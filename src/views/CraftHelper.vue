@@ -5,10 +5,29 @@ import {
   getModGroupsForItem,
   cleanModText,
   modWeightFor,
+  modSpecialKind,
   type Mod,
   type ModGroup,
 } from "../data/mods";
 import { jaTag, tagColor } from "../i18n/mod-tags-ja";
+
+function specialKindLabel(
+  kind: ReturnType<typeof modSpecialKind>,
+): string {
+  if (kind === "essence") return "エッセンス";
+  if (kind === "corrupt") return "コラプト";
+  if (kind === "desecrated") return "冒涜";
+  return "";
+}
+
+function specialKindColor(
+  kind: ReturnType<typeof modSpecialKind>,
+): string {
+  if (kind === "essence") return "bg-amber-700/40 text-amber-200";
+  if (kind === "corrupt") return "bg-red-700/40 text-red-200";
+  if (kind === "desecrated") return "bg-purple-700/40 text-purple-200";
+  return "";
+}
 import itemsJa from "../i18n/items-ja.json";
 
 /** 現在のアイテムタグに合致しそうなベース名候補（datalist autocomplete 用） */
@@ -302,31 +321,51 @@ function cancelPasteReview() {
 }
 
 function confirmPasteReview() {
-  const newKeys = new Set(slot.value.selectedKeys);
+  // 既存の選択は paste 結果で上書き
+  const newKeys = new Set<string>();
+
+  // 順序保ったまま追加候補を構築（review の順 = paste 順）
+  const candidates: { key: string; type: "prefix" | "suffix" }[] = [];
   for (const item of pasteReviewItems.value) {
     if (item.type !== "matched") continue;
     if (item.isImplicit || item.skip) continue;
-    const group = getGroupById(item.groupId);
-    if (group) {
-      for (const t of group.tiers) newKeys.delete(t.key);
+    const tierMod = modByKey.value.get(item.selectedTierKey);
+    if (!tierMod) continue;
+    candidates.push({ key: item.selectedTierKey, type: tierMod.type });
+  }
+
+  // プレ/サフ それぞれ先勝ちで 3 つまで
+  let pCount = 0;
+  let sCount = 0;
+  const skipped: { key: string; type: string }[] = [];
+  for (const c of candidates) {
+    if (c.type === "prefix" && pCount < 3) {
+      newKeys.add(c.key);
+      pCount++;
+    } else if (c.type === "suffix" && sCount < 3) {
+      newKeys.add(c.key);
+      sCount++;
+    } else {
+      skipped.push(c);
     }
-    newKeys.add(item.selectedTierKey);
   }
-  // 上限チェック
-  const allMods = Array.from(newKeys)
-    .map((k) => modByKey.value.get(k))
-    .filter((m): m is Mod => !!m);
-  const prefixCount = allMods.filter((m) => m.type === "prefix").length;
-  const suffixCount = allMods.filter((m) => m.type === "suffix").length;
-  if (prefixCount > 3 || suffixCount > 3) {
-    alert(
-      `プレフィックス ${prefixCount}/3、サフィックス ${suffixCount}/3 — 上限超過です。\n暗黙/除外チェックで調整してください。`,
-    );
-    return;
-  }
+
   slot.value.selectedKeys = Array.from(newKeys);
   pasteReviewVisible.value = false;
   pasteReviewItems.value = [];
+
+  if (skipped.length > 0) {
+    const skippedMods = skipped
+      .map((s) => {
+        const m = modByKey.value.get(s.key);
+        return m ? `${s.type === "prefix" ? "P" : "S"}: ${cleanModText(m.text_ja).split("\n").join(" / ")}` : "";
+      })
+      .filter(Boolean)
+      .join("\n  - ");
+    alert(
+      `プレ ${pCount}/3、サフ ${sCount}/3 で上限超過のため ${skipped.length} 件未反映:\n  - ${skippedMods}\n\n暗黙/除外/別 tier を見直すか、手動で追加してください。`,
+    );
+  }
 }
 const selectedPrefixCount = computed(
   () => selectedMods.value.filter((m) => m.type === "prefix").length,
@@ -628,11 +667,12 @@ function buildAiPrompt(): string {
       ? `Quality bonus: +${slot.value.parsedQuality}%${slot.value.parsedQualityCategory ? ` (${slot.value.parsedQualityCategory})` : ""} — boosts the values of the matched mod category, factor in when computing final values.`
       : "",
     "",
-    `Target mods (all at maximum tier, ${selectedMods.value.length}/6 selected):`,
-    ...selectedMods.value.map(
-      (m, i) =>
-        `${i + 1}. [${m.type}] ${cleanModText(m.text_en)} (group: ${m.groups.join(",")}, key: ${m.key}, lv ${m.level})`,
-    ),
+    `Target mods (${selectedMods.value.length}/6 selected):`,
+    ...selectedMods.value.map((m, i) => {
+      const kind = modSpecialKind(m);
+      const kindStr = kind ? ` [SPECIAL: ${kind}]` : "";
+      return `${i + 1}. [${m.type}]${kindStr} ${cleanModText(m.text_en)} (group: ${m.groups.join(",")}, key: ${m.key}, lv ${m.level})`;
+    }),
     "",
     hasStarterPrefix || hasStarterSuffix
       ? "Starter mods user specifies are already present on the base:"
@@ -959,6 +999,10 @@ function onAskAi() {
           >
             {{ m.type === "prefix" ? "プレ" : "サフ" }}
           </span>
+          <span
+            v-if="modSpecialKind(m)"
+            :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(m))]"
+          >{{ specialKindLabel(modSpecialKind(m)) }}</span>
           <span class="flex-1 text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
           <span class="text-[10px] text-[var(--color-text-muted)]">lv{{ m.level }}</span>
           <button
@@ -1078,6 +1122,15 @@ function onAskAi() {
                   class="font-semibold"
                 >
                   {{ getGroupById(item.groupId)?.type === "prefix" ? "プレ" : "サフ" }}
+                </span>
+                <span
+                  v-if="modSpecialKind(modByKey.get(item.selectedTierKey)!)"
+                  :class="[
+                    'px-2 py-0.5 rounded text-[10px] font-semibold',
+                    specialKindColor(modSpecialKind(modByKey.get(item.selectedTierKey)!)),
+                  ]"
+                >
+                  {{ specialKindLabel(modSpecialKind(modByKey.get(item.selectedTierKey)!)) }}
                 </span>
                 <span class="text-[var(--color-text-muted)]">{{ item.groupId }}</span>
                 <select

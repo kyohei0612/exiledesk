@@ -31,6 +31,22 @@ export interface Mod {
   stats: ModStat[];
   spawn: SpawnWeight[];
   tags: string[];
+  /** Essence currency 固有 mod */
+  essence?: number;
+  /** Vaal Orb コラプトでのみ付く mod */
+  corrupt?: number;
+  /** 冒涜 (Desecrated) ドメインの mod */
+  desecrated?: number;
+}
+
+/** 特殊 mod 分類のラベル（自動判定用） */
+export function modSpecialKind(
+  m: Mod,
+): "essence" | "corrupt" | "desecrated" | null {
+  if (m.essence) return "essence";
+  if (m.corrupt) return "corrupt";
+  if (m.desecrated) return "desecrated";
+  return null;
 }
 
 /** 指定アイテムタグでの spawn weight を返す（無ければ 0） */
