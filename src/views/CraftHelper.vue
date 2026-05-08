@@ -87,6 +87,10 @@ interface SlotState {
   parsedQuality?: number;
   /** コピペから抽出: 品質カテゴリ (例: "アタックモッド") */
   parsedQualityCategory?: string;
+  /** ベース固有のプレフィックス上限増減（黄昏の指輪 +1 等） */
+  prefixDelta?: number;
+  /** ベース固有のサフィックス上限増減（黄昏の指輪 -1 等） */
+  suffixDelta?: number;
 }
 
 function makeDefaultSlot(defaultTag: string): SlotState {
@@ -342,6 +346,11 @@ const effectiveModCount = computed(
   () => pasteReviewItems.value.filter(countsAsExplicit).length,
 );
 
+/** 動的 prefix/suffix 上限（ベース修飾子 prefixDelta/suffixDelta 反映） */
+const prefixMax = computed(() => 3 + (slot.value.prefixDelta ?? 0));
+const suffixMax = computed(() => 3 + (slot.value.suffixDelta ?? 0));
+const totalModMax = computed(() => prefixMax.value + suffixMax.value);
+
 function getGroupById(id: string): ModGroup | undefined {
   return availableGroups.value.find((g) => g.id === id);
 }
@@ -392,9 +401,9 @@ function removeAutoSplit() {
 watch(effectiveModCount, (n) => {
   if (!pasteReviewVisible.value) return;
   if (!enforceSixMods.value) return;
-  if (n < 6) {
+  if (n < totalModMax.value) {
     tryAutoSplitForFive();
-  } else if (n > 6) {
+  } else if (n > totalModMax.value) {
     const idx = pasteReviewItems.value
       .map((i, k) => ({ i, k }))
       .reverse()
@@ -426,15 +435,15 @@ function confirmPasteReview() {
     candidates.push({ key: item.selectedTierKey, type: tierMod.type });
   }
 
-  // プレ/サフ それぞれ先勝ちで 3 つまで
+  // プレ/サフ それぞれ先勝ちで上限まで（base 修飾子反映）
   let pCount = 0;
   let sCount = 0;
   const skipped: { key: string; type: string }[] = [];
   for (const c of candidates) {
-    if (c.type === "prefix" && pCount < 3) {
+    if (c.type === "prefix" && pCount < prefixMax.value) {
       newKeys.add(c.key);
       pCount++;
-    } else if (c.type === "suffix" && sCount < 3) {
+    } else if (c.type === "suffix" && sCount < suffixMax.value) {
       newKeys.add(c.key);
       sCount++;
     } else {
@@ -505,6 +514,9 @@ interface ParsedClipboard {
   quality?: number;
   qualityCategory?: string;
   modLines: string[];
+  /** "プレフィックスモッド +1個" 等から抽出（黄昏の指輪等の +/-1 ベース用） */
+  prefixDelta?: number;
+  suffixDelta?: number;
 }
 
 function parseJaClipboard(text: string): ParsedClipboard | null {
@@ -541,6 +553,18 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
     }
     // 品質の最大値表記（実値ではないので無視）
     if (line.startsWith("品質の最大値")) continue;
+
+    // ベース固有の prefix/suffix +/-N 個 修飾子（黄昏の指輪 等）
+    const pd = line.match(/^プレフィックスモッド\s*([+\-]?\d+)個?/);
+    if (pd) {
+      result.prefixDelta = parseInt(pd[1]);
+      continue;
+    }
+    const sd = line.match(/^サフィックスモッド\s*([+\-]?\d+)個?/);
+    if (sd) {
+      result.suffixDelta = parseInt(sd[1]);
+      continue;
+    }
 
     // スキップ metadata
     if (line.startsWith("品質") || line.startsWith("ソケット")) continue;
@@ -773,6 +797,8 @@ function applyPaste() {
   slot.value.parsedBase = baseName;
   slot.value.parsedQuality = parsed.quality;
   slot.value.parsedQualityCategory = parsed.qualityCategory;
+  slot.value.prefixDelta = parsed.prefixDelta;
+  slot.value.suffixDelta = parsed.suffixDelta;
 
   const { assignments } = matchModLines(
     parsed.modLines,
@@ -1275,8 +1301,18 @@ function onAskAi() {
           </div>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
             各行の分類と tier を選択して「適用」。
-            <span class="text-[var(--color-accent)]">explicit mod 数: {{ effectiveModCount }} / 6</span>
-            <span v-if="enforceSixMods">（暗黙・除外は除外。5 になった瞬間 splittable な mod を自動分割）</span>
+            <span class="text-[var(--color-accent)]">
+              explicit mod 数: {{ effectiveModCount }} / {{ totalModMax }}
+              （プレ {{ prefixMax }} ・サフ {{ suffixMax }}）
+            </span>
+            <span
+              v-if="(slot.prefixDelta ?? 0) !== 0 || (slot.suffixDelta ?? 0) !== 0"
+              class="text-[10px] text-[var(--color-accent)] ml-2"
+            >
+              ベース修飾: P{{ slot.prefixDelta && slot.prefixDelta > 0 ? "+" : "" }}{{ slot.prefixDelta ?? 0 }} /
+              S{{ slot.suffixDelta && slot.suffixDelta > 0 ? "+" : "" }}{{ slot.suffixDelta ?? 0 }}
+            </span>
+            <span v-if="enforceSixMods">（5 以下になった瞬間 splittable mod を自動分割）</span>
             <span v-else>（補完 OFF: そのまま適用）</span>
           </p>
         </div>
