@@ -327,6 +327,8 @@ type PasteReviewItem =
 
 const pasteReviewVisible = ref(false);
 const pasteReviewItems = ref<PasteReviewItem[]>([]);
+/** 「常に 6 mod に補完」モード（rare 想定。デフォルト ON） */
+const enforceSixMods = ref(true);
 
 /** "通常 + 特殊系" は explicit mod としてカウント、暗黙/除外は除外 */
 function countsAsExplicit(item: PasteReviewItem): boolean {
@@ -386,9 +388,10 @@ function removeAutoSplit() {
   );
 }
 
-// 分類変更のたびに count を再評価。<6 なら splittable を追加、>6 なら autoSplit を削除
+// 分類変更のたびに count を再評価。enforceSixMods が ON のとき自動補完
 watch(effectiveModCount, (n) => {
   if (!pasteReviewVisible.value) return;
+  if (!enforceSixMods.value) return;
   if (n < 6) {
     tryAutoSplitForFive();
   } else if (n > 6) {
@@ -397,6 +400,15 @@ watch(effectiveModCount, (n) => {
       .reverse()
       .find(({ i }) => i.type === "matched" && i.autoSplit)?.k;
     if (idx !== undefined) pasteReviewItems.value.splice(idx, 1);
+  }
+});
+
+// トグル OFF にしたら autoSplit を取り除く（任意モード）
+watch(enforceSixMods, (on) => {
+  if (!on) {
+    pasteReviewItems.value = pasteReviewItems.value.filter(
+      (i) => !(i.type === "matched" && i.autoSplit),
+    );
   }
 });
 
@@ -1253,11 +1265,19 @@ function onAskAi() {
         class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
       >
         <div class="px-4 py-3 border-b border-[var(--color-border)]">
-          <h3 class="text-base font-semibold">📋 解析結果確認</h3>
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <h3 class="text-base font-semibold">📋 解析結果確認</h3>
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+              <input type="checkbox" v-model="enforceSixMods" />
+              <span class="text-[var(--color-text-muted)]">常に 6 mod に補完</span>
+              <span class="text-[10px] text-[var(--color-text-muted)]">(rare 想定; magic 等は OFF)</span>
+            </label>
+          </div>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
             各行の分類と tier を選択して「適用」。
             <span class="text-[var(--color-accent)]">explicit mod 数: {{ effectiveModCount }} / 6</span>
-            （暗黙・除外は除外。5 になった瞬間 splittable な mod を自動分割）
+            <span v-if="enforceSixMods">（暗黙・除外は除外。5 になった瞬間 splittable な mod を自動分割）</span>
+            <span v-else>（補完 OFF: そのまま適用）</span>
           </p>
         </div>
         <div class="flex-1 overflow-y-auto divide-y divide-[var(--color-border)]">
