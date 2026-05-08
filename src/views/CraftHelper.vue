@@ -31,6 +31,14 @@ interface SlotState {
   starterSuffix: string;
   pasteText: string;
   notes: string;
+  /** コピペから抽出: アイテム名 */
+  parsedName?: string;
+  /** コピペから抽出: ベースアイテム名 */
+  parsedBase?: string;
+  /** コピペから抽出: 品質値 (例: 14) */
+  parsedQuality?: number;
+  /** コピペから抽出: 品質カテゴリ (例: "アタックモッド") */
+  parsedQualityCategory?: string;
 }
 
 function makeDefaultSlot(defaultTag: string): SlotState {
@@ -83,7 +91,9 @@ watch(
 // ============== 現スロット参照 ==============
 const slot = computed(() => slots.value[activeSlotId.value]);
 
-const availableMods = computed(() => getMaxTierMods(slot.value.itemTag));
+const availableMods = computed(() =>
+  getMaxTierMods(slot.value.itemTag, slot.value.itemLevel),
+);
 
 const filteredMods = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -151,6 +161,7 @@ interface ParsedClipboard {
   base?: string;
   itemLevel?: number;
   quality?: number;
+  qualityCategory?: string;
   modLines: string[];
 }
 
@@ -165,23 +176,31 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
   const result: ParsedClipboard = { modLines: [] };
   let inModSection = false;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    // メタデータ抽出
+  for (const line of lines) {
+    // アイテムレベル
     const ilvl = line.match(/^アイテムレベル[:\s]*(\d+)/);
     if (ilvl) {
       result.itemLevel = parseInt(ilvl[1]);
       inModSection = true;
       continue;
     }
-    const qm = line.match(/品質[^:]*[:\s]*\+?(\d+)%/);
+    // 品質（カテゴリ付き: "品質 (アタックモッド): +14%"）
+    const qmCat = line.match(/^品質\s*\(([^)]+)\)\s*[:\s]*\+?(\d+)%/);
+    if (qmCat) {
+      result.qualityCategory = qmCat[1];
+      result.quality = parseInt(qmCat[2]);
+      continue;
+    }
+    // 品質（カテゴリなし: "品質: +14%"）
+    const qm = line.match(/^品質\s*[:\s]\s*\+?(\d+)%/);
     if (qm) {
       result.quality = parseInt(qm[1]);
       continue;
     }
+    // 品質の最大値表記（実値ではないので無視）
+    if (line.startsWith("品質の最大値")) continue;
 
-    // スキップする metadata 行
+    // スキップ metadata
     if (line.startsWith("品質") || line.startsWith("ソケット")) continue;
     if (line.startsWith("必要")) continue;
     if (
@@ -190,12 +209,12 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
       line.startsWith("回避") ||
       line.startsWith("エナジーシールド") ||
       line.startsWith("ブロック")
-    ) continue;
+    )
+      continue;
     if (line === "腐敗" || line === "鏡映" || line === "壊れた") continue;
     if (line.match(/^---+$/)) continue;
 
     if (!inModSection) {
-      // ヘッダー: 1行目=名前 (rare or magic) / 2行目=ベース
       if (!result.name) result.name = line;
       else if (!result.base) result.base = line;
     } else {
@@ -248,6 +267,11 @@ function applyPaste() {
     return;
   }
   if (parsed.itemLevel) slot.value.itemLevel = parsed.itemLevel;
+  // メタデータをスロットに保存（表示・AI プロンプト用）
+  slot.value.parsedName = parsed.name;
+  slot.value.parsedBase = parsed.base;
+  slot.value.parsedQuality = parsed.quality;
+  slot.value.parsedQualityCategory = parsed.qualityCategory;
 
   const { matched, unmatched } = matchModLines(
     parsed.modLines,
@@ -299,8 +323,16 @@ function buildAiPrompt(): string {
   const starterS = availableMods.value.find(
     (m) => m.key === slot.value.starterSuffix,
   );
+  const hasStarterPrefix = !!starterP;
+  const hasStarterSuffix = !!starterS;
+  const needSuggestStarter = !hasStarterPrefix || !hasStarterSuffix;
+
   return [
-    `Plan the cheapest crafting path for a Path of Exile 2 ${slot.value.itemTag} (item level ${slot.value.itemLevel}, slot label: ${slotLabel(activeSlotId.value)} / ${itemLabel}).`,
+    `Plan the cheapest crafting path for a Path of Exile 2 ${slot.value.itemTag} at item level ${slot.value.itemLevel} (slot: ${slotLabel(activeSlotId.value)} / ${itemLabel}).`,
+    slot.value.parsedBase ? `Base item (parsed): ${slot.value.parsedBase}` : "",
+    slot.value.parsedQuality
+      ? `Quality bonus: +${slot.value.parsedQuality}%${slot.value.parsedQualityCategory ? ` (${slot.value.parsedQualityCategory})` : ""} — boosts the values of the matched mod category, factor in when computing final values.`
+      : "",
     "",
     `Target mods (all at maximum tier, ${selectedMods.value.length}/6 selected):`,
     ...selectedMods.value.map(
@@ -308,14 +340,20 @@ function buildAiPrompt(): string {
         `${i + 1}. [${m.type}] ${cleanModText(m.text_en)} (group: ${m.groups.join(",")}, key: ${m.key}, lv ${m.level})`,
     ),
     "",
-    starterP || starterS
-      ? "Starter mods already on the item (assume present):"
+    hasStarterPrefix || hasStarterSuffix
+      ? "Starter mods user specifies are already present on the base:"
       : "",
-    starterP
-      ? `- prefix: ${cleanModText(starterP.text_en)} (group: ${starterP.groups.join(",")})`
+    hasStarterPrefix
+      ? `- prefix: ${cleanModText(starterP!.text_en)} (group: ${starterP!.groups.join(",")})`
       : "",
-    starterS
-      ? `- suffix: ${cleanModText(starterS.text_en)} (group: ${starterS.groups.join(",")})`
+    hasStarterSuffix
+      ? `- suffix: ${cleanModText(starterS!.text_en)} (group: ${starterS!.groups.join(",")})`
+      : "",
+    needSuggestStarter
+      ? `\n** RECOMMEND best starter mod(s) the user should look for on a base **\n` +
+        `- The ${!hasStarterPrefix ? "prefix" : ""}${!hasStarterPrefix && !hasStarterSuffix ? " AND " : ""}${!hasStarterSuffix ? "suffix" : ""} is unspecified.\n` +
+        `- Recommend max-tier mod(s) that, if already on the base, would minimize total expected cost for this 6-mod target.\n` +
+        `- Justify the choice with a probability/cost reasoning.`
       : "",
     "",
     "Return:",
@@ -323,7 +361,9 @@ function buildAiPrompt(): string {
     "- Estimated cost in Divine Orbs per attempt + total expected cost",
     "- Estimated success probability per attempt",
     "- 2-3 alternative paths with same metrics",
+    "- Recommended starter mod(s) if user did not specify (with rationale)",
     "- Note POE2 mod weights, group exclusions, ilvl requirements",
+    "- Final mod values (factor in quality bonus if applicable; reference the pre-quality stat range from the bundle for stats that scale with quality)",
   ]
     .filter(Boolean)
     .join("\n");
@@ -523,6 +563,29 @@ function onAskAi() {
       <h3 class="text-sm font-semibold mb-3">
         🎯 目標 mod（{{ selectedMods.length }}/6）— 「{{ slotLabel(activeSlotId) }}」スロット
       </h3>
+
+      <!-- パース済メタデータ -->
+      <div
+        v-if="slot.parsedName || slot.parsedBase || slot.parsedQuality"
+        class="mb-3 pb-3 border-b border-[var(--color-border)] grid grid-cols-2 gap-2 text-xs"
+      >
+        <div v-if="slot.parsedName">
+          <span class="text-[var(--color-text-muted)]">アイテム名: </span>
+          <span class="text-[var(--color-accent)]">{{ slot.parsedName }}</span>
+        </div>
+        <div v-if="slot.parsedBase">
+          <span class="text-[var(--color-text-muted)]">ベース: </span>
+          <span>{{ slot.parsedBase }}</span>
+        </div>
+        <div v-if="slot.parsedQuality">
+          <span class="text-[var(--color-text-muted)]">品質: </span>
+          <span class="text-[var(--color-accent)]">+{{ slot.parsedQuality }}%</span>
+          <span v-if="slot.parsedQualityCategory" class="text-[var(--color-text-muted)]">
+            ({{ slot.parsedQualityCategory }})
+          </span>
+        </div>
+      </div>
+
       <ul v-if="selectedMods.length" class="space-y-1 text-sm font-mono">
         <li
           v-for="m in selectedMods"
@@ -553,6 +616,7 @@ function onAskAi() {
       </h3>
       <p class="text-xs text-[var(--color-text-muted)] mb-3">
         プレフィックス1 ＋ サフィックス1（最大 tier）を指定すると、その mod が既にあるベース前提で最短経路を計算します。
+        <span class="text-[var(--color-accent)]">空欄のままなら AI が「おすすめスターター」を提案します。</span>
       </p>
       <div class="grid grid-cols-2 gap-3">
         <select

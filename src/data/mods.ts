@@ -44,11 +44,16 @@ export function modCanSpawnOn(mod: Mod, itemTag: string): boolean {
 }
 
 /**
- * 指定アイテムタグに対し、各グループの最高 tier (= required_level 最大) の mod のみを返す
- * 6 mod 選択 UI で「最大値の組合せ」を扱うため、ティア違いを 1 つに集約する
+ * 指定アイテムタグ + アイテム lvl 上限に対し、各グループで required_level ≤ maxLevel
+ * の中で最高 tier の mod のみを返す。6 mod 選択 UI で「最大値の組合せ」用。
+ *
+ * @param itemTag spawn 対象タグ（"helmet"|"ring"|...）
+ * @param maxLevel アイテム lvl（required_level がこれ以下の mod のみ表示）
  */
-export function getMaxTierMods(itemTag: string): Mod[] {
-  const filtered = allMods.filter((m) => modCanSpawnOn(m, itemTag));
+export function getMaxTierMods(itemTag: string, maxLevel = 99): Mod[] {
+  const filtered = allMods.filter(
+    (m) => modCanSpawnOn(m, itemTag) && m.level <= maxLevel,
+  );
   const byGroup = new Map<string, Mod>();
   for (const m of filtered) {
     for (const g of m.groups) {
