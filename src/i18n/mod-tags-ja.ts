@@ -63,6 +63,11 @@ export function jaTag(tag: string): string {
   return tagJaMap[tag] ?? tag;
 }
 
+/** ユーザー向けに表示すべき既知タグか（内部 mod 識別子 (xxx_mod, unveiled_mod 等) を弾く） */
+export function hasJaTag(tag: string): boolean {
+  return tag in tagJaMap;
+}
+
 /** タグの色分類（badge bg-color に使う） */
 export function tagColor(tag: string): string {
   if (tag === "fire" || tag === "fire_damage") return "bg-red-700/40 text-red-200";

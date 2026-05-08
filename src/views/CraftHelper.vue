@@ -9,7 +9,12 @@ import {
   type Mod,
   type ModGroup,
 } from "../data/mods";
-import { jaTag, tagColor } from "../i18n/mod-tags-ja";
+import { jaTag, tagColor, hasJaTag } from "../i18n/mod-tags-ja";
+
+/** mod の tags 配列のうち、ユーザー向け既知タグだけを返す（内部 ID を排除） */
+function visibleTags(mod: Mod): string[] {
+  return (mod.tags ?? []).filter(hasJaTag);
+}
 
 function specialKindLabel(
   kind: ReturnType<typeof modSpecialKind>,
@@ -164,23 +169,10 @@ interface SavedPaste {
 const savedPastes = ref<SavedPaste[]>([]);
 
 // ============== 永続化 ==============
+// slot 自体は揮発（リロードで全リセット）。永続化されるのは savedPastes のみ。
+// 過去バージョンで slot を localStorage に保存していた残骸を削除する。
 onMounted(() => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      for (const s of SLOT_DEFS) {
-        if (parsed[s.id]) {
-          slots.value[s.id] = {
-            ...makeDefaultSlot(s.defaultTag),
-            ...parsed[s.id],
-          };
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to load saved slots:", e);
-    }
-  }
+  localStorage.removeItem(STORAGE_KEY);
   const sp = localStorage.getItem(SAVED_PASTES_KEY);
   if (sp) {
     try {
@@ -191,28 +183,6 @@ onMounted(() => {
     }
   }
 });
-
-/** slot のうち永続化する項目だけ（pasteText やパース結果は揮発で OK） */
-function pickPersistableSlot(s: SlotState): Partial<SlotState> {
-  return {
-    itemTag: s.itemTag,
-    itemLevel: s.itemLevel,
-    selectedKeys: s.selectedKeys,
-    starterPrefix: s.starterPrefix,
-    starterSuffix: s.starterSuffix,
-    notes: s.notes,
-  };
-}
-
-watch(
-  slots,
-  (v) => {
-    const out: Record<string, Partial<SlotState>> = {};
-    for (const id in v) out[id] = pickPersistableSlot(v[id]);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
-  },
-  { deep: true },
-);
 
 // items-ja.json は { "Pearl Ring": "真珠の指輪", ... } 形式の EN→JA マップ
 const itemsJaMap = itemsJa as Record<string, string>;
@@ -607,21 +577,6 @@ const allAvailableMods = computed(() =>
 );
 
 // ============== 操作 ==============
-
-/** 現スロットの目標 mod を全クリア（スロット削除の代替） */
-function clearCurrentSlotMods() {
-  if (activeSlotId.value === "all") return;
-  if (!selectedMods.value.length) return;
-  if (
-    !confirm(
-      `「${slotLabel(activeSlotId.value as SlotId)}」の目標 mod (${selectedMods.value.length} 個) をクリアしますか？`,
-    )
-  )
-    return;
-  slot.value.selectedKeys = [];
-  slot.value.starterPrefix = "";
-  slot.value.starterSuffix = "";
-}
 
 /** 解析関連の値だけリセット（pasteText + parsed metadata）。selectedKeys は残す */
 function resetSlotPaste() {
@@ -1460,15 +1415,7 @@ function onAskAi() {
         placeholder="🔍 mod 検索（日英）"
         class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-56"
       />
-      <button
-        v-if="selectedMods.length"
-        @click="clearCurrentSlotMods"
-        class="ml-auto px-2 py-1 text-xs text-[var(--color-text-muted)] hover:text-red-300 transition"
-        :title="`「${slotLabel(activeSlotId as SlotId)}」の目標 mod を全クリア`"
-      >
-        🗑️ クリア
-      </button>
-      <span :class="['text-xs text-[var(--color-text-muted)]', selectedMods.length ? '' : 'ml-auto']">
+      <span class="ml-auto text-xs text-[var(--color-text-muted)]">
         選択:
         <span class="text-[var(--color-accent)]">{{ selectedPrefixCount }}/3 P</span>
         +
@@ -1616,22 +1563,22 @@ function onAskAi() {
             <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(g.tiers[0])"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
                   aria-hidden="true"
                 >{{ specialKindLabel(modSpecialKind(g.tiers[0])) }}</span>
-                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
               </span>
-              <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
+              <span v-if="visibleTags(g.tiers[0]).length" class="flex gap-1 flex-wrap mt-1">
                 <span
-                  v-for="t in g.tiers[0].tags"
+                  v-for="t in visibleTags(g.tiers[0])"
                   :key="t"
                   :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
                 >{{ jaTag(t) }}</span>
               </span>
               <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
-                {{ g.tiers[0].name_ja || g.tiers[0].name_en }} · {{ g.id }}
+                {{ g.tiers[0].name_ja || g.tiers[0].name_en }}
               </span>
             </span>
             <span class="flex flex-col items-end shrink-0 gap-0.5">
@@ -1668,22 +1615,22 @@ function onAskAi() {
             <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(g.tiers[0])"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
                   aria-hidden="true"
                 >{{ specialKindLabel(modSpecialKind(g.tiers[0])) }}</span>
-                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
               </span>
-              <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
+              <span v-if="visibleTags(g.tiers[0]).length" class="flex gap-1 flex-wrap mt-1">
                 <span
-                  v-for="t in g.tiers[0].tags"
+                  v-for="t in visibleTags(g.tiers[0])"
                   :key="t"
                   :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
                 >{{ jaTag(t) }}</span>
               </span>
               <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
-                {{ g.tiers[0].name_ja || g.tiers[0].name_en }} · {{ g.id }}
+                {{ g.tiers[0].name_ja || g.tiers[0].name_en }}
               </span>
             </span>
             <span class="flex flex-col items-end shrink-0 gap-0.5">
@@ -1746,11 +1693,11 @@ function onAskAi() {
           >
             {{ m.type === "prefix" ? "プレ" : "サフ" }}
           </span>
+          <span class="flex-1 text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
           <span
             v-if="modSpecialKind(m)"
             :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(m))]"
           >{{ specialKindLabel(modSpecialKind(m)) }}</span>
-          <span class="flex-1 text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
           <span class="text-[10px] text-[var(--color-text-muted)]">lv{{ m.level }}</span>
           <button
             @click="removeSelectedMod(m.key)"
@@ -2014,12 +1961,19 @@ function onAskAi() {
             <span class="text-[var(--color-text-muted)] font-mono w-12 shrink-0">lv{{ t.level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span class="whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(t)"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(t))]"
                   aria-hidden="true"
                 >{{ specialKindLabel(modSpecialKind(t)) }}</span>
-                <span class="whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
+              </span>
+              <span v-if="visibleTags(t).length" class="flex gap-1 flex-wrap mt-1">
+                <span
+                  v-for="tg in visibleTags(t)"
+                  :key="tg"
+                  :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(tg)]"
+                >{{ jaTag(tg) }}</span>
               </span>
             </span>
             <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">w{{ modWeightFor(t, slot.itemTag) }}</span>
