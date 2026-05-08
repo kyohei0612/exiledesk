@@ -448,6 +448,17 @@ function applyPaste() {
 }
 
 // ============== AI プロンプト構築 ==============
+/** paste テキストから現在マッチしてない行を返す（AI に補完させる用） */
+function getUnmatchedFromPaste(): string[] {
+  const parsed = parseJaClipboard(slot.value.pasteText);
+  if (!parsed) return [];
+  const { unmatched } = matchModLines(
+    parsed.modLines,
+    allAvailableMods.value,
+  );
+  return unmatched;
+}
+
 function buildAiPrompt(): string {
   const itemLabel =
     ITEM_TAGS.find((t) => t.id === slot.value.itemTag)?.label ??
@@ -457,6 +468,7 @@ function buildAiPrompt(): string {
   const hasStarterPrefix = !!starterP;
   const hasStarterSuffix = !!starterS;
   const needSuggestStarter = !hasStarterPrefix || !hasStarterSuffix;
+  const unmatched = getUnmatchedFromPaste();
 
   return [
     `Plan the cheapest crafting path for a Path of Exile 2 ${slot.value.itemTag} at item level ${slot.value.itemLevel} (slot: ${slotLabel(activeSlotId.value)} / ${itemLabel}).`,
@@ -485,6 +497,11 @@ function buildAiPrompt(): string {
         `- The ${!hasStarterPrefix ? "prefix" : ""}${!hasStarterPrefix && !hasStarterSuffix ? " AND " : ""}${!hasStarterSuffix ? "suffix" : ""} is unspecified.\n` +
         `- Recommend max-tier mod(s) that, if already on the base, would minimize total expected cost for this 6-mod target.\n` +
         `- Justify the choice with a probability/cost reasoning.`
+      : "",
+    unmatched.length > 0
+      ? `\n** ADDITIONAL TARGET MOD LINES (paste から抽出、bundle にマッチせず) **\n` +
+        unmatched.map((l) => `- ${l}`).join("\n") +
+        `\nInterpret these as additional target mods. POE2 may have hybrid mods (multiple stats per affix labeled like P6, S2) that aren't in our bundle. Use your training knowledge of POE2 affix structure to identify the correct mod groups and tiers.`
       : "",
     "",
     "POE2 crafting mechanics to consider (cover what's relevant):",
