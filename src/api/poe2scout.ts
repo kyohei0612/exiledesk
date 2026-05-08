@@ -1,0 +1,170 @@
+/**
+ * poe2scout API クライアント
+ *
+ * poe2scout は POE2 専用の経済データ集約サービス（MIT、OpenAPI 完備、無認証 GET）
+ * Repo: https://github.com/poe2scout/poe2scout
+ * OpenAPI: https://poe2scout.com/api/openapi.json
+ *
+ * 慣例マナー:
+ * - User-Agent に連絡先 email を含める（fetch では browser が制御するので、Tauri 移行時に Rust 側で設定）
+ * - 高頻度連投は避ける（手動更新前提なら問題なし）
+ */
+
+// dev: vite proxy 経由で CORS 回避
+// prod: Tauri ネイティブ fetch なので CORS 関係なし、直叩き
+const BASE = import.meta.env.DEV
+  ? "/api/poe2scout"
+  : "https://poe2scout.com/api";
+
+// =================== 型定義 ===================
+
+export interface CurrencyDetail {
+  CurrencyItemId: number;
+  ItemId: number;
+  CurrencyCategoryId: number;
+  ApiId: string;
+  Text: string;
+  IconUrl: string;
+  CategoryApiId: string;
+  ItemMetadata: unknown;
+}
+
+export interface CurrencyData {
+  ValueTraded: string;
+  RelativePrice: string;
+  StockValue: string;
+  VolumeTraded: number;
+  HighestStock: number;
+}
+
+export interface SnapshotPair {
+  CurrencyExchangeSnapshotPairId: number;
+  CurrencyExchangeSnapshotId: number;
+  Volume: string;
+  BaseCurrencyApiId: string;
+  BaseCurrencyText: string;
+  CurrencyOne: CurrencyDetail;
+  CurrencyTwo: CurrencyDetail;
+  CurrencyOneData: CurrencyData;
+  CurrencyTwoData: CurrencyData;
+}
+
+export interface League {
+  Value: string;
+  IsCurrent: boolean;
+  DivinePrice: number;
+  ChaosDivinePrice: number;
+  BaseCurrencyApiId: string;
+  BaseCurrencyText: string;
+  BaseCurrencyIconUrl: string;
+  ExaltedCurrencyText: string;
+  ExaltedCurrencyIconUrl: string;
+  DivineCurrencyText: string;
+  DivineCurrencyIconUrl: string;
+  ChaosCurrencyText: string;
+  ChaosCurrencyIconUrl: string;
+}
+
+// =================== 取得関数 ===================
+
+export async function fetchLeagues(): Promise<League[]> {
+  const res = await fetch(`${BASE}/poe2/Leagues`);
+  if (!res.ok) throw new Error(`Leagues request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSnapshotPairs(
+  leagueName: string,
+  perPage = 500,
+): Promise<SnapshotPair[]> {
+  const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/SnapshotPairs?perPage=${perPage}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`SnapshotPairs request failed: ${res.status}`);
+  return res.json();
+}
+
+// =================== 集約・整形 ===================
+
+export interface RankedPair {
+  id: number;
+  volume: number;
+  oneText: string;
+  oneIcon: string;
+  oneRelativePrice: number;
+  twoText: string;
+  twoIcon: string;
+  twoRelativePrice: number;
+  baseCurrencyText: string;
+  /** 1 神（Divine Orb）あたり、CurrencyOne を何個受け取れるか */
+  oneDivineRate: number;
+  /** 1 神（Divine Orb）あたり、CurrencyTwo を何個受け取れるか */
+  twoDivineRate: number;
+  /** ペアに Divine Orb が含まれるか */
+  containsDivine: boolean;
+  /** CurrencyOne のカテゴリ ID（例: "currency", "essence", "omen"） */
+  oneCategoryApiId: string;
+  /** CurrencyTwo のカテゴリ ID */
+  twoCategoryApiId: string;
+}
+
+const DIVINE_API_ID = "divine";
+
+/**
+ * 取引量降順でランキング。Divine 含むペアは Divine を CurrencyOne 側に正規化。
+ * 各ペアの「1 神あたりの相手通貨数」も計算する。
+ *
+ * @param pairs poe2scout SnapshotPairs レスポンス
+ * @param divinePrice 1 神 = ? base通貨 (リーグ data の DivinePrice)
+ */
+export function rankPairsByVolume(
+  pairs: SnapshotPair[],
+  divinePrice: number,
+): RankedPair[] {
+  const safeDivinePrice = divinePrice > 0 ? divinePrice : 1;
+
+  return pairs
+    .map((p) => {
+      // Divine が CurrencyTwo 側にあるなら入れ替え
+      const divineIsTwo = p.CurrencyTwo.ApiId === DIVINE_API_ID;
+      const divineIsOne = p.CurrencyOne.ApiId === DIVINE_API_ID;
+      const containsDivine = divineIsOne || divineIsTwo;
+
+      const one = divineIsTwo ? p.CurrencyTwo : p.CurrencyOne;
+      const two = divineIsTwo ? p.CurrencyOne : p.CurrencyTwo;
+      const oneData = divineIsTwo ? p.CurrencyTwoData : p.CurrencyOneData;
+      const twoData = divineIsTwo ? p.CurrencyOneData : p.CurrencyTwoData;
+
+      const oneRel = parseFloat(oneData?.RelativePrice ?? "0");
+      const twoRel = parseFloat(twoData?.RelativePrice ?? "0");
+
+      // 1 神 で何個もらえるか = DivinePrice / RelativePrice
+      // RelativePrice は base通貨 (Exalted) 建ての価格
+      const oneDivineRate = oneRel > 0 ? safeDivinePrice / oneRel : 0;
+      const twoDivineRate = twoRel > 0 ? safeDivinePrice / twoRel : 0;
+
+      return {
+        id: p.CurrencyExchangeSnapshotPairId,
+        volume: parseFloat(p.Volume),
+        oneText: one.Text,
+        oneIcon: one.IconUrl,
+        oneRelativePrice: oneRel,
+        twoText: two.Text,
+        twoIcon: two.IconUrl,
+        twoRelativePrice: twoRel,
+        baseCurrencyText: p.BaseCurrencyText,
+        oneDivineRate,
+        twoDivineRate,
+        containsDivine,
+        oneCategoryApiId: one.CategoryApiId,
+        twoCategoryApiId: two.CategoryApiId,
+      };
+    })
+    .filter((r) => r.volume > 0 && Number.isFinite(r.volume))
+    .sort((a, b) => {
+      // Divine 含むペアを先頭に
+      if (a.containsDivine !== b.containsDivine) {
+        return a.containsDivine ? -1 : 1;
+      }
+      return b.volume - a.volume;
+    });
+}
