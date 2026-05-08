@@ -219,18 +219,26 @@ function modTextKey(text: string): string {
     .toLowerCase();
 }
 
-/** パースしたコピペ mod 行を bundle にマッチング */
-function matchModLines(lines: string[], pool: Mod[]): Mod[] {
+/** パースしたコピペ mod 行を bundle にマッチング。マッチ・未マッチ双方を返す */
+function matchModLines(
+  lines: string[],
+  pool: Mod[],
+): { matched: Mod[]; unmatched: string[] } {
   const matched: Mod[] = [];
+  const unmatched: string[] = [];
   for (const line of lines) {
     const k = modTextKey(line);
-    if (!k) continue;
+    if (!k) {
+      continue;
+    }
     const found = pool.find((m) => modTextKey(m.text_ja) === k);
     if (found && !matched.some((mm) => mm.key === found.key)) {
       matched.push(found);
+    } else if (!found) {
+      unmatched.push(line);
     }
   }
-  return matched;
+  return { matched, unmatched };
 }
 
 function applyPaste() {
@@ -240,14 +248,12 @@ function applyPaste() {
     return;
   }
   if (parsed.itemLevel) slot.value.itemLevel = parsed.itemLevel;
-  const matched = matchModLines(parsed.modLines, availableMods.value);
-  if (!matched.length) {
-    alert(
-      `mod 行 ${parsed.modLines.length} 件中、bundle と一致したものはありませんでした。\n` +
-        `手動選択するか、別のアイテムタイプ（現: ${ITEM_TAGS.find((t) => t.id === slot.value.itemTag)?.label}）に切替えて再試行してください。`,
-    );
-    return;
-  }
+
+  const { matched, unmatched } = matchModLines(
+    parsed.modLines,
+    availableMods.value,
+  );
+
   // プレ/サフ 上限を尊重して埋める
   const filledKeys = new Set<string>();
   let pCount = 0;
@@ -260,10 +266,26 @@ function applyPaste() {
     else sCount++;
   }
   slot.value.selectedKeys = Array.from(filledKeys);
-  alert(
-    `${parsed.modLines.length} 行中 ${matched.length} 件マッチ、${filledKeys.size} 件選択済みに反映しました。\n` +
-      "未マッチのものは手動で追加できます。",
-  );
+
+  const itemTagLabel =
+    ITEM_TAGS.find((t) => t.id === slot.value.itemTag)?.label ??
+    slot.value.itemTag;
+  const lines: string[] = [
+    `マッチ: ${matched.length}/${parsed.modLines.length} 行 → ${filledKeys.size} 件を選択中に反映（アイテムタイプ: ${itemTagLabel}）`,
+  ];
+  if (unmatched.length) {
+    lines.push("");
+    lines.push(`未マッチ ${unmatched.length} 行:`);
+    for (const u of unmatched) lines.push(`  • ${u}`);
+    lines.push("");
+    lines.push(
+      "※ 暗黙モッド・固有 mod・装備タイプ違い・品質ボーナスで構造変化した行は未マッチになります。",
+    );
+    lines.push(
+      "  手動で選択するか、別のアイテムタイプに切替えて再試行してください。",
+    );
+  }
+  alert(lines.join("\n"));
 }
 
 // ============== AI プロンプト構築 ==============
