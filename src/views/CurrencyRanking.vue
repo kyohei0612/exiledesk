@@ -13,12 +13,12 @@ import { jaCategory } from "../i18n/categories-ja";
 const leagues = ref<League[]>([]);
 const league = ref<string>("Fate of the Vaal");
 const divinePrice = ref<number>(1);
+const divineIcon = ref<string>("");
 const ranking = ref<RankedPair[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
 const categoryFilter = ref<string>("all");
-const flippedPairs = ref<Set<number>>(new Set());
 
 async function loadLeagues() {
   try {
@@ -28,6 +28,7 @@ async function loadLeagues() {
     if (current) {
       league.value = current.Value;
       divinePrice.value = current.DivinePrice || 1;
+      divineIcon.value = current.DivineCurrencyIconUrl || "";
     }
   } catch (e) {
     console.warn("Failed to load leagues, using default:", e);
@@ -39,12 +40,14 @@ async function refresh() {
   error.value = null;
   try {
     const leagueData = leagues.value.find((l) => l.Value === league.value);
-    if (leagueData) divinePrice.value = leagueData.DivinePrice || 1;
+    if (leagueData) {
+      divinePrice.value = leagueData.DivinePrice || 1;
+      divineIcon.value = leagueData.DivineCurrencyIconUrl || "";
+    }
 
     const pairs = await fetchSnapshotPairs(league.value);
     ranking.value = rankPairsByVolume(pairs, divinePrice.value);
     lastUpdated.value = new Date();
-    flippedPairs.value = new Set(); // リーグ切替時に flip 状態リセット
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -56,25 +59,20 @@ function onLeagueChange() {
   refresh();
 }
 
-function toggleFlip(id: number) {
-  const next = new Set(flippedPairs.value);
-  if (next.has(id)) next.delete(id);
-  else next.add(id);
-  flippedPairs.value = next;
-}
-
-function isFlipped(id: number): boolean {
-  return flippedPairs.value.has(id);
-}
-
-/** 数値を小数点第1位までフォーマット */
-function fmt1(n: number): string {
+/**
+ * 数値表示（poe.ninja 流の日本語ユニット 千/万/億）
+ * 基本 1 桁、<1 は 2-3 桁で潰さない
+ */
+function fmt(n: number): string {
   if (!Number.isFinite(n) || n === 0) return "—";
   const abs = Math.abs(n);
-  if (abs >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (abs >= 10_000) return (n / 1_000).toFixed(1) + "k";
-  if (abs < 0.1) return "<0.1";
-  return n.toFixed(1);
+  if (abs >= 100_000_000) return (n / 100_000_000).toFixed(1) + "億";
+  if (abs >= 10_000) return (n / 10_000).toFixed(1) + "万";
+  if (abs >= 1_000) return (n / 1_000).toFixed(1) + "千";
+  if (abs >= 1) return n.toFixed(1);
+  if (abs >= 0.1) return n.toFixed(2);
+  if (abs >= 0.01) return n.toFixed(3);
+  return n.toExponential(1);
 }
 
 function formatTime(d: Date | null): string {
@@ -99,7 +97,6 @@ const availableCategories = computed(() => {
 
 const filteredRanking = computed(() => {
   if (categoryFilter.value === "all") return ranking.value;
-  // 両側が選択カテゴリのペアのみ表示（純粋な X 系ペアに絞る）
   return ranking.value.filter(
     (r) =>
       r.oneCategoryApiId === categoryFilter.value &&
@@ -129,7 +126,7 @@ onMounted(async () => {
           最終更新: <span>{{ formatTime(lastUpdated) }}</span>
           <span v-if="ranking.length"> ／ {{ ranking.length }} ペア</span>
           <span v-if="divinePrice > 1">
-            ／ 1 神 = {{ fmt1(divinePrice) }} 高貴なるオーブ
+            ／ 1 神 = {{ fmt(divinePrice) }} 高貴なるオーブ
           </span>
         </p>
       </div>
@@ -137,7 +134,7 @@ onMounted(async () => {
         <select
           v-model="categoryFilter"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
-          title="種類で絞り込み"
+          title="種類で絞り込み（両側が同カテゴリのペアのみ）"
         >
           <option value="all">すべての種類</option>
           <option v-for="cat in availableCategories" :key="cat" :value="cat">
@@ -191,11 +188,10 @@ onMounted(async () => {
             <th class="text-left px-4 py-3 w-12">#</th>
             <th class="text-left px-4 py-3">通貨ペア</th>
             <th class="text-right px-4 py-3 w-32">取引量</th>
-            <th class="text-right px-4 py-3 w-72">1 トレードあたり</th>
+            <th class="text-right px-4 py-3 w-80">神 換算</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Divine 関連ペア -->
           <tr v-if="divinePairs.length" class="bg-[var(--color-surface)]/50">
             <td colspan="4" class="px-4 py-2 text-xs uppercase tracking-wider text-[var(--color-accent)]">
               💎 神（Divine）関連ペア
@@ -211,50 +207,27 @@ onMounted(async () => {
             </td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <template v-if="!isFlipped(p.id)">
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                  <button
-                    @click="toggleFlip(p.id)"
-                    class="text-[var(--color-text-muted)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] hover:text-[var(--color-accent)] transition cursor-pointer"
-                    title="ペアを反転"
-                  >↔</button>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
-                </template>
-                <template v-else>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
-                  <button
-                    @click="toggleFlip(p.id)"
-                    class="text-[var(--color-accent)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] transition cursor-pointer"
-                    title="元に戻す"
-                  >↔</button>
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                </template>
+                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
+                <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
             <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
-              {{ fmt1(p.volume) }}
+              {{ fmt(p.volume) }}
             </td>
-            <td class="px-4 py-2 text-right font-mono text-xs">
-              <template v-if="!isFlipped(p.id)">
-                <span class="text-[var(--color-text)]">1 神</span>
-                <span class="text-[var(--color-text-muted)]"> = </span>
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
-                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
-              </template>
-              <template v-else>
-                <span class="text-[var(--color-text)]">1 {{ jaCurrency(p.twoText) }}</span>
-                <span class="text-[var(--color-text-muted)]"> = </span>
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate > 0 ? 1 / p.twoDivineRate : 0) }}</span>
-                <span class="text-[var(--color-text-muted)]"> 神</span>
-              </template>
+            <td class="px-4 py-2 text-right">
+              <div class="flex items-center justify-end gap-1.5 text-xs font-mono">
+                <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
+                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text-muted)]">⇄</span>
+                <span class="text-[var(--color-text)]">1.0</span>
+                <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-4 h-4 object-contain" loading="lazy" />
+              </div>
             </td>
           </tr>
 
-          <!-- その他のペア -->
           <tr v-if="otherPairs.length" class="bg-[var(--color-surface)]/50">
             <td colspan="4" class="px-4 py-2 text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
               その他のペア（神不在）
@@ -270,50 +243,33 @@ onMounted(async () => {
             </td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <template v-if="!isFlipped(p.id)">
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                  <button
-                    @click="toggleFlip(p.id)"
-                    class="text-[var(--color-text-muted)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] hover:text-[var(--color-accent)] transition cursor-pointer"
-                    title="ペアを反転"
-                  >↔</button>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
-                </template>
-                <template v-else>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
-                  <button
-                    @click="toggleFlip(p.id)"
-                    class="text-[var(--color-accent)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] transition cursor-pointer"
-                    title="元に戻す"
-                  >↔</button>
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                </template>
+                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
+                <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
             <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
-              {{ fmt1(p.volume) }}
+              {{ fmt(p.volume) }}
             </td>
-            <td class="px-4 py-2 text-right font-mono text-xs">
-              <span class="text-[var(--color-text)]">1 神</span>
-              <span class="text-[var(--color-text-muted)]"> = </span>
-              <template v-if="!isFlipped(p.id)">
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.oneDivineRate) }}</span>
-                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.oneText) }}</span>
-                <span class="text-[var(--color-text-muted)]"> / </span>
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
-                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
-              </template>
-              <template v-else>
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
-                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
-                <span class="text-[var(--color-text-muted)]"> / </span>
-                <span class="text-[var(--color-accent)]">{{ fmt1(p.oneDivineRate) }}</span>
-                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.oneText) }}</span>
-              </template>
+            <td class="px-4 py-2 text-right">
+              <div class="flex flex-col gap-1 text-xs font-mono items-end">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text-muted)]">⇄</span>
+                  <span class="text-[var(--color-text)]">1.0</span>
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-4 h-4 object-contain" loading="lazy" />
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text-muted)]">⇄</span>
+                  <span class="text-[var(--color-text)]">1.0</span>
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-4 h-4 object-contain" loading="lazy" />
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -322,16 +278,10 @@ onMounted(async () => {
 
     <p class="mt-4 text-[10px] text-[var(--color-text-muted)] text-right">
       Powered by
-      <a
-        href="https://poe2scout.com"
-        target="_blank"
-        class="hover:text-[var(--color-accent)] underline"
-        >poe2scout</a
-      >
-      ／
-      <span class="font-mono">{{ league }}</span>
-      ／日本語名は v0 暫定（RePoE fork JA データに後日差替えで正規化）
-      ／ジェム・ユニーク等の種類別ランキングは別ビューで対応予定
+      <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--color-accent)] underline">poe2scout</a>
+      ／ <span class="font-mono">{{ league }}</span>
+      ／日本語名は v0 暫定（RePoE fork JA データに後日差替え）
+      ／レート表記は poe.ninja 流「X 神 ⇄ 1.0 アイテム」
     </p>
   </div>
 </template>

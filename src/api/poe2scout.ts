@@ -99,6 +99,10 @@ export interface RankedPair {
   oneDivineRate: number;
   /** 1 神（Divine Orb）あたり、CurrencyTwo を何個受け取れるか */
   twoDivineRate: number;
+  /** 1 単位の CurrencyOne の Divine 価格（poe.ninja 流の「X 神 ⇄ 1 X」表示用） */
+  oneDivinePrice: number;
+  /** 1 単位の CurrencyTwo の Divine 価格 */
+  twoDivinePrice: number;
   /** ペアに Divine Orb が含まれるか */
   containsDivine: boolean;
   /** CurrencyOne のカテゴリ ID（例: "currency", "essence", "omen"） */
@@ -142,6 +146,10 @@ export function rankPairsByVolume(
       const oneDivineRate = oneRel > 0 ? safeDivinePrice / oneRel : 0;
       const twoDivineRate = twoRel > 0 ? safeDivinePrice / twoRel : 0;
 
+      // 1 単位を買うのに必要な Divine 数（poe.ninja 流「X 神 ⇄ 1 X」用）
+      const oneDivinePrice = oneRel > 0 ? oneRel / safeDivinePrice : 0;
+      const twoDivinePrice = twoRel > 0 ? twoRel / safeDivinePrice : 0;
+
       return {
         id: p.CurrencyExchangeSnapshotPairId,
         volume: parseFloat(p.Volume),
@@ -154,6 +162,8 @@ export function rankPairsByVolume(
         baseCurrencyText: p.BaseCurrencyText,
         oneDivineRate,
         twoDivineRate,
+        oneDivinePrice,
+        twoDivinePrice,
         containsDivine,
         oneCategoryApiId: one.CategoryApiId,
         twoCategoryApiId: two.CategoryApiId,
