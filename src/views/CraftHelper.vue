@@ -124,6 +124,11 @@ const availableGroups = computed(() =>
   getModGroupsForItem(slot.value.itemTag, slot.value.itemLevel),
 );
 
+/** 武器スロット（タイプ選択が必要）か */
+const isWeaponSlot = computed(
+  () => activeSlotId.value === "weapon1" || activeSlotId.value === "weapon2",
+);
+
 /** items-ja.json から現在のアイテムタイプに合うベース名候補（datalist 用） */
 const baseNameSuggestions = computed<string[]>(() => {
   const re = BASE_PATTERNS[slot.value.itemTag];
@@ -709,17 +714,30 @@ function onAskAi() {
 
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
-      <label class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">アイテムタイプ:</span>
+      <label v-if="isWeaponSlot" class="flex items-center gap-2 text-sm">
+        <span class="text-[var(--color-text-muted)]">武器タイプ:</span>
         <select
           v-model="slot.itemTag"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
         >
-          <option v-for="t in ITEM_TAGS" :key="t.id" :value="t.id">
+          <option
+            v-for="t in ITEM_TAGS.filter((tt) =>
+              ['wand', 'sceptre', 'staff', 'sword', 'mace', 'axe', 'spear', 'flail', 'bow', 'crossbow'].includes(tt.id),
+            )"
+            :key="t.id"
+            :value="t.id"
+          >
             {{ t.label }}
           </option>
         </select>
       </label>
+      <span v-else class="text-xs text-[var(--color-text-muted)]">
+        アイテム:
+        <span class="text-[var(--color-text)]">
+          {{ ITEM_TAGS.find((t) => t.id === slot.itemTag)?.label }}
+        </span>
+        <span class="text-[10px]">（スロットから自動判定）</span>
+      </span>
       <label class="flex items-center gap-2 text-sm">
         <span class="text-[var(--color-text-muted)]">ilvl:</span>
         <input
