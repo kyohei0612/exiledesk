@@ -84,6 +84,24 @@ function formatTime(d: Date | null): string {
   });
 }
 
+/**
+ * 神換算列で表示する「1.0」側のアイテム（より価値の高い方）。
+ * Divine ペアは非 Divine 側 (one)。非 Divine ペアは Divine 価格が高い方。
+ */
+function primarySide(p: RankedPair): {
+  text: string;
+  icon: string;
+  divinePrice: number;
+} {
+  if (p.containsDivine) {
+    return { text: p.oneText, icon: p.oneIcon, divinePrice: p.oneDivinePrice };
+  }
+  if (p.oneDivinePrice >= p.twoDivinePrice) {
+    return { text: p.oneText, icon: p.oneIcon, divinePrice: p.oneDivinePrice };
+  }
+  return { text: p.twoText, icon: p.twoIcon, divinePrice: p.twoDivinePrice };
+}
+
 const availableCategories = computed(() => {
   const counts = new Map<string, number>();
   for (const r of ranking.value) {
@@ -209,33 +227,13 @@ onMounted(async () => {
               </div>
             </td>
             <td class="px-4 py-3 text-right">
-              <!-- Divine ペア: 通貨ペア表示と同方向（item 左 → 神 右） -->
-              <div
-                v-if="p.containsDivine"
-                class="flex items-center justify-end gap-1.5 text-sm font-mono"
-              >
+              <!-- 神換算: 全ペア共通で 1 行（より価値の高い側を「1.0」基準に） -->
+              <div class="flex items-center justify-end gap-1.5 text-sm font-mono">
                 <span class="text-[var(--color-text)]">1.0</span>
-                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
+                <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
                 <span class="text-[var(--color-text-muted)]">⇄</span>
-                <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
+                <span class="text-[var(--color-accent)]">{{ fmt(primarySide(p).divinePrice) }}</span>
                 <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-              </div>
-              <!-- 非 Divine ペア: 両通貨の神換算を 2 行（item 左 → 神 右） -->
-              <div v-else class="flex flex-col gap-1 text-sm font-mono items-end">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-5 h-5 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-                </div>
               </div>
             </td>
             <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">
