@@ -128,13 +128,15 @@ export function rankPairsByVolume(
 
   return pairs
     .map((p) => {
-      // API 自然順を維持（Divine の位置は固定しない）
-      const one = p.CurrencyOne;
-      const two = p.CurrencyTwo;
-      const oneData = p.CurrencyOneData;
-      const twoData = p.CurrencyTwoData;
+      // Divine を "two" 側（右）に正規化
+      const divineIsOne = p.CurrencyOne.ApiId === DIVINE_API_ID;
       const containsDivine =
-        one.ApiId === DIVINE_API_ID || two.ApiId === DIVINE_API_ID;
+        divineIsOne || p.CurrencyTwo.ApiId === DIVINE_API_ID;
+
+      const one = divineIsOne ? p.CurrencyTwo : p.CurrencyOne;
+      const two = divineIsOne ? p.CurrencyOne : p.CurrencyTwo;
+      const oneData = divineIsOne ? p.CurrencyTwoData : p.CurrencyOneData;
+      const twoData = divineIsOne ? p.CurrencyOneData : p.CurrencyTwoData;
 
       const oneRel = parseFloat(oneData?.RelativePrice ?? "0");
       const twoRel = parseFloat(twoData?.RelativePrice ?? "0");

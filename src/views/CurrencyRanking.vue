@@ -187,8 +187,8 @@ onMounted(async () => {
           <tr>
             <th class="text-left px-4 py-3 w-12">#</th>
             <th class="text-left px-4 py-3">通貨ペア</th>
-            <th class="text-right px-4 py-3 w-32">取引量</th>
             <th class="text-right px-4 py-3 w-80">神 換算</th>
+            <th class="text-right px-4 py-3 w-32">取引量</th>
           </tr>
         </thead>
         <tbody>
@@ -214,28 +214,18 @@ onMounted(async () => {
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
-              {{ fmt(p.volume) }}
-            </td>
             <td class="px-4 py-2 text-right">
               <div class="flex items-center justify-end gap-1.5 text-xs font-mono">
-                <!-- Divine が one 側 → 表示は two 側（item）を 1.0 として神換算 -->
-                <template v-if="p.oneText === 'Divine Orb'">
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
-                  <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-4 h-4 object-contain" loading="lazy" />
-                </template>
-                <!-- Divine が two 側 → 表示は one 側（item）を 1.0 として神換算 -->
-                <template v-else>
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
-                  <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-4 h-4 object-contain" loading="lazy" />
-                </template>
+                <!-- Divine は two 側に正規化済 → 常に one (非 Divine) を 1.0 として神換算 -->
+                <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
+                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text-muted)]">⇄</span>
+                <span class="text-[var(--color-text)]">1.0</span>
+                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-4 h-4 object-contain" loading="lazy" />
               </div>
+            </td>
+            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
+              {{ fmt(p.volume) }}
             </td>
           </tr>
 
@@ -261,9 +251,6 @@ onMounted(async () => {
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
-              {{ fmt(p.volume) }}
-            </td>
             <td class="px-4 py-2 text-right">
               <div class="flex flex-col gap-1 text-xs font-mono items-end">
                 <div class="flex items-center gap-1.5">
@@ -281,6 +268,9 @@ onMounted(async () => {
                   <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-4 h-4 object-contain" loading="lazy" />
                 </div>
               </div>
+            </td>
+            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
+              {{ fmt(p.volume) }}
             </td>
           </tr>
         </tbody>
