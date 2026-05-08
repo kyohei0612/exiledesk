@@ -128,6 +128,13 @@ const filteredRanking = computed(() => {
   });
 });
 
+const divinePairs = computed(() =>
+  filteredRanking.value.filter((r) => r.containsDivine),
+);
+const otherPairs = computed(() =>
+  filteredRanking.value.filter((r) => !r.containsDivine),
+);
+
 onMounted(async () => {
   await loadLeagues();
   refresh();
@@ -209,14 +216,18 @@ onMounted(async () => {
           </tr>
         </thead>
         <tbody>
+          <!-- 神（Divine）関連ペア -->
+          <tr v-if="divinePairs.length" class="bg-[var(--color-surface)]/50">
+            <td colspan="4" class="px-4 py-2 text-xs uppercase tracking-wider text-[var(--color-accent)]">
+              💎 神（Divine）関連ペア
+            </td>
+          </tr>
           <tr
-            v-for="(p, i) in filteredRanking"
+            v-for="(p, i) in divinePairs"
             :key="p.id"
             class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface)] transition"
           >
-            <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono">
-              {{ i + 1 }}
-            </td>
+            <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono">{{ i + 1 }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2 flex-wrap">
                 <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
@@ -227,7 +238,6 @@ onMounted(async () => {
               </div>
             </td>
             <td class="px-4 py-3 text-right">
-              <!-- 神換算: 全ペア共通で 1 行（より価値の高い側を「1.0」基準に） -->
               <div class="flex items-center justify-end gap-1.5 text-sm font-mono">
                 <span class="text-[var(--color-text)]">1.0</span>
                 <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
@@ -236,9 +246,40 @@ onMounted(async () => {
                 <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
               </div>
             </td>
-            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">
-              {{ fmt(p.volume) }}
+            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">{{ fmt(p.volume) }}</td>
+          </tr>
+
+          <!-- その他のペア（神不在） -->
+          <tr v-if="otherPairs.length" class="bg-[var(--color-surface)]/50">
+            <td colspan="4" class="px-4 py-2 text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+              その他のペア（神不在）
             </td>
+          </tr>
+          <tr
+            v-for="(p, i) in otherPairs"
+            :key="p.id"
+            class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface)] transition"
+          >
+            <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono">{{ i + 1 }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
+                <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5 text-sm font-mono">
+                <span class="text-[var(--color-text)]">1.0</span>
+                <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text-muted)]">⇄</span>
+                <span class="text-[var(--color-accent)]">{{ fmt(primarySide(p).divinePrice) }}</span>
+                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
+              </div>
+            </td>
+            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">{{ fmt(p.volume) }}</td>
           </tr>
         </tbody>
       </table>
