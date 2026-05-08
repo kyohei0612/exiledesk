@@ -87,8 +87,9 @@ const SLOT_DEFS = [
   { id: "hands", label: "手", defaultTag: "gloves" },
   { id: "ring1", label: "指輪1", defaultTag: "ring" },
   { id: "ring2", label: "指輪2", defaultTag: "ring" },
-  { id: "weapon1", label: "武器1", defaultTag: "sword" },
-  { id: "weapon2", label: "武器2", defaultTag: "sword" },
+  { id: "weapon1", label: "右手", defaultTag: "sword" },
+  { id: "weapon2", label: "左手", defaultTag: "shield" },
+  { id: "weapon_two_handed", label: "両手", defaultTag: "staff" },
   { id: "belt", label: "ベルト", defaultTag: "belt" },
   { id: "amulet", label: "首飾り", defaultTag: "amulet" },
 ] as const;
@@ -132,6 +133,7 @@ function makeDefaultSlot(defaultTag: string): SlotState {
 }
 
 const STORAGE_KEY = "exiledesk:craft-slots-v1";
+const SAVED_PASTES_KEY = "exiledesk:saved-pastes-v1";
 
 const slots = ref<Record<string, SlotState>>(
   Object.fromEntries(
@@ -141,28 +143,76 @@ const slots = ref<Record<string, SlotState>>(
 const activeSlotId = ref<SlotId>("head");
 const search = ref<string>("");
 
+interface SavedPaste {
+  name: string;
+  text: string;
+  createdAt: number;
+  itemTag?: string;
+  baseName?: string;
+}
+const savedPastes = ref<SavedPaste[]>([]);
+
 // ============== 永続化 ==============
 onMounted(() => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return;
-  try {
-    const parsed = JSON.parse(stored);
-    for (const s of SLOT_DEFS) {
-      if (parsed[s.id]) {
-        slots.value[s.id] = {
-          ...makeDefaultSlot(s.defaultTag),
-          ...parsed[s.id],
-        };
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      for (const s of SLOT_DEFS) {
+        if (parsed[s.id]) {
+          slots.value[s.id] = {
+            ...makeDefaultSlot(s.defaultTag),
+            ...parsed[s.id],
+          };
+        }
       }
+    } catch (e) {
+      console.warn("Failed to load saved slots:", e);
     }
-  } catch (e) {
-    console.warn("Failed to load saved slots:", e);
+  }
+  const sp = localStorage.getItem(SAVED_PASTES_KEY);
+  if (sp) {
+    try {
+      const arr = JSON.parse(sp);
+      if (Array.isArray(arr)) savedPastes.value = arr;
+    } catch (e) {
+      console.warn("Failed to load saved pastes:", e);
+    }
   }
 });
 
+/** slot のうち永続化する項目だけ（pasteText やパース結果は揮発で OK） */
+function pickPersistableSlot(s: SlotState): Partial<SlotState> {
+  return {
+    itemTag: s.itemTag,
+    itemLevel: s.itemLevel,
+    selectedKeys: s.selectedKeys,
+    starterPrefix: s.starterPrefix,
+    starterSuffix: s.starterSuffix,
+    notes: s.notes,
+  };
+}
+
 watch(
   slots,
-  (v) => localStorage.setItem(STORAGE_KEY, JSON.stringify(v)),
+  (v) => {
+    const out: Record<string, Partial<SlotState>> = {};
+    for (const id in v) out[id] = pickPersistableSlot(v[id]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+  },
+  { deep: true },
+);
+
+// items-ja.json は { "Pearl Ring": "真珠の指輪", ... } 形式の EN→JA マップ
+const itemsJaMap = itemsJa as Record<string, string>;
+function localizeItemName(s: string | undefined): string | undefined {
+  if (!s) return s;
+  return itemsJaMap[s] ?? s;
+}
+
+watch(
+  savedPastes,
+  (v) => localStorage.setItem(SAVED_PASTES_KEY, JSON.stringify(v)),
   { deep: true },
 );
 
@@ -175,28 +225,19 @@ const availableGroups = computed(() =>
 
 /** 武器スロット（タイプ選択が必要）か */
 const isWeaponSlot = computed(
-  () => activeSlotId.value === "weapon1" || activeSlotId.value === "weapon2",
+  () =>
+    activeSlotId.value === "weapon1" ||
+    activeSlotId.value === "weapon2" ||
+    activeSlotId.value === "weapon_two_handed",
 );
 
-/** 武器タイプ dropdown の候補（武器1=メイン武器全種、武器2=オフハンド: 盾・矢筒・フォーカス・片手武器） */
+/** 武器タイプ dropdown の候補
+ * - 右手 (weapon1): 装備可能な全武器（片手 + 両手）
+ * - 左手 (weapon2): オフハンド（盾・フォーカス・矢筒）+ デュアル用片手武器
+ * - 両手 (weapon_two_handed): 両手武器のみ（スタッフ・ボウ・クロスボウ）
+ */
 const weaponTypeOptions = computed(() => {
-  const mainHand = [
-    "wand",
-    "sceptre",
-    "staff",
-    "sword",
-    "mace",
-    "axe",
-    "spear",
-    "flail",
-    "bow",
-    "crossbow",
-  ];
-  const offHand = [
-    "shield",
-    "focus",
-    "quiver",
-    // 片手武器（デュアルウィールド用、2 ハンドの staff/bow/crossbow を除外）
+  const oneHand = [
     "wand",
     "sceptre",
     "sword",
@@ -205,9 +246,25 @@ const weaponTypeOptions = computed(() => {
     "spear",
     "flail",
   ];
-  const allowed =
-    activeSlotId.value === "weapon2" ? offHand : mainHand;
+  const twoHand = ["staff", "bow", "crossbow"];
+  const offHandOnly = ["shield", "focus", "quiver"];
+  let allowed: string[];
+  if (activeSlotId.value === "weapon_two_handed") {
+    allowed = twoHand;
+  } else if (activeSlotId.value === "weapon2") {
+    allowed = [...offHandOnly, ...oneHand];
+  } else {
+    // 右手：片手 + 両手 全て
+    allowed = [...oneHand, ...twoHand];
+  }
   return ITEM_TAGS.filter((t) => allowed.includes(t.id));
+});
+
+/** 武器スロットのラベル（dropdown 左の説明用） */
+const weaponSlotLabel = computed(() => {
+  if (activeSlotId.value === "weapon_two_handed") return "両手武器:";
+  if (activeSlotId.value === "weapon2") return "左手:";
+  return "右手:";
 });
 
 /** items-ja.json から現在のアイテムタイプに合うベース名候補（datalist 用） */
@@ -521,11 +578,61 @@ const allAvailableMods = computed(() =>
 
 // ============== 操作 ==============
 
-function clearSlot() {
-  if (!confirm(`「${slotLabel(activeSlotId.value)}」スロットをクリアしますか？`))
+/** 解析関連の値だけリセット（pasteText + parsed metadata）。selectedKeys は残す */
+function resetSlotPaste() {
+  slot.value.pasteText = "";
+  slot.value.parsedName = undefined;
+  slot.value.parsedBase = undefined;
+  slot.value.parsedQuality = undefined;
+  slot.value.parsedQualityCategory = undefined;
+  slot.value.prefixDelta = undefined;
+  slot.value.suffixDelta = undefined;
+  slot.value.isCorruptItem = false;
+}
+
+// ============== 保存パスト ==============
+const savedListVisible = ref(false);
+const hoveredSavedPaste = ref<SavedPaste | null>(null);
+
+function saveCurrentPaste() {
+  const txt = slot.value.pasteText.trim();
+  if (!txt) {
+    alert("保存するコピペがありません");
     return;
-  const def = SLOT_DEFS.find((s) => s.id === activeSlotId.value)!;
-  slots.value[activeSlotId.value] = makeDefaultSlot(def.defaultTag);
+  }
+  const defaultName =
+    slot.value.parsedName ||
+    slot.value.parsedBase ||
+    `${slotLabel(activeSlotId.value)} ${new Date().toLocaleDateString("ja-JP")}`;
+  const name = prompt("保存名を入力してください", defaultName);
+  if (!name) return;
+  const trimmedName = name.trim();
+  if (!trimmedName) return;
+  const idx = savedPastes.value.findIndex((p) => p.name === trimmedName);
+  if (idx >= 0) {
+    if (!confirm(`「${trimmedName}」は既に存在します。上書きしますか？`)) return;
+    savedPastes.value.splice(idx, 1);
+  }
+  savedPastes.value.unshift({
+    name: trimmedName,
+    text: slot.value.pasteText,
+    createdAt: Date.now(),
+    itemTag: slot.value.itemTag,
+    baseName: slot.value.parsedBase,
+  });
+}
+
+function loadSavedPaste(p: SavedPaste) {
+  slot.value.pasteText = p.text;
+  savedListVisible.value = false;
+  hoveredSavedPaste.value = null;
+}
+
+function deleteSavedPaste(name: string, ev?: Event) {
+  ev?.stopPropagation();
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  savedPastes.value = savedPastes.value.filter((p) => p.name !== name);
+  if (hoveredSavedPaste.value?.name === name) hoveredSavedPaste.value = null;
 }
 
 function slotLabel(id: SlotId): string {
@@ -545,6 +652,11 @@ interface ParsedClipboard {
   suffixDelta?: number;
 }
 
+/**
+ * POE2 のアイテムコピペ（日本語 / 英語）を解析。
+ * mod 行は そのまま modLines に保存し、照合は matchModLines で
+ * bundle の text_ja / text_en 双方を比較して言語非依存にマッチさせる。
+ */
 function parseJaClipboard(text: string): ParsedClipboard | null {
   const raw = text.trim();
   if (!raw) return null;
@@ -556,43 +668,70 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
   const result: ParsedClipboard = { modLines: [] };
   let inModSection = false;
 
+  // 英語版 metadata で skip 対象のプリフィックス
+  const EN_SKIP_PREFIXES = [
+    "Item Class:",
+    "Rarity:",
+    "Sockets:",
+    "Requires",
+    "Physical Damage:",
+    "Elemental Damage:",
+    "Chaos Damage:",
+    "Attacks per Second:",
+    "Critical Hit Chance:",
+    "Critical Strike Chance:",
+    "Armour:",
+    "Evasion Rating:",
+    "Energy Shield:",
+    "Block chance:",
+    "Block Chance:",
+    "Spirit:",
+  ];
+
   for (const line of lines) {
-    // アイテムレベル
-    const ilvl = line.match(/^アイテムレベル[:\s]*(\d+)/);
+    // アイテムレベル（JA / EN）
+    const ilvl = line.match(/^(?:アイテムレベル|Item Level)\s*[:\s]\s*(\d+)/i);
     if (ilvl) {
       result.itemLevel = parseInt(ilvl[1]);
       inModSection = true;
       continue;
     }
-    // 品質（カテゴリ付き: "品質 (アタックモッド): +14%"）
-    const qmCat = line.match(/^品質\s*\(([^)]+)\)\s*[:\s]*\+?(\d+)%/);
+    // 品質（カテゴリ付き: "品質 (アタックモッド): +14%" / "Quality (Attack Modifiers): +14%"）
+    const qmCat = line.match(
+      /^(?:品質|Quality)\s*\(([^)]+)\)\s*[:\s]\s*\+?(\d+)%/i,
+    );
     if (qmCat) {
       result.qualityCategory = qmCat[1];
       result.quality = parseInt(qmCat[2]);
       continue;
     }
-    // 品質（カテゴリなし: "品質: +14%"）
-    const qm = line.match(/^品質\s*[:\s]\s*\+?(\d+)%/);
+    // 品質（カテゴリなし）
+    const qm = line.match(/^(?:品質|Quality)\s*[:\s]\s*\+?(\d+)%/i);
     if (qm) {
       result.quality = parseInt(qm[1]);
       continue;
     }
-    // 品質の最大値表記（実値ではないので無視）
-    if (line.startsWith("品質の最大値")) continue;
+    // 「品質の最大値」/ "Maximum Quality" 等は無視
+    if (line.startsWith("品質の最大値") || /^Maximum Quality/i.test(line))
+      continue;
 
     // ベース固有の prefix/suffix +/-N 個 修飾子（黄昏の指輪 等）
-    const pd = line.match(/^プレフィックスモッド\s*([+\-]?\d+)個?/);
+    const pd = line.match(
+      /^(?:プレフィックスモッド|Prefix Modifier(?:s)?|Prefix Modifiers?)\s*([+\-]?\d+)個?/i,
+    );
     if (pd) {
       result.prefixDelta = parseInt(pd[1]);
       continue;
     }
-    const sd = line.match(/^サフィックスモッド\s*([+\-]?\d+)個?/);
+    const sd = line.match(
+      /^(?:サフィックスモッド|Suffix Modifier(?:s)?|Suffix Modifiers?)\s*([+\-]?\d+)個?/i,
+    );
     if (sd) {
       result.suffixDelta = parseInt(sd[1]);
       continue;
     }
 
-    // スキップ metadata
+    // 日本語スキップ metadata
     if (line.startsWith("品質") || line.startsWith("ソケット")) continue;
     if (line.startsWith("必要")) continue;
     if (
@@ -604,6 +743,18 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
     )
       continue;
     if (line === "腐敗" || line === "鏡映" || line === "壊れた") continue;
+
+    // 英語スキップ metadata
+    if (EN_SKIP_PREFIXES.some((p) => line.startsWith(p))) continue;
+    if (
+      line === "Corrupted" ||
+      line === "Mirrored" ||
+      line === "Split" ||
+      line === "Unidentified"
+    )
+      continue;
+
+    // セクション区切り
     if (line.match(/^---+$/)) continue;
 
     if (!inModSection) {
@@ -676,13 +827,19 @@ function matchModLines(
   pool: Mod[],
 ): { assignments: MatchAssignment[]; matched: Mod[]; unmatched: string[] } {
   // 全 variant を保持（key → Mod[] / level 降順）
+  // ja/en 両方のキーで同じ Mod を引けるようにして、英語コピペにも対応
   const keyToAllMods = new Map<string, Mod[]>();
   for (const m of pool) {
-    const k = modTextKey(m.text_ja);
-    if (!k) continue;
-    const list = keyToAllMods.get(k) ?? [];
-    list.push(m);
-    keyToAllMods.set(k, list);
+    const keys = new Set<string>();
+    const jaK = modTextKey(m.text_ja);
+    const enK = modTextKey(m.text_en);
+    if (jaK) keys.add(jaK);
+    if (enK) keys.add(enK);
+    for (const k of keys) {
+      const list = keyToAllMods.get(k) ?? [];
+      if (!list.includes(m)) list.push(m);
+      keyToAllMods.set(k, list);
+    }
   }
   for (const list of keyToAllMods.values()) {
     list.sort((a, b) => b.level - a.level);
@@ -812,13 +969,16 @@ function applyPaste() {
     return;
   }
   if (parsed.itemLevel) slot.value.itemLevel = parsed.itemLevel;
-  slot.value.parsedName = parsed.name;
+  // 名前/ベースを EN→JA 変換（英語コピペ対応）
+  const localizedName = localizeItemName(parsed.name);
+  const localizedBase = localizeItemName(parsed.base);
+  slot.value.parsedName = localizedName;
   // ベース判定: 1行目（magic）or 2行目（rare）から base パターン一致を選ぶ
   const re = BASE_PATTERNS[slot.value.itemTag];
-  let baseName = parsed.base;
+  let baseName = localizedBase;
   if (re) {
-    if (parsed.name && re.test(parsed.name)) baseName = parsed.name;
-    else if (parsed.base && re.test(parsed.base)) baseName = parsed.base;
+    if (localizedName && re.test(localizedName)) baseName = localizedName;
+    else if (localizedBase && re.test(localizedBase)) baseName = localizedBase;
   }
   slot.value.parsedBase = baseName;
   slot.value.parsedQuality = parsed.quality;
@@ -1017,20 +1177,13 @@ function onAskAi() {
           >·{{ slotSelCount(s.id) }}</span
         >
       </button>
-      <button
-        @click="clearSlot"
-        class="ml-auto px-3 py-2 rounded text-xs text-[var(--color-text-muted)] hover:bg-red-900/20 hover:text-red-300 transition"
-        :title="`このスロット（${slotLabel(activeSlotId)}）をクリア`"
-      >
-        🗑️ スロット削除
-      </button>
     </div>
 
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
       <label v-if="isWeaponSlot" class="flex items-center gap-2 text-sm">
         <span class="text-[var(--color-text-muted)]">
-          {{ activeSlotId === "weapon2" ? "オフハンド:" : "武器タイプ:" }}
+          {{ weaponSlotLabel }}
         </span>
         <select
           v-model="slot.itemTag"
@@ -1079,8 +1232,8 @@ function onAskAi() {
       </span>
     </div>
 
-    <!-- コピペ解析 -->
-    <details class="mb-4 rounded border border-[var(--color-border)] bg-[var(--color-surface)]/30">
+    <!-- コピペ解析（デフォルト開きっぱなし） -->
+    <details open class="mb-4 rounded border border-[var(--color-border)] bg-[var(--color-surface)]/30">
       <summary class="px-3 py-2 cursor-pointer text-sm">
         📋 コピペで一括入力（POE2 ゲーム内 → 右クリック → コピー → ここに貼付）
       </summary>
@@ -1099,6 +1252,77 @@ function onAskAi() {
           >
             🔍 解析して反映
           </button>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button
+              @click="resetSlotPaste"
+              :disabled="!slot.pasteText && !slot.parsedName && !slot.parsedBase"
+              class="px-2 py-1.5 rounded border border-[var(--color-border)] text-[11px] hover:bg-[var(--color-surface-2)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              title="現在のタブのコピペ・解析結果をリセット（選択中の目標 mod は残ります）"
+            >
+              🔄 リセット
+            </button>
+            <button
+              @click="saveCurrentPaste"
+              :disabled="!slot.pasteText.trim()"
+              class="px-2 py-1.5 rounded border border-[var(--color-border)] text-[11px] hover:bg-[var(--color-surface-2)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              title="現在のコピペを名前付きで保存"
+            >
+              💾 保存
+            </button>
+            <button
+              @click="savedListVisible = !savedListVisible"
+              :class="[
+                'px-2 py-1.5 rounded border text-[11px] transition',
+                savedListVisible
+                  ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)]'
+                  : 'border-[var(--color-border)] hover:bg-[var(--color-surface-2)]',
+              ]"
+              :title="`保存スロット (${savedPastes.length} 件)`"
+            >
+              📂 保存リスト
+              <span v-if="savedPastes.length" class="text-[var(--color-accent)]">
+                · {{ savedPastes.length }}
+              </span>
+            </button>
+          </div>
+          <!-- 保存リスト -->
+          <div
+            v-if="savedListVisible"
+            class="mt-1 rounded border border-[var(--color-border)] bg-[var(--color-bg)] max-h-56 overflow-y-auto relative"
+          >
+            <p
+              v-if="!savedPastes.length"
+              class="px-3 py-3 text-[11px] text-[var(--color-text-muted)] italic text-center"
+            >
+              保存されたコピペはまだありません
+            </p>
+            <ul v-else class="divide-y divide-[var(--color-border)]">
+              <li
+                v-for="p in savedPastes"
+                :key="p.name"
+                class="flex items-center gap-1 px-2 py-1.5 text-[11px] hover:bg-[var(--color-surface-2)]/40"
+                @mouseenter="hoveredSavedPaste = p"
+                @mouseleave="hoveredSavedPaste = null"
+              >
+                <button
+                  @click="loadSavedPaste(p)"
+                  class="flex-1 text-left truncate hover:text-[var(--color-accent)] transition"
+                  :title="`クリックで読込 / ホバーで内容プレビュー\n保存日: ${new Date(p.createdAt).toLocaleString('ja-JP')}`"
+                >
+                  <span class="truncate">{{ p.name }}</span>
+                  <span
+                    v-if="p.baseName"
+                    class="text-[9px] text-[var(--color-text-muted)] ml-1"
+                  >· {{ p.baseName }}</span>
+                </button>
+                <button
+                  @click="deleteSavedPaste(p.name, $event)"
+                  class="text-[var(--color-text-muted)] hover:text-red-300 px-1 transition shrink-0"
+                  title="削除"
+                >✕</button>
+              </li>
+            </ul>
+          </div>
           <p class="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
             mod 名と数値プレースホルダを照合して自動選択。<br />
             未マッチ行は手動で選び直してください。<br />
@@ -1107,6 +1331,23 @@ function onAskAi() {
         </div>
       </div>
     </details>
+
+    <!-- 保存リスト ホバープレビュー（floating） -->
+    <div
+      v-if="hoveredSavedPaste && savedListVisible"
+      class="fixed z-40 right-6 top-32 w-96 max-h-[60vh] overflow-y-auto p-3 rounded-lg border border-[var(--color-accent)] bg-[var(--color-surface)] shadow-2xl pointer-events-none"
+    >
+      <div class="text-[11px] text-[var(--color-accent)] mb-1 font-semibold">
+        {{ hoveredSavedPaste.name }}
+      </div>
+      <div
+        v-if="hoveredSavedPaste.baseName"
+        class="text-[10px] text-[var(--color-text-muted)] mb-2"
+      >
+        ベース: {{ hoveredSavedPaste.baseName }}
+      </div>
+      <pre class="text-[10px] font-mono whitespace-pre-wrap break-all text-[var(--color-text)]">{{ hoveredSavedPaste.text }}</pre>
+    </div>
 
     <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
     <div class="grid grid-cols-2 gap-4 items-start">
@@ -1129,7 +1370,14 @@ function onAskAi() {
           >
             <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
-              <span class="text-[var(--color-text)] whitespace-pre-line block">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span
+                  v-if="modSpecialKind(g.tiers[0])"
+                  :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
+                  aria-hidden="true"
+                >{{ specialKindLabel(modSpecialKind(g.tiers[0])) }}</span>
+                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              </span>
               <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
                 <span
                   v-for="t in g.tiers[0].tags"
@@ -1174,7 +1422,14 @@ function onAskAi() {
           >
             <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
-              <span class="text-[var(--color-text)] whitespace-pre-line block">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span
+                  v-if="modSpecialKind(g.tiers[0])"
+                  :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
+                  aria-hidden="true"
+                >{{ specialKindLabel(modSpecialKind(g.tiers[0])) }}</span>
+                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              </span>
               <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
                 <span
                   v-for="t in g.tiers[0].tags"
@@ -1511,7 +1766,16 @@ function onAskAi() {
           >
             <span class="text-[var(--color-accent)] font-semibold w-10 shrink-0">T{{ i + 1 }}</span>
             <span class="text-[var(--color-text-muted)] font-mono w-12 shrink-0">lv{{ t.level }}</span>
-            <span class="flex-1 whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
+            <span class="flex-1 min-w-0">
+              <span class="flex items-baseline gap-1.5 flex-wrap">
+                <span
+                  v-if="modSpecialKind(t)"
+                  :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(t))]"
+                  aria-hidden="true"
+                >{{ specialKindLabel(modSpecialKind(t)) }}</span>
+                <span class="whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
+              </span>
+            </span>
             <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">w{{ modWeightFor(t, slot.itemTag) }}</span>
             <span v-if="slot.selectedKeys.includes(t.key)" class="text-[var(--color-accent)] shrink-0">✓</span>
           </button>
