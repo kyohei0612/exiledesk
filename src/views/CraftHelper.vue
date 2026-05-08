@@ -69,6 +69,7 @@ const BASE_PATTERNS: Record<string, RegExp> = {
   wand: /ワンド/,
   sceptre: /(セプター|ホーリー)/,
   staff: /スタッフ/,
+  warstaff: /(クォータースタッフ|長杖)/,
   sword: /(剣|ソード|ブレード)/,
   mace: /(メイス|ハンマー|モール|棍)/,
   axe: /(斧|アックス)/,
@@ -76,6 +77,10 @@ const BASE_PATTERNS: Record<string, RegExp> = {
   flail: /フレイル/,
   bow: /(弓|ボウ)/,
   crossbow: /(クロスボウ|弩)/,
+  claw: /(鉤爪|クロウ)/,
+  dagger: /(短剣|ダガー)/,
+  fishing_rod: /(釣り竿|釣竿)/,
+  trap: /トラップ/,
   talisman: /タリスマン/,
 };
 
@@ -87,8 +92,8 @@ const SLOT_DEFS = [
   { id: "hands", label: "手", defaultTag: "gloves" },
   { id: "ring1", label: "指輪1", defaultTag: "ring" },
   { id: "ring2", label: "指輪2", defaultTag: "ring" },
-  { id: "weapon1", label: "右手", defaultTag: "sword" },
-  { id: "weapon2", label: "左手", defaultTag: "shield" },
+  { id: "weapon1", label: "左手", defaultTag: "sword" },
+  { id: "weapon2", label: "右手", defaultTag: "shield" },
   { id: "weapon_two_handed", label: "両手", defaultTag: "staff" },
   { id: "belt", label: "ベルト", defaultTag: "belt" },
   { id: "amulet", label: "首飾り", defaultTag: "amulet" },
@@ -140,8 +145,14 @@ const slots = ref<Record<string, SlotState>>(
     SLOT_DEFS.map((s) => [s.id, makeDefaultSlot(s.defaultTag)]),
   ),
 );
-const activeSlotId = ref<SlotId>("head");
+/** "all" は仮想タブ（自動振り分け用）。実 slot ではない */
+type ActiveTabId = SlotId | "all";
+const activeSlotId = ref<ActiveTabId>("all");
 const search = ref<string>("");
+
+/** 「全て」タブ専用のコピペ buffer（揮発） */
+const allTabPasteText = ref("");
+const allTabError = ref("");
 
 interface SavedPaste {
   name: string;
@@ -217,7 +228,13 @@ watch(
 );
 
 // ============== 現スロット参照 ==============
-const slot = computed(() => slots.value[activeSlotId.value]);
+/** "all" タブ時は head を使う（実態 slot がないので）。実 UI は v-if で分岐するのでこの値は使われない */
+const slot = computed(
+  () =>
+    slots.value[
+      activeSlotId.value === "all" ? "head" : activeSlotId.value
+    ],
+);
 
 const availableGroups = computed(() =>
   getModGroupsForItem(slot.value.itemTag, slot.value.itemLevel),
@@ -231,30 +248,43 @@ const isWeaponSlot = computed(
     activeSlotId.value === "weapon_two_handed",
 );
 
-/** 武器タイプ dropdown の候補
- * - 右手 (weapon1): 装備可能な全武器（片手 + 両手）
- * - 左手 (weapon2): オフハンド（盾・フォーカス・矢筒）+ デュアル用片手武器
- * - 両手 (weapon_two_handed): 両手武器のみ（スタッフ・ボウ・クロスボウ）
+/** 武器タイプ dropdown の候補（画面視点 = プレイヤーから見て）
+ * - weapon1 「左手」: メイン武器側（片手 + 両手 全て装備可）
+ * - weapon2 「右手」: オフハンド側（盾・フォーカス・矢筒）+ デュアル用片手武器
+ * - weapon_two_handed 「両手」: 両手武器のみ（スタッフ・ボウ・クロスボウ）
  */
 const weaponTypeOptions = computed(() => {
+  // 片手武器（POE2: 鉤爪・短剣・ワンド・片手剣・片手斧・片手メイス・セプター・スピア・フレイル）
   const oneHand = [
+    "claw",
+    "dagger",
     "wand",
-    "sceptre",
     "sword",
-    "mace",
     "axe",
+    "mace",
+    "sceptre",
     "spear",
     "flail",
   ];
-  const twoHand = ["staff", "bow", "crossbow"];
+  // 両手武器（弓・スタッフ・クォータースタッフ・クロスボウ・釣り竿・トラップ）
+  const twoHand = [
+    "bow",
+    "staff",
+    "warstaff",
+    "crossbow",
+    "fishing_rod",
+    "trap",
+  ];
+  // オフハンド専用（盾・フォーカス・矢筒）
   const offHandOnly = ["shield", "focus", "quiver"];
   let allowed: string[];
   if (activeSlotId.value === "weapon_two_handed") {
     allowed = twoHand;
   } else if (activeSlotId.value === "weapon2") {
+    // 画面右手（オフハンド側）= 盾系 + デュアル用片手武器
     allowed = [...offHandOnly, ...oneHand];
   } else {
-    // 右手：片手 + 両手 全て
+    // 画面左手（メイン武器側）= 片手 + 両手 全て
     allowed = [...oneHand, ...twoHand];
   }
   return ITEM_TAGS.filter((t) => allowed.includes(t.id));
@@ -263,8 +293,8 @@ const weaponTypeOptions = computed(() => {
 /** 武器スロットのラベル（dropdown 左の説明用） */
 const weaponSlotLabel = computed(() => {
   if (activeSlotId.value === "weapon_two_handed") return "両手武器:";
-  if (activeSlotId.value === "weapon2") return "左手:";
-  return "右手:";
+  if (activeSlotId.value === "weapon2") return "右手:";
+  return "左手:";
 });
 
 /** items-ja.json から現在のアイテムタイプに合うベース名候補（datalist 用） */
@@ -962,6 +992,150 @@ function matchModLines(
   return { assignments, matched, unmatched };
 }
 
+// ============== コピペからスロット種別を自動判定 ==============
+/** Item Class 文字列 → SlotId （JA / EN 両対応） */
+function slotFromItemClass(cls: string): SlotId | null {
+  // 順序重要: より具体的 → 一般。"Two Hand" を "Hand" より先に見るなど
+  const rules: Array<[RegExp, SlotId]> = [
+    // 防具
+    [/Helmets?|ヘルメット|兜|ヘッド|フード|キャップ|帽/i, "head"],
+    [/Body Armours?|ボディアーマー|胴体|ローブ|ベスト|チェスト|鎧|甲|衣|装束/i, "body"],
+    [/Boots|ブーツ|靴|サンダル|脚甲/i, "feet"],
+    [/Gloves|グローブ|手袋|ガントレット|籠手|拳/i, "hands"],
+    // アクセサリ
+    [/Rings?|リング|指輪/i, "ring1"],
+    [/Amulets?|アミュレット|首飾り/i, "amulet"],
+    [/Talismans?|タリスマン/i, "amulet"],
+    [/Belts?|ベルト/i, "belt"],
+    // 両手武器（先に判定）
+    [/Bows?|ボウ|弓/i, "weapon_two_handed"],
+    [/Crossbows?|クロスボウ|弩/i, "weapon_two_handed"],
+    [/Quarterstaves?|Quarterstaff|Warstaff|クォータースタッフ|長杖/i, "weapon_two_handed"],
+    [/Fishing Rods?|釣り竿|釣竿/i, "weapon_two_handed"],
+    [/Traps?|トラップ/i, "weapon_two_handed"],
+    [/Stave[s]?|Staff|スタッフ|杖/i, "weapon_two_handed"],
+    [/Two Hand|両手/i, "weapon_two_handed"],
+    // オフハンド専用
+    [/Shields?|シールド|盾|バックラー|Bucklers?/i, "weapon2"],
+    [/Quivers?|クイバー|矢筒/i, "weapon2"],
+    [/Foci|Focus|フォーカス/i, "weapon2"],
+    // 片手武器（最後にデフォルト右手）
+    [/One Hand|片手/i, "weapon1"],
+    [/Claws?|クロウ|爪|鉤爪/i, "weapon1"],
+    [/Daggers?|ダガー|短剣/i, "weapon1"],
+    [/Wands?|ワンド/i, "weapon1"],
+    [/Sceptres?|セプター/i, "weapon1"],
+    [/Swords?|ソード|剣|ブレード/i, "weapon1"],
+    [/Maces?|メイス|ハンマー|モール|棍/i, "weapon1"],
+    [/Axes?|斧|アックス/i, "weapon1"],
+    [/Spears?|槍|スピア|ジャベリン/i, "weapon1"],
+    [/Flails?|フレイル/i, "weapon1"],
+  ];
+  for (const [re, slotId] of rules) {
+    if (re.test(cls)) return slotId;
+  }
+  return null;
+}
+
+/** 行全体（Item Class 行 or ベース名行）から SlotId を推定 */
+function detectSlotFromPaste(text: string): SlotId | null {
+  // 1. "Item Class:" / "アイテムクラス:" を最優先
+  const m = text.match(/^(?:Item Class|アイテムクラス)\s*[:：]\s*(.+)$/im);
+  if (m) {
+    const target = slotFromItemClass(m[1].trim());
+    if (target) return target;
+  }
+  // 2. フォールバック: 先頭数行を BASE_PATTERNS / slotFromItemClass で評価
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  for (const line of lines) {
+    // BASE_PATTERNS（日本語ベース命名規則）
+    for (const [tag, re] of Object.entries(BASE_PATTERNS)) {
+      if (re.test(line)) {
+        return tagToSlotId(tag);
+      }
+    }
+    // 英語アイテム名（items-ja.json のキー） → ja 名に変換 → BASE_PATTERNS で再評価
+    const ja = itemsJaMap[line];
+    if (ja) {
+      for (const [tag, re] of Object.entries(BASE_PATTERNS)) {
+        if (re.test(ja)) return tagToSlotId(tag);
+      }
+    }
+    // class っぽい文字列
+    const guess = slotFromItemClass(line);
+    if (guess) return guess;
+  }
+  return null;
+}
+
+/** itemTag → 推奨 SlotId（ring は ring1 を返す） */
+function tagToSlotId(tag: string): SlotId | null {
+  const map: Record<string, SlotId> = {
+    helmet: "head",
+    body_armour: "body",
+    boots: "feet",
+    gloves: "hands",
+    ring: "ring1",
+    amulet: "amulet",
+    belt: "belt",
+    talisman: "amulet",
+    shield: "weapon2",
+    focus: "weapon2",
+    quiver: "weapon2",
+    staff: "weapon_two_handed",
+    warstaff: "weapon_two_handed",
+    bow: "weapon_two_handed",
+    crossbow: "weapon_two_handed",
+    fishing_rod: "weapon_two_handed",
+    trap: "weapon_two_handed",
+    sword: "weapon1",
+    mace: "weapon1",
+    axe: "weapon1",
+    spear: "weapon1",
+    flail: "weapon1",
+    wand: "weapon1",
+    sceptre: "weapon1",
+    claw: "weapon1",
+    dagger: "weapon1",
+  };
+  return map[tag] ?? null;
+}
+
+/** 「全て」タブからの自動振り分け実行 */
+function autoRouteAllPaste() {
+  allTabError.value = "";
+  const txt = allTabPasteText.value.trim();
+  if (!txt) {
+    allTabError.value = "コピペ内容が空です";
+    return;
+  }
+  let target = detectSlotFromPaste(txt);
+  if (!target) {
+    allTabError.value =
+      "アイテム種別を判定できませんでした。'Item Class:' / 'アイテムクラス:' 行が含まれているか確認してください。";
+    return;
+  }
+  // 指輪の場合: ring1 が空なら ring1、埋まってたら ring2
+  if (target === "ring1") {
+    if (
+      slots.value.ring1.selectedKeys.length > 0 &&
+      slots.value.ring2.selectedKeys.length === 0
+    ) {
+      target = "ring2";
+    }
+  }
+  // target slot に paste を入れて移動 → 自動解析
+  slots.value[target].pasteText = txt;
+  activeSlotId.value = target;
+  allTabPasteText.value = "";
+  // 次の tick で applyPaste 実行（slot computed の更新を待つ）
+  setTimeout(() => applyPaste(), 0);
+}
+
 function applyPaste() {
   const parsed = parseJaClipboard(slot.value.pasteText);
   if (!parsed) {
@@ -1160,6 +1334,18 @@ function onAskAi() {
     <!-- スロット タブ -->
     <div class="flex gap-1 mb-4 overflow-x-auto">
       <button
+        @click="activeSlotId = 'all'"
+        :class="[
+          'px-3 py-2 rounded text-sm whitespace-nowrap transition border-b-2',
+          activeSlotId === 'all'
+            ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)] text-[var(--color-accent)]'
+            : 'bg-[var(--color-surface)] border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+        ]"
+        title="コピペすると自動でアイテム種別を判定して該当スロットへ移動"
+      >
+        ✨ 全て
+      </button>
+      <button
         v-for="s in SLOT_DEFS"
         :key="s.id"
         @click="activeSlotId = s.id"
@@ -1178,6 +1364,42 @@ function onAskAi() {
         >
       </button>
     </div>
+
+    <!-- 「全て」タブ専用 UI: 自動振り分けコピペ（シンプル版） -->
+    <div v-if="activeSlotId === 'all'" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 p-4">
+      <p class="text-xs text-[var(--color-text-muted)] mb-2 leading-relaxed">
+        POE2 のアイテムテキスト（日本語 / 英語）を貼って <span class="text-[var(--color-accent)]">「自動振り分け」</span>を押すと、
+        Item Class を読み取って該当スロットに自動移動＆解析します。
+      </p>
+      <textarea
+        v-model="allTabPasteText"
+        rows="6"
+        placeholder="Item Class: Rings / アイテムクラス: 指輪 ..."
+        class="w-full px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs font-mono resize-y focus:outline-none focus:border-[var(--color-accent)]"
+      ></textarea>
+      <div class="mt-2 flex items-center gap-2 flex-wrap">
+        <button
+          @click="autoRouteAllPaste"
+          :disabled="!allTabPasteText.trim()"
+          class="px-4 py-2 rounded bg-[var(--color-accent)] text-black text-sm font-medium hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition"
+        >
+          🎯 自動振り分け＋解析
+        </button>
+        <button
+          @click="allTabPasteText = ''; allTabError = ''"
+          :disabled="!allTabPasteText"
+          class="px-3 py-2 rounded border border-[var(--color-border)] text-xs hover:bg-[var(--color-surface-2)] disabled:opacity-40 transition"
+        >
+          クリア
+        </button>
+        <span
+          v-if="allTabError"
+          class="text-xs text-red-300"
+        >⚠️ {{ allTabError }}</span>
+      </div>
+    </div>
+
+    <div v-else>
 
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
@@ -1571,6 +1793,7 @@ function onAskAi() {
         Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv・tags・weight + 品質情報を渡します。
         AI プロンプトには冒涜・エッセンス・パーフェクトエッセンス・コラプト機構を含む POE2 クラフト機構を考慮するよう指示。
       </p>
+    </div>
     </div>
 
     <!-- ========== Paste レビュー モーダル ========== -->
