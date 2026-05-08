@@ -304,6 +304,47 @@ const suffixGroups = computed(() =>
   filteredGroups.value.filter((g) => g.type === "suffix"),
 );
 
+/** mod 一覧の特殊カテゴリ別セクション分け（通常 → エッセンス → コラプト → 冒涜） */
+type GroupSectionKind = "normal" | "essence" | "corrupt" | "desecrated";
+interface GroupSection {
+  kind: GroupSectionKind;
+  label: string;
+  groups: ModGroup[];
+}
+const SECTION_ORDER: GroupSectionKind[] = [
+  "normal",
+  "essence",
+  "corrupt",
+  "desecrated",
+];
+const SECTION_LABEL: Record<GroupSectionKind, string> = {
+  normal: "通常",
+  essence: "エッセンス",
+  corrupt: "コラプト",
+  desecrated: "冒涜",
+};
+
+function partitionBySpecialKind(list: ModGroup[]): GroupSection[] {
+  const m: Record<GroupSectionKind, ModGroup[]> = {
+    normal: [],
+    essence: [],
+    corrupt: [],
+    desecrated: [],
+  };
+  for (const g of list) {
+    const kind = modSpecialKind(g.tiers[0]) ?? "normal";
+    m[kind].push(g);
+  }
+  return SECTION_ORDER.filter((k) => m[k].length > 0).map((k) => ({
+    kind: k,
+    label: SECTION_LABEL[k],
+    groups: m[k],
+  }));
+}
+
+const prefixSections = computed(() => partitionBySpecialKind(prefixGroups.value));
+const suffixSections = computed(() => partitionBySpecialKind(suffixGroups.value));
+
 /** 全 mod のキー → mod ルックアップ（selectedMods 表示用） */
 const modByKey = computed(() => {
   const map = new Map<string, Mod>();
@@ -548,14 +589,23 @@ function confirmPasteReview() {
       })
       .filter(Boolean)
       .join("\n  - ");
+    const pd = slot.value.prefixDelta ?? 0;
+    const sd = slot.value.suffixDelta ?? 0;
+    const deltaInfo =
+      pd !== 0 || sd !== 0
+        ? `（ベース修飾: P${pd >= 0 ? "+" : ""}${pd} / S${sd >= 0 ? "+" : ""}${sd} 反映済）`
+        : "";
     alert(
       [
-        `プレ ${pCount}/3、サフ ${sCount}/3 で上限超過のため ${skipped.length} 件未反映:`,
+        `プレ ${pCount}/${prefixMax.value}、サフ ${sCount}/${suffixMax.value} で上限超過のため ${skipped.length} 件未反映 ${deltaInfo}:`,
         `  - ${skippedMods}`,
         "",
         "※ 同名グループに prefix/suffix 両方ある mod (レアリティ等) は値が高い時、",
         "  実は両 variant が乗ってる可能性があります（例: 30% = prefix15% + suffix15%）。",
         "  該当する場合は paste テキストを 2 行に分割して再解析してください。",
+        "※ 破損 / エッセンス / 冒涜 系の mod は通常 mod と type が異なる variant を",
+        "  選択している可能性があります。レビュー画面の tier プルダウンで",
+        "  別の variant に切り替えると解消することがあります。",
         "暗黙/除外/別 tier 見直しでも調整可能です。",
       ].join("\n"),
     );
@@ -1547,9 +1597,20 @@ function onAskAi() {
         <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
           プレフィックス（{{ prefixGroups.length }} group）
         </div>
+        <div
+          v-for="sec in prefixSections"
+          :key="'pre-' + sec.kind"
+          class="contents"
+        >
+        <div
+          v-if="sec.kind !== 'normal'"
+          :class="['px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider', specialKindBgGradient(sec.kind), specialKindColor(sec.kind)]"
+        >
+          {{ sec.label }} ({{ sec.groups.length }})
+        </div>
         <div class="divide-y divide-[var(--color-border)]">
           <button
-            v-for="g in prefixGroups"
+            v-for="g in sec.groups"
             :key="g.id"
             @click="openTierPicker(g)"
             :class="[
@@ -1589,19 +1650,31 @@ function onAskAi() {
               </span>
             </span>
           </button>
-          <p v-if="!prefixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
-            該当なし
-          </p>
         </div>
+        </div>
+        <p v-if="!prefixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+          該当なし
+        </p>
       </div>
 
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
         <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
           サフィックス（{{ suffixGroups.length }} group）
         </div>
+        <div
+          v-for="sec in suffixSections"
+          :key="'suf-' + sec.kind"
+          class="contents"
+        >
+        <div
+          v-if="sec.kind !== 'normal'"
+          :class="['px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider', specialKindBgGradient(sec.kind), specialKindColor(sec.kind)]"
+        >
+          {{ sec.label }} ({{ sec.groups.length }})
+        </div>
         <div class="divide-y divide-[var(--color-border)]">
           <button
-            v-for="g in suffixGroups"
+            v-for="g in sec.groups"
             :key="g.id"
             @click="openTierPicker(g)"
             :class="[
@@ -1641,10 +1714,11 @@ function onAskAi() {
               </span>
             </span>
           </button>
-          <p v-if="!suffixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
-            該当なし
-          </p>
         </div>
+        </div>
+        <p v-if="!suffixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+          該当なし
+        </p>
       </div>
     </div>
 
