@@ -290,6 +290,23 @@ function removeSelectedMod(key: string) {
 }
 
 // ============== Paste レビュー モーダル ==============
+type ModClassification =
+  | "normal"
+  | "implicit"
+  | "corrupt"
+  | "desecrated"
+  | "essence"
+  | "skip";
+
+const CLASSIFICATION_OPTIONS: { value: ModClassification; label: string }[] = [
+  { value: "normal", label: "通常" },
+  { value: "implicit", label: "暗黙" },
+  { value: "corrupt", label: "破損" },
+  { value: "desecrated", label: "冒涜" },
+  { value: "essence", label: "エッセンス" },
+  { value: "skip", label: "除外" },
+];
+
 type PasteReviewItem =
   | {
       type: "matched";
@@ -297,19 +314,31 @@ type PasteReviewItem =
       lineTexts: string[];
       groupId: string;
       selectedTierKey: string;
-      isImplicit: boolean;
-      skip: boolean;
+      classification: ModClassification;
+      /** 5→6 自動分割で追加された行か（暗黙解除時に取除く） */
+      autoSplit?: boolean;
     }
   | {
       type: "unmatched";
       index: number;
       lineText: string;
-      isImplicit: boolean;
-      skip: boolean;
+      classification: ModClassification;
     };
 
 const pasteReviewVisible = ref(false);
 const pasteReviewItems = ref<PasteReviewItem[]>([]);
+
+/** "通常 + 特殊系" は explicit mod としてカウント、暗黙/除外は除外 */
+function countsAsExplicit(item: PasteReviewItem): boolean {
+  if (item.type !== "matched") return false;
+  return ["normal", "corrupt", "desecrated", "essence"].includes(
+    item.classification,
+  );
+}
+
+const effectiveModCount = computed(
+  () => pasteReviewItems.value.filter(countsAsExplicit).length,
+);
 
 function getGroupById(id: string): ModGroup | undefined {
   return availableGroups.value.find((g) => g.id === id);
@@ -320,6 +349,57 @@ function cancelPasteReview() {
   pasteReviewItems.value = [];
 }
 
+/** 5 → 6 の自動分割: splittable な mod を見つけて反対 variant を追加 */
+function tryAutoSplitForFive() {
+  if (pasteReviewItems.value.some((i) => i.type === "matched" && i.autoSplit)) {
+    return; // 既に追加済
+  }
+  for (let i = 0; i < pasteReviewItems.value.length; i++) {
+    const item = pasteReviewItems.value[i];
+    if (item.type !== "matched") continue;
+    if (!countsAsExplicit(item)) continue;
+    const cur = modByKey.value.get(item.selectedTierKey);
+    if (!cur) continue;
+    const myKey = modTextKey(cur.text_ja);
+    const opposite = allAvailableMods.value.find(
+      (m) => modTextKey(m.text_ja) === myKey && m.type !== cur.type,
+    );
+    if (!opposite) continue;
+    const oppGroupId = opposite.groups[0];
+    pasteReviewItems.value.splice(i + 1, 0, {
+      type: "matched",
+      indices: [...item.indices],
+      lineTexts: ["（自動分割：暗黙化により補填）"],
+      groupId: oppGroupId,
+      selectedTierKey: opposite.key,
+      classification: "normal",
+      autoSplit: true,
+    });
+    return;
+  }
+}
+
+/** 6 に戻ったら autoSplit で挿入されたものを取り除く */
+function removeAutoSplit() {
+  pasteReviewItems.value = pasteReviewItems.value.filter(
+    (i) => !(i.type === "matched" && i.autoSplit),
+  );
+}
+
+// 分類変更のたびに count を再評価。<6 なら splittable を追加、>6 なら autoSplit を削除
+watch(effectiveModCount, (n) => {
+  if (!pasteReviewVisible.value) return;
+  if (n < 6) {
+    tryAutoSplitForFive();
+  } else if (n > 6) {
+    const idx = pasteReviewItems.value
+      .map((i, k) => ({ i, k }))
+      .reverse()
+      .find(({ i }) => i.type === "matched" && i.autoSplit)?.k;
+    if (idx !== undefined) pasteReviewItems.value.splice(idx, 1);
+  }
+});
+
 function confirmPasteReview() {
   // 既存の選択は paste 結果で上書き
   const newKeys = new Set<string>();
@@ -327,8 +407,8 @@ function confirmPasteReview() {
   // 順序保ったまま追加候補を構築（review の順 = paste 順）
   const candidates: { key: string; type: "prefix" | "suffix" }[] = [];
   for (const item of pasteReviewItems.value) {
+    if (!countsAsExplicit(item)) continue;
     if (item.type !== "matched") continue;
-    if (item.isImplicit || item.skip) continue;
     const tierMod = modByKey.value.get(item.selectedTierKey);
     if (!tierMod) continue;
     candidates.push({ key: item.selectedTierKey, type: tierMod.type });
@@ -687,19 +767,23 @@ function applyPaste() {
     allAvailableMods.value,
   );
 
-  // 各 assignment → matched item (group + 初期 tier)
+  // 各 assignment → matched item (classification は特殊種別を自動セット)
   const items: PasteReviewItem[] = [];
   for (const a of assignments) {
     const groupId = a.mod.groups[0];
     if (!groupId) continue;
+    const kind = modSpecialKind(a.mod);
+    let cls: ModClassification = "normal";
+    if (kind === "essence") cls = "essence";
+    else if (kind === "corrupt") cls = "corrupt";
+    else if (kind === "desecrated") cls = "desecrated";
     items.push({
       type: "matched",
       indices: a.indices,
       lineTexts: a.indices.map((i) => parsed.modLines[i]),
       groupId,
       selectedTierKey: a.mod.key,
-      isImplicit: false,
-      skip: false,
+      classification: cls,
     });
   }
   // 未マッチ行 → unmatched item
@@ -711,8 +795,7 @@ function applyPaste() {
       type: "unmatched",
       index: i,
       lineText: parsed.modLines[i],
-      isImplicit: false,
-      skip: false,
+      classification: "normal",
     });
   }
   // 表示順を paste 元の順に近づける
@@ -1172,7 +1255,9 @@ function onAskAi() {
         <div class="px-4 py-3 border-b border-[var(--color-border)]">
           <h3 class="text-base font-semibold">📋 解析結果確認</h3>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
-            各行の分類と tier を選択して「適用」。暗黙・除外チェックの行は反映されません。
+            各行の分類と tier を選択して「適用」。
+            <span class="text-[var(--color-accent)]">explicit mod 数: {{ effectiveModCount }} / 6</span>
+            （暗黙・除外は除外。5 になった瞬間 splittable な mod を自動分割）
           </p>
         </div>
         <div class="flex-1 overflow-y-auto divide-y divide-[var(--color-border)]">
@@ -1180,12 +1265,25 @@ function onAskAi() {
             v-for="(item, idx) in pasteReviewItems"
             :key="idx"
             class="px-4 py-3 hover:bg-[var(--color-surface-2)]/30"
-            :class="{ 'opacity-40': item.isImplicit || item.skip }"
+            :class="{
+              'opacity-40':
+                item.classification === 'implicit' ||
+                item.classification === 'skip',
+              'bg-[var(--color-surface-2)]/30':
+                item.type === 'matched' && item.autoSplit,
+            }"
           >
             <!-- 行テキスト -->
             <div class="text-xs font-mono text-[var(--color-text)] mb-2">
               <template v-if="item.type === 'matched'">
-                <div v-for="(lt, li) in item.lineTexts" :key="li">{{ lt }}</div>
+                <span
+                  v-if="item.autoSplit"
+                  class="text-[10px] text-[var(--color-accent)] mr-2"
+                  >🔀 自動分割</span
+                >
+                <span v-for="(lt, li) in item.lineTexts" :key="li">
+                  {{ lt }}{{ li < item.lineTexts.length - 1 ? " / " : "" }}
+                </span>
               </template>
               <template v-else>
                 <div>{{ item.lineText }}</div>
@@ -1193,14 +1291,16 @@ function onAskAi() {
             </div>
             <!-- コントロール -->
             <div class="flex items-center gap-3 flex-wrap text-xs">
-              <label class="flex items-center gap-1">
-                <input type="checkbox" v-model="item.isImplicit" />
-                <span class="text-[var(--color-text-muted)]">暗黙</span>
-              </label>
-              <label class="flex items-center gap-1">
-                <input type="checkbox" v-model="item.skip" />
-                <span class="text-[var(--color-text-muted)]">除外</span>
-              </label>
+              <select
+                v-model="item.classification"
+                class="px-2 py-1 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
+              >
+                <option
+                  v-for="opt in CLASSIFICATION_OPTIONS"
+                  :key="opt.value"
+                  :value="opt.value"
+                >{{ opt.label }}</option>
+              </select>
               <template v-if="item.type === 'matched'">
                 <span
                   :class="
@@ -1211,15 +1311,6 @@ function onAskAi() {
                   class="font-semibold"
                 >
                   {{ getGroupById(item.groupId)?.type === "prefix" ? "プレ" : "サフ" }}
-                </span>
-                <span
-                  v-if="modSpecialKind(modByKey.get(item.selectedTierKey)!)"
-                  :class="[
-                    'px-2 py-0.5 rounded text-[10px] font-semibold',
-                    specialKindColor(modSpecialKind(modByKey.get(item.selectedTierKey)!)),
-                  ]"
-                >
-                  {{ specialKindLabel(modSpecialKind(modByKey.get(item.selectedTierKey)!)) }}
                 </span>
                 <span class="text-[var(--color-text-muted)]">{{ item.groupId }}</span>
                 <select
@@ -1239,7 +1330,7 @@ function onAskAi() {
               <template v-else>
                 <span class="text-orange-300/80">未マッチ</span>
                 <span class="text-[10px] text-[var(--color-text-muted)]">
-                  bundle に該当なし。AI プロンプトに含まれます。
+                  bundle 該当なし。AI プロンプトに含めます
                 </span>
               </template>
             </div>
