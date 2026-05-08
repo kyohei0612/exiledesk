@@ -608,6 +608,21 @@ const allAvailableMods = computed(() =>
 
 // ============== 操作 ==============
 
+/** 現スロットの目標 mod を全クリア（スロット削除の代替） */
+function clearCurrentSlotMods() {
+  if (activeSlotId.value === "all") return;
+  if (!selectedMods.value.length) return;
+  if (
+    !confirm(
+      `「${slotLabel(activeSlotId.value as SlotId)}」の目標 mod (${selectedMods.value.length} 個) をクリアしますか？`,
+    )
+  )
+    return;
+  slot.value.selectedKeys = [];
+  slot.value.starterPrefix = "";
+  slot.value.starterSuffix = "";
+}
+
 /** 解析関連の値だけリセット（pasteText + parsed metadata）。selectedKeys は残す */
 function resetSlotPaste() {
   slot.value.pasteText = "";
@@ -1445,7 +1460,15 @@ function onAskAi() {
         placeholder="🔍 mod 検索（日英）"
         class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-56"
       />
-      <span class="ml-auto text-xs text-[var(--color-text-muted)]">
+      <button
+        v-if="selectedMods.length"
+        @click="clearCurrentSlotMods"
+        class="ml-auto px-2 py-1 text-xs text-[var(--color-text-muted)] hover:text-red-300 transition"
+        :title="`「${slotLabel(activeSlotId as SlotId)}」の目標 mod を全クリア`"
+      >
+        🗑️ クリア
+      </button>
+      <span :class="['text-xs text-[var(--color-text-muted)]', selectedMods.length ? '' : 'ml-auto']">
         選択:
         <span class="text-[var(--color-accent)]">{{ selectedPrefixCount }}/3 P</span>
         +
