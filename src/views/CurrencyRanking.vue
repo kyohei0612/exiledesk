@@ -209,32 +209,32 @@ onMounted(async () => {
               </div>
             </td>
             <td class="px-4 py-3 text-right">
-              <!-- Divine ペア: 1 行（非 Divine 側 = one を 1.0 として神換算） -->
+              <!-- Divine ペア: 通貨ペア表示と同方向（item 左 → 神 右） -->
               <div
                 v-if="p.containsDivine"
                 class="flex items-center justify-end gap-1.5 text-sm font-mono"
               >
-                <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-                <span class="text-[var(--color-text-muted)]">⇄</span>
                 <span class="text-[var(--color-text)]">1.0</span>
                 <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
+                <span class="text-[var(--color-text-muted)]">⇄</span>
+                <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
+                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
               </div>
-              <!-- 非 Divine ペア: 両通貨の神換算を 2 行で -->
+              <!-- 非 Divine ペア: 両通貨の神換算を 2 行（item 左 → 神 右） -->
               <div v-else class="flex flex-col gap-1 text-sm font-mono items-end">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
                   <span class="text-[var(--color-text)]">1.0</span>
                   <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text-muted)]">⇄</span>
+                  <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-                  <span class="text-[var(--color-text-muted)]">⇄</span>
                   <span class="text-[var(--color-text)]">1.0</span>
                   <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-5 h-5 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text-muted)]">⇄</span>
+                  <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
                 </div>
               </div>
             </td>
