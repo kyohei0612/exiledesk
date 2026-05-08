@@ -4,8 +4,10 @@ import {
   ITEM_TAGS,
   getMaxTierMods,
   cleanModText,
+  modWeightFor,
   type Mod,
 } from "../data/mods";
+import { jaTag, tagColor } from "../i18n/mod-tags-ja";
 
 // ============== スロット定義 ==============
 const SLOT_DEFS = [
@@ -356,14 +358,23 @@ function buildAiPrompt(): string {
         `- Justify the choice with a probability/cost reasoning.`
       : "",
     "",
+    "POE2 crafting mechanics to consider (cover what's relevant):",
+    "- Currency: Orb of Alchemy / Augmentation / Regal / Exalted / Annulment / Chaos",
+    "- Essence (deterministic 1-mod) and Perfect Essence (broader pool / higher tier guarantee)",
+    "- Desecrated mods (abyss-only, rolled via specific currency)",
+    "- Vaal Orb / Corrupt: 4 outcomes (~25% each: no change / destroy / mod added / mod removed); rings don't typically gain sockets from corrupt — note item-type-specific Vaal effects",
+    "- Recombinator (POE2 specific merge mechanic)",
+    "- Bench / artificer crafts where applicable",
+    "",
     "Return:",
-    "- Cheapest currency-step path (Alchemy / Augmentation / Exalt / Annul / Chaos / Essence / Recombinator / etc.)",
-    "- Estimated cost in Divine Orbs per attempt + total expected cost",
-    "- Estimated success probability per attempt",
+    "- Cheapest currency-step path (be specific about which currencies and order)",
+    "- Estimated cost in Divine Orbs per attempt + total expected cost (cost ÷ probability)",
+    "- Estimated success probability per attempt + cumulative attempts",
     "- 2-3 alternative paths with same metrics",
     "- Recommended starter mod(s) if user did not specify (with rationale)",
     "- Note POE2 mod weights, group exclusions, ilvl requirements",
-    "- Final mod values (factor in quality bonus if applicable; reference the pre-quality stat range from the bundle for stats that scale with quality)",
+    "- Final mod values (factor in quality bonus; reference pre-quality stat range from bundle for stats that scale with quality)",
+    "- For complex calculations cross-check with Craft of Exile POE2 (Emulator: deterministic odds; Simulator: roll trial). URL: https://www.craftofexile.com/?cl=jp&game=poe2",
   ]
     .filter(Boolean)
     .join("\n");
@@ -514,9 +525,21 @@ function onAskAi() {
             <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ m.level }}</span>
             <span class="flex-1">
               <span class="text-[var(--color-text)]">{{ cleanModText(m.text_ja) }}</span>
+              <span v-if="m.tags && m.tags.length" class="flex gap-1 flex-wrap mt-1">
+                <span
+                  v-for="t in m.tags"
+                  :key="t"
+                  :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
+                >
+                  {{ jaTag(t) }}
+                </span>
+              </span>
               <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
                 {{ m.name_ja || m.name_en }} · {{ m.groups[0] }}
               </span>
+            </span>
+            <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">
+              w{{ modWeightFor(m, slot.itemTag) }}
             </span>
             <span v-if="slot.selectedKeys.includes(m.key)" class="text-[var(--color-accent)]">✓</span>
           </button>
@@ -640,7 +663,7 @@ function onAskAi() {
       </div>
     </div>
 
-    <div class="mt-6 flex gap-3 items-center">
+    <div class="mt-6 flex gap-3 items-center flex-wrap">
       <button
         @click="onAskAi"
         :disabled="!selectedMods.length"
@@ -648,8 +671,18 @@ function onAskAi() {
       >
         🤖 秘書（AI）に最短経路を相談
       </button>
-      <p class="text-[10px] text-[var(--color-text-muted)]">
-        Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv を渡します
+      <a
+        href="https://www.craftofexile.com/?cl=jp&game=poe2"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="px-4 py-2 rounded border border-[var(--color-border)] text-sm hover:bg-[var(--color-surface-2)] transition"
+        title="エミュレーター（確率）／シミュレーター（試行）両方使える参考ツール"
+      >
+        🧪 Craft of Exile (POE2 / 日本語) で確率検証 ↗
+      </a>
+      <p class="text-[10px] text-[var(--color-text-muted)] flex-1 min-w-[12rem]">
+        Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv・tags・weight + 品質情報を渡します。
+        AI プロンプトには冒涜・エッセンス・パーフェクトエッセンス・コラプト機構を含む POE2 クラフト機構を考慮するよう指示。
       </p>
     </div>
   </div>

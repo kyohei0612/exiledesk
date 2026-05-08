@@ -30,6 +30,13 @@ export interface Mod {
   level: number;
   stats: ModStat[];
   spawn: SpawnWeight[];
+  tags: string[];
+}
+
+/** 指定アイテムタグでの spawn weight を返す（無ければ 0） */
+export function modWeightFor(mod: Mod, itemTag: string): number {
+  const sw = mod.spawn.find((s) => s.t === itemTag);
+  return sw?.w ?? 0;
 }
 
 const raw = modsBundleRaw as Record<string, Omit<Mod, "key">>;
