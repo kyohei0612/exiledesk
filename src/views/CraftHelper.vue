@@ -286,28 +286,56 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
 
 /**
  * mod text を比較キー化。
- * bundle: "(1-4)から(60-71)の雷ダメージ" / paste: "4から71の雷ダメージ"
- * 両方を正規化して "_から_の雷ダメージ" にする。
+ * - bundle: "(1-4)から(60-71)の雷ダメージ" / paste: "4から71の雷ダメージ" → 同キー化
+ * - 複数 stat mod は \n 区切りの sub-line を **アルファベット順にソート** して
+ *   順序非依存にする（光半径＋命中力 と 命中力＋光半径 を同一視）
  */
 function modTextKey(text: string): string {
-  return cleanModText(text)
-    .replace(/[()（）]/g, "") // 括弧除去（半角・全角両方）
-    .replace(/[\d\-\.]+/g, "_") // 数値・範囲・小数を _ に統合
-    .replace(/[+＋]/g, "") // +記号除去
-    .replace(/\s+/g, "") // 空白除去
-    .toLowerCase();
+  if (!text.trim()) return "";
+  const cleaned = cleanModText(text);
+  const subs = cleaned
+    .split(/\r?\n/)
+    .map((l) =>
+      l
+        .replace(/[()（）]/g, "")
+        .replace(/[\d\-\.]+/g, "_")
+        .replace(/[+＋]/g, "")
+        .replace(/\s+/g, "")
+        .toLowerCase(),
+    )
+    .filter(Boolean)
+    .sort();
+  return subs.join("|");
+}
+
+/** N 本中 K 本を選ぶ全組合せのインデックスリストを返す */
+function combinations(n: number, k: number): number[][] {
+  const result: number[][] = [];
+  const helper = (start: number, current: number[]) => {
+    if (current.length === k) {
+      result.push([...current]);
+      return;
+    }
+    for (let i = start; i <= n - (k - current.length); i++) {
+      current.push(i);
+      helper(i + 1, current);
+      current.pop();
+    }
+  };
+  helper(0, []);
+  return result;
 }
 
 /**
- * パースしたコピペ mod 行を bundle にマッチング。
- * - 1〜3 行のウィンドウで連結照合（複数 stat mod 対応: 光半径＋マナ自動回復 等）
- * - 長いウィンドウ優先（greedy from longest）
+ * パースしたコピペ mod 行を bundle にマッチング（2 パス方式）。
+ * - Pass 1: 各行を **単独 1 行で** bundle 照合（pure mod 優先）
+ * - Pass 2: 未マッチ行の **2-3 行組合せ**（連続・非連続両方）で hybrid mod 拾い
+ * - 同一 mod の重複マッチは抑制、level 降順で T1 優先
  */
 function matchModLines(
   lines: string[],
   pool: Mod[],
 ): { matched: Mod[]; unmatched: string[] } {
-  // T1（最高 tier）を優先するため level 降順で走査
   const sortedPool = [...pool].sort((a, b) => b.level - a.level);
   const keyToMod = new Map<string, Mod>();
   for (const m of sortedPool) {
@@ -315,33 +343,55 @@ function matchModLines(
     if (k && !keyToMod.has(k)) keyToMod.set(k, m);
   }
 
+  const N = lines.length;
   const matched: Mod[] = [];
-  const unmatched: string[] = [];
-  const MAX_WINDOW = 3; // POE2 mod の最大 stat 数は通常 2-3
+  const consumed = new Set<number>();
+  const matchedKeys = new Set<string>();
 
-  let i = 0;
-  while (i < lines.length) {
-    let consumed = 0;
-    let foundMod: Mod | null = null;
-    for (let n = Math.min(MAX_WINDOW, lines.length - i); n >= 1; n--) {
-      const segment = lines.slice(i, i + n).join("\n");
-      const k = modTextKey(segment);
-      if (!k) continue;
-      const found = keyToMod.get(k);
-      if (found && !matched.some((mm) => mm.key === found.key)) {
-        foundMod = found;
-        consumed = n;
-        break;
-      }
-    }
-    if (foundMod && consumed > 0) {
-      matched.push(foundMod);
-      i += consumed;
-    } else {
-      unmatched.push(lines[i]);
-      i++;
+  // Pass 1: 1 行マッチを優先消化（pure mod を取りこぼさない）
+  for (let i = 0; i < N; i++) {
+    const k = modTextKey(lines[i]);
+    if (!k) continue;
+    const found = keyToMod.get(k);
+    if (!found) continue;
+    if (matchedKeys.has(found.key)) continue;
+    matched.push(found);
+    matchedKeys.add(found.key);
+    consumed.add(i);
+  }
+
+  // Pass 2: 残った行の組合せで hybrid mod を拾う
+  const remaining = Array.from({ length: N }, (_, i) => i).filter(
+    (i) => !consumed.has(i),
+  );
+  type Candidate = { indices: number[]; mod: Mod };
+  const candidates: Candidate[] = [];
+  for (let k = 2; k <= 3; k++) {
+    if (k > remaining.length) break;
+    for (const combo of combinations(remaining.length, k)) {
+      const indices = combo.map((c) => remaining[c]);
+      const segment = indices.map((i) => lines[i]).join("\n");
+      const ck = modTextKey(segment);
+      if (!ck) continue;
+      const found = keyToMod.get(ck);
+      if (found) candidates.push({ indices, mod: found });
     }
   }
+  candidates.sort((a, b) => {
+    if (a.indices.length !== b.indices.length) {
+      return b.indices.length - a.indices.length;
+    }
+    return a.indices[0] - b.indices[0];
+  });
+  for (const c of candidates) {
+    if (matchedKeys.has(c.mod.key)) continue;
+    if (c.indices.some((i) => consumed.has(i))) continue;
+    matched.push(c.mod);
+    matchedKeys.add(c.mod.key);
+    c.indices.forEach((i) => consumed.add(i));
+  }
+
+  const unmatched = lines.filter((_, i) => !consumed.has(i));
   return { matched, unmatched };
 }
 
@@ -458,6 +508,16 @@ function buildAiPrompt(): string {
     .filter(Boolean)
     .join("\n");
 }
+
+/** Craft of Exile (POE2 / 日本語) への deep-link URL（paste 済なら eimport 付き） */
+const craftOfExileUrl = computed(() => {
+  const base = "https://www.craftofexile.com/?cl=jp&game=poe2";
+  const paste = slot.value.pasteText.trim();
+  if (paste) {
+    return `${base}&eimport=${encodeURIComponent(paste)}`;
+  }
+  return base;
+});
 
 function onAskAi() {
   if (!selectedMods.value.length) {
