@@ -173,6 +173,8 @@ export function rankPairsByVolume(
     .sort((a, b) => {
       // 神換算が高い順
       // Divine ペア: 非 Divine 側 (one) の価格 / 非 Divine ペア: max(両通貨)
+      // ※ 同じアイテムが別ルート (Divine 直 vs Exalted 経由など) で違う神価格になる
+      // のは実データ通り — アービトラージが見える化される
       const aVal = a.containsDivine
         ? a.oneDivinePrice
         : Math.max(a.oneDivinePrice, a.twoDivinePrice);
@@ -180,7 +182,6 @@ export function rankPairsByVolume(
         ? b.oneDivinePrice
         : Math.max(b.oneDivinePrice, b.twoDivinePrice);
       if (bVal !== aVal) return bVal - aVal;
-      // 同価格は volume 降順で tie-break
       return b.volume - a.volume;
     });
 }
