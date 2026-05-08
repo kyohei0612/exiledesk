@@ -171,10 +171,16 @@ export function rankPairsByVolume(
     })
     .filter((r) => r.volume > 0 && Number.isFinite(r.volume))
     .sort((a, b) => {
-      // Divine 含むペアを先頭に
-      if (a.containsDivine !== b.containsDivine) {
-        return a.containsDivine ? -1 : 1;
-      }
+      // 神換算が高い順
+      // Divine ペア: 非 Divine 側 (one) の価格 / 非 Divine ペア: max(両通貨)
+      const aVal = a.containsDivine
+        ? a.oneDivinePrice
+        : Math.max(a.oneDivinePrice, a.twoDivinePrice);
+      const bVal = b.containsDivine
+        ? b.oneDivinePrice
+        : Math.max(b.oneDivinePrice, b.twoDivinePrice);
+      if (bVal !== aVal) return bVal - aVal;
+      // 同価格は volume 降順で tie-break
       return b.volume - a.volume;
     });
 }
