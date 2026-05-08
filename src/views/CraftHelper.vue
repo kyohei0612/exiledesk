@@ -205,12 +205,17 @@ function parseJaClipboard(text: string): ParsedClipboard | null {
   return result;
 }
 
-/** mod text 内の数値を `__` プレースホルダに置換し、比較キー化する */
+/**
+ * mod text を比較キー化。
+ * bundle: "(1-4)から(60-71)の雷ダメージ" / paste: "4から71の雷ダメージ"
+ * 両方を正規化して "_から_の雷ダメージ" にする。
+ */
 function modTextKey(text: string): string {
   return cleanModText(text)
-    .replace(/\d+から\d+の/g, "__から__の") // "4から5の" → "__から__の"
-    .replace(/[+\-]?\d+(\.\d+)?%?/g, "__")
-    .replace(/\s+/g, "")
+    .replace(/[()（）]/g, "") // 括弧除去（半角・全角両方）
+    .replace(/[\d\-\.]+/g, "_") // 数値・範囲・小数を _ に統合
+    .replace(/[+＋]/g, "") // +記号除去
+    .replace(/\s+/g, "") // 空白除去
     .toLowerCase();
 }
 
