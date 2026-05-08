@@ -129,6 +129,38 @@ const isWeaponSlot = computed(
   () => activeSlotId.value === "weapon1" || activeSlotId.value === "weapon2",
 );
 
+/** 武器タイプ dropdown の候補（武器1=メイン武器全種、武器2=オフハンド: 盾・矢筒・フォーカス・片手武器） */
+const weaponTypeOptions = computed(() => {
+  const mainHand = [
+    "wand",
+    "sceptre",
+    "staff",
+    "sword",
+    "mace",
+    "axe",
+    "spear",
+    "flail",
+    "bow",
+    "crossbow",
+  ];
+  const offHand = [
+    "shield",
+    "focus",
+    "quiver",
+    // 片手武器（デュアルウィールド用、2 ハンドの staff/bow/crossbow を除外）
+    "wand",
+    "sceptre",
+    "sword",
+    "mace",
+    "axe",
+    "spear",
+    "flail",
+  ];
+  const allowed =
+    activeSlotId.value === "weapon2" ? offHand : mainHand;
+  return ITEM_TAGS.filter((t) => allowed.includes(t.id));
+});
+
 /** items-ja.json から現在のアイテムタイプに合うベース名候補（datalist 用） */
 const baseNameSuggestions = computed<string[]>(() => {
   const re = BASE_PATTERNS[slot.value.itemTag];
@@ -715,18 +747,14 @@ function onAskAi() {
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
       <label v-if="isWeaponSlot" class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">武器タイプ:</span>
+        <span class="text-[var(--color-text-muted)]">
+          {{ activeSlotId === "weapon2" ? "オフハンド:" : "武器タイプ:" }}
+        </span>
         <select
           v-model="slot.itemTag"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
         >
-          <option
-            v-for="t in ITEM_TAGS.filter((tt) =>
-              ['wand', 'sceptre', 'staff', 'sword', 'mace', 'axe', 'spear', 'flail', 'bow', 'crossbow'].includes(tt.id),
-            )"
-            :key="t.id"
-            :value="t.id"
-          >
+          <option v-for="t in weaponTypeOptions" :key="t.id" :value="t.id">
             {{ t.label }}
           </option>
         </select>
