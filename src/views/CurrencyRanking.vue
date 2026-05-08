@@ -97,11 +97,17 @@ const availableCategories = computed(() => {
 
 const filteredRanking = computed(() => {
   if (categoryFilter.value === "all") return ranking.value;
-  return ranking.value.filter(
-    (r) =>
-      r.oneCategoryApiId === categoryFilter.value &&
-      r.twoCategoryApiId === categoryFilter.value,
-  );
+  return ranking.value.filter((r) => {
+    if (r.containsDivine) {
+      // Divine ペアは非 Divine 側 (one) のカテゴリで判定
+      return r.oneCategoryApiId === categoryFilter.value;
+    }
+    // 非 Divine ペアは OR モード（どちらか片側が一致）
+    return (
+      r.oneCategoryApiId === categoryFilter.value ||
+      r.twoCategoryApiId === categoryFilter.value
+    );
+  });
 });
 
 const divinePairs = computed(() =>
@@ -134,7 +140,7 @@ onMounted(async () => {
         <select
           v-model="categoryFilter"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
-          title="種類で絞り込み（両側が同カテゴリのペアのみ）"
+          title="種類で絞り込み（Divine ペアは非 Divine 側で判定）"
         >
           <option value="all">すべての種類</option>
           <option v-for="cat in availableCategories" :key="cat" :value="cat">
