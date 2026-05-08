@@ -731,23 +731,6 @@ function onAskAi() {
           </option>
         </select>
       </label>
-      <span v-else class="text-xs text-[var(--color-text-muted)]">
-        アイテム:
-        <span class="text-[var(--color-text)]">
-          {{ ITEM_TAGS.find((t) => t.id === slot.itemTag)?.label }}
-        </span>
-        <span class="text-[10px]">（スロットから自動判定）</span>
-      </span>
-      <label class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">ilvl:</span>
-        <input
-          v-model.number="slot.itemLevel"
-          type="number"
-          min="1"
-          max="86"
-          class="w-20 px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
-        />
-      </label>
       <label class="flex items-center gap-2 text-sm">
         <span class="text-[var(--color-text-muted)]">ベース:</span>
         <input
@@ -760,6 +743,16 @@ function onAskAi() {
         <datalist id="base-name-suggestions">
           <option v-for="b in baseNameSuggestions" :key="b" :value="b" />
         </datalist>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <span class="text-[var(--color-text-muted)]">ilvl:</span>
+        <input
+          v-model.number="slot.itemLevel"
+          type="number"
+          min="1"
+          max="86"
+          class="w-20 px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
+        />
       </label>
       <input
         v-model="search"
