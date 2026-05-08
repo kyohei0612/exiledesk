@@ -91,6 +91,8 @@ interface SlotState {
   prefixDelta?: number;
   /** ベース固有のサフィックス上限増減（黄昏の指輪 -1 等） */
   suffixDelta?: number;
+  /** コラプト済アイテム想定（範囲外値も許容、AI に通知） */
+  isCorruptItem?: boolean;
 }
 
 function makeDefaultSlot(defaultTag: string): SlotState {
@@ -876,6 +878,12 @@ function buildAiPrompt(): string {
     slot.value.parsedQuality
       ? `Quality bonus: +${slot.value.parsedQuality}%${slot.value.parsedQualityCategory ? ` (${slot.value.parsedQualityCategory})` : ""} — boosts the values of the matched mod category, factor in when computing final values.`
       : "",
+    (slot.value.prefixDelta ?? 0) !== 0 || (slot.value.suffixDelta ?? 0) !== 0
+      ? `Base modifier: prefix limit ${3 + (slot.value.prefixDelta ?? 0)} (delta ${slot.value.prefixDelta ?? 0}), suffix limit ${3 + (slot.value.suffixDelta ?? 0)} (delta ${slot.value.suffixDelta ?? 0}) — non-standard rare cap from base item.`
+      : "",
+    slot.value.isCorruptItem
+      ? `** Item is corrupted ** — values may be outside normal tier ranges due to Vaal Orb scaling. Account for this when judging tiers and crafting feasibility (corrupted items typically can't be modified further with normal currency).`
+      : "",
     "",
     `Target mods (${selectedMods.value.length}/6 selected):`,
     ...selectedMods.value.map((m, i) => {
@@ -1292,12 +1300,28 @@ function onAskAi() {
       >
         <div class="px-4 py-3 border-b border-[var(--color-border)]">
           <div class="flex items-center justify-between gap-3 flex-wrap">
-            <h3 class="text-base font-semibold">📋 解析結果確認</h3>
-            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
-              <input type="checkbox" v-model="enforceSixMods" />
-              <span class="text-[var(--color-text-muted)]">常に 6 mod に補完</span>
-              <span class="text-[10px] text-[var(--color-text-muted)]">(rare 想定; magic 等は OFF)</span>
-            </label>
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <h3 class="text-base font-semibold">📋 解析結果確認</h3>
+              <span
+                v-if="slot.parsedBase"
+                class="text-sm text-[var(--color-accent)]"
+              >／ {{ slot.parsedBase }}</span>
+              <span v-if="slot.parsedName" class="text-xs text-[var(--color-text-muted)]">
+                ({{ slot.parsedName }})
+              </span>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+              <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                <input type="checkbox" v-model="slot.isCorruptItem" />
+                <span class="text-red-300">コラプト想定</span>
+                <span class="text-[10px] text-[var(--color-text-muted)]">(範囲外値許容)</span>
+              </label>
+              <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                <input type="checkbox" v-model="enforceSixMods" />
+                <span class="text-[var(--color-text-muted)]">常に 6 mod に補完</span>
+                <span class="text-[10px] text-[var(--color-text-muted)]">(rare 想定)</span>
+              </label>
+            </div>
           </div>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
             各行の分類と tier を選択して「適用」。
