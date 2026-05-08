@@ -19,6 +19,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
 const categoryFilter = ref<string>("all");
+const searchQuery = ref<string>("");
 
 async function loadLeagues() {
   try {
@@ -114,18 +115,39 @@ const availableCategories = computed(() => {
 });
 
 const filteredRanking = computed(() => {
-  if (categoryFilter.value === "all") return ranking.value;
-  return ranking.value.filter((r) => {
-    if (r.containsDivine) {
-      // Divine ペアは非 Divine 側 (one) のカテゴリで判定
-      return r.oneCategoryApiId === categoryFilter.value;
-    }
-    // 非 Divine ペアは OR モード（どちらか片側が一致）
-    return (
-      r.oneCategoryApiId === categoryFilter.value ||
-      r.twoCategoryApiId === categoryFilter.value
-    );
-  });
+  let list = ranking.value;
+
+  // カテゴリフィルタ
+  if (categoryFilter.value !== "all") {
+    list = list.filter((r) => {
+      if (r.containsDivine) {
+        return r.oneCategoryApiId === categoryFilter.value;
+      }
+      return (
+        r.oneCategoryApiId === categoryFilter.value ||
+        r.twoCategoryApiId === categoryFilter.value
+      );
+    });
+  }
+
+  // 検索フィルタ（日英両方の名前を対象）
+  const q = searchQuery.value.trim().toLowerCase();
+  if (q) {
+    list = list.filter((r) => {
+      const oneEn = r.oneText.toLowerCase();
+      const twoEn = r.twoText.toLowerCase();
+      const oneJa = jaCurrency(r.oneText).toLowerCase();
+      const twoJa = jaCurrency(r.twoText).toLowerCase();
+      return (
+        oneEn.includes(q) ||
+        twoEn.includes(q) ||
+        oneJa.includes(q) ||
+        twoJa.includes(q)
+      );
+    });
+  }
+
+  return list;
 });
 
 onMounted(async () => {
@@ -148,6 +170,20 @@ onMounted(async () => {
         </p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
+        <div class="relative">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="🔍 アイテム名で検索"
+            class="px-3 py-2 pr-8 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-56 focus:outline-none focus:border-[var(--color-accent)]"
+          />
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm"
+            title="クリア"
+          >✕</button>
+        </div>
         <select
           v-model="categoryFilter"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
