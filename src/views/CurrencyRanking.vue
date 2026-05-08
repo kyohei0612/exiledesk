@@ -180,7 +180,7 @@ onMounted(async () => {
       v-else-if="ranking.length"
       class="rounded-lg border border-[var(--color-border)] overflow-hidden"
     >
-      <table class="w-full text-sm">
+      <table class="w-full text-base">
         <thead
           class="bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-text-muted)]"
         >
@@ -202,10 +202,10 @@ onMounted(async () => {
             :key="p.id"
             class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface)] transition"
           >
-            <td class="px-4 py-2 text-[var(--color-text-muted)] font-mono">
+            <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono">
               {{ i + 1 }}
             </td>
-            <td class="px-4 py-2">
+            <td class="px-4 py-3">
               <div class="flex items-center gap-2 flex-wrap">
                 <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
@@ -214,17 +214,17 @@ onMounted(async () => {
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-right">
-              <div class="flex items-center justify-end gap-1.5 text-xs font-mono">
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5 text-sm font-mono">
                 <!-- Divine は two 側に正規化済 → 常に one (非 Divine) を 1.0 として神換算 -->
                 <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
                 <span class="text-[var(--color-text-muted)]">⇄</span>
                 <span class="text-[var(--color-text)]">1.0</span>
-                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-4 h-4 object-contain" loading="lazy" />
+                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
               </div>
             </td>
-            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
+            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">
               {{ fmt(p.volume) }}
             </td>
           </tr>
@@ -242,7 +242,7 @@ onMounted(async () => {
             <td class="px-4 py-2 text-[var(--color-text-muted)] font-mono">
               {{ divinePairs.length + i + 1 }}
             </td>
-            <td class="px-4 py-2">
+            <td class="px-4 py-3">
               <div class="flex items-center gap-2 flex-wrap">
                 <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
@@ -251,25 +251,25 @@ onMounted(async () => {
                 <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
-            <td class="px-4 py-2 text-right">
-              <div class="flex flex-col gap-1 text-xs font-mono items-end">
+            <td class="px-4 py-3 text-right">
+              <div class="flex flex-col gap-1 text-sm font-mono items-end">
                 <div class="flex items-center gap-1.5">
                   <span class="text-[var(--color-accent)]">{{ fmt(p.oneDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
                   <span class="text-[var(--color-text-muted)]">⇄</span>
                   <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-4 h-4 object-contain" loading="lazy" />
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-5 h-5 object-contain" loading="lazy" />
                 </div>
                 <div class="flex items-center gap-1.5">
                   <span class="text-[var(--color-accent)]">{{ fmt(p.twoDivinePrice) }}</span>
-                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-4 h-4 object-contain" loading="lazy" />
+                  <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
                   <span class="text-[var(--color-text-muted)]">⇄</span>
                   <span class="text-[var(--color-text)]">1.0</span>
-                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-4 h-4 object-contain" loading="lazy" />
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-5 h-5 object-contain" loading="lazy" />
                 </div>
               </div>
             </td>
-            <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
+            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">
               {{ fmt(p.volume) }}
             </td>
           </tr>
