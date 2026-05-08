@@ -9,6 +9,32 @@ import {
   type ModGroup,
 } from "../data/mods";
 import { jaTag, tagColor } from "../i18n/mod-tags-ja";
+import itemsJa from "../i18n/items-ja.json";
+
+/** 現在のアイテムタグに合致しそうなベース名候補（datalist autocomplete 用） */
+const BASE_PATTERNS: Record<string, RegExp> = {
+  ring: /の指輪$/,
+  amulet: /のアミュレット$/,
+  belt: /(のベルト|帯)/,
+  helmet: /(兜|ヘルム|フード|キャップ|帽|ヘッド)/,
+  body_armour: /(ローブ|アーマー|ベスト|チェスト|鎧|甲|衣|装束|サブリガード)/,
+  gloves: /(手袋|グローブ|ガントレット|籠手|拳)/,
+  boots: /(ブーツ|靴|サンダル|履|脚甲)/,
+  shield: /(盾|シールド|バックラー)/,
+  focus: /(オーブ|フォーカス)/,
+  quiver: /(クイバー|矢筒)/,
+  wand: /ワンド/,
+  sceptre: /(セプター|ホーリー)/,
+  staff: /スタッフ/,
+  sword: /(剣|ソード|ブレード)/,
+  mace: /(メイス|ハンマー|モール|棍)/,
+  axe: /(斧|アックス)/,
+  spear: /(槍|スピア|ジャベリン)/,
+  flail: /フレイル/,
+  bow: /(弓|ボウ)/,
+  crossbow: /(クロスボウ|弩)/,
+  talisman: /タリスマン/,
+};
 
 // ============== スロット定義 ==============
 const SLOT_DEFS = [
@@ -98,6 +124,18 @@ const availableGroups = computed(() =>
   getModGroupsForItem(slot.value.itemTag, slot.value.itemLevel),
 );
 
+/** items-ja.json から現在のアイテムタイプに合うベース名候補（datalist 用） */
+const baseNameSuggestions = computed<string[]>(() => {
+  const re = BASE_PATTERNS[slot.value.itemTag];
+  if (!re) return [];
+  const ja = itemsJa as Record<string, string>;
+  const out: string[] = [];
+  for (const name of Object.values(ja)) {
+    if (re.test(name)) out.push(name);
+  }
+  return out.sort((a, b) => a.localeCompare(b, "ja"));
+});
+
 /** group の最高 tier (T1) でフィルタ。group 全体を残すか落とすかの判定に使う */
 const filteredGroups = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -186,6 +224,72 @@ function deselectGroup(group: ModGroup) {
   for (const t of group.tiers) set.delete(t.key);
   slot.value.selectedKeys = Array.from(set);
   closeTierPicker();
+}
+
+/** 目標 mod から特定 key を削除（サマリの個別削除ボタン用） */
+function removeSelectedMod(key: string) {
+  const set = new Set(slot.value.selectedKeys);
+  set.delete(key);
+  slot.value.selectedKeys = Array.from(set);
+}
+
+// ============== Paste レビュー モーダル ==============
+type PasteReviewItem =
+  | {
+      type: "matched";
+      indices: number[];
+      lineTexts: string[];
+      groupId: string;
+      selectedTierKey: string;
+      isImplicit: boolean;
+      skip: boolean;
+    }
+  | {
+      type: "unmatched";
+      index: number;
+      lineText: string;
+      isImplicit: boolean;
+      skip: boolean;
+    };
+
+const pasteReviewVisible = ref(false);
+const pasteReviewItems = ref<PasteReviewItem[]>([]);
+
+function getGroupById(id: string): ModGroup | undefined {
+  return availableGroups.value.find((g) => g.id === id);
+}
+
+function cancelPasteReview() {
+  pasteReviewVisible.value = false;
+  pasteReviewItems.value = [];
+}
+
+function confirmPasteReview() {
+  const newKeys = new Set(slot.value.selectedKeys);
+  for (const item of pasteReviewItems.value) {
+    if (item.type !== "matched") continue;
+    if (item.isImplicit || item.skip) continue;
+    const group = getGroupById(item.groupId);
+    if (group) {
+      for (const t of group.tiers) newKeys.delete(t.key);
+    }
+    newKeys.add(item.selectedTierKey);
+  }
+  // 上限チェック
+  const allMods = Array.from(newKeys)
+    .map((k) => modByKey.value.get(k))
+    .filter((m): m is Mod => !!m);
+  const prefixCount = allMods.filter((m) => m.type === "prefix").length;
+  const suffixCount = allMods.filter((m) => m.type === "suffix").length;
+  if (prefixCount > 3 || suffixCount > 3) {
+    alert(
+      `プレフィックス ${prefixCount}/3、サフィックス ${suffixCount}/3 — 上限超過です。\n暗黙/除外チェックで調整してください。`,
+    );
+    return;
+  }
+  slot.value.selectedKeys = Array.from(newKeys);
+  pasteReviewVisible.value = false;
+  pasteReviewItems.value = [];
 }
 const selectedPrefixCount = computed(
   () => selectedMods.value.filter((m) => m.type === "prefix").length,
@@ -326,16 +430,21 @@ function combinations(n: number, k: number): number[][] {
   return result;
 }
 
+interface MatchAssignment {
+  /** 入力行のうちこの mod に紐づく index 群 */
+  indices: number[];
+  /** 一致した mod（具体 tier） */
+  mod: Mod;
+}
+
 /**
  * パースしたコピペ mod 行を bundle にマッチング（2 パス方式）。
- * - Pass 1: 各行を **単独 1 行で** bundle 照合（pure mod 優先）
- * - Pass 2: 未マッチ行の **2-3 行組合せ**（連続・非連続両方）で hybrid mod 拾い
- * - 同一 mod の重複マッチは抑制、level 降順で T1 優先
+ * line → mod の対応も返すので、レビュー UI で tier 切替できる。
  */
 function matchModLines(
   lines: string[],
   pool: Mod[],
-): { matched: Mod[]; unmatched: string[] } {
+): { assignments: MatchAssignment[]; matched: Mod[]; unmatched: string[] } {
   const sortedPool = [...pool].sort((a, b) => b.level - a.level);
   const keyToMod = new Map<string, Mod>();
   for (const m of sortedPool) {
@@ -344,23 +453,23 @@ function matchModLines(
   }
 
   const N = lines.length;
-  const matched: Mod[] = [];
+  const assignments: MatchAssignment[] = [];
   const consumed = new Set<number>();
   const matchedKeys = new Set<string>();
 
-  // Pass 1: 1 行マッチを優先消化（pure mod を取りこぼさない）
+  // Pass 1: 1 行マッチ
   for (let i = 0; i < N; i++) {
     const k = modTextKey(lines[i]);
     if (!k) continue;
     const found = keyToMod.get(k);
     if (!found) continue;
     if (matchedKeys.has(found.key)) continue;
-    matched.push(found);
+    assignments.push({ indices: [i], mod: found });
     matchedKeys.add(found.key);
     consumed.add(i);
   }
 
-  // Pass 2: 残った行の組合せで hybrid mod を拾う
+  // Pass 2: 残った行の組合せ
   const remaining = Array.from({ length: N }, (_, i) => i).filter(
     (i) => !consumed.has(i),
   );
@@ -386,13 +495,14 @@ function matchModLines(
   for (const c of candidates) {
     if (matchedKeys.has(c.mod.key)) continue;
     if (c.indices.some((i) => consumed.has(i))) continue;
-    matched.push(c.mod);
+    assignments.push({ indices: c.indices, mod: c.mod });
     matchedKeys.add(c.mod.key);
     c.indices.forEach((i) => consumed.add(i));
   }
 
+  const matched = assignments.map((a) => a.mod);
   const unmatched = lines.filter((_, i) => !consumed.has(i));
-  return { matched, unmatched };
+  return { assignments, matched, unmatched };
 }
 
 function applyPaste() {
@@ -402,49 +512,53 @@ function applyPaste() {
     return;
   }
   if (parsed.itemLevel) slot.value.itemLevel = parsed.itemLevel;
-  // メタデータをスロットに保存（表示・AI プロンプト用）
   slot.value.parsedName = parsed.name;
   slot.value.parsedBase = parsed.base;
   slot.value.parsedQuality = parsed.quality;
   slot.value.parsedQualityCategory = parsed.qualityCategory;
 
-  const { matched, unmatched } = matchModLines(
+  const { assignments } = matchModLines(
     parsed.modLines,
     allAvailableMods.value,
   );
 
-  // プレ/サフ 上限を尊重して埋める
-  const filledKeys = new Set<string>();
-  let pCount = 0;
-  let sCount = 0;
-  for (const m of matched) {
-    if (m.type === "prefix" && pCount >= 3) continue;
-    if (m.type === "suffix" && sCount >= 3) continue;
-    filledKeys.add(m.key);
-    if (m.type === "prefix") pCount++;
-    else sCount++;
+  // 各 assignment → matched item (group + 初期 tier)
+  const items: PasteReviewItem[] = [];
+  for (const a of assignments) {
+    const groupId = a.mod.groups[0];
+    if (!groupId) continue;
+    items.push({
+      type: "matched",
+      indices: a.indices,
+      lineTexts: a.indices.map((i) => parsed.modLines[i]),
+      groupId,
+      selectedTierKey: a.mod.key,
+      isImplicit: false,
+      skip: false,
+    });
   }
-  slot.value.selectedKeys = Array.from(filledKeys);
+  // 未マッチ行 → unmatched item
+  const usedIndices = new Set<number>();
+  for (const a of assignments) for (const i of a.indices) usedIndices.add(i);
+  for (let i = 0; i < parsed.modLines.length; i++) {
+    if (usedIndices.has(i)) continue;
+    items.push({
+      type: "unmatched",
+      index: i,
+      lineText: parsed.modLines[i],
+      isImplicit: false,
+      skip: false,
+    });
+  }
+  // 表示順を paste 元の順に近づける
+  items.sort((a, b) => {
+    const ai = a.type === "matched" ? Math.min(...a.indices) : a.index;
+    const bi = b.type === "matched" ? Math.min(...b.indices) : b.index;
+    return ai - bi;
+  });
 
-  const itemTagLabel =
-    ITEM_TAGS.find((t) => t.id === slot.value.itemTag)?.label ??
-    slot.value.itemTag;
-  const lines: string[] = [
-    `マッチ: ${matched.length}/${parsed.modLines.length} 行 → ${filledKeys.size} 件を選択中に反映（アイテムタイプ: ${itemTagLabel}）`,
-  ];
-  if (unmatched.length) {
-    lines.push("");
-    lines.push(`未マッチ ${unmatched.length} 行:`);
-    for (const u of unmatched) lines.push(`  • ${u}`);
-    lines.push("");
-    lines.push(
-      "※ 暗黙モッド・固有 mod・装備タイプ違い・品質ボーナスで構造変化した行は未マッチになります。",
-    );
-    lines.push(
-      "  手動で選択するか、別のアイテムタイプに切替えて再試行してください。",
-    );
-  }
-  alert(lines.join("\n"));
+  pasteReviewItems.value = items;
+  pasteReviewVisible.value = true;
 }
 
 // ============== AI プロンプト構築 ==============
@@ -616,6 +730,19 @@ function onAskAi() {
           class="w-20 px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
         />
       </label>
+      <label class="flex items-center gap-2 text-sm">
+        <span class="text-[var(--color-text-muted)]">ベース:</span>
+        <input
+          v-model="slot.parsedBase"
+          list="base-name-suggestions"
+          type="text"
+          placeholder="例: エメラルドの指輪"
+          class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-52"
+        />
+        <datalist id="base-name-suggestions">
+          <option v-for="b in baseNameSuggestions" :key="b" :value="b" />
+        </datalist>
+      </label>
       <input
         v-model="search"
         type="text"
@@ -661,12 +788,12 @@ function onAskAi() {
     </details>
 
     <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-4 items-start">
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
-        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)]">
+        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
           プレフィックス（{{ prefixGroups.length }} group）
         </div>
-        <div class="max-h-80 overflow-y-auto divide-y divide-[var(--color-border)]">
+        <div class="divide-y divide-[var(--color-border)]">
           <button
             v-for="g in prefixGroups"
             :key="g.id"
@@ -707,10 +834,10 @@ function onAskAi() {
       </div>
 
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
-        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)]">
+        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
           サフィックス（{{ suffixGroups.length }} group）
         </div>
-        <div class="max-h-80 overflow-y-auto divide-y divide-[var(--color-border)]">
+        <div class="divide-y divide-[var(--color-border)]">
           <button
             v-for="g in suffixGroups"
             :key="g.id"
@@ -783,7 +910,7 @@ function onAskAi() {
         <li
           v-for="m in selectedMods"
           :key="m.key"
-          class="flex items-baseline gap-2"
+          class="flex items-baseline gap-2 group"
         >
           <span
             :class="[
@@ -793,8 +920,13 @@ function onAskAi() {
           >
             {{ m.type === "prefix" ? "プレ" : "サフ" }}
           </span>
-          <span class="flex-1 text-[var(--color-text)]">{{ cleanModText(m.text_ja) }}</span>
+          <span class="flex-1 text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
           <span class="text-[10px] text-[var(--color-text-muted)]">lv{{ m.level }}</span>
+          <button
+            @click="removeSelectedMod(m.key)"
+            class="text-[var(--color-text-muted)] hover:text-red-300 text-xs px-1 opacity-50 group-hover:opacity-100 transition"
+            title="この mod を削除"
+          >✕</button>
         </li>
       </ul>
       <p v-else class="text-xs text-[var(--color-text-muted)] italic">
@@ -854,6 +986,101 @@ function onAskAi() {
         Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv・tags・weight + 品質情報を渡します。
         AI プロンプトには冒涜・エッセンス・パーフェクトエッセンス・コラプト機構を含む POE2 クラフト機構を考慮するよう指示。
       </p>
+    </div>
+
+    <!-- ========== Paste レビュー モーダル ========== -->
+    <div
+      v-if="pasteReviewVisible"
+      class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      @click.self="cancelPasteReview"
+    >
+      <div
+        class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
+      >
+        <div class="px-4 py-3 border-b border-[var(--color-border)]">
+          <h3 class="text-base font-semibold">📋 解析結果確認</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+            各行の分類と tier を選択して「適用」。暗黙・除外チェックの行は反映されません。
+          </p>
+        </div>
+        <div class="flex-1 overflow-y-auto divide-y divide-[var(--color-border)]">
+          <div
+            v-for="(item, idx) in pasteReviewItems"
+            :key="idx"
+            class="px-4 py-3 hover:bg-[var(--color-surface-2)]/30"
+            :class="{ 'opacity-40': item.isImplicit || item.skip }"
+          >
+            <!-- 行テキスト -->
+            <div class="text-xs font-mono text-[var(--color-text)] mb-2">
+              <template v-if="item.type === 'matched'">
+                <div v-for="(lt, li) in item.lineTexts" :key="li">{{ lt }}</div>
+              </template>
+              <template v-else>
+                <div>{{ item.lineText }}</div>
+              </template>
+            </div>
+            <!-- コントロール -->
+            <div class="flex items-center gap-3 flex-wrap text-xs">
+              <label class="flex items-center gap-1">
+                <input type="checkbox" v-model="item.isImplicit" />
+                <span class="text-[var(--color-text-muted)]">暗黙</span>
+              </label>
+              <label class="flex items-center gap-1">
+                <input type="checkbox" v-model="item.skip" />
+                <span class="text-[var(--color-text-muted)]">除外</span>
+              </label>
+              <template v-if="item.type === 'matched'">
+                <span
+                  :class="
+                    getGroupById(item.groupId)?.type === 'prefix'
+                      ? 'text-blue-300'
+                      : 'text-amber-300'
+                  "
+                  class="font-semibold"
+                >
+                  {{ getGroupById(item.groupId)?.type === "prefix" ? "プレ" : "サフ" }}
+                </span>
+                <span class="text-[var(--color-text-muted)]">{{ item.groupId }}</span>
+                <select
+                  v-model="item.selectedTierKey"
+                  class="px-2 py-1 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs flex-1 min-w-[12rem]"
+                >
+                  <option
+                    v-for="(t, ti) in getGroupById(item.groupId)?.tiers ?? []"
+                    :key="t.key"
+                    :value="t.key"
+                  >
+                    T{{ ti + 1 }} lv{{ t.level }}
+                    {{ cleanModText(t.text_ja).split("\n").join(" / ") }}
+                  </option>
+                </select>
+              </template>
+              <template v-else>
+                <span class="text-orange-300/80">未マッチ</span>
+                <span class="text-[10px] text-[var(--color-text-muted)]">
+                  bundle に該当なし。AI プロンプトに含まれます。
+                </span>
+              </template>
+            </div>
+          </div>
+          <p
+            v-if="!pasteReviewItems.length"
+            class="px-4 py-6 text-xs text-[var(--color-text-muted)] italic text-center"
+          >
+            mod 行が検出されませんでした
+          </p>
+        </div>
+        <div class="px-4 py-3 border-t border-[var(--color-border)] flex justify-end gap-2">
+          <button
+            @click="cancelPasteReview"
+            class="px-4 py-2 rounded text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition"
+          >キャンセル</button>
+          <button
+            @click="confirmPasteReview"
+            class="px-4 py-2 rounded bg-[var(--color-accent)] text-black text-sm font-medium hover:bg-[var(--color-accent-hover)] transition"
+          >適用</button>
+        </div>
+      </div>
     </div>
 
     <!-- ========== Tier ピッカー モーダル ========== -->
