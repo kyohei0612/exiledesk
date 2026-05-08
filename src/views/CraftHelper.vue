@@ -28,6 +28,30 @@ function specialKindColor(
   if (kind === "desecrated") return "bg-purple-700/40 text-purple-200";
   return "";
 }
+
+/** 行全体に乗せるグラデーション背景クラス */
+function specialKindBgGradient(
+  kind: ReturnType<typeof modSpecialKind> | "implicit",
+): string {
+  if (kind === "desecrated")
+    return "bg-gradient-to-r from-purple-900/50 via-purple-800/30 to-transparent";
+  if (kind === "corrupt")
+    return "bg-gradient-to-r from-red-900/50 via-red-800/30 to-transparent";
+  if (kind === "essence")
+    return "bg-gradient-to-r from-amber-900/50 via-amber-800/30 to-transparent";
+  if (kind === "implicit")
+    return "bg-gradient-to-r from-cyan-900/40 via-cyan-800/20 to-transparent";
+  return "";
+}
+
+/** classification → bg gradient（review modal 用） */
+function classificationBg(c: ModClassification): string {
+  if (c === "desecrated") return specialKindBgGradient("desecrated");
+  if (c === "corrupt") return specialKindBgGradient("corrupt");
+  if (c === "essence") return specialKindBgGradient("essence");
+  if (c === "implicit") return specialKindBgGradient("implicit");
+  return "";
+}
 import itemsJa from "../i18n/items-ja.json";
 
 /** 現在のアイテムタグに合致しそうなベース名候補（datalist autocomplete 用） */
@@ -1097,6 +1121,7 @@ function onAskAi() {
             @click="openTierPicker(g)"
             :class="[
               'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
+              specialKindBgGradient(modSpecialKind(g.tiers[0])),
               selectedTierIn(g)
                 ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
                 : 'border-l-2 border-transparent',
@@ -1141,6 +1166,7 @@ function onAskAi() {
             @click="openTierPicker(g)"
             :class="[
               'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
+              specialKindBgGradient(modSpecialKind(g.tiers[0])),
               selectedTierIn(g)
                 ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
                 : 'border-l-2 border-transparent',
@@ -1207,7 +1233,10 @@ function onAskAi() {
         <li
           v-for="m in selectedMods"
           :key="m.key"
-          class="flex items-baseline gap-2 group"
+          :class="[
+            'flex items-baseline gap-2 group rounded px-2 py-1',
+            specialKindBgGradient(modSpecialKind(m)),
+          ]"
         >
           <span
             :class="[
@@ -1344,14 +1373,16 @@ function onAskAi() {
           <div
             v-for="(item, idx) in pasteReviewItems"
             :key="idx"
-            class="px-4 py-3 hover:bg-[var(--color-surface-2)]/30"
-            :class="{
-              'opacity-40':
-                item.classification === 'implicit' ||
-                item.classification === 'skip',
-              'bg-[var(--color-surface-2)]/30':
-                item.type === 'matched' && item.autoSplit,
-            }"
+            :class="[
+              'px-4 py-3 hover:bg-[var(--color-surface-2)]/30',
+              classificationBg(item.classification),
+              item.classification === 'implicit' || item.classification === 'skip'
+                ? 'opacity-40'
+                : '',
+              item.type === 'matched' && item.autoSplit
+                ? 'border-l-4 border-[var(--color-accent)]'
+                : '',
+            ]"
           >
             <!-- 行テキスト -->
             <div class="text-xs font-mono text-[var(--color-text)] mb-2">
@@ -1472,6 +1503,7 @@ function onAskAi() {
             @click="selectTier(tierPickerGroup, t)"
             :class="[
               'w-full text-left px-4 py-3 text-sm hover:bg-[var(--color-surface-2)] transition flex items-start gap-3',
+              specialKindBgGradient(modSpecialKind(t)),
               slot.selectedKeys.includes(t.key)
                 ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
                 : 'border-l-2 border-transparent',
