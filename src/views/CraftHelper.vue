@@ -298,23 +298,48 @@ function modTextKey(text: string): string {
     .toLowerCase();
 }
 
-/** パースしたコピペ mod 行を bundle にマッチング。マッチ・未マッチ双方を返す */
+/**
+ * パースしたコピペ mod 行を bundle にマッチング。
+ * - 1〜3 行のウィンドウで連結照合（複数 stat mod 対応: 光半径＋マナ自動回復 等）
+ * - 長いウィンドウ優先（greedy from longest）
+ */
 function matchModLines(
   lines: string[],
   pool: Mod[],
 ): { matched: Mod[]; unmatched: string[] } {
+  // T1（最高 tier）を優先するため level 降順で走査
+  const sortedPool = [...pool].sort((a, b) => b.level - a.level);
+  const keyToMod = new Map<string, Mod>();
+  for (const m of sortedPool) {
+    const k = modTextKey(m.text_ja);
+    if (k && !keyToMod.has(k)) keyToMod.set(k, m);
+  }
+
   const matched: Mod[] = [];
   const unmatched: string[] = [];
-  for (const line of lines) {
-    const k = modTextKey(line);
-    if (!k) {
-      continue;
+  const MAX_WINDOW = 3; // POE2 mod の最大 stat 数は通常 2-3
+
+  let i = 0;
+  while (i < lines.length) {
+    let consumed = 0;
+    let foundMod: Mod | null = null;
+    for (let n = Math.min(MAX_WINDOW, lines.length - i); n >= 1; n--) {
+      const segment = lines.slice(i, i + n).join("\n");
+      const k = modTextKey(segment);
+      if (!k) continue;
+      const found = keyToMod.get(k);
+      if (found && !matched.some((mm) => mm.key === found.key)) {
+        foundMod = found;
+        consumed = n;
+        break;
+      }
     }
-    const found = pool.find((m) => modTextKey(m.text_ja) === k);
-    if (found && !matched.some((mm) => mm.key === found.key)) {
-      matched.push(found);
-    } else if (!found) {
-      unmatched.push(line);
+    if (foundMod && consumed > 0) {
+      matched.push(foundMod);
+      i += consumed;
+    } else {
+      unmatched.push(lines[i]);
+      i++;
     }
   }
   return { matched, unmatched };
