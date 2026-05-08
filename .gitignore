@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated mod data cache (regenerable via scripts/extract-mods-bundle.mjs)
+data-cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

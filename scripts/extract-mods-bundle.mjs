@@ -1,0 +1,281 @@
+#!/usr/bin/env node
+/**
+ * extract-mods-bundle.mjs
+ * --------------------------------------------------------------
+ * RePoE fork (poe2) の mods.json から ExileDesk 用の mods-bundle を生成する。
+ *
+ * Sources:
+ *   - English: https://raw.githubusercontent.com/repoe-fork/poe2/master/data/mods.json
+ *   - Japanese: https://raw.githubusercontent.com/repoe-fork/poe2/master/data/Japanese/mods.json
+ *   - License: MIT (RePoE) / data owned by Grinding Gear Games (per ToS)
+ *
+ * Output:
+ *   - src/i18n/mods-bundle.json   ({ [key: string]: BundledMod })
+ *
+ * Usage:
+ *   node scripts/extract-mods-bundle.mjs                  # use cached files in data-cache/
+ *   node scripts/extract-mods-bundle.mjs --refresh        # re-download from upstream
+ *
+ * Categorization rule (kind flag in output):
+ *   - essence    : is_essence_only === true
+ *   - corrupted  : generation_type === "corrupted"  (Vaal Orb)
+ *   - desecrated : domain === "desecrated"          (Abyss / Ulaman / Kurgal / Amanamu)
+ *   - normal     : everything else that is prefix/suffix on item/misc/flask/jewel domain
+ *
+ * Each mod gets its appropriate flag (essence/corrupt/desecrated) set to 1,
+ * and `tags` is taken from `implicit_tags + adds_tags`.
+ * --------------------------------------------------------------
+ */
+
+import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(HERE, "..");
+const CACHE_DIR = resolve(ROOT, "data-cache");
+const OUT_FILE = resolve(ROOT, "src/i18n/mods-bundle.json");
+
+const SOURCES = {
+  en: "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/mods.json",
+  ja: "https://raw.githubusercontent.com/repoe-fork/poe2/master/data/Japanese/mods.json",
+};
+
+/** Domains we keep (corrupted/desecrated/essence are handled by other gates). */
+const ALLOWED_DOMAINS = new Set(["item", "misc", "flask", "jewel"]);
+/** generation_types we keep for "normal" pool. */
+const NORMAL_GEN_TYPES = new Set(["prefix", "suffix"]);
+
+/* ---------------- helpers ---------------- */
+
+function log(...args) {
+  console.log("[extract-mods]", ...args);
+}
+
+async function exists(path) {
+  try {
+    await stat(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function downloadIfMissing(url, dest, refresh) {
+  if (!refresh && (await exists(dest))) {
+    log(`cached: ${dest}`);
+    return;
+  }
+  log(`fetching ${url}`);
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  await writeFile(dest, buf);
+  log(`wrote ${dest} (${buf.length.toLocaleString()} bytes)`);
+}
+
+/**
+ * @param {object} v RePoE raw mod
+ * @returns {"essence"|"corrupted"|"desecrated"|"normal"|null}
+ */
+function classify(v) {
+  if (v.is_essence_only === true) return "essence";
+  if (v.generation_type === "corrupted") return "corrupted";
+  if (v.domain === "desecrated") return "desecrated";
+  if (
+    NORMAL_GEN_TYPES.has(v.generation_type) &&
+    ALLOWED_DOMAINS.has(v.domain)
+  ) {
+    return "normal";
+  }
+  return null;
+}
+
+/**
+ * Map RePoE's generation_type to our bundle's `type`.
+ * For corrupted/desecrated, we still expose prefix vs suffix so callers can
+ * filter by slot. RePoE uses "prefix"/"suffix" even within these domains.
+ * For mods with non-standard gen_type (rare), default to "suffix".
+ */
+function bundleType(v) {
+  const g = v.generation_type;
+  if (g === "prefix") return "prefix";
+  if (g === "suffix") return "suffix";
+  // corrupted/essence/etc. — fallback inference: name presence
+  // Most corrupted mods are suffix-style (e.g. "of Corruption"), but some are
+  // prefix. Use the first group's casing as a hint, fallback to suffix.
+  return "suffix";
+}
+
+/**
+ * Reduce spawn_weights to the ones we expose: all positive weights, plus
+ * informative zero entries for "default" so consumers can detect explicit
+ * blocks. Remove `default` zero (the implicit catch-all) since it's noise.
+ */
+function reduceSpawn(weights) {
+  if (!Array.isArray(weights) || weights.length === 0) return [];
+  const out = [];
+  for (const w of weights) {
+    const tag = w.tag;
+    const weight = Number(w.weight ?? 0) | 0;
+    if (!tag) continue;
+    // Drop the implicit catch-all "default" with weight 0 (noise).
+    if (tag === "default" && weight === 0) continue;
+    out.push({ t: tag, w: weight });
+  }
+  return out;
+}
+
+function reduceStats(stats) {
+  if (!Array.isArray(stats)) return [];
+  return stats.map((s) => {
+    const out = { id: s.id };
+    if (typeof s.min === "number") out.min = s.min;
+    if (typeof s.max === "number") out.max = s.max;
+    return out;
+  });
+}
+
+function mergeTags(v) {
+  const out = new Set();
+  for (const t of v.implicit_tags ?? []) out.add(t);
+  for (const t of v.adds_tags ?? []) out.add(t);
+  return Array.from(out);
+}
+
+/* ---------------- main extract ---------------- */
+
+async function main() {
+  const argv = process.argv.slice(2);
+  const refresh = argv.includes("--refresh");
+
+  await mkdir(CACHE_DIR, { recursive: true });
+
+  const enPath = resolve(CACHE_DIR, "mods.en.json");
+  const jaPath = resolve(CACHE_DIR, "mods.ja.json");
+
+  await downloadIfMissing(SOURCES.en, enPath, refresh);
+  await downloadIfMissing(SOURCES.ja, jaPath, refresh);
+
+  log("loading EN mods…");
+  const enRaw = JSON.parse(await readFile(enPath, "utf-8"));
+  log("loading JA mods…");
+  const jaRaw = JSON.parse(await readFile(jaPath, "utf-8"));
+
+  log(
+    `source counts: EN=${Object.keys(enRaw).length}, JA=${Object.keys(jaRaw).length}`,
+  );
+
+  const out = {};
+  const stats = {
+    total: 0,
+    byKind: { normal: 0, essence: 0, corrupted: 0, desecrated: 0 },
+    byDomain: {},
+    skippedNoText: 0,
+    missingJa: 0,
+  };
+
+  for (const [key, v] of Object.entries(enRaw)) {
+    const kind = classify(v);
+    if (kind === null) continue;
+
+    // Skip mods with no display text AND no stats — these are pure metadata
+    // shells (e.g. EssenceGrantedPassive). Keep ones that have either text or
+    // stats for downstream tooling.
+    const hasText = typeof v.text === "string" && v.text.trim().length > 0;
+    const hasStats = Array.isArray(v.stats) && v.stats.length > 0;
+    if (!hasText && !hasStats) {
+      stats.skippedNoText++;
+      continue;
+    }
+
+    const ja = jaRaw[key];
+    if (!ja) stats.missingJa++;
+
+    const bundled = {
+      name_en: v.name ?? "",
+      name_ja: ja?.name ?? v.name ?? "",
+      text_en: v.text ?? "",
+      text_ja: ja?.text ?? v.text ?? "",
+      type: bundleType(v),
+      groups: Array.isArray(v.groups) ? [...v.groups] : [],
+      level: Number(v.required_level ?? 1) | 0,
+      stats: reduceStats(v.stats ?? []),
+      spawn: reduceSpawn(v.spawn_weights ?? []),
+      tags: mergeTags(v),
+    };
+
+    if (kind === "essence") bundled.essence = 1;
+    else if (kind === "corrupted") bundled.corrupt = 1;
+    else if (kind === "desecrated") bundled.desecrated = 1;
+    // normal: no flag
+
+    out[key] = bundled;
+    stats.total++;
+    stats.byKind[kind]++;
+    stats.byDomain[v.domain] = (stats.byDomain[v.domain] ?? 0) + 1;
+  }
+
+  // Always write a stable, deterministic key order (sorted) so diffs are clean.
+  const sorted = {};
+  for (const key of Object.keys(out).sort()) sorted[key] = out[key];
+
+  await mkdir(dirname(OUT_FILE), { recursive: true });
+  await writeFile(OUT_FILE, JSON.stringify(sorted, null, 0));
+  const sizeBytes = (await stat(OUT_FILE)).size;
+
+  log("==== bundle written ====");
+  log(`output: ${OUT_FILE}`);
+  log(`size: ${(sizeBytes / 1024).toFixed(1)} KB`);
+  log(`total mods: ${stats.total}`);
+  log(`by kind:`);
+  for (const [k, n] of Object.entries(stats.byKind)) log(`  ${k}: ${n}`);
+  log(`by domain:`);
+  for (const [d, n] of Object.entries(stats.byDomain).sort(
+    (a, b) => b[1] - a[1],
+  )) {
+    log(`  ${d}: ${n}`);
+  }
+  log(`skipped (no text & no stats): ${stats.skippedNoText}`);
+  log(`missing JA translation: ${stats.missingJa}`);
+
+  // Sanity guards — fail loudly on regressions
+  const guardrails = {
+    minTotal: 2000,
+    minDesecrated: 300,
+    minCorrupted: 100,
+    minEssence: 5,
+    minNormal: 1500,
+  };
+  const failures = [];
+  if (stats.total < guardrails.minTotal)
+    failures.push(`total ${stats.total} < ${guardrails.minTotal}`);
+  if (stats.byKind.desecrated < guardrails.minDesecrated)
+    failures.push(
+      `desecrated ${stats.byKind.desecrated} < ${guardrails.minDesecrated}`,
+    );
+  if (stats.byKind.corrupted < guardrails.minCorrupted)
+    failures.push(
+      `corrupted ${stats.byKind.corrupted} < ${guardrails.minCorrupted}`,
+    );
+  if (stats.byKind.essence < guardrails.minEssence)
+    failures.push(
+      `essence ${stats.byKind.essence} < ${guardrails.minEssence}`,
+    );
+  if (stats.byKind.normal < guardrails.minNormal)
+    failures.push(`normal ${stats.byKind.normal} < ${guardrails.minNormal}`);
+
+  if (failures.length > 0) {
+    console.error("[extract-mods] GUARDRAIL FAILURE:");
+    for (const f of failures) console.error("  -", f);
+    process.exit(2);
+  }
+  log("guardrails OK");
+}
+
+main().catch((err) => {
+  console.error("[extract-mods] FATAL:", err);
+  process.exit(1);
+});

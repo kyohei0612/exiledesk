@@ -2,8 +2,14 @@
  * POE2 Mod データの読み込みとユーティリティ
  *
  * バンドル `src/i18n/mods-bundle.json` は RePoE fork (poe2) の
- * mods.json から item domain + prefix/suffix + not essence-only に絞って
- * EN/JA を統合・スリム化したもの（約 0.7 MB / 1753 件）
+ * mods.json (English / Japanese) から以下を統合してスリム化:
+ *   - normal: domain in (item|misc|flask|jewel) かつ generation_type in (prefix|suffix)
+ *   - essence: is_essence_only=true（PoE2 のエッセンス専用 mod シェル）
+ *   - corrupt: generation_type=corrupted (Vaal Orb)
+ *   - desecrated: domain=desecrated (Abyss/Ulaman/Kurgal/Amanamu)
+ *
+ * 抽出は `scripts/extract-mods-bundle.mjs` で再現可能。
+ * License: コードは MIT (RePoE)、データは GGG 所有 (ToS 準拠)。
  */
 
 import modsBundleRaw from "../i18n/mods-bundle.json";
