@@ -358,12 +358,22 @@ function confirmPasteReview() {
     const skippedMods = skipped
       .map((s) => {
         const m = modByKey.value.get(s.key);
-        return m ? `${s.type === "prefix" ? "P" : "S"}: ${cleanModText(m.text_ja).split("\n").join(" / ")}` : "";
+        return m
+          ? `${s.type === "prefix" ? "P" : "S"}: ${cleanModText(m.text_ja).split("\n").join(" / ")}`
+          : "";
       })
       .filter(Boolean)
       .join("\n  - ");
     alert(
-      `プレ ${pCount}/3、サフ ${sCount}/3 で上限超過のため ${skipped.length} 件未反映:\n  - ${skippedMods}\n\n暗黙/除外/別 tier を見直すか、手動で追加してください。`,
+      [
+        `プレ ${pCount}/3、サフ ${sCount}/3 で上限超過のため ${skipped.length} 件未反映:`,
+        `  - ${skippedMods}`,
+        "",
+        "※ 同名グループに prefix/suffix 両方ある mod (レアリティ等) は値が高い時、",
+        "  実は両 variant が乗ってる可能性があります（例: 30% = prefix15% + suffix15%）。",
+        "  該当する場合は paste テキストを 2 行に分割して再解析してください。",
+        "暗黙/除外/別 tier 見直しでも調整可能です。",
+      ].join("\n"),
     );
   }
 }
@@ -514,42 +524,81 @@ interface MatchAssignment {
 }
 
 /**
- * パースしたコピペ mod 行を bundle にマッチング（2 パス方式）。
- * line → mod の対応も返すので、レビュー UI で tier 切替できる。
+ * パースしたコピペ mod 行を bundle にマッチング（2 パス + type-balancing）。
+ * - 同一テキストキーで prefix/suffix 両variantが存在する場合、現在の P/S 件数
+ *   に応じて自動的にバランスする側を選択（プレ3埋まってたらサフ側を選ぶ）
+ * - 1 行マッチ優先 → 残りで multi-line combo
  */
 function matchModLines(
   lines: string[],
   pool: Mod[],
 ): { assignments: MatchAssignment[]; matched: Mod[]; unmatched: string[] } {
-  const sortedPool = [...pool].sort((a, b) => b.level - a.level);
-  const keyToMod = new Map<string, Mod>();
-  for (const m of sortedPool) {
+  // 全 variant を保持（key → Mod[] / level 降順）
+  const keyToAllMods = new Map<string, Mod[]>();
+  for (const m of pool) {
     const k = modTextKey(m.text_ja);
-    if (k && !keyToMod.has(k)) keyToMod.set(k, m);
+    if (!k) continue;
+    const list = keyToAllMods.get(k) ?? [];
+    list.push(m);
+    keyToAllMods.set(k, list);
+  }
+  for (const list of keyToAllMods.values()) {
+    list.sort((a, b) => b.level - a.level);
   }
 
-  const N = lines.length;
+  let pCount = 0;
+  let sCount = 0;
   const assignments: MatchAssignment[] = [];
   const consumed = new Set<number>();
   const matchedKeys = new Set<string>();
 
+  /**
+   * 候補から最適 mod を選ぶ。
+   * - 同 key で prefix/suffix 両方ある場合、現状の P/S 件数で偏ってる側を補完
+   * - 既に matched なものは除外
+   */
+  function pickBalanced(candidates: Mod[]): Mod | null {
+    const avail = candidates.filter((c) => !matchedKeys.has(c.key));
+    if (avail.length === 0) return null;
+    let bestPrefix: Mod | null = null;
+    let bestSuffix: Mod | null = null;
+    for (const c of avail) {
+      if (c.type === "prefix" && !bestPrefix) bestPrefix = c;
+      if (c.type === "suffix" && !bestSuffix) bestSuffix = c;
+    }
+    if (bestPrefix && bestSuffix) {
+      // 偏り回避: 上限超過側を避ける
+      if (pCount >= 3 && sCount < 3) return bestSuffix;
+      if (sCount >= 3 && pCount < 3) return bestPrefix;
+      // 通常: 件数が少ない側を補完
+      if (pCount < sCount) return bestPrefix;
+      if (sCount < pCount) return bestSuffix;
+      // 同数 → 高 level (avail[0])
+      return avail[0];
+    }
+    return bestPrefix ?? bestSuffix;
+  }
+
   // Pass 1: 1 行マッチ
-  for (let i = 0; i < N; i++) {
+  for (let i = 0; i < lines.length; i++) {
     const k = modTextKey(lines[i]);
     if (!k) continue;
-    const found = keyToMod.get(k);
-    if (!found) continue;
-    if (matchedKeys.has(found.key)) continue;
-    assignments.push({ indices: [i], mod: found });
-    matchedKeys.add(found.key);
+    const candidates = keyToAllMods.get(k);
+    if (!candidates) continue;
+    const chosen = pickBalanced(candidates);
+    if (!chosen) continue;
+    assignments.push({ indices: [i], mod: chosen });
+    matchedKeys.add(chosen.key);
     consumed.add(i);
+    if (chosen.type === "prefix") pCount++;
+    else sCount++;
   }
 
   // Pass 2: 残った行の組合せ
-  const remaining = Array.from({ length: N }, (_, i) => i).filter(
+  const remaining = Array.from({ length: lines.length }, (_, i) => i).filter(
     (i) => !consumed.has(i),
   );
-  type Candidate = { indices: number[]; mod: Mod };
+  type Candidate = { indices: number[]; key: string };
   const candidates: Candidate[] = [];
   for (let k = 2; k <= 3; k++) {
     if (k > remaining.length) break;
@@ -558,8 +607,8 @@ function matchModLines(
       const segment = indices.map((i) => lines[i]).join("\n");
       const ck = modTextKey(segment);
       if (!ck) continue;
-      const found = keyToMod.get(ck);
-      if (found) candidates.push({ indices, mod: found });
+      if (!keyToAllMods.has(ck)) continue;
+      candidates.push({ indices, key: ck });
     }
   }
   candidates.sort((a, b) => {
@@ -569,11 +618,15 @@ function matchModLines(
     return a.indices[0] - b.indices[0];
   });
   for (const c of candidates) {
-    if (matchedKeys.has(c.mod.key)) continue;
     if (c.indices.some((i) => consumed.has(i))) continue;
-    assignments.push({ indices: c.indices, mod: c.mod });
-    matchedKeys.add(c.mod.key);
+    const allVariants = keyToAllMods.get(c.key) ?? [];
+    const chosen = pickBalanced(allVariants);
+    if (!chosen) continue;
+    assignments.push({ indices: c.indices, mod: chosen });
+    matchedKeys.add(chosen.key);
     c.indices.forEach((i) => consumed.add(i));
+    if (chosen.type === "prefix") pCount++;
+    else sCount++;
   }
 
   const matched = assignments.map((a) => a.mod);
@@ -589,7 +642,14 @@ function applyPaste() {
   }
   if (parsed.itemLevel) slot.value.itemLevel = parsed.itemLevel;
   slot.value.parsedName = parsed.name;
-  slot.value.parsedBase = parsed.base;
+  // ベース判定: 1行目（magic）or 2行目（rare）から base パターン一致を選ぶ
+  const re = BASE_PATTERNS[slot.value.itemTag];
+  let baseName = parsed.base;
+  if (re) {
+    if (parsed.name && re.test(parsed.name)) baseName = parsed.name;
+    else if (parsed.base && re.test(parsed.base)) baseName = parsed.base;
+  }
+  slot.value.parsedBase = baseName;
   slot.value.parsedQuality = parsed.quality;
   slot.value.parsedQualityCategory = parsed.qualityCategory;
 
