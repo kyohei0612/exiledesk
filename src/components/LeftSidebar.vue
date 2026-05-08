@@ -6,7 +6,7 @@ interface NavItem {
   id: string;
   icon: string;
   label: string;
-  group: "top" | "self" | "economy" | "library" | "bottom";
+  group: "top" | "self" | "economy" | "tools" | "library" | "bottom";
 }
 
 const items: NavItem[] = [
@@ -21,6 +21,10 @@ const items: NavItem[] = [
   { id: "econ-trending", icon: "📊", label: "需要急騰", group: "economy" },
   { id: "econ-search", icon: "🔍", label: "商品検索", group: "economy" },
 
+  { id: "tool-craft", icon: "🔨", label: "クラフト相談", group: "tools" },
+  { id: "tool-dps", icon: "📈", label: "装備 DPS 比較", group: "tools" },
+  { id: "tool-ideal", icon: "🎯", label: "理想装備 vs 現在", group: "tools" },
+
   { id: "lib-items", icon: "📖", label: "アイテム図鑑", group: "library" },
   { id: "lib-skills", icon: "🪄", label: "スキルDB", group: "library" },
   { id: "lib-bosses", icon: "🗺️", label: "ボス情報", group: "library" },
@@ -33,17 +37,18 @@ const groupLabels: Record<string, string | null> = {
   top: null,
   self: "自分",
   economy: "経済",
+  tools: "ツール",
   library: "ライブラリ",
   bottom: null,
 };
 
-const groups = (["top", "self", "economy", "library", "bottom"] as const).map(
-  (key) => ({
-    key,
-    label: groupLabels[key],
-    items: items.filter((i) => i.group === key),
-  }),
-);
+const groups = (
+  ["top", "self", "economy", "tools", "library", "bottom"] as const
+).map((key) => ({
+  key,
+  label: groupLabels[key],
+  items: items.filter((i) => i.group === key),
+}));
 </script>
 
 <template>

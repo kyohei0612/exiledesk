@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CurrencyRanking from "../views/CurrencyRanking.vue";
+import CraftHelper from "../views/CraftHelper.vue";
 
 defineProps<{ activeNav: string }>();
 
@@ -11,6 +12,8 @@ const titles: Record<string, string> = {
   "char-skills": "⚡ スキル",
   "econ-trending": "📊 需要急騰アイテム",
   "econ-search": "🔍 商品検索",
+  "tool-dps": "📈 装備 DPS 比較",
+  "tool-ideal": "🎯 理想装備 vs 現在",
   "lib-items": "📖 アイテム図鑑",
   "lib-skills": "🪄 スキルDB",
   "lib-bosses": "🗺️ ボス情報",
@@ -30,6 +33,7 @@ const descriptions: Record<string, string> = {
 <template>
   <main class="flex-1 overflow-hidden">
     <CurrencyRanking v-if="activeNav === 'econ-currency'" />
+    <CraftHelper v-else-if="activeNav === 'tool-craft'" />
 
     <div v-else class="p-8 overflow-auto h-full">
       <h2 class="text-2xl font-semibold mb-2">
