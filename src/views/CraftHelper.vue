@@ -2,10 +2,11 @@
 import { ref, computed, watch, onMounted } from "vue";
 import {
   ITEM_TAGS,
-  getMaxTierMods,
+  getModGroupsForItem,
   cleanModText,
   modWeightFor,
   type Mod,
+  type ModGroup,
 } from "../data/mods";
 import { jaTag, tagColor } from "../i18n/mod-tags-ja";
 
@@ -93,36 +94,99 @@ watch(
 // ============== 現スロット参照 ==============
 const slot = computed(() => slots.value[activeSlotId.value]);
 
-const availableMods = computed(() =>
-  getMaxTierMods(slot.value.itemTag, slot.value.itemLevel),
+const availableGroups = computed(() =>
+  getModGroupsForItem(slot.value.itemTag, slot.value.itemLevel),
 );
 
-const filteredMods = computed(() => {
+/** group の最高 tier (T1) でフィルタ。group 全体を残すか落とすかの判定に使う */
+const filteredGroups = computed(() => {
   const q = search.value.trim().toLowerCase();
-  let list = availableMods.value;
+  let list = availableGroups.value;
   if (q) {
-    list = list.filter(
-      (m) =>
-        cleanModText(m.text_ja).toLowerCase().includes(q) ||
-        cleanModText(m.text_en).toLowerCase().includes(q) ||
-        m.name_ja.toLowerCase().includes(q),
-    );
+    list = list.filter((g) => {
+      // group 内のいずれかの tier がマッチすれば group ごと残す
+      return g.tiers.some(
+        (m) =>
+          cleanModText(m.text_ja).toLowerCase().includes(q) ||
+          cleanModText(m.text_en).toLowerCase().includes(q) ||
+          m.name_ja.toLowerCase().includes(q),
+      );
+    });
   }
   return list;
 });
 
-const prefixMods = computed(() =>
-  filteredMods.value.filter((m) => m.type === "prefix"),
+const prefixGroups = computed(() =>
+  filteredGroups.value.filter((g) => g.type === "prefix"),
 );
-const suffixMods = computed(() =>
-  filteredMods.value.filter((m) => m.type === "suffix"),
+const suffixGroups = computed(() =>
+  filteredGroups.value.filter((g) => g.type === "suffix"),
 );
+
+/** 全 mod のキー → mod ルックアップ（selectedMods 表示用） */
+const modByKey = computed(() => {
+  const map = new Map<string, Mod>();
+  for (const g of availableGroups.value) {
+    for (const t of g.tiers) map.set(t.key, t);
+  }
+  return map;
+});
 
 const selectedMods = computed(() =>
   slot.value.selectedKeys
-    .map((k) => availableMods.value.find((m) => m.key === k))
+    .map((k) => modByKey.value.get(k))
     .filter((m): m is Mod => !!m),
 );
+
+/** group 内で選択中の tier (なければ null) */
+function selectedTierIn(group: ModGroup): Mod | null {
+  for (const t of group.tiers) {
+    if (slot.value.selectedKeys.includes(t.key)) return t;
+  }
+  return null;
+}
+
+/** group 内の tier の通し番号 (T1=0, T2=1, ...) */
+function tierIndexOf(group: ModGroup, mod: Mod): number {
+  return group.tiers.findIndex((t) => t.key === mod.key);
+}
+
+// ============== Tier ピッカー ==============
+const tierPickerGroup = ref<ModGroup | null>(null);
+
+function openTierPicker(group: ModGroup) {
+  tierPickerGroup.value = group;
+}
+
+function closeTierPicker() {
+  tierPickerGroup.value = null;
+}
+
+function selectTier(group: ModGroup, tier: Mod) {
+  const set = new Set(slot.value.selectedKeys);
+  // 同 group の既存選択を一旦外す
+  for (const t of group.tiers) set.delete(t.key);
+  // タイプ別上限チェック
+  const otherSelectedOfType = Array.from(set)
+    .map((k) => modByKey.value.get(k))
+    .filter((m): m is Mod => !!m && m.type === tier.type).length;
+  if (otherSelectedOfType >= 3) {
+    alert(
+      `${tier.type === "prefix" ? "プレフィックス" : "サフィックス"} は最大 3 つまでです`,
+    );
+    return;
+  }
+  set.add(tier.key);
+  slot.value.selectedKeys = Array.from(set);
+  closeTierPicker();
+}
+
+function deselectGroup(group: ModGroup) {
+  const set = new Set(slot.value.selectedKeys);
+  for (const t of group.tiers) set.delete(t.key);
+  slot.value.selectedKeys = Array.from(set);
+  closeTierPicker();
+}
 const selectedPrefixCount = computed(
   () => selectedMods.value.filter((m) => m.type === "prefix").length,
 );
@@ -133,18 +197,12 @@ const slotSelCount = computed(
   () => (id: SlotId) => slots.value[id].selectedKeys.length,
 );
 
+/** 全 tier をフラット化したリスト（paste マッチング・starter ドロップダウン用） */
+const allAvailableMods = computed(() =>
+  availableGroups.value.flatMap((g) => g.tiers),
+);
+
 // ============== 操作 ==============
-function toggleMod(m: Mod) {
-  const set = new Set(slot.value.selectedKeys);
-  if (set.has(m.key)) {
-    set.delete(m.key);
-  } else {
-    if (m.type === "prefix" && selectedPrefixCount.value >= 3) return;
-    if (m.type === "suffix" && selectedSuffixCount.value >= 3) return;
-    set.add(m.key);
-  }
-  slot.value.selectedKeys = Array.from(set);
-}
 
 function clearSlot() {
   if (!confirm(`「${slotLabel(activeSlotId.value)}」スロットをクリアしますか？`))
@@ -277,7 +335,7 @@ function applyPaste() {
 
   const { matched, unmatched } = matchModLines(
     parsed.modLines,
-    availableMods.value,
+    allAvailableMods.value,
   );
 
   // プレ/サフ 上限を尊重して埋める
@@ -319,12 +377,8 @@ function buildAiPrompt(): string {
   const itemLabel =
     ITEM_TAGS.find((t) => t.id === slot.value.itemTag)?.label ??
     slot.value.itemTag;
-  const starterP = availableMods.value.find(
-    (m) => m.key === slot.value.starterPrefix,
-  );
-  const starterS = availableMods.value.find(
-    (m) => m.key === slot.value.starterSuffix,
-  );
+  const starterP = modByKey.value.get(slot.value.starterPrefix);
+  const starterS = modByKey.value.get(slot.value.starterSuffix);
   const hasStarterPrefix = !!starterP;
   const hasStarterSuffix = !!starterS;
   const needSuggestStarter = !hasStarterPrefix || !hasStarterSuffix;
@@ -471,7 +525,7 @@ function onAskAi() {
         <span class="text-[var(--color-accent)]">{{ selectedPrefixCount }}/3 P</span>
         +
         <span class="text-[var(--color-accent)]">{{ selectedSuffixCount }}/3 S</span>
-        ／ 候補 {{ filteredMods.length }} 件
+        ／ 候補 {{ filteredGroups.length }} group
       </span>
     </div>
 
@@ -504,46 +558,47 @@ function onAskAi() {
       </div>
     </details>
 
-    <!-- mod ピッカー (プレフィックス・サフィックス 2 列) -->
+    <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
     <div class="grid grid-cols-2 gap-4">
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
         <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)]">
-          プレフィックス（{{ prefixMods.length }} 候補）
+          プレフィックス（{{ prefixGroups.length }} group）
         </div>
         <div class="max-h-80 overflow-y-auto divide-y divide-[var(--color-border)]">
           <button
-            v-for="m in prefixMods"
-            :key="m.key"
-            @click="toggleMod(m)"
+            v-for="g in prefixGroups"
+            :key="g.id"
+            @click="openTierPicker(g)"
             :class="[
               'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
-              slot.selectedKeys.includes(m.key)
+              selectedTierIn(g)
                 ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
                 : 'border-l-2 border-transparent',
             ]"
           >
-            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ m.level }}</span>
-            <span class="flex-1">
-              <span class="text-[var(--color-text)]">{{ cleanModText(m.text_ja) }}</span>
-              <span v-if="m.tags && m.tags.length" class="flex gap-1 flex-wrap mt-1">
+            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
+            <span class="flex-1 min-w-0">
+              <span class="text-[var(--color-text)] whitespace-pre-line block">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
                 <span
-                  v-for="t in m.tags"
+                  v-for="t in g.tiers[0].tags"
                   :key="t"
                   :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
-                >
-                  {{ jaTag(t) }}
-                </span>
+                >{{ jaTag(t) }}</span>
               </span>
               <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
-                {{ m.name_ja || m.name_en }} · {{ m.groups[0] }}
+                {{ g.tiers[0].name_ja || g.tiers[0].name_en }} · {{ g.id }}
               </span>
             </span>
-            <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">
-              w{{ modWeightFor(m, slot.itemTag) }}
+            <span class="flex flex-col items-end shrink-0 gap-0.5">
+              <span class="text-[10px] text-[var(--color-text-muted)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
+              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--color-text-muted)]">{{ g.tiers.length }} tiers</span>
+              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--color-accent)] font-semibold">
+                T{{ tierIndexOf(g, selectedTierIn(g)!) + 1 }} ✓
+              </span>
             </span>
-            <span v-if="slot.selectedKeys.includes(m.key)" class="text-[var(--color-accent)]">✓</span>
           </button>
-          <p v-if="!prefixMods.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+          <p v-if="!prefixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
             該当なし
           </p>
         </div>
@@ -551,30 +606,43 @@ function onAskAi() {
 
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
         <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)]">
-          サフィックス（{{ suffixMods.length }} 候補）
+          サフィックス（{{ suffixGroups.length }} group）
         </div>
         <div class="max-h-80 overflow-y-auto divide-y divide-[var(--color-border)]">
           <button
-            v-for="m in suffixMods"
-            :key="m.key"
-            @click="toggleMod(m)"
+            v-for="g in suffixGroups"
+            :key="g.id"
+            @click="openTierPicker(g)"
             :class="[
               'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
-              slot.selectedKeys.includes(m.key)
+              selectedTierIn(g)
                 ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
                 : 'border-l-2 border-transparent',
             ]"
           >
-            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ m.level }}</span>
-            <span class="flex-1">
-              <span class="text-[var(--color-text)]">{{ cleanModText(m.text_ja) }}</span>
+            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
+            <span class="flex-1 min-w-0">
+              <span class="text-[var(--color-text)] whitespace-pre-line block">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+              <span v-if="g.tiers[0].tags && g.tiers[0].tags.length" class="flex gap-1 flex-wrap mt-1">
+                <span
+                  v-for="t in g.tiers[0].tags"
+                  :key="t"
+                  :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
+                >{{ jaTag(t) }}</span>
+              </span>
               <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
-                {{ m.name_ja || m.name_en }} · {{ m.groups[0] }}
+                {{ g.tiers[0].name_ja || g.tiers[0].name_en }} · {{ g.id }}
               </span>
             </span>
-            <span v-if="slot.selectedKeys.includes(m.key)" class="text-[var(--color-accent)]">✓</span>
+            <span class="flex flex-col items-end shrink-0 gap-0.5">
+              <span class="text-[10px] text-[var(--color-text-muted)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
+              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--color-text-muted)]">{{ g.tiers.length }} tiers</span>
+              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--color-accent)] font-semibold">
+                T{{ tierIndexOf(g, selectedTierIn(g)!) + 1 }} ✓
+              </span>
+            </span>
           </button>
-          <p v-if="!suffixMods.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+          <p v-if="!suffixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
             該当なし
           </p>
         </div>
@@ -647,8 +715,8 @@ function onAskAi() {
           class="px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
         >
           <option value="">プレフィックス: 指定なし</option>
-          <option v-for="m in prefixMods" :key="m.key" :value="m.key">
-            {{ cleanModText(m.text_ja) }} (lv{{ m.level }})
+          <option v-for="g in prefixGroups" :key="g.id" :value="g.tiers[0].key">
+            {{ cleanModText(g.tiers[0].text_ja).split("\n").join(" / ") }} (lv{{ g.tiers[0].level }})
           </option>
         </select>
         <select
@@ -656,8 +724,8 @@ function onAskAi() {
           class="px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
         >
           <option value="">サフィックス: 指定なし</option>
-          <option v-for="m in suffixMods" :key="m.key" :value="m.key">
-            {{ cleanModText(m.text_ja) }} (lv{{ m.level }})
+          <option v-for="g in suffixGroups" :key="g.id" :value="g.tiers[0].key">
+            {{ cleanModText(g.tiers[0].text_ja).split("\n").join(" / ") }} (lv{{ g.tiers[0].level }})
           </option>
         </select>
       </div>
@@ -684,6 +752,76 @@ function onAskAi() {
         Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv・tags・weight + 品質情報を渡します。
         AI プロンプトには冒涜・エッセンス・パーフェクトエッセンス・コラプト機構を含む POE2 クラフト機構を考慮するよう指示。
       </p>
+    </div>
+
+    <!-- ========== Tier ピッカー モーダル ========== -->
+    <div
+      v-if="tierPickerGroup"
+      class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      @click.self="closeTierPicker"
+    >
+      <div
+        class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+      >
+        <div class="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-semibold">
+              <span
+                :class="
+                  tierPickerGroup.type === 'prefix'
+                    ? 'text-blue-300'
+                    : 'text-amber-300'
+                "
+              >{{ tierPickerGroup.type === "prefix" ? "プレフィックス" : "サフィックス" }}</span>
+              ：<span class="text-[var(--color-accent)]">{{ tierPickerGroup.id }}</span>
+            </h3>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+              {{ tierPickerGroup.tiers.length }} tier から選択（T1 = 最高 tier）
+            </p>
+          </div>
+          <button
+            @click="closeTierPicker"
+            class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] w-7 h-7 rounded hover:bg-[var(--color-surface-2)] flex items-center justify-center"
+          >✕</button>
+        </div>
+        <div class="overflow-y-auto divide-y divide-[var(--color-border)] flex-1">
+          <button
+            v-for="(t, i) in tierPickerGroup.tiers"
+            :key="t.key"
+            @click="selectTier(tierPickerGroup, t)"
+            :class="[
+              'w-full text-left px-4 py-3 text-sm hover:bg-[var(--color-surface-2)] transition flex items-start gap-3',
+              slot.selectedKeys.includes(t.key)
+                ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
+                : 'border-l-2 border-transparent',
+            ]"
+          >
+            <span class="text-[var(--color-accent)] font-semibold w-10 shrink-0">T{{ i + 1 }}</span>
+            <span class="text-[var(--color-text-muted)] font-mono w-12 shrink-0">lv{{ t.level }}</span>
+            <span class="flex-1 whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
+            <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">w{{ modWeightFor(t, slot.itemTag) }}</span>
+            <span v-if="slot.selectedKeys.includes(t.key)" class="text-[var(--color-accent)] shrink-0">✓</span>
+          </button>
+        </div>
+        <div class="px-4 py-3 border-t border-[var(--color-border)] flex items-center justify-between">
+          <button
+            v-if="selectedTierIn(tierPickerGroup)"
+            @click="deselectGroup(tierPickerGroup)"
+            class="text-xs text-red-300 hover:text-red-200 transition"
+          >
+            🗑️ この group の選択を解除
+          </button>
+          <span v-else class="text-[10px] text-[var(--color-text-muted)]">
+            ※ クリックすると選択 → 自動で閉じます
+          </span>
+          <button
+            @click="closeTierPicker"
+            class="ml-auto text-xs px-3 py-1 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition"
+          >
+            閉じる
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

@@ -39,6 +39,47 @@ export function modWeightFor(mod: Mod, itemTag: string): number {
   return sw?.w ?? 0;
 }
 
+/** mod group：同 group 内に T1 / T2 / T3 ... と複数 tier */
+export interface ModGroup {
+  id: string;
+  type: "prefix" | "suffix";
+  /** 高 lv → 低 lv の降順。tiers[0] が T1（最高 tier） */
+  tiers: Mod[];
+}
+
+/**
+ * 指定アイテムタグ + ilvl で、各 group の利用可能な全 tier を含むグループ配列を返す。
+ * tier 別選択 UI で使う。
+ */
+export function getModGroupsForItem(
+  itemTag: string,
+  maxLevel = 99,
+): ModGroup[] {
+  const filtered = allMods.filter(
+    (m) => modCanSpawnOn(m, itemTag) && m.level <= maxLevel,
+  );
+  const byGroup = new Map<string, Mod[]>();
+  for (const m of filtered) {
+    const g = m.groups[0];
+    if (!g) continue;
+    if (!byGroup.has(g)) byGroup.set(g, []);
+    byGroup.get(g)!.push(m);
+  }
+  const groups: ModGroup[] = [];
+  for (const [gid, mods] of byGroup.entries()) {
+    mods.sort((a, b) => b.level - a.level);
+    groups.push({
+      id: gid,
+      type: mods[0].type,
+      tiers: mods,
+    });
+  }
+  return groups.sort((a, b) => {
+    if (a.type !== b.type) return a.type === "prefix" ? -1 : 1;
+    return a.tiers[0].text_ja.localeCompare(b.tiers[0].text_ja, "ja");
+  });
+}
+
 const raw = modsBundleRaw as Record<string, Omit<Mod, "key">>;
 export const allMods: Mod[] = Object.entries(raw).map(([key, m]) => ({
   key,
