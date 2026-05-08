@@ -1,32 +1,53 @@
 /**
  * POE2 アイテムカテゴリ ID の日本語ローカライズ
  * poe2scout の CategoryApiId 値を日本語に変換する
+ *
+ * v0 段階の暫定マップ。POE2 公式日本語クライアントは **基本カタカナ語**を使うため、
+ * 「遠征」ではなく「エクスペディション」のように転写する。
+ *
+ * **TODO**: 将来 RePoE fork (poe2) の正規 JA データに置換し、機械的に検証する。
+ *   - https://github.com/repoe-fork/poe2
  */
 
 const categoryJaMap: Record<string, string> = {
+  // === 通貨基本 ===
   currency: "通貨",
+  shard: "シャード",
+  catalyst: "カタリスト",
+  splinter: "スプリンター",
+  fragment: "フラグメント",
+  fragments: "フラグメント",
+
+  // === 強化系（POE1 系譜） ===
   essence: "エッセンス",
+  essences: "エッセンス",
   omen: "オーメン",
-  shard: "かけら",
-  distilled: "蒸留",
-  bone: "骨片",
-  catalyst: "触媒",
-  expedition: "遠征",
-  sanctum: "聖域",
-  ritual: "儀式",
-  delirium: "錯乱",
+  rune: "ルーン",
+  runes: "ルーン",
+  jewel: "ジュエル",
+
+  // === リーグ機構（POE2 公式日本語はカタカナ転写） ===
+  expedition: "エクスペディション",
+  sanctum: "サンクタム",
+  ritual: "リチュアル",
+  delirium: "ディリリアム",
   breach: "ブリーチ",
   ultimatum: "アルティメイタム",
   abyss: "アビス",
-  fragment: "フラグメント",
-  splinter: "破片",
+  incursion: "インカージョン",
+
+  // === POE2 固有 ===
   vaal: "ヴァール",
-  rune: "ルーン",
+  bone: "ボーン",
+  distilled: "蒸留した感情",
   soulcore: "ソウルコア",
   tablet: "タブレット",
-  jewel: "ジュエル",
+  idol: "アイドル",
+  lineagesupportgems: "ラインエイジサポートジェム",
+  uncutgems: "未加工ジェム",
+  vaultkeys: "聖遺物の鍵",
 
-  // ジェム系（参考、Currency Exchange に通常無いが将来用）
+  // === ジェム系（参考、Currency Exchange に通常無いが将来用） ===
   "skill-gem": "スキルジェム",
   "support-gem": "サポートジェム",
   "spirit-gem": "スピリットジェム",

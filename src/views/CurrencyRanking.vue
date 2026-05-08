@@ -18,6 +18,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
 const categoryFilter = ref<string>("all");
+const flippedPairs = ref<Set<number>>(new Set());
 
 async function loadLeagues() {
   try {
@@ -37,13 +38,13 @@ async function refresh() {
   loading.value = true;
   error.value = null;
   try {
-    // リーグ切り替え時は DivinePrice も更新
     const leagueData = leagues.value.find((l) => l.Value === league.value);
     if (leagueData) divinePrice.value = leagueData.DivinePrice || 1;
 
     const pairs = await fetchSnapshotPairs(league.value);
     ranking.value = rankPairsByVolume(pairs, divinePrice.value);
     lastUpdated.value = new Date();
+    flippedPairs.value = new Set(); // リーグ切替時に flip 状態リセット
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -55,7 +56,18 @@ function onLeagueChange() {
   refresh();
 }
 
-/** 数値を小数点第1位までフォーマット。<0.1 は ">0.1未満"、>=10000 はk/M 表記 */
+function toggleFlip(id: number) {
+  const next = new Set(flippedPairs.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  flippedPairs.value = next;
+}
+
+function isFlipped(id: number): boolean {
+  return flippedPairs.value.has(id);
+}
+
+/** 数値を小数点第1位までフォーマット */
 function fmt1(n: number): string {
   if (!Number.isFinite(n) || n === 0) return "—";
   const abs = Math.abs(n);
@@ -74,7 +86,6 @@ function formatTime(d: Date | null): string {
   });
 }
 
-/** ranking に出現するカテゴリ ID 一覧（重複なし、件数降順） */
 const availableCategories = computed(() => {
   const counts = new Map<string, number>();
   for (const r of ranking.value) {
@@ -86,12 +97,12 @@ const availableCategories = computed(() => {
     .map(([id]) => id);
 });
 
-/** 種類フィルタを適用したペアリスト */
 const filteredRanking = computed(() => {
   if (categoryFilter.value === "all") return ranking.value;
+  // 両側が選択カテゴリのペアのみ表示（純粋な X 系ペアに絞る）
   return ranking.value.filter(
     (r) =>
-      r.oneCategoryApiId === categoryFilter.value ||
+      r.oneCategoryApiId === categoryFilter.value &&
       r.twoCategoryApiId === categoryFilter.value,
   );
 });
@@ -102,6 +113,11 @@ const divinePairs = computed(() =>
 const otherPairs = computed(() =>
   filteredRanking.value.filter((r) => !r.containsDivine),
 );
+
+onMounted(async () => {
+  await loadLeagues();
+  refresh();
+});
 </script>
 
 <template>
@@ -121,14 +137,10 @@ const otherPairs = computed(() =>
         <select
           v-model="categoryFilter"
           class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
-          :title="'種類で絞り込み'"
+          title="種類で絞り込み"
         >
           <option value="all">すべての種類</option>
-          <option
-            v-for="cat in availableCategories"
-            :key="cat"
-            :value="cat"
-          >
+          <option v-for="cat in availableCategories" :key="cat" :value="cat">
             {{ jaCategory(cat) }}
           </option>
         </select>
@@ -183,7 +195,7 @@ const otherPairs = computed(() =>
           </tr>
         </thead>
         <tbody>
-          <!-- Divine 含むペア -->
+          <!-- Divine 関連ペア -->
           <tr v-if="divinePairs.length" class="bg-[var(--color-surface)]/50">
             <td colspan="4" class="px-4 py-2 text-xs uppercase tracking-wider text-[var(--color-accent)]">
               💎 神（Divine）関連ペア
@@ -199,33 +211,46 @@ const otherPairs = computed(() =>
             </td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <img
-                  v-if="p.oneIcon"
-                  :src="p.oneIcon"
-                  :alt="p.oneText"
-                  class="w-6 h-6 object-contain"
-                  loading="lazy"
-                />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
-                <img
-                  v-if="p.twoIcon"
-                  :src="p.twoIcon"
-                  :alt="p.twoText"
-                  class="w-6 h-6 object-contain"
-                  loading="lazy"
-                />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                <template v-if="!isFlipped(p.id)">
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                  <button
+                    @click="toggleFlip(p.id)"
+                    class="text-[var(--color-text-muted)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] hover:text-[var(--color-accent)] transition cursor-pointer"
+                    title="ペアを反転"
+                  >↔</button>
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                </template>
+                <template v-else>
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                  <button
+                    @click="toggleFlip(p.id)"
+                    class="text-[var(--color-accent)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] transition cursor-pointer"
+                    title="元に戻す"
+                  >↔</button>
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                </template>
               </div>
             </td>
             <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
               {{ fmt1(p.volume) }}
             </td>
             <td class="px-4 py-2 text-right font-mono text-xs">
-              <span class="text-[var(--color-text)]">1 神</span>
-              <span class="text-[var(--color-text-muted)]"> = </span>
-              <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
-              <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
+              <template v-if="!isFlipped(p.id)">
+                <span class="text-[var(--color-text)]">1 神</span>
+                <span class="text-[var(--color-text-muted)]"> = </span>
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
+                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
+              </template>
+              <template v-else>
+                <span class="text-[var(--color-text)]">1 {{ jaCurrency(p.twoText) }}</span>
+                <span class="text-[var(--color-text-muted)]"> = </span>
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate > 0 ? 1 / p.twoDivineRate : 0) }}</span>
+                <span class="text-[var(--color-text-muted)]"> 神</span>
+              </template>
             </td>
           </tr>
 
@@ -245,23 +270,28 @@ const otherPairs = computed(() =>
             </td>
             <td class="px-4 py-2">
               <div class="flex items-center gap-2 flex-wrap">
-                <img
-                  v-if="p.oneIcon"
-                  :src="p.oneIcon"
-                  :alt="p.oneText"
-                  class="w-6 h-6 object-contain"
-                  loading="lazy"
-                />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
-                <img
-                  v-if="p.twoIcon"
-                  :src="p.twoIcon"
-                  :alt="p.twoText"
-                  class="w-6 h-6 object-contain"
-                  loading="lazy"
-                />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                <template v-if="!isFlipped(p.id)">
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                  <button
+                    @click="toggleFlip(p.id)"
+                    class="text-[var(--color-text-muted)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] hover:text-[var(--color-accent)] transition cursor-pointer"
+                    title="ペアを反転"
+                  >↔</button>
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                </template>
+                <template v-else>
+                  <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                  <button
+                    @click="toggleFlip(p.id)"
+                    class="text-[var(--color-accent)] mx-1 px-2 py-0.5 rounded hover:bg-[var(--color-surface-2)] transition cursor-pointer"
+                    title="元に戻す"
+                  >↔</button>
+                  <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
+                  <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
+                </template>
               </div>
             </td>
             <td class="px-4 py-2 text-right text-[var(--color-accent)] font-mono">
@@ -270,11 +300,20 @@ const otherPairs = computed(() =>
             <td class="px-4 py-2 text-right font-mono text-xs">
               <span class="text-[var(--color-text)]">1 神</span>
               <span class="text-[var(--color-text-muted)]"> = </span>
-              <span class="text-[var(--color-accent)]">{{ fmt1(p.oneDivineRate) }}</span>
-              <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.oneText) }}</span>
-              <span class="text-[var(--color-text-muted)]"> / </span>
-              <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
-              <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
+              <template v-if="!isFlipped(p.id)">
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.oneDivineRate) }}</span>
+                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.oneText) }}</span>
+                <span class="text-[var(--color-text-muted)]"> / </span>
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
+                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
+              </template>
+              <template v-else>
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.twoDivineRate) }}</span>
+                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.twoText) }}</span>
+                <span class="text-[var(--color-text-muted)]"> / </span>
+                <span class="text-[var(--color-accent)]">{{ fmt1(p.oneDivineRate) }}</span>
+                <span class="text-[var(--color-text-muted)]"> {{ jaCurrency(p.oneText) }}</span>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -291,7 +330,7 @@ const otherPairs = computed(() =>
       >
       ／
       <span class="font-mono">{{ league }}</span>
-      ／日本語名は v0 暫定（RePoE fork JA データに後日差替え）
+      ／日本語名は v0 暫定（RePoE fork JA データに後日差替えで正規化）
       ／ジェム・ユニーク等の種類別ランキングは別ビューで対応予定
     </p>
   </div>
