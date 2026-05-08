@@ -629,6 +629,35 @@ function matchModLines(
     else sCount++;
   }
 
+  // 自動分割: rare 期待値は 6 mods。マッチが 5 で、既マッチに prefix/suffix
+  // 両 variant 存在の splittable mod があれば、相手 variant を追加して 6 に。
+  // （レアリティ等、POE2 では合計表記される可能性がある mod 用）
+  if (assignments.length === 5) {
+    for (let i = 0; i < assignments.length; i++) {
+      if (assignments.length >= 6) break;
+      const a = assignments[i];
+      const myKey = modTextKey(a.mod.text_ja);
+      const opposite = pool.find(
+        (m) =>
+          modTextKey(m.text_ja) === myKey &&
+          m.type !== a.mod.type &&
+          !matchedKeys.has(m.key),
+      );
+      if (!opposite) continue;
+      if (opposite.type === "prefix" && pCount >= 3) continue;
+      if (opposite.type === "suffix" && sCount >= 3) continue;
+      // 同 lv の variant を追加（半分扱いは tier picker で調整）
+      assignments.splice(i + 1, 0, {
+        indices: [...a.indices],
+        mod: opposite,
+      });
+      matchedKeys.add(opposite.key);
+      if (opposite.type === "prefix") pCount++;
+      else sCount++;
+      i++; // skip the inserted entry
+    }
+  }
+
   const matched = assignments.map((a) => a.mod);
   const unmatched = lines.filter((_, i) => !consumed.has(i));
   return { assignments, matched, unmatched };
