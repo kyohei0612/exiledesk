@@ -78,10 +78,20 @@ async function downloadIfMissing(url, dest, refresh) {
 
 /**
  * @param {object} v RePoE raw mod
+ * @param {string} key RePoE key (used to detect EssenceDisplay* OR-typed essence mods)
  * @returns {"essence"|"corrupted"|"desecrated"|"normal"|null}
  */
-function classify(v) {
+function classify(v, key) {
   if (v.is_essence_only === true) return "essence";
+  // POE2 essence の OR タイプ mod (RePoE では gt=unique でモデリング)
+  // 例: EssenceDisplayAttributes1-5 (筋力、器用さまたは知性), EssenceDisplayDefences1-4 (アーマー、回避力またはエナジーシールド)
+  if (
+    key.startsWith("EssenceDisplay") &&
+    v.domain === "item" &&
+    v.generation_type === "unique"
+  ) {
+    return "essence";
+  }
   if (v.generation_type === "corrupted") return "corrupted";
   if (v.domain === "desecrated") return "desecrated";
   if (
@@ -178,7 +188,7 @@ async function main() {
   };
 
   for (const [key, v] of Object.entries(enRaw)) {
-    const kind = classify(v);
+    const kind = classify(v, key);
     if (kind === null) continue;
 
     // Skip mods with no display text AND no stats — these are pure metadata
