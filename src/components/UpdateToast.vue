@@ -6,11 +6,13 @@
  * 新版があればトーストを表示、[今すぐ更新] でダウンロード + 署名検証 +
  * インストール + 再起動。Phase 1 設計 (2026-05-19): app-self-update.md 参照。
  */
-import { onMounted, ref } from "vue";
+import { onMounted, ref, shallowRef, markRaw } from "vue";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
-const update = ref<Update | null>(null);
+// Update は class インスタンス（#privateField 持ち）。Vue の reactive proxy で
+// 私有フィールドアクセスが壊れるため shallowRef + markRaw を併用する。
+const update = shallowRef<Update | null>(null);
 const phase = ref<"idle" | "checking" | "available" | "downloading" | "installing" | "done" | "error" | "safe-mode">("idle");
 const errorMsg = ref<string | null>(null);
 const downloadedBytes = ref(0);
@@ -55,7 +57,7 @@ async function runCheck() {
   try {
     const u = await check();
     if (u) {
-      update.value = u;
+      update.value = markRaw(u);
       phase.value = "available";
     } else {
       phase.value = "idle";

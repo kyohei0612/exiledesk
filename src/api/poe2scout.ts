@@ -5,16 +5,20 @@
  * Repo: https://github.com/poe2scout/poe2scout
  * OpenAPI: https://poe2scout.com/api/openapi.json
  *
- * 慣例マナー:
- * - User-Agent に連絡先 email を含める（fetch では browser が制御するので、Tauri 移行時に Rust 側で設定）
- * - 高頻度連投は避ける（手動更新前提なら問題なし）
+ * 2026-05-19 hotfix: poe2scout が Access-Control-Allow-Origin を返さないため、
+ * Tauri WebView の fetch だと CORS で弾かれる。本番ビルドでは
+ * @tauri-apps/plugin-http の fetch (Rust 経由、CORS 不問) を使う。
+ * dev では Vite proxy 経由で CORS 回避済なので native fetch を使う。
  */
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 
-// dev: vite proxy 経由で CORS 回避
-// prod: Tauri ネイティブ fetch なので CORS 関係なし、直叩き
 const BASE = import.meta.env.DEV
   ? "/api/poe2scout"
   : "https://poe2scout.com/api";
+
+const httpFetch: typeof fetch = import.meta.env.DEV
+  ? globalThis.fetch.bind(globalThis)
+  : (tauriFetch as unknown as typeof fetch);
 
 // =================== 型定義 ===================
 
@@ -68,7 +72,7 @@ export interface League {
 // =================== 取得関数 ===================
 
 export async function fetchLeagues(): Promise<League[]> {
-  const res = await fetch(`${BASE}/poe2/Leagues`);
+  const res = await httpFetch(`${BASE}/poe2/Leagues`);
   if (!res.ok) throw new Error(`Leagues request failed: ${res.status}`);
   return res.json();
 }
@@ -78,7 +82,7 @@ export async function fetchSnapshotPairs(
   perPage = 500,
 ): Promise<SnapshotPair[]> {
   const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/SnapshotPairs?perPage=${perPage}`;
-  const res = await fetch(url);
+  const res = await httpFetch(url);
   if (!res.ok) throw new Error(`SnapshotPairs request failed: ${res.status}`);
   return res.json();
 }

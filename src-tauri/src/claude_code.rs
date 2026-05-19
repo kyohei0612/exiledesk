@@ -32,19 +32,27 @@ fn run_claude_blocking(prompt: &str) -> Result<String, String> {
     // -p (--print): 非対話モードで応答を stdout に出力
     // --output-format text (default): 余計な json wrapping なし
     // 標準入力で prompt を渡す（"-" or stdin で受け取れる仕様）
-    let mut child = Command::new(CLAUDE_BIN)
-        .arg("-p")
+    let mut cmd = Command::new(CLAUDE_BIN);
+    cmd.arg("-p")
         .arg("--output-format")
         .arg("text")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            format!(
-                "Claude Code を起動できません ({CLAUDE_BIN}): {e}\nClaude Code (https://claude.com/code) をインストールして `claude /login` 済か確認してください。"
-            )
-        })?;
+        .stderr(Stdio::piped());
+
+    // Windows: コンソールウィンドウのチラつき (黒画面 flash) を抑止する。
+    // CREATE_NO_WINDOW = 0x08000000。GUI アプリから CLI を裏で叩く時の定番フラグ。
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000);
+    }
+
+    let mut child = cmd.spawn().map_err(|e| {
+        format!(
+            "Claude Code を起動できません ({CLAUDE_BIN}): {e}\nClaude Code (https://claude.com/code) をインストールして `claude /login` 済か確認してください。"
+        )
+    })?;
 
     if let Some(stdin) = child.stdin.as_mut() {
         stdin
