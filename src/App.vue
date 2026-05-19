@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
+import UpdateToast from "./components/UpdateToast.vue";
 
 const activeNav = ref<string>("econ-currency");
 </script>
@@ -15,5 +16,7 @@ const activeNav = ref<string>("econ-currency");
     />
 
     <CenterContent :active-nav="activeNav" class="flex-1" />
+
+    <UpdateToast />
   </div>
 </template>
