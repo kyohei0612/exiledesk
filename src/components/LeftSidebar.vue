@@ -6,45 +6,22 @@ interface NavItem {
   id: string;
   icon: string;
   label: string;
-  group: "top" | "self" | "economy" | "tools" | "library" | "bottom";
+  group: "economy" | "tools";
 }
 
 const items: NavItem[] = [
-  { id: "chat", icon: "🤖", label: "秘書チャット", group: "top" },
-
-  { id: "char-overview", icon: "👤", label: "概要", group: "self" },
-  { id: "char-equipment", icon: "⚔️", label: "装備", group: "self" },
-  { id: "char-passive", icon: "🌳", label: "パッシブ", group: "self" },
-  { id: "char-skills", icon: "⚡", label: "スキル", group: "self" },
-
   { id: "econ-currency", icon: "💰", label: "通貨ランキング", group: "economy" },
-  { id: "econ-trending", icon: "📊", label: "需要急騰", group: "economy" },
-  { id: "econ-search", icon: "🔍", label: "商品検索", group: "economy" },
+  { id: "econ-trending", icon: "🔍", label: "クラフト発見", group: "economy" },
 
   { id: "tool-craft", icon: "🔨", label: "クラフト相談", group: "tools" },
-  { id: "tool-dps", icon: "📈", label: "装備 DPS 比較", group: "tools" },
-  { id: "tool-ideal", icon: "🎯", label: "理想装備 vs 現在", group: "tools" },
-
-  { id: "lib-items", icon: "📖", label: "アイテム図鑑", group: "library" },
-  { id: "lib-skills", icon: "🪄", label: "スキルDB", group: "library" },
-  { id: "lib-bosses", icon: "🗺️", label: "ボス情報", group: "library" },
-  { id: "lib-filter", icon: "🧪", label: "フィルタ", group: "library" },
-
-  { id: "settings", icon: "⚙️", label: "設定", group: "bottom" },
 ];
 
 const groupLabels: Record<string, string | null> = {
-  top: null,
-  self: "自分",
   economy: "経済",
   tools: "ツール",
-  library: "ライブラリ",
-  bottom: null,
 };
 
-const groups = (
-  ["top", "self", "economy", "tools", "library", "bottom"] as const
-).map((key) => ({
+const groups = (["economy", "tools"] as const).map((key) => ({
   key,
   label: groupLabels[key],
   items: items.filter((i) => i.group === key),

@@ -1,0 +1,106 @@
+{
+  "$comment_jp": "POE2DB のテキスト確認用.txt から抽出した mod 表示順序。group key の配列で順序を定義。リストにない group は末尾に statOrder fallback で sort される。クラフト君リーダー管理。",
+
+  "ring": {
+    "prefix_normal": [
+      "IncreasedLife",
+      "IncreasedMana",
+      "IncreasedEvasionRating",
+      "PhysicalDamage",
+      "FireDamage",
+      "ColdDamage",
+      "LightningDamage",
+      "IncreasedAccuracy",
+      "ItemFoundRarityIncreasePrefix",
+      "FireDamagePercentage",
+      "ColdDamagePercentage",
+      "LightningDamagePercentage",
+      "IncreasedChaosDamage"
+    ],
+    "suffix_normal": [
+      "Strength",
+      "Dexterity",
+      "Intelligence",
+      "AllAttributes",
+      "FireResistance",
+      "ColdResistance",
+      "LightningResistance",
+      "AllElementalResistances",
+      "ChaosResistance",
+      "BaseLifeRegeneration",
+      "ManaRegeneration",
+      "PhysicalAttackDamageLeechedAsLife",
+      "PhysicalAttackDamageLeechedAsMana",
+      "LifeOnKill",
+      "ManaOnKill",
+      "IncreasedCastSpeed",
+      "ItemFoundRarityIncrease",
+      "ManaRegenerationLightRadius"
+    ]
+  },
+
+  "amulet": {
+    "prefix_normal": [
+      "IncreasedLife",
+      "IncreasedLifePercent",
+      "IncreasedMana",
+      "IncreasedManaPercent",
+      "IncreasedEnergyShield",
+      "IncreasedArmourPercent",
+      "IncreasedEvasionPercent",
+      "IncreasedEnergyShieldPercent",
+      "IncreasedAccuracy",
+      "ItemFoundRarityIncreasePrefix",
+      "Spirit",
+      "IncreasedSpellDamage"
+    ],
+    "suffix_normal": [
+      "Strength",
+      "Dexterity",
+      "Intelligence",
+      "AllAttributes",
+      "FireResistance",
+      "ColdResistance",
+      "LightningResistance",
+      "AllElementalResistances",
+      "ChaosResistance",
+      "AllSpellSkillsLevel",
+      "AllMinionSkillsLevel",
+      "AllMeleeSkillsLevel",
+      "AllProjectileSkillsLevel",
+      "BaseLifeRegeneration",
+      "ManaRegeneration",
+      "IncreasedCastSpeed",
+      "IncreasedCriticalHitChance",
+      "IncreasedCriticalDamageBonus",
+      "ItemFoundRarityIncrease",
+      "PhysicalDamageTakenAsLifeRecouped",
+      "PhysicalDamageTakenAsManaRecouped"
+    ]
+  },
+
+  "belt": {
+    "prefix_normal": [
+      "IncreasedLife",
+      "IncreasedMana",
+      "IncreasedArmour",
+      "PhysicalThorns",
+      "FlaskLifeRecoveryRate",
+      "FlaskManaRecoveryRate",
+      "CharmDuration"
+    ],
+    "suffix_normal": [
+      "Strength",
+      "FireResistance",
+      "ColdResistance",
+      "LightningResistance",
+      "ChaosResistance",
+      "StunThreshold",
+      "BaseLifeRegeneration",
+      "FlaskChargesAddedIncreasePercent",
+      "FlaskChargesUsedReducedPercent",
+      "CharmChargesAdded",
+      "CharmChargesUsedReduced"
+    ]
+  }
+}

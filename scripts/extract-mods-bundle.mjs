@@ -92,6 +92,15 @@ function classify(v, key) {
   ) {
     return "essence";
   }
+  // SpecialCorrupted (新 Vaal Orb mod、helmet 用 8 種)。
+  // RePoE では gt=unique でモデリングされ通常 corrupted パスをすり抜ける。
+  if (
+    key.startsWith("SpecialCorruption") &&
+    v.domain === "item" &&
+    v.generation_type === "unique"
+  ) {
+    return "corrupted";
+  }
   if (v.generation_type === "corrupted") return "corrupted";
   if (v.domain === "desecrated") return "desecrated";
   if (

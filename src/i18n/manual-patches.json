@@ -1,0 +1,15 @@
+{
+  "$schema_version": "1.0",
+  "$comment_jp": "PoB Essence.lua / Mod*.lua / Bases に未収録 or 誤登録の差分を手動記録。クラフト君リーダー管理。POE2DB / Craft of Exile などゲーム内表示準拠ソースとの照合で差分が見つかったら追記。",
+
+  "essence_extra_slots": {
+    "$comment_jp": "PoB Essence.lua の mods テーブルに未登録だが、実ゲーム / POE2DB で対応 slot に出る essence mod。modKey -> 該当 slot 配列。",
+    "EssenceAbyssPrefix": ["amulet", "belt", "body_armour", "boots", "focus", "gloves", "helmet", "ring", "shield"],
+    "EssenceAbyssSuffix": ["amulet", "belt", "body_armour", "boots", "focus", "gloves", "helmet", "ring", "shield"]
+  },
+
+  "essence_remove_slots": {
+    "$comment_jp": "PoB Essence.lua に登録されているが、実ゲーム / POE2DB では対応 slot に出ない（PoB データ古い疑いなど）essence mod。modKey -> 除外 slot 配列。",
+    "IncreasedAccuracy": ["ring"]
+  }
+}
