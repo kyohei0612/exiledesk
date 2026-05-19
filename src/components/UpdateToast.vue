@@ -11,13 +11,45 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
 const update = ref<Update | null>(null);
-const phase = ref<"idle" | "checking" | "available" | "downloading" | "installing" | "done" | "error">("idle");
+const phase = ref<"idle" | "checking" | "available" | "downloading" | "installing" | "done" | "error" | "safe-mode">("idle");
 const errorMsg = ref<string | null>(null);
 const downloadedBytes = ref(0);
 const totalBytes = ref<number | null>(null);
 
+// セーフモード: 連続クラッシュ検出。LocalStorage `exiledesk:launchSeq` を
+// 起動時に +1、5 秒生存で 0 に戻す。3 回連続でクリアできなければ自動 check skip。
+const LAUNCH_SEQ_KEY = "exiledesk:launchSeq";
+const SAFE_MODE_THRESHOLD = 3;
+const HEALTHY_BOOT_MS = 5000;
+
+function getLaunchSeq(): number {
+  try {
+    return parseInt(localStorage.getItem(LAUNCH_SEQ_KEY) ?? "0", 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function bumpLaunchSeq(): number {
+  const n = getLaunchSeq() + 1;
+  try {
+    localStorage.setItem(LAUNCH_SEQ_KEY, String(n));
+  } catch {
+    /* localStorage 不可は無視 */
+  }
+  return n;
+}
+
+function clearLaunchSeq() {
+  try {
+    localStorage.setItem(LAUNCH_SEQ_KEY, "0");
+  } catch {
+    /* noop */
+  }
+}
+
 async function runCheck() {
-  if (phase.value !== "idle") return;
+  if (phase.value !== "idle" && phase.value !== "safe-mode") return;
   phase.value = "checking";
   errorMsg.value = null;
   try {
@@ -67,7 +99,16 @@ function dismiss() {
 }
 
 onMounted(() => {
-  // 起動直後にチェック（UI 描画と並列で fetch、ユーザーは待たされない）
+  // 連続クラッシュ検出: launchSeq を +1、5 秒生存で 0 にリセット
+  const seq = bumpLaunchSeq();
+  setTimeout(clearLaunchSeq, HEALTHY_BOOT_MS);
+
+  if (seq >= SAFE_MODE_THRESHOLD) {
+    // セーフモード: 自動 check skip、トーストで明示
+    phase.value = "safe-mode";
+    return;
+  }
+  // 通常起動: バックグラウンドで check（UI ブロックなし）
   runCheck();
 });
 
@@ -80,7 +121,7 @@ function fmtBytes(b: number): string {
 
 <template>
   <div
-    v-if="phase === 'available' || phase === 'downloading' || phase === 'installing' || phase === 'done' || phase === 'error'"
+    v-if="phase === 'available' || phase === 'downloading' || phase === 'installing' || phase === 'done' || phase === 'error' || phase === 'safe-mode'"
     class="fixed bottom-4 right-4 max-w-sm rounded-lg border bg-[var(--color-surface)] border-[var(--color-border)] shadow-lg z-50 p-4"
   >
     <!-- 更新あり -->
@@ -153,6 +194,32 @@ function fmtBytes(b: number): string {
       <p class="text-xs text-[var(--color-text-muted)]">
         再起動して新版に切り替えます…
       </p>
+    </div>
+
+    <!-- セーフモード: 連続クラッシュ検出で自動 check skip -->
+    <div v-else-if="phase === 'safe-mode'">
+      <div class="flex items-baseline justify-between mb-2">
+        <h3 class="text-sm font-semibold text-amber-300">⚠ セーフモード</h3>
+        <button
+          @click="(clearLaunchSeq(), (phase = 'idle'))"
+          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          aria-label="閉じる"
+        >
+          ×
+        </button>
+      </div>
+      <p class="text-xs text-[var(--color-text-muted)] mb-2">
+        連続起動失敗を検知したため、自動更新チェックをスキップしています。
+        前回の更新が原因の可能性がある場合は、GitHub Releases から前バージョンを手動 DL してください。
+      </p>
+      <div class="flex gap-2">
+        <button
+          @click="(clearLaunchSeq(), runCheck())"
+          class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--color-accent)] text-black hover:bg-[var(--color-accent-hover)] font-semibold transition"
+        >
+          手動チェック
+        </button>
+      </div>
     </div>
 
     <!-- エラー -->
