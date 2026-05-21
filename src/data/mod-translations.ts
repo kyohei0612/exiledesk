@@ -224,7 +224,8 @@ export function getModStatIds(text: string): string[] {
  * 設計判断（リサーチ A/B 統合）:
  *   - trade2 fetch レスポンスには prefix/suffix フラグが返らない（公式 API 制約）
  *   - `mods.en.json` の 4327 件 (prefix 2275 + suffix 2052) が generation_type を持つ
- *   - `mods-bundle.json` は上記からスリム化済で type フィールドあり (prefix 1349 + suffix 1413)
+ *   - `mods-bundle.json` は上記からスリム化済で type フィールドあり (bundle 生 prefix 1349 + suffix 1413)
+ *   - compiledTranslations 構築後（dedupe + 衝突マージ）の text→affix Map は prefix 1324 / suffix 1268 / unknown 7
  *   - 同 text_en で prefix/suffix 両方ある「曖昧 mod」は 7 件のみ → "unknown"
  *
  * 入力は trade2 raw 英語 or 翻訳済日訳 どちらも受け付ける（getModStatIds と同様）。

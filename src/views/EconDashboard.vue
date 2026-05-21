@@ -29,9 +29,11 @@ import {
   type DiscoveryState,
   type ClusterSize,
   type ClusterCount,
+  type DedupWarningInfo,
   CLUSTER_SIZES,
   MAX_LISTINGS_PER_CYCLE,
   TARGET_COUNT_WARN_THRESHOLD,
+  DEDUP_WARN_THRESHOLD,
 } from "../services/craft-discovery";
 import {
   useCraftDiscoverySettings,
@@ -85,9 +87,47 @@ const discoveryStartedAtMs = ref<number | null>(null);
 const showTargetCountWarn = ref(false);
 const pendingTargetCount = ref<number | null>(null);
 
+// Phase 1.x dedupRate 自動打切り通知（manual-controls.md §2）
+//   - 800 件以上モードで重複率 > 70% の round が完了したとき、続行/打切りをユーザーに確認
+//   - resolve は handleDedupWarning が runDiscovery 内 await から解放するために保持
+const showDedupWarn = ref(false);
+const dedupWarnInfo = ref<DedupWarningInfo | null>(null);
+let dedupWarnResolver: ((cont: boolean) => void) | null = null;
+
+/**
+ * Phase 1.x: service 層から呼ばれる dedup 警告 callback.
+ * モーダルを開き、ユーザーが続行/打切りを押すまで Promise を保留。
+ */
+function handleDedupWarning(info: DedupWarningInfo): Promise<boolean> {
+  dedupWarnInfo.value = info;
+  showDedupWarn.value = true;
+  return new Promise<boolean>((resolve) => {
+    dedupWarnResolver = resolve;
+  });
+}
+function confirmDedupContinue(): void {
+  showDedupWarn.value = false;
+  const r = dedupWarnResolver;
+  dedupWarnResolver = null;
+  dedupWarnInfo.value = null;
+  if (r) r(true);
+}
+function confirmDedupAbort(): void {
+  showDedupWarn.value = false;
+  const r = dedupWarnResolver;
+  dedupWarnResolver = null;
+  dedupWarnInfo.value = null;
+  if (r) r(false);
+}
+
 function cancelDiscovery() {
   if (discoveryAbortController) {
     discoveryAbortController.abort();
+  }
+  // dedup 警告モーダル待ちで止まってる場合は「打切り」として resolve
+  // （AbortError は runDiscovery 内の他の sleep/invoke で拾われる）
+  if (dedupWarnResolver) {
+    confirmDedupAbort();
   }
 }
 
@@ -403,6 +443,8 @@ async function startDiscovery() {
       onProgress: (p) => {
         discoveryProgress.value = p;
       },
+      // Phase 1.x: 800 件以上モードで重複率 70% 超え時、続行/打切りをユーザーに確認
+      onDedupWarning: handleDedupWarning,
     });
     discoveryResult.value = res;
     discoveryState.value = res.state;
@@ -430,21 +472,66 @@ async function startDiscovery() {
 }
 
 /**
- * Phase 1 manual-controls.md §2: ETA を取得経過から線形外挿で算出（秒）。
- * runDiscovery 中の onProgress で `fetchedListings` が更新されるたびに再評価。
- * 取得開始直後や 0 件のときは null（「計算中」表示用）。
+ * Phase 1.x ETA cycle bias 補正（manual-controls.md §2、残課題 #2）.
+ *
+ * 問題:
+ *   - 旧実装は「経過時間 × 残件数 / 取得件数」の単純線形外挿
+ *   - search 段階（rate limit 7s/req）と fetch 段階（10 件 batch）で速度差大
+ *   - 結果、中盤で残時間が過小評価されがち
+ *
+ * 補正方式 = round 単位の段階モデル:
+ *   - 1 round = 1 search + 最大 10 batch fetch + inter-sort sleep ≒ 11 × 7s = 77s（API time）
+ *   - 完了 round 数が 1 以上なら elapsed / completedRounds を 1 round 実測時間として採用
+ *   - 0 round 完了時は理論値 (~11 × SLEEP_BETWEEN_REQ_MS) で初期推定
+ *   - 現在 round の進捗は fetchedThisRound / 100 から算出
+ *
+ * これにより search 段階で「ほぼ進まない」見かけにならず、roundsRemaining ベースで安定推定。
  */
+/** 1 round = 1 search + 10 batch fetch + 1 inter-sort sleep = 12 × SLEEP_BETWEEN_REQ_MS の保守的推定 */
+const ROUND_SEC_THEORETICAL = 12 * 7; // 84s（SLEEP_BETWEEN_REQ_MS=7000 と整合）
+
 const discoveryEtaSec = computed<number | null>(() => {
   const start = discoveryStartedAtMs.value;
   const prog = discoveryProgress.value;
   if (!start || !prog) return null;
-  const fetched = prog.fetchedListings ?? 0;
-  if (fetched <= 0) return null;
   const target = discoveryTargetCount.value;
+  const fetched = prog.fetchedListings ?? 0;
   if (fetched >= target) return 0;
+
   const elapsedSec = (Date.now() - start) / 1000;
   if (elapsedSec < 1) return null;
-  return Math.ceil((target - fetched) * (elapsedSec / fetched));
+
+  // sortsTotal は service 層が露出。未受信のあいだは ceil(target/100) で代替。
+  const sortsTotal =
+    prog.sortsTotal && prog.sortsTotal > 0
+      ? prog.sortsTotal
+      : Math.max(1, Math.ceil(target / 100));
+  // searchedSorts は 0-based の「進行中 round index」。
+  // fetch フェーズでは「現 round はまだ完了してない」ので、完了済 = searchedSorts.
+  const roundsCompleted = Math.max(0, prog.searchedSorts ?? 0);
+
+  // 1 round 平均所要時間: 実測 (完了 round >= 1) or 理論値
+  const avgRoundSec =
+    roundsCompleted >= 1
+      ? elapsedSec / roundsCompleted
+      : ROUND_SEC_THEORETICAL;
+
+  // 現在 round の進捗 (0.0 - 1.0): その round 中で取った件数 / 100
+  //   累積 fetched から既完了 round 分 (roundsCompleted * 100 件想定) を引いた残り。
+  //   重複弾きで実際は 100 件取れない場合があるが、ETA は保守推定で OK。
+  const fetchedThisRound = Math.max(
+    0,
+    Math.min(100, fetched - roundsCompleted * 100),
+  );
+  const currentRoundProgress = fetchedThisRound / 100;
+
+  // 残り = 未完了 round 数 - 現 round 進捗
+  const roundsRemaining = Math.max(
+    0,
+    sortsTotal - roundsCompleted - currentRoundProgress,
+  );
+  const remainSec = Math.ceil(avgRoundSec * roundsRemaining);
+  return remainSec;
 });
 
 const discoveryFetchedListings = computed(
@@ -624,6 +711,40 @@ function fmtEta(sec: number | null): string {
       >
         ⚠ サンプル {{ discoveryResult.totalListings }} 件のみ。クラスタリングの信頼性は低めです。
         取得を追加するか価格レンジを広げると改善します。
+      </div>
+
+      <!-- Phase 1.x: dedupRate 自動打切り通知（manual-controls.md §2、残課題 #1）
+           - 800 件以上モードで重複率 70% 超え時のみ発火
+           - 続行 = 残 round 実行 / 打切り = 現累積で集計 -->
+      <div
+        v-if="showDedupWarn && dedupWarnInfo"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--exile-color-bg-canvas)_75%,transparent)]"
+      >
+        <div class="max-w-md p-5 rounded-lg border border-[var(--exile-color-signal-warn)] bg-[var(--exile-color-bg-surface)] text-[var(--exile-color-text-primary)]">
+          <h4 class="text-sm font-semibold mb-3 text-[var(--exile-color-signal-warn)]">
+            ⚠ 重複率 {{ Math.round(dedupWarnInfo.dedupRate * 100) }}%（推奨上限 {{ Math.round(DEDUP_WARN_THRESHOLD * 100) }}%）
+          </h4>
+          <p class="text-xs leading-relaxed mb-3">
+            これ以上取得しても新規 listing が少ない可能性があります。
+          </p>
+          <ul class="text-[10px] text-[var(--exile-color-text-secondary)] leading-relaxed mb-4 list-disc list-inside space-y-1">
+            <li>完了 round: {{ dedupWarnInfo.roundsCompleted }} / {{ dedupWarnInfo.roundsTotal }}</li>
+            <li>新規取得: {{ dedupWarnInfo.newListingsSoFar }} 件</li>
+            <li>残 round: {{ dedupWarnInfo.roundsTotal - dedupWarnInfo.roundsCompleted }}（続行すると更に API 消費）</li>
+          </ul>
+          <div class="flex gap-2 justify-end">
+            <button
+              @click="confirmDedupAbort"
+              class="px-3 py-1 rounded text-[10px] border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]"
+              title="残 round を実行せず、現時点の累積で集計"
+            >打切り（現累積で集計）</button>
+            <button
+              @click="confirmDedupContinue"
+              class="px-3 py-1 rounded text-[10px] bg-[var(--exile-color-signal-warn)] text-[var(--exile-color-bg-canvas)] font-semibold hover:opacity-90"
+              title="残 round を全て実行（無駄になる可能性あり）"
+            >続行（残 {{ dedupWarnInfo.roundsTotal - dedupWarnInfo.roundsCompleted }} round）</button>
+          </div>
+        </div>
       </div>
 
       <!-- Phase 1 manual-controls.md §2: 1000 件選択時の警告モーダル（オーナー指示の文言） -->
@@ -849,7 +970,7 @@ function fmtEta(sec: number | null): string {
             </div>
           </div>
           <p class="text-[9px] text-[var(--exile-color-text-secondary)] leading-relaxed">
-            ※ mods-bundle.json の type フィールド (prefix 1349 / suffix 1413) で逆引き判定。曖昧 mod（同 text で両用）は 7 件のみ「不明」灰色。
+            ※ mods-bundle.json から構築した text→affix Map (prefix 1324 / suffix 1268) で逆引き判定。曖昧 mod（同 text で両用）は 7 件のみ「不明」灰色。
           </p>
         </section>
 

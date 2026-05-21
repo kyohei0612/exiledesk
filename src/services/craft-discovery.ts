@@ -243,11 +243,50 @@ export const TARGET_COUNT_WARN_THRESHOLD = 1000;
 export const ACCUMULATION_LIMIT = MAX_LISTINGS_PER_CYCLE;
 
 export interface DiscoveryProgress {
-  phase: "search" | "fetch" | "aggregate" | "done" | "retry";
+  phase: "search" | "fetch" | "aggregate" | "done" | "retry" | "dedup-warn";
   message: string;
   searchedSorts?: number;
   fetchedListings?: number;
+  /**
+   * Phase 1.x ETA cycle bias 補正: 計画上の round 総数 (= sortsNeeded).
+   *   UI 側で「完了 round 数 / 総 round 数」から残時間を推定するために露出。
+   *   省略時は呼び側で `Math.ceil(targetCount / 100)` から再計算可能。
+   */
+  sortsTotal?: number;
 }
+
+/**
+ * Phase 1.x dedupRate 自動打切り通知。
+ *
+ * 設計書 `manual-controls.md §2`: 「dedupRate > 0.7 で打ち切り推奨」.
+ * 800 件以上モードで 4 round 目以降の seenIds 重複率が急上昇し、無駄な API 消費になる。
+ *
+ * 呼び側 (UI) で「続行 / 打切り」を確認するための Promise を返す callback.
+ *   - 解決値 true  = 続行（残 round を実行）
+ *   - 解決値 false = 打切り（その時点までの累積で集計）
+ *
+ * 警告は **同一サイクル内では 1 回のみ** 発火する（無限プロンプト回避）。
+ * 300 / 500 件モード（sortsTotal < 8）では発火しない。
+ */
+export interface DedupWarningInfo {
+  /** 直近 round 完了時点の累積 dedupRate (重複弾き / (重複弾き + 新規)) */
+  dedupRate: number;
+  /** 完了済み round 数（1-based） */
+  roundsCompleted: number;
+  /** 計画上の round 総数 */
+  roundsTotal: number;
+  /** 直近 round までに新規取得できた listing 数 */
+  newListingsSoFar: number;
+}
+export type DedupWarningCallback = (
+  info: DedupWarningInfo,
+) => boolean | Promise<boolean>;
+
+/** dedupRate 自動打切り警告の発火閾値（manual-controls.md §2「0.7 で打ち切り推奨」） */
+export const DEDUP_WARN_THRESHOLD = 0.7;
+
+/** dedupRate 警告を発火させる最小 targetCount（300/500 では発火しない） */
+export const DEDUP_WARN_MIN_TARGET = 800;
 
 export interface DiscoveryResult {
   /** 累積 unique listing 数（state.allListings.length と一致） */
@@ -1420,6 +1459,14 @@ export async function runDiscovery(args: {
    * UI トグル「prefix/suffix 区別」が連動。
    */
   affixMode?: AffixMode;
+  /**
+   * Phase 1.x dedupRate 自動打切り通知 callback（manual-controls.md §2）.
+   *   - targetCount >= DEDUP_WARN_MIN_TARGET (800) のときのみ判定。
+   *   - 各 round 完了時に dedupRate > DEDUP_WARN_THRESHOLD (0.7) なら一度だけ呼ぶ。
+   *   - 解決値 false で残 round を打ち切り、現在の累積で aggregate へ進む。
+   *   - 省略時は警告無しで常に続行（後方互換）。
+   */
+  onDedupWarning?: DedupWarningCallback;
 }): Promise<DiscoveryResult> {
   const { league, category, onProgress, prevState, signal } = args;
   // dev-server (browser) では Tauri 環境ではないためスキップ
@@ -1466,14 +1513,20 @@ export async function runDiscovery(args: {
   let populationTotal = 0;
   let dupCount = 0; // 直近サイクルで「既に持ってた」と弾いた数
   let newListingsThisCycle = 0;
+  // Phase 1.x dedupRate 自動打切り通知: 同一サイクル内で 1 回のみ発火
+  let dedupWarningFired = false;
+  // 早期打切り flag（dedup 警告で「打切り」を選んだ場合）
+  let earlyAbortByDedup = false;
 
   for (let i = 0; i < sorts.length; i++) {
+    if (earlyAbortByDedup) break;
     const sort = sorts[i];
     try {
       notify({
         phase: "search",
         message: `検索 ${i + 1}/${sorts.length}（${sort}）`,
         searchedSorts: i,
+        sortsTotal: sorts.length,
       });
 
       if (signal?.aborted) throw new DiscoveryAbortedError();
@@ -1526,6 +1579,7 @@ export async function runDiscovery(args: {
           message: `取得中 ${allListings.length} 件（sort ${i + 1}/${sorts.length}, batch ${Math.floor(j / 10) + 1}）`,
           searchedSorts: i,
           fetchedListings: allListings.length,
+          sortsTotal: sorts.length,
         });
 
         const res = await invokeWithRetry<FetchResponse>(
@@ -1548,6 +1602,55 @@ export async function runDiscovery(args: {
         if (newListingsThisCycle >= targetCount) break;
       }
       if (newListingsThisCycle >= targetCount) break;
+
+      // Phase 1.x dedupRate 自動打切り通知（manual-controls.md §2）
+      //   - 800 件以上モード（sorts.length >= 8）でのみ評価
+      //   - 各 round 完了時に累積 dedupRate > 0.7 なら一度だけ警告
+      //   - UI 側 callback が false を返したら以降の round を打切り → aggregate へ
+      if (
+        !dedupWarningFired &&
+        args.onDedupWarning &&
+        targetCount >= DEDUP_WARN_MIN_TARGET &&
+        i < sorts.length - 1
+      ) {
+        const candidateTotal = dupCount + newListingsThisCycle;
+        const cumulativeDedup =
+          candidateTotal > 0 ? dupCount / candidateTotal : 0;
+        if (cumulativeDedup > DEDUP_WARN_THRESHOLD) {
+          dedupWarningFired = true;
+          notify({
+            phase: "dedup-warn",
+            message: `重複率 ${(cumulativeDedup * 100).toFixed(0)}%（推奨上限 70%）。続行 / 打切りを確認中`,
+            searchedSorts: i + 1,
+            fetchedListings: allListings.length,
+            sortsTotal: sorts.length,
+          });
+          let shouldContinue = true;
+          try {
+            shouldContinue = await args.onDedupWarning({
+              dedupRate: cumulativeDedup,
+              roundsCompleted: i + 1,
+              roundsTotal: sorts.length,
+              newListingsSoFar: newListingsThisCycle,
+            });
+          } catch (cbErr) {
+            // callback 内例外は「続行」扱い（取得継続を優先、UI 側 console.warn 推奨）
+            console.warn("[runDiscovery] onDedupWarning callback failed:", cbErr);
+            shouldContinue = true;
+          }
+          if (!shouldContinue) {
+            earlyAbortByDedup = true;
+            notify({
+              phase: "aggregate",
+              message: `重複率上限で打切り（${i + 1}/${sorts.length} round 完了、累積 ${allListings.length} 件）`,
+              searchedSorts: i + 1,
+              fetchedListings: allListings.length,
+              sortsTotal: sorts.length,
+            });
+            break;
+          }
+        }
+      }
 
       // 次 sort の前に必ず sleep（fresh=0 で sleep を skip した場合の保険、429 連発防止）
       if (i < sorts.length - 1) {
