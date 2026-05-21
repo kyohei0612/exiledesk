@@ -22,7 +22,11 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { translateModText, getModStatIds } from "../data/mod-translations";
+import {
+  translateModText,
+  getModStatIds,
+  getModAffixType,
+} from "../data/mod-translations";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // ━━ trade2 API 型 ━━
@@ -129,6 +133,18 @@ export interface ClusterCount {
    * → cluster の最高スペック listing と同等以上が検索対象になる（高品質オプション狙い）。
    */
   statMinValues: Record<string, number>;
+  /**
+   * Phase 1.5: modKeys[i] に対応する prefix/suffix 区分。
+   * bundle 逆引きで判定。同 text_en で曖昧な 7 件と bundle 非ヒット mod は "unknown"。
+   * affixMode="merged" のとき全要素 "unknown" となる（後方互換動作）。
+   */
+  affixTypes: Array<"prefix" | "suffix" | "unknown">;
+  /** Phase 1.5: クラスタ内 prefix 数（modKeys のうち type="prefix" の件数） */
+  prefixCount: number;
+  /** Phase 1.5: クラスタ内 suffix 数 */
+  suffixCount: number;
+  /** Phase 1.5: クラスタ内 affix 不明数 */
+  affixUnknownCount: number;
 }
 
 /** 「直近」判定の時間窓（オーナー指示 2026-05-19: 過去 12 時間） */
@@ -637,17 +653,18 @@ export function getSampleListings(): FetchedListing[] {
 export function buildResultFromState(
   state: DiscoveryState,
   hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
+  affixMode: AffixMode = DEFAULT_AFFIX_MODE,
 ): DiscoveryResult {
   const { ranking, emptyCount } = countModOccurrences(state.allListings);
   const denom = state.allListings.length || 1;
   const emptyModRate = emptyCount / denom;
   const clustersBySize = {
-    1: countModClusters(state.allListings, 1, hotConfig),
-    2: countModClusters(state.allListings, 2, hotConfig),
-    3: countModClusters(state.allListings, 3, hotConfig),
-    4: countModClusters(state.allListings, 4, hotConfig),
-    5: countModClusters(state.allListings, 5, hotConfig),
-    6: countModClusters(state.allListings, 6, hotConfig),
+    1: countModClusters(state.allListings, 1, hotConfig, affixMode),
+    2: countModClusters(state.allListings, 2, hotConfig, affixMode),
+    3: countModClusters(state.allListings, 3, hotConfig, affixMode),
+    4: countModClusters(state.allListings, 4, hotConfig, affixMode),
+    5: countModClusters(state.allListings, 5, hotConfig, affixMode),
+    6: countModClusters(state.allListings, 6, hotConfig, affixMode),
   } as Record<ClusterSize, ClusterCount[]>;
 
   return {
@@ -1014,6 +1031,16 @@ function combinations<T>(arr: T[], k: number): T[][] {
 const CLUSTER_HASH_SEP = "";
 
 /**
+ * Phase 1.5 prefix/suffix 集計モード:
+ *   - "merged" : 全 mod を区別せずまとめる（後方互換、affixTypes は全 "unknown" になる）
+ *   - "split"  : modKey ごとに bundle 逆引きで prefix/suffix を判定し、クラスタ情報に付与
+ */
+export type AffixMode = "merged" | "split";
+
+/** Phase 1.5 デフォルト集計モード: split（オーナー指示）。 */
+export const DEFAULT_AFFIX_MODE: AffixMode = "split";
+
+/**
  * listing 群から「N mod が一致するクラスタ」を集計、件数降順返却。
  *
  * 各 listing の explicit mod から正規化 modKey 配列を作り、
@@ -1024,11 +1051,13 @@ const CLUSTER_HASH_SEP = "";
  *   省略時は DEFAULT_HOT_CONFIG（既存 12h / 20 件を踏襲）。
  *   この関数自体は recentCount を算出するだけで「ホット判定 flag」は付けず、
  *   呼び側 UI で `recentCount >= hotConfig.minCount` をもって判定する。
+ * @param affixMode Phase 1.5: "split" で prefix/suffix 区別、"merged" で従来動作。
  */
 export function countModClusters(
   listings: FetchedListing[],
   clusterSize: ClusterSize,
   hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
+  affixMode: AffixMode = DEFAULT_AFFIX_MODE,
 ): ClusterCount[] {
   // 「直近 N 時間以内」の閾値（現在時刻 - windowHours h）
   const recentThresholdMs = Date.now() - hotConfig.windowHours * 3600 * 1000;
@@ -1161,6 +1190,29 @@ export function countModClusters(
     .map(([clusterHash, v]) => {
       const stats = computePriceStats(v.pricesDivine);
       const freshRate = v.count > 0 ? v.recentCount / v.count : 0;
+      // Phase 1.5: 各 modKey の prefix/suffix を判定。
+      //   - rawSamples[i] は translateModText 出力（タグ展開済日訳） or 英語
+      //   - getModAffixType は日英タグ込み・展開済どちらも受け付ける
+      //   - 入力に rawSample があれば優先、無ければ modKey で fallback
+      const affixTypes: Array<"prefix" | "suffix" | "unknown"> =
+        affixMode === "split"
+          ? v.modKeys.map((k, i) => {
+              const sample = v.rawSamples[i];
+              if (sample) {
+                const t = getModAffixType(sample);
+                if (t !== "unknown") return t;
+              }
+              return getModAffixType(k);
+            })
+          : v.modKeys.map(() => "unknown");
+      let prefixCount = 0;
+      let suffixCount = 0;
+      let affixUnknownCount = 0;
+      for (const t of affixTypes) {
+        if (t === "prefix") prefixCount++;
+        else if (t === "suffix") suffixCount++;
+        else affixUnknownCount++;
+      }
       return {
         clusterHash,
         modKeys: v.modKeys,
@@ -1175,6 +1227,10 @@ export function countModClusters(
         freshRate,
         statIdsPerMod: v.modKeys.map((k) => v.statIdsByKey.get(k) ?? []),
         statMinValues: Object.fromEntries(v.statMinValues),
+        affixTypes,
+        prefixCount,
+        suffixCount,
+        affixUnknownCount,
       };
     })
     .sort(
@@ -1359,6 +1415,11 @@ export async function runDiscovery(args: {
    * 省略時は DEFAULT_HOT_CONFIG (12h / 20 件).
    */
   hotConfig?: HotConfig;
+  /**
+   * Phase 1.5: prefix/suffix 集計モード（"split" / "merged"、デフォルト "split"）.
+   * UI トグル「prefix/suffix 区別」が連動。
+   */
+  affixMode?: AffixMode;
 }): Promise<DiscoveryResult> {
   const { league, category, onProgress, prevState, signal } = args;
   // dev-server (browser) では Tauri 環境ではないためスキップ
@@ -1377,6 +1438,8 @@ export async function runDiscovery(args: {
   // Phase 1 manual-controls 設定の解決（呼び側未指定なら default で稼働、後方互換）
   const priceRange: PriceRange = args.priceRange ?? DEFAULT_PRICE_RANGE;
   const hotConfig: HotConfig = args.hotConfig ?? DEFAULT_HOT_CONFIG;
+  // Phase 1.5: prefix/suffix 集計モード（呼び側未指定なら "split"）
+  const affixMode: AffixMode = args.affixMode ?? DEFAULT_AFFIX_MODE;
   const notify = (p: DiscoveryProgress) => onProgress?.(p);
 
   // 累積 state 初期化: カテゴリが一致する prevState だけ引き継ぐ
@@ -1530,13 +1593,14 @@ export async function runDiscovery(args: {
 
   // 累積データに対するクラスタリング再集計（1〜6 mod 全サイズ）
   // Phase 1: hotConfig を反映（時間窓 1/3/6/12h、件数閾値は呼び側 UI で適用）
+  // Phase 1.5: affixMode を反映（split で prefix/suffix 区別情報を付与）
   const clustersBySize = {
-    1: countModClusters(allListings, 1, hotConfig),
-    2: countModClusters(allListings, 2, hotConfig),
-    3: countModClusters(allListings, 3, hotConfig),
-    4: countModClusters(allListings, 4, hotConfig),
-    5: countModClusters(allListings, 5, hotConfig),
-    6: countModClusters(allListings, 6, hotConfig),
+    1: countModClusters(allListings, 1, hotConfig, affixMode),
+    2: countModClusters(allListings, 2, hotConfig, affixMode),
+    3: countModClusters(allListings, 3, hotConfig, affixMode),
+    4: countModClusters(allListings, 4, hotConfig, affixMode),
+    5: countModClusters(allListings, 5, hotConfig, affixMode),
+    6: countModClusters(allListings, 6, hotConfig, affixMode),
   } as Record<ClusterSize, ClusterCount[]>;
 
   // 次回引き継ぎ用 state

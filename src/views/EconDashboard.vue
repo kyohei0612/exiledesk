@@ -39,6 +39,7 @@ import {
   TARGET_COUNT_PRESETS,
   HOT_WINDOW_HOURS,
   FUTURE_CATEGORIES,
+  type AffixMode,
 } from "../composables/useCraftDiscoverySettings";
 import HotSeal from "../components/decor/HotSeal.vue";
 import BaseCard from "../components/decor/BaseCard.vue";
@@ -99,7 +100,7 @@ function runSampleDiscovery() {
     category: discoveryCategory.value,
   };
   discoveryState.value = sampleState;
-  discoveryResult.value = buildResultFromState(sampleState, settings.value.hotConfig);
+  discoveryResult.value = buildResultFromState(sampleState, settings.value.hotConfig, settings.value.affixMode);
   discoveryProgress.value = {
     phase: "done",
     message: `🧪 サンプル ${sampleListings.length} 件で集計（trade2 取得無し、ロジック動作確認用）`,
@@ -119,7 +120,7 @@ watch(discoveryCategory, async (newCat) => {
     const loaded = await loadDiscoveryState(newCat, currentLeague.value.Value);
     if (loaded) {
       discoveryState.value = loaded;
-      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig);
+      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode);
     }
   } catch (e) {
     console.warn("discovery load failed:", e);
@@ -133,7 +134,7 @@ watch(currentLeague, async (league) => {
     const loaded = await loadDiscoveryState(discoveryCategory.value, league.Value);
     if (loaded) {
       discoveryState.value = loaded;
-      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig);
+      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode);
     }
   } catch (e) {
     console.warn("discovery initial load failed:", e);
@@ -153,6 +154,23 @@ watch(
     discoveryResult.value = buildResultFromState(
       discoveryState.value,
       settings.value.hotConfig,
+      settings.value.affixMode,
+    );
+  },
+);
+
+/**
+ * Phase 1.5: prefix/suffix 区別モード変更時の再集計 watcher。
+ * fetch 不要、bundle 逆引きだけなので即時 buildResultFromState 呼び直しで反映。
+ */
+watch(
+  () => settings.value.affixMode,
+  () => {
+    if (!discoveryState.value) return;
+    discoveryResult.value = buildResultFromState(
+      discoveryState.value,
+      settings.value.hotConfig,
+      settings.value.affixMode,
     );
   },
 );
@@ -212,6 +230,13 @@ const freshColdPct = computed<number>({
 const freshHotThreshold = computed(() => freshHotPct.value / 100);
 const freshWarmThreshold = computed(() => freshWarmPct.value / 100);
 const freshColdThreshold = computed(() => freshColdPct.value / 100);
+
+// Phase 1.5: prefix/suffix 区別モード（"split" 時のみ UI でバッジ表示）
+const affixMode = computed<AffixMode>({
+  get: () => settings.value.affixMode,
+  set: (v: AffixMode) => (settings.value.affixMode = v),
+});
+const affixSplitEnabled = computed(() => affixMode.value === "split");
 
 // Phase 1 manual-controls.md §3: ホット件数閾値を呼び側で適用するための computed
 const hotMinCount = computed(() => settings.value.hotConfig.minCount);
@@ -371,6 +396,8 @@ async function startDiscovery() {
       // Phase 1 manual-controls: 価格レンジ + ホット閾値を service 層に渡す
       priceRange: settings.value.priceRange,
       hotConfig: settings.value.hotConfig,
+      // Phase 1.5: prefix/suffix 集計モード
+      affixMode: settings.value.affixMode,
       prevState: discoveryState.value ?? undefined,
       signal: discoveryAbortController.signal,
       onProgress: (p) => {
@@ -793,6 +820,39 @@ function fmtEta(sec: number | null): string {
           </p>
         </section>
 
+        <!-- Phase 1.5 §5: prefix/suffix 区別トグル（再 fetch 不要、bundle 逆引き集計） -->
+        <section class="p-2 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-canvas)] space-y-2">
+          <div class="text-[10px] font-semibold text-[var(--exile-color-accent-focus)]">🏷 prefix/suffix 区別（Phase 1.5）</div>
+          <div class="flex items-center gap-2 flex-wrap text-[10px]">
+            <span class="text-[var(--exile-color-text-secondary)]">集計モード:</span>
+            <div class="flex gap-1">
+              <button
+                @click="affixMode = 'split'"
+                :class="[
+                  'px-2 py-0.5 rounded border transition',
+                  affixMode === 'split'
+                    ? 'bg-[var(--exile-color-accent-focus)] text-black border-[var(--exile-color-accent-focus)] font-semibold'
+                    : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
+                ]"
+                title="各 mod に P/S バッジを付け、クラスタごとに prefix 数 + suffix 数を表示"
+              >P / S 区別 On</button>
+              <button
+                @click="affixMode = 'merged'"
+                :class="[
+                  'px-2 py-0.5 rounded border transition',
+                  affixMode === 'merged'
+                    ? 'bg-[var(--exile-color-text-secondary)] text-[var(--exile-color-bg-canvas)] border-[var(--exile-color-text-secondary)] font-semibold'
+                    : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
+                ]"
+                title="バッジ非表示・構成表示なし（従来動作）"
+              >Off (merged)</button>
+            </div>
+          </div>
+          <p class="text-[9px] text-[var(--exile-color-text-secondary)] leading-relaxed">
+            ※ mods-bundle.json の type フィールド (prefix 1349 / suffix 1413) で逆引き判定。曖昧 mod（同 text で両用）は 7 件のみ「不明」灰色。
+          </p>
+        </section>
+
         <!-- 既存項目: 表示制御（minCountThreshold / topNDisplay / freshHot/Warm/Cold） -->
         <div class="text-[10px] font-semibold text-[var(--exile-color-accent-mystic)]">⚙ 表示制御（既存項目）</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[10px]">
@@ -966,6 +1026,30 @@ function fmtEta(sec: number | null): string {
             >
               🆕 {{ c.recentCount }} / {{ c.count }}
             </span>
+            <!-- Phase 1.5: クラスタ構成 (prefix N + suffix N + ?) -->
+            <span
+              v-if="affixSplitEnabled"
+              class="px-1.5 py-0.5 rounded bg-[var(--exile-color-bg-canvas)] flex items-center gap-1"
+              :title="`Phase 1.5 prefix/suffix 区別: bundle 逆引きで判定。? = 曖昧 mod（bundle 非ヒット or text 重複）`"
+            >
+              <span
+                v-if="c.prefixCount > 0"
+                class="text-[var(--exile-color-text-link)] font-semibold"
+              >P{{ c.prefixCount }}</span>
+              <span
+                v-if="c.prefixCount > 0 && c.suffixCount > 0"
+                class="text-[var(--exile-color-text-secondary)]/60"
+              >+</span>
+              <span
+                v-if="c.suffixCount > 0"
+                class="text-[var(--exile-color-accent-mystic)] font-semibold"
+              >S{{ c.suffixCount }}</span>
+              <span
+                v-if="c.affixUnknownCount > 0"
+                class="text-[var(--exile-color-text-secondary)]"
+                :title="`affix 不明 ${c.affixUnknownCount} 件（bundle 非ヒット or 曖昧 text）`"
+              > ?{{ c.affixUnknownCount }}</span>
+            </span>
           </div>
 
           <div
@@ -986,10 +1070,24 @@ function fmtEta(sec: number | null): string {
             <div
               v-for="(raw, j) in c.rawSamples"
               :key="j"
-              class="text-[13px] text-[var(--exile-color-text-link)] leading-relaxed"
+              class="text-[13px] text-[var(--exile-color-text-link)] leading-relaxed flex items-center justify-center gap-1.5"
               :title="c.modKeys[j]"
             >
-              {{ raw }}
+              <!-- Phase 1.5: 個別 mod の prefix/suffix バッジ
+                   - prefix: text-link (青寄り) / suffix: accent-mystic (紫) / unknown: text-secondary 灰 -->
+              <span
+                v-if="affixSplitEnabled && c.affixTypes && c.affixTypes[j]"
+                :class="[
+                  'inline-block px-1 rounded text-[9px] font-bold leading-none align-middle',
+                  c.affixTypes[j] === 'prefix'
+                    ? 'bg-[color-mix(in_srgb,var(--exile-color-text-link)_25%,transparent)] text-[var(--exile-color-text-link)]'
+                    : c.affixTypes[j] === 'suffix'
+                      ? 'bg-[color-mix(in_srgb,var(--exile-color-accent-mystic)_25%,transparent)] text-[var(--exile-color-accent-mystic)]'
+                      : 'bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-secondary)]'
+                ]"
+                :title="c.affixTypes[j] === 'prefix' ? 'プレフィックス' : c.affixTypes[j] === 'suffix' ? 'サフィックス' : 'affix 不明（bundle 非ヒット or 曖昧）'"
+              >{{ c.affixTypes[j] === 'prefix' ? 'P' : c.affixTypes[j] === 'suffix' ? 'S' : '?' }}</span>
+              <span>{{ raw }}</span>
             </div>
           </div>
 

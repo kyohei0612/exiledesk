@@ -21,6 +21,7 @@ import modsBundle from "../i18n/mods-bundle.json";
 interface BundleEntry {
   text_en?: string;
   text_ja?: string;
+  type?: "prefix" | "suffix";
   stats?: Array<{ id?: string; min?: number; max?: number }>;
   // 他フィールドは無視
 }
@@ -32,6 +33,12 @@ interface CompiledTranslation {
   jaTemplate: string;
   /** この mod に対応する POE stat ID 列（trade2 search クエリ生成用） */
   statIds: string[];
+  /**
+   * prefix / suffix 区別（Phase 1.5 追加）。
+   * bundle の type フィールドから直接取得。
+   * 同 text_en で prefix/suffix 両方ある曖昧 mod (7 件) は "unknown"。
+   */
+  affixType: "prefix" | "suffix" | "unknown";
 }
 
 /** [token|display] タグを展開（mod-translations 内部用） */
@@ -50,15 +57,25 @@ const compiledTranslations: CompiledTranslation[] = (() => {
   const ESCAPED_RANGE_PATTERN =
     /\\\(-?\d+(?:\.\d+)?-(?:-?\d+(?:\.\d+)?)\\\)/g;
 
-  const seen = new Set<string>(); // 完全に同一の text_en は 1 度だけ登録
+  const seen = new Map<string, number>(); // text_en → out index（同 text_en の 2 回目以降は type 衝突判定）
 
   const entries = modsBundle as unknown as Record<string, BundleEntry>;
   for (const entry of Object.values(entries)) {
     const en = entry.text_en;
     const ja = entry.text_ja;
     if (!en || !ja || typeof en !== "string" || typeof ja !== "string") continue;
-    if (seen.has(en)) continue;
-    seen.add(en);
+
+    // 同 text_en で type が衝突する場合は "unknown" にマーク（Phase 1.5）
+    if (seen.has(en)) {
+      const idx = seen.get(en)!;
+      const existing = out[idx];
+      const incomingType: "prefix" | "suffix" | "unknown" =
+        entry.type === "prefix" || entry.type === "suffix" ? entry.type : "unknown";
+      if (existing.affixType !== incomingType) {
+        existing.affixType = "unknown";
+      }
+      continue;
+    }
 
     // stat IDs を抽出（trade2 search 用、null/undefined は除外）
     const statIds: string[] = [];
@@ -69,6 +86,9 @@ const compiledTranslations: CompiledTranslation[] = (() => {
         }
       }
     }
+
+    const affixType: "prefix" | "suffix" | "unknown" =
+      entry.type === "prefix" || entry.type === "suffix" ? entry.type : "unknown";
 
     try {
       // 1. en pattern: メタ文字エスケープ → (min-max) を (\d+) に
@@ -91,7 +111,8 @@ const compiledTranslations: CompiledTranslation[] = (() => {
         jaPattern = null;
       }
 
-      out.push({ pattern, jaPattern, enRaw: en, jaTemplate: ja, statIds });
+      seen.set(en, out.length);
+      out.push({ pattern, jaPattern, enRaw: en, jaTemplate: ja, statIds, affixType });
     } catch {
       // 異常なテンプレートはスキップ
     }
@@ -195,4 +216,47 @@ export function getModStatIds(text: string): string[] {
     if (t.jaPattern && t.jaPattern.test(text)) return t.statIds;
   }
   return [];
+}
+
+/**
+ * mod text から prefix / suffix を判定（Phase 1.5）。
+ *
+ * 設計判断（リサーチ A/B 統合）:
+ *   - trade2 fetch レスポンスには prefix/suffix フラグが返らない（公式 API 制約）
+ *   - `mods.en.json` の 4327 件 (prefix 2275 + suffix 2052) が generation_type を持つ
+ *   - `mods-bundle.json` は上記からスリム化済で type フィールドあり (prefix 1349 + suffix 1413)
+ *   - 同 text_en で prefix/suffix 両方ある「曖昧 mod」は 7 件のみ → "unknown"
+ *
+ * 入力は trade2 raw 英語 or 翻訳済日訳 どちらも受け付ける（getModStatIds と同様）。
+ *
+ * @returns "prefix" / "suffix" / "unknown" のいずれか。bundle 非ヒットも "unknown"。
+ */
+export function getModAffixType(text: string): "prefix" | "suffix" | "unknown" {
+  if (!text) return "unknown";
+  for (const t of compiledTranslations) {
+    if (t.pattern.test(text)) return t.affixType;
+    if (t.jaPattern && t.jaPattern.test(text)) return t.affixType;
+  }
+  return "unknown";
+}
+
+/**
+ * 簡易検証用: bundle 全体から prefix/suffix/unknown の集計を返す。
+ * デバッグ / Phase 1.5 解決率測定用。
+ */
+export function getAffixTypeDistribution(): {
+  prefix: number;
+  suffix: number;
+  unknown: number;
+  total: number;
+} {
+  let prefix = 0;
+  let suffix = 0;
+  let unknown = 0;
+  for (const t of compiledTranslations) {
+    if (t.affixType === "prefix") prefix++;
+    else if (t.affixType === "suffix") suffix++;
+    else unknown++;
+  }
+  return { prefix, suffix, unknown, total: compiledTranslations.length };
 }

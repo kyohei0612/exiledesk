@@ -85,6 +85,14 @@ export const TARGET_COUNT_PRESETS: ReadonlyArray<TargetCountPreset> = [
 /** ホット時間窓プリセット（manual-controls.md §3） */
 export const HOT_WINDOW_HOURS: ReadonlyArray<1 | 3 | 6 | 12> = [1, 3, 6, 12];
 
+/**
+ * Phase 1.5 prefix/suffix 集計モード:
+ *   - "split" : 各 mod の prefix/suffix を bundle 逆引きで判定し UI バッジ/構成表示
+ *   - "merged": 区別せず従来動作（バッジ非表示、prefixCount/suffixCount = 0）
+ * craft-discovery.ts の AffixMode と一致。
+ */
+export type AffixMode = "split" | "merged";
+
 export interface PriceRangeSettings {
   /** divine 建て下限（含む）。1 以上、max 未満 */
   min: number;
@@ -119,6 +127,11 @@ export interface CraftDiscoverySettings {
   freshWarmPct: number;
   /** 新鮮率「冷たい」閾値（%）既存項目 */
   freshColdPct: number;
+  /**
+   * Phase 1.5: prefix/suffix 区別モード（"split" / "merged"、デフォルト "split"）.
+   * "split" でクラスタカードに P/S バッジ + 構成表示。
+   */
+  affixMode: AffixMode;
 }
 
 // ━━ デフォルト ━━
@@ -137,6 +150,8 @@ export const DEFAULT_SETTINGS: CraftDiscoverySettings = {
   freshHotPct: 80,
   freshWarmPct: 40,
   freshColdPct: 20,
+  // Phase 1.5: デフォルトは "split"（オーナー指示「デフォルト On」、メタフォロワー哲学）
+  affixMode: "split",
 };
 
 // ━━ localStorage 永続化 ━━
@@ -199,6 +214,11 @@ function mergeWithDefaults(partial: Partial<CraftDiscoverySettings>): CraftDisco
     freshHotPct: partial.freshHotPct ?? DEFAULT_SETTINGS.freshHotPct,
     freshWarmPct: partial.freshWarmPct ?? DEFAULT_SETTINGS.freshWarmPct,
     freshColdPct: partial.freshColdPct ?? DEFAULT_SETTINGS.freshColdPct,
+    // Phase 1.5: 旧 v1 schema には無いので default で埋める（マイグレ互換）
+    affixMode:
+      partial.affixMode === "merged" || partial.affixMode === "split"
+        ? partial.affixMode
+        : DEFAULT_SETTINGS.affixMode,
   };
 }
 
