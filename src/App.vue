@@ -3,8 +3,14 @@ import { ref } from "vue";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
+import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 
 const activeNav = ref<string>("econ-currency");
+
+// Phase A.8: グローバルナビ系 (Ctrl+1/2/3, Ctrl+,, Ctrl+Q) を bind。
+// 画面固有系 (/, ↑↓, s, r, Ctrl+Enter, f) は registerHandler を経由して
+// 各画面側 (CurrencyRanking / EconDashboard / CraftHelper) から差し込む。
+useKeyboardShortcuts({ activeNav });
 </script>
 
 <template>
