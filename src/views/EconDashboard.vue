@@ -35,6 +35,8 @@ import {
   DEFAULT_LISTING_COUNT,
   RECENT_WINDOW_HOURS,
 } from "../services/craft-discovery";
+import HotSeal from "../components/decor/HotSeal.vue";
+import CornerMark from "../components/decor/CornerMark.vue";
 
 const leagues = ref<League[]>([]);
 const currentLeague = ref<League | null>(null);
@@ -286,7 +288,7 @@ async function startDiscovery() {
       </span>
     </p>
 
-    <div v-if="error" class="mb-4 p-3 rounded bg-red-900/30 border border-red-900/60 text-red-200 text-xs">
+    <div v-if="error" class="mb-4 p-3 rounded bg-[color-mix(in_srgb,var(--exile-color-signal-error)_10%,transparent)] border border-[var(--exile-color-signal-error)] text-[var(--exile-color-signal-error)] text-xs">
       {{ error }}
     </div>
 
@@ -301,7 +303,7 @@ async function startDiscovery() {
             :class="[
               'px-2 py-1 rounded text-[10px] border transition',
               showTestSettings
-                ? 'bg-purple-500/30 text-purple-200 border-purple-500/60'
+                ? 'bg-[color-mix(in_srgb,var(--exile-color-accent-mystic)_30%,transparent)] text-[var(--exile-color-accent-mystic)] border-[var(--exile-color-accent-mystic)]'
                 : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
             ]"
             title="テスト版用の開発者設定（閾値・表示件数を調整）"
@@ -332,7 +334,7 @@ async function startDiscovery() {
           <button
             v-else
             @click="cancelDiscovery"
-            class="px-3 py-1 rounded text-[10px] bg-red-500 text-white hover:bg-red-600 transition"
+            class="px-3 py-1 rounded text-[10px] bg-[var(--exile-color-signal-error)] text-[var(--exile-color-bg-canvas)] hover:opacity-90 transition"
             title="取得を中止（待機中ならすぐ反応、API リクエスト中なら完了後）"
           >
             ⏹ 中止
@@ -340,7 +342,7 @@ async function startDiscovery() {
           <button
             v-if="!discoveryLoading && discoveryState"
             @click="performReset"
-            class="px-2 py-1 rounded text-[10px] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-red-900/30 hover:text-red-300 transition"
+            class="px-2 py-1 rounded text-[10px] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[color-mix(in_srgb,var(--exile-color-signal-error)_15%,transparent)] hover:text-[var(--exile-color-signal-error)] transition"
             title="累積データを破棄してリセット"
           >
             🗑 リセット
@@ -364,7 +366,7 @@ async function startDiscovery() {
       </p>
       <p
         v-if="discoveryError"
-        class="text-xs text-red-300 mb-2 font-mono whitespace-pre-wrap break-all"
+        class="text-xs text-[var(--exile-color-signal-error)] mb-2 font-mono whitespace-pre-wrap break-all"
       >
         {{ discoveryError }}
       </p>
@@ -402,9 +404,9 @@ async function startDiscovery() {
           累積 <span class="text-[var(--color-accent)] font-semibold">{{ discoveryState.allListings.length }}</span> 件
           ／ <span class="text-[var(--color-accent)]">{{ discoveryState.cycleCount }}</span> サイクル
           <span v-if="discoveryResult && discoveryResult.cycleCount > 0">
-            ／ 直近サイクル: +<span class="text-emerald-400">{{ discoveryResult.newListingsThisCycle }}</span> 新規
+            ／ 直近サイクル: +<span class="text-[var(--exile-color-signal-success)]">{{ discoveryResult.newListingsThisCycle }}</span> 新規
             <span v-if="discoveryResult.dedupRate > 0">
-              ／ -<span class="text-amber-400">{{ Math.round(discoveryResult.dedupRate * 100) }}%</span> 重複弾き
+              ／ -<span class="text-[var(--exile-color-signal-warn)]">{{ Math.round(discoveryResult.dedupRate * 100) }}%</span> 重複弾き
             </span>
           </span>
         </div>
@@ -422,19 +424,19 @@ async function startDiscovery() {
         </span>
         <span>空 mod {{ fmtPct(discoveryResult.emptyModRate) }}</span>
         <span v-if="discoveryResult.failedSorts.length">
-          失敗 sort: <span class="text-red-300">{{ discoveryResult.failedSorts.join(", ") }}</span>
+          失敗 sort: <span class="text-[var(--exile-color-signal-error)]">{{ discoveryResult.failedSorts.join(", ") }}</span>
         </span>
       </div>
 
       <div
         v-if="showTestSettings"
-        class="mb-3 p-3 rounded border-2 border-purple-500/40 bg-purple-950/20 space-y-2"
+        class="mb-3 p-3 rounded border border-[var(--exile-color-accent-mystic)] bg-[color-mix(in_srgb,var(--exile-color-accent-mystic)_15%,transparent)] space-y-2"
       >
         <div class="flex items-baseline justify-between mb-1">
-          <span class="text-[11px] font-semibold text-purple-200">⚙ テスト設定（開発者用）</span>
+          <span class="text-[11px] font-semibold text-[var(--exile-color-accent-mystic)]">⚙ テスト設定（開発者用）</span>
           <button
             @click="resetTestSettings"
-            class="text-[10px] px-2 py-0.5 rounded border border-purple-500/40 text-purple-300/80 hover:bg-purple-900/30"
+            class="text-[10px] px-2 py-0.5 rounded border border-[var(--exile-color-accent-mystic)] text-[var(--exile-color-accent-mystic)] hover:bg-[color-mix(in_srgb,var(--exile-color-accent-mystic)_25%,transparent)]"
           >
             🔄 デフォルトに戻す
           </button>
@@ -500,7 +502,7 @@ async function startDiscovery() {
             <span class="text-[var(--color-text-muted)]/60">% 以上でオレンジ（未満は灰）</span>
           </label>
         </div>
-        <p class="text-[9px] text-purple-300/60 mt-2 leading-relaxed">
+        <p class="text-[9px] text-[var(--exile-color-text-secondary)] mt-2 leading-relaxed">
           ※ これらは本番ユーザーには見せない予定。配布版では「自動で最適表示」になる想定。
           いまは開発検証用に開放中。
         </p>
@@ -530,7 +532,7 @@ async function startDiscovery() {
             :class="[
               'px-2 py-1 rounded text-[10px] border transition',
               sortMode === 'fresh'
-                ? 'bg-red-500 text-white border-red-500 font-semibold'
+                ? 'bg-[var(--exile-color-accent-hot)] text-[var(--exile-color-text-primary)] border-[var(--exile-color-accent-hot)] font-semibold'
                 : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
             ]"
             :title="`新鮮率（直近 ${RECENT_WINDOW_HOURS}h ÷ 累積）が高い構成を優先 = 古い在庫が無く、市場が回ってる ≒ 売れてる`"
@@ -542,7 +544,7 @@ async function startDiscovery() {
             :class="[
               'px-2 py-1 rounded text-[10px] border transition',
               sortMode === 'recent'
-                ? 'bg-emerald-500 text-black border-emerald-500 font-semibold'
+                ? 'bg-[var(--exile-color-signal-success)] text-[var(--exile-color-bg-canvas)] border-[var(--exile-color-signal-success)] font-semibold'
                 : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]',
             ]"
             :title="`直近 ${RECENT_WINDOW_HOURS}h 以内に出品された listing が多い構成を優先（絶対数の新鮮さ）`"
@@ -572,35 +574,40 @@ async function startDiscovery() {
           v-for="(c, i) in discoveryClusterRanking"
           :key="c.clusterHash"
           @click="openCluster(c)"
-          class="rounded border-2 border-amber-900/50 bg-gradient-to-b from-stone-950 to-zinc-950 shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] hover:border-amber-500/80 hover:shadow-[inset_0_0_20px_rgba(245,158,11,0.15)] cursor-pointer transition overflow-hidden relative"
+          class="rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] hover:border-[var(--color-border-brass)] cursor-pointer transition overflow-hidden relative"
           :class="{ 'opacity-60 cursor-wait': openingClusterHash === c.clusterHash }"
           :title="`クリックで trade2 サイトを開く（${clusterSize} mod フィルタ入り）`"
         >
+          <CornerMark class="absolute top-1 left-1 z-10 pointer-events-none" />
+          <HotSeal
+            v-if="c.freshRate >= freshHotThreshold"
+            class="absolute top-1 left-3 z-10 pointer-events-none"
+          />
           <div
             v-if="openingClusterHash === c.clusterHash"
-            class="absolute top-2 right-2 text-[10px] text-amber-200 bg-amber-900/80 px-2 py-0.5 rounded font-mono z-10"
+            class="absolute top-2 right-2 text-[10px] text-[var(--exile-color-signal-warn)] bg-[var(--exile-color-bg-elevated)] px-2 py-0.5 rounded font-mono z-10"
           >
             🔗 開封中…
           </div>
-          <div class="px-3 py-1.5 bg-gradient-to-r from-amber-950/40 via-amber-900/30 to-amber-950/40 border-b border-amber-900/40 flex items-center justify-between text-[10px] font-mono gap-2 flex-wrap">
-            <span class="text-amber-200/80 font-semibold">#{{ i + 1 }}</span>
+          <div class="px-3 py-1.5 pl-10 bg-[var(--exile-color-bg-surface)] border-b border-[var(--exile-color-border-subtle)] flex items-center justify-between text-[10px] font-mono gap-2 flex-wrap">
+            <span class="text-[var(--exile-color-text-secondary)] font-semibold">#{{ i + 1 }}</span>
             <span
               class="px-1.5 py-0.5 rounded font-semibold"
               :class="
                 c.freshRate >= freshHotThreshold
-                  ? 'bg-red-500/40 text-red-100'
+                  ? 'bg-[color-mix(in_srgb,var(--exile-color-accent-hot)_40%,transparent)] text-[var(--exile-color-text-primary)]'
                   : c.freshRate >= freshWarmThreshold
-                    ? 'bg-amber-500/30 text-amber-200'
+                    ? 'bg-[color-mix(in_srgb,var(--exile-color-signal-warn)_30%,transparent)] text-[var(--exile-color-signal-warn)]'
                     : c.freshRate >= freshColdThreshold
-                      ? 'bg-orange-500/20 text-orange-300'
-                      : 'bg-zinc-700/30 text-zinc-400'
+                      ? 'bg-[color-mix(in_srgb,var(--exile-color-signal-warn)_15%,transparent)] text-[var(--exile-color-text-secondary)]'
+                      : 'bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-secondary)]'
               "
               :title="`新鮮率 = 直近 ${RECENT_WINDOW_HOURS}h (${c.recentCount}件) / 累積 (${c.count}件) → 高いほど「売れて回ってる」傾向`"
             >
               🔥 {{ Math.round(c.freshRate * 100) }}%
             </span>
             <span
-              class="px-1.5 py-0.5 rounded text-amber-200/80"
+              class="px-1.5 py-0.5 rounded text-[var(--exile-color-text-secondary)]"
               :title="`直近 ${RECENT_WINDOW_HOURS}h 以内に新規出品された listing 数`"
             >
               🆕 {{ c.recentCount }} / {{ c.count }}
@@ -609,30 +616,30 @@ async function startDiscovery() {
 
           <div
             v-if="c.priceMedian !== null"
-            class="px-3 py-1 border-b border-amber-900/30 bg-zinc-950/40 text-[10px] font-mono text-amber-100/80 flex items-center justify-between"
+            class="px-3 py-1 border-b border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-canvas)] text-[10px] font-mono text-[var(--exile-color-text-secondary)] flex items-center justify-between"
             :title="`中央値計算: divine 建て listing ${c.pricedCount} 件 / 全 ${c.count} 件`"
           >
             <span>
-              💰 中央値 <span class="text-amber-200 font-semibold">{{ c.priceMedian.toFixed(0) }}</span> div
+              💰 中央値 <span class="text-[var(--exile-color-text-primary)] font-semibold">{{ c.priceMedian.toFixed(0) }}</span> div
             </span>
-            <span class="text-amber-100/50">
+            <span class="text-[var(--exile-color-text-secondary)]">
               {{ c.priceP25?.toFixed(0) }}–{{ c.priceP75?.toFixed(0) }} div (P25–P75)
             </span>
-            <span class="text-amber-100/40">{{ c.pricedCount }}件</span>
+            <span class="text-[var(--exile-color-text-secondary)]">{{ c.pricedCount }}件</span>
           </div>
 
           <div class="px-4 py-3 space-y-1 text-center">
             <div
               v-for="(raw, j) in c.rawSamples"
               :key="j"
-              class="text-[13px] text-[#8888ff] leading-relaxed"
+              class="text-[13px] text-[var(--exile-color-text-link)] leading-relaxed"
               :title="c.modKeys[j]"
             >
               {{ raw }}
             </div>
           </div>
 
-          <div class="px-3 py-1 bg-gradient-to-r from-amber-950/30 via-amber-900/20 to-amber-950/30 border-t border-amber-900/30 text-center text-[10px] text-amber-200/40 font-mono">
+          <div class="px-3 py-1 bg-[var(--exile-color-bg-surface)] border-t border-[var(--exile-color-border-subtle)] text-center text-[10px] text-[var(--exile-color-text-secondary)] font-mono">
             モッド {{ c.modKeys.length }} 個（{{ clusterSize }} mod 一致グループ）
           </div>
         </li>

@@ -4,14 +4,15 @@
 // 実行: node scripts/lint-hex.mjs
 // 運用:
 //   - Phase A.0: warning モード（既存違反はログ出力のみ・exit 0）
-//   - Phase A.4 完了時点で error モードに昇格（LINT_HEX_STRICT=1 で exit 1）
+//   - Phase A.4 完了時点で error モードに昇格（デフォルト exit 1、LINT_HEX_STRICT=0 で warning モード残置）
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = 'src';
 const ALLOW = new Set(['src/style.css']);
 const EXT = /\.(vue|ts|tsx|js|jsx|css)$/;
-const STRICT = process.env.LINT_HEX_STRICT === '1';
+// Phase A.4 以降は default = strict。LINT_HEX_STRICT=0 を明示的に渡したときだけ warning モード。
+const STRICT = process.env.LINT_HEX_STRICT !== '0';
 
 // bg-[#xxx] / text-[#xxxxxx] / 生 #xxxxxx (3/4/6/8 桁)
 const HEX = /(?:bg|text|border|fill|stroke|from|to|via|outline|ring|shadow|caret|accent|divide|placeholder)-\[#[0-9A-Fa-f]{3,8}\b[^\]]*\]|(?<![\w&-])#[0-9A-Fa-f]{6}\b|(?<![\w&-])#[0-9A-Fa-f]{8}\b|(?<![\w&-])#[0-9A-Fa-f]{3}\b/g;
@@ -37,7 +38,7 @@ walk(ROOT);
 if (hits > 0) {
   console.error(`\n[lint:hex] ${hits} violations found. Use --exile-color-* tokens instead.`);
   if (STRICT) process.exit(1);
-  console.error('[lint:hex] (warning mode: LINT_HEX_STRICT=1 to fail CI)');
+  console.error('[lint:hex] (warning mode: LINT_HEX_STRICT=0 で warning モード残置中。Phase A.4 以降は default = error)');
   process.exit(0);
 }
 console.log('[lint:hex] OK');
