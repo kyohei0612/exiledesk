@@ -1792,11 +1792,11 @@ const renderedAiResult = computed(() => {
     .replace(/>/g, "&gt;");
   // step 2: 簡易 Markdown 変換（フロー図用 pre は最優先で wrap）
   const md = escaped
-    .replace(/```([\s\S]*?)```/g, '<pre class="bg-[var(--color-surface-2)] p-3 rounded my-3 text-xs whitespace-pre overflow-x-auto leading-relaxed font-mono">$1</pre>')
-    .replace(/`([^`]+)`/g, '<code class="bg-[var(--color-surface-2)] px-1 rounded text-xs">$1</code>')
+    .replace(/```([\s\S]*?)```/g, '<pre class="bg-[var(--exile-color-bg-elevated)] p-3 rounded my-3 text-xs whitespace-pre overflow-x-auto leading-relaxed font-mono">$1</pre>')
+    .replace(/`([^`]+)`/g, '<code class="bg-[var(--exile-color-bg-elevated)] px-1 rounded text-xs">$1</code>')
     .replace(/^#### (.+)$/gm, '<h5 class="font-semibold mt-2 mb-1 text-sm">$1</h5>')
-    .replace(/^### (.+)$/gm, '<h4 class="font-semibold mt-3 mb-1 text-[var(--color-accent)]">$1</h4>')
-    .replace(/^## (.+)$/gm, '<h3 class="font-bold mt-4 mb-2 text-base text-[var(--color-accent)]">$1</h3>')
+    .replace(/^### (.+)$/gm, '<h4 class="font-semibold mt-3 mb-1 text-[var(--exile-color-accent-focus)]">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 class="font-bold mt-4 mb-2 text-base text-[var(--exile-color-accent-focus)]">$1</h3>')
     .replace(/^# (.+)$/gm, '<h2 class="font-bold mt-4 mb-2 text-lg">$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>')
     .replace(/^- (.+)$/gm, '<li class="ml-5 list-disc">$1</li>')
@@ -1810,10 +1810,10 @@ const renderedAiResult = computed(() => {
 <template>
   <div class="p-8 overflow-auto h-full">
     <h2 class="text-2xl font-semibold mb-1">🔨 クラフト最短経路相談</h2>
-    <p class="text-sm text-[var(--color-text-muted)] max-w-3xl mb-4">
+    <p class="text-sm text-[var(--exile-color-text-secondary)] max-w-3xl mb-4">
       装備スロット別に目標 mod を保存（ローカル永続）。最大6個（プレ3＋サフ3）。
       コピペ解析で日本語版の装備テキストから自動入力。
-      <span class="text-[var(--color-accent)]">v0: 入力・保存・解析まで実装。AI 経路提案は次ステップ。</span>
+      <span class="text-[var(--exile-color-accent-focus)]">v0: 入力・保存・解析まで実装。AI 経路提案は次ステップ。</span>
     </p>
 
     <!-- スロット タブ -->
@@ -1823,8 +1823,8 @@ const renderedAiResult = computed(() => {
         :class="[
           'px-3 py-2 rounded text-sm whitespace-nowrap transition border-b-2',
           activeSlotId === 'all'
-            ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)] text-[var(--color-accent)]'
-            : 'bg-[var(--color-surface)] border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+            ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
+            : 'bg-[var(--exile-color-bg-surface)] border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]',
         ]"
         title="コピペすると自動でアイテム種別を判定して該当スロットへ移動"
       >
@@ -1837,43 +1837,43 @@ const renderedAiResult = computed(() => {
         :class="[
           'px-3 py-2 rounded text-sm whitespace-nowrap transition border-b-2',
           activeSlotId === s.id
-            ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)] text-[var(--color-accent)]'
-            : 'bg-[var(--color-surface)] border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+            ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
+            : 'bg-[var(--exile-color-bg-surface)] border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]',
         ]"
       >
         {{ s.label
         }}<span
           v-if="slotSelCount(s.id) > 0"
-          class="ml-1.5 text-[10px] text-[var(--color-accent)]"
+          class="ml-1.5 text-[10px] text-[var(--exile-color-accent-focus)]"
           >·{{ slotSelCount(s.id) }}</span
         >
       </button>
     </div>
 
     <!-- 「全て」タブ専用 UI: 自動振り分けコピペ（シンプル版） -->
-    <div v-if="activeSlotId === 'all'" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 p-4">
-      <p class="text-xs text-[var(--color-text-muted)] mb-2 leading-relaxed">
-        POE2 のアイテムテキスト（日本語 / 英語）を貼って <span class="text-[var(--color-accent)]">「自動振り分け」</span>を押すと、
+    <div v-if="activeSlotId === 'all'" class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]/30 p-4">
+      <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
+        POE2 のアイテムテキスト（日本語 / 英語）を貼って <span class="text-[var(--exile-color-accent-focus)]">「自動振り分け」</span>を押すと、
         Item Class を読み取って該当スロットに自動移動＆解析します。
       </p>
       <textarea
         v-model="allTabPasteText"
         rows="6"
         placeholder="Item Class: Rings / アイテムクラス: 指輪 ..."
-        class="w-full px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs font-mono resize-y focus:outline-none focus:border-[var(--color-accent)]"
+        class="w-full px-3 py-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs font-mono resize-y focus:outline-none focus:border-[var(--exile-color-accent-focus)]"
       ></textarea>
       <div class="mt-2 flex items-center gap-2 flex-wrap">
         <button
           @click="autoRouteAllPaste"
           :disabled="!allTabPasteText.trim()"
-          class="px-4 py-2 rounded bg-[var(--color-accent)] text-black text-sm font-medium hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition"
+          class="px-4 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black text-sm font-medium hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 transition"
         >
           🎯 自動振り分け＋解析
         </button>
         <button
           @click="allTabPasteText = ''; allTabError = ''"
           :disabled="!allTabPasteText"
-          class="px-3 py-2 rounded border border-[var(--color-border)] text-xs hover:bg-[var(--color-surface-2)] disabled:opacity-40 transition"
+          class="px-3 py-2 rounded border border-[var(--exile-color-border-subtle)] text-xs hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 transition"
         >
           クリア
         </button>
@@ -1908,12 +1908,12 @@ const renderedAiResult = computed(() => {
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
       <label v-if="isWeaponSlot" class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">
+        <span class="text-[var(--exile-color-text-secondary)]">
           {{ weaponSlotLabel }}
         </span>
         <select
           v-model="slot.itemTag"
-          class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm"
         >
           <option v-for="t in weaponTypeOptions" :key="t.id" :value="t.id">
             {{ t.label }}
@@ -1921,13 +1921,13 @@ const renderedAiResult = computed(() => {
         </select>
       </label>
       <label class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">ベース:</span>
+        <span class="text-[var(--exile-color-text-secondary)]">ベース:</span>
         <input
           v-model="slot.parsedBase"
           list="base-name-suggestions"
           type="text"
           placeholder="例: エメラルドの指輪"
-          class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-52"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm w-52"
         />
         <datalist id="base-name-suggestions">
           <option v-for="b in baseNameSuggestions" :key="b" :value="b" />
@@ -1939,7 +1939,7 @@ const renderedAiResult = computed(() => {
         v-if="isArmourSlot(slot.itemTag)"
         class="flex flex-wrap items-center gap-1 text-xs px-3 py-1 w-full"
       >
-        <span class="text-[var(--color-text-muted)] mr-1">type:</span>
+        <span class="text-[var(--exile-color-text-secondary)] mr-1">type:</span>
         <button
           v-for="chip in ARMOUR_TYPE_CHIPS"
           :key="chip.label"
@@ -1947,8 +1947,8 @@ const renderedAiResult = computed(() => {
           :class="[
             'px-2 py-0.5 rounded transition',
             slot.armourTypeFilter === chip.value
-              ? 'bg-[var(--color-accent)] text-black font-semibold'
-              : 'bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-2)]',
+              ? 'bg-[var(--exile-color-accent-focus)] text-black font-semibold'
+              : 'bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)]',
           ]"
         >
           {{ chip.label }}
@@ -1958,9 +1958,9 @@ const renderedAiResult = computed(() => {
       <!-- 選択ベースの implicit / base stats（PoB Data/Bases 由来） -->
       <div
         v-if="selectedBaseInfo"
-        class="flex flex-wrap items-center gap-3 text-xs px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] w-full"
+        class="flex flex-wrap items-center gap-3 text-xs px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] w-full"
       >
-        <span class="text-[var(--color-text-muted)]">
+        <span class="text-[var(--exile-color-text-secondary)]">
           {{ selectedBaseInfo.type }}
           <span v-if="selectedBaseInfo.req.level">(req lv{{ selectedBaseInfo.req.level }})</span>
         </span>
@@ -1972,7 +1972,7 @@ const renderedAiResult = computed(() => {
         </span>
         <span
           v-if="selectedBaseInfo.weapon"
-          class="text-[var(--color-text-muted)]"
+          class="text-[var(--exile-color-text-secondary)]"
         >
           物理 {{ selectedBaseInfo.weapon.PhysicalMin }}-{{ selectedBaseInfo.weapon.PhysicalMax }}
           / 速度 {{ selectedBaseInfo.weapon.AttackRateBase }}
@@ -1981,7 +1981,7 @@ const renderedAiResult = computed(() => {
         </span>
         <span
           v-if="selectedBaseInfo.armour"
-          class="text-[var(--color-text-muted)]"
+          class="text-[var(--exile-color-text-secondary)]"
         >
           <span v-if="selectedBaseInfo.armour.ArmourBase">アーマー {{ selectedBaseInfo.armour.ArmourBase }}</span>
           <span v-if="selectedBaseInfo.armour.EvasionBase"> / 回避 {{ selectedBaseInfo.armour.EvasionBase }}</span>
@@ -1989,47 +1989,47 @@ const renderedAiResult = computed(() => {
         </span>
       </div>
       <label class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--color-text-muted)]">ilvl:</span>
+        <span class="text-[var(--exile-color-text-secondary)]">ilvl:</span>
         <input
           v-model.number="slot.itemLevel"
           type="number"
           min="1"
           max="86"
-          class="w-20 px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
+          class="w-20 px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm"
         />
       </label>
       <input
         v-model="search"
         type="text"
         placeholder="🔍 mod 検索（日英）"
-        class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-56"
+        class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm w-56"
       />
-      <span class="ml-auto text-xs text-[var(--color-text-muted)]">
+      <span class="ml-auto text-xs text-[var(--exile-color-text-secondary)]">
         選択:
-        <span class="text-[var(--color-accent)]">{{ selectedPrefixCount }}/3 P</span>
+        <span class="text-[var(--exile-color-accent-focus)]">{{ selectedPrefixCount }}/3 P</span>
         +
-        <span class="text-[var(--color-accent)]">{{ selectedSuffixCount }}/3 S</span>
+        <span class="text-[var(--exile-color-accent-focus)]">{{ selectedSuffixCount }}/3 S</span>
         ／ 候補 {{ filteredGroups.length }} group
       </span>
     </div>
 
     <!-- コピペ解析（デフォルト開きっぱなし） -->
-    <details open class="mb-4 rounded border border-[var(--color-border)] bg-[var(--color-surface)]/30">
+    <details open class="mb-4 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]/30">
       <summary class="px-3 py-2 cursor-pointer text-sm">
         📋 コピペで一括入力（POE2 ゲーム内 → 右クリック → コピー → ここに貼付）
       </summary>
-      <div class="p-3 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
+      <div class="p-3 border-t border-[var(--exile-color-border-subtle)] grid grid-cols-2 gap-3">
         <textarea
           v-model="slot.pasteText"
           rows="8"
           placeholder="真珠の指輪&#10;指輪&#10;品質 (アタックモッド): +14%&#10;アイテムレベル: 78&#10;必要 レベル 60&#10;キャストスピードが9%増加する&#10;..."
-          class="w-full px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs font-mono resize-y focus:outline-none focus:border-[var(--color-accent)]"
+          class="w-full px-3 py-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs font-mono resize-y focus:outline-none focus:border-[var(--exile-color-accent-focus)]"
         ></textarea>
         <div class="flex flex-col gap-2">
           <button
             @click="applyPaste"
             :disabled="!slot.pasteText.trim()"
-            class="px-4 py-2 rounded bg-[var(--color-accent)] text-black text-sm font-medium hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition"
+            class="px-4 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black text-sm font-medium hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 transition"
           >
             🔍 解析して反映
           </button>
@@ -2037,7 +2037,7 @@ const renderedAiResult = computed(() => {
             <button
               @click="resetSlotPaste"
               :disabled="!slot.pasteText && !slot.parsedName && !slot.parsedBase"
-              class="px-2 py-1.5 rounded border border-[var(--color-border)] text-[11px] hover:bg-[var(--color-surface-2)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              class="px-2 py-1.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition"
               title="現在のタブのコピペ・解析結果をリセット（選択中の目標 mod は残ります）"
             >
               🔄 リセット
@@ -2045,7 +2045,7 @@ const renderedAiResult = computed(() => {
             <button
               @click="saveCurrentPaste"
               :disabled="!slot.pasteText.trim()"
-              class="px-2 py-1.5 rounded border border-[var(--color-border)] text-[11px] hover:bg-[var(--color-surface-2)] disabled:opacity-40 disabled:cursor-not-allowed transition"
+              class="px-2 py-1.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition"
               title="現在のコピペを名前付きで保存"
             >
               💾 保存
@@ -2055,13 +2055,13 @@ const renderedAiResult = computed(() => {
               :class="[
                 'px-2 py-1.5 rounded border text-[11px] transition',
                 savedListVisible
-                  ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)]'
-                  : 'border-[var(--color-border)] hover:bg-[var(--color-surface-2)]',
+                  ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)]'
+                  : 'border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)]',
               ]"
               :title="`保存スロット (${savedPastes.length} 件)`"
             >
               📂 保存リスト
-              <span v-if="savedPastes.length" class="text-[var(--color-accent)]">
+              <span v-if="savedPastes.length" class="text-[var(--exile-color-accent-focus)]">
                 · {{ savedPastes.length }}
               </span>
             </button>
@@ -2069,42 +2069,42 @@ const renderedAiResult = computed(() => {
           <!-- 保存リスト -->
           <div
             v-if="savedListVisible"
-            class="mt-1 rounded border border-[var(--color-border)] bg-[var(--color-bg)] max-h-56 overflow-y-auto relative"
+            class="mt-1 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-canvas)] max-h-56 overflow-y-auto relative"
           >
             <p
               v-if="!savedPastes.length"
-              class="px-3 py-3 text-[11px] text-[var(--color-text-muted)] italic text-center"
+              class="px-3 py-3 text-[11px] text-[var(--exile-color-text-secondary)] italic text-center"
             >
               保存されたコピペはまだありません
             </p>
-            <ul v-else class="divide-y divide-[var(--color-border)]">
+            <ul v-else class="divide-y divide-[var(--exile-color-border-subtle)]">
               <li
                 v-for="p in savedPastes"
                 :key="p.name"
-                class="flex items-center gap-1 px-2 py-1.5 text-[11px] hover:bg-[var(--color-surface-2)]/40"
+                class="flex items-center gap-1 px-2 py-1.5 text-[11px] hover:bg-[var(--exile-color-bg-elevated)]/40"
                 @mouseenter="hoveredSavedPaste = p"
                 @mouseleave="hoveredSavedPaste = null"
               >
                 <button
                   @click="loadSavedPaste(p)"
-                  class="flex-1 text-left truncate hover:text-[var(--color-accent)] transition"
+                  class="flex-1 text-left truncate hover:text-[var(--exile-color-accent-focus)] transition"
                   :title="`クリックで読込 / ホバーで内容プレビュー\n保存日: ${new Date(p.createdAt).toLocaleString('ja-JP')}`"
                 >
                   <span class="truncate">{{ p.name }}</span>
                   <span
                     v-if="p.baseName"
-                    class="text-[9px] text-[var(--color-text-muted)] ml-1"
+                    class="text-[9px] text-[var(--exile-color-text-secondary)] ml-1"
                   >· {{ p.baseName }}</span>
                 </button>
                 <button
                   @click="deleteSavedPaste(p.name, $event)"
-                  class="text-[var(--color-text-muted)] hover:text-red-300 px-1 transition shrink-0"
+                  class="text-[var(--exile-color-text-secondary)] hover:text-red-300 px-1 transition shrink-0"
                   title="削除"
                 >✕</button>
               </li>
             </ul>
           </div>
-          <p class="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
+          <p class="text-[10px] text-[var(--exile-color-text-secondary)] leading-relaxed">
             mod 名と数値プレースホルダを照合して自動選択。<br />
             未マッチ行は手動で選び直してください。<br />
             アイテム lvl も自動取得。
@@ -2116,22 +2116,22 @@ const renderedAiResult = computed(() => {
     <!-- 保存リスト ホバープレビュー（floating） -->
     <div
       v-if="hoveredSavedPaste && savedListVisible"
-      class="fixed z-40 right-6 top-32 w-96 max-h-[60vh] overflow-y-auto p-3 rounded-lg border border-[var(--color-accent)] bg-[var(--color-surface)] shadow-2xl pointer-events-none"
+      class="fixed z-40 right-6 top-32 w-96 max-h-[60vh] overflow-y-auto p-3 rounded-lg border border-[var(--exile-color-accent-focus)] bg-[var(--exile-color-bg-surface)] shadow-2xl pointer-events-none"
     >
-      <div class="text-[11px] text-[var(--color-accent)] mb-1 font-semibold">
+      <div class="text-[11px] text-[var(--exile-color-accent-focus)] mb-1 font-semibold">
         {{ hoveredSavedPaste.name }}
       </div>
       <div
         v-if="hoveredSavedPaste.baseName"
-        class="text-[10px] text-[var(--color-text-muted)] mb-2"
+        class="text-[10px] text-[var(--exile-color-text-secondary)] mb-2"
       >
         ベース: {{ hoveredSavedPaste.baseName }}
       </div>
-      <pre class="text-[10px] font-mono whitespace-pre-wrap break-all text-[var(--color-text)]">{{ hoveredSavedPaste.text }}</pre>
+      <pre class="text-[10px] font-mono whitespace-pre-wrap break-all text-[var(--exile-color-text-primary)]">{{ hoveredSavedPaste.text }}</pre>
     </div>
 
     <!-- 選択中サマリ（目標 mod。mod ピッカーより上に配置して常時視認できるように） -->
-    <div class="mb-4 p-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]">
+    <div class="mb-4 p-4 rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]">
       <h3 class="text-sm font-semibold mb-3">
         🎯 目標 mod（{{ selectedMods.length }}/6）— 「{{ slotLabel(activeSlotId) }}」スロット
       </h3>
@@ -2139,20 +2139,20 @@ const renderedAiResult = computed(() => {
       <!-- パース済メタデータ -->
       <div
         v-if="slot.parsedName || slot.parsedBase || slot.parsedQuality"
-        class="mb-3 pb-3 border-b border-[var(--color-border)] grid grid-cols-2 gap-2 text-xs"
+        class="mb-3 pb-3 border-b border-[var(--exile-color-border-subtle)] grid grid-cols-2 gap-2 text-xs"
       >
         <div v-if="slot.parsedName">
-          <span class="text-[var(--color-text-muted)]">アイテム名: </span>
-          <span class="text-[var(--color-accent)]">{{ slot.parsedName }}</span>
+          <span class="text-[var(--exile-color-text-secondary)]">アイテム名: </span>
+          <span class="text-[var(--exile-color-accent-focus)]">{{ slot.parsedName }}</span>
         </div>
         <div v-if="slot.parsedBase">
-          <span class="text-[var(--color-text-muted)]">ベース: </span>
+          <span class="text-[var(--exile-color-text-secondary)]">ベース: </span>
           <span>{{ slot.parsedBase }}</span>
         </div>
         <div v-if="slot.parsedQuality">
-          <span class="text-[var(--color-text-muted)]">品質: </span>
-          <span class="text-[var(--color-accent)]">+{{ slot.parsedQuality }}%</span>
-          <span v-if="slot.parsedQualityCategory" class="text-[var(--color-text-muted)]">
+          <span class="text-[var(--exile-color-text-secondary)]">品質: </span>
+          <span class="text-[var(--exile-color-accent-focus)]">+{{ slot.parsedQuality }}%</span>
+          <span v-if="slot.parsedQualityCategory" class="text-[var(--exile-color-text-secondary)]">
             ({{ slot.parsedQualityCategory }})
           </span>
         </div>
@@ -2161,13 +2161,13 @@ const renderedAiResult = computed(() => {
       <!-- 品質適用バッジ -->
       <div
         v-if="selectedMods.length && slot.parsedQuality"
-        class="mb-2 px-3 py-1.5 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-[11px]"
+        class="mb-2 px-3 py-1.5 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-[11px]"
       >
-        <span class="text-[var(--color-accent)]">品質適用中: +{{ slot.parsedQuality }}%</span>
-        <span v-if="slot.parsedQualityCategory" class="text-[var(--color-text-muted)] ml-1">
+        <span class="text-[var(--exile-color-accent-focus)]">品質適用中: +{{ slot.parsedQuality }}%</span>
+        <span v-if="slot.parsedQualityCategory" class="text-[var(--exile-color-text-secondary)] ml-1">
           ({{ slot.parsedQualityCategory }})
         </span>
-        <span class="text-[var(--color-text-muted)] ml-2">— 該当カテゴリ mod の数値に反映</span>
+        <span class="text-[var(--exile-color-text-secondary)] ml-2">— 該当カテゴリ mod の数値に反映</span>
       </div>
 
       <ul v-if="selectedMods.length" class="space-y-1 text-sm font-mono">
@@ -2188,15 +2188,15 @@ const renderedAiResult = computed(() => {
             {{ m.type === "prefix" ? "プレ" : "サフ" }}
           </span>
           <span
-            class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-[var(--color-surface-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]"
+            class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-secondary)] border border-[var(--exile-color-border-subtle)]"
             :title="`Tier ${absoluteTierOf(m)} / lv${m.level}`"
           >T{{ absoluteTierOf(m) }}</span>
-          <span class="flex-1 text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
+          <span class="flex-1 text-[var(--exile-color-text-primary)] whitespace-pre-line">{{ cleanModText(m.text_ja) }}</span>
           <span
             v-if="modSpecialKind(m)"
             :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(m))]"
           >{{ specialKindLabel(modSpecialKind(m)) }}</span>
-          <span class="text-[10px] text-[var(--color-text-muted)]">lv{{ m.level }}</span>
+          <span class="text-[10px] text-[var(--exile-color-text-secondary)]">lv{{ m.level }}</span>
           <span
             v-if="qualityBoostFor(m) > 0"
             class="text-[10px] text-emerald-300 font-mono shrink-0"
@@ -2204,29 +2204,29 @@ const renderedAiResult = computed(() => {
           >Q+{{ qualityBoostFor(m) }}%</span>
           <button
             @click="removeSelectedMod(m.key)"
-            class="text-[var(--color-text-muted)] hover:text-red-300 text-xs px-1 opacity-50 group-hover:opacity-100 transition"
+            class="text-[var(--exile-color-text-secondary)] hover:text-red-300 text-xs px-1 opacity-50 group-hover:opacity-100 transition"
             title="この mod を削除"
           >✕</button>
         </li>
       </ul>
-      <p v-else class="text-xs text-[var(--color-text-muted)] italic">
+      <p v-else class="text-xs text-[var(--exile-color-text-secondary)] italic">
         下のリストから選択 or コピペで自動入力
       </p>
     </div>
 
     <!-- スターター mod（mod ピッカーより上に配置） -->
-    <div class="mb-3 p-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]">
+    <div class="mb-3 p-4 rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]">
       <h3 class="text-sm font-semibold mb-2">
         🎯 スターター mod（既に持ってると楽になる）
       </h3>
-      <p class="text-xs text-[var(--color-text-muted)] mb-3">
+      <p class="text-xs text-[var(--exile-color-text-secondary)] mb-3">
         プレフィックス1 ＋ サフィックス1（最大 tier）を指定すると、その mod が既にあるベース前提で最短経路を計算します。
-        <span class="text-[var(--color-accent)]">空欄のままなら AI が「おすすめスターター」を提案します。</span>
+        <span class="text-[var(--exile-color-accent-focus)]">空欄のままなら AI が「おすすめスターター」を提案します。</span>
       </p>
       <div class="grid grid-cols-2 gap-3">
         <select
           v-model="slot.starterPrefix"
-          class="px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs"
         >
           <option value="">プレフィックス: 指定なし</option>
           <option v-for="g in prefixGroups" :key="g.id" :value="g.tiers[0].key">
@@ -2235,7 +2235,7 @@ const renderedAiResult = computed(() => {
         </select>
         <select
           v-model="slot.starterSuffix"
-          class="px-3 py-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs"
         >
           <option value="">サフィックス: 指定なし</option>
           <option v-for="g in suffixGroups" :key="g.id" :value="g.tiers[0].key">
@@ -2250,11 +2250,11 @@ const renderedAiResult = computed(() => {
       <button
         @click="onAskAi"
         :disabled="!selectedMods.length"
-        class="px-5 py-2 rounded bg-[var(--color-accent)] text-black font-medium text-sm hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition"
+        class="px-5 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black font-medium text-sm hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 transition"
       >
         🤖 秘書（AI）に最短経路を相談
       </button>
-      <p class="text-[10px] text-[var(--color-text-muted)] flex-1 min-w-[12rem]">
+      <p class="text-[10px] text-[var(--exile-color-text-secondary)] flex-1 min-w-[12rem]">
         Mod データ: RePoE fork (poe2) JA / EN ／ AI 送信時は英名・stat 範囲・group・lv・tags・weight + 品質情報を渡します。
         AI プロンプトには冒涜・エッセンス・パーフェクトエッセンス・コラプト機構を含む POE2 クラフト機構と、各 mod の概算個別確率を考慮した最短経路提案を指示。
       </p>
@@ -2288,8 +2288,8 @@ const renderedAiResult = computed(() => {
 
     <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
     <div class="grid grid-cols-2 gap-4 items-start">
-      <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
-        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
+      <div class="rounded-lg border border-[var(--exile-color-border-subtle)] overflow-hidden">
+        <div class="px-3 py-2 bg-[var(--exile-color-bg-surface)] text-xs uppercase tracking-wider text-[var(--exile-color-accent-focus)] sticky top-0 z-10">
           プレフィックス（{{ prefixGroups.length }} group）
         </div>
         <div
@@ -2307,35 +2307,35 @@ const renderedAiResult = computed(() => {
         </div>
         <div
           v-show="sec.kind === 'normal' || !isSectionCollapsed('prefix', sec.kind)"
-          class="divide-y divide-[var(--color-border)]"
+          class="divide-y divide-[var(--exile-color-border-subtle)]"
         >
           <button
             v-for="g in sec.groups"
             :key="g.id"
             @click="openTierPicker(g)"
             :class="[
-              'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
+              'w-full text-left px-3 py-2 text-xs hover:bg-[var(--exile-color-bg-surface)] transition flex items-start gap-2',
               specialKindBgGradient(sec.kind !== 'normal' ? sec.kind : modSpecialKind(g.tiers[0])),
               selectedTierIn(g)
-                ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
+                ? 'bg-[var(--exile-color-bg-elevated)] border-l-2 border-[var(--exile-color-accent-focus)]'
                 : 'border-l-2 border-transparent',
             ]"
           >
-            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
+            <span class="text-[var(--exile-color-text-secondary)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
                 <span
                   :class="[
                     'px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 font-mono',
                     selectedTierIn(g)
-                      ? 'bg-[var(--color-accent)] text-black'
-                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                      ? 'bg-[var(--exile-color-accent-focus)] text-black'
+                      : 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-secondary)] border border-[var(--exile-color-border-subtle)]'
                   ]"
                   :title="selectedTierIn(g) ? '選択中ティア' : '最高ティア (T1) を表示中'"
                 >
                   T{{ selectedTierIn(g) ? absoluteTierOf(selectedTierIn(g)!) : absoluteTierOf(g.tiers[0]) }}
                 </span>
-                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+                <span class="text-[var(--exile-color-text-primary)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(g.tiers[0])"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
@@ -2349,25 +2349,25 @@ const renderedAiResult = computed(() => {
                   :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
                 >{{ jaTag(t) }}</span>
               </span>
-              <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
+              <span class="text-[var(--exile-color-text-secondary)] block text-[10px] mt-0.5">
                 {{ g.tiers[0].name_ja || g.tiers[0].name_en }}
               </span>
             </span>
             <span class="flex flex-col items-end shrink-0 gap-0.5">
-              <span class="text-[10px] text-[var(--color-text-muted)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
-              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--color-text-muted)]">{{ g.tiers.length }} tiers</span>
-              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--color-accent)] font-semibold">✓ 選択中</span>
+              <span class="text-[10px] text-[var(--exile-color-text-secondary)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
+              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--exile-color-text-secondary)]">{{ g.tiers.length }} tiers</span>
+              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--exile-color-accent-focus)] font-semibold">✓ 選択中</span>
             </span>
           </button>
         </div>
         </div>
-        <p v-if="!prefixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+        <p v-if="!prefixGroups.length" class="p-4 text-xs text-[var(--exile-color-text-secondary)] italic">
           該当なし
         </p>
       </div>
 
-      <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
-        <div class="px-3 py-2 bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-accent)] sticky top-0 z-10">
+      <div class="rounded-lg border border-[var(--exile-color-border-subtle)] overflow-hidden">
+        <div class="px-3 py-2 bg-[var(--exile-color-bg-surface)] text-xs uppercase tracking-wider text-[var(--exile-color-accent-focus)] sticky top-0 z-10">
           サフィックス（{{ suffixGroups.length }} group）
         </div>
         <div
@@ -2385,35 +2385,35 @@ const renderedAiResult = computed(() => {
         </div>
         <div
           v-show="sec.kind === 'normal' || !isSectionCollapsed('suffix', sec.kind)"
-          class="divide-y divide-[var(--color-border)]"
+          class="divide-y divide-[var(--exile-color-border-subtle)]"
         >
           <button
             v-for="g in sec.groups"
             :key="g.id"
             @click="openTierPicker(g)"
             :class="[
-              'w-full text-left px-3 py-2 text-xs hover:bg-[var(--color-surface)] transition flex items-start gap-2',
+              'w-full text-left px-3 py-2 text-xs hover:bg-[var(--exile-color-bg-surface)] transition flex items-start gap-2',
               specialKindBgGradient(sec.kind !== 'normal' ? sec.kind : modSpecialKind(g.tiers[0])),
               selectedTierIn(g)
-                ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
+                ? 'bg-[var(--exile-color-bg-elevated)] border-l-2 border-[var(--exile-color-accent-focus)]'
                 : 'border-l-2 border-transparent',
             ]"
           >
-            <span class="text-[var(--color-text-muted)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
+            <span class="text-[var(--exile-color-text-secondary)] font-mono w-8 shrink-0">lv{{ g.tiers[0].level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
                 <span
                   :class="[
                     'px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 font-mono',
                     selectedTierIn(g)
-                      ? 'bg-[var(--color-accent)] text-black'
-                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                      ? 'bg-[var(--exile-color-accent-focus)] text-black'
+                      : 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-text-secondary)] border border-[var(--exile-color-border-subtle)]'
                   ]"
                   :title="selectedTierIn(g) ? '選択中ティア' : '最高ティア (T1) を表示中'"
                 >
                   T{{ selectedTierIn(g) ? absoluteTierOf(selectedTierIn(g)!) : absoluteTierOf(g.tiers[0]) }}
                 </span>
-                <span class="text-[var(--color-text)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
+                <span class="text-[var(--exile-color-text-primary)] whitespace-pre-line">{{ cleanModText(g.tiers[0].text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(g.tiers[0])"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(g.tiers[0]))]"
@@ -2427,19 +2427,19 @@ const renderedAiResult = computed(() => {
                   :class="['px-1.5 py-0.5 rounded text-[9px]', tagColor(t)]"
                 >{{ jaTag(t) }}</span>
               </span>
-              <span class="text-[var(--color-text-muted)] block text-[10px] mt-0.5">
+              <span class="text-[var(--exile-color-text-secondary)] block text-[10px] mt-0.5">
                 {{ g.tiers[0].name_ja || g.tiers[0].name_en }}
               </span>
             </span>
             <span class="flex flex-col items-end shrink-0 gap-0.5">
-              <span class="text-[10px] text-[var(--color-text-muted)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
-              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--color-text-muted)]">{{ g.tiers.length }} tiers</span>
-              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--color-accent)] font-semibold">✓ 選択中</span>
+              <span class="text-[10px] text-[var(--exile-color-text-secondary)] font-mono">w{{ modWeightFor(g.tiers[0], slot.itemTag) }}</span>
+              <span v-if="g.tiers.length > 1" class="text-[9px] text-[var(--exile-color-text-secondary)]">{{ g.tiers.length }} tiers</span>
+              <span v-if="selectedTierIn(g)" class="text-[10px] text-[var(--exile-color-accent-focus)] font-semibold">✓ 選択中</span>
             </span>
           </button>
         </div>
         </div>
-        <p v-if="!suffixGroups.length" class="p-4 text-xs text-[var(--color-text-muted)] italic">
+        <p v-if="!suffixGroups.length" class="p-4 text-xs text-[var(--exile-color-text-secondary)] italic">
           該当なし
         </p>
       </div>
@@ -2474,17 +2474,17 @@ const renderedAiResult = computed(() => {
       @click.self="cancelPasteReview"
     >
       <div
-        class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
+        class="bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col"
       >
-        <div class="px-4 py-3 border-b border-[var(--color-border)]">
+        <div class="px-4 py-3 border-b border-[var(--exile-color-border-subtle)]">
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div class="flex items-baseline gap-2 flex-wrap">
               <h3 class="text-base font-semibold">📋 解析結果確認</h3>
               <span
                 v-if="slot.parsedBase"
-                class="text-sm text-[var(--color-accent)]"
+                class="text-sm text-[var(--exile-color-accent-focus)]"
               >／ {{ slot.parsedBase }}</span>
-              <span v-if="slot.parsedName" class="text-xs text-[var(--color-text-muted)]">
+              <span v-if="slot.parsedName" class="text-xs text-[var(--exile-color-text-secondary)]">
                 ({{ slot.parsedName }})
               </span>
             </div>
@@ -2492,24 +2492,24 @@ const renderedAiResult = computed(() => {
               <label class="flex items-center gap-1.5 text-xs cursor-pointer">
                 <input type="checkbox" v-model="slot.isCorruptItem" />
                 <span class="text-red-300">コラプト想定</span>
-                <span class="text-[10px] text-[var(--color-text-muted)]">(範囲外値許容)</span>
+                <span class="text-[10px] text-[var(--exile-color-text-secondary)]">(範囲外値許容)</span>
               </label>
               <label class="flex items-center gap-1.5 text-xs cursor-pointer">
                 <input type="checkbox" v-model="enforceSixMods" />
-                <span class="text-[var(--color-text-muted)]">常に 6 mod に補完</span>
-                <span class="text-[10px] text-[var(--color-text-muted)]">(rare 想定)</span>
+                <span class="text-[var(--exile-color-text-secondary)]">常に 6 mod に補完</span>
+                <span class="text-[10px] text-[var(--exile-color-text-secondary)]">(rare 想定)</span>
               </label>
             </div>
           </div>
-          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+          <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
             各行の分類と tier を選択して「適用」。
-            <span class="text-[var(--color-accent)]">
+            <span class="text-[var(--exile-color-accent-focus)]">
               explicit mod 数: {{ effectiveModCount }} / {{ totalModMax }}
               （プレ {{ prefixMax }} ・サフ {{ suffixMax }}）
             </span>
             <span
               v-if="(slot.prefixDelta ?? 0) !== 0 || (slot.suffixDelta ?? 0) !== 0"
-              class="text-[10px] text-[var(--color-accent)] ml-2"
+              class="text-[10px] text-[var(--exile-color-accent-focus)] ml-2"
             >
               ベース修飾: P{{ slot.prefixDelta && slot.prefixDelta > 0 ? "+" : "" }}{{ slot.prefixDelta ?? 0 }} /
               S{{ slot.suffixDelta && slot.suffixDelta > 0 ? "+" : "" }}{{ slot.suffixDelta ?? 0 }}
@@ -2518,27 +2518,27 @@ const renderedAiResult = computed(() => {
             <span v-else>（補完 OFF: そのまま適用）</span>
           </p>
         </div>
-        <div class="flex-1 overflow-y-auto divide-y divide-[var(--color-border)]">
+        <div class="flex-1 overflow-y-auto divide-y divide-[var(--exile-color-border-subtle)]">
           <div
             v-for="(item, idx) in pasteReviewItems"
             :key="idx"
             :class="[
-              'px-4 py-3 hover:bg-[var(--color-surface-2)]/30',
+              'px-4 py-3 hover:bg-[var(--exile-color-bg-elevated)]/30',
               classificationBg(item.classification),
               item.classification === 'skip'
                 ? 'opacity-40'
                 : '',
               item.type === 'matched' && item.autoSplit
-                ? 'border-l-4 border-[var(--color-accent)]'
+                ? 'border-l-4 border-[var(--exile-color-accent-focus)]'
                 : '',
             ]"
           >
             <!-- 行テキスト -->
-            <div class="text-xs font-mono text-[var(--color-text)] mb-2">
+            <div class="text-xs font-mono text-[var(--exile-color-text-primary)] mb-2">
               <template v-if="item.type === 'matched'">
                 <span
                   v-if="item.autoSplit"
-                  class="text-[10px] text-[var(--color-accent)] mr-2"
+                  class="text-[10px] text-[var(--exile-color-accent-focus)] mr-2"
                   >🔀 自動分割</span
                 >
                 <span v-for="(lt, li) in item.lineTexts" :key="li">
@@ -2553,7 +2553,7 @@ const renderedAiResult = computed(() => {
             <div class="flex items-center gap-3 flex-wrap text-xs">
               <select
                 v-model="item.classification"
-                class="px-2 py-1 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs"
+                class="px-2 py-1 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs"
               >
                 <option
                   v-for="opt in CLASSIFICATION_OPTIONS"
@@ -2572,10 +2572,10 @@ const renderedAiResult = computed(() => {
                 >
                   {{ getGroupById(item.groupId)?.type === "prefix" ? "プレ" : "サフ" }}
                 </span>
-                <span class="text-[var(--color-text-muted)]">{{ item.groupId }}</span>
+                <span class="text-[var(--exile-color-text-secondary)]">{{ item.groupId }}</span>
                 <select
                   v-model="item.selectedTierKey"
-                  class="px-2 py-1 rounded bg-[var(--color-bg)] border border-[var(--color-border)] text-xs flex-1 min-w-[12rem]"
+                  class="px-2 py-1 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] text-xs flex-1 min-w-[12rem]"
                 >
                   <option
                     v-for="(t, ti) in getGroupById(item.groupId)?.tiers ?? []"
@@ -2589,7 +2589,7 @@ const renderedAiResult = computed(() => {
               </template>
               <template v-else>
                 <span class="text-orange-300/80">未マッチ</span>
-                <span class="text-[10px] text-[var(--color-text-muted)]">
+                <span class="text-[10px] text-[var(--exile-color-text-secondary)]">
                   bundle 該当なし。AI プロンプトに含めます
                 </span>
               </template>
@@ -2597,19 +2597,19 @@ const renderedAiResult = computed(() => {
           </div>
           <p
             v-if="!pasteReviewItems.length"
-            class="px-4 py-6 text-xs text-[var(--color-text-muted)] italic text-center"
+            class="px-4 py-6 text-xs text-[var(--exile-color-text-secondary)] italic text-center"
           >
             mod 行が検出されませんでした
           </p>
         </div>
-        <div class="px-4 py-3 border-t border-[var(--color-border)] flex justify-end gap-2">
+        <div class="px-4 py-3 border-t border-[var(--exile-color-border-subtle)] flex justify-end gap-2">
           <button
             @click="cancelPasteReview"
-            class="px-4 py-2 rounded text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition"
+            class="px-4 py-2 rounded text-sm text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)] transition"
           >キャンセル</button>
           <button
             @click="confirmPasteReview"
-            class="px-4 py-2 rounded bg-[var(--color-accent)] text-black text-sm font-medium hover:bg-[var(--color-accent-hover)] transition"
+            class="px-4 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black text-sm font-medium hover:bg-[var(--exile-color-accent-focus-hover)] transition"
           >適用</button>
         </div>
       </div>
@@ -2622,9 +2622,9 @@ const renderedAiResult = computed(() => {
       @click.self="closeTierPicker"
     >
       <div
-        class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+        class="bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
       >
-        <div class="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
+        <div class="px-4 py-3 border-b border-[var(--exile-color-border-subtle)] flex items-center justify-between">
           <div>
             <h3 class="text-sm font-semibold">
               <span
@@ -2634,35 +2634,35 @@ const renderedAiResult = computed(() => {
                     : 'text-amber-300'
                 "
               >{{ tierPickerGroup.type === "prefix" ? "プレフィックス" : "サフィックス" }}</span>
-              ：<span class="text-[var(--color-accent)]">{{ tierPickerGroup.id }}</span>
+              ：<span class="text-[var(--exile-color-accent-focus)]">{{ tierPickerGroup.id }}</span>
             </h3>
-            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+            <p class="text-xs text-[var(--exile-color-text-secondary)] mt-0.5">
               {{ tierPickerGroup.tiers.length }} tier から選択（T1 = 最高 tier）
             </p>
           </div>
           <button
             @click="closeTierPicker"
-            class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] w-7 h-7 rounded hover:bg-[var(--color-surface-2)] flex items-center justify-center"
+            class="text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)] w-7 h-7 rounded hover:bg-[var(--exile-color-bg-elevated)] flex items-center justify-center"
           >✕</button>
         </div>
-        <div class="overflow-y-auto divide-y divide-[var(--color-border)] flex-1">
+        <div class="overflow-y-auto divide-y divide-[var(--exile-color-border-subtle)] flex-1">
           <button
             v-for="(t, i) in tierPickerGroup.tiers"
             :key="t.key"
             @click="selectTier(tierPickerGroup, t)"
             :class="[
-              'w-full text-left px-4 py-3 text-sm hover:bg-[var(--color-surface-2)] transition flex items-start gap-3',
+              'w-full text-left px-4 py-3 text-sm hover:bg-[var(--exile-color-bg-elevated)] transition flex items-start gap-3',
               specialKindBgGradient(modSpecialKind(t)),
               slot.selectedKeys.includes(t.key)
-                ? 'bg-[var(--color-surface-2)] border-l-2 border-[var(--color-accent)]'
+                ? 'bg-[var(--exile-color-bg-elevated)] border-l-2 border-[var(--exile-color-accent-focus)]'
                 : 'border-l-2 border-transparent',
             ]"
           >
-            <span class="text-[var(--color-accent)] font-semibold w-10 shrink-0">T{{ i + 1 }}</span>
-            <span class="text-[var(--color-text-muted)] font-mono w-12 shrink-0">lv{{ t.level }}</span>
+            <span class="text-[var(--exile-color-accent-focus)] font-semibold w-10 shrink-0">T{{ i + 1 }}</span>
+            <span class="text-[var(--exile-color-text-secondary)] font-mono w-12 shrink-0">lv{{ t.level }}</span>
             <span class="flex-1 min-w-0">
               <span class="flex items-baseline gap-1.5 flex-wrap">
-                <span class="whitespace-pre-line text-[var(--color-text)]">{{ cleanModText(t.text_ja) }}</span>
+                <span class="whitespace-pre-line text-[var(--exile-color-text-primary)]">{{ cleanModText(t.text_ja) }}</span>
                 <span
                   v-if="modSpecialKind(t)"
                   :class="['px-1.5 py-0.5 rounded text-[9px] font-semibold shrink-0', specialKindColor(modSpecialKind(t))]"
@@ -2677,11 +2677,11 @@ const renderedAiResult = computed(() => {
                 >{{ jaTag(tg) }}</span>
               </span>
             </span>
-            <span class="text-[10px] text-[var(--color-text-muted)] font-mono shrink-0">w{{ modWeightFor(t, slot.itemTag) }}</span>
-            <span v-if="slot.selectedKeys.includes(t.key)" class="text-[var(--color-accent)] shrink-0">✓</span>
+            <span class="text-[10px] text-[var(--exile-color-text-secondary)] font-mono shrink-0">w{{ modWeightFor(t, slot.itemTag) }}</span>
+            <span v-if="slot.selectedKeys.includes(t.key)" class="text-[var(--exile-color-accent-focus)] shrink-0">✓</span>
           </button>
         </div>
-        <div class="px-4 py-3 border-t border-[var(--color-border)] flex items-center justify-between">
+        <div class="px-4 py-3 border-t border-[var(--exile-color-border-subtle)] flex items-center justify-between">
           <button
             v-if="selectedTierIn(tierPickerGroup)"
             @click="deselectGroup(tierPickerGroup)"
@@ -2689,12 +2689,12 @@ const renderedAiResult = computed(() => {
           >
             🗑️ この group の選択を解除
           </button>
-          <span v-else class="text-[10px] text-[var(--color-text-muted)]">
+          <span v-else class="text-[10px] text-[var(--exile-color-text-secondary)]">
             ※ クリックすると選択 → 自動で閉じます
           </span>
           <button
             @click="closeTierPicker"
-            class="ml-auto text-xs px-3 py-1 rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition"
+            class="ml-auto text-xs px-3 py-1 rounded text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)] transition"
           >
             閉じる
           </button>
@@ -2709,17 +2709,17 @@ const renderedAiResult = computed(() => {
       @click.self="aiResultVisible = false"
     >
       <div
-        class="bg-[var(--color-bg)] rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--color-border)] shadow-2xl"
+        class="bg-[var(--exile-color-bg-canvas)] rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-[var(--exile-color-border-subtle)] shadow-2xl"
       >
         <div
-          class="px-4 py-3 border-b border-[var(--color-border)] flex justify-between items-center"
+          class="px-4 py-3 border-b border-[var(--exile-color-border-subtle)] flex justify-between items-center"
         >
-          <h3 class="text-sm font-semibold text-[var(--color-accent)]">
+          <h3 class="text-sm font-semibold text-[var(--exile-color-accent-focus)]">
             🤖 秘書（Claude Code）からの最短経路提案
           </h3>
           <button
             @click="aiResultVisible = false"
-            class="text-[var(--color-text-muted)] hover:text-[var(--color-text)] w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--color-surface-2)]"
+            class="text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)] w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--exile-color-bg-elevated)]"
           >✕</button>
         </div>
 
@@ -2728,25 +2728,25 @@ const renderedAiResult = computed(() => {
           <div v-if="aiLoading" class="py-10 px-2">
             <div class="text-center mb-5">
               <div class="text-3xl mb-2 animate-pulse">⏳</div>
-              <p class="text-sm text-[var(--color-text-muted)]">
+              <p class="text-sm text-[var(--exile-color-text-secondary)]">
                 秘書が POE2 のクラフト機構を考慮中…
               </p>
             </div>
             <!-- progress bar（時間ベース、30 秒で 90% に到達。実応答到達で 100%） -->
             <div class="max-w-md mx-auto">
               <div
-                class="h-2 bg-[var(--color-surface-2)] rounded-full overflow-hidden border border-[var(--color-border)]"
+                class="h-2 bg-[var(--exile-color-bg-elevated)] rounded-full overflow-hidden border border-[var(--exile-color-border-subtle)]"
               >
                 <div
-                  class="h-full bg-gradient-to-r from-[var(--color-accent)] to-amber-300 transition-all duration-150 ease-out"
+                  class="h-full bg-gradient-to-r from-[var(--exile-color-accent-focus)] to-amber-300 transition-all duration-150 ease-out"
                   :style="{ width: aiProgress + '%' }"
                 ></div>
               </div>
               <div
-                class="flex justify-between text-[10px] text-[var(--color-text-muted)] mt-1 font-mono"
+                class="flex justify-between text-[10px] text-[var(--exile-color-text-secondary)] mt-1 font-mono"
               >
                 <span>{{ aiElapsedSec }}s 経過</span>
-                <span class="text-[var(--color-accent)]">{{ aiProgress }}%</span>
+                <span class="text-[var(--exile-color-accent-focus)]">{{ aiProgress }}%</span>
               </div>
             </div>
           </div>
@@ -2756,26 +2756,26 @@ const renderedAiResult = computed(() => {
             <p class="text-red-400 text-sm whitespace-pre-wrap font-mono">{{ aiError }}</p>
             <button
               @click="sendAiRequest"
-              class="px-3 py-1.5 rounded bg-[var(--color-accent)] text-black text-xs"
+              class="px-3 py-1.5 rounded bg-[var(--exile-color-accent-focus)] text-black text-xs"
             >🔄 再試行</button>
           </div>
 
           <!-- 返答表示 -->
           <div
             v-else-if="aiResultText"
-            class="text-sm text-[var(--color-text)] leading-relaxed"
+            class="text-sm text-[var(--exile-color-text-primary)] leading-relaxed"
             v-html="renderedAiResult"
           ></div>
         </div>
 
         <div
           v-if="aiResultText && !aiLoading && !aiError"
-          class="px-4 py-2 border-t border-[var(--color-border)] flex justify-between items-center text-[10px] text-[var(--color-text-muted)]"
+          class="px-4 py-2 border-t border-[var(--exile-color-border-subtle)] flex justify-between items-center text-[10px] text-[var(--exile-color-text-secondary)]"
         >
           <span>素材名にアイコン (絵文字) を自動付与しています</span>
           <button
             @click="sendAiRequest"
-            class="px-2 py-1 rounded hover:bg-[var(--color-surface-2)]"
+            class="px-2 py-1 rounded hover:bg-[var(--exile-color-bg-elevated)]"
           >🔄 再生成</button>
         </div>
       </div>
