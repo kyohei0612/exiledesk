@@ -1848,6 +1848,25 @@ const renderedAiResult = computed(() => {
 
     <div v-else>
 
+    <!--
+      Phase A.5a: 魔導書見開き（visual-concept §7.3）
+      - 左ペイン = 入力エリア（仕様通り）
+      - 中央 = 真鍮縦罫
+      - 右ペイン = mod 選択ピッカー（暫定）
+        ※ §7.3 規定では右ペイン = AI 出力（手順リスト）。現状 AI 出力は
+          モーダル提示 (renderedAiResult) のためメインフローに inline 配置
+          できず、暫定で mod ピッカーを右に置いている。
+          A.5b でモーダル inline 化（+ローマ数字 + Cinzel 手順）に合わせて
+          配置再検討。
+      TODO(A.5b): §6.6 line 429 の「幅 900px 未満で上下 1 カラム reflow」対応。
+        現状 `grid-cols-[1fr_1px_1fr]` は固定で狭幅ウィンドウで縦罫＋両ペインが
+        クラッシュする。`md:grid-cols-[1fr_1px_1fr] grid-cols-1` 化で reflow。
+    -->
+    <div class="grid grid-cols-[1fr_1px_1fr] gap-6 items-start">
+
+    <!-- 左ペイン: 入力エリア（ヘッダー + コピペ解析 + 目標 mod サマリ + スターター + AI 相談ボタン） -->
+    <div class="min-w-0">
+
     <!-- ヘッダー: アイテムタイプ・ilvl・検索 -->
     <div class="flex items-center gap-3 mb-3 flex-wrap">
       <label v-if="isWeaponSlot" class="flex items-center gap-2 text-sm">
@@ -2203,6 +2222,15 @@ const renderedAiResult = computed(() => {
       </p>
     </div>
 
+    </div>
+    <!-- /左ペイン -->
+
+    <!-- 中央縦罫（visual-concept §7.3 / border.brass） -->
+    <div class="border-l border-[var(--exile-color-border-brass)] min-h-full" />
+
+    <!-- 右ペイン: mod 選択ピッカー（prefix / suffix） -->
+    <div class="min-w-0">
+
     <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
     <div class="grid grid-cols-2 gap-4 items-start">
       <div class="rounded-lg border border-[var(--color-border)] overflow-hidden">
@@ -2361,6 +2389,12 @@ const renderedAiResult = computed(() => {
         </p>
       </div>
     </div>
+
+    </div>
+    <!-- /右ペイン -->
+
+    </div>
+    <!-- /魔導書見開き grid -->
 
     </div>
 
