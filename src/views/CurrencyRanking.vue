@@ -160,8 +160,9 @@ onMounted(async () => {
   <div class="p-8 overflow-auto h-full">
     <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
       <div>
-        <h2 class="text-2xl font-semibold mb-1">💰 通貨ランキング</h2>
-        <p class="text-xs text-[var(--color-text-muted)]">
+        <h2 class="text-[24px] font-semibold font-display mb-1">💰 通貨ランキング</h2>
+        <div class="h-px bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)] to-transparent" />
+        <p class="text-xs text-[var(--exile-color-text-secondary)]">
           最終更新: <span>{{ formatTime(lastUpdated) }}</span>
           <span v-if="ranking.length"> ／ {{ ranking.length }} ペア</span>
           <span v-if="divinePrice > 1">
@@ -175,18 +176,18 @@ onMounted(async () => {
             v-model="searchQuery"
             type="text"
             placeholder="🔍 アイテム名で検索"
-            class="px-3 py-2 pr-8 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm w-56 focus:outline-none focus:border-[var(--color-accent)]"
+            class="px-3 py-2 pr-8 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm w-56 focus:outline-none focus:border-[var(--exile-color-accent-focus)]"
           />
           <button
             v-if="searchQuery"
             @click="searchQuery = ''"
-            class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm"
+            class="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)] text-sm"
             title="クリア"
           >✕</button>
         </div>
         <select
           v-model="categoryFilter"
-          class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm"
           title="種類で絞り込み（Divine ペアは非 Divine 側で判定）"
         >
           <option value="all">すべての種類</option>
@@ -197,7 +198,7 @@ onMounted(async () => {
         <select
           v-model="league"
           @change="onLeagueChange"
-          class="px-3 py-2 rounded bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
+          class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm"
         >
           <option v-for="l in leagues" :key="l.Value" :value="l.Value">
             {{ l.Value }}{{ l.IsCurrent ? " ★" : "" }}
@@ -207,7 +208,7 @@ onMounted(async () => {
         <button
           @click="refresh"
           :disabled="loading"
-          class="px-4 py-2 rounded bg-[var(--color-accent)] text-black font-medium text-sm hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition"
+          class="px-4 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black font-medium text-sm hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 transition"
         >
           {{ loading ? "更新中…" : "🔄 更新" }}
         </button>
@@ -224,18 +225,18 @@ onMounted(async () => {
 
     <div
       v-if="loading && !ranking.length"
-      class="p-12 text-center text-[var(--color-text-muted)] text-sm"
+      class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm"
     >
       データ取得中…
     </div>
 
     <div
       v-else-if="ranking.length"
-      class="rounded-lg border border-[var(--color-border)] overflow-hidden"
+      class="rounded-lg border border-[var(--exile-color-border-subtle)] overflow-hidden"
     >
       <table class="w-full text-base">
         <thead
-          class="bg-[var(--color-surface)] text-xs uppercase tracking-wider text-[var(--color-text-muted)]"
+          class="bg-[var(--exile-color-bg-surface)] text-xs uppercase tracking-wider text-[var(--exile-color-text-secondary)]"
         >
           <tr>
             <th class="text-left px-4 py-3 w-12">#</th>
@@ -249,36 +250,36 @@ onMounted(async () => {
           <tr
             v-for="(p, i) in filteredRanking"
             :key="p.id"
-            class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface)] transition"
+            class="border-t border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)] transition"
           >
-            <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono">{{ i + 1 }}</td>
+            <td class="px-4 py-3 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
             <td class="px-4 py-3">
               <div class="flex items-center gap-2 flex-wrap">
                 <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain" loading="lazy" />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.oneText) }}</span>
-                <span class="text-[var(--color-text-muted)] mx-1">↔</span>
+                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.oneText) }}</span>
+                <span class="text-[var(--exile-color-text-secondary)] mx-1">↔</span>
                 <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain" loading="lazy" />
-                <span class="text-[var(--color-text)]">{{ jaCurrency(p.twoText) }}</span>
+                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.twoText) }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-right">
-              <div class="flex items-center justify-end gap-1.5 text-sm font-mono">
-                <span class="text-[var(--color-text)]">1.0</span>
+              <div class="flex items-center justify-end gap-1.5 text-sm tabular-nums">
+                <span class="text-[var(--exile-color-text-primary)]">1.0</span>
                 <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
-                <span class="text-[var(--color-text-muted)]">⇄</span>
-                <span class="text-[var(--color-accent)]">{{ fmt(primarySide(p).divinePrice) }}</span>
+                <span class="text-[var(--exile-color-text-secondary)]">⇄</span>
+                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(primarySide(p).divinePrice) }}</span>
                 <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
               </div>
             </td>
-            <td class="px-4 py-3 text-right text-[var(--color-accent)] font-mono">{{ fmt(p.volume) }}</td>
+            <td class="px-4 py-3 text-right text-[var(--exile-color-accent-focus)] tabular-nums">{{ fmt(p.volume) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p class="mt-4 text-[10px] text-[var(--color-text-muted)] text-right">
+    <p class="mt-4 text-[10px] text-[var(--exile-color-text-secondary)] text-right">
       Powered by
-      <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--color-accent)] underline">poe2scout</a>
+      <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
       ／ <span class="font-mono">{{ league }}</span>
       ／日本語名は v0 暫定（RePoE fork JA データに後日差替え）
       ／レート表記は poe.ninja 流「X 神 ⇄ 1.0 アイテム」

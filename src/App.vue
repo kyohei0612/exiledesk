@@ -12,7 +12,7 @@ const activeNav = ref<string>("econ-currency");
     <LeftSidebar
       :active="activeNav"
       @update:active="activeNav = $event"
-      class="w-56 shrink-0 border-r border-[var(--color-border)]"
+      class="w-56 shrink-0 border-r border-[var(--exile-color-border-subtle)]"
     />
 
     <CenterContent :active-nav="activeNav" class="flex-1" />
