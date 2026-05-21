@@ -23,6 +23,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { translateModText, getModStatIds } from "../data/mod-translations";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // ━━ trade2 API 型 ━━
 
@@ -231,6 +232,8 @@ export async function saveDiscoveryState(
   state: DiscoveryState,
   league: string,
 ): Promise<void> {
+  // dev-server (browser) では Tauri 環境ではないためスキップ（no-op で型上は成功扱い）
+  if (!isTauriRuntime()) return;
   const payload: SavedDiscovery = {
     version: 1,
     savedAt: new Date().toISOString(),
@@ -251,6 +254,8 @@ export async function loadDiscoveryState(
   category: DiscoveryCategory,
   league: string,
 ): Promise<DiscoveryState | null> {
+  // dev-server (browser) では Tauri 環境ではないためスキップ（呼び側は null で「未保存扱い」）
+  if (!isTauriRuntime()) return null;
   const result = await invoke<SavedDiscovery | null>("discovery_load", {
     category,
     league,
@@ -273,6 +278,8 @@ export async function clearDiscoveryState(
   category: DiscoveryCategory,
   league: string,
 ): Promise<void> {
+  // dev-server (browser) では Tauri 環境ではないためスキップ
+  if (!isTauriRuntime()) return;
   await invoke("discovery_clear", { category, league });
 }
 
@@ -397,6 +404,13 @@ export async function openClusterInTrade2(args: {
 }): Promise<{ openedUrl: string; missingMods: string[]; statCount: number }> {
   const { cluster, league, category } = args;
   const { query, missingMods } = buildClusterSearchQuery(cluster, category);
+
+  // dev-server (browser) では Tauri 環境ではないためスキップ（呼び側は throw で挙動表現）
+  if (!isTauriRuntime()) {
+    throw new Error(
+      "trade2 連携は Tauri ネイティブ環境でのみ動作します（ブラウザ dev では無効）",
+    );
+  }
 
   // stat filter が 0 件だと検索条件無しになるので、せめてカテゴリ filter で開く
   const search = await invoke<SearchPostResponse>("trade2_search", {
@@ -1235,6 +1249,14 @@ export async function runDiscovery(args: {
   onProgress?: (p: DiscoveryProgress) => void;
 }): Promise<DiscoveryResult> {
   const { league, category, onProgress, prevState, signal } = args;
+  // dev-server (browser) では Tauri 環境ではないためスキップ
+  //   trade2_search/trade2_fetch が undefined.invoke で TypeError になるのを未然回避。
+  //   呼び側 UI で握り潰せるよう専用エラーを投げる。
+  if (!isTauriRuntime()) {
+    throw new Error(
+      "クラフト発見の取得は Tauri ネイティブ環境でのみ動作します（ブラウザ dev では無効）",
+    );
+  }
   // 取得件数: 10-300 の範囲にクランプ、デフォルト 300
   const targetCount = Math.max(
     10,

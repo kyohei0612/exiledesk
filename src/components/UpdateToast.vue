@@ -9,6 +9,7 @@
 import { onMounted, ref, shallowRef, markRaw } from "vue";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // Update は class インスタンス（#privateField 持ち）。Vue の reactive proxy で
 // 私有フィールドアクセスが壊れるため shallowRef + markRaw を併用する。
@@ -52,6 +53,8 @@ function clearLaunchSeq() {
 
 async function runCheck() {
   if (phase.value !== "idle" && phase.value !== "safe-mode") return;
+  // dev-server (browser) では Tauri 環境ではないため updater トースト自体出さない
+  if (!isTauriRuntime()) return;
   phase.value = "checking";
   errorMsg.value = null;
   try {
@@ -101,6 +104,10 @@ function dismiss() {
 }
 
 onMounted(() => {
+  // dev-server (browser) では Tauri 環境ではないため updater 自体走らせない
+  //   （phase は "idle" のままなのでトーストもセーフモードも出ない）
+  if (!isTauriRuntime()) return;
+
   // 連続クラッシュ検出: launchSeq を +1、5 秒生存で 0 にリセット
   const seq = bumpLaunchSeq();
   setTimeout(clearLaunchSeq, HEALTHY_BOOT_MS);

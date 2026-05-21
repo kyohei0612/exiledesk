@@ -16,6 +16,7 @@ import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { parseJaClipboard, type ParsedClipboard } from "../parser/item-text";
 import { translateItemTextToEn } from "../parser/translate-item";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 interface EquippedItemInfo {
   slot_name: string;
@@ -52,6 +53,13 @@ const selectedSkillIndex = ref<number>(0);
 const buildSnapshot = ref<string>("");
 
 async function onLoadBuild() {
+  // dev-server (browser) では Tauri 環境ではないためスキップ（PoB headless は Rust 側にしか居ない）
+  if (!isTauriRuntime()) {
+    loadError.value =
+      "PoB 連携は Tauri ネイティブ環境でのみ動作します（ブラウザ dev では無効）";
+    loadState.value = "error";
+    return;
+  }
   loadState.value = "loading";
   loadError.value = "";
   buildSnapshot.value = "";

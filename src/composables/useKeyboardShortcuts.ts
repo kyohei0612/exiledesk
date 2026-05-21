@@ -22,6 +22,7 @@
 // ----------------------------------------------------------------------------
 
 import { onBeforeUnmount, onMounted, type Ref } from "vue";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 /** 画面固有ハンドラに渡される識別子 (visual-concept §6.1) */
 export type ShortcutKey =
@@ -89,6 +90,11 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 /** Tauri 環境で安全にアプリ終了。失敗してもユーザー体験に影響しない */
 async function quitTauri(): Promise<void> {
+  // dev-server (browser) では Tauri 環境ではないためスキップ（動的 import 自体を省く）
+  if (!isTauriRuntime()) {
+    console.info("[useKeyboardShortcuts] Ctrl+Q: Tauri 環境外のため終了を skip");
+    return;
+  }
   try {
     // 動的 import: ブラウザ単体実行時 (vite dev でブラウザを開いた場合) でも
     // モジュールロード失敗で composable 全体が落ちないようにする。
