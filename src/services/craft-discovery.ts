@@ -27,6 +27,7 @@ import {
   getModStatIds,
   getModAffixType,
 } from "../data/mod-translations";
+import { inferModTier, aggregateMinTier } from "../data/mod-tier-lookup";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // ━━ trade2 API 型 ━━
@@ -145,6 +146,21 @@ export interface ClusterCount {
   suffixCount: number;
   /** Phase 1.5: クラスタ内 affix 不明数 */
   affixUnknownCount: number;
+  /**
+   * Phase 1.6: 各 modKeys[i] に対応する tier 情報。
+   *   - minTier: cluster 内 listing で観測された最低 tier 番号（= 全 listing がこれ以上の tier を持つ）。
+   *     tier 番号は「1 = 最強」のため、minTier = 観測 tier 列の最大値。
+   *   - tierTotal: bundle 由来のファミリ総 tier 数（参考表示用）。
+   *   - minValue: minTier に対応する stat[0].min（trade2 query value.min に流す）。
+   *     bundle 由来値より listing 実 roll の方が低い場合は listing 値（緩い）を採用。
+   *   - すべて null の場合は推定不能（family 未ヒット or magnitude 取得失敗）。
+   * tierInferEnabled=false / family 未ヒットの mod は undefined フィールドとして保持。
+   */
+  modTiers?: Array<{
+    minTier: number | null;
+    tierTotal: number;
+    minValue: number | null;
+  }>;
 }
 
 /** 「直近」判定の時間窓（オーナー指示 2026-05-19: 過去 12 時間） */
@@ -449,16 +465,30 @@ function buildClusterSearchQuery(
       missingMods.push(cluster.rawSamples[i] ?? cluster.modKeys[i] ?? "");
       continue;
     }
+    // Phase 1.6: tier 推定由来 min を最優先（同等以上 tier の listing がヒットする）。
+    //   - modTiers[i].minValue が確定なら、その値を min として全 stat ID に適用。
+    //   - 未確定なら従来の statMinValues (listing 観測 min の最大) を使う。
+    //   - そもそも観測も無ければ min: 1 (fallback)。
+    const tierInfo = cluster.modTiers?.[i];
+    const tierMin =
+      tierInfo &&
+      tierInfo.minValue !== null &&
+      isFinite(tierInfo.minValue)
+        ? tierInfo.minValue
+        : null;
     for (const sid of statIds) {
       if (seenStatIds.has(sid)) continue;
       seenStatIds.add(sid);
-      // 観測された最小 roll 値があれば使う（cluster 内全 listing が含まれる検索条件）
-      // 無い場合は min: 1（fallback、ほぼ全 listing にヒット）
+      // 優先順位: tierMin > 観測 statMin > 1
       const observedMin = cluster.statMinValues?.[sid];
-      const minValue =
-        typeof observedMin === "number" && isFinite(observedMin)
-          ? observedMin
-          : 1;
+      let minValue: number;
+      if (tierMin !== null) {
+        minValue = tierMin;
+      } else if (typeof observedMin === "number" && isFinite(observedMin)) {
+        minValue = observedMin;
+      } else {
+        minValue = 1;
+      }
       statFilters.push({
         id: sid,
         value: { min: minValue },
@@ -693,17 +723,19 @@ export function buildResultFromState(
   state: DiscoveryState,
   hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
   affixMode: AffixMode = DEFAULT_AFFIX_MODE,
+  /** Phase 1.6: ティア推定 on/off。デフォルト true。 */
+  inferTiers: boolean = true,
 ): DiscoveryResult {
   const { ranking, emptyCount } = countModOccurrences(state.allListings);
   const denom = state.allListings.length || 1;
   const emptyModRate = emptyCount / denom;
   const clustersBySize = {
-    1: countModClusters(state.allListings, 1, hotConfig, affixMode),
-    2: countModClusters(state.allListings, 2, hotConfig, affixMode),
-    3: countModClusters(state.allListings, 3, hotConfig, affixMode),
-    4: countModClusters(state.allListings, 4, hotConfig, affixMode),
-    5: countModClusters(state.allListings, 5, hotConfig, affixMode),
-    6: countModClusters(state.allListings, 6, hotConfig, affixMode),
+    1: countModClusters(state.allListings, 1, hotConfig, affixMode, inferTiers),
+    2: countModClusters(state.allListings, 2, hotConfig, affixMode, inferTiers),
+    3: countModClusters(state.allListings, 3, hotConfig, affixMode, inferTiers),
+    4: countModClusters(state.allListings, 4, hotConfig, affixMode, inferTiers),
+    5: countModClusters(state.allListings, 5, hotConfig, affixMode, inferTiers),
+    6: countModClusters(state.allListings, 6, hotConfig, affixMode, inferTiers),
   } as Record<ClusterSize, ClusterCount[]>;
 
   return {
@@ -1097,6 +1129,12 @@ export function countModClusters(
   clusterSize: ClusterSize,
   hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
   affixMode: AffixMode = DEFAULT_AFFIX_MODE,
+  /**
+   * Phase 1.6: ティア推定 on/off。
+   * false にすると modTiers は undefined のまま、観測 tier の集計コストもスキップ。
+   * デフォルト true（オーナー指示 2026-05-21）。
+   */
+  inferTiers: boolean = true,
 ): ClusterCount[] {
   // 「直近 N 時間以内」の閾値（現在時刻 - windowHours h）
   const recentThresholdMs = Date.now() - hotConfig.windowHours * 3600 * 1000;
@@ -1113,6 +1151,12 @@ export function countModClusters(
       statIdsByKey: Map<string, string[]>; // modKey → stat ID 列
       // stat_id ごとの「観測された roll 値の最小」（cluster 内の最低 listing が拾える検索条件）
       statMinValues: Map<string, number>;
+      // Phase 1.6: modKey ごとに listing から観測した tier 番号列（null 含む）
+      tierObservationsByKey: Map<string, Array<number | null>>;
+      // Phase 1.6: modKey ごとに観測 family tierTotal（最大値を保持、参考表示用）
+      tierTotalByKey: Map<string, number>;
+      // Phase 1.6: modKey ごとに観測 stat[0].min の bundle 由来値（最小値を保持）
+      tierBundleMinByKey: Map<string, number>;
     }
   >();
 
@@ -1125,6 +1169,11 @@ export function countModClusters(
     const keyToRaw = new Map<string, string>();
     const keyToStatIds = new Map<string, string[]>();
     const listingStatValues = new Map<string, { min: number; max: number }>(); // この listing 内の stat_id → roll 値
+    // Phase 1.6: listing 単位の tier 推定結果（modKey → { tier, tierTotal, bundleMin }）
+    const listingTierByKey = new Map<
+      string,
+      { tier: number | null; tierTotal: number; bundleMin: number | null }
+    >();
     for (const m of modsWithStats) {
       const key = normalizeModText(m.text);
       if (key.length === 0) continue;
@@ -1136,6 +1185,21 @@ export function countModClusters(
       for (const sid of m.statIds) {
         const v = m.statValues[sid];
         if (v) listingStatValues.set(sid, v);
+      }
+      // Phase 1.6: ティア推定（オフでも結果は使われないが、空 map なら呼ばない）
+      if (inferTiers && !listingTierByKey.has(key)) {
+        // magnitudes は statIds の order 順に並べる（mod-tier-lookup の TierEntry.statMins 順と整合）
+        const magnitudes: number[] = [];
+        for (const sid of m.statIds) {
+          const v = m.statValues[sid];
+          if (v) magnitudes.push(v.min);
+        }
+        const info = inferModTier(m.text, magnitudes);
+        listingTierByKey.set(key, {
+          tier: info.tier,
+          tierTotal: info.tierTotal,
+          bundleMin: info.tierMinValue,
+        });
       }
     }
     const uniqueKeys = Array.from(keyToRaw.keys());
@@ -1202,6 +1266,30 @@ export function countModClusters(
             cur.statMinValues.set(sid, v.min);
           }
         }
+
+        // Phase 1.6: tier 観測の蓄積（cluster 構成 modKeys に対応する分だけ）
+        if (inferTiers) {
+          for (const k of sorted) {
+            const ti = listingTierByKey.get(k);
+            if (!ti) continue;
+            const arr = cur.tierObservationsByKey.get(k);
+            if (arr) arr.push(ti.tier);
+            // tierTotal は最大値を保持（family サイズ）
+            if (ti.tierTotal > 0) {
+              const prevTotal = cur.tierTotalByKey.get(k) ?? 0;
+              if (ti.tierTotal > prevTotal) {
+                cur.tierTotalByKey.set(k, ti.tierTotal);
+              }
+            }
+            // bundleMin は最小値を保持（参考用、trade2 query は別途 listing 実値とも比較）
+            if (ti.bundleMin !== null && isFinite(ti.bundleMin)) {
+              const prevMin = cur.tierBundleMinByKey.get(k);
+              if (prevMin === undefined || ti.bundleMin < prevMin) {
+                cur.tierBundleMinByKey.set(k, ti.bundleMin);
+              }
+            }
+          }
+        }
       } else {
         const statIdsByKey = new Map<string, string[]>();
         for (const k of sorted) {
@@ -1210,6 +1298,21 @@ export function countModClusters(
         const statMinValues = new Map<string, number>();
         for (const [sid, v] of listingStatValues) {
           statMinValues.set(sid, v.min);
+        }
+        // Phase 1.6: tier 観測の初期化
+        const tierObservationsByKey = new Map<string, Array<number | null>>();
+        const tierTotalByKey = new Map<string, number>();
+        const tierBundleMinByKey = new Map<string, number>();
+        if (inferTiers) {
+          for (const k of sorted) {
+            const ti = listingTierByKey.get(k);
+            if (!ti) continue;
+            tierObservationsByKey.set(k, [ti.tier]);
+            if (ti.tierTotal > 0) tierTotalByKey.set(k, ti.tierTotal);
+            if (ti.bundleMin !== null && isFinite(ti.bundleMin)) {
+              tierBundleMinByKey.set(k, ti.bundleMin);
+            }
+          }
         }
         map.set(hash, {
           count: 1,
@@ -1220,6 +1323,9 @@ export function countModClusters(
           pricesDivine: divinePrice !== null ? [divinePrice] : [],
           statIdsByKey,
           statMinValues,
+          tierObservationsByKey,
+          tierTotalByKey,
+          tierBundleMinByKey,
         });
       }
     }
@@ -1252,6 +1358,34 @@ export function countModClusters(
         else if (t === "suffix") suffixCount++;
         else affixUnknownCount++;
       }
+
+      // Phase 1.6: modTiers 計算
+      //   - minTier = listing 観測 tier 列の最大 (= 全 listing がこの tier 以上を保証)
+      //   - minValue: 該当 tier の bundle 由来 stat min を優先、無ければ statMinValues から fallback
+      let modTiers: ClusterCount["modTiers"] = undefined;
+      if (inferTiers) {
+        modTiers = v.modKeys.map((k) => {
+          const observed = v.tierObservationsByKey.get(k) ?? [];
+          const minTier = aggregateMinTier(observed);
+          const tierTotal = v.tierTotalByKey.get(k) ?? 0;
+          // minValue 決定:
+          //   1. bundle 由来 stat min を最優先（tier 表の正確な下限）
+          //   2. なければ listing 観測 stat 値の最小（fallback）
+          let minValue: number | null = v.tierBundleMinByKey.get(k) ?? null;
+          if (minValue === null) {
+            const statIds = v.statIdsByKey.get(k) ?? [];
+            const firstSid = statIds[0];
+            if (firstSid !== undefined) {
+              const observedMin = v.statMinValues.get(firstSid);
+              if (observedMin !== undefined && isFinite(observedMin)) {
+                minValue = observedMin;
+              }
+            }
+          }
+          return { minTier, tierTotal, minValue };
+        });
+      }
+
       return {
         clusterHash,
         modKeys: v.modKeys,
@@ -1270,6 +1404,7 @@ export function countModClusters(
         prefixCount,
         suffixCount,
         affixUnknownCount,
+        modTiers,
       };
     })
     .sort(
@@ -1460,6 +1595,12 @@ export async function runDiscovery(args: {
    */
   affixMode?: AffixMode;
   /**
+   * Phase 1.6: ティア推定 on/off（デフォルト true）.
+   * false にすると ClusterCount.modTiers が undefined となり、
+   * trade2 query 拡張も従来の listing 観測 min にフォールバック。
+   */
+  inferTiers?: boolean;
+  /**
    * Phase 1.x dedupRate 自動打切り通知 callback（manual-controls.md §2）.
    *   - targetCount >= DEDUP_WARN_MIN_TARGET (800) のときのみ判定。
    *   - 各 round 完了時に dedupRate > DEDUP_WARN_THRESHOLD (0.7) なら一度だけ呼ぶ。
@@ -1487,6 +1628,8 @@ export async function runDiscovery(args: {
   const hotConfig: HotConfig = args.hotConfig ?? DEFAULT_HOT_CONFIG;
   // Phase 1.5: prefix/suffix 集計モード（呼び側未指定なら "split"）
   const affixMode: AffixMode = args.affixMode ?? DEFAULT_AFFIX_MODE;
+  // Phase 1.6: ティア推定（呼び側未指定なら true）
+  const inferTiers: boolean = args.inferTiers ?? true;
   const notify = (p: DiscoveryProgress) => onProgress?.(p);
 
   // 累積 state 初期化: カテゴリが一致する prevState だけ引き継ぐ
@@ -1703,13 +1846,14 @@ export async function runDiscovery(args: {
   // 累積データに対するクラスタリング再集計（1〜6 mod 全サイズ）
   // Phase 1: hotConfig を反映（時間窓 1/3/6/12h、件数閾値は呼び側 UI で適用）
   // Phase 1.5: affixMode を反映（split で prefix/suffix 区別情報を付与）
+  // Phase 1.6: inferTiers を反映（modTiers を付与、trade2 query 同等以上 tier 拡張で参照）
   const clustersBySize = {
-    1: countModClusters(allListings, 1, hotConfig, affixMode),
-    2: countModClusters(allListings, 2, hotConfig, affixMode),
-    3: countModClusters(allListings, 3, hotConfig, affixMode),
-    4: countModClusters(allListings, 4, hotConfig, affixMode),
-    5: countModClusters(allListings, 5, hotConfig, affixMode),
-    6: countModClusters(allListings, 6, hotConfig, affixMode),
+    1: countModClusters(allListings, 1, hotConfig, affixMode, inferTiers),
+    2: countModClusters(allListings, 2, hotConfig, affixMode, inferTiers),
+    3: countModClusters(allListings, 3, hotConfig, affixMode, inferTiers),
+    4: countModClusters(allListings, 4, hotConfig, affixMode, inferTiers),
+    5: countModClusters(allListings, 5, hotConfig, affixMode, inferTiers),
+    6: countModClusters(allListings, 6, hotConfig, affixMode, inferTiers),
   } as Record<ClusterSize, ClusterCount[]>;
 
   // 次回引き継ぎ用 state

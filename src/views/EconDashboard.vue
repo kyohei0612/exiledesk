@@ -141,7 +141,7 @@ function runSampleDiscovery() {
     category: discoveryCategory.value,
   };
   discoveryState.value = sampleState;
-  discoveryResult.value = buildResultFromState(sampleState, settings.value.hotConfig, settings.value.affixMode);
+  discoveryResult.value = buildResultFromState(sampleState, settings.value.hotConfig, settings.value.affixMode, settings.value.tierInferEnabled);
   discoveryProgress.value = {
     phase: "done",
     message: `🧪 サンプル ${sampleListings.length} 件で集計（trade2 取得無し、ロジック動作確認用）`,
@@ -161,7 +161,7 @@ watch(discoveryCategory, async (newCat) => {
     const loaded = await loadDiscoveryState(newCat, currentLeague.value.Value);
     if (loaded) {
       discoveryState.value = loaded;
-      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode);
+      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode, settings.value.tierInferEnabled);
     }
   } catch (e) {
     console.warn("discovery load failed:", e);
@@ -175,7 +175,7 @@ watch(currentLeague, async (league) => {
     const loaded = await loadDiscoveryState(discoveryCategory.value, league.Value);
     if (loaded) {
       discoveryState.value = loaded;
-      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode);
+      discoveryResult.value = buildResultFromState(loaded, settings.value.hotConfig, settings.value.affixMode, settings.value.tierInferEnabled);
     }
   } catch (e) {
     console.warn("discovery initial load failed:", e);
@@ -196,6 +196,7 @@ watch(
       discoveryState.value,
       settings.value.hotConfig,
       settings.value.affixMode,
+      settings.value.tierInferEnabled,
     );
   },
 );
@@ -212,6 +213,24 @@ watch(
       discoveryState.value,
       settings.value.hotConfig,
       settings.value.affixMode,
+      settings.value.tierInferEnabled,
+    );
+  },
+);
+
+/**
+ * Phase 1.6: ティア推定 on/off 変更時の再集計 watcher。
+ * fetch 不要、bundle 逆引きだけなので即時 buildResultFromState 呼び直しで反映。
+ */
+watch(
+  () => settings.value.tierInferEnabled,
+  () => {
+    if (!discoveryState.value) return;
+    discoveryResult.value = buildResultFromState(
+      discoveryState.value,
+      settings.value.hotConfig,
+      settings.value.affixMode,
+      settings.value.tierInferEnabled,
     );
   },
 );
@@ -278,6 +297,56 @@ const affixMode = computed<AffixMode>({
   set: (v: AffixMode) => (settings.value.affixMode = v),
 });
 const affixSplitEnabled = computed(() => affixMode.value === "split");
+
+// Phase 1.6: ティア推定 on/off
+const tierInferEnabled = computed<boolean>({
+  get: () => settings.value.tierInferEnabled,
+  set: (v: boolean) => (settings.value.tierInferEnabled = v),
+});
+
+/**
+ * Phase 1.6: クラスタ全体の最低 tier ラベル。
+ * 各 mod の minTier の **最大値**（= 最も弱い tier 保証）を採用、"T3+" 形式で返す。
+ * 全 mod が推定不能なら null（バッジ非表示）。
+ */
+function clusterMinTierLabel(c: ClusterCount): string | null {
+  if (!c.modTiers || c.modTiers.length === 0) return null;
+  let worst: number | null = null;
+  for (const t of c.modTiers) {
+    if (t.minTier === null) continue;
+    if (worst === null || t.minTier > worst) worst = t.minTier;
+  }
+  return worst === null ? null : `T${worst}+`;
+}
+
+/**
+ * Phase 1.6: 個別 mod の tier ラベル（"T2+" / "T?" / 非表示）。
+ * - 推定不能 (tier=null) で family ヒットあり (tierTotal>0) なら "T?"
+ * - family 非ヒット (tierTotal=0) は何も返さない（バッジ非表示）
+ */
+function modTierLabel(c: ClusterCount, j: number): string | null {
+  const t = c.modTiers?.[j];
+  if (!t) return null;
+  if (t.minTier !== null) return `T${t.minTier}+`;
+  if (t.tierTotal > 0) return "T?";
+  return null;
+}
+
+/** Phase 1.6: 個別 mod tier の詳細 tooltip */
+function modTierTooltip(c: ClusterCount, j: number): string {
+  const t = c.modTiers?.[j];
+  if (!t) return "";
+  if (t.minTier !== null) {
+    const totalSuffix = t.tierTotal > 0 ? ` / 全 ${t.tierTotal} tier` : "";
+    const valueSuffix =
+      t.minValue !== null ? ` / 下限値 ${t.minValue}` : "";
+    return `cluster 内 全 listing がこの mod を T${t.minTier} 以上で持つ${totalSuffix}${valueSuffix}`;
+  }
+  if (t.tierTotal > 0) {
+    return `tier 推定不能（magnitude 取得失敗、family ${t.tierTotal} tier）`;
+  }
+  return "tier 推定不能（bundle 非ヒット mod）";
+}
 
 // Phase 1 manual-controls.md §3: ホット件数閾値を呼び側で適用するための computed
 const hotMinCount = computed(() => settings.value.hotConfig.minCount);
@@ -439,6 +508,8 @@ async function startDiscovery() {
       hotConfig: settings.value.hotConfig,
       // Phase 1.5: prefix/suffix 集計モード
       affixMode: settings.value.affixMode,
+      // Phase 1.6: ティア推定（同等以上 tier の trade2 query 拡張）
+      inferTiers: settings.value.tierInferEnabled,
       prevState: discoveryState.value ?? undefined,
       signal: discoveryAbortController.signal,
       onProgress: (p) => {
@@ -942,6 +1013,39 @@ function fmtEta(sec: number | null): string {
           </p>
         </section>
 
+        <!-- Phase 1.6 §6: ティア推定トグル（再 fetch 不要、bundle 逆引き、trade2 query 拡張） -->
+        <section class="p-2 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-canvas)] space-y-2">
+          <div class="text-[10px] font-semibold text-[var(--exile-color-accent-focus)]">🎯 ティア推定（Phase 1.6）</div>
+          <div class="flex items-center gap-2 flex-wrap text-[10px]">
+            <span class="text-[var(--exile-color-text-secondary)]">tier 表示 + 同等以上検索:</span>
+            <div class="flex gap-1">
+              <button
+                @click="tierInferEnabled = true"
+                :class="[
+                  'px-2 py-0.5 rounded border transition',
+                  tierInferEnabled
+                    ? 'bg-[var(--exile-color-accent-focus)] text-black border-[var(--exile-color-accent-focus)] font-semibold'
+                    : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
+                ]"
+                title="クラスタ各 mod に最低 tier (Tn+) を表示し、trade2 検索時にその tier 以上の listing を絞る"
+              >On</button>
+              <button
+                @click="tierInferEnabled = false"
+                :class="[
+                  'px-2 py-0.5 rounded border transition',
+                  !tierInferEnabled
+                    ? 'bg-[var(--exile-color-text-secondary)] text-[var(--exile-color-bg-canvas)] border-[var(--exile-color-text-secondary)] font-semibold'
+                    : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
+                ]"
+                title="ティア推定 off（観測 stat min のみで trade2 検索、従来動作）"
+              >Off</button>
+            </div>
+          </div>
+          <p class="text-[9px] text-[var(--exile-color-text-secondary)] leading-relaxed">
+            ※ bundle text_en family 内で listing の magnitude を range 突合し tier 番号 (1=最強) 推定。trade2 検索は「同等以上 tier」で同流派 listing がずらっと並ぶ（POE2 オーバーレイ流儀の再現）。
+          </p>
+        </section>
+
         <!-- Phase 1.5 §5: prefix/suffix 区別トグル（再 fetch 不要、bundle 逆引き集計） -->
         <section class="p-2 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-canvas)] space-y-2">
           <div class="text-[10px] font-semibold text-[var(--exile-color-accent-focus)]">🏷 prefix/suffix 区別（Phase 1.5）</div>
@@ -1148,6 +1252,12 @@ function fmtEta(sec: number | null): string {
             >
               🆕 {{ c.recentCount }} / {{ c.count }}
             </span>
+            <!-- Phase 1.6: クラスタ全体の最低 tier 表示（worst-mod の minTier、tier 番号は大きいほど弱い） -->
+            <span
+              v-if="tierInferEnabled && clusterMinTierLabel(c)"
+              class="px-1.5 py-0.5 rounded bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-tertiary)] font-mono font-semibold"
+              :title="`クラスタ内全 listing が保証する最低 tier。trade2 検索もこの tier 以上で絞る（オーバーレイ流儀の再現）`"
+            >🎯 {{ clusterMinTierLabel(c) }}</span>
             <!-- Phase 1.5: クラスタ構成 (prefix N + suffix N + ?) -->
             <span
               v-if="affixSplitEnabled"
@@ -1210,6 +1320,12 @@ function fmtEta(sec: number | null): string {
                 :title="c.affixTypes[j] === 'prefix' ? 'プレフィックス' : c.affixTypes[j] === 'suffix' ? 'サフィックス' : 'affix 不明（bundle 非ヒット or 曖昧）'"
               >{{ c.affixTypes[j] === 'prefix' ? 'P' : c.affixTypes[j] === 'suffix' ? 'S' : '?' }}</span>
               <span>{{ raw }}</span>
+              <!-- Phase 1.6: 各 mod の tier 情報併記（family 不明な mod は何も表示しない、推定不能は T?） -->
+              <span
+                v-if="tierInferEnabled && modTierLabel(c, j)"
+                class="inline-block px-1 rounded text-[10px] font-mono leading-none align-middle text-[var(--exile-color-text-tertiary)] bg-[var(--exile-color-bg-canvas)]"
+                :title="modTierTooltip(c, j)"
+              >{{ modTierLabel(c, j) }}</span>
             </div>
           </div>
 

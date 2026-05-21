@@ -132,6 +132,12 @@ export interface CraftDiscoverySettings {
    * "split" でクラスタカードに P/S バッジ + 構成表示。
    */
   affixMode: AffixMode;
+  /**
+   * Phase 1.6: ティア推定 on/off（デフォルト true）.
+   * on で各 cluster mod の minTier 表示 + trade2 query に「同等以上 tier」フィルタを掛ける。
+   * off で従来動作（観測 stat min のみで query 生成、tier 表示なし）。
+   */
+  tierInferEnabled: boolean;
 }
 
 // ━━ デフォルト ━━
@@ -152,6 +158,8 @@ export const DEFAULT_SETTINGS: CraftDiscoverySettings = {
   freshColdPct: 20,
   // Phase 1.5: デフォルトは "split"（オーナー指示「デフォルト On」、メタフォロワー哲学）
   affixMode: "split",
+  // Phase 1.6: ティア推定はデフォルト on（オーナー指示 2026-05-21、オーバーレイ流儀再現）
+  tierInferEnabled: true,
 };
 
 // ━━ localStorage 永続化 ━━
@@ -219,6 +227,11 @@ function mergeWithDefaults(partial: Partial<CraftDiscoverySettings>): CraftDisco
       partial.affixMode === "merged" || partial.affixMode === "split"
         ? partial.affixMode
         : DEFAULT_SETTINGS.affixMode,
+    // Phase 1.6: 旧 v1 schema には無いので default で埋める
+    tierInferEnabled:
+      typeof partial.tierInferEnabled === "boolean"
+        ? partial.tierInferEnabled
+        : DEFAULT_SETTINGS.tierInferEnabled,
   };
 }
 
