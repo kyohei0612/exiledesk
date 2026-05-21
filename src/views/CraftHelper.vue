@@ -17,6 +17,7 @@ import { jaTag, tagColor, hasJaTag } from "../i18n/mod-tags-ja";
 import { parseJaClipboard } from "../parser/item-text";
 import { askClaude } from "../services/ai-client";
 import { applyCraftIcons, translateEnToJa } from "../services/craft-icons";
+import CandleLoader from "../components/decor/CandleLoader.vue";
 
 /** mod の tags 配列のうち、ユーザー向け既知タグだけを返す（内部 ID を排除） */
 function visibleTags(mod: Mod): string[] {
@@ -35,22 +36,35 @@ function specialKindLabel(
 function specialKindColor(
   kind: ReturnType<typeof modSpecialKind>,
 ): string {
-  if (kind === "essence") return "bg-amber-700/40 text-amber-200";
-  if (kind === "corrupt") return "bg-red-700/40 text-red-200";
-  if (kind === "desecrated") return "bg-purple-700/40 text-purple-200";
+  // Phase A.5b: hardcoded preset Tailwind 色 (bg-amber-700/40 等) を
+  // 新 design token に置換（visual-concept §4.1 / §4.7）。
+  //   essence    → signal.warn (琥珀系・「炎」のトーン)
+  //   corrupt    → signal.down/error (朱・破損)
+  //   desecrated → accent.mystic (錬金紫・冒涜)
+  // color-mix で 30% 透過背景にして従来の "/40" 相当の弱トーンに揃える。
+  if (kind === "essence")
+    return "bg-[color-mix(in_srgb,var(--exile-color-signal-warn)_30%,transparent)] text-[var(--exile-color-signal-warn)]";
+  if (kind === "corrupt")
+    return "bg-[color-mix(in_srgb,var(--exile-color-signal-down)_30%,transparent)] text-[var(--exile-color-signal-down)]";
+  if (kind === "desecrated")
+    return "bg-[color-mix(in_srgb,var(--exile-color-accent-mystic)_40%,transparent)] text-[var(--exile-color-text-primary)]";
   return "";
 }
 
-/** 行全体に乗せるグラデーション背景クラス */
+/** 行全体に乗せるグラデーション背景クラス
+ * Phase A.5b: hardcoded preset 色を design token に置換。
+ *   gradient は §4.1 で原則禁止だが、特殊種別 mod 行の視認性が機能要件のため
+ *   color-mix 経由 + 弱トーン (40→25→0%) で抑制した上で許容（クラフト相談限定）。
+ */
 function specialKindBgGradient(
   kind: ReturnType<typeof modSpecialKind>,
 ): string {
   if (kind === "desecrated")
-    return "bg-gradient-to-r from-purple-900/50 via-purple-800/30 to-transparent";
+    return "bg-gradient-to-r from-[color-mix(in_srgb,var(--exile-color-accent-mystic)_45%,transparent)] via-[color-mix(in_srgb,var(--exile-color-accent-mystic)_25%,transparent)] to-transparent";
   if (kind === "corrupt")
-    return "bg-gradient-to-r from-red-900/50 via-red-800/30 to-transparent";
+    return "bg-gradient-to-r from-[color-mix(in_srgb,var(--exile-color-signal-down)_40%,transparent)] via-[color-mix(in_srgb,var(--exile-color-signal-down)_20%,transparent)] to-transparent";
   if (kind === "essence")
-    return "bg-gradient-to-r from-amber-900/50 via-amber-800/30 to-transparent";
+    return "bg-gradient-to-r from-[color-mix(in_srgb,var(--exile-color-signal-warn)_35%,transparent)] via-[color-mix(in_srgb,var(--exile-color-signal-warn)_18%,transparent)] to-transparent";
   return "";
 }
 
@@ -207,10 +221,34 @@ interface SavedPaste {
 }
 const savedPastes = ref<SavedPaste[]>([]);
 
+// ============== Cormorant Garamond lazy load (Phase A.5b) ==============
+// visual-concept §5.2 / §9.2 規定: Cormorant Garamond はクラフト相談画面のみで
+// 遅延読込（他画面では一切ロードしない）。style.css には @font-face を置かず、
+// この画面初回マウント時に <style id="exile-cormorant-face"> を head に動的注入する。
+// 二重注入防止のためグローバル ID で guard。font-display: block は数字桁ズレ防止 (§9.2)。
+const CORMORANT_FACE_ID = "exile-cormorant-face";
+function loadCormorantGaramond() {
+  if (document.getElementById(CORMORANT_FACE_ID)) return;
+  const style = document.createElement("style");
+  style.id = CORMORANT_FACE_ID;
+  style.textContent = `
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/cormorant-garamond-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0020-007E, U+00A0-00FF;
+}
+`;
+  document.head.appendChild(style);
+}
+
 // ============== 永続化 ==============
 // slot 自体は揮発（リロードで全リセット）。永続化されるのは savedPastes のみ。
 // 過去バージョンで slot を localStorage に保存していた残骸を削除する。
 onMounted(() => {
+  loadCormorantGaramond();
   localStorage.removeItem(STORAGE_KEY);
   const sp = localStorage.getItem(SAVED_PASTES_KEY);
   if (sp) {
@@ -1849,20 +1887,20 @@ const renderedAiResult = computed(() => {
     <div v-else>
 
     <!--
-      Phase A.5a: 魔導書見開き（visual-concept §7.3）
+      Phase A.5a / A.5b: 魔導書見開き（visual-concept §7.3 / §6.6）
       - 左ペイン = 入力エリア（仕様通り）
-      - 中央 = 真鍮縦罫
-      - 右ペイン = mod 選択ピッカー（暫定）
+      - 中央 = 真鍮縦罫（900px 未満では非表示・縦並びに reflow）
+      - 右ペイン = mod 選択ピッカー（暫定）+ 羊皮紙テクスチャ背景 + 蝋燭ローダー
         ※ §7.3 規定では右ペイン = AI 出力（手順リスト）。現状 AI 出力は
           モーダル提示 (renderedAiResult) のためメインフローに inline 配置
           できず、暫定で mod ピッカーを右に置いている。
-          A.5b でモーダル inline 化（+ローマ数字 + Cinzel 手順）に合わせて
-          配置再検討。
-      TODO(A.5b): §6.6 line 429 の「幅 900px 未満で上下 1 カラム reflow」対応。
-        現状 `grid-cols-[1fr_1px_1fr]` は固定で狭幅ウィンドウで縦罫＋両ペインが
-        クラッシュする。`md:grid-cols-[1fr_1px_1fr] grid-cols-1` 化で reflow。
+          A.5b でモーダル側も世界観強化（Cinzel/ローマ数字は inline DOM が
+          無いため見送り）。
+      A.5b reflow: visual-concept §6.6 line 429 「幅 900px 未満で中央縦罫を
+      消して上下 1 カラム」対応。Tailwind `md:` (768px) では足りないので
+      style ブロック内で 900px 任意ブレークポイント定義（.exile-craft-spread）。
     -->
-    <div class="grid grid-cols-[1fr_1px_1fr] gap-6 items-start">
+    <div class="exile-craft-spread grid grid-cols-[1fr_1px_1fr] gap-6 items-start">
 
     <!-- 左ペイン: 入力エリア（ヘッダー + コピペ解析 + 目標 mod サマリ + スターター + AI 相談ボタン） -->
     <div class="min-w-0">
@@ -2226,10 +2264,27 @@ const renderedAiResult = computed(() => {
     <!-- /左ペイン -->
 
     <!-- 中央縦罫（visual-concept §7.3 / border.brass） -->
-    <div class="border-l border-[var(--exile-color-border-brass)] min-h-full" />
+    <!-- 900px 未満では .exile-craft-spread が縦並びになるので、この縦罫は
+         非表示にすべき。grid-cols-1 reflow 時は親側で hidden 切替する。 -->
+    <div class="exile-craft-rule border-l border-[var(--exile-color-border-brass)] min-h-full" />
 
-    <!-- 右ペイン: mod 選択ピッカー（prefix / suffix） -->
-    <div class="min-w-0">
+    <!--
+      右ペイン: mod 選択ピッカー（prefix / suffix）+ 羊皮紙テクスチャ背景
+      Phase A.5b: visual-concept §7.3 規定の「右ページに羊皮紙テクスチャ
+      opacity 4%」を実装。アセット (`/decor/tex-parchment.webp`) が未配置の
+      場合は CSS bg-color (var(--exile-color-bg-surface)) にフォールバックして
+      404 噪音を出さない（background-image の url() は欠落時に静かに無視され
+      下層 bg-color が出るので、最小プレースホルダは敢えて置かない）。
+      §9.5 パフォーマンスガード: 静止画像 1 枚を 1 回だけ load、各画面で再生成
+      しない。動的 feTurbulence は不採用。
+    -->
+    <div class="exile-craft-right relative min-w-0">
+      <!-- 羊皮紙テクスチャ（疑似要素相当を子要素で。pointer-events なし） -->
+      <div
+        aria-hidden="true"
+        class="exile-parchment-bg pointer-events-none absolute inset-0 -z-0"
+      />
+      <div class="relative z-10">
 
     <!-- mod ピッカー (group ベース・クリックで tier ピッカー モーダル) -->
     <div class="grid grid-cols-2 gap-4 items-start">
@@ -2390,6 +2445,20 @@ const renderedAiResult = computed(() => {
       </div>
     </div>
 
+      </div>
+      <!-- /relative z-10 inner -->
+
+      <!--
+        Phase A.5b: 蝋燭ローダー（visual-concept §5.5 / §5.8）。
+        AI 応答中 (aiLoading) のみ右下に静かに揺れる。aiResultVisible モーダル
+        起動中でも、見開き右下に常駐させて「魔導書の脇で蝋燭が灯っている」演出。
+      -->
+      <div
+        v-if="aiLoading"
+        class="exile-candle-slot pointer-events-none absolute bottom-3 right-3 z-20"
+      >
+        <CandleLoader />
+      </div>
     </div>
     <!-- /右ペイン -->
 
@@ -2713,3 +2782,45 @@ const renderedAiResult = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ============================================================
+ * Phase A.5b: 魔導書見開きレイアウトの装飾 CSS
+ * (visual-concept §6.6 / §7.3 / §9.5)
+ * ============================================================ */
+
+/* ----- 羊皮紙テクスチャ背景 (§7.3)
+   - アセット (`/decor/tex-parchment.webp`) が未配置の場合は url() が静かに
+     失敗し、fallback の bg-surface 色がそのまま見える設計。
+   - opacity 4% は visual-concept §7.3 規定値。
+   - 1 枚 1024×1024 を tile 想定 (§9.3)。
+   - GPU 合成にのる static background-image のみ。動的 SVG filter は不使用。
+*/
+.exile-parchment-bg {
+  background-color: var(--exile-color-bg-surface);
+  background-image: url('/decor/tex-parchment.webp');
+  background-repeat: repeat;
+  background-size: 1024px 1024px;
+  opacity: 0.04;
+}
+
+/* ----- 900px 未満で中央縦罫を消し、上下 1 カラムに reflow (§6.6 line 429)
+   Tailwind の md: は 768px なので、ここで 900px 任意ブレークポイントを
+   scoped CSS で定義。.exile-craft-spread / .exile-craft-rule は親 grid と
+   縦罫 div に付与済。
+*/
+@media (max-width: 900px) {
+  .exile-craft-spread {
+    grid-template-columns: 1fr !important;
+  }
+  .exile-craft-rule {
+    display: none;
+  }
+  /* 縦並びになった際に右ペインの羊皮紙が無駄に長くならないよう、
+     上下に余白を取る。スクロール体験は単純な縦長 1 カラム。 */
+  .exile-craft-right {
+    margin-top: var(--exile-space-4);
+  }
+}
+</style>
+
