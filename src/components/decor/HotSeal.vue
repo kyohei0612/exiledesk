@@ -1,4 +1,5 @@
 <!-- placeholder, Phase A.7 で本格実装。visual-concept §5.5 / §9.3 deco-seal-hot: 16×16 円 + 小さな十字、accent.hot 単色、静止・点滅禁止。 -->
+<!-- Phase A.7: aria-hidden="true" と矛盾するため :title 属性を削除。意味は親要素側でホット度バッジ等が担保する。 -->
 <script setup lang="ts">
 // props 無し。配置側で absolute 制御。SVG inline で外部依存ゼロ。
 </script>
@@ -7,7 +8,6 @@
   <span
     class="inline-block"
     aria-hidden="true"
-    :title="'ホット度 50%↑ 封蝋'"
   >
     <svg
       width="16"

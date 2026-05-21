@@ -36,7 +36,7 @@ import {
   RECENT_WINDOW_HOURS,
 } from "../services/craft-discovery";
 import HotSeal from "../components/decor/HotSeal.vue";
-import CornerMark from "../components/decor/CornerMark.vue";
+import BaseCard from "../components/decor/BaseCard.vue";
 
 const leagues = ref<League[]>([]);
 const currentLeague = ref<League | null>(null);
@@ -570,15 +570,15 @@ async function startDiscovery() {
         v-if="discoveryClusterRanking.length"
         class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[800px] overflow-auto pr-2"
       >
-        <li
+        <BaseCard
+          as="li"
           v-for="(c, i) in discoveryClusterRanking"
           :key="c.clusterHash"
           @click="openCluster(c)"
-          class="rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] hover:border-[var(--color-border-brass)] cursor-pointer transition overflow-hidden relative"
+          class="cursor-pointer"
           :class="{ 'opacity-60 cursor-wait': openingClusterHash === c.clusterHash }"
           :title="`クリックで trade2 サイトを開く（${clusterSize} mod フィルタ入り）`"
         >
-          <CornerMark class="absolute top-1 left-1 z-10 pointer-events-none" />
           <HotSeal
             v-if="c.freshRate >= freshHotThreshold"
             class="absolute top-1 left-3 z-10 pointer-events-none"
@@ -642,7 +642,7 @@ async function startDiscovery() {
           <div class="px-3 py-1 bg-[var(--exile-color-bg-surface)] border-t border-[var(--exile-color-border-subtle)] text-center text-[10px] text-[var(--exile-color-text-secondary)] font-mono">
             モッド {{ c.modKeys.length }} 個（{{ clusterSize }} mod 一致グループ）
           </div>
-        </li>
+        </BaseCard>
       </ol>
 
       <p
