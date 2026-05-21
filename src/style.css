@@ -1,27 +1,210 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg: #1a1a1c;
-  --color-surface: #232327;
-  --color-surface-2: #2a2a2f;
-  --color-border: #3a3a40;
-  --color-text: #e8e8ea;
-  --color-text-muted: #a0a0a8;
-  --color-accent: #c9a96e;
-  --color-accent-hover: #d4b884;
+/* ============================================================
+ * ExileDesk Design Tokens (visual-concept.md §4 / §9.1 準拠)
+ *
+ * 構造:
+ *   1. @layer 宣言（プラグイン上書き経路の Day 1 予約）
+ *   2. Primitive + Semantic 層（:where(:root) で specificity 0）
+ *   3. @theme（Tailwind v4 utility 公開ブリッジ + 旧エイリアス）
+ *   4. @font-face（unicode-range で日本語衝突回避）
+ *   5. Base styles（body / scrollbar / selection / focus / motion）
+ * ============================================================ */
+
+/* ----- [B 最小ガード 1] layer 順 Day 1 予約 ----- */
+@layer exile-tokens, exile-plugin-theme;
+
+/* ============================================================
+ * Primitive + Semantic 層（Phase 1 では 2 階層を同一ブロックで宣言）
+ *   - [B 最小ガード 2] --exile- プレフィックスで Tailwind 既定と分離
+ *   - [B 最小ガード 3] :where(:root) で specificity 0、プラグイン上書き勝率 100%
+ *   - hex は ここにしか書かない（lint:hex で防御）
+ * ============================================================ */
+@layer exile-tokens {
+  :where(:root) {
+    /* ---------- 1.1 Background ---------- */
+    --exile-color-bg-canvas:   #0B0907;
+    --exile-color-bg-surface:  #13100C;
+    --exile-color-bg-elevated: #1C1812;
+
+    /* ---------- 1.2 Border ---------- */
+    --exile-color-border-subtle: #2A2218;
+    --exile-color-border-brass:  #7A5A2E;
+
+    /* ---------- 1.3 Text ---------- */
+    --exile-color-text-primary:       #E6D8B5;
+    --exile-color-text-secondary:     #9A8A6A;
+    --exile-color-text-tertiary:      #7A6B52; /* §4.8 WCAG 調整後（旧 #5E5240 廃止） */
+    --exile-color-text-link:          #9FB8C9;
+    --exile-color-text-link-visited:  #7A8A95;
+
+    /* ---------- 1.4 Accent ---------- */
+    --exile-color-accent-focus:       #C9A25A;
+    --exile-color-accent-focus-hover: #D4B26A; /* §5.3 ボタンホバー */
+    --exile-color-accent-cold:        #4A7FB0; /* クラフト相談限定 */
+    --exile-color-accent-hot:         #8B2A1E; /* クラフト発見 封蝋専用 */
+    --exile-color-accent-mystic:      #5A3E6B; /* クラフト相談 章番号 */
+
+    /* ---------- 1.5 Signal（§4.7 確定値） ---------- */
+    --exile-color-signal-up:      #7EC994;
+    --exile-color-signal-down:    #E5806B;
+    --exile-color-signal-warn:    #E0C97A;
+    --exile-color-signal-error:   #E5806B; /* = down と同色（認知共通化） */
+    --exile-color-signal-success: #7EC994; /* = up と同色 */
+    --exile-color-signal-info:    #9FB8C9;
+
+    /* ---------- 2. Typography ---------- */
+    --exile-font-family-sans:    'Inter Variable', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+    --exile-font-family-display: 'Cinzel', 'Yu Gothic UI', 'Meiryo', system-ui, serif;
+    --exile-font-family-mono:    'JetBrains Mono', 'Consolas', 'Yu Gothic UI', monospace;
+    --exile-font-family-script:  'Cormorant Garamond', 'Yu Gothic UI', 'Meiryo', serif;
+    --exile-font-family-jp:      'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+
+    /* ---------- 3. Spacing（§4.3 4px ベース） ---------- */
+    --exile-space-1:  4px;
+    --exile-space-2:  8px;
+    --exile-space-3:  12px;
+    --exile-space-4:  16px;
+    --exile-space-6:  24px;
+    --exile-space-8:  32px;
+    --exile-space-12: 48px;
+
+    /* ---------- 4. Radius（§4.4 4px 一択） ---------- */
+    --exile-radius-base: 4px;
+
+    /* ---------- 5. Motion（§4.6） ---------- */
+    --exile-motion-fast: 80ms;
+    --exile-motion-base: 120ms;
+    --exile-motion-slow: 300ms; /* クラフト相談初回遷移のみ */
+    --exile-ease-out:    cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
 }
 
+/* ============================================================
+ * @theme: Tailwind v4 utility 公開ブリッジ
+ *
+ * Tailwind v4 は @theme 内の --color-* / --font-* / --spacing-* を
+ * 自動で utility (bg-bg-canvas / text-text-primary 等) に展開する。
+ * ExileDesk は --exile-* を真の参照先とし、Tailwind に渡す名前は
+ * --color-* / --font-* の短縮形を `var(--exile-*)` で参照する 2 段構造。
+ *
+ * テーマプラグインは --exile-color-* を上書きすれば
+ * utility 経由でも一括反映される。
+ * ============================================================ */
+@theme {
+  /* ----- Colors ----- */
+  --color-bg-canvas:        var(--exile-color-bg-canvas);
+  --color-bg-surface:       var(--exile-color-bg-surface);
+  --color-bg-elevated:      var(--exile-color-bg-elevated);
+  --color-border-subtle:    var(--exile-color-border-subtle);
+  --color-border-brass:     var(--exile-color-border-brass);
+  --color-text-primary:     var(--exile-color-text-primary);
+  --color-text-secondary:   var(--exile-color-text-secondary);
+  --color-text-tertiary:    var(--exile-color-text-tertiary);
+  --color-text-link:        var(--exile-color-text-link);
+  --color-text-link-visited:var(--exile-color-text-link-visited);
+  --color-accent-focus:     var(--exile-color-accent-focus);
+  --color-accent-cold:      var(--exile-color-accent-cold);
+  --color-accent-hot:       var(--exile-color-accent-hot);
+  --color-accent-mystic:    var(--exile-color-accent-mystic);
+  --color-signal-up:        var(--exile-color-signal-up);
+  --color-signal-down:      var(--exile-color-signal-down);
+  --color-signal-warn:      var(--exile-color-signal-warn);
+  --color-signal-info:      var(--exile-color-signal-info);
+  --color-signal-success:   var(--exile-color-signal-success);
+  --color-signal-error:     var(--exile-color-signal-error);
+
+  /* ----- Fonts ----- */
+  --font-sans:    var(--exile-font-family-sans);
+  --font-display: var(--exile-font-family-display);
+  --font-mono:    var(--exile-font-family-mono);
+  --font-script:  var(--exile-font-family-script);
+  --font-jp:      var(--exile-font-family-jp);
+
+  /* ----- Spacing (utility: p-1 = 4px ベース) ----- */
+  --spacing-1:  var(--exile-space-1);
+  --spacing-2:  var(--exile-space-2);
+  --spacing-3:  var(--exile-space-3);
+  --spacing-4:  var(--exile-space-4);
+  --spacing-6:  var(--exile-space-6);
+  --spacing-8:  var(--exile-space-8);
+  --spacing-12: var(--exile-space-12);
+
+  /* ----- Radius ----- */
+  --radius-base: var(--exile-radius-base);
+
+  /* ============================================================
+   * 旧変数エイリアス（Phase A.9 で廃止予定）
+   *
+   * 既存 500+ Tailwind 任意値 utility (bg-[var(--color-bg)] 等) を
+   * 破壊しないための互換層。新規コードは --exile-color-* または
+   * Tailwind utility (bg-bg-canvas 等) を直接使うこと。
+   * ============================================================ */
+  --color-bg:           var(--exile-color-bg-canvas);    /* 旧 #1a1a1c → 新 canvas */
+  --color-surface:      var(--exile-color-bg-surface);   /* 旧 #232327 → 新 surface */
+  --color-surface-2:    var(--exile-color-bg-elevated);  /* 旧 #2a2a2f → 新 elevated */
+  --color-border:       var(--exile-color-border-subtle);/* 旧 #3a3a40 → 新 subtle */
+  --color-text:         var(--exile-color-text-primary); /* 旧 #e8e8ea → 新 primary */
+  --color-text-muted:   var(--exile-color-text-secondary); /* 旧 #a0a0a8 → 新 secondary */
+  --color-accent:       var(--exile-color-accent-focus); /* 旧 #c9a96e → 新 focus */
+  --color-accent-hover: var(--exile-color-accent-focus-hover); /* 旧 #d4b884 → 新 focus-hover */
+}
+
+/* ============================================================
+ * @font-face（visual-concept §9.2 / §9.6 unicode-range 戦略）
+ *
+ * 日本語コードポイントは subset から除外し、OS の Yu Gothic UI / Meiryo
+ * に委譲する。これによりラテン書体 woff2 サイズを抑える。
+ *
+ * Cormorant Garamond はクラフト相談画面 onMounted で動的注入する
+ * （CraftHelper.vue 側、A 案 §4.3 参照）。ここでは定義しない。
+ * ============================================================ */
+@font-face {
+  font-family: 'Inter Variable';
+  src: url('/fonts/inter-variable.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: block; /* 数字桁ズレ防止（§9.2） */
+  unicode-range:
+    U+0000-00FF, U+0100-024F, U+1E00-1EFF,
+    U+2000-206F, U+2070-209F, U+20A0-20CF, U+2212;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/cinzel-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  unicode-range:
+    U+0030-0039, U+0041-005A, U+0061-007A,
+    U+0020-002F, U+003A-0040;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0000-00FF;
+}
+
+/* ============================================================
+ * Base styles
+ * ============================================================ */
 html, body, #app {
   height: 100%;
   margin: 0;
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  background-color: var(--exile-color-bg-canvas);
+  color: var(--exile-color-text-primary);
+  font-family: var(--exile-font-family-sans);
+  font-size: 13px;       /* §4.2 本文 13px */
+  line-height: 1.4;      /* §4.2 / §9.6 */
+  font-feature-settings: 'tnum' 1, 'cv11' 1, 'palt' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
@@ -31,17 +214,56 @@ button {
   cursor: pointer;
 }
 
+/* tabular numeric は body 既定で ON（文章中の数字も等幅で揃える） */
+table td,
+table th,
+.exile-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Scrollbar（§5.9） ----- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-bg);
+  background: var(--exile-color-bg-canvas);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-2);
-  border-radius: 4px;
+  background: var(--exile-color-border-subtle);
+  border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border);
+  background: var(--exile-color-border-brass);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--exile-color-border-subtle) var(--exile-color-bg-canvas);
+}
+
+/* ----- Selection（§5.9） ----- */
+::selection {
+  background-color: color-mix(in srgb, var(--exile-color-accent-focus) 30%, transparent);
+  color: inherit;
+}
+
+/* ----- Focus ring（§6.2 / マウス操作でも常時表示） ----- */
+:focus {
+  outline: 2px solid var(--exile-color-accent-focus);
+  outline-offset: 1px;
+}
+:focus:not(:focus-visible) {
+  outline: 2px solid var(--exile-color-accent-focus);
+}
+
+/* ----- prefers-reduced-motion（§6.6） ----- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: var(--exile-motion-fast) !important;
+  }
+  /* クラフト相談 300ms 初回遷移のみ 0ms 化（visual-concept §6.6 規定） */
+  .craft-consultation-enter-active {
+    transition-duration: 0ms !important;
+  }
 }
