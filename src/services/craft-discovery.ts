@@ -134,6 +134,67 @@ export interface ClusterCount {
 /** 「直近」判定の時間窓（オーナー指示 2026-05-19: 過去 12 時間） */
 export const RECENT_WINDOW_HOURS = 12;
 
+// ━━ Phase 1 manual-controls 追加: 価格レンジ / 取得件数 / ホット閾値 ━━
+
+/**
+ * 価格レンジ（Phase 1, manual-controls.md §1）。
+ * Phase 1 は通貨を **divine 固定**（オーナー指示 2026-05-21）。
+ * Phase 2 で chaos/exalt 切替を残課題 #1 として再評価予定。
+ */
+export interface PriceRange {
+  /** divine 建て下限（含む）、1 以上 */
+  min: number;
+  /** divine 建て上限（含む）、max <= 2000 */
+  max: number;
+}
+
+/**
+ * ホット判定設定（manual-controls.md §3）。
+ * - countModClusters / buildResultFromState の派生計算で参照。
+ * - **再 fetch 不要**: 累積 state があれば slider を動かすだけで瞬時再集計可。
+ */
+export interface HotConfig {
+  /** ホット判定の時間窓 (hours). 1 / 3 / 6 / 12 のいずれか */
+  windowHours: 1 | 3 | 6 | 12;
+  /** 「ホット印」を付ける recentCount の下限（5-50, step 5 推奨） */
+  minCount: number;
+}
+
+/** Phase 1 規定値（既存 RECENT_WINDOW_HOURS=12 と整合、破壊的変更を避ける） */
+export const DEFAULT_HOT_CONFIG: HotConfig = {
+  windowHours: 12,
+  minCount: 20,
+};
+
+/** Phase 1 価格レンジ規定値（既存実装の "1-2000 div" を踏襲） */
+export const DEFAULT_PRICE_RANGE: PriceRange = {
+  min: 1,
+  max: 2000,
+};
+
+/**
+ * カテゴリ → trade2 API category option 文字列マップ。
+ * Phase 1 では ring/amulet のみ実装、Phase 2a で防具 5 種・2b で武器を追加する hook。
+ * manual-controls.md §4 の `categoryToOption()` 切り出し（A/B 統合案で B 採用）。
+ *
+ * 戻り値が null の場合 = Phase 1 未対応カテゴリ。呼び側で例外 or fallback すること。
+ */
+export function categoryToOption(cat: DiscoveryCategory): string {
+  // Phase 1 では 2 種類のみ。Phase 2a/2b で追加する場合はここを拡張:
+  //   case "belt":        return "accessory.belt";
+  //   case "gloves":      return "armour.gloves";
+  //   case "helmet":      return "armour.helmet";
+  //   case "boots":       return "armour.boots";
+  //   case "body_armour": return "armour.chest";
+  //   case "weapon.onesword": return "weapon.onesword";  // Phase 2b でベース種別分岐
+  switch (cat) {
+    case "ring":
+      return "accessory.ring";
+    case "amulet":
+      return "accessory.amulet";
+  }
+}
+
 /** クラスタサイズ (1-6 mod 被り、オーナー指示 2026-05-19) */
 export type ClusterSize = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -141,16 +202,26 @@ export const CLUSTER_SIZES: ClusterSize[] = [1, 2, 3, 4, 5, 6];
 
 /**
  * 取得件数の技術上限 (1 サイクルあたり).
- * trade2 search は 1 ソートで最大 100 件、3 ソートで合計 300 件が物理上限。
- * これを超える件数は別 query (価格レンジ分割等) が必要 → Phase 3 候補。
+ *
+ * Phase 1 manual-controls.md §2 拡張 (2026-05-21):
+ *   - 300/500/800/1000 の 4 プリセットに拡張
+ *   - 1 sort = 100 件上限なので、500=5 sort, 800=8 sort, 1000=10 sort 必要
+ *   - 但し trade2 search の sort kind 数は実質 indexed-desc / price-asc / price-desc の 3 種
+ *     500+ 件は 1 sort で 100 件取得 + ソート切替 + 累積モードで段階的に取る必要あり
+ *     → 現状 sorts = ceil(targetCount / 100) で 1-10 まで sortRound として扱う
+ *     （4 round 目以降は indexed-desc を再叩きするだけ = 累積モード時の冗長化と等価）
+ *   - 1000 件は 15 分 + paginate 非対応 + 価格帯偏りで実態 600-800 件、UI 警告必須
  */
-export const MAX_LISTINGS_PER_CYCLE = 300;
+export const MAX_LISTINGS_PER_CYCLE = 1000;
 
-/** 取得件数プリセット（UI ボタン用） */
-export const LISTING_COUNT_PRESETS: number[] = [10, 50, 100, 200, 300];
+/** 取得件数プリセット（UI ボタン用、Phase 1 manual-controls.md §2 採用） */
+export const LISTING_COUNT_PRESETS: number[] = [300, 500, 800, 1000];
 
 /** デフォルト取得件数 */
 export const DEFAULT_LISTING_COUNT = 300;
+
+/** 警告モーダル必須の閾値（1000 件は 15 分・全損リスクで意思確認必要） */
+export const TARGET_COUNT_WARN_THRESHOLD = 1000;
 
 // 後方互換 (旧名)
 export const ACCUMULATION_LIMIT = MAX_LISTINGS_PER_CYCLE;
@@ -297,6 +368,7 @@ export async function clearDiscoveryState(
 function buildClusterSearchQuery(
   cluster: ClusterCount,
   category: DiscoveryCategory,
+  priceRange: PriceRange = DEFAULT_PRICE_RANGE,
 ): { query: unknown; missingMods: string[] } {
   const statFilters: Array<{
     id: string;
@@ -340,8 +412,7 @@ function buildClusterSearchQuery(
     }
   }
 
-  const categoryOption =
-    category === "ring" ? "accessory.ring" : "accessory.amulet";
+  const categoryOption = categoryToOption(category);
 
   // 6 mod 縛り（オーナー指示 2026-05-19: 「絞るために 2 mod 検索でも 6 mod 付いてるものだけ」）
   const sixModFilter = {
@@ -364,13 +435,17 @@ function buildClusterSearchQuery(
               rarity: { option: "rare" },
             },
           },
-          // INSTANT BUYOUT + 価格レンジ（オーナー指示 2026-05-19、取得時と同じ条件）
+          // INSTANT BUYOUT + 価格レンジ（Phase 1 で priceRange 引数化、取得時と同じ条件）
           //   sale_type: priced = 即決のみ
-          //   price: 1-2000 div = Mirror tier 外れ値を弾く
+          //   price: priceRange (default 1-2000 div) = Mirror tier 外れ値を弾く
           trade_filters: {
             filters: {
               sale_type: { option: "priced" },
-              price: { min: 1, max: 2000, option: "divine" },
+              price: {
+                min: priceRange.min,
+                max: priceRange.max,
+                option: "divine",
+              },
             },
           },
           misc_filters: {
@@ -401,9 +476,15 @@ export async function openClusterInTrade2(args: {
   cluster: ClusterCount;
   league: string;
   category: DiscoveryCategory;
+  /** Phase 1 manual-controls 拡張: trade2 サイト遷移時にも同じ価格レンジを反映 */
+  priceRange?: PriceRange;
 }): Promise<{ openedUrl: string; missingMods: string[]; statCount: number }> {
-  const { cluster, league, category } = args;
-  const { query, missingMods } = buildClusterSearchQuery(cluster, category);
+  const { cluster, league, category, priceRange } = args;
+  const { query, missingMods } = buildClusterSearchQuery(
+    cluster,
+    category,
+    priceRange ?? DEFAULT_PRICE_RANGE,
+  );
 
   // dev-server (browser) では Tauri 環境ではないためスキップ（呼び側は throw で挙動表現）
   if (!isTauriRuntime()) {
@@ -549,18 +630,24 @@ export function getSampleListings(): FetchedListing[] {
 
 /**
  * 既存 listing 配列から DiscoveryResult を生成（ロード時の表示再構築用）。
+ *
+ * Phase 1 manual-controls.md §3: hotConfig を渡すと recent 判定の時間窓・件数閾値を
+ * 反映した cluster を返す（再 fetch 不要、UI スライダー変更で即呼び直し可能）。
  */
-export function buildResultFromState(state: DiscoveryState): DiscoveryResult {
+export function buildResultFromState(
+  state: DiscoveryState,
+  hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
+): DiscoveryResult {
   const { ranking, emptyCount } = countModOccurrences(state.allListings);
   const denom = state.allListings.length || 1;
   const emptyModRate = emptyCount / denom;
   const clustersBySize = {
-    1: countModClusters(state.allListings, 1),
-    2: countModClusters(state.allListings, 2),
-    3: countModClusters(state.allListings, 3),
-    4: countModClusters(state.allListings, 4),
-    5: countModClusters(state.allListings, 5),
-    6: countModClusters(state.allListings, 6),
+    1: countModClusters(state.allListings, 1, hotConfig),
+    2: countModClusters(state.allListings, 2, hotConfig),
+    3: countModClusters(state.allListings, 3, hotConfig),
+    4: countModClusters(state.allListings, 4, hotConfig),
+    5: countModClusters(state.allListings, 5, hotConfig),
+    6: countModClusters(state.allListings, 6, hotConfig),
   } as Record<ClusterSize, ClusterCount[]>;
 
   return {
@@ -933,13 +1020,18 @@ const CLUSTER_HASH_SEP = "";
  * C(modCount, N) の全組合せを sorted hash 化、同 hash の listing 数を数える。
  *
  * @param clusterSize 一致させたい mod 数 (4 / 5 / 6)
+ * @param hotConfig Phase 1 manual-controls.md §3: 時間窓 + ホット件数閾値（再 fetch 不要、派生指標）。
+ *   省略時は DEFAULT_HOT_CONFIG（既存 12h / 20 件を踏襲）。
+ *   この関数自体は recentCount を算出するだけで「ホット判定 flag」は付けず、
+ *   呼び側 UI で `recentCount >= hotConfig.minCount` をもって判定する。
  */
 export function countModClusters(
   listings: FetchedListing[],
   clusterSize: ClusterSize,
+  hotConfig: HotConfig = DEFAULT_HOT_CONFIG,
 ): ClusterCount[] {
-  // 「直近 12 時間以内」の閾値（現在時刻 - 12h）
-  const recentThresholdMs = Date.now() - RECENT_WINDOW_HOURS * 3600 * 1000;
+  // 「直近 N 時間以内」の閾値（現在時刻 - windowHours h）
+  const recentThresholdMs = Date.now() - hotConfig.windowHours * 3600 * 1000;
 
   const map = new Map<
     string,
@@ -1114,9 +1206,14 @@ function computePriceStats(prices: number[]): {
 
 type SortKind = "indexed-desc" | "price-asc" | "price-desc";
 
+/**
+ * @param opts.priceRange 価格レンジ（Phase 1 manual-controls.md §1、divine 固定）。
+ *   省略時は DEFAULT_PRICE_RANGE = 1-2000 div。
+ */
 function buildSearchQuery(opts: {
   baseType: DiscoveryCategory;
   sort: SortKind;
+  priceRange?: PriceRange;
 }): unknown {
   const sortBody: Record<string, string> = {};
   if (opts.sort === "indexed-desc") sortBody.indexed = "desc";
@@ -1127,8 +1224,8 @@ function buildSearchQuery(opts: {
   //   category.option = "accessory.ring" / "accessory.amulet"（POE1 慣習を踏襲）
   //   status.option = "securable"（旧 "online" は 400 を返す）
   //   6mod 縛り = pseudo.pseudo_number_of_affix_mods (min: 6) in stats
-  const categoryOption =
-    opts.baseType === "ring" ? "accessory.ring" : "accessory.amulet";
+  const categoryOption = categoryToOption(opts.baseType);
+  const priceRange = opts.priceRange ?? DEFAULT_PRICE_RANGE;
 
   return {
     query: {
@@ -1154,9 +1251,13 @@ function buildSearchQuery(opts: {
         },
         trade_filters: {
           filters: {
-            // 1 div 〜 2000 div（オーナー指示 2026-05-19: 上限 2000 神）
-            // 2000 div を超える希少 listing は外れ値として除外
-            price: { min: 1, max: 2000, option: "divine" },
+            // Phase 1 (2026-05-21): priceRange を引数化（divine 固定）。
+            // 既定 1-2000 div: Mirror tier 外れ値除外 + 1div 未満の不確実通貨換算を弾く。
+            price: {
+              min: priceRange.min,
+              max: priceRange.max,
+              option: "divine",
+            },
           },
         },
         misc_filters: {
@@ -1240,13 +1341,24 @@ async function invokeWithRetry<T>(
 export async function runDiscovery(args: {
   league: string;
   category: DiscoveryCategory;
-  /** 1 サイクルで取得したい listing 件数（1-300、デフォルト 300） */
+  /** 1 サイクルで取得したい listing 件数（10-1000、デフォルト 300） */
   targetCount?: number;
   /** 累積用の引き継ぎ state（カテゴリが一致してない場合は無視して新規開始） */
   prevState?: DiscoveryState;
   /** ユーザーによる中止用シグナル */
   signal?: AbortSignal;
   onProgress?: (p: DiscoveryProgress) => void;
+  /**
+   * Phase 1 manual-controls.md §1: 価格レンジ（divine 固定）.
+   * 省略時は DEFAULT_PRICE_RANGE (1-2000 div).
+   */
+  priceRange?: PriceRange;
+  /**
+   * Phase 1 manual-controls.md §3: ホット判定設定.
+   * runDiscovery 内では集計結果に反映、UI で slider を動かしたら buildResultFromState で再計算可。
+   * 省略時は DEFAULT_HOT_CONFIG (12h / 20 件).
+   */
+  hotConfig?: HotConfig;
 }): Promise<DiscoveryResult> {
   const { league, category, onProgress, prevState, signal } = args;
   // dev-server (browser) では Tauri 環境ではないためスキップ
@@ -1257,11 +1369,14 @@ export async function runDiscovery(args: {
       "クラフト発見の取得は Tauri ネイティブ環境でのみ動作します（ブラウザ dev では無効）",
     );
   }
-  // 取得件数: 10-300 の範囲にクランプ、デフォルト 300
+  // 取得件数: 10-1000 の範囲にクランプ、デフォルト 300
   const targetCount = Math.max(
     10,
     Math.min(MAX_LISTINGS_PER_CYCLE, args.targetCount ?? DEFAULT_LISTING_COUNT),
   );
+  // Phase 1 manual-controls 設定の解決（呼び側未指定なら default で稼働、後方互換）
+  const priceRange: PriceRange = args.priceRange ?? DEFAULT_PRICE_RANGE;
+  const hotConfig: HotConfig = args.hotConfig ?? DEFAULT_HOT_CONFIG;
   const notify = (p: DiscoveryProgress) => onProgress?.(p);
 
   // 累積 state 初期化: カテゴリが一致する prevState だけ引き継ぐ
@@ -1270,10 +1385,17 @@ export async function runDiscovery(args: {
       ? prevState
       : createEmptyState(category);
 
-  // 取得件数に応じて使うソート数を絞る（100件/sort なので 100 ごとに 1 sort 増やす）
-  const allSorts: SortKind[] = ["indexed-desc", "price-asc", "price-desc"];
-  const sortsNeeded = Math.min(allSorts.length, Math.ceil(targetCount / 100));
-  const sorts = allSorts.slice(0, sortsNeeded);
+  // 取得件数に応じて使うソート数を組む。
+  //   trade2 search は実質 3 sort kind (indexed-desc / price-asc / price-desc) だが、
+  //   500+ 件は同じ sort kind を sleep 挟んで複数 round 叩く（累積モードの 1 サイクル内冗長化）。
+  //   各 sort = 100 件上限、ceil(targetCount / 100) round 必要。
+  //   4 round 目以降は indexed-desc → price-asc → price-desc を循環。
+  const sortKinds: SortKind[] = ["indexed-desc", "price-asc", "price-desc"];
+  const sortsNeeded = Math.max(1, Math.ceil(targetCount / 100));
+  const sorts: SortKind[] = [];
+  for (let i = 0; i < sortsNeeded; i++) {
+    sorts.push(sortKinds[i % sortKinds.length]);
+  }
 
   const seenIds = baseState.seenIds;
   const allListings = baseState.allListings;
@@ -1294,7 +1416,12 @@ export async function runDiscovery(args: {
       if (signal?.aborted) throw new DiscoveryAbortedError();
       const search = await invokeWithRetry<SearchResponse>(
         "trade2_search",
-        { req: { league, query: buildSearchQuery({ baseType: category, sort }) } },
+        {
+          req: {
+            league,
+            query: buildSearchQuery({ baseType: category, sort, priceRange }),
+          },
+        },
         notify,
         signal,
       );
@@ -1402,13 +1529,14 @@ export async function runDiscovery(args: {
   const dedupRate = cycleCandidateTotal > 0 ? dupCount / cycleCandidateTotal : 0;
 
   // 累積データに対するクラスタリング再集計（1〜6 mod 全サイズ）
+  // Phase 1: hotConfig を反映（時間窓 1/3/6/12h、件数閾値は呼び側 UI で適用）
   const clustersBySize = {
-    1: countModClusters(allListings, 1),
-    2: countModClusters(allListings, 2),
-    3: countModClusters(allListings, 3),
-    4: countModClusters(allListings, 4),
-    5: countModClusters(allListings, 5),
-    6: countModClusters(allListings, 6),
+    1: countModClusters(allListings, 1, hotConfig),
+    2: countModClusters(allListings, 2, hotConfig),
+    3: countModClusters(allListings, 3, hotConfig),
+    4: countModClusters(allListings, 4, hotConfig),
+    5: countModClusters(allListings, 5, hotConfig),
+    6: countModClusters(allListings, 6, hotConfig),
   } as Record<ClusterSize, ClusterCount[]>;
 
   // 次回引き継ぎ用 state
