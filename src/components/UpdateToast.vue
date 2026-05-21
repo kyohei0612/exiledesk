@@ -192,7 +192,7 @@ function fmtBytes(b: number): string {
 
     <!-- 完了 -->
     <div v-else-if="phase === 'done'">
-      <h3 class="text-sm font-semibold text-emerald-400 mb-2">✓ 更新完了</h3>
+      <h3 class="text-sm font-semibold text-[var(--exile-color-signal-success)] mb-2">✓ 更新完了</h3>
       <p class="text-xs text-[var(--color-text-muted)]">
         再起動して新版に切り替えます…
       </p>
@@ -201,7 +201,7 @@ function fmtBytes(b: number): string {
     <!-- セーフモード: 連続クラッシュ検出で自動 check skip -->
     <div v-else-if="phase === 'safe-mode'">
       <div class="flex items-baseline justify-between mb-2">
-        <h3 class="text-sm font-semibold text-amber-300">⚠ セーフモード</h3>
+        <h3 class="text-sm font-semibold text-[var(--exile-color-signal-warn)]">⚠ セーフモード</h3>
         <button
           @click="(clearLaunchSeq(), (phase = 'idle'))"
           class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -227,7 +227,7 @@ function fmtBytes(b: number): string {
     <!-- エラー -->
     <div v-else-if="phase === 'error'">
       <div class="flex items-baseline justify-between mb-2">
-        <h3 class="text-sm font-semibold text-red-400">✗ 更新エラー</h3>
+        <h3 class="text-sm font-semibold text-[var(--exile-color-signal-error)]">✗ 更新エラー</h3>
         <button
           @click="dismiss"
           class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
@@ -235,7 +235,7 @@ function fmtBytes(b: number): string {
           ×
         </button>
       </div>
-      <p class="text-xs text-red-300 font-mono whitespace-pre-wrap break-all">
+      <p class="text-xs text-[var(--exile-color-signal-error)] font-mono whitespace-pre-wrap break-all">
         {{ errorMsg }}
       </p>
       <button

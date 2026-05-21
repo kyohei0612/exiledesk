@@ -216,7 +216,7 @@ onMounted(async () => {
 
     <div
       v-if="error"
-      class="p-4 mb-4 rounded bg-red-900/30 border border-red-700/50 text-red-200 text-sm"
+      class="p-4 mb-4 rounded bg-[color-mix(in_srgb,var(--exile-color-signal-error)_10%,transparent)] border-l-2 border-[var(--exile-color-signal-error)] text-[var(--exile-color-signal-error)] text-sm"
     >
       <p class="font-semibold mb-1">取得失敗</p>
       <p class="font-mono text-xs">{{ error }}</p>
