@@ -132,22 +132,6 @@
 
   /* ----- Radius ----- */
   --radius-base: var(--exile-radius-base);
-
-  /* ============================================================
-   * 旧変数エイリアス（Phase A.9 で廃止予定）
-   *
-   * 既存 500+ Tailwind 任意値 utility (bg-[var(--color-bg)] 等) を
-   * 破壊しないための互換層。新規コードは --exile-color-* または
-   * Tailwind utility (bg-bg-canvas 等) を直接使うこと。
-   * ============================================================ */
-  --color-bg:           var(--exile-color-bg-canvas);    /* 旧 #1a1a1c → 新 canvas */
-  --color-surface:      var(--exile-color-bg-surface);   /* 旧 #232327 → 新 surface */
-  --color-surface-2:    var(--exile-color-bg-elevated);  /* 旧 #2a2a2f → 新 elevated */
-  --color-border:       var(--exile-color-border-subtle);/* 旧 #3a3a40 → 新 subtle */
-  --color-text:         var(--exile-color-text-primary); /* 旧 #e8e8ea → 新 primary */
-  --color-text-muted:   var(--exile-color-text-secondary); /* 旧 #a0a0a8 → 新 secondary */
-  --color-accent:       var(--exile-color-accent-focus); /* 旧 #c9a96e → 新 focus */
-  --color-accent-hover: var(--exile-color-accent-focus-hover); /* 旧 #d4b884 → 新 focus-hover */
 }
 
 /* ============================================================
