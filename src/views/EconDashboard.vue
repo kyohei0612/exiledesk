@@ -124,8 +124,9 @@ function cancelDiscovery() {
   if (discoveryAbortController) {
     discoveryAbortController.abort();
   }
-  // dedup 警告モーダル待ちで止まってる場合は「打切り」として resolve
-  // （AbortError は runDiscovery 内の他の sleep/invoke で拾われる）
+  // Phase 1.x.1: dedup 警告モーダル待ちで止まってる場合は resolve(false) でモーダルを閉じる。
+  //   service 側で resolve 直後に signal.aborted を後置チェックし DiscoveryAbortedError を throw する
+  //   （案 B）ため、ここから先は通常 abort フローと同じ UI 表示「中止しました…」に合流する。
   if (dedupWarnResolver) {
     confirmDedupAbort();
   }

@@ -1638,6 +1638,12 @@ export async function runDiscovery(args: {
             console.warn("[runDiscovery] onDedupWarning callback failed:", cbErr);
             shouldContinue = true;
           }
+          // Phase 1.x.1: 案 B 採用（signal aborted 後置チェック）.
+          //   await 中に cancelDiscovery が走ると AbortController.abort() + resolver(false) が併発する。
+          //   そのまま earlyAbortByDedup ルートに乗ると「打切り→通常 aggregate」になり、UI の
+          //   「中止しました（取得済み listing は破棄）」分岐に乗らない。
+          //   案 A（resolver reject）より変更が小さく、既存 confirmDedupAbort/Continue を温存できるため B を採用。
+          if (signal?.aborted) throw new DiscoveryAbortedError();
           if (!shouldContinue) {
             earlyAbortByDedup = true;
             notify({
