@@ -131,41 +131,41 @@ function fmtBytes(b: number): string {
 <template>
   <div
     v-if="phase === 'available' || phase === 'downloading' || phase === 'installing' || phase === 'done' || phase === 'error' || phase === 'safe-mode'"
-    class="fixed bottom-4 right-4 max-w-sm rounded-lg border bg-[var(--color-surface)] border-[var(--color-border)] shadow-lg z-50 p-4"
+    class="fixed bottom-4 right-4 max-w-sm rounded-lg border bg-[var(--exile-color-bg-surface)] border-[var(--exile-color-border-subtle)] shadow-lg z-50 p-4"
   >
     <!-- 更新あり -->
     <div v-if="phase === 'available' && update">
       <div class="flex items-baseline justify-between mb-2">
-        <h3 class="text-sm font-semibold text-[var(--color-accent)]">
+        <h3 class="text-sm font-semibold text-[var(--exile-color-accent-focus)]">
           🆙 新しいバージョンが利用可能
         </h3>
         <button
           @click="dismiss"
-          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          class="text-xs text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
           aria-label="閉じる"
         >
           ×
         </button>
       </div>
-      <p class="text-xs text-[var(--color-text-muted)] mb-3">
-        v{{ update.currentVersion }} → <span class="text-[var(--color-text)] font-mono">v{{ update.version }}</span>
+      <p class="text-xs text-[var(--exile-color-text-secondary)] mb-3">
+        v{{ update.currentVersion }} → <span class="text-[var(--exile-color-text-primary)] font-mono">v{{ update.version }}</span>
       </p>
       <p
         v-if="update.body"
-        class="text-[10px] text-[var(--color-text-muted)] mb-3 whitespace-pre-wrap max-h-24 overflow-auto"
+        class="text-[10px] text-[var(--exile-color-text-secondary)] mb-3 whitespace-pre-wrap max-h-24 overflow-auto"
       >
         {{ update.body }}
       </p>
       <div class="flex gap-2">
         <button
           @click="applyUpdate"
-          class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--color-accent)] text-black hover:bg-[var(--color-accent-hover)] font-semibold transition"
+          class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--exile-color-accent-focus)] text-black hover:bg-[var(--exile-color-accent-focus-hover)] font-semibold transition"
         >
           今すぐ更新
         </button>
         <button
           @click="dismiss"
-          class="px-3 py-1.5 rounded text-xs border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] transition"
+          class="px-3 py-1.5 rounded text-xs border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] transition"
         >
           後で
         </button>
@@ -175,15 +175,15 @@ function fmtBytes(b: number): string {
     <!-- ダウンロード中 -->
     <div v-else-if="phase === 'downloading'">
       <h3 class="text-sm font-semibold mb-2">📥 ダウンロード中…</h3>
-      <p class="text-xs text-[var(--color-text-muted)] font-mono">
+      <p class="text-xs text-[var(--exile-color-text-secondary)] font-mono">
         {{ fmtBytes(downloadedBytes) }}<span v-if="totalBytes"> / {{ fmtBytes(totalBytes) }}</span>
       </p>
       <div
         v-if="totalBytes"
-        class="mt-2 h-1.5 bg-[var(--color-surface-2)] rounded overflow-hidden"
+        class="mt-2 h-1.5 bg-[var(--exile-color-bg-elevated)] rounded overflow-hidden"
       >
         <div
-          class="h-full bg-[var(--color-accent)] transition-all"
+          class="h-full bg-[var(--exile-color-accent-focus)] transition-all"
           :style="{ width: `${Math.min(100, (downloadedBytes / totalBytes) * 100)}%` }"
         ></div>
       </div>
@@ -192,7 +192,7 @@ function fmtBytes(b: number): string {
     <!-- インストール中 -->
     <div v-else-if="phase === 'installing'">
       <h3 class="text-sm font-semibold mb-2">⚙ インストール中…</h3>
-      <p class="text-xs text-[var(--color-text-muted)]">
+      <p class="text-xs text-[var(--exile-color-text-secondary)]">
         まもなく再起動します。
       </p>
     </div>
@@ -200,7 +200,7 @@ function fmtBytes(b: number): string {
     <!-- 完了 -->
     <div v-else-if="phase === 'done'">
       <h3 class="text-sm font-semibold text-[var(--exile-color-signal-success)] mb-2">✓ 更新完了</h3>
-      <p class="text-xs text-[var(--color-text-muted)]">
+      <p class="text-xs text-[var(--exile-color-text-secondary)]">
         再起動して新版に切り替えます…
       </p>
     </div>
@@ -211,20 +211,20 @@ function fmtBytes(b: number): string {
         <h3 class="text-sm font-semibold text-[var(--exile-color-signal-warn)]">⚠ セーフモード</h3>
         <button
           @click="(clearLaunchSeq(), (phase = 'idle'))"
-          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          class="text-xs text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
           aria-label="閉じる"
         >
           ×
         </button>
       </div>
-      <p class="text-xs text-[var(--color-text-muted)] mb-2">
+      <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2">
         連続起動失敗を検知したため、自動更新チェックをスキップしています。
         前回の更新が原因の可能性がある場合は、GitHub Releases から前バージョンを手動 DL してください。
       </p>
       <div class="flex gap-2">
         <button
           @click="(clearLaunchSeq(), runCheck())"
-          class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--color-accent)] text-black hover:bg-[var(--color-accent-hover)] font-semibold transition"
+          class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--exile-color-accent-focus)] text-black hover:bg-[var(--exile-color-accent-focus-hover)] font-semibold transition"
         >
           手動チェック
         </button>
@@ -237,7 +237,7 @@ function fmtBytes(b: number): string {
         <h3 class="text-sm font-semibold text-[var(--exile-color-signal-error)]">✗ 更新エラー</h3>
         <button
           @click="dismiss"
-          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          class="text-xs text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
         >
           ×
         </button>
@@ -247,7 +247,7 @@ function fmtBytes(b: number): string {
       </p>
       <button
         @click="runCheck"
-        class="mt-2 px-3 py-1 rounded text-xs border border-[var(--color-border)] hover:bg-[var(--color-surface-2)]"
+        class="mt-2 px-3 py-1 rounded text-xs border border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)]"
       >
         🔄 再試行
       </button>

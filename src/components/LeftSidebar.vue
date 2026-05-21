@@ -32,19 +32,19 @@ const groups = (["economy", "tools"] as const).map((key) => ({
 </script>
 
 <template>
-  <aside class="bg-[var(--color-surface)] flex flex-col py-3 select-none">
+  <aside class="bg-[var(--exile-color-bg-surface)] flex flex-col py-3 select-none">
     <div class="px-4 pb-3">
-      <h1 class="text-lg font-semibold tracking-wide text-[var(--color-accent)]">
+      <h1 class="text-lg font-semibold tracking-wide text-[var(--exile-color-accent-focus)]">
         ExileDesk
       </h1>
-      <p class="text-xs text-[var(--color-text-muted)]">POE2 Secretary</p>
+      <p class="text-xs text-[var(--exile-color-text-secondary)]">POE2 Secretary</p>
     </div>
 
     <nav class="flex-1 overflow-y-auto">
       <div v-for="group in groups" :key="group.key" class="mt-1">
         <div
           v-if="group.label"
-          class="px-4 mt-3 mb-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)]"
+          class="px-4 mt-3 mb-1 text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)]"
         >
           {{ group.label }}
         </div>
@@ -55,8 +55,8 @@ const groups = (["economy", "tools"] as const).map((key) => ({
           :class="[
             'w-full text-left px-4 py-2 flex items-center gap-2 transition border-l-2 font-display text-[13px] tracking-[0.06em]',
             active === item.id
-              ? 'bg-[var(--color-surface-2)] border-[var(--color-accent)] text-[var(--color-accent)]'
-              : 'border-transparent hover:bg-[var(--color-surface-2)]',
+              ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
+              : 'border-transparent hover:bg-[var(--exile-color-bg-elevated)]',
           ]"
         >
           <!--

@@ -226,7 +226,7 @@ const rarityColor = (r: string) => {
   if (r === "RARE" || r === "Rare") return "text-yellow-300";
   if (r === "UNIQUE" || r === "Unique") return "text-orange-400";
   if (r === "MAGIC" || r === "Magic") return "text-blue-300";
-  return "text-[var(--color-text)]";
+  return "text-[var(--exile-color-text-primary)]";
 };
 </script>
 
@@ -234,21 +234,21 @@ const rarityColor = (r: string) => {
   <div class="p-6 overflow-auto h-full">
     <header class="mb-4">
       <h2 class="text-2xl font-semibold mb-1">📈 装備 DPS 比較</h2>
-      <p class="text-sm text-[var(--color-text-muted)]">
+      <p class="text-sm text-[var(--exile-color-text-secondary)]">
         ① PoB code で base build を取込 → ② 装備一覧 + メインスキル選択 →
         ③ 変更したい slot に候補装備をコピペ → ④ 差分表示
       </p>
     </header>
 
     <!-- ① base build -->
-    <section class="mb-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-4">
+    <section class="mb-4 rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] p-4">
       <div class="flex justify-between items-center mb-2">
         <h3 class="text-sm font-semibold">① base build（PoB share code）</h3>
-        <span class="text-xs" :class="pobCodeReady ? 'text-green-400' : 'text-[var(--color-text-muted)]'">
+        <span class="text-xs" :class="pobCodeReady ? 'text-green-400' : 'text-[var(--exile-color-text-secondary)]'">
           {{ pobCodeStatus }}
         </span>
       </div>
-      <p class="text-[11px] text-[var(--color-text-muted)] mb-2 leading-relaxed">
+      <p class="text-[11px] text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
         poe.ninja のビルドページで「Copy PoB code」 → そのまま貼付。
         または PoB アプリの Import/Export で生成した share code でも可。
       </p>
@@ -256,7 +256,7 @@ const rarityColor = (r: string) => {
         v-model="pobCode"
         rows="4"
         placeholder="eNrFXG..."
-        class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded p-2 text-[11px] font-mono focus:outline-none focus:border-[var(--color-accent)] resize-none"
+        class="w-full bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] rounded p-2 text-[11px] font-mono focus:outline-none focus:border-[var(--exile-color-accent-focus)] resize-none"
       />
       <div class="mt-2 flex items-center gap-2">
         <button
@@ -265,7 +265,7 @@ const rarityColor = (r: string) => {
           class="px-3 py-1.5 rounded text-xs font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
           :class="loadState === 'loaded'
             ? 'bg-green-600 hover:bg-green-700 text-white'
-            : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-black'"
+            : 'bg-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-accent-focus-hover)] text-black'"
         >
           {{ loadState === "loading" ? "ロード中…"
              : loadState === "loaded" ? "✓ 読み込み完了（再実行）"
@@ -283,17 +283,17 @@ const rarityColor = (r: string) => {
     <!-- ② 装備一覧 + メインスキル -->
     <section
       v-if="loadState === 'loaded'"
-      class="mb-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-4"
+      class="mb-4 rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] p-4"
     >
       <h3 class="text-sm font-semibold mb-2">② 現在装備 + メインスキル</h3>
 
       <!-- メインスキル プルダウン -->
       <div v-if="skillGroups.length > 0" class="mb-3">
-        <label class="text-xs text-[var(--color-text-muted)] mr-2">メインスキル:</label>
+        <label class="text-xs text-[var(--exile-color-text-secondary)] mr-2">メインスキル:</label>
         <select
           v-model.number="selectedSkillIndex"
           @change="onChangeSkill"
-          class="bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1 text-xs"
+          class="bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] rounded px-2 py-1 text-xs"
         >
           <option v-for="g in skillGroups" :key="g.index" :value="g.index">
             {{ g.main_skill_name || g.label }}
@@ -307,15 +307,15 @@ const rarityColor = (r: string) => {
         <div
           v-for="it in equippedItems.filter(i => i.has_item)"
           :key="it.slot_name"
-          class="p-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)]"
+          class="p-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)]"
         >
-          <div class="text-[var(--color-text-muted)] text-[10px]">
+          <div class="text-[var(--exile-color-text-secondary)] text-[10px]">
             {{ it.slot_name }}
           </div>
           <div :class="rarityColor(it.rarity)" class="font-medium truncate">
             {{ it.title || it.base_name || "（名前なし）" }}
           </div>
-          <div v-if="it.title && it.base_name" class="text-[var(--color-text-muted)] text-[10px] truncate">
+          <div v-if="it.title && it.base_name" class="text-[var(--exile-color-text-secondary)] text-[10px] truncate">
             {{ it.base_name }}
           </div>
         </div>
@@ -326,10 +326,10 @@ const rarityColor = (r: string) => {
         <div
           v-for="s in KEY_STATS.filter(s => baselineStats[s.key] !== undefined)"
           :key="s.key"
-          class="p-2 rounded bg-[var(--color-bg)] border border-[var(--color-border)]"
+          class="p-2 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)]"
         >
-          <div class="text-[var(--color-text-muted)]">{{ s.label }}</div>
-          <div class="font-medium text-[var(--color-accent)]">
+          <div class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</div>
+          <div class="font-medium text-[var(--exile-color-accent-focus)]">
             {{ s.format ? s.format(baselineStats[s.key]) : baselineStats[s.key] }}
           </div>
         </div>
@@ -339,14 +339,14 @@ const rarityColor = (r: string) => {
     <!-- ③ 候補装備で比較 -->
     <section
       v-if="loadState === 'loaded'"
-      class="mb-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-4"
+      class="mb-4 rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] p-4"
     >
       <h3 class="text-sm font-semibold mb-2">③ 候補装備で比較</h3>
       <div class="flex items-center gap-2 mb-2 text-xs">
-        <label class="text-[var(--color-text-muted)]">変更する slot:</label>
+        <label class="text-[var(--exile-color-text-secondary)]">変更する slot:</label>
         <select
           v-model="selectedSlot"
-          class="bg-[var(--color-bg)] border border-[var(--color-border)] rounded px-2 py-1"
+          class="bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] rounded px-2 py-1"
         >
           <option value="">（自動推定 / アイテム class から）</option>
           <option
@@ -365,12 +365,12 @@ const rarityColor = (r: string) => {
         v-model="candidateText"
         rows="8"
         placeholder="候補装備のテキストをコピペ&#10;&#10;例:&#10;Rarity: Rare&#10;装備名&#10;ベース名&#10;--------&#10;Item Level: 78&#10;...mod 行..."
-        class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded p-2 text-xs font-mono focus:outline-none focus:border-[var(--color-accent)] resize-none mb-2"
+        class="w-full bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] rounded p-2 text-xs font-mono focus:outline-none focus:border-[var(--exile-color-accent-focus)] resize-none mb-2"
       />
 
-      <div v-if="candidateParsed" class="text-[11px] text-[var(--color-text-muted)] mb-2">
+      <div v-if="candidateParsed" class="text-[11px] text-[var(--exile-color-text-secondary)] mb-2">
         パース結果:
-        <span class="text-[var(--color-text)]">{{ candidateParsed.name || "（名前なし）" }}</span>
+        <span class="text-[var(--exile-color-text-primary)]">{{ candidateParsed.name || "（名前なし）" }}</span>
         / {{ candidateParsed.base || "?" }}
         / ilvl {{ candidateParsed.itemLevel ?? "?" }}
         / mod {{ candidateParsed.modLines.length }} 行
@@ -380,14 +380,14 @@ const rarityColor = (r: string) => {
         <button
           @click="onCompare"
           :disabled="!candidateParsed || compareState === 'comparing'"
-          class="px-3 py-1.5 rounded bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-black font-medium text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+          class="px-3 py-1.5 rounded bg-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-accent-focus-hover)] text-black font-medium text-xs disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {{ compareState === "comparing" ? "計算中…" : "この装備で比較" }}
         </button>
         <button
           v-if="compareState === 'done' || compareState === 'error'"
           @click="onResetCompare"
-          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          class="text-xs text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
         >
           リセット
         </button>
@@ -400,12 +400,12 @@ const rarityColor = (r: string) => {
     <!-- ④ ステータス差分 -->
     <section
       v-if="compareState === 'done'"
-      class="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-4"
+      class="rounded-lg bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] p-4"
     >
       <h3 class="text-sm font-semibold mb-3">
         ④ ステータス差分
-        <span class="text-xs text-[var(--color-text-muted)] ml-2">
-          slot: <span class="text-[var(--color-accent)]">{{ equippedSlot }}</span>
+        <span class="text-xs text-[var(--exile-color-text-secondary)] ml-2">
+          slot: <span class="text-[var(--exile-color-accent-focus)]">{{ equippedSlot }}</span>
         </span>
       </h3>
 
@@ -416,9 +416,9 @@ const rarityColor = (r: string) => {
             <div
               v-for="d in upStats"
               :key="d.key"
-              class="p-2 rounded bg-[var(--color-bg)] border border-green-900/40"
+              class="p-2 rounded bg-[var(--exile-color-bg-canvas)] border border-green-900/40"
             >
-              <div class="text-[var(--color-text-muted)] text-[10px]">{{ d.label }}</div>
+              <div class="text-[var(--exile-color-text-secondary)] text-[10px]">{{ d.label }}</div>
               <div>
                 {{ d.format(d.before) }} → {{ d.format(d.after) }}
                 <span class="text-green-400 ml-1">
@@ -435,9 +435,9 @@ const rarityColor = (r: string) => {
             <div
               v-for="d in downStats"
               :key="d.key"
-              class="p-2 rounded bg-[var(--color-bg)] border border-red-900/40"
+              class="p-2 rounded bg-[var(--exile-color-bg-canvas)] border border-red-900/40"
             >
-              <div class="text-[var(--color-text-muted)] text-[10px]">{{ d.label }}</div>
+              <div class="text-[var(--exile-color-text-secondary)] text-[10px]">{{ d.label }}</div>
               <div>
                 {{ d.format(d.before) }} → {{ d.format(d.after) }}
                 <span class="text-red-400 ml-1">
@@ -449,16 +449,16 @@ const rarityColor = (r: string) => {
         </div>
 
         <details v-if="sameStats.length > 0">
-          <summary class="cursor-pointer text-[var(--color-text-muted)]">
+          <summary class="cursor-pointer text-[var(--exile-color-text-secondary)]">
             ＝ 変化なし ({{ sameStats.length }}) を表示
           </summary>
           <div class="grid grid-cols-3 gap-1 mt-2">
             <div
               v-for="d in sameStats"
               :key="d.key"
-              class="p-1.5 rounded bg-[var(--color-bg)] border border-[var(--color-border)]"
+              class="p-1.5 rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)]"
             >
-              <div class="text-[var(--color-text-muted)] text-[10px]">{{ d.label }}</div>
+              <div class="text-[var(--exile-color-text-secondary)] text-[10px]">{{ d.label }}</div>
               <div>{{ d.format(d.after) }}</div>
             </div>
           </div>
