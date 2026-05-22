@@ -12,33 +12,40 @@
     - TS 集計層: src/services/craft-discovery-v2.ts (Phase γ)
 -->
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { type UnlistenFn } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
+import { ref, computed, onMounted, watch } from "vue";
 import BaseCard from "../components/decor/BaseCard.vue";
 import UniqueTooltip from "../components/decor/UniqueTooltip.vue";
 import {
-  startCraftDiscoveryV2,
-  clearCraftV2Cache,
   openTrade2ForSelectedMods,
   openTrade2ForUnique,
-  fetchEconomyLeagues,
   type AggregatedAscendancy,
-  type CharacterProgressInfo,
-  type LeagueInfo,
   type ModEntry,
   type SlotKey,
   type SlotMods,
-  type SnapshotMeta,
   type UniqueUsage,
 } from "../services/craft-discovery-v2";
-
-// Phase ο-B: 辞書件数チェック用に i18n JSON を直接 import (Vite で bundle される)
-import uniqueModsJa from "../i18n/unique-mods-ja.json";
-import uniqueNamesJa from "../i18n/unique-names-ja.json";
-import poe2FlavourJa from "../i18n/poe2-flavour-ja.json";
-import modTierAndGroup from "../i18n/mod-tier-and-group.json";
-import trade2StatMapping from "../i18n/trade2-stat-mapping.json";
+// 2026-05-23 シームレス徹底:
+//   従来 V2B.vue が抱えていた取得状態 (ascendancies / loading / warnHistory 等) は
+//   `craftV2Store` (singleton) に移動した。App.vue 起動時にも fetch が始まるので、
+//   この画面を開いた時にはすでにデータが揃っているケースが大半。
+//   per-view な操作 state (selectedMods / activeAscendancyId / hovered* 等) のみ
+//   ローカル ref で保持する。
+import {
+  craftV2Store,
+  ensureCraftV2Started,
+  refreshCraftV2,
+  forceRefetchCraftV2,
+  refetchWithSelectedLeague,
+  runHealthCheck,
+  pushWarn,
+  clearWarns,
+  toggleWarnDetail,
+  nowMs as nowMsRef,
+  MAX_WARN_HISTORY,
+  type WarnEntry,
+  type WarnLevel,
+  type WarnSource,
+} from "../state/craft-v2-store";
 
 // ---------------------------------------------------------------------------
 // メインタブ定義 (順序 + 日本語ラベル + アイコン)
@@ -80,132 +87,43 @@ const SLOT_TABS: readonly SlotTab[] = [
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
+// 2026-05-23 シームレス徹底:
+//   取得状態系は `craftV2Store` に集約済 (App.vue 起動時から走る)。
+//   ここでは store の reactive プロパティを computed で「画面ローカル名」に
+//   bind し直すことで、既存テンプレートを最小差分で動かす。
+//   writable な双方向バインド (selectedLeagueUrl) は computed get/set で expose。
 
-/** 漸進取得結果。アセンダンシー id で merge する。 */
-const ascendancies = ref<AggregatedAscendancy[]>([]);
+/** 漸進取得結果 (store プロキシ) */
+const ascendancies = computed(() => craftV2Store.ascendancies);
 
-/** 上タブで選択中のアセンダンシー id (英語クラス名 kebab) */
+/** 上タブで選択中のアセンダンシー id — per-view (画面ローカル) */
 const activeAscendancyId = ref<string>("");
 
-/** 右上トグル: Ring / Amulet */
+/** 右上トグル: Ring / Amulet / 他 — per-view */
 const activeSlot = ref<SlotKey>("ring");
 
-/** 取得中フラグ (onMounted で true、onDone で false) */
-const loading = ref<boolean>(true);
-/** 致命的エラー (invoke 自体が失敗) */
-const fatalError = ref<string | null>(null);
-/**
- * Phase ο-B: 警告履歴スタック (最新 5 件)。
- * - 旧 `lastWarn` (単一文字列) を多件対応に拡張。
- * - 起動時 health_check_all / 辞書件数チェック / fetch エラー等を一括表示。
- * - 既存コードは `lastWarn` を computed で参照できる (後方互換)。
- */
-type WarnSource =
-  | "health-check"
-  | "dict-check"
-  | "fetch-character"
-  | "trade2-search"
-  | "craft-fetch"
-  | "mod-select";
-type WarnLevel = "info" | "warn" | "error";
-interface WarnEntry {
-  level: WarnLevel;
-  message: string;
-  /** Date.now() — 表示時は formatHms で HH:MM:SS に整形 */
-  timestamp: number;
-  source?: WarnSource;
-  /**
-   * Phase ο-C (2026-05-23): 警告詳細リスト (具体値)。
-   * 例: 未知 inventoryId のサンプル ["Belt × 30", "Charm × 20", ...]。
-   * 1 件以上あれば UI 側で「▶ 詳細」アコーディオンを表示する。
-   * 0 件 / undefined ならアコーディオン非表示 (既存挙動と同じ)。
-   */
-  details?: string[];
-}
-const MAX_WARN_HISTORY = 5;
-const warnHistory = ref<WarnEntry[]>([]);
-/**
- * Phase ο-C: 詳細アコーディオン展開済みインデックスの Set。
- * timestamp をキーに保持 (配列インデックスは履歴が動くと変わるため不適)。
- */
-const expandedWarnTimestamps = ref<Set<number>>(new Set());
+/** 取得中フラグ (store プロキシ) */
+const loading = computed(() => craftV2Store.loading);
+/** 致命的エラー (store プロキシ) */
+const fatalError = computed(() => craftV2Store.fatalError);
 
-function toggleWarnDetail(ts: number): void {
-  const s = new Set(expandedWarnTimestamps.value);
-  if (s.has(ts)) s.delete(ts);
-  else s.add(ts);
-  expandedWarnTimestamps.value = s;
-}
+/** 警告履歴 (store プロキシ) — UI 表示は store の reactive 配列を直接見る */
+const warnHistory = computed(() => craftV2Store.warnHistory);
+const expandedWarnTimestamps = computed(
+  () => craftV2Store.expandedWarnTimestamps,
+);
 
-function pushWarn(
-  level: WarnLevel,
-  message: string,
-  source?: WarnSource,
-  details?: string[],
-): void {
-  const entry: WarnEntry = {
-    level,
-    message,
-    timestamp: Date.now(),
-    source,
-    details: details && details.length > 0 ? details : undefined,
-  };
-  // 新しいものを先頭に積み、5 件超は末尾から落とす
-  warnHistory.value = [entry, ...warnHistory.value].slice(0, MAX_WARN_HISTORY);
-}
-
-function clearWarns(): void {
-  warnHistory.value = [];
-  expandedWarnTimestamps.value = new Set();
-}
-
-/**
- * 後方互換ヘルパー: 旧 `lastWarn` (単一文字列) の代替。
- * 履歴の中で「直近の warn / error 1 件」の message を返す。info は静音扱いなので除外。
- *
- * 現状テンプレートからは未使用 (UI は履歴スタックを直接表示) だが、外部ロジック (e.g.
- * E2E テスト・将来の他コンポーネント) からの参照を考慮して export 相当のヘルパーで残す。
- *
- * 利用例: `const msg = topWarnMessage();`
- */
-function topWarnMessage(): string | null {
-  const top = warnHistory.value.find(
-    (w) => w.level === "warn" || w.level === "error",
-  );
-  return top ? top.message : null;
-}
-// 未使用変数警告回避 (将来呼ばれる API として保持): 自己参照で linter を満たす。
-void topWarnMessage;
-
-/** 完了スナップショット */
-const snapshot = ref<SnapshotMeta | null>(null);
-/** 完了時刻 (HH:MM:SS) */
-const lastUpdatedAt = ref<string | null>(null);
-
-/** 現在取得中のアセンダンシー名 (一番最後に来た progress 名で代用) */
-const currentlyFetching = ref<string | null>(null);
-
-/**
- * 2026-05-23: per-character 進捗情報。
- *
- * Rust 側の `craft-v2-character-progress` event を受けて、ヘッダーに
- * 「現在何をしているか」を表示するための state。
- *
- * - phase="search"    : 上位プレイヤー検索中
- * - phase="fetching"  : キャラ取得中 (N/M キャラ + 並列度)
- * - phase="completed" : アセ完了 → null にクリア (UI から消える)
- *
- * `loading=false` (onDone / onFatal) でも null クリアする。
- */
-const currentPhase = ref<CharacterProgressInfo | null>(null);
+/** 完了スナップショット (store プロキシ) */
+const snapshot = computed(() => craftV2Store.snapshot);
+const lastUpdatedAt = computed(() => craftV2Store.lastUpdatedAt);
+const currentlyFetching = computed(() => craftV2Store.currentlyFetching);
+const currentPhase = computed(() => craftV2Store.currentPhase);
 
 // 2026-05-23: 「動いてるか分からない」問題への対処。
 //   フェーズ表示の経過秒数 + 1Hz tick で UI が常時動くようにする。
 //   N/50 が retry で止まってても秒数は進む → 「停止 / エラー」と区別できる。
+//   nowMsRef は store 側 (取得中だけ tick する) を共有。
 const phaseStartedAt = ref<number>(Date.now());
-const _nowMs = ref<number>(Date.now());
-let nowTicker: ReturnType<typeof setInterval> | null = null;
-// フェーズ識別子 (ascendancy + phase) が変わったら startedAt をリセット
 const _phaseKey = computed<string>(() =>
   currentPhase.value
     ? `${currentPhase.value.ascendancy}::${currentPhase.value.phase}`
@@ -216,63 +134,39 @@ watch(_phaseKey, () => {
 });
 const phaseElapsedSecs = computed<number>(() => {
   if (!loading.value || !currentPhase.value) return 0;
-  return Math.floor((_nowMs.value - phaseStartedAt.value) / 1000);
+  return Math.floor((nowMsRef.value - phaseStartedAt.value) / 1000);
 });
 
-// Phase ξ: poe.ninja リーグ選択
-/** 動的取得した全リーグ一覧 (通常/HC/SSF/Standard 等、起動時 1 回 fetch) */
-const availableLeagues = ref<LeagueInfo[]>([]);
-/** dropdown 選択中のリーグ url (空文字 = メイン economyLeagues[0] = 現リーグ) */
-const selectedLeagueUrl = ref<string>("");
-/** リーグ一覧の取得失敗フラグ (dropdown 隠す判定用) */
-const leaguesLoadFailed = ref<boolean>(false);
+// Phase ξ: poe.ninja リーグ選択 (store プロキシ)
+const availableLeagues = computed(() => craftV2Store.availableLeagues);
+/** dropdown は writable 双方向バインドなので get/set 経由 */
+const selectedLeagueUrl = computed<string>({
+  get: () => craftV2Store.selectedLeagueUrl,
+  set: (v: string) => {
+    craftV2Store.selectedLeagueUrl = v;
+  },
+});
+const leaguesLoadFailed = computed(() => craftV2Store.leaguesLoadFailed);
 
-/**
- * Phase ζ: キャッシュから即時表示中フラグ。
- * - onCacheReady で true、最初の差分 progress (= 通常の onProgress) で false。
- * - UI ヘッダーに「(キャッシュから X 件即表示中、差分更新中…)」を出すために使う。
- */
-const showingFromCache = ref<boolean>(false);
-const cacheItemCount = ref<number>(0);
+// Phase ζ: キャッシュ即時表示フラグ (store プロキシ)
+const showingFromCache = computed(() => craftV2Store.showingFromCache);
+const cacheItemCount = computed(() => craftV2Store.cacheItemCount);
 
-/** unlisten 関数 (UI cleanup 用) */
-let unlistenRef: UnlistenFn | null = null;
+// ネットワーク状態 (取得中だけ poll、store 側で 1Hz 更新) — テンプレで参照
+const networkStatus = computed(() => craftV2Store.networkStatus);
+
+// WarnLevel / WarnSource は warnLevelClasses / warnSourceLabel の引数型で使う。
+// WarnEntry はテンプレ `v-for="w in warnHistory"` の `w` 推論に効くため import を維持する。
+// (TypeScript 的には型のみの import なので、未使用なら ts-prune 警告を出すが、テンプレで参照あり)
+void (null as WarnEntry | null);
 
 // ---------------------------------------------------------------------------
-// ネットワーク状態 (レート制限 + retry) 表示 (2026-05-23)
+// ネットワーク状態 (レート制限 + retry)
 // ---------------------------------------------------------------------------
-// オーナー指摘 (第1弾):「残り取得中で止まるのって実際何してんの、結構長いけどリミット待ち?
-// リミット制限待機中（●秒）ってカウント欲しい」
-// オーナー指摘 (第2弾):「キャラ取得中でしばらく止まるのはなんでなん? 途中で止まる時
-// あるけどあれなにしてんのそこ」
-//
-// 4 並列のうち 1-2 件が 5xx/429 retry sleep 中で Semaphore permit を握ったまま
-// 動かないとき、N/50 が止まって見える問題への対応として、retry 中タスク数 +
-// 直近 retry の理由 + 残秒数を UI 上に「🔁 再試行中 N 件 (522 残 X 秒)」で可視化。
-//
-// 取得中 (loading=true) のみ 1 秒ごとに Rust `get_network_status` を polling し、
-// rate-limit ペナルティと retry 情報を一括取得する。idle 時は polling しない。
-// ---------------------------------------------------------------------------
-interface NetworkStatusRaw {
-  global_penalty_waiting: boolean;
-  global_penalty_remaining_secs: number;
-  global_penalty_reason: string | null;
-  active_retry_count: number;
-  last_retry_reason: string | null;
-  last_retry_remaining_secs: number;
-}
-interface NetworkStatusUi {
-  /** rate-limit (=全タスク一斉停止) ペナルティ待機中か */
-  globalPenaltyWaiting: boolean;
-  globalPenaltyRemainingSecs: number;
-  globalPenaltyReason: string | null;
-  /** 現在 retry sleep 中のタスク数 (5xx/429 backoff) */
-  activeRetryCount: number;
-  lastRetryReason: string | null;
-  lastRetryRemainingSecs: number;
-}
-const networkStatus = ref<NetworkStatusUi | null>(null);
-let networkStatusPoller: ReturnType<typeof setInterval> | null = null;
+// 旧仕様では「取得中だけ 1Hz で get_network_status を poll」していたが、シームレス
+// 起動 (App.vue 起動時 fetch) と整合させるため、polling 自体は store 側で管理する。
+// ここでは store の `networkStatus` を computed 経由でテンプレに渡すのみ。
+// (上の「const networkStatus = computed(...)」で定義済)。
 
 // ---------------------------------------------------------------------------
 // ユニーク MOD ホバーオーバーレイ State
@@ -345,6 +239,20 @@ const activeAscendancy = computed<AggregatedAscendancy | null>(() => {
     ascendancies.value[0]
   );
 });
+
+// 2026-05-23 シームレス徹底:
+//   旧 `mergeAscendancy` 内で「初回到着時に activeAscendancyId を自動選択」していたが、
+//   集計マージは store 側に移動したので、こちらは store の ascendancies を watch して
+//   「未選択 (空文字) かつ初到着」のタイミングだけ最初の id を選ぶ。
+watch(
+  ascendancies,
+  (list) => {
+    if (!activeAscendancyId.value && list.length > 0) {
+      activeAscendancyId.value = list[0].id;
+    }
+  },
+  { immediate: true },
+);
 
 const activeSlotMods = computed<SlotMods>(() => {
   const a = activeAscendancy.value;
@@ -527,320 +435,27 @@ const overallProgressPercent = computed<number>(() => {
 });
 
 // ---------------------------------------------------------------------------
-// 進捗マージ + 漸進更新
+// 取得トリガー (store ラッパー)
 // ---------------------------------------------------------------------------
-
-function mergeAscendancy(agg: AggregatedAscendancy): void {
-  const idx = ascendancies.value.findIndex((a) => a.id === agg.id);
-  if (idx >= 0) {
-    // 既存を置き換え (同一 id の上書きは「更新」ボタン経由で起こりうる)
-    ascendancies.value.splice(idx, 1, agg);
-  } else {
-    ascendancies.value.push(agg);
-  }
-  // 初回到着時は自動でタブ選択
-  if (!activeAscendancyId.value) {
-    activeAscendancyId.value = agg.id;
-  }
-  // M4: 並列受信時の逆順表示防止。
-  //   - fetchProgress 完了済 (done >= total) のアセンダンシーは「直近: 〜」表示から外す
-  //   - 未完了 (取得進行中) のアセンダンシーだけ「直近: 〜」に出す
-  const fp = agg.fetchProgress;
-  if (fp && fp.total > 0 && fp.done < fp.total) {
-    currentlyFetching.value = agg.name;
-  } else if (currentlyFetching.value === agg.name) {
-    // 自分が finished に転じた瞬間は表示から除去 (別の未完了アセが拾うのを待つ)
-    currentlyFetching.value = null;
-  }
+// 2026-05-23 シームレス徹底:
+//   実体は `craft-v2-store.ts` に集約。ここでは「テンプレ参照の互換名」を維持しつつ
+//   store 関数を呼ぶ薄いラッパー。
+//   - `startFetch(true)`        → 「更新」ボタン (差分更新)
+//   - `forceRefetch()`          → 「全取得」ボタン (キャッシュ削除 + 全取得)
+//   - `refetchWithSelectedLeague` → 「このリーグで再取得」ボタン
+async function startFetch(_useCache: boolean = true): Promise<void> {
+  await refreshCraftV2();
 }
-
-// ---------------------------------------------------------------------------
-// 取得トリガー
-// ---------------------------------------------------------------------------
-
-/**
- * Phase ζ: 取得トリガー。
- * - useCache=true (default): ディスクキャッシュロード → 即時表示 → 差分更新
- * - useCache=false: キャッシュ無視で全取得 (「キャッシュ削除 + 全取得」ボタン用)
- */
-async function startFetch(useCache: boolean = true): Promise<void> {
-  // 前回 listen を破棄してからスタート
-  if (unlistenRef) {
-    unlistenRef();
-    unlistenRef = null;
-  }
-  ascendancies.value = [];
-  activeAscendancyId.value = "";
-  loading.value = true;
-  fatalError.value = null;
-  // Phase ο-B: 警告履歴は startFetch 単体でクリアしない (起動時 health-check の結果や
-  // dict-check の警告を残したいため)。ユーザーが明示的に「クリア」ボタンを押した時のみ消す。
-  snapshot.value = null;
-  lastUpdatedAt.value = null;
-  currentlyFetching.value = null;
-  currentPhase.value = null;
-  showingFromCache.value = false;
-  cacheItemCount.value = 0;
-
-  const un = await startCraftDiscoveryV2({
-    topNAscendancies: TARGET_ASCENDANCY_COUNT,
-    topNPerAscendancy: 50,
-    useCache,
-    leagueUrl: selectedLeagueUrl.value || undefined,
-    onCacheReady: (cachedAggs, cache) => {
-      // Phase ζ: キャッシュ即時表示
-      ascendancies.value = [...cachedAggs];
-      if (cachedAggs.length > 0 && !activeAscendancyId.value) {
-        activeAscendancyId.value = cachedAggs[0].id;
-      }
-      showingFromCache.value = true;
-      cacheItemCount.value = cachedAggs.length;
-      // snapshot は cache から仮埋め (差分更新後に上書き)
-      snapshot.value = {
-        league_url: cache.league_url,
-        snapshot_name: cache.snapshot_name,
-        version: cache.snapshot_version,
-      };
-      if (cache.saved_at) {
-        lastUpdatedAt.value =
-          formatHms(new Date(cache.saved_at * 1000)) + " (キャッシュ)";
-      }
-    },
-    onProgress: (agg) => {
-      // 差分 progress が初めて届いた時点でキャッシュ表示ラベルを下げる
-      if (showingFromCache.value) {
-        showingFromCache.value = false;
-        // M3: キャッシュ表示中の "(キャッシュ)" ラベルを「差分取得中…」に上書き
-        // (onDone で `formatHms(new Date())` に再上書きされる)
-        lastUpdatedAt.value = "差分取得中…";
-      }
-      mergeAscendancy(agg);
-    },
-    onError: (msg) => {
-      // 非致命的エラーは loading 継続、警告履歴に積む (Phase ο-B)
-      pushWarn("warn", msg, "craft-fetch");
-      // L8: 「直近: 〜」表示がエラー後も残るのを防ぐ (実際の取得は続行)
-      currentlyFetching.value = null;
-    },
-    onDone: (snap) => {
-      snapshot.value = snap;
-      loading.value = false;
-      currentlyFetching.value = null;
-      currentPhase.value = null;
-      lastUpdatedAt.value = formatHms(new Date());
-      showingFromCache.value = false;
-    },
-    onFatal: (msg) => {
-      fatalError.value = msg;
-      loading.value = false;
-      currentlyFetching.value = null;
-      currentPhase.value = null;
-      showingFromCache.value = false;
-    },
-    // 2026-05-23: per-character 進捗イベント。Rust 側が 5 キャラ毎にバッチ emit。
-    // phase="completed" 受信時は表示をクリア (次のアセ開始時に search/fetching で再上書きされる)。
-    onCharacterProgress: (info) => {
-      if (info.phase === "completed") {
-        // 同じアセの「直近フェーズ」だった場合のみクリア (別アセが既に search 開始済なら残す)
-        if (currentPhase.value?.ascendancy === info.ascendancy) {
-          currentPhase.value = null;
-        }
-      } else {
-        currentPhase.value = info;
-      }
-    },
-  });
-  unlistenRef = un;
-}
-
-/**
- * Phase ζ: キャッシュ削除 + 全取得 (snapshot_version 変動時と同じ動き)。
- * オーナー指示で「リーグ更新の検知が漏れた」「キャッシュが壊れた」ケースのリカバリ用に用意。
- */
 async function forceRefetch(): Promise<void> {
-  await clearCraftV2Cache();
-  await startFetch(false);
+  await forceRefetchCraftV2();
 }
 
-/**
- * Phase ξ: dropdown で選択中のリーグで再取得する。
- * - キャッシュは単一ファイル。Rust 側で league_url が一致しない時は流用しないので、
- *   別リーグに切替えると差分モードに入らず フル取得 → キャッシュ上書きになる。
- * - 同じリーグに戻すと、saveCraftV2Cache が上書きしたデータが流用される。
- */
-async function refetchWithSelectedLeague(): Promise<void> {
-  if (unlistenRef) {
-    try {
-      unlistenRef();
-    } catch {
-      /* noop */
-    }
-    unlistenRef = null;
-  }
-  // キャッシュは消さず、Rust 側の league_url 不一致判定に任せる (流用無効 → 再取得 → 上書き)
-  await startFetch(true);
-}
-
+// ---------------------------------------------------------------------------
+// 表示ヘルパー
+// ---------------------------------------------------------------------------
 function formatHms(d: Date): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-// ---------------------------------------------------------------------------
-// Phase ο-B: 健全性チェック
-// ---------------------------------------------------------------------------
-
-/**
- * Phase ο-A の Rust command `health_check_all` の戻り値型。
- * Rust 側は別 PR で実装中 (未実装でも本 UI は graceful fallback)。
- */
-interface HealthCheckResult {
-  poe_ninja_schema_ok: boolean;
-  poe2db_html_ok: boolean;
-  trade2_api_ok: boolean;
-  /** poe.ninja の inventory に出てくる「未知の inventoryId」件数 */
-  unknown_inventory_ids_count: number;
-  /**
-   * Phase ο-C (2026-05-23): 上位 20 件の「inv_id 文字列 + 累積カウント」。
-   * UI の警告詳細アコーディオンで「Belt × 30」のように具体値を表示するため。
-   * Rust 側 (`HealthCheckResult.unknown_inventory_id_samples`) と整合。
-   */
-  unknown_inventory_id_samples: Array<{
-    inventory_id: string;
-    count: number;
-  }>;
-  /** Rust 側で気付いた追加メッセージ (HTML 変更検出等) */
-  warnings: string[];
-}
-
-/**
- * Phase ο-B: 起動時の health_check_all 呼出。
- *
- * - Rust 側 (Phase ο-A) が未実装でも try-catch で graceful fallback (info 表示)。
- * - 警告ゼロなら「すべての外部 API が正常です」を info 表示 (UI 側で安心感を出すため)。
- * - 各失敗項目は level=error / warn / info で分けて履歴に積む。
- *
- * UI の「再チェック」ボタンからも呼ばれる (warnHistory に追記方式)。
- */
-async function runHealthCheck(): Promise<void> {
-  const prevCount = warnHistory.value.length;
-  try {
-    const result = await invoke<HealthCheckResult>("health_check_all");
-    if (!result.poe_ninja_schema_ok) {
-      pushWarn("error", "poe.ninja API 構造変更を検出", "health-check");
-    }
-    if (!result.poe2db_html_ok) {
-      pushWarn(
-        "warn",
-        "POE2DB HTML 構造変更の可能性 (辞書再生成検討)",
-        "health-check",
-      );
-    }
-    if (!result.trade2_api_ok) {
-      pushWarn("warn", "trade2 API 仕様変更の可能性", "health-check");
-    }
-    if (result.unknown_inventory_ids_count > 0) {
-      // Phase ο-C: 具体値 (上位 20 件の inv_id + count) を details に格納。
-      // オーナーが「Belt が 30 件、Charm が 20 件」のように内訳を確認できるよう、
-      // 警告行クリックでアコーディオン展開する UI を伴う。
-      // 将来的には details 内の inv_id を「白リストに追加」ボタン化する案あり
-      // (Phase ο-D 候補、現状は未実装)。
-      const samples = result.unknown_inventory_id_samples ?? [];
-      const details = samples.map(
-        (s) => `${s.inventory_id} × ${s.count} 件`,
-      );
-      pushWarn(
-        "info",
-        `未知 inventoryId ${result.unknown_inventory_ids_count} 件 (poe.ninja アイテム種別追加か)`,
-        "health-check",
-        details,
-      );
-    }
-    for (const w of result.warnings) {
-      pushWarn("warn", w, "health-check");
-    }
-    // 警告ゼロなら info で「正常」を 1 行出す (今回の health-check 由来分が増えてないとき)
-    if (warnHistory.value.length === prevCount) {
-      pushWarn("info", "すべての外部 API が正常です", "health-check");
-    }
-  } catch (err) {
-    // Rust 側未実装 (Phase ο-A 未マージ等) または通信失敗。
-    // UI を壊さない方針なので info で表示し、ユーザーには情報レベルとして伝える。
-    const msg = err instanceof Error ? err.message : String(err);
-    // 「Command health_check_all not found」系は未実装なので info、それ以外は warn 寄り
-    const isUnimplemented = /not found|unregistered/i.test(msg);
-    pushWarn(
-      isUnimplemented ? "info" : "warn",
-      isUnimplemented
-        ? "health_check_all 未実装 (Phase ο-A 後に有効化)"
-        : `health_check_all 失敗: ${msg}`,
-      "health-check",
-    );
-  }
-}
-
-/**
- * Phase ο-B: 辞書ファイル件数チェック。
- *
- * Vite の JSON import は静的バンドルされるため mtime は本番取得が難しい。
- * 代わりに「期待件数の最小値」とハードコード比較し、大幅減少 (= 辞書再生成失敗 / マージ漏れ)
- * を検知する簡易チェックに留める。
- *
- * 現状件数 (2026-05-22):
- *   unique-mods-ja      1629
- *   unique-names-ja      389
- *   poe2-flavour-ja     3103
- *   mod-tier-and-group   677 (tiers / groups 各)
- *   trade2-stat-mapping  543
- *
- * しきい値は「現状から少し下げた値」を採用 (= 微減は許容、大幅減で警告)。
- */
-const DICT_EXPECTED_MIN: Record<string, number> = {
-  "unique-mods-ja": 1500,
-  "unique-names-ja": 380,
-  "poe2-flavour-ja": 3000,
-  "mod-tier-and-group": 600,
-  "trade2-stat-mapping": 500,
-};
-
-function checkDictionaryFreshness(): void {
-  // mod-tier-and-group.json は { tiers: {...}, groups: {...} } 構造なので
-  // tiers / groups どちらでも値の少ない方を採用する (どちらか壊れても検知できる)。
-  const mtgTiersCount = Object.keys(
-    (modTierAndGroup as { tiers?: Record<string, unknown> }).tiers ?? {},
-  ).length;
-  const mtgGroupsCount = Object.keys(
-    (modTierAndGroup as { groups?: Record<string, unknown> }).groups ?? {},
-  ).length;
-  const mtgMin = Math.min(mtgTiersCount, mtgGroupsCount);
-
-  const checks: Array<readonly [string, number]> = [
-    ["unique-mods-ja", Object.keys(uniqueModsJa as Record<string, unknown>).length],
-    [
-      "unique-names-ja",
-      Object.keys(uniqueNamesJa as Record<string, unknown>).length,
-    ],
-    [
-      "poe2-flavour-ja",
-      Object.keys(poe2FlavourJa as Record<string, unknown>).length,
-    ],
-    ["mod-tier-and-group", mtgMin],
-    [
-      "trade2-stat-mapping",
-      Object.keys(trade2StatMapping as Record<string, unknown>).length,
-    ],
-  ];
-
-  for (const [name, actual] of checks) {
-    const expected = DICT_EXPECTED_MIN[name] ?? 0;
-    if (actual < expected) {
-      pushWarn(
-        "warn",
-        `辞書 ${name} が薄い (${actual}/${expected} 件) — 再生成を検討してください`,
-        "dict-check",
-      );
-    }
-  }
 }
 
 /**
@@ -880,104 +495,13 @@ function warnSourceLabel(source?: WarnSource): string {
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
-
-/**
- * 2026-05-23: 取得中 (loading=true) だけ 1 秒ごとに Rust `get_network_status` を
- * polling し、(a) Cloudflare 1015 / 429 グローバルペナルティ残秒数と (b) 5xx/429
- * retry sleep 中のタスク数を UI に反映する。
- *
- * - loading=false に戻った瞬間に setInterval をクリア (= idle 中はゼロ負荷)
- * - command 未登録 (旧 Rust バイナリで起動した場合) は catch して静かに無視
- * - グローバルペナルティ非待機 + retry 0 件なら networkStatus を null にして
- *   UI ラベルも自動消失させる
- */
-watch(loading, (isLoadingNow) => {
-  // 2026-05-23: 経過秒数 tick (loading 中だけ 500ms 間隔で _nowMs 更新)
-  if (isLoadingNow) {
-    if (nowTicker) clearInterval(nowTicker);
-    nowTicker = setInterval(() => {
-      _nowMs.value = Date.now();
-    }, 500);
-  } else {
-    if (nowTicker) clearInterval(nowTicker);
-    nowTicker = null;
-  }
-});
-
-watch(loading, (isLoading) => {
-  if (isLoading) {
-    if (networkStatusPoller) clearInterval(networkStatusPoller);
-    networkStatusPoller = setInterval(async () => {
-      try {
-        const s = await invoke<NetworkStatusRaw>("get_network_status");
-        // どちらかの情報があれば UI に流す。両方ゼロなら null にして表示消失。
-        if (s.global_penalty_waiting || s.active_retry_count > 0) {
-          networkStatus.value = {
-            globalPenaltyWaiting: s.global_penalty_waiting,
-            globalPenaltyRemainingSecs: s.global_penalty_remaining_secs,
-            globalPenaltyReason: s.global_penalty_reason,
-            activeRetryCount: s.active_retry_count,
-            lastRetryReason: s.last_retry_reason,
-            lastRetryRemainingSecs: s.last_retry_remaining_secs,
-          };
-        } else {
-          // 待機解除 + retry 0 → UI ラベルも消す
-          networkStatus.value = null;
-        }
-      } catch {
-        // command 未登録時 (旧バイナリ等) は何もしない。次の polling tick で再試行。
-      }
-    }, 1000);
-  } else {
-    if (networkStatusPoller) clearInterval(networkStatusPoller);
-    networkStatusPoller = null;
-    networkStatus.value = null;
-  }
-});
-
-onMounted(async () => {
-  // Phase ξ: リーグ一覧を先に取得して dropdown を埋める。
-  // 失敗しても致命的ではない (selectedLeagueUrl='' で従来通り economyLeagues[0] が使われる)。
-  try {
-    const leagues = await fetchEconomyLeagues();
-    availableLeagues.value = leagues;
-    leaguesLoadFailed.value = false;
-    // 初期選択は「メイン (現リーグ)」= 空文字 = Rust 側で economyLeagues[0] にフォールバック
-    if (!selectedLeagueUrl.value && leagues.length > 0) {
-      selectedLeagueUrl.value = leagues[0].url;
-    }
-  } catch (err) {
-    console.warn("[CraftDiscoveryV2B] fetchEconomyLeagues failed:", err);
-    leaguesLoadFailed.value = true;
-  }
-  // Phase ο-B: 起動時健全性チェック + 辞書件数チェック (両方独立、fetchEconomyLeagues とも独立)
-  //   - fetch 完了を待つ必要はないが、UI が落ち着いてから出した方が読みやすいので
-  //     fetchEconomyLeagues の直後・startFetch の直前に走らせる。
-  //   - health_check_all は失敗しても try-catch 内で graceful fallback 済み。
-  void runHealthCheck();
-  checkDictionaryFreshness();
-  // 起動時自動 trigger (Phase ε)
-  void startFetch();
-});
-
-onBeforeUnmount(() => {
-  if (unlistenRef) {
-    try {
-      unlistenRef();
-    } catch {
-      /* noop */
-    }
-    unlistenRef = null;
-  }
-  // 2026-05-23: 取得中 polling の cleanup (画面遷移時にタイマーが残るのを防ぐ)
-  if (networkStatusPoller) {
-    clearInterval(networkStatusPoller);
-    networkStatusPoller = null;
-  }
-  if (nowTicker) {
-    clearInterval(nowTicker);
-    nowTicker = null;
-  }
+// 2026-05-23 シームレス徹底:
+//   App.vue 起動時に `ensureCraftV2Started` が走っているので、ここでは念のため
+//   再度呼ぶ (冪等ガード済 = 既に走ってれば no-op)。
+//   既存 onBeforeUnmount で持っていた unlisten / poller cleanup は store 側に
+//   moved (= 画面遷移で取得を止めない / グローバル singleton として動き続ける)。
+onMounted(() => {
+  void ensureCraftV2Started();
 });
 
 // ---------------------------------------------------------------------------
