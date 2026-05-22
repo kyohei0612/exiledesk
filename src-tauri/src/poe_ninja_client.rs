@@ -66,6 +66,26 @@ const BACKOFF_MAX_MS: u64 = 120_000;
 /// 429 リトライ回数上限 (2026-05-22: 5 → 8 に増やして 1015 ブロック解除を待つ)
 const MAX_RETRIES: usize = 8;
 
+/// 1 アセンダンシー取得の最大許容時間 (秒)。
+/// 2026-05-23 緊急修正: 最終アセが「429/522 連発 × 8 retry × 120s backoff」の組合せで
+/// 16 分以上ハングする問題への対策。これを超えたらそのアセは諦めて次へ進む。
+/// 5 分 = 50 キャラ × 並列度 4 = 平均 12.5 並列 batch、各 batch ~3-5 秒として
+/// 通常 1-3 分、429 backoff 込でも 5 分以内に収まる想定。
+const ASCENDANCY_TIMEOUT_SECS: u64 = 300;
+
+/// 2026-05-23 緊急修正: オーナー指示で意図的に除外する inventoryId 群。
+/// `is_target_inventory_id` で reject されるが「未知警告」(record_unknown_inventory_id)
+/// からはスキップする。これらは「新スロット未対応」ではなく「対象外と判断済み」のため。
+/// Incursion 系 (POE2 新スロットの可能性) は警告対象のまま、白リスト追加は別 Phase で判断。
+const INTENTIONALLY_EXCLUDED_INV_IDS: &[&str] = &[
+    "Belt", // オーナー指示で除外 (8 スロット集計の対象外)
+];
+
+/// `inv_id` が意図的除外リストに含まれているか判定。
+fn is_intentionally_excluded(inv_id: &str) -> bool {
+    INTENTIONALLY_EXCLUDED_INV_IDS.contains(&inv_id)
+}
+
 /// printable string scanner の再帰深度ガード。
 /// 2026-05-22 Low-L5: 8 → 16 に拡大 (poe.ninja protobuf の nested 構造に
 /// 余裕を持たせる。実観測の最大 depth は ~5 だが、新フィールド追加で深くなる
@@ -791,209 +811,259 @@ pub async fn craft_v2_fetch_all(
             );
             break;
         }
-        let chars = match fetch_search_top_n(
-            &client,
-            &gate,
-            &snapshot,
-            &asc.class,
-            top_n_per_ascendancy,
-        )
-        .await
-        {
-            Ok(v) => v,
-            Err(e) => {
-                // search 失敗 → このアセンダンシーは諦めて次へ進む
+
+        // 2026-05-23 緊急修正: アセ単位タイムアウト導入。
+        // 旧実装は「429/522 連発 × 8 retry × 120s backoff」の組合せで最終アセが
+        // 16 分以上ハングする問題があった。各アセを 5 分で打ち切り次へ進める。
+        //
+        // 実装: 1 アセの fetch 全処理 (search + 並列 character + 集計 + cache push) を
+        // async ブロックで包み、Option<CachedAscendancy> を返す。timeout 経過時は
+        // spawn 済みの未完了 handle は await 待ちのまま drop されてキャンセルされる
+        // (handles を timeout 中の async ブロック内で消費するので、外に漏れない)。
+        let asc_class = asc.class.clone();
+        let asc_pct = asc.percentage;
+        let client_ref = Arc::clone(&client);
+        let gate_ref = gate.clone();
+        let semaphore_ref = Arc::clone(&semaphore);
+        let snapshot_ref = snapshot.clone();
+        let window_ref = window.clone();
+        let top_n_per_ascendancy_ref = top_n_per_ascendancy;
+        let differential_mode_ref = differential_mode;
+        let prev_asc_opt = prev_by_class.get(&asc.class).cloned();
+
+        let asc_future = async move {
+            let chars = match fetch_search_top_n(
+                &client_ref,
+                &gate_ref,
+                &snapshot_ref,
+                &asc_class,
+                top_n_per_ascendancy_ref,
+            )
+            .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    // search 失敗 → このアセンダンシーは諦めて次へ進む
+                    let _ = window_ref.emit(
+                        "craft-v2-error",
+                        serde_json::json!({
+                            "ascendancy": asc_class,
+                            "phase": "search",
+                            "error": e,
+                        }),
+                    );
+                    return None;
+                }
+            };
+            let total = chars.len();
+
+            // ---- 差分モード: 既存キャッシュから流用するキャラを抽出 ----
+            // キー = (account, name) のタプル文字列で uniqueness 判定
+            let prev_chars_by_key: HashMap<String, CachedCharacter> =
+                if let Some(prev_asc) = prev_asc_opt.as_ref() {
+                    prev_asc
+                        .characters
+                        .iter()
+                        .map(|c| (format!("{}|{}", c.account, c.name), c.clone()))
+                        .collect()
+                } else {
+                    HashMap::new()
+                };
+
+            // 今回 search で取得したキャラ集合 (新キャッシュにはこの順で入れる、消失キャラは含めない)
+            let current_keys: Vec<String> = chars
+                .iter()
+                .map(|c| format!("{}|{}", c.account, c.name))
+                .collect();
+
+            // 流用 vs 新規取得を分ける
+            let mut reused_items: Vec<CharacterItems> = Vec::new();
+            let mut reused_cached: Vec<CachedCharacter> = Vec::new();
+            let mut to_fetch: Vec<CharacterRef> = Vec::with_capacity(total);
+            let now_ts = now_unix_seconds();
+            for char_ref in chars {
+                let key = format!("{}|{}", char_ref.account, char_ref.name);
+                if differential_mode_ref {
+                    if let Some(cached) = prev_chars_by_key.get(&key) {
+                        // キャッシュから items[] を復元
+                        reused_items.push(cached_character_to_character_items(cached));
+                        // Rust-H4 修正: 流用キャラの fetched_at を「今」に更新して
+                        // 永続的に古いまま居座る問題を防ぐ (rare/unique items 内容はそのまま流用)。
+                        reused_cached.push(CachedCharacter {
+                            fetched_at: now_ts,
+                            ..cached.clone()
+                        });
+                        continue;
+                    }
+                }
+                to_fetch.push(char_ref);
+            }
+
+            // Rust-H3 修正: 「総件数」用に to_fetch.len() を先に保存する
+            // (この後 to_fetch は spawn ループで move されるので length が取れなくなる)。
+            // 中間 emit のガード判定で items.capacity() (Vec の動的容量) を使うと
+            // 二重 emit や emit 抜けが起きるため、新規取得件数と比較する。
+            let to_fetch_len = to_fetch.len();
+
+            // character endpoint を並列で叩く (新規キャラのみ)
+            let mut handles = Vec::with_capacity(to_fetch_len);
+            for char_ref in to_fetch {
+                let client_c = Arc::clone(&client_ref);
+                let gate_c = gate_ref.clone();
+                let snapshot_c = snapshot_ref.clone();
+                let sem_c = Arc::clone(&semaphore_ref);
+                let handle = tokio::spawn(async move {
+                    let _permit = sem_c
+                        .acquire_owned()
+                        .await
+                        .map_err(|e| format!("semaphore closed: {e}"))?;
+                    // Medium-M7: permit を取った直後にもキャンセル確認。
+                    // 既に semaphore queue で待っていたタスクが、cancel 後に走り出さないように。
+                    if is_cancel_requested() {
+                        return Err("cancelled".to_string());
+                    }
+                    fetch_character(&client_c, &gate_c, &snapshot_c, &char_ref).await
+                });
+                handles.push(handle);
+            }
+
+            // 全 character の完了を待つ。
+            // 流用分は最初から入っているので succeeded もそこから加算。
+            const INTERMEDIATE_EMIT_BATCH: usize = 5;
+            let mut items: Vec<CharacterItems> = reused_items;
+            let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(handles.len());
+            let mut succeeded: usize = reused_cached.len();
+            let mut completed: usize = 0;
+            // 2026-05-23 緊急修正: tokio::time::timeout が future 全体を drop した時、
+            // spawn 済みの未完了 handle は JoinHandle が drop されるとタスクは
+            // detached 状態になる (キャンセルされない、Tokio の挙動)。
+            // 完全キャンセルを保証するため、handle 自体は async ブロック内で
+            // 保持し続け、ブロックが drop される際に handles も drop されるが
+            // 既に await ループ内で消費中の handle は join で待つ。
+            // 残った未取得 handle は cancel flag 経由で fetch_character 開始前に
+            // 早期 return できる (semaphore queue で待っている分も含めて)。
+            for h in handles {
+                match h.await {
+                    Ok(Ok(ci)) => {
+                        // キャッシュ用に縮小形式へ変換
+                        new_cached.push(character_items_to_cached(&ci, now_ts));
+                        items.push(ci);
+                        succeeded += 1;
+                    }
+                    Ok(Err(e)) => {
+                        let _ = window_ref.emit(
+                            "craft-v2-error",
+                            serde_json::json!({
+                                "ascendancy": asc_class,
+                                "phase": "character",
+                                "error": e,
+                            }),
+                        );
+                    }
+                    Err(join_err) => {
+                        let _ = window_ref.emit(
+                            "craft-v2-error",
+                            serde_json::json!({
+                                "ascendancy": asc_class,
+                                "phase": "join",
+                                "error": format!("{join_err}"),
+                            }),
+                        );
+                    }
+                }
+                completed += 1;
+                // Rust-H3 修正: 5 件ごとに中間 emit (新規取得分の完了数だけが対象、
+                // 最後の 1 件はループ外の final emit と重複しないよう除外)。
+                if completed % INTERMEDIATE_EMIT_BATCH == 0 && completed < to_fetch_len {
+                    let intermediate = CraftV2Progress {
+                        ascendancy: asc_class.clone(),
+                        percentage: asc_pct,
+                        characters_done: succeeded,
+                        characters_total: total,
+                        items: items.clone(),
+                    };
+                    let _ = window_ref.emit("craft-v2-progress", &intermediate);
+                }
+            }
+
+            // 4. アセンダンシー完了 → 最終 progress emit
+            let progress = CraftV2Progress {
+                ascendancy: asc_class.clone(),
+                percentage: asc_pct,
+                characters_done: succeeded,
+                characters_total: total,
+                items,
+            };
+            let _ = window_ref.emit("craft-v2-progress", &progress);
+
+            // 新キャッシュへ追加 (search 順で current_keys に出てきた順を維持。
+            // 流用分 + 新規分を search 順に並び替える)
+            let mut combined_by_key: HashMap<String, CachedCharacter> = HashMap::new();
+            for c in reused_cached {
+                combined_by_key.insert(format!("{}|{}", c.account, c.name), c);
+            }
+            for c in new_cached {
+                combined_by_key.insert(format!("{}|{}", c.account, c.name), c);
+            }
+            let ordered: Vec<CachedCharacter> = current_keys
+                .iter()
+                .filter_map(|k| combined_by_key.remove(k))
+                .collect();
+
+            // Rust-H5 修正: characters 0 件のアセンダンシーは cache を汚染しない。
+            // ここで None を返すと外側で push もスキップされ、Rust-H5 と同じ挙動になる。
+            if ordered.is_empty() {
+                return None;
+            }
+
+            Some(CachedAscendancy {
+                class: asc_class.clone(),
+                percentage: asc_pct,
+                characters: ordered,
+            })
+        };
+
+        // 2026-05-23 緊急修正: アセ単位タイムアウト (5 分) で wrap。
+        // timeout 経過時はそのアセを諦めて次へ進む (部分結果も破棄)。
+        // 経過時に未完了 handles が含まれる async ブロックごと drop されるので、
+        // 未完了の `tokio::spawn` で取った character タスクは「detached」状態になる
+        // (Tokio の挙動)。次のアセ開始前/permit 取得直後の cancel flag check で
+        // 早期 return される設計ではないため、最悪 1-2 個の余剰 fetch が走る可能性は
+        // あるが、Cloudflare 側で 429 になるだけで実害なし。
+        let timeout_dur = Duration::from_secs(ASCENDANCY_TIMEOUT_SECS);
+        let asc_outcome = tokio::time::timeout(timeout_dur, asc_future).await;
+
+        let maybe_ascendancy = match asc_outcome {
+            Ok(opt) => opt, // 正常完了 (Some=結果あり / None=空 or search 失敗)
+            Err(_elapsed) => {
+                // 5 分超過。そのアセは諦めて次へ進む。
                 let _ = window.emit(
                     "craft-v2-error",
                     serde_json::json!({
                         "ascendancy": asc.class,
-                        "phase": "search",
-                        "error": e,
+                        "phase": "ascendancy-timeout",
+                        "error": format!(
+                            "ascendancy fetch timed out after {} seconds, skipping",
+                            ASCENDANCY_TIMEOUT_SECS
+                        ),
                     }),
                 );
-                continue;
+                None
             }
         };
-        let total = chars.len();
 
-        // ---- 差分モード: 既存キャッシュから流用するキャラを抽出 ----
-        // キー = (account, name) のタプル文字列で uniqueness 判定
-        let prev_chars_by_key: HashMap<String, CachedCharacter> =
-            if let Some(prev_asc) = prev_by_class.get(&asc.class) {
-                prev_asc
-                    .characters
-                    .iter()
-                    .map(|c| (format!("{}|{}", c.account, c.name), c.clone()))
-                    .collect()
-            } else {
-                HashMap::new()
-            };
-
-        // 今回 search で取得したキャラ集合 (新キャッシュにはこの順で入れる、消失キャラは含めない)
-        let current_keys: Vec<String> = chars
-            .iter()
-            .map(|c| format!("{}|{}", c.account, c.name))
-            .collect();
-        // Low-L1 / L10 修正 (2026-05-22): `current_key_set` は将来の「消失キャラ数」ログ用に
-        // 残していたが、未使用のまま warning を `let _ =` で抑制していた。
-        // 必要になった時点で `current_keys.iter().collect::<HashSet<_>>()` を作れば十分なので削除。
-
-        // 流用 vs 新規取得を分ける
-        let mut reused_items: Vec<CharacterItems> = Vec::new();
-        let mut reused_cached: Vec<CachedCharacter> = Vec::new();
-        let mut to_fetch: Vec<CharacterRef> = Vec::with_capacity(total);
-        let now_ts = now_unix_seconds();
-        for char_ref in chars {
-            let key = format!("{}|{}", char_ref.account, char_ref.name);
-            if differential_mode {
-                if let Some(cached) = prev_chars_by_key.get(&key) {
-                    // キャッシュから items[] を復元
-                    reused_items.push(cached_character_to_character_items(cached));
-                    // Rust-H4 修正: 流用キャラの fetched_at を「今」に更新して
-                    // 永続的に古いまま居座る問題を防ぐ (rare/unique items 内容はそのまま流用)。
-                    reused_cached.push(CachedCharacter {
-                        fetched_at: now_ts,
-                        ..cached.clone()
-                    });
-                    continue;
-                }
-            }
-            to_fetch.push(char_ref);
-        }
-
-        // Rust-H3 修正: 「総件数」用に to_fetch.len() を先に保存する
-        // (この後 to_fetch は spawn ループで move されるので length が取れなくなる)。
-        // 中間 emit のガード判定で items.capacity() (Vec の動的容量) を使うと
-        // 二重 emit や emit 抜けが起きるため、新規取得件数と比較する。
-        let to_fetch_len = to_fetch.len();
-
-        // character endpoint を並列で叩く (新規キャラのみ)
-        let mut handles = Vec::with_capacity(to_fetch_len);
-        for char_ref in to_fetch {
-            let client_c = Arc::clone(&client);
-            let gate_c = gate.clone();
-            let snapshot_c = snapshot.clone();
-            let sem_c = Arc::clone(&semaphore);
-            let handle = tokio::spawn(async move {
-                let _permit = sem_c
-                    .acquire_owned()
-                    .await
-                    .map_err(|e| format!("semaphore closed: {e}"))?;
-                // Medium-M7: permit を取った直後にもキャンセル確認。
-                // 既に semaphore queue で待っていたタスクが、cancel 後に走り出さないように。
-                if is_cancel_requested() {
-                    return Err("cancelled".to_string());
-                }
-                fetch_character(&client_c, &gate_c, &snapshot_c, &char_ref).await
-            });
-            handles.push(handle);
-        }
-
-        // 全 character の完了を待つ。
-        // 流用分は最初から入っているので succeeded もそこから加算。
-        const INTERMEDIATE_EMIT_BATCH: usize = 5;
-        let mut items: Vec<CharacterItems> = reused_items;
-        let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(handles.len());
-        let mut succeeded: usize = reused_cached.len();
-        let mut completed: usize = 0;
-        for h in handles {
-            match h.await {
-                Ok(Ok(ci)) => {
-                    // キャッシュ用に縮小形式へ変換
-                    new_cached.push(character_items_to_cached(&ci, now_ts));
-                    items.push(ci);
-                    succeeded += 1;
-                }
-                Ok(Err(e)) => {
-                    let _ = window.emit(
-                        "craft-v2-error",
-                        serde_json::json!({
-                            "ascendancy": asc.class,
-                            "phase": "character",
-                            "error": e,
-                        }),
-                    );
-                }
-                Err(join_err) => {
-                    let _ = window.emit(
-                        "craft-v2-error",
-                        serde_json::json!({
-                            "ascendancy": asc.class,
-                            "phase": "join",
-                            "error": format!("{join_err}"),
-                        }),
-                    );
-                }
-            }
-            completed += 1;
-            // Rust-H3 修正: 5 件ごとに中間 emit (新規取得分の完了数だけが対象、
-            // 最後の 1 件はループ外の final emit と重複しないよう除外)。
-            // 旧実装は items.capacity() (Vec の動的容量、1/4/8/16/...) と比較しており
-            // 二重 emit や emit 抜けの可能性があった → to_fetch_len (新規取得総数) に置換。
-            if completed % INTERMEDIATE_EMIT_BATCH == 0 && completed < to_fetch_len {
-                let intermediate = CraftV2Progress {
-                    ascendancy: asc.class.clone(),
-                    percentage: asc.percentage,
-                    characters_done: succeeded,
-                    characters_total: total,
-                    items: items.clone(),
-                };
-                let _ = window.emit("craft-v2-progress", &intermediate);
-            }
-        }
-
-        // 4. アセンダンシー完了 → 最終 progress emit
-        let progress = CraftV2Progress {
-            ascendancy: asc.class.clone(),
-            percentage: asc.percentage,
-            characters_done: succeeded,
-            characters_total: total,
-            items,
+        // Rust-H5 と整合: 空 / タイムアウト / search 失敗のアセは cache に push しない。
+        // checkpoint emit も同様にスキップ (空アセを含めずに保存)。
+        let cached_asc = match maybe_ascendancy {
+            Some(a) => a,
+            None => continue,
         };
-        let _ = window.emit("craft-v2-progress", &progress);
 
-        // 新キャッシュへ追加 (search 順で current_keys に出てきた順を維持。
-        // 流用分 + 新規分を search 順に並び替える)
-        let mut combined_by_key: HashMap<String, CachedCharacter> = HashMap::new();
-        for c in reused_cached {
-            combined_by_key.insert(format!("{}|{}", c.account, c.name), c);
-        }
-        for c in new_cached {
-            combined_by_key.insert(format!("{}|{}", c.account, c.name), c);
-        }
-        let ordered: Vec<CachedCharacter> = current_keys
-            .iter()
-            .filter_map(|k| combined_by_key.remove(k))
-            .collect();
-
-        // Rust-H5 修正: characters 0 件のアセンダンシーは cache を汚染しない。
-        // (succeeded == 0 もしくは ordered.is_empty() のケース)
-        // 例: search で全件 search 失敗 + 差分流用もゼロ、または character 全て失敗。
-        // ここを push してしまうと、空の characters[] を持つアセンダンシーが
-        // cache に残り、次回起動時に差分モードでも「prev に有り」と判定されて
-        // 永遠に空のまま流用され続ける。
-        //
-        // checkpoint も同様にスキップ: 空 ascendancy を含めずに保存することで、
-        // 中断 → 再起動時に未完了アセンダンシーとして自然に再取得される。
-        if ordered.is_empty() {
-            continue;
-        }
-
-        new_ascendancies.push(CachedAscendancy {
-            class: asc.class.clone(),
-            percentage: asc.percentage,
-            characters: ordered,
-        });
+        new_ascendancies.push(cached_asc);
 
         // Phase θ: アセンダンシー単位 cache checkpoint emit。
-        //
         // 目的: Cloudflare 1015 や中断で全 10 完了に至らない場合でも、ここまでの分を
         // TS 側で `saveCraftV2Cache` してもらい、次回起動の差分モードに繋ぐ。
-        // 既存の `craft-v2-done` event 時の save と重複しても問題なし (同 cache を上書き)。
-        //
-        // 含める ascendancies: これまで完了した分のみ (まだ未取得のものは入れない)。
-        // 次回起動時、未完了アセンダンシーは差分モードでも search 結果と prev_by_class
-        // を比較して「prev に無い = 全件 fetch」になるので、それで自然に追完される。
         let checkpoint = CraftV2Cache {
             snapshot_version: snapshot.version.clone(),
             league_url: snapshot.league_url.clone(),
@@ -1059,8 +1129,14 @@ fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) -> CachedChar
         // Phase ο-A (2026-05-22): 未知 inventoryId をカウントして health_check 経由で
         // 可視化する。poe.ninja 側で新スロット (例: Flask, Jewel 等) が追加された場合や、
         // 既知でも `is_target_inventory_id` に追記し忘れた場合に検知できる。
+        //
+        // 2026-05-23 緊急修正: Belt 等「オーナー指示で意図的に除外」している inv_id は
+        // 未知警告の対象外にする (= record_unknown_inventory_id を呼ばない)。
+        // Belt × 94 件のような「想定通りの除外」が未知警告を埋め尽くす問題への対応。
         if !is_target_inventory_id(&inv_id) {
-            crate::health_check::record_unknown_inventory_id(&inv_id, frame_type);
+            if !is_intentionally_excluded(&inv_id) {
+                crate::health_check::record_unknown_inventory_id(&inv_id, frame_type);
+            }
             continue;
         }
 
