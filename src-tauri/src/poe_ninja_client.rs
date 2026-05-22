@@ -11,7 +11,7 @@
 //!   - 人気順優先: 使用率降順でキュー投入 (キュー投入順 = 取得開始順)
 //!   - 並列度 4 (Semaphore で制御、Phase θ で 8→6→4 に段階緩和済み)
 //!   - 漸進UI更新: アセンダンシー単位で完了 → Tauri event emit
-//!   - レート制限: 380ms 間隔保証 (MIN_REQUEST_INTERVAL_MS) + 並列度 2 (CONCURRENT_FETCH_LIMIT)
+//!   - レート制限: 500ms 間隔保証 (MIN_REQUEST_INTERVAL_MS) + 並列度 1 (完全シリアル)
 //!     429 で exponential backoff、UA 明記
 //!   - 対象: 上位 10 アセンダンシー × 50 人 = 500 calls + 10 search + 2 data = 512 calls
 //!
@@ -27,9 +27,9 @@
 //! @author engineering-B
 //! @date 2026-05-22
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex as StdMutex};
+use std::sync::{Arc, Mutex as StdMutex, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use reqwest::{header::HeaderMap, Client, StatusCode};
@@ -57,13 +57,35 @@ const USER_AGENT: &str = "ExileDesk/0.1.4 (POE2 craft discovery; contact: nekodo
 /// 2026-05-22 Phase θ: さらに 220→280ms に緩和 (Cloudflare 1015 頻発のため)
 /// 2026-05-23: 並列 4 で 60 秒待ちペナルティ観測のため 280→380ms に追加緩和。
 /// 並列度も 4→2 に減らして burst を抑える (CONCURRENT_FETCH_LIMIT 参照)。
-const MIN_REQUEST_INTERVAL_MS: u64 = 380;
+/// 2026-05-23 第2回: 並列 2 + 380ms でも 1015 食らうため 380→500ms に追加緩和、
+/// 並列も 2→1 (完全シリアル) に。1.0 req/sec まで落として Cloudflare 閾値の
+/// 経験則 60-100 req/min を確実に下回る。
+/// 計算: 500 req × 500ms = 250 秒 (4 分強)。
+/// 2026-05-23 ON/OFF サイクル導入: 並列 1 シリアル 500ms でも 1015 食らうのは
+/// Cloudflare の token bucket が「連続送信」を検出しているという仮説に基づき、
+/// 200ms 並列 4 で 15 秒送って 10 秒完全休憩 (= token bucket リセット狙い) に切替。
+/// 1 サイクル ON 期間 75 req、510 req を約 170 秒 = 6.8 サイクルで完了見込み。
+const MIN_REQUEST_INTERVAL_MS: u64 = 200;
 
 /// キャラ並列 fetch の上限 (Semaphore のキャパシティ)。
-/// 2026-05-23: 4→2 に減らして Cloudflare 1015 ペナルティを抑制。
-/// 計算: 500 req × 380ms ≈ 190 秒、並列 2 で実 throughput ≈ 95 秒。
-/// 429 1 回 (60 秒待機) より速い見込み。
-const CONCURRENT_FETCH_LIMIT: usize = 2;
+/// 2026-05-23 第2回: 2→1 に減らして完全シリアル送信、burst ゼロ。
+/// 同時に複数 in-flight しないので Cloudflare の short window 集中検出を
+/// 確実に回避できる。
+/// 2026-05-23 ON/OFF サイクル: 1→4 に復活 (ON 期間 15 秒だけ並列 4、その後 10 秒休止)。
+/// 累積 req/sec は 75 req / 25 秒 = 3.0 req/sec で、シリアル 500ms の 2.0 req/sec
+/// より一見高いが、10 秒の完全休止が token bucket をリセットさせる狙い。
+const CONCURRENT_FETCH_LIMIT: usize = 4;
+
+/// ON/OFF サイクル: ON 期間の長さ (ms)。
+/// この期間内は MIN_REQUEST_INTERVAL_MS 間隔で並列 CONCURRENT_FETCH_LIMIT 件まで送信。
+/// 15 秒間 × 200ms 間隔 = 最大 75 req/サイクル。
+const ON_PERIOD_MS: u64 = 15_000;
+
+/// ON/OFF サイクル: OFF 期間の長さ (ms)。
+/// この期間中は全送信ブロック (acquire が次サイクル開始まで sleep)。
+/// 10 秒 = Cloudflare の per-IP token bucket がリセットされると経験的に期待される長さ。
+/// 短すぎると bucket がフルにならない、長すぎると無駄なアイドル。
+const OFF_PERIOD_MS: u64 = 10_000;
 
 /// 429 受信時の exponential backoff 初期値 (ms)
 /// 2026-05-22 Phase θ: 2s → 3s に延長
@@ -287,6 +309,14 @@ pub struct NetworkStatus {
     /// 直近 retry の残秒数 (sleep 終了予定までの残り)。
     /// `LAST_RETRY_INFO.until_ms` が過去になれば 0 を返す。
     pub last_retry_remaining_secs: u64,
+    /// ON/OFF サイクルの現在フェーズ。
+    /// Some("on") / Some("off") / None (= まだサイクル未開始 = 取得中ではない)。
+    /// UI 側で「🛌 休憩中」表示に使う想定 (現状は次 Phase で実装)。
+    pub cycle_phase: Option<String>,
+    /// 現在フェーズの残秒数。
+    ///   - phase="off" のとき: OFF 期間が終わるまで (= 次の ON 開始まで)
+    ///   - phase="on" / None のとき: 0 (UI 側で「休憩中」を出さない)
+    pub cycle_remaining_secs: u64,
 }
 
 /// UI が 1 秒ごとに呼ぶ「現在のネットワーク状態」command。
@@ -328,6 +358,23 @@ pub fn get_network_status() -> NetworkStatus {
         None => (None, 0),
     };
 
+    // --- ON/OFF サイクル (2026-05-23) ---
+    // CURRENT_OFF_END_MS は acquire の OFF 検出時に「OFF 終了時刻」を書き込む。
+    // 過去になれば自動的に ON フェーズとして扱う (= リセット書き込み不要)。
+    // 0 のままなら「まだ acquire が一度も呼ばれていない」 or 「OFF にまだ入っていない」
+    // = phase は None として UI には何も表示しない。
+    let off_end_ms = CURRENT_OFF_END_MS.load(Ordering::Relaxed);
+    let (cycle_phase, cycle_remaining_secs) = if off_end_ms == 0 {
+        (None, 0)
+    } else if off_end_ms > now_ms {
+        let remaining = (off_end_ms - now_ms) / 1000;
+        (Some("off".to_string()), remaining)
+    } else {
+        // OFF 終了済 = 現在 ON 期間中 (or サイクル外)。UI 側で「休憩中」を消すために
+        // phase="on" を明示的に返す (None だと「まだ未開始」と区別がつかない)。
+        (Some("on".to_string()), 0)
+    };
+
     NetworkStatus {
         global_penalty_waiting,
         global_penalty_remaining_secs,
@@ -335,6 +382,8 @@ pub fn get_network_status() -> NetworkStatus {
         active_retry_count,
         last_retry_reason,
         last_retry_remaining_secs,
+        cycle_phase,
+        cycle_remaining_secs,
     }
 }
 
@@ -361,6 +410,69 @@ fn record_penalty_for_ui(until_instant: Instant, reason: Option<String>) {
             *g = Some(r);
         }
     }
+}
+
+// ============================================================================
+// Cloudflare 1015 閾値実測ログ (2026-05-23)
+// ============================================================================
+//
+// 目的:
+//   ユーザー指摘「1 並列 500ms でも制限くらう、絶対おかしい、原因解明してくれ」
+//   への対応として、各 outbound HTTP リクエストに通し番号 + 直近 60 秒以内の
+//   リクエスト数 + セッション経過秒を eprintln! で stderr に詳細出力する。
+//
+//   これにより「N req in 60 秒で Cloudflare 1015 (= HTTP 429) を食らった」が
+//   実測でき、閾値が逆算できる。
+//
+// 設計判断:
+//   - `REQ_COUNTER`: AtomicU64、req# のシーケンス採番 (0001 から)。
+//   - `REQ_TIMESTAMPS`: StdMutex<VecDeque<Instant>>、直近 60 秒以内に発行した
+//     リクエストの送信時刻のみ保持する rolling window。先頭から古いものを pop して
+//     常に 60 秒以内のサンプルだけを残す。lock 範囲は push + 削除 + 長さ取得のみ
+//     なので短期 lock、競合は無視できる。
+//   - `SESSION_START`: OnceLock<Instant>、プロセス起動からの経過秒を測る基準点。
+//     `OnceLock::get_or_init` は thread-safe で最初の 1 回だけ初期化される。
+//
+// なぜ once_cell ではなく OnceLock:
+//   - Cargo.toml に once_cell 依存を追加するのを避けるため (std で代替可能)。
+//   - std::sync::OnceLock は Rust 1.70 以降で安定、本プロジェクトは edition=2021 + 最新版 OK。
+
+/// プロセス開始時刻 (= 1 度だけ Instant::now() で初期化)。
+/// `SESSION_START.get_or_init(Instant::now)` で thread-safe に初期化される。
+static SESSION_START: OnceLock<Instant> = OnceLock::new();
+
+/// 累計リクエスト番号。`fetch_add(1, Relaxed) + 1` で 0001 始まりの連番を採番。
+static REQ_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// 直近 60 秒以内に発行したリクエスト時刻の rolling window。
+/// `record_request_time` で push + 古い要素を pop + 長さを返す。
+static REQ_TIMESTAMPS: StdMutex<VecDeque<Instant>> = StdMutex::new(VecDeque::new());
+
+/// セッション開始からの経過秒 (f64)。
+/// `SESSION_START` が未初期化なら `Instant::now()` で初期化してから 0.0 を返す。
+fn session_elapsed_secs() -> f64 {
+    SESSION_START
+        .get_or_init(Instant::now)
+        .elapsed()
+        .as_secs_f64()
+}
+
+/// `now` を rolling window に push し、60 秒より古い要素を削除した後の長さを返す。
+/// (= 「直近 60 秒間に何件発行したか」を即座に取得)
+fn record_request_time(now: Instant) -> usize {
+    let mut deque = match REQ_TIMESTAMPS.lock() {
+        Ok(g) => g,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    deque.push_back(now);
+    while let Some(&front) = deque.front() {
+        if now.duration_since(front) > Duration::from_secs(60) {
+            deque.pop_front();
+        } else {
+            break;
+        }
+    }
+    deque.len()
 }
 
 // ============================================================================
@@ -468,6 +580,79 @@ pub struct CraftV2FetchResult {
 }
 
 // ============================================================================
+// ON/OFF サイクル: 共有 state + ログ出力ヘルパ (2026-05-23)
+// ============================================================================
+//
+// 目的:
+//   Cloudflare 1015 の発火条件が「短時間の累積 req 数」ではなく「連続送信の継続時間」
+//   なら、定期的に完全休止を挟むことで token bucket をリセットさせ、ペナルティを
+//   回避できる仮説に基づき、ON 期間 + OFF 期間サイクル送信を導入。
+//
+// 設計判断:
+//   - RateGateState 内で cycle_started_at を保持 (= acquire 呼び出しと同じ lock 内で更新)
+//   - 加えて UI 表示用に「現在 OFF 中かどうか」をグローバルに公開: AtomicU64 で
+//     OFF 終了時刻 (epoch ms) を持ち、`get_network_status` から polling 可能にする。
+//   - log_cycle_event: ON/OFF 遷移を session_elapsed_secs を交えて eprintln。
+//     ログから「ON/OFF サイクルが実際に効いているか」「req# との対応」が読める。
+//
+// なぜ global state も用意するか:
+//   RateGateState は async Mutex 越しなので Tauri command (sync) から読みづらい。
+//   AtomicU64 の OFF_END_MS は lock-free で即時 polling 可能 — UI 1Hz 更新と相性が良い。
+//   書き込みは acquire / penalty 設定時のみ (= 数百回/取得で済む)。
+
+/// 現在の OFF 期間が終わる epoch ms (0 = ON 中 or サイクル未開始)。
+/// `acquire` で OFF 検出時に「次サイクル開始時刻」を SystemTime ベースに変換して書き込む。
+/// UI polling が SystemTime::now() と比較して残秒数を計算する。
+static CURRENT_OFF_END_MS: AtomicU64 = AtomicU64::new(0);
+
+/// ON/OFF サイクルログを stderr に出力。session_elapsed_secs を絡めて時系列で読みやすく。
+/// `event`: "ON period started" / "OFF period entered, deferring to next cycle" 等。
+/// `from`/`to`: Tokio Instant (単調時計)。差分から「いつから・いつまで」を表示。
+///
+/// 戻り値は () のみ (`let _ = log_cycle_event(...)` で破棄)。
+fn log_cycle_event(event: &str, from: Instant, to: Instant) {
+    let now_instant = Instant::now();
+    let session_t = session_elapsed_secs();
+    let from_offset = if from >= now_instant {
+        from.duration_since(now_instant).as_secs_f64()
+    } else {
+        -now_instant.duration_since(from).as_secs_f64()
+    };
+    let to_offset = if to >= now_instant {
+        to.duration_since(now_instant).as_secs_f64()
+    } else {
+        -now_instant.duration_since(to).as_secs_f64()
+    };
+    eprintln!(
+        "[rate-cycle] {} — T+{:.1}s (from T+{:.1}s, to T+{:.1}s)",
+        event,
+        session_t,
+        session_t + from_offset,
+        session_t + to_offset,
+    );
+}
+
+/// `acquire` の OFF 検出時に呼ばれ、UI polling 用に OFF 終了時刻 (epoch ms) を更新する。
+/// `off_end` は Tokio `Instant` (単調時計) 由来なので、SystemTime に変換するために
+/// 「now との差分」を計算して足す。
+fn record_off_end_for_ui(off_end: Instant) {
+    let now_instant = Instant::now();
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+    let remaining_ms = if off_end > now_instant {
+        off_end.duration_since(now_instant).as_millis() as u64
+    } else {
+        0
+    };
+    let target_ms = now_ms + remaining_ms;
+    // ON 中に OFF 情報を消す: target_ms が「過去」になっていたら 0 に書き戻す。
+    // 単純化のため fetch_max ではなく直接 store (= 常に最新を書き込む)。
+    CURRENT_OFF_END_MS.store(target_ms, Ordering::Relaxed);
+}
+
+// ============================================================================
 // レート制限: グローバルゲート
 // ============================================================================
 
@@ -501,6 +686,11 @@ struct RateGateState {
     next_slot: Instant,
     /// 429 ペナルティ: この時刻まで送信禁止
     penalty_until: Instant,
+    /// 現在の ON 期間が始まった時刻 (None = まだ最初の acquire が来ていない)。
+    /// ON_PERIOD_MS 経過で OFF 期間に入り、ON_PERIOD_MS + OFF_PERIOD_MS 経過で
+    /// 自動的に次サイクルが開始される (= cycle_started_at を最新時刻に更新)。
+    /// set_penalty とは独立: ペナルティ中も ON/OFF サイクルは時間で進行する。
+    cycle_started_at: Option<Instant>,
 }
 
 impl RateGate {
@@ -510,6 +700,7 @@ impl RateGate {
             state: Arc::new(Mutex::new(RateGateState {
                 next_slot: past,
                 penalty_until: past,
+                cycle_started_at: None,
             })),
             min_interval: Duration::from_millis(min_interval_ms),
         }
@@ -518,13 +709,86 @@ impl RateGate {
     /// 1 リクエスト分の枠が空くまで待つ。
     /// 予約時刻ベース: lock 保持中に slot を確定 → drop → sleep_until。
     /// 複数タスクが同時に呼んでも reserved 時刻は単調増加 + min_interval 刻みで配布される。
+    ///
+    /// 2026-05-23 ON/OFF サイクル対応:
+    /// reserved 時刻が現在サイクルの OFF 期間内に入る場合、次サイクルの ON 開始
+    /// (= off_end) まで遅延させる。サイクルは「ON 15 秒 + OFF 10 秒」を 1 周期とし、
+    /// 最初の acquire 呼び出しで cycle_started_at が初期化される。
+    /// 周期経過後の reserved 時刻に対しては、cycle_started_at を新サイクルに進める
+    /// (= ループバックして自然に ON 期間として扱う)。
     pub async fn acquire(&self) {
         let send_at = {
             let mut guard = self.state.lock().await;
             let now = Instant::now();
             // 自分の予約時刻: 「今」「次空きスロット」「ペナルティ解除時刻」の最大値。
             // どれが大きくても順序関係は崩れない (next_slot が単調増加するため)。
-            let reserved = now.max(guard.next_slot).max(guard.penalty_until);
+            let mut reserved = now.max(guard.next_slot).max(guard.penalty_until);
+
+            // ----- ON/OFF サイクル判定 -----
+            let on_period = Duration::from_millis(ON_PERIOD_MS);
+            let off_period = Duration::from_millis(OFF_PERIOD_MS);
+            let cycle_total = on_period + off_period;
+
+            // reserved 時刻が「どのサイクルに属するか」を判定するため、
+            // 必要なら cycle_started_at を最新サイクルへ進める。
+            // 初回 (None) は reserved を新サイクル開始時刻として記録。
+            // 既存サイクル開始から `cycle_total` 以上経過した reserved に対しては、
+            // 経過したサイクル数だけ繰り上げて新サイクル開始時刻を再計算する
+            // (= reserved を含むサイクルの先頭に揃える)。
+            let cycle_start = match guard.cycle_started_at {
+                None => {
+                    guard.cycle_started_at = Some(reserved);
+                    let _ = log_cycle_event("ON period started", reserved, reserved + on_period);
+                    reserved
+                }
+                Some(start) => {
+                    if reserved >= start + cycle_total {
+                        // reserved が現在サイクル外。何サイクル進んだか計算して
+                        // 新サイクル開始時刻に揃える。
+                        let elapsed = reserved.duration_since(start);
+                        let cycles_elapsed = elapsed.as_millis() / cycle_total.as_millis();
+                        // u128 → u64 サイクル幅。1 サイクル = 25 秒なので u64 で十分。
+                        let advance = cycle_total
+                            .checked_mul(cycles_elapsed as u32)
+                            .unwrap_or(Duration::ZERO);
+                        let new_start = start + advance;
+                        guard.cycle_started_at = Some(new_start);
+                        let _ = log_cycle_event(
+                            "ON period started",
+                            new_start,
+                            new_start + on_period,
+                        );
+                        new_start
+                    } else {
+                        start
+                    }
+                }
+            };
+
+            let on_end = cycle_start + on_period;
+            let off_end = cycle_start + cycle_total;
+
+            // reserved が OFF 期間内 (on_end <= reserved < off_end) なら、次サイクル
+            // 開始 (off_end) まで遅延させる。同時に cycle_started_at も次サイクル
+            // 開始時刻に更新 (これにより以降の reserved は新サイクルの ON 期間として扱われる)。
+            if reserved >= on_end && reserved < off_end {
+                let new_start = off_end;
+                let _ = log_cycle_event(
+                    "OFF period entered, deferring to next cycle",
+                    reserved,
+                    new_start,
+                );
+                // UI polling 用に「OFF 終了時刻」を公開 (= 残秒数表示の元ネタ)。
+                record_off_end_for_ui(new_start);
+                reserved = new_start;
+                guard.cycle_started_at = Some(new_start);
+                let _ = log_cycle_event(
+                    "ON period started",
+                    new_start,
+                    new_start + on_period,
+                );
+            }
+
             // 次の呼び出しは reserved + min_interval 以降にしか発行できない。
             guard.next_slot = reserved + self.min_interval;
             reserved
@@ -590,6 +854,22 @@ async fn http_get_with_backoff(
     for attempt in 0..=MAX_RETRIES {
         gate.acquire().await;
 
+        // ------------------------------------------------------------------
+        // 2026-05-23: Cloudflare 1015 閾値実測ログ (リクエスト直前)
+        // ------------------------------------------------------------------
+        // gate.acquire() 後 = 実際に送信する直前のタイミングで採番 + 記録する。
+        // `req_id` は 0001 始まりの連番 (0-padding 4 桁、9999 超えれば桁あふれ表示)。
+        // `in_60s` は直近 60 秒以内の累計リクエスト数 (本リクエストも含む)。
+        let req_id = REQ_COUNTER.fetch_add(1, Ordering::Relaxed) + 1;
+        let req_time = Instant::now();
+        // SESSION_START を初期化 (まだなら) し、経過秒を取得。
+        let session_t = session_elapsed_secs();
+        let in_60s = record_request_time(req_time);
+        eprintln!(
+            "[req#{:04}] T+{:.1}s in_60s={} GET {}",
+            req_id, session_t, in_60s, url
+        );
+
         let resp = client
             .get(url)
             .send()
@@ -599,6 +879,15 @@ async fn http_get_with_backoff(
         let status = resp.status();
         let is_rate_limited = status == StatusCode::TOO_MANY_REQUESTS;
         let is_server_5xx = status.is_server_error();
+
+        // レスポンスを受け取った直後の所要時間ログ。
+        let elapsed_req = req_time.elapsed();
+        eprintln!(
+            "[req#{:04}] -> {} in {:.0}ms",
+            req_id,
+            status,
+            elapsed_req.as_millis()
+        );
 
         // 5xx は短時間で諦める (リトライ 3 回 = 初回 + 3 リトライ = 計 4 回試行、約 9 秒以内)。
         // 429 は MAX_RETRIES (= リトライ 8 回 = 計 9 回試行) まで粘る (Cloudflare 1015 解除待ち)。
@@ -617,15 +906,8 @@ async fn http_get_with_backoff(
             } else {
                 attempt > MAX_RETRIES - 1
             };
-            if exceeded {
-                let body = resp.text().await.unwrap_or_default();
-                let retries = if is_server_5xx { SERVER_ERROR_MAX_RETRIES } else { MAX_RETRIES };
-                return Err(format!(
-                    "HTTP {status} after {retries} retries for {url}: {}",
-                    body.chars().take(500).collect::<String>()
-                ));
-            }
-            // Retry-After ヘッダがあれば尊重、なければ exponential
+            // Retry-After ヘッダがあれば尊重、なければ exponential。
+            // 429 の場合は header / body dump 前に取得する必要がある (resp.text() で move される)。
             let retry_after_ms = resp
                 .headers()
                 .get("retry-after")
@@ -633,6 +915,51 @@ async fn http_get_with_backoff(
                 .and_then(|s| s.parse::<u64>().ok())
                 .map(|sec| sec * 1000)
                 .unwrap_or(backoff_ms);
+
+            // ------------------------------------------------------------------
+            // 2026-05-23: 429 (Cloudflare 1015) 詳細ログ — 閾値実測用
+            // ------------------------------------------------------------------
+            // resp を text() で消費する前にヘッダを dump する。retry-after / cf-ray /
+            // x-ratelimit-* 等の Cloudflare 固有ヘッダから 1015 vs 1020 の区別、
+            // ペナルティ秒数の元ネタを特定する。
+            // 既存のリトライ判定 (`exceeded`) と独立に毎回 dump (8 retry 全ての挙動が見える)。
+            if is_rate_limited {
+                eprintln!(
+                    "[req#{:04}] !!! 429 RATE LIMITED — in_60s before this req was {}, retry_after_ms={}",
+                    req_id, in_60s, retry_after_ms
+                );
+                eprintln!("[req#{:04}] 429 headers:", req_id);
+                for (k, v) in resp.headers().iter() {
+                    eprintln!("    {}: {}", k, v.to_str().unwrap_or("?"));
+                }
+            }
+
+            if exceeded {
+                let body = resp.text().await.unwrap_or_default();
+                let retries = if is_server_5xx { SERVER_ERROR_MAX_RETRIES } else { MAX_RETRIES };
+                if is_rate_limited {
+                    eprintln!(
+                        "[req#{:04}] 429 body (first 1KB):\n{}",
+                        req_id,
+                        body.chars().take(1024).collect::<String>()
+                    );
+                }
+                return Err(format!(
+                    "HTTP {status} after {retries} retries for {url}: {}",
+                    body.chars().take(500).collect::<String>()
+                ));
+            }
+            // 429 で諦めずリトライする場合も、body 先頭 1KB を dump して
+            // Cloudflare error page (1015 vs 1020 vs 別 error) の HTML パターンを観測する。
+            // resp はここで text() に move される — 以降は body 文字列だけ手元に残る。
+            if is_rate_limited {
+                let body = resp.text().await.unwrap_or_default();
+                eprintln!(
+                    "[req#{:04}] 429 body (first 1KB):\n{}",
+                    req_id,
+                    body.chars().take(1024).collect::<String>()
+                );
+            }
             // 429 は全タスク一斉停止 (Cloudflare 1015 全体ブロックの可能性)
             // 5xx は個別キャラ単位のリトライのみ (edge node 単発不調が典型)
             //
@@ -1484,6 +1811,20 @@ pub async fn craft_v2_fetch_all(
         };
 
         new_ascendancies.push(cached_asc);
+
+        // 2026-05-23: アセ完了時の累計リクエスト集計 (Cloudflare 1015 閾値実測用)。
+        // 「N アセ取った時点で累計 X req、平均 Y req/sec」を eprintln! に残す。
+        // 1015 を食らった瞬間との比較で「どのアセまでに何 req 出したら諦められたか」が分かる。
+        let total_reqs = REQ_COUNTER.load(Ordering::Relaxed);
+        let session_secs = SESSION_START
+            .get_or_init(Instant::now)
+            .elapsed()
+            .as_secs();
+        let avg_rate = total_reqs as f64 / session_secs.max(1) as f64;
+        eprintln!(
+            "[ascendancy_done] {} — cumulative {} req in {}s (avg {:.2} req/sec)",
+            asc.class, total_reqs, session_secs, avg_rate
+        );
 
         // Phase θ: アセンダンシー単位 cache checkpoint emit。
         // 目的: Cloudflare 1015 や中断で全 10 完了に至らない場合でも、ここまでの分を
