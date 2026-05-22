@@ -7,6 +7,7 @@ pub mod trade2;  // POE2 公式 trade2 API client (CORS 制約 + rate limit の�
 pub mod craft_discovery_storage;  // クラフト発見君の累積データ JSON 永続化 (app_data_dir)
 pub mod craft_v2_storage;  // Phase ζ: クラフト発見 V2 のディスクキャッシュ (差分更新用)
 pub mod poe_ninja_client;  // Phase β: poe.ninja クライアント (search protobuf decode + character endpoint)
+pub mod health_check;  // Phase ο-A: 起動時の外部 API / HTML / trade2 健全性チェック
 
 use std::path::PathBuf;
 
@@ -67,6 +68,7 @@ pub fn run() {
             poe_ninja_client::craft_v2_fetch_all,
             poe_ninja_client::craft_v2_cancel,
             poe_ninja_client::fetch_economy_leagues,
+            health_check::health_check_all,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

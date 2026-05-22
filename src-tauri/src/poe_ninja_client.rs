@@ -397,7 +397,10 @@ pub async fn fetch_index_state(
     let leagues = body
         .get("economyLeagues")
         .and_then(|v| v.as_array())
-        .ok_or_else(|| "index-state: economyLeagues (array) missing".to_string())?;
+        .ok_or_else(|| {
+            "index-state: economyLeagues (array) が消えている、poe.ninja API 構造変更の可能性"
+                .to_string()
+        })?;
 
     // Phase ξ: 指定 league_url があれば探す。無ければ default = economyLeagues[0]。
     let chosen_league = if let Some(req) = requested_league_url {
@@ -436,18 +439,27 @@ pub async fn fetch_index_state(
                 arr.get(0)
             }
         })
-        .ok_or_else(|| "index-state: snapshotVersions[0] missing".to_string())?;
+        .ok_or_else(|| {
+            "index-state: snapshotVersions[] が空または消えている、poe.ninja API 構造変更の可能性"
+                .to_string()
+        })?;
 
     let snapshot_name = snap
         .get("snapshotName")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| "index-state: snapshotName missing".to_string())?
+        .ok_or_else(|| {
+            "index-state: snapshotVersions[].snapshotName フィールドが消えている、poe.ninja API 構造変更の可能性"
+                .to_string()
+        })?
         .to_string();
 
     let version = snap
         .get("version")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| "index-state: version missing".to_string())?
+        .ok_or_else(|| {
+            "index-state: snapshotVersions[].version フィールドが消えている、poe.ninja API 構造変更の可能性"
+                .to_string()
+        })?
         .to_string();
 
     Ok(SnapshotMeta {
@@ -481,7 +493,10 @@ pub async fn fetch_economy_leagues_inner(
     let leagues = body
         .get("economyLeagues")
         .and_then(|v| v.as_array())
-        .ok_or_else(|| "index-state: economyLeagues (array) missing".to_string())?;
+        .ok_or_else(|| {
+            "index-state: economyLeagues (array) が消えている、poe.ninja API 構造変更の可能性"
+                .to_string()
+        })?;
 
     let mut out: Vec<LeagueInfo> = Vec::with_capacity(leagues.len());
     for entry in leagues {
@@ -1041,7 +1056,11 @@ fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) -> CachedChar
         };
 
         // 8 スロット対象外は捨てる (rare/unique 両方)
+        // Phase ο-A (2026-05-22): 未知 inventoryId をカウントして health_check 経由で
+        // 可視化する。poe.ninja 側で新スロット (例: Flask, Jewel 等) が追加された場合や、
+        // 既知でも `is_target_inventory_id` に追記し忘れた場合に検知できる。
         if !is_target_inventory_id(&inv_id) {
+            crate::health_check::record_unknown_inventory_id(&inv_id, frame_type);
             continue;
         }
 

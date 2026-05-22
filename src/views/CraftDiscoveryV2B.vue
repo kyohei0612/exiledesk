@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import BaseCard from "../components/decor/BaseCard.vue";
 import UniqueTooltip from "../components/decor/UniqueTooltip.vue";
 import {
@@ -30,6 +31,13 @@ import {
   type SnapshotMeta,
   type UniqueUsage,
 } from "../services/craft-discovery-v2";
+
+// Phase ο-B: 辞書件数チェック用に i18n JSON を直接 import (Vite で bundle される)
+import uniqueModsJa from "../i18n/unique-mods-ja.json";
+import uniqueNamesJa from "../i18n/unique-names-ja.json";
+import poe2FlavourJa from "../i18n/poe2-flavour-ja.json";
+import modTierAndGroup from "../i18n/mod-tier-and-group.json";
+import trade2StatMapping from "../i18n/trade2-stat-mapping.json";
 
 // ---------------------------------------------------------------------------
 // メインタブ定義 (順序 + 日本語ラベル + アイコン)
@@ -85,8 +93,66 @@ const activeSlot = ref<SlotKey>("ring");
 const loading = ref<boolean>(true);
 /** 致命的エラー (invoke 自体が失敗) */
 const fatalError = ref<string | null>(null);
-/** 非致命的エラー (search/character/aggregate)、テキスト表示用に直近 1 件を保持 */
-const lastWarn = ref<string | null>(null);
+/**
+ * Phase ο-B: 警告履歴スタック (最新 5 件)。
+ * - 旧 `lastWarn` (単一文字列) を多件対応に拡張。
+ * - 起動時 health_check_all / 辞書件数チェック / fetch エラー等を一括表示。
+ * - 既存コードは `lastWarn` を computed で参照できる (後方互換)。
+ */
+type WarnSource =
+  | "health-check"
+  | "dict-check"
+  | "fetch-character"
+  | "trade2-search"
+  | "craft-fetch"
+  | "mod-select";
+type WarnLevel = "info" | "warn" | "error";
+interface WarnEntry {
+  level: WarnLevel;
+  message: string;
+  /** Date.now() — 表示時は formatHms で HH:MM:SS に整形 */
+  timestamp: number;
+  source?: WarnSource;
+}
+const MAX_WARN_HISTORY = 5;
+const warnHistory = ref<WarnEntry[]>([]);
+
+function pushWarn(
+  level: WarnLevel,
+  message: string,
+  source?: WarnSource,
+): void {
+  const entry: WarnEntry = {
+    level,
+    message,
+    timestamp: Date.now(),
+    source,
+  };
+  // 新しいものを先頭に積み、5 件超は末尾から落とす
+  warnHistory.value = [entry, ...warnHistory.value].slice(0, MAX_WARN_HISTORY);
+}
+
+function clearWarns(): void {
+  warnHistory.value = [];
+}
+
+/**
+ * 後方互換ヘルパー: 旧 `lastWarn` (単一文字列) の代替。
+ * 履歴の中で「直近の warn / error 1 件」の message を返す。info は静音扱いなので除外。
+ *
+ * 現状テンプレートからは未使用 (UI は履歴スタックを直接表示) だが、外部ロジック (e.g.
+ * E2E テスト・将来の他コンポーネント) からの参照を考慮して export 相当のヘルパーで残す。
+ *
+ * 利用例: `const msg = topWarnMessage();`
+ */
+function topWarnMessage(): string | null {
+  const top = warnHistory.value.find(
+    (w) => w.level === "warn" || w.level === "error",
+  );
+  return top ? top.message : null;
+}
+// 未使用変数警告回避 (将来呼ばれる API として保持): 自己参照で linter を満たす。
+void topWarnMessage;
 
 /** 完了スナップショット */
 const snapshot = ref<SnapshotMeta | null>(null);
@@ -164,8 +230,11 @@ async function searchUniqueOnTrade2(u: UniqueUsage): Promise<void> {
     });
   } catch (e) {
     console.warn("[CraftDiscoveryV2B] unique trade2 search failed:", e);
-    lastWarn.value =
-      "trade2 検索失敗: " + (e instanceof Error ? e.message : String(e));
+    pushWarn(
+      "warn",
+      "trade2 検索失敗: " + (e instanceof Error ? e.message : String(e)),
+      "trade2-search",
+    );
   } finally {
     hoveredUnique.value = null;
     searching.value = false;
@@ -411,7 +480,8 @@ async function startFetch(useCache: boolean = true): Promise<void> {
   activeAscendancyId.value = "";
   loading.value = true;
   fatalError.value = null;
-  lastWarn.value = null;
+  // Phase ο-B: 警告履歴は startFetch 単体でクリアしない (起動時 health-check の結果や
+  // dict-check の警告を残したいため)。ユーザーが明示的に「クリア」ボタンを押した時のみ消す。
   snapshot.value = null;
   lastUpdatedAt.value = null;
   currentlyFetching.value = null;
@@ -453,8 +523,8 @@ async function startFetch(useCache: boolean = true): Promise<void> {
       mergeAscendancy(agg);
     },
     onError: (msg) => {
-      // 非致命的エラーは loading 継続、最新 1 件だけ画面表示
-      lastWarn.value = msg;
+      // 非致命的エラーは loading 継続、警告履歴に積む (Phase ο-B)
+      pushWarn("warn", msg, "craft-fetch");
       // L8: 「直近: 〜」表示がエラー後も残るのを防ぐ (実際の取得は続行)
       currentlyFetching.value = null;
     },
@@ -509,6 +579,178 @@ function formatHms(d: Date): string {
 }
 
 // ---------------------------------------------------------------------------
+// Phase ο-B: 健全性チェック
+// ---------------------------------------------------------------------------
+
+/**
+ * Phase ο-A の Rust command `health_check_all` の戻り値型。
+ * Rust 側は別 PR で実装中 (未実装でも本 UI は graceful fallback)。
+ */
+interface HealthCheckResult {
+  poe_ninja_schema_ok: boolean;
+  poe2db_html_ok: boolean;
+  trade2_api_ok: boolean;
+  /** poe.ninja の inventory に出てくる「未知の inventoryId」件数 */
+  unknown_inventory_ids_count: number;
+  /** Rust 側で気付いた追加メッセージ (HTML 変更検出等) */
+  warnings: string[];
+}
+
+/**
+ * Phase ο-B: 起動時の health_check_all 呼出。
+ *
+ * - Rust 側 (Phase ο-A) が未実装でも try-catch で graceful fallback (info 表示)。
+ * - 警告ゼロなら「すべての外部 API が正常です」を info 表示 (UI 側で安心感を出すため)。
+ * - 各失敗項目は level=error / warn / info で分けて履歴に積む。
+ *
+ * UI の「再チェック」ボタンからも呼ばれる (warnHistory に追記方式)。
+ */
+async function runHealthCheck(): Promise<void> {
+  const prevCount = warnHistory.value.length;
+  try {
+    const result = await invoke<HealthCheckResult>("health_check_all");
+    if (!result.poe_ninja_schema_ok) {
+      pushWarn("error", "poe.ninja API 構造変更を検出", "health-check");
+    }
+    if (!result.poe2db_html_ok) {
+      pushWarn(
+        "warn",
+        "POE2DB HTML 構造変更の可能性 (辞書再生成検討)",
+        "health-check",
+      );
+    }
+    if (!result.trade2_api_ok) {
+      pushWarn("warn", "trade2 API 仕様変更の可能性", "health-check");
+    }
+    if (result.unknown_inventory_ids_count > 0) {
+      pushWarn(
+        "info",
+        `未知 inventoryId ${result.unknown_inventory_ids_count} 件 (poe.ninja アイテム種別追加か)`,
+        "health-check",
+      );
+    }
+    for (const w of result.warnings) {
+      pushWarn("warn", w, "health-check");
+    }
+    // 警告ゼロなら info で「正常」を 1 行出す (今回の health-check 由来分が増えてないとき)
+    if (warnHistory.value.length === prevCount) {
+      pushWarn("info", "すべての外部 API が正常です", "health-check");
+    }
+  } catch (err) {
+    // Rust 側未実装 (Phase ο-A 未マージ等) または通信失敗。
+    // UI を壊さない方針なので info で表示し、ユーザーには情報レベルとして伝える。
+    const msg = err instanceof Error ? err.message : String(err);
+    // 「Command health_check_all not found」系は未実装なので info、それ以外は warn 寄り
+    const isUnimplemented = /not found|unregistered/i.test(msg);
+    pushWarn(
+      isUnimplemented ? "info" : "warn",
+      isUnimplemented
+        ? "health_check_all 未実装 (Phase ο-A 後に有効化)"
+        : `health_check_all 失敗: ${msg}`,
+      "health-check",
+    );
+  }
+}
+
+/**
+ * Phase ο-B: 辞書ファイル件数チェック。
+ *
+ * Vite の JSON import は静的バンドルされるため mtime は本番取得が難しい。
+ * 代わりに「期待件数の最小値」とハードコード比較し、大幅減少 (= 辞書再生成失敗 / マージ漏れ)
+ * を検知する簡易チェックに留める。
+ *
+ * 現状件数 (2026-05-22):
+ *   unique-mods-ja      1629
+ *   unique-names-ja      389
+ *   poe2-flavour-ja     3103
+ *   mod-tier-and-group   677 (tiers / groups 各)
+ *   trade2-stat-mapping  543
+ *
+ * しきい値は「現状から少し下げた値」を採用 (= 微減は許容、大幅減で警告)。
+ */
+const DICT_EXPECTED_MIN: Record<string, number> = {
+  "unique-mods-ja": 1500,
+  "unique-names-ja": 380,
+  "poe2-flavour-ja": 3000,
+  "mod-tier-and-group": 600,
+  "trade2-stat-mapping": 500,
+};
+
+function checkDictionaryFreshness(): void {
+  // mod-tier-and-group.json は { tiers: {...}, groups: {...} } 構造なので
+  // tiers / groups どちらでも値の少ない方を採用する (どちらか壊れても検知できる)。
+  const mtgTiersCount = Object.keys(
+    (modTierAndGroup as { tiers?: Record<string, unknown> }).tiers ?? {},
+  ).length;
+  const mtgGroupsCount = Object.keys(
+    (modTierAndGroup as { groups?: Record<string, unknown> }).groups ?? {},
+  ).length;
+  const mtgMin = Math.min(mtgTiersCount, mtgGroupsCount);
+
+  const checks: Array<readonly [string, number]> = [
+    ["unique-mods-ja", Object.keys(uniqueModsJa as Record<string, unknown>).length],
+    [
+      "unique-names-ja",
+      Object.keys(uniqueNamesJa as Record<string, unknown>).length,
+    ],
+    [
+      "poe2-flavour-ja",
+      Object.keys(poe2FlavourJa as Record<string, unknown>).length,
+    ],
+    ["mod-tier-and-group", mtgMin],
+    [
+      "trade2-stat-mapping",
+      Object.keys(trade2StatMapping as Record<string, unknown>).length,
+    ],
+  ];
+
+  for (const [name, actual] of checks) {
+    const expected = DICT_EXPECTED_MIN[name] ?? 0;
+    if (actual < expected) {
+      pushWarn(
+        "warn",
+        `辞書 ${name} が薄い (${actual}/${expected} 件) — 再生成を検討してください`,
+        "dict-check",
+      );
+    }
+  }
+}
+
+/**
+ * Phase ο-B: 警告履歴行の表示色クラス。visual-concept §5/§8 の暖色トーンに合わせる。
+ */
+function warnLevelClasses(level: WarnLevel): string {
+  switch (level) {
+    case "error":
+      return "text-red-200 border-l-2 border-red-600/60";
+    case "warn":
+      return "text-amber-200 border-l-2 border-amber-600/60";
+    case "info":
+    default:
+      return "text-[var(--exile-color-text-secondary)] border-l-2 border-[var(--exile-color-border-subtle)]";
+  }
+}
+
+function warnSourceLabel(source?: WarnSource): string {
+  switch (source) {
+    case "health-check":
+      return "健全性";
+    case "dict-check":
+      return "辞書";
+    case "fetch-character":
+      return "キャラ取得";
+    case "trade2-search":
+      return "trade2";
+    case "craft-fetch":
+      return "クラフト取得";
+    case "mod-select":
+      return "MOD 選択";
+    default:
+      return "";
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
 
@@ -527,6 +769,12 @@ onMounted(async () => {
     console.warn("[CraftDiscoveryV2B] fetchEconomyLeagues failed:", err);
     leaguesLoadFailed.value = true;
   }
+  // Phase ο-B: 起動時健全性チェック + 辞書件数チェック (両方独立、fetchEconomyLeagues とも独立)
+  //   - fetch 完了を待つ必要はないが、UI が落ち着いてから出した方が読みやすいので
+  //     fetchEconomyLeagues の直後・startFetch の直前に走らせる。
+  //   - health_check_all は失敗しても try-catch 内で graceful fallback 済み。
+  void runHealthCheck();
+  checkDictionaryFreshness();
   // 起動時自動 trigger (Phase ε)
   void startFetch();
 });
@@ -677,7 +925,11 @@ function toggleModSelect(mod: ModEntry): void {
     (isSuffix && suffixLimitReached.value)
   ) {
     const affixLabel = isPrefix ? "プレフィックス" : "サフィックス";
-    lastWarn.value = `${affixLabel}は 1 装備に最大 ${MAX_AFFIX_PER_ITEM} 個までです (POE2 mod 枠制限)`;
+    pushWarn(
+      "warn",
+      `${affixLabel}は 1 装備に最大 ${MAX_AFFIX_PER_ITEM} 個までです (POE2 mod 枠制限)`,
+      "mod-select",
+    );
     return;
   }
 
@@ -699,7 +951,11 @@ function toggleModSelect(mod: ModEntry): void {
       }
     }
     if (ousted.length > 0) {
-      lastWarn.value = `同カテゴリの選択を自動解除しました: ${ousted.join(" / ")}`;
+      pushWarn(
+        "info",
+        `同カテゴリの選択を自動解除しました: ${ousted.join(" / ")}`,
+        "mod-select",
+      );
     }
   }
   next.add(mod.rawTemplate);
@@ -795,15 +1051,21 @@ async function searchSelectedMods(): Promise<void> {
         tierMinByMod,
       });
       // 確認ダイアログ不要 (オーナー指示 2026-05-22): trade2 へ直接遷移
-      // missing mods があれば警告バナーに静かに通知
+      // missing mods があれば警告履歴に静かに通知
       if (r.missingMods.length > 0) {
-        lastWarn.value =
-          `[trade2] stat ID 未マッピングでスキップした MOD: ${r.missingMods.join(" / ")}`;
+        pushWarn(
+          "warn",
+          `[trade2] stat ID 未マッピングでスキップした MOD: ${r.missingMods.join(" / ")}`,
+          "trade2-search",
+        );
       }
     } catch (e) {
       console.warn("[CraftDiscoveryV2B] trade2 search failed:", e);
-      lastWarn.value =
-        "trade2 検索失敗: " + (e instanceof Error ? e.message : String(e));
+      pushWarn(
+        "warn",
+        "trade2 検索失敗: " + (e instanceof Error ? e.message : String(e)),
+        "trade2-search",
+      );
     }
   } finally {
     // M6: ガード解除 (例外/早期 return すべてのパスでリセット)
@@ -1046,12 +1308,61 @@ function pct(count: number): string {
         再試行
       </button>
     </div>
+    <!--
+      Phase ο-B: 警告履歴 (最新 5 件、起動時 health-check / dict-check / fetch エラーを一括表示)。
+      旧 lastWarn 単一バナーから多件スタックに拡張。再チェック / クリアボタン付き。
+    -->
     <div
-      v-else-if="lastWarn"
-      class="mb-3 px-3 py-1.5 rounded border border-amber-700/50 bg-amber-900/15 text-[11px] text-amber-200"
+      v-else-if="warnHistory.length > 0"
+      class="mb-3 px-3 py-2 rounded border border-[var(--exile-color-border-brass)]/60 bg-[var(--exile-color-bg-elevated)] text-[11px]"
     >
-      <strong class="font-display tracking-[0.05em]">警告:</strong>
-      {{ localizeError(lastWarn) }}
+      <div class="flex items-center justify-between mb-1.5">
+        <strong
+          class="font-display tracking-[0.05em] text-[var(--exile-color-accent-focus)]"
+        >
+          警告履歴
+          <span
+            class="ml-1 text-[10px] tabular-nums text-[var(--exile-color-text-secondary)]"
+            >({{ warnHistory.length }} / {{ MAX_WARN_HISTORY }})</span
+          >
+        </strong>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            @click="runHealthCheck"
+            class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] hover:bg-[var(--exile-color-bg-canvas)] hover:text-[var(--exile-color-accent-focus)] transition-colors text-[10px]"
+            title="外部 API の健全性を再チェック"
+          >
+            再チェック
+          </button>
+          <button
+            type="button"
+            @click="clearWarns"
+            class="px-2 py-0.5 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] hover:bg-[var(--exile-color-bg-canvas)] hover:text-[var(--exile-color-text-primary)] transition-colors text-[10px] text-[var(--exile-color-text-secondary)]"
+            title="警告履歴をクリア"
+          >
+            クリア
+          </button>
+        </div>
+      </div>
+      <ul class="space-y-0.5">
+        <li
+          v-for="(w, i) in warnHistory"
+          :key="i"
+          :class="['px-2 py-0.5 leading-snug', warnLevelClasses(w.level)]"
+        >
+          <span
+            class="tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] mr-1"
+            >[{{ formatHms(new Date(w.timestamp)) }}]</span
+          >
+          <span
+            v-if="warnSourceLabel(w.source)"
+            class="text-[10px] text-[var(--exile-color-text-secondary)] mr-1"
+            >{{ warnSourceLabel(w.source) }}:</span
+          >
+          {{ localizeError(w.message) }}
+        </li>
+      </ul>
     </div>
 
     <!-- ============================================================
