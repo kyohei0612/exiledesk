@@ -35,6 +35,7 @@ use reqwest::{header::HeaderMap, Client, StatusCode};
 use serde::Serialize;
 use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
+use tokio::task::JoinSet;
 use tokio::time::{sleep, sleep_until, Instant};
 
 use crate::craft_v2_storage::{
@@ -993,9 +994,13 @@ pub async fn craft_v2_fetch_all(
         // 16 分以上ハングする問題があった。各アセを 5 分で打ち切り次へ進める。
         //
         // 実装: 1 アセの fetch 全処理 (search + 並列 character + 集計 + cache push) を
-        // async ブロックで包み、Option<CachedAscendancy> を返す。timeout 経過時は
-        // spawn 済みの未完了 handle は await 待ちのまま drop されてキャンセルされる
-        // (handles を timeout 中の async ブロック内で消費するので、外に漏れない)。
+        // async ブロックで包み、Option<CachedAscendancy> を返す。
+        //
+        // 2026-05-23 Hotfix (Rust-H6): timeout 発火時に内側で spawn 済みの character
+        // タスクが detach されないよう、外側で `join_set_for_abort` を declare し、
+        // 内側 async ブロックで JoinSet を載せる (Arc<Mutex<Option<Arc<Mutex<JoinSet>>>>>).
+        // timeout 発火時に `abort_all()` を呼ぶことで、Semaphore::new(4) を超えて
+        // 累積していた detached task を一掃する。
         let asc_class = asc.class.clone();
         let asc_pct = asc.percentage;
         let client_ref = Arc::clone(&client);
@@ -1006,8 +1011,16 @@ pub async fn craft_v2_fetch_all(
         let top_n_per_ascendancy_ref = top_n_per_ascendancy;
         let differential_mode_ref = differential_mode;
         let prev_asc_opt = prev_by_class.get(&asc.class).cloned();
+        // Rust-H6: timeout 分岐から JoinSet にアクセスするための共有 slot。
+        // 内側 async ブロックは spawn 直後に Some(...) を書き込み、
+        // 外側はタイムアウト時にこれを読み出して abort_all を呼ぶ。
+        let join_set_for_abort: Arc<Mutex<Option<Arc<Mutex<JoinSet<Result<CharacterItems, String>>>>>>> =
+            Arc::new(Mutex::new(None));
+        let join_set_for_abort_inner = Arc::clone(&join_set_for_abort);
 
         let asc_future = async move {
+            // alias: 内側 async ブロックで move する handle
+            let join_set_for_abort = join_set_for_abort_inner;
             // 2026-05-23: search 開始時に phase="search" を emit。
             // total は確定前なので暫定で top_n_per_ascendancy_ref (= 通常 50) を入れる。
             // 検索失敗時は phase="completed" で done=0, total=0 を emit して UI をクリアする。
@@ -1106,33 +1119,53 @@ pub async fn craft_v2_fetch_all(
             // 二重 emit や emit 抜けが起きるため、新規取得件数と比較する。
             let to_fetch_len = to_fetch.len();
 
-            // character endpoint を並列で叩く (新規キャラのみ)
-            let mut handles = Vec::with_capacity(to_fetch_len);
-            for char_ref in to_fetch {
-                let client_c = Arc::clone(&client_ref);
-                let gate_c = gate_ref.clone();
-                let snapshot_c = snapshot_ref.clone();
-                let sem_c = Arc::clone(&semaphore_ref);
-                let handle = tokio::spawn(async move {
-                    let _permit = sem_c
-                        .acquire_owned()
-                        .await
-                        .map_err(|e| format!("semaphore closed: {e}"))?;
-                    // Medium-M7: permit を取った直後にもキャンセル確認。
-                    // 既に semaphore queue で待っていたタスクが、cancel 後に走り出さないように。
-                    if is_cancel_requested() {
-                        return Err("cancelled".to_string());
-                    }
-                    fetch_character(&client_c, &gate_c, &snapshot_c, &char_ref).await
-                });
-                handles.push(handle);
+            // character endpoint を並列で叩く (新規キャラのみ)。
+            //
+            // 2026-05-23 Hotfix (Rust-H6): 旧実装は `Vec<JoinHandle>` を async ブロック
+            // 内で保持していたが、外側の `tokio::time::timeout` が elapsed したとき
+            // async ブロックごと drop されると、未完了の JoinHandle は drop されるだけで
+            // **タスクは detached 状態のまま走り続ける** (Tokio の仕様: JoinHandle drop
+            // ≠ cancel)。これがアセタイムアウトを跨いで累積し、Semaphore::new(4) を
+            // 突破した「26 並列」現象を引き起こしていた。
+            //
+            // 対策: `JoinSet` を使い、外側からアクセス可能な `Arc<Mutex<JoinSet>>` に
+            // 載せる。タイムアウト発火時に外側で `set.abort_all()` を呼ぶことで
+            // 全 spawn 済みタスクを即 abort できる。タスク内の Semaphore permit は
+            // タスクが abort されると _permit binding が drop され、Semaphore の
+            // 内部カウンタは確実に回復する。同様に `ActiveFetchGuard` も Drop で
+            // ACTIVE_FETCH_COUNT を確実に -1 する (RAII)。
+            let join_set: Arc<Mutex<JoinSet<Result<CharacterItems, String>>>> =
+                Arc::new(Mutex::new(JoinSet::new()));
+            {
+                let mut set_guard = join_set.lock().await;
+                for char_ref in to_fetch {
+                    let client_c = Arc::clone(&client_ref);
+                    let gate_c = gate_ref.clone();
+                    let snapshot_c = snapshot_ref.clone();
+                    let sem_c = Arc::clone(&semaphore_ref);
+                    set_guard.spawn(async move {
+                        let _permit = sem_c
+                            .acquire_owned()
+                            .await
+                            .map_err(|e| format!("semaphore closed: {e}"))?;
+                        // Medium-M7: permit を取った直後にもキャンセル確認。
+                        // 既に semaphore queue で待っていたタスクが、cancel 後に走り出さないように。
+                        if is_cancel_requested() {
+                            return Err("cancelled".to_string());
+                        }
+                        fetch_character(&client_c, &gate_c, &snapshot_c, &char_ref).await
+                    });
+                }
             }
+            // Rust-H6: 外側 (timeout 分岐) からアクセスするためのクローン。
+            // Arc 経由なので JoinSet 本体は共有。
+            *join_set_for_abort.lock().await = Some(Arc::clone(&join_set));
 
             // 全 character の完了を待つ。
             // 流用分は最初から入っているので succeeded もそこから加算。
             const INTERMEDIATE_EMIT_BATCH: usize = 5;
             let mut items: Vec<CharacterItems> = reused_items;
-            let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(handles.len());
+            let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(to_fetch_len);
             let mut succeeded: usize = reused_cached.len();
             let mut completed: usize = 0;
 
@@ -1149,16 +1182,21 @@ pub async fn craft_v2_fetch_all(
                     phase: "fetching".to_string(),
                 },
             );
-            // 2026-05-23 緊急修正: tokio::time::timeout が future 全体を drop した時、
-            // spawn 済みの未完了 handle は JoinHandle が drop されるとタスクは
-            // detached 状態になる (キャンセルされない、Tokio の挙動)。
-            // 完全キャンセルを保証するため、handle 自体は async ブロック内で
-            // 保持し続け、ブロックが drop される際に handles も drop されるが
-            // 既に await ループ内で消費中の handle は join で待つ。
-            // 残った未取得 handle は cancel flag 経由で fetch_character 開始前に
-            // 早期 return できる (semaphore queue で待っている分も含めて)。
-            for h in handles {
-                match h.await {
+            // Rust-H6: JoinSet の `join_next()` を消費するループ。
+            // タイムアウト発火時には外側で `abort_all()` が呼ばれており、
+            // 残った task は JoinError::is_cancelled() で完了するので join_next() は
+            // 即 return する。よって `loop` で全消費しても外側 timeout が elapsed
+            // して async ブロックが drop されるまでに到達する。
+            // (実際には timeout 後の outer match で `asc_future` の結果は捨てる。)
+            loop {
+                let mut set_guard = join_set.lock().await;
+                let next = set_guard.join_next().await;
+                drop(set_guard); // 他の lock 待ちタスクを邪魔しないよう即 release
+                let join_result = match next {
+                    Some(r) => r,
+                    None => break, // 全完了
+                };
+                match join_result {
                     Ok(Ok(ci)) => {
                         // キャッシュ用に縮小形式へ変換
                         new_cached.push(character_items_to_cached(&ci, now_ts));
@@ -1271,11 +1309,14 @@ pub async fn craft_v2_fetch_all(
 
         // 2026-05-23 緊急修正: アセ単位タイムアウト (5 分) で wrap。
         // timeout 経過時はそのアセを諦めて次へ進む (部分結果も破棄)。
-        // 経過時に未完了 handles が含まれる async ブロックごと drop されるので、
-        // 未完了の `tokio::spawn` で取った character タスクは「detached」状態になる
-        // (Tokio の挙動)。次のアセ開始前/permit 取得直後の cancel flag check で
-        // 早期 return される設計ではないため、最悪 1-2 個の余剰 fetch が走る可能性は
-        // あるが、Cloudflare 側で 429 になるだけで実害なし。
+        //
+        // 2026-05-23 Hotfix (Rust-H6): 旧実装は async ブロック drop で detach され
+        // てしまい、Semaphore::new(4) を突破して 26 並列まで暴走した。本修正で
+        // タイムアウト発火時に明示的に `abort_all()` を呼ぶ。abort 後は:
+        //   - JoinSet 内の Task が cancel される
+        //   - 各 task の `_permit` (Semaphore OwnedPermit) が drop され Semaphore 回復
+        //   - 各 task の RAII `ActiveFetchGuard` が drop され ACTIVE_FETCH_COUNT 回復
+        // これにより次アセは確実に 0 並列スタート → Semaphore で 4 並列に整流される。
         let timeout_dur = Duration::from_secs(ASCENDANCY_TIMEOUT_SECS);
         let asc_outcome = tokio::time::timeout(timeout_dur, asc_future).await;
 
@@ -1283,14 +1324,32 @@ pub async fn craft_v2_fetch_all(
             Ok(opt) => opt, // 正常完了 (Some=結果あり / None=空 or search 失敗)
             Err(_elapsed) => {
                 // 5 分超過。そのアセは諦めて次へ進む。
+                // Rust-H6: 内側で spawn された全 character task を明示的に abort。
+                // JoinSet::abort_all() は各 task に cancel signal を送り、
+                // task 内の `.await` 点で JoinError::is_cancelled() を返して終了。
+                // Drop chain: cancel → _permit drop → Semaphore 回復、
+                //            ActiveFetchGuard drop → ACTIVE_FETCH_COUNT 回復。
+                {
+                    let slot = join_set_for_abort.lock().await;
+                    if let Some(set_arc) = slot.as_ref() {
+                        let mut set_guard = set_arc.lock().await;
+                        set_guard.abort_all();
+                        // abort_all は signal を出すだけ。実際の cancel 完了 (= permit/
+                        // guard drop) を待つために、残った task を join_next で消費。
+                        // abort されている task は即座に JoinError::is_cancelled() で
+                        // return するので、ここでブロックすることはない。
+                        while set_guard.join_next().await.is_some() {}
+                    }
+                }
+                let active_after_abort = ACTIVE_FETCH_COUNT.load(Ordering::Relaxed);
                 let _ = window.emit(
                     "craft-v2-error",
                     serde_json::json!({
                         "ascendancy": asc.class,
                         "phase": "ascendancy-timeout",
                         "error": format!(
-                            "ascendancy fetch timed out after {} seconds, skipping",
-                            ASCENDANCY_TIMEOUT_SECS
+                            "ascendancy fetch timed out after {} seconds, skipping (active_after_abort={})",
+                            ASCENDANCY_TIMEOUT_SECS, active_after_abort
                         ),
                     }),
                 );
