@@ -299,6 +299,12 @@ export interface UniqueUsage {
 export interface UniqueRepresentative {
   typeLine?: string;
   baseType?: string;
+  /**
+   * poe.ninja の `data.name` 生値 = ユニュ正式名 (例: "Atziri's Splendour")。
+   * `typeLine` はベース表示 (例: "Sacrificial Regalia") で trade2 name index と不一致のことがある。
+   * trade2 ユニュ検索ではこの `name` を優先する (2026-05-22 オーナー指示)。
+   */
+  name?: string;
   /** ベース implicit mod */
   implicitMods?: string[];
   /** explicit mod (ユニーク MOD) */
@@ -624,10 +630,18 @@ interface PoeNinjaItem {
     inventoryId?: string;
     explicitMods?: string[];
     implicitMods?: string[];
-    /** ユニーク名 (例: "Mageblood") */
+    /**
+     * POE1 では「Mageblood」等のユニュ名だったが、POE2 では `baseType` 寄りの「ベース表示」
+     * (例: "Sacrificial Regalia") が入るケースあり。trade2 検索には `name` フィールド優先。
+     */
     typeLine?: string;
     /** ベースタイプ (例: "Heavy Belt") */
     baseType?: string;
+    /**
+     * 2026-05-22: poe.ninja `data.name` 生値 = ユニュ正式名 (例: "Atziri's Splendour")。
+     * trade2 name index に登録されてる名前。typeLine と別の場合があるので独立保持。
+     */
+    name?: string;
     /** poe.ninja アイコン URL */
     icon?: string;
     flavourText?: string | string[];
@@ -980,6 +994,7 @@ function addUniqueToAscendancy(
     representative = {
       typeLine: data.typeLine,
       baseType: data.baseType,
+      name: typeof data.name === "string" && data.name ? data.name : undefined,
       implicitMods: Array.isArray(data.implicitMods)
         ? [...data.implicitMods]
         : undefined,

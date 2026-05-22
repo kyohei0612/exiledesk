@@ -154,9 +154,11 @@ async function searchUniqueOnTrade2(u: UniqueUsage): Promise<void> {
   searching.value = true;
   const league = snapshot.value?.snapshot_name ?? "Fate of the Vaal";
   try {
-    // 2026-05-22: baseType も渡して、name 検索 400 失敗時に baseType + rarity=unique で fallback
+    // 2026-05-22: trade2 検索は representative.name (正式名 "Atziri's Splendour" 等) を優先。
+    // 無ければ nameEn (= typeLine、ベース表示) で fallback、それも 400 なら baseType + rarity=unique
+    const tradeName = u.representative?.name || u.nameEn;
     await openTrade2ForUnique({
-      nameEn: u.nameEn,
+      nameEn: tradeName,
       league,
       baseType: u.representative?.baseType,
     });
