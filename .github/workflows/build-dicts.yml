@@ -1,0 +1,107 @@
+name: Weekly Dictionary Update
+
+# 毎週月曜 09:00 JST (= 日曜 00:00 UTC) に POE2DB / RePoE / trade2 から
+# 最新辞書を取得し、差分があれば自動 PR 作成。
+# パッチ後の新ユニュ・新 MOD・新 stat フィルター追加に追従。
+#
+# - 手動 trigger も可能 (workflow_dispatch)
+# - PR は auto/dict-update branch に push、レビュー後マージ
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-dicts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dictionaries (online — POE2DB / RePoE / trade2 取得)
+        run: pnpm build:dicts:online
+        env:
+          # POE2DB / pathofexile への礼儀として UA に連絡先入れる
+          USER_AGENT_CONTACT: "ExileDesk CI <nekodori0612@gmail.com>"
+
+      - name: Detect dictionary changes
+        id: diff
+        run: |
+          if git diff --quiet src/i18n/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "::notice::辞書に差分なし、PR 作成スキップ"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "## 辞書ファイル差分" >> $GITHUB_STEP_SUMMARY
+            git diff --stat src/i18n/ >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate diff summary for PR body
+        if: steps.diff.outputs.changed == 'true'
+        id: summary
+        run: |
+          {
+            echo "summary<<EOF"
+            echo "## 辞書 weekly 自動更新"
+            echo ""
+            echo "POE2DB / RePoE / trade2 から最新辞書を取得しました。"
+            echo ""
+            echo "## 差分 (件数ベース)"
+            echo '```'
+            git diff --stat src/i18n/
+            echo '```'
+            echo ""
+            echo "## 詳細件数"
+            for f in src/i18n/unique-mods-ja.json src/i18n/unique-names-ja.json src/i18n/poe2-flavour-ja.json src/i18n/mod-tier-and-group.json src/i18n/trade2-stat-mapping.json; do
+              if [ -f "$f" ]; then
+                count=$(node -e "const d=require('./$f');console.log(Array.isArray(d)?d.length:typeof d==='object'?Object.keys(d).length:0)")
+                echo "- \`$f\`: ${count} entries"
+              fi
+            done
+            echo ""
+            echo "自動生成: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            chore(dicts): weekly auto-update from POE2DB / RePoE / trade2
+
+            POE2DB / RePoE / trade2 から最新辞書を取得した結果の差分。
+            新ユニュ・新 MOD・新 stat フィルター追加に追従。
+          title: "[auto] 辞書週次更新"
+          body: ${{ steps.summary.outputs.summary }}
+          branch: auto/dict-update
+          delete-branch: true
+          labels: |
+            automated
+            dictionaries
+
+      - name: No-op (no changes)
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "::notice::No dictionary changes detected this week."
