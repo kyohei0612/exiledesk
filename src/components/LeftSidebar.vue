@@ -9,14 +9,14 @@ interface NavItem {
   group: "economy" | "tools";
 }
 
-// アイコンは visual-concept §5.5 / §8.2 で確定した錬金術記号セット (☉🜔📜⚙)。
-// ☉ = 通貨ランキング / 🜔 = クラフト発見 / 📜 = クラフト相談 / ⚙ = 設定
+// アイコンは visual-concept §5.5 / §8.2 で確定した錬金術記号セット (☉🜔⚙)。
+// ☉ = 通貨ランキング / 🜔 = クラフト発見 / ⚙ = 設定
 // 設定タブは Phase A.6 時点では未実装機能のため items から除外する。
 const items: NavItem[] = [
-  { id: "econ-currency", icon: "☉", label: "通貨ランキング", group: "economy" },
-  { id: "econ-trending", icon: "🜔", label: "クラフト発見", group: "economy" },
-
-  { id: "tool-craft", icon: "📜", label: "クラフト相談", group: "tools" },
+  { id: "econ-currency", icon: "☉", label: "カレンシーランキング", group: "economy" },
+  // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
+  // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
+  { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
 ];
 
 const groupLabels: Record<string, string | null> = {
@@ -24,11 +24,13 @@ const groupLabels: Record<string, string | null> = {
   tools: "ツール",
 };
 
-const groups = (["economy", "tools"] as const).map((key) => ({
-  key,
-  label: groupLabels[key],
-  items: items.filter((i) => i.group === key),
-}));
+const groups = (["economy", "tools"] as const)
+  .map((key) => ({
+    key,
+    label: groupLabels[key],
+    items: items.filter((i) => i.group === key),
+  }))
+  .filter((g) => g.items.length > 0);
 </script>
 
 <template>
@@ -60,14 +62,14 @@ const groups = (["economy", "tools"] as const).map((key) => ({
           ]"
         >
           <!--
-            アイコン (☉🜔📜) は Cinzel の unicode-range 外なので、
+            アイコン (☉🜔) は Cinzel の unicode-range 外なので、
             font-display 指定の影響を受けず Yu Gothic UI / 絵文字フォントに落ちる。
             ラベル日本語も同様に自動フォールバック (visual-concept §9.6)。
           -->
           <span class="w-5 inline-block text-center" aria-hidden="true">{{
             item.icon
           }}</span>
-          <span>{{ item.label }}</span>
+          <span class="whitespace-nowrap">{{ item.label }}</span>
         </button>
       </div>
     </nav>

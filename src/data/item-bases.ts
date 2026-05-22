@@ -1,6 +1,5 @@
 /**
  * PoB の Data/Bases/*.lua から抽出した item base 情報。
- * 武器ベースは base ごとに implicit (暗黙 mod) が違うため、CraftHelper でベース選択 UI を提供。
  *
  * 元データ: vendor/PathOfBuilding-PoE2/src/Data/Bases/<category>.lua
  * 抽出スクリプト: scripts/extract-item-bases.mjs

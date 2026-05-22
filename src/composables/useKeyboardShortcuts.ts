@@ -4,9 +4,9 @@
 // ショートカット仕様を集約する composable。
 //
 // 責務分割:
-//   - グローバル系 (Ctrl+1/2/3, Ctrl+,, Ctrl+Q):
+//   - グローバル系 (Ctrl+1/2, Ctrl+,, Ctrl+Q):
 //       この composable が直接処理する。activeNav の切替および Tauri 終了。
-//   - 画面固有系 (/, ↑↓, s, r, Ctrl+Enter, f, Esc 等):
+//   - 画面固有系 (/, ↑↓, s, r, f, Esc 等):
 //       各画面側から `registerHandler` でコールバックを登録する。複数画面が
 //       同じキーを使うため、最後に登録したハンドラが有効になる (画面切替時
 //       にマウントされた画面のものが優先される、という設計)。
@@ -14,8 +14,7 @@
 // 入力中ガード:
 //   input / textarea / contenteditable にフォーカスがある状態では、修飾なし
 //   の文字キー (/, s, r, f, Esc 等) は誤発火させない。修飾キーつき
-//   (Ctrl+1 等) や Ctrl+Enter はガードを通過する (Ctrl+Enter は CraftHelper
-//   の textarea から実行する想定)。
+//   (Ctrl+1 等) はガードを通過する。
 //
 // SSR/テスト互換:
 //   document が無い環境では何もしない。
@@ -32,16 +31,16 @@ export type ShortcutKey =
   | "sort" // s
   | "refresh" // r
   | "filter-toggle" // f (EconDashboard のホット度フィルタ等)
-  | "submit" // Ctrl+Enter (CraftHelper AI 実行)
   | "escape"; // Esc
 
 export type ShortcutHandler = (e: KeyboardEvent) => void;
 
 /** 設計書 Phase A.8: ナビ ID は LeftSidebar.vue と一致させる */
+// 2026-05-22: econ-trending (旧クラフト発見) は LeftSidebar から削除済。
+// Ctrl+2 は現行の「上位プレイヤーMOD一覧」(craft-v2) に割り当て直す。
 const NAV_BY_DIGIT: Record<string, string> = {
   "1": "econ-currency",
-  "2": "econ-trending",
-  "3": "tool-craft",
+  "2": "craft-v2",
 };
 
 export interface UseKeyboardShortcutsOptions {
@@ -180,13 +179,6 @@ export function useKeyboardShortcuts(
         } else {
           void quitTauri();
         }
-        return;
-      }
-
-      // Ctrl+Enter → 画面固有 (CraftHelper の AI 実行)
-      if (e.key === "Enter") {
-        const handled = dispatch("submit", e);
-        if (handled) e.preventDefault();
         return;
       }
 

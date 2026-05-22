@@ -2,11 +2,7 @@
  * POE2 アイテムテキストパーサー（クリップボード形式）
  *
  * ゲーム内 Ctrl+C / トレードサイト の "Item Class: ... ---- Item Level: N ----- mod 行..." 形式を
- * 構造化する。日本語版・英語版の両方に対応。
- *
- * このモジュールは CraftHelper.vue から切り出した共通パーサー。
- * tool-dps（装備 DPS 比較ビュー）も同じパース仕様で動作することで、
- * UX 統一・メンテナンス簡素化を図る。
+ * 構造化する。日本語版・英語版の両方に対応。tool-dps（装備 DPS 比較ビュー）で使用。
  */
 
 export interface ParsedClipboard {

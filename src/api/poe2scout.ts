@@ -107,28 +107,45 @@ export interface RankedPair {
   oneDivinePrice: number;
   /** 1 単位の CurrencyTwo の Divine 価格 */
   twoDivinePrice: number;
+  /** 1 単位の CurrencyOne の Chaos 換算価格 (0 ならレート未取得) */
+  oneChaosPrice: number;
+  /** 1 単位の CurrencyTwo の Chaos 換算価格 */
+  twoChaosPrice: number;
   /** ペアに Divine Orb が含まれるか */
   containsDivine: boolean;
   /** CurrencyOne のカテゴリ ID（例: "currency", "essence", "omen"） */
   oneCategoryApiId: string;
   /** CurrencyTwo のカテゴリ ID */
   twoCategoryApiId: string;
+  /** CurrencyOne の ApiId (アービトラージ検出用、ペア間で同 Item を識別) */
+  oneApiId: string;
+  /** CurrencyTwo の ApiId */
+  twoApiId: string;
 }
 
 const DIVINE_API_ID = "divine";
 
 /**
  * 取引量降順でランキング。Divine 含むペアは Divine を CurrencyOne 側に正規化。
- * 各ペアの「1 神あたりの相手通貨数」も計算する。
+ * 各ペアの「1 神あたりの相手通貨数」「Chaos 換算価格」も計算する。
  *
  * @param pairs poe2scout SnapshotPairs レスポンス
  * @param divinePrice 1 神 = ? base通貨 (リーグ data の DivinePrice)
+ * @param chaosDivinePrice 1 神 = ? Chaos (リーグ data の ChaosDivinePrice、
+ *   = Chaos per Divine。通常 >1 で Divine の方が Chaos より高価)
  */
 export function rankPairsByVolume(
   pairs: SnapshotPair[],
   divinePrice: number,
+  chaosDivinePrice: number,
 ): RankedPair[] {
   const safeDivinePrice = divinePrice > 0 ? divinePrice : 1;
+  const safeChaosDivinePrice = chaosDivinePrice > 0 ? chaosDivinePrice : 1;
+  // 1 Chaos の base 通貨 (Exalted) 建て価格
+  //   1 神 = chaosDivinePrice カオス
+  //   1 神 = divinePrice 高貴(Exalted)
+  //   ⇒ 1 カオス = divinePrice / chaosDivinePrice 高貴
+  const chaosExaltedPrice = safeDivinePrice / safeChaosDivinePrice;
 
   return pairs
     .map((p) => {
@@ -154,9 +171,20 @@ export function rankPairsByVolume(
       const oneDivinePrice = oneRel > 0 ? oneRel / safeDivinePrice : 0;
       const twoDivinePrice = twoRel > 0 ? twoRel / safeDivinePrice : 0;
 
+      // 1 単位を買うのに必要な Chaos 数
+      const oneChaosPrice = oneRel > 0 ? oneRel / chaosExaltedPrice : 0;
+      const twoChaosPrice = twoRel > 0 ? twoRel / chaosExaltedPrice : 0;
+
+      // volume は「取引個数」ベースで集計する (Exalted 建て総額の `p.Volume` だと
+      // Mirror / Headhunter のような単価異常アイテムが上位に来てしまうため)。
+      // 両通貨の VolumeTraded を合算 = ペア全体の取引フロー量
+      const oneVol = oneData?.VolumeTraded ?? 0;
+      const twoVol = twoData?.VolumeTraded ?? 0;
+      const tradeVolume = oneVol + twoVol;
+
       return {
         id: p.CurrencyExchangeSnapshotPairId,
-        volume: parseFloat(p.Volume),
+        volume: tradeVolume,
         oneText: one.Text,
         oneIcon: one.IconUrl,
         oneRelativePrice: oneRel,
@@ -168,24 +196,19 @@ export function rankPairsByVolume(
         twoDivineRate,
         oneDivinePrice,
         twoDivinePrice,
+        oneChaosPrice,
+        twoChaosPrice,
         containsDivine,
         oneCategoryApiId: one.CategoryApiId,
         twoCategoryApiId: two.CategoryApiId,
+        oneApiId: one.ApiId,
+        twoApiId: two.ApiId,
       };
     })
     .filter((r) => r.volume > 0 && Number.isFinite(r.volume))
-    .sort((a, b) => {
-      // 神換算が高い順
-      // Divine ペア: 非 Divine 側 (one) の価格 / 非 Divine ペア: max(両通貨)
-      // ※ 同じアイテムが別ルート (Divine 直 vs Exalted 経由など) で違う神価格になる
-      // のは実データ通り — アービトラージが見える化される
-      const aVal = a.containsDivine
-        ? a.oneDivinePrice
-        : Math.max(a.oneDivinePrice, a.twoDivinePrice);
-      const bVal = b.containsDivine
-        ? b.oneDivinePrice
-        : Math.max(b.oneDivinePrice, b.twoDivinePrice);
-      if (bVal !== aVal) return bVal - aVal;
-      return b.volume - a.volume;
-    });
+    .sort((a, b) => b.volume - a.volume);
+  // 2026-05-22 修正: 関数名 (rankPairsByVolume) どおり「取引量降順」に統一。
+  //   以前は「神換算降順 (Divine 側 or max(両通貨))」でソートしていたが、UI 名 "ランキング"
+  //   と乖離して Mirror / Perfect Essence のような超高額・低取引量アイテムが 1 位に来ていた。
+  //   アービトラージ見える化が必要なら別オプションとして将来追加検討。
 }

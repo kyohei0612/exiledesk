@@ -11,7 +11,7 @@
 
 const categoryJaMap: Record<string, string> = {
   // === 通貨基本 ===
-  currency: "通貨",
+  currency: "カレンシー",
   shard: "シャード",
   catalyst: "カタリスト",
   splinter: "スプリンター",
@@ -30,7 +30,7 @@ const categoryJaMap: Record<string, string> = {
   expedition: "エクスペディション",
   sanctum: "サンクタム",
   ritual: "リチュアル",
-  delirium: "ディリリアム",
+  delirium: "デリリウム",
   breach: "ブリーチ",
   ultimatum: "アルティメイタム",
   abyss: "アビス",
@@ -43,8 +43,8 @@ const categoryJaMap: Record<string, string> = {
   soulcore: "ソウルコア",
   tablet: "タブレット",
   idol: "アイドル",
-  lineagesupportgems: "ラインエイジサポートジェム",
-  uncutgems: "未加工ジェム",
+  lineagesupportgems: "リネージュサポート",
+  uncutgems: "ジェムの原石",
   vaultkeys: "聖遺物の鍵",
 
   // === ジェム系（参考、Currency Exchange に通常無いが将来用） ===

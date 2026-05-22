@@ -139,9 +139,6 @@
  *
  * 日本語コードポイントは subset から除外し、OS の Yu Gothic UI / Meiryo
  * に委譲する。これによりラテン書体 woff2 サイズを抑える。
- *
- * Cormorant Garamond はクラフト相談画面 onMounted で動的注入する
- * （CraftHelper.vue 側、A 案 §4.3 参照）。ここでは定義しない。
  * ============================================================ */
 @font-face {
   font-family: 'Inter Variable';

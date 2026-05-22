@@ -35,4 +35,7 @@ flate2 = "1"
 anyhow = "1"
 # POE2 trade2 API (CORS 制約のためブラウザ直叩き不可、Rust 側 proxy 必須)
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+# poe.ninja クライアント (Phase β): Semaphore で並列度制御、tokio::spawn で並列実行
+# (futures::join_all は使わず、JoinHandle を手書きループで集約することで依存を最小化)
+tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
 

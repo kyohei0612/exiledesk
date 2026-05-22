@@ -5,9 +5,14 @@ pub mod pob;  // PoB-PoE2 ヘッドレス連携（Phase 2、PobWorker thread + 4
 pub mod claude_code;  // Claude Code (claude CLI) spawn → MAX プラン OAuth 経由のトークン消費
 pub mod trade2;  // POE2 公式 trade2 API client (CORS 制約 + rate limit のため Rust 経由)
 pub mod craft_discovery_storage;  // クラフト発見君の累積データ JSON 永続化 (app_data_dir)
+pub mod craft_v2_storage;  // Phase ζ: クラフト発見 V2 のディスクキャッシュ (差分更新用)
+pub mod poe_ninja_client;  // Phase β: poe.ninja クライアント (search protobuf decode + character endpoint)
 
 use std::path::PathBuf;
 
+/// テンプレ由来 (`tauri create-app` の hello world example)。
+/// Low-L9 (2026-05-22): 実プロダクトでは未使用。削除可能だが、
+/// invoke_handler 登録から外すと UI 側の dev サンプルが壊れる懸念があるため残置。
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -56,6 +61,12 @@ pub fn run() {
             craft_discovery_storage::discovery_load,
             craft_discovery_storage::discovery_load_prev,
             craft_discovery_storage::discovery_clear,
+            craft_v2_storage::craft_v2_cache_load,
+            craft_v2_storage::craft_v2_cache_save,
+            craft_v2_storage::craft_v2_cache_clear,
+            poe_ninja_client::craft_v2_fetch_all,
+            poe_ninja_client::craft_v2_cancel,
+            poe_ninja_client::fetch_economy_leagues,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

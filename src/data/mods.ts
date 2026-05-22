@@ -266,9 +266,6 @@ export function modCanAppearAsKindOnSlot(
   if (kind === "essence") {
     // kind="essence" の 44 件はほぼ全て spawn を持たない（OR タイプ EssenceDisplay 系・
     // is_essence_only=true 群）。slot 別表示の根拠が無いため、ここでは spawn match のみで通す。
-    // 「ゲーム内エッセンスサフィックス/プレフィックス」(画像3 等で見える) の正体は、
-    // normal kind だが key に `Essence` を含む 191 件で、CraftHelper の partitionBySpecialKind の
-    // tierEffectiveKind() が essence section に振り分ける。
     return false;
   }
 
