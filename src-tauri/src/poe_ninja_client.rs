@@ -68,7 +68,14 @@ const USER_AGENT: &str = "ExileDesk/0.1.4 (POE2 craft discovery; contact: nekodo
 /// 2026-05-23 第3回: ON/OFF の burst でも秒スケールで 1015 食らうことを実機で観測。
 /// 「Cloudflare は burst を検出する」結論で完全シリアルに戻す。500ms。
 /// ON/OFF 機構自体はコードに残置 (OFF_PERIOD=0 で実質無効化)、将来再有効化用。
-const MIN_REQUEST_INTERVAL_MS: u64 = 500;
+/// 2026-05-23 第4回: コミュニティ情報で GGG 公式の rate limit が判明:
+///   短期 12秒/5回 (= 0.42 req/sec 上限)
+///   中期 62秒/15回 (= 0.24 req/sec 上限)
+///   長期 302秒/30回 (= 0.099 req/sec 上限)
+/// 500ms (2.0 req/sec) は全制限超過 → 2500ms (0.4 req/sec) に緩和、
+/// 短期制限ぎりぎりクリア。長期制限は超えるが poe.ninja キャッシュサーバは
+/// GGG より緩い説があり、まず試す。510 req × 2.5秒 = 21 分。
+const MIN_REQUEST_INTERVAL_MS: u64 = 2500;
 
 /// キャラ並列 fetch の上限 (Semaphore のキャパシティ)。
 /// 2026-05-23 第2回: 2→1 に減らして完全シリアル送信、burst ゼロ。
