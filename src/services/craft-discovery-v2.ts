@@ -154,6 +154,31 @@ export interface CraftV2ErrorPayload {
   error?: string;
 }
 
+/**
+ * 2026-05-23: per-character 進捗イベント (Rust `craft-v2-character-progress` のミラー)。
+ *
+ * 用途: ヘッダーに「現在の動作 (search / fetching / completed)」と「並列度」を表示する。
+ * Rust 側は 5 キャラ毎にバッチ emit する (= 並列 4 で約 1 秒に 1 回)。
+ */
+export interface CharacterProgressInfo {
+  ascendancy: string;
+  charactersDone: number;
+  charactersTotal: number;
+  /** 現在 fetch 中の並列タスク数 (snapshot) */
+  currentConcurrency: number;
+  /** "search" = 上位プレイヤー検索中 / "fetching" = キャラ取得中 / "completed" = アセ完了 */
+  phase: "search" | "fetching" | "completed";
+}
+
+/** Rust 側 serde の snake_case payload (UI に渡す前に camelCase に変換) */
+interface CharacterProgressInfoRaw {
+  ascendancy: string;
+  characters_done: number;
+  characters_total: number;
+  current_concurrency: number;
+  phase: "search" | "fetching" | "completed";
+}
+
 // ----------------------------------------------------------------------------
 // Phase ζ: ディスクキャッシュ型 (Rust 側 CraftV2Cache のミラー)
 // ----------------------------------------------------------------------------
@@ -1457,6 +1482,17 @@ export interface StartCraftDiscoveryV2Options {
    *   (= リーグ違うとキャッシュ流用せず再取得、キャッシュは単一ファイルなので上書き)
    */
   leagueUrl?: string;
+  /**
+   * 2026-05-23: per-character 進捗イベントフック。
+   *
+   * Rust 側が `craft-v2-character-progress` event を 5 キャラ毎にバッチ emit する。
+   * UI 側はヘッダーに「📥 ブラッドメイジ 32/50 (4 並列)」のように表示する想定。
+   *
+   * - phase="search"    : 上位プレイヤー検索中 (キャラ未確定 → total は暫定値)
+   * - phase="fetching"  : キャラ取得中
+   * - phase="completed" : アセ完了 (UI 側でフェーズ表示をクリアする目印)
+   */
+  onCharacterProgress?: (info: CharacterProgressInfo) => void;
 }
 
 // Phase ξ: poe.ninja の economyLeagues 一覧 (動的取得)
@@ -1517,6 +1553,7 @@ export async function startCraftDiscoveryV2(
     onCacheReady,
     useCache = true,
     leagueUrl,
+    onCharacterProgress,
   } = options;
 
   // ---- Phase ζ: キャッシュロード + 即時 UI 反映 ----
@@ -1540,8 +1577,8 @@ export async function startCraftDiscoveryV2(
     }
   }
 
-  // listen は async なので 4 つ並列に await する (Phase θ で checkpoint 追加)
-  const [unProgress, unError, unDone, unCheckpoint] = await Promise.all([
+  // listen は async なので 5 つ並列に await する (2026-05-23 で per-character progress 追加)
+  const [unProgress, unError, unDone, unCheckpoint, unCharProgress] = await Promise.all([
     listen<CraftV2Progress>("craft-v2-progress", (e) => {
       try {
         const agg = aggregateFromProgress(e.payload);
@@ -1574,6 +1611,20 @@ export async function startCraftDiscoveryV2(
     listen<CraftV2Cache>("craft-v2-checkpoint", (e) => {
       void saveCraftV2Cache(e.payload);
     }),
+    // 2026-05-23: per-character 進捗 event (Rust 側は 5 キャラ毎バッチ emit)。
+    // onCharacterProgress 未指定なら listen 自体は登録するがコールバック呼ばないだけ
+    // (unlisten 戻り値の整合性を保つため、必ず登録する)。
+    listen<CharacterProgressInfoRaw>("craft-v2-character-progress", (e) => {
+      if (!onCharacterProgress) return;
+      const raw = e.payload;
+      onCharacterProgress({
+        ascendancy: raw.ascendancy,
+        charactersDone: raw.characters_done,
+        charactersTotal: raw.characters_total,
+        currentConcurrency: raw.current_concurrency,
+        phase: raw.phase,
+      });
+    }),
   ]);
 
   const unlistenAll: UnlistenFn = () => {
@@ -1594,6 +1645,11 @@ export async function startCraftDiscoveryV2(
     }
     try {
       unCheckpoint();
+    } catch {
+      /* noop */
+    }
+    try {
+      unCharProgress();
     } catch {
       /* noop */
     }

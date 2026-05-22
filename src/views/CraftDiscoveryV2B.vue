@@ -24,6 +24,7 @@ import {
   openTrade2ForUnique,
   fetchEconomyLeagues,
   type AggregatedAscendancy,
+  type CharacterProgressInfo,
   type LeagueInfo,
   type ModEntry,
   type SlotKey,
@@ -183,6 +184,20 @@ const lastUpdatedAt = ref<string | null>(null);
 
 /** 現在取得中のアセンダンシー名 (一番最後に来た progress 名で代用) */
 const currentlyFetching = ref<string | null>(null);
+
+/**
+ * 2026-05-23: per-character 進捗情報。
+ *
+ * Rust 側の `craft-v2-character-progress` event を受けて、ヘッダーに
+ * 「現在何をしているか」を表示するための state。
+ *
+ * - phase="search"    : 上位プレイヤー検索中
+ * - phase="fetching"  : キャラ取得中 (N/M キャラ + 並列度)
+ * - phase="completed" : アセ完了 → null にクリア (UI から消える)
+ *
+ * `loading=false` (onDone / onFatal) でも null クリアする。
+ */
+const currentPhase = ref<CharacterProgressInfo | null>(null);
 
 // Phase ξ: poe.ninja リーグ選択
 /** 動的取得した全リーグ一覧 (通常/HC/SSF/Standard 等、起動時 1 回 fetch) */
@@ -529,6 +544,7 @@ async function startFetch(useCache: boolean = true): Promise<void> {
   snapshot.value = null;
   lastUpdatedAt.value = null;
   currentlyFetching.value = null;
+  currentPhase.value = null;
   showingFromCache.value = false;
   cacheItemCount.value = 0;
 
@@ -576,6 +592,7 @@ async function startFetch(useCache: boolean = true): Promise<void> {
       snapshot.value = snap;
       loading.value = false;
       currentlyFetching.value = null;
+      currentPhase.value = null;
       lastUpdatedAt.value = formatHms(new Date());
       showingFromCache.value = false;
     },
@@ -583,7 +600,20 @@ async function startFetch(useCache: boolean = true): Promise<void> {
       fatalError.value = msg;
       loading.value = false;
       currentlyFetching.value = null;
+      currentPhase.value = null;
       showingFromCache.value = false;
+    },
+    // 2026-05-23: per-character 進捗イベント。Rust 側が 5 キャラ毎にバッチ emit。
+    // phase="completed" 受信時は表示をクリア (次のアセ開始時に search/fetching で再上書きされる)。
+    onCharacterProgress: (info) => {
+      if (info.phase === "completed") {
+        // 同じアセの「直近フェーズ」だった場合のみクリア (別アセが既に search 開始済なら残す)
+        if (currentPhase.value?.ascendancy === info.ascendancy) {
+          currentPhase.value = null;
+        }
+      } else {
+        currentPhase.value = info;
+      }
     },
   });
   unlistenRef = un;
@@ -1301,9 +1331,52 @@ function pct(count: number): string {
             </template>
           </span>
           <!--
+            2026-05-23: per-character 進捗フェーズ表示。
+            ユーザー指摘「取得中ってのは新しいキャラを取り込むときの取得中の事だよ?
+            何で何も取得中に待ってる感じにしてんの」への対応。
+
+            phase 別の配色 (visual-concept §5/§8 暖色基調と整合):
+              - search   : 青系 (sky)  = 探索フェーズ
+              - fetching : 緑系 (emerald) = 取得フェーズ
+              - rate-limit (別 span) : amber 系 = ペナルティ待機
+
+            レート制限と共存可能 (= 「リミット待機中 + 直近フェーズ」を同時表示)。
+          -->
+          <span
+            v-if="loading && currentPhase && currentPhase.phase === 'search'"
+            class="inline-flex items-center gap-1 text-[11px] text-sky-300 font-medium"
+            :title="`${currentPhase.ascendancy} の上位プレイヤーを検索中`"
+          >
+            <span aria-hidden="true">🔍</span>
+            上位プレイヤー検索中
+            <span class="text-sky-200/80 text-[10px]"
+              >({{ currentPhase.ascendancy }})</span
+            >
+          </span>
+          <span
+            v-else-if="loading && currentPhase && currentPhase.phase === 'fetching'"
+            class="inline-flex items-center gap-1 text-[11px] text-emerald-300 font-medium"
+            :title="`${currentPhase.ascendancy} のキャラ装備を取得中`"
+          >
+            <span aria-hidden="true">📥</span>
+            キャラ取得中
+            <span class="text-emerald-200/90 tabular-nums"
+              >{{ currentPhase.ascendancy }}:
+              {{ currentPhase.charactersDone }}/{{ currentPhase.charactersTotal }}</span
+            >
+            <span
+              v-if="currentPhase.currentConcurrency > 0"
+              class="text-emerald-200/70 text-[10px] tabular-nums"
+            >
+              ({{ currentPhase.currentConcurrency }} 並列)
+            </span>
+          </span>
+
+          <!--
             2026-05-23: レート制限ペナルティ中の残秒数表示。
             取得中 (loading=true) かつペナルティ待機中 (rateLimitStatus.waiting) のみ表示。
             暖色トーンに合わせて amber 系 (visual-concept §5/§8 と整合)。
+            per-character 進捗とは別 span なので両方並んで表示される。
           -->
           <span
             v-if="loading && rateLimitStatus?.waiting"

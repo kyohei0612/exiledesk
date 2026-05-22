@@ -27,7 +27,7 @@
 //! @date 2026-05-22
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -157,6 +157,42 @@ pub fn craft_v2_cancel() {
 //   - lock-free / lock 制御は「アクセス頻度」と「データ型」のバランス選択
 static CURRENT_PENALTY_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
 static LAST_PENALTY_REASON: StdMutex<Option<String>> = StdMutex::new(None);
+
+// ============================================================================
+// per-character 進捗可視化 (2026-05-23)
+// ============================================================================
+//
+// 目的:
+//   ユーザー指摘「取得中ってのは新しいキャラを取り込むときの取得中の事だよ?
+//   何で何も取得中に待ってる感じにしてんの」への対応。
+//   1 アセ内のキャラ取得進捗 (32/50 など) と現在の並列度を UI に流す。
+//
+// 設計判断:
+//   - `ACTIVE_FETCH_COUNT`: AtomicUsize、`http_get_with_backoff` 前後で fetch_add/sub。
+//     並列度 snapshot は emit 時に `load(Relaxed)` で読み込むのみ — lock 不要。
+//   - per-character emit は **5 キャラ毎にバッチ** (= 並列 4 で動いてる時、約 1 秒に 1 回)
+//     にする。全 50 キャラ毎回 emit すると Tauri IPC オーバーヘッドが上がる。
+//     例外: phase 切り替え時 (search→fetching, fetching→completed) は即時 emit。
+
+/// 現在 outbound HTTP リクエストを発行中のタスク数。
+/// `http_get_with_backoff` の入口で +1、return 直前 (await 後) で -1。
+/// per-character progress emit 時に `current_concurrency` として詰める。
+static ACTIVE_FETCH_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+/// fetch ループ内で active fetch count を増減する RAII guard。
+/// Drop で必ず減らすので、panic / early return / await 中断のどれでも漏れない。
+struct ActiveFetchGuard;
+impl ActiveFetchGuard {
+    fn new() -> Self {
+        ACTIVE_FETCH_COUNT.fetch_add(1, Ordering::Relaxed);
+        Self
+    }
+}
+impl Drop for ActiveFetchGuard {
+    fn drop(&mut self) {
+        ACTIVE_FETCH_COUNT.fetch_sub(1, Ordering::Relaxed);
+    }
+}
 
 /// 現在のレート制限ペナルティ状態 (TS UI の polling 用)。
 #[derive(Serialize, Clone, Debug)]
@@ -292,6 +328,32 @@ pub struct CraftV2Progress {
     pub items: Vec<CharacterItems>,
 }
 
+/// per-character 単位の進捗イベント payload (Tauri emit 用、2026-05-23 追加)。
+///
+/// アセ内のキャラ取得が「今どこまで進んでいるか」「何をしている最中か」を可視化するため、
+/// `craft-v2-character-progress` event で emit される。UI 側でヘッダーに
+/// 「📥 ブラッドメイジ 32/50 (4 並列)」のように表示する。
+///
+/// 発火タイミング:
+///   - phase="search"    : `fetch_search_top_n` 呼出**前**に 1 回 (上位プレイヤー検索開始)
+///   - phase="fetching"  : 5 キャラ完了毎にバッチ emit (per-character オーバーヘッド削減)
+///   - phase="completed" : アセ完了時に 1 回 (UI のクリア用)
+#[derive(Serialize, Clone, Debug)]
+pub struct CraftV2CharacterProgress {
+    /// アセンダンシー名 (例: "Blood Mage")
+    pub ascendancy: String,
+    /// 既に取得済 (成功 + 失敗合計、流用分は含めない)
+    pub characters_done: usize,
+    /// 該当アセの取得対象キャラ数 (search で得た総数 = 通常 50、検索失敗時は 0)
+    pub characters_total: usize,
+    /// 現在 fetch 中の並列タスク数 (= ACTIVE_FETCH_COUNT snapshot)。
+    /// emit 時点での観測値なので「ちょうど 0」が一瞬で見えることもあるが、UX 上は
+    /// 「何個並列で走ってる」目安が立てば十分。
+    pub current_concurrency: usize,
+    /// "search" | "fetching" | "completed"
+    pub phase: String,
+}
+
 /// 取得完了時に return / craft-v2-done event で返す結果。
 /// TS 側は `cache` を `craft_v2_cache_save` で永続化する。
 #[derive(Serialize, Clone, Debug)]
@@ -416,6 +478,9 @@ async fn http_get_with_backoff(
     gate: &RateGate,
     url: &str,
 ) -> Result<reqwest::Response, String> {
+    // 2026-05-23: per-character 進捗の「並列度」表示用に active fetch count を増減する。
+    // RAII guard なので panic / early return / await 中断のどれでも必ず drop で -1 される。
+    let _active_guard = ActiveFetchGuard::new();
     let mut backoff_ms = BACKOFF_INITIAL_MS;
     for attempt in 0..=MAX_RETRIES {
         gate.acquire().await;
@@ -943,6 +1008,20 @@ pub async fn craft_v2_fetch_all(
         let prev_asc_opt = prev_by_class.get(&asc.class).cloned();
 
         let asc_future = async move {
+            // 2026-05-23: search 開始時に phase="search" を emit。
+            // total は確定前なので暫定で top_n_per_ascendancy_ref (= 通常 50) を入れる。
+            // 検索失敗時は phase="completed" で done=0, total=0 を emit して UI をクリアする。
+            let _ = window_ref.emit(
+                "craft-v2-character-progress",
+                &CraftV2CharacterProgress {
+                    ascendancy: asc_class.clone(),
+                    characters_done: 0,
+                    characters_total: top_n_per_ascendancy_ref,
+                    current_concurrency: ACTIVE_FETCH_COUNT.load(Ordering::Relaxed),
+                    phase: "search".to_string(),
+                },
+            );
+
             let chars = match fetch_search_top_n(
                 &client_ref,
                 &gate_ref,
@@ -962,6 +1041,17 @@ pub async fn craft_v2_fetch_all(
                             "phase": "search",
                             "error": e,
                         }),
+                    );
+                    // UI 側でフェーズ表示を消すために completed を投げる
+                    let _ = window_ref.emit(
+                        "craft-v2-character-progress",
+                        &CraftV2CharacterProgress {
+                            ascendancy: asc_class.clone(),
+                            characters_done: 0,
+                            characters_total: 0,
+                            current_concurrency: ACTIVE_FETCH_COUNT.load(Ordering::Relaxed),
+                            phase: "completed".to_string(),
+                        },
                     );
                     return None;
                 }
@@ -1045,6 +1135,20 @@ pub async fn craft_v2_fetch_all(
             let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(handles.len());
             let mut succeeded: usize = reused_cached.len();
             let mut completed: usize = 0;
+
+            // 2026-05-23: fetching 開始 emit。
+            // 並列タスクが走り出す前の「これから X 件取得する」状態を UI に見せる。
+            // done は reused_cached.len() (流用済) を初期値、total は search で取れた件数。
+            let _ = window_ref.emit(
+                "craft-v2-character-progress",
+                &CraftV2CharacterProgress {
+                    ascendancy: asc_class.clone(),
+                    characters_done: reused_cached.len(),
+                    characters_total: total,
+                    current_concurrency: ACTIVE_FETCH_COUNT.load(Ordering::Relaxed),
+                    phase: "fetching".to_string(),
+                },
+            );
             // 2026-05-23 緊急修正: tokio::time::timeout が future 全体を drop した時、
             // spawn 済みの未完了 handle は JoinHandle が drop されるとタスクは
             // detached 状態になる (キャンセルされない、Tokio の挙動)。
@@ -1095,7 +1199,38 @@ pub async fn craft_v2_fetch_all(
                     };
                     let _ = window_ref.emit("craft-v2-progress", &intermediate);
                 }
+                // 2026-05-23: per-character 進捗 emit。
+                // 5 キャラ毎にバッチ (並列 4 で動いてる時、約 1 秒に 1 回) で十分。
+                // 最後の 1 件 (completed == to_fetch_len) はループ外の completed emit と
+                // 重複させないため除外する。
+                if completed % INTERMEDIATE_EMIT_BATCH == 0 && completed < to_fetch_len {
+                    // succeeded は「流用 + 取得成功」、completed は「新規取得分の処理済」。
+                    // UI には「合計 succeeded / total」を見せたいので succeeded を使う。
+                    let _ = window_ref.emit(
+                        "craft-v2-character-progress",
+                        &CraftV2CharacterProgress {
+                            ascendancy: asc_class.clone(),
+                            characters_done: succeeded,
+                            characters_total: total,
+                            current_concurrency: ACTIVE_FETCH_COUNT.load(Ordering::Relaxed),
+                            phase: "fetching".to_string(),
+                        },
+                    );
+                }
             }
+
+            // 2026-05-23: アセ完了時の最終 emit。UI 側でフェーズ表示をクリアする。
+            // done = total になるよう succeeded を入れる (= 全件処理済み)。
+            let _ = window_ref.emit(
+                "craft-v2-character-progress",
+                &CraftV2CharacterProgress {
+                    ascendancy: asc_class.clone(),
+                    characters_done: succeeded,
+                    characters_total: total,
+                    current_concurrency: ACTIVE_FETCH_COUNT.load(Ordering::Relaxed),
+                    phase: "completed".to_string(),
+                },
+            );
 
             // 4. アセンダンシー完了 → 最終 progress emit
             let progress = CraftV2Progress {
