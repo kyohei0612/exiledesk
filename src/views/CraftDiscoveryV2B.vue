@@ -199,6 +199,26 @@ const currentlyFetching = ref<string | null>(null);
  */
 const currentPhase = ref<CharacterProgressInfo | null>(null);
 
+// 2026-05-23: 「動いてるか分からない」問題への対処。
+//   フェーズ表示の経過秒数 + 1Hz tick で UI が常時動くようにする。
+//   N/50 が retry で止まってても秒数は進む → 「停止 / エラー」と区別できる。
+const phaseStartedAt = ref<number>(Date.now());
+const _nowMs = ref<number>(Date.now());
+let nowTicker: ReturnType<typeof setInterval> | null = null;
+// フェーズ識別子 (ascendancy + phase) が変わったら startedAt をリセット
+const _phaseKey = computed<string>(() =>
+  currentPhase.value
+    ? `${currentPhase.value.ascendancy}::${currentPhase.value.phase}`
+    : "",
+);
+watch(_phaseKey, () => {
+  phaseStartedAt.value = Date.now();
+});
+const phaseElapsedSecs = computed<number>(() => {
+  if (!loading.value || !currentPhase.value) return 0;
+  return Math.floor((_nowMs.value - phaseStartedAt.value) / 1000);
+});
+
 // Phase ξ: poe.ninja リーグ選択
 /** 動的取得した全リーグ一覧 (通常/HC/SSF/Standard 等、起動時 1 回 fetch) */
 const availableLeagues = ref<LeagueInfo[]>([]);
@@ -219,26 +239,40 @@ const cacheItemCount = ref<number>(0);
 let unlistenRef: UnlistenFn | null = null;
 
 // ---------------------------------------------------------------------------
-// レート制限待機中表示 (2026-05-23)
+// ネットワーク状態 (レート制限 + retry) 表示 (2026-05-23)
 // ---------------------------------------------------------------------------
-// オーナー指摘:「残り取得中で止まるのって実際何してんの、結構長いけどリミット待ち?
-// リミット制限待機中（●秒）ってカウント欲しい」への対応。
+// オーナー指摘 (第1弾):「残り取得中で止まるのって実際何してんの、結構長いけどリミット待ち?
+// リミット制限待機中（●秒）ってカウント欲しい」
+// オーナー指摘 (第2弾):「キャラ取得中でしばらく止まるのはなんでなん? 途中で止まる時
+// あるけどあれなにしてんのそこ」
 //
-// 取得中 (loading=true) のみ 1 秒ごとに Rust `get_rate_limit_status` を polling して、
-// ペナルティ待機中なら残秒数を UI に表示する。idle 時は polling しない (= ゼロ負荷)。
+// 4 並列のうち 1-2 件が 5xx/429 retry sleep 中で Semaphore permit を握ったまま
+// 動かないとき、N/50 が止まって見える問題への対応として、retry 中タスク数 +
+// 直近 retry の理由 + 残秒数を UI 上に「🔁 再試行中 N 件 (522 残 X 秒)」で可視化。
+//
+// 取得中 (loading=true) のみ 1 秒ごとに Rust `get_network_status` を polling し、
+// rate-limit ペナルティと retry 情報を一括取得する。idle 時は polling しない。
 // ---------------------------------------------------------------------------
-interface RateLimitStatusRaw {
-  waiting: boolean;
-  remaining_secs: number;
-  reason: string | null;
+interface NetworkStatusRaw {
+  global_penalty_waiting: boolean;
+  global_penalty_remaining_secs: number;
+  global_penalty_reason: string | null;
+  active_retry_count: number;
+  last_retry_reason: string | null;
+  last_retry_remaining_secs: number;
 }
-interface RateLimitStatusUi {
-  waiting: boolean;
-  remainingSecs: number;
-  reason: string | null;
+interface NetworkStatusUi {
+  /** rate-limit (=全タスク一斉停止) ペナルティ待機中か */
+  globalPenaltyWaiting: boolean;
+  globalPenaltyRemainingSecs: number;
+  globalPenaltyReason: string | null;
+  /** 現在 retry sleep 中のタスク数 (5xx/429 backoff) */
+  activeRetryCount: number;
+  lastRetryReason: string | null;
+  lastRetryRemainingSecs: number;
 }
-const rateLimitStatus = ref<RateLimitStatusUi | null>(null);
-let rateLimitPoller: ReturnType<typeof setInterval> | null = null;
+const networkStatus = ref<NetworkStatusUi | null>(null);
+let networkStatusPoller: ReturnType<typeof setInterval> | null = null;
 
 // ---------------------------------------------------------------------------
 // ユニーク MOD ホバーオーバーレイ State
@@ -848,37 +882,56 @@ function warnSourceLabel(source?: WarnSource): string {
 // ---------------------------------------------------------------------------
 
 /**
- * 2026-05-23: 取得中 (loading=true) だけ 1 秒ごとに Rust `get_rate_limit_status` を
- * polling して、Cloudflare 1015 / 429 backoff の残秒数を UI に反映する。
+ * 2026-05-23: 取得中 (loading=true) だけ 1 秒ごとに Rust `get_network_status` を
+ * polling し、(a) Cloudflare 1015 / 429 グローバルペナルティ残秒数と (b) 5xx/429
+ * retry sleep 中のタスク数を UI に反映する。
  *
  * - loading=false に戻った瞬間に setInterval をクリア (= idle 中はゼロ負荷)
  * - command 未登録 (旧 Rust バイナリで起動した場合) は catch して静かに無視
- * - waiting=false の応答が来たら rateLimitStatus も null に戻す (= 表示自動消失)
+ * - グローバルペナルティ非待機 + retry 0 件なら networkStatus を null にして
+ *   UI ラベルも自動消失させる
  */
+watch(loading, (isLoadingNow) => {
+  // 2026-05-23: 経過秒数 tick (loading 中だけ 500ms 間隔で _nowMs 更新)
+  if (isLoadingNow) {
+    if (nowTicker) clearInterval(nowTicker);
+    nowTicker = setInterval(() => {
+      _nowMs.value = Date.now();
+    }, 500);
+  } else {
+    if (nowTicker) clearInterval(nowTicker);
+    nowTicker = null;
+  }
+});
+
 watch(loading, (isLoading) => {
   if (isLoading) {
-    if (rateLimitPoller) clearInterval(rateLimitPoller);
-    rateLimitPoller = setInterval(async () => {
+    if (networkStatusPoller) clearInterval(networkStatusPoller);
+    networkStatusPoller = setInterval(async () => {
       try {
-        const s = await invoke<RateLimitStatusRaw>("get_rate_limit_status");
-        if (s.waiting) {
-          rateLimitStatus.value = {
-            waiting: true,
-            remainingSecs: s.remaining_secs,
-            reason: s.reason,
+        const s = await invoke<NetworkStatusRaw>("get_network_status");
+        // どちらかの情報があれば UI に流す。両方ゼロなら null にして表示消失。
+        if (s.global_penalty_waiting || s.active_retry_count > 0) {
+          networkStatus.value = {
+            globalPenaltyWaiting: s.global_penalty_waiting,
+            globalPenaltyRemainingSecs: s.global_penalty_remaining_secs,
+            globalPenaltyReason: s.global_penalty_reason,
+            activeRetryCount: s.active_retry_count,
+            lastRetryReason: s.last_retry_reason,
+            lastRetryRemainingSecs: s.last_retry_remaining_secs,
           };
         } else {
-          // 待機解除 → UI 側のラベルも消す
-          rateLimitStatus.value = null;
+          // 待機解除 + retry 0 → UI ラベルも消す
+          networkStatus.value = null;
         }
       } catch {
         // command 未登録時 (旧バイナリ等) は何もしない。次の polling tick で再試行。
       }
     }, 1000);
   } else {
-    if (rateLimitPoller) clearInterval(rateLimitPoller);
-    rateLimitPoller = null;
-    rateLimitStatus.value = null;
+    if (networkStatusPoller) clearInterval(networkStatusPoller);
+    networkStatusPoller = null;
+    networkStatus.value = null;
   }
 });
 
@@ -917,9 +970,13 @@ onBeforeUnmount(() => {
     unlistenRef = null;
   }
   // 2026-05-23: 取得中 polling の cleanup (画面遷移時にタイマーが残るのを防ぐ)
-  if (rateLimitPoller) {
-    clearInterval(rateLimitPoller);
-    rateLimitPoller = null;
+  if (networkStatusPoller) {
+    clearInterval(networkStatusPoller);
+    networkStatusPoller = null;
+  }
+  if (nowTicker) {
+    clearInterval(nowTicker);
+    nowTicker = null;
   }
 });
 
@@ -1347,18 +1404,21 @@ function pct(count: number): string {
             class="inline-flex items-center gap-1 text-[11px] text-sky-300 font-medium"
             :title="`${currentPhase.ascendancy} の上位プレイヤーを検索中`"
           >
-            <span aria-hidden="true">🔍</span>
+            <span aria-hidden="true" class="animate-pulse">🔍</span>
             上位プレイヤー検索中
             <span class="text-sky-200/80 text-[10px]"
               >({{ currentPhase.ascendancy }})</span
             >
+            <span class="text-sky-200/60 text-[10px] tabular-nums">
+              ⏱ {{ phaseElapsedSecs }} 秒
+            </span>
           </span>
           <span
             v-else-if="loading && currentPhase && currentPhase.phase === 'fetching'"
             class="inline-flex items-center gap-1 text-[11px] text-emerald-300 font-medium"
             :title="`${currentPhase.ascendancy} のキャラ装備を取得中`"
           >
-            <span aria-hidden="true">📥</span>
+            <span aria-hidden="true" class="animate-pulse">📥</span>
             キャラ取得中
             <span class="text-emerald-200/90 tabular-nums"
               >{{ currentPhase.ascendancy }}:
@@ -1370,34 +1430,67 @@ function pct(count: number): string {
             >
               ({{ currentPhase.currentConcurrency }} 並列)
             </span>
+            <span class="text-emerald-200/60 text-[10px] tabular-nums">
+              ⏱ {{ phaseElapsedSecs }} 秒
+            </span>
           </span>
 
           <!--
             2026-05-23: レート制限ペナルティ中の残秒数表示。
-            取得中 (loading=true) かつペナルティ待機中 (rateLimitStatus.waiting) のみ表示。
+            取得中 (loading=true) かつグローバルペナルティ待機中のみ表示。
             暖色トーンに合わせて amber 系 (visual-concept §5/§8 と整合)。
             per-character 進捗とは別 span なので両方並んで表示される。
           -->
           <span
-            v-if="loading && rateLimitStatus?.waiting"
+            v-if="loading && networkStatus?.globalPenaltyWaiting"
             class="inline-flex items-center gap-1 text-[11px] text-amber-300 font-medium"
             :title="
-              rateLimitStatus.reason
-                ? `Cloudflare/サーバから ${rateLimitStatus.reason} を受信、自動再開を待機中`
+              networkStatus.globalPenaltyReason
+                ? `Cloudflare/サーバから ${networkStatus.globalPenaltyReason} を受信、自動再開を待機中`
                 : 'サーバからのレート制限解除を待機中'
             "
           >
-            <span aria-hidden="true">⏱</span>
-            リミット制限待機中（{{ rateLimitStatus.remainingSecs }} 秒）
+            <span aria-hidden="true" class="animate-pulse">⏱</span>
+            リミット制限待機中（{{ networkStatus.globalPenaltyRemainingSecs }} 秒）
             <span
-              v-if="rateLimitStatus.reason"
+              v-if="networkStatus.globalPenaltyReason"
               class="text-amber-200/70 text-[10px]"
             >
-              ({{ rateLimitStatus.reason }})
+              ({{ networkStatus.globalPenaltyReason }})
+            </span>
+          </span>
+
+          <!--
+            2026-05-23: retry sleep 中タスク数表示。
+            4 並列のうち 1-2 件が 5xx/429 backoff で sleep 中だと「N/50 が止まって
+            見える」問題への対応。retry 中タスク数 + 直近 retry 理由 + 残秒数を可視化。
+            色は orange-300/200 (retry イメージ、rate-limit の amber より淡い橙)。
+            rate-limit (グローバルペナルティ) と retry (個別タスク) は別軸なので同時表示可。
+          -->
+          <span
+            v-if="loading && networkStatus && networkStatus.activeRetryCount > 0"
+            class="inline-flex items-center gap-1 text-[11px] text-orange-300 font-medium"
+            :title="
+              networkStatus.lastRetryReason
+                ? `直近の再試行理由: ${networkStatus.lastRetryReason} (sleep 終了まで ${networkStatus.lastRetryRemainingSecs} 秒)`
+                : 'サーバ応答エラーで再試行待機中'
+            "
+          >
+            <span aria-hidden="true" class="animate-pulse">🔁</span>
+            再試行中 {{ networkStatus.activeRetryCount }} 件
+            <span
+              v-if="networkStatus.lastRetryReason"
+              class="text-orange-200/70 text-[10px]"
+            >
+              ({{ networkStatus.lastRetryReason }} 残 {{ networkStatus.lastRetryRemainingSecs }} 秒)
             </span>
           </span>
           <span
-            v-else-if="lastUpdatedAt"
+            v-if="
+              lastUpdatedAt &&
+              !(loading && networkStatus?.globalPenaltyWaiting) &&
+              !(loading && networkStatus && networkStatus.activeRetryCount > 0)
+            "
             class="text-[var(--exile-color-text-secondary)]"
           >
             最終更新: {{ lastUpdatedAt }}

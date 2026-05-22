@@ -195,42 +195,137 @@ impl Drop for ActiveFetchGuard {
     }
 }
 
-/// 現在のレート制限ペナルティ状態 (TS UI の polling 用)。
-#[derive(Serialize, Clone, Debug)]
-pub struct RateLimitStatus {
-    /// 現在ペナルティ待機中か (= until_ms > now)
-    pub waiting: bool,
-    /// 解除まで残り秒数 (waiting=false の時は 0)
-    pub remaining_secs: u64,
-    /// 最後にペナルティを受けた理由 (例: "429 Too Many Requests", "522 Connection Timeout")。
-    /// ペナルティを 1 度も受けていない場合は None。
-    pub reason: Option<String>,
+// ============================================================================
+// retry 中タスク数の可視化 (2026-05-23)
+// ============================================================================
+//
+// 目的:
+//   ユーザー指摘「キャラ取得中でしばらく止まるのはなんでなん? 途中で止まる時あるけど
+//   あれなにしてんのそこ」への対応。4 並列のうち 1-2 件が 5xx/429 backoff の sleep
+//   中なのに、他の完了済キャラの Semaphore permit を解放できず「N/50 が止まって見える」
+//   問題に対し、UI 側で「🔁 再試行中 N 件 (522 Bad Gateway 残 8 秒)」を表示する。
+//
+// 設計判断:
+//   - `ACTIVE_RETRY_COUNT`: AtomicUsize、retry sleep 直前で +1、sleep 完了で -1。
+//     RAII guard で panic / early return も漏れない。
+//   - `LAST_RETRY_INFO`: StdMutex<Option<RetryInfo>>。直近の retry の理由 + 終了時刻
+//     を 1 件だけ保持 (複数並列の場合は最後に書いたもので上書き、UI は 1 行表示なので
+//     これで十分)。読み込みは UI polling 1Hz、書き込みは retry 発生時のみ。
+static ACTIVE_RETRY_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+/// 直近の retry 情報 (UI polling 用)。
+/// `LAST_RETRY_INFO` に格納し、retry sleep 完了後も「最後に何が起きたか」として残す。
+/// `until_ms` が過去になれば UI 側は残秒数 0 として扱う。
+#[derive(Clone, Debug)]
+struct RetryInfo {
+    /// 例: "522 Bad Gateway", "429 Too Many Requests"
+    reason: String,
+    /// sleep が終わる epoch ms (UI 側で `now - until_ms` から残秒数を計算)
+    until_ms: u64,
 }
 
-/// UI が 1 秒ごとに呼ぶ「現在のレート制限状態」command。
-/// AtomicU64 のロードだけなので極めて高速 (polling 中もアプリ全体に影響なし)。
-#[tauri::command]
-pub fn get_rate_limit_status() -> RateLimitStatus {
-    let until_ms = CURRENT_PENALTY_UNTIL_MS.load(Ordering::Relaxed);
+static LAST_RETRY_INFO: StdMutex<Option<RetryInfo>> = StdMutex::new(None);
+
+/// retry sleep 中のタスク数を増減する RAII guard。
+/// `http_get_with_backoff` で sleep 直前に `new()`、sleep 後に drop することで
+/// panic / early return / await 中断のどれでも ACTIVE_RETRY_COUNT が漏れない。
+struct ActiveRetryGuard;
+impl ActiveRetryGuard {
+    fn new() -> Self {
+        ACTIVE_RETRY_COUNT.fetch_add(1, Ordering::Relaxed);
+        Self
+    }
+}
+impl Drop for ActiveRetryGuard {
+    fn drop(&mut self) {
+        ACTIVE_RETRY_COUNT.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+/// 直近 retry の理由 + 終了時刻を global state へ書き込む。
+/// `http_get_with_backoff` の 429/5xx 分岐で sleep 直前に呼ぶ。
+fn record_retry_info(reason: String, retry_after_ms: u64) {
     let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0);
-    let waiting = until_ms > now_ms;
-    let remaining_secs = if waiting {
-        (until_ms - now_ms) / 1000
+    let until_ms = now_ms + retry_after_ms;
+    if let Ok(mut g) = LAST_RETRY_INFO.lock() {
+        *g = Some(RetryInfo { reason, until_ms });
+    }
+}
+
+/// 現在のネットワーク状態 (TS UI の polling 用)。
+///
+/// 旧 `RateLimitStatus` を発展させ、retry 情報も統合した payload。
+/// rename 経緯 (2026-05-23): 「4 並列の 1-2 件が retry sleep 中」の表示が
+/// rate-limit ペナルティとは別軸で必要になったため、命名も `NetworkStatus`
+/// (= 通信全般の現在状態) に広げた。
+#[derive(Serialize, Clone, Debug)]
+pub struct NetworkStatus {
+    /// 現在グローバルペナルティ待機中か (= until_ms > now)。
+    /// 旧 `waiting` のリネーム — 「rate-limit ペナルティ (= 全タスク一斉停止)」用。
+    pub global_penalty_waiting: bool,
+    /// グローバルペナルティ解除まで残り秒数 (waiting=false の時は 0)
+    pub global_penalty_remaining_secs: u64,
+    /// 最後にグローバルペナルティを受けた理由 (例: "429 Too Many Requests")
+    pub global_penalty_reason: Option<String>,
+    /// 現在 retry sleep 中のタスク数 (5xx/429 backoff 中)。
+    /// 4 並列中で 1-2 件が retry なら 1 or 2、全件正常なら 0。
+    pub active_retry_count: usize,
+    /// 直近 retry の理由 (例: "522 Bad Gateway")。retry 一度も発生していなければ None。
+    pub last_retry_reason: Option<String>,
+    /// 直近 retry の残秒数 (sleep 終了予定までの残り)。
+    /// `LAST_RETRY_INFO.until_ms` が過去になれば 0 を返す。
+    pub last_retry_remaining_secs: u64,
+}
+
+/// UI が 1 秒ごとに呼ぶ「現在のネットワーク状態」command。
+/// AtomicU64/AtomicUsize のロード + 短期 Mutex<Option<...>> ロードだけなので極めて高速。
+///
+/// 旧名 `get_rate_limit_status` からのリネーム (2026-05-23) — retry 情報を含む
+/// より広いネットワーク状態 payload を返すため。TS 側も合わせて更新。
+#[tauri::command]
+pub fn get_network_status() -> NetworkStatus {
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+
+    // --- グローバルペナルティ (旧 RateLimitStatus 相当) ---
+    let penalty_until_ms = CURRENT_PENALTY_UNTIL_MS.load(Ordering::Relaxed);
+    let global_penalty_waiting = penalty_until_ms > now_ms;
+    let global_penalty_remaining_secs = if global_penalty_waiting {
+        (penalty_until_ms - now_ms) / 1000
     } else {
         0
     };
-    // 理由は Mutex で保護されているが lock 競合は実質ゼロ (書き込みは数秒〜数分に 1 回)
-    let reason = LAST_PENALTY_REASON
+    let global_penalty_reason = LAST_PENALTY_REASON
         .lock()
         .ok()
         .and_then(|g| g.clone());
-    RateLimitStatus {
-        waiting,
-        remaining_secs,
-        reason,
+
+    // --- retry 情報 (新規) ---
+    let active_retry_count = ACTIVE_RETRY_COUNT.load(Ordering::Relaxed);
+    let (last_retry_reason, last_retry_remaining_secs) = match LAST_RETRY_INFO.lock().ok().and_then(|g| g.clone()) {
+        Some(info) => {
+            let remaining_secs = if info.until_ms > now_ms {
+                (info.until_ms - now_ms) / 1000
+            } else {
+                0
+            };
+            (Some(info.reason), remaining_secs)
+        }
+        None => (None, 0),
+    };
+
+    NetworkStatus {
+        global_penalty_waiting,
+        global_penalty_remaining_secs,
+        global_penalty_reason,
+        active_retry_count,
+        last_retry_reason,
+        last_retry_remaining_secs,
     }
 }
 
@@ -545,7 +640,18 @@ async fn http_get_with_backoff(
                 gate.set_penalty(Duration::from_millis(retry_after_ms), Some(reason))
                     .await;
             }
+            // 2026-05-23: UI 可視化のため、sleep 中の retry 情報を global state に記録。
+            // 4 並列のうち 1-2 件が sleep 中でも、UI 側は「🔁 再試行中 N 件 (522 残 X 秒)」
+            // を表示できる。RAII guard で sleep 中の N をカウント、sleep 後に確実に -1。
+            let retry_reason = format!(
+                "{} {}",
+                status.as_u16(),
+                status.canonical_reason().unwrap_or("?")
+            );
+            record_retry_info(retry_reason, retry_after_ms);
+            let _retry_guard = ActiveRetryGuard::new();
             sleep(Duration::from_millis(retry_after_ms)).await;
+            drop(_retry_guard); // 明示 drop で N が確実に -1 されてから次ループへ
             backoff_ms = (backoff_ms * 2).min(BACKOFF_MAX_MS);
             continue;
         }
@@ -1163,7 +1269,9 @@ pub async fn craft_v2_fetch_all(
 
             // 全 character の完了を待つ。
             // 流用分は最初から入っているので succeeded もそこから加算。
-            const INTERMEDIATE_EMIT_BATCH: usize = 5;
+            // 2026-05-23: 旧 `INTERMEDIATE_EMIT_BATCH=5` (5 件毎バッチ) は撤廃。
+            // 1 件完了毎に emit して N/50 を即時更新するため (retry sleep 中も他並列が
+            // 動けば進捗が確実に進む)。
             let mut items: Vec<CharacterItems> = reused_items;
             let mut new_cached: Vec<CachedCharacter> = Vec::with_capacity(to_fetch_len);
             let mut succeeded: usize = reused_cached.len();
@@ -1225,9 +1333,14 @@ pub async fn craft_v2_fetch_all(
                     }
                 }
                 completed += 1;
-                // Rust-H3 修正: 5 件ごとに中間 emit (新規取得分の完了数だけが対象、
-                // 最後の 1 件はループ外の final emit と重複しないよう除外)。
-                if completed % INTERMEDIATE_EMIT_BATCH == 0 && completed < to_fetch_len {
+                // 2026-05-23 改修: 旧実装は `completed % 5 == 0` でバッチ emit していたが、
+                // 4 並列のうち 1-2 件が 5xx/429 retry sleep 中の場合、N/50 表示が
+                // 数十秒間動かず「止まっている」ように見えた。1 件完了毎に emit すれば、
+                // 他キャラが retry 中でも残り並列が完了する度に N が確実に進む。
+                // 50 キャラなら最大 50 回 emit、Tauri IPC オーバーヘッドは無視できる。
+                //
+                // 中間 emit は最後の 1 件 (= ループ外の final emit) と重複させないよう除外。
+                if completed < to_fetch_len {
                     let intermediate = CraftV2Progress {
                         ascendancy: asc_class.clone(),
                         percentage: asc_pct,
@@ -1237,13 +1350,10 @@ pub async fn craft_v2_fetch_all(
                     };
                     let _ = window_ref.emit("craft-v2-progress", &intermediate);
                 }
-                // 2026-05-23: per-character 進捗 emit。
-                // 5 キャラ毎にバッチ (並列 4 で動いてる時、約 1 秒に 1 回) で十分。
-                // 最後の 1 件 (completed == to_fetch_len) はループ外の completed emit と
-                // 重複させないため除外する。
-                if completed % INTERMEDIATE_EMIT_BATCH == 0 && completed < to_fetch_len {
-                    // succeeded は「流用 + 取得成功」、completed は「新規取得分の処理済」。
-                    // UI には「合計 succeeded / total」を見せたいので succeeded を使う。
+                // 2026-05-23: per-character 進捗 emit (毎件 emit)。
+                // succeeded は「流用 + 取得成功」、completed は「新規取得分の処理済」。
+                // UI には「合計 succeeded / total」を見せたいので succeeded を使う。
+                if completed < to_fetch_len {
                     let _ = window_ref.emit(
                         "craft-v2-character-progress",
                         &CraftV2CharacterProgress {
