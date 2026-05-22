@@ -9,6 +9,7 @@
     "updater:default",
     "process:default",
     "process:allow-restart",
+    "autostart:default",
     {
       "identifier": "http:default",
       "allow": [

@@ -11,12 +11,13 @@ interface NavItem {
 
 // アイコンは visual-concept §5.5 / §8.2 で確定した錬金術記号セット (☉🜔⚙)。
 // ☉ = 通貨ランキング / 🜔 = クラフト発見 / ⚙ = 設定
-// 設定タブは Phase A.6 時点では未実装機能のため items から除外する。
+// 2026-05-23: 設定画面 (autostart / close_to_tray / 自動再取得) を実装し復活。
 const items: NavItem[] = [
   { id: "econ-currency", icon: "☉", label: "カレンシーランキング", group: "economy" },
   // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
   // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
+  { id: "settings", icon: "⚙", label: "設定", group: "tools" },
 ];
 
 const groupLabels: Record<string, string | null> = {

@@ -27,7 +27,7 @@
  */
 import { reactive, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import type { UnlistenFn } from "@tauri-apps/api/event";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import {
   startCraftDiscoveryV2,
@@ -152,6 +152,7 @@ export const craftV2Store: CraftV2Store = reactive({
 // ---------------------------------------------------------------------------
 let unlistenRef: UnlistenFn | null = null;
 let networkStatusPoller: ReturnType<typeof setInterval> | null = null;
+let autoRefetchUnlisten: UnlistenFn | null = null;
 
 // 取得中だけ 1Hz で値を更新する「現在時刻」ref。UI が「動いてる」感を出す用 (Vue 側 watch で消費)。
 export const nowMs = ref<number>(Date.now());
@@ -368,6 +369,23 @@ export async function ensureCraftV2Started(): Promise<void> {
   if (craftV2Store.ascendancies.length > 0 && !craftV2Store.fatalError) return;
   craftV2Store.initialBootStarted = true;
 
+  // 0) 自動再取得 event listener を 1 度だけ仕込む (Phase 設定画面)
+  //
+  //    Rust 側 setup 内の tokio タスクが `auto_refetch_interval_secs` ごとに
+  //    `craft-v2-auto-refetch` を emit してくる。受信したら refreshCraftV2()。
+  //    loading 中なら refreshCraftV2 側で重複起動になるが、内部で前回 listen を
+  //    破棄してから再 fetch するので安全 (runFetch 冒頭の `if (unlistenRef)`).
+  if (!autoRefetchUnlisten) {
+    try {
+      autoRefetchUnlisten = await listen<void>("craft-v2-auto-refetch", () => {
+        console.log("[craft-v2-store] auto-refetch triggered by scheduler");
+        void refreshCraftV2();
+      });
+    } catch (err) {
+      console.warn("[craft-v2-store] failed to listen auto-refetch:", err);
+    }
+  }
+
   // 1) リーグ一覧取得 (Phase ξ)
   try {
     const leagues = await fetchEconomyLeagues();
@@ -425,6 +443,14 @@ export function disposeCraftV2Store(): void {
       /* noop */
     }
     unlistenRef = null;
+  }
+  if (autoRefetchUnlisten) {
+    try {
+      autoRefetchUnlisten();
+    } catch {
+      /* noop */
+    }
+    autoRefetchUnlisten = null;
   }
   stopNowTicker();
   stopNetworkStatusPoller();

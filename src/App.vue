@@ -11,7 +11,13 @@ const activeNav = ref<string>("econ-currency");
 // Phase A.8: グローバルナビ系 (Ctrl+1/2, Ctrl+,, Ctrl+Q) を bind。
 // 画面固有系 (/, ↑↓, s, r, f) は registerHandler を経由して
 // 各画面側 (CurrencyRanking / EconDashboard) から差し込む。
-useKeyboardShortcuts({ activeNav });
+// 2026-05-23: Ctrl+, で設定画面に遷移 (Phase 設定画面)。
+useKeyboardShortcuts({
+  activeNav,
+  onOpenSettings: () => {
+    activeNav.value = "settings";
+  },
+});
 
 // 2026-05-23 シームレス徹底:
 //   起動時に MOD 一覧 (クラフト発見 V2) の fetch を背景で開始する。
