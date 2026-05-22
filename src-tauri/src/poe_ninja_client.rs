@@ -65,7 +65,10 @@ const USER_AGENT: &str = "ExileDesk/0.1.4 (POE2 craft discovery; contact: nekodo
 /// Cloudflare の token bucket が「連続送信」を検出しているという仮説に基づき、
 /// 200ms 並列 4 で 15 秒送って 10 秒完全休憩 (= token bucket リセット狙い) に切替。
 /// 1 サイクル ON 期間 75 req、510 req を約 170 秒 = 6.8 サイクルで完了見込み。
-const MIN_REQUEST_INTERVAL_MS: u64 = 200;
+/// 2026-05-23 第3回: ON/OFF の burst でも秒スケールで 1015 食らうことを実機で観測。
+/// 「Cloudflare は burst を検出する」結論で完全シリアルに戻す。500ms。
+/// ON/OFF 機構自体はコードに残置 (OFF_PERIOD=0 で実質無効化)、将来再有効化用。
+const MIN_REQUEST_INTERVAL_MS: u64 = 500;
 
 /// キャラ並列 fetch の上限 (Semaphore のキャパシティ)。
 /// 2026-05-23 第2回: 2→1 に減らして完全シリアル送信、burst ゼロ。
@@ -74,7 +77,9 @@ const MIN_REQUEST_INTERVAL_MS: u64 = 200;
 /// 2026-05-23 ON/OFF サイクル: 1→4 に復活 (ON 期間 15 秒だけ並列 4、その後 10 秒休止)。
 /// 累積 req/sec は 75 req / 25 秒 = 3.0 req/sec で、シリアル 500ms の 2.0 req/sec
 /// より一見高いが、10 秒の完全休止が token bucket をリセットさせる狙い。
-const CONCURRENT_FETCH_LIMIT: usize = 4;
+/// 2026-05-23 第3回: ON 中の burst で 1015 食らうため 4→1 に戻す。
+/// 完全シリアル + 500ms 間隔 = 2 req/sec で安定動作を狙う。
+const CONCURRENT_FETCH_LIMIT: usize = 1;
 
 /// ON/OFF サイクル: ON 期間の長さ (ms)。
 /// この期間内は MIN_REQUEST_INTERVAL_MS 間隔で並列 CONCURRENT_FETCH_LIMIT 件まで送信。
@@ -85,7 +90,9 @@ const ON_PERIOD_MS: u64 = 15_000;
 /// この期間中は全送信ブロック (acquire が次サイクル開始まで sleep)。
 /// 10 秒 = Cloudflare の per-IP token bucket がリセットされると経験的に期待される長さ。
 /// 短すぎると bucket がフルにならない、長すぎると無駄なアイドル。
-const OFF_PERIOD_MS: u64 = 10_000;
+/// 2026-05-23 第3回: 0 に設定して ON/OFF 機構を実質無効化 (= 常時 ON、シリアル送信のみ)。
+/// 機構自体はコードに残置、将来再有効化する場合は 10_000 等に戻す。
+const OFF_PERIOD_MS: u64 = 0;
 
 /// 429 受信時の exponential backoff 初期値 (ms)
 /// 2026-05-22 Phase θ: 2s → 3s に延長
