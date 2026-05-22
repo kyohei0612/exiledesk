@@ -11,7 +11,8 @@
 //!   - 人気順優先: 使用率降順でキュー投入 (キュー投入順 = 取得開始順)
 //!   - 並列度 4 (Semaphore で制御、Phase θ で 8→6→4 に段階緩和済み)
 //!   - 漸進UI更新: アセンダンシー単位で完了 → Tauri event emit
-//!   - レート制限: 280ms 間隔保証 (MIN_REQUEST_INTERVAL_MS)、429 で exponential backoff、UA 明記
+//!   - レート制限: 380ms 間隔保証 (MIN_REQUEST_INTERVAL_MS) + 並列度 2 (CONCURRENT_FETCH_LIMIT)
+//!     429 で exponential backoff、UA 明記
 //!   - 対象: 上位 10 アセンダンシー × 50 人 = 500 calls + 10 search + 2 data = 512 calls
 //!
 //! 公開 API (Tauri command):
@@ -54,7 +55,15 @@ const USER_AGENT: &str = "ExileDesk/0.1.4 (POE2 craft discovery; contact: nekodo
 /// グローバルレート制限: 1 リクエスト送信の最低間隔 (ms)
 /// 2026-05-22 第3回: 180ms で 1015 諦めケースが残るので 220ms に緩和 (オーナー承認)
 /// 2026-05-22 Phase θ: さらに 220→280ms に緩和 (Cloudflare 1015 頻発のため)
-const MIN_REQUEST_INTERVAL_MS: u64 = 280;
+/// 2026-05-23: 並列 4 で 60 秒待ちペナルティ観測のため 280→380ms に追加緩和。
+/// 並列度も 4→2 に減らして burst を抑える (CONCURRENT_FETCH_LIMIT 参照)。
+const MIN_REQUEST_INTERVAL_MS: u64 = 380;
+
+/// キャラ並列 fetch の上限 (Semaphore のキャパシティ)。
+/// 2026-05-23: 4→2 に減らして Cloudflare 1015 ペナルティを抑制。
+/// 計算: 500 req × 380ms ≈ 190 秒、並列 2 で実 throughput ≈ 95 秒。
+/// 429 1 回 (60 秒待機) より速い見込み。
+const CONCURRENT_FETCH_LIMIT: usize = 2;
 
 /// 429 受信時の exponential backoff 初期値 (ms)
 /// 2026-05-22 Phase θ: 2s → 3s に延長
@@ -1079,7 +1088,7 @@ pub async fn craft_v2_fetch_all(
     //   - 429 が出た時にどのアセンダンシーで詰まったか明確
     // 2026-05-22 第3回: 8 並列で 1015 諦めケースが残るので 6 に緩和 (オーナー承認)
     // 2026-05-22 Phase θ: 6 でも 1015 が残るので 4 にさらに緩和 (オーナー指示)
-    let semaphore = Arc::new(Semaphore::new(4));
+    let semaphore = Arc::new(Semaphore::new(CONCURRENT_FETCH_LIMIT));
 
     // 新キャッシュ構築用バッファ (アセンダンシー完了ごとに push)
     let mut new_ascendancies: Vec<CachedAscendancy> = Vec::with_capacity(top_ascendancies.len());
