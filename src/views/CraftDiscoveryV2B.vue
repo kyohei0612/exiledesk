@@ -113,20 +113,41 @@ interface WarnEntry {
   /** Date.now() — 表示時は formatHms で HH:MM:SS に整形 */
   timestamp: number;
   source?: WarnSource;
+  /**
+   * Phase ο-C (2026-05-23): 警告詳細リスト (具体値)。
+   * 例: 未知 inventoryId のサンプル ["Belt × 30", "Charm × 20", ...]。
+   * 1 件以上あれば UI 側で「▶ 詳細」アコーディオンを表示する。
+   * 0 件 / undefined ならアコーディオン非表示 (既存挙動と同じ)。
+   */
+  details?: string[];
 }
 const MAX_WARN_HISTORY = 5;
 const warnHistory = ref<WarnEntry[]>([]);
+/**
+ * Phase ο-C: 詳細アコーディオン展開済みインデックスの Set。
+ * timestamp をキーに保持 (配列インデックスは履歴が動くと変わるため不適)。
+ */
+const expandedWarnTimestamps = ref<Set<number>>(new Set());
+
+function toggleWarnDetail(ts: number): void {
+  const s = new Set(expandedWarnTimestamps.value);
+  if (s.has(ts)) s.delete(ts);
+  else s.add(ts);
+  expandedWarnTimestamps.value = s;
+}
 
 function pushWarn(
   level: WarnLevel,
   message: string,
   source?: WarnSource,
+  details?: string[],
 ): void {
   const entry: WarnEntry = {
     level,
     message,
     timestamp: Date.now(),
     source,
+    details: details && details.length > 0 ? details : undefined,
   };
   // 新しいものを先頭に積み、5 件超は末尾から落とす
   warnHistory.value = [entry, ...warnHistory.value].slice(0, MAX_WARN_HISTORY);
@@ -134,6 +155,7 @@ function pushWarn(
 
 function clearWarns(): void {
   warnHistory.value = [];
+  expandedWarnTimestamps.value = new Set();
 }
 
 /**
@@ -592,6 +614,15 @@ interface HealthCheckResult {
   trade2_api_ok: boolean;
   /** poe.ninja の inventory に出てくる「未知の inventoryId」件数 */
   unknown_inventory_ids_count: number;
+  /**
+   * Phase ο-C (2026-05-23): 上位 20 件の「inv_id 文字列 + 累積カウント」。
+   * UI の警告詳細アコーディオンで「Belt × 30」のように具体値を表示するため。
+   * Rust 側 (`HealthCheckResult.unknown_inventory_id_samples`) と整合。
+   */
+  unknown_inventory_id_samples: Array<{
+    inventory_id: string;
+    count: number;
+  }>;
   /** Rust 側で気付いた追加メッセージ (HTML 変更検出等) */
   warnings: string[];
 }
@@ -623,10 +654,20 @@ async function runHealthCheck(): Promise<void> {
       pushWarn("warn", "trade2 API 仕様変更の可能性", "health-check");
     }
     if (result.unknown_inventory_ids_count > 0) {
+      // Phase ο-C: 具体値 (上位 20 件の inv_id + count) を details に格納。
+      // オーナーが「Belt が 30 件、Charm が 20 件」のように内訳を確認できるよう、
+      // 警告行クリックでアコーディオン展開する UI を伴う。
+      // 将来的には details 内の inv_id を「白リストに追加」ボタン化する案あり
+      // (Phase ο-D 候補、現状は未実装)。
+      const samples = result.unknown_inventory_id_samples ?? [];
+      const details = samples.map(
+        (s) => `${s.inventory_id} × ${s.count} 件`,
+      );
       pushWarn(
         "info",
         `未知 inventoryId ${result.unknown_inventory_ids_count} 件 (poe.ninja アイテム種別追加か)`,
         "health-check",
+        details,
       );
     }
     for (const w of result.warnings) {
@@ -1347,20 +1388,68 @@ function pct(count: number): string {
       </div>
       <ul class="space-y-0.5">
         <li
-          v-for="(w, i) in warnHistory"
-          :key="i"
+          v-for="w in warnHistory"
+          :key="w.timestamp"
           :class="['px-2 py-0.5 leading-snug', warnLevelClasses(w.level)]"
         >
-          <span
-            class="tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] mr-1"
-            >[{{ formatHms(new Date(w.timestamp)) }}]</span
+          <!--
+            Phase ο-C: 詳細リスト (details) がある行は「▶/▼」アコーディオンを
+            行頭に出してクリックで具体値 (未知 inv_id の内訳等) を展開できるようにする。
+            details が無い行は従来通り 1 行表示。
+          -->
+          <div
+            :class="[
+              'flex items-start gap-1',
+              w.details && w.details.length > 0
+                ? 'cursor-pointer hover:text-[var(--exile-color-accent-focus)]'
+                : '',
+            ]"
+            @click="
+              w.details && w.details.length > 0
+                ? toggleWarnDetail(w.timestamp)
+                : null
+            "
+            :title="
+              w.details && w.details.length > 0
+                ? 'クリックで詳細表示'
+                : ''
+            "
           >
-          <span
-            v-if="warnSourceLabel(w.source)"
-            class="text-[10px] text-[var(--exile-color-text-secondary)] mr-1"
-            >{{ warnSourceLabel(w.source) }}:</span
+            <span
+              v-if="w.details && w.details.length > 0"
+              class="select-none w-3 shrink-0 text-[10px] tabular-nums"
+              aria-hidden="true"
+              >{{ expandedWarnTimestamps.has(w.timestamp) ? "▼" : "▶" }}</span
+            >
+            <div class="flex-1 min-w-0">
+              <span
+                class="tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] mr-1"
+                >[{{ formatHms(new Date(w.timestamp)) }}]</span
+              >
+              <span
+                v-if="warnSourceLabel(w.source)"
+                class="text-[10px] text-[var(--exile-color-text-secondary)] mr-1"
+                >{{ warnSourceLabel(w.source) }}:</span
+              >
+              {{ localizeError(w.message) }}
+            </div>
+          </div>
+          <ul
+            v-if="
+              w.details &&
+              w.details.length > 0 &&
+              expandedWarnTimestamps.has(w.timestamp)
+            "
+            class="mt-1 ml-4 pl-2 border-l border-[var(--exile-color-border-subtle)] space-y-0.5 text-[10px] text-[var(--exile-color-text-secondary)]"
           >
-          {{ localizeError(w.message) }}
+            <li
+              v-for="(d, di) in w.details"
+              :key="di"
+              class="tabular-nums leading-tight"
+            >
+              {{ d }}
+            </li>
+          </ul>
         </li>
       </ul>
     </div>

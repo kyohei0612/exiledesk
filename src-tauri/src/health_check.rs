@@ -13,12 +13,39 @@
 //! @author engineering-B
 //! @date 2026-05-22
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Mutex;
 use std::time::Duration;
 
 use reqwest::Client;
 use serde::Serialize;
+
+// ============================================================================
+// Phase ο-C (2026-05-22): 未知 inventoryId サンプル収集
+// ============================================================================
+//
+// 旧実装は AtomicU64 で「件数」だけを保持していたが、オーナーから「62 件と
+// 数字だけでは何の inv_id か分からない、具体値が見たい」要望が出たため、
+// inv_id 文字列 → 出現カウントの Map を保持する。
+//
+// 排他制御:
+//   - 起動時は health_check_all から read (lock + clone) のみ。
+//   - フェッチ中は record_unknown_inventory_id から書き込み (頻度: 数十回/分)。
+//   - 同時アクセスはあるが秒間数件程度なので Mutex で十分 (Rwlock 不要)。
+//
+// メモリ上限:
+//   - 異常時 (POE2 が 1000 種類の新スロット投入) に備え、HashMap サイズが
+//     UNKNOWN_INV_ID_CAP を超えたら新規 inv_id を弾く (既存カウントは継続)。
+//   - 通常 POE2 で想定される未知スロットは 5-20 種類なので問題なし。
+const UNKNOWN_INV_ID_CAP: usize = 256;
+
+/// inv_id 文字列 → 累積出現カウント。
+/// 例: { "Belt" => 30, "Flask1" => 18, ... }
+static UNKNOWN_INV_ID_SAMPLES: Mutex<Option<HashMap<String, u64>>> = Mutex::new(None);
+
+/// サンプル UI 表示件数 (上位 N 件)。
+const UNKNOWN_INV_ID_SAMPLE_LIMIT: usize = 20;
 
 // ============================================================================
 // 定数
@@ -51,12 +78,63 @@ pub static UNKNOWN_INV_ID_COUNT: AtomicU64 = AtomicU64::new(0);
 ///
 /// `inv_id` はデバッグ用に eprintln! で 1 行ログ出力する (オーナー指示)。
 /// `frame_type` は -1 (欠落) の場合もある。
+///
+/// Phase ο-C (2026-05-22): カウントだけでなく inv_id 文字列もサンプル収集する。
+///   - UNKNOWN_INV_ID_SAMPLES に inv_id → count を蓄積。
+///   - UI 側で「Belt が 30 件、Flask1 が 18 件」のように具体値が見えるようにする。
 pub fn record_unknown_inventory_id(inv_id: &str, frame_type: i64) {
     UNKNOWN_INV_ID_COUNT.fetch_add(1, Ordering::Relaxed);
     eprintln!(
         "[health-check] unknown inventoryId='{}' frameType={}",
         inv_id, frame_type
     );
+
+    // Mutex 取得失敗 (poisoned) は無視: サンプル収集は best-effort で OK。
+    if let Ok(mut guard) = UNKNOWN_INV_ID_SAMPLES.lock() {
+        let map = guard.get_or_insert_with(HashMap::new);
+        // Cap 超過時の挙動:
+        //   - 既知の inv_id ならカウントだけ +1 (既存エントリ更新)。
+        //   - 新規 inv_id は破棄 (メモリ爆発防止)。
+        match map.get_mut(inv_id) {
+            Some(c) => {
+                *c = c.saturating_add(1);
+            }
+            None => {
+                if map.len() < UNKNOWN_INV_ID_CAP {
+                    map.insert(inv_id.to_string(), 1);
+                }
+            }
+        }
+    }
+}
+
+/// テスト・将来の手動リセット用ヘルパー (現状 UI からは未呼び出し)。
+/// カウンタとサンプル両方をクリアする。
+#[allow(dead_code)]
+pub fn reset_unknown_inventory_id_samples() {
+    UNKNOWN_INV_ID_COUNT.store(0, Ordering::Relaxed);
+    if let Ok(mut guard) = UNKNOWN_INV_ID_SAMPLES.lock() {
+        *guard = None;
+    }
+}
+
+/// 上位 N 件の (inv_id, count) を出現順で返す (count 降順、同数は inv_id 辞書順)。
+/// health_check_all から呼び出される。
+fn top_unknown_inventory_id_samples() -> Vec<(String, u64)> {
+    let guard = match UNKNOWN_INV_ID_SAMPLES.lock() {
+        Ok(g) => g,
+        Err(_) => return Vec::new(),
+    };
+    let map = match guard.as_ref() {
+        Some(m) => m,
+        None => return Vec::new(),
+    };
+
+    let mut items: Vec<(String, u64)> =
+        map.iter().map(|(k, v)| (k.clone(), *v)).collect();
+    items.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    items.truncate(UNKNOWN_INV_ID_SAMPLE_LIMIT);
+    items
 }
 
 // ============================================================================
@@ -67,6 +145,8 @@ pub fn record_unknown_inventory_id(inv_id: &str, frame_type: i64) {
 ///
 /// - `*_ok`            : 各チェックが成功 = true。1 つでも失敗で false。
 /// - `unknown_inventory_ids_count` : これまでの累積 (プロセス起動からの和)。
+/// - `unknown_inventory_id_samples` : Phase ο-C で追加。上位 20 件の
+///     (inv_id, count) ペアを count 降順で返す。UI 側で警告詳細展開時に表示。
 /// - `warnings`        : 失敗時の人間可読メッセージ。空なら全 OK。
 #[derive(Serialize, Clone, Debug)]
 pub struct HealthCheckResult {
@@ -74,7 +154,16 @@ pub struct HealthCheckResult {
     pub poe2db_html_ok: bool,
     pub trade2_api_ok: bool,
     pub unknown_inventory_ids_count: u64,
+    pub unknown_inventory_id_samples: Vec<UnknownInvIdSample>,
     pub warnings: Vec<String>,
+}
+
+/// `HealthCheckResult.unknown_inventory_id_samples` の 1 エントリ。
+/// JSON では `{ "inventory_id": "Belt", "count": 30 }` 形式。
+#[derive(Serialize, Clone, Debug)]
+pub struct UnknownInvIdSample {
+    pub inventory_id: String,
+    pub count: u64,
 }
 
 // ============================================================================
@@ -180,8 +269,26 @@ async fn check_poe_ninja_schema(client: &Client) -> Result<(), String> {
 
 /// 既知 unique ページ `Atziris_Splendour` を取得し、主要構造の存在を確認する。
 ///
-/// 確認: HTTP 200 + `class="itemName"` 文字列 + `<h1` タグの存在。
-/// (本格的な HTML パーサを足さない: scraper crate を追加しない方針)
+/// Phase ο-C (2026-05-22) 改訂:
+///   - 旧実装は `<h1>` タグ必須だったが、実機 (2026-05-22 curl) で POE2DB が
+///     `<h1>` を `<h3 style='display: none'>` に変更しているのを確認。
+///   - 新ヘッダー実構造:
+///       <div class="itemHeader doubleLine">
+///         <div class="itemName">
+///           <span class="lc">Atziri's Splendour</span>
+///         </div>
+///         ...
+///       </div>
+///   - そのため検証ロジックを「itemName クラス必須 + 以下のいずれかで item の
+///     正式名が抽出できる」に緩和:
+///       a) `<span class="lc">` (新構造: itemName 内の表示テキスト)
+///       b) `<div class="itemHeader` (新構造: ヘッダー枠)
+///       c) `<h1`                    (旧構造、フォールバック)
+///       d) `<h3` + `display: none`  (新構造で SEO 用に残ってる隠し h3)
+///     1 つでもマッチすればヘッダー検出 OK と判定。
+///   - これにより POE2DB の細かい構造変更で False Positive が出にくくなる。
+///
+/// (scraper crate は引き続き不採用: 依存を増やさない方針)
 async fn check_poe2db_html(client: &Client) -> Result<(), String> {
     let resp = client
         .get(POE2DB_SAMPLE_URL)
@@ -199,18 +306,31 @@ async fn check_poe2db_html(client: &Client) -> Result<(), String> {
         .await
         .map_err(|e| format!("poe2db body read error: {e}"))?;
 
-    // 文字列ベースの最小チェック (HTML パーサ依存を避ける)。
+    // (1) itemName クラスは新旧構造共通の必須要素 (現行 POE2DB は確実に持つ)。
     let has_item_name = html.contains("class=\"itemName\"")
-        || html.contains("class='itemName'")
-        || html.contains("itemName");
-    let has_h1 = html.contains("<h1");
+        || html.contains("class='itemName'");
     if !has_item_name {
         return Err(
             "poe2db: 'itemName' クラスが見つからない、HTML 構造変更の可能性".to_string()
         );
     }
-    if !has_h1 {
-        return Err("poe2db: <h1> タグが見つからない、HTML 構造変更の可能性".to_string());
+
+    // (2) ヘッダー検出は複数パターンの OR (どれか 1 つでもマッチすれば OK)。
+    //     POE2DB が h1 → h3(hidden) → div.itemHeader と変えていっても誤検知しない。
+    let has_h1 = html.contains("<h1");
+    let has_hidden_h3 =
+        html.contains("<h3") && html.contains("display: none");
+    let has_item_header = html.contains("class=\"itemHeader")
+        || html.contains("class='itemHeader");
+    let has_lc_span =
+        html.contains("class=\"lc\"") || html.contains("class='lc'");
+
+    if !(has_h1 || has_hidden_h3 || has_item_header || has_lc_span) {
+        return Err(
+            "poe2db: ヘッダー候補 (<h1> / <h3 display:none> / .itemHeader / .lc) \
+             がいずれも見つからない、HTML 構造変更の可能性"
+                .to_string(),
+        );
     }
 
     Ok(())
@@ -384,12 +504,21 @@ pub async fn health_check_all() -> Result<HealthCheckResult, String> {
     };
 
     let unknown_inventory_ids_count = UNKNOWN_INV_ID_COUNT.load(Ordering::Relaxed);
+    let unknown_inventory_id_samples: Vec<UnknownInvIdSample> =
+        top_unknown_inventory_id_samples()
+            .into_iter()
+            .map(|(inventory_id, count)| UnknownInvIdSample {
+                inventory_id,
+                count,
+            })
+            .collect();
 
     Ok(HealthCheckResult {
         poe_ninja_schema_ok,
         poe2db_html_ok,
         trade2_api_ok,
         unknown_inventory_ids_count,
+        unknown_inventory_id_samples,
         warnings,
     })
 }
@@ -418,12 +547,95 @@ mod tests {
             poe2db_html_ok: false,
             trade2_api_ok: true,
             unknown_inventory_ids_count: 3,
+            unknown_inventory_id_samples: vec![UnknownInvIdSample {
+                inventory_id: "Belt".to_string(),
+                count: 2,
+            }],
             warnings: vec!["poe2db html: HTTP 503".to_string()],
         };
         let s = serde_json::to_string(&r).unwrap();
         assert!(s.contains("\"poe_ninja_schema_ok\":true"));
         assert!(s.contains("\"poe2db_html_ok\":false"));
         assert!(s.contains("\"unknown_inventory_ids_count\":3"));
+        assert!(s.contains("\"inventory_id\":\"Belt\""));
+        assert!(s.contains("\"count\":2"));
         assert!(s.contains("HTTP 503"));
     }
+
+    /// Phase ο-C: サンプル収集が「同じ inv_id を複数回 push したら count が増える」
+    /// + 「上位 N 件が count 降順で並ぶ」ことを確認する。
+    #[test]
+    fn unknown_inv_id_samples_aggregate_by_count() {
+        // 先行テストの影響を消すため、明示リセット。
+        reset_unknown_inventory_id_samples();
+
+        // Belt を 3 回、Flask を 1 回、Charm を 2 回 push。
+        record_unknown_inventory_id("Belt", 2);
+        record_unknown_inventory_id("Belt", 2);
+        record_unknown_inventory_id("Belt", 2);
+        record_unknown_inventory_id("Flask", 0);
+        record_unknown_inventory_id("Charm", 2);
+        record_unknown_inventory_id("Charm", 2);
+
+        let samples = top_unknown_inventory_id_samples();
+        assert_eq!(samples.len(), 3);
+        // count 降順: Belt(3) → Charm(2) → Flask(1)
+        assert_eq!(samples[0].0, "Belt");
+        assert_eq!(samples[0].1, 3);
+        assert_eq!(samples[1].0, "Charm");
+        assert_eq!(samples[1].1, 2);
+        assert_eq!(samples[2].0, "Flask");
+        assert_eq!(samples[2].1, 1);
+
+        // 後続テストに影響しないよう片付け。
+        reset_unknown_inventory_id_samples();
+    }
+
+    /// Phase ο-C: 旧 (`<h1>`) 構造の HTML だけでも OK、新 (`itemHeader` + `lc`)
+    /// 構造の HTML だけでも OK、両方欠落かつ itemName も無い場合は NG、
+    /// という多パターン許容の挙動を確認する。
+    ///
+    /// 注: `check_poe2db_html` は HTTP 引いてしまうため、ここでは検証ロジックを
+    /// インライン化したヘルパー `validate_poe2db_html_struct` でユニットテスト。
+    #[test]
+    fn poe2db_html_struct_validator_accepts_old_and_new_layouts() {
+        let old_layout = "<html><body><h1>X</h1>\
+            <div class=\"itemName\">Atziri</div></body></html>";
+        let new_layout = "<html><body>\
+            <h3 style='display: none'>X</h3>\
+            <div class=\"itemHeader doubleLine\">\
+              <div class=\"itemName\"><span class=\"lc\">X</span></div>\
+            </div></body></html>";
+        let broken = "<html><body><p>nothing</p></body></html>";
+
+        assert!(validate_poe2db_html_struct(old_layout).is_ok());
+        assert!(validate_poe2db_html_struct(new_layout).is_ok());
+        assert!(validate_poe2db_html_struct(broken).is_err());
+    }
+}
+
+// ============================================================================
+// テスト用ヘルパー: HTTP 経由しない HTML 構造検証 (本体ロジックと同じ判定)
+// ============================================================================
+
+/// `check_poe2db_html` の HTML 部分だけを抽出したテスト用バリデータ。
+/// 本体ロジックの変更時にこっちも更新すること (DRY のため本体からも参照可能)。
+#[cfg(test)]
+fn validate_poe2db_html_struct(html: &str) -> Result<(), String> {
+    let has_item_name = html.contains("class=\"itemName\"")
+        || html.contains("class='itemName'");
+    if !has_item_name {
+        return Err("itemName missing".to_string());
+    }
+    let has_h1 = html.contains("<h1");
+    let has_hidden_h3 =
+        html.contains("<h3") && html.contains("display: none");
+    let has_item_header = html.contains("class=\"itemHeader")
+        || html.contains("class='itemHeader");
+    let has_lc_span =
+        html.contains("class=\"lc\"") || html.contains("class='lc'");
+    if !(has_h1 || has_hidden_h3 || has_item_header || has_lc_span) {
+        return Err("header missing".to_string());
+    }
+    Ok(())
 }
