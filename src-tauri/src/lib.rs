@@ -67,6 +67,7 @@ pub fn run() {
             craft_v2_storage::craft_v2_cache_clear,
             poe_ninja_client::craft_v2_fetch_all,
             poe_ninja_client::craft_v2_cancel,
+            poe_ninja_client::get_rate_limit_status,
             poe_ninja_client::fetch_economy_leagues,
             health_check::health_check_all,
         ])

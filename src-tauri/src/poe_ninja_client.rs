@@ -27,8 +27,8 @@
 //! @date 2026-05-22
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex as StdMutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use reqwest::{header::HeaderMap, Client, StatusCode};
@@ -125,6 +125,101 @@ fn is_cancel_requested() -> bool {
 #[tauri::command]
 pub fn craft_v2_cancel() {
     CRAFT_V2_CANCEL_FLAG.store(true, Ordering::Relaxed);
+}
+
+// ============================================================================
+// Rate limit penalty 可視化 (2026-05-23)
+// ============================================================================
+//
+// 目的:
+//   ユーザー指摘「残り取得中で止まるのって実際何してんの、結構長いけどリミット待ち?」
+//   への回答として、Cloudflare 1015 ペナルティ / 429 backoff 中の残秒数を UI に
+//   リアルタイム表示するための global state。
+//
+// 設計判断:
+//   - `CURRENT_PENALTY_UNTIL_MS`: AtomicU64 (UNIX epoch ms、0 = ペナルティなし)。
+//     RateGate::set_penalty で書き込み、TS 側 polling から読み込む。
+//     1 回の load/store だけで完結する単純な数値なので AtomicU64 (lock-free)
+//     を採用 — Mutex を取らないので polling 側もペナルティ書き込み側も
+//     一切ブロックされない。値を「時刻」として保持し、TS 側で `now` と比較する
+//     ことで「ペナルティ解除時にリセットを忘れる」競合が原理的に発生しない
+//     (時刻が過去になれば自動的に waiting=false になる)。
+//
+//   - `LAST_PENALTY_REASON`: Mutex<Option<String>>。
+//     String を atomic に扱う primitive が無いため Mutex で保護。
+//     書き込みは 429/5xx 検出時のみ (= 数秒〜数分に 1 回)、読み込みは UI polling
+//     から 1 秒に 1 回 → lock 競合は実質ゼロ。標準 std::sync::Mutex を採用
+//     (tokio::sync::Mutex は async 用途、ここは同期 command なので不要)。
+//
+// なぜ atomic と mutex を混在させたか:
+//   - 数値 (u64) は AtomicU64 で十分高速
+//   - String は AtomicPtr 等を組むより Mutex の方が安全 & 短期 lock
+//   - lock-free / lock 制御は「アクセス頻度」と「データ型」のバランス選択
+static CURRENT_PENALTY_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
+static LAST_PENALTY_REASON: StdMutex<Option<String>> = StdMutex::new(None);
+
+/// 現在のレート制限ペナルティ状態 (TS UI の polling 用)。
+#[derive(Serialize, Clone, Debug)]
+pub struct RateLimitStatus {
+    /// 現在ペナルティ待機中か (= until_ms > now)
+    pub waiting: bool,
+    /// 解除まで残り秒数 (waiting=false の時は 0)
+    pub remaining_secs: u64,
+    /// 最後にペナルティを受けた理由 (例: "429 Too Many Requests", "522 Connection Timeout")。
+    /// ペナルティを 1 度も受けていない場合は None。
+    pub reason: Option<String>,
+}
+
+/// UI が 1 秒ごとに呼ぶ「現在のレート制限状態」command。
+/// AtomicU64 のロードだけなので極めて高速 (polling 中もアプリ全体に影響なし)。
+#[tauri::command]
+pub fn get_rate_limit_status() -> RateLimitStatus {
+    let until_ms = CURRENT_PENALTY_UNTIL_MS.load(Ordering::Relaxed);
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+    let waiting = until_ms > now_ms;
+    let remaining_secs = if waiting {
+        (until_ms - now_ms) / 1000
+    } else {
+        0
+    };
+    // 理由は Mutex で保護されているが lock 競合は実質ゼロ (書き込みは数秒〜数分に 1 回)
+    let reason = LAST_PENALTY_REASON
+        .lock()
+        .ok()
+        .and_then(|g| g.clone());
+    RateLimitStatus {
+        waiting,
+        remaining_secs,
+        reason,
+    }
+}
+
+/// `set_penalty` から呼ばれる: global state を更新して UI に可視化させる。
+/// `until_instant` は Tokio の `Instant` (単調時計) 由来なので、UNIX epoch に
+/// 変換するために「現在の差分」を SystemTime ベースで再計算する。
+fn record_penalty_for_ui(until_instant: Instant, reason: Option<String>) {
+    let now_instant = Instant::now();
+    let now_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0);
+    let remaining_ms = if until_instant > now_instant {
+        until_instant.duration_since(now_instant).as_millis() as u64
+    } else {
+        0
+    };
+    let target_ms = now_ms + remaining_ms;
+    // 「既存ペナルティが長ければ伸ばさない」(max を取る) のは set_penalty 側で
+    // 行う前提だが、ここでも fetch_max でガードしておく。
+    CURRENT_PENALTY_UNTIL_MS.fetch_max(target_ms, Ordering::Relaxed);
+    if let Some(r) = reason {
+        if let Ok(mut g) = LAST_PENALTY_REASON.lock() {
+            *g = Some(r);
+        }
+    }
 }
 
 // ============================================================================
@@ -279,12 +374,17 @@ impl RateGate {
     /// このメソッドが next_slot も同時に押し上げる: 既に reserved 済の
     /// タスクは sleep_until で待っている最中なので影響なし。今後 acquire するタスクは
     /// penalty_until を見て自然に後ろにずれる。
-    pub async fn set_penalty(&self, dur: Duration) {
+    ///
+    /// 2026-05-23: `reason` 引数を追加。UI 側でペナルティ理由 ("429 Too Many Requests" 等)
+    /// を表示するため、global static (`LAST_PENALTY_REASON`) も同時に更新する。
+    pub async fn set_penalty(&self, dur: Duration, reason: Option<String>) {
         let mut guard = self.state.lock().await;
         let target = Instant::now() + dur;
         if target > guard.penalty_until {
             guard.penalty_until = target;
         }
+        // UI 可視化用 global state を更新 (lock-free な AtomicU64 + 短期 Mutex<String>)
+        record_penalty_for_ui(guard.penalty_until, reason);
     }
 }
 
@@ -365,8 +465,19 @@ async fn http_get_with_backoff(
                 .unwrap_or(backoff_ms);
             // 429 は全タスク一斉停止 (Cloudflare 1015 全体ブロックの可能性)
             // 5xx は個別キャラ単位のリトライのみ (edge node 単発不調が典型)
+            //
+            // 2026-05-23: UI に「リミット制限待機中 (●秒) (理由)」を出すため、
+            // ペナルティ発火時に status の文字列を `reason` として渡す。
+            // 429 だけでなく 522/503 等の Cloudflare 一時障害でも、UI 側に
+            // 「待っている事実 + 理由」を見せたいので 5xx も record する。
+            // ただし `set_penalty` は 429 のみ呼び、5xx は record_penalty_for_ui を
+            // 直接呼ばない (= gate に影響を与えない) — 単に reason だけ残すと
+            // 「ペナルティ無いのに理由だけ表示」のチグハグが起きるため、5xx は
+            // 個別 sleep のみで gate / global state 共に変更しない方針を維持。
             if is_rate_limited {
-                gate.set_penalty(Duration::from_millis(retry_after_ms)).await;
+                let reason = format!("{status}");
+                gate.set_penalty(Duration::from_millis(retry_after_ms), Some(reason))
+                    .await;
             }
             sleep(Duration::from_millis(retry_after_ms)).await;
             backoff_ms = (backoff_ms * 2).min(BACKOFF_MAX_MS);

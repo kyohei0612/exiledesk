@@ -204,6 +204,28 @@ const cacheItemCount = ref<number>(0);
 let unlistenRef: UnlistenFn | null = null;
 
 // ---------------------------------------------------------------------------
+// レート制限待機中表示 (2026-05-23)
+// ---------------------------------------------------------------------------
+// オーナー指摘:「残り取得中で止まるのって実際何してんの、結構長いけどリミット待ち?
+// リミット制限待機中（●秒）ってカウント欲しい」への対応。
+//
+// 取得中 (loading=true) のみ 1 秒ごとに Rust `get_rate_limit_status` を polling して、
+// ペナルティ待機中なら残秒数を UI に表示する。idle 時は polling しない (= ゼロ負荷)。
+// ---------------------------------------------------------------------------
+interface RateLimitStatusRaw {
+  waiting: boolean;
+  remaining_secs: number;
+  reason: string | null;
+}
+interface RateLimitStatusUi {
+  waiting: boolean;
+  remainingSecs: number;
+  reason: string | null;
+}
+const rateLimitStatus = ref<RateLimitStatusUi | null>(null);
+let rateLimitPoller: ReturnType<typeof setInterval> | null = null;
+
+// ---------------------------------------------------------------------------
 // ユニーク MOD ホバーオーバーレイ State
 // ---------------------------------------------------------------------------
 /** 現在ホバー中のユニーク (null なら非表示) */
@@ -795,6 +817,41 @@ function warnSourceLabel(source?: WarnSource): string {
 // Lifecycle
 // ---------------------------------------------------------------------------
 
+/**
+ * 2026-05-23: 取得中 (loading=true) だけ 1 秒ごとに Rust `get_rate_limit_status` を
+ * polling して、Cloudflare 1015 / 429 backoff の残秒数を UI に反映する。
+ *
+ * - loading=false に戻った瞬間に setInterval をクリア (= idle 中はゼロ負荷)
+ * - command 未登録 (旧 Rust バイナリで起動した場合) は catch して静かに無視
+ * - waiting=false の応答が来たら rateLimitStatus も null に戻す (= 表示自動消失)
+ */
+watch(loading, (isLoading) => {
+  if (isLoading) {
+    if (rateLimitPoller) clearInterval(rateLimitPoller);
+    rateLimitPoller = setInterval(async () => {
+      try {
+        const s = await invoke<RateLimitStatusRaw>("get_rate_limit_status");
+        if (s.waiting) {
+          rateLimitStatus.value = {
+            waiting: true,
+            remainingSecs: s.remaining_secs,
+            reason: s.reason,
+          };
+        } else {
+          // 待機解除 → UI 側のラベルも消す
+          rateLimitStatus.value = null;
+        }
+      } catch {
+        // command 未登録時 (旧バイナリ等) は何もしない。次の polling tick で再試行。
+      }
+    }, 1000);
+  } else {
+    if (rateLimitPoller) clearInterval(rateLimitPoller);
+    rateLimitPoller = null;
+    rateLimitStatus.value = null;
+  }
+});
+
 onMounted(async () => {
   // Phase ξ: リーグ一覧を先に取得して dropdown を埋める。
   // 失敗しても致命的ではない (selectedLeagueUrl='' で従来通り economyLeagues[0] が使われる)。
@@ -828,6 +885,11 @@ onBeforeUnmount(() => {
       /* noop */
     }
     unlistenRef = null;
+  }
+  // 2026-05-23: 取得中 polling の cleanup (画面遷移時にタイマーが残るのを防ぐ)
+  if (rateLimitPoller) {
+    clearInterval(rateLimitPoller);
+    rateLimitPoller = null;
   }
 });
 
@@ -1237,6 +1299,29 @@ function pct(count: number): string {
                 >(直近: {{ currentlyFetching }})</span
               >
             </template>
+          </span>
+          <!--
+            2026-05-23: レート制限ペナルティ中の残秒数表示。
+            取得中 (loading=true) かつペナルティ待機中 (rateLimitStatus.waiting) のみ表示。
+            暖色トーンに合わせて amber 系 (visual-concept §5/§8 と整合)。
+          -->
+          <span
+            v-if="loading && rateLimitStatus?.waiting"
+            class="inline-flex items-center gap-1 text-[11px] text-amber-300 font-medium"
+            :title="
+              rateLimitStatus.reason
+                ? `Cloudflare/サーバから ${rateLimitStatus.reason} を受信、自動再開を待機中`
+                : 'サーバからのレート制限解除を待機中'
+            "
+          >
+            <span aria-hidden="true">⏱</span>
+            リミット制限待機中（{{ rateLimitStatus.remainingSecs }} 秒）
+            <span
+              v-if="rateLimitStatus.reason"
+              class="text-amber-200/70 text-[10px]"
+            >
+              ({{ rateLimitStatus.reason }})
+            </span>
           </span>
           <span
             v-else-if="lastUpdatedAt"
