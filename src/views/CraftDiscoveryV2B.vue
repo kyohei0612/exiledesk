@@ -154,7 +154,12 @@ async function searchUniqueOnTrade2(u: UniqueUsage): Promise<void> {
   searching.value = true;
   const league = snapshot.value?.snapshot_name ?? "Fate of the Vaal";
   try {
-    await openTrade2ForUnique({ nameEn: u.nameEn, league });
+    // 2026-05-22: baseType も渡して、name 検索 400 失敗時に baseType + rarity=unique で fallback
+    await openTrade2ForUnique({
+      nameEn: u.nameEn,
+      league,
+      baseType: u.representative?.baseType,
+    });
   } catch (e) {
     console.warn("[CraftDiscoveryV2B] unique trade2 search failed:", e);
     lastWarn.value =
@@ -602,6 +607,49 @@ const allVisibleModsByTpl = computed<Map<string, ModEntry>>(() => {
 });
 
 /**
+ * 2026-05-22 オーナー指示: POE2 装備は prefix/suffix 各 3 枠まで。
+ * 4 つ目のチェックは物理的にあり得ない (耐性 4 種同時不可、等) のでガードする。
+ */
+const MAX_AFFIX_PER_ITEM = 3;
+/** prefix 側 rawTemplate の Set (per-slot) — selected カウント用 */
+const prefixTplSet = computed<Set<string>>(
+  () => new Set(activeSlotMods.value.prefix.map((m) => m.rawTemplate)),
+);
+const suffixTplSet = computed<Set<string>>(
+  () => new Set(activeSlotMods.value.suffix.map((m) => m.rawTemplate)),
+);
+const selectedPrefixCount = computed<number>(() => {
+  let n = 0;
+  for (const tpl of selectedMods.value) {
+    if (prefixTplSet.value.has(tpl)) n++;
+  }
+  return n;
+});
+const selectedSuffixCount = computed<number>(() => {
+  let n = 0;
+  for (const tpl of selectedMods.value) {
+    if (suffixTplSet.value.has(tpl)) n++;
+  }
+  return n;
+});
+const prefixLimitReached = computed<boolean>(
+  () => selectedPrefixCount.value >= MAX_AFFIX_PER_ITEM,
+);
+const suffixLimitReached = computed<boolean>(
+  () => selectedSuffixCount.value >= MAX_AFFIX_PER_ITEM,
+);
+/**
+ * mod が prefix 側か suffix 側かを判定 (チェックボックス :disabled で使用)。
+ * 同 affix 既選択 3 個に達してたら、未選択 mod のチェックを禁止する。
+ */
+function isModCheckDisabled(mod: ModEntry): boolean {
+  if (isModSelected(mod)) return false; // 既選択は解除のため disabled しない
+  if (prefixTplSet.value.has(mod.rawTemplate)) return prefixLimitReached.value;
+  if (suffixTplSet.value.has(mod.rawTemplate)) return suffixLimitReached.value;
+  return false;
+}
+
+/**
  * Phase ι: MOD カテゴリ排他選択。
  * - 解除動作はそのまま (チェック外し)
  * - 新規選択時、同 group の既選択 MOD があれば自動で解除
@@ -616,6 +664,18 @@ function toggleModSelect(mod: ModEntry): void {
     delete nextTiers[mod.rawTemplate];
     selectedMods.value = next;
     selectedTierIdxByMod.value = nextTiers;
+    return;
+  }
+
+  // 2026-05-22 オーナー指示: prefix/suffix 各 3 個上限ガード (POE2 mod 枠制限)
+  const isPrefix = prefixTplSet.value.has(mod.rawTemplate);
+  const isSuffix = suffixTplSet.value.has(mod.rawTemplate);
+  if (
+    (isPrefix && prefixLimitReached.value) ||
+    (isSuffix && suffixLimitReached.value)
+  ) {
+    const affixLabel = isPrefix ? "プレフィックス" : "サフィックス";
+    lastWarn.value = `${affixLabel}は 1 装備に最大 ${MAX_AFFIX_PER_ITEM} 個までです (POE2 mod 枠制限)`;
     return;
   }
 
@@ -1199,8 +1259,9 @@ function pct(count: number): string {
               <input
                 type="checkbox"
                 :checked="isModSelected(mod)"
+                :disabled="isModCheckDisabled(mod)"
                 @click.stop="toggleModSelect(mod)"
-                class="w-3.5 h-3.5 accent-[var(--exile-color-accent-focus)] cursor-pointer"
+                class="w-3.5 h-3.5 accent-[var(--exile-color-accent-focus)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="MOD を選択"
               />
               <span
@@ -1300,8 +1361,9 @@ function pct(count: number): string {
               <input
                 type="checkbox"
                 :checked="isModSelected(mod)"
+                :disabled="isModCheckDisabled(mod)"
                 @click.stop="toggleModSelect(mod)"
-                class="w-3.5 h-3.5 accent-[var(--exile-color-accent-focus)] cursor-pointer"
+                class="w-3.5 h-3.5 accent-[var(--exile-color-accent-focus)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="MOD を選択"
               />
               <span

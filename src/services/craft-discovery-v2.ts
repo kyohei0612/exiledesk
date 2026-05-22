@@ -1886,16 +1886,24 @@ export async function openTrade2ForSelectedMods(args: {
 export async function openTrade2ForUnique(args: {
   nameEn: string;
   league: string;
+  /**
+   * 2026-05-22 追加: name 検索失敗 (400 "Unknown item name") 時に
+   * baseType + rarity=unique で fallback 検索するためのベース種別。
+   * 渡されない場合は trade2 トップに飛ばす。
+   */
+  baseType?: string;
 }): Promise<{ openedUrl: string }> {
   const tradeLeague = snapshotNameToTradeLeague(args.league);
-  // Data-M5 (2026-05-22): ユニーク名検索でも `type_filters.rarity = unique` を明示。
-  // 旧コードは rarity 未指定だったため、同名 base のレアアイテムが result に混ざる事故が
-  // あり得た (例: "Mageblood" のような典型ユニーク名以外にも同 baseType の rare がヒット)。
-  // Data-M6 と同じく status は SecurityStatus.Securable (POE2 trade2 サイト ANY 互換)。
-  const query = {
+  if (!isTauriRuntime()) {
+    throw new Error(
+      "trade2 連携は Tauri ネイティブ環境でのみ動作します (ブラウザ dev では無効)",
+    );
+  }
+
+  // 1st try: name で絞り込み
+  const primaryQuery = {
     query: {
       status: { option: SecurityStatus.Securable },
-      // POE2 trade2 の name フィールドは { discriminator, option } 形式 (POE1 互換)
       name: { discriminator: null, option: args.nameEn },
       filters: {
         type_filters: {
@@ -1904,24 +1912,72 @@ export async function openTrade2ForUnique(args: {
           },
         },
       },
-      // trade_filters は省略 = INSTANT BUYOUT デフォルト
     },
     sort: { price: "asc" },
   };
-  if (!isTauriRuntime()) {
+  try {
+    const search = await invoke<Trade2SearchResponse>("trade2_search", {
+      req: { league: tradeLeague, query: primaryQuery },
+    });
+    if (search.id) {
+      const url = `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}/${search.id}`;
+      await openUrl(url);
+      return { openedUrl: url };
+    }
+    throw new Error("trade2_search にレスポンス id がありません");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // 2026-05-22: POE2 trade2 の name index に未登録の新ユニーク (例: Sacrificial Regalia)
+    // で 400 "Unknown item name" が出るケースの fallback。
+    const isUnknownName =
+      msg.includes("Unknown item name") || msg.includes("400");
+    if (!isUnknownName) throw err;
+
+    // Fallback 1: baseType + rarity=unique で再検索 (ベース種別レベルで絞り込み、ユーザーが手動で絞れる)
+    if (args.baseType) {
+      const fallbackQuery = {
+        query: {
+          status: { option: SecurityStatus.Securable },
+          type: { discriminator: null, option: args.baseType },
+          filters: {
+            type_filters: {
+              filters: {
+                rarity: { option: Rarity.Unique },
+              },
+            },
+          },
+        },
+        sort: { price: "asc" },
+      };
+      try {
+        const fallback = await invoke<Trade2SearchResponse>("trade2_search", {
+          req: { league: tradeLeague, query: fallbackQuery },
+        });
+        if (fallback.id) {
+          const url = `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}/${fallback.id}`;
+          await openUrl(url);
+          // 成功扱いだが、name 未登録だった旨は警告として呼出側に伝えたい
+          // (戻り値は openedUrl のみだが、ユーザーは ベース種別検索結果 を見ることになる)
+          console.warn(
+            `[openTrade2ForUnique] name "${args.nameEn}" が trade2 未登録 → baseType "${args.baseType}" で fallback 検索`,
+          );
+          return { openedUrl: url };
+        }
+      } catch (fallbackErr) {
+        console.warn(
+          "[openTrade2ForUnique] baseType fallback も失敗:",
+          fallbackErr,
+        );
+      }
+    }
+
+    // Fallback 2: trade2 検索ホームに飛ばす (ユーザー手動検索)
+    const homeUrl = `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
+    await openUrl(homeUrl);
     throw new Error(
-      "trade2 連携は Tauri ネイティブ環境でのみ動作します (ブラウザ dev では無効)",
+      `trade2 で「${args.nameEn}」は未登録のユニーク名です。検索ホームを開きました → 手動で検索してください。`,
     );
   }
-  const search = await invoke<Trade2SearchResponse>("trade2_search", {
-    req: { league: tradeLeague, query },
-  });
-  if (!search.id) {
-    throw new Error("trade2_search にレスポンス id がありません");
-  }
-  const url = `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}/${search.id}`;
-  await openUrl(url);
-  return { openedUrl: url };
 }
 
 // ============================================================================
