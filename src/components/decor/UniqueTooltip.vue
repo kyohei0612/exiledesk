@@ -38,6 +38,7 @@ const props = defineProps<{
 import modsBundleRaw from "../../i18n/mods-bundle.json";
 import itemsJaRaw from "../../i18n/items-ja.json";
 import uniqueModsJaRaw from "../../i18n/unique-mods-ja.json";
+import uniqueNamesJaRaw from "../../i18n/unique-names-ja.json";
 import poe2FlavourJaRaw from "../../i18n/poe2-flavour-ja.json";
 interface BundleEntry {
   text_en?: string;
@@ -49,6 +50,9 @@ const _itemsJa = itemsJaRaw as Record<string, string>;
 // Phase κ: POE2DB スクレイプ由来のユニーク特殊 MOD 辞書 (例: "Reflects opposite Ring" → "もう一個の指輪を反射する")
 //   build: `node scripts/build-unique-mods-ja.mjs` で生成。
 const _uniqueModsJa = uniqueModsJaRaw as Record<string, string>;
+// 2026-05-22: ユニュ英語正式名 → 日本語正式名 (例: "Atziri's Splendour" → "アッツィリの栄耀")
+//   build: `node scripts/build-unique-names-ja.mjs --offline` で生成 (389 件)。
+const _uniqueNamesJa = uniqueNamesJaRaw as Record<string, string>;
 // Phase κ: RePoE fork 由来の flavour text 辞書 (例: "Power is a matter of perspective." → "力とは主観的なものだ。")
 //   build: `node scripts/build-poe2-flavour-ja.mjs` で生成。
 const _flavourJa = poe2FlavourJaRaw as Record<string, string>;
@@ -169,7 +173,12 @@ const r = computed(() => props.unique?.representative ?? null);
 const displayName = computed<string>(() => {
   const u = props.unique;
   if (!u) return "";
-  // representative.typeLine 優先、なければ name
+  // 2026-05-22: ユニュ正式名 (data.name = "Atziri's Splendour") → 日本語正式名 ("アッツィリの栄耀") を優先。
+  // 辞書未登録なら英語正式名のまま、それも無ければ typeLine を jaCurrency で日本語化 (旧挙動 fallback)。
+  const officialEn = r.value?.name;
+  if (officialEn) {
+    return _uniqueNamesJa[officialEn] || officialEn;
+  }
   const en = r.value?.typeLine ?? u.nameEn;
   return jaCurrency(en);
 });

@@ -29,6 +29,32 @@ import { getModStatIds } from "../data/mod-translations";
 import modsBundle from "../i18n/mods-bundle.json";
 import trade2StatMapping from "../i18n/trade2-stat-mapping.json";
 import modTierAndGroup from "../i18n/mod-tier-and-group.json";
+import uniqueNamesJaRaw from "../i18n/unique-names-ja.json";
+
+/**
+ * 2026-05-22: ユニュ正式名 (英語 = `data.name`) → 日本語正式名の辞書。
+ * POE2DB JP ページから生成 (389 エントリ、`scripts/build-unique-names-ja.mjs`)。
+ * 例: "Atziri's Splendour" → "アッツィリの栄耀"。
+ * 未翻訳ユニュは EN === JP で保存されている (UI フォールバック分岐不要)。
+ */
+const _uniqueNamesJa = uniqueNamesJaRaw as Record<string, string>;
+
+/**
+ * UniqueUsage.name 用の表示名生成。
+ * 優先順:
+ *   1. `representative.name` (= poe.ninja data.name = 英語正式名) → 辞書で日本語化
+ *   2. `representative.name` の英語のまま (辞書未登録時)
+ *   3. `nameEn` (= typeLine、ベース表示) を `jaCurrency` で日本語化 (旧挙動 fallback)
+ */
+function displayUniqueNameJa(
+  representativeName: string | undefined,
+  fallbackTypeLine: string,
+): string {
+  if (representativeName) {
+    return _uniqueNamesJa[representativeName] || representativeName;
+  }
+  return jaCurrency(fallbackTypeLine);
+}
 import { SecurityStatus, Rarity } from "../constants/trade2";
 
 /**
@@ -1167,7 +1193,7 @@ function finalizeUniques(
   const list: UniqueUsage[] = [];
   for (const b of buckets.values()) {
     list.push({
-      name: jaCurrency(b.nameEn),
+      name: displayUniqueNameJa(b.representative?.name, b.nameEn),
       nameEn: b.nameEn,
       count: b.count,
       percentage: sampleSize > 0 ? b.count / sampleSize : 0,
