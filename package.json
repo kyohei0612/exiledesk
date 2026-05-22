@@ -8,7 +8,10 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "lint:hex": "node scripts/lint-hex.mjs"
+    "lint:hex": "node scripts/lint-hex.mjs",
+    "build:dicts": "node scripts/build-unique-pages-detail.mjs --offline && node scripts/build-unique-names-ja.mjs --offline && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
+    "build:dicts:online": "node scripts/build-unique-pages-detail.mjs && node scripts/build-unique-names-ja.mjs && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
+    "check:deps": "pnpm outdated; cd src-tauri && cargo update --dry-run"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
