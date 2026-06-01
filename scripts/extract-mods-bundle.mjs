@@ -207,6 +207,7 @@ function commonNorm(text) {
   s = s.replace(/\([+-]?\d+(?:\.\d+)?\)/g, "#");
   s = s.replace(/(?<![\w#])[-+]?\d+(?:\.\d+)?/g, "#");
   s = s.replace(/#(\s*-\s*#)+/g, "#");
+  s = s.replace(/\+#/g, "#"); // "+(range)"→"+#" の先頭符号を除去 (GGGトレードは先頭+を付けない)
   s = s.replace(/\s+/g, " ").trim();
   return s;
 }

@@ -65,6 +65,7 @@ def common_norm(text):
     s = re.sub(r"\((?:\+|-)?\d+(?:\.\d+)?\)", "#", s)
     s = re.sub(r"(?<![\w#])[-+]?\d+(?:\.\d+)?", "#", s)
     s = re.sub(r"#(\s*-\s*#)+", "#", s)
+    s = re.sub(r"\+#", "#", s)  # 先頭符号除去 (common_norm を3スクリプトで一致させる)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 

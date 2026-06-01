@@ -41,6 +41,7 @@ def common_norm(text):
     s = re.sub(r"\((?:\+|-)?\d+(?:\.\d+)?\)", "#", s)
     s = re.sub(r"(?<![\w#])[-+]?\d+(?:\.\d+)?", "#", s)
     s = re.sub(r"#(\s*-\s*#)+", "#", s)
+    s = re.sub(r"\+#", "#", s)  # "+(range)"→"+#" の先頭符号を除去 (GGGトレードは先頭+を付けない)
     return re.sub(r"\s+", " ", s).strip()
 
 def fetch(url, cache_name):
