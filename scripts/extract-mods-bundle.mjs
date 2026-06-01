@@ -244,7 +244,15 @@ async function main() {
   const modTextJa = (await exists(modTextJaPath))
     ? JSON.parse(await readFile(modTextJaPath, "utf-8"))
     : {};
-  log(`JA 補完辞書(トレード由来): ${Object.keys(modTextJa).length} entries`);
+  // 手動辞書 (build-ja-manual.py): どのソースにも無いニッチMODの手訳。
+  const modTextJaManualPath = resolve(ROOT, "src/i18n/mod-text-ja-manual.json");
+  const modTextJaManual = (await exists(modTextJaManualPath))
+    ? JSON.parse(await readFile(modTextJaManualPath, "utf-8"))
+    : {};
+  const jaSuppl = { ...modTextJa, ...modTextJaManual }; // 手動が後勝ち
+  log(
+    `JA 補完辞書: トレード ${Object.keys(modTextJa).length} + 手動 ${Object.keys(modTextJaManual).length} = ${Object.keys(jaSuppl).length}`,
+  );
 
   log(
     `source counts: EN=${Object.keys(enRaw).length}, JA=${Object.keys(jaRaw).length}`,
@@ -290,11 +298,16 @@ async function main() {
       tags: mergeTags(v),
     };
 
-    // JA 補完: RePoE JA 廃止で未訳 (text_ja === text_en) のものを公式トレード由来で上書き。
+    // JA 補完: RePoE JA 廃止で未訳 (text_ja === text_en) のものを補完辞書(トレード+手動)で上書き。
+    // 行単位で引き、全行が揃った場合のみ採用 (multi-line MOD も行ごとに突合できる)。
     if (bundled.text_ja === bundled.text_en && bundled.text_en) {
-      const ov = modTextJa[commonNorm(bundled.text_en)];
-      if (ov) {
-        bundled.text_ja = ov;
+      const lines = bundled.text_en
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const jaLines = lines.map((l) => jaSuppl[commonNorm(l)]);
+      if (jaLines.length > 0 && jaLines.every(Boolean)) {
+        bundled.text_ja = jaLines.join("\n");
         stats.jaOverlaid++;
       }
     }
