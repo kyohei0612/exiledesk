@@ -193,6 +193,24 @@ function mergeTags(v) {
 
 /* ---------------- main extract ---------------- */
 
+/**
+ * JA 補完辞書 (build-mod-text-ja.py が公式トレードスタッツから生成) と突合する共通正規化。
+ * Python 側 common_norm と完全一致させること: [Tag|表示]→表示、ダッシュ→-、
+ * (a-b)/(n)/裸数値 → #、空白圧縮。
+ */
+function commonNorm(text) {
+  let s = text;
+  s = s.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2");
+  s = s.replace(/\[([^\]]+)\]/g, "$1");
+  s = s.replace(/[—–]/g, "-");
+  s = s.replace(/\([+-]?\d+(?:\.\d+)?\s*-\s*[+-]?\d+(?:\.\d+)?\)/g, "#");
+  s = s.replace(/\([+-]?\d+(?:\.\d+)?\)/g, "#");
+  s = s.replace(/(?<![\w#])[-+]?\d+(?:\.\d+)?/g, "#");
+  s = s.replace(/#(\s*-\s*#)+/g, "#");
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const refresh = argv.includes("--refresh");
@@ -219,6 +237,14 @@ async function main() {
     log("⚠ JA mods が空: 全 MOD が EN fallback 表示になります");
   }
 
+  // JA 補完辞書 (RePoE JA廃止分を埋める / scripts/build-mod-text-ja.py が公式トレード
+  // スタッツ jp realm から生成)。{ common_norm(EN): JA text }
+  const modTextJaPath = resolve(ROOT, "src/i18n/mod-text-ja.json");
+  const modTextJa = (await exists(modTextJaPath))
+    ? JSON.parse(await readFile(modTextJaPath, "utf-8"))
+    : {};
+  log(`JA 補完辞書(トレード由来): ${Object.keys(modTextJa).length} entries`);
+
   log(
     `source counts: EN=${Object.keys(enRaw).length}, JA=${Object.keys(jaRaw).length}`,
   );
@@ -230,6 +256,7 @@ async function main() {
     byDomain: {},
     skippedNoText: 0,
     missingJa: 0,
+    jaOverlaid: 0,
   };
 
   for (const [key, v] of Object.entries(enRaw)) {
@@ -261,6 +288,15 @@ async function main() {
       spawn: reduceSpawn(v.spawn_weights ?? []),
       tags: mergeTags(v),
     };
+
+    // JA 補完: RePoE JA 廃止で未訳 (text_ja === text_en) のものを公式トレード由来で上書き。
+    if (bundled.text_ja === bundled.text_en && bundled.text_en) {
+      const ov = modTextJa[commonNorm(bundled.text_en)];
+      if (ov) {
+        bundled.text_ja = ov;
+        stats.jaOverlaid++;
+      }
+    }
 
     if (kind === "essence") bundled.essence = 1;
     else if (kind === "corrupted") bundled.corrupt = 1;
@@ -295,6 +331,7 @@ async function main() {
   }
   log(`skipped (no text & no stats): ${stats.skippedNoText}`);
   log(`missing JA translation: ${stats.missingJa}`);
+  log(`JA 補完で埋めた(トレード由来): ${stats.jaOverlaid}`);
 
   // Sanity guards — fail loudly on regressions
   const guardrails = {
