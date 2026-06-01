@@ -29,6 +29,11 @@ import { getModStatIds } from "../data/mod-translations";
 import modsBundle from "../i18n/mods-bundle.json";
 import trade2StatMapping from "../i18n/trade2-stat-mapping.json";
 import modTierAndGroup from "../i18n/mod-tier-and-group.json";
+// poe2db 権威 affix オーバーライド (ModGenerationTypeID 由来 / scripts/audit_affix_vs_poe2db.py で生成)。
+// bundle 多数決が「同テキストが prefix/suffix 両方に存在」で外すケースを poe2db gen で上書きする。
+// キーは normalizeModTemplate と同形式。毎リーグ `py scripts/audit_affix_vs_poe2db.py --refresh --write` で再生成。
+import affixOverridesRaw from "../i18n/affix-overrides.json";
+const _affixOverrides = affixOverridesRaw as Record<string, AffixKind>;
 import uniqueNamesJaRaw from "../i18n/unique-names-ja.json";
 
 /**
@@ -575,7 +580,9 @@ const _modBundleIndex: Map<string, ModBundleIndexEntry> = (() => {
   }
   const map = new Map<string, ModBundleIndexEntry>();
   for (const [tplKey, t] of tally) {
-    const affix: AffixKind = t.prefix >= t.suffix ? "P" : "S";
+    // bundle 多数決を基本とし、poe2db 権威 override があれば上書き (prefix/suffix の確定)。
+    const baseAffix: AffixKind = t.prefix >= t.suffix ? "P" : "S";
+    const affix: AffixKind = _affixOverrides[tplKey] ?? baseAffix;
     map.set(tplKey, {
       affix,
       textJaTemplate: t.textJaTemplate,
