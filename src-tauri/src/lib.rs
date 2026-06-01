@@ -2,7 +2,6 @@
 
 // OAuth は方針として実装なし（オーナー判断 2026-05-09: 申請が面倒、PoB share code で十分）
 pub mod pob;  // PoB-PoE2 ヘッドレス連携（Phase 2、PobWorker thread + 4 commands）— example からも参照される
-pub mod claude_code;  // Claude Code (claude CLI) spawn → MAX プラン OAuth 経由のトークン消費
 pub mod trade2;  // POE2 公式 trade2 API client (CORS 制約 + rate limit のため Rust 経由)
 pub mod craft_discovery_storage;  // クラフト発見君の累積データ JSON 永続化 (app_data_dir)
 pub mod craft_v2_storage;  // Phase ζ: クラフト発見 V2 のディスクキャッシュ (差分更新用)
@@ -225,7 +224,6 @@ pub fn run() {
             pob::pob_get_equipped_items,
             pob::pob_get_skill_groups,
             pob::pob_set_main_socket_group,
-            claude_code::ask_claude_code,
             trade2::trade2_search,
             trade2::trade2_search_count,
             trade2::trade2_fetch,
@@ -243,6 +241,7 @@ pub fn run() {
             health_check::health_check_all,
             settings::settings_load,
             settings::settings_save,
+            settings::is_debug_build,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

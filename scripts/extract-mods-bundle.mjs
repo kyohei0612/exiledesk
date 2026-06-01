@@ -6,7 +6,10 @@
  *
  * Sources:
  *   - English: https://raw.githubusercontent.com/repoe-fork/poe2/master/data/mods.json
- *   - Japanese: https://raw.githubusercontent.com/repoe-fork/poe2/master/data/Japanese/mods.json
+ *   - Japanese: (廃止) repoe-fork/poe2 は 2026-06 までに日本語ローカライズを全廃
+ *       (data/Japanese 消滅, stat_translations の Japanese 全 null)。
+ *       JA は cache (data-cache/mods.ja.json) を温存し、未取得 MOD は EN fallback。
+ *       恒久的な別 JA 源の選定は TODO (notes/2026-06-01-decisions.md)。
  *   - License: MIT (RePoE) / data owned by Grinding Gear Games (per ToS)
  *
  * Output:
@@ -61,19 +64,43 @@ async function exists(path) {
   }
 }
 
-async function downloadIfMissing(url, dest, refresh) {
+/**
+ * @param {string} url   取得元
+ * @param {string} dest  保存先
+ * @param {boolean} refresh  true なら cache があっても再取得
+ * @param {boolean} [optional=false]  true なら取得失敗を致命扱いせず、
+ *   既存 cache があればそれを使い、無ければ何もせず false を返す（呼出側で fallback）。
+ * @returns {Promise<boolean>}  最新データを取得/保持できたか
+ */
+async function downloadIfMissing(url, dest, refresh, optional = false) {
   if (!refresh && (await exists(dest))) {
     log(`cached: ${dest}`);
-    return;
+    return true;
   }
   log(`fetching ${url}`);
-  const res = await fetch(url);
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    res = { ok: false, status: `network error: ${e?.message ?? e}` };
+  }
   if (!res.ok) {
+    if (optional) {
+      const haveCache = await exists(dest);
+      log(
+        `⚠ optional source 取得失敗 (HTTP ${res.status}): ${url}` +
+          (haveCache
+            ? ` → 既存 cache (${dest}) で続行`
+            : ` → cache も無し。fallback で続行`),
+      );
+      return haveCache;
+    }
     throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
   }
   const buf = Buffer.from(await res.arrayBuffer());
   await writeFile(dest, buf);
   log(`wrote ${dest} (${buf.length.toLocaleString()} bytes)`);
+  return true;
 }
 
 /**
@@ -176,12 +203,21 @@ async function main() {
   const jaPath = resolve(CACHE_DIR, "mods.ja.json");
 
   await downloadIfMissing(SOURCES.en, enPath, refresh);
-  await downloadIfMissing(SOURCES.ja, jaPath, refresh);
+  // JA は optional: 2026-06-01 時点で上流 repoe-fork/poe2 が日本語 mods.json を
+  // 廃止 (data/Japanese 消滅, stat_translations の Japanese も全 null)。
+  // 取得失敗しても旧 cache → EN fallback と縮退して EN 追従を止めない。
+  // 恒久対応 (別 JA 源) は TODO: notes/2026-06-01-decisions.md 参照。
+  await downloadIfMissing(SOURCES.ja, jaPath, refresh, true);
 
   log("loading EN mods…");
   const enRaw = JSON.parse(await readFile(enPath, "utf-8"));
   log("loading JA mods…");
-  const jaRaw = JSON.parse(await readFile(jaPath, "utf-8"));
+  const jaRaw = (await exists(jaPath))
+    ? JSON.parse(await readFile(jaPath, "utf-8"))
+    : {};
+  if (Object.keys(jaRaw).length === 0) {
+    log("⚠ JA mods が空: 全 MOD が EN fallback 表示になります");
+  }
 
   log(
     `source counts: EN=${Object.keys(enRaw).length}, JA=${Object.keys(jaRaw).length}`,

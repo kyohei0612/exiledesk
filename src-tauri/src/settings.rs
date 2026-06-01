@@ -182,6 +182,18 @@ pub fn settings_save(
     Ok(())
 }
 
+/// 現在のビルドが debug ビルドかを返す。
+///
+/// UI 側 (Settings.vue) が「dev ビルド中は autostart toggle を無効化」する
+/// 判定に使う。debug ビルドの exe は CUI subsystem (= 起動時に黒コンソール窓が出る)
+/// で、`tauri-plugin-autostart::enable()` を呼ぶと `std::env::current_exe()` の
+/// debug 絶対パスが HKCU\Run に焼き付き、PC 起動時にちらつきの原因になる。
+/// UI 側で構造的に enable させないことで再発を防ぐ (2026-05-25 解析)。
+#[tauri::command]
+pub fn is_debug_build() -> bool {
+    cfg!(debug_assertions)
+}
+
 // ============================================================================
 // tests
 // ============================================================================

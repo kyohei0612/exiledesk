@@ -281,7 +281,14 @@ const filteredRanking = computed(() => {
     });
   }
 
-  return list;
+  // 表示順は「神換算（primarySide の Divine 価格）降順」= 価値が高い順に統一する。
+  // rankPairsByVolume は volume 降順で返すが、UI の "ランキング" はユーザーが読む
+  // 「神換算」列と一致させる必要があるため、表示直前に価値降順で並べ直す
+  // (2026-06-01 オーナー指示「ちゃんと高い順に並び替えて」)。
+  // list が ranking.value と同一参照になりうるので slice() してから sort する。
+  return list
+    .slice()
+    .sort((a, b) => primarySide(b).divinePrice - primarySide(a).divinePrice);
 });
 
 onMounted(async () => {
@@ -361,16 +368,6 @@ onMounted(async () => {
         <p class="text-xs text-[var(--exile-color-text-secondary)]">
           最終更新: <span>{{ formatTime(lastUpdated) }}</span>
           <span v-if="ranking.length"> ／ {{ ranking.length }} ペア</span>
-          <span v-if="divinePrice > 1">
-            ／ 1 神 = {{ fmt(divinePrice) }} 高貴 ／ 1 神 = {{ fmt(chaosDivinePrice) }} カオス
-          </span>
-          <!-- L6: divinePrice <= 1 (リーグ初日 / データ未確定) のフォールバック -->
-          <span
-            v-else-if="ranking.length"
-            class="text-[var(--exile-color-text-tertiary)] italic"
-          >
-            ／ 神価格は未確定 (1 神 = 1 高貴 仮置き)
-          </span>
         </p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
@@ -392,6 +389,35 @@ onMounted(async () => {
           {{ loading ? "更新中…" : "🔄 更新" }}
         </button>
       </div>
+    </div>
+
+    <!-- 基準レート帯: ランキングは「1 神 建て」なので、神→高貴/カオスの相場を真上に明示 -->
+    <div
+      v-if="ranking.length"
+      class="flex items-center gap-x-5 gap-y-2 mb-4 px-4 py-2.5 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] flex-wrap"
+    >
+      <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display">基準レート</span>
+      <template v-if="divinePrice > 1">
+        <div class="flex items-center gap-1.5 text-lg font-semibold tabular-nums">
+          <span class="text-[var(--exile-color-text-secondary)]">1</span>
+          <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-6 h-6 object-contain" loading="lazy" />
+          <span class="text-[var(--exile-color-text-secondary)]">=</span>
+          <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(divinePrice) }}</span>
+          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-6 h-6 object-contain" loading="lazy" />
+          <span class="text-sm text-[var(--exile-color-text-secondary)]">高貴</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
+          <span>1</span>
+          <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
+          <span>=</span>
+          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice) }}</span>
+          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+          <span class="text-sm">カオス</span>
+        </div>
+      </template>
+      <span v-else class="text-sm text-[var(--exile-color-text-tertiary)] italic">
+        神価格は未確定（1 神 = 1 高貴 仮置き）
+      </span>
     </div>
 
     <div
