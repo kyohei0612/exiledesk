@@ -46,6 +46,7 @@ const categoryJaMap: Record<string, string> = {
   lineagesupportgems: "リネージュサポート",
   uncutgems: "ジェムの原石",
   vaultkeys: "聖遺物の鍵",
+  verisium: "ヴェリシウム",
 
   // === ジェム系（参考、Currency Exchange に通常無いが将来用） ===
   "skill-gem": "スキルジェム",

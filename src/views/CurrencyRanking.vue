@@ -2,9 +2,11 @@
 import { ref, onMounted, computed } from "vue";
 import {
   fetchSnapshotPairs,
-  rankPairsByVolume,
+  aggregateItems,
   fetchLeagues,
-  type RankedPair,
+  fetchPriceTrends,
+  type RankedItem,
+  type ItemTrend,
   type League,
 } from "../api/poe2scout";
 import { jaCurrency } from "../i18n/currencies-ja";
@@ -13,14 +15,19 @@ import { jaCategory } from "../i18n/categories-ja";
 const leagues = ref<League[]>([]);
 const league = ref<string>("Fate of the Vaal");
 const divinePrice = ref<number>(1);
-const chaosDivinePrice = ref<number>(1); // 1 Chaos = X Divine (リーグ末期は >1 = Chaos > Divine 逆転)
+const chaosDivinePrice = ref<number>(1); // 1 神 = X カオス (Chaos per Divine, 通常 >1)
 const divineIcon = ref<string>("");
 const chaosIcon = ref<string>("");
 const exaltedIcon = ref<string>("");
-const ranking = ref<RankedPair[]>([]);
+const ranking = ref<RankedItem[]>([]);
+// ItemId → 過去7日トレンド (poe2scout PriceHistory)。表示は任意なので失敗しても表は出す。
+const trends = ref<Map<number, ItemTrend>>(new Map());
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
+// リーグ自動判定に失敗した時の警告 (前リーグのまま黙って表示する事故を防ぐ)。
+// refresh() の error とは別管理で、リーグ取得時のみ更新する。
+const leagueWarning = ref<string | null>(null);
 // 初期表示は「通貨 (currency)」固定 = 高貴なるオーブ等のオーブ系のみ
 // (オーナー指示 2026-05-22: 通貨欄はルーン/ジェム/エッセンスを混ぜない)
 const categoryFilter = ref<string>("currency");
@@ -38,9 +45,16 @@ async function loadLeagues() {
       divineIcon.value = current.DivineCurrencyIconUrl || "";
       chaosIcon.value = current.ChaosCurrencyIconUrl || "";
       exaltedIcon.value = current.ExaltedCurrencyIconUrl || current.BaseCurrencyIconUrl || "";
+      leagueWarning.value = null;
+    } else {
+      // API は応答したが IsCurrent なリーグが無い = 前リーグのまま表示する事故になり得る
+      leagueWarning.value =
+        "現在のリーグを自動判定できませんでした。上のリーグ選択で手動指定してください。";
     }
   } catch (e) {
     console.warn("Failed to load leagues, using default:", e);
+    leagueWarning.value =
+      "リーグ一覧を取得できませんでした。表示中のデータは前回リーグの可能性があります。";
   }
 }
 
@@ -57,12 +71,20 @@ async function refresh() {
       exaltedIcon.value = leagueData.ExaltedCurrencyIconUrl || leagueData.BaseCurrencyIconUrl || "";
     }
 
-    const pairs = await fetchSnapshotPairs(league.value);
-    ranking.value = rankPairsByVolume(
+    // ペアと価格履歴を並列取得。履歴は任意表示なので失敗しても本体は出す。
+    const [pairs, trendMap] = await Promise.all([
+      fetchSnapshotPairs(league.value),
+      fetchPriceTrends(league.value).catch((e) => {
+        console.warn("Failed to load price trends:", e);
+        return new Map<number, ItemTrend>();
+      }),
+    ]);
+    ranking.value = aggregateItems(
       pairs,
       divinePrice.value,
       chaosDivinePrice.value,
     );
+    trends.value = trendMap;
     lastUpdated.value = new Date();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
@@ -72,6 +94,8 @@ async function refresh() {
 }
 
 function onLeagueChange() {
+  // ユーザーが明示的にリーグを選んだ = 鮮度警告の役目は終わり (案内文と挙動を一致させる)
+  leagueWarning.value = null;
   refresh();
 }
 
@@ -107,113 +131,66 @@ function formatTime(d: Date | null): string {
   });
 }
 
-/**
- * 神換算列で表示する「1.0」側のアイテム（より価値の高い方）。
- * Divine ペアは非 Divine 側 (one)。非 Divine ペアは Divine 価格が高い方。
- */
-function primarySide(p: RankedPair): {
-  text: string;
-  icon: string;
-  divinePrice: number;
-  chaosPrice: number;
-  exaltedPrice: number;
-} {
-  if (p.containsDivine) {
-    return {
-      text: p.oneText,
-      icon: p.oneIcon,
-      divinePrice: p.oneDivinePrice,
-      chaosPrice: p.oneChaosPrice,
-      exaltedPrice: p.oneRelativePrice,
-    };
-  }
-  if (p.oneDivinePrice >= p.twoDivinePrice) {
-    return {
-      text: p.oneText,
-      icon: p.oneIcon,
-      divinePrice: p.oneDivinePrice,
-      chaosPrice: p.oneChaosPrice,
-      exaltedPrice: p.oneRelativePrice,
-    };
-  }
-  return {
-    text: p.twoText,
-    icon: p.twoIcon,
-    divinePrice: p.twoDivinePrice,
-    chaosPrice: p.twoChaosPrice,
-    exaltedPrice: p.twoRelativePrice,
-  };
+// --- 過去7日トレンド (スパークライン + 変化率) ---
+function trendFor(p: RankedItem): ItemTrend | undefined {
+  return trends.value.get(p.itemId);
+}
+/** spark 配列を SVG polyline の points 文字列に変換 (古→新, 左→右)。 */
+function sparkPoints(vals: number[], w = 72, h = 20): string {
+  if (vals.length < 2) return "";
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+  const pad = 1.5; // 線幅ぶん上下に余白
+  return vals
+    .map((v, i) => {
+      const x = (i / (vals.length - 1)) * w;
+      const y = h - pad - ((v - min) / range) * (h - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+/** 変化率の表示文字列 (+12.3% / −4.5% / 0%)。 */
+function fmtPct(n: number): string {
+  if (!Number.isFinite(n) || Math.abs(n) < 0.05) return "0%";
+  const sign = n > 0 ? "+" : "−";
+  return `${sign}${Math.abs(n).toFixed(0)}%`;
 }
 
-
-// ドロップダウンに出すカテゴリ集計 (2026-05-22 修正):
-// - Divine ペア: Divine は価格基準なので、非 Divine 側 (oneCategoryApiId) のカテゴリで集計
-// - 非 Divine ペア: 両者同カテゴリのみ集計 (リチュアル ↔ アビスのような混在ペアは除外)
-/**
- * 各 Item ApiId について、「Divine ペア / Exalted ペア / Chaos ペアそれぞれでの
- * Item 1 個あたりの神換算価格」を集めるマップ。同 Item が複数の異通貨ペアに登場すれば、
- * 各ペアで独立した relativePrice → 神換算値の差が「市場乖離 (アービトラージ機会)」。
- *
- * counterpart = "divine" | "exalted" | "chaos" の場合のみ拾う (他通貨は対象外)。
- */
-const itemDivineEquivMap = computed(() => {
-  const m = new Map<string, { divine?: number; exalted?: number; chaos?: number }>();
-  for (const r of ranking.value) {
-    // (oneApiId, twoApiId) のうち、片方が divine/exalted/chaos ならそれを counterpart、もう一方を Item とみなす
-    const counterparts = new Set(["divine", "exalted", "chaos"]);
-    let itemApiId: string | null = null;
-    let counterpart: "divine" | "exalted" | "chaos" | null = null;
-    let itemDivineEquiv = 0;
-    if (counterparts.has(r.oneApiId) && !counterparts.has(r.twoApiId)) {
-      itemApiId = r.twoApiId;
-      counterpart = r.oneApiId as "divine" | "exalted" | "chaos";
-      itemDivineEquiv = r.twoDivinePrice;
-    } else if (counterparts.has(r.twoApiId) && !counterparts.has(r.oneApiId)) {
-      itemApiId = r.oneApiId;
-      counterpart = r.twoApiId as "divine" | "exalted" | "chaos";
-      itemDivineEquiv = r.oneDivinePrice;
-    } else {
-      continue;
-    }
-    if (!itemApiId || !counterpart) continue;
-    const entry = m.get(itemApiId) ?? {};
-    entry[counterpart] = itemDivineEquiv;
-    m.set(itemApiId, entry);
-  }
-  return m;
-});
-
-/**
- * 行の primarySide Item について、Divine を基準として「高貴経由 / カオス経由で取引した
- * 場合の神換算差分」を返す。差分が 0 (もしくは比較対象なし) なら undefined。
- */
-function arbitrageDelta(
-  p: RankedPair,
-  via: "exalted" | "chaos",
-): number | undefined {
-  // primarySide の Item ApiId を特定 (containsDivine なら one=非Divine、それ以外は価値高い側)
-  const itemApiId = p.containsDivine
-    ? p.oneApiId
-    : p.oneDivinePrice >= p.twoDivinePrice
-      ? p.oneApiId
-      : p.twoApiId;
-  const entry = itemDivineEquivMap.value.get(itemApiId);
-  if (!entry || entry.divine === undefined || entry[via] === undefined) {
-    return undefined;
-  }
-  const diff = entry[via]! - entry.divine;
-  // ノイズ閾値: 0.0001 神未満は表示しない
-  if (Math.abs(diff) < 0.0001) return undefined;
-  return diff;
-}
-
-function fmtDelta(d: number): string {
-  const sign = d >= 0 ? "+" : "−";
-  return `${sign}${fmt(Math.abs(d))} 神`;
+// カテゴリ表示順 (オーナー指示 2026-06-03): 件数依存だと毎リーグ並びが変わるので固定順にする。
+// POE2 公式トレードの並びを参考に「カレンシー → 強化系 → リーグ機構 → ジェム/アイドル系」。
+// 未掲載カテゴリはこの後ろに ID 昇順で続ける。
+const CATEGORY_ORDER: string[] = [
+  "currency",
+  "essences",
+  "essence",
+  "delirium",
+  "breach",
+  "abyss",
+  "sanctum",
+  "fragments",
+  "fragment",
+  "runes",
+  "rune",
+  "ritual",
+  "soulcore",
+  "expedition",
+  "ultimatum",
+  "incursion",
+  "idol",
+  "uncutgems",
+  "lineagesupportgems",
+  "verisium",
+  "vaultkeys",
+  "vaal",
+];
+function categoryOrderIndex(id: string): number {
+  const i = CATEGORY_ORDER.indexOf(id);
+  return i === -1 ? CATEGORY_ORDER.length : i;
 }
 
 // カテゴリ別の表示用リスト。各カテゴリで取引量最大のアイテムのアイコンを代表に使う。
-// Divine ペア OR 両者同カテゴリの場合のみ集計対象 (異カテゴリペアは「すべて」のみ)。
+// アイテム単位に集約済なので categoryApiId でそのまま件数を数える。
 interface CategoryDisplay {
   id: string;
   count: number;
@@ -222,73 +199,44 @@ interface CategoryDisplay {
 const categoryDisplayList = computed<CategoryDisplay[]>(() => {
   const acc = new Map<string, { count: number; maxVolume: number; icon: string }>();
   for (const r of ranking.value) {
-    let cat: string | null = null;
-    let icon = "";
-    if (r.containsDivine) {
-      cat = r.oneCategoryApiId;
-      icon = r.oneIcon;
-    } else if (r.oneCategoryApiId === r.twoCategoryApiId) {
-      cat = r.oneCategoryApiId;
-      icon = r.oneDivinePrice >= r.twoDivinePrice ? r.oneIcon : r.twoIcon;
-    }
-    if (!cat) continue;
+    const cat = r.categoryApiId;
     const entry = acc.get(cat) ?? { count: 0, maxVolume: 0, icon: "" };
     entry.count += 1;
     if (r.volume > entry.maxVolume) {
       entry.maxVolume = r.volume;
-      entry.icon = icon;
+      entry.icon = r.icon;
     }
     acc.set(cat, entry);
   }
   return Array.from(acc.entries())
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([id, e]) => ({ id, count: e.count, icon: e.icon }));
+    .map(([id, e]) => ({ id, count: e.count, icon: e.icon }))
+    .sort((a, b) => {
+      const d = categoryOrderIndex(a.id) - categoryOrderIndex(b.id);
+      return d !== 0 ? d : a.id.localeCompare(b.id);
+    });
 });
 
 const filteredRanking = computed(() => {
   let list = ranking.value;
 
-  // カテゴリフィルタ (2026-05-22 修正):
-  // - Divine ペア: Divine は価格基準。非 Divine 側 (oneCategoryApiId) のカテゴリで判定
-  //   → 「リチュアル」フィルタで「Divine ↔ リチュアル素材」は表示される
-  // - 非 Divine ペア: 両者同カテゴリのみ表示 (リチュアル ↔ アビスのような混在は除外)
+  // カテゴリフィルタ: アイテムの categoryApiId で絞るだけ。
   if (categoryFilter.value !== "all") {
-    list = list.filter((r) => {
-      if (r.containsDivine) {
-        return r.oneCategoryApiId === categoryFilter.value;
-      }
-      return (
-        r.oneCategoryApiId === categoryFilter.value &&
-        r.twoCategoryApiId === categoryFilter.value
-      );
-    });
+    list = list.filter((r) => r.categoryApiId === categoryFilter.value);
   }
 
   // 検索フィルタ（日英両方の名前を対象）
   const q = searchQuery.value.trim().toLowerCase();
   if (q) {
-    list = list.filter((r) => {
-      const oneEn = r.oneText.toLowerCase();
-      const twoEn = r.twoText.toLowerCase();
-      const oneJa = jaCurrency(r.oneText).toLowerCase();
-      const twoJa = jaCurrency(r.twoText).toLowerCase();
-      return (
-        oneEn.includes(q) ||
-        twoEn.includes(q) ||
-        oneJa.includes(q) ||
-        twoJa.includes(q)
-      );
-    });
+    list = list.filter(
+      (r) =>
+        r.text.toLowerCase().includes(q) ||
+        jaCurrency(r.text).toLowerCase().includes(q),
+    );
   }
 
-  // 表示順は「神換算（primarySide の Divine 価格）降順」= 価値が高い順に統一する。
-  // rankPairsByVolume は volume 降順で返すが、UI の "ランキング" はユーザーが読む
-  // 「神換算」列と一致させる必要があるため、表示直前に価値降順で並べ直す
-  // (2026-06-01 オーナー指示「ちゃんと高い順に並び替えて」)。
+  // 表示順は「神換算」降順 = 価値が高い順 (オーナー指示 2026-06-01)。
   // list が ranking.value と同一参照になりうるので slice() してから sort する。
-  return list
-    .slice()
-    .sort((a, b) => primarySide(b).divinePrice - primarySide(a).divinePrice);
+  return list.slice().sort((a, b) => b.divinePrice - a.divinePrice);
 });
 
 onMounted(async () => {
@@ -367,7 +315,7 @@ onMounted(async () => {
         <div class="h-px bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)] to-transparent" />
         <p class="text-xs text-[var(--exile-color-text-secondary)]">
           最終更新: <span>{{ formatTime(lastUpdated) }}</span>
-          <span v-if="ranking.length"> ／ {{ ranking.length }} ペア</span>
+          <span v-if="ranking.length"> ／ {{ ranking.length }} 件</span>
         </p>
       </div>
       <div class="flex items-center gap-2 flex-wrap">
@@ -389,6 +337,14 @@ onMounted(async () => {
           {{ loading ? "更新中…" : "🔄 更新" }}
         </button>
       </div>
+    </div>
+
+    <!-- リーグ自動判定の警告: 前リーグのまま表示する事故を可視化 -->
+    <div
+      v-if="leagueWarning"
+      class="p-3 mb-4 rounded bg-[color-mix(in_srgb,var(--exile-color-signal-warning,#c9a227)_12%,transparent)] border-l-2 border-[var(--exile-color-signal-warning,#c9a227)] text-sm"
+    >
+      ⚠️ {{ leagueWarning }}
     </div>
 
     <!-- 基準レート帯: ランキングは「1 神 建て」なので、神→高貴/カオスの相場を真上に明示 -->
@@ -413,6 +369,23 @@ onMounted(async () => {
           <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice) }}</span>
           <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
           <span class="text-sm">カオス</span>
+        </div>
+        <!-- 高貴 ↔ カオス 相互レート (オーナー指示 2026-06-03) -->
+        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
+          <span>1</span>
+          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
+          <span>=</span>
+          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
+          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+          <span class="text-sm">カオス</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
+          <span>1</span>
+          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+          <span>=</span>
+          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
+          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
+          <span class="text-sm">高貴</span>
         </div>
       </template>
       <span v-else class="text-sm text-[var(--exile-color-text-tertiary)] italic">
@@ -440,7 +413,7 @@ onMounted(async () => {
       v-else-if="ranking.length && filteredRanking.length === 0"
       class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]"
     >
-      <p class="mb-2">該当するペアがありません</p>
+      <p class="mb-2">該当するアイテムがありません</p>
       <p class="text-xs text-[var(--exile-color-text-tertiary)]">
         カテゴリ / 検索条件を変更してください
         <button
@@ -466,75 +439,77 @@ onMounted(async () => {
         >
           <tr>
             <th class="text-left px-3 py-3 whitespace-nowrap">#</th>
-            <th class="text-left px-3 py-3 whitespace-nowrap">カレンシーペア</th>
+            <th class="text-left px-3 py-3 whitespace-nowrap">アイテム</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">神 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">高貴 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">カオス 換算</th>
+            <th class="text-right px-3 py-3 whitespace-nowrap">過去7日間</th>
           </tr>
         </thead>
         <tbody>
-          <!-- 単一ランキング（神換算降順）— ペア違いで同じアイテムが複数行に出るのは仕様 -->
+          <!-- 1 アイテム = 1 行。神/高貴/カオスの3換算 (オーナー指示 2026-06-03) -->
           <tr
             v-for="(p, i) in filteredRanking"
-            :key="p.id"
+            :key="p.apiId"
             class="border-t border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)] transition"
           >
             <td class="px-3 py-3 text-[var(--exile-color-text-secondary)] tabular-nums whitespace-nowrap">{{ i + 1 }}</td>
             <td class="px-3 py-3 whitespace-nowrap">
               <div class="flex items-center gap-2 whitespace-nowrap">
-                <img v-if="p.oneIcon" :src="p.oneIcon" :alt="p.oneText" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.oneText) }}</span>
-                <span class="text-[var(--exile-color-text-secondary)] mx-1">↔</span>
-                <img v-if="p.twoIcon" :src="p.twoIcon" :alt="p.twoText" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.twoText) }}</span>
+                <img v-if="p.icon" :src="p.icon" :alt="p.text" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
+                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.text) }}</span>
               </div>
             </td>
             <td class="px-2 py-3 text-right">
               <div class="flex items-center justify-end gap-1 text-sm tabular-nums">
-                <span class="text-[var(--exile-color-text-primary)]">1.0</span>
-                <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
-                <span class="text-[var(--exile-color-text-secondary)]">⇄</span>
-                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(primarySide(p).divinePrice) }}</span>
+                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(p.divinePrice) }}</span>
                 <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
               </div>
             </td>
             <td class="px-2 py-3 text-right">
               <div class="flex items-center justify-end gap-1 text-sm tabular-nums">
-                <span class="text-[var(--exile-color-text-primary)]">1.0</span>
-                <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
-                <span class="text-[var(--exile-color-text-secondary)]">⇄</span>
-                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(primarySide(p).exaltedPrice) }}</span>
+                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(p.exaltedPrice) }}</span>
                 <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-                <span
-                  v-if="arbitrageDelta(p, 'exalted') !== undefined"
-                  :class="[
-                    'text-[10px] ml-1',
-                    arbitrageDelta(p, 'exalted')! < 0
-                      ? 'text-[var(--exile-color-signal-error)]'
-                      : 'text-[var(--exile-color-signal-success)]',
-                  ]"
-                  :title="arbitrageDelta(p, 'exalted')! < 0 ? '神基準で損' : '神基準で得'"
-                >{{ fmtDelta(arbitrageDelta(p, 'exalted')!) }}</span>
               </div>
             </td>
             <td class="px-2 py-3 text-right">
               <div class="flex items-center justify-end gap-1 text-sm tabular-nums">
-                <span class="text-[var(--exile-color-text-primary)]">1.0</span>
-                <img v-if="primarySide(p).icon" :src="primarySide(p).icon" :alt="primarySide(p).text" class="w-5 h-5 object-contain" loading="lazy" />
-                <span class="text-[var(--exile-color-text-secondary)]">⇄</span>
-                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(primarySide(p).chaosPrice) }}</span>
+                <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(p.chaosPrice) }}</span>
                 <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-                <span
-                  v-if="arbitrageDelta(p, 'chaos') !== undefined"
-                  :class="[
-                    'text-[10px] ml-1',
-                    arbitrageDelta(p, 'chaos')! < 0
-                      ? 'text-[var(--exile-color-signal-error)]'
-                      : 'text-[var(--exile-color-signal-success)]',
-                  ]"
-                  :title="arbitrageDelta(p, 'chaos')! < 0 ? '神基準で損' : '神基準で得'"
-                >{{ fmtDelta(arbitrageDelta(p, 'chaos')!) }}</span>
               </div>
+            </td>
+            <td class="px-2 py-3">
+              <div
+                v-if="trendFor(p) && trendFor(p)!.spark.length >= 2"
+                class="flex items-center justify-end gap-2"
+                :title="`過去7日間 ${fmtPct(trendFor(p)!.changePct)}`"
+              >
+                <svg
+                  width="72"
+                  height="20"
+                  viewBox="0 0 72 20"
+                  preserveAspectRatio="none"
+                  class="shrink-0 overflow-visible"
+                >
+                  <polyline
+                    :points="sparkPoints(trendFor(p)!.spark)"
+                    fill="none"
+                    :stroke="trendFor(p)!.changePct < 0
+                      ? 'var(--exile-color-signal-error)'
+                      : 'var(--exile-color-signal-success)'"
+                    stroke-width="1.5"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <span
+                  class="text-xs tabular-nums w-12 text-right"
+                  :class="trendFor(p)!.changePct < 0
+                    ? 'text-[var(--exile-color-signal-error)]'
+                    : 'text-[var(--exile-color-signal-success)]'"
+                >{{ fmtPct(trendFor(p)!.changePct) }}</span>
+              </div>
+              <div v-else class="text-right text-xs text-[var(--exile-color-text-tertiary)] pr-1">—</div>
             </td>
           </tr>
         </tbody>
@@ -546,7 +521,7 @@ onMounted(async () => {
       <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
       ／ <span class="font-mono">{{ league }}</span>
       ／日本語名は v0 暫定（RePoE fork JA データに後日差替え）
-      ／レート表記は poe.ninja 流「X 神 ⇄ 1.0 アイテム」
+      ／各列は「1 アイテム = X 神 / 高貴 / カオス」
     </p>
     </div>
   </div>
