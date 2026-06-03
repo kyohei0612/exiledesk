@@ -11,9 +11,18 @@ import {
 } from "../api/poe2scout";
 import { jaCurrency } from "../i18n/currencies-ja";
 import { jaCategory } from "../i18n/categories-ja";
+import currencyEffectsJa from "../i18n/currency-effects-ja.json";
+
+// アイテム効果説明(日本語, poe2db由来)。キーは EN名を正規化(小文字英数のみ)したもの。
+const effectsMap = currencyEffectsJa as Record<string, string>;
+function effectFor(p: RankedItem): string {
+  return effectsMap[p.text.toLowerCase().replace(/[^a-z0-9]/g, "")] ?? "";
+}
 
 const leagues = ref<League[]>([]);
-const league = ref<string>("Fate of the Vaal");
+// 初期値は空。refresh() の初回で必ず現行リーグ(IsCurrent 非HC)を自動選択させるため
+// （過去リーグ名を既定にすると一覧に存在してしまい現行へ切替わらない不具合になる）。
+const league = ref<string>("");
 const divinePrice = ref<number>(1);
 const chaosDivinePrice = ref<number>(1); // 1 神 = X カオス (Chaos per Divine, 通常 >1)
 const divineIcon = ref<string>("");
@@ -463,9 +472,16 @@ onMounted(() => {
           >
             <td class="px-3 py-3 text-[var(--exile-color-text-secondary)] tabular-nums whitespace-nowrap">{{ i + 1 }}</td>
             <td class="px-3 py-3 whitespace-nowrap">
-              <div class="flex items-center gap-2 whitespace-nowrap">
+              <div
+                class="flex items-center gap-2 whitespace-nowrap"
+                :class="effectFor(p) ? 'cursor-help' : ''"
+                :title="effectFor(p) || undefined"
+              >
                 <img v-if="p.icon" :src="p.icon" :alt="p.text" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-                <span class="text-[var(--exile-color-text-primary)]">{{ jaCurrency(p.text) }}</span>
+                <span
+                  class="text-[var(--exile-color-text-primary)]"
+                  :class="effectFor(p) ? 'underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4' : ''"
+                >{{ jaCurrency(p.text) }}</span>
               </div>
             </td>
             <td class="px-2 py-3 text-right">

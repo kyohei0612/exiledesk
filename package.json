@@ -1,7 +1,7 @@
 {
   "name": "exiledesk",
   "private": true,
-  "version": "0.1.18",
+  "version": "0.1.19",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "tauri": "tauri",
     "lint:hex": "node scripts/lint-hex.mjs",
     "build:dicts": "node scripts/build-unique-pages-detail.mjs --offline && node scripts/build-unique-names-ja.mjs --offline && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
-    "build:dicts:online": "node scripts/build-unique-pages-detail.mjs && node scripts/build-unique-names-ja.mjs && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
+    "build:dicts:online": "node scripts/build-unique-pages-detail.mjs && node scripts/build-unique-names-ja.mjs && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs && node scripts/build-currency-effects-ja.mjs",
     "check:deps": "pnpm outdated; cd src-tauri && cargo update --dry-run"
   },
   "dependencies": {
