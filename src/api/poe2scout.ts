@@ -22,35 +22,19 @@ const httpFetch: typeof fetch = import.meta.env.DEV
 
 // =================== 型定義 ===================
 
-export interface CurrencyDetail {
-  CurrencyItemId: number;
+/**
+ * poe2scout の /Items 1 件。CurrentPrice が poe2scout 公式の確定価格(高貴=Exalted建て)。
+ * 通貨交換アイテムは ApiId を持ち、装備/ユニーク(armour/weapon等)は ApiId=null で区別できる。
+ */
+export interface CurrencyItem {
   ItemId: number;
-  CurrencyCategoryId: number;
-  ApiId: string;
-  Text: string;
-  IconUrl: string;
   CategoryApiId: string;
-  ItemMetadata: unknown;
-}
-
-export interface CurrencyData {
-  ValueTraded: string;
-  RelativePrice: string;
-  StockValue: string;
-  VolumeTraded: number;
-  HighestStock: number;
-}
-
-export interface SnapshotPair {
-  CurrencyExchangeSnapshotPairId: number;
-  CurrencyExchangeSnapshotId: number;
-  Volume: string;
-  BaseCurrencyApiId: string;
-  BaseCurrencyText: string;
-  CurrencyOne: CurrencyDetail;
-  CurrencyTwo: CurrencyDetail;
-  CurrencyOneData: CurrencyData;
-  CurrencyTwoData: CurrencyData;
+  Text: string;
+  Name: string | null;
+  Type: string | null;
+  ApiId: string | null;
+  CurrentPrice: number | null;
+  IconUrl: string;
 }
 
 export interface League {
@@ -77,22 +61,22 @@ export async function fetchLeagues(): Promise<League[]> {
   return res.json();
 }
 
-export async function fetchSnapshotPairs(
+export async function fetchItems(
   leagueName: string,
-  perPage = 500,
-): Promise<SnapshotPair[]> {
-  const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/SnapshotPairs?perPage=${perPage}`;
+): Promise<CurrencyItem[]> {
+  const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items`;
   const res = await httpFetch(url);
-  if (!res.ok) throw new Error(`SnapshotPairs request failed: ${res.status}`);
+  if (!res.ok) throw new Error(`Items request failed: ${res.status}`);
   return res.json();
 }
 
-// =================== 集約・整形 ===================
+// =================== 整形 ===================
 
 /**
- * 集約後の 1 アイテム = 1 行。素材を 基本通貨(高貴/カオス/神) で値付けした 3 換算を持つ。
- * オーナー指示 (2026-06-03): 「素材 → 神/高貴/カオス の表示だけでOK」。
- * 同一アイテムが複数の基本通貨ペアに出る "倍表示" を防ぐためペアではなくアイテム単位で集約する。
+ * 1 アイテム = 1 行。素材を 基本通貨(高貴/カオス/神) で値付けした 3 換算を持つ。
+ * 価格は poe2scout 公式の CurrentPrice(高貴=Exalted建て)を直接採用する。
+ * （SnapshotPairs の RelativePrice はペア基準通貨建てで普遍価格ではないため使わない。
+ *   オーナー指摘 2026-06-03「ExileDeskだけ値段が微妙に違う」の修正。）
  */
 export interface RankedItem {
   apiId: string;
@@ -101,9 +85,7 @@ export interface RankedItem {
   text: string;
   icon: string;
   categoryApiId: string;
-  /** 全ペア(対 高貴/カオス/神)の取引量合計 = 取引フロー量 */
-  volume: number;
-  /** 1 アイテム = ? 高貴(Exalted)。RelativePrice そのもの */
+  /** 1 アイテム = ? 高貴(Exalted)。= CurrentPrice */
   exaltedPrice: number;
   /** 1 アイテム = ? 神(Divine) */
   divinePrice: number;
@@ -111,27 +93,21 @@ export interface RankedItem {
   chaosPrice: number;
 }
 
-/**
- * 基本交換先通貨。POE2 の値付けは事実上この 3 通貨建て (オーナー指示 2026-06-03)。
- * これと交換するペアだけ拾い、素材同士 (どちらも非基本通貨) は全ビューから除外する。
- */
+/** 基本交換先通貨。これ自体は素材行に出さない(基準レート帯で表示)。 */
 const BASIC_TARGETS = new Set(["divine", "exalted", "chaos"]);
 
 /**
- * SnapshotPairs を「アイテム単位」に集約する。
- *  - 両側とも基本通貨 (高貴↔神 等のクロスレート) → ヘッダの基準レート帯で表示、表からは除外
- *  - 両側とも非基本通貨 (素材↔素材) → オーナー指示で全除外
- *  - ちょうど片側が基本通貨 → 非基本側がアイテム
- * RelativePrice は base通貨(Exalted)建てなので 1 つの値から 3 通貨換算を導ける。
- * 同一アイテムが複数ペアに出るので、代表価格は最大volumeペアの RelativePrice、
- * volume は全ペア合算（倍表示の解消）。
+ * /Items を「通貨交換アイテムの 1 行 = 1 アイテム」に整形する。
+ *  - 通貨交換アイテムのみ採用 = ApiId が非 null（装備/ユニークは ApiId=null で除外）
+ *  - 基本通貨(高貴/カオス/神)自体は除外（基準レート帯で表示）
+ *  - CurrentPrice(高貴建て) を正とし、神/カオス換算を導出
  *
- * @param pairs poe2scout SnapshotPairs レスポンス
- * @param divinePrice 1 神 = ? base通貨 (リーグ data の DivinePrice)
+ * @param items poe2scout /Items レスポンス
+ * @param divinePrice 1 神 = ? 高貴 (リーグ data の DivinePrice)
  * @param chaosDivinePrice 1 神 = ? Chaos (= Chaos per Divine。通常 >1)
  */
-export function aggregateItems(
-  pairs: SnapshotPair[],
+export function buildRankedItems(
+  items: CurrencyItem[],
   divinePrice: number,
   chaosDivinePrice: number,
 ): RankedItem[] {
@@ -140,54 +116,25 @@ export function aggregateItems(
   // 1 カオス = divinePrice / chaosDivinePrice 高貴(Exalted) 建て
   const chaosExaltedPrice = safeDivinePrice / safeChaosDivinePrice;
 
-  const agg = new Map<
-    string,
-    { item: CurrencyDetail; rel: number; bestPairVol: number; volume: number }
-  >();
-
-  for (const p of pairs) {
-    const oneBasic = BASIC_TARGETS.has(p.CurrencyOne.ApiId);
-    const twoBasic = BASIC_TARGETS.has(p.CurrencyTwo.ApiId);
-    // 両方 basic (クロスレート) or 両方 非basic (素材同士) → 除外
-    if (oneBasic === twoBasic) continue;
-
-    const item = oneBasic ? p.CurrencyTwo : p.CurrencyOne;
-    const itemData = oneBasic ? p.CurrencyTwoData : p.CurrencyOneData;
-    const rel = parseFloat(itemData?.RelativePrice ?? "0");
-    if (!(rel > 0)) continue;
-
-    // volume は取引個数ベース (両通貨の VolumeTraded 合算)。
-    // Exalted 建て総額だと Mirror 等の単価異常が上位に来るため使わない。
-    const pairVol =
-      (p.CurrencyOneData?.VolumeTraded ?? 0) +
-      (p.CurrencyTwoData?.VolumeTraded ?? 0);
-    if (!(pairVol > 0) || !Number.isFinite(pairVol)) continue;
-
-    const prev = agg.get(item.ApiId);
-    if (!prev) {
-      agg.set(item.ApiId, { item, rel, bestPairVol: pairVol, volume: pairVol });
-    } else {
-      prev.volume += pairVol;
-      if (pairVol > prev.bestPairVol) {
-        prev.bestPairVol = pairVol;
-        prev.rel = rel; // 取引が最も厚いペアの価格を代表値に
-      }
-    }
-  }
-
-  return Array.from(agg.values())
-    .map((e) => ({
-      apiId: e.item.ApiId,
-      itemId: e.item.ItemId,
-      text: e.item.Text,
-      icon: e.item.IconUrl,
-      categoryApiId: e.item.CategoryApiId,
-      volume: e.volume,
-      exaltedPrice: e.rel,
-      divinePrice: e.rel / safeDivinePrice,
-      chaosPrice: e.rel / chaosExaltedPrice,
+  return items
+    .filter(
+      (x): x is CurrencyItem & { ApiId: string; CurrentPrice: number } =>
+        !!x.ApiId &&
+        !BASIC_TARGETS.has(x.ApiId) &&
+        typeof x.CurrentPrice === "number" &&
+        x.CurrentPrice > 0,
+    )
+    .map((x) => ({
+      apiId: x.ApiId,
+      itemId: x.ItemId,
+      text: x.Text,
+      icon: x.IconUrl,
+      categoryApiId: x.CategoryApiId,
+      exaltedPrice: x.CurrentPrice,
+      divinePrice: x.CurrentPrice / safeDivinePrice,
+      chaosPrice: x.CurrentPrice / chaosExaltedPrice,
     }))
-    .sort((a, b) => b.volume - a.volume);
+    .sort((a, b) => b.exaltedPrice - a.exaltedPrice);
 }
 
 // =================== 価格履歴（過去7日トレンド） ===================

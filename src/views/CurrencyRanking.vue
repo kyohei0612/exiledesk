@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import {
-  fetchSnapshotPairs,
-  aggregateItems,
+  fetchItems,
+  buildRankedItems,
   fetchLeagues,
   fetchPriceTrends,
   type RankedItem,
@@ -71,16 +71,16 @@ async function refresh() {
       exaltedIcon.value = leagueData.ExaltedCurrencyIconUrl || leagueData.BaseCurrencyIconUrl || "";
     }
 
-    // ペアと価格履歴を並列取得。履歴は任意表示なので失敗しても本体は出す。
-    const [pairs, trendMap] = await Promise.all([
-      fetchSnapshotPairs(league.value),
+    // アイテム価格(/Items)と価格履歴を並列取得。履歴は任意表示なので失敗しても本体は出す。
+    const [items, trendMap] = await Promise.all([
+      fetchItems(league.value),
       fetchPriceTrends(league.value).catch((e) => {
         console.warn("Failed to load price trends:", e);
         return new Map<number, ItemTrend>();
       }),
     ]);
-    ranking.value = aggregateItems(
-      pairs,
+    ranking.value = buildRankedItems(
+      items,
       divinePrice.value,
       chaosDivinePrice.value,
     );
@@ -197,16 +197,15 @@ interface CategoryDisplay {
   icon: string;
 }
 const categoryDisplayList = computed<CategoryDisplay[]>(() => {
-  const acc = new Map<string, { count: number; maxVolume: number; icon: string }>();
+  // ranking は価格(高貴)降順なので、各カテゴリ最初に出たアイテム=最高額を代表アイコンに使う。
+  const acc = new Map<string, { count: number; icon: string }>();
   for (const r of ranking.value) {
-    const cat = r.categoryApiId;
-    const entry = acc.get(cat) ?? { count: 0, maxVolume: 0, icon: "" };
-    entry.count += 1;
-    if (r.volume > entry.maxVolume) {
-      entry.maxVolume = r.volume;
-      entry.icon = r.icon;
+    const entry = acc.get(r.categoryApiId);
+    if (entry) {
+      entry.count += 1;
+    } else {
+      acc.set(r.categoryApiId, { count: 1, icon: r.icon });
     }
-    acc.set(cat, entry);
   }
   return Array.from(acc.entries())
     .map(([id, e]) => ({ id, count: e.count, icon: e.icon }))
