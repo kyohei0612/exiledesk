@@ -33,45 +33,54 @@ const leagueWarning = ref<string | null>(null);
 const categoryFilter = ref<string>("currency");
 const searchQuery = ref<string>("");
 
-async function loadLeagues() {
-  try {
-    const list = await fetchLeagues();
-    leagues.value = list;
-    const current = list.find((l) => l.IsCurrent && !l.Value.startsWith("HC"));
-    if (current) {
-      league.value = current.Value;
-      divinePrice.value = current.DivinePrice || 1;
-      chaosDivinePrice.value = current.ChaosDivinePrice || 1;
-      divineIcon.value = current.DivineCurrencyIconUrl || "";
-      chaosIcon.value = current.ChaosCurrencyIconUrl || "";
-      exaltedIcon.value = current.ExaltedCurrencyIconUrl || current.BaseCurrencyIconUrl || "";
-      leagueWarning.value = null;
-    } else {
-      // API は応答したが IsCurrent なリーグが無い = 前リーグのまま表示する事故になり得る
-      leagueWarning.value =
-        "現在のリーグを自動判定できませんでした。上のリーグ選択で手動指定してください。";
-    }
-  } catch (e) {
-    console.warn("Failed to load leagues, using default:", e);
-    leagueWarning.value =
-      "リーグ一覧を取得できませんでした。表示中のデータは前回リーグの可能性があります。";
-  }
+/** 選択中リーグのレート(神/カオス)とアイコンを League から反映。 */
+function applyLeagueRates(l: League) {
+  divinePrice.value = l.DivinePrice || 1;
+  chaosDivinePrice.value = l.ChaosDivinePrice || 1;
+  divineIcon.value = l.DivineCurrencyIconUrl || "";
+  chaosIcon.value = l.ChaosCurrencyIconUrl || "";
+  exaltedIcon.value = l.ExaltedCurrencyIconUrl || l.BaseCurrencyIconUrl || "";
 }
 
+/**
+ * 起動時・更新ボタン・リーグ切替の全経路で呼ぶ。毎回:
+ *  1) リーグ一覧を取り直し最新レート(DivinePrice/ChaosDivinePrice)を反映
+ *  2) /Items(価格) と PriceHistory(7日) を取得
+ * これで「立ち上げ時」も「更新」も常に最新を取得する (no-store と併用)。
+ */
 async function refresh() {
   loading.value = true;
   error.value = null;
   try {
-    const leagueData = leagues.value.find((l) => l.Value === league.value);
-    if (leagueData) {
-      divinePrice.value = leagueData.DivinePrice || 1;
-      chaosDivinePrice.value = leagueData.ChaosDivinePrice || 1;
-      divineIcon.value = leagueData.DivineCurrencyIconUrl || "";
-      chaosIcon.value = leagueData.ChaosCurrencyIconUrl || "";
-      exaltedIcon.value = leagueData.ExaltedCurrencyIconUrl || leagueData.BaseCurrencyIconUrl || "";
+    // 1) リーグ一覧を毎回フレッシュ取得 (神/カオスレートも最新化)
+    let list: League[] = [];
+    try {
+      list = await fetchLeagues();
+      leagues.value = list;
+    } catch (e) {
+      console.warn("Failed to load leagues:", e);
+      leagueWarning.value =
+        "リーグ一覧を取得できませんでした。表示中のデータは前回リーグの可能性があります。";
+    }
+    if (list.length) {
+      // 選択中リーグ。未選択 or 一覧に無ければ現行リーグ(非HC)を自動選択
+      let sel = list.find((l) => l.Value === league.value);
+      if (!sel) {
+        sel = list.find((l) => l.IsCurrent && !l.Value.startsWith("HC"));
+        if (sel) {
+          league.value = sel.Value;
+          leagueWarning.value = null;
+        } else {
+          leagueWarning.value =
+            "現在のリーグを自動判定できませんでした。上のリーグ選択で手動指定してください。";
+        }
+      } else {
+        leagueWarning.value = null;
+      }
+      if (sel) applyLeagueRates(sel);
     }
 
-    // アイテム価格(/Items)と価格履歴を並列取得。履歴は任意表示なので失敗しても本体は出す。
+    // 2) アイテム価格(/Items)と価格履歴を並列取得。履歴は任意なので失敗しても本体は出す。
     const [items, trendMap] = await Promise.all([
       fetchItems(league.value),
       fetchPriceTrends(league.value).catch((e) => {
@@ -238,8 +247,8 @@ const filteredRanking = computed(() => {
   return list.slice().sort((a, b) => b.divinePrice - a.divinePrice);
 });
 
-onMounted(async () => {
-  await loadLeagues();
+onMounted(() => {
+  // 起動時も refresh() がリーグ一覧+価格+履歴を全てフレッシュ取得する
   refresh();
 });
 </script>

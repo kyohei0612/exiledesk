@@ -55,8 +55,13 @@ export interface League {
 
 // =================== 取得関数 ===================
 
+// 「更新」で必ず最新を取得するため、全 GET は no-store でキャッシュを使わない。
+// poe2scout は cf-cache-status: DYNAMIC(CDN非キャッシュ)だが Cache-Control 無 + Last-Modified 有のため
+// WebView のヒューリスティックキャッシュを確実に回避する。
+const NO_STORE: RequestInit = { cache: "no-store" };
+
 export async function fetchLeagues(): Promise<League[]> {
-  const res = await httpFetch(`${BASE}/poe2/Leagues`);
+  const res = await httpFetch(`${BASE}/poe2/Leagues`, NO_STORE);
   if (!res.ok) throw new Error(`Leagues request failed: ${res.status}`);
   return res.json();
 }
@@ -65,7 +70,7 @@ export async function fetchItems(
   leagueName: string,
 ): Promise<CurrencyItem[]> {
   const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items`;
-  const res = await httpFetch(url);
+  const res = await httpFetch(url, NO_STORE);
   if (!res.ok) throw new Error(`Items request failed: ${res.status}`);
   return res.json();
 }
@@ -164,7 +169,7 @@ export async function fetchPriceTrends(
   leagueName: string,
 ): Promise<Map<number, ItemTrend>> {
   const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items/PriceHistory`;
-  const res = await httpFetch(url);
+  const res = await httpFetch(url, NO_STORE);
   if (!res.ok) throw new Error(`PriceHistory request failed: ${res.status}`);
   const data = (await res.json()) as PriceHistoryResponse;
 
