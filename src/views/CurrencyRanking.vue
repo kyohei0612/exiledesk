@@ -5,6 +5,8 @@ import {
   buildRankedItems,
   fetchLeagues,
   fetchPriceTrends,
+  fetchItemTrend7d,
+  fetchLatestSnapshotEpoch,
   type RankedItem,
   type ItemTrend,
   type League,
@@ -70,15 +72,14 @@ const trends = ref<Map<number, ItemTrend>>(new Map());
 // 基準レートのスパークライン用に 神/カオス の ItemId を保持 (リーグごとに異なるため動的取得)。
 const divineItemId = ref<number | null>(null);
 const chaosItemId = ref<number | null>(null);
-const divineTrend = computed<ItemTrend | undefined>(() =>
-  divineItemId.value != null ? trends.value.get(divineItemId.value) : undefined,
-);
-const chaosTrend = computed<ItemTrend | undefined>(() =>
-  chaosItemId.value != null ? trends.value.get(chaosItemId.value) : undefined,
-);
+// 基準レートは「本物の7日」トレンドを個別履歴から取得して使う (一括は~24時間しか無いため)。
+const divineTrend = ref<ItemTrend | null>(null);
+const chaosTrend = ref<ItemTrend | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
+// poe2scout の最新スナップショット実時刻(Epoch秒)。鮮度の可視化用 (取得=PC時刻とは別)。
+const snapshotEpoch = ref<number | null>(null);
 // リーグ自動判定に失敗した時の警告 (前リーグのまま黙って表示する事故を防ぐ)。
 // refresh() の error とは別管理で、リーグ取得時のみ更新する。
 const leagueWarning = ref<string | null>(null);
@@ -134,14 +135,17 @@ async function refresh() {
       if (sel) applyLeagueRates(sel);
     }
 
-    // 2) アイテム価格(/Items)と価格履歴を並列取得。履歴は任意なので失敗しても本体は出す。
-    const [items, trendMap] = await Promise.all([
+    // 2) アイテム価格(/Items)・価格履歴・最新スナップショット時刻を並列取得。
+    //    履歴/時刻は任意なので失敗しても本体は出す。
+    const [items, trendMap, snapEpoch] = await Promise.all([
       fetchItems(league.value),
       fetchPriceTrends(league.value).catch((e) => {
         console.warn("Failed to load price trends:", e);
         return new Map<number, ItemTrend>();
       }),
+      fetchLatestSnapshotEpoch(league.value),
     ]);
+    snapshotEpoch.value = snapEpoch;
     ranking.value = buildRankedItems(
       items,
       divinePrice.value,
@@ -152,6 +156,24 @@ async function refresh() {
     chaosItemId.value = items.find((x) => x.ApiId === "chaos")?.ItemId ?? null;
     trends.value = trendMap;
     lastUpdated.value = new Date();
+
+    // 基準レート(神/カオス)は「本物の7日」トレンドを個別履歴から取得 (一括は~24時間のみ)。
+    // 任意表示なので失敗しても無視。並列で2件だけ。
+    const lg = league.value;
+    void Promise.all([
+      divineItemId.value != null
+        ? fetchItemTrend7d(lg, divineItemId.value)
+        : Promise.resolve(null),
+      chaosItemId.value != null
+        ? fetchItemTrend7d(lg, chaosItemId.value)
+        : Promise.resolve(null),
+    ]).then(([dt, ct]) => {
+      // リーグが切り替わっていなければ反映 (古い応答の取り違え防止)
+      if (league.value === lg) {
+        divineTrend.value = dt;
+        chaosTrend.value = ct;
+      }
+    });
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -194,6 +216,16 @@ function formatTime(d: Date | null): string {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+  });
+}
+/** poe2scout の相場スナップショット実時刻(Epoch秒)を「MM/DD HH:MM」で表示。鮮度の可視化。 */
+function formatEpoch(epoch: number | null): string {
+  if (!epoch) return "—";
+  return new Date(epoch * 1000).toLocaleString("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -379,7 +411,9 @@ onMounted(() => {
         <h2 class="text-[24px] font-semibold font-display mb-1">💰 カレンシーランキング</h2>
         <div class="h-px bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)] to-transparent" />
         <p class="text-xs text-[var(--exile-color-text-secondary)]">
-          最終更新: <span>{{ formatTime(lastUpdated) }}</span>
+          相場時刻: <span class="text-[var(--exile-color-text-primary)]">{{ formatEpoch(snapshotEpoch) }}</span>
+          <span class="text-[var(--exile-color-text-tertiary)]">（poe2scout更新）</span>
+          ／ 取得 <span>{{ formatTime(lastUpdated) }}</span>
           <span v-if="ranking.length"> ／ {{ ranking.length }} 件</span>
         </p>
       </div>
@@ -412,63 +446,51 @@ onMounted(() => {
       ⚠️ {{ leagueWarning }}
     </div>
 
-    <!-- 基準レート帯: 神/カオスの相場を2行に整理し、各行に過去7日の推移(スパークライン+%)を表示 -->
+    <!-- 基準レート帯: 1行に集約。神/カオスの相場 + 過去7日スパークライン(グラフ)+% -->
     <div
       v-if="ranking.length"
-      class="mb-4 px-4 py-3 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)]"
+      class="flex items-center gap-x-3 gap-y-1 mb-4 px-4 py-2.5 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] flex-wrap"
     >
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display">基準レート</span>
-        <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">過去7日</span>
-      </div>
+      <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display shrink-0">基準レート</span>
       <template v-if="divinePrice > 1">
-        <div class="flex flex-col gap-2">
-          <!-- 神 -->
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="flex items-center gap-1.5 text-base tabular-nums">
-              <span class="text-[var(--exile-color-text-secondary)]">1</span>
-              <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-6 h-6 object-contain" loading="lazy" />
-              <span class="text-[var(--exile-color-text-secondary)]">=</span>
-              <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(divinePrice) }}</span>
-              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-              <span class="text-xs text-[var(--exile-color-text-secondary)]">高貴</span>
-              <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">/</span>
-              <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(chaosDivinePrice) }}</span>
-              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-              <span class="text-xs text-[var(--exile-color-text-secondary)]">カオス</span>
-            </div>
-            <div v-if="divineTrend && divineTrend.spark.length >= 2" class="flex items-center gap-1.5 ml-auto">
-              <svg width="64" height="18" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-                <polyline :points="sparkPoints(divineTrend.spark)" fill="none" :stroke="divineTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
-              </svg>
-              <span class="text-xs tabular-nums w-12 text-right" :class="divineTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(divineTrend.changePct) }}</span>
-            </div>
-          </div>
-          <!-- カオス / 高貴 -->
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
-              <span>1</span>
-              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-              <span>=</span>
-              <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
-              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-              <span class="text-xs">高貴</span>
-              <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">/</span>
-              <span>1</span>
-              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-              <span>=</span>
-              <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
-              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-              <span class="text-xs">カオス</span>
-            </div>
-            <div v-if="chaosTrend && chaosTrend.spark.length >= 2" class="flex items-center gap-1.5 ml-auto">
-              <svg width="64" height="18" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-                <polyline :points="sparkPoints(chaosTrend.spark)" fill="none" :stroke="chaosTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
-              </svg>
-              <span class="text-xs tabular-nums w-12 text-right" :class="chaosTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(chaosTrend.changePct) }}</span>
-            </div>
-          </div>
+        <!-- 神 = 高貴 / カオス + 推移 -->
+        <div class="flex items-center gap-1 text-sm tabular-nums">
+          <span class="text-[var(--exile-color-text-secondary)]">1</span>
+          <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
+          <span class="text-[10px] text-[var(--exile-color-text-secondary)]">神</span>
+          <span class="text-[var(--exile-color-text-secondary)]">=</span>
+          <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(divinePrice) }}</span>
+          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
+          <span class="text-[10px] text-[var(--exile-color-text-secondary)]">高貴</span>
+          <span class="text-[var(--exile-color-text-tertiary)]">/</span>
+          <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(chaosDivinePrice) }}</span>
+          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
+          <span class="text-[10px] text-[var(--exile-color-text-secondary)]">カオス</span>
         </div>
+        <div v-if="divineTrend && divineTrend.spark.length >= 2" class="flex items-center gap-1">
+          <svg width="52" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
+            <polyline :points="sparkPoints(divineTrend.spark)" fill="none" :stroke="divineTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+          </svg>
+          <span class="text-xs tabular-nums" :class="divineTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(divineTrend.changePct) }}</span>
+        </div>
+        <span class="text-[var(--exile-color-border-subtle)] select-none">｜</span>
+        <!-- カオス = 高貴 + 推移 -->
+        <div class="flex items-center gap-1 text-sm tabular-nums text-[var(--exile-color-text-secondary)]">
+          <span>1</span>
+          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
+          <span class="text-[10px]">カオス</span>
+          <span>=</span>
+          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
+          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
+          <span class="text-[10px]">高貴</span>
+        </div>
+        <div v-if="chaosTrend && chaosTrend.spark.length >= 2" class="flex items-center gap-1">
+          <svg width="52" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
+            <polyline :points="sparkPoints(chaosTrend.spark)" fill="none" :stroke="chaosTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+          </svg>
+          <span class="text-xs tabular-nums" :class="chaosTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(chaosTrend.changePct) }}</span>
+        </div>
+        <span class="text-[10px] text-[var(--exile-color-text-tertiary)] ml-auto shrink-0">過去7日</span>
       </template>
       <span v-else class="text-sm text-[var(--exile-color-text-tertiary)] italic">
         神価格は未確定（1 神 = 1 高貴 仮置き）
@@ -525,7 +547,7 @@ onMounted(() => {
             <th class="text-right px-3 py-3 whitespace-nowrap">神 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">高貴 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">カオス 換算</th>
-            <th class="text-right px-3 py-3 whitespace-nowrap">過去7日間</th>
+            <th class="text-right px-3 py-3 whitespace-nowrap">24時間</th>
           </tr>
         </thead>
         <tbody>

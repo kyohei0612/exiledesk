@@ -66,6 +66,34 @@ export async function fetchLeagues(): Promise<League[]> {
   return res.json();
 }
 
+/**
+ * 最新スナップショットの実時刻(Epoch秒)を返す。鮮度の可視化用。
+ * poe2scout の SnapshotHistory は ~1時間刻み。取得失敗時は null。
+ */
+export async function fetchLatestSnapshotEpoch(
+  leagueName: string,
+): Promise<number | null> {
+  try {
+    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/SnapshotHistory?Limit=1`;
+    const res = await httpFetch(url, NO_STORE);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const arr: unknown = Array.isArray(data)
+      ? data
+      : data && typeof data === "object"
+        ? Object.values(data).find((v) => Array.isArray(v))
+        : null;
+    const first = Array.isArray(arr) ? arr[0] : null;
+    const ep =
+      first && typeof first === "object"
+        ? (first as Record<string, unknown>).Epoch
+        : null;
+    return typeof ep === "number" ? ep : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchItems(
   leagueName: string,
 ): Promise<CurrencyItem[]> {
@@ -153,10 +181,61 @@ interface PriceHistoryResponse {
   ItemHistories: { ItemId: number; History: PriceHistoryPoint[] }[];
 }
 
-/** 1 アイテムの 7 日トレンド。spark は古→新の価格列、changePct は期間内変化率(%)。 */
+/** 1 アイテムの トレンド。spark は古→新の価格列、changePct は期間内変化率(%)。 */
 export interface ItemTrend {
   spark: number[];
   changePct: number;
+}
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** 価格点列(古→新)から spark + changePct を作る (7日窓、無ければ全件)。 */
+function pointsToTrend(points: { price: number; t: number }[]): ItemTrend | null {
+  const valid = points
+    .filter((p) => Number.isFinite(p.price) && p.price > 0 && !Number.isNaN(p.t))
+    .sort((a, b) => a.t - b.t);
+  if (valid.length < 2) return null;
+  const cutoff = valid[valid.length - 1].t - SEVEN_DAYS_MS;
+  const recent = valid.filter((p) => p.t >= cutoff);
+  const series = recent.length >= 2 ? recent : valid;
+  const first = series[0].price;
+  const last = series[series.length - 1].price;
+  return {
+    spark: series.map((p) => p.price),
+    changePct: first > 0 ? ((last - first) / first) * 100 : 0,
+  };
+}
+
+/**
+ * 1 アイテムの「本物の7日トレンド」を個別履歴から取得。
+ * 一括 PriceHistory は直近~24時間しか返さないため、基準レート等の重要表示はこちらを使う。
+ * LogCount=200 で約7日分(1時間刻み)をカバー。失敗時 null。
+ */
+export async function fetchItemTrend7d(
+  leagueName: string,
+  itemId: number,
+): Promise<ItemTrend | null> {
+  try {
+    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items/${itemId}/History?LogCount=200`;
+    const res = await httpFetch(url, NO_STORE);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const arr: unknown = Array.isArray(data)
+      ? data
+      : data && typeof data === "object"
+        ? (data as Record<string, unknown>).PriceHistory
+        : null;
+    if (!Array.isArray(arr)) return null;
+    const points = arr
+      .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
+      .map((p) => ({
+        price: parseFloat(String(p.Price ?? "0")),
+        t: Date.parse(String(p.Time ?? "")),
+      }));
+    return pointsToTrend(points);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -173,30 +252,16 @@ export async function fetchPriceTrends(
   if (!res.ok) throw new Error(`PriceHistory request failed: ${res.status}`);
   const data = (await res.json()) as PriceHistoryResponse;
 
+  // 注意: この一括エンドポイントは直近~24時間しか返さない。広域(7日)の重要表示には
+  // fetchItemTrend7d(個別) を使うこと。ここはテーブル列(直近)用。
   const trends = new Map<number, ItemTrend>();
-  // 「過去7日」の下限時刻。最新点を基準に 7 日遡る（新リーグで7日未満なら全件）。
-  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
   for (const h of data.ItemHistories ?? []) {
-    const points = (h.History ?? [])
-      .map((p) => ({ price: parseFloat(p.Price), t: Date.parse(p.Time) }))
-      .filter((p) => Number.isFinite(p.price) && p.price > 0 && !Number.isNaN(p.t))
-      // API は新→古。古→新に並べ替える。
-      .sort((a, b) => a.t - b.t);
-    if (points.length < 2) continue;
-
-    const newestT = points[points.length - 1].t;
-    const cutoff = newestT - SEVEN_DAYS_MS;
-    const recent = points.filter((p) => p.t >= cutoff);
-    const series = recent.length >= 2 ? recent : points;
-
-    const first = series[0].price;
-    const last = series[series.length - 1].price;
-    const changePct = first > 0 ? ((last - first) / first) * 100 : 0;
-    trends.set(h.ItemId, {
-      spark: series.map((p) => p.price),
-      changePct,
-    });
+    const points = (h.History ?? []).map((p) => ({
+      price: parseFloat(p.Price),
+      t: Date.parse(p.Time),
+    }));
+    const trend = pointsToTrend(points);
+    if (trend) trends.set(h.ItemId, trend);
   }
   return trends;
 }
