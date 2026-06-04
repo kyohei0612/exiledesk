@@ -14,10 +14,46 @@ import { jaCategory } from "../i18n/categories-ja";
 import currencyEffectsJa from "../i18n/currency-effects-ja.json";
 
 // アイテム効果説明(日本語, poe2db由来)。キーは EN名を正規化(小文字英数のみ)したもの。
-const effectsMap = currencyEffectsJa as Record<string, string>;
-function effectFor(p: RankedItem): string {
-  return effectsMap[p.text.toLowerCase().replace(/[^a-z0-9]/g, "")] ?? "";
+// e=効果行, s=スタック数, lv=装備条件(レベル)。
+interface ItemEffect {
+  e: string[];
+  s?: string;
+  lv?: string;
 }
+const effectsMap = currencyEffectsJa as Record<string, ItemEffect>;
+const normName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+function effectFor(p: RankedItem): ItemEffect | null {
+  return effectsMap[normName(p.text)] ?? null;
+}
+
+// poe2db 風ホバーカードの状態 (Teleport で body に出してテーブルの overflow クリップを回避)。
+const hoverItem = ref<RankedItem | null>(null);
+const tip = ref({ x: 0, y: 0 });
+const hoverEffect = computed<ItemEffect | null>(() =>
+  hoverItem.value ? effectFor(hoverItem.value) : null,
+);
+function showTip(p: RankedItem, ev: MouseEvent) {
+  if (effectFor(p)) {
+    hoverItem.value = p;
+    tip.value = { x: ev.clientX, y: ev.clientY };
+  }
+}
+function moveTip(ev: MouseEvent) {
+  if (hoverItem.value) tip.value = { x: ev.clientX, y: ev.clientY };
+}
+function hideTip() {
+  hoverItem.value = null;
+}
+const tipStyle = computed(() => {
+  const w = 340;
+  let x = tip.value.x + 18;
+  let y = tip.value.y + 18;
+  if (typeof window !== "undefined") {
+    if (x + w > window.innerWidth - 8) x = tip.value.x - w - 18;
+    if (y > window.innerHeight - 220) y = Math.max(8, window.innerHeight - 240);
+  }
+  return { left: `${x}px`, top: `${y}px`, width: `${w}px` };
+});
 
 const leagues = ref<League[]>([]);
 // 初期値は空。refresh() の初回で必ず現行リーグ(IsCurrent 非HC)を自動選択させるため
@@ -31,6 +67,15 @@ const exaltedIcon = ref<string>("");
 const ranking = ref<RankedItem[]>([]);
 // ItemId → 過去7日トレンド (poe2scout PriceHistory)。表示は任意なので失敗しても表は出す。
 const trends = ref<Map<number, ItemTrend>>(new Map());
+// 基準レートのスパークライン用に 神/カオス の ItemId を保持 (リーグごとに異なるため動的取得)。
+const divineItemId = ref<number | null>(null);
+const chaosItemId = ref<number | null>(null);
+const divineTrend = computed<ItemTrend | undefined>(() =>
+  divineItemId.value != null ? trends.value.get(divineItemId.value) : undefined,
+);
+const chaosTrend = computed<ItemTrend | undefined>(() =>
+  chaosItemId.value != null ? trends.value.get(chaosItemId.value) : undefined,
+);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
@@ -102,6 +147,9 @@ async function refresh() {
       divinePrice.value,
       chaosDivinePrice.value,
     );
+    // 基準レートのスパークライン用に 神/カオス の ItemId を控える
+    divineItemId.value = items.find((x) => x.ApiId === "divine")?.ItemId ?? null;
+    chaosItemId.value = items.find((x) => x.ApiId === "chaos")?.ItemId ?? null;
     trends.value = trendMap;
     lastUpdated.value = new Date();
   } catch (e) {
@@ -364,45 +412,62 @@ onMounted(() => {
       ⚠️ {{ leagueWarning }}
     </div>
 
-    <!-- 基準レート帯: ランキングは「1 神 建て」なので、神→高貴/カオスの相場を真上に明示 -->
+    <!-- 基準レート帯: 神/カオスの相場を2行に整理し、各行に過去7日の推移(スパークライン+%)を表示 -->
     <div
       v-if="ranking.length"
-      class="flex items-center gap-x-5 gap-y-2 mb-4 px-4 py-2.5 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] flex-wrap"
+      class="mb-4 px-4 py-3 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)]"
     >
-      <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display">基準レート</span>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-[10px] uppercase tracking-wider text-[var(--exile-color-text-secondary)] font-display">基準レート</span>
+        <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">過去7日</span>
+      </div>
       <template v-if="divinePrice > 1">
-        <div class="flex items-center gap-1.5 text-lg font-semibold tabular-nums">
-          <span class="text-[var(--exile-color-text-secondary)]">1</span>
-          <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-6 h-6 object-contain" loading="lazy" />
-          <span class="text-[var(--exile-color-text-secondary)]">=</span>
-          <span class="text-[var(--exile-color-accent-focus)]">{{ fmt(divinePrice) }}</span>
-          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-6 h-6 object-contain" loading="lazy" />
-          <span class="text-sm text-[var(--exile-color-text-secondary)]">高貴</span>
-        </div>
-        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
-          <span>1</span>
-          <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-5 h-5 object-contain" loading="lazy" />
-          <span>=</span>
-          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice) }}</span>
-          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-          <span class="text-sm">カオス</span>
-        </div>
-        <!-- 高貴 ↔ カオス 相互レート (オーナー指示 2026-06-03) -->
-        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
-          <span>1</span>
-          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-          <span>=</span>
-          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
-          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-          <span class="text-sm">カオス</span>
-        </div>
-        <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
-          <span>1</span>
-          <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
-          <span>=</span>
-          <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
-          <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
-          <span class="text-sm">高貴</span>
+        <div class="flex flex-col gap-2">
+          <!-- 神 -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-1.5 text-base tabular-nums">
+              <span class="text-[var(--exile-color-text-secondary)]">1</span>
+              <img v-if="divineIcon" :src="divineIcon" alt="神" class="w-6 h-6 object-contain" loading="lazy" />
+              <span class="text-[var(--exile-color-text-secondary)]">=</span>
+              <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(divinePrice) }}</span>
+              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
+              <span class="text-xs text-[var(--exile-color-text-secondary)]">高貴</span>
+              <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">/</span>
+              <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(chaosDivinePrice) }}</span>
+              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+              <span class="text-xs text-[var(--exile-color-text-secondary)]">カオス</span>
+            </div>
+            <div v-if="divineTrend && divineTrend.spark.length >= 2" class="flex items-center gap-1.5 ml-auto">
+              <svg width="64" height="18" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
+                <polyline :points="sparkPoints(divineTrend.spark)" fill="none" :stroke="divineTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+              </svg>
+              <span class="text-xs tabular-nums w-12 text-right" :class="divineTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(divineTrend.changePct) }}</span>
+            </div>
+          </div>
+          <!-- カオス / 高貴 -->
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-1.5 text-base tabular-nums text-[var(--exile-color-text-secondary)]">
+              <span>1</span>
+              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+              <span>=</span>
+              <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
+              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
+              <span class="text-xs">高貴</span>
+              <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">/</span>
+              <span>1</span>
+              <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-5 h-5 object-contain" loading="lazy" />
+              <span>=</span>
+              <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
+              <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-5 h-5 object-contain" loading="lazy" />
+              <span class="text-xs">カオス</span>
+            </div>
+            <div v-if="chaosTrend && chaosTrend.spark.length >= 2" class="flex items-center gap-1.5 ml-auto">
+              <svg width="64" height="18" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
+                <polyline :points="sparkPoints(chaosTrend.spark)" fill="none" :stroke="chaosTrend.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+              </svg>
+              <span class="text-xs tabular-nums w-12 text-right" :class="chaosTrend.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(chaosTrend.changePct) }}</span>
+            </div>
+          </div>
         </div>
       </template>
       <span v-else class="text-sm text-[var(--exile-color-text-tertiary)] italic">
@@ -469,13 +534,15 @@ onMounted(() => {
             v-for="(p, i) in filteredRanking"
             :key="p.apiId"
             class="border-t border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)] transition"
+            @mouseenter="showTip(p, $event)"
+            @mousemove="moveTip"
+            @mouseleave="hideTip"
           >
             <td class="px-3 py-3 text-[var(--exile-color-text-secondary)] tabular-nums whitespace-nowrap">{{ i + 1 }}</td>
             <td class="px-3 py-3 whitespace-nowrap">
               <div
                 class="flex items-center gap-2 whitespace-nowrap"
                 :class="effectFor(p) ? 'cursor-help' : ''"
-                :title="effectFor(p) || undefined"
               >
                 <img v-if="p.icon" :src="p.icon" :alt="p.text" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
                 <span
@@ -548,5 +615,40 @@ onMounted(() => {
       ／各列は「1 アイテム = X 神 / 高貴 / カオス」
     </p>
     </div>
+
+    <!-- poe2db 風ホバーカード (Teleport で body 直下に出しテーブルの overflow クリップを回避) -->
+    <Teleport to="body">
+      <div
+        v-if="hoverItem && hoverEffect"
+        class="fixed z-[1000] pointer-events-none rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] shadow-2xl overflow-hidden"
+        :style="tipStyle"
+      >
+        <div class="flex items-center gap-2 px-3 py-2 bg-[var(--exile-color-bg-elevated)] border-b border-[var(--exile-color-border-subtle)]">
+          <img v-if="hoverItem.icon" :src="hoverItem.icon" :alt="hoverItem.text" class="w-7 h-7 object-contain shrink-0" />
+          <span class="font-display text-[15px] text-[var(--exile-color-accent-focus)] leading-tight">{{ jaCurrency(hoverItem.text) }}</span>
+        </div>
+        <div class="px-3 py-2">
+          <div
+            v-if="hoverEffect.s"
+            class="text-xs text-[var(--exile-color-text-secondary)] tabular-nums"
+          >スタック数: <span class="text-[var(--exile-color-text-primary)]">{{ hoverEffect.s }}</span></div>
+          <div
+            v-if="hoverEffect.lv"
+            class="text-xs text-[var(--exile-color-text-secondary)] tabular-nums"
+          >装備条件: <span class="text-[var(--exile-color-text-primary)]">{{ hoverEffect.lv }}</span></div>
+          <div
+            v-if="hoverEffect.s || hoverEffect.lv"
+            class="h-px my-2 bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)] to-transparent"
+          />
+          <p
+            v-for="(line, idx) in hoverEffect.e"
+            :key="idx"
+            class="text-[13px] leading-snug text-[var(--exile-color-accent-focus)]"
+            :class="idx > 0 ? 'mt-1' : ''"
+          >{{ line }}</p>
+        </div>
+        <div class="px-3 pb-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--exile-color-text-tertiary)] text-center">{{ hoverItem.text }}</div>
+      </div>
+    </Teleport>
   </div>
 </template>

@@ -28,6 +28,14 @@ const PAGES = [
   "Soul_Core",
   "Rune",
   "Lineage_Supports",
+  "Verisium",
+  "Delirium",
+  "Breach",
+  "Expedition",
+  "Ritual",
+  "Ultimatum",
+  "Abyss",
+  "Incursion",
 ];
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -51,7 +59,7 @@ async function fetchPage(slug) {
   return res.text();
 }
 
-/** 1 ページから { normalizedEnName: effectJa } を抽出。 */
+/** 1 ページから { normalizedEnName: {e:[効果], s:スタック, lv:レベル} } を抽出。 */
 function extract(html) {
   const anchor =
     /<a class="[^"]*"[^>]*data-hover="[^"]*BaseItemTypes[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
@@ -59,12 +67,13 @@ function extract(html) {
   let m;
   while ((m = anchor.exec(html)) !== null) {
     const slug = decodeURIComponent(m[1]).split("?")[0].split("/").pop();
-    const en = slug.replace(/_/g, " ");
-    const name = stripTags(m[2]);
-    items.push({ pos: m.index, en, name });
+    items.push({ pos: m.index, en: slug.replace(/_/g, " ") });
   }
   // 効果テキスト: explicitMod(カレンシー/エッセンス等) と implicitMod(ルーン/ソウルコア等) の両方。
   const emRe = /<div class="(?:explicitMod|implicitMod)">([\s\S]*?)<\/div>/g;
+  // スタック数 / 装備条件(レベル) は property / requirements div から。
+  const stackRe = /<div class="property">スタック数:\s*<span[^>]*>([^<]+)<\/span>/;
+  const reqRe = /<div class="requirements">[\s\S]*?<span[^>]*>([^<]+)<\/span>/;
   const out = {};
   for (let i = 0; i < items.length; i++) {
     const start = items[i].pos;
@@ -77,12 +86,15 @@ function extract(html) {
       const t = stripTags(e[1]);
       if (t && !effs.includes(t)) effs.push(t);
     }
-    if (effs.length) {
-      const key = norm(items[i].en);
-      // 既出キーは、より長い(=情報量多い)説明を優先
-      const joined = effs.join(" / ");
-      if (!out[key] || joined.length > out[key].length) out[key] = joined;
-    }
+    if (!effs.length) continue;
+    const sm = seg.match(stackRe);
+    const rm = seg.match(reqRe);
+    const entry = { e: effs };
+    if (sm) entry.s = stripTags(sm[1]);
+    if (rm) entry.lv = stripTags(rm[1]);
+    const key = norm(items[i].en);
+    // 既出キーは効果行が多い(=情報量多い)方を優先
+    if (!out[key] || effs.length > out[key].e.length) out[key] = entry;
   }
   return out;
 }
@@ -95,8 +107,10 @@ async function main() {
       const got = extract(html);
       let added = 0;
       for (const [k, v] of Object.entries(got)) {
-        if (!all[k] || v.length > all[k].length) {
-          if (!all[k]) added++;
+        if (!all[k]) {
+          all[k] = v;
+          added++;
+        } else if (v.e.length > all[k].e.length) {
           all[k] = v;
         }
       }
