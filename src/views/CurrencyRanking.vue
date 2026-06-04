@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, reactive, watch, onMounted, computed } from "vue";
 import {
   fetchItems,
   buildRankedItems,
@@ -67,8 +67,15 @@ const divineIcon = ref<string>("");
 const chaosIcon = ref<string>("");
 const exaltedIcon = ref<string>("");
 const ranking = ref<RankedItem[]>([]);
-// ItemId → 過去7日トレンド (poe2scout PriceHistory)。表示は任意なので失敗しても表は出す。
+// ItemId → 直近24時間トレンド (一括 PriceHistory)。即時フォールバック用。
 const trends = ref<Map<number, ItemTrend>>(new Map());
+// ItemId → 本物の7日トレンド (個別履歴を表示中アイテムだけ取得)。reactive で逐次反映。
+const trend7d = reactive(new Map<number, ItemTrend>());
+const loading7d = ref(false);
+// 表示用: 7日があれば優先、無ければ24時間にフォールバック。
+function rowTrend(p: RankedItem): ItemTrend | undefined {
+  return trend7d.get(p.itemId) ?? trends.value.get(p.itemId);
+}
 // 基準レートのスパークライン用に 神/カオス の ItemId を保持 (リーグごとに異なるため動的取得)。
 const divineItemId = ref<number | null>(null);
 const chaosItemId = ref<number | null>(null);
@@ -76,7 +83,16 @@ const chaosItemId = ref<number | null>(null);
 // 神→高貴 / 神→カオス / カオス→高貴 をそれぞれ別グラフで表示 (オーナー指示 2026-06-04)。
 const divineVsExalted = ref<ItemTrend | null>(null); // 1神=?高貴 の推移
 const divineVsChaos = ref<ItemTrend | null>(null); // 1神=?カオス の推移 (ReferenceCurrency=chaos)
-const chaosVsExalted = ref<ItemTrend | null>(null); // 1カオス=?高貴 の推移
+const chaosVsExalted = ref<ItemTrend | null>(null); // 1カオス=?高貴 の推移 (内部基礎)
+// 1高貴=?カオス の推移 = チャオス建て高貴 = chaosVsExalted(カオスの高貴建て)の逆数。
+const exaltedVsChaos = computed<ItemTrend | null>(() => {
+  const t = chaosVsExalted.value;
+  if (!t || t.spark.length < 2) return null;
+  const spark = t.spark.map((v) => (v > 0 ? 1 / v : 0));
+  const first = spark[0];
+  const last = spark[spark.length - 1];
+  return { spark, changePct: first > 0 ? ((last - first) / first) * 100 : 0 };
+});
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
@@ -153,6 +169,7 @@ async function refresh() {
       divinePrice.value,
       chaosDivinePrice.value,
     );
+    trend7d.clear(); // 新データなので7日キャッシュは破棄して取り直す
     // 基準レートのスパークライン用に 神/カオス の ItemId を控える
     divineItemId.value = items.find((x) => x.ApiId === "divine")?.ItemId ?? null;
     chaosItemId.value = items.find((x) => x.ApiId === "chaos")?.ItemId ?? null;
@@ -176,11 +193,41 @@ async function refresh() {
         chaosVsExalted.value = cve;
       }
     });
+
+    // テーブルの「本物7日」を表示中アイテムから取得 (起動/更新時)。逐次反映。
+    void load7dForVisible();
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
     loading.value = false;
   }
+}
+
+/**
+ * 表示中(フィルタ後)アイテムの「本物7日」トレンドを個別履歴から並列取得し reactive Map へ逐次反映。
+ * 取得済みはスキップ(キャッシュ)。リーグ切替で中断。一括(24時間)は即時フォールバックとして別に保持。
+ */
+async function load7dForVisible() {
+  const lg = league.value;
+  const todo = filteredRanking.value
+    .map((p) => p.itemId)
+    .filter((id) => !trend7d.has(id));
+  if (!todo.length) return;
+  loading7d.value = true;
+  const CONC = 8;
+  let idx = 0;
+  const worker = async () => {
+    while (idx < todo.length) {
+      const id = todo[idx++];
+      if (league.value !== lg) return; // リーグ切替で中断
+      const t = await fetchItemTrend7d(lg, id);
+      if (league.value === lg && t) trend7d.set(id, t);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONC, todo.length) }, () => worker()),
+  );
+  if (league.value === lg) loading7d.value = false;
 }
 
 function onLeagueChange() {
@@ -231,10 +278,7 @@ function formatEpoch(epoch: number | null): string {
   });
 }
 
-// --- 過去7日トレンド (スパークライン + 変化率) ---
-function trendFor(p: RankedItem): ItemTrend | undefined {
-  return trends.value.get(p.itemId);
-}
+// --- トレンド (スパークライン + 変化率) ---
 /** spark 配列を SVG polyline の points 文字列に変換 (古→新, 左→右)。 */
 function sparkPoints(vals: number[], w = 72, h = 20): string {
   if (vals.length < 2) return "";
@@ -336,6 +380,11 @@ const filteredRanking = computed(() => {
   // 表示順は「神換算」降順 = 価値が高い順 (オーナー指示 2026-06-01)。
   // list が ranking.value と同一参照になりうるので slice() してから sort する。
   return list.slice().sort((a, b) => b.divinePrice - a.divinePrice);
+});
+
+// カテゴリ切替時、新たに表示されるアイテムの7日トレンドを取得 (取得済みはスキップ)。
+watch(categoryFilter, () => {
+  void load7dForVisible();
 });
 
 onMounted(() => {
@@ -468,7 +517,7 @@ onMounted(() => {
             <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(divinePrice) }}</span>
             <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
             <span class="text-[10px] text-[var(--exile-color-text-secondary)]">高貴</span>
-            <div v-if="divineVsExalted && divineVsExalted.spark.length >= 2" class="flex items-center gap-1 ml-auto">
+            <div v-if="divineVsExalted && divineVsExalted.spark.length >= 2" class="flex items-center gap-1 ml-2">
               <svg width="60" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
                 <polyline :points="sparkPoints(divineVsExalted.spark)" fill="none" :stroke="divineVsExalted.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
               </svg>
@@ -484,27 +533,27 @@ onMounted(() => {
             <span class="text-[var(--exile-color-accent-focus)] font-semibold">{{ fmt(chaosDivinePrice) }}</span>
             <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
             <span class="text-[10px] text-[var(--exile-color-text-secondary)]">カオス</span>
-            <div v-if="divineVsChaos && divineVsChaos.spark.length >= 2" class="flex items-center gap-1 ml-auto">
+            <div v-if="divineVsChaos && divineVsChaos.spark.length >= 2" class="flex items-center gap-1 ml-2">
               <svg width="60" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
                 <polyline :points="sparkPoints(divineVsChaos.spark)" fill="none" :stroke="divineVsChaos.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
               </svg>
               <span class="text-xs tabular-nums w-12 text-right" :class="divineVsChaos.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(divineVsChaos.changePct) }}</span>
             </div>
           </div>
-          <!-- 1 カオス = 高貴 -->
+          <!-- 1 高貴 = カオス -->
           <div class="flex items-center gap-1 text-sm tabular-nums text-[var(--exile-color-text-secondary)]">
             <span>1</span>
-            <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
-            <span class="text-[10px]">カオス</span>
-            <span>=</span>
-            <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
             <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
             <span class="text-[10px]">高貴</span>
-            <div v-if="chaosVsExalted && chaosVsExalted.spark.length >= 2" class="flex items-center gap-1 ml-auto">
+            <span>=</span>
+            <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
+            <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
+            <span class="text-[10px]">カオス</span>
+            <div v-if="exaltedVsChaos && exaltedVsChaos.spark.length >= 2" class="flex items-center gap-1 ml-2">
               <svg width="60" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-                <polyline :points="sparkPoints(chaosVsExalted.spark)" fill="none" :stroke="chaosVsExalted.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+                <polyline :points="sparkPoints(exaltedVsChaos.spark)" fill="none" :stroke="exaltedVsChaos.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
               </svg>
-              <span class="text-xs tabular-nums w-12 text-right" :class="chaosVsExalted.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(chaosVsExalted.changePct) }}</span>
+              <span class="text-xs tabular-nums w-12 text-right" :class="exaltedVsChaos.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(exaltedVsChaos.changePct) }}</span>
             </div>
           </div>
         </div>
@@ -564,7 +613,9 @@ onMounted(() => {
             <th class="text-right px-3 py-3 whitespace-nowrap">神 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">高貴 換算</th>
             <th class="text-right px-3 py-3 whitespace-nowrap">カオス 換算</th>
-            <th class="text-right px-3 py-3 whitespace-nowrap">24時間</th>
+            <th class="text-right px-3 py-3 whitespace-nowrap">
+              過去7日間<span v-if="loading7d" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)] normal-case">読込中…</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -610,9 +661,9 @@ onMounted(() => {
             </td>
             <td class="px-2 py-3">
               <div
-                v-if="trendFor(p) && trendFor(p)!.spark.length >= 2"
+                v-if="rowTrend(p) && rowTrend(p)!.spark.length >= 2"
                 class="flex items-center justify-end gap-2"
-                :title="`過去7日間 ${fmtPct(trendFor(p)!.changePct)}`"
+                :title="`過去7日間 ${fmtPct(rowTrend(p)!.changePct)}`"
               >
                 <svg
                   width="72"
@@ -622,9 +673,9 @@ onMounted(() => {
                   class="shrink-0 overflow-visible"
                 >
                   <polyline
-                    :points="sparkPoints(trendFor(p)!.spark)"
+                    :points="sparkPoints(rowTrend(p)!.spark)"
                     fill="none"
-                    :stroke="trendFor(p)!.changePct < 0
+                    :stroke="rowTrend(p)!.changePct < 0
                       ? 'var(--exile-color-signal-error)'
                       : 'var(--exile-color-signal-success)'"
                     stroke-width="1.5"
@@ -634,10 +685,10 @@ onMounted(() => {
                 </svg>
                 <span
                   class="text-xs tabular-nums w-12 text-right"
-                  :class="trendFor(p)!.changePct < 0
+                  :class="rowTrend(p)!.changePct < 0
                     ? 'text-[var(--exile-color-signal-error)]'
                     : 'text-[var(--exile-color-signal-success)]'"
-                >{{ fmtPct(trendFor(p)!.changePct) }}</span>
+                >{{ fmtPct(rowTrend(p)!.changePct) }}</span>
               </div>
               <div v-else class="text-right text-xs text-[var(--exile-color-text-tertiary)] pr-1">—</div>
             </td>
