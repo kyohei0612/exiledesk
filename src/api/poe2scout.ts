@@ -214,9 +214,13 @@ function pointsToTrend(points: { price: number; t: number }[]): ItemTrend | null
 export async function fetchItemTrend7d(
   leagueName: string,
   itemId: number,
+  referenceCurrency?: string,
 ): Promise<ItemTrend | null> {
   try {
-    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items/${itemId}/History?LogCount=200`;
+    const ref = referenceCurrency
+      ? `&ReferenceCurrency=${encodeURIComponent(referenceCurrency)}`
+      : "";
+    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items/${itemId}/History?LogCount=200${ref}`;
     const res = await httpFetch(url, NO_STORE);
     if (!res.ok) return null;
     const data = await res.json();
