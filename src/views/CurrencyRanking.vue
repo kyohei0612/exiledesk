@@ -83,16 +83,7 @@ const chaosItemId = ref<number | null>(null);
 // 神→高貴 / 神→カオス / カオス→高貴 をそれぞれ別グラフで表示 (オーナー指示 2026-06-04)。
 const divineVsExalted = ref<ItemTrend | null>(null); // 1神=?高貴 の推移
 const divineVsChaos = ref<ItemTrend | null>(null); // 1神=?カオス の推移 (ReferenceCurrency=chaos)
-const chaosVsExalted = ref<ItemTrend | null>(null); // 1カオス=?高貴 の推移 (内部基礎)
-// 1高貴=?カオス の推移 = チャオス建て高貴 = chaosVsExalted(カオスの高貴建て)の逆数。
-const exaltedVsChaos = computed<ItemTrend | null>(() => {
-  const t = chaosVsExalted.value;
-  if (!t || t.spark.length < 2) return null;
-  const spark = t.spark.map((v) => (v > 0 ? 1 / v : 0));
-  const first = spark[0];
-  const last = spark[spark.length - 1];
-  return { spark, changePct: first > 0 ? ((last - first) / first) * 100 : 0 };
-});
+const chaosVsExalted = ref<ItemTrend | null>(null); // 1カオス=?高貴 の推移
 const loading = ref(false);
 const error = ref<string | null>(null);
 const lastUpdated = ref<Date | null>(null);
@@ -540,20 +531,20 @@ onMounted(() => {
               <span class="text-xs tabular-nums w-12 text-right" :class="divineVsChaos.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(divineVsChaos.changePct) }}</span>
             </div>
           </div>
-          <!-- 1 高貴 = カオス -->
+          <!-- 1 カオス = 高貴 (このリーグはカオス>高貴。数値3.1はこの向きで出る) -->
           <div class="flex items-center gap-1 text-sm tabular-nums text-[var(--exile-color-text-secondary)]">
             <span>1</span>
-            <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
-            <span class="text-[10px]">高貴</span>
-            <span>=</span>
-            <span class="text-[var(--exile-color-text-primary)]">{{ fmt(chaosDivinePrice / divinePrice) }}</span>
             <img v-if="chaosIcon" :src="chaosIcon" alt="カオス" class="w-4 h-4 object-contain" loading="lazy" />
             <span class="text-[10px]">カオス</span>
-            <div v-if="exaltedVsChaos && exaltedVsChaos.spark.length >= 2" class="flex items-center gap-1 ml-2">
+            <span>=</span>
+            <span class="text-[var(--exile-color-text-primary)]">{{ fmt(divinePrice / chaosDivinePrice) }}</span>
+            <img v-if="exaltedIcon" :src="exaltedIcon" alt="高貴" class="w-4 h-4 object-contain" loading="lazy" />
+            <span class="text-[10px]">高貴</span>
+            <div v-if="chaosVsExalted && chaosVsExalted.spark.length >= 2" class="flex items-center gap-1 ml-2">
               <svg width="60" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-                <polyline :points="sparkPoints(exaltedVsChaos.spark)" fill="none" :stroke="exaltedVsChaos.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+                <polyline :points="sparkPoints(chaosVsExalted.spark)" fill="none" :stroke="chaosVsExalted.changePct < 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
               </svg>
-              <span class="text-xs tabular-nums w-12 text-right" :class="exaltedVsChaos.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(exaltedVsChaos.changePct) }}</span>
+              <span class="text-xs tabular-nums w-12 text-right" :class="chaosVsExalted.changePct < 0 ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'">{{ fmtPct(chaosVsExalted.changePct) }}</span>
             </div>
           </div>
         </div>
