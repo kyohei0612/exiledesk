@@ -38,6 +38,95 @@ fn pob_src_dir() -> PathBuf {
         .join("src")
 }
 
+/// メインウィンドウを現在のモニタの可視領域(work area)内へクランプ＆再配置する。
+///
+/// Tauri 2.11 は `Monitor::work_area() -> &PhysicalRect<i32, u32>` で
+/// タスクバーを除外した可視領域を直接取得できる。`PhysicalRect` の
+/// `.position` がタスクバー除外の原点、`.size` がタスクバー除外サイズ。
+/// 下端・上端・左右どのエッジにタスクバーがあっても OS が算出済みの値を返すため、
+/// 経験的な reserve マージンに頼らず正確に「画面外はみ出し」を防げる。
+///
+/// 内寸/外寸セマンティクス:
+///   - `outer_size()` は装飾込みの外寸、`inner_size()` はコンテンツ領域の内寸。
+///   - `set_size()` は内寸を設定するため、外寸を work area に収めるには
+///     内寸ターゲット = work area寸 - 装飾差 とする。装飾差(タイトルバー/枠)は
+///     `outer_size() - inner_size()` から実測して使う。
+///
+/// 全ての操作は `let _ =` 等でエラーを握りつぶし、起動を止めない。
+fn clamp_into_visible_area(window: &tauri::WebviewWindow) {
+    use tauri::{PhysicalPosition, PhysicalSize};
+
+    // 1. 現在モニタ取得。失敗 / None なら何もしない (早期 return)。
+    let monitor = match window.current_monitor() {
+        Ok(Some(m)) => m,
+        _ => return,
+    };
+
+    // work area (タスクバー除外の可視領域) を取得。
+    let wa = monitor.work_area();
+    let wa_x = wa.position.x; // 可視領域原点 X (マルチモニタ絶対座標)
+    let wa_y = wa.position.y; // 可視領域原点 Y
+    let wa_w = wa.size.width as i32; // 可視領域幅
+    let wa_h = wa.size.height as i32; // 可視領域高さ
+
+    // work area が異常値 (0 以下) なら何もしない。
+    if wa_w <= 0 || wa_h <= 0 {
+        return;
+    }
+
+    // tauri.conf.json の minWidth 1280 / minHeight 600 (論理px) を物理px へ換算した下限ガード。
+    let scale = monitor.scale_factor();
+    let min_w_phys = (1280.0 * scale).round() as i32;
+    let min_h_phys = (600.0 * scale).round() as i32;
+
+    // 2. 外寸(装飾込み) と 内寸(コンテンツ領域) を取得し、装飾差を実測する。
+    let outer = match window.outer_size() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let inner = match window.inner_size() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    // 装飾差 (タイトルバー/枠分)。負値防止で 0 下限。
+    let deco_w = (outer.width as i32 - inner.width as i32).max(0);
+    let deco_h = (outer.height as i32 - inner.height as i32).max(0);
+
+    // 3. 外寸が work area を超えるなら内寸を縮小。
+    //    内寸ターゲット = work area寸 - 装飾差 (min 未満には縮めない)。
+    let mut new_inner_w = inner.width as i32;
+    let mut new_inner_h = inner.height as i32;
+    let mut need_resize = false;
+
+    if outer.width as i32 > wa_w {
+        new_inner_w = (wa_w - deco_w).max(min_w_phys);
+        need_resize = true;
+    }
+    if outer.height as i32 > wa_h {
+        new_inner_h = (wa_h - deco_h).max(min_h_phys);
+        need_resize = true;
+    }
+
+    if need_resize {
+        let _ = window.set_size(PhysicalSize::new(
+            new_inner_w.max(1) as u32,
+            new_inner_h.max(1) as u32,
+        ));
+    }
+
+    // 4. 再配置に使う最終外寸 (縮小後の想定値 = 内寸 + 装飾差)。
+    let final_outer_w = new_inner_w + deco_w;
+    let final_outer_h = new_inner_h + deco_h;
+
+    // 5. work area 原点を基準に水平中央＋可視領域内中央寄せで再配置。
+    //    work area が既にタスクバーを除外しているため、下端/上端どちらの
+    //    タスクバーでも食い込まない。マルチモニタ絶対座標。
+    let x = wa_x + (wa_w - final_outer_w).max(0) / 2;
+    let y = wa_y + (wa_h - final_outer_h).max(0) / 2;
+
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let pob_worker = pob::PobWorker::spawn(pob_src_dir());
@@ -152,6 +241,25 @@ pub fn run() {
             if tray_only {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.hide();
+                }
+            } else {
+                // ------------------------------------------------------------
+                // 起動時の画面外はみ出し防止 (2026-06-28)
+                //
+                // 症状: OS 任せの初期配置だと、低解像度/小型モニタや
+                //       タスクバー位置の都合でウィンドウ下端が画面外へ
+                //       はみ出すことがある。tauri.conf.json の "center": true
+                //       で中央寄せはされるが、ウィンドウ高さ(900)がモニタ
+                //       可視高さを超える環境では下端が切れてしまう。
+                //
+                // 対策: 現在モニタの work area(タスクバー除外の可視領域)へ
+                //       ウィンドウをクランプ＆再配置する (clamp_into_visible_area)。
+                //
+                // tray-only 起動時は window を hide するので再配置しない
+                // (隠すので不要・副作用回避)。
+                // ------------------------------------------------------------
+                if let Some(window) = app.get_webview_window("main") {
+                    clamp_into_visible_area(&window);
                 }
             }
 
