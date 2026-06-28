@@ -219,7 +219,7 @@ function formatHms(d: Date): string {
 // ---------------------------------------------------------------------------
 async function runFetch(
   useCache: boolean,
-  opts?: { background?: boolean },
+  opts?: { background?: boolean; bgWhenCached?: boolean },
 ): Promise<void> {
   // 前回 listen を破棄してからスタート (重複 event 防止)
   if (unlistenRef) {
@@ -236,6 +236,12 @@ async function runFetch(
   //   取得が完了するたびに、その1つだけを差し替える(途中経過は表示しない)。
   const background =
     opts?.background === true && craftV2Store.ascendancies.length > 0;
+  // 2026-06-28: 初回ロード(再起動含む)でも、ディスクキャッシュ(=前回データ)が
+  //   表示できたら以降をバックグラウンド更新へ切替える。再起動時に「全部最初から」
+  //   再構築せず、キャッシュを見せたまま完了アセンダンシーごとに差し替えるため。
+  //   onCacheReady 内で cachedAggs があるときに backgroundRefresh を立てる。
+  //   リーグ切替(別リーグのキャッシュを据え置くと誤表示)には適用しないよう専用フラグ。
+  const bgWhenCached = opts?.bgWhenCached === true;
   bgStaging.clear();
 
   if (background) {
@@ -283,6 +289,17 @@ async function runFetch(
       if (cache.saved_at) {
         craftV2Store.lastUpdatedAt =
           formatHms(new Date(cache.saved_at * 1000)) + " (キャッシュ)";
+      }
+      // 2026-06-28: 初回ロードでキャッシュ(前回データ)を表示できたら、以降の取得を
+      // バックグラウンド更新へ切替える。キャッシュを据え置いたまま、完了アセンダンシー
+      // から順に差し替える(再起動時に「全部最初から」鳴り直さない)。
+      // 進捗ティッカー/ポーラーは止めてテイクオーバーUIを出さない。
+      if (bgWhenCached && cachedAggs.length > 0) {
+        craftV2Store.backgroundRefresh = true;
+        craftV2Store.showingFromCache = false;
+        bgStaging.clear();
+        stopNowTicker();
+        stopNetworkStatusPoller();
       }
     },
     onProgress: (agg) => {
@@ -515,8 +532,10 @@ export async function ensureCraftV2Started(): Promise<void> {
   void runHealthCheck();
   checkDictionaryFreshness();
 
-  // 3) MOD 一覧の fetch を背景開始
-  await runFetch(true);
+  // 3) MOD 一覧の fetch を開始。
+  //    bgWhenCached: キャッシュ(前回データ)が出せたら以降をバックグラウンド更新にし、
+  //    再起動時も据え置き→完了アセンダンシーごと差し替えにする。
+  await runFetch(true, { bgWhenCached: true });
 }
 
 /**

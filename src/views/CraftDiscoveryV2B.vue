@@ -1310,7 +1310,9 @@ function pct(count: number): string {
             : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] hover:border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)]',
         ]"
         :title="
-          asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total
+          !backgroundRefresh &&
+          asc.fetchProgress &&
+          asc.fetchProgress.done < asc.fetchProgress.total
             ? `${asc.fetchProgress.done} / ${asc.fetchProgress.total} キャラ取得中`
             : asc.name
         "
@@ -1334,7 +1336,7 @@ function pct(count: number): string {
           fetchProgress があり、かつ完了 (done < total) 状態の時のみ表示。
         -->
         <span
-          v-if="asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total"
+          v-if="!backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total"
           class="flex items-center gap-1.5 text-[10px] tabular-nums text-[var(--exile-color-text-secondary)]"
         >
           <span
@@ -1356,7 +1358,7 @@ function pct(count: number): string {
       </button>
       <!-- 取得中インジケータ (未到着分、固定エリアのアセンダンシータブ内) -->
       <span
-        v-if="loading && ascendancies.length < TARGET_ASCENDANCY_COUNT"
+        v-if="loading && !backgroundRefresh && ascendancies.length < TARGET_ASCENDANCY_COUNT"
         class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] text-[var(--exile-color-text-secondary)] italic"
       >
         <span
