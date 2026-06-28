@@ -213,7 +213,7 @@ const summaryFooter = computed<string>(() => {
   const ilvl = r.value?.ilvl;
   const lv = r.value?.level;
   const parts: string[] = [];
-  if (typeof ilvl === "number" && ilvl > 0) parts.push(`item lvl ${ilvl}`);
+  if (typeof ilvl === "number" && ilvl > 0) parts.push(`アイテムLv ${ilvl}`);
   if (typeof lv === "number" && lv > 0) parts.push(`要求 Lv ${lv}`);
   return parts.join(" / ");
 });

@@ -35,6 +35,12 @@ import modTierAndGroup from "../i18n/mod-tier-and-group.json";
 import affixOverridesRaw from "../i18n/affix-overrides.json";
 const _affixOverrides = affixOverridesRaw as Record<string, AffixKind>;
 import uniqueNamesJaRaw from "../i18n/unique-names-ja.json";
+// 死蔵していた MOD 日本語辞書 (キー=英語 `#` テンプレ / 値=日本語 `#` テンプレ)。
+// bundle (mods-bundle.json) の text_ja が欠落して英語表示に落ちる MOD を、
+// finalizeBuckets で正規化キー突合してフォールバック日本語化するために使う。
+// manual は後勝ち優先。`_modTextJaIndex` を参照。
+import modTextJaRaw from "../i18n/mod-text-ja.json";
+import modTextJaManualRaw from "../i18n/mod-text-ja-manual.json";
 
 /**
  * 2026-05-22: ユニュ正式名 (英語 = `data.name`) → 日本語正式名の辞書。
@@ -626,6 +632,44 @@ const _modBundleIndex: Map<string, ModBundleIndexEntry> = (() => {
       textEnTemplate: tplKey,
     });
   }
+  return map;
+})();
+
+/**
+ * mod-text-ja(.manual) 辞書のキーと bucket.template を同一空間で突合するための正規化。
+ * `normalizeModTemplate` (数値→`#`, em/en-dash 吸収) + マーカー除去 + 小文字化 + trim。
+ * bundle 側の `template` (例 "Adds # to # Fire Damage to Attacks") と
+ * 辞書キー (例 "Adds # to # Fire damage to Attacks") の大小揺れを吸収する。
+ */
+function normalizeModTextKey(text: string): string {
+  return stripRichTextMarkers(normalizeModTemplate(text)).toLowerCase().trim();
+}
+
+/**
+ * 死蔵辞書 (mod-text-ja.json 3537 件 + mod-text-ja-manual.json 94 件) から
+ * 「正規化英語キー → 日本語 `#` テンプレ」の逆引きインデックスをモジュール初回 1 度だけ構築。
+ *
+ * 用途: finalizeBuckets で `bucket.textJaTemplate` (= bundle text_ja 由来) が null の MOD を、
+ * 同一正規化キーで引いて日本語テンプレにフォールバックする (英語漏れ救済)。
+ *
+ * - 値 (日本語テンプレ) は raw のまま保持する。`#` プレースホルダは後段 `fillTemplate` で平均値に埋まる。
+ *   (normalizeModTemplate は掛けない: 「知性20ごとに#から#」のような ja 内リテラル数値を壊さないため)
+ * - manual を後勝ちで上書きして優先する。
+ */
+const _modTextJaIndex: Map<string, string> = (() => {
+  const map = new Map<string, string>();
+  const ingest = (dict: Record<string, string>) => {
+    for (const enKey in dict) {
+      const ja = dict[enKey];
+      if (typeof ja !== "string" || !ja) continue;
+      const normKey = normalizeModTextKey(enKey);
+      if (!normKey) continue;
+      map.set(normKey, ja);
+    }
+  };
+  // mod-text-ja (汎用) を先に積み、manual で上書き優先。
+  ingest(modTextJaRaw as Record<string, string>);
+  ingest(modTextJaManualRaw as Record<string, string>);
   return map;
 })();
 
@@ -1229,8 +1273,30 @@ function finalizeBuckets(
       cntPerPos[i] > 0 ? sum / cntPerPos[i] : NaN,
     );
 
-    // 日本語テンプレート優先、なければ英語テンプレート
-    const tpl = bucket.textJaTemplate ?? bucket.template;
+    // 日本語テンプレート選択の優先順:
+    //   1. bucket.textJaTemplate (= bundle text_ja 由来) があればそれ (無回帰: 既存挙動)
+    //   2. 無ければ死蔵辞書 mod-text-ja(.manual) を正規化キー突合で引く (英語漏れ救済)
+    //   3. それも無ければ英語テンプレート (bucket.template)
+    let tpl = bucket.textJaTemplate;
+    if (tpl == null) {
+      const jaFallback = _modTextJaIndex.get(
+        normalizeModTextKey(bucket.template),
+      );
+      // 2026-06-28: 死蔵辞書 mod-text-ja(.manual) には値にリテラル数値/レンジを
+      // 焼き込んだ (= `#` を持たない/個数が違う) エントリが多数ある。これをそのまま
+      // 使うと fillTemplate で「平均値が埋まらず固定スポーンレンジ表示」や
+      // 「プレースホルダ位置ズレで誤った数値」になり、本ツールの数値忠実性を損なう。
+      // 安全側: 日本語値の `#` 個数が英語テンプレの placeholderCount と一致する
+      // エントリだけ採用し、不一致は英語テンプレ(実平均が正しく埋まる)へフォールバック。
+      if (
+        jaFallback != null &&
+        (jaFallback.match(/#/g) || []).length === placeholderCount
+      ) {
+        tpl = jaFallback;
+      } else {
+        tpl = bucket.template;
+      }
+    }
     // poe.ninja の MOD 文字列は `[Tag|Display]` 形式のリッチテキストマーカーを含む。
     // ゲーム内表示と同じく Display 側のみ残して整形する (2026-05-22)。
     // Data-M3 修正 (2026-05-22): 単独 `[Tag]` (= `|` 無し) は Display 部 = Tag なので、
