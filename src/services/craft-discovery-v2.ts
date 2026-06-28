@@ -196,6 +196,12 @@ export interface CachedRareItem {
    * weapon2 サブタブ分割 (shield / focus / quiver / main) で参照する。
    */
   subcategories?: string[];
+  /**
+   * 2026-06-28: ベース別使用率集計用の baseType (例: "Sapphire Ring")。
+   * 古いキャッシュ / 旧バイナリ (base_type を保存しない) では undefined になるため optional。
+   * その場合キャッシュ即時表示ではベース欄が空になるが、差分 fetch 完了で埋まる。
+   */
+  base_type?: string;
 }
 
 export interface CachedUniqueItem {
@@ -320,11 +326,42 @@ export interface ModEntry {
    * - UI 側で「最大ライフ +114 (T1)」のように表示する用途
    */
   inferredTier?: number;
+  /**
+   * 2026-06-28: 実リスティングの値分布で「最も使われているティア」(最頻ティア、1-based)。
+   * - 各 occurrence の値を tier 帯にビニングし、件数最多の帯を選ぶ (= 使用率どおりのティア)
+   * - 平均ベースの inferredTier と違い外れ値に引っ張られない
+   * - trade2 検索のデフォルトティアとして使う (オーナー指示: 下限値より使用率どおりのティア)
+   * - 単一プレースホルダ・tiers あり・値ありのときのみ算出、それ以外 undefined
+   */
+  usageTier?: number;
+}
+
+/**
+ * 2026-06-28: ベース別使用率エントリ (アミュレット / 指輪 のスロット表示用)。
+ *
+ * 「人数ベース」: そのアセンダンシー × スロットのサンプル人数のうち、各 baseType を
+ * 装備していたキャラ数。同一キャラが Ring1/Ring2 に同じベースを装備していても 1 人として
+ * カウントする (prefix/suffix の perChar de-dup と同方式)。百分比は UI 側で
+ * `count / sampleSize` (= pct ヘルパー) で算出し、prefix/suffix と同じ見せ方にする。
+ */
+export interface BaseEntry {
+  /** 表示名 (items-ja.json で日本語化、未登録は英語 baseType フォールバック) */
+  name: string;
+  /** 英語 baseType (内部キー / 名寄せ用) */
+  nameEn: string;
+  /** このベースを装備していた人数 (重複排除済) */
+  count: number;
 }
 
 export interface SlotMods {
   prefix: ModEntry[];
   suffix: ModEntry[];
+  /**
+   * 2026-06-28: ベース別使用率 (人数降順)。
+   * - 全スロットで集計はされるが、UI は ring / amulet のみ描画する (オーナー指示)。
+   * - prefix/suffix と同じ「人数ベース使用率」(perChar de-dup)。
+   */
+  bases: BaseEntry[];
 }
 
 /**
@@ -816,6 +853,18 @@ interface SlotCounter {
   /** template key → 集計 entry */
   prefix: Map<string, AggregatedModBucket>;
   suffix: Map<string, AggregatedModBucket>;
+  /** 2026-06-28: baseType (英語) → ベース集計 entry (人数ベース) */
+  bases: Map<string, BaseBucket>;
+}
+
+/**
+ * 2026-06-28: ベース集計バケット (スロット単位)。
+ * key = 英語 baseType。同一キャラ内の de-dup は呼び側の Set で行う (Ring1/Ring2 を 1 に)。
+ */
+interface BaseBucket {
+  nameEn: string;
+  /** このベースを装備していたキャラ数 (重複排除済) */
+  count: number;
 }
 
 interface AggregatedModBucket {
@@ -832,6 +881,7 @@ function emptySlotCounter(): SlotCounter {
   return {
     prefix: new Map<string, AggregatedModBucket>(),
     suffix: new Map<string, AggregatedModBucket>(),
+    bases: new Map<string, BaseBucket>(),
   };
 }
 
@@ -948,6 +998,29 @@ function addModToSlot(
 }
 
 /**
+ * 2026-06-28: rare 装備の baseType を「人数ベース」でスロット集計に加算する。
+ *
+ * prefix/suffix の perChar de-dup 方式に合わせ、同一キャラが同じベースを複数装備
+ * (指輪 2 本) しても 1 人としてカウントする (seenBases で de-dup)。
+ * → 開発 A レビューで指摘された「指輪 2 本二重計上」の轍を踏まない。
+ */
+function addBaseToSlot(
+  slot: SlotCounter,
+  baseType: string,
+  seenBases: Set<string>,
+): void {
+  if (!baseType || typeof baseType !== "string") return;
+  if (seenBases.has(baseType)) return; // 同キャラ・同スロット de-dup
+  seenBases.add(baseType);
+  let bucket = slot.bases.get(baseType);
+  if (!bucket) {
+    bucket = { nameEn: baseType, count: 0 };
+    slot.bases.set(baseType, bucket);
+  }
+  bucket.count += 1;
+}
+
+/**
  * 1 character の items[] を見て:
  *   - レア装備 (frameType=2): スロット別に MOD 集計 (8 スロット対応)
  *   - ユニーク装備 (frameType=3): キャラ単位 de-dup でユニーク使用率に加算
@@ -967,6 +1040,18 @@ function ingestCharacterItems(
 
   // スロット別「このキャラで見たテンプレート」セット (8 スロット分)
   const seenPerSlot: Record<SlotKey, Set<string>> = {
+    ring: new Set<string>(),
+    amulet: new Set<string>(),
+    weapon: new Set<string>(),
+    weapon2: new Set<string>(),
+    helm: new Set<string>(),
+    gloves: new Set<string>(),
+    body: new Set<string>(),
+    boots: new Set<string>(),
+  };
+
+  // 2026-06-28: スロット別「このキャラで見た baseType」セット (8 スロット分、人数ベース de-dup)
+  const seenBasesPerSlot: Record<SlotKey, Set<string>> = {
     ring: new Set<string>(),
     amulet: new Set<string>(),
     weapon: new Set<string>(),
@@ -1005,6 +1090,11 @@ function ingestCharacterItems(
       const slotCounter = asc.slots[rareSlot];
       for (const modText of mods) {
         addModToSlot(slotCounter, modText, seen);
+      }
+      // 2026-06-28: ベース別使用率の集計 (人数ベース、ring/amulet 以外でも集計だけはする)
+      const baseType = raw.itemData?.baseType;
+      if (typeof baseType === "string" && baseType) {
+        addBaseToSlot(slotCounter, baseType, seenBasesPerSlot[rareSlot]);
       }
       continue;
     }
@@ -1191,6 +1281,39 @@ function finalizeBuckets(
       }
     }
 
+    // 2026-06-28: 使用率どおりのティア (最頻ティア)。各 occurrence の値を tier 帯に
+    // ビニングして件数最多の帯を選ぶ。inferredTier (平均ベース) と違い外れ値に強い。
+    // trade2 デフォルトティアに使う (オーナー指示)。単一プレースホルダのみ算出。
+    let usageTier: number | undefined = undefined;
+    if (placeholderIsSingle && tiers.length > 0 && flatValues.length > 0) {
+      const tierCounts = new Array<number>(tiers.length).fill(0);
+      for (const v of flatValues) {
+        if (!Number.isFinite(v)) continue;
+        let idx = -1;
+        for (let i = 0; i < tiers.length; i++) {
+          if (v >= tiers[i].min && v <= tiers[i].max) {
+            idx = i;
+            break;
+          }
+        }
+        if (idx === -1) {
+          // 範囲外: 最高 max 超えは T1 (= idx 0)、下限割れは最低ティア (末尾)
+          const topMax = tiers[0].max;
+          idx = Number.isFinite(topMax) && v > topMax ? 0 : tiers.length - 1;
+        }
+        tierCounts[idx] += 1;
+      }
+      let bestIdx = -1;
+      let bestCnt = -1;
+      for (let i = 0; i < tierCounts.length; i++) {
+        if (tierCounts[i] > bestCnt) {
+          bestCnt = tierCounts[i];
+          bestIdx = i;
+        }
+      }
+      if (bestIdx >= 0 && bestCnt > 0) usageTier = bestIdx + 1; // 1-based
+    }
+
     entries.push({
       text,
       affix,
@@ -1200,6 +1323,7 @@ function finalizeBuckets(
       tiers,
       groupIds,
       inferredTier,
+      usageTier,
     });
   }
   // 人数降順
@@ -1207,10 +1331,28 @@ function finalizeBuckets(
   return entries;
 }
 
+/**
+ * 2026-06-28: ベース集計バケット群を UI 公開形式 (BaseEntry[]) に変換する (人数降順)。
+ * 表示名は items-ja.json (jaCurrency) で日本語化、未登録は英語 baseType フォールバック。
+ */
+function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
+  const list: BaseEntry[] = [];
+  for (const b of buckets.values()) {
+    list.push({
+      name: jaCurrency(b.nameEn),
+      nameEn: b.nameEn,
+      count: b.count,
+    });
+  }
+  list.sort((a, b) => b.count - a.count);
+  return list;
+}
+
 function finalizeSlot(slot: SlotCounter): SlotMods {
   return {
     prefix: finalizeBuckets(slot.prefix, "P"),
     suffix: finalizeBuckets(slot.suffix, "S"),
+    bases: finalizeBases(slot.bases),
   };
 }
 
@@ -1338,6 +1480,8 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         frameType: 2,
         inventoryId: r.inventory_id,
         explicitMods: r.explicit_mods,
+        // 2026-06-28: ベース集計用。旧キャッシュは undefined → ベース欄空 (差分 fetch で補完)
+        baseType: r.base_type,
         extended: { subcategories: r.subcategories ?? [] },
       },
     });

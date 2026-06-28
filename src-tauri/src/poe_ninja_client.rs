@@ -1943,10 +1943,17 @@ fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) -> CachedChar
                         .collect()
                 })
                 .unwrap_or_default();
+            // 2026-06-28: ベース別使用率集計用に baseType を保存 (ユニーク側と同抽出)
+            let base_type = data
+                .get("baseType")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             rare_items.push(CachedRareItem {
                 inventory_id: inv_id,
                 explicit_mods,
                 subcategories: subcategories.clone(),
+                base_type,
             });
         } else if frame_type == 3 {
             // unique
@@ -2035,6 +2042,8 @@ fn cached_character_to_character_items(c: &CachedCharacter) -> CharacterItems {
                 "frameType": 2,
                 "inventoryId": r.inventory_id,
                 "explicitMods": r.explicit_mods,
+                // 2026-06-28: ベース別使用率集計用に baseType を復元
+                "baseType": r.base_type,
                 "extended": { "subcategories": r.subcategories },
             }
         }));

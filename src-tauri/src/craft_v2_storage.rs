@@ -72,6 +72,10 @@ pub struct CachedRareItem {
     pub inventory_id: String,
     /// explicit MOD テキスト (例: "+47 to maximum Life")
     pub explicit_mods: Vec<String>,
+    /// 2026-06-28: ベース別使用率集計用の baseType (例: "Sapphire Ring")。
+    /// 古いキャッシュとの互換のため `#[serde(default)]` (= 空文字フォールバック)。
+    #[serde(default)]
+    pub base_type: String,
     /// Phase ν: poe.ninja item の `extended.subcategories` (例: `["shield"]`,
     /// `["focus"]`, `["quiver"]`, `["bow"]`, `["onesword"]`, `["wand"]`)。
     /// weapon2 バケットをサブ武器 / 盾 / フォーカス / クィーバーに分割するために使う。
@@ -130,7 +134,10 @@ fn cache_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 ///
 /// 古いキャッシュには `extended.subcategories` が無いため、weapon2 サブタブ
 /// (shield / focus / quiver / main) の分割が機能しない → 強制再取得する。
-const SCHEMA_PREFIX: &str = "ν1-";
+/// ν2 (2026-06-28): rare アイテムの `base_type` 追加。旧キャッシュは base_type が
+/// 無く、差分モードで流用されるとベース別使用率が過小カウントになるため、
+/// 一度だけフル再取得を強制して即座に完全化する。
+const SCHEMA_PREFIX: &str = "ν2-";
 
 /// 保存済キャッシュを読込む。ファイル無し or パース失敗時は Ok(None)。
 ///

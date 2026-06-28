@@ -19,6 +19,7 @@ import {
   openTrade2ForSelectedMods,
   openTrade2ForUnique,
   type AggregatedAscendancy,
+  type BaseEntry,
   type ModEntry,
   type SlotKey,
   type SlotMods,
@@ -256,7 +257,7 @@ watch(
 
 const activeSlotMods = computed<SlotMods>(() => {
   const a = activeAscendancy.value;
-  if (!a) return { prefix: [], suffix: [] };
+  if (!a) return { prefix: [], suffix: [], bases: [] };
   // 8 スロット分のフィールドを名前で直接引く (AggregatedAscendancy が SlotKey ごとにプロパティを持つ)
   return a[activeSlot.value];
 });
@@ -351,6 +352,29 @@ const totalLowPrefixCount = computed<number>(
 );
 const totalLowSuffixCount = computed<number>(
   () => sortedSuffix.value.filter((m) => m.count < LOW_COUNT_THRESHOLD).length,
+);
+
+// ---------------------------------------------------------------------------
+// 2026-06-28: ベース別使用率 (アミュレット / 指輪 のみ UI 表示)
+//   prefix/suffix と同じ「人数ベース使用率」「人数降順」「5 人以下は折りたたみ」
+//   の見せ方に寄せる。低カウント展開は prefix/suffix と同じ showLowCount を共有。
+// ---------------------------------------------------------------------------
+/** ベースセクションを描画するスロット (オーナー指示: アミュレット / 指輪 のみ) */
+const showBaseSection = computed<boolean>(
+  () => activeSlot.value === "ring" || activeSlot.value === "amulet",
+);
+// 既に集計時に降順ソート済みだが、防御的に再ソート (prefix/suffix と同じ扱い)
+const sortedBases = computed<BaseEntry[]>(() =>
+  [...activeSlotMods.value.bases].sort((a, b) => b.count - a.count),
+);
+const visibleBases = computed<BaseEntry[]>(() =>
+  showLowCount.value
+    ? sortedBases.value
+    : sortedBases.value.filter((b) => b.count >= LOW_COUNT_THRESHOLD),
+);
+/** フィルタ前の低カウントベース数 (もっと見るボタン判定用) */
+const totalLowBasesCount = computed<number>(
+  () => sortedBases.value.filter((b) => b.count < LOW_COUNT_THRESHOLD).length,
 );
 
 /**
@@ -673,6 +697,19 @@ function toggleModSelect(mod: ModEntry): void {
     }
   }
   next.add(mod.rawTemplate);
+  // Phase ι 改 (2026-06-28 オーナー指示): 新規選択時、ティアをデフォルト自動セットする。
+  // これで trade2 検索にデフォルトで「そのティア帯の min」が乗る (旧挙動は -1=制限なしで
+  // 何も乗らなかった)。デフォルトは「使用率どおりのティア」= usageTier (最頻ティア) を優先し、
+  // 算出不可 (多重プレースホルダ等) の場合のみ平均ベースの inferredTier にフォールバック。
+  // どちらも 1-based・tiers 配列の index 基準なので対応 index は (tier - 1)。
+  // ユーザーは dropdown で別ティア / 制限なしへ変更可能。
+  const defaultTier = mod.usageTier ?? mod.inferredTier;
+  if (defaultTier && mod.tiers && mod.tiers.length > 0) {
+    const idx = defaultTier - 1;
+    if (idx >= 0 && idx < mod.tiers.length) {
+      nextTiers[mod.rawTemplate] = idx;
+    }
+  }
   selectedMods.value = next;
   selectedTierIdxByMod.value = nextTiers;
 }
@@ -1605,9 +1642,76 @@ function pct(count: number): string {
         </div>
       </BaseCard>
 
+      <!-- ---------- ベース (アミュレット / 指輪 のみ、サフィックス直下) ---------- -->
+      <!-- 2026-06-28: 人数ベース使用率。prefix/suffix と同じカード/行スタイルを踏襲。 -->
+      <BaseCard
+        v-if="showBaseSection"
+        :class="isMostlyUniqueSlot ? 'order-4' : 'order-3'"
+      >
+        <div class="p-4 pl-5">
+          <div class="flex items-baseline justify-between mb-2">
+            <h2
+              class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2"
+            >
+              <span
+                class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold leading-none bg-[#6AA0B8]/25 text-[#9CC9DA] ring-1 ring-[#6AA0B8]/50"
+                aria-hidden="true"
+                >B</span
+              >
+              <span>ベース</span>
+              <span
+                class="text-[10px] tracking-wider text-[var(--exile-color-text-secondary)]"
+                >{{ activeSlotLabel }} / 人数降順</span
+              >
+            </h2>
+            <span
+              class="text-[11px] tabular-nums text-[var(--exile-color-text-secondary)]"
+              >n={{ sortedBases.length }}</span
+            >
+          </div>
+          <ul class="space-y-1">
+            <li
+              v-for="(b, i) in visibleBases"
+              :key="'base-' + i + '-' + b.nameEn"
+              class="group grid grid-cols-[auto_1fr_auto] items-center gap-3 py-1 px-1 -mx-1 rounded transition-colors hover:bg-[var(--exile-color-bg-elevated)]"
+            >
+              <span
+                class="shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold leading-none bg-[#6AA0B8]/25 text-[#9CC9DA] ring-1 ring-[#6AA0B8]/50"
+                aria-label="ベース"
+                >B</span
+              >
+              <span class="truncate text-[13px]">{{ b.name }}</span>
+              <span
+                class="shrink-0 tabular-nums text-[12px] text-[var(--exile-color-text-secondary)] group-hover:text-[var(--exile-color-accent-focus)]"
+              >
+                {{ b.count }}人
+                <span class="text-[10px] text-[var(--exile-color-text-tertiary)]"
+                  >({{ pct(b.count) }})</span
+                >
+              </span>
+            </li>
+            <li
+              v-if="sortedBases.length === 0"
+              class="text-[12px] text-[var(--exile-color-text-tertiary)] italic"
+            >
+              該当ベースなし
+            </li>
+            <li v-if="totalLowBasesCount > 0" class="pt-1">
+              <button
+                type="button"
+                @click.stop="showLowCount = !showLowCount"
+                class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
+              >
+                {{ showLowCount ? `▲ 5 人以下を隠す` : `▼ もっと見る (5 人以下 ${totalLowBasesCount} 件)` }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </BaseCard>
+
       <!-- ---------- ユニーク使用率 (スロット切替に依存しない、全装備で集計) ---------- -->
       <!-- 2026-05-22: レアに表示すべき MOD なし時は最上段に逆転 (isMostlyUniqueSlot) -->
-      <BaseCard :class="isMostlyUniqueSlot ? 'order-1 ring-1 ring-[var(--exile-color-accent-focus)]/50' : 'order-3'">
+      <BaseCard :class="isMostlyUniqueSlot ? 'order-1 ring-1 ring-[var(--exile-color-accent-focus)]/50' : 'order-4'">
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2">
             <h2
