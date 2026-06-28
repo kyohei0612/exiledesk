@@ -110,6 +110,14 @@ export interface CraftV2Store {
   lastUpdatedAt: string | null;
   // 取得進行状態
   loading: boolean;
+  /**
+   * 2026-06-28: 2回目以降(更新/自動再取得)の「バックグラウンド更新」モード。
+   * - true の間は UI を前回データのまま据え置き、loading 連動の取得中UIも出さない。
+   * - 各アセンダンシーの取得が完了するたびに、その1つだけを差し替える。
+   * - loading は「取得中(ガード/ボタン無効化用)」として true のまま、見た目テイクオーバー
+   *   をしないことを backgroundRefresh で区別する。
+   */
+  backgroundRefresh: boolean;
   fatalError: string | null;
   currentlyFetching: string | null;
   currentPhase: CharacterProgressInfo | null;
@@ -133,6 +141,7 @@ export const craftV2Store: CraftV2Store = reactive({
   snapshot: null,
   lastUpdatedAt: null,
   loading: false,
+  backgroundRefresh: false,
   fatalError: null,
   currentlyFetching: null,
   currentPhase: null,
@@ -153,6 +162,11 @@ export const craftV2Store: CraftV2Store = reactive({
 let unlistenRef: UnlistenFn | null = null;
 let networkStatusPoller: ReturnType<typeof setInterval> | null = null;
 let autoRefetchUnlisten: UnlistenFn | null = null;
+
+// 2026-06-28: バックグラウンド更新モードのステージング。
+// 据え置き中、まだ完了していないアセンダンシーの最新集計を一時保持し、
+// 完了 (fetchProgress.done >= total) した時点で表示へ swap する。
+const bgStaging = new Map<string, AggregatedAscendancy>();
 
 // 取得中だけ 1Hz で値を更新する「現在時刻」ref。UI が「動いてる」感を出す用 (Vue 側 watch で消費)。
 export const nowMs = ref<number>(Date.now());
@@ -203,7 +217,10 @@ function formatHms(d: Date): string {
 // ---------------------------------------------------------------------------
 // 内部: 取得のコア (旧 V2B.vue の startFetch 相当)
 // ---------------------------------------------------------------------------
-async function runFetch(useCache: boolean): Promise<void> {
+async function runFetch(
+  useCache: boolean,
+  opts?: { background?: boolean },
+): Promise<void> {
   // 前回 listen を破棄してからスタート (重複 event 防止)
   if (unlistenRef) {
     try {
@@ -213,20 +230,39 @@ async function runFetch(useCache: boolean): Promise<void> {
     }
     unlistenRef = null;
   }
-  craftV2Store.ascendancies = [];
-  craftV2Store.loading = true;
-  craftV2Store.fatalError = null;
-  craftV2Store.snapshot = null;
-  craftV2Store.lastUpdatedAt = null;
-  craftV2Store.currentlyFetching = null;
-  craftV2Store.currentPhase = null;
-  craftV2Store.showingFromCache = false;
-  craftV2Store.cacheItemCount = 0;
 
-  // 取得中だけ 1Hz tick (UI の経過秒数表示用)
-  startNowTicker();
-  // 取得中だけ networkStatus polling
-  startNetworkStatusPoller();
+  // 2026-06-28: 2回目以降(更新/自動再取得)は「バックグラウンド更新」モード。
+  //   既存データがある場合のみ有効。UI は前回データを据え置き、各アセンダンシーの
+  //   取得が完了するたびに、その1つだけを差し替える(途中経過は表示しない)。
+  const background =
+    opts?.background === true && craftV2Store.ascendancies.length > 0;
+  bgStaging.clear();
+
+  if (background) {
+    // 表示は据え置き: ascendancies / snapshot / lastUpdatedAt は消さない。
+    // loading は「取得中」(ガード・ボタン無効化)用に true、見た目テイクオーバーを
+    // しないことを backgroundRefresh で表す。進捗ティッカー/ポーラーは起動しない。
+    craftV2Store.loading = true;
+    craftV2Store.backgroundRefresh = true;
+    craftV2Store.fatalError = null;
+    craftV2Store.currentlyFetching = null;
+    craftV2Store.currentPhase = null;
+  } else {
+    craftV2Store.ascendancies = [];
+    craftV2Store.loading = true;
+    craftV2Store.backgroundRefresh = false;
+    craftV2Store.fatalError = null;
+    craftV2Store.snapshot = null;
+    craftV2Store.lastUpdatedAt = null;
+    craftV2Store.currentlyFetching = null;
+    craftV2Store.currentPhase = null;
+    craftV2Store.showingFromCache = false;
+    craftV2Store.cacheItemCount = 0;
+
+    // 取得中だけ 1Hz tick (UI の経過秒数表示用) + networkStatus polling
+    startNowTicker();
+    startNetworkStatusPoller();
+  }
 
   const un = await startCraftDiscoveryV2({
     topNAscendancies: 10,
@@ -234,6 +270,8 @@ async function runFetch(useCache: boolean): Promise<void> {
     useCache,
     leagueUrl: craftV2Store.selectedLeagueUrl || undefined,
     onCacheReady: (cachedAggs, cache) => {
+      // バックグラウンド更新中はキャッシュ即時表示で画面を上書きしない(据え置き徹底)。
+      if (craftV2Store.backgroundRefresh) return;
       craftV2Store.ascendancies = [...cachedAggs];
       craftV2Store.showingFromCache = true;
       craftV2Store.cacheItemCount = cachedAggs.length;
@@ -248,6 +286,17 @@ async function runFetch(useCache: boolean): Promise<void> {
       }
     },
     onProgress: (agg) => {
+      if (craftV2Store.backgroundRefresh) {
+        // 据え置きモード: 完了したアセンダンシーだけ差し替える。
+        // 途中経過(done < total)は staging に溜めるだけで表示は触らない。
+        bgStaging.set(agg.id, agg);
+        const fp = agg.fetchProgress;
+        if (fp && fp.total > 0 && fp.done >= fp.total) {
+          swapAscendancy(agg);
+          bgStaging.delete(agg.id);
+        }
+        return;
+      }
       if (craftV2Store.showingFromCache) {
         craftV2Store.showingFromCache = false;
         craftV2Store.lastUpdatedAt = "差分取得中…";
@@ -259,8 +308,15 @@ async function runFetch(useCache: boolean): Promise<void> {
       craftV2Store.currentlyFetching = null;
     },
     onDone: (snap) => {
+      // バックグラウンド更新: 完了signal未達のまま残った staging を最終反映して
+      // 表示を完全に最新化する。
+      if (craftV2Store.backgroundRefresh) {
+        for (const agg of bgStaging.values()) swapAscendancy(agg);
+        bgStaging.clear();
+      }
       craftV2Store.snapshot = snap;
       craftV2Store.loading = false;
+      craftV2Store.backgroundRefresh = false;
       craftV2Store.currentlyFetching = null;
       craftV2Store.currentPhase = null;
       craftV2Store.lastUpdatedAt = formatHms(new Date());
@@ -269,6 +325,18 @@ async function runFetch(useCache: boolean): Promise<void> {
       stopNetworkStatusPoller();
     },
     onFatal: (msg) => {
+      // バックグラウンド更新中の致命エラーは、据え置きデータを壊さず警告に留める。
+      if (craftV2Store.backgroundRefresh) {
+        pushWarn("warn", "バックグラウンド更新に失敗しました: " + msg, "craft-fetch");
+        craftV2Store.loading = false;
+        craftV2Store.backgroundRefresh = false;
+        craftV2Store.currentlyFetching = null;
+        craftV2Store.currentPhase = null;
+        bgStaging.clear();
+        stopNowTicker();
+        stopNetworkStatusPoller();
+        return;
+      }
       craftV2Store.fatalError = msg;
       craftV2Store.loading = false;
       craftV2Store.currentlyFetching = null;
@@ -278,6 +346,22 @@ async function runFetch(useCache: boolean): Promise<void> {
       stopNetworkStatusPoller();
     },
     onCharacterProgress: (info) => {
+      // バックグラウンド更新中は進捗フェーズUIは出さないが、completed を
+      // 「アセンダンシー取得完了」シグナルとして使い、staging を表示へ swap する。
+      // craft-v2-progress の done>=total は「新規キャラ全件成功」時しか立たない
+      // (部分失敗だと done<total のまま) ため、毎回必ず1回出る completed を
+      // 主トリガにして、部分失敗アセも確実に1つずつ差し替える。
+      if (craftV2Store.backgroundRefresh) {
+        if (info.phase === "completed") {
+          const id = info.ascendancy.toLowerCase().replace(/\s+/g, "-");
+          const staged = bgStaging.get(id);
+          if (staged) {
+            swapAscendancy(staged);
+            bgStaging.delete(id);
+          }
+        }
+        return;
+      }
       if (info.phase === "completed") {
         if (craftV2Store.currentPhase?.ascendancy === info.ascendancy) {
           craftV2Store.currentPhase = null;
@@ -288,6 +372,19 @@ async function runFetch(useCache: boolean): Promise<void> {
     },
   });
   unlistenRef = un;
+}
+
+/**
+ * 2026-06-28: バックグラウンド更新の「完了アセンダンシーだけ差し替える」用。
+ * mergeAscendancy と違い currentlyFetching 等の進捗 state は触らない(据え置き徹底)。
+ */
+function swapAscendancy(agg: AggregatedAscendancy): void {
+  const idx = craftV2Store.ascendancies.findIndex((a) => a.id === agg.id);
+  if (idx >= 0) {
+    craftV2Store.ascendancies.splice(idx, 1, agg);
+  } else {
+    craftV2Store.ascendancies.push(agg);
+  }
 }
 
 function mergeAscendancy(agg: AggregatedAscendancy): void {
@@ -427,7 +524,8 @@ export async function ensureCraftV2Started(): Promise<void> {
  * 強制実行なので `ensureCraftV2Started` のガードはバイパスする (= 必ず再 fetch)。
  */
 export async function refreshCraftV2(): Promise<void> {
-  await runFetch(true);
+  // 2026-06-28: 既存データがあれば「バックグラウンド更新」(据え置き→完了ごと差し替え)。
+  await runFetch(true, { background: true });
 }
 
 /**

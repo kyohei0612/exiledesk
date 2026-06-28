@@ -105,6 +105,8 @@ const activeSlot = ref<SlotKey>("ring");
 
 /** 取得中フラグ (store プロキシ) */
 const loading = computed(() => craftV2Store.loading);
+/** バックグラウンド更新中フラグ (2回目以降の据え置き更新。store プロキシ) */
+const backgroundRefresh = computed(() => craftV2Store.backgroundRefresh);
 /** 致命的エラー (store プロキシ) */
 const fatalError = computed(() => craftV2Store.fatalError);
 
@@ -933,7 +935,7 @@ function pct(count: number): string {
         <!-- 進捗・最終更新 -->
         <div class="mt-2 flex items-center gap-3 flex-wrap text-[11px]">
           <span
-            v-if="loading"
+            v-if="loading && !backgroundRefresh"
             class="inline-flex items-center gap-1.5 text-[var(--exile-color-accent-focus)]"
           >
             <span
@@ -951,6 +953,21 @@ function pct(count: number): string {
                 >(直近: {{ currentlyFetching }})</span
               >
             </template>
+          </span>
+          <!--
+            2026-06-28: 2回目以降のバックグラウンド更新中。表示は前回データのまま据え置き、
+            完了したアセンダンシーから順に差し替わる。控えめなインジケータのみ出す。
+          -->
+          <span
+            v-if="backgroundRefresh"
+            class="inline-flex items-center gap-1.5 text-[var(--exile-color-text-tertiary)]"
+            title="表示は前回のまま、裏で最新データを取得中です。取得が完了したアセンダンシーから順に切り替わります。"
+          >
+            <span
+              class="inline-block w-2 h-2 rounded-full bg-[var(--exile-color-text-tertiary)] animate-pulse"
+              aria-hidden="true"
+            ></span>
+            バックグラウンド更新中…
           </span>
           <!--
             2026-05-23: per-character 進捗フェーズ表示。
@@ -1072,7 +1089,7 @@ function pct(count: number): string {
           差分更新中も showingFromCache の時に最新データ取得中として表示される。
         -->
         <div
-          v-if="loading"
+          v-if="loading && !backgroundRefresh"
           class="mt-2 w-full max-w-[420px] h-1.5 rounded-full overflow-hidden bg-[var(--exile-color-bg-elevated)] border border-[var(--exile-color-border-subtle)]"
           :aria-label="`全体進捗 ${Math.round(overallProgressPercent)}%`"
           role="progressbar"
