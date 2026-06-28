@@ -881,11 +881,15 @@ function pct(count: number): string {
         >
           上位プレイヤーMOD一覧
           <span class="text-[var(--exile-color-text-secondary)] text-sm"
-            >(poe.ninja 連携 / 上位 10 アセンダンシー × 50 人)</span
+            >(poe.ninja 連携 / 上位 10 アセンダンシー<template
+              v-if="activeAscendancy"
+            >
+              × 各 {{ activeAscendancy.sampleSize }} 人</template
+            >)</span
           >
         </h1>
         <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-          上位プレイヤーのレア指輪 / レアアミュレットの explicit MOD を prefix / suffix で集計 (人数降順)
+          上位プレイヤーのレア装備 (指輪 / アミュレット / 武器 / オフハンド / 兜 / 手袋 / 胴体 / 靴) の explicit MOD を prefix / suffix で集計 (人数降順)
         </p>
         <p class="text-xs text-[var(--exile-color-text-secondary)] mt-0.5">
           ※ 数値は実際に取れた人数分の平均値
@@ -1350,6 +1354,7 @@ function pct(count: number): string {
       MOD 選択 → trade2 検索コントロール (アセンダンシータブと一緒に固定エリア、shrink-0)
     ============================================================ -->
     <div
+      v-if="ascendancies.length > 0"
       class="shrink-0 mb-3 flex items-center gap-3 px-3 py-2 rounded border border-[var(--exile-color-accent-focus)]/50 bg-[var(--exile-color-bg-elevated)] shadow-md"
     >
       <span
@@ -1433,6 +1438,29 @@ function pct(count: number): string {
     </div>
 
     <!-- ============================================================
+      取得完了したが 0 件 (空状態) — 真っ白防止。
+      loading / fatalError が無く、データも無いケースの最後の受け皿。
+    ============================================================ -->
+    <div
+      v-else-if="ascendancies.length === 0 && !loading && !fatalError"
+      class="py-12 text-center text-[var(--exile-color-text-secondary)] text-[13px]"
+    >
+      <div class="font-display tracking-[0.08em]">
+        データが取得できませんでした。
+      </div>
+      <p class="mt-2 text-[11px] text-[var(--exile-color-text-tertiary)]">
+        poe.ninja に接続できなかった可能性があります。下のボタンで再取得してください。
+      </p>
+      <button
+        type="button"
+        @click="() => startFetch(true)"
+        class="mt-3 px-4 py-1.5 rounded border border-[var(--exile-color-border-brass)] text-[13px] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
+      >
+        <span aria-hidden="true">⟳</span> 更新
+      </button>
+    </div>
+
+    <!-- ============================================================
       本体: prefix / suffix / unique 三段カード (アセンダンシー選択時のみ)
       2026-05-22: isMostlyUniqueSlot 時は CSS order でユニークを最上段に逆転表示。
       flex + order で並び替え (space-y-* は order 跨ぎだと意図しない隙間になるので gap-4)
@@ -1483,7 +1511,7 @@ function pct(count: number): string {
                 aria-label="接頭辞"
                 >P</span
               >
-              <span class="truncate text-[13px]">
+              <span class="truncate text-[13px]" :title="mod.text">
                 {{ mod.text }}
                 <span
                   v-if="mod.inferredTier"
@@ -1585,7 +1613,7 @@ function pct(count: number): string {
                 aria-label="接尾辞"
                 >S</span
               >
-              <span class="truncate text-[13px]">
+              <span class="truncate text-[13px]" :title="mod.text">
                 {{ mod.text }}
                 <span
                   v-if="mod.inferredTier"
@@ -1680,7 +1708,7 @@ function pct(count: number): string {
                 aria-label="ベース"
                 >B</span
               >
-              <span class="truncate text-[13px]">{{ b.name }}</span>
+              <span class="truncate text-[13px]" :title="b.name">{{ b.name }}</span>
               <span
                 class="shrink-0 tabular-nums text-[12px] text-[var(--exile-color-text-secondary)] group-hover:text-[var(--exile-color-accent-focus)]"
               >

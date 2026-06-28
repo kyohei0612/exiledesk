@@ -369,15 +369,30 @@ export async function ensureCraftV2Started(): Promise<void> {
   if (craftV2Store.ascendancies.length > 0 && !craftV2Store.fatalError) return;
   craftV2Store.initialBootStarted = true;
 
+  // 2026-06-28: 起動直後〜runFetch 到達までの間 (リーグ一覧フェッチ等を await する数秒)、
+  // loading=false / ascendancies=0 / fatalError=null が成立し、新設の空状態UI
+  // (「データ取得失敗」) が一瞬フラッシュ表示される回帰を防ぐため、ここで先に
+  // loading を立てておく。runFetch 内で再度 true にされ、onDone/onFatal で false に戻る。
+  craftV2Store.loading = true;
+
   // 0) 自動再取得 event listener を 1 度だけ仕込む (Phase 設定画面)
   //
   //    Rust 側 setup 内の tokio タスクが `auto_refetch_interval_secs` ごとに
   //    `craft-v2-auto-refetch` を emit してくる。受信したら refreshCraftV2()。
-  //    loading 中なら refreshCraftV2 側で重複起動になるが、内部で前回 listen を
-  //    破棄してから再 fetch するので安全 (runFetch 冒頭の `if (unlistenRef)`).
+  //    ただし取得中 (loading=true) は前回 fetch と混線する (progress 混線 / 早期
+  //    loading=false / 古いキャッシュ上書き) ため、コールバック先頭でスキップする。
   if (!autoRefetchUnlisten) {
     try {
       autoRefetchUnlisten = await listen<void>("craft-v2-auto-refetch", () => {
+        // 二重フェッチ防止: 既に取得中なら今回のスケジューラ発火はスキップする。
+        // (前回 fetch と混線して progress イベント混線 / 早期 loading=false /
+        //  古いキャッシュ上書き保存が起きるため。次回 interval で再度発火する。)
+        if (craftV2Store.loading) {
+          console.log(
+            "[craft-v2-store] auto-refetch skipped (fetch already in progress)",
+          );
+          return;
+        }
         console.log("[craft-v2-store] auto-refetch triggered by scheduler");
         void refreshCraftV2();
       });
