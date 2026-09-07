@@ -73,13 +73,16 @@ jobs:
       # 件数が 1 つでも減ったら失敗させる (PR は作らない)。
       # 辞書はすべて「補強」方針なので、正常なら件数は単調増加のはず。
       # 減る = スクレイパーの空振り (HTML 変更) か上流障害なので、人が見るべき。
+      # mod-tier-and-group.json はトップレベルが {tiers, groups} の 2 キー固定なので、
+      # 中身 (tiers のテンプレ数) で数える。トップレベルで数えると 677→869 のような
+      # 変化も 0 件への崩壊も「2 → 2」に見えて検知できない。
       - name: Guard against dictionary regressions
         run: |
           fail=0
           for f in unique-mods-ja unique-names-ja poe2-flavour-ja mod-tier-and-group trade2-stat-mapping currency-effects-ja items-ja-poe2db; do
             p="src/i18n/$f.json"
-            before=$(git show "HEAD:$p" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);console.log(Array.isArray(d)?d.length:Object.keys(d).length)})')
-            after=$(node -e "const d=require('./$p');console.log(Array.isArray(d)?d.length:Object.keys(d).length)")
+            before=$(git show "HEAD:$p" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);console.log(d&&d.tiers?Object.keys(d.tiers).length:Array.isArray(d)?d.length:Object.keys(d).length)})')
+            after=$(node -e "const d=require('./$p');console.log(d&&d.tiers?Object.keys(d.tiers).length:Array.isArray(d)?d.length:Object.keys(d).length)")
             printf '%-36s %6s -> %6s\n' "$p" "$before" "$after"
             if [ "$after" -lt "$before" ]; then
               echo "::error file=$p::辞書の件数が減少 ($before -> $after)。スクレイパーの空振りか上流障害の可能性。PR は作成しません。"
@@ -118,7 +121,7 @@ jobs:
             echo "## 詳細件数"
             for f in src/i18n/unique-mods-ja.json src/i18n/unique-names-ja.json src/i18n/poe2-flavour-ja.json src/i18n/mod-tier-and-group.json src/i18n/trade2-stat-mapping.json src/i18n/currency-effects-ja.json src/i18n/items-ja-poe2db.json; do
               if [ -f "$f" ]; then
-                count=$(node -e "const d=require('./$f');console.log(Array.isArray(d)?d.length:typeof d==='object'?Object.keys(d).length:0)")
+                count=$(node -e "const d=require('./$f');console.log(d&&d.tiers?Object.keys(d.tiers).length:Array.isArray(d)?d.length:typeof d==='object'?Object.keys(d).length:0)")
                 echo "- \`$f\`: ${count} entries"
               fi
             done
