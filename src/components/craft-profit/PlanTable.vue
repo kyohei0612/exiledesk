@@ -10,6 +10,8 @@ defineProps<{
   baseCost: number;
   pricing: boolean;
   profitOf: (row: PlanRow, op: OutcomePrice) => number | null;
+  /** 保証モッドの上位プレイヤー採用率 (0..1)。上位基準が無いときは null */
+  fitOf?: (op: OutcomePrice) => number | null;
 }>();
 const emit = defineEmits<{ price: [row: PlanRow, op: OutcomePrice]; open: [url: string] }>();
 
@@ -32,6 +34,7 @@ function profitClass(p: number | null): string {
           <th class="text-left px-3 py-2">エッセンス</th>
           <th class="text-left px-3 py-2">保証モッド (最低ロール)</th>
           <th class="text-left px-3 py-2">外れる mod</th>
+          <th v-if="fitOf" class="text-right px-3 py-2 whitespace-nowrap" title="保証モッドを上位プレイヤーの同種別レアが付けている割合">上位採用率</th>
           <th class="text-right px-3 py-2 whitespace-nowrap">素材 (高貴)</th>
           <th class="text-right px-3 py-2 whitespace-nowrap">合計コスト</th>
           <th class="text-right px-3 py-2 whitespace-nowrap">完成品 最安</th>
@@ -44,7 +47,7 @@ function profitClass(p: number | null): string {
           <tr v-if="row.plan.blocked" class="border-t border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]">
             <td class="px-3 py-2">{{ row.plan.essence.nameJa }}</td>
             <td class="px-3 py-2">{{ row.plan.guaranteed.textJa }}</td>
-            <td class="px-3 py-2 italic" colspan="6">使えません: {{ row.plan.blocked }}</td>
+            <td class="px-3 py-2 italic" :colspan="fitOf ? 7 : 6">使えません: {{ row.plan.blocked }}</td>
           </tr>
           <tr
             v-for="(op, i) in row.plan.blocked ? [] : row.prices"
@@ -60,6 +63,9 @@ function profitClass(p: number | null): string {
               <span v-if="op.missing.length" class="ml-1 text-[10px] text-amber-300" :title="op.missing.join(' / ')">(trade2 未対応 mod {{ op.missing.length }})</span>
             </td>
             <td class="px-3 py-2 text-[var(--exile-color-text-secondary)]">{{ op.outcome.removed ? op.outcome.removed.textJa : "—" }}</td>
+            <td v-if="fitOf" class="px-3 py-2 text-right tabular-nums" :class="(fitOf(op) ?? 0) >= 0.2 ? 'text-emerald-300' : (fitOf(op) ?? 0) > 0 ? '' : 'text-[var(--exile-color-text-tertiary)]'">
+              {{ fitOf(op) == null ? "—" : Math.round((fitOf(op) as number) * 100) + "%" }}
+            </td>
             <td class="px-3 py-2 text-right tabular-nums">{{ fmt(row.essencePrice) }}</td>
             <td class="px-3 py-2 text-right tabular-nums">{{ row.essencePrice == null ? "—" : fmt(baseCost + row.essencePrice) }}</td>
             <td class="px-3 py-2 text-right tabular-nums">
@@ -96,7 +102,7 @@ function profitClass(p: number | null): string {
           </tr>
         </template>
         <tr v-if="rows.length === 0">
-          <td colspan="8" class="px-3 py-4 text-center text-[var(--exile-color-text-tertiary)] italic">この装備に使えるエッセンスはありません</td>
+          <td :colspan="fitOf ? 9 : 8" class="px-3 py-4 text-center text-[var(--exile-color-text-tertiary)] italic">この装備に使えるエッセンスはありません</td>
         </tr>
       </tbody>
     </table>

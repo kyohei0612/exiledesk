@@ -8,16 +8,35 @@
     services/trade2/pricing.ts           trade2 search + fetch → 最安 (直列 + 間隔ガード)
 -->
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import ItemSummary from "../components/craft-profit/ItemSummary.vue";
 import PlanTable from "../components/craft-profit/PlanTable.vue";
-import { useCraftProfit } from "./craft-profit/useCraftProfit";
+import TopProfilePanel from "../components/craft-profit/TopProfilePanel.vue";
+import { useCraftProfit, type OutcomePrice, type PlanRow } from "./craft-profit/useCraftProfit";
+import { useTopProfile } from "./craft-profit/useTopProfile";
+import { guaranteedPct } from "./craft-profit/top-profile";
 
 const c = useCraftProfit();
+const leagueName = computed(() => c.league.value?.Value ?? null);
+const t = useTopProfile(c.item, leagueName, c.rates);
 
 onMounted(() => {
   void c.loadMarket();
+  void t.loadCache();
+});
+
+/** 上位基準があるときは保証モッドの上位採用率で並べ替え (使えない行は最後) */
+const fitOf = computed<((op: OutcomePrice) => number | null) | undefined>(() => {
+  const p = t.profile.value;
+  if (!p) return undefined;
+  return (op) => guaranteedPct(p, op.outcome.mods);
+});
+const sortedRows = computed<PlanRow[]>(() => {
+  const f = fitOf.value;
+  if (!f) return c.rows.value;
+  const score = (r: PlanRow) => (r.plan.blocked || r.prices.length === 0 ? -1 : f(r.prices[0]) ?? 0);
+  return [...c.rows.value].sort((a, b) => score(b) - score(a));
 });
 
 async function pasteFromClipboard(): Promise<void> {
@@ -88,6 +107,22 @@ async function pasteFromClipboard(): Promise<void> {
     <div v-if="c.item.value" class="mt-3 space-y-3">
       <ItemSummary :item="c.item.value" />
 
+      <TopProfilePanel
+        :options="t.options.value"
+        :selected-class="t.selectedClass.value"
+        :profile="t.profile.value"
+        :diagnosis="t.diagnosis.value"
+        :target="t.target.value"
+        :target-price="t.targetPrice.value"
+        :target-status="t.targetStatus.value"
+        :target-error="t.targetError.value"
+        :target-missing="t.targetMissing.value"
+        :cache-error="t.cacheError.value"
+        @select="(cls) => (t.selectedClass.value = cls)"
+        @price-target="t.priceTarget()"
+        @open="(url) => openUrl(url)"
+      />
+
       <div class="flex items-center gap-3">
         <button
           type="button"
@@ -104,10 +139,11 @@ async function pasteFromClipboard(): Promise<void> {
       </p>
 
       <PlanTable
-        :rows="c.rows.value"
+        :rows="sortedRows"
         :base-cost="c.baseCost.value"
         :pricing="c.pricing.value"
         :profit-of="c.profitOf"
+        :fit-of="fitOf"
         @price="(row, op) => c.priceOne(row, op)"
         @open="(url) => openUrl(url)"
       />

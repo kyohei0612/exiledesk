@@ -53,7 +53,7 @@ function inferTierFromAverage(tiers: ModEntry["tiers"], av: number): number {
  * 使用率どおりのティア (最頻ティア)。各 occurrence の値を tier 帯にビニングして
  * 件数最多の帯を選ぶ。平均ベースと違い外れ値に強い。trade2 のデフォルトティアに使う。
  */
-function usageTierFromValues(tiers: ModEntry["tiers"], flatValues: number[]): number | undefined {
+export function usageTierFromValues(tiers: ModEntry["tiers"], flatValues: number[]): number | undefined {
   const tierCounts = new Array<number>(tiers.length).fill(0);
   for (const v of flatValues) {
     if (!Number.isFinite(v)) continue;
