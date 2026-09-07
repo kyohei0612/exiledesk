@@ -6,9 +6,16 @@
  *   通常 / Greater    : マジック → レア + 保証モッド 1 (既存 mod はそのまま残る = 決定的)
  *   Perfect           : レアからランダムに 1 mod を取り除き、保証モッドを 1 つ追加 (取り除く mod ごとに結果を列挙)
  * 保証モッドの実値はランダム (ティア内でロール) なので、相場検索では最低ロール以上で絞る。
+ *
+ * クライアント由来の規則 (craft-rules.json、2026-09-08):
+ *   - Rarity: レアは prefix 3 / suffix 3 まで (マジックは 1 / 1)
+ *   - お告げ: 「次のパーフェクト / コラプトエッセンスは prefix (suffix) だけ取り除く」→ 外れる候補を絞る
+ *   - mod ファミリー (groups): 同じファミリーの mod は 1 個まで (= エッセンス専用 mod が 1 個しか付かない理由)
+ *   - Mods.Level: 保証モッドの必要 ilvl。装備 ilvl が届かないときは警告 (エッセンスが ilvl を無視するかは未確認)
  */
 
 import essencesJson from "../../i18n/essences.json";
+import craftRulesJson from "../../i18n/craft-rules.json";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import { allMods, type Mod } from "../../data/mods";
 import type { Trade2StatFilter } from "../../services/trade2/query";
@@ -29,7 +36,28 @@ export interface EssenceDef {
   targets: EssenceTarget[];
 }
 
+export interface OmenDef {
+  id: string;
+  nameEn: string;
+  nameJa: string;
+  trigger: string;
+  effect: string;
+  descEn: string;
+  descJa: string;
+}
+
+interface RarityLimit {
+  minMods: number;
+  maxMods: number;
+  maxPrefix: number;
+  maxSuffix: number;
+}
+
 const ESSENCES = (essencesJson as { essences: EssenceDef[] }).essences;
+const CRAFT_RULES = craftRulesJson as { rarity: Record<string, RarityLimit>; omens: OmenDef[] };
+const RARE_LIMIT: RarityLimit = CRAFT_RULES.rarity.Rare ?? { minMods: 4, maxMods: 6, maxPrefix: 3, maxSuffix: 3 };
+/** パーフェクト / コラプトエッセンスの除去対象を prefix / suffix に限定するお告げ */
+const ESSENCE_OMENS = CRAFT_RULES.omens.filter((o) => o.trigger === "perfectEssence" && (o.effect === "prefixOnly" || o.effect === "suffixOnly"));
 const MODS_BY_KEY: Map<string, Mod> = new Map(allMods.map((m) => [m.key, m]));
 const TRADE2_STAT_MAPPING = trade2StatMapping as Readonly<Record<string, string>>;
 
@@ -51,6 +79,10 @@ export interface Outcome {
   mods: OutcomeMod[];
   /** 結果のレアリティ */
   rarity: "magic" | "rare";
+  /** 使うお告げ (除去対象を prefix / suffix に限定)。無ければ null */
+  omen: OmenDef | null;
+  /** この結果になる確率 (除去候補が N 個なら 1/N。決定的なら 1) */
+  chance: number;
 }
 
 export interface EssencePlan {
@@ -59,6 +91,8 @@ export interface EssencePlan {
   outcomes: Outcome[];
   /** 使えない理由 (null なら使える) */
   blocked: string | null;
+  /** 使えるが注意 (必要 ilvl など) */
+  warnings: string[];
 }
 
 const stripLinks = (s: string) => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
@@ -108,6 +142,34 @@ function conflicts(mods: OutcomeMod[], g: OutcomeMod): boolean {
   return mods.some((m) => m.groups.some((x) => g.groups.includes(x)));
 }
 
+/** 保証モッドを足したときに prefix / suffix の上限 (Rarity テーブル) を超えるか */
+function exceedsLimit(rest: OutcomeMod[], g: OutcomeMod): boolean {
+  if (g.affix === "unknown") return false;
+  const limit = g.affix === "prefix" ? RARE_LIMIT.maxPrefix : RARE_LIMIT.maxSuffix;
+  return countAffix(rest, g.affix) >= limit;
+}
+
+/** コラプトエッセンス (アビス等)。effect 文は「パーフェクトまたはコラプト」なので Perfect と同じ扱い */
+function isCorruptedEssence(e: EssenceDef): boolean {
+  return /CorruptedEssence/.test(e.id);
+}
+
+/**
+ * レアから 1 mod 除去 + 保証モッド。除去候補ごとに結果を作る。
+ * omen があれば候補をその affix に絞る (確率 = 1 / 候補数)。
+ */
+function removeAndAddOutcomes(identified: ItemMod[], base: OutcomeMod[], guaranteed: OutcomeMod, omen: OmenDef | null): Outcome[] {
+  const affixOnly = omen?.effect === "prefixOnly" ? "prefix" : omen?.effect === "suffixOnly" ? "suffix" : null;
+  const candidates = affixOnly ? identified.filter((m) => m.affix === affixOnly) : identified;
+  const out: Outcome[] = [];
+  for (const removed of candidates) {
+    const rest = base.filter((m) => m.textEn !== removed.textEn);
+    if (conflicts(rest, guaranteed) || exceedsLimit(rest, guaranteed)) continue;
+    out.push({ removed, mods: [...rest, guaranteed], rarity: "rare", omen, chance: 1 / candidates.length });
+  }
+  return out;
+}
+
 /** 装備 (ノーマル / マジック / レア) に対して使えるエッセンスと結果を列挙する */
 export function planEssences(item: ParsedItem): EssencePlan[] {
   if (!item.itemClass) return [];
@@ -123,31 +185,43 @@ export function planEssences(item: ParsedItem): EssencePlan[] {
     const mod = MODS_BY_KEY.get(modId);
     if (!mod) continue;
     const guaranteed = guaranteedFromMod(mod);
-    // 効果文どおり: Perfect エッセンスと 0.3 の「合金 (Alloy)」はレアから 1 mod 除去 + 保証モッド、
-    // それ以外 (Lesser / 通常 / Greater) はマジック → レア + 保証モッド
-    const removeAndAdd = e.perfect || /Alloy$/.test(e.nameEn);
+    // 効果文どおり (CurrencyItems.Description、2026-09-08 再確認):
+    //   Perfect / コラプト (Hysteria 等 + アビス / ブリーチ) / 0.3 の合金 (VerisiumAlloy)
+    //     = "Removes a random modifier and augments a Rare item with a new guaranteed modifier"
+    //   Lesser / 通常 / Greater = "Upgrades a Magic item to a Rare item, adding a guaranteed modifier"
+    const removeAndAdd = e.perfect || isCorruptedEssence(e) || /VerisiumAlloy/.test(e.id);
     const usable = removeAndAdd ? item.rarity === "rare" : item.rarity === "magic";
     if (!usable) continue;
 
     const base = identified.map(fromItemMod);
     let blocked: string | null = null;
+    const warnings: string[] = [];
     if (item.mods.some((m) => !m.identified)) blocked = "同定できない mod があるため結果を確定できません";
     if (target.outcomes && target.outcomes.length > 1) blocked = "保証モッドが複数候補からランダム (未対応)";
+    if (item.itemLevel != null && mod.level > item.itemLevel) {
+      warnings.push(`保証モッドの必要 ilvl ${mod.level} > 装備 ilvl ${item.itemLevel} (Mods.Level。エッセンスが ilvl を無視するかは未確認)`);
+    }
 
     const outcomes: Outcome[] = [];
     if (removeAndAdd) {
-      for (const removed of identified) {
-        const rest = base.filter((m) => m !== undefined && m.textEn !== removed.textEn);
-        if (conflicts(rest, guaranteed)) continue;
-        if (guaranteed.affix !== "unknown" && countAffix(rest, guaranteed.affix) >= 3) continue;
-        outcomes.push({ removed, mods: [...rest, guaranteed], rarity: "rare" });
+      outcomes.push(...removeAndAddOutcomes(identified, base, guaranteed, null));
+      // お告げは「パーフェクトまたはコラプトエッセンス」にだけ効く (合金には効果文が無い)
+      if (e.perfect || isCorruptedEssence(e)) {
+        for (const omen of ESSENCE_OMENS) {
+          const affix = omen.effect === "prefixOnly" ? "prefix" : "suffix";
+          const pool = identified.filter((m) => m.affix === affix).length;
+          // お告げで除去候補が減らない (全部その affix) なら意味が無いので出さない
+          if (pool === 0 || pool >= identified.length) continue;
+          outcomes.push(...removeAndAddOutcomes(identified, base, guaranteed, omen));
+        }
       }
       if (outcomes.length === 0 && !blocked) blocked = "どの mod を外しても保証モッドが入りません (同系統 / 枠なし)";
     } else {
       if (conflicts(base, guaranteed)) blocked = blocked ?? "同系統の mod が既に付いています";
-      else outcomes.push({ removed: null, mods: [...base, guaranteed], rarity: "rare" });
+      else if (exceedsLimit(base, guaranteed)) blocked = blocked ?? `${guaranteed.affix === "prefix" ? "prefix" : "suffix"} の枠が埋まっています`;
+      else outcomes.push({ removed: null, mods: [...base, guaranteed], rarity: "rare", omen: null, chance: 1 });
     }
-    plans.push({ essence: e, guaranteed, outcomes, blocked });
+    plans.push({ essence: e, guaranteed, outcomes, blocked, warnings });
   }
   return plans;
 }

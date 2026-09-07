@@ -10,6 +10,8 @@ defineProps<{
   baseCost: number;
   pricing: boolean;
   profitOf: (row: PlanRow, op: OutcomePrice) => number | null;
+  /** 素材合計 (エッセンス + お告げ)。価格不明なら null */
+  materialCost: (row: PlanRow, op: OutcomePrice) => number | null;
   /** 保証モッドの上位プレイヤー採用率 (0..1)。上位基準が無いときは null */
   fitOf?: (op: OutcomePrice) => number | null;
 }>();
@@ -57,17 +59,24 @@ function profitClass(p: number | null): string {
             <td class="px-3 py-2 whitespace-nowrap">
               <span v-if="i === 0">{{ row.plan.essence.nameJa }}</span>
               <span v-else class="text-[var(--exile-color-text-tertiary)]">〃</span>
+              <span v-if="i === 0 && row.plan.warnings.length" class="ml-1 text-amber-300 cursor-help" :title="row.plan.warnings.join('\n')">⚠</span>
             </td>
             <td class="px-3 py-2">
               <span :class="row.plan.guaranteed.affix === 'prefix' ? 'text-[#C7A7E5]' : 'text-[#D6B98A]'">{{ row.plan.guaranteed.textJa }}</span>
               <span v-if="op.missing.length" class="ml-1 text-[10px] text-amber-300" :title="op.missing.join(' / ')">(trade2 未対応 mod {{ op.missing.length }})</span>
             </td>
-            <td class="px-3 py-2 text-[var(--exile-color-text-secondary)]">{{ op.outcome.removed ? op.outcome.removed.textJa : "—" }}</td>
+            <td class="px-3 py-2 text-[var(--exile-color-text-secondary)]">
+              <span>{{ op.outcome.removed ? op.outcome.removed.textJa : "—" }}</span>
+              <span v-if="op.outcome.removed" class="ml-1 text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ Math.round(op.outcome.chance * 100) }}%</span>
+              <span v-if="op.outcome.omen" class="ml-1 text-[10px] text-sky-300 cursor-help" :title="op.outcome.omen.descJa || op.outcome.omen.descEn">+{{ op.outcome.omen.nameJa }}</span>
+            </td>
             <td v-if="fitOf" class="px-3 py-2 text-right tabular-nums" :class="(fitOf(op) ?? 0) >= 0.2 ? 'text-emerald-300' : (fitOf(op) ?? 0) > 0 ? '' : 'text-[var(--exile-color-text-tertiary)]'">
               {{ fitOf(op) == null ? "—" : Math.round((fitOf(op) as number) * 100) + "%" }}
             </td>
-            <td class="px-3 py-2 text-right tabular-nums">{{ fmt(row.essencePrice) }}</td>
-            <td class="px-3 py-2 text-right tabular-nums">{{ row.essencePrice == null ? "—" : fmt(baseCost + row.essencePrice) }}</td>
+            <td class="px-3 py-2 text-right tabular-nums" :title="op.outcome.omen ? `エッセンス ${fmt(row.essencePrice)} + お告げ ${fmt(op.omenPrice)}` : ''">
+              {{ fmt(materialCost(row, op)) }}
+            </td>
+            <td class="px-3 py-2 text-right tabular-nums">{{ materialCost(row, op) == null ? "—" : fmt(baseCost + (materialCost(row, op) as number)) }}</td>
             <td class="px-3 py-2 text-right tabular-nums">
               <template v-if="op.status === 'done' && op.result">
                 <span>{{ fmt(op.result.minExalted) }}</span>

@@ -54,6 +54,8 @@ export const CLIENT_TABLES = [
   { name: "EssenceTargetItemCategories", columns: ["Id", "ItemClasses", "Text"] },
   { name: "EssenceType", columns: ["Id", "EssenceType", "IsCorruptedEssence"] },
   { name: "EssenceReplacementType", columns: ["Id"] },
+  // レアリティごとの mod / prefix / suffix 上限 (クラフト収支の規則、2026-09-08)
+  { name: "Rarity", columns: ["Id", "MinMods", "MaxMods", "MaxPrefix", "MaxSuffix"] },
 ];
 
 export async function loadTable(lang, name) {

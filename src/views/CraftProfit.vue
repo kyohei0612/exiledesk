@@ -143,6 +143,7 @@ async function pasteFromClipboard(): Promise<void> {
         :base-cost="c.baseCost.value"
         :pricing="c.pricing.value"
         :profit-of="c.profitOf"
+        :material-cost="c.materialCost"
         :fit-of="fitOf"
         @price="(row, op) => c.priceOne(row, op)"
         @open="(url) => openUrl(url)"

@@ -17,6 +17,8 @@ export interface OutcomePrice {
   /** trade2 に投げられなかった mod (stat 未マッピング) */
   missing: string[];
   error: string | null;
+  /** お告げ 1 個の価格 (高貴)。お告げ無し = 0、poe2scout に無ければ null */
+  omenPrice: number | null;
 }
 
 export interface PlanRow {
@@ -64,11 +66,15 @@ export function useCraftProfit() {
     }
   }
 
-  function essencePriceOf(nameEn: string): number | null {
-    // エッセンスは "essences"、0.3 の合金 (Alloy) は別カテゴリのことがあるので名前だけで引く
+  /** poe2scout の名前一致で価格 (高貴)。エッセンス / 合金 / お告げ共通 (カテゴリはまちまちなので名前だけで引く) */
+  function marketPriceOf(nameEn: string): number | null {
     const hit = marketItems.value.find((it) => it.Text === nameEn);
     return hit && typeof hit.CurrentPrice === "number" ? hit.CurrentPrice : null;
   }
+  const essencePriceOf = marketPriceOf;
+
+  /** 同じ mod 構成 (= 同じ trade2 filter) は 1 回しか検索しない (お告げ違いの行が同じ結果を共有する) */
+  const priceCache = new Map<string, PriceResult>();
 
   function analyze(): void {
     parseError.value = null;
@@ -84,10 +90,18 @@ export function useCraftProfit() {
       parseError.value = "ベース名から装備種別を特定できませんでした (ベース行が英語 / 日本語の正式名か確認)";
       return;
     }
+    priceCache.clear();
     rows.value = planEssences(parsed).map((plan) => ({
       plan,
       essencePrice: essencePriceOf(plan.essence.nameEn),
-      prices: plan.outcomes.map((outcome) => ({ outcome, status: "idle", result: null, missing: [], error: null })),
+      prices: plan.outcomes.map((outcome) => ({
+        outcome,
+        status: "idle",
+        result: null,
+        missing: [],
+        error: null,
+        omenPrice: outcome.omen ? marketPriceOf(outcome.omen.nameEn) : 0,
+      })),
     }));
   }
 
@@ -96,6 +110,14 @@ export function useCraftProfit() {
     if (!it || !league.value) return;
     const { filters, missing } = statFiltersForOutcome(op.outcome.mods);
     op.missing = missing;
+    const cacheKey = `${op.outcome.rarity}|${JSON.stringify(filters)}`;
+    const cached = priceCache.get(cacheKey);
+    if (cached) {
+      op.result = cached;
+      op.status = "done";
+      op.error = null;
+      return;
+    }
     op.status = "loading";
     op.error = null;
     try {
@@ -109,6 +131,7 @@ export function useCraftProfit() {
         },
         rates.value,
       );
+      priceCache.set(cacheKey, op.result);
       op.status = "done";
       rateLimitedUntil.value = null;
     } catch (e) {
@@ -149,10 +172,17 @@ export function useCraftProfit() {
     }
   }
 
-  /** 収支 = 完成品の最安 − (ベース + エッセンス)。Perfect は結果ごとに出すので平均も返す */
+  /** 素材の合計 (エッセンス + お告げ)。どちらか価格不明なら null */
+  function materialCost(row: PlanRow, op: OutcomePrice): number | null {
+    if (row.essencePrice == null || op.omenPrice == null) return null;
+    return row.essencePrice + op.omenPrice;
+  }
+
+  /** 収支 = 完成品の最安 − (ベース + エッセンス + お告げ)。Perfect は外れる mod ごとの行 (確率は chance) */
   function profitOf(row: PlanRow, op: OutcomePrice): number | null {
-    if (op.result?.minExalted == null || row.essencePrice == null) return null;
-    return op.result.minExalted - (baseCost.value + row.essencePrice);
+    const mat = materialCost(row, op);
+    if (op.result?.minExalted == null || mat == null) return null;
+    return op.result.minExalted - (baseCost.value + mat);
   }
 
   return {
@@ -171,6 +201,7 @@ export function useCraftProfit() {
     analyze,
     priceOne,
     priceAll,
+    materialCost,
     profitOf,
   };
 }
