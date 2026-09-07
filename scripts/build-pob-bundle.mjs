@@ -263,9 +263,20 @@ async function main() {
       return rel === "" || !SKIP_TOP.has(top);
     },
   });
-  for (const tree of [latest, "legion"]) {
+  const keepTrees = new Set([latest, "legion"]);
+  for (const tree of keepTrees) {
     const from = join(VENDOR, "src/TreeData", tree);
     if (await exists(from)) await cp(from, join(OUT, "TreeData", tree), { recursive: true });
+  }
+  // 念のため: fs.cp の filter が効かなかった場合 (v0.1.33 の CI で旧ツリー 4 版 260MB が紛れ込み
+  // インストーラが 328MB になった疑い) に備えて、同梱対象以外のツリーを明示的に消す
+  if (await exists(join(OUT, "TreeData"))) {
+    for (const ent of await readdir(join(OUT, "TreeData"))) {
+      if (!keepTrees.has(ent)) {
+        await rm(join(OUT, "TreeData", ent), { recursive: true, force: true });
+        log(`pruned TreeData/${ent}`);
+      }
+    }
   }
 
   // 3) インストール版形式の manifest.xml (branch/platform 付き → devMode に入らない)。
@@ -298,7 +309,26 @@ async function main() {
     JSON.stringify({ version, tree: latest, jp: jpVersion, builtAt: new Date().toISOString() }, null, 2),
   );
 
-  log(`done → ${OUT} (PoB ${version}${jpVersion ? `, PoB2-JP ${jpVersion}` : ", English only"})`);
+  const { files, bytes } = await measure(OUT);
+  log(`done → ${OUT} (PoB ${version}${jpVersion ? `, PoB2-JP ${jpVersion}` : ", English only"}): ${files} files, ${(bytes / 1048576).toFixed(1)} MB`);
+}
+
+/** 同梱物のファイル数と合計バイト数 (CI ログでサイズ異常に気付けるように) */
+async function measure(dir) {
+  let files = 0;
+  let bytes = 0;
+  for (const ent of await readdir(dir, { withFileTypes: true })) {
+    const p = join(dir, ent.name);
+    if (ent.isDirectory()) {
+      const sub = await measure(p);
+      files += sub.files;
+      bytes += sub.bytes;
+    } else {
+      files++;
+      bytes += (await stat(p)).size;
+    }
+  }
+  return { files, bytes };
 }
 
 main().catch((e) => {
