@@ -190,8 +190,25 @@ async function main() {
   }
 
   // ソートして書き出し
+  // 2026-09-07: 既存の unique-names-ja.json をベースに「追加のみ」でマージする。
+  //   同じ JSON を build-dicts-from-client.mjs (GGG クライアント Words.Text2、一次ソース) も
+  //   書いており、そちらが正。旧実装はここで全上書きしていたため、週次 CI が走るたびに
+  //   クライアント由来 1,785 件が poe2db 由来 431 件に縮んで件数ガードで落ちる構造だった。
+  //   既存キーは上書きせず、poe2db だけが持つキーだけを足す (件数は減らない)。
+  let existingNames = {};
+  if (await exists(OUT_NAMES)) {
+    try {
+      const j = JSON.parse(await readFile(OUT_NAMES, "utf8"));
+      if (j && typeof j === "object" && !Array.isArray(j)) existingNames = j;
+    } catch (e) {
+      log(`WARN: existing ${OUT_NAMES} unreadable (${e.message}) -> treat as empty`);
+    }
+  }
+  const mergedNames = { ...dict, ...existingNames };
   const sorted = {};
-  for (const k of Object.keys(dict).sort()) sorted[k] = dict[k];
+  for (const k of Object.keys(mergedNames).sort()) sorted[k] = mergedNames[k];
+  const addedFromPoe2db = Object.keys(dict).filter((k) => !(k in existingNames)).length;
+  log(`merge: existing ${Object.keys(existingNames).length} + poe2db-only ${addedFromPoe2db} -> ${Object.keys(sorted).length}`);
 
   await atomicWriteJson(OUT_NAMES, sorted);
 
