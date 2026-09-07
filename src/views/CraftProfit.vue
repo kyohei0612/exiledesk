@@ -97,8 +97,11 @@ async function pasteFromClipboard(): Promise<void> {
         >
           {{ c.pricing.value ? `相場を調査中… ${c.progress.value.done} / ${c.progress.value.total}` : "🔍 全候補の相場を調べる" }}
         </button>
-        <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">trade2 のレート制限のため 1 件あたり約 5 秒かかります</span>
+        <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">trade2 のレート制限のため 1 件あたり約 10 秒かかります</span>
       </div>
+      <p v-if="c.rateLimitedUntil.value" class="text-[12px] text-amber-300">
+        ⚠️ trade2 にレート制限されました。{{ new Date(c.rateLimitedUntil.value).toLocaleTimeString() }} 以降に「全候補の相場を調べる」を押し直してください (残りは未調査のままです)
+      </p>
 
       <PlanTable
         :rows="c.rows.value"

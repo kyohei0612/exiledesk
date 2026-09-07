@@ -18,7 +18,11 @@ const bundle = modsBundle as Record<string, Omit<Mod, "key">>;
 const itemsJaMap = itemsJa as Record<string, string>;
 
 // ─── プレースホルダー処理 ─────────────────────────────────────
-/** [Tag|表示名] → 表示名 */
+/**
+ * [Tag|表示名] → 表示名。`[Physical]` のような表示名無しの形は残す:
+ * translateModLine の出力は identifyModText (mod-translations.ts) に渡され、そちらの索引は
+ * `[Tag]` 付きの text_en で引いているため、ここで剥がすと全 mod が同定不能になる (2026-09-08 確認)。
+ */
 function stripLinkSyntax(s: string): string {
   return s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2");
 }

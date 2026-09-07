@@ -5,7 +5,7 @@
  */
 import { computed, ref } from "vue";
 import { fetchItems, fetchLeagues, type CurrencyItem, type League } from "../../api/poe2scout";
-import { priceMinListing, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
+import { priceMinListing, retryAfterSeconds, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
 import { tradeCategoryOfClass } from "../../services/trade2/category";
 import { parseItemText, type ParsedItem } from "./parse";
 import { planEssences, statFiltersForOutcome, type EssencePlan, type Outcome } from "./essence-plan";
@@ -39,6 +39,8 @@ export function useCraftProfit() {
   const rows = ref<PlanRow[]>([]);
   const pricing = ref(false);
   const progress = ref({ done: 0, total: 0 });
+  /** trade2 に 429 を返された時刻 + Retry-After (epoch ms)。この時刻までは一括調査を止める */
+  const rateLimitedUntil = ref<number | null>(null);
 
   const rates = computed<ExaltedRates>(() => {
     const l = league.value;
@@ -108,16 +110,27 @@ export function useCraftProfit() {
         rates.value,
       );
       op.status = "done";
+      rateLimitedUntil.value = null;
     } catch (e) {
       op.status = "error";
-      op.error = e instanceof Error ? e.message : String(e);
+      const wait = retryAfterSeconds(e);
+      if (wait != null) {
+        rateLimitedUntil.value = Date.now() + wait * 1000;
+        op.error = `trade2 のレート制限 (${wait} 秒後に再試行できます)`;
+      } else {
+        op.error = e instanceof Error ? e.message : String(e);
+      }
     }
     void row;
   }
 
-  /** 使えるエッセンス全部の相場を直列で調べる (trade2 のレート制限を守るため) */
+  /**
+   * 使えるエッセンス全部の相場を直列で調べる (trade2 のレート制限を守るため)。
+   * 429 を返されたら残りは打ち切る (続けても全部 429 になり、ペナルティが延びるだけ)。
+   */
   async function priceAll(): Promise<void> {
     if (pricing.value) return;
+    if (rateLimitedUntil.value && rateLimitedUntil.value > Date.now()) return;
     const targets: Array<[PlanRow, OutcomePrice]> = [];
     for (const row of rows.value) {
       if (row.plan.blocked) continue;
@@ -129,6 +142,7 @@ export function useCraftProfit() {
       for (const [row, op] of targets) {
         await priceOne(row, op);
         progress.value = { ...progress.value, done: progress.value.done + 1 };
+        if (rateLimitedUntil.value) break;
       }
     } finally {
       pricing.value = false;
@@ -151,6 +165,7 @@ export function useCraftProfit() {
     rows,
     pricing,
     progress,
+    rateLimitedUntil,
     rates,
     loadMarket,
     analyze,

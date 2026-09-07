@@ -11,8 +11,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { Rarity, SecurityStatus } from "../../constants/trade2";
 import type { Trade2SearchResponse, Trade2StatFilter } from "./query";
 
-/** 連続リクエストの最小間隔 (ms)。search と fetch で 1 回ずつ消費する。 */
-const MIN_INTERVAL_MS = 2500;
+/**
+ * 連続リクエストの最小間隔 (ms)。search と fetch で 1 回ずつ消費する。
+ * 2026-09-08 実測: 2.5 秒間隔だと search 20 回目あたり (約 75 秒) で 429 / Retry-After 600 秒の
+ * ペナルティを食らった (search は 1 分あたり 15 回前後が上限とみられる)。4.5 秒なら 1 分 13 回で収まる。
+ */
+const MIN_INTERVAL_MS = 4500;
+
+/** trade2.rs が返す 429 エラー文字列 ("... HTTP 429 retry-after=600: ...") から待ち秒数を取り出す。429 でなければ null */
+export function retryAfterSeconds(err: unknown): number | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  const m = msg.match(/HTTP 429 retry-after=(\d+)/);
+  return m ? Number(m[1]) : null;
+}
 /** fetch で見る listing 数 (trade2 の上限 = 10) */
 const FETCH_TOP_N = 10;
 

@@ -95,8 +95,11 @@ export function planEssences(item: ParsedItem): EssencePlan[] {
 
   for (const e of ESSENCES) {
     const target = e.targets.find((t) => t.itemClasses.includes(item.itemClass as string));
-    if (!target || !target.modId) continue;
-    const mod = MODS_BY_KEY.get(target.modId);
+    if (!target) continue;
+    // 保証モッドが複数候補からランダムなもの (属性系 / Greater 戦闘 等) は先頭候補で表示し、blocked にする
+    const modId = target.modId ?? target.outcomes?.[0]?.modId ?? null;
+    if (!modId) continue;
+    const mod = MODS_BY_KEY.get(modId);
     if (!mod) continue;
     const guaranteed = guaranteedFromMod(mod);
     // 効果文どおり: Perfect エッセンスと 0.3 の「合金 (Alloy)」はレアから 1 mod 除去 + 保証モッド、
