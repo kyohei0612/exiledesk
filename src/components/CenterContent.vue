@@ -3,6 +3,7 @@ import { computed, type Component } from "vue";
 import CurrencyRanking from "../views/CurrencyRanking.vue";
 import CraftDiscoveryV2B from "../views/CraftDiscoveryV2B.vue";
 import Settings from "../views/Settings.vue";
+import PobLauncher from "../views/PobLauncher.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
 // 復活時は次の 2 行を戻すだけで OK:
 //   import EconDashboard from "../views/EconDashboard.vue";
@@ -20,6 +21,8 @@ const currentView = computed<Component | undefined>(() => {
       return CraftDiscoveryV2B;
     case "settings":
       return Settings;
+    case "pob":
+      return PobLauncher;
     default:
       return undefined;
   }

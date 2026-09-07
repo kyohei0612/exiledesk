@@ -132,13 +132,19 @@ pub(crate) fn boot_pob(pob_src: &Path) -> Result<Lua> {
         .exec()
         .map_err(|e| anyhow!("arg setup: {}", e))?;
 
-    // PoB 同梱の lua libs (xml, dkjson, base64, sha1, sha2, socket) を package.path に
-    let lua_libs = pob_src
-        .parent()
-        .ok_or_else(|| anyhow!("pob_src has no parent"))?
-        .join("runtime")
-        .join("lua")
-        .display()
+    // PoB 同梱の lua libs (xml, dkjson, base64, sha1, sha2, socket) を package.path に。
+    // 同梱版 (resources/pob) はフラット配置で `<pob>/lua`、vendor submodule は `<src>/../runtime/lua`。
+    let flat_libs = pob_src.join("lua");
+    let lua_libs = if flat_libs.is_dir() {
+        flat_libs
+    } else {
+        pob_src
+            .parent()
+            .ok_or_else(|| anyhow!("pob_src has no parent"))?
+            .join("runtime")
+            .join("lua")
+    }
+    .display()
         .to_string()
         .replace('\\', "/");
     let setup_path = format!(

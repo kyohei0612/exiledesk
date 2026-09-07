@@ -8,8 +8,8 @@ pub mod craft_v2_storage;  // Phase ζ: クラフト発見 V2 のディスクキ
 pub mod poe_ninja_client;  // Phase β: poe.ninja クライアント (search protobuf decode + character endpoint)
 pub mod health_check;  // Phase ο-A: 起動時の外部 API / HTML / trade2 健全性チェック
 pub mod settings;  // 設定画面 (2026-05-23): autostart / close_to_tray / auto-refetch 永続化
+pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を外部プロセスで開く
 
-use std::path::PathBuf;
 use std::time::Duration;
 
 use tauri::{
@@ -24,18 +24,6 @@ use tauri::{
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-/// PoB submodule の src/ ディレクトリを返す。
-/// 開発時は `<project>/vendor/PathOfBuilding-PoE2/src` を指す。
-fn pob_src_dir() -> PathBuf {
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    manifest_dir
-        .parent()
-        .expect("src-tauri parent")
-        .join("vendor")
-        .join("PathOfBuilding-PoE2")
-        .join("src")
 }
 
 /// メインウィンドウを現在のモニタの可視領域(work area)内へクランプ＆再配置する。
@@ -129,8 +117,6 @@ fn clamp_into_visible_area(window: &tauri::WebviewWindow) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let pob_worker = pob::PobWorker::spawn(pob_src_dir());
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -147,10 +133,15 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--tray-only"]),
         ))
-        .manage(pob_worker)
         // Phase 設定画面: 設定 state (× ボタン / autostart / auto-refetch 周期)
         .manage(settings::AppSettingsState::default())
         .setup(|app| {
+            // 2026-09-07: ヘッドレス PoB のスクリプト元は同梱版 (resources/pob) を優先。
+            // 旧実装は CARGO_MANIFEST_DIR 固定で、リリースビルドでは存在しないパスを指していた。
+            app.manage(pob::PobWorker::spawn(pob_launcher::headless_src_dir(
+                &app.handle(),
+            )));
+
             // ----------------------------------------------------------------
             // 設定の disk → in-memory state ロード (起動時 1 回だけ)
             //
@@ -350,6 +341,8 @@ pub fn run() {
             settings::settings_load,
             settings::settings_save,
             settings::is_debug_build,
+            pob_launcher::pob_launcher_status,
+            pob_launcher::pob_launcher_open,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

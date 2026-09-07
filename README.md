@@ -221,24 +221,56 @@ cd src-tauri && cargo update
 
 Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必読。
 
+### 同梱 PoB (Path of Building PoE2) の更新
+
+- 実体は submodule `vendor/PathOfBuilding-PoE2` (runtime + src)。`scripts/build-pob-bundle.mjs` が
+  `src-tauri/resources/pob/` にフラット配置で組み立て、`tauri.conf.json` の `resources/pob/**/*` で同梱される。
+  リリース CI (`release.yml`) は tauri-action の前にこのスクリプトを実行する。ローカルで `pnpm tauri dev` /
+  `pnpm tauri build` する前にも 1 回実行しておくこと (無いと左ナビ「PoB を開く」が起動不可表示になる)。
+- PoB 本体を上げる: `git -C vendor/PathOfBuilding-PoE2 pull` → スクリプト再実行 → 起動確認 → submodule の
+  参照をコミット。TreeData は最新ツリー + legion のみ同梱 (旧ツリーは遅延ロードなので新規ビルドには不要)。
+- 同梱版は `Modules/ExileDeskOverlay.lua` で PoB 自身の自動更新を止めている (上書きで同梱物が壊れるため)。
+  `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
+- 注意: PoB の描画エンジン (SimpleGraphic) は 1 バイト = 1 グリフのビットマップフォントで、日本語は描画できない。
+  辞書を差し替えても豆腐になるので、日本語化はレンダラ側の対応が前提。
+
 ## アーキテクチャ概要
 
 ```
 ExileDesk/
-├── src/                       # Vue 3 + TypeScript フロント
-│   ├── views/                 # CraftDiscoveryV2B.vue, CurrencyRanking.vue
-│   ├── services/              # craft-discovery-v2.ts (集計層)
-│   ├── components/decor/      # BaseCard.vue, UniqueTooltip.vue
-│   ├── i18n/                  # 辞書 JSON 群
-│   ├── constants/             # trade2 マジック文字列集約
-│   └── composables/           # キーボードショートカット等
+├── src/                       # Vue 3 + TypeScript フロント (全ファイル 300〜400 行以下を維持)
+│   ├── views/
+│   │   ├── CraftDiscoveryV2B.vue      # 上位プレイヤーMOD一覧 (配線とレイアウトのみ)
+│   │   ├── craft-v2/                  # 派生状態 / MOD 選択 / ユニークホバー の composable + helpers
+│   │   ├── CurrencyRanking.vue        # カレンシーランキング (配線のみ)
+│   │   ├── currency/                  # 取得 composable + 表示ヘルパー
+│   │   ├── PobLauncher.vue            # 同梱 PoB の起動画面
+│   │   └── Settings.vue
+│   ├── components/
+│   │   ├── craft-v2/                  # ヘッダー / 警告履歴 / アセタブ / 検索バー / 各カード
+│   │   ├── currency/                  # サイドバー / 基準レート / テーブル / ホバーカード / スパークライン
+│   │   └── decor/                     # BaseCard.vue, UniqueTooltip.vue
+│   ├── services/
+│   │   ├── craft-discovery-v2.ts      # 互換 barrel (実体は下記)
+│   │   ├── craft-v2/                  # types / ninja-item / ingest / finalize / cache / runner
+│   │   ├── mods/                      # normalize (テンプレ正規化) / dictionaries (辞書引き)
+│   │   └── trade2/                    # league / query / open
+│   ├── state/craft-v2/                # store (reactive) / fetch (取得制御) / health (健全性・辞書チェック)
+│   ├── data/                          # mods.ts (bundle 読み込み), item-tags.ts
+│   ├── i18n/                          # 辞書 JSON 群 (クライアントデータ由来)
+│   └── composables/                   # キーボードショートカット等
 ├── src-tauri/                 # Rust バックエンド
-│   ├── src/poe_ninja_client.rs        # poe.ninja API client (RateGate 予約時刻ベース)
+│   ├── src/poe_ninja_client/          # poe.ninja client: config / status / metrics / rate_gate / http /
+│   │                                  #   leagues / search / ascendancy_fetch / orchestrate / cache_convert / protobuf
+│   ├── src/pob/                       # ヘッドレス PoB (mlua): lua_boot / worker / lua_calls / commands
+│   ├── src/pob_launcher.rs            # 同梱 PoB (resources/pob) の起動
+│   ├── src/health_check/              # 起動時健全性チェック: unknown_inv / checks_ninja / checks_web
 │   ├── src/craft_v2_storage.rs        # キャッシュ atomic write
-│   ├── src/health_check.rs            # Phase ο 健全性チェック
-│   └── src/trade2.rs                  # trade2 API client
-├── scripts/                   # 辞書ビルダー / α 探索ツール
-└── data-cache/                # スクレイプキャッシュ (gitignore)
+│   ├── src/trade2.rs                  # trade2 API client
+│   └── resources/pob/                 # 同梱 PoB (gitignore、scripts/build-pob-bundle.mjs が生成)
+├── vendor/PathOfBuilding-PoE2/# PoB submodule (runtime + src)
+├── scripts/                   # 辞書ビルダー / クライアントデータ抽出 / PoB 同梱組み立て
+└── data-cache/                # スクレイプ・クライアント抽出キャッシュ (gitignore)
 ```
 
 ### キャッシュ

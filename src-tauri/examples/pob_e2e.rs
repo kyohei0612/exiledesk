@@ -10,7 +10,12 @@ use std::env;
 use std::path::PathBuf;
 use std::time::Instant;
 
+/// 既定は vendor submodule の src/。`POB_SRC` 環境変数で同梱版 (src-tauri/resources/pob、
+/// フラット配置) など任意のディレクトリを指定できる (2026-09-07)。
 fn pob_src_dir() -> PathBuf {
+    if let Ok(p) = env::var("POB_SRC") {
+        return PathBuf::from(p);
+    }
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     manifest_dir
         .parent()

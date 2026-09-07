@@ -25,3 +25,6 @@ data-cache/
 *.njsproj
 *.sln
 *.sw?
+
+# 同梱 PoB (scripts/build-pob-bundle.mjs で vendor submodule から生成、リリース時に CI が組み立てる)
+src-tauri/resources/pob/
