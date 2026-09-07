@@ -80,6 +80,8 @@ pnpm build:dicts:client          # = node scripts/build-dicts-from-client.mjs
 | `items-ja-client.json` (新規) | BaseItemTypes `Name` | 4,479 件。`currencies-ja.ts` で items-ja(公式凍結) の次に引く |
 | `unique-names-ja.json` | Words `Text` → `Text2` | `Wordlist = 6` がユニーク名種別 (既知ユニークからの実測)。JA の `Text` は英語のままなので `Text2` を使う |
 | `poe2-flavour-ja.json` | FlavourText `Text` | **キーは CR+LF を保持** (`UniqueTooltip.strip()` がその形で引く。空白に潰すと一切ヒットしない) |
+| `unique-mods-ja.json` | Mods (`generation_type: unique`) の EN/JA text を行対応 | `build-unique-mods-from-client.mjs`。2,032 → 8,342 件。poe2db 版 (κ/λ) は追加のみの補強に降格 |
+| `currency-effects-ja.json` | CurrencyItems `Description` / `StackSize` | `build-currency-effects-from-client.mjs`。ルーン・ソウルコアは Description が空 (SoulCores テーブル要結合) で当面 poe2db 補強のまま |
 
 #### MOD 文言・ティア・spawn weight も原本から (2026-09-07〜)
 
@@ -105,6 +107,10 @@ build-mod-tier-and-group.mjs   ─ 無改造 → src/i18n/mod-tier-and-group.jso
 - **`extract-mods-bundle.mjs --refresh` は使わない**: 凍結済みの RePoE (JA は 404) を再取得して原本生成を上書きする。
 
 この `Mods` テーブル (spawn weight / タグ / ティア) がクラフト確率シミュレーションの土台になる。
+
+週次 CI (`build:dicts:online`) の poe2db / RePoE スクレイパーはすべて「既存キーは上書きしない・追加のみ」に
+なっているので、クライアント原本の値が週次実行で戻ることはない。原本化できていない残りは
+ルーン / ソウルコアの効果説明 (`SoulCores` → `ClientStrings2` の結合) のみ。
 
 ### 週次辞書更新 (CI) が失敗する / ユニーク辞書が 0 件になる → スクレイパー追従
 

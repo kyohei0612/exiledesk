@@ -376,8 +376,25 @@ async function main() {
   }
 
   // キーをアルファベット順にして diff を見やすく
+  // 2026-09-07: 既存の unique-mods-ja.json をベースに「追加のみ」でマージする。
+  //   同じ JSON を build-unique-mods-from-client.mjs (GGG クライアント原本) も書いており、
+  //   そちらが正。旧実装はここで全上書きしていたため、週次 CI が走るたびに
+  //   クライアント由来のキーが poe2db 由来だけに縮んで件数ガードで落ちる構造だった。
+  //   既存キーは上書きせず、poe2db だけが持つキーだけを足す (件数は減らない)。
+  let existingMods = {};
+  if (await exists(OUT_FILE)) {
+    try {
+      const j = JSON.parse(await readFile(OUT_FILE, "utf8"));
+      if (j && typeof j === "object" && !Array.isArray(j)) existingMods = j;
+    } catch (e) {
+      log(`WARN: existing ${OUT_FILE} unreadable (${e.message}) -> treat as empty`);
+    }
+  }
+  const mergedMods = { ...dict, ...existingMods };
+  const addedFromPoe2db = Object.keys(dict).filter((k) => !(k in existingMods)).length;
+  log(`merge: existing ${Object.keys(existingMods).length} + poe2db-only ${addedFromPoe2db} -> ${Object.keys(mergedMods).length}`);
   const sorted = {};
-  for (const k of Object.keys(dict).sort()) sorted[k] = dict[k];
+  for (const k of Object.keys(mergedMods).sort()) sorted[k] = mergedMods[k];
 
   await mkdir(dirname(OUT_FILE), { recursive: true });
   await writeFile(OUT_FILE, JSON.stringify(sorted, null, 2) + "\n");

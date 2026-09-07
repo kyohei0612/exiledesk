@@ -137,8 +137,11 @@ async function main() {
       console.warn(`  ${slug}: SKIP (${err.message})`);
     }
   }
-  // 既存をベースに、今回取得できたキーだけ上書き (取得できなかったキーは保持)。
-  const merged = { ...existing, ...all };
+  // 既存をベースに poe2db だけが持つキーを足す (追加のみ)。
+  // 2026-09-07: 同じ JSON を build-currency-effects-from-client.mjs (GGG クライアントの
+  // CurrencyItems.Description、一次ソース) が書くようになったため、既存キーは上書きしない。
+  // poe2db もこの同じテーブルを描画しているので文言は基本一致するが、正はクライアント側。
+  const merged = { ...all, ...existing };
   const keptFromExisting = Object.keys(existing).filter((k) => !(k in all)).length;
   const sorted = Object.fromEntries(
     Object.entries(merged).sort(([a], [b]) => a.localeCompare(b)),
