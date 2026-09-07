@@ -9,6 +9,12 @@
  *   - Japanese: (廃止) repoe-fork/poe2 は 2026-06 までに日本語ローカライズを全廃
  *       (data/Japanese 消滅, stat_translations の Japanese 全 null)。
  *       JA は cache (data-cache/mods.ja.json) を温存し、未取得 MOD は EN fallback。
+ *
+ *   2026-09-07: 入力の data-cache/mods.en.json / mods.ja.json は
+ *   scripts/build-mods-from-client.mjs が GGG クライアント (Mods テーブル +
+ *   stat_descriptions.csd) から生成するようになった (RePoE 形式互換)。
+ *   RePoE のダウンロードはファイルが無い時のフォールバックに過ぎない。
+ *   `--refresh` は凍結済みの RePoE (JA は 404) で上書きしてしまうので使わないこと。
  *       恒久的な別 JA 源の選定は TODO (notes/2026-06-01-decisions.md)。
  *   - License: MIT (RePoE) / data owned by Grinding Gear Games (per ToS)
  *

@@ -24,6 +24,8 @@
  *   src/i18n/items-ja-client.json   BaseItemTypes: EN Name -> JA Name   (新規ファイル)
  *   src/i18n/unique-names-ja.json   Words:         EN Text -> JA Text2  (Wordlist でユニーク名に限定)
  *   src/i18n/poe2-flavour-ja.json   FlavourText:   EN Text -> JA Text
+ *   data-cache/client-export/files/Data@StatDescriptions@stat_descriptions.csd
+ *                                   (副産物: MOD 文言の原本。build-mods-from-client.mjs の入力)
  *
  * Usage:
  *   node scripts/build-dicts-from-client.mjs
@@ -157,6 +159,9 @@ async function exportTables(source) {
   const config = {
     ...source,
     translations: ["English", "Japanese"],
+    // MOD 文言 (全言語) の原本。build-mods-from-client.mjs が読む。
+    // pathofexile-dat は files をパスの "/" を "@" に置換して保存する。
+    files: ["Data/StatDescriptions/stat_descriptions.csd"],
     tables: [
       { name: "BaseItemTypes", columns: ["Id", "Name"] },
       { name: "Words", columns: ["Wordlist", "Text", "Text2"] },

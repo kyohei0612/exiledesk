@@ -150,6 +150,14 @@
         "label": "T6: 4-12"
       }
     ],
+    "# Prefix Modifier allowed\n+# Suffix Modifier allowed": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
+      }
+    ],
     "# to # Added [Cold|Cold] Damage per Frenzy Charge": [
       {
         "tier": 1,
@@ -366,7 +374,7 @@
         "label": "T2: 20-30"
       }
     ],
-    "#% chance for [Attack] [HitDamage|Hits] to apply [Incision]": [
+    "#% chance for [Attack] [Hit|Hits] to apply [Incision]": [
       {
         "tier": 1,
         "min": 15,
@@ -402,7 +410,7 @@
         "label": "T2: 10-15"
       }
     ],
-    "#% chance for [Lightning] Damage with [HitDamage|Hits] to be [Lucky]": [
+    "#% chance for [Lightning] Damage with [Hit|Hits] to be [Lucky]": [
       {
         "tier": 1,
         "min": 15,
@@ -562,7 +570,7 @@
         "label": "T1: 20-50"
       }
     ],
-    "#% chance to Avoid being [Freeze|Frozen]": [
+    "#% chance to Avoid being [Chill|Chilled]\n#% chance to Avoid being [Freeze|Frozen]": [
       {
         "tier": 1,
         "min": 0,
@@ -678,7 +686,15 @@
         "label": "T1: 10-10"
       }
     ],
-    "#% chance to [Aggravate] [Bleeding] on targets you [HitDamage|Hit] with [Attack|Attacks]": [
+    "#% chance to Shock": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
+      }
+    ],
+    "#% chance to [Aggravate] [Bleeding] on targets you [Hit] with [Attack|Attacks]": [
       {
         "tier": 1,
         "min": 5,
@@ -686,7 +702,7 @@
         "label": "T1: 5-10"
       }
     ],
-    "#% chance to [Blind] Enemies on [HitDamage|Hit] with [Attack|Attacks]": [
+    "#% chance to [Blind] Enemies on [Hit] with [Attack|Attacks]": [
       {
         "tier": 1,
         "min": 36,
@@ -762,7 +778,7 @@
         "label": "T1: 25-35"
       }
     ],
-    "#% chance to [Daze] on [HitDamage|Hit]": [
+    "#% chance to [Daze] on [Hit]": [
       {
         "tier": 1,
         "min": 10,
@@ -782,7 +798,7 @@
         "label": "T3: 1-1"
       }
     ],
-    "#% chance to [Maim|Maim] on [HitDamage|Hit]": [
+    "#% chance to [Maim|Maim] on [Hit]": [
       {
         "tier": 1,
         "min": 10,
@@ -864,7 +880,7 @@
         "label": "T12: 5-10"
       }
     ],
-    "#% chance to [Poison] on [HitDamage|Hit] with this weapon": [
+    "#% chance to [Poison] on [Hit] with this weapon": [
       {
         "tier": 1,
         "min": 10,
@@ -872,7 +888,7 @@
         "label": "T1: 10-15"
       }
     ],
-    "#% chance to [Poison|Poison] on [HitDamage|Hit]": [
+    "#% chance to [Poison|Poison] on [Hit]": [
       {
         "tier": 1,
         "min": 5,
@@ -886,7 +902,7 @@
         "label": "T2: 1-1"
       }
     ],
-    "#% chance to build an additional [Combo] on [HitDamage|Hit]": [
+    "#% chance to build an additional [Combo] on [Hit]": [
       {
         "tier": 1,
         "min": 40,
@@ -906,7 +922,7 @@
         "label": "T3: 20-39"
       }
     ],
-    "#% chance to cause [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% chance to cause [Bleeding|Bleeding] on [Hit]": [
       {
         "tier": 1,
         "min": 25,
@@ -960,7 +976,7 @@
         "label": "T4: 8-12"
       }
     ],
-    "#% chance to gain [Onslaught|Onslaught] on Killing [HitDamage|Hits] with this Weapon": [
+    "#% chance to gain [Onslaught|Onslaught] on Killing [Hit|Hits] with this Weapon": [
       {
         "tier": 1,
         "min": 20,
@@ -1014,7 +1030,7 @@
         "label": "T1: 16-16"
       }
     ],
-    "#% chance to inflict [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% chance to inflict [Bleeding|Bleeding] on [Hit]": [
       {
         "tier": 1,
         "min": 5,
@@ -1430,6 +1446,12 @@
         "min": 39,
         "max": 47,
         "label": "T1: 39-47"
+      },
+      {
+        "tier": 2,
+        "min": 26,
+        "max": 31,
+        "label": "T2: 26-31"
       }
     ],
     "#% increased Cast Speed during any [Flask] Effect": [
@@ -1870,7 +1892,7 @@
         "label": "T2: 1-2"
       }
     ],
-    "#% increased Damage with [HitDamage|Hits] against [Mark|Marked] Enemy": [
+    "#% increased Damage with [Hit|Hits] against [Mark|Marked] Enemy": [
       {
         "tier": 1,
         "min": 20,
@@ -1884,7 +1906,7 @@
         "label": "T2: 10-19"
       }
     ],
-    "#% increased Damage with [HitDamage|Hits] against [Rarity|Rare and Unique] Enemies": [
+    "#% increased Damage with [Hit|Hits] against [Rarity|Rare and Unique] Enemies": [
       {
         "tier": 1,
         "min": 10,
@@ -2816,7 +2838,7 @@
         "label": "T9: 1-1"
       }
     ],
-    "#% increased Movement Speed\n#% increased [Slow|Slowing] Potency of [Debuff|Debuffs] on You": [
+    "#% increased Movement Speed\n#% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You": [
       {
         "tier": 1,
         "min": 30,
@@ -3036,6 +3058,20 @@
         "min": 2,
         "max": 4,
         "label": "T2: 2-4"
+      },
+      {
+        "tier": 3,
+        "min": 0,
+        "max": 0,
+        "label": "T3: 0-0"
+      }
+    ],
+    "#% increased Trap Trigger Area of Effect": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
       }
     ],
     "#% increased Weapon Swap Speed": [
@@ -4182,7 +4218,7 @@
         "label": "T1: 12-18"
       }
     ],
-    "#% increased [Attack] Speed if you haven't been [HitDamage|Hit] [Recently]": [
+    "#% increased [Attack] Speed if you haven't been [Hit] [Recently]": [
       {
         "tier": 1,
         "min": 13,
@@ -5111,75 +5147,75 @@
     "#% increased [CooldownRecovery|Cooldown Recovery Rate]": [
       {
         "tier": 1,
-        "min": 29,
-        "max": 32,
-        "label": "T1: 29-32"
+        "min": 33,
+        "max": 36,
+        "label": "T1: 33-36"
       },
       {
         "tier": 2,
-        "min": 24,
-        "max": 30,
-        "label": "T2: 24-30"
+        "min": 29,
+        "max": 32,
+        "label": "T2: 29-32"
       },
       {
         "tier": 3,
-        "min": 25,
-        "max": 28,
-        "label": "T3: 25-28"
+        "min": 24,
+        "max": 30,
+        "label": "T3: 24-30"
       },
       {
         "tier": 4,
-        "min": 21,
-        "max": 24,
-        "label": "T4: 21-24"
+        "min": 25,
+        "max": 28,
+        "label": "T4: 25-28"
       },
       {
         "tier": 5,
-        "min": 18,
-        "max": 23,
-        "label": "T5: 18-23"
+        "min": 21,
+        "max": 24,
+        "label": "T5: 21-24"
       },
       {
         "tier": 6,
-        "min": 17,
-        "max": 20,
-        "label": "T6: 17-20"
+        "min": 18,
+        "max": 23,
+        "label": "T6: 18-23"
       },
       {
         "tier": 7,
-        "min": 10,
-        "max": 18,
-        "label": "T7: 10-18"
+        "min": 17,
+        "max": 20,
+        "label": "T7: 17-20"
       },
       {
         "tier": 8,
-        "min": 12,
-        "max": 17,
-        "label": "T8: 12-17"
+        "min": 10,
+        "max": 18,
+        "label": "T8: 10-18"
       },
       {
         "tier": 9,
-        "min": 13,
-        "max": 16,
-        "label": "T9: 13-16"
+        "min": 12,
+        "max": 17,
+        "label": "T9: 12-17"
       },
       {
         "tier": 10,
-        "min": 9,
-        "max": 12,
-        "label": "T10: 9-12"
+        "min": 13,
+        "max": 16,
+        "label": "T10: 13-16"
       },
       {
         "tier": 11,
-        "min": 8,
+        "min": 9,
         "max": 12,
-        "label": "T11: 8-12"
+        "label": "T11: 9-12"
       },
       {
         "tier": 12,
-        "min": 10,
-        "max": 10,
-        "label": "T12: 10-10"
+        "min": 8,
+        "max": 12,
+        "label": "T12: 8-12"
       },
       {
         "tier": 13,
@@ -5808,6 +5844,12 @@
         "min": 3,
         "max": 7,
         "label": "T12: 3-7"
+      },
+      {
+        "tier": 13,
+        "min": 0,
+        "max": 0,
+        "label": "T13: 0-0"
       }
     ],
     "#% increased [Crossbow|Crossbow] Reload Speed": [
@@ -7578,14 +7620,6 @@
         "label": "T2: 2-3"
       }
     ],
-    "#% increased [Honour] restored": [
-      {
-        "tier": 1,
-        "min": 8,
-        "max": 10,
-        "label": "T1: 8-10"
-      }
-    ],
     "#% increased [IceCrystals|Ice Crystal] Life": [
       {
         "tier": 1,
@@ -7954,7 +7988,7 @@
         "label": "T2: 1-2"
       }
     ],
-    "#% increased [Melee] Damage if you've dealt a [Projectile] [Attack] [HitDamage|Hit] in the past eight seconds": [
+    "#% increased [Melee] Damage if you've dealt a [Projectile] [Attack] [Hit] in the past eight seconds": [
       {
         "tier": 1,
         "min": 60,
@@ -8282,7 +8316,7 @@
         "label": "T5: 1-2"
       }
     ],
-    "#% increased [Projectile] Damage if you've dealt a [Melee] [HitDamage|Hit] in the past eight seconds": [
+    "#% increased [Projectile] Damage if you've dealt a [Melee] [Hit] in the past eight seconds": [
       {
         "tier": 1,
         "min": 10,
@@ -8954,7 +8988,7 @@
         "label": "T16: 25-34"
       }
     ],
-    "#% increased [Spell] [Physical] Damage\n#% chance to inflict [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% increased [Spell] [Physical] Damage\n#% chance to inflict [Bleeding|Bleeding] on [Hit]": [
       {
         "tier": 1,
         "min": 100,
@@ -8970,7 +9004,7 @@
         "label": "T1: 1-20"
       }
     ],
-    "#% increased [Spirit] [Reservation] [Efficiency] of Skills": [
+    "#% increased [Spirit] [Reservation] [Efficiency]": [
       {
         "tier": 1,
         "min": 12,
@@ -10538,7 +10572,7 @@
         "label": "T8: 1-1"
       }
     ],
-    "#% of Damage taken from [Deflect|Deflected] [HitDamage|Hits] [Recoup|Recouped] as Life": [
+    "#% of Damage taken from [Deflect|Deflected] [Hit|Hits] [Recoup|Recouped] as Life": [
       {
         "tier": 1,
         "min": 12,
@@ -10552,6 +10586,14 @@
         "min": 8,
         "max": 15,
         "label": "T1: 8-15"
+      }
+    ],
+    "#% of Lightning Damage with [Attack] Skills Converted to Chaos Damage": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
       }
     ],
     "#% of Physical Damage from Hits taken as Chaos Damage": [
@@ -10656,7 +10698,7 @@
         "label": "T1: 26-30"
       }
     ],
-    "#% of [Physical] Damage from [HitDamage|Hits] taken as [Fire] Damage": [
+    "#% of [Physical] Damage from [Hit|Hits] taken as [Fire] Damage": [
       {
         "tier": 1,
         "min": 10,
@@ -10664,7 +10706,7 @@
         "label": "T1: 10-10"
       }
     ],
-    "#% of [Physical] Damage taken as [Lightning] while your [Shield] is raised\nYou take #% of damage from [Block|Blocked] [HitDamage|Hits] with a raised [Shield]": [
+    "#% of [Physical] Damage taken as [Lightning] while your [Shield] is raised\nYou take #% of damage from [Block|Blocked] [Hit|Hits] with a raised [Shield]": [
       {
         "tier": 1,
         "min": 30,
@@ -11172,20 +11214,12 @@
         "label": "T1: 35-50"
       }
     ],
-    "+# Prefix Modifier allowed": [
+    "+# Prefix Modifier allowed\n# Suffix Modifier allowed": [
       {
         "tier": 1,
         "min": 1,
         "max": 1,
         "label": "T1: 1-1"
-      }
-    ],
-    "+# Suffix Modifier allowed": [
-      {
-        "tier": 1,
-        "min": 0,
-        "max": 0,
-        "label": "T1: 0-0"
       }
     ],
     "+# [Charm] Slot": [
@@ -11210,6 +11244,12 @@
         "min": 4,
         "max": 5,
         "label": "T1: 4-5"
+      },
+      {
+        "tier": 2,
+        "min": 3,
+        "max": 4,
+        "label": "T2: 3-4"
       }
     ],
     "+# metres to Dodge Roll distance": [
@@ -12494,7 +12534,7 @@
         "label": "T11: 10-15"
       }
     ],
-    "+# to [Spirit|Spirit]\n#% increased [Spirit] [Reservation] [Efficiency] of Skills": [
+    "+# to [Spirit|Spirit]\n#% increased [Spirit] [Reservation] [Efficiency]": [
       {
         "tier": 1,
         "min": 40,
@@ -13581,9 +13621,9 @@
     "+#% to [Block] chance": [
       {
         "tier": 1,
-        "min": 12,
-        "max": 16,
-        "label": "T1: 12-16"
+        "min": 20,
+        "max": 25,
+        "label": "T1: 20-25"
       }
     ],
     "+#% to [CriticalDamageBonus|Critical Damage Bonus]": [
@@ -15702,6 +15742,14 @@
         "label": "T2: 5-5"
       }
     ],
+    "Allocates #": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
+      }
+    ],
     "Also grants # [Guard]": [
       {
         "tier": 1,
@@ -16006,14 +16054,6 @@
         "min": 3,
         "max": 5,
         "label": "T1: 3-5"
-      }
-    ],
-    "Costs # Gold to open": [
-      {
-        "tier": 1,
-        "min": 200,
-        "max": 200,
-        "label": "T1: 200-200"
       }
     ],
     "Damage Penetrates #% Elemental Resistances during any [Flask] Effect": [
@@ -16334,7 +16374,7 @@
         "label": "T1: 4-7"
       }
     ],
-    "Enemies killed by your [HitDamage|Hits] are destroyed\n[Burning] Enemies you kill have a #% chance to Explode, dealing a\ntenth of their maximum Life as [Fire] Damage": [
+    "Enemies killed by your [Hit|Hits] are destroyed\n[Burning] Enemies you kill have a #% chance to Explode, dealing a\ntenth of their maximum Life as [Fire] Damage": [
       {
         "tier": 1,
         "min": 1,
@@ -16598,7 +16638,7 @@
         "label": "T9: 2-3"
       }
     ],
-    "Gain # [Rage] when [HitDamage|Hit] by an Enemy": [
+    "Gain # [Rage] when [Hit] by an Enemy": [
       {
         "tier": 1,
         "min": 6,
@@ -16624,7 +16664,7 @@
         "label": "T4: 1-2"
       }
     ],
-    "Gain # [Rage|Rage] on [Melee] [HitDamage|Hit]": [
+    "Gain # [Rage|Rage] on [Melee] [Hit]": [
       {
         "tier": 1,
         "min": 3,
@@ -16830,7 +16870,7 @@
         "label": "T3: 9-9"
       }
     ],
-    "Grants # Life per Enemy [HitDamage|Hit]": [
+    "Grants # Life per Enemy [Hit]": [
       {
         "tier": 1,
         "min": 5,
@@ -16856,7 +16896,7 @@
         "label": "T4: 2-2"
       }
     ],
-    "Grants # [Rage|Rage] on [HitDamage|Hit]": [
+    "Grants # [Rage|Rage] on [Hit]": [
       {
         "tier": 1,
         "min": 1,
@@ -17082,7 +17122,7 @@
         "label": "T1: 1-1"
       }
     ],
-    "Inflict [Anaemia] on [HitDamage|Hit]\n[Anaemia] allows +# [CorruptedBlood|Corrupted Blood] debuffs to be inflicted on enemies": [
+    "Inflict [Anaemia] on [Hit]\n[Anaemia] allows +# [CorruptedBlood|Corrupted Blood] debuffs to be inflicted on enemies": [
       {
         "tier": 1,
         "min": 2,
@@ -17090,12 +17130,20 @@
         "label": "T1: 2-3"
       }
     ],
-    "Inflict [ElementalDamage|Elemental] [Exposure] on [HitDamage|Hit] while you have a Ruby and an Emerald socketed in your tree": [
+    "Inflict [ElementalDamage|Elemental] [Exposure] on [Hit] while you have a Ruby and an Emerald socketed in your tree": [
       {
         "tier": 1,
         "min": 1,
         "max": 1,
         "label": "T1: 1-1"
+      }
+    ],
+    "Inherent [Rage|Rage] loss starts # second later": [
+      {
+        "tier": 1,
+        "min": 1000,
+        "max": 2000,
+        "label": "T1: 1000-2000"
       }
     ],
     "Inherent [Rage|Rage] loss starts # seconds later": [
@@ -17104,12 +17152,6 @@
         "min": 3000,
         "max": 5000,
         "label": "T1: 3000-5000"
-      },
-      {
-        "tier": 2,
-        "min": 1000,
-        "max": 2000,
-        "label": "T2: 1000-2000"
       }
     ],
     "Instant Recovery\n#% reduced Amount Recovered": [
@@ -17206,7 +17248,7 @@
         "label": "T1: 50-100"
       }
     ],
-    "Monsters inflict # [GraspingVines|Grasping Vine] on [HitDamage|Hit]": [
+    "Monsters inflict # [GraspingVines|Grasping Vine] on [Hit]": [
       {
         "tier": 1,
         "min": 1,
@@ -17228,6 +17270,14 @@
         "min": 1,
         "max": 1,
         "label": "T1: 1-1"
+      }
+    ],
+    "One Conquered Notable Passive Skill becomes #": [
+      {
+        "tier": 1,
+        "min": 0,
+        "max": 0,
+        "label": "T1: 0-0"
       }
     ],
     "Players and their [Minion|Minions] deal no damage for # out of every # seconds": [
@@ -17254,7 +17304,7 @@
         "label": "T1: -3--3"
       }
     ],
-    "Prevent +#% of Damage from [Deflect|Deflected] [HitDamage|Hits]": [
+    "Prevent +#% of Damage from [Deflect|Deflected] [Hit|Hits]": [
       {
         "tier": 1,
         "min": 7,
@@ -17748,15 +17798,7 @@
         "label": "T5: 2-4"
       }
     ],
-    "Supported [Minion|Minions]' [Strike|Strikes] have [MeleeSplash|Melee Splash]": [
-      {
-        "tier": 1,
-        "min": 1,
-        "max": 1,
-        "label": "T1: 1-1"
-      }
-    ],
-    "Tempest Bells are destroyed after an additional # [HitDamage|Hits]": [
+    "Tempest Bells are destroyed after an additional # [Hit|Hits]": [
       {
         "tier": 1,
         "min": 4,
@@ -18550,7 +18592,7 @@
         "label": "T1: 1-5"
       }
     ],
-    "[Attack] [HitDamage|Hits] [Aggravate] any [Bleeding] on targets which is older than # seconds": [
+    "[Attack] [Hit|Hits] [Aggravate] any [Bleeding] on targets which is older than # seconds": [
       {
         "tier": 1,
         "min": 3000,
@@ -18916,7 +18958,7 @@
         "label": "T2: 3-4"
       }
     ],
-    "[Blind] Enemies on [HitDamage|Hit] while you have a Ruby and a Sapphire socketed in your tree": [
+    "[Blind] Enemies on [Hit] while you have a Ruby and a Sapphire socketed in your tree": [
       {
         "tier": 1,
         "min": 1,
@@ -19040,6 +19082,14 @@
         "label": "T1: 1-1"
       }
     ],
+    "[DNT] Obliterated ##": [
+      {
+        "tier": 1,
+        "min": 1,
+        "max": 1,
+        "label": "T1: 1-1"
+      }
+    ],
     "[DamagingAilments|Damaging Ailments] deal damage #% faster": [
       {
         "tier": 1,
@@ -19072,7 +19122,7 @@
         "label": "T5: 2-3"
       }
     ],
-    "[Daze|Dazes] on [HitDamage|Hit]": [
+    "[Daze|Dazes] on [Hit]": [
       {
         "tier": 1,
         "min": 100,
@@ -19080,7 +19130,7 @@
         "label": "T1: 100-100"
       }
     ],
-    "[Debilitate] Enemies on [HitDamage|Hit] while you have an Emerald and a Sapphire socketed in your tree": [
+    "[Debilitate] Enemies on [Hit] while you have an Emerald and a Sapphire socketed in your tree": [
       {
         "tier": 1,
         "min": 1,
@@ -19177,87 +19227,93 @@
       },
       {
         "tier": 3,
-        "min": 43,
-        "max": 48,
-        "label": "T3: 43-48"
+        "min": 40,
+        "max": 50,
+        "label": "T3: 40-50"
       },
       {
         "tier": 4,
-        "min": 37,
-        "max": 42,
-        "label": "T4: 37-42"
+        "min": 43,
+        "max": 48,
+        "label": "T4: 43-48"
       },
       {
         "tier": 5,
-        "min": 31,
-        "max": 36,
-        "label": "T5: 31-36"
+        "min": 37,
+        "max": 42,
+        "label": "T5: 37-42"
       },
       {
         "tier": 6,
-        "min": 25,
-        "max": 33,
-        "label": "T6: 25-33"
+        "min": 31,
+        "max": 36,
+        "label": "T6: 31-36"
       },
       {
         "tier": 7,
-        "min": 28,
-        "max": 30,
-        "label": "T7: 28-30"
+        "min": 25,
+        "max": 33,
+        "label": "T7: 25-33"
       },
       {
         "tier": 8,
-        "min": 26,
+        "min": 28,
         "max": 30,
-        "label": "T8: 26-30"
+        "label": "T8: 28-30"
       },
       {
         "tier": 9,
-        "min": 25,
-        "max": 27,
-        "label": "T9: 25-27"
+        "min": 26,
+        "max": 30,
+        "label": "T9: 26-30"
       },
       {
         "tier": 10,
-        "min": 22,
-        "max": 24,
-        "label": "T10: 22-24"
+        "min": 25,
+        "max": 27,
+        "label": "T10: 25-27"
       },
       {
         "tier": 11,
-        "min": 19,
-        "max": 21,
-        "label": "T11: 19-21"
+        "min": 22,
+        "max": 24,
+        "label": "T11: 22-24"
       },
       {
         "tier": 12,
-        "min": 15,
-        "max": 20,
-        "label": "T12: 15-20"
+        "min": 19,
+        "max": 21,
+        "label": "T12: 19-21"
       },
       {
         "tier": 13,
-        "min": 16,
-        "max": 18,
-        "label": "T13: 16-18"
+        "min": 15,
+        "max": 20,
+        "label": "T13: 15-20"
       },
       {
         "tier": 14,
-        "min": 13,
-        "max": 15,
-        "label": "T14: 13-15"
+        "min": 16,
+        "max": 18,
+        "label": "T14: 16-18"
       },
       {
         "tier": 15,
-        "min": 7,
-        "max": 13,
-        "label": "T15: 7-13"
+        "min": 13,
+        "max": 15,
+        "label": "T15: 13-15"
       },
       {
         "tier": 16,
+        "min": 7,
+        "max": 13,
+        "label": "T16: 7-13"
+      },
+      {
+        "tier": 17,
         "min": 5,
         "max": 8,
-        "label": "T16: 5-8"
+        "label": "T17: 5-8"
       }
     ],
     "[Gain] #% of Damage as Extra [Cold] Damage": [
@@ -19664,7 +19720,7 @@
         "label": "T2: 2-4"
       }
     ],
-    "[HitDamage|Hits] against you have #% reduced [CriticalDamageBonus|Critical Damage Bonus]": [
+    "[Hit|Hits] against you have #% reduced [CriticalDamageBonus|Critical Damage Bonus]": [
       {
         "tier": 1,
         "min": 10,
@@ -19726,7 +19782,7 @@
         "label": "T10: 21-27"
       }
     ],
-    "[HitDamage|Hits] have #% reduced [Critical|Critical Hit] Chance against you": [
+    "[Hit|Hits] have #% reduced [Critical|Critical Hit] Chance against you": [
       {
         "tier": 1,
         "min": -5,
@@ -19738,14 +19794,6 @@
         "min": -25,
         "max": -17,
         "label": "T2: -25--17"
-      }
-    ],
-    "[HitDamage|Hits] with [Shield] Skills which [HeavyStun|Heavy Stun] enemies break fully [ArmourBreak|Break Armour]": [
-      {
-        "tier": 1,
-        "min": 1,
-        "max": 1,
-        "label": "T1: 1-1"
       }
     ],
     "[Invoke|Invocated] [Spell|Spells] deal #% increased Damage": [
@@ -19966,7 +20014,7 @@
         "label": "T1: 1-1"
       }
     ],
-    "[Lightning] Damage from [HitDamage|Hits] also [Contributes|Contributes] to [Flammability] and [Ignite] [BuffMagnitude|Magnitudes]": [
+    "[Lightning] Damage from [Hit|Hits] also [Contributes|Contributes] to [Flammability] and [Ignite] [BuffMagnitude|Magnitudes]": [
       {
         "tier": 1,
         "min": 1,
@@ -20314,7 +20362,7 @@
         "label": "T1: 55-64"
       }
     ],
-    "[Minion|Minions] deal #% increased Damage if you've [HitDamage|Hit] [Recently]": [
+    "[Minion|Minions] deal #% increased Damage if you've [Hit] [Recently]": [
       {
         "tier": 1,
         "min": 60,
@@ -20836,6 +20884,14 @@
         "label": "T9: 1-2"
       }
     ],
+    "[Minion|Minions]' [Strike|Strikes] have [MeleeSplash|Melee Splash]": [
+      {
+        "tier": 1,
+        "min": 1,
+        "max": 1,
+        "label": "T1: 1-1"
+      }
+    ],
     "[NaturalSpawn|Natural] [Rarity|Rare] Monsters in Area have # extra Abyssal [MonsterModifiers|Modifier]": [
       {
         "tier": 1,
@@ -21032,7 +21088,7 @@
         "label": "T2: 25-44"
       }
     ],
-    "[Projectile|Projectiles] have #% chance to [Fork] if you've dealt a [Melee] [HitDamage|Hit] in the past eight seconds": [
+    "[Projectile|Projectiles] have #% chance to [Fork] if you've dealt a [Melee] [Hit] in the past eight seconds": [
       {
         "tier": 1,
         "min": 65,
@@ -21162,6 +21218,14 @@
         "label": "T1: 1-1"
       }
     ],
+    "[Shield] Skills fully [ArmourBreak|Break Armour] when they [HeavyStun|Heavy Stun] targets": [
+      {
+        "tier": 1,
+        "min": 1,
+        "max": 1,
+        "label": "T1: 1-1"
+      }
+    ],
     "[Spell] Skills have +# to maximum number of Summoned [Totem|Totems]": [
       {
         "tier": 1,
@@ -21252,7 +21316,7 @@
         "label": "T2: 2-3"
       }
     ],
-    "[Warcry|Warcries] [Empowered|Empower] # additional [Attack|Attacks]": [
+    "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]": [
       {
         "tier": 1,
         "min": 1,
@@ -21285,6 +21349,9 @@
     "# Mana gained when you [Block|Block]": [
       "GainManaOnBlock"
     ],
+    "# Prefix Modifier allowed\n+# Suffix Modifier allowed": [
+      "MaxPrefixMaxSuffix"
+    ],
     "# to # Added [Cold|Cold] Damage per Frenzy Charge": [
       "AddedColdDamagePerFrenzyCharge"
     ],
@@ -21312,7 +21379,7 @@
     "#% chance for Skills to retain #% of [Glory] on use": [
       "GloryChanceToNotConsume"
     ],
-    "#% chance for [Attack] [HitDamage|Hits] to apply [Incision]": [
+    "#% chance for [Attack] [Hit|Hits] to apply [Incision]": [
       "IncisionChance"
     ],
     "#% chance for [Charm|Charms] you use to not consume Charges": [
@@ -21321,7 +21388,7 @@
     "#% chance for [Flask|Flasks] you use to not consume Charges": [
       "FlaskChargesUsed"
     ],
-    "#% chance for [Lightning] Damage with [HitDamage|Hits] to be [Lucky]": [
+    "#% chance for [Lightning] Damage with [Hit|Hits] to be [Lucky]": [
       "LuckyLightningDamageChance"
     ],
     "#% chance for [Mace] [Slam] Skills you use yourself to cause an additional [Aftershock]": [
@@ -21345,7 +21412,7 @@
     "#% chance to Avoid being [Chill|Chilled]": [
       "AvoidChill"
     ],
-    "#% chance to Avoid being [Freeze|Frozen]": [
+    "#% chance to Avoid being [Chill|Chilled]\n#% chance to Avoid being [Freeze|Frozen]": [
       "ChanceToAvoidFreezeAndChill"
     ],
     "#% chance to Avoid being [Ignite|Ignited]": [
@@ -21367,34 +21434,37 @@
     "#% chance to Recover #% of maximum Mana when you use a Skill": [
       "ChanceToRecoverManaOnSkillUse"
     ],
-    "#% chance to [Aggravate] [Bleeding] on targets you [HitDamage|Hit] with [Attack|Attacks]": [
+    "#% chance to Shock": [
+      "StormBladeExplicitShockChance"
+    ],
+    "#% chance to [Aggravate] [Bleeding] on targets you [Hit] with [Attack|Attacks]": [
       "AggravateBleed"
     ],
-    "#% chance to [Blind] Enemies on [HitDamage|Hit] with [Attack|Attacks]": [
+    "#% chance to [Blind] Enemies on [Hit] with [Attack|Attacks]": [
       "BlindOnHit"
     ],
     "#% chance to [Chain] an additional time": [
       "Chain"
     ],
-    "#% chance to [Daze] on [HitDamage|Hit]": [
+    "#% chance to [Daze] on [Hit]": [
       "DazeBuildup"
     ],
-    "#% chance to [Maim|Maim] on [HitDamage|Hit]": [
+    "#% chance to [Maim|Maim] on [Hit]": [
       "LocalMaimOnHit"
     ],
     "#% chance to [Pierce|Pierce] an Enemy": [
       "ChanceToPierce"
     ],
-    "#% chance to [Poison] on [HitDamage|Hit] with this weapon": [
+    "#% chance to [Poison] on [Hit] with this weapon": [
       "LocalChanceToPoisonOnHit"
     ],
-    "#% chance to [Poison|Poison] on [HitDamage|Hit]": [
+    "#% chance to [Poison|Poison] on [Hit]": [
       "PoisonChanceIncrease"
     ],
-    "#% chance to build an additional [Combo] on [HitDamage|Hit]": [
+    "#% chance to build an additional [Combo] on [Hit]": [
       "AdditionalComboChance"
     ],
-    "#% chance to cause [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% chance to cause [Bleeding|Bleeding] on [Hit]": [
       "CausesBleeding",
       "LocalChanceToBleed"
     ],
@@ -21404,7 +21474,7 @@
     "#% chance to gain [Onslaught] for # seconds on Hit": [
       "OnslaughtOnHit"
     ],
-    "#% chance to gain [Onslaught|Onslaught] on Killing [HitDamage|Hits] with this Weapon": [
+    "#% chance to gain [Onslaught|Onslaught] on Killing [Hit|Hits] with this Weapon": [
       "Onslaught"
     ],
     "#% chance to gain [Volatility] on Kill": [
@@ -21422,7 +21492,7 @@
     "#% chance to gain a [Charges|Power], [Charges|Frenzy], or [Charges|Endurance Charge] on kill": [
       "PowerFrenzyOrEnduranceChargeOnKill"
     ],
-    "#% chance to inflict [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% chance to inflict [Bleeding|Bleeding] on [Hit]": [
       "BleedChanceIncrease"
     ],
     "#% chance when a [Charm|Charm] is used to use another Charm without consuming Charges": [
@@ -21546,10 +21616,10 @@
     "#% increased Damage with [Flail|Flails]": [
       "FlailDamage"
     ],
-    "#% increased Damage with [HitDamage|Hits] against [Mark|Marked] Enemy": [
+    "#% increased Damage with [Hit|Hits] against [Mark|Marked] Enemy": [
       "AllDamage"
     ],
-    "#% increased Damage with [HitDamage|Hits] against [Rarity|Rare and Unique] Enemies": [
+    "#% increased Damage with [Hit|Hits] against [Rarity|Rare and Unique] Enemies": [
       "DamageVsRareOrUnique"
     ],
     "#% increased Damage with [Mace|Maces]": [
@@ -21708,7 +21778,7 @@
     "#% increased Movement Speed": [
       "MovementVelocity"
     ],
-    "#% increased Movement Speed\n#% increased [Slow|Slowing] Potency of [Debuff|Debuffs] on You": [
+    "#% increased Movement Speed\n#% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You": [
       "MovementVelocity"
     ],
     "#% increased Movement Speed during any [Flask|Flask] Effect": [
@@ -21744,6 +21814,9 @@
     ],
     "#% increased Trap Throwing Speed": [
       "TrapAndMineThrowSpeed"
+    ],
+    "#% increased Trap Trigger Area of Effect": [
+      "TrapTriggerRadius"
     ],
     "#% increased Weapon Swap Speed": [
       "WeaponSwapSpeed"
@@ -21865,7 +21938,7 @@
       "CompanionAttackSpeed",
       "IncreasedAttackSpeed"
     ],
-    "#% increased [Attack] Speed if you haven't been [HitDamage|Hit] [Recently]": [
+    "#% increased [Attack] Speed if you haven't been [Hit] [Recently]": [
       "AttackSpeedHitRecently"
     ],
     "#% increased [Attack] Speed when on Full Life": [
@@ -22029,7 +22102,8 @@
       "FlailCriticalChance"
     ],
     "#% increased [Critical|Critical Hit] Chance": [
-      "CriticalStrikeChanceIncrease"
+      "CriticalStrikeChanceIncrease",
+      "StormBladeExplicitLocalIncreasedCriticalStrikeChance"
     ],
     "#% increased [Crossbow|Crossbow] Reload Speed": [
       "CrossbowReloadSpeed"
@@ -22219,9 +22293,6 @@
     "#% increased [Hazard] Damage": [
       "HazardDamage"
     ],
-    "#% increased [Honour] restored": [
-      "SanctumResolveRecovery"
-    ],
     "#% increased [IceCrystals|Ice Crystal] Life": [
       "IceCrystalLife"
     ],
@@ -22265,7 +22336,7 @@
     "#% increased [Melee] Damage": [
       "MeleeDamage"
     ],
-    "#% increased [Melee] Damage if you've dealt a [Projectile] [Attack] [HitDamage|Hit] in the past eight seconds": [
+    "#% increased [Melee] Damage if you've dealt a [Projectile] [Attack] [Hit] in the past eight seconds": [
       "MeleeDamage",
       "MeleeDamageIfProjectileHitRecently"
     ],
@@ -22308,7 +22379,7 @@
     "#% increased [Projectile] Damage": [
       "ProjectileDamage"
     ],
-    "#% increased [Projectile] Damage if you've dealt a [Melee] [HitDamage|Hit] in the past eight seconds": [
+    "#% increased [Projectile] Damage if you've dealt a [Melee] [Hit] in the past eight seconds": [
       "ProjectileDamageIfMeleeHitRecently"
     ],
     "#% increased [Projectile] Speed": [
@@ -22372,14 +22443,14 @@
     "#% increased [Spell] [Physical] Damage": [
       "WeaponDamageTypePrefix"
     ],
-    "#% increased [Spell] [Physical] Damage\n#% chance to inflict [Bleeding|Bleeding] on [HitDamage|Hit]": [
+    "#% increased [Spell] [Physical] Damage\n#% chance to inflict [Bleeding|Bleeding] on [Hit]": [
       "BleedChanceIncrease",
       "WeaponDamageTypePrefix"
     ],
     "#% increased [Spirit]": [
       "MaximumSpiritIncreasePercent"
     ],
-    "#% increased [Spirit] [Reservation] [Efficiency] of Skills": [
+    "#% increased [Spirit] [Reservation] [Efficiency]": [
       "SpiritReservationEfficiency"
     ],
     "#% increased [Spirit|Spirit]": [
@@ -22570,11 +22641,14 @@
       "AbyssRadiusJewelMod",
       "PercentDamageGoesToMana"
     ],
-    "#% of Damage taken from [Deflect|Deflected] [HitDamage|Hits] [Recoup|Recouped] as Life": [
+    "#% of Damage taken from [Deflect|Deflected] [Hit|Hits] [Recoup|Recouped] as Life": [
       "DeflectDamageTakenRecoupedAsLife"
     ],
     "#% of Leech is Instant": [
       "InstantLeechPercent"
+    ],
+    "#% of Lightning Damage with [Attack] Skills Converted to Chaos Damage": [
+      "StormBladeExplicitAttackLightningConvertToChaos"
     ],
     "#% of Physical Damage from Hits taken as Chaos Damage": [
       "PhysicalDamageTakenAsChaos"
@@ -22603,10 +22677,10 @@
     "#% of [Lightning] Damage taken [Recoup|Recouped] as Life": [
       "LightningDamageTakenRecoupedAsLife"
     ],
-    "#% of [Physical] Damage from [HitDamage|Hits] taken as [Fire] Damage": [
+    "#% of [Physical] Damage from [Hit|Hits] taken as [Fire] Damage": [
       "PhysicalDamageTakenAsElement"
     ],
-    "#% of [Physical] Damage taken as [Lightning] while your [Shield] is raised\nYou take #% of damage from [Block|Blocked] [HitDamage|Hits] with a raised [Shield]": [
+    "#% of [Physical] Damage taken as [Lightning] while your [Shield] is raised\nYou take #% of damage from [Block|Blocked] [Hit|Hits] with a raised [Shield]": [
       "BlockDamageTakenWhileActiveBlocking",
       "PhysicalDamageTakenAsLightningWhileActiveBlocking"
     ],
@@ -22678,10 +22752,7 @@
     "#% to gain [UndeadArchon|Archon of Undeath] when you create an [Offering]": [
       "ArchonUndeathOnOfferingUse"
     ],
-    "+# Prefix Modifier allowed": [
-      "MaxPrefixMaxSuffix"
-    ],
-    "+# Suffix Modifier allowed": [
+    "+# Prefix Modifier allowed\n# Suffix Modifier allowed": [
       "MaxPrefixMaxSuffix"
     ],
     "+# [Charm] Slot": [
@@ -22800,7 +22871,7 @@
     "+# to [Spirit|Spirit]": [
       "BaseSpirit"
     ],
-    "+# to [Spirit|Spirit]\n#% increased [Spirit] [Reservation] [Efficiency] of Skills": [
+    "+# to [Spirit|Spirit]\n#% increased [Spirit] [Reservation] [Efficiency]": [
       "BaseSpirit",
       "SpiritReservationEfficiency"
     ],
@@ -23065,6 +23136,10 @@
     "Adds an [ContainsBreach|Otherworldy Breach] to a Map \n# uses remaining": [
       "TowerAddContent"
     ],
+    "Allocates #": [
+      "EssenceGrantedPassive",
+      "GrantedPassive"
+    ],
     "Also grants # [Guard]": [
       "FlaskRecoveryAmount"
     ],
@@ -23155,9 +23230,6 @@
     "Conquered Small Passive Skills also grant [Minion|Minions] deal #% increased damage": [
       "HistoricAbyssJewelVeiledPrefix2-11"
     ],
-    "Costs # Gold to open": [
-      "Nothing"
-    ],
     "Damage Penetrates #% Elemental Resistances during any [Flask] Effect": [
       "ElementalPenetrationDuringFlaskEffect"
     ],
@@ -23185,7 +23257,7 @@
     "Enemies Hindered by you take #% increased [Physical] Damage": [
       "HinderedEnemyTakeIncreasedDamage"
     ],
-    "Enemies killed by your [HitDamage|Hits] are destroyed\n[Burning] Enemies you kill have a #% chance to Explode, dealing a\ntenth of their maximum Life as [Fire] Damage": [
+    "Enemies killed by your [Hit|Hits] are destroyed\n[Burning] Enemies you kill have a #% chance to Explode, dealing a\ntenth of their maximum Life as [Fire] Damage": [
       "EnemiesDestroyedOnKillAndExplodeOnKillChance"
     ],
     "Enemies take #% increased Damage for each [ElementalAilments|Elemental Ailment] type among\nyour Ailments on them": [
@@ -23221,10 +23293,10 @@
     "Gain # Mana per enemy killed": [
       "ManaGainedFromEnemyDeath"
     ],
-    "Gain # [Rage] when [HitDamage|Hit] by an Enemy": [
+    "Gain # [Rage] when [Hit] by an Enemy": [
       "GainRage"
     ],
-    "Gain # [Rage|Rage] on [Melee] [HitDamage|Hit]": [
+    "Gain # [Rage|Rage] on [Melee] [Hit]": [
       "RageOnHit"
     ],
     "Gain #% of Damage as Extra [Chaos] Damage while you are missing [Ward|Runic Ward]": [
@@ -23263,10 +23335,10 @@
     "Gains # Charges per Second": [
       "FlaskGainCharge"
     ],
-    "Grants # Life per Enemy [HitDamage|Hit]": [
+    "Grants # Life per Enemy [Hit]": [
       "LifeGainPerTarget"
     ],
-    "Grants # [Rage|Rage] on [HitDamage|Hit]": [
+    "Grants # [Rage|Rage] on [Hit]": [
       "RageOnHit"
     ],
     "Grants #% of Life Recovery to Minions": [
@@ -23336,11 +23408,14 @@
     "Increases and Reductions to [Projectile|Projectile] Speed also apply to Damage with [Bow|Bows]": [
       "ProjectileDamage"
     ],
-    "Inflict [Anaemia] on [HitDamage|Hit]\n[Anaemia] allows +# [CorruptedBlood|Corrupted Blood] debuffs to be inflicted on enemies": [
+    "Inflict [Anaemia] on [Hit]\n[Anaemia] allows +# [CorruptedBlood|Corrupted Blood] debuffs to be inflicted on enemies": [
       "AnaemiaOnHit"
     ],
-    "Inflict [ElementalDamage|Elemental] [Exposure] on [HitDamage|Hit] while you have a Ruby and an Emerald socketed in your tree": [
+    "Inflict [ElementalDamage|Elemental] [Exposure] on [Hit] while you have a Ruby and an Emerald socketed in your tree": [
       "JewelStatusOnHitWhileSocketed"
+    ],
+    "Inherent [Rage|Rage] loss starts # second later": [
+      "RageLossDelay"
     ],
     "Inherent [Rage|Rage] loss starts # seconds later": [
       "RageLossDelay"
@@ -23371,7 +23446,7 @@
     "Minions have +#% [SurpassChance|Surpassing] chance to fire an additional [Projectile]": [
       "MinionAdditionalProjectileChance"
     ],
-    "Monsters inflict # [GraspingVines|Grasping Vine] on [HitDamage|Hit]": [
+    "Monsters inflict # [GraspingVines|Grasping Vine] on [Hit]": [
       "MapUberModVines"
     ],
     "Non-Channelling Skills Cost -# Mana": [
@@ -23379,6 +23454,10 @@
     ],
     "On Corruption, Item gains two Enchantments": [
       "CorruptionIntertactions"
+    ],
+    "One Conquered Notable Passive Skill becomes #": [
+      "HistoricAbyssJewelVeiledSuffix1",
+      "HistoricAbyssJewelVeiledSuffix2"
     ],
     "Players and their [Minion|Minions] deal no damage for # out of every # seconds": [
       "MapAbyssDamageCycle"
@@ -23389,7 +23468,7 @@
     "Players have #% less Movement and [SkillSpeed|Skill Speed] for each time they've used a Skill [Recently]": [
       "MapUberModActionSpeed"
     ],
-    "Prevent +#% of Damage from [Deflect|Deflected] [HitDamage|Hits]": [
+    "Prevent +#% of Damage from [Deflect|Deflected] [Hit|Hits]": [
       "DeflectDamageTaken"
     ],
     "Projectiles have #% chance for an additional Projectile when [Fork|Forking]": [
@@ -23485,10 +23564,7 @@
     "Spells have #% increased [CooldownRecovery|Cooldown Recovery Rate]": [
       "CooldownRecovery"
     ],
-    "Supported [Minion|Minions]' [Strike|Strikes] have [MeleeSplash|Melee Splash]": [
-      "MinionMeleeSplash"
-    ],
-    "Tempest Bells are destroyed after an additional # [HitDamage|Hits]": [
+    "Tempest Bells are destroyed after an additional # [Hit|Hits]": [
       "BellHitLimit"
     ],
     "Triggers Level # Spectral Spirits when Equipped\n+# to maximum number of Spectral Spirits": [
@@ -23583,7 +23659,7 @@
     "[Attack] Skills have Added Lightning Damage equal to #% of maximum Mana": [
       "AttackLightningDamageMaximumMana"
     ],
-    "[Attack] [HitDamage|Hits] [Aggravate] any [Bleeding] on targets which is older than # seconds": [
+    "[Attack] [Hit|Hits] [Aggravate] any [Bleeding] on targets which is older than # seconds": [
       "AggravateBleed"
     ],
     "[Attack|Attacks] [Chain] # additional times": [
@@ -23637,7 +23713,7 @@
     "[Banner] Skills have #% increased Duration": [
       "BannerDuration"
     ],
-    "[Blind] Enemies on [HitDamage|Hit] while you have a Ruby and a Sapphire socketed in your tree": [
+    "[Blind] Enemies on [Hit] while you have a Ruby and a Sapphire socketed in your tree": [
       "BlindOnHit",
       "JewelStatusOnHitWhileSocketed"
     ],
@@ -23672,13 +23748,16 @@
     "[Critical|Critical Hits] [Poison] the enemy": [
       "CausesPoisonOnCrit"
     ],
+    "[DNT] Obliterated ##": [
+      "Obliterated"
+    ],
     "[DamagingAilments|Damaging Ailments] deal damage #% faster": [
       "FasterAilmentDamage"
     ],
-    "[Daze|Dazes] on [HitDamage|Hit]": [
+    "[Daze|Dazes] on [Hit]": [
       "DazeBuildup"
     ],
-    "[Debilitate] Enemies on [HitDamage|Hit] while you have an Emerald and a Sapphire socketed in your tree": [
+    "[Debilitate] Enemies on [Hit] while you have an Emerald and a Sapphire socketed in your tree": [
       "JewelStatusOnHitWhileSocketed"
     ],
     "[Debuff|Debuffs] on you expire #% faster": [
@@ -23747,16 +23826,13 @@
     "[Herald] Skills deal #% increased Damage": [
       "HeraldDamage"
     ],
-    "[HitDamage|Hits] against you have #% reduced [CriticalDamageBonus|Critical Damage Bonus]": [
+    "[Hit|Hits] against you have #% reduced [CriticalDamageBonus|Critical Damage Bonus]": [
       "ReducedCriticalStrikeDamageTaken",
       "ReducedExtraDamageFromCrits"
     ],
-    "[HitDamage|Hits] have #% reduced [Critical|Critical Hit] Chance against you": [
+    "[Hit|Hits] have #% reduced [Critical|Critical Hit] Chance against you": [
       "AbyssRadiusJewelMod",
       "ChanceToTakeCriticalStrike"
-    ],
-    "[HitDamage|Hits] with [Shield] Skills which [HeavyStun|Heavy Stun] enemies break fully [ArmourBreak|Break Armour]": [
-      "ShieldSkillsStunningAlsoFullyBreaksArmour"
     ],
     "[Invoke|Invocated] [Spell|Spells] deal #% increased Damage": [
       "WeaponCasterDamagePrefix"
@@ -23789,7 +23865,7 @@
     "[LifeLeech|Life Leech] effects are not removed when [Reservation|Unreserved] Life is Filled": [
       "LifeLeechNotRemovedOnFullLife"
     ],
-    "[Lightning] Damage from [HitDamage|Hits] also [Contributes|Contributes] to [Flammability] and [Ignite] [BuffMagnitude|Magnitudes]": [
+    "[Lightning] Damage from [Hit|Hits] also [Contributes|Contributes] to [Flammability] and [Ignite] [BuffMagnitude|Magnitudes]": [
       "LightningDamageCanIgnite"
     ],
     "[ManaLeech|Leech] #% of [Physical] [Attack] Damage as Mana": [
@@ -23836,7 +23912,7 @@
       "MinionDamage",
       "WeaponCasterDamagePrefix"
     ],
-    "[Minion|Minions] deal #% increased Damage if you've [HitDamage|Hit] [Recently]": [
+    "[Minion|Minions] deal #% increased Damage if you've [Hit] [Recently]": [
       "IncreasedMinionDamageIfYouHitEnemy"
     ],
     "[Minion|Minions] deal #% increased Damage with [Command] Skills": [
@@ -23882,6 +23958,9 @@
     "[Minion|Minions] have +#% to all Elemental [Resistances]": [
       "MinionElementalResistances"
     ],
+    "[Minion|Minions]' [Strike|Strikes] have [MeleeSplash|Melee Splash]": [
+      "MinionMeleeSplash"
+    ],
     "[NaturalSpawn|Natural] [Rarity|Rare] Monsters in Area have # extra Abyssal [MonsterModifiers|Modifier]": [
       "MapAbyssRareMonstersAbyssalModifier"
     ],
@@ -23915,7 +23994,7 @@
     "[Projectile|Projectiles] have #% chance to [Fork]": [
       "ProjectileChanceToFork"
     ],
-    "[Projectile|Projectiles] have #% chance to [Fork] if you've dealt a [Melee] [HitDamage|Hit] in the past eight seconds": [
+    "[Projectile|Projectiles] have #% chance to [Fork] if you've dealt a [Melee] [Hit] in the past eight seconds": [
       "ProjectilesFork"
     ],
     "[Projectile|Projectiles] have #% chance to [Shock]": [
@@ -23939,6 +24018,9 @@
     "[Seal|Sealed] Skills have +# to maximum [Seal|Seals]": [
       "AdditionalMaximumSeals"
     ],
+    "[Shield] Skills fully [ArmourBreak|Break Armour] when they [HeavyStun|Heavy Stun] targets": [
+      "ShieldSkillsStunningAlsoFullyBreaksArmour"
+    ],
     "[Spell] Skills have +# to maximum number of Summoned [Totem|Totems]": [
       "AdditionalSpellTotem"
     ],
@@ -23957,7 +24039,7 @@
     "[Trigger|Triggered] [Spell|Spells] deal #% increased [Spell] Damage": [
       "DamageWithTriggeredSpells"
     ],
-    "[Warcry|Warcries] [Empowered|Empower] # additional [Attack|Attacks]": [
+    "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]": [
       "WarcriesExertAnAdditionalAttack"
     ],
     "[Warcry|Warcry] Skills have #% increased Area of Effect": [

@@ -81,9 +81,30 @@ pnpm build:dicts:client          # = node scripts/build-dicts-from-client.mjs
 | `unique-names-ja.json` | Words `Text` → `Text2` | `Wordlist = 6` がユニーク名種別 (既知ユニークからの実測)。JA の `Text` は英語のままなので `Text2` を使う |
 | `poe2-flavour-ja.json` | FlavourText `Text` | **キーは CR+LF を保持** (`UniqueTooltip.strip()` がその形で引く。空白に潰すと一切ヒットしない) |
 
-まだクライアント化していないもの: MOD 本文 (`Metadata/StatDescriptions/stat_descriptions.csd`、全言語ブロック入り) と
-ティア/グループ (`Mods` テーブルの Level / ModType / SpawnWeight)。これらを読めば `mod-text-ja` / `unique-mods-ja` /
-`mod-tier-and-group` も原本化でき、Mods の spawn weight を使えばクラフト確率のシミュレーションも作れる。
+#### MOD 文言・ティア・spawn weight も原本から (2026-09-07〜)
+
+`pnpm build:dicts:client` は上の 3 辞書に続けて MOD パイプラインも回す:
+
+```
+build-dicts-from-client.mjs    ─ files 指定で Data/StatDescriptions/stat_descriptions.csd も書き出す
+build-mods-from-client.mjs     ─ Mods / Stats / Tags / ModType / ModFamily テーブル + csd
+                                 → data-cache/mods.en.json / mods.ja.json (RePoE 形式互換)
+extract-mods-bundle.mjs        ─ 無改造 (入力が RePoE の写しから原本生成に変わっただけ)
+                                 → src/i18n/mods-bundle.json
+build-mod-tier-and-group.mjs   ─ 無改造 → src/i18n/mod-tier-and-group.json
+```
+
+- `stat_descriptions.csd` は UTF-16LE、全言語のブロック入り (`lang "Japanese"` が 10,776 中 10,770)。
+  パーサは `scripts/parse-stat-descriptions.mjs` (PoB-PoE2 の `src/Export/statdesc.lua` の JS 移植)。
+  pathofexile-dat は `files` の保存名でパスの `/` を `@` に置換する。
+- `Mods` の外部キーは参照先テーブルの行番号。`Stat1Value` は `[min, max]` の配列。
+  `Domain` / `GenerationType` は enum で、ラベルは `build-mods-from-client.mjs` の表 (RePoE と Id で突合して確定)。
+- 検証 (2026-09-07): 旧 bundle と共通の 3,656 MOD で EN 文言 96.0% 一致。残りはマーカー名変更 (`[HitDamage|Hits]`→`[Hit|Hits]`) と
+  クライアント側の本当の更新 (数値調整・文言変更)。JA は 3,627 / 3,666 が本物の日本語 (トレード API 補完 0 件)。
+  クライアントにしか無い MOD は 220 件 (0.5 で追加されたもの)。
+- **`extract-mods-bundle.mjs --refresh` は使わない**: 凍結済みの RePoE (JA は 404) を再取得して原本生成を上書きする。
+
+この `Mods` テーブル (spawn weight / タグ / ティア) がクラフト確率シミュレーションの土台になる。
 
 ### 週次辞書更新 (CI) が失敗する / ユニーク辞書が 0 件になる → スクレイパー追従
 
