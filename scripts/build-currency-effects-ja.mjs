@@ -11,8 +11,15 @@
  *
  * キーは EN 名を正規化(小文字・英数のみ)したもの。フロントは同じ正規化で引く。
  * 使い方: node scripts/build-currency-effects-ja.mjs   (poe2db から取得)
+ *
+ * 2026-09-07: 既存の JSON をベースに上書きマージする方式に変更 (減らさない)。
+ *   旧実装は毎回ゼロから再構築していたため、1 ページの取得失敗 / 抽出 0 件が
+ *   そのまま欠損になり、CI の件数ガード (減少で失敗) に引っかかった
+ *   (実例: poe2db が /jp/Ultimatum を挑戦 MOD 一覧に再編、/jp/Incursion をほぼ空に)。
+ *   取得できたキーは最新テキストで上書き、取得できなかったキーは既存を保持する
+ *   (ホバー用辞書なので、消えたアイテムのキーが残っても無害)。
  */
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -99,7 +106,18 @@ function extract(html) {
   return out;
 }
 
+/** 既存辞書を読む。無い / 壊れている場合は空から始める。 */
+async function loadExisting() {
+  try {
+    const json = JSON.parse(await readFile(OUT, "utf-8"));
+    return json && typeof json === "object" && !Array.isArray(json) ? json : {};
+  } catch {
+    return {};
+  }
+}
+
 async function main() {
+  const existing = await loadExisting();
   const all = {};
   for (const slug of PAGES) {
     try {
@@ -119,11 +137,17 @@ async function main() {
       console.warn(`  ${slug}: SKIP (${err.message})`);
     }
   }
+  // 既存をベースに、今回取得できたキーだけ上書き (取得できなかったキーは保持)。
+  const merged = { ...existing, ...all };
+  const keptFromExisting = Object.keys(existing).filter((k) => !(k in all)).length;
   const sorted = Object.fromEntries(
-    Object.entries(all).sort(([a], [b]) => a.localeCompare(b)),
+    Object.entries(merged).sort(([a], [b]) => a.localeCompare(b)),
   );
   await writeFile(OUT, JSON.stringify(sorted, null, 0) + "\n", "utf-8");
-  console.log(`\nWrote ${Object.keys(sorted).length} effects -> ${OUT}`);
+  console.log(
+    `\nWrote ${Object.keys(sorted).length} effects -> ${OUT}` +
+      ` (existing ${Object.keys(existing).length}, scraped ${Object.keys(all).length}, kept-from-existing ${keptFromExisting})`,
+  );
 }
 
 main().catch((e) => {
