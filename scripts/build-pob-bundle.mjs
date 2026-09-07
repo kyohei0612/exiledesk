@@ -62,7 +62,7 @@ const EXE_NAME_IN_REPO = "Path{space}of{space}Building-PoE2.exe";
  * 組み合わせると起動時に「EGL_LockVulkanQueueANGLE が見つからない」で落ちる。
  * Lua 側 (src/) は master の最新を使う。
  */
-const JP_RUNTIME_BASE_COMMIT = "860f42682";
+const JP_RUNTIME_BASE_COMMIT = "860f4268299739ce9df87c4f373abe35824101cf"; // Release 0.22.0 (full SHA: CI の shallow checkout で fetch するため)
 const POB2JP_CANDIDATES = [
   process.env.POB2JP_DIR,
   resolve(ROOT, "vendor/PoB2-JP"),
@@ -174,6 +174,13 @@ async function resolveRuntimeDir(withJp) {
   await rm(tmp, { recursive: true, force: true });
   await mkdir(tmp, { recursive: true });
   const tar = join(tmp, "runtime.tar");
+  // CI (actions/checkout) は submodule を shallow に取るので、基準コミットが無ければ SHA 指定で fetch する
+  const has = spawnSync("git", ["-C", VENDOR, "cat-file", "-e", `${JP_RUNTIME_BASE_COMMIT}^{commit}`], { encoding: "utf-8" });
+  if (has.status !== 0) {
+    log(`fetching runtime base commit ${JP_RUNTIME_BASE_COMMIT.slice(0, 9)} (shallow checkout)`);
+    const f = spawnSync("git", ["-C", VENDOR, "fetch", "--depth=1", "origin", JP_RUNTIME_BASE_COMMIT], { encoding: "utf-8" });
+    if (f.status !== 0) throw new Error(`git fetch ${JP_RUNTIME_BASE_COMMIT} failed: ${f.stderr}`);
+  }
   const a = spawnSync("git", ["-C", VENDOR, "archive", "--format=tar", "-o", tar, JP_RUNTIME_BASE_COMMIT, "runtime"], {
     encoding: "utf-8",
   });
