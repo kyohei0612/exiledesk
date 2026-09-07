@@ -59,29 +59,14 @@ const _uniqueNamesJa = uniqueNamesJaRaw as Record<string, string>;
 //          + `build-unique-pages-detail.mjs` (poe2db 補強) + `build-poe2-flavour-ja.mjs` (RePoE、現在 404 で補強のみ)。
 const _flavourJa = poe2FlavourJaRaw as Record<string, string>;
 
-function normalizeTpl(text: string): string {
-  return text
-    .replace(/[—–]/g, "-") // em/en dash → ASCII hyphen (POE2DB の `(20—30)` 形式に対応)
-    .replace(/\(-?\d+(?:\.\d+)?-{1}-?\d+(?:\.\d+)?\)/g, "#")
-    .replace(/\(-?\d+(?:\.\d+)?\)/g, "#")
-    .replace(/-?\d+(?:\.\d+)?/g, "#")
-    .trim();
-}
-
-function extractNums(text: string): number[] {
-  const m = text.match(/-?\d+(?:\.\d+)?/g);
-  return m ? m.map(Number).filter(Number.isFinite) : [];
-}
-
-function fillJa(tpl: string, vals: number[]): string {
-  let i = 0;
-  return tpl.replace(/#/g, () => {
-    if (i >= vals.length) return "#";
-    const v = vals[i++];
-    const rounded = Math.round(v * 10) / 10;
-    return Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1);
-  });
-}
+// 2026-09-07: 正規化 / 数値抽出 / 埋め戻し / マーカー除去は services/mods/normalize.ts に統一
+// (以前はここに同じロジックの写しがあった)。
+import {
+  normalizeModTemplate as normalizeTpl,
+  extractNumbers as extractNums,
+  fillTemplate as fillJa,
+  stripRichTextMarkers as stripRichText,
+} from "../../services/mods/normalize";
 
 const _modJaIndex: Map<string, string> = (() => {
   const map = new Map<string, string>();
@@ -115,12 +100,6 @@ const _uniqueModsJaIndex: Map<string, string> = (() => {
   }
   return map;
 })();
-
-function stripRichText(s: string): string {
-  return s
-    .replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2") // [Tag|Display] → Display
-    .replace(/\[([^|\]]+)\]/g, "$1"); // [Tag] → Tag (Channelling 等)
-}
 
 function strip(text: string): string {
   // リッチテキストマーカーは先に除去 (辞書キーは plain text 前提、2026-05-22 修正)
