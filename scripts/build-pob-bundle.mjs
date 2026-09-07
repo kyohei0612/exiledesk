@@ -185,7 +185,8 @@ async function resolveRuntimeDir(withJp) {
     encoding: "utf-8",
   });
   if (a.status !== 0) throw new Error(`git archive ${JP_RUNTIME_BASE_COMMIT} failed: ${a.stderr}`);
-  const x = spawnSync("tar", ["-xf", tar, "-C", tmp], { encoding: "utf-8" });
+  // 絶対パス (C:\...) を渡すと Git Bash の GNU tar が「C はリモートホスト」と解釈して落ちるので、cwd 相対で展開する
+  const x = spawnSync("tar", ["-xf", "runtime.tar"], { cwd: tmp, encoding: "utf-8" });
   if (x.status !== 0) throw new Error(`tar extract failed: ${x.stderr}`);
   await unlink(tar);
   log(`exported official runtime @${JP_RUNTIME_BASE_COMMIT} → ${tmp}`);
