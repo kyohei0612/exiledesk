@@ -6,6 +6,17 @@ name: Weekly Dictionary Update
 #
 # - 手動 trigger も可能 (workflow_dispatch)
 # - PR は auto/dict-update branch に push、レビュー後マージ
+#
+# 2026-09-07 修復 (2026-05-24 の作成以来 15 週連続で失敗していた):
+#   - data-cache/ は gitignore 対象で CI には存在せず、Phase λ / names-ja が
+#     スラッグ源を失って即死していた → actions/cache で週をまたいで持ち越す。
+#     初回 (cache miss) は個別ページ ~780 枚を 1 req/s で取るため ~15 分かかるが、
+#     2 回目以降は新ユニークの差分だけになる。
+#   - スラッグ源であるカテゴリページを取る Phase κ (build-unique-mods-ja) を
+#     build:dicts:online の先頭に追加 (package.json)。
+#   - 辞書の件数が減ったら PR を作らず失敗させるガードを追加。
+#     poe2db の HTML 変更でスクレイパーが 0 件を返すと、旧来は辞書を空で
+#     上書きした PR がそのまま出る構造だった。
 on:
   schedule:
     - cron: "0 0 * * 0"
@@ -18,7 +29,8 @@ permissions:
 jobs:
   build-dicts:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 初回 cold cache で ~18 分見込み。余裕を持たせる。
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -27,22 +39,54 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          # release.yml と揃える (pnpm-lock.yaml は lockfileVersion 9.0、10 で検証済み)
+          version: 10
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Node 20 は 2026-04 に EOL。スクリプトは fetch / fs のみで 22 に依存差なし。
+          node-version: "22"
           cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # POE2DB スクレイプキャッシュ (個別ユニークページ等) を週をまたいで持ち越す。
+      # key は run ごとに一意にして毎回保存し、restore-keys で直近の分を復元する。
+      # カテゴリページ (スラッグ源) は Phase κ がオンライン時に必ず再取得するので、
+      # キャッシュが古くても新ユニークの検出は阻害されない。
+      - name: Restore POE2DB scrape cache
+        uses: actions/cache@v4
+        with:
+          path: data-cache
+          key: poe2db-cache-${{ github.run_id }}
+          restore-keys: |
+            poe2db-cache-
 
       - name: Build dictionaries (online — POE2DB / RePoE / trade2 取得)
         run: pnpm build:dicts:online
         env:
           # POE2DB / pathofexile への礼儀として UA に連絡先入れる
           USER_AGENT_CONTACT: "ExileDesk CI <nekodori0612@gmail.com>"
+
+      # 件数が 1 つでも減ったら失敗させる (PR は作らない)。
+      # 辞書はすべて「補強」方針なので、正常なら件数は単調増加のはず。
+      # 減る = スクレイパーの空振り (HTML 変更) か上流障害なので、人が見るべき。
+      - name: Guard against dictionary regressions
+        run: |
+          fail=0
+          for f in unique-mods-ja unique-names-ja poe2-flavour-ja mod-tier-and-group trade2-stat-mapping currency-effects-ja items-ja-poe2db; do
+            p="src/i18n/$f.json"
+            before=$(git show "HEAD:$p" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);console.log(Array.isArray(d)?d.length:Object.keys(d).length)})')
+            after=$(node -e "const d=require('./$p');console.log(Array.isArray(d)?d.length:Object.keys(d).length)")
+            printf '%-36s %6s -> %6s\n' "$p" "$before" "$after"
+            if [ "$after" -lt "$before" ]; then
+              echo "::error file=$p::辞書の件数が減少 ($before -> $after)。スクレイパーの空振りか上流障害の可能性。PR は作成しません。"
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ]
 
       - name: Detect dictionary changes
         id: diff
@@ -72,7 +116,7 @@ jobs:
             echo '```'
             echo ""
             echo "## 詳細件数"
-            for f in src/i18n/unique-mods-ja.json src/i18n/unique-names-ja.json src/i18n/poe2-flavour-ja.json src/i18n/mod-tier-and-group.json src/i18n/trade2-stat-mapping.json; do
+            for f in src/i18n/unique-mods-ja.json src/i18n/unique-names-ja.json src/i18n/poe2-flavour-ja.json src/i18n/mod-tier-and-group.json src/i18n/trade2-stat-mapping.json src/i18n/currency-effects-ja.json src/i18n/items-ja-poe2db.json; do
               if [ -f "$f" ]; then
                 count=$(node -e "const d=require('./$f');console.log(Array.isArray(d)?d.length:typeof d==='object'?Object.keys(d).length:0)")
                 echo "- \`$f\`: ${count} entries"

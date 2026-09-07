@@ -18,7 +18,7 @@
  *
  *   各ページに <div class="d-flex border-top rounded">...</div> 単位で
  *   ユニーク 1 個分のブロックがあり、内部に
- *     <a class="UniqueItems uniqueitem" href="<slug>">
+ *     <a class="UniqueItems UniqueItem" href="<slug>">
  *     <div class="explicitMod">[mod html]</div> *
  *   が並ぶ。slug (例: "Kalandras_Touch") で EN/JP ブロックを突合し、
  *   位置順に explicitMod テキストをペアリングして辞書化する。
@@ -205,9 +205,9 @@ function htmlToText(html, opts = {}) {
  *
  * 観測 (2026-05-22, /jp/Ring):
  *   <div class="d-flex border-top rounded">
- *     <div class="flex-shrink-0"><a class="UniqueItems uniqueitem" ... href="<Slug>">...</a></div>
+ *     <div class="flex-shrink-0"><a class="UniqueItems UniqueItem" ... href="<Slug>">...</a></div>
  *     <div class="flex-grow-1 ms-2">
- *       <div><a class="uniqueitem" ... href="/<lang>/<Slug>"><span class="uniqueName">...</span> <span class="uniqueTypeLine">...</span></a></div>
+ *       <div><a class="UniqueItem" ... href="/<lang>/<Slug>"><span class="uniqueName">...</span> <span class="uniqueTypeLine">...</span></a></div>
  *       <div class="explicitMod">...</div>
  *       <div class="explicitMod">...</div>
  *       ...
@@ -215,7 +215,7 @@ function htmlToText(html, opts = {}) {
  *   </div>
  *
  * 戻り値: [{ slug, mods: [<plain text>, ...] }, ...]
- *   - slug は `<a class="UniqueItems uniqueitem" ... href="...">` の最初に出る
+ *   - slug は `<a class="UniqueItems UniqueItem" ... href="...">` の最初に出る
  *     href (バーストラ無し ナマ slug)。Sekhema's Resolve が 3 ベース分繰り返される
  *     ようなページもあるが、slug ベースなのでマージできる。
  */
@@ -227,11 +227,15 @@ function parseUniqueBlocks(html) {
   for (let i = 1; i < parts.length; i++) {
     const chunk = parts[i];
     // 次の </div></div></div></div> 系で end が来るが、ここでは
-    // 同一文字列内で「class="UniqueItems uniqueitem" ... href="<slug>"」を取り、
+    // 同一文字列内で「class="UniqueItems UniqueItem" ... href="<slug>"」を取り、
     // 続く explicitMod を貪欲に集める (block 終端は次の "d-flex border-top rounded"
     // 分割で自然に確定するため、現在の chunk 内に閉じこめられる)
+    // 2026-09-07: poe2db が 2026-05-22〜06-01 の間に class の casing を
+    // "UniqueItems uniqueitem" → "UniqueItems UniqueItem" に変えており、
+    // 以降この match が全ページで空振りして entries: 0 → 辞書を空で上書きしていた。
+    // 再発防止として大文字小文字を無視する (i フラグ)。
     const m =
-      chunk.match(/class="UniqueItems uniqueitem"[^>]*href="([^"\/]+)"/);
+      chunk.match(/class="UniqueItems UniqueItem"[^>]*href="([^"\/]+)"/i);
     if (!m) continue;
     const slug = m[1];
     const modMatches = [

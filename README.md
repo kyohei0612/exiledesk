@@ -59,6 +59,41 @@ node scripts/build-trade2-stat-mapping.mjs
 `data-cache/poe2db-unique-pages/` は事前にスクレイプ済の HTML キャッシュなので、`--offline` フラグで HTTP 不要。
 新ユニュ追加など実 HTTP が必要な場合は `--offline` を外して実行 (POE2DB へのレート制限注意)。
 
+### 週次辞書更新 (CI) が失敗する / ユニーク辞書が 0 件になる → スクレイパー追従
+
+`build:dicts:online` は **Phase κ (`build-unique-mods-ja.mjs`) が先頭**で、POE2DB の
+カテゴリページ (`/us/Rings` 等) からユニークのスラッグ一覧を作り、以降の
+λ (`build-unique-pages-detail`) / `build-unique-names-ja` がそれを消費する。
+この κ が空振りすると後段が全滅する。
+
+症状の見分け方 (κ のログ):
+
+```text
+[build-unique-mods-ja] Rings: en=0 ja=0 pair-blocks=0 ...   ← 全カテゴリでこれ
+[build-unique-mods-ja] entries: 0
+```
+
+`categories fetched: 32` なのに `en=0 ja=0` なら HTTP は通っていて **HTML のパースが外れている**。
+実例 (2026-06): POE2DB がアンカーの class を `UniqueItems uniqueitem` → `UniqueItems UniqueItem`
+に変えただけで 3 ヶ月間ずっと 0 件だった (正規表現は現在 `i` フラグで casing 非依存)。
+確認手順:
+
+```bash
+node scripts/build-unique-mods-ja.mjs        # カテゴリページ再取得 (64 req、約 1 分)
+grep -o -i 'class="unique[A-Za-z ]*"' data-cache/poe2db_Rings_us.html | sort | uniq -c
+```
+
+ここに出る class 名と `parseUniqueBlocks` (κ) / `collectSlugs` (λ) の正規表現を突き合わせる。
+個別ページ側 (`<div class="Stats">` / `explicitMod` / `itemName` / `class="lc"`) は
+`data-cache/poe2db-unique-pages/<slug>_us.html` で同様に確認できる。
+
+CI (`.github/workflows/build-dicts.yml`) 側の仕組み:
+
+- `data-cache/` は gitignore 対象なので **actions/cache で週をまたいで持ち越す**
+  (初回のみ個別ページ ~780 枚を 1 req/s で取得、約 15〜18 分。以降は差分のみ)
+- 辞書の件数が 1 つでも減ったら PR を作らず失敗する (0 件で上書きされる事故の防止)
+- 手動実行: `gh workflow run build-dicts.yml` → 差分があれば `auto/dict-update` に PR が立つ
+
 ### 「poe.ninja API 構造変更を検出」警告 → スキーマ追従
 
 `src-tauri/src/poe_ninja_client.rs` の以下関数を更新:

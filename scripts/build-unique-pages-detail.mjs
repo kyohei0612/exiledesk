@@ -18,7 +18,7 @@
  * データソース:
  *   1. slug 一覧:
  *      - data-cache/poe2db_<Cat>_us.html (Phase κ で作成済キャッシュ) を
- *        全 read → `class="UniqueItems uniqueitem" ... href="<slug>"` で
+ *        全 read → `class="UniqueItems UniqueItem" ... href="<slug>"` で
  *        抽出 → 重複除去。オフライン専用 (Phase κ 同等の slug 範囲)
  *   2. 個別ページ:
  *      - https://poe2db.tw/us/<slug>
@@ -132,7 +132,9 @@ async function collectSlugs() {
     if (!html) continue;
     // href が "Brynhands_Mark" のように bare slug 形式 と "/us/Foo" 形式が
     // 混在する可能性があるため、両方拾って正規化する。
-    const re = /class="UniqueItems uniqueitem"[^>]*href="([^"]+)"/g;
+    // 2026-09-07: casing 変更 ("uniqueitem" → "UniqueItem") で 0 件になっていた。
+    // build-unique-mods-ja.mjs 側と同様に大文字小文字を無視する。
+    const re = /class="UniqueItems UniqueItem"[^>]*href="([^"]+)"/gi;
     let m;
     while ((m = re.exec(html)) !== null) {
       let slug = m[1];
@@ -265,8 +267,14 @@ async function main() {
     log(`--limit ${LIMIT}: truncated to ${slugs.length}`);
   }
   if (slugs.length === 0) {
-    log("no slugs available; abort");
-    return;
+    // 2026-09-07: 旧実装は return (exit 0) で通過し、次の build-unique-names-ja が
+    // 別のエラーで落ちて原因が分かりにくかった。ここで明示的に失敗させる。
+    log(
+      "no slugs available; abort — data-cache/poe2db_<Category>_us.html が無いか、" +
+        "アンカー抽出の正規表現が poe2db の現 HTML と合っていない。" +
+        "先に build-unique-mods-ja.mjs を実行するか README のメンテ手順を参照。",
+    );
+    process.exit(1);
   }
 
   let scrapedOk = 0;
