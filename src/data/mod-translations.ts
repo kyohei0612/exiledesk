@@ -161,6 +161,58 @@ const normalizedEnIndex: Map<string, number> = (() => {
 
 // ━━ 公開関数 ━━
 
+/** 英語 mod 行を bundle で同定した結果 (クラフト収支の貼り付け解析用、2026-09-07) */
+export interface IdentifiedMod {
+  /** normalizeModTemplate 相当の正規化テンプレ (`#` プレースホルダ) */
+  normalizedEn: string;
+  /** bundle の text_en (レンジ表記のまま) */
+  enRaw: string;
+  /** 日本語テンプレ (タグ展開済) */
+  jaTemplate: string;
+  statIds: string[];
+  affixType: "prefix" | "suffix" | "unknown";
+  /** 行から取り出した実数値 (テンプレの `#` と同順) */
+  values: number[];
+}
+
+/**
+ * 実値入りの英語 mod 行 (例 "+52 to maximum Life") を bundle のテンプレに同定する。
+ * 正規化テンプレの完全一致で引き、数値は行から順に抽出する。該当なしは null。
+ */
+export function identifyModText(en: string): IdentifiedMod | null {
+  const line = expandTagsLocal(en.trim());
+  if (!line) return null;
+  const normalized = normalizeTemplate(line);
+  let idx = normalizedEnIndex.get(normalized);
+  if (idx === undefined) {
+    // bundle 側はタグ込みなので、タグ展開後で再索引 (初回のみ構築)
+    idx = normalizedEnExpandedIndex().get(normalized);
+  }
+  if (idx === undefined) return null;
+  const t = compiledTranslations[idx];
+  const values = (line.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  return {
+    normalizedEn: t.normalizedEn,
+    enRaw: t.enRaw,
+    jaTemplate: expandTagsLocal(t.jaTemplate),
+    statIds: t.statIds,
+    affixType: t.affixType,
+    values,
+  };
+}
+
+let _expandedIndex: Map<string, number> | null = null;
+function normalizedEnExpandedIndex(): Map<string, number> {
+  if (_expandedIndex) return _expandedIndex;
+  const m = new Map<string, number>();
+  for (let i = 0; i < compiledTranslations.length; i++) {
+    const k = normalizeTemplate(expandTagsLocal(compiledTranslations[i].enRaw));
+    if (k && !m.has(k)) m.set(k, i);
+  }
+  _expandedIndex = m;
+  return m;
+}
+
 /**
  * mod text の `[token|display]` タグを `display` 部分に展開。
  * trade2 API の生フォーマット → 人間に読める形に変換。

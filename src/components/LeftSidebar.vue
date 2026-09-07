@@ -17,6 +17,8 @@ const items: NavItem[] = [
   // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
   // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
+  // 2026-09-07: 装備貼り付け → エッセンスで作れる完成品の相場と収支
+  { id: "craft-profit", icon: "🜲", label: "クラフト収支", group: "economy" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   { id: "settings", icon: "⚙", label: "設定", group: "tools" },

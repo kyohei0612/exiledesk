@@ -252,6 +252,21 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
   `vendor/PoB2-JP` で commit + push → ExileDesk で submodule 参照を commit。
 - ユーザーデータ: `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
 
+### クラフト収支 (2026-09-07〜)
+
+- 左ナビ「クラフト収支」: ゲーム内で装備に Ctrl+C したテキスト (日英) を貼り付け → ベース / レアリティ / mod を同定
+  (`views/craft-profit/parse.ts`: item-text パーサ + mods-bundle 同定) → 使えるエッセンス / 合金と完成品の mod 構成を列挙
+  (`views/craft-profit/essence-plan.ts`) → trade2 で「同ベース・同 mod 以上 (保証モッドは最低ロール)」のレアの最安を取得
+  (`services/trade2/pricing.ts`: search → fetch、直列 + 2.5 秒間隔) → 合計コスト (ベース購入価格 + 素材) / 完成品最安 / 収支 を高貴建てで表示。
+- 規則はクライアントの効果文どおり: Lesser / 通常 / Greater エッセンス = マジック → レア + 保証モッド (既存 mod は残る)、
+  Perfect エッセンス / 合金 (Alloy) = レアからランダム 1 mod 除去 + 保証モッド (外れる mod ごとに行を分けて表示)。
+- データ: `scripts/build-essences-from-client.mjs` が Essences / EssenceMods / EssenceTargetItemCategories から
+  `src/i18n/essences.json` (エッセンス → 装備種別ごとの保証モッド ID) と `src/i18n/base-item-classes.json` (ベース名 → 装備種別) を生成
+  (`pnpm build:dicts:client` に含まれる)。保証モッドの文言 / ロール幅 / stat は mods-bundle.json、trade2 の stat ID は trade2-stat-mapping.json。
+- 素材価格は poe2scout の名前一致 (エッセンスは "essences" カテゴリ、合金は別カテゴリ)。相場の通貨換算は poe2scout のリーグレート
+  (神 / カオス) と各通貨の価格表。診断: `cd src-tauri && cargo run --example trade2_probe`。
+- 未対応 (次段階候補): ルーン / ソウルコア、触媒、オーメン、割れ (Fracturing)、保証モッドが複数候補からランダムなエッセンス、ilvl 要件。
+
 ## アーキテクチャ概要
 
 ```

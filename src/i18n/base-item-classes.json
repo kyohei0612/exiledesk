@@ -1,0 +1,7082 @@
+{
+  "Keyblade": {
+    "cls": "Two Hand Sword",
+    "lvl": 1
+  },
+  "Golden Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 1
+  },
+  "Golden Hoop": {
+    "cls": "Ring",
+    "lvl": 12
+  },
+  "Golden Obi": {
+    "cls": "Belt",
+    "lvl": 12
+  },
+  "Golden Flame": {
+    "cls": "Shield",
+    "lvl": 15
+  },
+  "Golden Wreath": {
+    "cls": "Helmet",
+    "lvl": 12
+  },
+  "Golden Visage": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Golden Mantle": {
+    "cls": "Body Armour",
+    "lvl": 20
+  },
+  "Golden Caligae": {
+    "cls": "Boots",
+    "lvl": 12
+  },
+  "Golden Bracers": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Timeless Jewel": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Ruby": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Emerald": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Sapphire": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Diamond": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Time-Lost Ruby": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Time-Lost Emerald": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Time-Lost Sapphire": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Time-Lost Diamond": {
+    "cls": "Jewel",
+    "lvl": 20
+  },
+  "Ethereal Blade": {
+    "cls": "Dagger",
+    "lvl": 1
+  },
+  "Energy Blade": {
+    "cls": "Two Hand Sword",
+    "lvl": 1
+  },
+  "Shortsword": {
+    "cls": "One Hand Sword",
+    "lvl": 1
+  },
+  "Broadsword": {
+    "cls": "One Hand Sword",
+    "lvl": 6
+  },
+  "Vampiric Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 11
+  },
+  "Scimitar": {
+    "cls": "One Hand Sword",
+    "lvl": 16
+  },
+  "Charred Shortsword": {
+    "cls": "One Hand Sword",
+    "lvl": 21
+  },
+  "Sickle Sword": {
+    "cls": "One Hand Sword",
+    "lvl": 28
+  },
+  "Falchion": {
+    "cls": "One Hand Sword",
+    "lvl": 33
+  },
+  "Treasured Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 40
+  },
+  "Cutlass": {
+    "cls": "One Hand Sword",
+    "lvl": 45
+  },
+  "Runic Shortsword": {
+    "cls": "One Hand Sword",
+    "lvl": 50
+  },
+  "Messer": {
+    "cls": "One Hand Sword",
+    "lvl": 52
+  },
+  "Commander Sword": {
+    "cls": "One Hand Sword",
+    "lvl": 54
+  },
+  "Dark Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 65
+  },
+  "[DNT] Halfsword": {
+    "cls": "One Hand Sword",
+    "lvl": 67
+  },
+  "[DNT] Flat Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 72
+  },
+  "[DNT] Siphoning Sword": {
+    "cls": "One Hand Sword",
+    "lvl": 77
+  },
+  "[DNT] Rider Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 78
+  },
+  "[DNT] Molten Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 79
+  },
+  "[DNT] Reaper Sword": {
+    "cls": "One Hand Sword",
+    "lvl": 77
+  },
+  "[DNT] Carved Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 75
+  },
+  "[DNT] Coveted Blade": {
+    "cls": "One Hand Sword",
+    "lvl": 78
+  },
+  "Corroded Longsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 1
+  },
+  "Iron Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 6
+  },
+  "Blessed Claymore": {
+    "cls": "Two Hand Sword",
+    "lvl": 11
+  },
+  "Broad Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 16
+  },
+  "Rippled Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 22
+  },
+  "Arced Longsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 28
+  },
+  "Stone Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 33
+  },
+  "Obsidian Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 36
+  },
+  "Keen Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 45
+  },
+  "Ancient Greatblade": {
+    "cls": "Two Hand Sword",
+    "lvl": 49
+  },
+  "Flanged Greatblade": {
+    "cls": "Two Hand Sword",
+    "lvl": 52
+  },
+  "Regalia Longsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 54
+  },
+  "Ultra Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 65
+  },
+  "[DNT] Ancient Longsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 67
+  },
+  "[DNT] Ferric Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 72
+  },
+  "[DNT] Holy Greatblade": {
+    "cls": "Two Hand Sword",
+    "lvl": 77
+  },
+  "[DNT] Wide Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 78
+  },
+  "[DNT] Crested Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 79
+  },
+  "[DNT] Jagged Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 77
+  },
+  "[DNT] Carved Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 75
+  },
+  "[DNT] Midnight Greatsword": {
+    "cls": "Two Hand Sword",
+    "lvl": 78
+  },
+  "Dull Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 1
+  },
+  "Hook Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 4
+  },
+  "Bearded Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 10
+  },
+  "Extended Cleaver": {
+    "cls": "One Hand Axe",
+    "lvl": 16
+  },
+  "Bandit Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 20
+  },
+  "Crescent Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 26
+  },
+  "Carving Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 33
+  },
+  "Sacrificial Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 37
+  },
+  "Boarding Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 45
+  },
+  "Fury Cleaver": {
+    "cls": "One Hand Axe",
+    "lvl": 48
+  },
+  "Battle Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 52
+  },
+  "Profane Cleaver": {
+    "cls": "One Hand Axe",
+    "lvl": 54
+  },
+  "Dread Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 65
+  },
+  "[DNT] Callous Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 67
+  },
+  "[DNT] Catcher Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 72
+  },
+  "[DNT] Aged Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 77
+  },
+  "[DNT] Towering Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 78
+  },
+  "[DNT] Vagabond Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 79
+  },
+  "[DNT] Moonlight Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 77
+  },
+  "[DNT] Hacking Hatchet": {
+    "cls": "One Hand Axe",
+    "lvl": 75
+  },
+  "[DNT] Ritualistic Axe": {
+    "cls": "One Hand Axe",
+    "lvl": 78
+  },
+  "Splitting Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 1
+  },
+  "Light Halberd": {
+    "cls": "Two Hand Axe",
+    "lvl": 4
+  },
+  "Executioner Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 10
+  },
+  "Arched Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 16
+  },
+  "Elegant Glaive": {
+    "cls": "Two Hand Axe",
+    "lvl": 20
+  },
+  "Savage Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 27
+  },
+  "Rending Halberd": {
+    "cls": "Two Hand Axe",
+    "lvl": 33
+  },
+  "Jagged Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 40
+  },
+  "Reaver Glaive": {
+    "cls": "Two Hand Axe",
+    "lvl": 45
+  },
+  "Ember Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 50
+  },
+  "Ceremonial Halberd": {
+    "cls": "Two Hand Axe",
+    "lvl": 52
+  },
+  "Monument Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 57
+  },
+  "Vile Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 65
+  },
+  "[DNT] Dividing Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 67
+  },
+  "[DNT] Feathersteel Halberd": {
+    "cls": "Two Hand Axe",
+    "lvl": 72
+  },
+  "[DNT] Grimhold Axe": {
+    "cls": "Two Hand Axe",
+    "lvl": 77
+  },
+  "[DNT] Notched Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 78
+  },
+  "[DNT] Intricate Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 79
+  },
+  "[DNT] Violent Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 77
+  },
+  "[DNT] Severing Halberd": {
+    "cls": "Two Hand Axe",
+    "lvl": 75
+  },
+  "[DNT] Clawed Greataxe": {
+    "cls": "Two Hand Axe",
+    "lvl": 78
+  },
+  "Wooden Club": {
+    "cls": "One Hand Mace",
+    "lvl": 1
+  },
+  "Smithing Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 4
+  },
+  "Slim Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 10
+  },
+  "Spiked Club": {
+    "cls": "One Hand Mace",
+    "lvl": 16
+  },
+  "Warpick": {
+    "cls": "One Hand Mace",
+    "lvl": 22
+  },
+  "Plated Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 26
+  },
+  "Brigand Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 33
+  },
+  "Construct Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 36
+  },
+  "Morning Star": {
+    "cls": "One Hand Mace",
+    "lvl": 45
+  },
+  "Jade Club": {
+    "cls": "One Hand Mace",
+    "lvl": 49
+  },
+  "Lumen Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 52
+  },
+  "Execratus Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 55
+  },
+  "Torment Club": {
+    "cls": "One Hand Mace",
+    "lvl": 65
+  },
+  "Runemastered Torment Club": {
+    "cls": "One Hand Mace",
+    "lvl": 65
+  },
+  "Kalguuran Forgehammer": {
+    "cls": "One Hand Mace",
+    "lvl": 47
+  },
+  "Felled Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 1
+  },
+  "Oak Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 4
+  },
+  "Forge Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 11
+  },
+  "Studded Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 16
+  },
+  "Cultist Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 22
+  },
+  "Temple Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 28
+  },
+  "Leaden Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 33
+  },
+  "Crumbling Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 38
+  },
+  "Pointed Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 45
+  },
+  "Totemic Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 50
+  },
+  "Greatmace": {
+    "cls": "Two Hand Mace",
+    "lvl": 52
+  },
+  "Precise Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 54
+  },
+  "Giant Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 65
+  },
+  "Hardwood Spear": {
+    "cls": "Spear",
+    "lvl": 1
+  },
+  "Ironhead Spear": {
+    "cls": "Spear",
+    "lvl": 5
+  },
+  "Hunting Spear": {
+    "cls": "Spear",
+    "lvl": 10
+  },
+  "Winged Spear": {
+    "cls": "Spear",
+    "lvl": 16
+  },
+  "War Spear": {
+    "cls": "Spear",
+    "lvl": 21
+  },
+  "Forked Spear": {
+    "cls": "Spear",
+    "lvl": 26
+  },
+  "Barbed Spear": {
+    "cls": "Spear",
+    "lvl": 33
+  },
+  "Broad Spear": {
+    "cls": "Spear",
+    "lvl": 40
+  },
+  "Crossblade Spear": {
+    "cls": "Spear",
+    "lvl": 45
+  },
+  "Seaglass Spear": {
+    "cls": "Spear",
+    "lvl": 51
+  },
+  "Sword Spear": {
+    "cls": "Spear",
+    "lvl": 52
+  },
+  "Striking Spear": {
+    "cls": "Spear",
+    "lvl": 55
+  },
+  "Helix Spear": {
+    "cls": "Spear",
+    "lvl": 65
+  },
+  "Crude Claw": {
+    "cls": "Claw",
+    "lvl": 1
+  },
+  "Pict Claw": {
+    "cls": "Claw",
+    "lvl": 6
+  },
+  "Wolfbone Claw": {
+    "cls": "Claw",
+    "lvl": 12
+  },
+  "Forked Claw": {
+    "cls": "Claw",
+    "lvl": 16
+  },
+  "Plated Claw": {
+    "cls": "Claw",
+    "lvl": 22
+  },
+  "Edged Claw": {
+    "cls": "Claw",
+    "lvl": 28
+  },
+  "Arced Claw": {
+    "cls": "Claw",
+    "lvl": 33
+  },
+  "Hooked Claw": {
+    "cls": "Claw",
+    "lvl": 36
+  },
+  "Razorglass Claw": {
+    "cls": "Claw",
+    "lvl": 45
+  },
+  "Sharktooth Claw": {
+    "cls": "Claw",
+    "lvl": 49
+  },
+  "Armoured Claw": {
+    "cls": "Claw",
+    "lvl": 52
+  },
+  "Piercing Claw": {
+    "cls": "Claw",
+    "lvl": 55
+  },
+  "Talon Claw": {
+    "cls": "Claw",
+    "lvl": 65
+  },
+  "Glass Shank": {
+    "cls": "Dagger",
+    "lvl": 1
+  },
+  "Crone Knife": {
+    "cls": "Dagger",
+    "lvl": 6
+  },
+  "Simple Dagger": {
+    "cls": "Dagger",
+    "lvl": 12
+  },
+  "Skinning Knife": {
+    "cls": "Dagger",
+    "lvl": 16
+  },
+  "Moon Dagger": {
+    "cls": "Dagger",
+    "lvl": 20
+  },
+  "Engraved Knife": {
+    "cls": "Dagger",
+    "lvl": 27
+  },
+  "Obsidian Dagger": {
+    "cls": "Dagger",
+    "lvl": 33
+  },
+  "Bloodletting Dagger": {
+    "cls": "Dagger",
+    "lvl": 39
+  },
+  "Mail Breaker": {
+    "cls": "Dagger",
+    "lvl": 45
+  },
+  "Kris Knife": {
+    "cls": "Dagger",
+    "lvl": 49
+  },
+  "Parrying Dagger": {
+    "cls": "Dagger",
+    "lvl": 52
+  },
+  "Arcane Dirk": {
+    "cls": "Dagger",
+    "lvl": 56
+  },
+  "Cinquedea": {
+    "cls": "Dagger",
+    "lvl": 65
+  },
+  "[DNT] Crystalline Dagger": {
+    "cls": "Dagger",
+    "lvl": 67
+  },
+  "[DNT] Hag Knife": {
+    "cls": "Dagger",
+    "lvl": 72
+  },
+  "[DNT] Prominent Dagger": {
+    "cls": "Dagger",
+    "lvl": 77
+  },
+  "[DNT] Carving Knife": {
+    "cls": "Dagger",
+    "lvl": 78
+  },
+  "[DNT] Crescent Dagger": {
+    "cls": "Dagger",
+    "lvl": 79
+  },
+  "[DNT] Intricade Knife": {
+    "cls": "Dagger",
+    "lvl": 77
+  },
+  "[DNT] Midnight Dagger": {
+    "cls": "Dagger",
+    "lvl": 75
+  },
+  "[DNT] Ritualistic Dagger": {
+    "cls": "Dagger",
+    "lvl": 78
+  },
+  "Wrapped Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 1
+  },
+  "Long Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 4
+  },
+  "Gothic Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 11
+  },
+  "Crackling Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 16
+  },
+  "Crescent Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 20
+  },
+  "Steelpoint Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 28
+  },
+  "Slicing Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 33
+  },
+  "Barrier Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 37
+  },
+  "Hefty Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 45
+  },
+  "Smooth Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 49
+  },
+  "Anima Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 52
+  },
+  "Graceful Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 56
+  },
+  "Wyrm Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 65
+  },
+  "Splintered Flail": {
+    "cls": "Flail",
+    "lvl": 1
+  },
+  "Chain Flail": {
+    "cls": "Flail",
+    "lvl": 6
+  },
+  "Holy Flail": {
+    "cls": "Flail",
+    "lvl": 11
+  },
+  "Iron Flail": {
+    "cls": "Flail",
+    "lvl": 16
+  },
+  "Twin Flail": {
+    "cls": "Flail",
+    "lvl": 20
+  },
+  "Slender Flail": {
+    "cls": "Flail",
+    "lvl": 26
+  },
+  "Stone Flail": {
+    "cls": "Flail",
+    "lvl": 33
+  },
+  "Ring Flail": {
+    "cls": "Flail",
+    "lvl": 38
+  },
+  "Guarded Flail": {
+    "cls": "Flail",
+    "lvl": 45
+  },
+  "Icicle Flail": {
+    "cls": "Flail",
+    "lvl": 47
+  },
+  "Tearing Flail": {
+    "cls": "Flail",
+    "lvl": 52
+  },
+  "Great Flail": {
+    "cls": "Flail",
+    "lvl": 58
+  },
+  "Abyssal Flail": {
+    "cls": "Flail",
+    "lvl": 65
+  },
+  "[DNT] Slivered Flail": {
+    "cls": "Flail",
+    "lvl": 67
+  },
+  "[DNT] Shackled Flail": {
+    "cls": "Flail",
+    "lvl": 72
+  },
+  "[DNT] Righteous Flail": {
+    "cls": "Flail",
+    "lvl": 77
+  },
+  "[DNT] Ferric Flail": {
+    "cls": "Flail",
+    "lvl": 78
+  },
+  "[DNT] Twofold Flail": {
+    "cls": "Flail",
+    "lvl": 79
+  },
+  "[DNT] Winding Flail": {
+    "cls": "Flail",
+    "lvl": 77
+  },
+  "[DNT] Boulder Flail": {
+    "cls": "Flail",
+    "lvl": 75
+  },
+  "[DNT] Banded Flail": {
+    "cls": "Flail",
+    "lvl": 78
+  },
+  "Withered Wand": {
+    "cls": "Wand",
+    "lvl": 1
+  },
+  "Bone Wand": {
+    "cls": "Wand",
+    "lvl": 2
+  },
+  "Attuned Wand": {
+    "cls": "Wand",
+    "lvl": 2
+  },
+  "Siphoning Wand": {
+    "cls": "Wand",
+    "lvl": 11
+  },
+  "Volatile Wand": {
+    "cls": "Wand",
+    "lvl": 16
+  },
+  "Galvanic Wand": {
+    "cls": "Wand",
+    "lvl": 25
+  },
+  "Acrid Wand": {
+    "cls": "Wand",
+    "lvl": 33
+  },
+  "Offering Wand": {
+    "cls": "Wand",
+    "lvl": 38
+  },
+  "Frigid Wand": {
+    "cls": "Wand",
+    "lvl": 45
+  },
+  "Torture Wand": {
+    "cls": "Wand",
+    "lvl": 49
+  },
+  "Critical Wand": {
+    "cls": "Wand",
+    "lvl": 52
+  },
+  "Primordial Wand": {
+    "cls": "Wand",
+    "lvl": 56
+  },
+  "Dueling Wand": {
+    "cls": "Wand",
+    "lvl": 65
+  },
+  "Twisted Wand": {
+    "cls": "Wand",
+    "lvl": 65
+  },
+  "Runic Fork": {
+    "cls": "Wand",
+    "lvl": 65
+  },
+  "Runemastered Runic Fork": {
+    "cls": "Wand",
+    "lvl": 65
+  },
+  "Ashen Staff": {
+    "cls": "Staff",
+    "lvl": 1
+  },
+  "Gelid Staff": {
+    "cls": "Staff",
+    "lvl": 2
+  },
+  "Voltaic Staff": {
+    "cls": "Staff",
+    "lvl": 2
+  },
+  "Spriggan Staff": {
+    "cls": "Staff",
+    "lvl": 11
+  },
+  "Pyrophyte Staff": {
+    "cls": "Staff",
+    "lvl": 16
+  },
+  "Chiming Staff": {
+    "cls": "Staff",
+    "lvl": 25
+  },
+  "Rending Staff": {
+    "cls": "Staff",
+    "lvl": 33
+  },
+  "Reaping Staff": {
+    "cls": "Staff",
+    "lvl": 38
+  },
+  "Icicle Staff": {
+    "cls": "Staff",
+    "lvl": 45
+  },
+  "Roaring Staff": {
+    "cls": "Staff",
+    "lvl": 49
+  },
+  "Paralysing Staff": {
+    "cls": "Staff",
+    "lvl": 52
+  },
+  "Sanctified Staff": {
+    "cls": "Staff",
+    "lvl": 56
+  },
+  "Dark Staff": {
+    "cls": "Staff",
+    "lvl": 65
+  },
+  "Ravenous Staff": {
+    "cls": "Staff",
+    "lvl": 65
+  },
+  "Permafrost Staff": {
+    "cls": "Staff",
+    "lvl": 75
+  },
+  "[DNT] Cragbreaker Staff": {
+    "cls": "Staff",
+    "lvl": 11
+  },
+  "Reflecting Staff": {
+    "cls": "Staff",
+    "lvl": 70
+  },
+  "Perching Staff": {
+    "cls": "Staff",
+    "lvl": 65
+  },
+  "[DNT] Driftwood Oar": {
+    "cls": "Staff",
+    "lvl": 65
+  },
+  "Crude Bow": {
+    "cls": "Bow",
+    "lvl": 1
+  },
+  "Shortbow": {
+    "cls": "Bow",
+    "lvl": 5
+  },
+  "Warden Bow": {
+    "cls": "Bow",
+    "lvl": 11
+  },
+  "Recurve Bow": {
+    "cls": "Bow",
+    "lvl": 16
+  },
+  "Composite Bow": {
+    "cls": "Bow",
+    "lvl": 22
+  },
+  "Dualstring Bow": {
+    "cls": "Bow",
+    "lvl": 28
+  },
+  "Cultist Bow": {
+    "cls": "Bow",
+    "lvl": 33
+  },
+  "Zealot Bow": {
+    "cls": "Bow",
+    "lvl": 39
+  },
+  "Artillery Bow": {
+    "cls": "Bow",
+    "lvl": 45
+  },
+  "Tribal Bow": {
+    "cls": "Bow",
+    "lvl": 50
+  },
+  "Greatbow": {
+    "cls": "Bow",
+    "lvl": 52
+  },
+  "Double Limb Bow": {
+    "cls": "Bow",
+    "lvl": 56
+  },
+  "Heavy Bow": {
+    "cls": "Bow",
+    "lvl": 65
+  },
+  "Makeshift Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 1
+  },
+  "Tense Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 4
+  },
+  "Sturdy Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 10
+  },
+  "Varnished Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 16
+  },
+  "Dyad Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 20
+  },
+  "Alloy Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 26
+  },
+  "Bombard Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 33
+  },
+  "Construct Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 38
+  },
+  "Blackfire Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 45
+  },
+  "Piercing Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 50
+  },
+  "Cumbrous Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 52
+  },
+  "Dedalian Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 56
+  },
+  "Esoteric Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 65
+  },
+  "Rattling Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 1
+  },
+  "Stoic Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 6
+  },
+  "Lupine Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 12
+  },
+  "Omen Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 16
+  },
+  "Ochre Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 21
+  },
+  "Shrine Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 26
+  },
+  "Devouring Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 33
+  },
+  "Clasped Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 36
+  },
+  "Devotional Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 45
+  },
+  "Wrath Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 49
+  },
+  "Aromatic Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 52
+  },
+  "Pious Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 58
+  },
+  "Hallowed Sceptre": {
+    "cls": "Sceptre",
+    "lvl": 65
+  },
+  "Changeling Talisman": {
+    "cls": "Talisman",
+    "lvl": 1
+  },
+  "Nettle Talisman": {
+    "cls": "Talisman",
+    "lvl": 5
+  },
+  "Cinderbark Talisman": {
+    "cls": "Talisman",
+    "lvl": 10
+  },
+  "Familial Talisman": {
+    "cls": "Talisman",
+    "lvl": 16
+  },
+  "Frenzied Talisman": {
+    "cls": "Talisman",
+    "lvl": 22
+  },
+  "Primal Talisman": {
+    "cls": "Talisman",
+    "lvl": 28
+  },
+  "Rabid Talisman": {
+    "cls": "Talisman",
+    "lvl": 34
+  },
+  "Vicious Talisman": {
+    "cls": "Talisman",
+    "lvl": 40
+  },
+  "Voltfang Talisman": {
+    "cls": "Talisman",
+    "lvl": 46
+  },
+  "Lumbering Talisman": {
+    "cls": "Talisman",
+    "lvl": 52
+  },
+  "Roaring Talisman": {
+    "cls": "Talisman",
+    "lvl": 58
+  },
+  "Wingbeat Talisman": {
+    "cls": "Talisman",
+    "lvl": 65
+  },
+  "Condemned Talisman": {
+    "cls": "Talisman",
+    "lvl": 65
+  },
+  "Rusted Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Fur Plate": {
+    "cls": "Body Armour",
+    "lvl": 4
+  },
+  "Iron Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Raider Plate": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Maraketh Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 20
+  },
+  "Steel Plate": {
+    "cls": "Body Armour",
+    "lvl": 27
+  },
+  "Full Plate": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Vaal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 37
+  },
+  "Juggernaut Plate": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Chieftain Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 50
+  },
+  "Colosseum Plate": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Champion Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Glorious Plate": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Conqueror Plate": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Abyssal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Leather Vest": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Quilted Vest": {
+    "cls": "Body Armour",
+    "lvl": 4
+  },
+  "Pathfinder Coat": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Shrouded Vest": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Rhoahide Coat": {
+    "cls": "Body Armour",
+    "lvl": 22
+  },
+  "Studded Vest": {
+    "cls": "Body Armour",
+    "lvl": 26
+  },
+  "Scout's Vest": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Serpentscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 36
+  },
+  "Corsair Vest": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Smuggler Coat": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Strider Vest": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Hardleather Coat": {
+    "cls": "Body Armour",
+    "lvl": 56
+  },
+  "Exquisite Vest": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Mail Coat": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Armoured Vest": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Tattered Robe": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Feathered Robe": {
+    "cls": "Body Armour",
+    "lvl": 5
+  },
+  "Hexer's Robe": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Bone Raiment": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Silk Robe": {
+    "cls": "Body Armour",
+    "lvl": 22
+  },
+  "Keth Raiment": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Votive Raiment": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Altar Robe": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Elementalist Robe": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Mystic Raiment": {
+    "cls": "Body Armour",
+    "lvl": 49
+  },
+  "Imperial Robe": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Plated Raiment": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Havoc Raiment": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Enlightened Robe": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Arcane Raiment": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Chain Mail": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Rogue Armour": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Vagabond Armour": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Cloaked Mail": {
+    "cls": "Body Armour",
+    "lvl": 26
+  },
+  "Explorer Armour": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Scale Mail": {
+    "cls": "Body Armour",
+    "lvl": 37
+  },
+  "Knight Armour": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Ancestral Mail": {
+    "cls": "Body Armour",
+    "lvl": 50
+  },
+  "Lamellar Mail": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Gladiator Armour": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Heroic Armour": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Tournament Mail": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Slayer Armour": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Pilgrim Vestments": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Pelt Mantle": {
+    "cls": "Body Armour",
+    "lvl": 10
+  },
+  "Mail Vestments": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Shaman Mantle": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Ironclad Vestments": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Sacrificial Mantle": {
+    "cls": "Body Armour",
+    "lvl": 36
+  },
+  "Cleric Vestments": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Tideseer Mantle": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Gilded Vestments": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Venerated Mantle": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Revered Vestments": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Corvus Mantle": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Zenith Vestments": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Ornate Ringmail": {
+    "cls": "Body Armour",
+    "lvl": 43
+  },
+  "Ancient Mail": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Hermit Garb": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Waxed Jacket": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Marabout Garb": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Wayfarer Jacket": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Anchorite Garb": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Scalper's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 39
+  },
+  "Scoundrel Jacket": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Ascetic Garb": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Clandestine Jacket": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Monastic Garb": {
+    "cls": "Body Armour",
+    "lvl": 56
+  },
+  "Torment Jacket": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Devout Garb": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Assassin Garb": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Rusted Greathelm": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Soldier Greathelm": {
+    "cls": "Helmet",
+    "lvl": 12
+  },
+  "Wrapped Greathelm": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Spired Greathelm": {
+    "cls": "Helmet",
+    "lvl": 27
+  },
+  "Elite Greathelm": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Warrior Greathelm": {
+    "cls": "Helmet",
+    "lvl": 36
+  },
+  "Commander Greathelm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Fierce Greathelm": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Sentinel Greathelm": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Goliath Greathelm": {
+    "cls": "Helmet",
+    "lvl": 57
+  },
+  "Guardian Greathelm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Shabby Hood": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Felt Cap": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Lace Hood": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Swathed Cap": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Hunter Hood": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Viper Cap": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Corsair Cap": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Leatherbound Hood": {
+    "cls": "Helmet",
+    "lvl": 50
+  },
+  "Velvet Cap": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Covert Hood": {
+    "cls": "Helmet",
+    "lvl": 56
+  },
+  "Armoured Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Twig Circlet": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Wicker Tiara": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Beaded Circlet": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Chain Tiara": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Feathered Tiara": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Gold Circlet": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Vermeil Circlet": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Jade Tiara": {
+    "cls": "Helmet",
+    "lvl": 50
+  },
+  "Noble Circlet": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Twilight Tiara": {
+    "cls": "Helmet",
+    "lvl": 58
+  },
+  "Magus Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Brimmed Helm": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Guarded Helm": {
+    "cls": "Helmet",
+    "lvl": 11
+  },
+  "Visored Helm": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Cowled Helm": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Shielded Helm": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Closed Helm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Decorated Helm": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Gallant Helm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Ancient Visor": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Iron Crown": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Horned Crown": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Cultist Crown": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Martyr Crown": {
+    "cls": "Helmet",
+    "lvl": 28
+  },
+  "Heavy Crown": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Spiritbone Crown": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Lavish Crown": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Archon Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Tenebrous Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Hewn Mask": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Face Mask": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Hooded Mask": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Veiled Mask": {
+    "cls": "Helmet",
+    "lvl": 28
+  },
+  "Tribal Mask": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Solid Mask": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Shaded Mask": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Death Mask": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Stocky Mitts": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Riveted Mitts": {
+    "cls": "Gloves",
+    "lvl": 11
+  },
+  "Tempered Mitts": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Bolstered Mitts": {
+    "cls": "Gloves",
+    "lvl": 27
+  },
+  "Moulded Mitts": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Detailed Mitts": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Titan Mitts": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Grand Mitts": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Suede Bracers": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Firm Bracers": {
+    "cls": "Gloves",
+    "lvl": 11
+  },
+  "Bound Bracers": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Sectioned Bracers": {
+    "cls": "Gloves",
+    "lvl": 28
+  },
+  "Spined Bracers": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Fine Bracers": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Hardened Bracers": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Engraved Bracers": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Torn Gloves": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Sombre Gloves": {
+    "cls": "Gloves",
+    "lvl": 12
+  },
+  "Stitched Gloves": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Jewelled Gloves": {
+    "cls": "Gloves",
+    "lvl": 26
+  },
+  "Intricate Gloves": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Pauascale Gloves": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Embroidered Gloves": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Adorned Gloves": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Ringmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 6
+  },
+  "Layered Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Doubled Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Plate Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Burnished Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Ornate Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Ancient Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Rope Cuffs": {
+    "cls": "Gloves",
+    "lvl": 5
+  },
+  "Aged Cuffs": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Goldcast Cuffs": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Kalguuran Cuffs": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Righteous Cuffs": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Signet Cuffs": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Gauze Wraps": {
+    "cls": "Gloves",
+    "lvl": 4
+  },
+  "Linen Wraps": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Spiral Wraps": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Buckled Wraps": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Furtive Wraps": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Utility Wraps": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Rough Greaves": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Iron Greaves": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Bronze Greaves": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Trimmed Greaves": {
+    "cls": "Boots",
+    "lvl": 27
+  },
+  "Stone Greaves": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Reefsteel Greaves": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Monument Greaves": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Totemic Greaves": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Rawhide Boots": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Laced Boots": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Embossed Boots": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Steeltoe Boots": {
+    "cls": "Boots",
+    "lvl": 28
+  },
+  "Lizardscale Boots": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Flared Boots": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Leatherplate Boots": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Embroidered Boots": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Straw Sandals": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Wrapped Sandals": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Lattice Sandals": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Silk Slippers": {
+    "cls": "Boots",
+    "lvl": 27
+  },
+  "Feathered Sandals": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Flax Sandals": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Studded Sandals": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Elaborate Sandals": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Mail Sabatons": {
+    "cls": "Boots",
+    "lvl": 6
+  },
+  "Braced Sabatons": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Stacked Sabatons": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Covered Sabatons": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Flexile Sabatons": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Bold Sabatons": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Padded Leggings": {
+    "cls": "Boots",
+    "lvl": 5
+  },
+  "Secured Leggings": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Pelt Leggings": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Weaver Leggings": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Gilt Leggings": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Pious Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Ancient Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Frayed Shoes": {
+    "cls": "Boots",
+    "lvl": 5
+  },
+  "Threaded Shoes": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Hunting Shoes": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Steelpoint Shoes": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Velour Shoes": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Bladed Shoes": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Splintered Tower Shield": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Painted Tower Shield": {
+    "cls": "Shield",
+    "lvl": 6
+  },
+  "Braced Tower Shield": {
+    "cls": "Shield",
+    "lvl": 12
+  },
+  "Barricade Tower Shield": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Effigial Tower Shield": {
+    "cls": "Shield",
+    "lvl": 21
+  },
+  "Rampart Tower Shield": {
+    "cls": "Shield",
+    "lvl": 28
+  },
+  "Heraldric Tower Shield": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Stone Tower Shield": {
+    "cls": "Shield",
+    "lvl": 36
+  },
+  "Crucible Tower Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Ancestor Tower Shield": {
+    "cls": "Shield",
+    "lvl": 50
+  },
+  "Phalanx Tower Shield": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Defiant Tower Shield": {
+    "cls": "Shield",
+    "lvl": 58
+  },
+  "Blacksteel Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Hardwood Targe": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Pelage Targe": {
+    "cls": "Shield",
+    "lvl": 8
+  },
+  "Studded Targe": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Crescent Targe": {
+    "cls": "Shield",
+    "lvl": 26
+  },
+  "Chiseled Targe": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Feathered Targe": {
+    "cls": "Shield",
+    "lvl": 37
+  },
+  "Stratified Targe": {
+    "cls": "Shield",
+    "lvl": 46
+  },
+  "Carved Targe": {
+    "cls": "Shield",
+    "lvl": 51
+  },
+  "Mosaic Targe": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Aureate Targe": {
+    "cls": "Shield",
+    "lvl": 57
+  },
+  "Grand Targe": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Blazon Crest Shield": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Sigil Crest Shield": {
+    "cls": "Shield",
+    "lvl": 7
+  },
+  "Emblem Crest Shield": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Jingling Crest Shield": {
+    "cls": "Shield",
+    "lvl": 28
+  },
+  "Sectarian Crest Shield": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Omen Crest Shield": {
+    "cls": "Shield",
+    "lvl": 36
+  },
+  "Wayward Crest Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Seer Crest Shield": {
+    "cls": "Shield",
+    "lvl": 50
+  },
+  "Stoic Crest Shield": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Empyreal Crest Shield": {
+    "cls": "Shield",
+    "lvl": 57
+  },
+  "Deified Crest Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Leather Buckler": {
+    "cls": "Buckler",
+    "lvl": 1
+  },
+  "Wooden Buckler": {
+    "cls": "Buckler",
+    "lvl": 5
+  },
+  "Plated Buckler": {
+    "cls": "Buckler",
+    "lvl": 11
+  },
+  "Iron Buckler": {
+    "cls": "Buckler",
+    "lvl": 16
+  },
+  "Ridged Buckler": {
+    "cls": "Buckler",
+    "lvl": 22
+  },
+  "Spiked Buckler": {
+    "cls": "Buckler",
+    "lvl": 26
+  },
+  "Ringed Buckler": {
+    "cls": "Buckler",
+    "lvl": 33
+  },
+  "Edged Buckler": {
+    "cls": "Buckler",
+    "lvl": 39
+  },
+  "Laminate Buckler": {
+    "cls": "Buckler",
+    "lvl": 45
+  },
+  "Pearl Buckler": {
+    "cls": "Buckler",
+    "lvl": 50
+  },
+  "Ornate Buckler": {
+    "cls": "Buckler",
+    "lvl": 65
+  },
+  "Array Buckler": {
+    "cls": "Buckler",
+    "lvl": 55
+  },
+  "Aegis Buckler": {
+    "cls": "Buckler",
+    "lvl": 65
+  },
+  "Twig Focus": {
+    "cls": "Focus",
+    "lvl": 1
+  },
+  "Woven Focus": {
+    "cls": "Focus",
+    "lvl": 6
+  },
+  "Antler Focus": {
+    "cls": "Focus",
+    "lvl": 10
+  },
+  "Engraved Focus": {
+    "cls": "Focus",
+    "lvl": 16
+  },
+  "Tonal Focus": {
+    "cls": "Focus",
+    "lvl": 22
+  },
+  "Crystal Focus": {
+    "cls": "Focus",
+    "lvl": 26
+  },
+  "Voodoo Focus": {
+    "cls": "Focus",
+    "lvl": 33
+  },
+  "Plumed Focus": {
+    "cls": "Focus",
+    "lvl": 36
+  },
+  "Runed Focus": {
+    "cls": "Focus",
+    "lvl": 45
+  },
+  "Whorl Focus": {
+    "cls": "Focus",
+    "lvl": 51
+  },
+  "Elegant Focus": {
+    "cls": "Focus",
+    "lvl": 52
+  },
+  "Attuned Focus": {
+    "cls": "Focus",
+    "lvl": 57
+  },
+  "Magus Focus": {
+    "cls": "Focus",
+    "lvl": 65
+  },
+  "Broadhead Quiver": {
+    "cls": "Quiver",
+    "lvl": 1
+  },
+  "Fire Quiver": {
+    "cls": "Quiver",
+    "lvl": 8
+  },
+  "Sacral Quiver": {
+    "cls": "Quiver",
+    "lvl": 16
+  },
+  "Two-Point Quiver": {
+    "cls": "Quiver",
+    "lvl": 24
+  },
+  "Blunt Quiver": {
+    "cls": "Quiver",
+    "lvl": 33
+  },
+  "Toxic Quiver": {
+    "cls": "Quiver",
+    "lvl": 39
+  },
+  "Serrated Quiver": {
+    "cls": "Quiver",
+    "lvl": 44
+  },
+  "Primed Quiver": {
+    "cls": "Quiver",
+    "lvl": 51
+  },
+  "Penetrating Quiver": {
+    "cls": "Quiver",
+    "lvl": 55
+  },
+  "Volant Quiver": {
+    "cls": "Quiver",
+    "lvl": 61
+  },
+  "Visceral Quiver": {
+    "cls": "Quiver",
+    "lvl": 65
+  },
+  "Crimson Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Azure Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Amber Amulet": {
+    "cls": "Amulet",
+    "lvl": 8
+  },
+  "Jade Amulet": {
+    "cls": "Amulet",
+    "lvl": 8
+  },
+  "Lapis Amulet": {
+    "cls": "Amulet",
+    "lvl": 8
+  },
+  "Lunar Amulet": {
+    "cls": "Amulet",
+    "lvl": 14
+  },
+  "Bloodstone Amulet": {
+    "cls": "Amulet",
+    "lvl": 18
+  },
+  "Stellar Amulet": {
+    "cls": "Amulet",
+    "lvl": 25
+  },
+  "Solar Amulet": {
+    "cls": "Amulet",
+    "lvl": 30
+  },
+  "Gold Amulet": {
+    "cls": "Amulet",
+    "lvl": 35
+  },
+  "Pearlescent Amulet": {
+    "cls": "Amulet",
+    "lvl": 8
+  },
+  "Veridical Chain": {
+    "cls": "Amulet",
+    "lvl": 52
+  },
+  "Runemastered Veridical Chain": {
+    "cls": "Amulet",
+    "lvl": 65
+  },
+  "Lament Amulet": {
+    "cls": "Amulet",
+    "lvl": 42
+  },
+  "Portent Amulet": {
+    "cls": "Amulet",
+    "lvl": 42
+  },
+  "Absent Amulet": {
+    "cls": "Amulet",
+    "lvl": 50
+  },
+  "Corona Amulet": {
+    "cls": "Amulet",
+    "lvl": 40
+  },
+  "Iron Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Lazuli Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Ruby Ring": {
+    "cls": "Ring",
+    "lvl": 8
+  },
+  "Sapphire Ring": {
+    "cls": "Ring",
+    "lvl": 12
+  },
+  "Topaz Ring": {
+    "cls": "Ring",
+    "lvl": 16
+  },
+  "Amethyst Ring": {
+    "cls": "Ring",
+    "lvl": 20
+  },
+  "Emerald Ring": {
+    "cls": "Ring",
+    "lvl": 26
+  },
+  "Pearl Ring": {
+    "cls": "Ring",
+    "lvl": 32
+  },
+  "Prismatic Ring": {
+    "cls": "Ring",
+    "lvl": 35
+  },
+  "Gold Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Unset Ring": {
+    "cls": "Ring",
+    "lvl": 44
+  },
+  "Abyssal Signet": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Two-Stone Ring": {
+    "cls": "Ring",
+    "lvl": 35
+  },
+  "Biostatic Ring": {
+    "cls": "Ring",
+    "lvl": 52
+  },
+  "Vitalic Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Mnemonic Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Kinetic Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Oneiric Ring": {
+    "cls": "Ring",
+    "lvl": 47
+  },
+  "Grasping Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Rawhide Belt": {
+    "cls": "Belt",
+    "lvl": 1
+  },
+  "Linen Belt": {
+    "cls": "Belt",
+    "lvl": 1
+  },
+  "Wide Belt": {
+    "cls": "Belt",
+    "lvl": 14
+  },
+  "Long Belt": {
+    "cls": "Belt",
+    "lvl": 20
+  },
+  "Plate Belt": {
+    "cls": "Belt",
+    "lvl": 25
+  },
+  "Ornate Belt": {
+    "cls": "Belt",
+    "lvl": 31
+  },
+  "Mail Belt": {
+    "cls": "Belt",
+    "lvl": 40
+  },
+  "Double Belt": {
+    "cls": "Belt",
+    "lvl": 44
+  },
+  "Heavy Belt": {
+    "cls": "Belt",
+    "lvl": 50
+  },
+  "Runemastered Heavy Belt": {
+    "cls": "Belt",
+    "lvl": 65
+  },
+  "Utility Belt": {
+    "cls": "Belt",
+    "lvl": 55
+  },
+  "Fine Belt": {
+    "cls": "Belt",
+    "lvl": 62
+  },
+  "Stalking Belt": {
+    "cls": "Belt",
+    "lvl": 50
+  },
+  "Invoking Belt": {
+    "cls": "Belt",
+    "lvl": 32
+  },
+  "Sinew Belt": {
+    "cls": "Belt",
+    "lvl": 32
+  },
+  "Forking Belt": {
+    "cls": "Belt",
+    "lvl": 32
+  },
+  "Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Dusk Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Gloam Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Penumbra Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Tenebrous Ring": {
+    "cls": "Ring",
+    "lvl": 1
+  },
+  "Dusk Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Gloam Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Penumbra Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Tenebrous Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Twisted Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Distorted Amulet": {
+    "cls": "Amulet",
+    "lvl": 1
+  },
+  "Garment": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Grand Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Sacrificial Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Grasping Mail": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Grasping Mail": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Grasping Mail": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runefather's Grasping Mail": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Grand Visage": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Grand Manchettes": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Grand Cuisses": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Golden Greaves": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Golden Plate": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Golden Shield": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Breach Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Refined Breach Ring": {
+    "cls": "Ring",
+    "lvl": 40
+  },
+  "Calescent Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 45
+  },
+  "Flared Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 48
+  },
+  "Battle Pick": {
+    "cls": "One Hand Mace",
+    "lvl": 51
+  },
+  "Marching Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 54
+  },
+  "Runeforged Marching Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 65
+  },
+  "Bandit Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 59
+  },
+  "Structured Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 62
+  },
+  "Snakewood Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 45
+  },
+  "Blacksmith Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 48
+  },
+  "Zealot Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 51
+  },
+  "Solemn Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 54
+  },
+  "Heavy Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 59
+  },
+  "Disintegrating Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 62
+  },
+  "Reaching Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 45
+  },
+  "Barbarous Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 48
+  },
+  "Arcing Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 51
+  },
+  "Waxing Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 54
+  },
+  "Bladed Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 59
+  },
+  "Guardian Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 62
+  },
+  "Snakewood Shortbow": {
+    "cls": "Bow",
+    "lvl": 45
+  },
+  "Protector Bow": {
+    "cls": "Bow",
+    "lvl": 48
+  },
+  "Rider Bow": {
+    "cls": "Bow",
+    "lvl": 51
+  },
+  "Twin Bow": {
+    "cls": "Bow",
+    "lvl": 54
+  },
+  "Adherent Bow": {
+    "cls": "Bow",
+    "lvl": 59
+  },
+  "Militant Bow": {
+    "cls": "Bow",
+    "lvl": 62
+  },
+  "Taut Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 45
+  },
+  "Robust Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 48
+  },
+  "Painted Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 51
+  },
+  "Twin Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 54
+  },
+  "Cannonade Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 59
+  },
+  "Bleak Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 62
+  },
+  "Steelhead Spear": {
+    "cls": "Spear",
+    "lvl": 45
+  },
+  "Coursing Spear": {
+    "cls": "Spear",
+    "lvl": 48
+  },
+  "Swift Spear": {
+    "cls": "Spear",
+    "lvl": 51
+  },
+  "Branched Spear": {
+    "cls": "Spear",
+    "lvl": 54
+  },
+  "Jagged Spear": {
+    "cls": "Spear",
+    "lvl": 59
+  },
+  "Massive Spear": {
+    "cls": "Spear",
+    "lvl": 62
+  },
+  "Howling Talisman": {
+    "cls": "Talisman",
+    "lvl": 55
+  },
+  "Fury Talisman": {
+    "cls": "Talisman",
+    "lvl": 59
+  },
+  "Cruel Talisman": {
+    "cls": "Talisman",
+    "lvl": 63
+  },
+  "Barbarian Plate": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Rugged Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Sandsworn Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Elegant Plate": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Heavy Plate": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Stone Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Patchwork Vest": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Hunting Coat": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Riding Coat": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Layered Vest": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runner Vest": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Lizardscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Avian Robe": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Cursespeaker's Robe": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Luxurious Robe": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "River Raiment": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Adherent's Raiment": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Ceremonial Robe": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Ring Mail": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Scoundrel Armour": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Wanderer Armour": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Mantled Mail": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Trailblazer Armour": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Golden Mail": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Templar Vestments": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Bearskin Mantle": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Chain Vestments": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Occultist Mantle": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Plated Vestments": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Heartcarver Mantle": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Oiled Jacket": {
+    "cls": "Body Armour",
+    "lvl": 48
+  },
+  "Evangelist Garb": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Itinerant Jacket": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Hatungo Garb": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Hawker's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Corroded Greathelm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Mercenary Greathelm": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Homeguard Greathelm": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Elegant Greathelm": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Noble Greathelm": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Rotted Hood": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Wool Cap": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Narrow Hood": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Wrapped Cap": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Deerstalker Hood": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Druidic Circlet": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Avian Tiara": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Desert Circlet": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Sandsworn Tiara": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Jungle Tiara": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Domed Helm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Engraved Helm": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Soldier Helm": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Cabalist Helm": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Cassis Helm": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Mailed Crown": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Forest Crown": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Zealot Crown": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Hallowed Crown": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Inquisitor Crown": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Oak Mask": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Bandit Mask": {
+    "cls": "Helmet",
+    "lvl": 48
+  },
+  "Skulking Mask": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Pariah Mask": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Avian Mask": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Plated Mitts": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Elegant Mitts": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Ancient Mitts": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Feathered Mitts": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Hunting Bracers": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Swift Bracers": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Refined Bracers": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Spiked Bracers": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Ominous Gloves": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Embellished Gloves": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Baroque Gloves": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Gold Gloves": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Ironmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Captain Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Zealot Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Braided Cuffs": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Heirloom Cuffs": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Ornate Cuffs": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Bandage Wraps": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Cambric Wraps": {
+    "cls": "Gloves",
+    "lvl": 51
+  },
+  "Adorned Wraps": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Plated Greaves": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Lionheart Greaves": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Elegant Greaves": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Carved Greaves": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Bound Boots": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Sleek Boots": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Studded Boots": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Serpentscale Boots": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Laced Sandals": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Bangled Sandals": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Elegant Slippers": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Dunerunner Sandals": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Soldiering Sabatons": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Goldwork Sabatons": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Bastion Sabatons": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Adherent Leggings": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Bound Leggings": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Shamanistic Leggings": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Wayfarer Shoes": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Silverbuckled Shoes": {
+    "cls": "Boots",
+    "lvl": 51
+  },
+  "Treerunner Shoes": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Aged Tower Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Metalworked Tower Shield": {
+    "cls": "Shield",
+    "lvl": 48
+  },
+  "Cultist Tower Shield": {
+    "cls": "Shield",
+    "lvl": 51
+  },
+  "Bulwark Tower Shield": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Noble Tower Shield": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Goldworked Tower Shield": {
+    "cls": "Shield",
+    "lvl": 61
+  },
+  "Ironwood Targe": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Fur-lined Targe": {
+    "cls": "Shield",
+    "lvl": 48
+  },
+  "Mercenary Targe": {
+    "cls": "Shield",
+    "lvl": 51
+  },
+  "Polished Targe": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Stone Targe": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Avian Targe": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Painted Crest Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Engraved Crest Shield": {
+    "cls": "Shield",
+    "lvl": 48
+  },
+  "Descry Crest Shield": {
+    "cls": "Shield",
+    "lvl": 51
+  },
+  "Dekharan Crest Shield": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Quartered Crest Shield": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Glowering Crest Shield": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Oak Buckler": {
+    "cls": "Buckler",
+    "lvl": 45
+  },
+  "Painted Buckler": {
+    "cls": "Buckler",
+    "lvl": 48
+  },
+  "Coiled Buckler": {
+    "cls": "Buckler",
+    "lvl": 51
+  },
+  "Spikeward Buckler": {
+    "cls": "Buckler",
+    "lvl": 54
+  },
+  "Jingling Buckler": {
+    "cls": "Buckler",
+    "lvl": 59
+  },
+  "Bladeguard Buckler": {
+    "cls": "Buckler",
+    "lvl": 61
+  },
+  "Wreath Focus": {
+    "cls": "Focus",
+    "lvl": 45
+  },
+  "Staghorn Focus": {
+    "cls": "Focus",
+    "lvl": 48
+  },
+  "Jingling Focus": {
+    "cls": "Focus",
+    "lvl": 51
+  },
+  "Arrayed Focus": {
+    "cls": "Focus",
+    "lvl": 54
+  },
+  "Cultist Focus": {
+    "cls": "Focus",
+    "lvl": 59
+  },
+  "Hallowed Focus": {
+    "cls": "Focus",
+    "lvl": 61
+  },
+  "Soldier Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Ornate Plate": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Utzaal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Warlord Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Swiftstalker Coat": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Slipstrike Vest": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Wyrmscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Corsair Coat": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Vile Robe": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Flowing Raiment": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Sacramental Robe": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Feathered Raiment": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Dastard Armour": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Shrouded Mail": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Death Mail": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Thane Mail": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Wolfskin Mantle": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Conjurer Mantle": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Death Mantle": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Seastorm Mantle": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Sleek Jacket": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Rambler Jacket": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Falconer's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Austere Garb": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Primal Markings": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Warmonger Greathelm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Masked Greathelm": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Paragon Greathelm": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Imperial Greathelm": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Woven Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Desert Cap": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Trapper Hood": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Freebooter Cap": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Skycrown Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Sorcerous Tiara": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Kamasan Tiara": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Ancestral Tiara": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Warded Helm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Cryptic Helm": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Champion Helm": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Gladiatorial Helm": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Druidic Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Saintly Crown": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Divine Crown": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Cryptic Crown": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Brigand Mask": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Faridun Mask": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Soaring Mask": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Grinning Mask": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Knightly Mitts": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Ornate Mitts": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Vaal Mitts": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Massive Mitts": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Stalking Bracers": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Grand Bracers": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Barbed Bracers": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Polished Bracers": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Grim Gloves": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Opulent Gloves": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Vaal Gloves": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Sirenscale Gloves": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Steelmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Commander Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Cultist Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Blacksteel Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Bound Cuffs": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Ancient Cuffs": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Gleaming Cuffs": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Adherent Cuffs": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Tethering Bands": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "War Wraps": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Elegant Wraps": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Vaal Wraps": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Secured Wraps": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Fists of Stone": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Runeforged Fists of Stone": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Bulwark Greaves": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Ornate Greaves": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Vaal Greaves": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Tasalian Greaves": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Cinched Boots": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Cavalry Boots": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Dragonscale Boots": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Drakeskin Boots": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Bound Sandals": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Luxurious Slippers": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Sandsworn Sandals": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Sekhema Sandals": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Veteran Sabatons": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Noble Sabatons": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Fortress Sabatons": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Blacksteel Sabatons": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Faithful Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Apostle Leggings": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Warlock Leggings": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Cryptic Leggings": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Wanderer Shoes": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Charmed Shoes": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Quickslip Shoes": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Daggerfoot Shoes": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Royal Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Fortress Tower Shield": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Vaal Tower Shield": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Tawhoan Tower Shield": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Glacial Fortress": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Mammoth Targe": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Baroque Targe": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Soaring Targe": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Golden Targe": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Venerable Defender": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Intricate Crest Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Sekheman Crest Shield": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Vaal Crest Shield": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Blacksteel Crest Shield": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Gutspike Buckler": {
+    "cls": "Buckler",
+    "lvl": 70
+  },
+  "Ancient Buckler": {
+    "cls": "Buckler",
+    "lvl": 75
+  },
+  "Desert Buckler": {
+    "cls": "Buckler",
+    "lvl": 80
+  },
+  "Druidic Focus": {
+    "cls": "Focus",
+    "lvl": 65
+  },
+  "Leyline Focus": {
+    "cls": "Focus",
+    "lvl": 70
+  },
+  "Sacred Focus": {
+    "cls": "Focus",
+    "lvl": 75
+  },
+  "Tasalian Focus": {
+    "cls": "Focus",
+    "lvl": 80
+  },
+  "Runeforged Rusted Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Fur Plate": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runeforged Iron Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Runeforged Raider Plate": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Maraketh Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 20
+  },
+  "Runeforged Steel Plate": {
+    "cls": "Body Armour",
+    "lvl": 27
+  },
+  "Runeforged Full Plate": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Vaal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 37
+  },
+  "Runeforged Juggernaut Plate": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Chieftain Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 50
+  },
+  "Runeforged Colosseum Plate": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Champion Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Runeforged Glorious Plate": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Conqueror Plate": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Abyssal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Leather Vest": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Quilted Vest": {
+    "cls": "Body Armour",
+    "lvl": 4
+  },
+  "Runeforged Pathfinder Coat": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Runeforged Shrouded Vest": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Rhoahide Coat": {
+    "cls": "Body Armour",
+    "lvl": 22
+  },
+  "Runeforged Studded Vest": {
+    "cls": "Body Armour",
+    "lvl": 26
+  },
+  "Runeforged Scout's Vest": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Serpentscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 36
+  },
+  "Runeforged Corsair Vest": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Smuggler Coat": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Runeforged Strider Vest": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Hardleather Coat": {
+    "cls": "Body Armour",
+    "lvl": 56
+  },
+  "Runeforged Exquisite Vest": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Mail Coat": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Armoured Vest": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Tattered Robe": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Feathered Robe": {
+    "cls": "Body Armour",
+    "lvl": 5
+  },
+  "Runeforged Hexer's Robe": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Runeforged Bone Raiment": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Silk Robe": {
+    "cls": "Body Armour",
+    "lvl": 22
+  },
+  "Runeforged Keth Raiment": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Runeforged Votive Raiment": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Altar Robe": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Runeforged Elementalist Robe": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Mystic Raiment": {
+    "cls": "Body Armour",
+    "lvl": 49
+  },
+  "Runeforged Imperial Robe": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Plated Raiment": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Runeforged Havoc Raiment": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Enlightened Robe": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Arcane Raiment": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Chain Mail": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Rogue Armour": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Runeforged Vagabond Armour": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Cloaked Mail": {
+    "cls": "Body Armour",
+    "lvl": 26
+  },
+  "Runeforged Explorer Armour": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Scale Mail": {
+    "cls": "Body Armour",
+    "lvl": 37
+  },
+  "Runeforged Knight Armour": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Ancestral Mail": {
+    "cls": "Body Armour",
+    "lvl": 50
+  },
+  "Runeforged Lamellar Mail": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Gladiator Armour": {
+    "cls": "Body Armour",
+    "lvl": 58
+  },
+  "Runeforged Heroic Armour": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Tournament Mail": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Slayer Armour": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Pilgrim Vestments": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Pelt Mantle": {
+    "cls": "Body Armour",
+    "lvl": 10
+  },
+  "Runeforged Mail Vestments": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Shaman Mantle": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Runeforged Ironclad Vestments": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Sacrificial Mantle": {
+    "cls": "Body Armour",
+    "lvl": 36
+  },
+  "Runeforged Cleric Vestments": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Tideseer Mantle": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Runeforged Gilded Vestments": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Venerated Mantle": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Revered Vestments": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Corvus Mantle": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Zenith Vestments": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Hermit Garb": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Waxed Jacket": {
+    "cls": "Body Armour",
+    "lvl": 11
+  },
+  "Runeforged Marabout Garb": {
+    "cls": "Body Armour",
+    "lvl": 16
+  },
+  "Runeforged Wayfarer Jacket": {
+    "cls": "Body Armour",
+    "lvl": 28
+  },
+  "Runeforged Anchorite Garb": {
+    "cls": "Body Armour",
+    "lvl": 33
+  },
+  "Runeforged Scalper's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 39
+  },
+  "Runeforged Scoundrel Jacket": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runeforged Ascetic Garb": {
+    "cls": "Body Armour",
+    "lvl": 51
+  },
+  "Runeforged Clandestine Jacket": {
+    "cls": "Body Armour",
+    "lvl": 52
+  },
+  "Runeforged Monastic Garb": {
+    "cls": "Body Armour",
+    "lvl": 56
+  },
+  "Runeforged Torment Jacket": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Devout Garb": {
+    "cls": "Body Armour",
+    "lvl": 68
+  },
+  "Runeforged Assassin Garb": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runeforged Garment": {
+    "cls": "Body Armour",
+    "lvl": 1
+  },
+  "Runeforged Grand Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Sacrificial Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Elegant Plate": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Heavy Plate": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Stone Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged Layered Vest": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Runner Vest": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Lizardscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged River Raiment": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Adherent's Raiment": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Ceremonial Robe": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged Mantled Mail": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Trailblazer Armour": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Golden Mail": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged Occultist Mantle": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Plated Vestments": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Heartcarver Mantle": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged Itinerant Jacket": {
+    "cls": "Body Armour",
+    "lvl": 54
+  },
+  "Runeforged Hatungo Garb": {
+    "cls": "Body Armour",
+    "lvl": 59
+  },
+  "Runeforged Hawker's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 62
+  },
+  "Runeforged Primal Markings": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Rusted Greathelm": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Runeforged Soldier Greathelm": {
+    "cls": "Helmet",
+    "lvl": 12
+  },
+  "Runeforged Wrapped Greathelm": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Runeforged Spired Greathelm": {
+    "cls": "Helmet",
+    "lvl": 27
+  },
+  "Runeforged Elite Greathelm": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Warrior Greathelm": {
+    "cls": "Helmet",
+    "lvl": 36
+  },
+  "Runeforged Commander Greathelm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Fierce Greathelm": {
+    "cls": "Helmet",
+    "lvl": 51
+  },
+  "Runeforged Sentinel Greathelm": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Goliath Greathelm": {
+    "cls": "Helmet",
+    "lvl": 57
+  },
+  "Runeforged Guardian Greathelm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Shabby Hood": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Runeforged Felt Cap": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Runeforged Lace Hood": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runeforged Swathed Cap": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Runeforged Hunter Hood": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Viper Cap": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runeforged Corsair Cap": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Leatherbound Hood": {
+    "cls": "Helmet",
+    "lvl": 50
+  },
+  "Runeforged Velvet Cap": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Covert Hood": {
+    "cls": "Helmet",
+    "lvl": 56
+  },
+  "Runeforged Armoured Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Twig Circlet": {
+    "cls": "Helmet",
+    "lvl": 1
+  },
+  "Runeforged Wicker Tiara": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Runeforged Beaded Circlet": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Runeforged Chain Tiara": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Runeforged Feathered Tiara": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Gold Circlet": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runeforged Vermeil Circlet": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Jade Tiara": {
+    "cls": "Helmet",
+    "lvl": 50
+  },
+  "Runeforged Noble Circlet": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Twilight Tiara": {
+    "cls": "Helmet",
+    "lvl": 58
+  },
+  "Runeforged Magus Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Brimmed Helm": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Runeforged Guarded Helm": {
+    "cls": "Helmet",
+    "lvl": 11
+  },
+  "Runeforged Visored Helm": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Runeforged Cowled Helm": {
+    "cls": "Helmet",
+    "lvl": 26
+  },
+  "Runeforged Shielded Helm": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Closed Helm": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Decorated Helm": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Gallant Helm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Iron Crown": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Runeforged Horned Crown": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Runeforged Cultist Crown": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Runeforged Martyr Crown": {
+    "cls": "Helmet",
+    "lvl": 28
+  },
+  "Runeforged Heavy Crown": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Spiritbone Crown": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Lavish Crown": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Archon Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Hewn Mask": {
+    "cls": "Helmet",
+    "lvl": 5
+  },
+  "Runeforged Face Mask": {
+    "cls": "Helmet",
+    "lvl": 10
+  },
+  "Runeforged Hooded Mask": {
+    "cls": "Helmet",
+    "lvl": 16
+  },
+  "Runeforged Veiled Mask": {
+    "cls": "Helmet",
+    "lvl": 28
+  },
+  "Runeforged Tribal Mask": {
+    "cls": "Helmet",
+    "lvl": 33
+  },
+  "Runeforged Solid Mask": {
+    "cls": "Helmet",
+    "lvl": 45
+  },
+  "Runeforged Shaded Mask": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runeforged Death Mask": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Elegant Greathelm": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Noble Greathelm": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Runeforged Wrapped Cap": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Deerstalker Hood": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Runeforged Sandsworn Tiara": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Jungle Tiara": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Runeforged Cabalist Helm": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Gladiatorial Helm": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Hallowed Crown": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Inquisitor Crown": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Runeforged Pariah Mask": {
+    "cls": "Helmet",
+    "lvl": 54
+  },
+  "Runeforged Avian Mask": {
+    "cls": "Helmet",
+    "lvl": 59
+  },
+  "Runeforged Grand Visage": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Stocky Mitts": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Runeforged Riveted Mitts": {
+    "cls": "Gloves",
+    "lvl": 11
+  },
+  "Runeforged Tempered Mitts": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Bolstered Mitts": {
+    "cls": "Gloves",
+    "lvl": 27
+  },
+  "Runeforged Moulded Mitts": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Detailed Mitts": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Titan Mitts": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Grand Mitts": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Suede Bracers": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Runeforged Firm Bracers": {
+    "cls": "Gloves",
+    "lvl": 11
+  },
+  "Runeforged Bound Bracers": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Sectioned Bracers": {
+    "cls": "Gloves",
+    "lvl": 28
+  },
+  "Runeforged Spined Bracers": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Fine Bracers": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Hardened Bracers": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Engraved Bracers": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Torn Gloves": {
+    "cls": "Gloves",
+    "lvl": 1
+  },
+  "Runeforged Sombre Gloves": {
+    "cls": "Gloves",
+    "lvl": 12
+  },
+  "Runeforged Stitched Gloves": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Jewelled Gloves": {
+    "cls": "Gloves",
+    "lvl": 26
+  },
+  "Runeforged Intricate Gloves": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Pauascale Gloves": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Embroidered Gloves": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Adorned Gloves": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Ringmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 6
+  },
+  "Runeforged Layered Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Doubled Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Plate Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Burnished Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Ornate Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Rope Cuffs": {
+    "cls": "Gloves",
+    "lvl": 5
+  },
+  "Runeforged Aged Cuffs": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Goldcast Cuffs": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Kalguuran Cuffs": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Righteous Cuffs": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Signet Cuffs": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Gauze Wraps": {
+    "cls": "Gloves",
+    "lvl": 4
+  },
+  "Runeforged Linen Wraps": {
+    "cls": "Gloves",
+    "lvl": 16
+  },
+  "Runeforged Spiral Wraps": {
+    "cls": "Gloves",
+    "lvl": 33
+  },
+  "Runeforged Buckled Wraps": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runeforged Furtive Wraps": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runeforged Utility Wraps": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Ancient Mitts": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Runeforged Feathered Mitts": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Refined Bracers": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Runeforged Spiked Bracers": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Baroque Gloves": {
+    "cls": "Gloves",
+    "lvl": 54
+  },
+  "Runeforged Gold Gloves": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Zealot Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Ornate Cuffs": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Adorned Wraps": {
+    "cls": "Gloves",
+    "lvl": 59
+  },
+  "Runeforged Grand Manchettes": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Rough Greaves": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Runeforged Iron Greaves": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Runeforged Bronze Greaves": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Trimmed Greaves": {
+    "cls": "Boots",
+    "lvl": 27
+  },
+  "Runeforged Stone Greaves": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Reefsteel Greaves": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Monument Greaves": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Totemic Greaves": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Rawhide Boots": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Runeforged Laced Boots": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Runeforged Embossed Boots": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Steeltoe Boots": {
+    "cls": "Boots",
+    "lvl": 28
+  },
+  "Runeforged Lizardscale Boots": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Flared Boots": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Leatherplate Boots": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Embroidered Boots": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Straw Sandals": {
+    "cls": "Boots",
+    "lvl": 1
+  },
+  "Runeforged Wrapped Sandals": {
+    "cls": "Boots",
+    "lvl": 11
+  },
+  "Runeforged Lattice Sandals": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Silk Slippers": {
+    "cls": "Boots",
+    "lvl": 27
+  },
+  "Runeforged Feathered Sandals": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Flax Sandals": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Studded Sandals": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Elaborate Sandals": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Mail Sabatons": {
+    "cls": "Boots",
+    "lvl": 6
+  },
+  "Runeforged Braced Sabatons": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Stacked Sabatons": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Covered Sabatons": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Flexile Sabatons": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Bold Sabatons": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Padded Leggings": {
+    "cls": "Boots",
+    "lvl": 5
+  },
+  "Runeforged Secured Leggings": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Pelt Leggings": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Weaver Leggings": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Gilt Leggings": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Pious Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Frayed Shoes": {
+    "cls": "Boots",
+    "lvl": 5
+  },
+  "Runeforged Threaded Shoes": {
+    "cls": "Boots",
+    "lvl": 16
+  },
+  "Runeforged Hunting Shoes": {
+    "cls": "Boots",
+    "lvl": 33
+  },
+  "Runeforged Steelpoint Shoes": {
+    "cls": "Boots",
+    "lvl": 45
+  },
+  "Runeforged Velour Shoes": {
+    "cls": "Boots",
+    "lvl": 52
+  },
+  "Runeforged Bladed Shoes": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Elegant Greaves": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Runeforged Carved Greaves": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Studded Boots": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Runeforged Serpentscale Boots": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Elegant Slippers": {
+    "cls": "Boots",
+    "lvl": 54
+  },
+  "Runeforged Dunerunner Sandals": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Bastion Sabatons": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Shamanistic Leggings": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Treerunner Shoes": {
+    "cls": "Boots",
+    "lvl": 59
+  },
+  "Runeforged Grand Cuisses": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Splintered Tower Shield": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Runeforged Painted Tower Shield": {
+    "cls": "Shield",
+    "lvl": 6
+  },
+  "Runeforged Braced Tower Shield": {
+    "cls": "Shield",
+    "lvl": 12
+  },
+  "Runeforged Barricade Tower Shield": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Runeforged Effigial Tower Shield": {
+    "cls": "Shield",
+    "lvl": 21
+  },
+  "Runeforged Rampart Tower Shield": {
+    "cls": "Shield",
+    "lvl": 28
+  },
+  "Runeforged Heraldric Tower Shield": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Runeforged Stone Tower Shield": {
+    "cls": "Shield",
+    "lvl": 36
+  },
+  "Runeforged Crucible Tower Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Runeforged Ancestor Tower Shield": {
+    "cls": "Shield",
+    "lvl": 50
+  },
+  "Runeforged Phalanx Tower Shield": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Runeforged Defiant Tower Shield": {
+    "cls": "Shield",
+    "lvl": 58
+  },
+  "Runeforged Blacksteel Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runeforged Hardwood Targe": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Runeforged Pelage Targe": {
+    "cls": "Shield",
+    "lvl": 8
+  },
+  "Runeforged Studded Targe": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Runeforged Crescent Targe": {
+    "cls": "Shield",
+    "lvl": 26
+  },
+  "Runeforged Chiseled Targe": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Runeforged Feathered Targe": {
+    "cls": "Shield",
+    "lvl": 37
+  },
+  "Runeforged Stratified Targe": {
+    "cls": "Shield",
+    "lvl": 46
+  },
+  "Runeforged Carved Targe": {
+    "cls": "Shield",
+    "lvl": 51
+  },
+  "Runeforged Mosaic Targe": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Runeforged Aureate Targe": {
+    "cls": "Shield",
+    "lvl": 57
+  },
+  "Runeforged Grand Targe": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "[DNT] Venerable Defender": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Runeforged Blazon Crest Shield": {
+    "cls": "Shield",
+    "lvl": 1
+  },
+  "Runeforged Sigil Crest Shield": {
+    "cls": "Shield",
+    "lvl": 7
+  },
+  "Runeforged Emblem Crest Shield": {
+    "cls": "Shield",
+    "lvl": 16
+  },
+  "Runeforged Jingling Crest Shield": {
+    "cls": "Shield",
+    "lvl": 28
+  },
+  "Runeforged Sectarian Crest Shield": {
+    "cls": "Shield",
+    "lvl": 33
+  },
+  "Runeforged Omen Crest Shield": {
+    "cls": "Shield",
+    "lvl": 36
+  },
+  "Runeforged Wayward Crest Shield": {
+    "cls": "Shield",
+    "lvl": 45
+  },
+  "Runeforged Seer Crest Shield": {
+    "cls": "Shield",
+    "lvl": 50
+  },
+  "Runeforged Stoic Crest Shield": {
+    "cls": "Shield",
+    "lvl": 52
+  },
+  "Runeforged Empyreal Crest Shield": {
+    "cls": "Shield",
+    "lvl": 57
+  },
+  "Runeforged Deified Crest Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runeforged Leather Buckler": {
+    "cls": "Buckler",
+    "lvl": 1
+  },
+  "Runeforged Wooden Buckler": {
+    "cls": "Buckler",
+    "lvl": 5
+  },
+  "Runeforged Plated Buckler": {
+    "cls": "Buckler",
+    "lvl": 11
+  },
+  "Runeforged Iron Buckler": {
+    "cls": "Buckler",
+    "lvl": 16
+  },
+  "Runeforged Ridged Buckler": {
+    "cls": "Buckler",
+    "lvl": 22
+  },
+  "Runeforged Spiked Buckler": {
+    "cls": "Buckler",
+    "lvl": 26
+  },
+  "Runeforged Ringed Buckler": {
+    "cls": "Buckler",
+    "lvl": 33
+  },
+  "Runeforged Edged Buckler": {
+    "cls": "Buckler",
+    "lvl": 39
+  },
+  "Runeforged Laminate Buckler": {
+    "cls": "Buckler",
+    "lvl": 45
+  },
+  "Runeforged Pearl Buckler": {
+    "cls": "Buckler",
+    "lvl": 50
+  },
+  "Runeforged Ornate Buckler": {
+    "cls": "Buckler",
+    "lvl": 65
+  },
+  "Runeforged Array Buckler": {
+    "cls": "Buckler",
+    "lvl": 55
+  },
+  "Runeforged Aegis Buckler": {
+    "cls": "Buckler",
+    "lvl": 65
+  },
+  "Runeforged Bulwark Tower Shield": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Runeforged Noble Tower Shield": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Runeforged Goldworked Tower Shield": {
+    "cls": "Shield",
+    "lvl": 61
+  },
+  "Runeforged Polished Targe": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Runeforged Stone Targe": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Runeforged Avian Targe": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Runeforged Dekharan Crest Shield": {
+    "cls": "Shield",
+    "lvl": 54
+  },
+  "Runeforged Quartered Crest Shield": {
+    "cls": "Shield",
+    "lvl": 59
+  },
+  "Runeforged Glowering Crest Shield": {
+    "cls": "Shield",
+    "lvl": 62
+  },
+  "Runeforged Spikeward Buckler": {
+    "cls": "Buckler",
+    "lvl": 54
+  },
+  "Runeforged Jingling Buckler": {
+    "cls": "Buckler",
+    "lvl": 59
+  },
+  "Runeforged Bladeguard Buckler": {
+    "cls": "Buckler",
+    "lvl": 61
+  },
+  "Runeforged Twig Focus": {
+    "cls": "Focus",
+    "lvl": 1
+  },
+  "Runeforged Woven Focus": {
+    "cls": "Focus",
+    "lvl": 6
+  },
+  "Runeforged Antler Focus": {
+    "cls": "Focus",
+    "lvl": 10
+  },
+  "Runeforged Engraved Focus": {
+    "cls": "Focus",
+    "lvl": 16
+  },
+  "Runeforged Tonal Focus": {
+    "cls": "Focus",
+    "lvl": 22
+  },
+  "Runeforged Crystal Focus": {
+    "cls": "Focus",
+    "lvl": 26
+  },
+  "Runeforged Voodoo Focus": {
+    "cls": "Focus",
+    "lvl": 33
+  },
+  "Runeforged Plumed Focus": {
+    "cls": "Focus",
+    "lvl": 36
+  },
+  "Runeforged Runed Focus": {
+    "cls": "Focus",
+    "lvl": 45
+  },
+  "Runeforged Whorl Focus": {
+    "cls": "Focus",
+    "lvl": 51
+  },
+  "Runeforged Elegant Focus": {
+    "cls": "Focus",
+    "lvl": 52
+  },
+  "Runeforged Attuned Focus": {
+    "cls": "Focus",
+    "lvl": 57
+  },
+  "Runeforged Magus Focus": {
+    "cls": "Focus",
+    "lvl": 65
+  },
+  "Runeforged Arrayed Focus": {
+    "cls": "Focus",
+    "lvl": 54
+  },
+  "Runeforged Cultist Focus": {
+    "cls": "Focus",
+    "lvl": 59
+  },
+  "Runeforged Hallowed Focus": {
+    "cls": "Focus",
+    "lvl": 61
+  },
+  "Runeforged Soldier Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Ornate Plate": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Utzaal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Warlord Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Swiftstalker Coat": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Slipstrike Vest": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Wyrmscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Corsair Coat": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Vile Robe": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Flowing Raiment": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Sacramental Robe": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Feathered Raiment": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Dastard Armour": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Shrouded Mail": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Death Mail": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Thane Mail": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Wolfskin Mantle": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Conjurer Mantle": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Death Mantle": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Seastorm Mantle": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Sleek Jacket": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runeforged Rambler Jacket": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runeforged Falconer's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runeforged Austere Garb": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runeforged Warmonger Greathelm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Masked Greathelm": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Paragon Greathelm": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Imperial Greathelm": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Woven Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Desert Cap": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Trapper Hood": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Freebooter Cap": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Skycrown Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Sorcerous Tiara": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Kamasan Tiara": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Ancestral Tiara": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Warded Helm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Cryptic Helm": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Champion Helm": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Druidic Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Saintly Crown": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Divine Crown": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Cryptic Crown": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Brigand Mask": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runeforged Faridun Mask": {
+    "cls": "Helmet",
+    "lvl": 70
+  },
+  "Runeforged Soaring Mask": {
+    "cls": "Helmet",
+    "lvl": 75
+  },
+  "Runeforged Grinning Mask": {
+    "cls": "Helmet",
+    "lvl": 80
+  },
+  "Runeforged Knightly Mitts": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Ornate Mitts": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Vaal Mitts": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Massive Mitts": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged Stalking Bracers": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Grand Bracers": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Barbed Bracers": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Polished Bracers": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged Grim Gloves": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Opulent Gloves": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Vaal Gloves": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Sirenscale Gloves": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged Steelmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Commander Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Cultist Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Blacksteel Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged Bound Cuffs": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Ancient Cuffs": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Gleaming Cuffs": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Adherent Cuffs": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged War Wraps": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runeforged Elegant Wraps": {
+    "cls": "Gloves",
+    "lvl": 70
+  },
+  "Runeforged Vaal Wraps": {
+    "cls": "Gloves",
+    "lvl": 75
+  },
+  "Runeforged Secured Wraps": {
+    "cls": "Gloves",
+    "lvl": 80
+  },
+  "Runeforged Bulwark Greaves": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Ornate Greaves": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Vaal Greaves": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Tasalian Greaves": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Cinched Boots": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Cavalry Boots": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Dragonscale Boots": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Drakeskin Boots": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Bound Sandals": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Luxurious Slippers": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Sandsworn Sandals": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Sekhema Sandals": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Veteran Sabatons": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Noble Sabatons": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Fortress Sabatons": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Blacksteel Sabatons": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Faithful Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Apostle Leggings": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Warlock Leggings": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Cryptic Leggings": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Wanderer Shoes": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runeforged Charmed Shoes": {
+    "cls": "Boots",
+    "lvl": 70
+  },
+  "Runeforged Quickslip Shoes": {
+    "cls": "Boots",
+    "lvl": 75
+  },
+  "Runeforged Daggerfoot Shoes": {
+    "cls": "Boots",
+    "lvl": 80
+  },
+  "Runeforged Royal Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runeforged Fortress Tower Shield": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Runeforged Vaal Tower Shield": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Runeforged Tawhoan Tower Shield": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Runeforged Mammoth Targe": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runeforged Baroque Targe": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Runeforged Soaring Targe": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Runeforged Golden Targe": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Runeforged Intricate Crest Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runeforged Sekheman Crest Shield": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Runeforged Vaal Crest Shield": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Runeforged Blacksteel Crest Shield": {
+    "cls": "Shield",
+    "lvl": 80
+  },
+  "Runeforged Gutspike Buckler": {
+    "cls": "Buckler",
+    "lvl": 70
+  },
+  "Runeforged Ancient Buckler": {
+    "cls": "Buckler",
+    "lvl": 75
+  },
+  "Runeforged Desert Buckler": {
+    "cls": "Buckler",
+    "lvl": 80
+  },
+  "Runeforged Druidic Focus": {
+    "cls": "Focus",
+    "lvl": 65
+  },
+  "Runeforged Leyline Focus": {
+    "cls": "Focus",
+    "lvl": 70
+  },
+  "Runeforged Sacred Focus": {
+    "cls": "Focus",
+    "lvl": 75
+  },
+  "Runeforged Tasalian Focus": {
+    "cls": "Focus",
+    "lvl": 80
+  },
+  "Runeforged Wooden Club": {
+    "cls": "One Hand Mace",
+    "lvl": 38
+  },
+  "Runemastered Wooden Club": {
+    "cls": "One Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Slim Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 38
+  },
+  "Runeforged Spiked Club": {
+    "cls": "One Hand Mace",
+    "lvl": 40
+  },
+  "Runeforged Warpick": {
+    "cls": "One Hand Mace",
+    "lvl": 38
+  },
+  "Runeforged Kalguuran Forgehammer": {
+    "cls": "One Hand Mace",
+    "lvl": 65
+  },
+  "Runeforged Morning Star": {
+    "cls": "One Hand Mace",
+    "lvl": 65
+  },
+  "Runeforged Felled Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 38
+  },
+  "Runemastered Felled Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Oak Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 38
+  },
+  "Runemastered Oak Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Forge Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 40
+  },
+  "Runeforged Studded Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 38
+  },
+  "Runemastered Studded Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Cultist Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 40
+  },
+  "Runeforged Temple Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Leaden Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Crumbling Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 55
+  },
+  "Runeforged Pointed Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 65
+  },
+  "Runeforged Hardwood Spear": {
+    "cls": "Spear",
+    "lvl": 40
+  },
+  "Runeforged Ironhead Spear": {
+    "cls": "Spear",
+    "lvl": 38
+  },
+  "Runemastered Ironhead Spear": {
+    "cls": "Spear",
+    "lvl": 55
+  },
+  "Runeforged Hunting Spear": {
+    "cls": "Spear",
+    "lvl": 38
+  },
+  "Runeforged Winged Spear": {
+    "cls": "Spear",
+    "lvl": 40
+  },
+  "Runeforged War Spear": {
+    "cls": "Spear",
+    "lvl": 40
+  },
+  "Runeforged Forked Spear": {
+    "cls": "Spear",
+    "lvl": 55
+  },
+  "Runeforged Barbed Spear": {
+    "cls": "Spear",
+    "lvl": 55
+  },
+  "Runeforged Wrapped Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 38
+  },
+  "Runeforged Long Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 38
+  },
+  "Runemastered Long Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 55
+  },
+  "Runeforged Gothic Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 38
+  },
+  "Runemastered Gothic Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 55
+  },
+  "Runeforged Crescent Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 40
+  },
+  "Runeforged Steelpoint Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 40
+  },
+  "Runeforged Crude Bow": {
+    "cls": "Bow",
+    "lvl": 55
+  },
+  "Runeforged Shortbow": {
+    "cls": "Bow",
+    "lvl": 55
+  },
+  "Runeforged Warden Bow": {
+    "cls": "Bow",
+    "lvl": 40
+  },
+  "Runeforged Recurve Bow": {
+    "cls": "Bow",
+    "lvl": 40
+  },
+  "Runeforged Composite Bow": {
+    "cls": "Bow",
+    "lvl": 55
+  },
+  "Runeforged Dualstring Bow": {
+    "cls": "Bow",
+    "lvl": 55
+  },
+  "Runeforged Zealot Bow": {
+    "cls": "Bow",
+    "lvl": 55
+  },
+  "Runeforged Makeshift Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 38
+  },
+  "Runeforged Tense Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 38
+  },
+  "Runemastered Tense Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 55
+  },
+  "Runeforged Sturdy Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 38
+  },
+  "Runeforged Dyad Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 40
+  },
+  "Runemastered Dyad Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 65
+  },
+  "Runeforged Bombard Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 55
+  },
+  "Runeforged Changeling Talisman": {
+    "cls": "Talisman",
+    "lvl": 38
+  },
+  "Runeforged Nettle Talisman": {
+    "cls": "Talisman",
+    "lvl": 38
+  },
+  "Runemastered Nettle Talisman": {
+    "cls": "Talisman",
+    "lvl": 55
+  },
+  "Runeforged Familial Talisman": {
+    "cls": "Talisman",
+    "lvl": 38
+  },
+  "Runemastered Familial Talisman": {
+    "cls": "Talisman",
+    "lvl": 55
+  },
+  "Runeforged Vicious Talisman": {
+    "cls": "Talisman",
+    "lvl": 65
+  },
+  "Flanged Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 67
+  },
+  "Crown Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 72
+  },
+  "Molten Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 77
+  },
+  "Strife Pick": {
+    "cls": "One Hand Mace",
+    "lvl": 78
+  },
+  "Fortified Hammer": {
+    "cls": "One Hand Mace",
+    "lvl": 79
+  },
+  "Marauding Mace": {
+    "cls": "One Hand Mace",
+    "lvl": 77
+  },
+  "Akoyan Club": {
+    "cls": "One Hand Mace",
+    "lvl": 78
+  },
+  "Anvil Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 67
+  },
+  "Sacred Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 72
+  },
+  "Ironwood Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 77
+  },
+  "Fanatic Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 78
+  },
+  "Ruination Maul": {
+    "cls": "Two Hand Mace",
+    "lvl": 79
+  },
+  "Massive Greathammer": {
+    "cls": "Two Hand Mace",
+    "lvl": 77
+  },
+  "Tawhoan Greatclub": {
+    "cls": "Two Hand Mace",
+    "lvl": 78
+  },
+  "Aberrant Sledge": {
+    "cls": "Two Hand Mace",
+    "lvl": 70
+  },
+  "Runemastered Aberrant Sledge": {
+    "cls": "Two Hand Mace",
+    "lvl": 70
+  },
+  "Sinister Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 67
+  },
+  "Lunar Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 72
+  },
+  "Striking Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 77
+  },
+  "Bolting Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 78
+  },
+  "Aegis Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 79
+  },
+  "Razor Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 77
+  },
+  "Skullcrusher Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 75
+  },
+  "Dreaming Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 78
+  },
+  "Warding Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 65
+  },
+  "Runemastered Warding Quarterstaff": {
+    "cls": "Warstaff",
+    "lvl": 65
+  },
+  "Ironwood Shortbow": {
+    "cls": "Bow",
+    "lvl": 67
+  },
+  "Cavalry Bow": {
+    "cls": "Bow",
+    "lvl": 72
+  },
+  "Guardian Bow": {
+    "cls": "Bow",
+    "lvl": 77
+  },
+  "Gemini Bow": {
+    "cls": "Bow",
+    "lvl": 78
+  },
+  "Fanatic Bow": {
+    "cls": "Bow",
+    "lvl": 79
+  },
+  "Warmonger Bow": {
+    "cls": "Bow",
+    "lvl": 77
+  },
+  "Obliterator Bow": {
+    "cls": "Bow",
+    "lvl": 78
+  },
+  "Heartwood Shortbow": {
+    "cls": "Bow",
+    "lvl": 67
+  },
+  "Stout Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 67
+  },
+  "Engraved Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 72
+  },
+  "Flexed Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 77
+  },
+  "Gemini Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 78
+  },
+  "Siege Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 79
+  },
+  "Desolate Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 77
+  },
+  "Elegant Crossbow": {
+    "cls": "Crossbow",
+    "lvl": 78
+  },
+  "Trarthan Cannon": {
+    "cls": "Crossbow",
+    "lvl": 65
+  },
+  "Orichalcum Spear": {
+    "cls": "Spear",
+    "lvl": 67
+  },
+  "Soaring Spear": {
+    "cls": "Spear",
+    "lvl": 70
+  },
+  "Pronged Spear": {
+    "cls": "Spear",
+    "lvl": 72
+  },
+  "Stalking Spear": {
+    "cls": "Spear",
+    "lvl": 77
+  },
+  "Flying Spear": {
+    "cls": "Spear",
+    "lvl": 78
+  },
+  "Grand Spear": {
+    "cls": "Spear",
+    "lvl": 79
+  },
+  "Spiked Spear": {
+    "cls": "Spear",
+    "lvl": 77
+  },
+  "Guardian Spear": {
+    "cls": "Spear",
+    "lvl": 75
+  },
+  "Akoyan Spear": {
+    "cls": "Spear",
+    "lvl": 78
+  },
+  "Spiny Talisman": {
+    "cls": "Talisman",
+    "lvl": 67
+  },
+  "Ashbark Talisman": {
+    "cls": "Talisman",
+    "lvl": 72
+  },
+  "Fang Talisman": {
+    "cls": "Talisman",
+    "lvl": 77
+  },
+  "Fungal Talisman": {
+    "cls": "Talisman",
+    "lvl": 78
+  },
+  "Alpha Talisman": {
+    "cls": "Talisman",
+    "lvl": 75
+  },
+  "Maji Talisman": {
+    "cls": "Talisman",
+    "lvl": 79
+  },
+  "Wildwood Talisman": {
+    "cls": "Talisman",
+    "lvl": 70
+  },
+  "Thunder Talisman": {
+    "cls": "Talisman",
+    "lvl": 77
+  },
+  "Jade Talisman": {
+    "cls": "Talisman",
+    "lvl": 78
+  },
+  "Runemastered Rusted Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Iron Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Raider Plate": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Maraketh Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Steel Plate": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Runemastered Full Plate": {
+    "cls": "Body Armour",
+    "lvl": 45
+  },
+  "Runemastered Vaal Cuirass": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Leather Vest": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Quilted Vest": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Pathfinder Coat": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Shrouded Vest": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Rhoahide Coat": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Studded Vest": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Runemastered Scout's Vest": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Serpentscale Coat": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Smuggler Coat": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Strider Vest": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Exquisite Vest": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Armoured Vest": {
+    "cls": "Body Armour",
+    "lvl": 80
+  },
+  "Runemastered Tattered Robe": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Feathered Robe": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Hexer's Robe": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Bone Raiment": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Silk Robe": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Keth Raiment": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Votive Raiment": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Altar Robe": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Elementalist Robe": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Plated Raiment": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Havoc Raiment": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Enlightened Robe": {
+    "cls": "Body Armour",
+    "lvl": 75
+  },
+  "Runemastered Chain Mail": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Rogue Armour": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Vagabond Armour": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Cloaked Mail": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Runemastered Explorer Armour": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Scale Mail": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Knight Armour": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Ancestral Mail": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Heroic Armour": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Pilgrim Vestments": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Mail Vestments": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Shaman Mantle": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Ironclad Vestments": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Sacrificial Mantle": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Cleric Vestments": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Tideseer Mantle": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Gilded Vestments": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Revered Vestments": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Corvus Mantle": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Ornate Ringmail": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Ancient Mail": {
+    "cls": "Body Armour",
+    "lvl": 70
+  },
+  "Runemastered Hermit Garb": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Waxed Jacket": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Marabout Garb": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Wayfarer Jacket": {
+    "cls": "Body Armour",
+    "lvl": 40
+  },
+  "Runemastered Anchorite Garb": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Scalper's Jacket": {
+    "cls": "Body Armour",
+    "lvl": 55
+  },
+  "Runemastered Assassin Garb": {
+    "cls": "Body Armour",
+    "lvl": 73
+  },
+  "Runemastered Garment": {
+    "cls": "Body Armour",
+    "lvl": 38
+  },
+  "Runemastered Grand Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Sacrificial Regalia": {
+    "cls": "Body Armour",
+    "lvl": 65
+  },
+  "Runemastered Rusted Greathelm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Soldier Greathelm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Wrapped Greathelm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Spired Greathelm": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Elite Greathelm": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Warrior Greathelm": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Fierce Greathelm": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Shabby Hood": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Felt Cap": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Hunter Hood": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Viper Cap": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Corsair Cap": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Leatherbound Hood": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Velvet Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Covert Hood": {
+    "cls": "Helmet",
+    "lvl": 56
+  },
+  "Runemastered Armoured Cap": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Twig Circlet": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Wicker Tiara": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Beaded Circlet": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Chain Tiara": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Feathered Tiara": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Gold Circlet": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Vermeil Circlet": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Jade Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Twilight Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Magus Tiara": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Brimmed Helm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Guarded Helm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Visored Helm": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Cowled Helm": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Shielded Helm": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Decorated Helm": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Ancient Visor": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Iron Crown": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Horned Crown": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Cultist Crown": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Martyr Crown": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Heavy Crown": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Spiritbone Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Grand Visage": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Tenebrous Crown": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Hewn Mask": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Face Mask": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Hooded Mask": {
+    "cls": "Helmet",
+    "lvl": 38
+  },
+  "Runemastered Veiled Mask": {
+    "cls": "Helmet",
+    "lvl": 40
+  },
+  "Runemastered Tribal Mask": {
+    "cls": "Helmet",
+    "lvl": 52
+  },
+  "Runemastered Solid Mask": {
+    "cls": "Helmet",
+    "lvl": 55
+  },
+  "Runemastered Death Mask": {
+    "cls": "Helmet",
+    "lvl": 65
+  },
+  "Runemastered Stocky Mitts": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Riveted Mitts": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Tempered Mitts": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Bolstered Mitts": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Moulded Mitts": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Titan Mitts": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runemastered Suede Bracers": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Firm Bracers": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Sectioned Bracers": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Spined Bracers": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Fine Bracers": {
+    "cls": "Gloves",
+    "lvl": 45
+  },
+  "Runemastered Torn Gloves": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Sombre Gloves": {
+    "cls": "Gloves",
+    "lvl": 39
+  },
+  "Runemastered Stitched Gloves": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Jewelled Gloves": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Intricate Gloves": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Pauascale Gloves": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Embroidered Gloves": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runemastered Ringmail Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Layered Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Doubled Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Plate Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Burnished Gauntlets": {
+    "cls": "Gloves",
+    "lvl": 52
+  },
+  "Runemastered Rope Cuffs": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Aged Cuffs": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Goldcast Cuffs": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Verisium Cuffs": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Gauze Wraps": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Linen Wraps": {
+    "cls": "Gloves",
+    "lvl": 38
+  },
+  "Runemastered Spiral Wraps": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Furtive Wraps": {
+    "cls": "Gloves",
+    "lvl": 55
+  },
+  "Runemastered Utility Wraps": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runemastered Grand Manchettes": {
+    "cls": "Gloves",
+    "lvl": 65
+  },
+  "Runemastered Rough Greaves": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Iron Greaves": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Bronze Greaves": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Trimmed Greaves": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Stone Greaves": {
+    "cls": "Boots",
+    "lvl": 55
+  },
+  "Runemastered Laced Boots": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Embossed Boots": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Steeltoe Boots": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Lizardscale Boots": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Cinched Boots": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runemastered Straw Sandals": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Wrapped Sandals": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Lattice Sandals": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Silk Slippers": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Feathered Sandals": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Mail Sabatons": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Braced Sabatons": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Stacked Sabatons": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Covered Sabatons": {
+    "cls": "Boots",
+    "lvl": 55
+  },
+  "Runemastered Secured Leggings": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Ancient Leggings": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runemastered Threaded Shoes": {
+    "cls": "Boots",
+    "lvl": 38
+  },
+  "Runemastered Hunting Shoes": {
+    "cls": "Boots",
+    "lvl": 40
+  },
+  "Runemastered Velour Shoes": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runemastered Splintered Tower Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Painted Tower Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Braced Tower Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Barricade Tower Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Effigial Tower Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Rampart Tower Shield": {
+    "cls": "Shield",
+    "lvl": 40
+  },
+  "Runemastered Heraldric Tower Shield": {
+    "cls": "Shield",
+    "lvl": 50
+  },
+  "Runemastered Grand Cuisses": {
+    "cls": "Boots",
+    "lvl": 65
+  },
+  "Runemastered Crucible Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runemastered Blacksteel Tower Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runemastered Vaal Tower Shield": {
+    "cls": "Shield",
+    "lvl": 75
+  },
+  "Runemastered Glacial Fortress": {
+    "cls": "Shield",
+    "lvl": 70
+  },
+  "Runemastered Hardwood Targe": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Crescent Targe": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Blazon Crest Shield": {
+    "cls": "Shield",
+    "lvl": 40
+  },
+  "Runemastered Sigil Crest Shield": {
+    "cls": "Shield",
+    "lvl": 40
+  },
+  "Runemastered Emblem Crest Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Jingling Crest Shield": {
+    "cls": "Shield",
+    "lvl": 38
+  },
+  "Runemastered Omen Crest Shield": {
+    "cls": "Shield",
+    "lvl": 48
+  },
+  "Runemastered Leather Buckler": {
+    "cls": "Buckler",
+    "lvl": 38
+  },
+  "Runemastered Wooden Buckler": {
+    "cls": "Buckler",
+    "lvl": 38
+  },
+  "Runemastered Plated Buckler": {
+    "cls": "Buckler",
+    "lvl": 38
+  },
+  "Runemastered Iron Buckler": {
+    "cls": "Buckler",
+    "lvl": 38
+  },
+  "Runemastered Ridged Buckler": {
+    "cls": "Buckler",
+    "lvl": 40
+  },
+  "Runemastered Spiked Buckler": {
+    "cls": "Buckler",
+    "lvl": 40
+  },
+  "Runemastered Ornate Buckler": {
+    "cls": "Buckler",
+    "lvl": 55
+  },
+  "Runemastered Array Buckler": {
+    "cls": "Buckler",
+    "lvl": 60
+  },
+  "Runemastered Venerable Defender": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runemastered Intricate Crest Shield": {
+    "cls": "Shield",
+    "lvl": 65
+  },
+  "Runemastered Twig Focus": {
+    "cls": "Focus",
+    "lvl": 38
+  },
+  "Runemastered Woven Focus": {
+    "cls": "Focus",
+    "lvl": 38
+  },
+  "Runemastered Antler Focus": {
+    "cls": "Focus",
+    "lvl": 38
+  },
+  "Runemastered Engraved Focus": {
+    "cls": "Focus",
+    "lvl": 38
+  },
+  "Runemastered Tonal Focus": {
+    "cls": "Focus",
+    "lvl": 38
+  },
+  "Runemastered Crystal Focus": {
+    "cls": "Focus",
+    "lvl": 40
+  },
+  "Runemastered Voodoo Focus": {
+    "cls": "Focus",
+    "lvl": 55
+  },
+  "Runemastered Plumed Focus": {
+    "cls": "Focus",
+    "lvl": 75
+  },
+  "Runemastered Primal Markings": {
+    "cls": "Body Armour",
+    "lvl": 80
+  }
+}

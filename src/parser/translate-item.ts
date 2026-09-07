@@ -28,7 +28,9 @@ function modJaToRegex(jaText: string): RegExp {
   let s = stripLinkSyntax(jaText);
   // 正規表現メタ文字を escape (まず () . ? + 等)。後で数値範囲 → 数値パターンに変換するので
   // ( と ) は escape 後に巻き戻す。
-  s = s.replace(/[.*+?^${}\\|[\]]/g, "\\$&");
+  // 2026-09-07: `(` `)` もエスケープ対象に追加。旧実装は括弧を素通しにしていたため、直後の
+  // 「\( 数値-数値 \) → 数値パターン」置換が一度も当たらず、全 mod 行の英訳が null になっていた。
+  s = s.replace(/[.*+?^${}()\\|[\]]/g, "\\$&");
   // 数値範囲 \(N-M\) → 数値 1 つ (整数 / 小数)
   s = s.replace(/\\\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\\\)/g, "(-?\\d+(?:\\.\\d+)?)");
   // 残った \( \) を念のため処理（範囲じゃない括弧は escape のままで OK だが、
@@ -108,23 +110,18 @@ function translateMetadataLine(line: string): string | null {
  *  - bundle.text_ja の `(8-12)%` パターンに paste の `10%` がマッチした場合、
  *    text_en 側のテンプレ `(N-M)% increased ...` の対応位置を `10%` に置換して返す。
  */
-function translateModLine(jaLine: string): string | null {
+export function translateModLine(jaLine: string): string | null {
   const stripped = jaLine.trim();
   if (!stripped) return null;
   for (const entry of MOD_DICT) {
-    const m = stripped.match(entry.jaPattern);
-    if (!m) continue;
-    // m[1..] = 抽出された数値（複数あり）。en テンプレ中の「数値範囲 / 数値」を順番に置換。
+    if (!entry.jaPattern.test(stripped)) continue;
+    // 2026-09-07: 実値は入力行から直接拾う (捕獲グループ依存だと bundle 側の表記次第で `$&` が残る)。
+    // en テンプレの「数値範囲 / 裸数値」を出現順に置換する。
+    const values = stripped.match(/-?\d+(?:\.\d+)?/g) ?? [];
+    let valueIndex = 0;
     let en = entry.enTemplate;
-    let valueIndex = 1;
-    en = en.replace(/\((\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\)/g, () => {
-      const v = m[valueIndex++];
-      return v ?? "$&";
-    });
-    en = en.replace(/(?<![\d.])\d+(?:\.\d+)?(?![\d.])/g, () => {
-      const v = m[valueIndex++];
-      return v ?? "$&";
-    });
+    en = en.replace(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g, (m0) => values[valueIndex++] ?? m0);
+    en = en.replace(/(?<![\d.])-?\d+(?:\.\d+)?(?![\d.])/g, (m0) => values[valueIndex++] ?? m0);
     return en;
   }
   return null;

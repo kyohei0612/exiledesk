@@ -28,7 +28,8 @@ export const CSD_PATH = resolve(EXPORT_DIR, "files", "Data@StatDescriptions@stat
 /** 書き出すテーブルと列 (外部キーは行 index の数値になる) */
 export const CLIENT_TABLES = [
   // 装備ベース / カレンシー / ジェム / フラスコ等、全アイテムの表示名
-  { name: "BaseItemTypes", columns: ["Id", "Name"] },
+  // ItemClass は ItemClasses への行 index (クラフト収支: ベース → 装備種別 → trade2 カテゴリ)
+  { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass", "DropLevel"] },
   // ユニーク名 (Wordlist=6)。JA テーブルでは Text2 が日本語名
   { name: "Words", columns: ["Wordlist", "Text", "Text2"] },
   { name: "FlavourText", columns: ["Id", "Text"] },
@@ -45,6 +46,14 @@ export const CLIENT_TABLES = [
   { name: "MonsterVarieties", columns: ["Id", "Name"] },
   // ゲーム UI 文言 (現状は書き出すだけ。PoB UI は意訳のまま)
   { name: "ClientStrings", columns: ["Id", "Text"] },
+  // --- クラフト収支 (2026-09-07): エッセンス → 保証モッド の対応 ---
+  // Essences.BaseItemType → BaseItemTypes 行、EssenceMods.Essence → Essences 行、
+  // EssenceMods.Mod → Mods 行 (Id が mods-bundle のキー)、TargetItemCategory → EssenceTargetItemCategories 行
+  { name: "Essences", columns: ["BaseItemType", "Tier", "Perfect", "ReplacementType"] },
+  { name: "EssenceMods", columns: ["Essence", "TargetItemCategory", "Mod", "DisplayMod", "Text", "OutcomeMods", "OutcomeModWeights"] },
+  { name: "EssenceTargetItemCategories", columns: ["Id", "ItemClasses", "Text"] },
+  { name: "EssenceType", columns: ["Id", "EssenceType", "IsCorruptedEssence"] },
+  { name: "EssenceReplacementType", columns: ["Id"] },
 ];
 
 export async function loadTable(lang, name) {
