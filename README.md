@@ -243,6 +243,13 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
   起動確認 (`tier: full` で終わること。data-only に縮退したら PoB2-JP のアンカーが PoB 側で変わった) → submodule 参照をコミット。
   runtime 側の DLL 更新を取り込みたい場合は基準コミットを上げて同様に起動確認する。
 - 日本語化を上げる: `POBJP` (フォーク) 側で翻訳 CSV を更新・push → submodule 参照を更新。
+- **ゲーム内文言は公式訳** (2026-09-07〜): `node scripts/build-pob2jp-from-client.mjs` が
+  `data-cache/client-export/` (build-dicts-from-client.mjs の書き出し、12 テーブル + csd) から
+  `vendor/PoB2-JP/payload/Data/Translate/ja-JP/client-*.csv` (アイテム / ユニーク / スキル / パッシブ / MOD 名 /
+  stat 文 / フレーバー、約 32,000 件) を生成し manifest.lua の末尾に登録する。PoeJP は後から読んだファイルが勝つので
+  同じ英文キーは公式訳で上書き、PoB 自身の UI (タブ名 / 設定説明 / 計算欄) は PoB2-JP の意訳のまま。
+  リーグ更新時の手順: `pnpm build:dicts:client` → `node scripts/build-pob2jp-from-client.mjs` →
+  `vendor/PoB2-JP` で commit + push → ExileDesk で submodule 参照を commit。
 - ユーザーデータ: `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
 
 ## アーキテクチャ概要

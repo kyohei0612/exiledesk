@@ -45,6 +45,7 @@ import { CLIENT_FILES, CLIENT_TABLES, EXPORT_DIR, ROOT, TRANSLATIONS, loadTable 
 const OUT_ITEMS = resolve(ROOT, "src/i18n/items-ja-client.json");
 const OUT_NAMES = resolve(ROOT, "src/i18n/unique-names-ja.json");
 const OUT_FLAVOUR = resolve(ROOT, "src/i18n/poe2-flavour-ja.json");
+const OUT_ASCENDANCIES = resolve(ROOT, "src/i18n/ascendancies-ja-client.json");
 
 const NEWLINE_RE = /\r?\n/g;
 
@@ -244,8 +245,24 @@ async function main() {
   }
   log(`FlavourText: ${enF.length} rows -> ${Object.keys(flavour).length} translated`);
 
+  // --- Ascendancy / Characters: EN Name -> JA Name (アセンダンシータブ表示用、2026-09-07) ---
+  const ascendancies = {};
+  for (const table of ["Ascendancy", "Characters"]) {
+    const enA = await loadTable("English", table);
+    const jaA = await loadTable("Japanese", table);
+    if (enA.length !== jaA.length) throw new Error(`${table} row mismatch EN=${enA.length} JA=${jaA.length}`);
+    for (let i = 0; i < enA.length; i++) {
+      const en = normText(enA[i].Name);
+      const ja = normText(jaA[i].Name);
+      if (!en || !ja || en === ja || en.startsWith("[DNT")) continue;
+      ascendancies[en] = ja;
+    }
+  }
+  log(`Ascendancy + Characters: ${Object.keys(ascendancies).length} translated class names`);
+
   // --- 書き出し (補強、減らさない) ---
   await writeDict(OUT_ITEMS, "items-ja-client", await loadExisting(OUT_ITEMS), items);
+  await writeDict(OUT_ASCENDANCIES, "ascendancies-ja-client", await loadExisting(OUT_ASCENDANCIES), ascendancies);
   if (Object.keys(names).length) {
     await writeDict(OUT_NAMES, "unique-names-ja", existingNames, names);
   }

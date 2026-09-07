@@ -8,6 +8,8 @@
  * 不明なクラス (新アセンダンシー追加時など) は英語のまま返す (fallback)。
  */
 
+import ascendanciesJaClient from "./ascendancies-ja-client.json";
+
 const ascendancyJaMap: Record<string, string> = {
   // === Witch 系 ===
   "Blood Mage": "ブラッドメイジ",
@@ -53,8 +55,16 @@ const ascendancyJaMap: Record<string, string> = {
   Templar: "テンプラー",
 };
 
+/**
+ * 2026-09-07: ゲーム内表記はクライアントの公式訳に揃える (オーナー指示「ゲームに関係するところは全て正規の日本語訳」)。
+ * `ascendancies-ja-client.json` は scripts/build-dicts-from-client.mjs が Ascendancy / Characters テーブルから生成。
+ * 上の手書きマップは表記揺れ (Witchhunter) や未収録クラスのフォールバック。
+ * 旧オーナー指示の短縮形 (チャユラ / キタヴァ / ヴァラシュタ) は公式名 (〜の門弟 / 〜の鍛冶屋 / 〜の弟子) に置き換わる。
+ */
+const clientMap = ascendanciesJaClient as Record<string, string>;
+
 export function jaAscendancy(className: string): string {
-  return ascendancyJaMap[className] ?? className;
+  return clientMap[className] ?? ascendancyJaMap[className] ?? className;
 }
 
 /**
