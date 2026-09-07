@@ -132,13 +132,6 @@ fn is_intentionally_excluded(inv_id: &str) -> bool {
     INTENTIONALLY_EXCLUDED_INV_IDS.contains(&inv_id)
 }
 
-/// printable string scanner の再帰深度ガード。
-/// 2026-05-22 Low-L5: 8 → 16 に拡大 (poe.ninja protobuf の nested 構造に
-/// 余裕を持たせる。実観測の最大 depth は ~5 だが、新フィールド追加で深くなる
-/// ケースに備える。性能影響は無視できる: 1 リクエスト数 KB の scan 内で 16 深
-/// 程度の再帰は CPU bound にならない)。
-const MAX_SCAN_DEPTH: usize = 16;
-
 // ============================================================================
 // Cancel flag (Medium-M7, 2026-05-22)
 // ============================================================================
@@ -1073,28 +1066,34 @@ pub async fn fetch_index_state(
         .ok_or_else(|| "index-state: chosen_league.url missing".to_string())?
         .to_string();
 
-    // snapshotVersions[] からリーグ別 entry を探す: snapshotName == league の snapshotName
-    // 見つからなければ [0] フォールバック (リーグ共通の最新スナップショット想定)
-    let league_snapshot_name = chosen_league
-        .get("snapshotName")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-
-    let snap = body
+    // snapshotVersions[] からリーグ別 entry を探す。
+    //
+    // 2026-09-07 修正: 旧実装は `economyLeagues[].snapshotName` で突き合わせていたが、
+    // economyLeagues のエントリに snapshotName フィールドは存在しない
+    // (実際のキーは name / url / displayName / hardcore / indexed)。
+    // その結果 join キーが常に None になり、無条件で snapshotVersions[0] に
+    // フォールバックしていた。つまり **リーグを選んでも version / snapshot_name は
+    // 常に先頭リーグのもの** という不整合が起きていた
+    // (league_url だけ選択リーグ、実データは別リーグ)。
+    //
+    // snapshotVersions[] 側は economyLeagues と同じ `url` を持っているので、
+    // これを正しい join キーとして使う。
+    let snapshot_versions = body
         .get("snapshotVersions")
         .and_then(|v| v.as_array())
-        .and_then(|arr| {
-            if let Some(ref name) = league_snapshot_name {
-                arr.iter()
-                    .find(|s| s.get("snapshotName").and_then(|n| n.as_str()) == Some(name))
-                    .or_else(|| arr.get(0))
-            } else {
-                arr.get(0)
-            }
-        })
         .ok_or_else(|| {
             "index-state: snapshotVersions[] が空または消えている、poe.ninja API 構造変更の可能性"
                 .to_string()
+        })?;
+
+    let snap = snapshot_versions
+        .iter()
+        .find(|s| s.get("url").and_then(|u| u.as_str()) == Some(league_url.as_str()))
+        .ok_or_else(|| {
+            format!(
+                "index-state: snapshotVersions[] にリーグ '{league_url}' の entry が無い、\
+                 poe.ninja API 構造変更の可能性"
+            )
         })?;
 
     let snapshot_name = snap
@@ -1164,15 +1163,29 @@ pub async fn fetch_economy_leagues_inner(
             .to_string();
         let lower_url = url.to_lowercase();
         let lower_name = name.to_lowercase();
-        // POE2 URL 規約 (実機 2026-05-22 確認):
-        //   "vaal" (通常) / "hcvaal" (HC) / "ssfvaal" (SSF) / "ssfhcvaal" (SSF HC) /
-        //   "standard" (永続) / "hardcore" (永続HC)
-        // url 含有判定だけで HC/SSF を引けるが、name でも保険する。
-        let is_hardcore = lower_url.starts_with("hc")
-            || lower_url.contains("hcvaal")
-            || lower_url == "hardcore"
-            || lower_name.contains("hardcore");
-        let is_ssf = lower_url.starts_with("ssf") || lower_name.contains("ssf");
+        // 2026-09-07 修正: 旧実装は URL 規約を「prefix」と誤認していた
+        //   (誤) "hcvaal" / "ssfvaal"   ← そんな URL は実在しない
+        //   (正) "vaalhc" / "vaalssf" / "forbiddenriteshc" / "runesofaldurhcssf"
+        // = HC/SSF は **suffix**。さらに name 側も "Hardcore ..." ではなく
+        // "HC Forbidden Rites" 表記なので `contains("hardcore")` も外れており、
+        // 結果 HC リーグが全部ソフトコア扱いになっていた。
+        //
+        // 現在の index-state は各エントリに `hardcore` 真偽値を持っているので、
+        // それを一次ソースにし、無い場合だけ suffix / 表記から推定する。
+        let is_hardcore = entry
+            .get("hardcore")
+            .and_then(|v| v.as_bool())
+            .unwrap_or_else(|| {
+                lower_url == "hardcore"
+                    || lower_url.ends_with("hc")
+                    || lower_url.ends_with("hcssf")
+                    || lower_name.starts_with("hc ")
+                    || lower_name.contains("hardcore")
+            });
+        // SSF は真偽値フィールドが無いので suffix / 表記から判定する。
+        let is_ssf = lower_url.ends_with("ssf")
+            || lower_name.starts_with("ssf ")
+            || lower_name.contains(" ssf ");
         out.push(LeagueInfo {
             url,
             name,
@@ -1296,28 +1309,32 @@ pub async fn fetch_search_top_n(
         .await
         .map_err(|e| format!("search bytes read error: {e}"))?;
 
-    // wire format scan
-    let mut strings = Vec::with_capacity(1024);
-    scan_message(&bytes, 0, &mut strings, 0, -1);
+    // カラム型 protobuf を構造的にパースして "name" / "account" 列を引く。
+    let columns = extract_search_columns(&bytes);
+    let names = columns.get("name").map(Vec::as_slice).unwrap_or_default();
+    let accounts = columns.get("account").map(Vec::as_slice).unwrap_or_default();
 
-    // ラベル "name" / "account" の直後ブロック抽出
-    let names = slice_block_after_label(&strings, "name");
-    let accounts = slice_block_after_label(&strings, "account");
+    if names.is_empty() || accounts.is_empty() {
+        return Err(format!(
+            "search: name/account 列が取れない (name={}, account={}, 検出列=[{}])。\
+             poe.ninja search のレスポンス構造変更の可能性",
+            names.len(),
+            accounts.len(),
+            columns.keys().cloned().collect::<Vec<_>>().join(", "),
+        ));
+    }
 
     let pair_count = accounts.len().min(names.len()).min(n);
     let mut pairs = Vec::with_capacity(pair_count);
     for i in 0..pair_count {
-        let acct = accounts[i];
-        let nm = names[i];
+        let acct = &accounts[i];
+        let nm = &names[i];
         if !is_valid_account(acct) {
             continue;
         }
-        if is_meta_word(nm) {
-            continue;
-        }
         pairs.push(CharacterRef {
-            account: acct.to_string(),
-            name: nm.to_string(),
+            account: acct.clone(),
+            name: nm.clone(),
         });
     }
     Ok(pairs)
@@ -2108,15 +2125,170 @@ fn is_target_inventory_id(inv: &str) -> bool {
 }
 
 // ============================================================================
-// protobuf wire format スキャナ (Phase α B 案 Rust 移植)
+// protobuf wire format パーサ (search レスポンスのカラム抽出)
 // ============================================================================
 
-/// `(field_number, parent_field, depth)` を保持した printable string レコード
+/// protobuf の 1 フィールド分の値。
+///
+/// varint / fixed64 / fixed32 は search のカラム抽出では使わないので、
+/// 長さだけ読み飛ばせれば十分 (`Skipped`)。
 #[derive(Debug)]
-struct StringRecord<'a> {
-    text: &'a str,
-    parent: i32,
-    depth: usize,
+enum PbValue<'a> {
+    /// length-delimited (wire type 2): string / bytes / ネストした message
+    Bytes(&'a [u8]),
+    /// varint / fixed64 / fixed32 (読み飛ばし対象)
+    Skipped,
+}
+
+/// protobuf message を「フィールド番号 + 値」の並びとして順に読むイテレータ。
+///
+/// スキーマ (.proto) を持たないので、必要なフィールド番号だけを見て
+/// 残りは wire type に従って読み飛ばす。壊れたバイト列に当たったら
+/// `None` を返してそこで打ち切る (panic しない)。
+struct PbReader<'a> {
+    buf: &'a [u8],
+    pos: usize,
+}
+
+impl<'a> PbReader<'a> {
+    fn new(buf: &'a [u8]) -> Self {
+        Self { buf, pos: 0 }
+    }
+}
+
+impl<'a> Iterator for PbReader<'a> {
+    type Item = (i32, PbValue<'a>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pos >= self.buf.len() {
+            return None;
+        }
+        let (tag, next) = read_varint(self.buf, self.pos)?;
+        let wire_type = (tag & 0x7) as u8;
+        let field_no = (tag >> 3) as i32;
+        self.pos = next;
+
+        match wire_type {
+            // varint
+            0 => {
+                let (_, ni) = read_varint(self.buf, self.pos)?;
+                self.pos = ni;
+                Some((field_no, PbValue::Skipped))
+            }
+            // fixed64
+            1 => {
+                if self.pos + 8 > self.buf.len() {
+                    return None;
+                }
+                self.pos += 8;
+                Some((field_no, PbValue::Skipped))
+            }
+            // length-delimited
+            2 => {
+                let (len, ni) = read_varint(self.buf, self.pos)?;
+                let len = len as usize;
+                if ni + len > self.buf.len() {
+                    return None;
+                }
+                let slice = &self.buf[ni..ni + len];
+                self.pos = ni + len;
+                Some((field_no, PbValue::Bytes(slice)))
+            }
+            // fixed32
+            5 => {
+                if self.pos + 4 > self.buf.len() {
+                    return None;
+                }
+                self.pos += 4;
+                Some((field_no, PbValue::Skipped))
+            }
+            // 未知の wire type = デコード不能なので打ち切り
+            _ => None,
+        }
+    }
+}
+
+/// search レスポンスの「カラム」message を 1 件パースする。
+///
+/// 実機構造 (2026-09-07 確認):
+/// ```text
+/// f1 {                                  // ルート
+///   f1 : varint                         // 総ヒット数
+///   f12: Column {                       // カラムが横に 28 本並ぶ
+///     f1: string  = カラム ID   ("name" / "account" / "dps.total" / …)
+///     f2: string  = 表示名
+///     f7: string  = 値 (行数ぶん繰り返し。行順は全カラムで共通)
+///   } × 28
+/// }
+/// ```
+/// `name` 列の i 番目と `account` 列の i 番目が同一キャラを指す。
+///
+/// 旧実装 (〜v0.1.29) は「ラベル文字列の後ろに値が続く」前提でフラットに
+/// スキャンし、`parent`/`depth` のマジックナンバー (5/2, 2/3) に依存していた。
+/// 2026-09 のリーグ切替でフィールド番号が変わって全件 0 件になったため、
+/// フィールド番号を辿る構造パースに置き換えた (シグネチャ依存を排除)。
+///
+/// 戻り値: `(カラム ID, 値の配列)`。ID か値が無ければ `None` (= カラムではない)。
+fn parse_search_column(buf: &[u8]) -> Option<(String, Vec<String>)> {
+    const FIELD_COLUMN_ID: i32 = 1;
+    const FIELD_COLUMN_VALUE: i32 = 7;
+
+    let mut id: Option<String> = None;
+    let mut values: Vec<String> = Vec::new();
+
+    for (field_no, value) in PbReader::new(buf) {
+        let PbValue::Bytes(raw) = value else {
+            continue;
+        };
+        match field_no {
+            FIELD_COLUMN_ID if id.is_none() => {
+                // カラム ID は必ず UTF-8 文字列。バイナリなら別の message なので無視。
+                id = std::str::from_utf8(raw).ok().map(str::to_string);
+            }
+            FIELD_COLUMN_VALUE => {
+                // 数値カラムは UTF-8 にならないことがあるので、失敗分は捨てる。
+                if let Ok(s) = std::str::from_utf8(raw) {
+                    values.push(s.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+
+    match id {
+        Some(id) if !values.is_empty() => Some((id, values)),
+        _ => None,
+    }
+}
+
+/// search レスポンス全体から、カラム ID → 値配列 のマップを組み立てる。
+///
+/// ルートの階層 (現状 `f1` 直下の `f12`) が将来また変わっても拾えるよう、
+/// 「フィールド番号を決め打ちせず、カラムの *形* に一致する message を探す」
+/// 方針にしている。同じ ID が複数見つかった場合は最初 (= 最も浅い) を採用。
+pub(crate) fn extract_search_columns(buf: &[u8]) -> HashMap<String, Vec<String>> {
+    /// ネストの上限。実際は深さ 2 で見つかるが、構造変更に備えて少し余裕を持たせる。
+    const MAX_DEPTH: usize = 6;
+
+    fn walk(buf: &[u8], depth: usize, out: &mut HashMap<String, Vec<String>>) {
+        if depth > MAX_DEPTH {
+            return;
+        }
+        for (_field_no, value) in PbReader::new(buf) {
+            let PbValue::Bytes(raw) = value else {
+                continue;
+            };
+            if let Some((id, values)) = parse_search_column(raw) {
+                out.entry(id).or_insert(values);
+            }
+            // カラムでなかった message も、内側にカラムを抱えている可能性がある。
+            walk(raw, depth + 1, out);
+        }
+    }
+
+    let mut out = HashMap::new();
+    walk(buf, 0, &mut out);
+    out
 }
 
 /// varint を読む。返り値: `(value, next_offset)` または None
@@ -2139,227 +2311,42 @@ fn read_varint(buf: &[u8], offset: usize) -> Option<(u64, usize)> {
     None
 }
 
-/// UTF-8 として valid で、制御文字を含まないか判定する。
-///
-/// 元は ASCII 0x20-0x7e 限定だったが、poe.ninja のキャラ名にはタイ語・中国語・日本語等
-/// マルチバイト文字も多い。printable filter が ASCII で弾くと account/name 配列の長さが
-/// 食い違い、ペアが全体的にズレて全 character endpoint が 404 になる致命バグが発生していた
-/// (2026-05-22 修正)。
-///
-/// Low-L4 修正 (2026-05-22): 関数名を `is_printable_ascii` から `is_printable_utf8` に
-/// rename。実装は UTF-8 全域を受け入れているのに ASCII を名乗ると誤読を招くため。
-fn is_printable_utf8(buf: &[u8]) -> bool {
-    if buf.is_empty() {
-        return false;
-    }
-    let Ok(s) = std::str::from_utf8(buf) else {
-        return false;
-    };
-    !s.chars().any(|c| c.is_control())
-}
-
-/// バイト列の先頭が妥当な protobuf message タグかラフ判定
-fn looks_like_message(buf: &[u8]) -> bool {
-    if buf.len() < 2 {
-        return false;
-    }
-    let Some((tag, _)) = read_varint(buf, 0) else {
-        return false;
-    };
-    let wt = (tag & 0x7) as u8;
-    matches!(wt, 0 | 1 | 2 | 5)
-}
-
-/// protobuf message を再帰スキャンして printable string を集める。
-///
-/// `buf` は **'static / lifetime 不問** のスライス。`StringRecord<'a>` は
-/// 元の `buf` から借りた `&str` を保持する (アロケーション回避)。
-fn scan_message<'a>(
-    buf: &'a [u8],
-    _base_offset: usize,
-    out: &mut Vec<StringRecord<'a>>,
-    depth: usize,
-    parent_field: i32,
-) {
-    if depth > MAX_SCAN_DEPTH {
-        return;
-    }
-    let mut i = 0usize;
-    while i < buf.len() {
-        let Some((tag, next)) = read_varint(buf, i) else {
-            return;
-        };
-        let wt = (tag & 0x7) as u8;
-        let fn_num = (tag >> 3) as i32;
-        i = next;
-
-        match wt {
-            0 => {
-                let Some((_, ni)) = read_varint(buf, i) else {
-                    return;
-                };
-                i = ni;
-            }
-            1 => {
-                if i + 8 > buf.len() {
-                    return;
-                }
-                i += 8;
-            }
-            5 => {
-                if i + 4 > buf.len() {
-                    return;
-                }
-                i += 4;
-            }
-            2 => {
-                let Some((len, ni)) = read_varint(buf, i) else {
-                    return;
-                };
-                let len = len as usize;
-                i = ni;
-                if i + len > buf.len() {
-                    return;
-                }
-                let slice = &buf[i..i + len];
-                if is_printable_utf8(slice) {
-                    // ASCII なので from_utf8 は必ず成功
-                    if let Ok(text) = std::str::from_utf8(slice) {
-                        out.push(StringRecord {
-                            text,
-                            parent: parent_field,
-                            depth,
-                        });
-                    }
-                } else if looks_like_message(slice) {
-                    scan_message(slice, i, out, depth + 1, fn_num);
-                }
-                i += len;
-            }
-            _ => return, // 3, 4 group (廃止)、6+ は不明
-        }
-    }
-}
-
-/// ラベル文字列の直後ブロック (parent=2, depth=3 の値配列) を抽出する。
-///
-/// 実機観測: ラベル signature = (parent=5, depth=2)、値配列 signature = (parent=2, depth=3)
-fn slice_block_after_label<'a>(strings: &'a [StringRecord<'a>], label: &str) -> Vec<&'a str> {
-    const LABEL_PARENT: i32 = 5;
-    const LABEL_DEPTH: usize = 2;
-
-    let label_idx = strings.iter().position(|s| {
-        s.text == label && s.parent == LABEL_PARENT && s.depth == LABEL_DEPTH
-    });
-    let Some(start) = label_idx else {
-        return Vec::new();
-    };
-
-    let mut block = Vec::with_capacity(64);
-    for s in &strings[start + 1..] {
-        // 次のラベルで打ち切り
-        if s.parent == LABEL_PARENT && s.depth == LABEL_DEPTH {
-            break;
-        }
-        // 値配列のシグネチャだけ採用
-        if s.parent != 2 || s.depth != 3 {
-            continue;
-        }
-        block.push(s.text);
-    }
-    block
-}
-
 // ============================================================================
 // バリデーション
 // ============================================================================
 
-/// `^[A-Za-z0-9_]{2,32}-\d{4}$` の手書きチェック (regex crate を増やしたくないため)
+/// `<アカウント名>-<4 桁 discriminator>` 形式かの手書きチェック
+/// (regex crate を増やしたくないため)。
+///
+/// 2026-09-07: 先頭部の「ASCII 英数字 + `_` のみ」制約を撤廃した。
+/// 旧実装は `我的的的发-4378` / `썽아티비-1234` のような非 ASCII アカウント名を
+/// 全部弾いており、上位プレイヤーの実に 2〜3 割 (中国語・韓国語圏) が
+/// 集計から欠落していた。
+///
+/// 厳密な文字種チェックが必要だったのは、旧パーサが protobuf をフラットに
+/// 舐めてゴミ文字列を拾う可能性があったため。現在は `account` カラムから
+/// 構造的に取り出しているのでゴミは混入しない。ここでは
+/// 「末尾が `-` + 4 桁数字」「先頭部が 1〜32 文字で制御文字を含まない」
+/// だけを最低限のサニティチェックとして残す。
 fn is_valid_account(s: &str) -> bool {
     let bytes = s.as_bytes();
     let n = bytes.len();
-    if n < 2 + 1 + 4 {
+    // 最短: 先頭 1 バイト + '-' + 4 桁
+    if n < 1 + 1 + 4 {
         return false;
     }
     // 末尾 4 桁が数字、その直前が '-'
     if bytes[n - 5] != b'-' {
         return false;
     }
-    for &b in &bytes[n - 4..] {
-        if !b.is_ascii_digit() {
-            return false;
-        }
-    }
-    // 先頭 (n-5) 文字が英数字 + _、長さ 2-32
-    let head_len = n - 5;
-    if !(2..=32).contains(&head_len) {
+    if !bytes[n - 4..].iter().all(u8::is_ascii_digit) {
         return false;
     }
-    bytes[..head_len]
-        .iter()
-        .all(|&b| b.is_ascii_alphanumeric() || b == b'_')
-}
-
-/// メタ語 (スキーマ定義文字列) 判定
-fn is_meta_word(s: &str) -> bool {
-    matches!(
-        s,
-        // 処理段階名
-        "Start Search"
-            | "ApplyFilters"
-            | "ApplyIntegerFilters"
-            | "ApplyFloatFilters"
-            | "ApplySearchFilters"
-            | "SelectTopK"
-            | "PopulateValues"
-            | "PopulateDimensionCounts"
-            | "PopulateIntegerDimensionMetadata"
-            | "PopulateFloatDimensionMetadata"
-            | "BuildResult"
-            | "End Search"
-            // スキーマフィールド名
-            | "class"
-            | "weaponmode"
-            | "items"
-            | "skills"
-            | "keypassives"
-            | "anointed"
-            | "allskills"
-            | "level"
-            | "life"
-            | "energyshield"
-            | "mana"
-            | "spirit"
-            | "movementspeed"
-            | "liferegen"
-            | "itemrarity"
-            | "fireres"
-            | "coldres"
-            | "lightningres"
-            | "chaosres"
-            | "echarges"
-            | "fcharges"
-            | "pcharges"
-            | "armour"
-            | "evasion"
-            | "deflect"
-            | "block"
-            | "phystakenas"
-            | "uequip"
-            | "mequip"
-            | "mweapons"
-            | "marmours"
-            | "physicalmax"
-            | "firemax"
-            | "coldmax"
-            | "lightningmax"
-            | "chaosmax"
-            | "lowestmax"
-            | "dps"
-            | "ehp"
-            | "name"
-            | "account"
-    )
+    // 先頭部 (discriminator を除いた部分) を文字数で検査。
+    // バイト長ではなく char 数で数えないと、マルチバイト名が長さ上限に引っかかる。
+    let head = &s[..n - 5];
+    let head_chars = head.chars().count();
+    (1..=32).contains(&head_chars) && !head.chars().any(char::is_control)
 }
 
 // ============================================================================
@@ -2405,32 +2392,17 @@ mod tests {
     }
 
     #[test]
-    fn printable_utf8_basic() {
-        // Low-L4 修正 (2026-05-22): test 名と関数名を `is_printable_utf8` に統一。
-        // 末尾 `[0x80]` は単独 byte で UTF-8 invalid なので false 期待のまま。
-        assert!(is_printable_utf8(b"hello"));
-        assert!(is_printable_utf8(b"AsmodeusPOE-0579"));
-        assert!(!is_printable_utf8(b""));
-        assert!(!is_printable_utf8(b"hi\n"));
-        assert!(!is_printable_utf8(&[0x80]));
-    }
-
-    #[test]
     fn valid_account_examples() {
         assert!(is_valid_account("AsmodeusPOE-0579"));
         assert!(is_valid_account("dekkakza-4456"));
         assert!(is_valid_account("a9_-1234"));
-        assert!(!is_valid_account("AsmodeusPOE"));      // discriminator なし
-        assert!(!is_valid_account("a-12345"));          // 5 桁
-        assert!(!is_valid_account("-1234"));            // 先頭空
-        assert!(!is_valid_account("foo.bar-1234"));     // ドット禁止
-    }
-
-    #[test]
-    fn meta_word_filter() {
-        assert!(is_meta_word("dps"));
-        assert!(is_meta_word("Start Search"));
-        assert!(!is_meta_word("GabrielVRD"));
+        // 2026-09-07: 非 ASCII アカウント名も通す (中国語 / 韓国語圏の上位プレイヤー)
+        assert!(is_valid_account("我的的的发-4378"));
+        assert!(is_valid_account("썽아티비-1234"));
+        assert!(is_valid_account("foo.bar-1234")); // ドットも許容 (ゴミ混入は構造パースで排除済み)
+        assert!(!is_valid_account("AsmodeusPOE")); // discriminator なし
+        assert!(!is_valid_account("a-12345")); // 5 桁
+        assert!(!is_valid_account("-1234")); // 先頭空
     }
 
     #[test]
@@ -2440,18 +2412,65 @@ mod tests {
         assert_eq!(url_encode("fate-of-the-vaal"), "fate-of-the-vaal");
     }
 
-    /// scan_message が printable string を順序保持で抽出することを確認。
-    /// 手書き proto: field 1 (tag = 0x0a = (1<<3)|2), len = 5, "hello"
-    /// + field 2 (tag = 0x12 = (2<<3)|2), len = 5, "world"
+    /// protobuf の length-delimited フィールドを 1 バイト長で組み立てるテストヘルパ。
+    /// (len < 128 前提なので varint は 1 バイトで済む)
+    fn pb_bytes(field_no: u8, payload: &[u8]) -> Vec<u8> {
+        let mut out = vec![(field_no << 3) | 2, payload.len() as u8];
+        out.extend_from_slice(payload);
+        out
+    }
+
+    /// カラム message 1 本を組み立てる: f1 = ID, f7 = 値の繰り返し。
+    fn pb_column(id: &str, values: &[&str]) -> Vec<u8> {
+        let mut out = pb_bytes(1, id.as_bytes());
+        for v in values {
+            out.extend_from_slice(&pb_bytes(7, v.as_bytes()));
+        }
+        out
+    }
+
+    /// `f1 { f12: Column, f12: Column }` を組んで name/account が引けることを確認。
+    /// 2026-09 の poe.ninja search レスポンス構造を最小再現したもの。
     #[test]
-    fn scan_message_extracts_strings_in_order() {
-        let buf: Vec<u8> = vec![
-            0x0a, 0x05, b'h', b'e', b'l', b'l', b'o',
-            0x12, 0x05, b'w', b'o', b'r', b'l', b'd',
-        ];
-        let mut out = Vec::new();
-        scan_message(&buf, 0, &mut out, 0, -1);
-        let texts: Vec<&str> = out.iter().map(|s| s.text).collect();
-        assert_eq!(texts, vec!["hello", "world"]);
+    fn extract_search_columns_pulls_name_and_account() {
+        let name_col = pb_column("name", &["LonoE", "CoconutTvT"]);
+        let account_col = pb_column("account", &["Mchen-2808", "kimhs6692-1387"]);
+
+        let mut root = Vec::new();
+        root.extend_from_slice(&pb_bytes(12, &name_col));
+        root.extend_from_slice(&pb_bytes(12, &account_col));
+        let payload = pb_bytes(1, &root);
+
+        let cols = extract_search_columns(&payload);
+        assert_eq!(
+            cols.get("name").map(Vec::as_slice),
+            Some(["LonoE".to_string(), "CoconutTvT".to_string()].as_slice())
+        );
+        assert_eq!(
+            cols.get("account").map(Vec::as_slice),
+            Some(["Mchen-2808".to_string(), "kimhs6692-1387".to_string()].as_slice())
+        );
+    }
+
+    /// ルートの入れ子が 1 段深くなっても拾えること (構造変更への耐性)。
+    #[test]
+    fn extract_search_columns_survives_extra_nesting() {
+        let col = pb_column("name", &["Alpha"]);
+        let inner = pb_bytes(12, &col);
+        let mid = pb_bytes(3, &inner);
+        let payload = pb_bytes(1, &mid);
+
+        let cols = extract_search_columns(&payload);
+        assert_eq!(
+            cols.get("name").map(Vec::as_slice),
+            Some(["Alpha".to_string()].as_slice())
+        );
+    }
+
+    /// 値を持たない message はカラムとして扱わない (誤検出防止)。
+    #[test]
+    fn parse_search_column_rejects_valueless_message() {
+        let only_id = pb_bytes(1, b"name");
+        assert!(parse_search_column(&only_id).is_none());
     }
 }

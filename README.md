@@ -76,6 +76,38 @@ node scripts/build-trade2-stat-mapping.mjs
 
 サンプル HTML を `data-cache/poe2db-unique-pages/Atziris_Splendour_us.html` で確認しながら正規表現を調整。
 
+### 「上位プレイヤーMOD一覧」が空 / 「search カラムを抽出できない」警告 → search パーサ追従
+
+新リーグ開始直後に一番壊れやすい箇所。poe.ninja の search エンドポイントは
+`application/x-protobuf` のみ (JSON 非対応) で、`.proto` が公開されていないため
+**フィールド番号を実データから読み取る実装**になっている。リーグ切替でこの番号が
+変わるとパースが 0 件を返し、HTTP は 200 のまま機能だけが無言で死ぬ。
+
+まず切り分けプローブを走らせる (どの段で落ちたか 1 発で分かる):
+
+```bash
+cd src-tauri && cargo run --example ninja_probe
+```
+
+index-state → build-index-state → リーグ一覧 → リーグ指定解決 → search → character の
+6 段を順に叩き、search が 0 件なら `>>> SEARCH PARSE BROKEN <<<` を出す。
+
+構造が変わっていた場合は `poe_ninja_client.rs` の以下を実データに合わせて更新:
+- `parse_search_column` — カラム message のフィールド番号
+  (現状 `f1` = カラム ID、`f7` = 値の繰り返し)
+- `extract_search_columns` — カラムを探す深さ
+
+現在のレスポンス構造 (2026-09-07 実測):
+
+```text
+f1 { f1: varint(総ヒット数), f12: Column { f1: "name"/"account"/…, f7: 値 × 行数 } × 28 }
+```
+
+`name` 列と `account` 列は同じ行順なので、同じ添字どうしが 1 キャラに対応する。
+
+起動時ヘルスチェック (`check_poe_ninja_search_parse`) が実際にパースを試すので、
+壊れていれば警告履歴パネルに出る。
+
 ### 「trade2 API 仕様変更」警告 → カテゴリ追従
 
 `src/services/craft-discovery-v2.ts` の `slotToTradeCategory()` を更新。

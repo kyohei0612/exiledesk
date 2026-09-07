@@ -1943,26 +1943,28 @@ function slotToTradeCategory(slot: SlotKey): string {
 }
 
 /**
- * V2 の `snapshot_name` (kebab-case, 例: "fate-of-the-vaal") を
- * trade2 API が要求する正式リーグ名 (例: "Fate of the Vaal") へ変換する簡易版。
+ * V2 の `snapshot_name` (kebab-case, 例: "forbidden-rites") を
+ * trade2 API が要求する正式リーグ名 (例: "Forbidden Rites") へ変換する。
  *
- * 厳密には poe.ninja の `economyLeagues[].name` を参照すべきだが、
- * 現状 Rust 側 SnapshotMeta はそれを保持していない。安全策として:
- *   1. 既知マッピングを優先 (ハードコード: 現リーグ + HC/SSF バリアント)
- *   2. 未知のリーグは kebab → スペース + 単語頭文字大文字化で生成
- *      ("-hc"/"-ssfhc"/"-ssf" suffix は "Hardcore"/"SSF" prefix に変換)
- *      `of` `the` `and` 等 stopword は小文字維持 (POE 公式表記準拠)
+ * 変換規則:
+ *   1. 永続リーグ ("standard" / "hardcore") だけ直接マップ
+ *   2. それ以外は kebab → スペース + 単語頭文字大文字化
+ *      (`of` `the` `and` 等 stopword は小文字維持 = POE 公式表記準拠)
+ *   3. 先頭の "hc-" / "ssf-" / "hc-ssf-" は "HC " / "SSF " / "HC SSF " に変換
  *
- * Data-H4 修正:
- *   - 旧 "fate-of-the-vaalhc" マッピングは poe.ninja URL 命名規約と不一致だった
- *     (実際は "-hc" を独立 suffix で持つ可能性が高い)。HC/SSF バリアントを
- *     "fate-of-the-vaal-hc" 系で整理。実 URL は実機で要検証 (TODO)。
- *   - fallback の `charAt(0).toUpperCase()` は "of"/"the"/"and" も大文字化して
- *     "Fate Of The Vaal" になり、trade2 API が 400 を返していた。stopword 小文字
- *     維持に変更。先頭単語は常に大文字 (タイトルケース慣習)。
+ * 実データ (2026-09-07 実機確認):
+ *   poe.ninja snapshotName        trade2 リーグ ID
+ *   "forbidden-rites"          →  "Forbidden Rites"
+ *   "hc-forbidden-rites"       →  "HC Forbidden Rites"
+ *   "runes-of-aldur"           →  "Runes of Aldur"
+ * trade2 の正式 ID 一覧は `https://www.pathofexile.com/api/trade2/data/leagues` で確認できる。
+ * (SSF リーグはトレード不可のため trade2 側には存在しない)
  *
- * TODO (後日): poe.ninja の index-state から `economyLeagues[].name` も
- * 取得して SnapshotMeta に持たせ、ここを正規参照に置き換える。
+ * 過去の修正:
+ *   - stopword を大文字化して "Fate Of The Vaal" になり 400 を返していた問題を修正。
+ *   - HC/SSF を suffix ("-hc") と誤認していた問題を 2026-09-07 に prefix へ修正。
+ *     リーグ名をハードコードしていた KNOWN マップも、新リーグごとに更新が必要で
+ *     腐りやすいため撤去した (規則ベースの変換だけで実リーグ名に一致する)。
  */
 const TRADE_LEAGUE_STOPWORDS = new Set([
   "of",
@@ -1989,36 +1991,36 @@ function titleCaseLeagueWords(words: string[]): string {
 }
 
 function snapshotNameToTradeLeague(snapshotName: string): string {
-  if (!snapshotName) return "Fate of the Vaal";
+  if (!snapshotName) return "Standard";
 
-  // 既知リーグの直接マッピング (将来追加分はここに足す)
-  // ※ "-ssfhc" / "-ssf" / "-hc" の suffix 規約は poe.ninja URL を実機で要検証。
-  //    分からない場合は fallback の suffix 検出に任せる方が安全。
-  const KNOWN: Record<string, string> = {
-    "standard": "Standard",
-    "hardcore": "Hardcore",
-    "fate-of-the-vaal": "Fate of the Vaal",
-    "fate-of-the-vaal-hc": "Hardcore Fate of the Vaal",
-    "fate-of-the-vaal-ssf": "SSF Fate of the Vaal",
-    "fate-of-the-vaal-ssfhc": "Hardcore SSF Fate of the Vaal",
+  // 永続リーグだけは kebab → 表示名が 1 語で一致しないので直接マップ。
+  const PERMANENT: Record<string, string> = {
+    standard: "Standard",
+    hardcore: "Hardcore",
   };
-  const known = KNOWN[snapshotName.toLowerCase()];
-  if (known) return known;
+  const permanent = PERMANENT[snapshotName.toLowerCase()];
+  if (permanent) return permanent;
 
-  // フォールバック: kebab → "Word of the Word" (stopword 小文字維持) + suffix → prefix 変換
-  // 順序: ssfhc → ssf → hc の順で剥がす (-ssfhc が -hc にもマッチしてしまうのを防ぐ)
+  // 2026-09-07 修正: HC/SSF は **prefix**。
+  //   poe.ninja snapshotName : "hc-forbidden-rites" / "ssf-forbidden-rites"
+  //                            "hc-ssf-forbidden-rites"
+  //   trade2 リーグ ID       : "HC Forbidden Rites" (実機 /api/trade2/data/leagues で確認)
+  //
+  // 旧実装は "-hc" / "-ssf" を suffix として剥がす前提だったため一度も一致せず、
+  // "hc-forbidden-rites" が "Hc Forbidden Rites" になって trade2 が 400 を返していた。
+  // 剥がす順序は長い方から (hc-ssf- が hc- にもマッチしてしまうのを防ぐ)。
   const lower = snapshotName.toLowerCase();
   let core = lower;
   let prefix = "";
-  if (core.endsWith("-ssfhc")) {
-    core = core.slice(0, -"-ssfhc".length);
-    prefix = "Hardcore SSF ";
-  } else if (core.endsWith("-ssf")) {
-    core = core.slice(0, -"-ssf".length);
+  if (core.startsWith("hc-ssf-")) {
+    core = core.slice("hc-ssf-".length);
+    prefix = "HC SSF ";
+  } else if (core.startsWith("ssf-")) {
+    core = core.slice("ssf-".length);
     prefix = "SSF ";
-  } else if (core.endsWith("-hc")) {
-    core = core.slice(0, -"-hc".length);
-    prefix = "Hardcore ";
+  } else if (core.startsWith("hc-")) {
+    core = core.slice("hc-".length);
+    prefix = "HC ";
   }
   const words = core.split("-").filter((w) => w.length > 0);
   return prefix + titleCaseLeagueWords(words);
