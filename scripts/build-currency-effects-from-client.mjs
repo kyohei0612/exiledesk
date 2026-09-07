@@ -30,10 +30,12 @@ import { mkdir, readFile, writeFile, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { decodeCsd, parseStatDescriptions, renderDescriptor } from "./parse-stat-descriptions.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "..");
 const EXPORT_DIR = resolve(ROOT, "data-cache/client-export-currency");
+const CSD_PATH = resolve(ROOT, "data-cache/client-export/files/Data@StatDescriptions@stat_descriptions.csd");
 const OUT = resolve(ROOT, "src/i18n/currency-effects-ja.json");
 
 const STEAM_CANDIDATES = [
@@ -88,6 +90,11 @@ async function exportTables(source) {
       { name: "CurrencyItems", columns: ["BaseItemType", "Description", "StackSize", "CurrencyTab_StackSize"] },
       { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass"] },
       { name: "ItemClasses", columns: ["Id", "Name"] },
+      // ルーン / ソウルコア: 効果はカテゴリ (装備種別) ごとの stat + 値。文言は csd で描画する。
+      { name: "SoulCores", columns: ["BaseItemType", "RequiredLevel", "Description", "ExtraDescription"] },
+      { name: "SoulCoreStats", columns: ["SoulCore", "StatCategory", "Stats", "StatsValues", "BondedStats", "BondedStatsValues"] },
+      { name: "SoulCoreStatCategories", columns: ["Id", "Display"] },
+      { name: "Stats", columns: ["Id"] },
     ],
   };
   await writeFile(resolve(EXPORT_DIR, "config.json"), JSON.stringify(config, null, 2) + "\n", "utf8");
@@ -142,6 +149,75 @@ async function main() {
     if (!fresh[key] || lines.length > fresh[key].e.length) fresh[key] = entry;
   }
   log(`CurrencyItems: ${cEn.length} rows -> ${Object.keys(fresh).length} entries with JA description (no name: ${noName}, no description: ${noDesc})`);
+
+  // --- ルーン / ソウルコア: SoulCoreStats (カテゴリ × stat 値) を csd で日本語描画 ---
+  // 出力行は poe2db 版と同じ「<装備種別>: <効果>」形式。RequiredLevel は "レベル N"。
+  if (!(await exists(CSD_PATH))) {
+    log(`WARN: ${CSD_PATH} が無いためルーン / ソウルコアの効果は生成せず既存を保持します (build-dicts-from-client.mjs を先に実行)`);
+  } else {
+    const [cores, coreStats, catEn, catJa, stats] = await Promise.all([
+      loadTable("English", "SoulCores"),
+      loadTable("English", "SoulCoreStats"),
+      loadTable("English", "SoulCoreStatCategories"),
+      loadTable("Japanese", "SoulCoreStatCategories"),
+      loadTable("English", "Stats"),
+    ]);
+    const { byStat } = parseStatDescriptions(decodeCsd(await readFile(CSD_PATH)));
+    const stackByBase = new Map();
+    for (const r of cEn) if (r.BaseItemType != null && Number(r.StackSize) > 0) stackByBase.set(r.BaseItemType, Number(r.StackSize));
+    const rowsByCore = new Map();
+    for (const r of coreStats) {
+      if (!rowsByCore.has(r.SoulCore)) rowsByCore.set(r.SoulCore, []);
+      rowsByCore.get(r.SoulCore).push(r);
+    }
+    let coresOut = 0;
+    let coresNoLines = 0;
+    for (let i = 0; i < cores.length; i++) {
+      const base = bEn[cores[i].BaseItemType];
+      const name = base && base.Name;
+      if (!name) continue;
+      const lines = [];
+      for (const row of rowsByCore.get(i) || []) {
+        const cat = row.StatCategory;
+        const label = stripMarkers(String(catJa[cat]?.Display || catEn[cat]?.Display || catEn[cat]?.Id || "").trim());
+        const ids = (row.Stats || []).map((k) => stats[k]?.Id).filter(Boolean);
+        const vals = row.StatsValues || [];
+        const seen = new Set();
+        const parts = [];
+        for (const id of ids) {
+          if (seen.has(id)) continue;
+          const d = byStat.get(id);
+          if (!d) {
+            seen.add(id);
+            continue;
+          }
+          for (const sid of d.stats) seen.add(sid);
+          if (d.noDescription) continue;
+          const values = d.stats.map((sid) => {
+            const k = ids.indexOf(sid);
+            const v = k >= 0 ? Number(vals[k]) || 0 : 0;
+            return { min: v, max: v };
+          });
+          const text = renderDescriptor(d, "Japanese", values) ?? renderDescriptor(d, "English", values);
+          if (text) parts.push(stripMarkers(text.trim()));
+        }
+        if (!parts.length) continue;
+        lines.push(label ? `${label}: ${parts.join("、")}` : parts.join("、"));
+      }
+      if (!lines.length) {
+        coresNoLines++;
+        continue;
+      }
+      const entry = { e: lines };
+      const stack = stackByBase.get(cores[i].BaseItemType);
+      if (stack) entry.s = `1 / ${stack}`;
+      const lv = Number(cores[i].RequiredLevel) || 0;
+      if (lv > 0) entry.lv = `レベル ${lv}`;
+      fresh[norm(name)] = entry;
+      coresOut++;
+    }
+    log(`SoulCores: ${cores.length} rows -> ${coresOut} rune/soul-core entries (no renderable lines: ${coresNoLines})`);
+  }
 
   let existing = {};
   if (await exists(OUT)) {

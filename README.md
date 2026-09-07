@@ -81,7 +81,7 @@ pnpm build:dicts:client          # = node scripts/build-dicts-from-client.mjs
 | `unique-names-ja.json` | Words `Text` → `Text2` | `Wordlist = 6` がユニーク名種別 (既知ユニークからの実測)。JA の `Text` は英語のままなので `Text2` を使う |
 | `poe2-flavour-ja.json` | FlavourText `Text` | **キーは CR+LF を保持** (`UniqueTooltip.strip()` がその形で引く。空白に潰すと一切ヒットしない) |
 | `unique-mods-ja.json` | Mods (`generation_type: unique`) の EN/JA text を行対応 | `build-unique-mods-from-client.mjs`。2,032 → 8,342 件。poe2db 版 (κ/λ) は追加のみの補強に降格 |
-| `currency-effects-ja.json` | CurrencyItems `Description` / `StackSize` | `build-currency-effects-from-client.mjs`。ルーン・ソウルコアは Description が空 (SoulCores テーブル要結合) で当面 poe2db 補強のまま |
+| `currency-effects-ja.json` | CurrencyItems `Description` / `StackSize` + SoulCores / SoulCoreStats / SoulCoreStatCategories | `build-currency-effects-from-client.mjs`。ルーン・ソウルコアは「装備種別: 効果」を csd で描画 (poe2db 版と同文)、`RequiredLevel` → 「レベル N」 |
 
 #### MOD 文言・ティア・spawn weight も原本から (2026-09-07〜)
 
@@ -109,8 +109,8 @@ build-mod-tier-and-group.mjs   ─ 無改造 → src/i18n/mod-tier-and-group.jso
 この `Mods` テーブル (spawn weight / タグ / ティア) がクラフト確率シミュレーションの土台になる。
 
 週次 CI (`build:dicts:online`) の poe2db / RePoE スクレイパーはすべて「既存キーは上書きしない・追加のみ」に
-なっているので、クライアント原本の値が週次実行で戻ることはない。原本化できていない残りは
-ルーン / ソウルコアの効果説明 (`SoulCores` → `ClientStrings2` の結合) のみ。
+なっているので、クライアント原本の値が週次実行で戻ることはない。これで辞書の全層が原本由来になった。
+poe2db / RePoE 経路が今も意味を持つのは「クライアントに無いもの」だけ (現状ほぼ無い)。
 
 ### 週次辞書更新 (CI) が失敗する / ユニーク辞書が 0 件になる → スクレイパー追従
 
