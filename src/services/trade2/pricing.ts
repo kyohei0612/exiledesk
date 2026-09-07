@@ -12,11 +12,14 @@ import { Rarity, SecurityStatus } from "../../constants/trade2";
 import type { Trade2SearchResponse, Trade2StatFilter } from "./query";
 
 /**
- * 連続リクエストの最小間隔 (ms)。search と fetch で 1 回ずつ消費する。
- * 2026-09-08 実測: 2.5 秒間隔だと search 20 回目あたり (約 75 秒) で 429 / Retry-After 600 秒の
- * ペナルティを食らった (search は 1 分あたり 15 回前後が上限とみられる)。4.5 秒なら 1 分 13 回で収まる。
+ * 連続リクエストの最小間隔 (ms)。search と fetch は別ポリシーなので別々に数える。
+ * 2026-09-08 実測 (X-Rate-Limit-Ip, policy trade-search-request-limit):
+ *   search = 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600
+ *   → 5 分で 30 回を超えると 30 分ペナルティ。2.5 秒間隔だと 75 秒で 429 (Retry-After 600) を食らった。
+ * 一括調査 (20 件超) を通すには search を 10 秒間隔にする必要がある (30 回 / 300 秒ちょうど)。
  */
-const MIN_INTERVAL_MS = 4500;
+const SEARCH_INTERVAL_MS = 10500;
+const FETCH_INTERVAL_MS = 2500;
 
 /** trade2.rs が返す 429 エラー文字列 ("... HTTP 429 retry-after=600: ...") から待ち秒数を取り出す。429 でなければ null */
 export function retryAfterSeconds(err: unknown): number | null {
@@ -27,15 +30,16 @@ export function retryAfterSeconds(err: unknown): number | null {
 /** fetch で見る listing 数 (trade2 の上限 = 10) */
 const FETCH_TOP_N = 10;
 
-let lastRequestAt = 0;
+const lastRequestAt = { search: 0, fetch: 0 };
 let chain: Promise<unknown> = Promise.resolve();
 
-/** 直列化 + 最小間隔ガード */
-function throttled<T>(fn: () => Promise<T>): Promise<T> {
+/** 直列化 + エンドポイント別の最小間隔ガード */
+function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
   const run = async () => {
-    const wait = lastRequestAt + MIN_INTERVAL_MS - Date.now();
+    const interval = kind === "search" ? SEARCH_INTERVAL_MS : FETCH_INTERVAL_MS;
+    const wait = lastRequestAt[kind] + interval - Date.now();
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    lastRequestAt = Date.now();
+    lastRequestAt[kind] = Date.now();
     return fn();
   };
   const p = chain.then(run, run);
@@ -134,7 +138,7 @@ export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRate
   for (const useBase of attempts) {
     usedBase = useBase;
     const body = buildQuery(input, useBase);
-    search = await throttled(() => invoke<Trade2SearchResponse>("trade2_search", { req: { league: input.league, query: body } }));
+    search = await throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league: input.league, query: body } }));
     if ((search.total ?? 0) > 0) break;
   }
   const searchUrl = search.id
@@ -144,7 +148,7 @@ export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRate
   if (ids.length === 0 || !search.id) {
     return { total: search.total ?? 0, minExalted: null, listings: [], searchUrl };
   }
-  const fetched = await throttled(() => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id } }));
+  const fetched = await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id } }));
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;

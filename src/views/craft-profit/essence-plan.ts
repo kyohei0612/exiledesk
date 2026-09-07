@@ -63,14 +63,35 @@ export interface EssencePlan {
 
 const stripLinks = (s: string) => s.replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 
+/**
+ * 保証モッドの最低ロール。stats[].min はクライアント内部値で、クリティカル率や吸収 (permyriad) は
+ * 表示値の 100 倍 / 10000 倍で入っている (例 local_critical_strike_chance: 表示 2.11% ↔ 内部 211)。
+ * trade2 は表示値で受けるので、テンプレの範囲下限と内部値の比が 10 の冪なら表示値を採用する。
+ * (2026-09-08: 探求のエッセンスで 211 以上を投げて 0 件になっていた)
+ */
+function displayMins(textEn: string): number[] {
+  const out: number[] = [];
+  const re = /\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(textEn))) out.push(Number(m[1]));
+  return out;
+}
+function statMinForTrade(min: number, display: number | undefined): number {
+  if (display === undefined || display === 0 || min === display) return min;
+  const ratio = min / display;
+  for (const p of [10, 100, 1000, 10000]) if (Math.abs(ratio - p) < 1e-6) return display;
+  return min;
+}
+
 /** bundle の mod → 保証モッド (最低ロール表記) */
 function guaranteedFromMod(m: Mod): OutcomeMod {
+  const mins = displayMins(m.text_en);
   return {
     textEn: stripLinks(m.text_en),
     textJa: stripLinks(m.text_ja || m.text_en),
     affix: m.type === "prefix" || m.type === "suffix" ? m.type : "unknown",
     groups: m.groups ?? [],
-    stats: (m.stats ?? []).map((s) => ({ id: s.id, value: s.min ?? 0 })),
+    stats: (m.stats ?? []).map((s, i) => ({ id: s.id, value: statMinForTrade(s.min ?? 0, mins[i]) })),
     guaranteed: true,
   };
 }

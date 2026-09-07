@@ -315,7 +315,16 @@ async function main() {
       continue;
     }
     matchedTexts++;
+    // 武器 / 防具のローカル mod (GGG 内部 ID が `local_` 始まり) は、trade2 側に
+    // "... (Local)" という別 stat がある場合そちらを使う。同文のグローバル stat に
+    // 誤マップすると検索が 0 件になる (2026-09-08: 命中力 / アタックスピードで確認)。
+    const localHit = trade2ByText.get(`${norm} (Local)`);
     for (const internalId of internalIdSet) {
+      const chosen = localHit && internalId.startsWith("local_") ? localHit : hit;
+      if (chosen !== hit) {
+        mapping[internalId] = chosen.tradeId;
+        continue;
+      }
       if (mapping[internalId] && mapping[internalId] !== hit.tradeId) {
         // 同一 internal ID が複数 trade2 ID に紐付くケース (理屈上ありうる)
         // 既存マッピングを優先 (先勝ち) し、衝突として記録
