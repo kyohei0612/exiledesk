@@ -59,6 +59,32 @@ node scripts/build-trade2-stat-mapping.mjs
 `data-cache/poe2db-unique-pages/` は事前にスクレイプ済の HTML キャッシュなので、`--offline` フラグで HTTP 不要。
 新ユニュ追加など実 HTTP が必要な場合は `--offline` を外して実行 (POE2DB へのレート制限注意)。
 
+### 一次ソース: GGG クライアントの dat テーブルから辞書を生成 (2026-09-07〜)
+
+poe2db / RePoE / PoB はいずれもゲームクライアント同梱のデータテーブルの写しなので、
+写しをスクレイプする代わりに原本を読む。暗号化されておらず、パスワード等は不要。
+
+```bash
+pnpm build:dicts:client          # = node scripts/build-dicts-from-client.mjs
+```
+
+- 読み取りは devDependency の `pathofexile-dat` (poe-dat-viewer 作者製) の CLI を子プロセスで呼ぶ。
+  Steam 既定パスを自動検出 (`--steam <dir>` / `POE2_DIR` で指定可)。
+  `--patch <version>` なら GGG のパッチ配信サーバから直接取るのでゲーム不要 (CI 向け。
+  ただし PoE2 の最新パッチ番号フィードが未整備なので、CI 配線は保留)。
+- PoE2 のテーブルは `Data/Balance/<Table>` と `Data/Balance/Japanese/<Table>` にあり、EN / JA は同じ行番号で対応する。
+- 出力 (すべて既存への上書きマージ。クライアントが正なので同じキーはクライアントの訳で更新、キーは消さない):
+
+| 出力 | テーブル | 備考 |
+|---|---|---|
+| `items-ja-client.json` (新規) | BaseItemTypes `Name` | 4,479 件。`currencies-ja.ts` で items-ja(公式凍結) の次に引く |
+| `unique-names-ja.json` | Words `Text` → `Text2` | `Wordlist = 6` がユニーク名種別 (既知ユニークからの実測)。JA の `Text` は英語のままなので `Text2` を使う |
+| `poe2-flavour-ja.json` | FlavourText `Text` | **キーは CR+LF を保持** (`UniqueTooltip.strip()` がその形で引く。空白に潰すと一切ヒットしない) |
+
+まだクライアント化していないもの: MOD 本文 (`Metadata/StatDescriptions/stat_descriptions.csd`、全言語ブロック入り) と
+ティア/グループ (`Mods` テーブルの Level / ModType / SpawnWeight)。これらを読めば `mod-text-ja` / `unique-mods-ja` /
+`mod-tier-and-group` も原本化でき、Mods の spawn weight を使えばクラフト確率のシミュレーションも作れる。
+
 ### 週次辞書更新 (CI) が失敗する / ユニーク辞書が 0 件になる → スクレイパー追従
 
 `build:dicts:online` は **Phase κ (`build-unique-mods-ja.mjs`) が先頭**で、POE2DB の

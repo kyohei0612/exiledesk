@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "lint:hex": "node scripts/lint-hex.mjs",
+    "build:dicts:client": "node scripts/build-dicts-from-client.mjs",
     "build:dicts": "node scripts/build-unique-pages-detail.mjs --offline && node scripts/build-unique-names-ja.mjs --offline && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
     "build:dicts:online": "node scripts/build-unique-mods-ja.mjs && node scripts/build-unique-pages-detail.mjs && node scripts/build-unique-names-ja.mjs && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs && node scripts/build-currency-effects-ja.mjs && node scripts/build-items-ja-poe2db.mjs",
     "check:deps": "pnpm outdated; cd src-tauri && cargo update --dry-run"
@@ -30,6 +31,7 @@
     "@tailwindcss/vite": "^4.2.4",
     "@tauri-apps/cli": "^2",
     "@vitejs/plugin-vue": "^5.2.1",
+    "pathofexile-dat": "^15.2.0",
     "protobufjs": "^8.4.0",
     "tailwindcss": "^4.2.4",
     "typescript": "~5.6.2",

@@ -51,10 +51,12 @@ const _itemsJa = itemsJaRaw as Record<string, string>;
 //   build: `node scripts/build-unique-mods-ja.mjs` で生成。
 const _uniqueModsJa = uniqueModsJaRaw as Record<string, string>;
 // 2026-05-22: ユニュ英語正式名 → 日本語正式名 (例: "Atziri's Splendour" → "アッツィリの栄耀")
-//   build: `node scripts/build-unique-names-ja.mjs --offline` で生成 (389 件)。
+//   build: `node scripts/build-dicts-from-client.mjs` (GGG クライアント Words.Text2、一次ソース)
+//          + `node scripts/build-unique-pages-detail.mjs` 系 (poe2db 補強)。
 const _uniqueNamesJa = uniqueNamesJaRaw as Record<string, string>;
-// Phase κ: RePoE fork 由来の flavour text 辞書 (例: "Power is a matter of perspective." → "力とは主観的なものだ。")
-//   build: `node scripts/build-poe2-flavour-ja.mjs` で生成。
+// flavour text 辞書 (例: "Power is a matter of perspective." → "力とは主観的なものだ。")
+//   build: `node scripts/build-dicts-from-client.mjs` (GGG クライアント FlavourText、一次ソース。キーは CR+LF 保持)
+//          + `build-unique-pages-detail.mjs` (poe2db 補強) + `build-poe2-flavour-ja.mjs` (RePoE、現在 404 で補強のみ)。
 const _flavourJa = poe2FlavourJaRaw as Record<string, string>;
 
 function normalizeTpl(text: string): string {
@@ -138,7 +140,7 @@ function strip(text: string): string {
   if (_uniqueModsJa[plain]) {
     return _uniqueModsJa[plain];
   }
-  // 3. poe2-flavour-ja.json (Phase κ: RePoE fork 由来) flat lookup
+  // 3. poe2-flavour-ja.json (GGG クライアント FlavourText 由来 + poe2db/RePoE 補強) flat lookup
   //    辞書キーは \r\n 改行を含む場合がある → 両方試す
   if (_flavourJa[plain]) {
     return _flavourJa[plain];
