@@ -28,3 +28,5 @@ data-cache/
 
 # 同梱 PoB (scripts/build-pob-bundle.mjs で vendor submodule から生成、リリース時に CI が組み立てる)
 src-tauri/resources/pob/
+
+# 同梱 PoB 用: 公式 runtime の基準コミット展開キャッシュ (build-pob-bundle.mjs が作る)

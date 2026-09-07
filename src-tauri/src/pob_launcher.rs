@@ -60,6 +60,8 @@ pub fn headless_src_dir(app: &tauri::AppHandle) -> PathBuf {
 struct BundleMeta {
     version: Option<String>,
     tree: Option<String>,
+    /// PoB2-JP (日本語化パッチ) のバージョン。英語版のみの組み立てでは null
+    jp: Option<String>,
 }
 
 /// UI 向けの同梱 PoB 状態
@@ -73,6 +75,8 @@ pub struct PobLauncherStatus {
     pub version: Option<String>,
     /// 同梱ツリーバージョン (例: "0_5")
     pub tree: Option<String>,
+    /// 日本語化パッチ (PoB2-JP) のバージョン。None = 英語版
+    pub jp_version: Option<String>,
     /// available=false のときの理由 / 起動失敗の理由
     pub message: Option<String>,
 }
@@ -98,6 +102,7 @@ fn build_status(app: &tauri::AppHandle) -> PobLauncherStatus {
         exe: Some(exe.display().to_string()),
         version: meta.version,
         tree: meta.tree,
+        jp_version: meta.jp,
         message: if available {
             None
         } else {

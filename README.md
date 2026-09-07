@@ -221,18 +221,29 @@ cd src-tauri && cargo update
 
 Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必読。
 
-### 同梱 PoB (Path of Building PoE2) の更新
+### 同梱 PoB (Path of Building PoE2 日本語版) の更新
 
-- 実体は submodule `vendor/PathOfBuilding-PoE2` (runtime + src)。`scripts/build-pob-bundle.mjs` が
-  `src-tauri/resources/pob/` にフラット配置で組み立て、`tauri.conf.json` の `resources/pob/**/*` で同梱される。
-  リリース CI (`release.yml`) は tauri-action の前にこのスクリプトを実行する。ローカルで `pnpm tauri dev` /
-  `pnpm tauri build` する前にも 1 回実行しておくこと (無いと左ナビ「PoB を開く」が起動不可表示になる)。
-- PoB 本体を上げる: `git -C vendor/PathOfBuilding-PoE2 pull` → スクリプト再実行 → 起動確認 → submodule の
-  参照をコミット。TreeData は最新ツリー + legion のみ同梱 (旧ツリーは遅延ロードなので新規ビルドには不要)。
-- 同梱版は `Modules/ExileDeskOverlay.lua` で PoB 自身の自動更新を止めている (上書きで同梱物が壊れるため)。
-  `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
-- 注意: PoB の描画エンジン (SimpleGraphic) は 1 バイト = 1 グリフのビットマップフォントで、日本語は描画できない。
-  辞書を差し替えても豆腐になるので、日本語化はレンダラ側の対応が前提。
+- 構成: 公式 PoB (submodule `vendor/PathOfBuilding-PoE2`、master = release) + 日本語化パッチ PoB2-JP
+  (ochi3/PoB2-JP のフォーク `kyohei0612/PoB2-JP`、submodule `vendor/PoB2-JP` / 開発機は `C:/Users/kyohei/POE秘書/POBJP`)
+  + 日本語フォント BIZ UDPGothic (`vendor/fonts`、SIL OFL)。
+- `scripts/build-pob-bundle.mjs` が `src-tauri/resources/pob/` にフラット配置で組み立て、`tauri.conf.json` の
+  `resources/pob/**/*` で同梱される。リリース CI (`release.yml`) は tauri-action の前にこのスクリプトを実行する。
+  ローカルで `pnpm tauri dev` / `pnpm tauri build` する前にも 1 回実行しておくこと (無いと左ナビ「PoB を開く」が起動不可表示)。
+  `--no-jp` で英語版のみ、`--check` で存在確認。
+- 組み立て手順: (1) 公式 runtime (exe/DLL/lua) → (2) src/ の Lua/Data (TreeData は最新 + legion のみ)
+  → (3) `Install-PoB2-JP.ps1 -Force -NoUpdate` で JP フック / CJK 対応 SimpleGraphic.dll / 辞書 CSV を適用
+  → (4) 同梱フォントを `SimpleGraphic/Fonts/JpUI*.ttf` に上書き (PoB2-JP は游ゴシックを Windows からコピーするが
+  再配布不可 + CI に無い) → (5) `*.pob2jp.bak` 除去 → (6) `Modules/ExileDeskOverlay.lua` で PoB 自身の自動更新を無効化。
+- **runtime の基準コミット固定** (`JP_RUNTIME_BASE_COMMIT` = PoB 0.22.0 release): PoB2-JP の差替 SimpleGraphic.dll は
+  パッチ同梱の古い ANGLE / re2 / fmt / lua51 とセットで動き、残りの DLL (libEGL.dll 等) は 0.22.0 公式版と組み合わせた
+  状態でオーナー環境の動作実績がある。master (0.23.1) の libEGL.dll は新しい libGLESv2 の export を要求するため、
+  JP 同梱の libGLESv2 と混ぜると起動時に「EGL_LockVulkanQueueANGLE が見つからない」で落ちる。
+  Lua 側 (src/) は master 最新を使う (0.22.0 runtime + 0.23.1 src で動作確認済み)。
+- PoB 本体を上げる: `git -C vendor/PathOfBuilding-PoE2 fetch && git checkout origin/master` → スクリプト再実行 →
+  起動確認 (`tier: full` で終わること。data-only に縮退したら PoB2-JP のアンカーが PoB 側で変わった) → submodule 参照をコミット。
+  runtime 側の DLL 更新を取り込みたい場合は基準コミットを上げて同様に起動確認する。
+- 日本語化を上げる: `POBJP` (フォーク) 側で翻訳 CSV を更新・push → submodule 参照を更新。
+- ユーザーデータ: `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
 
 ## アーキテクチャ概要
 

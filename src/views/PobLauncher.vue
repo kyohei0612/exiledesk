@@ -13,6 +13,8 @@ interface PobLauncherStatus {
   exe: string | null;
   version: string | null;
   tree: string | null;
+  /** PoB2-JP (日本語化パッチ) のバージョン。null = 英語版 */
+  jp_version: string | null;
   message: string | null;
 }
 
@@ -59,9 +61,9 @@ onActivated(() => {
 <template>
   <section class="h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-4">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">Path of Building (PoE2)</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">Path of Building (PoE2) 日本語版</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        ExileDesk 同梱版。このアプリに入っている PoB を別ウィンドウで開きます (別途インストール不要)。
+        ExileDesk 同梱版 (公式 PoB + PoB2-JP 日本語化パッチ)。このアプリに入っている PoB を別ウィンドウで開きます (別途インストール不要)。
       </p>
     </header>
 
@@ -75,6 +77,12 @@ onActivated(() => {
         </dd>
         <dt class="text-[var(--exile-color-text-secondary)]">PoB バージョン</dt>
         <dd class="tabular-nums">{{ status?.version ?? "—" }} <span v-if="status?.tree" class="text-[var(--exile-color-text-tertiary)]">(ツリー {{ status.tree }})</span></dd>
+        <dt class="text-[var(--exile-color-text-secondary)]">日本語化</dt>
+        <dd class="tabular-nums">
+          <span v-if="status?.jp_version">PoB2-JP {{ status.jp_version }}</span>
+          <span v-else-if="status" class="text-amber-300">なし (英語版)</span>
+          <span v-else>—</span>
+        </dd>
         <dt class="text-[var(--exile-color-text-secondary)]">同梱先</dt>
         <dd class="font-mono text-[11px] break-all text-[var(--exile-color-text-secondary)]">{{ status?.dir ?? "—" }}</dd>
         <dt class="text-[var(--exile-color-text-secondary)]">ビルド保存先</dt>
