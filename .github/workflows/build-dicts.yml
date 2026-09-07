@@ -57,7 +57,7 @@ jobs:
       # カテゴリページ (スラッグ源) は Phase κ がオンライン時に必ず再取得するので、
       # キャッシュが古くても新ユニークの検出は阻害されない。
       - name: Restore POE2DB scrape cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: data-cache
           key: poe2db-cache-${{ github.run_id }}
@@ -149,3 +149,14 @@ jobs:
       - name: No-op (no changes)
         if: steps.diff.outputs.changed == 'false'
         run: echo "::notice::No dictionary changes detected this week."
+
+      # ジョブが失敗 (件数ガード等) した回でも、取得済みページは次回のために必ず保存する。
+      # 一体型 actions/cache は成功時しか保存しないため restore / save に分割している。
+      # 2026-09-07: 初回 run が件数ガードで失敗 → 保存スキップ → 次の run が再び
+      # ~780 ページのコールド取得 (18 分) になったのを受けて追加。
+      - name: Save POE2DB scrape cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data-cache
+          key: poe2db-cache-${{ github.run_id }}
