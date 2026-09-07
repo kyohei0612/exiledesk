@@ -40,9 +40,8 @@ import { spawnSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(HERE, "..");
-const EXPORT_DIR = resolve(ROOT, "data-cache/client-export");
+import { CLIENT_FILES, CLIENT_TABLES, EXPORT_DIR, ROOT, TRANSLATIONS, loadTable } from "./client-export-config.mjs";
+
 const OUT_ITEMS = resolve(ROOT, "src/i18n/items-ja-client.json");
 const OUT_NAMES = resolve(ROOT, "src/i18n/unique-names-ja.json");
 const OUT_FLAVOUR = resolve(ROOT, "src/i18n/poe2-flavour-ja.json");
@@ -156,17 +155,12 @@ async function resolveSource() {
 // ---------------------------------------------------------------------------
 async function exportTables(source) {
   await mkdir(EXPORT_DIR, { recursive: true });
+  // テーブル / ファイル一覧は client-export-config.mjs に集約 (同梱 PoB の日本語化ビルダーと共有)
   const config = {
     ...source,
-    translations: ["English", "Japanese"],
-    // MOD 文言 (全言語) の原本。build-mods-from-client.mjs が読む。
-    // pathofexile-dat は files をパスの "/" を "@" に置換して保存する。
-    files: ["Data/StatDescriptions/stat_descriptions.csd"],
-    tables: [
-      { name: "BaseItemTypes", columns: ["Id", "Name"] },
-      { name: "Words", columns: ["Wordlist", "Text", "Text2"] },
-      { name: "FlavourText", columns: ["Id", "Text"] },
-    ],
+    translations: TRANSLATIONS,
+    files: CLIENT_FILES,
+    tables: CLIENT_TABLES,
   };
   await writeFile(resolve(EXPORT_DIR, "config.json"), JSON.stringify(config, null, 2) + "\n", "utf8");
 
@@ -179,12 +173,6 @@ async function exportTables(source) {
   log(`running pathofexile-dat ${pkg.version} in ${EXPORT_DIR}`);
   const r = spawnSync(process.execPath, [bin], { cwd: EXPORT_DIR, stdio: "inherit" });
   if (r.status !== 0) throw new Error(`pathofexile-dat exited with ${r.status}`);
-}
-
-async function loadTable(lang, name) {
-  const p = resolve(EXPORT_DIR, "tables", lang, `${name}.json`);
-  const j = JSON.parse(await readFile(p, "utf8"));
-  return Array.isArray(j) ? j : j.rows || Object.values(j);
 }
 
 // ---------------------------------------------------------------------------
