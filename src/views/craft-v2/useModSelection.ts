@@ -165,7 +165,8 @@ export function useModSelection(deps: {
       for (const mod of chosen) {
         const idx = selectedTierIdxByMod.value[mod.rawTemplate];
         if (typeof idx === "number" && mod.tiers && mod.tiers[idx]) {
-          tierMinByMod[mod.rawTemplate] = mod.tiers[idx].min;
+          // 下限は全 stat の最低ロール平均 (trade2 の "Adds # to #" は平均値で絞る)
+          tierMinByMod[mod.rawTemplate] = mod.tiers[idx].filterMin ?? mod.tiers[idx].min;
         }
       }
       try {

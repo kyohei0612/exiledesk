@@ -16,6 +16,7 @@ import type {
   CraftV2Cache,
   CraftV2Progress,
   ModEntry,
+  ModTierRow,
   SlotKey,
   SlotMods,
   UniqueUsage,
@@ -30,11 +31,16 @@ import {
   type UniqueBucket,
 } from "./ingest";
 import { countPlaceholders, fillTemplate, stripRichTextMarkers } from "../mods/normalize";
-import { displayUniqueNameJa, lookupGroups, lookupModTextJa, lookupTiers } from "../mods/dictionaries";
+import { displayUniqueNameJa, lookupGroups, lookupModTextJa } from "../mods/dictionaries";
+import { tiersForTemplate } from "../mods/tiers";
+import { tagSetsForSlotWithClasses } from "../mods/item-class-tags";
+import { baseClassOf } from "../trade2/category";
 
 // ============================================================================
 // MOD バケット → ModEntry
 // ============================================================================
+
+const meanOf = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 
 /**
  * 平均値から推定 tier (avg がどの tier の min-max 範囲に入るか)。
@@ -81,7 +87,7 @@ export function usageTierFromValues(tiers: ModEntry["tiers"], flatValues: number
   return bestIdx >= 0 && bestCnt > 0 ? bestIdx + 1 : undefined;
 }
 
-function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: AffixKind): ModEntry[] {
+function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: AffixKind, tagSets: string[][] | null): ModEntry[] {
   const entries: ModEntry[] = [];
   for (const bucket of buckets.values()) {
     // 各 # 位置ごとの平均値
@@ -114,17 +120,26 @@ function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: Affix
           : bucket.template;
     }
     const text = stripRichTextMarkers(fillTemplate(tpl, avgValues));
-    const tiers = lookupTiers(bucket.template);
+    const tiers = tiersForTemplate(bucket.template, tagSets);
     const groupIds = lookupGroups(bucket.template);
 
+    // ティア判定: 単一値はそのまま、複数値 ("Adds # to #") は各 occurrence の平均値を
+    // ティア側も (mins の平均 .. maxs の平均) に潰して比較する (2026-09-08)
     const placeholderIsSingle = placeholderCount === 1;
+    const tiersForJudge: ModTierRow[] = placeholderIsSingle
+      ? tiers
+      : tiers.map((t) => ({ ...t, min: meanOf(t.mins), max: meanOf(t.maxs) }));
+    const judgeValues: number[] = placeholderIsSingle
+      ? flatValues
+      : bucket.values.filter((arr) => arr.length >= placeholderCount).map((arr) => meanOf(arr.slice(0, placeholderCount)));
+    const judgeAvg = placeholderIsSingle ? avgValues[0] : meanOf(avgValues.filter(Number.isFinite));
     let inferredTier: number | undefined = undefined;
-    if (placeholderIsSingle && tiers.length > 0 && avgValues.length > 0 && Number.isFinite(avgValues[0])) {
-      inferredTier = inferTierFromAverage(tiers, avgValues[0]);
+    if (tiersForJudge.length > 0 && Number.isFinite(judgeAvg)) {
+      inferredTier = inferTierFromAverage(tiersForJudge, judgeAvg);
     }
     let usageTier: number | undefined = undefined;
-    if (placeholderIsSingle && tiers.length > 0 && flatValues.length > 0) {
-      usageTier = usageTierFromValues(tiers, flatValues);
+    if (tiersForJudge.length > 0 && judgeValues.length > 0) {
+      usageTier = usageTierFromValues(tiersForJudge, judgeValues);
     }
 
     entries.push({
@@ -152,10 +167,16 @@ function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
   return list;
 }
 
-function finalizeSlot(slot: SlotCounter): SlotMods {
+/**
+ * スロットの MOD 一覧を確定する。ティア表は「そのスロットで実際に使われていたベースの種別」の spawn タグで絞る
+ * (武器スロットなら弓 / 杖 / メイス … の和集合)。ベースが取れていない古いキャッシュはスロット既定タグ。
+ */
+function finalizeSlot(slot: SlotCounter, slotKey: SlotKey): SlotMods {
+  const classes = [...slot.bases.values()].map((b) => baseClassOf(b.nameEn)?.cls).filter((c): c is string => !!c);
+  const tagSets = tagSetsForSlotWithClasses(slotKey, classes);
   return {
-    prefix: finalizeBuckets(slot.prefix, "P"),
-    suffix: finalizeBuckets(slot.suffix, "S"),
+    prefix: finalizeBuckets(slot.prefix, "P", tagSets),
+    suffix: finalizeBuckets(slot.suffix, "S", tagSets),
     bases: finalizeBases(slot.bases),
   };
 }
@@ -201,14 +222,14 @@ function finalizeAscendancy(
     usagePercent,
     sampleSize,
     icon: ascendancyIcon(classEn),
-    ring: finalizeSlot(counter.slots.ring),
-    amulet: finalizeSlot(counter.slots.amulet),
-    weapon: finalizeSlot(counter.slots.weapon),
-    weapon2: finalizeSlot(counter.slots.weapon2),
-    helm: finalizeSlot(counter.slots.helm),
-    gloves: finalizeSlot(counter.slots.gloves),
-    body: finalizeSlot(counter.slots.body),
-    boots: finalizeSlot(counter.slots.boots),
+    ring: finalizeSlot(counter.slots.ring, "ring"),
+    amulet: finalizeSlot(counter.slots.amulet, "amulet"),
+    weapon: finalizeSlot(counter.slots.weapon, "weapon"),
+    weapon2: finalizeSlot(counter.slots.weapon2, "weapon2"),
+    helm: finalizeSlot(counter.slots.helm, "helm"),
+    gloves: finalizeSlot(counter.slots.gloves, "gloves"),
+    body: finalizeSlot(counter.slots.body, "body"),
+    boots: finalizeSlot(counter.slots.boots, "boots"),
     uniques: finalizeUniques(counter.uniques, sampleSize),
     uniquesBySlot,
     error,

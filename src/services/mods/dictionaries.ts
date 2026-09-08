@@ -16,6 +16,7 @@ import uniqueNamesJaRaw from "../../i18n/unique-names-ja.json";
 import modTextJaRaw from "../../i18n/mod-text-ja.json";
 import modTextJaManualRaw from "../../i18n/mod-text-ja-manual.json";
 import { jaCurrency } from "../../i18n/currencies-ja";
+import { tiersForTemplate } from "./tiers";
 import type { AffixKind, ModTierRow } from "../craft-v2/types";
 import {
   normalizeModTemplate,
@@ -28,7 +29,8 @@ import {
 // ============================================================================
 
 interface ModTierAndGroupJson {
-  tiers: Record<string, ModTierRow[]>;
+  /** 旧ティア表 (全 mod 混在)。2026-09-08 以降は services/mods/tiers.ts が装備タグ付きで組むので未使用 */
+  tiers: Record<string, unknown>;
   groups: Record<string, string[]>;
 }
 const _modTierAndGroup = modTierAndGroup as ModTierAndGroupJson;
@@ -51,16 +53,13 @@ function buildTierGroupWithAliases<T>(
   return out;
 }
 
-const _modTiers: Readonly<Record<string, ModTierRow[]>> = buildTierGroupWithAliases(
-  _modTierAndGroup.tiers,
-);
 const _modGroups: Readonly<Record<string, string[]>> = buildTierGroupWithAliases(
   _modTierAndGroup.groups,
 );
 
-/** rawTemplate (正規化済 英語テンプレ) からティア一覧を引く。マーカー除去版でもフォールバック。 */
+/** rawTemplate (正規化済 英語テンプレ) からティア一覧を引く (装備タグで絞らない = 全 mod)。装備が分かるなら tiersForTemplate を使う */
 export function lookupTiers(template: string): ModTierRow[] {
-  return _modTiers[template] ?? _modTiers[stripRichTextMarkers(template)] ?? [];
+  return tiersForTemplate(template, null);
 }
 
 /** rawTemplate からグループ ID 一覧を引く。マーカー除去版でもフォールバック。 */

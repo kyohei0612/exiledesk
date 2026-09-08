@@ -14,7 +14,9 @@ import type { CachedRareItem, CraftV2Cache, ModEntry, ModTierRow } from "../../s
 import { usageTierFromValues } from "../../services/craft-v2/finalize";
 import { baseClassOf } from "../../services/trade2/category";
 import { extractNumbers, normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers } from "../../services/mods/normalize";
-import { heuristicAffix, lookupGroups, lookupModTextJa, lookupTiers, modBundleIndex } from "../../services/mods/dictionaries";
+import { heuristicAffix, lookupGroups, lookupModTextJa, modBundleIndex } from "../../services/mods/dictionaries";
+import { tiersForTemplate } from "../../services/mods/tiers";
+import { tagsForItemClass } from "../../services/mods/item-class-tags";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import type { Trade2StatFilter } from "../../services/trade2/query";
@@ -114,9 +116,11 @@ export function buildTopProfile(cache: CraftV2Cache, itemClass: string, classEn:
     }
   }
   const mods: TopProfileMod[] = [];
+  const classTags = tagsForItemClass(itemClass);
+  const tagSets = classTags ? [classTags] : null;
   for (const [key, b] of buckets) {
     const idx = modBundleIndex.get(b.template);
-    const tiers = lookupTiers(b.template);
+    const tiers = tiersForTemplate(b.template, tagSets);
     const scale = tierScale(tiers, b.values);
     const jaTpl = idx?.textJaTemplate ?? lookupModTextJa(b.template) ?? null;
     mods.push({
@@ -168,7 +172,8 @@ export function diagnoseItem(profile: TopProfile, item: ParsedItem): ItemDiagnos
   const identified = item.mods.filter((m): m is ItemMod => m.identified);
   const present: ModDiagnosis[] = identified.map((m) => {
     const p = findProfileMod(profile, m.textEn);
-    const tiers = p?.tiers ?? lookupTiers(normalizeModTemplate(m.textEn));
+    const classTags = tagsForItemClass(profile.itemClass);
+    const tiers = p?.tiers ?? tiersForTemplate(normalizeModTemplate(m.textEn), classTags ? [classTags] : null);
     const v = extractNumbers(m.textEn)[0];
     const scale = p?.scale ?? tierScale(tiers, v === undefined ? [] : [v]);
     return { textJa: m.textJa, affix: m.affix, pct: p?.pct ?? 0, usageTier: p?.usageTier, myTier: v === undefined ? undefined : tierOfValue(tiers, v * scale) };
@@ -220,7 +225,7 @@ export function targetMods(profile: TopProfile): TargetMods {
   const seen = new Set<string>();
   const mods: ModEntry[] = chosen.map((m) => {
     const row = m.usageTier ? m.tiers[m.usageTier - 1] : undefined;
-    const min = row ? row.min / m.scale : undefined;
+    const min = row ? row.filterMin / m.scale : undefined;
     if (min !== undefined) tierMinByMod[m.template] = min;
     const tradeIds = getModStatIds(m.template)
       .map((id) => TRADE2_STAT_MAPPING[`local_${id}`] ?? TRADE2_STAT_MAPPING[id])

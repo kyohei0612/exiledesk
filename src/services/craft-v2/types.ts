@@ -162,11 +162,19 @@ export const SLOT_KEYS: readonly SlotKey[] = [
   "boots",
 ] as const;
 
-/** ティア表 1 行 (mod-tier-and-group.json の tiers[key][i]) */
+/** ティア表 1 行 (services/mods/tiers.ts が装備タグで絞って組む) */
 export interface ModTierRow {
   tier: number;
+  /** stats[0] の範囲 (互換: 単一値 mod の判定に使う) */
   min: number;
   max: number;
+  /** 全 stat の範囲 ("Adds # to #" は 2 要素) */
+  mins: number[];
+  maxs: number[];
+  /** trade2 の下限に使う値 (全 stat の最低ロールの平均。trade2 の "Adds # to #" は平均値で絞るため) */
+  filterMin: number;
+  /** 必要 ilvl (Mods.Level) */
+  level: number;
   label: string;
 }
 /** UI 公開用: ModEntry.tiers の要素型 */
