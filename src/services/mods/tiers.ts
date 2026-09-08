@@ -9,7 +9,8 @@
  * その装備に実際に出る mod だけでティアを付ける。
  *   - 出現判定はゲームと同じ「spawn を先頭から見て、装備タグに最初に一致した項目の重み」(弓は `bow:0` が先に来る)
  *   - 範囲は text_en の表示値 (クリティカル率 4.41-5 など。stats の内部値は ×100 のことがある)
- *   - 複数 stat (Adds # to #) は全 stat の範囲を持ち、trade2 の下限には平均を使う
+ *   - 複数 stat (Adds # to #) は全 stat の範囲を持つ。trade2 は (X+Y)/2 の平均値 1 本で照合するので、ティア同士の
+ *     平均値範囲が重なる。下限に「平均値範囲の中央」を使い、下のティアの上振れが混ざるのを減らす (オーナー判断 2026-09-08)
  */
 
 import modsBundle from "../../i18n/mods-bundle.json";
@@ -127,7 +128,8 @@ export function tiersForTemplate(template: string, tagSets: readonly (readonly s
     max: r.maxs[0],
     mins: r.mins,
     maxs: r.maxs,
-    filterMin: Math.floor(mean(r.mins) * 100) / 100,
+    // 単一値: 下限そのまま (ティアは重ならない)。複数値: 平均値範囲 [mean(mins), mean(maxs)] の中央
+    filterMin: Math.floor((r.mins.length === 1 ? r.mins[0] : (mean(r.mins) + mean(r.maxs)) / 2) * 100) / 100,
     level: r.level,
     label: `T${i + 1}: ${r.mins.map((lo, j) => fmtRange(lo, r.maxs[j])).join(" / ")}`,
   }));

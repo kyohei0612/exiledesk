@@ -171,7 +171,7 @@ export interface ModTierRow {
   /** 全 stat の範囲 ("Adds # to #" は 2 要素) */
   mins: number[];
   maxs: number[];
-  /** trade2 の下限に使う値 (全 stat の最低ロールの平均。trade2 の "Adds # to #" は平均値で絞るため) */
+  /** trade2 の下限に使う値。単一値 = min、複数値 ("Adds # to #") = 平均値範囲の中央 (trade2 は (X+Y)/2 で照合する) */
   filterMin: number;
   /** 必要 ilvl (Mods.Level) */
   level: number;
