@@ -72,6 +72,8 @@ export interface CraftV2Store {
   currentPhase: CharacterProgressInfo | null;
   showingFromCache: boolean;
   cacheItemCount: number;
+  /** 表示中データの取得時刻 (epoch 秒)。キャッシュなら saved_at、取得完了なら完了時刻。自動更新の鮮度判定に使う */
+  cacheSavedAt: number | null;
   networkStatus: NetworkStatusUi | null;
   // リーグ選択
   availableLeagues: LeagueInfo[];
@@ -95,6 +97,7 @@ export const craftV2Store: CraftV2Store = reactive({
   currentPhase: null,
   showingFromCache: false,
   cacheItemCount: 0,
+  cacheSavedAt: null,
   networkStatus: null,
   availableLeagues: [],
   selectedLeagueUrl: "",
@@ -136,6 +139,12 @@ export function toggleWarnDetail(ts: number): void {
   if (s.has(ts)) s.delete(ts);
   else s.add(ts);
   craftV2Store.expandedWarnTimestamps = s;
+}
+
+/** M/D HH:MM (日付をまたぐキャッシュの表示用) */
+export function formatDateTime(d: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** HH:MM:SS */

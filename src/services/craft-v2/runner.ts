@@ -56,6 +56,7 @@ export async function startCraftDiscoveryV2(
     onDone,
     onFatal,
     onCacheReady,
+    shouldFetch,
     useCache = true,
     leagueUrl,
     onCharacterProgress,
@@ -74,6 +75,9 @@ export async function startCraftDiscoveryV2(
       }
     }
   }
+
+  // キャッシュが新しければここで終わり (poe.ninja には行かない)
+  if (shouldFetch && !shouldFetch(prevCache)) return null;
 
   const [unProgress, unError, unDone, unCheckpoint, unCharProgress] = await Promise.all([
     listen<CraftV2Progress>("craft-v2-progress", (e) => {

@@ -16,7 +16,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { AggregatedAscendancy } from "../../services/craft-v2/types";
 import { clearCraftV2Cache } from "../../services/craft-v2/cache";
 import { fetchEconomyLeagues, startCraftDiscoveryV2 } from "../../services/craft-v2/runner";
-import { craftV2Store, formatHms, nowMs, pushWarn } from "./store";
+import { craftV2Store, formatDateTime, formatHms, nowMs, pushWarn } from "./store";
 import { checkDictionaryFreshness, runHealthCheck } from "./health";
 
 interface NetworkStatusRaw {
@@ -26,6 +26,34 @@ interface NetworkStatusRaw {
   active_retry_count: number;
   last_retry_reason: string | null;
   last_retry_remaining_secs: number;
+}
+
+/**
+ * 自動更新の鮮度しきい値 (2026-09-08 オーナー指示: 起動のたびに取りに行くのは重い。3 日空いたら更新)。
+ * 手動の「更新」「全取得」「このリーグで再取得」は鮮度に関係なくいつでも動く (取得中なら中断して再開)。
+ */
+export const CRAFT_V2_STALE_SECS = 3 * 24 * 3600;
+
+export function isCraftV2CacheStale(savedAtSec: number | null | undefined): boolean {
+  if (!savedAtSec) return true;
+  return Date.now() / 1000 - savedAtSec >= CRAFT_V2_STALE_SECS;
+}
+
+/** 取得中なら Rust 側に中断を頼み、done が来る (loading=false) まで待つ (最大 90 秒) */
+async function cancelInFlight(): Promise<void> {
+  if (!craftV2Store.loading) return;
+  try {
+    await invoke("craft_v2_cancel");
+  } catch (err) {
+    console.warn("[craft-v2-store] craft_v2_cancel failed:", err);
+  }
+  const deadline = Date.now() + 90_000;
+  while (craftV2Store.loading && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  // タイムアウトしたら状態だけ落として先へ進む (Rust 側は次のキャラ境界で止まる)
+  craftV2Store.loading = false;
+  craftV2Store.backgroundRefresh = false;
 }
 
 // store の外側に置く mutable refs (UnlistenFn / Timer は reactive 化不要)
@@ -109,7 +137,7 @@ function mergeAscendancy(agg: AggregatedAscendancy): void {
 // ---------------------------------------------------------------------------
 // 取得のコア
 // ---------------------------------------------------------------------------
-async function runFetch(useCache: boolean, opts?: { background?: boolean; bgWhenCached?: boolean }): Promise<void> {
+async function runFetch(useCache: boolean, opts?: { background?: boolean; bgWhenCached?: boolean; onlyIfStale?: boolean }): Promise<void> {
   if (unlistenRef) {
     try {
       unlistenRef();
@@ -123,6 +151,7 @@ async function runFetch(useCache: boolean, opts?: { background?: boolean; bgWhen
   const background = opts?.background === true && craftV2Store.ascendancies.length > 0;
   // 初回ロードでもキャッシュが表示できたら以降をバックグラウンド更新へ切替える (リーグ切替には適用しない)
   const bgWhenCached = opts?.bgWhenCached === true;
+  const onlyIfStale = opts?.onlyIfStale === true;
   bgStaging.clear();
 
   if (background) {
@@ -161,16 +190,31 @@ async function runFetch(useCache: boolean, opts?: { background?: boolean; bgWhen
         snapshot_name: cache.snapshot_name,
         version: cache.snapshot_version,
       };
+      craftV2Store.cacheSavedAt = cache.saved_at || null;
       if (cache.saved_at) {
-        craftV2Store.lastUpdatedAt = formatHms(new Date(cache.saved_at * 1000)) + " (キャッシュ)";
+        craftV2Store.lastUpdatedAt = formatDateTime(new Date(cache.saved_at * 1000)) + " (キャッシュ)";
       }
-      if (bgWhenCached && cachedAggs.length > 0) {
+    },
+    shouldFetch: (cache) => {
+      const hasCache = !!cache && craftV2Store.ascendancies.length > 0;
+      if (onlyIfStale && hasCache && !isCraftV2CacheStale(cache?.saved_at)) {
+        // 3 日以内: キャッシュ表示のままで終了 (poe.ninja に行かない)
+        const savedAt = cache?.saved_at ?? 0;
+        const next = new Date((savedAt + CRAFT_V2_STALE_SECS) * 1000);
+        craftV2Store.lastUpdatedAt = `${formatDateTime(new Date(savedAt * 1000))} (キャッシュ / 次回自動更新 ${formatDateTime(next)})`;
+        craftV2Store.loading = false;
+        craftV2Store.backgroundRefresh = false;
+        stopProgressUi();
+        return false;
+      }
+      if (bgWhenCached && hasCache) {
         craftV2Store.backgroundRefresh = true;
         craftV2Store.showingFromCache = false;
         bgStaging.clear();
         stopNowTicker();
         stopNetworkStatusPoller();
       }
+      return true;
     },
     onProgress: (agg) => {
       if (craftV2Store.backgroundRefresh) {
@@ -201,6 +245,7 @@ async function runFetch(useCache: boolean, opts?: { background?: boolean; bgWhen
       craftV2Store.snapshot = snap;
       craftV2Store.loading = false;
       craftV2Store.backgroundRefresh = false;
+      craftV2Store.cacheSavedAt = Math.floor(Date.now() / 1000);
       craftV2Store.lastUpdatedAt = formatHms(new Date());
       craftV2Store.showingFromCache = false;
       stopProgressUi();
@@ -271,6 +316,10 @@ export async function ensureCraftV2Started(): Promise<void> {
           console.log("[craft-v2-store] auto-refetch skipped (fetch already in progress)");
           return;
         }
+        if (!isCraftV2CacheStale(craftV2Store.cacheSavedAt)) {
+          console.log("[craft-v2-store] auto-refetch skipped (cache is fresh, < 3 days)");
+          return;
+        }
         console.log("[craft-v2-store] auto-refetch triggered by scheduler");
         void refreshCraftV2();
       });
@@ -294,21 +343,25 @@ export async function ensureCraftV2Started(): Promise<void> {
   void runHealthCheck();
   checkDictionaryFreshness();
 
-  await runFetch(true, { bgWhenCached: true });
+  // 起動時: キャッシュが 3 日以内なら取りに行かない (手動ボタンはいつでも可)
+  await runFetch(true, { bgWhenCached: true, onlyIfStale: true });
 }
 
 /** 「更新」ボタン (差分更新): 既存データがあればバックグラウンド更新。 */
 export async function refreshCraftV2(): Promise<void> {
+  await cancelInFlight();
   await runFetch(true, { background: true });
 }
 
 /** 「全取得」ボタン: ディスクキャッシュ削除 → 完全再取得。 */
 export async function forceRefetchCraftV2(): Promise<void> {
+  await cancelInFlight();
   await clearCraftV2Cache();
   await runFetch(false);
 }
 
 /** 「このリーグで再取得」ボタン: selectedLeagueUrl で再 fetch。 */
 export async function refetchWithSelectedLeague(): Promise<void> {
+  await cancelInFlight();
   await runFetch(true);
 }

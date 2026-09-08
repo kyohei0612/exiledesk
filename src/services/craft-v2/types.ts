@@ -313,6 +313,11 @@ export interface StartCraftDiscoveryV2Options {
    * キャッシュあり + useCache=true の時、invoke 発火前に各アセンダンシーを流す。
    */
   onCacheReady?: (data: AggregatedAscendancy[], cache: CraftV2Cache) => void;
+  /**
+   * onCacheReady の直後に呼ばれ、false を返すと poe.ninja への取得を行わない (キャッシュ表示のみ、2026-09-08)。
+   * 起動時の「3 日以内のキャッシュなら取りに行かない」に使う。
+   */
+  shouldFetch?: (cache: CraftV2Cache | null) => boolean;
   /** ディスクキャッシュを使うかどうか (default true)。false は「キャッシュ削除 + 全取得」用 */
   useCache?: boolean;
   /** 取得対象リーグの url (例: "forbiddenrites")。undefined なら economyLeagues[0] */
