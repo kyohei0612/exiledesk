@@ -9,6 +9,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { Rarity, SecurityStatus } from "../../constants/trade2";
+import { trade2QueryUrl } from "./league";
 import type { Trade2SearchResponse, Trade2StatFilter } from "./query";
 
 /**
@@ -100,6 +101,15 @@ export interface PriceQueryInput {
   category: string | null;
   rarity: "rare" | "magic";
   stats: Trade2StatFilter[];
+}
+
+/**
+ * 同じ条件でトレードサイトを開く URL (API を叩かない)。ベース名があればベース完全一致、無ければカテゴリ。
+ * 「鑑定」ボタン用: レート制限を消費せずに出品一覧を目で見る。
+ */
+export function priceQueryUrl(input: PriceQueryInput): string {
+  const useBase = !!input.baseTypeEn;
+  return trade2QueryUrl(input.league, buildQuery(input, useBase));
 }
 
 function buildQuery(input: PriceQueryInput, useBase: boolean) {

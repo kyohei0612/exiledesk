@@ -14,6 +14,8 @@ defineProps<{
   materialCost: (row: PlanRow, op: OutcomePrice) => number | null;
   /** 保証モッドの上位プレイヤー採用率 (0..1)。上位基準が無いときは null */
   fitOf?: (op: OutcomePrice) => number | null;
+  /** 「鑑定」: この結果の条件でトレードサイトを開く URL (API 不使用) */
+  queryUrlOf: (op: OutcomePrice) => string | null;
 }>();
 const emit = defineEmits<{ price: [row: PlanRow, op: OutcomePrice]; open: [url: string] }>();
 
@@ -91,10 +93,20 @@ function profitClass(p: number | null): string {
             </td>
             <td class="px-3 py-2 text-right whitespace-nowrap">
               <button
+                v-if="queryUrlOf(op)"
+                type="button"
+                @click="emit('open', queryUrlOf(op)!)"
+                class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-surface)]"
+                title="この条件でトレードサイトを開く (API を使わないのでレート制限なし)"
+              >
+                鑑定 ↗
+              </button>
+              <button
                 type="button"
                 :disabled="pricing || op.status === 'loading'"
                 @click="emit('price', row, op)"
-                class="px-2 py-0.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:bg-[var(--exile-color-bg-surface)] disabled:opacity-50"
+                class="ml-1 px-2 py-0.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:bg-[var(--exile-color-bg-surface)] disabled:opacity-50"
+                title="アプリ内で最安を取得 (trade2 API、レート制限あり)"
               >
                 相場
               </button>

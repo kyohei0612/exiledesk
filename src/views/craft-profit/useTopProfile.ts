@@ -4,7 +4,7 @@
 import { computed, ref, watch, type Ref } from "vue";
 import { loadCraftV2Cache } from "../../services/craft-v2/cache";
 import type { CraftV2Cache } from "../../services/craft-v2/types";
-import { priceMinListing, retryAfterSeconds, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
+import { priceMinListing, priceQueryUrl, retryAfterSeconds, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
 import { tradeCategoryOfClass } from "../../services/trade2/category";
 import { jaAscendancy } from "../../i18n/ascendancies-ja";
 import type { ParsedItem } from "./parse";
@@ -64,6 +64,14 @@ export function useTopProfile(item: Ref<ParsedItem | null>, league: Ref<string |
   const diagnosis = computed(() => (profile.value && item.value ? diagnoseItem(profile.value, item.value) : null));
   const target = computed(() => (profile.value ? targetMods(profile.value) : null));
 
+  /** 典型構成の条件でトレードサイトを開く URL (API 不使用) */
+  const targetUrl = computed<string | null>(() => {
+    const p = profile.value;
+    const t = target.value;
+    if (!p || !t || !league.value || t.filters.length === 0) return null;
+    return priceQueryUrl({ league: league.value, baseTypeEn: null, category: tradeCategoryOfClass(p.itemClass), rarity: "rare", stats: t.filters });
+  });
+
   /** 典型構成 (上位の主流 prefix 3 + suffix 3、最頻ティア下限) の最安を 1 回だけ検索する */
   async function priceTarget(): Promise<void> {
     const p = profile.value;
@@ -86,5 +94,5 @@ export function useTopProfile(item: Ref<ParsedItem | null>, league: Ref<string |
     }
   }
 
-  return { cache, cacheError, loadCache, options, selectedClass, profile, diagnosis, target, targetPrice, targetMissing, targetStatus, targetError, priceTarget };
+  return { cache, cacheError, loadCache, options, selectedClass, profile, diagnosis, target, targetUrl, targetPrice, targetMissing, targetStatus, targetError, priceTarget };
 }

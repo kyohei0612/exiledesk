@@ -1,35 +1,27 @@
 /**
- * trade2 検索を実行して結果ページを OS 既定ブラウザで開く
+ * trade2 の検索条件を組み立てて、結果ページを OS 既定ブラウザで開く
  *
  * craft-discovery-v2.ts から切り出し (2026-09-07)。
- * 「押したらトレード行く」挙動 (旧 openClusterInTrade2 の V2 移植)。
+ * 2026-09-08: API (trade2_search) を叩かず、条件 JSON を `?q=` に載せた URL を開く方式に変更。
+ *   - search API はレート制限が厳しく (5 分 30 回、超えると 10 分ペナルティ)、「押したらトレード行く」に使うと
+ *     他の相場取得まで巻き添えになる。サイト側は `?q=` を読んで自前で検索するので、アプリからの API 消費は 0。
+ *   - ユニーク名が trade2 未登録のときはサイト側がエラーを出すので、その場で手動で直してもらう。
  */
 
-import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
-import { snapshotNameToTradeLeague, trade2HomeUrl, trade2SearchUrl } from "./league";
-import {
-  buildRareSearchQuery,
-  buildStatFilters,
-  buildUniqueBaseQuery,
-  buildUniqueNameQuery,
-  type Trade2SearchResponse,
-} from "./query";
+import { snapshotNameToTradeLeague, trade2QueryUrl } from "./league";
+import { buildRareSearchQuery, buildStatFilters, buildUniqueNameQuery } from "./query";
 
 const TAURI_ONLY = "trade2 連携は Tauri ネイティブ環境でのみ動作します (ブラウザ dev では無効)";
 
-async function trade2Search(tradeLeague: string, query: unknown): Promise<Trade2SearchResponse> {
-  return await invoke<Trade2SearchResponse>("trade2_search", { req: { league: tradeLeague, query } });
-}
-
 /**
- * 選択された MOD 群で trade2 を検索し、結果ページを開く。
+ * 選択された MOD 群の検索条件で trade2 サイトを開く (API 呼び出しなし)。
  *
  * @param args.league  snapshot.snapshot_name (kebab-case、自動変換)
  * @returns 開いた URL、stat ID 引き失敗した MOD のテキスト、適用された stat 数
- * @throws Tauri 環境外 / trade2_search が id を返さなかった場合
+ * @throws Tauri 環境外
  */
 export async function openTrade2ForSelectedMods(args: {
   selectedMods: ModEntry[];
@@ -42,60 +34,20 @@ export async function openTrade2ForSelectedMods(args: {
 
   const { statFilters, missingMods } = buildStatFilters(args.selectedMods, args.tierMinByMod);
   const query = buildRareSearchQuery(args.slot, statFilters);
-  const tradeLeague = snapshotNameToTradeLeague(args.league);
-  const search = await trade2Search(tradeLeague, query);
-  if (!search.id) throw new Error("trade2_search にレスポンス id がありません");
-
-  const url = trade2SearchUrl(tradeLeague, search.id);
+  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), query);
   await openUrl(url);
   return { openedUrl: url, missingMods, statCount: statFilters.length };
 }
 
-/**
- * ユニーク名で trade2 検索を開く。
- * name 検索が 400 "Unknown item name" (trade2 未登録の新ユニーク) なら baseType + rarity=unique で
- * フォールバック検索、それも無理なら検索ホームを開いて Error を投げる。
- */
+/** ユニーク名の検索条件で trade2 サイトを開く (API 呼び出しなし) */
 export async function openTrade2ForUnique(args: {
   nameEn: string;
   league: string;
+  /** 互換のため残置 (未使用)。名前が未登録ならサイト側で直してもらう */
   baseType?: string;
 }): Promise<{ openedUrl: string }> {
-  const tradeLeague = snapshotNameToTradeLeague(args.league);
   if (!isTauriRuntime()) throw new Error(TAURI_ONLY);
-
-  try {
-    const search = await trade2Search(tradeLeague, buildUniqueNameQuery(args.nameEn));
-    if (search.id) {
-      const url = trade2SearchUrl(tradeLeague, search.id);
-      await openUrl(url);
-      return { openedUrl: url };
-    }
-    throw new Error("trade2_search にレスポンス id がありません");
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const isUnknownName = msg.includes("Unknown item name") || msg.includes("400");
-    if (!isUnknownName) throw err;
-
-    if (args.baseType) {
-      try {
-        const fallback = await trade2Search(tradeLeague, buildUniqueBaseQuery(args.baseType));
-        if (fallback.id) {
-          const url = trade2SearchUrl(tradeLeague, fallback.id);
-          await openUrl(url);
-          console.warn(
-            `[openTrade2ForUnique] name "${args.nameEn}" が trade2 未登録 → baseType "${args.baseType}" で fallback 検索`,
-          );
-          return { openedUrl: url };
-        }
-      } catch (fallbackErr) {
-        console.warn("[openTrade2ForUnique] baseType fallback も失敗:", fallbackErr);
-      }
-    }
-
-    await openUrl(trade2HomeUrl(tradeLeague));
-    throw new Error(
-      `trade2 で「${args.nameEn}」は未登録のユニーク名です。検索ホームを開きました → 手動で検索してください。`,
-    );
-  }
+  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), buildUniqueNameQuery(args.nameEn));
+  await openUrl(url);
+  return { openedUrl: url };
 }

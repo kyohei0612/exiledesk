@@ -5,7 +5,7 @@
  */
 import { computed, ref } from "vue";
 import { fetchItems, fetchLeagues, type CurrencyItem, type League } from "../../api/poe2scout";
-import { priceMinListing, retryAfterSeconds, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
+import { priceMinListing, priceQueryUrl, retryAfterSeconds, type ExaltedRates, type PriceQueryInput, type PriceResult } from "../../services/trade2/pricing";
 import { tradeCategoryOfClass } from "../../services/trade2/category";
 import { parseItemText, type ParsedItem } from "./parse";
 import { planEssences, statFiltersForOutcome, type EssencePlan, type Outcome } from "./essence-plan";
@@ -105,6 +105,25 @@ export function useCraftProfit() {
     }));
   }
 
+  function queryInputOf(op: OutcomePrice): PriceQueryInput | null {
+    const it = item.value;
+    if (!it || !league.value) return null;
+    const { filters } = statFiltersForOutcome(op.outcome.mods);
+    return {
+      league: league.value.Value,
+      baseTypeEn: it.baseEn,
+      category: it.itemClass ? tradeCategoryOfClass(it.itemClass) : null,
+      rarity: op.outcome.rarity,
+      stats: filters,
+    };
+  }
+
+  /** 「鑑定」: この結果の条件でトレードサイトを開く URL (API 不使用、レート制限なし) */
+  function queryUrlOf(op: OutcomePrice): string | null {
+    const input = queryInputOf(op);
+    return input ? priceQueryUrl(input) : null;
+  }
+
   async function priceOne(row: PlanRow, op: OutcomePrice): Promise<void> {
     const it = item.value;
     if (!it || !league.value) return;
@@ -201,6 +220,7 @@ export function useCraftProfit() {
     analyze,
     priceOne,
     priceAll,
+    queryUrlOf,
     materialCost,
     profitOf,
   };

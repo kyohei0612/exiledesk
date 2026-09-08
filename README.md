@@ -255,17 +255,26 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
 ### クラフト収支 (2026-09-07〜)
 
 - 左ナビ「クラフト収支」: ゲーム内で装備に Ctrl+C したテキスト (日英) を貼り付け → ベース / レアリティ / mod を同定
-  (`views/craft-profit/parse.ts`: item-text パーサ + mods-bundle 同定) → 使えるエッセンス / 合金と完成品の mod 構成を列挙
-  (`views/craft-profit/essence-plan.ts`) → trade2 で「同ベース・同 mod 以上 (保証モッドは最低ロール)」のレアの最安を取得
-  (`services/trade2/pricing.ts`: search → fetch、直列 + 2.5 秒間隔) → 合計コスト (ベース購入価格 + 素材) / 完成品最安 / 収支 を高貴建てで表示。
-- 規則はクライアントの効果文どおり: Lesser / 通常 / Greater エッセンス = マジック → レア + 保証モッド (既存 mod は残る)、
-  Perfect エッセンス / 合金 (Alloy) = レアからランダム 1 mod 除去 + 保証モッド (外れる mod ごとに行を分けて表示)。
+  (`views/craft-profit/parse.ts`: item-text パーサ + mods-bundle 同定) → 使えるエッセンス / 合金 / お告げと完成品の mod 構成を列挙
+  (`views/craft-profit/essence-plan.ts`) → 各行の「鑑定 ↗」で同条件のトレードサイトを開く (API 不使用、レート制限なし)、
+  「相場」でアプリ内取得 (`services/trade2/pricing.ts`: search → fetch、search 10.5 秒 / fetch 2.5 秒間隔、429 で打ち切り)
+  → 合計コスト (ベース購入価格 + 素材) / 完成品最安 / 収支 を高貴建てで表示。
+- 規則はクライアント原本どおり (`src/i18n/craft-rules.json` = `scripts/build-craft-rules-from-client.mjs`):
+  Lesser / 通常 / Greater エッセンス = マジック → レア + 保証モッド (既存 mod は残る)、
+  Perfect / コラプトエッセンス / 合金 = レアからランダム 1 mod 除去 + 保証モッド (外れる mod ごとに行、確率 = 1/候補数)、
+  結晶化のお告げ (左側 / 右側) で除去対象を prefix / suffix に限定、Rarity テーブルの prefix / suffix 上限、
+  同ファミリー (Mods.Families) の mod は 1 個、保証モッドの必要 ilvl (Mods.Level) は警告表示。
+- 上位プレイヤー基準 (`views/craft-profit/top-profile.ts`): 発見 V2 のキャッシュから同種別のレアだけ集計し、mod の採用率 /
+  最頻ティアを表示。貼り付け装備の mod の採用率と自分のティア、付いていない主流 mod、エッセンス候補の「上位採用率」順の並べ替え、
+  典型構成 (主流 prefix 3 + suffix 3) の鑑定 / 相場。
 - データ: `scripts/build-essences-from-client.mjs` が Essences / EssenceMods / EssenceTargetItemCategories から
   `src/i18n/essences.json` (エッセンス → 装備種別ごとの保証モッド ID) と `src/i18n/base-item-classes.json` (ベース名 → 装備種別) を生成
-  (`pnpm build:dicts:client` に含まれる)。保証モッドの文言 / ロール幅 / stat は mods-bundle.json、trade2 の stat ID は trade2-stat-mapping.json。
-- 素材価格は poe2scout の名前一致 (エッセンスは "essences" カテゴリ、合金は別カテゴリ)。相場の通貨換算は poe2scout のリーグレート
-  (神 / カオス) と各通貨の価格表。診断: `cd src-tauri && cargo run --example trade2_probe`。
-- 未対応 (次段階候補): ルーン / ソウルコア、触媒、オーメン、割れ (Fracturing)、保証モッドが複数候補からランダムなエッセンス、ilvl 要件。
+  (`pnpm build:dicts:client` に含まれる)。保証モッドの文言 / ロール幅 / stat は mods-bundle.json、trade2 の stat ID は trade2-stat-mapping.json
+  (`local_*` の GGG ID は trade2 の "(Local)" 版に張る)。
+- 素材価格は poe2scout の名前一致 (エッセンス / 合金 / お告げ)。相場の通貨換算は poe2scout のリーグレート (神 / カオス) と各通貨の価格表。
+  診断: `cd src-tauri && cargo run --example trade2_probe` / `trade2_batch <queries.json> <out.json>` (env `TRADE2_GAP_MS`)。
+- trade2 のレート制限 (実測 X-Rate-Limit-Ip): search 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600。5 分 30 回を超えると 10〜30 分ペナルティ。
+- 未対応 (次段階候補): ルーン / ソウルコア、触媒、割れ (Fracturing)、保証モッドが複数候補からランダムなエッセンス、高貴 / 消滅 / カオス系のお告げ。
 
 ## アーキテクチャ概要
 

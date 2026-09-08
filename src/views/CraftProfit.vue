@@ -117,6 +117,7 @@ async function pasteFromClipboard(): Promise<void> {
         :target-status="t.targetStatus.value"
         :target-error="t.targetError.value"
         :target-missing="t.targetMissing.value"
+        :target-url="t.targetUrl.value"
         :cache-error="t.cacheError.value"
         @select="(cls) => (t.selectedClass.value = cls)"
         @price-target="t.priceTarget()"
@@ -132,7 +133,7 @@ async function pasteFromClipboard(): Promise<void> {
         >
           {{ c.pricing.value ? `相場を調査中… ${c.progress.value.done} / ${c.progress.value.total}` : "🔍 全候補の相場を調べる" }}
         </button>
-        <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">trade2 のレート制限 (検索 30 回 / 5 分) のため 1 件あたり 10〜20 秒かかります</span>
+        <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">trade2 のレート制限 (検索 30 回 / 5 分) のため 1 件あたり 10〜20 秒かかります。各行の「鑑定 ↗」はサイトを開くだけなので制限なし</span>
       </div>
       <p v-if="c.rateLimitedUntil.value" class="text-[12px] text-amber-300">
         ⚠️ trade2 にレート制限されました。{{ new Date(c.rateLimitedUntil.value).toLocaleTimeString() }} 以降に「全候補の相場を調べる」を押し直してください (残りは未調査のままです)
@@ -145,6 +146,7 @@ async function pasteFromClipboard(): Promise<void> {
         :profit-of="c.profitOf"
         :material-cost="c.materialCost"
         :fit-of="fitOf"
+        :query-url-of="c.queryUrlOf"
         @price="(row, op) => c.priceOne(row, op)"
         @open="(url) => openUrl(url)"
       />

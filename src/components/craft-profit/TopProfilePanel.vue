@@ -19,6 +19,7 @@ defineProps<{
   targetStatus: "idle" | "loading" | "done" | "error";
   targetError: string | null;
   targetMissing: string[];
+  targetUrl: string | null;
   cacheError: string | null;
 }>();
 const emit = defineEmits<{ select: [classEn: string | null]; priceTarget: []; open: [url: string] }>();
@@ -93,6 +94,15 @@ function onSelect(e: Event) {
       <div v-if="target && target.mods.length" class="mt-3 flex items-center gap-3 flex-wrap border-t border-[var(--exile-color-border-subtle)] pt-2">
         <span class="text-[11px] text-[var(--exile-color-text-secondary)]">典型構成 (主流 prefix 3 + suffix 3、最頻ティア下限):</span>
         <span class="text-[11px]">{{ target.mods.map((m) => m.text).join(" / ") }}</span>
+        <button
+          v-if="targetUrl"
+          type="button"
+          @click="emit('open', targetUrl)"
+          class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]"
+          title="この条件でトレードサイトを開く (API を使わないのでレート制限なし)"
+        >
+          鑑定 ↗
+        </button>
         <button
           type="button"
           :disabled="targetStatus === 'loading'"
