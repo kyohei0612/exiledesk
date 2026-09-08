@@ -118,6 +118,9 @@ async function main() {
       REPO,
       "--title",
       "PoB bundle (rolling)",
+      // prerelease + latest=false: 自動更新の releases/latest/download/latest.json がこのタグを指さないように
+      "--prerelease",
+      "--latest=false",
       "--notes",
       "ExileDesk が別途ダウンロードする同梱 PoB (公式 PoB + PoB2-JP)。このタグは内容が変わるたびに上書きされます。",
     ]);
