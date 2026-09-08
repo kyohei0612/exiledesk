@@ -221,14 +221,22 @@ cd src-tauri && cargo update
 
 Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必読。
 
-### 同梱 PoB (Path of Building PoE2 日本語版) の更新
+### PoB (Path of Building PoE2 日本語版) の配布と更新
+
+- **2026-09-08 から PoB はインストーラに同梱しない** (更新のたびに 120 MB 落としていたため)。CI の
+  `scripts/publish-pob-bundle.mjs` が組み立て結果を zip (約 124 MB) にし、GitHub Release の固定タグ `pob-bundle` (rolling) に
+  `pob-bundle.zip` + `pob-bundle.json` (contentHash / zipSha256 / url) を置く。内容ハッシュが前回と同じなら再アップロードしない。
+- アプリ側 (`src-tauri/src/pob_bundle.rs`、`src/services/pob-bundle.ts`): `%LOCALAPPDATA%\com.kyohei.exiledesk\pob` に展開。
+  未インストールなら左ナビ「PoB」の画面で「PoB をダウンロード」。インストール済みなら起動時に **30 日ごと**に manifest を確認し、
+  内容が変わっていれば自動で入れ替える (手動「更新を確認」も可)。入れ替え後はヘッドレス PoB (DPS 計算) も再起動する。
+  ローカル検証: `cd src-tauri && cargo run --example pob_bundle_probe <dir>` (`EXILEDESK_POB_MANIFEST_URL` で manifest 差し替え)。
 
 - 構成: 公式 PoB (submodule `vendor/PathOfBuilding-PoE2`、master = release) + 日本語化パッチ PoB2-JP
   (ochi3/PoB2-JP のフォーク `kyohei0612/PoB2-JP`、submodule `vendor/PoB2-JP` / 開発機は `C:/Users/kyohei/POE秘書/POBJP`)
   + 日本語フォント BIZ UDPGothic (`vendor/fonts`、SIL OFL)。
-- `scripts/build-pob-bundle.mjs` が `src-tauri/resources/pob/` にフラット配置で組み立て、`tauri.conf.json` の
-  `resources/pob/**/*` で同梱される。リリース CI (`release.yml`) は tauri-action の前にこのスクリプトを実行する。
-  ローカルで `pnpm tauri dev` / `pnpm tauri build` する前にも 1 回実行しておくこと (無いと左ナビ「PoB を開く」が起動不可表示)。
+- `scripts/build-pob-bundle.mjs` が `src-tauri/resources/pob/` にフラット配置で組み立てる。リリース CI (`release.yml`) は
+  tauri-action の前に build → publish の順で実行する。開発機では `src-tauri/resources/pob` があればそれを直接使う
+  (`pob_launcher::bundled_pob_dir` の候補: app_local_data_dir/pob → 旧同梱 resources → 開発用 resources/pob)。
   `--no-jp` で英語版のみ、`--check` で存在確認。
 - 組み立て手順: (1) 公式 runtime (exe/DLL/lua) → (2) src/ の Lua/Data (TreeData は最新 + legion のみ)
   → (3) `Install-PoB2-JP.ps1 -Force -NoUpdate` で JP フック / CJK 対応 SimpleGraphic.dll / 辞書 CSV を適用
@@ -286,7 +294,7 @@ ExileDesk/
 │   │   ├── craft-v2/                  # 派生状態 / MOD 選択 / ユニークホバー の composable + helpers
 │   │   ├── CurrencyRanking.vue        # カレンシーランキング (配線のみ)
 │   │   ├── currency/                  # 取得 composable + 表示ヘルパー
-│   │   ├── PobLauncher.vue            # 同梱 PoB の起動画面
+│   │   ├── PobLauncher.vue            # PoB の起動 / ダウンロード / 更新画面
 │   │   └── Settings.vue
 │   ├── components/
 │   │   ├── craft-v2/                  # ヘッダー / 警告履歴 / アセタブ / 検索バー / 各カード
@@ -304,11 +312,12 @@ ExileDesk/
 │   ├── src/poe_ninja_client/          # poe.ninja client: config / status / metrics / rate_gate / http /
 │   │                                  #   leagues / search / ascendancy_fetch / orchestrate / cache_convert / protobuf
 │   ├── src/pob/                       # ヘッドレス PoB (mlua): lua_boot / worker / lua_calls / commands
-│   ├── src/pob_launcher.rs            # 同梱 PoB (resources/pob) の起動
+│   ├── src/pob_launcher.rs            # PoB の起動 (app_local_data_dir/pob)
+│   ├── src/pob_bundle.rs              # PoB 別配布 (pob-bundle release から DL / 30 日ごと確認 / 入れ替え)
 │   ├── src/health_check/              # 起動時健全性チェック: unknown_inv / checks_ninja / checks_web
 │   ├── src/craft_v2_storage.rs        # キャッシュ atomic write
 │   ├── src/trade2.rs                  # trade2 API client
-│   └── resources/pob/                 # 同梱 PoB (gitignore、scripts/build-pob-bundle.mjs が生成)
+│   └── resources/pob/                 # 開発用 PoB (gitignore、scripts/build-pob-bundle.mjs が生成。CI では zip にして別配布)
 ├── vendor/PathOfBuilding-PoE2/# PoB submodule (runtime + src)
 ├── scripts/                   # 辞書ビルダー / クライアントデータ抽出 / PoB 同梱組み立て
 └── data-cache/                # スクレイプ・クライアント抽出キャッシュ (gitignore)

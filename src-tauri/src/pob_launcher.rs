@@ -24,6 +24,10 @@ pub const POB_EXE_NAME: &str = "Path of Building-PoE2.exe";
 /// - 開発 (`tauri dev`): `src-tauri/resources/pob` (build-pob-bundle.mjs の出力)
 pub fn bundled_pob_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
+    // 2026-09-08: 別配布 (pob_bundle) の展開先を最優先。インストーラ同梱は廃止 (旧版の残骸があれば次点)
+    if let Ok(d) = crate::pob_bundle::pob_data_dir(app) {
+        candidates.push(d);
+    }
     if let Ok(res) = app.path().resource_dir() {
         candidates.push(res.join("resources").join("pob"));
         candidates.push(res.join("pob"));
@@ -85,7 +89,7 @@ fn build_status(app: &tauri::AppHandle) -> PobLauncherStatus {
     let Some(dir) = bundled_pob_dir(app) else {
         return PobLauncherStatus {
             message: Some(
-                "同梱 PoB が見つかりません (開発時: node scripts/build-pob-bundle.mjs を実行)".to_string(),
+                "PoB が未インストールです。この画面の「PoB をダウンロード」で取得してください (開発時: node scripts/build-pob-bundle.mjs)".to_string(),
             ),
             ..Default::default()
         };

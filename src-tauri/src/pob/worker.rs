@@ -42,22 +42,39 @@ pub struct SkillGroupInfo {
 }
 
 pub struct PobWorker {
-    tx: mpsc::Sender<PobJob>,
+    /// 2026-09-08: PoB 同梱物の入れ替え後に worker を起動し直せるよう Mutex で差し替え可能にした
+    tx: std::sync::Mutex<mpsc::Sender<PobJob>>,
 }
 
 impl PobWorker {
-    pub fn spawn(pob_src: PathBuf) -> Self {
+    fn spawn_thread(pob_src: PathBuf) -> mpsc::Sender<PobJob> {
         let (tx, rx) = mpsc::channel::<PobJob>();
         thread::Builder::new()
             .name("pob-worker".into())
             .spawn(move || worker_loop(pob_src, rx))
             .expect("spawn pob worker thread");
-        Self { tx }
+        tx
+    }
+
+    pub fn spawn(pob_src: PathBuf) -> Self {
+        Self { tx: std::sync::Mutex::new(Self::spawn_thread(pob_src)) }
+    }
+
+    /// 新しいスクリプトディレクトリで worker を起動し直す。旧 thread は sender が消えた時点で終了する。
+    pub fn restart(&self, pob_src: PathBuf) {
+        let new_tx = Self::spawn_thread(pob_src);
+        if let Ok(mut guard) = self.tx.lock() {
+            *guard = new_tx;
+        }
+    }
+
+    fn sender(&self) -> mpsc::Sender<PobJob> {
+        self.tx.lock().map(|g| g.clone()).unwrap_or_else(|e| e.into_inner().clone())
     }
 
     pub fn load_build_xml(&self, xml: String) -> Result<(), String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::LoadBuildXml { xml, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -66,7 +83,7 @@ impl PobWorker {
 
     pub fn get_stat(&self, key: String) -> Result<f64, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::GetStat { key, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -75,7 +92,7 @@ impl PobWorker {
 
     pub fn get_stats_all(&self) -> Result<HashMap<String, f64>, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::GetStatsAll { reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -90,7 +107,7 @@ impl PobWorker {
         raw: String,
     ) -> Result<String, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::SetItemInSlot { slot, raw, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -99,7 +116,7 @@ impl PobWorker {
 
     pub fn clear_slot(&self, slot: String) -> Result<(), String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::ClearSlot { slot, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -109,7 +126,7 @@ impl PobWorker {
     /// build を XML で snapshot。装備差替え前に呼んで、後で restore できるように。
     pub fn snapshot(&self) -> Result<String, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::Snapshot { reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -118,7 +135,7 @@ impl PobWorker {
 
     pub fn restore_snapshot(&self, xml: String) -> Result<(), String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::RestoreSnapshot { xml, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -129,7 +146,7 @@ impl PobWorker {
     /// 空 slot も has_item=false で返す。Vue 側で slot プルダウン構築用。
     pub fn get_equipped_items(&self) -> Result<Vec<EquippedItemInfo>, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::GetEquippedItems { reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -138,7 +155,7 @@ impl PobWorker {
 
     pub fn get_skill_groups(&self) -> Result<Vec<SkillGroupInfo>, String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::GetSkillGroups { reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()
@@ -147,7 +164,7 @@ impl PobWorker {
 
     pub fn set_main_socket_group(&self, index: u32) -> Result<(), String> {
         let (tx, rx) = mpsc::channel();
-        self.tx
+        self.sender()
             .send(PobJob::SetMainSocketGroup { index, reply: tx })
             .map_err(|_| "pob worker disconnected".to_string())?;
         rx.recv()

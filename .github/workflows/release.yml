@@ -59,8 +59,15 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build bundled PoB (vendor submodule -> src-tauri/resources/pob)
+      - name: Build PoB bundle (vendor submodule -> src-tauri/resources/pob)
         run: node scripts/build-pob-bundle.mjs
+
+      # PoB はインストーラに同梱せず、固定タグ pob-bundle に zip + manifest として置く (内容が変わったときだけ上書き)。
+      # アプリは起動時 30 日ごとに manifest を確認して app_local_data_dir/pob に展開する。
+      - name: Publish PoB bundle (rolling release "pob-bundle")
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-pob-bundle.mjs
 
       - name: Build & Release (tauri-action)
         uses: tauri-apps/tauri-action@v0

@@ -5,6 +5,7 @@ import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
+import { ensurePobBundleFresh } from "./services/pob-bundle";
 
 const activeNav = ref<string>("econ-currency");
 
@@ -26,6 +27,8 @@ useKeyboardShortcuts({
 //   `ensureCraftV2Started` は冪等 (initialBootStarted ガード) なので、複数回呼んでも安全。
 onMounted(() => {
   void ensureCraftV2Started();
+  // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
+  void ensurePobBundleFresh();
 });
 </script>
 

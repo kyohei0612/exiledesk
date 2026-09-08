@@ -36,8 +36,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "../src/i18n/*.json",
-      "resources/pob/**/*"
+      "../src/i18n/*.json"
     ],
     "windows": {
       "nsis": {
