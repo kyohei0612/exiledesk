@@ -13,33 +13,27 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use serde::Serialize;
-use tauri::Manager;
 
 /// 同梱 PoB の実行体ファイル名 (公式 runtime と同じ)
 pub const POB_EXE_NAME: &str = "Path of Building-PoE2.exe";
 
-/// 同梱 PoB ディレクトリの候補を順に探し、`Launch.lua` がある最初のものを返す。
+/// PoB ディレクトリの候補を順に探し、`Launch.lua` がある最初のものを返す。
 ///
-/// - リリース: `<resource_dir>/resources/pob` (tauri.conf.json の `resources/pob/**/*`)
-/// - 開発 (`tauri dev`): `src-tauri/resources/pob` (build-pob-bundle.mjs の出力)
+/// - 通常: `<app_local_data_dir>/pob` (pob_bundle がダウンロード / 展開)
+/// - 開発ビルドのみ: `src-tauri/resources/pob` (build-pob-bundle.mjs の出力)
 pub fn bundled_pob_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
-    // 2026-09-08: 別配布 (pob_bundle) の展開先を最優先。インストーラ同梱は廃止 (旧版の残骸があれば次点)
+    // 2026-09-08: 別配布 (pob_bundle) の展開先だけを見る。インストーラ同梱 (resources/pob) は廃止。
     if let Ok(d) = crate::pob_bundle::pob_data_dir(app) {
         candidates.push(d);
     }
-    if let Ok(res) = app.path().resource_dir() {
-        candidates.push(res.join("resources").join("pob"));
-        candidates.push(res.join("pob"));
+    // 開発ビルド (`tauri dev`) だけ、build-pob-bundle.mjs の出力を直接使う。
+    // リリースビルドでこの絶対パスを見ると、開発機では「未インストールなのに起動できる」状態になり
+    // ダウンロード / 30 日更新の経路が試せない (2026-09-08 に発覚)。
+    if cfg!(debug_assertions) {
+        candidates.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources").join("pob"));
     }
-    candidates.push(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("resources")
-            .join("pob"),
-    );
-    candidates
-        .into_iter()
-        .find(|d| d.join("Launch.lua").is_file())
+    candidates.into_iter().find(|d| d.join("Launch.lua").is_file())
 }
 
 /// ヘッドレス PoB (mlua) 用のスクリプトディレクトリ。
