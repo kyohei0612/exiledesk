@@ -54,7 +54,7 @@ export function isPoeNinjaItem(x: unknown): x is PoeNinjaItem {
  *
  * 第 2 引数 `subcategories` は将来のサブスロット分割用に予約 (現在は未使用)。
  */
-export function inventoryIdToSlot(
+function inventoryIdToSlot(
   inventoryId: string,
   _subcategories: readonly string[],
 ): SlotKey | null {

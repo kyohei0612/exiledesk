@@ -47,24 +47,3 @@ export const Rarity = {
   NonUnique: "nonunique",
 } as const;
 export type RarityValue = (typeof Rarity)[keyof typeof Rarity];
-
-/**
- * `trade_filters.filters.sale_type.option`。
- * `null` option = "Buyout or Fixed Price" だが、JSON で null を送ると invalid になるので
- * sale_type 自体を省略する運用 (= デフォルト挙動 = INSTANT BUYOUT 互換) を推奨。
- */
-export const SaleType = {
-  /** 値段ありリスティング (default 相当、フィールドを送らない方が安全) */
-  PriceFixed: "priced",
-  /** any (= 全種別含む) */
-  Any: "any",
-} as const;
-export type SaleTypeValue = (typeof SaleType)[keyof typeof SaleType];
-
-/** 主要な対価通貨 (trade_filters.filters.price.option / divine 表示換算等)。 */
-export const Currency = {
-  Chaos: "chaos",
-  Divine: "divine",
-  Exalted: "exalted",
-} as const;
-export type CurrencyValue = (typeof Currency)[keyof typeof Currency];

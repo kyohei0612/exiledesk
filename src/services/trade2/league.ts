@@ -52,11 +52,6 @@ export function snapshotNameToTradeLeague(snapshotName: string): string {
   return prefix + titleCaseLeagueWords(words);
 }
 
-/** trade2 サイトの検索結果 URL */
-export function trade2SearchUrl(tradeLeague: string, searchId: string): string {
-  return `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}/${searchId}`;
-}
-
 /**
  * 検索条件 JSON をそのまま載せた trade2 サイトの URL (API を叩かない = レート制限に当たらない)。
  * サイト側が `?q=` を読んで検索を実行し、圧縮 URL に置き換える (2026-09-08 実ブラウザで確認)。
@@ -66,6 +61,6 @@ export function trade2QueryUrl(tradeLeague: string, query: unknown): string {
 }
 
 /** trade2 サイトの検索ホーム URL (手動検索へのフォールバック) */
-export function trade2HomeUrl(tradeLeague: string): string {
+function trade2HomeUrl(tradeLeague: string): string {
   return `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
 }

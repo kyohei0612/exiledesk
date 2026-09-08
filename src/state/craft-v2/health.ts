@@ -74,8 +74,8 @@ const DICT_EXPECTED_MIN: Record<string, number> = {
 };
 
 export function checkDictionaryFreshness(): void {
-  const mtg = modTierAndGroup as { tiers?: Record<string, unknown>; groups?: Record<string, unknown> };
-  const mtgMin = Math.min(Object.keys(mtg.tiers ?? {}).length, Object.keys(mtg.groups ?? {}).length);
+  const mtg = modTierAndGroup as { groups?: Record<string, unknown> };
+  const mtgMin = Object.keys(mtg.groups ?? {}).length;
 
   const checks: Array<readonly [string, number]> = [
     ["unique-mods-ja", Object.keys(uniqueModsJa as Record<string, unknown>).length],

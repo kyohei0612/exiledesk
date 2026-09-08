@@ -66,7 +66,7 @@ export interface TopProfile {
 }
 
 /** 「主流」とみなす採用率の下限 */
-export const MAINSTREAM_PCT = 0.2;
+const MAINSTREAM_PCT = 0.2;
 
 function itemsOfClass(cache: CraftV2Cache, itemClass: string, classEn: string | null): CachedRareItem[] {
   const out: CachedRareItem[] = [];
@@ -162,7 +162,7 @@ function tierOfValue(tiers: ModTierRow[], v: number): number | undefined {
   return v > tiers[0].max ? 1 : tiers.length;
 }
 
-export function findProfileMod(profile: TopProfile, textEn: string): TopProfileMod | undefined {
+function findProfileMod(profile: TopProfile, textEn: string): TopProfileMod | undefined {
   const key = normalizeModTextKey(textEn);
   return profile.mods.find((m) => m.key === key);
 }
@@ -191,11 +191,6 @@ export function guaranteedPct(profile: TopProfile, mods: OutcomeMod[]): number {
   const g = mods.find((m) => m.guaranteed);
   if (!g) return 0;
   return findProfileMod(profile, g.textEn)?.pct ?? 0;
-}
-
-/** 結果の mod のうち主流 mod の本数 */
-export function mainstreamCount(profile: TopProfile, mods: OutcomeMod[]): number {
-  return mods.filter((m) => (findProfileMod(profile, m.textEn)?.pct ?? 0) >= MAINSTREAM_PCT).length;
 }
 
 // ─── 典型構成 (trade2 検索用) ─────────────────────────────────

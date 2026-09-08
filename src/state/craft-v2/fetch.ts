@@ -312,19 +312,3 @@ export async function forceRefetchCraftV2(): Promise<void> {
 export async function refetchWithSelectedLeague(): Promise<void> {
   await runFetch(true);
 }
-
-/** cleanup (現状は呼ばない — singleton なので global に持ち続ける)。HMR 用の保険。 */
-export function disposeCraftV2Store(): void {
-  for (const un of [unlistenRef, autoRefetchUnlisten]) {
-    if (!un) continue;
-    try {
-      un();
-    } catch {
-      /* noop */
-    }
-  }
-  unlistenRef = null;
-  autoRefetchUnlisten = null;
-  stopNowTicker();
-  stopNetworkStatusPoller();
-}

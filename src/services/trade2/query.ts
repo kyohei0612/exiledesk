@@ -139,15 +139,3 @@ export function buildUniqueNameQuery(nameEn: string) {
     sort: { price: "asc" },
   };
 }
-
-/** ベース種別 + rarity=unique で絞り込む検索クエリ (name 未登録時のフォールバック) */
-export function buildUniqueBaseQuery(baseType: string) {
-  return {
-    query: {
-      status: { option: SecurityStatus.Securable },
-      type: { discriminator: null, option: baseType },
-      filters: { type_filters: { filters: { rarity: { option: Rarity.Unique } } } },
-    },
-    sort: { price: "asc" },
-  };
-}

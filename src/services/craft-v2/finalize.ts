@@ -43,16 +43,23 @@ import { baseClassOf } from "../trade2/category";
 const meanOf = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 
 /**
- * 平均値から推定 tier (avg がどの tier の min-max 範囲に入るか)。
- * 単一プレースホルダの MOD のみ計算可能。範囲外 (最大 max 超え) は T1。
+ * 値 → ティア (1-based)。範囲内ならそのティア、範囲の隙間に落ちたら「下限 ≤ 値」の一番上のティア
+ * (tiers は下限降順)。全ティアの下限より小さければ最下位、最上位の上限より大きければ T1。
+ * (2026-09-08: 旧実装は隙間の値を全部最下位にしていた。例: 火ダメージ追加の平均 31 が T1 下限 31.0 をわずかに下回り T9)
  */
-function inferTierFromAverage(tiers: ModEntry["tiers"], av: number): number {
+function tierIndexOfValue(tiers: ModEntry["tiers"], v: number): number {
   for (let i = 0; i < tiers.length; i++) {
-    const t = tiers[i];
-    if (av >= t.min && av <= t.max) return i + 1;
+    if (v >= tiers[i].min && v <= tiers[i].max) return i;
   }
-  const topMax = tiers[0].max;
-  return Number.isFinite(topMax) && av > topMax ? 1 : tiers.length;
+  for (let i = 0; i < tiers.length; i++) {
+    if (v >= tiers[i].min) return i;
+  }
+  return tiers.length - 1;
+}
+
+/** 平均値から推定 tier (1-based)。単一プレースホルダ、または複数値の平均で使う。 */
+function inferTierFromAverage(tiers: ModEntry["tiers"], av: number): number {
+  return tierIndexOfValue(tiers, av) + 1;
 }
 
 /**
@@ -63,18 +70,7 @@ export function usageTierFromValues(tiers: ModEntry["tiers"], flatValues: number
   const tierCounts = new Array<number>(tiers.length).fill(0);
   for (const v of flatValues) {
     if (!Number.isFinite(v)) continue;
-    let idx = -1;
-    for (let i = 0; i < tiers.length; i++) {
-      if (v >= tiers[i].min && v <= tiers[i].max) {
-        idx = i;
-        break;
-      }
-    }
-    if (idx === -1) {
-      const topMax = tiers[0].max;
-      idx = Number.isFinite(topMax) && v > topMax ? 0 : tiers.length - 1;
-    }
-    tierCounts[idx] += 1;
+    tierCounts[tierIndexOfValue(tiers, v)] += 1;
   }
   let bestIdx = -1;
   let bestCnt = -1;
@@ -300,7 +296,7 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
  * fetchProgress は `{ done: 0, total: 件数 }` を仮入れし、差分 progress が届いた時点で置換される
  * (キャッシュ表示中に進捗バーが 100% に張り付くのを防ぐ)。
  */
-export function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAscendancy {
+function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAscendancy {
   const counter = emptyAscendancyCounter();
   for (const c of cached.characters) {
     ingestCharacterItems(counter, cachedCharacterToCharacterItems(c));

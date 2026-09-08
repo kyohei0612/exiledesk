@@ -32,7 +32,7 @@
  *   - normal     : everything else that is prefix/suffix on item/misc/flask/jewel domain
  *
  * Each mod gets its appropriate flag (essence/corrupt/desecrated) set to 1,
- * and `tags` is taken from `implicit_tags + adds_tags`.
+ * (2026-09-08: name_en / name_ja / tags はどこも読まないので出力しない。約 315 KB 削減)
  * --------------------------------------------------------------
  */
 
@@ -190,13 +190,6 @@ function reduceStats(stats) {
   });
 }
 
-function mergeTags(v) {
-  const out = new Set();
-  for (const t of v.implicit_tags ?? []) out.add(t);
-  for (const t of v.adds_tags ?? []) out.add(t);
-  return Array.from(out);
-}
-
 /* ---------------- main extract ---------------- */
 
 /**
@@ -292,8 +285,6 @@ async function main() {
     if (!ja) stats.missingJa++;
 
     const bundled = {
-      name_en: v.name ?? "",
-      name_ja: ja?.name ?? v.name ?? "",
       text_en: v.text ?? "",
       text_ja: ja?.text ?? v.text ?? "",
       type: bundleType(v),
@@ -301,7 +292,6 @@ async function main() {
       level: Number(v.required_level ?? 1) | 0,
       stats: reduceStats(v.stats ?? []),
       spawn: reduceSpawn(v.spawn_weights ?? []),
-      tags: mergeTags(v),
     };
 
     // JA 補完: RePoE JA 廃止で未訳 (text_ja === text_en) のものを補完辞書(トレード+手動)で上書き。

@@ -58,7 +58,7 @@ export interface ExaltedRates {
   others?: Record<string, number>;
 }
 
-export function toExalted(amount: number, currency: string, rates: ExaltedRates): number | null {
+function toExalted(amount: number, currency: string, rates: ExaltedRates): number | null {
   switch (currency) {
     case "exalted":
       return amount;

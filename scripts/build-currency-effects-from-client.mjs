@@ -87,12 +87,11 @@ async function exportTables(source) {
     ...source,
     translations: ["English", "Japanese"],
     tables: [
-      { name: "CurrencyItems", columns: ["BaseItemType", "Description", "StackSize", "CurrencyTab_StackSize"] },
-      { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass"] },
-      { name: "ItemClasses", columns: ["Id", "Name"] },
+      { name: "CurrencyItems", columns: ["BaseItemType", "Description", "StackSize"] },
+      { name: "BaseItemTypes", columns: ["Id", "Name"] },
       // ルーン / ソウルコア: 効果はカテゴリ (装備種別) ごとの stat + 値。文言は csd で描画する。
-      { name: "SoulCores", columns: ["BaseItemType", "RequiredLevel", "Description", "ExtraDescription"] },
-      { name: "SoulCoreStats", columns: ["SoulCore", "StatCategory", "Stats", "StatsValues", "BondedStats", "BondedStatsValues"] },
+      { name: "SoulCores", columns: ["BaseItemType", "RequiredLevel"] },
+      { name: "SoulCoreStats", columns: ["SoulCore", "StatCategory", "Stats", "StatsValues"] },
       { name: "SoulCoreStatCategories", columns: ["Id", "Display"] },
       { name: "Stats", columns: ["Id"] },
     ],

@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { jaCurrency } from "../../i18n/currencies-ja";
-import type { UniqueUsage } from "../../services/craft-discovery-v2";
+import type { UniqueUsage } from "../../services/craft-v2/types";
 
 const props = defineProps<{
   /** 表示対象 (null なら描画しない) */

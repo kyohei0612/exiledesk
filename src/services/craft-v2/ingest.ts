@@ -121,7 +121,7 @@ export function emptyAscendancyCounter(): AscendancyCounter {
  * オーナー判断: 「装備個数で重み付くのは実装上の傾向値として許容、後日修正検討」。
  * 修正したい場合は perCharSeen ヒット時の `bucket.values.push` を削るだけ。
  */
-export function addModToSlot(
+function addModToSlot(
   slot: SlotCounter,
   modText: string,
   perCharSeen: Set<string>,
@@ -156,7 +156,7 @@ export function addModToSlot(
 }
 
 /** rare 装備の baseType を「人数ベース」で加算 (同キャラ同スロットは seenBases で de-dup)。 */
-export function addBaseToSlot(
+function addBaseToSlot(
   slot: SlotCounter,
   baseType: string,
   seenBases: Set<string>,
@@ -176,7 +176,7 @@ export function addBaseToSlot(
  * 1 ユニークアイテムを全スロット集計 (`asc.uniques`) とスロット別集計に登録する。
  * representative は bucket 作成時 (= 最初に観測したインスタンス) で固定される。
  */
-export function addUniqueToAscendancy(
+function addUniqueToAscendancy(
   asc: AscendancyCounter,
   item: PoeNinjaItem,
   slot: SlotKey,

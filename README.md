@@ -198,7 +198,7 @@ f1 { f1: varint(総ヒット数), f12: Column { f1: "name"/"account"/…, f7: �
 
 ### 「trade2 API 仕様変更」警告 → カテゴリ追従
 
-`src/services/craft-discovery-v2.ts` の `slotToTradeCategory()` を更新。
+`src/services/trade2/query.ts` の `slotToTradeCategory()` を更新。
 trade2 の正式カテゴリ ID は `https://www.pathofexile.com/api/trade2/data/filters` で確認:
 ```bash
 curl https://www.pathofexile.com/api/trade2/data/filters | jq '.result[] | select(.id=="type_filters") | .filters[] | select(.id=="category") | .option.options[].id'
@@ -207,7 +207,7 @@ curl https://www.pathofexile.com/api/trade2/data/filters | jq '.result[] | selec
 ### 「未知 inventoryId が N 件」info → 新アイテムスロット対応
 
 poe.ninja から想定外の inventoryId (例: 新タイプ装備) が来ている。
-`is_target_inventory_id` (`poe_ninja_client.rs`) の白リストに追加するか、`inventoryIdToSlot()` (`craft-discovery-v2.ts`) で SlotKey にマップ。
+`is_target_inventory_id` (`poe_ninja_client.rs`) の白リストに追加するか、`inventoryIdToSlot()` (`services/craft-v2/ninja-item.ts`) で SlotKey にマップ。
 
 ### 依存パッケージ更新確認 (定期的)
 
@@ -293,7 +293,6 @@ ExileDesk/
 │   │   ├── currency/                  # サイドバー / 基準レート / テーブル / ホバーカード / スパークライン
 │   │   └── decor/                     # BaseCard.vue, UniqueTooltip.vue
 │   ├── services/
-│   │   ├── craft-discovery-v2.ts      # 互換 barrel (実体は下記)
 │   │   ├── craft-v2/                  # types / ninja-item / ingest / finalize / cache / runner
 │   │   ├── mods/                      # normalize (テンプレ正規化) / dictionaries (辞書引き)
 │   │   └── trade2/                    # league / query / open

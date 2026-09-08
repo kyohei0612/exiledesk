@@ -8,18 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@fontsource-variable/inter':
-        specifier: ^5.2.8
-        version: 5.2.8
-      '@fontsource/cinzel':
-        specifier: ^5.2.8
-        version: 5.2.8
-      '@fontsource/cormorant-garamond':
-        specifier: ^5.2.11
-        version: 5.2.11
-      '@fontsource/jetbrains-mono':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@tauri-apps/api':
         specifier: ^2
         version: 2.11.0
@@ -54,9 +42,6 @@ importers:
       pathofexile-dat:
         specifier: ^15.2.0
         version: 15.2.0
-      protobufjs:
-        specifier: ^8.4.0
-        version: 8.4.0
       tailwindcss:
         specifier: ^4.2.4
         version: 4.2.4
@@ -244,18 +229,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@fontsource-variable/inter@5.2.8':
-    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
-
-  '@fontsource/cinzel@5.2.8':
-    resolution: {integrity: sha512-B9WeF/jPlOJOrcXfX96cy4KfM+s1QcU2C9W2hE3azBOBzPvzFkNpBovT5JmhAeicE/s4HZWKF9LF5hmEcqlbsw==}
-
-  '@fontsource/cormorant-garamond@5.2.11':
-    resolution: {integrity: sha512-5JjpN023lhA5soijgVT0BdRGzmlijm402ppjccMd6h+vRE0mX2lJnE+41UPfnlidrkV9/rCo1mf58WZlHnB0CA==}
-
-  '@fontsource/jetbrains-mono@5.2.8':
-    resolution: {integrity: sha512-6w8/SG4kqvIMu7xd7wt6x3idn1Qux3p9N62s6G3rfldOUYHpWcc2FKrqf+Vo44jRvqWj2oAtTHrZXEP23oSKwQ==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -792,9 +765,6 @@ packages:
     resolution: {integrity: sha512-NXYBzinNrblfraPGyrbPoD19C1h9lfI/1mzgWYvXUTe414Gz/X1FD2XBZSZM7rRTrMA8JL3OtAaGifrIKhQ5yQ==}
     engines: {node: '>= 12.0.0'}
 
-  long@5.3.2:
-    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
-
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -834,10 +804,6 @@ packages:
   postcss@8.5.14:
     resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
     engines: {node: ^10 || ^12 || >=14}
-
-  protobufjs@8.4.0:
-    resolution: {integrity: sha512-iriNhQ57SYA5Jbdi+41AyPdx6jPPkFO7DODzkOBmqFhgYn/JzX2HxgxYPY18eQAs3CP/AWqtPvkWn8rclRAxdQ==}
-    engines: {node: '>=12.0.0'}
 
   rollup@4.60.3:
     resolution: {integrity: sha512-pAQK9HalE84QSm4Po3EmWIZPd3FnjkShVkiMlz1iligWYkWQ7wHYd1PF/T7QZ5TVSD6uSTon5gBVMSM4JfBV+A==}
@@ -1013,14 +979,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.12':
     optional: true
-
-  '@fontsource-variable/inter@5.2.8': {}
-
-  '@fontsource/cinzel@5.2.8': {}
-
-  '@fontsource/cormorant-garamond@5.2.11': {}
-
-  '@fontsource/jetbrains-mono@5.2.8': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -1458,8 +1416,6 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.32.0
       lightningcss-win32-x64-msvc: 1.32.0
 
-  long@5.3.2: {}
-
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -1492,10 +1448,6 @@ snapshots:
       nanoid: 3.3.12
       picocolors: 1.1.1
       source-map-js: 1.2.1
-
-  protobufjs@8.4.0:
-    dependencies:
-      long: 5.3.2
 
   rollup@4.60.3:
     dependencies:

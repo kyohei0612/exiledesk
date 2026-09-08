@@ -74,7 +74,7 @@ function setsOf(classes: string[]): string[][] {
  * 発見 V2 のスロット → 種別ごとの spawn タグ集合 (武器 / オフハンドは全種別)。
  * 出現判定は spawn の並び順に依存するので、種別ごとに別々の集合として評価する (和集合にしない)。
  */
-export function tagSetsForSlot(slot: SlotKey): string[][] {
+function tagSetsForSlot(slot: SlotKey): string[][] {
   switch (slot) {
     case "ring":
       return CLASS_TAG_SETS.Ring;

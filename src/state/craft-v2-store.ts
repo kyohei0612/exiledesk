@@ -26,6 +26,5 @@ export {
   refreshCraftV2,
   forceRefetchCraftV2,
   refetchWithSelectedLeague,
-  disposeCraftV2Store,
 } from "./craft-v2/fetch";
-export { runHealthCheck, checkDictionaryFreshness } from "./craft-v2/health";
+export { runHealthCheck } from "./craft-v2/health";

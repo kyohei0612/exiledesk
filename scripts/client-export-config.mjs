@@ -32,28 +32,24 @@ export const CLIENT_TABLES = [
   { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass", "DropLevel"] },
   // ユニーク名 (Wordlist=6)。JA テーブルでは Text2 が日本語名
   { name: "Words", columns: ["Wordlist", "Text", "Text2"] },
-  { name: "FlavourText", columns: ["Id", "Text"] },
+  { name: "FlavourText", columns: ["Text"] },
   // --- 2026-09-07 追加: 同梱 PoB の公式日本語化用 ---
-  { name: "ActiveSkills", columns: ["Id", "DisplayedName", "Description"] },
-  { name: "GemTags", columns: ["Id", "Name"] },
-  { name: "PassiveSkills", columns: ["Id", "Name", "FlavourText", "IsKeystone", "IsNotable"] },
-  { name: "Ascendancy", columns: ["Id", "Name", "FlavourText"] },
-  { name: "Characters", columns: ["Id", "Name"] },
+  { name: "ActiveSkills", columns: ["DisplayedName", "Description"] },
+  { name: "GemTags", columns: ["Name"] },
+  { name: "PassiveSkills", columns: ["Name", "FlavourText"] },
+  { name: "Ascendancy", columns: ["Name", "FlavourText"] },
+  { name: "Characters", columns: ["Name"] },
   { name: "ItemClasses", columns: ["Id", "Name"] },
   // prefix / suffix の名前 ("Fulcent" / "of the Lion")
   { name: "Mods", columns: ["Id", "Name", "Domain", "GenerationType"] },
   // モンスター / ミニオン名 (PoB のスペクター一覧等)
-  { name: "MonsterVarieties", columns: ["Id", "Name"] },
-  // ゲーム UI 文言 (現状は書き出すだけ。PoB UI は意訳のまま)
-  { name: "ClientStrings", columns: ["Id", "Text"] },
+  { name: "MonsterVarieties", columns: ["Name"] },
   // --- クラフト収支 (2026-09-07): エッセンス → 保証モッド の対応 ---
   // Essences.BaseItemType → BaseItemTypes 行、EssenceMods.Essence → Essences 行、
   // EssenceMods.Mod → Mods 行 (Id が mods-bundle のキー)、TargetItemCategory → EssenceTargetItemCategories 行
-  { name: "Essences", columns: ["BaseItemType", "Tier", "Perfect", "ReplacementType"] },
-  { name: "EssenceMods", columns: ["Essence", "TargetItemCategory", "Mod", "DisplayMod", "Text", "OutcomeMods", "OutcomeModWeights"] },
-  { name: "EssenceTargetItemCategories", columns: ["Id", "ItemClasses", "Text"] },
-  { name: "EssenceType", columns: ["Id", "EssenceType", "IsCorruptedEssence"] },
-  { name: "EssenceReplacementType", columns: ["Id"] },
+  { name: "Essences", columns: ["BaseItemType", "Tier", "Perfect"] },
+  { name: "EssenceMods", columns: ["Essence", "TargetItemCategory", "Mod", "OutcomeMods", "OutcomeModWeights"] },
+  { name: "EssenceTargetItemCategories", columns: ["Id", "ItemClasses"] },
   // レアリティごとの mod / prefix / suffix 上限 (クラフト収支の規則、2026-09-08)
   { name: "Rarity", columns: ["Id", "MinMods", "MaxMods", "MaxPrefix", "MaxSuffix"] },
 ];

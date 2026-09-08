@@ -41,21 +41,3 @@ export function jaCurrency(englishName: string): string {
     englishName
   );
 }
-
-/**
- * 日本語があるかどうか (公式 / client / poe2db フォールバック / アポストロフィ除去のいずれかにあれば true)
- */
-export function hasJa(englishName: string): boolean {
-  return (
-    englishName in map ||
-    englishName in client ||
-    englishName in poe2db ||
-    stripApos(englishName) in poe2db
-  );
-}
-
-export const DIVINE_ORB_EN = "Divine Orb";
-export const DIVINE_ORB_JA = map["Divine Orb"] ?? "神のオーブ";
-
-/** 翻訳済件数（デバッグ用） */
-export const TRANSLATION_COUNT = Object.keys(map).length;

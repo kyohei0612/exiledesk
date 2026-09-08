@@ -3,7 +3,7 @@
  *
  * craft-discovery-v2.ts から切り出し (2026-09-07)。
  *   - bundle 索引:   normalize(text_en) → { affix, 日本語テンプレ }   (mods-bundle.json)
- *   - ティア/グループ: normalize(text_en) → ModTierRow[] / group[]   (mod-tier-and-group.json)
+ *   - グループ:       normalize(text_en) → group[]   (mod-tier-and-group.json。ティアは mods/tiers.ts)
  *   - mod-text-ja:   正規化キー → 日本語テンプレ (英語漏れ救済のフォールバック)
  *   - ユニーク正式名: 英語 → 日本語 (unique-names-ja.json)
  * すべて GGG クライアント原本から生成した辞書 (scripts/build-*-from-client.mjs)。
@@ -16,8 +16,7 @@ import uniqueNamesJaRaw from "../../i18n/unique-names-ja.json";
 import modTextJaRaw from "../../i18n/mod-text-ja.json";
 import modTextJaManualRaw from "../../i18n/mod-text-ja-manual.json";
 import { jaCurrency } from "../../i18n/currencies-ja";
-import { tiersForTemplate } from "./tiers";
-import type { AffixKind, ModTierRow } from "../craft-v2/types";
+import type { AffixKind } from "../craft-v2/types";
 import {
   normalizeModTemplate,
   normalizeModTextKey,
@@ -29,8 +28,7 @@ import {
 // ============================================================================
 
 interface ModTierAndGroupJson {
-  /** 旧ティア表 (全 mod 混在)。2026-09-08 以降は services/mods/tiers.ts が装備タグ付きで組むので未使用 */
-  tiers: Record<string, unknown>;
+  /** ティア表は services/mods/tiers.ts が装備タグ付きで実行時に組む (2026-09-08 以降 JSON には groups のみ) */
   groups: Record<string, string[]>;
 }
 const _modTierAndGroup = modTierAndGroup as ModTierAndGroupJson;
@@ -56,11 +54,6 @@ function buildTierGroupWithAliases<T>(
 const _modGroups: Readonly<Record<string, string[]>> = buildTierGroupWithAliases(
   _modTierAndGroup.groups,
 );
-
-/** rawTemplate (正規化済 英語テンプレ) からティア一覧を引く (装備タグで絞らない = 全 mod)。装備が分かるなら tiersForTemplate を使う */
-export function lookupTiers(template: string): ModTierRow[] {
-  return tiersForTemplate(template, null);
-}
 
 /** rawTemplate からグループ ID 一覧を引く。マーカー除去版でもフォールバック。 */
 export function lookupGroups(template: string): string[] {

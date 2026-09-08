@@ -68,7 +68,7 @@ export function extractNumbers(text: string): number[] {
 }
 
 /** 整数なら整数表示、小数なら 1 桁 (UI 表示の ModEntry.text と同じ規則) */
-export function formatAvgNumber(v: number): string {
+function formatAvgNumber(v: number): string {
   if (!Number.isFinite(v)) return "?";
   const rounded = Math.round(v * 10) / 10;
   if (Number.isInteger(rounded)) return rounded.toFixed(0);

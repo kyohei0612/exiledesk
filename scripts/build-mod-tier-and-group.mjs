@@ -221,7 +221,8 @@ async function main() {
   const sortedGroups = {};
   for (const k of Object.keys(groups).sort()) sortedGroups[k] = groups[k];
 
-  const out = { tiers: sortedTiers, groups: sortedGroups };
+  // 2026-09-08: tiers は services/mods/tiers.ts が装備タグ付きで実行時に組むので出力しない (214 KB 削減)
+  const out = { groups: sortedGroups };
   await mkdir(dirname(OUT_FILE), { recursive: true });
   await writeFile(OUT_FILE, JSON.stringify(out, null, 2) + "\n");
 
