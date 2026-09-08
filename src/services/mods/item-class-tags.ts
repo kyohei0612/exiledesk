@@ -7,58 +7,67 @@
 
 import type { SlotKey } from "../craft-v2/types";
 
-const ARMOUR_SUBTYPES = ["armour", "str_armour", "dex_armour", "int_armour", "str_dex_armour", "str_int_armour", "dex_int_armour", "str_dex_int_armour"];
-const SHIELD_SUBTYPES = ["shield", "str_shield", "dex_shield", "int_shield", "str_dex_shield", "str_int_shield", "dex_int_shield"];
+/**
+ * 防具 / 盾はベースの属性種別 (str / dex / int …) でタグが変わり、spawn には `str_armour:0` の後に `gloves:1`
+ * のような並びが 27 件ある (order-sensitive)。和集合で評価すると最初の 0 で誤って除外するので、
+ * サブタイプごとに別のタグ集合を作り「どれかで出れば出る」と評価する。
+ */
+const ARMOUR_SUBTYPES = ["str_armour", "dex_armour", "int_armour", "str_dex_armour", "str_int_armour", "dex_int_armour", "str_dex_int_armour"];
+const SHIELD_SUBTYPES = ["str_shield", "dex_shield", "int_shield", "str_dex_shield", "str_int_shield", "dex_int_shield"];
 const ONE_HAND = ["weapon", "one_hand_weapon"];
 const TWO_HAND = ["weapon", "two_hand_weapon"];
 
-const CLASS_TAGS: Record<string, string[]> = {
-  Ring: ["ring"],
-  Amulet: ["amulet"],
-  Belt: ["belt"],
-  Talisman: ["talisman"],
-  Helmet: ["helmet", ...ARMOUR_SUBTYPES],
-  "Body Armour": ["body_armour", ...ARMOUR_SUBTYPES],
-  Gloves: ["gloves", ...ARMOUR_SUBTYPES],
-  Boots: ["boots", ...ARMOUR_SUBTYPES],
-  Shield: SHIELD_SUBTYPES,
-  Buckler: SHIELD_SUBTYPES,
-  Focus: ["focus"],
-  Quiver: ["quiver"],
-  Bow: ["bow", "ranged", ...TWO_HAND],
-  Crossbow: ["crossbow", "ranged", ...TWO_HAND],
-  Wand: ["wand", ...ONE_HAND],
-  Sceptre: ["sceptre", ...ONE_HAND],
-  Staff: ["staff", ...TWO_HAND],
-  Warstaff: ["warstaff", ...TWO_HAND],
-  "One Hand Mace": ["mace", ...ONE_HAND],
-  "Two Hand Mace": ["mace", ...TWO_HAND],
-  "One Hand Sword": ["sword", ...ONE_HAND],
-  "Two Hand Sword": ["sword", ...TWO_HAND],
-  "One Hand Axe": ["axe", ...ONE_HAND],
-  "Two Hand Axe": ["axe", ...TWO_HAND],
-  Spear: ["spear", ...ONE_HAND],
-  Flail: ["flail", ...ONE_HAND],
-  Claw: ["claw", ...ONE_HAND],
-  Dagger: ["dagger", ...ONE_HAND],
-  Jewel: ["strjewel", "dexjewel", "intjewel", "radius_jewel", "str_radius_jewel", "dex_radius_jewel", "int_radius_jewel"],
-  Charm: ["utility_flask"],
-  "Life Flask": ["life_flask"],
-  "Mana Flask": ["mana_flask"],
-  "Trap Tool": ["trap"],
-  "Fishing Rod": ["fishing_rod"],
+const armourSets = (slotTag: string) => ARMOUR_SUBTYPES.map((sub) => [slotTag, "armour", sub]);
+const shieldSets = () => SHIELD_SUBTYPES.map((sub) => ["shield", sub]);
+
+/** 装備種別 → タグ集合の一覧 (1 種別が複数集合を持つのは防具 / 盾のサブタイプ) */
+const CLASS_TAG_SETS: Record<string, string[][]> = {
+  Ring: [["ring"]],
+  Amulet: [["amulet"]],
+  Belt: [["belt"]],
+  Talisman: [["talisman"]],
+  Helmet: armourSets("helmet"),
+  "Body Armour": armourSets("body_armour"),
+  Gloves: armourSets("gloves"),
+  Boots: armourSets("boots"),
+  Shield: shieldSets(),
+  Buckler: shieldSets(),
+  Focus: [["focus"]],
+  Quiver: [["quiver"]],
+  Bow: [["bow", "ranged", ...TWO_HAND]],
+  Crossbow: [["crossbow", "ranged", ...TWO_HAND]],
+  Wand: [["wand", ...ONE_HAND]],
+  Sceptre: [["sceptre", ...ONE_HAND]],
+  Staff: [["staff", ...TWO_HAND]],
+  Warstaff: [["warstaff", ...TWO_HAND]],
+  "One Hand Mace": [["mace", ...ONE_HAND]],
+  "Two Hand Mace": [["mace", ...TWO_HAND]],
+  "One Hand Sword": [["sword", ...ONE_HAND]],
+  "Two Hand Sword": [["sword", ...TWO_HAND]],
+  "One Hand Axe": [["axe", ...ONE_HAND]],
+  "Two Hand Axe": [["axe", ...TWO_HAND]],
+  Spear: [["spear", ...ONE_HAND]],
+  Flail: [["flail", ...ONE_HAND]],
+  Claw: [["claw", ...ONE_HAND]],
+  Dagger: [["dagger", ...ONE_HAND]],
+  Jewel: [["strjewel"], ["dexjewel"], ["intjewel"], ["radius_jewel", "str_radius_jewel"], ["radius_jewel", "dex_radius_jewel"], ["radius_jewel", "int_radius_jewel"]],
+  Charm: [["utility_flask"]],
+  "Life Flask": [["life_flask"]],
+  "Mana Flask": [["mana_flask"]],
+  "Trap Tool": [["trap"]],
+  "Fishing Rod": [["fishing_rod"]],
 };
 
-/** 装備種別 → spawn タグ。未知の種別は null (= 絞らない) */
-export function tagsForItemClass(itemClass: string): string[] | null {
-  return CLASS_TAGS[itemClass] ?? null;
+/** 装備種別 → spawn タグ集合の一覧。未知の種別は null (= 絞らない) */
+export function tagSetsForItemClass(itemClass: string): string[][] | null {
+  return CLASS_TAG_SETS[itemClass] ?? null;
 }
 
 const WEAPON_CLASSES = ["Bow", "Crossbow", "Wand", "Sceptre", "Staff", "Warstaff", "One Hand Mace", "Two Hand Mace", "One Hand Sword", "Two Hand Sword", "One Hand Axe", "Two Hand Axe", "Spear", "Flail", "Claw", "Dagger"];
 const OFFHAND_CLASSES = ["Shield", "Buckler", "Focus", "Quiver"];
 
 function setsOf(classes: string[]): string[][] {
-  return classes.map((c) => CLASS_TAGS[c]).filter((t): t is string[] => !!t);
+  return classes.flatMap((c) => CLASS_TAG_SETS[c] ?? []);
 }
 
 /**
@@ -68,17 +77,17 @@ function setsOf(classes: string[]): string[][] {
 export function tagSetsForSlot(slot: SlotKey): string[][] {
   switch (slot) {
     case "ring":
-      return [CLASS_TAGS.Ring];
+      return CLASS_TAG_SETS.Ring;
     case "amulet":
-      return [CLASS_TAGS.Amulet];
+      return CLASS_TAG_SETS.Amulet;
     case "helm":
-      return [CLASS_TAGS.Helmet];
+      return CLASS_TAG_SETS.Helmet;
     case "gloves":
-      return [CLASS_TAGS.Gloves];
+      return CLASS_TAG_SETS.Gloves;
     case "body":
-      return [CLASS_TAGS["Body Armour"]];
+      return CLASS_TAG_SETS["Body Armour"];
     case "boots":
-      return [CLASS_TAGS.Boots];
+      return CLASS_TAG_SETS.Boots;
     case "weapon":
       return setsOf(WEAPON_CLASSES);
     case "weapon2":

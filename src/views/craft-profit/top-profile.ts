@@ -16,7 +16,7 @@ import { baseClassOf } from "../../services/trade2/category";
 import { extractNumbers, normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers } from "../../services/mods/normalize";
 import { heuristicAffix, lookupGroups, lookupModTextJa, modBundleIndex } from "../../services/mods/dictionaries";
 import { tiersForTemplate } from "../../services/mods/tiers";
-import { tagsForItemClass } from "../../services/mods/item-class-tags";
+import { tagSetsForItemClass } from "../../services/mods/item-class-tags";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import type { Trade2StatFilter } from "../../services/trade2/query";
@@ -116,8 +116,7 @@ export function buildTopProfile(cache: CraftV2Cache, itemClass: string, classEn:
     }
   }
   const mods: TopProfileMod[] = [];
-  const classTags = tagsForItemClass(itemClass);
-  const tagSets = classTags ? [classTags] : null;
+  const tagSets = tagSetsForItemClass(itemClass);
   for (const [key, b] of buckets) {
     const idx = modBundleIndex.get(b.template);
     const tiers = tiersForTemplate(b.template, tagSets);
@@ -172,8 +171,7 @@ export function diagnoseItem(profile: TopProfile, item: ParsedItem): ItemDiagnos
   const identified = item.mods.filter((m): m is ItemMod => m.identified);
   const present: ModDiagnosis[] = identified.map((m) => {
     const p = findProfileMod(profile, m.textEn);
-    const classTags = tagsForItemClass(profile.itemClass);
-    const tiers = p?.tiers ?? tiersForTemplate(normalizeModTemplate(m.textEn), classTags ? [classTags] : null);
+    const tiers = p?.tiers ?? tiersForTemplate(normalizeModTemplate(m.textEn), tagSetsForItemClass(profile.itemClass));
     const v = extractNumbers(m.textEn)[0];
     const scale = p?.scale ?? tierScale(tiers, v === undefined ? [] : [v]);
     return { textJa: m.textJa, affix: m.affix, pct: p?.pct ?? 0, usageTier: p?.usageTier, myTier: v === undefined ? undefined : tierOfValue(tiers, v * scale) };
