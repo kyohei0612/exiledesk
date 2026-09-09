@@ -55,7 +55,8 @@ export function useCurrencyRanking() {
   // リーグ自動判定に失敗した時の警告 (前リーグのまま黙って表示する事故を防ぐ)。
   const leagueWarning = ref<string | null>(null);
   // 初期表示は「通貨 (currency)」固定 (オーナー指示 2026-05-22: 通貨欄はルーン/ジェム/エッセンスを混ぜない)
-  const categoryFilter = ref<string>("currency");
+  // 2026-09-09: 既定はゲーム内取引所の「カレンシー」(x:Currency)
+  const categoryFilter = ref<string>("x:Currency");
   const searchQuery = ref<string>("");
 
   /** 表示用: 7 日があれば優先、無ければ 24 時間にフォールバック。 */
@@ -182,9 +183,9 @@ export function useCurrencyRanking() {
   const categoryDisplayList = computed<CategoryDisplay[]>(() => {
     const acc = new Map<string, { count: number; icon: string }>();
     for (const r of ranking.value) {
-      const entry = acc.get(r.categoryApiId);
+      const entry = acc.get(r.groupId);
       if (entry) entry.count += 1;
-      else acc.set(r.categoryApiId, { count: 1, icon: r.icon });
+      else acc.set(r.groupId, { count: 1, icon: r.icon });
     }
     return Array.from(acc.entries())
       .map(([id, e]) => ({ id, count: e.count, icon: e.icon }))
@@ -197,7 +198,7 @@ export function useCurrencyRanking() {
   const filteredRanking = computed(() => {
     let list = ranking.value;
     if (categoryFilter.value !== "all") {
-      list = list.filter((r) => r.categoryApiId === categoryFilter.value);
+      list = list.filter((r) => r.groupId === categoryFilter.value);
     }
     const q = searchQuery.value.trim().toLowerCase();
     if (q) {

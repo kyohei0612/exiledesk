@@ -284,6 +284,13 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
 - trade2 のレート制限 (実測 X-Rate-Limit-Ip): search 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600。5 分 30 回を超えると 10〜30 分ペナルティ。
 - 未対応 (次段階候補): ルーン / ソウルコア、触媒、割れ (Fracturing)、保証モッドが複数候補からランダムなエッセンス、高貴 / 消滅 / カオス系のお告げ。
 
+### カレンシーランキングの分類 (2026-09-09〜)
+
+- サイドバーのカテゴリはゲーム内カレンシー取引所 (Alva) と同じ 14 分類・同じ並び (クライアント `CurrencyExchange` /
+  `CurrencyExchangeCategories` 由来、`scripts/build-currency-exchange-from-client.mjs` → `src/i18n/currency-exchange.json`)。
+  poe2scout のアイテムを英名で取引所の表に引き、グループ ID `x:<Category>` で集計する。取引所に無いもの (装備 / ユニーク等) は
+  poe2scout のカテゴリのまま後ろに並ぶ。基本通貨 3 種 (神 / 高貴 / カオス) は基準レート帯に出すので件数はゲームより 3 少ない。
+
 ## アーキテクチャ概要
 
 ```

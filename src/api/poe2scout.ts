@@ -11,6 +11,7 @@
  * dev では Vite proxy 経由で CORS 回避済なので native fetch を使う。
  */
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+import { exchangeGroupIdOf, exchangeSubJaOf } from "../i18n/currency-exchange";
 
 const BASE = import.meta.env.DEV
   ? "/api/poe2scout"
@@ -118,6 +119,10 @@ export interface RankedItem {
   text: string;
   icon: string;
   categoryApiId: string;
+  /** 表示上のグループ: ゲーム内取引所の分類 (`x:Currency` 等)。取引所に無ければ categoryApiId (2026-09-09) */
+  groupId: string;
+  /** 取引所のサブカテゴリ (例 "グレータールーン")。無ければ null */
+  subJa: string | null;
   /** 1 アイテム = ? 高貴(Exalted)。= CurrentPrice */
   exaltedPrice: number;
   /** 1 アイテム = ? 神(Divine) */
@@ -163,6 +168,8 @@ export function buildRankedItems(
       text: x.Text,
       icon: x.IconUrl,
       categoryApiId: x.CategoryApiId,
+      groupId: exchangeGroupIdOf(x.Text) ?? x.CategoryApiId,
+      subJa: exchangeSubJaOf(x.Text),
       exaltedPrice: x.CurrentPrice,
       divinePrice: x.CurrentPrice / safeDivinePrice,
       chaosPrice: x.CurrentPrice / chaosExaltedPrice,

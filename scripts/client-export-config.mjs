@@ -52,6 +52,9 @@ export const CLIENT_TABLES = [
   { name: "EssenceTargetItemCategories", columns: ["Id", "ItemClasses"] },
   // レアリティごとの mod / prefix / suffix 上限 (クラフト収支の規則、2026-09-08)
   { name: "Rarity", columns: ["Id", "MinMods", "MaxMods", "MaxPrefix", "MaxSuffix"] },
+  // カレンシー取引所 (Alva) の分類: カレンシーランキングのカテゴリをゲームと同じにする (2026-09-09)
+  { name: "CurrencyExchange", columns: ["Item", "Category", "SubCategory", "EnabledInChallengeLeague"] },
+  { name: "CurrencyExchangeCategories", columns: ["Id", "Name"] },
 ];
 
 export async function loadTable(lang, name) {

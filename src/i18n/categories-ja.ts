@@ -1,3 +1,4 @@
+import { jaExchangeGroup } from "./currency-exchange";
 /**
  * POE2 アイテムカテゴリ ID の日本語ローカライズ
  * poe2scout の CategoryApiId 値を日本語に変換する
@@ -55,5 +56,6 @@ const categoryJaMap: Record<string, string> = {
 };
 
 export function jaCategory(apiId: string): string {
-  return categoryJaMap[apiId] ?? apiId;
+  // 2026-09-09: ゲーム内取引所の分類 (`x:Currency` 等) はクライアントの公式名で
+  return jaExchangeGroup(apiId) ?? categoryJaMap[apiId] ?? apiId;
 }

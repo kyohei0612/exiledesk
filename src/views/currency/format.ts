@@ -1,3 +1,4 @@
+import { exchangeGroupOrder } from "../../i18n/currency-exchange";
 /**
  * カレンシーランキング画面の表示ヘルパー (数値・時刻・スパークライン・カテゴリ順・効果辞書)
  *
@@ -112,6 +113,9 @@ const CATEGORY_ORDER: string[] = [
   "vaal",
 ];
 export function categoryOrderIndex(id: string): number {
+  // 2026-09-09: ゲーム内取引所の 14 分類 (`x:…`) をゲームと同じ順で先頭に、取引所に無い poe2scout カテゴリを後ろに
+  const ex = exchangeGroupOrder(id);
+  if (ex >= 0) return ex;
   const i = CATEGORY_ORDER.indexOf(id);
-  return i === -1 ? CATEGORY_ORDER.length : i;
+  return 1000 + (i === -1 ? CATEGORY_ORDER.length : i);
 }

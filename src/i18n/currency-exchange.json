@@ -1,0 +1,3657 @@
+{
+  "categories": [
+    {
+      "id": "Currency",
+      "nameEn": "Currency",
+      "nameJa": "カレンシー"
+    },
+    {
+      "id": "Essences",
+      "nameEn": "Essences",
+      "nameJa": "エッセンス"
+    },
+    {
+      "id": "Delirium",
+      "nameEn": "Delirium",
+      "nameJa": "デリリウム"
+    },
+    {
+      "id": "Breach",
+      "nameEn": "Breach",
+      "nameJa": "ブリーチ"
+    },
+    {
+      "id": "Abyss",
+      "nameEn": "Abyss",
+      "nameJa": "アビス"
+    },
+    {
+      "id": "Incursion",
+      "nameEn": "Atziri's Temple",
+      "nameJa": "アッツィリ神殿"
+    },
+    {
+      "id": "Fragments",
+      "nameEn": "Fragments",
+      "nameJa": "フラグメント"
+    },
+    {
+      "id": "Runes",
+      "nameEn": "Runes",
+      "nameJa": "ルーン"
+    },
+    {
+      "id": "Ritual",
+      "nameEn": "Ritual",
+      "nameJa": "リチュアル"
+    },
+    {
+      "id": "SoulCore",
+      "nameEn": "Soul Cores",
+      "nameJa": "ソウルコア"
+    },
+    {
+      "id": "Idol",
+      "nameEn": "Idols",
+      "nameJa": "アイドル"
+    },
+    {
+      "id": "UncutGems",
+      "nameEn": "Uncut Gems",
+      "nameJa": "ジェムの原石"
+    },
+    {
+      "id": "Expedition",
+      "nameEn": "Expedition",
+      "nameJa": "エクスペディション"
+    },
+    {
+      "id": "Gems",
+      "nameEn": "Gems",
+      "nameJa": "ジェム"
+    }
+  ],
+  "subcategories": {
+    "Currency": {
+      "nameEn": "Currency",
+      "nameJa": "カレンシー"
+    },
+    "CurrencySockets": {
+      "nameEn": "Jewellers' Currency",
+      "nameJa": "宝飾職人のカレンシー"
+    },
+    "Shards": {
+      "nameEn": "Currency Shards",
+      "nameJa": "カレンシーシャード"
+    },
+    "CurrencyQuality": {
+      "nameEn": "Quality Currency",
+      "nameJa": "品質カレンシー"
+    },
+    "CurrencyIdentification": {
+      "nameEn": "Identification Currency",
+      "nameJa": "鑑定カレンシー"
+    },
+    "EssencesLesser": {
+      "nameEn": "Lesser Essences",
+      "nameJa": "レッサーエッセンス"
+    },
+    "Essences": {
+      "nameEn": "Essences",
+      "nameJa": "エッセンス"
+    },
+    "EssencesGreater": {
+      "nameEn": "Greater Essences",
+      "nameJa": "グレーターエッセンス"
+    },
+    "EssencesPerfect": {
+      "nameEn": "Perfect Essences",
+      "nameJa": "パーフェクトエッセンス"
+    },
+    "EssencesCorrupted": {
+      "nameEn": "Corrupted Essences",
+      "nameJa": "コラプトエッセンス"
+    },
+    "Delirium": {
+      "nameEn": "Delirium",
+      "nameJa": "デリリウム"
+    },
+    "Breach": {
+      "nameEn": "Breach",
+      "nameJa": "ブリーチ"
+    },
+    "DeliriumInstill": {
+      "nameEn": "Liquid Emotions",
+      "nameJa": "液化した感情"
+    },
+    "BreachCatalyst": {
+      "nameEn": "Catalysts",
+      "nameJa": "カタリスト"
+    },
+    "AbyssTickets": {
+      "nameEn": "Abyssal Bones",
+      "nameJa": "アビスの骨"
+    },
+    "SoulCore": {
+      "nameEn": "Soul Cores",
+      "nameJa": "ソウルコア"
+    },
+    "FragmentsUltimatum": {
+      "nameEn": "Ultimatum Fragments",
+      "nameJa": "アルティメイタムフラグメント"
+    },
+    "FragmentsPinnacle": {
+      "nameEn": "Pinnacle Fragments",
+      "nameJa": "ピナクルフラグメント"
+    },
+    "FragmentsVaultKey": {
+      "nameEn": "Reliquary Keys",
+      "nameJa": "聖廟の鍵"
+    },
+    "Runes": {
+      "nameEn": "Runes",
+      "nameJa": "ルーン"
+    },
+    "PerfectRunes": {
+      "nameEn": "Perfect Runes",
+      "nameJa": "パーフェクトルーン"
+    },
+    "GreaterRunes": {
+      "nameEn": "Greater Runes",
+      "nameJa": "グレータールーン"
+    },
+    "Omens": {
+      "nameEn": "Omens",
+      "nameJa": "お告げ"
+    },
+    "OmensSpecial": {
+      "nameEn": "Special Omens",
+      "nameJa": "特殊お告げ"
+    },
+    "Idol": {
+      "nameEn": "Idols",
+      "nameJa": "アイドル"
+    },
+    "Ritual": {
+      "nameEn": "Ritual",
+      "nameJa": "リチュアル"
+    },
+    "UncutSupportGems": {
+      "nameEn": "Uncut Support Gems",
+      "nameJa": "サポートジェムの原石"
+    },
+    "UncutReservationGems": {
+      "nameEn": "Uncut Reservation Gems",
+      "nameJa": "リザーブジェムの原石"
+    },
+    "UncutSkillGems": {
+      "nameEn": "Uncut Skill Gems",
+      "nameJa": "スキルジェムの原石"
+    },
+    "Fluxes": {
+      "nameEn": "Fluxes",
+      "nameJa": "フラックス"
+    },
+    "LineageSupports": {
+      "nameEn": "Lineage Support Gems",
+      "nameJa": "リネージュサポートジェム"
+    },
+    "AbyssalEye": {
+      "nameEn": "Abyssal Eyes",
+      "nameJa": "アビサルアイ"
+    },
+    "Expedition": {
+      "nameEn": "Expedition",
+      "nameJa": "エクスペディション"
+    },
+    "Verisium": {
+      "nameEn": "Verisium",
+      "nameJa": "ヴェリシウム"
+    },
+    "Alloys": {
+      "nameEn": "Alloys",
+      "nameJa": "合金"
+    },
+    "StarlitOre": {
+      "nameEn": "Starlit Ore",
+      "nameJa": "星明りの鉱石"
+    }
+  },
+  "items": {
+    "Orb of Augmentation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Greater Orb of Augmentation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Perfect Orb of Augmentation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Orb of Transmutation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Greater Orb of Transmutation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Perfect Orb of Transmutation": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Regal Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Greater Regal Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Perfect Regal Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Exalted Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Greater Exalted Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Perfect Exalted Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Chaos Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Greater Chaos Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Perfect Chaos Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Orb of Alchemy": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Divine Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Orb of Chance": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Orb of Annulment": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Artificer's Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Fracturing Orb": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Hinekora's Lock": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Mirror of Kalandra": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Cryptic Key": {
+      "category": "Currency",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Lesser Jeweller's Orb": {
+      "category": "Currency",
+      "sub": "CurrencySockets",
+      "enabled": true
+    },
+    "Greater Jeweller's Orb": {
+      "category": "Currency",
+      "sub": "CurrencySockets",
+      "enabled": true
+    },
+    "Perfect Jeweller's Orb": {
+      "category": "Currency",
+      "sub": "CurrencySockets",
+      "enabled": true
+    },
+    "Transmutation Shard": {
+      "category": "Currency",
+      "sub": "Shards",
+      "enabled": true
+    },
+    "Regal Shard": {
+      "category": "Currency",
+      "sub": "Shards",
+      "enabled": true
+    },
+    "Artificer's Shard": {
+      "category": "Currency",
+      "sub": "Shards",
+      "enabled": true
+    },
+    "Chance Shard": {
+      "category": "Currency",
+      "sub": "Shards",
+      "enabled": true
+    },
+    "Armourer's Scrap": {
+      "category": "Currency",
+      "sub": "CurrencyQuality",
+      "enabled": true
+    },
+    "Blacksmith's Whetstone": {
+      "category": "Currency",
+      "sub": "CurrencyQuality",
+      "enabled": true
+    },
+    "Arcanist's Etcher": {
+      "category": "Currency",
+      "sub": "CurrencyQuality",
+      "enabled": true
+    },
+    "Glassblower's Bauble": {
+      "category": "Currency",
+      "sub": "CurrencyQuality",
+      "enabled": true
+    },
+    "Gemcutter's Prism": {
+      "category": "Currency",
+      "sub": "CurrencyQuality",
+      "enabled": true
+    },
+    "Scroll of Wisdom": {
+      "category": "Currency",
+      "sub": "CurrencyIdentification",
+      "enabled": true
+    },
+    "Lesser Essence of the Body": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of the Mind": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Enhancement": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Abrasion": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Flames": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Insulation": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Ice": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Thawing": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Electricity": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Grounding": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Ruin": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Command": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Battle": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Sorcery": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Haste": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Alacrity": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of the Infinite": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Seeking": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Lesser Essence of Opulence": {
+      "category": "Essences",
+      "sub": "EssencesLesser",
+      "enabled": true
+    },
+    "Essence of the Body": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of the Mind": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Enhancement": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Abrasion": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Flames": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Insulation": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Ice": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Thawing": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Electricity": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Grounding": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Ruin": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Command": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Battle": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Sorcery": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Haste": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Alacrity": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of the Infinite": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Seeking": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Essence of Opulence": {
+      "category": "Essences",
+      "sub": "Essences",
+      "enabled": true
+    },
+    "Greater Essence of the Body": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of the Mind": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Enhancement": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of the Infinite": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Flames": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Insulation": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Ice": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Thawing": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Electricity": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Grounding": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Abrasion": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Battle": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Sorcery": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Ruin": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Command": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Haste": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Alacrity": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Seeking": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Greater Essence of Opulence": {
+      "category": "Essences",
+      "sub": "EssencesGreater",
+      "enabled": true
+    },
+    "Perfect Essence of the Body": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of the Mind": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Enhancement": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Abrasion": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Flames": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Insulation": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Ice": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Thawing": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Electricity": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Grounding": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Ruin": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Command": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Battle": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Sorcery": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Haste": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Alacrity": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of the Infinite": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Seeking": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Perfect Essence of Opulence": {
+      "category": "Essences",
+      "sub": "EssencesPerfect",
+      "enabled": true
+    },
+    "Essence of Hysteria": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Essence of Delirium": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Essence of Horror": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Essence of Insanity": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Essence of the Abyss": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Essence of the Breach": {
+      "category": "Essences",
+      "sub": "EssencesCorrupted",
+      "enabled": true
+    },
+    "Simulacrum Splinter": {
+      "category": "Delirium",
+      "sub": "Delirium",
+      "enabled": true
+    },
+    "Simulacrum": {
+      "category": "Delirium",
+      "sub": "Delirium",
+      "enabled": true
+    },
+    "Raven's Reflection": {
+      "category": "Delirium",
+      "sub": "Delirium",
+      "enabled": true
+    },
+    "Breach Splinter": {
+      "category": "Breach",
+      "sub": "Breach",
+      "enabled": true
+    },
+    "Diluted Liquid Ire": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Diluted Liquid Guilt": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Diluted Liquid Greed": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Liquid Paranoia": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Liquid Envy": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Liquid Disgust": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Liquid Despair": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Concentrated Liquid Fear": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Concentrated Liquid Suffering": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Concentrated Liquid Isolation": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Diluted Liquid Ire": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Diluted Liquid Guilt": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Diluted Liquid Greed": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Liquid Paranoia": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Liquid Envy": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Liquid Disgust": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Liquid Despair": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Concentrated Liquid Fear": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Concentrated Liquid Suffering": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Concentrated Liquid Isolation": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Potent Liquid Melancholy": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Potent Liquid Ferocity": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Potent Liquid Contempt": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Potent Liquid Melancholy": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Potent Liquid Ferocity": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Ancient Potent Liquid Contempt": {
+      "category": "Delirium",
+      "sub": "DeliriumInstill",
+      "enabled": true
+    },
+    "Raven-Touched Shard": {
+      "category": "Delirium",
+      "sub": "Delirium",
+      "enabled": true
+    },
+    "Flesh Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Neural Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Carapace Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Adaptive Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Xoph's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Tul's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Esh's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Uul-Netol's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Reaver Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Sibilant Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Chayula's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Skittering Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Necrotic Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Flesh Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Neural Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Carapace Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Uul-Netol's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Xoph's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Tul's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Esh's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Chayula's Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Reaver Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Sibilant Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Skittering Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Adaptive Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Refined Necrotic Catalyst": {
+      "category": "Breach",
+      "sub": "BreachCatalyst",
+      "enabled": true
+    },
+    "Gnawed Jawbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Preserved Jawbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Ancient Jawbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Gnawed Rib": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Preserved Rib": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Ancient Rib": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Gnawed Collarbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Preserved Collarbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Ancient Collarbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Preserved Cranium": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Preserved Vertebrae": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Altered Collarbone": {
+      "category": "Abyss",
+      "sub": "AbyssTickets",
+      "enabled": true
+    },
+    "Architect's Orb": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Crystallised Corruption": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Core Destabiliser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Ancient Infuser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Cultivation Orb": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Yaomac's Orb of Sacrifice": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Kopec's Orb of Sacrifice": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Kamasa's Orb of Sacrifice": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Yugul's Orb of Sacrifice": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Armourer's Infuser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Blacksmith's Infuser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Arcanist's Infuser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Catalysing Infuser": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Orb of Extraction": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Vaal Siphoner": {
+      "category": "Incursion",
+      "sub": "Currency",
+      "enabled": true
+    },
+    "Guatelitzi's Thesis": {
+      "category": "Incursion",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Citaqualotl's Thesis": {
+      "category": "Incursion",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Thesis": {
+      "category": "Incursion",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Quipolatl's Thesis": {
+      "category": "Incursion",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Cowardly Fate": {
+      "category": "Fragments",
+      "sub": "FragmentsUltimatum",
+      "enabled": true
+    },
+    "Deadly Fate": {
+      "category": "Fragments",
+      "sub": "FragmentsUltimatum",
+      "enabled": true
+    },
+    "Victorious Fate": {
+      "category": "Fragments",
+      "sub": "FragmentsUltimatum",
+      "enabled": true
+    },
+    "Ancient Crisis Fragment": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Faded Crisis Fragment": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Weathered Crisis Fragment": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Origin Cradle": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Origin Spark": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Origin Core": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Call of the Shadows": {
+      "category": "Fragments",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Twilight Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Xesht's Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "The Trialmaster's Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Ritualistic Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Tangmazu's Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Olroth's Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "The Arbiter's Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Zarokh's Reliquary Key: Against the Darkness": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Zarokh's Reliquary Key: Sandstorm Visage": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Zarokh's Reliquary Key: Blessed Bonds": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Zarokh's Reliquary Key: Sekhema's Resolve": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Zarokh's Reliquary Key: Temporalis": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Azmeri Reliquary Key": {
+      "category": "Fragments",
+      "sub": "FragmentsVaultKey",
+      "enabled": true
+    },
+    "Lesser Desert Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Desert Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Desert Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Glacial Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Glacial Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Glacial Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Storm Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Storm Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Storm Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Iron Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Iron Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Iron Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Body Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Body Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Body Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Mind Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Mind Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Mind Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Vision Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Vision Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Vision Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Rebirth Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Rebirth Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Rebirth Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Inspiration Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Inspiration Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Inspiration Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Stone Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Stone Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Stone Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Perfect Desert Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Glacial Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Storm Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Iron Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Body Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Mind Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Rebirth Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Inspiration Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Stone Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Vision Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Robust Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Adept Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Resolve Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Ward Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Perfect Charging Rune": {
+      "category": "Runes",
+      "sub": "PerfectRunes",
+      "enabled": true
+    },
+    "Greater Rune of Leadership": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Greater Rune of Tithing": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Greater Rune of Alacrity": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Greater Rune of Nobility": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Farrul's Rune of the Hunt": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Thane Myrk's Rune of Summer": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Lady Hestra's Rune of Winter": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Thane Leld's Rune of Spring": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Fenumus' Rune of Agony": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Thane Girt's Rune of Wildness": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Hedgewitch Assandra's Rune of Wisdom": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Saqawal's Rune of the Sky": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "The Greatwolf's Rune of Willpower": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Craiceann's Rune of Recovery": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Craiceann's Rune of Warding": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Countess Seske's Rune of Archery": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Saqawal's Rune of Erosion": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Saqawal's Rune of Memory": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "The Greatwolf's Rune of Claws": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Courtesan Mannan's Rune of Cruelty": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Thane Grannell's Rune of Mastery": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Fenumus' Rune of Spinning": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Fenumus' Rune of Draining": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Farrul's Rune of Grace": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Farrul's Rune of the Chase": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Lesser Robust Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Robust Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Robust Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Adept Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Adept Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Adept Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Resolve Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Resolve Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Resolve Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Masterwork Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Omen of Sinistral Alchemy": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Dextral Alchemy": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Sinistral Coronation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Dextral Coronation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Homogenising Coronation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Refreshment": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Resurgence": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Corruption": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Amelioration": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sinistral Exaltation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Dextral Exaltation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Homogenising Exaltation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Catalysing Exaltation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Answered Prayers": {
+      "category": "Ritual",
+      "sub": "OmensSpecial",
+      "enabled": true
+    },
+    "Omen of the Hunt": {
+      "category": "Ritual",
+      "sub": "OmensSpecial",
+      "enabled": true
+    },
+    "Omen of Reinforcements": {
+      "category": "Ritual",
+      "sub": "OmensSpecial",
+      "enabled": true
+    },
+    "Omen of Secret Compartments": {
+      "category": "Ritual",
+      "sub": "OmensSpecial",
+      "enabled": true
+    },
+    "Omen of Greater Annulment": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": false
+    },
+    "Omen of Whittling": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sinistral Erasure": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Dextral Erasure": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Chaotic Rarity": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Chaotic Quantity": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Chaotic Monsters": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Chaotic Effectiveness": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sinistral Annulment": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Dextral Annulment": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Chance": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of the Ancients": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Dextral Crystallisation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sinistral Crystallisation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Greater Exaltation": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of the Blessed": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sanctification": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Gambling": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Bartering": {
+      "category": "Ritual",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Abyssal Echoes": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of the Sovereign": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of the Liege": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of the Blackblooded": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Putrefaction": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Light": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Sinistral Necromancy": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Omen of Dextral Necromancy": {
+      "category": "Abyss",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Soul Core of Topotante": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Tacati": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Opiloti": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Jiquani": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Zalatl": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Citaqualotl": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Puhuarte": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Tzamoto": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Xopec": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Quipolatl": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Ticaba": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Atmohua": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Cholotl": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Zantipi": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Soul Core of Azcapa": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Atmohua's Soul Core of Retreat": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Hayoxi's Soul Core of Heatproofing": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Zalatl's Soul Core of Insulation": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Topotante's Soul Core of Dampening": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Opiloti's Soul Core of Assault": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Guatelitzi's Soul Core of Endurance": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Xopec's Soul Core of Power": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Xipocado's Soul Core of Dominion": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Citaqualotl's Soul Core of Foulness": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Cholotl's Soul Core of War": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Tacati's Soul Core of Affliction": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Quipolatl's Soul Core of Flow": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Tzamoto's Soul Core of Ferocity": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Uromoti's Soul Core of Attenuation": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Estazunti's Soul Core of Convalescence": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Automation": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Malediction": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Targeting": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Rallying": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Radiance": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Severing": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Rippling": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Quaking": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Munitions": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Snares": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Abundance": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Squalls": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Jiquani's Soul Core of Thundering": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Atziri's Soul Core of Devotion": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Atziri's Soul Core of Vitality": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Atziri's Soul Core of Alacrity": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Atziri's Soul Core of Inoculation": {
+      "category": "SoulCore",
+      "sub": "SoulCore",
+      "enabled": true
+    },
+    "Bear Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Primate Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Stag Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Boar Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Snake Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Wolf Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Cat Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Owl Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Ox Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Fox Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Rabbit Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Thruldana": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Maxarius": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Eeshta": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Egrin": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Ralakesh": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Sirrius": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Grold": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of the Sycophant": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Idol of the Martyr": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Idol of the Pharisee": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Carved Cunning": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Carved Majesty": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Carved Mischief": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Carved Tenacity": {
+      "category": "Idol",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Idol of Greust": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Yeena": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Eramir": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Oak": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Alira": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Kraityn": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Idol of Silk": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Panther Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Hawk Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Stoat Idol": {
+      "category": "Idol",
+      "sub": "Idol",
+      "enabled": true
+    },
+    "Uncut Support Gem (Level 1)": {
+      "category": "UncutGems",
+      "sub": "UncutSupportGems",
+      "enabled": true
+    },
+    "Uncut Support Gem (Level 2)": {
+      "category": "UncutGems",
+      "sub": "UncutSupportGems",
+      "enabled": true
+    },
+    "Uncut Support Gem (Level 3)": {
+      "category": "UncutGems",
+      "sub": "UncutSupportGems",
+      "enabled": true
+    },
+    "Uncut Support Gem (Level 4)": {
+      "category": "UncutGems",
+      "sub": "UncutSupportGems",
+      "enabled": true
+    },
+    "Uncut Support Gem (Level 5)": {
+      "category": "UncutGems",
+      "sub": "UncutSupportGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 4)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 5)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 6)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 7)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 8)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 9)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 10)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 11)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 12)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 13)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 14)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 15)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 16)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 17)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 18)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 19)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Spirit Gem (Level 20)": {
+      "category": "UncutGems",
+      "sub": "UncutReservationGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 1)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 2)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 3)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 4)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 5)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 6)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 7)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 8)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 9)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 10)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 11)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 12)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 13)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 14)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 15)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 16)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 17)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 18)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 19)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Uncut Skill Gem (Level 20)": {
+      "category": "UncutGems",
+      "sub": "UncutSkillGems",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 5)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 6)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 7)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 8)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 9)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 10)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 11)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 12)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 13)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 14)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 15)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 16)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 17)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 18)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 19)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Thaumaturgic Flux (Level 20)": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Atalui's Bloodletting": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Einhar's Beastrite": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Brutus' Brain": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uruk's Smelting": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Paquate's Pact": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Vilenta's Propulsion": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Ailith's Chimes": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tecrod's Revenge": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Doedre's Undoing": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Ratha's Assault": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Arjun's Medal": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Kaom's Madness": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Sione's Temper": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Ixchel's Torment": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Romira's Requital": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tawhoa's Tending": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Dominus' Grasp": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Dialla's Desire": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Kalisa's Crescendo": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Kulemak's Dominion": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Amanamu's Tithe": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Xoph's Pyre": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Esh's Radiance": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tul's Stillness": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uul-Netol's Embrace": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Rakiata's Flow": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Garukhan's Resolve": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tasalio's Rhythm": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tacati's Ire": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Rigwald's Ferocity": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Khatal's Rejuvenation": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Bhatair's Vengeance": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uhtred's Exodus": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uhtred's Omen": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uhtred's Augury": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Daresso's Passion": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Ahn's Citadel": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Atziri's Allure": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Hayoxi's Fulmination": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Zarokh's Refrain": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Kurgal's Leash": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Varashta's Blessing": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Arbiter's Ignition": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Arakaali's Lust": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Xibaqua's Rending": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Guatelitzi's Ablation": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Atziri's Communion": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Atziri's Impatience": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Zerphi's Infamy": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Zarokh's Revolt": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Oisín's Oath": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Kulemak's Invitation": {
+      "category": "Abyss",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Amanamu's Gaze": {
+      "category": "Abyss",
+      "sub": "AbyssalEye",
+      "enabled": true
+    },
+    "Tecrod's Gaze": {
+      "category": "Abyss",
+      "sub": "AbyssalEye",
+      "enabled": true
+    },
+    "Kurgal's Gaze": {
+      "category": "Abyss",
+      "sub": "AbyssalEye",
+      "enabled": true
+    },
+    "Ulaman's Gaze": {
+      "category": "Abyss",
+      "sub": "AbyssalEye",
+      "enabled": true
+    },
+    "Cirel's Cultivation": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Morgana's Tempest": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Breachstone": {
+      "category": "Breach",
+      "sub": "Breach",
+      "enabled": true
+    },
+    "Expedition Logbook": {
+      "category": "Expedition",
+      "sub": "Expedition",
+      "enabled": true
+    },
+    "Shattered Triskelion": {
+      "category": "Expedition",
+      "sub": "Expedition",
+      "enabled": true
+    },
+    "The Triskelion Reforged": {
+      "category": "Expedition",
+      "sub": "Expedition",
+      "enabled": true
+    },
+    "Aldur's Saga": {
+      "category": "Expedition",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Medved's Saga": {
+      "category": "Expedition",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Vorana's Saga": {
+      "category": "Expedition",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Uhtred's Saga": {
+      "category": "Expedition",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Olroth's Saga": {
+      "category": "Expedition",
+      "sub": "Omens",
+      "enabled": true
+    },
+    "Verisium": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Exceptional Verisium": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Medved's Crest of the Circle": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Vorana's Crest of the Scythe": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Uhtred's Crest of the Chalice": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Olroth's Crest of the Sun": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Runic Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Adaptive Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Protective Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Expansive Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Swift Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Cyclonic Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Prismatic Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Mystic Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Sovereign Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Celestial Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Transcendent Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "The Runebinder's Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "The Runefather's Alloy": {
+      "category": "Expedition",
+      "sub": "Alloys",
+      "enabled": true
+    },
+    "Blazing Flux": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Chilling Flux": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Crackling Flux": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Void Flux": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Liquid Verisium": {
+      "category": "Expedition",
+      "sub": "Verisium",
+      "enabled": true
+    },
+    "Perfect Flux": {
+      "category": "Expedition",
+      "sub": "Fluxes",
+      "enabled": true
+    },
+    "Starlit Ore": {
+      "category": "Expedition",
+      "sub": "StarlitOre",
+      "enabled": true
+    },
+    "Venerable Starlit Ore": {
+      "category": "Expedition",
+      "sub": "StarlitOre",
+      "enabled": true
+    },
+    "Revered Starlit Ore": {
+      "category": "Expedition",
+      "sub": "StarlitOre",
+      "enabled": true
+    },
+    "Veridical Starlit Ore": {
+      "category": "Expedition",
+      "sub": "StarlitOre",
+      "enabled": true
+    },
+    "Warding Starlit Ore": {
+      "category": "Expedition",
+      "sub": "StarlitOre",
+      "enabled": true
+    },
+    "Breachlord Sac": {
+      "category": "Breach",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Head of the King": {
+      "category": "Ritual",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "An Audience with the King": {
+      "category": "Ritual",
+      "sub": "FragmentsPinnacle",
+      "enabled": true
+    },
+    "Sacred Bloom": {
+      "category": "Ritual",
+      "sub": "Ritual",
+      "enabled": true
+    },
+    "Ancient Rune of Splinters": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Dueling": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of the Titan": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Shattering": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Prowess": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Control": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Discovery": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Decay": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Witchcraft": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of the Horde": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Animosity": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Detonation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ancient Rune of Retaliation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Vitality": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of the Hunt": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Acrobatics": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Culmination": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Renown": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Accumulation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Foundations": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of the Prism": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of the Blossom": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Consistency": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Reach": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Vital Flame": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Rune of Confrontation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Lesser Ward Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Ward Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Ward Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Lesser Charging Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Charging Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Greater Charging Rune": {
+      "category": "Runes",
+      "sub": "Runes",
+      "enabled": true
+    },
+    "Warding Rune of Reinforcement": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Protection": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Disintegration": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Desperation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Symbiosis": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Courage": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Stability": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Glancing": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Heart": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Nourishment": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Annihilation": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Armature": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Obsession": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Equinox": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Salvaging": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Bodyguards": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Warding Rune of Hollowing": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Serle's Triumph": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Cadigan's Epiphany": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Astrid's Creativity": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Emergent Vigour": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Emergent Possibility": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Emergent Protection": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Emergent Instinct": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Uhtred's Sidereus": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Kolr's Hunt": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Vorana's Carnage": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Thrud's Might": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Medved's Tending": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Katla's Gloom": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Aldur's Legacy": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Passion of Aldur": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Breath of Aldur": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Ire of Aldur": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Betrayal of Aldur": {
+      "category": "Runes",
+      "sub": "GreaterRunes",
+      "enabled": true
+    },
+    "Eonyr's Thunder": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Helbrym's Hide": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Her Declaration": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Prototype Seventeen": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Seraph's Heart": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uhtred's Rite": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Trickster's Shard": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Arbiter's Reach": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tangmazu's Thurible": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Esh's Prowess": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Breachlord's Rift": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Breachlord's Amalgam": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Vruun's Aftermath": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Vruun's Inevitability": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Uhtred's Constellation": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Medved's Felling": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Vorana's Siege": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Styrn's Mountain": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Styrn's Ferocity": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Catha's Brilliance": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Mórrigan's Insight": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Tul's Avalanche": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Olroth's Hubris": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    },
+    "Olroth's Conviction": {
+      "category": "Gems",
+      "sub": "LineageSupports",
+      "enabled": true
+    }
+  }
+}
