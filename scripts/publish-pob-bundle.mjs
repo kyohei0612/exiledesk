@@ -46,7 +46,8 @@ async function contentHash(meta) {
   h.update(JSON.stringify({ version: meta.version, tree: meta.tree, jp: meta.jp }));
   for await (const p of walk(SRC)) {
     const rel = relative(SRC, p).replace(/\\/g, "/");
-    if (rel === "exiledesk-pob.json") continue;
+    // builtAt / タイムスタンプ入りのファイルはハッシュに入れない (内容が同じなら再アップロードしない)
+    if (rel === "exiledesk-pob.json" || rel.startsWith(".pob2jp-log.txt") || rel === ".pob2jp-state.json") continue;
     h.update(rel);
     h.update(await readFile(p));
   }

@@ -222,6 +222,26 @@ async function removeBackups(dir) {
   return n;
 }
 
+/**
+ * 組み立てを決定的にする (2026-09-09): PoB2-JP インストーラはタイムスタンプ入りのログ (.pob2jp-log.txt) と
+ * `.pob2jp-state.json` の patchedAt を書く。これが残ると内容ハッシュが毎回変わり、publish-pob-bundle.mjs が
+ * 同じ中身を再アップロードし、アプリ側も 30 日チェックで無駄に 124 MB 落とし直す。
+ */
+async function normalizeJpState(dir) {
+  for (const f of [".pob2jp-log.txt", ".pob2jp-log.txt.1"]) {
+    await rm(join(dir, f), { force: true });
+  }
+  const statePath = join(dir, ".pob2jp-state.json");
+  try {
+    const st = JSON.parse(await readFile(statePath, "utf-8"));
+    delete st.patchedAt;
+    await writeFile(statePath, JSON.stringify(st, null, 2) + "\n", "utf-8");
+    log("normalized .pob2jp-state.json (patchedAt removed), removed .pob2jp-log.txt");
+  } catch {
+    /* JP 無し (--no-jp) なら何もしない */
+  }
+}
+
 async function main() {
   if (ARGS.has("--check")) {
     const ok = (await exists(join(OUT, EXE_NAME))) && (await exists(join(OUT, "Launch.lua")));
@@ -293,6 +313,7 @@ async function main() {
     await installFonts();
     const removed = await removeBackups(OUT);
     log(`removed ${removed} *.pob2jp.bak`);
+    await normalizeJpState(OUT);
     jpVersion = (await readFile(join(pob2jp, "VERSION"), "utf-8")).trim();
   }
 
