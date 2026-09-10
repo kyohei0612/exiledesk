@@ -10,6 +10,7 @@ pub mod health_check;  // Phase ο-A: 起動時の外部 API / HTML / trade2 健
 pub mod settings;  // 設定画面 (2026-05-23): autostart / close_to_tray / auto-refetch 永続化
 pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を外部プロセスで開く
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
+pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 
 use std::time::Duration;
 
@@ -347,6 +348,11 @@ pub fn run() {
             pob_bundle::pob_bundle_status,
             pob_bundle::pob_bundle_check,
             pob_bundle::pob_bundle_install,
+            client_log::client_log_status,
+            client_log::client_log_diagnose,
+            client_log::client_log_clear,
+            client_log::client_log_history,
+            client_log::client_log_auto_rotate,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

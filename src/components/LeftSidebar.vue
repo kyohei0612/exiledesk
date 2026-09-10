@@ -21,6 +21,8 @@ const items: NavItem[] = [
   { id: "craft-profit", icon: "🜲", label: "クラフト収支", group: "economy" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
+  // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す
+  { id: "client-log", icon: "🜂", label: "ゲームログ診断", group: "tools" },
   { id: "settings", icon: "⚙", label: "設定", group: "tools" },
 ];
 

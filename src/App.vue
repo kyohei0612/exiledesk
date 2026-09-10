@@ -6,6 +6,7 @@ import UpdateToast from "./components/UpdateToast.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
+import { ensureClientLogRotated } from "./services/client-log";
 
 const activeNav = ref<string>("econ-currency");
 
@@ -29,6 +30,8 @@ onMounted(() => {
   void ensureCraftV2Started();
   // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
   void ensurePobBundleFresh();
+  // ゲームログ: 前回の消し込みから 7 日経っていれば診断 → 履歴保存 → 本体を空に
+  void ensureClientLogRotated();
 });
 </script>
 
