@@ -83,6 +83,10 @@ export interface CachedRareItem {
    * 古いキャッシュ / 旧バイナリでは undefined になるため optional。
    */
   base_type?: string;
+  /** 2026-09-12: 付与スキル (例: "Level 20 Cast on Critical")。古いキャッシュは無い。 */
+  granted_skills?: string[];
+  /** 2026-09-12: 付与スキルの穴に入っていたジェム名 (例: ["Frost Wall"])。 */
+  socketed_gems?: string[];
 }
 
 export interface CachedUniqueItem {
@@ -214,6 +218,31 @@ export interface BaseEntry {
   /** 英語 baseType (内部キー / 名寄せ用) */
   nameEn: string;
   /** このベースを装備していた人数 (重複排除済) */
+  count: number;
+  /**
+   * このベースが付与していたスキルの内訳 (人数降順)。不在のアミュレット / 王笏など
+   * 「スキルが付いたベース」だけ非空。それ以外は空配列。(2026-09-12)
+   */
+  skills: BaseSkillEntry[];
+}
+
+/** ベースが付与するスキル 1 種 (例: クリティカル時キャスト Lv17-20 · 12 人) */
+export interface BaseSkillEntry {
+  /** 表示名 (skills-ja-client で日本語化、未登録は英語) */
+  name: string;
+  nameEn: string;
+  /** 観測したスキルレベルの最小 / 最大 (取れなければ null) */
+  levelMin: number | null;
+  levelMax: number | null;
+  /** このスキルを付与するベースを装備していた人数 */
+  count: number;
+  /** 付与スキルの穴に入っていたジェム (人数降順) */
+  gems: BaseGemEntry[];
+}
+
+export interface BaseGemEntry {
+  name: string;
+  nameEn: string;
   count: number;
 }
 

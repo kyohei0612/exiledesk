@@ -34,7 +34,45 @@ export interface PoeNinjaItem {
     extended?: {
       subcategories?: string[];
     };
+    /**
+     * アイテムが付与するスキル (2026-09-12)。`values[0][0]` が "Level 20 Cast on Critical" 形式。
+     * 不在のアミュレット / 王笏 / 一部ユニークが持つ。
+     */
+    grantedSkills?: { name?: string; values?: unknown[][] }[];
+    /**
+     * 付与スキルの穴に入っているジェム。`socketedItems[0]` が付与スキル本体で、
+     * その `socketedItems[]` に装着ジェム (typeLine) が入る。
+     */
+    socketedItems?: { typeLine?: string; socketedItems?: { typeLine?: string }[] }[];
   };
+}
+
+/** "Level 20 Cast on Critical" → { level: 20, name: "Cast on Critical" }。形式外は level null。 */
+export function parseGrantedSkill(raw: string): { level: number | null; name: string } {
+  const m = raw.match(/^Level ([0-9]+) (.+)$/);
+  if (m) return { level: Number(m[1]), name: m[2].trim() };
+  return { level: null, name: raw.trim() };
+}
+
+/** items[] 1 件から付与スキル文字列 (生値) の配列を取り出す。 */
+export function grantedSkillStrings(item: PoeNinjaItem): string[] {
+  const out: string[] = [];
+  for (const g of item.itemData?.grantedSkills ?? []) {
+    const v = g?.values?.[0]?.[0];
+    if (typeof v === "string" && v) out.push(v);
+  }
+  return out;
+}
+
+/** items[] 1 件から「付与スキルの穴に入っているジェム名」を取り出す。 */
+export function socketedGemNames(item: PoeNinjaItem): string[] {
+  const out: string[] = [];
+  for (const holder of item.itemData?.socketedItems ?? []) {
+    for (const g of holder?.socketedItems ?? []) {
+      if (typeof g?.typeLine === "string" && g.typeLine) out.push(g.typeLine);
+    }
+  }
+  return out;
 }
 
 export function isPoeNinjaItem(x: unknown): x is PoeNinjaItem {

@@ -94,8 +94,16 @@ export function useCraftV2Derived() {
   const totalLowBasesCount = computed(() => lowCount(sortedBases.value));
   const totalLowUniquesCount = computed(() => lowCount(activeUniques.value));
 
-  /** ベースセクションを描画するスロット (オーナー指示: アミュレット / 指輪 のみ) */
-  const showBaseSection = computed<boolean>(() => activeSlot.value === "ring" || activeSlot.value === "amulet");
+  /**
+   * ベースセクションを描画するスロット (オーナー指示: アミュレット / 指輪 のみ)。
+   * 2026-09-12: スキルを付与するベース (王笏など) が集計に出ているスロットでも描画する。
+   */
+  const showBaseSection = computed<boolean>(
+    () =>
+      activeSlot.value === "ring" ||
+      activeSlot.value === "amulet" ||
+      sortedBases.value.some((b) => (b.skills?.length ?? 0) > 0),
+  );
 
   /**
    * レアに表示すべき MOD が無いスロット (prefix / suffix とも 0 件、折りたたみ状態) で、

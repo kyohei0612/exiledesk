@@ -11,7 +11,15 @@ import type {
   SlotKey,
   UniqueRepresentative,
 } from "./types";
-import { classifyEquipItem, classifyUniqueItem, isPoeNinjaItem, type PoeNinjaItem } from "./ninja-item";
+import {
+  classifyEquipItem,
+  classifyUniqueItem,
+  grantedSkillStrings,
+  isPoeNinjaItem,
+  parseGrantedSkill,
+  socketedGemNames,
+  type PoeNinjaItem,
+} from "./ninja-item";
 import { extractNumbers, normalizeModTemplate } from "../mods/normalize";
 import { heuristicAffix, modBundleIndex } from "../mods/dictionaries";
 
@@ -33,6 +41,17 @@ export interface AggregatedModBucket {
 export interface BaseBucket {
   nameEn: string;
   count: number;
+  /** 付与スキル別の内訳 (key = 英語スキル名)。スキルを付与しないベースは空。(2026-09-12) */
+  skills: Map<string, SkillBucket>;
+}
+
+export interface SkillBucket {
+  nameEn: string;
+  count: number;
+  levelMin: number | null;
+  levelMax: number | null;
+  /** 付与スキルの穴に入っていたジェム名 → 人数 */
+  gems: Map<string, number>;
 }
 
 export interface SlotCounter {
@@ -155,21 +174,42 @@ function addModToSlot(
   bucket.values.push(extractNumbers(modText));
 }
 
-/** rare 装備の baseType を「人数ベース」で加算 (同キャラ同スロットは seenBases で de-dup)。 */
+/**
+ * rare 装備の baseType を「人数ベース」で加算 (同キャラ同スロットは seenBases で de-dup)。
+ * 付与スキル (不在のアミュレット等) があれば、そのスキルと装着ジェムも同じ人数単位で積む (2026-09-12)。
+ */
 function addBaseToSlot(
   slot: SlotCounter,
-  baseType: string,
+  item: PoeNinjaItem,
   seenBases: Set<string>,
 ): void {
+  const baseType = item.itemData?.baseType;
   if (!baseType || typeof baseType !== "string") return;
   if (seenBases.has(baseType)) return;
   seenBases.add(baseType);
   let bucket = slot.bases.get(baseType);
   if (!bucket) {
-    bucket = { nameEn: baseType, count: 0 };
+    bucket = { nameEn: baseType, count: 0, skills: new Map<string, SkillBucket>() };
     slot.bases.set(baseType, bucket);
   }
   bucket.count += 1;
+
+  const gems = socketedGemNames(item);
+  for (const raw of grantedSkillStrings(item)) {
+    const { level, name } = parseGrantedSkill(raw);
+    if (!name) continue;
+    let sk = bucket.skills.get(name);
+    if (!sk) {
+      sk = { nameEn: name, count: 0, levelMin: null, levelMax: null, gems: new Map<string, number>() };
+      bucket.skills.set(name, sk);
+    }
+    sk.count += 1;
+    if (level !== null) {
+      sk.levelMin = sk.levelMin === null ? level : Math.min(sk.levelMin, level);
+      sk.levelMax = sk.levelMax === null ? level : Math.max(sk.levelMax, level);
+    }
+    for (const g of new Set(gems)) sk.gems.set(g, (sk.gems.get(g) ?? 0) + 1);
+  }
 }
 
 /**
@@ -253,10 +293,7 @@ export function ingestCharacterItems(asc: AscendancyCounter, charItems: Characte
       for (const modText of mods) {
         addModToSlot(slotCounter, modText, seen);
       }
-      const baseType = raw.itemData?.baseType;
-      if (typeof baseType === "string" && baseType) {
-        addBaseToSlot(slotCounter, baseType, seenBasesPerSlot[rareSlot]);
-      }
+      addBaseToSlot(slotCounter, raw, seenBasesPerSlot[rareSlot]);
       continue;
     }
 

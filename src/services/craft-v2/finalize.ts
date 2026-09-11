@@ -6,6 +6,7 @@
 
 import { jaAscendancy, ascendancyIcon } from "../../i18n/ascendancies-ja";
 import { jaCurrency } from "../../i18n/currencies-ja";
+import { jaSkill } from "../../i18n/skills-ja";
 import type {
   AffixKind,
   AggregatedAscendancy,
@@ -157,7 +158,19 @@ function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: Affix
 function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
   const list: BaseEntry[] = [];
   for (const b of buckets.values()) {
-    list.push({ name: jaCurrency(b.nameEn), nameEn: b.nameEn, count: b.count });
+    const skills = [...b.skills.values()]
+      .map((s) => ({
+        name: jaSkill(s.nameEn),
+        nameEn: s.nameEn,
+        levelMin: s.levelMin,
+        levelMax: s.levelMax,
+        count: s.count,
+        gems: [...s.gems.entries()]
+          .map(([nameEn, count]) => ({ name: jaSkill(nameEn), nameEn, count }))
+          .sort((x, y) => y.count - x.count),
+      }))
+      .sort((x, y) => y.count - x.count);
+    list.push({ name: jaCurrency(b.nameEn), nameEn: b.nameEn, count: b.count, skills });
   }
   list.sort((a, b) => b.count - a.count);
   return list;
@@ -264,6 +277,9 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         explicitMods: r.explicit_mods,
         baseType: r.base_type,
         extended: { subcategories: r.subcategories ?? [] },
+        // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
+        grantedSkills: (r.granted_skills ?? []).map((s) => ({ name: "Grants Skill", values: [[s, 25]] })),
+        socketedItems: [{ socketedItems: (r.socketed_gems ?? []).map((g) => ({ typeLine: g })) }],
       },
     });
   }

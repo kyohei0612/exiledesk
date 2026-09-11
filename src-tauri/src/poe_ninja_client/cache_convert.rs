@@ -81,11 +81,48 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+            // 2026-09-12: 付与スキル ("Level 20 Cast on Critical") と、その穴に入ったジェム名。
+            let granted_skills: Vec<String> = data
+                .get("grantedSkills")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|g| {
+                            g.get("values")?
+                                .as_array()?
+                                .first()?
+                                .as_array()?
+                                .first()?
+                                .as_str()
+                                .map(|s| s.to_string())
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            let socketed_gems: Vec<String> = data
+                .get("socketedItems")
+                .and_then(|v| v.as_array())
+                .map(|holders| {
+                    holders
+                        .iter()
+                        .flat_map(|h| {
+                            h.get("socketedItems")
+                                .and_then(|v| v.as_array())
+                                .cloned()
+                                .unwrap_or_default()
+                        })
+                        .filter_map(|g| g.get("typeLine").and_then(|v| v.as_str()).map(|s| s.to_string()))
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                })
+                .unwrap_or_default();
             rare_items.push(CachedRareItem {
                 inventory_id: inv_id,
                 explicit_mods,
                 subcategories: subcategories.clone(),
                 base_type,
+                granted_skills,
+                socketed_gems,
             });
         } else if frame_type == 3 {
             // unique
@@ -177,6 +214,9 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                 // 2026-06-28: ベース別使用率集計用に baseType を復元
                 "baseType": r.base_type,
                 "extended": { "subcategories": r.subcategories },
+                // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (TS 側 ingest が同じ経路で読む)
+                "grantedSkills": r.granted_skills.iter().map(|s| serde_json::json!({ "name": "Grants Skill", "values": [[s, 25]] })).collect::<Vec<_>>(),
+                "socketedItems": [{ "socketedItems": r.socketed_gems.iter().map(|g| serde_json::json!({ "typeLine": g })).collect::<Vec<_>>() }],
             }
         }));
     }

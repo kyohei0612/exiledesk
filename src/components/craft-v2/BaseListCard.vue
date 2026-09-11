@@ -48,6 +48,25 @@ const showLowCount = defineModel<boolean>("showLowCount", { required: true });
             {{ b.count }}人
             <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">({{ pct(b.count) }})</span>
           </span>
+          <!-- 付与スキル (不在のアミュレット / 王笏など)。2026-09-12: ベースの中身が見えない問題への対応 -->
+          <ul v-if="b.skills && b.skills.length > 0" class="col-span-3 ml-7 mb-1 space-y-0.5">
+            <li v-for="s in b.skills" :key="'skill-' + b.nameEn + '-' + s.nameEn" class="text-[12px] leading-snug">
+              <div class="flex items-baseline gap-2">
+                <span class="shrink-0 text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">付与</span>
+                <span class="text-[var(--exile-color-accent-focus)]" :title="s.nameEn">{{ s.name }}</span>
+                <span v-if="s.levelMax !== null" class="text-[11px] tabular-nums text-[var(--exile-color-text-secondary)]">
+                  Lv{{ s.levelMin === s.levelMax ? s.levelMax : `${s.levelMin}-${s.levelMax}` }}
+                </span>
+                <span class="ml-auto shrink-0 tabular-nums text-[11px] text-[var(--exile-color-text-secondary)]">{{ s.count }}人</span>
+              </div>
+              <div v-if="s.gems.length > 0" class="ml-6 text-[11px] text-[var(--exile-color-text-secondary)] flex flex-wrap gap-x-2">
+                <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">装着</span>
+                <span v-for="g in s.gems" :key="'gem-' + s.nameEn + '-' + g.nameEn" :title="g.nameEn" class="tabular-nums">
+                  {{ g.name }}<span class="text-[var(--exile-color-text-tertiary)]">×{{ g.count }}</span>
+                </span>
+              </div>
+            </li>
+          </ul>
         </li>
         <li v-if="total === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当ベースなし</li>
         <li v-if="lowCount > 0" class="pt-1">

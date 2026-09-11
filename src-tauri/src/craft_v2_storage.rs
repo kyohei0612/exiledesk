@@ -82,6 +82,14 @@ pub struct CachedRareItem {
     /// 古いキャッシュとの互換のため `#[serde(default)]`。
     #[serde(default)]
     pub subcategories: Vec<String>,
+    /// 2026-09-12: アイテムが付与するスキル (例: "Level 20 Cast on Critical")。
+    /// 不在のアミュレット / 王笏などが持つ `grantedSkills[].values[0][0]` の生文字列。
+    #[serde(default)]
+    pub granted_skills: Vec<String>,
+    /// 2026-09-12: 付与スキルに装着されていたジェム名 (例: ["Frost Wall", "Arc"])。
+    /// `socketedItems[0].socketedItems[].typeLine` (付与スキルの穴に入ったジェム)。
+    #[serde(default)]
+    pub socketed_gems: Vec<String>,
 }
 
 /// ユニーク装備の縮小保存。ホバーオーバーレイ表示に必要な最小サブセット。
@@ -137,7 +145,9 @@ fn cache_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 /// ν2 (2026-06-28): rare アイテムの `base_type` 追加。旧キャッシュは base_type が
 /// 無く、差分モードで流用されるとベース別使用率が過小カウントになるため、
 /// 一度だけフル再取得を強制して即座に完全化する。
-const SCHEMA_PREFIX: &str = "ν2-";
+/// ν3 (2026-09-12): rare アイテムの `granted_skills` / `socketed_gems` 追加 (不在のアミュレット等の
+/// 付与スキル表示)。旧キャッシュには無いので同様にフル再取得を強制する。
+const SCHEMA_PREFIX: &str = "ν3-";
 
 /// 保存済キャッシュを読込む。ファイル無し or パース失敗時は Ok(None)。
 ///
