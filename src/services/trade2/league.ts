@@ -60,7 +60,13 @@ export function trade2QueryUrl(tradeLeague: string, query: unknown): string {
   return `${trade2HomeUrl(tradeLeague)}?q=${encodeURIComponent(JSON.stringify(query))}`;
 }
 
+/**
+ * ブラウザで開く trade2 サイトのオリジン。オーナー指示 (2026-09-12) で日本語サイト。
+ * API (`/api/trade2/...`) は www 固定のまま (constants/trade2.ts)。検索 ID とリーグ ID は両サイト共通。
+ */
+export const TRADE2_SITE_ORIGIN = "https://jp.pathofexile.com";
+
 /** trade2 サイトの検索ホーム URL (手動検索へのフォールバック) */
 function trade2HomeUrl(tradeLeague: string): string {
-  return `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
+  return `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
 }

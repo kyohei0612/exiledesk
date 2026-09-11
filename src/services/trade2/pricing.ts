@@ -9,7 +9,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { Rarity, SecurityStatus } from "../../constants/trade2";
-import { trade2QueryUrl } from "./league";
+import { TRADE2_SITE_ORIGIN, trade2QueryUrl } from "./league";
 import type { Trade2SearchResponse, Trade2StatFilter } from "./query";
 
 /**
@@ -152,7 +152,7 @@ export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRate
     if ((search.total ?? 0) > 0) break;
   }
   const searchUrl = search.id
-    ? `https://www.pathofexile.com/trade2/search/poe2/${encodeURIComponent(input.league)}/${search.id}`
+    ? `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(input.league)}/${search.id}`
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
