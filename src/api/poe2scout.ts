@@ -3,7 +3,10 @@
  *
  * poe2scout は POE2 専用の経済データ集約サービス（MIT、OpenAPI 完備、無認証 GET）
  * Repo: https://github.com/poe2scout/poe2scout
- * OpenAPI: https://poe2scout.com/api/openapi.json
+ * OpenAPI: https://api.poe2scout.com/openapi/v1.json
+ *
+ * 2026-09-11: API が poe2scout.com/api から api.poe2scout.com に移転 (旧 URL はフロントの HTML を返す)。
+ * パス構造 (/poe2/Leagues 等) は同じなのでホストだけ差し替え。
  *
  * 2026-05-19 hotfix: poe2scout が Access-Control-Allow-Origin を返さないため、
  * Tauri WebView の fetch だと CORS で弾かれる。本番ビルドでは
@@ -15,7 +18,7 @@ import { exchangeGroupIdOf, exchangeSubJaOf } from "../i18n/currency-exchange";
 
 const BASE = import.meta.env.DEV
   ? "/api/poe2scout"
-  : "https://poe2scout.com/api";
+  : "https://api.poe2scout.com";
 
 const httpFetch: typeof fetch = import.meta.env.DEV
   ? globalThis.fetch.bind(globalThis)

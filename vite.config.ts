@@ -35,9 +35,9 @@ export default defineConfig(async () => ({
     // 4. dev 時 CORS 回避用のプロキシ（本番 Tauri ビルド時は無関係）
     proxy: {
       "/api/poe2scout": {
-        target: "https://poe2scout.com",
+        target: "https://api.poe2scout.com",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/poe2scout/, "/api"),
+        rewrite: (path) => path.replace(/^\/api\/poe2scout/, ""),
       },
     },
   },

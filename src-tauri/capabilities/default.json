@@ -13,7 +13,8 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://poe2scout.com/*" }
+        { "url": "https://poe2scout.com/*" },
+        { "url": "https://api.poe2scout.com/*" }
       ]
     }
   ]
