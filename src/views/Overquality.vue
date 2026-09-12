@@ -7,8 +7,16 @@
 -->
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { PRESETS, useOverquality } from "./overquality/useOverquality";
+import { marketStore } from "../state/market-store";
+import { triLine } from "./vaal-scales/money";
+const tri = (n: number | null | undefined): string => triLine(n, marketStore.rates.value);
+
+async function open(url: string | null): Promise<void> {
+  await openExternal(url);
+}
 
 const o = useOverquality();
 onMounted(() => {
@@ -54,17 +62,49 @@ function evClass(v: number | null): string {
       <!-- 入力 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">入力</h2>
+          <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">入力</h2>
+            <button
+              type="button"
+              :disabled="o.pricing.value || o.tradeAuto.rateLimitSecs.value > 0 || (!o.baseEn.value && !o.uniqueEn.value)"
+              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              @click="o.fetchPrices"
+            >
+              <span aria-hidden="true">⟳</span>
+              {{ o.pricing.value ? "trade2 で検索中…" : o.tradeAuto.rateLimitSecs.value > 0 ? `レート制限中 (${o.tradeAuto.rateLimitSecs.value} 秒)` : "trade2 で取り直す" }}
+            </button>
+          </div>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
             <label>対象</label>
             <select v-model="o.presetId.value" class="num text-left w-64">
               <option v-for="p in PRESETS" :key="p.id" :value="p.id">{{ p.label }}</option>
             </select>
+            <template v-if="o.preset.value.baseEn === null">
+              <label>
+                <div>ベース名 (日本語 / 英語)</div>
+                <div class="text-[10px]" :class="o.baseInput.value && !o.baseEn.value ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">
+                  {{ o.baseInput.value && !o.baseEn.value ? "辞書に無い名前です" : o.baseEn.value ? o.baseEn.value : "例: 吸収のワンド" }}
+                </div>
+              </label>
+              <input v-model="o.baseInput.value" type="text" spellcheck="false" class="num text-left w-64" />
+              <label>
+                <div>目標ユニーク名 (日本語 / 英語)</div>
+                <div class="text-[10px]" :class="o.uniqueInput.value && !o.uniqueEn.value ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">
+                  {{ o.uniqueInput.value && !o.uniqueEn.value ? "辞書に無い名前です" : o.uniqueEn.value ? o.uniqueEn.value : "例: アドニアのエゴ" }}
+                </div>
+              </label>
+              <input v-model="o.uniqueInput.value" type="text" spellcheck="false" class="num text-left w-64" />
+            </template>
             <label>
-              <div>{{ o.preset.value.baseJa }} 1 個 (高貴)</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">失敗のたびに消える。相場が無いので手入力</div>
+              <div>
+                {{ o.preset.value.baseJa }} 1 個 (高貴)
+                <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.baseTradeUrl.value" @click="open(o.baseTradeUrl.value)">トレード2へ ↗</button>
+              </div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+                失敗のたびに消える。trade2 のノーマル・未コラプト最安を自動で取る<span v-if="o.autoBasePrice.value != null"> (取得 {{ fmt(o.autoBasePrice.value) }})</span>。手入力で上書き可
+              </div>
             </label>
-            <input v-model.number="o.basePrice.value" type="number" min="0" step="any" class="num w-28" />
+            <input v-model.number="o.basePriceOverride.value" type="number" min="0" step="any" :placeholder="o.autoBasePrice.value != null ? String(o.autoBasePrice.value) : '—'" class="num w-28" />
             <label>
               <div>目標品質</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">最大品質を最大 10% まで超過できる (クライアント)</div>
@@ -76,12 +116,15 @@ function evClass(v: number | null): string {
             </label>
             <input v-model.number="o.qualityCurrencyCount.value" type="number" min="0" step="1" class="num w-28" />
             <label>
-              <div>完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}%)</div>
+              <div>
+                完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上)
+                <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
+              </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                初期値は poe2scout のユニーク相場 (品質を問わない値<span v-if="o.auto.value.uniqueRef != null">: {{ fmt(o.auto.value.uniqueRef) }}</span>)。高品質の実勢に直してください
+                trade2 の「品質 {{ o.targetQuality.value }}% 以上」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ fmt(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければ poe2scout の品質不問の値 {{ fmt(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
               </div>
             </label>
-            <input v-model.number="o.salePrice.value" type="number" min="0" step="any" placeholder="—" class="num w-28" />
+            <input v-model.number="o.salePriceOverride.value" type="number" min="0" step="any" :placeholder="o.salePrice.value != null ? String(o.salePrice.value) : '—'" class="num w-28" />
           </div>
         </div>
       </BaseCard>
@@ -89,7 +132,7 @@ function evClass(v: number | null): string {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (高貴 / 個)。空欄で poe2scout の値</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個: 高貴 · カオス · 神)。空欄で poe2scout の値、上書きは高貴</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
@@ -97,7 +140,7 @@ function evClass(v: number | null): string {
                   <div>{{ o.preset.value.qualityCurrencyJa }}</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる (20% まで)</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums w-24 text-[var(--exile-color-text-secondary)]">{{ fmt(o.auto.value.qualityCurrency) }}</td>
+                <td class="py-1.5 text-right tabular-nums text-[11px] whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ tri(o.auto.value.qualityCurrency) }}</td>
                 <td class="py-1.5 text-right w-28"><input v-model.number="o.overrides.value.qualityCurrency" type="number" min="0" step="any" placeholder="上書き" class="num w-24" /></td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
@@ -105,7 +148,7 @@ function evClass(v: number | null): string {
                   <div>{{ o.preset.value.infuserJa }}</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる。最大品質を最大 10% まで超過できるが、一定確率でコラプト化する</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">{{ fmt(o.auto.value.infuser) }}</td>
+                <td class="py-1.5 text-right tabular-nums text-[11px] whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ tri(o.auto.value.infuser) }}</td>
                 <td class="py-1.5 text-right"><input v-model.number="o.overrides.value.infuser" type="number" min="0" step="any" placeholder="上書き" class="num w-24" /></td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
@@ -113,7 +156,7 @@ function evClass(v: number | null): string {
                   <div>可能性のお告げ</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">次回使用する可能性のオーブはアイテムを破壊しない。成功したベースにだけ使う</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">{{ fmt(o.auto.value.omen) }}</td>
+                <td class="py-1.5 text-right tabular-nums text-[11px] whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ tri(o.auto.value.omen) }}</td>
                 <td class="py-1.5 text-right"><input v-model.number="o.overrides.value.omen" type="number" min="0" step="any" placeholder="上書き" class="num w-24" /></td>
               </tr>
               <tr>
@@ -121,7 +164,7 @@ function evClass(v: number | null): string {
                   <div>可能性のオーブ</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ノーマルアイテムをユニークにアップグレードするか破壊する (お告げで破壊が無くなる)</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">{{ fmt(o.auto.value.chance) }}</td>
+                <td class="py-1.5 text-right tabular-nums text-[11px] whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ tri(o.auto.value.chance) }}</td>
                 <td class="py-1.5 text-right"><input v-model.number="o.overrides.value.chance" type="number" min="0" step="any" placeholder="上書き" class="num w-24" /></td>
               </tr>
             </tbody>
@@ -139,6 +182,7 @@ function evClass(v: number | null): string {
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
               <div class="text-[var(--exile-color-text-secondary)]">実質コスト</div>
               <div class="tabular-nums text-[16px]">{{ fmt(o.result.value.costPerFinished) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ divine(o.result.value.costPerFinished) }}</span></div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tri(o.result.value.costPerFinished) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">(ベース + 品質通貨 + インフューザー期待値) ÷ 生存率 + お告げ + オーブ</div>
             </div>
             <div class="rounded border p-3" :class="o.result.value.profit > 0 ? 'border-emerald-400/40' : 'border-red-400/40'">
@@ -146,6 +190,7 @@ function evClass(v: number | null): string {
               <div class="tabular-nums text-[16px]" :class="evClass(o.result.value.profit)">
                 {{ (o.result.value.profit >= 0 ? "+" : "") + fmt(o.result.value.profit) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ divine(o.result.value.profit) }}</span>
               </div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tri(o.result.value.profit) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">利益率 {{ (o.result.value.margin * 100).toFixed(1) }}% (利益 ÷ 売値)</div>
             </div>
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">

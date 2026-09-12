@@ -7,6 +7,15 @@
 import { jaAscendancy, ascendancyIcon } from "../../i18n/ascendancies-ja";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import { jaSkill } from "../../i18n/skills-ja";
+import gemsClientRaw from "../../i18n/gems-client.json";
+
+/** 英名 → ジェム情報 (スピリット / メタ判定)。gems-client.json (GGG クライアント由来) */
+const GEM_INFO: Map<string, { spirit: boolean; meta: boolean }> = (() => {
+  const m = new Map<string, { spirit: boolean; meta: boolean }>();
+  for (const g of gemsClientRaw as { en: string; kind: string; spirit: boolean }[]) m.set(g.en, { spirit: !!g.spirit, meta: g.kind === "meta" });
+  return m;
+})();
+const isMetaGem = (nameEn: string): boolean => GEM_INFO.get(nameEn)?.meta === true;
 import type {
   AffixKind,
   AggregatedAscendancy,
@@ -20,6 +29,7 @@ import type {
   ModTierRow,
   SlotKey,
   SlotMods,
+  SkillUsage,
   UniqueUsage,
 } from "./types";
 import {
@@ -206,6 +216,27 @@ function finalizeUniques(buckets: Map<string, UniqueBucket>, sampleSize: number)
   return list;
 }
 
+function finalizeSkills(buckets: Map<string, import("./ingest").SkillBucket2>, sampleSize: number): SkillUsage[] {
+  const list: SkillUsage[] = [];
+  for (const b of buckets.values()) {
+    const info = GEM_INFO.get(b.nameEn);
+    list.push({
+      name: jaSkill(b.nameEn),
+      nameEn: b.nameEn,
+      spirit: info?.spirit ?? false,
+      meta: info?.meta ?? false,
+      count: b.count,
+      percentage: sampleSize > 0 ? b.count / sampleSize : 0,
+      mainCount: b.mainCount,
+      supports: [...b.supports.entries()]
+        .map(([nameEn, count]) => ({ name: jaSkill(nameEn), nameEn, count }))
+        .sort((x, y) => y.count - x.count),
+    });
+  }
+  list.sort((a, b) => b.count - a.count || b.mainCount - a.mainCount);
+  return list;
+}
+
 function finalizeAscendancy(
   classEn: string,
   usagePercent: number,
@@ -241,6 +272,7 @@ function finalizeAscendancy(
     boots: finalizeSlot(counter.slots.boots, "boots"),
     uniques: finalizeUniques(counter.uniques, sampleSize),
     uniquesBySlot,
+    skills: finalizeSkills(counter.skills, sampleSize),
     error,
     fetchProgress,
   };
@@ -254,7 +286,7 @@ function finalizeAscendancy(
 export function aggregateFromProgress(payload: CraftV2Progress): AggregatedAscendancy {
   const counter = emptyAscendancyCounter();
   for (const ci of payload.items) {
-    ingestCharacterItems(counter, ci);
+    ingestCharacterItems(counter, ci, isMetaGem);
   }
   return finalizeAscendancy(payload.ascendancy, payload.percentage, payload.characters_done, counter, undefined, {
     done: payload.characters_done,
@@ -304,7 +336,14 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
       },
     });
   }
-  return { account: c.account, name: c.name, items };
+  const skills: unknown[] = (c.skills ?? []).map((g) => ({
+    allGems: [
+      ...g.mains.map((n) => ({ name: n, itemData: { support: false } })),
+      ...g.supports.map((n) => ({ name: n, itemData: { support: true } })),
+    ],
+    dps: [{ dps: g.dps }],
+  }));
+  return { account: c.account, name: c.name, items, skills };
 }
 
 /**
@@ -315,7 +354,7 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
 function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAscendancy {
   const counter = emptyAscendancyCounter();
   for (const c of cached.characters) {
-    ingestCharacterItems(counter, cachedCharacterToCharacterItems(c));
+    ingestCharacterItems(counter, cachedCharacterToCharacterItems(c), isMetaGem);
   }
   const cachedCount = cached.characters.length;
   return finalizeAscendancy(cached.class, cached.percentage, cachedCount, counter, undefined, {

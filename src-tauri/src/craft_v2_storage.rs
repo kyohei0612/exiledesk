@@ -63,6 +63,19 @@ pub struct CachedCharacter {
     pub unique_items: Vec<CachedUniqueItem>,
     /// unix timestamp (seconds、fetch_character 完了時刻)
     pub fetched_at: i64,
+    /// 2026-09-12: スキルグループ (主流スキル集計用)。旧キャッシュには無い
+    #[serde(default)]
+    pub skills: Vec<CachedSkillGroup>,
+}
+
+/// poe.ninja `skills[]` 1 グループの縮小形。mains = サポート以外のジェム名 (トリガーメタ + スキル)、supports = サポート名。
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CachedSkillGroup {
+    pub mains: Vec<String>,
+    pub supports: Vec<String>,
+    /// poe.ninja が算出した DPS の最大値 (無ければ 0)
+    #[serde(default)]
+    pub dps: f64,
 }
 
 /// rare 装備の最低限フィールド。MOD 集計に必要な情報のみ。
@@ -147,7 +160,8 @@ fn cache_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
 /// 一度だけフル再取得を強制して即座に完全化する。
 /// ν3 (2026-09-12): rare アイテムの `granted_skills` / `socketed_gems` 追加 (不在のアミュレット等の
 /// 付与スキル表示)。旧キャッシュには無いので同様にフル再取得を強制する。
-const SCHEMA_PREFIX: &str = "ν3-";
+/// ν4 (2026-09-12): キャラのスキルグループ (`skills`) 追加 (主流スキル / スピリット / サポート集計)。
+const SCHEMA_PREFIX: &str = "ν4-";
 
 /// 保存済キャッシュを読込む。ファイル無し or パース失敗時は Ok(None)。
 ///

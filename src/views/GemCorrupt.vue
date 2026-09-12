@@ -8,9 +8,12 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
+import { marketStore } from "../state/market-store";
+import { triLine } from "./vaal-scales/money";
+const tri = (n: number | null | undefined): string => triLine(n, marketStore.rates.value);
 import type { RouteResult } from "./gem-corrupt/model";
 
 const g = useGemCorrupt();
@@ -39,13 +42,9 @@ function evClass(v: number | null): string {
   if (v == null) return "text-[var(--exile-color-text-tertiary)]";
   return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
 }
-const rateLimitSecs = computed(() => {
-  const until = g.rateLimitedUntil.value;
-  if (!until) return 0;
-  return Math.max(0, Math.ceil((until - Date.now()) / 1000));
-});
+const rateLimitSecs = computed(() => g.tradeAuto.rateLimitSecs.value);
 async function open(url: string | null): Promise<void> {
-  if (url) await openUrl(url);
+  await openExternal(url);
 }
 function isBest(r: RouteResult): boolean {
   return !!g.best.value && g.best.value.id === r.id;
@@ -90,8 +89,8 @@ const materialRows = computed(() => {
       </p>
     </header>
 
-    <!-- ジェム選択 -->
-    <BaseCard class="mb-4">
+    <!-- ジェム選択 (候補リストがカードからはみ出すので overflow を解放し、最前面に出す) -->
+    <BaseCard class="mb-4 !overflow-visible relative z-30">
       <div class="p-4 pl-5 flex flex-wrap gap-4 items-start">
         <div class="relative w-80">
           <label class="block text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)] mb-1">ジェム (日本語 / 英語で検索)</label>
@@ -107,7 +106,7 @@ const materialRows = computed(() => {
           />
           <ul
             v-if="listOpen && !g.selected.value && g.matches.value.length > 0"
-            class="absolute z-20 mt-1 w-full max-h-72 overflow-y-auto rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] shadow-lg"
+            class="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] shadow-lg"
           >
             <li
               v-for="m in g.matches.value"
@@ -152,7 +151,7 @@ const materialRows = computed(() => {
                 @click="g.fetchSalePrices"
               >
                 <span aria-hidden="true">⟳</span>
-                {{ g.pricing.value ? "trade2 で検索中… (3 件、約 30 秒)" : rateLimitSecs > 0 ? `レート制限中 (${rateLimitSecs} 秒)` : "trade2 で最安を取得" }}
+                {{ g.pricing.value ? "trade2 で検索中… (3 件、約 30 秒)" : rateLimitSecs > 0 ? `レート制限中 (${rateLimitSecs} 秒)` : "再取得" }}
               </button>
             </div>
           </div>
@@ -193,14 +192,14 @@ const materialRows = computed(() => {
                     title="同じ条件でトレードサイト (JP) を開く。API は使わない"
                     @click="open(g.tradeUrl(row.key))"
                   >
-                    鑑定 ↗
+                    トレード2へ ↗
                   </button>
                 </td>
               </tr>
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            取得は最安 1 件の値です。出品が少ない時は「鑑定」で一覧を見て手で直してください。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
+            ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。出品が少ない時は「トレード2へ」で一覧を見て手で直してください。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
         </div>
       </BaseCard>
@@ -208,7 +207,7 @@ const materialRows = computed(() => {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (高貴 / 個)</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個: 高貴 · カオス · 神)</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr v-for="m in materialRows" :key="m.key" class="border-t border-[var(--exile-color-border-subtle)] first:border-t-0">
@@ -225,7 +224,7 @@ const materialRows = computed(() => {
                     step="0.1"
                     class="w-24 text-right text-[12px] px-1.5 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)] tabular-nums"
                   />
-                  <span v-else :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : fmt(m.price) }}</span>
+                  <span v-else class="text-[11px] whitespace-nowrap" :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : tri(m.price) }}</span>
                 </td>
               </tr>
             </tbody>
@@ -263,8 +262,10 @@ const materialRows = computed(() => {
                 <span class="text-[var(--exile-color-text-secondary)]">1 回の期待収支</span>
                 <span class="tabular-nums text-[14px]" :class="evClass(r.id === 'buyFinished' ? null : r.ev)">
                   {{ r.id === "buyFinished" ? "基準 (0)" : (r.ev >= 0 ? "+" : "") + fmt(r.ev) }}
-                  <span v-if="r.id !== 'buyFinished'" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ divine(r.ev) }}</span>
                 </span>
+              </div>
+              <div v-if="r.id !== 'buyFinished'" class="text-[10px] text-[var(--exile-color-text-tertiary)] text-right -mt-0.5 mb-1">{{ tri(r.ev) }}</div>
+              <div class="hidden">
               </div>
               <div class="flex items-baseline justify-between">
                 <span class="text-[var(--exile-color-text-secondary)]">完成品 1 個の実質コスト</span>

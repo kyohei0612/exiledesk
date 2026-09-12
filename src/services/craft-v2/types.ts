@@ -22,6 +22,8 @@ export interface CharacterItems {
   name: string;
   /** poe.ninja items[] 配列の生 JSON (Rust 側は serde_json::Value で透過) */
   items: unknown[];
+  /** poe.ninja skills[] (スキルグループ) の生 JSON。古い payload には無い (2026-09-12) */
+  skills?: unknown[];
 }
 
 export interface CraftV2Progress {
@@ -112,6 +114,14 @@ export interface CachedCharacter {
   rare_items: CachedRareItem[];
   unique_items: CachedUniqueItem[];
   fetched_at: number;
+  /** 2026-09-12: スキルグループ (Rust CachedSkillGroup のミラー)。旧キャッシュには無い */
+  skills?: CachedSkillGroup[];
+}
+
+export interface CachedSkillGroup {
+  mains: string[];
+  supports: string[];
+  dps: number;
 }
 
 export interface CachedAscendancy {
@@ -291,6 +301,24 @@ export interface UniqueUsage {
 /** 8 スロット分の SlotMods をまとめた型 */
 export type SlotModsBundle = { [K in SlotKey]: SlotMods };
 
+/** スキル使用率 1 行 (2026-09-12)。poe.ninja のスキルグループから、同キャラ重複を除いて人数集計 */
+export interface SkillUsage {
+  /** 表示名 (skills-ja-client で日本語化) */
+  name: string;
+  nameEn: string;
+  /** スピリットジェム (persistent) か。gems-client.json 由来、不明は false */
+  spirit: boolean;
+  /** メタジェム (トリガー等) か */
+  meta: boolean;
+  /** このスキルを持っていた人数 */
+  count: number;
+  percentage: number;
+  /** このスキルが「そのキャラで DPS 最大のグループ」だった人数 (= 主力) */
+  mainCount: number;
+  /** 一緒に付いていたサポート (人数降順) */
+  supports: { name: string; nameEn: string; count: number }[];
+}
+
 export interface AggregatedAscendancy {
   /** id: `class` 英語表記を kebab-case 化したもの (UI key 用) */
   id: string;
@@ -316,6 +344,8 @@ export interface AggregatedAscendancy {
   uniques: UniqueUsage[];
   /** スロット別ユニーク使用率 (Ring1/Ring2 で同 unique = 1) */
   uniquesBySlot: { [K in SlotKey]: UniqueUsage[] };
+  /** スキル使用率 (人数降順)。古いキャッシュ (ν3 以前) では空 (2026-09-12) */
+  skills: SkillUsage[];
   /** 取得失敗時の理由 (UI でエラー表示用、成功時は undefined) */
   error?: string;
   /** このアセンダンシーの取得進捗 (N/M キャラ)。progress event 由来の場合のみ存在。 */

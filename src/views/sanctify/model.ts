@@ -41,6 +41,8 @@ export interface SanctifyAffix {
   target: number | null;
   /** 大当たり値 (これ以上で大当たり)。null なら大当たり無し */
   jackpot: number | null;
+  /** GGG 内部 stat ID (貼り付け解析で取れた物)。trade2 の自動相場に使う。手で追加した物は空 */
+  statIds?: string[];
 }
 
 export interface SanctifyPrices {

@@ -188,12 +188,49 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
         }
     }
 
+    // 2026-09-12: スキルグループ (allGems[] の name と itemData.support、dps[].dps の最大)
+    let skills: Vec<CachedSkillGroup> = ci
+        .skills
+        .iter()
+        .filter_map(|g| {
+            let gems = g.get("allGems")?.as_array()?;
+            let mut mains = Vec::new();
+            let mut supports = Vec::new();
+            for gem in gems {
+                let name = match gem.get("name").and_then(|v| v.as_str()) {
+                    Some(n) if !n.is_empty() => n.to_string(),
+                    _ => continue,
+                };
+                let is_support = gem
+                    .get("itemData")
+                    .and_then(|d| d.get("support"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                if is_support {
+                    supports.push(name);
+                } else {
+                    mains.push(name);
+                }
+            }
+            if mains.is_empty() {
+                return None;
+            }
+            let dps = g
+                .get("dps")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|d| d.get("dps").and_then(|x| x.as_f64())).fold(0.0_f64, f64::max))
+                .unwrap_or(0.0);
+            Some(CachedSkillGroup { mains, supports, dps })
+        })
+        .collect();
+
     CachedCharacter {
         account: ci.account.clone(),
         name: ci.name.clone(),
         rare_items,
         unique_items,
         fetched_at,
+        skills,
     }
 }
 
@@ -253,10 +290,25 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
             "itemData": data,
         }));
     }
+    // 2026-09-12: スキルグループを poe.ninja の形 (allGems[].name / itemData.support、dps[].dps) に戻す
+    let skills: Vec<serde_json::Value> = c
+        .skills
+        .iter()
+        .map(|g| {
+            let mut gems: Vec<serde_json::Value> = g
+                .mains
+                .iter()
+                .map(|n| serde_json::json!({ "name": n, "itemData": { "support": false } }))
+                .collect();
+            gems.extend(g.supports.iter().map(|n| serde_json::json!({ "name": n, "itemData": { "support": true } })));
+            serde_json::json!({ "allGems": gems, "dps": [{ "dps": g.dps }] })
+        })
+        .collect();
     CharacterItems {
         account: c.account.clone(),
         name: c.name.clone(),
         items,
+        skills,
     }
 }
 

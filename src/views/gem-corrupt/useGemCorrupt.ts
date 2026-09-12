@@ -7,12 +7,13 @@
  *               「鑑定 ↗」は API を叩かず ?q= でトレードサイトを開く (レート制限に当たらない)。
  *   期待値:     gem-corrupt/model.ts (純粋関数)
  */
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import gemsRaw from "../../i18n/gems-client.json";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { priceMinForQuery, retryAfterSeconds, type PriceResult } from "../../services/trade2/pricing";
+import type { PriceResult } from "../../services/trade2/pricing";
+import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
 export interface GemInfo {
@@ -99,7 +100,6 @@ export function useGemCorrupt() {
   const requireSockets = ref(true);
   const pricing = ref(false);
   const priceError = ref<string | null>(null);
-  const rateLimitedUntil = ref<number | null>(null);
 
   function queryOptions(key: SaleKey): GemQueryOptions {
     const category = selected.value?.kind === "meta" ? "gem.metagem" : "gem.activegem";
@@ -119,30 +119,32 @@ export function useGemCorrupt() {
     return trade2QueryUrl(tradeLeague.value, buildGemQuery(selected.value.en, queryOptions(key)));
   }
 
+  /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
+  let fetchSeq = 0;
   async function fetchSalePrices(): Promise<void> {
-    if (!selected.value || pricing.value) return;
-    if (rateLimitedUntil.value && Date.now() < rateLimitedUntil.value) return;
+    if (!selected.value || pricing.value || isRateLimited()) return;
+    const gem = selected.value;
+    const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
     try {
       for (const row of SALE_ROWS) {
-        const body = buildGemQuery(selected.value.en, queryOptions(row.key));
-        const r = await priceMinForQuery(tradeLeague.value, body, rates.value);
+        const body = buildGemQuery(gem.en, queryOptions(row.key));
+        const r = await autoPrice(tradeLeague.value, body, rates.value);
+        if (seq !== fetchSeq) return; // 別のジェムに切り替わった
+        if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
       }
-    } catch (e) {
-      const secs = retryAfterSeconds(e);
-      if (secs) {
-        rateLimitedUntil.value = Date.now() + secs * 1000;
-        priceError.value = `trade2 のレート制限に当たりました。${secs} 秒後に再試行できます`;
-      } else {
-        priceError.value = e instanceof Error ? e.message : String(e);
-      }
+      priceError.value = tradeAuto.lastError.value;
     } finally {
-      pricing.value = false;
+      if (seq === fetchSeq) pricing.value = false;
     }
   }
+  // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す
+  watch([selected, requireSockets], () => {
+    if (selected.value) void fetchSalePrices();
+  });
 
   // ---- 前提 (確率) ----
   const params = ref<CorruptParams>({ ...DEFAULT_PARAMS });
@@ -173,7 +175,7 @@ export function useGemCorrupt() {
     requireSockets,
     pricing,
     priceError,
-    rateLimitedUntil,
+    tradeAuto,
     tradeUrl,
     fetchSalePrices,
     params,

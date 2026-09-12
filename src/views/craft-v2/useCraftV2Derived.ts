@@ -6,6 +6,7 @@
  */
 import { computed, ref, watch } from "vue";
 import type {
+  SkillUsage,
   AggregatedAscendancy,
   BaseEntry,
   ModEntry,
@@ -22,6 +23,8 @@ export function useCraftV2Derived() {
   const activeAscendancyId = ref<string>("");
   /** 右上トグルで選択中のスロット */
   const activeSlot = ref<SlotKey>("ring");
+  /** 「スキル」タブ (装備スロットの代わりに主流スキルを出す)。2026-09-12 */
+  const skillsTab = ref(false);
 
   const activeAscendancy = computed<AggregatedAscendancy | null>(() => {
     if (ascendancies.value.length === 0) return null;
@@ -58,6 +61,8 @@ export function useCraftV2Derived() {
   });
 
   const activeSlotLabel = computed<string>(() => SLOT_TABS.find((t) => t.key === activeSlot.value)?.label ?? "");
+  /** 選択中アセのスキル使用率 (古いキャッシュでは空) */
+  const activeSkills = computed<SkillUsage[]>(() => activeAscendancy.value?.skills ?? []);
 
   // ---- 低カウント折りたたみ (アセンダンシー × スロット 別に独立した state) ----
   const expandKey = computed<string>(() => `${activeAscendancyId.value}::${activeSlot.value}`);
@@ -177,6 +182,8 @@ export function useCraftV2Derived() {
     showLowCountUniques,
     sortedPrefix,
     sortedSuffix,
+    skillsTab,
+    activeSkills,
     sortedBases,
     visiblePrefix,
     visibleSuffix,

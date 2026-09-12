@@ -9,8 +9,16 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { useSanctify } from "./sanctify/useSanctify";
+import { marketStore } from "../state/market-store";
+import { triLine } from "./vaal-scales/money";
+const tri = (n: number | null | undefined): string => triLine(n, marketStore.rates.value);
+
+async function open(url: string | null): Promise<void> {
+  await openExternal(url);
+}
 
 const s = useSanctify();
 onMounted(() => {
@@ -182,12 +190,28 @@ const verdict = computed(() => {
       <!-- 売値 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">売値 (高貴)</h2>
+          <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 (高貴)</h2>
+            <button
+              type="button"
+              :disabled="s.affixes.value.length === 0 || s.pricing.value || s.tradeAuto.rateLimitSecs.value > 0"
+              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              @click="s.fetchPrices"
+            >
+              <span aria-hidden="true">⟳</span>
+              {{ s.pricing.value ? "trade2 で検索中…" : s.tradeAuto.rateLimitSecs.value > 0 ? `レート制限中 (${s.tradeAuto.rateLimitSecs.value} 秒)` : "trade2 で取り直す" }}
+            </button>
+          </div>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
+            解析すると自動で trade2 から取ります: 未聖別 = 同じベース・重要モッドが今の値以上の最安、当たり = 目標値以上の最安、大当たり = 大当たり値以上。
+            現状維持は未聖別 × 0.7 の目安 (加工不可になる分)。どれも手で直せます。
+            <span v-if="s.autoNote.value" class="text-amber-300">{{ s.autoNote.value }}</span>
+          </p>
           <table class="w-full text-[12px]">
             <tbody>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
-                  <div>未聖別のまま売る</div>
+                  <div>未聖別のまま売る <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('shown'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">今の状態の相場。これが比較の基準</div>
                 </td>
                 <td class="py-1.5 text-right w-28"><input v-model.number="s.prices.value.unsanctified" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
@@ -208,14 +232,14 @@ const verdict = computed(() => {
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
-                  <div>当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pHit) }})</span></div>
+                  <div>当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pHit) }})</span> <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('target'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">重要モッド全部が目標値以上</div>
                 </td>
                 <td class="py-1.5 text-right"><input v-model.number="s.prices.value.hit" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
               </tr>
               <tr v-if="s.hasJackpot.value">
                 <td class="py-1.5 pr-2">
-                  <div>大当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pJackpot) }})</span></div>
+                  <div>大当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pJackpot) }})</span> <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('jackpot'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">重要モッド全部が大当たり値以上</div>
                 </td>
                 <td class="py-1.5 text-right"><input v-model.number="s.prices.value.jackpot" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
@@ -232,11 +256,11 @@ const verdict = computed(() => {
           <p class="text-[13px] mb-3" :class="verdict.cls">{{ verdict.text }}</p>
           <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-[12px]">
             <span class="text-[var(--exile-color-text-secondary)]">費用 (神のオーブ + お告げ)</span>
-            <span class="text-right tabular-nums">{{ fmt(s.cost.value) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ divine(s.cost.value) }}</span></span>
+            <span class="text-right tabular-nums text-[11px] whitespace-nowrap">{{ tri(s.cost.value) }}</span>
             <span class="text-[var(--exile-color-text-secondary)]">期待売上</span>
             <span class="text-right tabular-nums">{{ fmt(s.result.value.expectedRevenue) }}</span>
             <span class="text-[var(--exile-color-text-secondary)]">期待収支 (売上 − 費用)</span>
-            <span class="text-right tabular-nums" :class="evClass(s.result.value.ev)">{{ s.result.value.ev == null ? "—" : (s.result.value.ev >= 0 ? "+" : "") + fmt(s.result.value.ev) }}</span>
+            <span class="text-right tabular-nums" :class="evClass(s.result.value.ev)">{{ s.result.value.ev == null ? "—" : (s.result.value.ev >= 0 ? "+" : "") + fmt(s.result.value.ev) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ s.result.value.ev == null ? "" : tri(s.result.value.ev) }}</span></span>
             <span class="text-[var(--exile-color-text-secondary)]">ブリック / 現状維持 / 当たり / 大当たり</span>
             <span class="text-right tabular-nums">
               <span class="text-red-300">{{ pct(s.result.value.pBrick) }}</span> /

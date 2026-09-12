@@ -8,13 +8,41 @@
  */
 import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
+import { buildBaseTypeQuery, buildUniqueQualityQuery } from "../../services/trade2/query";
+import { trade2QueryUrl } from "../../services/trade2/league";
+import { autoMin, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import itemsJaClient from "../../i18n/items-ja-client.json";
+import itemsJa from "../../i18n/items-ja.json";
+import uniqueNamesJa from "../../i18n/unique-names-ja.json";
+
+/** 日本語 / 英語どちらで入れても英名に寄せる (辞書は EN → JA なので逆引き表を作る) */
+function reverseMap(...dicts: Record<string, string>[]): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const d of dicts) for (const [en, ja] of Object.entries(d)) m.set(ja, en);
+  return m;
+}
+const BASE_JA_TO_EN = reverseMap(itemsJa as Record<string, string>, itemsJaClient as Record<string, string>);
+const UNIQUE_JA_TO_EN = reverseMap(uniqueNamesJa as Record<string, string>);
+export function resolveBaseEn(input: string): string | null {
+  const t = input.trim();
+  if (!t) return null;
+  if ((itemsJaClient as Record<string, string>)[t] || (itemsJa as Record<string, string>)[t]) return t;
+  return BASE_JA_TO_EN.get(t) ?? null;
+}
+export function resolveUniqueEn(input: string): string | null {
+  const t = input.trim();
+  if (!t) return null;
+  if ((uniqueNamesJa as Record<string, string>)[t]) return t;
+  return UNIQUE_JA_TO_EN.get(t) ?? null;
+}
 import { DEFAULT_OVERQUALITY_PARAMS, evaluateOverquality, type OverqualityInputs, type OverqualityParams } from "./model";
 
 export interface Preset {
   id: string;
   label: string;
-  /** ベース (日本語表示用) */
+  /** ベース (日本語表示用)。固定プリセットは英名も持つ */
   baseJa: string;
+  baseEn: string | null;
   /** 目標ユニーク (poe2scout の Text 先頭一致で売値の初期値を引く) */
   uniqueJa: string;
   uniqueEn: string | null;
@@ -29,6 +57,7 @@ export const PRESETS: readonly Preset[] = [
     id: "adonia",
     label: "アドニアのエゴ (吸収のワンド)",
     baseJa: "吸収のワンド",
+    baseEn: "Siphoning Wand",
     uniqueJa: "アドニアのエゴ",
     uniqueEn: "Adonia's Ego",
     qualityCurrencyJa: "秘術師の彫刻針",
@@ -40,6 +69,7 @@ export const PRESETS: readonly Preset[] = [
     id: "caster",
     label: "その他のワンド / スタッフ / セプター",
     baseJa: "ベース (キャスター武器)",
+    baseEn: null,
     uniqueJa: "目標ユニーク",
     uniqueEn: null,
     qualityCurrencyJa: "秘術師の彫刻針",
@@ -51,6 +81,7 @@ export const PRESETS: readonly Preset[] = [
     id: "martial",
     label: "マーシャル武器",
     baseJa: "ベース (マーシャル武器)",
+    baseEn: null,
     uniqueJa: "目標ユニーク",
     uniqueEn: null,
     qualityCurrencyJa: "鍛冶屋の砥石",
@@ -62,6 +93,7 @@ export const PRESETS: readonly Preset[] = [
     id: "armour",
     label: "防具",
     baseJa: "ベース (防具)",
+    baseEn: null,
     uniqueJa: "目標ユニーク",
     uniqueEn: null,
     qualityCurrencyJa: "鎧鍛冶の端材",
@@ -82,6 +114,7 @@ export function useOverquality() {
   async function loadMarket(): Promise<void> {
     await marketStore.ensureMarket();
     applyMarketDefaults();
+    void fetchPrices();
   }
   const priceOf = marketStore.priceOf;
   const uniquePriceOf = marketStore.uniquePriceOf;
@@ -89,9 +122,20 @@ export function useOverquality() {
 
   // ---- 入力 ----
   const targetQuality = ref(30);
-  const basePrice = ref<number | null>(1);
+  /** 汎用プリセット用: ベース / ユニークの名前 (日本語でも英語でも可)。固定プリセットでは preset の値 */
+  const baseInput = ref("");
+  const uniqueInput = ref("");
+  const baseEn = computed<string | null>(() => preset.value.baseEn ?? resolveBaseEn(baseInput.value));
+  const uniqueEn = computed<string | null>(() => preset.value.uniqueEn ?? resolveUniqueEn(uniqueInput.value));
+  /** trade2 から取った値 (自動)。手入力の上書きは override 側 */
+  const autoBasePrice = ref<number | null>(null);
+  const autoSalePrice = ref<number | null>(null);
+  const basePriceOverride = ref<number | null>(null);
+  const salePriceOverride = ref<number | null>(null);
+  const basePrice = computed<number | null>(() => basePriceOverride.value ?? autoBasePrice.value);
+  const salePrice = computed<number | null>(() => salePriceOverride.value ?? autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
   const qualityCurrencyCount = ref(4);
-  const salePrice = ref<number | null>(null);
+  const pricing = ref(false);
   /** 自動価格の上書き (null = poe2scout の値を使う) */
   const overrides = ref<{ qualityCurrency: number | null; infuser: number | null; omen: number | null; chance: number | null }>({
     qualityCurrency: null,
@@ -100,10 +144,45 @@ export function useOverquality() {
     chance: null,
   });
   function applyMarketDefaults(): void {
-    if (salePrice.value == null) salePrice.value = uniquePriceOf(preset.value.uniqueEn);
+    /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
+  const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  const baseTradeUrl = computed(() => (baseEn.value ? trade2QueryUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value)) : null));
+  const saleTradeUrl = computed(() =>
+    uniqueEn.value ? trade2QueryUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value)) : null,
+  );
+  let fetchSeq = 0;
+  /** 素のベース (ノーマル・未コラプト) と 目標品質以上のユニーク を trade2 で取る */
+  async function fetchPrices(): Promise<void> {
+    if (pricing.value || isRateLimited()) return;
+    const seq = ++fetchSeq;
+    pricing.value = true;
+    try {
+      if (baseEn.value) {
+        const v = await autoMin(tradeLeague.value, buildBaseTypeQuery(baseEn.value), marketStore.rates.value);
+        if (seq !== fetchSeq) return;
+        if (v != null) autoBasePrice.value = v;
+      }
+      if (uniqueEn.value) {
+        const v = await autoMin(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value), marketStore.rates.value);
+        if (seq !== fetchSeq) return;
+        if (v != null) autoSalePrice.value = v;
+      }
+    } finally {
+      if (seq === fetchSeq) pricing.value = false;
+    }
+  }
+  // 名前 / 目標品質 / プリセットが変わったら取り直す (相場が来てから)
+  let debounce: ReturnType<typeof setTimeout> | null = null;
+  watch([baseEn, uniqueEn, targetQuality, () => league.value?.Value], () => {
+    autoBasePrice.value = null;
+    autoSalePrice.value = null;
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(() => void fetchPrices(), 400);
+  });
   watch(presetId, () => {
-    salePrice.value = uniquePriceOf(preset.value.uniqueEn);
+    basePriceOverride.value = null;
+    salePriceOverride.value = null;
   });
 
   const auto = computed(() => ({
@@ -111,7 +190,7 @@ export function useOverquality() {
     infuser: priceOf(preset.value.infuserApiId),
     omen: priceOf("omen-of-chance"),
     chance: priceOf("chance"),
-    uniqueRef: uniquePriceOf(preset.value.uniqueEn),
+    uniqueRef: uniquePriceOf(uniqueEn.value),
   }));
   const inputs = computed<OverqualityInputs>(() => ({
     targetQuality: targetQuality.value,
@@ -139,9 +218,22 @@ export function useOverquality() {
     loadMarket,
     divineRate,
     targetQuality,
+    baseInput,
+    uniqueInput,
+    baseEn,
+    uniqueEn,
+    autoBasePrice,
+    autoSalePrice,
+    basePriceOverride,
+    salePriceOverride,
     basePrice,
-    qualityCurrencyCount,
     salePrice,
+    qualityCurrencyCount,
+    pricing,
+    fetchPrices,
+    baseTradeUrl,
+    saleTradeUrl,
+    tradeAuto,
     overrides,
     auto,
     inputs,

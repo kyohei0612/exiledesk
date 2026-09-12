@@ -19,6 +19,7 @@ import ModSearchBar from "../components/craft-v2/ModSearchBar.vue";
 import ModListCard from "../components/craft-v2/ModListCard.vue";
 import BaseListCard from "../components/craft-v2/BaseListCard.vue";
 import UniqueUsageCard from "../components/craft-v2/UniqueUsageCard.vue";
+import SkillUsageCard from "../components/craft-v2/SkillUsageCard.vue";
 import { craftV2Store, ensureCraftV2Started, refreshCraftV2, forceRefetchCraftV2 } from "../state/craft-v2-store";
 import { useCraftV2Derived } from "./craft-v2/useCraftV2Derived";
 import { useModSelection } from "./craft-v2/useModSelection";
@@ -52,6 +53,7 @@ onMounted(() => {
   <section class="h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <CraftV2Header
       v-model:active-slot="d.activeSlot.value"
+      v-model:skills-tab="d.skillsTab.value"
       :sample-size="sampleSize"
       :phase-elapsed-secs="d.phaseElapsedSecs.value"
       :progress-fraction="d.progressFraction.value"
@@ -106,8 +108,15 @@ onMounted(() => {
         </button>
       </div>
 
+      <!-- スキルタブ: 主流スキル / スピリット / サポート (2026-09-12) -->
+      <SkillUsageCard
+        v-if="d.activeAscendancy.value && d.skillsTab.value"
+        :skills="d.activeSkills.value"
+        :sample-size="d.activeAscendancy.value.sampleSize"
+      />
+
       <!-- 本体: prefix / suffix / (ベース) / unique カード。ユニーク優位スロットでは order でユニークを最上段に。 -->
-      <div v-if="d.activeAscendancy.value" class="flex flex-col gap-4">
+      <div v-if="d.activeAscendancy.value && !d.skillsTab.value" class="flex flex-col gap-4">
         <ModListCard
           affix="P"
           v-model:show-low-count="d.showLowCount.value"

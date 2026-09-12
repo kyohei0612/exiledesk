@@ -35,6 +35,9 @@ pub struct CharacterItems {
     pub name: String,
     /// poe.ninja `items[]` 配列の JSON value をそのまま保持
     pub items: Vec<serde_json::Value>,
+    /// poe.ninja `skills[]` (スキルグループ: allGems[] + dps[]) をそのまま保持 (2026-09-12、主流スキル集計用)
+    #[serde(default)]
+    pub skills: Vec<serde_json::Value>,
 }
 
 /// snapshot メタ情報 (index-state より動的解決)

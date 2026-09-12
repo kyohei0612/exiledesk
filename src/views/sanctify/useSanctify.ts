@@ -8,6 +8,9 @@
 import { computed, ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { parseItemText, type ParsedItem } from "../../services/items/parse-item";
+import { buildRareBaseQuery, statFiltersFromIds } from "../../services/trade2/query";
+import { trade2QueryUrl } from "../../services/trade2/league";
+import { autoMin, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import {
   DEFAULT_SANCTIFY_PARAMS,
   evaluateSanctify,
@@ -70,12 +73,14 @@ export function useSanctify() {
         brickBelow: d.brickBelow,
         target: d.target,
         jackpot: null,
+        statIds: m.stats.map((st) => st.id),
       });
     }
     affixes.value = list;
     // 品質は貼り付け文の「品質: +20%」から拾う (無ければそのまま)
     const q = text.value.match(/(?:Quality|品質)[^\d]*?(\d+)\s*%/);
     if (q) qualityPct.value = Number(q[1]);
+    void fetchPrices();
   }
 
   function addAffix(): void {
@@ -104,15 +109,68 @@ export function useSanctify() {
   const cost = computed(() => (divinePrice.value ?? 0) + (omenPrice.value ?? 0));
   const divineRate = computed(() => league.value?.DivinePrice || 1);
 
-  // ---- 売値 / 前提 ----
+  // ---- 売値 (trade2 自動 → 手で上書き可) / 前提 ----
   const prices = ref<SanctifyPrices>({ unsanctified: null, unchanged: null, bricked: 0, hit: null, jackpot: null });
+  const pricing = ref(false);
+  /** 現状維持の売値を自動で埋めた時の係数 (未聖別 × これ)。加工不可になる分だけ安い、の目安 */
+  const UNCHANGED_RATIO = 0.7;
+  const autoNote = ref<string | null>(null);
+  const hasJackpot = computed(() => affixes.value.some((a) => a.key && a.jackpot != null));
+
+  /** 重要モッドの下限を「表示値 / 目標 / 大当たり」にした同ベース・同 mod のレア検索 */
+  function queryFor(kind: "shown" | "target" | "jackpot") {
+    const keys = affixes.value.filter((a) => a.key && a.statIds && a.statIds.length > 0);
+    const entries = keys.map((a) => ({
+      ids: a.statIds!,
+      min: kind === "shown" ? a.shown : kind === "target" ? a.target : a.jackpot,
+    }));
+    const filters = statFiltersFromIds(entries);
+    if (filters.length === 0) return null;
+    return buildRareBaseQuery(parsed.value?.baseEn ?? null, filters);
+  }
+  const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  function tradeUrl(kind: "shown" | "target" | "jackpot"): string | null {
+    const q = queryFor(kind);
+    return q ? trade2QueryUrl(tradeLeague.value, q) : null;
+  }
+  let fetchSeq = 0;
+  /** 未聖別 (今の値) / 当たり (目標値) / 大当たり を trade2 で取る。取れた物だけ埋め、現状維持は未聖別 × 0.7 の目安 */
+  async function fetchPrices(): Promise<void> {
+    if (pricing.value || isRateLimited()) return;
+    const seq = ++fetchSeq;
+    pricing.value = true;
+    autoNote.value = null;
+    try {
+      const kinds: Array<"shown" | "target" | "jackpot"> = ["shown", "target"];
+      if (hasJackpot.value) kinds.push("jackpot");
+      for (const kind of kinds) {
+        const q = queryFor(kind);
+        if (!q) {
+          autoNote.value = "trade2 に対応する stat が無いモッドだけなので自動取得できません。手入力してください";
+          continue;
+        }
+        const v = await autoMin(tradeLeague.value, q, marketStore.rates.value);
+        if (seq !== fetchSeq) return;
+        if (v == null) continue;
+        if (kind === "shown") {
+          prices.value = { ...prices.value, unsanctified: v, unchanged: Math.round(v * UNCHANGED_RATIO * 100) / 100 };
+        } else if (kind === "target") {
+          prices.value = { ...prices.value, hit: v };
+        } else {
+          prices.value = { ...prices.value, jackpot: v };
+        }
+      }
+    } finally {
+      if (seq === fetchSeq) pricing.value = false;
+    }
+  }
+
   const params = ref<SanctifyParams>({ ...DEFAULT_SANCTIFY_PARAMS });
   function resetParams(): void {
     params.value = { ...DEFAULT_SANCTIFY_PARAMS };
   }
 
   const result = computed<SanctifyResult>(() => evaluateSanctify(affixes.value, qualityPct.value, prices.value, cost.value, params.value));
-  const hasJackpot = computed(() => affixes.value.some((a) => a.key && a.jackpot != null));
 
   return {
     text,
@@ -133,6 +191,11 @@ export function useSanctify() {
     cost,
     divineRate,
     prices,
+    pricing,
+    autoNote,
+    fetchPrices,
+    tradeUrl,
+    tradeAuto,
     params,
     resetParams,
     result,

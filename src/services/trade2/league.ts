@@ -61,12 +61,31 @@ export function trade2QueryUrl(tradeLeague: string, query: unknown): string {
 }
 
 /**
- * ブラウザで開く trade2 サイトのオリジン。オーナー指示 (2026-09-12) で日本語サイト。
+ * ブラウザで開く trade2 サイト。オーナー指示 (2026-09-12) で既定は日本語サイト (jp)。
+ * jp はボット確認 (Cloudflare) を挟むことがあり、その後に検索が消える環境もあるので設定で www に切り替えられる。
  * API (`/api/trade2/...`) は www 固定のまま (constants/trade2.ts)。検索 ID とリーグ ID は両サイト共通。
  */
-export const TRADE2_SITE_ORIGIN = "https://jp.pathofexile.com";
+export type Trade2Site = "jp" | "www";
+export const TRADE2_SITE_KEY = "exiledesk.trade2.site";
+export function trade2Site(): Trade2Site {
+  try {
+    return localStorage.getItem(TRADE2_SITE_KEY) === "www" ? "www" : "jp";
+  } catch {
+    return "jp";
+  }
+}
+export function setTrade2Site(site: Trade2Site): void {
+  try {
+    localStorage.setItem(TRADE2_SITE_KEY, site);
+  } catch {
+    /* 保存できなくても既定 (jp) で動く */
+  }
+}
+export function trade2SiteOrigin(): string {
+  return trade2Site() === "www" ? "https://www.pathofexile.com" : "https://jp.pathofexile.com";
+}
 
 /** trade2 サイトの検索ホーム URL (手動検索へのフォールバック) */
 function trade2HomeUrl(tradeLeague: string): string {
-  return `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
+  return `${trade2SiteOrigin()}/trade2/search/poe2/${encodeURIComponent(tradeLeague)}`;
 }

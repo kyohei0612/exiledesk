@@ -8,7 +8,7 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { TRADE2_SITE_ORIGIN } from "./league";
+import { trade2SiteOrigin } from "./league";
 import type { Trade2SearchResponse } from "./query";
 
 /**
@@ -106,7 +106,7 @@ async function searchOnce(league: string, body: unknown): Promise<Trade2SearchRe
 /** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
 async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates): Promise<PriceResult> {
   const searchUrl = search.id
-    ? `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(league)}/${search.id}`
+    ? `${trade2SiteOrigin()}/trade2/search/poe2/${encodeURIComponent(league)}/${search.id}`
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {

@@ -160,10 +160,17 @@ pub async fn fetch_character(
         .cloned()
         .unwrap_or_default();
 
+    let skills = body
+        .get("skills")
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default();
+
     Ok(CharacterItems {
         account: char_ref.account.clone(),
         name: char_ref.name.clone(),
         items,
+        skills,
     })
 }
 

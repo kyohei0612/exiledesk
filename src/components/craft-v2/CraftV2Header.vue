@@ -17,6 +17,8 @@ defineProps<{
   overallProgressPercent: number;
 }>();
 const activeSlot = defineModel<SlotKey>("activeSlot", { required: true });
+/** 「スキル」タブ (2026-09-12)。装備タブを押すと外れる */
+const skillsTab = defineModel<boolean>("skillsTab", { default: false });
 const emit = defineEmits<{ refresh: []; forceRefetch: [] }>();
 const store = craftV2Store;
 </script>
@@ -178,12 +180,15 @@ const store = craftV2Store;
           :key="tab.key"
           type="button"
           role="tab"
-          :aria-selected="activeSlot === tab.key"
-          @click="activeSlot = tab.key"
+          :aria-selected="activeSlot === tab.key && !skillsTab"
+          @click="
+            activeSlot = tab.key;
+            skillsTab = false;
+          "
           :class="[
             'px-2.5 py-1.5 transition-colors inline-flex items-center gap-1 leading-none whitespace-nowrap',
             idx > 0 ? 'border-l border-[var(--exile-color-border-subtle)]' : '',
-            activeSlot === tab.key
+            activeSlot === tab.key && !skillsTab
               ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
               : 'text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
           ]"
@@ -191,6 +196,23 @@ const store = craftV2Store;
         >
           <span aria-hidden="true">{{ tab.icon }}</span>
           <span>{{ tab.label }}</span>
+        </button>
+        <!-- 2026-09-12: 主流スキル / スピリット / サポート (poe.ninja のスキルグループ) -->
+        <button
+          type="button"
+          role="tab"
+          :aria-selected="skillsTab"
+          @click="skillsTab = true"
+          :class="[
+            'px-2.5 py-1.5 transition-colors inline-flex items-center gap-1 leading-none whitespace-nowrap border-l border-[var(--exile-color-border-subtle)]',
+            skillsTab
+              ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
+              : 'text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
+          ]"
+          title="スキル"
+        >
+          <span aria-hidden="true">✦</span>
+          <span>スキル</span>
         </button>
       </div>
 

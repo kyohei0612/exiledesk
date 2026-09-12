@@ -71,8 +71,18 @@ export interface UniqueBucket {
 
 export type AscendancySlotCounters = { [K in SlotKey]: SlotCounter };
 
+/** スキル集計バケット (key = 英語スキル名) */
+export interface SkillBucket2 {
+  nameEn: string;
+  count: number;
+  mainCount: number;
+  supports: Map<string, number>;
+}
+
 export interface AscendancyCounter {
   slots: AscendancySlotCounters;
+  /** スキル使用率 (同キャラ重複除去済)。2026-09-12 */
+  skills: Map<string, SkillBucket2>;
   /** 全スロット合算のユニーク集計 (互換維持)。同キャラ複数スロットでも 1。 */
   uniques: Map<string, UniqueBucket>;
   /** スロット別ユニーク集計。同キャラ × 同ユニーク × 同スロット は 1。 */
@@ -113,6 +123,7 @@ export function emptyAscendancyCounter(): AscendancyCounter {
       boots: emptySlotCounter(),
     },
     uniques: new Map<string, UniqueBucket>(),
+    skills: new Map<string, SkillBucket2>(),
     uniquesBySlot: {
       ring: new Map<string, UniqueBucket>(),
       amulet: new Map<string, UniqueBucket>(),
@@ -269,12 +280,70 @@ function addUniqueToAscendancy(
   }
 }
 
+interface RawSkillGroup {
+  allGems?: { name?: string; itemData?: { support?: boolean } }[];
+  dps?: { dps?: number }[];
+}
+
+/**
+ * 1 character の skills[] (poe.ninja のスキルグループ) を集計する。
+ *   - 同キャラで同じスキルが複数グループにあっても人数は 1
+ *   - サポートは「そのスキルと同じグループにあった物」を人数単位で数える
+ *   - DPS 最大のグループの (トリガー以外の) 先頭スキルを「主力」として数える
+ */
+function ingestCharacterSkills(asc: AscendancyCounter, raw: unknown[] | undefined, isMeta: (nameEn: string) => boolean): void {
+  if (!Array.isArray(raw)) return;
+  const seenSkill = new Set<string>();
+  const seenPair = new Set<string>();
+  let bestDps = -1;
+  let bestMain: string | null = null;
+  for (const g of raw as RawSkillGroup[]) {
+    if (!g || !Array.isArray(g.allGems)) continue;
+    const mains: string[] = [];
+    const supports: string[] = [];
+    for (const gem of g.allGems) {
+      const n = typeof gem?.name === "string" ? gem.name.trim() : "";
+      if (!n) continue;
+      if (gem.itemData?.support) supports.push(n);
+      else mains.push(n);
+    }
+    if (mains.length === 0) continue;
+    const dps = Array.isArray(g.dps) ? g.dps.reduce((m, d) => Math.max(m, typeof d?.dps === "number" ? d.dps : 0), 0) : 0;
+    if (dps > bestDps) {
+      bestDps = dps;
+      bestMain = mains.find((m) => !isMeta(m)) ?? mains[0];
+    }
+    for (const m of mains) {
+      let b = asc.skills.get(m);
+      if (!b) {
+        b = { nameEn: m, count: 0, mainCount: 0, supports: new Map<string, number>() };
+        asc.skills.set(m, b);
+      }
+      if (!seenSkill.has(m)) {
+        seenSkill.add(m);
+        b.count += 1;
+      }
+      for (const s of supports) {
+        const key = `${m}::${s}`;
+        if (seenPair.has(key)) continue;
+        seenPair.add(key);
+        b.supports.set(s, (b.supports.get(s) ?? 0) + 1);
+      }
+    }
+  }
+  if (bestMain && bestDps > 0) {
+    const b = asc.skills.get(bestMain);
+    if (b) b.mainCount += 1;
+  }
+}
+
 /**
  * 1 character の items[] を見て:
  *   - レア装備 (frameType=2): スロット別に MOD 集計 + ベース集計
  *   - ユニーク装備 (frameType=3): キャラ単位 de-dup でユニーク使用率に加算
  */
-export function ingestCharacterItems(asc: AscendancyCounter, charItems: CharacterItems): void {
+export function ingestCharacterItems(asc: AscendancyCounter, charItems: CharacterItems, isMeta: (nameEn: string) => boolean = () => false): void {
+  ingestCharacterSkills(asc, charItems.skills, isMeta);
   if (!Array.isArray(charItems.items)) return;
 
   const seenPerSlot = emptySlotSets();
