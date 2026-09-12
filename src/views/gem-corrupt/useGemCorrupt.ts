@@ -36,8 +36,8 @@ export interface SaleRow {
 }
 
 export const SALE_ROWS: readonly SaleRow[] = [
-  { key: "level21", label: "レベル 21 (品質 20%)", condition: "レベル 21 · 品質 20% · コラプト済" },
-  { key: "quality23", label: "品質 23% (レベル 20)", condition: "レベル 20 以下 · 品質 23% · コラプト済" },
+  { key: "level21", label: "レベル 21 (品質 20%)", condition: "レベル 21 · 品質 20% · コラプト済 · 2 重コラプトなし" },
+  { key: "quality23", label: "品質 23% (レベル 20)", condition: "レベル 20 以下 · 品質 23% · コラプト済 · 2 重コラプトなし" },
   { key: "finished", label: "完成品 (21 · 23%)", condition: "レベル 21 · 品質 23% · コラプト済" },
 ];
 
@@ -104,13 +104,17 @@ export function useGemCorrupt() {
   function queryOptions(key: SaleKey): GemQueryOptions {
     const category = selected.value?.kind === "meta" ? "gem.metagem" : "gem.activegem";
     const socketsMin = requireSockets.value ? 5 : undefined;
+    const common = { category, corrupted: true, socketsMin } as const;
     switch (key) {
+      // レベル 21 / 品質 23% はヴァールオーブ 1 回の産物なので 2 重コラプト品 (結晶を通した物) を除く
+      // (オーナー指摘 2026-09-13: 含めると 2 重コラプト品の相場が混ざる)
       case "level21":
-        return { category, levelMin: 21, qualityMin: 20, qualityMax: 20, corrupted: true, socketsMin };
+        return { ...common, levelMin: 21, qualityMin: 20, qualityMax: 20, twiceCorrupted: false };
       case "quality23":
-        return { category, levelMax: 20, qualityMin: 23, corrupted: true, socketsMin };
+        return { ...common, levelMax: 20, qualityMin: 23, twiceCorrupted: false };
+      // 完成品 (21 · 23%) は結晶を通した 2 重コラプト品そのもの (JP 実測: 未 2 重で絞ると 0 件)
       case "finished":
-        return { category, levelMin: 21, qualityMin: 23, corrupted: true, socketsMin };
+        return { ...common, levelMin: 21, qualityMin: 23 };
     }
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");

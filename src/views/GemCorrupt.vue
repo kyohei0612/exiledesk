@@ -7,7 +7,7 @@
     i18n/gems-client.json              ジェム一覧 (GGG クライアント由来)
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
@@ -43,7 +43,39 @@ function isBest(r: RouteResult): boolean {
 }
 function onQueryInput(): void {
   listOpen.value = true;
+  hi.value = 0;
   if (g.selected.value && g.query.value !== g.selected.value.ja) g.selected.value = null;
+}
+
+/** 候補リストのキーボード操作 (オーナー要望 2026-09-13): ↑↓ で選び、Enter で確定、Esc で閉じる */
+const hi = ref(0);
+const listEl = ref<HTMLUListElement | null>(null);
+function scrollHiIntoView(): void {
+  void nextTick(() => {
+    const li = listEl.value?.children[hi.value] as HTMLElement | undefined;
+    li?.scrollIntoView({ block: "nearest" });
+  });
+}
+function onQueryKeydown(e: KeyboardEvent): void {
+  const n = g.matches.value.length;
+  const visible = listOpen.value && !g.selected.value && n > 0;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    if (!visible) {
+      listOpen.value = true;
+      return;
+    }
+    const d = e.key === "ArrowDown" ? 1 : -1;
+    hi.value = (hi.value + d + n) % n;
+    scrollHiIntoView();
+  } else if (e.key === "Enter") {
+    if (!visible) return;
+    e.preventDefault();
+    const m = g.matches.value[Math.min(hi.value, n - 1)];
+    if (m) g.select(m);
+  } else if (e.key === "Escape") {
+    listOpen.value = false;
+  }
 }
 
 /** 素材の説明 (GGG クライアント CurrencyItems.Description の日本語、2026-09-12 書き出し) */
@@ -96,15 +128,19 @@ const materialRows = computed(() => {
             @input="onQueryInput"
             @focus="listOpen = true"
             @blur="listOpen = false"
+            @keydown="onQueryKeydown"
           />
           <ul
             v-if="listOpen && !g.selected.value && g.matches.value.length > 0"
+            ref="listEl"
             class="absolute z-50 mt-1 w-full max-h-72 overflow-y-auto rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] shadow-lg"
           >
             <li
-              v-for="m in g.matches.value"
+              v-for="(m, i) in g.matches.value"
               :key="m.en"
-              class="px-2 py-1 text-[13px] cursor-pointer hover:bg-[var(--exile-color-bg-surface)] flex items-baseline gap-2"
+              class="px-2 py-1 text-[13px] cursor-pointer flex items-baseline gap-2"
+              :class="i === hi ? 'bg-[var(--exile-color-bg-surface)] text-[var(--exile-color-accent-focus)]' : 'hover:bg-[var(--exile-color-bg-surface)]'"
+              @mouseenter="hi = i"
               @mousedown.prevent="g.select(m)"
             >
               <span>{{ m.ja }}</span>

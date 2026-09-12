@@ -137,6 +137,8 @@ export interface GemQueryOptions {
   qualityMin?: number;
   qualityMax?: number;
   corrupted?: boolean;
+  /** 2 重コラプト (Twice Corrupted)。ジェムコラプトの賭けは 1 回のコラプトで得る品なので false で絞る (オーナー指摘 2026-09-13) */
+  twiceCorrupted?: boolean;
   socketsMin?: number;
 }
 
@@ -160,6 +162,7 @@ export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
   const sockets = range(o.socketsMin, undefined);
   if (sockets) misc.gem_sockets = sockets;
   if (o.corrupted != null) misc.corrupted = { option: o.corrupted ? "true" : "false" };
+  if (o.twiceCorrupted != null) misc.twice_corrupted = { option: o.twiceCorrupted ? "true" : "false" };
   return {
     query: {
       status: { option: SecurityStatus.Securable },
