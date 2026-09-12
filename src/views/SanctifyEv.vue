@@ -12,9 +12,11 @@ import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { useSanctify } from "./sanctify/useSanctify";
-import { marketStore } from "../state/market-store";
-import { triLine } from "./vaal-scales/money";
-const tri = (n: number | null | undefined): string => triLine(n, marketStore.rates.value);
+import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
+import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
+import { displayCurrency } from "../state/display-currency";
+const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
+const unit = displayCurrency.label;
 
 async function open(url: string | null): Promise<void> {
   await openExternal(url);
@@ -36,10 +38,6 @@ function fmt(n: number | null | undefined, digits?: number): string {
 function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;
 }
-function divine(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n)) return "";
-  return `(${fmt(n / s.divineRate.value, 2)} 神)`;
-}
 function evClass(v: number | null): string {
   if (v == null) return "text-[var(--exile-color-text-tertiary)]";
   return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
@@ -58,9 +56,9 @@ async function pasteFromClipboard(): Promise<void> {
 const verdict = computed(() => {
   const r = s.result.value;
   if (r.ev == null) return { text: "売値を入れると判定が出ます", cls: "text-[var(--exile-color-text-tertiary)]" };
-  if (r.vsSell == null) return { text: `聖別の期待収支 ${fmt(r.ev)} 高貴。「未聖別で売る値段」を入れると比較できます`, cls: "" };
-  if (r.vsSell > 0) return { text: `聖別した方が得: 未聖別で売るより ${fmt(r.vsSell)} 高貴 ${divine(r.vsSell)} 上`, cls: "text-emerald-300" };
-  return { text: `売った方が得: 聖別すると未聖別で売るより ${fmt(-r.vsSell)} 高貴 ${divine(-r.vsSell)} 下`, cls: "text-red-300" };
+  if (r.vsSell == null) return { text: `聖別の期待収支 ${money(r.ev, true)}。「未聖別で売る値段」を入れると比較できます`, cls: "" };
+  if (r.vsSell > 0) return { text: `聖別した方が得: 未聖別で売るより ${money(r.vsSell)} 上`, cls: "text-emerald-300" };
+  return { text: `売った方が得: 聖別すると未聖別で売るより ${money(-r.vsSell)} 下`, cls: "text-red-300" };
 });
 </script>
 
@@ -73,10 +71,11 @@ const verdict = computed(() => {
         各モッドの値がそれぞれ独立にランダム倍率 (既定 0.78〜1.22 倍) で変わり、以後はほぼ加工できません。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        費用: poe2scout{{ s.league.value ? ` (${s.league.value.Value})` : "" }} · {{ s.marketLabel.value }} (カレンシーランキングと共有) の 神のオーブ {{ fmt(s.divinePrice.value) }} + 聖別のお告げ {{ fmt(s.omenPrice.value) }}
-        = {{ fmt(s.cost.value) }} 高貴 / 倍率の範囲は非公開 (コミュニティ観測値、変更可)
+        費用: poe2scout{{ s.league.value ? ` (${s.league.value.Value})` : "" }} · {{ s.marketLabel.value }} (カレンシーランキングと共有) の 神のオーブ {{ money(s.divinePrice.value) }} + 聖別のお告げ {{ money(s.omenPrice.value) }}
+        = {{ money(s.cost.value) }} / 倍率の範囲は非公開 (コミュニティ観測値、変更可)
         <span v-if="s.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ s.marketError.value }}</span>
       </p>
+      <div class="mt-1"><CurrencyPicker /></div>
     </header>
 
     <!-- 貼り付け -->
@@ -191,7 +190,7 @@ const verdict = computed(() => {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 (高貴)</h2>
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 ({{ unit }})</h2>
             <button
               type="button"
               :disabled="s.affixes.value.length === 0 || s.pricing.value || s.tradeAuto.rateLimitSecs.value > 0"
@@ -214,35 +213,35 @@ const verdict = computed(() => {
                   <div>未聖別のまま売る <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('shown'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">今の状態の相場。これが比較の基準</div>
                 </td>
-                <td class="py-1.5 text-right w-28"><input v-model.number="s.prices.value.unsanctified" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
+                <td class="py-1.5 text-right w-28"><MoneyInput v-model="s.prices.value.unsanctified" placeholder="—" /></td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>現状維持 <span class="text-[var(--exile-color-text-tertiary)] tabular-nums">({{ pct(s.result.value.pUnchanged) }})</span></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">聖別したが目標に届かず、ブリックもしていない。加工不可になる分、普通は未聖別より安い</div>
                 </td>
-                <td class="py-1.5 text-right"><input v-model.number="s.prices.value.unchanged" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
+                <td class="py-1.5 text-right"><MoneyInput v-model="s.prices.value.unchanged" placeholder="—" /></td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>ブリック <span class="text-red-300 tabular-nums">({{ pct(s.result.value.pBrick) }})</span></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">重要モッドのどれかがブリック値未満。他がどれだけ良くても買い手は付かない前提</div>
                 </td>
-                <td class="py-1.5 text-right"><input v-model.number="s.prices.value.bricked" type="number" min="0" step="any" placeholder="0" class="num w-24" /></td>
+                <td class="py-1.5 text-right"><MoneyInput v-model="s.prices.value.bricked" placeholder="0" /></td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pHit) }})</span> <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('target'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">重要モッド全部が目標値以上</div>
                 </td>
-                <td class="py-1.5 text-right"><input v-model.number="s.prices.value.hit" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
+                <td class="py-1.5 text-right"><MoneyInput v-model="s.prices.value.hit" placeholder="—" /></td>
               </tr>
               <tr v-if="s.hasJackpot.value">
                 <td class="py-1.5 pr-2">
                   <div>大当たり <span class="text-emerald-300 tabular-nums">({{ pct(s.result.value.pJackpot) }})</span> <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="open(s.tradeUrl('jackpot'))">トレード2へ ↗</button></div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">重要モッド全部が大当たり値以上</div>
                 </td>
-                <td class="py-1.5 text-right"><input v-model.number="s.prices.value.jackpot" type="number" min="0" step="any" placeholder="—" class="num w-24" /></td>
+                <td class="py-1.5 text-right"><MoneyInput v-model="s.prices.value.jackpot" placeholder="—" /></td>
               </tr>
             </tbody>
           </table>
@@ -256,11 +255,11 @@ const verdict = computed(() => {
           <p class="text-[13px] mb-3" :class="verdict.cls">{{ verdict.text }}</p>
           <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-[12px]">
             <span class="text-[var(--exile-color-text-secondary)]">費用 (神のオーブ + お告げ)</span>
-            <span class="text-right tabular-nums text-[11px] whitespace-nowrap">{{ tri(s.cost.value) }}</span>
+            <span class="text-right tabular-nums">{{ money(s.cost.value) }}</span>
             <span class="text-[var(--exile-color-text-secondary)]">期待売上</span>
-            <span class="text-right tabular-nums">{{ fmt(s.result.value.expectedRevenue) }}</span>
+            <span class="text-right tabular-nums">{{ money(s.result.value.expectedRevenue) }}</span>
             <span class="text-[var(--exile-color-text-secondary)]">期待収支 (売上 − 費用)</span>
-            <span class="text-right tabular-nums" :class="evClass(s.result.value.ev)">{{ s.result.value.ev == null ? "—" : (s.result.value.ev >= 0 ? "+" : "") + fmt(s.result.value.ev) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ s.result.value.ev == null ? "" : tri(s.result.value.ev) }}</span></span>
+            <span class="text-right tabular-nums" :class="evClass(s.result.value.ev)">{{ s.result.value.ev == null ? "—" : money(s.result.value.ev, true) }}</span>
             <span class="text-[var(--exile-color-text-secondary)]">ブリック / 現状維持 / 当たり / 大当たり</span>
             <span class="text-right tabular-nums">
               <span class="text-red-300">{{ pct(s.result.value.pBrick) }}</span> /

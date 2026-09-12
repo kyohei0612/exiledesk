@@ -57,7 +57,26 @@ export function snapshotNameToTradeLeague(snapshotName: string): string {
  * サイト側が `?q=` を読んで検索を実行し、圧縮 URL に置き換える (2026-09-08 実ブラウザで確認)。
  */
 export function trade2QueryUrl(tradeLeague: string, query: unknown): string {
-  return `${trade2HomeUrl(tradeLeague)}?q=${encodeURIComponent(JSON.stringify(query))}`;
+  return `${trade2HomeUrl(tradeLeague)}?q=${encodeURIComponent(JSON.stringify(toSiteQuery(query)))}`;
+}
+
+/**
+ * サイトの URL 状態は `type` / `name` を文字列で持つ (API は {discriminator, option} も受けるがサイトの ?q= は
+ * 文字列しか解釈しない場合がある — オーナー報告「トレード2へで検索に失敗する」2026-09-12)。
+ */
+function toSiteQuery(query: unknown): unknown {
+  if (!query || typeof query !== "object") return query;
+  const q = JSON.parse(JSON.stringify(query)) as { query?: Record<string, unknown> };
+  const inner = q.query;
+  if (inner && typeof inner === "object") {
+    for (const k of ["type", "name"]) {
+      const v = inner[k];
+      if (v && typeof v === "object" && "option" in (v as Record<string, unknown>)) {
+        inner[k] = (v as { option: unknown }).option;
+      }
+    }
+  }
+  return q;
 }
 
 /**

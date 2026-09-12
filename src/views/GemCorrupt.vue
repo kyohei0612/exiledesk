@@ -11,9 +11,11 @@ import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
-import { marketStore } from "../state/market-store";
-import { triLine } from "./vaal-scales/money";
-const tri = (n: number | null | undefined): string => triLine(n, marketStore.rates.value);
+import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
+import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
+import { displayCurrency } from "../state/display-currency";
+const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
+const unit = displayCurrency.label;
 import type { RouteResult } from "./gem-corrupt/model";
 
 const g = useGemCorrupt();
@@ -25,18 +27,8 @@ const showAssumptions = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const listOpen = ref(false);
 
-function fmt(n: number | null | undefined, digits?: number): string {
-  if (n == null || !Number.isFinite(n)) return "—";
-  if (digits != null) return n.toFixed(digits);
-  const abs = Math.abs(n);
-  return abs >= 100 ? n.toFixed(0) : abs >= 10 ? n.toFixed(1) : n.toFixed(2);
-}
 function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;
-}
-function divine(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n) || !g.divineRate.value) return "";
-  return `(${fmt(n / g.divineRate.value, 2)} 神)`;
 }
 function evClass(v: number | null): string {
   if (v == null) return "text-[var(--exile-color-text-tertiary)]";
@@ -81,8 +73,9 @@ const materialRows = computed(() => {
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプトの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
         レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う)
-        を「1 回あたりの期待収支」で比べます。金額は高貴 (Exalted) 建て。
+        を「1 回あたりの期待収支」で比べます。
       </p>
+      <div class="mt-1"><CurrencyPicker /></div>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
         素材価格: poe2scout{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} (カレンシーランキングと共有) / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
         <span v-if="g.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ g.marketError.value }}</span>
@@ -138,7 +131,7 @@ const materialRows = computed(() => {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 (高貴)</h2>
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 ({{ unit }})</h2>
             <div class="flex items-center gap-3 text-[11px]">
               <label class="inline-flex items-center gap-1 text-[var(--exile-color-text-secondary)]">
                 <input v-model="g.requireSockets.value" type="checkbox" class="accent-[var(--exile-color-accent-focus)]" />
@@ -172,14 +165,7 @@ const materialRows = computed(() => {
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ row.condition }}</div>
                 </td>
                 <td class="py-1.5 text-right">
-                  <input
-                    v-model.number="g.sale.value[row.key]"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    placeholder="—"
-                    class="w-24 text-right text-[12px] px-1.5 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)] tabular-nums"
-                  />
+                  <MoneyInput v-model="g.sale.value[row.key]" />
                 </td>
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
@@ -207,7 +193,7 @@ const materialRows = computed(() => {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個: 高貴 · カオス · 神)</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr v-for="m in materialRows" :key="m.key" class="border-t border-[var(--exile-color-border-subtle)] first:border-t-0">
@@ -216,15 +202,8 @@ const materialRows = computed(() => {
                   <div v-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
                 <td class="py-1.5 text-right tabular-nums w-28">
-                  <input
-                    v-if="m.editable"
-                    v-model.number="g.baseGemPrice.value"
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    class="w-24 text-right text-[12px] px-1.5 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)] tabular-nums"
-                  />
-                  <span v-else class="text-[11px] whitespace-nowrap" :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : tri(m.price) }}</span>
+                  <MoneyInput v-if="m.editable" v-model="g.baseGemPrice.value" />
+                  <span v-else class="whitespace-nowrap" :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
                 </td>
               </tr>
             </tbody>
@@ -261,10 +240,9 @@ const materialRows = computed(() => {
               <div class="flex items-baseline justify-between">
                 <span class="text-[var(--exile-color-text-secondary)]">1 回の期待収支</span>
                 <span class="tabular-nums text-[14px]" :class="evClass(r.id === 'buyFinished' ? null : r.ev)">
-                  {{ r.id === "buyFinished" ? "基準 (0)" : (r.ev >= 0 ? "+" : "") + fmt(r.ev) }}
+                  {{ r.id === "buyFinished" ? "基準 (0)" : money(r.ev, true) }}
                 </span>
               </div>
-              <div v-if="r.id !== 'buyFinished'" class="text-[10px] text-[var(--exile-color-text-tertiary)] text-right -mt-0.5 mb-1">{{ tri(r.ev) }}</div>
               <div class="hidden">
               </div>
               <div class="flex items-baseline justify-between">
@@ -272,12 +250,12 @@ const materialRows = computed(() => {
                 <span class="tabular-nums">
                   <template v-if="r.costPerFinished == null">—</template>
                   <template v-else-if="r.costPerFinished <= 0">0 (途中の売上で回収)</template>
-                  <template v-else>{{ fmt(r.costPerFinished) }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ divine(r.costPerFinished) }}</span></template>
+                  <template v-else>{{ money(r.costPerFinished) }}</template>
                 </span>
               </div>
               <div class="flex items-baseline justify-between">
                 <span class="text-[var(--exile-color-text-secondary)]">1 回の確定費用</span>
-                <span class="tabular-nums">{{ fmt(r.upfront) }}</span>
+                <span class="tabular-nums">{{ money(r.upfront) }}</span>
               </div>
               <div class="flex items-baseline justify-between">
                 <span class="text-[var(--exile-color-text-secondary)]">完成品になる確率</span>
@@ -299,7 +277,7 @@ const materialRows = computed(() => {
                   <tr v-for="(o, i) in r.outcomes" :key="i" class="border-t border-[var(--exile-color-border-subtle)]">
                     <td class="py-0.5 pr-1">{{ o.label }}</td>
                     <td class="py-0.5 text-right tabular-nums w-12">{{ pct(o.p) }}</td>
-                    <td class="py-0.5 text-right tabular-nums w-16">{{ fmt(o.net) }}</td>
+                    <td class="py-0.5 text-right tabular-nums w-20">{{ money(o.net) }}</td>
                   </tr>
                 </tbody>
               </table>
