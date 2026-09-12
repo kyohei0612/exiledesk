@@ -152,7 +152,7 @@ onMounted(async () => {
 
 <template>
   <div
-    class="h-full overflow-y-auto px-8 py-8 text-[var(--exile-color-text-primary)]"
+    class="min-h-full px-8 py-8 text-[var(--exile-color-text-primary)]"
   >
     <div class="max-w-2xl">
       <header class="mb-6 pb-3 border-b border-[var(--exile-color-border-subtle)]">

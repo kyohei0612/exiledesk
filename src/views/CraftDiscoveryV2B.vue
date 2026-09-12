@@ -50,7 +50,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <CraftV2Header
       v-model:active-slot="d.activeSlot.value"
       v-model:skills-tab="d.skillsTab.value"
@@ -77,7 +77,7 @@ onMounted(() => {
     />
 
     <!-- スクロール可能本体 (アセンダンシータブまでの固定エリアの下) -->
-    <div class="flex-1 overflow-y-auto -mx-6 px-6 pb-2">
+    <div class="flex-1 -mx-6 px-6 pb-2">
       <!-- 初回ロード中 (まだ 0 件) -->
       <div
         v-if="store.ascendancies.length === 0 && store.loading && !store.fatalError"

@@ -102,7 +102,7 @@ const grouped = computed(() =>
 </script>
 
 <template>
-  <section class="h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)] overflow-y-auto">
+  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">アルダーの航路</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -144,7 +144,7 @@ const grouped = computed(() =>
               <div v-if="resolved[i]!.bosses.length" class="text-[10px] text-[var(--exile-color-text-secondary)]">{{ resolved[i]!.bosses.map((b) => b.ja).join(" / ") }}</div>
               <div v-if="grades[resolved[i]!.mapEn]" class="text-[10px] text-[var(--exile-color-accent-focus)]">評価 {{ grades[resolved[i]!.mapEn] }}</div>
             </div>
-            <ul v-else-if="slotMatches[i].length > 0" class="mt-2 space-y-0.5 max-h-40 overflow-y-auto">
+            <ul v-else-if="slotMatches[i].length > 0" class="mt-2 space-y-0.5">
               <li v-for="r in slotMatches[i]" :key="r.mapEn">
                 <button type="button" class="w-full text-left text-[11px] px-1 py-0.5 rounded hover:bg-[var(--exile-color-bg-elevated)]" @click="pick(i, r)">
                   <span>{{ r.mapJa }}</span>

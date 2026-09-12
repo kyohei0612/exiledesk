@@ -8,7 +8,8 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { trade2SiteOrigin } from "./league";
+import { trade2Site, trade2SiteOrigin } from "./league";
+import { localizeQueryForSite } from "./localize";
 import type { Trade2SearchResponse } from "./query";
 
 /**
@@ -100,7 +101,10 @@ interface FetchResponse {
 
 /** 検索 1 回 (直列化 + 間隔ガード) */
 async function searchOnce(league: string, body: unknown): Promise<Trade2SearchResponse> {
-  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query: body } }));
+  // JP サイト設定なら JP の API に日本語名で投げる (検索 ID を JP サイトで開けるようにする)
+  const site = trade2Site();
+  const query = localizeQueryForSite(body);
+  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } }));
 }
 
 /** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
@@ -112,7 +116,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
   if (ids.length === 0 || !search.id) {
     return { total: search.total ?? 0, minExalted: null, listings: [], searchUrl };
   }
-  const fetched = await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id } }));
+  const fetched = await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site: trade2Site() } }));
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;

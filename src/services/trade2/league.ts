@@ -14,6 +14,8 @@
  * (SSF リーグはトレード不可のため trade2 側には存在しない)
  */
 
+import { localizeQueryForSite } from "./localize";
+
 const TRADE_LEAGUE_STOPWORDS = new Set(["of", "the", "and", "or", "in", "a", "an", "to", "for"]);
 
 function titleCaseLeagueWords(words: string[]): string {
@@ -57,7 +59,7 @@ export function snapshotNameToTradeLeague(snapshotName: string): string {
  * サイト側が `?q=` を読んで検索を実行し、圧縮 URL に置き換える (2026-09-08 実ブラウザで確認)。
  */
 export function trade2QueryUrl(tradeLeague: string, query: unknown): string {
-  return `${trade2HomeUrl(tradeLeague)}?q=${encodeURIComponent(JSON.stringify(toSiteQuery(query)))}`;
+  return `${trade2HomeUrl(tradeLeague)}?q=${encodeURIComponent(JSON.stringify(toSiteQuery(localizeQueryForSite(query))))}`;
 }
 
 /**

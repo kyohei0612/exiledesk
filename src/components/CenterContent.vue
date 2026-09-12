@@ -45,7 +45,8 @@ const currentView = computed<Component | undefined>(() => {
 </script>
 
 <template>
-  <main class="flex-1 overflow-hidden">
+  <!-- 2026-09-12 オーナー指示: 画面内スクロールは無し、アプリ全体 (main) だけがスクロールする -->
+  <main class="flex-1 overflow-y-auto">
     <keep-alive>
       <component :is="currentView" />
     </keep-alive>

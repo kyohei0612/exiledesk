@@ -17,6 +17,15 @@ use reqwest::header::{HeaderMap, HeaderValue, ACCEPT_LANGUAGE};
 use serde::{Deserialize, Serialize};
 
 const TRADE2_BASE: &str = "https://www.pathofexile.com/api/trade2";
+/// 日本語サイト。検索 ID の名前空間が www と別なので、JP サイトで開く検索は JP の API で作る (2026-09-12)
+const TRADE2_BASE_JP: &str = "https://jp.pathofexile.com/api/trade2";
+
+fn base_for(site: &Option<String>) -> &'static str {
+    match site.as_deref() {
+        Some("jp") => TRADE2_BASE_JP,
+        _ => TRADE2_BASE,
+    }
+}
 const USER_AGENT: &str =
     "ExileDesk/0.1 (POE2 personal economy dashboard, Tauri app)";
 
@@ -46,6 +55,9 @@ struct SearchResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchRequest {
     pub league: String,
+    /// "jp" なら jp.pathofexile.com の API を使う (既定 www)
+    #[serde(default)]
+    pub site: Option<String>,
     /// trade2 query 全体 (status/type/filters/sort 含む)。
     /// フロントで組み立てる JSON value をそのまま受け取って公式 API に POST する。
     pub query: serde_json::Value,
@@ -55,7 +67,7 @@ pub struct SearchRequest {
 /// rate limit に当たった場合 Err。呼び側で適切に retry / throttle すること。
 #[tauri::command]
 pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, String> {
-    let url = format!("{}/search/poe2/{}", TRADE2_BASE, urlencode(&req.league));
+    let url = format!("{}/search/poe2/{}", base_for(&req.site), urlencode(&req.league));
 
     let client = build_client()?;
 
@@ -116,6 +128,9 @@ pub struct FetchRequest {
     /// search レスポンスの `id`（fetch URL の ?query= に乗せる）
     #[serde(rename = "queryId")]
     pub query_id: String,
+    /// search と同じサイト ("jp" / 既定 www)
+    #[serde(default)]
+    pub site: Option<String>,
 }
 
 /// listing 詳細を取得する。レスポンス全体（`{ result: [...] }`）をそのままフロントに返す。
@@ -134,7 +149,7 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
     let ids_csv = req.ids.join(",");
     let url = format!(
         "{}/fetch/{}?query={}",
-        TRADE2_BASE,
+        base_for(&req.site),
         ids_csv,
         urlencode(&req.query_id)
     );
