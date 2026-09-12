@@ -29,7 +29,7 @@ async fn main() {
         },
         "sort": { "price": "asc" }
     });
-    let search = trade2_search(SearchRequest { league: league.clone(), query })
+    let search = trade2_search(SearchRequest { league: league.clone(), query, site: None })
         .await
         .expect("search");
     let total = search["total"].as_u64().unwrap_or(0);
@@ -43,7 +43,7 @@ async fn main() {
         return;
     }
     tokio::time::sleep(std::time::Duration::from_millis(2500)).await;
-    let fetched = trade2_fetch(FetchRequest { ids, query_id: qid }).await.expect("fetch");
+    let fetched = trade2_fetch(FetchRequest { ids, query_id: qid, site: None }).await.expect("fetch");
     for r in fetched["result"].as_array().unwrap_or(&vec![]) {
         println!(
             "  {} {} | {} {} | ilvl {}",

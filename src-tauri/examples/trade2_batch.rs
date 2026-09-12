@@ -20,6 +20,8 @@ async fn main() {
     let out = std::env::args().nth(2).expect("output json path");
     let input: Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("read queries")).expect("parse queries");
     let league = input["league"].as_str().expect("league").to_string();
+    // "site": "jp" で jp.pathofexile.com の API (アプリの JP 設定と同じ経路)
+    let site: Option<String> = input["site"].as_str().map(|s| s.to_string());
     let queries = input["queries"].as_array().expect("queries array");
     let mut results: Vec<Value> = Vec::new();
 
@@ -30,7 +32,7 @@ async fn main() {
         let mut qid = String::new();
         for body in q["attempts"].as_array().cloned().unwrap_or_default() {
             tokio::time::sleep(gap()).await;
-            match trade2_search(SearchRequest { league: league.clone(), query: body }).await {
+            match trade2_search(SearchRequest { league: league.clone(), query: body, site: site.clone() }).await {
                 Ok(s) => {
                     let total = s["total"].as_u64().unwrap_or(0);
                     rec["total"] = json!(total);
@@ -52,7 +54,7 @@ async fn main() {
         }
         if !ids.is_empty() {
             tokio::time::sleep(gap()).await;
-            match trade2_fetch(FetchRequest { ids, query_id: qid }).await {
+            match trade2_fetch(FetchRequest { ids, query_id: qid, site: site.clone() }).await {
                 Ok(f) => {
                     let listings: Vec<Value> = f["result"]
                         .as_array()
