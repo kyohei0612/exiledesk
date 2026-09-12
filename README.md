@@ -262,14 +262,10 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
 
 ### ヴァールの天秤 (2026-09-12〜)
 
-賭けクラフトの期待値ツール群。左ナビ「ヴァールの天秤」をクリックすると下に 4 つが展開する (旧「クラフト収支」は廃止、
-貼り付け解析だけ `services/items/parse-item.ts` に移設)。確率はどれも GGG 非公開なので既定値はコミュニティの観測値で、各画面の「前提」から変更できる。
+賭けクラフトの期待値ツール群。左ナビ「ヴァールの天秤」をクリックすると下に展開する (旧「クラフト収支」は廃止。
+聖別の賭け / アルダーの航路 も 2026-09-12 にオーナー指示で削除)。確率はどれも GGG 非公開なので既定値はコミュニティの観測値で、各画面の「前提」から変更できる。
 素材価格は poe2scout、売値は trade2 (取得ボタン = API、「鑑定 ↗」= `?q=` で JP トレードを開くだけ) か手入力。
 
-- 聖別の賭け (`views/SanctifyEv.vue`, `views/sanctify/{model,useSanctify}.ts`): 神のオーブ + 聖別のお告げ。装備を貼り付け →
-  モッドごとに ブリック値 / 目標値 / 大当たり値 → 各モッドの値がそれぞれ独立に 0.78〜1.22 倍 (既定) される分布を列挙し、
-  4 区分 (ブリック / 現状維持 / 当たり / 大当たり) の確率 × 区分ごとの売値で期待値。未聖別で売る値段と比較して判定。
-  品質付きモッドは「表示値 = 切り捨て(実値 × (1+品質))」から実値に戻して計算する。
 - アドニアの賭け (`views/Overquality.vue`, `views/overquality/{model,useOverquality}.ts`): 吸収のワンドをヴァールアルカニストのインフューザーで
   品質 20% → 30% に育てて可能性のお告げ + 可能性のオーブでアドニアのエゴにする (アドニア専用ページ)。品質の階段を状態遷移で解いて
   生存率 / インフューザー期待数 / 完成品 1 個の実質コスト / 利益 / 損益分岐のベース価格 / 95・99% 資金を出す。
@@ -277,9 +273,6 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
 - ジェムコラプトの賭け (`views/GemCorrupt.vue`, `views/gem-corrupt/{model,useGemCorrupt}.ts`): レベル 21 · 品質 23% のジェムを
   得る 4 経路 (自作 / 21 を買って結晶 / 23% を買って結晶 / 完成品を買う) を 1 回の期待収支で比較。ジェム一覧は
   `scripts/build-gems-from-client.mjs` → `src/i18n/gems-client.json` (SkillGems / BaseItemTypes / GemTags、persistent = スピリット)。
-- アルダーの航路 (`views/SagaPlanner.vue`): アルダーの叙事詩の 5 枠の噂からマップを絞る。噂 → マップの対応 (観測値) と
-  クライアント由来のマップ名 / ボス名 / ユニーク判定は `scripts/build-saga-from-client.mjs` → `src/i18n/saga-routes.json`。
-  噂の文言はクライアントのテーブルに無いので英語表記、評価欄は自分用 (localStorage)。
 - trade2 のレート制限 (実測 X-Rate-Limit-Ip): search 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600。5 分 30 回を超えると 10〜30 分ペナルティ。
   `services/trade2/pricing.ts` は search 10.5 秒 / fetch 2.5 秒間隔で直列化し、429 で打ち切る。
   診断: `cd src-tauri && cargo run --example trade2_probe` / `trade2_batch <queries.json> <out.json>` (env `TRADE2_GAP_MS`)。

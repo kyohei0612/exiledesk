@@ -197,36 +197,6 @@ export function buildUniqueQualityQuery(nameEn: string, qualityMin: number) {
   };
 }
 
-/** GGG 内部 stat ID と下限値 → trade2 の stat フィルタ (mapping に無い ID は捨てる)。聖別の賭け用 (2026-09-12) */
-export function statFiltersFromIds(entries: { ids: string[]; min: number | null }[]): Trade2StatFilter[] {
-  const out: Trade2StatFilter[] = [];
-  const seen = new Set<string>();
-  for (const e of entries) {
-    for (const id of e.ids) {
-      const tradeId = TRADE2_STAT_MAPPING[id];
-      if (!tradeId || seen.has(tradeId)) continue;
-      seen.add(tradeId);
-      const f: Trade2StatFilter = { id: tradeId, disabled: false };
-      if (e.min != null && Number.isFinite(e.min)) f.value = { min: e.min };
-      out.push(f);
-    }
-  }
-  return out;
-}
-
-/** レア + ベース名完全一致 + stat フィルタ (聖別の賭け: 同じ mod 構成の相場) */
-export function buildRareBaseQuery(baseEn: string | null, statFilters: Trade2StatFilter[], category?: string) {
-  const typeFilters: Record<string, unknown> = { rarity: { option: Rarity.Rare } };
-  if (!baseEn && category) typeFilters.category = { option: category };
-  const query: Record<string, unknown> = {
-    status: { option: SecurityStatus.Securable },
-    stats: [{ type: "and", filters: statFilters }],
-    filters: { type_filters: { filters: typeFilters } },
-  };
-  if (baseEn) query.type = { discriminator: null, option: baseEn };
-  return { query, sort: { price: "asc" } };
-}
-
 /** ユニーク名で絞り込む検索クエリ */
 export function buildUniqueNameQuery(nameEn: string) {
   return {

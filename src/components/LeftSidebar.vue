@@ -22,16 +22,15 @@ const items: NavItem[] = [
   // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
   // 2026-09-12: 「ヴァールの天秤」= 賭けクラフトの期待値ツール群 (旧クラフト収支は廃止)。親をクリックで展開。
+  // 聖別の賭け / アルダーの航路 は同日オーナー指示で削除 (使わない)。
   {
     id: "vaal-scales",
     icon: "⚖",
     label: "ヴァールの天秤",
     group: "economy",
     children: [
-      { id: "sanctify-ev", icon: "🜊", label: "聖別の賭け", group: "economy" },
       { id: "overquality", icon: "🜛", label: "アドニアの賭け", group: "economy" },
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
-      { id: "saga", icon: "🜄", label: "アルダーの航路", group: "economy" },
     ],
   },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
