@@ -128,6 +128,48 @@ export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilte
   };
 }
 
+/** ジェム検索の条件 (ジェムコラプト収支 2026-09-12)。未指定の項目は絞らない。 */
+export interface GemQueryOptions {
+  /** trade2 の category (gem.activegem / gem.metagem) */
+  category: "gem.activegem" | "gem.metagem";
+  levelMin?: number;
+  levelMax?: number;
+  qualityMin?: number;
+  qualityMax?: number;
+  corrupted?: boolean;
+  socketsMin?: number;
+}
+
+/**
+ * ジェム名完全一致 + レベル / 品質 / コラプト / ソケット数で絞る検索クエリ。
+ * 品質は type_filters、レベル・ソケット・コラプトは misc_filters (trade2 の data/filters で確認、2026-09-12)。
+ */
+export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
+  const range = (min?: number, max?: number): Record<string, number> | null => {
+    const r: Record<string, number> = {};
+    if (min != null) r.min = min;
+    if (max != null) r.max = max;
+    return Object.keys(r).length ? r : null;
+  };
+  const typeFilters: Record<string, unknown> = { category: { option: o.category } };
+  const quality = range(o.qualityMin, o.qualityMax);
+  if (quality) typeFilters.quality = quality;
+  const misc: Record<string, unknown> = {};
+  const level = range(o.levelMin, o.levelMax);
+  if (level) misc.gem_level = level;
+  const sockets = range(o.socketsMin, undefined);
+  if (sockets) misc.gem_sockets = sockets;
+  if (o.corrupted != null) misc.corrupted = { option: o.corrupted ? "true" : "false" };
+  return {
+    query: {
+      status: { option: SecurityStatus.Securable },
+      type: { discriminator: null, option: gemEn },
+      filters: { type_filters: { filters: typeFilters }, misc_filters: { filters: misc } },
+    },
+    sort: { price: "asc" },
+  };
+}
+
 /** ユニーク名で絞り込む検索クエリ */
 export function buildUniqueNameQuery(nameEn: string) {
   return {

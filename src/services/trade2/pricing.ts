@@ -133,26 +133,15 @@ interface FetchResponse {
   }>;
 }
 
-/**
- * 最安値を調べる。ベース完全一致で 0 件ならカテゴリで再検索する。
- * 各 search / fetch は throttled で直列化される (同時に複数呼んでも安全)。
- */
-export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRates): Promise<PriceResult> {
-  const attempts: boolean[] = [];
-  if (input.baseTypeEn) attempts.push(true);
-  if (input.category) attempts.push(false);
-  if (attempts.length === 0) throw new Error("ベース名もカテゴリも無いので検索できません");
+/** 検索 1 回 (直列化 + 間隔ガード) */
+async function searchOnce(league: string, body: unknown): Promise<Trade2SearchResponse> {
+  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query: body } }));
+}
 
-  let search: Trade2SearchResponse = {};
-  let usedBase = true;
-  for (const useBase of attempts) {
-    usedBase = useBase;
-    const body = buildQuery(input, useBase);
-    search = await throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league: input.league, query: body } }));
-    if ((search.total ?? 0) > 0) break;
-  }
+/** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
+async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates): Promise<PriceResult> {
   const searchUrl = search.id
-    ? `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(input.league)}/${search.id}`
+    ? `${TRADE2_SITE_ORIGIN}/trade2/search/poe2/${encodeURIComponent(league)}/${search.id}`
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
@@ -175,11 +164,37 @@ export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRate
     });
   }
   const finite = listings.filter((l) => Number.isFinite(l.amountExalted)).map((l) => l.amountExalted);
-  void usedBase;
   return {
     total: search.total ?? 0,
     minExalted: finite.length ? Math.min(...finite) : null,
     listings: listings.sort((a, b) => a.amountExalted - b.amountExalted),
     searchUrl,
   };
+}
+
+/**
+ * 任意の検索クエリ (buildGemQuery 等) の最安値。search 1 回 + fetch 1 回。
+ * ジェムコラプト収支 (2026-09-12) 用。
+ */
+export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates): Promise<PriceResult> {
+  const search = await searchOnce(league, body);
+  return fetchListings(league, search, rates);
+}
+
+/**
+ * 最安値を調べる。ベース完全一致で 0 件ならカテゴリで再検索する。
+ * 各 search / fetch は throttled で直列化される (同時に複数呼んでも安全)。
+ */
+export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRates): Promise<PriceResult> {
+  const attempts: boolean[] = [];
+  if (input.baseTypeEn) attempts.push(true);
+  if (input.category) attempts.push(false);
+  if (attempts.length === 0) throw new Error("ベース名もカテゴリも無いので検索できません");
+
+  let search: Trade2SearchResponse = {};
+  for (const useBase of attempts) {
+    search = await searchOnce(input.league, buildQuery(input, useBase));
+    if ((search.total ?? 0) > 0) break;
+  }
+  return fetchListings(input.league, search, rates);
 }

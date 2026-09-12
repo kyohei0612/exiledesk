@@ -19,6 +19,8 @@ const items: NavItem[] = [
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
   // 2026-09-07: 装備貼り付け → エッセンスで作れる完成品の相場と収支
   { id: "craft-profit", icon: "🜲", label: "クラフト収支", group: "economy" },
+  // 2026-09-12: ジェムをヴァール / コラプトの結晶で 21 · 23% にする 4 経路の期待値比較
+  { id: "gem-corrupt", icon: "🜛", label: "ジェムコラプト収支", group: "economy" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す
