@@ -90,11 +90,11 @@ function evClass(v: number | null): string {
             <input v-model.number="o.qualityCurrencyCount.value" type="number" min="0" step="1" class="num w-28" />
             <label>
               <div>
-                完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上)
+                完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト)
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                trade2 の「品質 {{ o.targetQuality.value }}% 以上」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ money(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければカレンシーランキングの品質不問の値 {{ money(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
+                trade2 の「品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ money(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければカレンシーランキングの品質不問の値 {{ money(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
               </div>
             </label>
             <MoneyInput v-model="o.salePriceOverride.value" :placeholder-exalted="o.salePrice.value" width="w-28" />

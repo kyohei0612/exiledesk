@@ -191,13 +191,20 @@ export function buildBaseTypeQuery(baseEn: string, rarity: "normal" | "rare" = "
   };
 }
 
-/** ユニーク名 + 品質下限 (品質超過の賭けの完成品用) */
-export function buildUniqueQualityQuery(nameEn: string, qualityMin: number) {
+/** ユニーク名 + 品質下限 (+ ルーンソケット下限)、未コラプト。アドニアの賭けの完成品用 (オーナー指示: アドニアのエゴ · 品質 30% · ソケット 2) */
+export function buildUniqueQualityQuery(nameEn: string, qualityMin: number, runeSocketsMin?: number) {
+  const equipment: Record<string, unknown> = {};
+  if (runeSocketsMin != null) equipment.rune_sockets = { min: runeSocketsMin };
   return {
     query: {
       status: { option: SecurityStatus.Securable },
       name: { discriminator: null, option: nameEn },
-      filters: { type_filters: { filters: { rarity: { option: Rarity.Unique }, quality: { min: qualityMin } } } },
+      filters: {
+        type_filters: { filters: { rarity: { option: Rarity.Unique }, quality: { min: qualityMin } } },
+        equipment_filters: { filters: equipment },
+        // 未コラプトに限定 (コラプト品は同じ 30% でも 20 神前後と安く、完成品の相場を下に引っ張る。オーナーの検索と同条件)
+        misc_filters: { filters: { corrupted: { option: "false" } } },
+      },
     },
     sort: { price: "asc" },
   };

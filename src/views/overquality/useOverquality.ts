@@ -121,7 +121,7 @@ export function useOverquality() {
   const saleTradeUrl = computed(
     () =>
       saleSearchUrl.value ??
-      (uniqueEn.value ? trade2QueryUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value)) : null),
+      (uniqueEn.value ? trade2QueryUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value, BASE_RUNE_SOCKETS)) : null),
   );
   let fetchSeq = 0;
   /** 素のベース (ノーマル・未コラプト) と 目標品質以上のユニーク を trade2 で取る */
@@ -137,7 +137,7 @@ export function useOverquality() {
         if (url) baseSearchUrl.value = url;
       }
       if (uniqueEn.value) {
-        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value), marketStore.rates.value);
+        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value, BASE_RUNE_SOCKETS), marketStore.rates.value);
         if (seq !== fetchSeq) return;
         if (v != null) autoSalePrice.value = v;
         if (url) saleSearchUrl.value = url;
