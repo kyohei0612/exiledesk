@@ -7,7 +7,7 @@
     i18n/gems-client.json              ジェム一覧 (GGG クライアント由来)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
@@ -86,6 +86,123 @@ const MATERIAL_DESC: Record<string, string> = {
   crystal: "コラプト状態のスキルジェムを予測不可能に変化させるか、または破壊する。",
   uncut20: "ジェムを生成するか既存のジェムのレベルをレベル20に上げる",
 };
+/**
+ * 収支 (実績入力、オーナー指示 2026-09-13): 実際に使った素材の数と、売れた数を手で入れて損益を出す。
+ * アドニアと同じ作りで、神のオーブでの調整は無いので素材と結果だけ。単価は上の相場、売値は相場か実売。
+ * ジェムごとに別帳簿 (localStorage、この PC だけ)。
+ */
+const LEDGER_KEY = "exiledesk.gem.ledger";
+interface GemLedger {
+  baseGem: number;
+  gcp: number;
+  perfectJeweller: number;
+  vaal: number;
+  crystal: number;
+  uncut20: number;
+  /** 売れた数 */
+  soldLevel21: number;
+  soldQuality23: number;
+  soldFinished: number;
+  soldOther: number;
+  /** 実売の 1 個あたり (高貴)。null なら相場 */
+  eachLevel21: number | null;
+  eachQuality23: number | null;
+  eachFinished: number | null;
+  eachOther: number | null;
+}
+const EMPTY_LEDGER: GemLedger = {
+  baseGem: 0, gcp: 0, perfectJeweller: 0, vaal: 0, crystal: 0, uncut20: 0,
+  soldLevel21: 0, soldQuality23: 0, soldFinished: 0, soldOther: 0,
+  eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
+};
+type LedgerBook = Record<string, Partial<GemLedger>>;
+function loadBook(): LedgerBook {
+  try {
+    const raw = localStorage.getItem(LEDGER_KEY);
+    return raw ? (JSON.parse(raw) as LedgerBook) : {};
+  } catch {
+    return {};
+  }
+}
+const book = ref<LedgerBook>(loadBook());
+const ledgerGem = computed(() => g.selected.value?.en ?? "");
+const ledger = computed<GemLedger>(() => ({ ...EMPTY_LEDGER, ...(book.value[ledgerGem.value] ?? {}) }));
+function setLedger<K extends keyof GemLedger>(key: K, v: GemLedger[K]): void {
+  if (!ledgerGem.value) return;
+  book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, [key]: v } };
+}
+type CountKey = "baseGem" | "gcp" | "perfectJeweller" | "vaal" | "crystal" | "uncut20" | "soldLevel21" | "soldQuality23" | "soldFinished" | "soldOther";
+type EachKey = "eachLevel21" | "eachQuality23" | "eachFinished" | "eachOther";
+function ledgerNum(key: CountKey, ev: Event): void {
+  const v = Number((ev.target as HTMLInputElement).value);
+  setLedger(key, Number.isFinite(v) && v > 0 ? v : 0);
+}
+function resetLedger(): void {
+  if (!ledgerGem.value) return;
+  const next = { ...book.value };
+  delete next[ledgerGem.value];
+  book.value = next;
+}
+watch(
+  book,
+  (v) => {
+    try {
+      localStorage.setItem(LEDGER_KEY, JSON.stringify(v));
+    } catch {
+      /* 保存できなくても動く */
+    }
+  },
+  { deep: true },
+);
+const ledgerRows = computed(() => {
+  const m = g.materials.value;
+  const l = ledger.value;
+  const rows: { key: CountKey; label: string; unit: number | null; qty: number }[] = [
+    { key: "baseGem", label: "低レベルのジェム本体", unit: m.baseGem, qty: l.baseGem },
+    { key: "gcp", label: "宝石細工師のプリズム", unit: m.gcp, qty: l.gcp },
+    { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", unit: m.perfectJeweller, qty: l.perfectJeweller },
+    { key: "vaal", label: "ヴァールオーブ", unit: m.vaal, qty: l.vaal },
+    { key: "crystal", label: "コラプトの結晶", unit: m.crystal, qty: l.crystal },
+    { key: "uncut20", label: g.uncutLabel.value, unit: m.uncut20, qty: l.uncut20 },
+  ];
+  return rows.map((r) => ({ ...r, cost: r.unit == null ? null : r.unit * r.qty }));
+});
+const ledgerSales = computed(() => {
+  const l = ledger.value;
+  const s = g.sale.value;
+  const rows: { qtyKey: CountKey; eachKey: EachKey; label: string; market: number | null; qty: number; each: number | null }[] = [
+    { qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, qty: l.soldLevel21, each: l.eachLevel21 },
+    { qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23% (レベル 20)", market: s.quality23, qty: l.soldQuality23, each: l.eachQuality23 },
+    { qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, qty: l.soldFinished, each: l.eachFinished },
+    { qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: null, qty: l.soldOther, each: l.eachOther },
+  ];
+  return rows.map((r) => {
+    const price = r.each ?? r.market;
+    return { ...r, price, revenue: price == null ? (r.qty > 0 ? null : 0) : price * r.qty };
+  });
+});
+const ledgerTotals = computed(() => {
+  const rows = ledgerRows.value;
+  const sales = ledgerSales.value;
+  const missingCost = rows.some((r) => r.qty > 0 && r.cost == null);
+  const missingSale = sales.some((r) => r.qty > 0 && r.revenue == null);
+  const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
+  const revenue = sales.reduce((s, r) => s + (r.revenue ?? 0), 0);
+  const vaal = ledger.value.vaal;
+  const finished = ledger.value.soldFinished;
+  return {
+    cost,
+    revenue,
+    profit: revenue - cost,
+    missingCost,
+    missingSale,
+    /** ヴァール 1 回あたりの損益 */
+    perVaal: vaal > 0 ? (revenue - cost) / vaal : null,
+    /** 完成品 1 個あたりの実コスト */
+    perFinished: finished > 0 ? cost / finished : null,
+  };
+});
+
 const materialRows = computed(() => {
   const m = g.materials.value;
   return [
@@ -327,6 +444,91 @@ const materialRows = computed(() => {
           「1 回の期待収支」は 1 回試して出来た物を全部売った時の平均損益で、完成品を買う経路が 0 の基準。これで「最も得」を決めます。
           実質コスト = (費用の期待値 − 完成品以外で回収できる期待額) ÷ 完成品になる確率。自作で片方だけ売る戦略の時は完成率 0 なので出ません。
         </p>
+      </div>
+    </BaseCard>
+
+    <!-- 収支 (実績入力) 2026-09-13 -->
+    <BaseCard class="mb-4">
+      <div class="p-4 pl-5">
+        <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">
+            収支<span v-if="g.selected.value" class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ g.selected.value.ja }}</span>
+          </h2>
+          <div class="flex items-center gap-3 text-[11px] text-[var(--exile-color-text-secondary)]">
+            <span>実際に使った数と売れた数を入れる。単価は上の相場、売値は相場か実売</span>
+            <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" @click="resetLedger">全部 0 に</button>
+          </div>
+        </div>
+        <p v-if="!g.selected.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">ジェムを選ぶと、そのジェムの帳簿が出ます。</p>
+        <template v-else>
+          <table class="w-full text-[12px]">
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+              <tr>
+                <th class="text-left font-normal pb-1">素材</th>
+                <th class="text-right font-normal pb-1 pl-3">単価</th>
+                <th class="text-right font-normal pb-1 pl-3">使った数</th>
+                <th class="text-right font-normal pb-1 pl-3">費用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in ledgerRows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)]">
+                <td class="py-1.5 pr-2">{{ r.label }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.unit == null ? 'text-amber-300' : ''">{{ r.unit == null ? "相場なし" : money(r.unit) }}</td>
+                <td class="py-1.5 pl-3 text-right">
+                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="ledgerNum(r.key, $event)" />
+                </td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
+              </tr>
+              <tr class="border-t border-[var(--exile-color-border-brass)]">
+                <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
+                <td></td>
+                <td></td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.cost) }}</td>
+              </tr>
+            </tbody>
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+              <tr>
+                <th class="text-left font-normal pt-3 pb-1">売れた物</th>
+                <th class="text-right font-normal pt-3 pb-1 pl-3">1 個の売値 (空欄なら相場)</th>
+                <th class="text-right font-normal pt-3 pb-1 pl-3">売れた数</th>
+                <th class="text-right font-normal pt-3 pb-1 pl-3">売上</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in ledgerSales" :key="r.qtyKey" class="border-t border-[var(--exile-color-border-subtle)]">
+                <td class="py-1.5 pr-2">{{ r.label }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
+                  <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setLedger(r.eachKey, $event)" />
+                </td>
+                <td class="py-1.5 pl-3 text-right">
+                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="ledgerNum(r.qtyKey, $event)" />
+                </td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
+              </tr>
+              <tr class="border-t border-[var(--exile-color-border-brass)]">
+                <td class="py-1.5 pr-2 font-display tracking-[0.04em]">売上合計</td>
+                <td></td>
+                <td></td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.revenue) }}</td>
+              </tr>
+              <tr class="border-t border-[var(--exile-color-border-brass)]">
+                <td class="py-1.5 pr-2 font-display tracking-[0.04em]">収支</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
+                  {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${money(ledgerTotals.perFinished)}` : "" }}
+                </td>
+                <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
+                  {{ ledgerTotals.perVaal != null ? `ヴァール 1 回あたり ${money(ledgerTotals.perVaal, true)}` : "" }}
+                </td>
+                <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ money(ledgerTotals.profit, true) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            売値の欄は空欄なら上の売値 (trade2 最安)、実際に売れた額があればそれを入れてください。「その他」は外れの生存品など、相場が無い物の実売用。入力はジェムごとにこの PC に残ります。
+            <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
+            <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>
+          </p>
+        </template>
       </div>
     </BaseCard>
 
