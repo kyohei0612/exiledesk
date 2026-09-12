@@ -260,29 +260,29 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
   `vendor/PoB2-JP` で commit + push → ExileDesk で submodule 参照を commit。
 - ユーザーデータ: `installed.cfg` によりビルド保存先は公式 PoB と同じ `Documents/Path of Building (PoE2)/`。
 
-### クラフト収支 (2026-09-07〜)
+### ヴァールの天秤 (2026-09-12〜)
 
-- 左ナビ「クラフト収支」: ゲーム内で装備に Ctrl+C したテキスト (日英) を貼り付け → ベース / レアリティ / mod を同定
-  (`views/craft-profit/parse.ts`: item-text パーサ + mods-bundle 同定) → 使えるエッセンス / 合金 / お告げと完成品の mod 構成を列挙
-  (`views/craft-profit/essence-plan.ts`) → 各行の「鑑定 ↗」で同条件のトレードサイトを開く (API 不使用、レート制限なし)、
-  「相場」でアプリ内取得 (`services/trade2/pricing.ts`: search → fetch、search 10.5 秒 / fetch 2.5 秒間隔、429 で打ち切り)
-  → 合計コスト (ベース購入価格 + 素材) / 完成品最安 / 収支 を高貴建てで表示。
-- 規則はクライアント原本どおり (`src/i18n/craft-rules.json` = `scripts/build-craft-rules-from-client.mjs`):
-  Lesser / 通常 / Greater エッセンス = マジック → レア + 保証モッド (既存 mod は残る)、
-  Perfect / コラプトエッセンス / 合金 = レアからランダム 1 mod 除去 + 保証モッド (外れる mod ごとに行、確率 = 1/候補数)、
-  結晶化のお告げ (左側 / 右側) で除去対象を prefix / suffix に限定、Rarity テーブルの prefix / suffix 上限、
-  同ファミリー (Mods.Families) の mod は 1 個、保証モッドの必要 ilvl (Mods.Level) は警告表示。
-- 上位プレイヤー基準 (`views/craft-profit/top-profile.ts`): 発見 V2 のキャッシュから同種別のレアだけ集計し、mod の採用率 /
-  最頻ティアを表示。貼り付け装備の mod の採用率と自分のティア、付いていない主流 mod、エッセンス候補の「上位採用率」順の並べ替え、
-  典型構成 (主流 prefix 3 + suffix 3) の鑑定 / 相場。
-- データ: `scripts/build-essences-from-client.mjs` が Essences / EssenceMods / EssenceTargetItemCategories から
-  `src/i18n/essences.json` (エッセンス → 装備種別ごとの保証モッド ID) と `src/i18n/base-item-classes.json` (ベース名 → 装備種別) を生成
-  (`pnpm build:dicts:client` に含まれる)。保証モッドの文言 / ロール幅 / stat は mods-bundle.json、trade2 の stat ID は trade2-stat-mapping.json
-  (`local_*` の GGG ID は trade2 の "(Local)" 版に張る)。
-- 素材価格は poe2scout の名前一致 (エッセンス / 合金 / お告げ)。相場の通貨換算は poe2scout のリーグレート (神 / カオス) と各通貨の価格表。
-  診断: `cd src-tauri && cargo run --example trade2_probe` / `trade2_batch <queries.json> <out.json>` (env `TRADE2_GAP_MS`)。
+賭けクラフトの期待値ツール群。左ナビ「ヴァールの天秤」をクリックすると下に 4 つが展開する (旧「クラフト収支」は廃止、
+貼り付け解析だけ `services/items/parse-item.ts` に移設)。確率はどれも GGG 非公開なので既定値はコミュニティの観測値で、各画面の「前提」から変更できる。
+素材価格は poe2scout、売値は trade2 (取得ボタン = API、「鑑定 ↗」= `?q=` で JP トレードを開くだけ) か手入力。
+
+- 聖別の賭け (`views/SanctifyEv.vue`, `views/sanctify/{model,useSanctify}.ts`): 神のオーブ + 聖別のお告げ。装備を貼り付け →
+  モッドごとに ブリック値 / 目標値 / 大当たり値 → 各モッドの値がそれぞれ独立に 0.78〜1.22 倍 (既定) される分布を列挙し、
+  4 区分 (ブリック / 現状維持 / 当たり / 大当たり) の確率 × 区分ごとの売値で期待値。未聖別で売る値段と比較して判定。
+  品質付きモッドは「表示値 = 切り捨て(実値 × (1+品質))」から実値に戻して計算する。
+- 品質超過の賭け (`views/Overquality.vue`, `views/overquality/{model,useOverquality}.ts`): ヴァールインフューザーで品質 20% → 30% に
+  育てて可能性のお告げ + 可能性のオーブでユニーク化 (代表: 吸収のワンド → アドニアのエゴ)。品質の階段を状態遷移で解いて
+  生存率 / インフューザー期待数 / 完成品 1 個の実質コスト / 利益 / 損益分岐のベース価格 / 95・99% 資金を出す。
+  既定: +2 が 20%、コラプト確率 = 0.052 × (品質 − 20) (20 → 30 の生存率 ≈ 9.8%)。
+- ジェムコラプトの賭け (`views/GemCorrupt.vue`, `views/gem-corrupt/{model,useGemCorrupt}.ts`): レベル 21 · 品質 23% のジェムを
+  得る 4 経路 (自作 / 21 を買って結晶 / 23% を買って結晶 / 完成品を買う) を 1 回の期待収支で比較。ジェム一覧は
+  `scripts/build-gems-from-client.mjs` → `src/i18n/gems-client.json` (SkillGems / BaseItemTypes / GemTags、persistent = スピリット)。
+- アルダーの航路 (`views/SagaPlanner.vue`): アルダーの叙事詩の 5 枠の噂からマップを絞る。噂 → マップの対応 (観測値) と
+  クライアント由来のマップ名 / ボス名 / ユニーク判定は `scripts/build-saga-from-client.mjs` → `src/i18n/saga-routes.json`。
+  噂の文言はクライアントのテーブルに無いので英語表記、評価欄は自分用 (localStorage)。
 - trade2 のレート制限 (実測 X-Rate-Limit-Ip): search 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600。5 分 30 回を超えると 10〜30 分ペナルティ。
-- 未対応 (次段階候補): ルーン / ソウルコア、触媒、割れ (Fracturing)、保証モッドが複数候補からランダムなエッセンス、高貴 / 消滅 / カオス系のお告げ。
+  `services/trade2/pricing.ts` は search 10.5 秒 / fetch 2.5 秒間隔で直列化し、429 で打ち切る。
+  診断: `cd src-tauri && cargo run --example trade2_probe` / `trade2_batch <queries.json> <out.json>` (env `TRADE2_GAP_MS`)。
 
 ### カレンシーランキングの分類 (2026-09-09〜)
 

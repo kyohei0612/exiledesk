@@ -30,7 +30,6 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { ROOT, loadPair, loadTable } from "./client-export-config.mjs";
 
-const OUT_ESSENCES = resolve(ROOT, "src/i18n/essences.json");
 const OUT_CLASSES = resolve(ROOT, "src/i18n/base-item-classes.json");
 const BUNDLE = resolve(ROOT, "src/i18n/mods-bundle.json");
 
@@ -106,7 +105,7 @@ async function main() {
   await writeFile(OUT_ESSENCES, JSON.stringify({ essences }, null, 2) + "\n", "utf8");
   await writeFile(OUT_CLASSES, JSON.stringify(baseClasses, null, 2) + "\n", "utf8");
   const withTargets = essences.filter((e) => e.targets.length > 0).length;
-  log(`essences: ${essences.length} (targets あり ${withTargets}) → ${OUT_ESSENCES}`);
+  log(`essences: ${essences.length} (targets あり ${withTargets}) — 2026-09-12 以降 essences.json は出力しない (クラフト収支を廃止)`);
   log(`base-item-classes: ${Object.keys(baseClasses).length} → ${OUT_CLASSES}`);
   if (missingInBundle.size) {
     log(`WARN: mods-bundle に無い保証モッド ${missingInBundle.size} 件: ${[...missingInBundle].slice(0, 10).join(", ")}${missingInBundle.size > 10 ? " …" : ""}`);

@@ -4,9 +4,11 @@ import CurrencyRanking from "../views/CurrencyRanking.vue";
 import CraftDiscoveryV2B from "../views/CraftDiscoveryV2B.vue";
 import Settings from "../views/Settings.vue";
 import PobLauncher from "../views/PobLauncher.vue";
-import CraftProfit from "../views/CraftProfit.vue";
 import ClientLog from "../views/ClientLog.vue";
 import GemCorrupt from "../views/GemCorrupt.vue";
+import SanctifyEv from "../views/SanctifyEv.vue";
+import Overquality from "../views/Overquality.vue";
+import SagaPlanner from "../views/SagaPlanner.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
 // 復活時は次の 2 行を戻すだけで OK:
 //   import EconDashboard from "../views/EconDashboard.vue";
@@ -26,12 +28,16 @@ const currentView = computed<Component | undefined>(() => {
       return Settings;
     case "pob":
       return PobLauncher;
-    case "craft-profit":
-      return CraftProfit;
     case "client-log":
       return ClientLog;
     case "gem-corrupt":
       return GemCorrupt;
+    case "sanctify-ev":
+      return SanctifyEv;
+    case "overquality":
+      return Overquality;
+    case "saga":
+      return SagaPlanner;
     default:
       return undefined;
   }

@@ -1,5 +1,5 @@
 <!--
-  GemCorrupt.vue — ジェムコラプト収支 (2026-09-12)
+  GemCorrupt.vue — ジェムコラプトの賭け (2026-09-12、「ヴァールの天秤」の 1 つ)
   ジェムを選ぶ → 売値 3 つ (レベル 21 / 品質 23% / 完成品) を trade2 で取る or 手入力 →
   自作 / 21 を買って賭け / 23% を買って賭け / 完成品を買う の 4 経路を「1 回あたりの期待収支」で比べる (完成品 1 個の実質コストも併記)。
     views/gem-corrupt/model.ts         期待値モデル (純粋関数)
@@ -79,7 +79,7 @@ const materialRows = computed(() => {
 <template>
   <section class="h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)] overflow-y-auto">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプト収支</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプトの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
         レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う)
         を「1 回あたりの期待収支」で比べます。金額は高貴 (Exalted) 建て。

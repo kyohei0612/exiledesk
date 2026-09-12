@@ -8,9 +8,8 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { Rarity, SecurityStatus } from "../../constants/trade2";
-import { TRADE2_SITE_ORIGIN, trade2QueryUrl } from "./league";
-import type { Trade2SearchResponse, Trade2StatFilter } from "./query";
+import { TRADE2_SITE_ORIGIN } from "./league";
+import type { Trade2SearchResponse } from "./query";
 
 /**
  * 連続リクエストの最小間隔 (ms)。search と fetch は別ポリシーなので別々に数える。
@@ -92,40 +91,6 @@ export interface PriceResult {
   searchUrl: string;
 }
 
-export interface PriceQueryInput {
-  /** trade2 のリーグ名 (例 "Forbidden Rites") */
-  league: string;
-  /** 完全一致させるベース名 (英語)。null なら category のみ */
-  baseTypeEn: string | null;
-  /** type_filters.category.option (baseTypeEn が無いとき / 0 件時のフォールバック) */
-  category: string | null;
-  rarity: "rare" | "magic";
-  stats: Trade2StatFilter[];
-}
-
-/**
- * 同じ条件でトレードサイトを開く URL (API を叩かない)。ベース名があればベース完全一致、無ければカテゴリ。
- * 「鑑定」ボタン用: レート制限を消費せずに出品一覧を目で見る。
- */
-export function priceQueryUrl(input: PriceQueryInput): string {
-  const useBase = !!input.baseTypeEn;
-  return trade2QueryUrl(input.league, buildQuery(input, useBase));
-}
-
-function buildQuery(input: PriceQueryInput, useBase: boolean) {
-  const typeFilters: Record<string, unknown> = {
-    rarity: { option: input.rarity === "rare" ? Rarity.Rare : Rarity.Magic },
-  };
-  if (!useBase && input.category) typeFilters.category = { option: input.category };
-  const query: Record<string, unknown> = {
-    status: { option: SecurityStatus.Securable },
-    stats: [{ type: "and", filters: input.stats }],
-    filters: { type_filters: { filters: typeFilters } },
-  };
-  if (useBase && input.baseTypeEn) query.type = { discriminator: null, option: input.baseTypeEn };
-  return { query, sort: { price: "asc" } };
-}
-
 interface FetchResponse {
   result?: Array<{
     item?: { name?: string; typeLine?: string; ilvl?: number };
@@ -179,22 +144,4 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
 export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates): Promise<PriceResult> {
   const search = await searchOnce(league, body);
   return fetchListings(league, search, rates);
-}
-
-/**
- * 最安値を調べる。ベース完全一致で 0 件ならカテゴリで再検索する。
- * 各 search / fetch は throttled で直列化される (同時に複数呼んでも安全)。
- */
-export async function priceMinListing(input: PriceQueryInput, rates: ExaltedRates): Promise<PriceResult> {
-  const attempts: boolean[] = [];
-  if (input.baseTypeEn) attempts.push(true);
-  if (input.category) attempts.push(false);
-  if (attempts.length === 0) throw new Error("ベース名もカテゴリも無いので検索できません");
-
-  let search: Trade2SearchResponse = {};
-  for (const useBase of attempts) {
-    search = await searchOnce(input.league, buildQuery(input, useBase));
-    if ((search.total ?? 0) > 0) break;
-  }
-  return fetchListings(input.league, search, rates);
 }
