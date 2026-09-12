@@ -6,7 +6,7 @@
     views/overquality/useOverquality.ts プリセット / 相場 / 入力
 -->
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { useOverquality } from "./overquality/useOverquality";
@@ -25,6 +25,54 @@ onMounted(() => {
 });
 const showAssumptions = ref(false);
 const showLadder = ref(false);
+
+/** 「N 回やった場合」の N (5 刻み)。オーナー指示 2026-09-13 */
+const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const attempts = ref(10);
+const atN = computed(() => {
+  const r = o.result.value;
+  const n = attempts.value;
+  const s = r.survival;
+  const finish = (o.auto.value.omen ?? 0) + (o.auto.value.chance ?? 0);
+  return {
+    n,
+    /** 少なくとも 1 個できる確率 */
+    pAny: s > 0 ? 1 - Math.pow(1 - s, n) : 0,
+    /** 完成の期待数 */
+    expected: n * s,
+    /** 材料費 (ワンド + 彫刻針 + インフューザー期待) × N */
+    materials: r.ok ? n * r.expectedCostPerAttempt : null,
+    /** 成功 1 個ごとに掛かるお告げ + オーブ */
+    finish,
+    /** 期待総費用 = 材料費 + 期待完成数 × 仕上げ */
+    total: r.ok ? n * r.expectedCostPerAttempt + n * s * finish : null,
+    /** 期待売上 = 期待完成数 × 売値 */
+    revenue: r.ok && o.salePrice.value != null ? n * s * o.salePrice.value : null,
+  };
+});
+/** 素材表の行 (1 回あたりの数量と費用、N 回分) */
+const materialRows = computed(() => {
+  const r = o.result.value;
+  const n = attempts.value;
+  const s = r.survival;
+  const rows = [
+    { key: "wand", label: "吸収のワンド", note: "ノーマル · 未コラプト · ソケット 2", unit: o.autoBasePrice.value, perAttempt: 1, onSuccess: false },
+    { key: "etcher", label: o.preset.value.qualityCurrencyJa, note: "0 → 20% (1 本 +1%)", unit: o.auto.value.qualityCurrency, perAttempt: o.qualityCurrencyCount.value, onSuccess: false },
+    { key: "infuser", label: o.preset.value.infuserJa, note: "20% → 目標まで。壊れるまでに使う本数の期待値", unit: o.auto.value.infuser, perAttempt: r.expectedInfusers, onSuccess: false },
+    { key: "omen", label: "可能性のお告げ", note: "成功した 1 本にだけ使う", unit: o.auto.value.omen, perAttempt: 1, onSuccess: true },
+    { key: "chance", label: "可能性のオーブ", note: "成功した 1 本にだけ使う", unit: o.auto.value.chance, perAttempt: 1, onSuccess: true },
+  ];
+  return rows.map((row) => {
+    const qtyN = row.onSuccess ? row.perAttempt * n * s : row.perAttempt * n;
+    return {
+      ...row,
+      costPerAttempt: row.unit == null ? null : row.onSuccess ? null : row.unit * row.perAttempt,
+      qtyN,
+      costN: row.unit == null ? null : row.unit * qtyN,
+    };
+  });
+});
+const fmtQty = (q: number): string => (Number.isInteger(q) ? String(q) : q.toFixed(2));
 
 function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 1 : 2)}%`;
@@ -112,47 +160,53 @@ function evClass(v: number | null): string {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})</h2>
+          <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 ({{ unit }})</h2>
+            <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
+              回数
+              <select v-model.number="attempts" class="num text-left w-20">
+                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+              </select>
+            </label>
+          </div>
           <table class="w-full text-[12px]">
-            <tbody>
-              <tr class="border-b border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5 pr-2">
-                  <div>{{ o.preset.value.qualityCurrencyJa }}</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる (20% まで)</div>
-                </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.qualityCurrency) }}</td>
-              </tr>
-              <tr class="border-b border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5 pr-2">
-                  <div>{{ o.preset.value.infuserJa }}</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                    品質を向上させる。最大品質を最大 10% まで超過できるが、一定確率でコラプト化する
-                    <span v-if="o.priceSource.value === 'index'">· poeindex 固定値 (実売 {{ money(o.market.value.infuser) }})</span>
-                    <span v-else>· 取引所の実売 (poeindex 固定値 {{ money(o.index.value.infuser) }})</span>
-                  </div>
-                </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.infuser) }}</td>
-              </tr>
-              <tr class="border-b border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5 pr-2">
-                  <div>可能性のお告げ</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                    次回使用する可能性のオーブはアイテムを破壊しない。成功したベースにだけ使う
-                    <span v-if="o.priceSource.value === 'index'">· poeindex 固定値 (実売 {{ money(o.market.value.omen) }})</span>
-                    <span v-else>· 取引所の実売 (poeindex 固定値 {{ money(o.index.value.omen) }})</span>
-                  </div>
-                </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.omen) }}</td>
-              </tr>
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
+                <th class="text-left font-normal pb-1">素材</th>
+                <th class="text-right font-normal pb-1 pl-3">単価</th>
+                <th class="text-right font-normal pb-1 pl-3">1 回の数</th>
+                <th class="text-right font-normal pb-1 pl-3">1 回の費用</th>
+                <th class="text-right font-normal pb-1 pl-3">{{ attempts }} 回の数</th>
+                <th class="text-right font-normal pb-1 pl-3">{{ attempts }} 回の費用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in materialRows" :key="m.key" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
-                  <div>可能性のオーブ</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ノーマルアイテムをユニークにアップグレードするか破壊する (お告げで破壊が無くなる)</div>
+                  <div>{{ m.label }}</div>
+                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ m.note }}</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.chance) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(m.unit) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ m.onSuccess ? "成功時 1" : fmtQty(m.perAttempt) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ m.onSuccess ? "—" : money(m.costPerAttempt) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}<span v-if="m.onSuccess" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(m.costN) }}</td>
+              </tr>
+              <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
+                <td class="py-1.5 pr-2">合計</td>
+                <td></td>
+                <td></td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ o.result.value.ok ? money(o.result.value.expectedCostPerAttempt) : "—" }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]">完成 {{ atN.expected.toFixed(2) }} 個 (期待)</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(atN.total) }}</td>
               </tr>
             </tbody>
           </table>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            インフューザー · お告げ · オーブの数は期待値。{{ attempts }} 回の合計は「材料費 × 回数 + 仕上げ (お告げ + オーブ) × 期待完成数」。
+            <span v-if="o.priceSource.value === 'index'">インフューザーとお告げは poeindex の固定値 (実売 {{ money(o.market.value.infuser) }} / {{ money(o.market.value.omen) }})。</span>
+            <span v-else>インフューザーとお告げは取引所の実売 (poeindex 固定値 {{ money(o.index.value.infuser) }} / {{ money(o.index.value.omen) }})。</span>
+          </p>
         </div>
       </BaseCard>
     </div>
@@ -199,6 +253,33 @@ function evClass(v: number | null): string {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             資金は「少なくとも 1 個成功するまでに要る手持ち」で、期待総費用ではありません。期待総費用は実質コスト × 作る個数です。
           </p>
+          <div class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+            <div class="flex items-baseline justify-between mb-1">
+              <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
+              <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
+                回数
+                <select v-model.number="attempts" class="num text-left w-20">
+                  <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-1 max-w-xl">
+              <span class="text-[var(--exile-color-text-secondary)]">1 個以上できる確率</span>
+              <span class="text-right tabular-nums">{{ pct(atN.pAny) }}</span>
+              <span class="text-[var(--exile-color-text-secondary)]">完成の期待数</span>
+              <span class="text-right tabular-nums">{{ atN.expected.toFixed(2) }} 個</span>
+              <span class="text-[var(--exile-color-text-secondary)]">材料費 (ワンド + 彫刻針 + インフューザー) × {{ attempts }}</span>
+              <span class="text-right tabular-nums">{{ money(atN.materials) }}</span>
+              <span class="text-[var(--exile-color-text-secondary)]">仕上げ (お告げ + オーブ) × 期待完成数</span>
+              <span class="text-right tabular-nums">{{ money(atN.finish * atN.expected) }}</span>
+              <span class="text-[var(--exile-color-text-secondary)]">期待総費用</span>
+              <span class="text-right tabular-nums">{{ money(atN.total) }}</span>
+              <span class="text-[var(--exile-color-text-secondary)]">期待売上 (完成数 × 売値)</span>
+              <span class="text-right tabular-nums">{{ money(atN.revenue) }}</span>
+              <span class="text-[var(--exile-color-text-secondary)]">期待損益</span>
+              <span class="text-right tabular-nums" :class="evClass(atN.revenue != null && atN.total != null ? atN.revenue - atN.total : null)">{{ atN.revenue != null && atN.total != null ? money(atN.revenue - atN.total, true) : "—" }}</span>
+            </div>
+          </div>
           <button type="button" class="mt-2 text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="showLadder = !showLadder">
             {{ showLadder ? "▲ 品質ごとの内訳を閉じる" : "▼ 品質ごとの内訳" }}
           </button>
