@@ -34,18 +34,82 @@ const FETCH_TOP_N = 10;
 const lastRequestAt = { search: 0, fetch: 0 };
 let chain: Promise<unknown> = Promise.resolve();
 
-/** 次に search を送れる時刻 (ms)。画面の「再取得まで N 秒」表示用 (オーナー要望 2026-09-13) */
-export function nextSearchAllowedAt(): number {
-  return lastRequestAt.search + SEARCH_INTERVAL_MS;
+/**
+ * 擬似レート制限 (オーナー指示 2026-09-13「本番で制限に引っかかる前にこっちで疑似制限を」):
+ * search の送信時刻を窓ごとに数え、サーバーの上限 (5/10s, 15/60s, 30/300s) より少し手前で自分から待つ。
+ * 余裕を残すのは、同じ IP でオーナーがトレードサイトを手で検索した分をこちらが数えられないため。
+ * 記録は localStorage に残す (アプリを立ち上げ直してもサーバー側の窓は続いている)。
+ */
+const SEARCH_BUDGET: ReadonlyArray<{ windowMs: number; max: number }> = [
+  { windowMs: 10_000, max: 4 },
+  { windowMs: 60_000, max: 12 },
+  { windowMs: 300_000, max: 26 },
+];
+const SEARCH_LOG_KEY = "exiledesk.trade2.searchLog";
+let searchLog: number[] = loadSearchLog();
+function loadSearchLog(): number[] {
+  try {
+    const raw = localStorage.getItem(SEARCH_LOG_KEY);
+    const arr = raw ? (JSON.parse(raw) as unknown) : [];
+    const cutoff = Date.now() - 300_000;
+    return Array.isArray(arr) ? arr.filter((t): t is number => typeof t === "number" && t > cutoff) : [];
+  } catch {
+    return [];
+  }
+}
+function recordSearch(at: number): void {
+  searchLog = searchLog.filter((t) => t > at - 300_000);
+  searchLog.push(at);
+  try {
+    localStorage.setItem(SEARCH_LOG_KEY, JSON.stringify(searchLog));
+  } catch {
+    /* 保存できなくても動く */
+  }
+}
+/** 窓の予算から見て、次の search を送れる最も早い時刻 (ms) */
+function budgetAllowedAt(now: number): number {
+  let at = now;
+  for (const b of SEARCH_BUDGET) {
+    const inWindow = searchLog.filter((t) => t > now - b.windowMs);
+    if (inWindow.length >= b.max) {
+      // 一番古い物が窓から出た瞬間に 1 枠空く
+      const oldest = inWindow[inWindow.length - b.max];
+      at = Math.max(at, oldest + b.windowMs + 200);
+    }
+  }
+  return at;
 }
 
-/** 直列化 + エンドポイント別の最小間隔ガード */
+/** 次に search を送れる時刻 (ms) = 最小間隔と窓の予算の遅い方。画面の「再取得まで N 秒」表示用 */
+export function nextSearchAllowedAt(): number {
+  const now = Date.now();
+  const last = searchLog.length ? searchLog[searchLog.length - 1] : lastRequestAt.search;
+  return Math.max(last + SEARCH_INTERVAL_MS, budgetAllowedAt(now));
+}
+/** 直近 5 分の search 回数と上限 (画面表示用) */
+export function searchBudgetUsage(): { used: number; max: number } {
+  const now = Date.now();
+  return { used: searchLog.filter((t) => t > now - 300_000).length, max: SEARCH_BUDGET[SEARCH_BUDGET.length - 1].max };
+}
+
+/** 直列化 + エンドポイント別の最小間隔ガード (+ search は窓の予算) */
 function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
   const run = async () => {
-    const interval = kind === "search" ? SEARCH_INTERVAL_MS : FETCH_INTERVAL_MS;
-    const wait = lastRequestAt[kind] + interval - Date.now();
+    if (kind === "search") {
+      // 予算が空くまで待つ (待ち中に他の search は直列なので増えない)
+      for (;;) {
+        const wait = nextSearchAllowedAt() - Date.now();
+        if (wait <= 0) break;
+        await new Promise((r) => setTimeout(r, Math.min(wait, 5_000)));
+      }
+      const at = Date.now();
+      lastRequestAt.search = at;
+      recordSearch(at);
+      return fn();
+    }
+    const wait = lastRequestAt.fetch + FETCH_INTERVAL_MS - Date.now();
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    lastRequestAt[kind] = Date.now();
+    lastRequestAt.fetch = Date.now();
     return fn();
   };
   const p = chain.then(run, run);

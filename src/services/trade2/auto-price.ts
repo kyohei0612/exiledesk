@@ -7,7 +7,7 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
-import { nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, type ExaltedRates, type PriceResult } from "./pricing";
+import { nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
 const rateLimitedUntil = ref<number | null>(null);
@@ -32,6 +32,11 @@ export const tradeAuto = {
     void now.value; // 1 秒ごとに再計算
     return pending.value > 0 ? 0 : Math.max(0, Math.ceil((nextSearchAllowedAt() - Date.now()) / 1000));
   }),
+  /** 直近 5 分の検索回数 / 自主上限 (擬似レート制限)。1 秒ごとに更新 */
+  budget: computed(() => {
+    void now.value;
+    return searchBudgetUsage();
+  }),
   /** 画面ヘッダ用の短い状態文 */
   label: computed(() => {
     if (rateLimitedUntil.value && rateLimitedUntil.value > now.value) {
@@ -52,7 +57,8 @@ export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trad
   if (limit > 0) return { label: `レート制限中 (${limit} 秒)`, disabled: true };
   const cool = tradeAuto.cooldownSecs.value;
   if (cool > 0) return { label: `再取得まで ${cool} 秒`, disabled: true };
-  return { label: idleLabel, disabled: false };
+  const b = tradeAuto.budget.value;
+  return { label: `${idleLabel} (5 分で ${b.used}/${b.max} 回)`, disabled: false };
 }
 
 export function isRateLimited(): boolean {
