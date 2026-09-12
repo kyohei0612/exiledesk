@@ -79,11 +79,11 @@ function evClass(v: number | null): string {
             <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.autoBasePrice.value) }}</span>
             <label>
               <div>インフューザーとお告げの値段</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">poeindex の固定値 (インフューザー 0.10 神 / お告げ 12 神) か、取引所の実売か</div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">取引所の実売 (カレンシーランキング) か、poeindex の固定値 (インフューザー 0.10 神 / お告げ 12 神、古い) か</div>
             </label>
             <select v-model="o.priceSource.value" class="num text-left w-48">
-              <option value="index">poeindex の固定値</option>
               <option value="market">取引所の実売</option>
+              <option value="index">poeindex の固定値 (比較用)</option>
             </select>
             <label>
               <div>目標品質</div>
@@ -92,7 +92,7 @@ function evClass(v: number | null): string {
             <input v-model.number="o.targetQuality.value" type="number" min="21" max="30" step="1" class="num w-28" />
             <label>
               <div>{{ o.preset.value.qualityCurrencyJa }} の必要数 (0 → 20%)</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース 1 個あたり。poeindex は約 14 本。単価は右の素材表</div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース 1 個あたり。1 本で +1% なので 20 本 (poeindex は約 14 本)。単価は右の素材表</div>
             </label>
             <input v-model.number="o.qualityCurrencyCount.value" type="number" min="0" step="1" class="num w-28" />
             <label>

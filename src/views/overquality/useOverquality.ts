@@ -70,11 +70,11 @@ export const PRESETS: readonly Preset[] = [
 const BASE_RUNE_SOCKETS = 2;
 
 /**
- * poeindex (Adonia 30% Quality) の固定値 (2026-09-12 時点、オーナーの画面より)。
- * オーナー指示「インデックスの値に全て合わせて計算して欲しい」→ 既定はこちら。取引所の実売にも切り替えられる。
- *   彫刻針 0 → 20% に約 14 本 / ヴァールインフューザー 0.10 神 / 可能性のお告げ 12 神
+ * poeindex (Adonia 30% Quality) の固定値 (2026-09-12 時点、オーナーの画面より): インフューザー 0.10 神 / お告げ 12 神。
+ * 取引所の実売 (インフューザー 3 高貴前後、お告げ 7.7 神) と比べて古いので既定は「取引所の実売」。比較用に切り替えられる。
+ * 彫刻針: オーナー実測「1 本で +1%」→ 0 → 20% は 20 本 (poeindex は約 14 本としていた)。
  */
-export const INDEX_ETCHER_COUNT = 14;
+export const ETCHER_COUNT_DEFAULT = 20;
 export const INDEX_INFUSER_DIV = 0.1;
 export const INDEX_OMEN_DIV = 12;
 export type PriceSource = "index" | "market";
@@ -111,10 +111,10 @@ export function useOverquality() {
   const autoSalePrice = ref<number | null>(null);
   const basePrice = computed<number | null>(() => autoBasePrice.value);
   const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
-  const qualityCurrencyCount = ref(INDEX_ETCHER_COUNT);
+  const qualityCurrencyCount = ref(ETCHER_COUNT_DEFAULT);
   const pricing = ref(false);
-  /** インフューザーとお告げの値段の元: poeindex の固定値 (既定) / 取引所の実売 */
-  const priceSource = ref<PriceSource>("index");
+  /** インフューザーとお告げの値段の元: 取引所の実売 (既定) / poeindex の固定値 (比較用) */
+  const priceSource = ref<PriceSource>("market");
   function applyMarketDefaults(): void {
     /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
