@@ -68,7 +68,7 @@ const materialRows = computed(() => {
 </script>
 
 <template>
-  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプトの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -77,7 +77,7 @@ const materialRows = computed(() => {
       </p>
       <div class="mt-1"><CurrencyPicker /></div>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        素材価格: poe2scout{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} (カレンシーランキングと共有) / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
+        素材価格: カレンシーランキングの相場{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
         <span v-if="g.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ g.marketError.value }}</span>
       </p>
     </header>
@@ -344,7 +344,7 @@ const materialRows = computed(() => {
 
     <footer class="text-[11px] text-[var(--exile-color-text-tertiary)] flex items-center gap-4 flex-wrap">
       <span>ジェム一覧 / 素材の名前と説明: ゲームクライアント (SkillGems, BaseItemTypes, GemTags, CurrencyItems)</span>
-      <span>素材価格: poe2scout</span>
+      <span>素材価格: カレンシーランキングの相場 (poe2scout 由来)</span>
       <span>売値: trade2 (取得ボタンは検索 3 回、鑑定は API 不使用)</span>
     </footer>
   </section>

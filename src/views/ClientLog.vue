@@ -105,7 +105,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ゲームログ診断</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">

@@ -21,15 +21,16 @@ const props = withDefaults(
 );
 const model = defineModel<number | null>({ default: null });
 
-const shown = computed<string>({
+const shown = computed<string | number | null>({
   get: () => {
     const d = displayCurrency.toDisplay(model.value);
     if (d == null) return "";
     // 入力欄なので丸めすぎない (3 桁まで)
     return String(Math.round(d * 1000) / 1000);
   },
-  set: (raw: string) => {
-    const t = raw.trim();
+  set: (raw: string | number | null) => {
+    // type="number" の v-model は Vue が数値に変換して渡す (文字列とは限らない) ので、両方受ける
+    const t = raw == null ? "" : String(raw).trim();
     if (t === "") {
       model.value = null;
       return;

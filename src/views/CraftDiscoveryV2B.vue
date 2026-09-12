@@ -50,7 +50,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <CraftV2Header
       v-model:active-slot="d.activeSlot.value"
       v-model:skills-tab="d.skillsTab.value"

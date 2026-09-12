@@ -37,7 +37,7 @@ function evClass(v: number | null): string {
 </script>
 
 <template>
-  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">アドニアの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -45,7 +45,7 @@ function evClass(v: number | null): string {
         20% を超えた分だけコラプト化の危険があり、コラプトしたワンドは失敗です。完成品 1 個あたりの実質コストで判定します。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        素材価格: poe2scout{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} (カレンシーランキングと共有) / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
+        素材価格: カレンシーランキングの相場{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
         <span v-if="o.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ o.marketError.value }}</span>
       </p>
       <div class="mt-1"><CurrencyPicker /></div>
@@ -94,7 +94,7 @@ function evClass(v: number | null): string {
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                trade2 の「品質 {{ o.targetQuality.value }}% 以上」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ money(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければ poe2scout の品質不問の値 {{ money(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
+                trade2 の「品質 {{ o.targetQuality.value }}% 以上」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ money(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければカレンシーランキングの品質不問の値 {{ money(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
               </div>
             </label>
             <MoneyInput v-model="o.salePriceOverride.value" :placeholder-exalted="o.salePrice.value" width="w-28" />
@@ -105,7 +105,7 @@ function evClass(v: number | null): string {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})。空欄で poe2scout の値</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})。空欄でカレンシーランキングの値</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">

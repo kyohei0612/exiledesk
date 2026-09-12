@@ -63,7 +63,7 @@ const verdict = computed(() => {
 </script>
 
 <template>
-  <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">聖別の賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -71,7 +71,7 @@ const verdict = computed(() => {
         各モッドの値がそれぞれ独立にランダム倍率 (既定 0.78〜1.22 倍) で変わり、以後はほぼ加工できません。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        費用: poe2scout{{ s.league.value ? ` (${s.league.value.Value})` : "" }} · {{ s.marketLabel.value }} (カレンシーランキングと共有) の 神のオーブ {{ money(s.divinePrice.value) }} + 聖別のお告げ {{ money(s.omenPrice.value) }}
+        費用: カレンシーランキングの相場{{ s.league.value ? ` (${s.league.value.Value})` : "" }} · {{ s.marketLabel.value }} の 神のオーブ {{ money(s.divinePrice.value) }} + 聖別のお告げ {{ money(s.omenPrice.value) }}
         = {{ money(s.cost.value) }} / 倍率の範囲は非公開 (コミュニティ観測値、変更可)
         <span v-if="s.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ s.marketError.value }}</span>
       </p>
