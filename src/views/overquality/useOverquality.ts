@@ -69,6 +69,16 @@ export const PRESETS: readonly Preset[] = [
 /** 材料のワンドの条件: ノーマル・未コラプト・ルーンソケット 2 (オーナー指示 2026-09-12) */
 const BASE_RUNE_SOCKETS = 2;
 
+/**
+ * poeindex (Adonia 30% Quality) の固定値 (2026-09-12 時点、オーナーの画面より)。
+ * オーナー指示「インデックスの値に全て合わせて計算して欲しい」→ 既定はこちら。取引所の実売にも切り替えられる。
+ *   彫刻針 0 → 20% に約 14 本 / ヴァールインフューザー 0.10 神 / 可能性のお告げ 12 神
+ */
+export const INDEX_ETCHER_COUNT = 14;
+export const INDEX_INFUSER_DIV = 0.1;
+export const INDEX_OMEN_DIV = 12;
+export type PriceSource = "index" | "market";
+
 export function useOverquality() {
   const presetId = ref<string>("adonia");
   const preset = computed<Preset>(() => PRESETS.find((p) => p.id === presetId.value) ?? PRESETS[0]);
@@ -101,8 +111,10 @@ export function useOverquality() {
   const autoSalePrice = ref<number | null>(null);
   const basePrice = computed<number | null>(() => autoBasePrice.value);
   const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
-  const qualityCurrencyCount = ref(4);
+  const qualityCurrencyCount = ref(INDEX_ETCHER_COUNT);
   const pricing = ref(false);
+  /** インフューザーとお告げの値段の元: poeindex の固定値 (既定) / 取引所の実売 */
+  const priceSource = ref<PriceSource>("index");
   function applyMarketDefaults(): void {
     /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
@@ -151,12 +163,27 @@ export function useOverquality() {
     debounce = setTimeout(() => void fetchPrices(), 400);
   });
 
-  const auto = computed(() => ({
+  /** 取引所の実売 (高貴) */
+  const market = computed(() => ({
     qualityCurrency: priceOf(preset.value.qualityCurrencyApiId),
     infuser: priceOf(preset.value.infuserApiId),
     omen: priceOf("omen-of-chance"),
     chance: priceOf("chance"),
     uniqueRef: uniquePriceOf(uniqueEn.value),
+  }));
+  /** poeindex の固定値 (神 → 高貴) */
+  const divine = computed(() => marketStore.rates.value.divine || 1);
+  const index = computed(() => ({
+    infuser: INDEX_INFUSER_DIV * divine.value,
+    omen: INDEX_OMEN_DIV * divine.value,
+  }));
+  /** 計算に使う値 (priceSource で切替)。彫刻針とオーブはどちらでも実売 */
+  const auto = computed(() => ({
+    qualityCurrency: market.value.qualityCurrency,
+    infuser: priceSource.value === "index" ? index.value.infuser : market.value.infuser,
+    omen: priceSource.value === "index" ? index.value.omen : market.value.omen,
+    chance: market.value.chance,
+    uniqueRef: market.value.uniqueRef,
   }));
   const inputs = computed<OverqualityInputs>(() => ({
     targetQuality: targetQuality.value,
@@ -193,6 +220,9 @@ export function useOverquality() {
     basePrice,
     salePrice,
     qualityCurrencyCount,
+    priceSource,
+    market,
+    index,
     pricing,
     fetchPrices,
     baseTradeUrl,

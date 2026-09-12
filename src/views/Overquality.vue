@@ -78,13 +78,21 @@ function evClass(v: number | null): string {
             </label>
             <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.autoBasePrice.value) }}</span>
             <label>
+              <div>インフューザーとお告げの値段</div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">poeindex の固定値 (インフューザー 0.10 神 / お告げ 12 神) か、取引所の実売か</div>
+            </label>
+            <select v-model="o.priceSource.value" class="num text-left w-48">
+              <option value="index">poeindex の固定値</option>
+              <option value="market">取引所の実売</option>
+            </select>
+            <label>
               <div>目標品質</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">最大品質を最大 10% まで超過できる (クライアント)</div>
             </label>
             <input v-model.number="o.targetQuality.value" type="number" min="21" max="30" step="1" class="num w-28" />
             <label>
-              <div>{{ o.preset.value.qualityCurrencyJa }} の必要数 (20% まで)</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース 1 個あたり。単価は右の素材表</div>
+              <div>{{ o.preset.value.qualityCurrencyJa }} の必要数 (0 → 20%)</div>
+              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース 1 個あたり。poeindex は約 14 本。単価は右の素材表</div>
             </label>
             <input v-model.number="o.qualityCurrencyCount.value" type="number" min="0" step="1" class="num w-28" />
             <label>
@@ -104,7 +112,7 @@ function evClass(v: number | null): string {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})。カレンシーランキングの相場</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
@@ -117,14 +125,22 @@ function evClass(v: number | null): string {
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>{{ o.preset.value.infuserJa }}</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる。最大品質を最大 10% まで超過できるが、一定確率でコラプト化する</div>
+                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+                    品質を向上させる。最大品質を最大 10% まで超過できるが、一定確率でコラプト化する
+                    <span v-if="o.priceSource.value === 'index'">· poeindex 固定値 (実売 {{ money(o.market.value.infuser) }})</span>
+                    <span v-else>· 取引所の実売 (poeindex 固定値 {{ money(o.index.value.infuser) }})</span>
+                  </div>
                 </td>
                 <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.infuser) }}</td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>可能性のお告げ</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">次回使用する可能性のオーブはアイテムを破壊しない。成功したベースにだけ使う</div>
+                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+                    次回使用する可能性のオーブはアイテムを破壊しない。成功したベースにだけ使う
+                    <span v-if="o.priceSource.value === 'index'">· poeindex 固定値 (実売 {{ money(o.market.value.omen) }})</span>
+                    <span v-else>· 取引所の実売 (poeindex 固定値 {{ money(o.index.value.omen) }})</span>
+                  </div>
                 </td>
                 <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.omen) }}</td>
               </tr>
