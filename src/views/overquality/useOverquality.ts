@@ -66,6 +66,9 @@ export const PRESETS: readonly Preset[] = [
   },
 ];
 
+/** 材料のワンドの条件: ノーマル・未コラプト・ルーンソケット 2 (オーナー指示 2026-09-12) */
+const BASE_RUNE_SOCKETS = 2;
+
 export function useOverquality() {
   const presetId = ref<string>("adonia");
   const preset = computed<Preset>(() => PRESETS.find((p) => p.id === presetId.value) ?? PRESETS[0]);
@@ -113,7 +116,7 @@ export function useOverquality() {
   const baseSearchUrl = ref<string | null>(null);
   const saleSearchUrl = ref<string | null>(null);
   const baseTradeUrl = computed(() =>
-    baseSearchUrl.value ?? (baseEn.value ? trade2QueryUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value)) : null),
+    baseSearchUrl.value ?? (baseEn.value ? trade2QueryUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value, "normal", BASE_RUNE_SOCKETS)) : null),
   );
   const saleTradeUrl = computed(
     () =>
@@ -128,7 +131,7 @@ export function useOverquality() {
     pricing.value = true;
     try {
       if (baseEn.value) {
-        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value), marketStore.rates.value);
+        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value, "normal", BASE_RUNE_SOCKETS), marketStore.rates.value);
         if (seq !== fetchSeq) return;
         if (v != null) autoBasePrice.value = v;
         if (url) baseSearchUrl.value = url;

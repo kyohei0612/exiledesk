@@ -170,14 +170,20 @@ export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
   };
 }
 
-/** ベース名完全一致 (レアリティ指定、未コラプト) の最安。品質超過の賭けの「素のベース」用 (2026-09-12) */
-export function buildBaseTypeQuery(baseEn: string, rarity: "normal" | "rare" = "normal") {
+/**
+ * ベース名完全一致 (レアリティ指定、未コラプト、ルーンソケット数の下限) の最安。アドニアの賭けの「素のワンド」用 (2026-09-12)。
+ * オーナー指示: アドニアの材料は「コラプトなし・ノーマル・2 ソケットの吸収のワンド」。trade2 の装備フィルタ id は rune_sockets。
+ */
+export function buildBaseTypeQuery(baseEn: string, rarity: "normal" | "rare" = "normal", runeSocketsMin?: number) {
+  const equipment: Record<string, unknown> = {};
+  if (runeSocketsMin != null) equipment.rune_sockets = { min: runeSocketsMin };
   return {
     query: {
       status: { option: SecurityStatus.Securable },
       type: { discriminator: null, option: baseEn },
       filters: {
         type_filters: { filters: { rarity: { option: rarity === "normal" ? Rarity.Normal : Rarity.Rare } } },
+        equipment_filters: { filters: equipment },
         misc_filters: { filters: { corrupted: { option: "false" } } },
       },
     },

@@ -74,7 +74,7 @@ function evClass(v: number | null): string {
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.baseTradeUrl.value" @click="open(o.baseTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                失敗のたびに消える。trade2 のノーマル・未コラプト最安を自動で取る<span v-if="o.autoBasePrice.value != null"> (取得 {{ money(o.autoBasePrice.value) }})</span>。手入力で上書き可
+                失敗のたびに消える。trade2 の「ノーマル · 未コラプト · ソケット 2」の最安を自動で取る<span v-if="o.autoBasePrice.value != null"> (取得 {{ money(o.autoBasePrice.value) }})</span>。手入力で上書き可
               </div>
             </label>
             <MoneyInput v-model="o.basePriceOverride.value" :placeholder-exalted="o.autoBasePrice.value" width="w-28" />
