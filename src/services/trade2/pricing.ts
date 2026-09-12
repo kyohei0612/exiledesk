@@ -100,10 +100,31 @@ interface FetchResponse {
 }
 
 /** 検索 1 回 (直列化 + 間隔ガード) */
+/**
+ * dev (vite) では Tauri が無いので、vite のプロキシ (/api/trade2-www, /api/trade2-jp) 経由で直接叩く。
+ * 本番は Rust の trade2_search / trade2_fetch。429 は Rust 側と同じ "HTTP 429 retry-after=N" 形式で投げる。
+ */
+const DEV_TRADE = import.meta.env.DEV;
+async function devJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const r = await fetch(url, init);
+  if (r.status === 429) throw new Error(`HTTP 429 retry-after=${r.headers.get("retry-after") ?? "60"}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return (await r.json()) as T;
+}
+
 async function searchOnce(league: string, body: unknown): Promise<Trade2SearchResponse> {
   // JP サイト設定なら JP の API に日本語名で投げる (検索 ID を JP サイトで開けるようにする)
   const site = trade2Site();
   const query = localizeQueryForSite(body);
+  if (DEV_TRADE) {
+    return throttled("search", () =>
+      devJson<Trade2SearchResponse>(`/api/trade2-${site}/search/poe2/${encodeURIComponent(league)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(query),
+      }),
+    );
+  }
   return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } }));
 }
 
@@ -116,7 +137,10 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
   if (ids.length === 0 || !search.id) {
     return { total: search.total ?? 0, minExalted: null, listings: [], searchUrl };
   }
-  const fetched = await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site: trade2Site() } }));
+  const site = trade2Site();
+  const fetched = DEV_TRADE
+    ? await throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`))
+    : await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } }));
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;

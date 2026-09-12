@@ -11,7 +11,6 @@ import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { useOverquality } from "./overquality/useOverquality";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
-import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
@@ -74,10 +73,10 @@ function evClass(v: number | null): string {
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.baseTradeUrl.value" @click="open(o.baseTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                失敗のたびに消える。trade2 の「ノーマル · 未コラプト · ソケット 2」の最安を自動で取る<span v-if="o.autoBasePrice.value != null"> (取得 {{ money(o.autoBasePrice.value) }})</span>。手入力で上書き可
+                失敗のたびに消える。trade2 の「ノーマル · 未コラプト · ソケット 2」の最安
               </div>
             </label>
-            <MoneyInput v-model="o.basePriceOverride.value" :placeholder-exalted="o.autoBasePrice.value" width="w-28" />
+            <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.autoBasePrice.value) }}</span>
             <label>
               <div>目標品質</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">最大品質を最大 10% まで超過できる (クライアント)</div>
@@ -94,10 +93,10 @@ function evClass(v: number | null): string {
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                trade2 の「品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト」の最安を自動で取る<span v-if="o.autoSalePrice.value != null"> (取得 {{ money(o.autoSalePrice.value) }})</span><span v-else-if="o.auto.value.uniqueRef != null">。無ければカレンシーランキングの品質不問の値 {{ money(o.auto.value.uniqueRef) }}</span>。手入力で上書き可
+                trade2 の「品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト」の最安<span v-if="o.autoSalePrice.value == null && o.auto.value.uniqueRef != null">。取れるまではカレンシーランキングの品質不問の値</span>
               </div>
             </label>
-            <MoneyInput v-model="o.salePriceOverride.value" :placeholder-exalted="o.salePrice.value" width="w-28" />
+            <span class="tabular-nums text-[13px] text-right" :class="o.salePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.salePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.salePrice.value) }}</span>
           </div>
         </div>
       </BaseCard>
@@ -105,7 +104,7 @@ function evClass(v: number | null): string {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})。空欄でカレンシーランキングの値</h2>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})。カレンシーランキングの相場</h2>
           <table class="w-full text-[12px]">
             <tbody>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
@@ -113,32 +112,28 @@ function evClass(v: number | null): string {
                   <div>{{ o.preset.value.qualityCurrencyJa }}</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる (20% まで)</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ money(o.auto.value.qualityCurrency) }}</td>
-                <td class="py-1.5 text-right w-28"><MoneyInput v-model="o.overrides.value.qualityCurrency" placeholder="上書き" /></td>
+                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.qualityCurrency) }}</td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>{{ o.preset.value.infuserJa }}</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">品質を向上させる。最大品質を最大 10% まで超過できるが、一定確率でコラプト化する</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ money(o.auto.value.infuser) }}</td>
-                <td class="py-1.5 text-right"><MoneyInput v-model="o.overrides.value.infuser" placeholder="上書き" /></td>
+                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.infuser) }}</td>
               </tr>
               <tr class="border-b border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
                   <div>可能性のお告げ</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">次回使用する可能性のオーブはアイテムを破壊しない。成功したベースにだけ使う</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ money(o.auto.value.omen) }}</td>
-                <td class="py-1.5 text-right"><MoneyInput v-model="o.overrides.value.omen" placeholder="上書き" /></td>
+                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.omen) }}</td>
               </tr>
               <tr>
                 <td class="py-1.5 pr-2">
                   <div>可能性のオーブ</div>
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ノーマルアイテムをユニークにアップグレードするか破壊する (お告げで破壊が無くなる)</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ money(o.auto.value.chance) }}</td>
-                <td class="py-1.5 text-right"><MoneyInput v-model="o.overrides.value.chance" placeholder="上書き" /></td>
+                <td class="py-1.5 text-right tabular-nums whitespace-nowrap">{{ money(o.auto.value.chance) }}</td>
               </tr>
             </tbody>
           </table>

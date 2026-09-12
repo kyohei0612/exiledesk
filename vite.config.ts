@@ -39,6 +39,20 @@ export default defineConfig(async () => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/poe2scout/, ""),
       },
+      // 2026-09-12: trade2 API も dev ではプロキシ経由で叩けるようにする (本番は Rust trade2_search / trade2_fetch)。
+      // ブラウザ (vite dev) でヴァールの天秤の自動取得まで確認するため。UA は Cloudflare 対策で付ける。
+      "/api/trade2-www": {
+        target: "https://www.pathofexile.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trade2-www/, "/api/trade2"),
+        headers: { "User-Agent": "ExileDesk/dev (contact: nekodori0612@gmail.com)" },
+      },
+      "/api/trade2-jp": {
+        target: "https://jp.pathofexile.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trade2-jp/, "/api/trade2"),
+        headers: { "User-Agent": "ExileDesk/dev (contact: nekodori0612@gmail.com)" },
+      },
     },
   },
 }));

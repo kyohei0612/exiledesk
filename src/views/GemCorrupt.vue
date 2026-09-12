@@ -165,7 +165,7 @@ const materialRows = computed(() => {
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ row.condition }}</div>
                 </td>
                 <td class="py-1.5 text-right">
-                  <MoneyInput v-model="g.sale.value[row.key]" />
+                  <span class="tabular-nums text-[13px]" :class="g.sale.value[row.key] == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ g.sale.value[row.key] == null ? (g.pricing.value ? "取得中…" : "—") : money(g.sale.value[row.key]) }}</span>
                 </td>
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
@@ -185,7 +185,7 @@ const materialRows = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。出品が少ない時は「トレード2へ」で一覧を見て手で直してください。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
+            ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
         </div>
       </BaseCard>

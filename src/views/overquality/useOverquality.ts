@@ -93,22 +93,16 @@ export function useOverquality() {
   const uniqueInput = ref("");
   const baseEn = computed<string | null>(() => preset.value.baseEn ?? resolveBaseEn(baseInput.value));
   const uniqueEn = computed<string | null>(() => preset.value.uniqueEn ?? resolveUniqueEn(uniqueInput.value));
-  /** trade2 から取った値 (自動)。手入力の上書きは override 側 */
+  /**
+   * trade2 から取った値 (自動)。オーナー指示 (2026-09-12): 取得する物に手入力の上書きは付けない
+   * (手で直したくなる = 取得先がおかしい、なので取得側を直す)。
+   */
   const autoBasePrice = ref<number | null>(null);
   const autoSalePrice = ref<number | null>(null);
-  const basePriceOverride = ref<number | null>(null);
-  const salePriceOverride = ref<number | null>(null);
-  const basePrice = computed<number | null>(() => basePriceOverride.value ?? autoBasePrice.value);
-  const salePrice = computed<number | null>(() => salePriceOverride.value ?? autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
+  const basePrice = computed<number | null>(() => autoBasePrice.value);
+  const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
   const qualityCurrencyCount = ref(4);
   const pricing = ref(false);
-  /** 自動価格の上書き (null = poe2scout の値を使う) */
-  const overrides = ref<{ qualityCurrency: number | null; infuser: number | null; omen: number | null; chance: number | null }>({
-    qualityCurrency: null,
-    infuser: null,
-    omen: null,
-    chance: null,
-  });
   function applyMarketDefaults(): void {
     /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
@@ -156,10 +150,6 @@ export function useOverquality() {
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => void fetchPrices(), 400);
   });
-  watch(presetId, () => {
-    basePriceOverride.value = null;
-    salePriceOverride.value = null;
-  });
 
   const auto = computed(() => ({
     qualityCurrency: priceOf(preset.value.qualityCurrencyApiId),
@@ -171,11 +161,11 @@ export function useOverquality() {
   const inputs = computed<OverqualityInputs>(() => ({
     targetQuality: targetQuality.value,
     basePrice: basePrice.value != null && Number.isFinite(basePrice.value) ? basePrice.value : null,
-    qualityCurrencyPrice: overrides.value.qualityCurrency ?? auto.value.qualityCurrency,
+    qualityCurrencyPrice: auto.value.qualityCurrency,
     qualityCurrencyCount: qualityCurrencyCount.value,
-    infuserPrice: overrides.value.infuser ?? auto.value.infuser,
-    omenPrice: overrides.value.omen ?? auto.value.omen,
-    chancePrice: overrides.value.chance ?? auto.value.chance,
+    infuserPrice: auto.value.infuser,
+    omenPrice: auto.value.omen,
+    chancePrice: auto.value.chance,
     salePrice: salePrice.value != null && Number.isFinite(salePrice.value) ? salePrice.value : null,
   }));
 
@@ -200,8 +190,6 @@ export function useOverquality() {
     uniqueEn,
     autoBasePrice,
     autoSalePrice,
-    basePriceOverride,
-    salePriceOverride,
     basePrice,
     salePrice,
     qualityCurrencyCount,
@@ -210,7 +198,6 @@ export function useOverquality() {
     baseTradeUrl,
     saleTradeUrl,
     tradeAuto,
-    overrides,
     auto,
     inputs,
     params,
