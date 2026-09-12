@@ -70,14 +70,12 @@ export const PRESETS: readonly Preset[] = [
 const BASE_RUNE_SOCKETS = 2;
 
 /**
- * poeindex (Adonia 30% Quality) の固定値 (2026-09-12 時点、オーナーの画面より): インフューザー 0.10 神 / お告げ 12 神。
- * 取引所の実売 (インフューザー 3 高貴前後、お告げ 7.7 神) と比べて古いので既定は「取引所の実売」。比較用に切り替えられる。
- * 彫刻針: オーナー実測「1 本で +1%」→ 0 → 20% は 20 本 (poeindex は約 14 本としていた)。
+ * 固定の前提 (オーナー指示 2026-09-13「入力は全て自動でいい」→ 手入力欄と poeindex 固定値モードは撤去):
+ *   目標品質 30% (完成品の検索条件と同じ) / 彫刻針は 1 本 +1% なので 0 → 20% に 20 本 (オーナー実測)。
+ *   インフューザーとお告げの値段は取引所の実売 (カレンシーランキング) のみ。
  */
-export const ETCHER_COUNT_DEFAULT = 20;
-export const INDEX_INFUSER_DIV = 0.1;
-export const INDEX_OMEN_DIV = 12;
-export type PriceSource = "index" | "market";
+export const TARGET_QUALITY = 30;
+export const ETCHER_COUNT = 20;
 
 export function useOverquality() {
   const presetId = ref<string>("adonia");
@@ -96,8 +94,8 @@ export function useOverquality() {
   const uniquePriceOf = marketStore.uniquePriceOf;
   const divineRate = computed(() => league.value?.DivinePrice || 1);
 
-  // ---- 入力 ----
-  const targetQuality = ref(30);
+  // ---- 前提 (固定) ----
+  const targetQuality = computed(() => TARGET_QUALITY);
   /** 汎用プリセット用: ベース / ユニークの名前 (日本語でも英語でも可)。固定プリセットでは preset の値 */
   const baseInput = ref("");
   const uniqueInput = ref("");
@@ -111,10 +109,8 @@ export function useOverquality() {
   const autoSalePrice = ref<number | null>(null);
   const basePrice = computed<number | null>(() => autoBasePrice.value);
   const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
-  const qualityCurrencyCount = ref(ETCHER_COUNT_DEFAULT);
+  const qualityCurrencyCount = computed(() => ETCHER_COUNT);
   const pricing = ref(false);
-  /** インフューザーとお告げの値段の元: 取引所の実売 (既定) / poeindex の固定値 (比較用) */
-  const priceSource = ref<PriceSource>("market");
   function applyMarketDefaults(): void {
     /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
@@ -163,27 +159,13 @@ export function useOverquality() {
     debounce = setTimeout(() => void fetchPrices(), 400);
   });
 
-  /** 取引所の実売 (高貴) */
-  const market = computed(() => ({
+  /** 取引所の実売 (高貴、カレンシーランキングの相場) */
+  const auto = computed(() => ({
     qualityCurrency: priceOf(preset.value.qualityCurrencyApiId),
     infuser: priceOf(preset.value.infuserApiId),
     omen: priceOf("omen-of-chance"),
     chance: priceOf("chance"),
     uniqueRef: uniquePriceOf(uniqueEn.value),
-  }));
-  /** poeindex の固定値 (神 → 高貴) */
-  const divine = computed(() => marketStore.rates.value.divine || 1);
-  const index = computed(() => ({
-    infuser: INDEX_INFUSER_DIV * divine.value,
-    omen: INDEX_OMEN_DIV * divine.value,
-  }));
-  /** 計算に使う値 (priceSource で切替)。彫刻針とオーブはどちらでも実売 */
-  const auto = computed(() => ({
-    qualityCurrency: market.value.qualityCurrency,
-    infuser: priceSource.value === "index" ? index.value.infuser : market.value.infuser,
-    omen: priceSource.value === "index" ? index.value.omen : market.value.omen,
-    chance: market.value.chance,
-    uniqueRef: market.value.uniqueRef,
   }));
   const inputs = computed<OverqualityInputs>(() => ({
     targetQuality: targetQuality.value,
@@ -220,9 +202,6 @@ export function useOverquality() {
     basePrice,
     salePrice,
     qualityCurrencyCount,
-    priceSource,
-    market,
-    index,
     pricing,
     fetchPrices,
     baseTradeUrl,

@@ -13,6 +13,7 @@ import { useOverquality } from "./overquality/useOverquality";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
+import { refetchState } from "../services/trade2/auto-price";
 import { marketStore } from "../state/market-store";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
@@ -75,6 +76,8 @@ const materialRows = computed(() => {
   });
 });
 const fmtQty = (q: number): string => (Number.isInteger(q) ? String(q) : q.toFixed(2));
+/** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
+const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り直す"));
 
 /**
  * 収支 (実績): 実際に使った素材の数と、完成した数、神のオーブでリロールした回数を手で入れて損益を出す (オーナー指示 2026-09-13)。
@@ -183,15 +186,15 @@ function evClass(v: number | null): string {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">入力</h2>
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2 から自動)</h2>
             <button
               type="button"
-              :disabled="o.pricing.value || o.tradeAuto.rateLimitSecs.value > 0 || (!o.baseEn.value && !o.uniqueEn.value)"
-              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              :disabled="refetch.disabled || (!o.baseEn.value && !o.uniqueEn.value)"
+              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
               @click="o.fetchPrices"
             >
               <span aria-hidden="true">⟳</span>
-              {{ o.pricing.value ? "trade2 で検索中…" : o.tradeAuto.rateLimitSecs.value > 0 ? `レート制限中 (${o.tradeAuto.rateLimitSecs.value} 秒)` : "trade2 で取り直す" }}
+              {{ refetch.label }}
             </button>
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
@@ -206,24 +209,6 @@ function evClass(v: number | null): string {
             </label>
             <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.autoBasePrice.value) }}</span>
             <label>
-              <div>インフューザーとお告げの値段</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">取引所の実売 (カレンシーランキング) か、poeindex の固定値 (インフューザー 0.10 神 / お告げ 12 神、古い) か</div>
-            </label>
-            <select v-model="o.priceSource.value" class="num text-left w-48">
-              <option value="market">取引所の実売</option>
-              <option value="index">poeindex の固定値 (比較用)</option>
-            </select>
-            <label>
-              <div>目標品質</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">最大品質を最大 10% まで超過できる (クライアント)</div>
-            </label>
-            <input v-model.number="o.targetQuality.value" type="number" min="21" max="30" step="1" class="num w-28" />
-            <label>
-              <div>{{ o.preset.value.qualityCurrencyJa }} の必要数 (0 → 20%)</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース 1 個あたり。1 本で +1% なので 20 本 (poeindex は約 14 本)。単価は右の素材表</div>
-            </label>
-            <input v-model.number="o.qualityCurrencyCount.value" type="number" min="0" step="1" class="num w-28" />
-            <label>
               <div>
                 完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト)
                 <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
@@ -234,6 +219,10 @@ function evClass(v: number | null): string {
             </label>
             <span class="tabular-nums text-[13px] text-right" :class="o.salePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.salePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.salePrice.value) }}</span>
           </div>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
+            前提: 目標品質 {{ o.targetQuality.value }}% (完成品の検索条件と同じ、最大品質は 10% まで超過できる) · {{ o.preset.value.qualityCurrencyJa }}は 1 本 +1% なので 0 → 20% に {{ o.qualityCurrencyCount.value }} 本 ·
+            インフューザーとお告げとオーブの単価はカレンシーランキングの相場。
+          </p>
         </div>
       </BaseCard>
 
@@ -284,8 +273,6 @@ function evClass(v: number | null): string {
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             インフューザー · お告げ · オーブの数は期待値。{{ attempts }} 回の合計は「材料費 × 回数 + 仕上げ (お告げ + オーブ) × 期待完成数」。
-            <span v-if="o.priceSource.value === 'index'">インフューザーとお告げは poeindex の固定値 (実売 {{ money(o.market.value.infuser) }} / {{ money(o.market.value.omen) }})。</span>
-            <span v-else>インフューザーとお告げは取引所の実売 (poeindex 固定値 {{ money(o.index.value.infuser) }} / {{ money(o.index.value.omen) }})。</span>
           </p>
         </div>
       </BaseCard>

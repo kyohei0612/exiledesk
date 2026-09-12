@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
+import { refetchState } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
@@ -34,7 +35,8 @@ function evClass(v: number | null): string {
   if (v == null) return "text-[var(--exile-color-text-tertiary)]";
   return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
 }
-const rateLimitSecs = computed(() => g.tradeAuto.rateLimitSecs.value);
+/** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
+const refetch = computed(() => refetchState(g.pricing.value, "再取得", "trade2 で検索中… (3 件、約 30 秒)"));
 async function open(url: string | null): Promise<void> {
   await openExternal(url);
 }
@@ -172,7 +174,7 @@ const ledgerSales = computed(() => {
   const s = g.sale.value;
   const rows: { qtyKey: CountKey; eachKey: EachKey; label: string; market: number | null; qty: number; each: number | null }[] = [
     { qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, qty: l.soldLevel21, each: l.eachLevel21 },
-    { qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23% (レベル 20)", market: s.quality23, qty: l.soldQuality23, each: l.eachQuality23 },
+    { qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23%", market: s.quality23, qty: l.soldQuality23, each: l.eachQuality23 },
     { qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, qty: l.soldFinished, each: l.eachFinished },
     { qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: null, qty: l.soldOther, each: l.eachOther },
   ];
@@ -203,16 +205,51 @@ const ledgerTotals = computed(() => {
   };
 });
 
+/** 「N 回やった場合」の N (5 刻み)。アドニアと同じ (オーナー指示 2026-09-13) */
+const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const attempts = ref(10);
+const craft = computed(() => g.routes.value.find((r) => r.id === "craft") ?? null);
+/**
+ * 素材表: 自作 1 回あたりの数と費用、N 回分。
+ * 結晶と原石は期待値 (結晶は片方当たった時に賭ける場合だけ、原石は壊れなかった物だけ)。
+ */
 const materialRows = computed(() => {
   const m = g.materials.value;
-  return [
-    { key: "baseGem", label: "低レベルのジェム本体", price: m.baseGem, editable: true, qty: 1 },
-    { key: "gcp", label: "宝石細工師のプリズム", price: m.gcp, editable: false, qty: 4 },
-    { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", price: m.perfectJeweller, editable: false, qty: 1 },
-    { key: "vaal", label: "ヴァールオーブ", price: m.vaal, editable: false, qty: 1 },
-    { key: "crystal", label: "コラプトの結晶", price: m.crystal, editable: false, qty: 1 },
-    { key: "uncut20", label: g.uncutLabel.value, price: m.uncut20, editable: false, qty: 1 },
+  const c = craft.value;
+  const n = attempts.value;
+  const rows: { key: string; label: string; price: number | null; editable: boolean; perAttempt: number | null; expected: boolean }[] = [
+    { key: "baseGem", label: "低レベルのジェム本体", price: m.baseGem, editable: true, perAttempt: 1, expected: false },
+    { key: "gcp", label: "宝石細工師のプリズム", price: m.gcp, editable: false, perAttempt: 4, expected: false },
+    { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", price: m.perfectJeweller, editable: false, perAttempt: 1, expected: false },
+    { key: "vaal", label: "ヴァールオーブ", price: m.vaal, editable: false, perAttempt: 1, expected: false },
+    { key: "crystal", label: "コラプトの結晶", price: m.crystal, editable: false, perAttempt: c?.ok ? (c.expectedCrystals ?? 0) : null, expected: true },
+    { key: "uncut20", label: g.uncutLabel.value, price: m.uncut20, editable: false, perAttempt: c?.ok ? (c.expectedUncut ?? 0) : null, expected: true },
   ];
+  return rows.map((r) => {
+    const qtyN = r.perAttempt == null ? null : r.perAttempt * n;
+    return {
+      ...r,
+      costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
+      qtyN,
+      costN: r.price == null || qtyN == null ? null : r.price * qtyN,
+    };
+  });
+});
+const fmtQty = (q: number | null): string => (q == null ? "—" : Number.isInteger(q) ? String(q) : q.toFixed(2));
+/** N 回やった場合 (経路ごと) */
+const atN = computed(() => {
+  const n = attempts.value;
+  return g.routes.value
+    .filter((r) => r.ok)
+    .map((r) => ({
+      id: r.id,
+      label: r.label,
+      pAny: r.pFinished > 0 ? 1 - Math.pow(1 - r.pFinished, n) : 0,
+      expected: n * r.pFinished,
+      cost: n * r.expectedCost,
+      revenue: n * (r.ev + r.expectedCost),
+      profit: n * r.ev,
+    }));
 });
 </script>
 
@@ -292,12 +329,12 @@ const materialRows = computed(() => {
               </label>
               <button
                 type="button"
-                :disabled="!g.selected.value || g.pricing.value || rateLimitSecs > 0"
+                :disabled="!g.selected.value || refetch.disabled"
                 class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 @click="g.fetchSalePrices"
               >
                 <span aria-hidden="true">⟳</span>
-                {{ g.pricing.value ? "trade2 で検索中… (3 件、約 30 秒)" : rateLimitSecs > 0 ? `レート制限中 (${rateLimitSecs} 秒)` : "再取得" }}
+                {{ refetch.label }}
               </button>
             </div>
           </div>
@@ -346,23 +383,54 @@ const materialRows = computed(() => {
       <!-- 素材 -->
       <BaseCard>
         <div class="p-4 pl-5">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">素材 (1 個、{{ unit }})</h2>
+          <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 (自作、{{ unit }})</h2>
+            <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
+              回数
+              <select v-model.number="attempts" class="num text-left w-20">
+                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+              </select>
+            </label>
+          </div>
           <table class="w-full text-[12px]">
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+              <tr>
+                <th class="text-left font-normal pb-1">素材</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">単価</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の数</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の数</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の費用</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr v-for="m in materialRows" :key="m.key" class="border-t border-[var(--exile-color-border-subtle)] first:border-t-0">
+              <tr v-for="m in materialRows" :key="m.key" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">
-                  <div>{{ m.label }}<span v-if="m.qty > 1" class="text-[var(--exile-color-text-tertiary)]"> ×{{ m.qty }}</span></div>
+                  <div>{{ m.label }}</div>
                   <div v-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums w-28">
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
                   <MoneyInput v-if="m.editable" v-model="g.baseGemPrice.value" />
-                  <span v-else class="whitespace-nowrap" :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
+                  <span v-else :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
                 </td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costPerAttempt) }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costN) }}</td>
+              </tr>
+              <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
+                <td class="py-1.5 pr-2">合計 (期待)</td>
+                <td></td>
+                <td></td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(craft.expectedCost) : "—" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]">{{ craft?.ok ? `完成 ${(attempts * craft.pFinished).toFixed(2)} 個` : "" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(attempts * craft.expectedCost) : "—" }}</td>
               </tr>
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は相場が無いので手入力です。
+            結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>
         </div>
       </BaseCard>
@@ -439,6 +507,42 @@ const materialRows = computed(() => {
               不足: {{ r.missing.join("、") }}
             </div>
           </div>
+        </div>
+        <div v-if="atN.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+          <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
+            <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合 (経路ごと)</span>
+            <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
+              回数
+              <select v-model.number="attempts" class="num text-left w-20">
+                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+              </select>
+            </label>
+          </div>
+          <table class="w-full text-[12px]">
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+              <tr>
+                <th class="text-left font-normal pb-1">経路</th>
+                <th class="text-right font-normal pb-1 pl-2">1 個以上できる確率</th>
+                <th class="text-right font-normal pb-1 pl-2">完成の期待数</th>
+                <th class="text-right font-normal pb-1 pl-2">期待総費用</th>
+                <th class="text-right font-normal pb-1 pl-2">期待売上</th>
+                <th class="text-right font-normal pb-1 pl-2">期待損益</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in atN" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="g.best.value && g.best.value.id === r.id ? 'text-[var(--exile-color-accent-focus)]' : ''">
+                <td class="py-1 pr-2">{{ r.label }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums">{{ pct(r.pAny) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums">{{ r.expected.toFixed(2) }} 個</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.profit)">{{ r.id === 'buyFinished' ? "基準 (0)" : money(r.profit, true) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">
+            期待総費用は「確定費用 + 結晶の期待本数 × 結晶」× 回数。期待売上は出来た物 (完成品・21・23%・外れの生存品) を全部売った時の平均 × 回数。買って賭ける経路の費用は買値込み。
+          </p>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
           「1 回の期待収支」は 1 回試して出来た物を全部売った時の平均損益で、完成品を買う経路が 0 の基準。これで「最も得」を決めます。

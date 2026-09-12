@@ -7,7 +7,7 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
-import { priceMinForQuery, retryAfterSeconds, type ExaltedRates, type PriceResult } from "./pricing";
+import { nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
 const rateLimitedUntil = ref<number | null>(null);
@@ -23,6 +23,15 @@ export const tradeAuto = {
   lastError,
   /** 残り秒 (制限中でなければ 0) */
   rateLimitSecs: computed(() => (rateLimitedUntil.value ? Math.max(0, Math.ceil((rateLimitedUntil.value - now.value) / 1000)) : 0)),
+  /**
+   * 直前の search から最小間隔 (10.5 秒) が空くまでの残り秒。連打しても裏で待たされるだけなので、
+   * ボタンに「再取得まで N 秒」と出して 0 になったら押せるようにする (オーナー要望 2026-09-13)。
+   * pending が使う値なので、検索中は 0 扱い (「検索中…」を優先)。
+   */
+  cooldownSecs: computed(() => {
+    void now.value; // 1 秒ごとに再計算
+    return pending.value > 0 ? 0 : Math.max(0, Math.ceil((nextSearchAllowedAt() - Date.now()) / 1000));
+  }),
   /** 画面ヘッダ用の短い状態文 */
   label: computed(() => {
     if (rateLimitedUntil.value && rateLimitedUntil.value > now.value) {
@@ -32,6 +41,19 @@ export const tradeAuto = {
     return lastError.value ? `trade2 エラー: ${lastError.value}` : "";
   }),
 };
+
+/**
+ * 再取得ボタンの文言と押せるか。各ツール共通 (アドニア / ジェム)。
+ *   検索中 → "trade2 で検索中…" / 429 → "レート制限中 (N 秒)" / 間隔待ち → "再取得まで N 秒" / それ以外 → idleLabel
+ */
+export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trade2 で検索中…"): { label: string; disabled: boolean } {
+  if (busy) return { label: busyLabel, disabled: true };
+  const limit = tradeAuto.rateLimitSecs.value;
+  if (limit > 0) return { label: `レート制限中 (${limit} 秒)`, disabled: true };
+  const cool = tradeAuto.cooldownSecs.value;
+  if (cool > 0) return { label: `再取得まで ${cool} 秒`, disabled: true };
+  return { label: idleLabel, disabled: false };
+}
 
 export function isRateLimited(): boolean {
   return !!rateLimitedUntil.value && rateLimitedUntil.value > Date.now();

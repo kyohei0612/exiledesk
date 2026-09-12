@@ -34,6 +34,11 @@ const FETCH_TOP_N = 10;
 const lastRequestAt = { search: 0, fetch: 0 };
 let chain: Promise<unknown> = Promise.resolve();
 
+/** 次に search を送れる時刻 (ms)。画面の「再取得まで N 秒」表示用 (オーナー要望 2026-09-13) */
+export function nextSearchAllowedAt(): number {
+  return lastRequestAt.search + SEARCH_INTERVAL_MS;
+}
+
 /** 直列化 + エンドポイント別の最小間隔ガード */
 function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
   const run = async () => {

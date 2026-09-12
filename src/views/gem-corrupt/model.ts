@@ -6,7 +6,7 @@
  *          → ヴァールオーブ → 片方だけ当たったらコラプトの結晶で残りを賭ける (賭けない選択も可)
  *          → 生き残った物だけ原石 (レベル 20) でレベル 20 にする (コラプトの +1 で 21)
  *   B. レベル 21 (品質 20%) を買ってコラプトの結晶で品質 23% を賭ける
- *   C. 品質 23% (レベル 20) を買ってコラプトの結晶でレベル +1 を賭ける
+ *   C. 品質 23% (レベルは不問) を買ってコラプトの結晶でレベル +1 を賭ける
  *   D. 完成品をそのまま買う (基準)
  *
  * 確率は GGG 非公開。既定値はコミュニティの推定で、UI から全て変更できる (CorruptParams)。
@@ -56,7 +56,7 @@ export interface MaterialPrices {
 export interface SalePrices {
   /** レベル 21 · 品質 20% · コラプト済 */
   level21: number | null;
-  /** レベル 20 · 品質 23% · コラプト済 */
+  /** 品質 23% · コラプト済 (レベル不問) */
   quality23: number | null;
   /** レベル 21 · 品質 23% (完成品) */
   finished: number | null;
@@ -85,6 +85,12 @@ export interface RouteResult {
   pFinished: number;
   /** 完成品 1 個を得るための実質コスト = (期待費用 − 完成品以外の期待売上) / pFinished。完成品を買う経路は完成品の価格 */
   costPerFinished: number | null;
+  /** 1 回の試行の期待費用 (確定費用 + 結晶などの条件付き費用の期待値)。期待売上 = ev + expectedCost */
+  expectedCost: number;
+  /** 1 回の試行で使うコラプトの結晶の期待本数 (自作は当たった時だけ、買って賭ける経路は 1) */
+  expectedCrystals?: number;
+  /** 1 回の試行で使う原石 (レベル 20) の期待本数 (売る物 = 壊れなかった物にだけ掛かる) */
+  expectedUncut?: number;
   /** 内訳 */
   outcomes: OutcomeLine[];
   /** 自作経路で「片方当たり → 結晶で賭ける」を選ぶか (期待値で決めた結果) */
@@ -138,6 +144,7 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     ev: 0,
     pFinished: 0,
     costPerFinished: null,
+    expectedCost: 0,
     outcomes: [],
     missing,
   };
@@ -216,6 +223,9 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   salvage += pJunk * junkNet;
   ev += pJunk * junkNet;
 
+  const useCrystalAfterLevel = gambleAfterLevel && crystal != null;
+  const useCrystalAfterQuality = gambleAfterQuality && crystal != null;
+  const destroyed = (useCrystalAfterLevel ? pLevelUp : 0) * (1 - survive) + (useCrystalAfterQuality ? pQualityTop : 0) * (1 - survive);
   return {
     ...base,
     ok: true,
@@ -223,6 +233,9 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     ev,
     pFinished,
     costPerFinished: pFinished > 0 ? (expectedCost - salvage) / pFinished : null,
+    expectedCost,
+    expectedCrystals: (useCrystalAfterLevel ? pLevelUp : 0) + (useCrystalAfterQuality ? pQualityTop : 0),
+    expectedUncut: 1 - destroyed,
     outcomes,
     gambleAfterLevel,
     gambleAfterQuality,
@@ -235,7 +248,7 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   if (s.level21 == null) missing.push("売値: レベル 21");
   if (s.finished == null) missing.push("売値: 完成品");
   if (m.crystal == null) missing.push("コラプトの結晶");
-  const base: RouteResult = { id: "buy21", label: "レベル 21 を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, outcomes: [], missing };
+  const base: RouteResult = { id: "buy21", label: "レベル 21 を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s21 = s.level21!;
   const sF = s.finished!;
@@ -251,7 +264,7 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   ];
   const salvage = (survive - hit) * lf * s21;
   const ev = -upfront + hit * sF + salvage;
-  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, outcomes };
+  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, expectedCost: upfront, expectedCrystals: 1, outcomes };
 }
 
 /** 品質 23% を買って結晶でレベルを賭ける */
@@ -260,7 +273,7 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   if (s.quality23 == null) missing.push("売値: 品質 23%");
   if (s.finished == null) missing.push("売値: 完成品");
   if (m.crystal == null) missing.push("コラプトの結晶");
-  const base: RouteResult = { id: "buy23", label: "品質 23% を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, outcomes: [], missing };
+  const base: RouteResult = { id: "buy23", label: "品質 23% を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s23 = s.quality23!;
   const sF = s.finished!;
@@ -276,14 +289,14 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   ];
   const salvage = (survive - hit) * lf * s23;
   const ev = -upfront + hit * sF + salvage;
-  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, outcomes };
+  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, expectedCost: upfront, expectedCrystals: 1, outcomes };
 }
 
 function buyFinishedRoute(s: SalePrices): RouteResult {
   const missing = s.finished == null ? ["売値: 完成品"] : [];
-  const base: RouteResult = { id: "buyFinished", label: "完成品を買う (基準)", ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, outcomes: [], missing };
+  const base: RouteResult = { id: "buyFinished", label: "完成品を買う (基準)", ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
-  return { ...base, ok: true, upfront: s.finished!, ev: 0, costPerFinished: s.finished!, outcomes: [{ label: "完成品", p: 1, net: s.finished! }] };
+  return { ...base, ok: true, upfront: s.finished!, ev: 0, costPerFinished: s.finished!, expectedCost: s.finished!, outcomes: [{ label: "完成品", p: 1, net: s.finished! }] };
 }
 
 export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult[] {
