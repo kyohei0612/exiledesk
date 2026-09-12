@@ -1,8 +1,7 @@
 /**
- * 品質超過の賭け — 状態 / 相場 (2026-09-12)
+ * アドニアの賭け — 状態 / 相場 (2026-09-12)
  *
- *   プリセット: アドニアのエゴ (吸収のワンド → 秘術師の彫刻針 → ヴァールアルカニストのインフューザー → 可能性のお告げ + 可能性のオーブ)
- *               防具 / マーシャル武器 (端材 / 砥石 + 対応するヴァールインフューザー)
+ *   アドニア専用 (オーナー指示 2026-09-12): 吸収のワンド → 秘術師の彫刻針 → ヴァールアルカニストのインフューザー → 可能性のお告げ + 可能性のオーブ
  *   素材価格:   poe2scout。売値の初期値は poe2scout のユニーク価格 (品質を問わない値なので目安)
  *   期待値:     overquality/model.ts
  */
@@ -64,42 +63,6 @@ export const PRESETS: readonly Preset[] = [
     qualityCurrencyApiId: "etcher",
     infuserJa: "ヴァールアルカニストのインフューザー",
     infuserApiId: "vaal-arcanists-infuser",
-  },
-  {
-    id: "caster",
-    label: "その他のワンド / スタッフ / セプター",
-    baseJa: "ベース (キャスター武器)",
-    baseEn: null,
-    uniqueJa: "目標ユニーク",
-    uniqueEn: null,
-    qualityCurrencyJa: "秘術師の彫刻針",
-    qualityCurrencyApiId: "etcher",
-    infuserJa: "ヴァールアルカニストのインフューザー",
-    infuserApiId: "vaal-arcanists-infuser",
-  },
-  {
-    id: "martial",
-    label: "マーシャル武器",
-    baseJa: "ベース (マーシャル武器)",
-    baseEn: null,
-    uniqueJa: "目標ユニーク",
-    uniqueEn: null,
-    qualityCurrencyJa: "鍛冶屋の砥石",
-    qualityCurrencyApiId: "whetstone",
-    infuserJa: "ヴァール鍛冶屋のインフューザー",
-    infuserApiId: "vaal-blacksmiths-infuser",
-  },
-  {
-    id: "armour",
-    label: "防具",
-    baseJa: "ベース (防具)",
-    baseEn: null,
-    uniqueJa: "目標ユニーク",
-    uniqueEn: null,
-    qualityCurrencyJa: "鎧鍛冶の端材",
-    qualityCurrencyApiId: "scrap",
-    infuserJa: "ヴァール鎧鍛冶のインフューザー",
-    infuserApiId: "vaal-armourers-infuser",
   },
 ];
 

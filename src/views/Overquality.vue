@@ -1,6 +1,6 @@
 <!--
-  Overquality.vue — 品質超過の賭け (2026-09-12)
-  品質 20% を超えて (最大 30%) 育てたベースを、可能性のお告げ + 可能性のオーブでユニークにする (代表: アドニアのエゴ)。
+  Overquality.vue — アドニアの賭け (2026-09-12、オーナー指示でアドニア専用)
+  吸収のワンドを品質 20% を超えて (最大 30%) 育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにする。
   ベースと彫刻針は失敗のたびに消え、お告げとオーブは成功したベースにしか使わない。完成品 1 個あたりの実質コストと利益を出す。
     views/overquality/model.ts          品質の階段を状態遷移で解く (純粋関数)
     views/overquality/useOverquality.ts プリセット / 相場 / 入力
@@ -9,7 +9,7 @@
 import { onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
-import { PRESETS, useOverquality } from "./overquality/useOverquality";
+import { useOverquality } from "./overquality/useOverquality";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
@@ -39,10 +39,10 @@ function evClass(v: number | null): string {
 <template>
   <section class="min-h-full flex flex-col px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">品質超過の賭け</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">アドニアの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        ヴァールインフューザーで品質を 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでユニークにするクラフトの収支。
-        20% を超えた分だけコラプト化の危険があり、コラプトしたベースは失敗です。完成品 1 個あたりの実質コストで判定します。
+        吸収のワンドをヴァールアルカニストのインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにするクラフトの収支。
+        20% を超えた分だけコラプト化の危険があり、コラプトしたワンドは失敗です。完成品 1 個あたりの実質コストで判定します。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
         素材価格: poe2scout{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} (カレンシーランキングと共有) / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
@@ -68,26 +68,6 @@ function evClass(v: number | null): string {
             </button>
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
-            <label>対象</label>
-            <select v-model="o.presetId.value" class="num text-left w-64">
-              <option v-for="p in PRESETS" :key="p.id" :value="p.id">{{ p.label }}</option>
-            </select>
-            <template v-if="o.preset.value.baseEn === null">
-              <label>
-                <div>ベース名 (日本語 / 英語)</div>
-                <div class="text-[10px]" :class="o.baseInput.value && !o.baseEn.value ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">
-                  {{ o.baseInput.value && !o.baseEn.value ? "辞書に無い名前です" : o.baseEn.value ? o.baseEn.value : "例: 吸収のワンド" }}
-                </div>
-              </label>
-              <input v-model="o.baseInput.value" type="text" spellcheck="false" class="num text-left w-64" />
-              <label>
-                <div>目標ユニーク名 (日本語 / 英語)</div>
-                <div class="text-[10px]" :class="o.uniqueInput.value && !o.uniqueEn.value ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">
-                  {{ o.uniqueInput.value && !o.uniqueEn.value ? "辞書に無い名前です" : o.uniqueEn.value ? o.uniqueEn.value : "例: アドニアのエゴ" }}
-                </div>
-              </label>
-              <input v-model="o.uniqueInput.value" type="text" spellcheck="false" class="num text-left w-64" />
-            </template>
             <label>
               <div>
                 {{ o.preset.value.baseJa }} 1 個 ({{ unit }})

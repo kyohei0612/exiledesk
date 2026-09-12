@@ -29,7 +29,7 @@ const items: NavItem[] = [
     group: "economy",
     children: [
       { id: "sanctify-ev", icon: "🜊", label: "聖別の賭け", group: "economy" },
-      { id: "overquality", icon: "🜛", label: "品質超過の賭け", group: "economy" },
+      { id: "overquality", icon: "🜛", label: "アドニアの賭け", group: "economy" },
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
       { id: "saga", icon: "🜄", label: "アルダーの航路", group: "economy" },
     ],
