@@ -52,11 +52,8 @@ const mods = {};
 for (const [id, m] of Object.entries(modsEn)) {
   if (m.generation_type !== "corrupted" || !(m.domain === "item" || m.domain === "misc")) continue;
   const b = bundle[id] ?? {};
-  const trade = [];
-  for (const s of m.stats) {
-    const t = statMap[s.id];
-    if (t) trade.push(t.replace(/^explicit\./, "enchant."));
-  }
+  // trade2 ではヴァール付加は enchant.* に載る (mapping は explicit / implicit で来るので付け替え、重複は除く)
+  const trade = [...new Set(m.stats.map((s) => statMap[s.id]).filter(Boolean).map((t) => t.replace(/^(explicit|implicit)\./, "enchant.")))];
   mods[id] = {
     domain: m.domain === "misc" ? "jewel" : "item",
     group: m.groups?.[0] ?? id,
@@ -65,7 +62,8 @@ for (const [id, m] of Object.entries(modsEn)) {
     stats: m.stats.map((s) => ({ id: s.id, min: s.min, max: s.max })),
     /** trade2 の stat フィルタ id (ヴァール付加は enchant.* に載る、2026-09-13 JP 実測) */
     trade,
-    spawn: m.spawn_weights.filter((w) => w.weight > 0).map((w) => w.tag),
+    /** spawn_weights は順序付き: 最初に一致したタグの重みで決まる (bow:0 → two_hand_weapon:1 なら弓には付かない) */
+    spawn: m.spawn_weights.map((w) => ({ t: w.tag, w: w.weight })),
   };
 }
 
@@ -96,28 +94,47 @@ const QUALITY = new Set(["Wand", "Staff"]);
 const fourthOf = (cls) => (SOCKET.has(cls) ? "socket" : QUALITY.has(cls) ? "quality" : "none");
 
 // ---- 5. ユニーク → プール ----
+//   同名ユニークが複数ベース (素 / Runeforged / Runemastered、まれに別ベース) で出るので、表示ベースは Rune* でない物を優先し、
+//   プールは全ベースのタグの和で作る (どのベースで買っても付き得る付加を漏らさない)。
 const GROUPS = new Set(["accessory", "armour", "weapon", "jewel"]);
-const uniques = {};
+const byName = new Map();
 const skipped = [];
 for (const g of t2items.result ?? t2items) {
   if (!GROUPS.has(g.id)) continue;
   for (const e of g.entries) {
     if (!e.flags?.unique || !e.name) continue;
+    if (e.name === "INCOMPLETE" || !uniqueJa[e.name]) {
+      skipped.push(`${e.name} (${e.type}: 未実装 / 日本語名なし)`);
+      continue;
+    }
     const base = bases.get(e.type);
     if (!base) {
       skipped.push(`${e.name} (${e.type}: ベース不明)`);
       continue;
     }
-    const inherited = classTags[base.cls] ?? [];
-    const tags = new Set([...inherited, ...base.tags]);
-    const isJewel = base.cls === "Jewel";
-    const pool = Object.entries(mods)
-      .filter(([, m]) => (isJewel ? m.domain === "jewel" : m.domain === "item" && m.spawn.some((t) => tags.has(t))))
-      .map(([id]) => id)
-      .sort();
-    if (pool.length === 0) skipped.push(`${e.name} (${e.type}: プール 0)`);
-    uniques[e.name] = { ja: uniqueJa[e.name] ?? e.name, base: e.type, cls: base.cls, group: g.id, fourth: fourthOf(base.cls), pool };
+    const cur = byName.get(e.name) ?? { types: [], cls: base.cls, group: g.id, tags: new Set() };
+    cur.types.push(e.type);
+    for (const t of [...(classTags[base.cls] ?? []), ...base.tags]) cur.tags.add(t);
+    byName.set(e.name, cur);
   }
+}
+const poolFor = (tags, isJewel) =>
+  Object.entries(mods)
+    .filter(([, m]) => {
+      if (isJewel) return m.domain === "jewel";
+      if (m.domain !== "item") return false;
+      const hit = m.spawn.find((w) => w.t === "default" || tags.has(w.t));
+      return !!hit && hit.w > 0;
+    })
+    .map(([id]) => id)
+    .sort();
+const uniques = {};
+for (const [name, u] of byName) {
+  const isJewel = u.cls === "Jewel";
+  const pool = poolFor(u.tags, isJewel);
+  if (pool.length === 0) skipped.push(`${name} (プール 0)`);
+  const plain = u.types.find((t) => !/^Rune(forged|mastered) /.test(t)) ?? u.types[0];
+  uniques[name] = { ja: uniqueJa[name], base: plain, cls: u.cls, group: u.group, fourth: fourthOf(u.cls), pool };
 }
 
 const out = {

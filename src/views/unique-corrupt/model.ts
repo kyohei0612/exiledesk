@@ -196,7 +196,7 @@ export interface ArchitectInputs {
   /** いま持っている品の価値 (1 個目の付加つきの売値)。これを賭ける */
   itemValue: number | null;
   orbPrice: number | null;
-  /** 2 個目のプール数 (= N − 1) */
+  /** 2 個目のプール数 (1 個目と同じグループを除いた数) */
   poolSize: number;
   /** 2 個目の狙いと、その 2 重コラプト品の売値 */
   targets: TargetPrice[];

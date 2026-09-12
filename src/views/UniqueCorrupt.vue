@@ -80,7 +80,7 @@ function onQueryKeydown(e: KeyboardEvent): void {
 }
 
 /** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
-const refetch = computed(() => refetchState(u.pricing.value, "trade2 で取り直す", `trade2 で検索中… (残り ${u.pending.value} 件、1 件 約 10 秒)`));
+const refetch = computed(() => refetchState(u.pricing.value, "trade2 で取り直す", `trade2 で検索中… (残り ${u.remaining.value} 件、1 件 約 10 秒)`));
 
 /** 「N 回やった場合」の N (5 刻み) */
 const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
@@ -356,7 +356,7 @@ const ledgerTotals = computed(() => {
             <tbody>
               <tr v-for="m in poolRows" :key="m.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="m.on ? 'text-[var(--exile-color-accent-focus)]' : ''">
                 <td class="py-1">
-                  <input type="checkbox" :checked="m.on" :disabled="!m.on && u.targets.value.length >= MAX_TARGETS" class="accent-[var(--exile-color-accent-focus)]" @change="u.toggleTarget(m.id)" />
+                  <input type="checkbox" :checked="m.on" :disabled="!m.priceable || (!m.on && u.targets.value.length >= MAX_TARGETS)" class="accent-[var(--exile-color-accent-focus)]" @change="u.toggleTarget(m.id)" />
                 </td>
                 <td class="py-1">
                   <div>{{ m.ja }}</div>
@@ -514,7 +514,7 @@ const ledgerTotals = computed(() => {
               <table class="w-full text-[12px]">
                 <tbody>
                   <tr v-for="m in secondRows" :key="m.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="m.on ? 'text-[var(--exile-color-accent-focus)]' : ''">
-                    <td class="py-1 w-8"><input type="checkbox" :checked="m.on" :disabled="!m.on && u.secondTargets.value.length >= MAX_SECOND_TARGETS" class="accent-[var(--exile-color-accent-focus)]" @change="u.toggleSecond(m.id)" /></td>
+                    <td class="py-1 w-8"><input type="checkbox" :checked="m.on" :disabled="!m.priceable || (!m.on && u.secondTargets.value.length >= MAX_SECOND_TARGETS)" class="accent-[var(--exile-color-accent-focus)]" @change="u.toggleSecond(m.id)" /></td>
                     <td class="py-1">
                       <div>{{ m.ja }}</div>
                       <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ m.en }}</div>
@@ -569,11 +569,20 @@ const ledgerTotals = computed(() => {
                   {{ u.architect.value.ev > 0 ? `打つ価値あり: 平均 ${money(u.architect.value.ev)} の上乗せ` : `そのまま売った方が得: 打つと平均 ${money(-u.architect.value.ev)} の損` }}
                 </p>
                 <table class="mt-2 text-[12px] w-full">
+                  <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+                    <tr>
+                      <th class="text-left font-normal pb-1">結果</th>
+                      <th class="text-right font-normal pb-1 pl-2">確率</th>
+                      <th class="text-right font-normal pb-1 pl-2">売値</th>
+                      <th class="text-right font-normal pb-1 pl-2">損益</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr v-for="o in u.architect.value.outcomes" :key="o.key" class="border-t border-[var(--exile-color-border-subtle)] tabular-nums" :class="o.hit ? 'text-[var(--exile-color-accent-focus)]' : ''">
                       <td class="py-1 pr-2">{{ o.label }}</td>
                       <td class="py-1 pl-2 text-right">{{ pct(o.p) }}</td>
                       <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(o.sale) }}</td>
+                      <td class="py-1 pl-2 text-right whitespace-nowrap" :class="evClass(o.sale == null ? null : o.sale - u.architect.value.cost)">{{ o.sale == null ? "—" : money(o.sale - u.architect.value.cost, true) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -618,18 +627,18 @@ const ledgerTotals = computed(() => {
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
                 <td></td>
-                <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">{{ ledgerTotals.rate != null ? `実測の当たり率 ${pct(ledgerTotals.rate)}` : "" }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">{{ ledgerTotals.rate != null ? `当たり ÷ ヴァール ${pct(ledgerTotals.rate)}` : "" }}</td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.cost) }}</td>
               </tr>
             </tbody>
-            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+            <tbody class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pt-3 pb-1">売れた物</th>
                 <th class="text-right font-normal pt-3 pb-1 pl-3">1 個の売値 (空欄なら相場)</th>
                 <th class="text-right font-normal pt-3 pb-1 pl-3">売れた数</th>
                 <th class="text-right font-normal pt-3 pb-1 pl-3">売上</th>
               </tr>
-            </thead>
+            </tbody>
             <tbody>
               <tr v-for="r in ledgerSales" :key="r.qtyKey" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">{{ r.label }}</td>
@@ -682,13 +691,13 @@ const ledgerTotals = computed(() => {
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
               <label>壊れずに 2 個目が付く確率</label><input v-model.number="u.params.value.architectSurvive" type="number" min="0" max="1" step="0.05" class="num" />
             </div>
-            <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="u.resetParams">既定に戻す</button>
+            <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="u.resetParams">既定値に戻す</button>
           </div>
           <div class="text-[11px] text-[var(--exile-color-text-secondary)] leading-relaxed space-y-1">
             <p>付加の中身: そのクラスに付き得る付加 (ゲームクライアントの Mods、GenerationType=corrupted) から一様。クライアントの重みは 0/1 しか無いので、実際の偏りは不明。</p>
             <p>装飾品 (指輪 · アミュレット · ベルト) とジュエルは 4 つ目の系統が「何もなし」なので、変化なしが 50% になる。ワンド · 杖はソケットの代わりに品質が上がる。矢筒 · 王笏 · タリスマンの 4 つ目は資料が無く「何もなし」扱い。</p>
             <p>「値が変わる」「ソケット」「狙い以外の付加」で出来た物は、コラプト済みの最安で売る前提 (高ロールで高く売れる分は見ていない、控えめ)。</p>
-            <p>アーキテクトオーブ: コラプト済みの品に打つと 50% で 2 個目の付加 (既にある付加と別グループ)、50% で破壊 (アイテム文言 / Maxroll / timesaver、2026-09)。2 個目のプールは 1 個目のグループを除いた数で割る。</p>
+            <p>アーキテクトオーブ: コラプト済みの品に打つと 50% で 2 個目の付加 (既にある付加と別グループ)、50% で破壊 (アイテム文言 / Maxroll / timesaver、2026-09)。2 個目のプールは 1 個目と同じグループを除いた数で割る (「別グループ」自体もコミュニティの説明で、同じグループが 6〜9 種ある装備 (ジェムレベル / 防御%) では差が大きい)。</p>
             <p>trade2 の検索: 未コラプト / コラプト済み (2 重なし) / 狙い付加あり / 2 重コラプト (1 個目あり) / 2 重 + 2 個目あり。ヴァール付加は trade2 では enchant として載る (JP 実測)。</p>
           </div>
         </div>

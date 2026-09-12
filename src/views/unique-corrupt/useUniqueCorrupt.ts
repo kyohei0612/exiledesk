@@ -10,7 +10,7 @@
  * trade2 の検索回数 (擬似レート制限 5 分 26 回): 基本 2 + 狙い (最大 3) + 2 重 (最安 1 + 狙い最大 2) = 最大 8 回。
  * 一度取った値はクエリごとに覚えて、変わった分だけ取り直す。
  */
-import { computed, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildUniqueCorruptQuery } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
@@ -43,7 +43,7 @@ export interface UniqueInfo {
 }
 
 interface EnchantFile {
-  mods: Record<string, { domain: string; group: string; en: string; ja: string; trade: string[] }>;
+  mods: Record<string, { domain: string; group: string; en: string; ja: string; trade: string[]; spawn: { t: string; w: number }[] }>;
   uniques: Record<string, { ja: string; base: string; cls: string; group: string; fourth: FourthOutcome; pool: string[] }>;
 }
 const FILE = vaalEnchants as unknown as EnchantFile;
@@ -117,6 +117,7 @@ export function useUniqueCorrupt() {
     targets.value = [];
     firstEnchant.value = null;
     secondTargets.value = [];
+    fetchSeq++; // 取得中なら捨てる (古いユニークのクエリを続けない)
   }
   /** 選んだユニークのクラスの付加プール */
   const pool = computed<EnchantInfo[]>(() => (selected.value ? selected.value.pool.map((id) => ENCHANTS[id]).filter((m): m is EnchantInfo => !!m) : []));
@@ -190,12 +191,12 @@ export function useUniqueCorrupt() {
     return buildUniqueCorruptQuery(u.en, { corrupted: true, twiceCorrupted: true, enchantStats: [...f.trade, ...m.trade] });
   }
   const cacheKey = (kind: QueryKind): string => `${selected.value?.en ?? ""}|${tradeLeague.value}|${kind}|${kind.startsWith("twice") ? firstEnchant.value ?? "" : ""}`;
-  /** いま要る検索 (順番 = 取る順番) */
+  /** いま要る検索 (順番 = 取る順番)。trade2 で検索できない付加 (stat id なし) は除く */
   const wanted = computed<QueryKind[]>(() => {
     if (!selected.value) return [];
     const list: QueryKind[] = ["base", "floor", ...targets.value.map((id): QueryKind => `target:${id}`)];
     if (firstEnchant.value) list.push("twice-floor", ...secondTargets.value.map((id): QueryKind => `twice:${id}`));
-    return list;
+    return list.filter((k) => queryFor(k) != null);
   });
   function get(kind: QueryKind): Fetched | null {
     return fetched.value[cacheKey(kind)] ?? null;
@@ -207,32 +208,60 @@ export function useUniqueCorrupt() {
     return q ? trade2QueryUrl(tradeLeague.value, q) : null;
   }
   let fetchSeq = 0;
-  /** 足りない物だけ trade2 で取る (force なら全部取り直す) */
+  /** 取得中に条件が変わった (取得が終わったらもう一度回す) */
+  let dirty = false;
+  /** 取得中の残り件数 (ボタンの文言用。force のときは全件) */
+  const remaining = ref(0);
+  /** 足りない物だけ trade2 で取る (force なら全部取り直す)。取得中に増えた分も同じループで拾う */
   async function fetchPrices(force = false): Promise<void> {
-    if (pricing.value || isRateLimited() || !selected.value) return;
+    if (!selected.value || league.value == null) return;
+    if (pricing.value) {
+      dirty = true;
+      return;
+    }
+    if (isRateLimited()) return;
     const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
+    const done = new Set<string>();
     try {
-      for (const kind of wanted.value) {
+      for (;;) {
+        const todo = wanted.value.filter((k) => (force ? !done.has(cacheKey(k)) : !get(k)));
+        remaining.value = todo.length;
+        const kind = todo[0];
+        if (!kind) break;
         const key = cacheKey(kind);
-        if (!force && fetched.value[key]) continue;
         const q = queryFor(kind);
-        if (!q) continue;
+        if (!q) break;
         const { min, url } = await autoMinWithUrl(tradeLeague.value, q, marketStore.rates.value);
         if (seq !== fetchSeq) return;
-        if (tradeAuto.lastError.value) priceError.value = tradeAuto.lastError.value;
-        if (min == null && url == null && isRateLimited()) return;
+        done.add(key);
+        if (min == null && url == null) {
+          // 検索 ID すら返らない = 429 か通信エラー。「取得済み」にはせず、次の機会に取り直す
+          priceError.value = tradeAuto.lastError.value;
+          break;
+        }
         fetched.value = { ...fetched.value, [key]: { price: min, url } };
       }
     } finally {
-      if (seq === fetchSeq) pricing.value = false;
+      if (seq === fetchSeq) {
+        pricing.value = false;
+        remaining.value = 0;
+        if (dirty) {
+          dirty = false;
+          void fetchPrices();
+        }
+      }
     }
   }
   let debounce: ReturnType<typeof setTimeout> | null = null;
-  watch(wanted, () => {
+  watch([wanted, tradeLeague], () => {
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => void fetchPrices(), 600);
+  });
+  onScopeDispose(() => {
+    if (debounce) clearTimeout(debounce);
+    fetchSeq++;
   });
   const pending = computed(() => wanted.value.filter((k) => !get(k)).length);
 
@@ -298,6 +327,7 @@ export function useUniqueCorrupt() {
     pricing,
     priceError,
     pending,
+    remaining,
     fetchPrices,
     get,
     tradeUrl,
