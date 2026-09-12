@@ -9,10 +9,10 @@
  */
 import { computed, ref } from "vue";
 import gemsRaw from "../../i18n/gems-client.json";
-import { fetchItems, fetchLeagues, type CurrencyItem, type League } from "../../api/poe2scout";
+import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { priceMinForQuery, retryAfterSeconds, type ExaltedRates, type PriceResult } from "../../services/trade2/pricing";
+import { priceMinForQuery, retryAfterSeconds, type PriceResult } from "../../services/trade2/pricing";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
 export interface GemInfo {
@@ -73,34 +73,13 @@ export function useGemCorrupt() {
     priceError.value = null;
   }
 
-  // ---- 相場 (poe2scout) ----
-  const league = ref<League | null>(null);
-  const marketItems = ref<CurrencyItem[]>([]);
-  const marketError = ref<string | null>(null);
-  const rates = computed<ExaltedRates>(() => {
-    const l = league.value;
-    const divine = l?.DivinePrice || 1;
-    const chaos = l && l.ChaosDivinePrice ? divine / l.ChaosDivinePrice : 1;
-    const others: Record<string, number> = {};
-    for (const it of marketItems.value) {
-      if (it.ApiId && typeof it.CurrentPrice === "number") others[it.ApiId] = it.CurrentPrice;
-    }
-    return { divine, chaos, others };
-  });
-  async function loadMarket(): Promise<void> {
-    try {
-      const leagues = await fetchLeagues();
-      league.value = leagues.find((l) => l.IsCurrent && !l.Value.startsWith("HC")) ?? leagues[0] ?? null;
-      if (league.value) marketItems.value = await fetchItems(league.value.Value);
-      marketError.value = null;
-    } catch (e) {
-      marketError.value = e instanceof Error ? e.message : String(e);
-    }
-  }
-  const priceOf = (apiId: string): number | null => {
-    const v = rates.value.others?.[apiId];
-    return typeof v === "number" && v > 0 ? v : null;
-  };
+  // ---- 相場 (poe2scout、アプリ共通の相場ストア。カレンシーランキングが取った物を流用) ----
+  const league = marketStore.league;
+  const marketError = marketStore.error;
+  const marketLabel = marketStore.fetchedLabel;
+  const loadMarket = (): Promise<void> => marketStore.ensureMarket();
+  const rates = marketStore.rates;
+  const priceOf = marketStore.priceOf;
 
   /** 低レベルジェム本体の値段 (高貴)。相場が無いので手入力、既定 1 */
   const baseGemPrice = ref<number>(1);
@@ -184,6 +163,7 @@ export function useGemCorrupt() {
     select,
     league,
     marketError,
+    marketLabel,
     loadMarket,
     baseGemPrice,
     materials,

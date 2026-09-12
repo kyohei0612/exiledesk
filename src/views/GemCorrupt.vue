@@ -85,7 +85,7 @@ const materialRows = computed(() => {
         を「1 回あたりの期待収支」で比べます。金額は高貴 (Exalted) 建て。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        素材価格: poe2scout{{ g.league.value ? ` (${g.league.value.Value})` : "" }} / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
+        素材価格: poe2scout{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} (カレンシーランキングと共有) / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
         <span v-if="g.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ g.marketError.value }}</span>
       </p>
     </header>

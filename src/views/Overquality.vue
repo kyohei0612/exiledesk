@@ -45,7 +45,7 @@ function evClass(v: number | null): string {
         20% を超えた分だけコラプト化の危険があり、コラプトしたベースは失敗です。完成品 1 個あたりの実質コストで判定します。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        素材価格: poe2scout{{ o.league.value ? ` (${o.league.value.Value})` : "" }} / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
+        素材価格: poe2scout{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} (カレンシーランキングと共有) / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
         <span v-if="o.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ o.marketError.value }}</span>
       </p>
     </header>

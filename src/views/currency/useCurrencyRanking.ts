@@ -18,6 +18,7 @@ import {
   type League,
 } from "../../api/poe2scout";
 import { jaCurrency } from "../../i18n/currencies-ja";
+import { adoptMarket } from "../../state/market-store";
 import { categoryOrderIndex } from "./format";
 
 export interface CategoryDisplay {
@@ -133,6 +134,8 @@ export function useCurrencyRanking() {
         fetchLatestSnapshotEpoch(league.value),
       ]);
       snapshotEpoch.value = snapEpoch;
+      // 2026-09-12: 取った価格表を相場ストアに流し、ヴァールの天秤の素材価格に流用する (二重取得しない)
+      adoptMarket(leagues.value, league.value, items);
       ranking.value = buildRankedItems(items, divinePrice.value, chaosDivinePrice.value);
       trend7d.clear(); // 新データなので 7 日キャッシュは破棄して取り直す
       trends.value = trendMap;

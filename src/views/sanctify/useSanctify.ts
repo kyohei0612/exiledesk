@@ -6,7 +6,7 @@
  *   期待値:       sanctify/model.ts
  */
 import { computed, ref } from "vue";
-import { fetchItems, fetchLeagues, type CurrencyItem, type League } from "../../api/poe2scout";
+import { marketStore } from "../../state/market-store";
 import { parseItemText, type ParsedItem } from "../../services/items/parse-item";
 import {
   DEFAULT_SANCTIFY_PARAMS,
@@ -93,24 +93,12 @@ export function useSanctify() {
     a.target = d.target;
   }
 
-  // ---- 相場 (poe2scout) ----
-  const league = ref<League | null>(null);
-  const marketItems = ref<CurrencyItem[]>([]);
-  const marketError = ref<string | null>(null);
-  async function loadMarket(): Promise<void> {
-    try {
-      const leagues = await fetchLeagues();
-      league.value = leagues.find((l) => l.IsCurrent && !l.Value.startsWith("HC")) ?? leagues[0] ?? null;
-      if (league.value) marketItems.value = await fetchItems(league.value.Value);
-      marketError.value = null;
-    } catch (e) {
-      marketError.value = e instanceof Error ? e.message : String(e);
-    }
-  }
-  const priceOf = (apiId: string): number | null => {
-    const hit = marketItems.value.find((it) => it.ApiId === apiId);
-    return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
-  };
+  // ---- 相場 (アプリ共通の相場ストア) ----
+  const league = marketStore.league;
+  const marketError = marketStore.error;
+  const marketLabel = marketStore.fetchedLabel;
+  const loadMarket = (): Promise<void> => marketStore.ensureMarket();
+  const priceOf = marketStore.priceOf;
   const divinePrice = computed(() => priceOf("divine"));
   const omenPrice = computed(() => priceOf("omen-of-sanctification"));
   const cost = computed(() => (divinePrice.value ?? 0) + (omenPrice.value ?? 0));
@@ -138,6 +126,7 @@ export function useSanctify() {
     resetDefaults,
     league,
     marketError,
+    marketLabel,
     loadMarket,
     divinePrice,
     omenPrice,

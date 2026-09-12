@@ -65,7 +65,7 @@ const verdict = computed(() => {
         各モッドの値がそれぞれ独立にランダム倍率 (既定 0.78〜1.22 倍) で変わり、以後はほぼ加工できません。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
-        費用: poe2scout{{ s.league.value ? ` (${s.league.value.Value})` : "" }} の 神のオーブ {{ fmt(s.divinePrice.value) }} + 聖別のお告げ {{ fmt(s.omenPrice.value) }}
+        費用: poe2scout{{ s.league.value ? ` (${s.league.value.Value})` : "" }} · {{ s.marketLabel.value }} (カレンシーランキングと共有) の 神のオーブ {{ fmt(s.divinePrice.value) }} + 聖別のお告げ {{ fmt(s.omenPrice.value) }}
         = {{ fmt(s.cost.value) }} 高貴 / 倍率の範囲は非公開 (コミュニティ観測値、変更可)
         <span v-if="s.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ s.marketError.value }}</span>
       </p>

@@ -7,7 +7,7 @@
  *   期待値:     overquality/model.ts
  */
 import { computed, ref, watch } from "vue";
-import { fetchItems, fetchLeagues, type CurrencyItem, type League } from "../../api/poe2scout";
+import { marketStore } from "../../state/market-store";
 import { DEFAULT_OVERQUALITY_PARAMS, evaluateOverquality, type OverqualityInputs, type OverqualityParams } from "./model";
 
 export interface Preset {
@@ -75,30 +75,16 @@ export function useOverquality() {
   const presetId = ref<string>("adonia");
   const preset = computed<Preset>(() => PRESETS.find((p) => p.id === presetId.value) ?? PRESETS[0]);
 
-  // ---- 相場 (poe2scout) ----
-  const league = ref<League | null>(null);
-  const marketItems = ref<CurrencyItem[]>([]);
-  const marketError = ref<string | null>(null);
+  // ---- 相場 (アプリ共通の相場ストア) ----
+  const league = marketStore.league;
+  const marketError = marketStore.error;
+  const marketLabel = marketStore.fetchedLabel;
   async function loadMarket(): Promise<void> {
-    try {
-      const leagues = await fetchLeagues();
-      league.value = leagues.find((l) => l.IsCurrent && !l.Value.startsWith("HC")) ?? leagues[0] ?? null;
-      if (league.value) marketItems.value = await fetchItems(league.value.Value);
-      marketError.value = null;
-      applyMarketDefaults();
-    } catch (e) {
-      marketError.value = e instanceof Error ? e.message : String(e);
-    }
+    await marketStore.ensureMarket();
+    applyMarketDefaults();
   }
-  const priceOf = (apiId: string): number | null => {
-    const hit = marketItems.value.find((it) => it.ApiId === apiId);
-    return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
-  };
-  const uniquePriceOf = (nameEn: string | null): number | null => {
-    if (!nameEn) return null;
-    const hit = marketItems.value.find((it) => !it.ApiId && it.Text.startsWith(nameEn));
-    return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
-  };
+  const priceOf = marketStore.priceOf;
+  const uniquePriceOf = marketStore.uniquePriceOf;
   const divineRate = computed(() => league.value?.DivinePrice || 1);
 
   // ---- 入力 ----
@@ -149,6 +135,7 @@ export function useOverquality() {
     preset,
     league,
     marketError,
+    marketLabel,
     loadMarket,
     divineRate,
     targetQuality,
