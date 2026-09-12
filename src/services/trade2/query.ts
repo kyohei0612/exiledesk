@@ -213,6 +213,34 @@ export function buildUniqueQualityQuery(nameEn: string, qualityMin: number, rune
   };
 }
 
+/**
+ * ユニークのコラプトの賭け (2026-09-13): ユニーク名 + コラプト状態 (+ 2 重コラプト) + ヴァール付加の stat フィルタ。
+ * ヴァール付加は trade2 では enchant.stat_* に載る (JP 実測 2026-09-13: 指輪の全耐性付加 477 件が enchant で当たる)。
+ */
+export interface UniqueCorruptQueryOptions {
+  corrupted: boolean;
+  twiceCorrupted?: boolean;
+  /** 付加の trade2 stat id (enchant.stat_*)。複数なら全部 (and) */
+  enchantStats?: string[];
+}
+export function buildUniqueCorruptQuery(nameEn: string, o: UniqueCorruptQueryOptions) {
+  const misc: Record<string, unknown> = { corrupted: { option: o.corrupted ? "true" : "false" } };
+  if (o.twiceCorrupted != null) misc.twice_corrupted = { option: o.twiceCorrupted ? "true" : "false" };
+  const stats = o.enchantStats && o.enchantStats.length > 0 ? [{ type: "and", filters: o.enchantStats.map((id) => ({ id, disabled: false })) }] : [];
+  return {
+    query: {
+      status: { option: SecurityStatus.Securable },
+      name: { discriminator: null, option: nameEn },
+      stats,
+      filters: {
+        type_filters: { filters: { rarity: { option: Rarity.Unique } } },
+        misc_filters: { filters: misc },
+      },
+    },
+    sort: { price: "asc" },
+  };
+}
+
 /** ユニーク名で絞り込む検索クエリ */
 export function buildUniqueNameQuery(nameEn: string) {
   return {

@@ -29,7 +29,10 @@ export const CSD_PATH = resolve(EXPORT_DIR, "files", "Data@StatDescriptions@stat
 export const CLIENT_TABLES = [
   // 装備ベース / カレンシー / ジェム / フラスコ等、全アイテムの表示名
   // ItemClass は ItemClasses への行 index (クラフト収支: ベース → 装備種別 → trade2 カテゴリ)
-  { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass", "DropLevel"] },
+  // Tags はヴァール付加 (コラプト implicit) のプール判定用 (2026-09-13、build-vaal-enchants-from-client.mjs)。
+  // 継承タグ (ring / weapon 等) は入っていないので、そちらは data-cache/base_items.json (RePoE 形式) から補う。
+  { name: "BaseItemTypes", columns: ["Id", "Name", "ItemClass", "DropLevel", "Tags"] },
+  { name: "Tags", columns: ["Id"] },
   // ユニーク名 (Wordlist=6)。JA テーブルでは Text2 が日本語名
   { name: "Words", columns: ["Wordlist", "Text", "Text2"] },
   { name: "FlavourText", columns: ["Text"] },

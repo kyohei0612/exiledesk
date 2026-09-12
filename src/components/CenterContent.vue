@@ -7,6 +7,7 @@ import PobLauncher from "../views/PobLauncher.vue";
 import ClientLog from "../views/ClientLog.vue";
 import GemCorrupt from "../views/GemCorrupt.vue";
 import Overquality from "../views/Overquality.vue";
+import UniqueCorrupt from "../views/UniqueCorrupt.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
 // 復活時は次の 2 行を戻すだけで OK:
 //   import EconDashboard from "../views/EconDashboard.vue";
@@ -32,6 +33,8 @@ const currentView = computed<Component | undefined>(() => {
       return GemCorrupt;
     case "overquality":
       return Overquality;
+    case "unique-corrupt":
+      return UniqueCorrupt;
     default:
       return undefined;
   }
