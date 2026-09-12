@@ -116,6 +116,9 @@ export function useGemCorrupt() {
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   function tradeUrl(key: SaleKey): string | null {
     if (!selected.value) return null;
+    // 自動取得済みなら検索 ID 付き URL (サイト側で ?q= を解釈させなくて済む)
+    const done = saleInfo.value[key]?.searchUrl;
+    if (done) return done;
     return trade2QueryUrl(tradeLeague.value, buildGemQuery(selected.value.en, queryOptions(key)));
   }
 

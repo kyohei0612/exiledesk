@@ -64,3 +64,13 @@ export async function autoMin(league: string, body: unknown, rates: ExaltedRates
   const r = await autoPrice(league, body, rates);
   return r && r.minExalted != null ? Math.round(r.minExalted * 100) / 100 : null;
 }
+
+/**
+ * 最安値と「検索 ID 付きの URL」。API 検索が済んでいれば ?q= より確実に開ける
+ * (JP サイトでも同じ ID が使える。Awakened PoE Trade 等の JP Trade ボタンと同じ経路)。
+ */
+export async function autoMinWithUrl(league: string, body: unknown, rates: ExaltedRates): Promise<{ min: number | null; url: string | null }> {
+  const r = await autoPrice(league, body, rates);
+  if (!r) return { min: null, url: null };
+  return { min: r.minExalted != null ? Math.round(r.minExalted * 100) / 100 : null, url: r.searchUrl || null };
+}

@@ -10,7 +10,7 @@ import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildBaseTypeQuery, buildUniqueQualityQuery } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { autoMin, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
@@ -147,9 +147,15 @@ export function useOverquality() {
     /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
-  const baseTradeUrl = computed(() => (baseEn.value ? trade2QueryUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value)) : null));
-  const saleTradeUrl = computed(() =>
-    uniqueEn.value ? trade2QueryUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value)) : null,
+  const baseSearchUrl = ref<string | null>(null);
+  const saleSearchUrl = ref<string | null>(null);
+  const baseTradeUrl = computed(() =>
+    baseSearchUrl.value ?? (baseEn.value ? trade2QueryUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value)) : null),
+  );
+  const saleTradeUrl = computed(
+    () =>
+      saleSearchUrl.value ??
+      (uniqueEn.value ? trade2QueryUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value)) : null),
   );
   let fetchSeq = 0;
   /** 素のベース (ノーマル・未コラプト) と 目標品質以上のユニーク を trade2 で取る */
@@ -159,14 +165,16 @@ export function useOverquality() {
     pricing.value = true;
     try {
       if (baseEn.value) {
-        const v = await autoMin(tradeLeague.value, buildBaseTypeQuery(baseEn.value), marketStore.rates.value);
+        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value), marketStore.rates.value);
         if (seq !== fetchSeq) return;
         if (v != null) autoBasePrice.value = v;
+        if (url) baseSearchUrl.value = url;
       }
       if (uniqueEn.value) {
-        const v = await autoMin(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value), marketStore.rates.value);
+        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildUniqueQualityQuery(uniqueEn.value, targetQuality.value), marketStore.rates.value);
         if (seq !== fetchSeq) return;
         if (v != null) autoSalePrice.value = v;
+        if (url) saleSearchUrl.value = url;
       }
     } finally {
       if (seq === fetchSeq) pricing.value = false;
@@ -177,6 +185,8 @@ export function useOverquality() {
   watch([baseEn, uniqueEn, targetQuality, () => league.value?.Value], () => {
     autoBasePrice.value = null;
     autoSalePrice.value = null;
+    baseSearchUrl.value = null;
+    saleSearchUrl.value = null;
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => void fetchPrices(), 400);
   });

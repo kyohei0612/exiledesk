@@ -10,7 +10,7 @@ import { marketStore } from "../../state/market-store";
 import { parseItemText, type ParsedItem } from "../../services/items/parse-item";
 import { buildRareBaseQuery, statFiltersFromIds } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { autoMin, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import {
   DEFAULT_SANCTIFY_PARAMS,
   evaluateSanctify,
@@ -129,7 +129,10 @@ export function useSanctify() {
     return buildRareBaseQuery(parsed.value?.baseEn ?? null, filters);
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  /** 自動取得で得た検索 ID 付き URL (kind 別) */
+  const searchUrls = ref<Record<"shown" | "target" | "jackpot", string | null>>({ shown: null, target: null, jackpot: null });
   function tradeUrl(kind: "shown" | "target" | "jackpot"): string | null {
+    if (searchUrls.value[kind]) return searchUrls.value[kind];
     const q = queryFor(kind);
     return q ? trade2QueryUrl(tradeLeague.value, q) : null;
   }
@@ -140,6 +143,7 @@ export function useSanctify() {
     const seq = ++fetchSeq;
     pricing.value = true;
     autoNote.value = null;
+    searchUrls.value = { shown: null, target: null, jackpot: null };
     try {
       const kinds: Array<"shown" | "target" | "jackpot"> = ["shown", "target"];
       if (hasJackpot.value) kinds.push("jackpot");
@@ -149,8 +153,9 @@ export function useSanctify() {
           autoNote.value = "trade2 に対応する stat が無いモッドだけなので自動取得できません。手入力してください";
           continue;
         }
-        const v = await autoMin(tradeLeague.value, q, marketStore.rates.value);
+        const { min: v, url } = await autoMinWithUrl(tradeLeague.value, q, marketStore.rates.value);
         if (seq !== fetchSeq) return;
+        if (url) searchUrls.value = { ...searchUrls.value, [kind]: url };
         if (v == null) continue;
         if (kind === "shown") {
           prices.value = { ...prices.value, unsanctified: v, unchanged: Math.round(v * UNCHANGED_RATIO * 100) / 100 };
