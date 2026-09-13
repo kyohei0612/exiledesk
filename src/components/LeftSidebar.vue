@@ -33,6 +33,8 @@ const items: NavItem[] = [
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
       // 2026-09-13: ユニークにヴァール → 狙いの付加 (+ アーキテクトオーブで 2 重コラプト)
       { id: "unique-corrupt", icon: "🜚", label: "ユニークコラプトの賭け", group: "economy" },
+      // 2026-09-14: レアクラフトの第 1 弾 (エッセンス + 冒涜 + エグザルト、損益分岐の当たり率で見る)
+      { id: "es-helmet", icon: "🜲", label: "ES 兜のクラフト", group: "economy" },
     ],
   },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)

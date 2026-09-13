@@ -241,6 +241,42 @@ export function buildUniqueCorruptQuery(nameEn: string, o: UniqueCorruptQueryOpt
   };
 }
 
+/**
+ * レアクラフト用の「条件で絞る」検索 (2026-09-14、ES 兜のクラフトから)。ベース (ノーマル / マジック) と完成品 (レア) の両方に使う。
+ *   category: trade2 の type_filters.category (armour.helmet 等)
+ *   rarity: normal / magic / nonunique (レア = ユニーク以外)
+ *   ilvlMin / esMin / socketsMin: type_filters.ilvl / equipment_filters.es / equipment_filters.rune_sockets
+ *   stats: stat id と下限 (pseudo.* も可)
+ */
+export interface SpecQueryOptions {
+  category: string;
+  rarity: "normal" | "magic" | "nonunique";
+  ilvlMin?: number;
+  esMin?: number;
+  socketsMin?: number;
+  stats?: { id: string; min: number }[];
+}
+export function buildSpecQuery(o: SpecQueryOptions) {
+  const type: Record<string, unknown> = { category: { option: o.category }, rarity: { option: o.rarity } };
+  if (o.ilvlMin != null) type.ilvl = { min: o.ilvlMin };
+  const equipment: Record<string, unknown> = {};
+  if (o.esMin != null) equipment.es = { min: o.esMin };
+  if (o.socketsMin != null) equipment.rune_sockets = { min: o.socketsMin };
+  const stats = o.stats && o.stats.length > 0 ? [{ type: "and", filters: o.stats.map((s) => ({ id: s.id, disabled: false, value: { min: s.min } })) }] : [];
+  return {
+    query: {
+      status: { option: SecurityStatus.Securable },
+      stats,
+      filters: {
+        type_filters: { filters: type },
+        equipment_filters: { filters: equipment },
+        misc_filters: { filters: { corrupted: { option: "false" } } },
+      },
+    },
+    sort: { price: "asc" },
+  };
+}
+
 /** ユニーク名で絞り込む検索クエリ */
 export function buildUniqueNameQuery(nameEn: string) {
   return {
