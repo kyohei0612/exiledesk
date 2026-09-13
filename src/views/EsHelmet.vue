@@ -1,6 +1,6 @@
 <!--
   EsHelmet.vue — ES 兜のクラフト (2026-09-14、「ヴァールの天秤」の 1 つ)
-  マジックの ES ティアラ (フラット ES 付き) を買い、強化の大エッセンス → 保存された肋骨 + 左の降霊のお告げ → 大エグザルト ×2 で
+  マジックの ES ティアラ (フラット ES 付き) を買い、強化のグレーターエッセンス → 保存された肋骨 + 左手のネクロマンシーのお告げ → 高貴なオーブ (上級) ×2 で
   「ES 450 以上 + 元素耐性 合計 60 以上」の兜を作って売る。上位ラインは 2 ソケットの規格外ベースで耐性 80 以上。
   当たる確率は重みが非公開で出せないので、損益分岐の当たり率と、仮置きの確率での試算、収支 (実測) を並べる。
     views/es-helmet/model.ts       期待値モデル (純粋関数)
@@ -137,14 +137,15 @@ watch(
 const unitOf = (key: string): number | null => h.materials.value.find((m) => m.key === key)?.unit ?? null;
 const ledgerRows = computed(() => {
   const l = ledger.value;
-  const exaltUnit = h.usePerfectExalt.value ? unitOf("pexalt") : unitOf("gexalt");
+  const exaltUnit = h.exalt.value === "perfect" ? unitOf("pexalt") : unitOf("gexalt");
+  const labelOf = (key: string, fallback: string): string => h.materials.value.find((m) => m.key === key)?.label ?? fallback;
   const rows: { key: CountKey; label: string; unit: number | null; qty: number }[] = [
     { key: "bases", label: "ベース", unit: h.basePrice.value, qty: l.bases },
-    { key: "essences", label: "強化の大エッセンス", unit: unitOf("essence"), qty: l.essences },
-    { key: "omens", label: "左の降霊のお告げ", unit: unitOf("omen"), qty: l.omens },
-    { key: "ribs", label: "保存された肋骨", unit: unitOf("rib"), qty: l.ribs },
-    { key: "exalts", label: h.usePerfectExalt.value ? "完全なエグザルテッドオーブ" : "大エグザルテッドオーブ", unit: exaltUnit, qty: l.exalts },
-    { key: "runes", label: "大アイアンルーン", unit: unitOf("rune"), qty: l.runes },
+    { key: "essences", label: "強化のグレーターエッセンス", unit: unitOf("essence"), qty: l.essences },
+    { key: "omens", label: "左手のネクロマンシーのお告げ", unit: unitOf("omen"), qty: l.omens },
+    { key: "ribs", label: labelOf("rib", "肋骨"), unit: unitOf("rib"), qty: l.ribs },
+    { key: "exalts", label: h.exalt.value === "perfect" ? "高貴なオーブ (完全)" : "高貴なオーブ (上級)", unit: exaltUnit, qty: l.exalts },
+    { key: "runes", label: labelOf("rune", "ルーン"), unit: unitOf("rune"), qty: l.runes },
   ];
   return rows.map((r) => ({ ...r, cost: r.unit == null ? null : r.unit * r.qty }));
 });
@@ -184,8 +185,8 @@ const ledgerTotals = computed(() => {
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ES 兜のクラフト</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        フラット ES 付きのマジック兜を買い、強化の大エッセンス (%ES) → 保存された肋骨 + 左の降霊のお告げ (冒涜のハイブリッド ES) → 大エグザルト ×2 (耐性) で
-        「ES 450 以上 + 元素耐性 合計 60 以上」の兜を作って売る。上位ラインは 2 ソケットの規格外ベースで耐性 80 以上を狙う。
+        フラット ES 付きのマジック兜を買い、強化のグレーターエッセンス (%ES) → 肋骨 + 右手のネクロマンシーのお告げ (冒涜の接尾辞: 耐性 + 混沌耐性) → 高貴なオーブで空きを埋める (ハイブリッド ES と耐性は運) で
+        「ES 450 以上 + 元素耐性 合計 60 以上」の兜を作って売る。上位ラインは 2 ソケットの規格外ベースで耐性 80 以上を狙う。当たり率は poe2db の重み × クライアントのティア値で計算。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
         素材価格: カレンシーランキングの相場{{ h.league.value ? ` (${h.league.value.Value})` : "" }} · {{ h.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 当たる確率は非公開 (損益分岐と仮置きで見る)
@@ -283,9 +284,19 @@ const ledgerTotals = computed(() => {
               </tr>
             </tbody>
           </table>
-          <div class="flex items-center gap-4 mt-2 text-[11px] text-[var(--exile-color-text-secondary)]">
-            <label class="inline-flex items-center gap-1"><input v-model="h.usePerfectExalt.value" type="checkbox" class="accent-[var(--exile-color-accent-focus)]" />完全エグザルト + 大エグザルトのお告げにする</label>
-            <label class="inline-flex items-center gap-1"><input v-model="h.useRunes.value" type="checkbox" class="accent-[var(--exile-color-accent-focus)]" />ソケットに大アイアンルーン</label>
+          <div class="flex items-center gap-4 mt-2 text-[11px] text-[var(--exile-color-text-secondary)] flex-wrap">
+            <label class="inline-flex items-center gap-2">肋骨
+              <select v-model="h.rib.value" class="num text-left w-40"><option v-for="o in h.RIB_OPTIONS" :key="o.id" :value="o.id">{{ o.label }}</option></select>
+            </label>
+            <label class="inline-flex items-center gap-2">エグザルト
+              <select v-model="h.exalt.value" class="num text-left w-72"><option v-for="o in h.EXALT_OPTIONS" :key="o.id" :value="o.id">{{ o.label }}</option></select>
+            </label>
+            <label class="inline-flex items-center gap-2">ルーン
+              <select v-model="h.rune.value" class="num text-left w-44"><option v-for="o in h.RUNE_OPTIONS" :key="o.id" :value="o.id">{{ o.label }}</option></select>
+            </label>
+            <label class="inline-flex items-center gap-2">エグザルトで足す数
+              <select v-model.number="h.exaltCount.value" class="num text-left w-20"><option v-for="n in h.EXALT_COUNT_OPTIONS" :key="n" :value="n">{{ n }} 個</option></select>
+            </label>
           </div>
         </div>
       </BaseCard>
@@ -303,7 +314,7 @@ const ledgerTotals = computed(() => {
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">(費用 {{ money(h.result.value.cost) }} − 外れ {{ money(h.missPrice.value) }}) ÷ (当たり {{ money(h.hitPrice.value) }} − 外れ)。中を 0 と見た保守値</div>
             </div>
             <div class="rounded border p-3" :class="h.result.value.ev > 0 ? 'border-emerald-500/40' : 'border-[var(--exile-color-border-subtle)]'">
-              <div class="text-[var(--exile-color-text-secondary)]">期待収支 (仮置き: 当たり {{ pct(h.result.value.pHit) }} · 中 {{ pct(h.result.value.pMid) }})</div>
+              <div class="text-[var(--exile-color-text-secondary)]">期待収支 ({{ h.probsSource.value === "db" ? "DB の重みで計算" : "手動" }}: 当たり {{ pct(h.result.value.pHit) }} · 中 {{ pct(h.result.value.pMid) }})</div>
               <div class="tabular-nums text-[16px]" :class="evClass(h.result.value.ev)">{{ money(h.result.value.ev, true) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">期待売上 {{ money(h.result.value.expectedSale) }} − 費用 {{ money(h.result.value.cost) }}</div>
             </div>
@@ -314,12 +325,22 @@ const ledgerTotals = computed(() => {
             </div>
           </div>
           <p class="text-[13px] mt-3" :class="evClass(h.result.value.ev)">
-            {{ h.result.value.breakeven <= 0.1 ? `当たり率 ${pct(h.result.value.breakeven)} を超えれば黒字。外れでも ${money(h.missPrice.value)} で売れるので下振れが小さい` : `当たり率 ${pct(h.result.value.breakeven)} が必要。実測の当たり率 (収支) と比べてください` }}
+            {{ h.result.value.ev > 0 ? `作る価値あり: 1 回につき平均 ${money(h.result.value.ev)} の利益` : `作らない方が得: 1 回につき平均 ${money(-h.result.value.ev)} の赤字` }}
+            (損益分岐の当たり率 {{ pct(h.result.value.breakeven) }} に対して計算上の当たり率 {{ pct(h.result.value.pHit) }})
           </p>
+          <div v-if="h.odds.value.ok" class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1 text-[11px] max-w-3xl">
+            <span class="text-[var(--exile-color-text-secondary)]">耐性 合計 {{ h.preset.value.resHit }}+ になる確率</span><span class="text-right tabular-nums">{{ pct(h.odds.value.pResHit) }}</span>
+            <span class="text-[var(--exile-color-text-secondary)]">ES {{ h.th.value.esHit }}+ になる確率</span><span class="text-right tabular-nums">{{ pct(h.odds.value.pEsHit) }}</span>
+            <span class="text-[var(--exile-color-text-secondary)]">ハイブリッド ES が付く確率</span><span class="text-right tabular-nums">{{ pct(h.odds.value.pHybrid) }}</span>
+            <span class="text-[var(--exile-color-text-secondary)]">冒涜で耐性を取れる確率</span><span class="text-right tabular-nums">{{ pct(h.odds.value.pRibRes) }}</span>
+            <span class="text-[var(--exile-color-text-secondary)]">ES の平均 / 耐性合計の平均</span><span class="text-right tabular-nums">{{ h.odds.value.meanEs.toFixed(0) }} / {{ h.odds.value.meanRes.toFixed(0) }}</span>
+            <span class="text-[var(--exile-color-text-secondary)]">フラット ES のティア値</span><span class="text-right tabular-nums">{{ h.odds.value.flatEsRange ? `${h.odds.value.flatEsRange[0]}〜${h.odds.value.flatEsRange[1]}` : "—" }}</span>
+          </div>
+          <p v-else class="text-[11px] text-amber-300 mt-2">当たり率の計算に失敗: {{ h.odds.value.reason }}</p>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">
             <div class="text-[12px]">
-              <div class="text-[11px] text-[var(--exile-color-text-secondary)] mb-1">当たり率を変えた場合 (中 {{ pct(h.result.value.pMid) }} は固定)</div>
+              <div class="text-[11px] text-[var(--exile-color-text-secondary)] mb-1">当たり率がもし違ったら (中 {{ pct(h.result.value.pMid) }} は固定)</div>
               <table class="w-full">
                 <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
                   <tr>
@@ -341,7 +362,7 @@ const ledgerTotals = computed(() => {
             </div>
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
               <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
-                <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合 (仮置きの確率)</span>
+                <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
                 <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
                   回数
                   <select v-model.number="attempts" class="num text-left w-20">
@@ -367,6 +388,59 @@ const ledgerTotals = computed(() => {
           </div>
         </template>
         <p v-else class="text-[12px] text-[var(--exile-color-text-tertiary)]">不足: {{ h.result.value.missing.join("、") || "計算できません" }}</p>
+      </div>
+    </BaseCard>
+
+    <!-- 選択肢の比較 (2026-09-14) -->
+    <BaseCard class="mb-4">
+      <div class="p-4 pl-5">
+        <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">選択肢の比較 (肋骨 × エグザルト × ルーン × 足す数)</h2>
+          <span class="text-[11px] text-[var(--exile-color-text-secondary)]">費用と損益分岐は相場から、当たり率は {{ h.probsSource.value === "db" ? "poe2db の重みで計算" : "手動の共通値" }}。緑が期待収支の最大</span>
+        </div>
+        <table class="w-full text-[12px]">
+          <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+            <tr>
+              <th class="text-left font-normal pb-1">肋骨</th>
+              <th class="text-left font-normal pb-1 pl-2">エグザルト</th>
+              <th class="text-left font-normal pb-1 pl-2">ルーン</th>
+              <th class="text-right font-normal pb-1 pl-2">数</th>
+              <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
+              <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">損益分岐</th>
+              <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">当たり / 中</th>
+              <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の期待収支</th>
+              <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">10 回</th>
+              <th class="pb-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="v in h.variants.value"
+              :key="v.key"
+              class="border-t border-[var(--exile-color-border-subtle)] tabular-nums"
+              :class="[v.current ? 'text-[var(--exile-color-accent-focus)]' : '', v.key === h.bestVariantKey.value ? 'bg-emerald-500/10' : '']"
+            >
+              <td class="py-1 pr-2 whitespace-nowrap">{{ v.labels.rib }}</td>
+              <td class="py-1 pl-2 whitespace-nowrap">{{ v.labels.exalt }}</td>
+              <td class="py-1 pl-2 whitespace-nowrap">{{ v.labels.rune }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap">{{ v.labels.count }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(v.cost) }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap">{{ v.breakeven == null ? "—" : pct(v.breakeven) }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap">{{ pct(v.hit) }} / {{ pct(v.mid) }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap" :class="evClass(v.ev)">{{ v.ev == null ? "—" : money(v.ev, true) }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap" :class="evClass(v.ev10)">{{ v.ev10 == null ? "—" : money(v.ev10, true) }}</td>
+              <td class="py-1 pl-2 text-right whitespace-nowrap">
+                <span v-if="v.key === h.bestVariantKey.value" class="text-[10px] px-1 rounded bg-emerald-500/20 text-emerald-300">最も得</span>
+                <button v-if="!v.current" type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="h.selectVariant(v.key)">これにする</button>
+                <span v-else class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">選択中</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+          当たり率は poe2db の推定重み (PoE1 由来。冒涜は全部 1 = 一様) とクライアントのティア値で 6,000 回試行した比率。古代の肋骨は兜では候補が変わらないので費用が増えるだけ。
+          「数」はエグザルトで足す MOD の数 (2 = 空きを 1 つ残す、3 = 6 MOD まで埋める)。
+        </p>
       </div>
     </BaseCard>
 
@@ -451,12 +525,22 @@ const ledgerTotals = computed(() => {
         </button>
         <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 text-[12px]">
           <div class="space-y-2">
-            <div class="text-[11px] text-[var(--exile-color-text-secondary)]">仮置きの確率 (重みが非公開なので実測で置き換える前提)</div>
+            <div class="text-[11px] text-[var(--exile-color-text-secondary)]">当たり率の出所</div>
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
-              <label>当たり (ES {{ h.th.value.esHit }}+ · 耐性 {{ h.preset.value.resHit }}+)</label><input v-model.number="h.probs.value.hit" type="number" min="0" max="1" step="0.05" class="num" />
-              <label>中 (ES {{ h.th.value.esMid }}+ · 耐性 {{ h.th.value.resMid }}+)。残りが外れ</label><input v-model.number="h.probs.value.mid" type="number" min="0" max="1" step="0.05" class="num" />
+              <label>計算方法</label>
+              <select v-model="h.probsSource.value" class="num text-left w-full"><option value="db">poe2db の重みで計算</option><option value="manual">手動 (下の値)</option></select>
+              <label>手動: 当たり (ES {{ h.th.value.esHit }}+ · 耐性 {{ h.preset.value.resHit }}+)</label><input v-model.number="h.manualProbs.value.hit" type="number" min="0" max="1" step="0.05" class="num" />
+              <label>手動: 中 (ES {{ h.th.value.esMid }}+ · 耐性 {{ h.th.value.resMid }}+)。残りが外れ</label><input v-model.number="h.manualProbs.value.mid" type="number" min="0" max="1" step="0.05" class="num" />
             </div>
             <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="h.resetProbs">既定値に戻す</button>
+            <div class="text-[11px] text-[var(--exile-color-text-secondary)] pt-2">計算の入力 (DB 計算のとき)</div>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
+              <label>兜の属性 (重み表)</label>
+              <select v-model="h.oddsIn.value.page" class="num text-left w-full"><option v-for="pg in h.HELMET_PAGES" :key="pg.id" :value="pg.id">{{ pg.label }}</option></select>
+              <label>ベースの素の ES (先祖のティアラ 109 / カマサのティアラ 101 / 術師のティアラ 92)</label><input v-model.number="h.oddsIn.value.baseEs" type="number" min="0" step="1" class="num" />
+              <label>買うベースのフラット ES のティア (1 = 61〜73)</label><input v-model.number="h.oddsIn.value.flatEsTier" type="number" min="1" max="8" step="1" class="num" />
+              <label>品質 %</label><input v-model.number="h.oddsIn.value.quality" type="number" min="0" max="30" step="1" class="num" />
+            </div>
             <div class="text-[11px] text-[var(--exile-color-text-secondary)] pt-2">trade2 の検索条件 (変えると取り直す)</div>
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
               <label>ベースの ilvl 下限</label><input v-model.number="h.th.value.ilvlMin" type="number" min="1" max="100" step="1" class="num" />
@@ -469,9 +553,10 @@ const ledgerTotals = computed(() => {
             <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="h.resetThresholds">既定値に戻す</button>
           </div>
           <div class="text-[11px] text-[var(--exile-color-text-secondary)] leading-relaxed space-y-1">
-            <p>手順 (Fubgun 0.5.5 レシピ / 0.5 の「クラフト MOD 1 + 冒涜 1」): マジックの ES 兜 (フラット ES = 接頭辞 1) → 強化の大エッセンス (%ES = 接頭辞 2、レア化) → 保存された肋骨 + 左の降霊のお告げ → 魂の井戸でハイブリッド ES (接頭辞 3) → 大エグザルト ×2 (接尾辞: 耐性 2 つ) → 大アイアンルーン。</p>
+            <p>手順 (0.5 の「クラフト MOD 1 + 冒涜 1」): マジックの ES 兜 (フラット ES = 接頭辞 1) → 強化のグレーターエッセンス (%ES = 接頭辞 2、レア化) → 肋骨 + 右手のネクロマンシーのお告げ → 魂の井戸で冒涜の接尾辞 3 択 (兜の冒涜は接尾辞だけ。「X と混沌耐性 +13〜17」を取る) → 高貴なオーブで空き (接頭辞 1 + 接尾辞 2) を埋める (ハイブリッド ES と耐性が付くかは重み次第) → 鉄のルーン。</p>
+            <p>計算: poe2db の推定重み (PoE1 由来、冒涜は全部 1 = 一様) × クライアントのティア値。ES = (素の ES + フラット ES) × (1 + %ES + ハイブリッド + 品質 + ルーン)。ES 450 は「素 109 + フラット T1 + エッセンス上振れ + ハイブリッド」でやっと届く水準で、平均は 390 前後。</p>
             <p>当たりの判定は結果だけ (ES 合計と元素耐性の合計の擬似 stat) で見る。ES 450 の目安は (ベース ES 約 120 + フラット ES 約 100) × (1 + %ES + ハイブリッド + 品質 + ルーン)。</p>
-            <p>損益分岐の当たり率は中の売上を 0 と見た保守値。仮置きの既定 (当たり 35% · 中 40%) はガイドの「安くて堅い」からの置き数で実測ではない。収支の実測の当たり率で置き換えること。</p>
+            <p>損益分岐の当たり率は中の売上を 0 と見た保守値。当たり率は既定で DB の重みから計算し、手動に切り替えれば任意の値も入れられる。収支の実測の当たり率と見比べること。</p>
             <p>上位ラインの外れは「2 ソケットのレア ES 兜 (耐性なし)」の最安で、規格外ベースの転売価格に近い。上位ラインの当たりは出品が薄く (200 件前後)、最安より下で出す前提。</p>
             <p>JP 実測 2026-09-14: ES 450+ · 耐性 60+ = 2 神、ES 450+ · 耐性 80+ · ソケット 2 = 20〜55 神、ES 400+ · 耐性 60+ = 5〜10 カオス、マジック ES 兜 (フラット ES 40+、ilvl 80+) = 1 高貴、規格外 2 ソケットのノーマル ES 兜 = 15〜33 カオス。</p>
           </div>
