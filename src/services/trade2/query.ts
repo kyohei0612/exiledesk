@@ -253,6 +253,9 @@ export interface SpecQueryOptions {
   rarity: "normal" | "magic" | "nonunique";
   ilvlMin?: number;
   esMin?: number;
+  /** 防御タイプで絞る (回避 / アーマー) 2026-09-14 */
+  evMin?: number;
+  arMin?: number;
   socketsMin?: number;
   stats?: { id: string; min: number }[];
 }
@@ -261,6 +264,8 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   if (o.ilvlMin != null) type.ilvl = { min: o.ilvlMin };
   const equipment: Record<string, unknown> = {};
   if (o.esMin != null) equipment.es = { min: o.esMin };
+  if (o.evMin != null) equipment.ev = { min: o.evMin };
+  if (o.arMin != null) equipment.ar = { min: o.arMin };
   if (o.socketsMin != null) equipment.rune_sockets = { min: o.socketsMin };
   const stats = o.stats && o.stats.length > 0 ? [{ type: "and", filters: o.stats.map((s) => ({ id: s.id, disabled: false, value: { min: s.min } })) }] : [];
   return {
