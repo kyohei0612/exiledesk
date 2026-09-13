@@ -1,9 +1,15 @@
 /**
- * レアクラフトの賭け — シミュレーター (純粋関数、UI 非依存) 2026-09-14
+ * 規格外の賭け — シミュレーター (純粋関数、UI 非依存) 2026-09-14
  *
  * poe2db の推定重み (PoE1 由来。冒涜と新 MOD は 1) × クライアントのティア値で、
  * 「マジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 (3 択から選ぶ) → 高貴なオーブで空きを埋める」を回す。
  * オーナー指示 (2026-09-14): 「DB に載っている重みをそのまま使って期待値をマシに」。
+ *
+ * 冒涜の 3 択 (2026-09-14 訂正): 1 つはアビス専用 MOD (リッチの MOD) が確定、残り 2 つはそれぞれ約 50% で
+ * その装備の通常の MOD になる (Sift の冒涜ガイドの推定)。肋骨の「最低 MOD レベル」(古代 = 40) は通常の MOD にも効く。
+ * 以前はアビス専用 MOD だけで 3 択を作っていて、古代の肋骨が意味を持たなかった (オーナー指摘)。
+ * アビスの反響のお告げ: 最初の 3 択の一番いい物の点数が「引き直した時の点数の平均」より低ければ 1 回引き直す
+ * (引き直すかどうかをこう決めると点数の期待値が一番高くなる)。
  *
  * 1 回ぶんの結果は「素の値」だけを持つ (フラット ES / %ES / ライフ / 元素耐性 / 混沌耐性 / 移動速度)。
  * 素の ES・品質・ルーンは後から足すので、それらを変えてもシミュレーションはやり直さない。
@@ -49,6 +55,9 @@ export type Metric = "es" | "life" | "res" | "chaos" | "ms";
 export const METRIC_LABEL: Record<Metric, string> = { es: "ES", life: "ライフ", res: "元素耐性", chaos: "混沌耐性", ms: "移動速度" };
 export const METRIC_UNIT: Record<Metric, string> = { es: "", life: "", res: "%", chaos: "%", ms: "%" };
 
+/** 冒涜の 3 択のうち、2 つ目・3 つ目が通常の MOD になる確率 (Sift の推定) */
+export const DEFAULT_NORMAL_SHARE = 0.5;
+
 /** 1 回ぶんの素の値 (列) */
 const COL = { esFlat: 0, esPct: 1, life: 2, res: 3, chaos: 4, ms: 5 } as const;
 const NCOL = 6;
@@ -93,8 +102,12 @@ export interface SimOptions {
   baseMods: BaseModSpec[];
   essence: { name: string; stat: string } | null;
   desecrate: boolean;
-  /** 冒涜の候補の MOD レベル下限 (保存 0 / 古代 40) */
+  /** 冒涜の候補の最低 MOD レベル (保存 0 / 古代 40)。アビス専用 MOD と通常の MOD の両方に効く */
   ribMinLevel: number;
+  /** 3 択の 2 つ目・3 つ目が通常の MOD になる確率 */
+  normalShare: number;
+  /** アビスの反響のお告げを使う (3 択を 1 回引き直せる) */
+  echo: boolean;
   /** エグザルトごとの MOD レベル下限 (配列の長さ = 足す数) */
   exaltLevels: number[];
   /** 右側の高貴なお告げ = 接尾辞だけ */
@@ -109,6 +122,8 @@ export interface SimResult {
   reason?: string;
   n: number;
   raw: Float32Array;
+  /** 反響で引き直した割合 */
+  pReroll: number;
   /** 使ったベース MOD のティア値 (表示用) */
   baseRanges: { family: string; tier: number; level: number; min: number; max: number }[];
 }
@@ -149,16 +164,6 @@ export function findEssence(page: string, name: string, stat: string): WEssence 
   return WEIGHT_PAGES[page]?.essence.find((e) => e.essence === name && e.stats.some((s) => s.id === stat)) ?? null;
 }
 
-/** 冒涜の候補 (レベル下限つき) */
-export function desecratePool(page: string, ilvl: number, ribMinLevel: number): WMod[] {
-  return (WEIGHT_PAGES[page]?.desecrated ?? []).filter((m) => m.level <= ilvl && m.level >= ribMinLevel);
-}
-
-/** 古代の肋骨でも候補が変わらないか (全部がレベル下限以上) */
-export function ribMakesNoDifference(page: string, ilvl: number, ribMinLevel: number): boolean {
-  return desecratePool(page, ilvl, 0).length === desecratePool(page, ilvl, ribMinLevel).length;
-}
-
 /** 接頭辞 / 接尾辞の空き (ベース MOD + エッセンス + 冒涜のあと) */
 export function slotsAfterSetup(o: Pick<SimOptions, "page" | "ilvl" | "baseMods" | "essence" | "desecrate">): Slots {
   const page = WEIGHT_PAGES[o.page];
@@ -176,6 +181,7 @@ export function slotsAfterSetup(o: Pick<SimOptions, "page" | "ilvl" | "baseMods"
   }
   let desecrateGen: Slots["desecrateGen"] = null;
   if (o.desecrate && page) {
+    // アビス専用 MOD がある側に冒涜が付く (兜 / 手袋 / 靴は接尾辞だけ)
     const pool = page.desecrated.filter((m) => m.level <= o.ilvl);
     const suffixes = pool.filter((m) => m.gen === "suffix").length;
     const prefixes = pool.length - suffixes;
@@ -199,13 +205,25 @@ export function simulate(o: SimOptions): SimResult {
   const hit = cache.get(key);
   if (hit) return hit;
   const res = run(o);
-  if (cache.size > 300) cache.clear();
+  if (cache.size > 400) cache.clear();
   cache.set(key, res);
   return res;
 }
 
+function weightedPick(cands: WMod[], r: () => number): WMod | null {
+  if (cands.length === 0) return null;
+  let total = 0;
+  for (const m of cands) total += m.weight;
+  let x = r() * total;
+  for (const m of cands) {
+    x -= m.weight;
+    if (x <= 0) return m;
+  }
+  return cands[cands.length - 1];
+}
+
 function run(o: SimOptions): SimResult {
-  const fail = (reason: string): SimResult => ({ ok: false, reason, n: 0, raw: new Float32Array(0), baseRanges: [] });
+  const fail = (reason: string): SimResult => ({ ok: false, reason, n: 0, raw: new Float32Array(0), pReroll: 0, baseRanges: [] });
   const page = WEIGHT_PAGES[o.page];
   if (!page) return fail(`重み表に ${o.page} が無い`);
 
@@ -223,10 +241,13 @@ function run(o: SimOptions): SimResult {
   if (ess && bases.some((b) => b.mod.families.includes(ess.family))) return fail("エッセンスの MOD がベースの MOD と同じ系統 (付けられない)");
 
   const slots = slotsAfterSetup(o);
-  const pool = o.desecrate && slots.desecrateGen ? desecratePool(o.page, o.ilvl, o.ribMinLevel).filter((m) => m.gen === slots.desecrateGen) : [];
-  if (o.desecrate && slots.desecrateGen && pool.length === 0) return fail("冒涜の候補が無い");
+  const gen = o.desecrate ? slots.desecrateGen : null;
+  // 冒涜の候補: アビス専用 MOD (一様) と、同じ側の通常の MOD (poe2db の重み)。どちらも最低 MOD レベルで絞る
+  const lichPool = gen ? page.desecrated.filter((m) => m.gen === gen && m.level <= o.ilvl && m.level >= o.ribMinLevel) : [];
+  const normalPool = gen ? page.normal.filter((m) => m.gen === gen && m.weight > 0 && m.level <= o.ilvl && m.level >= o.ribMinLevel) : [];
+  if (gen && lichPool.length === 0 && normalPool.length === 0) return fail("冒涜の候補が無い");
 
-  // エグザルトの候補 (レベル下限ごと)
+  // エグザルトの候補
   const eligible = page.normal.filter((m) => m.weight > 0 && m.level <= o.ilvl);
 
   const priority = o.priority;
@@ -254,42 +275,71 @@ function run(o: SimOptions): SimResult {
     const v = st.min + (st.max - st.min) * r();
     for (const [c, k] of cols) row[c] += v * k;
   };
+  const share = Math.min(1, Math.max(0, o.normalShare));
+
+  // 冒涜の時点で埋まっている系統 (ベース + エッセンス) は毎回同じ
+  const setupFamilies = new Set<string>();
+  for (const b of bases) for (const f of b.mod.families) setupFamilies.add(f);
+  if (ess) setupFamilies.add(ess.family);
+
+  /** 冒涜の 3 択を出して、指標の点数が一番高い物を返す (1 つ目はアビス専用 MOD、2 つ目・3 つ目は share の確率で通常の MOD) */
+  const reveal = (rand: () => number): { mod: WMod | null; score: number } => {
+    const picks: WMod[] = [];
+    const free = (m: WMod): boolean => !picks.includes(m) && !m.families.some((f) => setupFamilies.has(f));
+    const drawLich = (): WMod | null => {
+      const c = lichPool.filter(free);
+      return c.length ? c[Math.floor(rand() * c.length)] : null;
+    };
+    const drawNormal = (): WMod | null => weightedPick(normalPool.filter(free), rand);
+    for (let k = 0; k < 3; k++) {
+      let m = k === 0 ? drawLich() : rand() < share ? drawNormal() : drawLich();
+      if (!m) m = drawLich() ?? drawNormal();
+      if (m) picks.push(m);
+    }
+    let best: WMod | null = null;
+    let bestScore = -Infinity;
+    for (const m of picks) {
+      const sc = modScore(m);
+      if (sc > bestScore) {
+        best = m;
+        bestScore = sc;
+      }
+    }
+    return { mod: best, score: best ? bestScore : 0 };
+  };
+  // 反響: 引き直した時の点数の平均より悪ければ引き直す
+  let rerollBelow = -Infinity;
+  if (gen && o.echo) {
+    const r2 = rng(0xec0e5);
+    const K = 3000;
+    let sum = 0;
+    for (let k = 0; k < K; k++) sum += reveal(r2).score;
+    rerollBelow = sum / K;
+  }
+  let rerolls = 0;
 
   for (let i = 0; i < n; i++) {
     row.fill(0);
-    const used = new Set<string>();
+    const used = new Set<string>(setupFamilies);
     let prefix = 0;
     let suffix = 0;
     for (const b of bases) {
       for (const st of b.mod.stats) addStat(st);
-      for (const f of b.mod.families) used.add(f);
       if (b.mod.gen === "prefix") prefix++;
       else suffix++;
     }
     if (ess) {
       for (const st of ess.stats) addStat(st);
-      used.add(ess.family);
       if (ess.gen === "prefix") prefix++;
       else suffix++;
     }
-    // 冒涜: 使える候補から 3 つ (重複なし、一様) → 指標の点数が一番高い物を選ぶ
-    if (pool.length > 0) {
-      const bag = pool.filter((m) => !m.families.some((f) => used.has(f)));
-      const picks: WMod[] = [];
-      for (let k = 0; k < 3 && bag.length > 0; k++) {
-        const idx = Math.floor(r() * bag.length);
-        picks.push(bag[idx]);
-        bag.splice(idx, 1);
+    if (gen) {
+      let rv = reveal(r);
+      if (o.echo && rv.score < rerollBelow) {
+        rv = reveal(r);
+        rerolls++;
       }
-      let best = picks[0];
-      let bestScore = best ? modScore(best) : 0;
-      for (const m of picks) {
-        const s = modScore(m);
-        if (s > bestScore) {
-          best = m;
-          bestScore = s;
-        }
-      }
+      const best = rv.mod;
       if (best) {
         for (const st of best.stats) addStat(st);
         for (const f of best.families) used.add(f);
@@ -301,25 +351,15 @@ function run(o: SimOptions): SimResult {
     for (const lv of o.exaltLevels) {
       const prefixOk = o.exaltSide === "any" && prefix < 3;
       const suffixOk = suffix < 3;
-      let total = 0;
       const cands: WMod[] = [];
       for (const m of eligible) {
         if (m.level < lv) continue;
         if (m.gen === "prefix" ? !prefixOk : !suffixOk) continue;
         if (m.families.some((f) => used.has(f))) continue;
         cands.push(m);
-        total += m.weight;
       }
-      if (cands.length === 0) break;
-      let x = r() * total;
-      let pick = cands[cands.length - 1];
-      for (const m of cands) {
-        x -= m.weight;
-        if (x <= 0) {
-          pick = m;
-          break;
-        }
-      }
+      const pick = weightedPick(cands, r);
+      if (!pick) break;
       for (const st of pick.stats) addStat(st);
       for (const f of pick.families) used.add(f);
       if (pick.gen === "prefix") prefix++;
@@ -327,7 +367,7 @@ function run(o: SimOptions): SimResult {
     }
     raw.set(row, i * NCOL);
   }
-  return { ok: true, n, raw, baseRanges: bases.map((b) => ({ family: b.mod.family, tier: b.tier, level: b.level, min: b.min, max: b.max })) };
+  return { ok: true, n, raw, pReroll: rerolls / n, baseRanges: bases.map((b) => ({ family: b.mod.family, tier: b.tier, level: b.level, min: b.min, max: b.max })) };
 }
 
 // ---------------------------------------------------------------------------
@@ -399,7 +439,10 @@ export function evaluateLadder(sim: SimResult, post: PostOptions, buckets: Ladde
   let saleSum = 0;
   let profit = 0;
   const sums: Record<Metric, number> = { es: 0, life: 0, res: 0, chaos: 0, ms: 0 };
-  const order = buckets.map((b, i) => ({ i, price: b.price })).filter((x) => x.price != null).sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  const order = buckets
+    .map((b, i) => ({ i, price: b.price }))
+    .filter((x) => x.price != null)
+    .sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
   for (let s = 0; s < sim.n; s++) {
     const m = metricsOf(sim.raw, s, post);
     for (const k of Object.keys(sums) as Metric[]) sums[k] += m[k];

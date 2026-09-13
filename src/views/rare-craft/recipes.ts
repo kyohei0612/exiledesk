@@ -4,7 +4,8 @@
  * オーナー指示 (2026-09-14): 1 ソケットの通常ベースは作らない。規格外 (ルーンソケット 2) のベースだけで収支を出す
  * (1 ソケットは今の相場で全部赤字、規格外は完成品の値が 10〜40 倍で黒字)。
  *
- * 0.5 の基本形「マジックベース (MOD 1 つ) → グレーターエッセンス (クラフト MOD 枠) → 肋骨で冒涜 → 高貴なオーブで空きを埋める」。
+ * 0.5 の基本形「マジックベース (MOD 1 つ) → グレーターエッセンス (クラフト MOD 枠) → 肋骨で冒涜 (必ずやる) → 高貴なオーブ 1 個 + 偉大なる高貴なお告げで MOD を 2 つ足す」。
+ * オーナー指示 (2026-09-14): 偉大なる高貴なお告げは必ず使う (足す数の選択は無し)。アビスの反響のお告げ (冒涜の 3 択を 1 回引き直す) も選択肢に入れる。
  * 名前は全部クライアントの日本語 (items-ja-client.json)。単価の apiId は poe2scout。
  * 兜 / 手袋 / 靴の冒涜 MOD は接尾辞だけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。
  */
@@ -86,7 +87,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "es-helmet",
     label: "ES 兜",
-    note: "フラット ES 付きの規格外マジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 鉄のルーン ×2",
+    note: "フラット ES 付きの規格外マジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 鉄のルーン ×2",
     category: "armour.helmet",
     ilvl: 80,
     pages: [{ id: "Helmets_int", label: "知性 (ES) 兜", defence: { esMin: 100 }, baseEs: 109 }],
@@ -112,7 +113,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "life-res-gloves",
     label: "ライフ耐性手袋",
-    note: "ライフ付きの規格外マジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 耐性ルーン ×2",
+    note: "ライフ付きの規格外マジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 耐性ルーン ×2",
     category: "armour.gloves",
     ilvl: 82,
     pages: [
@@ -137,7 +138,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "ms-boots",
     label: "移動速度靴",
-    note: "移動速度付きの規格外マジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 耐性ルーン ×2",
+    note: "移動速度付きの規格外マジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 耐性ルーン ×2",
     category: "armour.boots",
     ilvl: 82,
     pages: [
@@ -170,17 +171,25 @@ export const RIBS: { id: RibId; label: string; apiId: string; minLevel: number }
 ];
 
 export type ExaltId = "normal" | "greater" | "perfect";
-export const EXALTS: { id: ExaltId; label: string; note: string }[] = [
-  { id: "normal", label: "高貴なオーブ", note: "MOD レベルの下限なし" },
-  { id: "greater", label: "高貴なオーブ (上級)", note: "MOD レベル 35 以上" },
-  { id: "perfect", label: "高貴なオーブ (完全) + 偉大なる高貴なお告げ", note: "MOD レベル 50 以上を 2 つ同時 (3 つ目は上級)" },
+/** 高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に 1 個使い、MOD を 2 つ付ける */
+export const EXALT_ADDS = 2;
+export const EXALTS: { id: ExaltId; label: string; apiId: string; minLevel: number; note: string }[] = [
+  { id: "normal", label: "高貴なオーブ", apiId: "exalted", minLevel: 1, note: "MOD レベルの下限なし" },
+  { id: "greater", label: "高貴なオーブ (上級)", apiId: "greater-exalted-orb", minLevel: 35, note: "MOD レベル 35 以上" },
+  { id: "perfect", label: "高貴なオーブ (完全)", apiId: "perfect-exalted-orb", minLevel: 50, note: "MOD レベル 50 以上" },
 ];
 export type SideId = "any" | "suffix";
 export const SIDES: { id: SideId; label: string }[] = [
   { id: "any", label: "お告げなし" },
   { id: "suffix", label: "右側の高貴なお告げ (接尾辞だけ)" },
 ];
-export const EXALT_COUNTS = [2, 3];
+export type EchoId = "none" | "echoes";
+export const ECHOES: { id: EchoId; label: string }[] = [
+  { id: "none", label: "使わない" },
+  { id: "echoes", label: "アビスの反響のお告げ (3 択を 1 回引き直せる)" },
+];
+/** アビスの反響のお告げ (poe2scout の ApiId。trade2 の static id は旧名の omen-of-abyssal-favours なので混同しない) */
+export const ECHO_API_ID = "omen-of-abyssal-echoes";
 
 /** 1 回に使う素材 */
 export interface MaterialRow {
@@ -192,31 +201,25 @@ export interface MaterialRow {
 }
 
 export function exaltLevelsFor(exalt: ExaltId, count: number): number[] {
-  if (exalt === "perfect") return Array.from({ length: count }, (_, i) => (i < 2 ? 50 : 35));
-  const lv = exalt === "greater" ? 35 : 1;
+  const lv = EXALTS.find((x) => x.id === exalt)?.minLevel ?? 1;
   return Array.from({ length: count }, () => lv);
 }
 
-export function materialsFor(r: RecipeDef, o: { essenceId: string; rib: RibId; exalt: ExaltId; count: number; side: SideId; runeId: string; sockets: number }): MaterialRow[] {
+export function materialsFor(
+  r: RecipeDef,
+  o: { essenceId: string; rib: RibId; echo: EchoId; exalt: ExaltId; count: number; side: SideId; runeId: string; sockets: number },
+): MaterialRow[] {
   const rows: MaterialRow[] = [];
   const ess = r.essences.find((e) => e.id === o.essenceId);
   if (ess) rows.push({ key: "essence", apiId: ess.apiId, label: ess.label.replace(/ \(.+\)$/, ""), note: "クラフト MOD 枠。マジック → レア", qty: 1 });
   const rib = RIBS.find((x) => x.id === o.rib)!;
   rows.push({ key: "rib", apiId: rib.apiId, label: rib.label, note: "魂の井戸で冒涜 3 択 → 耐性 + 混沌耐性を優先して選ぶ", qty: 1 });
-  const n = o.count;
-  let uses = n;
-  if (n > 0) {
-    if (o.exalt === "perfect") {
-      const perfect = Math.min(2, n);
-      rows.push({ key: "pexalt", apiId: "perfect-exalted-orb", label: "高貴なオーブ (完全)", note: "MOD レベル 50 以上", qty: 1 });
-      if (perfect >= 2) rows.push({ key: "gomen", apiId: "omen-of-greater-exaltation", label: "偉大なる高貴なお告げ", note: "1 回で 2 つ付ける", qty: 1 });
-      if (n > 2) rows.push({ key: "gexalt", apiId: "greater-exalted-orb", label: "高貴なオーブ (上級)", note: "3 つ目", qty: n - 2 });
-      uses = 1 + Math.max(0, n - 2);
-    } else {
-      const apiId = o.exalt === "greater" ? "greater-exalted-orb" : "exalted";
-      rows.push({ key: "exalt", apiId, label: o.exalt === "greater" ? "高貴なオーブ (上級)" : "高貴なオーブ", note: `空きを ${n} つ埋める`, qty: n });
-    }
-    if (o.side === "suffix") rows.push({ key: "dextral", apiId: "omen-of-dextral-exaltation", label: "右側の高貴なお告げ", note: "エグザルトを接尾辞だけにする (使う回数ぶん)", qty: uses });
+  if (o.echo === "echoes") rows.push({ key: "echo", apiId: ECHO_API_ID, label: "アビスの反響のお告げ", note: "最初の 3 択が悪ければ 1 回引き直す", qty: 1 });
+  if (o.count > 0) {
+    const ex = EXALTS.find((x) => x.id === o.exalt) ?? EXALTS[0];
+    rows.push({ key: "exalt", apiId: ex.apiId, label: ex.label, note: `${ex.note}。1 個で ${o.count} つ付ける`, qty: 1 });
+    if (o.count >= 2) rows.push({ key: "gomen", apiId: "omen-of-greater-exaltation", label: "偉大なる高貴なお告げ", note: "次の高貴なオーブで MOD を 2 つ付ける", qty: 1 });
+    if (o.side === "suffix") rows.push({ key: "dextral", apiId: "omen-of-dextral-exaltation", label: "右側の高貴なお告げ", note: "高貴なオーブを接尾辞だけにする", qty: 1 });
   }
   const rune = r.runes.find((x) => x.id === o.runeId);
   if (rune?.apiId && o.sockets > 0) {

@@ -1,6 +1,6 @@
 <!--
   RareCraft.vue — 規格外の賭け (2026-09-14、「ヴァールの天秤」の 1 つ。旧「ES 兜のクラフト」を一般化)
-  規格外 (ルーンソケット 2) のマジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める → ルーン ×2、の収支。
+  規格外 (ルーンソケット 2) のマジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
   1 ソケットの通常ベースは今の相場で全部赤字なので扱わない (オーナー指示 2026-09-14)。
   当たり方は poe2db の推定重み × クライアントのティア値でシミュレーションし、trade2 の「売値の段」で期待収支を出す。
     views/rare-craft/sim.ts          シミュレーター + 売値の段 (純粋関数)
@@ -90,17 +90,34 @@ const materialTable = computed(() => {
 });
 const variantRows = computed(() => (showAllVariants.value ? c.variants.value : c.variants.value.slice(0, 12)));
 /** 比較表は横に収めるため短い名前にする (フル名は title) */
-const shortExalt: Record<string, string> = { normal: "通常", greater: "上級", perfect: "完全 + 偉大" };
+const shortExalt: Record<string, string> = { normal: "通常", greater: "上級", perfect: "完全" };
+const shortEssence = (label: string): string => label.match(/\((.+)\)$/)?.[1] ?? label.replace("のグレーターエッセンス", "");
+/** エッセンスを選べるレシピだけエッセンスの列を出す */
+const essenceCol = computed(() => c.essences.value.filter((e) => e.ok).length > 1);
+function setNormalShare(ev: Event): void {
+  const v = Number((ev.target as HTMLInputElement).value);
+  if (Number.isFinite(v)) c.normalShare.value = Math.min(100, Math.max(0, v)) / 100;
+}
 const shortRune = (label: string): string => (label === "ルーンなし" ? "—" : label.replace(/ \(.+\)$/, "").replace("のグレータールーン", " G").replace("のパーフェクトルーン", " P").replace("ファルウルの追跡のルーン", "追跡"));
 
-/** 収支 (実績入力、レシピごとに保存) */
+/**
+ * 収支 (実績入力、レシピごとに保存)
+ * 2026-09-14 オーナー指摘: 使うのは基本「最も得」の組み合わせなので、回数を入れたら素材欄の組み合わせ (既定は最も得) の
+ * 「1 回の数 × 回数」で使った数を埋める (空欄 = 自動、違った数だけ上書き)。
+ */
 const LEDGER_KEY = "exiledesk.rare-craft.ledger";
 interface Ledger {
-  counts: Record<string, number>;
+  attempts: number;
+  /** 手で上書きした使った数 (無い行は 1 回の数 × 回数) */
+  qty: Record<string, number>;
   sold: Record<string, number>;
   each: Record<string, number | null>;
 }
-type LedgerBook = Record<string, Partial<Ledger>>;
+interface StoredLedger extends Partial<Ledger> {
+  /** 旧形式: 使った数を全部手で入れていた (0 より大きい物は上書きとして引き継ぐ) */
+  counts?: Record<string, number>;
+}
+type LedgerBook = Record<string, StoredLedger>;
 function loadBook(): LedgerBook {
   try {
     const raw = localStorage.getItem(LEDGER_KEY);
@@ -112,20 +129,36 @@ function loadBook(): LedgerBook {
 const book = ref<LedgerBook>(loadBook());
 const ledger = computed<Ledger>(() => {
   const l = book.value[c.recipeId.value] ?? {};
-  return { counts: { ...(l.counts ?? {}) }, sold: { ...(l.sold ?? {}) }, each: { ...(l.each ?? {}) } };
+  const qty: Record<string, number> = { ...(l.qty ?? {}) };
+  if (!l.qty && l.counts) {
+    for (const [k, v] of Object.entries(l.counts)) if (typeof v === "number" && v > 0) qty[k] = v;
+  }
+  return { attempts: l.attempts ?? 0, qty, sold: { ...(l.sold ?? {}) }, each: { ...(l.each ?? {}) } };
 });
 function saveLedger(next: Ledger): void {
   book.value = { ...book.value, [c.recipeId.value]: next };
 }
+/** 数の入力。空欄は null (= 自動) */
+function readCount(ev: Event): number | null {
+  const raw = (ev.target as HTMLInputElement).value.trim();
+  if (raw === "") return null;
+  const v = Number(raw);
+  return Number.isFinite(v) && v >= 0 ? v : null;
+}
+function setAttempts(ev: Event): void {
+  saveLedger({ ...ledger.value, attempts: Math.floor(readCount(ev) ?? 0) });
+}
 function setCount(key: string, ev: Event): void {
-  const v = Number((ev.target as HTMLInputElement).value);
+  const v = readCount(ev);
   const l = ledger.value;
-  saveLedger({ ...l, counts: { ...l.counts, [key]: Number.isFinite(v) && v > 0 ? v : 0 } });
+  const qty = { ...l.qty };
+  if (v == null) delete qty[key];
+  else qty[key] = v;
+  saveLedger({ ...l, qty });
 }
 function setSold(key: string, ev: Event): void {
-  const v = Number((ev.target as HTMLInputElement).value);
   const l = ledger.value;
-  saveLedger({ ...l, sold: { ...l.sold, [key]: Number.isFinite(v) && v > 0 ? v : 0 } });
+  saveLedger({ ...l, sold: { ...l.sold, [key]: readCount(ev) ?? 0 } });
 }
 function setEach(key: string, v: number | null): void {
   const l = ledger.value;
@@ -150,12 +183,14 @@ watch(
 const ledgerRows = computed(() => {
   const l = ledger.value;
   const rows = [
-    { key: "base", label: "ベース (規格外のマジック)", unit: c.basePrice.value },
-    ...c.materials.value.map((m) => ({ key: m.apiId, label: m.label, unit: m.unit })),
+    { key: "base", label: "ベース (規格外のマジック)", unit: c.basePrice.value, perAttempt: 1 },
+    ...c.materials.value.map((m) => ({ key: m.apiId, label: m.label, unit: m.unit, perAttempt: m.qty })),
   ];
   return rows.map((r) => {
-    const qty = l.counts[r.key] ?? 0;
-    return { ...r, qty, cost: r.unit == null ? null : r.unit * qty };
+    const auto = r.perAttempt * l.attempts;
+    const override = l.qty[r.key] ?? null;
+    const qty = override ?? auto;
+    return { ...r, auto, override, qty, cost: r.unit == null ? null : r.unit * qty };
   });
 });
 const ledgerSales = computed(() => {
@@ -174,7 +209,7 @@ const ledgerSales = computed(() => {
 const ledgerTotals = computed(() => {
   const cost = ledgerRows.value.reduce((s, r) => s + (r.cost ?? 0), 0);
   const revenue = ledgerSales.value.reduce((s, r) => s + (r.revenue ?? 0), 0);
-  const bases = ledger.value.counts.base ?? 0;
+  const bases = ledgerRows.value.find((r) => r.key === "base")?.qty ?? 0;
   return {
     cost,
     revenue,
@@ -184,14 +219,15 @@ const ledgerTotals = computed(() => {
     missingSale: ledgerSales.value.some((r) => r.qty > 0 && r.revenue == null),
   };
 });
+const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toFixed(2));
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">規格外の賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める → ルーン ×2、の収支。
+        規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
         どこまで伸びるかは poe2db の推定重み × クライアントのティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
@@ -218,7 +254,7 @@ const ledgerTotals = computed(() => {
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">{{ c.recipe.value.note }}</p>
     </header>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 相場 (trade2 自動) -->
       <BaseCard>
         <div class="p-4 pl-5">
@@ -264,6 +300,14 @@ const ledgerTotals = computed(() => {
               </select>
             </label>
           </div>
+          <div class="mb-2 flex items-center gap-x-3 gap-y-1 flex-wrap text-[11px]">
+            <span v-if="c.autoBest.value" class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">{{ c.bestVariant.value ? "一番収支がいい組み合わせを表示中" : "相場が揃ったら一番収支がいい組み合わせに切り替えます" }}</span>
+            <template v-else>
+              <span class="text-[var(--exile-color-text-tertiary)]">手で選んだ組み合わせ</span>
+              <button type="button" class="underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="c.autoBest.value = true">一番収支がいい組み合わせに戻す</button>
+            </template>
+            <span v-if="c.bestVariant.value" class="text-[var(--exile-color-text-secondary)]">最も得な組み合わせの期待収支 <span class="tabular-nums" :class="evClass(c.bestVariant.value.ev)">{{ money(c.bestVariant.value.ev, true) }}</span></span>
+          </div>
           <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 items-center text-[11px] text-[var(--exile-color-text-secondary)] mb-3">
             <label>ベースの MOD</label>
             <select v-model.number="c.baseTier.value" class="num text-left w-full min-w-0">
@@ -275,23 +319,24 @@ const ledgerTotals = computed(() => {
             </select>
             <label>肋骨</label>
             <select v-model="c.rib.value" class="num text-left w-full min-w-0">
-              <option v-for="o in c.RIBS" :key="o.id" :value="o.id">{{ o.label }}</option>
+              <option v-for="o in c.RIBS" :key="o.id" :value="o.id">{{ o.label }}{{ o.minLevel ? ` (候補を MOD レベル ${o.minLevel} 以上に絞る)` : "" }}</option>
+            </select>
+            <label>反響</label>
+            <select v-model="c.echo.value" class="num text-left w-full min-w-0">
+              <option v-for="o in c.ECHOES" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
             <label>高貴なオーブ</label>
             <select v-model="c.exalt.value" class="num text-left w-full min-w-0">
-              <option v-for="o in c.EXALTS" :key="o.id" :value="o.id">{{ o.label }} ({{ o.note }})</option>
+              <option v-for="o in c.EXALTS" :key="o.id" :value="o.id">{{ o.label }} + 偉大なる高貴なお告げ ({{ o.note }})</option>
             </select>
-            <label>足す数</label>
-            <div class="flex items-center gap-2">
-              <select v-model.number="c.exaltCount.value" class="num text-left w-20">
-                <option v-for="n in c.EXALT_COUNTS" :key="n" :value="n">{{ n }} 個</option>
-              </select>
-              <span v-if="c.effectiveCount.value < c.exaltCount.value" class="text-amber-300">空きが足りないので {{ c.effectiveCount.value }} 個</span>
-            </div>
             <label>お告げ</label>
             <select v-model="c.side.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.SIDES" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
+            <template v-if="c.effectiveCount.value < c.EXALT_ADDS">
+              <span></span>
+              <span class="text-amber-300">空きが {{ c.effectiveCount.value }} つしか無いので {{ c.effectiveCount.value }} つだけ足します</span>
+            </template>
             <label>ルーン</label>
             <select v-model="c.runeId.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.recipe.value.runes" :key="o.id" :value="o.id">{{ o.label }}</option>
@@ -341,7 +386,7 @@ const ledgerTotals = computed(() => {
         <p v-if="!c.sim.value.ok" class="text-[12px] text-amber-300">計算できません: {{ c.sim.value.reason }}</p>
         <p v-else-if="!c.result.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">不足: {{ c.missing.value.join("、") || "相場を取得中" }}</p>
         <template v-else>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[12px]">
+          <div class="grid grid-cols-2 @3xl:grid-cols-4 gap-3 text-[12px]">
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
               <div class="text-[var(--exile-color-text-secondary)]">1 回の費用</div>
               <div class="tabular-nums text-[16px]">{{ money(c.cost.value) }}</div>
@@ -397,6 +442,8 @@ const ledgerTotals = computed(() => {
           <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--exile-color-text-secondary)]">
             <span v-for="m in c.recipe.value.metrics" :key="m">{{ METRIC_LABEL[m] }} の平均 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ Math.round(c.result.value.means[m]) }}{{ METRIC_UNIT[m] }}</span></span>
             <span>冒涜のあとの空き: 接頭辞 {{ c.slots.value.prefixOpen }} / 接尾辞 {{ c.slots.value.suffixOpen }}</span>
+            <span>高貴なオーブで足す MOD: {{ c.effectiveCount.value }} つ</span>
+            <span v-if="c.echo.value === 'echoes'">反響で引き直す割合 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ pct(c.sim.value.pReroll) }}</span></span>
           </div>
 
           <div class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px] max-w-3xl">
@@ -430,17 +477,17 @@ const ledgerTotals = computed(() => {
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">選択肢の比較 (高貴なオーブ × 足す数 × お告げ × ルーン)</h2>
-          <span class="text-[11px] text-[var(--exile-color-text-secondary)]">期待収支の高い順。ベース / エッセンス / 肋骨 は上の選択のまま</span>
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">選択肢の比較 (エッセンス × 肋骨 × 反響 × 高貴なオーブ × お告げ × ルーン)</h2>
+          <span class="text-[11px] text-[var(--exile-color-text-secondary)]">期待収支の高い順。ベースは上の選択のまま。高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に 1 個使って 2 つ足す</span>
         </div>
         <p v-if="c.variants.value.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場が揃うと出ます (不足: {{ c.missing.value.join("、") || "取得中" }})</p>
         <template v-else>
           <table class="w-full text-[12px] break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
-                <th class="text-left font-normal pb-1">高貴なオーブ</th>
-                <th class="text-right font-normal pb-1 pl-2">数</th>
-                <th class="text-left font-normal pb-1 pl-2">お告げ</th>
+                <th v-if="essenceCol" class="text-left font-normal pb-1 pr-2">エッセンス</th>
+                <th class="text-left font-normal pb-1">冒涜</th>
+                <th class="text-left font-normal pb-1 pl-2">高貴なオーブ</th>
                 <th class="text-left font-normal pb-1 pl-2">ルーン</th>
                 <th class="text-right font-normal pb-1 pl-2">1 回の費用</th>
                 <th class="text-right font-normal pb-1 pl-2">期待売上</th>
@@ -457,9 +504,9 @@ const ledgerTotals = computed(() => {
                 class="border-t border-[var(--exile-color-border-subtle)] tabular-nums"
                 :class="[v.current ? 'text-[var(--exile-color-accent-focus)]' : '', i === 0 ? 'bg-emerald-500/10' : '']"
               >
-                <td class="py-1 pr-2" :title="v.labels.exalt">{{ shortExalt[v.exalt] }}</td>
-                <td class="py-1 pl-2 text-right">{{ v.count }}</td>
-                <td class="py-1 pl-2" :title="v.labels.side">{{ v.side === "suffix" ? "右側" : "—" }}</td>
+                <td v-if="essenceCol" class="py-1 pr-2" :title="v.labels.essence">{{ shortEssence(v.labels.essence) }}</td>
+                <td class="py-1 pr-2" :title="`${v.labels.rib} / 反響: ${v.labels.echo}`">{{ v.rib === "ancient" ? "古代" : "保存" }}{{ v.echo === "echoes" ? " + 反響" : "" }}</td>
+                <td class="py-1 pl-2" :title="`${v.labels.exalt} + 偉大なる高貴なお告げ / ${v.labels.side}`">{{ shortExalt[v.exalt] }}{{ v.side === "suffix" ? " 右側" : "" }}{{ v.count < c.EXALT_ADDS ? ` (${v.count} つ)` : "" }}</td>
                 <td class="py-1 pl-2" :title="v.labels.rune">{{ shortRune(v.labels.rune) }}</td>
                 <td class="py-1 pl-2 text-right">{{ money(v.cost) }}</td>
                 <td class="py-1 pl-2 text-right">{{ money(v.expectedSale) }}</td>
@@ -478,29 +525,37 @@ const ledgerTotals = computed(() => {
             {{ showAllVariants ? "▲ 上位 12 件だけ" : `▼ 全 ${c.variants.value.length} 件を見る` }}
           </button>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            <template v-if="c.ribSame.value">古代の肋骨: この装備の冒涜の候補は全部 MOD レベル 40 以上なので、保存された肋骨と当たり方は同じ。費用だけ {{ c.ribCostDiff.value == null ? "" : money(c.ribCostDiff.value) }} 高くなります。</template>
-            右側の高貴なお告げは接尾辞 (耐性) にだけ付けるので、空きの数によっては足せる数が減ります。一番高い段 = 取れた売値が一番高い段で売る確率。
+            冒涜 = 肋骨 (保存 / 古代) と アビスの反響のお告げ の有無。古代の肋骨は冒涜の候補を MOD レベル 40 以上に絞る (通常の MOD の低いティアが出なくなる)。反響は最初の 3 択の一番いい物が「引き直した時の平均」より悪ければ引き直す。
+            高貴なオーブの「右側」= 右側の高貴なお告げ (接尾辞だけに付ける)。一番高い段 = 取れた売値が一番高い段で売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
           </p>
+          <p v-if="c.unpricedOptions.value.length" class="text-[11px] text-amber-300 mt-1">相場が無いので比較に出ていない素材: {{ c.unpricedOptions.value.join("、") }}</p>
         </template>
       </div>
     </BaseCard>
 
-    <!-- 収支 (実績入力) -->
+    <!-- 収支 (実績入力、回数で素材欄の組み合わせを埋める 2026-09-14) -->
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
           <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">収支<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ c.recipe.value.label }}</span></h2>
-          <div class="flex items-center gap-3 text-[11px] text-[var(--exile-color-text-secondary)]">
-            <span>実際に使った数と売れた数を入れる。単価は上の相場、売値は相場か実売</span>
+          <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+            <span>回数を入れると使った数が埋まる。違った数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)]" @click="resetLedger">全部 0 に</button>
           </div>
+        </div>
+        <div class="mb-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+          <label class="inline-flex items-center gap-2">
+            回数
+            <input :value="ledger.attempts || ''" type="number" min="0" step="1" placeholder="0" class="num w-20" @input="setAttempts" />
+          </label>
+          <span>{{ c.autoBest.value ? "素材欄の組み合わせ = 最も得" : "素材欄の組み合わせ = 手で選んだ物" }}</span>
         </div>
         <table class="w-full text-[12px] break-words">
           <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
             <tr>
               <th class="text-left font-normal pb-1">素材</th>
               <th class="text-right font-normal pb-1 pl-3">単価</th>
-              <th class="text-right font-normal pb-1 pl-3">使った数</th>
+              <th class="text-right font-normal pb-1 pl-3">使った数 (空欄は 1 回の数 × 回数)</th>
               <th class="text-right font-normal pb-1 pl-3">費用</th>
             </tr>
           </thead>
@@ -508,7 +563,7 @@ const ledgerTotals = computed(() => {
             <tr v-for="r in ledgerRows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)]">
               <td class="py-1.5 pr-2">{{ r.label }}</td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.unit == null ? 'text-amber-300' : ''">{{ r.unit == null ? "相場なし" : money(r.unit) }}</td>
-              <td class="py-1.5 pl-3 text-right"><input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="setCount(r.key, $event)" /></td>
+              <td class="py-1.5 pl-3 text-right"><input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtCount(r.auto)" class="num w-24" @input="setCount(r.key, $event)" /></td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
@@ -550,7 +605,7 @@ const ledgerTotals = computed(() => {
           </tbody>
         </table>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          ベースの「使った数」が回数。売値の欄は空欄なら上の相場、実際に売れた額があればそれを入れてください。入力はレシピごとにこの PC に残ります。
+          使った数は空欄なら「素材欄で選んでいる組み合わせの 1 回の数 × 回数」、実際に違った数だけ入れてください。売値の欄は空欄なら上の相場、実際に売れた額があればそれを入れてください。入力はレシピごとにこの PC に残ります。
           <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
           <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>
         </p>
@@ -564,7 +619,7 @@ const ledgerTotals = computed(() => {
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>
           <span>前提 (売値の段の条件と計算の入力。ここで変えられます)</span>
         </button>
-        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 text-[12px]">
+        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 @4xl:grid-cols-2 gap-4 text-[12px]">
           <div class="space-y-2">
             <div class="text-[11px] text-[var(--exile-color-text-secondary)]">売値の段 (trade2 の検索条件。変えるとその分だけ取り直す)</div>
             <div v-for="b in c.buckets.value" :key="b.key" class="flex items-center gap-3 flex-wrap">
@@ -588,6 +643,7 @@ const ledgerTotals = computed(() => {
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
               <label>ベースの ilvl (これ以下の MOD だけ付く)</label><input v-model.number="c.ilvl.value" type="number" min="1" max="100" step="1" class="num" />
               <label>品質 % (防御にだけ効く)</label><input v-model.number="c.quality.value" type="number" min="0" max="30" step="1" class="num" />
+              <label>冒涜 3 択の 2・3 つ目が通常の MOD になる確率 %</label><input :value="Math.round(c.normalShare.value * 100)" type="number" min="0" max="100" step="5" class="num" @change="setNormalShare" />
               <template v-if="c.recipe.value.id === 'es-helmet'">
                 <label>ベースの素の ES (先祖のティアラ 109 / カマサのティアラ 101)</label><input v-model.number="c.baseEs.value" type="number" min="0" step="1" class="num" />
               </template>
@@ -596,10 +652,14 @@ const ledgerTotals = computed(() => {
           <div class="text-[11px] text-[var(--exile-color-text-secondary)] leading-relaxed space-y-1">
             <p>
               手順 (0.5 の「クラフト MOD 1 + 冒涜 1」): マジックベースの MOD 1 つ → グレーターエッセンス (クラフト MOD 枠、レア化) → 肋骨で冒涜 3 択 (耐性 + 混沌耐性を優先して選ぶ) →
-              高貴なオーブで空きを埋める。付く MOD は poe2db の推定重みに比例、ロール値は範囲内で一様、同じ系統は重ならない。
+              高貴なオーブ 1 個 + 偉大なる高貴なお告げで MOD を 2 つ足す (空きは 1 つ残る)。付く MOD は poe2db の推定重みに比例、ロール値は範囲内で一様、同じ系統は重ならない。
             </p>
             <p>重み: poe2db の値 (PoE1 で同系統だった MOD の重み。PoE2 の新 MOD と冒涜は 1 = 一様)。ティア値と「どの装備に付くか」はクライアントの MOD 表。GGG は PoE2 の重みを公開していない。</p>
-            <p>兜 / 手袋 / 靴の冒涜 MOD は接尾辞だけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。冒涜の候補は全部 MOD レベル 65 なので古代の肋骨でも候補は変わらない。</p>
+            <p>兜 / 手袋 / 靴の冒涜 MOD は接尾辞だけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。</p>
+            <p>
+              冒涜の 3 択: 1 つはアビス専用 MOD (全部 MOD レベル 65、一様)、残り 2 つはそれぞれ左の確率で同じ側の通常の MOD (poe2db の重み)。コミュニティ (Sift の冒涜ガイド) の推定で、GGG は公開していない。
+              古代の肋骨は候補を MOD レベル 40 以上に絞る。アビスの反響のお告げは、最初の 3 択の一番いい物の点数 (耐性 + 混沌耐性の重み付き) が「引き直した時の平均」より低ければ 1 回引き直す。お告げは引き直さなくても消費する前提。
+            </p>
             <p>売値の段: trade2 の擬似 stat (ライフ合計 / 元素耐性合計 / 混沌耐性合計 / 移動速度) と ES の値で検索した最安。1 回ぶんの結果は満たす段のうち一番高い売値で、どれにも届かなければ外れの最安で売る。</p>
             <p>ルーンと品質はシミュレーションのあとに足す (ソケット 2 本ぶん)。ES = (素の ES + フラット ES) × (1 + %ES + 品質 + 鉄のルーン)。</p>
             <p>規格外だけを扱う理由 (2026-09-14 の JP 相場): ソケット 1 の完成品は 1〜18 カオスで 3 レシピとも赤字、ソケット 2 は同じ条件で 37〜139 カオス。売値は最安値なので、出品が少ない段は「トレード2へ」で並びを見てから作ること。</p>

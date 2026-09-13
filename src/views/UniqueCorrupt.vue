@@ -222,7 +222,7 @@ const ledgerTotals = computed(() => {
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ユニークコラプトの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -283,7 +283,7 @@ const ledgerTotals = computed(() => {
       </div>
     </BaseCard>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 相場 (trade2 自動) -->
       <BaseCard>
         <div class="p-4 pl-5">
@@ -387,7 +387,7 @@ const ledgerTotals = computed(() => {
         <p v-if="!u.selected.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">ユニークと狙いの付加を選んでください。</p>
         <p v-else-if="u.targets.value.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">狙いの付加を 1 つ以上選んでください (付加プールの「狙う」)。</p>
         <template v-else-if="u.result.value.ok">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
+          <div class="grid grid-cols-1 @3xl:grid-cols-3 gap-3 text-[12px]">
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
               <div class="text-[var(--exile-color-text-secondary)]">当たり 1 個あたりの実質コスト</div>
               <div class="tabular-nums text-[16px]">{{ money(u.result.value.costPerHit) }}</div>
@@ -508,7 +508,7 @@ const ledgerTotals = computed(() => {
               <option v-for="t in u.targetPrices.value" :key="t.id" :value="t.id">{{ t.label }} ({{ money(t.price) }})</option>
             </select>
           </div>
-          <div v-if="u.firstEnchant.value" class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div v-if="u.firstEnchant.value" class="grid grid-cols-1 @6xl:grid-cols-2 gap-4">
             <div>
               <div class="text-[11px] text-[var(--exile-color-text-secondary)] mb-1">2 個目の狙い (最大 {{ MAX_SECOND_TARGETS }}、1 個目と別グループの {{ u.secondPool.value.length }} 種から一様)</div>
               <table class="w-full text-[12px]">
@@ -531,7 +531,7 @@ const ledgerTotals = computed(() => {
                 </tbody>
               </table>
             </div>
-            <div class="text-[12px]">
+            <div class="@container text-[12px]">
               <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center">
                 <label>
                   <div>いまの品の価値 (1 個目の付加つきの売値)</div>
@@ -553,7 +553,7 @@ const ledgerTotals = computed(() => {
                 <span class="tabular-nums text-right" :class="u.twiceFloorPrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ u.twiceFloorPrice.value == null ? (u.pricing.value ? "取得中…" : "—") : money(u.twiceFloorPrice.value) }}</span>
               </div>
               <template v-if="u.architect.value.ok">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <div class="grid grid-cols-1 @md:grid-cols-2 gap-3 mt-3">
                   <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
                     <div class="text-[var(--exile-color-text-secondary)]">1 回の期待収支</div>
                     <div class="tabular-nums text-[16px]" :class="evClass(u.architect.value.ev)">{{ money(u.architect.value.ev, true) }}</div>
@@ -678,7 +678,7 @@ const ledgerTotals = computed(() => {
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>
           <span>前提 (確率は非公開のためコミュニティの仮定。ここで変えられます)</span>
         </button>
-        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 text-[12px]">
+        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 @4xl:grid-cols-2 gap-4 text-[12px]">
           <div class="space-y-2">
             <div class="text-[11px] text-[var(--exile-color-text-secondary)]">ヴァールオーブ (ユニーク装備に 1 回)。4 系統の重み (比率で使う)。Maxroll / U4N: 等確率 25% ずつ</div>
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">

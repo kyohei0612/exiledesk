@@ -167,7 +167,7 @@ function evClass(v: number | null): string {
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">アドニアの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -181,7 +181,7 @@ function evClass(v: number | null): string {
       <div class="mt-1"><CurrencyPicker /></div>
     </header>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 入力 -->
       <BaseCard>
         <div class="p-4 pl-5">
@@ -283,7 +283,7 @@ function evClass(v: number | null): string {
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">完成品 1 個あたり</h2>
         <template v-if="o.result.value.ok">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
+          <div class="grid grid-cols-1 @3xl:grid-cols-3 gap-3 text-[12px]">
             <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
               <div class="text-[var(--exile-color-text-secondary)]">実質コスト</div>
               <div class="tabular-nums text-[16px]">{{ money(o.result.value.costPerFinished) }}</div>

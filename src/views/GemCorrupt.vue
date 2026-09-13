@@ -17,7 +17,7 @@ import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
-import type { RouteResult } from "./gem-corrupt/model";
+import type { RouteId, RouteResult } from "./gem-corrupt/model";
 
 const g = useGemCorrupt();
 onMounted(() => {
@@ -89,18 +89,24 @@ const MATERIAL_DESC: Record<string, string> = {
   uncut20: "ジェムを生成するか既存のジェムのレベルをレベル20に上げる",
 };
 /**
- * 収支 (実績入力、オーナー指示 2026-09-13): 実際に使った素材の数と、売れた数を手で入れて損益を出す。
- * アドニアと同じ作りで、神のオーブでの調整は無いので素材と結果だけ。単価は上の相場、売値は相場か実売。
- * ジェムごとに別帳簿 (localStorage、この PC だけ)。
+ * 収支 (実績入力、オーナー指示 2026-09-13)。単価は上の相場、買ったジェムと売れた物は相場か実際の額。ジェムごとに別帳簿 (localStorage、この PC だけ)。
+ * 2026-09-14 オーナー指摘: 使うのは基本「最も得」の経路なのに、帳簿が空で「買ったジェム」の行も無かった。
+ * → 経路 (既定は最も得) と回数を入れると、その経路で使う物が「1 回の数 × 回数」で埋まる (空欄 = 自動、違う数だけ上書き)。
  */
 const LEDGER_KEY = "exiledesk.gem.ledger";
+type BuyKey = "buyLevel21" | "buyQuality23" | "buyFinished";
+type RowKey = "baseGem" | "gcp" | "perfectJeweller" | "vaal" | "crystal" | "uncut20" | BuyKey;
+type SoldKey = "soldLevel21" | "soldQuality23" | "soldFinished" | "soldOther";
+type EachKey = "eachLevel21" | "eachQuality23" | "eachFinished" | "eachOther";
 interface GemLedger {
-  baseGem: number;
-  gcp: number;
-  perfectJeweller: number;
-  vaal: number;
-  crystal: number;
-  uncut20: number;
+  /** null = 最も得の経路に合わせる */
+  route: RouteId | null;
+  /** やった回数 */
+  attempts: number;
+  /** 手で上書きした使った数 (無い行は 1 回の数 × 回数) */
+  qty: Partial<Record<RowKey, number>>;
+  /** 買ったジェムの実際の 1 個の値段 (高貴)。無ければ相場 */
+  buyEach: Partial<Record<BuyKey, number>>;
   /** 売れた数 */
   soldLevel21: number;
   soldQuality23: number;
@@ -113,11 +119,14 @@ interface GemLedger {
   eachOther: number | null;
 }
 const EMPTY_LEDGER: GemLedger = {
-  baseGem: 0, gcp: 0, perfectJeweller: 0, vaal: 0, crystal: 0, uncut20: 0,
+  route: null, attempts: 0, qty: {}, buyEach: {},
   soldLevel21: 0, soldQuality23: 0, soldFinished: 0, soldOther: 0,
   eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
 };
-type LedgerBook = Record<string, Partial<GemLedger>>;
+/** 旧形式 (素材ごとの使った数を全部手で入れていた) のキー。0 より大きい物は上書きとして引き継ぐ */
+const OLD_QTY_KEYS = ["baseGem", "gcp", "perfectJeweller", "vaal", "crystal", "uncut20"] as const;
+type StoredGemLedger = Partial<GemLedger> & Partial<Record<(typeof OLD_QTY_KEYS)[number], number>>;
+type LedgerBook = Record<string, StoredGemLedger>;
 function loadBook(): LedgerBook {
   try {
     const raw = localStorage.getItem(LEDGER_KEY);
@@ -128,16 +137,64 @@ function loadBook(): LedgerBook {
 }
 const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
-const ledger = computed<GemLedger>(() => ({ ...EMPTY_LEDGER, ...(book.value[ledgerGem.value] ?? {}) }));
+const ledger = computed<GemLedger>(() => {
+  const raw = book.value[ledgerGem.value] ?? {};
+  const qty: Partial<Record<RowKey, number>> = { ...(raw.qty ?? {}) };
+  if (!raw.qty) {
+    for (const k of OLD_QTY_KEYS) {
+      const v = raw[k];
+      if (typeof v === "number" && v > 0) qty[k] = v;
+    }
+  }
+  return {
+    ...EMPTY_LEDGER,
+    route: raw.route ?? null,
+    attempts: raw.attempts ?? 0,
+    qty,
+    buyEach: { ...(raw.buyEach ?? {}) },
+    soldLevel21: raw.soldLevel21 ?? 0,
+    soldQuality23: raw.soldQuality23 ?? 0,
+    soldFinished: raw.soldFinished ?? 0,
+    soldOther: raw.soldOther ?? 0,
+    eachLevel21: raw.eachLevel21 ?? null,
+    eachQuality23: raw.eachQuality23 ?? null,
+    eachFinished: raw.eachFinished ?? null,
+    eachOther: raw.eachOther ?? null,
+  };
+});
 function setLedger<K extends keyof GemLedger>(key: K, v: GemLedger[K]): void {
   if (!ledgerGem.value) return;
   book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, [key]: v } };
 }
-type CountKey = "baseGem" | "gcp" | "perfectJeweller" | "vaal" | "crystal" | "uncut20" | "soldLevel21" | "soldQuality23" | "soldFinished" | "soldOther";
-type EachKey = "eachLevel21" | "eachQuality23" | "eachFinished" | "eachOther";
-function ledgerNum(key: CountKey, ev: Event): void {
-  const v = Number((ev.target as HTMLInputElement).value);
-  setLedger(key, Number.isFinite(v) && v > 0 ? v : 0);
+/** 数の入力。空欄は null (= 自動) */
+function readCount(ev: Event): number | null {
+  const raw = (ev.target as HTMLInputElement).value.trim();
+  if (raw === "") return null;
+  const v = Number(raw);
+  return Number.isFinite(v) && v >= 0 ? v : null;
+}
+function setAttempts(ev: Event): void {
+  setLedger("attempts", Math.floor(readCount(ev) ?? 0));
+}
+function setRoute(ev: Event): void {
+  const v = (ev.target as HTMLSelectElement).value;
+  setLedger("route", v === "" ? null : (v as RouteId));
+}
+function setQty(key: RowKey, ev: Event): void {
+  const v = readCount(ev);
+  const qty = { ...ledger.value.qty };
+  if (v == null) delete qty[key];
+  else qty[key] = v;
+  setLedger("qty", qty);
+}
+function setBuyEach(key: BuyKey, v: number | null): void {
+  const b = { ...ledger.value.buyEach };
+  if (v == null) delete b[key];
+  else b[key] = v;
+  setLedger("buyEach", b);
+}
+function setSold(key: SoldKey, ev: Event): void {
+  setLedger(key, readCount(ev) ?? 0);
 }
 function resetLedger(): void {
   if (!ledgerGem.value) return;
@@ -156,23 +213,67 @@ watch(
   },
   { deep: true },
 );
-const ledgerRows = computed(() => {
+/** 帳簿の経路 (既定は最も得。相場が揃わず決まらない間は自作) */
+const ledgerRouteId = computed<RouteId>(() => ledger.value.route ?? g.best.value?.id ?? "craft");
+interface LedgerRowDef {
+  key: RowKey;
+  label: string;
+  market: number | null;
+  /** 買った物 (実際の買値を入れられる) */
+  buy: BuyKey | null;
+  /** 1 回の数。null は結果次第 (自動では埋めない) */
+  perAttempt: number | null;
+  hint: string;
+}
+function routeRows(id: RouteId): LedgerRowDef[] {
   const m = g.materials.value;
+  const s = g.sale.value;
+  const r = g.routes.value.find((x) => x.id === id);
+  const crystal: LedgerRowDef = { key: "crystal", label: "コラプトの結晶", market: m.crystal, buy: null, perAttempt: 1, hint: "" };
+  switch (id) {
+    case "craft":
+      return [
+        { key: "baseGem", label: "低レベルのジェム本体", market: m.baseGem, buy: null, perAttempt: 1, hint: "" },
+        { key: "gcp", label: "宝石細工師のプリズム", market: m.gcp, buy: null, perAttempt: 4, hint: "" },
+        { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", market: m.perfectJeweller, buy: null, perAttempt: 1, hint: "" },
+        { key: "vaal", label: "ヴァールオーブ", market: m.vaal, buy: null, perAttempt: 1, hint: "" },
+        {
+          ...crystal,
+          perAttempt: null,
+          hint: `片方当たった時だけ使う。実際の数を入れる${r?.ok ? ` (期待 ${fmtQty(r.expectedCrystals ?? 0)} 本 / 回)` : ""}`,
+        },
+        {
+          key: "uncut20",
+          label: g.uncutLabel.value,
+          market: m.uncut20,
+          buy: null,
+          perAttempt: null,
+          hint: `売る物にだけ使う。実際の数を入れる${r?.ok ? ` (期待 ${fmtQty(r.expectedUncut ?? 0)} 個 / 回)` : ""}`,
+        },
+      ];
+    case "buy21":
+      return [{ key: "buyLevel21", label: "レベル 21 (品質 20%) のジェム", market: s.level21, buy: "buyLevel21", perAttempt: 1, hint: "買った物" }, crystal];
+    case "buy23":
+      return [{ key: "buyQuality23", label: "品質 23% のジェム", market: s.quality23, buy: "buyQuality23", perAttempt: 1, hint: "買った物" }, crystal];
+    case "buyFinished":
+      return [{ key: "buyFinished", label: "完成品 (21 · 23%)", market: s.finished, buy: "buyFinished", perAttempt: 1, hint: "買った物" }];
+  }
+}
+const ledgerRows = computed(() => {
   const l = ledger.value;
-  const rows: { key: CountKey; label: string; unit: number | null; qty: number }[] = [
-    { key: "baseGem", label: "低レベルのジェム本体", unit: m.baseGem, qty: l.baseGem },
-    { key: "gcp", label: "宝石細工師のプリズム", unit: m.gcp, qty: l.gcp },
-    { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", unit: m.perfectJeweller, qty: l.perfectJeweller },
-    { key: "vaal", label: "ヴァールオーブ", unit: m.vaal, qty: l.vaal },
-    { key: "crystal", label: "コラプトの結晶", unit: m.crystal, qty: l.crystal },
-    { key: "uncut20", label: g.uncutLabel.value, unit: m.uncut20, qty: l.uncut20 },
-  ];
-  return rows.map((r) => ({ ...r, cost: r.unit == null ? null : r.unit * r.qty }));
+  return routeRows(ledgerRouteId.value).map((r) => {
+    const auto = r.perAttempt == null ? 0 : r.perAttempt * l.attempts;
+    const override = l.qty[r.key] ?? null;
+    const qty = override ?? auto;
+    const each = r.buy ? (l.buyEach[r.buy] ?? null) : null;
+    const unit = each ?? r.market;
+    return { ...r, auto, override, qty, each, unit, cost: unit == null ? null : unit * qty };
+  });
 });
 const ledgerSales = computed(() => {
   const l = ledger.value;
   const s = g.sale.value;
-  const rows: { qtyKey: CountKey; eachKey: EachKey; label: string; market: number | null; qty: number; each: number | null }[] = [
+  const rows: { qtyKey: SoldKey; eachKey: EachKey; label: string; market: number | null; qty: number; each: number | null }[] = [
     { qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, qty: l.soldLevel21, each: l.eachLevel21 },
     { qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23%", market: s.quality23, qty: l.soldQuality23, each: l.eachQuality23 },
     { qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, qty: l.soldFinished, each: l.eachFinished },
@@ -190,7 +291,7 @@ const ledgerTotals = computed(() => {
   const missingSale = sales.some((r) => r.qty > 0 && r.revenue == null);
   const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
   const revenue = sales.reduce((s, r) => s + (r.revenue ?? 0), 0);
-  const vaal = ledger.value.vaal;
+  const n = ledger.value.attempts;
   const finished = ledger.value.soldFinished;
   return {
     cost,
@@ -198,8 +299,8 @@ const ledgerTotals = computed(() => {
     profit: revenue - cost,
     missingCost,
     missingSale,
-    /** ヴァール 1 回あたりの損益 */
-    perVaal: vaal > 0 ? (revenue - cost) / vaal : null,
+    /** 1 回あたりの損益 */
+    perAttempt: n > 0 ? (revenue - cost) / n : null,
     /** 完成品 1 個あたりの実コスト */
     perFinished: finished > 0 ? cost / finished : null,
   };
@@ -254,7 +355,7 @@ const atN = computed(() => {
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプトの賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -316,7 +417,7 @@ const atN = computed(() => {
       </div>
     </BaseCard>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 売値 -->
       <BaseCard>
         <div class="p-4 pl-5">
@@ -446,7 +547,7 @@ const atN = computed(() => {
             <span v-if="g.best.value.id === 'buyFinished'"> (どの経路も期待収支がマイナス)</span>
           </span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 @2xl:grid-cols-2 @5xl:grid-cols-4 gap-3">
           <div
             v-for="r in g.routes.value"
             :key="r.id"
@@ -551,35 +652,54 @@ const atN = computed(() => {
       </div>
     </BaseCard>
 
-    <!-- 収支 (実績入力) 2026-09-13 -->
+    <!-- 収支 (実績入力) 2026-09-13、経路と回数で埋める 2026-09-14 -->
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
           <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">
             収支<span v-if="g.selected.value" class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ g.selected.value.ja }}</span>
           </h2>
-          <div class="flex items-center gap-3 text-[11px] text-[var(--exile-color-text-secondary)]">
-            <span>実際に使った数と売れた数を入れる。単価は上の相場、売値は相場か実売</span>
+          <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+            <span>経路と回数を入れると使った数が埋まる。違った数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" @click="resetLedger">全部 0 に</button>
           </div>
         </div>
         <p v-if="!g.selected.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">ジェムを選ぶと、そのジェムの帳簿が出ます。</p>
         <template v-else>
-          <table class="w-full text-[12px]">
+          <div class="mb-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+            <label class="inline-flex items-center gap-2 min-w-0 max-w-full">
+              経路
+              <select :value="ledger.route ?? ''" class="num text-left w-72 max-w-full min-w-0" @change="setRoute">
+                <option value="">最も得に合わせる{{ g.best.value ? ` (${g.best.value.label})` : "" }}</option>
+                <option v-for="r in g.routes.value" :key="r.id" :value="r.id">{{ r.label }}</option>
+              </select>
+            </label>
+            <label class="inline-flex items-center gap-2">
+              回数
+              <input :value="ledger.attempts || ''" type="number" min="0" step="1" placeholder="0" class="num w-20" @input="setAttempts" />
+            </label>
+          </div>
+          <table class="w-full text-[12px] break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
-                <th class="text-right font-normal pb-1 pl-3">単価</th>
-                <th class="text-right font-normal pb-1 pl-3">使った数</th>
+                <th class="text-right font-normal pb-1 pl-3">単価 (買った物は空欄なら相場)</th>
+                <th class="text-right font-normal pb-1 pl-3">使った数 (空欄は 1 回の数 × 回数)</th>
                 <th class="text-right font-normal pb-1 pl-3">費用</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="r in ledgerRows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5 pr-2">{{ r.label }}</td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.unit == null ? 'text-amber-300' : ''">{{ r.unit == null ? "相場なし" : money(r.unit) }}</td>
+                <td class="py-1.5 pr-2">
+                  <div>{{ r.label }}</div>
+                  <div v-if="r.hint" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.hint }}</div>
+                </td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="!r.buy && r.unit == null ? 'text-amber-300' : ''">
+                  <MoneyInput v-if="r.buy" :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setBuyEach(r.buy as BuyKey, $event)" />
+                  <template v-else>{{ r.unit == null ? "相場なし" : money(r.unit) }}</template>
+                </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="ledgerNum(r.key, $event)" />
+                  <input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtQty(r.auto)" class="num w-24" @input="setQty(r.key, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
               </tr>
@@ -605,7 +725,7 @@ const atN = computed(() => {
                   <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setLedger(r.eachKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="ledgerNum(r.qtyKey, $event)" />
+                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="setSold(r.qtyKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
               </tr>
@@ -621,14 +741,15 @@ const atN = computed(() => {
                   {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${money(ledgerTotals.perFinished)}` : "" }}
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
-                  {{ ledgerTotals.perVaal != null ? `ヴァール 1 回あたり ${money(ledgerTotals.perVaal, true)}` : "" }}
+                  {{ ledgerTotals.perAttempt != null ? `1 回あたり ${money(ledgerTotals.perAttempt, true)}` : "" }}
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ money(ledgerTotals.profit, true) }}</td>
               </tr>
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            売値の欄は空欄なら上の売値 (trade2 最安)、実際に売れた額があればそれを入れてください。「その他」は外れの生存品など、相場が無い物の実売用。入力はジェムごとにこの PC に残ります。
+            使った数は空欄なら「経路の 1 回の数 × 回数」、実際に違った数だけ入れてください。自作の結晶と原石は結果次第なので実際の数を入れます。
+            買ったジェムと売れた物の値段は空欄なら上の売値 (trade2 最安)、実際の額があればそれを入れてください。「その他」は外れの生存品など、相場が無い物の実売用。入力はジェムごとにこの PC に残ります。
             <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
             <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>
           </p>
@@ -647,7 +768,7 @@ const atN = computed(() => {
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>
           <span>前提 (確率は非公開のためコミュニティ推定。ここで変えられます)</span>
         </button>
-        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4 text-[12px]">
+        <div v-if="showAssumptions" class="mt-3 grid grid-cols-1 @4xl:grid-cols-2 gap-4 text-[12px]">
           <div class="space-y-2">
             <div class="text-[11px] text-[var(--exile-color-text-secondary)]">ヴァールオーブ (未コラプトのジェムに 1 回)。4 系統の重み (比率で使う)</div>
             <div class="grid grid-cols-2 gap-x-4 gap-y-1 items-center">
@@ -675,7 +796,7 @@ const atN = computed(() => {
               既定値に戻す
             </button>
           </div>
-          <div class="lg:col-span-2 text-[11px] text-[var(--exile-color-text-tertiary)] leading-relaxed">
+          <div class="@4xl:col-span-2 text-[11px] text-[var(--exile-color-text-tertiary)] leading-relaxed">
             ゲームクライアントにあるのは「コラプトの結晶: コラプト状態のスキルジェムを予測不可能に変化させるか、または破壊する」「穢れにより +1 レベル」
             といった文言と対象アイテム種 (スキル / サポート / メタジェム) までで、確率は入っていません。既定値は 4 系統等確率・品質 7 段階均等・結晶の破壊 50% です。
             レベル上げは「原石」でコラプト後も可能なので、レベルは最後に上げる前提で計算しています (壊れた物にレベル代を払わない)。
