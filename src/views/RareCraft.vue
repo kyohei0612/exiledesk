@@ -1,6 +1,7 @@
 <!--
-  RareCraft.vue — レアクラフトの賭け (2026-09-14、「ヴァールの天秤」の 1 つ。旧「ES 兜のクラフト」を一般化)
-  マジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める、の収支。
+  RareCraft.vue — 規格外の賭け (2026-09-14、「ヴァールの天秤」の 1 つ。旧「ES 兜のクラフト」を一般化)
+  規格外 (ルーンソケット 2) のマジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める → ルーン ×2、の収支。
+  1 ソケットの通常ベースは今の相場で全部赤字なので扱わない (オーナー指示 2026-09-14)。
   当たり方は poe2db の推定重み × クライアントのティア値でシミュレーションし、trade2 の「売値の段」で期待収支を出す。
     views/rare-craft/sim.ts          シミュレーター + 売値の段 (純粋関数)
     views/rare-craft/recipes.ts      レシピ (ES 兜 / ライフ耐性手袋 / 移動速度靴) と素材
@@ -50,10 +51,10 @@ const priceRows = computed(() => {
   const rows: { kind: "base" | "floor" | `b:${string}`; label: string; note: string }[] = [
     {
       kind: "base",
-      label: "ベース (マジック)",
-      note: `${c.page.value.label} · ilvl ${c.ilvl.value}+ · ${c.recipe.value.baseMod.label} ${t ? `${t.min}〜${t.max} (T${t.tier})` : "—"} · ソケット ${c.sockets.value}+`,
+      label: "ベース (規格外のマジック)",
+      note: `${c.page.value.label} · ilvl ${c.ilvl.value}+ · ${c.recipe.value.baseMod.label} ${t ? `${t.min}〜${t.max} (T${t.tier})` : "—"} · ソケット ${c.sockets.value}`,
     },
-    ...c.buckets.value.map((b) => ({ kind: bucketKind(b.key), label: `売値の段: ${bucketLabel(b.conds)}`, note: `レア · 未コラプト · ソケット ${c.sockets.value}+` })),
+    ...c.buckets.value.map((b) => ({ kind: bucketKind(b.key), label: `売値の段: ${bucketLabel(b.conds)}`, note: `レア · 未コラプト · ソケット ${c.sockets.value}` })),
     { kind: "floor", label: `外れ: ${bucketLabel(c.floorConds.value)}`, note: "どの段にも届かなかった物をこの値で売る" },
   ];
   return rows.map((r) => {
@@ -82,12 +83,15 @@ const atN = computed(() => {
 const materialTable = computed(() => {
   const n = attempts.value;
   const rows = [
-    { key: "base", label: "ベース (マジック)", note: "1 回に 1 個。外れても品物は残る (外れの売値で売る)", unit: c.basePrice.value, qty: 1 },
+    { key: "base", label: "ベース (規格外のマジック)", note: "1 回に 1 個。外れても品物は残る (外れの売値で売る)", unit: c.basePrice.value, qty: 1 },
     ...c.materials.value.map((m) => ({ key: m.key, label: m.label, note: m.note, unit: m.unit, qty: m.qty })),
   ];
   return rows.map((r) => ({ ...r, costPerAttempt: r.unit == null ? null : r.unit * r.qty, qtyN: r.qty * n, costN: r.unit == null ? null : r.unit * r.qty * n }));
 });
 const variantRows = computed(() => (showAllVariants.value ? c.variants.value : c.variants.value.slice(0, 12)));
+/** 比較表は横に収めるため短い名前にする (フル名は title) */
+const shortExalt: Record<string, string> = { normal: "通常", greater: "上級", perfect: "完全 + 偉大" };
+const shortRune = (label: string): string => (label === "ルーンなし" ? "—" : label.replace(/ \(.+\)$/, "").replace("のグレータールーン", " G").replace("のパーフェクトルーン", " P").replace("ファルウルの追跡のルーン", "追跡"));
 
 /** 収支 (実績入力、レシピごとに保存) */
 const LEDGER_KEY = "exiledesk.rare-craft.ledger";
@@ -146,7 +150,7 @@ watch(
 const ledgerRows = computed(() => {
   const l = ledger.value;
   const rows = [
-    { key: "base", label: "ベース (マジック)", unit: c.basePrice.value },
+    { key: "base", label: "ベース (規格外のマジック)", unit: c.basePrice.value },
     ...c.materials.value.map((m) => ({ key: m.apiId, label: m.label, unit: m.unit })),
   ];
   return rows.map((r) => {
@@ -185,10 +189,10 @@ const ledgerTotals = computed(() => {
 <template>
   <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">レアクラフトの賭け</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">規格外の賭け</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        マジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める、の収支。
-        どこまで伸びるかは poe2db の推定重み × クライアントのティア値で 2 万回試し、trade2 の「売値の段」で売った時の期待収支を出します。
+        規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブで空きを埋める → ルーン ×2、の収支。
+        どこまで伸びるかは poe2db の推定重み × クライアントのティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
         素材価格: カレンシーランキングの相場{{ c.league.value ? ` (${c.league.value.Value})` : "" }} · {{ c.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 重み: poe2db の推定 (PoE1 由来、冒涜は一様)
@@ -205,17 +209,11 @@ const ledgerTotals = computed(() => {
         </label>
         <label v-if="c.recipe.value.pages.length > 1" class="inline-flex items-center gap-2">
           防御タイプ
-          <select v-model="c.pageId.value" class="num text-left w-64">
+          <select v-model="c.pageId.value" class="num text-left w-64 max-w-full">
             <option v-for="p in c.recipe.value.pages" :key="p.id" :value="p.id">{{ p.label }}</option>
           </select>
         </label>
-        <label class="inline-flex items-center gap-2">
-          ソケット
-          <select v-model.number="c.sockets.value" class="num text-left w-20">
-            <option :value="1">1</option>
-            <option :value="2">2</option>
-          </select>
-        </label>
+        <span class="px-1.5 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]">規格外 · ソケット 2</span>
       </div>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">{{ c.recipe.value.note }}</p>
     </header>
@@ -266,21 +264,21 @@ const ledgerTotals = computed(() => {
               </select>
             </label>
           </div>
-          <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-center text-[11px] text-[var(--exile-color-text-secondary)] mb-3">
+          <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 items-center text-[11px] text-[var(--exile-color-text-secondary)] mb-3">
             <label>ベースの MOD</label>
-            <select v-model.number="c.baseTier.value" class="num text-left w-full">
+            <select v-model.number="c.baseTier.value" class="num text-left w-full min-w-0">
               <option v-for="t in c.tiers.value" :key="t.tier" :value="t.tier">{{ c.recipe.value.baseMod.label }} {{ t.min }}〜{{ t.max }} (T{{ t.tier }} · MOD レベル {{ t.level }})</option>
             </select>
             <label>エッセンス</label>
-            <select v-model="c.essenceId.value" class="num text-left w-full">
+            <select v-model="c.essenceId.value" class="num text-left w-full min-w-0">
               <option v-for="e in c.essences.value" :key="e.id" :value="e.id" :disabled="!e.ok">{{ e.label }}{{ e.range ? ` ${e.range.min}〜${e.range.max}` : "" }}{{ e.ok ? "" : ` (${e.reason})` }}</option>
             </select>
             <label>肋骨</label>
-            <select v-model="c.rib.value" class="num text-left w-full">
+            <select v-model="c.rib.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.RIBS" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
             <label>高貴なオーブ</label>
-            <select v-model="c.exalt.value" class="num text-left w-full">
+            <select v-model="c.exalt.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.EXALTS" :key="o.id" :value="o.id">{{ o.label }} ({{ o.note }})</option>
             </select>
             <label>足す数</label>
@@ -291,23 +289,23 @@ const ledgerTotals = computed(() => {
               <span v-if="c.effectiveCount.value < c.exaltCount.value" class="text-amber-300">空きが足りないので {{ c.effectiveCount.value }} 個</span>
             </div>
             <label>お告げ</label>
-            <select v-model="c.side.value" class="num text-left w-full">
+            <select v-model="c.side.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.SIDES" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
             <label>ルーン</label>
-            <select v-model="c.runeId.value" class="num text-left w-full">
+            <select v-model="c.runeId.value" class="num text-left w-full min-w-0">
               <option v-for="o in c.recipe.value.runes" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
           </div>
-          <table class="w-full text-[12px]">
+          <table class="w-full text-[12px] break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">単価</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の数</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の数</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の費用</th>
+                <th class="text-right font-normal pb-1 pl-2">単価</th>
+                <th class="text-right font-normal pb-1 pl-2">1 回の数</th>
+                <th class="text-right font-normal pb-1 pl-2">1 回の費用</th>
+                <th class="text-right font-normal pb-1 pl-2">{{ attempts }} 回の数</th>
+                <th class="text-right font-normal pb-1 pl-2">{{ attempts }} 回の費用</th>
               </tr>
             </thead>
             <tbody>
@@ -369,14 +367,14 @@ const ledgerTotals = computed(() => {
             {{ c.result.value.ev > 0 ? `作る価値あり: 1 回につき平均 ${money(c.result.value.ev)} の利益` : `作らない方が得: 1 回につき平均 ${money(-c.result.value.ev)} の赤字` }}
           </p>
 
-          <table class="mt-3 text-[12px] w-full max-w-4xl">
+          <table class="mt-3 text-[12px] w-full max-w-4xl break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">売値の段</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">条件を満たす確率</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">この段で売る確率</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">売値</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">期待売上への寄与</th>
+                <th class="text-right font-normal pb-1 pl-2">条件を満たす確率</th>
+                <th class="text-right font-normal pb-1 pl-2">この段で売る確率</th>
+                <th class="text-right font-normal pb-1 pl-2">売値</th>
+                <th class="text-right font-normal pb-1 pl-2">期待売上への寄与</th>
               </tr>
             </thead>
             <tbody>
@@ -411,7 +409,7 @@ const ledgerTotals = computed(() => {
                 </select>
               </label>
             </div>
-            <div v-if="atN" class="grid grid-cols-2 gap-x-6 gap-y-1">
+            <div v-if="atN" class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1">
               <span class="text-[var(--exile-color-text-secondary)]">総費用</span>
               <span class="text-right tabular-nums">{{ money(atN.cost) }}</span>
               <span class="text-[var(--exile-color-text-secondary)]">期待売上</span>
@@ -437,18 +435,18 @@ const ledgerTotals = computed(() => {
         </div>
         <p v-if="c.variants.value.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場が揃うと出ます (不足: {{ c.missing.value.join("、") || "取得中" }})</p>
         <template v-else>
-          <table class="w-full text-[12px]">
+          <table class="w-full text-[12px] break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">高貴なオーブ</th>
                 <th class="text-right font-normal pb-1 pl-2">数</th>
                 <th class="text-left font-normal pb-1 pl-2">お告げ</th>
                 <th class="text-left font-normal pb-1 pl-2">ルーン</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">期待売上</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">期待収支</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">黒字の確率</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">一番高い段</th>
+                <th class="text-right font-normal pb-1 pl-2">1 回の費用</th>
+                <th class="text-right font-normal pb-1 pl-2">期待売上</th>
+                <th class="text-right font-normal pb-1 pl-2">期待収支</th>
+                <th class="text-right font-normal pb-1 pl-2">黒字の確率</th>
+                <th class="text-right font-normal pb-1 pl-2">一番高い段</th>
                 <th class="pb-1"></th>
               </tr>
             </thead>
@@ -459,16 +457,16 @@ const ledgerTotals = computed(() => {
                 class="border-t border-[var(--exile-color-border-subtle)] tabular-nums"
                 :class="[v.current ? 'text-[var(--exile-color-accent-focus)]' : '', i === 0 ? 'bg-emerald-500/10' : '']"
               >
-                <td class="py-1 pr-2 whitespace-nowrap">{{ v.labels.exalt }}</td>
+                <td class="py-1 pr-2" :title="v.labels.exalt">{{ shortExalt[v.exalt] }}</td>
                 <td class="py-1 pl-2 text-right">{{ v.count }}</td>
-                <td class="py-1 pl-2 whitespace-nowrap">{{ v.labels.side }}</td>
-                <td class="py-1 pl-2 whitespace-nowrap">{{ v.labels.rune }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(v.cost) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(v.expectedSale) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap" :class="evClass(v.ev)">{{ money(v.ev, true) }}</td>
+                <td class="py-1 pl-2" :title="v.labels.side">{{ v.side === "suffix" ? "右側" : "—" }}</td>
+                <td class="py-1 pl-2" :title="v.labels.rune">{{ shortRune(v.labels.rune) }}</td>
+                <td class="py-1 pl-2 text-right">{{ money(v.cost) }}</td>
+                <td class="py-1 pl-2 text-right">{{ money(v.expectedSale) }}</td>
+                <td class="py-1 pl-2 text-right" :class="evClass(v.ev)">{{ money(v.ev, true) }}</td>
                 <td class="py-1 pl-2 text-right">{{ pct(v.pProfit) }}</td>
                 <td class="py-1 pl-2 text-right">{{ pct(v.pTop) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">
+                <td class="py-1 pl-2 text-right">
                   <span v-if="i === 0" class="text-[10px] px-1 rounded bg-emerald-500/20 text-emerald-300">最も得</span>
                   <button v-if="!v.current" type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="c.selectVariant(v.key)">これにする</button>
                   <span v-else class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">選択中</span>
@@ -497,7 +495,7 @@ const ledgerTotals = computed(() => {
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)]" @click="resetLedger">全部 0 に</button>
           </div>
         </div>
-        <table class="w-full text-[12px]">
+        <table class="w-full text-[12px] break-words">
           <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
             <tr>
               <th class="text-left font-normal pb-1">素材</th>
@@ -603,14 +601,15 @@ const ledgerTotals = computed(() => {
             <p>重み: poe2db の値 (PoE1 で同系統だった MOD の重み。PoE2 の新 MOD と冒涜は 1 = 一様)。ティア値と「どの装備に付くか」はクライアントの MOD 表。GGG は PoE2 の重みを公開していない。</p>
             <p>兜 / 手袋 / 靴の冒涜 MOD は接尾辞だけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。冒涜の候補は全部 MOD レベル 65 なので古代の肋骨でも候補は変わらない。</p>
             <p>売値の段: trade2 の擬似 stat (ライフ合計 / 元素耐性合計 / 混沌耐性合計 / 移動速度) と ES の値で検索した最安。1 回ぶんの結果は満たす段のうち一番高い売値で、どれにも届かなければ外れの最安で売る。</p>
-            <p>ルーンと品質はシミュレーションのあとに足す (ソケット数ぶん)。ES = (素の ES + フラット ES) × (1 + %ES + 品質 + 鉄のルーン)。</p>
+            <p>ルーンと品質はシミュレーションのあとに足す (ソケット 2 本ぶん)。ES = (素の ES + フラット ES) × (1 + %ES + 品質 + 鉄のルーン)。</p>
+            <p>規格外だけを扱う理由 (2026-09-14 の JP 相場): ソケット 1 の完成品は 1〜18 カオスで 3 レシピとも赤字、ソケット 2 は同じ条件で 37〜139 カオス。売値は最安値なので、出品が少ない段は「トレード2へ」で並びを見てから作ること。</p>
           </div>
         </div>
       </div>
     </BaseCard>
 
     <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-      素材価格: カレンシーランキングの相場 (poe2scout 由来) · ベースと売値: trade2 (JP API、検索は 10 秒間隔、条件ごとに 5 回) · 重み: poe2db (推定) · ティア値: ゲームクライアント
+      素材価格: カレンシーランキングの相場 (poe2scout 由来) · ベースと売値: trade2 (JP API、ソケット 2、検索は 10 秒間隔、条件ごとに 5 回) · 重み: poe2db (推定) · ティア値: ゲームクライアント
     </p>
   </section>
 </template>

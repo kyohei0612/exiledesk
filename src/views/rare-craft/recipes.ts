@@ -1,5 +1,8 @@
 /**
- * レアクラフトの賭け — レシピ定義 (2026-09-14)
+ * 規格外の賭け — レシピ定義 (2026-09-14)
+ *
+ * オーナー指示 (2026-09-14): 1 ソケットの通常ベースは作らない。規格外 (ルーンソケット 2) のベースだけで収支を出す
+ * (1 ソケットは今の相場で全部赤字、規格外は完成品の値が 10〜40 倍で黒字)。
  *
  * 0.5 の基本形「マジックベース (MOD 1 つ) → グレーターエッセンス (クラフト MOD 枠) → 肋骨で冒涜 → 高貴なオーブで空きを埋める」。
  * 名前は全部クライアントの日本語 (items-ja-client.json)。単価の apiId は poe2scout。
@@ -8,6 +11,9 @@
 import type { Metric } from "./sim";
 
 export type RecipeId = "es-helmet" | "life-res-gloves" | "ms-boots";
+
+/** 規格外のベース = ルーンソケット 2 (兜 / 手袋 / 靴の通常は 1) */
+export const EXCEPTIONAL_SOCKETS = 2;
 
 export interface PageDef {
   /** poe2db の重み表のページ */
@@ -80,7 +86,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "es-helmet",
     label: "ES 兜",
-    note: "フラット ES 付きのマジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める",
+    note: "フラット ES 付きの規格外マジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 鉄のルーン ×2",
     category: "armour.helmet",
     ilvl: 80,
     pages: [{ id: "Helmets_int", label: "知性 (ES) 兜", defence: { esMin: 100 }, baseEs: 109 }],
@@ -106,7 +112,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "life-res-gloves",
     label: "ライフ耐性手袋",
-    note: "ライフ付きのマジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める",
+    note: "ライフ付きの規格外マジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 耐性ルーン ×2",
     category: "armour.gloves",
     ilvl: 82,
     pages: [
@@ -117,7 +123,7 @@ export const RECIPES: readonly RecipeDef[] = [
     essences: RES_ESSENCES,
     defaultEssence: "insulation",
     runes: RES_RUNES,
-    defaultRune: "none",
+    defaultRune: "storm",
     priority: { res: 1, chaos: 0.3 },
     buckets: [
       { key: "a", conds: { life: 120, res: 80 } },
@@ -131,7 +137,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "ms-boots",
     label: "移動速度靴",
-    note: "移動速度付きのマジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める",
+    note: "移動速度付きの規格外マジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブで空きを埋める → 耐性ルーン ×2",
     category: "armour.boots",
     ilvl: 82,
     pages: [
@@ -143,7 +149,7 @@ export const RECIPES: readonly RecipeDef[] = [
     essences: [BODY_ESSENCE, ...RES_ESSENCES],
     defaultEssence: "body",
     runes: [...RES_RUNES, { id: "chase", label: "ファルウルの追跡のルーン (移動速度 +5%)", apiId: "farruls-rune-of-the-chase", effect: { ms: 5 } }],
-    defaultRune: "none",
+    defaultRune: "storm",
     priority: { res: 1, chaos: 0.3 },
     // 肉体のグレーターエッセンスがライフ枠を使う (85〜99) ので、ライフの段は 85 (100 は届かない)
     buckets: [

@@ -1,5 +1,5 @@
 /**
- * レアクラフトの賭け — 状態 / 相場 / trade2 (2026-09-14)
+ * 規格外の賭け — 状態 / 相場 / trade2 (2026-09-14、ソケット 2 固定)
  *
  *   レシピ (ES 兜 / ライフ耐性手袋 / 移動速度靴) を選ぶ
  *   → trade2 で「ベース (マジック + ベース MOD のティア)」「売値の段 ×3」「外れ」の最安を自動で取る (クエリごとに覚える)
@@ -15,6 +15,7 @@ import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/
 import {
   EXALT_COUNTS,
   EXALTS,
+  EXCEPTIONAL_SOCKETS,
   RECIPES,
   RIBS,
   SIDES,
@@ -79,7 +80,8 @@ export function useRareCraft() {
   const page = computed(() => recipe.value.pages.find((p) => p.id === pageId.value) ?? recipe.value.pages[0]);
   const ilvl = ref(recipe.value.ilvl);
   const baseTier = ref(recipe.value.baseMod.defaultTier);
-  const sockets = ref(1);
+  /** 規格外 = ソケット 2 固定 (オーナー指示 2026-09-14) */
+  const sockets = computed(() => EXCEPTIONAL_SOCKETS);
   const quality = ref(recipe.value.quality);
   const baseEs = ref(page.value.baseEs);
   const essenceId = ref(recipe.value.defaultEssence);

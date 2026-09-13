@@ -8,8 +8,8 @@
 //!   - `trade2_search_count`: 上の `total` だけ取り出す軽量版（母集団件数表示用）
 //!   - `trade2_fetch`: search で取った listing id 列（最大 10）を query_id 付きで照会、listing 詳細を返す
 //!
-//! 今後の予定:
-//!   - rate limit ヘッダパース + 自動 throttle（現状はフロント側で sleep 吸収）
+//! rate limit: 成功時はレスポンスに `_ratelimit` (x-rate-limit-* ヘッダ) を足し、429 時はエラー文字列に
+//!   `ratelimit={...}` を含める。フロント (services/trade2/pricing.ts) がサーバーの実カウントに合わせて待つ (2026-09-14)。
 //!
 //! User-Agent: ExileDesk/0.1 (連絡先 hardcode せず、必要なら env で渡す)
 
@@ -87,10 +87,12 @@ pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, Stri
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
+        let rl = rate_limit_headers(res.headers());
         let body = res.text().await.unwrap_or_default();
         return Err(format!(
-            "trade2 search HTTP 429 retry-after={}: {}",
+            "trade2 search HTTP 429 retry-after={} ratelimit={}: {}",
             retry_after,
+            rl,
             body.chars().take(1000).collect::<String>()
         ));
     }
@@ -103,10 +105,14 @@ pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, Stri
         ));
     }
 
-    let body: serde_json::Value = res
+    let rl = rate_limit_headers(res.headers());
+    let mut body: serde_json::Value = res
         .json()
         .await
         .map_err(|e| format!("json parse error: {e}"))?;
+    if let Some(obj) = body.as_object_mut() {
+        obj.insert("_ratelimit".to_string(), rl);
+    }
     Ok(body)
 }
 
@@ -171,10 +177,12 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
+        let rl = rate_limit_headers(res.headers());
         let body = res.text().await.unwrap_or_default();
         return Err(format!(
-            "trade2 fetch HTTP 429 retry-after={}: {}",
+            "trade2 fetch HTTP 429 retry-after={} ratelimit={}: {}",
             retry_after,
+            rl,
             body.chars().take(1000).collect::<String>()
         ));
     }
@@ -187,11 +195,30 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
         ));
     }
 
-    let body: serde_json::Value = res
+    let rl = rate_limit_headers(res.headers());
+    let mut body: serde_json::Value = res
         .json()
         .await
         .map_err(|e| format!("json parse error: {e}"))?;
+    if let Some(obj) = body.as_object_mut() {
+        obj.insert("_ratelimit".to_string(), rl);
+    }
     Ok(body)
+}
+
+/// x-rate-limit-* ヘッダをそのまま JSON にする (2026-09-14)。
+/// フロントの擬似レート制限がサーバー側の実カウント (同じ IP の手動検索も含む) に合わせるために使う。
+fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {
+    let mut m = serde_json::Map::new();
+    for (k, v) in h.iter() {
+        let name = k.as_str();
+        if name.starts_with("x-rate-limit-") {
+            if let Ok(s) = v.to_str() {
+                m.insert(name.to_string(), serde_json::Value::String(s.to_string()));
+            }
+        }
+    }
+    serde_json::Value::Object(m)
 }
 
 /// 簡易 URL encode (Rust 標準は無いので手書き、ASCII + - _ . ~ 以外はパーセント符号化)。

@@ -66,6 +66,79 @@ function recordSearch(at: number): void {
     /* 保存できなくても動く */
   }
 }
+/**
+ * サーバーの実カウントに合わせた待ち (2026-09-14)。trade2 は毎回
+ *   x-rate-limit-ip: "5:10:60,15:60:300,30:300:1800" (上限:窓秒:罰則秒)
+ *   x-rate-limit-ip-state: "3:10:0,9:60:0,20:300:0" (現在数:窓秒:残りの罰則秒)
+ * を返す。自前の記録は同じ IP の手動検索を数えられず 429 を踏んだ (2026-09-14) ので、
+ * ヘッダの現在数が上限に近ければその窓の長さぶん待ち、罰則が残っていればその秒数待つ。
+ */
+type RateKind = "search" | "fetch";
+const SERVER_BLOCK_KEY = "exiledesk.trade2.serverBlockedUntil";
+const serverBlockedUntil: Record<RateKind, number> = loadServerBlock();
+function loadServerBlock(): Record<RateKind, number> {
+  try {
+    const raw = localStorage.getItem(SERVER_BLOCK_KEY);
+    const v = raw ? (JSON.parse(raw) as Partial<Record<RateKind, number>>) : {};
+    return { search: Number(v.search) || 0, fetch: Number(v.fetch) || 0 };
+  } catch {
+    return { search: 0, fetch: 0 };
+  }
+}
+export function syncRateLimit(kind: RateKind, headers: Record<string, string> | null | undefined): void {
+  if (!headers) return;
+  const now = Date.now();
+  let until = serverBlockedUntil[kind];
+  for (const [name, rules] of Object.entries(headers)) {
+    const m = name.toLowerCase().match(/^x-rate-limit-(ip|account)$/);
+    if (!m) continue;
+    const state = headers[`${name}-state`] ?? headers[`x-rate-limit-${m[1]}-state`];
+    if (!state) continue;
+    const r = rules.split(",").map((x) => x.split(":").map(Number));
+    const st = state.split(",").map((x) => x.split(":").map(Number));
+    r.forEach(([max, period], i) => {
+      const [cur, , restricted] = st[i] ?? [];
+      if (!Number.isFinite(max) || !Number.isFinite(cur)) return;
+      if (restricted > 0) until = Math.max(until, now + restricted * 1000);
+      // 余裕: 上限 15 以上の窓は 2、それ未満は 1 残して止める
+      const margin = max >= 15 ? 2 : 1;
+      if (cur >= max - margin) until = Math.max(until, now + period * 1000);
+    });
+  }
+  if (until !== serverBlockedUntil[kind]) {
+    serverBlockedUntil[kind] = until;
+    try {
+      localStorage.setItem(SERVER_BLOCK_KEY, JSON.stringify(serverBlockedUntil));
+    } catch {
+      /* 保存できなくても動く */
+    }
+  }
+}
+/** 429 のエラー文字列 ("... ratelimit={...}: ...") からヘッダを取り出して同期する */
+export function syncRateLimitFromError(kind: RateKind, err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  const m = msg.match(/ratelimit=(\{[^}]*\})/);
+  if (!m) return;
+  try {
+    syncRateLimit(kind, JSON.parse(m[1]) as Record<string, string>);
+  } catch {
+    /* 形式が違えば無視 */
+  }
+}
+function withSync<T>(kind: RateKind, p: Promise<T>): Promise<T> {
+  return p.then(
+    (res) => {
+      const rl = (res as unknown as { _ratelimit?: Record<string, string> })?._ratelimit;
+      syncRateLimit(kind, rl);
+      return res;
+    },
+    (err) => {
+      syncRateLimitFromError(kind, err);
+      throw err;
+    },
+  );
+}
+
 /** 窓の予算から見て、次の search を送れる最も早い時刻 (ms) */
 function budgetAllowedAt(now: number): number {
   let at = now;
@@ -84,7 +157,7 @@ function budgetAllowedAt(now: number): number {
 export function nextSearchAllowedAt(): number {
   const now = Date.now();
   const last = searchLog.length ? searchLog[searchLog.length - 1] : lastRequestAt.search;
-  return Math.max(last + SEARCH_INTERVAL_MS, budgetAllowedAt(now));
+  return Math.max(last + SEARCH_INTERVAL_MS, budgetAllowedAt(now), serverBlockedUntil.search);
 }
 /** 直近 5 分の search 回数と上限 (画面表示用) */
 export function searchBudgetUsage(): { used: number; max: number } {
@@ -107,7 +180,7 @@ function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T
       recordSearch(at);
       return fn();
     }
-    const wait = lastRequestAt.fetch + FETCH_INTERVAL_MS - Date.now();
+    const wait = Math.max(lastRequestAt.fetch + FETCH_INTERVAL_MS, serverBlockedUntil.fetch) - Date.now();
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     lastRequestAt.fetch = Date.now();
     return fn();
@@ -176,9 +249,15 @@ interface FetchResponse {
 const DEV_TRADE = import.meta.env.DEV;
 async function devJson<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init);
-  if (r.status === 429) throw new Error(`HTTP 429 retry-after=${r.headers.get("retry-after") ?? "60"}`);
+  const rl: Record<string, string> = {};
+  r.headers.forEach((v, k) => {
+    if (k.toLowerCase().startsWith("x-rate-limit-")) rl[k.toLowerCase()] = v;
+  });
+  if (r.status === 429) throw new Error(`HTTP 429 retry-after=${r.headers.get("retry-after") ?? "60"} ratelimit=${JSON.stringify(rl)}`);
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  return (await r.json()) as T;
+  const body = (await r.json()) as T;
+  if (body && typeof body === "object") (body as unknown as { _ratelimit?: Record<string, string> })._ratelimit = rl;
+  return body;
 }
 
 async function searchOnce(league: string, body: unknown): Promise<Trade2SearchResponse> {
@@ -186,15 +265,18 @@ async function searchOnce(league: string, body: unknown): Promise<Trade2SearchRe
   const site = trade2Site();
   const query = localizeQueryForSite(body);
   if (DEV_TRADE) {
-    return throttled("search", () =>
-      devJson<Trade2SearchResponse>(`/api/trade2-${site}/search/poe2/${encodeURIComponent(league)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(query),
-      }),
+    return withSync(
+      "search",
+      throttled("search", () =>
+        devJson<Trade2SearchResponse>(`/api/trade2-${site}/search/poe2/${encodeURIComponent(league)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(query),
+        }),
+      ),
     );
   }
-  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } }));
+  return withSync("search", throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } })));
 }
 
 /** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
@@ -208,8 +290,8 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
   }
   const site = trade2Site();
   const fetched = DEV_TRADE
-    ? await throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`))
-    : await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } }));
+    ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`)))
+    : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } })));
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;
