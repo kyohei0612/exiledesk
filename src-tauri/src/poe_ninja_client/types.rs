@@ -75,6 +75,8 @@ pub struct CraftV2Progress {
     pub characters_total: usize,
     /// このアセンダンシー分のすべての CharacterItems (完了時に 1 度だけ emit)
     pub items: Vec<CharacterItems>,
+    /// 2026-09-14: poe.ninja のスキル使用率 (そのクラスの全キャラ)。辞書が取れなかった時は None
+    pub skill_stats: Option<SkillUsageStats>,
 }
 
 /// per-character 単位の進捗イベント payload (Tauri emit 用、2026-05-23 追加)。

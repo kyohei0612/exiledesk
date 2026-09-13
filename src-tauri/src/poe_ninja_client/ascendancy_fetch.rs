@@ -132,7 +132,7 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
 
     // search 開始 (total は確定前なので暫定で top_n)
     emit_char_progress(window, &asc_class, 0, ctx.top_n_per_ascendancy, "search");
-    let chars = match fetch_search_top_n(&ctx.client, &ctx.gate, &ctx.snapshot, &asc_class, ctx.top_n_per_ascendancy).await {
+    let search = match fetch_search(&ctx.client, &ctx.gate, &ctx.snapshot, &asc_class, ctx.top_n_per_ascendancy).await {
         Ok(v) => v,
         Err(e) => {
             // search 失敗 → このアセンダンシーは諦めて次へ。UI のフェーズ表示を消すため completed を投げる
@@ -141,6 +141,15 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
             return None;
         }
     };
+    // 2026-09-14: poe.ninja が表示しているスキル使用率 (そのクラスの全キャラ)。辞書が取れなくても装備の集計は続ける
+    let skill_stats = match skill_stats_from_summary(&ctx.client, &ctx.gate, &search.summary).await {
+        Ok(s) => s,
+        Err(e) => {
+            emit_error(window, &asc_class, "skill-stats", e);
+            None
+        }
+    };
+    let chars = search.characters;
     let total = chars.len();
     let current_keys: Vec<String> = chars.iter().map(|c| char_key(&c.account, &c.name)).collect();
 
@@ -184,6 +193,7 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
                     characters_done: succeeded,
                     characters_total: total,
                     items: items.clone(),
+                    skill_stats: skill_stats.clone(),
                 },
             );
             emit_char_progress(window, &asc_class, succeeded, total, "fetching");
@@ -200,6 +210,7 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
             characters_done: succeeded,
             characters_total: total,
             items,
+            skill_stats: skill_stats.clone(),
         },
     );
 
@@ -207,5 +218,5 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
     if ordered.is_empty() {
         return None;
     }
-    Some(CachedAscendancy { class: asc_class, percentage: asc_pct, characters: ordered })
+    Some(CachedAscendancy { class: asc_class, percentage: asc_pct, characters: ordered, skill_stats })
 }

@@ -30,6 +30,9 @@ import type {
   SlotKey,
   SlotMods,
   SkillUsage,
+  SkillUsageStatsRaw,
+  GemUsageCountRaw,
+  NinjaSkillStats,
   UniqueUsage,
 } from "./types";
 import {
@@ -237,6 +240,15 @@ function finalizeSkills(buckets: Map<string, import("./ingest").SkillBucket2>, s
   return list;
 }
 
+/** Rust のスキル使用率 (英語名 + 人数) を表示用に (日本語名 + 割合)。人数 0 / 総数 0 は出さない */
+function toNinjaSkills(raw: SkillUsageStatsRaw | null | undefined): NinjaSkillStats | null {
+  if (!raw || !(raw.total > 0)) return null;
+  const total = raw.total;
+  const map = (list: GemUsageCountRaw[] | undefined) =>
+    (list ?? []).filter((g) => g.count > 0).map((g) => ({ name: jaSkill(g.name), nameEn: g.name, count: g.count, percentage: g.count / total }));
+  return { total, main: map(raw.main), spirit: map(raw.spirit), all: map(raw.all) };
+}
+
 function finalizeAscendancy(
   classEn: string,
   usagePercent: number,
@@ -244,6 +256,7 @@ function finalizeAscendancy(
   counter: AscendancyCounter,
   error?: string,
   fetchProgress?: { done: number; total: number },
+  ninjaRaw?: SkillUsageStatsRaw | null,
 ): AggregatedAscendancy {
   const uniquesBySlot: { [K in SlotKey]: UniqueUsage[] } = {
     ring: finalizeUniques(counter.uniquesBySlot.ring, sampleSize),
@@ -273,6 +286,7 @@ function finalizeAscendancy(
     uniques: finalizeUniques(counter.uniques, sampleSize),
     uniquesBySlot,
     skills: finalizeSkills(counter.skills, sampleSize),
+    ninjaSkills: toNinjaSkills(ninjaRaw),
     error,
     fetchProgress,
   };
@@ -291,7 +305,7 @@ export function aggregateFromProgress(payload: CraftV2Progress): AggregatedAscen
   return finalizeAscendancy(payload.ascendancy, payload.percentage, payload.characters_done, counter, undefined, {
     done: payload.characters_done,
     total: payload.characters_total,
-  });
+  }, payload.skill_stats);
 }
 
 /**
@@ -360,7 +374,7 @@ function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAsce
   return finalizeAscendancy(cached.class, cached.percentage, cachedCount, counter, undefined, {
     done: 0,
     total: cachedCount > 0 ? cachedCount : 1,
-  });
+  }, cached.skill_stats);
 }
 
 /** キャッシュ全体から AggregatedAscendancy[] を構築 (使用率降順)。 */

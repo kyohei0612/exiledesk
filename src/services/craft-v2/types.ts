@@ -32,6 +32,8 @@ export interface CraftV2Progress {
   characters_done: number;
   characters_total: number;
   items: CharacterItems[];
+  /** 2026-09-14: poe.ninja のスキル使用率 (そのクラスの全キャラ)。辞書が取れなかった時は null */
+  skill_stats?: SkillUsageStatsRaw | null;
 }
 
 export interface CraftV2ErrorPayload {
@@ -128,6 +130,8 @@ export interface CachedAscendancy {
   class: string;
   percentage: number;
   characters: CachedCharacter[];
+  /** 2026-09-14: poe.ninja のスキル使用率。旧キャッシュには無い */
+  skill_stats?: SkillUsageStatsRaw | null;
 }
 
 export interface CraftV2Cache {
@@ -319,6 +323,34 @@ export interface SkillUsage {
   supports: { name: string; nameEn: string; count: number }[];
 }
 
+/** Rust SkillUsageStats のミラー (2026-09-14)。poe.ninja が表示しているスキル使用率 (search の集計、そのクラスの全キャラ) */
+export interface SkillUsageStatsRaw {
+  total: number;
+  main: GemUsageCountRaw[];
+  spirit: GemUsageCountRaw[];
+  all: GemUsageCountRaw[];
+}
+export interface GemUsageCountRaw {
+  name: string;
+  count: number;
+}
+/** poe.ninja のスキル使用率 1 行 (表示用) */
+export interface NinjaSkillStat {
+  /** 表示名 (skills-ja-client で日本語化) */
+  name: string;
+  nameEn: string;
+  count: number;
+  /** 0..1 (人数 ÷ そのクラスの全キャラ) */
+  percentage: number;
+}
+/** poe.ninja の Main Skills / Spirit Skills / All Skills (人数降順) */
+export interface NinjaSkillStats {
+  total: number;
+  main: NinjaSkillStat[];
+  spirit: NinjaSkillStat[];
+  all: NinjaSkillStat[];
+}
+
 export interface AggregatedAscendancy {
   /** id: `class` 英語表記を kebab-case 化したもの (UI key 用) */
   id: string;
@@ -346,6 +378,8 @@ export interface AggregatedAscendancy {
   uniquesBySlot: { [K in SlotKey]: UniqueUsage[] };
   /** スキル使用率 (人数降順)。古いキャッシュ (ν3 以前) では空 (2026-09-12) */
   skills: SkillUsage[];
+  /** poe.ninja のスキル使用率 (そのクラスの全キャラ)。古いキャッシュでは無い (2026-09-14) */
+  ninjaSkills?: NinjaSkillStats | null;
   /** 取得失敗時の理由 (UI でエラー表示用、成功時は undefined) */
   error?: string;
   /** このアセンダンシーの取得進捗 (N/M キャラ)。progress event 由来の場合のみ存在。 */

@@ -111,8 +111,10 @@ onMounted(() => {
       <!-- スキルタブ: 主流スキル / スピリット / サポート (2026-09-12) -->
       <SkillUsageCard
         v-if="d.activeAscendancy.value && d.skillsTab.value"
+        :ninja="d.activeNinjaSkills.value"
         :skills="d.activeSkills.value"
         :sample-size="d.activeAscendancy.value.sampleSize"
+        :ascendancy-name="d.activeAscendancy.value.name"
       />
 
       <!-- 本体: prefix / suffix / (ベース) / unique カード。ユニーク優位スロットでは order でユニークを最上段に。 -->

@@ -50,6 +50,31 @@ pub struct CachedAscendancy {
     pub percentage: f64,
     /// キャラ集合 (取得成功分のみ、search の上位順)
     pub characters: Vec<CachedCharacter>,
+    /// 2026-09-14: poe.ninja が表示しているスキル使用率 (search の集計、そのクラスの全キャラ)。旧キャッシュには無い
+    #[serde(default)]
+    pub skill_stats: Option<SkillUsageStats>,
+}
+
+/// poe.ninja のスキル使用率 (search レスポンスの集計 dimension を辞書で名前にした物)。
+/// オーナー指摘 (2026-09-14): 「上位の人の集計ではなく、poe.ninja が表示している登録キャラ全体の使用率を使用率順に」。
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct SkillUsageStats {
+    /// そのクラスの全キャラ数 (poe.ninja の "Found N characters")
+    pub total: u64,
+    /// Main Skills (dimension `skills`)
+    pub main: Vec<GemUsageCount>,
+    /// Spirit Skills (dimension `spiritgems`)
+    pub spirit: Vec<GemUsageCount>,
+    /// All Skills (dimension `allskills`、サポート含む)
+    pub all: Vec<GemUsageCount>,
+}
+
+/// ジェム 1 種の使用人数
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GemUsageCount {
+    /// 英語名 (poe.ninja の辞書そのまま)
+    pub name: String,
+    pub count: u64,
 }
 
 /// キャラ単位のキャッシュ (rare + unique のみ縮小保存)。

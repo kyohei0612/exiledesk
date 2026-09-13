@@ -63,6 +63,8 @@ export function useCraftV2Derived() {
   const activeSlotLabel = computed<string>(() => SLOT_TABS.find((t) => t.key === activeSlot.value)?.label ?? "");
   /** 選択中アセのスキル使用率 (古いキャッシュでは空) */
   const activeSkills = computed<SkillUsage[]>(() => activeAscendancy.value?.skills ?? []);
+  /** 選択中アセの poe.ninja スキル使用率 (そのクラスの全キャラ、古いキャッシュでは null) */
+  const activeNinjaSkills = computed(() => activeAscendancy.value?.ninjaSkills ?? null);
 
   // ---- 低カウント折りたたみ (アセンダンシー × スロット 別に独立した state) ----
   const expandKey = computed<string>(() => `${activeAscendancyId.value}::${activeSlot.value}`);
@@ -184,6 +186,7 @@ export function useCraftV2Derived() {
     sortedSuffix,
     skillsTab,
     activeSkills,
+    activeNinjaSkills,
     sortedBases,
     visiblePrefix,
     visibleSuffix,
