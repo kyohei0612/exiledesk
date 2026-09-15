@@ -403,6 +403,8 @@ export interface LadderRow {
 export interface LadderResult {
   rows: LadderRow[];
   floor: { pSold: number; price: number | null; contribution: number };
+  /** 外れの条件にも届かず売れない確率 */
+  below: { pSold: number };
   expectedSale: number;
   ev: number;
   /** 売値が 1 回の費用以上になる確率 */
@@ -432,10 +434,18 @@ const meets = (m: Record<Metric, number>, conds: Partial<Record<Metric, number>>
   return true;
 };
 
-export function evaluateLadder(sim: SimResult, post: PostOptions, buckets: LadderBucket[], floorPrice: number | null, cost: number): LadderResult {
+export function evaluateLadder(
+  sim: SimResult,
+  post: PostOptions,
+  buckets: LadderBucket[],
+  floorConds: Partial<Record<Metric, number>>,
+  floorPrice: number | null,
+  cost: number,
+): LadderResult {
   const reach = new Array(buckets.length).fill(0);
   const sold = new Array(buckets.length).fill(0);
   let floorSold = 0;
+  let belowSold = 0;
   let saleSum = 0;
   let profit = 0;
   const sums: Record<Metric, number> = { es: 0, life: 0, res: 0, chaos: 0, ms: 0 };
@@ -450,12 +460,23 @@ export function evaluateLadder(sim: SimResult, post: PostOptions, buckets: Ladde
     ok.forEach((v, i) => {
       if (v) reach[i]++;
     });
-    let price = floorPrice ?? 0;
+    let price = 0;
     const top = order.find((x) => ok[x.i] && (x.price ?? 0) > (floorPrice ?? 0));
+    const anyBucket = order.find((x) => ok[x.i]);
     if (top) {
       sold[top.i]++;
       price = top.price ?? 0;
-    } else floorSold++;
+    } else if (meets(m, floorConds)) {
+      floorSold++;
+      price = floorPrice ?? 0;
+    } else if (anyBucket) {
+      // 段には届いたが外れの条件を満たさない (条件を手で変えた時だけ起きる): その段の売値で売る
+      sold[anyBucket.i]++;
+      price = anyBucket.price ?? 0;
+    } else {
+      // 外れの条件にも届かない物は売れない扱い (2026-09-15 オーナー指示。以前は外れの売値で売れる計算だった)
+      belowSold++;
+    }
     saleSum += price;
     if (price >= cost) profit++;
   }
@@ -473,6 +494,7 @@ export function evaluateLadder(sim: SimResult, post: PostOptions, buckets: Ladde
   return {
     rows,
     floor: { pSold: floorSold / n, price: floorPrice, contribution: (floorSold / n) * (floorPrice ?? 0) },
+    below: { pSold: belowSold / n },
     expectedSale,
     ev: expectedSale - cost,
     pProfit: profit / n,

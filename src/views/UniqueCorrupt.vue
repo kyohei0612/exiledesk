@@ -208,7 +208,9 @@ const ledgerTotals = computed(() => {
   const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
   const revenue = sales.reduce((s, r) => s + (r.revenue ?? 0), 0);
   const vaals = ledger.value.vaals;
-  const hits = ledger.value.soldHit;
+  // 当たり = そのまま売った物 + アーキテクトオーブに回した物 (アーキテクトは 1 個目の付加つきにだけ打つ)。
+  // 2026-09-15: 以前は売れた数だけで数えていて、アーキテクトに回すほど当たり率が低く出ていた
+  const hits = ledger.value.soldHit + ledger.value.architects;
   return {
     cost,
     revenue,

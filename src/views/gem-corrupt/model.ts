@@ -7,7 +7,15 @@
  *          → 生き残った物だけ原石 (レベル 20) でレベル 20 にする (コラプトの +1 で 21)
  *   B. レベル 21 (品質 20%) を買ってコラプトの結晶で品質 23% を賭ける
  *   C. 品質 23% (レベルは不問) を買ってコラプトの結晶でレベル +1 を賭ける
+ *      → 生き残った物は結晶の後に原石 (レベル 20) で上げてから売る
+ *        (2026-09-15 オーナー指摘: 原石代が抜けていて収支が合わなかった)
  *   D. 完成品をそのまま買う (基準)
+ *
+ * 期待費用 / 期待売上 / 期待収支 / 実質コストは結果の内訳 (OutcomeLine) から finish() で一度に出す (2026-09-15)。
+ *   期待費用 = 確定費用 + 結晶の期待費用 + 原石の期待費用
+ *   期待売上 = Σ 確率 × 売値 (原石代を引く前)
+ * 以前は原石代を売上から引いていたため、素材表の合計・N 回の表・収支の帳簿で費用の中身が食い違い、
+ * 実質コストには完成品に使う原石が入っていなかった。
  *
  * 確率は GGG 非公開。既定値はコミュニティの推定で、UI から全て変更できる (CorruptParams)。
  *   ヴァールオーブ: 変化なし / レベル ±1 / 品質 −3〜+3 (7 段階均等) / ソケット ±1 の 4 系統を等確率
@@ -64,12 +72,21 @@ export interface SalePrices {
 
 export type RouteId = "craft" | "buy21" | "buy23" | "buyFinished";
 
+/** 収支の「売れた物」の行 (売値の 3 状態 + 外れの生存品) */
+export type SaleSlot = "level21" | "quality23" | "finished" | "other";
+
 export interface OutcomeLine {
   label: string;
   /** この結果になる確率 (0..1) */
   p: number;
-  /** この結果の売上 (高貴)。原石代など後払いの費用を引いた純額 */
+  /** この結果の純額 (高貴) = 売値 − この結果で使う原石代 */
   net: number;
+  /** 売る時の 1 個の値段 (原石代を引く前)。売らない結果は 0 */
+  gross: number;
+  /** 収支の「売れた物」のどの行に入るか。null は売らない (破壊 / 原石代の方が高い) */
+  sale: SaleSlot | null;
+  /** この結果で使う原石 (レベル 20) の数 */
+  uncut: number;
 }
 
 export interface RouteResult {
@@ -85,11 +102,11 @@ export interface RouteResult {
   pFinished: number;
   /** 完成品 1 個を得るための実質コスト = (期待費用 − 完成品以外の期待売上) / pFinished。完成品を買う経路は完成品の価格 */
   costPerFinished: number | null;
-  /** 1 回の試行の期待費用 (確定費用 + 結晶などの条件付き費用の期待値)。期待売上 = ev + expectedCost */
+  /** 1 回の試行の期待費用 (確定費用 + 結晶と原石の期待費用)。期待売上 = ev + expectedCost */
   expectedCost: number;
   /** 1 回の試行で使うコラプトの結晶の期待本数 (自作は当たった時だけ、買って賭ける経路は 1) */
   expectedCrystals?: number;
-  /** 1 回の試行で使う原石 (レベル 20) の期待本数 (売る物 = 壊れなかった物にだけ掛かる) */
+  /** 1 回の試行で使う原石 (レベル 20) の期待本数 (売る物にだけ掛かる) */
   expectedUncut?: number;
   /** 内訳 */
   outcomes: OutcomeLine[];
@@ -120,6 +137,56 @@ function crystalHitQuality(p: CorruptParams): number {
 /** コラプトの結晶を「レベル系統がまだ」の状態 (品質 23%) に使った時の当たり確率 (生存 × 半々) */
 function crystalHitLevel(p: CorruptParams): number {
   return (1 - clamp01(p.crystalDestroy)) / 2;
+}
+
+/** 売らない結果 (破壊など) */
+function lostLine(label: string, p: number): OutcomeLine {
+  return { label, p, net: 0, gross: 0, sale: null, uncut: 0 };
+}
+/** 原石でレベル 20 にしてから売る結果。原石代の方が高ければ売らない (原石も使わない) */
+function leveledSaleLine(label: string, p: number, price: number, sale: SaleSlot, uncut: number): OutcomeLine {
+  return price > uncut ? { label, p, net: price - uncut, gross: price, sale, uncut: 1 } : lostLine(label, p);
+}
+/** そのまま売る結果 (原石なし) */
+function saleLine(label: string, p: number, price: number, sale: SaleSlot): OutcomeLine {
+  return price > 0 ? { label, p, net: price, gross: price, sale, uncut: 0 } : lostLine(label, p);
+}
+
+/**
+ * 内訳から期待費用 / 期待収支 / 完成率 / 実質コストを出す。
+ * `conditionalCost` は確定費用以外で結果の前に払う費用の期待値 (自作で片方当たった時の結晶)。
+ */
+function finish(
+  base: RouteResult,
+  upfront: number,
+  conditionalCost: number,
+  uncutPrice: number,
+  outcomes: OutcomeLine[],
+  extra: Partial<RouteResult>,
+): RouteResult {
+  let revenue = 0;
+  let salvage = 0;
+  let pFinished = 0;
+  let expectedUncut = 0;
+  for (const o of outcomes) {
+    revenue += o.p * o.gross;
+    expectedUncut += o.p * o.uncut;
+    if (o.sale === "finished") pFinished += o.p;
+    else salvage += o.p * o.gross;
+  }
+  const expectedCost = upfront + conditionalCost + expectedUncut * uncutPrice;
+  return {
+    ...base,
+    ok: true,
+    upfront,
+    ev: revenue - expectedCost,
+    pFinished,
+    costPerFinished: pFinished > 0 ? (expectedCost - salvage) / pFinished : null,
+    expectedCost,
+    expectedUncut,
+    outcomes,
+    ...extra,
+  };
 }
 
 /**
@@ -164,82 +231,48 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   const survive = 1 - clamp01(p.crystalDestroy);
 
   const upfront = baseGem + 4 * gcp + pj + vaal;
+  /** 原石でレベルを上げて売った時の純額 (原石代の方が高ければ売らないので 0) */
   const sell = (price: number): number => Math.max(0, price - uncut);
 
   // レベル +1 が出た後: 止める (21 として売る) か、結晶で品質を賭けるか
-  const stopAfterLevel = sell(s21);
   const hitQ = crystalHitQuality(p);
-  const gambleAfterLevelEv =
-    crystal == null ? Number.NEGATIVE_INFINITY : -crystal + hitQ * sell(sF) + (survive - hitQ) * sell(lf * s21);
-  const gambleAfterLevel = gambleAfterLevelEv > stopAfterLevel;
+  const gambleAfterLevel =
+    crystal != null && -crystal + hitQ * sell(sF) + (survive - hitQ) * sell(lf * s21) > sell(s21);
 
   // 品質 +3 が出た後: 止める (23% として売る) か、結晶でレベルを賭けるか
-  const stopAfterQuality = sell(s23);
   const hitL = crystalHitLevel(p);
-  const gambleAfterQualityEv =
-    crystal == null ? Number.NEGATIVE_INFINITY : -crystal + hitL * sell(sF) + (survive - hitL) * sell(lf * s23);
-  const gambleAfterQuality = gambleAfterQualityEv > stopAfterQuality;
+  const gambleAfterQuality =
+    crystal != null && -crystal + hitL * sell(sF) + (survive - hitL) * sell(lf * s23) > sell(s23);
 
   const pLevelUp = v.level / 2;
   const pQualityTop = v.quality / steps;
   const pJunk = 1 - pLevelUp - pQualityTop;
-  const junkNet = sell(lf * baseGem);
 
   const outcomes: OutcomeLine[] = [];
-  let ev = -upfront;
-  let pFinished = 0;
-  let salvage = 0; // 完成品以外の期待売上 (実質コスト計算用)
-  let expectedCost = upfront;
-
-  if (gambleAfterLevel && crystal != null) {
-    expectedCost += pLevelUp * crystal;
-    outcomes.push({ label: "レベル +1 → 結晶で品質 23% 当たり (完成品)", p: pLevelUp * hitQ, net: sell(sF) });
-    outcomes.push({ label: "レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", p: pLevelUp * (survive - hitQ), net: sell(lf * s21) });
-    outcomes.push({ label: "レベル +1 → 結晶で破壊", p: pLevelUp * (1 - survive), net: 0 });
-    pFinished += pLevelUp * hitQ;
-    salvage += pLevelUp * (survive - hitQ) * sell(lf * s21);
-    ev += pLevelUp * gambleAfterLevelEv;
+  let expectedCrystals = 0;
+  if (gambleAfterLevel) {
+    expectedCrystals += pLevelUp;
+    outcomes.push(leveledSaleLine("レベル +1 → 結晶で品質 23% 当たり (完成品)", pLevelUp * hitQ, sF, "finished", uncut));
+    outcomes.push(leveledSaleLine("レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", pLevelUp * (survive - hitQ), lf * s21, "other", uncut));
+    outcomes.push(lostLine("レベル +1 → 結晶で破壊", pLevelUp * (1 - survive)));
   } else {
-    outcomes.push({ label: "レベル +1 → そのまま売る", p: pLevelUp, net: stopAfterLevel });
-    salvage += pLevelUp * stopAfterLevel;
-    ev += pLevelUp * stopAfterLevel;
+    outcomes.push(leveledSaleLine("レベル +1 → そのまま売る", pLevelUp, s21, "level21", uncut));
   }
-
-  if (gambleAfterQuality && crystal != null) {
-    expectedCost += pQualityTop * crystal;
-    outcomes.push({ label: "品質 23% → 結晶でレベル +1 当たり (完成品)", p: pQualityTop * hitL, net: sell(sF) });
-    outcomes.push({ label: "品質 23% → 結晶で外れ (レベル −1)", p: pQualityTop * (survive - hitL), net: sell(lf * s23) });
-    outcomes.push({ label: "品質 23% → 結晶で破壊", p: pQualityTop * (1 - survive), net: 0 });
-    pFinished += pQualityTop * hitL;
-    salvage += pQualityTop * (survive - hitL) * sell(lf * s23);
-    ev += pQualityTop * gambleAfterQualityEv;
+  if (gambleAfterQuality) {
+    expectedCrystals += pQualityTop;
+    outcomes.push(leveledSaleLine("品質 23% → 結晶でレベル +1 当たり (完成品)", pQualityTop * hitL, sF, "finished", uncut));
+    outcomes.push(leveledSaleLine("品質 23% → 結晶で外れ (レベル −1)", pQualityTop * (survive - hitL), lf * s23, "other", uncut));
+    outcomes.push(lostLine("品質 23% → 結晶で破壊", pQualityTop * (1 - survive)));
   } else {
-    outcomes.push({ label: "品質 23% → そのまま売る", p: pQualityTop, net: stopAfterQuality });
-    salvage += pQualityTop * stopAfterQuality;
-    ev += pQualityTop * stopAfterQuality;
+    outcomes.push(leveledSaleLine("品質 23% → そのまま売る", pQualityTop, s23, "quality23", uncut));
   }
+  outcomes.push(leveledSaleLine("外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", pJunk, lf * baseGem, "other", uncut));
 
-  outcomes.push({ label: "外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", p: pJunk, net: junkNet });
-  salvage += pJunk * junkNet;
-  ev += pJunk * junkNet;
-
-  const useCrystalAfterLevel = gambleAfterLevel && crystal != null;
-  const useCrystalAfterQuality = gambleAfterQuality && crystal != null;
-  const destroyed = (useCrystalAfterLevel ? pLevelUp : 0) * (1 - survive) + (useCrystalAfterQuality ? pQualityTop : 0) * (1 - survive);
-  return {
-    ...base,
-    ok: true,
-    upfront,
-    ev,
-    pFinished,
-    costPerFinished: pFinished > 0 ? (expectedCost - salvage) / pFinished : null,
-    expectedCost,
-    expectedCrystals: (useCrystalAfterLevel ? pLevelUp : 0) + (useCrystalAfterQuality ? pQualityTop : 0),
-    expectedUncut: 1 - destroyed,
-    outcomes,
+  return finish(base, upfront, expectedCrystals * (crystal ?? 0), uncut, outcomes, {
+    expectedCrystals,
     gambleAfterLevel,
     gambleAfterQuality,
-  };
+  });
 }
 
 /** レベル 21 を買って結晶で品質を賭ける (買った物は既に 21 なので原石代は不要) */
@@ -251,56 +284,76 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   const base: RouteResult = { id: "buy21", label: "レベル 21 を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s21 = s.level21!;
-  const sF = s.finished!;
-  const crystal = m.crystal!;
   const lf = clamp01(p.leftoverFraction);
   const survive = 1 - clamp01(p.crystalDestroy);
   const hit = crystalHitQuality(p);
-  const upfront = s21 + crystal;
   const outcomes: OutcomeLine[] = [
-    { label: "品質 23% 当たり (完成品)", p: hit, net: sF },
-    { label: "外れ (レベル 21 のまま、品質は崩れる)", p: survive - hit, net: lf * s21 },
-    { label: "破壊", p: 1 - survive, net: 0 },
+    saleLine("品質 23% 当たり (完成品)", hit, s.finished!, "finished"),
+    saleLine("外れ (レベル 21 のまま、品質は崩れる)", survive - hit, lf * s21, "other"),
+    lostLine("破壊", 1 - survive),
   ];
-  const salvage = (survive - hit) * lf * s21;
-  const ev = -upfront + hit * sF + salvage;
-  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, expectedCost: upfront, expectedCrystals: 1, outcomes };
+  return finish(base, s21 + m.crystal!, 0, 0, outcomes, { expectedCrystals: 1 });
 }
 
-/** 品質 23% を買って結晶でレベルを賭ける */
+/**
+ * 品質 23% を買って結晶でレベルを賭ける。
+ * 買う 23% はレベル不問なので、生き残った物 (当たり / 外れ) は結晶の後に原石でレベル 20 に上げてから売る
+ * (2026-09-15 オーナー確認: 原石は結晶の後、残った物にだけ使う)。
+ */
 function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult {
   const missing: string[] = [];
   if (s.quality23 == null) missing.push("売値: 品質 23%");
   if (s.finished == null) missing.push("売値: 完成品");
   if (m.crystal == null) missing.push("コラプトの結晶");
+  if (m.uncut20 == null) missing.push("原石 (レベル 20)");
   const base: RouteResult = { id: "buy23", label: "品質 23% を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
   const s23 = s.quality23!;
-  const sF = s.finished!;
-  const crystal = m.crystal!;
+  const uncut = m.uncut20!;
   const lf = clamp01(p.leftoverFraction);
   const survive = 1 - clamp01(p.crystalDestroy);
   const hit = crystalHitLevel(p);
-  const upfront = s23 + crystal;
   const outcomes: OutcomeLine[] = [
-    { label: "レベル +1 当たり (完成品)", p: hit, net: sF },
-    { label: "外れ (レベル −1)", p: survive - hit, net: lf * s23 },
-    { label: "破壊", p: 1 - survive, net: 0 },
+    leveledSaleLine("レベル +1 当たり (完成品)", hit, s.finished!, "finished", uncut),
+    leveledSaleLine("外れ (レベル −1)", survive - hit, lf * s23, "other", uncut),
+    lostLine("破壊", 1 - survive),
   ];
-  const salvage = (survive - hit) * lf * s23;
-  const ev = -upfront + hit * sF + salvage;
-  return { ...base, ok: true, upfront, ev, pFinished: hit, costPerFinished: hit > 0 ? (upfront - salvage) / hit : null, expectedCost: upfront, expectedCrystals: 1, outcomes };
+  return finish(base, s23 + m.crystal!, 0, uncut, outcomes, { expectedCrystals: 1 });
 }
 
 function buyFinishedRoute(s: SalePrices): RouteResult {
   const missing = s.finished == null ? ["売値: 完成品"] : [];
   const base: RouteResult = { id: "buyFinished", label: "完成品を買う (基準)", ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
-  return { ...base, ok: true, upfront: s.finished!, ev: 0, costPerFinished: s.finished!, expectedCost: s.finished!, outcomes: [{ label: "完成品", p: 1, net: s.finished! }] };
+  return finish(base, s.finished!, 0, 0, [saleLine("完成品", 1, s.finished!, "finished")], { expectedCrystals: 0 });
 }
 
 export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult[] {
   return [craftRoute(m, s, p), buy21Route(m, s, p), buy23Route(m, s, p), buyFinishedRoute(s)];
+}
+
+/**
+ * 1 回あたりの「売れた物」の期待数と、その行の平均の売値 (原石代を引く前)。
+ * 収支で回数を入れた時に売れた数を期待値で埋める (2026-09-15 オーナー指示)。
+ * 外れの生存品 (other) は相場が無いので、平均の売値 (前提の割合 × 元の値段) も使う。
+ */
+export function expectedSales(r: RouteResult): Record<SaleSlot, { qty: number; price: number | null }> {
+  const acc: Record<SaleSlot, { qty: number; value: number }> = {
+    level21: { qty: 0, value: 0 },
+    quality23: { qty: 0, value: 0 },
+    finished: { qty: 0, value: 0 },
+    other: { qty: 0, value: 0 },
+  };
+  for (const o of r.outcomes) {
+    if (!o.sale || o.p <= 0) continue;
+    acc[o.sale].qty += o.p;
+    acc[o.sale].value += o.p * o.gross;
+  }
+  const out = {} as Record<SaleSlot, { qty: number; price: number | null }>;
+  for (const k of Object.keys(acc) as SaleSlot[]) {
+    out[k] = { qty: acc[k].qty, price: acc[k].qty > 0 ? acc[k].value / acc[k].qty : null };
+  }
+  return out;
 }
 
 /**

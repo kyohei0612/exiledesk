@@ -25,8 +25,10 @@ const shown = computed<string | number | null>({
   get: () => {
     const d = displayCurrency.toDisplay(model.value);
     if (d == null) return "";
-    // 入力欄なので丸めすぎない (3 桁まで)
-    return String(Math.round(d * 1000) / 1000);
+    // 入力欄なので丸めすぎない (3 桁まで)。
+    // 数値で返す: 文字列だと Vue の v-model (type="number") が入力中の「0.0」を数値 0 と "0" の違いで書き戻し、
+    // 「0.05」と打つと「05」= 5 になっていた (2026-09-15)
+    return Math.round(d * 1000) / 1000;
   },
   set: (raw: string | number | null) => {
     // type="number" の v-model は Vue が数値に変換して渡す (文字列とは限らない) ので、両方受ける

@@ -11,13 +11,14 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
-import { SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
+import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
+import { pendingGemCorrupt } from "../state/app-nav";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
-import type { RouteId, RouteResult } from "./gem-corrupt/model";
+import { expectedSales, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
 
 const g = useGemCorrupt();
 onMounted(() => {
@@ -27,6 +28,23 @@ onMounted(() => {
 const showAssumptions = ref(false);
 const expanded = ref<Record<string, boolean>>({});
 const listOpen = ref(false);
+/**
+ * 上位プレイヤーMOD一覧のスキル欄の「コラプト計算」から来た時 (2026-09-14、オーナー指示):
+ * そのジェムを選ぶ → 選んだ時の自動取得 (trade2 で売値 3 件) が走って計算が始まる。
+ */
+watch(
+  pendingGemCorrupt,
+  (nameEn) => {
+    if (!nameEn) return;
+    pendingGemCorrupt.value = null;
+    const gem = GEMS.find((x) => x.en === nameEn);
+    if (!gem) return;
+    listOpen.value = false;
+    if (g.selected.value?.en !== gem.en) g.select(gem);
+    void nextTick(() => document.querySelector("main")?.scrollTo({ top: 0 }));
+  },
+  { immediate: true },
+);
 
 function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;
@@ -92,6 +110,8 @@ const MATERIAL_DESC: Record<string, string> = {
  * 収支 (実績入力、オーナー指示 2026-09-13)。単価は上の相場、買ったジェムと売れた物は相場か実際の額。ジェムごとに別帳簿 (localStorage、この PC だけ)。
  * 2026-09-14 オーナー指摘: 使うのは基本「最も得」の経路なのに、帳簿が空で「買ったジェム」の行も無かった。
  * → 経路 (既定は最も得) と回数を入れると、その経路で使う物が「1 回の数 × 回数」で埋まる (空欄 = 自動、違う数だけ上書き)。
+ * 2026-09-15 オーナー指示: 売れた数も「1 回の期待数 × 回数」で埋める。結果次第の結晶と原石も期待数で埋める。
+ * 回数を入れた時点の経路を帳簿に固定する (相場で「最も得」が変わっても、やった分を別の経路で数え直さない)。
  */
 const LEDGER_KEY = "exiledesk.gem.ledger";
 type BuyKey = "buyLevel21" | "buyQuality23" | "buyFinished";
@@ -107,11 +127,8 @@ interface GemLedger {
   qty: Partial<Record<RowKey, number>>;
   /** 買ったジェムの実際の 1 個の値段 (高貴)。無ければ相場 */
   buyEach: Partial<Record<BuyKey, number>>;
-  /** 売れた数 */
-  soldLevel21: number;
-  soldQuality23: number;
-  soldFinished: number;
-  soldOther: number;
+  /** 手で上書きした売れた数 (無い行は 1 回の期待数 × 回数) */
+  sold: Partial<Record<SoldKey, number>>;
   /** 実売の 1 個あたり (高貴)。null なら相場 */
   eachLevel21: number | null;
   eachQuality23: number | null;
@@ -119,13 +136,14 @@ interface GemLedger {
   eachOther: number | null;
 }
 const EMPTY_LEDGER: GemLedger = {
-  route: null, attempts: 0, qty: {}, buyEach: {},
-  soldLevel21: 0, soldQuality23: 0, soldFinished: 0, soldOther: 0,
+  route: null, attempts: 0, qty: {}, buyEach: {}, sold: {},
   eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
 };
 /** 旧形式 (素材ごとの使った数を全部手で入れていた) のキー。0 より大きい物は上書きとして引き継ぐ */
 const OLD_QTY_KEYS = ["baseGem", "gcp", "perfectJeweller", "vaal", "crystal", "uncut20"] as const;
-type StoredGemLedger = Partial<GemLedger> & Partial<Record<(typeof OLD_QTY_KEYS)[number], number>>;
+/** 旧形式 (売れた数を全部手で入れていた、2026-09-15 まで) のキー。0 より大きい物は上書きとして引き継ぐ */
+const OLD_SOLD_KEYS = ["soldLevel21", "soldQuality23", "soldFinished", "soldOther"] as const;
+type StoredGemLedger = Partial<GemLedger> & Partial<Record<(typeof OLD_QTY_KEYS)[number] | SoldKey, number>>;
 type LedgerBook = Record<string, StoredGemLedger>;
 function loadBook(): LedgerBook {
   try {
@@ -146,16 +164,20 @@ const ledger = computed<GemLedger>(() => {
       if (typeof v === "number" && v > 0) qty[k] = v;
     }
   }
+  const sold: Partial<Record<SoldKey, number>> = { ...(raw.sold ?? {}) };
+  if (!raw.sold) {
+    for (const k of OLD_SOLD_KEYS) {
+      const v = raw[k];
+      if (typeof v === "number" && v > 0) sold[k] = v;
+    }
+  }
   return {
     ...EMPTY_LEDGER,
     route: raw.route ?? null,
     attempts: raw.attempts ?? 0,
     qty,
     buyEach: { ...(raw.buyEach ?? {}) },
-    soldLevel21: raw.soldLevel21 ?? 0,
-    soldQuality23: raw.soldQuality23 ?? 0,
-    soldFinished: raw.soldFinished ?? 0,
-    soldOther: raw.soldOther ?? 0,
+    sold,
     eachLevel21: raw.eachLevel21 ?? null,
     eachQuality23: raw.eachQuality23 ?? null,
     eachFinished: raw.eachFinished ?? null,
@@ -174,7 +196,15 @@ function readCount(ev: Event): number | null {
   return Number.isFinite(v) && v >= 0 ? v : null;
 }
 function setAttempts(ev: Event): void {
-  setLedger("attempts", Math.floor(readCount(ev) ?? 0));
+  if (!ledgerGem.value) return;
+  const n = Math.floor(readCount(ev) ?? 0);
+  // 回数を入れた時点の「最も得」で経路を固定する。相場が変わって最も得が入れ替わっても、
+  // やった分を別の経路の素材で数え直さない (2026-09-15)
+  if (ledger.value.route == null && n > 0 && g.best.value) {
+    book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, attempts: n, route: g.best.value.id } };
+    return;
+  }
+  setLedger("attempts", n);
 }
 function setRoute(ev: Event): void {
   const v = (ev.target as HTMLSelectElement).value;
@@ -194,7 +224,11 @@ function setBuyEach(key: BuyKey, v: number | null): void {
   setLedger("buyEach", b);
 }
 function setSold(key: SoldKey, ev: Event): void {
-  setLedger(key, readCount(ev) ?? 0);
+  const v = readCount(ev);
+  const sold = { ...ledger.value.sold };
+  if (v == null) delete sold[key];
+  else sold[key] = v;
+  setLedger("sold", sold);
 }
 function resetLedger(): void {
   if (!ledgerGem.value) return;
@@ -230,6 +264,15 @@ function routeRows(id: RouteId): LedgerRowDef[] {
   const s = g.sale.value;
   const r = g.routes.value.find((x) => x.id === id);
   const crystal: LedgerRowDef = { key: "crystal", label: "コラプトの結晶", market: m.crystal, buy: null, perAttempt: 1, hint: "" };
+  /** 原石は結果次第なので 1 回の期待個数 (相場が揃うまでは埋めない) */
+  const uncut = (hint: string): LedgerRowDef => ({
+    key: "uncut20",
+    label: g.uncutLabel.value,
+    market: m.uncut20,
+    buy: null,
+    perAttempt: r?.ok ? (r.expectedUncut ?? 0) : null,
+    hint: `${hint}。空欄は期待 ${r?.ok ? fmtQty(r.expectedUncut ?? 0) : "—"} 個 × 回数`,
+  });
   switch (id) {
     case "craft":
       return [
@@ -239,22 +282,19 @@ function routeRows(id: RouteId): LedgerRowDef[] {
         { key: "vaal", label: "ヴァールオーブ", market: m.vaal, buy: null, perAttempt: 1, hint: "" },
         {
           ...crystal,
-          perAttempt: null,
-          hint: `片方当たった時だけ使う。実際の数を入れる${r?.ok ? ` (期待 ${fmtQty(r.expectedCrystals ?? 0)} 本 / 回)` : ""}`,
+          perAttempt: r?.ok ? (r.expectedCrystals ?? 0) : null,
+          hint: `片方当たった時だけ使う。空欄は期待 ${r?.ok ? fmtQty(r.expectedCrystals ?? 0) : "—"} 本 × 回数`,
         },
-        {
-          key: "uncut20",
-          label: g.uncutLabel.value,
-          market: m.uncut20,
-          buy: null,
-          perAttempt: null,
-          hint: `売る物にだけ使う。実際の数を入れる${r?.ok ? ` (期待 ${fmtQty(r.expectedUncut ?? 0)} 個 / 回)` : ""}`,
-        },
+        uncut("売る物にだけ使う"),
       ];
     case "buy21":
       return [{ key: "buyLevel21", label: "レベル 21 (品質 20%) のジェム", market: s.level21, buy: "buyLevel21", perAttempt: 1, hint: "買った物" }, crystal];
     case "buy23":
-      return [{ key: "buyQuality23", label: "品質 23% のジェム", market: s.quality23, buy: "buyQuality23", perAttempt: 1, hint: "買った物" }, crystal];
+      return [
+        { key: "buyQuality23", label: "品質 23% のジェム", market: s.quality23, buy: "buyQuality23", perAttempt: 1, hint: "買った物" },
+        crystal,
+        uncut("結晶の後、残った物にだけ使う"),
+      ];
     case "buyFinished":
       return [{ key: "buyFinished", label: "完成品 (21 · 23%)", market: s.finished, buy: "buyFinished", perAttempt: 1, hint: "買った物" }];
   }
@@ -273,15 +313,22 @@ const ledgerRows = computed(() => {
 const ledgerSales = computed(() => {
   const l = ledger.value;
   const s = g.sale.value;
-  const rows: { qtyKey: SoldKey; eachKey: EachKey; label: string; market: number | null; qty: number; each: number | null }[] = [
-    { qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, qty: l.soldLevel21, each: l.eachLevel21 },
-    { qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23%", market: s.quality23, qty: l.soldQuality23, each: l.eachQuality23 },
-    { qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, qty: l.soldFinished, each: l.eachFinished },
-    { qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: null, qty: l.soldOther, each: l.eachOther },
+  const route = g.routes.value.find((x) => x.id === ledgerRouteId.value);
+  // 経路の内訳から 1 回あたりの売れた数の期待値 (相場が揃うまでは自動で埋めない)
+  const exp = route?.ok ? expectedSales(route) : null;
+  const rows: { slot: SaleSlot; qtyKey: SoldKey; eachKey: EachKey; label: string; market: number | null; each: number | null }[] = [
+    { slot: "level21", qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, each: l.eachLevel21 },
+    { slot: "quality23", qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23%", market: s.quality23, each: l.eachQuality23 },
+    { slot: "finished", qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, each: l.eachFinished },
+    // 外れの生存品は相場が無いので、前提の割合 × 元の値段の平均を空欄時の売値にする
+    { slot: "other", qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: exp?.other.price ?? null, each: l.eachOther },
   ];
   return rows.map((r) => {
+    const auto = exp ? exp[r.slot].qty * l.attempts : 0;
+    const override = l.sold[r.qtyKey] ?? null;
+    const qty = override ?? auto;
     const price = r.each ?? r.market;
-    return { ...r, price, revenue: price == null ? (r.qty > 0 ? null : 0) : price * r.qty };
+    return { ...r, auto, override, qty, price, revenue: price == null ? (qty > 0 ? null : 0) : price * qty };
   });
 });
 const ledgerTotals = computed(() => {
@@ -292,7 +339,7 @@ const ledgerTotals = computed(() => {
   const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
   const revenue = sales.reduce((s, r) => s + (r.revenue ?? 0), 0);
   const n = ledger.value.attempts;
-  const finished = ledger.value.soldFinished;
+  const finished = sales.find((r) => r.slot === "finished")?.qty ?? 0;
   return {
     cost,
     revenue,
@@ -642,7 +689,7 @@ const atN = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">
-            期待総費用は「確定費用 + 結晶の期待本数 × 結晶」× 回数。期待売上は出来た物 (完成品・21・23%・外れの生存品) を全部売った時の平均 × 回数。買って賭ける経路の費用は買値込み。
+            期待総費用は「確定費用 + 結晶と原石の期待費用」× 回数。期待売上は出来た物 (完成品・21・23%・外れの生存品) を全部売った時の平均 × 回数。買って賭ける経路の費用は買値込み。
           </p>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
@@ -660,7 +707,7 @@ const atN = computed(() => {
             収支<span v-if="g.selected.value" class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ g.selected.value.ja }}</span>
           </h2>
           <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
-            <span>経路と回数を入れると使った数が埋まる。違った数だけ上書き</span>
+            <span>経路と回数を入れると使った数と売れた数が期待値で埋まる。実際と違う数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" @click="resetLedger">全部 0 に</button>
           </div>
         </div>
@@ -725,7 +772,7 @@ const atN = computed(() => {
                   <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setLedger(r.eachKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <input :value="r.qty || ''" type="number" min="0" step="1" placeholder="0" class="num w-24" @input="setSold(r.qtyKey, $event)" />
+                  <input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtQty(r.auto)" class="num w-24" @input="setSold(r.qtyKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
               </tr>
@@ -748,8 +795,9 @@ const atN = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            使った数は空欄なら「経路の 1 回の数 × 回数」、実際に違った数だけ入れてください。自作の結晶と原石は結果次第なので実際の数を入れます。
-            買ったジェムと売れた物の値段は空欄なら上の売値 (trade2 最安)、実際の額があればそれを入れてください。「その他」は外れの生存品など、相場が無い物の実売用。入力はジェムごとにこの PC に残ります。
+            使った数と売れた数は空欄なら「経路の 1 回の数 × 回数」で、結晶・原石・売れた数のように結果次第の物は期待値です。実際に違った数だけ入れてください。
+            回数を入れた時点の「最も得」の経路で帳簿を固定します (相場が変わっても、やった分を別の経路で数え直さない)。
+            買ったジェムと売れた物の値段は空欄なら上の売値 (trade2 最安)、実際の額があればそれを入れてください。「その他」は外れの生存品などで、空欄の売値は前提の割合から出した平均です。入力はジェムごとにこの PC に残ります。
             <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
             <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>
           </p>

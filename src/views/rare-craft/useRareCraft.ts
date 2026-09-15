@@ -42,6 +42,7 @@ import {
   simulate,
   slotsAfterSetup,
   type LadderBucket,
+  type LadderResult,
   type Metric,
   type PostOptions,
   type SimOptions,
@@ -330,7 +331,7 @@ export function useRareCraft() {
 
   // ---- 素材と費用 ----
   function materialRows(o: { essenceId: string; exalt: ExaltId; count: number; side: SideId; rib: RibId; echo: EchoId; runeId: string }) {
-    return materialsFor(recipe.value, { essenceId: o.essenceId, rib: o.rib, echo: o.echo, exalt: o.exalt, count: o.count, side: o.side, runeId: o.runeId, sockets: sockets.value }).map((m) => ({
+    return materialsFor(recipe.value, { essenceId: o.essenceId, rib: o.rib, echo: o.echo, exalt: o.exalt, count: o.count, side: o.side, runeId: o.runeId, sockets: sockets.value, quality: quality.value }).map((m) => ({
       ...m,
       unit: priceOf(m.apiId),
     }));
@@ -359,7 +360,7 @@ export function useRareCraft() {
   const result = computed(() => {
     const s = sim.value;
     if (!s.ok || cost.value == null || floorPrice.value == null) return null;
-    return evaluateLadder(s, postFor(runeId.value), ladderBuckets.value, floorPrice.value, cost.value);
+    return evaluateLadder(s, postFor(runeId.value), ladderBuckets.value, floorConds.value, floorPrice.value, cost.value);
   });
   /** 一番高い段 (N 回で 1 個以上当たる確率の対象) */
   const topRow = computed(() => {
@@ -386,7 +387,7 @@ export function useRareCraft() {
               for (const ru of recipe.value.runes) {
                 const c = costOf(materialRows({ essenceId: es.id, exalt: ex.id, count: eff, side: sd.id, rib: rb.id, echo: ec.id, runeId: ru.id }));
                 if (c == null) continue;
-                const lr = evaluateLadder(s, postFor(ru.id), ladderBuckets.value, floorPrice.value, c);
+                const lr = evaluateLadder(s, postFor(ru.id), ladderBuckets.value, floorConds.value, floorPrice.value, c);
                 const top = lr.rows.filter((x) => x.price != null).sort((a, b) => (b.price ?? 0) - (a.price ?? 0))[0];
                 out.push({
                   key: `${es.id}|${rb.id}|${ec.id}|${ex.id}|${sd.id}|${ru.id}`,
@@ -423,7 +424,7 @@ export function useRareCraft() {
     for (const ex of EXALTS) ids.set(ex.apiId, ex.label);
     ids.set("omen-of-greater-exaltation", "偉大なる高貴なお告げ");
     ids.set("omen-of-dextral-exaltation", "右側の高貴なお告げ");
-    ids.set("artificers", "熟練工のオーブ");
+    if (recipe.value.metrics.includes("es") && quality.value > 0) ids.set("scrap", "鎧鍛冶の端材");
     for (const ru of recipe.value.runes) if (ru.apiId) ids.set(ru.apiId, ru.label.replace(/ \(.+\)$/, ""));
     return [...ids].filter(([id]) => priceOf(id) == null).map(([, label]) => label);
   });
@@ -457,7 +458,42 @@ export function useRareCraft() {
     { immediate: true },
   );
 
+  // ---- 収支の組み合わせ (2026-09-15) ----
+  /** 素材欄の組み合わせのキー (比較表の Variant.key と同じ形) */
+  const currentKey = computed(() => [essenceId.value, rib.value, echo.value, exalt.value, side.value, runeId.value].join("|"));
+  function variantLabel(key: string): string {
+    const [es, rb, ec, ex, sd, ru] = key.split("|");
+    const r = recipe.value;
+    const parts = [
+      r.essences.length > 1 ? r.essences.find((e) => e.id === es)?.label.replace(/ \(.+\)$/, "") : null,
+      RIBS.find((x) => x.id === rb)?.label,
+      ec === "echoes" ? "アビスの反響のお告げ" : null,
+      EXALTS.find((x) => x.id === ex)?.label,
+      sd === "suffix" ? "右側の高貴なお告げ" : null,
+      r.runes.find((x) => x.id === ru)?.label.replace(/ \(.+\)$/, ""),
+    ];
+    return parts.filter(Boolean).join(" · ");
+  }
+  /**
+   * 組み合わせ 1 つの「1 回の素材」と「売値の段ごとに売る確率」(収支の自動入力用)。
+   * 素材欄の組み合わせなら上の計算 (2 万回) をそのまま使い、別の組み合わせなら同じ回数で計算し直す。
+   */
+  function detailFor(key: string): { materials: ReturnType<typeof materialRows>; ladder: LadderResult | null } {
+    if (key === currentKey.value) return { materials: materials.value, ladder: result.value };
+    const [es, rb, ec, ex, sd, ru] = key.split("|");
+    const o = { essenceId: es, rib: rb as RibId, echo: ec as EchoId, exalt: ex as ExaltId, side: sd as SideId };
+    const so = simOptionsFor(o, 20000);
+    const mats = materialRows({ ...o, count: so.exaltLevels.length, runeId: ru });
+    const c0 = costOf(mats);
+    const s = simulate(so);
+    const ladder = s.ok && c0 != null && floorPrice.value != null ? evaluateLadder(s, postFor(ru), ladderBuckets.value, floorConds.value, floorPrice.value, c0) : null;
+    return { materials: mats, ladder };
+  }
+
   return {
+    currentKey,
+    variantLabel,
+    detailFor,
     RECIPES,
     RIBS,
     EXALTS,

@@ -9,6 +9,11 @@
 import { computed, ref } from "vue";
 import BaseCard from "../decor/BaseCard.vue";
 import type { NinjaSkillStat, NinjaSkillStats, SkillUsage } from "../../services/craft-v2/types";
+import gemsRaw from "../../i18n/gems-client.json";
+import { openGemCorrupt } from "../../state/app-nav";
+
+/** ジェムコラプトの賭けで計算できるジェム (英語名)。ユニークの付与スキルやサポートは対象外 */
+const CORRUPTIBLE = new Set((gemsRaw as { en: string }[]).map((g) => g.en));
 
 const props = defineProps<{
   /** poe.ninja の集計 (古いキャッシュでは null) */
@@ -65,16 +70,28 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
             <ul class="space-y-0.5">
               <li v-for="s in visible(sec.key, sec.list)" :key="s.nameEn" class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]">
                 <div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-3">
-                  <button
-                    type="button"
-                    class="text-left truncate text-[13px] disabled:cursor-default"
-                    :title="s.nameEn"
-                    :disabled="supportsOf(s.nameEn).length === 0"
-                    @click="expanded[sec.key + s.nameEn] = !expanded[sec.key + s.nameEn]"
-                  >
-                    {{ s.name }}
-                    <span v-if="supportsOf(s.nameEn).length > 0" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ expanded[sec.key + s.nameEn] ? "▲" : "▼" }}</span>
-                  </button>
+                  <div class="flex items-baseline gap-1.5 min-w-0">
+                    <button
+                      type="button"
+                      class="min-w-0 text-left truncate text-[13px] disabled:cursor-default"
+                      :title="s.nameEn"
+                      :disabled="supportsOf(s.nameEn).length === 0"
+                      @click="expanded[sec.key + s.nameEn] = !expanded[sec.key + s.nameEn]"
+                    >
+                      {{ s.name }}
+                      <span v-if="supportsOf(s.nameEn).length > 0" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ expanded[sec.key + s.nameEn] ? "▲" : "▼" }}</span>
+                    </button>
+                    <!-- 2026-09-14: ジェムコラプトの賭けへ (そのジェムで計算開始) -->
+                    <button
+                      v-if="CORRUPTIBLE.has(s.nameEn)"
+                      type="button"
+                      class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
+                      :title="`ジェムコラプトの賭けで ${s.name} を計算する`"
+                      @click="openGemCorrupt(s.nameEn)"
+                    >
+                      コラプト計算 ↗
+                    </button>
+                  </div>
                   <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fmtCount(s.count) }} 人</span>
                   <span class="tabular-nums text-[13px] w-11 text-right">{{ pct(s.percentage) }}</span>
                 </div>

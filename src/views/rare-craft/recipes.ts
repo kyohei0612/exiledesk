@@ -207,9 +207,14 @@ export function exaltLevelsFor(exalt: ExaltId, count: number): number[] {
 
 export function materialsFor(
   r: RecipeDef,
-  o: { essenceId: string; rib: RibId; echo: EchoId; exalt: ExaltId; count: number; side: SideId; runeId: string; sockets: number },
+  o: { essenceId: string; rib: RibId; echo: EchoId; exalt: ExaltId; count: number; side: SideId; runeId: string; sockets: number; quality: number },
 ): MaterialRow[] {
   const rows: MaterialRow[] = [];
+  // 品質は ES の計算に足しているので、その分の鎧鍛冶の端材も費用に入れる
+  // (2026-09-15 オーナー確認: 端材で上げる、1 個 +1%。以前は品質がタダ扱いだった)
+  if (r.metrics.includes("es") && o.quality > 0) {
+    rows.push({ key: "scrap", apiId: "scrap", label: "鎧鍛冶の端材", note: `品質 0 → ${o.quality}% (1 個 +1%)`, qty: Math.ceil(o.quality) });
+  }
   const ess = r.essences.find((e) => e.id === o.essenceId);
   if (ess) rows.push({ key: "essence", apiId: ess.apiId, label: ess.label.replace(/ \(.+\)$/, ""), note: "クラフト MOD 枠。マジック → レア", qty: 1 });
   const rib = RIBS.find((x) => x.id === o.rib)!;
@@ -222,8 +227,9 @@ export function materialsFor(
     if (o.side === "suffix") rows.push({ key: "dextral", apiId: "omen-of-dextral-exaltation", label: "右側の高貴なお告げ", note: "高貴なオーブを接尾辞だけにする", qty: 1 });
   }
   const rune = r.runes.find((x) => x.id === o.runeId);
+  // ベースは trade2 でソケット 2 以上に絞って買うので、熟練工のオーブは使わない
+  // (2026-09-15、以前は毎回 2 個を費用に入れていた)
   if (rune?.apiId && o.sockets > 0) {
-    rows.push({ key: "artificer", apiId: "artificers", label: "熟練工のオーブ", note: "ソケットが無ければ開ける", qty: o.sockets });
     rows.push({ key: "rune", apiId: rune.apiId, label: rune.label.replace(/ \(.+\)$/, ""), note: rune.label.match(/\((.+)\)$/)?.[1] ?? "", qty: o.sockets });
   }
   return rows;

@@ -67,6 +67,12 @@ export function useGemCorrupt() {
     return hit.slice(0, 12);
   });
   function select(g: GemInfo): void {
+    // 2026-09-14: 別のジェムの取得中に選び直したら、その取得は捨てて新しいジェムで取り直す
+    // (以前は取得中フラグで新しい取得が始まらず、前のジェムの売値が新しいジェムに書き込まれていた)
+    if (selected.value?.en !== g.en) {
+      fetchSeq++;
+      pricing.value = false;
+    }
     selected.value = g;
     query.value = g.ja;
     sale.value = { level21: null, quality23: null, finished: null };
