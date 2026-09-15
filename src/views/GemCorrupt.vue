@@ -18,7 +18,7 @@ import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import { displayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
-import { expectedSales, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
+import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
 
 const g = useGemCorrupt();
 onMounted(() => {
@@ -384,21 +384,20 @@ const materialRows = computed(() => {
   });
 });
 const fmtQty = (q: number | null): string => (q == null ? "—" : Number.isInteger(q) ? String(q) : q.toFixed(2));
-/** N 回やった場合 (経路ごと) */
-const atN = computed(() => {
-  const n = attempts.value;
-  return g.routes.value
-    .filter((r) => r.ok)
-    .map((r) => ({
-      id: r.id,
-      label: r.label,
-      pAny: r.pFinished > 0 ? 1 - Math.pow(1 - r.pFinished, n) : 0,
-      expected: n * r.pFinished,
-      cost: n * r.expectedCost,
-      revenue: n * (r.ev + r.expectedCost),
-      profit: n * r.ev,
-    }));
-});
+/**
+ * 同じ予算でやった場合 (経路ごと)。2026-09-16 オーナー指摘: 経路ごとに 1 回の費用が 10 倍近く違うので、
+ * 回数ではなく予算で揃え、赤字の確率と損益のぶれ (下位 5% / 中央 / 上位 5%) を出す。
+ */
+const BUDGET_DIVINES = [5, 10, 20, 50, 100];
+const budgetDivines = ref(20);
+const budgetExalted = computed(() => budgetDivines.value * (g.divineRate.value > 0 ? g.divineRate.value : 1));
+const atBudget = computed(() =>
+  g.routes.value.flatMap((r) => {
+    const risk = budgetRisk(r, budgetExalted.value);
+    return risk ? [{ id: r.id, label: r.label, risk }] : [];
+  }),
+);
+const signedPct = (v: number | null): string => (v == null ? "—" : `${v > 0 ? "+" : ""}${(v * 100).toFixed(1)}%`);
 </script>
 
 <template>
@@ -612,7 +611,9 @@ const atN = computed(() => {
                   {{ r.id === "buyFinished" ? "基準 (0)" : money(r.ev, true) }}
                 </span>
               </div>
-              <div class="hidden">
+              <div class="flex items-baseline justify-between">
+                <span class="text-[var(--exile-color-text-secondary)]">利回り (期待収支 ÷ 期待費用)</span>
+                <span class="tabular-nums" :class="evClass(r.id === 'buyFinished' ? null : r.ev)">{{ r.id === "buyFinished" ? "基準 (0%)" : signedPct(roi(r)) }}</span>
               </div>
               <div class="flex items-baseline justify-between">
                 <span class="text-[var(--exile-color-text-secondary)]">完成品 1 個の実質コスト</span>
@@ -656,44 +657,55 @@ const atN = computed(() => {
             </div>
           </div>
         </div>
-        <div v-if="atN.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+        <div v-if="atBudget.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
           <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
-            <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合 (経路ごと)</span>
+            <span class="font-display tracking-[0.04em]">同じ予算でやった場合 ({{ money(budgetExalted) }})</span>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
-              回数
-              <select v-model.number="attempts" class="num text-left w-20">
-                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+              予算
+              <select v-model.number="budgetDivines" class="num text-left w-24">
+                <option v-for="d in BUDGET_DIVINES" :key="d" :value="d">{{ d }} 神</option>
               </select>
             </label>
           </div>
+          <div class="overflow-x-auto">
           <table class="w-full text-[12px]">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">経路</th>
-                <th class="text-right font-normal pb-1 pl-2">1 個以上できる確率</th>
-                <th class="text-right font-normal pb-1 pl-2">完成の期待数</th>
+                <th class="text-right font-normal pb-1 pl-2">回数</th>
                 <th class="text-right font-normal pb-1 pl-2">期待総費用</th>
-                <th class="text-right font-normal pb-1 pl-2">期待売上</th>
                 <th class="text-right font-normal pb-1 pl-2">期待損益</th>
+                <th class="text-right font-normal pb-1 pl-2">赤字の確率</th>
+                <th class="text-right font-normal pb-1 pl-2">下位 5%</th>
+                <th class="text-right font-normal pb-1 pl-2">中央</th>
+                <th class="text-right font-normal pb-1 pl-2">上位 5%</th>
+                <th class="text-right font-normal pb-1 pl-2">完成 1 個以上</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in atN" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="g.best.value && g.best.value.id === r.id ? 'text-[var(--exile-color-accent-focus)]' : ''">
+              <tr v-for="r in atBudget" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="g.best.value && g.best.value.id === r.id ? 'text-[var(--exile-color-accent-focus)]' : ''">
                 <td class="py-1 pr-2">{{ r.label }}</td>
-                <td class="py-1 pl-2 text-right tabular-nums">{{ pct(r.pAny) }}</td>
-                <td class="py-1 pl-2 text-right tabular-nums">{{ r.expected.toFixed(2) }} 個</td>
-                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
-                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
-                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.profit)">{{ r.id === 'buyFinished' ? "基準 (0)" : money(r.profit, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums">{{ r.risk.attempts }} 回</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.risk.cost) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.profit)">{{ r.id === 'buyFinished' ? "基準 (0)" : money(r.risk.profit, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums">{{ r.id === 'buyFinished' ? "—" : pct(r.risk.pLoss) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.p05)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.p05, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.median)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.median, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.p95)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.p95, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ pct(r.risk.pAnyFinished) }} ({{ r.risk.expectedFinished.toFixed(2) }} 個)</td>
               </tr>
             </tbody>
           </table>
+          </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">
-            期待総費用は「確定費用 + 結晶と原石の期待費用」× 回数。期待売上は出来た物 (完成品・21・23%・外れの生存品) を全部売った時の平均 × 回数。買って賭ける経路の費用は買値込み。
+            回数 = 予算 ÷ 1 回の期待費用 (最低 1 回)。期待総費用は「確定費用 + 結晶と原石の期待費用」× 回数、買って賭ける経路は買値込み。
+            赤字の確率と下位 5% / 中央 / 上位 5% は、結果ごとの損益を回数ぶん引く試行を 1 万回やった分布です (出来た物は全部その相場で売れた前提)。
+            1 回の費用が高い経路は同じ予算でも回数が少ないので、結果のぶれが大きくなります。
           </p>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
-          「1 回の期待収支」は 1 回試して出来た物を全部売った時の平均損益で、完成品を買う経路が 0 の基準。これで「最も得」を決めます。
+          「1 回の期待収支」は 1 回試して出来た物を全部売った時の平均損益で、完成品を買う経路が 0 の基準。
+          「最も得」は利回り (1 回の期待収支 ÷ 1 回の期待費用) が一番高い経路です。1 回の費用が経路ごとに 10 倍近く違うので、金額ではなく投資額あたりで比べます。
           実質コスト = (費用の期待値 − 完成品以外で回収できる期待額) ÷ 完成品になる確率。自作で片方だけ売る戦略の時は完成率 0 なので出ません。
         </p>
       </div>

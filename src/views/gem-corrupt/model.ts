@@ -87,6 +87,10 @@ export interface OutcomeLine {
   sale: SaleSlot | null;
   /** この結果で使う原石 (レベル 20) の数 */
   uncut: number;
+  /** この結果の途中で使うコラプトの結晶の数 (確定費用に入っている物は除く。自作で片方当たって賭けた時だけ 1) */
+  crystal: number;
+  /** この結果になった 1 回の損益 = 売値 − 確定費用 − 結晶 − 原石。finish() で埋める */
+  profit: number;
 }
 
 export interface RouteResult {
@@ -140,26 +144,26 @@ function crystalHitLevel(p: CorruptParams): number {
 }
 
 /** 売らない結果 (破壊など) */
-function lostLine(label: string, p: number): OutcomeLine {
-  return { label, p, net: 0, gross: 0, sale: null, uncut: 0 };
+function lostLine(label: string, p: number, crystal = 0): OutcomeLine {
+  return { label, p, net: 0, gross: 0, sale: null, uncut: 0, crystal, profit: 0 };
 }
 /** 原石でレベル 20 にしてから売る結果。原石代の方が高ければ売らない (原石も使わない) */
-function leveledSaleLine(label: string, p: number, price: number, sale: SaleSlot, uncut: number): OutcomeLine {
-  return price > uncut ? { label, p, net: price - uncut, gross: price, sale, uncut: 1 } : lostLine(label, p);
+function leveledSaleLine(label: string, p: number, price: number, sale: SaleSlot, uncut: number, crystal = 0): OutcomeLine {
+  return price > uncut ? { label, p, net: price - uncut, gross: price, sale, uncut: 1, crystal, profit: 0 } : lostLine(label, p, crystal);
 }
 /** そのまま売る結果 (原石なし) */
 function saleLine(label: string, p: number, price: number, sale: SaleSlot): OutcomeLine {
-  return price > 0 ? { label, p, net: price, gross: price, sale, uncut: 0 } : lostLine(label, p);
+  return price > 0 ? { label, p, net: price, gross: price, sale, uncut: 0, crystal: 0, profit: 0 } : lostLine(label, p);
 }
 
 /**
- * 内訳から期待費用 / 期待収支 / 完成率 / 実質コストを出す。
- * `conditionalCost` は確定費用以外で結果の前に払う費用の期待値 (自作で片方当たった時の結晶)。
+ * 内訳から期待費用 / 期待収支 / 完成率 / 実質コスト / 結果ごとの 1 回の損益を出す。
+ * 結晶は確定費用に入っている物 (買って賭ける経路) と、結果の途中で払う物 (OutcomeLine.crystal、自作) を分ける。
  */
 function finish(
   base: RouteResult,
   upfront: number,
-  conditionalCost: number,
+  crystalPrice: number,
   uncutPrice: number,
   outcomes: OutcomeLine[],
   extra: Partial<RouteResult>,
@@ -168,13 +172,15 @@ function finish(
   let salvage = 0;
   let pFinished = 0;
   let expectedUncut = 0;
+  let expectedCrystals = 0;
   for (const o of outcomes) {
     revenue += o.p * o.gross;
     expectedUncut += o.p * o.uncut;
+    expectedCrystals += o.p * o.crystal;
     if (o.sale === "finished") pFinished += o.p;
     else salvage += o.p * o.gross;
   }
-  const expectedCost = upfront + conditionalCost + expectedUncut * uncutPrice;
+  const expectedCost = upfront + expectedCrystals * crystalPrice + expectedUncut * uncutPrice;
   return {
     ...base,
     ok: true,
@@ -183,8 +189,9 @@ function finish(
     pFinished,
     costPerFinished: pFinished > 0 ? (expectedCost - salvage) / pFinished : null,
     expectedCost,
+    expectedCrystals,
     expectedUncut,
-    outcomes,
+    outcomes: outcomes.map((o) => ({ ...o, profit: o.gross - upfront - o.crystal * crystalPrice - o.uncut * uncutPrice })),
     ...extra,
   };
 }
@@ -249,30 +256,23 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   const pJunk = 1 - pLevelUp - pQualityTop;
 
   const outcomes: OutcomeLine[] = [];
-  let expectedCrystals = 0;
   if (gambleAfterLevel) {
-    expectedCrystals += pLevelUp;
-    outcomes.push(leveledSaleLine("レベル +1 → 結晶で品質 23% 当たり (完成品)", pLevelUp * hitQ, sF, "finished", uncut));
-    outcomes.push(leveledSaleLine("レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", pLevelUp * (survive - hitQ), lf * s21, "other", uncut));
-    outcomes.push(lostLine("レベル +1 → 結晶で破壊", pLevelUp * (1 - survive)));
+    outcomes.push(leveledSaleLine("レベル +1 → 結晶で品質 23% 当たり (完成品)", pLevelUp * hitQ, sF, "finished", uncut, 1));
+    outcomes.push(leveledSaleLine("レベル +1 → 結晶で外れ (レベル 21 のまま、品質は崩れる)", pLevelUp * (survive - hitQ), lf * s21, "other", uncut, 1));
+    outcomes.push(lostLine("レベル +1 → 結晶で破壊", pLevelUp * (1 - survive), 1));
   } else {
     outcomes.push(leveledSaleLine("レベル +1 → そのまま売る", pLevelUp, s21, "level21", uncut));
   }
   if (gambleAfterQuality) {
-    expectedCrystals += pQualityTop;
-    outcomes.push(leveledSaleLine("品質 23% → 結晶でレベル +1 当たり (完成品)", pQualityTop * hitL, sF, "finished", uncut));
-    outcomes.push(leveledSaleLine("品質 23% → 結晶で外れ (レベル −1)", pQualityTop * (survive - hitL), lf * s23, "other", uncut));
-    outcomes.push(lostLine("品質 23% → 結晶で破壊", pQualityTop * (1 - survive)));
+    outcomes.push(leveledSaleLine("品質 23% → 結晶でレベル +1 当たり (完成品)", pQualityTop * hitL, sF, "finished", uncut, 1));
+    outcomes.push(leveledSaleLine("品質 23% → 結晶で外れ (レベル −1)", pQualityTop * (survive - hitL), lf * s23, "other", uncut, 1));
+    outcomes.push(lostLine("品質 23% → 結晶で破壊", pQualityTop * (1 - survive), 1));
   } else {
     outcomes.push(leveledSaleLine("品質 23% → そのまま売る", pQualityTop, s23, "quality23", uncut));
   }
   outcomes.push(leveledSaleLine("外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", pJunk, lf * baseGem, "other", uncut));
 
-  return finish(base, upfront, expectedCrystals * (crystal ?? 0), uncut, outcomes, {
-    expectedCrystals,
-    gambleAfterLevel,
-    gambleAfterQuality,
-  });
+  return finish(base, upfront, crystal ?? 0, uncut, outcomes, { gambleAfterLevel, gambleAfterQuality });
 }
 
 /** レベル 21 を買って結晶で品質を賭ける (買った物は既に 21 なので原石代は不要) */
@@ -356,15 +356,96 @@ export function expectedSales(r: RouteResult): Record<SaleSlot, { qty: number; p
   return out;
 }
 
+/** 利回り = 1 回の期待収支 ÷ 1 回の期待費用 (計算できない経路は null) */
+export function roi(r: RouteResult): number | null {
+  return r.ok && r.expectedCost > 0 && Number.isFinite(r.ev) ? r.ev / r.expectedCost : null;
+}
+
 /**
- * 1 回あたりの期待収支が最も高い経路 (計算できた物の中で)。
- * 完成品を買う経路は収支 0 の基準なので、他が全てマイナスなら「買った方が得」になる。
- * (実質コストは自作で片方だけ売る戦略だと完成率 0 になり比べられないので、比較軸には使わない)
+ * 利回りが最も高い経路 (計算できた物の中で)。
+ * 2026-09-16 オーナー指摘「投資額が多いのに 1 回あたりで比べるのはおかしい」: 以前は 1 回あたりの期待収支の金額で選んでいて、
+ * 1 回の費用が 10 倍近い「買って賭ける」経路ほど、少しのプラスでも金額が大きく見えて有利に出ていた。
+ * 完成品を買う経路は利回り 0% の基準なので、他が全てマイナスなら「買った方が得」になる。
  */
 export function bestRoute(routes: RouteResult[]): RouteResult | null {
-  const ok = routes.filter((r) => r.ok && Number.isFinite(r.ev));
-  if (ok.length === 0) return null;
-  return ok.reduce((a, b) => (b.ev > a.ev ? b : a));
+  let best: RouteResult | null = null;
+  let bestRoi = Number.NEGATIVE_INFINITY;
+  for (const r of routes) {
+    const v = roi(r);
+    if (v != null && v > bestRoi) {
+      best = r;
+      bestRoi = v;
+    }
+  }
+  return best;
+}
+
+export interface BudgetRisk {
+  /** 予算でできる回数 (予算 ÷ 1 回の期待費用を丸め、最低 1 回) */
+  attempts: number;
+  /** 期待総費用 */
+  cost: number;
+  /** 期待損益 = 回数 × 1 回の期待収支 */
+  profit: number;
+  /** 赤字で終わる確率 */
+  pLoss: number;
+  /** 損益の下位 5% / 中央 / 上位 5% */
+  p05: number;
+  median: number;
+  p95: number;
+  /** 完成品が 1 個以上できる確率と期待数 */
+  pAnyFinished: number;
+  expectedFinished: number;
+}
+
+/**
+ * 同じ予算でその経路をやった時の損益の分布 (2026-09-16)。
+ * 結果ごとの 1 回の損益 (OutcomeLine.profit) を回数ぶん引く試行を `trials` 回やって集計する。
+ * 乱数は種を固定しているので、同じ入力なら同じ数字が出る (表示がちらつかない)。
+ */
+export function budgetRisk(r: RouteResult, budget: number, trials = 10000): BudgetRisk | null {
+  if (!r.ok || !(r.expectedCost > 0) || !(budget > 0)) return null;
+  const n = Math.max(1, Math.round(budget / r.expectedCost));
+  const lines = r.outcomes.filter((o) => o.p > 0);
+  const total = lines.reduce((s, o) => s + o.p, 0);
+  if (lines.length === 0 || !(total > 0)) return null;
+  const cum: number[] = [];
+  let acc = 0;
+  for (const o of lines) cum.push((acc += o.p / total));
+  // mulberry32
+  let seed = 0x2f6b7a31;
+  const rand = (): number => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const results = new Float64Array(trials);
+  let losses = 0;
+  for (let t = 0; t < trials; t++) {
+    let sum = 0;
+    for (let k = 0; k < n; k++) {
+      const u = rand();
+      let i = 0;
+      while (i < cum.length - 1 && u > cum[i]) i++;
+      sum += lines[i].profit;
+    }
+    results[t] = sum;
+    if (sum < -1e-6) losses++;
+  }
+  results.sort();
+  const q = (x: number): number => results[Math.min(trials - 1, Math.floor(x * trials))];
+  return {
+    attempts: n,
+    cost: n * r.expectedCost,
+    profit: n * r.ev,
+    pLoss: losses / trials,
+    p05: q(0.05),
+    median: q(0.5),
+    p95: q(0.95),
+    pAnyFinished: r.pFinished > 0 ? 1 - Math.pow(1 - r.pFinished, n) : 0,
+    expectedFinished: n * r.pFinished,
+  };
 }
 
 /** ヴァールオーブの表示用確率 (正規化後) */
