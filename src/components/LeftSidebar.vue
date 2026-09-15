@@ -21,6 +21,8 @@ const items: NavItem[] = [
   // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
   // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
+  // 2026-09-16: 公式サイトのマーチャント履歴をアプリ内ログインで取り込む
+  { id: "trade-history", icon: "🜨", label: "取引履歴", group: "economy" },
   // 2026-09-12: 「ヴァールの天秤」= 賭けクラフトの期待値ツール群 (旧クラフト収支は廃止)。親をクリックで展開。
   // 聖別の賭け / アルダーの航路 は同日オーナー指示で削除 (使わない)。
   {

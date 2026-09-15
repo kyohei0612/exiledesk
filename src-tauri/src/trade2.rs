@@ -33,7 +33,7 @@ const USER_AGENT: &str =
 const ACCEPT_LANGUAGE_VALUE: &str = "ja,en;q=0.9";
 
 /// 共通 reqwest::Client ビルダー。User-Agent と Accept-Language を一括設定。
-fn build_client() -> Result<reqwest::Client, String> {
+pub(crate) fn build_client() -> Result<reqwest::Client, String> {
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static(ACCEPT_LANGUAGE_VALUE));
     reqwest::Client::builder()
@@ -208,7 +208,7 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
 
 /// x-rate-limit-* ヘッダをそのまま JSON にする (2026-09-14)。
 /// フロントの擬似レート制限がサーバー側の実カウント (同じ IP の手動検索も含む) に合わせるために使う。
-fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {
+pub(crate) fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {
     let mut m = serde_json::Map::new();
     for (k, v) in h.iter() {
         let name = k.as_str();
@@ -222,7 +222,7 @@ fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {
 }
 
 /// 簡易 URL encode (Rust 標準は無いので手書き、ASCII + - _ . ~ 以外はパーセント符号化)。
-fn urlencode(s: &str) -> String {
+pub(crate) fn urlencode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for b in s.bytes() {
         match b {

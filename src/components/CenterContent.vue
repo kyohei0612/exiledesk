@@ -9,6 +9,7 @@ import GemCorrupt from "../views/GemCorrupt.vue";
 import Overquality from "../views/Overquality.vue";
 import UniqueCorrupt from "../views/UniqueCorrupt.vue";
 import RareCraft from "../views/RareCraft.vue";
+import TradeHistory from "../views/TradeHistory.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
 // 復活時は次の 2 行を戻すだけで OK:
 //   import EconDashboard from "../views/EconDashboard.vue";
@@ -38,6 +39,8 @@ const currentView = computed<Component | undefined>(() => {
       return UniqueCorrupt;
     case "rare-craft":
       return RareCraft;
+    case "trade-history":
+      return TradeHistory;
     default:
       return undefined;
   }

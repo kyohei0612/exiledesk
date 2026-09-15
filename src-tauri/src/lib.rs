@@ -12,6 +12,7 @@ pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を�
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
+pub mod trade_history;  // 取引履歴 (マーチャント履歴) の連動 (2026-09-16): アプリ内ログイン + 履歴 API
 
 use std::time::Duration;
 
@@ -353,6 +354,11 @@ pub fn run() {
             settings::settings_load,
             settings::settings_save,
             settings::is_debug_build,
+            trade_history::trade_history_session,
+            trade_history::trade_history_login,
+            trade_history::trade_history_logout,
+            trade_history::trade_history_leagues,
+            trade_history::trade_history_fetch,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
             pob_bundle::pob_bundle_status,
