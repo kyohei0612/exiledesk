@@ -15,7 +15,7 @@ import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
-import { displayCurrency } from "../state/display-currency";
+import { displayCurrency, type DisplayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
@@ -388,9 +388,33 @@ const fmtQty = (q: number | null): string => (q == null ? "—" : Number.isInteg
  * 同じ予算でやった場合 (経路ごと)。2026-09-16 オーナー指摘: 経路ごとに 1 回の費用が 10 倍近く違うので、
  * 回数ではなく予算で揃え、赤字の確率と損益のぶれ (下位 5% / 中央 / 上位 5%) を出す。
  */
-const BUDGET_DIVINES = [5, 10, 20, 50, 100];
-const budgetDivines = ref(20);
-const budgetExalted = computed(() => budgetDivines.value * (g.divineRate.value > 0 ? g.divineRate.value : 1));
+/** 予算の選択肢 (表示通貨ごと)。2026-09-16 オーナー指示: 表示通貨 (高貴 / カオス / 神) の単位で選べるように */
+const BUDGET_OPTIONS: Record<DisplayCurrency, number[]> = {
+  exalted: [1000, 2000, 5000, 10000, 20000, 50000],
+  chaos: [50, 100, 200, 500, 1000, 2000],
+  divine: [5, 10, 20, 50, 100],
+};
+const budgetOptions = computed(() => BUDGET_OPTIONS[displayCurrency.cur.value]);
+/** 選んだ予算 (高貴建て)。未選択は 20 神相当。通貨を切り替えたら一番近い選択肢に寄せる */
+const budgetChosenEx = ref<number | null>(null);
+const budgetDisplay = computed<number>({
+  get: () => {
+    const ex = budgetChosenEx.value ?? 20 * (g.divineRate.value > 0 ? g.divineRate.value : 1);
+    const d = displayCurrency.toDisplay(ex) ?? 0;
+    return budgetOptions.value.reduce((a, b) => (Math.abs(b - d) < Math.abs(a - d) ? b : a));
+  },
+  set: (v) => {
+    budgetChosenEx.value = displayCurrency.fromDisplay(v);
+  },
+});
+const budgetExalted = computed(() => displayCurrency.fromDisplay(budgetDisplay.value) ?? 0);
+/** 同じ回数でやった場合 (2026-09-16 オーナー指示で「同じ予算」と両方出す)。赤字の確率とぶれも同じ計算 */
+const atAttempts = computed(() =>
+  g.routes.value.flatMap((r) => {
+    const risk = r.ok ? budgetRisk(r, attempts.value * r.expectedCost) : null;
+    return risk ? [{ id: r.id, label: r.label, risk }] : [];
+  }),
+);
 const atBudget = computed(() =>
   g.routes.value.flatMap((r) => {
     const risk = budgetRisk(r, budgetExalted.value);
@@ -657,13 +681,55 @@ const signedPct = (v: number | null): string => (v == null ? "—" : `${v > 0 ? 
             </div>
           </div>
         </div>
+        <div v-if="atAttempts.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+          <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
+            <span class="font-display tracking-[0.04em]">同じ回数でやった場合 ({{ attempts }} 回ずつ)</span>
+            <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
+              回数
+              <select v-model.number="attempts" class="num text-left w-20">
+                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
+              </select>
+            </label>
+          </div>
+          <div class="overflow-x-auto">
+          <table class="w-full text-[12px]">
+            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
+              <tr>
+                <th class="text-left font-normal pb-1">経路</th>
+                <th class="text-right font-normal pb-1 pl-2">期待総費用</th>
+                <th class="text-right font-normal pb-1 pl-2">期待損益</th>
+                <th class="text-right font-normal pb-1 pl-2">赤字の確率</th>
+                <th class="text-right font-normal pb-1 pl-2">下位 5%</th>
+                <th class="text-right font-normal pb-1 pl-2">中央</th>
+                <th class="text-right font-normal pb-1 pl-2">上位 5%</th>
+                <th class="text-right font-normal pb-1 pl-2">完成 1 個以上</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in atAttempts" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="g.best.value && g.best.value.id === r.id ? 'text-[var(--exile-color-accent-focus)]' : ''">
+                <td class="py-1 pr-2">{{ r.label }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(r.risk.cost) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.profit)">{{ r.id === 'buyFinished' ? "基準 (0)" : money(r.risk.profit, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums">{{ r.id === 'buyFinished' ? "—" : pct(r.risk.pLoss) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.p05)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.p05, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.median)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.median, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap" :class="evClass(r.id === 'buyFinished' ? null : r.risk.p95)">{{ r.id === 'buyFinished' ? "—" : money(r.risk.p95, true) }}</td>
+                <td class="py-1 pl-2 text-right tabular-nums whitespace-nowrap">{{ pct(r.risk.pAnyFinished) }} ({{ r.risk.expectedFinished.toFixed(2) }} 個)</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">
+            どの経路も同じ回数やった場合。1 回の費用が高い経路ほど総費用も大きくなるので、投資額あたりで比べる時は下の「同じ予算でやった場合」を見てください。
+          </p>
+        </div>
         <div v-if="atBudget.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
           <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
             <span class="font-display tracking-[0.04em]">同じ予算でやった場合 ({{ money(budgetExalted) }})</span>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               予算
-              <select v-model.number="budgetDivines" class="num text-left w-24">
-                <option v-for="d in BUDGET_DIVINES" :key="d" :value="d">{{ d }} 神</option>
+              <select v-model.number="budgetDisplay" class="num text-left w-28">
+                <option v-for="v in budgetOptions" :key="v" :value="v">{{ v }} {{ unit }}</option>
               </select>
             </label>
           </div>
