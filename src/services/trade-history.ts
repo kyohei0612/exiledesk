@@ -3,7 +3,9 @@
  *
  * Rust (trade_history.rs) がアプリ内ログインの POESESSID で、サイトと同じ履歴 API を読む (非公式 API)。
  * API が返すのは直近の分だけなので、取れた物をこの PC (localStorage) に足していき、API から消えた古い分も残す。
- * 取得は 5 分に 1 回まで。429 (制限中) の時はサーバーの retry-after に従う (XileHUD は既定 15 分間隔)。
+ * 取得は 15 分に 1 回まで。さらに応答の x-rate-limit-account / -ip を見て、上限の 8 割に近い窓があればその窓が明けるまで、
+ * 締め出し中ならその秒数だけ待つ (2026-09-16)。履歴の制限はアカウント単位で公式サイトの更新ボタンと共通
+ * (XileHUD が観測した値: 1 分 5 回 / 10 分 10 回 / 3 時間 15 回、超えると最長 1 時間締め出し)。
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -38,8 +40,29 @@ export interface FetchOutcome {
   message: string;
 }
 
-/** 取得の最短間隔 */
-export const MIN_INTERVAL_MS = 5 * 60 * 1000;
+/** 取得の最短間隔 (3 時間 15 回の窓に 15 分間隔なら 12 回で収まる) */
+export const MIN_INTERVAL_MS = 15 * 60 * 1000;
+
+/**
+ * レート制限ヘッダから、次に取ってよいまでの待ち時間 (ms)。
+ * rules "5:60:60,10:600:120,15:10800:3600" = 最大回数:窓 (秒):超えた時の締め出し (秒)
+ * state "4:60:0,..." = 使った回数:窓 (秒):締め出しの残り (秒)
+ */
+export function waitFromRateLimit(rl: Record<string, string> | null | undefined): number {
+  if (!rl) return 0;
+  let wait = 0;
+  for (const scope of ["account", "ip"]) {
+    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
+    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
+    rules.forEach((rule, i) => {
+      const [max, period] = rule.split(":").map(Number);
+      const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
+      if (restricted > 0) wait = Math.max(wait, restricted * 1000);
+      else if (max > 0 && period > 0 && hits >= Math.floor(max * 0.8)) wait = Math.max(wait, period * 1000);
+    });
+  }
+  return wait;
+}
 
 const keyOf = (game: Game, league: string): string => `exiledesk.trade-history.${game}.${league}`;
 
@@ -158,7 +181,7 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
   }
   // 成功でも失敗でも次の取得まで間隔を空ける (失敗時の連打でアカウントの制限を招かない)
   s.lastFetchAt = now;
-  s.nextAllowedAt = now + Math.max(MIN_INTERVAL_MS, (res.retry_after ?? 0) * 1000);
+  s.nextAllowedAt = now + Math.max(MIN_INTERVAL_MS, (res.retry_after ?? 0) * 1000, waitFromRateLimit(res.ratelimit));
   if (res.status === 200) {
     const have = new Set(s.entries.map((e) => e.key));
     let added = 0;
