@@ -405,7 +405,8 @@ export interface BudgetRisk {
  */
 export function budgetRisk(r: RouteResult, budget: number, trials = 10000): BudgetRisk | null {
   if (!r.ok || !(r.expectedCost > 0) || !(budget > 0)) return null;
-  const n = Math.max(1, Math.round(budget / r.expectedCost));
+  // 予算を超えないよう切り捨て (1 回分に届かない予算は呼び出し側で「予算不足」にする)。+1e-9 は n × 費用 ÷ 費用 の丸め誤差よけ
+  const n = Math.max(1, Math.floor(budget / r.expectedCost + 1e-9));
   const lines = r.outcomes.filter((o) => o.p > 0);
   const total = lines.reduce((s, o) => s + o.p, 0);
   if (lines.length === 0 || !(total > 0)) return null;
