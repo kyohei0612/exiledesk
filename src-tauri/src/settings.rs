@@ -189,9 +189,12 @@ pub fn settings_save(
 /// で、`tauri-plugin-autostart::enable()` を呼ぶと `std::env::current_exe()` の
 /// debug 絶対パスが HKCU\Run に焼き付き、PC 起動時にちらつきの原因になる。
 /// UI 側で構造的に enable させないことで再発を防ぐ (2026-05-25 解析)。
+///
+/// 2026-09-15: `target\release` の exe も開発ビルドとして扱う。これで設定画面を開くと
+/// Run が開発ビルドのパスに書き換わり、ログインのたびにインストール版と 2 重に常駐していた。
 #[tauri::command]
 pub fn is_debug_build() -> bool {
-    cfg!(debug_assertions)
+    cfg!(debug_assertions) || crate::instance_guard::is_dev_exe()
 }
 
 // ============================================================================

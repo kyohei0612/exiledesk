@@ -173,93 +173,102 @@ impl PobWorker {
 }
 
 pub(crate) fn worker_loop(pob_src: PathBuf, rx: mpsc::Receiver<PobJob>) {
-    let lua = match boot_pob(&pob_src) {
-        Ok(lua) => lua,
-        Err(e) => {
-            // 起動失敗。以降の job はすべて失敗で返す。
-            eprintln!("[pob worker] boot_pob failed: {:#}", e);
-            for job in rx {
-                let msg = format!("PoB boot failed: {:#}", e);
-                match job {
-                    PobJob::LoadBuildXml { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::GetStat { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::GetStatsAll { reply } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::SetItemInSlot { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::ClearSlot { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::Snapshot { reply } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::RestoreSnapshot { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::GetEquippedItems { reply } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::GetSkillGroups { reply } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                    PobJob::SetMainSocketGroup { reply, .. } => {
-                        let _ = reply.send(Err(msg.clone()));
-                    }
-                }
-            }
-            return;
-        }
-    };
-
+    // 2026-09-15: PoB の読み込みは最初のジョブが来たときに行う。
+    // 以前は thread 起動と同時に読み込んでいたため、ヘッドレス PoB を使わない起動でも
+    // アプリ起動のたびに CPU と約 400 MB のメモリを使っていた。
+    let mut booted: Option<Result<Lua, String>> = None;
     for job in rx {
-        match job {
-            PobJob::LoadBuildXml { xml, reply } => {
-                let r = call_load_build_xml(&lua, &xml).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::GetStat { key, reply } => {
-                let r = call_get_stat(&lua, &key).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::GetStatsAll { reply } => {
-                let r = call_get_stats_all(&lua).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::SetItemInSlot { slot, raw, reply } => {
-                let r =
-                    call_set_item_in_slot(&lua, slot.as_deref(), &raw).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::ClearSlot { slot, reply } => {
-                let r = call_clear_slot(&lua, &slot).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::Snapshot { reply } => {
-                let r = call_snapshot(&lua).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::RestoreSnapshot { xml, reply } => {
-                let r = call_load_build_xml(&lua, &xml).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::GetEquippedItems { reply } => {
-                let r = call_get_equipped_items(&lua).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::GetSkillGroups { reply } => {
-                let r = call_get_skill_groups(&lua).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
-            PobJob::SetMainSocketGroup { index, reply } => {
-                let r = call_set_main_socket_group(&lua, index).map_err(|e| e.to_string());
-                let _ = reply.send(r);
-            }
+        let state = booted.get_or_insert_with(|| {
+            boot_pob(&pob_src).map_err(|e| {
+                // 起動失敗。以降の job はすべて失敗で返す。
+                eprintln!("[pob worker] boot_pob failed: {:#}", e);
+                format!("PoB boot failed: {:#}", e)
+            })
+        });
+        match state {
+            Ok(lua) => run_job(lua, job),
+            Err(msg) => fail_job(job, msg.clone()),
+        }
+    }
+}
+
+fn run_job(lua: &Lua, job: PobJob) {
+    match job {
+        PobJob::LoadBuildXml { xml, reply } => {
+            let r = call_load_build_xml(lua, &xml).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::GetStat { key, reply } => {
+            let r = call_get_stat(lua, &key).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::GetStatsAll { reply } => {
+            let r = call_get_stats_all(lua).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::SetItemInSlot { slot, raw, reply } => {
+            let r =
+                call_set_item_in_slot(lua, slot.as_deref(), &raw).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::ClearSlot { slot, reply } => {
+            let r = call_clear_slot(lua, &slot).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::Snapshot { reply } => {
+            let r = call_snapshot(lua).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::RestoreSnapshot { xml, reply } => {
+            let r = call_load_build_xml(lua, &xml).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::GetEquippedItems { reply } => {
+            let r = call_get_equipped_items(lua).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::GetSkillGroups { reply } => {
+            let r = call_get_skill_groups(lua).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+        PobJob::SetMainSocketGroup { index, reply } => {
+            let r = call_set_main_socket_group(lua, index).map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
+    }
+}
+
+fn fail_job(job: PobJob, msg: String) {
+    match job {
+        PobJob::LoadBuildXml { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::GetStat { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::GetStatsAll { reply } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::SetItemInSlot { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::ClearSlot { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::Snapshot { reply } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::RestoreSnapshot { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::GetEquippedItems { reply } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::GetSkillGroups { reply } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::SetMainSocketGroup { reply, .. } => {
+            let _ = reply.send(Err(msg));
         }
     }
 }

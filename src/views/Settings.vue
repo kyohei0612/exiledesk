@@ -196,7 +196,7 @@ onMounted(async () => {
                 v-if="isDebugBuild"
                 class="block mt-1 text-xs text-[var(--exile-color-signal-warning,#d4a247)]"
               >
-                ⚠ dev ビルドでは設定できません。release exe (`target\release\exiledesk.exe` または installer) で起動した時のみ有効化できます。
+                ⚠ 開発ビルド (target フォルダの exe) では設定できません。インストール版で設定してください。
               </span>
             </span>
           </label>

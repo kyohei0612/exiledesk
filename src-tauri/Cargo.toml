@@ -44,4 +44,10 @@ tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
 # PoB 同梱物の別配布 (2026-09-08): zip 展開 + ダウンロード検証
 zip = { version = "2", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
+# 2 つ目の起動を既存のウィンドウに回す (2026-09-15、開発ビルドは対象外)
+tauri-plugin-single-instance = "2"
+
+# スタートアップ登録 (HKCU\Run) の登録先を確かめて直す (auto-launch と同じ版)
+[target.'cfg(windows)'.dependencies]
+winreg = "0.10"
 

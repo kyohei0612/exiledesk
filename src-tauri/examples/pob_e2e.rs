@@ -32,7 +32,7 @@ fn main() {
     println!("\n[step 1] spawn PobWorker (PoB headless boot, ~数百ms)…");
     let t0 = Instant::now();
     let worker = PobWorker::spawn(pob_src_dir());
-    // PoB boot は spawn 内のスレッドでバックグラウンド起動するので、
+    // PoB boot は最初のジョブが来たときに worker スレッドで行う (2026-09-15 遅延化)。
     // 最初のジョブ送信時にブロッキングで完了を待つ。
     println!("  spawn returned in {:?}", t0.elapsed());
 

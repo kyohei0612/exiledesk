@@ -11,6 +11,7 @@ pub mod settings;  // 設定画面 (2026-05-23): autostart / close_to_tray / aut
 pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を外部プロセスで開く
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
+pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
 
 use std::time::Duration;
 
@@ -119,7 +120,13 @@ fn clamp_into_visible_area(window: &tauri::WebviewWindow) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    // 2 つ目の起動は既存のウィンドウを前面に出して終わる (single-instance は最初に登録する)。
+    // 開発ビルドはインストール版と並べて動かせるよう対象外 (instance_guard.rs)。
+    if !instance_guard::is_dev_exe() {
+        builder = builder.plugin(tauri_plugin_single_instance::init(instance_guard::on_second_instance));
+    }
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
@@ -133,7 +140,7 @@ pub fn run() {
         // ----------------------------------------------------------------
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--tray-only"]),
+            Some(vec![instance_guard::TRAY_ONLY_ARG]),
         ))
         // Phase 設定画面: 設定 state (× ボタン / autostart / auto-refetch 周期)
         .manage(settings::AppSettingsState::default())
@@ -155,13 +162,16 @@ pub fn run() {
                 state.set(loaded.clone());
             }
 
+            // 自動起動の登録先が別の exe (古い開発ビルドなど) を指していたら今の exe に直す
+            instance_guard::repair_autostart(&app.package_info().name);
+
             // ----------------------------------------------------------------
             // --tray-only フラグ判定 (Discord 風バックグラウンド起動)
             //
             // Windows ログイン時の自動起動では `--tray-only` 付きで exec される。
             // この時はメインウィンドウを表示しない (= タスクトレイのみ常駐)。
             // ----------------------------------------------------------------
-            let tray_only = std::env::args().any(|a| a == "--tray-only");
+            let tray_only = std::env::args().any(|a| a == instance_guard::TRAY_ONLY_ARG);
             // ----------------------------------------------------------------
             // タスクトレイ常駐 (Phase 1.6)
             //
