@@ -57,12 +57,40 @@ export function waitFromRateLimit(rl: Record<string, string> | null | undefined)
     rules.forEach((rule, i) => {
       const [max, period] = rule.split(":").map(Number);
       const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
-      if (restricted > 0) wait = Math.max(wait, restricted * 1000);
+      // 締め出し中は、締め出しの残りだけでなく窓 (最長 3 時間) が明けるまで待つ。
+      // 2026-09-16 実測: 1 時間の締め出しが解けた直後に 1 回取っただけで、3 時間の窓がまだ埋まっていて再び 3600 秒締め出された
+      if (restricted > 0) wait = Math.max(wait, Math.max(restricted, period) * 1000);
       else if (max > 0 && period > 0 && hits >= Math.floor(max * 0.8)) wait = Math.max(wait, period * 1000);
     });
   }
   return wait;
 }
+
+const PERIOD_LABEL: Record<number, string> = { 60: "1 分", 600: "10 分", 3600: "1 時間", 10800: "3 時間" };
+
+/** 制限の状態を人が読める形に (例: "1 分 1/5 · 10 分 3/10 · 3 時間 15/15 (締め出し 3600 秒)") */
+export function describeRateLimit(rl: Record<string, string> | null | undefined): string {
+  if (!rl) return "";
+  for (const scope of ["account", "ip"]) {
+    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
+    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
+    if (rules.length === 0) continue;
+    return rules
+      .map((rule, i) => {
+        const [max, period] = rule.split(":").map(Number);
+        const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
+        const label = PERIOD_LABEL[period] ?? `${period} 秒`;
+        return `${label} ${Number.isFinite(hits) ? hits : "?"}/${max}${restricted > 0 ? ` (締め出し ${restricted} 秒)` : ""}`;
+      })
+      .join(" · ");
+  }
+  return "";
+}
+
+const clock = (ms: number): string => {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
 
 const keyOf = (game: Game, league: string): string => `exiledesk.trade-history.${game}.${league}`;
 
@@ -182,12 +210,18 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
   // 成功でも失敗でも次の取得まで間隔を空ける (失敗時の連打でアカウントの制限を招かない)
   s.lastFetchAt = now;
   s.nextAllowedAt = now + Math.max(MIN_INTERVAL_MS, (res.retry_after ?? 0) * 1000, waitFromRateLimit(res.ratelimit));
+  const limitText = describeRateLimit(res.ratelimit);
+  const limitSuffix = limitText ? ` [制限: ${limitText}]` : "";
   if (res.status === 200) {
     const have = new Set(s.entries.map((e) => e.key));
+    const list = listOf(res.body);
     let added = 0;
-    for (const raw of listOf(res.body)) {
+    let parsed = 0;
+    for (const raw of list) {
       const e = parseEntry(raw);
-      if (e && !have.has(e.key)) {
+      if (!e) continue;
+      parsed++;
+      if (!have.has(e.key)) {
         s.entries.push(e);
         have.add(e.key);
         added++;
@@ -195,7 +229,16 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
     }
     s.entries.sort((a, b) => b.time - a.time);
     save(game, league, s);
-    return { ok: true, added, message: added > 0 ? `${added} 件を追加しました` : "新しい取引はありません" };
+    if (added > 0) return { ok: true, added, message: `${added} 件を追加しました${limitSuffix}` };
+    // 0 件の時は応答の形を出す (読み取りの形式違いと、本当に履歴が無いのを見分けるため)
+    const keysOf = (v: unknown): string => (v && typeof v === "object" ? Object.keys(v as object).slice(0, 8).join(", ") : typeof v);
+    if (list.length > 0 && parsed === 0) {
+      return { ok: false, added: 0, message: `応答の ${list.length} 件を読めませんでした (1 件目の項目: ${keysOf(list[0])})${limitSuffix}` };
+    }
+    if (list.length === 0) {
+      return { ok: true, added: 0, message: `サイトの履歴は 0 件でした (応答の項目: ${keysOf(res.body)})。リーグが合っているか確認してください${limitSuffix}` };
+    }
+    return { ok: true, added: 0, message: `新しい取引はありません (${parsed} 件は取り込み済み)${limitSuffix}` };
   }
   save(game, league, s);
   const apiMessage = (res.body as { error?: { message?: string } } | null)?.error?.message;
@@ -203,7 +246,11 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
     return { ok: false, added: 0, message: "ログインが切れています。もう一度 pathofexile.com にログインしてください" };
   }
   if (res.status === 429) {
-    return { ok: false, added: 0, message: `取得の制限中です。${res.retry_after ?? "しばらく"} 秒ほど待ってください` };
+    return {
+      ok: false,
+      added: 0,
+      message: `取得の制限中です${limitSuffix}。締め出しが解けても枠が埋まっているとすぐまた締め出されるので、${clock(s.nextAllowedAt)} ごろまで公式サイトの更新も含めて待ってください`,
+    };
   }
   return { ok: false, added: 0, message: `サイト側で履歴を取れませんでした (HTTP ${res.status}${apiMessage ? `: ${apiMessage}` : ""})。公式サイトでも失敗する時は GGG 側の不具合です` };
 }
