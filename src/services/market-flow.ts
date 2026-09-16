@@ -94,6 +94,31 @@ export async function setWatches(watches: Watch[], league: string, site: string)
   }
 }
 
+export interface FlowStatus {
+  sampling: boolean;
+  current: string | null;
+  done: number;
+  total: number;
+  rounds: number;
+  last_at: number;
+  next_at: number;
+  auto_watches: number;
+  manual_watches: number;
+  last_error: string | null;
+  rate_state: string | null;
+  retry_until: number;
+}
+
+/** 自動追跡が今どうなっているか */
+export async function loadFlowStatus(): Promise<FlowStatus | null> {
+  if (!isTauriRuntime()) return null;
+  try {
+    return await invoke<FlowStatus>("market_flow_status");
+  } catch {
+    return null;
+  }
+}
+
 /** 1 銘柄を手動で追跡に足す / 外す */
 export async function toggleWatch(watch: Watch, on: boolean, league: string, site: string): Promise<FlowStore | null> {
   if (!isTauriRuntime()) return null;
@@ -136,6 +161,10 @@ export interface FlowSummary {
   /** 48 時間以上売れ残っている件数と、その最安に対する値段の倍率 (値段不相応の目安) */
   stale: number;
   staleRatio: number | null;
+  /** まだ売れていない出品のうち一番古い物の齢 (分) */
+  oldestMin: number | null;
+  /** 判定が出せるまでの目安 (分)。売れ残りが 48 時間に届くまで。判定済みなら null */
+  etaMin: number | null;
 }
 
 const HOUR = 3600;
@@ -158,6 +187,8 @@ const EMPTY_SUMMARY: FlowSummary = {
   enough: false,
   stale: 0,
   staleRatio: null,
+  oldestMin: null,
+  etaMin: null,
 };
 
 /**
@@ -245,6 +276,17 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // 判定に足りるか: 消えた記録が 3 件以上、または 48 時間以上売れ残りが 3 件以上
   const enough = gone >= MIN_EVENTS || stale >= MIN_EVENTS;
 
+  // まだ判定できない時、「あとどれくらいで判定できるか」を出す。
+  // 消えれば早く判定が付くが、売れ残りで判定する場合は 3 件目が 48 時間に届くまで待つ (オーナー指摘)
+  const aliveAges = records.filter((r) => !r.event).map((r) => r.exit).sort((a, b) => b - a);
+  const oldest = aliveAges.length > 0 ? aliveAges[0] : null;
+  let etaSecs: number | null = null;
+  if (!enough) {
+    const need = MIN_EVENTS - gone; // 消えた記録で足りない分
+    const nth = aliveAges[Math.max(0, Math.min(aliveAges.length - 1, need - 1))];
+    if (aliveAges.length >= need && nth != null) etaSecs = Math.max(0, NORMAL_SECS - nth);
+  }
+
   let tone: FlowTone = "unknown";
   let label = "";
   if (enough) {
@@ -273,6 +315,8 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     enough,
     stale,
     staleRatio,
+    oldestMin: oldest != null ? Math.round(oldest / 60) : null,
+    etaMin: etaSecs != null ? Math.round(etaSecs / 60) : null,
   };
 }
 
@@ -281,8 +325,9 @@ export function fmtAge(min: number | null): string {
   if (min == null) return "—";
   if (min < 60) return `${min} 分`;
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h} 時間 ${min % 60} 分`;
-  return `${Math.floor(h / 24)} 日 ${h % 24} 時間`;
+  if (h < 24) return min % 60 === 0 ? `${h} 時間` : `${h} 時間 ${min % 60} 分`;
+  const d = Math.floor(h / 24);
+  return h % 24 === 0 ? `${d} 日` : `${d} 日 ${h % 24} 時間`;
 }
 
 /** 0-1 → "78%" */

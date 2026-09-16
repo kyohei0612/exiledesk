@@ -31,6 +31,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex as StdMutex;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -136,6 +137,9 @@ pub struct WatchState {
 pub struct FlowStore {
     /// 最後にサンプルを取った時刻 (unix 秒)
     pub sampled_at: i64,
+    /// 何周したか (UI に出す)
+    #[serde(default)]
+    pub rounds: u64,
     /// 追跡リストを更新した時刻
     pub list_refreshed_at: i64,
     pub league: String,
@@ -165,6 +169,45 @@ const SAMPLE_INTERVAL: Duration = Duration::from_secs(3600);
 const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
+/// 今どの銘柄を取っているか (key, 何件目, 全体件数)。UI に出すため
+static PROGRESS: StdMutex<Option<(String, usize, usize)>> = StdMutex::new(None);
+/// 直近の失敗 (UI に出す)
+static LAST_ERROR: StdMutex<Option<String>> = StdMutex::new(None);
+/// trade2 が返したレート制限の使用状況 (x-rate-limit-ip-state)
+static RATE_STATE: StdMutex<Option<String>> = StdMutex::new(None);
+/// 429 を食らった時の再開予定時刻 (unix 秒)
+static RETRY_UNTIL: StdMutex<i64> = StdMutex::new(0);
+
+fn set_progress(v: Option<(String, usize, usize)>) {
+    if let Ok(mut g) = PROGRESS.lock() {
+        *g = v;
+    }
+}
+fn set_error(v: Option<String>) {
+    if let Ok(mut g) = LAST_ERROR.lock() {
+        *g = v;
+    }
+}
+fn set_rate_state(v: Option<String>) {
+    if let Ok(mut g) = RATE_STATE.lock() {
+        *g = v;
+    }
+}
+/// エラー文字列から 429 の待ち時間を拾って再開予定にする
+fn note_retry_after(msg: &str) {
+    if !msg.contains("429") {
+        return;
+    }
+    let secs = msg
+        .split("retry-after=")
+        .nth(1)
+        .and_then(|rest| rest.split(|c: char| !c.is_ascii_digit()).next())
+        .and_then(|d| d.parse::<i64>().ok())
+        .unwrap_or(60);
+    if let Ok(mut g) = RETRY_UNTIL.lock() {
+        *g = now_secs() + secs;
+    }
+}
 
 // ============================================================================
 // 保存
@@ -509,6 +552,10 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
     }
     let site = if store.site.is_empty() { None } else { Some(store.site.clone()) };
     let now = now_secs();
+    let auto: Vec<&Watch> = store.watches.iter().filter(|w| !w.manual).collect();
+    let total_watches = auto.len();
+    let mut index = 0usize;
+    set_error(None);
 
     for watch in &store.watches {
         // 手動で足した銘柄は 1 時間ごとの巡回に入れない (オーナー指示 2026-09-16)。
@@ -516,6 +563,8 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         if watch.manual {
             continue;
         }
+        index += 1;
+        set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         // --- search: 総数と ID 一覧 ---
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
@@ -526,10 +575,19 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
             Ok(v) => v,
             Err(e) => {
                 eprintln!("[market_flow] search {} 失敗: {e}", watch.key);
+                note_retry_after(&e);
+                set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
                 tokio::time::sleep(REQUEST_INTERVAL).await;
                 continue;
             }
         };
+        // レート制限の使用状況を控える (UI に出す)
+        set_rate_state(
+            body.get("_ratelimit")
+                .and_then(|r| r.get("x-rate-limit-ip-state"))
+                .and_then(|v| v.as_str())
+                .map(str::to_string),
+        );
         let total = body.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         let query_id = body.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let ids: Vec<String> = body
@@ -616,7 +674,64 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
             tokio::time::sleep(REQUEST_INTERVAL).await;
         }
     }
+    // 1 周終わり
+    let mut store_end = load_store(app);
+    store_end.rounds += 1;
+    store_end.sampled_at = now_secs();
+    save_store(app, &store_end)?;
+    set_progress(None);
     Ok(())
+}
+
+/// UI に出す進捗
+#[derive(Serialize, Clone, Debug)]
+pub struct FlowStatus {
+    /// 取得中か
+    pub sampling: bool,
+    /// 取得中の銘柄名 (取得中のみ)
+    pub current: Option<String>,
+    /// 何件目 / 全体
+    pub done: usize,
+    pub total: usize,
+    /// 何周したか
+    pub rounds: u64,
+    /// 最後に取った時刻と次回の予定 (unix 秒)
+    pub last_at: i64,
+    pub next_at: i64,
+    /// 自動で追う銘柄の数 (手動は含まない)
+    pub auto_watches: usize,
+    pub manual_watches: usize,
+    pub last_error: Option<String>,
+    /// trade2 のレート制限の使用状況 ("4:10:0,12:60:0,..." 形式)
+    pub rate_state: Option<String>,
+    /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
+    pub retry_until: i64,
+}
+
+/// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
+#[tauri::command]
+pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
+    let store = load_store(&app);
+    let progress = PROGRESS.lock().ok().and_then(|g| g.clone());
+    let sampling = SAMPLING.load(Ordering::SeqCst);
+    let (current, done, total) = match progress {
+        Some((k, d, t)) => (Some(k), d, t),
+        None => (None, 0, 0),
+    };
+    Ok(FlowStatus {
+        sampling,
+        current,
+        done,
+        total,
+        rounds: store.rounds,
+        last_at: store.sampled_at,
+        next_at: if store.sampled_at > 0 { store.sampled_at + SAMPLE_INTERVAL.as_secs() as i64 } else { 0 },
+        auto_watches: store.watches.iter().filter(|w| !w.manual).count(),
+        manual_watches: store.watches.iter().filter(|w| w.manual).count(),
+        last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
+        rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
+        retry_until: RETRY_UNTIL.lock().map(|g| *g).unwrap_or(0),
+    })
 }
 
 /// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す

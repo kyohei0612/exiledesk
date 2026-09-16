@@ -15,6 +15,7 @@ import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { recordFlow } from "../../services/market-flow";
+import { rowQueryOptions, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -202,20 +203,7 @@ export function useGemCorrupt() {
   const priceError = ref<string | null>(null);
 
   function queryOptions(key: SaleKey): GemQueryOptions {
-    const category = selected.value?.kind === "meta" ? "gem.metagem" : "gem.activegem";
-    const socketsMin = requireSockets.value ? 5 : undefined;
-    const common = { category, corrupted: true, socketsMin } as const;
-    switch (key) {
-      // レベル 21 / 品質 23% はヴァールオーブ 1 回の産物なので 2 重コラプト品 (結晶を通した物) を除く
-      // (オーナー指摘 2026-09-13: 含めると 2 重コラプト品の相場が混ざる)
-      case "level21":
-        return { ...common, levelMin: 21, qualityMin: 20, qualityMax: 20, twiceCorrupted: false };
-      case "quality23":
-        return { ...common, qualityMin: 23, twiceCorrupted: false }; // レベルは問わない (品質はレベルと無関係、オーナー指示 2026-09-13)
-      // 完成品 (21 · 23%) は結晶を通した 2 重コラプト品そのもの (JP 実測: 未 2 重で絞ると 0 件)
-      case "finished":
-        return { ...common, levelMin: 21, qualityMin: 23 };
-    }
+    return rowQueryOptions(key, selected.value?.kind === "meta", requireSockets.value ? 5 : undefined);
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   function tradeUrl(key: SaleKey): string | null {
@@ -229,9 +217,9 @@ export function useGemCorrupt() {
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
   /** 手動取得の結果を捌き速度の記録に差し込む (自動サンプルと同じ形) */
-  async function recordFinishedSample(gemEn: string, r: PriceResult): Promise<void> {
+  async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
     await recordFlow({
-      key: gemEn,
+      key: watchKey(gemEn, key),
       total: r.total,
       ids: r.listingIds ?? [],
       entries: r.listings.map((l) => ({
@@ -257,8 +245,8 @@ export function useGemCorrupt() {
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
-        // 2026-09-16 オーナー指示: 手で取った分も売れ行きの記録に差し込む (完成品の条件だけが追跡対象)
-        if (row.key === "finished") void recordFinishedSample(gem.en, r);
+        // 2026-09-16 オーナー指示: 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する
+        void recordRowSample(gem.en, row.key, r);
       }
       priceError.value = tradeAuto.lastError.value;
     } finally {

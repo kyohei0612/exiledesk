@@ -370,6 +370,7 @@ pub fn run() {
             market_flow::market_flow_load,
             market_flow::market_flow_set_watches,
             market_flow::market_flow_toggle_watch,
+            market_flow::market_flow_status,
             market_flow::market_flow_sample_now,
             market_flow::market_flow_record,
             pob_launcher::pob_launcher_status,

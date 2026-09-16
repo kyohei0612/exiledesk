@@ -12,13 +12,19 @@
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
-import { buildGemQuery } from "../services/trade2/query";
+import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { marketStore } from "./market-store";
 import { trade2Site } from "../services/trade2/league";
 
 /** 追跡対象にする下限 (完成品を使っている人数)。GemBreak.vue と同じ値 */
 const TRACK_MIN_FINISHED = 5;
+/**
+ * 自動で追うジェムの数の上限。
+ * 1 ジェムにつき 3 条件 (レベル 21 / 品質 23% / 完成品) を追うので、
+ * 10 ジェム = 30 銘柄 = 毎時 60 リクエスト。trade2 の 600 回 / 6 時間に収まる。
+ */
+const TRACK_MAX_GEMS = 10;
 /** リストを取り直す間隔 */
 const REFRESH_SECS = 24 * 3600;
 /** 起動直後は他の取得とぶつかるので少し待つ */
@@ -46,16 +52,29 @@ interface Result {
 
 let started = false;
 
-/** 取得結果から追跡リストを作って登録する (画面からも使う形と同じ) */
+/**
+ * 取得結果から追跡リストを作る。1 ジェムにつき 3 条件
+ * (レベル 21 / 品質 23% / 完成品) を別々に追う (オーナー指示 2026-09-16:
+ * 「品質 23% とかでも売れてるか分からんし」)。
+ */
 export function watchesFromRows(rows: Row[]): { key: string; label: string; note: string; query: unknown }[] {
-  return rows
+  const gems = rows
     .filter((r) => r.both >= TRACK_MIN_FINISHED)
-    .map((r) => ({
-      key: r.name,
-      label: jaSkill(r.name),
-      note: `完成品 ${r.both} / ${r.users} 人`,
-      query: buildGemQuery(r.name, { category: "gem.activegem", levelMin: 21, qualityMin: 23, corrupted: true }),
-    }));
+    .slice()
+    .sort((a, b) => b.both - a.both)
+    .slice(0, TRACK_MAX_GEMS);
+  const out: { key: string; label: string; note: string; query: unknown }[] = [];
+  for (const r of gems) {
+    for (const key of SALE_KEYS) {
+      out.push({
+        key: watchKey(r.name, key),
+        label: `${jaSkill(r.name)} (${SALE_KEY_LABEL[key]})`,
+        note: `完成品 ${r.both} / ${r.users} 人`,
+        query: rowQuery(r.name, key),
+      });
+    }
+  }
+  return out;
 }
 
 /**

@@ -7,7 +7,7 @@
     i18n/gems-client.json              ジェム一覧 (GGG クライアント由来)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
@@ -19,18 +19,36 @@ import { displayCurrency, type DisplayCurrency } from "../state/display-currency
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
-import { fmtAge, fmtPct, loadFlow, summarizeFlow, toggleWatch, type FlowStore } from "../services/market-flow";
-import { buildGemQuery } from "../services/trade2/query";
+import { fmtAge, fmtPct, loadFlow, loadFlowStatus, summarizeFlow, toggleWatch, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./gem-corrupt/row-query";
+import { resumeAtText, waitText } from "../utils/wait-text";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
 
 const g = useGemCorrupt();
+const nowMs = ref(Date.now());
+let tickTimer: ReturnType<typeof setInterval> | null = null;
+
 onActivated(() => {
-  // <keep-alive> で保持されるので、画面に戻ってきた時に売れ行きを読み直す
+  // <keep-alive> で保持されるので、画面に戻ってきた時に読み直す
   void reloadFlow();
+  startStatusPolling();
+  if (!tickTimer) tickTimer = setInterval(() => (nowMs.value = Date.now()), 1000);
+});
+onDeactivated(() => {
+  stopStatusPolling();
+  if (tickTimer) clearInterval(tickTimer);
+  tickTimer = null;
+});
+onUnmounted(() => {
+  stopStatusPolling();
+  if (tickTimer) clearInterval(tickTimer);
+  tickTimer = null;
 });
 onMounted(() => {
   void reloadFlow();
+  startStatusPolling();
+  if (!tickTimer) tickTimer = setInterval(() => (nowMs.value = Date.now()), 1000);
   void g.loadMarket();
 });
 
@@ -175,9 +193,55 @@ const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
 // ---- 売れ行き (2026-09-16: gem_flow が 1 時間ごとに記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
+/** 自動追跡の進行状況 (2026-09-16: 動いているのが分かるように) */
+const flowStatus = ref<FlowStatus | null>(null);
+let statusTimer: ReturnType<typeof setInterval> | null = null;
+
 async function reloadFlow(): Promise<void> {
   flowStore.value = await loadFlow();
+  flowStatus.value = await loadFlowStatus();
 }
+function startStatusPolling(): void {
+  if (statusTimer) return;
+  statusTimer = setInterval(async () => {
+    flowStatus.value = await loadFlowStatus();
+    // 取得が 1 周終わったら記録も読み直す
+    if (flowStatus.value && !flowStatus.value.sampling && flowStatus.value.last_at > (flowStore.value?.sampled_at ?? 0)) {
+      flowStore.value = await loadFlow();
+    }
+  }, 5000);
+}
+function stopStatusPolling(): void {
+  if (statusTimer) clearInterval(statusTimer);
+  statusTimer = null;
+}
+
+const fmtClock = (t: number | null | undefined): string => {
+  if (!t) return "—";
+  const d = new Date(t * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+/** 429 の残り秒 (0 なら制限なし) */
+const retryLeft = computed(() => {
+  const until = flowStatus.value?.retry_until ?? 0;
+  if (!until) return 0;
+  return Math.max(0, until - Math.floor(nowMs.value / 1000));
+});
+/** 使った回数 ("4:10:0,12:60:0" → "10 秒 4 / 60 秒 12") */
+const rateText = computed(() => {
+  const raw = flowStatus.value?.rate_state;
+  if (!raw) return "";
+  return raw
+    .split(",")
+    .map((part) => {
+      const [used, window] = part.split(":");
+      const w = Number(window);
+      const label = w >= 3600 ? `${w / 3600} 時間` : w >= 60 ? `${w / 60} 分` : `${w} 秒`;
+      return `${label} ${used}`;
+    })
+    .join(" · ");
+});
 // 手動の「再取得」が終わったら記録が増えているので読み直す
 watch(
   () => g.pricing.value,
@@ -185,12 +249,16 @@ watch(
     if (prev && !now) void reloadFlow();
   },
 );
-/** 選択中ジェムの売れ行き */
-const flow = computed(() => summarizeFlow(flowStore.value?.states?.[g.selected.value?.en ?? ""]));
+/** 行 (条件) ごとの捌き速度 */
+function flowOf(key: SaleKey) {
+  const en = g.selected.value?.en ?? "";
+  return summarizeFlow(flowStore.value?.states?.[watchKey(en, key)]);
+}
+/** 表の下のまとめに使う代表値 (完成品) */
+const flow = computed(() => flowOf("finished"));
 /** バッジの色: 速い=緑 / 普通=黄 / 遅い=赤 */
 /** ホバーで出す内訳 */
-const flowTitle = computed(() => {
-  const f = flow.value;
+function flowTitleOf(f: ReturnType<typeof flowOf>): string {
   return [
     `半分が売れるまで: ${fmtAge(f.medianMin)}`,
     `24 時間以内に売れる: ${fmtPct(f.soldIn24h)} · 48 時間以内: ${fmtPct(f.soldIn48h)}`,
@@ -201,9 +269,9 @@ const flowTitle = computed(() => {
     `出品総数: ${f.total ?? "—"} · 最終記録 ${fmtFlowAt(f.lastAt)}`,
     "出品 1 件ずつを ID で追い、出品時刻からの齢で、売れ残りも含めて生存分析で出しています",
   ].join("\n");
-});
-const flowBadgeClass = computed(() => {
-  switch (flow.value.tone) {
+}
+function badgeClassOf(tone: string): string {
+  switch (tone) {
     case "fast":
       return "border-emerald-500/60 bg-emerald-500/15 text-emerald-300";
     case "normal":
@@ -213,11 +281,11 @@ const flowBadgeClass = computed(() => {
     default:
       return "border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]";
   }
-});
-/** 追跡対象に入っているか */
+}
+/** 追跡対象に入っているか (3 条件のどれかが入っていれば追跡中) */
 const flowWatch = computed(() => {
   const en = g.selected.value?.en ?? "";
-  return flowStore.value?.watches?.find((x) => x.key === en) ?? null;
+  return flowStore.value?.watches?.find((x) => SALE_KEYS.some((k) => x.key === watchKey(en, k))) ?? null;
 });
 const flowTracked = computed(() => !!flowWatch.value);
 /** 手動で足した銘柄か (自動リストの入れ替えで消えない) */
@@ -231,16 +299,21 @@ async function toggleFlowWatch(): Promise<void> {
   watchBusy.value = true;
   try {
     const on = !flowTracked.value;
-    const watch = {
-      key: gem.en,
-      label: gem.ja,
-      note: "手動で追加",
-      manual: true,
-      query: buildGemQuery(gem.en, { category: gem.kind === "meta" ? "gem.metagem" : "gem.activegem", levelMin: 21, qualityMin: 23, corrupted: true }),
-    };
-    const next = await toggleWatch(watch, on, marketStore.league.value?.Value ?? "", trade2Site());
-    if (next) flowStore.value = next;
-    else await reloadFlow();
+    const league = marketStore.league.value?.Value ?? "";
+    const site = trade2Site();
+    // 3 条件 (レベル 21 / 品質 23% / 完成品) をまとめて足す / 外す
+    for (const key of SALE_KEYS) {
+      const watch = {
+        key: watchKey(gem.en, key),
+        label: `${gem.ja} (${SALE_KEY_LABEL[key]})`,
+        note: "手動で追加",
+        manual: true,
+        query: rowQuery(gem.en, key, gem.kind === "meta"),
+      };
+      const next = await toggleWatch(watch, on, league, site);
+      if (next) flowStore.value = next;
+    }
+    await reloadFlow();
   } finally {
     watchBusy.value = false;
   }
@@ -704,7 +777,7 @@ const summary = computed(() => {
                 <th class="text-left font-normal pb-1">状態</th>
                 <th class="text-right font-normal pb-1 w-28">売値</th>
                 <th class="text-right font-normal pb-1 w-20">出品数</th>
-                <th class="text-right font-normal pb-1 w-44">売れ行き</th>
+                <th class="text-right font-normal pb-1 w-48">売れ行き</th>
                 <th class="text-right font-normal pb-1 w-16"></th>
               </tr>
             </thead>
@@ -720,17 +793,21 @@ const summary = computed(() => {
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
                 </td>
-                <!-- 2026-09-16: 捌き速度 (出品を ID で追って生存分析) -->
+                <!-- 2026-09-16: 捌き速度 (出品を ID で追って生存分析)。3 条件とも出す -->
                 <td class="py-1.5 text-right">
-                  <template v-if="row.key === 'finished'">
-                    <div v-if="flow.label" class="flex items-center justify-end gap-2" :title="flowTitle">
-                      <span class="px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border" :class="flowBadgeClass">{{ flow.label }}</span>
+                  <template v-for="f in [flowOf(row.key)]" :key="row.key">
+                    <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
+                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ flow.medianMin != null ? `半分売れるまで ${fmtAge(flow.medianMin)}` : `24h ${fmtPct(flow.soldIn24h)}` }}
+                        {{ f.medianMin != null ? `半分売れるまで ${fmtAge(f.medianMin)}` : `24h ${fmtPct(f.soldIn24h)}` }}
                       </span>
                     </div>
-                    <span v-else-if="flow.gone + flow.alive > 0" class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                      追跡中 {{ flow.alive }} 件{{ flow.gone > 0 ? ` / 消えた ${flow.gone} 件` : "" }}
+                    <span
+                      v-else-if="f.gone + f.alive > 0"
+                      class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap"
+                      :title="`追跡 ${f.alive} 件 (最古 ${fmtAge(f.oldestMin)}) / 消えた ${f.gone} 件。24 時間以内に消えれば速い、48 時間残れば遅いと判定します`"
+                    >
+                      判定待ち {{ f.gone + f.alive }} 件<template v-if="f.etaMin != null"> · あと {{ fmtAge(f.etaMin) }}</template>
                     </span>
                     <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
@@ -750,6 +827,34 @@ const summary = computed(() => {
               </tr>
             </tbody>
           </table>
+          <!-- 2026-09-16: 自動追跡が動いているのが分かるように -->
+          <div
+            v-if="flowStatus"
+            class="mt-3 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-elevated)]/40 px-3 py-2 text-[11px] flex flex-wrap items-center gap-x-4 gap-y-1"
+          >
+            <span class="font-display tracking-[0.06em] text-[var(--exile-color-text-secondary)]">自動追跡</span>
+            <span v-if="flowStatus.sampling" class="inline-flex items-center gap-1.5 text-emerald-300">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
+              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
+            </span>
+            <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5 text-[var(--exile-color-text-secondary)]">
+              <span class="inline-block w-2 h-2 rounded-full bg-[var(--exile-color-text-tertiary)]" aria-hidden="true"></span>
+              待機中 · 次回 {{ fmtClock(flowStatus.next_at) }}
+            </span>
+            <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
+
+            <span class="tabular-nums text-[var(--exile-color-text-tertiary)]">
+              {{ flowStatus.rounds }} 周目 · 最終 {{ fmtClock(flowStatus.last_at) }} · 自動 {{ flowStatus.auto_watches }}
+              / 手動 {{ flowStatus.manual_watches }} 銘柄
+            </span>
+            <span v-if="rateText" class="tabular-nums text-[var(--exile-color-text-tertiary)]">使った回数 {{ rateText }}</span>
+
+            <span v-if="retryLeft > 0" class="inline-flex items-center gap-1 text-amber-300 font-medium">
+              <span aria-hidden="true" class="animate-pulse">⏱</span>
+              トレードのリミット待機中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）
+            </span>
+            <span v-else-if="flowStatus.last_error" class="text-amber-300 basis-full break-all">⚠ 直近の失敗: {{ flowStatus.last_error }}</span>
+          </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
