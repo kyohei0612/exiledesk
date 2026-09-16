@@ -269,6 +269,17 @@ function setAttempts(ev: Event): void {
   }
   setLedger("attempts", n);
 }
+/**
+ * 取引所で比べた後は、収支の固定単価もその値に入れ替える (2026-09-16 オーナー指示)。
+ * 手入力した単価 (l.unit) は固定単価より優先されるので、ここで上書きされない。
+ */
+async function fetchExchangeAndRepin(): Promise<void> {
+  await g.fetchExchange();
+  if (!ledgerGem.value) return;
+  if (Object.keys(ledger.value.prices).length === 0) return; // まだ回数を入れていない = 固定前
+  refreshLedgerPrices();
+}
+
 /** 固定した単価を今の相場で取り直す */
 function refreshLedgerPrices(): void {
   if (!ledgerGem.value) return;
@@ -685,8 +696,8 @@ const summary = computed(() => {
               type="button"
               :disabled="g.exchangeLoading.value"
               class="text-[11px] px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40"
-              title="公式の取引所で、素材ごとに 高貴 / カオス / 神 のどれで買うのが安いかを調べます (6 件、約 20 秒)"
-              @click="g.fetchExchange"
+              title="公式の取引所で、素材ごとに 高貴 / カオス / 神 のどれで買うのが安いかを調べます (6 件、約 20 秒)。収支で固定した単価もこの値に入れ替えます (手入力した単価はそのまま)"
+              @click="fetchExchangeAndRepin"
             >
               {{ g.exchangeLoading.value ? `取引所で比較中… (${g.exchangeDone.value}/6)` : "取引所で比べる" }}
             </button>
@@ -982,7 +993,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            単価は回数を入れた時点の値 (相場と取引所の安い方) で固定します。あとで相場が動いても、やった分の費用は変わりません。実際に払った額が違う時は単価の欄に直接入れてください (空欄に戻すと固定値に戻ります)。「今の相場に更新」で固定し直せます。
+            単価は回数を入れた時点の値 (相場と取引所の安い方) で固定します。あとで相場が動いても、やった分の費用は変わりません。実際に払った額が違う時は単価の欄に直接入れてください (空欄に戻すと固定値に戻ります)。素材の「取引所で比べる」を押すと、その結果で固定単価も入れ替えます (手入力した分はそのまま)。「今の相場に更新」でも固定し直せます。
             使った数と売れた数は空欄なら「経路の 1 回の数 × 回数」で、結晶・原石・売れた数のように結果次第の物は期待値です。実際に違った数だけ入れてください。
             回数を入れた時点の「最も得」の経路で帳簿を固定します (相場が変わっても、やった分を別の経路で数え直さない)。
             買ったジェムと売れた物の値段は空欄なら上の売値 (trade2 最安)、実際の額があればそれを入れてください。「その他」は外れの生存品などで、空欄の売値は前提の割合から出した平均です。入力はジェムごとにこの PC に残ります。
