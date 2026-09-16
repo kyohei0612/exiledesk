@@ -12,10 +12,9 @@ import gemsRaw from "../../i18n/gems-client.json";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { checkListingsAlive, type PriceResult } from "../../services/trade2/pricing";
+import { type PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { confirmFlow, recordFlow } from "../../services/market-flow";
-import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
+import { rowQueryOptions } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -216,35 +215,9 @@ export function useGemCorrupt() {
 
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
-  /** 手動取得の結果を捌き速度の記録に差し込む (自動サンプルと同じ形) */
-  async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
-    const gem = GEMS.find((g) => g.en === gemEn);
-    const watch = watchKey(gemEn, key);
-    const missing = await recordFlow({
-      key: watch,
-      label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
-      total: r.total,
-      // 生存確認は search が返した ID 全部で行う (最安 10 件だけだと押し出しを売れた扱いにする)
-      ids: r.allIds ?? r.listingIds ?? [],
-      entries: r.listings.map((l) => ({
-        id: l.id,
-        amount: l.amount,
-        currency: l.currency,
-        account: l.account || null,
-        listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
-      })),
-    });
-    // 出品が 100 件を超えて search の一覧から溢れた分は、直接 fetch で生死を確かめる。
-    // これをしないと 101 番目以降に押し下げられた出品がいつまでも判定されない (2026-09-17)
-    if (missing.length > 0 && r.queryId) {
-      try {
-        const alive = await checkListingsAlive(missing, r.queryId);
-        await confirmFlow(watch, missing, alive);
-      } catch {
-        /* 確認に失敗しても次の取得でまた試す */
-      }
-    }
-  }
+  // 2026-09-17 オーナー選択 (案 B): 売値は securable (インスタントバイアウトのみ) で取る。
+  // 捌き速度の追跡は any でないと成立しないので、別物のこの結果は記録に混ぜない。
+  // 記録は 1 時間ごとの自動巡回 (market_flow.rs) だけが作る。
 
   async function fetchSalePrices(): Promise<void> {
     if (!selected.value || pricing.value || isRateLimited()) return;
@@ -260,8 +233,6 @@ export function useGemCorrupt() {
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
-        // 2026-09-16 オーナー指示: 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する
-        void recordRowSample(gem.en, row.key, r);
       }
       priceError.value = tradeAuto.lastError.value;
     } finally {

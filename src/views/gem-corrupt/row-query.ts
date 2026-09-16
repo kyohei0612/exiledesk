@@ -39,16 +39,15 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
 }
 
 /**
- * 捌き速度の追跡に使うクエリ (売値の検索と同じ条件)。
+ * 捌き速度の追跡に使うクエリ。条件は売値の検索と同じだが status だけ違う。
  *
- * status は `any`。`securable` (直近接続中 + オフラインが短い出品) だと、出品者が
- * オフラインになるだけで検索から消え「売れた」と誤判定する
- * (2026-09-16 実データで中央値 30 分という異常値が出た)。
+ * 売値は `securable` (インスタントバイアウトのみ = 今すぐ買える値段) で見るのに対し、
+ * 追跡は `any` (全部)。securable は時間帯で結果が激しく入れ替わり、
+ * 検索から消えただけの出品を「売れた」と誤判定するため
+ * (2026-09-17: コメット品質 23% が 40 分で 105 件 → 26 件)。
  */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
-  const q = buildGemQuery(gemEn, rowQueryOptions(key, meta)) as { query: { status: { option: string } } };
-  q.query.status = { option: SecurityStatus.Any };
-  return q;
+  return buildGemQuery(gemEn, { ...rowQueryOptions(key, meta), status: SecurityStatus.Any });
 }
 
 /** 追跡のキー ("Arc::finished")。銘柄 1 つ = ジェム × 条件 */

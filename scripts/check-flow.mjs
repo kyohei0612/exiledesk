@@ -150,6 +150,34 @@ const { summarizeFlow, soldWithin } = await import(pathToFileURL(out).href);
   check("7. 24 時間残った出品は母数に入り、若い出品は入らない", r.known === 2 && r.hit === 1, `hit=${r.hit} known=${r.known}`);
 }
 
+// ---------------------------------------------------------------------------
+// 8. 検索クエリ: 売値は securable (インスタントバイアウトのみ) / 追跡は any
+//    オーナー選択 (2026-09-17 案 B)。ここを取り違えると誤判定が戻るので毎回見る
+// ---------------------------------------------------------------------------
+{
+  const qout = join(dir, "row-query.mjs");
+  await build({ entryPoints: ["src/views/gem-corrupt/row-query.ts"], outfile: qout, bundle: true, format: "esm", platform: "neutral", logLevel: "error" });
+  const { rowQuery, rowQueryOptions } = await import(pathToFileURL(qout).href);
+  const bout = join(dir, "query.mjs");
+  await build({ entryPoints: ["src/services/trade2/query.ts"], outfile: bout, bundle: true, format: "esm", platform: "neutral", logLevel: "error" });
+  const { buildGemQuery } = await import(pathToFileURL(bout).href);
+
+  const sale = buildGemQuery("Comet", rowQueryOptions("finished", false));
+  const track = rowQuery("Comet", "finished");
+  const ok =
+    sale.query.status.option === "securable" &&
+    track.query.status.option === "any" &&
+    sale.query.filters.misc_filters.filters.gem_sockets?.min === 5 &&
+    track.query.filters.misc_filters.filters.gem_sockets?.min === 5 &&
+    !sale.query.filters.trade_filters &&
+    JSON.stringify(sale.query.filters.type_filters) === JSON.stringify(track.query.filters.type_filters);
+  check(
+    "8. 売値=securable / 追跡=any で、それ以外の条件は同じ",
+    ok,
+    `売値 status=${sale.query.status.option} / 追跡 status=${track.query.status.option} / ソケット=${sale.query.filters.misc_filters.filters.gem_sockets?.min}`,
+  );
+}
+
 rmSync(dir, { recursive: true, force: true });
 console.log(`\n${ng === 0 ? "全部 OK" : `NG ${ng} 件`}`);
 process.exit(ng === 0 ? 0 : 1);

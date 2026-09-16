@@ -4,7 +4,7 @@
  * craft-discovery-v2.ts から切り出し (2026-09-07)。
  */
 
-import { SecurityStatus, Rarity, SaleType } from "../../constants/trade2";
+import { SecurityStatus, Rarity } from "../../constants/trade2";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
@@ -108,7 +108,7 @@ export function buildStatFilters(
  *   - rarity: rare 固定、category: slotToTradeCategory(slot)
  *   - status: securable (直近接続 + 短時間オフラインを含む実購入可能 listing)
  *   - stats: 選択 MOD を "and" で連結
- *   - sale_type: priced (即時購入)。省略しても API の結果は同じだが、サイトの検索画面に反映されない
+ *   - sale_type は送らない (即時購入の絞り込みは status: securable の方。2026-09-17 確定)
  */
 export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilter[]) {
   return {
@@ -122,8 +122,6 @@ export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilte
             category: { option: slotToTradeCategory(slot) },
           },
         },
-        // 即時購入だけ (サイトを開いた時も同じ条件になるように明示する。2026-09-17)
-        trade_filters: { filters: { sale_type: { option: SaleType.Priced } } },
       },
     },
     sort: { price: "asc" },
@@ -142,6 +140,20 @@ export interface GemQueryOptions {
   /** 2 重コラプト (Twice Corrupted)。ジェムコラプトの賭けは 1 回のコラプトで得る品なので false で絞る (オーナー指摘 2026-09-13) */
   twiceCorrupted?: boolean;
   socketsMin?: number;
+  /**
+   * `query.status.option`。既定は securable = トレードサイトの「インスタントバイアウト」。
+   *
+   * サイトのドロップダウンとの対応 (2026-09-17 に確定):
+   *   available … インスタントバイアウトおよび対面トレード (サイトの既定)
+   *   securable … インスタントバイアウト (即時購入できる出品だけ)
+   *   onlineleague / online … 対面トレード
+   *   any … 指定なし (オフラインの出品も全部)
+   *
+   * 売値は「今すぐ買える値段」を見たいので securable。
+   * 捌き速度の追跡だけは any を使う (securable は時間帯で結果が激しく動き、
+   * 消えた = 売れた の判定が壊れるため。2026-09-17 実データで確認)。
+   */
+  status?: string;
 }
 
 /**
@@ -167,14 +179,11 @@ export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
   if (o.twiceCorrupted != null) misc.twice_corrupted = { option: o.twiceCorrupted ? "true" : "false" };
   return {
     query: {
-      status: { option: SecurityStatus.Any },
+      status: { option: o.status ?? SecurityStatus.Securable },
       type: { discriminator: null, option: gemEn },
       filters: {
         type_filters: { filters: typeFilters },
         misc_filters: { filters: misc },
-        // 即時購入だけを見る。省略しても API の結果は同じだが、
-        // 「トレード 2 へ」でサイトを開いた時に即時購入が選ばれない (2026-09-17 オーナー報告)
-        trade_filters: { filters: { sale_type: { option: SaleType.Priced } } },
       },
     },
     sort: { price: "asc" },
