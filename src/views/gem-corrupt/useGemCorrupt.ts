@@ -230,6 +230,7 @@ export function useGemCorrupt() {
         id: l.id,
         amount: l.amount,
         currency: l.currency,
+        account: l.account || null,
         listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
       })),
     });

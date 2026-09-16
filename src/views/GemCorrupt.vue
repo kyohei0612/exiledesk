@@ -276,13 +276,12 @@ function cheapestTitle(key: SaleKey): string {
   if (!l) return "";
   const kind = l.priceType ? `種類 ${l.priceType}` : "種類不明";
   const at = l.indexed ? new Date(l.indexed).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "出品時刻不明";
-  const buy = !info?.onlineKnown
-    ? "今すぐ買えるかは応答から判断できません"
-    : l.purchasable
-      ? "今すぐ買えます"
-      : `交渉が必要 (出品者オフライン)。今すぐ買える最安は ${info?.minExaltedBuyable != null ? money(info.minExaltedBuyable) : "この 10 件には無し"}`;
-  return `最安 ${l.amount} ${l.currency} · ${kind} · ${at}${l.account ? ` · ${l.account}` : ""}
-${buy}`;
+  // 即時購入にオンラインかどうかは関係ない (オーナー指摘 2026-09-17)。
+  // 見るのは出品者と値段。同じ出品者が並べているかどうかが捌け方の判断に効く
+  const same = (info?.listings ?? []).filter((x) => x.account && x.account === l.account).length;
+  const who = l.account ? `${l.account}${same > 1 ? ` (この 10 件中 ${same} 件が同じ出品者)` : ""}` : "出品者不明";
+  return `最安 ${l.amount} ${l.currency} · ${kind} · ${at}
+${who}`;
 }
 
 /** 直近の失敗を短い日本語に (詳細はホバー) */

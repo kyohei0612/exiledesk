@@ -90,6 +90,9 @@ pub struct Tracked {
     pub amount: Option<f64>,
     #[serde(default)]
     pub currency: Option<String>,
+    /// 出品者のアカウント名 (2026-09-17)
+    #[serde(default)]
+    pub account: Option<String>,
 }
 
 impl Tracked {
@@ -524,6 +527,11 @@ pub struct ListingRef {
     pub amount: Option<f64>,
     #[serde(default)]
     pub currency: Option<String>,
+    /// 出品者のアカウント名。
+    /// オーナー指示 (2026-09-17):「大事なのは出品者の名前と売値が最重要」。
+    /// 同じ人がまとめて引き上げたのか、別々の人の出品が売れたのかを見分けるのに使う
+    #[serde(default)]
+    pub account: Option<String>,
     /// 出品時刻 (unix 秒)。trade2 の listing.indexed を読んだ物
     #[serde(default)]
     pub listed_at: Option<i64>,
@@ -679,6 +687,7 @@ pub fn apply_sample(
             gone_at: None,
             amount: e.amount,
             currency: e.currency.clone(),
+            account: e.account.clone(),
         });
         added_now += 1;
     }
@@ -905,6 +914,11 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
                                 id: id.to_string(),
                                 amount: price.and_then(|p| p.get("amount")).and_then(|x| x.as_f64()),
                                 currency: price.and_then(|p| p.get("currency")).and_then(|x| x.as_str()).map(str::to_string),
+                                account: listing
+                                    .and_then(|l| l.get("account"))
+                                    .and_then(|a| a.get("name"))
+                                    .and_then(|x| x.as_str())
+                                    .map(str::to_string),
                                 listed_at: listing
                                     .and_then(|l| l.get("indexed"))
                                     .and_then(|x| x.as_str())
@@ -1111,10 +1125,10 @@ mod tests {
     use super::*;
 
     fn lr(id: &str, amount: f64) -> ListingRef {
-        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: None }
+        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: None , account: None }
     }
     fn lr_at(id: &str, amount: f64, listed_at: i64) -> ListingRef {
-        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: Some(listed_at) }
+        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: Some(listed_at) , account: None }
     }
 
     /// 出品時刻が取れていれば、こちらが見つけた時刻ではなく出品時刻から齢を数える
@@ -1238,7 +1252,7 @@ mod tests {
     fn revive_undoes_daily_gone() {
         let now = 1_700_000_000i64;
         let mut st = WatchState::default();
-        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".to_string()), listed_at: None };
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".to_string()), listed_at: None , account: None };
         apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         // b が一時的に見えなくなる
         apply_sample(&mut st, now + 600, 1, &["a".into()], &[e("a")], true);
@@ -1254,7 +1268,7 @@ mod tests {
     fn mass_disappearance_is_not_trusted() {
         let now = 1_700_000_000i64;
         let mut st = WatchState::default();
-        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None };
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None , account: None };
         let ids: Vec<String> = (0..10).map(|i| format!("id{i}")).collect();
         let entries: Vec<ListingRef> = ids.iter().map(|i| e(i)).collect();
         apply_sample(&mut st, now, 10, &ids, &entries, true);
@@ -1271,7 +1285,7 @@ mod tests {
     fn empty_result_does_not_wipe_tracked() {
         let now = 1_700_000_000i64;
         let mut st = WatchState::default();
-        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None };
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None , account: None };
         apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         // 空の応答 (total 0 / ID 0 件)
         let ids: Vec<String> = Vec::new();

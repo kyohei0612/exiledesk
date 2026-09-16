@@ -33,6 +33,8 @@ export interface Tracked {
   gone_at?: number | null;
   amount?: number | null;
   currency?: string | null;
+  /** 出品者のアカウント名 */
+  account?: string | null;
 }
 export interface Daily {
   day: number;
@@ -70,6 +72,8 @@ export interface FlowStore {
   states: Record<string, WatchState>;
 }
 export interface ListingRef {
+  /** 出品者のアカウント名 (同じ人のまとめ出しを見分ける。2026-09-17) */
+  account?: string | null;
   id: string;
   amount?: number | null;
   currency?: string | null;

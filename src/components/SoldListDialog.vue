@@ -61,6 +61,8 @@ function dayStart(sec: number): number {
 interface Row {
   id: string;
   cond: string;
+  /** 出品者。オーナー指示 (2026-09-17):「大事なのは出品者の名前と売値」 */
+  account: string;
   amount: number | null | undefined;
   currency: string | null | undefined;
   listedAt: number | null;
@@ -74,6 +76,8 @@ interface Row {
   estimated: boolean;
   /** 同じ回の巡回で一緒に消えた件数 */
   batch: number;
+  /** そのうち同じ出品者だった件数 (1 人のまとめ引き上げを見分ける) */
+  sameSeller: number;
 }
 
 /** 条件ごとのまとめ (表の上に出す) */
@@ -107,14 +111,18 @@ const soldRows = computed<Row[]>(() => {
     const st = props.store?.states?.[k.key];
     if (!st?.tracked) continue;
     const batchOf = new Map<number, number>();
+    const sellerBatch = new Map<string, number>();
     for (const t of st.tracked) {
-      if (t.gone_at) batchOf.set(t.gone_at, (batchOf.get(t.gone_at) ?? 0) + 1);
+      if (!t.gone_at) continue;
+      batchOf.set(t.gone_at, (batchOf.get(t.gone_at) ?? 0) + 1);
+      if (t.account) sellerBatch.set(`${t.gone_at}:${t.account}`, (sellerBatch.get(`${t.gone_at}:${t.account}`) ?? 0) + 1);
     }
     for (const t of st.tracked) {
       if (!t.gone_at) continue;
       rows.push({
         id: t.id,
         cond: k.label,
+        account: t.account ?? "",
         amount: t.amount,
         currency: t.currency,
         listedAt: t.listed_at ?? null,
@@ -124,6 +132,7 @@ const soldRows = computed<Row[]>(() => {
         watched: t.gone_at - t.first_seen,
         estimated: t.listed_at == null,
         batch: batchOf.get(t.gone_at) ?? 1,
+        sameSeller: t.account ? (sellerBatch.get(`${t.gone_at}:${t.account}`) ?? 1) : 0,
       });
     }
   }
@@ -155,19 +164,29 @@ const dayGroups = computed(() => {
 });
 /** 全期間の合計 */
 const grandTotal = computed(() => sumBy(soldRows.value));
+
+/** 出品者ごとの内訳 (多い順)。1 人の在庫がまとめて動いただけなのかを見る */
+const sellerBreakdown = computed(() => {
+  const m = new Map<string, number>();
+  for (const r of soldRows.value) {
+    const who = r.account || "出品者不明";
+    m.set(who, (m.get(who) ?? 0) + 1);
+  }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+});
 /** 登録元のメモ (「完成品 12 / 47 人」など) */
 const note = computed(() => props.store?.watches?.find((w) => props.keys.some((k) => k.key === w.key))?.note ?? "");
 
 /** まだ出品されている分 (古い順 = 滞留している順) */
 const aliveRows = computed(() => {
   const now = nowSec();
-  const rows: { id: string; cond: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean }[] = [];
+  const rows: { id: string; cond: string; account: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean }[] = [];
   for (const k of props.keys) {
     const st = props.store?.states?.[k.key];
     if (!st?.tracked) continue;
     for (const t of st.tracked) {
       if (t.gone_at) continue;
-      rows.push({ id: t.id, cond: k.label, amount: t.amount, currency: t.currency, listedAt: t.listed_at ?? null, age: now - startOf(t), estimated: t.listed_at == null });
+      rows.push({ id: t.id, cond: k.label, account: t.account ?? "", amount: t.amount, currency: t.currency, listedAt: t.listed_at ?? null, age: now - startOf(t), estimated: t.listed_at == null });
     }
   }
   return rows.sort((a, b) => b.age - a.age);
@@ -228,6 +247,7 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
                 <th class="text-left font-normal pb-1 whitespace-nowrap">消えた時刻</th>
                 <th class="text-left font-normal pb-1 pl-3">条件</th>
                 <th class="text-right font-normal pb-1 pl-3">値段</th>
+                <th class="text-left font-normal pb-1 pl-3">出品者</th>
                 <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
                 <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">出品から</th>
                 <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">見ていた時間</th>
@@ -236,7 +256,7 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
             </thead>
             <tbody v-for="g in dayGroups" :key="g.start">
               <tr class="border-t border-[var(--exile-color-border-brass)]">
-                <td colspan="7" class="pt-3 pb-1">
+                <td colspan="8" class="pt-3 pb-1">
                   <div class="flex items-baseline gap-3 flex-wrap">
                     <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ fmtDay(g.start) }}</span>
                     <span v-for="[c, amt] in g.totals" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
@@ -248,11 +268,15 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
                 <td class="py-1 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.goneAt) }}</td>
                 <td class="py-1 pl-3 whitespace-nowrap">{{ r.cond }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
+                <td class="py-1 pl-3 max-w-[10rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
                 <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.listedAt ?? r.firstSeen) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span></td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtSpan(r.life) }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtSpan(r.watched) }}</td>
                 <td class="py-1 pl-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
-                  <span v-if="r.batch > 1" class="text-amber-300" title="同じ回の確認で一緒に消えました。1 人のまとめ出しが引き上げられた可能性があります">同時に {{ r.batch }} 件</span>
+                  <span v-if="r.sameSeller > 1" class="text-amber-300" :title="`同じ出品者の ${r.sameSeller} 件が同時に消えました。1 人がまとめて引き上げた (または 1 人がまとめ買いした) 可能性が高く、件数ぶん売れたとは数えない方が安全です`">
+                    同じ出品者 {{ r.sameSeller }} 件が同時
+                  </span>
+                  <span v-else-if="r.batch > 1" class="text-[var(--exile-color-text-tertiary)]" title="同じ回の確認で一緒に消えました (出品者は別々)">同時に {{ r.batch }} 件</span>
                 </td>
               </tr>
             </tbody>
@@ -262,6 +286,12 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
             <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
             <span class="text-[var(--exile-color-text-tertiary)] tabular-nums">{{ soldRows.length }} 件</span>
             <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(全部が売れたとは限りません。下の注意を参照)</span>
+          </p>
+          <p v-if="sellerBreakdown.length > 0" class="mt-1 text-[11px] flex items-baseline gap-3 flex-wrap">
+            <span class="text-[var(--exile-color-text-secondary)]">出品者の内訳</span>
+            <span v-for="[who, n] in sellerBreakdown" :key="who" class="tabular-nums text-[var(--exile-color-text-tertiary)]">
+              {{ who }} <span :class="n >= 3 ? 'text-amber-300' : ''">{{ n }} 件</span>
+            </span>
           </p>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             「消えた」は公式の検索結果から居なくなったという意味で、売れたのか取り下げたのかは区別できません。値段は最後に見えていた時の出品価格です。
@@ -279,6 +309,7 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
               <tr>
                 <th class="text-left font-normal pb-1">条件</th>
                 <th class="text-right font-normal pb-1 pl-3">値段</th>
+                <th class="text-left font-normal pb-1 pl-3">出品者</th>
                 <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
                 <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">出品からの経過</th>
               </tr>
@@ -287,6 +318,7 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
               <tr v-for="r in aliveRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
+                <td class="py-1 pl-3 max-w-[10rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
                 <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.listedAt) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span></td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.age >= 48 * 3600 ? 'text-rose-300' : ''">{{ fmtSpan(r.age) }}</td>
               </tr>
