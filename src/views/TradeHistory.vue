@@ -1,7 +1,8 @@
 <!--
   TradeHistory.vue — 取引履歴 (マーチャント履歴) の連動 (2026-09-16)
   アプリ内のウィンドウで pathofexile.com にログイン → サイトと同じ履歴 API で「いつ・何が・いくらで売れたか」を読む。
-  取れた分はこの PC に足していく (API は直近分しか返さない)。取得は 15 分に 1 回まで (制限ヘッダに近ければもっと待つ)。
+  取れた分はこの PC に足していく (API は直近分しか返さない)。取得の間隔はサーバーの残り回数に合わせる (上限の 1 回手前で止める)。
+  アイテム名は表示時にクライアントの日本語へ変換する (保存は英語名のまま)。
     services/trade-history.ts   Tauri ラッパ / 解析 / 蓄積
     src-tauri/src/trade_history.rs  ログイン用ウィンドウ / cookie / 履歴 API
 -->
@@ -12,8 +13,10 @@ import { displayCurrency } from "../state/display-currency";
 import { marketStore } from "../state/market-store";
 import { toExalted } from "../services/trade2/pricing";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { jaTypeName, jaUniqueName } from "../services/trade2/localize";
 import {
   fetchAndMerge,
+  historyBudget,
   loadStored,
   logout,
   onLoginClosed,
@@ -132,12 +135,22 @@ async function fetchNow(): Promise<void> {
     busy.value = false;
   }
 }
-const waitSec = computed(() => Math.max(0, Math.ceil((nextAllowedAt.value - now.value) / 1000)));
+/** 残り回数と次に取れる時刻 (now を見て毎秒引き直す) */
+const budget = computed(() => {
+  void now.value;
+  void lastFetchAt.value;
+  return league.value ? historyBudget(game.value, league.value) : null;
+});
+const waitSec = computed(() => Math.max(0, Math.ceil(((budget.value?.allowedAt ?? 0) - now.value) / 1000)));
+const usageText = computed(() => (budget.value?.usage ?? []).map((u) => `${u.label} ${u.used}/${u.max}`).join(" · "));
 const fetchLabel = computed(() => {
   if (busy.value) return "取得中…";
   if (waitSec.value > 0) return `次の取得まで ${Math.floor(waitSec.value / 60)}:${String(waitSec.value % 60).padStart(2, "0")}`;
   return "履歴を取得";
 });
+/** クライアントと同じ日本語名 (ユニーク名とベース名を別々に引く) */
+const jaName = (e: TradeEntry): string => (e.name ? jaUniqueName(e.name) : "");
+const jaType = (e: TradeEntry): string => (e.typeLine ? jaTypeName(e.typeLine) : "");
 
 // ---- 絞り込みと集計 ----
 const PERIODS = [
@@ -152,7 +165,10 @@ const visible = computed(() => {
   const p = PERIODS.find((x) => x.id === period.value);
   const since = p && p.ms > 0 ? now.value - p.ms : 0;
   const q = search.value.trim().toLowerCase();
-  return entries.value.filter((e) => e.time >= since && (!q || `${e.name} ${e.typeLine}`.toLowerCase().includes(q)));
+  // 検索は日本語名と英語名のどちらでも引っかかるように
+  return entries.value.filter(
+    (e) => e.time >= since && (!q || `${e.name} ${e.typeLine} ${jaName(e)} ${jaType(e)}`.toLowerCase().includes(q)),
+  );
 });
 /** PoE2 の通貨だけ高貴に換算できる (換算レートは PoE2 の相場) */
 function exaltedOf(e: TradeEntry): number | null {
@@ -203,7 +219,13 @@ onMounted(async () => {
   timer = setInterval(() => (now.value = Date.now()), 1000);
   void marketStore.ensureMarket();
   if (!inApp) {
+    // アプリ外 (ブラウザ) では取得できないが、保存済みの履歴は見られるように前回のリーグを読む
     loggedIn.value = false;
+    try {
+      league.value = localStorage.getItem(`exiledesk.trade-history.league.${game.value}`) ?? "";
+    } catch {
+      /* 読めなければ空のまま */
+    }
     return;
   }
   unlisten = await onLoginClosed(() => void refreshSession());
@@ -225,8 +247,8 @@ onUnmounted(() => {
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
         取引サイトの履歴 API は GGG の非公式 API です (公式の認証には取引履歴を読む権限がありません)。ログイン状態はアプリ内のブラウザにだけ残り、ExileDesk はファイルに保存しません。
-        履歴の取得回数の制限はアカウント単位で、公式サイトの更新ボタンと共通です (目安: 3 時間で 15 回、超えると最長 1 時間締め出し)。
-        そのため取得は 15 分に 1 回まで、制限に近い時はさらに待ちます。公式サイトで何度も更新した直後は、こちらでも取れないことがあります。
+        履歴の取得回数の制限はアカウント単位で、公式サイトや他のツール (PoE Overlay II など) の更新と共通です。
+        サーバーが返す残り回数に合わせて、上限の 1 回手前で止めます (目安: 1 分 5 回 / 10 分 10 回 / 3 時間 15 回、超えると最長 1 時間締め出し)。
       </p>
       <div class="mt-1"><CurrencyPicker /></div>
     </header>
@@ -266,7 +288,9 @@ onUnmounted(() => {
       >
         {{ fetchLabel }}
       </button>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">最終取得 {{ lastFetchAt ? fmtTime(lastFetchAt) : "—" }}</span>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
+        最終取得 {{ lastFetchAt ? fmtTime(lastFetchAt) : "—" }}<span v-if="usageText"> · 使った回数 {{ usageText }}</span>
+      </span>
       <p v-if="message" class="basis-full text-[12px]" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
     </div>
 
@@ -318,8 +342,8 @@ onUnmounted(() => {
             <td class="py-1 pl-3">
               <div class="flex items-center gap-2 min-w-0">
                 <img v-if="e.icon" :src="e.icon" alt="" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-                <span class="min-w-0" :class="rarityClass(e.rarity)">
-                  <span v-if="e.name">{{ e.name }} </span><span :class="e.name ? 'text-[var(--exile-color-text-secondary)]' : ''">{{ e.typeLine }}</span>
+                <span class="min-w-0" :class="rarityClass(e.rarity)" :title="`${e.name} ${e.typeLine}`.trim()">
+                  <span v-if="e.name" class="mr-1.5">{{ jaName(e) }}</span><span :class="e.name ? 'text-[var(--exile-color-text-secondary)]' : ''">{{ jaType(e) }}</span>
                   <span v-if="e.ilvl" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> ilvl {{ e.ilvl }}</span>
                 </span>
               </div>

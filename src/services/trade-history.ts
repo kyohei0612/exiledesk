@@ -3,9 +3,12 @@
  *
  * Rust (trade_history.rs) がアプリ内ログインの POESESSID で、サイトと同じ履歴 API を読む (非公式 API)。
  * API が返すのは直近の分だけなので、取れた物をこの PC (localStorage) に足していき、API から消えた古い分も残す。
- * 取得は 15 分に 1 回まで。さらに応答の x-rate-limit-account / -ip を見て、上限の 8 割に近い窓があればその窓が明けるまで、
- * 締め出し中ならその秒数だけ待つ (2026-09-16)。履歴の制限はアカウント単位で公式サイトの更新ボタンと共通
- * (XileHUD が観測した値: 1 分 5 回 / 10 分 10 回 / 3 時間 15 回、超えると最長 1 時間締め出し)。
+ *
+ * 取得の間隔 (2026-09-16 オーナー指示「公式と同じ API なんだからトレードと一緒の感覚でいい」):
+ * 固定の間隔ではなく、trade2 検索と同じくサーバーの制限に合わせる。
+ *   - 応答の `x-rate-limit-account` (例 "5:60:60,10:600:120,15:10800:3600" = 上限:窓秒:締め出し秒) を覚え、
+ *     自分の取得時刻を窓ごとに数えて、上限の 1 回手前で止める (公式サイトや PoE Overlay II が使う分の余白)
+ *   - 応答の state が上限に近ければその窓ぶん、締め出し中ならその窓ぶん待つ (窓が埋まったまま解除直後に押すとまた締め出されるため)
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -31,7 +34,12 @@ export interface TradeEntry {
 interface Stored {
   entries: TradeEntry[];
   lastFetchAt: number;
+  /** サーバー都合で待たされる時刻 (429 / 制限が近い時) */
   nextAllowedAt: number;
+  /** 自分が取得した時刻 (窓の計算用、3 時間より古い物は捨てる) */
+  hits: number[];
+  /** 最後に見たサーバーの制限ルール */
+  rules: string;
 }
 
 export interface FetchOutcome {
@@ -40,57 +48,12 @@ export interface FetchOutcome {
   message: string;
 }
 
-/** 取得の最短間隔 (3 時間 15 回の窓に 15 分間隔なら 12 回で収まる) */
-export const MIN_INTERVAL_MS = 15 * 60 * 1000;
-
-/**
- * レート制限ヘッダから、次に取ってよいまでの待ち時間 (ms)。
- * rules "5:60:60,10:600:120,15:10800:3600" = 最大回数:窓 (秒):超えた時の締め出し (秒)
- * state "4:60:0,..." = 使った回数:窓 (秒):締め出しの残り (秒)
- */
-export function waitFromRateLimit(rl: Record<string, string> | null | undefined): number {
-  if (!rl) return 0;
-  let wait = 0;
-  for (const scope of ["account", "ip"]) {
-    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
-    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
-    rules.forEach((rule, i) => {
-      const [max, period] = rule.split(":").map(Number);
-      const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
-      // 締め出し中は、締め出しの残りだけでなく窓 (最長 3 時間) が明けるまで待つ。
-      // 2026-09-16 実測: 1 時間の締め出しが解けた直後に 1 回取っただけで、3 時間の窓がまだ埋まっていて再び 3600 秒締め出された
-      if (restricted > 0) wait = Math.max(wait, Math.max(restricted, period) * 1000);
-      else if (max > 0 && period > 0 && hits >= Math.floor(max * 0.8)) wait = Math.max(wait, period * 1000);
-    });
-  }
-  return wait;
-}
-
-const PERIOD_LABEL: Record<number, string> = { 60: "1 分", 600: "10 分", 3600: "1 時間", 10800: "3 時間" };
-
-/** 制限の状態を人が読める形に (例: "1 分 1/5 · 10 分 3/10 · 3 時間 15/15 (締め出し 3600 秒)") */
-export function describeRateLimit(rl: Record<string, string> | null | undefined): string {
-  if (!rl) return "";
-  for (const scope of ["account", "ip"]) {
-    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
-    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
-    if (rules.length === 0) continue;
-    return rules
-      .map((rule, i) => {
-        const [max, period] = rule.split(":").map(Number);
-        const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
-        const label = PERIOD_LABEL[period] ?? `${period} 秒`;
-        return `${label} ${Number.isFinite(hits) ? hits : "?"}/${max}${restricted > 0 ? ` (締め出し ${restricted} 秒)` : ""}`;
-      })
-      .join(" · ");
-  }
-  return "";
-}
-
-const clock = (ms: number): string => {
-  const d = new Date(ms);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-};
+/** 連打よけの最小間隔 (制限は下の窓で見る) */
+export const MIN_INTERVAL_MS = 10_000;
+/** サーバーの制限ルールの既定 (最初の取得前や、ヘッダが無い時に使う) */
+const DEFAULT_RULES = "5:60:60,10:600:120,15:10800:3600";
+/** 窓ごとに何回残して止めるか (公式サイトや他ツールが使う分の余白) */
+const MARGIN = 1;
 
 const keyOf = (game: Game, league: string): string => `exiledesk.trade-history.${game}.${league}`;
 
@@ -99,12 +62,18 @@ export function loadStored(game: Game, league: string): Stored {
     const raw = localStorage.getItem(keyOf(game, league));
     if (raw) {
       const s = JSON.parse(raw) as Partial<Stored>;
-      return { entries: Array.isArray(s.entries) ? s.entries : [], lastFetchAt: s.lastFetchAt ?? 0, nextAllowedAt: s.nextAllowedAt ?? 0 };
+      return {
+        entries: Array.isArray(s.entries) ? s.entries : [],
+        lastFetchAt: s.lastFetchAt ?? 0,
+        nextAllowedAt: s.nextAllowedAt ?? 0,
+        hits: Array.isArray(s.hits) ? s.hits : [],
+        rules: typeof s.rules === "string" && s.rules ? s.rules : DEFAULT_RULES,
+      };
     }
   } catch {
     /* 読めなくても動く */
   }
-  return { entries: [], lastFetchAt: 0, nextAllowedAt: 0 };
+  return { entries: [], lastFetchAt: 0, nextAllowedAt: 0, hits: [], rules: DEFAULT_RULES };
 }
 
 function save(game: Game, league: string, s: Stored): void {
@@ -113,6 +82,48 @@ function save(game: Game, league: string, s: Stored): void {
   } catch {
     /* 容量超過などで保存できなくても表示は続ける */
   }
+}
+
+const PERIOD_LABEL: Record<number, string> = { 60: "1 分", 600: "10 分", 3600: "1 時間", 10800: "3 時間" };
+const periodLabel = (period: number): string => PERIOD_LABEL[period] ?? `${period} 秒`;
+
+/** "5:60:60,10:600:120" → [[max, period, penalty], ...] */
+function parseRules(rules: string): number[][] {
+  return rules
+    .split(",")
+    .map((r) => r.split(":").map(Number))
+    .filter((r) => r.length >= 2 && Number.isFinite(r[0]) && Number.isFinite(r[1]));
+}
+
+export interface BudgetWindow {
+  label: string;
+  used: number;
+  max: number;
+}
+export interface HistoryBudget {
+  /** 次に取れる時刻 (ms) */
+  allowedAt: number;
+  /** 窓ごとの使用状況 (画面表示用) */
+  usage: BudgetWindow[];
+}
+
+/** 自分の取得記録とサーバーの制限から、次に取れる時刻と残り回数を出す */
+export function historyBudget(game: Game, league: string): HistoryBudget {
+  const s = loadStored(game, league);
+  const now = Date.now();
+  let allowedAt = Math.max(s.nextAllowedAt, s.lastFetchAt + MIN_INTERVAL_MS);
+  const usage: BudgetWindow[] = [];
+  for (const [max, period] of parseRules(s.rules)) {
+    const windowMs = period * 1000;
+    const inWindow = s.hits.filter((t) => t > now - windowMs);
+    usage.push({ label: periodLabel(period), used: inWindow.length, max });
+    if (inWindow.length >= max - MARGIN) {
+      // 一番古い物が窓から出た瞬間に 1 枠空く
+      const oldest = inWindow[Math.max(0, inWindow.length - (max - MARGIN))];
+      allowedAt = Math.max(allowedAt, oldest + windowMs + 1000);
+    }
+  }
+  return { allowedAt, usage };
 }
 
 export async function sessionLoggedIn(): Promise<boolean> {
@@ -194,12 +205,62 @@ interface FetchResponse {
   body: unknown;
 }
 
-/** 履歴を取って蓄積に足す。間隔を空けずに呼ばれたら何もしない */
+/** 制限の状態を人が読める形に (例: "1 分 1/5 · 10 分 3/10 · 3 時間 15/15 (締め出し 3600 秒)") */
+export function describeRateLimit(rl: Record<string, string> | null | undefined): string {
+  if (!rl) return "";
+  for (const scope of ["account", "ip"]) {
+    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
+    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
+    if (rules.length === 0) continue;
+    return rules
+      .map((rule, i) => {
+        const [max, period] = rule.split(":").map(Number);
+        const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
+        return `${periodLabel(period)} ${Number.isFinite(hits) ? hits : "?"}/${max}${restricted > 0 ? ` (締め出し ${restricted} 秒)` : ""}`;
+      })
+      .join(" · ");
+  }
+  return "";
+}
+
+/**
+ * 応答のレート制限ヘッダから、サーバー都合で待つべき時間 (ms)。
+ * 締め出し中はその窓の長さ (最長 3 時間) を待つ。2026-09-16 実測: 1 時間の締め出しが解けた直後に 1 回取っただけで、
+ * 3 時間の窓がまだ埋まっていて再び 3600 秒締め出された。
+ */
+export function waitFromRateLimit(rl: Record<string, string> | null | undefined): number {
+  if (!rl) return 0;
+  let wait = 0;
+  for (const scope of ["account", "ip"]) {
+    const rules = rl[`x-rate-limit-${scope}`]?.split(",") ?? [];
+    const states = rl[`x-rate-limit-${scope}-state`]?.split(",") ?? [];
+    rules.forEach((rule, i) => {
+      const [max, period] = rule.split(":").map(Number);
+      const [hits, , restricted] = (states[i] ?? "").split(":").map(Number);
+      if (restricted > 0) wait = Math.max(wait, Math.max(restricted, period) * 1000);
+      else if (max > 0 && period > 0 && hits >= max - MARGIN) wait = Math.max(wait, period * 1000);
+    });
+  }
+  return wait;
+}
+
+/** 応答ヘッダから制限ルール (account 優先) を取り出す */
+function rulesOf(rl: Record<string, string> | null | undefined): string | null {
+  return rl?.["x-rate-limit-account"] || rl?.["x-rate-limit-ip"] || null;
+}
+
+const clock = (ms: number): string => {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+/** 履歴を取って蓄積に足す。制限の窓が空くまでは何もしない */
 export async function fetchAndMerge(game: Game, league: string): Promise<FetchOutcome> {
   const s = loadStored(game, league);
   const now = Date.now();
-  if (now < s.nextAllowedAt) {
-    return { ok: false, added: 0, message: `取得は ${Math.ceil((s.nextAllowedAt - now) / 1000)} 秒後にできます` };
+  const allowedAt = historyBudget(game, league).allowedAt;
+  if (now < allowedAt) {
+    return { ok: false, added: 0, message: `次に取れるのは ${clock(allowedAt)} ごろです (残り ${Math.ceil((allowedAt - now) / 1000)} 秒)` };
   }
   let res: FetchResponse;
   try {
@@ -207,9 +268,10 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
   } catch (e) {
     return { ok: false, added: 0, message: e instanceof Error ? e.message : String(e) };
   }
-  // 成功でも失敗でも次の取得まで間隔を空ける (失敗時の連打でアカウントの制限を招かない)
   s.lastFetchAt = now;
-  s.nextAllowedAt = now + Math.max(MIN_INTERVAL_MS, (res.retry_after ?? 0) * 1000, waitFromRateLimit(res.ratelimit));
+  s.hits = [...s.hits.filter((t) => t > now - 3 * 3600_000), now];
+  s.rules = rulesOf(res.ratelimit) ?? s.rules;
+  s.nextAllowedAt = now + Math.max((res.retry_after ?? 0) * 1000, waitFromRateLimit(res.ratelimit));
   const limitText = describeRateLimit(res.ratelimit);
   const limitSuffix = limitText ? ` [制限: ${limitText}]` : "";
   if (res.status === 200) {
@@ -249,8 +311,8 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
     return {
       ok: false,
       added: 0,
-      message: `取得の制限中です${limitSuffix}。締め出しが解けても枠が埋まっているとすぐまた締め出されるので、${clock(s.nextAllowedAt)} ごろまで公式サイトの更新も含めて待ってください`,
+      message: `取得の制限中です${limitSuffix}。締め出しが解けても枠が埋まっているとすぐまた締め出されるので、${clock(s.nextAllowedAt)} ごろまで公式サイトや他のツールでの更新も含めて待ってください`,
     };
   }
-  return { ok: false, added: 0, message: `サイト側で履歴を取れませんでした (HTTP ${res.status}${apiMessage ? `: ${apiMessage}` : ""})。公式サイトでも失敗する時は GGG 側の不具合です` };
+  return { ok: false, added: 0, message: `サイト側で履歴を取れませんでした (HTTP ${res.status}${apiMessage ? `: ${apiMessage}` : ""})。公式サイトでも失敗する時は GGG 側の不具合です${limitSuffix}` };
 }
