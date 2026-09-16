@@ -6,15 +6,16 @@
  * 新版があればトーストを表示、[今すぐ更新] でダウンロード + 署名検証 +
  * インストール + 再起動。Phase 1 設計 (2026-05-19): app-self-update.md 参照。
  */
-import { onMounted, ref, shallowRef, markRaw } from "vue";
+import { onMounted, ref, shallowRef, markRaw, watch } from "vue";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { updateCheckError, updateCheckRequest, updateCheckState } from "../state/update-check";
 
 // Update は class インスタンス（#privateField 持ち）。Vue の reactive proxy で
 // 私有フィールドアクセスが壊れるため shallowRef + markRaw を併用する。
 const update = shallowRef<Update | null>(null);
-const phase = ref<"idle" | "checking" | "available" | "downloading" | "installing" | "done" | "error" | "safe-mode">("idle");
+const phase = ref<"idle" | "checking" | "available" | "downloading" | "installing" | "done" | "error" | "safe-mode" | "up-to-date">("idle");
 const errorMsg = ref<string | null>(null);
 const downloadedBytes = ref(0);
 const totalBytes = ref<number | null>(null);
@@ -51,25 +52,59 @@ function clearLaunchSeq() {
   }
 }
 
-async function runCheck() {
-  if (phase.value !== "idle" && phase.value !== "safe-mode") return;
+/**
+ * 更新チェック。`manual` は設定画面のボタン経由 (2026-09-16)。
+ * 自動 (起動時) は「最新でした」を出さないが、手動は結果が分からないと困るので出す。
+ */
+async function runCheck(manual = false) {
+  if (phase.value !== "idle" && phase.value !== "safe-mode" && phase.value !== "up-to-date") return;
   // dev-server (browser) では Tauri 環境ではないため updater トースト自体出さない
-  if (!isTauriRuntime()) return;
+  if (!isTauriRuntime()) {
+    if (manual) {
+      updateCheckState.value = "error";
+      updateCheckError.value = "アプリ (ExileDesk) の中でだけ確認できます";
+    }
+    return;
+  }
   phase.value = "checking";
   errorMsg.value = null;
+  updateCheckState.value = "checking";
+  updateCheckError.value = null;
   try {
     const u = await check();
     if (u) {
       update.value = markRaw(u);
       phase.value = "available";
+      updateCheckState.value = "available";
     } else {
-      phase.value = "idle";
+      phase.value = manual ? "up-to-date" : "idle";
+      updateCheckState.value = "none";
+      // 手動の「最新です」は放っておくと邪魔なので数秒で消す
+      if (manual) {
+        setTimeout(() => {
+          if (phase.value === "up-to-date") phase.value = "idle";
+        }, 6000);
+      }
     }
   } catch (e) {
     errorMsg.value = typeof e === "string" ? e : (e as Error).message;
     phase.value = "error";
+    updateCheckState.value = "error";
+    updateCheckError.value = errorMsg.value;
   }
 }
+
+// 設定画面の「更新を確認」ボタン
+watch(updateCheckRequest, () => {
+  // 進行中 (ダウンロード等) は無視、既に出ているトーストはそのまま
+  if (phase.value === "downloading" || phase.value === "installing" || phase.value === "done") return;
+  if (phase.value === "available") {
+    updateCheckState.value = "available";
+    return;
+  }
+  if (phase.value === "error") phase.value = "idle";
+  void runCheck(true);
+});
 
 async function applyUpdate() {
   if (!update.value) return;
@@ -130,7 +165,15 @@ function fmtBytes(b: number): string {
 
 <template>
   <div
-    v-if="phase === 'available' || phase === 'downloading' || phase === 'installing' || phase === 'done' || phase === 'error' || phase === 'safe-mode'"
+    v-if="
+      phase === 'available' ||
+      phase === 'downloading' ||
+      phase === 'installing' ||
+      phase === 'done' ||
+      phase === 'error' ||
+      phase === 'safe-mode' ||
+      phase === 'up-to-date'
+    "
     class="fixed bottom-4 right-4 max-w-sm rounded-lg border bg-[var(--exile-color-bg-surface)] border-[var(--exile-color-border-subtle)] shadow-lg z-50 p-4"
   >
     <!-- 更新あり -->
@@ -205,6 +248,21 @@ function fmtBytes(b: number): string {
       </p>
     </div>
 
+    <!-- 手動チェックで最新だった時 (2026-09-16、起動時は出さない) -->
+    <div v-else-if="phase === 'up-to-date'">
+      <div class="flex items-baseline justify-between mb-1">
+        <h3 class="text-sm font-semibold text-[var(--exile-color-signal-success)]">✓ 最新版です</h3>
+        <button
+          @click="dismiss"
+          class="text-xs text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]"
+          aria-label="閉じる"
+        >
+          ×
+        </button>
+      </div>
+      <p class="text-xs text-[var(--exile-color-text-secondary)]">更新はありません。</p>
+    </div>
+
     <!-- セーフモード: 連続クラッシュ検出で自動 check skip -->
     <div v-else-if="phase === 'safe-mode'">
       <div class="flex items-baseline justify-between mb-2">
@@ -223,7 +281,7 @@ function fmtBytes(b: number): string {
       </p>
       <div class="flex gap-2">
         <button
-          @click="(clearLaunchSeq(), runCheck())"
+          @click="(clearLaunchSeq(), runCheck(true))"
           class="flex-1 px-3 py-1.5 rounded text-xs bg-[var(--exile-color-accent-focus)] text-black hover:bg-[var(--exile-color-accent-focus-hover)] font-semibold transition"
         >
           手動チェック
@@ -246,7 +304,7 @@ function fmtBytes(b: number): string {
         {{ errorMsg }}
       </p>
       <button
-        @click="runCheck"
+        @click="(phase = 'idle'), runCheck(true)"
         class="mt-2 px-3 py-1 rounded text-xs border border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)]"
       >
         🔄 再試行

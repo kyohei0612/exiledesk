@@ -22,6 +22,9 @@
 import { ref, computed, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { setTrade2Site, trade2Site, type Trade2Site } from "../services/trade2/league";
+import { getVersion } from "@tauri-apps/api/app";
+import { requestUpdateCheck, updateCheckError, updateCheckState } from "../state/update-check";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // トレードサイトの言語 (ブラウザで開く先)。localStorage のみ (2026-09-12)
 const tradeSite = ref<Trade2Site>(trade2Site());
@@ -57,6 +60,23 @@ const savedAt = ref<Date | null>(null);
 // PC 起動時に黒コンソール窓が出てしまう (CUI subsystem)。
 // debug ビルドでは toggle を構造的に押せないようにして再発防止する (2026-05-25)。
 const isDebugBuild = ref<boolean>(false);
+
+/** 更新確認 (2026-09-16): 実際のチェックとトーストは UpdateToast.vue が持つ */
+const appVersion = ref("");
+const updateStatusText = computed(() => {
+  switch (updateCheckState.value) {
+    case "checking":
+      return "確認中…";
+    case "none":
+      return "最新版です";
+    case "available":
+      return "新しいバージョンがあります (右下のお知らせから更新)";
+    case "error":
+      return `確認できませんでした: ${updateCheckError.value ?? ""}`;
+    default:
+      return "";
+  }
+});
 
 // 自動再取得間隔は UI 側で「時間」単位、永続化は秒単位
 const autoRefetchHours = computed<number>({
@@ -145,6 +165,13 @@ onMounted(async () => {
     isDebugBuild.value = await invoke<boolean>("is_debug_build");
   } catch {
     // 取得失敗時は release 扱い (= toggle 有効) にフォールバック
+  }
+  if (isTauriRuntime()) {
+    try {
+      appVersion.value = await getVersion();
+    } catch {
+      /* 取れなくても設定画面は動く */
+    }
   }
   void loadSettings();
 });
@@ -271,6 +298,44 @@ onMounted(async () => {
           <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
             「トレード2へ」「鑑定」で開くサイト。日本語サイトはボット確認 (Cloudflare) を挟むことがあり、
             その後に検索条件が消えて開けない場合は英語に切り替えてください。相場の取得 (API) はこの設定に関係なく動きます。
+          </p>
+        </section>
+
+        <!-- 更新 (2026-09-16 オーナー要望: アプリを開いたまま確認したい) -->
+        <section>
+          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
+            更新
+          </h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm">
+              現在のバージョン
+              <span class="font-mono text-[var(--exile-color-accent-focus)]">{{ appVersion ? `v${appVersion}` : "—" }}</span>
+            </span>
+            <button
+              type="button"
+              :disabled="updateCheckState === 'checking'"
+              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] text-sm text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+              @click="requestUpdateCheck"
+            >
+              {{ updateCheckState === "checking" ? "確認中…" : "更新を確認" }}
+            </button>
+            <span
+              v-if="updateStatusText"
+              class="text-xs"
+              :class="
+                updateCheckState === 'available'
+                  ? 'text-[var(--exile-color-accent-focus)]'
+                  : updateCheckState === 'error'
+                    ? 'text-[var(--exile-color-signal-error)]'
+                    : 'text-[var(--exile-color-text-secondary)]'
+              "
+            >
+              {{ updateStatusText }}
+            </span>
+          </div>
+          <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
+            起動時と同じ確認を今すぐ実行します。新しいバージョンがあれば、起動時と同じように画面右下にお知らせが出ます
+            (そこから「今すぐ更新」でダウンロード → 再起動)。
           </p>
         </section>
 
