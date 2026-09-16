@@ -246,7 +246,19 @@ function toNinjaSkills(raw: SkillUsageStatsRaw | null | undefined): NinjaSkillSt
   const total = raw.total;
   const map = (list: GemUsageCountRaw[] | undefined) =>
     (list ?? []).filter((g) => g.count > 0).map((g) => ({ name: jaSkill(g.name), nameEn: g.name, count: g.count, percentage: g.count / total }));
-  return { total, main: map(raw.main), spirit: map(raw.spirit), all: map(raw.all) };
+  const main0 = map(raw.main);
+  const spirit0 = map(raw.spirit);
+  // poe.ninja の区分はスピリットジェムをメインスキル側にも入れてくる (例: ヘラルドオブアイス)。
+  // クライアントのスピリットタグを正として振り分け直す (2026-09-16 オーナー指示: タグがあれば問答無用でスピリット、無ければスキル)
+  const isSpirit = (nameEn: string): boolean => GEM_INFO.get(nameEn)?.spirit === true;
+  const inSpirit = new Set(spirit0.map((s) => s.nameEn));
+  const moved = main0.filter((s) => isSpirit(s.nameEn) && !inSpirit.has(s.nameEn));
+  return {
+    total,
+    main: main0.filter((s) => !isSpirit(s.nameEn)),
+    spirit: [...spirit0, ...moved].sort((a, b) => b.count - a.count),
+    all: map(raw.all),
+  };
 }
 
 function finalizeAscendancy(

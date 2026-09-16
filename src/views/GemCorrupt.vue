@@ -105,6 +105,7 @@ const MATERIAL_DESC: Record<string, string> = {
   vaal: "アイテムをコラプトし、予測不能な変化を与える。",
   crystal: "コラプト状態のスキルジェムを予測不可能に変化させるか、または破壊する。",
   uncut20: "ジェムを生成するか既存のジェムのレベルをレベル20に上げる",
+  baseGem: "そのジェムを作る原石。レベル 15〜20 のうち一番安い物を使う",
 };
 /**
  * 収支 (実績入力、オーナー指示 2026-09-13)。単価は上の相場、買ったジェムと売れた物は相場か実際の額。ジェムごとに別帳簿 (localStorage、この PC だけ)。
@@ -366,7 +367,7 @@ const materialRows = computed(() => {
   const c = craft.value;
   const n = attempts.value;
   const rows: { key: string; label: string; price: number | null; editable: boolean; perAttempt: number | null; expected: boolean }[] = [
-    { key: "baseGem", label: "低レベルのジェム本体", price: m.baseGem, editable: true, perAttempt: 1, expected: false },
+    { key: "baseGem", label: g.baseGemLabel.value, price: m.baseGem, editable: false, perAttempt: 1, expected: false },
     { key: "gcp", label: "宝石細工師のプリズム", price: m.gcp, editable: false, perAttempt: 4, expected: false },
     { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", price: m.perfectJeweller, editable: false, perAttempt: 1, expected: false },
     { key: "vaal", label: "ヴァールオーブ", price: m.vaal, editable: false, perAttempt: 1, expected: false },
@@ -600,8 +601,7 @@ const summary = computed(() => {
                   <div v-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
-                  <MoneyInput v-if="m.editable" v-model="g.baseGemPrice.value" />
-                  <span v-else :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
+                  <span :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costPerAttempt) }}</td>
@@ -619,7 +619,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は相場が無いので手入力です。
+            原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です (スピリットジェムはスピリットの原石)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>
         </div>

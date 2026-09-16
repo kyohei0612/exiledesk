@@ -88,10 +88,38 @@ export function useGemCorrupt() {
   const rates = marketStore.rates;
   const priceOf = marketStore.priceOf;
 
-  /** 低レベルジェム本体の値段 (高貴)。相場が無いので手入力、既定 1 */
-  const baseGemPrice = ref<number>(1);
+  /**
+   * 低レベルのジェム本体 = 原石のうち一番安い物 (2026-09-16 オーナー指示「スキルジェムとスピリットジェムの 15 以上を対象に一番安いのを表示」)。
+   * 以前は「相場が無いので手入力」で既定 1 高貴のままだったため、ジェムが高い今は自作の収支が良く出すぎていた。
+   */
+  const BASE_GEM_MIN_LEVEL = 15;
+  const BASE_GEM_MAX_LEVEL = 20;
+  interface BaseGemSource {
+    apiId: string | null;
+    level: number | null;
+    price: number | null;
+  }
+  const baseGemSource = computed<BaseGemSource>(() => {
+    const gem = selected.value;
+    const empty: BaseGemSource = { apiId: null, level: null, price: null };
+    if (!gem) return empty;
+    const kind = gem.spirit ? "spirit" : "skill";
+    let best: BaseGemSource = empty;
+    for (let lv = BASE_GEM_MIN_LEVEL; lv <= BASE_GEM_MAX_LEVEL; lv++) {
+      const apiId = `uncut-${kind}-gem-${lv}`;
+      const p = priceOf(apiId);
+      if (p != null && (best.price == null || p < best.price)) best = { apiId, level: lv, price: p };
+    }
+    return best;
+  });
+  /** 素材表に出す名前 (どのレベルの原石を使うか) */
+  const baseGemLabel = computed(() => {
+    const lv = baseGemSource.value.level;
+    const kind = selected.value?.spirit ? "スピリットジェムの原石" : "スキルジェムの原石";
+    return lv == null ? "低レベルのジェム本体" : `低レベルのジェム本体 (${kind} レベル ${lv})`;
+  });
   const materials = computed<MaterialPrices>(() => ({
-    baseGem: Number.isFinite(baseGemPrice.value) && baseGemPrice.value >= 0 ? baseGemPrice.value : null,
+    baseGem: baseGemSource.value.price,
     gcp: priceOf(MATERIAL_API.gcp),
     perfectJeweller: priceOf(MATERIAL_API.perfectJeweller),
     vaal: priceOf(MATERIAL_API.vaal),
@@ -180,7 +208,8 @@ export function useGemCorrupt() {
     marketError,
     marketLabel,
     loadMarket,
-    baseGemPrice,
+    baseGemSource,
+    baseGemLabel,
     materials,
     uncutLabel,
     sale,
