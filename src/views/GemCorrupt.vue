@@ -641,7 +641,7 @@ const summary = computed(() => {
                 <th class="text-left font-normal pb-1">状態</th>
                 <th class="text-right font-normal pb-1 w-28">売値</th>
                 <th class="text-right font-normal pb-1 w-20">出品数</th>
-                <th class="text-right font-normal pb-1 w-36">売れ行き</th>
+                <th class="text-right font-normal pb-1 w-44">売れ行き</th>
                 <th class="text-right font-normal pb-1 w-16"></th>
               </tr>
             </thead>
@@ -671,7 +671,10 @@ const summary = computed(() => {
                           stroke-linecap="round"
                         />
                       </svg>
-                      <span class="tabular-nums text-[11px]" :class="flowToneClass">{{ flow.label }} {{ fmtAge(flow.medianAge) }}</span>
+                      <span class="tabular-nums text-[11px] whitespace-nowrap" :class="flowToneClass">
+                        <span class="font-display tracking-[0.04em]">{{ flow.label }}</span>
+                        <span class="text-[var(--exile-color-text-secondary)]"> {{ fmtAge(flow.medianAge) }}</span>
+                      </span>
                     </div>
                     <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
