@@ -24,6 +24,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { setTrade2Site, trade2Site, type Trade2Site } from "../services/trade2/league";
 import { getVersion } from "@tauri-apps/api/app";
 import { requestUpdateCheck, updateCheckError, updateCheckState } from "../state/update-check";
+import { updateErrorJa } from "../utils/trade-error";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // トレードサイトの言語 (ブラウザで開く先)。localStorage のみ (2026-09-12)
@@ -72,7 +73,7 @@ const updateStatusText = computed(() => {
     case "available":
       return "新しいバージョンがあります (右下のお知らせから更新)";
     case "error":
-      return `確認できませんでした: ${updateCheckError.value ?? ""}`;
+      return `確認できませんでした: ${updateErrorJa(updateCheckError.value)}`;
     default:
       return "";
   }

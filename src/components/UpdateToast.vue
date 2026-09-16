@@ -11,6 +11,7 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { updateCheckError, updateCheckRequest, updateCheckState } from "../state/update-check";
+import { updateErrorJa } from "../utils/trade-error";
 
 // Update は class インスタンス（#privateField 持ち）。Vue の reactive proxy で
 // 私有フィールドアクセスが壊れるため shallowRef + markRaw を併用する。
@@ -300,8 +301,8 @@ function fmtBytes(b: number): string {
           ×
         </button>
       </div>
-      <p class="text-xs text-[var(--exile-color-signal-error)] font-mono whitespace-pre-wrap break-all">
-        {{ errorMsg }}
+      <p class="text-xs text-[var(--exile-color-signal-error)] whitespace-pre-wrap break-words" :title="errorMsg ?? ''">
+        {{ updateErrorJa(errorMsg) }}
       </p>
       <button
         @click="(phase = 'idle'), runCheck(true)"

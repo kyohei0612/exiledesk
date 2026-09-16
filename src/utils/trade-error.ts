@@ -28,3 +28,18 @@ export function tradeErrorJa(raw: string | null | undefined): string {
 export function watchLabelOf(key: string, labels: Record<string, string>): string {
   return labels[key] ?? key;
 }
+
+/** 自動更新 (Tauri updater) のエラーを短い日本語に */
+export function updateErrorJa(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const s = String(raw);
+  if (/valid release JSON|Could not fetch/i.test(s)) return "更新情報を取得できませんでした (公開直後で準備中か、通信の問題)。少し待って再試行してください";
+  if (/signature|verify/i.test(s)) return "更新ファイルの署名を確認できませんでした";
+  if (/404|not found/i.test(s)) return "更新情報が見つかりません";
+  if (/403|forbidden/i.test(s)) return "更新情報にアクセスできません";
+  if (/network|dns|connect|error sending request/i.test(s)) return "通信できません (ネットワーク)";
+  if (/timed? ?out|timeout/i.test(s)) return "応答がありません (タイムアウト)";
+  if (/permission|denied|access is denied/i.test(s)) return "書き込みを拒否されました (管理者権限かウイルス対策)";
+  return s.length > 80 ? s.slice(0, 80) + "…" : s;
+}
+
