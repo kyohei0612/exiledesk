@@ -75,6 +75,12 @@ export function adoptMarket(list: League[], leagueValue: string, fetched: Curren
   error.value = null;
 }
 
+/** poe2scout の ApiId → ItemId (取引所ペアの問い合わせに使う) */
+export function itemIdOf(apiId: string): number | null {
+  const hit = items.value.find((it) => it.ApiId === apiId);
+  return hit ? hit.ItemId : null;
+}
+
 export function priceOf(apiId: string): number | null {
   const hit = items.value.find((it) => it.ApiId === apiId);
   return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
@@ -118,5 +124,6 @@ export const marketStore = {
   refreshMarket,
   adoptMarket,
   priceOf,
+  itemIdOf,
   uniquePriceOf,
 };

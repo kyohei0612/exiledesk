@@ -107,6 +107,51 @@ export async function fetchItems(
   return res.json();
 }
 
+/**
+ * カレンシー取引所のペア 1 組の最新レート (2026-09-16)。
+ *
+ * オーナー指摘「取引所だとレートあるんじゃない？」のとおり、ペアごとに実レートが入っている。
+ * `RelativePrice` はリーグの基準通貨 (高貴) 換算の値で、同じ素材でも「何で買うか」で変わる
+ * (実測: ヴァールは カオス経由 4.32 / 高貴経由 4.47)。`HighestStock` は板の厚み。
+ */
+export interface PairRate {
+  /** 素材 1 個の高貴換算 (このペアでの値) */
+  onePrice: number;
+  /** 支払い通貨 1 個の高貴換算 (このペアでの値) */
+  twoPrice: number;
+  /** 板の厚み。薄いペアは値が壊れるので呼び側で弾く (実測: 原石 lv17 × 高貴 は高貴側 在庫 25 で値が 3 倍ずれた) */
+  oneStock: number;
+  twoStock: number;
+  oneVolume: number;
+  twoVolume: number;
+}
+
+export async function fetchPairRate(
+  leagueName: string,
+  oneItemId: number,
+  twoItemId: number,
+): Promise<PairRate | null> {
+  const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Currencies/Pairs/${oneItemId}/${twoItemId}/History?limit=1`;
+  const res = await httpFetch(url, NO_STORE);
+  if (!res.ok) return null;
+  type Side = { RelativePrice?: number; HighestStock?: number; VolumeTraded?: number };
+  const body = (await res.json()) as { History?: Array<{ Data?: { CurrencyOneData?: Side; CurrencyTwoData?: Side } }> };
+  const d = body.History?.[0]?.Data;
+  const one = d?.CurrencyOneData;
+  const two = d?.CurrencyTwoData;
+  const onePrice = one?.RelativePrice;
+  const twoPrice = two?.RelativePrice;
+  if (typeof onePrice !== "number" || typeof twoPrice !== "number" || onePrice <= 0 || twoPrice <= 0) return null;
+  return {
+    onePrice,
+    twoPrice,
+    oneStock: one?.HighestStock ?? 0,
+    twoStock: two?.HighestStock ?? 0,
+    oneVolume: one?.VolumeTraded ?? 0,
+    twoVolume: two?.VolumeTraded ?? 0,
+  };
+}
+
 // =================== 整形 ===================
 
 /**

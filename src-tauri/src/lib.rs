@@ -339,7 +339,6 @@ pub fn run() {
             trade2::trade2_search,
             trade2::trade2_search_count,
             trade2::trade2_fetch,
-            trade2::trade2_exchange,
             craft_discovery_storage::discovery_save,
             craft_discovery_storage::discovery_load,
             craft_discovery_storage::discovery_load_prev,

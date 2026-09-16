@@ -206,62 +206,6 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
     Ok(body)
 }
 
-/// カレンシー取引所 (exchange) の検索リクエスト。
-/// 「何を払って何を買うか」を通貨 ID で指定し、出品 (払う量 : もらう量) を返す。
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ExchangeRequest {
-    pub league: String,
-    #[serde(default)]
-    pub site: Option<String>,
-    /// exchange query 全体 (status / have / want / sort / engine)
-    pub query: serde_json::Value,
-}
-
-/// カレンシー取引所を検索する (2026-09-16)。
-/// オーナー指示「たまにカオスで買った方が安い」に応えるため、通貨ごとの実レートをここから取る。
-/// 制限は search とは別枠 (実測 IP: 15 秒 5 回 / 90 秒 10 回 / 5 分 30 回)。
-#[tauri::command]
-pub async fn trade2_exchange(req: ExchangeRequest) -> Result<serde_json::Value, String> {
-    let url = format!("{}/exchange/{}", base_for(&req.site), urlencode(&req.league));
-    let res = build_client()?
-        .post(&url)
-        .json(&req.query)
-        .send()
-        .await
-        .map_err(|e| format!("network error: {e}"))?;
-    let status = res.status();
-    if status.as_u16() == 429 {
-        let retry_after = res
-            .headers()
-            .get("retry-after")
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("")
-            .to_string();
-        let rl = rate_limit_headers(res.headers());
-        let body = res.text().await.unwrap_or_default();
-        return Err(format!(
-            "trade2 exchange HTTP 429 retry-after={} ratelimit={}: {}",
-            retry_after,
-            rl,
-            body.chars().take(500).collect::<String>()
-        ));
-    }
-    if !status.is_success() {
-        let body = res.text().await.unwrap_or_default();
-        return Err(format!(
-            "trade2 exchange HTTP {}: {}",
-            status,
-            body.chars().take(500).collect::<String>()
-        ));
-    }
-    let rl = rate_limit_headers(res.headers());
-    let mut body: serde_json::Value = res.json().await.map_err(|e| format!("json parse error: {e}"))?;
-    if let Some(obj) = body.as_object_mut() {
-        obj.insert("_ratelimit".to_string(), rl);
-    }
-    Ok(body)
-}
-
 /// x-rate-limit-* ヘッダをそのまま JSON にする (2026-09-14)。
 /// フロントの擬似レート制限がサーバー側の実カウント (同じ IP の手動検索も含む) に合わせるために使う。
 pub(crate) fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {

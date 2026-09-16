@@ -14,8 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { cachedBest, fetchBest, type ExchangeBest, type PayCurrency } from "../../services/trade2/exchange";
-import { toExalted } from "../../services/trade2/pricing";
+import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
 export interface GemInfo {
@@ -148,14 +147,14 @@ export function useGemCorrupt() {
     { key: "crystal", apiId: MATERIAL_API.crystal },
     { key: "uncut20", apiId: selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20 },
   ]);
-  const exchange = ref<Record<string, ExchangeBest>>({});
+  const exchange = ref<Record<string, BestBuy>>({});
   const exchangeLoading = ref(false);
   const exchangeError = ref<string | null>(null);
   const exchangeDone = computed(() => materialApiIds.value.filter((m) => exchange.value[m.apiId]).length);
   function loadExchangeCache(): void {
     const next = { ...exchange.value };
     for (const m of materialApiIds.value) {
-      const c = cachedBest(m.apiId);
+      const c = cachedBuy(m.apiId);
       if (c) next[m.apiId] = c;
     }
     exchange.value = next;
@@ -167,7 +166,7 @@ export function useGemCorrupt() {
     try {
       for (const m of materialApiIds.value) {
         try {
-          const b = await fetchBest(tradeLeague.value, m.apiId);
+          const b = await fetchBuy(tradeLeague.value, m.apiId);
           if (b) exchange.value = { ...exchange.value, [m.apiId]: b };
         } catch (e) {
           exchangeError.value = e instanceof Error ? e.message : String(e);
@@ -182,14 +181,9 @@ export function useGemCorrupt() {
   function bestBuy(apiId: string | null | undefined): { currency: PayCurrency; perUnit: number; exalted: number } | null {
     if (!apiId) return null;
     const e = exchange.value[apiId];
-    if (!e) return null;
-    let best: { currency: PayCurrency; perUnit: number; exalted: number } | null = null;
-    for (const r of e.rates) {
-      const ex = toExalted(r.perUnit, r.currency, rates.value);
-      if (ex == null) continue;
-      if (!best || ex < best.exalted) best = { currency: r.currency, perUnit: r.perUnit, exalted: ex };
-    }
-    return best;
+    const b = e?.best;
+    if (!b) return null;
+    return { currency: b.currency, perUnit: b.perUnit, exalted: b.exalted };
   }
   /** 相場と取引所の安い方 (取引所を取っていなければ相場のまま) */
   const withExchange = (apiId: string | null | undefined, market: number | null): number | null => {
