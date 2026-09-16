@@ -137,13 +137,30 @@ export async function toggleWatch(watch: Watch, on: boolean, league: string, sit
   }
 }
 
-/** 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」) */
-export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<void> {
-  if (!isTauriRuntime()) return;
+/**
+ * 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
+ *
+ * 戻り値は「search の一覧に載らなかった追跡中の ID」。出品が 100 件を超えると
+ * search は安い順 100 件しか返さないので、これらは直接 fetch しないと生死が分からない。
+ * 呼び出し側で checkListingsAlive → confirmFlow まで繋ぐ (2026-09-17)。
+ */
+export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<string[]> {
+  if (!isTauriRuntime()) return [];
   try {
-    await invoke("market_flow_record", { req: sample });
+    return (await invoke<string[]>("market_flow_record", { req: sample })) ?? [];
   } catch {
     /* 記録できなくても価格表示には影響しない */
+    return [];
+  }
+}
+
+/** 直接 fetch した結果 (実在した ID) を記録に反映する */
+export async function confirmFlow(key: string, checked: string[], alive: string[]): Promise<void> {
+  if (!isTauriRuntime()) return;
+  try {
+    await invoke("market_flow_confirm", { req: { key, checked, alive } });
+  } catch {
+    /* 確認できなければ次の取得でまた試す */
   }
 }
 

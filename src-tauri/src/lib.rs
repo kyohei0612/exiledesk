@@ -373,6 +373,7 @@ pub fn run() {
             market_flow::market_flow_status,
             market_flow::market_flow_sample_now,
             market_flow::market_flow_record,
+            market_flow::market_flow_confirm,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
             pob_bundle::pob_bundle_status,

@@ -191,7 +191,14 @@ const TRACK_MAX_PER_WATCH: usize = 60;
 /// 日次集計を残す日数
 const DAILY_MAX_DAYS: usize = 30;
 /// 行方不明の ID をまとめて確認する間隔 (検索回数を間引くため)
-const CONFIRM_INTERVAL_SECS: i64 = 3 * 3600;
+/// 行方不明の出品を直接 fetch して確認する間隔。
+/// 出品が 100 件を超える銘柄はこれが唯一の判定手段なので、巡回ごと (1 時間) に確認する。
+/// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
+const CONFIRM_INTERVAL_SECS: i64 = 3300;
+
+/// 1 組 (10 分) あたりの確認 fetch の上限。
+/// 通常の取得が 1 時間 60 回なので、これを足しても 6 時間 600 回の制限に収まる
+const CONFIRM_MAX_PER_SLICE: usize = 3;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// 全銘柄が 1 巡する周期
@@ -452,7 +459,7 @@ pub struct ListingRef {
 
 /// 画面から手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
 #[tauri::command]
-pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<FlowStore, String> {
+pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<Vec<String>, String> {
     let mut store = load_store(&app);
     let now = now_secs();
     // 2026-09-16: 画面で取った銘柄はそのまま記録対象にする (チェックを廃止したため)。
@@ -472,8 +479,45 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<F
     // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
     let list_complete = req.ids.len() as u64 >= req.total;
     apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
+    // 出品が 100 件を超えていて search の一覧に載らなかった追跡分は、
+    // 直接 fetch しないと生死が分からない。画面側に投げ返して確認してもらう (2026-09-17)
+    let missing: Vec<String> = if list_complete {
+        Vec::new()
+    } else {
+        let present: HashSet<&str> = req.ids.iter().map(String::as_str).collect();
+        state
+            .tracked
+            .iter()
+            .filter(|t| t.gone_at.is_none() && !present.contains(t.id.as_str()))
+            .take(10)
+            .map(|t| t.id.clone())
+            .collect()
+    };
     prune(state, now);
     store.sampled_at = now;
+    save_store(&app, &store)?;
+    Ok(missing)
+}
+
+/// 画面が確認 fetch を投げた結果を反映する (market_flow_record の戻り値に対する返事)
+#[derive(Deserialize)]
+pub struct ConfirmRequest {
+    pub key: String,
+    /// 確認した ID
+    pub checked: Vec<String>,
+    /// そのうち実在した ID
+    pub alive: Vec<String>,
+}
+
+#[tauri::command]
+pub fn market_flow_confirm(app: tauri::AppHandle, req: ConfirmRequest) -> Result<FlowStore, String> {
+    let mut store = load_store(&app);
+    let now = now_secs();
+    let Some(state) = store.states.get_mut(&req.key) else {
+        return Ok(store);
+    };
+    let alive: HashSet<String> = req.alive.into_iter().collect();
+    apply_confirm(state, now, &req.checked, &alive);
     save_store(&app, &store)?;
     Ok(store)
 }
@@ -692,6 +736,8 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
     let total_watches = auto.len();
     let resumed = done_keys.len();
+    // この組で確認 fetch を使った回数 (上限 CONFIRM_MAX_PER_SLICE)
+    let mut confirmed_in_slice: usize = 0;
     // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
     // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
     let pace = if slice.is_some() && total_watches > 0 {
@@ -803,8 +849,10 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         let list_complete = ids.len() as u64 >= total;
         apply_sample(state, now, total, &ids, &entries, list_complete);
 
-        // --- 行方不明の確認 (3 時間おき、1 銘柄 10 件まで。検索回数を間引くため) ---
-        let need_confirm = !list_complete && now - state.confirmed_at >= CONFIRM_INTERVAL_SECS;
+        // --- 行方不明の確認 (巡回ごと、1 銘柄 10 件まで、1 組 CONFIRM_MAX_PER_SLICE 銘柄まで) ---
+        let need_confirm = !list_complete
+            && now - state.confirmed_at >= CONFIRM_INTERVAL_SECS
+            && confirmed_in_slice < CONFIRM_MAX_PER_SLICE;
         let missing: Vec<String> = if need_confirm {
             let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
             state
@@ -826,6 +874,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         save_store(app, &store_now)?;
 
         if !missing.is_empty() && !query_id.is_empty() {
+            confirmed_in_slice += 1;
             let fetch = crate::trade2::FetchRequest { ids: missing.clone(), query_id, site: site.clone() };
             let alive: HashSet<String> = match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => v

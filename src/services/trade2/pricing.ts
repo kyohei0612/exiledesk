@@ -245,6 +245,8 @@ export interface PriceResult {
   allIds?: string[];
   /** trade2 サイトで同じ検索を開く URL */
   searchUrl: string;
+  /** この検索の query id (行方不明の出品を直接 fetch して確認するのに使う) */
+  queryId?: string;
 }
 
 interface FetchResponse {
@@ -293,6 +295,23 @@ async function searchOnce(league: string, body: unknown): Promise<Trade2SearchRe
   return withSync("search", throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } })));
 }
 
+/**
+ * 指定した listing ID が今も出品されているか直接 fetch で確かめる (1 回 10 件まで)。
+ *
+ * 出品が 100 件を超える銘柄では search が安い順 100 件しか ID を返さないので、
+ * 101 番目以降に押し下げられた出品は search だけでは生死が分からない。
+ * その分だけをここで確認する (2026-09-17)。
+ */
+export async function checkListingsAlive(ids: string[], queryId: string): Promise<string[]> {
+  const top = ids.slice(0, 10);
+  if (top.length === 0 || !queryId) return [];
+  const site = trade2Site();
+  const fetched = DEV_TRADE
+    ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${top.join(",")}?query=${encodeURIComponent(queryId)}`)))
+    : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids: top, queryId, site } })));
+  return (fetched.result ?? []).map((r) => r.id ?? "").filter(Boolean);
+}
+
 /** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
 async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates): Promise<PriceResult> {
   const searchUrl = search.id
@@ -300,7 +319,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
-    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl };
+    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl, queryId: search.id };
   }
   const site = trade2Site();
   const fetched = DEV_TRADE
@@ -331,6 +350,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     listingIds: ids,
     allIds: search.result ?? [],
     searchUrl,
+    queryId: search.id,
   };
 }
 
