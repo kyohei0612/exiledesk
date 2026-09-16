@@ -129,8 +129,12 @@ interface GemLedger {
   attempts: number;
   /** 手で上書きした使った数 (無い行は 1 回の数 × 回数) */
   qty: Partial<Record<RowKey, number>>;
-  /** 買ったジェムの実際の 1 個の値段 (高貴)。無ければ相場 */
-  buyEach: Partial<Record<BuyKey, number>>;
+  /** 手で入れた 1 個の値段 (高貴)。無ければ下の固定値 → 今の相場 の順 */
+  unit: Partial<Record<RowKey, number>>;
+  /** 回数を入れた時点の単価 (高貴)。あとで相場が動いても、やった分の費用を数え直さない (2026-09-16) */
+  prices: Partial<Record<RowKey, number>>;
+  /** 上の単価を取った時刻 (ms) */
+  pricesAt: number;
   /** 手で上書きした売れた数 (無い行は 1 回の期待数 × 回数) */
   sold: Partial<Record<SoldKey, number>>;
   /** 実売の 1 個あたり (高貴)。null なら相場 */
@@ -140,7 +144,7 @@ interface GemLedger {
   eachOther: number | null;
 }
 const EMPTY_LEDGER: GemLedger = {
-  route: null, attempts: 0, qty: {}, buyEach: {}, sold: {},
+  route: null, attempts: 0, qty: {}, unit: {}, prices: {}, pricesAt: 0, sold: {},
   eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
 };
 /** 旧形式 (素材ごとの使った数を全部手で入れていた) のキー。0 より大きい物は上書きとして引き継ぐ */
@@ -180,7 +184,9 @@ const ledger = computed<GemLedger>(() => {
     route: raw.route ?? null,
     attempts: raw.attempts ?? 0,
     qty,
-    buyEach: { ...(raw.buyEach ?? {}) },
+    unit: { ...((raw as { buyEach?: Partial<Record<RowKey, number>> }).buyEach ?? {}), ...(raw.unit ?? {}) },
+    prices: { ...(raw.prices ?? {}) },
+    pricesAt: raw.pricesAt ?? 0,
     sold,
     eachLevel21: raw.eachLevel21 ?? null,
     eachQuality23: raw.eachQuality23 ?? null,
@@ -199,16 +205,49 @@ function readCount(ev: Event): number | null {
   const v = Number(raw);
   return Number.isFinite(v) && v >= 0 ? v : null;
 }
+/** 今の単価を写し取る (行ごと、相場 or 取引所の安い方) */
+function snapshotPrices(routeId: RouteId): Partial<Record<RowKey, number>> {
+  const out: Partial<Record<RowKey, number>> = {};
+  for (const r of routeRows(routeId)) if (r.market != null) out[r.key] = r.market;
+  return out;
+}
 function setAttempts(ev: Event): void {
   if (!ledgerGem.value) return;
   const n = Math.floor(readCount(ev) ?? 0);
-  // 回数を入れた時点の「最も得」で経路を固定する。相場が変わって最も得が入れ替わっても、
-  // やった分を別の経路の素材で数え直さない (2026-09-15)
-  if (ledger.value.route == null && n > 0 && g.best.value) {
-    book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, attempts: n, route: g.best.value.id } };
+  const l = ledger.value;
+  // 回数を入れた時点の「最も得」で経路を固定し (2026-09-15)、単価もその時点で固定する (2026-09-16 オーナー指示)。
+  // あとで相場が動いても、やった分の費用を数え直さない
+  const route = l.route ?? (n > 0 && g.best.value ? g.best.value.id : null);
+  const needPrices = n > 0 && Object.keys(l.prices).length === 0;
+  if (route !== l.route || needPrices) {
+    book.value = {
+      ...book.value,
+      [ledgerGem.value]: {
+        ...l,
+        attempts: n,
+        route,
+        prices: needPrices ? snapshotPrices(route ?? ledgerRouteId.value) : l.prices,
+        pricesAt: needPrices ? Date.now() : l.pricesAt,
+      },
+    };
     return;
   }
   setLedger("attempts", n);
+}
+/** 固定した単価を今の相場で取り直す */
+function refreshLedgerPrices(): void {
+  if (!ledgerGem.value) return;
+  book.value = {
+    ...book.value,
+    [ledgerGem.value]: { ...ledger.value, prices: snapshotPrices(ledgerRouteId.value), pricesAt: Date.now() },
+  };
+}
+/** 単価の手入力 (空欄なら固定値 → 相場) */
+function setUnit(key: RowKey, v: number | null): void {
+  const unit = { ...ledger.value.unit };
+  if (v == null) delete unit[key];
+  else unit[key] = v;
+  setLedger("unit", unit);
 }
 function setRoute(ev: Event): void {
   const v = (ev.target as HTMLSelectElement).value;
@@ -220,12 +259,6 @@ function setQty(key: RowKey, ev: Event): void {
   if (v == null) delete qty[key];
   else qty[key] = v;
   setLedger("qty", qty);
-}
-function setBuyEach(key: BuyKey, v: number | null): void {
-  const b = { ...ledger.value.buyEach };
-  if (v == null) delete b[key];
-  else b[key] = v;
-  setLedger("buyEach", b);
 }
 function setSold(key: SoldKey, ev: Event): void {
   const v = readCount(ev);
@@ -309,9 +342,10 @@ const ledgerRows = computed(() => {
     const auto = r.perAttempt == null ? 0 : r.perAttempt * l.attempts;
     const override = l.qty[r.key] ?? null;
     const qty = override ?? auto;
-    const each = r.buy ? (l.buyEach[r.buy] ?? null) : null;
-    const unit = each ?? r.market;
-    return { ...r, auto, override, qty, each, unit, cost: unit == null ? null : unit * qty };
+    const each = l.unit[r.key] ?? null;
+    const pinned = l.prices[r.key] ?? null;
+    const unit = each ?? pinned ?? r.market;
+    return { ...r, auto, override, qty, each, pinned, unit, cost: unit == null ? null : unit * qty };
   });
 });
 const ledgerSales = computed(() => {
@@ -392,6 +426,12 @@ const materialRows = computed(() => {
     };
   });
 });
+/** 単価を固定した時刻 (MM/DD HH:mm) */
+const fmtStamp = (ms: number): string => {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
 const fmtQty = (q: number | null): string => (q == null ? "—" : Number.isInteger(q) ? String(q) : q.toFixed(2));
 /**
  * 経路の比較 (2026-09-16 オーナー指摘「分かりにくい、1 回の収支が小さすぎて何これってなる」で作り直し):
@@ -807,12 +847,16 @@ const summary = computed(() => {
               回数
               <input :value="ledger.attempts || ''" type="number" min="0" step="1" placeholder="0" class="num w-20" @input="setAttempts" />
             </label>
+            <span v-if="ledger.pricesAt">
+              単価は {{ fmtStamp(ledger.pricesAt) }} 時点で固定
+              <button type="button" class="ml-1 underline hover:text-[var(--exile-color-accent-focus)]" @click="refreshLedgerPrices">今の相場に更新</button>
+            </span>
           </div>
           <table class="w-full text-[12px] break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
-                <th class="text-right font-normal pb-1 pl-3">単価 (買った物は空欄なら相場)</th>
+                <th class="text-right font-normal pb-1 pl-3">単価 (空欄は固定した値 / 相場)</th>
                 <th class="text-right font-normal pb-1 pl-3">使った数 (空欄は 1 回の数 × 回数)</th>
                 <th class="text-right font-normal pb-1 pl-3">費用</th>
               </tr>
@@ -823,9 +867,13 @@ const summary = computed(() => {
                   <div>{{ r.label }}</div>
                   <div v-if="r.hint" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.hint }}</div>
                 </td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="!r.buy && r.unit == null ? 'text-amber-300' : ''">
-                  <MoneyInput v-if="r.buy" :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setBuyEach(r.buy as BuyKey, $event)" />
-                  <template v-else>{{ r.unit == null ? "相場なし" : money(r.unit) }}</template>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
+                  <MoneyInput
+                    :model-value="r.each"
+                    :placeholder-exalted="r.pinned ?? r.market"
+                    width="w-24"
+                    @update:model-value="setUnit(r.key, $event)"
+                  />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
                   <input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtQty(r.auto)" class="num w-24" @input="setQty(r.key, $event)" />
@@ -877,6 +925,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            単価は回数を入れた時点の値 (相場と取引所の安い方) で固定します。あとで相場が動いても、やった分の費用は変わりません。実際に払った額が違う時は単価の欄に直接入れてください (空欄に戻すと固定値に戻ります)。「今の相場に更新」で固定し直せます。
             使った数と売れた数は空欄なら「経路の 1 回の数 × 回数」で、結晶・原石・売れた数のように結果次第の物は期待値です。実際に違った数だけ入れてください。
             回数を入れた時点の「最も得」の経路で帳簿を固定します (相場が変わっても、やった分を別の経路で数え直さない)。
             買ったジェムと売れた物の値段は空欄なら上の売値 (trade2 最安)、実際の額があればそれを入れてください。「その他」は外れの生存品などで、空欄の売値は前提の割合から出した平均です。入力はジェムごとにこの PC に残ります。
