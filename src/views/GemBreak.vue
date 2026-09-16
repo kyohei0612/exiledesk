@@ -1,6 +1,7 @@
 <!--
-  GemBreak.vue — クラフト前提ジェム (2026-09-16)
+  GemBreak.vue — クラフト選定ジェム (2026-09-16)
   オーナー指示: 「21 とか 23% とか完成品を使ってる人数をランキングで見たい」「一旦ジェムリングのみで試してもええ」
+  「クラフト選定ジェムって名前で、そこでクラフトするジェムを選ぶ感じで」
   → poe.ninja のアセンダンシー 1 つ分の上位キャラだけ取って、そのジェムを
      レベル 21 以上 / 品質 23% 以上 / 両方 (完成品) で使っている人数を数える。
   poe.ninja の全体集計 (search の dimension) にはレベル / 品質の軸が無いので、ここだけは実データを数えている。
@@ -149,9 +150,10 @@ onUnmounted(() => unlisten?.());
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフト前提ジェム</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフト選定ジェム</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかのランキング。値段の判断材料用で、高い安いは含みません。
+        ここでコラプトするジェムを選びます。上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキングで、値段の判断は含みません。
+        気になるジェムを押すと、そのジェムでジェムコラプトの賭けの計算が始まります。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
@@ -209,7 +211,14 @@ onUnmounted(() => unlisten?.());
         </h2>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-0.5 mb-2">{{ sec.note }}</p>
         <ul class="space-y-0.5">
-          <li v-for="(r, i) in visible(sec.key)" :key="r.name" class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]">
+          <li
+            v-for="(r, i) in visible(sec.key)"
+            :key="r.name"
+            class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]"
+            :class="CORRUPTIBLE.has(r.name) ? 'cursor-pointer' : ''"
+            :title="CORRUPTIBLE.has(r.name) ? `ジェムコラプトの賭けで ${jaSkill(r.name)} を計算する` : r.name"
+            @click="CORRUPTIBLE.has(r.name) && openGemCorrupt(r.name)"
+          >
             <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2">
               <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
               <div class="flex items-baseline gap-1.5 min-w-0">
@@ -219,9 +228,9 @@ onUnmounted(() => unlisten?.());
                   type="button"
                   class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
                   :title="`ジェムコラプトの賭けで ${jaSkill(r.name)} を計算する`"
-                  @click="openGemCorrupt(r.name)"
+                  @click.stop="openGemCorrupt(r.name)"
                 >
-                  コラプト計算 ↗
+                  このジェムで計算 ↗
                 </button>
               </div>
               <span class="tabular-nums text-[13px] whitespace-nowrap">
