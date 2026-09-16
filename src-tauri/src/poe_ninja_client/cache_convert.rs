@@ -189,27 +189,33 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
     }
 
     // 2026-09-12: スキルグループ (allGems[] の name と itemData.support、dps[].dps の最大)
+    // 2026-09-16: メインジェムは properties の Level / Quality も拾う (レベル 21 / 品質 23% のランキング用)
     let skills: Vec<CachedSkillGroup> = ci
         .skills
         .iter()
         .filter_map(|g| {
             let gems = g.get("allGems")?.as_array()?;
-            let mut mains = Vec::new();
+            let mut mains: Vec<CachedGem> = Vec::new();
             let mut supports = Vec::new();
             for gem in gems {
                 let name = match gem.get("name").and_then(|v| v.as_str()) {
                     Some(n) if !n.is_empty() => n.to_string(),
                     _ => continue,
                 };
-                let is_support = gem
-                    .get("itemData")
+                let item_data = gem.get("itemData");
+                let is_support = item_data
                     .and_then(|d| d.get("support"))
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
                 if is_support {
                     supports.push(name);
                 } else {
-                    mains.push(name);
+                    let props = item_data.and_then(|d| d.get("properties"));
+                    mains.push(CachedGem {
+                        name,
+                        level: gem_property_number(props, "Level"),
+                        quality: gem_property_number(props, "[Quality]"),
+                    });
                 }
             }
             if mains.is_empty() {
@@ -298,7 +304,17 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
             let mut gems: Vec<serde_json::Value> = g
                 .mains
                 .iter()
-                .map(|n| serde_json::json!({ "name": n, "itemData": { "support": false } }))
+                .map(|gem| {
+                    // poe.ninja と同じ properties の形に戻す (TS 側の解析を 1 本にするため)
+                    let mut props: Vec<serde_json::Value> = Vec::new();
+                    if let Some(l) = gem.level {
+                        props.push(serde_json::json!({ "name": "Level", "values": [[l.to_string(), 0]] }));
+                    }
+                    if let Some(q) = gem.quality {
+                        props.push(serde_json::json!({ "name": "[Quality]", "values": [[format!("+{q}%"), 1]] }));
+                    }
+                    serde_json::json!({ "name": gem.name, "itemData": { "support": false, "properties": props } })
+                })
                 .collect();
             gems.extend(g.supports.iter().map(|n| serde_json::json!({ "name": n, "itemData": { "support": true } })));
             serde_json::json!({ "allGems": gems, "dps": [{ "dps": g.dps }] })
@@ -329,4 +345,23 @@ pub(crate) fn is_target_inventory_id(inv: &str) -> bool {
             | "BodyArmour"
             | "Boots"
     )
+}
+
+/// poe.ninja のジェム properties から数値を 1 つ読む ("Level" → 21、"[Quality]" → "+23%" の 23)。
+pub(crate) fn gem_property_number(props: Option<&serde_json::Value>, key: &str) -> Option<i64> {
+    for p in props?.as_array()? {
+        if p.get("name").and_then(|v| v.as_str()) != Some(key) {
+            continue;
+        }
+        let raw = p
+            .get("values")
+            .and_then(|v| v.as_array())
+            .and_then(|a| a.first())
+            .and_then(|v| v.as_array())
+            .and_then(|a| a.first())
+            .and_then(|v| v.as_str())?;
+        let digits: String = raw.chars().filter(|c| c.is_ascii_digit()).collect();
+        return digits.parse::<i64>().ok();
+    }
+    None
 }

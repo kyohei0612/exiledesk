@@ -33,7 +33,7 @@ const store = craftV2Store;
           : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] hover:border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)]',
       ]"
       :title="
-        !store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total
+        store.loading && !store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total
           ? `${asc.fetchProgress.done} / ${asc.fetchProgress.total} キャラ取得中`
           : asc.name
       "
@@ -49,7 +49,7 @@ const store = craftV2Store;
       </span>
       <!-- タブ毎の小プログレスバー (N/M キャラ取得中のみ) -->
       <span
-        v-if="!store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total"
+        v-if="store.loading && !store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total"
         class="flex items-center gap-1.5 text-[10px] tabular-nums text-[var(--exile-color-text-secondary)]"
       >
         <span class="flex-1 h-1 rounded-full overflow-hidden bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)]" aria-hidden="true">

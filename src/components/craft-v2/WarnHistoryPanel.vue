@@ -3,11 +3,11 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。状態は craftV2Store を直接参照する。
 -->
 <script setup lang="ts">
+import { ref } from "vue";
 import {
   craftV2Store,
   clearWarns,
   formatHms,
-  runHealthCheck,
   toggleWarnDetail,
   MAX_WARN_HISTORY,
 } from "../../state/craft-v2-store";
@@ -15,6 +15,25 @@ import { localizeError, warnLevelClasses, warnSourceLabel } from "../../views/cr
 
 const emit = defineEmits<{ retry: [] }>();
 const store = craftV2Store;
+
+/** 2026-09-16: 健全性チェックは内部処理なのでボタンを廃止。代わりに履歴をそのままコピーできるように */
+const copied = ref(false);
+async function copyWarns(): Promise<void> {
+  const text = store.warnHistory
+    .map((w) => {
+      const head = `[${formatHms(new Date(w.timestamp))}] ${warnSourceLabel(w.source) ? warnSourceLabel(w.source) + ": " : ""}${localizeError(w.message)}`;
+      const details = (w.details ?? []).map((d) => `    ${d}`);
+      return [head, ...details].join("\n");
+    })
+    .join("\n");
+  try {
+    await navigator.clipboard.writeText(text);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 1500);
+  } catch {
+    /* コピーできない環境では何もしない */
+  }
+}
 </script>
 
 <template>
@@ -37,11 +56,11 @@ const store = craftV2Store;
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          @click="runHealthCheck"
+          @click="copyWarns"
           class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] hover:bg-[var(--exile-color-bg-canvas)] hover:text-[var(--exile-color-accent-focus)] transition-colors text-[10px]"
-          title="外部 API の健全性を再チェック"
+          title="警告履歴をテキストでコピー"
         >
-          再チェック
+          {{ copied ? "コピーした" : "コピー" }}
         </button>
         <button
           type="button"

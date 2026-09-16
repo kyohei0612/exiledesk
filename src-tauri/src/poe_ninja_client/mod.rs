@@ -46,7 +46,7 @@ use tokio::task::JoinSet;
 use tokio::time::{sleep, sleep_until, Instant};
 
 use crate::craft_v2_storage::{
-    CachedAscendancy, CachedCharacter, CachedRareItem, CachedSkillGroup, CachedUniqueItem, CraftV2Cache, GemUsageCount,
+    CachedAscendancy, CachedCharacter, CachedGem, CachedRareItem, CachedSkillGroup, CachedUniqueItem, CraftV2Cache, GemUsageCount,
     SkillUsageStats,
 };
 

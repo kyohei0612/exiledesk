@@ -121,9 +121,16 @@ export interface CachedCharacter {
 }
 
 export interface CachedSkillGroup {
-  mains: string[];
+  /** 2026-09-16: レベル / 品質のランキング用にジェム単位で持つ (Rust CachedGem のミラー) */
+  mains: CachedGem[];
   supports: string[];
   dps: number;
+}
+
+export interface CachedGem {
+  name: string;
+  level?: number | null;
+  quality?: number | null;
 }
 
 export interface CachedAscendancy {
@@ -321,6 +328,15 @@ export interface SkillUsage {
   mainCount: number;
   /** 一緒に付いていたサポート (人数降順) */
   supports: { name: string; nameEn: string; count: number }[];
+  /** 2026-09-16: レベル 21 以上で使っていた人数 */
+  lvl21: number;
+  /** 品質 23% 以上で使っていた人数 */
+  q23: number;
+  /** 両方 (限界突破) で使っていた人数 */
+  both: number;
+  /** 見えている中で一番高いレベル / 品質 (参考表示用) */
+  maxLevel: number;
+  maxQuality: number;
 }
 
 /** Rust SkillUsageStats のミラー (2026-09-14)。poe.ninja が表示しているスキル使用率 (search の集計、そのクラスの全キャラ) */

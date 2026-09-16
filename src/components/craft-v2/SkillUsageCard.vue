@@ -22,6 +22,9 @@ const props = defineProps<{
   skills: SkillUsage[];
   sampleSize: number;
   ascendancyName: string;
+  /** 2026-09-16: 全アセンダンシー合算のスキル集計 (レベル / 品質ランキング用) */
+  allSkills: SkillUsage[];
+  allSampleSize: number;
 }>();
 
 const PAGE = 20;
@@ -40,6 +43,29 @@ const sections = computed(() => {
   ];
 });
 const visible = (key: string, list: NinjaSkillStat[]): NinjaSkillStat[] => (showAll.value[key] ? list : list.slice(0, PAGE));
+
+// ---- 限界突破ランキング (2026-09-16) ----
+// poe.ninja の全体集計にはレベル / 品質の軸が無いので、取得済みの上位プレイヤーの実データから数える。
+const BREAK_SECTIONS = [
+  { key: "lvl21", label: "レベル 21 以上", icon: "⬆", note: "コラプトでレベルが上がったジェムを使っている人" },
+  { key: "q23", label: "品質 23% 以上", icon: "✧", note: "コラプトで品質が上がったジェムを使っている人" },
+  { key: "both", label: "限界突破 (両方)", icon: "☠", note: "レベル 21 以上かつ品質 23% 以上のジェムを使っている人" },
+] as const;
+type BreakKey = (typeof BREAK_SECTIONS)[number]["key"];
+const breakShowAll = ref<Record<string, boolean>>({});
+function breakList(key: BreakKey): SkillUsage[] {
+  return props.allSkills
+    .filter((s) => s[key] > 0)
+    .slice()
+    .sort((a, b) => b[key] - a[key] || b.count - a.count)
+    .map((s) => s);
+}
+const breakVisible = (key: BreakKey): SkillUsage[] => {
+  const list = breakList(key);
+  return breakShowAll.value[key] ? list : list.slice(0, PAGE);
+};
+/** 母数は「そのスキルを使っている人」。使用者のうち何割が突破しているかを出す */
+const breakPct = (s: SkillUsage, key: BreakKey): string => (s.count > 0 ? `${Math.round((s[key] / s.count) * 100)}%` : "-");
 /** poe.ninja と同じく整数 %。1% 未満は "<1%" */
 function pct(p: number): string {
   const v = p * 100;
@@ -117,6 +143,57 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
             </button>
           </div>
         </BaseCard>
+      </div>
+
+      <!-- 限界突破ランキング (取得済みの上位プレイヤー全員から実測) -->
+      <div class="mt-5">
+        <div class="flex items-baseline gap-2 mb-1 px-1 flex-wrap">
+          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">限界突破ランキング</h2>
+          <span class="text-[11px] text-[var(--exile-color-text-secondary)]">
+            取れた上位プレイヤー {{ fmtCount(allSampleSize) }} 人 (全アセンダンシー合算) の実データ
+          </span>
+        </div>
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2 px-1">
+          poe.ninja の全体集計にはジェムのレベル / 品質が無いので、ここだけは取得済みキャラのジェムを直接数えています (% は
+          「そのスキルを使っている人のうち、突破している人の割合」)。
+        </p>
+        <p v-if="allSkills.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] px-1">
+          まだデータがありません。ヘッダーの「全取得」で取り直すと入ります。
+        </p>
+        <div v-else class="grid grid-cols-1 @4xl:grid-cols-2 @6xl:grid-cols-3 gap-4 items-start">
+          <BaseCard v-for="sec in BREAK_SECTIONS" :key="sec.key">
+            <div class="p-4 pl-5">
+              <div class="flex items-baseline justify-between mb-2 gap-2">
+                <h3 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-baseline gap-2 min-w-0">
+                  <span aria-hidden="true">{{ sec.icon }}</span>
+                  <span class="shrink-0">{{ sec.label }}</span>
+                </h3>
+              </div>
+              <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">{{ sec.note }}</p>
+              <ul class="space-y-0.5">
+                <li v-for="s in breakVisible(sec.key)" :key="s.nameEn" class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]">
+                  <div class="grid grid-cols-[minmax(0,1fr)_auto_auto] items-baseline gap-3">
+                    <span class="min-w-0 truncate text-[13px]" :title="s.nameEn">{{ s.name }}</span>
+                    <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fmtCount(s[sec.key]) }} / {{ fmtCount(s.count) }} 人</span>
+                    <span class="tabular-nums text-[13px] w-11 text-right">{{ breakPct(s, sec.key) }}</span>
+                  </div>
+                  <div class="mt-0.5 h-1 rounded bg-[var(--exile-color-bg-elevated)] overflow-hidden">
+                    <div class="h-full bg-[var(--exile-color-accent-focus)]/60" :style="{ width: `${Math.min(100, (s[sec.key] / Math.max(1, s.count)) * 100)}%` }" />
+                  </div>
+                </li>
+                <li v-if="breakList(sec.key).length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当なし</li>
+              </ul>
+              <button
+                v-if="breakList(sec.key).length > PAGE"
+                type="button"
+                class="mt-2 text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
+                @click="breakShowAll[sec.key] = !breakShowAll[sec.key]"
+              >
+                {{ breakShowAll[sec.key] ? `▲ 上位 ${PAGE} 件だけ` : `▼ 残り ${breakList(sec.key).length - PAGE} 件を見る` }}
+              </button>
+            </div>
+          </BaseCard>
+        </div>
       </div>
     </template>
   </div>

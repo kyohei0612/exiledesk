@@ -234,6 +234,11 @@ function finalizeSkills(buckets: Map<string, import("./ingest").SkillBucket2>, s
       supports: [...b.supports.entries()]
         .map(([nameEn, count]) => ({ name: jaSkill(nameEn), nameEn, count }))
         .sort((x, y) => y.count - x.count),
+      lvl21: b.lvl21,
+      q23: b.q23,
+      both: b.both,
+      maxLevel: b.maxLevel,
+      maxQuality: b.maxQuality,
     });
   }
   list.sort((a, b) => b.count - a.count || b.mainCount - a.mainCount);
@@ -364,7 +369,17 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
   }
   const skills: unknown[] = (c.skills ?? []).map((g) => ({
     allGems: [
-      ...g.mains.map((n) => ({ name: n, itemData: { support: false } })),
+      // 2026-09-16: poe.ninja と同じ properties の形に戻す (レベル / 品質のランキング用)
+      ...g.mains.map((gem) => ({
+        name: gem.name,
+        itemData: {
+          support: false,
+          properties: [
+            ...(gem.level != null ? [{ name: "Level", values: [[String(gem.level), 0]] }] : []),
+            ...(gem.quality != null ? [{ name: "[Quality]", values: [[`+${gem.quality}%`, 1]] }] : []),
+          ],
+        },
+      })),
       ...g.supports.map((n) => ({ name: n, itemData: { support: true } })),
     ],
     dps: [{ dps: g.dps }],
@@ -374,8 +389,7 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
 
 /**
  * 1 アセンダンシー分のキャッシュから AggregatedAscendancy を再構築する。
- * fetchProgress は `{ done: 0, total: 件数 }` を仮入れし、差分 progress が届いた時点で置換される
- * (キャッシュ表示中に進捗バーが 100% に張り付くのを防ぐ)。
+ * fetchProgress は `{ done: 件数, total: 件数 }` (= 取得済み) を入れる。取得が始まれば progress で置換される。
  */
 function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAscendancy {
   const counter = emptyAscendancyCounter();
@@ -383,8 +397,9 @@ function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAsce
     ingestCharacterItems(counter, cachedCharacterToCharacterItems(c), isMetaGem);
   }
   const cachedCount = cached.characters.length;
+  // 2026-09-16: キャッシュのキャラは取得済み。done=0 だとタブに "0/50" が残り、取得済アセンダンシー数も 0 になる
   return finalizeAscendancy(cached.class, cached.percentage, cachedCount, counter, undefined, {
-    done: 0,
+    done: cachedCount,
     total: cachedCount > 0 ? cachedCount : 1,
   }, cached.skill_stats);
 }

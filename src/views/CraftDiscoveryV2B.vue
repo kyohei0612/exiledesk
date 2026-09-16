@@ -115,6 +115,8 @@ onMounted(() => {
         :skills="d.activeSkills.value"
         :sample-size="d.activeAscendancy.value.sampleSize"
         :ascendancy-name="d.activeAscendancy.value.name"
+        :all-skills="d.allSkills.value"
+        :all-sample-size="d.allSampleSize.value"
       />
 
       <!-- 本体: prefix / suffix / (ベース) / unique カード。ユニーク優位スロットでは order でユニークを最上段に。 -->

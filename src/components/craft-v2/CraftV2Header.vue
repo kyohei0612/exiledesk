@@ -52,8 +52,9 @@ const store = craftV2Store;
         <button
           type="button"
           @click="refetchWithSelectedLeague"
-          class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] hover:bg-[var(--exile-color-bg-surface)] hover:text-[var(--exile-color-accent-focus)] transition-colors"
-          :title="store.loading ? '取得中の処理を中断して、選択中のリーグで取り直す' : '選択中のリーグで再取得 (キャッシュは上書き)'"
+          :disabled="store.loading"
+          class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] hover:bg-[var(--exile-color-bg-surface)] hover:text-[var(--exile-color-accent-focus)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--exile-color-bg-elevated)] disabled:hover:text-inherit"
+          :title="store.loading ? '取得が終わるまで押せません' : '選択中のリーグで再取得 (キャッシュは上書き)'"
         >
           このリーグで再取得
         </button>
@@ -220,16 +221,18 @@ const store = craftV2Store;
       <button
         type="button"
         @click="emit('refresh')"
-        class="px-3 py-1.5 rounded border text-[13px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]"
-        :title="store.loading ? '取得中の処理を中断して差分更新をやり直す' : 'poe.ninja から差分更新 (キャッシュ活用)'"
+        :disabled="store.loading"
+        class="px-3 py-1.5 rounded border text-[13px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        :title="store.loading ? '取得が終わるまで押せません' : 'poe.ninja から差分更新 (キャッシュ活用)'"
       >
         <span aria-hidden="true">⟳</span> 更新
       </button>
       <button
         type="button"
         @click="emit('forceRefetch')"
-        class="px-3 py-1.5 rounded border text-[12px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)]"
-        :title="store.loading ? '取得中の処理を中断して、キャッシュ削除 + 全取得' : 'キャッシュ削除 + 全取得 (リーグ更新等のリカバリ用)'"
+        :disabled="store.loading"
+        class="px-3 py-1.5 rounded border text-[12px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        :title="store.loading ? '取得が終わるまで押せません' : 'キャッシュ削除 + 全取得 (リーグ更新等のリカバリ用)'"
       >
         <span aria-hidden="true">⌫</span> 全取得
       </button>
