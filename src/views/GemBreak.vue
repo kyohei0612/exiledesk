@@ -16,7 +16,7 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { loadFlow, setWatches, summarizeFlow, fmtAge, type FlowStore } from "../services/market-flow";
+import { loadFlow, setWatches, summarizeFlow, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { watchesFromRows } from "../state/gem-watch-auto";
 import { marketStore } from "../state/market-store";
@@ -199,7 +199,7 @@ function speedOf(nameEn: string): SpeedCell[] {
   return SALE_KEYS.map((key) => {
     const f = summarizeFlow(flowStore.value?.states?.[watchKey(nameEn, key)]);
     const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : "記録なし");
-    const detail = f.medianMin != null ? `売れるまで約 ${fmtAge(f.medianMin)}` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
+    const detail = f.known24 > 0 ? `1 日以内に ${f.hit24} / ${f.known24} 件が売れた` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
     return { label: SALE_KEY_LABEL[key], verdict, tone: f.tone, detail };
   });
 }

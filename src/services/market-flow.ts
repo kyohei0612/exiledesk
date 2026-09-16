@@ -7,17 +7,19 @@
  *
  * ## 測り方
  * 追跡中の出品には 2 種類ある:
- *   - 消えた物   … 寿命 = 消えた時刻 − 初めて見た時刻 (売れたか取り下げたか)
- *   - まだある物 … 「少なくとも今の齢までは売れなかった」という打ち切りデータ
- * 消えた物だけで平均を取ると売れ残りを無視した速い数字になるので、打ち切りも含めて
- * **生存分析 (Kaplan-Meier)** で「半分が消えるまでの時間」を出す。
+ *   - 消えた物   … 寿命 = 消えた時刻 − 出品時刻 (売れたか取り下げたか)
+ *   - まだある物 … 「少なくとも今の齢までは売れていない」という情報
+ * これを「1 日以内に売れた割合」「2 日以内に売れた割合」に直して判定する。
+ *   割合 = (その時間内に消えた件数) ÷ (その時間の時点で結果が分かっている件数)
+ *   まだ生きていて齢がその時間に届いていない物は「結果不明」として母数から外す。
  *
- * 以前は「今並んでいる出品が何分前に出された物か」で測っていたが、
- * examples/gem_flow_sim.rs で検証したところ **速い市場ほど遅く出る** (良い出品は覗く前に
- * 売れていて、目に入るのは売れ残りだけ) ため捨てた。
+ * 以前は生存分析 (Kaplan-Meier) の中央値を使っていたが、実データで中央値 0.3 時間 (実際は
+ * 4 時間) のような値が出た。出品直後に捕まえた品ほど早く消えるため、早い時刻では母数が
+ * 数件しかなく、生存率が一気に落ちて中央値がそこで確定してしまう (左側切断の小標本問題)。
+ * 割合ベースなら母数がはっきりしていて壊れない。
  *
  * ## 判定 (オーナー指示 2026-09-16)
- *   24 時間以内に半分売れる → 速い / 1〜2 日 → 普通 / 48 時間を超える → 遅い
+ *   1 日以内に半分売れる → 速い / 2 日以内に半分売れる → 普通 / それ以下 → 遅い
  */
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
@@ -146,11 +148,16 @@ export interface FlowSummary {
   /** "速い" / "普通" / "遅い" / "" */
   label: string;
   tone: FlowTone;
-  /** 半分が売れるまでの時間 (分)。生存分析の中央値。求まらなければ null */
+  /** 消えた出品の寿命の中央値 (分)。参考表示用 */
   medianMin: number | null;
-  /** 24 時間 / 48 時間以内に売れる割合 (0-1) */
+  /** 1 日 / 2 日以内に売れた割合 (0-1)。結果が分かっている件数に対する割合 */
   soldIn24h: number | null;
   soldIn48h: number | null;
+  /** その割合の分母 (結果が分かっている件数) と分子 */
+  known24: number;
+  hit24: number;
+  known48: number;
+  hit48: number;
   /** 追跡した件数 */
   gone: number;
   alive: number;
@@ -172,8 +179,6 @@ const HOUR = 3600;
 /** オーナー指示: 24 時間以内=速い / 48 時間以内=普通 / それ以降=遅い */
 const FAST_SECS = 24 * HOUR;
 const NORMAL_SECS = 48 * HOUR;
-/** 判定を出すのに要る最低件数 */
-const MIN_EVENTS = 3;
 
 const EMPTY_SUMMARY: FlowSummary = {
   label: "",
@@ -181,6 +186,10 @@ const EMPTY_SUMMARY: FlowSummary = {
   medianMin: null,
   soldIn24h: null,
   soldIn48h: null,
+  known24: 0,
+  hit24: 0,
+  known48: 0,
+  hit48: 0,
   gone: 0,
   alive: 0,
   total: null,
@@ -193,67 +202,49 @@ const EMPTY_SUMMARY: FlowSummary = {
 };
 
 /**
- * Kaplan-Meier 法の生存曲線 (左側切断つき)。
- *
- * こちらが見つけた時点で既に何時間も出品されている物が多い (オーナー指摘: 17 時間前の
- * 出品を今拾う)。そこで「出品時刻からの齢」を寿命とし、観測に入った齢 (entry) より前の
- * 区間ではその出品を母数に入れない = 遅れて参加した扱いにする。
- * こうしないと「見つけてから何時間で消えたか」になり、実際より速く見える。
+ * ある時間内に売れた割合。
+ * 分母は「その時間の時点で結果が分かっている出品」= その時間内に消えた物 + 齢がその時間を
+ * 超えた物 (消えた物もまだある物も)。まだ齢が足りない物は数えない。
  */
-export function survivalCurve(records: { entry: number; exit: number; event: boolean }[]): { t: number; s: number }[] {
-  const times = [...new Set(records.filter((r) => r.event).map((r) => r.exit))].sort((a, b) => a - b);
-  const curve: { t: number; s: number }[] = [];
-  let s = 1;
-  for (const t of times) {
-    // その時刻に「観測中」だった件数 (entry < t <= exit)
-    const atRisk = records.filter((r) => r.entry < t && r.exit >= t).length;
-    const d = records.filter((r) => r.event && r.exit === t).length;
-    if (atRisk > 0 && d > 0) {
-      s *= 1 - d / atRisk;
-      curve.push({ t, s });
+export function soldWithin(
+  records: { life: number; gone: boolean }[],
+  windowSecs: number,
+): { hit: number; known: number; rate: number | null } {
+  let hit = 0;
+  let known = 0;
+  for (const r of records) {
+    if (r.gone) {
+      known++;
+      if (r.life <= windowSecs) hit++;
+    } else if (r.life >= windowSecs) {
+      known++; // 生きたままその時間を超えた = 売れなかったと確定
     }
   }
-  return curve;
+  return { hit, known, rate: known > 0 ? hit / known : null };
 }
 
-/** 生存曲線から「その時刻までに消える割合」を読む */
-function soldBy(curve: { t: number; s: number }[], t: number): number | null {
-  if (curve.length === 0) return null;
-  let s = 1;
-  for (const p of curve) {
-    if (p.t > t) break;
-    s = p.s;
-  }
-  return 1 - s;
-}
-
-/** 生存率が 0.5 を切る時刻 (= 半分が売れるまで)。届かなければ null */
-function medianFrom(curve: { t: number; s: number }[]): number | null {
-  for (const p of curve) {
-    if (p.s <= 0.5) return p.t;
-  }
-  return null;
-}
+/** 判定に要る最低の母数 */
+const MIN_KNOWN = 3;
 
 /** 追跡記録から捌き速度を出す */
 export function summarizeFlow(state: WatchState | undefined, nowSec: number = Math.floor(Date.now() / 1000)): FlowSummary {
   if (!state || !Array.isArray(state.tracked)) return EMPTY_SUMMARY;
 
-  const records: { entry: number; exit: number; event: boolean }[] = [];
-  let gone = 0;
-  let alive = 0;
+  const records: { life: number; gone: boolean }[] = [];
+  const goneLives: number[] = [];
+  const aliveAges: number[] = [];
   let stale = 0;
   const stalePrices: number[] = [];
   const allPrices: number[] = [];
   for (const t of state.tracked) {
     const start = t.listed_at ?? t.first_seen;
-    const exit = Math.max(60, (t.gone_at ?? nowSec) - start);
-    const entry = Math.max(0, t.first_seen - start);
-    records.push({ entry, exit, event: !!t.gone_at });
-    if (t.gone_at) gone++;
+    const life = Math.max(60, (t.gone_at ?? nowSec) - start);
+    const gone = !!t.gone_at;
+    records.push({ life, gone });
+    if (gone) goneLives.push(life);
     else {
-      alive++;
-      if (exit >= NORMAL_SECS) {
+      aliveAges.push(life);
+      if (life >= NORMAL_SECS) {
         stale++;
         if (t.amount != null) stalePrices.push(t.amount);
       }
@@ -264,37 +255,21 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     return { ...EMPTY_SUMMARY, total: state.total ?? null, lastAt: state.sampled_at || null };
   }
 
-  const curve = survivalCurve(records);
-  const median = medianFrom(curve);
-  const soldIn24h = soldBy(curve, FAST_SECS);
-  const soldIn48h = soldBy(curve, NORMAL_SECS);
+  const d1 = soldWithin(records, FAST_SECS);
+  const d2 = soldWithin(records, NORMAL_SECS);
 
-  // 値段不相応の目安: 48 時間以上残っている出品は、最安の何倍で出しているか
+  // 値段不相応の目安: 2 日以上残っている出品は、最安の何倍で出しているか
   const cheapest = allPrices.length > 0 ? Math.min(...allPrices) : null;
   const staleAvg = stalePrices.length > 0 ? stalePrices.reduce((a, b) => a + b, 0) / stalePrices.length : null;
   const staleRatio = cheapest != null && cheapest > 0 && staleAvg != null ? staleAvg / cheapest : null;
 
-  // 判定に足りるか: 消えた記録が 3 件以上、または 48 時間以上売れ残りが 3 件以上
-  const enough = gone >= MIN_EVENTS || stale >= MIN_EVENTS;
-
-  // まだ判定できない時、「あとどれくらいで判定できるか」を出す。
-  // 消えれば早く判定が付くが、売れ残りで判定する場合は 3 件目が 48 時間に届くまで待つ (オーナー指摘)
-  const aliveAges = records.filter((r) => !r.event).map((r) => r.exit).sort((a, b) => b - a);
-  const oldest = aliveAges.length > 0 ? aliveAges[0] : null;
-  let etaSecs: number | null = null;
-  if (!enough) {
-    const need = MIN_EVENTS - gone; // 消えた記録で足りない分
-    const nth = aliveAges[Math.max(0, Math.min(aliveAges.length - 1, need - 1))];
-    if (aliveAges.length >= need && nth != null) etaSecs = Math.max(0, NORMAL_SECS - nth);
-  }
-
   let tone: FlowTone = "unknown";
   let label = "";
-  if (enough) {
-    if (median != null && median <= FAST_SECS) {
-      tone = "fast";
-      label = "速い";
-    } else if (median != null && median <= NORMAL_SECS) {
+  if (d1.known >= MIN_KNOWN && (d1.rate ?? 0) >= 0.5) {
+    tone = "fast";
+    label = "速い";
+  } else if (d2.known >= MIN_KNOWN) {
+    if ((d2.rate ?? 0) >= 0.5) {
       tone = "normal";
       label = "普通";
     } else {
@@ -302,21 +277,37 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       label = "遅い";
     }
   }
+  const enough = label !== "";
+
+  // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか
+  aliveAges.sort((a, b) => b - a);
+  const need = MIN_KNOWN - d2.known;
+  let etaSecs: number | null = null;
+  if (!enough && need > 0 && aliveAges.length >= need) {
+    etaSecs = Math.max(0, NORMAL_SECS - aliveAges[need - 1]);
+  }
+
+  goneLives.sort((a, b) => a - b);
+  const median = goneLives.length > 0 ? goneLives[Math.floor(goneLives.length / 2)] : null;
 
   return {
     label,
     tone,
     medianMin: median != null ? Math.round(median / 60) : null,
-    soldIn24h,
-    soldIn48h,
-    gone,
-    alive,
+    soldIn24h: d1.rate,
+    soldIn48h: d2.rate,
+    known24: d1.known,
+    hit24: d1.hit,
+    known48: d2.known,
+    hit48: d2.hit,
+    gone: goneLives.length,
+    alive: aliveAges.length,
     total: state.total ?? null,
     lastAt: state.sampled_at || null,
     enough,
     stale,
     staleRatio,
-    oldestMin: oldest != null ? Math.round(oldest / 60) : null,
+    oldestMin: aliveAges.length > 0 ? Math.round(aliveAges[0] / 60) : null,
     etaMin: etaSecs != null ? Math.round(etaSecs / 60) : null,
   };
 }

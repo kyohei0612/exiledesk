@@ -265,14 +265,16 @@ const flowManual = computed(() => !!flowWatch.value?.manual);
 /** ホバーで出す内訳 */
 function flowTitleOf(f: ReturnType<typeof flowOf>): string {
   return [
-    `売れるまでの目安: ${fmtAge(f.medianMin)} (追跡した出品の半分が消えるまでの時間)`,
-    `1 日以内に売れる割合: ${fmtPct(f.soldIn24h)} · 2 日以内: ${fmtPct(f.soldIn48h)}`,
+    `1 日以内に売れた割合: ${f.hit24} / ${f.known24} 件 (${fmtPct(f.soldIn24h)})`,
+    `2 日以内: ${f.hit48} / ${f.known48} 件 (${fmtPct(f.soldIn48h)})`,
+    `売れた分の寿命の中央値: ${fmtAge(f.medianMin)}`,
+    "割合の分母は「その時間の時点で結果が分かっている出品」。まだ齢が足りない物は数えません",
     `追跡: 消えた ${f.gone} 件 / まだ残っている ${f.alive} 件`,
     f.stale > 0
       ? `48 時間以上売れ残り: ${f.stale} 件${f.staleRatio != null ? ` (最安の ${f.staleRatio.toFixed(1)} 倍の値付け)` : ""}`
       : "48 時間以上の売れ残りなし",
     `出品総数: ${f.total ?? "—"} · 最終記録 ${fmtFlowAt(f.lastAt)}`,
-    "出品 1 件ずつを ID で追い、出品時刻からの齢で、売れ残りも含めて生存分析で出しています",
+    "出品 1 件ずつを ID で追い、出品時刻からの齢で数えています",
   ].join("\n");
 }
 function badgeClassOf(tone: string): string {
@@ -743,7 +745,7 @@ const summary = computed(() => {
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ f.medianMin != null ? `売れるまで約 ${fmtAge(f.medianMin)}` : `1 日で ${fmtPct(f.soldIn24h)} 売れる` }}
+                        1 日で {{ fmtPct(f.soldIn24h) }} 売れる
                       </span>
                     </div>
                     <span
@@ -806,7 +808,7 @@ const summary = computed(() => {
               追跡 {{ flowStore?.watches.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
             </span>
             <br v-if="g.selected.value" />
-            捌き速度は最安 10 件の出品を 1 件ずつ ID で追い、消えるまでの時間を貯めて出します (売れ残りも「まだ売れていない」として計算に入る)。判定は 24 時間以内に半分売れれば速い / 48 時間までなら普通 / それ以降は遅い。クラフト選定ジェムで完成品 5 人以上だったジェムは 1 時間ごとに自動で追い、それ以外のジェムも「再取得」を押すたびに記録が貯まります。
+            捌き速度は最安 10 件の出品を 1 件ずつ ID で追い、「1 日以内に売れた割合」で判定します (半分以上なら速い / 2 日で半分なら普通 / それ以下は遅い)。割合の分母はその時間の時点で結果が分かっている出品だけで、まだ齢が足りない物は数えません。クラフト選定ジェムで完成品 5 人以上だったジェムは 1 時間ごとに自動で追い、それ以外のジェムも「再取得」を押すたびに記録が貯まります。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>
         </div>
