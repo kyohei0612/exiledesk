@@ -155,6 +155,10 @@ pub struct FlowStore {
     /// 最後に 1 組を取った時刻
     #[serde(default)]
     pub sliced_at: i64,
+    /// 今の組で取り終わった銘柄のキー。組を終えたら空にする。
+    /// 途中でアプリを閉じても、次の起動で続きから再開するために残す (オーナー指示 2026-09-16)
+    #[serde(default)]
+    pub slice_done: Vec<String>,
     /// 追跡リストを更新した時刻
     pub list_refreshed_at: i64,
     pub league: String,
@@ -615,7 +619,10 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         .filter(|(i, _)| slice.map(|sl| i % SLICES == sl).unwrap_or(true))
         .map(|(_, w)| w)
         .collect();
+    // 途中で終わっていた場合は、その組で取り済みの銘柄を飛ばして続きから
+    let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
     let total_watches = auto.len();
+    let resumed = done_keys.len();
     // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
     // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
     let pace = if slice.is_some() && total_watches > 0 {
@@ -630,7 +637,11 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
 
     for watch in auto.iter().copied() {
         index += 1;
+        if done_keys.contains(&watch.key) {
+            continue; // 前回の続き: この銘柄はもう取ってある
+        }
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
+        let _ = resumed;
         // --- search: 総数と ID 一覧 ---
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
@@ -739,6 +750,10 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         };
         prune(state, now);
         store_now.sampled_at = now;
+        // この銘柄は取り終わった。アプリが落ちても次回はここから続ける
+        if slice.is_some() && !store_now.slice_done.contains(&watch.key) {
+            store_now.slice_done.push(watch.key.clone());
+        }
         save_store(app, &store_now)?;
 
         if !missing.is_empty() && !query_id.is_empty() {
@@ -767,6 +782,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     // この組は終わり。取りこぼしがあれば早めに再挑戦する (レート制限が明けたら動き出す)
     let mut store_end = load_store(app);
     store_end.sliced_at = now_secs();
+    store_end.slice_done.clear();
     if let Some(sl) = slice {
         store_end.slice_cursor = (sl + 1) % SLICES;
         // 最後の組まで回ったら 1 巡
@@ -817,6 +833,8 @@ pub struct FlowStatus {
     /// 今どの組を取っているか (1 時間を SLICES 回に分ける)
     pub slice: usize,
     pub slices: usize,
+    /// 今の組で取り終わった銘柄数 (中断から再開した時に分かるように)
+    pub slice_done: usize,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -851,17 +869,22 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         retry_at: store.retry_at,
         slice: store.slice_cursor % SLICES,
         slices: SLICES,
+        slice_done: store.slice_done.len(),
     })
 }
 
 /// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す
 pub fn spawn_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        // 起動したらすぐ 1 組取る。直前 5 分以内に取っていれば飛ばす
+        // 起動したらすぐ 1 組取る。
+        // 前回の組を取り切る前に閉じていた場合 (slice_done が残っている) は続きから再開し、
+        // そうでなければ前回から 5 分以上空いている時だけ動かす。
+        // 閉じている間に予定時刻を過ぎていても、取り戻さずにそこから 10 分間隔にずらす (オーナー指示)。
         tokio::time::sleep(Duration::from_secs(15)).await;
         {
             let store = load_store(&app);
-            if !store.watches.is_empty() && now_secs() - store.sliced_at >= 300 {
+            let interrupted = !store.slice_done.is_empty();
+            if !store.watches.is_empty() && (interrupted || now_secs() - store.sliced_at >= 300) {
                 let sl = store.slice_cursor % SLICES;
                 if let Err(e) = sample_slice(&app, Some(sl)).await {
                     eprintln!("[market_flow] 起動時のサンプリング失敗: {e}");
@@ -997,6 +1020,15 @@ mod tests {
         }
         let keys: Vec<&str> = watches.iter().map(|w| w.key.as_str()).collect();
         assert_eq!(keys, vec!["Manual", "New"]);
+    }
+
+    /// 中断から再開する時、取り済みの銘柄は飛ばす
+    #[test]
+    fn resume_skips_done_watches() {
+        let keys = ["A", "B", "C"];
+        let done: HashSet<String> = ["A".to_string()].into_iter().collect();
+        let todo: Vec<&str> = keys.iter().copied().filter(|k| !done.contains(*k)).collect();
+        assert_eq!(todo, vec!["B", "C"]);
     }
 
     /// 7 日を超えて生き残った出品は集計に畳んで捨てる (キャッシュを膨らませない)

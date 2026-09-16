@@ -112,6 +112,7 @@ export interface FlowStatus {
   retry_at: number;
   slice: number;
   slices: number;
+  slice_done: number;
 }
 
 /** 自動追跡が今どうなっているか */
