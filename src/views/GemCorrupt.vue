@@ -22,6 +22,7 @@ import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type Sa
 import { fmtAge, fmtPct, loadFlow, loadFlowStatus, summarizeFlow, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, watchKey, type SaleKey } from "./gem-corrupt/row-query";
 import { resumeAtText, waitText } from "../utils/wait-text";
+import { tradeErrorJa } from "../utils/trade-error";
 
 const g = useGemCorrupt();
 const nowMs = ref(Date.now());
@@ -262,6 +263,19 @@ const flowWatch = computed(() => {
 const flowTracked = computed(() => !!flowWatch.value);
 /** 手動で足した銘柄か (自動リストの入れ替えで消えない) */
 const flowManual = computed(() => !!flowWatch.value?.manual);
+/** 直近の失敗を短い日本語に (詳細はホバー) */
+const flowErrorJa = computed(() => {
+  const raw = flowStatus.value?.last_error ?? "";
+  if (!raw) return "";
+  // "Arc::finished: trade2 search HTTP 400 ..." の形。銘柄名と本文に分ける
+  const m = /^(.+?::[a-z0-9]+):\s*([\s\S]*)$/i.exec(raw);
+  const key = m?.[1] ?? "";
+  const body = m?.[2] ?? raw;
+  const watch = flowStore.value?.watches?.find((w) => w.key === key);
+  const who = watch?.label || key;
+  return who ? `${who}: ${tradeErrorJa(body)}` : tradeErrorJa(body);
+});
+
 /** ホバーで出す内訳 */
 function flowTitleOf(f: ReturnType<typeof flowOf>): string {
   return [
@@ -558,14 +572,23 @@ const materialRows = computed(() => {
   return rows.map((r) => {
     const qtyN = r.perAttempt == null ? null : r.perAttempt * n;
     const apiId = apiIdOf.get(r.key) ?? null;
+    const buy = g.bestBuy(apiId);
+    // オーナー指示 (2026-09-16): 行の単価と費用は「買う通貨」の単位で出す。合計だけ表示通貨に換算する
+    const unitAmount = buy ? buy.perUnit : null;
+    const unitCurrency = buy ? buy.currency : null;
     return {
       ...r,
       apiId,
       // 取引所で一番安く買える通貨 (取っていなければ null)
-      buy: g.bestBuy(apiId),
+      buy,
+      unitAmount,
+      unitCurrency,
       costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
       qtyN,
       costN: r.price == null || qtyN == null ? null : r.price * qtyN,
+      // 買う通貨建ての費用 (取引所を取っていれば)
+      buyCostPerAttempt: unitAmount == null || r.perAttempt == null ? null : unitAmount * r.perAttempt,
+      buyCostN: unitAmount == null || qtyN == null ? null : unitAmount * qtyN,
     };
   });
 });
@@ -799,7 +822,9 @@ const summary = computed(() => {
               <span aria-hidden="true" class="animate-pulse">⏱</span>
               トレードのリミット待機中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）
             </span>
-            <span v-else-if="flowStatus.last_error" class="text-amber-300 basis-full break-all">⚠ 直近の失敗: {{ flowStatus.last_error }}</span>
+            <span v-else-if="flowStatus.last_error" class="text-amber-300 basis-full" :title="flowStatus.last_error">
+              ⚠ {{ flowErrorJa }}
+            </span>
           </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
@@ -839,8 +864,7 @@ const summary = computed(() => {
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">単価</th>
-                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">買う通貨 (取引所)</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">単価 (取引所)</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の数</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の数</th>
@@ -853,25 +877,34 @@ const summary = computed(() => {
                   <div>{{ m.label }}</div>
                   <div v-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
-                  <span :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
-                </td>
                 <td
                   class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
-                  :class="m.buy && m.price != null && m.buy.exalted <= m.price ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'"
-                  :title="m.buy ? `取引所の最安 ${m.buy.perUnit} ${CURRENCY_JA[m.buy.currency]} / 個 (${money(m.buy.exalted)})` : '未取得'"
+                  :class="m.unitAmount != null ? 'text-emerald-300' : m.price == null ? 'text-amber-300' : ''"
+                  :title="
+                    m.unitAmount != null
+                      ? `取引所の最安 ${m.unitAmount} ${CURRENCY_JA[m.unitCurrency!]} / 個 (${money(m.buy!.exalted)})`
+                      : m.price != null
+                        ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押すと取引所の通貨建てになります`
+                        : '相場なし'
+                  "
                 >
-                  <template v-if="m.buy">{{ fmtBuy(m.buy.perUnit) }} {{ CURRENCY_JA[m.buy.currency] }}</template>
-                  <template v-else>—</template>
+                  <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-else-if="m.price != null">{{ money(m.price) }}</template>
+                  <template v-else>相場なし</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costPerAttempt) }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
+                  <template v-if="m.buyCostPerAttempt != null">{{ fmtBuy(m.buyCostPerAttempt) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-else>{{ money(m.costPerAttempt) }}</template>
+                </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costN) }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
+                  <template v-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-else>{{ money(m.costN) }}</template>
+                </td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
                 <td class="py-1.5 pr-2">合計 (期待)</td>
-                <td></td>
                 <td></td>
                 <td></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(craft.expectedCost) : "—" }}</td>
@@ -881,7 +914,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            「買う通貨」は公式の取引所で カオス / 神 のうち安く買える方と単価です (高貴は取引所の手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。緑はカレンシーランキングの相場より安い時で、その時は単価もそちらを使います。灰色は相場の方が安いので使いません。合計は選んだ表示通貨に換算します。
+            単価と費用は「取引所で買う時の通貨」の単位です (緑)。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。
             原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です (スピリットジェムはスピリットの原石)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>

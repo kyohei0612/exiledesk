@@ -437,7 +437,7 @@ onUnmounted(() => {
             :title="r.name"
             @click="toggle(sec.key, r.name)"
           >
-            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-baseline gap-2">
+            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2">
               <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
               <div class="flex items-baseline gap-1.5 min-w-0">
                 <span class="min-w-0 truncate text-[13px]" :title="r.name">
@@ -453,9 +453,8 @@ onUnmounted(() => {
                 >
                   このジェムで計算 ↗
                 </button>
-              </div>
               <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
-              <span class="flex items-baseline gap-2 text-[10px] whitespace-nowrap justify-end">
+              <span class="flex items-baseline shrink-0 gap-2 text-[10px] whitespace-nowrap ">
                 <template v-if="speedSummary(r.name) === '' || speedOf(r.name).some((c) => c.verdict !== '記録なし')">
                   <span v-for="c in speedOf(r.name)" :key="c.label" :title="c.detail">
                     <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
@@ -463,6 +462,8 @@ onUnmounted(() => {
                   </span>
                 </template>
               </span>
+
+              </div>
               <span class="tabular-nums text-[13px] whitespace-nowrap">
                 {{ r[sec.key] }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">/ {{ r.users }} 人</span>
               </span>

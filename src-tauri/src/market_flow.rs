@@ -602,7 +602,9 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     if store.watches.is_empty() || store.league.is_empty() {
         return Ok(());
     }
-    let site = if store.site.is_empty() { None } else { Some(store.site.clone()) };
+    // 追跡の検索は英語名で投げるので www 固定にする。
+    // JP サイトは日本語名しか受け付けず "Unknown item base type" (HTTP 400) になる (2026-09-16)。
+    let site: Option<String> = Some("www".to_string());
     let now = now_secs();
     // 自動で追う銘柄を 6 組に分け、指定された組だけ取る (10 分おきに 1 組)
     let auto: Vec<&Watch> = store
