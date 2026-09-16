@@ -37,6 +37,21 @@ export const SecurityStatus = {
 export type SecurityStatusValue =
   (typeof SecurityStatus)[keyof typeof SecurityStatus];
 
+/**
+ * `trade_filters.filters.sale_type.option` の値。
+ *
+ * 省略しても API の既定は即時購入と同じ結果になるが、**サイト側の検索画面には反映されない**。
+ * 「トレード 2 へ」で開いた時に即時購入が選ばれていない、というオーナー報告 (2026-09-17) の原因。
+ * 画面と同じ物を見せるため、明示的に送る。
+ */
+export const SaleType = {
+  /** 即時購入 (値段が付いている出品だけ) */
+  Priced: "priced",
+  /** 値段なし (交渉) */
+  Unpriced: "unpriced",
+} as const;
+export type SaleTypeValue = (typeof SaleType)[keyof typeof SaleType];
+
 /** `type_filters.filters.rarity.option` の代表値。 */
 export const Rarity = {
   Normal: "normal",

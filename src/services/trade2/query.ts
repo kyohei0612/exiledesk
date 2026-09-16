@@ -4,7 +4,7 @@
  * craft-discovery-v2.ts から切り出し (2026-09-07)。
  */
 
-import { SecurityStatus, Rarity } from "../../constants/trade2";
+import { SecurityStatus, Rarity, SaleType } from "../../constants/trade2";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
@@ -108,7 +108,7 @@ export function buildStatFilters(
  *   - rarity: rare 固定、category: slotToTradeCategory(slot)
  *   - status: securable (直近接続 + 短時間オフラインを含む実購入可能 listing)
  *   - stats: 選択 MOD を "and" で連結
- *   - sale_type は送らない (= 即時購入デフォルト。null を送ると Invalid になる)
+ *   - sale_type: priced (即時購入)。省略しても API の結果は同じだが、サイトの検索画面に反映されない
  */
 export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilter[]) {
   return {
@@ -122,6 +122,8 @@ export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilte
             category: { option: slotToTradeCategory(slot) },
           },
         },
+        // 即時購入だけ (サイトを開いた時も同じ条件になるように明示する。2026-09-17)
+        trade_filters: { filters: { sale_type: { option: SaleType.Priced } } },
       },
     },
     sort: { price: "asc" },
@@ -167,7 +169,13 @@ export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
     query: {
       status: { option: SecurityStatus.Any },
       type: { discriminator: null, option: gemEn },
-      filters: { type_filters: { filters: typeFilters }, misc_filters: { filters: misc } },
+      filters: {
+        type_filters: { filters: typeFilters },
+        misc_filters: { filters: misc },
+        // 即時購入だけを見る。省略しても API の結果は同じだが、
+        // 「トレード 2 へ」でサイトを開いた時に即時購入が選ばれない (2026-09-17 オーナー報告)
+        trade_filters: { filters: { sale_type: { option: SaleType.Priced } } },
+      },
     },
     sort: { price: "asc" },
   };
