@@ -306,17 +306,10 @@ export function useRareCraft() {
       }
     }
   }
-  let debounce: ReturnType<typeof setTimeout> | null = null;
-  watch(
-    [kinds, () => kinds.value.map((k) => cacheKey(k)).join("\n")],
-    () => {
-      if (debounce) clearTimeout(debounce);
-      // しきい値を打っている途中で検索しないように長めに待つ
-      debounce = setTimeout(() => void fetchPrices(), 1500);
-    },
-  );
+  // 2026-09-16 オーナー指示: 条件を変えただけで trade2 を叩かない (レート制限対策)。
+  // 取れていない種類の数だけ数えて、取得ボタンに出す
+  const missingCount = computed(() => kinds.value.filter((k) => !get(k)).length);
   onScopeDispose(() => {
-    if (debounce) clearTimeout(debounce);
     fetchSeq++;
   });
 
@@ -533,6 +526,7 @@ export function useRareCraft() {
     priceError,
     remaining,
     fetchPrices,
+    missingCount,
     get,
     tradeUrl,
     basePrice,

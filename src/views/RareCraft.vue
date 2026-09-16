@@ -43,7 +43,14 @@ function evClass(v: number | null | undefined): string {
 }
 const condKeys = (conds: Partial<Record<Metric, number>>): Metric[] => Object.keys(conds) as Metric[];
 const bucketKind = (key: string): `b:${string}` => `b:${key}`;
-const refetch = computed(() => refetchState(c.pricing.value, "trade2 で取り直す", `trade2 で検索中… (残り ${c.remaining.value} 件、1 件 約 10 秒)`));
+const refetch = computed(() =>
+  refetchState(
+    c.pricing.value,
+    // 2026-09-16: 画面を開いただけでは取りに行かない。未取得なら「取得」、揃っていれば「取り直す」
+    c.missingCount.value > 0 ? `取得 (${c.missingCount.value} 件、1 件 約 10 秒)` : "trade2 で取り直す",
+    `trade2 で検索中… (残り ${c.remaining.value} 件、1 件 約 10 秒)`,
+  ),
+);
 
 /** 相場カードの行 */
 const priceRows = computed(() => {
@@ -289,17 +296,20 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2 から自動)</h2>
+            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2)</h2>
             <button
               type="button"
               :disabled="refetch.disabled"
               class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
-              @click="c.fetchPrices(true)"
+              @click="c.fetchPrices(c.missingCount.value === 0)"
             >
               <span aria-hidden="true">⟳</span>
               {{ refetch.label }}
             </button>
           </div>
+          <p v-if="c.missingCount.value > 0 && !c.pricing.value" class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
+            画面を開いただけでは取りに行きません (レート制限に当たるため)。条件を決めてから「取得」を押してください。
+          </p>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
             <template v-for="r in priceRows" :key="r.kind">
               <label>
