@@ -1,0 +1,259 @@
+<!--
+  GemBreak.vue — クラフト前提ジェム (2026-09-16)
+  オーナー指示: 「21 とか 23% とか完成品を使ってる人数をランキングで見たい」「一旦ジェムリングのみで試してもええ」
+  → poe.ninja のアセンダンシー 1 つ分の上位キャラだけ取って、そのジェムを
+     レベル 21 以上 / 品質 23% 以上 / 両方 (完成品) で使っている人数を数える。
+  poe.ninja の全体集計 (search の dimension) にはレベル / 品質の軸が無いので、ここだけは実データを数えている。
+    src-tauri/src/gem_break.rs  取得 + 集計 (gem-break-progress を emit)
+-->
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { jaSkill } from "../i18n/skills-ja";
+import { openGemCorrupt } from "../state/app-nav";
+import gemsRaw from "../i18n/gems-client.json";
+
+/** ジェムコラプトの賭けで計算できるジェム (英語名) */
+const CORRUPTIBLE = new Set((gemsRaw as { en: string }[]).map((g) => g.en));
+
+interface Row {
+  name: string;
+  users: number;
+  lvl21: number;
+  q23: number;
+  both: number;
+  max_level: number;
+  max_quality: number;
+}
+interface Result {
+  class: string;
+  percentage: number;
+  characters: number;
+  league: string;
+  snapshot: string;
+  fetched_at: number;
+  rows: Row[];
+}
+interface Asc {
+  class: string;
+  percentage: number;
+}
+
+const inApp = isTauriRuntime();
+const STORE_KEY = "exiledesk.gem-break.result";
+const CLASS_KEY = "exiledesk.gem-break.class";
+const TOPN_KEY = "exiledesk.gem-break.topn";
+
+const result = ref<Result | null>(null);
+const ascendancies = ref<Asc[]>([]);
+const selectedClass = ref<string>("");
+const topN = ref<number>(40);
+const busy = ref(false);
+const error = ref("");
+const progress = ref<{ phase: string; done: number; total: number } | null>(null);
+
+function loadStored(): void {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) result.value = JSON.parse(raw) as Result;
+    selectedClass.value = localStorage.getItem(CLASS_KEY) ?? "";
+    const n = Number(localStorage.getItem(TOPN_KEY));
+    if (n >= 5 && n <= 100) topN.value = n;
+  } catch {
+    /* 読めなくても取り直せる */
+  }
+}
+
+async function loadAscendancies(): Promise<void> {
+  if (!inApp) return;
+  try {
+    ascendancies.value = await invoke<Asc[]>("gem_break_ascendancies");
+    if (!selectedClass.value) selectedClass.value = ascendancies.value[0]?.class ?? "";
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  }
+}
+
+async function fetchNow(): Promise<void> {
+  if (busy.value || !inApp) return;
+  busy.value = true;
+  error.value = "";
+  progress.value = null;
+  try {
+    const r = await invoke<Result>("gem_break_fetch", {
+      req: { class: selectedClass.value || null, topN: topN.value },
+    });
+    result.value = r;
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(r));
+      localStorage.setItem(CLASS_KEY, r.class);
+      localStorage.setItem(TOPN_KEY, String(topN.value));
+    } catch {
+      /* 保存できなくても表示はできる */
+    }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    busy.value = false;
+    progress.value = null;
+  }
+}
+
+const SECTIONS = [
+  { key: "lvl21", label: "レベル 21 以上", icon: "⬆", note: "コラプトでレベルが上がったジェムを使っている人数" },
+  { key: "q23", label: "品質 23% 以上", icon: "✧", note: "コラプトで品質が上がったジェムを使っている人数" },
+  { key: "both", label: "完成品 (両方)", icon: "☠", note: "レベル 21 以上かつ品質 23% 以上で使っている人数" },
+] as const;
+type Key = (typeof SECTIONS)[number]["key"];
+
+const PAGE = 25;
+const showAll = ref<Record<string, boolean>>({});
+function listOf(key: Key): Row[] {
+  const rows = result.value?.rows ?? [];
+  return rows
+    .filter((r) => r[key] > 0)
+    .slice()
+    .sort((a, b) => b[key] - a[key] || b.users - a.users || a.name.localeCompare(b.name));
+}
+const visible = (key: Key): Row[] => (showAll.value[key] ? listOf(key) : listOf(key).slice(0, PAGE));
+const fetchedAtText = computed(() => {
+  const t = result.value?.fetched_at;
+  if (!t) return "";
+  const d = new Date(t * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+});
+const progressText = computed(() => {
+  const p = progress.value;
+  if (!p) return "";
+  if (p.phase === "search") return "上位プレイヤーを検索中…";
+  if (p.phase === "completed") return "集計中…";
+  return `キャラ取得中 ${p.done}/${p.total}`;
+});
+
+let unlisten: UnlistenFn | null = null;
+onMounted(async () => {
+  loadStored();
+  await loadAscendancies();
+  if (inApp) {
+    unlisten = await listen<{ phase: string; done: number; total: number }>("gem-break-progress", (e) => {
+      progress.value = e.payload;
+    });
+  }
+});
+onUnmounted(() => unlisten?.());
+</script>
+
+<template>
+  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+    <header class="mb-3">
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフト前提ジェム</h1>
+      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
+        上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかのランキング。値段の判断材料用で、高い安いは含みません。
+      </p>
+      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
+        poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
+        (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
+      </p>
+    </header>
+
+    <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ取得できます。</p>
+
+    <div
+      class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
+    >
+      <label class="inline-flex items-center gap-2 min-w-0">
+        <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
+        <select v-model="selectedClass" class="sel max-w-64">
+          <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ selectedClass }}</option>
+          <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ a.class }} ({{ a.percentage.toFixed(1) }}%)</option>
+        </select>
+      </label>
+      <label class="inline-flex items-center gap-2">
+        <span class="text-[var(--exile-color-text-secondary)]">人数</span>
+        <select v-model.number="topN" class="sel">
+          <option :value="20">20 人</option>
+          <option :value="40">40 人</option>
+          <option :value="60">60 人</option>
+          <option :value="100">100 人</option>
+        </select>
+      </label>
+      <button
+        type="button"
+        :disabled="!inApp || busy || !selectedClass"
+        class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+        @click="fetchNow"
+      >
+        {{ busy ? "取得中…" : "取得" }}
+      </button>
+      <span v-if="busy && progressText" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-300">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
+        {{ progressText }}
+      </span>
+      <span v-else-if="result" class="text-[11px] text-[var(--exile-color-text-tertiary)]">
+        {{ result.class }} の上位 {{ result.characters }} 人 · {{ result.league }} · 取得 {{ fetchedAtText }}
+      </span>
+      <p v-if="error" class="basis-full text-[12px] text-amber-300">{{ error }}</p>
+    </div>
+
+    <p v-if="!result" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
+      まだ取得していません。アセンダンシーを選んで「取得」を押してください (まずは使用率トップの 1 つで十分です)。
+    </p>
+    <div v-else class="grid grid-cols-1 @4xl:grid-cols-2 @6xl:grid-cols-3 gap-4 items-start">
+      <div v-for="sec in SECTIONS" :key="sec.key" class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4">
+        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-baseline gap-2">
+          <span aria-hidden="true">{{ sec.icon }}</span>
+          <span>{{ sec.label }}</span>
+        </h2>
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-0.5 mb-2">{{ sec.note }}</p>
+        <ul class="space-y-0.5">
+          <li v-for="(r, i) in visible(sec.key)" :key="r.name" class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]">
+            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2">
+              <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
+              <div class="flex items-baseline gap-1.5 min-w-0">
+                <span class="min-w-0 truncate text-[13px]" :title="r.name">{{ jaSkill(r.name) }}</span>
+                <button
+                  v-if="CORRUPTIBLE.has(r.name)"
+                  type="button"
+                  class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
+                  :title="`ジェムコラプトの賭けで ${jaSkill(r.name)} を計算する`"
+                  @click="openGemCorrupt(r.name)"
+                >
+                  コラプト計算 ↗
+                </button>
+              </div>
+              <span class="tabular-nums text-[13px] whitespace-nowrap">
+                {{ r[sec.key] }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">/ {{ r.users }} 人</span>
+              </span>
+            </div>
+          </li>
+          <li v-if="listOf(sec.key).length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当なし</li>
+        </ul>
+        <button
+          v-if="listOf(sec.key).length > PAGE"
+          type="button"
+          class="mt-2 text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
+          @click="showAll[sec.key] = !showAll[sec.key]"
+        >
+          {{ showAll[sec.key] ? `▲ 上位 ${PAGE} 件だけ` : `▼ 残り ${listOf(sec.key).length - PAGE} 件を見る` }}
+        </button>
+      </div>
+    </div>
+  </section>
+</template>
+
+<style scoped>
+.sel {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--exile-color-bg-surface);
+  border: 1px solid var(--exile-color-border-subtle);
+}
+.sel:focus {
+  outline: none;
+  border-color: var(--exile-color-accent-focus);
+}
+</style>

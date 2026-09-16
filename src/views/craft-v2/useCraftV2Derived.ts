@@ -66,36 +66,6 @@ export function useCraftV2Derived() {
   /** 選択中アセの poe.ninja スキル使用率 (そのクラスの全キャラ、古いキャッシュでは null) */
   const activeNinjaSkills = computed(() => activeAscendancy.value?.ninjaSkills ?? null);
 
-  /**
-   * 2026-09-16: 取れた上位プレイヤー全員 (全アセンダンシー合算) のスキル使用率。
-   * レベル / 品質は poe.ninja の全体集計 (search の dimension) に無いので、取得済みキャラの実データから数える。
-   */
-  const allSkills = computed<SkillUsage[]>(() => {
-    const merged = new Map<string, SkillUsage>();
-    for (const a of ascendancies.value) {
-      for (const s of a.skills ?? []) {
-        const m = merged.get(s.nameEn);
-        if (!m) {
-          merged.set(s.nameEn, { ...s, supports: [...s.supports] });
-          continue;
-        }
-        m.count += s.count;
-        m.mainCount += s.mainCount;
-        m.lvl21 += s.lvl21;
-        m.q23 += s.q23;
-        m.both += s.both;
-        m.maxLevel = Math.max(m.maxLevel, s.maxLevel);
-        m.maxQuality = Math.max(m.maxQuality, s.maxQuality);
-      }
-    }
-    const total = allSampleSize.value;
-    const list = [...merged.values()].map((s) => ({ ...s, percentage: total > 0 ? s.count / total : 0 }));
-    list.sort((a, b) => b.count - a.count);
-    return list;
-  });
-  /** 合算の母数 (取れた上位プレイヤーの延べ人数) */
-  const allSampleSize = computed<number>(() => ascendancies.value.reduce((n, a) => n + (a.sampleSize ?? 0), 0));
-
   // ---- 低カウント折りたたみ (アセンダンシー × スロット 別に独立した state) ----
   const expandKey = computed<string>(() => `${activeAscendancyId.value}::${activeSlot.value}`);
   const showLowCountByKey = ref<Record<string, boolean>>({});
@@ -217,8 +187,6 @@ export function useCraftV2Derived() {
     skillsTab,
     activeSkills,
     activeNinjaSkills,
-    allSkills,
-    allSampleSize,
     sortedBases,
     visiblePrefix,
     visibleSuffix,

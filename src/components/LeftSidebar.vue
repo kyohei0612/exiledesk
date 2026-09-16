@@ -37,6 +37,8 @@ const items: NavItem[] = [
       { id: "unique-corrupt", icon: "🜚", label: "ユニークコラプトの賭け", group: "economy" },
       // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。poe2db の重みでシミュレーション
       { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
+      // 2026-09-16: レベル 21 / 品質 23% / 完成品 を使っている人数のランキング (剪定用)
+      { id: "gem-break", icon: "🜃", label: "クラフト前提ジェム", group: "economy" },
     ],
   },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)

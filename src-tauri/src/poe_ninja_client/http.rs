@@ -9,7 +9,7 @@ use super::*;
 // ============================================================================
 
 /// 共通 client builder (User-Agent 設定)
-pub(crate) fn build_client() -> Result<Client, String> {
+pub fn build_client() -> Result<Client, String> {
     let headers = HeaderMap::new();
     Client::builder()
         .user_agent(USER_AGENT)
