@@ -146,7 +146,29 @@ pub struct WatchState {
 }
 
 /// 記録の作り方を変えた時に上げる。合わないデータは捨てて取り直す
-pub const FLOW_SCHEMA: u32 = 2;
+///
+/// 3 … 2026-09-17: 保存済みのクエリが古い `status: securable` のままで巡回していた。
+///     出品者がオフラインになるだけで検索から消えるため、深夜に 10 件同時消失のような
+///     「売れた」誤判定が出ていた (コメット / チャージレギュレーションで確認)。
+pub const FLOW_SCHEMA: u32 = 3;
+
+/// 保存済みのクエリを今のルールに合わせる。
+///
+/// 追跡の検索は必ず `status: any` にする。`securable` (直近接続中) だと出品者が
+/// 寝落ちしただけで検索から消えて、売れたことにされてしまう。
+/// 画面側のクエリは直してあるが、保存済みの古いクエリがそのまま使われていたので、
+/// ここで送る直前に必ず上書きする (2026-09-17)。
+fn force_status_any(query: &mut serde_json::Value) -> bool {
+    let Some(q) = query.get_mut("query") else { return false };
+    let now_any = q.get("status").and_then(|s| s.get("option")).and_then(|o| o.as_str()) == Some("any");
+    if now_any {
+        return false;
+    }
+    if let Some(obj) = q.as_object_mut() {
+        obj.insert("status".to_string(), serde_json::json!({ "option": "any" }));
+    }
+    true
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct FlowStore {
@@ -301,6 +323,16 @@ fn load_store(app: &tauri::AppHandle) -> FlowStore {
             w.auto = !w.manual;
         }
     }
+    // 古いクエリ (securable) はここで直す。直った物は追跡データを捨てる (別の検索なので比べられない)
+    let mut fixed: Vec<String> = Vec::new();
+    for w in store.watches.iter_mut() {
+        if force_status_any(&mut w.query) {
+            fixed.push(w.key.clone());
+        }
+    }
+    for k in fixed {
+        store.states.remove(&k);
+    }
     if store.schema != FLOW_SCHEMA {
         store.schema = FLOW_SCHEMA;
         store.states.clear();
@@ -354,11 +386,18 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
         .filter(|w| w.manual)
         .map(|w| Watch { auto: false, ..w.clone() })
         .collect();
+    // 検索条件が変わった銘柄 (記録を作り直す)
+    let mut changed: Vec<String> = Vec::new();
     for w in req.watches {
         match watches.iter_mut().find(|x| x.key == w.key) {
             // 手動で追っていた銘柄が自動リストにも載った: 巡回に入れる。
             // 記録 (states) はそのまま使うので、手動で貯めたぶんの続きから判断される
             Some(existing) => {
+                // 検索条件が変わったら、前の記録は別の検索の結果なので比べられない。
+                // そのまま残すと「消えた = 売れた」と誤判定するので捨てる (2026-09-17)
+                if existing.query != w.query {
+                    changed.push(w.key.clone());
+                }
                 existing.auto = true;
                 existing.label = w.label;
                 existing.query = w.query;
@@ -366,6 +405,9 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
             }
             None => watches.push(Watch { manual: false, auto: true, ..w }),
         }
+    }
+    for k in &changed {
+        store.states.remove(k);
     }
     let keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
     // 外れた銘柄の記録は残す (7 日触られていない物だけ捨てる)
@@ -758,10 +800,12 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         let _ = resumed;
         // --- search: 総数と ID 一覧 ---
+        let mut query = watch.query.clone();
+        force_status_any(&mut query);
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
             site: site.clone(),
-            query: watch.query.clone(),
+            query,
         };
         let mut body = match crate::trade2::trade2_search(search.clone()).await {
             Ok(v) => Some(v),
@@ -1166,6 +1210,16 @@ mod tests {
         apply_sample(&mut st, now + 1200, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         assert_eq!(st.daily[0].gone, 0, "日次の消えた件数も戻す");
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
+    }
+
+    /// 古いクエリ (securable) は any に直す
+    #[test]
+    fn force_status_any_rewrites_old_queries() {
+        let mut q = serde_json::json!({"query":{"status":{"option":"securable"},"type":{"option":"Comet"}},"sort":{"price":"asc"}});
+        assert!(force_status_any(&mut q), "直したら true");
+        assert_eq!(q["query"]["status"]["option"], "any");
+        assert_eq!(q["query"]["type"]["option"], "Comet", "他の条件は触らない");
+        assert!(!force_status_any(&mut q), "もう any なら false");
     }
 
     /// 手動で追っていた銘柄が自動リストにも載ったら、巡回に入れて記録は続きから使う
