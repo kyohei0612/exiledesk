@@ -260,8 +260,8 @@ const flow = computed(() => flowOf("finished"));
 /** ホバーで出す内訳 */
 function flowTitleOf(f: ReturnType<typeof flowOf>): string {
   return [
-    `半分が売れるまで: ${fmtAge(f.medianMin)}`,
-    `24 時間以内に売れる: ${fmtPct(f.soldIn24h)} · 48 時間以内: ${fmtPct(f.soldIn48h)}`,
+    `売れるまでの目安: ${fmtAge(f.medianMin)} (追跡した出品の半分が消えるまでの時間)`,
+    `1 日以内に売れる割合: ${fmtPct(f.soldIn24h)} · 2 日以内: ${fmtPct(f.soldIn48h)}`,
     `追跡: 消えた ${f.gone} 件 / まだ残っている ${f.alive} 件`,
     f.stale > 0
       ? `48 時間以上売れ残り: ${f.stale} 件${f.staleRatio != null ? ` (最安の ${f.staleRatio.toFixed(1)} 倍の値付け)` : ""}`
@@ -799,7 +799,7 @@ const summary = computed(() => {
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ f.medianMin != null ? `半分売れるまで ${fmtAge(f.medianMin)}` : `24h ${fmtPct(f.soldIn24h)}` }}
+                        {{ f.medianMin != null ? `売れるまで約 ${fmtAge(f.medianMin)}` : `1 日で ${fmtPct(f.soldIn24h)} 売れる` }}
                       </span>
                     </div>
                     <span
