@@ -790,8 +790,8 @@ const summary = computed(() => {
             <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
 
             <span class="tabular-nums text-[var(--exile-color-text-tertiary)]">
-              {{ flowStatus.rounds }} 周目 · 最終 {{ fmtClock(flowStatus.last_at) }} · 自動 {{ flowStatus.auto_watches }}
-              / 手動 {{ flowStatus.manual_watches }} 銘柄
+              {{ flowStatus.rounds }} 周目 · {{ flowStatus.slices }} 分割の {{ flowStatus.slice + 1 }} 組目 · 最終 {{ fmtClock(flowStatus.last_at) }} ·
+              自動 {{ flowStatus.auto_watches }} / 手動 {{ flowStatus.manual_watches }} 銘柄
             </span>
             <span v-if="rateText" class="tabular-nums text-[var(--exile-color-text-tertiary)]">使った回数 {{ rateText }}</span>
 

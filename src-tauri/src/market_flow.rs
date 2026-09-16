@@ -19,10 +19,15 @@
 //! 手動で足した銘柄 (manual=true) は巡回に入れず、画面の「再取得」を押した時だけ記録する。
 //! (自動リストの入れ替えでは消えないので、記録は貯まり続ける)
 //!
-//! ## 取得量 (オーナー指示: 検索の回数を間引く)
+//! ## 取得量 (オーナー指示: 検索の回数を間引く / ばらす)
 //! 1 銘柄あたり毎時 search 1 + fetch 1。生存確認は search が返す ID 一覧 (最大 100 件)
 //! で賄い、そこに載らない物だけ 3 時間おきにまとめて fetch する (1 回 10 件まで)。
 //! trade2 の制限: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間。
+//!
+//! 1 時間ぶんをまとめて取ると連続アクセスで制限に当たるので、**10 分おきに 1/6 ずつ**取る
+//! (オーナー指示 2026-09-16)。銘柄を 6 組に分けて順番に回すので、1 時間で全銘柄が 1 巡する。
+//! 30 銘柄なら 1 回 5 銘柄 = 10 リクエスト。その 10 回も 10 分かけて均すので、
+//! 実際の送信は 1 分に 1 回程度になる (バーストを作らない)。
 //!
 //! ## キャッシュの上限 (オーナー指示: 1 ID あたり 1 週間)
 //! 追跡は 1 ID につき 7 日で打ち切り、それ以降は日次集計に畳んで捨てる。
@@ -141,9 +146,15 @@ pub struct FlowStore {
     /// 何周したか (UI に出す)
     #[serde(default)]
     pub rounds: u64,
-    /// レート制限などで取りこぼした時の再開予定 (unix 秒、0 なら通常の 1 時間間隔)
+    /// レート制限などで取りこぼした時の再開予定 (unix 秒、0 なら通常の間隔)
     #[serde(default)]
     pub retry_at: i64,
+    /// 次に取る組 (0..SLICES)。10 分おきに 1 組ずつ回す
+    #[serde(default)]
+    pub slice_cursor: usize,
+    /// 最後に 1 組を取った時刻
+    #[serde(default)]
+    pub sliced_at: i64,
     /// 追跡リストを更新した時刻
     pub list_refreshed_at: i64,
     pub league: String,
@@ -167,8 +178,12 @@ const DAILY_MAX_DAYS: usize = 30;
 const CONFIRM_INTERVAL_SECS: i64 = 3 * 3600;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
-/// サンプリング周期
+/// 全銘柄が 1 巡する周期
 const SAMPLE_INTERVAL: Duration = Duration::from_secs(3600);
+/// 1 時間を何回に分けて取るか (1 回あたりの連続アクセスを減らす)
+const SLICES: usize = 6;
+/// 分割 1 回の間隔 (SAMPLE_INTERVAL / SLICES)
+const SLICE_INTERVAL_SECS: i64 = 600;
 /// 起動直後の 1 回目を飛ばす条件
 const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
@@ -567,34 +582,51 @@ pub fn prune(state: &mut WatchState, now: i64) {
 // サンプリング (HTTP)
 // ============================================================================
 
+/// 全銘柄を 1 周する (手動ボタン用)
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
+    sample_slice(app, None).await
+}
+
+/// `slice` を渡すとその組だけ取る (10 分おきの自動取得)。None なら全銘柄。
+pub async fn sample_slice(app: &tauri::AppHandle, slice: Option<usize>) -> Result<(), String> {
     if SAMPLING.swap(true, Ordering::SeqCst) {
         return Ok(()); // 既に走っている
     }
-    let result = sample_inner(app).await;
+    let result = sample_inner(app, slice).await;
     SAMPLING.store(false, Ordering::SeqCst);
     result
 }
 
-async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
+async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<(), String> {
     let store = load_store(app);
     if store.watches.is_empty() || store.league.is_empty() {
         return Ok(());
     }
     let site = if store.site.is_empty() { None } else { Some(store.site.clone()) };
     let now = now_secs();
-    let auto: Vec<&Watch> = store.watches.iter().filter(|w| !w.manual).collect();
+    // 自動で追う銘柄を 6 組に分け、指定された組だけ取る (10 分おきに 1 組)
+    let auto: Vec<&Watch> = store
+        .watches
+        .iter()
+        .filter(|w| !w.manual)
+        .enumerate()
+        .filter(|(i, _)| slice.map(|sl| i % SLICES == sl).unwrap_or(true))
+        .map(|(_, w)| w)
+        .collect();
     let total_watches = auto.len();
+    // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
+    // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
+    let pace = if slice.is_some() && total_watches > 0 {
+        let secs = ((SLICE_INTERVAL_SECS as f64 * 0.9) / (total_watches as f64 * 2.0)).clamp(8.0, 120.0);
+        Duration::from_secs(secs as u64)
+    } else {
+        REQUEST_INTERVAL
+    };
     let mut index = 0usize;
     let mut incomplete = false;
     set_error(None);
 
-    for watch in &store.watches {
-        // 手動で足した銘柄は 1 時間ごとの巡回に入れない (オーナー指示 2026-09-16)。
-        // 毎時のリクエスト枠は自動リストに残し、手動分は画面の「再取得」を押した時に記録する。
-        if watch.manual {
-            continue;
-        }
+    for watch in auto.iter().copied() {
         index += 1;
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         // --- search: 総数と ID 一覧 ---
@@ -634,7 +666,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         }
         let Some(body) = body else {
             incomplete = true;
-            tokio::time::sleep(REQUEST_INTERVAL).await;
+            tokio::time::sleep(pace).await;
             continue;
         };
         // レート制限の使用状況を控える (UI に出す)
@@ -651,7 +683,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
             .and_then(|v| v.as_array())
             .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect())
             .unwrap_or_default();
-        tokio::time::sleep(REQUEST_INTERVAL).await;
+        tokio::time::sleep(pace).await;
 
         // --- fetch: 最安 10 件の値段 (新規を追跡に入れるため) ---
         let mut entries: Vec<ListingRef> = Vec::new();
@@ -679,7 +711,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                 }
                 Err(e) => eprintln!("[market_flow] fetch {} 失敗: {e}", watch.key),
             }
-            tokio::time::sleep(REQUEST_INTERVAL).await;
+            tokio::time::sleep(pace).await;
         }
 
         // --- 反映 ---
@@ -717,7 +749,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                     .unwrap_or_default(),
                 Err(e) => {
                     eprintln!("[market_flow] confirm {} 失敗: {e}", watch.key);
-                    tokio::time::sleep(REQUEST_INTERVAL).await;
+                    tokio::time::sleep(pace).await;
                     continue;
                 }
             };
@@ -727,13 +759,23 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                 prune(state, now);
             }
             save_store(app, &store_c)?;
-            tokio::time::sleep(REQUEST_INTERVAL).await;
+            tokio::time::sleep(pace).await;
         }
     }
-    // 1 周終わり。取りこぼしがあれば早めに再挑戦する (レート制限が明けたら動き出す)
+    // この組は終わり。取りこぼしがあれば早めに再挑戦する (レート制限が明けたら動き出す)
     let mut store_end = load_store(app);
-    store_end.rounds += 1;
-    store_end.sampled_at = now_secs();
+    store_end.sliced_at = now_secs();
+    if let Some(sl) = slice {
+        store_end.slice_cursor = (sl + 1) % SLICES;
+        // 最後の組まで回ったら 1 巡
+        if store_end.slice_cursor == 0 {
+            store_end.rounds += 1;
+            store_end.sampled_at = now_secs();
+        }
+    } else {
+        store_end.rounds += 1;
+        store_end.sampled_at = now_secs();
+    }
     store_end.retry_at = if incomplete {
         let until = retry_until();
         now_secs() + (until - now_secs()).max(RETRY_GAP_SECS)
@@ -770,6 +812,9 @@ pub struct FlowStatus {
     pub retry_until: i64,
     /// 取りこぼした回の再挑戦予定 (unix 秒、0 なら通常運転)
     pub retry_at: i64,
+    /// 今どの組を取っているか (1 時間を SLICES 回に分ける)
+    pub slice: usize,
+    pub slices: usize,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -791,8 +836,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         last_at: store.sampled_at,
         next_at: if store.retry_at > 0 {
             store.retry_at
-        } else if store.sampled_at > 0 {
-            store.sampled_at + SAMPLE_INTERVAL.as_secs() as i64
+        } else if store.sliced_at > 0 {
+            store.sliced_at + SLICE_INTERVAL_SECS
         } else {
             0
         },
@@ -802,18 +847,21 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
         retry_until: retry_until(),
         retry_at: store.retry_at,
+        slice: store.slice_cursor % SLICES,
+        slices: SLICES,
     })
 }
 
 /// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す
 pub fn spawn_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        // 1 回目は起動したらすぐ。直前 15 分以内に取っていれば飛ばす
+        // 起動したらすぐ 1 組取る。直前 5 分以内に取っていれば飛ばす
         tokio::time::sleep(Duration::from_secs(15)).await;
         {
             let store = load_store(&app);
-            if !store.watches.is_empty() && now_secs() - store.sampled_at >= FIRST_SAMPLE_MIN_GAP {
-                if let Err(e) = sample_once(&app).await {
+            if !store.watches.is_empty() && now_secs() - store.sliced_at >= 300 {
+                let sl = store.slice_cursor % SLICES;
+                if let Err(e) = sample_slice(&app, Some(sl)).await {
                     eprintln!("[market_flow] 起動時のサンプリング失敗: {e}");
                 }
             }
@@ -821,14 +869,15 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
         loop {
             let store = load_store(&app);
             let now = now_secs();
-            // 通常は 1 時間ごと。取りこぼした回は retry_at (レート制限の明ける頃) に再挑戦
-            let due = now - store.sampled_at >= SAMPLE_INTERVAL.as_secs() as i64 || (store.retry_at > 0 && now >= store.retry_at);
+            // 10 分おきに 1 組。取りこぼした回は retry_at (レート制限の明ける頃) に再挑戦
+            let due = now - store.sliced_at >= SLICE_INTERVAL_SECS || (store.retry_at > 0 && now >= store.retry_at);
             if due && !store.watches.is_empty() {
-                if let Err(e) = sample_once(&app).await {
+                let sl = store.slice_cursor % SLICES;
+                if let Err(e) = sample_slice(&app, Some(sl)).await {
                     eprintln!("[market_flow] サンプリング失敗: {e}");
                 }
             }
-            tokio::time::sleep(Duration::from_secs(300)).await;
+            tokio::time::sleep(Duration::from_secs(60)).await;
         }
     });
 }
