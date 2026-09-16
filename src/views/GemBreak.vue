@@ -182,6 +182,7 @@ onUnmounted(() => unlisten?.());
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
         (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
+        装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
       </p>
     </header>
 
