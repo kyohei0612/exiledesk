@@ -1,38 +1,51 @@
 /**
- * market-flow.ts — 捌き速度 (2026-09-16、旧 gem-flow)
+ * market-flow.ts — 捌き速度 (2026-09-16)
  *
- * Rust 側 (src-tauri/src/market_flow.rs) が 1 時間ごとに記録した出品の状態から、
+ * Rust 側 (src-tauri/src/market_flow.rs) が出品 1 件ずつを ID で追った記録から、
  * 「この商品はどれくらいで売れるのか」を出す。ジェム専用ではなく、trade2 のクエリを
  * 渡して登録した銘柄なら何でも同じ仕組みで測れる。
  *
- * ## 指標の選び方 (examples/gem_flow_sim.rs で 6 パターンの市場を作って検証)
- * 「今並んでいる出品の滞留時間」は **速い市場ほど遅く出る** (良い出品は覗く前に売れていて、
- * 目に入るのは売れ残りだけ)。実際の待ち時間と順序が合ったのは **消失率** だけだった。
- *   需給均衡 (実際 21 分): 滞留の中央値 18.4 時間 / 消失率 31%
- *   供給過多 (実際 1.5 時間): 滞留 20.6 時間 / 消失率 11%
- *   死んだ市場 (実際 8.8 時間): 滞留 2.7 日 / 消失率 2%
- * よって主指標は「前回見えていた出品 ID が 1 時間後に何割消えたか」。
+ * ## 測り方
+ * 追跡中の出品には 2 種類ある:
+ *   - 消えた物   … 寿命 = 消えた時刻 − 初めて見た時刻 (売れたか取り下げたか)
+ *   - まだある物 … 「少なくとも今の齢までは売れなかった」という打ち切りデータ
+ * 消えた物だけで平均を取ると売れ残りを無視した速い数字になるので、打ち切りも含めて
+ * **生存分析 (Kaplan-Meier)** で「半分が消えるまでの時間」を出す。
  *
- * 1 つだけ検出できない市場がある: 「即売れ + 強気出品だらけ」(見える範囲が全部売れ残り)。
- * これは「最安だけ頻繁に入れ替わるのに在庫が動かない」という形で出るので、別に警告する。
+ * 以前は「今並んでいる出品が何分前に出された物か」で測っていたが、
+ * examples/gem_flow_sim.rs で検証したところ **速い市場ほど遅く出る** (良い出品は覗く前に
+ * 売れていて、目に入るのは売れ残りだけ) ため捨てた。
+ *
+ * ## 判定 (オーナー指示 2026-09-16)
+ *   24 時間以内に半分売れる → 速い / 1〜2 日 → 普通 / 48 時間を超える → 遅い
  */
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 
-export interface FlowSample {
-  t: number;
-  total: number;
-  median_age_min: number | null;
-  avg_age_min?: number | null;
-  seen: number;
-  entries?: ListingRef[];
-  cheapest_amount: number | null;
-  cheapest_currency: string | null;
-}
-export interface ListingRef {
+export interface Tracked {
   id: string;
+  first_seen: number;
+  last_seen: number;
+  gone_at?: number | null;
   amount?: number | null;
   currency?: string | null;
+}
+export interface Daily {
+  day: number;
+  added: number;
+  gone: number;
+  survived: number;
+  total_avg: number;
+  samples: number;
+}
+export interface WatchState {
+  tracked: Tracked[];
+  daily: Daily[];
+  total: number;
+  sampled_at: number;
+  confirmed_at?: number;
+  cheapest_amount?: number | null;
+  cheapest_currency?: string | null;
 }
 export interface Watch {
   key: string;
@@ -46,10 +59,15 @@ export interface FlowStore {
   league: string;
   site: string;
   watches: Watch[];
-  samples: Record<string, FlowSample[]>;
+  states: Record<string, WatchState>;
+}
+export interface ListingRef {
+  id: string;
+  amount?: number | null;
+  currency?: string | null;
 }
 
-const EMPTY: FlowStore = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], samples: {} };
+const EMPTY: FlowStore = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
 
 export async function loadFlow(): Promise<FlowStore> {
   if (!isTauriRuntime()) return EMPTY;
@@ -70,17 +88,8 @@ export async function setWatches(watches: Watch[], league: string, site: string)
   }
 }
 
-/** 手で取った結果を同じ履歴に差し込む */
-export async function recordFlow(sample: {
-  key: string;
-  total: number;
-  median_age_min: number | null;
-  avg_age_min: number | null;
-  seen: number;
-  entries: ListingRef[];
-  cheapest_amount: number | null;
-  cheapest_currency: string | null;
-}): Promise<void> {
+/** 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」) */
+export async function recordFlow(sample: { key: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<void> {
   if (!isTauriRuntime()) return;
   try {
     await invoke("market_flow_record", { req: sample });
@@ -89,136 +98,129 @@ export async function recordFlow(sample: {
   }
 }
 
-export type FlowTone = "fast" | "normal" | "slow" | "suspect" | "unknown";
+export type FlowTone = "fast" | "normal" | "slow" | "unknown";
 
 export interface FlowSummary {
-  /** "速い" / "普通" / "遅い" / "速いかも" / "" */
+  /** "速い" / "普通" / "遅い" / "" */
   label: string;
   tone: FlowTone;
-  /** 1 時間あたりの消失率 (0-1)。主指標 */
-  turnover: number | null;
-  /** 待ち時間の目安 (分)。見えている件数 ÷ 1 時間の消失数 */
-  waitMin: number | null;
-  /** 最安が入れ替わった割合 (0-1) */
-  cheapestChurn: number | null;
-  /** 出品総数 (直近) と 24 時間の増減 */
-  totalNow: number | null;
-  totalDelta: number | null;
-  /** 判定に使えた比較の回数 (サンプル間の対) */
-  pairs: number;
-  /** 値段帯が入れ替わって比較できなかった回数 */
-  skipped: number;
-  count: number;
+  /** 半分が売れるまでの時間 (分)。生存分析の中央値。求まらなければ null */
+  medianMin: number | null;
+  /** 24 時間 / 48 時間以内に売れる割合 (0-1) */
+  soldIn24h: number | null;
+  soldIn48h: number | null;
+  /** 追跡した件数 */
+  gone: number;
+  alive: number;
+  /** 直近の出品総数 */
+  total: number | null;
   lastAt: number | null;
-  /** 参考: 今並んでいる出品の滞留時間 (判定には使わない) */
-  avgAge: number | null;
+  /** 判定に足りるだけのデータがあるか */
+  enough: boolean;
 }
 
-/** シミュレーションから決めたしきい値 (1 時間あたりの消失率) */
-const FAST_TURNOVER = 0.2;
-const SLOW_TURNOVER = 0.08;
-/** 在庫が動かないのに最安だけ入れ替わる = 見えている価格帯より下で売れている疑い */
-const SUSPECT_CHURN = 0.5;
+const HOUR = 3600;
+/** オーナー指示: 24 時間以内=速い / 48 時間以内=普通 / それ以降=遅い */
+const FAST_SECS = 24 * HOUR;
+const NORMAL_SECS = 48 * HOUR;
+/** 判定を出すのに要る最低件数 */
+const MIN_EVENTS = 3;
 
 const EMPTY_SUMMARY: FlowSummary = {
   label: "",
   tone: "unknown",
-  turnover: null,
-  waitMin: null,
-  cheapestChurn: null,
-  totalNow: null,
-  totalDelta: null,
-  pairs: 0,
-  skipped: 0,
-  count: 0,
+  medianMin: null,
+  soldIn24h: null,
+  soldIn48h: null,
+  gone: 0,
+  alive: 0,
+  total: null,
   lastAt: null,
-  avgAge: null,
+  enough: false,
 };
 
 /**
- * 直近のサンプルから捌き速度を出す。
- *
- * 消失の数え方に 1 つ仕掛けがある: 「安い出品がまとめて出てきて、前に見えていた高い出品が
- * 一覧から押し出された」時に、それを売れたと数えてはいけない (オーナーの例: 50 神が滞留して
- * いるところに 40 神が 20 件参戦 → 一見 100% 入れ替わるが 1 件も売れていない)。
- * そこで「前回見えていた出品のうち、**今回の一覧に載る値段だったはずの物**」だけを数える。
- *
- * @param toEx 値段を高貴建てに直す関数 (通貨がまちまちなので呼び出し側の相場を使う)
+ * Kaplan-Meier 法の生存曲線。
+ * `events` = 消えるまでの秒数、`censored` = まだ売れていない出品の現在の齢 (打ち切り)。
  */
-export function summarizeFlow(
-  samples: FlowSample[] | undefined,
-  toEx: (amount: number, currency: string) => number | null = () => null,
-): FlowSummary {
-  const list = samples ?? [];
-  if (list.length === 0) return EMPTY_SUMMARY;
-  const last = list[list.length - 1];
-  const base = list[Math.max(0, list.length - 25)];
-
-  /** 出品の値段 (高貴建て)。換算できなければ null */
-  const priceOf = (e: ListingRef): number | null => {
-    if (e.amount == null || !e.currency) return null;
-    return toEx(e.amount, e.currency);
-  };
-
-  let goneWeighted = 0;
-  let hoursTotal = 0;
-  let churnHit = 0;
-  let pairs = 0;
-  let skipped = 0;
-  for (let i = 1; i < list.length; i++) {
-    const prev = list[i - 1];
-    const cur = list[i];
-    const prevEntries = prev.entries ?? [];
-    const curEntries = cur.entries ?? [];
-    if (prevEntries.length === 0 || curEntries.length === 0) continue;
-    const hours = (cur.t - prev.t) / 3600;
-    // 間が空きすぎた対 (アプリを閉じていた等) は捨てる
-    if (!(hours > 0.2 && hours <= 6)) continue;
-
-    // 今回の一覧に載っている一番高い値段。これより高い出品は「見えなくなっただけ」かもしれない
-    const curPrices = curEntries.map(priceOf).filter((v): v is number => v != null);
-    const visibleMax = curPrices.length > 0 && curEntries.length >= 10 ? Math.max(...curPrices) : Infinity;
-    const curIds = new Set(curEntries.map((e) => e.id));
-
-    let checked = 0;
-    let gone = 0;
-    for (const e of prevEntries) {
-      const p = priceOf(e);
-      // 押し出された可能性がある物は数えない (値段が分からない物は数える = 保守的)
-      if (p != null && p > visibleMax) continue;
-      checked++;
-      if (!curIds.has(e.id)) gone++;
+export function survivalCurve(events: number[], censored: number[]): { t: number; s: number }[] {
+  const all = [
+    ...events.map((t) => ({ t, event: true })),
+    ...censored.map((t) => ({ t, event: false })),
+  ].sort((a, b) => a.t - b.t || (a.event ? -1 : 1));
+  const curve: { t: number; s: number }[] = [];
+  let s = 1;
+  let i = 0;
+  while (i < all.length) {
+    const t = all[i].t;
+    const atRisk = all.length - i; // この時刻の直前まで残っている件数
+    let d = 0;
+    while (i < all.length && all[i].t === t) {
+      if (all[i].event) d++;
+      i++;
     }
-    // 比較できる出品が少なすぎる対は捨てる (値段帯がごっそり入れ替わった時など)
-    if (checked < 3) {
-      skipped++;
-      continue;
+    if (d > 0 && atRisk > 0) {
+      s *= 1 - d / atRisk;
+      curve.push({ t, s });
     }
-    goneWeighted += gone / checked;
-    hoursTotal += hours;
-    if (prevEntries[0]?.id !== curEntries[0]?.id) churnHit++;
-    pairs++;
+  }
+  return curve;
+}
+
+/** 生存曲線から「その時刻までに消える割合」を読む */
+function soldBy(curve: { t: number; s: number }[], t: number): number | null {
+  if (curve.length === 0) return null;
+  let s = 1;
+  for (const p of curve) {
+    if (p.t > t) break;
+    s = p.s;
+  }
+  return 1 - s;
+}
+
+/** 生存率が 0.5 を切る時刻 (= 半分が売れるまで)。届かなければ null */
+function medianFrom(curve: { t: number; s: number }[]): number | null {
+  for (const p of curve) {
+    if (p.s <= 0.5) return p.t;
+  }
+  return null;
+}
+
+/** 追跡記録から捌き速度を出す */
+export function summarizeFlow(state: WatchState | undefined, nowSec: number = Math.floor(Date.now() / 1000)): FlowSummary {
+  if (!state || !Array.isArray(state.tracked)) return EMPTY_SUMMARY;
+  const events: number[] = [];
+  const censored: number[] = [];
+  for (const t of state.tracked) {
+    if (t.gone_at) events.push(Math.max(60, t.gone_at - t.first_seen));
+    else censored.push(Math.max(60, nowSec - t.first_seen));
+  }
+  const gone = events.length;
+  const alive = censored.length;
+  if (gone === 0 && alive === 0) {
+    return { ...EMPTY_SUMMARY, total: state.total ?? null, lastAt: state.sampled_at || null };
   }
 
-  const turnover = pairs > 0 && hoursTotal > 0 ? goneWeighted / hoursTotal : null;
-  const cheapestChurn = pairs > 0 ? churnHit / pairs : null;
-  // 待ち時間 = 1 ÷ 1 時間あたりの消失率
-  const waitMin = turnover != null && turnover > 0 ? Math.round(60 / turnover) : null;
+  const curve = survivalCurve(events, censored);
+  const median = medianFrom(curve);
+  const soldIn24h = soldBy(curve, FAST_SECS);
+  const soldIn48h = soldBy(curve, NORMAL_SECS);
+
+  // 判定に足りるか: 消えた記録が 3 件以上、または 48 時間以上売れ残りが 3 件以上
+  const longSurvivors = censored.filter((c) => c >= NORMAL_SECS).length;
+  const enough = gone >= MIN_EVENTS || longSurvivors >= MIN_EVENTS;
 
   let tone: FlowTone = "unknown";
   let label = "";
-  if (turnover != null) {
-    if (turnover >= FAST_TURNOVER) {
+  if (enough) {
+    if (median != null && median <= FAST_SECS) {
       tone = "fast";
       label = "速い";
-    } else if (turnover >= SLOW_TURNOVER) {
+    } else if (median != null && median <= NORMAL_SECS) {
       tone = "normal";
       label = "普通";
-    } else if ((cheapestChurn ?? 0) >= SUSPECT_CHURN) {
-      // 在庫は動かないのに最安だけ毎回入れ替わる = 表示価格より下で即売れしている疑い
-      tone = "suspect";
-      label = "速いかも";
     } else {
+      // 中央値が 48 時間を超える、または半分も売れないまま 48 時間以上残っている
       tone = "slow";
       label = "遅い";
     }
@@ -227,16 +229,14 @@ export function summarizeFlow(
   return {
     label,
     tone,
-    turnover,
-    waitMin,
-    cheapestChurn,
-    totalNow: last.total,
-    totalDelta: list.length > 1 ? last.total - base.total : null,
-    pairs,
-    skipped,
-    count: list.length,
-    lastAt: last.t,
-    avgAge: last.avg_age_min ?? last.median_age_min ?? null,
+    medianMin: median != null ? Math.round(median / 60) : null,
+    soldIn24h,
+    soldIn48h,
+    gone,
+    alive,
+    total: state.total ?? null,
+    lastAt: state.sampled_at || null,
+    enough,
   };
 }
 
@@ -247,4 +247,9 @@ export function fmtAge(min: number | null): string {
   const h = Math.floor(min / 60);
   if (h < 24) return `${h} 時間 ${min % 60} 分`;
   return `${Math.floor(h / 24)} 日 ${h % 24} 時間`;
+}
+
+/** 0-1 → "78%" */
+export function fmtPct(v: number | null): string {
+  return v == null ? "—" : `${Math.round(v * 100)}%`;
 }

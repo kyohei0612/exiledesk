@@ -1,28 +1,30 @@
-//! 捌き速度の追跡 (2026-09-16、旧 gem_flow)
+//! 捌き速度の追跡 (2026-09-16)
 //!
-//! 「この商品は何時間で売れるのか」を、公式 trade2 の出品を定期的に覗いて測る。
+//! 「この商品は何日で売れるのか」を、公式 trade2 の出品を定期的に覗いて測る。
 //! ジェム専用ではなく、trade2 のクエリを 1 本渡せば何でも追える (レア装備でも通貨でも)。
 //!
-//! ## 何を測るか (シミュレーションで検証済み: examples/gem_flow_sim.rs)
-//! 素朴に「今並んでいる出品が何分前に出された物か」を見ると **速い市場ほど遅く出る**。
-//! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。6 パターンの市場を
-//! ダミーで作って測ったところ、実際の待ち時間と順序が合うのは **消失率** だけだった:
+//! ## 測り方: 出品 1 件ずつを ID で追う
+//! 最安 10 件の listing ID を「追跡対象」に入れ、毎時の search が返す ID 一覧に
+//! 載っているかで生死を確認する。消えた時刻 − 初めて見た時刻 = その出品の寿命。
+//! 窓 (最安 10 件) から押し出されただけの物を「売れた」と誤判定しないため、ID で追う。
 //!
-//! | 市場              | 実際の待ち | 滞留の中央値 | 消失率 |
-//! |-------------------|-----------|-------------|--------|
-//! | 需給均衡 (速い)    | 21 分     | 18.4 時間   | 31%    |
-//! | 供給過多 (遅い)    | 1.5 時間  | 20.6 時間   | 11%    |
-//! | 速い + 強気が居座る | 14 分     | 2.2 日      | 15%    |
-//! | 薄い市場          | 6 時間    | 1.7 日      | 4%     |
-//! | 死んだ市場        | 8.8 時間  | 2.7 日      | 2%     |
+//! オーナー指摘の例:「50 神が滞留しているところに 40 神が 20 件参戦」→ 最安 10 件は
+//! 丸ごと入れ替わるが、50 神の ID は追跡し続けるので売れたことにはならない。
 //!
-//! そこで **前回見えていた出品 ID が今回何割消えたか** を主指標にする。
-//! 1 例外だけ検出できない: 「即売れ + 強気出品だらけ」(見える範囲が全部売れ残り)。
-//! これは「最安だけ頻繁に入れ替わるのに在庫が動かない」で別途警告する。
+//! ## 前の実装 (滞留時間) を捨てた理由
+//! examples/gem_flow_sim.rs で 6 パターンの市場を作って測ったところ、
+//! 「今並んでいる出品が何分前に出された物か」は **速い市場ほど遅く出た**。
+//! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。
 //!
-//! 取得量: 1 銘柄あたり search 1 + fetch 1 = 2 リクエスト / 時。
-//! trade2 の制限 (5/10 秒, 15/60 秒, 30/5 分, 600/6 時間) に対して 8 秒間隔で流す。
+//! ## 取得量 (オーナー指示: 検索の回数を間引く)
+//! 1 銘柄あたり毎時 search 1 + fetch 1。生存確認は search が返す ID 一覧 (最大 100 件)
+//! で賄い、そこに載らない物だけ 3 時間おきにまとめて fetch する (1 回 10 件まで)。
+//! trade2 の制限: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間。
+//!
+//! ## キャッシュの上限 (オーナー指示: 1 ID あたり 1 週間)
+//! 追跡は 1 ID につき 7 日で打ち切り、それ以降は日次集計に畳んで捨てる。
 
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,6 +32,10 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
+
+// ============================================================================
+// データ構造
+// ============================================================================
 
 /// 追跡する銘柄 1 つ (ジェムでも装備でも、trade2 のクエリがあれば何でも)
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -46,64 +52,105 @@ pub struct Watch {
     pub note: String,
 }
 
-/// 1 回のサンプル
+/// 追跡中 (または消えた) 出品 1 件
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct FlowSample {
-    /// unix 秒
-    pub t: i64,
-    /// 条件に合う出品の総数
-    pub total: u64,
-    /// 見た出品のうち「出品されてからの経過分」の中央値 (取れなければ None)
-    pub median_age_min: Option<i64>,
-    /// 同じく平均 (表示用。判定は外れ値に強い中央値で行う)
-    #[serde(default)]
-    pub avg_age_min: Option<i64>,
-    /// 実際に見た出品数 (最大 10)
-    pub seen: usize,
-    /// その時見えていた最安 10 件 (消失率の計算に使う。主指標)。
-    /// 値段も持つのは「安い出品がまとめて出てきて押し出されただけ」を売れたと誤判定しないため。
-    #[serde(default)]
-    pub entries: Vec<ListingRef>,
-    /// 最安値 (そのままの通貨)
-    pub cheapest_amount: Option<f64>,
-    pub cheapest_currency: Option<String>,
-}
-
-/// 見えていた出品 1 件 (ID と値段)
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ListingRef {
+pub struct Tracked {
     pub id: String,
+    /// 初めて見た時刻 (unix 秒)
+    pub first_seen: i64,
+    /// 最後に生存を確認した時刻
+    pub last_seen: i64,
+    /// 消えたと判断した時刻 (生きていれば None)
+    #[serde(default)]
+    pub gone_at: Option<i64>,
     #[serde(default)]
     pub amount: Option<f64>,
     #[serde(default)]
     pub currency: Option<String>,
 }
 
+impl Tracked {
+    /// 寿命 (秒)。消えていれば消滅まで、生きていれば今まで (打ち切り)
+    pub fn age(&self, now: i64) -> i64 {
+        self.gone_at.unwrap_or(now) - self.first_seen
+    }
+}
+
+/// 1 日ぶんの集計 (追跡を捨てた後も残る)
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Daily {
+    /// その日の 0 時 (unix 秒、UTC 基準で丸めるだけなので厳密な暦日でなくてよい)
+    pub day: i64,
+    /// 新しく追跡に入った件数
+    pub added: u32,
+    /// 消えた件数
+    pub gone: u32,
+    /// 7 日追っても消えなかった件数 (打ち切り)
+    pub survived: u32,
+    /// 出品総数の平均
+    pub total_avg: f64,
+    /// サンプル回数
+    pub samples: u32,
+}
+
+/// 銘柄ごとの状態
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct WatchState {
+    /// 追跡中 + 最近消えた出品 (7 日で捨てる)
+    pub tracked: Vec<Tracked>,
+    /// 日次集計 (30 日)
+    pub daily: Vec<Daily>,
+    /// 直近の出品総数
+    pub total: u64,
+    /// 最後にサンプルした時刻
+    pub sampled_at: i64,
+    /// 最後に「行方不明の ID」をまとめて確認した時刻 (3 時間おき)
+    #[serde(default)]
+    pub confirmed_at: i64,
+    /// 最安値 (表示用)
+    #[serde(default)]
+    pub cheapest_amount: Option<f64>,
+    #[serde(default)]
+    pub cheapest_currency: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct FlowStore {
     /// 最後にサンプルを取った時刻 (unix 秒)
     pub sampled_at: i64,
-    /// 追跡リストを更新した時刻 (クラフト選定ジェムの取得時刻)
+    /// 追跡リストを更新した時刻
     pub list_refreshed_at: i64,
-    /// trade2 のリーグ名
     pub league: String,
-    /// "jp" / "www"
     pub site: String,
     pub watches: Vec<Watch>,
-    /// キー → サンプル列 (古い順)
-    pub samples: std::collections::HashMap<String, Vec<FlowSample>>,
+    /// キー → 状態
+    pub states: HashMap<String, WatchState>,
 }
 
-/// 1 ジェムあたり保持するサンプル数 (1 時間ごと = 30 日分)
-const MAX_SAMPLES: usize = 24 * 30;
-/// リクエストの間隔 (trade2 の 30 回 / 5 分に対して余裕を持たせる)
+// ============================================================================
+// 定数 (オーナー指示: 判定は 3 日、1 ID の追跡は 7 日)
+// ============================================================================
+
+/// 1 ID を追う上限 (これを超えたら打ち切って日次集計に畳む)
+const TRACK_MAX_SECS: i64 = 7 * 24 * 3600;
+/// 1 銘柄で追跡する上限件数
+const TRACK_MAX_PER_WATCH: usize = 60;
+/// 日次集計を残す日数
+const DAILY_MAX_DAYS: usize = 30;
+/// 行方不明の ID をまとめて確認する間隔 (検索回数を間引くため)
+const CONFIRM_INTERVAL_SECS: i64 = 3 * 3600;
+/// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// サンプリング周期
 const SAMPLE_INTERVAL: Duration = Duration::from_secs(3600);
-/// 起動直後の 1 回目を飛ばす条件 (直前のサンプルからこの秒数以内なら取らない)
+/// 起動直後の 1 回目を飛ばす条件
 const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
+
+// ============================================================================
+// 保存
+// ============================================================================
 
 fn store_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let mut dir = app
@@ -156,12 +203,12 @@ pub struct SetWatchesRequest {
     pub site: Option<String>,
 }
 
-/// 追跡する銘柄を入れ替える (登録元の画面から呼ぶ)。外れた銘柄のサンプルは捨てる。
+/// 追跡する銘柄を入れ替える (登録元の画面から呼ぶ)。外れた銘柄の記録は捨てる。
 #[tauri::command]
 pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
-    let keys: std::collections::HashSet<String> = req.watches.iter().map(|w| w.key.clone()).collect();
-    store.samples.retain(|k, _| keys.contains(k));
+    let keys: HashSet<String> = req.watches.iter().map(|w| w.key.clone()).collect();
+    store.states.retain(|k, _| keys.contains(k));
     store.watches = req.watches;
     store.league = req.league;
     if let Some(s) = req.site {
@@ -172,108 +219,187 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
     Ok(store)
 }
 
-#[derive(Deserialize)]
-pub struct RecordRequest {
-    /// 銘柄のキー
-    pub key: String,
-    pub total: u64,
-    #[serde(default)]
-    pub median_age_min: Option<i64>,
-    #[serde(default)]
-    pub avg_age_min: Option<i64>,
-    #[serde(default)]
-    pub seen: usize,
-    #[serde(default)]
-    pub cheapest_amount: Option<f64>,
-    #[serde(default)]
-    pub cheapest_currency: Option<String>,
-    /// 見えていた出品 (ID と値段。消失率に使う)
-    #[serde(default)]
-    pub entries: Vec<ListingRef>,
-}
-
-/// 画面から手で取った結果を同じ履歴に差し込む (2026-09-16 オーナー指示)。
-/// 自動サンプルと同じ形で時系列に入るので、グラフも繋がる。
-#[tauri::command]
-pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<FlowStore, String> {
-    let mut store = load_store(&app);
-    let now = now_secs();
-    let v = store.samples.entry(req.key).or_default();
-    // 同じ時間帯に自動サンプルが入っていれば上書きする (二重計上を避ける)
-    if let Some(last) = v.last_mut() {
-        if now - last.t < 300 {
-            *last = FlowSample {
-                t: now,
-                total: req.total,
-                median_age_min: req.median_age_min,
-                avg_age_min: req.avg_age_min,
-                seen: req.seen,
-                entries: req.entries,
-                cheapest_amount: req.cheapest_amount,
-                cheapest_currency: req.cheapest_currency,
-            };
-            store.sampled_at = now;
-            save_store(&app, &store)?;
-            return Ok(store);
-        }
-    }
-    v.push(FlowSample {
-        t: now,
-        total: req.total,
-        median_age_min: req.median_age_min,
-        avg_age_min: req.avg_age_min,
-        seen: req.seen,
-        entries: req.entries,
-        cheapest_amount: req.cheapest_amount,
-        cheapest_currency: req.cheapest_currency,
-    });
-    if v.len() > MAX_SAMPLES {
-        let cut = v.len() - MAX_SAMPLES;
-        v.drain(0..cut);
-    }
-    store.sampled_at = now;
-    save_store(&app, &store)?;
-    Ok(store)
-}
-
-/// 今すぐ 1 周サンプルを取る (手動ボタン用)。取得中なら何もしない。
+/// 今すぐ 1 周サンプルを取る (手動)。取得中なら何もしない。
 #[tauri::command]
 pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<FlowStore, String> {
     sample_once(&app).await?;
     Ok(load_store(&app))
 }
 
-// ============================================================================
-// サンプリング
-// ============================================================================
-
-/// 出品時刻の文字列 ("2026-09-16T10:00:00Z") → 経過分
-fn age_minutes(indexed: &str, now: i64) -> Option<i64> {
-    // 形式は RFC3339。chrono を足さずに済ませるため手で読む (YYYY-MM-DDTHH:MM:SSZ)
-    let b = indexed.as_bytes();
-    if b.len() < 19 {
-        return None;
-    }
-    let num = |s: &str| -> Option<i64> { s.parse::<i64>().ok() };
-    let y = num(&indexed[0..4])?;
-    let mo = num(&indexed[5..7])?;
-    let d = num(&indexed[8..10])?;
-    let h = num(&indexed[11..13])?;
-    let mi = num(&indexed[14..16])?;
-    let s = num(&indexed[17..19])?;
-    // 1970-01-01 からの日数 (civil_from_days の逆、Howard Hinnant のアルゴリズム)
-    let y_adj = if mo <= 2 { y - 1 } else { y };
-    let era = if y_adj >= 0 { y_adj } else { y_adj - 399 } / 400;
-    let yoe = y_adj - era * 400;
-    let mp = (mo + 9) % 12;
-    let doy = (153 * mp + 2) / 5 + d - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    let days = era * 146_097 + doe - 719_468;
-    let epoch = days * 86_400 + h * 3600 + mi * 60 + s;
-    Some(((now - epoch).max(0)) / 60)
+#[derive(Deserialize)]
+pub struct RecordRequest {
+    /// 銘柄のキー
+    pub key: String,
+    pub total: u64,
+    /// search が返した ID 一覧 (生存確認に使う)
+    #[serde(default)]
+    pub ids: Vec<String>,
+    /// 最安 10 件 (新しく追跡に入れる)
+    #[serde(default)]
+    pub entries: Vec<ListingRef>,
 }
 
-/// 追跡中の全ジェムを 1 周サンプルする
+/// 見えていた出品 1 件 (ID と値段)
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ListingRef {
+    pub id: String,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub currency: Option<String>,
+}
+
+/// 画面から手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
+#[tauri::command]
+pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<FlowStore, String> {
+    let mut store = load_store(&app);
+    let now = now_secs();
+    let state = store.states.entry(req.key).or_default();
+    // 手動分は「search の ID 一覧が全部取れている」前提で扱う (最大 100 件)
+    apply_sample(state, now, req.total, &req.ids, &req.entries, req.total < 100);
+    prune(state, now);
+    store.sampled_at = now;
+    save_store(&app, &store)?;
+    Ok(store)
+}
+
+// ============================================================================
+// 集計の本体 (テストしやすいよう HTTP から分離)
+// ============================================================================
+
+/// 1 回のサンプルを状態に反映する。
+///
+/// * `ids` … search が返した ID 一覧 (価格の安い順、最大 100)
+/// * `entries` … 最安 10 件 (値段つき)。新規は追跡に入れる
+/// * `list_complete` … `ids` が出品全部を含んでいるか (総数 < 100 なら true)。
+///   true の時だけ「一覧に無い = 消えた」と判断できる。
+pub fn apply_sample(
+    state: &mut WatchState,
+    now: i64,
+    total: u64,
+    ids: &[String],
+    entries: &[ListingRef],
+    list_complete: bool,
+) {
+    let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    let mut gone_now = 0u32;
+
+    for t in state.tracked.iter_mut() {
+        if t.gone_at.is_some() {
+            continue;
+        }
+        if present.contains(t.id.as_str()) {
+            t.last_seen = now;
+        } else if list_complete {
+            // 出品全部が見えている状態で一覧に無い = 売れたか取り下げた
+            t.gone_at = Some(now);
+            gone_now += 1;
+        }
+        // list_complete でない時は判断を保留 (後で confirm_missing がまとめて確認する)
+    }
+
+    // 新しく見えた最安 10 件を追跡に入れる
+    let known: HashSet<String> = state.tracked.iter().map(|t| t.id.clone()).collect();
+    let mut added_now = 0u32;
+    for e in entries {
+        if known.contains(&e.id) {
+            continue;
+        }
+        state.tracked.push(Tracked {
+            id: e.id.clone(),
+            first_seen: now,
+            last_seen: now,
+            gone_at: None,
+            amount: e.amount,
+            currency: e.currency.clone(),
+        });
+        added_now += 1;
+    }
+
+    state.total = total;
+    state.sampled_at = now;
+    if let Some(first) = entries.first() {
+        state.cheapest_amount = first.amount;
+        state.cheapest_currency = first.currency.clone();
+    }
+    bump_daily(state, now, added_now, gone_now, 0, total);
+}
+
+/// 行方不明だった ID の生死が分かった時に反映する (fetch で確認した結果)。
+/// `alive` に入っていない追跡中 ID は消えたことにする。
+pub fn apply_confirm(state: &mut WatchState, now: i64, checked: &[String], alive: &HashSet<String>) {
+    let mut gone_now = 0u32;
+    for t in state.tracked.iter_mut() {
+        if t.gone_at.is_some() || !checked.contains(&t.id) {
+            continue;
+        }
+        if alive.contains(&t.id) {
+            t.last_seen = now;
+        } else {
+            t.gone_at = Some(now);
+            gone_now += 1;
+        }
+    }
+    state.confirmed_at = now;
+    if gone_now > 0 {
+        bump_daily(state, now, 0, gone_now, 0, state.total);
+    }
+}
+
+fn day_of(t: i64) -> i64 {
+    t - t.rem_euclid(86_400)
+}
+
+fn bump_daily(state: &mut WatchState, now: i64, added: u32, gone: u32, survived: u32, total: u64) {
+    let day = day_of(now);
+    if let Some(d) = state.daily.iter_mut().find(|d| d.day == day) {
+        d.added += added;
+        d.gone += gone;
+        d.survived += survived;
+        d.total_avg = (d.total_avg * d.samples as f64 + total as f64) / (d.samples + 1) as f64;
+        d.samples += 1;
+    } else {
+        state.daily.push(Daily { day, added, gone, survived, total_avg: total as f64, samples: 1 });
+    }
+    if state.daily.len() > DAILY_MAX_DAYS {
+        let cut = state.daily.len() - DAILY_MAX_DAYS;
+        state.daily.drain(0..cut);
+    }
+}
+
+/// キャッシュを膨らませないための掃除 (オーナー指示: 1 ID は 1 週間)
+pub fn prune(state: &mut WatchState, now: i64) {
+    let mut survived = 0u32;
+    state.tracked.retain(|t| {
+        match t.gone_at {
+            // 消えた記録は 7 日で捨てる (それまでは寿命の計算に使う)
+            Some(g) => now - g < TRACK_MAX_SECS,
+            // 生きたまま 7 日を超えた物は「7 日でも売れなかった」として集計に畳んで捨てる
+            None => {
+                if now - t.first_seen >= TRACK_MAX_SECS {
+                    survived += 1;
+                    false
+                } else {
+                    true
+                }
+            }
+        }
+    });
+    if survived > 0 {
+        bump_daily(state, now, 0, 0, survived, state.total);
+    }
+    // 上限を超えたら古い物から捨てる
+    if state.tracked.len() > TRACK_MAX_PER_WATCH {
+        state.tracked.sort_by_key(|t| t.first_seen);
+        let cut = state.tracked.len() - TRACK_MAX_PER_WATCH;
+        state.tracked.drain(0..cut);
+    }
+}
+
+// ============================================================================
+// サンプリング (HTTP)
+// ============================================================================
+
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
     if SAMPLING.swap(true, Ordering::SeqCst) {
         return Ok(()); // 既に走っている
@@ -290,9 +416,9 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
     }
     let site = if store.site.is_empty() { None } else { Some(store.site.clone()) };
     let now = now_secs();
-    let mut new_samples: Vec<(String, FlowSample)> = Vec::new();
 
     for watch in &store.watches {
+        // --- search: 総数と ID 一覧 ---
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
             site: site.clone(),
@@ -311,45 +437,26 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         let ids: Vec<String> = body
             .get("result")
             .and_then(|v| v.as_array())
-            .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).take(10).collect())
+            .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect())
             .unwrap_or_default();
         tokio::time::sleep(REQUEST_INTERVAL).await;
 
-        let mut ages: Vec<i64> = Vec::new();
+        // --- fetch: 最安 10 件の値段 (新規を追跡に入れるため) ---
         let mut entries: Vec<ListingRef> = Vec::new();
-        let mut cheapest: Option<(f64, String)> = None;
-        if !ids.is_empty() && !query_id.is_empty() {
-            let fetch = crate::trade2::FetchRequest { ids: ids.clone(), query_id, site: site.clone() };
+        let top: Vec<String> = ids.iter().take(10).cloned().collect();
+        if !top.is_empty() && !query_id.is_empty() {
+            let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => {
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
-                            let listing = item.get("listing");
-                            let price_amount = listing.and_then(|l| l.get("price")).and_then(|p| p.get("amount")).and_then(|x| x.as_f64());
-                            let price_currency = listing
-                                .and_then(|l| l.get("price"))
-                                .and_then(|p| p.get("currency"))
-                                .and_then(|x| x.as_str())
-                                .map(str::to_string);
-                            if let Some(id) = item.get("id").and_then(|x| x.as_str()) {
-                                entries.push(ListingRef { id: id.to_string(), amount: price_amount, currency: price_currency.clone() });
-                            }
-                            if let Some(idx) = listing.and_then(|l| l.get("indexed")).and_then(|x| x.as_str()) {
-                                if let Some(m) = age_minutes(idx, now) {
-                                    ages.push(m);
-                                }
-                            }
-                            if cheapest.is_none() {
-                                let amount = listing.and_then(|l| l.get("price")).and_then(|p| p.get("amount")).and_then(|x| x.as_f64());
-                                let currency = listing
-                                    .and_then(|l| l.get("price"))
-                                    .and_then(|p| p.get("currency"))
-                                    .and_then(|x| x.as_str())
-                                    .map(str::to_string);
-                                if let (Some(a), Some(c)) = (amount, currency) {
-                                    cheapest = Some((a, c));
-                                }
-                            }
+                            let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
+                            let price = item.get("listing").and_then(|l| l.get("price"));
+                            entries.push(ListingRef {
+                                id: id.to_string(),
+                                amount: price.and_then(|p| p.get("amount")).and_then(|x| x.as_f64()),
+                                currency: price.and_then(|p| p.get("currency")).and_then(|x| x.as_str()).map(str::to_string),
+                            });
                         }
                     }
                 }
@@ -358,43 +465,61 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
             tokio::time::sleep(REQUEST_INTERVAL).await;
         }
 
-        ages.sort_unstable();
-        let median = if ages.is_empty() { None } else { Some(ages[ages.len() / 2]) };
-        let avg = if ages.is_empty() { None } else { Some(ages.iter().sum::<i64>() / ages.len() as i64) };
-        new_samples.push((
-            watch.key.clone(),
-            FlowSample {
-                t: now,
-                total,
-                median_age_min: median,
-                avg_age_min: avg,
-                seen: ages.len(),
-                entries,
-                cheapest_amount: cheapest.as_ref().map(|c| c.0),
-                cheapest_currency: cheapest.map(|c| c.1),
-            },
-        ));
-    }
+        // --- 反映 ---
+        let mut store_now = load_store(app);
+        let state = store_now.states.entry(watch.key.clone()).or_default();
+        // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
+        let list_complete = total < 100;
+        apply_sample(state, now, total, &ids, &entries, list_complete);
 
-    // 走っている間に追跡リストが変わっている可能性があるので読み直してから足す
-    let mut store = load_store(app);
-    for (name, sample) in new_samples {
-        let v = store.samples.entry(name).or_default();
-        v.push(sample);
-        if v.len() > MAX_SAMPLES {
-            let cut = v.len() - MAX_SAMPLES;
-            v.drain(0..cut);
+        // --- 行方不明の確認 (3 時間おき、1 銘柄 10 件まで。検索回数を間引くため) ---
+        let need_confirm = !list_complete && now - state.confirmed_at >= CONFIRM_INTERVAL_SECS;
+        let missing: Vec<String> = if need_confirm {
+            let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
+            state
+                .tracked
+                .iter()
+                .filter(|t| t.gone_at.is_none() && !present.contains(t.id.as_str()))
+                .take(10)
+                .map(|t| t.id.clone())
+                .collect()
+        } else {
+            Vec::new()
+        };
+        prune(state, now);
+        store_now.sampled_at = now;
+        save_store(app, &store_now)?;
+
+        if !missing.is_empty() && !query_id.is_empty() {
+            let fetch = crate::trade2::FetchRequest { ids: missing.clone(), query_id, site: site.clone() };
+            let alive: HashSet<String> = match crate::trade2::trade2_fetch(fetch).await {
+                Ok(v) => v
+                    .get("result")
+                    .and_then(|x| x.as_array())
+                    .map(|arr| arr.iter().filter_map(|i| i.get("id").and_then(|x| x.as_str()).map(str::to_string)).collect())
+                    .unwrap_or_default(),
+                Err(e) => {
+                    eprintln!("[market_flow] confirm {} 失敗: {e}", watch.key);
+                    tokio::time::sleep(REQUEST_INTERVAL).await;
+                    continue;
+                }
+            };
+            let mut store_c = load_store(app);
+            if let Some(state) = store_c.states.get_mut(&watch.key) {
+                apply_confirm(state, now, &missing, &alive);
+                prune(state, now);
+            }
+            save_store(app, &store_c)?;
+            tokio::time::sleep(REQUEST_INTERVAL).await;
         }
     }
-    store.sampled_at = now;
-    save_store(app, &store)
+    Ok(())
 }
 
 /// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す
 pub fn spawn_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        // オーナー指示 (2026-09-16): 1 回目は起動したらすぐ取る。
-        // ただし直前 (15 分以内) に取っていれば飛ばす (再起動を繰り返した時にレート制限を焼かないため)。
+        // 1 回目は起動したらすぐ。直前 15 分以内に取っていれば飛ばす
         tokio::time::sleep(Duration::from_secs(15)).await;
         {
             let store = load_store(&app);
@@ -421,33 +546,79 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
 mod tests {
     use super::*;
 
-    /// 2026-01-01T00:00:00Z = 1767225600 (既知の値) を基準に経過分を確認
-    #[test]
-    fn age_minutes_reads_rfc3339() {
-        let base = 1_767_225_600i64;
-        assert_eq!(age_minutes("2026-01-01T00:00:00Z", base + 1800), Some(30));
-        assert_eq!(age_minutes("2026-01-01T00:00:00Z", base), Some(0));
-        // 未来の出品時刻 (時計ずれ) は 0 に丸める
-        assert_eq!(age_minutes("2026-01-01T00:00:00Z", base - 600), Some(0));
+    fn lr(id: &str, amount: f64) -> ListingRef {
+        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()) }
     }
 
-    /// 月またぎ / うるう年を含む日付でも epoch がずれない
+    /// 最安 10 件が丸ごと安い出品に入れ替わっても、前の出品は「消えた」にならない
+    /// (オーナーの例: 50 神が滞留しているところに 40 神が 20 件参戦)
     #[test]
-    fn age_minutes_handles_month_and_leap() {
-        // 2026-09-16T00:00:00Z = 1789516800
-        let sep16 = 1_789_516_800i64;
-        assert_eq!(age_minutes("2026-09-16T00:00:00Z", sep16 + 3600), Some(60));
-        // 2024-02-29 (うるう日) = 1709164800
-        let leap = 1_709_164_800i64;
-        assert_eq!(age_minutes("2024-02-29T00:00:00Z", leap + 60), Some(1));
+    fn cheaper_flood_does_not_count_as_sold() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        // 50 神が 10 件並んでいる
+        let old: Vec<String> = (0..10).map(|i| format!("old{i}")).collect();
+        let old_entries: Vec<ListingRef> = old.iter().map(|id| lr(id, 50.0)).collect();
+        apply_sample(&mut st, t0, 10, &old, &old_entries, true);
+        assert_eq!(st.tracked.len(), 10);
+
+        // 40 神が 20 件参戦。search の一覧には新旧 30 件すべてが入る
+        let new: Vec<String> = (0..20).map(|i| format!("new{i}")).collect();
+        let mut all = new.clone();
+        all.extend(old.clone());
+        let new_top: Vec<ListingRef> = new.iter().take(10).map(|id| lr(id, 40.0)).collect();
+        apply_sample(&mut st, t0 + 3600, 30, &all, &new_top, true);
+
+        // 50 神は 1 件も消えていない
+        assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0);
+        // 新しい 10 件が追跡に加わっている
+        assert_eq!(st.tracked.len(), 20);
     }
 
-    /// 形式が違う / 短い文字列は None
+    /// 一覧から消えたら売れた扱い。寿命が入る
     #[test]
-    fn age_minutes_rejects_garbage() {
-        assert_eq!(age_minutes("", 0), None);
-        assert_eq!(age_minutes("2026-09-16", 0), None);
+    fn disappearing_listing_gets_lifetime() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        apply_sample(&mut st, t0, 2, &["a".into(), "b".into()], &[lr("a", 40.0), lr("b", 41.0)], true);
+        apply_sample(&mut st, t0 + 7200, 1, &["b".into()], &[lr("b", 41.0)], true);
+        let gone: Vec<&Tracked> = st.tracked.iter().filter(|t| t.gone_at.is_some()).collect();
+        assert_eq!(gone.len(), 1);
+        assert_eq!(gone[0].id, "a");
+        assert_eq!(gone[0].age(t0 + 7200), 7200);
     }
 
+    /// 総数が 100 以上 (一覧が途中まで) の時は勝手に消えた判定をしない
+    #[test]
+    fn incomplete_list_does_not_mark_gone() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        apply_sample(&mut st, t0, 150, &["a".into()], &[lr("a", 40.0)], false);
+        apply_sample(&mut st, t0 + 3600, 150, &["z".into()], &[lr("z", 39.0)], false);
+        assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0);
+    }
+
+    /// 名指しの確認で「居なかった」なら消えた扱い
+    #[test]
+    fn confirm_marks_missing_as_gone() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        apply_sample(&mut st, t0, 150, &["a".into(), "b".into()], &[lr("a", 40.0), lr("b", 41.0)], false);
+        let alive: HashSet<String> = ["b".to_string()].into_iter().collect();
+        apply_confirm(&mut st, t0 + 10_800, &["a".to_string(), "b".to_string()], &alive);
+        let gone: Vec<&Tracked> = st.tracked.iter().filter(|t| t.gone_at.is_some()).collect();
+        assert_eq!(gone.len(), 1);
+        assert_eq!(gone[0].id, "a");
+    }
+
+    /// 7 日を超えて生き残った出品は集計に畳んで捨てる (キャッシュを膨らませない)
+    #[test]
+    fn prune_drops_after_a_week() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        apply_sample(&mut st, t0, 1, &["a".into()], &[lr("a", 40.0)], true);
+        prune(&mut st, t0 + TRACK_MAX_SECS + 60);
+        assert!(st.tracked.is_empty());
+        assert_eq!(st.daily.iter().map(|d| d.survived).sum::<u32>(), 1);
+    }
 }
-

@@ -228,27 +228,13 @@ export function useGemCorrupt() {
 
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
-  /** 手動取得の結果を売れ行きの履歴に入れる (自動サンプルと同じ形) */
+  /** 手動取得の結果を捌き速度の記録に差し込む (自動サンプルと同じ形) */
   async function recordFinishedSample(gemEn: string, r: PriceResult): Promise<void> {
-    const ages: number[] = [];
-    const now = Date.now();
-    for (const l of r.listings) {
-      if (!l.indexed) continue;
-      const t = Date.parse(l.indexed);
-      if (Number.isNaN(t)) continue;
-      ages.push(Math.max(0, Math.round((now - t) / 60000)));
-    }
-    ages.sort((a, b) => a - b);
-    const cheapest = r.listings[0];
     await recordFlow({
       key: gemEn,
       total: r.total,
-      median_age_min: ages.length > 0 ? ages[Math.floor(ages.length / 2)] : null,
-      avg_age_min: ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null,
-      seen: ages.length,
+      ids: r.listingIds ?? [],
       entries: r.listings.map((l) => ({ id: l.id, amount: l.amount, currency: l.currency })),
-      cheapest_amount: cheapest?.amount ?? null,
-      cheapest_currency: cheapest?.currency ?? null,
     });
   }
 
