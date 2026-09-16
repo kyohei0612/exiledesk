@@ -16,6 +16,9 @@
 //! 「今並んでいる出品が何分前に出された物か」は **速い市場ほど遅く出た**。
 //! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。
 //!
+//! 手動で足した銘柄 (manual=true) は巡回に入れず、画面の「再取得」を押した時だけ記録する。
+//! (自動リストの入れ替えでは消えないので、記録は貯まり続ける)
+//!
 //! ## 取得量 (オーナー指示: 検索の回数を間引く)
 //! 1 銘柄あたり毎時 search 1 + fetch 1。生存確認は search が返す ID 一覧 (最大 100 件)
 //! で賄い、そこに載らない物だけ 3 時間おきにまとめて fetch する (1 回 10 件まで)。
@@ -50,6 +53,9 @@ pub struct Watch {
     /// 補足 (「完成品を 41 人が使用」など、登録元が入れる)
     #[serde(default)]
     pub note: String,
+    /// 手動で追加した銘柄か。true なら自動リストの入れ替えで消さない (2026-09-16)
+    #[serde(default)]
+    pub manual: bool,
 }
 
 /// 追跡中 (または消えた) 出品 1 件
@@ -215,18 +221,66 @@ pub struct SetWatchesRequest {
     pub site: Option<String>,
 }
 
-/// 追跡する銘柄を入れ替える (登録元の画面から呼ぶ)。外れた銘柄の記録は捨てる。
+/// 自動リストを入れ替える (クラフト選定ジェムの取得後)。
+/// 手動で足した銘柄 (manual=true) は残す。外れた銘柄の記録は捨てる。
 #[tauri::command]
 pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
-    let keys: HashSet<String> = req.watches.iter().map(|w| w.key.clone()).collect();
+    let mut watches: Vec<Watch> = store.watches.iter().filter(|w| w.manual).cloned().collect();
+    let manual_keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
+    for w in req.watches {
+        if !manual_keys.contains(&w.key) {
+            watches.push(Watch { manual: false, ..w });
+        }
+    }
+    let keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
     store.states.retain(|k, _| keys.contains(k));
-    store.watches = req.watches;
+    store.watches = watches;
     store.league = req.league;
     if let Some(s) = req.site {
         store.site = s;
     }
     store.list_refreshed_at = now_secs();
+    save_store(&app, &store)?;
+    Ok(store)
+}
+
+#[derive(Deserialize)]
+pub struct ToggleWatchRequest {
+    pub watch: Watch,
+    /// true で追加、false で外す
+    pub on: bool,
+    #[serde(default)]
+    pub league: Option<String>,
+    #[serde(default)]
+    pub site: Option<String>,
+}
+
+/// 1 銘柄を手動で追跡に足す / 外す (ジェムコラプトの「追跡する」)。
+/// 手動で足した物は自動リストの入れ替えでは消えない。
+#[tauri::command]
+pub fn market_flow_toggle_watch(app: tauri::AppHandle, req: ToggleWatchRequest) -> Result<FlowStore, String> {
+    let mut store = load_store(&app);
+    if let Some(l) = req.league.filter(|l| !l.is_empty()) {
+        store.league = l;
+    }
+    if let Some(s) = req.site.filter(|s| !s.is_empty()) {
+        store.site = s;
+    }
+    let key = req.watch.key.clone();
+    if req.on {
+        if let Some(existing) = store.watches.iter_mut().find(|w| w.key == key) {
+            existing.manual = true;
+            existing.query = req.watch.query;
+            existing.label = req.watch.label;
+            existing.note = req.watch.note;
+        } else {
+            store.watches.push(Watch { manual: true, ..req.watch });
+        }
+    } else {
+        store.watches.retain(|w| w.key != key);
+        store.states.remove(&key);
+    }
     save_store(&app, &store)?;
     Ok(store)
 }
@@ -457,6 +511,11 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
     let now = now_secs();
 
     for watch in &store.watches {
+        // 手動で足した銘柄は 1 時間ごとの巡回に入れない (オーナー指示 2026-09-16)。
+        // 毎時のリクエスト枠は自動リストに残し、手動分は画面の「再取得」を押した時に記録する。
+        if watch.manual {
+            continue;
+        }
         // --- search: 総数と ID 一覧 ---
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
@@ -679,6 +738,26 @@ mod tests {
         let gone: Vec<&Tracked> = st.tracked.iter().filter(|t| t.gone_at.is_some()).collect();
         assert_eq!(gone.len(), 1);
         assert_eq!(gone[0].id, "a");
+    }
+
+    /// 自動リストを入れ替えても、手動で足した銘柄は残る
+    #[test]
+    fn manual_watches_survive_auto_refresh() {
+        let manual = Watch { key: "Manual".into(), label: "手動".into(), query: serde_json::json!({}), note: String::new(), manual: true };
+        let auto_old = Watch { key: "Old".into(), label: String::new(), query: serde_json::json!({}), note: String::new(), manual: false };
+        let auto_new = Watch { key: "New".into(), label: String::new(), query: serde_json::json!({}), note: String::new(), manual: false };
+        // set_watches と同じ合成をここで再現 (ファイル入出力を挟まずに検証)
+        let existing = vec![manual.clone(), auto_old];
+        let incoming = vec![auto_new.clone()];
+        let mut watches: Vec<Watch> = existing.iter().filter(|w| w.manual).cloned().collect();
+        let manual_keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
+        for w in incoming {
+            if !manual_keys.contains(&w.key) {
+                watches.push(Watch { manual: false, ..w });
+            }
+        }
+        let keys: Vec<&str> = watches.iter().map(|w| w.key.as_str()).collect();
+        assert_eq!(keys, vec!["Manual", "New"]);
     }
 
     /// 7 日を超えて生き残った出品は集計に畳んで捨てる (キャッシュを膨らませない)

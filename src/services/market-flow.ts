@@ -54,6 +54,8 @@ export interface Watch {
   label: string;
   query: unknown;
   note: string;
+  /** 手動で足した銘柄 (自動リストの入れ替えで消えない) */
+  manual?: boolean;
 }
 export interface FlowStore {
   sampled_at: number;
@@ -89,6 +91,16 @@ export async function setWatches(watches: Watch[], league: string, site: string)
     await invoke("market_flow_set_watches", { req: { watches, league, site } });
   } catch {
     /* 失敗しても本体の表示には影響しない */
+  }
+}
+
+/** 1 銘柄を手動で追跡に足す / 外す */
+export async function toggleWatch(watch: Watch, on: boolean, league: string, site: string): Promise<FlowStore | null> {
+  if (!isTauriRuntime()) return null;
+  try {
+    return await invoke<FlowStore>("market_flow_toggle_watch", { req: { watch, on, league, site } });
+  } catch {
+    return null;
   }
 }
 

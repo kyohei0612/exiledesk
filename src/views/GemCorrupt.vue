@@ -19,7 +19,10 @@ import { displayCurrency, type DisplayCurrency } from "../state/display-currency
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
-import { fmtAge, fmtPct, loadFlow, summarizeFlow, type FlowStore } from "../services/market-flow";
+import { fmtAge, fmtPct, loadFlow, summarizeFlow, toggleWatch, type FlowStore } from "../services/market-flow";
+import { buildGemQuery } from "../services/trade2/query";
+import { marketStore } from "../state/market-store";
+import { trade2Site } from "../services/trade2/league";
 
 const g = useGemCorrupt();
 onActivated(() => {
@@ -211,11 +214,37 @@ const flowBadgeClass = computed(() => {
       return "border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]";
   }
 });
-/** 追跡対象に入っているか (クラフト選定ジェムで完成品 5 人以上だったか) */
-const flowTracked = computed(() => {
+/** 追跡対象に入っているか */
+const flowWatch = computed(() => {
   const en = g.selected.value?.en ?? "";
-  return !!flowStore.value?.watches.some((x) => x.key === en);
+  return flowStore.value?.watches?.find((x) => x.key === en) ?? null;
 });
+const flowTracked = computed(() => !!flowWatch.value);
+/** 手動で足した銘柄か (自動リストの入れ替えで消えない) */
+const flowManual = computed(() => !!flowWatch.value?.manual);
+const watchBusy = ref(false);
+
+/** 「追跡する」の切り替え。手動で足した分も 1 時間ごとの巡回に入る (規則は自動分と同じ) */
+async function toggleFlowWatch(): Promise<void> {
+  const gem = g.selected.value;
+  if (!gem || watchBusy.value) return;
+  watchBusy.value = true;
+  try {
+    const on = !flowTracked.value;
+    const watch = {
+      key: gem.en,
+      label: gem.ja,
+      note: "手動で追加",
+      manual: true,
+      query: buildGemQuery(gem.en, { category: gem.kind === "meta" ? "gem.metagem" : "gem.activegem", levelMin: 21, qualityMin: 23, corrupted: true }),
+    };
+    const next = await toggleWatch(watch, on, marketStore.league.value?.Value ?? "", trade2Site());
+    if (next) flowStore.value = next;
+    else await reloadFlow();
+  } finally {
+    watchBusy.value = false;
+  }
+}
 const fmtFlowAt = (t: number | null): string => {
   if (!t) return "";
   const d = new Date(t * 1000);
@@ -636,6 +665,27 @@ const summary = computed(() => {
                 <input v-model="g.requireSockets.value" type="checkbox" class="accent-[var(--exile-color-accent-focus)]" />
                 5 ソケットに限定
               </label>
+              <!-- 2026-09-16: 自動リストに無いジェムも手動で継続追跡できる -->
+              <label
+                class="inline-flex items-center gap-1 text-[var(--exile-color-text-secondary)]"
+                :class="!g.selected.value || watchBusy ? 'opacity-40' : 'cursor-pointer'"
+                :title="
+                  flowTracked
+                    ? flowManual
+                      ? '「再取得」を押すたびに記録が貯まります (1 時間ごとの自動巡回には入りません)。外すと記録も消えます'
+                      : 'クラフト選定ジェムの自動リストに入っているので、1 時間ごとに自動で追います'
+                    : '記録を残す対象にします。「再取得」を押すたびに貯まります'
+                "
+              >
+                <input
+                  type="checkbox"
+                  :checked="flowTracked"
+                  :disabled="!g.selected.value || watchBusy"
+                  class="accent-[var(--exile-color-accent-focus)]"
+                  @change="toggleFlowWatch"
+                />
+                捌き速度を記録{{ flowTracked ? (flowManual ? " (手動)" : " (自動)") : "" }}
+              </label>
               <button
                 type="button"
                 :disabled="!g.selected.value || refetch.disabled"
@@ -703,11 +753,17 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowTracked ? "自動追跡中" : "自動追跡の対象外 (クラフト選定ジェムで完成品 5 人以上になると入ります)" }} ·
+              {{
+                flowTracked
+                  ? flowManual
+                    ? "手動 (再取得を押した分を記録)"
+                    : "自動 (1 時間ごと)"
+                  : "記録していません (左のチェックで残せます)"
+              }} ·
               追跡 {{ flowStore?.watches.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
             </span>
             <br v-if="g.selected.value" />
-            捌き速度は最安 10 件の出品を 1 件ずつ ID で追い、消えるまでの時間を貯めて出します (売れ残りも「まだ売れていない」として計算に入る)。判定は 24 時間以内に半分売れれば速い / 48 時間までなら普通 / それ以降は遅い。クラフト選定ジェムで完成品 5 人以上だったジェムを 1 時間ごとに追います。
+            捌き速度は最安 10 件の出品を 1 件ずつ ID で追い、消えるまでの時間を貯めて出します (売れ残りも「まだ売れていない」として計算に入る)。判定は 24 時間以内に半分売れれば速い / 48 時間までなら普通 / それ以降は遅い。クラフト選定ジェムで完成品 5 人以上だったジェムは 1 時間ごとに自動で追い、それ以外は上のチェックを入れて「再取得」を押すたびに記録が貯まります。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
         </div>
