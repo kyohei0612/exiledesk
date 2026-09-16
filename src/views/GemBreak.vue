@@ -202,6 +202,10 @@ const fetchedAtText = computed(() => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 });
+/** レート制限 / 再試行の待ち中は「取得中」ではない (オーナー指摘 2026-09-16) */
+const waiting = computed(() => busy.value && !!net.value && (net.value.global_penalty_waiting || net.value.active_retry_count > 0));
+/** 待機中に出す「ここまで取れた」表示 */
+const doneText = computed(() => (progress.value ? `${progress.value.done}/${progress.value.total} 人 取得済み` : ""));
 const progressText = computed(() => {
   const p = progress.value;
   if (!p) return "";
@@ -278,7 +282,7 @@ onUnmounted(() => {
         class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
         @click="fetchNow"
       >
-        {{ busy ? "取得中…" : "取得" }}
+        {{ busy ? (waiting ? "待機中…" : "取得中…") : "取得" }}
       </button>
       <button
         v-if="busy"
@@ -289,10 +293,11 @@ onUnmounted(() => {
       >
         中止
       </button>
-      <span v-if="busy && progressText" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-300">
+      <span v-if="busy && progressText && !waiting" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-300">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
         {{ progressText }}
       </span>
+      <span v-if="waiting && doneText" class="text-[11px] text-[var(--exile-color-text-tertiary)] tabular-nums">{{ doneText }}</span>
       <!-- poe.ninja のレート制限待ち / 再試行待ち (MOD 一覧のヘッダーと同じ表示) -->
       <span
         v-if="busy && net?.global_penalty_waiting"

@@ -5,6 +5,7 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
 -->
 <script setup lang="ts">
+import { computed } from "vue";
 import type { SlotKey } from "../../services/craft-v2/types";
 import { craftV2Store, refetchWithSelectedLeague } from "../../state/craft-v2-store";
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
@@ -22,6 +23,10 @@ const activeSlot = defineModel<SlotKey>("activeSlot", { required: true });
 const skillsTab = defineModel<boolean>("skillsTab", { default: false });
 const emit = defineEmits<{ refresh: []; forceRefetch: [] }>();
 const store = craftV2Store;
+/** レート制限 / 再試行の待ち中は「取得中」ではないので、フェーズ表示を待機表示に差し替える (オーナー指摘 2026-09-16) */
+const waiting = computed(
+  () => store.loading && !!store.networkStatus && (store.networkStatus.globalPenaltyWaiting || store.networkStatus.activeRetryCount > 0),
+);
 </script>
 
 <template>
@@ -65,9 +70,11 @@ const store = craftV2Store;
       <div class="mt-2 flex items-center gap-3 flex-wrap text-[11px]">
         <span v-if="store.loading && !store.backgroundRefresh" class="inline-flex items-center gap-1.5 text-[var(--exile-color-accent-focus)]">
           <span class="inline-block w-2 h-2 rounded-full bg-[var(--exile-color-accent-focus)] animate-pulse" aria-hidden="true"></span>
-          <template v-if="store.showingFromCache">キャッシュから {{ store.cacheItemCount }} 件即表示中、最新データ取得中…</template>
+          <template v-if="store.showingFromCache">
+            キャッシュから {{ store.cacheItemCount }} 件即表示中、{{ waiting ? "待機中…" : "最新データ取得中…" }}
+          </template>
           <template v-else>
-            取得中… {{ progressFraction }} アセンダンシー
+            {{ waiting ? "待機中…" : "取得中…" }} {{ progressFraction }} アセンダンシー
             <span v-if="store.currentlyFetching" class="text-[var(--exile-color-text-secondary)]">(直近: {{ store.currentlyFetching }})</span>
           </template>
         </span>
@@ -82,7 +89,7 @@ const store = craftV2Store;
         </span>
         <!-- per-character 進捗フェーズ (search=青 / fetching=緑)。レート制限と共存表示 -->
         <span
-          v-if="store.loading && store.currentPhase && store.currentPhase.phase === 'search'"
+          v-if="store.loading && !waiting && store.currentPhase && store.currentPhase.phase === 'search'"
           class="inline-flex items-center gap-1 text-[11px] text-sky-300 font-medium"
           :title="`${store.currentPhase.ascendancy} の上位プレイヤーを検索中`"
         >
@@ -92,7 +99,7 @@ const store = craftV2Store;
           <span class="text-sky-200/60 text-[10px] tabular-nums">⏱ {{ phaseElapsedSecs }} 秒</span>
         </span>
         <span
-          v-else-if="store.loading && store.currentPhase && store.currentPhase.phase === 'fetching'"
+          v-else-if="store.loading && !waiting && store.currentPhase && store.currentPhase.phase === 'fetching'"
           class="inline-flex items-center gap-1 text-[11px] text-emerald-300 font-medium"
           :title="`${store.currentPhase.ascendancy} のキャラ装備を取得中`"
         >
@@ -107,6 +114,10 @@ const store = craftV2Store;
           <span class="text-emerald-200/60 text-[10px] tabular-nums">⏱ {{ phaseElapsedSecs }} 秒</span>
         </span>
 
+        <!-- 待機中はフェーズ表示の代わりに「どこまで取れたか」だけ静かに出す -->
+        <span v-if="waiting && store.currentPhase" class="text-[11px] text-[var(--exile-color-text-tertiary)] tabular-nums">
+          {{ store.currentPhase.ascendancy }}: {{ store.currentPhase.charactersDone }}/{{ store.currentPhase.charactersTotal }} 人 取得済み
+        </span>
         <!-- レート制限ペナルティ中の残秒数 -->
         <span
           v-if="store.loading && store.networkStatus?.globalPenaltyWaiting"
