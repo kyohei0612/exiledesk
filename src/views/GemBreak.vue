@@ -27,9 +27,16 @@ interface Row {
   both: number;
   max_level: number;
   max_quality: number;
+  /** コラプト済みで使っていた人数 */
+  corrupted: number;
+  /** [レベル, 人数] 昇順 */
+  level_dist: [number, number][];
+  /** [品質, 人数] 昇順 */
+  quality_dist: [number, number][];
 }
 interface Result {
   class: string;
+  classes?: string[];
   percentage: number;
   characters: number;
   league: string;
@@ -46,11 +53,14 @@ const inApp = isTauriRuntime();
 const STORE_KEY = "exiledesk.gem-break.result";
 const CLASS_KEY = "exiledesk.gem-break.class";
 const TOPN_KEY = "exiledesk.gem-break.topn";
+const SPREAD_KEY = "exiledesk.gem-break.spread";
 
 const result = ref<Result | null>(null);
 const ascendancies = ref<Asc[]>([]);
 const selectedClass = ref<string>("");
 const topN = ref<number>(40);
+/** 何アセンダンシーに散らすか (1 = 選んだアセだけ) */
+const spread = ref<number>(1);
 const busy = ref(false);
 const error = ref("");
 const progress = ref<{ phase: string; done: number; total: number } | null>(null);
@@ -62,6 +72,8 @@ function loadStored(): void {
     selectedClass.value = localStorage.getItem(CLASS_KEY) ?? "";
     const n = Number(localStorage.getItem(TOPN_KEY));
     if (n >= 5 && n <= 100) topN.value = n;
+    const sp = Number(localStorage.getItem(SPREAD_KEY));
+    if (sp >= 1 && sp <= 10) spread.value = sp;
   } catch {
     /* 読めなくても取り直せる */
   }
@@ -84,13 +96,14 @@ async function fetchNow(): Promise<void> {
   progress.value = null;
   try {
     const r = await invoke<Result>("gem_break_fetch", {
-      req: { class: selectedClass.value || null, topN: topN.value },
+      req: { class: selectedClass.value || null, topN: topN.value, spread: spread.value },
     });
     result.value = r;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
       localStorage.setItem(CLASS_KEY, r.class);
       localStorage.setItem(TOPN_KEY, String(topN.value));
+      localStorage.setItem(SPREAD_KEY, String(spread.value));
     } catch {
       /* 保存できなくても表示はできる */
     }
@@ -119,6 +132,17 @@ function listOf(key: Key): Row[] {
     .sort((a, b) => b[key] - a[key] || b.users - a.users || a.name.localeCompare(b.name));
 }
 const visible = (key: Key): Row[] => (showAll.value[key] ? listOf(key) : listOf(key).slice(0, PAGE));
+
+/** 行を開いてレベル / 品質の内訳を見る */
+const expanded = ref<Record<string, boolean>>({});
+const toggle = (key: Key, name: string): void => {
+  const k = key + "::" + name;
+  expanded.value = { ...expanded.value, [k]: !expanded.value[k] };
+};
+const isOpen = (key: Key, name: string): boolean => !!expanded.value[key + "::" + name];
+/** "20:5 / 21:12 / 22:3" (人数の多い順ではなく値の昇順、0 は出さない) */
+const distText = (d: [number, number][] | undefined, suffix = ""): string =>
+  (d ?? []).map(([v, c]) => `${v}${suffix}: ${c}人`).join(" / ") || "—";
 const fetchedAtText = computed(() => {
   const t = result.value?.fetched_at;
   if (!t) return "";
@@ -152,8 +176,8 @@ onUnmounted(() => unlisten?.());
     <header class="mb-3">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフト選定ジェム</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        ここでコラプトするジェムを選びます。上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキングで、値段の判断は含みません。
-        気になるジェムを押すと、そのジェムでジェムコラプトの賭けの計算が始まります。
+        ここでコラプトするジェムを選びます。上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
+        行を押すと、そのジェムが実際に何レベル / 何 % で使われているかの内訳が出ます。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
@@ -168,9 +192,17 @@ onUnmounted(() => unlisten?.());
     >
       <label class="inline-flex items-center gap-2 min-w-0">
         <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
-        <select v-model="selectedClass" class="sel max-w-64">
+        <select v-model="selectedClass" class="sel max-w-64" :disabled="spread > 1">
           <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ selectedClass }}</option>
           <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ a.class }} ({{ a.percentage.toFixed(1) }}%)</option>
+        </select>
+      </label>
+      <label class="inline-flex items-center gap-2">
+        <span class="text-[var(--exile-color-text-secondary)]">範囲</span>
+        <select v-model.number="spread" class="sel">
+          <option :value="1">選んだアセだけ</option>
+          <option :value="3">上位 3 アセに散らす</option>
+          <option :value="5">上位 5 アセに散らす</option>
         </select>
       </label>
       <label class="inline-flex items-center gap-2">
@@ -214,15 +246,17 @@ onUnmounted(() => unlisten?.());
           <li
             v-for="(r, i) in visible(sec.key)"
             :key="r.name"
-            class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)]"
-            :class="CORRUPTIBLE.has(r.name) ? 'cursor-pointer' : ''"
-            :title="CORRUPTIBLE.has(r.name) ? `ジェムコラプトの賭けで ${jaSkill(r.name)} を計算する` : r.name"
-            @click="CORRUPTIBLE.has(r.name) && openGemCorrupt(r.name)"
+            class="py-1 px-1 -mx-1 rounded hover:bg-[var(--exile-color-bg-elevated)] cursor-pointer"
+            :title="r.name"
+            @click="toggle(sec.key, r.name)"
           >
             <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2">
               <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
               <div class="flex items-baseline gap-1.5 min-w-0">
-                <span class="min-w-0 truncate text-[13px]" :title="r.name">{{ jaSkill(r.name) }}</span>
+                <span class="min-w-0 truncate text-[13px]" :title="r.name">
+                  {{ jaSkill(r.name) }}
+                  <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ isOpen(sec.key, r.name) ? "▲" : "▼" }}</span>
+                </span>
                 <button
                   v-if="CORRUPTIBLE.has(r.name)"
                   type="button"
@@ -237,6 +271,21 @@ onUnmounted(() => unlisten?.());
                 {{ r[sec.key] }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">/ {{ r.users }} 人</span>
               </span>
             </div>
+            <!-- 内訳: 何レベル / 何 % が実際に使われているか -->
+            <dl v-if="isOpen(sec.key, r.name)" class="ml-7 mt-1 space-y-0.5 text-[11px] text-[var(--exile-color-text-secondary)]">
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">レベル</dt>
+                <dd class="tabular-nums">{{ distText(r.level_dist) }}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">品質</dt>
+                <dd class="tabular-nums">{{ distText(r.quality_dist, "%") }}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">コラプト済み</dt>
+                <dd class="tabular-nums">{{ r.corrupted }} / {{ r.users }} 人</dd>
+              </div>
+            </dl>
           </li>
           <li v-if="listOf(sec.key).length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)] italic">該当なし</li>
         </ul>

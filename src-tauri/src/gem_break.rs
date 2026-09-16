@@ -29,12 +29,20 @@ pub struct GemBreakRow {
     /// 見えた中で一番高いレベル / 品質
     pub max_level: i64,
     pub max_quality: i64,
+    /// コラプト済みで使っていた人数
+    pub corrupted: u32,
+    /// レベルの分布 (レベル, 人数) レベル昇順。同じキャラの同じレベルは 1 回
+    pub level_dist: Vec<(i64, u32)>,
+    /// 品質の分布 (品質, 人数) 昇順
+    pub quality_dist: Vec<(i64, u32)>,
 }
 
 #[derive(Serialize, Clone, Debug)]
 pub struct GemBreakResult {
-    /// 集計に使ったアセンダンシー
+    /// 集計に使ったアセンダンシー (複数なら "上位 N アセ合算")
     pub class: String,
+    /// 実際に見たアセンダンシー名
+    pub classes: Vec<String>,
     /// そのアセンダンシーの使用率 (%)
     pub percentage: f64,
     /// 実際に取れたキャラ数 (= 母数)
@@ -53,6 +61,9 @@ pub struct GemBreakRequest {
     /// 取るキャラ数 (既定 40、上限 100)。JS からは topN で来る
     #[serde(alias = "topN")]
     pub top_n: Option<usize>,
+    /// 何アセンダンシーに散らすか (既定 1 = class だけ)。2 以上なら使用率上位から均等に取る
+    #[serde(alias = "spread")]
+    pub spread: Option<usize>,
 }
 
 #[derive(Serialize, Clone)]
@@ -86,10 +97,11 @@ fn prop_num(props: Option<&serde_json::Value>, key: &str) -> Option<i64> {
     None
 }
 
-/// 1 アセンダンシー分を取って集計する。
+/// 1 つ (または使用率上位いくつか) のアセンダンシーの上位キャラを取って集計する。
 #[tauri::command]
 pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Result<GemBreakResult, String> {
     let top_n = req.top_n.unwrap_or(40).clamp(5, 100);
+    let spread = req.spread.unwrap_or(1).clamp(1, 10);
     let client = ninja::build_client()?;
     // MOD 一覧の一括取得より緩め (1 アセだけなので急がない。429 を食らうと数分待たされる)
     let gate = ninja::RateGate::new(1500);
@@ -97,76 +109,133 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     emit(&window, "search", 0, top_n, "");
     let snap = ninja::fetch_index_state(&client, &gate, None).await?;
     let ascs = ninja::fetch_build_index_state(&client, &gate, &snap.league_url).await?;
-    let asc = match &req.class {
-        Some(c) => ascs.iter().find(|a| &a.class == c).cloned(),
-        None => ascs.first().cloned(),
-    }
-    .ok_or_else(|| "そのアセンダンシーが poe.ninja に見つかりません".to_string())?;
 
-    emit(&window, "search", 0, top_n, &asc.class);
-    let refs = ninja::fetch_search_top_n(&client, &gate, &snap, &asc.class, top_n).await?;
-    let total = refs.len();
+    // 対象アセンダンシー: spread=1 なら指定 1 つ、2 以上なら使用率上位から spread 個
+    let targets: Vec<ninja::AscendancyMeta> = if spread <= 1 {
+        let a = match &req.class {
+            Some(c) => ascs.iter().find(|a| &a.class == c).cloned(),
+            None => ascs.first().cloned(),
+        }
+        .ok_or_else(|| "そのアセンダンシーが poe.ninja に見つかりません".to_string())?;
+        vec![a]
+    } else {
+        ascs.iter().take(spread).cloned().collect()
+    };
+    if targets.is_empty() {
+        return Err("アセンダンシーが取れませんでした".to_string());
+    }
+    // 散らす時は 1 アセあたりの人数を割る (合計はだいたい top_n)
+    let per_asc = ((top_n as f64) / targets.len() as f64).ceil() as usize;
 
     let mut table: HashMap<String, GemBreakRow> = HashMap::new();
+    // ジェムごとの分布 (レベル / 品質 → 人数)。同じキャラの同じ値は 1 回
+    let mut level_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
+    let mut quality_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
     let mut done = 0usize;
-    for r in refs {
-        emit(&window, "fetching", done, total, &asc.class);
-        let ci = match ninja::fetch_character(&client, &gate, &snap, &r).await {
-            Ok(c) => c,
-            Err(_) => continue, // 1 人取れなくても集計は続ける
+    let mut planned = 0usize;
+
+    for asc in &targets {
+        emit(&window, "search", done, planned.max(top_n), &asc.class);
+        let refs = match ninja::fetch_search_top_n(&client, &gate, &snap, &asc.class, per_asc).await {
+            Ok(r) => r,
+            Err(_) => continue, // 1 アセ取れなくても他は続ける
         };
-        done += 1;
-        // 同じキャラで同じジェムは 1 回だけ数える
-        let mut seen: HashSet<&str> = HashSet::new();
-        let mut seen_l: HashSet<&str> = HashSet::new();
-        let mut seen_q: HashSet<&str> = HashSet::new();
-        let mut seen_b: HashSet<&str> = HashSet::new();
-        for g in &ci.skills {
-            let Some(gems) = g.get("allGems").and_then(|v| v.as_array()) else {
-                continue;
+        planned += refs.len();
+        for r in refs {
+            emit(&window, "fetching", done, planned.max(top_n), &asc.class);
+            let ci = match ninja::fetch_character(&client, &gate, &snap, &r).await {
+                Ok(c) => c,
+                Err(_) => continue, // 1 人取れなくても集計は続ける
             };
-            for gem in gems {
-                let Some(name) = gem.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()) else {
+            done += 1;
+            // 同じキャラで同じジェムは 1 回だけ数える
+            let mut seen: HashSet<String> = HashSet::new();
+            let mut seen_l: HashSet<String> = HashSet::new();
+            let mut seen_q: HashSet<String> = HashSet::new();
+            let mut seen_b: HashSet<String> = HashSet::new();
+            let mut seen_c: HashSet<String> = HashSet::new();
+            // 分布は (ジェム, 値) 単位で 1 回
+            let mut seen_ld: HashSet<(String, i64)> = HashSet::new();
+            let mut seen_qd: HashSet<(String, i64)> = HashSet::new();
+            for g in &ci.skills {
+                let Some(gems) = g.get("allGems").and_then(|v| v.as_array()) else {
                     continue;
                 };
-                let item = gem.get("itemData");
-                if item.and_then(|d| d.get("support")).and_then(|v| v.as_bool()).unwrap_or(false) {
-                    continue; // サポートはレベル / 品質を持たない
+                for gem in gems {
+                    let Some(name) = gem.get("name").and_then(|v| v.as_str()).filter(|s| !s.is_empty()) else {
+                        continue;
+                    };
+                    let item = gem.get("itemData");
+                    if item.and_then(|d| d.get("support")).and_then(|v| v.as_bool()).unwrap_or(false) {
+                        continue; // サポートはレベル / 品質を持たない
+                    }
+                    let name = name.to_string();
+                    let props = item.and_then(|d| d.get("properties"));
+                    let lvl = prop_num(props, "Level").unwrap_or(0);
+                    let q = prop_num(props, "[Quality]").unwrap_or(0);
+                    let corrupted = item
+                        .and_then(|d| d.get("corrupted"))
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+                    let row = table.entry(name.clone()).or_insert_with(|| GemBreakRow {
+                        name: name.clone(),
+                        ..Default::default()
+                    });
+                    if seen.insert(name.clone()) {
+                        row.users += 1;
+                    }
+                    if lvl >= 21 && seen_l.insert(name.clone()) {
+                        row.lvl21 += 1;
+                    }
+                    if q >= 23 && seen_q.insert(name.clone()) {
+                        row.q23 += 1;
+                    }
+                    if lvl >= 21 && q >= 23 && seen_b.insert(name.clone()) {
+                        row.both += 1;
+                    }
+                    if corrupted && seen_c.insert(name.clone()) {
+                        row.corrupted += 1;
+                    }
+                    row.max_level = row.max_level.max(lvl);
+                    row.max_quality = row.max_quality.max(q);
+                    if lvl > 0 && seen_ld.insert((name.clone(), lvl)) {
+                        *level_dist.entry(name.clone()).or_default().entry(lvl).or_insert(0) += 1;
+                    }
+                    if seen_qd.insert((name.clone(), q)) {
+                        *quality_dist.entry(name.clone()).or_default().entry(q).or_insert(0) += 1;
+                    }
                 }
-                let props = item.and_then(|d| d.get("properties"));
-                let lvl = prop_num(props, "Level").unwrap_or(0);
-                let q = prop_num(props, "[Quality]").unwrap_or(0);
-                let row = table.entry(name.to_string()).or_insert_with(|| GemBreakRow {
-                    name: name.to_string(),
-                    ..Default::default()
-                });
-                if seen.insert(name) {
-                    row.users += 1;
-                }
-                if lvl >= 21 && seen_l.insert(name) {
-                    row.lvl21 += 1;
-                }
-                if q >= 23 && seen_q.insert(name) {
-                    row.q23 += 1;
-                }
-                if lvl >= 21 && q >= 23 && seen_b.insert(name) {
-                    row.both += 1;
-                }
-                row.max_level = row.max_level.max(lvl);
-                row.max_quality = row.max_quality.max(q);
             }
         }
     }
-    emit(&window, "completed", done, total, &asc.class);
+    let label = if targets.len() == 1 {
+        targets[0].class.clone()
+    } else {
+        format!("上位 {} アセ合算", targets.len())
+    };
+    emit(&window, "completed", done, planned.max(done), &label);
 
     if done == 0 {
         return Err("キャラを 1 人も取れませんでした (poe.ninja のレート制限の可能性)".to_string());
     }
     let mut rows: Vec<GemBreakRow> = table.into_values().collect();
+    for row in &mut rows {
+        if let Some(m) = level_dist.remove(&row.name) {
+            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
+            v.sort_by_key(|(k, _)| *k);
+            row.level_dist = v;
+        }
+        if let Some(m) = quality_dist.remove(&row.name) {
+            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
+            v.sort_by_key(|(k, _)| *k);
+            row.quality_dist = v;
+        }
+    }
     rows.sort_by(|a, b| b.users.cmp(&a.users).then_with(|| a.name.cmp(&b.name)));
     Ok(GemBreakResult {
-        class: asc.class,
-        percentage: asc.percentage,
+        class: label,
+        classes: targets.iter().map(|a| a.class.clone()).collect(),
+        percentage: targets.iter().map(|a| a.percentage).sum(),
         characters: done,
         league: snap.league_url.clone(),
         snapshot: snap.snapshot_name.clone(),
