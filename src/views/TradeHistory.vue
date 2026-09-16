@@ -217,6 +217,10 @@ const since = computed(() => {
   if (!p || p.days <= 0) return 0;
   return todayStart.value - (p.days - 1) * DAY_MS;
 });
+/** 7 日間モードで見ている日 (0 = 今日)。オーナー指示 2026-09-16: 7 日間は日付を選んで時間帯で見る */
+const selectedDay = ref<number>(0);
+const activeDay = computed(() => (selectedDay.value ? startOfDay(selectedDay.value) : todayStart.value));
+
 /** 検索だけ掛けた分 (期間の集計に使う) */
 const searched = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -224,7 +228,33 @@ const searched = computed(() => {
   // 検索は日本語名と英語名のどちらでも引っかかるように
   return entries.value.filter((e) => `${e.name} ${e.typeLine} ${jaName(e)} ${jaType(e)}`.toLowerCase().includes(q));
 });
-const visible = computed(() => searched.value.filter((e) => e.time >= since.value));
+const visible = computed(() => {
+  // 7 日間は「選んだ 1 日」だけを出す (日付ごとに見たい、というオーナー指示)
+  if (period.value === "7d") {
+    const from = activeDay.value;
+    const to = from + DAY_MS;
+    return searched.value.filter((e) => e.time >= from && e.time < to);
+  }
+  return searched.value.filter((e) => e.time >= since.value);
+});
+
+/** 7 日間の日付チップ (古い → 新しい)。その日の合計と件数つき */
+const days7 = computed(() => {
+  const out: { start: number; label: string; total: number; count: number }[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const start = todayStart.value - i * DAY_MS;
+    const to = start + DAY_MS;
+    let total = 0;
+    let count = 0;
+    for (const e of searched.value) {
+      if (e.time < start || e.time >= to) continue;
+      total += valueOf(e);
+      count++;
+    }
+    out.push({ start, label: dayLabel(start), total, count });
+  }
+  return out;
+});
 /** PoE2 の通貨だけ高貴に換算できる (換算レートは PoE2 の相場) */
 function exaltedOf(e: TradeEntry): number | null {
   if (game.value !== "poe2" || e.amount == null || !e.currency) return null;
@@ -285,18 +315,21 @@ interface Bar {
 }
 const bars = computed<Bar[]>(() => {
   const out: Bar[] = [];
-  if (period.value === "today") {
-    const base = todayStart.value;
+  // 当日 / 7 日間 (選んだ日) は時間別、全部だけ日別
+  if (period.value === "today" || period.value === "7d") {
+    const base = period.value === "today" ? todayStart.value : activeDay.value;
     const byHour = new Array(24).fill(0).map(() => ({ v: 0, c: 0 }));
     for (const e of searched.value) {
-      if (e.time < base) continue;
+      if (e.time < base || e.time >= base + DAY_MS) continue;
       const h = new Date(e.time).getHours();
       byHour[h].v += valueOf(e);
       byHour[h].c++;
     }
-    const nowHour = new Date(now.value).getHours();
-    for (let h = 0; h <= nowHour; h++) {
-      out.push({ key: `h${h}`, label: `${h}`, sub: `${h}:00`, value: byHour[h].v, count: byHour[h].c, today: h === nowHour });
+    // 今日は「今の時間」まで、過去の日は 24 時間ぶん
+    const isToday = base === todayStart.value;
+    const lastHour = isToday ? new Date(now.value).getHours() : 23;
+    for (let h = 0; h <= lastHour; h++) {
+      out.push({ key: `h${h}`, label: `${h}`, sub: `${h}:00`, value: byHour[h].v, count: byHour[h].c, today: isToday && h === lastHour });
     }
     return out;
   }
@@ -309,21 +342,6 @@ const bars = computed<Bar[]>(() => {
     b.v += valueOf(e);
     b.c++;
     byDay.set(k, b);
-  }
-  if (period.value === "7d") {
-    for (let i = 6; i >= 0; i--) {
-      const start = todayStart.value - i * DAY_MS;
-      const b = byDay.get(dayKey(start));
-      out.push({
-        key: dayKey(start),
-        label: `${new Date(start).getMonth() + 1}/${new Date(start).getDate()}`,
-        sub: dayLabel(start),
-        value: b?.v ?? 0,
-        count: b?.c ?? 0,
-        today: start === todayStart.value,
-      });
-    }
-    return out;
   }
   // 「全部」= リーグ開始から今日まで 1 日ずつ (売れていない日も 0 で並べる)
   let first = startOfDay(allStartMs.value);
@@ -509,7 +527,13 @@ onUnmounted(() => {
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
         <div class="flex items-center gap-2">
           <h2 class="font-display tracking-[0.08em] text-[13px] text-[var(--exile-color-accent-focus)]">
-            {{ period === "today" ? "今日の売上 (時間別)" : period === "7d" ? "この 7 日間の売上 (1 日ずつ)" : "リーグ開始からの売上 (1 日ずつ)" }}
+            {{
+              period === "today"
+                ? "今日の売上 (時間別)"
+                : period === "7d"
+                  ? `${dayLabel(activeDay)} の売上 (時間別)`
+                  : "リーグ開始からの売上 (1 日ずつ)"
+            }}
           </h2>
           <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden">
             <button
@@ -529,6 +553,26 @@ onUnmounted(() => {
           <span class="text-[11px] text-[var(--exile-color-text-secondary)] tabular-nums">{{ visible.length }} 件</span>
         </div>
       </div>
+      <!-- 7 日間: 日付を選ぶ (その日の時間帯グラフになる) -->
+      <div v-if="period === '7d'" class="flex flex-wrap gap-1.5 mb-3">
+        <button
+          v-for="d in days7"
+          :key="d.start"
+          type="button"
+          class="px-2 py-1 rounded border text-[11px] text-left transition-colors"
+          :class="
+            d.start === activeDay
+              ? 'border-[var(--exile-color-accent-focus)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
+              : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:border-[var(--exile-color-border-brass)]'
+          "
+          @click="selectedDay = d.start"
+        >
+          <span class="block">{{ d.label }}</span>
+          <span class="block tabular-nums text-[10px]" :class="d.start === activeDay ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'">
+            <template v-if="game === 'poe2'">{{ money(d.total) }} · </template>{{ d.count }} 件
+          </span>
+        </button>
+      </div>
       <p v-if="game !== 'poe2'" class="text-[11px] text-[var(--exile-color-text-tertiary)]">PoE1 は高貴換算の相場が無いのでグラフは出しません (一覧と通貨別合計だけ)。</p>
       <template v-else>
         <div class="flex items-end gap-[3px] h-32">
@@ -547,7 +591,7 @@ onUnmounted(() => {
           </span>
         </div>
         <div class="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px] text-[var(--exile-color-text-secondary)]">
-          <span>最大 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ money(barMax) }}</span> / {{ period === "today" ? "時" : "日" }}</span>
+          <span>最大 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ money(barMax) }}</span> / {{ period === "all" ? "日" : "時" }}</span>
           <span v-for="[c, amt] in totals.byCurrency" :key="c" class="tabular-nums">{{ curLabel(c) }} {{ fmtAmount(amt) }}</span>
           <span v-if="totals.unconverted > 0" class="text-[10px] text-[var(--exile-color-text-tertiary)]">換算できない {{ totals.unconverted }} 件は 0 として扱っています</span>
         </div>

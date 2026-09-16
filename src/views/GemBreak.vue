@@ -143,7 +143,7 @@ async function fetchNow(): Promise<void> {
   startNetPolling();
   try {
     const r = await invoke<Result>("gem_break_fetch", {
-      req: { class: selectedClass.value ?? null, topN: topN.value, spread: spread.value },
+      req: { class: selectedClass.value ?? null, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
     try {
@@ -275,9 +275,10 @@ onUnmounted(() => {
           </option>
         </select>
       </label>
-      <label class="inline-flex items-center gap-2">
+      <!-- 全アセンダンシーを選んだら「範囲」は意味が無いので出さない (オーナー指示 2026-09-16) -->
+      <label v-if="selectedClass" class="inline-flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">範囲</span>
-        <select v-model.number="spread" class="sel" :disabled="!selectedClass">
+        <select v-model.number="spread" class="sel">
           <option :value="1">選んだアセだけ</option>
           <option :value="3">上位 3 アセに散らす</option>
           <option :value="5">上位 5 アセに散らす</option>
