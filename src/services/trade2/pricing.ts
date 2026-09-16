@@ -223,6 +223,8 @@ export interface PriceListing {
   /** trade2 の item.name + typeLine */
   itemName: string;
   ilvl: number | null;
+  /** 出品時刻 (RFC3339)。売れ行きの滞留時間に使う (2026-09-16) */
+  indexed: string | null;
 }
 
 export interface PriceResult {
@@ -237,7 +239,7 @@ export interface PriceResult {
 interface FetchResponse {
   result?: Array<{
     item?: { name?: string; typeLine?: string; ilvl?: number };
-    listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string } };
+    listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string }; indexed?: string };
   }>;
 }
 
@@ -305,6 +307,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
       account: r.listing?.account?.name ?? "",
       itemName: [r.item?.name, r.item?.typeLine].filter(Boolean).join(" "),
       ilvl: r.item?.ilvl ?? null,
+      indexed: r.listing?.indexed ?? null,
     });
   }
   const finite = listings.filter((l) => Number.isFinite(l.amountExalted)).map((l) => l.amountExalted);

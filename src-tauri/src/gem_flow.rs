@@ -69,6 +69,8 @@ const MAX_SAMPLES: usize = 24 * 30;
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// サンプリング周期
 const SAMPLE_INTERVAL: Duration = Duration::from_secs(3600);
+/// 起動直後の 1 回目を飛ばす条件 (直前のサンプルからこの秒数以内なら取らない)
+const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
 
@@ -136,6 +138,61 @@ pub fn gem_flow_set_tracked(app: tauri::AppHandle, req: SetTrackedRequest) -> Re
         store.site = s;
     }
     store.list_refreshed_at = now_secs();
+    save_store(&app, &store)?;
+    Ok(store)
+}
+
+#[derive(Deserialize)]
+pub struct RecordRequest {
+    /// ジェム英語名
+    pub name: String,
+    pub total: u64,
+    #[serde(default)]
+    pub median_age_min: Option<i64>,
+    #[serde(default)]
+    pub seen: usize,
+    #[serde(default)]
+    pub cheapest_amount: Option<f64>,
+    #[serde(default)]
+    pub cheapest_currency: Option<String>,
+}
+
+/// 画面から手で取った結果を同じ履歴に差し込む (2026-09-16 オーナー指示)。
+/// 自動サンプルと同じ形で時系列に入るので、グラフも繋がる。
+#[tauri::command]
+pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemFlowStore, String> {
+    let mut store = load_store(&app);
+    let now = now_secs();
+    let v = store.samples.entry(req.name).or_default();
+    // 同じ時間帯に自動サンプルが入っていれば上書きする (二重計上を避ける)
+    if let Some(last) = v.last_mut() {
+        if now - last.t < 300 {
+            *last = FlowSample {
+                t: now,
+                total: req.total,
+                median_age_min: req.median_age_min,
+                seen: req.seen,
+                cheapest_amount: req.cheapest_amount,
+                cheapest_currency: req.cheapest_currency,
+            };
+            store.sampled_at = now;
+            save_store(&app, &store)?;
+            return Ok(store);
+        }
+    }
+    v.push(FlowSample {
+        t: now,
+        total: req.total,
+        median_age_min: req.median_age_min,
+        seen: req.seen,
+        cheapest_amount: req.cheapest_amount,
+        cheapest_currency: req.cheapest_currency,
+    });
+    if v.len() > MAX_SAMPLES {
+        let cut = v.len() - MAX_SAMPLES;
+        v.drain(0..cut);
+    }
+    store.sampled_at = now;
     save_store(&app, &store)?;
     Ok(store)
 }
@@ -299,8 +356,17 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
 /// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す
 pub fn spawn_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        // 起動直後は他の取得とぶつからないよう少し待つ
-        tokio::time::sleep(Duration::from_secs(120)).await;
+        // オーナー指示 (2026-09-16): 1 回目は起動したらすぐ取る。
+        // ただし直前 (15 分以内) に取っていれば飛ばす (再起動を繰り返した時にレート制限を焼かないため)。
+        tokio::time::sleep(Duration::from_secs(15)).await;
+        {
+            let store = load_store(&app);
+            if !store.gems.is_empty() && now_secs() - store.sampled_at >= FIRST_SAMPLE_MIN_GAP {
+                if let Err(e) = sample_once(&app).await {
+                    eprintln!("[gem_flow] 起動時のサンプリング失敗: {e}");
+                }
+            }
+        }
         loop {
             let store = load_store(&app);
             let due = now_secs() - store.sampled_at >= SAMPLE_INTERVAL.as_secs() as i64;

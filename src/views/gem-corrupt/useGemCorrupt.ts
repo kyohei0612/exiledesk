@@ -14,6 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import { recordGemFlow } from "../../services/gem-flow";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -227,6 +228,28 @@ export function useGemCorrupt() {
 
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
+  /** 手動取得の結果を売れ行きの履歴に入れる (自動サンプルと同じ形) */
+  async function recordFinishedSample(gemEn: string, r: PriceResult): Promise<void> {
+    const ages: number[] = [];
+    const now = Date.now();
+    for (const l of r.listings) {
+      if (!l.indexed) continue;
+      const t = Date.parse(l.indexed);
+      if (Number.isNaN(t)) continue;
+      ages.push(Math.max(0, Math.round((now - t) / 60000)));
+    }
+    ages.sort((a, b) => a - b);
+    const cheapest = r.listings[0];
+    await recordGemFlow({
+      name: gemEn,
+      total: r.total,
+      median_age_min: ages.length > 0 ? ages[Math.floor(ages.length / 2)] : null,
+      seen: ages.length,
+      cheapest_amount: cheapest?.amount ?? null,
+      cheapest_currency: cheapest?.currency ?? null,
+    });
+  }
+
   async function fetchSalePrices(): Promise<void> {
     if (!selected.value || pricing.value || isRateLimited()) return;
     const gem = selected.value;
@@ -241,6 +264,8 @@ export function useGemCorrupt() {
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
+        // 2026-09-16 オーナー指示: 手で取った分も売れ行きの記録に差し込む (完成品の条件だけが追跡対象)
+        if (row.key === "finished") void recordFinishedSample(gem.en, r);
       }
       priceError.value = tradeAuto.lastError.value;
     } finally {

@@ -172,6 +172,13 @@ const flowStore = ref<GemFlowStore | null>(null);
 async function reloadFlow(): Promise<void> {
   flowStore.value = await loadGemFlow();
 }
+// 手動の「再取得」が終わったら記録が増えているので読み直す
+watch(
+  () => g.pricing.value,
+  (now, prev) => {
+    if (prev && !now) void reloadFlow();
+  },
+);
 /** 選択中ジェムの売れ行き */
 const flow = computed(() => summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""]));
 const flowToneClass = computed(() => {

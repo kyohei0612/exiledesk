@@ -52,6 +52,23 @@ export async function setTrackedGems(gems: TrackedGem[], league: string, site: s
   }
 }
 
+/** 手で取った結果を同じ履歴に差し込む (ジェムコラプトの「再取得」から) */
+export async function recordGemFlow(sample: {
+  name: string;
+  total: number;
+  median_age_min: number | null;
+  seen: number;
+  cheapest_amount: number | null;
+  cheapest_currency: string | null;
+}): Promise<void> {
+  if (!isTauriRuntime()) return;
+  try {
+    await invoke("gem_flow_record", { req: sample });
+  } catch {
+    /* 記録できなくても価格表示には影響しない */
+  }
+}
+
 /** 今すぐ 1 周サンプルを取る (手動) */
 export async function sampleGemFlowNow(): Promise<GemFlowStore> {
   if (!isTauriRuntime()) return EMPTY;

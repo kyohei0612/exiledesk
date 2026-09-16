@@ -370,6 +370,7 @@ pub fn run() {
             gem_flow::gem_flow_load,
             gem_flow::gem_flow_set_tracked,
             gem_flow::gem_flow_sample_now,
+            gem_flow::gem_flow_record,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
             pob_bundle::pob_bundle_status,
