@@ -10,7 +10,12 @@
 import { fetchPairRate } from "../../api/poe2scout";
 import { marketStore } from "../../state/market-store";
 
-export const PAY_CURRENCIES = ["exalted", "chaos", "divine"] as const;
+/**
+ * 支払いに使う通貨。
+ * オーナー指示 (2026-09-16): 高貴で買うと取引所の手数料 (ゴールド) がかなり掛かるので外す。
+ * カオスか神のどちらで買うのが安いかだけ比べる。
+ */
+export const PAY_CURRENCIES = ["chaos", "divine"] as const;
 export type PayCurrency = (typeof PAY_CURRENCIES)[number];
 
 export interface PayOption {
@@ -65,7 +70,7 @@ function pickBest(options: PayOption[]): PayOption | null {
   return options.reduce<PayOption | null>((a, b) => (a == null || b.exalted < a.exalted ? b : a), null);
 }
 
-/** 素材 1 つを 3 通貨ぶん引いて、一番安い通貨を決める */
+/** 素材 1 つをカオス / 神で引いて、安い方を決める (高貴は手数料が高いので使わない) */
 export async function fetchBuy(league: string, apiId: string): Promise<BestBuy | null> {
   const hit = cachedBuy(apiId);
   if (hit) return hit;
@@ -80,7 +85,7 @@ export async function fetchBuy(league: string, apiId: string): Promise<BestBuy |
     // 両側とも板が厚いペアだけ採用する
     if (r.oneStock < MIN_STOCK || r.twoStock < MIN_STOCK || r.oneVolume < MIN_VOLUME || r.twoVolume < MIN_VOLUME) continue;
     // 支払い量はアプリ共通の換算レートで出す (ペア内の相対値は薄い板で暴れるため)
-    const rate = currency === "exalted" ? 1 : currency === "chaos" ? marketStore.rates.value.chaos : marketStore.rates.value.divine;
+    const rate = currency === "chaos" ? marketStore.rates.value.chaos : marketStore.rates.value.divine;
     options.push({ currency, exalted: r.onePrice, perUnit: rate > 0 ? r.onePrice / rate : r.onePrice, stock: r.oneStock });
   }
   if (options.length === 0) return null;
