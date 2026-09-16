@@ -9,7 +9,17 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::Emitter;
+
+/// 取得中に「中止」が押されたか (レート制限待ちが長い時の逃げ道)
+static CANCEL: AtomicBool = AtomicBool::new(false);
+
+/// 取得を中止する。走っているループが次のキャラに移る時に見て抜ける。
+#[tauri::command]
+pub fn gem_break_cancel() {
+    CANCEL.store(true, Ordering::Relaxed);
+}
 
 use crate::poe_ninja_client as ninja;
 
@@ -167,6 +177,7 @@ fn gear_bonus(gems: &[GemView], pick_level: bool) -> i64 {
 pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Result<GemBreakResult, String> {
     let top_n = req.top_n.unwrap_or(40).clamp(5, 100);
     let spread = req.spread.unwrap_or(1).clamp(1, 10);
+    CANCEL.store(false, Ordering::Relaxed);
     let client = ninja::build_client()?;
     // MOD 一覧の一括取得より緩め (1 アセだけなので急がない。429 を食らうと数分待たされる)
     let gate = ninja::RateGate::new(1500);
@@ -199,7 +210,10 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let mut done = 0usize;
     let mut planned = 0usize;
 
-    for asc in &targets {
+    'outer: for asc in &targets {
+        if CANCEL.load(Ordering::Relaxed) {
+            break;
+        }
         emit(&window, "search", done, planned.max(top_n), &asc.class);
         let refs = match ninja::fetch_search_top_n(&client, &gate, &snap, &asc.class, per_asc).await {
             Ok(r) => r,
@@ -207,6 +221,9 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
         };
         planned += refs.len();
         for r in refs {
+            if CANCEL.load(Ordering::Relaxed) {
+                break 'outer;
+            }
             emit(&window, "fetching", done, planned.max(top_n), &asc.class);
             let ci = match ninja::fetch_character(&client, &gate, &snap, &r).await {
                 Ok(c) => c,
@@ -272,7 +289,11 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     emit(&window, "completed", done, planned.max(done), &label);
 
     if done == 0 {
-        return Err("キャラを 1 人も取れませんでした (poe.ninja のレート制限の可能性)".to_string());
+        return Err(if CANCEL.load(Ordering::Relaxed) {
+            "中止しました (1 人も取れていません)".to_string()
+        } else {
+            "キャラを 1 人も取れませんでした (poe.ninja のレート制限の可能性)".to_string()
+        });
     }
     let mut rows: Vec<GemBreakRow> = table.into_values().collect();
     for row in &mut rows {

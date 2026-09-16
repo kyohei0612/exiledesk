@@ -362,6 +362,7 @@ pub fn run() {
             trade_history::trade_history_fetch,
             gem_break::gem_break_fetch,
             gem_break::gem_break_ascendancies,
+            gem_break::gem_break_cancel,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
             pob_bundle::pob_bundle_status,

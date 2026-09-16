@@ -65,6 +65,44 @@ const spread = ref<number>(1);
 const busy = ref(false);
 const error = ref("");
 const progress = ref<{ phase: string; done: number; total: number } | null>(null);
+/** poe.ninja のレート制限 / 再試行の状態 (MOD 一覧のヘッダーと同じ物を出す) */
+interface NetworkStatusRaw {
+  global_penalty_waiting: boolean;
+  global_penalty_remaining_secs: number;
+  global_penalty_reason?: string | null;
+  active_retry_count: number;
+  last_retry_reason?: string | null;
+  last_retry_remaining_secs: number;
+}
+const net = ref<NetworkStatusRaw | null>(null);
+let netTimer: ReturnType<typeof setInterval> | null = null;
+
+function startNetPolling(): void {
+  if (netTimer || !inApp) return;
+  netTimer = setInterval(async () => {
+    try {
+      const s = await invoke<NetworkStatusRaw>("get_network_status");
+      net.value = s.global_penalty_waiting || s.active_retry_count > 0 ? s : null;
+    } catch {
+      net.value = null;
+    }
+  }, 1000);
+}
+function stopNetPolling(): void {
+  if (netTimer) clearInterval(netTimer);
+  netTimer = null;
+  net.value = null;
+}
+
+/** 取得を中止する (レート制限待ちが長い時の逃げ道)。取れた分までで結果が返る */
+async function cancelNow(): Promise<void> {
+  if (!busy.value) return;
+  try {
+    await invoke("gem_break_cancel");
+  } catch {
+    /* 失敗しても取得側はいずれ終わる */
+  }
+}
 
 function loadStored(): void {
   try {
@@ -95,6 +133,7 @@ async function fetchNow(): Promise<void> {
   busy.value = true;
   error.value = "";
   progress.value = null;
+  startNetPolling();
   try {
     const r = await invoke<Result>("gem_break_fetch", {
       req: { class: selectedClass.value || null, topN: topN.value, spread: spread.value },
@@ -113,6 +152,7 @@ async function fetchNow(): Promise<void> {
   } finally {
     busy.value = false;
     progress.value = null;
+    stopNetPolling();
   }
 }
 
@@ -179,7 +219,10 @@ onMounted(async () => {
     });
   }
 });
-onUnmounted(() => unlisten?.());
+onUnmounted(() => {
+  unlisten?.();
+  stopNetPolling();
+});
 </script>
 
 <template>
@@ -236,9 +279,47 @@ onUnmounted(() => unlisten?.());
       >
         {{ busy ? "取得中…" : "取得" }}
       </button>
+      <button
+        v-if="busy"
+        type="button"
+        class="px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)]"
+        title="取得を止める (取れた分までで集計します)"
+        @click="cancelNow"
+      >
+        中止
+      </button>
       <span v-if="busy && progressText" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-300">
         <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
         {{ progressText }}
+      </span>
+      <!-- poe.ninja のレート制限待ち / 再試行待ち (MOD 一覧のヘッダーと同じ表示) -->
+      <span
+        v-if="busy && net?.global_penalty_waiting"
+        class="inline-flex items-center gap-1 text-[11px] text-amber-300 font-medium"
+        :title="
+          net.global_penalty_reason
+            ? `poe.ninja から ${net.global_penalty_reason} を受信、自動再開を待機中`
+            : 'poe.ninja のレート制限の解除を待機中'
+        "
+      >
+        <span aria-hidden="true" class="animate-pulse">⏱</span>
+        リミット制限待機中（{{ net.global_penalty_remaining_secs }} 秒）
+        <span v-if="net.global_penalty_reason" class="text-amber-200/70 text-[10px]">({{ net.global_penalty_reason }})</span>
+      </span>
+      <span
+        v-else-if="busy && net && net.active_retry_count > 0"
+        class="inline-flex items-center gap-1 text-[11px] text-orange-300 font-medium"
+        :title="
+          net.last_retry_reason
+            ? `直近の再試行理由: ${net.last_retry_reason} (待機終了まで ${net.last_retry_remaining_secs} 秒)`
+            : 'サーバ応答エラーで再試行待機中'
+        "
+      >
+        <span aria-hidden="true" class="animate-pulse">🔁</span>
+        再試行中 {{ net.active_retry_count }} 件
+        <span v-if="net.last_retry_reason" class="text-orange-200/70 text-[10px]">
+          ({{ net.last_retry_reason }} 残 {{ net.last_retry_remaining_secs }} 秒)
+        </span>
       </span>
       <span v-else-if="result" class="text-[11px] text-[var(--exile-color-text-tertiary)]">
         {{ resultClassJa }} の上位 {{ result.characters }} 人 · 取得 {{ fetchedAtText }}
