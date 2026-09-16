@@ -20,6 +20,8 @@ const money = (n: number | null | undefined, signed = false): string => displayC
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
 import { fmtAge, loadFlow, summarizeFlow, type FlowStore } from "../services/market-flow";
+import { toExalted } from "../services/trade2/pricing";
+import { marketStore } from "../state/market-store";
 
 const g = useGemCorrupt();
 onActivated(() => {
@@ -183,7 +185,9 @@ watch(
   },
 );
 /** 選択中ジェムの売れ行き */
-const flow = computed(() => summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""]));
+const flow = computed(() =>
+  summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""], (amount, currency) => toExalted(amount, currency, marketStore.rates.value)),
+);
 /** バッジの色: 速い=緑 / 普通=黄 / 遅い=赤 */
 /** ホバーで出す内訳 */
 const flowTitle = computed(() => {

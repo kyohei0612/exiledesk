@@ -25,9 +25,14 @@ export interface FlowSample {
   median_age_min: number | null;
   avg_age_min?: number | null;
   seen: number;
-  ids?: string[];
+  entries?: ListingRef[];
   cheapest_amount: number | null;
   cheapest_currency: string | null;
+}
+export interface ListingRef {
+  id: string;
+  amount?: number | null;
+  currency?: string | null;
 }
 export interface Watch {
   key: string;
@@ -72,7 +77,7 @@ export async function recordFlow(sample: {
   median_age_min: number | null;
   avg_age_min: number | null;
   seen: number;
-  ids: string[];
+  entries: ListingRef[];
   cheapest_amount: number | null;
   cheapest_currency: string | null;
 }): Promise<void> {
@@ -101,6 +106,8 @@ export interface FlowSummary {
   totalDelta: number | null;
   /** 判定に使えた比較の回数 (サンプル間の対) */
   pairs: number;
+  /** 値段帯が入れ替わって比較できなかった回数 */
+  skipped: number;
   count: number;
   lastAt: number | null;
   /** 参考: 今並んでいる出品の滞留時間 (判定には使わない) */
@@ -122,43 +129,80 @@ const EMPTY_SUMMARY: FlowSummary = {
   totalNow: null,
   totalDelta: null,
   pairs: 0,
+  skipped: 0,
   count: 0,
   lastAt: null,
   avgAge: null,
 };
 
-/** 直近 24 時間ぶんのサンプルから捌き速度を出す */
-export function summarizeFlow(samples: FlowSample[] | undefined): FlowSummary {
+/**
+ * 直近のサンプルから捌き速度を出す。
+ *
+ * 消失の数え方に 1 つ仕掛けがある: 「安い出品がまとめて出てきて、前に見えていた高い出品が
+ * 一覧から押し出された」時に、それを売れたと数えてはいけない (オーナーの例: 50 神が滞留して
+ * いるところに 40 神が 20 件参戦 → 一見 100% 入れ替わるが 1 件も売れていない)。
+ * そこで「前回見えていた出品のうち、**今回の一覧に載る値段だったはずの物**」だけを数える。
+ *
+ * @param toEx 値段を高貴建てに直す関数 (通貨がまちまちなので呼び出し側の相場を使う)
+ */
+export function summarizeFlow(
+  samples: FlowSample[] | undefined,
+  toEx: (amount: number, currency: string) => number | null = () => null,
+): FlowSummary {
   const list = samples ?? [];
   if (list.length === 0) return EMPTY_SUMMARY;
   const last = list[list.length - 1];
   const base = list[Math.max(0, list.length - 25)];
 
-  // 連続するサンプルの対を見て「前回見えていた ID が今回何割消えたか」を 1 時間あたりに直す
+  /** 出品の値段 (高貴建て)。換算できなければ null */
+  const priceOf = (e: ListingRef): number | null => {
+    if (e.amount == null || !e.currency) return null;
+    return toEx(e.amount, e.currency);
+  };
+
   let goneWeighted = 0;
   let hoursTotal = 0;
   let churnHit = 0;
   let pairs = 0;
+  let skipped = 0;
   for (let i = 1; i < list.length; i++) {
     const prev = list[i - 1];
     const cur = list[i];
-    const prevIds = prev.ids ?? [];
-    const curIds = cur.ids ?? [];
-    if (prevIds.length === 0 || curIds.length === 0) continue;
+    const prevEntries = prev.entries ?? [];
+    const curEntries = cur.entries ?? [];
+    if (prevEntries.length === 0 || curEntries.length === 0) continue;
     const hours = (cur.t - prev.t) / 3600;
     // 間が空きすぎた対 (アプリを閉じていた等) は捨てる
     if (!(hours > 0.2 && hours <= 6)) continue;
-    const curSet = new Set(curIds);
-    const gone = prevIds.filter((id) => !curSet.has(id)).length;
-    goneWeighted += gone / prevIds.length;
+
+    // 今回の一覧に載っている一番高い値段。これより高い出品は「見えなくなっただけ」かもしれない
+    const curPrices = curEntries.map(priceOf).filter((v): v is number => v != null);
+    const visibleMax = curPrices.length > 0 && curEntries.length >= 10 ? Math.max(...curPrices) : Infinity;
+    const curIds = new Set(curEntries.map((e) => e.id));
+
+    let checked = 0;
+    let gone = 0;
+    for (const e of prevEntries) {
+      const p = priceOf(e);
+      // 押し出された可能性がある物は数えない (値段が分からない物は数える = 保守的)
+      if (p != null && p > visibleMax) continue;
+      checked++;
+      if (!curIds.has(e.id)) gone++;
+    }
+    // 比較できる出品が少なすぎる対は捨てる (値段帯がごっそり入れ替わった時など)
+    if (checked < 3) {
+      skipped++;
+      continue;
+    }
+    goneWeighted += gone / checked;
     hoursTotal += hours;
-    if (prevIds[0] !== curIds[0]) churnHit++;
+    if (prevEntries[0]?.id !== curEntries[0]?.id) churnHit++;
     pairs++;
   }
 
   const turnover = pairs > 0 && hoursTotal > 0 ? goneWeighted / hoursTotal : null;
   const cheapestChurn = pairs > 0 ? churnHit / pairs : null;
-  // 待ち時間 = 見えている件数 ÷ 1 時間に消える数 (= 1 / 消失率)
+  // 待ち時間 = 1 ÷ 1 時間あたりの消失率
   const waitMin = turnover != null && turnover > 0 ? Math.round(60 / turnover) : null;
 
   let tone: FlowTone = "unknown";
@@ -189,6 +233,7 @@ export function summarizeFlow(samples: FlowSample[] | undefined): FlowSummary {
     totalNow: last.total,
     totalDelta: list.length > 1 ? last.total - base.total : null,
     pairs,
+    skipped,
     count: list.length,
     lastAt: last.t,
     avgAge: last.avg_age_min ?? last.median_age_min ?? null,

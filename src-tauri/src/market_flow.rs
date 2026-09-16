@@ -60,12 +60,23 @@ pub struct FlowSample {
     pub avg_age_min: Option<i64>,
     /// 実際に見た出品数 (最大 10)
     pub seen: usize,
-    /// その時見えていた最安 10 件の listing ID (消失率の計算に使う。主指標)
+    /// その時見えていた最安 10 件 (消失率の計算に使う。主指標)。
+    /// 値段も持つのは「安い出品がまとめて出てきて押し出されただけ」を売れたと誤判定しないため。
     #[serde(default)]
-    pub ids: Vec<String>,
+    pub entries: Vec<ListingRef>,
     /// 最安値 (そのままの通貨)
     pub cheapest_amount: Option<f64>,
     pub cheapest_currency: Option<String>,
+}
+
+/// 見えていた出品 1 件 (ID と値段)
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ListingRef {
+    pub id: String,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub currency: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -176,9 +187,9 @@ pub struct RecordRequest {
     pub cheapest_amount: Option<f64>,
     #[serde(default)]
     pub cheapest_currency: Option<String>,
-    /// 見えていた listing ID (消失率に使う)
+    /// 見えていた出品 (ID と値段。消失率に使う)
     #[serde(default)]
-    pub ids: Vec<String>,
+    pub entries: Vec<ListingRef>,
 }
 
 /// 画面から手で取った結果を同じ履歴に差し込む (2026-09-16 オーナー指示)。
@@ -197,7 +208,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<F
                 median_age_min: req.median_age_min,
                 avg_age_min: req.avg_age_min,
                 seen: req.seen,
-                ids: req.ids,
+                entries: req.entries,
                 cheapest_amount: req.cheapest_amount,
                 cheapest_currency: req.cheapest_currency,
             };
@@ -212,7 +223,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<F
         median_age_min: req.median_age_min,
         avg_age_min: req.avg_age_min,
         seen: req.seen,
-        ids: req.ids,
+        entries: req.entries,
         cheapest_amount: req.cheapest_amount,
         cheapest_currency: req.cheapest_currency,
     });
@@ -305,7 +316,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         tokio::time::sleep(REQUEST_INTERVAL).await;
 
         let mut ages: Vec<i64> = Vec::new();
-        let seen_ids: Vec<String> = ids.iter().take(10).cloned().collect();
+        let mut entries: Vec<ListingRef> = Vec::new();
         let mut cheapest: Option<(f64, String)> = None;
         if !ids.is_empty() && !query_id.is_empty() {
             let fetch = crate::trade2::FetchRequest { ids: ids.clone(), query_id, site: site.clone() };
@@ -314,6 +325,15 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
                             let listing = item.get("listing");
+                            let price_amount = listing.and_then(|l| l.get("price")).and_then(|p| p.get("amount")).and_then(|x| x.as_f64());
+                            let price_currency = listing
+                                .and_then(|l| l.get("price"))
+                                .and_then(|p| p.get("currency"))
+                                .and_then(|x| x.as_str())
+                                .map(str::to_string);
+                            if let Some(id) = item.get("id").and_then(|x| x.as_str()) {
+                                entries.push(ListingRef { id: id.to_string(), amount: price_amount, currency: price_currency.clone() });
+                            }
                             if let Some(idx) = listing.and_then(|l| l.get("indexed")).and_then(|x| x.as_str()) {
                                 if let Some(m) = age_minutes(idx, now) {
                                     ages.push(m);
@@ -349,7 +369,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                 median_age_min: median,
                 avg_age_min: avg,
                 seen: ages.len(),
-                ids: seen_ids,
+                entries,
                 cheapest_amount: cheapest.as_ref().map(|c| c.0),
                 cheapest_currency: cheapest.map(|c| c.1),
             },

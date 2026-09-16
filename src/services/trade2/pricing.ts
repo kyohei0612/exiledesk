@@ -216,6 +216,8 @@ export function toExalted(amount: number, currency: string, rates: ExaltedRates)
 }
 
 export interface PriceListing {
+  /** trade2 の listing ID (捌き速度の消失率に使う) */
+  id: string;
   amountExalted: number;
   amount: number;
   currency: string;
@@ -240,6 +242,7 @@ export interface PriceResult {
 
 interface FetchResponse {
   result?: Array<{
+    id?: string;
     item?: { name?: string; typeLine?: string; ilvl?: number };
     listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string }; indexed?: string };
   }>;
@@ -303,6 +306,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     if (typeof amount !== "number" || !currency) continue;
     const ex = toExalted(amount, currency, rates);
     listings.push({
+      id: r.id ?? "",
       amountExalted: ex ?? Number.POSITIVE_INFINITY,
       amount,
       currency,

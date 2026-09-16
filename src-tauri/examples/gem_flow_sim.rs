@@ -31,6 +31,9 @@ struct Listing {
 
 struct Scenario {
     name: &'static str,
+    /// オーナーの例: 高値だけが並んだ後、ある時刻に安い出品がまとめて参戦する
+    /// (時刻 [分], 件数, 価格)
+    injection: Option<(i64, usize, f64)>,
     /// 1 時間あたりの出品数
     arrivals_per_hour: f64,
     /// 1 時間あたりの買い手の数
@@ -108,12 +111,23 @@ fn run(sc: &Scenario, seed: u32) -> (f64, Metrics) {
     let mut m = Metrics::default();
     let mut prev_cheapest: Option<(f64, i64)> = None;
     let mut prev_visible: Vec<(u64, f64)> = Vec::new(); // (id, price)
+    let mut injected = false;
     let mut next_id: u64 = 0;
 
     let total_minutes = 14 * 24 * 60; // 14 日
     let warmup = 2 * 24 * 60; // 最初の 2 日は集計しない
 
     for t in 0..total_minutes {
+        // オーナーの例: 途中で安い出品がまとめて参戦する
+        if let Some((at, count, price)) = sc.injection {
+            if !injected && t >= at {
+                injected = true;
+                for _ in 0..count {
+                    next_id += 1;
+                    book.push(Listing { id: next_id, price, listed_at: t, stale: false });
+                }
+            }
+        }
         // 出品
         if rng.next_f64() < sc.arrivals_per_hour / 60.0 {
             let stale = rng.next_f64() < sc.stale_ratio;
@@ -198,12 +212,22 @@ fn run(sc: &Scenario, seed: u32) -> (f64, Metrics) {
 
 fn main() {
     let scenarios = vec![
-        Scenario { name: "A 速い市場 (需給均衡)", arrivals_per_hour: 6.0, buyers_per_hour: 6.0, stale_ratio: 0.0, price_spread: 0.3 },
-        Scenario { name: "B 遅い市場 (供給過多)", arrivals_per_hour: 6.0, buyers_per_hour: 1.5, stale_ratio: 0.0, price_spread: 0.3 },
-        Scenario { name: "C 速いが強気出品が居座る", arrivals_per_hour: 6.0, buyers_per_hour: 5.5, stale_ratio: 0.35, price_spread: 0.3 },
-        Scenario { name: "D 薄い市場 (出品も買い手も少ない)", arrivals_per_hour: 0.6, buyers_per_hour: 0.5, stale_ratio: 0.1, price_spread: 0.3 },
-        Scenario { name: "E 即売れ + 強気多数 (最悪ケース)", arrivals_per_hour: 4.0, buyers_per_hour: 3.8, stale_ratio: 0.6, price_spread: 0.2 },
-        Scenario { name: "F 死んだ市場 (ほぼ売れない)", arrivals_per_hour: 3.0, buyers_per_hour: 0.2, stale_ratio: 0.2, price_spread: 0.3 },
+        Scenario { name: "A 速い市場 (需給均衡)", arrivals_per_hour: 6.0, buyers_per_hour: 6.0, stale_ratio: 0.0, price_spread: 0.3, injection: None },
+        Scenario { name: "B 遅い市場 (供給過多)", arrivals_per_hour: 6.0, buyers_per_hour: 1.5, stale_ratio: 0.0, price_spread: 0.3, injection: None },
+        Scenario { name: "C 速いが強気出品が居座る", arrivals_per_hour: 6.0, buyers_per_hour: 5.5, stale_ratio: 0.35, price_spread: 0.3, injection: None },
+        Scenario { name: "D 薄い市場 (出品も買い手も少ない)", arrivals_per_hour: 0.6, buyers_per_hour: 0.5, stale_ratio: 0.1, price_spread: 0.3, injection: None },
+        Scenario { name: "E 即売れ + 強気多数 (最悪ケース)", arrivals_per_hour: 4.0, buyers_per_hour: 3.8, stale_ratio: 0.6, price_spread: 0.2, injection: None },
+        Scenario { name: "F 死んだ市場 (ほぼ売れない)", arrivals_per_hour: 3.0, buyers_per_hour: 0.2, stale_ratio: 0.2, price_spread: 0.3, injection: None },
+        // オーナーの例: 高値 (相場 125 = 50 神相当) だけが滞留しているところに、
+        // 安値 (100 = 40 神相当) が 20 件まとめて参戦し、そこから少しだけ売れる
+        Scenario {
+            name: "G 高値滞留 → 安値が 20 件参戦",
+            arrivals_per_hour: 0.4,
+            buyers_per_hour: 0.6,
+            stale_ratio: 1.0,
+            price_spread: 0.1,
+            injection: Some((5 * 24 * 60, 20, 100.0)),
+        },
     ];
 
     println!(
