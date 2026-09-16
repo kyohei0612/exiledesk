@@ -20,7 +20,8 @@ const money = (n: number | null | undefined, signed = false): string => displayC
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
 import { fmtAge, fmtPct, loadFlow, loadFlowStatus, summarizeFlow, type FlowStatus, type FlowStore } from "../services/market-flow";
-import { SALE_KEYS, watchKey, type SaleKey } from "./gem-corrupt/row-query";
+import { SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./gem-corrupt/row-query";
+import SoldListDialog from "../components/SoldListDialog.vue";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { tradeErrorJa } from "../utils/trade-error";
 
@@ -192,6 +193,9 @@ const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
 // ---- 売れ行き (2026-09-16: gem_flow が 1 時間ごとに記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
+/** 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る */
+const soldOpen = ref(false);
+const soldKeys = computed(() => SALE_KEYS.map((k) => ({ key: watchKey(g.selected.value?.en ?? "", k), label: SALE_KEY_LABEL[k] })));
 /** 自動追跡の進行状況 (2026-09-16: 動いているのが分かるように) */
 const flowStatus = ref<FlowStatus | null>(null);
 let statusTimer: ReturnType<typeof setInterval> | null = null;
@@ -765,13 +769,15 @@ const summary = computed(() => {
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
                 </td>
                 <!-- 2026-09-16: 捌き速度 (出品を ID で追って生存分析)。3 条件とも出す -->
-                <td class="py-1.5 text-right">
+                <!-- 2026-09-17 オーナー指示: 押すと売れたリスト (値段つき) を出す -->
+                <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" @click="soldOpen = true">
                   <template v-for="f in [flowOf(row.key)]" :key="row.key">
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
                         1 日で {{ fmtPct(f.soldIn24h) }} 売れる
                       </span>
+                      <span class="text-[10px] underline text-[var(--exile-color-text-tertiary)] whitespace-nowrap">売れたリスト</span>
                     </div>
                     <span
                       v-else-if="f.gone + f.alive > 0"
@@ -1232,6 +1238,13 @@ const summary = computed(() => {
       <span>素材価格: カレンシーランキングの相場 (poe2scout 由来)</span>
       <span>売値: trade2 (取得ボタンは検索 3 回、鑑定は API 不使用)</span>
     </footer>
+    <SoldListDialog
+      :open="soldOpen"
+      :title="g.selected.value?.ja ?? ''"
+      :keys="soldKeys"
+      :store="flowStore"
+      @close="soldOpen = false"
+    />
   </section>
 </template>
 

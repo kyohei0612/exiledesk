@@ -19,6 +19,7 @@ import { resumeAtText, waitText } from "../utils/wait-text";
 import { loadFlow, setWatches, summarizeFlow, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { watchesFromRows } from "../state/gem-watch-auto";
+import SoldListDialog from "../components/SoldListDialog.vue";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
@@ -207,6 +208,10 @@ function speedOf(nameEn: string): SpeedCell[] {
     return { label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
   });
 }
+/** 売れたリスト (オーナー指示 2026-09-17): チップを押すと、そのジェムの消えた出品を値段つきで出す */
+const soldFor = ref<string>("");
+const soldKeys = computed(() => SALE_KEYS.map((k) => ({ key: watchKey(soldFor.value, k), label: SALE_KEY_LABEL[k] })));
+
 /** 「どれも遅い」のような 1 行のまとめ。条件ごとに違う時は下のチップに任せて空にする */
 function speedSummary(nameEn: string): string {
   const cells = speedOf(nameEn);
@@ -456,10 +461,17 @@ onUnmounted(() => {
               <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
               <span class="flex items-baseline shrink-0 gap-2 text-[10px] whitespace-nowrap ">
                 <template v-if="speedSummary(r.name) === '' || speedOf(r.name).some((c) => c.verdict !== '記録なし')">
-                  <span v-for="c in speedOf(r.name)" :key="c.label" :title="c.detail">
-                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
-                    <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
-                  </span>
+                  <button
+                    type="button"
+                    class="flex items-baseline gap-2 hover:underline"
+                    :title="`${jaSkill(r.name)} の売れたリスト (値段・出品時刻つき) を見る`"
+                    @click.stop="soldFor = r.name"
+                  >
+                    <span v-for="c in speedOf(r.name)" :key="c.label" :title="c.detail">
+                      <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
+                      <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
+                    </span>
+                  </button>
                 </template>
               </span>
 
@@ -496,6 +508,13 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
+    <SoldListDialog
+      :open="soldFor !== ''"
+      :title="soldFor ? jaSkill(soldFor) : ''"
+      :keys="soldKeys"
+      :store="flowStore"
+      @close="soldFor = ''"
+    />
   </section>
 </template>
 
