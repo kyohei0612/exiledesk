@@ -52,7 +52,7 @@ struct SearchResponse {
 }
 
 /// search request body (フロントエンドが組み立てる JSON をそのまま透過)。
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchRequest {
     pub league: String,
     /// "jp" なら jp.pathofexile.com の API を使う (既定 www)

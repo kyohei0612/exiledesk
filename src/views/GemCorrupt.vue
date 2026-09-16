@@ -781,9 +781,9 @@ const summary = computed(() => {
               <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
               取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
             </span>
-            <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5 text-[var(--exile-color-text-secondary)]">
-              <span class="inline-block w-2 h-2 rounded-full bg-[var(--exile-color-text-tertiary)]" aria-hidden="true"></span>
-              待機中 · 次回 {{ fmtClock(flowStatus.next_at) }}
+            <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5" :class="flowStatus.retry_at > 0 ? 'text-amber-300' : 'text-[var(--exile-color-text-secondary)]'">
+              <span class="inline-block w-2 h-2 rounded-full" :class="flowStatus.retry_at > 0 ? 'bg-amber-300 animate-pulse' : 'bg-[var(--exile-color-text-tertiary)]'" aria-hidden="true"></span>
+              {{ flowStatus.retry_at > 0 ? "取りこぼし分を再取得予定" : "待機中" }} · 次回 {{ fmtClock(flowStatus.next_at) }}
             </span>
             <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
 

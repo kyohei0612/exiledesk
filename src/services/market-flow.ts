@@ -107,6 +107,7 @@ export interface FlowStatus {
   last_error: string | null;
   rate_state: string | null;
   retry_until: number;
+  retry_at: number;
 }
 
 /** 自動追跡が今どうなっているか */
