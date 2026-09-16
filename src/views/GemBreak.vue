@@ -13,6 +13,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { jaSkill } from "../i18n/skills-ja";
+import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import gemsRaw from "../i18n/gems-client.json";
 
@@ -115,10 +116,11 @@ async function fetchNow(): Promise<void> {
   }
 }
 
+// オーナー指示 (2026-09-16): 並びは 完成品 → レベル 21 → 品質 23%
 const SECTIONS = [
+  { key: "both", label: "完成品 (両方)", icon: "☠", note: "レベル 21 以上かつ品質 23% 以上で使っている人数" },
   { key: "lvl21", label: "レベル 21 以上", icon: "⬆", note: "コラプトでレベルが上がったジェムを使っている人数" },
   { key: "q23", label: "品質 23% 以上", icon: "✧", note: "コラプトで品質が上がったジェムを使っている人数" },
-  { key: "both", label: "完成品 (両方)", icon: "☠", note: "レベル 21 以上かつ品質 23% 以上で使っている人数" },
 ] as const;
 type Key = (typeof SECTIONS)[number]["key"];
 
@@ -143,6 +145,15 @@ const isOpen = (key: Key, name: string): boolean => !!expanded.value[key + "::" 
 /** "20:5 / 21:12 / 22:3" (人数の多い順ではなく値の昇順、0 は出さない) */
 const distText = (d: [number, number][] | undefined, suffix = ""): string =>
   (d ?? []).map(([v, c]) => `${v}${suffix}: ${c}人`).join(" / ") || "—";
+/** 集計対象の表示名 (1 アセなら日本語名、複数なら「上位 N アセ合算」) */
+const resultClassJa = computed(() => {
+  const r = result.value;
+  if (!r) return "";
+  const cs = r.classes ?? [];
+  if (cs.length === 1) return `${ascendancyIcon(cs[0])} ${jaAscendancy(cs[0])}`;
+  if (cs.length > 1) return `${cs.map((c) => jaAscendancy(c)).join(" / ")}`;
+  return jaAscendancy(r.class);
+});
 const fetchedAtText = computed(() => {
   const t = result.value?.fetched_at;
   if (!t) return "";
@@ -194,8 +205,10 @@ onUnmounted(() => unlisten?.());
       <label class="inline-flex items-center gap-2 min-w-0">
         <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
         <select v-model="selectedClass" class="sel max-w-64" :disabled="spread > 1">
-          <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ selectedClass }}</option>
-          <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ a.class }} ({{ a.percentage.toFixed(1) }}%)</option>
+          <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ jaAscendancy(selectedClass) }}</option>
+          <option v-for="a in ascendancies" :key="a.class" :value="a.class">
+            {{ ascendancyIcon(a.class) }} {{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)
+          </option>
         </select>
       </label>
       <label class="inline-flex items-center gap-2">
@@ -228,7 +241,7 @@ onUnmounted(() => unlisten?.());
         {{ progressText }}
       </span>
       <span v-else-if="result" class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-        {{ result.class }} の上位 {{ result.characters }} 人 · {{ result.league }} · 取得 {{ fetchedAtText }}
+        {{ resultClassJa }} の上位 {{ result.characters }} 人 · 取得 {{ fetchedAtText }}
       </span>
       <p v-if="error" class="basis-full text-[12px] text-amber-300">{{ error }}</p>
     </div>
@@ -236,7 +249,8 @@ onUnmounted(() => unlisten?.());
     <p v-if="!result" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
       まだ取得していません。アセンダンシーを選んで「取得」を押してください (まずは使用率トップの 1 つで十分です)。
     </p>
-    <div v-else class="grid grid-cols-1 @4xl:grid-cols-2 @6xl:grid-cols-3 gap-4 items-start">
+    <!-- 段組みは他の「賭け」画面と同じ刻み (狭い時に無理に横並びにしない) -->
+    <div v-else class="grid grid-cols-1 @6xl:grid-cols-2 @7xl:grid-cols-3 gap-4 items-start">
       <div v-for="sec in SECTIONS" :key="sec.key" class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-baseline gap-2">
           <span aria-hidden="true">{{ sec.icon }}</span>
