@@ -107,12 +107,21 @@ pub(crate) async fn fetch_search(
     class: &str,
     n: usize,
 ) -> Result<SearchResult, String> {
-    let url = format!(
-        "{NINJA_BASE}/poe2/api/builds/{version}/search?overview={overview}&class={class}&sort=dps",
-        version = url_encode(&snapshot.version),
-        overview = url_encode(&snapshot.snapshot_name),
-        class = url_encode(class),
-    );
+    // 2026-09-16: class が空なら絞り込み無し = リーグ全体の DPS 上位 (別の 100 人が返る)
+    let url = if class.is_empty() {
+        format!(
+            "{NINJA_BASE}/poe2/api/builds/{version}/search?overview={overview}&sort=dps",
+            version = url_encode(&snapshot.version),
+            overview = url_encode(&snapshot.snapshot_name),
+        )
+    } else {
+        format!(
+            "{NINJA_BASE}/poe2/api/builds/{version}/search?overview={overview}&class={class}&sort=dps",
+            version = url_encode(&snapshot.version),
+            overview = url_encode(&snapshot.snapshot_name),
+            class = url_encode(class),
+        )
+    };
     let resp = http_get_with_backoff(client, gate, &url).await?;
     let bytes = resp
         .bytes()

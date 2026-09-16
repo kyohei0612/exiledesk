@@ -61,7 +61,8 @@ const SPREAD_KEY = "exiledesk.gem-break.spread";
 
 const result = ref<Result | null>(null);
 const ascendancies = ref<Asc[]>([]);
-const selectedClass = ref<string>("");
+/** null = まだ決まっていない / "" = 全アセンダンシー / それ以外 = そのアセンダンシー */
+const selectedClass = ref<string | null>(null);
 const topN = ref<number>(40);
 /** 何アセンダンシーに散らすか (1 = 選んだアセだけ) */
 const spread = ref<number>(1);
@@ -111,7 +112,7 @@ function loadStored(): void {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) result.value = JSON.parse(raw) as Result;
-    selectedClass.value = localStorage.getItem(CLASS_KEY) ?? "";
+    selectedClass.value = localStorage.getItem(CLASS_KEY);
     const n = Number(localStorage.getItem(TOPN_KEY));
     if (n >= 5 && n <= 100) topN.value = n;
     const sp = Number(localStorage.getItem(SPREAD_KEY));
@@ -125,7 +126,8 @@ async function loadAscendancies(): Promise<void> {
   if (!inApp) return;
   try {
     ascendancies.value = await invoke<Asc[]>("gem_break_ascendancies");
-    if (!selectedClass.value) selectedClass.value = ascendancies.value[0]?.class ?? "";
+    // 保存されていなければ使用率トップ。空文字 (全アセンダンシー) を選んでいた場合はそのまま
+    if (selectedClass.value === null) selectedClass.value = ascendancies.value[0]?.class ?? "";
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   }
@@ -139,12 +141,12 @@ async function fetchNow(): Promise<void> {
   startNetPolling();
   try {
     const r = await invoke<Result>("gem_break_fetch", {
-      req: { class: selectedClass.value || null, topN: topN.value, spread: spread.value },
+      req: { class: selectedClass.value ?? null, topN: topN.value, spread: spread.value },
     });
     result.value = r;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
-      localStorage.setItem(CLASS_KEY, r.class);
+      localStorage.setItem(CLASS_KEY, selectedClass.value ?? "");
       localStorage.setItem(TOPN_KEY, String(topN.value));
       localStorage.setItem(SPREAD_KEY, String(spread.value));
     } catch {
@@ -192,7 +194,8 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
 const resultClassJa = computed(() => {
   const r = result.value;
   if (!r) return "";
-  const cs = r.classes ?? [];
+  const cs = (r.classes ?? []).filter((c) => c);
+  if (cs.length === 0) return "全アセンダンシー";
   if (cs.length === 1) return `${ascendancyIcon(cs[0])} ${jaAscendancy(cs[0])}`;
   if (cs.length > 1) return `${cs.map((c) => jaAscendancy(c)).join(" / ")}`;
   return jaAscendancy(r.class);
@@ -262,6 +265,8 @@ onUnmounted(() => {
       <label class="inline-flex items-center gap-2 min-w-0">
         <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
         <select v-model="selectedClass" class="sel max-w-64" :disabled="spread > 1">
+          <!-- クラス指定なし = リーグ全体の DPS 上位 100 人 (ジェムリング上位と 75% 別人だった) -->
+          <option value="">全アセンダンシー (リーグ全体の上位)</option>
           <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ jaAscendancy(selectedClass) }}</option>
           <option v-for="a in ascendancies" :key="a.class" :value="a.class">
             {{ ascendancyIcon(a.class) }} {{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)
@@ -270,7 +275,7 @@ onUnmounted(() => {
       </label>
       <label class="inline-flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">範囲</span>
-        <select v-model.number="spread" class="sel">
+        <select v-model.number="spread" class="sel" :disabled="!selectedClass">
           <option :value="1">選んだアセだけ</option>
           <option :value="3">上位 3 アセに散らす</option>
           <option :value="5">上位 5 アセに散らす</option>
@@ -287,7 +292,7 @@ onUnmounted(() => {
       </label>
       <button
         type="button"
-        :disabled="!inApp || busy || !selectedClass"
+        :disabled="!inApp || busy || selectedClass == null"
         class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
         @click="fetchNow"
       >

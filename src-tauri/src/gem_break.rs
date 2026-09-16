@@ -190,8 +190,13 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let snap = ninja::fetch_index_state(&client, &gate, None).await?;
     let ascs = ninja::fetch_build_index_state(&client, &gate, &snap.league_url).await?;
 
+    // クラス指定なし (空文字) = リーグ全体の DPS 上位 100 人 (オーナー案 2026-09-16)。
+    // ジェムリング上位 100 人と比べて 75 人が別人だったので、母集団として別物になる。
+    let all_classes = matches!(req.class.as_deref(), Some(""));
     // 対象アセンダンシー: spread=1 なら指定 1 つ、2 以上なら使用率上位から spread 個
-    let targets: Vec<ninja::AscendancyMeta> = if spread <= 1 {
+    let targets: Vec<ninja::AscendancyMeta> = if all_classes {
+        vec![ninja::AscendancyMeta { class: String::new(), percentage: 100.0 }]
+    } else if spread <= 1 {
         let a = match &req.class {
             Some(c) => ascs.iter().find(|a| &a.class == c).cloned(),
             None => ascs.first().cloned(),
@@ -285,7 +290,9 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
             }
         }
     }
-    let label = if targets.len() == 1 {
+    let label = if all_classes {
+        "全アセンダンシー".to_string()
+    } else if targets.len() == 1 {
         targets[0].class.clone()
     } else {
         format!("上位 {} アセ合算", targets.len())
