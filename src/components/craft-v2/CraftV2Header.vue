@@ -8,6 +8,7 @@
 import type { SlotKey } from "../../services/craft-v2/types";
 import { craftV2Store, refetchWithSelectedLeague } from "../../state/craft-v2-store";
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
+import { resumeAtText, waitText } from "../../utils/wait-text";
 
 defineProps<{
   /** 選択中アセンダンシーのサンプル人数 (null なら未表示) */
@@ -117,7 +118,11 @@ const store = craftV2Store;
           "
         >
           <span aria-hidden="true" class="animate-pulse">⏱</span>
-          リミット制限待機中（{{ store.networkStatus.globalPenaltyRemainingSecs }} 秒）
+          リミット制限待機中（あと {{ waitText(store.networkStatus.globalPenaltyRemainingSecs) }}<template
+            v-if="resumeAtText(store.networkStatus.globalPenaltyRemainingSecs)"
+          >
+            · {{ resumeAtText(store.networkStatus.globalPenaltyRemainingSecs) }} 頃に再開</template
+          >）
           <span v-if="store.networkStatus.globalPenaltyReason" class="text-amber-200/70 text-[10px]">
             ({{ store.networkStatus.globalPenaltyReason }})
           </span>
@@ -129,14 +134,14 @@ const store = craftV2Store;
           class="inline-flex items-center gap-1 text-[11px] text-orange-300 font-medium"
           :title="
             store.networkStatus.lastRetryReason
-              ? `直近の再試行理由: ${store.networkStatus.lastRetryReason} (sleep 終了まで ${store.networkStatus.lastRetryRemainingSecs} 秒)`
+              ? `直近の再試行理由: ${store.networkStatus.lastRetryReason} (あと ${waitText(store.networkStatus.lastRetryRemainingSecs)})`
               : 'サーバ応答エラーで再試行待機中'
           "
         >
           <span aria-hidden="true" class="animate-pulse">🔁</span>
           再試行中 {{ store.networkStatus.activeRetryCount }} 件
           <span v-if="store.networkStatus.lastRetryReason" class="text-orange-200/70 text-[10px]">
-            ({{ store.networkStatus.lastRetryReason }} 残 {{ store.networkStatus.lastRetryRemainingSecs }} 秒)
+            ({{ store.networkStatus.lastRetryReason }} あと {{ waitText(store.networkStatus.lastRetryRemainingSecs) }})
           </span>
         </span>
         <span

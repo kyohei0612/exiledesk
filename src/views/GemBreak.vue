@@ -15,6 +15,7 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
+import { resumeAtText, waitText } from "../utils/wait-text";
 import gemsRaw from "../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -303,7 +304,9 @@ onUnmounted(() => {
         "
       >
         <span aria-hidden="true" class="animate-pulse">⏱</span>
-        リミット制限待機中（{{ net.global_penalty_remaining_secs }} 秒）
+        リミット制限待機中（あと {{ waitText(net.global_penalty_remaining_secs) }}<template v-if="resumeAtText(net.global_penalty_remaining_secs)">
+          · {{ resumeAtText(net.global_penalty_remaining_secs) }} 頃に再開</template
+        >）
         <span v-if="net.global_penalty_reason" class="text-amber-200/70 text-[10px]">({{ net.global_penalty_reason }})</span>
       </span>
       <span
@@ -311,14 +314,14 @@ onUnmounted(() => {
         class="inline-flex items-center gap-1 text-[11px] text-orange-300 font-medium"
         :title="
           net.last_retry_reason
-            ? `直近の再試行理由: ${net.last_retry_reason} (待機終了まで ${net.last_retry_remaining_secs} 秒)`
+            ? `直近の再試行理由: ${net.last_retry_reason} (あと ${waitText(net.last_retry_remaining_secs)})`
             : 'サーバ応答エラーで再試行待機中'
         "
       >
         <span aria-hidden="true" class="animate-pulse">🔁</span>
         再試行中 {{ net.active_retry_count }} 件
         <span v-if="net.last_retry_reason" class="text-orange-200/70 text-[10px]">
-          ({{ net.last_retry_reason }} 残 {{ net.last_retry_remaining_secs }} 秒)
+          ({{ net.last_retry_reason }} あと {{ waitText(net.last_retry_remaining_secs) }})
         </span>
       </span>
       <span v-else-if="result" class="text-[11px] text-[var(--exile-color-text-tertiary)]">
