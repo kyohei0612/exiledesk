@@ -16,7 +16,8 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { setWatches } from "../services/market-flow";
+import { loadFlow, setWatches, summarizeFlow, fmtAge, type FlowStore } from "../services/market-flow";
+import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { watchesFromRows } from "../state/gem-watch-auto";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
@@ -182,6 +183,47 @@ type Key = (typeof SECTIONS)[number]["key"];
 
 /** 売れ行きを追う下限 (完成品を使っている人数) */
 const TRACK_MIN_FINISHED = 5;
+/** 捌き速度 (ジェムコラプト側で貯めた記録) を 1 行で出す */
+const flowStore = ref<FlowStore | null>(null);
+async function reloadFlow(): Promise<void> {
+  flowStore.value = await loadFlow();
+}
+interface SpeedCell {
+  label: string;
+  verdict: string;
+  tone: string;
+  detail: string;
+}
+/** そのジェムの 3 条件ぶんの判定 */
+function speedOf(nameEn: string): SpeedCell[] {
+  return SALE_KEYS.map((key) => {
+    const f = summarizeFlow(flowStore.value?.states?.[watchKey(nameEn, key)]);
+    const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : "記録なし");
+    const detail = f.medianMin != null ? `売れるまで約 ${fmtAge(f.medianMin)}` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
+    return { label: SALE_KEY_LABEL[key], verdict, tone: f.tone, detail };
+  });
+}
+/** 「どれも遅い」のような 1 行のまとめ。条件ごとに違う時は下のチップに任せて空にする */
+function speedSummary(nameEn: string): string {
+  const cells = speedOf(nameEn);
+  const known = cells.filter((c) => c.verdict === "速い" || c.verdict === "普通" || c.verdict === "遅い");
+  if (known.length === 0) return "まだ記録がありません (ジェムコラプトの賭けで「再取得」を押すと貯まります)";
+  if (known.length === cells.length && known.every((c) => c.verdict === known[0].verdict)) return `どれも${known[0].verdict}`;
+  return "";
+}
+function speedToneClass(tone: string): string {
+  switch (tone) {
+    case "fast":
+      return "text-emerald-300";
+    case "normal":
+      return "text-amber-300";
+    case "slow":
+      return "text-red-300";
+    default:
+      return "text-[var(--exile-color-text-tertiary)]";
+  }
+}
+
 const PAGE = 25;
 const showAll = ref<Record<string, boolean>>({});
 function listOf(key: Key): Row[] {
@@ -242,6 +284,7 @@ const progressText = computed(() => {
 let unlisten: UnlistenFn | null = null;
 onMounted(async () => {
   loadStored();
+  void reloadFlow();
   await loadAscendancies();
   if (inApp) {
     unlisten = await listen<{ phase: string; done: number; total: number }>("gem-break-progress", (e) => {
@@ -424,6 +467,17 @@ onUnmounted(() => {
               <div class="flex gap-2">
                 <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">コラプト済み</dt>
                 <dd class="tabular-nums">{{ r.corrupted }} / {{ r.users }} 人</dd>
+              </div>
+              <!-- 2026-09-16: 捌き速度を 1 行で (完成品 / 品質 23% / レベル 21 のどれが売れるか) -->
+              <div class="flex gap-2">
+                <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">捌き速度</dt>
+                <dd class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                  <span v-if="speedSummary(r.name)" class="text-[var(--exile-color-text-primary)]">{{ speedSummary(r.name) }}</span>
+                  <span v-for="c in speedOf(r.name)" :key="c.label" class="tabular-nums" :title="c.detail">
+                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.label }}</span>
+                    <span class="ml-1" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
+                  </span>
+                </dd>
               </div>
             </dl>
           </li>

@@ -49,7 +49,8 @@ pub struct Watch {
     /// 画面に出す名前
     #[serde(default)]
     pub label: String,
-    /// trade2 の検索クエリ (フロントで組んだ物をそのまま使う)
+    /// trade2 の検索クエリ (フロントで組んだ物をそのまま使う)。手動分は空でもよい
+    #[serde(default)]
     pub query: serde_json::Value,
     /// 補足 (「完成品を 41 人が使用」など、登録元が入れる)
     #[serde(default)]
@@ -339,6 +340,9 @@ pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<FlowStore, 
 pub struct RecordRequest {
     /// 銘柄のキー
     pub key: String,
+    /// 画面に出す名前 (未登録なら手動の銘柄として登録する)
+    #[serde(default)]
+    pub label: Option<String>,
     pub total: u64,
     /// search が返した ID 一覧 (生存確認に使う)
     #[serde(default)]
@@ -366,6 +370,17 @@ pub struct ListingRef {
 pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
     let now = now_secs();
+    // 2026-09-16: 画面で取った銘柄はそのまま記録対象にする (チェックを廃止したため)。
+    // 手動扱いなので 1 時間ごとの巡回には入らず、自動リストの入れ替えでも消えない。
+    if !store.watches.iter().any(|w| w.key == req.key) {
+        store.watches.push(Watch {
+            key: req.key.clone(),
+            label: req.label.clone().unwrap_or_else(|| req.key.clone()),
+            query: serde_json::Value::Null,
+            note: "画面で取得".to_string(),
+            manual: true,
+        });
+    }
     let state = store.states.entry(req.key).or_default();
     // 手動分は「search の ID 一覧が全部取れている」前提で扱う (最大 100 件)
     apply_sample(state, now, req.total, &req.ids, &req.entries, req.total < 100);

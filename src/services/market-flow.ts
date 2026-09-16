@@ -130,7 +130,7 @@ export async function toggleWatch(watch: Watch, on: boolean, league: string, sit
 }
 
 /** 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」) */
-export async function recordFlow(sample: { key: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<void> {
+export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<void> {
   if (!isTauriRuntime()) return;
   try {
     await invoke("market_flow_record", { req: sample });

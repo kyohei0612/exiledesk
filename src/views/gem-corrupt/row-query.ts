@@ -21,9 +21,12 @@ export const SALE_KEY_LABEL: Record<SaleKey, string> = {
  *   - レベル 21 / 品質 23% はヴァールオーブ 1 回の産物なので 2 重コラプト品を除く
  *   - 完成品 (21 · 23%) は結晶を通した 2 重コラプト品そのもの
  */
-export function rowQueryOptions(key: SaleKey, meta: boolean, socketsMin?: number): GemQueryOptions {
+/** コラプト済みは直せないので、買う時は 5 ソケット前提 (オーナー指示 2026-09-16: 常に必須) */
+export const REQUIRED_SOCKETS = 5;
+
+export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
   const category = meta ? "gem.metagem" : "gem.activegem";
-  const common = { category, corrupted: true, socketsMin } as const;
+  const common = { category, corrupted: true, socketsMin: REQUIRED_SOCKETS } as const;
   switch (key) {
     case "level21":
       return { ...common, levelMin: 21, qualityMin: 20, qualityMax: 20, twiceCorrupted: false };
@@ -34,7 +37,7 @@ export function rowQueryOptions(key: SaleKey, meta: boolean, socketsMin?: number
   }
 }
 
-/** 追跡に使うクエリ (ソケット条件は付けない = 母数を減らさない) */
+/** 追跡に使うクエリ (画面の検索と同じ条件) */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
   return buildGemQuery(gemEn, rowQueryOptions(key, meta));
 }

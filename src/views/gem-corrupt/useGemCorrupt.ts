@@ -15,7 +15,7 @@ import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { recordFlow } from "../../services/market-flow";
-import { rowQueryOptions, watchKey } from "./row-query";
+import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -198,12 +198,12 @@ export function useGemCorrupt() {
   // ---- 売値 (手入力 or trade2) ----
   const sale = ref<SalePrices>({ level21: null, quality23: null, finished: null });
   const saleInfo = ref<Record<SaleKey, PriceResult | null>>({ level21: null, quality23: null, finished: null });
-  const requireSockets = ref(true);
   const pricing = ref(false);
   const priceError = ref<string | null>(null);
 
   function queryOptions(key: SaleKey): GemQueryOptions {
-    return rowQueryOptions(key, selected.value?.kind === "meta", requireSockets.value ? 5 : undefined);
+    // 5 ソケットは常に必須 (コラプト済みはソケットを足せないため)
+    return rowQueryOptions(key, selected.value?.kind === "meta");
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   function tradeUrl(key: SaleKey): string | null {
@@ -218,8 +218,10 @@ export function useGemCorrupt() {
   let fetchSeq = 0;
   /** 手動取得の結果を捌き速度の記録に差し込む (自動サンプルと同じ形) */
   async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
+    const gem = GEMS.find((g) => g.en === gemEn);
     await recordFlow({
       key: watchKey(gemEn, key),
+      label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
       total: r.total,
       ids: r.listingIds ?? [],
       entries: r.listings.map((l) => ({
@@ -254,7 +256,7 @@ export function useGemCorrupt() {
     }
   }
   // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す
-  watch([selected, requireSockets], () => {
+  watch(selected, () => {
     if (selected.value) void fetchSalePrices();
   });
 
@@ -292,7 +294,6 @@ export function useGemCorrupt() {
     uncutLabel,
     sale,
     saleInfo,
-    requireSockets,
     pricing,
     priceError,
     tradeAuto,
