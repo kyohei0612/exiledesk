@@ -167,9 +167,11 @@ export async function confirmFlow(key: string, checked: string[], alive: string[
 export type FlowTone = "fast" | "normal" | "slow" | "unknown";
 
 export interface FlowSummary {
-  /** "速い" / "普通" / "遅い" / "" */
+  /** "速い" / "普通" / "遅い" / "" ((暫定) 付きは売れ残りを 1 件も観測できていない) */
   label: string;
   tone: FlowTone;
+  /** 売れ残りを 1 件も観測できていない = 率が 100% にしかならない状態 (2026-09-17) */
+  provisional: boolean;
   /** 消えた出品の寿命の中央値 (分)。参考表示用 */
   medianMin: number | null;
   /** 1 日 / 2 日以内に売れた割合 (0-1)。結果が分かっている件数に対する割合 */
@@ -205,6 +207,7 @@ const NORMAL_SECS = 48 * HOUR;
 const EMPTY_SUMMARY: FlowSummary = {
   label: "",
   tone: "unknown",
+  provisional: false,
   medianMin: null,
   soldIn24h: null,
   soldIn48h: null,
@@ -285,15 +288,23 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   const staleAvg = stalePrices.length > 0 ? stalePrices.reduce((a, b) => a + b, 0) / stalePrices.length : null;
   const staleRatio = cheapest != null && cheapest > 0 && staleAvg != null ? staleAvg / cheapest : null;
 
+  // 「売れなかった」を 1 件も観測できていないうちは、母数が売れた分だけになるので
+  // 必ず 100% になる。判定は出すが (暫定) を付けて、鵜呑みにしないようにする (2026-09-17 全点検)
+  const censored24 = records.some((r) => !r.gone && r.life >= FAST_SECS);
+  const censored48 = records.some((r) => !r.gone && r.life >= NORMAL_SECS);
+
   let tone: FlowTone = "unknown";
   let label = "";
+  let provisional = false;
   if (d1.known >= MIN_KNOWN && (d1.rate ?? 0) >= 0.5) {
     tone = "fast";
-    label = "速い";
+    provisional = !censored24 && d1.hit === d1.known;
+    label = provisional ? "速い (暫定)" : "速い";
   } else if (d2.known >= MIN_KNOWN) {
     if ((d2.rate ?? 0) >= 0.5) {
       tone = "normal";
-      label = "普通";
+      provisional = !censored48 && d2.hit === d2.known;
+      label = provisional ? "普通 (暫定)" : "普通";
     } else {
       tone = "slow";
       label = "遅い";
@@ -315,6 +326,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   return {
     label,
     tone,
+    provisional,
     medianMin: median != null ? Math.round(median / 60) : null,
     soldIn24h: d1.rate,
     soldIn48h: d2.rate,

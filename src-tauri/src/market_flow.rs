@@ -218,6 +218,29 @@ const DAILY_MAX_DAYS: usize = 30;
 /// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
 const CONFIRM_INTERVAL_SECS: i64 = 3300;
 
+/// 一度の確認で「追跡中の何割が消えたら怪しいと見なすか」。
+///
+/// 検索条件がズレている / 応答がおかしい等で、検索に載らないだけの出品を
+/// まとめて「売れた」にしてしまう事故が実際に起きた (2026-09-17 全点検)。
+/// これを超えたら検索結果を信用せず、ID を直接 fetch して確かめる。
+const MASS_GONE_RATIO: f64 = 0.5;
+/// 一斉消失とみなす最低件数 (少数なら普通に売れただけ)
+const MASS_GONE_MIN: usize = 3;
+
+/// 追跡中のうち、今回の ID 一覧に載っていない件数
+fn missing_count(state: &WatchState, ids: &[String]) -> (usize, usize) {
+    let present: std::collections::HashSet<&str> = ids.iter().map(String::as_str).collect();
+    let alive: Vec<&Tracked> = state.tracked.iter().filter(|t| t.gone_at.is_none()).collect();
+    let missing = alive.iter().filter(|t| !present.contains(t.id.as_str())).count();
+    (missing, alive.len())
+}
+
+/// 一斉に消えた (ように見える) か。true なら検索結果だけで消えた判定をしない
+pub fn looks_like_mass_gone(state: &WatchState, ids: &[String]) -> bool {
+    let (missing, alive) = missing_count(state, ids);
+    missing >= MASS_GONE_MIN && alive > 0 && (missing as f64) > (alive as f64) * MASS_GONE_RATIO
+}
+
 /// 1 組 (10 分) あたりの確認 fetch の上限。
 /// 通常の取得が 1 時間 60 回なので、これを足しても 6 時間 600 回の制限に収まる
 const CONFIRM_MAX_PER_SLICE: usize = 3;
@@ -395,7 +418,9 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
             Some(existing) => {
                 // 検索条件が変わったら、前の記録は別の検索の結果なので比べられない。
                 // そのまま残すと「消えた = 売れた」と誤判定するので捨てる (2026-09-17)
-                if existing.query != w.query {
+                // 手動で登録した銘柄はクエリを持たない (画面の検索条件で取っている)。
+                // その場合は条件が変わったわけではないので記録は残す
+                if !existing.query.is_null() && existing.query != w.query {
                     changed.push(w.key.clone());
                 }
                 existing.auto = true;
@@ -413,6 +438,11 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
     // 外れた銘柄の記録は残す (7 日触られていない物だけ捨てる)
     let cutoff = now_secs() - TRACK_MAX_SECS;
     store.states.retain(|k, st| keys.contains(k) || st.sampled_at >= cutoff);
+    // リーグが変われば別の市場なので、前のリーグの記録は使えない (2026-09-17 全点検)
+    if !store.league.is_empty() && store.league != req.league {
+        store.states.clear();
+        store.slice_done.clear();
+    }
     store.watches = watches;
     store.league = req.league;
     if let Some(s) = req.site {
@@ -519,7 +549,9 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
     let state = store.states.entry(req.key).or_default();
     // ID 一覧が出品全部を含んでいる時だけ「消えた」を判定する。
     // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
-    let list_complete = req.ids.len() as u64 >= req.total;
+    let list_complete = req.ids.len() as u64 >= req.total
+        && !(req.ids.is_empty() && !state.tracked.is_empty())
+        && !looks_like_mass_gone(state, &req.ids);
     apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
     // 出品が 100 件を超えていて search の一覧に載らなかった追跡分は、
     // 直接 fetch しないと生死が分からない。画面側に投げ返して確認してもらう (2026-09-17)
@@ -890,7 +922,12 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         let mut store_now = load_store(app);
         let state = store_now.states.entry(watch.key.clone()).or_default();
         // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
-        let list_complete = ids.len() as u64 >= total;
+        // ID が 1 件も返らなかった時は「全部売れた」ではなく「取れなかった」とみなす。
+        // 一時的に空の応答が返るだけで追跡中の出品を全滅させないため (2026-09-17 全点検)。
+        // 一斉に消えたように見える時も検索結果を信用せず、後の確認 fetch に回す。
+        let list_complete = ids.len() as u64 >= total
+            && !(ids.is_empty() && !state.tracked.is_empty())
+            && !looks_like_mass_gone(state, &ids);
         apply_sample(state, now, total, &ids, &entries, list_complete);
 
         // --- 行方不明の確認 (巡回ごと、1 銘柄 10 件まで、1 組 CONFIRM_MAX_PER_SLICE 銘柄まで) ---
@@ -1210,6 +1247,38 @@ mod tests {
         apply_sample(&mut st, now + 1200, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         assert_eq!(st.daily[0].gone, 0, "日次の消えた件数も戻す");
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
+    }
+
+    /// 半分以上が一度に消えたように見えたら、検索結果だけで判定しない
+    #[test]
+    fn mass_disappearance_is_not_trusted() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None };
+        let ids: Vec<String> = (0..10).map(|i| format!("id{i}")).collect();
+        let entries: Vec<ListingRef> = ids.iter().map(|i| e(i)).collect();
+        apply_sample(&mut st, now, 10, &ids, &entries, true);
+        // 10 件中 1 件しか残っていない応答
+        let few = vec!["id0".to_string()];
+        assert!(looks_like_mass_gone(&st, &few), "9/10 が消えたら怪しい");
+        // 2 件だけ消えたのは普通に売れただけ
+        let most: Vec<String> = ids.iter().take(8).cloned().collect();
+        assert!(!looks_like_mass_gone(&st, &most), "2/10 なら普通");
+    }
+
+    /// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
+    #[test]
+    fn empty_result_does_not_wipe_tracked() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None };
+        apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
+        // 空の応答 (total 0 / ID 0 件)
+        let ids: Vec<String> = Vec::new();
+        let list_complete = ids.len() as u64 >= 0 && !(ids.is_empty() && !st.tracked.is_empty());
+        assert!(!list_complete, "空の応答では消えた判定をしない");
+        apply_sample(&mut st, now + 3600, 0, &ids, &[], list_complete);
+        assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0);
     }
 
     /// 古いクエリ (securable) は any に直す

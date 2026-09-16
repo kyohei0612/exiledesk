@@ -14,6 +14,7 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
+import { GEMS } from "../views/gem-corrupt/useGemCorrupt";
 import { marketStore } from "./market-store";
 import { trade2Site } from "../services/trade2/league";
 
@@ -52,6 +53,24 @@ interface Result {
 
 let started = false;
 
+/** 並び順に左右されない形にして比べる (Rust 側は key を並べ替えて保存するため) */
+function canon(v: unknown): string {
+  const walk = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(walk);
+    if (x && typeof x === "object") {
+      const o = x as Record<string, unknown>;
+      return Object.keys(o)
+        .sort()
+        .reduce<Record<string, unknown>>((acc, k) => {
+          acc[k] = walk(o[k]);
+          return acc;
+        }, {});
+    }
+    return x;
+  };
+  return JSON.stringify(walk(v));
+}
+
 /**
  * 取得結果から追跡リストを作る。1 ジェムにつき 3 条件
  * (レベル 21 / 品質 23% / 完成品) を別々に追う (オーナー指示 2026-09-16:
@@ -70,7 +89,8 @@ export function watchesFromRows(rows: Row[]): { key: string; label: string; note
         key: watchKey(r.name, key),
         label: `${jaSkill(r.name)} (${SALE_KEY_LABEL[key]})`,
         note: `完成品 ${r.both} / ${r.users} 人`,
-        query: rowQuery(r.name, key),
+        // メタジェムは検索のカテゴリが違う。画面側と同じ判定にする (2026-09-17 全点検で発覚)
+        query: rowQuery(r.name, key, GEMS.find((g) => g.en === r.name)?.kind === "meta"),
       });
     }
   }
@@ -87,10 +107,49 @@ export function startWatchAutoRefresh(): void {
   setTimeout(() => void refreshIfStale(), START_DELAY_MS);
 }
 
+/** 保存済みの取得結果 (クラフト選定ジェム) */
+function cachedRows(): Row[] | null {
+  try {
+    const raw = localStorage.getItem(RESULT_KEY);
+    if (!raw) return null;
+    const r = JSON.parse(raw) as Result;
+    return Array.isArray(r?.rows) && r.rows.length > 0 ? r.rows : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 保存済みのクエリが今のコードと違っていたら登録し直す (2026-09-17 全点検)。
+ *
+ * 追跡の検索は登録時のクエリを Rust 側がそのまま使い回すので、検索条件を直しても
+ * 保存済みの銘柄は古い条件のまま回り続けていた
+ * (status が securable のまま / 5 ソケット条件が入っていない、を実際に踏んだ)。
+ * 条件が違えば別の市場を見ているのと同じなので、登録し直して記録も作り直す。
+ *
+ * @returns 作り直したら true
+ */
+async function rebuildIfQueryChanged(flow: Awaited<ReturnType<typeof loadFlow>>, league: string): Promise<boolean> {
+  const rows = cachedRows();
+  if (!rows) return false;
+  const want = watchesFromRows(rows);
+  if (want.length === 0) return false;
+  const stale = want.some((w) => {
+    const cur = flow.watches.find((x) => x.key === w.key);
+    return !cur || canon(cur.query) !== canon(w.query);
+  });
+  if (!stale) return false;
+  await setWatches(want, league, trade2Site());
+  return true;
+}
+
 async function refreshIfStale(): Promise<void> {
   try {
     const flow = await loadFlow();
     const nowSec = Math.floor(Date.now() / 1000);
+    const league = marketStore.league.value?.Value ?? "";
+    // 保存済みのクエリが古い形なら、24 時間経っていなくても登録し直す
+    if (flow.watches.length > 0 && (await rebuildIfQueryChanged(flow, league))) return;
     const fresh = flow.watches.length > 0 && nowSec - flow.list_refreshed_at < REFRESH_SECS;
     if (fresh) return;
 
@@ -102,7 +161,7 @@ async function refreshIfStale(): Promise<void> {
     } catch {
       /* 保存できなくても追跡は動く */
     }
-    await setWatches(watchesFromRows(r.rows), marketStore.league.value?.Value ?? "", trade2Site());
+    await setWatches(watchesFromRows(r.rows), league, trade2Site());
   } catch {
     /* poe.ninja が 429 等で取れない日もある。次の起動で再挑戦 */
   }
