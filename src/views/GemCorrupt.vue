@@ -98,6 +98,9 @@ function onQueryKeydown(e: KeyboardEvent): void {
   }
 }
 
+/** 取引所の支払い通貨の日本語名 */
+const CURRENCY_JA: Record<string, string> = { exalted: "高貴", chaos: "カオス", divine: "神" };
+const fmtBuy = (n: number): string => (n >= 100 ? n.toFixed(0) : n >= 1 ? n.toFixed(2) : n.toFixed(3));
 /** 素材の説明 (GGG クライアント CurrencyItems.Description の日本語、2026-09-12 書き出し) */
 const MATERIAL_DESC: Record<string, string> = {
   gcp: "スキルジェムの品質を向上させる。",
@@ -374,10 +377,15 @@ const materialRows = computed(() => {
     { key: "crystal", label: "コラプトの結晶", price: m.crystal, editable: false, perAttempt: c?.ok ? (c.expectedCrystals ?? 0) : null, expected: true },
     { key: "uncut20", label: g.uncutLabel.value, price: m.uncut20, editable: false, perAttempt: c?.ok ? (c.expectedUncut ?? 0) : null, expected: true },
   ];
+  const apiIdOf = new Map(g.materialApiIds.value.map((m) => [m.key, m.apiId]));
   return rows.map((r) => {
     const qtyN = r.perAttempt == null ? null : r.perAttempt * n;
+    const apiId = apiIdOf.get(r.key) ?? null;
     return {
       ...r,
+      apiId,
+      // 取引所で一番安く買える通貨 (取っていなければ null)
+      buy: g.bestBuy(apiId),
       costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
       qtyN,
       costN: r.price == null || qtyN == null ? null : r.price * qtyN,
@@ -576,6 +584,15 @@ const summary = computed(() => {
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 (自作、{{ unit }})</h2>
+            <button
+              type="button"
+              :disabled="g.exchangeLoading.value"
+              class="text-[11px] px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40"
+              title="公式の取引所で、素材ごとに 高貴 / カオス / 神 のどれで買うのが安いかを調べます (6 件、約 20 秒)"
+              @click="g.fetchExchange"
+            >
+              {{ g.exchangeLoading.value ? `取引所で比較中… (${g.exchangeDone.value}/6)` : "取引所で比べる" }}
+            </button>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
               <select v-model.number="attempts" class="num text-left w-20">
@@ -588,6 +605,7 @@ const summary = computed(() => {
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">単価</th>
+                <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">買う通貨 (取引所)</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の数</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">1 回の費用</th>
                 <th class="text-right font-normal pb-1 pl-2 whitespace-nowrap">{{ attempts }} 回の数</th>
@@ -603,6 +621,14 @@ const summary = computed(() => {
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
                   <span :class="m.price == null ? 'text-amber-300' : ''">{{ m.price == null ? "相場なし" : money(m.price) }}</span>
                 </td>
+                <td
+                  class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
+                  :class="m.buy && m.price != null && m.buy.exalted <= m.price ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'"
+                  :title="m.buy ? `取引所の最安 ${m.buy.perUnit} ${CURRENCY_JA[m.buy.currency]} / 個 (${money(m.buy.exalted)})` : '未取得'"
+                >
+                  <template v-if="m.buy">{{ fmtBuy(m.buy.perUnit) }} {{ CURRENCY_JA[m.buy.currency] }}</template>
+                  <template v-else>—</template>
+                </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costPerAttempt) }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
@@ -612,6 +638,7 @@ const summary = computed(() => {
                 <td class="py-1.5 pr-2">合計 (期待)</td>
                 <td></td>
                 <td></td>
+                <td></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(craft.expectedCost) : "—" }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]">{{ craft?.ok ? `完成 ${(attempts * craft.pFinished).toFixed(2)} 個` : "" }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(attempts * craft.expectedCost) : "—" }}</td>
@@ -619,6 +646,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            「買う通貨」は公式の取引所で一番安く買える通貨と単価です (ボタンで取得、30 分は取り直しません)。緑はカレンシーランキングの相場より安い時で、その時は単価もそちらを使います。灰色は相場の方が安いので使いません。合計は選んだ表示通貨に換算します。
             原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です (スピリットジェムはスピリットの原石)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>

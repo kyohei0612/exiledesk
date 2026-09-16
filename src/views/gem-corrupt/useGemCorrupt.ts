@@ -14,6 +14,8 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import { cachedBest, fetchBest, type ExchangeBest, type PayCurrency } from "../../services/trade2/exchange";
+import { toExalted } from "../../services/trade2/pricing";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
 export interface GemInfo {
@@ -66,6 +68,9 @@ export function useGemCorrupt() {
     });
     return hit.slice(0, 12);
   });
+  function nextTickLoadExchange(): void {
+    queueMicrotask(() => loadExchangeCache());
+  }
   function select(g: GemInfo): void {
     // 2026-09-14: 別のジェムの取得中に選び直したら、その取得は捨てて新しいジェムで取り直す
     // (以前は取得中フラグで新しい取得が始まらず、前のジェムの売値が新しいジェムに書き込まれていた)
@@ -75,6 +80,8 @@ export function useGemCorrupt() {
     }
     selected.value = g;
     query.value = g.ja;
+    // 取ってあった取引所レート (30 分以内) はそのまま使う
+    void nextTickLoadExchange();
     sale.value = { level21: null, quality23: null, finished: null };
     saleInfo.value = { level21: null, quality23: null, finished: null };
     priceError.value = null;
@@ -118,14 +125,78 @@ export function useGemCorrupt() {
     const kind = selected.value?.spirit ? "スピリットジェムの原石" : "スキルジェムの原石";
     return lv == null ? "低レベルのジェム本体" : `低レベルのジェム本体 (${kind} レベル ${lv})`;
   });
-  const materials = computed<MaterialPrices>(() => ({
-    baseGem: baseGemSource.value.price,
-    gcp: priceOf(MATERIAL_API.gcp),
-    perfectJeweller: priceOf(MATERIAL_API.perfectJeweller),
-    vaal: priceOf(MATERIAL_API.vaal),
-    crystal: priceOf(MATERIAL_API.crystal),
-    uncut20: priceOf(selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20),
-  }));
+  const materials = computed<MaterialPrices>(() => {
+    const uncutId = selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20;
+    return {
+      baseGem: withExchange(baseGemSource.value.apiId, baseGemSource.value.price),
+      gcp: withExchange(MATERIAL_API.gcp, priceOf(MATERIAL_API.gcp)),
+      perfectJeweller: withExchange(MATERIAL_API.perfectJeweller, priceOf(MATERIAL_API.perfectJeweller)),
+      vaal: withExchange(MATERIAL_API.vaal, priceOf(MATERIAL_API.vaal)),
+      crystal: withExchange(MATERIAL_API.crystal, priceOf(MATERIAL_API.crystal)),
+      uncut20: withExchange(uncutId, priceOf(uncutId)),
+    };
+  });
+  /**
+   * 取引所 (exchange) で素材を通貨ごとに比べる (2026-09-16 オーナー指示「たまにカオスで買った方が安い」)。
+   * poe2scout の相場は高貴建て 1 本なので通貨差が出ない。実レートは公式取引所から取る (ボタンで手動、30 分キャッシュ)。
+   */
+  const materialApiIds = computed<{ key: string; apiId: string }[]>(() => [
+    ...(baseGemSource.value.apiId ? [{ key: "baseGem", apiId: baseGemSource.value.apiId }] : []),
+    { key: "gcp", apiId: MATERIAL_API.gcp },
+    { key: "perfectJeweller", apiId: MATERIAL_API.perfectJeweller },
+    { key: "vaal", apiId: MATERIAL_API.vaal },
+    { key: "crystal", apiId: MATERIAL_API.crystal },
+    { key: "uncut20", apiId: selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20 },
+  ]);
+  const exchange = ref<Record<string, ExchangeBest>>({});
+  const exchangeLoading = ref(false);
+  const exchangeError = ref<string | null>(null);
+  const exchangeDone = computed(() => materialApiIds.value.filter((m) => exchange.value[m.apiId]).length);
+  function loadExchangeCache(): void {
+    const next = { ...exchange.value };
+    for (const m of materialApiIds.value) {
+      const c = cachedBest(m.apiId);
+      if (c) next[m.apiId] = c;
+    }
+    exchange.value = next;
+  }
+  async function fetchExchange(): Promise<void> {
+    if (exchangeLoading.value) return;
+    exchangeLoading.value = true;
+    exchangeError.value = null;
+    try {
+      for (const m of materialApiIds.value) {
+        try {
+          const b = await fetchBest(tradeLeague.value, m.apiId);
+          if (b) exchange.value = { ...exchange.value, [m.apiId]: b };
+        } catch (e) {
+          exchangeError.value = e instanceof Error ? e.message : String(e);
+          break;
+        }
+      }
+    } finally {
+      exchangeLoading.value = false;
+    }
+  }
+  /** その素材を一番安く買える通貨 (高貴換算つき)。取っていなければ null */
+  function bestBuy(apiId: string | null | undefined): { currency: PayCurrency; perUnit: number; exalted: number } | null {
+    if (!apiId) return null;
+    const e = exchange.value[apiId];
+    if (!e) return null;
+    let best: { currency: PayCurrency; perUnit: number; exalted: number } | null = null;
+    for (const r of e.rates) {
+      const ex = toExalted(r.perUnit, r.currency, rates.value);
+      if (ex == null) continue;
+      if (!best || ex < best.exalted) best = { currency: r.currency, perUnit: r.perUnit, exalted: ex };
+    }
+    return best;
+  }
+  /** 相場と取引所の安い方 (取引所を取っていなければ相場のまま) */
+  const withExchange = (apiId: string | null | undefined, market: number | null): number | null => {
+    const b = bestBuy(apiId);
+    if (!b) return market;
+    return market == null ? b.exalted : Math.min(market, b.exalted);
+  };
   const uncutLabel = computed(() => (selected.value?.spirit ? "スピリットジェムの原石 (レベル 20)" : "スキルジェムの原石 (レベル 20)"));
 
   // ---- 売値 (手入力 or trade2) ----
@@ -210,6 +281,13 @@ export function useGemCorrupt() {
     loadMarket,
     baseGemSource,
     baseGemLabel,
+    materialApiIds,
+    exchange,
+    exchangeLoading,
+    exchangeError,
+    exchangeDone,
+    fetchExchange,
+    bestBuy,
     materials,
     uncutLabel,
     sale,
