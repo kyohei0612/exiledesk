@@ -269,6 +269,22 @@ const flowTracked = computed(() => !!flowWatch.value);
 const flowManual = computed(() => !!flowWatch.value?.manual);
 /** 1 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
 const flowAuto = computed(() => !!flowWatch.value?.auto);
+/** 最安 1 件の内訳 (値段の種類・出品者・出品時刻)。おかしな値段の切り分け用 (2026-09-17) */
+function cheapestTitle(key: SaleKey): string {
+  const info = g.saleInfo.value[key];
+  const l = info?.listings?.[0];
+  if (!l) return "";
+  const kind = l.priceType ? `種類 ${l.priceType}` : "種類不明";
+  const at = l.indexed ? new Date(l.indexed).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "出品時刻不明";
+  const buy = !info?.onlineKnown
+    ? "今すぐ買えるかは応答から判断できません"
+    : l.purchasable
+      ? "今すぐ買えます"
+      : `交渉が必要 (出品者オフライン)。今すぐ買える最安は ${info?.minExaltedBuyable != null ? money(info.minExaltedBuyable) : "この 10 件には無し"}`;
+  return `最安 ${l.amount} ${l.currency} · ${kind} · ${at}${l.account ? ` · ${l.account}` : ""}
+${buy}`;
+}
+
 /** 直近の失敗を短い日本語に (詳細はホバー) */
 const flowErrorJa = computed(() => {
   const raw = flowStatus.value?.last_error ?? "";
@@ -763,7 +779,8 @@ const summary = computed(() => {
                   <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ row.condition }}</div>
                 </td>
                 <td class="py-1.5 text-right">
-                  <span class="tabular-nums text-[13px]" :class="g.sale.value[row.key] == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ g.sale.value[row.key] == null ? (g.pricing.value ? "取得中…" : "—") : money(g.sale.value[row.key]) }}</span>
+                  <!-- 2026-09-17: 変な値段の時に中身が分かるように、最安 1 件の内訳をホバーで出す -->
+                  <span class="tabular-nums text-[13px]" :title="cheapestTitle(row.key)" :class="g.sale.value[row.key] == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ g.sale.value[row.key] == null ? (g.pricing.value ? "取得中…" : "—") : money(g.sale.value[row.key]) }}</span>
                 </td>
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
