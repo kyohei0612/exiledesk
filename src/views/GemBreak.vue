@@ -63,7 +63,8 @@ const result = ref<Result | null>(null);
 const ascendancies = ref<Asc[]>([]);
 /** null = まだ決まっていない / "" = 全アセンダンシー / それ以外 = そのアセンダンシー */
 const selectedClass = ref<string | null>(null);
-const topN = ref<number>(40);
+/** 既定は 100 人 (search が返す上限) */
+const topN = ref<number>(100);
 /** 何アセンダンシーに散らすか (1 = 選んだアセだけ) */
 const spread = ref<number>(1);
 const busy = ref(false);
@@ -126,8 +127,9 @@ async function loadAscendancies(): Promise<void> {
   if (!inApp) return;
   try {
     ascendancies.value = await invoke<Asc[]>("gem_break_ascendancies");
-    // 保存されていなければ使用率トップ。空文字 (全アセンダンシー) を選んでいた場合はそのまま
-    if (selectedClass.value === null) selectedClass.value = ascendancies.value[0]?.class ?? "";
+    // 既定は「全アセンダンシー」(オーナー判断 2026-09-16: 売れるのは個別アセではなく全体で人気のジェム)。
+    // 保存済みの選択があればそれを優先する
+    if (selectedClass.value === null) selectedClass.value = "";
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   }
