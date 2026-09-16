@@ -33,8 +33,6 @@ const items: NavItem[] = [
     children: [
       { id: "overquality", icon: "🜛", label: "アドニアの賭け", group: "economy" },
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
-      // 2026-09-13: ユニークにヴァール → 狙いの付加 (+ アーキテクトオーブで 2 重コラプト)
-      { id: "unique-corrupt", icon: "🜚", label: "ユニークコラプトの賭け", group: "economy" },
       // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。poe2db の重みでシミュレーション
       { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
       // 2026-09-16: クラフトするジェムを選ぶ画面。レベル 21 / 品質 23% / 完成品 を使っている人数のランキング

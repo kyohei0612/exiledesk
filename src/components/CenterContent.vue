@@ -7,7 +7,6 @@ import PobLauncher from "../views/PobLauncher.vue";
 import ClientLog from "../views/ClientLog.vue";
 import GemCorrupt from "../views/GemCorrupt.vue";
 import Overquality from "../views/Overquality.vue";
-import UniqueCorrupt from "../views/UniqueCorrupt.vue";
 import RareCraft from "../views/RareCraft.vue";
 import TradeHistory from "../views/TradeHistory.vue";
 import GemBreak from "../views/GemBreak.vue";
@@ -36,8 +35,6 @@ const currentView = computed<Component | undefined>(() => {
       return GemCorrupt;
     case "overquality":
       return Overquality;
-    case "unique-corrupt":
-      return UniqueCorrupt;
     case "rare-craft":
       return RareCraft;
     case "trade-history":
