@@ -139,8 +139,14 @@ pub struct WatchState {
     pub cheapest_currency: Option<String>,
 }
 
+/// 記録の作り方を変えた時に上げる。合わないデータは捨てて取り直す
+pub const FLOW_SCHEMA: u32 = 2;
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct FlowStore {
+    /// 記録の形式 (FLOW_SCHEMA)
+    #[serde(default)]
+    pub schema: u32,
     /// 最後にサンプルを取った時刻 (unix 秒)
     pub sampled_at: i64,
     /// 何周したか (UI に出す)
@@ -273,7 +279,16 @@ fn load_store(app: &tauri::AppHandle) -> FlowStore {
     let Ok(text) = fs::read_to_string(&p) else {
         return FlowStore::default();
     };
-    serde_json::from_str(&text).unwrap_or_default()
+    let mut store: FlowStore = serde_json::from_str(&text).unwrap_or_default();
+    // 2026-09-16: 追跡の検索条件を securable → any に変えた。
+    // 古い記録は「出品者がオフラインになっただけ」を売れた扱いにしているので捨てる
+    if store.schema != FLOW_SCHEMA {
+        store.schema = FLOW_SCHEMA;
+        store.states.clear();
+        store.slice_done.clear();
+        store.rounds = 0;
+    }
+    store
 }
 
 fn save_store(app: &tauri::AppHandle, store: &FlowStore) -> Result<(), String> {
@@ -471,6 +486,11 @@ pub fn apply_sample(
 
     for t in state.tracked.iter_mut() {
         if t.gone_at.is_some() {
+            // 消えた扱いにした出品がまた現れたら生き返らせる (取り下げでも売却でもなかった)
+            if present.contains(t.id.as_str()) {
+                t.gone_at = None;
+                t.last_seen = now;
+            }
             continue;
         }
         if present.contains(t.id.as_str()) {
@@ -1020,6 +1040,18 @@ mod tests {
         }
         let keys: Vec<&str> = watches.iter().map(|w| w.key.as_str()).collect();
         assert_eq!(keys, vec!["Manual", "New"]);
+    }
+
+    /// 消えた扱いにした出品が再び現れたら生き返る (出品者が一時的にオフラインだった等)
+    #[test]
+    fn reappearing_listing_revives() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        apply_sample(&mut st, t0, 1, &["a".into()], &[lr("a", 40.0)], true);
+        apply_sample(&mut st, t0 + 3600, 0, &[], &[], true);
+        assert!(st.tracked[0].gone_at.is_some());
+        apply_sample(&mut st, t0 + 7200, 1, &["a".into()], &[lr("a", 40.0)], true);
+        assert!(st.tracked[0].gone_at.is_none(), "再び見えたら生存に戻す");
     }
 
     /// 中断から再開する時、取り済みの銘柄は飛ばす

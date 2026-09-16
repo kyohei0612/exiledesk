@@ -5,6 +5,7 @@
  * オーナー指示: 「追跡するのは品質 23% もレベル +1 もだからね、完成版だけじゃない」。
  */
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
+import { SecurityStatus } from "../../constants/trade2";
 
 export type SaleKey = "level21" | "quality23" | "finished";
 
@@ -37,9 +38,18 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
   }
 }
 
-/** 追跡に使うクエリ (画面の検索と同じ条件) */
+/**
+ * 捌き速度の追跡に使うクエリ。
+ *
+ * 画面の売値検索は `securable` (直近接続中 + オフラインが短い出品) だが、追跡では使えない。
+ * 出品者がオフラインになるだけで検索から消え、「売れた」と誤判定するため
+ * (2026-09-16 実データで中央値 30 分という異常値が出た)。
+ * 追跡は `any` にして、本当に取り下げ / 売却された時だけ消えるようにする。
+ */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
-  return buildGemQuery(gemEn, rowQueryOptions(key, meta));
+  const q = buildGemQuery(gemEn, rowQueryOptions(key, meta)) as { query: { status: { option: string } } };
+  q.query.status = { option: SecurityStatus.Any };
+  return q;
 }
 
 /** 追跡のキー ("Arc::finished")。銘柄 1 つ = ジェム × 条件 */
