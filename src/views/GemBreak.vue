@@ -190,17 +190,21 @@ async function reloadFlow(): Promise<void> {
 }
 interface SpeedCell {
   label: string;
+  /** 一覧に出す短い表記 */
+  short: string;
   verdict: string;
   tone: string;
   detail: string;
 }
+/** 一覧の狭い場所用 */
+const SHORT_LABEL: Record<string, string> = { level21: "21", quality23: "23%", finished: "完成" };
 /** そのジェムの 3 条件ぶんの判定 */
 function speedOf(nameEn: string): SpeedCell[] {
   return SALE_KEYS.map((key) => {
     const f = summarizeFlow(flowStore.value?.states?.[watchKey(nameEn, key)]);
     const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : "記録なし");
     const detail = f.known24 > 0 ? `1 日以内に ${f.hit24} / ${f.known24} 件が売れた` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
-    return { label: SALE_KEY_LABEL[key], verdict, tone: f.tone, detail };
+    return { label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
   });
 }
 /** 「どれも遅い」のような 1 行のまとめ。条件ごとに違う時は下のチップに任せて空にする */
@@ -433,7 +437,7 @@ onUnmounted(() => {
             :title="r.name"
             @click="toggle(sec.key, r.name)"
           >
-            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2">
+            <div class="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-baseline gap-2">
               <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
               <div class="flex items-baseline gap-1.5 min-w-0">
                 <span class="min-w-0 truncate text-[13px]" :title="r.name">
@@ -450,6 +454,15 @@ onUnmounted(() => {
                   このジェムで計算 ↗
                 </button>
               </div>
+              <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
+              <span class="flex items-baseline gap-2 text-[10px] whitespace-nowrap justify-end">
+                <template v-if="speedSummary(r.name) === '' || speedOf(r.name).some((c) => c.verdict !== '記録なし')">
+                  <span v-for="c in speedOf(r.name)" :key="c.label" :title="c.detail">
+                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
+                    <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
+                  </span>
+                </template>
+              </span>
               <span class="tabular-nums text-[13px] whitespace-nowrap">
                 {{ r[sec.key] }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">/ {{ r.users }} 人</span>
               </span>
@@ -467,17 +480,6 @@ onUnmounted(() => {
               <div class="flex gap-2">
                 <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">コラプト済み</dt>
                 <dd class="tabular-nums">{{ r.corrupted }} / {{ r.users }} 人</dd>
-              </div>
-              <!-- 2026-09-16: 捌き速度を 1 行で (完成品 / 品質 23% / レベル 21 のどれが売れるか) -->
-              <div class="flex gap-2">
-                <dt class="shrink-0 text-[var(--exile-color-text-tertiary)]">捌き速度</dt>
-                <dd class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                  <span v-if="speedSummary(r.name)" class="text-[var(--exile-color-text-primary)]">{{ speedSummary(r.name) }}</span>
-                  <span v-for="c in speedOf(r.name)" :key="c.label" class="tabular-nums" :title="c.detail">
-                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.label }}</span>
-                    <span class="ml-1" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
-                  </span>
-                </dd>
               </div>
             </dl>
           </li>
