@@ -16,7 +16,8 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { setTrackedGems } from "../services/gem-flow";
+import { setWatches } from "../services/market-flow";
+import { buildGemQuery } from "../services/trade2/query";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
@@ -151,10 +152,16 @@ async function fetchNow(): Promise<void> {
     result.value = r;
     // 2026-09-16: 全アセンダンシーで取った時だけ、完成品 5 人以上を売れ行きの追跡対象にする
     if (!selectedClass.value) {
-      const tracked = r.rows
+      // 完成品 (コラプト済み・レベル 21 以上・品質 23% 以上) の検索クエリで登録する
+      const watches = r.rows
         .filter((x) => x.both >= TRACK_MIN_FINISHED)
-        .map((x) => ({ name: x.name, finished_users: x.both, users: x.users }));
-      void setTrackedGems(tracked, marketStore.league.value?.Value ?? "", trade2Site());
+        .map((x) => ({
+          key: x.name,
+          label: jaSkill(x.name),
+          note: `完成品 ${x.both} / ${x.users} 人`,
+          query: buildGemQuery(x.name, { category: "gem.activegem", levelMin: 21, qualityMin: 23, corrupted: true }),
+        }));
+      void setWatches(watches, marketStore.league.value?.Value ?? "", trade2Site());
     }
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));

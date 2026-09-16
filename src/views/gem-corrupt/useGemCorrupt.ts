@@ -14,7 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import type { PriceResult } from "../../services/trade2/pricing";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { recordGemFlow } from "../../services/gem-flow";
+import { recordFlow } from "../../services/market-flow";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -240,12 +240,13 @@ export function useGemCorrupt() {
     }
     ages.sort((a, b) => a - b);
     const cheapest = r.listings[0];
-    await recordGemFlow({
-      name: gemEn,
+    await recordFlow({
+      key: gemEn,
       total: r.total,
       median_age_min: ages.length > 0 ? ages[Math.floor(ages.length / 2)] : null,
       avg_age_min: ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null,
       seen: ages.length,
+      ids: r.listingIds ?? [],
       cheapest_amount: cheapest?.amount ?? null,
       cheapest_currency: cheapest?.currency ?? null,
     });

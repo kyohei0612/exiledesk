@@ -19,7 +19,7 @@ import { displayCurrency, type DisplayCurrency } from "../state/display-currency
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
-import { fmtAge, loadGemFlow, summarizeFlow, type GemFlowStore } from "../services/gem-flow";
+import { fmtAge, loadFlow, summarizeFlow, type FlowStore } from "../services/market-flow";
 
 const g = useGemCorrupt();
 onActivated(() => {
@@ -171,9 +171,9 @@ const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
 // ---- 売れ行き (2026-09-16: gem_flow が 1 時間ごとに記録した物を読むだけ) ----
-const flowStore = ref<GemFlowStore | null>(null);
+const flowStore = ref<FlowStore | null>(null);
 async function reloadFlow(): Promise<void> {
-  flowStore.value = await loadGemFlow();
+  flowStore.value = await loadFlow();
 }
 // 手動の「再取得」が終わったら記録が増えているので読み直す
 watch(
@@ -185,6 +185,22 @@ watch(
 /** 選択中ジェムの売れ行き */
 const flow = computed(() => summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""]));
 /** バッジの色: 速い=緑 / 普通=黄 / 遅い=赤 */
+/** ホバーで出す内訳 */
+const flowTitle = computed(() => {
+  const f = flow.value;
+  const pct = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`);
+  const lines = [
+    `1 時間あたりの入れ替わり (消失率): ${pct(f.turnover)} → 待ち時間の目安 ${fmtAge(f.waitMin)}`,
+    `最安が入れ替わった割合: ${pct(f.cheapestChurn)}`,
+    `出品総数: ${f.totalNow ?? "—"}${f.totalDelta != null ? ` (24 時間で ${f.totalDelta > 0 ? "+" : ""}${f.totalDelta})` : ""}`,
+    `参考 (判定には使わない) 今ある出品の滞留: ${fmtAge(f.avgAge)}`,
+    `記録 ${f.count} 件 / 比較 ${f.pairs} 回 · 最終 ${fmtFlowAt(f.lastAt)}`,
+  ];
+  if (f.tone === "suspect") {
+    lines.push("在庫は動かないのに最安だけ入れ替わる = 表示より安い価格で即売れしている可能性");
+  }
+  return lines.join("\n");
+});
 const flowBadgeClass = computed(() => {
   switch (flow.value.tone) {
     case "fast":
@@ -193,6 +209,8 @@ const flowBadgeClass = computed(() => {
       return "border-amber-500/60 bg-amber-500/15 text-amber-300";
     case "slow":
       return "border-red-500/60 bg-red-500/15 text-red-300";
+    case "suspect":
+      return "border-sky-500/60 bg-sky-500/15 text-sky-300";
     default:
       return "border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]";
   }
@@ -200,7 +218,7 @@ const flowBadgeClass = computed(() => {
 /** 追跡対象に入っているか (クラフト選定ジェムで完成品 5 人以上だったか) */
 const flowTracked = computed(() => {
   const en = g.selected.value?.en ?? "";
-  return !!flowStore.value?.gems.some((x) => x.name === en);
+  return !!flowStore.value?.watches.some((x) => x.key === en);
 });
 const fmtFlowAt = (t: number | null): string => {
   if (!t) return "";
@@ -656,19 +674,18 @@ const summary = computed(() => {
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
                 </td>
-                <!-- 2026-09-16: 売れ行き = 速い / 普通 / 遅い のバッジ + 平均待ち時間 -->
+                <!-- 2026-09-16: 捌き速度 = 消失率から出した判定 + 待ち時間の目安 -->
                 <td class="py-1.5 text-right">
                   <template v-if="row.key === 'finished'">
-                    <div
-                      v-if="flow.count > 0 && flow.label"
-                      class="flex items-center justify-end gap-2"
-                      :title="`判定は滞留時間の中央値 ${fmtAge(flow.medianAge)} (1 時間以内=速い / 6 時間以内=普通 / それ以上=遅い)
-出品総数 ${flow.totalNow}${flow.totalDelta != null ? ` (24 時間で ${flow.totalDelta > 0 ? '+' : ''}${flow.totalDelta})` : ''}
-最終記録 ${fmtFlowAt(flow.lastAt)} · 記録 ${flow.count} 件`"
-                    >
+                    <div v-if="flow.label" class="flex items-center justify-end gap-2" :title="flowTitle">
                       <span class="px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border" :class="flowBadgeClass">{{ flow.label }}</span>
-                      <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">平均待ち {{ fmtAge(flow.avgAge) }}</span>
+                      <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
+                        {{ flow.waitMin != null ? `待ち ${fmtAge(flow.waitMin)}` : flow.turnover === 0 ? "1 時間で動きなし" : "" }}
+                      </span>
                     </div>
+                    <span v-else-if="flow.count > 0" class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+                      記録 {{ flow.count }} 件 (判定は 2 回目から)
+                    </span>
                     <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
                   </template>
@@ -691,10 +708,10 @@ const summary = computed(() => {
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               売れ行きの記録: {{ flow.count }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
               {{ flowTracked ? "自動追跡中" : "自動追跡の対象外 (クラフト選定ジェムで完成品 5 人以上になると入ります)" }} ·
-              追跡 {{ flowStore?.gems.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
+              追跡 {{ flowStore?.watches.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
             </span>
             <br v-if="g.selected.value" />
-            売れ行きは「今並んでいる出品が何分前に出された物か」の中央値です (短いほど回転が速い)。クラフト選定ジェムで完成品 5 人以上だったジェムを 1 時間ごとに記録します。
+            捌き速度は「前回見えていた出品が 1 時間後に何割消えたか」で測ります (シミュレーションで、滞留時間より実際の待ち時間に合うことを確認済み)。クラフト選定ジェムで完成品 5 人以上だったジェムを 1 時間ごとに記録します。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
         </div>

@@ -232,6 +232,8 @@ export interface PriceResult {
   /** 高貴建て最安 (換算不能な通貨のみだった場合 null) */
   minExalted: number | null;
   listings: PriceListing[];
+  /** 見えていた listing ID (捌き速度の消失率に使う。2026-09-16) */
+  listingIds?: string[];
   /** trade2 サイトで同じ検索を開く URL */
   searchUrl: string;
 }
@@ -288,7 +290,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
-    return { total: search.total ?? 0, minExalted: null, listings: [], searchUrl };
+    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], searchUrl };
   }
   const site = trade2Site();
   const fetched = DEV_TRADE
@@ -315,6 +317,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     total: search.total ?? 0,
     minExalted: finite.length ? Math.min(...finite) : null,
     listings: listings.sort((a, b) => a.amountExalted - b.amountExalted),
+    listingIds: ids,
     searchUrl,
   };
 }

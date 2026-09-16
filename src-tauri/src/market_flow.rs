@@ -1,16 +1,26 @@
-//! ジェムの売れ行き追跡 (2026-09-16)
+//! 捌き速度の追跡 (2026-09-16、旧 gem_flow)
 //!
-//! オーナー要望: 「さばきが速いジェムを探したい。アプリがオンラインの間ずっと 1 時間に 1 回、
-//! クラフト選定ジェムで完成品 5 人以上のジェムの売れ行きを見たい」。
+//! 「この商品は何時間で売れるのか」を、公式 trade2 の出品を定期的に覗いて測る。
+//! ジェム専用ではなく、trade2 のクエリを 1 本渡せば何でも追える (レア装備でも通貨でも)。
 //!
-//! 測り方 (オーナー案の「ID が消えたか」より素直な方法):
-//!   1. **滞留時間**: trade2 の fetch が返す `listing.indexed` (出品時刻) を見て、
-//!      今並んでいる最安 10 件が「何分前に出された物か」の中央値を取る。
-//!      さばきが速い市場ほど新しい出品しか残らない = 中央値が短い。1 回の取得で分かる。
-//!   2. **出品総数の推移**: search の `total` を 1 時間ごとに記録。増え続ける = 供給過多。
-//!   ID の消失は「売れた / 値下げ再出品 / 取り消し / オフライン」を区別できないので主軸にしない。
+//! ## 何を測るか (シミュレーションで検証済み: examples/gem_flow_sim.rs)
+//! 素朴に「今並んでいる出品が何分前に出された物か」を見ると **速い市場ほど遅く出る**。
+//! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。6 パターンの市場を
+//! ダミーで作って測ったところ、実際の待ち時間と順序が合うのは **消失率** だけだった:
 //!
-//! 取得量: 1 ジェムあたり search 1 + fetch 1 = 2 リクエスト / 時。
+//! | 市場              | 実際の待ち | 滞留の中央値 | 消失率 |
+//! |-------------------|-----------|-------------|--------|
+//! | 需給均衡 (速い)    | 21 分     | 18.4 時間   | 31%    |
+//! | 供給過多 (遅い)    | 1.5 時間  | 20.6 時間   | 11%    |
+//! | 速い + 強気が居座る | 14 分     | 2.2 日      | 15%    |
+//! | 薄い市場          | 6 時間    | 1.7 日      | 4%     |
+//! | 死んだ市場        | 8.8 時間  | 2.7 日      | 2%     |
+//!
+//! そこで **前回見えていた出品 ID が今回何割消えたか** を主指標にする。
+//! 1 例外だけ検出できない: 「即売れ + 強気出品だらけ」(見える範囲が全部売れ残り)。
+//! これは「最安だけ頻繁に入れ替わるのに在庫が動かない」で別途警告する。
+//!
+//! 取得量: 1 銘柄あたり search 1 + fetch 1 = 2 リクエスト / 時。
 //! trade2 の制限 (5/10 秒, 15/60 秒, 30/5 分, 600/6 時間) に対して 8 秒間隔で流す。
 
 use std::fs;
@@ -21,15 +31,19 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
-/// 追跡するジェム 1 種
+/// 追跡する銘柄 1 つ (ジェムでも装備でも、trade2 のクエリがあれば何でも)
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TrackedGem {
-    /// 英語名 (trade2 の type にそのまま使う)
-    pub name: String,
-    /// クラフト選定ジェムで「完成品 (レベル 21 かつ品質 23%)」を使っていた人数
-    pub finished_users: u32,
-    /// そのジェムの使用者数
-    pub users: u32,
+pub struct Watch {
+    /// 一意なキー (ジェムなら英語名)
+    pub key: String,
+    /// 画面に出す名前
+    #[serde(default)]
+    pub label: String,
+    /// trade2 の検索クエリ (フロントで組んだ物をそのまま使う)
+    pub query: serde_json::Value,
+    /// 補足 (「完成品を 41 人が使用」など、登録元が入れる)
+    #[serde(default)]
+    pub note: String,
 }
 
 /// 1 回のサンプル
@@ -46,13 +60,16 @@ pub struct FlowSample {
     pub avg_age_min: Option<i64>,
     /// 実際に見た出品数 (最大 10)
     pub seen: usize,
+    /// その時見えていた最安 10 件の listing ID (消失率の計算に使う。主指標)
+    #[serde(default)]
+    pub ids: Vec<String>,
     /// 最安値 (そのままの通貨)
     pub cheapest_amount: Option<f64>,
     pub cheapest_currency: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct GemFlowStore {
+pub struct FlowStore {
     /// 最後にサンプルを取った時刻 (unix 秒)
     pub sampled_at: i64,
     /// 追跡リストを更新した時刻 (クラフト選定ジェムの取得時刻)
@@ -61,8 +78,8 @@ pub struct GemFlowStore {
     pub league: String,
     /// "jp" / "www"
     pub site: String,
-    pub gems: Vec<TrackedGem>,
-    /// ジェム英語名 → サンプル列 (古い順)
+    pub watches: Vec<Watch>,
+    /// キー → サンプル列 (古い順)
     pub samples: std::collections::HashMap<String, Vec<FlowSample>>,
 }
 
@@ -83,7 +100,7 @@ fn store_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("app_data_dir error: {e}"))?;
     fs::create_dir_all(&dir).map_err(|e| format!("mkdir {dir:?}: {e}"))?;
-    dir.push("gem_flow.json");
+    dir.push("market_flow.json");
     Ok(dir)
 }
 
@@ -94,17 +111,17 @@ fn now_secs() -> i64 {
         .unwrap_or(0)
 }
 
-fn load_store(app: &tauri::AppHandle) -> GemFlowStore {
+fn load_store(app: &tauri::AppHandle) -> FlowStore {
     let Ok(p) = store_path(app) else {
-        return GemFlowStore::default();
+        return FlowStore::default();
     };
     let Ok(text) = fs::read_to_string(&p) else {
-        return GemFlowStore::default();
+        return FlowStore::default();
     };
     serde_json::from_str(&text).unwrap_or_default()
 }
 
-fn save_store(app: &tauri::AppHandle, store: &GemFlowStore) -> Result<(), String> {
+fn save_store(app: &tauri::AppHandle, store: &FlowStore) -> Result<(), String> {
     let p = store_path(app)?;
     let text = serde_json::to_string(store).map_err(|e| format!("serialize error: {e}"))?;
     fs::write(&p, text).map_err(|e| format!("write {p:?}: {e}"))
@@ -114,28 +131,27 @@ fn save_store(app: &tauri::AppHandle, store: &GemFlowStore) -> Result<(), String
 // Tauri commands
 // ============================================================================
 
-/// 保存済みの売れ行きデータを返す (UI 表示用)
+/// 保存済みの記録を返す (UI 表示用)
 #[tauri::command]
-pub fn gem_flow_load(app: tauri::AppHandle) -> Result<GemFlowStore, String> {
+pub fn market_flow_load(app: tauri::AppHandle) -> Result<FlowStore, String> {
     Ok(load_store(&app))
 }
 
 #[derive(Deserialize)]
-pub struct SetTrackedRequest {
-    pub gems: Vec<TrackedGem>,
+pub struct SetWatchesRequest {
+    pub watches: Vec<Watch>,
     pub league: String,
     #[serde(default)]
     pub site: Option<String>,
 }
 
-/// 追跡するジェムを入れ替える (クラフト選定ジェムの取得後にフロントから呼ぶ)。
-/// 消えたジェムのサンプルは捨てる。
+/// 追跡する銘柄を入れ替える (登録元の画面から呼ぶ)。外れた銘柄のサンプルは捨てる。
 #[tauri::command]
-pub fn gem_flow_set_tracked(app: tauri::AppHandle, req: SetTrackedRequest) -> Result<GemFlowStore, String> {
+pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
-    let names: std::collections::HashSet<String> = req.gems.iter().map(|g| g.name.clone()).collect();
-    store.samples.retain(|k, _| names.contains(k));
-    store.gems = req.gems;
+    let keys: std::collections::HashSet<String> = req.watches.iter().map(|w| w.key.clone()).collect();
+    store.samples.retain(|k, _| keys.contains(k));
+    store.watches = req.watches;
     store.league = req.league;
     if let Some(s) = req.site {
         store.site = s;
@@ -147,8 +163,8 @@ pub fn gem_flow_set_tracked(app: tauri::AppHandle, req: SetTrackedRequest) -> Re
 
 #[derive(Deserialize)]
 pub struct RecordRequest {
-    /// ジェム英語名
-    pub name: String,
+    /// 銘柄のキー
+    pub key: String,
     pub total: u64,
     #[serde(default)]
     pub median_age_min: Option<i64>,
@@ -160,15 +176,18 @@ pub struct RecordRequest {
     pub cheapest_amount: Option<f64>,
     #[serde(default)]
     pub cheapest_currency: Option<String>,
+    /// 見えていた listing ID (消失率に使う)
+    #[serde(default)]
+    pub ids: Vec<String>,
 }
 
 /// 画面から手で取った結果を同じ履歴に差し込む (2026-09-16 オーナー指示)。
 /// 自動サンプルと同じ形で時系列に入るので、グラフも繋がる。
 #[tauri::command]
-pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemFlowStore, String> {
+pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
     let now = now_secs();
-    let v = store.samples.entry(req.name).or_default();
+    let v = store.samples.entry(req.key).or_default();
     // 同じ時間帯に自動サンプルが入っていれば上書きする (二重計上を避ける)
     if let Some(last) = v.last_mut() {
         if now - last.t < 300 {
@@ -178,6 +197,7 @@ pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemF
                 median_age_min: req.median_age_min,
                 avg_age_min: req.avg_age_min,
                 seen: req.seen,
+                ids: req.ids,
                 cheapest_amount: req.cheapest_amount,
                 cheapest_currency: req.cheapest_currency,
             };
@@ -192,6 +212,7 @@ pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemF
         median_age_min: req.median_age_min,
         avg_age_min: req.avg_age_min,
         seen: req.seen,
+        ids: req.ids,
         cheapest_amount: req.cheapest_amount,
         cheapest_currency: req.cheapest_currency,
     });
@@ -206,7 +227,7 @@ pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemF
 
 /// 今すぐ 1 周サンプルを取る (手動ボタン用)。取得中なら何もしない。
 #[tauri::command]
-pub async fn gem_flow_sample_now(app: tauri::AppHandle) -> Result<GemFlowStore, String> {
+pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<FlowStore, String> {
     sample_once(&app).await?;
     Ok(load_store(&app))
 }
@@ -214,21 +235,6 @@ pub async fn gem_flow_sample_now(app: tauri::AppHandle) -> Result<GemFlowStore, 
 // ============================================================================
 // サンプリング
 // ============================================================================
-
-/// 完成品 (コラプト済み・レベル 21 以上・品質 23% 以上) の検索クエリ
-fn finished_query(gem_en: &str) -> serde_json::Value {
-    serde_json::json!({
-        "query": {
-            "status": { "option": "securable" },
-            "type": { "discriminator": null, "option": gem_en },
-            "filters": {
-                "type_filters": { "filters": { "category": { "option": "gem.activegem" }, "quality": { "min": 23 } } },
-                "misc_filters": { "filters": { "gem_level": { "min": 21 }, "corrupted": { "option": "true" } } }
-            }
-        },
-        "sort": { "price": "asc" }
-    })
-}
 
 /// 出品時刻の文字列 ("2026-09-16T10:00:00Z") → 経過分
 fn age_minutes(indexed: &str, now: i64) -> Option<i64> {
@@ -268,23 +274,23 @@ pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
 
 async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
     let store = load_store(app);
-    if store.gems.is_empty() || store.league.is_empty() {
+    if store.watches.is_empty() || store.league.is_empty() {
         return Ok(());
     }
     let site = if store.site.is_empty() { None } else { Some(store.site.clone()) };
     let now = now_secs();
     let mut new_samples: Vec<(String, FlowSample)> = Vec::new();
 
-    for gem in &store.gems {
+    for watch in &store.watches {
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
             site: site.clone(),
-            query: finished_query(&gem.name),
+            query: watch.query.clone(),
         };
         let body = match crate::trade2::trade2_search(search).await {
             Ok(v) => v,
             Err(e) => {
-                eprintln!("[gem_flow] search {} 失敗: {e}", gem.name);
+                eprintln!("[market_flow] search {} 失敗: {e}", watch.key);
                 tokio::time::sleep(REQUEST_INTERVAL).await;
                 continue;
             }
@@ -299,9 +305,10 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         tokio::time::sleep(REQUEST_INTERVAL).await;
 
         let mut ages: Vec<i64> = Vec::new();
+        let seen_ids: Vec<String> = ids.iter().take(10).cloned().collect();
         let mut cheapest: Option<(f64, String)> = None;
         if !ids.is_empty() && !query_id.is_empty() {
-            let fetch = crate::trade2::FetchRequest { ids, query_id, site: site.clone() };
+            let fetch = crate::trade2::FetchRequest { ids: ids.clone(), query_id, site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => {
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
@@ -326,7 +333,7 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                         }
                     }
                 }
-                Err(e) => eprintln!("[gem_flow] fetch {} 失敗: {e}", gem.name),
+                Err(e) => eprintln!("[market_flow] fetch {} 失敗: {e}", watch.key),
             }
             tokio::time::sleep(REQUEST_INTERVAL).await;
         }
@@ -335,13 +342,14 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
         let median = if ages.is_empty() { None } else { Some(ages[ages.len() / 2]) };
         let avg = if ages.is_empty() { None } else { Some(ages.iter().sum::<i64>() / ages.len() as i64) };
         new_samples.push((
-            gem.name.clone(),
+            watch.key.clone(),
             FlowSample {
                 t: now,
                 total,
                 median_age_min: median,
                 avg_age_min: avg,
                 seen: ages.len(),
+                ids: seen_ids,
                 cheapest_amount: cheapest.as_ref().map(|c| c.0),
                 cheapest_currency: cheapest.map(|c| c.1),
             },
@@ -370,18 +378,18 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
         tokio::time::sleep(Duration::from_secs(15)).await;
         {
             let store = load_store(&app);
-            if !store.gems.is_empty() && now_secs() - store.sampled_at >= FIRST_SAMPLE_MIN_GAP {
+            if !store.watches.is_empty() && now_secs() - store.sampled_at >= FIRST_SAMPLE_MIN_GAP {
                 if let Err(e) = sample_once(&app).await {
-                    eprintln!("[gem_flow] 起動時のサンプリング失敗: {e}");
+                    eprintln!("[market_flow] 起動時のサンプリング失敗: {e}");
                 }
             }
         }
         loop {
             let store = load_store(&app);
             let due = now_secs() - store.sampled_at >= SAMPLE_INTERVAL.as_secs() as i64;
-            if due && !store.gems.is_empty() {
+            if due && !store.watches.is_empty() {
                 if let Err(e) = sample_once(&app).await {
-                    eprintln!("[gem_flow] サンプリング失敗: {e}");
+                    eprintln!("[market_flow] サンプリング失敗: {e}");
                 }
             }
             tokio::time::sleep(Duration::from_secs(300)).await;
@@ -421,14 +429,5 @@ mod tests {
         assert_eq!(age_minutes("2026-09-16", 0), None);
     }
 
-    /// 完成品クエリの条件 (レベル 21 以上 / 品質 23% 以上 / コラプト済み)
-    #[test]
-    fn finished_query_has_expected_filters() {
-        let q = finished_query("Arc");
-        assert_eq!(q["query"]["type"]["option"], "Arc");
-        assert_eq!(q["query"]["filters"]["misc_filters"]["filters"]["gem_level"]["min"], 21);
-        assert_eq!(q["query"]["filters"]["type_filters"]["filters"]["quality"]["min"], 23);
-        assert_eq!(q["query"]["filters"]["misc_filters"]["filters"]["corrupted"]["option"], "true");
-    }
 }
 
