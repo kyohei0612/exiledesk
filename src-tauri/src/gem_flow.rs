@@ -41,6 +41,9 @@ pub struct FlowSample {
     pub total: u64,
     /// 見た出品のうち「出品されてからの経過分」の中央値 (取れなければ None)
     pub median_age_min: Option<i64>,
+    /// 同じく平均 (表示用。判定は外れ値に強い中央値で行う)
+    #[serde(default)]
+    pub avg_age_min: Option<i64>,
     /// 実際に見た出品数 (最大 10)
     pub seen: usize,
     /// 最安値 (そのままの通貨)
@@ -150,6 +153,8 @@ pub struct RecordRequest {
     #[serde(default)]
     pub median_age_min: Option<i64>,
     #[serde(default)]
+    pub avg_age_min: Option<i64>,
+    #[serde(default)]
     pub seen: usize,
     #[serde(default)]
     pub cheapest_amount: Option<f64>,
@@ -171,6 +176,7 @@ pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemF
                 t: now,
                 total: req.total,
                 median_age_min: req.median_age_min,
+                avg_age_min: req.avg_age_min,
                 seen: req.seen,
                 cheapest_amount: req.cheapest_amount,
                 cheapest_currency: req.cheapest_currency,
@@ -184,6 +190,7 @@ pub fn gem_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<GemF
         t: now,
         total: req.total,
         median_age_min: req.median_age_min,
+        avg_age_min: req.avg_age_min,
         seen: req.seen,
         cheapest_amount: req.cheapest_amount,
         cheapest_currency: req.cheapest_currency,
@@ -326,12 +333,14 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
 
         ages.sort_unstable();
         let median = if ages.is_empty() { None } else { Some(ages[ages.len() / 2]) };
+        let avg = if ages.is_empty() { None } else { Some(ages.iter().sum::<i64>() / ages.len() as i64) };
         new_samples.push((
             gem.name.clone(),
             FlowSample {
                 t: now,
                 total,
                 median_age_min: median,
+                avg_age_min: avg,
                 seen: ages.len(),
                 cheapest_amount: cheapest.as_ref().map(|c| c.0),
                 cheapest_currency: cheapest.map(|c| c.1),

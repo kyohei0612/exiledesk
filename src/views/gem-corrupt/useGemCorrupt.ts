@@ -244,6 +244,7 @@ export function useGemCorrupt() {
       name: gemEn,
       total: r.total,
       median_age_min: ages.length > 0 ? ages[Math.floor(ages.length / 2)] : null,
+      avg_age_min: ages.length > 0 ? Math.round(ages.reduce((a, b) => a + b, 0) / ages.length) : null,
       seen: ages.length,
       cheapest_amount: cheapest?.amount ?? null,
       cheapest_currency: cheapest?.currency ?? null,

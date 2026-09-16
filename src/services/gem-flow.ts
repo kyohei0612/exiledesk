@@ -13,6 +13,7 @@ export interface FlowSample {
   t: number;
   total: number;
   median_age_min: number | null;
+  avg_age_min?: number | null;
   seen: number;
   cheapest_amount: number | null;
   cheapest_currency: string | null;
@@ -57,6 +58,7 @@ export async function recordGemFlow(sample: {
   name: string;
   total: number;
   median_age_min: number | null;
+  avg_age_min?: number | null;
   seen: number;
   cheapest_amount: number | null;
   cheapest_currency: string | null;
@@ -81,8 +83,10 @@ export interface FlowSummary {
   /** "速い" / "普通" / "遅い" / "" */
   label: string;
   tone: FlowTone;
-  /** 今並んでいる出品の滞留時間の中央値 (分) */
+  /** 今並んでいる出品の滞留時間の中央値 (分)。判定はこちら (外れ値に強い) */
   medianAge: number | null;
+  /** 同じく平均 (表示用) */
+  avgAge: number | null;
   /** 直近の出品総数 */
   totalNow: number | null;
   /** 24 時間前 (取れなければ最古) との差 */
@@ -102,7 +106,7 @@ const SLOW_MIN = 360;
 export function summarizeFlow(samples: FlowSample[] | undefined): FlowSummary {
   const list = samples ?? [];
   if (list.length === 0) {
-    return { label: "", tone: "unknown", medianAge: null, totalNow: null, totalDelta: null, spark: [], count: 0, lastAt: null };
+    return { label: "", tone: "unknown", medianAge: null, avgAge: null, totalNow: null, totalDelta: null, spark: [], count: 0, lastAt: null };
   }
   const last = list[list.length - 1];
   const spark = list.map((s) => s.total);
@@ -127,6 +131,7 @@ export function summarizeFlow(samples: FlowSample[] | undefined): FlowSummary {
     label,
     tone,
     medianAge,
+    avgAge: last.avg_age_min ?? medianAge,
     totalNow: last.total,
     totalDelta: list.length > 1 ? last.total - base.total : null,
     spark,

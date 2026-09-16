@@ -20,7 +20,6 @@ const money = (n: number | null | undefined, signed = false): string => displayC
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
 import { fmtAge, loadGemFlow, summarizeFlow, type GemFlowStore } from "../services/gem-flow";
-import { sparkPoints } from "./currency/format";
 
 const g = useGemCorrupt();
 onActivated(() => {
@@ -185,16 +184,17 @@ watch(
 );
 /** 選択中ジェムの売れ行き */
 const flow = computed(() => summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""]));
-const flowToneClass = computed(() => {
+/** バッジの色: 速い=緑 / 普通=黄 / 遅い=赤 */
+const flowBadgeClass = computed(() => {
   switch (flow.value.tone) {
     case "fast":
-      return "text-emerald-300";
+      return "border-emerald-500/60 bg-emerald-500/15 text-emerald-300";
     case "normal":
-      return "text-[var(--exile-color-text-primary)]";
+      return "border-amber-500/60 bg-amber-500/15 text-amber-300";
     case "slow":
-      return "text-amber-300";
+      return "border-red-500/60 bg-red-500/15 text-red-300";
     default:
-      return "text-[var(--exile-color-text-tertiary)]";
+      return "border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]";
   }
 });
 /** 追跡対象に入っているか (クラフト選定ジェムで完成品 5 人以上だったか) */
@@ -202,7 +202,6 @@ const flowTracked = computed(() => {
   const en = g.selected.value?.en ?? "";
   return !!flowStore.value?.gems.some((x) => x.name === en);
 });
-const flowSpark = computed(() => sparkPoints(flow.value.spark));
 const fmtFlowAt = (t: number | null): string => {
   if (!t) return "";
   const d = new Date(t * 1000);
@@ -657,24 +656,18 @@ const summary = computed(() => {
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
                 </td>
-                <!-- 2026-09-16: 売れ行き (完成品の条件で 1 時間ごとに記録した物) -->
+                <!-- 2026-09-16: 売れ行き = 速い / 普通 / 遅い のバッジ + 平均待ち時間 -->
                 <td class="py-1.5 text-right">
                   <template v-if="row.key === 'finished'">
-                    <div v-if="flow.count > 0" class="flex items-center justify-end gap-1.5" :title="`出品の滞留時間の中央値 ${fmtAge(flow.medianAge)} · 出品総数 ${flow.totalNow}${flow.totalDelta != null ? ` (24 時間で ${flow.totalDelta > 0 ? '+' : ''}${flow.totalDelta})` : ''} · 最終記録 ${fmtFlowAt(flow.lastAt)}`">
-                      <svg v-if="flow.spark.length > 1" width="52" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
-                        <polyline
-                          :points="flowSpark"
-                          fill="none"
-                          :stroke="(flow.totalDelta ?? 0) > 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'"
-                          stroke-width="1.5"
-                          stroke-linejoin="round"
-                          stroke-linecap="round"
-                        />
-                      </svg>
-                      <span class="tabular-nums text-[11px] whitespace-nowrap" :class="flowToneClass">
-                        <span class="font-display tracking-[0.04em]">{{ flow.label }}</span>
-                        <span class="text-[var(--exile-color-text-secondary)]"> {{ fmtAge(flow.medianAge) }}</span>
-                      </span>
+                    <div
+                      v-if="flow.count > 0 && flow.label"
+                      class="flex items-center justify-end gap-2"
+                      :title="`判定は滞留時間の中央値 ${fmtAge(flow.medianAge)} (1 時間以内=速い / 6 時間以内=普通 / それ以上=遅い)
+出品総数 ${flow.totalNow}${flow.totalDelta != null ? ` (24 時間で ${flow.totalDelta > 0 ? '+' : ''}${flow.totalDelta})` : ''}
+最終記録 ${fmtFlowAt(flow.lastAt)} · 記録 ${flow.count} 件`"
+                    >
+                      <span class="px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border" :class="flowBadgeClass">{{ flow.label }}</span>
+                      <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">平均待ち {{ fmtAge(flow.avgAge) }}</span>
                     </div>
                     <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
