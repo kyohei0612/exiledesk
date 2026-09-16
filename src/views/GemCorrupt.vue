@@ -19,9 +19,12 @@ import { displayCurrency, type DisplayCurrency } from "../state/display-currency
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
+import { fmtAge, loadGemFlow, summarizeFlow, type GemFlowStore } from "../services/gem-flow";
+import { sparkPoints } from "./currency/format";
 
 const g = useGemCorrupt();
 onMounted(() => {
+  void reloadFlow();
   void g.loadMarket();
 });
 
@@ -163,6 +166,38 @@ function loadBook(): LedgerBook {
 }
 const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
+
+// ---- 売れ行き (2026-09-16: gem_flow が 1 時間ごとに記録した物を読むだけ) ----
+const flowStore = ref<GemFlowStore | null>(null);
+async function reloadFlow(): Promise<void> {
+  flowStore.value = await loadGemFlow();
+}
+/** 選択中ジェムの売れ行き */
+const flow = computed(() => summarizeFlow(flowStore.value?.samples[g.selected.value?.en ?? ""]));
+const flowToneClass = computed(() => {
+  switch (flow.value.tone) {
+    case "fast":
+      return "text-emerald-300";
+    case "normal":
+      return "text-[var(--exile-color-text-primary)]";
+    case "slow":
+      return "text-amber-300";
+    default:
+      return "text-[var(--exile-color-text-tertiary)]";
+  }
+});
+/** 追跡対象に入っているか (クラフト選定ジェムで完成品 5 人以上だったか) */
+const flowTracked = computed(() => {
+  const en = g.selected.value?.en ?? "";
+  return !!flowStore.value?.gems.some((x) => x.name === en);
+});
+const flowSpark = computed(() => sparkPoints(flow.value.spark));
+const fmtFlowAt = (t: number | null): string => {
+  if (!t) return "";
+  const d = new Date(t * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
 const ledger = computed<GemLedger>(() => {
   const raw = book.value[ledgerGem.value] ?? {};
   const qty: Partial<Record<RowKey, number>> = { ...(raw.qty ?? {}) };
@@ -584,6 +619,7 @@ const summary = computed(() => {
                 <th class="text-left font-normal pb-1">状態</th>
                 <th class="text-right font-normal pb-1 w-28">売値</th>
                 <th class="text-right font-normal pb-1 w-20">出品数</th>
+                <th class="text-right font-normal pb-1 w-36">売れ行き</th>
                 <th class="text-right font-normal pb-1 w-16"></th>
               </tr>
             </thead>
@@ -598,6 +634,26 @@ const summary = computed(() => {
                 </td>
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
+                </td>
+                <!-- 2026-09-16: 売れ行き (完成品の条件で 1 時間ごとに記録した物) -->
+                <td class="py-1.5 text-right">
+                  <template v-if="row.key === 'finished'">
+                    <div v-if="flow.count > 0" class="flex items-center justify-end gap-1.5" :title="`出品の滞留時間の中央値 ${fmtAge(flow.medianAge)} · 出品総数 ${flow.totalNow}${flow.totalDelta != null ? ` (24 時間で ${flow.totalDelta > 0 ? '+' : ''}${flow.totalDelta})` : ''} · 最終記録 ${fmtFlowAt(flow.lastAt)}`">
+                      <svg v-if="flow.spark.length > 1" width="52" height="16" viewBox="0 0 72 20" preserveAspectRatio="none" class="shrink-0 overflow-visible">
+                        <polyline
+                          :points="flowSpark"
+                          fill="none"
+                          :stroke="(flow.totalDelta ?? 0) > 0 ? 'var(--exile-color-signal-error)' : 'var(--exile-color-signal-success)'"
+                          stroke-width="1.5"
+                          stroke-linejoin="round"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <span class="tabular-nums text-[11px]" :class="flowToneClass">{{ flow.label }} {{ fmtAge(flow.medianAge) }}</span>
+                    </div>
+                    <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
+                    <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
+                  </template>
                 </td>
                 <td class="py-1.5 text-right">
                   <button
@@ -614,6 +670,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            売れ行きは「今並んでいる出品が何分前に出された物か」の中央値です (短いほど回転が速い)。クラフト選定ジェムで完成品 5 人以上だったジェムを 1 時間ごとに記録します。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
         </div>

@@ -12,6 +12,7 @@ pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を�
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
+pub mod gem_flow;  // ジェムの売れ行き追跡 (2026-09-16): 1 時間ごとに出品の滞留時間と総数を記録
 pub mod gem_break;  // クラフト前提ジェム (2026-09-16): 1 アセンダンシー分のレベル 21 / 品質 23% 使用人数
 pub mod trade_history;  // 取引履歴 (マーチャント履歴) の連動 (2026-09-16): アプリ内ログイン + 履歴 API
 
@@ -152,6 +153,9 @@ pub fn run() {
             app.manage(pob::PobWorker::spawn(pob_launcher::headless_src_dir(
                 &app.handle(),
             )));
+
+            // 2026-09-16: ジェムの売れ行きを 1 時間ごとに記録する (追跡リストが空なら何もしない)
+            gem_flow::spawn_scheduler(app.handle().clone());
 
             // ----------------------------------------------------------------
             // 設定の disk → in-memory state ロード (起動時 1 回だけ)
@@ -363,6 +367,9 @@ pub fn run() {
             gem_break::gem_break_fetch,
             gem_break::gem_break_ascendancies,
             gem_break::gem_break_cancel,
+            gem_flow::gem_flow_load,
+            gem_flow::gem_flow_set_tracked,
+            gem_flow::gem_flow_sample_now,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
             pob_bundle::pob_bundle_status,

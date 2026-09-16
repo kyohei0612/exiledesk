@@ -16,6 +16,9 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
+import { setTrackedGems } from "../services/gem-flow";
+import { marketStore } from "../state/market-store";
+import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -146,6 +149,13 @@ async function fetchNow(): Promise<void> {
       req: { class: selectedClass.value ?? null, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
+    // 2026-09-16: 全アセンダンシーで取った時だけ、完成品 5 人以上を売れ行きの追跡対象にする
+    if (!selectedClass.value) {
+      const tracked = r.rows
+        .filter((x) => x.both >= TRACK_MIN_FINISHED)
+        .map((x) => ({ name: x.name, finished_users: x.both, users: x.users }));
+      void setTrackedGems(tracked, marketStore.league.value?.Value ?? "", trade2Site());
+    }
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
       localStorage.setItem(CLASS_KEY, selectedClass.value ?? "");
@@ -171,6 +181,8 @@ const SECTIONS = [
 ] as const;
 type Key = (typeof SECTIONS)[number]["key"];
 
+/** 売れ行きを追う下限 (完成品を使っている人数) */
+const TRACK_MIN_FINISHED = 5;
 const PAGE = 25;
 const showAll = ref<Record<string, boolean>>({});
 function listOf(key: Key): Row[] {
@@ -256,6 +268,8 @@ onUnmounted(() => {
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
         (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
         装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
+        全アセンダンシーで取ると、完成品を {{ TRACK_MIN_FINISHED }} 人以上が使っているジェムを売れ行きの追跡対象にします
+        (1 時間ごとに出品の滞留時間と総数を記録 → ジェムコラプトの賭けに表示)。
       </p>
     </header>
 
