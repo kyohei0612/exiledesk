@@ -71,6 +71,33 @@ export async function fetchLeagues(): Promise<League[]> {
 }
 
 /**
+ * そのリーグで一番古いスナップショットの実時刻(Epoch秒) = リーグ開始 (2026-09-16、取引履歴のグラフ用)。
+ * SnapshotHistory は 1 時間刻みで、リーグ 1 本分 (数百件) が 1 リクエストで全部返る。取得失敗時は null。
+ */
+export async function fetchLeagueStartEpoch(leagueName: string): Promise<number | null> {
+  try {
+    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/SnapshotHistory?Limit=5000`;
+    const res = await httpFetch(url, NO_STORE);
+    if (!res.ok) return null;
+    const data: unknown = await res.json();
+    const arr: unknown = Array.isArray(data)
+      ? data
+      : data && typeof data === "object"
+        ? Object.values(data).find((v) => Array.isArray(v))
+        : null;
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    let oldest = Number.POSITIVE_INFINITY;
+    for (const row of arr) {
+      const ep = row && typeof row === "object" ? (row as Record<string, unknown>).Epoch : null;
+      if (typeof ep === "number" && ep > 0) oldest = Math.min(oldest, ep);
+    }
+    return Number.isFinite(oldest) ? oldest : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 最新スナップショットの実時刻(Epoch秒)を返す。鮮度の可視化用。
  * poe2scout の SnapshotHistory は ~1時間刻み。取得失敗時は null。
  */

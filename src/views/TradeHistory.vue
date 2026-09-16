@@ -11,6 +11,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { displayCurrency } from "../state/display-currency";
 import { marketStore } from "../state/market-store";
+import { fetchLeagueStartEpoch } from "../api/poe2scout";
 import { toExalted } from "../services/trade2/pricing";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { jaTypeName, jaUniqueName } from "../services/trade2/localize";
@@ -47,6 +48,33 @@ const entries = ref<TradeEntry[]>([]);
 const lastFetchAt = ref(0);
 const nextAllowedAt = ref(0);
 const now = ref(Date.now());
+/** このリーグの開始時刻 (ms)。「全部」のグラフの左端に使う。取れなければ一番古い記録から */
+const leagueStartMs = ref<number | null>(null);
+
+const LEAGUE_START_KEY = (l: string): string => `exiledesk.trade-history.leagueStart.${l}`;
+/** リーグ開始は変わらないので 1 度取ったら保存して使い回す (poe2scout の一番古いスナップショット) */
+async function loadLeagueStart(): Promise<void> {
+  leagueStartMs.value = null;
+  const l = league.value;
+  if (!l || game.value !== "poe2") return;
+  try {
+    const cached = localStorage.getItem(LEAGUE_START_KEY(l));
+    if (cached) {
+      leagueStartMs.value = Number(cached);
+      return;
+    }
+  } catch {
+    /* 読めなくても取り直せる */
+  }
+  const ep = await fetchLeagueStartEpoch(l);
+  if (ep == null || league.value !== l) return;
+  leagueStartMs.value = ep * 1000;
+  try {
+    localStorage.setItem(LEAGUE_START_KEY(l), String(ep * 1000));
+  } catch {
+    /* 保存できなくても表示は出る */
+  }
+}
 
 function reloadStored(): void {
   if (!league.value) {
@@ -104,6 +132,7 @@ watch(league, (l) => {
     /* 保存できなくても動く */
   }
   reloadStored();
+  void loadLeagueStart();
 });
 
 async function login(): Promise<void> {
@@ -237,6 +266,14 @@ const summary = computed(() => {
   };
 });
 
+/** 「全部」の左端。リーグ開始が取れればそれ、駄目なら一番古い記録 (どちらも無ければ今日) */
+const allStartMs = computed<number>(() => {
+  if (leagueStartMs.value) return leagueStartMs.value;
+  let oldest = Number.POSITIVE_INFINITY;
+  for (const e of entries.value) oldest = Math.min(oldest, e.time);
+  return Number.isFinite(oldest) ? oldest : todayStart.value;
+});
+
 /** グラフの棒。当日は時間別 (0-23 時)、それ以外は日別 */
 interface Bar {
   key: string;
@@ -288,15 +325,20 @@ const bars = computed<Bar[]>(() => {
     }
     return out;
   }
-  const sorted = [...byDay.entries()].sort((a, b) => a[1].start - b[1].start);
-  for (const [k, b] of sorted) {
+  // 「全部」= リーグ開始から今日まで 1 日ずつ (売れていない日も 0 で並べる)
+  let first = startOfDay(allStartMs.value);
+  const days = Math.floor((todayStart.value - first) / DAY_MS);
+  if (days > 400) first = todayStart.value - 400 * DAY_MS; // 保険 (リーグ開始が取れないほど古い時)
+  for (let t = first; t <= todayStart.value; t += DAY_MS) {
+    const start = startOfDay(t); // 夏時間などでずれても日付境界に戻す
+    const b = byDay.get(dayKey(start));
     out.push({
-      key: k,
-      label: `${new Date(b.start).getMonth() + 1}/${new Date(b.start).getDate()}`,
-      sub: dayLabel(b.start),
-      value: b.v,
-      count: b.c,
-      today: b.start === todayStart.value,
+      key: dayKey(start),
+      label: `${new Date(start).getMonth() + 1}/${new Date(start).getDate()}`,
+      sub: dayLabel(start),
+      value: b?.v ?? 0,
+      count: b?.c ?? 0,
+      today: start === todayStart.value,
     });
   }
   return out;
@@ -436,7 +478,12 @@ onUnmounted(() => {
         v-for="card in [
           { id: 'today', label: '当日', note: dayLabel(todayStart), s: summary.today },
           { id: '7d', label: '7 日間', note: `${dayLabel(todayStart - 6 * DAY_MS)} 〜 ${dayLabel(todayStart)}`, s: summary.week },
-          { id: 'all', label: '全部', note: `保存 ${entries.length} 件`, s: summary.all },
+          {
+            id: 'all',
+            label: '全部',
+            note: leagueStartMs ? `リーグ開始 ${dayLabel(leagueStartMs)} 〜` : `保存 ${entries.length} 件`,
+            s: summary.all,
+          },
         ]"
         :key="card.id"
         type="button"
@@ -462,7 +509,7 @@ onUnmounted(() => {
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
         <div class="flex items-center gap-2">
           <h2 class="font-display tracking-[0.08em] text-[13px] text-[var(--exile-color-accent-focus)]">
-            {{ period === "today" ? "今日の売上 (時間別)" : period === "7d" ? "この 7 日間の売上 (日別)" : "全期間の売上 (日別)" }}
+            {{ period === "today" ? "今日の売上 (時間別)" : period === "7d" ? "この 7 日間の売上 (1 日ずつ)" : "リーグ開始からの売上 (1 日ずつ)" }}
           </h2>
           <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden">
             <button
