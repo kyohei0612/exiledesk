@@ -170,9 +170,14 @@ export function useRareCraft() {
   const marketLabel = marketStore.fetchedLabel;
   const priceOf = marketStore.priceOf;
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  /**
+   * 通貨相場 (poe2scout) だけ用意する。
+   *
+   * オーナー指示 (2026-09-16 / 再指摘 2026-09-17): タブを開いただけで trade2 を
+   * 叩かない。素材の値段は「取得」ボタンを押した時だけ取りに行く (レート制限対策)。
+   */
   async function loadMarket(): Promise<void> {
     await marketStore.ensureMarket();
-    void fetchPrices();
   }
 
   // ---- ベース MOD のティアとエッセンス ----

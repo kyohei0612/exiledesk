@@ -7,13 +7,14 @@
     src-tauri/src/trade_history.rs  ログイン用ウィンドウ / cookie / 履歴 API
 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { displayCurrency } from "../state/display-currency";
 import { marketStore } from "../state/market-store";
 import { fetchLeagueStartEpoch } from "../api/poe2scout";
 import { toExalted } from "../services/trade2/pricing";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { waitText } from "../utils/wait-text";
 import { jaTypeName, jaUniqueName } from "../services/trade2/localize";
 import {
   fetchAndMerge,
@@ -164,6 +165,33 @@ async function fetchNow(): Promise<void> {
     busy.value = false;
   }
 }
+/**
+ * タブを開いた時の自動更新 (オーナー指示 2026-09-17)。
+ *
+ * サーバーの制限とは別に、アプリ内でも前回取得から 5 分空ける。
+ * タブを行き来するだけで取得枠 (1 分 5 回 / 10 分 10 回 / 3 時間 15 回) を
+ * 食い潰さないようにするため。手動の「履歴を取得」はこの 5 分を待たずに押せる。
+ */
+const AUTO_MIN_GAP_MS = 5 * 60_000;
+/** 自動更新を見送った理由 (画面に出す) */
+const autoNote = ref("");
+
+async function maybeAutoFetch(): Promise<void> {
+  if (!inApp || !loggedIn.value || !league.value || busy.value) return;
+  const nowMs = Date.now();
+  const allowedAt = historyBudget(game.value, league.value).allowedAt;
+  if (nowMs < allowedAt) {
+    autoNote.value = `自動更新は見送り (制限中 · あと ${waitText(Math.ceil((allowedAt - nowMs) / 1000))})`;
+    return;
+  }
+  if (lastFetchAt.value && nowMs - lastFetchAt.value < AUTO_MIN_GAP_MS) {
+    autoNote.value = `自動更新は見送り (前回取得から ${waitText(Math.ceil((nowMs - lastFetchAt.value) / 1000))})`;
+    return;
+  }
+  autoNote.value = "";
+  await fetchNow();
+}
+
 /** 残り回数と次に取れる時刻 (now を見て毎秒引き直す) */
 const budget = computed(() => {
   void now.value;
@@ -426,6 +454,11 @@ onMounted(async () => {
   unlisten = await onLoginClosed(() => void refreshSession());
   await refreshSession();
   await loadLeagues();
+  await maybeAutoFetch();
+});
+// keep-alive なのでタブを開き直しても mount されない。開いた時にここで更新する
+onActivated(() => {
+  void maybeAutoFetch();
 });
 onUnmounted(() => {
   if (timer) clearInterval(timer);
@@ -484,7 +517,7 @@ onUnmounted(() => {
         {{ fetchLabel }}
       </button>
       <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-        最終取得 {{ lastFetchAt ? fmtTime(lastFetchAt) : "—" }}<span v-if="usageText"> · 使った回数 {{ usageText }}</span>
+        最終取得 {{ lastFetchAt ? fmtTime(lastFetchAt) : "—" }}<span v-if="usageText"> · 使った回数 {{ usageText }}</span><span v-if="autoNote"> · {{ autoNote }}</span>
       </span>
       <p v-if="message" class="basis-full text-[12px]" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
     </div>
