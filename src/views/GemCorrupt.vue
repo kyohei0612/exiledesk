@@ -1083,7 +1083,18 @@ const summary = computed(() => {
               <button type="button" class="ml-1 underline hover:text-[var(--exile-color-accent-focus)]" @click="refreshLedgerPrices">今の相場に更新</button>
             </span>
           </div>
-          <table class="w-full text-[12px] break-words">
+          <!--
+            オーナー指摘 (2026-09-17): 数字を打つと表の幅が動いて画面全体がズレる。
+            自動列幅だと中身の桁数で毎回配分し直されるため、table-fixed + colgroup で固定する。
+          -->
+          <div class="overflow-x-auto">
+          <table class="w-full table-fixed min-w-[36rem] text-[12px] break-words">
+            <colgroup>
+              <col />
+              <col class="w-[13rem]" />
+              <col class="w-[11rem]" />
+              <col class="w-[8rem]" />
+            </colgroup>
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">素材</th>
@@ -1155,6 +1166,7 @@ const summary = computed(() => {
               </tr>
             </tbody>
           </table>
+          </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             単価は回数を入れた時点の値 (相場と取引所の安い方) で固定します。あとで相場が動いても、やった分の費用は変わりません。実際に払った額が違う時は単価の欄に直接入れてください (空欄に戻すと固定値に戻ります)。素材の「取引所で比べる」を押すと、その結果で固定単価も入れ替えます (手入力した分はそのまま)。「今の相場に更新」でも固定し直せます。
             使った数と売れた数は空欄なら「経路の 1 回の数 × 回数」で、結晶・原石・売れた数のように結果次第の物は期待値です。実際に違った数だけ入れてください。
