@@ -192,8 +192,11 @@ const flowTitle = computed(() => {
     `半分が売れるまで: ${fmtAge(f.medianMin)}`,
     `24 時間以内に売れる: ${fmtPct(f.soldIn24h)} · 48 時間以内: ${fmtPct(f.soldIn48h)}`,
     `追跡: 消えた ${f.gone} 件 / まだ残っている ${f.alive} 件`,
+    f.stale > 0
+      ? `48 時間以上売れ残り: ${f.stale} 件${f.staleRatio != null ? ` (最安の ${f.staleRatio.toFixed(1)} 倍の値付け)` : ""}`
+      : "48 時間以上の売れ残りなし",
     `出品総数: ${f.total ?? "—"} · 最終記録 ${fmtFlowAt(f.lastAt)}`,
-    "出品 1 件ずつを ID で追い、売れ残り (打ち切り) も含めて生存分析で出しています",
+    "出品 1 件ずつを ID で追い、出品時刻からの齢で、売れ残りも含めて生存分析で出しています",
   ].join("\n");
 });
 const flowBadgeClass = computed(() => {

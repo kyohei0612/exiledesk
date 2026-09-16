@@ -234,7 +234,12 @@ export function useGemCorrupt() {
       key: gemEn,
       total: r.total,
       ids: r.listingIds ?? [],
-      entries: r.listings.map((l) => ({ id: l.id, amount: l.amount, currency: l.currency })),
+      entries: r.listings.map((l) => ({
+        id: l.id,
+        amount: l.amount,
+        currency: l.currency,
+        listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
+      })),
     });
   }
 

@@ -24,6 +24,8 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 export interface Tracked {
   id: string;
+  /** 出品された時刻 (trade2 の listing.indexed)。齢はここを起点に数える */
+  listed_at?: number | null;
   first_seen: number;
   last_seen: number;
   gone_at?: number | null;
@@ -65,6 +67,8 @@ export interface ListingRef {
   id: string;
   amount?: number | null;
   currency?: string | null;
+  /** 出品時刻 (unix 秒) */
+  listed_at?: number | null;
 }
 
 const EMPTY: FlowStore = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
@@ -117,6 +121,9 @@ export interface FlowSummary {
   lastAt: number | null;
   /** 判定に足りるだけのデータがあるか */
   enough: boolean;
+  /** 48 時間以上売れ残っている件数と、その最安に対する値段の倍率 (値段不相応の目安) */
+  stale: number;
+  staleRatio: number | null;
 }
 
 const HOUR = 3600;
@@ -137,29 +144,27 @@ const EMPTY_SUMMARY: FlowSummary = {
   total: null,
   lastAt: null,
   enough: false,
+  stale: 0,
+  staleRatio: null,
 };
 
 /**
- * Kaplan-Meier 法の生存曲線。
- * `events` = 消えるまでの秒数、`censored` = まだ売れていない出品の現在の齢 (打ち切り)。
+ * Kaplan-Meier 法の生存曲線 (左側切断つき)。
+ *
+ * こちらが見つけた時点で既に何時間も出品されている物が多い (オーナー指摘: 17 時間前の
+ * 出品を今拾う)。そこで「出品時刻からの齢」を寿命とし、観測に入った齢 (entry) より前の
+ * 区間ではその出品を母数に入れない = 遅れて参加した扱いにする。
+ * こうしないと「見つけてから何時間で消えたか」になり、実際より速く見える。
  */
-export function survivalCurve(events: number[], censored: number[]): { t: number; s: number }[] {
-  const all = [
-    ...events.map((t) => ({ t, event: true })),
-    ...censored.map((t) => ({ t, event: false })),
-  ].sort((a, b) => a.t - b.t || (a.event ? -1 : 1));
+export function survivalCurve(records: { entry: number; exit: number; event: boolean }[]): { t: number; s: number }[] {
+  const times = [...new Set(records.filter((r) => r.event).map((r) => r.exit))].sort((a, b) => a - b);
   const curve: { t: number; s: number }[] = [];
   let s = 1;
-  let i = 0;
-  while (i < all.length) {
-    const t = all[i].t;
-    const atRisk = all.length - i; // この時刻の直前まで残っている件数
-    let d = 0;
-    while (i < all.length && all[i].t === t) {
-      if (all[i].event) d++;
-      i++;
-    }
-    if (d > 0 && atRisk > 0) {
+  for (const t of times) {
+    // その時刻に「観測中」だった件数 (entry < t <= exit)
+    const atRisk = records.filter((r) => r.entry < t && r.exit >= t).length;
+    const d = records.filter((r) => r.event && r.exit === t).length;
+    if (atRisk > 0 && d > 0) {
       s *= 1 - d / atRisk;
       curve.push({ t, s });
     }
@@ -189,26 +194,44 @@ function medianFrom(curve: { t: number; s: number }[]): number | null {
 /** 追跡記録から捌き速度を出す */
 export function summarizeFlow(state: WatchState | undefined, nowSec: number = Math.floor(Date.now() / 1000)): FlowSummary {
   if (!state || !Array.isArray(state.tracked)) return EMPTY_SUMMARY;
-  const events: number[] = [];
-  const censored: number[] = [];
+
+  const records: { entry: number; exit: number; event: boolean }[] = [];
+  let gone = 0;
+  let alive = 0;
+  let stale = 0;
+  const stalePrices: number[] = [];
+  const allPrices: number[] = [];
   for (const t of state.tracked) {
-    if (t.gone_at) events.push(Math.max(60, t.gone_at - t.first_seen));
-    else censored.push(Math.max(60, nowSec - t.first_seen));
+    const start = t.listed_at ?? t.first_seen;
+    const exit = Math.max(60, (t.gone_at ?? nowSec) - start);
+    const entry = Math.max(0, t.first_seen - start);
+    records.push({ entry, exit, event: !!t.gone_at });
+    if (t.gone_at) gone++;
+    else {
+      alive++;
+      if (exit >= NORMAL_SECS) {
+        stale++;
+        if (t.amount != null) stalePrices.push(t.amount);
+      }
+    }
+    if (t.amount != null) allPrices.push(t.amount);
   }
-  const gone = events.length;
-  const alive = censored.length;
-  if (gone === 0 && alive === 0) {
+  if (records.length === 0) {
     return { ...EMPTY_SUMMARY, total: state.total ?? null, lastAt: state.sampled_at || null };
   }
 
-  const curve = survivalCurve(events, censored);
+  const curve = survivalCurve(records);
   const median = medianFrom(curve);
   const soldIn24h = soldBy(curve, FAST_SECS);
   const soldIn48h = soldBy(curve, NORMAL_SECS);
 
+  // 値段不相応の目安: 48 時間以上残っている出品は、最安の何倍で出しているか
+  const cheapest = allPrices.length > 0 ? Math.min(...allPrices) : null;
+  const staleAvg = stalePrices.length > 0 ? stalePrices.reduce((a, b) => a + b, 0) / stalePrices.length : null;
+  const staleRatio = cheapest != null && cheapest > 0 && staleAvg != null ? staleAvg / cheapest : null;
+
   // 判定に足りるか: 消えた記録が 3 件以上、または 48 時間以上売れ残りが 3 件以上
-  const longSurvivors = censored.filter((c) => c >= NORMAL_SECS).length;
-  const enough = gone >= MIN_EVENTS || longSurvivors >= MIN_EVENTS;
+  const enough = gone >= MIN_EVENTS || stale >= MIN_EVENTS;
 
   let tone: FlowTone = "unknown";
   let label = "";
@@ -220,7 +243,6 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       tone = "normal";
       label = "普通";
     } else {
-      // 中央値が 48 時間を超える、または半分も売れないまま 48 時間以上残っている
       tone = "slow";
       label = "遅い";
     }
@@ -237,6 +259,8 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     total: state.total ?? null,
     lastAt: state.sampled_at || null,
     enough,
+    stale,
+    staleRatio,
   };
 }
 

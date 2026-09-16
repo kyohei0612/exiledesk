@@ -56,6 +56,10 @@ pub struct Watch {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Tracked {
     pub id: String,
+    /// 実際に出品された時刻 (trade2 の listing.indexed)。取れなければ None。
+    /// 齢はこれを起点に数える (こちらが見つけた時にはもう何時間も経っていることが多いため)
+    #[serde(default)]
+    pub listed_at: Option<i64>,
     /// 初めて見た時刻 (unix 秒)
     pub first_seen: i64,
     /// 最後に生存を確認した時刻
@@ -70,9 +74,17 @@ pub struct Tracked {
 }
 
 impl Tracked {
+    /// 齢の起点 (出品時刻が取れていればそれ、無ければ初めて見た時刻)
+    pub fn start(&self) -> i64 {
+        self.listed_at.unwrap_or(self.first_seen)
+    }
     /// 寿命 (秒)。消えていれば消滅まで、生きていれば今まで (打ち切り)
     pub fn age(&self, now: i64) -> i64 {
-        self.gone_at.unwrap_or(now) - self.first_seen
+        self.gone_at.unwrap_or(now) - self.start()
+    }
+    /// 観測に入った時の齢 (生存分析の左側切断に使う)
+    pub fn entry_age(&self) -> i64 {
+        (self.first_seen - self.start()).max(0)
     }
 }
 
@@ -247,6 +259,9 @@ pub struct ListingRef {
     pub amount: Option<f64>,
     #[serde(default)]
     pub currency: Option<String>,
+    /// 出品時刻 (unix 秒)。trade2 の listing.indexed を読んだ物
+    #[serde(default)]
+    pub listed_at: Option<i64>,
 }
 
 /// 画面から手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
@@ -261,6 +276,29 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<F
     store.sampled_at = now;
     save_store(&app, &store)?;
     Ok(store)
+}
+
+/// trade2 の出品時刻 ("2026-09-16T10:00:00Z") を unix 秒に。chrono を足さずに手で読む
+pub fn parse_indexed(indexed: &str) -> Option<i64> {
+    if indexed.len() < 19 {
+        return None;
+    }
+    let num = |s: &str| -> Option<i64> { s.parse::<i64>().ok() };
+    let y = num(&indexed[0..4])?;
+    let mo = num(&indexed[5..7])?;
+    let d = num(&indexed[8..10])?;
+    let h = num(&indexed[11..13])?;
+    let mi = num(&indexed[14..16])?;
+    let sec = num(&indexed[17..19])?;
+    // Howard Hinnant の days_from_civil
+    let y_adj = if mo <= 2 { y - 1 } else { y };
+    let era = if y_adj >= 0 { y_adj } else { y_adj - 399 } / 400;
+    let yoe = y_adj - era * 400;
+    let mp = (mo + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some(days * 86_400 + h * 3600 + mi * 60 + sec)
 }
 
 // ============================================================================
@@ -307,6 +345,7 @@ pub fn apply_sample(
         }
         state.tracked.push(Tracked {
             id: e.id.clone(),
+            listed_at: e.listed_at,
             first_seen: now,
             last_seen: now,
             gone_at: None,
@@ -451,11 +490,16 @@ async fn sample_inner(app: &tauri::AppHandle) -> Result<(), String> {
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
                             let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
-                            let price = item.get("listing").and_then(|l| l.get("price"));
+                            let listing = item.get("listing");
+                            let price = listing.and_then(|l| l.get("price"));
                             entries.push(ListingRef {
                                 id: id.to_string(),
                                 amount: price.and_then(|p| p.get("amount")).and_then(|x| x.as_f64()),
                                 currency: price.and_then(|p| p.get("currency")).and_then(|x| x.as_str()).map(str::to_string),
+                                listed_at: listing
+                                    .and_then(|l| l.get("indexed"))
+                                    .and_then(|x| x.as_str())
+                                    .and_then(parse_indexed),
                             });
                         }
                     }
@@ -547,7 +591,33 @@ mod tests {
     use super::*;
 
     fn lr(id: &str, amount: f64) -> ListingRef {
-        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()) }
+        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: None }
+    }
+    fn lr_at(id: &str, amount: f64, listed_at: i64) -> ListingRef {
+        ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: Some(listed_at) }
+    }
+
+    /// 出品時刻が取れていれば、こちらが見つけた時刻ではなく出品時刻から齢を数える
+    #[test]
+    fn age_counts_from_listed_at() {
+        let mut st = WatchState::default();
+        let t0 = 1_700_000_000;
+        // 17 時間前に出品された物を今見つけた
+        apply_sample(&mut st, t0, 1, &["a".into()], &[lr_at("a", 43.0, t0 - 17 * 3600)], true);
+        let t = &st.tracked[0];
+        assert_eq!(t.entry_age(), 17 * 3600);
+        assert_eq!(t.age(t0), 17 * 3600);
+        // 1 時間後に消えたら寿命は 18 時間
+        apply_sample(&mut st, t0 + 3600, 0, &[], &[], true);
+        assert_eq!(st.tracked[0].age(t0 + 3600), 18 * 3600);
+    }
+
+    /// 出品時刻のパース (2026-01-01T00:00:00Z = 1767225600)
+    #[test]
+    fn parse_indexed_reads_rfc3339() {
+        assert_eq!(parse_indexed("2026-01-01T00:00:00Z"), Some(1_767_225_600));
+        assert_eq!(parse_indexed("2024-02-29T00:00:00Z"), Some(1_709_164_800));
+        assert_eq!(parse_indexed("bad"), None);
     }
 
     /// 最安 10 件が丸ごと安い出品に入れ替わっても、前の出品は「消えた」にならない
