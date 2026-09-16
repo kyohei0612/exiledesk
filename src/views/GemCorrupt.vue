@@ -7,7 +7,7 @@
     i18n/gems-client.json              ジェム一覧 (GGG クライアント由来)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onActivated, onMounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
@@ -23,6 +23,10 @@ import { fmtAge, loadGemFlow, summarizeFlow, type GemFlowStore } from "../servic
 import { sparkPoints } from "./currency/format";
 
 const g = useGemCorrupt();
+onActivated(() => {
+  // <keep-alive> で保持されるので、画面に戻ってきた時に売れ行きを読み直す
+  void reloadFlow();
+});
 onMounted(() => {
   void reloadFlow();
   void g.loadMarket();
@@ -688,6 +692,12 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+            <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
+              売れ行きの記録: {{ flow.count }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
+              {{ flowTracked ? "自動追跡中" : "自動追跡の対象外 (クラフト選定ジェムで完成品 5 人以上になると入ります)" }} ·
+              追跡 {{ flowStore?.gems.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
+            </span>
+            <br v-if="g.selected.value" />
             売れ行きは「今並んでいる出品が何分前に出された物か」の中央値です (短いほど回転が速い)。クラフト選定ジェムで完成品 5 人以上だったジェムを 1 時間ごとに記録します。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、買う場合は品質 20% · 5 ソケット前提です。
           </p>
