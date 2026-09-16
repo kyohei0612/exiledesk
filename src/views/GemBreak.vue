@@ -17,7 +17,7 @@ import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { setWatches } from "../services/market-flow";
-import { buildGemQuery } from "../services/trade2/query";
+import { watchesFromRows } from "../state/gem-watch-auto";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
@@ -152,16 +152,8 @@ async function fetchNow(): Promise<void> {
     result.value = r;
     // 2026-09-16: 全アセンダンシーで取った時だけ、完成品 5 人以上を売れ行きの追跡対象にする
     if (!selectedClass.value) {
-      // 完成品 (コラプト済み・レベル 21 以上・品質 23% 以上) の検索クエリで登録する
-      const watches = r.rows
-        .filter((x) => x.both >= TRACK_MIN_FINISHED)
-        .map((x) => ({
-          key: x.name,
-          label: jaSkill(x.name),
-          note: `完成品 ${x.both} / ${x.users} 人`,
-          query: buildGemQuery(x.name, { category: "gem.activegem", levelMin: 21, qualityMin: 23, corrupted: true }),
-        }));
-      void setWatches(watches, marketStore.league.value?.Value ?? "", trade2Site());
+      // 完成品 (コラプト済み・レベル 21 以上・品質 23% 以上) を捌き速度の追跡に登録する
+      void setWatches(watchesFromRows(r.rows), marketStore.league.value?.Value ?? "", trade2Site());
     }
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
@@ -275,8 +267,9 @@ onUnmounted(() => {
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
         (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
         装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
-        全アセンダンシーで取ると、完成品を {{ TRACK_MIN_FINISHED }} 人以上が使っているジェムを売れ行きの追跡対象にします
-        (1 時間ごとに出品の滞留時間と総数を記録 → ジェムコラプトの賭けに表示)。
+        全アセンダンシーで取ると、完成品を {{ TRACK_MIN_FINISHED }} 人以上が使っているジェムを捌き速度の追跡対象にします
+        (出品 1 件ずつを 1 時間ごとに追って、売れるまでの時間を測る → ジェムコラプトの賭けに表示)。
+        この一覧はアプリ起動時に 1 日 1 回、自動で取り直します。
       </p>
     </header>
 
