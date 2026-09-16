@@ -58,6 +58,8 @@ export interface Watch {
   note: string;
   /** 手動で足した銘柄 (自動リストの入れ替えで消えない) */
   manual?: boolean;
+  /** 今の自動リストに入っている (1 時間ごとの巡回で取る)。manual と両方 true もあり得る */
+  auto?: boolean;
 }
 export interface FlowStore {
   sampled_at: number;

@@ -263,6 +263,8 @@ const flowWatch = computed(() => {
 const flowTracked = computed(() => !!flowWatch.value);
 /** 手動で足した銘柄か (自動リストの入れ替えで消えない) */
 const flowManual = computed(() => !!flowWatch.value?.manual);
+/** 1 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
+const flowAuto = computed(() => !!flowWatch.value?.auto);
 /** 直近の失敗を短い日本語に (詳細はホバー) */
 const flowErrorJa = computed(() => {
   const raw = flowStatus.value?.last_error ?? "";
@@ -829,7 +831,7 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowTracked ? (flowManual ? "手動 (再取得を押した分を記録)" : "自動 (1 時間ごと)") : "まだ記録がありません (再取得を押すと貯まります)" }} ·
+              {{ flowTracked ? (flowAuto ? (flowManual ? "自動 (1 時間ごと) + 手動分も同じ記録" : "自動 (1 時間ごと)") : "手動 (再取得を押した分を記録)") : "まだ記録がありません (再取得を押すと貯まります)" }} ·
               追跡 {{ flowStore?.watches.length ?? 0 }} ジェム。「再取得」を押した分もここに記録されます。
             </span>
             <br v-if="g.selected.value" />
