@@ -1,0 +1,3 @@
+# bat / cmd は CRLF でないと cmd が行を読み違える (2026-09-17)
+*.bat text eol=crlf
+*.cmd text eol=crlf
