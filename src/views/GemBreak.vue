@@ -41,6 +41,8 @@ interface Result {
   classes?: string[];
   percentage: number;
   characters: number;
+  requested?: number;
+  cancelled?: boolean;
   league: string;
   snapshot: string;
   fetched_at: number;
@@ -206,6 +208,13 @@ const fetchedAtText = computed(() => {
 const waiting = computed(() => busy.value && !!net.value && (net.value.global_penalty_waiting || net.value.active_retry_count > 0));
 /** 待機中に出す「ここまで取れた」表示 */
 const doneText = computed(() => (progress.value ? `${progress.value.done}/${progress.value.total} 人 取得済み` : ""));
+/** 取ろうとした人数より大幅に少ない = レート制限や中止で打ち切られた (数字があてにならない) */
+const shortfall = computed(() => {
+  const r = result.value;
+  if (!r || !r.requested) return null;
+  if (r.characters >= r.requested) return null;
+  return { got: r.characters, want: r.requested, cancelled: !!r.cancelled };
+});
 const progressText = computed(() => {
   const p = progress.value;
   if (!p) return "";
@@ -335,6 +344,11 @@ onUnmounted(() => {
       <p v-if="error" class="basis-full text-[12px] text-amber-300">{{ error }}</p>
     </div>
 
+    <!-- 母数が足りていない時の警告 (オーナー指摘 2026-09-16: 「上位 1 人ってなんだ」) -->
+    <p v-if="shortfall" class="mb-3 px-3 py-2 rounded border border-amber-600/60 bg-amber-900/15 text-[12px] text-amber-300">
+      {{ shortfall.want }} 人中 {{ shortfall.got }} 人しか取れていません（{{ shortfall.cancelled ? "中止しました" : "poe.ninja のレート制限で打ち切り" }}）。
+      この人数では順位も割合もあてになりません。時間を置いて取り直してください。
+    </p>
     <p v-if="!result" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
       まだ取得していません。アセンダンシーを選んで「取得」を押してください (まずは使用率トップの 1 つで十分です)。
     </p>

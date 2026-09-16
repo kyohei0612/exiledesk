@@ -57,6 +57,10 @@ pub struct GemBreakResult {
     pub percentage: f64,
     /// 実際に取れたキャラ数 (= 母数)
     pub characters: usize,
+    /// 取ろうとしたキャラ数 (これより少なければレート制限や中止で打ち切られている)
+    pub requested: usize,
+    /// 中止ボタンで打ち切ったか
+    pub cancelled: bool,
     pub league: String,
     pub snapshot: String,
     /// 取得時刻 (unix 秒)
@@ -314,6 +318,8 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
         classes: targets.iter().map(|a| a.class.clone()).collect(),
         percentage: targets.iter().map(|a| a.percentage).sum(),
         characters: done,
+        requested: top_n,
+        cancelled: CANCEL.load(Ordering::Relaxed),
         league: snap.league_url.clone(),
         snapshot: snap.snapshot_name.clone(),
         fetched_at: std::time::SystemTime::now()
