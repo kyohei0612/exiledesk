@@ -39,12 +39,11 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
 }
 
 /**
- * 捌き速度の追跡に使うクエリ。
+ * 捌き速度の追跡に使うクエリ (売値の検索と同じ条件)。
  *
- * 画面の売値検索は `securable` (直近接続中 + オフラインが短い出品) だが、追跡では使えない。
- * 出品者がオフラインになるだけで検索から消え、「売れた」と誤判定するため
+ * status は `any`。`securable` (直近接続中 + オフラインが短い出品) だと、出品者が
+ * オフラインになるだけで検索から消え「売れた」と誤判定する
  * (2026-09-16 実データで中央値 30 分という異常値が出た)。
- * 追跡は `any` にして、本当に取り下げ / 売却された時だけ消えるようにする。
  */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
   const q = buildGemQuery(gemEn, rowQueryOptions(key, meta)) as { query: { status: { option: string } } };

@@ -165,7 +165,7 @@ export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
   if (o.twiceCorrupted != null) misc.twice_corrupted = { option: o.twiceCorrupted ? "true" : "false" };
   return {
     query: {
-      status: { option: SecurityStatus.Securable },
+      status: { option: SecurityStatus.Any },
       type: { discriminator: null, option: gemEn },
       filters: { type_filters: { filters: typeFilters }, misc_filters: { filters: misc } },
     },
