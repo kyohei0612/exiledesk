@@ -223,7 +223,8 @@ export function useGemCorrupt() {
       key: watchKey(gemEn, key),
       label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
       total: r.total,
-      ids: r.listingIds ?? [],
+      // 生存確認は search が返した ID 全部で行う (最安 10 件だけだと押し出しを売れた扱いにする)
+      ids: r.allIds ?? r.listingIds ?? [],
       entries: r.listings.map((l) => ({
         id: l.id,
         amount: l.amount,

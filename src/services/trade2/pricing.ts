@@ -234,8 +234,15 @@ export interface PriceResult {
   /** 高貴建て最安 (換算不能な通貨のみだった場合 null) */
   minExalted: number | null;
   listings: PriceListing[];
-  /** 見えていた listing ID (捌き速度の消失率に使う。2026-09-16) */
+  /** fetch した最安 N 件の listing ID (値段が取れている分) */
   listingIds?: string[];
+  /**
+   * search が返した ID 一覧すべて (最大 100)。捌き速度の生存確認に使う。
+   *
+   * 最安 10 件だけで生死を判定すると、同値の出品が新しく入っただけで
+   * 窓から押し出された物を「売れた」と誤判定する (2026-09-17 実データで確認)。
+   */
+  allIds?: string[];
   /** trade2 サイトで同じ検索を開く URL */
   searchUrl: string;
 }
@@ -293,7 +300,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
-    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], searchUrl };
+    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl };
   }
   const site = trade2Site();
   const fetched = DEV_TRADE
@@ -322,6 +329,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     minExalted: finite.length ? Math.min(...finite) : null,
     listings: listings.sort((a, b) => a.amountExalted - b.amountExalted),
     listingIds: ids,
+    allIds: search.result ?? [],
     searchUrl,
   };
 }

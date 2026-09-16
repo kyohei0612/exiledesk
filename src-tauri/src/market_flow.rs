@@ -468,8 +468,10 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<F
         });
     }
     let state = store.states.entry(req.key).or_default();
-    // 手動分は「search の ID 一覧が全部取れている」前提で扱う (最大 100 件)
-    apply_sample(state, now, req.total, &req.ids, &req.entries, req.total < 100);
+    // ID 一覧が出品全部を含んでいる時だけ「消えた」を判定する。
+    // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
+    let list_complete = req.ids.len() as u64 >= req.total;
+    apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
     prune(state, now);
     store.sampled_at = now;
     save_store(&app, &store)?;
@@ -519,11 +521,16 @@ pub fn apply_sample(
 ) {
     let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
     let mut gone_now = 0u32;
+    // 生き返った出品が「消えた」として数えられていた日 (集計から引く)
+    let mut revived_days: Vec<i64> = Vec::new();
 
     for t in state.tracked.iter_mut() {
         if t.gone_at.is_some() {
             // 消えた扱いにした出品がまた現れたら生き返らせる (取り下げでも売却でもなかった)
             if present.contains(t.id.as_str()) {
+                if let Some(g) = t.gone_at {
+                    revived_days.push(day_of(g));
+                }
                 t.gone_at = None;
                 t.last_seen = now;
             }
@@ -563,6 +570,12 @@ pub fn apply_sample(
     if let Some(first) = entries.first() {
         state.cheapest_amount = first.amount;
         state.cheapest_currency = first.currency.clone();
+    }
+    // 誤って「消えた」と数えた分を日次集計から取り消す
+    for day in revived_days {
+        if let Some(d) = state.daily.iter_mut().find(|d| d.day == day) {
+            d.gone = d.gone.saturating_sub(1);
+        }
     }
     bump_daily(state, now, added_now, gone_now, 0, total);
 }
@@ -787,7 +800,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         let mut store_now = load_store(app);
         let state = store_now.states.entry(watch.key.clone()).or_default();
         // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
-        let list_complete = total < 100;
+        let list_complete = ids.len() as u64 >= total;
         apply_sample(state, now, total, &ids, &entries, list_complete);
 
         // --- 行方不明の確認 (3 時間おき、1 銘柄 10 件まで。検索回数を間引くため) ---
@@ -1088,6 +1101,22 @@ mod tests {
         assert!(st.tracked[0].gone_at.is_some());
         apply_sample(&mut st, t0 + 7200, 1, &["a".into()], &[lr("a", 40.0)], true);
         assert!(st.tracked[0].gone_at.is_none(), "再び見えたら生存に戻す");
+    }
+
+    /// 生き返った出品は日次の「消えた」からも引く
+    #[test]
+    fn revive_undoes_daily_gone() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".to_string()), listed_at: None };
+        apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
+        // b が一時的に見えなくなる
+        apply_sample(&mut st, now + 600, 1, &["a".into()], &[e("a")], true);
+        assert_eq!(st.daily[0].gone, 1);
+        // また現れた: 売れていない
+        apply_sample(&mut st, now + 1200, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
+        assert_eq!(st.daily[0].gone, 0, "日次の消えた件数も戻す");
+        assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
     }
 
     /// 手動で追っていた銘柄が自動リストにも載ったら、巡回に入れて記録は続きから使う
