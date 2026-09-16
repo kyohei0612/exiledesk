@@ -183,13 +183,13 @@ const jaType = (e: TradeEntry): string => (e.typeLine ? jaTypeName(e.typeLine) :
 
 // ---- 絞り込みと集計 (2026-09-16: 時間の引き算ではなく日付で仕分ける) ----
 const DAY_MS = 86_400_000;
+// オーナー指示 (2026-09-16): 当日は 7 日間の日付チップで選べるので不要
 const PERIODS = [
-  { id: "today", label: "当日", days: 1 },
   { id: "7d", label: "7 日間", days: 7 },
   { id: "all", label: "全部", days: 0 },
 ] as const;
 type PeriodId = (typeof PERIODS)[number]["id"];
-const period = ref<PeriodId>("today");
+const period = ref<PeriodId>("7d");
 const search = ref("");
 
 const pad2 = (n: number): string => String(n).padStart(2, "0");
@@ -290,7 +290,6 @@ const summary = computed(() => {
     return { total, count };
   };
   return {
-    today: sum(todayStart.value),
     week: sum(todayStart.value - 6 * DAY_MS),
     all: sum(0),
   };
@@ -316,8 +315,8 @@ interface Bar {
 const bars = computed<Bar[]>(() => {
   const out: Bar[] = [];
   // 当日 / 7 日間 (選んだ日) は時間別、全部だけ日別
-  if (period.value === "today" || period.value === "7d") {
-    const base = period.value === "today" ? todayStart.value : activeDay.value;
+  if (period.value === "7d") {
+    const base = activeDay.value;
     const byHour = new Array(24).fill(0).map(() => ({ v: 0, c: 0 }));
     for (const e of searched.value) {
       if (e.time < base || e.time >= base + DAY_MS) continue;
@@ -491,10 +490,9 @@ onUnmounted(() => {
     </div>
 
     <!-- 売上まとめ (当日 / 7 日間 / 全部) -->
-    <div v-if="game === 'poe2'" class="grid grid-cols-1 @2xl:grid-cols-3 gap-3 mb-4">
+    <div v-if="game === 'poe2'" class="grid grid-cols-1 @2xl:grid-cols-2 gap-3 mb-4">
       <button
         v-for="card in [
-          { id: 'today', label: '当日', note: dayLabel(todayStart), s: summary.today },
           { id: '7d', label: '7 日間', note: `${dayLabel(todayStart - 6 * DAY_MS)} 〜 ${dayLabel(todayStart)}`, s: summary.week },
           {
             id: 'all',
@@ -528,11 +526,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-2">
           <h2 class="font-display tracking-[0.08em] text-[13px] text-[var(--exile-color-accent-focus)]">
             {{
-              period === "today"
-                ? "今日の売上 (時間別)"
-                : period === "7d"
-                  ? `${dayLabel(activeDay)} の売上 (時間別)`
-                  : "リーグ開始からの売上 (1 日ずつ)"
+              period === "7d" ? `${dayLabel(activeDay)} の売上 (時間別)` : "リーグ開始からの売上 (1 日ずつ)"
             }}
           </h2>
           <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden">
