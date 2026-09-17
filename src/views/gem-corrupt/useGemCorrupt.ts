@@ -13,7 +13,7 @@ import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
-import { recordFlow } from "../../services/market-flow";
+import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
@@ -85,7 +85,11 @@ export function useGemCorrupt() {
     void nextTickLoadExchange();
     sale.value = { level21: null, quality23: null, finished: null };
     saleInfo.value = { level21: null, quality23: null, finished: null };
+    saleRecordedAt.value = { level21: null, quality23: null, finished: null };
     priceError.value = null;
+    // 取得が通らなくても計算できるように、まず記録の最安値を入れる
+    applyRecordedSale(g.en, true);
+    refreshFlow();
   }
 
   // ---- 相場 (poe2scout、アプリ共通の相場ストア。カレンシーランキングが取った物を流用) ----
@@ -203,6 +207,50 @@ export function useGemCorrupt() {
   const pricing = ref(false);
   const priceError = ref<string | null>(null);
 
+  /**
+   * 一括取得 (自動巡回) が最後に見た最安値を売値の初期値にする
+   * (オーナー指示 2026-09-17:「レート制限中でも一括で取った最終の値で計算してくれ。
+   * ジェムコラの検索・計算はどのページから遷移しても」)。
+   *
+   * レート制限中は trade2 を叩けないので、以前は売値が空のまま何も計算できなかった。
+   * 記録はこの PC のファイルなので読むのに通信は要らない。取得が通れば上書きされる。
+   */
+  const flow = ref<FlowStore | null>(null);
+  /** その売値が記録由来の時、その記録を取った時刻 (unix 秒)。取得し直すと null に戻る */
+  const saleRecordedAt = ref<Record<SaleKey, number | null>>({ level21: null, quality23: null, finished: null });
+  function refreshFlow(): void {
+    void loadFlow().then((f) => {
+      flow.value = f;
+      // 読み込みが間に合わずに空だった分をここで埋める
+      if (selected.value) applyRecordedSale(selected.value.en, false);
+    });
+  }
+  /** 記録の最安値を高貴建てに直す */
+  function recordedExalted(key: SaleKey, en: string): { exalted: number; at: number } | null {
+    const st = flow.value?.states?.[watchKey(en, key)];
+    const amount = st?.cheapest_amount;
+    if (st == null || amount == null || !(amount > 0)) return null;
+    const r = rates.value;
+    const cur = st.cheapest_currency ?? "exalted";
+    const exalted =
+      cur === "exalted" ? amount : cur === "divine" ? (r.divine > 0 ? amount * r.divine : null) : cur === "chaos" ? (r.chaos > 0 ? amount * r.chaos : null) : null;
+    return exalted == null ? null : { exalted: Math.round(exalted * 100) / 100, at: st.sampled_at };
+  }
+  /** 記録の値を売値に入れる (overwrite = false なら空いている欄だけ) */
+  function applyRecordedSale(en: string, overwrite: boolean): void {
+    const next = { ...sale.value };
+    const at = { ...saleRecordedAt.value };
+    for (const row of SALE_ROWS) {
+      if (!overwrite && next[row.key] != null) continue;
+      const rec = recordedExalted(row.key, en);
+      if (!rec) continue;
+      next[row.key] = rec.exalted;
+      at[row.key] = rec.at;
+    }
+    sale.value = next;
+    saleRecordedAt.value = at;
+  }
+
   function queryOptions(key: SaleKey): GemQueryOptions {
     // 5 ソケットは常に必須 (コラプト済みはソケットを足せないため)
     return rowQueryOptions(key, selected.value?.kind === "meta");
@@ -255,7 +303,10 @@ export function useGemCorrupt() {
         if (seq !== fetchSeq) return; // 別のジェムに切り替わった
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
-        if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
+        if (r.minExalted != null) {
+          sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
+          saleRecordedAt.value = { ...saleRecordedAt.value, [row.key]: null };
+        }
         // 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する。自動巡回と同じルール
         void recordRowSample(gem.en, row.key, r);
       }
@@ -303,6 +354,8 @@ export function useGemCorrupt() {
     uncutLabel,
     sale,
     saleInfo,
+    saleRecordedAt,
+    refreshFlow,
     pricing,
     priceError,
     tradeAuto,

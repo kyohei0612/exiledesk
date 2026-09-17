@@ -191,7 +191,7 @@ function loadBook(): LedgerBook {
 const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
-// ---- 売れ行き (2026-09-16: market_flow が 2 時間ごとに記録した物を読むだけ) ----
+// ---- 売れ行き (2026-09-16: market_flow が 8 時間ごとに記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
 /**
  * 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る。
@@ -287,10 +287,19 @@ function isWatched(key: SaleKey): boolean {
   const en = g.selected.value?.en ?? "";
   return !!flowStore.value?.watches?.some((w) => w.key === watchKey(en, key));
 }
-/** 2 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
+/** 8 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
 const flowAuto = computed(() => !!flowWatch.value?.auto);
+/** その売値が一括取得の記録から来たか (レート制限中はこれで計算する) */
+function recordedAt(key: SaleKey): number | null {
+  return g.saleRecordedAt.value[key];
+}
+const fmtRecordedAt = (sec: number): string =>
+  new Date(sec * 1000).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+
 /** 最安 1 件の内訳 (値段の種類・出品者・出品時刻)。おかしな値段の切り分け用 (2026-09-17) */
 function cheapestTitle(key: SaleKey): string {
+  const rec = recordedAt(key);
+  if (rec) return `一括取得の記録 (${fmtRecordedAt(rec)} 時点の最安)。レート制限中や取得前はこの値で計算します`;
   const info = g.saleInfo.value[key];
   const l = info?.listings?.[0];
   if (!l) return "";
@@ -812,6 +821,8 @@ const summary = computed(() => {
                 <td class="py-1.5 text-right">
                   <!-- 2026-09-17: 変な値段の時に中身が分かるように、最安 1 件の内訳をホバーで出す -->
                   <span class="tabular-nums text-[13px]" :title="cheapestTitle(row.key)" :class="g.sale.value[row.key] == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ g.sale.value[row.key] == null ? (g.pricing.value ? "取得中…" : "—") : money(g.sale.value[row.key]) }}</span>
+                  <!-- オーナー指示 2026-09-17: レート制限中でも一括取得の最終値で計算する。どこから来た値かは出す -->
+                  <div v-if="recordedAt(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">記録 {{ fmtRecordedAt(recordedAt(row.key)!) }}</div>
                 </td>
                 <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
@@ -885,13 +896,13 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowAuto ? "自動 (2 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
+              {{ flowAuto ? "自動 (8 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
               追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
                 · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。
-            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も 2 時間ごとの自動巡回とまったく同じルールで記録されます。検索から消えた出品は、その ID を直接照会して実在を確かめてから「売れた」と数えます (即時購入から外れただけの物を売れた扱いにしないため)。
+            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も 8 時間ごとの自動巡回とまったく同じルールで記録されます。検索から消えた出品は、その ID を直接照会して実在を確かめてから「売れた」と数えます (即時購入から外れただけの物を売れた扱いにしないため)。
             判定は最安 10 件の出品を 1 件ずつ ID で追い、「1 日以内に売れた割合」で出します (半分以上なら速い / 2 日で半分なら普通 / それ以下は遅い)。売れ残りをまだ 1 件も観測していない間は「(暫定)」が付きます。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>

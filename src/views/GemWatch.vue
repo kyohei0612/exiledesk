@@ -5,7 +5,7 @@
     - 取得先 (アセンダンシー) / 並べる基準 / 上位何ジェム / 人数の下限 / 上限
     - 手で足したジェムの一覧 (検索で追加、一覧から削除)
     - 今監視している銘柄の状態 (3 条件の判定と記録件数)
-  自動取得の動き (2 時間 1 巡・ID 直接照会で裏取り) は市場側 (market_flow.rs) のまま。
+  自動取得の動き (8 時間 1 巡) は市場側 (market_flow.rs) のまま。手動の一括取得はいつでも押せる。
 -->
 <script setup lang="ts">
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from "vue";
@@ -74,7 +74,6 @@ const ASCENDANCIES = [
 const readAt = ref<number>(0);
 const status = ref<FlowStatus | null>(null);
 function reload(): void {
-  now.value = Date.now();
   rows.value = cachedRows() ?? [];
   void loadFlow().then((f) => {
     flowStore.value = f;
@@ -84,38 +83,19 @@ function reload(): void {
 }
 
 /**
- * 一括取得の間隔 (オーナー指示 2026-09-17:「手動でできる関係上、一括取得は 8 時間に 1 回でいいかも」)。
- * 自動巡回は 2 時間で 1 周しているので、全銘柄をまとめて取り直すのはこの間隔で足りる。
+ * 監視している全銘柄を今すぐ 1 巡する (自動巡回と同じ処理を手で走らせるだけ)。
+ * オーナー指示 2026-09-17:「一括取得は手動は自由で、自動が 8 時間に 1 回ね」→ 手で押す分に制限は付けない。
  */
-const SWEEP_MIN_INTERVAL_MS = 8 * 60 * 60 * 1000;
-const SWEEP_AT_KEY = "exiledesk.gemwatch.lastSweep";
-const lastSweepAt = ref<number>(Number(localStorage.getItem(SWEEP_AT_KEY) ?? 0) || 0);
-/** 画面の「あと何時間」を動かすための今時刻 (reload のたびに更新される) */
-const now = ref(Date.now());
-const sweepWaitMs = computed(() => Math.max(0, lastSweepAt.value + SWEEP_MIN_INTERVAL_MS - now.value));
-const sweepWaitText = computed(() => {
-  const ms = sweepWaitMs.value;
-  if (ms <= 0) return "";
-  const min = Math.ceil(ms / 60_000);
-  return min >= 60 ? `あと ${Math.floor(min / 60)} 時間 ${min % 60} 分` : `あと ${min} 分`;
-});
-
-/** 監視している全銘柄を今すぐ 1 巡する (自動巡回と同じ処理を手で走らせるだけ) */
 const sweeping = ref(false);
 async function sweep(): Promise<void> {
-  if (sweeping.value || status.value?.sampling || sweepWaitMs.value > 0) return;
+  if (sweeping.value || status.value?.sampling) return;
   sweeping.value = true;
   message.value = { ok: true, text: "一括取得を始めました (終わるまで数分かかります)" };
   const poll = window.setInterval(reload, 3000);
   try {
     const ok = await sweepNow();
-    if (ok) {
-      // 取れた時だけ次の 8 時間を数え始める (失敗した時にまで待たされないように)
-      lastSweepAt.value = Date.now();
-      localStorage.setItem(SWEEP_AT_KEY, String(lastSweepAt.value));
-    }
     message.value = ok
-      ? { ok: true, text: "一括取得が終わりました (次に押せるのは 8 時間後です)" }
+      ? { ok: true, text: "一括取得が終わりました" }
       : { ok: false, text: "一括取得に失敗しました (レート制限か通信)" };
   } finally {
     clearInterval(poll);
@@ -390,7 +370,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
-          ここで選んだジェムを 2 時間ごとに巡回して、売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
+          ここで選んだジェムを 8 時間ごとに巡回して、売れるまでの時間を測ります (もっと細かく見たい時は「一括取得」を押す) (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
           上位は下の「使用率ランキング」で取得した結果から決まります。
         </p>
 
@@ -428,16 +408,12 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
           <button
             type="button"
-            :disabled="sweeping || !!status?.sampling || sweepWaitMs > 0"
+            :disabled="sweeping || !!status?.sampling"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="
-              sweepWaitMs > 0
-                ? `一括取得は 8 時間に 1 回です (${sweepWaitText})。自動巡回は 2 時間で 1 周しているので、その間も記録は増えます`
-                : '監視している全銘柄を今すぐ 1 巡します (2 時間ごとの巡回と同じ処理)。銘柄数 × 2 回ほど検索します。押すと次は 8 時間後まで押せません'
-            "
+            title="監視している全銘柄を今すぐ 1 巡します (8 時間ごとの自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はありません"
             @click="sweep"
           >
-            {{ sweeping || status?.sampling ? sweepText || "取得中…" : sweepWaitMs > 0 ? `⟳ 一括取得 (${sweepWaitText})` : "⟳ 一括取得 (今すぐ 1 巡)" }}
+            {{ sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
           </button>
           <button
             type="button"
@@ -459,8 +435,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり 2 時間に検索 1 回 + 値段 1 回なので、
-          {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / 2) + 24 }} 回のリクエストになります (trade2 の上限は毎時 100 回)。
+          監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり 8 時間に検索 1 回 + 値段 1 回なので、
+          {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / 8) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
           監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
           記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
         </p>
