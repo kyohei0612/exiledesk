@@ -1,5 +1,5 @@
 <!--
-  GemWatch.vue — 監視ジェム (2026-09-17 オーナー指示)
+  GemWatch.vue — 自動ジェム監視 (2026-09-17 オーナー指示)
   ---------------------------------------------------------------------------
   「何を捌き速度の追跡に入れるか」をここで決める。
     - 取得先 (アセンダンシー) / 並べる基準 / 上位何ジェム / 人数の下限 / 上限
@@ -65,7 +65,7 @@ const ASCENDANCIES = [
 
 /**
  * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
- * (オーナー指示 2026-09-17:「監視ジェムはアプリ内更新だからレート無い。タブ開くたびに読み直して。
+ * (オーナー指示 2026-09-17:「自動ジェム監視はアプリ内更新だからレート無い。タブ開くたびに読み直して。
  * 手動で取った情報が反映されないとズレる」)。
  */
 const readAt = ref<number>(0);
@@ -154,39 +154,35 @@ const matches = computed(() => {
   return hit.slice(0, 12);
 });
 
-/**
- * 設定変更の反映は少し待ってからまとめて行う (オーナー指示 2026-09-17:
- * 「チェックの切り替えにレート制限置いていいよ」)。
- * チェックを何度も切り替えても、最後の状態で 1 回だけ登録し直す。
- */
-const SYNC_MIN_GAP_MS = 3000;
-let syncTimer: ReturnType<typeof setTimeout> | null = null;
-let lastSyncAt = 0;
-const pending = ref(false);
 
+/**
+ * 設定を書き換えるだけ。監視の切り替えは「監視を開始」ボタンで明示的に行う
+ * (オーナー指示 2026-09-17:「アセンダンシー変えるとすぐ自動取得が止まって新しいのが始まる。
+ * 一覧を取得して表示してから、開始ボタンで始めたい」)。
+ */
 function apply(patch: Parameters<typeof updateWatchSettings>[0]): void {
   updateWatchSettings(patch);
-  pending.value = true;
-  if (syncTimer) clearTimeout(syncTimer);
-  const wait = Math.max(400, SYNC_MIN_GAP_MS - (Date.now() - lastSyncAt));
-  syncTimer = setTimeout(() => {
-    syncTimer = null;
-    void sync();
-  }, wait);
 }
+
+/** 設定から決まる監視リストと、今まさに巡回している銘柄の差 */
+const diff = computed(() => {
+  const want = new Set(gems.value.map((g) => g.name));
+  const now = new Set((flowStore.value?.watches ?? []).filter((w) => w.auto).map((w) => w.key.split("::")[0]));
+  const add = [...want].filter((n) => !now.has(n));
+  const drop = [...now].filter((n) => !want.has(n));
+  return { add, drop, changed: add.length > 0 || drop.length > 0 };
+});
 
 /** 設定を追跡に反映する (poe.ninja は叩かず、保存済みの取得結果から作り直す) */
 async function sync(): Promise<void> {
   if (busy.value) return;
   busy.value = true;
-  pending.value = false;
-  lastSyncAt = Date.now();
   try {
     const ok = await rebuildWatches();
     flowStore.value = await loadFlow();
     message.value = ok
       ? { ok: true, text: `監視リストを更新しました (${gems.value.length} ジェム / ${gems.value.length * 3} 銘柄)` }
-      : { ok: false, text: "クラフト選定ジェムの取得結果がまだありません。先にそちらで取得してください (手動で足したジェムは反映済み)" };
+      : { ok: false, text: "使用率ランキングをまだ取得していません。下の「取得」を押してください (手動で足したジェムは反映済み)" };
   } finally {
     busy.value = false;
   }
@@ -268,10 +264,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
   <section class="p-6 @container">
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">監視ジェム</h2>
+        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
           ここで選んだジェムを 2 時間ごとに巡回して、売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
-          上位は「クラフト選定ジェム」で取得した結果から決まります。
+          上位は下の「使用率ランキング」で取得した結果から決まります。
         </p>
 
         <!-- 設定 -->
@@ -325,11 +321,13 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
           <button
             type="button"
-            :disabled="busy"
-            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40"
+            :disabled="busy || !diff.changed"
+            class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
+            :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
             @click="sync"
           >
-            {{ busy ? "反映中…" : pending ? "反映待ち…" : "今すぐ反映" }}
+            {{ busy ? "反映中…" : diff.changed ? `監視を開始 (+${diff.add.length} / -${diff.drop.length})` : "監視リストは最新です" }}
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">

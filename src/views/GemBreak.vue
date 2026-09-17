@@ -1,5 +1,5 @@
 <!--
-  GemBreak.vue — 使用率ランキング (2026-09-16、2026-09-17 に監視ジェムの中へ統合)
+  GemBreak.vue — 使用率ランキング (2026-09-16、2026-09-17 に自動ジェム監視の中へ統合)
   オーナー指示: 「21 とか 23% とか完成品を使ってる人数をランキングで見たい」「一旦ジェムリングのみで試してもええ」
   「クラフト選定ジェムって名前で、そこでクラフトするジェムを選ぶ感じで」
   → poe.ninja のアセンダンシー 1 つ分の上位キャラだけ取って、そのジェムを
@@ -16,12 +16,8 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { setWatches } from "../services/market-flow";
-import { watchesFromRows } from "../state/gem-watch-auto";
-import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../state/watch-settings";
+import { addManualGem, isManualGem, removeManualGem } from "../state/watch-settings";
 import { rebuildWatches } from "../state/gem-watch-auto";
-import { marketStore } from "../state/market-store";
-import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -152,11 +148,9 @@ async function fetchNow(): Promise<void> {
       req: { class: selectedClass.value ?? null, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
-    // 監視ジェムの「取得先」と同じアセンダンシーで取った時だけ、監視リストを作り直す。
-    // (別のアセンダンシーを眺めただけで監視対象が入れ替わらないように。2026-09-17)
-    if ((selectedClass.value ?? "") === watchSettings.value.klass) {
-      void setWatches(watchesFromRows(r.rows), marketStore.league.value?.Value ?? "", trade2Site());
-    }
+    // 取得しただけでは監視は切り替えない (オーナー指示 2026-09-17:
+    // 「アセンダンシー変えたら一覧取得後に表示して、自動取得開始ボタンがあれば便利」)。
+    // 上の自動ジェム監視に「新しい一覧で監視を開始」ボタンが出るので、そこで明示的に切り替える。
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
       localStorage.setItem(CLASS_KEY, selectedClass.value ?? "");
@@ -184,7 +178,7 @@ type Key = (typeof SECTIONS)[number]["key"];
 
 /** 売れ行きを追う下限 (完成品を使っている人数) */
 const TRACK_MIN_FINISHED = 5;
-/** 一覧から監視ジェムに入れる / 外す (すぐ追跡に反映する) */
+/** 一覧から自動ジェム監視に入れる / 外す (すぐ追跡に反映する) */
 function toggleWatchGem(name: string): void {
   if (isManualGem(name)) removeManualGem(name);
   else if (!addManualGem(name)) return;
@@ -270,7 +264,7 @@ onUnmounted(() => {
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">使用率ランキング (poe.ninja)</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
         上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
-        <span class="text-[var(--exile-color-text-primary)]">上の「監視ジェム」の上位はここの結果から決まります。</span>
+        <span class="text-[var(--exile-color-text-primary)]">上の「自動ジェム監視」の上位はここの結果から決まります。</span>
         行を押すと、そのジェムが実際に何レベル / 何 % で使われているかの内訳が出ます。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
@@ -416,14 +410,14 @@ onUnmounted(() => {
                 >
                   このジェムで計算 ↗
                 </button>
-                <!-- 2026-09-17 オーナー指示: 一覧から直接、監視ジェムに入れられるように -->
+                <!-- 2026-09-17 オーナー指示: 一覧から直接、自動ジェム監視に入れられるように -->
                 <button
                   type="button"
                   class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border transition-colors"
                   :class="isManualGem(r.name)
                     ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
                     : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
-                  :title="isManualGem(r.name) ? '監視ジェムから外す' : 'このジェムを監視ジェムに入れる (2 時間ごとに捌き速度を測る)'"
+                  :title="isManualGem(r.name) ? '自動ジェム監視から外す' : 'このジェムを自動ジェム監視に入れる (2 時間ごとに捌き速度を測る)'"
                   @click.stop="toggleWatchGem(r.name)"
                 >
                   {{ isManualGem(r.name) ? "監視中 ✓" : "監視へ +" }}

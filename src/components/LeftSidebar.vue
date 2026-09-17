@@ -34,8 +34,8 @@ const items: NavItem[] = [
       { id: "overquality", icon: "🜛", label: "アドニアの賭け", group: "economy" },
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
       // 2026-09-16: クラフトするジェムを選ぶ画面 (ジェムコラプトの直下に置く)
-      // 2026-09-17: 監視ジェム (使用率ランキングの取得もここに統合。旧「クラフト選定ジェム」)
-      { id: "gem-watch", icon: "👁", label: "監視ジェム", group: "economy" },
+      // 2026-09-17: 自動ジェム監視 (使用率ランキングの取得もここに統合。旧「クラフト選定ジェム」)
+      { id: "gem-watch", icon: "👁", label: "自動ジェム監視", group: "economy" },
       // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。poe2db の重みでシミュレーション
       { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
     ],
