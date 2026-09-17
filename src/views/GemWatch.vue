@@ -220,6 +220,31 @@ const orphans = computed(() => {
   return [...names.entries()].map(([name, tracked]) => ({ name, tracked })).sort((a, b) => b.tracked - a.tracked);
 });
 
+/**
+ * 一覧の並び (オーナー指示 2026-09-17):
+ *   1. 3 条件 (レベル 21 / 品質 23% / 完成品) が**全部「速い」**の物を最優先
+ *   2. その中では 3 条件の平均売値が高い順
+ *   3. 以降は「速い」の数が多い順 → 平均売値が高い順
+ * 記録を読み直すたびに勝手に並び替わる (flowStore が変わると再計算される)。
+ */
+const sortedGems = computed(() => {
+  const scored = gems.value.map((gem) => {
+    const cs = cells(gem.name);
+    const fast = cs.filter((c) => c.tone === "fast").length;
+    const prices = cs.map((c) => c.avgExalted).filter((v): v is number => v != null);
+    const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
+    return { gem, fast, allFast: fast === 3, avg };
+  });
+  return scored
+    .sort((a, b) => {
+      if (a.allFast !== b.allFast) return a.allFast ? -1 : 1;
+      if (a.fast !== b.fast) return b.fast - a.fast;
+      if ((a.avg ?? -1) !== (b.avg ?? -1)) return (b.avg ?? -1) - (a.avg ?? -1);
+      return a.gem.name.localeCompare(b.gem.name);
+    })
+    .map((x) => ({ ...x.gem, fast: x.fast, avg: x.avg }));
+});
+
 // ---- 監視中の状態 ----
 function cells(en: string) {
   return SALE_KEYS.map((k) => {
@@ -228,6 +253,8 @@ function cells(en: string) {
     const avg = averageExalted(f.soldPrices);
     return {
       key: k,
+      /** 並べ替えに使う平均売値 (高貴建て) */
+      avgExalted: avg,
       label: SALE_KEY_LABEL[k],
       verdict: f.label || (f.gone + f.alive > 0 ? `判定待ち ${f.gone + f.alive} 件` : watched ? "巡回待ち" : "未登録"),
       // 判定の横に出す実測 (売れるまでの時間と平均売値)
@@ -375,7 +402,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
     <!-- 監視中の一覧 -->
     <BaseCard>
       <div class="p-4 pl-5">
-        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-2">監視中 ({{ gems.length }} ジェム)</h3>
+        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">監視中 ({{ gems.length }} ジェム)</h3>
+        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
+          3 条件とも「速い」ジェムを上に、その中では 3 条件の平均売値が高い順。記録を読み直すたびに並び替わります。
+        </p>
         <p v-if="gems.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
           まだ 1 つもありません。上の検索で足すか、「クラフト選定ジェム」で取得すると上位が自動で入ります。
         </p>
@@ -384,7 +414,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">ジェム</th>
-                <th class="text-left font-normal pb-1 pl-3">入り方</th>
+                <th class="text-left font-normal pb-1 pl-3">入り方 / 速い数 / 平均売値</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
                 <th class="text-left font-normal pb-1 pl-3">レベル 21</th>
                 <th class="text-left font-normal pb-1 pl-3">品質 23%</th>
@@ -393,12 +423,16 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="gem in gems" :key="gem.name" class="border-t border-[var(--exile-color-border-subtle)]">
+              <tr v-for="gem in sortedGems" :key="gem.name" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5">
                   {{ jaSkill(gem.name) }}
                   <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ gem.name }}</span>
                 </td>
-                <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-secondary)]">{{ gem.manual ? "手動" : "上位" }}</td>
+                <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
+                  {{ gem.manual ? "手動" : "上位" }}
+                  <span v-if="gem.fast > 0" class="ml-1 text-[10px]" :class="gem.fast === 3 ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'">速い {{ gem.fast }}/3</span>
+                  <span v-if="gem.avg != null" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">平均 {{ displayCurrency.money(gem.avg) }}</span>
+                </td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
                 <td v-for="c in cells(gem.name)" :key="c.key" class="py-1.5 pl-3">
                   <button type="button" class="text-[11px] hover:underline text-left" :class="toneClass(c.tone)" :title="`${c.label}: ${c.title} (押すと記録の一覧)`" @click="openSold(gem.name, c.key)">
