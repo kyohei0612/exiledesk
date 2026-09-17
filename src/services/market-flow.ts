@@ -123,6 +123,9 @@ export interface FlowStatus {
   sampled_watches: number;
   /** 検索から消えていて、まだ直接照会で決着していない出品の数 */
   pending_missing: number;
+  /** 直接照会した延べ件数 / そのうち実在した件数 */
+  confirm_checked: number;
+  confirm_alive: number;
 }
 
 /** 自動追跡が今どうなっているか */

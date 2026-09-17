@@ -177,9 +177,16 @@ pub struct WatchState {
     pub total: u64,
     /// 最後にサンプルした時刻
     pub sampled_at: i64,
-    /// 最後に「行方不明の ID」をまとめて確認した時刻 (3 時間おき)
+    /// 最後に「行方不明の ID」をまとめて確認した時刻
     #[serde(default)]
     pub confirmed_at: i64,
+    /// 直接照会した ID の延べ件数 (2026-09-17 の切り分け用)
+    #[serde(default)]
+    pub confirm_checked: u32,
+    /// そのうち「まだ実在した」件数。
+    /// ここが常に照会数と同じなら、消えた出品まで fetch が返している疑いがある
+    #[serde(default)]
+    pub confirm_alive: u32,
     /// 最後に値段 (fetch) を取った時刻。2 巡に 1 回だけ取り直す
     #[serde(default)]
     pub fetched_at: i64,
@@ -801,6 +808,8 @@ pub fn apply_sample(
 /// `alive` に入っていない追跡中 ID は消えたことにする。
 pub fn apply_confirm(state: &mut WatchState, now: i64, checked: &[String], alive: &HashSet<String>) {
     let mut gone_now = 0u32;
+    state.confirm_checked = state.confirm_checked.saturating_add(checked.len() as u32);
+    state.confirm_alive = state.confirm_alive.saturating_add(checked.iter().filter(|id| alive.contains(*id)).count() as u32);
     for t in state.tracked.iter_mut() {
         if t.gone_at.is_some() || !checked.contains(&t.id) {
             continue;
@@ -1161,6 +1170,9 @@ pub struct FlowStatus {
     /// 検索から消えていて、まだ直接照会で決着していない出品の数。
     /// ここが増え続けるなら確認が追いついていない (2026-09-17 に実際に滞留した)
     pub pending_missing: usize,
+    /// 直接照会した延べ件数と、そのうち実在した件数 (売れを検出できているかの確認用)
+    pub confirm_checked: u32,
+    pub confirm_alive: u32,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1187,6 +1199,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         } else {
             0
         },
+        confirm_checked: store.states.values().map(|st| st.confirm_checked).sum(),
+        confirm_alive: store.states.values().map(|st| st.confirm_alive).sum(),
         pending_missing: store
             .states
             .values()
