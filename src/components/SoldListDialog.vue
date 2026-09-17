@@ -11,7 +11,7 @@
  */
 import { computed, ref } from "vue";
 import { flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
-import { averageInDisplay, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
+import { averageExalted, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
 
 const props = defineProps<{
   open: boolean;
@@ -81,7 +81,7 @@ const summaries = computed(() =>
       alive: f.alive,
       medianMin: f.medianMin,
       olderThanMedian: f.olderThanMedian,
-      avgSold: averageInDisplay(f.soldPrices),
+      avgSold: averageExalted(f.soldPrices),
       droppedUnsold: f.droppedUnsold,
       truncated: f.truncated,
       total: st?.total ?? null,

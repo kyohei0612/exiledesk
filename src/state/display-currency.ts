@@ -72,12 +72,15 @@ export const displayCurrency = {
 };
 
 /**
- * 出品時の通貨がバラバラな値段を、表示通貨に換算して平均する (2026-09-17)。
- * オーナー指示:「早い / 普通 / 遅い の横に平均売り単価を、表示通貨の単位で」。
+ * 出品時の通貨がバラバラな値段を、**高貴建て**に揃えて平均する (2026-09-17)。
  *
- * @returns 表示通貨での平均。1 件も無い / 相場が取れていない時は null
+ * オーナー指示:「早い / 普通 / 遅い の横に平均売り単価を、表示通貨の単位で」。
+ * 戻り値は高貴建てなので、画面では displayCurrency.money() に通して表示すること
+ * (ここで表示通貨に換算してしまうと money() で二重に割られる。2026-09-17 に踏んだ)。
+ *
+ * @returns 高貴建ての平均。1 件も無い / 相場が取れていない時は null
  */
-export function averageInDisplay(prices: { amount: number; currency: string }[]): number | null {
+export function averageExalted(prices: { amount: number; currency: string }[]): number | null {
   if (prices.length === 0) return null;
   const r = marketStore.rates.value;
   const toExalted = (p: { amount: number; currency: string }): number | null => {
@@ -88,5 +91,5 @@ export function averageInDisplay(prices: { amount: number; currency: string }[])
   };
   const ex = prices.map(toExalted).filter((v): v is number => v != null);
   if (ex.length === 0) return null;
-  return displayCurrency.toDisplay(ex.reduce((a, b) => a + b, 0) / ex.length);
+  return ex.reduce((a, b) => a + b, 0) / ex.length;
 }

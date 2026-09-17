@@ -15,7 +15,7 @@ import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
-import { averageInDisplay, displayCurrency, type DisplayCurrency } from "../state/display-currency";
+import { averageExalted, displayCurrency, type DisplayCurrency } from "../state/display-currency";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
@@ -823,7 +823,7 @@ const summary = computed(() => {
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)<template v-if="averageInDisplay(f.soldPrices) != null"> · 平均 {{ money(averageInDisplay(f.soldPrices)) }}</template><span v-if="f.olderThanMedian > 0" class="text-[var(--exile-color-text-tertiary)]"> · 未売却 {{ f.olderThanMedian }} 件はそれより長い</span>
+                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)<template v-if="averageExalted(f.soldPrices) != null"> · 平均 {{ money(averageExalted(f.soldPrices)) }}</template><span v-if="f.olderThanMedian > 0" class="text-[var(--exile-color-text-tertiary)]"> · 未売却 {{ f.olderThanMedian }} 件はそれより長い</span>
                       </span>
                       <span class="text-[10px] underline text-[var(--exile-color-text-tertiary)] whitespace-nowrap">売れたリスト</span>
                     </div>
