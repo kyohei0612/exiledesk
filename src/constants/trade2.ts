@@ -27,8 +27,16 @@ export const SecurityStatus = {
   /** リーグ内の online (実質 online 互換) */
   OnlineLeague: "onlineleague",
   /**
-   * POE2 拡張: 安全に購入できそうな listing (recent + 短時間オフライン)。
-   * trade2 サイト UI の "ANY" デフォルトはこちらを送る。
+   * **インスタントバイアウト** (即時購入できる出品だけ)。
+   *
+   * トレードサイトのドロップダウンとの対応 (2026-09-17 に実機で確定):
+   *   available    … インスタントバイアウトおよび対面トレード (サイトの既定)
+   *   securable    … インスタントバイアウト  ← これ
+   *   onlineleague … 対面トレード (リーグにオンライン)
+   *   online       … 対面トレード (オンライン)
+   *   any          … 指定なし (オフラインの出品も全部)
+   *
+   * ジェムの売値と捌き速度の追跡は両方これを使う (母集団を 1 つに固定するため)。
    */
   Securable: "securable",
   /** 全て (オフライン含む) */
@@ -36,21 +44,6 @@ export const SecurityStatus = {
 } as const;
 export type SecurityStatusValue =
   (typeof SecurityStatus)[keyof typeof SecurityStatus];
-
-/**
- * `trade_filters.filters.sale_type.option` の値。
- *
- * 省略しても API の既定は即時購入と同じ結果になるが、**サイト側の検索画面には反映されない**。
- * 「トレード 2 へ」で開いた時に即時購入が選ばれていない、というオーナー報告 (2026-09-17) の原因。
- * 画面と同じ物を見せるため、明示的に送る。
- */
-export const SaleType = {
-  /** 即時購入 (値段が付いている出品だけ) */
-  Priced: "priced",
-  /** 値段なし (交渉) */
-  Unpriced: "unpriced",
-} as const;
-export type SaleTypeValue = (typeof SaleType)[keyof typeof SaleType];
 
 /** `type_filters.filters.rarity.option` の代表値。 */
 export const Rarity = {

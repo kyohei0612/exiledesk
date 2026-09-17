@@ -1,37 +1,68 @@
-//! 捌き速度の追跡 (2026-09-16)
+//! 捌き速度の追跡 — 仕様 (2026-09-17 確定版)
 //!
 //! 「この商品は何日で売れるのか」を、公式 trade2 の出品を定期的に覗いて測る。
-//! ジェム専用ではなく、trade2 のクエリを 1 本渡せば何でも追える (レア装備でも通貨でも)。
+//! ジェム専用ではなく、trade2 のクエリを 1 本渡せば何でも追える。
 //!
-//! ## 測り方: 出品 1 件ずつを ID で追う
-//! 最安 10 件の listing ID を「追跡対象」に入れ、毎時の search が返す ID 一覧に
-//! 載っているかで生死を確認する。消えた時刻 − 初めて見た時刻 = その出品の寿命。
-//! 窓 (最安 10 件) から押し出されただけの物を「売れた」と誤判定しないため、ID で追う。
+//! ## 1. 見る母集団: インスタントバイアウトだけ (status: securable)
+//! 売値の表示も追跡も同じ条件で見る。オーナー指示:「インスタントバイアウトだけ見たらいい。
+//! その中でルール決めるからエニーで見る必要が全くない」。
+//! 母集団を 1 つに固定したので、画面の「再取得」で取った結果も自動巡回とまったく同じ
+//! ルールで判定できる (条件が違う物を混ぜると、消えた/現れたが嘘になる)。
 //!
-//! オーナー指摘の例:「50 神が滞留しているところに 40 神が 20 件参戦」→ 最安 10 件は
-//! 丸ごと入れ替わるが、50 神の ID は追跡し続けるので売れたことにはならない。
+//! トレードサイトのドロップダウンとの対応:
+//!   available / securable / onlineleague / online / any
+//!   = インスタントバイアウトおよび対面トレード / インスタントバイアウト /
+//!     対面トレード (リーグにオンライン) / 対面トレード (オンライン) / 指定なし
 //!
-//! ## 前の実装 (滞留時間) を捨てた理由
-//! examples/gem_flow_sim.rs で 6 パターンの市場を作って測ったところ、
-//! 「今並んでいる出品が何分前に出された物か」は **速い市場ほど遅く出た**。
-//! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。
+//! ## 2. 数え方: 出品 1 件ずつを ID で追う
+//! 最安 10 件の listing ID を追跡対象に入れ、search が返す ID 一覧に載っているかを見る。
+//! 「出品された時刻 (listing.indexed) → 消えた時刻」がその出品の寿命。
+//! 窓 (最安 10 件) から押し出されただけの物を売れた扱いにしないため、ID で追う。
+//! 例:「50 神が滞留しているところに 40 神が 20 件参戦」→ 最安 10 件は入れ替わるが、
+//! 50 神の ID は追跡し続けるので売れたことにはならない。
 //!
-//! 手動だけの銘柄 (manual=true / auto=false) は巡回に入れず、画面の「再取得」を押した時だけ記録する。
-//! ただし自動リストにも載った銘柄は巡回に戻し、手動で貯めた記録の続きとして扱う。
-//! (自動リストの入れ替えでは消えないので、記録は貯まり続ける)
+//! ## 3. 消えた判定は必ず裏取りする (ここが一番大事)
+//! 検索から消えただけでは「売れた」と数えない。securable は出品者の状況で出入りするため。
+//! 消えた候補は **その ID を直接 fetch** して実在を確かめる。fetch は status の絞り込みを
+//! 受けないので、「即時購入から外れただけ」と「本当に無くなった」を確実に見分けられる。
+//!   - 直接照会で返ってくる → 生きている (last_seen を更新)
+//!   - 返ってこない         → そこで初めて売れた (gone_at)
+//!   - 消えた扱いの ID がまた現れたら復活させ、日次の件数からも引く
 //!
-//! ## 取得量 (オーナー指示: 検索の回数を間引く / ばらす)
-//! 1 銘柄あたり毎時 search 1 + fetch 1。生存確認は search が返す ID 一覧 (最大 100 件)
-//! で賄い、そこに載らない物だけ 3 時間おきにまとめて fetch する (1 回 10 件まで)。
-//! trade2 の制限: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間。
+//! 2026-09-16〜17 にこれを怠って踏んだ事故: 深夜に 10 件同時消失を「売れた」と数え、
+//! 9 日売れ残っていた出品まで売れたことになっていた。
 //!
-//! 1 時間ぶんをまとめて取ると連続アクセスで制限に当たるので、**10 分おきに 1/6 ずつ**取る
-//! (オーナー指示 2026-09-16)。銘柄を 6 組に分けて順番に回すので、1 時間で全銘柄が 1 巡する。
-//! 30 銘柄なら 1 回 5 銘柄 = 10 リクエスト。その 10 回も 10 分かけて均すので、
-//! 実際の送信は 1 分に 1 回程度になる (バーストを作らない)。
+//! ## 4. 取得量 (trade2: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間 = 毎時 100 回)
+//! 銘柄を 12 組に分け、10 分おきに 1 組ずつ取る (2 時間で全銘柄が 1 巡)。
+//!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
+//!   - fetch   … 値段は 2 巡に 1 回でよい (FETCH_INTERVAL_SECS)
+//!   - 確認    … 消えた候補の直接照会。1 組 CONFIRM_MAX_PER_SLICE 銘柄 × 10 件まで
+//! 25 ジェム (75 銘柄) で毎時およそ 80 回。残りは手動の取得や取引所比較の取り分。
+//! 1 組の中でも送信間隔を均してバーストを作らない。
 //!
-//! ## キャッシュの上限 (オーナー指示: 1 ID あたり 1 週間)
+//! ## 5. 保存済みクエリは毎回今のルールに直す
+//! 追跡は登録時のクエリを使い回すので、条件を変えた時に上書きしないと古い条件のまま回る
+//! (2026-09-17 に securable のまま / any のまま を両方踏んだ)。
+//! 読み込み時と送信直前に normalize_track_status で status を直し、
+//! 直した銘柄・条件が変わった銘柄・リーグが変わった時は記録を作り直す。
+//!
+//! ## 6. キャッシュの上限
 //! 追跡は 1 ID につき 7 日で打ち切り、それ以降は日次集計に畳んで捨てる。
+//! 自動リストから外れた銘柄の記録も、7 日触られなければ掃除する。
+//!
+//! ## 7. 判定 (フロント側 src/services/market-flow.ts)
+//! 「1 日以内に売れた割合」で 速い / 普通 / 遅い を出す。割合の分母は結果が分かっている
+//! 出品だけ (売れた + その時間を超えて売れ残った) で、齢が足りない物は数えない。
+//! 売れ残りを 1 件も観測していないうちは必ず 100% になるので「(暫定)」を付ける。
+//!
+//! ## 経緯: 滞留時間をやめた理由
+//! 最初は「今並んでいる出品が何分前に出された物か」で測っていたが、
+//! examples/gem_flow_sim.rs で 6 パターンの市場を作って検算したところ **速い市場ほど遅く出た**。
+//! 良い出品は覗く前に売れていて、目に入るのは売れ残りだけだから。そこで ID 追跡に切り替えた。
+//!
+//! ## 検証 (公式 API は叩かない)
+//!   cargo run --example flow_audit   … 事故 8 パターンをダミー応答で再現
+//!   pnpm check:flow                  … 判定ロジックと検索条件をダミーで検算
 
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -174,7 +205,7 @@ const TRACK_STATUS: &str = "securable";
 ///
 /// 追跡の検索は登録時のクエリを使い回すので、条件を変えた時はここで上書きしないと
 /// 古い条件のまま回り続ける (2026-09-17 に securable のまま / any のまま を両方踏んだ)。
-fn force_status_any(query: &mut serde_json::Value) -> bool {
+fn normalize_track_status(query: &mut serde_json::Value) -> bool {
     let Some(q) = query.get_mut("query") else { return false };
     if q.get("status").and_then(|s| s.get("option")).and_then(|o| o.as_str()) == Some(TRACK_STATUS) {
         return false;
@@ -233,29 +264,6 @@ const DAILY_MAX_DAYS: usize = 30;
 /// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
 const CONFIRM_INTERVAL_SECS: i64 = 7000;
 
-/// 一度の確認で「追跡中の何割が消えたら怪しいと見なすか」。
-///
-/// 検索条件がズレている / 応答がおかしい等で、検索に載らないだけの出品を
-/// まとめて「売れた」にしてしまう事故が実際に起きた (2026-09-17 全点検)。
-/// これを超えたら検索結果を信用せず、ID を直接 fetch して確かめる。
-const MASS_GONE_RATIO: f64 = 0.5;
-/// 一斉消失とみなす最低件数 (少数なら普通に売れただけ)
-const MASS_GONE_MIN: usize = 3;
-
-/// 追跡中のうち、今回の ID 一覧に載っていない件数
-fn missing_count(state: &WatchState, ids: &[String]) -> (usize, usize) {
-    let present: std::collections::HashSet<&str> = ids.iter().map(String::as_str).collect();
-    let alive: Vec<&Tracked> = state.tracked.iter().filter(|t| t.gone_at.is_none()).collect();
-    let missing = alive.iter().filter(|t| !present.contains(t.id.as_str())).count();
-    (missing, alive.len())
-}
-
-/// 一斉に消えた (ように見える) か。true なら検索結果だけで消えた判定をしない
-pub fn looks_like_mass_gone(state: &WatchState, ids: &[String]) -> bool {
-    let (missing, alive) = missing_count(state, ids);
-    missing >= MASS_GONE_MIN && alive > 0 && (missing as f64) > (alive as f64) * MASS_GONE_RATIO
-}
-
 /// 1 組 (10 分) あたりの確認 fetch の上限。
 ///
 /// 2026-09-17 に検索を securable (即時購入のみ) へ統一したので、
@@ -264,9 +272,7 @@ pub fn looks_like_mass_gone(state: &WatchState, ids: &[String]) -> bool {
 const CONFIRM_MAX_PER_SLICE: usize = 4;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
-/// 全銘柄が 1 巡する周期 (2026-09-17: 追跡できるジェムを増やすため 1 時間 → 2 時間)
-const SAMPLE_INTERVAL: Duration = Duration::from_secs(2 * 3600);
-/// 1 巡を何回に分けて取るか (1 回あたりの連続アクセスを減らす)
+/// 1 巡を何回に分けて取るか。SLICES × SLICE_INTERVAL_SECS = 1 巡の周期 (2 時間)
 const SLICES: usize = 12;
 /// 分割 1 回の間隔 (SAMPLE_INTERVAL / SLICES)
 const SLICE_INTERVAL_SECS: i64 = 600;
@@ -281,8 +287,6 @@ const SLICE_INTERVAL_SECS: i64 = 600;
 ///   2 時間で search 75 回 + fetch 約 38 回 = 113 回 → 毎時 約 57 回
 ///   確認 fetch 毎時 12 回を足して 約 69 回。残りは手動の取得や取引所比較に使える
 const FETCH_INTERVAL_SECS: i64 = 4 * 3600;
-/// 起動直後の 1 回目を飛ばす条件
-const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
 const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
 /// 取りこぼした時に再挑戦するまでの最短間隔
@@ -352,35 +356,6 @@ fn store_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// 生の応答を 1 件だけ保存する (調査用、2026-09-17)。
-///
-/// 「どのフィールドが即時購入かどうかを表すのか」を特定するために使う。
-/// これが分かれば、検索 1 回で「表示は即時購入 / 追跡は全部」を両立できる。
-/// 保存先: app_data_dir/trade2-debug.json (ラベルごとに最新 1 件だけ)
-pub fn debug_dump(app: &tauri::AppHandle, label: &str, first_item: &serde_json::Value) {
-    let Ok(mut dir) = app.path().app_data_dir() else { return };
-    let _ = fs::create_dir_all(&dir);
-    dir.push("trade2-debug.json");
-    let mut all: serde_json::Map<String, serde_json::Value> = fs::read_to_string(&dir)
-        .ok()
-        .and_then(|t| serde_json::from_str(&t).ok())
-        .unwrap_or_default();
-    all.insert(
-        label.to_string(),
-        serde_json::json!({ "at": now_secs(), "sample": first_item }),
-    );
-    if let Ok(text) = serde_json::to_string_pretty(&all) {
-        let _ = fs::write(&dir, text);
-    }
-}
-
-/// 画面 (売値 = securable) の応答を調査用に保存する
-#[tauri::command]
-pub fn trade2_debug_dump(app: tauri::AppHandle, label: String, body: serde_json::Value) {
-    let first = body.get("result").and_then(|r| r.as_array()).and_then(|a| a.first()).cloned();
-    debug_dump(&app, &label, &first.unwrap_or(serde_json::Value::Null));
-}
-
 fn now_secs() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -407,7 +382,7 @@ fn load_store(app: &tauri::AppHandle) -> FlowStore {
     // 古いクエリ (securable) はここで直す。直った物は追跡データを捨てる (別の検索なので比べられない)
     let mut fixed: Vec<String> = Vec::new();
     for w in store.watches.iter_mut() {
-        if force_status_any(&mut w.query) {
+        if normalize_track_status(&mut w.query) {
             fixed.push(w.key.clone());
         }
     }
@@ -895,7 +870,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         let _ = resumed;
         // --- search: 総数と ID 一覧 ---
         let mut query = watch.query.clone();
-        force_status_any(&mut query);
+        normalize_track_status(&mut query);
         let search = crate::trade2::SearchRequest {
             league: store.league.clone(),
             site: site.clone(),
@@ -961,10 +936,6 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => {
-                    // 調査用: 自動 (any) の生の応答を 1 件だけ残す
-                    if let Some(first) = v.get("result").and_then(|x| x.as_array()).and_then(|a| a.first()) {
-                        debug_dump(app, "auto-any", first);
-                    }
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
                             let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
@@ -1325,23 +1296,6 @@ mod tests {
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
     }
 
-    /// 半分以上が一度に消えたように見えたら、検索結果だけで判定しない
-    #[test]
-    fn mass_disappearance_is_not_trusted() {
-        let now = 1_700_000_000i64;
-        let mut st = WatchState::default();
-        let e = |id: &str| ListingRef { id: id.into(), amount: Some(1.0), currency: Some("divine".into()), listed_at: None , account: None };
-        let ids: Vec<String> = (0..10).map(|i| format!("id{i}")).collect();
-        let entries: Vec<ListingRef> = ids.iter().map(|i| e(i)).collect();
-        apply_sample(&mut st, now, 10, &ids, &entries, true);
-        // 10 件中 1 件しか残っていない応答
-        let few = vec!["id0".to_string()];
-        assert!(looks_like_mass_gone(&st, &few), "9/10 が消えたら怪しい");
-        // 2 件だけ消えたのは普通に売れただけ
-        let most: Vec<String> = ids.iter().take(8).cloned().collect();
-        assert!(!looks_like_mass_gone(&st, &most), "2/10 なら普通");
-    }
-
     /// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
     #[test]
     fn empty_result_does_not_wipe_tracked() {
@@ -1359,12 +1313,12 @@ mod tests {
 
     /// 古いクエリ (securable) は any に直す
     #[test]
-    fn force_status_any_rewrites_old_queries() {
+    fn normalize_track_status_rewrites_old_queries() {
         let mut q = serde_json::json!({"query":{"status":{"option":"any"},"type":{"option":"Comet"}},"sort":{"price":"asc"}});
-        assert!(force_status_any(&mut q), "直したら true");
+        assert!(normalize_track_status(&mut q), "直したら true");
         assert_eq!(q["query"]["status"]["option"], TRACK_STATUS);
         assert_eq!(q["query"]["type"]["option"], "Comet", "他の条件は触らない");
-        assert!(!force_status_any(&mut q), "もう securable なら false");
+        assert!(!normalize_track_status(&mut q), "もう securable なら false");
     }
 
     /// 手動で追っていた銘柄が自動リストにも載ったら、巡回に入れて記録は続きから使う

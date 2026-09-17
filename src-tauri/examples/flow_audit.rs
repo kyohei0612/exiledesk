@@ -9,7 +9,7 @@
 //!   cargo run --example flow_audit
 use std::collections::HashSet;
 
-use exiledesk_lib::market_flow::{apply_confirm, apply_sample, looks_like_mass_gone, prune, ListingRef, WatchState};
+use exiledesk_lib::market_flow::{apply_confirm, apply_sample, prune, ListingRef, WatchState};
 
 const HOUR: i64 = 3600;
 
@@ -83,16 +83,14 @@ fn main() {
     }
 
     // ------------------------------------------------------------------
-    // 2. 出品者が寝落ち (securable 事故の再現): 安い在庫が一斉に消える
-    //    → 検索結果だけで「売れた」にしない。直接 fetch で生きていれば無傷
+    // 2. 即時購入から一斉に外れた (寝落ちやまとめ引き上げ): 安い在庫がまとめて消える
+    //    → 検索結果だけで「売れた」にしない。直接照会で生きていれば無傷
     // ------------------------------------------------------------------
     {
         let mut st = WatchState::default();
         sample(&mut st, t0, &shop(&["a", "b", "c", "d", "e", "f", "g", "h"], t0, 9.0));
         // 8 件中 7 件が同時に消えたように見える応答
         let r = shop(&["h"], t0, 30.0);
-        let mass = looks_like_mass_gone(&st, &r.ids);
-        let _ = mass;
         sample(&mut st, t0 + HOUR, &r);
         let after_search = gone_count(&st);
         // 確認 fetch: 実際には全部生きていた (オフラインなだけ)
@@ -101,8 +99,8 @@ fn main() {
         apply_confirm(&mut st, t0 + HOUR, &checked, &alive);
         ok &= check(
             "2. 一斉消失は売れた扱いにしない (寝落ち / 条件ズレ)",
-            mass && after_search == 0 && gone_count(&st) == 0,
-            format!("怪しい判定 {mass} / 検索後の消えた {after_search} / 確認後の消えた {}", gone_count(&st)),
+            after_search == 0 && gone_count(&st) == 0,
+            format!("検索後の消えた {after_search} / 確認後の消えた {}", gone_count(&st)),
         );
     }
 

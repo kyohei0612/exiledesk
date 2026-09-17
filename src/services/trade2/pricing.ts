@@ -229,25 +229,12 @@ export interface PriceListing {
   indexed: string | null;
   /** 値段の種類 ("~b/o" 即決 / "~price" 固定価格 など) */
   priceType?: string | null;
-  /**
-   * 今すぐ買えるか (出品者がオンライン扱い)。
-   *
-   * 売値の検索は status: any (オフラインの出品も含む) なので、サイトで開くと
-   * 「交渉可能な値段」の出品が最安に出てくる (オーナー報告 2026-09-17)。
-   * 応答に出品者のオンライン情報があれば、そこから「今すぐ買える最安」を出す。
-   * 情報が無い応答なら null (判断できない)。
-   */
-  purchasable?: boolean | null;
 }
 
 export interface PriceResult {
   total: number;
   /** 高貴建て最安 (換算不能な通貨のみだった場合 null) */
   minExalted: number | null;
-  /** 今すぐ買える出品だけの最安。応答にオンライン情報が無ければ null */
-  minExaltedBuyable?: number | null;
-  /** 応答から「今すぐ買えるか」を判断できたか */
-  onlineKnown?: boolean;
   listings: PriceListing[];
   /** fetch した最安 N 件の listing ID (値段が取れている分) */
   listingIds?: string[];
@@ -268,11 +255,7 @@ interface FetchResponse {
   result?: Array<{
     id?: string;
     item?: { name?: string; typeLine?: string; ilvl?: number };
-    listing?: {
-      account?: { name?: string; online?: unknown };
-      price?: { amount?: number; currency?: string; type?: string };
-      indexed?: string;
-    };
+    listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string; type?: string }; indexed?: string };
   }>;
 }
 
@@ -331,15 +314,6 @@ export async function checkListingsAlive(ids: string[], queryId: string): Promis
   return (fetched.result ?? []).map((r) => r.id ?? "").filter(Boolean);
 }
 
-/**
- * 即時購入として扱う値段の種類。
- *
- * 公式の listing.price.type は "~b/o" (即決) か "~price" (固定価格) が普通で、
- * 交渉前提の出品はここに別の値が入る (または値段そのものが無い)。
- * 知らない種類が来たら弾く側に倒す (値段として出すのは確実に買える物だけにする)。
- */
-const BUYOUT_PRICE_TYPES = new Set(["~b/o", "~price", "b/o", "price", "buyout", "fixed"]);
-
 /** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
 async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates): Promise<PriceResult> {
   const searchUrl = search.id
@@ -347,32 +321,18 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     : "";
   const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
   if (ids.length === 0 || !search.id) {
-    return { total: search.total ?? 0, minExalted: null, minExaltedBuyable: null, onlineKnown: false, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl, queryId: search.id };
+    return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl, queryId: search.id };
   }
   const site = trade2Site();
   const fetched = DEV_TRADE
     ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`)))
     : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } })));
-  // 調査用 (2026-09-17): 即時購入かどうかを表すフィールドを特定するため、生の応答を 1 件だけ残す
-  if (!DEV_TRADE) {
-    try {
-      await invoke("trade2_debug_dump", { label: "manual-securable", body: fetched });
-    } catch {
-      /* 調査用なので失敗しても無視 */
-    }
-  }
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;
     const currency = r.listing?.price?.currency;
     const priceType = r.listing?.price?.type ?? null;
-    const on = r.listing?.account?.online;
-    const purchasable = on == null ? null : !!on;
     if (typeof amount !== "number" || !currency) continue;
-    // 即時購入 (固定価格 / 即決) 以外は値段として使わない。
-    // オーナー報告 (2026-09-17):「アイスショットの値段、即時購入じゃないやつを表示してる」。
-    // 検索側でも sale_type: priced を送るようにしたが、応答にも念のため蓋をする
-    if (priceType && !BUYOUT_PRICE_TYPES.has(priceType)) continue;
     const ex = toExalted(amount, currency, rates);
     listings.push({
       id: r.id ?? "",
@@ -384,20 +344,14 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
       ilvl: r.item?.ilvl ?? null,
       indexed: r.listing?.indexed ?? null,
       priceType,
-      purchasable,
     });
   }
   const finite = listings.filter((l) => Number.isFinite(l.amountExalted)).map((l) => l.amountExalted);
-  // 今すぐ買える出品だけの最安 (判断できる応答の時だけ)
-  const buyable = listings.filter((l) => l.purchasable === true && Number.isFinite(l.amountExalted)).map((l) => l.amountExalted);
-  const onlineKnown = listings.some((l) => l.purchasable != null);
   return {
     total: search.total ?? 0,
     minExalted: finite.length ? Math.min(...finite) : null,
     listings: listings.sort((a, b) => a.amountExalted - b.amountExalted),
     listingIds: ids,
-    minExaltedBuyable: buyable.length ? Math.min(...buyable) : null,
-    onlineKnown,
     allIds: search.result ?? [],
     searchUrl,
     queryId: search.id,
