@@ -15,7 +15,7 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { flowSentence, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { averageExalted, displayCurrency } from "../state/display-currency";
 import {
   addManualGem,
@@ -103,6 +103,33 @@ async function sweep(): Promise<void> {
     reload();
   }
 }
+
+/**
+ * 自動取得の間隔 (オーナー指示 2026-09-17:「自動取得の時間数を UI で変更できるようにしたい」)。
+ * 記録側 (market_flow.rs) が持っている値をそのまま出し入れする。1 巡を 12 組に分けて回すので、
+ * 12 時間なら 1 時間おきに 1 組ずつ取る計算になる。
+ */
+const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
+const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? 8 * 3600) / 3600) * 10) / 10);
+async function applyCycle(hours: number): Promise<void> {
+  const applied = await setFlowCycle(Math.round(hours * 3600));
+  status.value = await loadFlowStatus();
+  message.value =
+    applied == null
+      ? { ok: false, text: "間隔を変更できませんでした" }
+      : { ok: true, text: `自動取得を ${Math.round(applied / 3600)} 時間ごとにしました (前回の一括取得から数えます)` };
+}
+
+/** 前回の一括取得 / 次の自動取得 (手動で押した分も同じ時計を使う) */
+const fmtClock = (sec: number): string =>
+  sec > 0 ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+const sweepClock = computed(() => {
+  const st = status.value;
+  if (!st) return "";
+  const last = st.swept_at > 0 ? `前回の一括取得 ${fmtClock(st.swept_at)}` : "まだ 1 巡していません";
+  const next = st.swept_at > 0 ? ` · 次の自動取得 ${fmtClock(st.next_at)}` : "";
+  return `${last}${next}`;
+});
 
 /** 取得中の進捗表示 */
 const sweepText = computed(() => {
@@ -370,7 +397,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
-          ここで選んだジェムを 8 時間ごとに巡回して、売れるまでの時間を測ります (もっと細かく見たい時は「一括取得」を押す) (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
+          ここで選んだジェムを {{ cycleHours }} 時間ごとに 1 巡して、売れるまでの時間を測ります (手動の一括取得もこの時計を進めます) (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
           上位は下の「使用率ランキング」で取得した結果から決まります。
         </p>
 
@@ -401,6 +428,17 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             監視の上限
             <input type="number" min="1" max="25" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
           </label>
+          <label class="inline-flex flex-col gap-1">
+            自動取得の間隔
+            <select
+              class="num text-left w-36"
+              :value="cycleHours"
+              title="前回の一括取得 (手動でも自動でも) から何時間後に、自動でもう 1 巡するか。短いほど売れた時刻が細かく分かりますが、リクエストは増えます (trade2 の上限は毎時 100 回)"
+              @change="applyCycle(Number(($event.target as HTMLSelectElement).value))"
+            >
+              <option v-for="h in CYCLE_OPTIONS" :key="h" :value="h">{{ h }} 時間ごとに 1 巡</option>
+            </select>
+          </label>
           <label class="inline-flex items-center gap-2 pb-1">
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
             上位を自動で入れる
@@ -410,7 +448,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             type="button"
             :disabled="sweeping || !!status?.sampling"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            title="監視している全銘柄を今すぐ 1 巡します (8 時間ごとの自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はありません"
+            :title="`監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
             @click="sweep"
           >
             {{ sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
@@ -435,11 +473,13 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり 8 時間に検索 1 回 + 値段 1 回なので、
-          {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / 8) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
+          監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり {{ cycleHours }} 時間に検索 1 回 + 値段 1 回なので、
+          {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / cycleHours) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
+          間隔を短くすると「消えた」のに気付くのが早くなる分、売れるまでの時間も細かく出ます。
           監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
           記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
         </p>
+        <p v-if="sweepClock" class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">{{ sweepClock }}</p>
         <p v-if="message" class="text-[12px] mt-2" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
       </div>
     </BaseCard>

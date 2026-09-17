@@ -191,7 +191,7 @@ function loadBook(): LedgerBook {
 const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
-// ---- 売れ行き (2026-09-16: market_flow が 8 時間ごとに記録した物を読むだけ) ----
+// ---- 売れ行き (2026-09-16: market_flow が巡回で記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
 /**
  * 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る。
@@ -287,7 +287,7 @@ function isWatched(key: SaleKey): boolean {
   const en = g.selected.value?.en ?? "";
   return !!flowStore.value?.watches?.some((w) => w.key === watchKey(en, key));
 }
-/** 8 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
+/** 自動巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
 const flowAuto = computed(() => !!flowWatch.value?.auto);
 /** その売値が一括取得の記録から来たか (レート制限中はこれで計算する) */
 function recordedAt(key: SaleKey): number | null {
@@ -880,7 +880,7 @@ const summary = computed(() => {
             <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
 
             <span class="tabular-nums text-[var(--exile-color-text-tertiary)]">
-              {{ flowStatus.rounds }} 周目 · {{ flowStatus.slices }} 分割の {{ flowStatus.slice + 1 }} 組目 · 最終 {{ fmtClock(flowStatus.last_at) }} ·
+              {{ flowStatus.rounds }} 周目 · {{ Math.round(flowStatus.cycle_secs / 3600) }} 時間ごと · 前回の一括取得 {{ fmtClock(flowStatus.swept_at) }} · 最終 {{ fmtClock(flowStatus.last_at) }} ·
               自動 {{ flowStatus.auto_watches }} / 手動 {{ flowStatus.manual_watches }} 銘柄
             </span>
             <span v-if="rateText" class="tabular-nums text-[var(--exile-color-text-tertiary)]">使った回数 {{ rateText }}</span>
@@ -896,13 +896,13 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowAuto ? "自動 (8 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
+              {{ flowAuto ? `自動 (${Math.round((flowStatus?.cycle_secs ?? 8 * 3600) / 3600)} 時間ごと)` : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
               追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
                 · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。
-            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も 8 時間ごとの自動巡回とまったく同じルールで記録されます。検索から消えた出品は、その ID を直接照会して実在を確かめてから「売れた」と数えます (即時購入から外れただけの物を売れた扱いにしないため)。
+            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も自動巡回とまったく同じルールで記録されます。検索から消えた出品は、その ID を直接照会して実在を確かめてから「売れた」と数えます (即時購入から外れただけの物を売れた扱いにしないため)。
             判定は最安 10 件の出品を 1 件ずつ ID で追い、「1 日以内に売れた割合」で出します (半分以上なら速い / 2 日で半分なら普通 / それ以下は遅い)。売れ残りをまだ 1 件も観測していない間は「(暫定)」が付きます。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>

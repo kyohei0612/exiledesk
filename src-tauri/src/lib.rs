@@ -371,6 +371,7 @@ pub fn run() {
             market_flow::market_flow_set_watches,
             market_flow::market_flow_toggle_watch,
             market_flow::market_flow_status,
+            market_flow::market_flow_set_cycle,
             market_flow::market_flow_sample_now,
             market_flow::market_flow_record,
             market_flow::market_flow_verify,

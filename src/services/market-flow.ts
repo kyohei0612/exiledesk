@@ -124,6 +124,20 @@ export interface FlowStatus {
   slice_done: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
+  /** 今の 1 巡の周期 (秒)。画面の設定で変えられる */
+  cycle_secs: number;
+  /** 最後に全銘柄を 1 巡した時刻 (手動の一括取得を含む)。次の自動取得はここから周期ぶん後 */
+  swept_at: number;
+}
+
+/** 1 巡の周期を変える (1〜24 時間)。戻り値は実際に入った秒数 */
+export async function setFlowCycle(secs: number): Promise<number | null> {
+  if (!isTauriRuntime()) return null;
+  try {
+    return await invoke<number>("market_flow_set_cycle", { secs });
+  } catch {
+    return null;
+  }
 }
 
 /** 自動追跡が今どうなっているか */

@@ -50,7 +50,8 @@
 //! 確認の枠を食う。BURIED_MAX 回続けて「一覧外だが生存」なら追跡をやめて集計に畳む。
 //!
 //! ## 4. 取得量 (trade2: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間 = 毎時 100 回)
-//! 銘柄を 12 組に分け、40 分おきに 1 組ずつ取る (8 時間で全銘柄が 1 巡)。
+//! 前回の一括取得 (手動 / 自動どちらでも swept_at に記録) から周期ぶん経ったら、
+//! 全銘柄をまとめて 1 巡する。周期は画面から 1〜24 時間で変えられる (FlowStore.cycle_secs、既定 8 時間)。
 //! オーナー指示 (2026-09-17):「自動が 8 時間に 1 回ね」。手動の一括取得はいつでも押せる。
 //! 組は**ジェム単位**で割り当てるので、1 ジェムの 3 条件は必ず同じ組で一緒に取れる。
 //! まだ 1 度も取れていない銘柄がある間 (記録の作り直し直後) は 5 分おきに詰めて、
@@ -275,6 +276,15 @@ pub struct FlowStore {
     /// 途中でアプリを閉じても、次の起動で続きから再開するために残す (オーナー指示 2026-09-16)
     #[serde(default)]
     pub slice_done: Vec<String>,
+    /// 最後に全銘柄を 1 巡した時刻 (手動の一括取得でも自動でも記録する)。
+    /// 次の自動取得はここから cycle_secs 後 (オーナー指示 2026-09-17:
+    /// 「前回一括取得してから手動も含めて ● 時間周期で取得する」)
+    #[serde(default)]
+    pub swept_at: i64,
+    /// 1 巡にかける時間 (秒)。0 なら既定 (CYCLE_DEFAULT_SECS)。
+    /// オーナー指示 2026-09-17:「自動取得の時間数を UI で変更できるようにしたい」
+    #[serde(default)]
+    pub cycle_secs: i64,
     /// 追跡リストを更新した時刻
     pub list_refreshed_at: i64,
     pub league: String,
@@ -318,35 +328,30 @@ const RELIST_SLACK_SECS: i64 = 300;
 const DAILY_MAX_DAYS: usize = 30;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
-/// 1 巡を何回に分けて取るか。SLICES × SLICE_INTERVAL_SECS = 1 巡の周期 (8 時間)
+/// 1 巡を何回に分けて取るか (組の数)。1 組の間隔 = 1 巡の周期 ÷ SLICES
 const SLICES: usize = 12;
-/// 分割 1 回の間隔 (1 巡 = SLICES × これ)
-const SLICE_INTERVAL_SECS: i64 = 2400;
+/// 1 巡の周期の既定 (8 時間)。画面から変えられる (FlowStore.cycle_secs)
+pub const CYCLE_DEFAULT_SECS: i64 = 8 * 3600;
+/// 変えられる範囲 (1 時間〜24 時間)
+pub const CYCLE_MIN_SECS: i64 = 3600;
+pub const CYCLE_MAX_SECS: i64 = 24 * 3600;
 
-/// まだ 1 度も取れていない銘柄がある間の間隔 (1 周目を早く埋める)。
-///
-/// 記録を作り直した直後は全銘柄が空で、通常の間隔だと全部埋まるまで 8 時間かかり、
-/// 画面上は「追跡が切れている」ように見える (オーナー報告 2026-09-17)。
-/// 1 周目だけ詰めて約 1 時間で埋める。その 1 時間は毎時 108 回ペースになるが、
-/// 以降は毎時 65 回に戻るので 6 時間 600 回の枠には収まる (6 時間で約 433 回)。
-const FIRST_PASS_SLICE_SECS: i64 = 300;
 
-/// 1 周目が終わっていない (まだ 1 度も取れていない自動銘柄がある) か
-fn in_first_pass(store: &FlowStore) -> bool {
-    store
-        .watches
-        .iter()
-        .filter(|w| w.auto)
-        .any(|w| store.states.get(&w.key).map(|st| st.sampled_at == 0).unwrap_or(true))
+/// 1 巡の周期 (保存値、未設定や範囲外なら既定)
+fn cycle_secs(store: &FlowStore) -> i64 {
+    if store.cycle_secs <= 0 {
+        CYCLE_DEFAULT_SECS
+    } else {
+        store.cycle_secs.clamp(CYCLE_MIN_SECS, CYCLE_MAX_SECS)
+    }
 }
 
-/// 次の組までの間隔 (1 周目だけ詰める)
-fn slice_interval(store: &FlowStore) -> i64 {
-    if in_first_pass(store) {
-        FIRST_PASS_SLICE_SECS
-    } else {
-        SLICE_INTERVAL_SECS
+/// 次に自動で 1 巡する予定時刻 (前回の一括取得から周期ぶん後)。まだ 1 度も取っていなければ今すぐ
+fn next_sweep_at(store: &FlowStore) -> i64 {
+    if store.swept_at <= 0 {
+        return now_secs();
     }
+    store.swept_at + cycle_secs(store)
 }
 
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
@@ -987,14 +992,10 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
     let total_watches = auto.len();
     let resumed = done_keys.len();
-    // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
-    // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
-    let pace = if slice.is_some() && total_watches > 0 {
-        let secs = ((slice_interval(&store) as f64 * 0.9) / (total_watches as f64 * 2.0)).clamp(8.0, 120.0);
-        Duration::from_secs(secs as u64)
-    } else {
-        REQUEST_INTERVAL
-    };
+    // 1 巡はまとめて走らせる (オーナー指示 2026-09-17: 前回の一括取得から周期ぶん後に 1 巡)。
+    // 1 銘柄 = search 1 + fetch 1 を REQUEST_INTERVAL 間隔で。上限に当たった時は
+    // レート側で待つ (MAX_WAIT_IN_SWEEP_SECS まで) ので、いっぺんにバーストはしない。
+    let pace = REQUEST_INTERVAL;
     let mut index = 0usize;
     let mut incomplete = false;
     set_error(None);
@@ -1160,6 +1161,8 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     } else {
         store_end.rounds += 1;
         store_end.sampled_at = now_secs();
+        // 手動の一括取得もここを通る。次の自動取得はこの時刻から数える
+        store_end.swept_at = now_secs();
     }
     store_end.retry_at = if incomplete {
         let until = retry_until();
@@ -1204,6 +1207,10 @@ pub struct FlowStatus {
     pub slice_done: usize,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
+    /// 今の 1 巡の周期 (秒)
+    pub cycle_secs: i64,
+    /// 最後に全銘柄を 1 巡した時刻 (手動の一括取得を含む)
+    pub swept_at: i64,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1223,13 +1230,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         total,
         rounds: store.rounds,
         last_at: store.sampled_at,
-        next_at: if store.retry_at > 0 {
-            store.retry_at
-        } else if store.sliced_at > 0 {
-            store.sliced_at + slice_interval(&store)
-        } else {
-            0
-        },
+        next_at: if store.retry_at > 0 { store.retry_at } else { next_sweep_at(&store) },
+        swept_at: store.swept_at,
         sampled_watches: store
             .watches
             .iter()
@@ -1244,35 +1246,34 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         slice: store.slice_cursor % SLICES,
         slices: SLICES,
         slice_done: store.slice_done.len(),
+        cycle_secs: cycle_secs(&store),
     })
 }
 
-/// 起動時に呼ぶ: 1 時間ごとのサンプリングを回す
+/// 1 巡の周期を変える (画面の設定。1〜24 時間)
+#[tauri::command]
+pub fn market_flow_set_cycle(app: tauri::AppHandle, secs: i64) -> Result<i64, String> {
+    let mut store = load_store(&app);
+    store.cycle_secs = secs.clamp(CYCLE_MIN_SECS, CYCLE_MAX_SECS);
+    let applied = cycle_secs(&store);
+    save_store(&app, &store)?;
+    Ok(applied)
+}
+
+/// 起動時に呼ぶ: 前回の一括取得から周期ぶん経ったら全銘柄を 1 巡する
+///
+/// オーナー指示 (2026-09-17):「前回一括取得してから手動も含めて ● 時間周期で取得する。
+/// 一括取得は手動でも自動でも前回の更新日時を記録するように」。
+/// 手で一括取得を押した分も swept_at を更新するので、そこから数え直す。
 pub fn spawn_scheduler(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
-        // 起動したらすぐ 1 組取る。
-        // 前回の組を取り切る前に閉じていた場合 (slice_done が残っている) は続きから再開し、
-        // そうでなければ前回から 5 分以上空いている時だけ動かす。
-        // 閉じている間に予定時刻を過ぎていても、取り戻さずにそこから 10 分間隔にずらす (オーナー指示)。
         tokio::time::sleep(Duration::from_secs(15)).await;
-        {
-            let store = load_store(&app);
-            let interrupted = !store.slice_done.is_empty();
-            if !store.watches.is_empty() && (interrupted || now_secs() - store.sliced_at >= 300) {
-                let sl = store.slice_cursor % SLICES;
-                if let Err(e) = sample_slice(&app, Some(sl)).await {
-                    eprintln!("[market_flow] 起動時のサンプリング失敗: {e}");
-                }
-            }
-        }
         loop {
             let store = load_store(&app);
             let now = now_secs();
-            // 10 分おきに 1 組。取りこぼした回は retry_at (レート制限の明ける頃) に再挑戦
-            let due = now - store.sliced_at >= slice_interval(&store) || (store.retry_at > 0 && now >= store.retry_at);
-            if due && !store.watches.is_empty() {
-                let sl = store.slice_cursor % SLICES;
-                if let Err(e) = sample_slice(&app, Some(sl)).await {
+            let due = now >= next_sweep_at(&store) || (store.retry_at > 0 && now >= store.retry_at);
+            if due && !store.watches.is_empty() && !store.league.is_empty() {
+                if let Err(e) = sample_slice(&app, None).await {
                     eprintln!("[market_flow] サンプリング失敗: {e}");
                 }
             }
