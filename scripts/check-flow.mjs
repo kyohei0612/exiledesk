@@ -109,6 +109,30 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
 }
 
 // ---------------------------------------------------------------------------
+// 3b. 表示している売却時間より長く並んでいる在庫の方が多ければ 1 段下げる
+//     (2026-09-17 レビュー: 観測窓が短いと中央値が短く出て「速い」に化ける)
+// ---------------------------------------------------------------------------
+{
+  const s = summarizeFlow(
+    state([
+      L({ listedHoursAgo: 3, goneHoursAgo: 1 }), // 2 時間で売れた
+      L({ listedHoursAgo: 4, goneHoursAgo: 2 }), // 2 時間
+      L({ listedHoursAgo: 5, goneHoursAgo: 2 }), // 3 時間
+      L({ listedHoursAgo: 8 }),
+      L({ listedHoursAgo: 9 }),
+      L({ listedHoursAgo: 10 }),
+      L({ listedHoursAgo: 11 }),
+    ]),
+    NOW,
+  );
+  check(
+    "3b. 売れた時間より長く並んでいる在庫が多ければ格下げ",
+    s.label === "普通" && s.olderThanMedian === 4,
+    `label=${s.label} 表示より長い=${s.olderThanMedian} 文=${flowSentence(s)}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // 4. 母数が足りなければ判定しない
 // ---------------------------------------------------------------------------
 {

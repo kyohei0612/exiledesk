@@ -232,8 +232,6 @@ export interface FlowSummary {
   /** "速い" / "普通" / "遅い" / "" ((暫定) 付きは売れ残りを 1 件も観測できていない) */
   label: string;
   tone: FlowTone;
-  /** 売れ残りを 1 件も観測できていない = 率が 100% にしかならない状態 (2026-09-17) */
-  provisional: boolean;
   /** まだ並んでいる出品のうち、表示している「売れるまでの時間」より長く並んでいる件数 */
   olderThanMedian: number;
   /** 7 日売れずに打ち切った件数 (日次集計から。中央値には入らない) */
@@ -275,7 +273,6 @@ const NORMAL_SECS = 48 * HOUR;
 const EMPTY_SUMMARY: FlowSummary = {
   label: "",
   tone: "unknown",
-  provisional: false,
   olderThanMedian: 0,
   droppedUnsold: 0,
   truncated: false,
@@ -366,12 +363,18 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   //   売れた出品が 3 件以上あれば、売れるまでの時間の中央値でそのまま言い切る
   //   ただし 2 日以上売れ残っている出品の方が多ければ「遅い」(実際に滞留しているので)
   goneLives.sort((a, b) => a - b);
-  const median = goneLives.length > 0 ? goneLives[Math.floor(goneLives.length / 2)] : null;
+  const median =
+    goneLives.length === 0
+      ? null
+      : goneLives.length % 2 === 1
+        ? goneLives[(goneLives.length - 1) / 2]
+        : (goneLives[goneLives.length / 2 - 1] + goneLives[goneLives.length / 2]) / 2;
 
   let tone: FlowTone = "unknown";
   let label = "";
-  if (stale >= MIN_KNOWN && stale > goneLives.length) {
-    // 2 日以上売れ残っている出品の方が多い = 実際に滞留している
+  if (stale >= MIN_KNOWN && stale >= goneLives.length) {
+    // 2 日以上売れ残っている出品が売れた数と同じかそれ以上 = 実際に滞留している
+    // (同数の時に「普通」と出てしまう穴があった。2026-09-17 レビュー指摘)
     tone = "slow";
     label = "遅い";
   } else if (goneLives.length >= MIN_KNOWN && median != null) {
@@ -387,8 +390,19 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       label = "遅い";
     }
   }
+  // 「N 時間で売れる」と言っているのに、それより長く並んだままの在庫が売れた数より多いなら
+  // その主張は現実に追いついていない。1 段下げる (2026-09-17 レビュー指摘の生存者バイアス対策)
+  const olderThanMedianEarly = median == null ? 0 : aliveAges.filter((a) => a > median).length;
+  if (label && olderThanMedianEarly > goneLives.length) {
+    if (tone === "fast") {
+      tone = "normal";
+      label = "普通";
+    } else if (tone === "normal") {
+      tone = "slow";
+      label = "遅い";
+    }
+  }
   const enough = label !== "";
-  const provisional = false;
 
   // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか
   aliveAges.sort((a, b) => b - a);
@@ -401,13 +415,12 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // 「3.8 時間で売れる」と出しているのに、それより長く並んでいる出品が何件あるか。
   // 観測できている期間が短いうちは中央値が短く出るので、その事実を数字で併記する
   // (2026-09-17 レビュー: 判定が出た銘柄の生存中 175 件のうち 117 件が中央値より古かった)
-  const olderThanMedian = median == null ? 0 : aliveAges.filter((a) => a > median).length;
+  const olderThanMedian = olderThanMedianEarly;
   const droppedUnsold = (state.daily ?? []).reduce((sum, d) => sum + (d.survived ?? 0), 0);
 
   return {
     label,
     tone,
-    provisional,
     olderThanMedian,
     droppedUnsold,
     truncated: state.list_complete === false,

@@ -297,6 +297,16 @@ const TRACK_MAX_PER_WATCH: usize = 60;
 /// 最安帯の捌け方を測るのが目的なので、沈んだ物は追うのをやめて集計に畳む
 /// (オーナー指摘 2026-09-17:「出品がめっちゃ増えると ID 検索がめっちゃ増えるけど平気？」)
 const BURIED_MAX: u32 = 3;
+
+/// 検索の ID 一覧が「出品全部」を含んでいるか。
+///
+/// ここが true の時だけ「一覧に無い = 売れた」と判定してよい。
+///   - ID が総数に届いていない (出品 100 件超で切れている) → 判定しない
+///   - 応答が空なのに追跡中がある (通信不良など) → 判定しない
+/// 自動巡回と手動取得で同じ式を使うため関数にしてある (2026-09-17 レビュー指摘)
+pub fn list_is_complete(ids: &[String], total: u64, tracked: &[Tracked]) -> bool {
+    ids.len() as u64 >= total && !(ids.is_empty() && !tracked.is_empty())
+}
 /// 「消えたのと同時に同じ出品者が並べ直した」とみなす余裕 (オーナー指示 2026-09-17)。
 ///
 /// 判定は「前回その出品を見た後に、同じ出品者が新しく並べた」で行う。
@@ -697,7 +707,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     // 自動巡回とまったく同じルールで判定する (画面の売値も巡回も条件が同じ securable のため)。
     // ID 一覧が出品全部を含んでいる時だけ「消えた = 売れた」と数える。
     // 応答が空の時は判定しない (通信不良で全滅させないため)
-    let list_complete = req.ids.len() as u64 >= req.total && !(req.ids.is_empty() && !state.tracked.is_empty());
+    let list_complete = list_is_complete(&req.ids, req.total, &state.tracked);
     apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
     // 一覧が切れている時 (出品 100 件超) は、載っていない追跡分を「値段で沈んだ」と数える
     if !list_complete && !req.ids.is_empty() {
@@ -896,8 +906,9 @@ pub fn prune(state: &mut WatchState, now: i64) {
             // 消えた記録は 7 日で捨てる (それまでは寿命の計算に使う)
             Some(g) => now - g < TRACK_MAX_SECS,
             // 生きたまま 7 日を超えた物は「7 日でも売れなかった」として集計に畳んで捨てる
+            // 起点は寿命と同じ「出品時刻」に揃える (初見起点だと実質 7 日以上追ってしまう)
             None => {
-                if now - t.first_seen >= TRACK_MAX_SECS {
+                if now - t.start() >= TRACK_MAX_SECS {
                     survived += 1;
                     false
                 } else {
@@ -909,11 +920,16 @@ pub fn prune(state: &mut WatchState, now: i64) {
     if survived > 0 {
         bump_daily(state, now, 0, 0, survived, state.total);
     }
-    // 上限を超えたら古い物から捨てる
+    // 上限を超えたら古い物から捨てる。捨てた生存分は集計に残す
+    // (黙って消すと「売れなかった物だけが静かに減る」形になる。2026-09-17 レビュー指摘)
     if state.tracked.len() > TRACK_MAX_PER_WATCH {
         state.tracked.sort_by_key(|t| t.first_seen);
         let cut = state.tracked.len() - TRACK_MAX_PER_WATCH;
-        state.tracked.drain(0..cut);
+        let dropped: Vec<Tracked> = state.tracked.drain(0..cut).collect();
+        let unsold = dropped.iter().filter(|t| t.gone_at.is_none()).count() as u32;
+        if unsold > 0 {
+            bump_daily(state, now, 0, 0, unsold, state.total);
+        }
     }
 }
 
@@ -1105,7 +1121,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         //
         // ID を直接 fetch する裏取りは使えない (消えた出品にもキャッシュを 200 で返す。
         // 2026-09-17 に実測)。応答が空の時や、100 件を超えて一覧が切れている時は判定しない。
-        let list_complete = ids.len() as u64 >= total && !(ids.is_empty() && !state.tracked.is_empty());
+        let list_complete = list_is_complete(&ids, total, &state.tracked);
         apply_sample(state, now, total, &ids, &entries, list_complete);
         state.fetched_at = now;
         state.list_complete = list_complete;
