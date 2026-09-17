@@ -353,6 +353,14 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
   const fetched = DEV_TRADE
     ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`)))
     : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } })));
+  // 調査用 (2026-09-17): 即時購入かどうかを表すフィールドを特定するため、生の応答を 1 件だけ残す
+  if (!DEV_TRADE) {
+    try {
+      await invoke("trade2_debug_dump", { label: "manual-securable", body: fetched });
+    } catch {
+      /* 調査用なので失敗しても無視 */
+    }
+  }
   const listings: PriceListing[] = [];
   for (const r of fetched.result ?? []) {
     const amount = r.listing?.price?.amount;

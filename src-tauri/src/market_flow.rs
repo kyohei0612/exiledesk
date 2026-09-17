@@ -340,6 +340,35 @@ fn store_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+/// 生の応答を 1 件だけ保存する (調査用、2026-09-17)。
+///
+/// 「どのフィールドが即時購入かどうかを表すのか」を特定するために使う。
+/// これが分かれば、検索 1 回で「表示は即時購入 / 追跡は全部」を両立できる。
+/// 保存先: app_data_dir/trade2-debug.json (ラベルごとに最新 1 件だけ)
+pub fn debug_dump(app: &tauri::AppHandle, label: &str, first_item: &serde_json::Value) {
+    let Ok(mut dir) = app.path().app_data_dir() else { return };
+    let _ = fs::create_dir_all(&dir);
+    dir.push("trade2-debug.json");
+    let mut all: serde_json::Map<String, serde_json::Value> = fs::read_to_string(&dir)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_default();
+    all.insert(
+        label.to_string(),
+        serde_json::json!({ "at": now_secs(), "sample": first_item }),
+    );
+    if let Ok(text) = serde_json::to_string_pretty(&all) {
+        let _ = fs::write(&dir, text);
+    }
+}
+
+/// 画面 (売値 = securable) の応答を調査用に保存する
+#[tauri::command]
+pub fn trade2_debug_dump(app: tauri::AppHandle, label: String, body: serde_json::Value) {
+    let first = body.get("result").and_then(|r| r.as_array()).and_then(|a| a.first()).cloned();
+    debug_dump(&app, &label, &first.unwrap_or(serde_json::Value::Null));
+}
+
 fn now_secs() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -949,6 +978,10 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => {
+                    // 調査用: 自動 (any) の生の応答を 1 件だけ残す
+                    if let Some(first) = v.get("result").and_then(|x| x.as_array()).and_then(|a| a.first()) {
+                        debug_dump(app, "auto-any", first);
+                    }
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
                             let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
