@@ -190,6 +190,7 @@ async function reloadFlow(): Promise<void> {
   flowStore.value = await loadFlow();
 }
 interface SpeedCell {
+  key: (typeof SALE_KEYS)[number];
   label: string;
   /** 一覧に出す短い表記 */
   short: string;
@@ -207,12 +208,25 @@ function speedOf(nameEn: string): SpeedCell[] {
     const watched = flowStore.value?.watches?.some((w) => w.key === watchKey(nameEn, key));
     const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし");
     const detail = f.known24 > 0 ? `1 日以内に ${f.hit24} / ${f.known24} 件が売れた` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
-    return { label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
+    return { key, label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
   });
 }
 /** 売れたリスト (オーナー指示 2026-09-17): チップを押すと、そのジェムの消えた出品を値段つきで出す */
 const soldFor = ref<string>("");
-const soldKeys = computed(() => SALE_KEYS.map((k) => ({ key: watchKey(soldFor.value, k), label: SALE_KEY_LABEL[k] })));
+/** 条件を 1 つだけ見る時のキー (チップから開いた場合)。null なら 3 条件まとめて */
+const soldOnly = ref<(typeof SALE_KEYS)[number] | null>(null);
+const soldKeys = computed(() => {
+  const keys = soldOnly.value ? [soldOnly.value] : SALE_KEYS;
+  return keys.map((k) => ({ key: watchKey(soldFor.value, k), label: SALE_KEY_LABEL[k] }));
+});
+function openSold(name: string, key: (typeof SALE_KEYS)[number] | null): void {
+  soldOnly.value = key;
+  soldFor.value = name;
+}
+const soldTitle = computed(() => {
+  const ja = soldFor.value ? jaSkill(soldFor.value) : "";
+  return soldOnly.value ? `${ja} · ${SALE_KEY_LABEL[soldOnly.value]}` : ja;
+});
 
 /** 「どれも遅い」のような 1 行のまとめ。条件ごとに違う時は下のチップに任せて空にする */
 function speedSummary(nameEn: string): string {
@@ -463,16 +477,17 @@ onUnmounted(() => {
               <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
               <span class="flex items-baseline shrink-0 gap-2 text-[10px] whitespace-nowrap ">
                 <template v-if="speedSummary(r.name) === '' || speedOf(r.name).some((c) => c.verdict !== '記録なし')">
+                  <!-- 条件ごとに押せる。押した条件だけの一覧を出す (オーナー指示 2026-09-17) -->
                   <button
+                    v-for="c in speedOf(r.name)"
+                    :key="c.label"
                     type="button"
-                    class="flex items-baseline gap-2 hover:underline"
-                    :title="`${jaSkill(r.name)} の売れたリスト (値段・出品時刻つき) を見る`"
-                    @click.stop="soldFor = r.name"
+                    class="hover:underline"
+                    :title="`${jaSkill(r.name)} · ${c.label} の記録を一覧で見る (${c.detail})`"
+                    @click.stop="openSold(r.name, c.key)"
                   >
-                    <span v-for="c in speedOf(r.name)" :key="c.label" :title="c.detail">
-                      <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
-                      <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
-                    </span>
+                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
+                    <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
                   </button>
                 </template>
               </span>
@@ -512,7 +527,7 @@ onUnmounted(() => {
     </div>
     <SoldListDialog
       :open="soldFor !== ''"
-      :title="soldFor ? jaSkill(soldFor) : ''"
+      :title="soldTitle"
       :keys="soldKeys"
       :store="flowStore"
       @close="soldFor = ''"

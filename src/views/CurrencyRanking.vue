@@ -11,7 +11,7 @@
     components/currency/Sparkline          7 日折れ線 + %
 -->
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import RateHeader from "../components/currency/RateHeader.vue";
@@ -40,8 +40,13 @@ function hideTip() {
 }
 
 onMounted(() => {
-  // 起動時も refresh() がリーグ一覧 + 価格 + 履歴を全てフレッシュ取得する
+  // 起動時は前回の保存分をすぐ出したうえで取り直す (真っ白にしない)
   void r.refresh();
+});
+// keep-alive なのでタブを開き直しても mount されない。開いた時にここで更新する
+// (前回から 5 分経っていなければ見送り。オーナー指示 2026-09-17)
+onActivated(() => {
+  void r.refreshIfStale();
 });
 </script>
 
@@ -63,7 +68,9 @@ onMounted(() => {
             相場時刻: <span class="text-[var(--exile-color-text-primary)]">{{ formatEpoch(r.snapshotEpoch.value) }}</span>
             <span class="text-[var(--exile-color-text-tertiary)]">（poe2scout更新）</span>
             ／ 取得 <span>{{ formatTime(r.lastUpdated.value) }}</span>
+            <span v-if="r.fromCache.value" class="text-[var(--exile-color-text-tertiary)]">（前回のデータ）</span>
             <span v-if="r.ranking.value.length"> ／ {{ r.ranking.value.length }} 件</span>
+            <span v-if="r.autoNote.value" class="text-[var(--exile-color-text-tertiary)]"> ／ {{ r.autoNote.value }}</span>
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">

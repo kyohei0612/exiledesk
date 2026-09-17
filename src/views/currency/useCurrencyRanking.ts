@@ -27,6 +27,18 @@ export interface CategoryDisplay {
   icon: string;
 }
 
+/** 前回の表示内容を残しておく場所 (取得中に画面が真っ白になるのを防ぐ) */
+const CACHE_KEY = "exiledesk.currency.snapshot";
+const CACHE_VERSION = 1;
+interface Snapshot {
+  v: number;
+  league: string;
+  leagues: League[];
+  ranking: RankedItem[];
+  snapshotEpoch: number | null;
+  savedAt: number;
+}
+
 export function useCurrencyRanking() {
   const leagues = ref<League[]>([]);
   // 初期値は空。refresh() の初回で必ず現行リーグ (IsCurrent 非HC) を自動選択させるため
@@ -59,6 +71,90 @@ export function useCurrencyRanking() {
   // 2026-09-09: 既定はゲーム内取引所の「カレンシー」(x:Currency)
   const categoryFilter = ref<string>("x:Currency");
   const searchQuery = ref<string>("");
+
+  /** 表示中の内容が前回の保存分か (更新が終わるまで true)。画面に「前回のデータ」と出す */
+  const fromCache = ref(false);
+  /** 自動更新を見送った理由 (画面に出す) */
+  const autoNote = ref("");
+
+  /**
+   * タブを開いた時の自動更新の最短間隔 (オーナー指示 2026-09-17: 取引履歴と同じ作りに)。
+   *
+   * poe2scout は公開されている制限が無いので、こちらで礼儀として間隔を決める。
+   * 1 回の更新でリーグ一覧 + 価格表 + 履歴 + 基準レート 3 本と、それなりに叩くため。
+   */
+  const AUTO_MIN_GAP_MS = 5 * 60_000;
+
+  /**
+   * 前回の取得結果を保存する。
+   *
+   * オーナー指摘 (2026-09-17):「更新中でも前のキャッシュを読み込んで表示してほしい。
+   * 何も表示がない現象をやめたい」。トレンド (履歴) は数秒で埋まり量も多いので保存しない。
+   */
+  function saveSnapshot() {
+    try {
+      const snap: Snapshot = {
+        v: CACHE_VERSION,
+        league: league.value,
+        leagues: leagues.value,
+        ranking: ranking.value,
+        snapshotEpoch: snapshotEpoch.value,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(snap));
+    } catch {
+      /* 容量超過などで保存できなくても表示は続く */
+    }
+  }
+
+  /**
+   * タブを開いた時に呼ぶ。前回の取得から AUTO_MIN_GAP_MS 経っていれば更新し、
+   * 経っていなければ理由だけ出して何もしない。手動の「更新」ボタンはこの制限を受けない。
+   */
+  async function refreshIfStale(): Promise<void> {
+    if (loading.value) return;
+    const last = lastUpdated.value?.getTime() ?? 0;
+    const waitMs = AUTO_MIN_GAP_MS - (Date.now() - last);
+    if (last > 0 && waitMs > 0) {
+      const m = Math.ceil(waitMs / 60_000);
+      autoNote.value = `自動更新は見送り (前回から 5 分空けます · あと ${m} 分)`;
+      return;
+    }
+    autoNote.value = "";
+    await refresh();
+  }
+
+  /** 起動直後に前回の内容を出す (この後 refresh() が上書きする) */
+  function hydrateFromCache() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return;
+      const snap = JSON.parse(raw) as Snapshot;
+      if (snap?.v !== CACHE_VERSION || !Array.isArray(snap.ranking) || snap.ranking.length === 0) return;
+      // 形が違う (古い版で保存した等) キャッシュで画面を壊さない。1 件検査して駄目なら捨てる
+      const sample = snap.ranking[0] as Partial<RankedItem>;
+      const shapeOk =
+        typeof sample?.apiId === "string" &&
+        typeof sample?.itemId === "number" &&
+        typeof sample?.text === "string" &&
+        typeof sample?.groupId === "string" &&
+        typeof sample?.exaltedPrice === "number";
+      if (!shapeOk) {
+        localStorage.removeItem(CACHE_KEY);
+        return;
+      }
+      leagues.value = Array.isArray(snap.leagues) ? snap.leagues : [];
+      if (!league.value) league.value = snap.league ?? "";
+      const sel = leagues.value.find((l) => l.Value === league.value);
+      if (sel) applyLeagueRates(sel);
+      ranking.value = snap.ranking;
+      snapshotEpoch.value = snap.snapshotEpoch ?? null;
+      lastUpdated.value = new Date(snap.savedAt);
+      fromCache.value = true;
+    } catch {
+      /* 壊れていたら無視して普通に取得する */
+    }
+  }
 
   /** 表示用: 7 日があれば優先、無ければ 24 時間にフォールバック。 */
   function rowTrend(p: RankedItem): ItemTrend | undefined {
@@ -140,6 +236,8 @@ export function useCurrencyRanking() {
       trend7d.clear(); // 新データなので 7 日キャッシュは破棄して取り直す
       trends.value = trendMap;
       lastUpdated.value = new Date();
+      fromCache.value = false;
+      saveSnapshot();
 
       // 神 / カオス の ItemId はリーグごとに異なるため動的に控える
       const dId = items.find((x) => x.ApiId === "divine")?.ItemId ?? null;
@@ -216,7 +314,12 @@ export function useCurrencyRanking() {
     void load7dForVisible();
   });
 
+  hydrateFromCache();
+
   return {
+    fromCache,
+    autoNote,
+    refreshIfStale,
     leagues,
     league,
     divinePrice,

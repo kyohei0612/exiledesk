@@ -193,9 +193,26 @@ const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
 // ---- 売れ行き (2026-09-16: market_flow が 2 時間ごとに記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
-/** 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る */
+/**
+ * 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る。
+ * 行から開いた時はその条件だけ、見出しのボタンから開いた時は 3 条件まとめて出す
+ * (「レベル +1 はレベル +1 だけ一覧で表示」)。
+ */
 const soldOpen = ref(false);
-const soldKeys = computed(() => SALE_KEYS.map((k) => ({ key: watchKey(g.selected.value?.en ?? "", k), label: SALE_KEY_LABEL[k] })));
+const soldOnly = ref<SaleKey | null>(null);
+const soldKeys = computed(() => {
+  const en = g.selected.value?.en ?? "";
+  const keys = soldOnly.value ? [soldOnly.value] : SALE_KEYS;
+  return keys.map((k) => ({ key: watchKey(en, k), label: SALE_KEY_LABEL[k] }));
+});
+const soldTitle = computed(() => {
+  const ja = g.selected.value?.ja ?? "";
+  return soldOnly.value ? `${ja} · ${SALE_KEY_LABEL[soldOnly.value]}` : ja;
+});
+function openSold(key: SaleKey | null): void {
+  soldOnly.value = key;
+  soldOpen.value = true;
+}
 /** 自動追跡の進行状況 (2026-09-16: 動いているのが分かるように) */
 const flowStatus = ref<FlowStatus | null>(null);
 let statusTimer: ReturnType<typeof setInterval> | null = null;
@@ -752,6 +769,16 @@ const summary = computed(() => {
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 ({{ unit }})</h2>
             <div class="flex items-center gap-3 text-[11px]">
+              <!-- 2026-09-17 オーナー指摘「売れたIDと金額の一覧が見当たらない」: 常設の入口を置く -->
+              <button
+                type="button"
+                :disabled="!g.selected.value"
+                class="underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
+                title="このジェムの追跡記録 (売れた出品の値段・出品者・寿命、追跡中の出品) を一覧で見る"
+                @click="openSold(null)"
+              >
+                📋 売れたリスト
+              </button>
               <button
                 type="button"
                 :disabled="!g.selected.value || refetch.disabled"
@@ -789,7 +816,7 @@ const summary = computed(() => {
                 </td>
                 <!-- 2026-09-16: 捌き速度 (出品を ID で追って生存分析)。3 条件とも出す -->
                 <!-- 2026-09-17 オーナー指示: 押すと売れたリスト (値段つき) を出す -->
-                <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" @click="soldOpen = true">
+                <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" :title="`${row.label} の記録を一覧で見る`" @click="openSold(row.key)">
                   <template v-for="f in [flowOf(row.key)]" :key="row.key">
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
@@ -803,9 +830,9 @@ const summary = computed(() => {
                       class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap"
                       :title="`追跡 ${f.alive} 件 (最古 ${fmtAge(f.oldestMin)}) / 消えた ${f.gone} 件。24 時間以内に消えれば速い、48 時間残れば遅いと判定します`"
                     >
-                      判定待ち {{ f.gone + f.alive }} 件<template v-if="f.etaMin != null"> · あと {{ fmtAge(f.etaMin) }}</template>
+                      <span class="underline">判定待ち {{ f.gone + f.alive }} 件</span><template v-if="f.etaMin != null"> · あと {{ fmtAge(f.etaMin) }}</template>
                     </span>
-                    <span v-else-if="isWatched(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)]" title="追跡対象です。巡回の順番が来ると記録が始まります">巡回待ち</span>
+                    <span v-else-if="isWatched(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)] underline" title="追跡対象です。巡回の順番が来ると記録が始まります。押すと記録の一覧">巡回待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
                   </template>
                 </td>
@@ -1261,7 +1288,7 @@ const summary = computed(() => {
     </footer>
     <SoldListDialog
       :open="soldOpen"
-      :title="g.selected.value?.ja ?? ''"
+      :title="soldTitle"
       :keys="soldKeys"
       :store="flowStore"
       @close="soldOpen = false"
