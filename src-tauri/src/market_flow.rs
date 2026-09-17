@@ -684,7 +684,7 @@ pub struct ListingRef {
 
 /// 画面から手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
 #[tauri::command]
-pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<Vec<String>, String> {
+pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(), String> {
     let mut store = load_store(&app);
     let now = now_secs();
     // 2026-09-16: 画面で取った銘柄はそのまま記録対象にする (チェックを廃止したため)。
@@ -700,31 +700,25 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
         });
     }
     let state = store.states.entry(req.key).or_default();
-    // ID 一覧が出品全部を含んでいる時だけ「消えた」を判定する。
-    // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
-    // 2026-09-17: 画面の売値も巡回も同じ条件 (securable) になったので、
-    // 手動で取った結果も自動巡回と同じルールで判定してよい (partial は使わない)
-    // 自動巡回と同じルール: 検索結果だけでは消えた判定をせず、要確認の ID を画面に返す
-    apply_sample(state, now, req.total, &req.ids, &req.entries, false);
-    // 出品が 100 件を超えていて search の一覧に載らなかった追跡分は、
-    // 直接 fetch しないと生死が分からない。画面側に投げ返して確認してもらう (2026-09-17)
-    let missing: Vec<String> = {
+    // 自動巡回とまったく同じルールで判定する (画面の売値も巡回も条件が同じ securable のため)。
+    // ID 一覧が出品全部を含んでいる時だけ「消えた = 売れた」と数える。
+    // 応答が空の時は判定しない (通信不良で全滅させないため)
+    let list_complete = req.ids.len() as u64 >= req.total && !(req.ids.is_empty() && !state.tracked.is_empty());
+    apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
+    // 一覧が切れている時 (出品 100 件超) は、載っていない追跡分を「値段で沈んだ」と数える
+    if !list_complete && !req.ids.is_empty() {
         let present: HashSet<&str> = req.ids.iter().map(String::as_str).collect();
-        state
-            .tracked
-            .iter()
-            .filter(|t| t.gone_at.is_none() && !present.contains(t.id.as_str()))
-            .take(10)
-            .map(|t| t.id.clone())
-            .collect()
-    };
+        for t in state.tracked.iter_mut() {
+            if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
+                t.buried = t.buried.saturating_add(1);
+            }
+        }
+    }
     prune(state, now);
     store.sampled_at = now;
     save_store(&app, &store)?;
-    Ok(missing)
+    Ok(())
 }
-
-/// 画面が確認 fetch を投げた結果を反映する (market_flow_record の戻り値に対する返事)
 
 /// trade2 の出品時刻 ("2026-09-16T10:00:00Z") を unix 秒に。chrono を足さずに手で読む
 pub fn parse_indexed(indexed: &str) -> Option<i64> {
