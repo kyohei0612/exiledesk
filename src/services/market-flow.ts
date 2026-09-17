@@ -121,6 +121,8 @@ export interface FlowStatus {
   slice_done: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
+  /** 検索から消えていて、まだ直接照会で決着していない出品の数 */
+  pending_missing: number;
 }
 
 /** 自動追跡が今どうなっているか */

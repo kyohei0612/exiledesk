@@ -885,7 +885,8 @@ const summary = computed(() => {
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
               {{ flowAuto ? "自動 (2 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
               追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
-                · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
+                · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template><template v-if="flowStatus && flowStatus.pending_missing > 0">
+                · <span :title="'検索から消えたが、まだ直接照会で売れたか確かめていない出品の数。次の巡回で確認します'">確認待ち {{ flowStatus.pending_missing }} 件</span></template>。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。

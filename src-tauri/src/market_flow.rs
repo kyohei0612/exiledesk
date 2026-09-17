@@ -43,7 +43,8 @@
 //!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
 //!   - fetch   … 1 銘柄 1 巡に 1 回。値段の更新に加えて、**新しい出品を追跡に入れるのがここ**。
 //!               間隔を空けるとその間に出品されて売れた物を丸ごと取りこぼし、速度が遅い側に偏る
-//!   - 確認    … 消えた候補の直接照会。1 組 CONFIRM_MAX_PER_SLICE 銘柄 × 10 件まで
+//!   - 確認    … 消えた候補の直接照会。巡回のたびに行う (1 組 CONFIRM_MAX_PER_SLICE 銘柄 ×
+//!               10 件まで)。ここを間引くと消えた候補が滞留して判定が出ない
 //! 18 ジェム (54 銘柄) で毎時およそ 78 回。残りは手動の取得や取引所比較の取り分。
 //! 1 組の中でも送信間隔を均してバーストを作らない。
 //!
@@ -269,14 +270,21 @@ const DAILY_MAX_DAYS: usize = 30;
 /// 行方不明の出品を直接 fetch して確認する間隔。
 /// 出品が 100 件を超える銘柄はこれが唯一の判定手段なので、巡回ごと (1 時間) に確認する。
 /// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
-const CONFIRM_INTERVAL_SECS: i64 = 7000;
+/// 確認 fetch の最短間隔。
+///
+/// 巡回そのものが 1 銘柄 1 巡 (2 時間) に 1 回なので、ここで更に間隔を空けると
+/// 「消えた候補」が次の周まで放置され、いつまでも売れた判定が出ない
+/// (2026-09-17: 54 銘柄中 8 銘柄しか確認できておらず、候補 7 件が保留のままだった)。
+/// 巡回のたびに確認してよいので、事故防止の下限だけ残す。
+const CONFIRM_INTERVAL_SECS: i64 = 60;
 
 /// 1 組 (10 分) あたりの確認 fetch の上限。
 ///
-/// 2026-09-17 に検索を securable (即時購入のみ) へ統一したので、
-/// 「検索から消えた = 売れた」とは判定せず、必ず ID を直接 fetch して実在を確かめる。
-/// そのため確認 fetch が主役になる。12 組 (2 時間) で最大 48 回 = 毎時 24 回。
-const CONFIRM_MAX_PER_SLICE: usize = 4;
+/// 検索を securable (即時購入のみ) に統一したので「検索から消えた = 売れた」とは判定せず、
+/// 必ず ID を直接 fetch して実在を確かめる。そのため確認 fetch が主役になる。
+/// 1 組に入る銘柄 (18 ジェム = 54 銘柄なら 4〜5 本) を取りこぼさない数にしておく。
+/// 12 組 (2 時間) で最大 60 回 = 毎時 30 回。検索 27 + 値段 27 と合わせて毎時 84 回。
+const CONFIRM_MAX_PER_SLICE: usize = 5;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// 1 巡を何回に分けて取るか。SLICES × SLICE_INTERVAL_SECS = 1 巡の周期 (2 時間)
@@ -1150,6 +1158,9 @@ pub struct FlowStatus {
     pub slice_done: usize,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
+    /// 検索から消えていて、まだ直接照会で決着していない出品の数。
+    /// ここが増え続けるなら確認が追いついていない (2026-09-17 に実際に滞留した)
+    pub pending_missing: usize,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1176,6 +1187,11 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         } else {
             0
         },
+        pending_missing: store
+            .states
+            .values()
+            .map(|st| st.tracked.iter().filter(|t| t.gone_at.is_none() && t.last_seen < st.sampled_at).count())
+            .sum(),
         sampled_watches: store
             .watches
             .iter()
