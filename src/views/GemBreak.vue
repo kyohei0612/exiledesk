@@ -203,7 +203,9 @@ const SHORT_LABEL: Record<string, string> = { level21: "21", quality23: "23%", f
 function speedOf(nameEn: string): SpeedCell[] {
   return SALE_KEYS.map((key) => {
     const f = summarizeFlow(flowStore.value?.states?.[watchKey(nameEn, key)]);
-    const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : "記録なし");
+    // 記録がまだ無くても、追跡に登録済みなら「巡回待ち」(対象外と区別する。2026-09-17)
+    const watched = flowStore.value?.watches?.some((w) => w.key === watchKey(nameEn, key));
+    const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし");
     const detail = f.known24 > 0 ? `1 日以内に ${f.hit24} / ${f.known24} 件が売れた` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
     return { label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
   });
@@ -216,7 +218,7 @@ const soldKeys = computed(() => SALE_KEYS.map((k) => ({ key: watchKey(soldFor.va
 function speedSummary(nameEn: string): string {
   const cells = speedOf(nameEn);
   const known = cells.filter((c) => c.verdict === "速い" || c.verdict === "普通" || c.verdict === "遅い");
-  if (known.length === 0) return "まだ記録がありません (ジェムコラプトの賭けで「再取得」を押すと貯まります)";
+  if (known.length === 0) return "まだ判定できる記録がありません (巡回で貯まるのを待つか、ジェムコラプトの賭けで「再取得」)";
   if (known.length === cells.length && known.every((c) => c.verdict === known[0].verdict)) return `どれも${known[0].verdict}`;
   return "";
 }

@@ -119,6 +119,8 @@ export interface FlowStatus {
   slice: number;
   slices: number;
   slice_done: number;
+  /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
+  sampled_watches: number;
 }
 
 /** 自動追跡が今どうなっているか */

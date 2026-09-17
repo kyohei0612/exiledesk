@@ -266,7 +266,7 @@ export function useGemCorrupt() {
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
-        // 生存確認と新規追加にだけ使う (消えた判定はしない)
+        // 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する。自動巡回と同じルール
         void recordRowSample(gem.en, row.key, r);
       }
       priceError.value = tradeAuto.lastError.value;

@@ -265,6 +265,11 @@ const flowWatch = computed(() => {
   return flowStore.value?.watches?.find((x) => SALE_KEYS.some((k) => x.key === watchKey(en, k))) ?? null;
 });
 const flowTracked = computed(() => !!flowWatch.value);
+/** その条件が追跡対象か (記録がまだ無くても、登録されていれば「巡回待ち」と出す) */
+function isWatched(key: SaleKey): boolean {
+  const en = g.selected.value?.en ?? "";
+  return !!flowStore.value?.watches?.some((w) => w.key === watchKey(en, key));
+}
 /** 2 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
 const flowAuto = computed(() => !!flowWatch.value?.auto);
 /** 最安 1 件の内訳 (値段の種類・出品者・出品時刻)。おかしな値段の切り分け用 (2026-09-17) */
@@ -800,7 +805,7 @@ const summary = computed(() => {
                     >
                       判定待ち {{ f.gone + f.alive }} 件<template v-if="f.etaMin != null"> · あと {{ fmtAge(f.etaMin) }}</template>
                     </span>
-                    <span v-else-if="flowTracked" class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録待ち</span>
+                    <span v-else-if="isWatched(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)]" title="追跡対象です。巡回の順番が来ると記録が始まります">巡回待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
                   </template>
                 </td>
@@ -852,7 +857,8 @@ const summary = computed(() => {
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
               {{ flowAuto ? "自動 (2 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
-              追跡 {{ flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト)。
+              追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
+                · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。

@@ -34,6 +34,9 @@
 //!
 //! ## 4. 取得量 (trade2: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間 = 毎時 100 回)
 //! 銘柄を 12 組に分け、10 分おきに 1 組ずつ取る (2 時間で全銘柄が 1 巡)。
+//! 組は**ジェム単位**で割り当てるので、1 ジェムの 3 条件は必ず同じ組で一緒に取れる。
+//! まだ 1 度も取れていない銘柄がある間 (記録の作り直し直後) は 5 分おきに詰めて、
+//! 約 1 時間で 1 周目を埋める。
 //!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
 //!   - fetch   … 値段は 2 巡に 1 回でよい (FETCH_INTERVAL_SECS)
 //!   - 確認    … 消えた候補の直接照会。1 組 CONFIRM_MAX_PER_SLICE 銘柄 × 10 件まで
@@ -274,8 +277,34 @@ const CONFIRM_MAX_PER_SLICE: usize = 4;
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// 1 巡を何回に分けて取るか。SLICES × SLICE_INTERVAL_SECS = 1 巡の周期 (2 時間)
 const SLICES: usize = 12;
-/// 分割 1 回の間隔 (SAMPLE_INTERVAL / SLICES)
+/// 分割 1 回の間隔 (1 巡 = SLICES × これ)
 const SLICE_INTERVAL_SECS: i64 = 600;
+
+/// まだ 1 度も取れていない銘柄がある間の間隔 (1 周目を早く埋める)。
+///
+/// 記録を作り直した直後は全銘柄が空で、通常の間隔だと全部埋まるまで 2 時間かかり、
+/// 画面上は「追跡が切れている」ように見える (オーナー報告 2026-09-17)。
+/// 1 周目だけ詰めて約 1 時間で埋める。その 1 時間は毎時 108 回ペースになるが、
+/// 以降は毎時 65 回に戻るので 6 時間 600 回の枠には収まる (6 時間で約 433 回)。
+const FIRST_PASS_SLICE_SECS: i64 = 300;
+
+/// 1 周目が終わっていない (まだ 1 度も取れていない自動銘柄がある) か
+fn in_first_pass(store: &FlowStore) -> bool {
+    store
+        .watches
+        .iter()
+        .filter(|w| w.auto)
+        .any(|w| store.states.get(&w.key).map(|st| st.sampled_at == 0).unwrap_or(true))
+}
+
+/// 次の組までの間隔 (1 周目だけ詰める)
+fn slice_interval(store: &FlowStore) -> i64 {
+    if in_first_pass(store) {
+        FIRST_PASS_SLICE_SECS
+    } else {
+        SLICE_INTERVAL_SECS
+    }
+}
 
 /// 値段 (fetch) を取り直す間隔。
 ///
@@ -834,14 +863,27 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     // JP サイトは日本語名しか受け付けず "Unknown item base type" (HTTP 400) になる (2026-09-16)。
     let site: Option<String> = Some("www".to_string());
     let now = now_secs();
-    // 自動で追う銘柄を 6 組に分け、指定された組だけ取る (10 分おきに 1 組)
+    // 自動で追う銘柄を SLICES 組に分け、指定された組だけ取る。
+    //
+    // 組は「ジェム単位」で割り当てる。1 ジェムの 3 条件 (レベル 21 / 品質 23% / 完成品) が
+    // 別々の組に散ると、画面ではジェムごとに 1 条件だけ記録がある状態が続いて
+    // 「品質 23% とレベル +1 の追跡が切れている」ように見える (オーナー報告 2026-09-17)。
+    let mut gem_order: Vec<&str> = Vec::new();
     let auto: Vec<&Watch> = store
         .watches
         .iter()
         .filter(|w| w.auto)
-        .enumerate()
-        .filter(|(i, _)| slice.map(|sl| i % SLICES == sl).unwrap_or(true))
-        .map(|(_, w)| w)
+        .filter(|w| {
+            let gem = w.key.split("::").next().unwrap_or(w.key.as_str());
+            let idx = match gem_order.iter().position(|g| *g == gem) {
+                Some(i) => i,
+                None => {
+                    gem_order.push(gem);
+                    gem_order.len() - 1
+                }
+            };
+            slice.map(|sl| idx % SLICES == sl).unwrap_or(true)
+        })
         .collect();
     // 途中で終わっていた場合は、その組で取り済みの銘柄を飛ばして続きから
     let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
@@ -852,7 +894,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
     // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
     let pace = if slice.is_some() && total_watches > 0 {
-        let secs = ((SLICE_INTERVAL_SECS as f64 * 0.9) / (total_watches as f64 * 2.0)).clamp(8.0, 120.0);
+        let secs = ((slice_interval(&store) as f64 * 0.9) / (total_watches as f64 * 2.0)).clamp(8.0, 120.0);
         Duration::from_secs(secs as u64)
     } else {
         REQUEST_INTERVAL
@@ -1081,6 +1123,8 @@ pub struct FlowStatus {
     pub slices: usize,
     /// 今の組で取り終わった銘柄数 (中断から再開した時に分かるように)
     pub slice_done: usize,
+    /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
+    pub sampled_watches: usize,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1103,10 +1147,15 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         next_at: if store.retry_at > 0 {
             store.retry_at
         } else if store.sliced_at > 0 {
-            store.sliced_at + SLICE_INTERVAL_SECS
+            store.sliced_at + slice_interval(&store)
         } else {
             0
         },
+        sampled_watches: store
+            .watches
+            .iter()
+            .filter(|w| w.auto && store.states.get(&w.key).map(|st| st.sampled_at > 0).unwrap_or(false))
+            .count(),
         auto_watches: store.watches.iter().filter(|w| w.auto).count(),
         manual_watches: store.watches.iter().filter(|w| w.manual).count(),
         last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
@@ -1141,7 +1190,7 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
             let store = load_store(&app);
             let now = now_secs();
             // 10 分おきに 1 組。取りこぼした回は retry_at (レート制限の明ける頃) に再挑戦
-            let due = now - store.sliced_at >= SLICE_INTERVAL_SECS || (store.retry_at > 0 && now >= store.retry_at);
+            let due = now - store.sliced_at >= slice_interval(&store) || (store.retry_at > 0 && now >= store.retry_at);
             if due && !store.watches.is_empty() {
                 let sl = store.slice_cursor % SLICES;
                 if let Err(e) = sample_slice(&app, Some(sl)).await {
