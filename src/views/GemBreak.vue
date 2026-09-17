@@ -1,5 +1,5 @@
 <!--
-  GemBreak.vue — クラフト選定ジェム (2026-09-16)
+  GemBreak.vue — 使用率ランキング (2026-09-16、2026-09-17 に監視ジェムの中へ統合)
   オーナー指示: 「21 とか 23% とか完成品を使ってる人数をランキングで見たい」「一旦ジェムリングのみで試してもええ」
   「クラフト選定ジェムって名前で、そこでクラフトするジェムを選ぶ感じで」
   → poe.ninja のアセンダンシー 1 つ分の上位キャラだけ取って、そのジェムを
@@ -16,10 +16,8 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { loadFlow, setWatches, summarizeFlow, type FlowStore } from "../services/market-flow";
-import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
+import { setWatches } from "../services/market-flow";
 import { watchesFromRows } from "../state/gem-watch-auto";
-import SoldListDialog from "../components/SoldListDialog.vue";
 import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../state/watch-settings";
 import { rebuildWatches } from "../state/gem-watch-auto";
 import { marketStore } from "../state/market-store";
@@ -186,76 +184,11 @@ type Key = (typeof SECTIONS)[number]["key"];
 
 /** 売れ行きを追う下限 (完成品を使っている人数) */
 const TRACK_MIN_FINISHED = 5;
-/** 捌き速度 (ジェムコラプト側で貯めた記録) を 1 行で出す */
-const flowStore = ref<FlowStore | null>(null);
-async function reloadFlow(): Promise<void> {
-  flowStore.value = await loadFlow();
-}
-interface SpeedCell {
-  key: (typeof SALE_KEYS)[number];
-  label: string;
-  /** 一覧に出す短い表記 */
-  short: string;
-  verdict: string;
-  tone: string;
-  detail: string;
-}
-/** 一覧の狭い場所用 */
-const SHORT_LABEL: Record<string, string> = { level21: "21", quality23: "23%", finished: "完成" };
-/** そのジェムの 3 条件ぶんの判定 */
-function speedOf(nameEn: string): SpeedCell[] {
-  return SALE_KEYS.map((key) => {
-    const f = summarizeFlow(flowStore.value?.states?.[watchKey(nameEn, key)]);
-    // 記録がまだ無くても、追跡に登録済みなら「巡回待ち」(対象外と区別する。2026-09-17)
-    const watched = flowStore.value?.watches?.some((w) => w.key === watchKey(nameEn, key));
-    const verdict = f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし");
-    const detail = f.known24 > 0 ? `1 日以内に ${f.hit24} / ${f.known24} 件が売れた` : f.gone + f.alive > 0 ? `追跡 ${f.alive} / 消えた ${f.gone}` : "";
-    return { key, label: SALE_KEY_LABEL[key], short: SHORT_LABEL[key] ?? SALE_KEY_LABEL[key], verdict, tone: f.tone, detail: detail || SALE_KEY_LABEL[key] };
-  });
-}
-/** 売れたリスト (オーナー指示 2026-09-17): チップを押すと、そのジェムの消えた出品を値段つきで出す */
-const soldFor = ref<string>("");
-/** 条件を 1 つだけ見る時のキー (チップから開いた場合)。null なら 3 条件まとめて */
-const soldOnly = ref<(typeof SALE_KEYS)[number] | null>(null);
-const soldKeys = computed(() => {
-  const keys = soldOnly.value ? [soldOnly.value] : SALE_KEYS;
-  return keys.map((k) => ({ key: watchKey(soldFor.value, k), label: SALE_KEY_LABEL[k] }));
-});
 /** 一覧から監視ジェムに入れる / 外す (すぐ追跡に反映する) */
 function toggleWatchGem(name: string): void {
   if (isManualGem(name)) removeManualGem(name);
   else if (!addManualGem(name)) return;
-  void rebuildWatches().then(() => void reloadFlow());
-}
-
-function openSold(name: string, key: (typeof SALE_KEYS)[number] | null): void {
-  soldOnly.value = key;
-  soldFor.value = name;
-}
-const soldTitle = computed(() => {
-  const ja = soldFor.value ? jaSkill(soldFor.value) : "";
-  return soldOnly.value ? `${ja} · ${SALE_KEY_LABEL[soldOnly.value]}` : ja;
-});
-
-/** 「どれも遅い」のような 1 行のまとめ。条件ごとに違う時は下のチップに任せて空にする */
-function speedSummary(nameEn: string): string {
-  const cells = speedOf(nameEn);
-  const known = cells.filter((c) => c.verdict === "速い" || c.verdict === "普通" || c.verdict === "遅い");
-  if (known.length === 0) return "まだ判定できる記録がありません (巡回で貯まるのを待つか、ジェムコラプトの賭けで「再取得」)";
-  if (known.length === cells.length && known.every((c) => c.verdict === known[0].verdict)) return `どれも${known[0].verdict}`;
-  return "";
-}
-function speedToneClass(tone: string): string {
-  switch (tone) {
-    case "fast":
-      return "text-emerald-300";
-    case "normal":
-      return "text-amber-300";
-    case "slow":
-      return "text-red-300";
-    default:
-      return "text-[var(--exile-color-text-tertiary)]";
-  }
+  void rebuildWatches();
 }
 
 const PAGE = 25;
@@ -318,7 +251,6 @@ const progressText = computed(() => {
 let unlisten: UnlistenFn | null = null;
 onMounted(async () => {
   loadStored();
-  void reloadFlow();
   await loadAscendancies();
   if (inApp) {
     unlisten = await listen<{ phase: string; done: number; total: number }>("gem-break-progress", (e) => {
@@ -335,9 +267,10 @@ onUnmounted(() => {
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフト選定ジェム</h1>
+      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">使用率ランキング (poe.ninja)</h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        ここでコラプトするジェムを選びます。上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
+        上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
+        <span class="text-[var(--exile-color-text-primary)]">上の「監視ジェム」の上位はここの結果から決まります。</span>
         行を押すと、そのジェムが実際に何レベル / 何 % で使われているかの内訳が出ます。
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
@@ -495,24 +428,6 @@ onUnmounted(() => {
                 >
                   {{ isManualGem(r.name) ? "監視中 ✓" : "監視へ +" }}
                 </button>
-              <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
-              <span class="flex items-baseline shrink-0 gap-2 text-[10px] whitespace-nowrap ">
-                <template v-if="speedSummary(r.name) === '' || speedOf(r.name).some((c) => c.verdict !== '記録なし')">
-                  <!-- 条件ごとに押せる。押した条件だけの一覧を出す (オーナー指示 2026-09-17) -->
-                  <button
-                    v-for="c in speedOf(r.name)"
-                    :key="c.label"
-                    type="button"
-                    class="hover:underline"
-                    :title="`${jaSkill(r.name)} · ${c.label} の記録を一覧で見る (${c.detail})`"
-                    @click.stop="openSold(r.name, c.key)"
-                  >
-                    <span class="text-[var(--exile-color-text-tertiary)]">{{ c.short }}</span>
-                    <span class="ml-0.5" :class="speedToneClass(c.tone)">{{ c.verdict }}</span>
-                  </button>
-                </template>
-              </span>
-
               </div>
               <span class="tabular-nums text-[13px] whitespace-nowrap">
                 {{ r[sec.key] }} <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">/ {{ r.users }} 人</span>
@@ -546,13 +461,6 @@ onUnmounted(() => {
         </button>
       </div>
     </div>
-    <SoldListDialog
-      :open="soldFor !== ''"
-      :title="soldTitle"
-      :keys="soldKeys"
-      :store="flowStore"
-      @close="soldFor = ''"
-    />
   </section>
 </template>
 

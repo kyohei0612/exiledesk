@@ -8,14 +8,14 @@
   自動取得の動き (2 時間 1 巡・ID 直接照会で裏取り) は市場側 (market_flow.rs) のまま。
 -->
 <script setup lang="ts">
-import { computed, onActivated, onMounted, ref } from "vue";
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from "vue";
 import BaseCard from "../components/decor/BaseCard.vue";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { loadFlow, summarizeFlow, type FlowStore } from "../services/market-flow";
+import { loadFlow, loadFlowStatus, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
 import {
   addManualGem,
   removeManualGem,
@@ -28,6 +28,8 @@ import {
 } from "../state/watch-settings";
 import { cachedRows, rebuildWatches } from "../state/gem-watch-auto";
 import { openGemCorrupt } from "../state/app-nav";
+// 旧「クラフト選定ジェム」タブ。取得と使用率ランキングはここに埋め込む (2026-09-17 タブを統合)
+import GemUsageRanking from "./GemBreak.vue";
 
 /** クラフト選定ジェムが保存した取得結果 (これを基準に上位を決める) */
 const rows = ref<GemUsageRow[]>([]);
@@ -61,12 +63,69 @@ const ASCENDANCIES = [
   "Tactician",
 ];
 
+/**
+ * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
+ * (オーナー指示 2026-09-17:「監視ジェムはアプリ内更新だからレート無い。タブ開くたびに読み直して。
+ * 手動で取った情報が反映されないとズレる」)。
+ */
+const readAt = ref<number>(0);
+const status = ref<FlowStatus | null>(null);
 function reload(): void {
   rows.value = cachedRows() ?? [];
-  void loadFlow().then((f) => (flowStore.value = f));
+  void loadFlow().then((f) => {
+    flowStore.value = f;
+    readAt.value = Date.now();
+  });
+  void loadFlowStatus().then((s) => (status.value = s));
 }
+
+/** 監視している全銘柄を今すぐ 1 巡する (自動巡回と同じ処理を手で走らせるだけ) */
+const sweeping = ref(false);
+async function sweep(): Promise<void> {
+  if (sweeping.value || status.value?.sampling) return;
+  sweeping.value = true;
+  message.value = { ok: true, text: "一括取得を始めました (終わるまで数分かかります)" };
+  const poll = window.setInterval(reload, 3000);
+  try {
+    const ok = await sweepNow();
+    message.value = ok
+      ? { ok: true, text: "一括取得が終わりました" }
+      : { ok: false, text: "一括取得に失敗しました (レート制限か通信)" };
+  } finally {
+    clearInterval(poll);
+    sweeping.value = false;
+    reload();
+  }
+}
+
+/** 取得中の進捗表示 */
+const sweepText = computed(() => {
+  const s = status.value;
+  if (!s?.sampling) return "";
+  return `取得中 ${s.done}/${s.total}${s.current ? ` · ${s.current}` : ""}`;
+});
 onMounted(reload);
-onActivated(reload);
+onActivated(() => {
+  reload();
+  // 開いている間は 20 秒ごとに読み直す (別のタブで再取得した分がすぐ出るように)
+  if (timer === null) timer = window.setInterval(reload, 20_000);
+});
+onDeactivated(() => {
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+});
+onUnmounted(() => {
+  if (timer !== null) clearInterval(timer);
+});
+let timer: number | null = null;
+const readAtText = computed(() => {
+  if (!readAt.value) return "";
+  const d = new Date(readAt.value);
+  const p = (n: number): string => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+});
 
 // ---- 検索 (ジェムコラプトの賭けと同じ。正規表現も使える) ----
 const query = ref("");
@@ -246,6 +305,24 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
             上位を自動で入れる
           </label>
+          <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
+          <button
+            type="button"
+            :disabled="sweeping || !!status?.sampling"
+            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+            title="監視している全銘柄を今すぐ 1 巡します (2 時間ごとの巡回と同じ処理)。銘柄数 × 2 回ほど検索します"
+            @click="sweep"
+          >
+            {{ sweeping || status?.sampling ? (sweepText || "取得中…") : "⟳ 一括取得 (今すぐ 1 巡)" }}
+          </button>
+          <button
+            type="button"
+            class="underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]"
+            title="記録を読み直します (この PC のファイルを読むだけなので通信はしません)"
+            @click="reload"
+          >
+            🔄 記録を読み直す<span v-if="readAtText" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> ({{ readAtText }})</span>
+          </button>
           <button
             type="button"
             :disabled="busy"
@@ -371,6 +448,11 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         </ul>
       </div>
     </BaseCard>
+
+    <!-- 使用率ランキング (poe.ninja)。ここで取得した結果が上の「上位」の元になる -->
+    <div class="mt-4">
+      <GemUsageRanking />
+    </div>
 
     <SoldListDialog :open="soldFor !== ''" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldFor = ''" />
   </section>

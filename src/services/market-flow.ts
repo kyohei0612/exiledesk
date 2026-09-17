@@ -159,6 +159,21 @@ export async function recordFlow(sample: { key: string; label?: string; total: n
   }
 }
 
+/**
+ * 監視している全銘柄を今すぐ 1 巡する (オーナー指示 2026-09-17:
+ * 「一括取得ボタン。自動取得の道を手動でスタートするだけ」)。
+ * 中身は 2 時間ごとの巡回とまったく同じ処理。走っている間は状態表示に進捗が出る。
+ */
+export async function sweepNow(): Promise<boolean> {
+  if (!isTauriRuntime()) return false;
+  try {
+    await invoke("market_flow_sample_now");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 記録と今の検索結果を突き合わせた結果 */
 export interface VerifyResult {
   total: number;
