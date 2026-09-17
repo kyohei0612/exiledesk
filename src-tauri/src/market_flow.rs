@@ -469,6 +469,23 @@ pub struct SetWatchesRequest {
 #[tauri::command]
 pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) -> Result<FlowStore, String> {
     let mut store = load_store(&app);
+    merge_watches(&mut store, req.watches, &req.league, now_secs());
+    if let Some(s) = req.site {
+        store.site = s;
+    }
+    save_store(&app, &store)?;
+    Ok(store)
+}
+
+/// 監視リストの入れ替え本体 (テストできるよう AppHandle から切り離してある)。
+///
+/// 記録 (states) の扱い:
+///   - 被っている銘柄 … そのまま使う (キャッシュを引き継ぐ。オーナー指示 2026-09-17)
+///   - 外れた銘柄     … 消さない。7 日触られていない物だけ掃除する。
+///                      7 日以内に戻せば続きから追える
+///   - 条件が変わった銘柄 … 別の検索の結果なので作り直す (混ぜると誤判定する)
+///   - リーグが変わった   … 別の市場なので全部作り直す
+pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, now: i64) {
     // 手動分は残す。いったん巡回から外し、今回のリストに載っていれば戻す
     let mut watches: Vec<Watch> = store
         .watches
@@ -476,15 +493,10 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
         .filter(|w| w.manual)
         .map(|w| Watch { auto: false, ..w.clone() })
         .collect();
-    // 検索条件が変わった銘柄 (記録を作り直す)
     let mut changed: Vec<String> = Vec::new();
-    for w in req.watches {
+    for w in incoming {
         match watches.iter_mut().find(|x| x.key == w.key) {
-            // 手動で追っていた銘柄が自動リストにも載った: 巡回に入れる。
-            // 記録 (states) はそのまま使うので、手動で貯めたぶんの続きから判断される
             Some(existing) => {
-                // 検索条件が変わったら、前の記録は別の検索の結果なので比べられない。
-                // そのまま残すと「消えた = 売れた」と誤判定するので捨てる (2026-09-17)
                 // 手動で登録した銘柄はクエリを持たない (画面の検索条件で取っている)。
                 // その場合は条件が変わったわけではないので記録は残す
                 if !existing.query.is_null() && existing.query != w.query {
@@ -502,22 +514,15 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
         store.states.remove(k);
     }
     let keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
-    // 外れた銘柄の記録は残す (7 日触られていない物だけ捨てる)
-    let cutoff = now_secs() - TRACK_MAX_SECS;
+    let cutoff = now - TRACK_MAX_SECS;
     store.states.retain(|k, st| keys.contains(k) || st.sampled_at >= cutoff);
-    // リーグが変われば別の市場なので、前のリーグの記録は使えない (2026-09-17 全点検)
-    if !store.league.is_empty() && store.league != req.league {
+    if !store.league.is_empty() && store.league != league {
         store.states.clear();
         store.slice_done.clear();
     }
     store.watches = watches;
-    store.league = req.league;
-    if let Some(s) = req.site {
-        store.site = s;
-    }
-    store.list_refreshed_at = now_secs();
-    save_store(&app, &store)?;
-    Ok(store)
+    store.league = league.to_string();
+    store.list_refreshed_at = now;
 }
 
 #[derive(Deserialize)]
@@ -1420,6 +1425,41 @@ mod tests {
         assert!(watches[0].manual && watches[0].auto, "手動のまま巡回にも入る");
         assert_eq!(watches[0].label, "アーク", "自動リストの名前とクエリで上書き");
         assert_eq!(watches[0].query, serde_json::json!({"b":2}));
+    }
+
+    /// 監視から外して戻しても、7 日以内なら記録を引き継ぐ (オーナー指示 2026-09-17)
+    #[test]
+    fn dropped_and_readded_gem_keeps_its_records() {
+        let now = 1_700_000_000i64;
+        let watch = |key: &str| Watch {
+            key: key.to_string(),
+            label: key.to_string(),
+            query: serde_json::json!({ "query": { "type": { "option": key } } }),
+            note: String::new(),
+            manual: false,
+            auto: true,
+        };
+        let mut store = FlowStore::default();
+        merge_watches(&mut store, vec![watch("Arc::level21"), watch("Comet::level21")], "L", now);
+        // 記録を作る
+        let st = store.states.entry("Arc::level21".into()).or_default();
+        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None });
+        st.sampled_at = now;
+
+        // 監視から外す (コメットだけにする)
+        merge_watches(&mut store, vec![watch("Comet::level21")], "L", now + 600);
+        assert!(store.states.contains_key("Arc::level21"), "外しても記録は消えない");
+
+        // 3 日後に戻す
+        let back = now + 3 * 24 * 3600;
+        merge_watches(&mut store, vec![watch("Arc::level21"), watch("Comet::level21")], "L", back);
+        let st = store.states.get("Arc::level21").expect("記録が残っている");
+        assert_eq!(st.tracked.len(), 1, "前の追跡をそのまま引き継ぐ");
+        assert_eq!(st.tracked[0].id, "a");
+
+        // 8 日触られなければ掃除される
+        merge_watches(&mut store, vec![watch("Comet::level21")], "L", now + 8 * 24 * 3600);
+        assert!(!store.states.contains_key("Arc::level21"), "7 日を過ぎた分は掃除する");
     }
 
     /// 一覧の入れ替え: 被っている銘柄はそのまま、外れた銘柄も 7 日は記録を残す

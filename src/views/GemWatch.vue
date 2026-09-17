@@ -222,7 +222,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
           監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり 2 時間に検索 1 回 + 値段 1 回なので、
           {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / 2) + 24 }} 回のリクエストになります (trade2 の上限は毎時 100 回)。
-          取得先やジェムを変えると、その銘柄の記録は作り直しになります (別の条件で貯めた記録は混ぜられないため)。
+          監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
+          記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
         </p>
         <p v-if="message" class="text-[12px] mt-2" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
       </div>
@@ -294,7 +295,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                     v-if="gem.manual"
                     type="button"
                     class="ml-3 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-rose-300"
-                    title="監視から外す (記録は 7 日で消えます)"
+                    title="監視から外す (記録は残るので、7 日以内に戻せば続きから追える)"
                     @click="remove(gem.name)"
                   >
                     外す
