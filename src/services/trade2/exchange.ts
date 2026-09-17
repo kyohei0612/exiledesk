@@ -20,12 +20,20 @@ export type PayCurrency = (typeof PAY_CURRENCIES)[number];
 
 export interface PayOption {
   currency: PayCurrency;
-  /** 素材 1 個の高貴換算 (そのペアでの値) */
+  /** 素材 1 個の高貴換算 (取引所のレートそのまま) */
   exalted: number;
-  /** 素材 1 個あたり払う量 (その通貨建て) */
+  /** 素材 1 個あたり払う量 (その通貨建て、取引所のレートそのまま) */
   perUnit: number;
   /** 素材側の在庫 (板の厚み) */
   stock: number;
+}
+
+/** 実際に払う額に直した単価 (payable() で作る) */
+export interface PayableOption extends PayOption {
+  /** 繰り上げ後に実際に払う量 */
+  payPerUnit: number;
+  /** 繰り上げ後の高貴換算 (費用と期待値はこの値で計算する) */
+  payExalted: number;
 }
 export interface BestBuy {
   apiId: string;
@@ -66,8 +74,28 @@ export function cachedBuy(apiId: string): BestBuy | null {
   return hit && Date.now() - hit.fetchedAt < FRESH_MS ? hit : null;
 }
 
+/**
+ * 実際に払う額に直す (オーナー指示 2026-09-17:「3.2 神とかでも 4 神で表記してくれ、要は繰上の値段で」)。
+ *
+ * 通貨は 1 個単位でしか渡せないので、1 個以上の単価は切り上げた額が実際の出費になる。
+ * 1 未満 (宝石細工師のプリズムが 0.05 神 など) は束でまとめて買う物なので、そのままにする
+ * (ここを切り上げると 20 倍の値段になってしまう)。
+ * 取ってきたレートはそのまま持っておいて (キャッシュも生の値)、使う時にこれを通す。
+ */
+export function payableUnit(perUnit: number): number {
+  return perUnit >= 1 ? Math.ceil(perUnit) : perUnit;
+}
+
+/** 生のレートに「実際に払う額」を足す。高貴換算も繰り上げ後の量から出し直す */
+export function payable(o: PayOption): PayableOption {
+  const payPerUnit = payableUnit(o.perUnit);
+  const ratio = o.perUnit > 0 ? payPerUnit / o.perUnit : 1;
+  return { ...o, payPerUnit, payExalted: o.exalted * ratio };
+}
+
+/** 一番安いのは「実際に払う額」で比べる (1.1 神 = 2 神 払うより、カオスで買う方が安いこともある) */
 function pickBest(options: PayOption[]): PayOption | null {
-  return options.reduce<PayOption | null>((a, b) => (a == null || b.exalted < a.exalted ? b : a), null);
+  return options.reduce<PayOption | null>((a, b) => (a == null || payable(b).payExalted < payable(a).payExalted ? b : a), null);
 }
 
 /** 素材 1 つをカオス / 神で引いて、安い方を決める (高貴は手数料が高いので使わない) */

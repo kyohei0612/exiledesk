@@ -16,7 +16,7 @@ import { type PriceResult } from "../../services/trade2/pricing";
 import { recordFlow } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
-import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
+import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
 export interface GemInfo {
@@ -180,12 +180,14 @@ export function useGemCorrupt() {
     }
   }
   /** その素材を一番安く買える通貨 (高貴換算つき)。取っていなければ null */
-  function bestBuy(apiId: string | null | undefined): { currency: PayCurrency; perUnit: number; exalted: number } | null {
+  function bestBuy(apiId: string | null | undefined): { currency: PayCurrency; perUnit: number; rawPerUnit: number; exalted: number } | null {
     if (!apiId) return null;
     const e = exchange.value[apiId];
     const b = e?.best;
     if (!b) return null;
-    return { currency: b.currency, perUnit: b.perUnit, exalted: b.exalted };
+    // 単価は「実際に払う額」に繰り上げる (rawPerUnit は繰り上げ前の取引所レート)
+    const p = payable(b);
+    return { currency: b.currency, perUnit: p.payPerUnit, rawPerUnit: b.perUnit, exalted: p.payExalted };
   }
   /** 相場と取引所の安い方 (取引所を取っていなければ相場のまま) */
   const withExchange = (apiId: string | null | undefined, market: number | null): number | null => {
