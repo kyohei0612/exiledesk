@@ -15,6 +15,9 @@
 //!     対面トレード (リーグにオンライン) / 対面トレード (オンライン) / 指定なし
 //!
 //! ## 2. 数え方: 出品 1 件ずつを ID で追う
+//! 照合は **ID だけ**で行う (値段や順位は使わない)。安い出品が大量に増えて順位が下がっても、
+//! ID 一覧に載っていれば生存。一覧 (最大 100) から溢れた分は直接照会に回す。
+//! 追跡中の出品が最安 10 件に入っていれば値段を今の値に更新する (値下げに追従)。
 //! 最安 10 件の listing ID を追跡対象に入れ、search が返す ID 一覧に載っているかを見る。
 //! 「出品された時刻 (listing.indexed) → 消えた時刻」がその出品の寿命。
 //! 窓 (最安 10 件) から押し出されただけの物を売れた扱いにしないため、ID で追う。
@@ -38,9 +41,10 @@
 //! まだ 1 度も取れていない銘柄がある間 (記録の作り直し直後) は 5 分おきに詰めて、
 //! 約 1 時間で 1 周目を埋める。
 //!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
-//!   - fetch   … 値段は 2 巡に 1 回でよい (FETCH_INTERVAL_SECS)
+//!   - fetch   … 1 銘柄 1 巡に 1 回。値段の更新に加えて、**新しい出品を追跡に入れるのがここ**。
+//!               間隔を空けるとその間に出品されて売れた物を丸ごと取りこぼし、速度が遅い側に偏る
 //!   - 確認    … 消えた候補の直接照会。1 組 CONFIRM_MAX_PER_SLICE 銘柄 × 10 件まで
-//! 25 ジェム (75 銘柄) で毎時およそ 80 回。残りは手動の取得や取引所比較の取り分。
+//! 18 ジェム (54 銘柄) で毎時およそ 78 回。残りは手動の取得や取引所比較の取り分。
 //! 1 組の中でも送信間隔を均してバーストを作らない。
 //!
 //! ## 5. 保存済みクエリは毎回今のルールに直す
@@ -306,16 +310,17 @@ fn slice_interval(store: &FlowStore) -> i64 {
     }
 }
 
-/// 値段 (fetch) を取り直す間隔。
+/// 値段 (fetch) を取り直す間隔 = 毎巡 (2 時間)。
 ///
-/// 生存確認は search が返す ID 一覧だけで足りるので、fetch は 2 巡に 1 回でよい。
-/// これで 1 銘柄あたりのリクエストが 2 回/巡 → 1.5 回/巡になり、同じ枠でより多くのジェムを追える。
+/// 一度 4 時間おき (2 巡に 1 回) にしたが、**新しい出品が追跡に入るのは fetch の時だけ**なので、
+/// 空白の間に出品されて売れた物が丸ごと見えなくなる。速く売れる物ほど取りこぼすので、
+/// 捌き速度が遅い側に偏る (2026-09-17 オーナー指摘の「取得は 4 時間に 1 回なんよね？」で気付いた)。
+/// 測るのが速度である以上ここは削れないので毎巡取り直す。
 ///
 /// 使う枠の計算 (trade2 の search は 600 回 / 6 時間 = 毎時 100 回):
-///   25 ジェム × 3 条件 = 75 銘柄
-///   2 時間で search 75 回 + fetch 約 38 回 = 113 回 → 毎時 約 57 回
-///   確認 fetch 毎時 12 回を足して 約 69 回。残りは手動の取得や取引所比較に使える
-const FETCH_INTERVAL_SECS: i64 = 4 * 3600;
+///   18 ジェム × 3 条件 = 54 銘柄 → 2 時間で search 54 + fetch 54 = 108 回 = 毎時 54 回
+///   確認 fetch 毎時 24 回を足して 約 78 回。残りは手動の取得や取引所比較に使える
+const FETCH_INTERVAL_SECS: i64 = 7000;
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
 const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
 /// 取りこぼした時に再挑戦するまでの最短間隔
@@ -727,6 +732,21 @@ pub fn apply_sample(
             gone_now += 1;
         }
         // list_complete でない時は判断を保留 (後で confirm_missing がまとめて確認する)
+    }
+
+    // 値段の取り直し: 追跡中の出品が最安 10 件に入っていたら、今の値段に更新する。
+    // 出品者が値下げしても ID は変わらないので、更新しないと売れたリストの値段が古いままになる
+    // (2026-09-17 オーナー指摘)。出品時刻は最初に見た値のままにする (寿命の起点を動かさない)
+    for e in entries {
+        if let Some(t) = state.tracked.iter_mut().find(|t| t.id == e.id && t.gone_at.is_none()) {
+            if e.amount.is_some() {
+                t.amount = e.amount;
+                t.currency = e.currency.clone();
+            }
+            if t.account.is_none() {
+                t.account = e.account.clone();
+            }
+        }
     }
 
     // 新しく見えた最安 10 件を追跡に入れる
@@ -1343,6 +1363,20 @@ mod tests {
         apply_sample(&mut st, now + 1200, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         assert_eq!(st.daily[0].gone, 0, "日次の消えた件数も戻す");
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
+    }
+
+    /// 追跡中の出品が値下げされたら、記録の値段も追従する
+    #[test]
+    fn price_is_refreshed_for_tracked_listings() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str, amt: f64| ListingRef { id: id.into(), amount: Some(amt), currency: Some("divine".into()), listed_at: Some(now - 3600), account: Some("Seller#1".into()) };
+        apply_sample(&mut st, now, 1, &["a".into()], &[e("a", 10.0)], false);
+        apply_sample(&mut st, now + 7200, 1, &["a".into()], &[e("a", 7.0)], false);
+        let t = st.tracked.iter().find(|t| t.id == "a").unwrap();
+        assert_eq!(t.amount, Some(7.0), "値下げが反映される");
+        assert_eq!(t.listed_at, Some(now - 3600), "出品時刻は動かさない");
+        assert_eq!(st.tracked.len(), 1, "同じ ID を二重に追跡しない");
     }
 
     /// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
