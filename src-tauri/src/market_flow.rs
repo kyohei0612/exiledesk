@@ -366,8 +366,14 @@ static PROGRESS: StdMutex<Option<(String, usize, usize)>> = StdMutex::new(None);
 static LAST_ERROR: StdMutex<Option<String>> = StdMutex::new(None);
 /// trade2 が返したレート制限の使用状況 (x-rate-limit-ip-state)
 static RATE_STATE: StdMutex<Option<String>> = StdMutex::new(None);
+/// trade2 が返したレート制限の規則 (x-rate-limit-ip)。画面側の待ちと同じ物を見せるために出す
+static RATE_RULES: StdMutex<Option<String>> = StdMutex::new(None);
 /// 429 を食らった時の再開予定時刻 (unix 秒)
 static RETRY_UNTIL: StdMutex<i64> = StdMutex::new(0);
+/// 今まさに待っている解除予定時刻 (unix 秒、0 なら待っていない)。
+/// オーナー指示 2026-09-17:「取得中でレート制限の秒数動かすようにして」→
+/// 秒数を文字に焼くと止まって見えるので、予定時刻だけ出して画面側で 1 秒ごとに数える。
+static WAIT_UNTIL: StdMutex<i64> = StdMutex::new(0);
 
 fn set_progress(v: Option<(String, usize, usize)>) {
     if let Ok(mut g) = PROGRESS.lock() {
@@ -381,6 +387,31 @@ fn set_error(v: Option<String>) {
 }
 fn set_rate_state(v: Option<String>) {
     if let Ok(mut g) = RATE_STATE.lock() {
+        *g = v;
+    }
+}
+fn set_rate_rules(v: Option<String>) {
+    if let Ok(mut g) = RATE_RULES.lock() {
+        *g = v;
+    }
+}
+/// 応答に付いてくるレート制限ヘッダ (規則と使用状況) を控える。search / fetch どちらでも呼ぶ
+fn note_rate_headers(body: &serde_json::Value) {
+    let rl = body.get("_ratelimit");
+    let pick = |k: &str| rl.and_then(|r| r.get(k)).and_then(|v| v.as_str()).map(str::to_string);
+    if let Some(v) = pick("x-rate-limit-ip") {
+        set_rate_rules(Some(v));
+    }
+    if let Some(v) = pick("x-rate-limit-ip-state") {
+        set_rate_state(Some(v));
+    }
+}
+/// 今待っている解除予定 (unix 秒)。待っていなければ 0
+fn wait_until() -> i64 {
+    WAIT_UNTIL.lock().map(|g| *g).unwrap_or(0)
+}
+fn set_wait_until(v: i64) {
+    if let Ok(mut g) = WAIT_UNTIL.lock() {
         *g = v;
     }
 }
@@ -1031,8 +1062,11 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         if body.is_none() {
             let wait = retry_wait_secs();
             if wait > 0 && wait <= MAX_WAIT_IN_SWEEP_SECS {
-                set_progress(Some((format!("待機中 ({} 秒)", wait), index, total_watches)));
+                // 秒数は画面側が 1 秒ごとに数える (ここで文字にすると止まって見える)
+                set_wait_until(now_secs() + wait + 2);
+                set_progress(Some(("レート制限の解除待ち".to_string(), index, total_watches)));
                 tokio::time::sleep(Duration::from_secs(wait as u64 + 2)).await;
+                set_wait_until(0);
                 set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
                 body = match crate::trade2::trade2_search(search).await {
                     Ok(v) => {
@@ -1052,13 +1086,8 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             tokio::time::sleep(pace).await;
             continue;
         };
-        // レート制限の使用状況を控える (UI に出す)
-        set_rate_state(
-            body.get("_ratelimit")
-                .and_then(|r| r.get("x-rate-limit-ip-state"))
-                .and_then(|v| v.as_str())
-                .map(str::to_string),
-        );
+        // レート制限の規則と使用状況を控える (画面はこれを見て待ち時間を出す)
+        note_rate_headers(&body);
         let total = body.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         let query_id = body.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let ids: Vec<String> = body
@@ -1079,6 +1108,7 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
                 Ok(v) => {
+                    note_rate_headers(&v);
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
                         for item in arr {
                             let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
@@ -1196,6 +1226,10 @@ pub struct FlowStatus {
     pub last_error: Option<String>,
     /// trade2 のレート制限の使用状況 ("4:10:0,12:60:0,..." 形式)
     pub rate_state: Option<String>,
+    /// レート制限の規則 (x-rate-limit-ip)。画面はこれと state から待ち時間を出す
+    pub rate_rules: Option<String>,
+    /// 今まさに待っている解除予定 (unix 秒、0 なら待っていない)
+    pub wait_until: i64,
     /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
     pub retry_until: i64,
     /// 取りこぼした回の再挑戦予定 (unix 秒、0 なら通常運転)
@@ -1241,6 +1275,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         manual_watches: store.watches.iter().filter(|w| w.manual).count(),
         last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
+        rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
+        wait_until: wait_until(),
         retry_until: retry_until(),
         retry_at: store.retry_at,
         slice: store.slice_cursor % SLICES,

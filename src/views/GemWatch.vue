@@ -28,6 +28,7 @@ import {
   type WatchMetric,
 } from "../state/watch-settings";
 import { cachedRows, rebuildWatches } from "../state/gem-watch-auto";
+import { tradeAuto } from "../services/trade2/auto-price";
 import { expectedValueOf } from "./gem-corrupt/expected-value";
 import { marketStore } from "../state/market-store";
 import { openGemCorrupt } from "../state/app-nav";
@@ -147,11 +148,16 @@ async function applyCycle(hours: number): Promise<void> {
   };
 }
 
-/** 取得中の進捗表示 */
+/**
+ * 取得中の進捗表示。レート制限の残り秒は共通の時計 (tradeAuto) から取るので、
+ * 待っている間もちゃんと減っていく (オーナー指示 2026-09-17:
+ * 「取得中でレート制限の秒数動かすようにして、一律で同じところを見るように」)。
+ */
 const sweepText = computed(() => {
   const s = status.value;
   if (!s?.sampling) return "";
-  return `取得中 ${s.done}/${s.total}${s.current ? ` · ${s.current}` : ""}`;
+  const wait = tradeAuto.waitSecs.value;
+  return `取得中 ${s.done}/${s.total}${wait > 0 ? ` · レート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
 });
 onMounted(() => {
   reload();

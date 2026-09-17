@@ -7,7 +7,7 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
-import { nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
+import { nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, syncRateLimit, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
 const rateLimitedUntil = ref<number | null>(null);
@@ -16,6 +16,29 @@ const now = ref(Date.now());
 setInterval(() => {
   now.value = Date.now();
 }, 1000);
+
+/**
+ * 自動巡回 (Rust 側) が見たレート制限をこちらにも取り込む (オーナー指示 2026-09-17:
+ * 「レートは一律で同じところを見るように全部」)。
+ *
+ * 裏の一括取得と画面の再取得は同じ IP の同じ枠を食う。別々に数えていたので、
+ * 裏が使い切っていても画面のボタンは「押せる」ままで、押して 429 を踏んでから
+ * 初めて秒数が出ていた。状態 (ヘッダ) と待ちの予定時刻をここで合流させる。
+ *
+ * 裏が search で見た状態か fetch で見た状態かは区別が付かないので、両方に当てる。
+ * 外すとしても「余計に待つ」側に外れるので、429 を踏むよりは安全側。
+ *
+ * @param rules   x-rate-limit-ip (上限:窓秒:罰則秒)
+ * @param state   x-rate-limit-ip-state (現在数:窓秒:残りの罰則秒)
+ * @param untilMs 解除予定 (ms)。0 / 過去なら無視
+ */
+export function noteExternalRate(rules: string | null, state: string | null, untilMs = 0): void {
+  if (rules && state) {
+    syncRateLimit("search", { "x-rate-limit-ip": rules, "x-rate-limit-ip-state": state });
+    syncRateLimit("fetch", { "x-rate-limit-ip": rules, "x-rate-limit-ip-state": state });
+  }
+  if (untilMs > Date.now() && untilMs > (rateLimitedUntil.value ?? 0)) rateLimitedUntil.value = untilMs;
+}
 
 export const tradeAuto = {
   pending,
@@ -36,6 +59,16 @@ export const tradeAuto = {
   budget: computed(() => {
     void now.value;
     return searchBudgetUsage();
+  }),
+  /**
+   * 「今トレードに投げられるまで」の残り秒。制限中の秒数と最小間隔の遅い方 (どの画面でも同じ値)。
+   * 1 秒ごとに数え直すので、待っている間はちゃんと減っていく。
+   */
+  waitSecs: computed(() => {
+    void now.value;
+    const limit = rateLimitedUntil.value ? Math.max(0, Math.ceil((rateLimitedUntil.value - now.value) / 1000)) : 0;
+    const cool = Math.max(0, Math.ceil((nextSearchAllowedAt() - Date.now()) / 1000));
+    return Math.max(limit, cool);
   }),
   /** 画面ヘッダ用の短い状態文 */
   label: computed(() => {

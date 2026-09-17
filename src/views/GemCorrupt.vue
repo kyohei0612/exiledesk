@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
-import { refetchState } from "../services/trade2/auto-price";
+import { refetchState, tradeAuto } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
@@ -242,12 +242,19 @@ const fmtClock = (t: number | null | undefined): string => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getHours())}:${p(d.getMinutes())}`;
 };
-/** 429 の残り秒 (0 なら制限なし) */
+/**
+ * レート制限の残り秒 (0 なら制限なし)。画面ごとに別の数え方をしないよう、
+ * 裏の巡回 (retry_until / wait_until) も画面の取得も同じ時計 (tradeAuto) に合流させてある
+ * (オーナー指示 2026-09-17:「レートは一律で同じところを見るように全部」)。
+ */
 const retryLeft = computed(() => {
-  const until = flowStatus.value?.retry_until ?? 0;
-  if (!until) return 0;
-  return Math.max(0, until - Math.floor(nowMs.value / 1000));
+  const st = flowStatus.value;
+  const nowSec = Math.floor(nowMs.value / 1000);
+  const fromFlow = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
+  return Math.max(fromFlow > 0 ? fromFlow - nowSec : 0, tradeAuto.rateLimitSecs.value);
 });
+/** 次にトレードへ投げられるまでの残り秒 (制限 + 最小間隔。取得中の表示に出す) */
+const rateWait = computed(() => tradeAuto.waitSecs.value);
 /** 使った回数 ("4:10:0,12:60:0" → "10 秒 4 / 60 秒 12") */
 const rateText = computed(() => {
   const raw = flowStatus.value?.rate_state;
@@ -871,7 +878,7 @@ const summary = computed(() => {
             <span class="font-display tracking-[0.06em] text-[var(--exile-color-text-secondary)]">自動追跡</span>
             <span v-if="flowStatus.sampling" class="inline-flex items-center gap-1.5 text-emerald-300">
               <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
-              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="flowStatus.slice_done > 0"> (続きから)</span><span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
+              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="rateWait > 0"> · レート待ち {{ rateWait }} 秒</span><span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
             </span>
             <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5" :class="flowStatus.retry_at > 0 ? 'text-amber-300' : 'text-[var(--exile-color-text-secondary)]'">
               <span class="inline-block w-2 h-2 rounded-full" :class="flowStatus.retry_at > 0 ? 'bg-amber-300 animate-pulse' : 'bg-[var(--exile-color-text-tertiary)]'" aria-hidden="true"></span>

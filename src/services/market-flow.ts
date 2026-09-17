@@ -23,6 +23,7 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { noteExternalRate } from "./trade2/auto-price";
 
 export interface Tracked {
   id: string;
@@ -128,6 +129,10 @@ export interface FlowStatus {
   cycle_secs: number;
   /** 最後に全銘柄を 1 巡した時刻 (手動の一括取得を含む)。次の自動取得はここから周期ぶん後 */
   swept_at: number;
+  /** レート制限の規則 (x-rate-limit-ip) */
+  rate_rules: string | null;
+  /** 今まさに待っている解除予定 (unix 秒、0 なら待っていない) */
+  wait_until: number;
 }
 
 /** 1 巡の周期を変える (1〜24 時間)。戻り値は実際に入った秒数 */
@@ -140,11 +145,18 @@ export async function setFlowCycle(secs: number): Promise<number | null> {
   }
 }
 
-/** 自動追跡が今どうなっているか */
+/**
+ * 自動追跡が今どうなっているか。
+ * ついでに、裏の巡回が見たレート制限を画面側の待ちにも反映する
+ * (オーナー指示 2026-09-17:「レートは一律で同じところを見るように全部」)。
+ */
 export async function loadFlowStatus(): Promise<FlowStatus | null> {
   if (!isTauriRuntime()) return null;
   try {
-    return await invoke<FlowStatus>("market_flow_status");
+    const st = await invoke<FlowStatus>("market_flow_status");
+    const until = Math.max(st.wait_until, st.retry_until) * 1000;
+    noteExternalRate(st.rate_rules ?? null, st.rate_state ?? null, until);
+    return st;
   } catch {
     return null;
   }
