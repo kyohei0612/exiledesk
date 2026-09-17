@@ -236,6 +236,8 @@ export interface FlowSummary {
   olderThanMedian: number;
   /** 7 日売れずに打ち切った件数 (日次集計から。中央値には入らない) */
   droppedUnsold: number;
+  /** 売れた出品の値段 (出品時の通貨のまま)。平均売値の計算に使う */
+  soldPrices: { amount: number; currency: string }[];
   /** 出品が 100 件を超えていて「消えた」を判定できない状態か */
   truncated: boolean;
   /** 消えた出品の寿命の中央値 (分)。参考表示用 */
@@ -275,6 +277,7 @@ const EMPTY_SUMMARY: FlowSummary = {
   tone: "unknown",
   olderThanMedian: 0,
   droppedUnsold: 0,
+  soldPrices: [],
   truncated: false,
   medianMin: null,
   soldIn24h: null,
@@ -325,6 +328,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
 
   const records: { life: number; gone: boolean }[] = [];
   const goneLives: number[] = [];
+  const soldPrices: { amount: number; currency: string }[] = [];
   const aliveAges: number[] = [];
   let stale = 0;
   const stalePrices: number[] = [];
@@ -336,7 +340,10 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     const life = Math.max(60, (t.gone_at ?? nowSec) - start);
     const gone = !!t.gone_at;
     records.push({ life, gone });
-    if (gone) goneLives.push(life);
+    if (gone) {
+      goneLives.push(life);
+      if (t.amount != null && t.currency) soldPrices.push({ amount: t.amount, currency: t.currency });
+    }
     else {
       aliveAges.push(life);
       if (life >= NORMAL_SECS) {
@@ -419,6 +426,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     tone,
     olderThanMedian,
     droppedUnsold,
+    soldPrices,
     truncated: state.list_complete === false,
     medianMin: median != null ? Math.round(median / 60) : null,
     soldIn24h: d1.rate,

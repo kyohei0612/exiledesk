@@ -11,6 +11,7 @@
  */
 import { computed, ref } from "vue";
 import { flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
+import { averageInDisplay, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
 
 const props = defineProps<{
   open: boolean;
@@ -80,6 +81,7 @@ const summaries = computed(() =>
       alive: f.alive,
       medianMin: f.medianMin,
       olderThanMedian: f.olderThanMedian,
+      avgSold: averageInDisplay(f.soldPrices),
       droppedUnsold: f.droppedUnsold,
       truncated: f.truncated,
       total: st?.total ?? null,
@@ -215,7 +217,21 @@ async function verify(key: string): Promise<void> {
           売れたリスト<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ title }}</span>
           <span v-if="note" class="ml-2 text-[11px] text-[var(--exile-color-text-tertiary)] tracking-normal">{{ note }}</span>
         </h2>
-        <button type="button" class="text-[12px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="emit('close')">閉じる</button>
+        <div class="flex items-center gap-3 text-[11px]">
+          <label class="inline-flex items-center gap-1 text-[var(--exile-color-text-tertiary)]">
+            表示通貨
+            <select
+              class="text-[11px] px-1 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]"
+              :value="displayCurrency.cur.value"
+              @change="setDisplayCurrency(($event.target as HTMLSelectElement).value as DisplayCurrency)"
+            >
+              <option value="exalted">高貴</option>
+              <option value="chaos">カオス</option>
+              <option value="divine">神</option>
+            </select>
+          </label>
+          <button type="button" class="text-[12px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="emit('close')">閉じる</button>
+        </div>
       </div>
 
       <!-- 条件ごとの判定 -->
@@ -230,6 +246,7 @@ async function verify(key: string): Promise<void> {
           <p class="mt-1 text-[var(--exile-color-text-secondary)] leading-relaxed">{{ s.sentence }}</p>
           <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
             <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
+            <div v-if="s.avgSold != null" class="flex justify-between gap-2 text-[var(--exile-color-text-secondary)]"><dt>平均売値</dt><dd>{{ displayCurrency.money(s.avgSold) }}</dd></div>
             <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
             <div v-if="s.olderThanMedian > 0" class="flex justify-between gap-2 text-amber-300"><dt>うち表示より長い</dt><dd>{{ s.olderThanMedian }} 件</dd></div>
             <div v-if="s.droppedUnsold > 0" class="flex justify-between gap-2"><dt>7 日で打ち切り</dt><dd>{{ s.droppedUnsold }} 件</dd></div>

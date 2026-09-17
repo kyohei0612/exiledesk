@@ -15,7 +15,8 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { loadFlow, loadFlowStatus, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { flowSentence, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { averageInDisplay, displayCurrency } from "../state/display-currency";
 import {
   addManualGem,
   removeManualGem,
@@ -224,10 +225,14 @@ function cells(en: string) {
   return SALE_KEYS.map((k) => {
     const f = summarizeFlow(flowStore.value?.states?.[watchKey(en, k)]);
     const watched = flowStore.value?.watches?.some((w) => w.key === watchKey(en, k));
+    const avg = averageInDisplay(f.soldPrices);
     return {
       key: k,
       label: SALE_KEY_LABEL[k],
       verdict: f.label || (f.gone + f.alive > 0 ? `判定待ち ${f.gone + f.alive} 件` : watched ? "巡回待ち" : "未登録"),
+      // 判定の横に出す実測 (売れるまでの時間と平均売値)
+      detail: f.gone > 0 ? `${fmtSellTime(f.medianMin)}${avg != null ? ` · ${displayCurrency.money(avg)}` : ""}` : "",
+      title: flowSentence(f),
       tone: f.tone,
       gone: f.gone,
       alive: f.alive,
@@ -396,8 +401,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-secondary)]">{{ gem.manual ? "手動" : "上位" }}</td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
                 <td v-for="c in cells(gem.name)" :key="c.key" class="py-1.5 pl-3">
-                  <button type="button" class="text-[11px] hover:underline" :class="toneClass(c.tone)" :title="`${c.label} の記録を見る (追跡 ${c.alive} / 売れた ${c.gone})`" @click="openSold(gem.name, c.key)">
-                    {{ c.verdict }}
+                  <button type="button" class="text-[11px] hover:underline text-left" :class="toneClass(c.tone)" :title="`${c.label}: ${c.title} (押すと記録の一覧)`" @click="openSold(gem.name, c.key)">
+                    {{ c.verdict }}<span v-if="c.detail" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> {{ c.detail }}</span>
                   </button>
                 </td>
                 <td class="py-1.5 pl-3 text-right whitespace-nowrap">

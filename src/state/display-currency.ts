@@ -70,3 +70,23 @@ export const displayCurrency = {
     return `${sign}${fmtNum(d)}${opts?.unit === false ? "" : ` ${LABEL[cur.value]}`}`;
   },
 };
+
+/**
+ * 出品時の通貨がバラバラな値段を、表示通貨に換算して平均する (2026-09-17)。
+ * オーナー指示:「早い / 普通 / 遅い の横に平均売り単価を、表示通貨の単位で」。
+ *
+ * @returns 表示通貨での平均。1 件も無い / 相場が取れていない時は null
+ */
+export function averageInDisplay(prices: { amount: number; currency: string }[]): number | null {
+  if (prices.length === 0) return null;
+  const r = marketStore.rates.value;
+  const toExalted = (p: { amount: number; currency: string }): number | null => {
+    if (p.currency === "exalted") return p.amount;
+    if (p.currency === "divine") return r.divine > 0 ? p.amount * r.divine : null;
+    if (p.currency === "chaos") return r.chaos > 0 ? p.amount * r.chaos : null;
+    return null;
+  };
+  const ex = prices.map(toExalted).filter((v): v is number => v != null);
+  if (ex.length === 0) return null;
+  return displayCurrency.toDisplay(ex.reduce((a, b) => a + b, 0) / ex.length);
+}
