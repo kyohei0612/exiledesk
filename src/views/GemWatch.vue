@@ -87,10 +87,10 @@ function reload(): void {
  * オーナー指示 2026-09-17:「一括取得は手動は自由で、自動が 8 時間に 1 回ね」→ 手で押す分に制限は付けない。
  */
 const sweeping = ref(false);
-async function sweep(): Promise<void> {
+async function sweep(reason?: string): Promise<void> {
   if (sweeping.value || status.value?.sampling) return;
   sweeping.value = true;
-  message.value = { ok: true, text: "一括取得を始めました (終わるまで数分かかります)" };
+  message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
   const poll = window.setInterval(reload, 3000);
   try {
     const ok = await sweepNow();
@@ -104,22 +104,6 @@ async function sweep(): Promise<void> {
   }
 }
 
-/**
- * 自動取得の間隔 (オーナー指示 2026-09-17:「自動取得の時間数を UI で変更できるようにしたい」)。
- * 記録側 (market_flow.rs) が持っている値をそのまま出し入れする。1 巡を 12 組に分けて回すので、
- * 12 時間なら 1 時間おきに 1 組ずつ取る計算になる。
- */
-const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
-const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? 8 * 3600) / 3600) * 10) / 10);
-async function applyCycle(hours: number): Promise<void> {
-  const applied = await setFlowCycle(Math.round(hours * 3600));
-  status.value = await loadFlowStatus();
-  message.value =
-    applied == null
-      ? { ok: false, text: "間隔を変更できませんでした" }
-      : { ok: true, text: `自動取得を ${Math.round(applied / 3600)} 時間ごとにしました (前回の一括取得から数えます)` };
-}
-
 /** 前回の一括取得 / 次の自動取得 (手動で押した分も同じ時計を使う) */
 const fmtClock = (sec: number): string =>
   sec > 0 ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -130,6 +114,38 @@ const sweepClock = computed(() => {
   const next = st.swept_at > 0 ? ` · 次の自動取得 ${fmtClock(st.next_at)}` : "";
   return `${last}${next}`;
 });
+
+/**
+ * 自動取得の間隔 (オーナー指示 2026-09-17:「自動取得の時間数を UI で変更できるようにしたい」)。
+ * 記録側 (market_flow.rs) が持っている値をそのまま出し入れする。
+ * 前回の一括取得 (手動でも自動でも) からこの時間ぶん経ったら、全銘柄をまとめて 1 巡する。
+ */
+const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
+const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? 8 * 3600) / 3600) * 10) / 10);
+async function applyCycle(hours: number): Promise<void> {
+  const applied = await setFlowCycle(Math.round(hours * 3600));
+  status.value = await loadFlowStatus();
+  if (applied == null) {
+    message.value = { ok: false, text: "間隔を変更できませんでした" };
+    return;
+  }
+  const st = status.value;
+  const h = Math.round(applied / 3600);
+  const last = st && st.swept_at > 0 ? `前回の一括取得は ${fmtClock(st.swept_at)}` : "まだ 1 巡していません";
+  /**
+   * 新しい間隔で見てもう予定時刻を過ぎているなら、そのまま 1 巡して周期を始める
+   * (オーナー指示 2026-09-17:「もし一括取得できるなら、そのまま一括取得周期開始しよう」)。
+   */
+  const due = !st || st.swept_at <= 0 || st.next_at <= Math.floor(Date.now() / 1000);
+  if (due && !st?.sampling && !sweeping.value) {
+    await sweep(`自動取得を ${h} 時間ごとにしました。${last} で、もう ${h} 時間経っているので`);
+    return;
+  }
+  message.value = {
+    ok: true,
+    text: `自動取得を ${h} 時間ごとにしました。${last} · 次の自動取得は ${fmtClock(st?.next_at ?? 0)}`,
+  };
+}
 
 /** 取得中の進捗表示 */
 const sweepText = computed(() => {
@@ -449,7 +465,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             :disabled="sweeping || !!status?.sampling"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
             :title="`監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
-            @click="sweep"
+            @click="sweep()"
           >
             {{ sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
           </button>
