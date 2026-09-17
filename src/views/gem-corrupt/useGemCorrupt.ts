@@ -13,8 +13,9 @@ import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
+import { recordFlow } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { rowQueryOptions } from "./row-query";
+import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 
@@ -215,9 +216,32 @@ export function useGemCorrupt() {
 
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
-  // 2026-09-17 オーナー選択 (案 B): 売値は securable (インスタントバイアウトのみ) で取る。
-  // 捌き速度の追跡は any でないと成立しないので、別物のこの結果は記録に混ぜない。
-  // 記録は 1 時間ごとの自動巡回 (market_flow.rs) だけが作る。
+  /**
+   * 手動の「再取得」を捌き速度の記録に回す (足す方向だけ)。
+   *
+   * 売値は securable (即時購入のみ) で取るので、追跡 (any) の部分集合になる。
+   * そこに見えた出品は確実に生きているので「生存の更新・新しい出品の追加」には使える。
+   * 逆に見えなかった出品を消えた扱いにはしない (即時購入で出ていないだけかもしれない)。
+   * オーナー指摘 (2026-09-17):「なんで手動取得はその自動取得の速さに関われないの」。
+   */
+  async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
+    const gem = GEMS.find((g) => g.en === gemEn);
+    await recordFlow({
+      key: watchKey(gemEn, key),
+      label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
+      total: r.total,
+      ids: r.allIds ?? r.listingIds ?? [],
+      entries: r.listings.map((l) => ({
+        id: l.id,
+        amount: l.amount,
+        currency: l.currency,
+        account: l.account || null,
+        listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
+      })),
+      partial: true,
+    });
+  }
+
 
   async function fetchSalePrices(): Promise<void> {
     if (!selected.value || pricing.value || isRateLimited()) return;
@@ -233,6 +257,8 @@ export function useGemCorrupt() {
         if (!r) continue;
         saleInfo.value = { ...saleInfo.value, [row.key]: r };
         if (r.minExalted != null) sale.value = { ...sale.value, [row.key]: Math.round(r.minExalted * 100) / 100 };
+        // 生存確認と新規追加にだけ使う (消えた判定はしない)
+        void recordRowSample(gem.en, row.key, r);
       }
       priceError.value = tradeAuto.lastError.value;
     } finally {

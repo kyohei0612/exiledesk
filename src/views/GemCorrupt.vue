@@ -191,7 +191,7 @@ function loadBook(): LedgerBook {
 const book = ref<LedgerBook>(loadBook());
 const ledgerGem = computed(() => g.selected.value?.en ?? "");
 
-// ---- 売れ行き (2026-09-16: gem_flow が 1 時間ごとに記録した物を読むだけ) ----
+// ---- 売れ行き (2026-09-16: market_flow が 2 時間ごとに記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
 /** 売れたリスト (オーナー指示 2026-09-17): 判定の根拠になった出品を 1 件ずつ見る */
 const soldOpen = ref(false);
@@ -265,7 +265,7 @@ const flowWatch = computed(() => {
   return flowStore.value?.watches?.find((x) => SALE_KEYS.some((k) => x.key === watchKey(en, k))) ?? null;
 });
 const flowTracked = computed(() => !!flowWatch.value);
-/** 1 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
+/** 2 時間ごとの巡回に入っているか。手動で足した物でも自動リストに載れば巡回する */
 const flowAuto = computed(() => !!flowWatch.value?.auto);
 /** 最安 1 件の内訳 (値段の種類・出品者・出品時刻)。おかしな値段の切り分け用 (2026-09-17) */
 function cheapestTitle(key: SaleKey): string {
@@ -851,12 +851,12 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowAuto ? "自動 (1 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
+              {{ flowAuto ? "自動 (2 時間ごと)" : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
               追跡 {{ flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト)。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。
-            捌き速度の追跡はこれとは別に、オフラインの出品も含めた全部 (指定なし) で見ています。即時購入だけで追うと、同じ出品が時間帯によって検索から消えたり現れたりして「売れた」と誤判定するためです。そのため記録が増えるのは 1 時間ごとの自動巡回だけで、「再取得」を押した分は記録に混ぜません。
+            捌き速度の追跡はこれとは別に、オフラインの出品も含めた全部 (指定なし) で見ています。即時購入だけで追うと、同じ出品が時間帯によって検索から消えたり現れたりして「売れた」と誤判定するためです。「再取得」を押した分は、そこに見えた出品の生存確認と新しい出品の追加にだけ使います (見えなかった物を消えた扱いにはしません)。消えた判定をするのは 2 時間ごとの自動巡回だけです。
             判定は最安 10 件の出品を 1 件ずつ ID で追い、「1 日以内に売れた割合」で出します (半分以上なら速い / 2 日で半分なら普通 / それ以下は遅い)。売れ残りをまだ 1 件も観測していない間は「(暫定)」が付きます。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>

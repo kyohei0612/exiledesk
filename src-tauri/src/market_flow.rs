@@ -141,6 +141,9 @@ pub struct WatchState {
     /// 最後に「行方不明の ID」をまとめて確認した時刻 (3 時間おき)
     #[serde(default)]
     pub confirmed_at: i64,
+    /// 最後に値段 (fetch) を取った時刻。2 巡に 1 回だけ取り直す
+    #[serde(default)]
+    pub fetched_at: i64,
     /// 最安値 (表示用)
     #[serde(default)]
     pub cheapest_amount: Option<f64>,
@@ -245,16 +248,27 @@ pub fn looks_like_mass_gone(state: &WatchState, ids: &[String]) -> bool {
 }
 
 /// 1 組 (10 分) あたりの確認 fetch の上限。
-/// 通常の取得が 1 時間 60 回なので、これを足しても 6 時間 600 回の制限に収まる
-const CONFIRM_MAX_PER_SLICE: usize = 3;
+/// 12 組 (2 時間) で最大 24 回 = 毎時 12 回。下の計算に収まる
+const CONFIRM_MAX_PER_SLICE: usize = 2;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
-/// 全銘柄が 1 巡する周期
-const SAMPLE_INTERVAL: Duration = Duration::from_secs(3600);
-/// 1 時間を何回に分けて取るか (1 回あたりの連続アクセスを減らす)
-const SLICES: usize = 6;
+/// 全銘柄が 1 巡する周期 (2026-09-17: 追跡できるジェムを増やすため 1 時間 → 2 時間)
+const SAMPLE_INTERVAL: Duration = Duration::from_secs(2 * 3600);
+/// 1 巡を何回に分けて取るか (1 回あたりの連続アクセスを減らす)
+const SLICES: usize = 12;
 /// 分割 1 回の間隔 (SAMPLE_INTERVAL / SLICES)
 const SLICE_INTERVAL_SECS: i64 = 600;
+
+/// 値段 (fetch) を取り直す間隔。
+///
+/// 生存確認は search が返す ID 一覧だけで足りるので、fetch は 2 巡に 1 回でよい。
+/// これで 1 銘柄あたりのリクエストが 2 回/巡 → 1.5 回/巡になり、同じ枠でより多くのジェムを追える。
+///
+/// 使う枠の計算 (trade2 の search は 600 回 / 6 時間 = 毎時 100 回):
+///   25 ジェム × 3 条件 = 75 銘柄
+///   2 時間で search 75 回 + fetch 約 38 回 = 113 回 → 毎時 約 57 回
+///   確認 fetch 毎時 12 回を足して 約 69 回。残りは手動の取得や取引所比較に使える
+const FETCH_INTERVAL_SECS: i64 = 4 * 3600;
 /// 起動直後の 1 回目を飛ばす条件
 const FIRST_SAMPLE_MIN_GAP: i64 = 900;
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
@@ -517,6 +531,10 @@ pub struct RecordRequest {
     /// 最安 10 件 (新しく追跡に入れる)
     #[serde(default)]
     pub entries: Vec<ListingRef>,
+    /// 追跡より狭い条件で取った結果か (画面の売値は securable = 即時購入のみ)。
+    /// true なら「見えた = 生きている」だけを信じ、「見えない = 消えた」とは judgment しない
+    #[serde(default)]
+    pub partial: bool,
 }
 
 /// 見えていた出品 1 件 (ID と値段)
@@ -557,6 +575,14 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
     let state = store.states.entry(req.key).or_default();
     // ID 一覧が出品全部を含んでいる時だけ「消えた」を判定する。
     // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
+    if req.partial {
+        // 売値 (securable) の結果。生存確認と新規追加にだけ使う
+        apply_partial(state, now, &req.ids, &req.entries);
+        prune(state, now);
+        store.sampled_at = now;
+        save_store(&app, &store)?;
+        return Ok(Vec::new());
+    }
     let list_complete = req.ids.len() as u64 >= req.total
         && !(req.ids.is_empty() && !state.tracked.is_empty())
         && !looks_like_mass_gone(state, &req.ids);
@@ -579,6 +605,21 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
     store.sampled_at = now;
     save_store(&app, &store)?;
     Ok(missing)
+}
+
+/// 追跡より狭い条件 (売値 = securable) の結果を、足す方向にだけ取り込む。
+///
+/// 売値の検索は追跡 (any) の部分集合なので、そこに見えた出品は確実に生きている。
+/// 逆に見えないことは何の証拠にもならない (即時購入で出ていないだけ)。
+/// そこで「生存の更新・新しい出品の追加・消えた扱いからの復活」だけに使い、
+/// 消えた判定と出品総数・最安値はいじらない (オーナー指摘 2026-09-17:
+/// 「なんで手動取得はその自動取得の速さに関われないの」)。
+pub fn apply_partial(state: &mut WatchState, now: i64, ids: &[String], entries: &[ListingRef]) {
+    let total = state.total;
+    let cheapest = (state.cheapest_amount, state.cheapest_currency.clone());
+    apply_sample(state, now, total, ids, entries, false);
+    state.cheapest_amount = cheapest.0;
+    state.cheapest_currency = cheapest.1;
 }
 
 /// 画面が確認 fetch を投げた結果を反映する (market_flow_record の戻り値に対する返事)
@@ -899,8 +940,11 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         tokio::time::sleep(pace).await;
 
         // --- fetch: 最安 10 件の値段 (新規を追跡に入れるため) ---
+        // 生存確認は上の ID 一覧で足りるので、値段は 2 巡に 1 回だけ取り直す
+        let last_fetched = load_store(app).states.get(&watch.key).map(|s| s.fetched_at).unwrap_or(0);
+        let need_fetch = now - last_fetched >= FETCH_INTERVAL_SECS;
         let mut entries: Vec<ListingRef> = Vec::new();
-        let top: Vec<String> = ids.iter().take(10).cloned().collect();
+        let top: Vec<String> = if need_fetch { ids.iter().take(10).cloned().collect() } else { Vec::new() };
         if !top.is_empty() && !query_id.is_empty() {
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
@@ -943,6 +987,9 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             && !(ids.is_empty() && !state.tracked.is_empty())
             && !looks_like_mass_gone(state, &ids);
         apply_sample(state, now, total, &ids, &entries, list_complete);
+        if need_fetch {
+            state.fetched_at = now;
+        }
 
         // --- 行方不明の確認 (巡回ごと、1 銘柄 10 件まで、1 組 CONFIRM_MAX_PER_SLICE 銘柄まで) ---
         let need_confirm = !list_complete
@@ -1261,6 +1308,23 @@ mod tests {
         apply_sample(&mut st, now + 1200, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         assert_eq!(st.daily[0].gone, 0, "日次の消えた件数も戻す");
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
+    }
+
+    /// 狭い条件の結果は、生存確認と新規追加にだけ使う (消えた判定はしない)
+    #[test]
+    fn partial_sample_never_marks_gone() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str, amt: f64| ListingRef { id: id.into(), amount: Some(amt), currency: Some("divine".into()), listed_at: None, account: None };
+        apply_sample(&mut st, now, 3, &["a".into(), "b".into(), "c".into()], &[e("a", 5.0), e("b", 6.0), e("c", 7.0)], true);
+        st.cheapest_amount = Some(5.0);
+        // 売値 (securable) では a と、まだ知らない d しか見えない
+        apply_partial(&mut st, now + 600, &["a".into(), "d".into()], &[e("a", 5.0), e("d", 4.0)]);
+        assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0, "b と c を消えた扱いにしない");
+        assert_eq!(st.tracked.len(), 4, "新しく見えた d は追跡に入れる");
+        assert_eq!(st.tracked.iter().find(|t| t.id == "a").unwrap().last_seen, now + 600, "見えた物は生存を更新");
+        assert_eq!(st.cheapest_amount, Some(5.0), "最安値 (追跡側の数字) は上書きしない");
+        assert_eq!(st.total, 3, "出品総数も上書きしない");
     }
 
     /// 半分以上が一度に消えたように見えたら、検索結果だけで判定しない
