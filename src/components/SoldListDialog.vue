@@ -7,11 +7,10 @@
  * 2026-09-17 の作り直し (オーナー指摘:「同時に 14 件とか何のことってなる」):
  *   - 一覧は「確認した時刻」でまとめる。2 時間ごとに確認しているので、
  *     1 回の確認で何件もまとめて消えているのが普通。それが分かる見出しを出す
- *   - 判定は 1 行の日本語で書く (「1 日以内に 8 / 10 件が売れました」)
- *   - 「暫定」はその場で理由を書く
+ *   - 判定は実測そのままを書く (「速い · 3 時間で売れる」「14 件が売れました (売れるまで 3 時間)」)
  */
 import { computed, ref } from "vue";
-import { flowSentence, summarizeFlow, verifyFlow, PROVISIONAL_NOTE, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
+import { flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
 
 const props = defineProps<{
   open: boolean;
@@ -76,7 +75,6 @@ const summaries = computed(() =>
       label: k.label,
       verdict: f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし"),
       sentence: flowSentence(f),
-      provisional: f.provisional,
       tone: f.tone,
       gone: f.gone,
       alive: f.alive,
@@ -223,14 +221,14 @@ async function verify(key: string): Promise<void> {
           <div class="flex items-center justify-between gap-2">
             <span class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</span>
             <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none whitespace-nowrap" :class="toneClass(s.tone)">
-              {{ s.verdict }}<span v-if="s.provisional" :title="PROVISIONAL_NOTE"> (暫定)</span>
+              {{ s.verdict }}<template v-if="s.medianMin != null"> · {{ fmtSellTime(s.medianMin) }}で売れる</template>
             </span>
           </div>
           <p class="mt-1 text-[var(--exile-color-text-secondary)] leading-relaxed">{{ s.sentence }}</p>
           <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
             <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
             <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
-            <div class="flex justify-between gap-2"><dt>売れるまで (中央値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
+            <div class="flex justify-between gap-2"><dt>売れるまで (真ん中の値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
             <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
             <div class="flex justify-between gap-2"><dt>最後に確認</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
           </dl>

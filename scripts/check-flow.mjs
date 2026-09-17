@@ -69,9 +69,9 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     NOW,
   );
   check(
-    "1. 売れ残り未観測なら暫定の印が付く",
-    s.label === "速い" && s.provisional === true && /暫定/.test(flowSentence(s)),
-    `label=${s.label} 暫定=${s.provisional} 文=${flowSentence(s)}`,
+    "1. 実測の売れるまでの時間で判定する",
+    s.label === "速い" && /件が売れました（売れるまで/.test(flowSentence(s)),
+    `label=${s.label} 文=${flowSentence(s)}`,
   );
 }
 
@@ -88,7 +88,7 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     ]),
     NOW,
   );
-  check("2. 売れ残りを観測したら暫定が外れる", s.label === "速い" && s.provisional === false, `label=${s.label} 24h率=${s.soldIn24h} 母数=${s.known24}`);
+  check("2. 売れ残りがあっても、売れた実績が多ければ速い", s.label === "速い", `label=${s.label} 文=${flowSentence(s)}`);
 }
 
 // ---------------------------------------------------------------------------

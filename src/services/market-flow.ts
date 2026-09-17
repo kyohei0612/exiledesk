@@ -182,24 +182,29 @@ export async function verifyFlow(key: string): Promise<VerifyResult | null> {
   }
 }
 
-/**
- * 判定を 1 行の日本語にする (オーナー指摘 2026-09-17:「暫定だけだと分かりづらい」)。
- * 画面ではこの文をそのまま出す。数字の意味が分かる形にしておく。
- */
-export function flowSentence(f: FlowSummary): string {
-  if (!f.enough) {
-    if (f.gone + f.alive === 0) return "まだ記録がありません";
-    const need = Math.max(0, MIN_KNOWN - f.known48);
-    return `結果が分かった出品が ${f.known48} 件（あと ${need} 件で判定できます）`;
-  }
-  const head = `1 日以内に ${f.hit24} / ${f.known24} 件が売れました`;
-  if (f.provisional) return `${head}。ただし売れ残りをまだ 1 件も見ていないので暫定です`;
-  return head;
+/** 分 → 「3 時間」「25 分」「2 日」 */
+export function fmtSellTime(min: number | null): string {
+  if (min == null) return "—";
+  if (min < 60) return `${Math.max(1, Math.round(min))} 分`;
+  const h = min / 60;
+  if (h < 48) return `${h < 10 ? h.toFixed(1).replace(/\.0$/, "") : Math.round(h)} 時間`;
+  return `${Math.round(h / 24)} 日`;
 }
 
-/** 判定が暫定かどうかの説明 (ホバー用) */
-export const PROVISIONAL_NOTE =
-  "結果が分かった出品が全部「売れた」なので、率が 100% にしかなりません。1 日以上売れ残る出品が出てくると確定します。";
+/**
+ * 判定を 1 行の日本語にする。実測そのままを書く
+ * (オーナー指示 2026-09-17:「事実ベースで売れ時間出そう。暫定とかいいから」)。
+ */
+export function flowSentence(f: FlowSummary): string {
+  if (f.gone === 0) {
+    if (f.alive === 0) return "まだ記録がありません";
+    return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）`;
+  }
+  const head = `${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`;
+  if (!f.enough) return `${head}。判定にはあと ${Math.max(0, MIN_KNOWN - f.gone)} 件`;
+  if (f.stale > 0) return `${head}。2 日以上売れ残りが ${f.stale} 件`;
+  return head;
+}
 
 export type FlowTone = "fast" | "normal" | "slow" | "unknown";
 
@@ -327,22 +332,26 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   const staleAvg = stalePrices.length > 0 ? stalePrices.reduce((a, b) => a + b, 0) / stalePrices.length : null;
   const staleRatio = cheapest != null && cheapest > 0 && staleAvg != null ? staleAvg / cheapest : null;
 
-  // 「売れなかった」を 1 件も観測できていないうちは、母数が売れた分だけになるので
-  // 必ず 100% になる。判定は出すが (暫定) を付けて、鵜呑みにしないようにする (2026-09-17 全点検)
-  const censored24 = records.some((r) => !r.gone && r.life >= FAST_SECS);
-  const censored48 = records.some((r) => !r.gone && r.life >= NORMAL_SECS);
+  // 判定は実測そのもので出す (オーナー指示 2026-09-17:
+  // 「事実ベースで売れ時間出そう。暫定とかいいから『速い (●時間で売れる)』みたいな分かりやすい方」)。
+  //   売れた出品が 3 件以上あれば、売れるまでの時間の中央値でそのまま言い切る
+  //   ただし 2 日以上売れ残っている出品の方が多ければ「遅い」(実際に滞留しているので)
+  goneLives.sort((a, b) => a - b);
+  const median = goneLives.length > 0 ? goneLives[Math.floor(goneLives.length / 2)] : null;
 
   let tone: FlowTone = "unknown";
   let label = "";
-  let provisional = false;
-  if (d1.known >= MIN_KNOWN && (d1.rate ?? 0) >= 0.5) {
-    tone = "fast";
-    provisional = !censored24 && d1.hit === d1.known;
-    label = "速い";
-  } else if (d2.known >= MIN_KNOWN) {
-    if ((d2.rate ?? 0) >= 0.5) {
+  if (stale >= MIN_KNOWN && stale > goneLives.length) {
+    // 2 日以上売れ残っている出品の方が多い = 実際に滞留している
+    tone = "slow";
+    label = "遅い";
+  } else if (goneLives.length >= MIN_KNOWN && median != null) {
+    if (median <= FAST_SECS / 4) {
+      // 6 時間以内
+      tone = "fast";
+      label = "速い";
+    } else if (median <= FAST_SECS) {
       tone = "normal";
-      provisional = !censored48 && d2.hit === d2.known;
       label = "普通";
     } else {
       tone = "slow";
@@ -350,6 +359,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     }
   }
   const enough = label !== "";
+  const provisional = false;
 
   // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか
   aliveAges.sort((a, b) => b - a);
@@ -358,9 +368,6 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   if (!enough && need > 0 && aliveAges.length >= need) {
     etaSecs = Math.max(0, NORMAL_SECS - aliveAges[need - 1]);
   }
-
-  goneLives.sort((a, b) => a - b);
-  const median = goneLives.length > 0 ? goneLives[Math.floor(goneLives.length / 2)] : null;
 
   return {
     label,

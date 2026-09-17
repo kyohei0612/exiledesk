@@ -19,7 +19,7 @@ import { displayCurrency, type DisplayCurrency } from "../state/display-currency
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, expectedSales, roi, type RouteId, type RouteResult, type SaleSlot } from "./gem-corrupt/model";
-import { flowSentence, fmtAge, loadFlow, loadFlowStatus, summarizeFlow, PROVISIONAL_NOTE, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { flowSentence, fmtAge, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./gem-corrupt/row-query";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { resumeAtText, waitText } from "../utils/wait-text";
@@ -322,7 +322,6 @@ function flowTitleOf(f: ReturnType<typeof flowOf>): string {
   const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v * 100)}%`);
   return [
     flowSentence(f),
-    f.provisional ? PROVISIONAL_NOTE : "",
     `1 日以内に売れた割合: ${f.hit24} / ${f.known24} 件 (${pct(f.soldIn24h)})`,
     `2 日以内: ${f.hit48} / ${f.known48} 件 (${pct(f.soldIn48h)})`,
     `売れた分の寿命の中央値: ${fmtAge(f.medianMin)}`,
@@ -822,20 +821,18 @@ const summary = computed(() => {
                 <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" :title="`${row.label} の記録を一覧で見る`" @click="openSold(row.key)">
                   <template v-for="f in [flowOf(row.key)]" :key="row.key">
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
-                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">
-                        {{ f.label }}<span v-if="f.provisional" :title="PROVISIONAL_NOTE">?</span>
-                      </span>
+                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        1 日以内に {{ f.hit24 }} / {{ f.known24 }} 件
+                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)
                       </span>
                       <span class="text-[10px] underline text-[var(--exile-color-text-tertiary)] whitespace-nowrap">売れたリスト</span>
                     </div>
                     <span
                       v-else-if="f.gone + f.alive > 0"
                       class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap"
-                      :title="`${flowSentence(f)}。判定には結果の分かった出品が 3 件必要です (今 ${f.known48} 件)。押すと記録の一覧`"
+                      :title="`${flowSentence(f)}。判定には売れた出品が 3 件必要です。押すと記録の一覧`"
                     >
-                      <span class="underline">記録中 {{ f.gone }} 件売れた / {{ f.alive }} 件並んでいる</span><template v-if="f.etaMin != null"> · 判定まであと {{ fmtAge(f.etaMin) }}</template>
+                      <span class="underline">{{ f.gone > 0 ? `${f.gone} 件売れた (${fmtSellTime(f.medianMin)})` : "まだ売れていない" }} / {{ f.alive }} 件並んでいる</span>
                     </span>
                     <span v-else-if="isWatched(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)] underline" title="追跡対象です。巡回の順番が来ると記録が始まります。押すと記録の一覧">巡回待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
