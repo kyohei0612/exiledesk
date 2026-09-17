@@ -26,7 +26,12 @@ function findEsbuild() {
     return require_.resolve("esbuild", { paths: [join(store, dir, "node_modules")] });
   }
 }
-const { build } = await import(pathToFileURL(findEsbuild()).href);
+const { build: esbuild } = await import(pathToFileURL(findEsbuild()).href);
+/**
+ * 束ねる時の共通設定。vite の `import.meta.env` はここには無いので潰しておく
+ * (market-flow.ts がレート制限の共通化で trade2 側を読むようになり、DEV 判定が混ざった 2026-09-17)。
+ */
+const build = (opts) => esbuild({ bundle: true, format: "esm", platform: "neutral", logLevel: "error", define: { "import.meta.env.DEV": "false" }, ...opts });
 
 const HOUR = 3600;
 const NOW = 1_700_000_000;
