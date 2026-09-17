@@ -200,9 +200,10 @@ pub struct WatchState {
     pub total: u64,
     /// 最後にサンプルした時刻
     pub sampled_at: i64,
-    /// 最後に「一覧から消えた分」を判定した時刻 (旧: 直接照会の時刻)
-    #[serde(default)]
-    pub confirmed_at: i64,
+    /// 直近のサンプルで ID 一覧が全部取れていたか。
+    /// false が続く銘柄は出品が 100 件を超えていて「消えた」を判定できない (画面に出す)
+    #[serde(default = "default_true")]
+    pub list_complete: bool,
     /// 最後に値段 (fetch) を取った時刻。2 巡に 1 回だけ取り直す
     #[serde(default)]
     pub fetched_at: i64,
@@ -221,6 +222,10 @@ pub struct WatchState {
 ///     検索を securable (即時購入のみ) に統一したので、any で貯めた記録とは母集団が違う。
 pub const FLOW_SCHEMA: u32 = 4;
 
+fn default_true() -> bool {
+    true
+}
+
 /// 追跡に使う `query.status.option`。
 ///
 /// トレードサイトの「インスタントバイアウト」= securable。
@@ -228,8 +233,7 @@ pub const FLOW_SCHEMA: u32 = 4;
 /// その中でルールを決めるからエニーで見る必要が全くない」。
 /// 画面の売値と同じ条件なので、手動の再取得も自動巡回と同じルールで判定できる。
 ///
-/// securable は出品者の状況で出入りするが、消えた候補は ID を直接 fetch して
-/// 実在を確かめてから判定する (fetch は status の絞り込みを受けない)。
+/// 生死は検索が返す ID 一覧だけで見る (ID 直接 fetch は消えた出品にもキャッシュを返すので使わない)。
 const TRACK_STATUS: &str = "securable";
 
 /// 保存済みのクエリを今のルール (TRACK_STATUS) に合わせる。直したら true。
@@ -293,11 +297,12 @@ const TRACK_MAX_PER_WATCH: usize = 60;
 /// 最安帯の捌け方を測るのが目的なので、沈んだ物は追うのをやめて集計に畳む
 /// (オーナー指摘 2026-09-17:「出品がめっちゃ増えると ID 検索がめっちゃ増えるけど平気？」)
 const BURIED_MAX: u32 = 3;
-/// 「消えたのと同時に同じ出品者が並べ直した」とみなす時間差 (オーナー指示 2026-09-17)。
+/// 「消えたのと同時に同じ出品者が並べ直した」とみなす余裕 (オーナー指示 2026-09-17)。
 ///
-/// 売れた直後に在庫を並べ直す人がいるので、この範囲に収まる出れ替わりは
-/// 値段の付け替えとみなして売れた件数から外す。これより開いていれば売れた扱いでよい。
-const RELIST_WINDOW_SECS: i64 = 300;
+/// 判定は「前回その出品を見た後に、同じ出品者が新しく並べた」で行う。
+/// 巡回は 2 時間おきなので、当初の「5 分以内」では実際には一度も引っかからなかった
+/// (2026-09-17 レビュー: 売れた 105 件中 0 件)。前回確認からの区間で見る。
+const RELIST_SLACK_SECS: i64 = 300;
 /// 日次集計を残す日数
 const DAILY_MAX_DAYS: usize = 30;
 /// リクエストの間隔
@@ -333,17 +338,6 @@ fn slice_interval(store: &FlowStore) -> i64 {
     }
 }
 
-/// 値段 (fetch) を取り直す間隔 = 毎巡 (2 時間)。
-///
-/// 一度 4 時間おき (2 巡に 1 回) にしたが、**新しい出品が追跡に入るのは fetch の時だけ**なので、
-/// 空白の間に出品されて売れた物が丸ごと見えなくなる。速く売れる物ほど取りこぼすので、
-/// 捌き速度が遅い側に偏る (2026-09-17 オーナー指摘の「取得は 4 時間に 1 回なんよね？」で気付いた)。
-/// 測るのが速度である以上ここは削れないので毎巡取り直す。
-///
-/// 使う枠の計算 (trade2 の search は 600 回 / 6 時間 = 毎時 100 回):
-///   18 ジェム × 3 条件 = 54 銘柄 → 2 時間で search 54 + fetch 54 = 108 回 = 毎時 54 回
-///   確認 fetch 毎時 24 回を足して 約 78 回。残りは手動の取得や取引所比較に使える
-const FETCH_INTERVAL_SECS: i64 = 7000;
 /// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
 const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
 /// 取りこぼした時に再挑戦するまでの最短間隔
@@ -772,11 +766,14 @@ pub fn apply_sample(
         if t.gone_at.is_some() {
             // 消えた扱いにした出品がまた現れたら生き返らせる (取り下げでも売却でもなかった)
             if present.contains(t.id.as_str()) {
-                if let Some(g) = t.gone_at {
+                // 付け替え扱いの分は売れた件数に入れていないので、日次からも引かない
+                if let (Some(g), false) = (t.gone_at, t.relisted) {
                     revived_days.push(day_of(g));
                 }
                 t.gone_at = None;
+                t.relisted = false;
                 t.last_seen = now;
+                t.buried = 0;
             }
             continue;
         }
@@ -786,11 +783,13 @@ pub fn apply_sample(
         } else if list_complete {
             // 出品全部が見えている状態で一覧に無い = 売れたか取り下げた。
             // ただし同じ出品者が 5 分以内に並べ直していれば、値段の付け替えとみなす
+            // 前回この出品を見た時刻より後に、同じ出品者が新しく並べていれば付け替えとみなす
+            let since = t.last_seen - RELIST_SLACK_SECS;
             let relisted = t.account.as_deref().is_some_and(|acc| {
                 entries.iter().any(|e| {
                     e.account.as_deref() == Some(acc)
                         && !known_ids.contains(&e.id)
-                        && e.listed_at.map(|at| (now - at).abs() <= RELIST_WINDOW_SECS).unwrap_or(false)
+                        && e.listed_at.map(|at| at >= since && at <= now + RELIST_SLACK_SECS).unwrap_or(false)
                 })
             });
             t.gone_at = Some(now);
@@ -799,7 +798,7 @@ pub fn apply_sample(
                 gone_now += 1;
             }
         }
-        // list_complete でない時は判断を保留 (後で confirm_missing がまとめて確認する)
+        // list_complete でない時は判断を保留 (一覧が切れているので「消えた」とは言えない)
     }
 
     // 値段の取り直し: 追跡中の出品が最安 10 件に入っていたら、今の値段に更新する。
@@ -945,7 +944,6 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     // 追跡の検索は英語名で投げるので www 固定にする。
     // JP サイトは日本語名しか受け付けず "Unknown item base type" (HTTP 400) になる (2026-09-16)。
     let site: Option<String> = Some("www".to_string());
-    let now = now_secs();
     // 自動で追う銘柄を SLICES 組に分け、指定された組だけ取る。
     //
     // 組は「ジェム単位」で割り当てる。1 ジェムの 3 条件 (レベル 21 / 品質 23% / 完成品) が
@@ -991,6 +989,9 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         }
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         let _ = resumed;
+        // 時刻は銘柄ごとに取り直す。組の先頭で固定していた頃は、1 組を回り切る十数分ぶん
+        // 記録が過去にずれて「初見 < 出品時刻」が出ていた (2026-09-17 レビュー指摘)
+        let now = now_secs();
         // --- search: 総数と ID 一覧 ---
         let mut query = watch.query.clone();
         normalize_track_status(&mut query);
@@ -1050,11 +1051,12 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         tokio::time::sleep(pace).await;
 
         // --- fetch: 最安 10 件の値段 (新規を追跡に入れるため) ---
-        // 生存確認は上の ID 一覧で足りるので、値段は 2 巡に 1 回だけ取り直す
-        let last_fetched = load_store(app).states.get(&watch.key).map(|s| s.fetched_at).unwrap_or(0);
-        let need_fetch = now - last_fetched >= FETCH_INTERVAL_SECS;
+        // ここは毎回取る。**新しい出品が追跡に入るのは fetch の時だけ**なので、間引くと
+        // その間に出品されて売れた物を丸ごと取りこぼし、速度が遅い側に偏る。
+        // 2026-09-17 のレビューで、間引き条件 (2 巡に 1 回) が実際には 60 銘柄中 42 件で
+        // 発火しており、値段も新規も 3.6 時間に 1 回しか入っていなかった。
         let mut entries: Vec<ListingRef> = Vec::new();
-        let top: Vec<String> = if need_fetch { ids.iter().take(10).cloned().collect() } else { Vec::new() };
+        let top: Vec<String> = ids.iter().take(10).cloned().collect();
         if !top.is_empty() && !query_id.is_empty() {
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch(fetch).await {
@@ -1105,9 +1107,8 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         // 2026-09-17 に実測)。応答が空の時や、100 件を超えて一覧が切れている時は判定しない。
         let list_complete = ids.len() as u64 >= total && !(ids.is_empty() && !state.tracked.is_empty());
         apply_sample(state, now, total, &ids, &entries, list_complete);
-        if need_fetch {
-            state.fetched_at = now;
-        }
+        state.fetched_at = now;
+        state.list_complete = list_complete;
 
         // 一覧が切れている時 (出品 100 件超): 載っていない追跡分は値段で沈んでいる。
         // BURIED_MAX 回続いたら追跡をやめる (最安帯の捌け方を測るのが目的なので)

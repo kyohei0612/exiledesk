@@ -823,7 +823,7 @@ const summary = computed(() => {
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
                       <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)
+                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)<span v-if="f.olderThanMedian > 0" class="text-[var(--exile-color-text-tertiary)]"> · 未売却 {{ f.olderThanMedian }} 件はそれより長い</span>
                       </span>
                       <span class="text-[10px] underline text-[var(--exile-color-text-tertiary)] whitespace-nowrap">売れたリスト</span>
                     </div>

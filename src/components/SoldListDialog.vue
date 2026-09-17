@@ -79,6 +79,9 @@ const summaries = computed(() =>
       gone: f.gone,
       alive: f.alive,
       medianMin: f.medianMin,
+      olderThanMedian: f.olderThanMedian,
+      droppedUnsold: f.droppedUnsold,
+      truncated: f.truncated,
       total: st?.total ?? null,
       cheapest: st?.cheapest_amount ?? null,
       cheapestCur: st?.cheapest_currency ?? null,
@@ -228,6 +231,9 @@ async function verify(key: string): Promise<void> {
           <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
             <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
             <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
+            <div v-if="s.olderThanMedian > 0" class="flex justify-between gap-2 text-amber-300"><dt>うち表示より長い</dt><dd>{{ s.olderThanMedian }} 件</dd></div>
+            <div v-if="s.droppedUnsold > 0" class="flex justify-between gap-2"><dt>7 日で打ち切り</dt><dd>{{ s.droppedUnsold }} 件</dd></div>
+            <div v-if="s.truncated" class="flex justify-between gap-2 text-amber-300"><dt>判定不可</dt><dd>出品 100 件超</dd></div>
             <div class="flex justify-between gap-2"><dt>売れるまで (真ん中の値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
             <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
             <div class="flex justify-between gap-2"><dt>最後に確認</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>

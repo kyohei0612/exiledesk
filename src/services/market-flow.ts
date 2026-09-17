@@ -51,7 +51,8 @@ export interface WatchState {
   daily: Daily[];
   total: number;
   sampled_at: number;
-  confirmed_at?: number;
+  /** 直近のサンプルで ID 一覧が全部取れていたか (false = 出品 100 件超で判定できない) */
+  list_complete?: boolean;
   cheapest_amount?: number | null;
   cheapest_currency?: string | null;
 }
@@ -211,14 +212,18 @@ export function fmtSellTime(min: number | null): string {
  * (オーナー指示 2026-09-17:「事実ベースで売れ時間出そう。暫定とかいいから」)。
  */
 export function flowSentence(f: FlowSummary): string {
+  if (f.truncated) return "出品が多すぎて (100 件超) 売れたかどうかを判定できません";
   if (f.gone === 0) {
     if (f.alive === 0) return "まだ記録がありません";
     return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）`;
   }
-  const head = `${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`;
-  if (!f.enough) return `${head}。判定にはあと ${Math.max(0, MIN_KNOWN - f.gone)} 件`;
-  if (f.stale > 0) return `${head}。2 日以上売れ残りが ${f.stale} 件`;
-  return head;
+  const parts = [`${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`];
+  if (!f.enough) parts.push(`判定にはあと ${Math.max(0, MIN_KNOWN - f.gone)} 件`);
+  // 「速い」と出していても、それより長く並んでいる出品があるなら必ず併記する
+  if (f.olderThanMedian > 0) parts.push(`ただし並んでいる ${f.alive} 件のうち ${f.olderThanMedian} 件はもっと長く並んでいます`);
+  if (f.stale > 0) parts.push(`2 日以上売れ残り ${f.stale} 件`);
+  if (f.droppedUnsold > 0) parts.push(`7 日売れずに打ち切り ${f.droppedUnsold} 件`);
+  return parts.join("。");
 }
 
 export type FlowTone = "fast" | "normal" | "slow" | "unknown";
@@ -229,6 +234,12 @@ export interface FlowSummary {
   tone: FlowTone;
   /** 売れ残りを 1 件も観測できていない = 率が 100% にしかならない状態 (2026-09-17) */
   provisional: boolean;
+  /** まだ並んでいる出品のうち、表示している「売れるまでの時間」より長く並んでいる件数 */
+  olderThanMedian: number;
+  /** 7 日売れずに打ち切った件数 (日次集計から。中央値には入らない) */
+  droppedUnsold: number;
+  /** 出品が 100 件を超えていて「消えた」を判定できない状態か */
+  truncated: boolean;
   /** 消えた出品の寿命の中央値 (分)。参考表示用 */
   medianMin: number | null;
   /** 1 日 / 2 日以内に売れた割合 (0-1)。結果が分かっている件数に対する割合 */
@@ -265,6 +276,9 @@ const EMPTY_SUMMARY: FlowSummary = {
   label: "",
   tone: "unknown",
   provisional: false,
+  olderThanMedian: 0,
+  droppedUnsold: 0,
+  truncated: false,
   medianMin: null,
   soldIn24h: null,
   soldIn48h: null,
@@ -384,10 +398,19 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     etaSecs = Math.max(0, NORMAL_SECS - aliveAges[need - 1]);
   }
 
+  // 「3.8 時間で売れる」と出しているのに、それより長く並んでいる出品が何件あるか。
+  // 観測できている期間が短いうちは中央値が短く出るので、その事実を数字で併記する
+  // (2026-09-17 レビュー: 判定が出た銘柄の生存中 175 件のうち 117 件が中央値より古かった)
+  const olderThanMedian = median == null ? 0 : aliveAges.filter((a) => a > median).length;
+  const droppedUnsold = (state.daily ?? []).reduce((sum, d) => sum + (d.survived ?? 0), 0);
+
   return {
     label,
     tone,
     provisional,
+    olderThanMedian,
+    droppedUnsold,
+    truncated: state.list_complete === false,
     medianMin: median != null ? Math.round(median / 60) : null,
     soldIn24h: d1.rate,
     soldIn48h: d2.rate,
