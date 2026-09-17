@@ -20,6 +20,8 @@ export const WATCH_METRIC_LABEL: Record<WatchMetric, string> = {
 };
 
 export interface WatchSettings {
+  /** 設定の版。既定値を変えた時に上げて、古い既定のまま使っている人に反映する */
+  v: number;
   /** 取得先のアセンダンシー (空文字 = 全アセンダンシー = リーグ全体の上位) */
   klass: string;
   /** 上位を決める基準 */
@@ -36,12 +38,19 @@ export interface WatchSettings {
   autoTop: boolean;
 }
 
+/**
+ * 既定値 (オーナー指示 2026-09-17)。
+ *
+ * 「全アセンダンシー・使用率 5 人以上」で今まで通り 18 ジェム前後が監視に入る形にする。
+ * 18 ジェム = 54 銘柄で毎時およそ 78 回 (trade2 の上限は毎時 100 回)。
+ */
 export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
+  v: 2,
   klass: "",
   metric: "quality23",
-  topN: 5,
+  topN: 18,
   minUsers: 5,
-  maxGems: 10,
+  maxGems: 18,
   manual: [],
   autoTop: true,
 };
@@ -53,7 +62,20 @@ function load(): WatchSettings {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_WATCH_SETTINGS };
     const s = JSON.parse(raw) as Partial<WatchSettings>;
+    // v1 (上位 5 / 上限 10) のまま保存されていたら、新しい既定に合わせる。
+    // 手で変えた設定は尊重したいが、v1 は初期値のまま使っていた人なので上書きしてよい
+    if (s.v !== DEFAULT_WATCH_SETTINGS.v) {
+      return {
+        ...DEFAULT_WATCH_SETTINGS,
+        klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
+        metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
+        minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
+        manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
+        autoTop: s.autoTop !== false,
+      };
+    }
     return {
+      v: DEFAULT_WATCH_SETTINGS.v,
       klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
       metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
       topN: clamp(s.topN, 0, 25, DEFAULT_WATCH_SETTINGS.topN),

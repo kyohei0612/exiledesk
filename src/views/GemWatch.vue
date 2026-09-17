@@ -95,15 +95,33 @@ const matches = computed(() => {
   return hit.slice(0, 12);
 });
 
-async function apply(patch: Parameters<typeof updateWatchSettings>[0]): Promise<void> {
+/**
+ * 設定変更の反映は少し待ってからまとめて行う (オーナー指示 2026-09-17:
+ * 「チェックの切り替えにレート制限置いていいよ」)。
+ * チェックを何度も切り替えても、最後の状態で 1 回だけ登録し直す。
+ */
+const SYNC_MIN_GAP_MS = 3000;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let lastSyncAt = 0;
+const pending = ref(false);
+
+function apply(patch: Parameters<typeof updateWatchSettings>[0]): void {
   updateWatchSettings(patch);
-  await sync();
+  pending.value = true;
+  if (syncTimer) clearTimeout(syncTimer);
+  const wait = Math.max(400, SYNC_MIN_GAP_MS - (Date.now() - lastSyncAt));
+  syncTimer = setTimeout(() => {
+    syncTimer = null;
+    void sync();
+  }, wait);
 }
 
 /** 設定を追跡に反映する (poe.ninja は叩かず、保存済みの取得結果から作り直す) */
 async function sync(): Promise<void> {
   if (busy.value) return;
   busy.value = true;
+  pending.value = false;
+  lastSyncAt = Date.now();
   try {
     const ok = await rebuildWatches();
     flowStore.value = await loadFlow();
@@ -234,7 +252,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40"
             @click="sync"
           >
-            {{ busy ? "反映中…" : "今すぐ反映" }}
+            {{ busy ? "反映中…" : pending ? "反映待ち…" : "今すぐ反映" }}
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
