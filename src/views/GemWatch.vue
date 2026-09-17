@@ -28,6 +28,8 @@ import {
   type WatchMetric,
 } from "../state/watch-settings";
 import { cachedRows, rebuildWatches } from "../state/gem-watch-auto";
+import { expectedValueOf } from "./gem-corrupt/expected-value";
+import { marketStore } from "../state/market-store";
 import { openGemCorrupt } from "../state/app-nav";
 // 旧「クラフト選定ジェム」タブ。取得と使用率ランキングはここに埋め込む (2026-09-17 タブを統合)
 import GemUsageRanking from "./GemBreak.vue";
@@ -105,7 +107,11 @@ const sweepText = computed(() => {
   if (!s?.sampling) return "";
   return `取得中 ${s.done}/${s.total}${s.current ? ` · ${s.current}` : ""}`;
 });
-onMounted(reload);
+onMounted(() => {
+  reload();
+  // 期待値の計算に素材の相場が要る (30 分以内に取っていれば通信しない)
+  void marketStore.ensureMarket();
+});
 onActivated(() => {
   reload();
   // 開いている間は 20 秒ごとに読み直す (別のタブで再取得した分がすぐ出るように)
@@ -220,30 +226,84 @@ const orphans = computed(() => {
   return [...names.entries()].map(([name, tracked]) => ({ name, tracked })).sort((a, b) => b.tracked - a.tracked);
 });
 
+/** スピリットジェムかどうか (期待値の素材が別物なので要る) */
+const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
+
 /**
- * 一覧の並び (オーナー指示 2026-09-17):
- *   1. 3 条件 (レベル 21 / 品質 23% / 完成品) が**全部「速い」**の物を最優先
- *   2. その中では 3 条件の平均売値が高い順
- *   3. 以降は「速い」の数が多い順 → 平均売値が高い順
- * 記録を読み直すたびに勝手に並び替わる (flowStore が変わると再計算される)。
+ * 1 行分の計算。実売の平均売値をそのままジェムコラプトの賭けの式に入れて、
+ * 「1 回回したら手元にいくら残るか」(期待値) を出す (オーナー指示 2026-09-17)。
  */
-const sortedGems = computed(() => {
-  const scored = gems.value.map((gem) => {
+const scoredGems = computed(() => {
+  return gems.value.map((gem) => {
     const cs = cells(gem.name);
-    const fast = cs.filter((c) => c.tone === "fast").length;
+    const price = {} as Record<(typeof SALE_KEYS)[number], number | null>;
+    const fastKeys = new Set<string>();
+    for (const c of cs) {
+      price[c.key] = c.avgExalted;
+      if (c.tone === "fast") fastKeys.add(c.key);
+    }
     const prices = cs.map((c) => c.avgExalted).filter((v): v is number => v != null);
     const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
-    return { gem, fast, allFast: fast === 3, avg };
+    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false }, price);
+    return {
+      ...gem,
+      cells: cs,
+      price,
+      fastKeys,
+      fast: fastKeys.size,
+      allFast: fastKeys.size === 3,
+      /** レベル 21 と完成品が速い (オーナーの言う「2 番目に大事」) */
+      coreFast: fastKeys.has("level21") && fastKeys.has("finished"),
+      avg,
+      ev: e?.ev ?? null,
+      evRoute: e?.route.label ?? "",
+      evRoi: e?.roi ?? null,
+      evUpfront: e?.route.upfront ?? null,
+    };
   });
-  return scored
-    .sort((a, b) => {
-      if (a.allFast !== b.allFast) return a.allFast ? -1 : 1;
-      if (a.fast !== b.fast) return b.fast - a.fast;
-      if ((a.avg ?? -1) !== (b.avg ?? -1)) return (b.avg ?? -1) - (a.avg ?? -1);
-      return a.gem.name.localeCompare(b.gem.name);
-    })
-    .map((x) => ({ ...x.gem, fast: x.fast, avg: x.avg }));
 });
+
+/**
+ * 並べ替え (オーナー指示 2026-09-17)。
+ *   既定「期待値」: 3 条件とも速い物を一番上 → レベル 21 と完成品が速い物 → 速い数 → 期待値の高い順
+ *   条件名 (レベル 21 / 品質 23% / 完成品) を押した時: その条件が速い物を上に、その中で平均売値の高い順
+ * どちらも記録を読み直すたびに勝手に並び替わる (flowStore が変われば再計算される)。
+ */
+type SortMode = "ev" | (typeof SALE_KEYS)[number];
+const sortBy = ref<SortMode>("ev");
+const sortedGems = computed(() => {
+  const mode = sortBy.value;
+  const rows = scoredGems.value.slice();
+  const num = (v: number | null): number => (v == null ? Number.NEGATIVE_INFINITY : v);
+  if (mode === "ev") {
+    rows.sort((a, b) => {
+      if (a.allFast !== b.allFast) return a.allFast ? -1 : 1;
+      if (a.coreFast !== b.coreFast) return a.coreFast ? -1 : 1;
+      if (a.fast !== b.fast) return b.fast - a.fast;
+      if (num(a.ev) !== num(b.ev)) return num(b.ev) - num(a.ev);
+      return a.name.localeCompare(b.name);
+    });
+  } else {
+    rows.sort((a, b) => {
+      const af = a.fastKeys.has(mode);
+      const bf = b.fastKeys.has(mode);
+      if (af !== bf) return af ? -1 : 1;
+      if (num(a.price[mode]) !== num(b.price[mode])) return num(b.price[mode]) - num(a.price[mode]);
+      if (num(a.ev) !== num(b.ev)) return num(b.ev) - num(a.ev);
+      return a.name.localeCompare(b.name);
+    });
+  }
+  return rows;
+});
+const SORT_NOTE: Record<SortMode, string> = {
+  ev: "3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (1 回回した時の手残り) が高い順。",
+  level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の平均売値が高い順。",
+  quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の平均売値が高い順。",
+  finished: "完成品が「速い」ジェムを上に、その中では 完成品の平均売値が高い順。",
+};
+function sortHead(mode: SortMode): string {
+  return sortBy.value === mode ? "text-[var(--exile-color-accent-focus)]" : "hover:text-[var(--exile-color-text-secondary)]";
+}
 
 // ---- 監視中の状態 ----
 function cells(en: string) {
@@ -404,7 +464,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">監視中 ({{ gems.length }} ジェム)</h3>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
-          3 条件とも「速い」ジェムを上に、その中では 3 条件の平均売値が高い順。記録を読み直すたびに並び替わります。
+          {{ SORT_NOTE[sortBy] }}記録を読み直すたびに並び替わります (見出しを押すと並べ替えが変わります)。
         </p>
         <p v-if="gems.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
           まだ 1 つもありません。上の検索で足すか、「クラフト選定ジェム」で取得すると上位が自動で入ります。
@@ -413,18 +473,38 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <table class="w-full text-[12px]">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
-                <th class="text-left font-normal pb-1">ジェム</th>
+                <!-- 一番左が期待値。見出しを押すとその条件で並べ替える (オーナー指示 2026-09-17) -->
+                <th class="text-left font-normal pb-1">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" title="1 回回した時の手残り (期待値) の高い順に並べる" @click="sortBy = 'ev'">
+                    期待値{{ sortBy === "ev" ? " ▼" : "" }}
+                  </button>
+                </th>
+                <th class="text-left font-normal pb-1 pl-3">ジェム</th>
                 <th class="text-left font-normal pb-1 pl-3">入り方 / 速い数 / 平均売値</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
-                <th class="text-left font-normal pb-1 pl-3">レベル 21</th>
-                <th class="text-left font-normal pb-1 pl-3">品質 23%</th>
-                <th class="text-left font-normal pb-1 pl-3">完成品</th>
+                <th v-for="k in SALE_KEYS" :key="k" class="text-left font-normal pb-1 pl-3">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} が速い物を上に、その中で平均売値の高い順に並べる`" @click="sortBy = k">
+                    {{ SALE_KEY_LABEL[k] }}{{ sortBy === k ? " ▼" : "" }}
+                  </button>
+                </th>
                 <th class="pb-1 pl-3"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="gem in sortedGems" :key="gem.name" class="border-t border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5">
+                <td class="py-1.5 whitespace-nowrap">
+                  <span
+                    v-if="gem.ev != null"
+                    class="text-[12px]"
+                    :class="gem.ev > 0 ? 'text-emerald-300' : gem.ev < 0 ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'"
+                    :title="`${gem.evRoute}: 1 回あたりの期待収支 ${displayCurrency.money(gem.ev, { signed: true })}${gem.evRoi != null ? ` (利回り ${(gem.evRoi * 100).toFixed(0)}%)` : ''}${gem.evUpfront ? ` / 1 回の元手 ${displayCurrency.money(gem.evUpfront)}` : ''}
+売値は実際に売れた値段の平均を使っています`"
+                  >
+                    {{ displayCurrency.money(gem.ev, { signed: true }) }}
+                  </span>
+                  <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="売れた記録か素材の相場がまだ足りません">—</span>
+                </td>
+                <td class="py-1.5 pl-3">
                   {{ jaSkill(gem.name) }}
                   <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ gem.name }}</span>
                 </td>
@@ -434,7 +514,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                   <span v-if="gem.avg != null" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">平均 {{ displayCurrency.money(gem.avg) }}</span>
                 </td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
-                <td v-for="c in cells(gem.name)" :key="c.key" class="py-1.5 pl-3">
+                <td v-for="c in gem.cells" :key="c.key" class="py-1.5 pl-3">
                   <button type="button" class="text-[11px] hover:underline text-left" :class="toneClass(c.tone)" :title="`${c.label}: ${c.title} (押すと記録の一覧)`" @click="openSold(gem.name, c.key)">
                     {{ c.verdict }}<span v-if="c.detail" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ c.detail }}</span>
                   </button>
