@@ -35,6 +35,12 @@
 //! 2026-09-16〜17 にこれを怠って踏んだ事故: 深夜に 10 件同時消失を「売れた」と数え、
 //! 9 日売れ残っていた出品まで売れたことになっていた。
 //!
+//! ### 出品が増えても回数は増えない
+//! search は 1 銘柄 1 回で ID を最大 100 件まとめて返し、fetch も最安 10 件を 1 回。
+//! 確認も 1 銘柄 1 回 (10 件まで) なので、**リクエストは銘柄数だけで決まる**。
+//! ただし出品が 100 件を超えると、値段で沈んだ追跡分が毎巡「消えた候補」になって
+//! 確認の枠を食う。BURIED_MAX 回続けて「一覧外だが生存」なら追跡をやめて集計に畳む。
+//!
 //! ## 4. 取得量 (trade2: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間 = 毎時 100 回)
 //! 銘柄を 12 組に分け、10 分おきに 1 組ずつ取る (2 時間で全銘柄が 1 巡)。
 //! 組は**ジェム単位**で割り当てるので、1 ジェムの 3 条件は必ず同じ組で一緒に取れる。
@@ -132,6 +138,11 @@ pub struct Tracked {
     /// 出品者のアカウント名 (2026-09-17)
     #[serde(default)]
     pub account: Option<String>,
+    /// 検索の一覧に出てこなかったのに、直接照会では生きていた回数 (連続)。
+    /// 出品が 100 件を超えると安い順 100 件しか返らないので、値段で沈んだ出品がこうなる。
+    /// 一覧に戻れば 0 に戻る。BURIED_MAX 回続いたら追跡から外す (2026-09-17)
+    #[serde(default)]
+    pub buried: u32,
 }
 
 impl Tracked {
@@ -271,6 +282,12 @@ pub struct FlowStore {
 const TRACK_MAX_SECS: i64 = 7 * 24 * 3600;
 /// 1 銘柄で追跡する上限件数
 const TRACK_MAX_PER_WATCH: usize = 60;
+/// 何回続けて「一覧に出ないが生きている」なら追跡をやめるか。
+///
+/// 安い順 100 件から沈んだ出品は、毎巡かならず「消えた候補」になり確認 fetch を食う。
+/// 最安帯の捌け方を測るのが目的なので、沈んだ物は追うのをやめて集計に畳む
+/// (オーナー指摘 2026-09-17:「出品がめっちゃ増えると ID 検索がめっちゃ増えるけど平気？」)
+const BURIED_MAX: u32 = 3;
 /// 日次集計を残す日数
 const DAILY_MAX_DAYS: usize = 30;
 /// 行方不明の ID をまとめて確認する間隔 (検索回数を間引くため)
@@ -746,6 +763,7 @@ pub fn apply_sample(
         }
         if present.contains(t.id.as_str()) {
             t.last_seen = now;
+            t.buried = 0;
         } else if list_complete {
             // 出品全部が見えている状態で一覧に無い = 売れたか取り下げた
             t.gone_at = Some(now);
@@ -785,6 +803,7 @@ pub fn apply_sample(
             amount: e.amount,
             currency: e.currency.clone(),
             account: e.account.clone(),
+            buried: 0,
         });
         added_now += 1;
     }
@@ -815,7 +834,9 @@ pub fn apply_confirm(state: &mut WatchState, now: i64, checked: &[String], alive
             continue;
         }
         if alive.contains(&t.id) {
+            // 一覧に出てこないのに生きていた = 値段で沈んでいる
             t.last_seen = now;
+            t.buried = t.buried.saturating_add(1);
         } else {
             t.gone_at = Some(now);
             gone_now += 1;
@@ -851,6 +872,19 @@ fn bump_daily(state: &mut WatchState, now: i64, added: u32, gone: u32, survived:
 /// キャッシュを膨らませないための掃除 (オーナー指示: 1 ID は 1 週間)
 pub fn prune(state: &mut WatchState, now: i64) {
     let mut survived = 0u32;
+    let mut buried = 0u32;
+    // 値段で沈んだ出品は追うのをやめる (確認 fetch の枠を、最安帯の判定に使うため)
+    state.tracked.retain(|t| {
+        if t.gone_at.is_none() && t.buried >= BURIED_MAX {
+            buried += 1;
+            false
+        } else {
+            true
+        }
+    });
+    if buried > 0 {
+        bump_daily(state, now, 0, 0, buried, state.total);
+    }
     state.tracked.retain(|t| {
         match t.gone_at {
             // 消えた記録は 7 日で捨てる (それまでは寿命の計算に使う)
@@ -1414,6 +1448,26 @@ mod tests {
         assert_eq!(st.tracked.len(), 1, "同じ ID を二重に追跡しない");
     }
 
+    /// 値段で沈んだ出品 (一覧外だが生存) は追跡から外す
+    #[test]
+    fn buried_listings_stop_being_tracked() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let e = |id: &str| ListingRef { id: id.into(), amount: Some(5.0), currency: Some("divine".into()), listed_at: None, account: None };
+        apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], false);
+        // b が一覧から消え、直接照会では生きている、を 3 回
+        let checked = vec!["b".to_string()];
+        let alive: HashSet<String> = checked.iter().cloned().collect();
+        for i in 1..=3 {
+            apply_sample(&mut st, now + i * 7200, 2, &["a".into()], &[e("a")], false);
+            apply_confirm(&mut st, now + i * 7200, &checked, &alive);
+        }
+        prune(&mut st, now + 3 * 7200);
+        assert!(st.tracked.iter().all(|t| t.id != "b"), "沈んだ出品は追跡から外す");
+        assert_eq!(st.tracked.len(), 1, "一覧に居る a は残る");
+        assert!(st.daily.iter().any(|d| d.survived > 0), "集計には残す");
+    }
+
     /// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
     #[test]
     fn empty_result_does_not_wipe_tracked() {
@@ -1473,7 +1527,7 @@ mod tests {
         merge_watches(&mut store, vec![watch("Arc::level21"), watch("Comet::level21")], "L", now);
         // 記録を作る
         let st = store.states.entry("Arc::level21".into()).or_default();
-        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None });
+        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None, buried: 0 });
         st.sampled_at = now;
 
         // 監視から外す (コメットだけにする)
