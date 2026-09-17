@@ -5,7 +5,6 @@
  * オーナー指示: 「追跡するのは品質 23% もレベル +1 もだからね、完成版だけじゃない」。
  */
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
-import { SecurityStatus } from "../../constants/trade2";
 
 export type SaleKey = "level21" | "quality23" | "finished";
 
@@ -39,15 +38,17 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
 }
 
 /**
- * 捌き速度の追跡に使うクエリ。条件は売値の検索と同じだが status だけ違う。
+ * 捌き速度の追跡に使うクエリ。売値の検索と完全に同じ (status も securable)。
  *
- * 売値は `securable` (インスタントバイアウトのみ = 今すぐ買える値段) で見るのに対し、
- * 追跡は `any` (全部)。securable は時間帯で結果が激しく入れ替わり、
- * 検索から消えただけの出品を「売れた」と誤判定するため
- * (2026-09-17: コメット品質 23% が 40 分で 105 件 → 26 件)。
+ * オーナー指示 (2026-09-17):「インスタントバイアウトだけ見ればいい。
+ * その中でルールを決めるからエニーで見る必要が全くない」。
+ * 画面と同じ母集団を追うので、手動の「再取得」も自動巡回と同じルールで判定できる。
+ *
+ * securable は出品者の状況で出入りするが、消えた候補は ID を直接 fetch して
+ * 実在を確かめてから判定する (fetch は status の絞り込みを受けない)。
  */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
-  return buildGemQuery(gemEn, { ...rowQueryOptions(key, meta), status: SecurityStatus.Any });
+  return buildGemQuery(gemEn, rowQueryOptions(key, meta));
 }
 
 /** 追跡のキー ("Arc::finished")。銘柄 1 つ = ジェム × 条件 */

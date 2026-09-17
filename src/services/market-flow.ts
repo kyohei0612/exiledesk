@@ -148,7 +148,7 @@ export async function toggleWatch(watch: Watch, on: boolean, league: string, sit
  * search は安い順 100 件しか返さないので、これらは直接 fetch しないと生死が分からない。
  * 呼び出し側で checkListingsAlive → confirmFlow まで繋ぐ (2026-09-17)。
  */
-export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[]; partial?: boolean }): Promise<string[]> {
+export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[]}): Promise<string[]> {
   if (!isTauriRuntime()) return [];
   try {
     return (await invoke<string[]>("market_flow_record", { req: sample })) ?? [];

@@ -151,8 +151,9 @@ const { summarizeFlow, soldWithin } = await import(pathToFileURL(out).href);
 }
 
 // ---------------------------------------------------------------------------
-// 8. 検索クエリ: 売値は securable (インスタントバイアウトのみ) / 追跡は any
-//    オーナー選択 (2026-09-17 案 B)。ここを取り違えると誤判定が戻るので毎回見る
+// 8. 検索クエリ: 売値も追跡も securable (インスタントバイアウトのみ)
+//    オーナー指示 (2026-09-17):「インスタントバイアウトだけ見ればいい」。
+//    ここを取り違えると母集団が変わって判定が壊れるので毎回見る
 // ---------------------------------------------------------------------------
 {
   const qout = join(dir, "row-query.mjs");
@@ -166,13 +167,13 @@ const { summarizeFlow, soldWithin } = await import(pathToFileURL(out).href);
   const track = rowQuery("Comet", "finished");
   const ok =
     sale.query.status.option === "securable" &&
-    track.query.status.option === "any" &&
+    track.query.status.option === "securable" &&
     sale.query.filters.misc_filters.filters.gem_sockets?.min === 5 &&
     track.query.filters.misc_filters.filters.gem_sockets?.min === 5 &&
     !sale.query.filters.trade_filters &&
     JSON.stringify(sale.query.filters.type_filters) === JSON.stringify(track.query.filters.type_filters);
   check(
-    "8. 売値=securable / 追跡=any で、それ以外の条件は同じ",
+    "8. 売値と追跡が同じ条件 (securable = 即時購入のみ)",
     ok,
     `売値 status=${sale.query.status.option} / 追跡 status=${track.query.status.option} / ソケット=${sale.query.filters.misc_filters.filters.gem_sockets?.min}`,
   );

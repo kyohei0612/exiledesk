@@ -12,8 +12,8 @@ import gemsRaw from "../../i18n/gems-client.json";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { type PriceResult } from "../../services/trade2/pricing";
-import { recordFlow } from "../../services/market-flow";
+import { checkListingsAlive, type PriceResult } from "../../services/trade2/pricing";
+import { confirmFlow, recordFlow } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
@@ -217,17 +217,17 @@ export function useGemCorrupt() {
   /** 選んだジェムの 3 状態を trade2 で取る (自動 / 再取得)。制限中は何もしない */
   let fetchSeq = 0;
   /**
-   * 手動の「再取得」を捌き速度の記録に回す (足す方向だけ)。
+   * 手動の「再取得」を捌き速度の記録に回す。
    *
-   * 売値は securable (即時購入のみ) で取るので、追跡 (any) の部分集合になる。
-   * そこに見えた出品は確実に生きているので「生存の更新・新しい出品の追加」には使える。
-   * 逆に見えなかった出品を消えた扱いにはしない (即時購入で出ていないだけかもしれない)。
-   * オーナー指摘 (2026-09-17):「なんで手動取得はその自動取得の速さに関われないの」。
+   * 2026-09-17 以降は売値も巡回も同じ条件 (securable = 即時購入のみ) なので、
+   * 手動で取った結果も自動巡回とまったく同じルールで判定できる
+   * (消えた判定まで含む。オーナー指示「同じルールで手動でもやればいい」)。
    */
   async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
     const gem = GEMS.find((g) => g.en === gemEn);
-    await recordFlow({
-      key: watchKey(gemEn, key),
+    const watch = watchKey(gemEn, key);
+    const missing = await recordFlow({
+      key: watch,
       label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
       total: r.total,
       ids: r.allIds ?? r.listingIds ?? [],
@@ -238,8 +238,17 @@ export function useGemCorrupt() {
         account: l.account || null,
         listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
       })),
-      partial: true,
     });
+    // 検索から消えた出品は、ID を直接 fetch して実在を確かめてから判定する。
+    // fetch は status の絞り込みを受けないので「即時購入から外れただけ」と「本当に消えた」を見分けられる
+    if (missing.length > 0 && r.queryId) {
+      try {
+        const alive = await checkListingsAlive(missing, r.queryId);
+        await confirmFlow(watch, missing, alive);
+      } catch {
+        /* 確認に失敗しても次の取得でまた試す */
+      }
+    }
   }
 
 

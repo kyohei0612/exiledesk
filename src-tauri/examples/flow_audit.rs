@@ -14,7 +14,7 @@ use exiledesk_lib::market_flow::{apply_confirm, apply_sample, looks_like_mass_go
 const HOUR: i64 = 3600;
 
 fn listing(id: &str, price: f64, listed_at: i64) -> ListingRef {
-    ListingRef { id: id.to_string(), amount: Some(price), currency: Some("divine".to_string()), listed_at: Some(listed_at) }
+    ListingRef { id: id.to_string(), amount: Some(price), currency: Some("divine".to_string()), listed_at: Some(listed_at), account: None }
 }
 
 /// 検索の応答を模した物。ids は search が返す ID 一覧 (安い順、最大 100)
@@ -25,11 +25,21 @@ struct Response {
     entries: Vec<ListingRef>,
 }
 
-/// 本番と同じ手順で 1 回ぶん取り込む (list_complete の決め方まで本番と揃える)
+/// 本番と同じ手順で 1 回ぶん取り込む。
+///
+/// 2026-09-17 以降、検索結果だけでは「消えた = 売れた」と判定しない
+/// (securable = 即時購入のみ は出品者の状況で出入りするため)。
+/// 消えた候補は ID を直接 fetch して実在を確かめてから判定する = confirm。
 fn sample(state: &mut WatchState, now: i64, r: &Response) {
-    let complete = r.ids.len() as u64 >= r.total && !(r.ids.is_empty() && !state.tracked.is_empty()) && !looks_like_mass_gone(state, &r.ids);
-    apply_sample(state, now, r.total, &r.ids, &r.entries, complete);
+    apply_sample(state, now, r.total, &r.ids, &r.entries, false);
     prune(state, now);
+}
+
+/// 消えた候補を直接 fetch で確かめる (alive に入っていない物が売れた扱いになる)
+fn confirm(state: &mut WatchState, now: i64, checked: &[&str], alive: &[&str]) {
+    let checked: Vec<String> = checked.iter().map(|s| s.to_string()).collect();
+    let alive: HashSet<String> = alive.iter().map(|s| s.to_string()).collect();
+    apply_confirm(state, now, &checked, &alive);
 }
 
 fn gone_count(state: &WatchState) -> usize {
@@ -61,8 +71,15 @@ fn main() {
         let mut st = WatchState::default();
         sample(&mut st, t0, &shop(&["a", "b", "c", "d", "e"], t0, 10.0));
         sample(&mut st, t0 + HOUR, &shop(&["b", "c", "d", "e"], t0, 10.0));
+        confirm(&mut st, t0 + HOUR, &["a"], &[]); // 直接照会でも居ない = 売れた
         sample(&mut st, t0 + 2 * HOUR, &shop(&["c", "d", "e"], t0, 10.0));
-        ok &= check("1. 1 件ずつ消えるのは売れた扱い", gone_count(&st) == 2, format!("消えた {} / 追跡中 {}", gone_count(&st), alive_count(&st)));
+        let before_confirm = gone_count(&st);
+        confirm(&mut st, t0 + 2 * HOUR, &["b"], &[]);
+        ok &= check(
+            "1. 直接照会で居なければ売れた扱い (検索だけでは判定しない)",
+            before_confirm == 1 && gone_count(&st) == 2,
+            format!("確認前 {before_confirm} → 確認後 {} / 追跡中 {}", gone_count(&st), alive_count(&st)),
+        );
     }
 
     // ------------------------------------------------------------------
@@ -75,6 +92,7 @@ fn main() {
         // 8 件中 7 件が同時に消えたように見える応答
         let r = shop(&["h"], t0, 30.0);
         let mass = looks_like_mass_gone(&st, &r.ids);
+        let _ = mass;
         sample(&mut st, t0 + HOUR, &r);
         let after_search = gone_count(&st);
         // 確認 fetch: 実際には全部生きていた (オフラインなだけ)
@@ -154,6 +172,7 @@ fn main() {
         let mut st = WatchState::default();
         sample(&mut st, t0, &shop(&["a", "b", "c"], t0, 10.0));
         sample(&mut st, t0 + HOUR, &shop(&["a", "b"], t0, 10.0));
+        confirm(&mut st, t0 + HOUR, &["c"], &[]); // いったん売れた扱いになる
         let after_gone = (gone_count(&st), st.daily.iter().map(|d| d.gone).sum::<u32>());
         sample(&mut st, t0 + 2 * HOUR, &shop(&["a", "b", "c"], t0, 10.0));
         let after_revive = (gone_count(&st), st.daily.iter().map(|d| d.gone).sum::<u32>());

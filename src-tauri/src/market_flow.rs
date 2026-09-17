@@ -153,25 +153,34 @@ pub struct WatchState {
 
 /// 記録の作り方を変えた時に上げる。合わないデータは捨てて取り直す
 ///
-/// 3 … 2026-09-17: 保存済みのクエリが古い `status: securable` のままで巡回していた。
-///     出品者がオフラインになるだけで検索から消えるため、深夜に 10 件同時消失のような
-///     「売れた」誤判定が出ていた (コメット / チャージレギュレーションで確認)。
-pub const FLOW_SCHEMA: u32 = 3;
+/// 3 … 2026-09-17: 保存済みのクエリが古いまま巡回していたので作り直した。
+/// 4 … 2026-09-17 (オーナー指示):「インスタントバイアウトだけ見ればいい。
+///     その中でルールを決めるからエニーで見る必要が全くない」。
+///     検索を securable (即時購入のみ) に統一したので、any で貯めた記録とは母集団が違う。
+pub const FLOW_SCHEMA: u32 = 4;
 
-/// 保存済みのクエリを今のルールに合わせる。
+/// 追跡に使う `query.status.option`。
 ///
-/// 追跡の検索は必ず `status: any` にする。`securable` (直近接続中) だと出品者が
-/// 寝落ちしただけで検索から消えて、売れたことにされてしまう。
-/// 画面側のクエリは直してあるが、保存済みの古いクエリがそのまま使われていたので、
-/// ここで送る直前に必ず上書きする (2026-09-17)。
+/// トレードサイトの「インスタントバイアウト」= securable。
+/// オーナー指示 (2026-09-17):「インスタントバイアウトだけ見ればいい。
+/// その中でルールを決めるからエニーで見る必要が全くない」。
+/// 画面の売値と同じ条件なので、手動の再取得も自動巡回と同じルールで判定できる。
+///
+/// securable は出品者の状況で出入りするが、消えた候補は ID を直接 fetch して
+/// 実在を確かめてから判定する (fetch は status の絞り込みを受けない)。
+const TRACK_STATUS: &str = "securable";
+
+/// 保存済みのクエリを今のルール (TRACK_STATUS) に合わせる。直したら true。
+///
+/// 追跡の検索は登録時のクエリを使い回すので、条件を変えた時はここで上書きしないと
+/// 古い条件のまま回り続ける (2026-09-17 に securable のまま / any のまま を両方踏んだ)。
 fn force_status_any(query: &mut serde_json::Value) -> bool {
     let Some(q) = query.get_mut("query") else { return false };
-    let now_any = q.get("status").and_then(|s| s.get("option")).and_then(|o| o.as_str()) == Some("any");
-    if now_any {
+    if q.get("status").and_then(|s| s.get("option")).and_then(|o| o.as_str()) == Some(TRACK_STATUS) {
         return false;
     }
     if let Some(obj) = q.as_object_mut() {
-        obj.insert("status".to_string(), serde_json::json!({ "option": "any" }));
+        obj.insert("status".to_string(), serde_json::json!({ "option": TRACK_STATUS }));
     }
     true
 }
@@ -222,7 +231,7 @@ const DAILY_MAX_DAYS: usize = 30;
 /// 行方不明の出品を直接 fetch して確認する間隔。
 /// 出品が 100 件を超える銘柄はこれが唯一の判定手段なので、巡回ごと (1 時間) に確認する。
 /// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
-const CONFIRM_INTERVAL_SECS: i64 = 3300;
+const CONFIRM_INTERVAL_SECS: i64 = 7000;
 
 /// 一度の確認で「追跡中の何割が消えたら怪しいと見なすか」。
 ///
@@ -248,8 +257,11 @@ pub fn looks_like_mass_gone(state: &WatchState, ids: &[String]) -> bool {
 }
 
 /// 1 組 (10 分) あたりの確認 fetch の上限。
-/// 12 組 (2 時間) で最大 24 回 = 毎時 12 回。下の計算に収まる
-const CONFIRM_MAX_PER_SLICE: usize = 2;
+///
+/// 2026-09-17 に検索を securable (即時購入のみ) へ統一したので、
+/// 「検索から消えた = 売れた」とは判定せず、必ず ID を直接 fetch して実在を確かめる。
+/// そのため確認 fetch が主役になる。12 組 (2 時間) で最大 48 回 = 毎時 24 回。
+const CONFIRM_MAX_PER_SLICE: usize = 4;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// 全銘柄が 1 巡する周期 (2026-09-17: 追跡できるジェムを増やすため 1 時間 → 2 時間)
@@ -560,10 +572,6 @@ pub struct RecordRequest {
     /// 最安 10 件 (新しく追跡に入れる)
     #[serde(default)]
     pub entries: Vec<ListingRef>,
-    /// 追跡より狭い条件で取った結果か (画面の売値は securable = 即時購入のみ)。
-    /// true なら「見えた = 生きている」だけを信じ、「見えない = 消えた」とは judgment しない
-    #[serde(default)]
-    pub partial: bool,
 }
 
 /// 見えていた出品 1 件 (ID と値段)
@@ -604,23 +612,13 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
     let state = store.states.entry(req.key).or_default();
     // ID 一覧が出品全部を含んでいる時だけ「消えた」を判定する。
     // 画面から最安 10 件しか届かない場合に押し出しを売れた扱いにしないため (2026-09-17)
-    if req.partial {
-        // 売値 (securable) の結果。生存確認と新規追加にだけ使う
-        apply_partial(state, now, &req.ids, &req.entries);
-        prune(state, now);
-        store.sampled_at = now;
-        save_store(&app, &store)?;
-        return Ok(Vec::new());
-    }
-    let list_complete = req.ids.len() as u64 >= req.total
-        && !(req.ids.is_empty() && !state.tracked.is_empty())
-        && !looks_like_mass_gone(state, &req.ids);
-    apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
+    // 2026-09-17: 画面の売値も巡回も同じ条件 (securable) になったので、
+    // 手動で取った結果も自動巡回と同じルールで判定してよい (partial は使わない)
+    // 自動巡回と同じルール: 検索結果だけでは消えた判定をせず、要確認の ID を画面に返す
+    apply_sample(state, now, req.total, &req.ids, &req.entries, false);
     // 出品が 100 件を超えていて search の一覧に載らなかった追跡分は、
     // 直接 fetch しないと生死が分からない。画面側に投げ返して確認してもらう (2026-09-17)
-    let missing: Vec<String> = if list_complete {
-        Vec::new()
-    } else {
+    let missing: Vec<String> = {
         let present: HashSet<&str> = req.ids.iter().map(String::as_str).collect();
         state
             .tracked
@@ -634,21 +632,6 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
     store.sampled_at = now;
     save_store(&app, &store)?;
     Ok(missing)
-}
-
-/// 追跡より狭い条件 (売値 = securable) の結果を、足す方向にだけ取り込む。
-///
-/// 売値の検索は追跡 (any) の部分集合なので、そこに見えた出品は確実に生きている。
-/// 逆に見えないことは何の証拠にもならない (即時購入で出ていないだけ)。
-/// そこで「生存の更新・新しい出品の追加・消えた扱いからの復活」だけに使い、
-/// 消えた判定と出品総数・最安値はいじらない (オーナー指摘 2026-09-17:
-/// 「なんで手動取得はその自動取得の速さに関われないの」)。
-pub fn apply_partial(state: &mut WatchState, now: i64, ids: &[String], entries: &[ListingRef]) {
-    let total = state.total;
-    let cheapest = (state.cheapest_amount, state.cheapest_currency.clone());
-    apply_sample(state, now, total, ids, entries, false);
-    state.cheapest_amount = cheapest.0;
-    state.cheapest_currency = cheapest.1;
 }
 
 /// 画面が確認 fetch を投げた結果を反映する (market_flow_record の戻り値に対する返事)
@@ -1013,21 +996,20 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         let mut store_now = load_store(app);
         let state = store_now.states.entry(watch.key.clone()).or_default();
         // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
-        // ID が 1 件も返らなかった時は「全部売れた」ではなく「取れなかった」とみなす。
-        // 一時的に空の応答が返るだけで追跡中の出品を全滅させないため (2026-09-17 全点検)。
-        // 一斉に消えたように見える時も検索結果を信用せず、後の確認 fetch に回す。
-        let list_complete = ids.len() as u64 >= total
-            && !(ids.is_empty() && !state.tracked.is_empty())
-            && !looks_like_mass_gone(state, &ids);
+        // 検索結果だけでは「消えた = 売れた」と判定しない (2026-09-17)。
+        //
+        // securable (即時購入のみ) は出品者の状況で出入りするので、検索から消えただけでは
+        // 売れたと言えない。消えた候補は下の確認 fetch (ID 直接照会。status の絞り込みを
+        // 受けないので実在が確実に分かる) に回し、そこで居なければ売れたと数える。
+        let list_complete = false;
         apply_sample(state, now, total, &ids, &entries, list_complete);
         if need_fetch {
             state.fetched_at = now;
         }
 
         // --- 行方不明の確認 (巡回ごと、1 銘柄 10 件まで、1 組 CONFIRM_MAX_PER_SLICE 銘柄まで) ---
-        let need_confirm = !list_complete
-            && now - state.confirmed_at >= CONFIRM_INTERVAL_SECS
-            && confirmed_in_slice < CONFIRM_MAX_PER_SLICE;
+        // 枠を超えた分は次の巡回に回る (判定が遅れるだけで、間違った判定にはならない)
+        let need_confirm = now - state.confirmed_at >= CONFIRM_INTERVAL_SECS && confirmed_in_slice < CONFIRM_MAX_PER_SLICE;
         let missing: Vec<String> = if need_confirm {
             let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
             state
@@ -1343,23 +1325,6 @@ mod tests {
         assert!(st.tracked.iter().all(|t| t.gone_at.is_none()));
     }
 
-    /// 狭い条件の結果は、生存確認と新規追加にだけ使う (消えた判定はしない)
-    #[test]
-    fn partial_sample_never_marks_gone() {
-        let now = 1_700_000_000i64;
-        let mut st = WatchState::default();
-        let e = |id: &str, amt: f64| ListingRef { id: id.into(), amount: Some(amt), currency: Some("divine".into()), listed_at: None, account: None };
-        apply_sample(&mut st, now, 3, &["a".into(), "b".into(), "c".into()], &[e("a", 5.0), e("b", 6.0), e("c", 7.0)], true);
-        st.cheapest_amount = Some(5.0);
-        // 売値 (securable) では a と、まだ知らない d しか見えない
-        apply_partial(&mut st, now + 600, &["a".into(), "d".into()], &[e("a", 5.0), e("d", 4.0)]);
-        assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0, "b と c を消えた扱いにしない");
-        assert_eq!(st.tracked.len(), 4, "新しく見えた d は追跡に入れる");
-        assert_eq!(st.tracked.iter().find(|t| t.id == "a").unwrap().last_seen, now + 600, "見えた物は生存を更新");
-        assert_eq!(st.cheapest_amount, Some(5.0), "最安値 (追跡側の数字) は上書きしない");
-        assert_eq!(st.total, 3, "出品総数も上書きしない");
-    }
-
     /// 半分以上が一度に消えたように見えたら、検索結果だけで判定しない
     #[test]
     fn mass_disappearance_is_not_trusted() {
@@ -1395,11 +1360,11 @@ mod tests {
     /// 古いクエリ (securable) は any に直す
     #[test]
     fn force_status_any_rewrites_old_queries() {
-        let mut q = serde_json::json!({"query":{"status":{"option":"securable"},"type":{"option":"Comet"}},"sort":{"price":"asc"}});
+        let mut q = serde_json::json!({"query":{"status":{"option":"any"},"type":{"option":"Comet"}},"sort":{"price":"asc"}});
         assert!(force_status_any(&mut q), "直したら true");
-        assert_eq!(q["query"]["status"]["option"], "any");
+        assert_eq!(q["query"]["status"]["option"], TRACK_STATUS);
         assert_eq!(q["query"]["type"]["option"], "Comet", "他の条件は触らない");
-        assert!(!force_status_any(&mut q), "もう any なら false");
+        assert!(!force_status_any(&mut q), "もう securable なら false");
     }
 
     /// 手動で追っていた銘柄が自動リストにも載ったら、巡回に入れて記録は続きから使う
