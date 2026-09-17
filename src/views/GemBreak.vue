@@ -20,6 +20,8 @@ import { loadFlow, setWatches, summarizeFlow, type FlowStore } from "../services
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { watchesFromRows } from "../state/gem-watch-auto";
 import SoldListDialog from "../components/SoldListDialog.vue";
+import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../state/watch-settings";
+import { rebuildWatches } from "../state/gem-watch-auto";
 import { marketStore } from "../state/market-store";
 import { trade2Site } from "../services/trade2/league";
 import gemsRaw from "../i18n/gems-client.json";
@@ -152,9 +154,9 @@ async function fetchNow(): Promise<void> {
       req: { class: selectedClass.value ?? null, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
-    // 2026-09-16: 全アセンダンシーで取った時だけ、完成品 5 人以上を売れ行きの追跡対象にする
-    if (!selectedClass.value) {
-      // 完成品 (コラプト済み・レベル 21 以上・品質 23% 以上) を捌き速度の追跡に登録する
+    // 監視ジェムの「取得先」と同じアセンダンシーで取った時だけ、監視リストを作り直す。
+    // (別のアセンダンシーを眺めただけで監視対象が入れ替わらないように。2026-09-17)
+    if ((selectedClass.value ?? "") === watchSettings.value.klass) {
       void setWatches(watchesFromRows(r.rows), marketStore.league.value?.Value ?? "", trade2Site());
     }
     try {
@@ -219,6 +221,13 @@ const soldKeys = computed(() => {
   const keys = soldOnly.value ? [soldOnly.value] : SALE_KEYS;
   return keys.map((k) => ({ key: watchKey(soldFor.value, k), label: SALE_KEY_LABEL[k] }));
 });
+/** 一覧から監視ジェムに入れる / 外す (すぐ追跡に反映する) */
+function toggleWatchGem(name: string): void {
+  if (isManualGem(name)) removeManualGem(name);
+  else if (!addManualGem(name)) return;
+  void rebuildWatches().then(() => void reloadFlow());
+}
+
 function openSold(name: string, key: (typeof SALE_KEYS)[number] | null): void {
   soldOnly.value = key;
   soldFor.value = name;
@@ -473,6 +482,18 @@ onUnmounted(() => {
                   @click.stop="openGemCorrupt(r.name)"
                 >
                   このジェムで計算 ↗
+                </button>
+                <!-- 2026-09-17 オーナー指示: 一覧から直接、監視ジェムに入れられるように -->
+                <button
+                  type="button"
+                  class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border transition-colors"
+                  :class="isManualGem(r.name)
+                    ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
+                    : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
+                  :title="isManualGem(r.name) ? '監視ジェムから外す' : 'このジェムを監視ジェムに入れる (2 時間ごとに捌き速度を測る)'"
+                  @click.stop="toggleWatchGem(r.name)"
+                >
+                  {{ isManualGem(r.name) ? "監視中 ✓" : "監視へ +" }}
                 </button>
               <!-- 2026-09-16 オーナー指示: 一覧の余白に捌き速度を出す (展開しなくても分かるように) -->
               <span class="flex items-baseline shrink-0 gap-2 text-[10px] whitespace-nowrap ">

@@ -35,6 +35,8 @@ const items: NavItem[] = [
       { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
       // 2026-09-16: クラフトするジェムを選ぶ画面 (ジェムコラプトの直下に置く)
       { id: "gem-break", icon: "🜃", label: "クラフト選定ジェム", group: "economy" },
+      // 2026-09-17: 捌き速度を追うジェムの設定と一覧
+      { id: "gem-watch", icon: "👁", label: "監視ジェム", group: "economy" },
       // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。poe2db の重みでシミュレーション
       { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
     ],

@@ -13,22 +13,12 @@ import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
+import { watchGems, watchSettings, type GemUsageRow } from "./watch-settings";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "../views/gem-corrupt/useGemCorrupt";
 import { marketStore } from "./market-store";
 import { trade2Site } from "../services/trade2/league";
 
-/** 追跡対象にする下限 (完成品を使っている人数)。GemBreak.vue と同じ値 */
-const TRACK_MIN_FINISHED = 5;
-/**
- * 自動で追うジェムの数の上限。
- *
- * 1 ジェムにつき 3 条件 (レベル 21 / 品質 23% / 完成品) を追う。
- * 2026-09-17: 巡回を 2 時間 1 巡にして値段の取得を 2 巡に 1 回へ間引いたので、
- * 同じ枠で 10 → 25 ジェム (75 銘柄) まで増やせる。
- * 消費は毎時およそ 69 回で、trade2 の 600 回 / 6 時間 (毎時 100 回) に収まる。
- */
-const TRACK_MAX_GEMS = 25;
 /** リストを取り直す間隔 */
 const REFRESH_SECS = 24 * 3600;
 /** 起動直後は他の取得とぶつかるので少し待つ */
@@ -36,11 +26,7 @@ const START_DELAY_MS = 30_000;
 /** クラフト選定ジェムの画面と共有する保存先 */
 const RESULT_KEY = "exiledesk.gem-break.result";
 
-interface Row {
-  name: string;
-  users: number;
-  both: number;
-}
+type Row = GemUsageRow;
 interface Result {
   class: string;
   classes?: string[];
@@ -78,26 +64,47 @@ function canon(v: unknown): string {
  * 取得結果から追跡リストを作る。1 ジェムにつき 3 条件
  * (レベル 21 / 品質 23% / 完成品) を別々に追う (オーナー指示 2026-09-16:
  * 「品質 23% とかでも売れてるか分からんし」)。
+ *
+ * どのジェムを監視するかは設定 (state/watch-settings.ts) で決まる。
+ * 既定は「全アセンダンシー・品質 23% の使用者数 上位 5・5 人以上・上限 10 ジェム」。
  */
 export function watchesFromRows(rows: Row[]): { key: string; label: string; note: string; query: unknown }[] {
-  const gems = rows
-    .filter((r) => r.both >= TRACK_MIN_FINISHED)
-    .slice()
-    .sort((a, b) => b.both - a.both)
-    .slice(0, TRACK_MAX_GEMS);
   const out: { key: string; label: string; note: string; query: unknown }[] = [];
-  for (const r of gems) {
+  for (const gem of watchGems(rows)) {
     for (const key of SALE_KEYS) {
       out.push({
-        key: watchKey(r.name, key),
-        label: `${jaSkill(r.name)} (${SALE_KEY_LABEL[key]})`,
-        note: `完成品 ${r.both} / ${r.users} 人`,
+        key: watchKey(gem.name, key),
+        label: `${jaSkill(gem.name)} (${SALE_KEY_LABEL[key]})`,
+        note: gem.note,
         // メタジェムは検索のカテゴリが違う。画面側と同じ判定にする (2026-09-17 全点検で発覚)
-        query: rowQuery(r.name, key, GEMS.find((g) => g.en === r.name)?.kind === "meta"),
+        query: rowQuery(gem.name, key, GEMS.find((g) => g.en === gem.name)?.kind === "meta"),
       });
     }
   }
   return out;
+}
+
+/** 保存済みの取得結果 (クラフト選定ジェム) */
+export function cachedRows(): Row[] | null {
+  try {
+    const raw = localStorage.getItem(RESULT_KEY);
+    if (!raw) return null;
+    const r = JSON.parse(raw) as Result;
+    return Array.isArray(r?.rows) && r.rows.length > 0 ? r.rows : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 設定を変えた時に呼ぶ。保存済みの取得結果から監視リストを作り直す (poe.ninja は叩かない)。
+ * 取得結果が無ければ false (その時は取得してもらう)。
+ */
+export async function rebuildWatches(): Promise<boolean> {
+  const rows = cachedRows();
+  if (!rows) return false;
+  await setWatches(watchesFromRows(rows), marketStore.league.value?.Value ?? "", trade2Site());
+  return true;
 }
 
 /**
@@ -108,18 +115,6 @@ export function startWatchAutoRefresh(): void {
   if (started || !isTauriRuntime()) return;
   started = true;
   setTimeout(() => void refreshIfStale(), START_DELAY_MS);
-}
-
-/** 保存済みの取得結果 (クラフト選定ジェム) */
-function cachedRows(): Row[] | null {
-  try {
-    const raw = localStorage.getItem(RESULT_KEY);
-    if (!raw) return null;
-    const r = JSON.parse(raw) as Result;
-    return Array.isArray(r?.rows) && r.rows.length > 0 ? r.rows : null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -157,7 +152,8 @@ async function refreshIfStale(): Promise<void> {
     if (fresh) return;
 
     // 全アセンダンシー (リーグ全体の上位 100 人) で取り直す
-    const r = await invoke<Result>("gem_break_fetch", { req: { class: "", topN: 100, spread: 1 } });
+    const s = watchSettings.value;
+    const r = await invoke<Result>("gem_break_fetch", { req: { class: s.klass || "", topN: 100, spread: 1 } });
     if (!r?.rows?.length) return;
     try {
       localStorage.setItem(RESULT_KEY, JSON.stringify(r));
