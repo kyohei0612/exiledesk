@@ -128,6 +128,24 @@ async function remove(en: string): Promise<void> {
   await sync();
 }
 
+/**
+ * 設定に載っていないのに記録が残っているジェム。
+ *
+ * 以前は「ジェムコラプトの賭けで再取得を押す」と自動で手動登録されていたので、
+ * その名残がここに出る。巡回には入っていないので、必要なら監視に入れられるようにする。
+ */
+const orphans = computed(() => {
+  const inList = new Set(gems.value.map((g) => g.name));
+  const names = new Map<string, number>();
+  for (const w of flowStore.value?.watches ?? []) {
+    const en = w.key.split("::")[0];
+    if (inList.has(en)) continue;
+    const st = flowStore.value?.states?.[w.key];
+    names.set(en, (names.get(en) ?? 0) + (st?.tracked?.length ?? 0));
+  }
+  return [...names.entries()].map(([name, tracked]) => ({ name, tracked })).sort((a, b) => b.tracked - a.tracked);
+});
+
 // ---- 監視中の状態 ----
 function cells(en: string) {
   return SALE_KEYS.map((k) => {
@@ -314,6 +332,25 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             </tbody>
           </table>
         </div>
+      </div>
+    </BaseCard>
+
+    <!-- 設定外だが記録が残っているジェム -->
+    <BaseCard v-if="orphans.length" class="mt-4">
+      <div class="p-4 pl-5">
+        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">巡回に入っていないジェム ({{ orphans.length }})</h3>
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
+          以前の版で「再取得」を押して記録が作られたジェムです。今は巡回に入っていません (記録は 7 日で掃除されます)。
+          続けて測りたい物だけ監視に入れてください。
+        </p>
+        <ul class="flex flex-wrap gap-2">
+          <li v-for="o in orphans" :key="o.name" class="flex items-center gap-2 px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px]">
+            <span>{{ jaSkill(o.name) }}</span>
+            <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録 {{ o.tracked }} 件</span>
+            <button type="button" class="underline text-[var(--exile-color-accent-focus)] hover:opacity-80" @click="add(o.name)">監視に入れる</button>
+            <button type="button" class="underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="openSold(o.name, null)">記録を見る</button>
+          </li>
+        </ul>
       </div>
     </BaseCard>
 
