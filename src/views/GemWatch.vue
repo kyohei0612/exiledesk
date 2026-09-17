@@ -440,7 +440,16 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                   </button>
                 </td>
                 <td class="py-1.5 pl-3 text-right whitespace-nowrap">
-                  <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="openGemCorrupt(gem.name)">計算 ↗</button>
+                  <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" title="ジェムコラプトの賭けでこのジェムを計算する" @click="openGemCorrupt(gem.name)">計算 ↗</button>
+                  <!-- オーナー指示 2026-09-17: 固定は消して、代わりに売り履歴 (3 条件まとめて) を出す -->
+                  <button
+                    type="button"
+                    class="ml-3 text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]"
+                    title="このジェムの売れたリスト (値段・出品者・並んでいた時間) を 3 条件まとめて見る"
+                    @click="openSold(gem.name, null)"
+                  >
+                    📋 売り履歴
+                  </button>
                   <button
                     v-if="gem.manual"
                     type="button"
@@ -449,15 +458,6 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                     @click="remove(gem.name)"
                   >
                     外す
-                  </button>
-                  <button
-                    v-else
-                    type="button"
-                    class="ml-3 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]"
-                    title="上位から外れても監視し続けるように、手動の一覧へ移す"
-                    @click="add(gem.name)"
-                  >
-                    固定
                   </button>
                 </td>
               </tr>
