@@ -1,16 +1,17 @@
 <script setup lang="ts">
 /**
- * SoldListDialog.vue — 捌き速度の「売れたリスト」(オーナー指示 2026-09-17)
+ * SoldListDialog.vue — 売れたリスト (2026-09-17)
  *
- * 判定 (速い / 普通 / 遅い) の根拠になった出品を 1 件ずつ出す。
- * 取引履歴と同じ「日付で束ねた表」の形にして、値段・出品時刻・寿命まで全部載せる。
+ * 判定の根拠になった出品を 1 件ずつ見る画面。
  *
- * 「消えた」は検索結果から居なくなったという意味で、売れたか取り下げたかは区別できない。
- * 同じ回の巡回で何件も同時に消えた時は、1 人のまとめ出しが引き上げられた可能性があるので
- * 備考に出す (2026-09-17 チャージレギュレーションで実際に起きた)。
+ * 2026-09-17 の作り直し (オーナー指摘:「同時に 14 件とか何のことってなる」):
+ *   - 一覧は「確認した時刻」でまとめる。2 時間ごとに確認しているので、
+ *     1 回の確認で何件もまとめて消えているのが普通。それが分かる見出しを出す
+ *   - 判定は 1 行の日本語で書く (「1 日以内に 8 / 10 件が売れました」)
+ *   - 「暫定」はその場で理由を書く
  */
 import { computed, ref } from "vue";
-import { summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
+import { flowSentence, summarizeFlow, verifyFlow, PROVISIONAL_NOTE, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
 
 const props = defineProps<{
   open: boolean;
@@ -36,11 +37,6 @@ function fmtClock(sec: number | null | undefined): string {
   const p = (n: number): string => String(n).padStart(2, "0");
   return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-function fmtDay(sec: number): string {
-  const d = new Date(sec * 1000);
-  const w = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-  return `${d.getMonth() + 1} 月 ${d.getDate()} 日 (${w})`;
-}
 /** 秒 → 「2 時間 15 分」「3 日 4 時間」 */
 function fmtSpan(sec: number | null | undefined): string {
   if (sec == null || !Number.isFinite(sec)) return "—";
@@ -51,72 +47,55 @@ function fmtSpan(sec: number | null | undefined): string {
   return `${Math.floor(h / 24)} 日 ${h % 24} 時間`;
 }
 const startOf = (t: Tracked): number => t.listed_at ?? t.first_seen;
-/** その日の 0:00 (ローカル) */
-function dayStart(sec: number): number {
-  const d = new Date(sec * 1000);
-  d.setHours(0, 0, 0, 0);
-  return Math.floor(d.getTime() / 1000);
-}
 
 interface Row {
   id: string;
   cond: string;
-  /** 出品者。オーナー指示 (2026-09-17):「大事なのは出品者の名前と売値」 */
   account: string;
   amount: number | null | undefined;
   currency: string | null | undefined;
   listedAt: number | null;
   firstSeen: number;
   goneAt: number;
-  /** 出品されてから消えるまで */
+  /** 出品されてから消えるまで (並んでいた時間) */
   life: number;
-  /** こちらが見ていられた時間 (初めて見てから消えるまで) */
-  watched: number;
-  /** 出品時刻が取れていない (寿命は「初めて見てから」で数えた) */
+  /** 出品時刻が取れていない (並んでいた時間は「初めて見てから」で数えた) */
   estimated: boolean;
-  /** 同じ回の巡回で一緒に消えた件数 */
-  batch: number;
-  /** そのうち同じ出品者だった件数 (1 人のまとめ引き上げを見分ける) */
-  sameSeller: number;
+  /** 値段の付け替え (消えた直後に同じ出品者が並べ直した) */
+  relisted: boolean;
 }
 
-/** 条件ごとのまとめ (表の上に出す) */
+/** 条件ごとのまとめ */
 const summaries = computed(() =>
   props.keys.map((k) => {
     const st = props.store?.states?.[k.key];
     const f = summarizeFlow(st);
+    const watched = props.store?.watches?.some((w) => w.key === k.key);
     return {
       key: k.key,
       label: k.label,
-      verdict: f.label || (f.gone + f.alive > 0 ? "判定待ち" : "記録なし"),
+      verdict: f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし"),
+      sentence: flowSentence(f),
+      provisional: f.provisional,
       tone: f.tone,
       gone: f.gone,
       alive: f.alive,
+      medianMin: f.medianMin,
       total: st?.total ?? null,
       cheapest: st?.cheapest_amount ?? null,
       cheapestCur: st?.cheapest_currency ?? null,
       sampledAt: st?.sampled_at ?? 0,
-      medianMin: f.medianMin,
-      soldIn24h: f.soldIn24h,
-      known24: f.known24,
-      hit24: f.hit24,
+      stale: f.stale,
     };
   }),
 );
 
-/** 消えた出品 (新しい順)。同じ回にまとめて消えた件数も数える */
+/** 消えた出品 (新しい順) */
 const soldRows = computed<Row[]>(() => {
   const rows: Row[] = [];
   for (const k of props.keys) {
     const st = props.store?.states?.[k.key];
     if (!st?.tracked) continue;
-    const batchOf = new Map<number, number>();
-    const sellerBatch = new Map<string, number>();
-    for (const t of st.tracked) {
-      if (!t.gone_at) continue;
-      batchOf.set(t.gone_at, (batchOf.get(t.gone_at) ?? 0) + 1);
-      if (t.account) sellerBatch.set(`${t.gone_at}:${t.account}`, (sellerBatch.get(`${t.gone_at}:${t.account}`) ?? 0) + 1);
-    }
     for (const t of st.tracked) {
       if (!t.gone_at) continue;
       rows.push({
@@ -129,17 +108,15 @@ const soldRows = computed<Row[]>(() => {
         firstSeen: t.first_seen,
         goneAt: t.gone_at,
         life: t.gone_at - startOf(t),
-        watched: t.gone_at - t.first_seen,
         estimated: t.listed_at == null,
-        batch: batchOf.get(t.gone_at) ?? 1,
-        sameSeller: t.account ? (sellerBatch.get(`${t.gone_at}:${t.account}`) ?? 1) : 0,
+        relisted: !!t.relisted,
       });
     }
   }
   return rows.sort((a, b) => b.goneAt - a.goneAt);
 });
 
-/** 通貨ごとに足す (神とカオスが混ざるので合算はしない) */
+/** 通貨ごとに足す (神とカオスが混ざるので合算しない) */
 function sumBy(list: { amount?: number | null; currency?: string | null }[]): [string, number][] {
   const m = new Map<string, number>();
   for (const r of list) {
@@ -149,35 +126,42 @@ function sumBy(list: { amount?: number | null; currency?: string | null }[]): [s
   return [...m.entries()].sort((a, b) => b[1] - a[1]);
 }
 
-/** 日付で束ねる (取引履歴と同じ見せ方。その日の合計つき) */
-const dayGroups = computed(() => {
+/**
+ * 「確認した時刻」でまとめる。
+ *
+ * 2 時間ごとに確認しているので、その間に売れた分は同じ時刻でまとめて出てくる。
+ * 「同時に 14 件消えた」ように見えるのはそのため、というのが分かる形にする。
+ */
+const checkGroups = computed(() => {
   const map = new Map<number, Row[]>();
   for (const r of soldRows.value) {
-    const d = dayStart(r.goneAt);
-    const list = map.get(d);
+    const list = map.get(r.goneAt);
     if (list) list.push(r);
-    else map.set(d, [r]);
+    else map.set(r.goneAt, [r]);
   }
-  return [...map.entries()]
-    .sort((a, b) => b[0] - a[0])
-    .map(([start, list]) => ({ start, list, totals: sumBy(list) }));
+  const times = [...map.keys()].sort((a, b) => b - a);
+  return times.map((at, i) => {
+    const list = map.get(at)!;
+    const sellers = new Map<string, number>();
+    for (const r of list) sellers.set(r.account || "不明", (sellers.get(r.account || "不明") ?? 0) + 1);
+    const top = [...sellers.entries()].sort((a, b) => b[1] - a[1])[0];
+    return {
+      at,
+      list,
+      prev: times[i + 1] ?? null,
+      totals: sumBy(list.filter((r) => !r.relisted)),
+      sold: list.filter((r) => !r.relisted).length,
+      relisted: list.filter((r) => r.relisted).length,
+      topSeller: top && top[1] > 1 ? { name: top[0], n: top[1] } : null,
+    };
+  });
 });
-/** 全期間の合計 */
-const grandTotal = computed(() => sumBy(soldRows.value));
 
-/** 出品者ごとの内訳 (多い順)。1 人の在庫がまとめて動いただけなのかを見る */
-const sellerBreakdown = computed(() => {
-  const m = new Map<string, number>();
-  for (const r of soldRows.value) {
-    const who = r.account || "出品者不明";
-    m.set(who, (m.get(who) ?? 0) + 1);
-  }
-  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-});
-/** 登録元のメモ (「完成品 12 / 47 人」など) */
-const note = computed(() => props.store?.watches?.find((w) => props.keys.some((k) => k.key === w.key))?.note ?? "");
+const grandTotal = computed(() => sumBy(soldRows.value.filter((r) => !r.relisted)));
+const soldCount = computed(() => soldRows.value.filter((r) => !r.relisted).length);
+const relistedCount = computed(() => soldRows.value.filter((r) => r.relisted).length);
 
-/** まだ出品されている分 (古い順 = 滞留している順) */
+/** まだ出品されている分 (並んでいる時間が長い順) */
 const aliveRows = computed(() => {
   const now = nowSec();
   const rows: { id: string; cond: string; account: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean }[] = [];
@@ -192,6 +176,9 @@ const aliveRows = computed(() => {
   return rows.sort((a, b) => b.age - a.age);
 });
 
+/** 登録元のメモ (「品質 23% を 12 / 47 人」など) */
+const note = computed(() => props.store?.watches?.find((w) => props.keys.some((k) => k.key === w.key))?.note ?? "");
+
 function toneClass(tone: string): string {
   switch (tone) {
     case "fast":
@@ -204,13 +191,8 @@ function toneClass(tone: string): string {
       return "text-[var(--exile-color-text-tertiary)] border-[var(--exile-color-border-subtle)]";
   }
 }
-const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v * 100)}%`);
 
-/**
- * 記録と今の検索結果の突き合わせ (オーナー指摘 2026-09-17:
- * 「その検索がちゃんと機能してないと困る。確認する術ないの」)。
- * 押した銘柄で検索を 1 回だけ投げ、追跡中の ID が今も一覧に載っているかを数える。
- */
+/** 記録と今の検索結果の突き合わせ (検索 1 回) */
 const verifying = ref("");
 const verified = ref<Record<string, VerifyResult | null>>({});
 async function verify(key: string): Promise<void> {
@@ -235,106 +217,106 @@ async function verify(key: string): Promise<void> {
         <button type="button" class="text-[12px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="emit('close')">閉じる</button>
       </div>
 
-      <!-- 条件ごとのまとめ -->
-      <div class="px-4 grid grid-cols-1 @2xl:grid-cols-3 sm:grid-cols-3 gap-2">
+      <!-- 条件ごとの判定 -->
+      <div class="px-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div v-for="s in summaries" :key="s.key" class="rounded border border-[var(--exile-color-border-subtle)] p-2 text-[11px]">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</span>
-            <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none" :class="toneClass(s.tone)">{{ s.verdict }}</span>
+            <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none whitespace-nowrap" :class="toneClass(s.tone)">
+              {{ s.verdict }}<span v-if="s.provisional" :title="PROVISIONAL_NOTE"> (暫定)</span>
+            </span>
           </div>
+          <p class="mt-1 text-[var(--exile-color-text-secondary)] leading-relaxed">{{ s.sentence }}</p>
           <dl class="mt-1 space-y-0.5 tabular-nums text-[var(--exile-color-text-tertiary)]">
-            <div class="flex justify-between gap-2"><dt>売れた / 追跡中</dt><dd>{{ s.gone }} / {{ s.alive }} 件</dd></div>
-            <div class="flex justify-between gap-2"><dt>1 日で売れた率</dt><dd>{{ pct(s.soldIn24h) }} <span v-if="s.known24">({{ s.hit24 }}/{{ s.known24 }})</span></dd></div>
+            <div class="flex justify-between gap-2"><dt>売れた</dt><dd>{{ s.gone }} 件</dd></div>
+            <div class="flex justify-between gap-2"><dt>まだ並んでいる</dt><dd>{{ s.alive }} 件<span v-if="s.stale"> (うち 2 日超 {{ s.stale }})</span></dd></div>
             <div class="flex justify-between gap-2"><dt>売れるまで (中央値)</dt><dd>{{ s.medianMin != null ? fmtSpan(s.medianMin * 60) : "—" }}</dd></div>
             <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
-            <div class="flex justify-between gap-2"><dt>最後に見た</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
+            <div class="flex justify-between gap-2"><dt>最後に確認</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
           </dl>
           <button
             type="button"
             class="mt-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
             :disabled="verifying !== ''"
-            title="今この条件で検索を 1 回投げ、記録している ID が今も一覧に載っているかを数えます (判定の土台の確認)"
+            title="今この条件で検索を 1 回投げ、記録している出品が今も一覧に載っているかを数えます (判定の土台の確認)"
             @click="verify(s.key)"
           >
-            {{ verifying === s.key ? "突き合わせ中…" : "検索と突き合わせ" }}
+            {{ verifying === s.key ? "突き合わせ中…" : "今の検索と突き合わせる" }}
           </button>
           <p v-if="verified[s.key]" class="text-[10px] mt-0.5 tabular-nums" :class="verified[s.key]!.ids >= verified[s.key]!.total ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-300'">
-            出品 {{ verified[s.key]!.total }} 件 / 取れた ID {{ verified[s.key]!.ids }} 件<br />
-            追跡 {{ verified[s.key]!.tracked }} 件中 一覧にある {{ verified[s.key]!.matched }} 件 · 消えた候補 {{ verified[s.key]!.missing.length }} 件<br />
+            今の出品 {{ verified[s.key]!.total }} 件 (ID が取れた分 {{ verified[s.key]!.ids }} 件)<br />
+            追跡中 {{ verified[s.key]!.tracked }} 件のうち、今も並んでいるのが {{ verified[s.key]!.matched }} 件 / 消えたのが {{ verified[s.key]!.missing.length }} 件<br />
             まだ追跡していない出品 {{ verified[s.key]!.untracked }} 件
           </p>
           <p v-else-if="verified[s.key] === null" class="text-[10px] mt-0.5 text-amber-300">突き合わせに失敗しました (レート制限か通信)</p>
         </div>
       </div>
 
-      <!-- 売れた (消えた) 一覧 -->
       <div class="p-4 pt-3">
+        <!-- 売れた一覧 -->
         <div class="rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
+          <div class="flex items-baseline gap-3 flex-wrap mb-2">
+            <h3 class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">売れた出品</h3>
+            <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ soldCount }} 件</span>
+            <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
+            <span v-if="relistedCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ relistedCount }} 件は除外</span>
+          </div>
+
           <p v-if="soldRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">
-            まだ 1 件も消えていません。追跡中の出品が売れるか取り下げられると、ここに値段つきで並びます。
+            まだ 1 件も売れていません。追跡中の出品が一覧から消えると、ここに値段つきで並びます。
           </p>
+
           <table v-else class="w-full">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
-                <th class="text-left font-normal pb-1 whitespace-nowrap">消えた時刻</th>
-                <th class="text-left font-normal pb-1 pl-3">条件</th>
+                <th class="text-left font-normal pb-1">条件</th>
                 <th class="text-right font-normal pb-1 pl-3">値段</th>
                 <th class="text-left font-normal pb-1 pl-3">出品者</th>
+                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいた時間</th>
                 <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
-                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">出品から</th>
-                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">見ていた時間</th>
-                <th class="text-left font-normal pb-1 pl-3">備考</th>
               </tr>
             </thead>
-            <tbody v-for="g in dayGroups" :key="g.start">
+            <tbody v-for="g in checkGroups" :key="g.at">
+              <!-- 確認 1 回ぶんの見出し。まとめて消えて見える理由をここで説明する -->
               <tr class="border-t border-[var(--exile-color-border-brass)]">
-                <td colspan="8" class="pt-3 pb-1">
-                  <div class="flex items-baseline gap-3 flex-wrap">
-                    <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ fmtDay(g.start) }}</span>
-                    <span v-for="[c, amt] in g.totals" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
-                    <span class="text-[11px] text-[var(--exile-color-text-tertiary)] tabular-nums">{{ g.list.length }} 件</span>
+                <td colspan="5" class="pt-3 pb-1">
+                  <div class="flex items-baseline gap-2 flex-wrap">
+                    <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ fmtClock(g.at) }} の確認</span>
+                    <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ g.sold }} 件が売れていた</span>
+                    <span v-if="g.prev" class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+                      (前の確認 {{ fmtClock(g.prev) }} · この {{ fmtSpan(g.at - g.prev) }} のどこかで売れた)
+                    </span>
+                    <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
+                    <span v-if="g.topSeller" class="text-[10px] text-amber-300">同じ出品者 {{ g.topSeller.name }} が {{ g.topSeller.n }} 件</span>
+                    <span v-if="g.relisted" class="text-[10px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ g.relisted }} 件を含む (除外済み)</span>
                   </div>
                 </td>
               </tr>
-              <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
-                <td class="py-1 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.goneAt) }}</td>
-                <td class="py-1 pl-3 whitespace-nowrap">{{ r.cond }}</td>
+              <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="r.relisted ? 'text-[var(--exile-color-text-tertiary)]' : ''">
+                <td class="py-1 whitespace-nowrap">
+                  {{ r.cond }}<span v-if="r.relisted" class="text-[10px]"> · 付け替え</span>
+                </td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
-                <td class="py-1 pl-3 max-w-[10rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
-                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.listedAt ?? r.firstSeen) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span></td>
+                <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtSpan(r.life) }}</td>
-                <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtSpan(r.watched) }}</td>
-                <td class="py-1 pl-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
-                  <span v-if="r.sameSeller > 1" class="text-amber-300" :title="`同じ出品者の ${r.sameSeller} 件が同時に消えました。1 人がまとめて引き上げた (または 1 人がまとめ買いした) 可能性が高く、件数ぶん売れたとは数えない方が安全です`">
-                    同じ出品者 {{ r.sameSeller }} 件が同時
-                  </span>
-                  <span v-else-if="r.batch > 1" class="text-[var(--exile-color-text-tertiary)]" title="同じ回の確認で一緒に消えました (出品者は別々)">同時に {{ r.batch }} 件</span>
+                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
+                  {{ fmtClock(r.listedAt ?? r.firstSeen) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
                 </td>
               </tr>
             </tbody>
           </table>
-          <p v-if="soldRows.length > 0" class="mt-2 text-[11px] flex items-baseline gap-3 flex-wrap">
-            <span class="text-[var(--exile-color-text-secondary)]">消えた分の合計</span>
-            <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
-            <span class="text-[var(--exile-color-text-tertiary)] tabular-nums">{{ soldRows.length }} 件</span>
-            <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(全部が売れたとは限りません。下の注意を参照)</span>
-          </p>
-          <p v-if="sellerBreakdown.length > 0" class="mt-1 text-[11px] flex items-baseline gap-3 flex-wrap">
-            <span class="text-[var(--exile-color-text-secondary)]">出品者の内訳</span>
-            <span v-for="[who, n] in sellerBreakdown" :key="who" class="tabular-nums text-[var(--exile-color-text-tertiary)]">
-              {{ who }} <span :class="n >= 3 ? 'text-amber-300' : ''">{{ n }} 件</span>
-            </span>
-          </p>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            「消えた」は公式の検索結果から居なくなったという意味で、売れたのか取り下げたのかは区別できません。値段は最後に見えていた時の出品価格です。
-            1 時間ごと (手動取得ならそのたび) に確認しているので、消えた時刻はその間隔ぶんの誤差があります。
-            <span class="text-amber-300">同時に複数件</span>が同じ回で消えている場合は、1 人が並べていた在庫をまとめて引き上げた (または 1 人がまとめ買いした) 可能性が高いので、件数ぶん売れたとは数えない方が安全です。
+
+          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2 leading-relaxed">
+            出品の一覧は 2 時間ごと (「再取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
+            <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
+            消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
+            消えたのと同時に同じ出品者が並べ直していた分は、値段の付け替えとみなして売れた件数から外しています。
           </p>
         </div>
 
-        <!-- 出品中 -->
+        <!-- まだ並んでいる -->
         <div class="mt-3 rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
-          <h3 class="text-[11px] text-[var(--exile-color-text-secondary)] mb-1">追跡中 (まだ売れていない出品・古い順)</h3>
+          <h3 class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)] mb-1">まだ並んでいる出品 ({{ aliveRows.length }} 件・長い順)</h3>
           <p v-if="aliveRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">追跡中の出品はありません。</p>
           <table v-else class="w-full">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
@@ -342,22 +324,24 @@ async function verify(key: string): Promise<void> {
                 <th class="text-left font-normal pb-1">条件</th>
                 <th class="text-right font-normal pb-1 pl-3">値段</th>
                 <th class="text-left font-normal pb-1 pl-3">出品者</th>
+                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">並んでいる時間</th>
                 <th class="text-left font-normal pb-1 pl-3 whitespace-nowrap">出品時刻</th>
-                <th class="text-right font-normal pb-1 pl-3 whitespace-nowrap">出品からの経過</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="r in aliveRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
-                <td class="py-1 pl-3 max-w-[10rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
-                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtClock(r.listedAt) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span></td>
+                <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.age >= 48 * 3600 ? 'text-rose-300' : ''">{{ fmtSpan(r.age) }}</td>
+                <td class="py-1 pl-3 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">
+                  {{ fmtClock(r.listedAt) }}<span v-if="r.estimated" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (推定)</span>
+                </td>
               </tr>
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            出品から 48 時間を超えて残っている物は赤字にしています。値段の割に売れていない = その値段では高いという目安です。
+            2 日以上並んだままの出品は赤字にしています。その値段では買い手が付いていないという目安です。
           </p>
         </div>
       </div>

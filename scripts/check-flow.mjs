@@ -52,7 +52,7 @@ function check(name, ok, detail) {
 const dir = mkdtempSync(join(tmpdir(), "flowcheck-"));
 const out = join(dir, "market-flow.mjs");
 await build({ entryPoints: ["src/services/market-flow.ts"], outfile: out, bundle: true, format: "esm", platform: "neutral", logLevel: "error" });
-const { summarizeFlow, soldWithin } = await import(pathToFileURL(out).href);
+const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(out).href);
 
 // ---------------------------------------------------------------------------
 // 1. 売れた分しか結果が分かっていない時は「(暫定)」を付ける
@@ -68,7 +68,11 @@ const { summarizeFlow, soldWithin } = await import(pathToFileURL(out).href);
     ]),
     NOW,
   );
-  check("1. 売れ残り未観測なら (暫定) が付く", s.label === "速い (暫定)" && s.provisional === true, `label=${s.label} 24h率=${s.soldIn24h} 母数=${s.known24}`);
+  check(
+    "1. 売れ残り未観測なら暫定の印が付く",
+    s.label === "速い" && s.provisional === true && /暫定/.test(flowSentence(s)),
+    `label=${s.label} 暫定=${s.provisional} 文=${flowSentence(s)}`,
+  );
 }
 
 // ---------------------------------------------------------------------------

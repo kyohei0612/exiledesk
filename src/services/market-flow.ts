@@ -182,6 +182,25 @@ export async function verifyFlow(key: string): Promise<VerifyResult | null> {
   }
 }
 
+/**
+ * 判定を 1 行の日本語にする (オーナー指摘 2026-09-17:「暫定だけだと分かりづらい」)。
+ * 画面ではこの文をそのまま出す。数字の意味が分かる形にしておく。
+ */
+export function flowSentence(f: FlowSummary): string {
+  if (!f.enough) {
+    if (f.gone + f.alive === 0) return "まだ記録がありません";
+    const need = Math.max(0, MIN_KNOWN - f.known48);
+    return `結果が分かった出品が ${f.known48} 件（あと ${need} 件で判定できます）`;
+  }
+  const head = `1 日以内に ${f.hit24} / ${f.known24} 件が売れました`;
+  if (f.provisional) return `${head}。ただし売れ残りをまだ 1 件も見ていないので暫定です`;
+  return head;
+}
+
+/** 判定が暫定かどうかの説明 (ホバー用) */
+export const PROVISIONAL_NOTE =
+  "結果が分かった出品が全部「売れた」なので、率が 100% にしかなりません。1 日以上売れ残る出品が出てくると確定します。";
+
 export type FlowTone = "fast" | "normal" | "slow" | "unknown";
 
 export interface FlowSummary {
@@ -319,12 +338,12 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   if (d1.known >= MIN_KNOWN && (d1.rate ?? 0) >= 0.5) {
     tone = "fast";
     provisional = !censored24 && d1.hit === d1.known;
-    label = provisional ? "速い (暫定)" : "速い";
+    label = "速い";
   } else if (d2.known >= MIN_KNOWN) {
     if ((d2.rate ?? 0) >= 0.5) {
       tone = "normal";
       provisional = !censored48 && d2.hit === d2.known;
-      label = provisional ? "普通 (暫定)" : "普通";
+      label = "普通";
     } else {
       tone = "slow";
       label = "遅い";
