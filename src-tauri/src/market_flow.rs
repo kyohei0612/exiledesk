@@ -24,16 +24,24 @@
 //! 例:「50 神が滞留しているところに 40 神が 20 件参戦」→ 最安 10 件は入れ替わるが、
 //! 50 神の ID は追跡し続けるので売れたことにはならない。
 //!
-//! ## 3. 消えた判定は必ず裏取りする (ここが一番大事)
-//! 検索から消えただけでは「売れた」と数えない。securable は出品者の状況で出入りするため。
-//! 消えた候補は **その ID を直接 fetch** して実在を確かめる。fetch は status の絞り込みを
-//! 受けないので、「即時購入から外れただけ」と「本当に無くなった」を確実に見分けられる。
-//!   - 直接照会で返ってくる → 生きている (last_seen を更新)
-//!   - 返ってこない         → そこで初めて売れた (gone_at)
-//!   - 消えた扱いの ID がまた現れたら復活させ、日次の件数からも引く
+//! ## 3. 生きているかは「検索の ID 一覧」だけで見る (ここが一番大事)
+//! search が返す ID 一覧が、その時点で実際に並んでいる出品そのもの。
+//! 一覧から消えた = 売れた (か取り下げた) と数える。
+//! オーナー指摘 (2026-09-17):「インスタから対面トレードに切り替える人は存在しない」
+//! ので、即時購入の一覧から消えることは実質「売れた」を意味する。
 //!
-//! 2026-09-16〜17 にこれを怠って踏んだ事故: 深夜に 10 件同時消失を「売れた」と数え、
-//! 9 日売れ残っていた出品まで売れたことになっていた。
+//! **ID を直接 fetch する裏取りは使えない**。2026-09-17 に実測したところ、
+//! 既に市場から消えた出品 (指定なしの検索にも出てこない ID) に対しても fetch は
+//! 200 で値段つきのデータを返した。つまり fetch はキャッシュの読み出しであって
+//! 生存確認にならない。これに気づくまで「売れた」が 1 件も出ない状態が続いた。
+//!
+//! 誤判定を避けるための条件:
+//!   - ID 一覧が総数に届いていない時 (100 件超で切れている) は判定しない。
+//!     載っていない追跡分は「値段で沈んだ」として buried を進め、3 回続いたら追跡終了
+//!   - 応答が空の時は判定しない (通信不良で全滅させない)
+//!   - 消えたのと同時に**同じ出品者が 5 分以内に並べ直していたら**値段の付け替えとみなし、
+//!     売れた件数には数えない (RELIST_WINDOW_SECS)
+//!   - 消えた扱いの ID がまた現れたら復活させ、日次の件数からも引く
 //!
 //! ### 出品が増えても回数は増えない
 //! search は 1 銘柄 1 回で ID を最大 100 件まとめて返し、fetch も最安 10 件を 1 回。
@@ -49,8 +57,8 @@
 //!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
 //!   - fetch   … 1 銘柄 1 巡に 1 回。値段の更新に加えて、**新しい出品を追跡に入れるのがここ**。
 //!               間隔を空けるとその間に出品されて売れた物を丸ごと取りこぼし、速度が遅い側に偏る
-//!   - 確認    … 消えた候補の直接照会。巡回のたびに行う (1 組 CONFIRM_MAX_PER_SLICE 銘柄 ×
-//!               10 件まで)。ここを間引くと消えた候補が滞留して判定が出ない
+//!   - 確認    … 消えた候補がある時だけ、同じ条件を指定なしで検索し直す (1 銘柄 1 回)。
+//!               1 組 CONFIRM_MAX_PER_SLICE 銘柄まで。間引くと判定が滞留する
 //! 18 ジェム (54 銘柄) で毎時およそ 78 回。残りは手動の取得や取引所比較の取り分。
 //! 1 組の中でも送信間隔を均してバーストを作らない。
 //!
@@ -143,6 +151,10 @@ pub struct Tracked {
     /// 一覧に戻れば 0 に戻る。BURIED_MAX 回続いたら追跡から外す (2026-09-17)
     #[serde(default)]
     pub buried: u32,
+    /// 消えたのと同時に、同じ出品者が新しく並べ直した形跡があるか。
+    /// 値段の付け替え (取り下げ → すぐ再出品) とみなして、売れた件数には数えない
+    #[serde(default)]
+    pub relisted: bool,
 }
 
 impl Tracked {
@@ -188,16 +200,9 @@ pub struct WatchState {
     pub total: u64,
     /// 最後にサンプルした時刻
     pub sampled_at: i64,
-    /// 最後に「行方不明の ID」をまとめて確認した時刻
+    /// 最後に「一覧から消えた分」を判定した時刻 (旧: 直接照会の時刻)
     #[serde(default)]
     pub confirmed_at: i64,
-    /// 直接照会した ID の延べ件数 (2026-09-17 の切り分け用)
-    #[serde(default)]
-    pub confirm_checked: u32,
-    /// そのうち「まだ実在した」件数。
-    /// ここが常に照会数と同じなら、消えた出品まで fetch が返している疑いがある
-    #[serde(default)]
-    pub confirm_alive: u32,
     /// 最後に値段 (fetch) を取った時刻。2 巡に 1 回だけ取り直す
     #[serde(default)]
     pub fetched_at: i64,
@@ -288,27 +293,13 @@ const TRACK_MAX_PER_WATCH: usize = 60;
 /// 最安帯の捌け方を測るのが目的なので、沈んだ物は追うのをやめて集計に畳む
 /// (オーナー指摘 2026-09-17:「出品がめっちゃ増えると ID 検索がめっちゃ増えるけど平気？」)
 const BURIED_MAX: u32 = 3;
+/// 「消えたのと同時に同じ出品者が並べ直した」とみなす時間差 (オーナー指示 2026-09-17)。
+///
+/// 売れた直後に在庫を並べ直す人がいるので、この範囲に収まる出れ替わりは
+/// 値段の付け替えとみなして売れた件数から外す。これより開いていれば売れた扱いでよい。
+const RELIST_WINDOW_SECS: i64 = 300;
 /// 日次集計を残す日数
 const DAILY_MAX_DAYS: usize = 30;
-/// 行方不明の ID をまとめて確認する間隔 (検索回数を間引くため)
-/// 行方不明の出品を直接 fetch して確認する間隔。
-/// 出品が 100 件を超える銘柄はこれが唯一の判定手段なので、巡回ごと (1 時間) に確認する。
-/// 代わりに 1 組あたりの確認回数を CONFIRM_MAX_PER_SLICE で抑える (2026-09-17)
-/// 確認 fetch の最短間隔。
-///
-/// 巡回そのものが 1 銘柄 1 巡 (2 時間) に 1 回なので、ここで更に間隔を空けると
-/// 「消えた候補」が次の周まで放置され、いつまでも売れた判定が出ない
-/// (2026-09-17: 54 銘柄中 8 銘柄しか確認できておらず、候補 7 件が保留のままだった)。
-/// 巡回のたびに確認してよいので、事故防止の下限だけ残す。
-const CONFIRM_INTERVAL_SECS: i64 = 60;
-
-/// 1 組 (10 分) あたりの確認 fetch の上限。
-///
-/// 検索を securable (即時購入のみ) に統一したので「検索から消えた = 売れた」とは判定せず、
-/// 必ず ID を直接 fetch して実在を確かめる。そのため確認 fetch が主役になる。
-/// 1 組に入る銘柄 (18 ジェム = 54 銘柄なら 4〜5 本) を取りこぼさない数にしておく。
-/// 12 組 (2 時間) で最大 60 回 = 毎時 30 回。検索 27 + 値段 27 と合わせて毎時 84 回。
-const CONFIRM_MAX_PER_SLICE: usize = 5;
 /// リクエストの間隔
 const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
 /// 1 巡を何回に分けて取るか。SLICES × SLICE_INTERVAL_SECS = 1 巡の周期 (2 時間)
@@ -597,6 +588,59 @@ pub fn market_flow_toggle_watch(app: tauri::AppHandle, req: ToggleWatchRequest) 
     Ok(store)
 }
 
+/// 記録と、今の検索結果を突き合わせた結果 (画面の「検索と突き合わせ」用)
+#[derive(Serialize)]
+pub struct VerifyResult {
+    /// 今の出品総数
+    pub total: u64,
+    /// 検索が返した ID の数 (総数に届いていなければ一覧が切れている)
+    pub ids: usize,
+    /// 追跡中 (まだ消えていない) の件数
+    pub tracked: usize,
+    /// そのうち検索にも載っていた件数
+    pub matched: usize,
+    /// 追跡中だが検索に載っていない = 次の巡回で「売れた」と数える候補
+    pub missing: Vec<String>,
+    /// 検索には居るがまだ追跡していない件数 (最安 10 件に入っていない分)
+    pub untracked: usize,
+}
+
+/// 記録している ID と、今の検索結果を突き合わせる (検索 1 回)。
+///
+/// オーナー指摘 (2026-09-17):「その検索がちゃんと機能してないと困る。確認する術ないの」。
+/// 判定の土台が検索の ID 一覧なので、ここが噛み合っているかをいつでも確かめられるようにする。
+#[tauri::command]
+pub async fn market_flow_verify(app: tauri::AppHandle, key: String) -> Result<VerifyResult, String> {
+    let store = load_store(&app);
+    let watch = store.watches.iter().find(|w| w.key == key).ok_or("その銘柄は登録されていません")?;
+    let mut query = watch.query.clone();
+    if query.is_null() {
+        return Err("この銘柄は検索条件を持っていません".to_string());
+    }
+    normalize_track_status(&mut query);
+    let search = crate::trade2::SearchRequest { league: store.league.clone(), site: Some("www".to_string()), query };
+    let v = crate::trade2::trade2_search(search).await.map_err(|e| e.to_string())?;
+    let total = v.get("total").and_then(|x| x.as_u64()).unwrap_or(0);
+    let ids: Vec<String> = v
+        .get("result")
+        .and_then(|x| x.as_array())
+        .map(|a| a.iter().filter_map(|i| i.as_str().map(str::to_string)).collect())
+        .unwrap_or_default();
+    let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    let empty = WatchState::default();
+    let state = store.states.get(&key).unwrap_or(&empty);
+    let alive: Vec<&Tracked> = state.tracked.iter().filter(|t| t.gone_at.is_none()).collect();
+    let tracked_ids: HashSet<&str> = alive.iter().map(|t| t.id.as_str()).collect();
+    Ok(VerifyResult {
+        total,
+        ids: ids.len(),
+        tracked: alive.len(),
+        matched: alive.iter().filter(|t| present.contains(t.id.as_str())).count(),
+        missing: alive.iter().filter(|t| !present.contains(t.id.as_str())).map(|t| t.id.clone()).collect(),
+        untracked: ids.iter().filter(|id| !tracked_ids.contains(id.as_str())).count(),
+    })
+}
+
 /// 今すぐ 1 周サンプルを取る (手動)。取得中なら何もしない。
 #[tauri::command]
 pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<FlowStore, String> {
@@ -681,27 +725,6 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<V
 }
 
 /// 画面が確認 fetch を投げた結果を反映する (market_flow_record の戻り値に対する返事)
-#[derive(Deserialize)]
-pub struct ConfirmRequest {
-    pub key: String,
-    /// 確認した ID
-    pub checked: Vec<String>,
-    /// そのうち実在した ID
-    pub alive: Vec<String>,
-}
-
-#[tauri::command]
-pub fn market_flow_confirm(app: tauri::AppHandle, req: ConfirmRequest) -> Result<FlowStore, String> {
-    let mut store = load_store(&app);
-    let now = now_secs();
-    let Some(state) = store.states.get_mut(&req.key) else {
-        return Ok(store);
-    };
-    let alive: HashSet<String> = req.alive.into_iter().collect();
-    apply_confirm(state, now, &req.checked, &alive);
-    save_store(&app, &store)?;
-    Ok(store)
-}
 
 /// trade2 の出品時刻 ("2026-09-16T10:00:00Z") を unix 秒に。chrono を足さずに手で読む
 pub fn parse_indexed(indexed: &str) -> Option<i64> {
@@ -745,6 +768,8 @@ pub fn apply_sample(
     list_complete: bool,
 ) {
     let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    // 今回の応答に出てきた中で、既に追跡している ID (並べ直しの判定に使う)
+    let known_ids: HashSet<String> = state.tracked.iter().map(|t| t.id.clone()).collect();
     let mut gone_now = 0u32;
     // 生き返った出品が「消えた」として数えられていた日 (集計から引く)
     let mut revived_days: Vec<i64> = Vec::new();
@@ -765,9 +790,20 @@ pub fn apply_sample(
             t.last_seen = now;
             t.buried = 0;
         } else if list_complete {
-            // 出品全部が見えている状態で一覧に無い = 売れたか取り下げた
+            // 出品全部が見えている状態で一覧に無い = 売れたか取り下げた。
+            // ただし同じ出品者が 5 分以内に並べ直していれば、値段の付け替えとみなす
+            let relisted = t.account.as_deref().is_some_and(|acc| {
+                entries.iter().any(|e| {
+                    e.account.as_deref() == Some(acc)
+                        && !known_ids.contains(&e.id)
+                        && e.listed_at.map(|at| (now - at).abs() <= RELIST_WINDOW_SECS).unwrap_or(false)
+                })
+            });
             t.gone_at = Some(now);
-            gone_now += 1;
+            t.relisted = relisted;
+            if !relisted {
+                gone_now += 1;
+            }
         }
         // list_complete でない時は判断を保留 (後で confirm_missing がまとめて確認する)
     }
@@ -804,6 +840,7 @@ pub fn apply_sample(
             currency: e.currency.clone(),
             account: e.account.clone(),
             buried: 0,
+            relisted: false,
         });
         added_now += 1;
     }
@@ -823,30 +860,6 @@ pub fn apply_sample(
     bump_daily(state, now, added_now, gone_now, 0, total);
 }
 
-/// 行方不明だった ID の生死が分かった時に反映する (fetch で確認した結果)。
-/// `alive` に入っていない追跡中 ID は消えたことにする。
-pub fn apply_confirm(state: &mut WatchState, now: i64, checked: &[String], alive: &HashSet<String>) {
-    let mut gone_now = 0u32;
-    state.confirm_checked = state.confirm_checked.saturating_add(checked.len() as u32);
-    state.confirm_alive = state.confirm_alive.saturating_add(checked.iter().filter(|id| alive.contains(*id)).count() as u32);
-    for t in state.tracked.iter_mut() {
-        if t.gone_at.is_some() || !checked.contains(&t.id) {
-            continue;
-        }
-        if alive.contains(&t.id) {
-            // 一覧に出てこないのに生きていた = 値段で沈んでいる
-            t.last_seen = now;
-            t.buried = t.buried.saturating_add(1);
-        } else {
-            t.gone_at = Some(now);
-            gone_now += 1;
-        }
-    }
-    state.confirmed_at = now;
-    if gone_now > 0 {
-        bump_daily(state, now, 0, gone_now, 0, state.total);
-    }
-}
 
 fn day_of(t: i64) -> i64 {
     t - t.rem_euclid(86_400)
@@ -965,8 +978,6 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
     let total_watches = auto.len();
     let resumed = done_keys.len();
-    // この組で確認 fetch を使った回数 (上限 CONFIRM_MAX_PER_SLICE)
-    let mut confirmed_in_slice: usize = 0;
     // 1 組ぶんを 10 分かけて均す (オーナー指示 2026-09-16: いっぺんにバーストさせない)。
     // 1 銘柄 = search 1 + fetch 1 なので、間隔 = 10 分 × 0.9 ÷ (銘柄数 × 2)
     let pace = if slice.is_some() && total_watches > 0 {
@@ -1090,27 +1101,30 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         // securable (即時購入のみ) は出品者の状況で出入りするので、検索から消えただけでは
         // 売れたと言えない。消えた候補は下の確認 fetch (ID 直接照会。status の絞り込みを
         // 受けないので実在が確実に分かる) に回し、そこで居なければ売れたと数える。
-        let list_complete = false;
+        // 即時購入の一覧が全部取れていれば、そこから消えた出品を「売れた」と数える。
+        //
+        // オーナー指摘 (2026-09-17):「インスタから対面トレードに切り替える人は存在しない」。
+        // 即時購入の一覧から消える = 売れた (か取り下げた) とみなしてよい。
+        // 値段を変えただけなら ID は変わらないので一覧に残り、売れた扱いにはならない。
+        //
+        // ID を直接 fetch する裏取りは使えない (消えた出品にもキャッシュを 200 で返す。
+        // 2026-09-17 に実測)。応答が空の時や、100 件を超えて一覧が切れている時は判定しない。
+        let list_complete = ids.len() as u64 >= total && !(ids.is_empty() && !state.tracked.is_empty());
         apply_sample(state, now, total, &ids, &entries, list_complete);
         if need_fetch {
             state.fetched_at = now;
         }
 
-        // --- 行方不明の確認 (巡回ごと、1 銘柄 10 件まで、1 組 CONFIRM_MAX_PER_SLICE 銘柄まで) ---
-        // 枠を超えた分は次の巡回に回る (判定が遅れるだけで、間違った判定にはならない)
-        let need_confirm = now - state.confirmed_at >= CONFIRM_INTERVAL_SECS && confirmed_in_slice < CONFIRM_MAX_PER_SLICE;
-        let missing: Vec<String> = if need_confirm {
+        // 一覧が切れている時 (出品 100 件超): 載っていない追跡分は値段で沈んでいる。
+        // BURIED_MAX 回続いたら追跡をやめる (最安帯の捌け方を測るのが目的なので)
+        if !list_complete && !ids.is_empty() {
             let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
-            state
-                .tracked
-                .iter()
-                .filter(|t| t.gone_at.is_none() && !present.contains(t.id.as_str()))
-                .take(10)
-                .map(|t| t.id.clone())
-                .collect()
-        } else {
-            Vec::new()
-        };
+            for t in state.tracked.iter_mut() {
+                if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
+                    t.buried = t.buried.saturating_add(1);
+                }
+            }
+        }
         prune(state, now);
         store_now.sampled_at = now;
         // この銘柄は取り終わった。アプリが落ちても次回はここから続ける
@@ -1119,29 +1133,6 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         }
         save_store(app, &store_now)?;
 
-        if !missing.is_empty() && !query_id.is_empty() {
-            confirmed_in_slice += 1;
-            let fetch = crate::trade2::FetchRequest { ids: missing.clone(), query_id, site: site.clone() };
-            let alive: HashSet<String> = match crate::trade2::trade2_fetch(fetch).await {
-                Ok(v) => v
-                    .get("result")
-                    .and_then(|x| x.as_array())
-                    .map(|arr| arr.iter().filter_map(|i| i.get("id").and_then(|x| x.as_str()).map(str::to_string)).collect())
-                    .unwrap_or_default(),
-                Err(e) => {
-                    eprintln!("[market_flow] confirm {} 失敗: {e}", watch.key);
-                    tokio::time::sleep(pace).await;
-                    continue;
-                }
-            };
-            let mut store_c = load_store(app);
-            if let Some(state) = store_c.states.get_mut(&watch.key) {
-                apply_confirm(state, now, &missing, &alive);
-                prune(state, now);
-            }
-            save_store(app, &store_c)?;
-            tokio::time::sleep(pace).await;
-        }
     }
     // この組は終わり。取りこぼしがあれば早めに再挑戦する (レート制限が明けたら動き出す)
     let mut store_end = load_store(app);
@@ -1201,12 +1192,6 @@ pub struct FlowStatus {
     pub slice_done: usize,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
-    /// 検索から消えていて、まだ直接照会で決着していない出品の数。
-    /// ここが増え続けるなら確認が追いついていない (2026-09-17 に実際に滞留した)
-    pub pending_missing: usize,
-    /// 直接照会した延べ件数と、そのうち実在した件数 (売れを検出できているかの確認用)
-    pub confirm_checked: u32,
-    pub confirm_alive: u32,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1233,13 +1218,6 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         } else {
             0
         },
-        confirm_checked: store.states.values().map(|st| st.confirm_checked).sum(),
-        confirm_alive: store.states.values().map(|st| st.confirm_alive).sum(),
-        pending_missing: store
-            .states
-            .values()
-            .map(|st| st.tracked.iter().filter(|t| t.gone_at.is_none() && t.last_seen < st.sampled_at).count())
-            .sum(),
         sampled_watches: store
             .watches
             .iter()
@@ -1373,19 +1351,6 @@ mod tests {
         assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0);
     }
 
-    /// 名指しの確認で「居なかった」なら消えた扱い
-    #[test]
-    fn confirm_marks_missing_as_gone() {
-        let mut st = WatchState::default();
-        let t0 = 1_700_000_000;
-        apply_sample(&mut st, t0, 150, &["a".into(), "b".into()], &[lr("a", 40.0), lr("b", 41.0)], false);
-        let alive: HashSet<String> = ["b".to_string()].into_iter().collect();
-        apply_confirm(&mut st, t0 + 10_800, &["a".to_string(), "b".to_string()], &alive);
-        let gone: Vec<&Tracked> = st.tracked.iter().filter(|t| t.gone_at.is_some()).collect();
-        assert_eq!(gone.len(), 1);
-        assert_eq!(gone[0].id, "a");
-    }
-
     /// 自動リストを入れ替えても、手動で足した銘柄は残る
     #[test]
     fn manual_watches_survive_auto_refresh() {
@@ -1448,24 +1413,56 @@ mod tests {
         assert_eq!(st.tracked.len(), 1, "同じ ID を二重に追跡しない");
     }
 
-    /// 値段で沈んだ出品 (一覧外だが生存) は追跡から外す
+    /// 売れた直後に同じ出品者が並べ直した分は、売れた件数に数えない
+    #[test]
+    fn immediate_relist_is_not_counted_as_sold() {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        let l = |id: &str, amt: f64, acc: &str, at: i64| ListingRef {
+            id: id.into(),
+            amount: Some(amt),
+            currency: Some("divine".into()),
+            listed_at: Some(at),
+            account: Some(acc.into()),
+        };
+        apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[l("a", 10.0, "S1", now - 7200), l("b", 11.0, "S2", now - 7200)], true);
+        // a が消え、同じ出品者 S1 が 1 分前に並べ直した新しい出品 c が出ている
+        let t1 = now + 3600;
+        apply_sample(&mut st, t1, 2, &["b".into(), "c".into()], &[l("b", 11.0, "S2", now - 7200), l("c", 9.0, "S1", t1 - 60)], true);
+        let a = st.tracked.iter().find(|t| t.id == "a").unwrap();
+        assert!(a.gone_at.is_some(), "一覧から消えたことは記録する");
+        assert!(a.relisted, "並べ直しとして印を付ける");
+        assert_eq!(st.daily.iter().map(|d| d.gone).sum::<u32>(), 0, "売れた件数には数えない");
+
+        // 別の出品者が時間を空けて出した場合は売れた扱い
+        let t2 = t1 + 3600;
+        apply_sample(&mut st, t2, 1, &["c".into()], &[l("c", 9.0, "S1", t1 - 60)], true);
+        let b = st.tracked.iter().find(|t| t.id == "b").unwrap();
+        assert!(b.gone_at.is_some() && !b.relisted, "並べ直しでなければ売れた扱い");
+        assert_eq!(st.daily.iter().map(|d| d.gone).sum::<u32>(), 1);
+    }
+
+    /// 一覧が 100 件で切れている時、載っていない追跡分は「沈んだ」として追跡をやめる
     #[test]
     fn buried_listings_stop_being_tracked() {
         let now = 1_700_000_000i64;
         let mut st = WatchState::default();
         let e = |id: &str| ListingRef { id: id.into(), amount: Some(5.0), currency: Some("divine".into()), listed_at: None, account: None };
-        apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], false);
-        // b が一覧から消え、直接照会では生きている、を 3 回
-        let checked = vec!["b".to_string()];
-        let alive: HashSet<String> = checked.iter().cloned().collect();
+        apply_sample(&mut st, now, 150, &["a".into(), "b".into()], &[e("a"), e("b")], false);
+        // b が一覧 (切れている) に載らない状態が 3 回続く
         for i in 1..=3 {
-            apply_sample(&mut st, now + i * 7200, 2, &["a".into()], &[e("a")], false);
-            apply_confirm(&mut st, now + i * 7200, &checked, &alive);
+            let ids = vec!["a".to_string()];
+            let present: std::collections::HashSet<&str> = ids.iter().map(String::as_str).collect();
+            apply_sample(&mut st, now + i * 7200, 150, &ids, &[e("a")], false);
+            for t in st.tracked.iter_mut() {
+                if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
+                    t.buried += 1;
+                }
+            }
+            prune(&mut st, now + i * 7200);
         }
-        prune(&mut st, now + 3 * 7200);
         assert!(st.tracked.iter().all(|t| t.id != "b"), "沈んだ出品は追跡から外す");
         assert_eq!(st.tracked.len(), 1, "一覧に居る a は残る");
-        assert!(st.daily.iter().any(|d| d.survived > 0), "集計には残す");
     }
 
     /// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
@@ -1527,7 +1524,7 @@ mod tests {
         merge_watches(&mut store, vec![watch("Arc::level21"), watch("Comet::level21")], "L", now);
         // 記録を作る
         let st = store.states.entry("Arc::level21".into()).or_default();
-        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None, buried: 0 });
+        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None, buried: 0, relisted: false });
         st.sampled_at = now;
 
         // 監視から外す (コメットだけにする)

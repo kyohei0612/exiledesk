@@ -12,8 +12,8 @@ import gemsRaw from "../../i18n/gems-client.json";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { checkListingsAlive, type PriceResult } from "../../services/trade2/pricing";
-import { confirmFlow, recordFlow } from "../../services/market-flow";
+import { type PriceResult } from "../../services/trade2/pricing";
+import { recordFlow } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
@@ -225,9 +225,8 @@ export function useGemCorrupt() {
    */
   async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
     const gem = GEMS.find((g) => g.en === gemEn);
-    const watch = watchKey(gemEn, key);
-    const missing = await recordFlow({
-      key: watch,
+    await recordFlow({
+      key: watchKey(gemEn, key),
       label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
       total: r.total,
       ids: r.allIds ?? r.listingIds ?? [],
@@ -239,18 +238,7 @@ export function useGemCorrupt() {
         listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
       })),
     });
-    // 検索から消えた出品は、ID を直接 fetch して実在を確かめてから判定する。
-    // fetch は status の絞り込みを受けないので「即時購入から外れただけ」と「本当に消えた」を見分けられる
-    if (missing.length > 0 && r.queryId) {
-      try {
-        const alive = await checkListingsAlive(missing, r.queryId);
-        await confirmFlow(watch, missing, alive);
-      } catch {
-        /* 確認に失敗しても次の取得でまた試す */
-      }
-    }
   }
-
 
   async function fetchSalePrices(): Promise<void> {
     if (!selected.value || pricing.value || isRateLimited()) return;

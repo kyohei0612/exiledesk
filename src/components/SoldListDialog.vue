@@ -9,8 +9,8 @@
  * 同じ回の巡回で何件も同時に消えた時は、1 人のまとめ出しが引き上げられた可能性があるので
  * 備考に出す (2026-09-17 チャージレギュレーションで実際に起きた)。
  */
-import { computed } from "vue";
-import { summarizeFlow, type FlowStore, type Tracked } from "../services/market-flow";
+import { computed, ref } from "vue";
+import { summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
 
 const props = defineProps<{
   open: boolean;
@@ -205,6 +205,23 @@ function toneClass(tone: string): string {
   }
 }
 const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v * 100)}%`);
+
+/**
+ * 記録と今の検索結果の突き合わせ (オーナー指摘 2026-09-17:
+ * 「その検索がちゃんと機能してないと困る。確認する術ないの」)。
+ * 押した銘柄で検索を 1 回だけ投げ、追跡中の ID が今も一覧に載っているかを数える。
+ */
+const verifying = ref("");
+const verified = ref<Record<string, VerifyResult | null>>({});
+async function verify(key: string): Promise<void> {
+  if (verifying.value) return;
+  verifying.value = key;
+  try {
+    verified.value = { ...verified.value, [key]: await verifyFlow(key) };
+  } finally {
+    verifying.value = "";
+  }
+}
 </script>
 
 <template>
@@ -232,6 +249,21 @@ const pct = (v: number | null): string => (v == null ? "—" : `${Math.round(v *
             <div class="flex justify-between gap-2"><dt>今の出品数 / 最安</dt><dd>{{ s.total ?? "—" }} 件 / {{ fmtAmount(s.cheapest) }} {{ curLabel(s.cheapestCur) }}</dd></div>
             <div class="flex justify-between gap-2"><dt>最後に見た</dt><dd>{{ fmtClock(s.sampledAt) }}</dd></div>
           </dl>
+          <button
+            type="button"
+            class="mt-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
+            :disabled="verifying !== ''"
+            title="今この条件で検索を 1 回投げ、記録している ID が今も一覧に載っているかを数えます (判定の土台の確認)"
+            @click="verify(s.key)"
+          >
+            {{ verifying === s.key ? "突き合わせ中…" : "検索と突き合わせ" }}
+          </button>
+          <p v-if="verified[s.key]" class="text-[10px] mt-0.5 tabular-nums" :class="verified[s.key]!.ids >= verified[s.key]!.total ? 'text-[var(--exile-color-text-secondary)]' : 'text-amber-300'">
+            出品 {{ verified[s.key]!.total }} 件 / 取れた ID {{ verified[s.key]!.ids }} 件<br />
+            追跡 {{ verified[s.key]!.tracked }} 件中 一覧にある {{ verified[s.key]!.matched }} 件 · 消えた候補 {{ verified[s.key]!.missing.length }} 件<br />
+            まだ追跡していない出品 {{ verified[s.key]!.untracked }} 件
+          </p>
+          <p v-else-if="verified[s.key] === null" class="text-[10px] mt-0.5 text-amber-300">突き合わせに失敗しました (レート制限か通信)</p>
         </div>
       </div>
 

@@ -35,6 +35,8 @@ export interface Tracked {
   currency?: string | null;
   /** 出品者のアカウント名 */
   account?: string | null;
+  /** 消えたのと同時に同じ出品者が並べ直した = 値段の付け替え。売れた件数には数えない */
+  relisted?: boolean;
 }
 export interface Daily {
   day: number;
@@ -121,11 +123,6 @@ export interface FlowStatus {
   slice_done: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
-  /** 検索から消えていて、まだ直接照会で決着していない出品の数 */
-  pending_missing: number;
-  /** 直接照会した延べ件数 / そのうち実在した件数 */
-  confirm_checked: number;
-  confirm_alive: number;
 }
 
 /** 自動追跡が今どうなっているか */
@@ -150,10 +147,7 @@ export async function toggleWatch(watch: Watch, on: boolean, league: string, sit
 
 /**
  * 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
- *
- * 戻り値は「search の一覧に載らなかった追跡中の ID」。出品が 100 件を超えると
- * search は安い順 100 件しか返さないので、これらは直接 fetch しないと生死が分からない。
- * 呼び出し側で checkListingsAlive → confirmFlow まで繋ぐ (2026-09-17)。
+ * 自動巡回とまったく同じ条件・同じルールで判定される (2026-09-17)。
  */
 export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[]}): Promise<string[]> {
   if (!isTauriRuntime()) return [];
@@ -165,13 +159,26 @@ export async function recordFlow(sample: { key: string; label?: string; total: n
   }
 }
 
-/** 直接 fetch した結果 (実在した ID) を記録に反映する */
-export async function confirmFlow(key: string, checked: string[], alive: string[]): Promise<void> {
-  if (!isTauriRuntime()) return;
+/** 記録と今の検索結果を突き合わせた結果 */
+export interface VerifyResult {
+  total: number;
+  ids: number;
+  tracked: number;
+  matched: number;
+  missing: string[];
+  untracked: number;
+}
+
+/**
+ * 記録している ID と、今の検索結果を突き合わせる (検索 1 回)。
+ * 判定の土台が検索の ID 一覧なので、噛み合っているかを確かめるのに使う。
+ */
+export async function verifyFlow(key: string): Promise<VerifyResult | null> {
+  if (!isTauriRuntime()) return null;
   try {
-    await invoke("market_flow_confirm", { req: { key, checked, alive } });
+    return await invoke<VerifyResult>("market_flow_verify", { key });
   } catch {
-    /* 確認できなければ次の取得でまた試す */
+    return null;
   }
 }
 
@@ -273,6 +280,8 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   const stalePrices: number[] = [];
   const allPrices: number[] = [];
   for (const t of state.tracked) {
+    // 値段の付け替え (消えた直後に同じ出品者が並べ直した) は売れても売れ残ってもいないので外す
+    if (t.relisted) continue;
     const start = t.listed_at ?? t.first_seen;
     const life = Math.max(60, (t.gone_at ?? nowSec) - start);
     const gone = !!t.gone_at;
