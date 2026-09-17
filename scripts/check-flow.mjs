@@ -105,7 +105,7 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     ]),
     NOW,
   );
-  check("3. 滞留が多ければ遅い", s.label === "遅い" && s.tone === "slow", `label=${s.label} 48h率=${s.soldIn48h} 母数=${s.known48} 滞留=${s.stale}`);
+  check("3. 1 件も売れず滞留だけなら遅い", s.label === "遅い" && s.tone === "slow", `label=${s.label} 48h率=${s.soldIn48h} 母数=${s.known48} 滞留=${s.stale}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,8 +126,8 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     NOW,
   );
   check(
-    "3b. 売れた時間より長く並んでいる在庫が多ければ格下げ",
-    s.label === "普通" && s.olderThanMedian === 4,
+    "3b. 並んだままの在庫は判定を動かさず、件数だけ併記する",
+    s.label === "速い" && s.olderThanMedian === 4 && /もっと長く並んでいます/.test(flowSentence(s)),
     `label=${s.label} 表示より長い=${s.olderThanMedian} 文=${flowSentence(s)}`,
   );
 }

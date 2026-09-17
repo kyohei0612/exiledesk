@@ -372,12 +372,12 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
 
   let tone: FlowTone = "unknown";
   let label = "";
-  if (stale >= MIN_KNOWN && stale >= goneLives.length) {
-    // 2 日以上売れ残っている出品が売れた数と同じかそれ以上 = 実際に滞留している
-    // (同数の時に「普通」と出てしまう穴があった。2026-09-17 レビュー指摘)
-    tone = "slow";
-    label = "遅い";
-  } else if (goneLives.length >= MIN_KNOWN && median != null) {
+  if (goneLives.length >= MIN_KNOWN && median != null) {
+    // 売れた出品の待ち時間そのもので決める。
+    // オーナー指摘 (2026-09-17):「観測してる ID が無くなったなら普通に速いだろ。
+    // 待機時間によるけどそいつが」= 売れた 1 件ずつの待ち時間が事実であって、
+    // 他の在庫が並んだままなのは「その値段では買われていない」という別の話。
+    // 並んだままの在庫は判定を動かさず、数字として併記するだけにする
     if (median <= FAST_SECS / 4) {
       // 6 時間以内
       tone = "fast";
@@ -389,19 +389,15 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       tone = "slow";
       label = "遅い";
     }
+  } else if (stale >= MIN_KNOWN && stale > goneLives.length) {
+    // 売れた実績が足りない (中央値が出せない) 上に、2 日以上並んだままの在庫の方が多い。
+    // その市場は動いていないので遅いと言い切ってよい
+    tone = "slow";
+    label = "遅い";
   }
-  // 「N 時間で売れる」と言っているのに、それより長く並んだままの在庫が売れた数より多いなら
-  // その主張は現実に追いついていない。1 段下げる (2026-09-17 レビュー指摘の生存者バイアス対策)
+  // 判定は動かさないが、より長く並んだままの在庫の数は必ず併記する
+  // (「その値段なら 3 時間、それより高いと並んだまま」という読み方ができるように)
   const olderThanMedianEarly = median == null ? 0 : aliveAges.filter((a) => a > median).length;
-  if (label && olderThanMedianEarly > goneLives.length) {
-    if (tone === "fast") {
-      tone = "normal";
-      label = "普通";
-    } else if (tone === "normal") {
-      tone = "slow";
-      label = "遅い";
-    }
-  }
   const enough = label !== "";
 
   // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか

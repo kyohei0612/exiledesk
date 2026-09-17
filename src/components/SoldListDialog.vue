@@ -315,6 +315,9 @@ async function verify(key: string): Promise<void> {
             <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
             消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
             消えたのと同時に同じ出品者が並べ直していた分は、値段の付け替えとみなして売れた件数から外しています。
+            追跡しているのは<span class="text-[var(--exile-color-text-secondary)]">その時点で最安 10 件の出品</span>なので、
+            「売れるまで ◯ 時間」は<span class="text-[var(--exile-color-text-secondary)]">最安帯に並べた場合の時間</span>です。
+            それより高い値段で並んでいる物は「まだ並んでいる出品」に残り続けます。
           </p>
         </div>
 
