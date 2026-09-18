@@ -66,14 +66,16 @@ impl AppSettings {
     ///
     /// - `auto_refetch_interval_secs`:
     ///   - 0 → そのまま (無効化)
-    ///   - 1..=599 → 600 (最低 10 分、誤入力で連打しないように)
+    ///   - 1..=86399 → 3 日 (単位を日に変えた時の移行。1 日未満の指定は受け付けない)
     ///   - 7 日超 → 7 日 (上限。2026-09-18 に 24 時間から広げた)
     fn normalized(mut self) -> Self {
         let s = self.auto_refetch_interval_secs;
         self.auto_refetch_interval_secs = if s == 0 {
             0
-        } else if s < 600 {
-            600
+        } else if s < 24 * 3600 {
+            // 2026-09-18: 単位を「時間」から「日」に変えたので、1 日未満の古い値 (既定だった 6 時間など) は
+            // 既定の 3 日に繰り上げる。そのままだと画面に「0 日 (= 無効)」と出るのに裏では 6 時間ごとに走る
+            3 * 24 * 3600
         } else if s > 7 * 24 * 3600 {
             7 * 24 * 3600
         } else {
@@ -217,13 +219,14 @@ mod tests {
     }
 
     #[test]
-    fn normalized_clamps_too_short_interval() {
+    fn normalized_lifts_old_hour_scale_interval() {
+        // 単位を日に変える前の既定 (6 時間) は、画面で「0 日」に見えるので既定の 3 日へ
         let s = AppSettings {
-            auto_refetch_interval_secs: 1,
+            auto_refetch_interval_secs: 6 * 3600,
             ..Default::default()
         }
         .normalized();
-        assert_eq!(s.auto_refetch_interval_secs, 600);
+        assert_eq!(s.auto_refetch_interval_secs, 3 * 24 * 3600);
     }
 
     #[test]

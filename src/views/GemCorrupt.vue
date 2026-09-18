@@ -249,8 +249,8 @@ const retryLeft = computed(() => {
   const fromFlow = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
   return Math.max(fromFlow > 0 ? fromFlow - nowSec : 0, tradeAuto.rateLimitSecs.value);
 });
-/** 次にトレードへ投げられるまでの残り秒 (罰則 + 通常の間隔。取得中の表示に出す) */
-const rateWait = computed(() => Math.max(tradeAuto.waitSecs.value, (flowStatus.value?.pace_until ?? 0) - Math.floor(nowMs.value / 1000)));
+/** 止められている残り秒 (通常の送信間隔は「待ち」として出さない。2026-09-18) */
+const rateWait = computed(() => retryLeft.value);
 /** 使った回数 ("4:10:0,12:60:0" → "10 秒 4 / 60 秒 12") */
 const rateText = computed(() => {
   const raw = flowStatus.value?.rate_state;

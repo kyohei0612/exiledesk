@@ -96,10 +96,10 @@ async function sweep(reason?: string): Promise<void> {
   message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
   const poll = window.setInterval(reload, 3000);
   try {
-    const ok = await sweepNow();
-    message.value = ok
+    const r = await sweepNow();
+    message.value = r.ok
       ? { ok: true, text: "一括取得が終わりました" }
-      : { ok: false, text: "一括取得に失敗しました (レート制限か通信)" };
+      : { ok: false, text: r.message ?? "一括取得に失敗しました (レート制限か通信)" };
   } finally {
     clearInterval(poll);
     sweeping.value = false;
@@ -161,8 +161,9 @@ const sweepText = computed(() => {
   if (!sweeping.value && s.pace_secs > 5) {
     return `自動巡回中 ${s.sweep_done}/${s.total || gems.value.length * 3} 銘柄 · ${s.pace_secs} 秒おき${s.current ? ` · ${s.current}` : ""}`;
   }
-  // 罰則待ちも通常の間隔待ちも同じ時計で出す (裏の門番 = pace_until、画面側 = tradeAuto)
-  const wait = Math.max(tradeAuto.waitSecs.value, (s.pace_until || 0) - Math.floor(Date.now() / 1000));
+  // 「レート待ち」と出すのは実際に止められている時だけ。通常の間隔 (10 秒前後) は待ちではない
+  // (2026-09-18: min_spacing を入れたので pace_until が常に数秒先になり、ずっと待ちに見えていた)
+  const wait = Math.max(tradeAuto.rateLimitSecs.value, (s.wait_until || 0) - Math.floor(Date.now() / 1000));
   // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
   const left = Math.max(0, s.total - s.done);
   const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * 20) / 60))} 分` : "";
@@ -501,7 +502,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
           自動巡回は <span class="text-[var(--exile-color-text-secondary)]">1 巡およそ 15 分</span>で終わる速さに均して流します
-          ({{ status?.pace_secs ?? 11 }} 秒おきに 1 回) のでレート制限に当たりません。
+          (今は {{ status?.pace_secs ?? 8 }} 秒おきに 1 回) のでレート制限に当たりません。
           手動の「一括取得」だけは上限の許す限り速く回すので、その間だけ待ちが出ます。
           監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり {{ cycleHours }} 時間に検索 1 回 + 値段 1 回なので、
           {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / cycleHours) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
@@ -562,7 +563,6 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                   </button>
                 </th>
                 <th class="text-left font-normal pb-1 pl-3">ジェム</th>
-                <th class="text-left font-normal pb-1 pl-3">入り方 / 速い数</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
                 <th v-for="k in SALE_KEYS" :key="k" class="text-left font-normal pb-1 pl-3">
                   <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} が速い物を上に、その中で今の最安値が高い順に並べる`" @click="sortBy = k">
@@ -590,11 +590,6 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                 <td class="py-1.5 pl-3">
                   {{ jaSkill(gem.name) }}
                   <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ gem.name }}</span>
-                </td>
-                <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                  {{ gem.manual ? "手動" : "上位" }}
-                  <span v-if="gem.fast > 0" class="ml-1 text-[10px]" :class="gem.fast === 3 ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'">速い {{ gem.fast }}/3</span>
-
                 </td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
                 <td v-for="c in gem.cells" :key="c.key" class="py-1.5 pl-3">

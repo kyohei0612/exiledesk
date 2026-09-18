@@ -580,45 +580,7 @@ pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, 
     store.list_refreshed_at = now;
 }
 
-#[derive(Deserialize)]
-pub struct ToggleWatchRequest {
-    pub watch: Watch,
-    /// true で追加、false で外す
-    pub on: bool,
-    #[serde(default)]
-    pub league: Option<String>,
-    #[serde(default)]
-    pub site: Option<String>,
-}
 
-/// 1 銘柄を手動で追跡に足す / 外す (ジェムコラプトの「追跡する」)。
-/// 手動で足した物は自動リストの入れ替えでは消えない。
-#[tauri::command]
-pub fn market_flow_toggle_watch(app: tauri::AppHandle, req: ToggleWatchRequest) -> Result<FlowStore, String> {
-    let mut store = load_store(&app);
-    if let Some(l) = req.league.filter(|l| !l.is_empty()) {
-        store.league = l;
-    }
-    if let Some(s) = req.site.filter(|s| !s.is_empty()) {
-        store.site = s;
-    }
-    let key = req.watch.key.clone();
-    if req.on {
-        if let Some(existing) = store.watches.iter_mut().find(|w| w.key == key) {
-            existing.manual = true;
-            existing.query = req.watch.query;
-            existing.label = req.watch.label;
-            existing.note = req.watch.note;
-        } else {
-            store.watches.push(Watch { manual: true, auto: false, ..req.watch });
-        }
-    } else {
-        store.watches.retain(|w| w.key != key);
-        store.states.remove(&key);
-    }
-    save_store(&app, &store)?;
-    Ok(store)
-}
 
 /// 記録と、今の検索結果を突き合わせた結果 (画面の「検索と突き合わせ」用)
 #[derive(Serialize)]

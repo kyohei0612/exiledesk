@@ -160,13 +160,19 @@ fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
     wait
 }
 
-/// 送ってよくなるまで待って、送った記録を残す。全ての trade2 リクエストがここを通る
-async fn gate_acquire(kind: &str) {
+/// 待てる上限。これを超える待ちは「今は無理」と返して、呼び側にエラーを出させる
+/// (2026-09-18: 上限が無く、罰則 10 分の時に「再取得」が無反応のまま 10 分固まっていた)
+const MAX_GATE_WAIT_MS: i64 = 90_000;
+
+/// 送ってよくなるまで待って、送った記録を残す。全ての trade2 リクエストがここを通る。
+/// 待ちが長すぎる時は Err (呼び側が「レート制限中: あと N 秒」として返す)
+async fn gate_acquire(kind: &str) -> Result<(), String> {
+    let mut waited = 0i64;
     loop {
         let wait = {
             let mut guard = match GATES.lock() {
                 Ok(g) => g,
-                Err(_) => return,
+                Err(_) => return Ok(()),
             };
             let map = guard.get_or_insert_with(HashMap::new);
             let g = map.entry(kind.to_string()).or_default();
@@ -180,9 +186,17 @@ async fn gate_acquire(kind: &str) {
             wait
         };
         if wait <= 0 {
-            return;
+            return Ok(());
         }
-        tokio::time::sleep(Duration::from_millis(wait.min(2000) as u64)).await;
+        if waited + wait > MAX_GATE_WAIT_MS {
+            return Err(format!(
+                "trade2 レート制限中 (あと {} 秒)。少し待ってから取得してください",
+                (wait + 999) / 1000
+            ));
+        }
+        let step = wait.min(2000);
+        waited += step;
+        tokio::time::sleep(Duration::from_millis(step as u64)).await;
     }
 }
 
@@ -342,7 +356,7 @@ pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, Stri
     let client = build_client()?;
 
     // 上限に当たる前にここで待つ (画面の取得も裏の一括取得も同じ門を通る)
-    gate_acquire("search").await;
+    gate_acquire("search").await?;
     let res = client
         .post(&url)
         .json(&req.query)
@@ -436,7 +450,7 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
 
     let client = build_client()?;
 
-    gate_acquire("fetch").await;
+    gate_acquire("fetch").await?;
     let res = client
         .get(&url)
         .send()

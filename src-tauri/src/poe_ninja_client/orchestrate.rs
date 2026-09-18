@@ -148,6 +148,9 @@ pub async fn craft_v2_fetch_all(
         cache: build_cache(&snapshot, new_ascendancies),
     };
     // 全体完了通知 (TS 側はこの payload の cache を craft_v2_cache_save に渡す)
+    // 使用率ランキングがこれを合図に相乗りするので、ジョブの鍵を離してから知らせる
+    // (2026-09-18: 鍵を持ったまま emit していたので、相乗り側が「取得中です」で弾かれることがあった)
+    drop(_job);
     let _ = window.emit("craft-v2-done", &result);
     Ok(result)
 }

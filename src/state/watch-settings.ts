@@ -75,7 +75,10 @@ function load(): WatchSettings {
       return {
         ...DEFAULT_WATCH_SETTINGS,
         klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
+        // 基準 (metric) だけ既定に戻す。上位いくつ / 人数の下限 / 上限は手で決めた値なので引き継ぐ
+        topN: clamp(s.topN, 0, 25, DEFAULT_WATCH_SETTINGS.topN),
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
+        maxGems: clamp(s.maxGems, 1, 25, DEFAULT_WATCH_SETTINGS.maxGems),
         manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
         autoTop: s.autoTop !== false,
       };

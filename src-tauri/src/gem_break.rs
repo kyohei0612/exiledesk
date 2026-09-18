@@ -259,7 +259,7 @@ fn try_offline(
     let label = if class.is_empty() { "全アセンダンシー".to_string() } else { class.clone() };
     let n = per_char.len();
     emit(window, "completed", n, n, &label, n);
-    Some(GemBreakResult {
+    let out = GemBreakResult {
         class: label,
         classes: vec![class],
         percentage: 100.0,
@@ -272,7 +272,10 @@ fn try_offline(
         // キャッシュから組み立てた時は「いつ取ったか」を偽らない (元の取得時刻を出す)
         fetched_at: hit.fetched_at,
         rows: aggregate(&per_char),
-    })
+    };
+    // 通信経路と同じく app_data にも残す (同梱データにする時はこのファイルを使う)
+    save_result(app, &out);
+    Some(out)
 }
 
 /// キャッシュに残す形 (poe.ninja の表示値のまま)
@@ -472,16 +475,7 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     };
     // 画面 (localStorage) とは別に app_data にも残す。同梱データにできる形なので、
     // 新しい PC はこれを積んでおけば取得なしで始められる
-    if let Some(p) = result_path(&app) {
-        match serde_json::to_string(&out) {
-            Ok(json) => {
-                if let Err(e) = std::fs::write(&p, json) {
-                    eprintln!("[gem_break] 集計結果を保存できません: {e}");
-                }
-            }
-            Err(e) => eprintln!("[gem_break] 集計結果を JSON 化できません: {e}"),
-        }
-    }
+    save_result(&app, &out);
     Ok(out)
 }
 
@@ -490,6 +484,19 @@ fn result_path(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
     let dir = app.path().app_data_dir().ok()?;
     let _ = std::fs::create_dir_all(&dir);
     Some(dir.join("gem_break_result.json"))
+}
+
+/// 集計結果を app_data に残す (通信経路とキャッシュ経路で共通)
+fn save_result(app: &tauri::AppHandle, out: &GemBreakResult) {
+    let Some(p) = result_path(app) else { return };
+    match serde_json::to_string(out) {
+        Ok(json) => {
+            if let Err(e) = std::fs::write(&p, json) {
+                eprintln!("[gem_break] 集計結果を保存できません: {e}");
+            }
+        }
+        Err(e) => eprintln!("[gem_break] 集計結果を JSON 化できません: {e}"),
+    }
 }
 
 /// 最後に取れた集計結果 (無ければ null)。
