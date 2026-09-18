@@ -10,6 +10,7 @@
  * 1 日 1 回より短い間隔では回さない (レート制限を焼かないため)。
  */
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
@@ -20,7 +21,15 @@ import { marketStore } from "./market-store";
 import { trade2Site } from "../services/trade2/league";
 
 /** リストを取り直す間隔 */
-const REFRESH_SECS = 24 * 3600;
+/**
+ * 使用率ランキングを取り直す間隔 (2026-09-18 オーナー指示:
+ * 「この使用リストって、忍者の上位 MOD を取る時に一緒に取得ってイメージ」)。
+ *
+ * 上位プレイヤーMOD一覧と同じ poe.ninja を叩くので、別々の時計で走らせると枠を取り合う。
+ * 1 週間に 1 回に落として、MOD 一覧の取得が終わった直後に相乗りする (下の listen)。
+ * 上位 100 人の顔ぶれは日単位ではほとんど変わらないので、毎日取り直す必要はない。
+ */
+const REFRESH_SECS = 7 * 24 * 3600;
 /** 起動直後は他の取得とぶつかるので少し待つ */
 const START_DELAY_MS = 30_000;
 /** クラフト選定ジェムの画面と共有する保存先 */
@@ -114,6 +123,12 @@ export async function rebuildWatches(): Promise<boolean> {
 export function startWatchAutoRefresh(): void {
   if (started || !isTauriRuntime()) return;
   started = true;
+  // 上位プレイヤーMOD一覧の取得が終わったら相乗りする (poe.ninja を 1 回のまとまりで叩くため)。
+  // 取得中はこちらが断られるので、終わってから声がかかるこの形が一番ぶつからない
+  void listen("craft-v2-done", () => {
+    void refreshIfStale();
+  });
+  // MOD 一覧が走らない時のための保険 (キャッシュが新しければ何もしない)
   setTimeout(() => void refreshIfStale(), START_DELAY_MS);
 }
 
