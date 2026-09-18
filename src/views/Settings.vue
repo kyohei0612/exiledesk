@@ -79,12 +79,13 @@ const updateStatusText = computed(() => {
   }
 });
 
-// 自動再取得間隔は UI 側で「時間」単位、永続化は秒単位
-const autoRefetchHours = computed<number>({
-  get: () => Math.round(settings.value.auto_refetch_interval_secs / 3600),
+// 自動再取得間隔は UI 側で「日」単位、永続化は秒単位
+// (オーナー指示 2026-09-18: MOD 一覧も使用率ランキングも 3 日に 1 回のペース)
+const autoRefetchDays = computed<number>({
+  get: () => Math.round(settings.value.auto_refetch_interval_secs / 86_400),
   set: (v) => {
-    const clamped = Math.max(0, Math.min(24, Math.round(v)));
-    settings.value.auto_refetch_interval_secs = clamped * 3600;
+    const clamped = Math.max(0, Math.min(7, Math.round(v)));
+    settings.value.auto_refetch_interval_secs = clamped * 86_400;
   },
 });
 
@@ -263,20 +264,21 @@ onMounted(async () => {
             <span class="text-sm whitespace-nowrap">取得間隔:</span>
             <input
               type="number"
-              v-model.number="autoRefetchHours"
+              v-model.number="autoRefetchDays"
               @change="saveSettings"
               min="0"
-              max="24"
+              max="7"
               step="1"
               class="w-20 px-2 py-1 bg-[var(--exile-color-bg-elevated)] border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] rounded-sm"
             />
             <span class="text-sm text-[var(--exile-color-text-secondary)]">
-              時間 (0 = 無効)
+              日 (0 = 無効)
             </span>
           </label>
           <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
-            背景で MOD 一覧を再取得します。<br />
-            例: 6 時間 = 1 日 4 回、8 時間 = 1 日 3 回。
+            背景で MOD 一覧を再取得します。自動ジェム監視の「使用率ランキング」も、この取得が
+            終わった直後に相乗りして取り直します (同じ poe.ninja を叩くため)。<br />
+            既定は 3 日。全体の顔ぶれは日単位ではほとんど変わらないので、これで十分です。
           </p>
         </section>
 

@@ -45,7 +45,9 @@ pub struct AppSettings {
     /// × ボタンで「最小化 (タスクトレイへ)」か「通常終了」か。
     /// true = Discord 風 hide、false = 完全終了。
     pub close_to_tray: bool,
-    /// 自動再取得の間隔 (秒)。0 で無効。デフォ 6 * 3600 = 21600 秒 (1 日 4 回相当)。
+    /// 自動再取得の間隔 (秒)。0 で無効。
+    /// 既定 3 日 (オーナー指示 2026-09-18:「全体がごろっと変わるのはそんなに無いから、
+    /// どっちも 3 日に 1 回のペースにしよう」)。使用率ランキングもこれに相乗りする。
     pub auto_refetch_interval_secs: u64,
 }
 
@@ -54,7 +56,7 @@ impl Default for AppSettings {
         Self {
             autostart_enabled: false,
             close_to_tray: true, // Discord 風がデフォ (オーナー指示)
-            auto_refetch_interval_secs: 6 * 3600,
+            auto_refetch_interval_secs: 3 * 24 * 3600,
         }
     }
 }
@@ -65,15 +67,15 @@ impl AppSettings {
     /// - `auto_refetch_interval_secs`:
     ///   - 0 → そのまま (無効化)
     ///   - 1..=599 → 600 (最低 10 分、誤入力で連打しないように)
-    ///   - 86400+ → 86400 (上限 24 時間)
+    ///   - 7 日超 → 7 日 (上限。2026-09-18 に 24 時間から広げた)
     fn normalized(mut self) -> Self {
         let s = self.auto_refetch_interval_secs;
         self.auto_refetch_interval_secs = if s == 0 {
             0
         } else if s < 600 {
             600
-        } else if s > 86_400 {
-            86_400
+        } else if s > 7 * 24 * 3600 {
+            7 * 24 * 3600
         } else {
             s
         };
@@ -210,7 +212,8 @@ mod tests {
         let d = AppSettings::default();
         assert!(!d.autostart_enabled);
         assert!(d.close_to_tray);
-        assert_eq!(d.auto_refetch_interval_secs, 21_600);
+        // 既定は 3 日 (2026-09-18 オーナー指示: MOD 一覧も使用率ランキングも 3 日に 1 回)
+        assert_eq!(d.auto_refetch_interval_secs, 3 * 24 * 3600);
     }
 
     #[test]
@@ -240,7 +243,8 @@ mod tests {
             ..Default::default()
         }
         .normalized();
-        assert_eq!(s.auto_refetch_interval_secs, 86_400);
+        // 上限は 7 日 (2026-09-18 に 24 時間から広げた)
+        assert_eq!(s.auto_refetch_interval_secs, 7 * 24 * 3600);
     }
 
     #[test]
