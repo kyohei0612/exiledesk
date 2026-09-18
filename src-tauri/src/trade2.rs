@@ -47,6 +47,13 @@ struct Gate {
     /// 2026-09-18: こちらは上限の半分も使っていないのに 429 (retry-after 600 秒) を食らった。
     /// サーバーの数えた回数がこちらの記録より多い = 別経路が枠を使っているので、その間は半分に抑える
     foreign_seen_at: i64,
+    /// 窓の長さ(秒) → (前回サーバーが返した現在数, その時刻ミリ秒)。
+    ///
+    /// 「サーバーの数 > こちらの記録」をそのまま別経路の証拠にすると外れる。2026-09-18 の 6 時間窓が
+    /// まさにそれで、送信記録を保存するようになる前 (v0.1.168 より前) の自分の送信 90 回ぶんが
+    /// こちらにだけ無く、ずっと「別経路がいる」と誤判定して枠を半分に絞っていた。
+    /// 差が一定なら古い履歴、**伸び方がこちらの送信より速ければ**本当に別経路。そのための前回値。
+    last_state: HashMap<i64, (i64, i64)>,
 }
 
 static GATES: StdMutex<Option<HashMap<String, Gate>>> = StdMutex::new(None);
@@ -276,26 +283,38 @@ pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
                 block_all_until(map, now + restricted * 1000 + 500);
                 continue;
             }
-            // サーバーの数えた現在数が**こちらの記録より多く**、かつ上限に近い = 同じ IP の別経路
-            // (手で開いた検索など) が使っている。自分の送信だけで上限近くまで使った時は
-            // wait_for_rules が正確に待つので、ここでは止めない。
-            // 「送ったことにする」のも駄目: 6 時間窓の差分が 10 秒窓にも乗って全部止まる。
+            // 同じ IP の別経路 (ブラウザで開いたトレード検索など) が枠を使っていないかを見る。
+            //
+            // 「サーバーの数 > こちらの記録」では判定できない。2026-09-18 の記録では 6 時間窓が常に
+            // 90 回ほど多かったが、これは記録を保存する前の自分の送信で、差はずっと一定だった。
+            // 見るべきは**伸び方**: 前回の応答からサーバーの数が増えたぶんが、その間にこちらが
+            // 送った数より多ければ、その差は他の誰かが送っている。
             let Some(&(max, _)) = rules.get(i) else { continue };
             let margin = if max >= 15 { 2 } else { 1 };
             let keep = max.saturating_sub(margin).max(1) as i64;
-            let own = {
+            let (own, prev) = {
                 let g = map.entry(kind.to_string()).or_default();
-                g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64
+                let own = g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64;
+                (own, g.last_state.insert(period, (cur, now)))
             };
-            // 差が 1 なら別経路とみなさない。こちらは「送る直前」に、サーバーは「受けた時」に
-            // 数えるので窓の端では常に 1 ずれる。ここを別経路と誤認すると枠を半分しか使えなくなる
-            // (2026-09-18 の記録では 429 の直前に毎回 foreign が立っていた)。
-            if cur <= own + 1 {
+            let Some((prev_cur, prev_at)) = prev else { continue };
+            // 窓が一周していたら古いぶんが抜けて数が減るので、伸び方では比べられない
+            if now - prev_at >= period * 1000 {
+                continue;
+            }
+            let own_delta = {
+                let g = map.entry(kind.to_string()).or_default();
+                // 境界は入れる側に寄せる (自分の送信を取りこぼすと別経路と誤判定するため)。
+                // 前回の応答より後に送った物しかここには入らない (応答は必ずその送信より後なので)
+                g.sends.iter().filter(|t| **t >= prev_at && **t <= now).count() as i64
+            };
+            let foreign = cur - prev_cur - own_delta;
+            if foreign <= 0 {
                 continue;
             }
             crate::app_log::line_static(&format!(
-                "[trade2] {kind} 窓{period}秒: サーバー {cur} 回 / こちらの記録 {own} 回。\
-同じ回線の別経路 (ブラウザのトレード検索など) が枠を使っています"
+                "[trade2] {kind} 窓{period}秒: 前回の応答からサーバーは {} 回増、こちらの送信は {own_delta} 回。差の {foreign} 回は同じ回線の別経路 (ブラウザのトレード検索など)。今の現在数 {cur} / 上限 {max} (こちらの記録 {own})",
+                cur - prev_cur
             ));
             let g = map.entry(kind.to_string()).or_default();
             g.foreign_seen_at = now;
@@ -597,7 +616,7 @@ mod rate_tests {
     static GLOBAL_TEST_LOCK: StdMutex<()> = StdMutex::new(());
 
     fn gate(sends: Vec<i64>, rules: Vec<Rule>, blocked_until: i64) -> Gate {
-        Gate { sends, rules, blocked_until, foreign_seen_at: 0 }
+        Gate { sends, rules, blocked_until, ..Default::default() }
     }
 
     /// 枠が余っていれば待たない (ただし直前の送信からは最低 MIN_SPACING_MS 空ける)
@@ -651,13 +670,22 @@ mod rate_tests {
         assert!(wait_for_rules(&g, now, SPACING) > 9_000);
     }
 
-    /// 自分の送信だけで上限近くまで使っても、state ヘッダの現在数で余計に止めない
-    /// (止めていた頃は 28 件ごとに 300 秒止まった。2026-09-18 レビュー指摘)
+    /// 別経路の判定は「差」ではなく「伸び方」で見る。
+    ///
+    /// 自分の送信だけで上限近くまで使っても余計に止めない (止めていた頃は 28 件ごとに 300 秒止まった)。
+    /// サーバーの数がこちらの記録より多いだけでも止めない (2026-09-18: 6 時間窓が常に 90 回多く、
+    /// それは記録を保存する前の自分の送信だった)。前回の応答からの伸びがこちらの送信より速い時だけ。
     #[test]
-    fn own_sends_do_not_trigger_the_foreign_block() {
+    fn only_a_faster_growing_counter_counts_as_another_client() {
         let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let now = now_ms();
         let key = "test-own";
+        let push_send = || {
+            let mut guard = GATES.lock().unwrap();
+            let map = guard.get_or_insert_with(HashMap::new);
+            map.entry(key.to_string()).or_default().sends.push(now_ms());
+        };
+        let blocked = || GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
         {
             let mut guard = GATES.lock().unwrap();
             let map = guard.get_or_insert_with(HashMap::new);
@@ -665,26 +693,26 @@ mod rate_tests {
             g.rules = vec![(5, 10)];
             g.sends = vec![now - 3_000, now - 2_000, now - 1_000, now - 500];
             g.blocked_until = 0;
+            g.last_state.clear();
         }
         let mut h = HeaderMap::new();
         h.insert("x-rate-limit-ip", HeaderValue::from_static("5:10:60"));
-        // サーバーもこちらと同じ 4 件を数えている = 別経路は無い
+        // 1 回目: 比べる相手がまだ無い
         h.insert("x-rate-limit-ip-state", HeaderValue::from_static("4:10:0"));
         gate_note(key, &h);
-        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
-        assert_eq!(blocked, 0, "自分の送信ぶんでは止めない");
-        // 1 の差は数えない。こちらは送る直前に、サーバーは受けた時に数えるので窓の端では必ずずれる
-        // (2026-09-18: ここで別経路と誤認して、ずっと枠を半分しか使えていなかった)
+        assert_eq!(blocked(), 0, "1 回目は比べられないので止めない");
+        // こちらが 1 回送り、サーバーも 1 増えた = 全部自分の送信
+        push_send();
         h.insert("x-rate-limit-ip-state", HeaderValue::from_static("5:10:0"));
         gate_note(key, &h);
-        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
-        assert_eq!(blocked, 0, "1 の差は窓の端のずれなので止めない");
-        // 2 以上ずれていれば別経路。超過ぶんの枠が空くまで止める
-        // (上限 5 / 10 秒 なら 1 枠 = 2 秒。窓の長さぶん丸ごとは止めない)
-        h.insert("x-rate-limit-ip-state", HeaderValue::from_static("6:10:0"));
+        assert_eq!(blocked(), 0, "伸びたぶんが自分の送信と同じなら止めない");
+        // こちらは 1 回しか送っていないのにサーバーは 3 増えた = 2 回は別経路
+        push_send();
+        h.insert("x-rate-limit-ip-state", HeaderValue::from_static("8:10:0"));
         gate_note(key, &h);
-        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
-        assert!(blocked >= now + 4_000 && blocked <= now + 9_000, "超過ぶんだけ待つ (blocked={blocked}, now={now})");
+        let b = blocked();
+        // 上限 5 / 10 秒 なら 1 枠 = 2 秒。超過 (8 - 4 + 1 = 5 枠) ぶんだけ待つ
+        assert!(b >= now + 8_000 && b <= now + 13_000, "超過ぶんだけ待つ (blocked={b}, now={now})");
     }
 
     /// 429 を 1 つの窓口で食らったら、他の窓口も同じ時刻まで止まる
