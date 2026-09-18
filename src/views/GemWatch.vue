@@ -375,7 +375,15 @@ function cells(en: string) {
       /** 並べ替えと表示に使う今の最安値 (高貴建て) */
       cheapest,
       label: SALE_KEY_LABEL[k],
-      verdict: f.label || (f.gone + f.alive > 0 ? `判定待ち ${f.gone + f.alive} 件` : watched ? "巡回待ち" : "未登録"),
+      verdict:
+        f.label ||
+        (f.firstLook && f.alive > 0
+          ? "次回の取得で判定"
+          : f.gone + f.alive > 0
+            ? `判定待ち ${f.gone + f.alive} 件`
+            : watched
+              ? "巡回待ち"
+              : "未登録"),
       // 判定の横: 売れるまでの時間と、今の最安値
       detail: parts.join(" · "),
       title: `${flowSentence(f)}${avg != null ? `。売れた値段の平均は ${displayCurrency.money(avg)} (期待値の計算に使う値)` : ""}`,

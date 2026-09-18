@@ -565,7 +565,8 @@ const summary = computed(() => {
                       class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap"
                       :title="`${flowSentence(f)}。判定には売れた出品が 3 件必要です。押すと記録の一覧`"
                     >
-                      <span class="underline">{{ f.gone > 0 ? `${f.gone} 件売れた (${fmtSellTime(f.medianMin)})` : "まだ売れていない" }} / {{ f.alive }} 件並んでいる</span>
+                      <span v-if="f.firstLook && f.gone === 0" class="underline">初回・次回の取得で判定 ({{ f.alive }} 件を記録)</span>
+                      <span v-else class="underline">{{ f.gone > 0 ? `${f.gone} 件売れた (${fmtSellTime(f.medianMin)})` : "まだ売れていない" }} / {{ f.alive }} 件並んでいる</span>
                     </span>
                     <span v-else-if="isWatched(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)] underline" title="追跡対象です。巡回の順番が来ると記録が始まります。押すと記録の一覧">巡回待ち</span>
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>

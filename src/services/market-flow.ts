@@ -239,6 +239,9 @@ export function fmtSellTime(min: number | null): string {
  */
 export function flowSentence(f: FlowSummary): string {
   if (f.truncated) return "出品が多すぎて (100 件超) 売れたかどうかを判定できません";
+  if (f.firstLook && f.gone === 0) {
+    return `初回の取得です。今並んでいる ${f.alive} 件（最長 ${fmtSellTime(f.oldestMin)}）を覚えたところなので、次回の取得でこのうち何件が売れたかを見て判定します`;
+  }
   if (f.gone === 0) {
     if (f.alive === 0) return "まだ記録がありません";
     return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）`;
@@ -287,6 +290,14 @@ export interface FlowSummary {
   lastAt: number | null;
   /** 判定に足りるだけのデータがあるか */
   enough: boolean;
+  /**
+   * この銘柄をまだ 1 回しか見ていない (初回の取得)。
+   *
+   * 2026-09-19 オーナー「初回の時遅いって出るけど、初回だから次回更新時判断ってやつ追加しなきゃね」:
+   * 「2 日以上並んでいる」は出品時刻から初回でも分かるので、古い在庫が並んでいる銘柄は
+   * 1 回目でいきなり「遅い」になっていた。こちらはまだ市場の動きを一度も見ていないのに。
+   */
+  firstLook: boolean;
   /** 48 時間以上売れ残っている件数と、その最安に対する値段の倍率 (値段不相応の目安) */
   stale: number;
   staleRatio: number | null;
@@ -321,6 +332,7 @@ const EMPTY_SUMMARY: FlowSummary = {
   total: null,
   lastAt: null,
   enough: false,
+  firstLook: false,
   stale: 0,
   staleRatio: null,
   oldestMin: null,
@@ -407,6 +419,10 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
         ? goneLives[(goneLives.length - 1) / 2]
         : (goneLives[goneLives.length / 2 - 1] + goneLives[goneLives.length / 2]) / 2;
 
+  // まだ 1 回しか見ていない = 出品が入れ替わったかを一度も確かめていない。
+  // last_seen が first_seen より後の記録が 1 つでもあれば、2 回目以降を見ている
+  const firstLook = !state.tracked.some((t) => t.last_seen > t.first_seen);
+
   let tone: FlowTone = "unknown";
   let label = "";
   if (goneLives.length >= MIN_KNOWN && median != null) {
@@ -426,9 +442,11 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       tone = "slow";
       label = "遅い";
     }
-  } else if (stale >= MIN_KNOWN && stale > goneLives.length) {
+  } else if (!firstLook && stale >= MIN_KNOWN && stale > goneLives.length) {
     // 売れた実績が足りない (中央値が出せない) 上に、2 日以上並んだままの在庫の方が多い。
-    // その市場は動いていないので遅いと言い切ってよい
+    // その市場は動いていないので遅いと言い切ってよい。
+    // ただし初回の取得では言わない。齢は出品時刻から分かるが、こちらはまだ
+    // 「その間に売れて入れ替わったか」を一度も見ていないため (2026-09-19 オーナー指摘)
     tone = "slow";
     label = "遅い";
   }
@@ -472,6 +490,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     total: state.total ?? null,
     lastAt: state.sampled_at || null,
     enough,
+    firstLook,
     stale,
     staleRatio,
     oldestMin: aliveAges.length > 0 ? Math.round(aliveAges[0] / 60) : null,
