@@ -160,6 +160,120 @@ fn gems_of(ci: &ninja::CharacterItems) -> Vec<GemView> {
     out
 }
 
+/// キャラごとのジェムから集計表を作る。
+///
+/// 2026-09-18: キャッシュだけで組み立てる経路 (try_offline) と同じ計算を使うため関数にした。
+fn aggregate(per_char: &[Vec<GemView>]) -> Vec<GemBreakRow> {
+    let mut table: HashMap<String, GemBreakRow> = HashMap::new();
+    // ジェムごとの分布 (レベル / 品質 → 人数)。同じキャラの同じ値は 1 回
+    let mut level_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
+    let mut quality_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
+    for gems in per_char {
+        // 装備 / アセの底上げを引いて、ジェム自身のレベル / 品質に戻す
+        let lvl_bonus = gear_bonus(gems, true);
+        let q_bonus = gear_bonus(gems, false);
+        // 同じキャラで同じジェムは 1 回だけ数える
+        let mut seen: HashSet<String> = HashSet::new();
+        let mut seen_l: HashSet<String> = HashSet::new();
+        let mut seen_q: HashSet<String> = HashSet::new();
+        let mut seen_b: HashSet<String> = HashSet::new();
+        let mut seen_c: HashSet<String> = HashSet::new();
+        // 分布は (ジェム, 値) 単位で 1 回
+        let mut seen_ld: HashSet<(String, i64)> = HashSet::new();
+        let mut seen_qd: HashSet<(String, i64)> = HashSet::new();
+        for gem in gems {
+            let name = gem.name.clone();
+            // ジェム自身の値 (コラプトで上がった分だけが 20 / 20% を超える)
+            let lvl = (gem.level - lvl_bonus).max(0);
+            let q = (gem.quality - q_bonus).max(0);
+            let row = table.entry(name.clone()).or_insert_with(|| GemBreakRow {
+                name: name.clone(),
+                ..Default::default()
+            });
+            if seen.insert(name.clone()) {
+                row.users += 1;
+            }
+            // コラプト済みでなければ 21 / 23% にはならない (推定を外した時の保険)
+            let lvl_ok = gem.corrupted && lvl >= 21;
+            let q_ok = gem.corrupted && q >= 23;
+            if lvl_ok && seen_l.insert(name.clone()) {
+                row.lvl21 += 1;
+            }
+            if q_ok && seen_q.insert(name.clone()) {
+                row.q23 += 1;
+            }
+            if lvl_ok && q_ok && seen_b.insert(name.clone()) {
+                row.both += 1;
+            }
+            if gem.corrupted && seen_c.insert(name.clone()) {
+                row.corrupted += 1;
+            }
+            row.max_level = row.max_level.max(lvl);
+            row.max_quality = row.max_quality.max(q);
+            if lvl > 0 && seen_ld.insert((name.clone(), lvl)) {
+                *level_dist.entry(name.clone()).or_default().entry(lvl).or_insert(0) += 1;
+            }
+            if seen_qd.insert((name.clone(), q)) {
+                *quality_dist.entry(name.clone()).or_default().entry(q).or_insert(0) += 1;
+            }
+        }
+    }
+    let mut rows: Vec<GemBreakRow> = table.into_values().collect();
+    for row in &mut rows {
+        if let Some(m) = level_dist.remove(&row.name) {
+            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
+            v.sort_by_key(|(k, _)| *k);
+            row.level_dist = v;
+        }
+        if let Some(m) = quality_dist.remove(&row.name) {
+            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
+            v.sort_by_key(|(k, _)| *k);
+            row.quality_dist = v;
+        }
+    }
+    rows.sort_by(|a, b| b.users.cmp(&a.users).then_with(|| a.name.cmp(&b.name)));
+    rows
+}
+
+/// キャッシュだけで結果を組み立てられるなら組み立てる (poe.ninja には一切問い合わせない)。
+///
+/// 条件: 同じ条件の検索結果が SEARCH_FRESH_SECS 以内にあり、その顔ぶれのジェムが全員分あること。
+/// 新しい PC では同梱データがそのまま使えるので、初回から 1 リクエストも要らない。
+fn try_offline(
+    window: &tauri::Window,
+    app: &tauri::AppHandle,
+    class: String,
+    top_n: usize,
+    now: i64,
+) -> Option<GemBreakResult> {
+    let cache = gcache::load_raw(app)?;
+    let hit = cache.searches.get(&gcache::search_key(&class, top_n))?;
+    if now - hit.fetched_at >= gcache::SEARCH_FRESH_SECS || hit.chars.is_empty() {
+        return None;
+    }
+    let mut per_char: Vec<Vec<GemView>> = Vec::with_capacity(hit.chars.len());
+    for (account, name) in &hit.chars {
+        let c = cache.characters.get(&gcache::char_key(account, name))?;
+        per_char.push(from_cached(&c.gems));
+    }
+    let label = if class.is_empty() { "全アセンダンシー".to_string() } else { class.clone() };
+    let n = per_char.len();
+    emit(window, "completed", n, n, &label, n);
+    Some(GemBreakResult {
+        class: label,
+        classes: vec![class],
+        percentage: 100.0,
+        characters: n,
+        reused: n,
+        requested: top_n,
+        cancelled: false,
+        league: cache.league.clone(),
+        snapshot: cache.snapshot_name.clone(),
+        fetched_at: now,
+        rows: aggregate(&per_char),
+    })
+}
+
 /// キャッシュに残す形 (poe.ninja の表示値のまま)
 fn to_cached(gems: &[GemView]) -> Vec<gcache::CachedGem> {
     gems.iter()
@@ -208,6 +322,21 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let top_n = req.top_n.unwrap_or(40).clamp(5, 100);
     let spread = req.spread.unwrap_or(1).clamp(1, 10);
     CANCEL.store(false, Ordering::Relaxed);
+    let app = window.app_handle().clone();
+    let now_ts = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0)
+    };
+    // 前と同じ条件で、顔ぶれもジェムも全部キャッシュにあるなら **1 リクエストも投げずに** 組み立て直す
+    // (2026-09-18 オーナー報告「即レート制限」: 1 人も新しく取らない時でも index-state / search で
+    //  3 回問い合わせていたので、IP がブロックされているとそこで弾かれていた)
+    if spread <= 1 {
+        if let Some(r) = try_offline(&window, &app, req.class.clone().unwrap_or_default(), top_n, now_ts()) {
+            return Ok(r);
+        }
+    }
     let client = ninja::build_client()?;
     // poe.ninja 宛は 1 本のゲートを共有する (2026-09-18 オーナー指摘「どっちかズラさんと終わる」)。
     // 間隔 (2.5 秒) もペナルティも上位プレイヤーMOD一覧と共通なので、同時に走っても倍速にならない
@@ -242,21 +371,14 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     // 散らす時は 1 アセあたりの人数を割る (合計はだいたい top_n)
     let per_asc = ((top_n as f64) / targets.len() as f64).ceil() as usize;
 
-    let mut table: HashMap<String, GemBreakRow> = HashMap::new();
-    // ジェムごとの分布 (レベル / 品質 → 人数)。同じキャラの同じ値は 1 回
-    let mut level_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
-    let mut quality_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
+    // 集計はキャラごとのジェムを貯めてから 1 回でやる (キャッシュだけで作る経路と同じ計算)
+    let mut per_char: Vec<Vec<GemView>> = Vec::new();
     let mut done = 0usize;
     let mut planned = 0usize;
     // キャラごとのキャッシュ (snapshot が変わっていれば空で始まる)
-    let app = window.app_handle().clone();
-    let now_ts = || {
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0)
-    };
     let mut cache = gcache::load(&app, &snap.version, now_ts());
+    cache.league = snap.league_url.clone();
+    cache.snapshot_name = snap.snapshot_name.clone();
     let mut reused = 0usize;
     let mut fetched_since_save = 0usize;
 
@@ -270,6 +392,14 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
             Err(_) => continue, // 1 アセ取れなくても他は続ける
         };
         planned += refs.len();
+        // 顔ぶれも覚えておく (次に同じ条件で取るなら search も要らない)
+        cache.searches.insert(
+            gcache::search_key(&asc.class, per_asc),
+            gcache::CachedSearch {
+                fetched_at: now_ts(),
+                chars: refs.iter().map(|r| (r.account.clone(), r.name.clone())).collect(),
+            },
+        );
         for r in refs {
             if CANCEL.load(Ordering::Relaxed) {
                 break 'outer;
@@ -294,61 +424,14 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
                     // 途中でレート制限に当たっても取れた分を残す (5 人ごとに保存)
                     fetched_since_save += 1;
                     if fetched_since_save >= 5 {
-                        gcache::save(&app, &cache);
+                        gcache::save(&app, &mut cache);
                         fetched_since_save = 0;
                     }
                     g
                 }
             };
             done += 1;
-            // 装備 / アセの底上げを引いて、ジェム自身のレベル / 品質に戻す
-            let lvl_bonus = gear_bonus(&gems, true);
-            let q_bonus = gear_bonus(&gems, false);
-            // 同じキャラで同じジェムは 1 回だけ数える
-            let mut seen: HashSet<String> = HashSet::new();
-            let mut seen_l: HashSet<String> = HashSet::new();
-            let mut seen_q: HashSet<String> = HashSet::new();
-            let mut seen_b: HashSet<String> = HashSet::new();
-            let mut seen_c: HashSet<String> = HashSet::new();
-            // 分布は (ジェム, 値) 単位で 1 回
-            let mut seen_ld: HashSet<(String, i64)> = HashSet::new();
-            let mut seen_qd: HashSet<(String, i64)> = HashSet::new();
-            for gem in &gems {
-                let name = gem.name.clone();
-                // ジェム自身の値 (コラプトで上がった分だけが 20 / 20% を超える)
-                let lvl = (gem.level - lvl_bonus).max(0);
-                let q = (gem.quality - q_bonus).max(0);
-                let row = table.entry(name.clone()).or_insert_with(|| GemBreakRow {
-                    name: name.clone(),
-                    ..Default::default()
-                });
-                if seen.insert(name.clone()) {
-                    row.users += 1;
-                }
-                // コラプト済みでなければ 21 / 23% にはならない (推定を外した時の保険)
-                let lvl_ok = gem.corrupted && lvl >= 21;
-                let q_ok = gem.corrupted && q >= 23;
-                if lvl_ok && seen_l.insert(name.clone()) {
-                    row.lvl21 += 1;
-                }
-                if q_ok && seen_q.insert(name.clone()) {
-                    row.q23 += 1;
-                }
-                if lvl_ok && q_ok && seen_b.insert(name.clone()) {
-                    row.both += 1;
-                }
-                if gem.corrupted && seen_c.insert(name.clone()) {
-                    row.corrupted += 1;
-                }
-                row.max_level = row.max_level.max(lvl);
-                row.max_quality = row.max_quality.max(q);
-                if lvl > 0 && seen_ld.insert((name.clone(), lvl)) {
-                    *level_dist.entry(name.clone()).or_default().entry(lvl).or_insert(0) += 1;
-                }
-                if seen_qd.insert((name.clone(), q)) {
-                    *quality_dist.entry(name.clone()).or_default().entry(q).or_insert(0) += 1;
-                }
-            }
+            per_char.push(gems);
         }
     }
     let label = if all_classes {
@@ -359,7 +442,7 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
         format!("上位 {} アセ合算", targets.len())
     };
     // 中止やレート制限で抜けた時も、取れたキャラはここで残す
-    gcache::save(&app, &cache);
+    gcache::save(&app, &mut cache);
     emit(&window, "completed", done, planned.max(done), &label, reused);
 
     if done == 0 {
@@ -369,20 +452,7 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
             "キャラを 1 人も取れませんでした (poe.ninja のレート制限の可能性)".to_string()
         });
     }
-    let mut rows: Vec<GemBreakRow> = table.into_values().collect();
-    for row in &mut rows {
-        if let Some(m) = level_dist.remove(&row.name) {
-            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
-            v.sort_by_key(|(k, _)| *k);
-            row.level_dist = v;
-        }
-        if let Some(m) = quality_dist.remove(&row.name) {
-            let mut v: Vec<(i64, u32)> = m.into_iter().collect();
-            v.sort_by_key(|(k, _)| *k);
-            row.quality_dist = v;
-        }
-    }
-    rows.sort_by(|a, b| b.users.cmp(&a.users).then_with(|| a.name.cmp(&b.name)));
+    let rows = aggregate(&per_char);
     let out = GemBreakResult {
         class: label,
         classes: targets.iter().map(|a| a.class.clone()).collect(),

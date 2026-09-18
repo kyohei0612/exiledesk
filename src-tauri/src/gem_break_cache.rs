@@ -21,7 +21,12 @@ use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
 /// 形式を変えた時に上げる (合わないキャッシュは捨てて取り直す)
-const SCHEMA: u32 = 1;
+const SCHEMA: u32 = 2;
+/// 「上位 N 人が誰か」の検索結果をそのまま信じる時間。
+/// この間に取り直すなら poe.ninja に**一度も**問い合わせない (2026-09-18
+/// オーナー報告「即レート制限」: 1 人も新しく取らない時でも index-state / search の
+/// 3 リクエストを投げていて、IP がブロックされているとそこで弾かれていた)
+pub const SEARCH_FRESH_SECS: i64 = 6 * 3600;
 /// これより古いキャラは捨てる (装備やジェムが変わっている可能性が上がるため)
 const MAX_AGE_SECS: i64 = 7 * 24 * 3600;
 
@@ -41,6 +46,14 @@ pub struct CachedChar {
     pub gems: Vec<CachedGem>,
 }
 
+/// 「このアセンダンシーの上位 N 人は誰か」の検索結果
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CachedSearch {
+    pub fetched_at: i64,
+    /// (アカウント, キャラ名) の並び (poe.ninja が返した順 = DPS 順)
+    pub chars: Vec<(String, String)>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct GemBreakCache {
     #[serde(default)]
@@ -48,9 +61,25 @@ pub struct GemBreakCache {
     /// poe.ninja の snapshot version。変わったら全部捨てる
     #[serde(default)]
     pub snapshot_version: String,
+    /// 最後に保存した時刻 (検索結果をそのまま信じてよいかの判断に使う)
+    #[serde(default)]
+    pub saved_at: i64,
+    /// 表示に使うリーグ / snapshot 名 (取りに行かずに結果を組み立てる時に要る)
+    #[serde(default)]
+    pub league: String,
+    #[serde(default)]
+    pub snapshot_name: String,
+    /// "アセンダンシー|人数" → 上位の顔ぶれ
+    #[serde(default)]
+    pub searches: HashMap<String, CachedSearch>,
     /// "アカウント|キャラ名" → ジェム
     #[serde(default)]
     pub characters: HashMap<String, CachedChar>,
+}
+
+/// 検索結果のキー
+pub fn search_key(class: &str, n: usize) -> String {
+    format!("{class}|{n}")
 }
 
 pub fn char_key(account: &str, name: &str) -> String {
@@ -64,24 +93,37 @@ fn path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+/// そのまま読む (snapshot の照合はしない)。まだ poe.ninja に何も聞いていない段階で使う
+pub fn load_raw(app: &tauri::AppHandle) -> Option<GemBreakCache> {
+    let p = path(app).ok()?;
+    let raw = std::fs::read_to_string(&p).ok()?;
+    let c = serde_json::from_str::<GemBreakCache>(&raw).ok()?;
+    if c.schema != SCHEMA {
+        return None;
+    }
+    Some(c)
+}
+
 /// 読み込む。形式違い / snapshot 違いなら空で返す (= 全部取り直し)
 pub fn load(app: &tauri::AppHandle, snapshot_version: &str, now: i64) -> GemBreakCache {
     let empty = GemBreakCache {
         schema: SCHEMA,
         snapshot_version: snapshot_version.to_string(),
-        characters: HashMap::new(),
+        ..Default::default()
     };
-    let Ok(p) = path(app) else { return empty };
-    let Ok(raw) = std::fs::read_to_string(&p) else { return empty };
-    let Ok(mut c) = serde_json::from_str::<GemBreakCache>(&raw) else { return empty };
-    if c.schema != SCHEMA || c.snapshot_version != snapshot_version {
+    let Some(mut c) = load_raw(app) else { return empty };
+    if c.snapshot_version != snapshot_version {
         return empty;
     }
     c.characters.retain(|_, v| now - v.fetched_at < MAX_AGE_SECS);
     c
 }
 
-pub fn save(app: &tauri::AppHandle, cache: &GemBreakCache) {
+pub fn save(app: &tauri::AppHandle, cache: &mut GemBreakCache) {
+    cache.saved_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
     let Ok(p) = path(app) else { return };
     match serde_json::to_string(cache) {
         Ok(json) => {
