@@ -8,7 +8,7 @@
     src-tauri/src/gem_break.rs  取得 + 集計 (gem-break-progress を emit)
 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
@@ -16,8 +16,9 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { addManualGem, isManualGem, removeManualGem } from "../state/watch-settings";
-import { rebuildWatches } from "../state/gem-watch-auto";
+import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../state/watch-settings";
+import { rankingClass, rebuildWatches } from "../state/gem-watch-auto";
+import { loadAscendancies } from "../state/ascendancy-list";
 import gemsRaw from "../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -52,21 +53,25 @@ interface Result {
   fetched_at: number;
   rows: Row[];
 }
-interface Asc {
-  class: string;
-  percentage: number;
-}
-
 const inApp = isTauriRuntime();
 const STORE_KEY = "exiledesk.gem-break.result";
-const CLASS_KEY = "exiledesk.gem-break.class";
 const TOPN_KEY = "exiledesk.gem-break.topn";
 const SPREAD_KEY = "exiledesk.gem-break.spread";
 
 const result = ref<Result | null>(null);
-const ascendancies = ref<Asc[]>([]);
-/** null = まだ決まっていない / "" = 全アセンダンシー / それ以外 = そのアセンダンシー */
-const selectedClass = ref<string | null>(null);
+/**
+ * どのアセンダンシーを見るかは 自動ジェム監視の「取得先」で決める ("" = 全アセンダンシー)。
+ * 2026-09-19 オーナー指示:「監視で個別アセを選んでも画面が変わらない。選んだら、取得済みなら
+ * 変えてくれ。そしたら使用率ランキングのプルダウンは要らないでしょ」。ここは表示専用にした。
+ */
+const selectedClass = computed(() => watchSettings.value.klass ?? "");
+/** 今出している結果が 1 アセンダンシーの物ならその名前 (散らした結果や未取得は null) */
+const resultClass = computed(() => {
+  const cs = result.value?.classes;
+  return Array.isArray(cs) && cs.length === 1 ? cs[0] : null;
+});
+/** 選んだアセンダンシーの結果をまだ持っていない = 取得を促す */
+const needFetch = computed(() => result.value == null || resultClass.value !== selectedClass.value);
 /** 既定は 100 人 (search が返す上限) */
 const topN = ref<number>(100);
 /** 何アセンダンシーに散らすか (1 = 選んだアセだけ) */
@@ -118,7 +123,6 @@ function loadStored(): void {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) result.value = JSON.parse(raw) as Result;
     else void loadSeed(); // この PC でまだ取っていない → 同梱データ / 前回の結果を使う
-    selectedClass.value = localStorage.getItem(CLASS_KEY);
     const n = Number(localStorage.getItem(TOPN_KEY));
     if (n >= 5 && n <= 100) topN.value = n;
     const sp = Number(localStorage.getItem(SPREAD_KEY));
@@ -145,15 +149,25 @@ async function loadSeed(): Promise<void> {
   }
 }
 
-async function loadAscendancies(): Promise<void> {
-  if (!inApp) return;
+/**
+ * 取得先を変えた時: そのアセンダンシーを 1 リクエストも投げずに出せるなら差し替える。
+ * 出せなければ何もしない (needFetch が立つので「取得」を促す)。
+ */
+async function showCached(): Promise<void> {
+  if (!inApp || busy.value) return;
   try {
-    ascendancies.value = await invoke<Asc[]>("gem_break_ascendancies");
-    // 既定は「全アセンダンシー」(オーナー判断 2026-09-16: 売れるのは個別アセではなく全体で人気のジェム)。
-    // 保存済みの選択があればそれを優先する
-    if (selectedClass.value === null) selectedClass.value = "";
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
+    const r = await invoke<Result | null>("gem_break_cached", {
+      req: { class: selectedClass.value, topN: topN.value },
+    });
+    if (!r?.rows?.length) return;
+    result.value = r;
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(r));
+    } catch {
+      /* 保存できなくても表示はできる */
+    }
+  } catch {
+    /* キャッシュから出せないだけ。needFetch が「取得」を促す */
   }
 }
 
@@ -165,7 +179,7 @@ async function fetchNow(): Promise<void> {
   startNetPolling();
   try {
     const r = await invoke<Result>("gem_break_fetch", {
-      req: { class: selectedClass.value ?? null, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
+      req: { class: selectedClass.value, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
     // 取得しただけでは監視は切り替えない (オーナー指示 2026-09-17:
@@ -173,7 +187,6 @@ async function fetchNow(): Promise<void> {
     // 上の自動ジェム監視に「新しい一覧で監視を開始」ボタンが出るので、そこで明示的に切り替える。
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
-      localStorage.setItem(CLASS_KEY, selectedClass.value ?? "");
       localStorage.setItem(TOPN_KEY, String(topN.value));
       localStorage.setItem(SPREAD_KEY, String(spread.value));
     } catch {
@@ -264,9 +277,13 @@ const progressText = computed(() => {
 });
 
 let unlisten: UnlistenFn | null = null;
+watch(selectedClass, () => void showCached());
+watch(resultClass, (v) => (rankingClass.value = v), { immediate: true });
+
 onMounted(async () => {
   loadStored();
   await loadAscendancies();
+  void showCached();
   if (inApp) {
     unlisten = await listen<{ phase: string; done: number; total: number; reused?: number }>("gem-break-progress", (e) => {
       progress.value = e.payload;
@@ -306,17 +323,14 @@ onUnmounted(() => {
     <div
       class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
-      <label class="inline-flex items-center gap-2 min-w-0">
+      <!-- どのアセンダンシーを見るかは 自動ジェム監視の「取得先」で決める (2026-09-19 オーナー指示) -->
+      <span class="inline-flex items-center gap-2 min-w-0">
         <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
-        <select v-model="selectedClass" class="sel max-w-64" :disabled="spread > 1">
-          <!-- クラス指定なし = リーグ全体の DPS 上位 100 人 (ジェムリング上位と 75% 別人だった) -->
-          <option value="">全アセンダンシー (リーグ全体の上位)</option>
-          <option v-if="ascendancies.length === 0 && selectedClass" :value="selectedClass">{{ jaAscendancy(selectedClass) }}</option>
-          <option v-for="a in ascendancies" :key="a.class" :value="a.class">
-            {{ ascendancyIcon(a.class) }} {{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)
-          </option>
-        </select>
-      </label>
+        <span class="text-[var(--exile-color-accent-focus)] truncate">
+          {{ selectedClass ? `${ascendancyIcon(selectedClass)} ${jaAscendancy(selectedClass)}` : "全アセンダンシー (リーグ全体の上位)" }}
+        </span>
+        <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">上の「取得先」で選びます</span>
+      </span>
       <!-- 全アセンダンシーを選んだら「範囲」は意味が無いので出さない (オーナー指示 2026-09-16) -->
       <label v-if="selectedClass" class="inline-flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">範囲</span>
@@ -337,12 +351,18 @@ onUnmounted(() => {
       </label>
       <button
         type="button"
-        :disabled="!inApp || busy || selectedClass == null"
-        class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="!inApp || busy"
+        class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+        :class="needFetch && !busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
         @click="fetchNow"
       >
         {{ busy ? (waiting ? "待機中…" : "取得中…") : "取得" }}
       </button>
+      <!-- 選んだアセンダンシーの結果を持っていない = 取得を促す (2026-09-19 オーナー指示) -->
+      <span v-if="needFetch && !busy" class="text-[11px] text-amber-300">
+        {{ selectedClass ? jaAscendancy(selectedClass) : "全アセンダンシー" }} はまだ取得していません。「取得」を押してください
+        <template v-if="result">（今出ているのは {{ resultClassJa }} の結果）</template>
+      </span>
       <button
         v-if="busy"
         type="button"

@@ -411,6 +411,7 @@ pub fn run() {
             trade_history::trade_history_fetch,
             gem_break::gem_break_fetch,
             gem_break::gem_break_stored_result,
+            gem_break::gem_break_cached,
             gem_break::gem_break_ascendancies,
             gem_break::gem_break_cancel,
             market_flow::market_flow_load,

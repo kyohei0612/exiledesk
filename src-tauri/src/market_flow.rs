@@ -1161,6 +1161,17 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
     // 1 巡の終わり。取りこぼしがあればその銘柄だけ後で取り直す (回数に上限あり)
     let mut store_end = load_store(app);
     if only.is_none() {
+        // 巡っている間に監視リストが変わって足された銘柄を拾う。
+        //
+        // 2026-09-19 オーナー「監視リスト変更して一括回したけど、なんか巡回待ちって」:
+        // 取る対象はこの関数に入った時点の一覧で固定なので、途中で足された銘柄は
+        // 一度も取られないまま「1 巡終わった」ことになり、次の周期 (2 時間) まで
+        // 記録ゼロ = 「巡回待ち」のままだった。実測でも 12 銘柄が state すら無かった。
+        for w in &store_end.watches {
+            if w.auto && !store_end.states.contains_key(&w.key) && !failed.contains(&w.key) {
+                failed.push(w.key.clone());
+            }
+        }
         store_end.rounds += 1;
         store_end.sampled_at = now_secs();
         // 手動の一括取得もここを通る。次の自動取得はこの時刻から数える
@@ -1209,6 +1220,8 @@ pub struct FlowStatus {
     pub rate_rules: Option<String>,
     /// 今まさに待っている解除予定 (unix 秒、0 なら待っていない)。罰則で止まっている時だけ
     pub wait_until: i64,
+    /// 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない
+    pub budget_until: i64,
     /// 次にリクエストを投げられる時刻 (unix 秒)。上限に当たらないための通常の間隔待ちを含む
     pub pace_until: i64,
     /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
@@ -1260,6 +1273,7 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
         // 罰則で止まっている解除予定は門番が持つ (画面はこれを 1 秒ごとに数える)
         wait_until: retry_until(),
+        budget_until: now_secs() + crate::trade2::gate_budget_wait_secs(),
         pace_until: now_secs() + crate::trade2::gate_wait_secs(),
         retry_until: retry_until(),
         retry_at: store.retry_at,

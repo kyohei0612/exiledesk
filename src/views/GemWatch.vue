@@ -15,7 +15,7 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { fmtClock } from "../utils/format-time";
 import { searchGems } from "./gem-corrupt/search";
 import { averageExalted, displayCurrency } from "../state/display-currency";
@@ -29,8 +29,9 @@ import {
   type GemUsageRow,
   type WatchMetric,
 } from "../state/watch-settings";
-import { cachedRows, rebuildWatches } from "../state/gem-watch-auto";
-import { tradeAuto } from "../services/trade2/auto-price";
+import { cachedRows, rankingClass, rebuildWatches } from "../state/gem-watch-auto";
+import { ascendancies, loadAscendancies } from "../state/ascendancy-list";
+import { resumeAtText, waitText } from "../utils/wait-text";
 import { expectedValueOf } from "./gem-corrupt/expected-value";
 import { marketStore } from "../state/market-store";
 import { openGemCorrupt } from "../state/app-nav";
@@ -47,27 +48,13 @@ const s = watchSettings;
 /** 設定と取得結果から決まる「監視するジェム」 */
 const gems = computed(() => watchGems(rows.value, s.value));
 
-/** 取得結果に出てくるアセンダンシー一覧 (取得先の選択肢) */
-const ASCENDANCIES = [
-  "",
-  "Infernalist",
-  "Blood Mage",
-  "Stormweaver",
-  "Chronomancer",
-  "Titan",
-  "Warbringer",
-  "Deadeye",
-  "Pathfinder",
-  "Witchhunter",
-  "Gemling Legionnaire",
-  "Invoker",
-  "Acolyte of Chayula",
-  "Ritualist",
-  "Lich",
-  "Amazon",
-  "Smith of Kitava",
-  "Tactician",
-];
+/**
+ * 取得先の選択肢。使用率つきの一覧を poe.ninja から取る (使用率ランキングと同じ物)。
+ * 2026-09-19 オーナー指示で、アセンダンシーの選択はここに一本化した
+ * (使用率ランキング側のプルダウンは撤去)。取れていない間は空 = 全アセだけ出す。
+ */
+/** 選んだアセンダンシーの結果をまだ持っていない (下の使用率ランキングで「取得」が要る) */
+const needUsageFetch = computed(() => rankingClass.value !== (s.value.klass ?? ""));
 
 /**
  * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
@@ -88,6 +75,9 @@ function reload(): void {
  * オーナー指示 2026-09-17:「一括取得は手動は自由で、自動が 8 時間に 1 回ね」→ 手で押す分に制限は付けない。
  */
 const sweeping = ref(false);
+/** レート制限の残り秒を毎秒数え直すための時計 */
+const nowMs = ref(Date.now());
+let tick: number | null = null;
 async function sweep(reason?: string): Promise<void> {
   if (sweeping.value || status.value?.sampling) return;
   sweeping.value = true;
@@ -95,8 +85,12 @@ async function sweep(reason?: string): Promise<void> {
   const poll = window.setInterval(reload, 3000);
   try {
     const r = await sweepNow();
+    await reload();
+    const left = status.value?.retry_keys ?? 0;
     message.value = r.ok
-      ? { ok: true, text: "一括取得が終わりました" }
+      ? left > 0
+        ? { ok: false, text: `一括取得は終わりましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(status.value?.retry_at ?? 0)} 頃に取り直します` }
+        : { ok: true, text: "一括取得が終わりました" }
       : { ok: false, text: r.message ?? "一括取得に失敗しました (レート制限か通信)" };
   } finally {
     clearInterval(poll);
@@ -104,6 +98,20 @@ async function sweep(reason?: string): Promise<void> {
     reload();
   }
 }
+
+/**
+ * トレードのレート制限で止まっている残り秒。
+ *
+ * 2026-09-19 オーナー「この監視のとこでレート制限の表記が出ないね。ズレてる。
+ * ジェムのところに行ったらレート制限だったけど、こっちでは完了になってる」:
+ * ここは取得中 (sampling) の時しかレートに触れていなかったので、止まっている間は
+ * 何も出ず「待機中」に見えていた。ジェムコラプトと同じ時計を、取得中かどうかに
+ * 関係なく出す。
+ */
+const retryLeft = computed(() => {
+  void nowMs.value; // 1 秒ごとに数え直す
+  return tradeRateSecs(status.value);
+});
 
 /** 前回の一括取得 / 次の自動取得 (手動で押した分も同じ時計を使う) */
 const sweepClock = computed(() => {
@@ -148,7 +156,7 @@ async function applyCycle(hours: number): Promise<void> {
 }
 
 /**
- * 取得中の進捗表示。レート制限の残り秒は共通の時計 (tradeAuto) から取るので、
+ * 取得中の進捗表示。レート制限の残り秒は共通の関数 (tradeRateSecs) から取るので、
  * 待っている間もちゃんと減っていく (オーナー指示 2026-09-17:
  * 「取得中でレート制限の秒数動かすようにして、一律で同じところを見るように」)。
  */
@@ -161,7 +169,7 @@ const sweepText = computed(() => {
   }
   // 「レート待ち」と出すのは実際に止められている時だけ。通常の間隔 (10 秒前後) は待ちではない
   // (2026-09-18: min_spacing を入れたので pace_until が常に数秒先になり、ずっと待ちに見えていた)
-  const wait = Math.max(tradeAuto.rateLimitSecs.value, (s.wait_until || 0) - Math.floor(Date.now() / 1000));
+  const wait = retryLeft.value;
   // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
   const left = Math.max(0, s.total - s.done);
   const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * 20) / 60))} 分` : "";
@@ -169,21 +177,29 @@ const sweepText = computed(() => {
 });
 onMounted(() => {
   reload();
+  void loadAscendancies();
   // 期待値の計算に素材の相場が要る (30 分以内に取っていれば通信しない)
   void marketStore.ensureMarket();
+  if (tick === null) tick = window.setInterval(() => (nowMs.value = Date.now()), 1000);
 });
 onActivated(() => {
   reload();
+  if (tick === null) tick = window.setInterval(() => (nowMs.value = Date.now()), 1000);
   // 開いている間は 20 秒ごとに読み直す (別のタブで再取得した分がすぐ出るように)
   if (timer === null) timer = window.setInterval(reload, 20_000);
 });
 onDeactivated(() => {
+  if (tick !== null) {
+    clearInterval(tick);
+    tick = null;
+  }
   if (timer !== null) {
     clearInterval(timer);
     timer = null;
   }
 });
 onUnmounted(() => {
+  if (tick !== null) clearInterval(tick);
   if (timer !== null) clearInterval(timer);
 });
 let timer: number | null = null;
@@ -435,8 +451,11 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             取得先
             <select class="num text-left w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
               <option value="">全アセンダンシー (リーグ上位)</option>
-              <option v-for="a in ASCENDANCIES.filter((x) => x)" :key="a" :value="a">{{ jaAscendancy(a) }}</option>
+              <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
+            <span v-if="needUsageFetch" class="text-[10px] text-amber-300">
+              この取得先の使用率ランキングはまだありません。下の「取得」を押してください
+            </span>
           </label>
           <label class="inline-flex flex-col gap-1">
             上位の基準
@@ -501,6 +520,9 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           間隔を短くすると「消えた」のに気付くのが早くなる分、売れるまでの時間も細かく出ます。
           監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
           記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
+        </p>
+        <p v-if="retryLeft > 0" class="text-[11px] text-amber-300 mt-1">
+          トレードのレート制限中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）。解除まで取得は止まります
         </p>
         <p v-if="sweepClock" class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">{{ sweepClock }}</p>
         <p v-if="message" class="text-[12px] mt-2" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>

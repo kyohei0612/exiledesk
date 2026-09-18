@@ -239,8 +239,15 @@ fn aggregate(per_char: &[Vec<GemView>]) -> Vec<GemBreakRow> {
 ///
 /// 条件: 同じ条件の検索結果が SEARCH_FRESH_SECS 以内にあり、その顔ぶれのジェムが全員分あること。
 /// 新しい PC では同梱データがそのまま使えるので、初回から 1 リクエストも要らない。
+fn now_ts() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
+}
+
 fn try_offline(
-    window: &tauri::Window,
+    window: Option<&tauri::Window>,
     app: &tauri::AppHandle,
     class: String,
     top_n: usize,
@@ -258,7 +265,9 @@ fn try_offline(
     }
     let label = if class.is_empty() { "全アセンダンシー".to_string() } else { class.clone() };
     let n = per_char.len();
-    emit(window, "completed", n, n, &label, n);
+    if let Some(w) = window {
+        emit(w, "completed", n, n, &label, n);
+    }
     let out = GemBreakResult {
         class: label,
         classes: vec![class],
@@ -327,17 +336,11 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let spread = req.spread.unwrap_or(1).clamp(1, 10);
     CANCEL.store(false, Ordering::Relaxed);
     let app = window.app_handle().clone();
-    let now_ts = || {
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0)
-    };
     // 前と同じ条件で、顔ぶれもジェムも全部キャッシュにあるなら **1 リクエストも投げずに** 組み立て直す
     // (2026-09-18 オーナー報告「即レート制限」: 1 人も新しく取らない時でも index-state / search で
     //  3 回問い合わせていたので、IP がブロックされているとそこで弾かれていた)
     if spread <= 1 {
-        if let Some(r) = try_offline(&window, &app, req.class.clone().unwrap_or_default(), top_n, now_ts()) {
+        if let Some(r) = try_offline(Some(&window), &app, req.class.clone().unwrap_or_default(), top_n, now_ts()) {
             return Ok(r);
         }
     }
@@ -503,6 +506,17 @@ fn save_result(app: &tauri::AppHandle, out: &GemBreakResult) {
 ///
 /// 新しい PC では同梱データ (seed_data) がここに入るので、画面は poe.ninja を叩かずに
 /// 監視ジェムを決められる (オーナー指示 2026-09-18「自動ジェム周りのデータだけ内蔵して」)。
+/// そのアセンダンシーを **1 リクエストも投げずに** 出せるか。出せるなら結果を返す。
+///
+/// 2026-09-19 オーナー指示:「監視で個別アセを選んでも画面が変わらない。選んだ時、取得されて
+/// なかったら取得を促して、取得済みなら変えてくれ」。画面はこれを呼んで、返れば表示を差し替え、
+/// null なら「まだ取得していません」と出す。
+#[tauri::command]
+pub fn gem_break_cached(app: tauri::AppHandle, req: GemBreakRequest) -> Option<GemBreakResult> {
+    let top_n = req.top_n.unwrap_or(100).clamp(5, 100);
+    try_offline(None, &app, req.class.unwrap_or_default(), top_n, now_ts())
+}
+
 #[tauri::command]
 pub fn gem_break_stored_result(app: tauri::AppHandle) -> Option<serde_json::Value> {
     let p = result_path(&app)?;

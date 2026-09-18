@@ -9,12 +9,13 @@
  * poe.ninja 側は 1 アセンダンシー分 (100 人 + 2 リクエスト) で数分かかるので、
  * 1 日 1 回より短い間隔では回さない (レート制限を焼かないため)。
  */
+import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
-import { watchGems, watchSettings, type GemUsageRow } from "./watch-settings";
+import { watchGems, type GemUsageRow } from "./watch-settings";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "../views/gem-corrupt/useGemCorrupt";
 import { marketStore } from "./market-store";
@@ -94,6 +95,13 @@ export function watchesFromRows(rows: Row[]): { key: string; label: string; note
   return out;
 }
 
+/**
+ * 今表示している使用率ランキングがどのアセンダンシーの物か ("" = 全アセ、null = 不明 / 複数)。
+ * 使用率ランキング (GemBreak) が入れて、監視の「取得先」の脇に「未取得」と出すために読む
+ * (2026-09-19 オーナー指示:「個別選んだ時、取得されてなかったら取得を促して」)。
+ */
+export const rankingClass = ref<string | null>(null);
+
 /** 保存済みの取得結果 (クラフト選定ジェム) */
 export function cachedRows(): Row[] | null {
   try {
@@ -167,9 +175,11 @@ async function refreshIfStale(): Promise<void> {
     const fresh = flow.watches.length > 0 && nowSec - flow.list_refreshed_at < REFRESH_SECS;
     if (fresh) return;
 
-    // 全アセンダンシー (リーグ全体の上位 100 人) で取り直す
-    const s = watchSettings.value;
-    const r = await invoke<Result>("gem_break_fetch", { req: { class: s.klass || "", topN: 100, spread: 1 } });
+    // 相乗りで取るのは **全アセンダンシーだけ** (オーナー指示 2026-09-19:
+    // 「上位 MOD の時に一緒にって言うけど時間かかっちゃうから、一緒に取るのは
+    //   デフォの全アセ使用率だけでいいや。1 個ずつやってたら長くなるでしょ」)。
+    // 個別アセは画面の「取得」で明示的に取る。
+    const r = await invoke<Result>("gem_break_fetch", { req: { class: "", topN: 100, spread: 1 } });
     if (!r?.rows?.length) return;
     try {
       localStorage.setItem(RESULT_KEY, JSON.stringify(r));

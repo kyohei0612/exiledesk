@@ -23,7 +23,7 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
-import { noteExternalRate } from "./trade2/auto-price";
+import { noteExternalRate, tradeAuto } from "./trade2/auto-price";
 
 export interface Tracked {
   id: string;
@@ -138,6 +138,8 @@ export interface FlowStatus {
   rate_rules: string | null;
   /** 罰則で止まっている時の解除予定 (unix 秒、0 なら止まっていない) */
   wait_until: number;
+  /** 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない */
+  budget_until: number;
   /** 次にリクエストを投げられる時刻 (unix 秒。上限に当たらないための通常の間隔待ちを含む) */
   pace_until: number;
 }
@@ -160,6 +162,23 @@ export async function setFlowCycle(secs: number): Promise<number | null> {
  * ついでに、裏の巡回が見たレート制限を画面側の待ちにも反映する
  * (オーナー指示 2026-09-17:「レートは一律で同じところを見るように全部」)。
  */
+/**
+ * トレードのレート制限で「止まっている」残り秒。画面はどこもこれを使う。
+ *
+ * 2026-09-19 オーナー「レート制限周りの同期がずれてる」: 画面ごとに別々の式で出していて、
+ * ジェムコラプトは制限中、監視は完了、と食い違っていた。1 か所にまとめる。
+ * 見る物は 3 つ:
+ *   - 罰則 (429 / restricted) …… wait_until / retry_until
+ *   - 枠が空くまでの待ち ……… budget_until (罰則ではないが取得は進まない)
+ *   - 画面側が数えている分 …… tradeAuto (1 秒ごとに減る時計)
+ * 通常の最低間隔 (10 秒前後) は「止まっている」ではないので入れない。
+ */
+export function tradeRateSecs(st: FlowStatus | null | undefined): number {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const until = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0, st?.budget_until ?? 0);
+  return Math.max(until > 0 ? until - nowSec : 0, tradeAuto.rateLimitSecs.value);
+}
+
 export async function loadFlowStatus(): Promise<FlowStatus | null> {
   if (!isTauriRuntime()) return null;
   try {

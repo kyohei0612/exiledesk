@@ -442,6 +442,24 @@ pub fn gate_wait_secs() -> i64 {
     (wait + 999) / 1000
 }
 
+/// 「枠が空くまで」の待ち秒。通常の最低間隔 (10 秒前後) は入れない。
+///
+/// 2026-09-19 オーナー「レート制限周りの同期がずれてる」の調査で分かったこと:
+/// 画面が「止まっている」と判断していたのは罰則 (gate_blocked_until_secs) だけだった。
+/// 合計の枠 (combined_wait) で数分待つ場合は罰則が 0 なので、画面は「制限なし」に見えるのに
+/// 実際には何も進まない、という食い違いが起きる。ここを分けて出せるようにする。
+pub fn gate_budget_wait_secs() -> i64 {
+    let Ok(mut guard) = GATES.lock() else { return 0 };
+    let map = guard.get_or_insert_with(HashMap::new);
+    let now = now_ms();
+    // 最低間隔ぶん (spacing) は「待ち」に数えない = spacing を 0 にして測る
+    let mut wait = combined_wait(map, now);
+    for g in map.values() {
+        wait = wait.max(wait_for_rules(g, now, 0));
+    }
+    (wait + 999) / 1000
+}
+
 const TRADE2_BASE: &str = "https://www.pathofexile.com/api/trade2";
 /// 日本語サイト。検索 ID の名前空間が www と別なので、JP サイトで開く検索は JP の API で作る (2026-09-12)
 const TRADE2_BASE_JP: &str = "https://jp.pathofexile.com/api/trade2";

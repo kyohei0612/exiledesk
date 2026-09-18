@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
-import { refetchState, tradeAuto } from "../services/trade2/auto-price";
+import { refetchState } from "../services/trade2/auto-price";
 import { currencyJa } from "../state/display-currency";
 import { fmtClock } from "../utils/format-time";
 import { DEFAULT_CYCLE_SECS } from "../services/market-flow";
@@ -23,7 +23,7 @@ import { averageExalted, displayCurrency, type DisplayCurrency } from "../state/
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, roi, type RouteResult } from "./gem-corrupt/model";
-import { flowSentence, fmtAge, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { flowSentence, fmtAge, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./gem-corrupt/row-query";
 import { fmtQty, useGemLedger } from "./gem-corrupt/ledger";
 import SoldListDialog from "../components/SoldListDialog.vue";
@@ -195,14 +195,14 @@ function stopStatusPolling(): void {
 
 /**
  * レート制限の残り秒 (0 なら制限なし)。画面ごとに別の数え方をしないよう、
- * 裏の巡回 (retry_until / wait_until) も画面の取得も同じ時計 (tradeAuto) に合流させてある
+ * 裏の巡回も画面の取得も同じ関数 (tradeRateSecs) を見る (2026-09-19 に 1 か所へまとめた)
  * (オーナー指示 2026-09-17:「レートは一律で同じところを見るように全部」)。
  */
 const retryLeft = computed(() => {
   const st = flowStatus.value;
   const nowSec = Math.floor(nowMs.value / 1000);
-  const fromFlow = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
-  return Math.max(fromFlow > 0 ? fromFlow - nowSec : 0, tradeAuto.rateLimitSecs.value);
+  void nowSec;
+  return tradeRateSecs(st);
 });
 /** 止められている残り秒 (通常の送信間隔は「待ち」として出さない。2026-09-18) */
 const rateWait = computed(() => retryLeft.value);
