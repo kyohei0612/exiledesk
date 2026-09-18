@@ -74,13 +74,11 @@ const ASCENDANCIES = [
  * (オーナー指示 2026-09-17:「自動ジェム監視はアプリ内更新だからレート無い。タブ開くたびに読み直して。
  * 手動で取った情報が反映されないとズレる」)。
  */
-const readAt = ref<number>(0);
 const status = ref<FlowStatus | null>(null);
 function reload(): void {
   rows.value = cachedRows() ?? [];
   void loadFlow().then((f) => {
     flowStore.value = f;
-    readAt.value = Date.now();
   });
   void loadFlowStatus().then((s) => (status.value = s));
 }
@@ -189,12 +187,6 @@ onUnmounted(() => {
   if (timer !== null) clearInterval(timer);
 });
 let timer: number | null = null;
-const readAtText = computed(() => {
-  if (!readAt.value) return "";
-  const d = new Date(readAt.value);
-  const p = (n: number): string => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-});
 
 // ---- 検索 (ジェムコラプトの賭けと同じ関数。正規表現も使える) ----
 const query = ref("");
@@ -320,7 +312,7 @@ const scoredGems = computed(() => {
  * 並べ替え (オーナー指示 2026-09-17)。
  *   既定「期待値」: 3 条件とも速い物を一番上 → レベル 21 と完成品が速い物 → 速い数 → 期待値の高い順
  *   条件名 (レベル 21 / 品質 23% / 完成品) を押した時: その条件が速い物を上に、その中で今の最安値が高い順
- * どちらも記録を読み直すたびに勝手に並び替わる (flowStore が変われば再計算される)。
+ * どちらも記録が増えれば勝手に並び替わる (flowStore が変われば再計算される)。
  */
 type SortMode = "ev" | (typeof SALE_KEYS)[number];
 const sortBy = ref<SortMode>("ev");
@@ -483,14 +475,6 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
           <button
             type="button"
-            class="underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]"
-            title="記録を読み直します (この PC のファイルを読むだけなので通信はしません)"
-            @click="reload"
-          >
-            🔄 記録を読み直す<span v-if="readAtText" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> ({{ readAtText }})</span>
-          </button>
-          <button
-            type="button"
             :disabled="busy || !diff.changed"
             class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
             :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
@@ -547,7 +531,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">監視中 ({{ gems.length }} ジェム)</h3>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
-          {{ SORT_NOTE[sortBy] }}記録を読み直すたびに並び替わります (見出しを押すと並べ替えが変わります)。
+          {{ SORT_NOTE[sortBy] }}記録が増えると自動で並び替わります (見出しを押すと並べ替えが変わります)。
         </p>
         <p v-if="gems.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
           まだ 1 つもありません。上の検索で足すか、下の「使用率ランキング」で取得すると上位が自動で入ります。
