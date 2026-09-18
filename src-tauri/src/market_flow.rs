@@ -326,8 +326,8 @@ pub fn list_is_complete(ids: &[String], total: u64, tracked: &[Tracked]) -> bool
 const RELIST_SLACK_SECS: i64 = 300;
 /// 日次集計を残す日数
 const DAILY_MAX_DAYS: usize = 30;
-/// リクエストの間隔
-const REQUEST_INTERVAL: Duration = Duration::from_secs(8);
+/// リクエストの最低間隔 (実際の間隔は trade2 の門番が上限から決める)
+const REQUEST_INTERVAL: Duration = Duration::from_secs(1);
 /// 1 巡を何回に分けて取るか (組の数)。1 組の間隔 = 1 巡の周期 ÷ SLICES
 const SLICES: usize = 12;
 /// 1 巡の周期の既定 (8 時間)。画面から変えられる (FlowStore.cycle_secs)
@@ -1024,8 +1024,9 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     let total_watches = auto.len();
     let resumed = done_keys.len();
     // 1 巡はまとめて走らせる (オーナー指示 2026-09-17: 前回の一括取得から周期ぶん後に 1 巡)。
-    // 1 銘柄 = search 1 + fetch 1 を REQUEST_INTERVAL 間隔で。上限に当たった時は
-    // レート側で待つ (MAX_WAIT_IN_SWEEP_SECS まで) ので、いっぺんにバーストはしない。
+    // 間隔は trade2 側の門番 (gate_acquire) が上限を見て空けるので、ここでは最低限だけ空ける
+    // (オーナー指示 2026-09-18:「レート止まるね、どうにか止まらんようにしたい」→
+    //  罰則を食らう前に門番が待つので、固定で 8 秒空ける必要がなくなった)。
     let pace = REQUEST_INTERVAL;
     let mut index = 0usize;
     let mut incomplete = false;
@@ -1228,8 +1229,10 @@ pub struct FlowStatus {
     pub rate_state: Option<String>,
     /// レート制限の規則 (x-rate-limit-ip)。画面はこれと state から待ち時間を出す
     pub rate_rules: Option<String>,
-    /// 今まさに待っている解除予定 (unix 秒、0 なら待っていない)
+    /// 今まさに待っている解除予定 (unix 秒、0 なら待っていない)。罰則で止まっている時だけ
     pub wait_until: i64,
+    /// 次にリクエストを投げられる時刻 (unix 秒)。上限に当たらないための通常の間隔待ちを含む
+    pub pace_until: i64,
     /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
     pub retry_until: i64,
     /// 取りこぼした回の再挑戦予定 (unix 秒、0 なら通常運転)
@@ -1276,7 +1279,9 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
         rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
-        wait_until: wait_until(),
+        // 門番が罰則で止まっている分も同じ数字で見せる (画面はこれを 1 秒ごとに数える)
+        wait_until: wait_until().max(crate::trade2::gate_blocked_until_secs()),
+        pace_until: now_secs() + crate::trade2::gate_wait_secs(),
         retry_until: retry_until(),
         retry_at: store.retry_at,
         slice: store.slice_cursor % SLICES,

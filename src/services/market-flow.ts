@@ -131,8 +131,10 @@ export interface FlowStatus {
   swept_at: number;
   /** レート制限の規則 (x-rate-limit-ip) */
   rate_rules: string | null;
-  /** 今まさに待っている解除予定 (unix 秒、0 なら待っていない) */
+  /** 罰則で止まっている時の解除予定 (unix 秒、0 なら止まっていない) */
   wait_until: number;
+  /** 次にリクエストを投げられる時刻 (unix 秒。上限に当たらないための通常の間隔待ちを含む) */
+  pace_until: number;
 }
 
 /** 1 巡の周期を変える (1〜24 時間)。戻り値は実際に入った秒数 */

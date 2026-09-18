@@ -156,7 +156,8 @@ async function applyCycle(hours: number): Promise<void> {
 const sweepText = computed(() => {
   const s = status.value;
   if (!s?.sampling) return "";
-  const wait = tradeAuto.waitSecs.value;
+  // 罰則待ちも通常の間隔待ちも同じ時計で出す (裏の門番 = pace_until、画面側 = tradeAuto)
+  const wait = Math.max(tradeAuto.waitSecs.value, (s.pace_until || 0) - Math.floor(Date.now() / 1000));
   return `取得中 ${s.done}/${s.total}${wait > 0 ? ` · レート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
 });
 onMounted(() => {
