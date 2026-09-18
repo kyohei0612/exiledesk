@@ -32,6 +32,13 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      # 自分のバージョン行を除いた Cargo.lock でキーを作る (2026-09-18)。
+      # リリースのたびに版が上がるので、そのままだとキャッシュのキーが毎回変わり、
+      # 1.1 GB のキャッシュを毎回作り直していた (保存に 52 秒 + 10 GB の枠を食って古い物が消える)。
+      - name: Cache key (自分の版を除いた Cargo.lock)
+        shell: bash
+        run: sed '/^name = "exiledesk"$/,+1 s/^version = .*/version = "x"/' src-tauri/Cargo.lock > .cargo-lock-key
+
       - name: Cache Rust target
         uses: actions/cache@v4
         with:
@@ -39,7 +46,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+            !src-tauri/target/release/bundle
+          key: ${{ runner.os }}-cargo-${{ hashFiles('.cargo-lock-key') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 

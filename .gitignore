@@ -30,3 +30,6 @@ data-cache/
 src-tauri/resources/pob*/
 
 # 同梱 PoB 用: 公式 runtime の基準コミット展開キャッシュ (build-pob-bundle.mjs が作る)
+
+# CI のキャッシュキー用 (自分の版を除いた Cargo.lock)
+.cargo-lock-key
