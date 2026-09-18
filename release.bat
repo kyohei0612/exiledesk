@@ -41,7 +41,8 @@ if "%NEW_VERSION%"=="" (
     pause
     exit /b 1
 )
-echo   -> new version: v%NEW_VERSION%
+rem  "->" is a redirect in cmd (it created a junk file named "new" on every release)
+echo   next version: v%NEW_VERSION%
 
 echo.
 echo ============================================================
