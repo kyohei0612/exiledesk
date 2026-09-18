@@ -6,11 +6,15 @@
 //! (オーナー判断: 「一旦ジェムリングのみで試してもええ」= 1 アセなら 40 リクエスト程度)。
 //!
 //! 進捗は `gem-break-progress` event で emit する (取得はレート制限で数分かかりうる)。
+//!
+//! 2026-09-18 (オーナー報告「すぐレートが制限になって取るのにかなり時間くう」):
+//! キャラごとの結果を `gem_break_cache` に残し、次からはキャッシュに無い人だけ取る。
+//! 途中でレート制限に当たっても取れた分は残るので、続きから再開できる。
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 /// 取得中に「中止」が押されたか (レート制限待ちが長い時の逃げ道)
 static CANCEL: AtomicBool = AtomicBool::new(false);
@@ -21,6 +25,7 @@ pub fn gem_break_cancel() {
     CANCEL.store(true, Ordering::Relaxed);
 }
 
+use crate::gem_break_cache as gcache;
 use crate::poe_ninja_client as ninja;
 
 /// 集計 1 行 (ジェム 1 種)
@@ -57,6 +62,8 @@ pub struct GemBreakResult {
     pub percentage: f64,
     /// 実際に取れたキャラ数 (= 母数)
     pub characters: usize,
+    /// そのうちキャッシュから流用した人数 (poe.ninja に取りに行かなかった分)
+    pub reused: usize,
     /// 取ろうとしたキャラ数 (これより少なければレート制限や中止で打ち切られている)
     pub requested: usize,
     /// 中止ボタンで打ち切ったか
@@ -86,10 +93,15 @@ struct Progress {
     done: usize,
     total: usize,
     class: String,
+    /// done のうちキャッシュから流用した人数 (画面で「取得 12 / キャッシュ 60」と出す)
+    reused: usize,
 }
 
-fn emit(window: &tauri::Window, phase: &'static str, done: usize, total: usize, class: &str) {
-    let _ = window.emit("gem-break-progress", Progress { phase, done, total, class: class.to_string() });
+fn emit(window: &tauri::Window, phase: &'static str, done: usize, total: usize, class: &str, reused: usize) {
+    let _ = window.emit(
+        "gem-break-progress",
+        Progress { phase, done, total, class: class.to_string(), reused },
+    );
 }
 
 /// poe.ninja のジェム properties から数値を 1 つ ("Level" → 21、"[Quality]" → "+23%" の 23)
@@ -148,6 +160,20 @@ fn gems_of(ci: &ninja::CharacterItems) -> Vec<GemView> {
     out
 }
 
+/// キャッシュに残す形 (poe.ninja の表示値のまま)
+fn to_cached(gems: &[GemView]) -> Vec<gcache::CachedGem> {
+    gems.iter()
+        .map(|g| gcache::CachedGem { name: g.name.clone(), level: g.level, quality: g.quality, corrupted: g.corrupted })
+        .collect()
+}
+
+/// キャッシュから集計用に戻す
+fn from_cached(gems: &[gcache::CachedGem]) -> Vec<GemView> {
+    gems.iter()
+        .map(|g| GemView { name: g.name.clone(), level: g.level, quality: g.quality, corrupted: g.corrupted })
+        .collect()
+}
+
 /// 装備 / アセンダンシー由来の底上げ量を推定する (2026-09-16)。
 ///
 /// poe.ninja の `Level` は「+1 to Level of all Skills」などを **足した表示値** なので、
@@ -183,10 +209,14 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let spread = req.spread.unwrap_or(1).clamp(1, 10);
     CANCEL.store(false, Ordering::Relaxed);
     let client = ninja::build_client()?;
-    // MOD 一覧の一括取得より緩め (1 アセだけなので急がない。429 を食らうと数分待たされる)
-    let gate = ninja::RateGate::new(1500);
+    // poe.ninja 宛は 1 本のゲートを共有する (2026-09-18 オーナー指摘「どっちかズラさんと終わる」)。
+    // 間隔 (2.5 秒) もペナルティも上位プレイヤーMOD一覧と共通なので、同時に走っても倍速にならない
+    let gate = ninja::global_gate();
+    // 先に上位プレイヤーMOD一覧が走っていたら、交互に取り合わずに断る (終わってから押してもらう)
+    let _job = ninja::try_take_ninja_job("使用率ランキング")
+        .map_err(|other| format!("{other} の取得中です。終わってから取得してください (同じ poe.ninja の枠を使うため)"))?;
 
-    emit(&window, "search", 0, top_n, "");
+    emit(&window, "search", 0, top_n, "", 0);
     let snap = ninja::fetch_index_state(&client, &gate, None).await?;
     let ascs = ninja::fetch_build_index_state(&client, &gate, &snap.league_url).await?;
 
@@ -218,12 +248,23 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     let mut quality_dist: HashMap<String, HashMap<i64, u32>> = HashMap::new();
     let mut done = 0usize;
     let mut planned = 0usize;
+    // キャラごとのキャッシュ (snapshot が変わっていれば空で始まる)
+    let app = window.app_handle().clone();
+    let now_ts = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0)
+    };
+    let mut cache = gcache::load(&app, &snap.version, now_ts());
+    let mut reused = 0usize;
+    let mut fetched_since_save = 0usize;
 
     'outer: for asc in &targets {
         if CANCEL.load(Ordering::Relaxed) {
             break;
         }
-        emit(&window, "search", done, planned.max(top_n), &asc.class);
+        emit(&window, "search", done, planned.max(top_n), &asc.class, reused);
         let refs = match ninja::fetch_search_top_n(&client, &gate, &snap, &asc.class, per_asc).await {
             Ok(r) => r,
             Err(_) => continue, // 1 アセ取れなくても他は続ける
@@ -233,13 +274,33 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
             if CANCEL.load(Ordering::Relaxed) {
                 break 'outer;
             }
-            emit(&window, "fetching", done, planned.max(top_n), &asc.class);
-            let ci = match ninja::fetch_character(&client, &gate, &snap, &r).await {
-                Ok(c) => c,
-                Err(_) => continue, // 1 人取れなくても集計は続ける
+            emit(&window, "fetching", done, planned.max(top_n), &asc.class, reused);
+            // キャッシュにいれば取りに行かない (レート制限を食う唯一の原因がここなので効く)
+            let key = gcache::char_key(&r.account, &r.name);
+            let gems: Vec<GemView> = match cache.characters.get(&key) {
+                Some(c) => {
+                    reused += 1;
+                    from_cached(&c.gems)
+                }
+                None => {
+                    let ci = match ninja::fetch_character(&client, &gate, &snap, &r).await {
+                        Ok(c) => c,
+                        Err(_) => continue, // 1 人取れなくても集計は続ける
+                    };
+                    let g = gems_of(&ci);
+                    cache
+                        .characters
+                        .insert(key, gcache::CachedChar { fetched_at: now_ts(), gems: to_cached(&g) });
+                    // 途中でレート制限に当たっても取れた分を残す (5 人ごとに保存)
+                    fetched_since_save += 1;
+                    if fetched_since_save >= 5 {
+                        gcache::save(&app, &cache);
+                        fetched_since_save = 0;
+                    }
+                    g
+                }
             };
             done += 1;
-            let gems = gems_of(&ci);
             // 装備 / アセの底上げを引いて、ジェム自身のレベル / 品質に戻す
             let lvl_bonus = gear_bonus(&gems, true);
             let q_bonus = gear_bonus(&gems, false);
@@ -297,7 +358,9 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     } else {
         format!("上位 {} アセ合算", targets.len())
     };
-    emit(&window, "completed", done, planned.max(done), &label);
+    // 中止やレート制限で抜けた時も、取れたキャラはここで残す
+    gcache::save(&app, &cache);
+    emit(&window, "completed", done, planned.max(done), &label, reused);
 
     if done == 0 {
         return Err(if CANCEL.load(Ordering::Relaxed) {
@@ -320,11 +383,12 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
         }
     }
     rows.sort_by(|a, b| b.users.cmp(&a.users).then_with(|| a.name.cmp(&b.name)));
-    Ok(GemBreakResult {
+    let out = GemBreakResult {
         class: label,
         classes: targets.iter().map(|a| a.class.clone()).collect(),
         percentage: targets.iter().map(|a| a.percentage).sum(),
         characters: done,
+        reused,
         requested: top_n,
         cancelled: CANCEL.load(Ordering::Relaxed),
         league: snap.league_url.clone(),
@@ -334,14 +398,45 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
             .map(|d| d.as_secs() as i64)
             .unwrap_or(0),
         rows,
-    })
+    };
+    // 画面 (localStorage) とは別に app_data にも残す。同梱データにできる形なので、
+    // 新しい PC はこれを積んでおけば取得なしで始められる
+    if let Some(p) = result_path(&app) {
+        match serde_json::to_string(&out) {
+            Ok(json) => {
+                if let Err(e) = std::fs::write(&p, json) {
+                    eprintln!("[gem_break] 集計結果を保存できません: {e}");
+                }
+            }
+            Err(e) => eprintln!("[gem_break] 集計結果を JSON 化できません: {e}"),
+        }
+    }
+    Ok(out)
+}
+
+/// 集計結果を app_data に残す場所 (画面の localStorage とは別に、同梱データにできる形で持つ)
+fn result_path(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+    let dir = app.path().app_data_dir().ok()?;
+    let _ = std::fs::create_dir_all(&dir);
+    Some(dir.join("gem_break_result.json"))
+}
+
+/// 最後に取れた集計結果 (無ければ null)。
+///
+/// 新しい PC では同梱データ (seed_data) がここに入るので、画面は poe.ninja を叩かずに
+/// 監視ジェムを決められる (オーナー指示 2026-09-18「自動ジェム周りのデータだけ内蔵して」)。
+#[tauri::command]
+pub fn gem_break_stored_result(app: tauri::AppHandle) -> Option<serde_json::Value> {
+    let p = result_path(&app)?;
+    let raw = std::fs::read_to_string(p).ok()?;
+    serde_json::from_str(&raw).ok()
 }
 
 /// 選べるアセンダンシー (使用率降順)。UI のプルダウン用。
 #[tauri::command]
 pub async fn gem_break_ascendancies() -> Result<Vec<ninja::AscendancyMeta>, String> {
     let client = ninja::build_client()?;
-    let gate = ninja::RateGate::new(1500);
+    let gate = ninja::global_gate();
     let snap = ninja::fetch_index_state(&client, &gate, None).await?;
     ninja::fetch_build_index_state(&client, &gate, &snap.league_url).await
 }

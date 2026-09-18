@@ -12,7 +12,9 @@ pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を�
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
-pub mod app_log;         // app_data_dir/exiledesk.log (2026-09-18 オーナー「エラーログ見て欲しい」)
+pub mod app_log;
+pub mod gem_break_cache;  // 使用率ランキングのキャラ別キャッシュ (2026-09-18)
+pub mod seed_data;        // 同梱データ (自動ジェム監視まわり) の取り込み (2026-09-18)         // app_data_dir/exiledesk.log (2026-09-18 オーナー「エラーログ見て欲しい」)
 pub mod market_flow;  // 捌き速度の追跡 (2026-09-16): trade2 のクエリ単位で 周期ごとに出品の消失率を記録
 pub mod gem_break;  // クラフト前提ジェム (2026-09-16): 1 アセンダンシー分のレベル 21 / 品質 23% 使用人数
 pub mod trade_history;  // 取引履歴 (マーチャント履歴) の連動 (2026-09-16): アプリ内ログイン + 履歴 API
@@ -205,6 +207,9 @@ pub fn run() {
                     std::env::args().skip(1).collect::<Vec<_>>()
                 ),
             );
+            // 同梱した自動ジェム監視のデータ (捌き速度の記録 / 使用率ランキング) を、
+            // まだ無い時だけ入れる (オーナー指示 2026-09-18「ビルドに食い込んで」)
+            seed_data::install_if_missing(app.handle());
             // 自動起動の登録先が別の exe (古い開発ビルドなど) を指していたら今の exe に直す
             instance_guard::repair_autostart(&app.package_info().name);
 
@@ -400,6 +405,7 @@ pub fn run() {
             trade_history::trade_history_leagues,
             trade_history::trade_history_fetch,
             gem_break::gem_break_fetch,
+            gem_break::gem_break_stored_result,
             gem_break::gem_break_ascendancies,
             gem_break::gem_break_cancel,
             market_flow::market_flow_load,

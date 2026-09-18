@@ -877,7 +877,7 @@ const summary = computed(() => {
             <span class="font-display tracking-[0.06em] text-[var(--exile-color-text-secondary)]">自動追跡</span>
             <span v-if="flowStatus.sampling" class="inline-flex items-center gap-1.5 text-emerald-300">
               <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
-              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="rateWait > 0"> · レート待ち {{ rateWait }} 秒</span><span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
+              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="rateWait > 0"> · トレードのレート待ち {{ rateWait }} 秒</span><span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
             </span>
             <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5" :class="flowStatus.retry_at > 0 ? 'text-amber-300' : 'text-[var(--exile-color-text-secondary)]'">
               <span class="inline-block w-2 h-2 rounded-full" :class="flowStatus.retry_at > 0 ? 'bg-amber-300 animate-pulse' : 'bg-[var(--exile-color-text-tertiary)]'" aria-hidden="true"></span>

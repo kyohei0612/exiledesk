@@ -198,6 +198,21 @@ pub struct NetworkStatus {
     pub cycle_remaining_secs: u64,
 }
 
+/// 今残っているレート制限の罰則 (無ければ 0)。
+///
+/// `RateGate` はコマンドごとに作り直すので、罰則を覚えているのはこのグローバルだけ。
+/// 新しく作ったゲートにこれを入れておかないと、解除前に投げて 429 を再発させる
+/// (2026-09-18 オーナー報告「すぐレート制限になる」の一因)。
+pub fn global_penalty_remaining() -> Duration {
+    let now_ms = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0);
+    let until = CURRENT_PENALTY_UNTIL_MS.load(Ordering::Relaxed);
+    if until > now_ms {
+        Duration::from_millis(until - now_ms)
+    } else {
+        Duration::ZERO
+    }
+}
+
 /// UI が 1 秒ごとに呼ぶ「現在のネットワーク状態」command。
 /// AtomicU64/AtomicUsize のロード + 短期 Mutex<Option<...>> ロードだけなので極めて高速。
 ///

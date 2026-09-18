@@ -159,7 +159,7 @@ const sweepText = computed(() => {
   if (!s?.sampling) return "";
   // 罰則待ちも通常の間隔待ちも同じ時計で出す (裏の門番 = pace_until、画面側 = tradeAuto)
   const wait = Math.max(tradeAuto.waitSecs.value, (s.pace_until || 0) - Math.floor(Date.now() / 1000));
-  return `取得中 ${s.done}/${s.total}${wait > 0 ? ` · レート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
+  return `取得中 ${s.done}/${s.total}${wait > 0 ? ` · トレードのレート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
 });
 onMounted(() => {
   reload();

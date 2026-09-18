@@ -43,6 +43,8 @@ interface Result {
   classes?: string[];
   percentage: number;
   characters: number;
+  /** そのうちキャッシュ / 同梱データから流用した人数 */
+  reused?: number;
   requested?: number;
   cancelled?: boolean;
   league: string;
@@ -71,7 +73,7 @@ const topN = ref<number>(100);
 const spread = ref<number>(1);
 const busy = ref(false);
 const error = ref("");
-const progress = ref<{ phase: string; done: number; total: number } | null>(null);
+const progress = ref<{ phase: string; done: number; total: number; reused?: number } | null>(null);
 /** poe.ninja のレート制限 / 再試行の状態 (MOD 一覧のヘッダーと同じ物を出す) */
 interface NetworkStatusRaw {
   global_penalty_waiting: boolean;
@@ -115,6 +117,7 @@ function loadStored(): void {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) result.value = JSON.parse(raw) as Result;
+    else void loadSeed(); // この PC でまだ取っていない → 同梱データ / 前回の結果を使う
     selectedClass.value = localStorage.getItem(CLASS_KEY);
     const n = Number(localStorage.getItem(TOPN_KEY));
     if (n >= 5 && n <= 100) topN.value = n;
@@ -122,6 +125,23 @@ function loadStored(): void {
     if (sp >= 1 && sp <= 10) spread.value = sp;
   } catch {
     /* 読めなくても取り直せる */
+  }
+}
+
+/**
+ * まだ一度も取っていない PC 用。app_data に置かれた集計結果 (インストーラ同梱分を含む) を読む
+ * (オーナー指示 2026-09-18:「自動ジェム周りのデータだけ内蔵してビルドに食い込んで」)。
+ */
+async function loadSeed(): Promise<void> {
+  if (!inApp) return;
+  try {
+    const stored = await invoke<Result | null>("gem_break_stored_result");
+    if (stored && !result.value) {
+      result.value = stored;
+      localStorage.setItem(STORE_KEY, JSON.stringify(stored));
+    }
+  } catch {
+    /* 無ければ普通に取得してもらう */
   }
 }
 
@@ -238,7 +258,9 @@ const progressText = computed(() => {
   if (!p) return "";
   if (p.phase === "search") return "上位プレイヤーを検索中…";
   if (p.phase === "completed") return "集計中…";
-  return `キャラ取得中 ${p.done}/${p.total}`;
+  // キャッシュから流用した人数を出す (poe.ninja に取りに行くのは差分だけ)
+  const reused = p.reused ? ` (うちキャッシュ ${p.reused} 人)` : "";
+  return `キャラ取得中 ${p.done}/${p.total}${reused}`;
 });
 
 let unlisten: UnlistenFn | null = null;
@@ -246,7 +268,7 @@ onMounted(async () => {
   loadStored();
   await loadAscendancies();
   if (inApp) {
-    unlisten = await listen<{ phase: string; done: number; total: number }>("gem-break-progress", (e) => {
+    unlisten = await listen<{ phase: string; done: number; total: number; reused?: number }>("gem-break-progress", (e) => {
       progress.value = e.payload;
     });
   }
@@ -269,7 +291,8 @@ onUnmounted(() => {
       </p>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
-        (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
+        (1 アセンダンシー = 人数 + 2 リクエスト。一度見たキャラは保存して次からは取りに行かないので、2 回目以降は数分で終わります)。
+        上位プレイヤーMOD一覧と同じ poe.ninja の枠を使うので、そちらが取得中はこちらを待たせます。
         装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
         どのジェムを捌き速度の追跡に入れるかは、上の「自動ジェム監視」の設定 (基準 / 上位いくつ / 人数の下限) で決まります
         (出品 1 件ずつを周期ごとに追って、売れるまでの時間を測る → ジェムコラプトの賭けに表示)。
@@ -344,7 +367,7 @@ onUnmounted(() => {
         "
       >
         <span aria-hidden="true" class="animate-pulse">⏱</span>
-        リミット制限待機中（あと {{ waitText(net.global_penalty_remaining_secs) }}<template v-if="resumeAtText(net.global_penalty_remaining_secs)">
+        poe.ninja のリミット待機中（あと {{ waitText(net.global_penalty_remaining_secs) }}<template v-if="resumeAtText(net.global_penalty_remaining_secs)">
           · {{ resumeAtText(net.global_penalty_remaining_secs) }} 頃に再開</template
         >）
         <span v-if="net.global_penalty_reason" class="text-amber-200/70 text-[10px]">({{ net.global_penalty_reason }})</span>
@@ -359,7 +382,7 @@ onUnmounted(() => {
         "
       >
         <span aria-hidden="true" class="animate-pulse">🔁</span>
-        再試行中 {{ net.active_retry_count }} 件
+        poe.ninja に再試行中 {{ net.active_retry_count }} 件
         <span v-if="net.last_retry_reason" class="text-orange-200/70 text-[10px]">
           ({{ net.last_retry_reason }} あと {{ waitText(net.last_retry_remaining_secs) }})
         </span>

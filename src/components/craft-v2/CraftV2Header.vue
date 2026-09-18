@@ -129,7 +129,7 @@ const waiting = computed(
           "
         >
           <span aria-hidden="true" class="animate-pulse">⏱</span>
-          リミット制限待機中（あと {{ waitText(store.networkStatus.globalPenaltyRemainingSecs) }}<template
+          poe.ninja のリミット待機中（あと {{ waitText(store.networkStatus.globalPenaltyRemainingSecs) }}<template
             v-if="resumeAtText(store.networkStatus.globalPenaltyRemainingSecs)"
           >
             · {{ resumeAtText(store.networkStatus.globalPenaltyRemainingSecs) }} 頃に再開</template
@@ -150,7 +150,7 @@ const waiting = computed(
           "
         >
           <span aria-hidden="true" class="animate-pulse">🔁</span>
-          再試行中 {{ store.networkStatus.activeRetryCount }} 件
+          poe.ninja に再試行中 {{ store.networkStatus.activeRetryCount }} 件
           <span v-if="store.networkStatus.lastRetryReason" class="text-orange-200/70 text-[10px]">
             ({{ store.networkStatus.lastRetryReason }} あと {{ waitText(store.networkStatus.lastRetryRemainingSecs) }})
           </span>

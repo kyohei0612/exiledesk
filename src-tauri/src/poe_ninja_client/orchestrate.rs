@@ -71,7 +71,10 @@ pub async fn craft_v2_fetch_all(
     league_url: Option<String>,
 ) -> Result<CraftV2FetchResult, String> {
     let client = Arc::new(build_client()?);
-    let gate = RateGate::new(MIN_REQUEST_INTERVAL_MS);
+    // poe.ninja 宛は 1 本のゲートを共有する (使用率ランキングと同時に走っても間隔が半分にならない)
+    let gate = global_gate();
+    // 取得は 1 本ずつ。使用率ランキングが走っていれば終わるまで待つ (2026-09-18)
+    let _job = take_ninja_job("上位プレイヤーMOD一覧").await;
 
     // Medium-M7: 前回 fetch 末尾でユーザがキャンセルした残骸が残らないようリセット
     CRAFT_V2_CANCEL_FLAG.store(false, Ordering::Relaxed);

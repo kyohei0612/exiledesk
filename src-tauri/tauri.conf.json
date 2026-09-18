@@ -37,7 +37,8 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "../src/i18n/*.json"
+      "../src/i18n/*.json",
+      "seed/*.json"
     ],
     "windows": {
       "nsis": {

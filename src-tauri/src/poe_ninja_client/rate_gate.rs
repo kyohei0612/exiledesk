@@ -45,6 +45,67 @@ pub(crate) struct RateGateState {
     cycle_started_at: Option<Instant>,
 }
 
+/// poe.ninja 宛の**全リクエストが通る 1 本のゲート** (2026-09-18)。
+///
+/// オーナー指摘:「自動ジェムと上位 MOD は取るルートが忍者からだから、どっちかズラさんと終わる」。
+/// 以前は取得の入口ごとに `RateGate::new` していたので、上位プレイヤーMOD一覧と
+/// 使用率ランキングが同時に走ると**実際の送信間隔が半分**になり、両方 429 を食らっていた。
+/// 同じ相手 (同じ IP の枠) を見ているのだから、間隔もペナルティも 1 本で持つ。
+static GLOBAL_GATE: std::sync::OnceLock<RateGate> = std::sync::OnceLock::new();
+
+/// poe.ninja 共通のレートゲート
+pub fn global_gate() -> RateGate {
+    GLOBAL_GATE.get_or_init(|| RateGate::new(MIN_REQUEST_INTERVAL_MS)).clone()
+}
+
+/// poe.ninja からの取得を 1 本ずつに直列化する鍵。
+///
+/// ゲートで間隔は守れるが、2 つの取得が交互に枠を取り合うと**両方が遅くなって両方終わらない**。
+/// 先に始まった方を終わらせてから次を流す (オーナー指摘「どっちかズラさんと終わる」)。
+static JOB_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+/// 今どの取得が走っているか (画面に出す用。空なら誰も走っていない)
+static JOB_NAME: StdMutex<Option<&'static str>> = StdMutex::new(None);
+
+/// 取得の順番待ちをする鍵。drop するまで他の取得は待つ
+pub struct NinjaJob {
+    _guard: tokio::sync::MutexGuard<'static, ()>,
+}
+
+impl Drop for NinjaJob {
+    fn drop(&mut self) {
+        if let Ok(mut g) = JOB_NAME.lock() {
+            *g = None;
+        }
+    }
+}
+
+/// 走っている取得の名前 (無ければ None)
+pub fn ninja_job_running() -> Option<&'static str> {
+    JOB_NAME.lock().ok().and_then(|g| *g)
+}
+
+/// 取得を始める。他が走っていれば Err (呼び側が「後にしてください」と出す)
+pub fn try_take_ninja_job(name: &'static str) -> Result<NinjaJob, &'static str> {
+    match JOB_LOCK.try_lock() {
+        Ok(guard) => {
+            if let Ok(mut g) = JOB_NAME.lock() {
+                *g = Some(name);
+            }
+            Ok(NinjaJob { _guard: guard })
+        }
+        Err(_) => Err(ninja_job_running().unwrap_or("別の取得")),
+    }
+}
+
+/// 取得を始める (空くまで待つ)。自動で回る物はこちら
+pub async fn take_ninja_job(name: &'static str) -> NinjaJob {
+    let guard = JOB_LOCK.lock().await;
+    if let Ok(mut g) = JOB_NAME.lock() {
+        *g = Some(name);
+    }
+    NinjaJob { _guard: guard }
+}
+
 impl RateGate {
     pub fn new(min_interval_ms: u64) -> Self {
         let past = Instant::now() - Duration::from_millis(min_interval_ms * 2);

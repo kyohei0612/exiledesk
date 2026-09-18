@@ -73,7 +73,7 @@ export const tradeAuto = {
   /** 画面ヘッダ用の短い状態文 */
   label: computed(() => {
     if (rateLimitedUntil.value && rateLimitedUntil.value > now.value) {
-      return `trade2 レート制限中 (${Math.ceil((rateLimitedUntil.value - now.value) / 1000)} 秒)`;
+      return `トレード (trade2) のレート制限中 (${Math.ceil((rateLimitedUntil.value - now.value) / 1000)} 秒)`;
     }
     if (pending.value > 0) return `trade2 検索中… (${pending.value} 件待ち、1 件 約 10 秒)`;
     return lastError.value ? `trade2 エラー: ${lastError.value}` : "";
@@ -87,7 +87,7 @@ export const tradeAuto = {
 export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trade2 で検索中…"): { label: string; disabled: boolean } {
   if (busy) return { label: busyLabel, disabled: true };
   const limit = tradeAuto.rateLimitSecs.value;
-  if (limit > 0) return { label: `レート制限中 (${limit} 秒)`, disabled: true };
+  if (limit > 0) return { label: `トレードのレート制限中 (${limit} 秒)`, disabled: true };
   const cool = tradeAuto.cooldownSecs.value;
   if (cool > 0) return { label: `再取得まで ${cool} 秒`, disabled: true };
   const b = tradeAuto.budget.value;
