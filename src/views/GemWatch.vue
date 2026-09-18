@@ -159,7 +159,10 @@ const sweepText = computed(() => {
   if (!s?.sampling) return "";
   // 罰則待ちも通常の間隔待ちも同じ時計で出す (裏の門番 = pace_until、画面側 = tradeAuto)
   const wait = Math.max(tradeAuto.waitSecs.value, (s.pace_until || 0) - Math.floor(Date.now() / 1000));
-  return `取得中 ${s.done}/${s.total}${wait > 0 ? ` · トレードのレート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
+  // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
+  const left = Math.max(0, s.total - s.done);
+  const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * 20) / 60))} 分` : "";
+  return `取得中 ${s.done}/${s.total}${eta}${wait > 0 ? ` · トレードのレート待ち ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
 });
 onMounted(() => {
   reload();

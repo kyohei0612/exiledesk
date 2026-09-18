@@ -47,6 +47,57 @@ struct Gate {
 
 static GATES: StdMutex<Option<HashMap<String, Gate>>> = StdMutex::new(None);
 
+/// 送信記録の保存先 (アプリを閉じても覚えておくため)。起動時に `load_gates` で入れる。
+///
+/// 2026-09-18 オーナー報告「一括でやった時に死ぬほどレート引っかかる」:
+/// 記録がメモリだけだったので、アプリを再起動するたびに「まだ 1 回も送っていない」状態に戻り、
+/// 上限いっぱいまで一気に投げて → サーバ側の枠を使い切って長い待ちに入る、を繰り返していた。
+/// 今日は更新で 4 回再起動しているので、そのたびにバーストしていたことになる。
+static GATE_STORE: StdMutex<Option<std::path::PathBuf>> = StdMutex::new(None);
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+struct StoredGate {
+    sends: Vec<i64>,
+    rules: Vec<Rule>,
+    blocked_until: i64,
+}
+
+/// 起動時に 1 回。保存してあった送信記録を読み込む
+pub fn load_gates(path: std::path::PathBuf) {
+    if let Ok(mut g) = GATE_STORE.lock() {
+        *g = Some(path.clone());
+    }
+    let Ok(raw) = std::fs::read_to_string(&path) else { return };
+    let Ok(stored) = serde_json::from_str::<HashMap<String, StoredGate>>(&raw) else { return };
+    let now = now_ms();
+    let Ok(mut guard) = GATES.lock() else { return };
+    let map = guard.get_or_insert_with(HashMap::new);
+    for (kind, st) in stored {
+        let sends: Vec<i64> = st.sends.into_iter().filter(|t| *t > now - 6 * 3600 * 1000).collect();
+        let e = map.entry(kind).or_default();
+        e.sends = sends;
+        e.rules = st.rules;
+        e.blocked_until = st.blocked_until;
+    }
+}
+
+/// 送信記録を保存する (GATES の lock を持っている間に呼ぶ)
+fn save_gates_locked(map: &HashMap<String, Gate>) {
+    let Some(path) = GATE_STORE.lock().ok().and_then(|g| g.clone()) else { return };
+    let stored: HashMap<&String, StoredGate> = map
+        .iter()
+        .map(|(k, g)| {
+            (
+                k,
+                StoredGate { sends: g.sends.clone(), rules: g.rules.clone(), blocked_until: g.blocked_until },
+            )
+        })
+        .collect();
+    if let Ok(json) = serde_json::to_string(&stored) {
+        let _ = std::fs::write(path, json);
+    }
+}
+
 /// 規則が取れるまでの控えめな既定 (search の公表値より 1 段きつめ)
 fn default_rules() -> Vec<Rule> {
     vec![(4, 10), (12, 60), (24, 300)]
@@ -90,6 +141,7 @@ async fn gate_acquire(kind: &str) {
             let wait = wait_for_rules(g, now);
             if wait <= 0 {
                 g.sends.push(now);
+                save_gates_locked(map);
             }
             wait
         };
@@ -150,6 +202,7 @@ fn gate_note(kind: &str, headers: &HeaderMap) {
         }
     }
     g.sends.sort_unstable();
+    save_gates_locked(map);
 }
 
 /// 429 を食らった時の罰則を控える
@@ -158,6 +211,7 @@ fn gate_penalty(kind: &str, retry_after_secs: i64) {
     let map = guard.get_or_insert_with(HashMap::new);
     let g = map.entry(kind.to_string()).or_default();
     g.blocked_until = g.blocked_until.max(now_ms() + retry_after_secs.max(1) * 1000 + 500);
+    save_gates_locked(map);
 }
 
 /// 罰則 (429 や x-rate-limit-*-state の restricted) で送れない時の解除予定 (unix 秒)。

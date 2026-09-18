@@ -199,6 +199,11 @@ pub fn run() {
             }
 
             app_log::init(app.handle());
+            // trade2 の送信記録を読み直す (再起動のたびにバーストしないように 2026-09-18)
+            if let Ok(dir) = app.path().app_data_dir() {
+                let _ = std::fs::create_dir_all(&dir);
+                trade2::load_gates(dir.join("trade2_rate.json"));
+            }
             app_log::line(
                 app.handle(),
                 &format!(
