@@ -277,7 +277,7 @@ const EV_ATTEMPTS = 30;
 const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
 
 /**
- * 1 行分の計算。実売の平均売値をそのままジェムコラプトの賭けの式に入れて、
+ * 1 行分の計算。期待値は実売の平均をジェムコラプトの賭けの式に入れて出し、画面には今の最安値を出す。
  * 「1 回回したら手元にいくら残るか」(期待値) を出す (オーナー指示 2026-09-17)。
  */
 const scoredGems = computed(() => {
@@ -286,12 +286,15 @@ const scoredGems = computed(() => {
     const price: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
     const fastKeys = new Set<string>();
     for (const c of cs) {
-      price[c.key] = c.avgExalted;
+      // 見出しを押した時の並べ替えは、画面に出ている値 (今の最安値) で
+      price[c.key] = c.cheapest;
       if (c.tone === "fast") fastKeys.add(c.key);
     }
-    const prices = cs.map((c) => c.avgExalted).filter((v): v is number => v != null);
-    const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
-    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false }, price);
+    // 期待値は**実売の平均**で計算する (画面に出す最安値ではない。オーナー指示 2026-09-18:
+    // 「並び順だけ上から 3 つの平均で期待値を出すだけ」)
+    const soldAvg: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
+    for (const c of cs) soldAvg[c.key] = c.avgExalted;
+    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false }, soldAvg);
     return {
       ...gem,
       cells: cs,
@@ -301,7 +304,6 @@ const scoredGems = computed(() => {
       allFast: fastKeys.size === 3,
       /** レベル 21 と完成品が速い (オーナーの言う「2 番目に大事」) */
       coreFast: fastKeys.has("level21") && fastKeys.has("finished"),
-      avg,
       /** 30 回回した時の期待収支 */
       ev: e ? e.ev * EV_ATTEMPTS : null,
       /** 1 回あたりの期待収支 */
@@ -316,7 +318,7 @@ const scoredGems = computed(() => {
 /**
  * 並べ替え (オーナー指示 2026-09-17)。
  *   既定「期待値」: 3 条件とも速い物を一番上 → レベル 21 と完成品が速い物 → 速い数 → 期待値の高い順
- *   条件名 (レベル 21 / 品質 23% / 完成品) を押した時: その条件が速い物を上に、その中で平均売値の高い順
+ *   条件名 (レベル 21 / 品質 23% / 完成品) を押した時: その条件が速い物を上に、その中で今の最安値が高い順
  * どちらも記録を読み直すたびに勝手に並び替わる (flowStore が変われば再計算される)。
  */
 type SortMode = "ev" | (typeof SALE_KEYS)[number];
@@ -347,9 +349,9 @@ const sortedGems = computed(() => {
 });
 const SORT_NOTE: Record<SortMode, string> = {
   ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS} 回回した時の手残り) が高い順。`,
-  level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の平均売値が高い順。",
-  quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の平均売値が高い順。",
-  finished: "完成品が「速い」ジェムを上に、その中では 完成品の平均売値が高い順。",
+  level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の今の最安値が高い順。",
+  quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の今の最安値が高い順。",
+  finished: "完成品が「速い」ジェムを上に、その中では 完成品の今の最安値が高い順。",
 };
 function sortHead(mode: SortMode): string {
   return sortBy.value === mode ? "text-[var(--exile-color-accent-focus)]" : "hover:text-[var(--exile-color-text-secondary)]";
@@ -358,18 +360,32 @@ function sortHead(mode: SortMode): string {
 // ---- 監視中の状態 ----
 function cells(en: string) {
   return SALE_KEYS.map((k) => {
-    const f = summarizeFlow(flowStore.value?.states?.[watchKey(en, k)]);
+    const st = flowStore.value?.states?.[watchKey(en, k)];
+    const f = summarizeFlow(st);
     const watched = flowStore.value?.watches?.some((w) => w.key === watchKey(en, k));
+    /**
+     * 画面に出すのは**今の最安値** (オーナー指示 2026-09-18:
+     * 「ここ平均じゃなくて現在の最安値ね表示は。並び順だけ上から 3 つの平均で期待値を出すだけで、
+     *   売値の平均を表示は間違ってる」)。巡回のたびに更新される最安 1 件の値段。
+     */
+    const cheapest =
+      st?.cheapest_amount != null && st.cheapest_currency
+        ? averageExalted([{ amount: st.cheapest_amount, currency: st.cheapest_currency }])
+        : null;
+    /** 期待値の計算に使う実売の平均 (画面には出さない) */
     const avg = averageExalted(f.soldPrices);
+    const parts = [f.gone > 0 ? fmtSellTime(f.medianMin) : "", cheapest != null ? displayCurrency.money(cheapest) : ""].filter(Boolean);
     return {
       key: k,
-      /** 並べ替えに使う平均売値 (高貴建て) */
+      /** 期待値に渡す実売の平均 (高貴建て) */
       avgExalted: avg,
+      /** 並べ替えと表示に使う今の最安値 (高貴建て) */
+      cheapest,
       label: SALE_KEY_LABEL[k],
       verdict: f.label || (f.gone + f.alive > 0 ? `判定待ち ${f.gone + f.alive} 件` : watched ? "巡回待ち" : "未登録"),
-      // 判定の横に出す実測 (売れるまでの時間と平均売値)
-      detail: f.gone > 0 ? `${fmtSellTime(f.medianMin)}${avg != null ? ` · ${displayCurrency.money(avg)}` : ""}` : "",
-      title: flowSentence(f),
+      // 判定の横: 売れるまでの時間と、今の最安値
+      detail: parts.join(" · "),
+      title: `${flowSentence(f)}${avg != null ? `。売れた値段の平均は ${displayCurrency.money(avg)} (期待値の計算に使う値)` : ""}`,
       tone: f.tone,
       gone: f.gone,
       alive: f.alive,
@@ -546,10 +562,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                   </button>
                 </th>
                 <th class="text-left font-normal pb-1 pl-3">ジェム</th>
-                <th class="text-left font-normal pb-1 pl-3">入り方 / 速い数 / 平均売値</th>
+                <th class="text-left font-normal pb-1 pl-3">入り方 / 速い数</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
                 <th v-for="k in SALE_KEYS" :key="k" class="text-left font-normal pb-1 pl-3">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} が速い物を上に、その中で平均売値の高い順に並べる`" @click="sortBy = k">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} が速い物を上に、その中で今の最安値が高い順に並べる`" @click="sortBy = k">
                     {{ SALE_KEY_LABEL[k] }}{{ sortBy === k ? " ▼" : "" }}
                   </button>
                 </th>
@@ -578,7 +594,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
                   {{ gem.manual ? "手動" : "上位" }}
                   <span v-if="gem.fast > 0" class="ml-1 text-[10px]" :class="gem.fast === 3 ? 'text-emerald-300' : 'text-[var(--exile-color-text-tertiary)]'">速い {{ gem.fast }}/3</span>
-                  <span v-if="gem.avg != null" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">平均 {{ displayCurrency.money(gem.avg) }}</span>
+
                 </td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
                 <td v-for="c in gem.cells" :key="c.key" class="py-1.5 pl-3">

@@ -269,7 +269,8 @@ fn try_offline(
         cancelled: false,
         league: cache.league.clone(),
         snapshot: cache.snapshot_name.clone(),
-        fetched_at: now,
+        // キャッシュから組み立てた時は「いつ取ったか」を偽らない (元の取得時刻を出す)
+        fetched_at: hit.fetched_at,
         rows: aggregate(&per_char),
     })
 }
