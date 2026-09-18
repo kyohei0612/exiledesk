@@ -266,6 +266,10 @@ pub struct FlowStore {
     /// 429 / 通信エラーで取れなかった銘柄 (retry_at にこれだけ取り直す)
     #[serde(default)]
     pub retry_keys: Vec<String>,
+    /// 今の 1 巡で取り終わった銘柄。巡が終わったら空にする。
+    /// 薄く流す自動巡回は 1 巡に何時間もかかるので、途中でアプリを閉じても続きから再開する
+    #[serde(default)]
+    pub sweep_done: Vec<String>,
     /// 取り直しを何回続けたか (MAX_RETRY_ROUNDS で諦めて次の周期へ)
     #[serde(default)]
     pub retry_count: u32,
@@ -959,9 +963,25 @@ pub fn prune(state: &mut WatchState, now: i64) {
 // サンプリング (HTTP)
 // ============================================================================
 
-/// 全銘柄を 1 周する (手動ボタンと周期の自動取得)。既に走っていれば Err
+/// 巡回の走らせ方
+#[derive(Clone, Copy, PartialEq)]
+pub enum Pace {
+    /// 手動の一括取得: 上限の許す限り速く (「今すぐ 1 巡」なので待たせない)
+    Fast,
+    /// 自動巡回: 周期いっぱいに薄く広げる。1 リクエストあたり 周期 ÷ 本数 の間隔を空けるので、
+    /// レートの枠に一度も触れない (オーナー了承 2026-09-18:
+    /// 「54 銘柄だけどレートになるまで 8 銘柄くらいしか取れない」→ 一気に投げるのをやめる)
+    Spread,
+}
+
+/// 全銘柄を 1 周する (手動ボタン)。既に走っていれば Err
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
-    sample_guarded(app, None).await
+    sample_guarded(app, None, Pace::Fast).await
+}
+
+/// 自動巡回: 周期いっぱいに薄く広げて 1 周する
+pub async fn sample_spread(app: &tauri::AppHandle) -> Result<(), String> {
+    sample_guarded(app, None, Pace::Spread).await
 }
 
 /// 取りこぼした銘柄 (retry_keys) だけ取り直す
@@ -970,15 +990,15 @@ async fn sample_retry(app: &tauri::AppHandle) -> Result<(), String> {
     if keys.is_empty() {
         return Ok(());
     }
-    sample_guarded(app, Some(keys)).await
+    sample_guarded(app, Some(keys), Pace::Fast).await
 }
 
-async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> Result<(), String> {
+async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>, pace: Pace) -> Result<(), String> {
     if SAMPLING.swap(true, Ordering::SeqCst) {
         // 黙って Ok を返すと画面が「終わりました」を出してしまう (2026-09-18 レビュー指摘)
         return Err("取得中です".to_string());
     }
-    let result = sample_inner(app, only).await;
+    let result = sample_inner(app, only, pace).await;
     // 途中で ? で抜けても進捗表示を残さない
     set_progress(None);
     SAMPLING.store(false, Ordering::SeqCst);
@@ -986,7 +1006,7 @@ async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>) -
 }
 
 /// `only` を渡すとその銘柄だけ取る (取りこぼしの取り直し)。None なら自動リスト全部
-async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> Result<(), String> {
+async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pace_mode: Pace) -> Result<(), String> {
     let store = load_store(app);
     if store.watches.is_empty() || store.league.is_empty() {
         return Ok(());
@@ -994,6 +1014,12 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> 
     // 追跡の検索は英語名で投げるので www 固定にする。
     // JP サイトは日本語名しか受け付けず "Unknown item base type" (HTTP 400) になる (2026-09-16)。
     let site: Option<String> = Some("www".to_string());
+    // 薄く流す時は 1 巡に何時間もかかるので、既にこの巡で取った銘柄は飛ばす (続きから)
+    let done_keys: HashSet<String> = if pace_mode == Pace::Spread && only.is_none() {
+        store.sweep_done.iter().cloned().collect()
+    } else {
+        HashSet::new()
+    };
     let auto: Vec<&Watch> = store
         .watches
         .iter()
@@ -1001,11 +1027,18 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> 
         .filter(|w| only.as_ref().map(|k| k.contains(&w.key)).unwrap_or(true))
         .collect();
     let total_watches = auto.len();
-    // 1 巡はまとめて走らせる (オーナー指示 2026-09-17: 前回の一括取得から周期ぶん後に 1 巡)。
-    // 間隔は trade2 側の門番 (gate_acquire) が上限を見て空けるので、ここでは最低限だけ空ける
-    // (オーナー指示 2026-09-18:「レート止まるね、どうにか止まらんようにしたい」→
-    //  罰則を食らう前に門番が待つので、固定で 8 秒空ける必要がなくなった)。
-    let pace = REQUEST_INTERVAL;
+    // 手動の一括取得は上限の許す限り速く (門番が待つ)。
+    // 自動巡回は周期いっぱいに薄く広げる: 1 銘柄 = search + fetch の 2 リクエストなので、
+    // 間隔 = 周期 ÷ (銘柄数 × 2)。54 銘柄 / 2 時間なら 66 秒に 1 回で、枠に一度も触れない
+    // (オーナー了承 2026-09-18:「一気に順に取ってる」のをやめる)
+    let pace = match pace_mode {
+        Pace::Fast => REQUEST_INTERVAL,
+        Pace::Spread => {
+            let reqs = (total_watches as i64 * 2).max(1);
+            let secs = (cycle_secs(&store) / reqs).clamp(REQUEST_INTERVAL.as_secs() as i64, 600);
+            Duration::from_secs(secs as u64)
+        }
+    };
     let mut index = 0usize;
     // 後で取り直す銘柄 (429 / 通信エラーだけ。HTTP 400 のような恒久的な失敗は入れない)
     let mut failed: Vec<String> = Vec::new();
@@ -1013,6 +1046,9 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> 
 
     for watch in auto.iter().copied() {
         index += 1;
+        if done_keys.contains(&watch.key) {
+            continue; // この巡では取得済み (途中で閉じた分の続き)
+        }
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         // 時刻は銘柄ごとに取り直す。組の先頭で固定していた頃は、1 組を回り切る十数分ぶん
         // 記録が過去にずれて「初見 < 出品時刻」が出ていた (2026-09-17 レビュー指摘)
@@ -1138,6 +1174,9 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> 
             eprintln!("[market_flow] 巡回中にリーグが変わったので中断: {} -> {}", store.league, store_now.league);
             return Ok(());
         }
+        if pace_mode == Pace::Spread && !store_now.sweep_done.contains(&watch.key) {
+            store_now.sweep_done.push(watch.key.clone());
+        }
         save_store(app, &store_now)?;
 
     }
@@ -1149,6 +1188,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> 
         // 手動の一括取得もここを通る。次の自動取得はこの時刻から数える
         store_end.swept_at = now_secs();
         store_end.retry_count = 0;
+        store_end.sweep_done.clear();
     }
     if failed.is_empty() || store_end.retry_count >= MAX_RETRY_ROUNDS {
         if !failed.is_empty() {
@@ -1199,6 +1239,10 @@ pub struct FlowStatus {
     pub retry_at: i64,
     /// 取り直しを待っている銘柄数
     pub retry_keys: usize,
+    /// 今の 1 巡で取り終わった銘柄数 (自動巡回は時間をかけて回るので進み具合を出す)
+    pub sweep_done: usize,
+    /// 今の送信間隔 (秒)。自動巡回は周期 ÷ 本数で薄く流す
+    pub pace_secs: i64,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
     /// 今の 1 巡の周期 (秒)
@@ -1242,6 +1286,11 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         retry_until: retry_until(),
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),
+        sweep_done: store.sweep_done.len(),
+        pace_secs: {
+            let reqs = (store.watches.iter().filter(|w| w.auto).count() as i64 * 2).max(1);
+            (cycle_secs(&store) / reqs).clamp(1, 600)
+        },
         cycle_secs: cycle_secs(&store),
     })
 }
@@ -1272,7 +1321,8 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
                 continue;
             }
             if now >= next_sweep_at(&store) {
-                if let Err(e) = sample_once(&app).await {
+                // 自動巡回は周期いっぱいに薄く広げる (枠に触れないので待ちが出ない)
+                if let Err(e) = sample_spread(&app).await {
                     crate::app_log::line_static(&format!("[market_flow] サンプリング失敗: {e}"));
                 }
             } else if store.retry_at > 0 && now >= store.retry_at {

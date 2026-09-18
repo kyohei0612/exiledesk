@@ -124,6 +124,10 @@ export interface FlowStatus {
   retry_at: number;
   /** 取り直しを待っている銘柄数 (429 / 通信で取れなかった分) */
   retry_keys: number;
+  /** 今の 1 巡で取り終わった銘柄数 (自動巡回は周期をかけて回る) */
+  sweep_done: number;
+  /** 今の送信間隔 (秒)。自動巡回は 周期 ÷ 本数 で薄く流す */
+  pace_secs: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
   /** 今の 1 巡の周期 (秒)。画面の設定で変えられる */

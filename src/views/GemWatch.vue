@@ -157,6 +157,10 @@ async function applyCycle(hours: number): Promise<void> {
 const sweepText = computed(() => {
   const s = status.value;
   if (!s?.sampling) return "";
+  // 自動巡回は周期いっぱいに薄く流すので、「待ち」ではなく間隔として出す
+  if (!sweeping.value && s.pace_secs > 5) {
+    return `自動巡回中 ${s.sweep_done}/${s.total || gems.value.length * 3} 銘柄 · ${s.pace_secs} 秒おき${s.current ? ` · ${s.current}` : ""}`;
+  }
   // 罰則待ちも通常の間隔待ちも同じ時計で出す (裏の門番 = pace_until、画面側 = tradeAuto)
   const wait = Math.max(tradeAuto.waitSecs.value, (s.pace_until || 0) - Math.floor(Date.now() / 1000));
   // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
@@ -480,6 +484,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+          自動巡回は {{ cycleHours }} 時間ぶんに均して流します ({{ gems.length ? Math.round((cycleHours * 3600) / (gems.length * 3 * 2)) : 0 }} 秒おきに 1 回) のでレート制限に当たりません。
+          手動の「一括取得」だけは上限の許す限り速く回すので、その間だけ待ちが出ます。
           監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり {{ cycleHours }} 時間に検索 1 回 + 値段 1 回なので、
           {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / cycleHours) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
           間隔を短くすると「消えた」のに気付くのが早くなる分、売れるまでの時間も細かく出ます。
