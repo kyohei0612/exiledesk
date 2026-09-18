@@ -166,7 +166,7 @@ const MAX_GATE_WAIT_MS: i64 = 90_000;
 
 /// 送ってよくなるまで待って、送った記録を残す。全ての trade2 リクエストがここを通る。
 /// 待ちが長すぎる時は Err (呼び側が「レート制限中: あと N 秒」として返す)
-async fn gate_acquire(kind: &str) -> Result<(), String> {
+pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
     let mut waited = 0i64;
     loop {
         let wait = {
@@ -200,39 +200,80 @@ async fn gate_acquire(kind: &str) -> Result<(), String> {
     }
 }
 
+/// この門を通る窓口 (罰則は IP 単位なので、1 つ食らったら全部止める)
+const KINDS: [&str; 3] = ["search", "fetch", "history"];
+
+/// 罰則は同じ IP にかかるので、全ての窓口を同じ時刻まで止める。
+///
+/// 2026-09-18 の記録: 21:36:04 の fetch (retry-after 600) と 21:36:13 の search (retry-after 591) は
+/// **解除時刻が同じ 21:46:04** だった。窓口ごとに別々の罰則ではない。それまでは片方が 429 を
+/// 食らってももう片方は投げ続けていたので、冷却中に枠を使ってしまっていた。
+fn block_all_until(map: &mut HashMap<String, Gate>, until_ms: i64) {
+    for kind in KINDS {
+        map.entry(kind.to_string()).or_default();
+    }
+    for g in map.values_mut() {
+        g.blocked_until = g.blocked_until.max(until_ms);
+    }
+}
+
+/// 直近 n 秒に送った回数 (全窓口の合計)。記録に残す用
+fn recent_counts(map: &HashMap<String, Gate>, now: i64) -> String {
+    [60i64, 300, 900, 3600]
+        .iter()
+        .map(|w| {
+            let n: usize = map
+                .values()
+                .map(|g| g.sends.iter().filter(|t| **t > now - w * 1000).count())
+                .sum();
+            format!("{w}秒={n}回")
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 /// 応答のヘッダで規則と現在数を合わせる (罰則が残っていればその間は送らない)
-fn gate_note(kind: &str, headers: &HeaderMap) {
+pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
     let get = |name: &str| headers.get(name).and_then(|v| v.to_str().ok()).map(str::to_string);
     let rules_raw = get("x-rate-limit-ip");
     let state_raw = get("x-rate-limit-ip-state");
     let Ok(mut guard) = GATES.lock() else { return };
     let map = guard.get_or_insert_with(HashMap::new);
-    let g = map.entry(kind.to_string()).or_default();
     let now = now_ms();
-    if let Some(raw) = rules_raw {
-        let parsed: Vec<Rule> = raw
-            .split(',')
-            .filter_map(|part| {
-                let mut it = part.split(':');
-                let max = it.next()?.trim().parse::<u32>().ok()?;
-                let period = it.next()?.trim().parse::<i64>().ok()?;
-                Some((max, period))
-            })
-            .collect();
-        if !parsed.is_empty() {
-            g.rules = parsed;
+    let mut rules = {
+        let g = map.entry(kind.to_string()).or_default();
+        if let Some(raw) = rules_raw {
+            let parsed: Vec<Rule> = raw
+                .split(',')
+                .filter_map(|part| {
+                    let mut it = part.split(':');
+                    let max = it.next()?.trim().parse::<u32>().ok()?;
+                    let period = it.next()?.trim().parse::<i64>().ok()?;
+                    Some((max, period))
+                })
+                .collect();
+            if !parsed.is_empty() && parsed != g.rules {
+                crate::app_log::line_static(&format!("[trade2] {kind} の規則が変わりました: {parsed:?}"));
+                g.rules = parsed;
+            }
         }
+        g.rules.clone()
+    };
+    if rules.is_empty() {
+        rules = default_rules();
     }
     if let Some(raw) = state_raw {
-        let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
         for (i, part) in raw.split(',').enumerate() {
             let nums: Vec<i64> = part.split(':').filter_map(|x| x.trim().parse::<i64>().ok()).collect();
             let (Some(&cur), Some(&period), Some(&restricted)) = (nums.first(), nums.get(1), nums.get(2)) else {
                 continue;
             };
-            // 罰則が残っていればその間は送らない
+            // 罰則が残っていればその間は送らない (全窓口)
             if restricted > 0 {
-                g.blocked_until = g.blocked_until.max(now + restricted * 1000 + 500);
+                crate::app_log::line_static(&format!(
+                    "[trade2] {kind} 窓{period}秒に罰則が残っています (あと {restricted} 秒)"
+                ));
+                block_all_until(map, now + restricted * 1000 + 500);
                 continue;
             }
             // サーバーの数えた現在数が**こちらの記録より多く**、かつ上限に近い = 同じ IP の別経路
@@ -242,12 +283,23 @@ fn gate_note(kind: &str, headers: &HeaderMap) {
             let Some(&(max, _)) = rules.get(i) else { continue };
             let margin = if max >= 15 { 2 } else { 1 };
             let keep = max.saturating_sub(margin).max(1) as i64;
-            let own = g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64;
-            if cur > own {
-                // 別経路が同じ IP の枠を使っている。しばらく控えめにする
-                g.foreign_seen_at = now;
+            let own = {
+                let g = map.entry(kind.to_string()).or_default();
+                g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64
+            };
+            // 差が 1 なら別経路とみなさない。こちらは「送る直前」に、サーバーは「受けた時」に
+            // 数えるので窓の端では常に 1 ずれる。ここを別経路と誤認すると枠を半分しか使えなくなる
+            // (2026-09-18 の記録では 429 の直前に毎回 foreign が立っていた)。
+            if cur <= own + 1 {
+                continue;
             }
-            if cur > own && cur >= keep {
+            crate::app_log::line_static(&format!(
+                "[trade2] {kind} 窓{period}秒: サーバー {cur} 回 / こちらの記録 {own} 回。\
+同じ回線の別経路 (ブラウザのトレード検索など) が枠を使っています"
+            ));
+            let g = map.entry(kind.to_string()).or_default();
+            g.foreign_seen_at = now;
+            if cur >= keep {
                 // 窓は滑って動くので、平均すると period/max ごとに 1 枠空く。
                 // 超過ぶんだけ待てば上限を下回る (窓の長さぶん丸ごと止めると、
                 // 8 銘柄ほどで 5 分止まる = オーナー報告「8 銘柄くらいしか取れない」2026-09-18)。
@@ -257,19 +309,27 @@ fn gate_note(kind: &str, headers: &HeaderMap) {
             }
         }
     }
+    let g = map.entry(kind.to_string()).or_default();
     g.sends.sort_unstable();
     save_gates_locked(map);
 }
 
-/// 429 を食らった時の罰則を控える
-fn gate_penalty(kind: &str, retry_after_secs: i64) {
-    crate::app_log::line_static(&format!(
-        "[trade2] {kind} で 429 を受けました (retry-after {retry_after_secs} 秒)"
-    ));
+/// 429 を食らった時の罰則を控える。
+///
+/// 2026-09-18 オーナー「やっぱ制限がでるね、なんでやろ」: それまで retry-after しか記録して
+/// いなかったので、**どの規則で断られたのか**が後から分からなかった (こちらの記録では
+/// 5 分に 24 回で、規則は search 30 回 / fetch 50 回。届いていないのに断られている)。
+/// サーバーが返した x-rate-limit-* と本文の頭、それに自分の送信回数を丸ごと残す。
+fn gate_penalty(kind: &str, retry_after_secs: i64, rl: &serde_json::Value, body: &str) {
     let Ok(mut guard) = GATES.lock() else { return };
     let map = guard.get_or_insert_with(HashMap::new);
-    let g = map.entry(kind.to_string()).or_default();
-    g.blocked_until = g.blocked_until.max(now_ms() + retry_after_secs.max(1) * 1000 + 500);
+    let now = now_ms();
+    crate::app_log::line_static(&format!(
+        "[trade2] {kind} で 429 (retry-after {retry_after_secs} 秒)\n  サーバーの規則と現在数: {rl}\n  こちらの送信 (全窓口): {}\n  本文: {}",
+        recent_counts(map, now),
+        body.chars().take(200).collect::<String>().replace('\n', " ")
+    ));
+    block_all_until(map, now + retry_after_secs.max(1) * 1000 + 500);
     save_gates_locked(map);
 }
 
@@ -374,9 +434,9 @@ pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, Stri
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
-        gate_penalty("search", retry_after.parse::<i64>().unwrap_or(60));
         let rl = rate_limit_headers(res.headers());
         let body = res.text().await.unwrap_or_default();
+        gate_penalty("search", retry_after.parse::<i64>().unwrap_or(60), &rl, &body);
         return Err(format!(
             "trade2 search HTTP 429 retry-after={} ratelimit={}: {}",
             retry_after,
@@ -467,9 +527,9 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
             .and_then(|v| v.to_str().ok())
             .unwrap_or("")
             .to_string();
-        gate_penalty("fetch", retry_after.parse::<i64>().unwrap_or(60));
         let rl = rate_limit_headers(res.headers());
         let body = res.text().await.unwrap_or_default();
+        gate_penalty("fetch", retry_after.parse::<i64>().unwrap_or(60), &rl, &body);
         return Err(format!(
             "trade2 fetch HTTP 429 retry-after={} ratelimit={}: {}",
             retry_after,
@@ -533,6 +593,9 @@ mod rate_tests {
     /// テスト用の最低間隔 (search 相当)
     const SPACING: i64 = 10_500;
 
+    /// GATES は 1 つしか無いので、そこを触るテストは順番に走らせる
+    static GLOBAL_TEST_LOCK: StdMutex<()> = StdMutex::new(());
+
     fn gate(sends: Vec<i64>, rules: Vec<Rule>, blocked_until: i64) -> Gate {
         Gate { sends, rules, blocked_until, foreign_seen_at: 0 }
     }
@@ -592,6 +655,7 @@ mod rate_tests {
     /// (止めていた頃は 28 件ごとに 300 秒止まった。2026-09-18 レビュー指摘)
     #[test]
     fn own_sends_do_not_trigger_the_foreign_block() {
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let now = now_ms();
         let key = "test-own";
         {
@@ -609,12 +673,39 @@ mod rate_tests {
         gate_note(key, &h);
         let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
         assert_eq!(blocked, 0, "自分の送信ぶんでは止めない");
-        // サーバーの方が多い (手で検索した分がある) 時は、超過ぶんの枠が空くまで止める
-        // (上限 5 / 10 秒 なら 1 枠 = 2 秒。窓の長さぶん丸ごとは止めない)
+        // 1 の差は数えない。こちらは送る直前に、サーバーは受けた時に数えるので窓の端では必ずずれる
+        // (2026-09-18: ここで別経路と誤認して、ずっと枠を半分しか使えていなかった)
         h.insert("x-rate-limit-ip-state", HeaderValue::from_static("5:10:0"));
         gate_note(key, &h);
         let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
-        assert!(blocked >= now + 2_000 && blocked <= now + 6_000, "超過ぶんだけ待つ (blocked={blocked}, now={now})");
+        assert_eq!(blocked, 0, "1 の差は窓の端のずれなので止めない");
+        // 2 以上ずれていれば別経路。超過ぶんの枠が空くまで止める
+        // (上限 5 / 10 秒 なら 1 枠 = 2 秒。窓の長さぶん丸ごとは止めない)
+        h.insert("x-rate-limit-ip-state", HeaderValue::from_static("6:10:0"));
+        gate_note(key, &h);
+        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
+        assert!(blocked >= now + 4_000 && blocked <= now + 9_000, "超過ぶんだけ待つ (blocked={blocked}, now={now})");
+    }
+
+    /// 429 を 1 つの窓口で食らったら、他の窓口も同じ時刻まで止まる
+    /// (2026-09-18 の記録: search と fetch の解除時刻が同じ 21:46:04 だった)
+    #[test]
+    fn a_penalty_stops_every_kind() {
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let now = now_ms();
+        {
+            let mut guard = GATES.lock().unwrap();
+            let map = guard.get_or_insert_with(HashMap::new);
+            for k in KINDS {
+                map.entry(k.to_string()).or_default().blocked_until = 0;
+            }
+        }
+        gate_penalty("fetch", 600, &serde_json::Value::Null, "");
+        let guard = GATES.lock().unwrap();
+        let map = guard.as_ref().unwrap();
+        for k in KINDS {
+            assert!(map[k].blocked_until >= now + 600_000, "{k} も止まる");
+        }
     }
 
     /// 罰則中はその解除まで待つ

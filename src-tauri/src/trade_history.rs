@@ -95,11 +95,16 @@ pub async fn trade_history_logout(app: tauri::AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub async fn trade_history_leagues(game: String) -> Result<Vec<String>, String> {
     let url = format!("{SITE}api/{}/data/leagues", trade_root(&game));
-    let body: serde_json::Value = crate::trade2::build_client()?
+    // 取引履歴も同じ pathofexile.com。門番を通さないと trade2 側の枠を黙って食う
+    // (2026-09-18: 門番の記録より実際の送信が多く、別経路と誤認していた原因の 1 つ)
+    crate::trade2::gate_acquire("history").await?;
+    let res = crate::trade2::build_client()?
         .get(&url)
         .send()
         .await
-        .map_err(|e| format!("通信エラー: {e}"))?
+        .map_err(|e| format!("通信エラー: {e}"))?;
+    crate::trade2::gate_note("history", res.headers());
+    let body: serde_json::Value = res
         .json()
         .await
         .map_err(|e| format!("リーグ一覧を読めません: {e}"))?;
@@ -127,12 +132,14 @@ pub async fn trade_history_fetch(app: tauri::AppHandle, req: HistoryRequest) -> 
         trade_root(&req.game),
         crate::trade2::urlencode(&req.league)
     );
+    crate::trade2::gate_acquire("history").await?;
     let res = crate::trade2::build_client()?
         .get(&url)
         .header(COOKIE, format!("{SESSION_COOKIE}={}", cookie.value()))
         .send()
         .await
         .map_err(|e| format!("通信エラー: {e}"))?;
+    crate::trade2::gate_note("history", res.headers());
     let status = res.status().as_u16();
     let ratelimit = crate::trade2::rate_limit_headers(res.headers());
     let retry_after = res
