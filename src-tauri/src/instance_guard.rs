@@ -68,6 +68,39 @@ pub fn bring_to_front<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
+/// 「次の起動ではウィンドウを出す」印のファイル名 (app_data_dir 直下)。
+///
+/// 2026-09-18 オーナー報告「更新したら強制再起動するけど一瞬起動してすぐ閉じる」:
+/// 自動更新の再起動は今の引数をそのまま引き継ぐので、ログイン時に `--tray-only` で
+/// 立ち上がっていた常駐分から更新すると、新版も `--tray-only` = ウィンドウを作ってすぐ隠す。
+/// 更新の直前にこの印を置き、次の起動で見つけたら `--tray-only` を無視してウィンドウを出す。
+const SHOW_MARKER: &str = "show_on_next_start";
+
+fn marker_path<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Option<std::path::PathBuf> {
+    app.path().app_data_dir().ok().map(|d| d.join(SHOW_MARKER))
+}
+
+/// 更新の再起動前に呼ぶ (画面の UpdateToast から)
+#[tauri::command]
+pub fn mark_show_on_restart(app: tauri::AppHandle) -> Result<(), String> {
+    let Some(p) = marker_path(&app) else { return Err("app_data_dir が取れません".into()) };
+    if let Some(dir) = p.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&p, b"1").map_err(|e| e.to_string())
+}
+
+/// 印があれば消して true (起動時に 1 回だけ見る)
+pub fn take_show_marker<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> bool {
+    let Some(p) = marker_path(app) else { return false };
+    if p.exists() {
+        let _ = std::fs::remove_file(&p);
+        true
+    } else {
+        false
+    }
+}
+
 #[cfg(windows)]
 const RUN_KEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 

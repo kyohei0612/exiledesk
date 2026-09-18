@@ -177,7 +177,9 @@ pub fn run() {
             // Windows ログイン時の自動起動では `--tray-only` 付きで exec される。
             // この時はメインウィンドウを表示しない (= タスクトレイのみ常駐)。
             // ----------------------------------------------------------------
-            let tray_only = std::env::args().any(|a| a == instance_guard::TRAY_ONLY_ARG);
+            // 自動更新からの再起動 (印あり) は `--tray-only` を引き継いでいてもウィンドウを出す
+            let tray_only = std::env::args().any(|a| a == instance_guard::TRAY_ONLY_ARG)
+                && !instance_guard::take_show_marker(app.handle());
             // ----------------------------------------------------------------
             // タスクトレイ常駐 (Phase 1.6)
             //
@@ -320,6 +322,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             greet,
+            instance_guard::mark_show_on_restart,
             pob::pob_load_build_code,
             pob::pob_load_build_xml,
             pob::pob_get_stat,

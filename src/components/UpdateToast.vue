@@ -9,6 +9,7 @@
 import { onMounted, ref, shallowRef, markRaw, watch } from "vue";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { updateCheckError, updateCheckRequest, updateCheckState } from "../state/update-check";
 import { updateErrorJa } from "../utils/trade-error";
@@ -127,6 +128,13 @@ async function applyUpdate() {
       }
     });
     phase.value = "done";
+    // 再起動は今の引数 (ログイン時の --tray-only など) を引き継ぐので、次の起動ではウィンドウを出す印を置く
+    // (2026-09-18 オーナー報告「更新後に一瞬起動してすぐ閉じる」)
+    try {
+      await invoke("mark_show_on_restart");
+    } catch {
+      /* 印が置けなくても更新自体は続ける (トレイから出せる) */
+    }
     // インストーラ実行後、明示 relaunch で新版を立ち上げる
     await relaunch();
   } catch (e) {
