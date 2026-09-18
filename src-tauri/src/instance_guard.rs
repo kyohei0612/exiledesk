@@ -49,10 +49,22 @@ pub fn on_second_instance<R: tauri::Runtime>(app: &tauri::AppHandle<R>, args: Ve
     if args.iter().any(|a| a == TRAY_ONLY_ARG) {
         return;
     }
+    bring_to_front(app);
+}
+
+/// メインウィンドウを確実に前面へ出す (2 つ目の起動 / トレイの左クリック / メニューの「表示」で共通)。
+///
+/// 2026-09-18 オーナー報告「更新後、起動しても強制終了する」: 実際は 2 つ目の起動が single-instance で
+/// 即終了し、既存のウィンドウは show() で「表示」にはなるが Windows が裏のプロセスの
+/// SetForegroundWindow を拒むので他のウィンドウの後ろに残っていた (ユーザーからは一瞬出て消えたように見える)。
+/// 一度「常に手前」にしてから戻すと Z 順が上がるので、フォーカスを取れなくても見える位置に来る。
+pub fn bring_to_front<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
         let _ = window.show();
+        let _ = window.set_always_on_top(true);
         let _ = window.set_focus();
+        let _ = window.set_always_on_top(false);
     }
 }
 
