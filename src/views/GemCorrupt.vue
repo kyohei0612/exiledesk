@@ -145,7 +145,7 @@ const MATERIAL_DESC: Record<string, string> = {
 const {
   ledger, ledgerRows, ledgerSales, ledgerTotals,
   setAttempts, setRoute, setQty, setSold, setUnit, setEach,
-  resetLedger, refreshLedgerPrices, fetchExchangeAndRepin,
+  resetLedger, clearCounts, refreshLedgerPrices, fetchExchangeAndRepin,
 } = useGemLedger(g);
 
 // ---- 売れ行き (2026-09-16: market_flow が巡回で記録した物を読むだけ) ----
@@ -853,6 +853,7 @@ const summary = computed(() => {
           </h2>
           <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
             <span>経路と回数を入れると使った数と売れた数が期待値で埋まる。実際と違う数だけ上書き</span>
+            <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" title="上書きした数を消して、回数から出る期待値に戻します (回数・経路・単価はそのまま)" @click="clearCounts">数を期待値に戻す</button>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" @click="resetLedger">全部 0 に</button>
           </div>
         </div>

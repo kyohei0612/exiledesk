@@ -51,12 +51,15 @@ const EMPTY_LEDGER: GemLedger = {
   eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
 };
 
-/** 旧形式 (素材ごとの使った数を全部手で入れていた) のキー。0 より大きい物は上書きとして引き継ぐ */
-const OLD_QTY_KEYS = ["baseGem", "gcp", "perfectJeweller", "vaal", "crystal", "uncut20"] as const;
-/** 旧形式 (売れた数を全部手で入れていた、2026-09-15 まで) のキー。0 より大きい物は上書きとして引き継ぐ */
-const OLD_SOLD_KEYS = ["soldLevel21", "soldQuality23", "soldFinished", "soldOther"] as const;
-
-type StoredGemLedger = Partial<GemLedger> & Partial<Record<(typeof OLD_QTY_KEYS)[number] | SoldKey, number>>;
+/**
+ * 旧形式 (回数を入れる前、素材ごとの数と売れた数を全部手で入れていた 2026-09-15 まで) の置き場。
+ *
+ * 2026-09-19 オーナー「なにも触ってないね。そこデフォルトで期待値入れて欲しい」:
+ * これを「手で入れた上書き」として引き継いでいたので、回数を入れても期待値が出ず、
+ * 何年も前の数が居座って見えていた。旧形式の数は回数と結びついていない
+ * (当時の記録は attempts が 0 のまま) ので、もう引き継がない。
+ */
+type StoredGemLedger = Partial<GemLedger> & Partial<Record<RowKey | SoldKey, number>>;
 type LedgerBook = Record<string, StoredGemLedger>;
 
 function loadBook(): LedgerBook {
@@ -108,6 +111,8 @@ export interface GemLedgerApi {
   /** 実売の 1 個あたり (空欄なら相場) */
   setEach: (key: EachKey, v: number | null) => void;
   resetLedger: () => void;
+  /** 使った数 / 売れた数の上書きだけ消す (回数・経路・単価は残す) */
+  clearCounts: () => void;
   refreshLedgerPrices: () => void;
   fetchExchangeAndRepin: () => Promise<void>;
 }
@@ -126,29 +131,15 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
 
   const ledger = computed<GemLedger>(() => {
     const raw = book.value[ledgerGem.value] ?? {};
-    const qty: Partial<Record<RowKey, number>> = { ...(raw.qty ?? {}) };
-    if (!raw.qty) {
-      for (const k of OLD_QTY_KEYS) {
-        const v = raw[k];
-        if (typeof v === "number" && v > 0) qty[k] = v;
-      }
-    }
-    const sold: Partial<Record<SoldKey, number>> = { ...(raw.sold ?? {}) };
-    if (!raw.sold) {
-      for (const k of OLD_SOLD_KEYS) {
-        const v = raw[k];
-        if (typeof v === "number" && v > 0) sold[k] = v;
-      }
-    }
     return {
       ...EMPTY_LEDGER,
       route: raw.route ?? null,
       attempts: raw.attempts ?? 0,
-      qty,
+      qty: { ...(raw.qty ?? {}) },
       unit: { ...((raw as { buyEach?: Partial<Record<RowKey, number>> }).buyEach ?? {}), ...(raw.unit ?? {}) },
       prices: { ...(raw.prices ?? {}) },
       pricesAt: raw.pricesAt ?? 0,
-      sold,
+      sold: { ...(raw.sold ?? {}) },
       eachLevel21: raw.eachLevel21 ?? null,
       eachQuality23: raw.eachQuality23 ?? null,
       eachFinished: raw.eachFinished ?? null,
@@ -283,6 +274,10 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
     else sold[key] = v;
     setLedger("sold", sold);
   }
+  function clearCounts(): void {
+    if (!ledgerGem.value) return;
+    book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, qty: {}, sold: {} } };
+  }
   function resetLedger(): void {
     if (!ledgerGem.value) return;
     const next = { ...book.value };
@@ -372,6 +367,7 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
     setUnit,
     setEach,
     resetLedger,
+    clearCounts,
     refreshLedgerPrices,
     fetchExchangeAndRepin,
   };
