@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
@@ -8,6 +9,7 @@ import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
 import { ensureClientLogRotated } from "./services/client-log";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
+import { isTauriRuntime } from "./utils/isTauriRuntime";
 
 // 2026-09-14: 画面から別の画面へ飛べるよう、表示中の画面は共有状態 (state/app-nav.ts) に置く
 import { activeNav } from "./state/app-nav";
@@ -29,6 +31,8 @@ useKeyboardShortcuts({
 //   画面遷移時に「取得待ち」が発生しにくい。
 //   `ensureCraftV2Started` は冪等 (initialBootStarted ガード) なので、複数回呼んでも安全。
 onMounted(() => {
+  // 中身が描けたのでウィンドウを出してもらう (白い窓を見せないため、起動時は隠してある)
+  if (isTauriRuntime()) void invoke("show_main_window").catch(() => {});
   void ensureCraftV2Started();
   // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
   void ensurePobBundleFresh();

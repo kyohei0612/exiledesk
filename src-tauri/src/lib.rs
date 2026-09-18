@@ -122,6 +122,33 @@ fn clamp_into_visible_area(window: &tauri::WebviewWindow) {
     let _ = window.set_position(PhysicalPosition::new(x, y));
 }
 
+/// ウィンドウをもう出したか (画面からの合図と保険のタイマーで二重に出さない)
+static WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// 画面 (App.vue) の準備ができたら呼ばれる。ここで初めてウィンドウを出す。
+///
+/// 2026-09-18 オーナー報告「白い画面のアプリが立ち上がって即終了する」:
+/// 2 つ目の起動でも tauri.conf.json のウィンドウは作られるので、single-instance が
+/// プロセスを終わらせるまでの一瞬だけ**中身が空の白い窓**が見えていた。
+/// 起動時は隠して (visible: false)、中身が描けてから出せば白い窓は出ない。
+#[tauri::command]
+fn show_main_window(app: tauri::AppHandle) {
+    show_main_window_now(&app, "画面の準備ができた");
+}
+
+fn show_main_window_now(app: &tauri::AppHandle, why: &str) {
+    use std::sync::atomic::Ordering as AtomicOrdering;
+    if WINDOW_SHOWN.swap(true, AtomicOrdering::SeqCst) {
+        return;
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        clamp_into_visible_area(&window);
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+    app_log::line(app, &format!("[起動] ウィンドウを表示 ({why})"));
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -250,10 +277,9 @@ pub fn run() {
             // 一部 OS で初期化順序の都合で WebView が遅延起動になる事例がある。
             // ----------------------------------------------------------------
             if tray_only {
-                app_log::line(app.handle(), "[起動] --tray-only なのでウィンドウを隠してトレイ常駐");
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
-                }
+                // 起動時点で既に隠れている (visible: false)。そのままトレイ常駐
+                app_log::line(app.handle(), "[起動] --tray-only なのでウィンドウは出さずトレイ常駐");
+                WINDOW_SHOWN.store(true, std::sync::atomic::Ordering::SeqCst);
             } else {
                 // ------------------------------------------------------------
                 // 起動時の画面外はみ出し防止 (2026-06-28)
@@ -270,9 +296,13 @@ pub fn run() {
                 // tray-only 起動時は window を hide するので再配置しない
                 // (隠すので不要・副作用回避)。
                 // ------------------------------------------------------------
-                if let Some(window) = app.get_webview_window("main") {
-                    clamp_into_visible_area(&window);
-                }
+                // 画面から合図が来たら出す。来なければ 5 秒後に保険で出す
+                // (フロントが壊れていてもウィンドウが出ないまま常駐しないように)
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+                    show_main_window_now(&handle, "保険のタイマー (画面からの合図が来なかった)");
+                });
             }
 
             // ----------------------------------------------------------------
@@ -334,6 +364,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             instance_guard::mark_show_on_restart,
+            show_main_window,
             pob::pob_load_build_code,
             pob::pob_load_build_xml,
             pob::pob_get_stat,

@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "ExileDesk",
+        "visible": false,
         "width": 1280,
         "height": 900,
         "minWidth": 1280,
