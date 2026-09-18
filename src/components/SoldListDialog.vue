@@ -5,13 +5,14 @@
  * 判定の根拠になった出品を 1 件ずつ見る画面。
  *
  * 2026-09-17 の作り直し (オーナー指摘:「同時に 14 件とか何のことってなる」):
- *   - 一覧は「確認した時刻」でまとめる。2 時間ごとに確認しているので、
+ *   - 一覧は「確認した時刻」でまとめる。周期 (既定 8 時間) ごとに確認しているので、
  *     1 回の確認で何件もまとめて消えているのが普通。それが分かる見出しを出す
  *   - 判定は実測そのままを書く (「速い · 3 時間で売れる」「14 件が売れました (売れるまで 3 時間)」)
  */
 import { computed, ref } from "vue";
 import { flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
-import { averageExalted, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
+import { averageExalted, currencyJa, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
+import { fmtClock, fmtSpan } from "../utils/format-time";
 
 const props = defineProps<{
   open: boolean;
@@ -23,28 +24,12 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ (e: "close"): void }>();
 
-const CURRENCY_JA: Record<string, string> = { exalted: "高貴", divine: "神", chaos: "カオス" };
-const curLabel = (c: string | null | undefined): string => (c ? (CURRENCY_JA[c] ?? c) : "");
+const curLabel = currencyJa;
 const nowSec = (): number => Math.floor(Date.now() / 1000);
 
 function fmtAmount(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return n >= 100 ? String(Math.round(n)) : n.toFixed(n < 10 ? 1 : 0).replace(/\.0$/, "");
-}
-function fmtClock(sec: number | null | undefined): string {
-  if (!sec) return "—";
-  const d = new Date(sec * 1000);
-  const p = (n: number): string => String(n).padStart(2, "0");
-  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-/** 秒 → 「2 時間 15 分」「3 日 4 時間」 */
-function fmtSpan(sec: number | null | undefined): string {
-  if (sec == null || !Number.isFinite(sec)) return "—";
-  const m = Math.max(0, Math.round(sec / 60));
-  if (m < 60) return `${m} 分`;
-  const h = Math.floor(m / 60);
-  if (h < 48) return `${h} 時間${m % 60 ? ` ${m % 60} 分` : ""}`;
-  return `${Math.floor(h / 24)} 日 ${h % 24} 時間`;
 }
 const startOf = (t: Tracked): number => t.listed_at ?? t.first_seen;
 
@@ -132,15 +117,18 @@ function sumBy(list: { amount?: number | null; currency?: string | null }[]): [s
 /**
  * 「確認した時刻」でまとめる。
  *
- * 2 時間ごとに確認しているので、その間に売れた分は同じ時刻でまとめて出てくる。
+ * 周期ごとに確認しているので、その間に売れた分は同じ時刻でまとめて出てくる。
  * 「同時に 14 件消えた」ように見えるのはそのため、というのが分かる形にする。
+ * 1 巡の中で 3 条件は数秒〜数十秒ずれて取られるので、秒ではなく分でまとめる
+ * (秒で分けていた頃は同じ確認が 2〜3 つの見出しに割れていた。2026-09-18 レビュー指摘)
  */
 const checkGroups = computed(() => {
   const map = new Map<number, Row[]>();
   for (const r of soldRows.value) {
-    const list = map.get(r.goneAt);
+    const at = Math.floor(r.goneAt / 60) * 60;
+    const list = map.get(at);
     if (list) list.push(r);
-    else map.set(r.goneAt, [r]);
+    else map.set(at, [r]);
   }
   const times = [...map.keys()].sort((a, b) => b - a);
   return times.map((at, i) => {
@@ -148,10 +136,10 @@ const checkGroups = computed(() => {
     const sellers = new Map<string, number>();
     for (const r of list) sellers.set(r.account || "不明", (sellers.get(r.account || "不明") ?? 0) + 1);
     const top = [...sellers.entries()].sort((a, b) => b[1] - a[1])[0];
+    void i;
     return {
       at,
       list,
-      prev: times[i + 1] ?? null,
       totals: sumBy(list.filter((r) => !r.relisted)),
       sold: list.filter((r) => !r.relisted).length,
       relisted: list.filter((r) => r.relisted).length,
@@ -304,10 +292,8 @@ async function verify(key: string): Promise<void> {
                   <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ fmtClock(g.at) }} の確認</span>
                     <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ g.sold }} 件が売れていた</span>
-                    <span v-if="g.prev" class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-                      (前の確認 {{ fmtClock(g.prev) }} · この {{ fmtSpan(g.at - g.prev) }} のどこかで売れた)
-                    </span>
-                    <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
+                    <!-- 「前の確認」の時刻は記録に無い (売れた物があった確認しか分からない) ので、間隔は出さない -->
+                    <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
                     <span v-if="g.topSeller" class="text-[10px] text-amber-300">同じ出品者 {{ g.topSeller.name }} が {{ g.topSeller.n }} 件</span>
                     <span v-if="g.relisted" class="text-[10px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ g.relisted }} 件を含む (除外済み)</span>
                   </div>
@@ -328,7 +314,7 @@ async function verify(key: string): Promise<void> {
           </table>
 
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2 leading-relaxed">
-            出品の一覧は 2 時間ごと (「再取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
+            出品の一覧は自動取得の周期ごと (「再取得」や「一括取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
             <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
             消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
             消えたのと同時に同じ出品者が並べ直していた分は、値段の付け替えとみなして売れた件数から外しています。

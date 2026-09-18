@@ -46,7 +46,7 @@ const L = ({ id = Math.random().toString(36).slice(2), price = 10, listedHoursAg
   amount: price,
   currency: "divine",
 });
-const state = (tracked) => ({ tracked, daily: [], total: tracked.length, sampled_at: NOW, confirmed_at: 0 });
+const state = (tracked) => ({ tracked, daily: [], total: tracked.length, sampled_at: NOW });
 
 let ng = 0;
 function check(name, ok, detail) {

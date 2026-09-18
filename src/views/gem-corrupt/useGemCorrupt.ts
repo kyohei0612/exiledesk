@@ -18,6 +18,8 @@ import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-
 import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
+import { baseGemSourceFor, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
+import { searchGems } from "./search";
 
 export interface GemInfo {
   en: string;
@@ -44,31 +46,12 @@ export const SALE_ROWS: readonly SaleRow[] = [
   { key: "finished", label: "完成品 (21 · 23%)", condition: "レベル 21 · 品質 23% · コラプト済" },
 ];
 
-/** poe2scout の ApiId。原石はスキル / スピリットで分かれる */
-const MATERIAL_API = {
-  gcp: "gcp",
-  perfectJeweller: "perfect-jewellers-orb",
-  vaal: "vaal",
-  crystal: "crystallised-corruption",
-  uncutSkill20: "uncut-skill-gem-20",
-  uncutSpirit20: "uncut-spirit-gem-20",
-} as const;
-
 export function useGemCorrupt() {
   // ---- ジェム選択 ----
   const query = ref("");
   const selected = ref<GemInfo | null>(null);
-  const matches = computed<GemInfo[]>(() => {
-    const q = query.value.trim().toLowerCase();
-    if (!q) return [];
-    const hit = GEMS.filter((g) => g.ja.toLowerCase().includes(q) || g.en.toLowerCase().includes(q));
-    hit.sort((a, b) => {
-      const as = a.ja.toLowerCase().startsWith(q) || a.en.toLowerCase().startsWith(q) ? 0 : 1;
-      const bs = b.ja.toLowerCase().startsWith(q) || b.en.toLowerCase().startsWith(q) ? 0 : 1;
-      return as - bs || a.ja.localeCompare(b.ja, "ja");
-    });
-    return hit.slice(0, 12);
-  });
+  // 自動ジェム監視と同じ検索 (正規表現も使える。2026-09-18 に共通化)
+  const matches = computed<GemInfo[]>(() => searchGems(query.value).hits);
   function nextTickLoadExchange(): void {
     queueMicrotask(() => loadExchangeCache());
   }
@@ -98,31 +81,17 @@ export function useGemCorrupt() {
   const marketLabel = marketStore.fetchedLabel;
   const loadMarket = (): Promise<void> => marketStore.ensureMarket();
   const rates = marketStore.rates;
-  const priceOf = marketStore.priceOf;
 
   /**
    * 低レベルのジェム本体 = 原石のうち一番安い物 (2026-09-16 オーナー指示「スキルジェムとスピリットジェムの 15 以上を対象に一番安いのを表示」)。
    * 以前は「相場が無いので手入力」で既定 1 高貴のままだったため、ジェムが高い今は自作の収支が良く出すぎていた。
+   * 決め方は materials.ts (自動ジェム監視の期待値と共通)
    */
-  const BASE_GEM_MIN_LEVEL = 15;
-  const BASE_GEM_MAX_LEVEL = 20;
-  interface BaseGemSource {
-    apiId: string | null;
-    level: number | null;
-    price: number | null;
-  }
   const baseGemSource = computed<BaseGemSource>(() => {
     const gem = selected.value;
-    const empty: BaseGemSource = { apiId: null, level: null, price: null };
-    if (!gem) return empty;
-    const kind = gem.spirit ? "spirit" : "skill";
-    let best: BaseGemSource = empty;
-    for (let lv = BASE_GEM_MIN_LEVEL; lv <= BASE_GEM_MAX_LEVEL; lv++) {
-      const apiId = `uncut-${kind}-gem-${lv}`;
-      const p = priceOf(apiId);
-      if (p != null && (best.price == null || p < best.price)) best = { apiId, level: lv, price: p };
-    }
-    return best;
+    if (!gem) return { apiId: null, level: null, price: null };
+    void marketStore.items.value; // 相場が入ったら取り直す
+    return baseGemSourceFor(gem.spirit);
   });
   /** 素材表に出す名前 (どのレベルの原石を使うか) */
   const baseGemLabel = computed(() => {
@@ -130,16 +99,11 @@ export function useGemCorrupt() {
     const kind = selected.value?.spirit ? "スピリットジェムの原石" : "スキルジェムの原石";
     return lv == null ? "低レベルのジェム本体" : `低レベルのジェム本体 (${kind} レベル ${lv})`;
   });
+  /** 素材の単価 = 相場と取引所 (繰り上げ後) の安い方。自動ジェム監視の期待値と同じ決め方 */
   const materials = computed<MaterialPrices>(() => {
-    const uncutId = selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20;
-    return {
-      baseGem: withExchange(baseGemSource.value.apiId, baseGemSource.value.price),
-      gcp: withExchange(MATERIAL_API.gcp, priceOf(MATERIAL_API.gcp)),
-      perfectJeweller: withExchange(MATERIAL_API.perfectJeweller, priceOf(MATERIAL_API.perfectJeweller)),
-      vaal: withExchange(MATERIAL_API.vaal, priceOf(MATERIAL_API.vaal)),
-      crystal: withExchange(MATERIAL_API.crystal, priceOf(MATERIAL_API.crystal)),
-      uncut20: withExchange(uncutId, priceOf(uncutId)),
-    };
+    void marketStore.items.value;
+    void exchange.value;
+    return materialPricesFor(!!selected.value?.spirit, (apiId) => bestBuy(apiId)?.exalted ?? null, baseGemSource.value);
   });
   /**
    * 取引所 (exchange) で素材を通貨ごとに比べる (2026-09-16 オーナー指示「たまにカオスで買った方が安い」)。
@@ -151,7 +115,7 @@ export function useGemCorrupt() {
     { key: "perfectJeweller", apiId: MATERIAL_API.perfectJeweller },
     { key: "vaal", apiId: MATERIAL_API.vaal },
     { key: "crystal", apiId: MATERIAL_API.crystal },
-    { key: "uncut20", apiId: selected.value?.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20 },
+    { key: "uncut20", apiId: uncut20ApiId(!!selected.value?.spirit) },
   ]);
   const exchange = ref<Record<string, BestBuy>>({});
   const exchangeLoading = ref(false);
@@ -193,12 +157,6 @@ export function useGemCorrupt() {
     const p = payable(b);
     return { currency: b.currency, perUnit: p.payPerUnit, rawPerUnit: b.perUnit, exalted: p.payExalted };
   }
-  /** 相場と取引所の安い方 (取引所を取っていなければ相場のまま) */
-  const withExchange = (apiId: string | null | undefined, market: number | null): number | null => {
-    const b = bestBuy(apiId);
-    if (!b) return market;
-    return market == null ? b.exalted : Math.min(market, b.exalted);
-  };
   const uncutLabel = computed(() => (selected.value?.spirit ? "スピリットジェムの原石 (レベル 20)" : "スキルジェムの原石 (レベル 20)"));
 
   // ---- 売値 (手入力 or trade2) ----
@@ -344,7 +302,6 @@ export function useGemCorrupt() {
     baseGemSource,
     baseGemLabel,
     materialApiIds,
-    exchange,
     exchangeLoading,
     exchangeError,
     exchangeDone,
@@ -355,10 +312,8 @@ export function useGemCorrupt() {
     sale,
     saleInfo,
     saleRecordedAt,
-    refreshFlow,
     pricing,
     priceError,
-    tradeAuto,
     tradeUrl,
     fetchSalePrices,
     params,

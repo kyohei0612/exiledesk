@@ -10,6 +10,9 @@
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState, tradeAuto } from "../services/trade2/auto-price";
+import { currencyJa } from "../state/display-currency";
+import { fmtClock } from "../utils/format-time";
+import { DEFAULT_CYCLE_SECS } from "../services/market-flow";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
@@ -126,7 +129,6 @@ function onQueryKeydown(e: KeyboardEvent): void {
 }
 
 /** 取引所の支払い通貨の日本語名 */
-const CURRENCY_JA: Record<string, string> = { exalted: "高貴", chaos: "カオス", divine: "神" };
 const fmtBuy = (n: number): string => (n >= 100 ? n.toFixed(0) : n >= 1 ? n.toFixed(2) : n.toFixed(3));
 /** 素材の説明 (GGG クライアント CurrencyItems.Description の日本語、2026-09-12 書き出し) */
 const MATERIAL_DESC: Record<string, string> = {
@@ -236,12 +238,6 @@ function stopStatusPolling(): void {
   statusTimer = null;
 }
 
-const fmtClock = (t: number | null | undefined): string => {
-  if (!t) return "—";
-  const d = new Date(t * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}`;
-};
 /**
  * レート制限の残り秒 (0 なら制限なし)。画面ごとに別の数え方をしないよう、
  * 裏の巡回 (retry_until / wait_until) も画面の取得も同じ時計 (tradeAuto) に合流させてある
@@ -300,8 +296,7 @@ const flowAuto = computed(() => !!flowWatch.value?.auto);
 function recordedAt(key: SaleKey): number | null {
   return g.saleRecordedAt.value[key];
 }
-const fmtRecordedAt = (sec: number): string =>
-  new Date(sec * 1000).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+const fmtRecordedAt = (sec: number): string => fmtClock(sec);
 
 /** 最安 1 件の内訳 (値段の種類・出品者・出品時刻)。おかしな値段の切り分け用 (2026-09-17) */
 function cheapestTitle(key: SaleKey): string {
@@ -632,9 +627,12 @@ const materialRows = computed(() => {
     const qtyN = r.perAttempt == null ? null : r.perAttempt * n;
     const apiId = apiIdOf.get(r.key) ?? null;
     const buy = g.bestBuy(apiId);
-    // オーナー指示 (2026-09-16): 行の単価と費用は「買う通貨」の単位で出す。合計だけ表示通貨に換算する
-    const unitAmount = buy ? buy.perUnit : null;
-    const unitCurrency = buy ? buy.currency : null;
+    // オーナー指示 (2026-09-16): 行の単価と費用は「買う通貨」の単位で出す。合計だけ表示通貨に換算する。
+    // ただし相場の方が安ければ計算は相場を使う (materials.ts の withExchange) ので、行もそれに合わせる
+    // (取引所の値を無条件に出していて、行の合計と「合計 (期待)」が食い違っていた。2026-09-18 レビュー指摘)
+    const marketCheaper = !!buy && r.price != null && r.price < buy.exalted;
+    const unitAmount = buy && !marketCheaper ? buy.perUnit : null;
+    const unitCurrency = buy && !marketCheaper ? buy.currency : null;
     return {
       ...r,
       apiId,
@@ -642,6 +640,7 @@ const materialRows = computed(() => {
       buy,
       unitAmount,
       unitCurrency,
+      marketCheaper,
       costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
       qtyN,
       costN: r.price == null || qtyN == null ? null : r.price * qtyN,
@@ -882,12 +881,12 @@ const summary = computed(() => {
             </span>
             <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5" :class="flowStatus.retry_at > 0 ? 'text-amber-300' : 'text-[var(--exile-color-text-secondary)]'">
               <span class="inline-block w-2 h-2 rounded-full" :class="flowStatus.retry_at > 0 ? 'bg-amber-300 animate-pulse' : 'bg-[var(--exile-color-text-tertiary)]'" aria-hidden="true"></span>
-              {{ flowStatus.retry_at > 0 ? "取りこぼし分を再取得予定" : "待機中" }} · 次回 {{ fmtClock(flowStatus.next_at) }}
+              {{ flowStatus.retry_at > 0 ? `取りこぼし ${flowStatus.retry_keys} 銘柄を取り直し予定` : "待機中" }} · 次回 {{ fmtClock(flowStatus.next_at, "time") }}
             </span>
             <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
 
             <span class="tabular-nums text-[var(--exile-color-text-tertiary)]">
-              {{ flowStatus.rounds }} 周目 · {{ Math.round(flowStatus.cycle_secs / 3600) }} 時間ごと · 前回の一括取得 {{ fmtClock(flowStatus.swept_at) }} · 最終 {{ fmtClock(flowStatus.last_at) }} ·
+              {{ flowStatus.rounds }} 周目 · {{ Math.round(flowStatus.cycle_secs / 3600) }} 時間ごと · 前回の一括取得 {{ fmtClock(flowStatus.swept_at) }} · 最終 {{ fmtClock(flowStatus.last_at, "time") }} ·
               自動 {{ flowStatus.auto_watches }} / 手動 {{ flowStatus.manual_watches }} 銘柄
             </span>
             <span v-if="rateText" class="tabular-nums text-[var(--exile-color-text-tertiary)]">使った回数 {{ rateText }}</span>
@@ -903,14 +902,14 @@ const summary = computed(() => {
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowAuto ? `自動 (${Math.round((flowStatus?.cycle_secs ?? 8 * 3600) / 3600)} 時間ごと)` : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
-              追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (クラフト選定ジェムのリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
+              {{ flowAuto ? `自動 (${Math.round((flowStatus?.cycle_secs ?? DEFAULT_CYCLE_SECS) / 3600)} 時間ごと)` : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
+              追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (自動ジェム監視のリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
                 · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。
-            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も自動巡回とまったく同じルールで記録されます。検索から消えた出品は、その ID を直接照会して実在を確かめてから「売れた」と数えます (即時購入から外れただけの物を売れた扱いにしないため)。
-            判定は最安 10 件の出品を 1 件ずつ ID で追い、「1 日以内に売れた割合」で出します (半分以上なら速い / 2 日で半分なら普通 / それ以下は遅い)。売れ残りをまだ 1 件も観測していない間は「(暫定)」が付きます。
+            捌き速度の追跡も同じ条件 (即時購入のみ) で見ているので、「再取得」を押した分も自動巡回とまったく同じルールで記録されます。検索の ID 一覧から消えた出品を「売れた」と数えます (同じ出品者がすぐ並べ直した物は値段の付け替えとして除外)。
+            判定は最安 10 件の出品を 1 件ずつ ID で追い、売れるまでの時間の真ん中の値で出します (6 時間以内なら速い / 24 時間以内なら普通 / それより長ければ遅い)。売れた出品が 3 件たまるまでは判定を出しません。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>
         </div>
@@ -928,7 +927,7 @@ const summary = computed(() => {
               title="公式の取引所で、素材ごとに カオス / 神 のどちらで買うのが安いかを調べます (6 件、約 20 秒)。高貴は取引所の手数料 (ゴールド) が高いので外しています。収支で固定した単価もこの値に入れ替えます (手入力した単価はそのまま)"
               @click="fetchExchangeAndRepin"
             >
-              {{ g.exchangeLoading.value ? `取引所で比較中… (${g.exchangeDone.value}/6)` : "取引所で比べる" }}
+              {{ g.exchangeLoading.value ? `取引所で比較中… (${g.exchangeDone.value}/${g.materialApiIds.value.length})` : "取引所で比べる" }}
             </button>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
@@ -958,25 +957,27 @@ const summary = computed(() => {
                   class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
                   :class="m.unitAmount != null ? 'text-emerald-300' : m.price == null ? 'text-amber-300' : ''"
                   :title="
-                    m.unitAmount != null
-                      ? `取引所の最安 ${m.buy!.rawPerUnit} ${CURRENCY_JA[m.unitCurrency!]} / 個 → 実際に払う ${m.unitAmount} ${CURRENCY_JA[m.unitCurrency!]} (${money(m.buy!.exalted)})`
-                      : m.price != null
-                        ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押すと取引所の通貨建てになります`
-                        : '相場なし'
+                    m.unitAmount != null && m.buy
+                      ? `取引所の最安 ${m.buy.rawPerUnit} ${currencyJa(m.unitCurrency)} / 個 → 実際に払う ${m.unitAmount} ${currencyJa(m.unitCurrency)} (${money(m.buy.exalted)})`
+                      : m.marketCheaper && m.buy
+                        ? `カレンシーランキングの相場 (${money(m.price)}) の方が取引所 (${money(m.buy.exalted)}、繰り上げ後) より安いので相場で計算します`
+                        : m.price != null
+                          ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押すと取引所の通貨建てになります`
+                          : '相場なし'
                   "
                 >
-                  <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else-if="m.price != null">{{ money(m.price) }}</template>
                   <template v-else>相場なし</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
-                  <template v-if="m.buyCostPerAttempt != null">{{ fmtBuy(m.buyCostPerAttempt) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-if="m.buyCostPerAttempt != null">{{ fmtBuy(m.buyCostPerAttempt) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else>{{ money(m.costPerAttempt) }}</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
-                  <template v-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ CURRENCY_JA[m.unitCurrency!] }}</template>
+                  <template v-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else>{{ money(m.costN) }}</template>
                 </td>
               </tr>
@@ -992,7 +993,7 @@ const summary = computed(() => {
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             単価と費用は「取引所で買う時の通貨」の単位です (緑)。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。
-            単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。
+            単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です (スピリットジェムはスピリットの原石)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>

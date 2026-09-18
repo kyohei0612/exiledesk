@@ -42,7 +42,7 @@ export interface WatchSettings {
  * 既定値 (オーナー指示 2026-09-17)。
  *
  * 「全アセンダンシー・使用率 5 人以上」で今まで通り 18 ジェム前後が監視に入る形にする。
- * 18 ジェム = 54 銘柄で毎時およそ 78 回 (trade2 の上限は毎時 100 回)。
+ * 18 ジェム = 54 銘柄 × 2 リクエストを周期 (既定 8 時間) ごとに 1 巡 (trade2 の上限は毎時 100 回)。
  */
 export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   v: 2,

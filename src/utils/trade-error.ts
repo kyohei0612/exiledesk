@@ -24,11 +24,6 @@ export function tradeErrorJa(raw: string | null | undefined): string {
   return s.length > 60 ? s.slice(0, 60) + "…" : s;
 }
 
-/** "Arc::finished" のようなキーを "アーク (完成品)" に近い形へ。label があればそれを使う */
-export function watchLabelOf(key: string, labels: Record<string, string>): string {
-  return labels[key] ?? key;
-}
-
 /** 自動更新 (Tauri updater) のエラーを短い日本語に */
 export function updateErrorJa(raw: string | null | undefined): string {
   if (!raw) return "";

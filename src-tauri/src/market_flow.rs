@@ -39,30 +39,27 @@
 //!   - ID 一覧が総数に届いていない時 (100 件超で切れている) は判定しない。
 //!     載っていない追跡分は「値段で沈んだ」として buried を進め、3 回続いたら追跡終了
 //!   - 応答が空の時は判定しない (通信不良で全滅させない)
-//!   - 消えたのと同時に**同じ出品者が 5 分以内に並べ直していたら**値段の付け替えとみなし、
-//!     売れた件数には数えない (RELIST_WINDOW_SECS)
+//!   - 消えた出品と同じ出品者が、前回その出品を見た後に新しく並べていたら値段の付け替えとみなし、
+//!     売れた件数には数えない (RELIST_SLACK_SECS。見るのは最安 10 件の範囲)
 //!   - 消えた扱いの ID がまた現れたら復活させ、日次の件数からも引く
 //!
 //! ### 出品が増えても回数は増えない
-//! search は 1 銘柄 1 回で ID を最大 100 件まとめて返し、fetch も最安 10 件を 1 回。
-//! 確認も 1 銘柄 1 回 (10 件まで) なので、**リクエストは銘柄数だけで決まる**。
-//! ただし出品が 100 件を超えると、値段で沈んだ追跡分が毎巡「消えた候補」になって
-//! 確認の枠を食う。BURIED_MAX 回続けて「一覧外だが生存」なら追跡をやめて集計に畳む。
+//! search は 1 銘柄 1 回で ID を最大 100 件まとめて返し、fetch も最安 10 件を 1 回なので、
+//! **リクエストは銘柄数だけで決まる**。出品が 100 件を超えて一覧が切れている間は
+//! 判定せず、載っていない追跡分の buried を進めて BURIED_MAX 回続いたら追跡をやめる
+//! (日次の buried に畳む。売れたのか沈んだのかは分からないので survived とは分ける)。
 //!
 //! ## 4. 取得量 (trade2: 5/10 秒, 15/60 秒, 30/5 分, 600/6 時間 = 毎時 100 回)
 //! 前回の一括取得 (手動 / 自動どちらでも swept_at に記録) から周期ぶん経ったら、
 //! 全銘柄をまとめて 1 巡する。周期は画面から 1〜24 時間で変えられる (FlowStore.cycle_secs、既定 8 時間)。
 //! オーナー指示 (2026-09-17):「自動が 8 時間に 1 回ね」。手動の一括取得はいつでも押せる。
-//! 組は**ジェム単位**で割り当てるので、1 ジェムの 3 条件は必ず同じ組で一緒に取れる。
-//! まだ 1 度も取れていない銘柄がある間 (記録の作り直し直後) は 5 分おきに詰めて、
-//! 約 1 時間で 1 周目を埋める。
 //!   - search  … 1 銘柄 1 巡に 1 回 (生存確認)
 //!   - fetch   … 1 銘柄 1 巡に 1 回。値段の更新に加えて、**新しい出品を追跡に入れるのがここ**。
 //!               間隔を空けるとその間に出品されて売れた物を丸ごと取りこぼし、速度が遅い側に偏る
-//!   - 確認    … 消えた候補がある時だけ、同じ条件を指定なしで検索し直す (1 銘柄 1 回)。
-//!               1 組 CONFIRM_MAX_PER_SLICE 銘柄まで。間引くと判定が滞留する
-//! 18 ジェム (54 銘柄) で毎時およそ 78 回。残りは手動の取得や取引所比較の取り分。
-//! 1 組の中でも送信間隔を均してバーストを作らない。
+//! 送信の間隔は trade2 側の門番 (gate_acquire) が上限ヘッダから決める。罰則を食らう前に待つので
+//! 1 巡の途中で長く止まらない (2026-09-18 オーナー指摘「レート止まる」)。
+//! 429 や通信エラーで取れなかった銘柄だけ RETRY_GAP_SECS 後に取り直す (MAX_RETRY_ROUNDS 回まで)。
+//! HTTP 400 など何度やっても同じ失敗は取り直さない (全銘柄を 10 分おきに回し直す事故を防ぐ)。
 //!
 //! ## 5. 保存済みクエリは毎回今のルールに直す
 //! 追跡は登録時のクエリを使い回すので、条件を変えた時に上書きしないと古い条件のまま回る
@@ -119,7 +116,7 @@ pub struct Watch {
     /// 手動で追加した銘柄か。true なら自動リストの入れ替えで消さない (2026-09-16)
     #[serde(default)]
     pub manual: bool,
-    /// 今の自動リストに入っているか。true なら 1 時間ごとの巡回で取る。
+    /// 今の自動リストに入っているか。true なら周期ごとの一括取得で取る。
     /// manual と両方 true もあり得る (手動で足した物が後から自動リストにも載った場合)。
     /// その時は巡回に入れて、手動で貯めた記録の続きとして判断する (オーナー指示 2026-09-17)
     #[serde(default)]
@@ -185,6 +182,9 @@ pub struct Daily {
     pub gone: u32,
     /// 7 日追っても消えなかった件数 (打ち切り)
     pub survived: u32,
+    /// 最安帯から沈んで追うのをやめた件数 (売れたかどうかは分からない。survived と分ける 2026-09-18)
+    #[serde(default)]
+    pub buried: u32,
     /// 出品総数の平均
     pub total_avg: f64,
     /// サンプル回数
@@ -206,9 +206,6 @@ pub struct WatchState {
     /// false が続く銘柄は出品が 100 件を超えていて「消えた」を判定できない (画面に出す)
     #[serde(default = "default_true")]
     pub list_complete: bool,
-    /// 最後に値段 (fetch) を取った時刻。2 巡に 1 回だけ取り直す
-    #[serde(default)]
-    pub fetched_at: i64,
     /// 最安値 (表示用)
     #[serde(default)]
     pub cheapest_amount: Option<f64>,
@@ -266,16 +263,12 @@ pub struct FlowStore {
     /// レート制限などで取りこぼした時の再開予定 (unix 秒、0 なら通常の間隔)
     #[serde(default)]
     pub retry_at: i64,
-    /// 次に取る組 (0..SLICES)。10 分おきに 1 組ずつ回す
+    /// 429 / 通信エラーで取れなかった銘柄 (retry_at にこれだけ取り直す)
     #[serde(default)]
-    pub slice_cursor: usize,
-    /// 最後に 1 組を取った時刻
+    pub retry_keys: Vec<String>,
+    /// 取り直しを何回続けたか (MAX_RETRY_ROUNDS で諦めて次の周期へ)
     #[serde(default)]
-    pub sliced_at: i64,
-    /// 今の組で取り終わった銘柄のキー。組を終えたら空にする。
-    /// 途中でアプリを閉じても、次の起動で続きから再開するために残す (オーナー指示 2026-09-16)
-    #[serde(default)]
-    pub slice_done: Vec<String>,
+    pub retry_count: u32,
     /// 最後に全銘柄を 1 巡した時刻 (手動の一括取得でも自動でも記録する)。
     /// 次の自動取得はここから cycle_secs 後 (オーナー指示 2026-09-17:
     /// 「前回一括取得してから手動も含めて ● 時間周期で取得する」)
@@ -328,8 +321,6 @@ const RELIST_SLACK_SECS: i64 = 300;
 const DAILY_MAX_DAYS: usize = 30;
 /// リクエストの最低間隔 (実際の間隔は trade2 の門番が上限から決める)
 const REQUEST_INTERVAL: Duration = Duration::from_secs(1);
-/// 1 巡を何回に分けて取るか (組の数)。1 組の間隔 = 1 巡の周期 ÷ SLICES
-const SLICES: usize = 12;
 /// 1 巡の周期の既定 (8 時間)。画面から変えられる (FlowStore.cycle_secs)
 pub const CYCLE_DEFAULT_SECS: i64 = 8 * 3600;
 /// 変えられる範囲 (1 時間〜24 時間)
@@ -354,10 +345,12 @@ fn next_sweep_at(store: &FlowStore) -> i64 {
     store.swept_at + cycle_secs(store)
 }
 
-/// 429 を食らった時に待つ上限 (これを超える指定なら一度あきらめて後で再開する)
+/// 罰則で止まっている時にその場で待つ上限 (これより長ければ後で取り直す)
 const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
-/// 取りこぼした時に再挑戦するまでの最短間隔
+/// 取りこぼした銘柄を取り直すまでの最短間隔
 const RETRY_GAP_SECS: i64 = 10 * 60;
+/// 取り直しを続ける上限。超えたら諦めて次の周期を待つ (2026-09-18 レビュー: 上限が無いと永久に回る)
+const MAX_RETRY_ROUNDS: u32 = 3;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
 /// 今どの銘柄を取っているか (key, 何件目, 全体件数)。UI に出すため
@@ -368,12 +361,7 @@ static LAST_ERROR: StdMutex<Option<String>> = StdMutex::new(None);
 static RATE_STATE: StdMutex<Option<String>> = StdMutex::new(None);
 /// trade2 が返したレート制限の規則 (x-rate-limit-ip)。画面側の待ちと同じ物を見せるために出す
 static RATE_RULES: StdMutex<Option<String>> = StdMutex::new(None);
-/// 429 を食らった時の再開予定時刻 (unix 秒)
-static RETRY_UNTIL: StdMutex<i64> = StdMutex::new(0);
-/// 今まさに待っている解除予定時刻 (unix 秒、0 なら待っていない)。
-/// オーナー指示 2026-09-17:「取得中でレート制限の秒数動かすようにして」→
-/// 秒数を文字に焼くと止まって見えるので、予定時刻だけ出して画面側で 1 秒ごとに数える。
-static WAIT_UNTIL: StdMutex<i64> = StdMutex::new(0);
+
 
 fn set_progress(v: Option<(String, usize, usize)>) {
     if let Ok(mut g) = PROGRESS.lock() {
@@ -406,38 +394,17 @@ fn note_rate_headers(body: &serde_json::Value) {
         set_rate_state(Some(v));
     }
 }
-/// 今待っている解除予定 (unix 秒)。待っていなければ 0
-fn wait_until() -> i64 {
-    WAIT_UNTIL.lock().map(|g| *g).unwrap_or(0)
-}
-fn set_wait_until(v: i64) {
-    if let Ok(mut g) = WAIT_UNTIL.lock() {
-        *g = v;
-    }
-}
-/// 429 の再開予定 (unix 秒)
+/// 罰則で止まっている時の解除予定 (unix 秒)。門番 (trade2.rs) が 429 と state ヘッダから持つ
 fn retry_until() -> i64 {
-    RETRY_UNTIL.lock().map(|g| *g).unwrap_or(0)
+    crate::trade2::gate_blocked_until_secs()
 }
-/// 今から再開までの秒数 (制限中でなければ 0)
+/// 今から再開までの秒数 (止まっていなければ 0)
 fn retry_wait_secs() -> i64 {
     (retry_until() - now_secs()).max(0)
 }
-
-/// エラー文字列から 429 の待ち時間を拾って再開予定にする
-fn note_retry_after(msg: &str) {
-    if !msg.contains("429") {
-        return;
-    }
-    let secs = msg
-        .split("retry-after=")
-        .nth(1)
-        .and_then(|rest| rest.split(|c: char| !c.is_ascii_digit()).next())
-        .and_then(|d| d.parse::<i64>().ok())
-        .unwrap_or(60);
-    if let Ok(mut g) = RETRY_UNTIL.lock() {
-        *g = now_secs() + secs;
-    }
+/// その失敗は後で取り直せば通る物か (429 / 通信)。HTTP 400 のような恒久的な失敗は取り直さない
+fn is_retriable(msg: &str) -> bool {
+    msg.contains("429") || msg.contains("network error")
 }
 
 // ============================================================================
@@ -469,7 +436,7 @@ fn load_store(app: &tauri::AppHandle) -> FlowStore {
         return FlowStore::default();
     };
     let mut store: FlowStore = serde_json::from_str(&text).unwrap_or_default();
-    // 2026-09-16: 追跡の検索条件を securable → any に変えた。
+    // 2026-09-17: 追跡の検索条件を any → securable (即時購入のみ) に統一した。
     // 古い記録は「出品者がオフラインになっただけ」を売れた扱いにしているので捨てる
     // auto を足す前の記録には印が無いので、手動以外を自動扱いに直す (一度だけ)
     if !store.watches.is_empty() && store.watches.iter().all(|w| !w.auto) {
@@ -490,7 +457,6 @@ fn load_store(app: &tauri::AppHandle) -> FlowStore {
     if store.schema != FLOW_SCHEMA {
         store.schema = FLOW_SCHEMA;
         store.states.clear();
-        store.slice_done.clear();
         store.rounds = 0;
     }
     store
@@ -550,6 +516,18 @@ pub fn market_flow_set_watches(app: tauri::AppHandle, req: SetWatchesRequest) ->
 ///   - 条件が変わった銘柄 … 別の検索の結果なので作り直す (混ぜると誤判定する)
 ///   - リーグが変わった   … 別の市場なので全部作り直す
 pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, now: i64) {
+    // 条件が変わったかは「前のリスト全体」と比べる。
+    // 手動分だけと比べていた頃は、自動銘柄の条件が変わっても記録が残って
+    // 旧条件の ID が新条件の一覧に無い = 一斉に「売れた」になり得た (2026-09-18 レビュー指摘)。
+    // 手動で登録した銘柄はクエリを持たない (画面の検索条件で取っている) ので、その場合は比べない
+    let mut changed: Vec<String> = Vec::new();
+    for w in &incoming {
+        if let Some(prev) = store.watches.iter().find(|x| x.key == w.key) {
+            if !prev.query.is_null() && prev.query != w.query {
+                changed.push(w.key.clone());
+            }
+        }
+    }
     // 手動分は残す。いったん巡回から外し、今回のリストに載っていれば戻す
     let mut watches: Vec<Watch> = store
         .watches
@@ -557,15 +535,9 @@ pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, 
         .filter(|w| w.manual)
         .map(|w| Watch { auto: false, ..w.clone() })
         .collect();
-    let mut changed: Vec<String> = Vec::new();
     for w in incoming {
         match watches.iter_mut().find(|x| x.key == w.key) {
             Some(existing) => {
-                // 手動で登録した銘柄はクエリを持たない (画面の検索条件で取っている)。
-                // その場合は条件が変わったわけではないので記録は残す
-                if !existing.query.is_null() && existing.query != w.query {
-                    changed.push(w.key.clone());
-                }
                 existing.auto = true;
                 existing.label = w.label;
                 existing.query = w.query;
@@ -582,7 +554,6 @@ pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, 
     store.states.retain(|k, st| keys.contains(k) || st.sampled_at >= cutoff);
     if !store.league.is_empty() && store.league != league {
         store.states.clear();
-        store.slice_done.clear();
     }
     store.watches = watches;
     store.league = league.to_string();
@@ -729,7 +700,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     let mut store = load_store(&app);
     let now = now_secs();
     // 2026-09-16: 画面で取った銘柄はそのまま記録対象にする (チェックを廃止したため)。
-    // 手動扱いなので 1 時間ごとの巡回には入らず、自動リストの入れ替えでも消えない。
+    // 手動扱いなので周期の一括取得には入らず、自動リストの入れ替えでも消えない。
     if !store.watches.iter().any(|w| w.key == req.key) {
         store.watches.push(Watch {
             key: req.key.clone(),
@@ -746,15 +717,9 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     // 応答が空の時は判定しない (通信不良で全滅させないため)
     let list_complete = list_is_complete(&req.ids, req.total, &state.tracked);
     apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
-    // 一覧が切れている時 (出品 100 件超) は、載っていない追跡分を「値段で沈んだ」と数える
-    if !list_complete && !req.ids.is_empty() {
-        let present: HashSet<&str> = req.ids.iter().map(String::as_str).collect();
-        for t in state.tracked.iter_mut() {
-            if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
-                t.buried = t.buried.saturating_add(1);
-            }
-        }
-    }
+    // 自動経路と同じく、一覧が全部取れたかを画面に出す (手動経路だけ更新していなかった 2026-09-18)
+    state.list_complete = list_complete;
+    mark_buried(state, &req.ids, list_complete);
     prune(state, now);
     store.sampled_at = now;
     save_store(&app, &store)?;
@@ -794,6 +759,21 @@ pub fn parse_indexed(indexed: &str) -> Option<i64> {
 /// * `entries` … 最安 10 件 (値段つき)。新規は追跡に入れる
 /// * `list_complete` … `ids` が出品全部を含んでいるか (総数 < 100 なら true)。
 ///   true の時だけ「一覧に無い = 消えた」と判断できる。
+/// 一覧が切れている時 (出品 100 件超) は、載っていない追跡分を「値段で沈んだ」と数える。
+/// BURIED_MAX 回続いたら prune で追跡をやめる (最安帯の捌け方を測るのが目的なので)。
+/// 自動経路 / 手動経路で同じ処理 (以前は 3 か所にコピーがあった 2026-09-18)
+pub fn mark_buried(state: &mut WatchState, ids: &[String], list_complete: bool) {
+    if list_complete || ids.is_empty() {
+        return;
+    }
+    let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
+    for t in state.tracked.iter_mut() {
+        if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
+            t.buried = t.buried.saturating_add(1);
+        }
+    }
+}
+
 pub fn apply_sample(
     state: &mut WatchState,
     now: i64,
@@ -906,15 +886,19 @@ fn day_of(t: i64) -> i64 {
 }
 
 fn bump_daily(state: &mut WatchState, now: i64, added: u32, gone: u32, survived: u32, total: u64) {
+    bump_daily_full(state, now, added, gone, survived, 0, total);
+}
+fn bump_daily_full(state: &mut WatchState, now: i64, added: u32, gone: u32, survived: u32, buried: u32, total: u64) {
     let day = day_of(now);
     if let Some(d) = state.daily.iter_mut().find(|d| d.day == day) {
         d.added += added;
         d.gone += gone;
         d.survived += survived;
+        d.buried += buried;
         d.total_avg = (d.total_avg * d.samples as f64 + total as f64) / (d.samples + 1) as f64;
         d.samples += 1;
     } else {
-        state.daily.push(Daily { day, added, gone, survived, total_avg: total as f64, samples: 1 });
+        state.daily.push(Daily { day, added, gone, survived, buried, total_avg: total as f64, samples: 1 });
     }
     if state.daily.len() > DAILY_MAX_DAYS {
         let cut = state.daily.len() - DAILY_MAX_DAYS;
@@ -936,7 +920,7 @@ pub fn prune(state: &mut WatchState, now: i64) {
         }
     });
     if buried > 0 {
-        bump_daily(state, now, 0, 0, buried, state.total);
+        bump_daily_full(state, now, 0, 0, 0, buried, state.total);
     }
     state.tracked.retain(|t| {
         match t.gone_at {
@@ -958,7 +942,8 @@ pub fn prune(state: &mut WatchState, now: i64) {
         bump_daily(state, now, 0, 0, survived, state.total);
     }
     // 上限を超えたら古い物から捨てる。捨てた生存分は集計に残す
-    // (黙って消すと「売れなかった物だけが静かに減る」形になる。2026-09-17 レビュー指摘)
+    // (黙って消すと「売れなかった物だけが静かに減る」形になる。2026-09-17 レビュー指摘)。
+    // 活発な銘柄 (毎巡 10 件追加) だと 7 日を待たずに上限で切れるので、中央値の母数は実質 2〜3 日分
     if state.tracked.len() > TRACK_MAX_PER_WATCH {
         state.tracked.sort_by_key(|t| t.first_seen);
         let cut = state.tracked.len() - TRACK_MAX_PER_WATCH;
@@ -974,22 +959,34 @@ pub fn prune(state: &mut WatchState, now: i64) {
 // サンプリング (HTTP)
 // ============================================================================
 
-/// 全銘柄を 1 周する (手動ボタン用)
+/// 全銘柄を 1 周する (手動ボタンと周期の自動取得)。既に走っていれば Err
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
-    sample_slice(app, None).await
+    sample_guarded(app, None).await
 }
 
-/// `slice` を渡すとその組だけ取る (10 分おきの自動取得)。None なら全銘柄。
-pub async fn sample_slice(app: &tauri::AppHandle, slice: Option<usize>) -> Result<(), String> {
-    if SAMPLING.swap(true, Ordering::SeqCst) {
-        return Ok(()); // 既に走っている
+/// 取りこぼした銘柄 (retry_keys) だけ取り直す
+async fn sample_retry(app: &tauri::AppHandle) -> Result<(), String> {
+    let keys: HashSet<String> = load_store(app).retry_keys.iter().cloned().collect();
+    if keys.is_empty() {
+        return Ok(());
     }
-    let result = sample_inner(app, slice).await;
+    sample_guarded(app, Some(keys)).await
+}
+
+async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> Result<(), String> {
+    if SAMPLING.swap(true, Ordering::SeqCst) {
+        // 黙って Ok を返すと画面が「終わりました」を出してしまう (2026-09-18 レビュー指摘)
+        return Err("取得中です".to_string());
+    }
+    let result = sample_inner(app, only).await;
+    // 途中で ? で抜けても進捗表示を残さない
+    set_progress(None);
     SAMPLING.store(false, Ordering::SeqCst);
     result
 }
 
-async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<(), String> {
+/// `only` を渡すとその銘柄だけ取る (取りこぼしの取り直し)。None なら自動リスト全部
+async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>) -> Result<(), String> {
     let store = load_store(app);
     if store.watches.is_empty() || store.league.is_empty() {
         return Ok(());
@@ -997,48 +994,26 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
     // 追跡の検索は英語名で投げるので www 固定にする。
     // JP サイトは日本語名しか受け付けず "Unknown item base type" (HTTP 400) になる (2026-09-16)。
     let site: Option<String> = Some("www".to_string());
-    // 自動で追う銘柄を SLICES 組に分け、指定された組だけ取る。
-    //
-    // 組は「ジェム単位」で割り当てる。1 ジェムの 3 条件 (レベル 21 / 品質 23% / 完成品) が
-    // 別々の組に散ると、画面ではジェムごとに 1 条件だけ記録がある状態が続いて
-    // 「品質 23% とレベル +1 の追跡が切れている」ように見える (オーナー報告 2026-09-17)。
-    let mut gem_order: Vec<&str> = Vec::new();
     let auto: Vec<&Watch> = store
         .watches
         .iter()
         .filter(|w| w.auto)
-        .filter(|w| {
-            let gem = w.key.split("::").next().unwrap_or(w.key.as_str());
-            let idx = match gem_order.iter().position(|g| *g == gem) {
-                Some(i) => i,
-                None => {
-                    gem_order.push(gem);
-                    gem_order.len() - 1
-                }
-            };
-            slice.map(|sl| idx % SLICES == sl).unwrap_or(true)
-        })
+        .filter(|w| only.as_ref().map(|k| k.contains(&w.key)).unwrap_or(true))
         .collect();
-    // 途中で終わっていた場合は、その組で取り済みの銘柄を飛ばして続きから
-    let done_keys: HashSet<String> = if slice.is_some() { store.slice_done.iter().cloned().collect() } else { HashSet::new() };
     let total_watches = auto.len();
-    let resumed = done_keys.len();
     // 1 巡はまとめて走らせる (オーナー指示 2026-09-17: 前回の一括取得から周期ぶん後に 1 巡)。
     // 間隔は trade2 側の門番 (gate_acquire) が上限を見て空けるので、ここでは最低限だけ空ける
     // (オーナー指示 2026-09-18:「レート止まるね、どうにか止まらんようにしたい」→
     //  罰則を食らう前に門番が待つので、固定で 8 秒空ける必要がなくなった)。
     let pace = REQUEST_INTERVAL;
     let mut index = 0usize;
-    let mut incomplete = false;
+    // 後で取り直す銘柄 (429 / 通信エラーだけ。HTTP 400 のような恒久的な失敗は入れない)
+    let mut failed: Vec<String> = Vec::new();
     set_error(None);
 
     for watch in auto.iter().copied() {
         index += 1;
-        if done_keys.contains(&watch.key) {
-            continue; // 前回の続き: この銘柄はもう取ってある
-        }
         set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
-        let _ = resumed;
         // 時刻は銘柄ごとに取り直す。組の先頭で固定していた頃は、1 組を回り切る十数分ぶん
         // 記録が過去にずれて「初見 < 出品時刻」が出ていた (2026-09-17 レビュー指摘)
         let now = now_secs();
@@ -1054,36 +1029,33 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
             Ok(v) => Some(v),
             Err(e) => {
                 eprintln!("[market_flow] search {} 失敗: {e}", watch.key);
-                note_retry_after(&e);
                 set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
+                if !is_retriable(&e) {
+                    // 何度やっても同じ失敗 (HTTP 400 など)。この巡は飛ばし、取り直しにも入れない
+                    tokio::time::sleep(pace).await;
+                    continue;
+                }
                 None
             }
         };
-        // レート制限なら解除を待ってから同じ銘柄を取り直す (オーナー指示 2026-09-16: 止まらないように)
-        if body.is_none() {
-            let wait = retry_wait_secs();
-            if wait > 0 && wait <= MAX_WAIT_IN_SWEEP_SECS {
-                // 秒数は画面側が 1 秒ごとに数える (ここで文字にすると止まって見える)
-                set_wait_until(now_secs() + wait + 2);
-                set_progress(Some(("レート制限の解除待ち".to_string(), index, total_watches)));
-                tokio::time::sleep(Duration::from_secs(wait as u64 + 2)).await;
-                set_wait_until(0);
-                set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
-                body = match crate::trade2::trade2_search(search).await {
-                    Ok(v) => {
-                        set_error(None);
-                        Some(v)
-                    }
-                    Err(e) => {
-                        note_retry_after(&e);
-                        set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
-                        None
-                    }
-                };
-            }
+        // 罰則で止められたら解除を待って同じ銘柄を取り直す (オーナー指示 2026-09-16: 止まらないように)。
+        // 待つのは門番 (gate_acquire) なので、ここは「長すぎるなら後回し」の判断だけ
+        if body.is_none() && retry_wait_secs() <= MAX_WAIT_IN_SWEEP_SECS {
+            set_progress(Some(("レート制限の解除待ち".to_string(), index, total_watches)));
+            body = match crate::trade2::trade2_search(search).await {
+                Ok(v) => {
+                    set_error(None);
+                    Some(v)
+                }
+                Err(e) => {
+                    set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
+                    None
+                }
+            };
+            set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
         }
         let Some(body) = body else {
-            incomplete = true;
+            failed.push(watch.key.clone());
             tokio::time::sleep(pace).await;
             continue;
         };
@@ -1156,53 +1128,41 @@ async fn sample_inner(app: &tauri::AppHandle, slice: Option<usize>) -> Result<()
         // 2026-09-17 に実測)。応答が空の時や、100 件を超えて一覧が切れている時は判定しない。
         let list_complete = list_is_complete(&ids, total, &state.tracked);
         apply_sample(state, now, total, &ids, &entries, list_complete);
-        state.fetched_at = now;
         state.list_complete = list_complete;
-
-        // 一覧が切れている時 (出品 100 件超): 載っていない追跡分は値段で沈んでいる。
-        // BURIED_MAX 回続いたら追跡をやめる (最安帯の捌け方を測るのが目的なので)
-        if !list_complete && !ids.is_empty() {
-            let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
-            for t in state.tracked.iter_mut() {
-                if t.gone_at.is_none() && !present.contains(t.id.as_str()) {
-                    t.buried = t.buried.saturating_add(1);
-                }
-            }
-        }
+        mark_buried(state, &ids, list_complete);
         prune(state, now);
         store_now.sampled_at = now;
-        // この銘柄は取り終わった。アプリが落ちても次回はここから続ける
-        if slice.is_some() && !store_now.slice_done.contains(&watch.key) {
-            store_now.slice_done.push(watch.key.clone());
+        // 巡回中にリーグが切り替わっていたら (merge_watches が記録を全消しした直後)、
+        // 旧リーグの結果を書き戻さない (2026-09-18 レビュー指摘)
+        if store_now.league != store.league {
+            eprintln!("[market_flow] 巡回中にリーグが変わったので中断: {} -> {}", store.league, store_now.league);
+            return Ok(());
         }
         save_store(app, &store_now)?;
 
     }
-    // この組は終わり。取りこぼしがあれば早めに再挑戦する (レート制限が明けたら動き出す)
+    // 1 巡の終わり。取りこぼしがあればその銘柄だけ後で取り直す (回数に上限あり)
     let mut store_end = load_store(app);
-    store_end.sliced_at = now_secs();
-    store_end.slice_done.clear();
-    if let Some(sl) = slice {
-        store_end.slice_cursor = (sl + 1) % SLICES;
-        // 最後の組まで回ったら 1 巡
-        if store_end.slice_cursor == 0 {
-            store_end.rounds += 1;
-            store_end.sampled_at = now_secs();
-        }
-    } else {
+    if only.is_none() {
         store_end.rounds += 1;
         store_end.sampled_at = now_secs();
         // 手動の一括取得もここを通る。次の自動取得はこの時刻から数える
         store_end.swept_at = now_secs();
+        store_end.retry_count = 0;
     }
-    store_end.retry_at = if incomplete {
-        let until = retry_until();
-        now_secs() + (until - now_secs()).max(RETRY_GAP_SECS)
+    if failed.is_empty() || store_end.retry_count >= MAX_RETRY_ROUNDS {
+        if !failed.is_empty() {
+            eprintln!("[market_flow] {} 銘柄が {} 回取れなかったので次の周期まで諦める", failed.len(), MAX_RETRY_ROUNDS);
+        }
+        store_end.retry_keys.clear();
+        store_end.retry_at = 0;
     } else {
-        0
-    };
+        store_end.retry_count += 1;
+        store_end.retry_keys = failed;
+        // 罰則が明ける頃 (少なくとも RETRY_GAP_SECS 後) に取り直す
+        store_end.retry_at = now_secs() + retry_wait_secs().max(RETRY_GAP_SECS);
+    }
     save_store(app, &store_end)?;
-    set_progress(None);
     Ok(())
 }
 
@@ -1237,11 +1197,8 @@ pub struct FlowStatus {
     pub retry_until: i64,
     /// 取りこぼした回の再挑戦予定 (unix 秒、0 なら通常運転)
     pub retry_at: i64,
-    /// 今どの組を取っているか (1 時間を SLICES 回に分ける)
-    pub slice: usize,
-    pub slices: usize,
-    /// 今の組で取り終わった銘柄数 (中断から再開した時に分かるように)
-    pub slice_done: usize,
+    /// 取り直しを待っている銘柄数
+    pub retry_keys: usize,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
     /// 今の 1 巡の周期 (秒)
@@ -1279,14 +1236,12 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
         rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
-        // 門番が罰則で止まっている分も同じ数字で見せる (画面はこれを 1 秒ごとに数える)
-        wait_until: wait_until().max(crate::trade2::gate_blocked_until_secs()),
+        // 罰則で止まっている解除予定は門番が持つ (画面はこれを 1 秒ごとに数える)
+        wait_until: retry_until(),
         pace_until: now_secs() + crate::trade2::gate_wait_secs(),
         retry_until: retry_until(),
         retry_at: store.retry_at,
-        slice: store.slice_cursor % SLICES,
-        slices: SLICES,
-        slice_done: store.slice_done.len(),
+        retry_keys: store.retry_keys.len(),
         cycle_secs: cycle_secs(&store),
     })
 }
@@ -1312,10 +1267,18 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
         loop {
             let store = load_store(&app);
             let now = now_secs();
-            let due = now >= next_sweep_at(&store) || (store.retry_at > 0 && now >= store.retry_at);
-            if due && !store.watches.is_empty() && !store.league.is_empty() {
-                if let Err(e) = sample_slice(&app, None).await {
+            if store.watches.is_empty() || store.league.is_empty() {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            }
+            if now >= next_sweep_at(&store) {
+                if let Err(e) = sample_once(&app).await {
                     eprintln!("[market_flow] サンプリング失敗: {e}");
+                }
+            } else if store.retry_at > 0 && now >= store.retry_at {
+                // 取りこぼした銘柄だけ取り直す (全銘柄を回し直さない)
+                if let Err(e) = sample_retry(&app).await {
+                    eprintln!("[market_flow] 取り直し失敗: {e}");
                 }
             }
             tokio::time::sleep(Duration::from_secs(60)).await;
@@ -1528,13 +1491,36 @@ mod tests {
         apply_sample(&mut st, now, 2, &["a".into(), "b".into()], &[e("a"), e("b")], true);
         // 空の応答 (total 0 / ID 0 件)
         let ids: Vec<String> = Vec::new();
-        let list_complete = ids.len() as u64 >= 0 && !(ids.is_empty() && !st.tracked.is_empty());
+        let list_complete = list_is_complete(&ids, 0, &st.tracked);
         assert!(!list_complete, "空の応答では消えた判定をしない");
         apply_sample(&mut st, now + 3600, 0, &ids, &[], list_complete);
         assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some()).count(), 0);
     }
 
-    /// 古いクエリ (securable) は any に直す
+    /// 自動銘柄の検索条件が変わったら記録を作り直す (手動分としか比べていなかった 2026-09-18 レビュー指摘)
+    #[test]
+    fn auto_watch_query_change_resets_its_records() {
+        let now = 1_700_000_000i64;
+        let mut store = FlowStore::default();
+        let w = |q: &str| Watch {
+            key: "Arc::finished".into(),
+            label: "Arc".into(),
+            query: serde_json::json!({ "q": q }),
+            note: String::new(),
+            manual: false,
+            auto: true,
+        };
+        merge_watches(&mut store, vec![w("old")], "L", now);
+        store.states.insert("Arc::finished".into(), WatchState { sampled_at: now, ..Default::default() });
+        // 同じ条件で登録し直しても記録は残る
+        merge_watches(&mut store, vec![w("old")], "L", now + 1);
+        assert!(store.states.contains_key("Arc::finished"), "条件が同じなら記録は引き継ぐ");
+        // 条件が変わったら作り直す
+        merge_watches(&mut store, vec![w("new")], "L", now + 2);
+        assert!(!store.states.contains_key("Arc::finished"), "条件が変わった銘柄の記録は捨てる");
+    }
+
+    /// 古いクエリ (any) は securable に直す
     #[test]
     fn normalize_track_status_rewrites_old_queries() {
         let mut q = serde_json::json!({"query":{"status":{"option":"any"},"type":{"option":"Comet"}},"sort":{"price":"asc"}});

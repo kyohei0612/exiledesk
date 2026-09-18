@@ -7,42 +7,19 @@
  *
  * 売値は捌き速度の記録から出した「実際に売れた値段の平均」を渡す
  * (画面の最安 1 件ではなく、実売の平均で期待値を出したいため)。
+ * 素材はジェムコラプトの賭けと同じ materials.ts (相場と取引所の繰り上げ単価の安い方)。
+ * 前提確率は既定値 (DEFAULT_PARAMS)。画面で前提を変えても一覧には反映しない。
  */
-import { evaluateRoutes, roi, DEFAULT_PARAMS, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
-import { marketStore } from "../../state/market-store";
+import { evaluateRoutes, roi, DEFAULT_PARAMS, type RouteResult, type SalePrices } from "./model";
+import { materialPricesFor } from "./materials";
+import { cachedBuy, payable } from "../../services/trade2/exchange";
 import type { GemInfo } from "./useGemCorrupt";
 
-/** 素材の poe2scout ApiId (useGemCorrupt と同じ) */
-const MATERIAL_API = {
-  gcp: "gcp",
-  perfectJeweller: "perfect-jewellers-orb",
-  vaal: "vaal",
-  crystal: "crystallised-corruption",
-  uncutSkill20: "uncut-skill-gem-20",
-  uncutSpirit20: "uncut-spirit-gem-20",
-} as const;
-
-/** 本体に使う原石の探索範囲 (安いレベルを選ぶ) */
-const BASE_GEM_MIN_LEVEL = 15;
-const BASE_GEM_MAX_LEVEL = 20;
-
-/** そのジェムを作る時の素材の単価 (高貴建て)。相場が無い物は null */
-export function materialsForGem(gem: Pick<GemInfo, "spirit">): MaterialPrices {
-  const priceOf = marketStore.priceOf;
-  const kind = gem.spirit ? "spirit" : "skill";
-  let baseGem: number | null = null;
-  for (let lv = BASE_GEM_MIN_LEVEL; lv <= BASE_GEM_MAX_LEVEL; lv++) {
-    const p = priceOf(`uncut-${kind}-gem-${lv}`);
-    if (p != null && (baseGem == null || p < baseGem)) baseGem = p;
-  }
-  return {
-    baseGem,
-    gcp: priceOf(MATERIAL_API.gcp),
-    perfectJeweller: priceOf(MATERIAL_API.perfectJeweller),
-    vaal: priceOf(MATERIAL_API.vaal),
-    crystal: priceOf(MATERIAL_API.crystal),
-    uncut20: priceOf(gem.spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20),
-  };
+/** 取引所の繰り上げ単価 (30 分キャッシュ)。画面を開いていなくても localStorage から読める */
+function cachedPayable(apiId: string | null | undefined): number | null {
+  if (!apiId) return null;
+  const b = cachedBuy(apiId)?.best;
+  return b ? payable(b).payExalted : null;
 }
 
 /**
@@ -58,7 +35,7 @@ export function expectedValueOf(
   sale: SalePrices,
 ): { ev: number; roi: number | null; route: RouteResult } | null {
   if (sale.level21 == null && sale.quality23 == null && sale.finished == null) return null;
-  const routes = evaluateRoutes(materialsForGem(gem), sale, DEFAULT_PARAMS);
+  const routes = evaluateRoutes(materialPricesFor(gem.spirit, cachedPayable), sale, DEFAULT_PARAMS);
   let best: RouteResult | null = null;
   for (const r of routes) {
     if (!r.ok || !Number.isFinite(r.ev)) continue;

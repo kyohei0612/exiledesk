@@ -43,6 +43,9 @@ if "%NEW_VERSION%"=="" (
 )
 rem  "->" is a redirect in cmd (it created a junk file named "new" on every release)
 echo   next version: v%NEW_VERSION%
+rem  Cargo.lock also carries the crate version; without this, the lock file went stale and
+rem  any cargo command afterwards dirtied the working tree (review 2026-09-18)
+cargo update --workspace --offline --manifest-path src-tauri\Cargo.toml -q
 
 echo.
 echo ============================================================

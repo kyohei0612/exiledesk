@@ -44,6 +44,8 @@ export interface Daily {
   added: number;
   gone: number;
   survived: number;
+  /** 最安帯から沈んで追うのをやめた件数 (売れたかは不明) */
+  buried?: number;
   total_avg: number;
   samples: number;
 }
@@ -64,7 +66,7 @@ export interface Watch {
   note: string;
   /** 手動で足した銘柄 (自動リストの入れ替えで消えない) */
   manual?: boolean;
-  /** 今の自動リストに入っている (1 時間ごとの巡回で取る)。manual と両方 true もあり得る */
+  /** 今の自動リストに入っている (周期ごとの一括取得で取る)。manual と両方 true もあり得る */
   auto?: boolean;
 }
 export interface FlowStore {
@@ -120,9 +122,8 @@ export interface FlowStatus {
   rate_state: string | null;
   retry_until: number;
   retry_at: number;
-  slice: number;
-  slices: number;
-  slice_done: number;
+  /** 取り直しを待っている銘柄数 (429 / 通信で取れなかった分) */
+  retry_keys: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
   /** 今の 1 巡の周期 (秒)。画面の設定で変えられる */
@@ -136,6 +137,9 @@ export interface FlowStatus {
   /** 次にリクエストを投げられる時刻 (unix 秒。上限に当たらないための通常の間隔待ちを含む) */
   pace_until: number;
 }
+
+/** 1 巡の周期の既定 (秒)。Rust 側 CYCLE_DEFAULT_SECS と同じ */
+export const DEFAULT_CYCLE_SECS = 8 * 3600;
 
 /** 1 巡の周期を変える (1〜24 時間)。戻り値は実際に入った秒数 */
 export async function setFlowCycle(secs: number): Promise<number | null> {
@@ -164,34 +168,23 @@ export async function loadFlowStatus(): Promise<FlowStatus | null> {
   }
 }
 
-/** 1 銘柄を手動で追跡に足す / 外す */
-export async function toggleWatch(watch: Watch, on: boolean, league: string, site: string): Promise<FlowStore | null> {
-  if (!isTauriRuntime()) return null;
-  try {
-    return await invoke<FlowStore>("market_flow_toggle_watch", { req: { watch, on, league, site } });
-  } catch {
-    return null;
-  }
-}
-
 /**
  * 手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
  * 自動巡回とまったく同じ条件・同じルールで判定される (2026-09-17)。
  */
-export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[]}): Promise<string[]> {
-  if (!isTauriRuntime()) return [];
+export async function recordFlow(sample: { key: string; label?: string; total: number; ids: string[]; entries: ListingRef[] }): Promise<void> {
+  if (!isTauriRuntime()) return;
   try {
-    return (await invoke<string[]>("market_flow_record", { req: sample })) ?? [];
+    await invoke("market_flow_record", { req: sample });
   } catch {
     /* 記録できなくても価格表示には影響しない */
-    return [];
   }
 }
 
 /**
  * 監視している全銘柄を今すぐ 1 巡する (オーナー指示 2026-09-17:
  * 「一括取得ボタン。自動取得の道を手動でスタートするだけ」)。
- * 中身は 2 時間ごとの巡回とまったく同じ処理。走っている間は状態表示に進捗が出る。
+ * 中身は周期の自動取得とまったく同じ処理。走っている間は状態表示に進捗が出る。
  */
 export async function sweepNow(): Promise<boolean> {
   if (!isTauriRuntime()) return false;
@@ -251,19 +244,22 @@ export function flowSentence(f: FlowSummary): string {
   if (f.olderThanMedian > 0) parts.push(`ただし並んでいる ${f.alive} 件のうち ${f.olderThanMedian} 件はもっと長く並んでいます`);
   if (f.stale > 0) parts.push(`2 日以上売れ残り ${f.stale} 件`);
   if (f.droppedUnsold > 0) parts.push(`7 日売れずに打ち切り ${f.droppedUnsold} 件`);
+  if (f.droppedBuried > 0) parts.push(`最安帯から沈んで追跡をやめた ${f.droppedBuried} 件`);
   return parts.join("。");
 }
 
 export type FlowTone = "fast" | "normal" | "slow" | "unknown";
 
 export interface FlowSummary {
-  /** "速い" / "普通" / "遅い" / "" ((暫定) 付きは売れ残りを 1 件も観測できていない) */
+  /** "速い" / "普通" / "遅い" / "" (母数不足) */
   label: string;
   tone: FlowTone;
   /** まだ並んでいる出品のうち、表示している「売れるまでの時間」より長く並んでいる件数 */
   olderThanMedian: number;
   /** 7 日売れずに打ち切った件数 (日次集計から。中央値には入らない) */
   droppedUnsold: number;
+  /** 最安帯から沈んで追跡をやめた件数 (売れたかは分からないので売れ残りとは分ける) */
+  droppedBuried: number;
   /** 売れた出品の値段 (出品時の通貨のまま)。平均売値の計算に使う */
   soldPrices: { amount: number; currency: string }[];
   /** 出品が 100 件を超えていて「消えた」を判定できない状態か */
@@ -305,6 +301,7 @@ const EMPTY_SUMMARY: FlowSummary = {
   tone: "unknown",
   olderThanMedian: 0,
   droppedUnsold: 0,
+  droppedBuried: 0,
   soldPrices: [],
   truncated: false,
   medianMin: null,
@@ -448,12 +445,14 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // (2026-09-17 レビュー: 判定が出た銘柄の生存中 175 件のうち 117 件が中央値より古かった)
   const olderThanMedian = olderThanMedianEarly;
   const droppedUnsold = (state.daily ?? []).reduce((sum, d) => sum + (d.survived ?? 0), 0);
+  const droppedBuried = (state.daily ?? []).reduce((sum, d) => sum + (d.buried ?? 0), 0);
 
   return {
     label,
     tone,
     olderThanMedian,
     droppedUnsold,
+    droppedBuried,
     soldPrices,
     truncated: state.list_complete === false,
     medianMin: median != null ? Math.round(median / 60) : null,

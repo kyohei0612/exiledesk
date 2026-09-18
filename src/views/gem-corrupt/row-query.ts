@@ -44,8 +44,8 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
  * その中でルールを決めるからエニーで見る必要が全くない」。
  * 画面と同じ母集団を追うので、手動の「再取得」も自動巡回と同じルールで判定できる。
  *
- * securable は出品者の状況で出入りするが、消えた候補は ID を直接 fetch して
- * 実在を確かめてから判定する (fetch は status の絞り込みを受けない)。
+ * 消えた判定は search の ID 一覧だけで行う (ID を直接 fetch する裏取りはキャッシュを返すので使えない。
+ * 2026-09-17 実測。詳細は market_flow.rs の冒頭)。
  */
 export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
   return buildGemQuery(gemEn, rowQueryOptions(key, meta));

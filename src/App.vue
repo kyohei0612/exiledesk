@@ -34,8 +34,8 @@ onMounted(() => {
   void ensurePobBundleFresh();
   // ゲームログ: 前回の消し込みから 7 日経っていれば診断 → 履歴保存 → 本体を空に
   void ensureClientLogRotated();
-  // 捌き速度: 追跡する銘柄 (完成品 5 人以上のジェム) を 1 日 1 回そろえ直す。
-  // 出品の追跡そのものは Rust 側が起動 15 秒後から 1 時間ごとに回す
+  // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
+  // 出品の追跡そのものは Rust 側が周期 (既定 8 時間) ごとに回す
   startWatchAutoRefresh();
 });
 </script>

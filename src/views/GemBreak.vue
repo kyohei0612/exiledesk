@@ -177,7 +177,6 @@ const SECTIONS = [
 type Key = (typeof SECTIONS)[number]["key"];
 
 /** 売れ行きを追う下限 (完成品を使っている人数) */
-const TRACK_MIN_FINISHED = 5;
 /** 一覧から自動ジェム監視に入れる / 外す (すぐ追跡に反映する) */
 function toggleWatchGem(name: string): void {
   if (isManualGem(name)) removeManualGem(name);
@@ -259,9 +258,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <!-- 自動ジェム監視のページに埋め込まれる (2026-09-17 タブ統合)。単独ページの余白と h1 は持たない -->
+  <section class="@container block rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4 pl-5 text-[var(--exile-color-text-primary)]">
     <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">使用率ランキング (poe.ninja)</h1>
+      <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px]">使用率ランキング (poe.ninja)</h3>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
         上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
         <span class="text-[var(--exile-color-text-primary)]">上の「自動ジェム監視」の上位はここの結果から決まります。</span>
@@ -271,8 +271,8 @@ onUnmounted(() => {
         poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
         (1 アセンダンシー = 人数 + 2 リクエスト。レート制限に当たると自動で待つので数分かかることがあります)。
         装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
-        全アセンダンシーで取ると、完成品を {{ TRACK_MIN_FINISHED }} 人以上が使っているジェムを捌き速度の追跡対象にします
-        (出品 1 件ずつを 2 時間ごとに追って、売れるまでの時間を測る → ジェムコラプトの賭けに表示)。
+        どのジェムを捌き速度の追跡に入れるかは、上の「自動ジェム監視」の設定 (基準 / 上位いくつ / 人数の下限) で決まります
+        (出品 1 件ずつを周期ごとに追って、売れるまでの時間を測る → ジェムコラプトの賭けに表示)。
         この一覧はアプリ起動時に 1 日 1 回、自動で取り直します。
       </p>
     </header>
@@ -417,7 +417,7 @@ onUnmounted(() => {
                   :class="isManualGem(r.name)
                     ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
                     : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
-                  :title="isManualGem(r.name) ? '自動ジェム監視から外す' : 'このジェムを自動ジェム監視に入れる (2 時間ごとに捌き速度を測る)'"
+                  :title="isManualGem(r.name) ? '自動ジェム監視から外す' : 'このジェムを自動ジェム監視に入れる (周期ごとに捌き速度を測る)'"
                   @click.stop="toggleWatchGem(r.name)"
                 >
                   {{ isManualGem(r.name) ? "監視中 ✓" : "監視へ +" }}

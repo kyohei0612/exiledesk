@@ -8,8 +8,9 @@
 //!   - `trade2_search_count`: 上の `total` だけ取り出す軽量版（母集団件数表示用）
 //!   - `trade2_fetch`: search で取った listing id 列（最大 10）を query_id 付きで照会、listing 詳細を返す
 //!
-//! rate limit: 成功時はレスポンスに `_ratelimit` (x-rate-limit-* ヘッダ) を足し、429 時はエラー文字列に
-//!   `ratelimit={...}` を含める。フロント (services/trade2/pricing.ts) がサーバーの実カウントに合わせて待つ (2026-09-14)。
+//! rate limit: 全リクエストがこのファイルの門番 (gate_acquire) を通り、上限に当たる前に間隔を空ける (2026-09-18)。
+//!   成功時はレスポンスに `_ratelimit` (x-rate-limit-* ヘッダ) を足し、429 時はエラー文字列に
+//!   `ratelimit={...}` を含める (フロントはこれを表示と自分の記録の突き合わせに使う)。
 //!
 //! User-Agent: ExileDesk/0.1 (連絡先 hardcode せず、必要なら env で渡す)
 
@@ -134,12 +135,16 @@ fn gate_note(kind: &str, headers: &HeaderMap) {
                 g.blocked_until = g.blocked_until.max(now + restricted * 1000 + 500);
                 continue;
             }
-            // サーバーの数えた現在数が上限に近い = 同じ IP の別経路 (手で開いた検索など) が使っている。
-            // 窓がいつ始まったかは分からないので、窓の長さぶん待ってから再開する (フロントと同じ判断)。
-            // ここで「送ったことにする」と、6 時間窓の差分が 10 秒窓にも乗って全部止まってしまう。
+            // サーバーの数えた現在数が**こちらの記録より多く**、かつ上限に近い = 同じ IP の別経路
+            // (手で開いた検索など) が使っている。窓がいつ始まったかは分からないので、窓の長さぶん
+            // 待ってから再開する (フロントと同じ判断)。
+            // 自分の送信だけで上限近くまで使った時は wait_for_rules が正確に待つので、ここでは止めない
+            // (止めていた頃は 28 件送るたびに 300 秒止まっていた。2026-09-18 レビュー指摘)。
+            // 「送ったことにする」のも駄目: 6 時間窓の差分が 10 秒窓にも乗って全部止まる。
             let Some(&(max, _)) = rules.get(i) else { continue };
             let margin = if max >= 15 { 2 } else { 1 };
-            if cur >= (max.saturating_sub(margin)) as i64 {
+            let own = g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64;
+            if cur > own && cur >= (max.saturating_sub(margin)) as i64 {
                 g.blocked_until = g.blocked_until.max(now + period * 1000);
             }
         }
@@ -211,12 +216,10 @@ pub(crate) fn build_client() -> Result<reqwest::Client, String> {
         .map_err(|e| format!("client build error: {e}"))
 }
 
-/// search レスポンスのうち、興味があるフィールド（total と id）。
+/// search レスポンスのうち、件数だけ (trade2_search_count 用)
 #[derive(Debug, Deserialize)]
 struct SearchResponse {
-    id: Option<String>,
     total: Option<u64>,
-    result: Option<Vec<String>>,
 }
 
 /// search request body (フロントエンドが組み立てる JSON をそのまま透過)。
@@ -312,7 +315,7 @@ pub struct FetchRequest {
 }
 
 /// listing 詳細を取得する。レスポンス全体（`{ result: [...] }`）をそのままフロントに返す。
-/// rate limit は呼び側で sleep を挟むこと（実測 5-10 sec/req）。
+/// rate limit は門番 (gate_acquire) が待つので、呼び側で sleep は要らない。
 #[tauri::command]
 pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String> {
     if req.ids.is_empty() {
@@ -446,6 +449,34 @@ mod rate_tests {
         let g = gate(sends, vec![(5, 10), (15, 60)], 0);
         // 60 秒窓 (上限 15、余裕 2 → 13 件) の方が長い
         assert!(wait_for_rules(&g, now) > 9_000);
+    }
+
+    /// 自分の送信だけで上限近くまで使っても、state ヘッダの現在数で余計に止めない
+    /// (止めていた頃は 28 件ごとに 300 秒止まった。2026-09-18 レビュー指摘)
+    #[test]
+    fn own_sends_do_not_trigger_the_foreign_block() {
+        let now = now_ms();
+        let key = "test-own";
+        {
+            let mut guard = GATES.lock().unwrap();
+            let map = guard.get_or_insert_with(HashMap::new);
+            let g = map.entry(key.to_string()).or_default();
+            g.rules = vec![(5, 10)];
+            g.sends = vec![now - 3_000, now - 2_000, now - 1_000, now - 500];
+            g.blocked_until = 0;
+        }
+        let mut h = HeaderMap::new();
+        h.insert("x-rate-limit-ip", HeaderValue::from_static("5:10:60"));
+        // サーバーもこちらと同じ 4 件を数えている = 別経路は無い
+        h.insert("x-rate-limit-ip-state", HeaderValue::from_static("4:10:0"));
+        gate_note(key, &h);
+        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
+        assert_eq!(blocked, 0, "自分の送信ぶんでは止めない");
+        // サーバーの方が多い (手で検索した分がある) 時だけ窓の長さぶん止める
+        h.insert("x-rate-limit-ip-state", HeaderValue::from_static("5:10:0"));
+        gate_note(key, &h);
+        let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
+        assert!(blocked >= now + 10_000, "別経路の使用があれば窓の長さぶん止める");
     }
 
     /// 罰則中はその解除まで待つ

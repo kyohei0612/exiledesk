@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
-import { displayCurrency } from "../state/display-currency";
+import { currencyJa, displayCurrency } from "../state/display-currency";
 import { marketStore } from "../state/market-store";
 import { fetchLeagueStartEpoch } from "../api/poe2scout";
 import { toExalted } from "../services/trade2/pricing";
@@ -407,8 +407,7 @@ const dayGroups = computed(() => {
   return out;
 });
 
-const CURRENCY_JA: Record<string, string> = { exalted: "高貴", divine: "神", chaos: "カオス" };
-const curLabel = (c: string | null): string => (c ? (CURRENCY_JA[c] ?? c) : "");
+const curLabel = currencyJa;
 const fmtAmount = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(2));
 function fmtTime(ms: number): string {
   if (!ms) return "—";

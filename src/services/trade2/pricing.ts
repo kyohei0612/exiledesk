@@ -3,13 +3,17 @@
  *
  *   search (条件 → listing ID 列 + total) → fetch (先頭 10 件の詳細) → 価格を高貴 (Exalted) 建てに正規化 → 最安
  *
- * レート制限: trade2 は search / fetch とも短時間の連打で 429 を返す。Rust 側 (trade2.rs) は
- * proxy のみで throttle しないので、ここで直列化 + 最小間隔を守る (実測 2〜3 秒間隔なら安定)。
+ * レート制限: 本番 (Tauri) は Rust 側の門番 (trade2.rs gate_acquire) が上限ヘッダを見て待つので、
+ * ここは直列化と「再取得まで N 秒」の表示用の記録だけ (2026-09-18 に二重待ちをやめた)。
+ * 開発時 (vite のプロキシで直接叩く) だけ、ここで最小間隔と窓の予算を守る。
  */
 
 import { invoke } from "@tauri-apps/api/core";
 import { trade2Site, trade2SiteOrigin } from "./league";
 import { localizeQueryForSite } from "./localize";
+
+/** 開発時は vite のプロキシで直接叩く (Rust の門番を通らないので、ここで待つ) */
+const DEV_TRADE = import.meta.env.DEV;
 import type { Trade2SearchResponse } from "./query";
 
 /**
@@ -115,7 +119,7 @@ export function syncRateLimit(kind: RateKind, headers: Record<string, string> | 
   }
 }
 /** 429 のエラー文字列 ("... ratelimit={...}: ...") からヘッダを取り出して同期する */
-export function syncRateLimitFromError(kind: RateKind, err: unknown): void {
+function syncRateLimitFromError(kind: RateKind, err: unknown): void {
   const msg = err instanceof Error ? err.message : String(err);
   const m = msg.match(/ratelimit=(\{[^}]*\})/);
   if (!m) return;
@@ -165,23 +169,30 @@ export function searchBudgetUsage(): { used: number; max: number } {
   return { used: searchLog.filter((t) => t > now - 300_000).length, max: SEARCH_BUDGET[SEARCH_BUDGET.length - 1].max };
 }
 
-/** 直列化 + エンドポイント別の最小間隔ガード (+ search は窓の予算) */
+/**
+ * 直列化 + (開発時だけ) エンドポイント別の最小間隔ガードと search の窓の予算。
+ * 本番は Rust の門番が待つので、ここで待つと二重になる (レビュー指摘 2026-09-18)
+ */
 function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
   const run = async () => {
     if (kind === "search") {
-      // 予算が空くまで待つ (待ち中に他の search は直列なので増えない)
-      for (;;) {
-        const wait = nextSearchAllowedAt() - Date.now();
-        if (wait <= 0) break;
-        await new Promise((r) => setTimeout(r, Math.min(wait, 5_000)));
+      if (DEV_TRADE) {
+        // 予算が空くまで待つ (待ち中に他の search は直列なので増えない)
+        for (;;) {
+          const wait = nextSearchAllowedAt() - Date.now();
+          if (wait <= 0) break;
+          await new Promise((r) => setTimeout(r, Math.min(wait, 5_000)));
+        }
       }
       const at = Date.now();
       lastRequestAt.search = at;
       recordSearch(at);
       return fn();
     }
-    const wait = Math.max(lastRequestAt.fetch + FETCH_INTERVAL_MS, serverBlockedUntil.fetch) - Date.now();
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    if (DEV_TRADE) {
+      const wait = Math.max(lastRequestAt.fetch + FETCH_INTERVAL_MS, serverBlockedUntil.fetch) - Date.now();
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    }
     lastRequestAt.fetch = Date.now();
     return fn();
   };
@@ -264,7 +275,6 @@ interface FetchResponse {
  * dev (vite) では Tauri が無いので、vite のプロキシ (/api/trade2-www, /api/trade2-jp) 経由で直接叩く。
  * 本番は Rust の trade2_search / trade2_fetch。429 は Rust 側と同じ "HTTP 429 retry-after=N" 形式で投げる。
  */
-const DEV_TRADE = import.meta.env.DEV;
 async function devJson<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init);
   const rl: Record<string, string> = {};

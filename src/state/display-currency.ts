@@ -11,6 +11,10 @@ import { marketStore } from "./market-store";
 export type DisplayCurrency = "exalted" | "chaos" | "divine";
 const KEY = "exiledesk.vaal.currency";
 const LABEL: Record<DisplayCurrency, string> = { exalted: "高貴", chaos: "カオス", divine: "神" };
+/** trade2 の通貨 id → 日本語 (画面共通。知らない通貨は id のまま) */
+export function currencyJa(c: string | null | undefined): string {
+  return c ? (LABEL[c as DisplayCurrency] ?? c) : "";
+}
 
 function load(): DisplayCurrency {
   try {

@@ -547,6 +547,5 @@ export function useRareCraft() {
     bestVariant,
     unpricedOptions,
     selectVariant,
-    tradeAuto,
   };
 }

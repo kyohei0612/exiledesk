@@ -15,7 +15,9 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { fmtClock } from "../utils/format-time";
+import { searchGems } from "./gem-corrupt/search";
 import { averageExalted, displayCurrency } from "../state/display-currency";
 import {
   addManualGem,
@@ -106,8 +108,6 @@ async function sweep(reason?: string): Promise<void> {
 }
 
 /** 前回の一括取得 / 次の自動取得 (手動で押した分も同じ時計を使う) */
-const fmtClock = (sec: number): string =>
-  sec > 0 ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 const sweepClock = computed(() => {
   const st = status.value;
   if (!st) return "";
@@ -122,7 +122,7 @@ const sweepClock = computed(() => {
  * 前回の一括取得 (手動でも自動でも) からこの時間ぶん経ったら、全銘柄をまとめて 1 巡する。
  */
 const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
-const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? 8 * 3600) / 3600) * 10) / 10);
+const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? DEFAULT_CYCLE_SECS) / 3600) * 10) / 10);
 async function applyCycle(hours: number): Promise<void> {
   const applied = await setFlowCycle(Math.round(hours * 3600));
   status.value = await loadFlowStatus();
@@ -132,19 +132,20 @@ async function applyCycle(hours: number): Promise<void> {
   }
   const st = status.value;
   const h = Math.round(applied / 3600);
-  const last = st && st.swept_at > 0 ? `前回の一括取得は ${fmtClock(st.swept_at)}` : "まだ 1 巡していません";
+  const swept = !!st && st.swept_at > 0;
   /**
    * 新しい間隔で見てもう予定時刻を過ぎているなら、そのまま 1 巡して周期を始める
    * (オーナー指示 2026-09-17:「もし一括取得できるなら、そのまま一括取得周期開始しよう」)。
    */
-  const due = !st || st.swept_at <= 0 || st.next_at <= Math.floor(Date.now() / 1000);
+  const due = !st || !swept || st.next_at <= Math.floor(Date.now() / 1000);
   if (due && !st?.sampling && !sweeping.value) {
-    await sweep(`自動取得を ${h} 時間ごとにしました。${last} で、もう ${h} 時間経っているので`);
+    const why = swept ? `前回の一括取得は ${fmtClock(st.swept_at)} で、もう ${h} 時間経っているので` : "まだ 1 巡していないので";
+    await sweep(`自動取得を ${h} 時間ごとにしました。${why}`);
     return;
   }
   message.value = {
     ok: true,
-    text: `自動取得を ${h} 時間ごとにしました。${last} · 次の自動取得は ${fmtClock(st?.next_at ?? 0)}`,
+    text: `自動取得を ${h} 時間ごとにしました。前回の一括取得は ${fmtClock(st?.swept_at)} · 次の自動取得は ${fmtClock(st?.next_at)}`,
   };
 }
 
@@ -187,32 +188,12 @@ const readAtText = computed(() => {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 });
 
-// ---- 検索 (ジェムコラプトの賭けと同じ。正規表現も使える) ----
+// ---- 検索 (ジェムコラプトの賭けと同じ関数。正規表現も使える) ----
 const query = ref("");
-const regexError = ref("");
-const matches = computed(() => {
-  const q = query.value.trim();
-  if (!q) return [];
-  regexError.value = "";
-  let test: (g: { ja: string; en: string }) => boolean;
-  // 正規表現として読めるならそれで、駄目なら普通の部分一致で探す
-  try {
-    const re = new RegExp(q, "i");
-    test = (g) => re.test(g.ja) || re.test(g.en);
-  } catch (e) {
-    regexError.value = e instanceof Error ? e.message : String(e);
-    const lower = q.toLowerCase();
-    test = (g) => g.ja.toLowerCase().includes(lower) || g.en.toLowerCase().includes(lower);
-  }
-  const lower = q.toLowerCase();
-  const hit = GEMS.filter(test);
-  hit.sort((a, b) => {
-    const as = a.ja.toLowerCase().startsWith(lower) || a.en.toLowerCase().startsWith(lower) ? 0 : 1;
-    const bs = b.ja.toLowerCase().startsWith(lower) || b.en.toLowerCase().startsWith(lower) ? 0 : 1;
-    return as - bs || a.ja.localeCompare(b.ja, "ja");
-  });
-  return hit.slice(0, 12);
-});
+const search = computed(() => searchGems(query.value));
+const matches = computed(() => search.value.hits);
+// 副作用のない computed から取る (以前は matches の中で ref を書いていて、欄を空にしても警告が残った)
+const regexError = computed(() => search.value.regexError);
 
 
 /**
@@ -295,7 +276,7 @@ const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
 const scoredGems = computed(() => {
   return gems.value.map((gem) => {
     const cs = cells(gem.name);
-    const price = {} as Record<(typeof SALE_KEYS)[number], number | null>;
+    const price: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
     const fastKeys = new Set<string>();
     for (const c of cs) {
       price[c.key] = c.avgExalted;
@@ -420,7 +401,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
-          ここで選んだジェムを {{ cycleHours }} 時間ごとに 1 巡して、売れるまでの時間を測ります (手動の一括取得もこの時計を進めます) (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件)。
+          ここで選んだジェムを {{ cycleHours }} 時間ごとに 1 巡して、売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件。手動の一括取得もこの時計を進めます)。
           上位は下の「使用率ランキング」で取得した結果から決まります。
         </p>
 
@@ -542,7 +523,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           {{ SORT_NOTE[sortBy] }}記録を読み直すたびに並び替わります (見出しを押すと並べ替えが変わります)。
         </p>
         <p v-if="gems.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
-          まだ 1 つもありません。上の検索で足すか、「クラフト選定ジェム」で取得すると上位が自動で入ります。
+          まだ 1 つもありません。上の検索で足すか、下の「使用率ランキング」で取得すると上位が自動で入ります。
         </p>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-[12px]">
@@ -550,7 +531,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
               <tr>
                 <!-- 一番左が期待値。見出しを押すとその条件で並べ替える (オーナー指示 2026-09-17) -->
                 <th class="text-left font-normal pb-1 whitespace-nowrap">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の平均、素材は取引所の繰り上げ単価を使います`" @click="sortBy = 'ev'">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の平均、素材はジェムコラプトの賭けと同じ (相場と取引所の繰り上げ単価の安い方)、前提の確率は既定値です`" @click="sortBy = 'ev'">
                     期待値{{ sortBy === "ev" ? " ▼" : "" }}
                   </button>
                 </th>
@@ -628,7 +609,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">巡回に入っていないジェム ({{ orphans.length }})</h3>
         <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
-          以前の版で「再取得」を押して記録が作られたジェムです。今は巡回に入っていません (記録は 7 日で掃除されます)。
+          ジェムコラプトの賭けで「再取得」を押して記録は作られたが、監視には入れていないジェムです (記録は 7 日で掃除されます)。
           続けて測りたい物だけ監視に入れてください。
         </p>
         <ul class="flex flex-wrap gap-2">

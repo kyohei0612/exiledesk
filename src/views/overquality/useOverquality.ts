@@ -9,7 +9,7 @@ import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildBaseTypeQuery, buildUniqueQualityQuery } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
-import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
+import { autoMinWithUrl, isRateLimited } from "../../services/trade2/auto-price";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
@@ -22,13 +22,13 @@ function reverseMap(...dicts: Record<string, string>[]): Map<string, string> {
 }
 const BASE_JA_TO_EN = reverseMap(itemsJa as Record<string, string>, itemsJaClient as Record<string, string>);
 const UNIQUE_JA_TO_EN = reverseMap(uniqueNamesJa as Record<string, string>);
-export function resolveBaseEn(input: string): string | null {
+function resolveBaseEn(input: string): string | null {
   const t = input.trim();
   if (!t) return null;
   if ((itemsJaClient as Record<string, string>)[t] || (itemsJa as Record<string, string>)[t]) return t;
   return BASE_JA_TO_EN.get(t) ?? null;
 }
-export function resolveUniqueEn(input: string): string | null {
+function resolveUniqueEn(input: string): string | null {
   const t = input.trim();
   if (!t) return null;
   if ((uniqueNamesJa as Record<string, string>)[t]) return t;
@@ -74,8 +74,8 @@ const BASE_RUNE_SOCKETS = 2;
  *   目標品質 30% (完成品の検索条件と同じ) / 彫刻針は 1 本 +1% なので 0 → 20% に 20 本 (オーナー実測)。
  *   インフューザーとお告げの値段は取引所の実売 (カレンシーランキング) のみ。
  */
-export const TARGET_QUALITY = 30;
-export const ETCHER_COUNT = 20;
+const TARGET_QUALITY = 30;
+const ETCHER_COUNT = 20;
 
 export function useOverquality() {
   const presetId = ref<string>("adonia");
@@ -87,12 +87,11 @@ export function useOverquality() {
   const marketLabel = marketStore.fetchedLabel;
   async function loadMarket(): Promise<void> {
     await marketStore.ensureMarket();
-    applyMarketDefaults();
+    // 売値は salePrice の computed で poe2scout のユニーク相場に落ちる
     void fetchPrices();
   }
   const priceOf = marketStore.priceOf;
   const uniquePriceOf = marketStore.uniquePriceOf;
-  const divineRate = computed(() => league.value?.DivinePrice || 1);
 
   // ---- 前提 (固定) ----
   const targetQuality = computed(() => TARGET_QUALITY);
@@ -111,9 +110,6 @@ export function useOverquality() {
   const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
   const qualityCurrencyCount = computed(() => ETCHER_COUNT);
   const pricing = ref(false);
-  function applyMarketDefaults(): void {
-    /* 売値は salePrice の computed で poe2scout のユニーク相場に落ちる */
-  }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   const baseSearchUrl = ref<string | null>(null);
   const saleSearchUrl = ref<string | null>(null);
@@ -184,31 +180,25 @@ export function useOverquality() {
   }
   const result = computed(() => evaluateOverquality(inputs.value, params.value));
 
+  // 画面で使う物だけ返す (未使用の戻り値は 2026-09-18 のレビューで整理)
   return {
-    presetId,
     preset,
     league,
     marketError,
     marketLabel,
     loadMarket,
-    divineRate,
     targetQuality,
-    baseInput,
-    uniqueInput,
     baseEn,
     uniqueEn,
     autoBasePrice,
     autoSalePrice,
-    basePrice,
     salePrice,
     qualityCurrencyCount,
     pricing,
     fetchPrices,
     baseTradeUrl,
     saleTradeUrl,
-    tradeAuto,
     auto,
-    inputs,
     params,
     resetParams,
     result,

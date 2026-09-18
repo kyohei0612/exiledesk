@@ -84,7 +84,9 @@ function toSiteQuery(query: unknown): unknown {
 /**
  * ブラウザで開く trade2 サイト。オーナー指示 (2026-09-12) で既定は日本語サイト (jp)。
  * jp はボット確認 (Cloudflare) を挟むことがあり、その後に検索が消える環境もあるので設定で www に切り替えられる。
- * API (`/api/trade2/...`) は www 固定のまま (constants/trade2.ts)。検索 ID とリーグ ID は両サイト共通。
+ * API (`/api/trade2/...`) は www 固定のまま (constants/trade2.ts)。リーグ ID は両サイト共通。
+ * 検索 ID (search の id) はサイトごとに別 (trade2.rs)。出品 ID (listing の id) が両サイトで同じかは未確認
+ * (手動の再取得は JP、自動巡回は www で取っていて、記録は同じ ID 空間だと仮定している。2026-09-18 レビュー)。
  */
 export type Trade2Site = "jp" | "www";
 export const TRADE2_SITE_KEY = "exiledesk.trade2.site";
