@@ -955,14 +955,14 @@ const summary = computed(() => {
                 </td>
                 <td
                   class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
-                  :class="m.unitAmount != null ? 'text-emerald-300' : m.price == null ? 'text-amber-300' : ''"
+                  :class="m.buy ? 'text-emerald-300' : m.price == null ? 'text-amber-300' : ''"
                   :title="
                     m.unitAmount != null && m.buy
                       ? `取引所の最安 ${m.buy.rawPerUnit} ${currencyJa(m.unitCurrency)} / 個 → 実際に払う ${m.unitAmount} ${currencyJa(m.unitCurrency)} (${money(m.buy.exalted)})`
                       : m.marketCheaper && m.buy
-                        ? `カレンシーランキングの相場 (${money(m.price)}) の方が取引所 (${money(m.buy.exalted)}、繰り上げ後) より安いので相場で計算します`
+                        ? `取引所で比べた結果、相場 (${money(m.price)}) の方が取引所 (${m.buy.rawPerUnit} ${currencyJa(m.buy.currency)} / 個 → 繰り上げて ${money(m.buy.exalted)}) より安いので、相場で買う前提で計算します`
                         : m.price != null
-                          ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押すと取引所の通貨建てになります`
+                          ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押しても取引所の板が薄い素材はここに出ません`
                           : '相場なし'
                   "
                 >
@@ -992,7 +992,7 @@ const summary = computed(() => {
             </tbody>
           </table>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            単価と費用は「取引所で買う時の通貨」の単位です (緑)。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。
+            <span class="text-emerald-300">緑</span>は「取引所で比べた」行です。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。
             単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             原石 (レベル 20) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です (スピリットジェムはスピリットの原石)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。

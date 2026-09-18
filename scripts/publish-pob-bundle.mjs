@@ -15,7 +15,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { readdir, readFile, stat, writeFile, rm } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -74,13 +74,25 @@ async function main() {
       current = null;
     }
   }
+  const vendorKey = process.env.VENDOR_KEY ?? null;
   if (current?.contentHash === hash) {
+    // 中身は同じでも、CI が次回「作り直さなくていい」と判断する目印 (vendorKey) が
+    // 公開済み manifest に入っていなければ、manifest だけ入れ直す (zip は作り直さない)。
+    // 2026-09-18: ここで先に抜けていたので vendorKey が永久に書かれず、CI が毎回 PoB を組み立て直していた。
+    if (vendorKey && current.vendorKey !== vendorKey && !DRY) {
+      await mkdir(OUT_DIR, { recursive: true });
+      await writeFile(MANIFEST, JSON.stringify({ ...current, vendorKey }, null, 2) + "\n");
+      const up = sh("gh", ["release", "upload", TAG, MANIFEST, "-R", REPO, "--clobber"]);
+      if (!up.ok) throw new Error(`gh release upload failed: ${up.out}`);
+      log(`unchanged → manifest の vendorKey だけ更新 (${vendorKey})`);
+      return;
+    }
     log("unchanged → upload skipped");
     return;
   }
 
   await rm(OUT_DIR, { recursive: true, force: true });
-  await import("node:fs/promises").then((m) => m.mkdir(OUT_DIR, { recursive: true }));
+  await mkdir(OUT_DIR, { recursive: true });
   log("zipping (Compress-Archive)…");
   const z = sh("powershell", [
     "-NoProfile",
@@ -98,7 +110,7 @@ async function main() {
     contentHash: hash,
     // 2026-09-18: CI が「同梱をやり直す必要があるか」をこれ 1 つで判断する
     // (vendor の submodule SHA + 組み立てスクリプトのハッシュ。CI が VENDOR_KEY で渡す)
-    vendorKey: process.env.VENDOR_KEY ?? null,
+    vendorKey,
     zipSha256: zipSha,
     zipSize: size,
     builtAt: meta.builtAt,

@@ -45,9 +45,20 @@ export interface BestBuy {
 /**
  * 板が薄いペアは値が壊れるので使わない (実測 2026-09-16: 原石 lv17 × 高貴 は高貴側の在庫 25 / 取引 372 で
  * 高貴の相対値が 3.08 になり、素材の値も 1.5 と出た。ヴァールのペアは両側とも厚く、値も整合する)。
+ *
+ * 2026-09-18 オーナー指摘「ここだけ取引所価格にならない」: 在庫 50 / 取引 20 という線が厳しすぎて、
+ * 宝飾職人のオーブ (完全)・コラプトの結晶・原石といった数の出ない素材が軒並み落ちていた。
+ * 線を下げる代わりに、壊れた値そのものを下で弾く (SANE_FLOOR)。
  */
-const MIN_STOCK = 50;
-const MIN_VOLUME = 20;
+const MIN_STOCK = 10;
+const MIN_VOLUME = 5;
+/**
+ * 相場 (poe2scout) のこの割合を下回る値は、板が壊れているとみなして捨てる。
+ *
+ * 計算を狂わせるのは「安すぎる値」だけ (単価は相場と取引所の安い方を使うので、高すぎる値は相場に負けて無視される)。
+ * 上の実測でも 4.11 の原石が 1.5 (= 相場の 0.36 倍) と出ていた。
+ */
+const SANE_FLOOR = 0.5;
 const CACHE_KEY = "exiledesk.exchange.pairRates";
 const FRESH_MS = 30 * 60 * 1000;
 
@@ -110,8 +121,11 @@ export async function fetchBuy(league: string, apiId: string): Promise<BestBuy |
     if (two == null || two === one) continue;
     const r = await fetchPairRate(league, one, two);
     if (!r) continue;
-    // 両側とも板が厚いペアだけ採用する
+    // 板が薄すぎるペアは見ない
     if (r.oneStock < MIN_STOCK || r.twoStock < MIN_STOCK || r.oneVolume < MIN_VOLUME || r.twoVolume < MIN_VOLUME) continue;
+    // 相場より極端に安い値は板が壊れている (薄い板だと相対値が暴れる)
+    const market = marketStore.priceOf(apiId);
+    if (market != null && market > 0 && r.onePrice < market * SANE_FLOOR) continue;
     // 支払い量はアプリ共通の換算レートで出す (ペア内の相対値は薄い板で暴れるため)
     const rate = currency === "chaos" ? marketStore.rates.value.chaos : marketStore.rates.value.divine;
     options.push({ currency, exalted: r.onePrice, perUnit: rate > 0 ? r.onePrice / rate : r.onePrice, stock: r.oneStock });
