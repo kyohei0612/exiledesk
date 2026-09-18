@@ -67,18 +67,17 @@ pub fn bring_to_front<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     let _ = window.unminimize();
     let _ = window.show();
     #[cfg(windows)]
-    {
-        // Tauri の set_focus / set_always_on_top だけでは、裏のプロセスからは前面に出せなかった
-        // (2026-09-18 実測: 表示状態にはなるが Claude 等の後ろに残る)。Win32 で前面ウィンドウの
-        // スレッドに付いてから SetForegroundWindow する (実測で前面に来ることを確認済み)
-        match window.hwnd() {
-            Ok(h) => {
-                let ok = force_foreground(h.0 as isize);
-                crate::app_log::line(app, &format!("[instance_guard] ウィンドウを前面へ (SetForegroundWindow={ok})"));
-            }
-            Err(e) => crate::app_log::line(app, &format!("[instance_guard] hwnd が取れない: {e}")),
+    // Tauri の set_focus だけでは、裏で動いているプロセスからは前面に出せない
+    // (2026-09-18 実測: 表示状態にはなるが他のウィンドウの後ろに残る)。
+    // 前面ウィンドウのスレッドに入力を付けてから SetForegroundWindow する
+    match window.hwnd() {
+        Ok(h) => {
+            let ok = force_foreground(h.0 as isize);
+            crate::app_log::line(app, &format!("[instance_guard] ウィンドウを前面へ (SetForegroundWindow={ok})"));
         }
+        Err(e) => crate::app_log::line(app, &format!("[instance_guard] hwnd が取れない: {e}")),
     }
+    #[cfg(not(windows))]
     let _ = window.set_focus();
 }
 
