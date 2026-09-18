@@ -58,6 +58,10 @@ struct Gate {
 
 static GATES: StdMutex<Option<HashMap<String, Gate>>> = StdMutex::new(None);
 
+/// レート規則ヘッダを丸ごと記録した窓口 (起動ごとに 1 回だけ出す)
+static HEADERS_LOGGED: StdMutex<std::collections::BTreeSet<String>> =
+    StdMutex::new(std::collections::BTreeSet::new());
+
 /// 送信記録の保存先 (アプリを閉じても覚えておくため)。起動時に `load_gates` で入れる。
 ///
 /// 2026-09-18 オーナー報告「一括でやった時に死ぬほどレート引っかかる」:
@@ -142,7 +146,25 @@ fn min_spacing_ms(kind: &str) -> i64 {
     }
 }
 
-/// その窓で「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
+/// 窓ごとの上限に対して「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
+fn window_wait(sends: &[i64], rules: &[Rule], now: i64, shy: bool) -> i64 {
+    let mut wait = 0;
+    for &(max, period) in rules {
+        // 上限ぴったりまで使うと他の呼び出しとぶつかるので、少し残して止める
+        let margin = if shy { max / 2 } else if max >= 15 { 2 } else { 1 };
+        let keep = max.saturating_sub(margin).max(1) as usize;
+        let window_ms = period * 1000;
+        let in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
+        if in_window.len() >= keep {
+            // 一番古い物が窓から出た瞬間に 1 枠空く
+            let oldest = in_window[in_window.len() - keep];
+            wait = wait.max(oldest + window_ms + 300 - now);
+        }
+    }
+    wait
+}
+
+/// その窓口だけで見た待ち時間
 fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
     let mut wait = (g.blocked_until - now).max(0);
     // 直前の送信からは最低 spacing_ms 空ける (窓に余裕があっても burst にしない)
@@ -152,19 +174,37 @@ fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
     // 同じ IP の別経路 (ブラウザのトレード検索など) が見えている間は、枠を半分しか使わない
     let shy = now - g.foreign_seen_at < FOREIGN_QUIET_MS;
     let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
-    for (max, period) in rules {
-        // 上限ぴったりまで使うと他の呼び出しとぶつかるので、少し残して止める
-        let margin = if shy { max / 2 } else if max >= 15 { 2 } else { 1 };
-        let keep = max.saturating_sub(margin).max(1) as usize;
-        let window_ms = period * 1000;
-        let in_window: Vec<i64> = g.sends.iter().copied().filter(|t| *t > now - window_ms).collect();
-        if in_window.len() >= keep {
-            // 一番古い物が窓から出た瞬間に 1 枠空く
-            let oldest = in_window[in_window.len() - keep];
-            wait = wait.max(oldest + window_ms + 300 - now);
+    wait.max(window_wait(&g.sends, &rules, now, shy))
+}
+
+/// 全窓口あわせた枠。同じ長さの窓を持つ規則のうち**一番きつい上限**を、合計の送信数に当てる。
+///
+/// 2026-09-18 の実測でここに行き着いた。サーバーが返す規則は search が 5 分 30 回、
+/// fetch が 5 分 50 回で、門番はこれを別々に数えていた。ところが:
+///   - 罰則は IP 単位でかかる (search と fetch の 429 の解除時刻がミリ秒まで同じだった)
+///   - 429 の応答には x-rate-limit-* が 1 つも付かない (本文は GGG の "Rate limit exceeded")。
+///     つまり「どの規則で断られたか」はサーバーからは分からない
+///   - 429 を食らった時の**合計**送信数 (直近 5 分) は 24 / 25 / 30 / 32 回。
+///     通ったのは最大 29 回。search の上限 30 回とほぼ一致する
+/// = 5 分 30 回は search だけでなく、その IP から取引所 API に投げた全部に掛かっている。
+/// 別々に数えていたので、合計では 5 分に 57 回投げていた (10.5 秒ごとに search と fetch を 1 組)。
+fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
+    let mut by_period: std::collections::BTreeMap<i64, u32> = std::collections::BTreeMap::new();
+    for g in map.values() {
+        let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
+        for (max, period) in rules {
+            by_period.entry(period).and_modify(|m| *m = (*m).min(max)).or_insert(max);
         }
     }
-    wait
+    by_period.into_iter().map(|(period, max)| (max, period)).collect()
+}
+
+/// 全窓口の送信を合わせた待ち時間
+fn combined_wait(map: &HashMap<String, Gate>, now: i64) -> i64 {
+    let mut sends: Vec<i64> = map.values().flat_map(|g| g.sends.iter().copied()).collect();
+    sends.sort_unstable();
+    let shy = map.values().any(|g| now - g.foreign_seen_at < FOREIGN_QUIET_MS);
+    window_wait(&sends, &combined_rules(map), now, shy)
 }
 
 /// 待てる上限。これを超える待ちは「今は無理」と返して、呼び側にエラーを出させる
@@ -182,12 +222,14 @@ pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
                 Err(_) => return Ok(()),
             };
             let map = guard.get_or_insert_with(HashMap::new);
-            let g = map.entry(kind.to_string()).or_default();
             let now = now_ms();
+            let g = map.entry(kind.to_string()).or_default();
             g.sends.retain(|t| *t > now - 6 * 3600 * 1000);
-            let wait = wait_for_rules(g, now, min_spacing_ms(kind));
+            let own = wait_for_rules(g, now, min_spacing_ms(kind));
+            // 枠は IP 単位なので、全窓口を合わせた分も見る
+            let wait = own.max(combined_wait(map, now));
             if wait <= 0 {
-                g.sends.push(now);
+                map.entry(kind.to_string()).or_default().sends.push(now);
                 save_gates_locked(map);
             }
             wait
@@ -241,6 +283,17 @@ fn recent_counts(map: &HashMap<String, Gate>, now: i64) -> String {
 
 /// 応答のヘッダで規則と現在数を合わせる (罰則が残っていればその間は送らない)
 pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
+    // サーバーが出している規則群を起動ごとに 1 回だけ丸ごと残す。
+    // 2026-09-18: 門番は x-rate-limit-ip しか見ていない。ほかに account / client の規則が
+    // 出ているなら、そちらで断られている可能性があるので、実物を確かめられるようにする。
+    if let Ok(mut seen) = HEADERS_LOGGED.lock() {
+        if seen.insert(kind.to_string()) {
+            crate::app_log::line_static(&format!(
+                "[trade2] {kind} のレート規則ヘッダ: {}",
+                rate_limit_headers(headers)
+            ));
+        }
+    }
     let get = |name: &str| headers.get(name).and_then(|v| v.to_str().ok()).map(str::to_string);
     let rules_raw = get("x-rate-limit-ip");
     let state_raw = get("x-rate-limit-ip-state");
@@ -375,6 +428,7 @@ pub fn gate_wait_secs() -> i64 {
     let map = guard.get_or_insert_with(HashMap::new);
     let now = now_ms();
     let mut wait = 0;
+    wait = wait.max(combined_wait(map, now));
     for (kind, g) in map.iter() {
         wait = wait.max(wait_for_rules(g, now, min_spacing_ms(kind)));
     }
@@ -734,6 +788,22 @@ mod rate_tests {
         for k in KINDS {
             assert!(map[k].blocked_until >= now + 600_000, "{k} も止まる");
         }
+    }
+
+    /// search と fetch は 1 つの枠として数える (罰則が IP 単位なので上限も IP 単位)。
+    /// 別々に数えていた頃は、合計で 5 分 57 回投げて 429 を食らっていた (2026-09-18)
+    #[test]
+    fn search_and_fetch_share_one_budget() {
+        let now = 1_000_000_000;
+        let mut map = HashMap::new();
+        // それぞれの上限 (30 / 50) には遠いが、合わせると search の 30 に届く
+        map.insert("search".to_string(), gate((0..14).map(|i| now - i * 10_000).collect(), vec![(30, 300)], 0));
+        map.insert("fetch".to_string(), gate((0..14).map(|i| now - i * 10_000 - 1_000).collect(), vec![(50, 300)], 0));
+        for (kind, g) in map.iter() {
+            assert_eq!(window_wait(&g.sends, &g.rules, now, false), 0, "{kind} 単体では空いている");
+        }
+        assert_eq!(combined_rules(&map), vec![(30, 300)], "きつい方の上限を合計に当てる");
+        assert!(combined_wait(&map, now) > 0, "合計 28 回は 30 回の枠に届いているので待つ");
     }
 
     /// 罰則中はその解除まで待つ
