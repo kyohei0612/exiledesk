@@ -188,16 +188,20 @@ fn gate_note(kind: &str, headers: &HeaderMap) {
                 continue;
             }
             // サーバーの数えた現在数が**こちらの記録より多く**、かつ上限に近い = 同じ IP の別経路
-            // (手で開いた検索など) が使っている。窓がいつ始まったかは分からないので、窓の長さぶん
-            // 待ってから再開する (フロントと同じ判断)。
-            // 自分の送信だけで上限近くまで使った時は wait_for_rules が正確に待つので、ここでは止めない
-            // (止めていた頃は 28 件送るたびに 300 秒止まっていた。2026-09-18 レビュー指摘)。
+            // (手で開いた検索など) が使っている。自分の送信だけで上限近くまで使った時は
+            // wait_for_rules が正確に待つので、ここでは止めない。
             // 「送ったことにする」のも駄目: 6 時間窓の差分が 10 秒窓にも乗って全部止まる。
             let Some(&(max, _)) = rules.get(i) else { continue };
             let margin = if max >= 15 { 2 } else { 1 };
+            let keep = max.saturating_sub(margin).max(1) as i64;
             let own = g.sends.iter().filter(|t| **t > now - period * 1000).count() as i64;
-            if cur > own && cur >= (max.saturating_sub(margin)) as i64 {
-                g.blocked_until = g.blocked_until.max(now + period * 1000);
+            if cur > own && cur >= keep {
+                // 窓は滑って動くので、平均すると period/max ごとに 1 枠空く。
+                // 超過ぶんだけ待てば上限を下回る (窓の長さぶん丸ごと止めると、
+                // 8 銘柄ほどで 5 分止まる = オーナー報告「8 銘柄くらいしか取れない」2026-09-18)。
+                let slot_ms = (period * 1000 / max.max(1) as i64).max(1);
+                let excess = cur - keep + 1;
+                g.blocked_until = g.blocked_until.max(now + slot_ms * excess);
             }
         }
     }
@@ -526,11 +530,12 @@ mod rate_tests {
         gate_note(key, &h);
         let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
         assert_eq!(blocked, 0, "自分の送信ぶんでは止めない");
-        // サーバーの方が多い (手で検索した分がある) 時だけ窓の長さぶん止める
+        // サーバーの方が多い (手で検索した分がある) 時は、超過ぶんの枠が空くまで止める
+        // (上限 5 / 10 秒 なら 1 枠 = 2 秒。窓の長さぶん丸ごとは止めない)
         h.insert("x-rate-limit-ip-state", HeaderValue::from_static("5:10:0"));
         gate_note(key, &h);
         let blocked = GATES.lock().unwrap().as_ref().unwrap()[key].blocked_until;
-        assert!(blocked >= now + 10_000, "別経路の使用があれば窓の長さぶん止める");
+        assert!(blocked >= now + 2_000 && blocked <= now + 6_000, "超過ぶんだけ待つ (blocked={blocked}, now={now})");
     }
 
     /// 罰則中はその解除まで待つ
