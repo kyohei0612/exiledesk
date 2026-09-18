@@ -4,8 +4,14 @@
 
 use super::*;
 
+/// この 2 つのテストは同じグローバル (UNKNOWN_INV_ID_COUNT / サンプル一覧) を触るので、
+/// 並列に走ると互いの記録を混ぜて落ちる (2026-09-18: 単独実行では通るのに --lib で時々失敗していた)。
+/// 順番に走らせるための鍵。
+static GLOBAL_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[test]
 fn unknown_inv_id_counter_increments() {
+    let _guard = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let before = UNKNOWN_INV_ID_COUNT.load(Ordering::Relaxed);
     record_unknown_inventory_id("MysterySlot", 2);
     record_unknown_inventory_id("MysterySlot2", -1);
@@ -39,6 +45,7 @@ fn health_check_result_serializes() {
 /// + 「上位 N 件が count 降順で並ぶ」ことを確認する。
 #[test]
 fn unknown_inv_id_samples_aggregate_by_count() {
+    let _guard = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     // 先行テストの影響を消すため、明示リセット。
     reset_unknown_inventory_id_samples();
 
