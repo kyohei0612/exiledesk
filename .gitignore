@@ -33,3 +33,4 @@ src-tauri/resources/pob*/
 
 # CI のキャッシュキー用 (自分の版を除いた Cargo.lock)
 .cargo-lock-key
+.pob-published

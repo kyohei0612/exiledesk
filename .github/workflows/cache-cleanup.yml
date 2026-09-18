@@ -1,0 +1,45 @@
+name: Cache cleanup
+
+# キャッシュ枠 (リポジトリあたり 10 GB) の掃除 (2026-09-18 オーナー指示:「キャッシュ枠 1 日でクリアにしよう」)。
+#
+# 2026-09-18 に枠が 10.14 GB まで膨らみ、古い物が押し出されて毎回ゼロからビルドしていた。
+# 原因はリリースのたびにキーが変わっていたことで、そちらは直した (依存が変わった時だけキーが変わる)。
+# ここは保険として、**今使っているキャッシュ以外**を毎日捨てる。
+# 全部消すと翌朝の 1 本目が 9 分かかるので、最新の 1 世代だけは残す。
+on:
+  schedule:
+    - cron: "0 18 * * *" # 毎日 03:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 古いキャッシュを消す (使っている最新の 1 世代だけ残す)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/actions/caches" --paginate \
+            -q '.actions_caches[] | "\(.id)\t\(.key)\t\(.created_at)\t\(.size_in_bytes)"' \
+            | sort -k2,2 -k3,3r > /tmp/caches.tsv || true
+          total=0
+          kept=""
+          while IFS=$'\t' read -r id key created size; do
+            [ -z "${id:-}" ] && continue
+            if [ "$kept" != "$key" ]; then
+              kept="$key"
+              echo "keep   $key ($((size / 1048576)) MB, $created)"
+              continue
+            fi
+            echo "delete $key ($((size / 1048576)) MB, $created)"
+            gh api -X DELETE "repos/$REPO/actions/caches/$id" >/dev/null || true
+            total=$((total + size))
+          done < /tmp/caches.tsv
+          echo "消した容量: $((total / 1048576)) MB"
+          gh api "repos/$REPO/actions/caches" -q '[.actions_caches[].size_in_bytes] | add // 0' \
+            | awk '{ printf "残り %.2f GB\n", $1 / 1073741824 }'

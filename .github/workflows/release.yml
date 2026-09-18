@@ -14,10 +14,10 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout (with submodules)
+      # サブモジュール (PoB 本体 + 日本語パッチ、合わせて 30 秒ぶん) は、
+      # 同梱物を作り直す時だけ取りに行く (2026-09-18: 毎回 31 秒かけて取っていた)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,15 +67,40 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # vendor の SHA + 組み立てスクリプトが前回と同じなら、PoB 同梱はまるごと飛ばす。
+      # SHA は submodule の中身が無くても git ls-tree で読める
+      - name: PoB 同梱の要否
+        id: pob
+        shell: bash
+        run: |
+          key=$(git ls-tree HEAD vendor | sha256sum | cut -c1-16)
+          key=$key-$(sha256sum scripts/build-pob-bundle.mjs scripts/publish-pob-bundle.mjs | sha256sum | cut -c1-16)
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      - name: PoB 同梱の記録
+        id: pob-cache
+        uses: actions/cache@v4
+        with:
+          path: .pob-published
+          key: pob-published-${{ steps.pob.outputs.key }}
+
+      - name: Checkout submodules (PoB を作り直す時だけ)
+        if: steps.pob-cache.outputs.cache-hit != 'true'
+        run: git submodule update --init --recursive --depth 1
+
       - name: Build PoB bundle (vendor submodule -> src-tauri/resources/pob)
+        if: steps.pob-cache.outputs.cache-hit != 'true'
         run: node scripts/build-pob-bundle.mjs
 
       # PoB はインストーラに同梱せず、固定タグ pob-bundle に zip + manifest として置く (内容が変わったときだけ上書き)。
       # アプリは起動時 30 日ごとに manifest を確認して app_local_data_dir/pob に展開する。
       - name: Publish PoB bundle (rolling release "pob-bundle")
+        if: steps.pob-cache.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/publish-pob-bundle.mjs
+        run: |
+          node scripts/publish-pob-bundle.mjs
+          date -u +%FT%TZ > .pob-published
 
       - name: Build & Release (tauri-action)
         uses: tauri-apps/tauri-action@v0
