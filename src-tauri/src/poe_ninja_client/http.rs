@@ -158,6 +158,8 @@ pub(crate) async fn http_get_with_backoff(
             // 個別 sleep のみで gate / global state 共に変更しない方針を維持。
             if is_rate_limited {
                 let reason = format!("{status}");
+                // 同じ間隔で投げ続けるとまた同じ所で 429 になるので、間隔自体を伸ばす
+                gate.slow_down();
                 gate.set_penalty(Duration::from_millis(retry_after_ms), Some(reason))
                     .await;
             }

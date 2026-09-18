@@ -17,6 +17,9 @@ use tauri::Manager;
 const SEEDS: &[(&str, &str)] = &[
     ("seed/market_flow.json", "market_flow.json"),
     ("seed/gem_break_result.json", "gem_break_result.json"),
+    // キャラ別キャッシュも積んでおく。同じ snapshot の間は使用率ランキングを
+    // 取り直してもリクエストがほぼ 0 で済む
+    ("seed/gem_break_cache.json", "gem_break_cache.json"),
 ];
 
 fn app_data_path(app: &tauri::AppHandle, name: &str) -> Option<PathBuf> {

@@ -30,7 +30,8 @@ pub struct RateGate {
     /// next_slot: 次に発行できる送信時刻 (単調増加)。
     /// penalty_until: 429 ペナルティで全タスクが揃って待つ時刻。
     state: Arc<Mutex<RateGateState>>,
-    min_interval: Duration,
+    /// 最小送信間隔 (ms)。429 を食らうたびに伸ばす (2026-09-18)
+    min_interval_ms: Arc<std::sync::atomic::AtomicU64>,
 }
 
 pub(crate) struct RateGateState {
@@ -115,8 +116,29 @@ impl RateGate {
                 penalty_until: past,
                 cycle_started_at: None,
             })),
-            min_interval: Duration::from_millis(min_interval_ms),
+            min_interval_ms: Arc::new(std::sync::atomic::AtomicU64::new(min_interval_ms)),
         }
+    }
+
+    /// 今の最小送信間隔
+    pub fn interval_ms(&self) -> u64 {
+        self.min_interval_ms.load(Ordering::Relaxed)
+    }
+
+    /// 429 を食らった時に間隔を伸ばす (2026-09-18 オーナー報告「死ぬほどレート引っかかる」)。
+    ///
+    /// 決め打ちの 2.5 秒だと、poe.ninja の長い窓 (体感 30 回 / 5 分 ≒ 10 秒に 1 回) を超えるので
+    /// 30 回ごとに必ず 429 → 数十分の罰則、を繰り返していた。1 回食らったらその場で倍にして、
+    /// 上限 (MAX_SLOWDOWN_MS) まで伸ばす。次の起動では元の間隔から始める
+    /// (キャッシュが効いていれば数リクエストで終わるので、いきなり遅くする必要はない)。
+    pub fn slow_down(&self) -> u64 {
+        let cur = self.min_interval_ms.load(Ordering::Relaxed);
+        let next = (cur * 2).min(MAX_SLOWDOWN_MS);
+        if next != cur {
+            self.min_interval_ms.store(next, Ordering::Relaxed);
+            eprintln!("[rate_gate] 429 を受けたので送信間隔を {cur}ms -> {next}ms に伸ばしました");
+        }
+        next
     }
 
     /// 1 リクエスト分の枠が空くまで待つ。
@@ -202,8 +224,8 @@ impl RateGate {
                 );
             }
 
-            // 次の呼び出しは reserved + min_interval 以降にしか発行できない。
-            guard.next_slot = reserved + self.min_interval;
+            // 次の呼び出しは reserved + 最小間隔 以降にしか発行できない。
+            guard.next_slot = reserved + Duration::from_millis(self.min_interval_ms.load(Ordering::Relaxed));
             reserved
         };
         // lock を drop した状態で待つ。他タスクは別 slot で並行に進める。

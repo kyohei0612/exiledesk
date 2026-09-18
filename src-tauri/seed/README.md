@@ -9,6 +9,7 @@
 | --- | --- | --- |
 | `market_flow.json` | 捌き速度の記録 (追跡中の出品 ID・売れた記録・日次集計) | 判定が出るまで数日かかる |
 | `gem_break_result.json` | 使用率ランキングの集計結果 (どのジェムを監視するかの元) | poe.ninja に 100 リクエスト必要 (レート制限で 10 分〜1 時間) |
+| `gem_break_cache.json` | 上のキャラ別の元データ | 取り直す時にまた 100 リクエスト |
 
 ## 更新のしかた
 
@@ -17,6 +18,7 @@
 ```bash
 cp "$APPDATA/com.kyohei.exiledesk/market_flow.json" src-tauri/seed/market_flow.json
 cp "$APPDATA/com.kyohei.exiledesk/gem_break_result.json" src-tauri/seed/gem_break_result.json
+cp "$APPDATA/com.kyohei.exiledesk/gem_break_cache.json" src-tauri/seed/gem_break_cache.json
 ```
 
 `gem_break_result.json` は使用率ランキングを 1 回取得すると書かれる (v0.1.167 以降)。

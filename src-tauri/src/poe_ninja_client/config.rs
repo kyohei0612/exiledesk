@@ -61,6 +61,11 @@ pub(crate) const ON_PERIOD_MS: u64 = 15_000;
 /// 機構自体はコードに残置、将来再有効化する場合は 10_000 等に戻す。
 pub(crate) const OFF_PERIOD_MS: u64 = 0;
 
+/// 429 を食らって間隔を伸ばす時の上限 (ms)。
+/// poe.ninja の長い窓は体感 30 回 / 5 分 (= 10 秒に 1 回) なので、そこまで伸ばせば止まらない
+/// (2026-09-18 オーナー報告「死ぬほどレート引っかかる」)。
+pub(crate) const MAX_SLOWDOWN_MS: u64 = 10_000;
+
 /// 429 受信時の exponential backoff 初期値 (ms)
 /// 2026-05-22 Phase θ: 2s → 3s に延長
 pub(crate) const BACKOFF_INITIAL_MS: u64 = 3_000;
