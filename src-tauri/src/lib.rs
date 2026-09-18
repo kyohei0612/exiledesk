@@ -12,6 +12,7 @@ pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を�
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
+pub mod app_log;         // app_data_dir/exiledesk.log (2026-09-18 オーナー「エラーログ見て欲しい」)
 pub mod market_flow;  // 捌き速度の追跡 (2026-09-16): trade2 のクエリ単位で 周期ごとに出品の消失率を記録
 pub mod gem_break;  // クラフト前提ジェム (2026-09-16): 1 アセンダンシー分のレベル 21 / 品質 23% 使用人数
 pub mod trade_history;  // 取引履歴 (マーチャント履歴) の連動 (2026-09-16): アプリ内ログイン + 履歴 API
@@ -168,6 +169,15 @@ pub fn run() {
                 state.set(loaded.clone());
             }
 
+            app_log::init(app.handle());
+            app_log::line(
+                app.handle(),
+                &format!(
+                    "[起動] v{} args={:?}",
+                    app.package_info().version,
+                    std::env::args().skip(1).collect::<Vec<_>>()
+                ),
+            );
             // 自動起動の登録先が別の exe (古い開発ビルドなど) を指していたら今の exe に直す
             instance_guard::repair_autostart(&app.package_info().name);
 
@@ -240,6 +250,7 @@ pub fn run() {
             // 一部 OS で初期化順序の都合で WebView が遅延起動になる事例がある。
             // ----------------------------------------------------------------
             if tray_only {
+                app_log::line(app.handle(), "[起動] --tray-only なのでウィンドウを隠してトレイ常駐");
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.hide();
                 }

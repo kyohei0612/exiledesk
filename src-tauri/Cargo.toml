@@ -50,4 +50,6 @@ tauri-plugin-single-instance = "2"
 # スタートアップ登録 (HKCU\Run) の登録先を確かめて直す (auto-launch と同じ版)
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10"
+# ウィンドウを確実に前面へ出す (AttachThreadInput + SetForegroundWindow)。tauri が既に持っている版
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
 

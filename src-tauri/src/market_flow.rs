@@ -1273,12 +1273,12 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
             }
             if now >= next_sweep_at(&store) {
                 if let Err(e) = sample_once(&app).await {
-                    eprintln!("[market_flow] サンプリング失敗: {e}");
+                    crate::app_log::line_static(&format!("[market_flow] サンプリング失敗: {e}"));
                 }
             } else if store.retry_at > 0 && now >= store.retry_at {
                 // 取りこぼした銘柄だけ取り直す (全銘柄を回し直さない)
                 if let Err(e) = sample_retry(&app).await {
-                    eprintln!("[market_flow] 取り直し失敗: {e}");
+                    crate::app_log::line_static(&format!("[market_flow] 取り直し失敗: {e}"));
                 }
             }
             tokio::time::sleep(Duration::from_secs(60)).await;

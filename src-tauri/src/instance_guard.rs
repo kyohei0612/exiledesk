@@ -45,6 +45,7 @@ fn exe_in_run_value(value: &str) -> &str {
 
 /// 2 つ目が起動されたとき (single-instance のコールバック)。既存のウィンドウを前面に出す。
 pub fn on_second_instance<R: tauri::Runtime>(app: &tauri::AppHandle<R>, args: Vec<String>, _cwd: String) {
+    crate::app_log::line(app, &format!("[instance_guard] 2 つ目の起動を受けた args={args:?}"));
     // 2 つ目がログイン時の自動起動なら、既に動いている方をそのままにする
     if args.iter().any(|a| a == TRAY_ONLY_ARG) {
         return;
@@ -59,12 +60,57 @@ pub fn on_second_instance<R: tauri::Runtime>(app: &tauri::AppHandle<R>, args: Ve
 /// SetForegroundWindow を拒むので他のウィンドウの後ろに残っていた (ユーザーからは一瞬出て消えたように見える)。
 /// 一度「常に手前」にしてから戻すと Z 順が上がるので、フォーカスを取れなくても見える位置に来る。
 pub fn bring_to_front<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_always_on_top(true);
-        let _ = window.set_focus();
-        let _ = window.set_always_on_top(false);
+    let Some(window) = app.get_webview_window("main") else {
+        crate::app_log::line(app, "[instance_guard] main ウィンドウが無い");
+        return;
+    };
+    let _ = window.unminimize();
+    let _ = window.show();
+    #[cfg(windows)]
+    {
+        // Tauri の set_focus / set_always_on_top だけでは、裏のプロセスからは前面に出せなかった
+        // (2026-09-18 実測: 表示状態にはなるが Claude 等の後ろに残る)。Win32 で前面ウィンドウの
+        // スレッドに付いてから SetForegroundWindow する (実測で前面に来ることを確認済み)
+        match window.hwnd() {
+            Ok(h) => {
+                let ok = force_foreground(h.0 as isize);
+                crate::app_log::line(app, &format!("[instance_guard] ウィンドウを前面へ (SetForegroundWindow={ok})"));
+            }
+            Err(e) => crate::app_log::line(app, &format!("[instance_guard] hwnd が取れない: {e}")),
+        }
+    }
+    let _ = window.set_focus();
+}
+
+/// 前面ウィンドウのスレッドに入力を付けてから前面化する (Windows が裏プロセスの前面化を拒む対策)
+#[cfg(windows)]
+fn force_foreground(hwnd: isize) -> bool {
+    use windows_sys::Win32::Foundation::HWND;
+    use windows_sys::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        BringWindowToTop, GetForegroundWindow, GetWindowThreadProcessId, SetForegroundWindow, SetWindowPos, ShowWindow,
+        SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, SW_RESTORE,
+    };
+    // SAFETY: 全て自プロセスのウィンドウ / スレッドに対する Win32 呼び出し。失敗しても戻り値で分かるだけ
+    unsafe {
+        let h = hwnd as HWND;
+        let topmost = -1isize as HWND;
+        let notopmost = -2isize as HWND;
+        let fg = GetForegroundWindow();
+        let me = GetCurrentThreadId();
+        let mut pid = 0u32;
+        let fg_thread = if fg.is_null() { 0 } else { GetWindowThreadProcessId(fg, &mut pid) };
+        let attached = fg_thread != 0 && fg_thread != me && AttachThreadInput(me, fg_thread, 1) != 0;
+        ShowWindow(h, SW_RESTORE);
+        // 一度「常に手前」にして戻すと Z 順が上がる (前面化が拒まれても見える位置に来る)
+        SetWindowPos(h, topmost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        SetWindowPos(h, notopmost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+        BringWindowToTop(h);
+        let ok = SetForegroundWindow(h) != 0;
+        if attached {
+            AttachThreadInput(me, fg_thread, 0);
+        }
+        ok
     }
 }
 
