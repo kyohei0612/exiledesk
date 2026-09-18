@@ -76,31 +76,33 @@ jobs:
           key=$(git ls-tree HEAD vendor | sha256sum | cut -c1-16)
           key=$key-$(sha256sum scripts/build-pob-bundle.mjs scripts/publish-pob-bundle.mjs | sha256sum | cut -c1-16)
           echo "key=$key" >> "$GITHUB_OUTPUT"
-
-      - name: PoB 同梱の記録
-        id: pob-cache
-        uses: actions/cache@v4
-        with:
-          path: .pob-published
-          key: pob-published-${{ steps.pob.outputs.key }}
+          # 公開済みの pob-bundle manifest に入っている vendorKey と比べる。
+          # (タグで作ったキャッシュは別のタグから見えないので、キャッシュでは判定できない)
+          published=$(curl -sfL "https://github.com/${{ github.repository }}/releases/download/pob-bundle/pob-bundle.json" | jq -r ".vendorKey // empty" || true)
+          if [ "$published" = "$key" ]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "PoB 同梱は前回と同じ ($key) なので飛ばす"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "PoB 同梱をやり直す (公開済み: ${published:-なし} / 今回: $key)"
+          fi
 
       - name: Checkout submodules (PoB を作り直す時だけ)
-        if: steps.pob-cache.outputs.cache-hit != 'true'
+        if: steps.pob.outputs.needed == 'true'
         run: git submodule update --init --recursive --depth 1
 
       - name: Build PoB bundle (vendor submodule -> src-tauri/resources/pob)
-        if: steps.pob-cache.outputs.cache-hit != 'true'
+        if: steps.pob.outputs.needed == 'true'
         run: node scripts/build-pob-bundle.mjs
 
       # PoB はインストーラに同梱せず、固定タグ pob-bundle に zip + manifest として置く (内容が変わったときだけ上書き)。
       # アプリは起動時 30 日ごとに manifest を確認して app_local_data_dir/pob に展開する。
       - name: Publish PoB bundle (rolling release "pob-bundle")
-        if: steps.pob-cache.outputs.cache-hit != 'true'
+        if: steps.pob.outputs.needed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node scripts/publish-pob-bundle.mjs
-          date -u +%FT%TZ > .pob-published
+          VENDOR_KEY: ${{ steps.pob.outputs.key }}
+        run: node scripts/publish-pob-bundle.mjs
 
       - name: Build & Release (tauri-action)
         uses: tauri-apps/tauri-action@v0

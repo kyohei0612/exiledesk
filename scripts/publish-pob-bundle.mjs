@@ -96,6 +96,9 @@ async function main() {
     tree: meta.tree,
     jp: meta.jp ?? null,
     contentHash: hash,
+    // 2026-09-18: CI が「同梱をやり直す必要があるか」をこれ 1 つで判断する
+    // (vendor の submodule SHA + 組み立てスクリプトのハッシュ。CI が VENDOR_KEY で渡す)
+    vendorKey: process.env.VENDOR_KEY ?? null,
     zipSha256: zipSha,
     zipSize: size,
     builtAt: meta.builtAt,
