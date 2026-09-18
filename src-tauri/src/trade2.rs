@@ -121,15 +121,26 @@ fn now_ms() -> i64 {
 
 /// 同じ IP の別経路を見つけてから、控えめに投げ続ける時間
 const FOREIGN_QUIET_MS: i64 = 10 * 60 * 1000;
-/// どの送信も最低これだけは空ける (3 発を 1 秒以内に出すような burst を作らない)
-const MIN_SPACING_MS: i64 = 2_000;
+/// エンドポイントごとの最低間隔。
+///
+/// 2026-09-18 オーナー報告「昨日は一括押しても止まらなかった」→ 何が変わったかを記録で突き合わせた。
+/// v0.1.159 のレビューで、画面側 (pricing.ts) が持っていた最低間隔 (search 10.5 秒 / fetch 2.5 秒) を
+/// 「Rust の門番があるから二重待ちになる」と外していた。門番は窓の上限しか見ないので、
+/// 手動の再取得が **3 発を 1 秒以内**に出せるようになり (記録で確認: 18:28:49-50 に 3 発)、
+/// そこから 429 (retry-after 600 秒) を踏んでいた。昨日まで効いていた値をこちらに移す。
+fn min_spacing_ms(kind: &str) -> i64 {
+    match kind {
+        "search" => 10_500,
+        _ => 2_500,
+    }
+}
 
 /// その窓で「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
-fn wait_for_rules(g: &Gate, now: i64) -> i64 {
+fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
     let mut wait = (g.blocked_until - now).max(0);
-    // 直前の送信からは最低 MIN_SPACING_MS 空ける (窓に余裕があっても burst にしない)
-    if let Some(last) = g.sends.last() {
-        wait = wait.max(last + MIN_SPACING_MS - now);
+    // 直前の送信からは最低 spacing_ms 空ける (窓に余裕があっても burst にしない)
+    if let Some(last) = g.sends.iter().max() {
+        wait = wait.max(last + spacing_ms - now);
     }
     // 同じ IP の別経路 (ブラウザのトレード検索など) が見えている間は、枠を半分しか使わない
     let shy = now - g.foreign_seen_at < FOREIGN_QUIET_MS;
@@ -161,7 +172,7 @@ async fn gate_acquire(kind: &str) {
             let g = map.entry(kind.to_string()).or_default();
             let now = now_ms();
             g.sends.retain(|t| *t > now - 6 * 3600 * 1000);
-            let wait = wait_for_rules(g, now);
+            let wait = wait_for_rules(g, now, min_spacing_ms(kind));
             if wait <= 0 {
                 g.sends.push(now);
                 save_gates_locked(map);
@@ -271,8 +282,8 @@ pub fn gate_wait_secs() -> i64 {
     let map = guard.get_or_insert_with(HashMap::new);
     let now = now_ms();
     let mut wait = 0;
-    for g in map.values() {
-        wait = wait.max(wait_for_rules(g, now));
+    for (kind, g) in map.iter() {
+        wait = wait.max(wait_for_rules(g, now, min_spacing_ms(kind)));
     }
     (wait + 999) / 1000
 }
@@ -505,6 +516,9 @@ pub(crate) fn urlencode(s: &str) -> String {
 mod rate_tests {
     use super::*;
 
+    /// テスト用の最低間隔 (search 相当)
+    const SPACING: i64 = 10_500;
+
     fn gate(sends: Vec<i64>, rules: Vec<Rule>, blocked_until: i64) -> Gate {
         Gate { sends, rules, blocked_until, foreign_seen_at: 0 }
     }
@@ -513,8 +527,8 @@ mod rate_tests {
     #[test]
     fn free_slot_does_not_wait() {
         let now = 1_000_000;
-        let g = gate(vec![now - 9_000], vec![(5, 10)], 0);
-        assert_eq!(wait_for_rules(&g, now), 0);
+        let g = gate(vec![now - 11_000], vec![(5, 10)], 0);
+        assert_eq!(wait_for_rules(&g, now, SPACING), 0);
     }
 
     /// 枠が空いていても 1 秒以内に連発はしない (2026-09-18: 手動の再取得が 3 発を 1 秒で出していた)
@@ -522,17 +536,19 @@ mod rate_tests {
     fn burst_is_spaced_out() {
         let now = 1_000_000;
         let g = gate(vec![now - 500], vec![(5, 10)], 0);
-        assert_eq!(wait_for_rules(&g, now), 1_500, "直前の送信から 2 秒空ける");
+        assert_eq!(wait_for_rules(&g, now, SPACING), 10_000, "直前の送信から 10.5 秒空ける");
     }
 
     /// 別経路が枠を使っている間は半分しか使わない
     #[test]
     fn foreign_traffic_halves_the_budget() {
         let now = 1_000_000;
-        let mut g = gate((0..3).map(|i| now - 9_000 + i * 1_000).collect(), vec![(5, 10)], 0);
-        assert_eq!(wait_for_rules(&g, now), 0, "普段は 4 件まで使える");
+        // 上限 10 / 600 秒。普段の余裕は 2 (8 件まで)、別経路が見えている時は半分 (5 件まで)
+        let sends: Vec<i64> = (0..6).map(|i| now - 300_000 + i * 10_000).collect();
+        let mut g = gate(sends, vec![(10, 600)], 0);
+        assert_eq!(wait_for_rules(&g, now, SPACING), 0, "普段は 8 件まで使えるので 6 件なら待たない");
         g.foreign_seen_at = now - 1_000;
-        assert!(wait_for_rules(&g, now) > 0, "別経路が見えている間は 3 件目で止める");
+        assert!(wait_for_rules(&g, now, SPACING) > 0, "別経路が見えている間は 5 件で止める");
     }
 
     /// 上限の手前 (余裕 1) まで使ったら、一番古い送信が窓から出るまで待つ
@@ -540,10 +556,11 @@ mod rate_tests {
     fn waits_until_oldest_leaves_the_window() {
         let now = 1_000_000;
         // 上限 5 / 10 秒 → 余裕 1 なので 4 件で止める。一番古いのは 3 秒前
-        let sends = vec![now - 3_000, now - 2_000, now - 1_000, now - 500];
+        let sends = vec![now - 9_000, now - 8_000, now - 7_000, now - 6_000];
         let g = gate(sends, vec![(5, 10)], 0);
-        // 3 秒前の分が窓 (10 秒) から出るまで = あと 7 秒 + 余白 0.3 秒
-        assert_eq!(wait_for_rules(&g, now), 7_300);
+        // 9 秒前の分が窓 (10 秒) から出るまで = あと 1 秒 + 余白 0.3 秒。
+        // ただし直前の送信 (6 秒前) から 10.5 秒の最低間隔の方が長いのでそちらが効く
+        assert_eq!(wait_for_rules(&g, now, SPACING), 4_500);
     }
 
     /// 窓が複数ある時は一番長く待つ物に合わせる
@@ -551,10 +568,10 @@ mod rate_tests {
     fn takes_the_longest_wait_of_all_windows() {
         let now = 1_000_000;
         let mut sends: Vec<i64> = (0..13).map(|i| now - 50_000 + i * 100).collect();
-        sends.push(now - 500);
+        sends.push(now - 11_000);
         let g = gate(sends, vec![(5, 10), (15, 60)], 0);
         // 60 秒窓 (上限 15、余裕 2 → 13 件) の方が長い
-        assert!(wait_for_rules(&g, now) > 9_000);
+        assert!(wait_for_rules(&g, now, SPACING) > 9_000);
     }
 
     /// 自分の送信だけで上限近くまで使っても、state ヘッダの現在数で余計に止めない
@@ -591,6 +608,6 @@ mod rate_tests {
     fn penalty_blocks_until_it_clears() {
         let now = 1_000_000;
         let g = gate(vec![], vec![(5, 10)], now + 30_000);
-        assert_eq!(wait_for_rules(&g, now), 30_000);
+        assert_eq!(wait_for_rules(&g, now, SPACING), 30_000);
     }
 }
