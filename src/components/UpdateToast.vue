@@ -113,6 +113,14 @@ async function applyUpdate() {
   phase.value = "downloading";
   errorMsg.value = null;
   try {
+    // 再起動は今の引数 (ログイン時の --tray-only など) を引き継ぐので、次の起動ではウィンドウを出す印を
+    // **インストールの前に**置く。Windows ではインストーラがこのプロセスを終了させて自分で新版を起動するため、
+    // downloadAndInstall の後の行は実行されない (2026-09-18 実測: 印が無いまま --tray-only で隠れて立ち上がった)
+    try {
+      await invoke("mark_show_on_restart");
+    } catch {
+      /* 印が置けなくても更新自体は続ける (トレイから出せる) */
+    }
     await update.value.downloadAndInstall((event) => {
       switch (event.event) {
         case "Started":
@@ -128,14 +136,7 @@ async function applyUpdate() {
       }
     });
     phase.value = "done";
-    // 再起動は今の引数 (ログイン時の --tray-only など) を引き継ぐので、次の起動ではウィンドウを出す印を置く
-    // (2026-09-18 オーナー報告「更新後に一瞬起動してすぐ閉じる」)
-    try {
-      await invoke("mark_show_on_restart");
-    } catch {
-      /* 印が置けなくても更新自体は続ける (トレイから出せる) */
-    }
-    // インストーラ実行後、明示 relaunch で新版を立ち上げる
+    // インストーラ実行後、明示 relaunch で新版を立ち上げる (Windows ではここまで来ないことが多い)
     await relaunch();
   } catch (e) {
     errorMsg.value = typeof e === "string" ? e : (e as Error).message;
