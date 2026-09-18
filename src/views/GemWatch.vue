@@ -484,7 +484,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          自動巡回は {{ cycleHours }} 時間ぶんに均して流します ({{ gems.length ? Math.round((cycleHours * 3600) / (gems.length * 3 * 2)) : 0 }} 秒おきに 1 回) のでレート制限に当たりません。
+          自動巡回は <span class="text-[var(--exile-color-text-secondary)]">1 巡およそ 20 分</span>で終わる速さに均して流します
+          ({{ status?.pace_secs ?? 11 }} 秒おきに 1 回) のでレート制限に当たりません。
           手動の「一括取得」だけは上限の許す限り速く回すので、その間だけ待ちが出ます。
           監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり {{ cycleHours }} 時間に検索 1 回 + 値段 1 回なので、
           {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / cycleHours) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。

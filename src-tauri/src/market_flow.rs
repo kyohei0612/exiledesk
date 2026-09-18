@@ -341,6 +341,13 @@ fn cycle_secs(store: &FlowStore) -> i64 {
     }
 }
 
+/// 自動巡回の送信間隔 (秒)。1 巡を SWEEP_TARGET_SECS で終える速さ (周期がそれより短ければ周期に合わせる)
+fn spread_pace_secs(watches: i64, cycle: i64) -> i64 {
+    let reqs = (watches * 2).max(1);
+    let window = SWEEP_TARGET_SECS.min(cycle.max(60));
+    (window / reqs).clamp(REQUEST_INTERVAL.as_secs() as i64, 600)
+}
+
 /// 次に自動で 1 巡する予定時刻 (前回の一括取得から周期ぶん後)。まだ 1 度も取っていなければ今すぐ
 fn next_sweep_at(store: &FlowStore) -> i64 {
     if store.swept_at <= 0 {
@@ -355,6 +362,14 @@ const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
 const RETRY_GAP_SECS: i64 = 10 * 60;
 /// 取り直しを続ける上限。超えたら諦めて次の周期を待つ (2026-09-18 レビュー: 上限が無いと永久に回る)
 const MAX_RETRY_ROUNDS: u32 = 3;
+
+/// 自動巡回で 1 巡にかける時間 (オーナー指示 2026-09-18:「2 時間で 54 個はきつい。
+/// 20 分で全部取得終わればいいからそれで合わせて」)。
+///
+/// 54 銘柄 = 108 リクエストを 20 分 → 11 秒に 1 回。search と fetch は別の枠なので
+/// 各エンドポイントは 22 秒に 1 回になり、どの窓 (10 秒 5 回 / 60 秒 15 回 / 5 分 30 回) にも余裕がある。
+/// 周期がこれより短い時は周期に合わせる (1 巡が次の巡に食い込まないように)。
+const SWEEP_TARGET_SECS: i64 = 20 * 60;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
 /// 今どの銘柄を取っているか (key, 何件目, 全体件数)。UI に出すため
@@ -1033,11 +1048,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
     // (オーナー了承 2026-09-18:「一気に順に取ってる」のをやめる)
     let pace = match pace_mode {
         Pace::Fast => REQUEST_INTERVAL,
-        Pace::Spread => {
-            let reqs = (total_watches as i64 * 2).max(1);
-            let secs = (cycle_secs(&store) / reqs).clamp(REQUEST_INTERVAL.as_secs() as i64, 600);
-            Duration::from_secs(secs as u64)
-        }
+        Pace::Spread => Duration::from_secs(spread_pace_secs(total_watches as i64, cycle_secs(&store)) as u64),
     };
     let mut index = 0usize;
     // 後で取り直す銘柄 (429 / 通信エラーだけ。HTTP 400 のような恒久的な失敗は入れない)
@@ -1287,10 +1298,7 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),
         sweep_done: store.sweep_done.len(),
-        pace_secs: {
-            let reqs = (store.watches.iter().filter(|w| w.auto).count() as i64 * 2).max(1);
-            (cycle_secs(&store) / reqs).clamp(1, 600)
-        },
+        pace_secs: spread_pace_secs(store.watches.iter().filter(|w| w.auto).count() as i64, cycle_secs(&store)),
         cycle_secs: cycle_secs(&store),
     })
 }
@@ -1345,6 +1353,19 @@ mod tests {
     }
     fn lr_at(id: &str, amount: f64, listed_at: i64) -> ListingRef {
         ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: Some(listed_at) , account: None }
+    }
+
+    /// 自動巡回の間隔: 54 銘柄 (108 リクエスト) を 20 分で回る速さになる
+    #[test]
+    fn spread_pace_finishes_a_sweep_in_the_target_window() {
+        let pace = spread_pace_secs(54, 2 * 3600);
+        assert_eq!(pace, 11, "108 リクエスト × 11 秒 = 約 20 分");
+        // 各エンドポイント (search / fetch) は 22 秒に 1 回 = どの窓にも余裕がある
+        assert!(pace * 2 >= 20);
+        // 周期が短い時はそちらに合わせる (1 巡が次の巡に食い込まない)
+        assert_eq!(spread_pace_secs(54, 600), 5);
+        // 銘柄が 1 つなら 2 リクエストしかないので、上限の 600 秒で頭打ち
+        assert_eq!(spread_pace_secs(1, 2 * 3600), 600);
     }
 
     /// 出品時刻が取れていれば、こちらが見つけた時刻ではなく出品時刻から齢を数える
