@@ -45,9 +45,15 @@ export interface WatchSettings {
  * 18 ジェム = 54 銘柄 × 2 リクエストを周期 (既定 8 時間) ごとに 1 巡 (trade2 の上限は毎時 100 回)。
  */
 export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
-  v: 2,
+  /**
+   * v3 (2026-09-18 オーナー指摘「完成品を 5 人以上使ってる人を監視するはずなのにリストがおかしい。
+   * 状態時キャストが入ってないし、逆に少ないやつが入ってる」): 既定の基準が
+   * 品質 23% の使用者数だった (画面の説明文だけ「完成品」と書いてあった)。
+   * 完成品 (レベル 21 · 品質 23% の両方) の使用者数に直す。
+   */
+  v: 3,
   klass: "",
-  metric: "quality23",
+  metric: "finished",
   topN: 18,
   minUsers: 5,
   maxGems: 18,
@@ -62,13 +68,13 @@ function load(): WatchSettings {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_WATCH_SETTINGS };
     const s = JSON.parse(raw) as Partial<WatchSettings>;
-    // v1 (上位 5 / 上限 10) のまま保存されていたら、新しい既定に合わせる。
-    // 手で変えた設定は尊重したいが、v1 は初期値のまま使っていた人なので上書きしてよい
+    // 古い版のまま保存されていたら、新しい既定に合わせる。
+    // 手で変えた設定は尊重したいが、旧版は初期値のまま使っていた人なので上書きしてよい。
+    // v2 → v3 は「基準」そのものを直す修正なので、metric も既定 (完成品) に戻す
     if (s.v !== DEFAULT_WATCH_SETTINGS.v) {
       return {
         ...DEFAULT_WATCH_SETTINGS,
         klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
-        metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
         manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
         autoTop: s.autoTop !== false,
@@ -172,7 +178,15 @@ export function watchGems(rows: GemUsageRow[], s: WatchSettings = state.value): 
     const top = rows
       .filter((r) => metricCount(r, s.metric) >= s.minUsers)
       .slice()
-      .sort((a, b) => metricCount(b, s.metric) - metricCount(a, s.metric))
+      // 同じ人数で並んだ時は「そのジェム自体の使用者が多い方」を上に
+      // (2026-09-18: 5 人で並んだ時に、使用者 8 人の元素系状態異常時キャストが
+      //  使用者 16 人のフリッカーストライクに負けて 19 位で切られていた)
+      .sort(
+        (a, b) =>
+          metricCount(b, s.metric) - metricCount(a, s.metric) ||
+          b.users - a.users ||
+          a.name.localeCompare(b.name),
+      )
       .slice(0, s.topN);
     for (const r of top) {
       if (out.length >= s.maxGems) break;
