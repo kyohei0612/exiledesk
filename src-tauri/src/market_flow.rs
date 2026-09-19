@@ -374,7 +374,28 @@ const MAX_RETRY_ROUNDS: u32 = 3;
 /// 周期がこれより短い時は周期に合わせる (1 巡が次の巡に食い込まないように)。
 const SWEEP_TARGET_SECS: i64 = 20 * 60;
 
-static SAMPLING: AtomicBool = AtomicBool::new(false);
+/// 自動 (薄く流す巡回 / 取りこぼしの取り直し) が走っているか
+static RUNNING_AUTO: AtomicBool = AtomicBool::new(false);
+/// 手動の一括が走っているか。
+///
+/// 2026-09-19 オーナー「一括は全部とっていいよ。ただ、間に記録として挟む感じ。巡回中でも
+/// 取った時間で別に挟めるでしょ、手動で」。自動と手動は**同時に走ってよい** (記録は取った時刻
+/// つきの観測なので、混ざっても順に積むだけ)。それぞれ 1 本ずつ。
+static RUNNING_MANUAL: AtomicBool = AtomicBool::new(false);
+/// 記録ファイルの 読む→直す→書く を 2 本の巡回で取り合わないための鍵。
+/// 持っている間に await しない (中で待つと相手の巡回が止まる)
+static STORE_LOCK: StdMutex<()> = StdMutex::new(());
+
+/// 巡回の枠。自動と手動で別々に「走っているか」を持つ
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Slot {
+    Auto,
+    Manual,
+}
+
+fn store_lock() -> std::sync::MutexGuard<'static, ()> {
+    STORE_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
 /// 今どの銘柄を取っているか (key, 何件目, 全体件数)。UI に出すため
 static PROGRESS: StdMutex<Option<(String, usize, usize)>> = StdMutex::new(None);
 /// 直近の失敗 (UI に出す)
@@ -689,6 +710,7 @@ pub struct ListingRef {
 /// 画面から手で取った結果を同じ記録に差し込む (ジェムコラプトの「再取得」)。
 #[tauri::command]
 pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(), String> {
+    let _store_guard = store_lock();
     let mut store = load_store(&app);
     let now = now_secs();
     // 2026-09-16: 画面で取った銘柄はそのまま記録対象にする (チェックを廃止したため)。
@@ -719,7 +741,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     // 「手動で取った情報は自動で取ったデータに組み込んで、自動で取った感じで記録しといて」)。
     // 記録そのものは上で同じ経路に入っている。加えて、いま自動巡回が走っていて
     // この銘柄にまだ来ていなければ「この巡では取った」扱いにして、同じ物を取り直させない
-    if SAMPLING.load(Ordering::SeqCst)
+    if RUNNING_AUTO.load(Ordering::SeqCst)
         && store.watches.iter().any(|w| w.key == key && w.auto)
         && !store.sweep_done.contains(&key)
     {
@@ -973,16 +995,14 @@ pub enum Pace {
     Spread,
 }
 
-/// 全銘柄を 1 周する (手動ボタン)。既に走っていれば Err (「取得中です」)。
-/// 自動巡回の途中は画面のボタン自体を押せなくしている (オーナー 2026-09-19:
-/// 「自動巡回中、一括は押せなくていい」)。ここの Err はその二重の守り
+/// 全銘柄を 1 周する (手動ボタン)。自動巡回が走っていても構わず全部取る (手動は手動で 1 本だけ)
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
-    sample_guarded(app, None, Pace::Fast).await
+    sample_guarded(app, None, Pace::Fast, Slot::Manual).await
 }
 
 /// 自動巡回: 周期いっぱいに薄く広げて 1 周する
 pub async fn sample_spread(app: &tauri::AppHandle) -> Result<(), String> {
-    sample_guarded(app, None, Pace::Spread).await
+    sample_guarded(app, None, Pace::Spread, Slot::Auto).await
 }
 
 /// 取りこぼした銘柄 (retry_keys) だけ取り直す
@@ -991,18 +1011,24 @@ async fn sample_retry(app: &tauri::AppHandle) -> Result<(), String> {
     if keys.is_empty() {
         return Ok(());
     }
-    sample_guarded(app, Some(keys), Pace::Fast).await
+    sample_guarded(app, Some(keys), Pace::Fast, Slot::Auto).await
 }
 
-async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>, pace: Pace) -> Result<(), String> {
-    if SAMPLING.swap(true, Ordering::SeqCst) {
+async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>, pace: Pace, slot: Slot) -> Result<(), String> {
+    let flag = match slot {
+        Slot::Auto => &RUNNING_AUTO,
+        Slot::Manual => &RUNNING_MANUAL,
+    };
+    if flag.swap(true, Ordering::SeqCst) {
         // 黙って Ok を返すと画面が「終わりました」を出してしまう (2026-09-18 レビュー指摘)
         return Err("取得中です".to_string());
     }
     let result = sample_inner(app, only, pace).await;
-    // 途中で ? で抜けても進捗表示を残さない
-    set_progress(None);
-    SAMPLING.store(false, Ordering::SeqCst);
+    // 途中で ? で抜けても進捗表示を残さない。ただし手動が走っている間は手動の進捗を消さない
+    if slot == Slot::Manual || !RUNNING_MANUAL.load(Ordering::SeqCst) {
+        set_progress(None);
+    }
+    flag.store(false, Ordering::SeqCst);
     result
 }
 
@@ -1046,7 +1072,10 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         if done_keys.contains(&watch.key) {
             continue; // この巡では取得済み (途中で閉じた分の続き)
         }
-        set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
+        // 手動と自動が同時に走っている時は、押した本人が見たい手動の進捗を出す
+        if pace_mode == Pace::Fast || !RUNNING_MANUAL.load(Ordering::SeqCst) {
+            set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
+        }
         // 時刻は銘柄ごとに取り直す。組の先頭で固定していた頃は、1 組を回り切る十数分ぶん
         // 記録が過去にずれて「初見 < 出品時刻」が出ていた (2026-09-17 レビュー指摘)
         let now = now_secs();
@@ -1131,6 +1160,9 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         }
 
         // --- 反映 ---
+        {
+        // 2 本の巡回 (自動 + 手動) が同じファイルを 読む→直す→書く で取り合わないように
+        let _store_guard = store_lock();
         let mut store_now = load_store(app);
         let state = store_now.states.entry(watch.key.clone()).or_default();
         // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
@@ -1163,9 +1195,11 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             store_now.sweep_done.push(watch.key.clone());
         }
         save_store(app, &store_now)?;
+        }
 
     }
     // 1 巡の終わり。取りこぼしがあればその銘柄だけ後で取り直す (回数に上限あり)
+    let _store_guard = store_lock();
     let mut store_end = load_store(app);
     if only.is_none() {
         // 巡っている間に監視リストが変わって足された銘柄を拾う。
@@ -1184,7 +1218,11 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         // 手動の一括取得もここを通る。次の自動取得はこの時刻から数える
         store_end.swept_at = now_secs();
         store_end.retry_count = 0;
-        store_end.sweep_done.clear();
+        // 手動の一括が終わった時、自動巡回がまだ走っていれば「この巡で取った」の記録は残す
+        // (消すと自動側が終わりまで再度全部取り直しに見える)
+        if !(pace_mode == Pace::Fast && RUNNING_AUTO.load(Ordering::SeqCst)) {
+            store_end.sweep_done.clear();
+        }
     }
     if failed.is_empty() || store_end.retry_count >= MAX_RETRY_ROUNDS {
         if !failed.is_empty() {
@@ -1205,8 +1243,10 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
 /// UI に出す進捗
 #[derive(Serialize, Clone, Debug)]
 pub struct FlowStatus {
-    /// 取得中か
+    /// 取得中か (自動か手動のどちらか)
     pub sampling: bool,
+    /// 手動の一括が走っているか (画面の一括ボタンはこれだけを見て押せなくする)
+    pub manual_sampling: bool,
     /// 取得中の銘柄名 (取得中のみ)
     pub current: Option<String>,
     /// 何件目 / 全体
@@ -1258,13 +1298,15 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
     let store = load_store(&app);
     let progress = PROGRESS.lock().ok().and_then(|g| g.clone());
     let (budget_used, budget_max) = crate::trade2::gate_usage_300();
-    let sampling = SAMPLING.load(Ordering::SeqCst);
+    let manual_sampling = RUNNING_MANUAL.load(Ordering::SeqCst);
+    let sampling = RUNNING_AUTO.load(Ordering::SeqCst) || manual_sampling;
     let (current, done, total) = match progress {
         Some((k, d, t)) => (Some(k), d, t),
         None => (None, 0, 0),
     };
     Ok(FlowStatus {
         sampling,
+        manual_sampling,
         current,
         done,
         total,
@@ -1322,8 +1364,8 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }
-            if SAMPLING.load(Ordering::SeqCst) {
-                // 手動の一括か取り直しが走っている。終わってから次の判断をする
+            if RUNNING_AUTO.load(Ordering::SeqCst) {
+                // 自動 (巡回か取り直し) が走っている。終わってから次の判断をする
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }

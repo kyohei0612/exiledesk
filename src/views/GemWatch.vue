@@ -79,8 +79,9 @@ const sweeping = ref(false);
 const nowMs = ref(Date.now());
 let tick: number | null = null;
 async function sweep(reason?: string): Promise<void> {
-  // 自動巡回の途中は押せない (ボタンも disabled。オーナー 2026-09-19「自動巡回中、一括は押せなくていい」)
-  if (sweeping.value || status.value?.sampling) return;
+  // 自動巡回の途中でも押せる (記録は取った時刻つきなので間に挟まるだけ。オーナー 2026-09-19)。
+  // 押せないのは手動の一括がもう走っている時だけ
+  if (sweeping.value || status.value?.manual_sampling) return;
   sweeping.value = true;
   message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
   const poll = window.setInterval(reload, 3000);
@@ -170,7 +171,7 @@ const sweepText = computed(() => {
   const s = status.value;
   if (!s?.sampling) return "";
   // 自動巡回は周期いっぱいに薄く流すので、「待ち」ではなく間隔として出す
-  if (!sweeping.value && s.pace_secs > 5) {
+  if (!sweeping.value && !s.manual_sampling && s.pace_secs > 5) {
     return `自動巡回中 ${s.sweep_done}/${s.total || gems.value.length * 3} 銘柄 · ${s.pace_secs} 秒おき${s.current ? ` · ${s.current}` : ""}`;
   }
   // 「レート待ち」と出すのは実際に止められている時だけ。通常の間隔 (10 秒前後) は待ちではない
@@ -499,7 +500,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
           <button
             type="button"
-            :disabled="sweeping || !!status?.sampling"
+            :disabled="sweeping || !!status?.manual_sampling"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
             :title="`監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
             @click="sweep()"
