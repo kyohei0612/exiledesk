@@ -27,12 +27,37 @@ function load(): DisplayCurrency {
 const cur = ref<DisplayCurrency>(load());
 
 /** 1 表示通貨 = ? 高貴 */
-const rate = computed<number>(() => {
+const rate = computed<number>(() => rateOf(cur.value));
+
+function rateOf(c: DisplayCurrency): number {
   const r = marketStore.rates.value;
-  if (cur.value === "chaos") return r.chaos > 0 ? r.chaos : 1;
-  if (cur.value === "divine") return r.divine > 0 ? r.divine : 1;
+  if (c === "chaos") return r.chaos > 0 ? r.chaos : 1;
+  if (c === "divine") return r.divine > 0 ? r.divine : 1;
   return 1;
-});
+}
+
+/**
+ * 価値の高い順。1 未満になったら 1 つ下に落として表示する
+ * (オーナー指示 2026-09-19:「1 神以下ならカオスで表現してくれ。基本 1 以下なら 1 つ下のカレンシーで」)。
+ * PoE2 では 神 > カオス > 高貴 の順 (カオスは高貴より高い)。
+ */
+const LADDER: readonly DisplayCurrency[] = ["divine", "chaos", "exalted"] as const;
+
+/**
+ * その額を出すのに一番読みやすい通貨を選ぶ。
+ * 選んでいる通貨から始めて、1 未満なら 1 つ下へ (一番下まで来たらそのまま)。
+ * 0 と符号は元のまま扱う (絶対値で判断)。
+ */
+function pickUnit(exalted: number): { c: DisplayCurrency; value: number } {
+  const start = Math.max(0, LADDER.indexOf(cur.value));
+  for (let i = start; i < LADDER.length; i++) {
+    const c = LADDER[i];
+    const v = exalted / rateOf(c);
+    if (Math.abs(v) >= 1 || i === LADDER.length - 1) return { c, value: v };
+  }
+  const c = LADDER[LADDER.length - 1];
+  return { c, value: exalted / rateOf(c) };
+}
 
 export function setDisplayCurrency(c: DisplayCurrency): void {
   cur.value = c;
@@ -66,12 +91,23 @@ export const displayCurrency = {
     if (v == null || !Number.isFinite(v)) return null;
     return v * rate.value;
   },
-  /** "123 神" 形式。signed で + を付ける */
+  /**
+   * "123 神" 形式。signed で + を付ける。
+   *
+   * 選んでいる通貨で 1 未満になる額は 1 つ下の通貨で出す (0.02 神 → 8.5 カオス)。
+   * 単位を出さない (unit: false) 時は、桁だけ見せる場所なので選んでいる通貨のまま
+   * (単位なしで通貨が変わると何の数字か分からなくなるため)。
+   */
   money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean }): string {
-    const d = displayCurrency.toDisplay(exalted);
-    if (d == null) return "—";
-    const sign = opts?.signed && d > 0 ? "+" : "";
-    return `${sign}${fmtNum(d)}${opts?.unit === false ? "" : ` ${LABEL[cur.value]}`}`;
+    if (exalted == null || !Number.isFinite(exalted)) return "—";
+    if (opts?.unit === false) {
+      const d = displayCurrency.toDisplay(exalted);
+      if (d == null) return "—";
+      return `${opts?.signed && d > 0 ? "+" : ""}${fmtNum(d)}`;
+    }
+    const { c, value } = pickUnit(exalted);
+    const sign = opts?.signed && value > 0 ? "+" : "";
+    return `${sign}${fmtNum(value)} ${LABEL[c]}`;
   },
 };
 
