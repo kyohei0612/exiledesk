@@ -29,6 +29,8 @@ export interface GemInfo {
   kind: "skill" | "meta";
   spirit: boolean;
   minLevel: number;
+  /** 原石から作れない (クライアントの CraftingLevel が 0)。元のジェムはトレードで現物を買う */
+  buyOnly?: boolean;
 }
 
 export const GEMS: readonly GemInfo[] = gemsRaw as GemInfo[];

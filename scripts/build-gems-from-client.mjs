@@ -8,6 +8,10 @@
  *   [{ en, ja, kind: "skill" | "meta", spirit, minLevel }]
  *   - kind: ItemClass が Meta Skill Gem なら "meta" (trade2 の category は gem.metagem)、それ以外 "skill" (gem.activegem)。
  *   - spirit: GemTags に persistent があれば true (レベル上げは「スピリットジェムの原石」、なければ「スキルジェムの原石」)。
+ *   - buyOnly: CraftingLevel が 0 = 原石から作れない (カルグール系・ドロップ限定など)。素材の
+ *     「低レベルのジェム本体」はトレードで現物を買う値段になる (2026-09-19 オーナー指摘)。
+ *     専用の GemTag は無く、この列が唯一の手がかり。行が複数ある時は本物 (Metadata/Items/Gems/SkillGem*)
+ *     の最大値を採る。武器の既定攻撃 (Metadata/Items/Gem/…PlayerDefault…) とユニーク版は除く。
  *   サポートジェムは対象外。
  *
  * 書き出しは pathofexile-dat を data-cache/client-export-gems/ で実行する (他の書き出しと同じ方式)。
@@ -64,23 +68,39 @@ const gt = await loadTable("English", "GemTags");
 const tagsOf = (g) => new Set((g.GemEffects ?? []).flatMap((e) => (ge[e]?.GemTags ?? []).map((t) => gt[t]?.Id)));
 
 const out = [];
-const seen = new Set();
+const byName = new Map();
 for (const g of sg) {
   const b = bE[g.BaseItemType];
   if (!b) continue;
+  const id = b.Id ?? "";
+  // 本物のジェムは Metadata/Items/Gems/ と Metadata/Items/Gem/ (単数) の 2 系統に散らばっている
+  // (トリニティ / ブリンク / アーチメイジは単数側)。除くのは:
+  //   - 武器の既定攻撃 (…SkillGemPlayerDefault…): 買えも直せもしない (ジェム一覧に 13 個混ざっていた)
+  //   - ユニーク版 (UniqueSkillGem*): 同名の別行で、原石の段 (CraftingLevel) を持たない
+  if (/PlayerDefault/.test(id) || /\/UniqueSkillGem/.test(id)) continue;
   const cls = ic[b.ItemClass]?.Id;
   if (cls !== "Active Skill Gem" && cls !== "Meta Skill Gem") continue;
   const en = (b.Name ?? "").trim();
   const ja = (bJ[g.BaseItemType]?.Name ?? "").trim();
   if (!en || en.startsWith("[DNT") || en.startsWith("[UNUSED")) continue;
-  if (seen.has(en)) continue;
-  seen.add(en);
   const tags = tagsOf(g);
   const kind = cls === "Meta Skill Gem" ? "meta" : "skill";
-  out.push({ en, ja: ja || en, kind, spirit: tags.has("persistent"), minLevel: g.MinLevelReq ?? 0 });
+  const craft = g.CraftingLevel ?? 0;
+  const prev = byName.get(en);
+  if (prev) {
+    // 同名の行が複数ある時は原石の段が分かる方 (CraftingLevel の大きい方) を採る
+    if (craft > prev.craft) prev.craft = craft;
+    continue;
+  }
+  byName.set(en, { en, ja: ja || en, kind, spirit: tags.has("persistent"), minLevel: g.MinLevelReq ?? 0, craft });
+}
+for (const g of byName.values()) {
+  const { craft, ...rest } = g;
+  out.push(craft === 0 ? { ...rest, buyOnly: true } : rest);
 }
 out.sort((a, b) => a.ja.localeCompare(b.ja, "ja"));
 await writeFile(OUT, JSON.stringify(out, null, 0) + "\n", "utf8");
 const kinds = out.reduce((m, g) => ((m[g.kind] = (m[g.kind] ?? 0) + 1), m), {});
 const spirit = out.filter((g) => g.spirit).length;
-console.log(`[build-gems] ${out.length} gems (${JSON.stringify(kinds)}, spirit=${spirit}) -> ${OUT}`);
+const buyOnly = out.filter((g) => g.buyOnly).length;
+console.log(`[build-gems] ${out.length} gems (${JSON.stringify(kinds)}, spirit=${spirit}, buyOnly=${buyOnly}) -> ${OUT}`);
