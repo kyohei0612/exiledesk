@@ -356,8 +356,6 @@ fn next_sweep_at(store: &FlowStore) -> i64 {
     store.swept_at + cycle_secs(store)
 }
 
-/// 罰則で止まっている時にその場で待つ上限 (これより長ければ後で取り直す)
-const MAX_WAIT_IN_SWEEP_SECS: i64 = 20 * 60;
 /// 取りこぼした銘柄を取り直すまでの最短間隔
 const RETRY_GAP_SECS: i64 = 10 * 60;
 /// 取り直しを続ける上限。超えたら諦めて次の周期を待つ (2026-09-18 レビュー: 上限が無いと永久に回る)
@@ -419,12 +417,15 @@ fn note_rate_headers(body: &serde_json::Value) {
     }
 }
 /// 罰則で止まっている時の解除予定 (unix 秒)。門番 (trade2.rs) が 429 と state ヘッダから持つ
-fn retry_until() -> i64 {
+/// 罰則 (429 / restricted) で止まっている解除予定 (unix 秒、0 なら止まっていない)。
+/// FlowStatus の wait_until と retry_until は**どちらもこの値** (名前が 2 つあるだけ。画面側の型を
+/// 変えないために両方残している。2026-09-19 リファクタで確認)
+fn penalty_until_secs() -> i64 {
     crate::trade2::gate_blocked_until_secs()
 }
 /// 今から再開までの秒数 (止まっていなければ 0)
 fn retry_wait_secs() -> i64 {
-    (retry_until() - now_secs()).max(0)
+    (penalty_until_secs() - now_secs()).max(0)
 }
 /// その失敗は後で取り直せば通る物か (429 / 通信 / 門番の待ち切れ)。
 /// HTTP 400 のような恒久的な失敗は取り直さない。
@@ -1045,7 +1046,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             site: site.clone(),
             query,
         };
-        let mut body = match crate::trade2::trade2_search(search.clone()).await {
+        let body = match crate::trade2::trade2_search(search).await {
             Ok(v) => Some(v),
             Err(e) => {
                 eprintln!("[market_flow] search {} 失敗: {e}", watch.key);
@@ -1058,22 +1059,10 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
                 None
             }
         };
-        // 罰則で止められたら解除を待って同じ銘柄を取り直す (オーナー指示 2026-09-16: 止まらないように)。
-        // 待つのは門番 (gate_acquire) なので、ここは「長すぎるなら後回し」の判断だけ
-        if body.is_none() && retry_wait_secs() <= MAX_WAIT_IN_SWEEP_SECS {
-            set_progress(Some(("レート制限の解除待ち".to_string(), index, total_watches)));
-            body = match crate::trade2::trade2_search(search).await {
-                Ok(v) => {
-                    set_error(None);
-                    Some(v)
-                }
-                Err(e) => {
-                    set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
-                    None
-                }
-            };
-            set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
-        }
+        // 待つのは門番 (gate_acquire、上限 90 秒)。それを超えて止められた銘柄は
+        // 取り直し (retry_keys) に回す。ここでもう一度投げ直す処理は 2026-09-19 に消した:
+        // 門番が「待ちが長すぎる」と返した直後にもう一度呼んでも必ず同じ Err になる無駄玉で、
+        // 「レート制限の解除待ち」と出るだけで何も待っていなかった
         let Some(body) = body else {
             failed.push(watch.key.clone());
             tokio::time::sleep(pace).await;
@@ -1282,12 +1271,12 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
         rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
         // 罰則で止まっている解除予定は門番が持つ (画面はこれを 1 秒ごとに数える)
-        wait_until: retry_until(),
+        wait_until: penalty_until_secs(),
         budget_until: now_secs() + crate::trade2::gate_budget_wait_secs(),
         budget_used,
         budget_max,
         pace_until: now_secs() + crate::trade2::gate_wait_secs(),
-        retry_until: retry_until(),
+        retry_until: penalty_until_secs(),
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),
         sweep_done: store.sweep_done.len(),

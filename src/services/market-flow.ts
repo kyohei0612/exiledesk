@@ -187,10 +187,11 @@ export async function loadFlowStatus(): Promise<FlowStatus | null> {
   if (!isTauriRuntime()) return null;
   try {
     const st = await invoke<FlowStatus>("market_flow_status");
-    const until = Math.max(st.wait_until, st.retry_until) * 1000;
-    noteExternalRate(st.rate_rules ?? null, st.rate_state ?? null, until);
+    // 止まっている解除予定 = 罰則 (wait_until / retry_until は同じ値) と枠待ち (budget_until) の遅い方
+    const stopped = Math.max(st.wait_until, st.retry_until, st.budget_until) * 1000;
+    noteExternalRate(stopped);
     // 画面のボタンの数字も門番の数に合わせる (手動と自動で別々に数えない)
-    noteGateState(st.pace_until * 1000, st.budget_used, st.budget_max);
+    noteGateState(st.pace_until * 1000, st.budget_used, st.budget_max, stopped);
     return st;
   } catch {
     return null;

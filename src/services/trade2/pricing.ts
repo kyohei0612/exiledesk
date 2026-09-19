@@ -26,10 +26,15 @@ import type { Trade2SearchResponse } from "./query";
 const SEARCH_INTERVAL_MS = 10500;
 const FETCH_INTERVAL_MS = 2500;
 
-/** trade2.rs が返す 429 エラー文字列 ("... HTTP 429 retry-after=600: ...") から待ち秒数を取り出す。429 でなければ null */
+/**
+ * エラー文字列から「あと何秒待てば投げられるか」を取り出す。該当しなければ null。
+ *   - 429: "... HTTP 429 retry-after=600: ..."
+ *   - 門番の待ち切れ: "trade2 レート制限中 (あと 217 秒)。..." (2026-09-19: これを読まずに
+ *     「trade2 エラー: …」と長文で出していた。秒数が読めれば普通の制限として数えられる)
+ */
 export function retryAfterSeconds(err: unknown): number | null {
   const msg = err instanceof Error ? err.message : String(err);
-  const m = msg.match(/HTTP 429 retry-after=(\d+)/);
+  const m = msg.match(/HTTP 429 retry-after=(\d+)/) ?? msg.match(/レート制限中 \(あと (\d+) 秒\)/);
   return m ? Number(m[1]) : null;
 }
 /** fetch で見る listing 数 (trade2 の上限 = 10) */
@@ -90,7 +95,10 @@ function loadServerBlock(): Record<RateKind, number> {
   }
 }
 export function syncRateLimit(kind: RateKind, headers: Record<string, string> | null | undefined): void {
-  if (!headers) return;
+  // 本番は Rust の門番が同じヘッダを見て**超過ぶんだけ**待つ。ここの「窓の長さぶん止める」を
+  // 本番でも動かすと、巡回で 5 分窓が 28/30 に張り付いている間ずっと「あと 300 秒」と出て、
+  // 手動と自動の表示が食い違う (2026-09-19 リファクタで発覚。門番側では 09-18 に直していた)
+  if (!DEV_TRADE || !headers) return;
   const now = Date.now();
   let until = serverBlockedUntil[kind];
   for (const [name, rules] of Object.entries(headers)) {
@@ -152,16 +160,26 @@ function withSync<T>(kind: RateKind, p: Promise<T>): Promise<T> {
  * 実際に投げる間隔は本番では門番が決めているので、表示もそこに合わせる。
  * 門番がいない時 (ブラウザの開発モード) だけ下の JS の帳簿に落ちる。
  */
-let gateSnapshot: { at: number; nextAtMs: number; used: number; max: number } | null = null;
+let gateSnapshot: { at: number; nextAtMs: number; used: number; max: number; stoppedUntilMs: number } | null = null;
 
-export function noteGateState(nextAtMs: number, used: number, max: number): void {
-  gateSnapshot = { at: Date.now(), nextAtMs, used, max };
+/**
+ * @param nextAtMs       次に投げられる時刻 (通常の最低間隔を含む)
+ * @param used / max     5 分窓の使用数 / 上限 (全窓口の合計)
+ * @param stoppedUntilMs 罰則か枠待ちで止まっている解除予定 (0 = 止まっていない)
+ */
+export function noteGateState(nextAtMs: number, used: number, max: number, stoppedUntilMs = 0): void {
+  gateSnapshot = { at: Date.now(), nextAtMs, used, max, stoppedUntilMs };
 }
 
 /** 古い値で表示し続けないよう、30 秒で捨てる */
-function gateNow(): { nextAtMs: number; used: number; max: number } | null {
+function gateNow(): { nextAtMs: number; used: number; max: number; stoppedUntilMs: number } | null {
   const g = gateSnapshot;
   return g && Date.now() - g.at < 30_000 ? g : null;
+}
+
+/** 門番が「止まっている」と言っている解除予定 (ms)。止まっていなければ 0 */
+export function gateStoppedUntilMs(): number {
+  return gateNow()?.stoppedUntilMs ?? 0;
 }
 
 /** 窓の予算から見て、次の search を送れる最も早い時刻 (ms) */
@@ -180,16 +198,20 @@ function budgetAllowedAt(now: number): number {
 
 /** 次に search を送れる時刻 (ms) = 最小間隔と窓の予算の遅い方。画面の「再取得まで N 秒」表示用 */
 export function nextSearchAllowedAt(): number {
-  const g = gateNow();
-  if (g) return Math.max(g.nextAtMs, serverBlockedUntil.search);
+  if (!DEV_TRADE) {
+    // 本番: 門番の予定だけ。まだ読めていない起動直後は「待ち無し」(押せば門番が待つ)
+    return gateNow()?.nextAtMs ?? 0;
+  }
   const now = Date.now();
   const last = searchLog.length ? searchLog[searchLog.length - 1] : lastRequestAt.search;
   return Math.max(last + SEARCH_INTERVAL_MS, budgetAllowedAt(now), serverBlockedUntil.search);
 }
 /** 直近 5 分の search 回数と上限 (画面表示用) */
 export function searchBudgetUsage(): { used: number; max: number } {
-  const g = gateNow();
-  if (g) return { used: g.used, max: g.max };
+  if (!DEV_TRADE) {
+    const g = gateNow();
+    return g ? { used: g.used, max: g.max } : { used: 0, max: 30 };
+  }
   const now = Date.now();
   return { used: searchLog.filter((t) => t > now - 300_000).length, max: SEARCH_BUDGET[SEARCH_BUDGET.length - 1].max };
 }
