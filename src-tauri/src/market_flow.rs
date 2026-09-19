@@ -392,6 +392,21 @@ const SWEEP_TARGET_SECS: i64 = 30 * 60;
 
 /// 手動の一括取得を中止する合図 (画面の「中止」)
 static CANCEL_MANUAL: AtomicBool = AtomicBool::new(false);
+/// 手動の一括取得の通し進捗 (これまでに取り終えた数, 全体数)。
+///
+/// 2026-09-19 オーナー「取得中の一括、なんか数字行ったり来たりしてない？」:
+/// 取り切るまで繰り返すようにしたので、取り直しの周は「1/5」のように母数が小さくなり、
+/// 画面の数字が 42/42 → 1/5 と戻って見えていた。周をまたいで通しで数える。
+static MANUAL_BASE: StdMutex<Option<(usize, usize)>> = StdMutex::new(None);
+
+fn set_manual_base(v: Option<(usize, usize)>) {
+    if let Ok(mut g) = MANUAL_BASE.lock() {
+        *g = v;
+    }
+}
+fn manual_base() -> Option<(usize, usize)> {
+    MANUAL_BASE.lock().ok().and_then(|g| *g)
+}
 /// 自動 (薄く流す巡回 / 取りこぼしの取り直し) が走っているか
 static RUNNING_AUTO: AtomicBool = AtomicBool::new(false);
 /// 手動の一括が走っているか。
@@ -1029,8 +1044,11 @@ pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
         return Err("取得中です".to_string());
     }
     CANCEL_MANUAL.store(false, Ordering::SeqCst);
+    let all = load_store(app).watches.iter().filter(|w| w.auto).count();
+    set_manual_base(Some((0, all)));
     let result = sample_until_done(app).await;
     set_progress(None);
+    set_manual_base(None);
     CANCEL_MANUAL.store(false, Ordering::SeqCst);
     RUNNING_MANUAL.store(false, Ordering::SeqCst);
     result
@@ -1047,16 +1065,20 @@ async fn sample_until_done(app: &tauri::AppHandle) -> Result<(), String> {
         if left.is_empty() {
             return Ok(());
         }
+        // 取り直しの周は「全体 − 残り」から数え直す (数字が戻らない)
+        let all = manual_base().map(|(_, a)| a).unwrap_or(left.len());
+        set_manual_base(Some((all.saturating_sub(left.len()), all)));
         // 罰則で止まっているなら明けるまで待つ (待っている間も画面に出す)
         let mut waited = 0;
         while retry_wait_secs() > 0 && waited < MAX_PENALTY_WAIT_SECS {
             if CANCEL_MANUAL.load(Ordering::SeqCst) {
                 return Ok(());
             }
+            let (base, all) = manual_base().unwrap_or((0, left.len()));
             set_progress(Some((
                 format!("レート制限の解除待ち (残り {} 銘柄)", left.len()),
-                0,
-                left.len(),
+                base,
+                all,
             )));
             tokio::time::sleep(Duration::from_secs(5)).await;
             waited += 5;
@@ -1155,7 +1177,12 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         }
         // 手動と自動が同時に走っている時は、押した本人が見たい手動の進捗を出す
         if pace_mode == Pace::Fast || !RUNNING_MANUAL.load(Ordering::SeqCst) {
-            set_progress(Some((watch.label.clone().max(watch.key.clone()), index, total_watches)));
+            // 手動は周をまたいで通しで数える (取り直しの周で数字が戻らないように)
+            let (done, total) = match (pace_mode, manual_base()) {
+                (Pace::Fast, Some((base, all))) => ((base + index).min(all), all),
+                _ => (index, total_watches),
+            };
+            set_progress(Some((watch.label.clone().max(watch.key.clone()), done, total)));
         }
         // 時刻は銘柄ごとに取り直す。組の先頭で固定していた頃は、1 組を回り切る十数分ぶん
         // 記録が過去にずれて「初見 < 出品時刻」が出ていた (2026-09-17 レビュー指摘)
