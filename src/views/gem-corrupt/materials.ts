@@ -48,9 +48,26 @@ export function baseGemSourceFor(spirit: boolean): BaseGemSource {
   return best;
 }
 
-/** 原石 (レベル 20) の ApiId */
+/**
+ * 仕上げ (売る前にレベル 20 へ上げる) に使う物の ApiId。
+ *
+ * 2026-09-19 オーナー「原石に関してはソーマタージフラックス 20 レベルが仕上げになるよ」。
+ * それまでは 原石 (レベル 20) を使っていたが、仕上げに使うのは ソーマタージ・フラックス
+ * (レベル 20) で、スキル / スピリットの区別も無い。
+ *
+ * poe2scout の ApiId のスラッグが分からないので英語表記で引く。相場一覧に無い時
+ * (まだ取っていない / poe2scout が扱っていない) は、これまで通り原石に落とす。
+ */
+export const FINISHER_TEXT = "Thaumaturgic Flux (Level 20)";
+export const FINISHER_JA = "ソーマタージ・フラックス (レベル 20)";
+
 export function uncut20ApiId(spirit: boolean): string {
-  return spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20;
+  return marketStore.apiIdByText(FINISHER_TEXT) ?? (spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20);
+}
+
+/** 仕上げに ソーマタージ・フラックス を使えているか (使えていなければ原石のまま) */
+export function finisherIsFlux(): boolean {
+  return marketStore.apiIdByText(FINISHER_TEXT) != null;
 }
 
 /**

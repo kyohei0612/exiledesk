@@ -13,12 +13,13 @@ import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
+import { isSpiritGem, noteSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
 import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
+import { originalGemQuery, rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
 import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
-import { baseGemSourceFor, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
+import { baseGemSourceFor, finisherIsFlux, FINISHER_JA, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
 import { searchGems } from "./search";
 
 export interface GemInfo {
@@ -87,23 +88,38 @@ export function useGemCorrupt() {
    * 以前は「相場が無いので手入力」で既定 1 高貴のままだったため、ジェムが高い今は自作の収支が良く出すぎていた。
    * 決め方は materials.ts (自動ジェム監視の期待値と共通)
    */
-  const baseGemSource = computed<BaseGemSource>(() => {
+  /** 実測 (出品のリザーブ) が入ったら作り直すための目印 */
+  const spiritBump = ref(0);
+  /**
+   * そのジェムがスピリットジェムの原石で作る物か。
+   * 出品から読めていればそれを、まだならクライアントの推定 (gems-client.json) を使う。
+   */
+  const isSpirit = computed(() => {
+    void spiritBump.value;
     const gem = selected.value;
-    if (!gem) return { apiId: null, level: null, price: null };
+    return gem ? isSpiritGem(gem.en, gem.spirit) : false;
+  });
+  /** その判定が実測か推定か (画面の説明に出す) */
+  const spiritMeasured = computed(() => {
+    void spiritBump.value;
+    return spiritGemMeasured(selected.value?.en);
+  });
+  const baseGemSource = computed<BaseGemSource>(() => {
+    if (!selected.value) return { apiId: null, level: null, price: null };
     void marketStore.items.value; // 相場が入ったら取り直す
-    return baseGemSourceFor(gem.spirit);
+    return baseGemSourceFor(isSpirit.value);
   });
   /** 素材表に出す名前 (どのレベルの原石を使うか) */
   const baseGemLabel = computed(() => {
     const lv = baseGemSource.value.level;
-    const kind = selected.value?.spirit ? "スピリットジェムの原石" : "スキルジェムの原石";
+    const kind = isSpirit.value ? "スピリットジェムの原石" : "スキルジェムの原石";
     return lv == null ? "低レベルのジェム本体" : `低レベルのジェム本体 (${kind} レベル ${lv})`;
   });
   /** 素材の単価 = 相場と取引所 (繰り上げ後) の安い方。自動ジェム監視の期待値と同じ決め方 */
   const materials = computed<MaterialPrices>(() => {
     void marketStore.items.value;
     void exchange.value;
-    return materialPricesFor(!!selected.value?.spirit, (apiId) => bestBuy(apiId)?.exalted ?? null, baseGemSource.value);
+    return materialPricesFor(isSpirit.value, (apiId) => bestBuy(apiId)?.exalted ?? null, baseGemSource.value);
   });
   /**
    * 取引所 (exchange) で素材を通貨ごとに比べる (2026-09-16 オーナー指示「たまにカオスで買った方が安い」)。
@@ -115,7 +131,7 @@ export function useGemCorrupt() {
     { key: "perfectJeweller", apiId: MATERIAL_API.perfectJeweller },
     { key: "vaal", apiId: MATERIAL_API.vaal },
     { key: "crystal", apiId: MATERIAL_API.crystal },
-    { key: "uncut20", apiId: uncut20ApiId(!!selected.value?.spirit) },
+    { key: "uncut20", apiId: uncut20ApiId(isSpirit.value) },
   ]);
   const exchange = ref<Record<string, BestBuy>>({});
   const exchangeLoading = ref(false);
@@ -157,7 +173,16 @@ export function useGemCorrupt() {
     const p = payable(b);
     return { currency: b.currency, perUnit: p.payPerUnit, rawPerUnit: b.perUnit, exalted: p.payExalted };
   }
-  const uncutLabel = computed(() => (selected.value?.spirit ? "スピリットジェムの原石 (レベル 20)" : "スキルジェムの原石 (レベル 20)"));
+  /**
+   * 仕上げ (レベル 20 に上げる) に使う物の名前。
+   * オーナー指摘 2026-09-19: 仕上げは ソーマタージ・フラックス (レベル 20)。
+   * 相場一覧に無い時だけ、これまで通り原石の名前を出す。
+   */
+  const uncutLabel = computed(() => {
+    void marketStore.items.value;
+    if (finisherIsFlux()) return FINISHER_JA;
+    return isSpirit.value ? "スピリットジェムの原石 (レベル 20)" : "スキルジェムの原石 (レベル 20)";
+  });
 
   // ---- 売値 (手入力 or trade2) ----
   const sale = ref<SalePrices>({ level21: null, quality23: null, finished: null });
@@ -233,6 +258,10 @@ export function useGemCorrupt() {
    */
   async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
     const gem = GEMS.find((g) => g.en === gemEn);
+    // 出品に「リザーブ … Spirit」が出ていれば、そのジェムはスピリットジェムの原石で作る。
+    // 取った応答から読むだけなので、これ用のリクエストは増えない (2026-09-19)
+    noteSpiritGem(gemEn, r.reservesSpirit ?? null);
+    spiritBump.value++;
     await recordFlow({
       key: watchKey(gemEn, key),
       label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
@@ -246,6 +275,18 @@ export function useGemCorrupt() {
         listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
       })),
     });
+  }
+
+  /**
+   * 素のスキル (コラプト無し・二重コラプト無し) を 1 件見て、スピリットをリザーブするかを決める。
+   * コラプト済みの出品にもリザーブ行は出るが、オーナー指示どおり素の品で確かめる。
+   */
+  async function measureSpirit(gem: GemInfo): Promise<void> {
+    if (isRateLimited()) return;
+    const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value);
+    if (!r || r.reservesSpirit == null) return;
+    noteSpiritGem(gem.en, r.reservesSpirit);
+    spiritBump.value++;
   }
 
   async function fetchSalePrices(): Promise<void> {
@@ -268,6 +309,9 @@ export function useGemCorrupt() {
         // 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する。自動巡回と同じルール
         void recordRowSample(gem.en, row.key, r);
       }
+      // 原石の種類がまだ実測できていなければ、素のスキルを 1 件だけ見る (search + fetch 1 回ずつ)。
+      // 結果は覚えるので、同じジェムで二度は走らない (オーナー指示 2026-09-19)
+      if (!spiritGemMeasured(gem.en)) await measureSpirit(gem);
       priceError.value = tradeAuto.lastError.value;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
@@ -309,6 +353,8 @@ export function useGemCorrupt() {
     bestBuy,
     materials,
     uncutLabel,
+    isSpirit,
+    spiritMeasured,
     sale,
     saleInfo,
     saleRecordedAt,

@@ -86,6 +86,15 @@ export function priceOf(apiId: string): number | null {
   return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
 }
 
+/**
+ * 英語表記そのままで ApiId を引く。poe2scout の ApiId のスラッグが分からない物に使う
+ * (2026-09-19: "Thaumaturgic Flux (Level 20)" の ApiId が不明だったため)。
+ */
+export function apiIdByText(textEn: string): string | null {
+  const hit = items.value.find((it) => it.ApiId && it.Text === textEn);
+  return hit?.ApiId ?? null;
+}
+
 /** ユニーク (ApiId 無し) を英名の先頭一致で引く。poe2scout の Text は "名前 ベース" 形式 */
 export function uniquePriceOf(nameEn: string | null): number | null {
   if (!nameEn) return null;
@@ -125,5 +134,6 @@ export const marketStore = {
   adoptMarket,
   priceOf,
   itemIdOf,
+  apiIdByText,
   uniquePriceOf,
 };

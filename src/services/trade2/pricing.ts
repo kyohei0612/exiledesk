@@ -260,6 +260,11 @@ export interface PriceResult {
   searchUrl: string;
   /** この検索の query id (行方不明の出品を直接 fetch して確認するのに使う) */
   queryId?: string;
+  /**
+   * 出品がスピリットをリザーブしていたか (= スピリットジェムの原石で作るジェム)。
+   * null は「出品が無くて読めなかった」。詳細は state/gem-spirit.ts
+   */
+  reservesSpirit?: boolean | null;
 }
 
 interface FetchResponse {
@@ -321,7 +326,13 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`)))
     : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } })));
   const listings: PriceListing[] = [];
+  // 出品の properties に「リザーブ … Spirit」があれば、そのジェムはスピリットジェムの原石で作る。
+  // 日本語サイトでも値は `100[Spirit|スピリット]` の形なので Spirit で拾える (2026-09-19)
+  let seen = 0;
+  let reserves = false;
   for (const r of fetched.result ?? []) {
+    seen++;
+    if (propsHaveSpiritReservation(r.item)) reserves = true;
     const amount = r.listing?.price?.amount;
     const currency = r.listing?.price?.currency;
     const priceType = r.listing?.price?.type ?? null;
@@ -348,7 +359,17 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
     allIds: search.result ?? [],
     searchUrl,
     queryId: search.id,
+    reservesSpirit: seen > 0 ? reserves : null,
   };
+}
+
+/** 出品の properties に スピリットのリザーブ が出ているか */
+function propsHaveSpiritReservation(item: unknown): boolean {
+  const props = (item as { properties?: { name?: string; values?: unknown[][] }[] } | undefined)?.properties;
+  if (!Array.isArray(props)) return false;
+  return props.some((p) =>
+    (p.values ?? []).some((v) => typeof v?.[0] === "string" && /Spirit/i.test(v[0] as string)),
+  );
 }
 
 /**

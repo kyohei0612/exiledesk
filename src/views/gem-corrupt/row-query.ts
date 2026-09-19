@@ -51,5 +51,22 @@ export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
   return buildGemQuery(gemEn, rowQueryOptions(key, meta));
 }
 
+/**
+ * 元のスキルを見るためのクエリ (コラプトしていない素の出品)。
+ *
+ * オーナー指示 2026-09-19:「検索の仕方はジェム名 + コラプト無し、二重コラプト無しだね」
+ * 「これだけはしっかり元のスキルを見ないといけない」。原石の種類 (スキル / スピリット) は
+ * 出品の properties に「リザーブ … Spirit」が出るかで決まるので、素の品を 1 件見る。
+ * 結果はジェムごとに覚えるので、1 ジェムにつき一度きり (state/gem-spirit.ts)。
+ * ソケット数は問わない (値段ではなく素性を見るため)。
+ */
+export function originalGemQuery(gemEn: string, meta = false): unknown {
+  return buildGemQuery(gemEn, {
+    category: meta ? "gem.metagem" : "gem.activegem",
+    corrupted: false,
+    twiceCorrupted: false,
+  });
+}
+
 /** 追跡のキー ("Arc::finished")。銘柄 1 つ = ジェム × 条件 */
 export const watchKey = (gemEn: string, key: SaleKey): string => `${gemEn}::${key}`;
