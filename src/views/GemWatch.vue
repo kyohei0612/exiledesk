@@ -79,17 +79,13 @@ const sweeping = ref(false);
 const nowMs = ref(Date.now());
 let tick: number | null = null;
 async function sweep(reason?: string): Promise<void> {
-  if (sweeping.value) return;
+  // 自動巡回の途中は押せない (ボタンも disabled。オーナー 2026-09-19「自動巡回中、一括は押せなくていい」)
+  if (sweeping.value || status.value?.sampling) return;
   sweeping.value = true;
   message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
   const poll = window.setInterval(reload, 3000);
   try {
     const r = await sweepNow();
-    if (r.ok && r.accelerated) {
-      // 自動巡回の途中だった: 新しく始めずに、残りを手動の速さで回す (オーナー指示 2026-09-19)
-      message.value = { ok: true, text: "自動巡回の途中だったので、残りを手動と同じ速さで取ります (続きから)" };
-      return;
-    }
     await reload();
     const st = status.value;
     const left = st?.retry_keys ?? 0;

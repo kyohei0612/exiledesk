@@ -375,12 +375,6 @@ const MAX_RETRY_ROUNDS: u32 = 3;
 const SWEEP_TARGET_SECS: i64 = 20 * 60;
 
 static SAMPLING: AtomicBool = AtomicBool::new(false);
-/// 自動巡回 (薄く流す) の途中で手動の一括が押された = 残りを手動と同じ速さで回す。
-///
-/// 2026-09-19 オーナー「別に手動の方、レート制限になってなかったら動くでいいんじゃない」。
-/// それまでは巡回中に一括を押すと「取得中です」で断っていた (20 分の巡回の間ずっと押せない)。
-/// 2 本走らせると記録の書き込みがぶつかるので、走っている巡回のペースを切り替えて続きから行く。
-static FAST_REQUESTED: AtomicBool = AtomicBool::new(false);
 /// 今どの銘柄を取っているか (key, 何件目, 全体件数)。UI に出すため
 static PROGRESS: StdMutex<Option<(String, usize, usize)>> = StdMutex::new(None);
 /// 直近の失敗 (UI に出す)
@@ -654,7 +648,7 @@ pub async fn market_flow_verify(app: tauri::AppHandle, key: String) -> Result<Ve
 
 /// 今すぐ 1 周サンプルを取る (手動)。取得中なら何もしない。
 #[tauri::command]
-pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<bool, String> {
+pub async fn market_flow_sample_now(app: tauri::AppHandle) -> Result<(), String> {
     sample_once(&app).await
 }
 
@@ -979,15 +973,11 @@ pub enum Pace {
     Spread,
 }
 
-/// 全銘柄を 1 周する (手動ボタン)。
-/// 自動巡回が走っていれば新しく始めずに、その巡回を手動と同じ速さに切り替えて続きから行く
-/// (戻り値 true)。走っていなければ普通に 1 周して false。
-pub async fn sample_once(app: &tauri::AppHandle) -> Result<bool, String> {
-    if SAMPLING.load(Ordering::SeqCst) {
-        FAST_REQUESTED.store(true, Ordering::SeqCst);
-        return Ok(true);
-    }
-    sample_guarded(app, None, Pace::Fast).await.map(|_| false)
+/// 全銘柄を 1 周する (手動ボタン)。既に走っていれば Err (「取得中です」)。
+/// 自動巡回の途中は画面のボタン自体を押せなくしている (オーナー 2026-09-19:
+/// 「自動巡回中、一括は押せなくていい」)。ここの Err はその二重の守り
+pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
+    sample_guarded(app, None, Pace::Fast).await
 }
 
 /// 自動巡回: 周期いっぱいに薄く広げて 1 周する
@@ -1012,7 +1002,6 @@ async fn sample_guarded(app: &tauri::AppHandle, only: Option<HashSet<String>>, p
     let result = sample_inner(app, only, pace).await;
     // 途中で ? で抜けても進捗表示を残さない
     set_progress(None);
-    FAST_REQUESTED.store(false, Ordering::SeqCst);
     SAMPLING.store(false, Ordering::SeqCst);
     result
 }
@@ -1043,12 +1032,9 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
     // 自動巡回は周期いっぱいに薄く広げる: 1 銘柄 = search + fetch の 2 リクエストなので、
     // 間隔 = 周期 ÷ (銘柄数 × 2)。54 銘柄 / 2 時間なら 66 秒に 1 回で、枠に一度も触れない
     // (オーナー了承 2026-09-18:「一気に順に取ってる」のをやめる)
-    let spread_pace = Duration::from_secs(spread_pace_secs(total_watches as i64, cycle_secs(&store)) as u64);
-    // 間隔は銘柄ごとに決め直す: 薄く流している途中で手動の一括が押されたら、残りは手動の速さで
-    let pace_of = move || match pace_mode {
+    let pace = match pace_mode {
         Pace::Fast => REQUEST_INTERVAL,
-        Pace::Spread if FAST_REQUESTED.load(Ordering::SeqCst) => REQUEST_INTERVAL,
-        Pace::Spread => spread_pace,
+        Pace::Spread => Duration::from_secs(spread_pace_secs(total_watches as i64, cycle_secs(&store)) as u64),
     };
     let mut index = 0usize;
     // 後で取り直す銘柄 (429 / 通信エラーだけ。HTTP 400 のような恒久的な失敗は入れない)
@@ -1079,7 +1065,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
                 set_error(Some(format!("{}: {}", watch.key, e.chars().take(140).collect::<String>())));
                 if !is_retriable(&e) {
                     // 何度やっても同じ失敗 (HTTP 400 など)。この巡は飛ばし、取り直しにも入れない
-                    tokio::time::sleep(pace_of()).await;
+                    tokio::time::sleep(pace).await;
                     continue;
                 }
                 None
@@ -1091,7 +1077,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         // 「レート制限の解除待ち」と出るだけで何も待っていなかった
         let Some(body) = body else {
             failed.push(watch.key.clone());
-            tokio::time::sleep(pace_of()).await;
+            tokio::time::sleep(pace).await;
             continue;
         };
         // レート制限の規則と使用状況を控える (画面はこれを見て待ち時間を出す)
@@ -1103,7 +1089,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             .and_then(|v| v.as_array())
             .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect())
             .unwrap_or_default();
-        tokio::time::sleep(pace_of()).await;
+        tokio::time::sleep(pace).await;
 
         // --- fetch: 最安 10 件の値段 (新規を追跡に入れるため) ---
         // ここは毎回取る。**新しい出品が追跡に入るのは fetch の時だけ**なので、間引くと
@@ -1141,7 +1127,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
                 }
                 Err(e) => eprintln!("[market_flow] fetch {} 失敗: {e}", watch.key),
             }
-            tokio::time::sleep(pace_of()).await;
+            tokio::time::sleep(pace).await;
         }
 
         // --- 反映 ---
