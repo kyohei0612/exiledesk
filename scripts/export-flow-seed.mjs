@@ -55,8 +55,16 @@ const store = JSON.parse(readFileSync(src, "utf8"));
 // 監視リスト (どのジェムを追うか) は機体ごとの設定なので配らない
 delete store.watches;
 let masked = 0;
+let dropped = 0;
 for (const st of Object.values(store.states ?? {})) {
-  for (const t of st.tracked ?? []) {
+  // **まだ並んでいる出品は配らない** (Rust 側 market_flow_export_seed と同じ)。
+  // 追跡中の分を渡すと、受け取った機体が次に回した時「一覧に無い = 売れた」と数えてしまい、
+  // 消えた時刻がその機体の取得時刻になって、寿命が伸びて何でも「遅い」に寄る。
+  // 測り終わった分 (売れた / 打ち切った) だけ配れば判定はそのまま引き継げる。
+  const before = (st.tracked ?? []).length;
+  st.tracked = (st.tracked ?? []).filter((t) => t.gone_at != null);
+  dropped += before - st.tracked.length;
+  for (const t of st.tracked) {
     if (typeof t.account === "string" && t.account) {
       t.account = maskAccount(t.account);
       masked++;
@@ -71,5 +79,5 @@ writeFileSync(dst, json);
 
 const states = Object.keys(store.states ?? {}).length;
 const kb = Math.round(json.length / 1024);
-console.log(`銘柄 ${states} / ${kb} KB / 出品者名 ${masked} 件を伏字`);
+console.log(`銘柄 ${states} / ${kb} KB / 出品者名 ${masked} 件を伏字 / 追跡中 ${dropped} 件は配らない`);
 console.log(json === before ? "same" : "changed");

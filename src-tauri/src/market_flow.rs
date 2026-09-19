@@ -297,6 +297,13 @@ pub fn market_flow_export_seed(app: tauri::AppHandle, path: String) -> Result<(S
     // 伏せても**同じ人は同じ文字列**になるので、「同じ出品者がすぐ並べ直した」の判定は効いたまま。
     let mut store: FlowStore = serde_json::from_str(&raw).map_err(|e| format!("記録を読めません: {e}"))?;
     for st in store.states.values_mut() {
+        // **まだ並んでいる出品は配らない** (オーナー 2026-09-20「次からアプリ起動して
+        // 一括取得や手動取得したらどうなる?」への対処)。
+        // 追跡中の出品をそのまま渡すと、受け取った機体が次に回した時「一覧に無い = 売れた」と
+        // 数えてしまい、消えた時刻がその機体の取得時刻になる。母機が測ってから時間が空くほど
+        // 寿命が伸び、何でも「遅い」に寄る。**測り終わった分 (売れた / 打ち切った) だけ**配れば
+        // 判定はそのまま引き継げて、並んでいる物は受け取った側が自分で追い直す。
+        st.tracked.retain(|t| t.gone_at.is_some());
         for t in st.tracked.iter_mut() {
             t.account = t.account.as_deref().map(mask_account);
         }
@@ -324,9 +331,16 @@ pub fn market_flow_import_seed(app: tauri::AppHandle, json: String) -> Result<us
     let _guard = store_lock();
     let mut store = load_store(&app);
     let mut n = 0usize;
-    for (key, st) in seed.states {
+    for (key, mut st) in seed.states {
+        // 念のためこちら側でも落とす (古い同梱データには追跡中の分が入っている)
+        st.tracked.retain(|t| t.gone_at.is_some());
         let newer = store.states.get(&key).map(|cur| st.sampled_at > cur.sampled_at).unwrap_or(true);
         if newer {
+            // こちらで追いかけている最中の出品は残す (配られた分は測り終わったデータだけ)
+            if let Some(cur) = store.states.get(&key) {
+                let alive: Vec<Tracked> = cur.tracked.iter().filter(|t| t.gone_at.is_none()).cloned().collect();
+                st.tracked.extend(alive);
+            }
             store.states.insert(key, st);
             n += 1;
         }
