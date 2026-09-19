@@ -125,16 +125,28 @@ function readCount(ev: Event): number | null {
   return Number.isFinite(v) && v >= 0 ? v : null;
 }
 
-export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi {
+/**
+ * @param attempts 「N 回やった場合」の N。**素材・経路の札と同じ物**を受け取る
+ *   (オーナー指示 2026-09-20:「回数はどこ動かしてもどれも一緒に変化させて欲しい、収支も含めて」)。
+ *   ジェムごとに保存もするので、開き直すとそのジェムで入れた回数に戻る。
+ */
+export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<number>): GemLedgerApi {
   const book: Ref<LedgerBook> = ref(loadBook());
   const ledgerGem = computed(() => g.selected.value?.en ?? "");
+
+  // ジェムを選び直したら、そのジェムで入れた回数を共有の回数に戻す (入れていなければ今の値のまま)
+  watch(ledgerGem, (en) => {
+    const saved = en ? (book.value[en]?.attempts ?? 0) : 0;
+    if (saved > 0) attempts.value = saved;
+  });
 
   const ledger = computed<GemLedger>(() => {
     const raw = book.value[ledgerGem.value] ?? {};
     return {
       ...EMPTY_LEDGER,
       route: raw.route ?? null,
-      attempts: raw.attempts ?? 0,
+      // 回数は素材・経路と共通の値を使う (保存は下の setAttempts でジェムごとに残す)
+      attempts: attempts.value,
       qty: { ...(raw.qty ?? {}) },
       unit: { ...((raw as { buyEach?: Partial<Record<RowKey, number>> }).buyEach ?? {}), ...(raw.unit ?? {}) },
       prices: { ...(raw.prices ?? {}) },
@@ -211,12 +223,14 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
     return out;
   }
 
-  function setAttempts(ev: Event): void {
+  /**
+   * 回数が変わった時にジェムごとの帳簿へ書く。
+   * 回数を入れた時点の「最も得」で経路を固定し (2026-09-15)、単価もその時点で固定する (2026-09-16 オーナー指示)。
+   * あとで相場が動いても、やった分の費用を数え直さない。
+   */
+  function applyAttempts(n: number): void {
     if (!ledgerGem.value) return;
-    const n = Math.floor(readCount(ev) ?? 0);
     const l = ledger.value;
-    // 回数を入れた時点の「最も得」で経路を固定し (2026-09-15)、単価もその時点で固定する (2026-09-16 オーナー指示)。
-    // あとで相場が動いても、やった分の費用を数え直さない
     const route = l.route ?? (n > 0 && g.best.value ? g.best.value.id : null);
     const needPrices = n > 0 && Object.keys(l.prices).length === 0;
     if (route !== l.route || needPrices) {
@@ -233,6 +247,13 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
       return;
     }
     setLedger("attempts", n);
+  }
+  // 素材・経路の札で回数を変えた時も、収支の記録と固定を同じように動かす (2026-09-20)
+  watch(attempts, (n) => applyAttempts(n));
+
+  /** 収支の「回数」欄。共有の値を動かすので、素材・経路の表も一緒に変わる */
+  function setAttempts(ev: Event): void {
+    attempts.value = Math.floor(readCount(ev) ?? 0);
   }
 
   /** 固定した単価を今の相場で取り直す */

@@ -83,9 +83,13 @@ function onQueryKeydown(e: KeyboardEvent): void {
 }
 
 // 収支 (実績入力) は views/gem-corrupt/ledger.ts へ (画面は LedgerPanel.vue)
-/** 「N 回やった場合」の N。素材・経路・収支で共通 (子に配って、素材の選択で戻ってくる) */
+/**
+ * 「N 回やった場合」の N。**素材・経路・収支のどこで変えても全部が動く**
+ * (オーナー指示 2026-09-20:「回数はどこ動かしてもどれも一緒に変化させて欲しい、収支も含めて」)。
+ * ジェムごとに収支へ保存されるので、開き直すとそのジェムで入れた回数に戻る。
+ */
 const attempts = ref(10);
-const ledgerApi = useGemLedger(g);
+const ledgerApi = useGemLedger(g, attempts);
 const { fetchExchangeAndRepin } = ledgerApi;
 
 </script>
