@@ -265,6 +265,19 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     Ok(())
 }
 
+/// 出品者名を 4 文字目から伏せる ("KyoheiPoE" → "Kyo******")。
+///
+/// 同じ人は同じ文字列になるので、並べ直しの判定はそのまま効く。
+/// 3 文字以下は全部伏せる (頭 3 文字だけだと元の名前がほぼ残ってしまうため)。
+pub fn mask_account(name: &str) -> String {
+    let chars: Vec<char> = name.chars().collect();
+    if chars.len() <= 3 {
+        return "*".repeat(chars.len());
+    }
+    let head: String = chars[..3].iter().collect();
+    format!("{head}{}", "*".repeat(chars.len() - 3))
+}
+
 /// 記録をまるごと書き出す (オーナー指示 2026-09-20:「これ別に人に配るわけじゃないから
 /// 俺のデータそのまま使って OK。出品者情報とかフルで渡してあげて、要約せずに」)。
 ///
@@ -278,13 +291,14 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
 pub fn market_flow_export_seed(app: tauri::AppHandle, path: String) -> Result<(String, usize), String> {
     let src = store_path(&app)?;
     let raw = std::fs::read_to_string(&src).map_err(|e| format!("記録を読めません ({}): {e}", src.display()))?;
-    // 出品者のアカウント名だけは落とす。リポジトリ (と GitHub のリリース) は公開なので、
-    // 他人の名前をそこに置かない。判定に使う値段・出品時刻・消えた時刻はそのまま残る
-    // (同じ出品者の並べ直しの判定にしか使っておらず、配った先では新しく測り直すため)
+    // 出品者のアカウント名は 4 文字目から伏せる (オーナー指示 2026-09-20:
+    // 「アカウント名だけまずいなら 4 文字目以降から伏字でいいんじゃね」)。
+    // リポジトリと GitHub のリリースは公開なので、他人の名前をそのまま置かないため。
+    // 伏せても**同じ人は同じ文字列**になるので、「同じ出品者がすぐ並べ直した」の判定は効いたまま。
     let mut store: FlowStore = serde_json::from_str(&raw).map_err(|e| format!("記録を読めません: {e}"))?;
     for st in store.states.values_mut() {
         for t in st.tracked.iter_mut() {
-            t.account = None;
+            t.account = t.account.as_deref().map(mask_account);
         }
     }
     // 監視リストは機体ごとの設定なので配らない
@@ -321,4 +335,21 @@ pub fn market_flow_import_seed(app: tauri::AppHandle, json: String) -> Result<us
         save_store(&app, &store)?;
     }
     Ok(n)
+}
+
+#[cfg(test)]
+mod seed_tests {
+    use super::mask_account;
+
+    /// 出品者名は 4 文字目から伏せる。同じ人は同じ文字列になる (並べ直しの判定に要る)
+    #[test]
+    fn account_is_masked_from_the_fourth_character() {
+        assert_eq!(mask_account("KyoheiPoE"), "Kyo******");
+        assert_eq!(mask_account("abcd"), "abc*");
+        assert_eq!(mask_account("abc"), "***", "3 文字以下は全部伏せる");
+        assert_eq!(mask_account(""), "");
+        assert_eq!(mask_account("あいうえお"), "あいう**", "日本語でも文字数で数える");
+        assert_eq!(mask_account("Seller#1"), mask_account("Seller#1"), "同じ人は同じ文字列");
+        assert_ne!(mask_account("SellerA"), mask_account("Bidder"), "別人は別の文字列");
+    }
 }
