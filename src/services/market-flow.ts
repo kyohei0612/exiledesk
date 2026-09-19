@@ -216,11 +216,12 @@ export async function recordFlow(sample: { key: string; label?: string; total: n
  * 「一括取得ボタン。自動取得の道を手動でスタートするだけ」)。
  * 中身は周期の自動取得とまったく同じ処理。走っている間は状態表示に進捗が出る。
  */
-export async function sweepNow(): Promise<{ ok: boolean; message?: string }> {
+export async function sweepNow(): Promise<{ ok: boolean; accelerated?: boolean; message?: string }> {
   if (!isTauriRuntime()) return { ok: false, message: "アプリの中でだけ取得できます" };
   try {
-    await invoke("market_flow_sample_now");
-    return { ok: true };
+    // true = 自動巡回が走っていたので、それを手動の速さに切り替えて続きから行く (新しく始めない)
+    const accelerated = await invoke<boolean>("market_flow_sample_now");
+    return { ok: true, accelerated };
   } catch (e) {
     // Rust 側の理由をそのまま出す (「取得中です」を「失敗しました」と言わないため)
     return { ok: false, message: typeof e === "string" ? e : e instanceof Error ? e.message : undefined };
