@@ -14,7 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { isSpiritGem, noteSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
-import { baseSourceOf, cachedBaseBuy, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
+import { baseBuyTotal, baseSourceOf, cachedBaseBuy, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
 import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { originalGemQuery, rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
@@ -129,6 +129,11 @@ export function useGemCorrupt() {
     void baseBump.value;
     return baseGemSourceFor(isSpirit.value, selected.value.en);
   });
+  /** 現物を N 個買う時の合計 (高貴)。最安から N 件を積む。現物でなければ null */
+  function baseBuyTotalFor(n: number): { total: number; covered: number } | null {
+    void baseBump.value;
+    return baseSource.value === "buy" ? baseBuyTotal(selected.value?.en, n) : null;
+  }
   /** 現物を買うジェムの、覚えている最安・件数・時刻 (素材表のホバー用) */
   const baseBuyInfo = computed(() => {
     void baseBump.value;
@@ -264,6 +269,8 @@ export function useGemCorrupt() {
     // 5 ソケットは常に必須 (コラプト済みはソケットを足せないため)
     return rowQueryOptions(key, selected.value?.kind === "meta");
   }
+  /** 現物を買う時に見る出品数 (オーナー指示 2026-09-19:「50 個、最安値から取得して」) */
+  const BASE_BUY_DEPTH = 50;
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   /**
    * 現物を買うジェムの「低レベルのジェム本体」をトレードサイトで開く URL
@@ -321,14 +328,18 @@ export function useGemCorrupt() {
    */
   async function measureOriginal(gem: GemInfo): Promise<void> {
     if (isRateLimited()) return;
-    const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value);
+    const buying = baseSourceOf(gem.en) === "buy";
+    // 現物を買うジェムは最安 50 件まで見る (N 個買う時の合計を積むため。fetch は 10 件ずつ = 5 回)。
+    // 種類の判定 (スピリットか) だけなら 10 件で足りる
+    const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value, buying ? BASE_BUY_DEPTH : undefined);
     if (!r) return;
     if (r.reservesSpirit != null) {
       noteSpiritGem(gem.en, r.reservesSpirit);
       spiritBump.value++;
     }
-    if (baseSourceOf(gem.en) === "buy") {
-      noteBaseBuy(gem.en, r.minExalted, r.total);
+    if (buying) {
+      const prices = r.listings.map((l) => l.amountExalted).filter((v) => Number.isFinite(v));
+      noteBaseBuy(gem.en, r.minExalted, r.total, prices);
       baseBump.value++;
     }
   }
@@ -361,9 +372,13 @@ export function useGemCorrupt() {
       if (seq === fetchSeq) pricing.value = false;
     }
   }
-  // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す
+  // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す。
+  // 2026-09-19:「素材 (元の加工されていないジェムやカレンシー) は取引所検索して最安値で表示」を
+  // 既定にする。取引所の比較は poe2scout のペア相場なので trade2 の枠は使わない (30 分キャッシュ)
   watch(selected, () => {
-    if (selected.value) void fetchSalePrices();
+    if (!selected.value) return;
+    void fetchSalePrices();
+    void fetchExchange();
   });
 
   // ---- 前提 (確率) ----
@@ -392,6 +407,7 @@ export function useGemCorrupt() {
     baseSource,
     setBaseSource,
     baseBuyInfo,
+    baseBuyTotalFor,
     baseTradeUrl,
     materialApiIds,
     exchangeLoading,

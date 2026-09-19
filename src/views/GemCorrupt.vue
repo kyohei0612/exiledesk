@@ -316,6 +316,8 @@ const materialRows = computed(() => {
       unitAmount,
       unitCurrency,
       marketCheaper,
+      // 現物を買う素材は「最安 1 件 × N」ではなく最安から N 件の合計 (オーナー指示 2026-09-19)
+      buyTotal: r.key === "baseGem" && qtyN != null ? g.baseBuyTotalFor(Math.ceil(qtyN)) : null,
       costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
       qtyN,
       costN: r.price == null || qtyN == null ? null : r.price * qtyN,
@@ -658,7 +660,11 @@ const summary = computed(() => {
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
-                  <template v-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ currencyJa(m.unitCurrency) }}</template>
+                  <!-- 現物を買う素材は最安から N 件を積んだ合計 (1 件 × N ではない。2026-09-19) -->
+                  <template v-if="m.buyTotal">
+                    <span :title="`最安から ${attempts} 件の合計。取れている ${m.buyTotal.covered} 件ぶんは実際の値段、足りない分は一番高い値で埋めています`">{{ money(m.buyTotal.total) }}</span>
+                  </template>
+                  <template v-else-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else>{{ money(m.costN) }}</template>
                 </td>
               </tr>

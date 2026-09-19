@@ -27,7 +27,7 @@ const SOURCE_KEY = "exiledesk.gem.baseSource";
 const PRICE_KEY = "exiledesk.gem.baseBuy";
 
 type SourceBook = Record<string, BaseSource>;
-type PriceBook = Record<string, { exalted: number; at: number; total?: number }>;
+type PriceBook = Record<string, { exalted: number; at: number; total?: number; prices?: number[] }>;
 
 function load<T>(key: string): T {
   try {
@@ -73,15 +73,34 @@ export function setBaseSource(nameEn: string, v: BaseSource): void {
  * total = 検索に掛かった出品数 (オーナー 2026-09-19「原石素材 1 個しかないのおかしい」→ 何件の中の最安かを
  * 画面に出せるように残す)
  */
-export function noteBaseBuy(nameEn: string | null | undefined, exalted: number | null | undefined, total?: number): void {
+export function noteBaseBuy(
+  nameEn: string | null | undefined,
+  exalted: number | null | undefined,
+  total?: number,
+  prices?: number[],
+): void {
   if (!nameEn || exalted == null || !Number.isFinite(exalted)) return;
   const b = P();
-  b[nameEn] = { exalted, at: Date.now(), total };
+  b[nameEn] = { exalted, at: Date.now(), total, prices };
   save(PRICE_KEY, b);
 }
 
-/** 覚えている現物の最安 (高貴)・取った時刻・その時の出品数 */
-export function cachedBaseBuy(nameEn: string | null | undefined): { exalted: number; at: number; total?: number } | null {
+/** 覚えている現物の最安 (高貴)・取った時刻・その時の出品数・最安から順の値段 */
+export function cachedBaseBuy(nameEn: string | null | undefined): { exalted: number; at: number; total?: number; prices?: number[] } | null {
   if (!nameEn) return null;
   return P()[nameEn] ?? null;
+}
+
+/**
+ * 現物を N 個買う時の合計 (高貴)。**最安 1 件 × N ではなく、最安から N 件の合計**
+ * (オーナー指示 2026-09-19:「最安値順に並べたときに、回数指定した際の合計を書こう」)。
+ * 覚えている件数を超える分は、取れている中で一番高い値で埋める (足りない旨は画面に出す)。
+ */
+export function baseBuyTotal(nameEn: string | null | undefined, n: number): { total: number; covered: number } | null {
+  const hit = cachedBaseBuy(nameEn);
+  if (!hit || n <= 0) return null;
+  const list = hit.prices?.length ? hit.prices : [hit.exalted];
+  let total = 0;
+  for (let i = 0; i < n; i++) total += list[Math.min(i, list.length - 1)];
+  return { total, covered: Math.min(n, list.length) };
 }

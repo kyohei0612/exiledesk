@@ -100,11 +100,11 @@ export function isRateLimited(): boolean {
 }
 
 /** 1 クエリの最安。制限中は即 null。 */
-export async function autoPrice(league: string, body: unknown, rates: ExaltedRates): Promise<PriceResult | null> {
+export async function autoPrice(league: string, body: unknown, rates: ExaltedRates, topN?: number): Promise<PriceResult | null> {
   if (isRateLimited()) return null;
   pending.value += 1;
   try {
-    const r = await priceMinForQuery(league, body, rates);
+    const r = await priceMinForQuery(league, body, rates, topN);
     lastError.value = null;
     return r;
   } catch (e) {

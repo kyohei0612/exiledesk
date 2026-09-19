@@ -37,7 +37,9 @@ export function retryAfterSeconds(err: unknown): number | null {
   const m = msg.match(/HTTP 429 retry-after=(\d+)/) ?? msg.match(/レート制限中 \(あと (\d+) 秒\)/);
   return m ? Number(m[1]) : null;
 }
-/** fetch で見る listing 数 (trade2 の上限 = 10) */
+/** fetch 1 回で見られる listing 数 (trade2 の上限 = 10) */
+const FETCH_CHUNK = 10;
+/** 既定で見る listing 数 (最安 10 件) */
 const FETCH_TOP_N = 10;
 
 const lastRequestAt = { search: 0, fetch: 0 };
@@ -359,19 +361,33 @@ async function searchOnce(league: string, body: unknown): Promise<Trade2SearchRe
   return withSync("search", throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } })));
 }
 
-/** search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる */
-async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates): Promise<PriceResult> {
+/**
+ * search 結果の先頭 N 件を fetch して最安 (高貴建て) をまとめる。
+ *
+ * topN は 10 を超えられる (trade2 の fetch は 1 回 10 件までなので 10 件ずつに割って投げる)。
+ * オーナー指示 2026-09-19:「現物のトレードサイトの奴は 50 個、最安値から取得して」
+ * — 素材として N 個買う時の合計は「最安 1 件 × N」ではなく**最安から N 件の合計**なので、
+ * 積み上げられるだけの深さが要る。
+ */
+async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates, topN = FETCH_TOP_N): Promise<PriceResult> {
   const searchUrl = search.id
     ? `${trade2SiteOrigin()}/trade2/search/poe2/${encodeURIComponent(league)}/${search.id}`
     : "";
-  const ids = (search.result ?? []).slice(0, FETCH_TOP_N);
+  const ids = (search.result ?? []).slice(0, topN);
   if (ids.length === 0 || !search.id) {
     return { total: search.total ?? 0, minExalted: null, listings: [], listingIds: [], allIds: search.result ?? [], searchUrl, queryId: search.id };
   }
   const site = trade2Site();
-  const fetched = DEV_TRADE
-    ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${ids.join(",")}?query=${encodeURIComponent(search.id!)}`)))
-    : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids, queryId: search.id, site } })));
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += FETCH_CHUNK) chunks.push(ids.slice(i, i + FETCH_CHUNK));
+  const results: FetchResponse["result"] = [];
+  for (const chunk of chunks) {
+    const part = DEV_TRADE
+      ? await withSync("fetch", throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${chunk.join(",")}?query=${encodeURIComponent(search.id!)}`)))
+      : await withSync("fetch", throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids: chunk, queryId: search.id, site } })));
+    for (const r of part.result ?? []) results.push(r);
+  }
+  const fetched: FetchResponse = { result: results };
   const listings: PriceListing[] = [];
   // 出品の properties に「リザーブ … Spirit」があれば、そのジェムはスピリットジェムの原石で作る。
   // 日本語サイトでも値は `100[Spirit|スピリット]` の形なので Spirit で拾える (2026-09-19)
@@ -423,7 +439,7 @@ function propsHaveSpiritReservation(item: unknown): boolean {
  * 任意の検索クエリ (buildGemQuery 等) の最安値。search 1 回 + fetch 1 回。
  * ジェムコラプト収支 (2026-09-12) 用。
  */
-export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates): Promise<PriceResult> {
+export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates, topN = FETCH_TOP_N): Promise<PriceResult> {
   const search = await searchOnce(league, body);
-  return fetchListings(league, search, rates);
+  return fetchListings(league, search, rates, topN);
 }
