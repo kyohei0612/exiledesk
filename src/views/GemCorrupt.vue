@@ -326,6 +326,16 @@ const materialRows = computed(() => {
   });
 });
 /** 単価を固定した時刻 (MM/DD HH:mm) */
+/**
+ * 現物を買うジェムの「低レベルのジェム本体」のホバー文 (何件の中の最安か・いつ取ったか)。
+ * テンプレートの属性の中でテンプレート文字列を入れ子にすると引用符が属性を閉じてしまうので、ここで組む
+ */
+const baseBuyTitle = computed(() => {
+  const i = g.baseBuyInfo.value;
+  if (!i) return "";
+  const n = i.total != null ? ` ${i.total} 件` : "";
+  return `トレードの現物 (コラプト無し・二重コラプト無し、オンラインの出品${n}) の最安 ${money(i.exalted)}。${fmtStamp(i.at)} 取得。「再取得」で取り直します`;
+});
 const fmtStamp = (ms: number): string => {
   const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, "0");
@@ -621,8 +631,8 @@ const summary = computed(() => {
                       : m.marketCheaper && m.buy
                         ? `取引所で比べた結果、相場 (${money(m.price)}) の方が取引所 (${m.buy.rawPerUnit} ${currencyJa(m.buy.currency)} / 個 → 繰り上げて ${money(m.buy.exalted)}) より安いので、相場で買う前提で計算します`
                         : m.price != null
-                          ? m.key === 'baseGem' && g.baseBuyInfo.value
-                            ? `トレードの現物 (コラプト無し・二重コラプト無し、オンラインの出品${g.baseBuyInfo.value.total != null ? ` ${g.baseBuyInfo.value.total} 件` : ""}) の最安 ${money(m.price)}。${fmtStamp(g.baseBuyInfo.value.at)} 取得。「再取得」で取り直します`
+                          ? m.key === 'baseGem' && baseBuyTitle
+                            ? baseBuyTitle
                             : `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押しても取引所の板が薄い素材はここに出ません`
                           : '相場なし'
                   "
