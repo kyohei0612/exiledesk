@@ -341,8 +341,12 @@ const scoredGems = computed(() => {
     }
     // 期待値は**実売の平均**で計算する (画面に出す最安値ではない。オーナー指示 2026-09-18:
     // 「並び順だけ上から 3 つの平均で期待値を出すだけ」)
+    // 売れた実績が無い条件は **0 (売れない)** として計算する
+    // (オーナー指示 2026-09-19:「判定待ちは売れてない判定でおｋ。売れない = 遅いでおｋだし、
+    //  遅いは 0 として期待値出して」)。追跡記録そのものが無い条件だけ null にして、
+    // 3 条件とも記録が無いジェムは今まで通り「—」にする (見ていないだけで、売れないとは言えないため)
     const soldAvg: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
-    for (const c of cs) soldAvg[c.key] = c.avgExalted;
+    for (const c of cs) soldAvg[c.key] = c.avgExalted ?? (c.gone + c.alive > 0 ? 0 : null);
     const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false, en: gem.name }, soldAvg);
     return {
       ...gem,
@@ -397,7 +401,7 @@ const sortedGems = computed(() => {
   return rows;
 });
 const SORT_NOTE: Record<SortMode, string> = {
-  ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS} 回回した時の手残り) が高い順。`,
+  ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS} 回回した時の手残り) が高い順。売れた実績が無い条件は「売れない = 0」として計算します (判定待ちも同じ扱い)。`,
   level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の今の最安値が高い順。",
   quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の今の最安値が高い順。",
   finished: "完成品が「速い」ジェムを上に、その中では 完成品の今の最安値が高い順。",
