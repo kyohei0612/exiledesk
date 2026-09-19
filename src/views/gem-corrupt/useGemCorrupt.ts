@@ -121,7 +121,7 @@ export function useGemCorrupt() {
     saveBaseSource(en, v);
     baseBump.value++;
     // 現物を買うに切り替えて、まだ値段が無ければ取りに行く (売値と同じ門を通る)
-    if (v === "buy" && !pricing.value) void measureOriginal(selected.value!);
+    if (v === "buy" && !pricing.value) void measureOriginal(selected.value!, true);
   }
   const baseGemSource = computed<BaseGemSource>(() => {
     if (!selected.value) return { apiId: null, level: null, price: null, mode: "uncut" };
@@ -271,6 +271,13 @@ export function useGemCorrupt() {
   }
   /** 現物を買う時に見る出品数 (オーナー指示 2026-09-19:「50 個、最安値から取得して」) */
   const BASE_BUY_DEPTH = 50;
+  /**
+   * 現物 50 件の取り直しを我慢する時間。
+   * 1 回で search 1 + fetch 5 = **6 リクエスト** 使う (売値の 3 条件で別に 6 使うので、
+   * ジェムを選ぶたびに 12)。5 分 28 回の枠にすぐ届くので、自動で取る時はこの時間内なら使い回す。
+   * 「再取得」を押した時は必ず取り直す。
+   */
+  const BASE_BUY_FRESH_MS = 30 * 60 * 1000;
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
   /**
    * 現物を買うジェムの「低レベルのジェム本体」をトレードサイトで開く URL
@@ -326,9 +333,14 @@ export function useGemCorrupt() {
    *   - 原石から作れないジェム (カルグール系) は、この最安がそのまま「低レベルのジェム本体」の値段
    *     (オーナー指摘 2026-09-19:「元のスキルはトレードから現物買うしかないよね」)。こちらは毎回取り直す
    */
-  async function measureOriginal(gem: GemInfo): Promise<void> {
+  async function measureOriginal(gem: GemInfo, force = false): Promise<void> {
     if (isRateLimited()) return;
     const buying = baseSourceOf(gem.en) === "buy";
+    if (buying && !force) {
+      // 自動で開いた時は、覚えている 50 件が新しければ投げ直さない (6 リクエスト節約)
+      const hit = cachedBaseBuy(gem.en);
+      if (hit?.prices?.length && Date.now() - hit.at < BASE_BUY_FRESH_MS) return;
+    }
     // 現物を買うジェムは最安 50 件まで見る (N 個買う時の合計を積むため。fetch は 10 件ずつ = 5 回)。
     // 種類の判定 (スピリットか) だけなら 10 件で足りる
     const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value, buying ? BASE_BUY_DEPTH : undefined);
@@ -344,7 +356,7 @@ export function useGemCorrupt() {
     }
   }
 
-  async function fetchSalePrices(): Promise<void> {
+  async function fetchSalePrices(force = false): Promise<void> {
     if (!selected.value || pricing.value || isRateLimited()) return;
     const gem = selected.value;
     const seq = ++fetchSeq;
@@ -366,7 +378,7 @@ export function useGemCorrupt() {
       }
       // 素のスキルを見る (search + fetch 1 回ずつ):
       //   原石の種類がまだ実測できていない時 (一度きり) と、現物を買うジェム (値段なので毎回)
-      if (!spiritGemMeasured(gem.en) || baseSourceOf(gem.en) === "buy") await measureOriginal(gem);
+      if (!spiritGemMeasured(gem.en) || baseSourceOf(gem.en) === "buy") await measureOriginal(gem, force);
       priceError.value = tradeAuto.lastError.value;
     } finally {
       if (seq === fetchSeq) pricing.value = false;

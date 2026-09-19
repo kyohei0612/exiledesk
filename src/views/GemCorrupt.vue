@@ -486,7 +486,7 @@ const summary = computed(() => {
                 type="button"
                 :disabled="!g.selected.value || refetch.disabled"
                 class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                @click="g.fetchSalePrices"
+                @click="g.fetchSalePrices(true)"
               >
                 <span aria-hidden="true">⟳</span>
                 {{ refetch.label }}
