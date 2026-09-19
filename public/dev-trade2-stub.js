@@ -60,6 +60,14 @@
     };
   }
 
+  /**
+   * ?update=1 で「起動時に更新が見つかった」状態を装う (全面のアップデート画面の確認用)。
+   * ダウンロードは進捗だけ流して、再起動はしない。
+   */
+  if (location.search.includes("update=1")) {
+    window.__TAURI_UPDATER_STUB__ = true;
+  }
+
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input.url;

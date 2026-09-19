@@ -21,6 +21,14 @@ const phase = ref<"idle" | "checking" | "available" | "downloading" | "installin
 const errorMsg = ref<string | null>(null);
 const downloadedBytes = ref(0);
 const totalBytes = ref<number | null>(null);
+/**
+ * 起動時のチェックで見つかった更新は**そのまま入れて再起動する** (オーナー指示 2026-09-20:
+ * 「起動時にアプデチェックして更新データあるなら、そこでアップデート中 → 強制再起動 → 表示」)。
+ * その間は全面に「アップデート中です」を出して操作させない。
+ * 設定画面の「更新を確認」から押した時は今まで通り、隅のトーストで本人に選ばせる。
+ * 連続クラッシュ (セーフモード) の時は自動チェックごと飛ばすので、ここにも来ない。
+ */
+const forced = ref(false);
 
 // セーフモード: 連続クラッシュ検出。LocalStorage `exiledesk:launchSeq` を
 // 起動時に +1、5 秒生存で 0 に戻す。3 回連続でクリアできなければ自動 check skip。
@@ -78,6 +86,11 @@ async function runCheck(manual = false) {
       update.value = markRaw(u);
       phase.value = "available";
       updateCheckState.value = "available";
+      // 起動時に見つけた分は聞かずに入れる
+      if (!manual) {
+        forced.value = true;
+        void applyUpdate();
+      }
     } else {
       phase.value = manual ? "up-to-date" : "idle";
       updateCheckState.value = "none";
@@ -141,11 +154,14 @@ async function applyUpdate() {
   } catch (e) {
     errorMsg.value = typeof e === "string" ? e : (e as Error).message;
     phase.value = "error";
+    // 失敗した時は閉じ込めない (このまま今の版で使える)
+    forced.value = false;
   }
 }
 
 function dismiss() {
   phase.value = "idle";
+  forced.value = false;
 }
 
 onMounted(() => {
@@ -162,6 +178,20 @@ onMounted(() => {
     phase.value = "safe-mode";
     return;
   }
+  // 開発時に ?update=1 を付けた時だけ、全面のアップデート画面の見え方を確かめる (実際には入れない)
+  if (import.meta.env.DEV && (window as unknown as { __TAURI_UPDATER_STUB__?: boolean }).__TAURI_UPDATER_STUB__) {
+    forced.value = true;
+    phase.value = "downloading";
+    totalBytes.value = 12_000_000;
+    const t = setInterval(() => {
+      downloadedBytes.value = Math.min(totalBytes.value ?? 0, downloadedBytes.value + 900_000);
+      if (downloadedBytes.value >= (totalBytes.value ?? 0)) {
+        clearInterval(t);
+        phase.value = "installing";
+      }
+    }, 300);
+    return;
+  }
   // 通常起動: バックグラウンドで check（UI ブロックなし）
   runCheck();
 });
@@ -174,15 +204,40 @@ function fmtBytes(b: number): string {
 </script>
 
 <template>
+  <!-- 起動時に見つけた更新: 全面に出して、入れ終わったら再起動する (2026-09-20) -->
+  <div v-if="forced" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-[1px]">
+    <div class="max-w-md mx-6 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] p-6 shadow-lg text-center">
+      <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">アップデート中です</h2>
+      <p class="text-[13px] text-[var(--exile-color-text-secondary)] leading-relaxed">
+        新しい版<template v-if="update?.version"> ({{ update.version }})</template>を入れています。終わると自動で再起動します。
+      </p>
+      <div class="mt-4 h-1.5 w-full rounded bg-[var(--exile-color-bg-elevated)] overflow-hidden">
+        <div
+          class="h-full bg-[var(--exile-color-accent-focus)] transition-[width] duration-200"
+          :style="{ width: totalBytes ? `${Math.min(100, Math.round((downloadedBytes / totalBytes) * 100))}%` : '35%' }"
+        ></div>
+      </div>
+      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-2 tabular-nums">
+        <template v-if="phase === 'downloading'">
+          ダウンロード中 {{ fmtBytes(downloadedBytes) }}<template v-if="totalBytes"> / {{ fmtBytes(totalBytes) }}</template>
+        </template>
+        <template v-else-if="phase === 'installing'">インストール中…</template>
+        <template v-else-if="phase === 'done'">再起動しています…</template>
+        <template v-else>準備中…</template>
+      </p>
+    </div>
+  </div>
+
   <div
     v-if="
+      !forced && (
       phase === 'available' ||
       phase === 'downloading' ||
       phase === 'installing' ||
       phase === 'done' ||
       phase === 'error' ||
       phase === 'safe-mode' ||
-      phase === 'up-to-date'
+      phase === 'up-to-date')
     "
     class="fixed bottom-4 right-4 max-w-sm rounded-lg border bg-[var(--exile-color-bg-surface)] border-[var(--exile-color-border-subtle)] shadow-lg z-50 p-4"
   >
