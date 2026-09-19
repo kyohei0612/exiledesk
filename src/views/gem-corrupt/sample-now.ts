@@ -12,10 +12,11 @@
  * 記録の形は自動巡回・ジェムコラプトの「再取得」と同じ (market_flow_record) なので、
  * 捌き速度の判定にもそのまま使われる。
  */
+import { computed, ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { noteSpiritGem } from "../../state/gem-spirit";
 import { buildGemQuery } from "../../services/trade2/query";
-import { autoPrice } from "../../services/trade2/auto-price";
+import { autoPrice, isRateLimited } from "../../services/trade2/auto-price";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { recordFlow } from "../../services/market-flow";
 import { rowQueryOptions, SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./row-query";
@@ -46,19 +47,65 @@ export async function recordGemSample(gemEn: string, key: SaleKey, r: PriceResul
   });
 }
 
+/** 監視に入れた直後の取得が走っているか。走っている間は「一括取得」を押せなくする */
+const running = ref(false);
+export const sampleBusy = computed(() => running.value);
+/** 今どのジェムを取っているか (画面のメッセージ用) */
+const current = ref("");
+export const sampleTarget = computed(() => current.value);
+
+/** 押してから実際に投げるまで空ける時間 (オーナー指示 2026-09-20:「一応 10 秒空けてスタート」) */
+const START_DELAY_MS = 10_000;
+/** 1 条件あたりの待ちの上限 (レート制限が明けるのを待つが、永久には待たない) */
+const MAX_WAIT_MS = 30 * 60 * 1000;
+/** レート制限中の見直し間隔 */
+const POLL_MS = 5_000;
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
 /**
- * そのジェムの 3 条件を今すぐ 1 回ずつ取る。
- * @returns 取れた条件の数と、待ちで飛ばした条件の数
+ * そのジェムの 3 条件を取る。**取れるまで順番待ちする** (レート制限なら明けるのを待つ)。
+ *
+ * オーナー指示 2026-09-20:「監視中にぶち込んだ瞬間に必ず 1 度取得を回そう、フルで 3 種。
+ * レート制限なら取れるまで順番待機して、一応 10 秒空けてスタート。その際 一括は押せないように」。
+ *
+ * @returns 取れた条件の数と、待ちきれずに諦めた条件の数
  */
 export async function sampleGemNow(gemEn: string): Promise<{ done: number; skipped: number }> {
   const gem = GEMS.find((g) => g.en === gemEn);
   const league = marketStore.league.value?.Value ?? "Standard";
+  running.value = true;
+  current.value = gemEn;
   let done = 0;
-  for (const key of SALE_KEYS) {
-    const r = await autoPrice(league, buildGemQuery(gemEn, rowQueryOptions(key, gem?.kind === "meta")), marketStore.rates.value);
-    if (!r) continue;
-    await recordGemSample(gemEn, key, r);
-    done++;
+  try {
+    // 押した直後に投げない (連打や、直前の取得と重ならないように 10 秒空ける)
+    await sleep(START_DELAY_MS);
+    for (const key of SALE_KEYS) {
+      const body = buildGemQuery(gemEn, rowQueryOptions(key, gem?.kind === "meta"));
+      let waited = 0;
+      for (;;) {
+        // 罰則で止まっている間は投げずに待つ (門番の順番待ちは autoPrice の中で待つ)
+        if (isRateLimited()) {
+          if (waited >= MAX_WAIT_MS) break;
+          await sleep(POLL_MS);
+          waited += POLL_MS;
+          continue;
+        }
+        const r = await autoPrice(league, body, marketStore.rates.value);
+        if (r) {
+          await recordGemSample(gemEn, key, r);
+          done++;
+          break;
+        }
+        // 取れなかった = 制限に入ったか通信が落ちた。少し置いてもう一度
+        if (waited >= MAX_WAIT_MS) break;
+        await sleep(POLL_MS);
+        waited += POLL_MS;
+      }
+    }
+  } finally {
+    running.value = false;
+    current.value = "";
   }
   return { done, skipped: SALE_KEYS.length - done };
 }

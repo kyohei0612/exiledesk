@@ -60,11 +60,18 @@ const result = ref<Result | null>(null);
  * 2026-09-19 オーナー指示:「監視で個別アセを選んでも画面が変わらない。選んだら、取得済みなら
  * 変えてくれ。そしたら使用率ランキングのプルダウンは要らないでしょ」。ここは表示専用にした。
  */
-// カスタム監視スキル (手動の分だけ監視) の時は、ランキング自体は全アセンダンシーを見せる
+/**
+ * この一覧で見ているアセンダンシー。値は上の「自動ジェム監視」のプルダウンと同じ (設定に持つ)。
+ *
+ * オーナー指示 2026-09-20:「自動ジェム監視; ここではプルダウンで監視ジェムは変わらない」。
+ * 監視するジェムは**手で選んだ分だけ**なので (既定 autoTop = false)、ここを変えても監視は変わらない。
+ * 変わるのはこの一覧の中身だけ。
+ */
 const selectedClass = computed(() => {
   const k = watchSettings.value.klass ?? "";
   return k === MANUAL_ONLY ? "" : k;
 });
+
 /** 今出している結果が 1 アセンダンシーの物ならその名前 (散らした結果や未取得は null) */
 const resultClass = computed(() => {
   const cs = result.value?.classes;
@@ -163,6 +170,9 @@ async function showCached(): Promise<void> {
     result.value = r;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
+      // アセンダンシーごとにも残す。監視は「自分の取得先」の分だけを読むので、
+      // ここで別のアセを見ても監視リストは変わらない (2026-09-20)
+      localStorage.setItem(`${STORE_KEY}.${selectedClass.value || "all"}`, JSON.stringify(r));
     } catch {
       /* 保存できなくても表示はできる */
     }
@@ -187,6 +197,9 @@ async function fetchNow(): Promise<void> {
     // 上の自動ジェム監視に「新しい一覧で監視を開始」ボタンが出るので、そこで明示的に切り替える。
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
+      // アセンダンシーごとにも残す。監視は「自分の取得先」の分だけを読むので、
+      // ここで別のアセを見ても監視リストは変わらない (2026-09-20)
+      localStorage.setItem(`${STORE_KEY}.${selectedClass.value || "all"}`, JSON.stringify(r));
       localStorage.setItem(TOPN_KEY, String(topN.value));
       localStorage.setItem(SPREAD_KEY, String(spread.value));
     } catch {
@@ -259,7 +272,7 @@ onUnmounted(() => {
 });
 
 // 取得ボタンを上の「自動ジェム監視」に置いたので、親から押せるようにする (2026-09-19)
-defineExpose({ fetchNow, busy, waiting, needFetch });
+defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, selectedClass });
 </script>
 
 <template>
@@ -292,35 +305,17 @@ defineExpose({ fetchNow, busy, waiting, needFetch });
     <div
       class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
-      <!-- どのアセンダンシーを見るかは 自動ジェム監視の「取得先」で決める (2026-09-19 オーナー指示) -->
+      <!-- 操作 (アセンダンシー / 取得 / 範囲 / 人数) は上の「自動ジェム監視」に置いた
+           (オーナー指示 2026-09-20:「使用率ランキング; ここでは何もプルダウンなしで基本設定は自動ジェム監視」)。
+           ここは結果を出すだけ。 -->
       <span class="inline-flex items-center gap-2 min-w-0">
         <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
         <span class="text-[var(--exile-color-accent-focus)] truncate">
           {{ selectedClass ? `${ascendancyIcon(selectedClass)} ${jaAscendancy(selectedClass)}` : "全アセンダンシー (リーグ全体の上位)" }}
         </span>
-        <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">上の「取得先」で選びます</span>
       </span>
-      <!-- 全アセンダンシーを選んだら「範囲」は意味が無いので出さない (オーナー指示 2026-09-16) -->
-      <label v-if="selectedClass" class="inline-flex items-center gap-2">
-        <span class="text-[var(--exile-color-text-secondary)]">範囲</span>
-        <select v-model.number="spread" class="sel">
-          <option :value="1">選んだアセだけ</option>
-          <option :value="3">上位 3 アセに散らす</option>
-          <option :value="5">上位 5 アセに散らす</option>
-        </select>
-      </label>
-      <label class="inline-flex items-center gap-2">
-        <span class="text-[var(--exile-color-text-secondary)]">人数</span>
-        <select v-model.number="topN" class="sel">
-          <option :value="20">20 人</option>
-          <option :value="40">40 人</option>
-          <option :value="60">60 人</option>
-          <option :value="100">100 人</option>
-        </select>
-      </label>
-      <!-- 取得ボタンは上の「自動ジェム監視」の設定に置いた (2026-09-19 オーナー「この取得ボタン上でいいな、設定と一緒に」) -->
       <span v-if="needFetch && !busy" class="text-[11px] text-amber-300">
-        {{ selectedClass ? jaAscendancy(selectedClass) : "全アセンダンシー" }} はまだ取得していません。上の「ランキングを取得」を押してください
+        まだ取得していません。上の「自動ジェム監視」の「取得」を押してください
         <template v-if="result">（今出ているのは {{ resultClassJa }} の結果）</template>
       </span>
       <button

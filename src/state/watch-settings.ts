@@ -45,6 +45,12 @@ export interface WatchSettings {
    * 上位から自動で入る分も 1 件ずつ外せるようにするための除外リスト。
    */
   excluded: string[];
+  /**
+   * 外した時刻 (英語名 → ミリ秒)。外したジェムを少しの間だけ画面に置いて、戻せるようにする。
+   * オーナー指示 2026-09-20:「監視中ジェムの下に除外したジェムたちを置いておこう。
+   * 8 時間でキャッシュクリアでそこ表示しなくて OK になるように。メモリ機能的な」。
+   */
+  droppedAt: Record<string, number>;
   /** 自動で上位を入れるか (false なら手動のジェムだけ監視する) */
   autoTop: boolean;
 }
@@ -69,14 +75,20 @@ export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
    * 品質 23% の使用者数だった (画面の説明文だけ「完成品」と書いてあった)。
    * 完成品 (レベル 21 · 品質 23% の両方) の使用者数に直す。
    */
-  v: 3,
+  /**
+   * v4 (2026-09-20 オーナー指示:「自動で入らないようにしようか。そしたら気になるやつ 7 個まで
+   * 選んで一括取得できるよね」): 使用率ランキングの上位を自動で入れるのをやめ、**手で選んだ分だけ**
+   * 監視する。上位を自動で入れたい人はチェックを戻せる (autoTop)。
+   */
+  v: 4,
   klass: "",
   metric: "finished",
   minUsers: 5,
   maxGems: MAX_WATCH_GEMS,
   manual: [],
   excluded: [],
-  autoTop: true,
+  droppedAt: {},
+  autoTop: false,
 };
 
 const KEY = "exiledesk.watch-settings";
@@ -98,7 +110,9 @@ function load(): WatchSettings {
         maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
         manual: strings(s.manual),
         excluded: strings(s.excluded),
-        autoTop: s.autoTop !== false,
+        droppedAt: stamps(s.droppedAt),
+        // v4 で「自動で上位を入れない」を既定にしたので、古い設定の値は引き継がない
+        autoTop: DEFAULT_WATCH_SETTINGS.autoTop,
       };
     }
     return {
@@ -109,12 +123,22 @@ function load(): WatchSettings {
       maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
       manual: strings(s.manual),
       excluded: strings(s.excluded),
+      droppedAt: stamps(s.droppedAt),
       autoTop: s.autoTop !== false,
     };
   } catch {
     return { ...DEFAULT_WATCH_SETTINGS };
   }
 }
+
+/** 外した時刻の表 (壊れた値は捨てる) */
+const stamps = (v: unknown): Record<string, number> => {
+  const out: Record<string, number> = {};
+  if (v && typeof v === "object") {
+    for (const [k, t] of Object.entries(v as Record<string, unknown>)) if (typeof t === "number" && Number.isFinite(t)) out[k] = t;
+  }
+  return out;
+};
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
@@ -157,11 +181,46 @@ export function removeManualGem(en: string): void {
  */
 export function dropWatchGem(en: string): void {
   const s = state.value;
+  const droppedAt = { ...s.droppedAt, [en]: Date.now() };
   if (s.manual.includes(en)) {
-    updateWatchSettings({ manual: s.manual.filter((x) => x !== en) });
+    updateWatchSettings({ manual: s.manual.filter((x) => x !== en), droppedAt });
     return;
   }
-  if (!s.excluded.includes(en)) updateWatchSettings({ excluded: [...s.excluded, en] });
+  updateWatchSettings({ excluded: s.excluded.includes(en) ? s.excluded : [...s.excluded, en], droppedAt });
+}
+
+/** 外したジェムを画面に置いておく時間 (自動巡回の 1 巡と同じ 8 時間) */
+export const DROPPED_KEEP_MS = 8 * 3600 * 1000;
+
+/**
+ * 最近外したジェム (新しい順)。8 時間を過ぎた分は落とす。
+ * 「戻す」で監視に入れ直せるようにするための一時置き場 (オーナー指示 2026-09-20)。
+ */
+export function recentlyDropped(now = Date.now()): { name: string; at: number }[] {
+  return Object.entries(state.value.droppedAt)
+    .filter(([, at]) => now - at < DROPPED_KEEP_MS)
+    .map(([name, at]) => ({ name, at }))
+    .sort((a, b) => b.at - a.at);
+}
+
+/** 外したジェムを監視に戻す (除外も解いて、一時置き場からも消す) */
+export function restoreWatchGem(en: string): boolean {
+  const s = state.value;
+  const droppedAt = { ...s.droppedAt };
+  delete droppedAt[en];
+  if (s.manual.includes(en) || s.manual.length >= s.maxGems) {
+    updateWatchSettings({ excluded: s.excluded.filter((x) => x !== en), droppedAt });
+    return s.manual.includes(en);
+  }
+  updateWatchSettings({ manual: [...s.manual, en], excluded: s.excluded.filter((x) => x !== en), droppedAt });
+  return true;
+}
+
+/** 一時置き場から消す (戻さずに忘れる) */
+export function forgetDropped(en: string): void {
+  const droppedAt = { ...state.value.droppedAt };
+  delete droppedAt[en];
+  updateWatchSettings({ droppedAt });
 }
 
 /** 手を入れた跡があるか (リセットを押せるか) */
@@ -171,7 +230,7 @@ export function watchListEdited(s: WatchSettings = state.value): boolean {
 
 /** 手で足した / 外した分を全部捨てて、使用率ランキングどおりの並びに戻す */
 export function resetWatchList(): void {
-  updateWatchSettings({ manual: [], excluded: [] });
+  updateWatchSettings({ manual: [], excluded: [], droppedAt: {} });
 }
 
 export function isManualGem(en: string): boolean {

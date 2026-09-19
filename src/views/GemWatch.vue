@@ -12,7 +12,7 @@ import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } fro
 import BaseCard from "../components/decor/BaseCard.vue";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
-import { sampleGemNow } from "./gem-corrupt/sample-now";
+import { sampleBusy, sampleGemNow, sampleTarget } from "./gem-corrupt/sample-now";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "./gem-corrupt/useGemCorrupt";
 /** 画面に出す日本語名 (無ければ英語名のまま) */
@@ -23,6 +23,9 @@ import { searchGems } from "./gem-corrupt/search";
 import {
   addManualGem,
   dropWatchGem,
+  forgetDropped,
+  recentlyDropped,
+  restoreWatchGem,
   resetWatchList,
   watchListEdited,
   updateWatchSettings,
@@ -34,7 +37,7 @@ import {
   type GemUsageRow,
   type WatchMetric,
 } from "../state/watch-settings";
-import { cachedRows, rankingClass, rebuildWatches } from "../state/gem-watch-auto";
+import { cachedRows, rebuildWatches } from "../state/gem-watch-auto";
 import { ascendancies, loadAscendancies } from "../state/ascendancy-list";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { marketStore } from "../state/market-store";
@@ -63,7 +66,6 @@ const gems = computed(() => watchGems(rows.value, s.value));
 /** 選んだアセンダンシーの結果をまだ持っていない (下の使用率ランキングで「取得」が要る) */
 /** カスタム監視スキル = 使用率ランキングを使わない */
 const manualOnly = computed(() => s.value.klass === MANUAL_ONLY);
-const needUsageFetch = computed(() => !manualOnly.value && rankingClass.value !== (s.value.klass ?? ""));
 
 /**
  * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
@@ -194,6 +196,21 @@ async function remove(en: string): Promise<void> {
   dropWatchGem(en);
   await sync();
 }
+/**
+ * 最近外したジェム (8 時間だけ置いておく)。オーナー指示 2026-09-20:
+ * 「監視中ジェムの下に除外したジェムたちを 1 日だけ置いておこう。8 時間でキャッシュクリアで
+ *   そこ表示しなくて OK になるように。メモリ機能的な」。
+ * 1 秒ごとの時計 (nowMs) を見ているので、8 時間を過ぎた分は自然に消える。
+ */
+const dropped = computed(() => recentlyDropped(nowMs.value));
+function restore(en: string): void {
+  if (!restoreWatchGem(en)) {
+    message.value = { ok: false, text: `戻せません (監視の上限 ${s.value.maxGems} ジェムに達しています)` };
+    return;
+  }
+  void sync();
+}
+
 /** 手で足した / 外した分を捨てて、使用率ランキングどおりの並びに戻す */
 const listEdited = computed(() => watchListEdited(s.value));
 async function resetList(): Promise<void> {
@@ -238,6 +255,54 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
 <template>
   <section class="p-6 @container">
+    <!-- 監視中の一覧 (手で選んだジェム)。設定より先に出す (オーナー指示 2026-09-20:
+         「上の監視ジェムだけ独立させて、その下に上の設定を持ってきて、その下にアセンダンシープルダウン」) -->
+    <WatchTable :gems="gems" :flow-store="flowStore" @remove="remove" @open-sold="openSold" />
+
+    <!-- 最近外したジェム (8 時間で消える一時置き場。オーナー指示 2026-09-20) -->
+    <BaseCard v-if="dropped.length" class="mb-4">
+      <div class="p-4 pl-5">
+        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">最近外したジェム ({{ dropped.length }})</h3>
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
+          監視から外した分をしばらく置いておきます (8 時間で消えます)。売れ行きの記録は 7 日残るので、戻せば続きから測れます。
+        </p>
+        <ul class="flex flex-wrap gap-2">
+          <li v-for="d in dropped" :key="d.name" class="flex items-center gap-2 px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px]">
+            <span>{{ jaGemName(d.name) }}</span>
+            <button type="button" class="underline text-[var(--exile-color-accent-focus)] hover:opacity-80" @click="restore(d.name)">戻す</button>
+            <button type="button" class="underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]" title="ここから消すだけ (監視には入りません)" @click="forgetDropped(d.name)">×</button>
+          </li>
+        </ul>
+      </div>
+    </BaseCard>
+
+    <!-- 手動で足す -->
+    <BaseCard class="mb-4">
+      <div class="p-4 pl-5">
+        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-2">ジェムを足す</h3>
+        <label class="block text-[11px] text-[var(--exile-color-text-secondary)] mb-1">ジェム (日本語 / 英語 / 正規表現)</label>
+        <input v-model="query" type="text" placeholder="例: アーク / Cast on / ^ヘラルド" class="num w-96 max-w-full" />
+        <p v-if="regexError" class="text-[10px] text-amber-300 mt-1">正規表現として読めないので、普通の文字で探しています ({{ regexError }})</p>
+        <ul v-if="matches.length" class="mt-2 border border-[var(--exile-color-border-subtle)] rounded divide-y divide-[var(--exile-color-border-subtle)] max-w-xl">
+          <li v-for="g in matches" :key="g.en" class="flex items-center justify-between gap-3 px-3 py-1.5 text-[12px]">
+            <span>
+              {{ g.ja }}
+              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ g.en }}<span v-if="g.kind === 'meta'"> · メタジェム</span></span>
+            </span>
+            <button
+              v-if="!s.manual.includes(g.en)"
+              type="button"
+              class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]"
+              @click="add(g.en)"
+            >
+              監視に入れる
+            </button>
+            <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]">監視中</span>
+          </li>
+        </ul>
+      </div>
+    </BaseCard>
+
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
@@ -248,33 +313,50 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
         <!-- 設定 -->
         <div class="flex items-end gap-x-4 gap-y-2 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+          <!-- 使用率ランキングの操作はここに集約 (オーナー指示 2026-09-20:
+               「使用率ランキング; ここでは何もプルダウンなしで基本設定は自動ジェム監視」)。
+               **このプルダウンで監視ジェムは変わらない** (監視は手で選んだ分だけ。下の一覧の中身が変わる) -->
           <label class="inline-flex flex-col gap-1">
-            取得先
+            使用率を見るアセンダンシー
             <select class="num w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
               <option value="">全アセンダンシー (リーグ上位)</option>
-              <!-- 使用率ランキングを使わず、手で足したジェムだけ監視する (2026-09-19 オーナー指示) -->
-              <option :value="MANUAL_ONLY">カスタム監視スキル (手動で入れた分だけ)</option>
               <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
           </label>
-          <!-- ランキングの取得は取得先のすぐ隣に (2026-09-19 オーナー「この取得ボタン上でいいな、設定と一緒に」) -->
+          <label v-if="s.klass" class="inline-flex flex-col gap-1">
+            範囲
+            <select class="num w-40" :value="ranking?.spread ?? 1" @change="ranking && (ranking.spread = Number(($event.target as HTMLSelectElement).value))">
+              <option :value="1">選んだアセだけ</option>
+              <option :value="3">上位 3 アセに散らす</option>
+              <option :value="5">上位 5 アセに散らす</option>
+            </select>
+          </label>
+          <label class="inline-flex flex-col gap-1">
+            人数
+            <select class="num w-24" :value="ranking?.topN ?? 100" @change="ranking && (ranking.topN = Number(($event.target as HTMLSelectElement).value))">
+              <option :value="20">20 人</option>
+              <option :value="40">40 人</option>
+              <option :value="60">60 人</option>
+              <option :value="100">100 人</option>
+            </select>
+          </label>
           <button
             type="button"
             :disabled="!!ranking?.busy"
             class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
-            :class="needUsageFetch && !ranking?.busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
-            title="選んだ取得先の使用率ランキングを poe.ninja から取り直します (監視するジェムはこの結果から決まります)"
+            :class="ranking?.needFetch && !ranking?.busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
+            title="選んだアセンダンシーの使用率を poe.ninja から取り直します。一度取った分はそのまま出るので、取り直したい時だけ押してください"
             @click="ranking?.fetchNow()"
           >
-            {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "ランキング取得中…") : "ランキングを取得" }}
+            {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "取得中…") : ranking?.needFetch ? "ランキングを取得" : "ランキングを取り直す" }}
           </button>
-          <label v-if="!manualOnly" class="inline-flex flex-col gap-1">
+          <label v-if="s.autoTop && !manualOnly" class="inline-flex flex-col gap-1">
             上位の基準
             <select class="num w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
               <option v-for="(label, key) in WATCH_METRIC_LABEL" :key="key" :value="key">{{ label }}</option>
             </select>
           </label>
-          <label v-if="!manualOnly" class="inline-flex flex-col gap-1">
+          <label v-if="s.autoTop && !manualOnly" class="inline-flex flex-col gap-1">
             人数の下限
             <input type="number" min="1" max="100" class="num w-20" :value="s.minUsers" @change="apply({ minUsers: Number(($event.target as HTMLInputElement).value) })" />
           </label>
@@ -296,7 +378,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </label>
           <label v-if="!manualOnly" class="inline-flex items-center gap-2 pb-1">
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
-            上位を自動で入れる
+            上位を自動で入れる (既定は手で選んだ分だけ)
           </label>
           <!-- 手で足した / 外した分を捨てて元の並びに戻す (オーナー指示 2026-09-20「いつでも最初の並びに戻せるようにリセット機能つきで」) -->
           <button
@@ -315,12 +397,12 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
           <button
             type="button"
-            :disabled="sweeping || !!status?.manual_sampling"
+            :disabled="sweeping || !!status?.manual_sampling || sampleBusy"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="`監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
+            :title="sampleBusy ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)` : `監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
             @click="sweep()"
           >
-            {{ sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
+            {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
           </button>
           <!-- 取り切るまで繰り返すので、途中でやめる口を取得中だけ出す (オーナー指示 2026-09-19) -->
           <button
@@ -369,36 +451,6 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       </div>
     </BaseCard>
 
-    <!-- 手動で足す -->
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-2">ジェムを足す</h3>
-        <label class="block text-[11px] text-[var(--exile-color-text-secondary)] mb-1">ジェム (日本語 / 英語 / 正規表現)</label>
-        <input v-model="query" type="text" placeholder="例: アーク / Cast on / ^ヘラルド" class="num w-96 max-w-full" />
-        <p v-if="regexError" class="text-[10px] text-amber-300 mt-1">正規表現として読めないので、普通の文字で探しています ({{ regexError }})</p>
-        <ul v-if="matches.length" class="mt-2 border border-[var(--exile-color-border-subtle)] rounded divide-y divide-[var(--exile-color-border-subtle)] max-w-xl">
-          <li v-for="g in matches" :key="g.en" class="flex items-center justify-between gap-3 px-3 py-1.5 text-[12px]">
-            <span>
-              {{ g.ja }}
-              <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ g.en }}<span v-if="g.kind === 'meta'"> · メタジェム</span></span>
-            </span>
-            <button
-              v-if="!s.manual.includes(g.en)"
-              type="button"
-              class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]"
-              @click="add(g.en)"
-            >
-              監視に入れる
-            </button>
-            <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]">監視中</span>
-          </li>
-        </ul>
-      </div>
-    </BaseCard>
-
-    <!-- 監視中の一覧 -->
-    <WatchTable :gems="gems" :flow-store="flowStore" @remove="remove" @open-sold="openSold" />
-
     <!-- 設定外だが記録が残っているジェム -->
     <BaseCard v-if="orphans.length" class="mt-4">
       <div class="p-4 pl-5">
@@ -418,7 +470,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       </div>
     </BaseCard>
 
-    <!-- 使用率ランキング (poe.ninja)。ここで取得した結果が上の「上位」の元になる -->
+    <!-- 使用率ランキング (poe.ninja)。ここでアセンダンシーを選んで取得し、気になるジェムを「監視へ」で上に入れる -->
     <div class="mt-4">
       <GemUsageRanking ref="ranking" />
     </div>

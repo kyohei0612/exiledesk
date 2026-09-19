@@ -15,7 +15,7 @@ import { listen } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { loadFlow, setWatches } from "../services/market-flow";
 import { rowQuery, SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../views/gem-corrupt/row-query";
-import { watchGems, type GemUsageRow } from "./watch-settings";
+import { watchGems, watchSettings, type GemUsageRow } from "./watch-settings";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "../views/gem-corrupt/useGemCorrupt";
 import { marketStore } from "./market-store";
@@ -120,6 +120,12 @@ export function cachedRows(): Row[] | null {
  */
 export async function rebuildWatches(): Promise<boolean> {
   const rows = cachedRows();
+  // 手で選んだ分だけ監視する時 (既定) は、使用率ランキングを取っていなくても組める
+  // (2026-09-20 オーナー指示で「自動で上位を入れる」を既定から外したため)
+  if (!rows && !watchSettings.value.autoTop) {
+    await setWatches(watchesFromRows([]), marketStore.league.value?.Value ?? "", trade2Site());
+    return true;
+  }
   if (!rows) return false;
   await setWatches(watchesFromRows(rows), marketStore.league.value?.Value ?? "", trade2Site());
   return true;

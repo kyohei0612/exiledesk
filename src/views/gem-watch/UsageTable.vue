@@ -9,7 +9,7 @@ import { jaSkill } from "../../i18n/skills-ja";
 import { openGemCorrupt } from "../../state/app-nav";
 import { addManualGem, isManualGem, removeManualGem } from "../../state/watch-settings";
 import { rebuildWatches } from "../../state/gem-watch-auto";
-import { sampleGemNow } from "../gem-corrupt/sample-now";
+import { sampleBusy, sampleGemNow } from "../gem-corrupt/sample-now";
 import gemsRaw from "../../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -117,7 +117,14 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
                   :class="isManualGem(r.name)
                     ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
                     : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
-                  :title="isManualGem(r.name) ? '自動ジェム監視から外す' : 'このジェムを自動ジェム監視に入れる (周期ごとに捌き速度を測る)'"
+                  :disabled="sampleBusy"
+                  :title="
+                    sampleBusy
+                      ? '別のジェムを取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)'
+                      : isManualGem(r.name)
+                        ? '自動ジェム監視から外す'
+                        : 'このジェムを自動ジェム監視に入れて、その場で 3 条件を取ります (10 秒後に開始。レート制限中なら明けるまで待ちます)'
+                  "
                   @click.stop="toggleWatchGem(r.name)"
                 >
                   {{ isManualGem(r.name) ? "監視中 ✓" : "監視へ +" }}
