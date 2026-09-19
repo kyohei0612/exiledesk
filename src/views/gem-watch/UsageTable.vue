@@ -7,9 +7,9 @@
 import { computed, ref } from "vue";
 import { jaSkill } from "../../i18n/skills-ja";
 import { openGemCorrupt } from "../../state/app-nav";
-import { addManualGem, isManualGem, removeManualGem } from "../../state/watch-settings";
+import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../../state/watch-settings";
 import { rebuildWatches } from "../../state/gem-watch-auto";
-import { sampleBusy, sampleGemNow } from "../gem-corrupt/sample-now";
+import { queueSample } from "../gem-corrupt/sample-now";
 import gemsRaw from "../../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -44,6 +44,9 @@ type Key = (typeof SECTIONS)[number]["key"];
 
 /** 売れ行きを追う下限 (完成品を使っている人数) */
 /** 一覧から自動ジェム監視に入れる / 外す (すぐ追跡に反映する) */
+/** 監視の枠が埋まっているか (埋まっていると「監視へ」が押せない理由を出す) */
+const watchFull = computed(() => watchSettings.value.manual.length >= watchSettings.value.maxGems);
+
 function toggleWatchGem(name: string): void {
   if (isManualGem(name)) {
     removeManualGem(name);
@@ -51,8 +54,8 @@ function toggleWatchGem(name: string): void {
     return;
   }
   if (!addManualGem(name)) return;
-  // 足したその場で 3 条件の最安を 1 回ずつ取る (6 リクエスト)。監視の一覧に値段がすぐ出る (2026-09-19)
-  void rebuildWatches().then(() => sampleGemNow(name));
+  // **まず監視リストに入れて**、取得は待ち行列に回す (取得中でも次のジェムを足せる。2026-09-20)
+  void rebuildWatches().then(() => queueSample(name));
 }
 
 const PAGE = 25;
@@ -117,13 +120,13 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
                   :class="isManualGem(r.name)
                     ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
                     : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
-                  :disabled="sampleBusy"
+                  :disabled="!isManualGem(r.name) && watchFull"
                   :title="
-                    sampleBusy
-                      ? '別のジェムを取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)'
-                      : isManualGem(r.name)
-                        ? '自動ジェム監視から外す'
-                        : 'このジェムを自動ジェム監視に入れて、その場で 3 条件を取ります (10 秒後に開始。レート制限中なら明けるまで待ちます)'
+                    isManualGem(r.name)
+                      ? '自動ジェム監視から外す'
+                      : watchFull
+                        ? `監視は ${watchSettings.maxGems} ジェムまでです。どれかを外してから入れてください`
+                        : 'このジェムを自動ジェム監視に入れます。取得 (3 条件) は順番待ちで流れるので、続けて他のジェムも足せます'
                   "
                   @click.stop="toggleWatchGem(r.name)"
                 >

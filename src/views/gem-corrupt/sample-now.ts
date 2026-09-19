@@ -47,6 +47,33 @@ export async function recordGemSample(gemEn: string, key: SaleKey, r: PriceResul
   });
 }
 
+/**
+ * 取得の待ち行列。**監視リストへの追加は待たせない**で、取得だけ 1 本ずつ順に流す
+ * (オーナー報告 2026-09-20:「使用率ランキングから監視中押しても何もならん。
+ *  トレードと通信してる関係があるなら、監視リストに入れてから取得を続けるようにして」)。
+ * 以前は取得中は「監視へ」ボタン自体を押せなくしていたので、レート制限待ちの間ずっと
+ * 何も足せなかった。
+ */
+const queue: string[] = [];
+
+/** 監視に入れたジェムの取得を予約する (走っていなければすぐ始まる) */
+export function queueSample(gemEn: string): void {
+  if (!queue.includes(gemEn) && current.value !== gemEn) queue.push(gemEn);
+  void pump();
+}
+
+async function pump(): Promise<void> {
+  if (running.value) return;
+  for (;;) {
+    const next = queue.shift();
+    if (!next) return;
+    await sampleGemNow(next);
+  }
+}
+
+/** 取得の待ち行列に何本残っているか (画面に出す) */
+export const sampleQueued = computed(() => queue.length);
+
 /** 監視に入れた直後の取得が走っているか。走っている間は「一括取得」を押せなくする */
 const running = ref(false);
 export const sampleBusy = computed(() => running.value);

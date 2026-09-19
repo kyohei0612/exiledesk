@@ -12,7 +12,7 @@ import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } fro
 import BaseCard from "../components/decor/BaseCard.vue";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
-import { sampleBusy, sampleGemNow, sampleTarget } from "./gem-corrupt/sample-now";
+import { queueSample, sampleBusy, sampleQueued, sampleTarget } from "./gem-corrupt/sample-now";
 import { jaSkill } from "../i18n/skills-ja";
 import { GEMS } from "./gem-corrupt/useGemCorrupt";
 /** 画面に出す日本語名 (無ければ英語名のまま) */
@@ -175,18 +175,9 @@ async function add(en: string): Promise<void> {
   await sync();
   // 足したその場で 3 条件の最安を 1 回ずつ取る (6 リクエスト)。オーナー 2026-09-19
   // 「監視ボタン押したら各項目の最安値だけ 1 件取れるみたいなのでいい、それでクラフトするか決める」
-  busy.value = true;
-  message.value = { ok: true, text: `監視に入れました。${jaGemName(en)} の 3 条件の最安を取っています… (6 リクエスト、約 40 秒)` };
-  try {
-    const r = await sampleGemNow(en);
-    flowStore.value = await loadFlow();
-    message.value =
-      r.skipped === 0
-        ? { ok: true, text: `${jaGemName(en)} の 3 条件の最安を取りました` }
-        : { ok: false, text: `${jaGemName(en)}: ${r.done} / 3 条件を取りました。残りはトレードの枠待ちで飛ばしたので、次の巡回か「一括」で入ります` };
-  } finally {
-    busy.value = false;
-  }
+  // 取得は待ち行列に回す (走っていても続けて足せる。2026-09-20)
+  queueSample(en);
+  message.value = { ok: true, text: `監視に入れました。${jaGemName(en)} の 3 条件を順番に取ります (10 秒後に開始)` };
 }
 /**
  * 監視リストから 1 件外す。手で足した物は消し、使用率ランキングから入った物は除外に入れる
@@ -292,7 +283,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             :title="sampleBusy ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)` : '監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します'"
             @click="sweep()"
           >
-            {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
+            {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…${sampleQueued > 0 ? ` (あと ${sampleQueued} 件)` : ""}` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
           </button>
           <button
             v-if="sweeping || status?.manual_sampling"
