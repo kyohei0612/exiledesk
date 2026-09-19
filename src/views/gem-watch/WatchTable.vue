@@ -176,11 +176,14 @@ function toneClass(tone: string): string {
     <BaseCard>
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">監視中 ({{ gems.length }} ジェム)</h3>
+        <!-- 一括取得 / 自動取得の間隔 などの操作 (親から差し込む。オーナー指示 2026-09-20:
+             「監視中ジェムに一括取得ボタンと自動取得の間隔プルダウンを置こうか」) -->
+        <div class="mb-2"><slot name="controls" /></div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
           {{ SORT_NOTE[sortBy] }}記録が増えると自動で並び替わります (見出しを押すと並べ替えが変わります)。
         </p>
         <p v-if="gems.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
-          まだ 1 つもありません。上の検索で足すか、下の「使用率ランキング」で取得すると上位が自動で入ります。
+          まだ 1 つもありません。下の「ジェムを足す」か、「使用率ランキング」の「監視へ +」で入れてください (7 ジェムまで)。
         </p>
         <div v-else class="overflow-x-auto">
           <table class="w-full text-[12px]">

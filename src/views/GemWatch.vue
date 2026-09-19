@@ -26,12 +26,9 @@ import {
   forgetDropped,
   recentlyDropped,
   restoreWatchGem,
-  resetWatchList,
-  watchListEdited,
   updateWatchSettings,
   watchGems,
   watchSettings,
-  MANUAL_ONLY,
   MAX_WATCH_GEMS,
   WATCH_METRIC_LABEL,
   type GemUsageRow,
@@ -63,9 +60,6 @@ const gems = computed(() => watchGems(rows.value, s.value));
  * 2026-09-19 オーナー指示で、アセンダンシーの選択はここに一本化した
  * (使用率ランキング側のプルダウンは撤去)。取れていない間は空 = 全アセだけ出す。
  */
-/** 選んだアセンダンシーの結果をまだ持っていない (下の使用率ランキングで「取得」が要る) */
-/** カスタム監視スキル = 使用率ランキングを使わない */
-const manualOnly = computed(() => s.value.klass === MANUAL_ONLY);
 
 /**
  * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
@@ -89,7 +83,7 @@ function reload(): void {
 const nowMs = ref(Date.now());
 let tick: number | null = null;
 // 一括取得と巡回の状態・時計・周期の設定は gem-watch/use-sweep.ts へ (2026-09-19 の分割)
-const { sweeping, stopSweep, sweep, retryLeft, paceLeft, sweepClock, CYCLE_OPTIONS, sweepMinutes, cycleHours, applyCycle, sweepText } = useSweep({
+const { sweeping, stopSweep, sweep, retryLeft, paceLeft, sweepClock, CYCLE_OPTIONS, cycleHours, applyCycle, sweepText } = useSweep({
   reload,
   message,
   status,
@@ -235,33 +229,24 @@ async function fetchRanking(): Promise<void> {
   await ranking.value?.fetchNow();
 }
 
-/** 手で足した / 外した分を捨てて、使用率ランキングどおりの並びに戻す */
-const listEdited = computed(() => watchListEdited(s.value));
-async function resetList(): Promise<void> {
-  const n = s.value.manual.length;
-  if (n > 0 && !window.confirm(`手で足した ${n} ジェムも消して、使用率ランキングどおりの並びに戻します。よろしいですか?`)) return;
-  resetWatchList();
-  await sync();
-  message.value = { ok: true, text: "監視リストを最初の並びに戻しました (記録は残っています)" };
-}
-
 /**
- * 設定に載っていないのに記録が残っているジェム。
- *
- * 以前は「ジェムコラプトの賭けで再取得を押す」と自動で手動登録されていたので、
- * その名残がここに出る。巡回には入っていないので、必要なら監視に入れられるようにする。
+ * プルダウンに出すアセンダンシー: poe.ninja の**使用率が多い順に上位 8 個**
+ * (オーナー指示 2026-09-20:「範囲は忍者の上位 8 アセンダンシーを…使用率だけ多い順に並べて上から。
+ *  これはアプリを開くときにチェックして違うなら変える」)。一覧は起動のたびに取り直す。
+ * 今選んでいる物が 8 位圏外に落ちても、選択が消えないように残す。
  */
-const orphans = computed(() => {
-  const inList = new Set(gems.value.map((g) => g.name));
-  const names = new Map<string, number>();
-  for (const w of flowStore.value?.watches ?? []) {
-    const en = w.key.split("::")[0];
-    if (inList.has(en)) continue;
-    const st = flowStore.value?.states?.[w.key];
-    names.set(en, (names.get(en) ?? 0) + (st?.tracked?.length ?? 0));
+const topAscendancies = computed(() => {
+  const sorted = [...ascendancies.value].sort((a, b) => b.percentage - a.percentage);
+  const top = sorted.slice(0, 8);
+  const cur = s.value.klass;
+  if (cur && !top.some((a) => a.class === cur)) {
+    const hit = sorted.find((a) => a.class === cur);
+    if (hit) top.push(hit);
   }
-  return [...names.entries()].map(([name, tracked]) => ({ name, tracked })).sort((a, b) => b.tracked - a.tracked);
+  return top;
 });
+
+
 
 
 // ---- 売れたリスト ----
@@ -279,9 +264,67 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
 <template>
   <section class="p-6 @container">
-    <!-- 監視中の一覧 (手で選んだジェム)。設定より先に出す (オーナー指示 2026-09-20:
-         「上の監視ジェムだけ独立させて、その下に上の設定を持ってきて、その下にアセンダンシープルダウン」) -->
-    <WatchTable :gems="gems" :flow-store="flowStore" @remove="remove" @open-sold="openSold" />
+    <!-- 監視中の一覧 (手で選んだジェム 7 個まで)。操作もこのカードに入れる -->
+    <WatchTable :gems="gems" :flow-store="flowStore" @remove="remove" @open-sold="openSold">
+      <template #controls>
+        <div class="flex items-end gap-x-4 gap-y-2 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+          <label class="inline-flex flex-col gap-1">
+            自動取得の間隔
+            <select
+              class="num w-44"
+              :value="cycleHours"
+              title="前回の一括取得 (手動でも自動でも) から何時間後に、自動でもう 1 巡するか。既定は「しない」で、押した時だけ回ります"
+              @change="applyCycle(Number(($event.target as HTMLSelectElement).value))"
+            >
+              <option :value="0">自動取得しない (一括だけ)</option>
+              <option v-for="h in CYCLE_OPTIONS" :key="h" :value="h">{{ h }} 時間ごとに 1 巡</option>
+            </select>
+          </label>
+          <label class="inline-flex flex-col gap-1">
+            監視の上限
+            <input type="number" min="1" :max="MAX_WATCH_GEMS" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
+          </label>
+          <!-- 自動巡回と同じ処理を手で 1 巡させる。他の取得が走っている間は押せない (2026-09-20) -->
+          <button
+            type="button"
+            :disabled="sweeping || !!status?.manual_sampling || sampleBusy"
+            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+            :title="sampleBusy ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)` : '監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します'"
+            @click="sweep()"
+          >
+            {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
+          </button>
+          <button
+            v-if="sweeping || status?.manual_sampling"
+            type="button"
+            class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-amber-200 hover:bg-amber-500/20"
+            title="一括取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)"
+            @click="stopSweep"
+          >
+            ■ 中止
+          </button>
+          <button
+            type="button"
+            :disabled="busy || !diff.changed"
+            class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
+            :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
+            @click="sync(true)"
+          >
+            {{ busy ? "反映中…" : diff.changed ? `監視を開始 (+${diff.add.length} / -${diff.drop.length})` : "監視リストは最新です" }}
+          </button>
+        </div>
+        <p v-if="retryLeft > 0" class="text-[11px] text-amber-300 mt-1">
+          トレードのレート制限中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）。解除まで取得は止まります
+        </p>
+        <p v-else-if="paceLeft > 0" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
+          次の 1 本まで {{ waitText(paceLeft) }}（止まってはいません。一定の間隔で流しています）
+        </p>
+        <p v-if="sweepClock" class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">{{ sweepClock }}</p>
+        <p v-if="message" class="text-[12px] mt-1" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
+      </template>
+    </WatchTable>
+
 
     <!-- 最近外したジェム (8 時間で消える一時置き場。オーナー指示 2026-09-20) -->
     <BaseCard v-if="dropped.length" class="mb-4">
@@ -327,41 +370,15 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       </div>
     </BaseCard>
 
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
-        <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
-          ここで選んだジェムを {{ status?.auto_off ? "手動の一括取得だけで" : `${cycleHours} 時間ごとに 1 巡して` }} 売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件。手動の一括取得もこの時計を進めます)。
-          {{ manualOnly ? "カスタム監視スキル: 下の「ジェムを足す」で入れたジェムだけを監視します (使用率ランキングは使いません)。" : "上位は下の「使用率ランキング」で取得した結果から決まります。" }}
-        </p>
-
-        <!-- 設定 -->
-        <div class="flex items-end gap-x-4 gap-y-2 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
-          <!-- 使用率ランキングの操作はここに集約 (オーナー指示 2026-09-20:
-               「使用率ランキング; ここでは何もプルダウンなしで基本設定は自動ジェム監視」)。
-               **このプルダウンで監視ジェムは変わらない** (監視は手で選んだ分だけ。下の一覧の中身が変わる) -->
-          <label class="inline-flex flex-col gap-1">
-            使用率を見るアセンダンシー
-            <select class="num w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
-              <option value="">全アセンダンシー (リーグ上位)</option>
-              <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
-            </select>
-          </label>
-          <label v-if="s.klass" class="inline-flex flex-col gap-1">
-            範囲
-            <select class="num w-40" :value="ranking?.spread ?? 1" @change="ranking && (ranking.spread = Number(($event.target as HTMLSelectElement).value))">
-              <option :value="1">選んだアセだけ</option>
-              <option :value="3">上位 3 アセに散らす</option>
-              <option :value="5">上位 5 アセに散らす</option>
-            </select>
-          </label>
-          <label class="inline-flex flex-col gap-1">
-            人数
-            <select class="num w-24" :value="ranking?.topN ?? 100" @change="ranking && (ranking.topN = Number(($event.target as HTMLSelectElement).value))">
-              <option :value="20">20 人</option>
-              <option :value="40">40 人</option>
-              <option :value="60">60 人</option>
-              <option :value="100">100 人</option>
+    <!-- 使用率ランキング。アセンダンシーの選択と取得もここに統一 (オーナー指示 2026-09-20) -->
+    <div class="mt-4">
+      <GemUsageRanking ref="ranking">
+        <template #controls>
+          <label class="inline-flex items-center gap-2 min-w-0">
+            <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
+            <select class="sel w-64" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
+              <option value="">全アセンダンシー (リーグ全体の上位)</option>
+              <option v-for="a in topAscendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
           </label>
           <button
@@ -369,135 +386,29 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             :disabled="!!ranking?.busy"
             class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
             :class="ranking?.needFetch && !ranking?.busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
-            title="選んだアセンダンシーの使用率を poe.ninja から取り直します。一度取った分はそのまま出るので、取り直したい時だけ押してください"
+            title="選んだアセンダンシーの使用率を poe.ninja から取り直します (上位 100 人)。一度取った分はそのまま出るので、取り直したい時だけ押してください"
             @click="fetchRanking"
           >
             {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "取得中…") : ranking?.needFetch ? "ランキングを取得" : "ランキングを取り直す" }}
           </button>
-          <label v-if="s.autoTop && !manualOnly" class="inline-flex flex-col gap-1">
-            上位の基準
-            <select class="num w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
+            上位を自動で監視に入れる
+          </label>
+          <label v-if="s.autoTop" class="inline-flex items-center gap-2">
+            <span class="text-[var(--exile-color-text-secondary)]">基準</span>
+            <select class="sel w-52" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
               <option v-for="(label, key) in WATCH_METRIC_LABEL" :key="key" :value="key">{{ label }}</option>
             </select>
           </label>
-          <label v-if="s.autoTop && !manualOnly" class="inline-flex flex-col gap-1">
-            人数の下限
-            <input type="number" min="1" max="100" class="num w-20" :value="s.minUsers" @change="apply({ minUsers: Number(($event.target as HTMLInputElement).value) })" />
+          <label v-if="s.autoTop" class="inline-flex items-center gap-2">
+            <span class="text-[var(--exile-color-text-secondary)]">人数の下限</span>
+            <input type="number" min="1" max="100" class="sel w-16" :value="s.minUsers" @change="apply({ minUsers: Number(($event.target as HTMLInputElement).value) })" />
           </label>
-          <label class="inline-flex flex-col gap-1">
-            監視の上限
-            <input type="number" min="1" :max="MAX_WATCH_GEMS" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
-          </label>
-          <label class="inline-flex flex-col gap-1">
-            自動取得の間隔
-            <select
-              class="num w-36"
-              :value="cycleHours"
-              title="前回の一括取得 (手動でも自動でも) から何時間後に、自動でもう 1 巡するか。短いほど売れた時刻が細かく分かりますが、リクエストは増えます (trade2 の上限は毎時 100 回)"
-              @change="applyCycle(Number(($event.target as HTMLSelectElement).value))"
-            >
-              <option v-for="h in CYCLE_OPTIONS" :key="h" :value="h">{{ h }} 時間ごとに 1 巡</option>
-              <option :value="0">自動取得しない (手動の一括だけ)</option>
-            </select>
-          </label>
-          <label v-if="!manualOnly" class="inline-flex items-center gap-2 pb-1">
-            <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
-            上位を自動で入れる (既定は手で選んだ分だけ)
-          </label>
-          <!-- 手で足した / 外した分を捨てて元の並びに戻す (オーナー指示 2026-09-20「いつでも最初の並びに戻せるようにリセット機能つきで」) -->
-          <button
-            type="button"
-            :disabled="!listEdited || busy"
-            class="px-3 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="
-              listEdited
-                ? `手で足した ${s.manual.length} ジェムと外した ${s.excluded.length} ジェムを捨てて、使用率ランキングどおりの並びに戻します (売れ行きの記録は消えません)`
-                : '手を入れていないので、今が最初の並びです'
-            "
-            @click="resetList"
-          >
-            ↺ リストを元に戻す
-          </button>
-          <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
-          <button
-            type="button"
-            :disabled="sweeping || !!status?.manual_sampling || sampleBusy"
-            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="sampleBusy ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)` : `監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します。手で押す分に回数の制限はなく、押した時刻から次の自動取得までの ${cycleHours} 時間を数え直します`"
-            @click="sweep()"
-          >
-            {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
-          </button>
-          <!-- 取り切るまで繰り返すので、途中でやめる口を取得中だけ出す (オーナー指示 2026-09-19) -->
-          <button
-            v-if="sweeping || status?.manual_sampling"
-            type="button"
-            class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-amber-200 hover:bg-amber-500/20"
-            title="一括取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)"
-            @click="stopSweep"
-          >
-            ■ 中止
-          </button>
-          <button
-            type="button"
-            :disabled="busy || !diff.changed"
-            class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
-            :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
-            @click="sync(true)"
-          >
-            {{ busy ? "反映中…" : diff.changed ? `監視を開始 (+${diff.add.length} / -${diff.drop.length})` : "監視リストは最新です" }}
-          </button>
-        </div>
-        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          <template v-if="status?.auto_off">
-            自動巡回は<span class="text-[var(--exile-color-text-secondary)]">しない設定</span>です。「一括取得」を押した時だけ回ります。
-          </template>
-          <template v-else>
-            自動巡回は <span class="text-[var(--exile-color-text-secondary)]">1 巡およそ {{ sweepMinutes }} 分</span>で終わる速さに均して流します
-            (今は {{ status?.pace_secs ?? 8 }} 秒おきに 1 回)。
-            監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄 × 検索 1 回 + 値段 1 回 = 1 巡 {{ gems.length * 6 }} リクエストを、
-            {{ cycleHours }} 時間ごとに回します。
-          </template>
-          手動の「一括取得」は上限の許す限り速く回すので、その間だけ待ちが出ます (自動とは別に走ります)。
-          間隔を短くすると「消えた」のに気付くのが早くなる分、売れるまでの時間も細かく出ます。
-          監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
-          記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
-        </p>
-        <p v-if="retryLeft > 0" class="text-[11px] text-amber-300 mt-1">
-          トレードのレート制限中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）。解除まで取得は止まります
-        </p>
-        <p v-else-if="paceLeft > 0" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
-          次の 1 本まで {{ waitText(paceLeft) }}（止まってはいません。一定の間隔で流しています）
-        </p>
-        <p v-if="sweepClock" class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">{{ sweepClock }}</p>
-        <p v-if="message" class="text-[12px] mt-2" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
-      </div>
-    </BaseCard>
-
-    <!-- 設定外だが記録が残っているジェム -->
-    <BaseCard v-if="orphans.length" class="mt-4">
-      <div class="p-4 pl-5">
-        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">巡回に入っていないジェム ({{ orphans.length }})</h3>
-        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
-          記録はあるが監視には入っていないジェムです (手で外した分と、ジェムコラプトの賭けで「再取得」を押して記録だけ作られた分)。
-          記録は 7 日で掃除されるので、続けて測りたい物は監視に戻してください。
-        </p>
-        <ul class="flex flex-wrap gap-2">
-          <li v-for="o in orphans" :key="o.name" class="flex items-center gap-2 px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px]">
-            <span>{{ jaSkill(o.name) }}</span>
-            <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">記録 {{ o.tracked }} 件</span>
-            <button type="button" class="underline text-[var(--exile-color-accent-focus)] hover:opacity-80" @click="add(o.name)">監視に入れる</button>
-            <button type="button" class="underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="openSold(o.name, null)">記録を見る</button>
-          </li>
-        </ul>
-      </div>
-    </BaseCard>
-
-    <!-- 使用率ランキング (poe.ninja)。ここでアセンダンシーを選んで取得し、気になるジェムを「監視へ」で上に入れる -->
-    <div class="mt-4">
-      <GemUsageRanking ref="ranking" />
+        </template>
+      </GemUsageRanking>
     </div>
+
 
     <SoldListDialog :open="soldFor !== ''" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldFor = ''" />
   </section>

@@ -282,7 +282,7 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
       <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px]">使用率ランキング (poe.ninja)</h3>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
         上位プレイヤーが「レベル 21 / 品質 23% / 完成品」のジェムを実際に何人使っているかの人数ランキング。
-        <span class="text-[var(--exile-color-text-primary)]">上の「自動ジェム監視」が見るジェムはここから決まります。</span>
+        <span class="text-[var(--exile-color-text-primary)]">気になるジェムの「監視へ +」で、上の監視リストに入れられます (7 ジェムまで)。</span>
         行を押すと内訳 (何レベル / 何 % で使われているか) が出ます。
       </p>
       <!-- 細かい話はたたんでおく (2026-09-19 オーナー「分かりづらい、簡潔に」) -->
@@ -305,17 +305,11 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
     <div
       class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
-      <!-- 操作 (アセンダンシー / 取得 / 範囲 / 人数) は上の「自動ジェム監視」に置いた
-           (オーナー指示 2026-09-20:「使用率ランキング; ここでは何もプルダウンなしで基本設定は自動ジェム監視」)。
-           ここは結果を出すだけ。 -->
-      <span class="inline-flex items-center gap-2 min-w-0">
-        <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
-        <span class="text-[var(--exile-color-accent-focus)] truncate">
-          {{ selectedClass ? `${ascendancyIcon(selectedClass)} ${jaAscendancy(selectedClass)}` : "全アセンダンシー (リーグ全体の上位)" }}
-        </span>
-      </span>
+      <!-- アセンダンシーの選択と取得は親から差し込む (オーナー指示 2026-09-20:
+           「使用率ランキングと監視ジェム設定を一緒に。ここは使用率ランキングで統一」) -->
+      <slot name="controls" />
       <span v-if="needFetch && !busy" class="text-[11px] text-amber-300">
-        まだ取得していません。上の「自動ジェム監視」の「取得」を押してください
+        まだ取得していません。「ランキングを取得」を押してください
         <template v-if="result">（今出ているのは {{ resultClassJa }} の結果）</template>
       </span>
       <button
