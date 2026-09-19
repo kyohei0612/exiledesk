@@ -15,7 +15,7 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { fmtClock } from "../utils/format-time";
 import { searchGems } from "./gem-corrupt/search";
 import { averageExalted, displayCurrency } from "../state/display-currency";
@@ -75,6 +75,11 @@ function reload(): void {
  * オーナー指示 2026-09-17:「一括取得は手動は自由で、自動が 8 時間に 1 回ね」→ 手で押す分に制限は付けない。
  */
 const sweeping = ref(false);
+/** 一括取得を中止する (取り切るまで繰り返すので途中でやめる口。2026-09-19) */
+async function stopSweep(): Promise<void> {
+  message.value = { ok: true, text: "中止します (今の銘柄を取り終えたら止まります)" };
+  await cancelSweep();
+}
 /** レート制限の残り秒を毎秒数え直すための時計 */
 const nowMs = ref(Date.now());
 let tick: number | null = null;
@@ -97,7 +102,7 @@ async function sweep(reason?: string): Promise<void> {
       ? left > 0
         ? { ok: false, text: `一括取得は一周しましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(st?.retry_at ?? 0)} 頃に取り直します` }
         : failed > 0
-          ? { ok: false, text: `一括取得は一周しましたが ${failed} 銘柄が取れませんでした (レート制限か通信)。取り直しの上限に達したので、次の巡回か手動でもう一度取ってください` }
+          ? { ok: false, text: `${failed} 銘柄が取れませんでした (レート制限か通信)。繰り返しの上限に達したか、中止されました` }
           : all > 0 && got < all
             ? { ok: false, text: `一括取得は一周しましたが、記録があるのは ${got}/${all} 銘柄です` }
             : { ok: true, text: "一括取得が終わりました" }
@@ -521,6 +526,16 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             @click="sweep()"
           >
             {{ sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
+          </button>
+          <!-- 取り切るまで繰り返すので、途中でやめる口を取得中だけ出す (オーナー指示 2026-09-19) -->
+          <button
+            v-if="sweeping || status?.manual_sampling"
+            type="button"
+            class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-amber-200 hover:bg-amber-500/20"
+            title="一括取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)"
+            @click="stopSweep"
+          >
+            ■ 中止
           </button>
           <button
             type="button"

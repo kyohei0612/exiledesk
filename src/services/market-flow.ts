@@ -237,6 +237,16 @@ export async function sweepNow(): Promise<{ ok: boolean; message?: string }> {
   }
 }
 
+/** 手動の一括取得を中止する (取り切るまで繰り返すので、途中でやめる口) */
+export async function cancelSweep(): Promise<void> {
+  if (!isTauriRuntime()) return;
+  try {
+    await invoke("market_flow_cancel");
+  } catch {
+    /* 失敗しても次の周で止まる */
+  }
+}
+
 /** 記録と今の検索結果を突き合わせた結果 */
 export interface VerifyResult {
   total: number;
@@ -284,6 +294,7 @@ export function flowSentence(f: FlowSummary): string {
   }
   const parts = [`${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`];
   if (!f.enough) parts.push(`判定にはあと ${Math.max(0, MIN_KNOWN - f.gone)} 件`);
+  else if (f.gone < MIN_KNOWN) parts.push(`${f.gone} 件だけで出した判定です`);
   // 「速い」と出していても、それより長く並んでいる出品があるなら必ず併記する
   if (f.olderThanMedian > 0) parts.push(`ただし並んでいる ${f.alive} 件のうち ${f.olderThanMedian} 件はもっと長く並んでいます`);
   if (f.stale > 0) parts.push(`2 日以上売れ残り ${f.stale} 件`);
@@ -478,6 +489,14 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
       tone = "slow";
       label = "遅い";
     }
+  } else if (median != null && median <= FAST_SECS / 4) {
+    // 母数は 3 件に足りないが、**短時間で売れた実績がある**。
+    // オーナー 2026-09-19:「1 件でも短時間で売れたら一応早いんじゃないの？」
+    // 1 件でも 6 時間以内に売れたなら「その値段なら捌ける」と言ってよい。
+    // 逆に 1 件が長かっただけでは「遅い」と言い切れない (たまたま高値だった等) ので、
+    // 普通 / 遅い は今まで通り 3 件を待つ。件数は判定の横に出るので薄さは分かる
+    tone = "fast";
+    label = "速い";
   } else if (!firstLook && stale >= MIN_KNOWN && stale > goneLives.length) {
     // 売れた実績が足りない (中央値が出せない) 上に、2 日以上並んだままの在庫の方が多い。
     // その市場は動いていないので遅いと言い切ってよい。

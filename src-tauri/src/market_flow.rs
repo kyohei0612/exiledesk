@@ -390,6 +390,8 @@ const MAX_RETRY_ROUNDS: u32 = 3;
 /// 周期がこれより短い時は周期に合わせる (1 巡が次の巡に食い込まないように)。
 const SWEEP_TARGET_SECS: i64 = 30 * 60;
 
+/// 手動の一括取得を中止する合図 (画面の「中止」)
+static CANCEL_MANUAL: AtomicBool = AtomicBool::new(false);
 /// 自動 (薄く流す巡回 / 取りこぼしの取り直し) が走っているか
 static RUNNING_AUTO: AtomicBool = AtomicBool::new(false);
 /// 手動の一括が走っているか。
@@ -1011,14 +1013,73 @@ pub enum Pace {
     Spread,
 }
 
-/// 全銘柄を 1 周する (手動ボタン)。自動巡回が走っていても構わず全部取る (手動は手動で 1 本だけ)
+/// 手動の一括取得で「取り切る」ために繰り返す上限 (これを超えたら諦めて画面に出す)
+const MAX_MANUAL_PASSES: u32 = 12;
+/// 罰則が明けるのを待つ上限 (1 回の待ちあたり)
+const MAX_PENALTY_WAIT_SECS: i64 = 40 * 60;
+
+/// 全銘柄を 1 周する (手動ボタン)。自動巡回が走っていても構わず全部取る (手動は手動で 1 本だけ)。
+///
+/// オーナー指示 2026-09-19:「一括取得やけど、取り切るまでやってくれるか」。
+/// 1 周して取れなかった銘柄があれば、**罰則が明けるのを待ってからその銘柄だけ**繰り返す。
+/// 自動巡回の取り直し (retry_keys / MAX_RETRY_ROUNDS) とは別で、こちらは押している間ずっと粘る。
+/// 「中止」を押すか、上限 (MAX_MANUAL_PASSES) に達したら残りを画面に出して終わる。
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
-    sample_guarded(app, None, Pace::Fast, Slot::Manual).await
+    if RUNNING_MANUAL.swap(true, Ordering::SeqCst) {
+        return Err("取得中です".to_string());
+    }
+    CANCEL_MANUAL.store(false, Ordering::SeqCst);
+    let result = sample_until_done(app).await;
+    set_progress(None);
+    CANCEL_MANUAL.store(false, Ordering::SeqCst);
+    RUNNING_MANUAL.store(false, Ordering::SeqCst);
+    result
+}
+
+/// 取れなかった銘柄が無くなるまで繰り返す (手動の一括取得の本体)
+async fn sample_until_done(app: &tauri::AppHandle) -> Result<(), String> {
+    sample_inner(app, None, Pace::Fast).await?;
+    for _ in 0..MAX_MANUAL_PASSES {
+        if CANCEL_MANUAL.load(Ordering::SeqCst) {
+            return Ok(());
+        }
+        let left: HashSet<String> = load_store(app).last_failed.iter().cloned().collect();
+        if left.is_empty() {
+            return Ok(());
+        }
+        // 罰則で止まっているなら明けるまで待つ (待っている間も画面に出す)
+        let mut waited = 0;
+        while retry_wait_secs() > 0 && waited < MAX_PENALTY_WAIT_SECS {
+            if CANCEL_MANUAL.load(Ordering::SeqCst) {
+                return Ok(());
+            }
+            set_progress(Some((
+                format!("レート制限の解除待ち (残り {} 銘柄)", left.len()),
+                0,
+                left.len(),
+            )));
+            tokio::time::sleep(Duration::from_secs(5)).await;
+            waited += 5;
+        }
+        sample_inner(app, Some(left), Pace::Fast).await?;
+    }
+    Ok(())
+}
+
+/// 手動の一括取得を中止する (画面の「中止」)
+#[tauri::command]
+pub fn market_flow_cancel() {
+    CANCEL_MANUAL.store(true, Ordering::SeqCst);
 }
 
 /// 自動巡回: 周期いっぱいに薄く広げて 1 周する
 pub async fn sample_spread(app: &tauri::AppHandle) -> Result<(), String> {
     sample_guarded(app, None, Pace::Spread, Slot::Auto).await
+}
+
+/// 手動の一括取得が走っているか (画面のボタン用)
+pub fn manual_running() -> bool {
+    RUNNING_MANUAL.load(Ordering::SeqCst)
 }
 
 /// 取りこぼした銘柄 (retry_keys) だけ取り直す
@@ -1084,6 +1145,10 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
     set_error(None);
 
     for watch in auto.iter().copied() {
+        // 手動の一括取得は「中止」で途中でも抜ける (2026-09-19)
+        if pace_mode == Pace::Fast && CANCEL_MANUAL.load(Ordering::SeqCst) {
+            break;
+        }
         index += 1;
         if done_keys.contains(&watch.key) {
             continue; // この巡では取得済み (途中で閉じた分の続き)
@@ -1240,9 +1305,8 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             store_end.sweep_done.clear();
         }
     }
-    if only.is_none() {
-        store_end.last_failed = failed.clone();
-    }
+    // 取り切ったかの判定に使うので、取り直しの周でも更新する
+    store_end.last_failed = failed.clone();
     if failed.is_empty() || store_end.retry_count >= MAX_RETRY_ROUNDS {
         if !failed.is_empty() {
             eprintln!("[market_flow] {} 銘柄が {} 回取れなかったので次の周期まで諦める", failed.len(), MAX_RETRY_ROUNDS);
