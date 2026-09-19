@@ -7,10 +7,12 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
-import { gateStoppedUntilMs, nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
+import { gateStoppedUntilMs, isBudgetWait, nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
 const rateLimitedUntil = ref<number | null>(null);
+/** 今の止まりが「枠待ち」(裏の巡回と分け合い) か、罰則 (429) か。文言を分けるだけ */
+const budgetWait = ref(false);
 const lastError = ref<string | null>(null);
 const now = ref(Date.now());
 setInterval(() => {
@@ -29,7 +31,17 @@ setInterval(() => {
  * @param untilMs 解除予定 (ms)。0 / 過去なら無視
  */
 export function noteExternalRate(untilMs = 0): void {
-  if (untilMs > Date.now() && untilMs > (rateLimitedUntil.value ?? 0)) rateLimitedUntil.value = untilMs;
+  if (untilMs > Date.now() && untilMs > (rateLimitedUntil.value ?? 0)) {
+    rateLimitedUntil.value = untilMs;
+    budgetWait.value = false;
+  }
+}
+
+/** 止まっている理由の文 (秒数付き)。罰則と枠待ちで言い方を変える */
+function stoppedLabel(secs: number): string {
+  return budgetWait.value && gateStoppedUntilMs() <= Date.now()
+    ? `トレードの枠が空くまで ${secs} 秒 (裏の巡回と分け合い)`
+    : `トレード (trade2) のレート制限中 (${secs} 秒)`;
 }
 
 /** 止まっている解除予定 (ms)。画面側で受けた 429 と、門番が言う罰則 / 枠待ちの遅い方 */
@@ -74,7 +86,7 @@ export const tradeAuto = {
   label: computed(() => {
     void now.value;
     const secs = Math.max(0, Math.ceil((stoppedUntilMs() - Date.now()) / 1000));
-    if (secs > 0) return `トレード (trade2) のレート制限中 (${secs} 秒)`;
+    if (secs > 0) return stoppedLabel(secs);
     if (pending.value > 0) return `trade2 検索中… (${pending.value} 件待ち、1 件 約 10 秒)`;
     return lastError.value ? `trade2 エラー: ${lastError.value}` : "";
   }),
@@ -87,7 +99,7 @@ export const tradeAuto = {
 export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trade2 で検索中…"): { label: string; disabled: boolean } {
   if (busy) return { label: busyLabel, disabled: true };
   const limit = tradeAuto.rateLimitSecs.value;
-  if (limit > 0) return { label: `トレードのレート制限中 (${limit} 秒)`, disabled: true };
+  if (limit > 0) return { label: stoppedLabel(limit), disabled: true };
   const cool = tradeAuto.cooldownSecs.value;
   if (cool > 0) return { label: `再取得まで ${cool} 秒`, disabled: true };
   const b = tradeAuto.budget.value;
@@ -111,6 +123,7 @@ export async function autoPrice(league: string, body: unknown, rates: ExaltedRat
     const secs = retryAfterSeconds(e);
     if (secs) {
       rateLimitedUntil.value = Date.now() + secs * 1000;
+      budgetWait.value = isBudgetWait(e);
       lastError.value = null;
     } else {
       lastError.value = e instanceof Error ? e.message : String(e);

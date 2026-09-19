@@ -34,8 +34,17 @@ const FETCH_INTERVAL_MS = 2500;
  */
 export function retryAfterSeconds(err: unknown): number | null {
   const msg = err instanceof Error ? err.message : String(err);
-  const m = msg.match(/HTTP 429 retry-after=(\d+)/) ?? msg.match(/レート制限中 \(あと (\d+) 秒\)/);
+  const m =
+    msg.match(/HTTP 429 retry-after=(\d+)/) ??
+    msg.match(/レート制限中 \(あと (\d+) 秒\)/) ??
+    msg.match(/枠待ち \(あと (\d+) 秒\)/);
   return m ? Number(m[1]) : null;
+}
+
+/** 門番の「枠待ち」(自分の上限、罰則ではない) か。表示を「レート制限中」と分けるため (2026-09-19) */
+export function isBudgetWait(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /枠待ち \(あと \d+ 秒\)/.test(msg);
 }
 /** fetch 1 回で見られる listing 数 (trade2 の上限 = 10) */
 const FETCH_CHUNK = 10;

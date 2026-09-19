@@ -361,8 +361,20 @@ export function useGemCorrupt() {
     }
   }
 
+  /**
+   * 待ち (罰則 / 枠待ち) で取得を見送った = 明けたら自動で取り直す。
+   *
+   * 2026-09-19 オーナー「次とってくれない、カルグール」: 開いた時に枠待ちで見送ると、
+   * 明けても誰も取りに行かず「未取得 (再取得で取ります)」のまま。人が押さなくても取るようにする
+   */
+  const retryWhenFree = ref(false);
   async function fetchSalePrices(force = false): Promise<void> {
-    if (!selected.value || pricing.value || isRateLimited()) return;
+    if (!selected.value || pricing.value) return;
+    if (isRateLimited()) {
+      retryWhenFree.value = true;
+      return;
+    }
+    retryWhenFree.value = false;
     const gem = selected.value;
     const seq = ++fetchSeq;
     pricing.value = true;
@@ -387,10 +399,19 @@ export function useGemCorrupt() {
       // 原石の種類がまだ実測できていなければ、素のスキルを 1 回だけ見る (現物を買うジェムは上で取り済み)
       if (!spiritGemMeasured(gem.en) && baseSourceOf(gem.en) !== "buy") await measureOriginal(gem, force);
       priceError.value = tradeAuto.lastError.value;
+      // 途中で待ちに入った (どれかが null で返った) なら、明けたら続きを取る
+      if (seq === fetchSeq && isRateLimited()) retryWhenFree.value = true;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
     }
   }
+  // 待ちが明けた瞬間に取り直す (1 秒ごとに数え直している残り秒を見る)
+  watch(
+    () => tradeAuto.rateLimitSecs.value,
+    (secs) => {
+      if (secs === 0 && retryWhenFree.value && selected.value && !pricing.value) void fetchSalePrices();
+    },
+  );
   // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す。
   // 2026-09-19:「素材 (元の加工されていないジェムやカレンシー) は取引所検索して最安値で表示」を
   // 既定にする。取引所の比較は poe2scout のペア相場なので trade2 の枠は使わない (30 分キャッシュ)
@@ -443,6 +464,7 @@ export function useGemCorrupt() {
     saleRecordedAt,
     pricing,
     priceError,
+    retryWhenFree,
     tradeUrl,
     fetchSalePrices,
     params,

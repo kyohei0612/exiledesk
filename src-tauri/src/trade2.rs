@@ -248,6 +248,15 @@ fn maybe_recover_adaptive_max(now: i64) {
     }
 }
 
+/// 5 分窓の上限が前より大きくなったか (規則が広がった = 別の環境になった)
+fn rules_widened(old: &[Rule], new: &[Rule]) -> bool {
+    let max300 = |rs: &[Rule]| rs.iter().filter(|(_, p)| *p == 300).map(|(m, _)| *m).max();
+    match (max300(old), max300(new)) {
+        (Some(o), Some(n)) => n > o,
+        _ => false,
+    }
+}
+
 fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
     let mut by_period: std::collections::BTreeMap<i64, u32> = std::collections::BTreeMap::new();
     for g in map.values() {
@@ -274,6 +283,30 @@ fn combined_wait(map: &HashMap<String, Gate>, now: i64) -> i64 {
 /// (2026-09-18: 上限が無く、罰則 10 分の時に「再取得」が無反応のまま 10 分固まっていた)
 const MAX_GATE_WAIT_MS: i64 = 90_000;
 
+/// 今、画面 (90 秒で諦める側) が枠を待っている数。
+///
+/// 2026-09-19 オーナー「次とってくれない、カルグール」: 巡回を「枠が空くまで 20 分粘る」に
+/// したら、今度は画面の取得が巡回に枠を取られ続けて 90 秒で諦めるようになった
+/// (どちらも 2 秒おきに覗くので、空いた枠は先に覗いた方が取る = ほぼ半々)。
+/// 画面は人が待っているので、巡回は画面が待っている間は枠を譲る。
+static IMPATIENT_WAITING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+/// 画面が待っている間、巡回が譲って次に覗くまで
+const PATIENT_YIELD_MS: i64 = 500;
+
+/// 画面の待ちを数える (落ちても減るように Drop で戻す)
+struct ImpatientGuard;
+impl ImpatientGuard {
+    fn new() -> Self {
+        IMPATIENT_WAITING.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        Self
+    }
+}
+impl Drop for ImpatientGuard {
+    fn drop(&mut self) {
+        IMPATIENT_WAITING.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
 /// 送ってよくなるまで待って、送った記録を残す。全ての trade2 リクエストがここを通る。
 /// 待ちが長すぎる時は Err (呼び側が「レート制限中: あと N 秒」として返す)
 pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
@@ -290,9 +323,13 @@ pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
 pub(crate) const PATIENT_MAX_WAIT_MS: i64 = 20 * 60 * 1000;
 
 pub(crate) async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), String> {
+    // 長く待てる側 (巡回) か、人が待っている側 (画面) か
+    let patient = max_wait_ms > MAX_GATE_WAIT_MS;
+    let _impatient = if patient { None } else { Some(ImpatientGuard::new()) };
     let mut waited = 0i64;
     loop {
-        let wait = {
+        // (待ち ms, 罰則で止まっているか)
+        let (wait, penalized) = {
             let mut guard = match GATES.lock() {
                 Ok(g) => g,
                 Err(_) => return Ok(()),
@@ -303,21 +340,28 @@ pub(crate) async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<()
             g.sends.retain(|t| *t > now - 6 * 3600 * 1000);
             let own = wait_for_rules(g, now, min_spacing_ms(kind));
             // 枠は IP 単位なので、全窓口を合わせた分も見る
-            let wait = own.max(combined_wait(map, now));
+            let mut wait = own.max(combined_wait(map, now));
+            // 空いていても、画面が待っているなら巡回は譲る
+            if wait <= 0 && patient && IMPATIENT_WAITING.load(std::sync::atomic::Ordering::SeqCst) > 0 {
+                wait = PATIENT_YIELD_MS;
+            }
             if wait <= 0 {
                 map.entry(kind.to_string()).or_default().sends.push(now);
                 save_gates_locked(map);
             }
-            wait
+            (wait, map.values().any(|g| g.blocked_until > now))
         };
         if wait <= 0 {
             return Ok(());
         }
         if waited + wait > max_wait_ms {
-            return Err(format!(
-                "trade2 レート制限中 (あと {} 秒)。少し待ってから取得してください",
-                (wait + 999) / 1000
-            ));
+            // 罰則 (429) と枠待ち (自分の上限) は別物なので文を分ける。画面はどちらも秒数として読む
+            let secs = (wait + 999) / 1000;
+            return Err(if penalized {
+                format!("trade2 レート制限中 (あと {secs} 秒)。少し待ってから取得してください")
+            } else {
+                format!("trade2 の枠待ち (あと {secs} 秒)。裏の巡回と枠を分け合っています")
+            });
         }
         let step = wait.min(2000);
         waited += step;
@@ -390,6 +434,16 @@ pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
                 .collect();
             if !parsed.is_empty() && parsed != g.rules {
                 crate::app_log::line_static(&format!("[trade2] {kind} の規則が変わりました: {parsed:?}"));
+                if rules_widened(&g.rules, &parsed) {
+                    // 枠が広がった (ログインで Account 規則が付くと IP の 5 分枠が 30 → 60 になる。
+                    // 2026-09-19 19:50 の実測)。下げていた合計上限は古い枠で踏んだ物なので基準に戻す
+                    if let Ok(mut m) = ADAPTIVE_MAX.lock() {
+                        if *m < COMBINED_MAX_300 {
+                            *m = COMBINED_MAX_300;
+                            crate::app_log::line_static(&format!("[trade2] 枠が広がったので合計の 5 分上限を {COMBINED_MAX_300} に戻します"));
+                        }
+                    }
+                }
                 g.rules = parsed;
             }
         }
@@ -972,6 +1026,17 @@ mod rate_tests {
         }
         assert_eq!(adaptive_max(), COMBINED_MIN_300, "下限より下には行かない");
         *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+    }
+
+    /// 規則が広がった時だけ「別の環境」とみなす (ログインで 30 → 60)。狭まった / 同じ / 無い は違う
+    #[test]
+    fn widened_rules_are_detected_only_when_the_5min_cap_grows() {
+        let old = vec![(5, 10), (15, 60), (30, 300), (600, 21600)];
+        let new = vec![(8, 10), (15, 60), (60, 300), (600, 10800)];
+        assert!(rules_widened(&old, &new), "5 分枠 30 → 60");
+        assert!(!rules_widened(&new, &old), "狭まった");
+        assert!(!rules_widened(&old, &old), "同じ");
+        assert!(!rules_widened(&[], &new), "前の規則が無い (初回) は違う");
     }
 
     /// 罰則中はその解除まで待つ
