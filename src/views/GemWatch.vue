@@ -152,8 +152,14 @@ const diff = computed(() => {
 });
 
 /** 設定を追跡に反映する (poe.ninja は叩かず、保存済みの取得結果から作り直す) */
-async function sync(): Promise<void> {
+async function sync(confirmDrop = false): Promise<void> {
   if (busy.value) return;
+  // 今測っているジェムが外れる時は先に確認 (間違えて押した時の保険。2026-09-20)
+  if (confirmDrop && diff.value.drop.length > 0) {
+    const names = diff.value.drop.map((n) => jaGemName(n)).join(" / ");
+    if (!window.confirm(`今の監視から ${diff.value.drop.length} ジェム (${names}) が外れます。
+続けますか?`)) return;
+  }
   busy.value = true;
   try {
     const ok = await rebuildWatches();
@@ -209,6 +215,24 @@ function restore(en: string): void {
     return;
   }
   void sync();
+}
+
+/**
+ * 使用率ランキングを取り直す。
+ * オーナー指示 2026-09-20:「もしジェムが入ってて間違えて取得ボタン押しちゃったら
+ * 『上書きしますか』ポップアップを出そう」。上位を自動で入れる設定の時だけ、取り直すと
+ * 監視リストが新しい上位で置き換わるので、その時は先に確認する
+ * (手で選んでいる時は取り直しても監視リストは変わらないので、黙って取る)。
+ */
+async function fetchRanking(): Promise<void> {
+  if (s.value.autoTop && gems.value.length > 0) {
+    const ok = window.confirm(
+      `「上位を自動で入れる」が有効です。取り直すと、今の ${gems.value.length} ジェムが新しい上位で置き換わります。
+取得しますか?`,
+    );
+    if (!ok) return;
+  }
+  await ranking.value?.fetchNow();
 }
 
 /** 手で足した / 外した分を捨てて、使用率ランキングどおりの並びに戻す */
@@ -346,7 +370,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
             :class="ranking?.needFetch && !ranking?.busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
             title="選んだアセンダンシーの使用率を poe.ninja から取り直します。一度取った分はそのまま出るので、取り直したい時だけ押してください"
-            @click="ranking?.fetchNow()"
+            @click="fetchRanking"
           >
             {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "取得中…") : ranking?.needFetch ? "ランキングを取得" : "ランキングを取り直す" }}
           </button>
@@ -420,7 +444,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
             :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
             :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
-            @click="sync"
+            @click="sync(true)"
           >
             {{ busy ? "反映中…" : diff.changed ? `監視を開始 (+${diff.add.length} / -${diff.drop.length})` : "監視リストは最新です" }}
           </button>
