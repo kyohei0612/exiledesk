@@ -11,6 +11,7 @@ import { ensurePobBundleFresh } from "./services/pob-bundle";
 import { ensureClientLogRotated } from "./services/client-log";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
 import { startSessionWatch } from "./state/poe-session";
+import { importFlowSeed } from "./services/flow-seed";
 import { isTauriRuntime } from "./utils/isTauriRuntime";
 
 // 2026-09-14: 画面から別の画面へ飛べるよう、表示中の画面は共有状態 (state/app-nav.ts) に置く
@@ -45,6 +46,8 @@ onMounted(() => {
   startWatchAutoRefresh();
   // ログイン状態を読む。未ログインなら LoginGate が前に出る (枠が半分だとすぐ制限に当たるため)
   startSessionWatch();
+  // 同梱の捌き速度データを取り込む (サブ機の初期データ。自分で測った分は消さない)
+  void importFlowSeed();
 });
 </script>
 

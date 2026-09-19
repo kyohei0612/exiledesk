@@ -51,10 +51,19 @@
   if (/[?&](no)?login=1/.test(location.search)) {
     const empty = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
     window.__TAURI_INTERNALS__ = {
+      // listen() 系が使う。無いと設定画面などがここで落ちる
+      transformCallback: (cb) => {
+        const id = Math.floor(Math.random() * 1e9);
+        window[`_${id}`] = cb;
+        return id;
+      },
       invoke: async (cmd) => {
         // ?nologin=1 は未ログイン、?login=1 ならログイン済みを装う
         if (cmd === "trade_history_session") return { logged_in: location.search.includes("login=1") && !location.search.includes("nologin=1"), account: "stub" };
         if (cmd === "market_flow_load") return empty;
+        if (cmd === "settings_load") return { autostart_enabled: false, close_to_tray: true, auto_refetch_interval_secs: 259200 };
+        if (cmd === "market_flow_import_seed") return 0;
+        if (cmd === "market_flow_export_seed") return ["(スタブ) 実際には書き出していません", 0];
         return null;
       },
     };

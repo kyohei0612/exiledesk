@@ -19,12 +19,13 @@
  *   - 区切り: brass 系の薄罫 (`--exile-color-border-subtle`)
  *   - 補助テキスト: `--exile-color-text-secondary`
  */
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { setTrade2Site, trade2Site, type Trade2Site } from "../services/trade2/league";
 import { getVersion } from "@tauri-apps/api/app";
 import { requestUpdateCheck, updateCheckError, updateCheckState } from "../state/update-check";
 import { updateErrorJa } from "../utils/trade-error";
+import { exportFlowSeed, seedCount } from "../services/flow-seed";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 // トレードサイトの言語 (ブラウザで開く先)。localStorage のみ (2026-09-12)
@@ -64,6 +65,34 @@ const isDebugBuild = ref<boolean>(false);
 
 /** 更新確認 (2026-09-16): 実際のチェックとトーストは UpdateToast.vue が持つ */
 const appVersion = ref("");
+
+// ---- 配布データ (捌き速度の記録をリポジトリに書き出す) ----
+const SEED_PATH_KEY = "exiledesk.flow-seed.path";
+const seedPath = ref(localStorage.getItem(SEED_PATH_KEY) ?? "");
+const seedBusy = ref(false);
+const seedMsg = ref("");
+const seedOk = ref(true);
+watch(seedPath, (v) => {
+  try {
+    localStorage.setItem(SEED_PATH_KEY, v);
+  } catch {
+    /* 保存できなくてもその場では使える */
+  }
+});
+async function doExportSeed(): Promise<void> {
+  seedBusy.value = true;
+  seedMsg.value = "";
+  try {
+    const r = await exportFlowSeed(seedPath.value.trim());
+    seedOk.value = true;
+    seedMsg.value = `書き出しました (${Math.round(r.bytes / 1024)} KB) → ${r.path}`;
+  } catch (e) {
+    seedOk.value = false;
+    seedMsg.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    seedBusy.value = false;
+  }
+}
 const updateStatusText = computed(() => {
   switch (updateCheckState.value) {
     case "checking":
@@ -302,6 +331,34 @@ onMounted(async () => {
             「トレード2へ」「鑑定」で開くサイト。日本語サイトはボット確認 (Cloudflare) を挟むことがあり、
             その後に検索条件が消えて開けない場合は英語に切り替えてください。相場の取得 (API) はこの設定に関係なく動きます。
           </p>
+        </section>
+
+        <!-- 配布データ (2026-09-20 オーナー指示: 測った記録をビルドに同梱してサブ機に配る) -->
+        <section>
+          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">配布データ (捌き速度)</h2>
+          <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
+            この PC で測った売れ行きの記録を、リポジトリの <span class="font-mono">src/data/flow-seed.json</span> に書き出します。
+            そのまま release.bat を回すと、次の版に同梱されてサブ機に配られます (サブ機は起動時に取り込み、
+            自分で測った分は消しません)。今の同梱データは {{ seedCount() }} 銘柄です。
+          </p>
+          <div class="flex flex-wrap items-center gap-3">
+            <input
+              v-model="seedPath"
+              type="text"
+              spellcheck="false"
+              placeholder="C:\Users\kyohei\ExileDesk\src\data\flow-seed.json"
+              class="text-xs px-2 py-1 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)] w-[28rem] max-w-full font-mono"
+            />
+            <button
+              type="button"
+              :disabled="!seedPath || seedBusy"
+              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] text-sm text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+              @click="doExportSeed"
+            >
+              {{ seedBusy ? "書き出し中…" : "配布データを書き出す" }}
+            </button>
+            <span v-if="seedMsg" class="text-xs" :class="seedOk ? 'text-emerald-300' : 'text-amber-300'">{{ seedMsg }}</span>
+          </div>
         </section>
 
         <!-- 更新 (2026-09-16 オーナー要望: アプリを開いたまま確認したい) -->

@@ -264,3 +264,61 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     save_store(&app, &store)?;
     Ok(())
 }
+
+/// 記録をまるごと書き出す (オーナー指示 2026-09-20:「これ別に人に配るわけじゃないから
+/// 俺のデータそのまま使って OK。出品者情報とかフルで渡してあげて、要約せずに」)。
+///
+/// 一括取得で測った記録を丸ごとリポジトリに置き、ビルドに同梱して自分のサブ機に配る。
+/// **公開リリースにも入る**ので、他人に配る形に変える時は要約に切り替えること
+/// (生の記録には出品者のアカウント名が入る)。
+///
+/// `path` は書き出し先のフルパス (例: リポジトリの src/data/flow-seed.json)。
+/// 親フォルダが無ければ作る。返り値は (実際に書いたパス, バイト数)。
+#[tauri::command]
+pub fn market_flow_export_seed(app: tauri::AppHandle, path: String) -> Result<(String, usize), String> {
+    let src = store_path(&app)?;
+    let raw = std::fs::read_to_string(&src).map_err(|e| format!("記録を読めません ({}): {e}", src.display()))?;
+    // 出品者のアカウント名だけは落とす。リポジトリ (と GitHub のリリース) は公開なので、
+    // 他人の名前をそこに置かない。判定に使う値段・出品時刻・消えた時刻はそのまま残る
+    // (同じ出品者の並べ直しの判定にしか使っておらず、配った先では新しく測り直すため)
+    let mut store: FlowStore = serde_json::from_str(&raw).map_err(|e| format!("記録を読めません: {e}"))?;
+    for st in store.states.values_mut() {
+        for t in st.tracked.iter_mut() {
+            t.account = None;
+        }
+    }
+    // 監視リストは機体ごとの設定なので配らない
+    store.watches.clear();
+    let json = serde_json::to_string(&store).map_err(|e| format!("書き出せません: {e}"))?;
+    let p = std::path::PathBuf::from(&path);
+    if let Some(dir) = p.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| format!("フォルダを作れません ({}): {e}", dir.display()))?;
+    }
+    let n = json.len();
+    std::fs::write(&p, json).map_err(|e| format!("書き出せません ({}): {e}", p.display()))?;
+    Ok((p.display().to_string(), n))
+}
+
+/// 同梱の記録を取り込む (サブ機の初期データ)。
+///
+/// **こちらに無い銘柄と、こちらより新しい銘柄だけ**入れる。サブ機で自分が測った分は消さない。
+/// 監視リストは触らない (どのジェムを追うかはその機体の設定のまま)。
+/// 返り値は入れた銘柄数。
+#[tauri::command]
+pub fn market_flow_import_seed(app: tauri::AppHandle, json: String) -> Result<usize, String> {
+    let seed: FlowStore = serde_json::from_str(&json).map_err(|e| format!("同梱データを読めません: {e}"))?;
+    let _guard = store_lock();
+    let mut store = load_store(&app);
+    let mut n = 0usize;
+    for (key, st) in seed.states {
+        let newer = store.states.get(&key).map(|cur| st.sampled_at > cur.sampled_at).unwrap_or(true);
+        if newer {
+            store.states.insert(key, st);
+            n += 1;
+        }
+    }
+    if n > 0 {
+        save_store(&app, &store)?;
+    }
+    Ok(n)
+}
