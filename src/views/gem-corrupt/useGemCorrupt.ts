@@ -47,7 +47,7 @@ export interface SaleRow {
 export const SALE_ROWS: readonly SaleRow[] = [
   { key: "level21", label: "レベル 21 (品質 20%)", condition: "レベル 21 · 品質 20% · コラプト済 · 2 重コラプトなし" },
   { key: "quality23", label: "品質 23%", condition: "品質 23% · コラプト済 · 2 重コラプトなし (レベル不問)" },
-  { key: "finished", label: "完成品 (21 · 23%)", condition: "レベル 21 · 品質 23% · コラプト済" },
+  { key: "finished", label: "完成品 (21 · 23%)", condition: "レベル 21 · 品質 23% · 2 重コラプト済" },
 ];
 
 export function useGemCorrupt() {

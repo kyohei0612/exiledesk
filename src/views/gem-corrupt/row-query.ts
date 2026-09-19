@@ -19,7 +19,9 @@ export const SALE_KEY_LABEL: Record<SaleKey, string> = {
 /**
  * 条件ごとの検索オプション。
  *   - レベル 21 / 品質 23% はヴァールオーブ 1 回の産物なので 2 重コラプト品を除く
- *   - 完成品 (21 · 23%) は結晶を通した 2 重コラプト品そのもの
+ *   - 完成品 (21 · 23%) は結晶を通した 2 重コラプト品そのもの。
+ *     2026-09-19 オーナー「完成は同じく、ダブルコラプトあり・21 レベル・23% 品質の奴だよ」
+ *     → 「絞らない」ではなく twice_corrupted = true で絞る (1 回コラプトで両方当たった品が混ざらない)
  */
 /** コラプト済みは直せないので、買う時は 5 ソケット前提 (オーナー指示 2026-09-16: 常に必須) */
 export const REQUIRED_SOCKETS = 5;
@@ -33,7 +35,7 @@ export function rowQueryOptions(key: SaleKey, meta: boolean): GemQueryOptions {
     case "quality23":
       return { ...common, qualityMin: 23, twiceCorrupted: false }; // レベルは問わない
     case "finished":
-      return { ...common, levelMin: 21, qualityMin: 23 };
+      return { ...common, levelMin: 21, qualityMin: 23, twiceCorrupted: true };
   }
 }
 
