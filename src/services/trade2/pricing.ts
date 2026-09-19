@@ -143,6 +143,27 @@ function withSync<T>(kind: RateKind, p: Promise<T>): Promise<T> {
   );
 }
 
+/**
+ * Rust の門番から読んだ状態。**画面の数字はこれを基準にする**。
+ *
+ * 2026-09-19 オーナー「手動と自動のレート制限が合わんね。一緒にしてよ」:
+ * JS 側は画面から出した search だけを数えた別の帳簿を持っていたので、裏の巡回が
+ * どれだけ枠を使ってもボタンの「5 分で n/26 回」も「再取得まで N 秒」も動かなかった。
+ * 実際に投げる間隔は本番では門番が決めているので、表示もそこに合わせる。
+ * 門番がいない時 (ブラウザの開発モード) だけ下の JS の帳簿に落ちる。
+ */
+let gateSnapshot: { at: number; nextAtMs: number; used: number; max: number } | null = null;
+
+export function noteGateState(nextAtMs: number, used: number, max: number): void {
+  gateSnapshot = { at: Date.now(), nextAtMs, used, max };
+}
+
+/** 古い値で表示し続けないよう、30 秒で捨てる */
+function gateNow(): { nextAtMs: number; used: number; max: number } | null {
+  const g = gateSnapshot;
+  return g && Date.now() - g.at < 30_000 ? g : null;
+}
+
 /** 窓の予算から見て、次の search を送れる最も早い時刻 (ms) */
 function budgetAllowedAt(now: number): number {
   let at = now;
@@ -159,12 +180,16 @@ function budgetAllowedAt(now: number): number {
 
 /** 次に search を送れる時刻 (ms) = 最小間隔と窓の予算の遅い方。画面の「再取得まで N 秒」表示用 */
 export function nextSearchAllowedAt(): number {
+  const g = gateNow();
+  if (g) return Math.max(g.nextAtMs, serverBlockedUntil.search);
   const now = Date.now();
   const last = searchLog.length ? searchLog[searchLog.length - 1] : lastRequestAt.search;
   return Math.max(last + SEARCH_INTERVAL_MS, budgetAllowedAt(now), serverBlockedUntil.search);
 }
 /** 直近 5 分の search 回数と上限 (画面表示用) */
 export function searchBudgetUsage(): { used: number; max: number } {
+  const g = gateNow();
+  if (g) return { used: g.used, max: g.max };
   const now = Date.now();
   return { used: searchLog.filter((t) => t > now - 300_000).length, max: SEARCH_BUDGET[SEARCH_BUDGET.length - 1].max };
 }

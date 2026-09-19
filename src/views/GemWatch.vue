@@ -86,11 +86,16 @@ async function sweep(reason?: string): Promise<void> {
   try {
     const r = await sweepNow();
     await reload();
-    const left = status.value?.retry_keys ?? 0;
+    const st = status.value;
+    const left = st?.retry_keys ?? 0;
+    const got = st?.sampled_watches ?? 0;
+    const all = st?.auto_watches ?? 0;
     message.value = r.ok
       ? left > 0
-        ? { ok: false, text: `一括取得は終わりましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(status.value?.retry_at ?? 0)} 頃に取り直します` }
-        : { ok: true, text: "一括取得が終わりました" }
+        ? { ok: false, text: `一括取得は一周しましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(st?.retry_at ?? 0)} 頃に取り直します` }
+        : all > 0 && got < all
+          ? { ok: false, text: `一括取得は一周しましたが、記録があるのは ${got}/${all} 銘柄です` }
+          : { ok: true, text: "一括取得が終わりました" }
       : { ok: false, text: r.message ?? "一括取得に失敗しました (レート制限か通信)" };
   } finally {
     clearInterval(poll);

@@ -442,6 +442,28 @@ pub fn gate_wait_secs() -> i64 {
     (wait + 999) / 1000
 }
 
+/// 5 分窓を全窓口あわせて何回使ったか / 上限は何回か (画面の「5 分で n/26 回」用)。
+///
+/// 2026-09-19 オーナー「手動と自動のレート制限が合わんね。レート制限中に手動しても
+/// そこのレート制限が変わらん。一緒にしてよ、ぐちゃぐちゃになる」:
+/// 画面のボタンは JS 側が別に持っている送信記録 (画面から出した分だけ) を数えていたので、
+/// 裏の巡回がどれだけ使っても増えなかった。門番の数を返して 1 つにする。
+pub fn gate_usage_300() -> (i64, i64) {
+    let Ok(mut guard) = GATES.lock() else { return (0, 0) };
+    let map = guard.get_or_insert_with(HashMap::new);
+    let now = now_ms();
+    let used: i64 = map
+        .values()
+        .map(|g| g.sends.iter().filter(|t| **t > now - 300_000).count() as i64)
+        .sum();
+    let max = combined_rules(map)
+        .into_iter()
+        .find(|(_, period)| *period == 300)
+        .map(|(m, _)| m as i64)
+        .unwrap_or(30);
+    (used, max)
+}
+
 /// 「枠が空くまで」の待ち秒。通常の最低間隔 (10 秒前後) は入れない。
 ///
 /// 2026-09-19 オーナー「レート制限周りの同期がずれてる」の調査で分かったこと:

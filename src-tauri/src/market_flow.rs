@@ -426,9 +426,15 @@ fn retry_until() -> i64 {
 fn retry_wait_secs() -> i64 {
     (retry_until() - now_secs()).max(0)
 }
-/// その失敗は後で取り直せば通る物か (429 / 通信)。HTTP 400 のような恒久的な失敗は取り直さない
+/// その失敗は後で取り直せば通る物か (429 / 通信 / 門番の待ち切れ)。
+/// HTTP 400 のような恒久的な失敗は取り直さない。
+///
+/// 2026-09-19 オーナー「一括終わってないくせに終わったって言ってる意味が分からん」:
+/// 門番が「待ちが長すぎる」と返すエラー (trade2 レート制限中 (あと N 秒)) を
+/// **恒久的な失敗**として扱っていたので、取り直しに入らず 41/42 銘柄で「終わりました」に
+/// なっていた。これは時間が経てば必ず通るので取り直す。
 fn is_retriable(msg: &str) -> bool {
-    msg.contains("429") || msg.contains("network error")
+    msg.contains("429") || msg.contains("network error") || msg.contains("レート制限中")
 }
 
 // ============================================================================
@@ -1222,6 +1228,9 @@ pub struct FlowStatus {
     pub wait_until: i64,
     /// 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない
     pub budget_until: i64,
+    /// 5 分窓を全窓口あわせて何回使ったか / 上限 (画面の「5 分で n/N 回」)
+    pub budget_used: i64,
+    pub budget_max: i64,
     /// 次にリクエストを投げられる時刻 (unix 秒)。上限に当たらないための通常の間隔待ちを含む
     pub pace_until: i64,
     /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
@@ -1247,6 +1256,7 @@ pub struct FlowStatus {
 pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
     let store = load_store(&app);
     let progress = PROGRESS.lock().ok().and_then(|g| g.clone());
+    let (budget_used, budget_max) = crate::trade2::gate_usage_300();
     let sampling = SAMPLING.load(Ordering::SeqCst);
     let (current, done, total) = match progress {
         Some((k, d, t)) => (Some(k), d, t),
@@ -1274,6 +1284,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         // 罰則で止まっている解除予定は門番が持つ (画面はこれを 1 秒ごとに数える)
         wait_until: retry_until(),
         budget_until: now_secs() + crate::trade2::gate_budget_wait_secs(),
+        budget_used,
+        budget_max,
         pace_until: now_secs() + crate::trade2::gate_wait_secs(),
         retry_until: retry_until(),
         retry_at: store.retry_at,

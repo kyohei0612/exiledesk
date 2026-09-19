@@ -24,6 +24,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { noteExternalRate, tradeAuto } from "./trade2/auto-price";
+import { noteGateState } from "./trade2/pricing";
 
 export interface Tracked {
   id: string;
@@ -140,6 +141,9 @@ export interface FlowStatus {
   wait_until: number;
   /** 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない */
   budget_until: number;
+  /** 5 分窓を全窓口あわせて何回使ったか / 上限 (画面の「5 分で n/N 回」) */
+  budget_used: number;
+  budget_max: number;
   /** 次にリクエストを投げられる時刻 (unix 秒。上限に当たらないための通常の間隔待ちを含む) */
   pace_until: number;
 }
@@ -185,6 +189,8 @@ export async function loadFlowStatus(): Promise<FlowStatus | null> {
     const st = await invoke<FlowStatus>("market_flow_status");
     const until = Math.max(st.wait_until, st.retry_until) * 1000;
     noteExternalRate(st.rate_rules ?? null, st.rate_state ?? null, until);
+    // 画面のボタンの数字も門番の数に合わせる (手動と自動で別々に数えない)
+    noteGateState(st.pace_until * 1000, st.budget_used, st.budget_max);
     return st;
   } catch {
     return null;
