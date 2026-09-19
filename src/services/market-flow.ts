@@ -189,16 +189,33 @@ export async function setFlowCycle(secs: number): Promise<number | null> {
  */
 export function tradeRateSecs(st: FlowStatus | null | undefined): number {
   const nowSec = Math.floor(Date.now() / 1000);
-  const until = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0, st?.budget_until ?? 0);
+  const until = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
   return Math.max(until > 0 ? until - nowSec : 0, tradeAuto.rateLimitSecs.value);
+}
+
+/**
+ * 枠が空くまでの待ち秒 (罰則ではない)。
+ *
+ * 2026-09-19 オーナー「レート待ちのくせになぜか進んでるよ、取得おかしい」:
+ * 罰則 (429 で止まる) と枠待ち (順番が来るまで間を空ける) を 1 つの数字にまとめていたので、
+ * 進んでいるのに「解除まで取得は止まります」と出ていた。分けて出す。
+ *   - 罰則     … 取得は**止まる**。解除まで何もできない
+ *   - 枠待ち   … 取得は**続く**。次の 1 本を投げるまで間を空けているだけ
+ */
+export function tradeBudgetSecs(st: FlowStatus | null | undefined): number {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const until = st?.budget_until ?? 0;
+  return Math.max(0, until > 0 ? until - nowSec : 0);
 }
 
 export async function loadFlowStatus(): Promise<FlowStatus | null> {
   if (!isTauriRuntime()) return null;
   try {
     const st = await invoke<FlowStatus>("market_flow_status");
-    // 止まっている解除予定 = 罰則 (wait_until / retry_until は同じ値) と枠待ち (budget_until) の遅い方
-    const stopped = Math.max(st.wait_until, st.retry_until, st.budget_until) * 1000;
+    // 「止まっている」は罰則だけ。枠待ちは順番待ちなので取得は進む
+    // (2026-09-19: 一緒にしていたので、進んでいるのに「止まります」と出ていた。
+    //  さらに isRateLimited() が true になって画面の取得が黙って見送られていた)
+    const stopped = Math.max(st.wait_until, st.retry_until) * 1000;
     noteExternalRate(stopped);
     // 画面のボタンの数字も門番の数に合わせる (手動と自動で別々に数えない)
     noteGateState(st.pace_until * 1000, st.budget_used, st.budget_max, stopped);
