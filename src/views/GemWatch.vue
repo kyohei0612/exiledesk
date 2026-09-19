@@ -310,7 +310,7 @@ const scoredGems = computed(() => {
     // 「並び順だけ上から 3 つの平均で期待値を出すだけ」)
     const soldAvg: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
     for (const c of cs) soldAvg[c.key] = c.avgExalted;
-    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false }, soldAvg);
+    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false, en: gem.name }, soldAvg);
     return {
       ...gem,
       cells: cs,

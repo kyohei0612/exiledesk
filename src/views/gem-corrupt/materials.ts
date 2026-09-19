@@ -10,6 +10,7 @@
  *   - 取引所のレートを取ってあれば、実際に払う額 (1 以上は繰り上げ) と比べて安い方
  */
 import { marketStore } from "../../state/market-store";
+import { baseSourceOf, cachedBaseBuy, type BaseSource } from "../../state/gem-base-source";
 import type { MaterialPrices } from "./model";
 
 /** 素材の poe2scout ApiId。原石はスキル / スピリットで分かれる */
@@ -34,16 +35,27 @@ export interface BaseGemSource {
   level: number | null;
   /** 相場 (高貴)。取引所との比較前 */
   price: number | null;
+  /** "uncut" = 原石から作る / "buy" = トレードで現物 (コラプト無し) を買う */
+  mode: BaseSource;
 }
 
-/** 原石 lv15〜20 のうち相場が一番安い物 */
-export function baseGemSourceFor(spirit: boolean): BaseGemSource {
+/**
+ * 低レベルのジェム本体の調達先。
+ *   - 原石から作れるジェム: 原石 lv15〜20 のうち相場が一番安い物
+ *   - 原石から作れないジェム (カルグール系): トレードで現物 (コラプト無し) を買う。
+ *     値段は売値の取得のついでに取って覚えてある物 (state/gem-base-source.ts)。
+ *     まだ無ければ null (= 相場なし) で、取得を待つ
+ */
+export function baseGemSourceFor(spirit: boolean, nameEn?: string | null): BaseGemSource {
+  if (nameEn && baseSourceOf(nameEn) === "buy") {
+    return { apiId: null, level: null, price: cachedBaseBuy(nameEn)?.exalted ?? null, mode: "buy" };
+  }
   const kind = spirit ? "spirit" : "skill";
-  let best: BaseGemSource = { apiId: null, level: null, price: null };
+  let best: BaseGemSource = { apiId: null, level: null, price: null, mode: "uncut" };
   for (let lv = BASE_GEM_MIN_LEVEL; lv <= BASE_GEM_MAX_LEVEL; lv++) {
     const apiId = `uncut-${kind}-gem-${lv}`;
     const p = marketStore.priceOf(apiId);
-    if (p != null && (best.price == null || p < best.price)) best = { apiId, level: lv, price: p };
+    if (p != null && (best.price == null || p < best.price)) best = { apiId, level: lv, price: p, mode: "uncut" };
   }
   return best;
 }

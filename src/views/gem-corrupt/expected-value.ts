@@ -11,7 +11,7 @@
  * 前提確率は既定値 (DEFAULT_PARAMS)。画面で前提を変えても一覧には反映しない。
  */
 import { evaluateRoutes, roi, DEFAULT_PARAMS, type RouteResult, type SalePrices } from "./model";
-import { materialPricesFor } from "./materials";
+import { baseGemSourceFor, materialPricesFor } from "./materials";
 import { cachedBuy, payable } from "../../services/trade2/exchange";
 import type { GemInfo } from "./useGemCorrupt";
 
@@ -31,11 +31,13 @@ function cachedPayable(apiId: string | null | undefined): number | null {
  * 完成品を買う経路は期待収支 0 の基準なので、他が全部マイナスなら 0 付近に落ち着く。
  */
 export function expectedValueOf(
-  gem: Pick<GemInfo, "spirit">,
+  gem: Pick<GemInfo, "spirit" | "en">,
   sale: SalePrices,
 ): { ev: number; roi: number | null; route: RouteResult } | null {
   if (sale.level21 == null && sale.quality23 == null && sale.finished == null) return null;
-  const routes = evaluateRoutes(materialPricesFor(gem.spirit, cachedPayable), sale, DEFAULT_PARAMS);
+  // 原石から作れないジェム (カルグール系) は、覚えてある現物の最安を元のジェムの値段にする
+  const base = baseGemSourceFor(gem.spirit, gem.en);
+  const routes = evaluateRoutes(materialPricesFor(gem.spirit, cachedPayable, base), sale, DEFAULT_PARAMS);
   let best: RouteResult | null = null;
   for (const r of routes) {
     if (!r.ok || !Number.isFinite(r.ev)) continue;

@@ -14,6 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { isSpiritGem, noteSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
+import { baseSourceOf, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
 import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { originalGemQuery, rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
@@ -104,13 +105,31 @@ export function useGemCorrupt() {
     void spiritBump.value;
     return spiritGemMeasured(selected.value?.en);
   });
-  const baseGemSource = computed<BaseGemSource>(() => {
-    if (!selected.value) return { apiId: null, level: null, price: null };
-    void marketStore.items.value; // 相場が入ったら取り直す
-    return baseGemSourceFor(isSpirit.value);
+  /** 調達先 (原石 / 現物) や現物の値段が変わった時に作り直すための目印 */
+  const baseBump = ref(0);
+  /** 低レベルのジェム本体の調達先 ("uncut" = 原石から作る / "buy" = トレードで現物を買う) */
+  const baseSource = computed<BaseSource>(() => {
+    void baseBump.value;
+    return baseSourceOf(selected.value?.en);
   });
-  /** 素材表に出す名前 (どのレベルの原石を使うか) */
+  /** 素材表の切替 (カルグール系は既定で「現物を買う」。手で変えたら覚える) */
+  function setBaseSource(v: BaseSource): void {
+    const en = selected.value?.en;
+    if (!en) return;
+    saveBaseSource(en, v);
+    baseBump.value++;
+    // 現物を買うに切り替えて、まだ値段が無ければ取りに行く (売値と同じ門を通る)
+    if (v === "buy" && !pricing.value) void measureOriginal(selected.value!);
+  }
+  const baseGemSource = computed<BaseGemSource>(() => {
+    if (!selected.value) return { apiId: null, level: null, price: null, mode: "uncut" };
+    void marketStore.items.value; // 相場が入ったら取り直す
+    void baseBump.value;
+    return baseGemSourceFor(isSpirit.value, selected.value.en);
+  });
+  /** 素材表に出す名前 (どのレベルの原石を使うか / 現物を買うか) */
   const baseGemLabel = computed(() => {
+    if (baseGemSource.value.mode === "buy") return "低レベルのジェム本体 (トレードで現物を買う)";
     const lv = baseGemSource.value.level;
     const kind = isSpirit.value ? "スピリットジェムの原石" : "スキルジェムの原石";
     return lv == null ? "低レベルのジェム本体" : `低レベルのジェム本体 (${kind} レベル ${lv})`;
@@ -278,15 +297,23 @@ export function useGemCorrupt() {
   }
 
   /**
-   * 素のスキル (コラプト無し・二重コラプト無し) を 1 件見て、スピリットをリザーブするかを決める。
-   * コラプト済みの出品にもリザーブ行は出るが、オーナー指示どおり素の品で確かめる。
+   * 素のスキル (コラプト無し・二重コラプト無し) を見る。2 つの用途:
+   *   - スピリットをリザーブするか (= どちらの原石か)。ジェムごとに一度きり
+   *   - 原石から作れないジェム (カルグール系) は、この最安がそのまま「低レベルのジェム本体」の値段
+   *     (オーナー指摘 2026-09-19:「元のスキルはトレードから現物買うしかないよね」)。こちらは毎回取り直す
    */
-  async function measureSpirit(gem: GemInfo): Promise<void> {
+  async function measureOriginal(gem: GemInfo): Promise<void> {
     if (isRateLimited()) return;
     const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value);
-    if (!r || r.reservesSpirit == null) return;
-    noteSpiritGem(gem.en, r.reservesSpirit);
-    spiritBump.value++;
+    if (!r) return;
+    if (r.reservesSpirit != null) {
+      noteSpiritGem(gem.en, r.reservesSpirit);
+      spiritBump.value++;
+    }
+    if (baseSourceOf(gem.en) === "buy") {
+      noteBaseBuy(gem.en, r.minExalted);
+      baseBump.value++;
+    }
   }
 
   async function fetchSalePrices(): Promise<void> {
@@ -309,9 +336,9 @@ export function useGemCorrupt() {
         // 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する。自動巡回と同じルール
         void recordRowSample(gem.en, row.key, r);
       }
-      // 原石の種類がまだ実測できていなければ、素のスキルを 1 件だけ見る (search + fetch 1 回ずつ)。
-      // 結果は覚えるので、同じジェムで二度は走らない (オーナー指示 2026-09-19)
-      if (!spiritGemMeasured(gem.en)) await measureSpirit(gem);
+      // 素のスキルを見る (search + fetch 1 回ずつ):
+      //   原石の種類がまだ実測できていない時 (一度きり) と、現物を買うジェム (値段なので毎回)
+      if (!spiritGemMeasured(gem.en) || baseSourceOf(gem.en) === "buy") await measureOriginal(gem);
       priceError.value = tradeAuto.lastError.value;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
@@ -345,6 +372,8 @@ export function useGemCorrupt() {
     loadMarket,
     baseGemSource,
     baseGemLabel,
+    baseSource,
+    setBaseSource,
     materialApiIds,
     exchangeLoading,
     exchangeError,
