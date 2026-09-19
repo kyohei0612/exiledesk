@@ -162,7 +162,7 @@ export function useGemCorrupt() {
     { key: "perfectJeweller", apiId: MATERIAL_API.perfectJeweller },
     { key: "vaal", apiId: MATERIAL_API.vaal },
     { key: "crystal", apiId: MATERIAL_API.crystal },
-    { key: "uncut20", apiId: uncut20ApiId(isSpirit.value) },
+    { key: "uncut20", apiId: uncut20ApiId(isSpirit.value, baseGemSource.value.mode) },
   ]);
   const exchange = ref<Record<string, BestBuy>>({});
   const exchangeLoading = ref(false);
@@ -211,7 +211,7 @@ export function useGemCorrupt() {
    */
   const uncutLabel = computed(() => {
     void marketStore.items.value;
-    if (finisherIsFlux()) return FINISHER_JA;
+    if (finisherIsFlux(baseGemSource.value.mode)) return FINISHER_JA;
     return isSpirit.value ? "スピリットジェムの原石 (レベル 20)" : "スキルジェムの原石 (レベル 20)";
   });
 

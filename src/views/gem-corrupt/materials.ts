@@ -61,25 +61,30 @@ export function baseGemSourceFor(spirit: boolean, nameEn?: string | null): BaseG
 }
 
 /**
- * 仕上げ (売る前にレベル 20 へ上げる) に使う物の ApiId。
+ * 仕上げ (売る前にレベル 20 へ上げる) に使う物の ApiId。**調達先と揃える**。
  *
- * 2026-09-19 オーナー「原石に関してはソーマタージフラックス 20 レベルが仕上げになるよ」。
- * それまでは 原石 (レベル 20) を使っていたが、仕上げに使うのは ソーマタージ・フラックス
- * (レベル 20) で、スキル / スピリットの区別も無い。
+ * 2026-09-19 オーナー「原石に関してはソーマタージフラックス 20 レベルが仕上げになるよ」
+ * → 「普通のカレンシージェムから作れるやつでもソーマタージフラックスになってる。あれは
+ *     作れん現物のやつの表示だから同期させてくれ。普通のジェムの選択のときはカレンシーの 20 ジェムや」。
  *
- * poe2scout の ApiId のスラッグが分からないので英語表記で引く。相場一覧に無い時
- * (まだ取っていない / poe2scout が扱っていない) は、これまで通り原石に落とす。
+ *   - 原石から作るジェム  … 原石 (レベル 20)。スキル / スピリットは本体と同じ側
+ *   - 現物を買うジェム    … ソーマタージ・フラックス (レベル 20)。原石では上げられないため
+ *
+ * フラックスは poe2scout の ApiId のスラッグが分からないので英語表記で引く。
+ * 相場一覧に無い時 (まだ取っていない / poe2scout が扱っていない) は原石に落とす。
  */
 export const FINISHER_TEXT = "Thaumaturgic Flux (Level 20)";
 export const FINISHER_JA = "ソーマタージ・フラックス (レベル 20)";
 
-export function uncut20ApiId(spirit: boolean): string {
-  return marketStore.apiIdByText(FINISHER_TEXT) ?? (spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20);
+export function uncut20ApiId(spirit: boolean, mode: BaseSource = "uncut"): string {
+  const uncut = spirit ? MATERIAL_API.uncutSpirit20 : MATERIAL_API.uncutSkill20;
+  if (mode !== "buy") return uncut;
+  return marketStore.apiIdByText(FINISHER_TEXT) ?? uncut;
 }
 
-/** 仕上げに ソーマタージ・フラックス を使えているか (使えていなければ原石のまま) */
-export function finisherIsFlux(): boolean {
-  return marketStore.apiIdByText(FINISHER_TEXT) != null;
+/** その調達先で仕上げに ソーマタージ・フラックス を使うか (現物を買うジェムで、相場一覧にある時だけ) */
+export function finisherIsFlux(mode: BaseSource = "uncut"): boolean {
+  return mode === "buy" && marketStore.apiIdByText(FINISHER_TEXT) != null;
 }
 
 /**
@@ -98,7 +103,8 @@ export function withExchange(apiId: string | null | undefined, market: number | 
 /** そのジェムを作る時の素材の単価 (高貴建て)。相場が無い物は null */
 export function materialPricesFor(spirit: boolean, buyOf: BuyOf, base: BaseGemSource = baseGemSourceFor(spirit)): MaterialPrices {
   const priceOf = marketStore.priceOf;
-  const uncut = uncut20ApiId(spirit);
+  // 仕上げは調達先と揃える (原石から作るなら原石、現物を買うならフラックス)
+  const uncut = uncut20ApiId(spirit, base.mode);
   return {
     baseGem: withExchange(base.apiId, base.price, buyOf),
     gcp: withExchange(MATERIAL_API.gcp, priceOf(MATERIAL_API.gcp), buyOf),
