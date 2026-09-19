@@ -248,3 +248,47 @@ table th,
     transition-duration: 0ms !important;
   }
 }
+
+/* ============================================================
+ * 入力欄の共通スタイル (.num / .sel)
+ *
+ * 2026-09-19 の画面分割まで、この 2 つは GemCorrupt / GemWatch / RareCraft /
+ * Overquality / TradeHistory / GemBreak の <style scoped> に同じ物が 6 つ書いてあった。
+ * 札 (子コンポーネント) に切り出したとたん **scoped なので子には効かず、枠が消えた**
+ * (オーナー報告 2026-09-20「UI が消えてるね、枠が」)。共通なので 1 か所に置く。
+ *
+ * @layer components に入れてあるので、幅は Tailwind の w-20 / w-24 などで上書きできる。
+ * ============================================================ */
+@layer components {
+  .num {
+    width: 5.5rem;
+    /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」) */
+    text-align: left;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--exile-color-bg-surface);
+    border: 1px solid var(--exile-color-border-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+  /* 数値の欄だけ右詰め (桁を揃えて読むため) */
+  .num[type="number"] {
+    text-align: right;
+  }
+  .num:focus {
+    outline: none;
+    border-color: var(--exile-color-accent-focus);
+  }
+
+  .sel {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--exile-color-bg-surface);
+    border: 1px solid var(--exile-color-border-subtle);
+  }
+  .sel:focus {
+    outline: none;
+    border-color: var(--exile-color-accent-focus);
+  }
+}

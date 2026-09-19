@@ -406,16 +406,3 @@ onUnmounted(() => {
   </section>
 </template>
 
-<style scoped>
-.sel {
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--exile-color-bg-surface);
-  border: 1px solid var(--exile-color-border-subtle);
-}
-.sel:focus {
-  outline: none;
-  border-color: var(--exile-color-accent-focus);
-}
-</style>

@@ -397,23 +397,3 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
   </section>
 </template>
 
-<style scoped>
-.num {
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--exile-color-bg-surface);
-  border: 1px solid var(--exile-color-border-subtle);
-  /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」)。
-     以前は右詰めが既定で、テキスト欄やプルダウンに毎回 text-left を足して打ち消していた */
-  text-align: left;
-}
-/* 数値の欄だけ右詰め (桁を揃えて読むため) */
-.num[type="number"] {
-  text-align: right;
-}
-.num:focus {
-  outline: none;
-  border-color: var(--exile-color-accent-focus);
-}
-</style>
