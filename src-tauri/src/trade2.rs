@@ -130,8 +130,6 @@ fn now_ms() -> i64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
 }
 
-/// 同じ IP の別経路を見つけてから、控えめに投げ続ける時間
-const FOREIGN_QUIET_MS: i64 = 10 * 60 * 1000;
 /// エンドポイントごとの最低間隔。
 ///
 /// 2026-09-18 オーナー報告「昨日は一括押しても止まらなかった」→ 何が変わったかを記録で突き合わせた。
@@ -147,18 +145,11 @@ fn min_spacing_ms(kind: &str) -> i64 {
 }
 
 /// 窓ごとの上限に対して「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
-/// 別経路が見えている時に枠を半分にするのは、この長さまでの窓だけ。
-///
-/// 2026-09-19 22:19 の実測: 3 時間窓 (600 回) まで半分 (300) にしていたので、search + fetch の
-/// 3 時間の合計 (≈300) がそこに当たり、「あと 26 分 52 秒」の待ちを自分で作っていた。
-/// 別経路の使用は数分に 1 回程度なので、長い窓を半分にする理由は無い
-const SHY_MAX_PERIOD: i64 = 600;
-
-fn window_wait(sends: &[i64], rules: &[Rule], now: i64, shy: bool) -> i64 {
+fn window_wait(sends: &[i64], rules: &[Rule], now: i64) -> i64 {
     let mut wait = 0;
     for &(max, period) in rules {
         // 上限ぴったりまで使うと他の呼び出しとぶつかるので、少し残して止める
-        let margin = if shy && period <= SHY_MAX_PERIOD { max / 2 } else if max >= 15 { 2 } else { 1 };
+        let margin = if max >= 15 { 2 } else { 1 };
         let keep = max.saturating_sub(margin).max(1) as usize;
         let window_ms = period * 1000;
         let in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
@@ -178,10 +169,10 @@ fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
     if let Some(last) = g.sends.iter().max() {
         wait = wait.max(last + spacing_ms - now);
     }
-    // 同じ IP の別経路 (ブラウザのトレード検索など) が見えている間は、枠を半分しか使わない
-    let shy = now - g.foreign_seen_at < FOREIGN_QUIET_MS;
+    // 別経路 (ブラウザのトレード検索など) を見つけても枠は縮めない (2026-09-19 オーナー
+    // 「アプリ側で制限かけるの良くない。送り方を統一して踏まないように」)。ログに残すだけ
     let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
-    wait.max(window_wait(&g.sends, &rules, now, shy))
+    wait.max(window_wait(&g.sends, &rules, now))
 }
 
 /// 全窓口あわせた枠。同じ長さの窓を持つ規則のうち**一番きつい上限**を、合計の送信数に当てる。
@@ -274,12 +265,50 @@ fn combined_rules(_map: &HashMap<String, Gate>) -> Vec<Rule> {
     vec![(adaptive_max(), 300)]
 }
 
-/// 全窓口の送信を合わせた待ち時間
-fn combined_wait(map: &HashMap<String, Gate>, now: i64) -> i64 {
-    let mut sends: Vec<i64> = map.values().flat_map(|g| g.sends.iter().copied()).collect();
-    sends.sort_unstable();
-    let shy = map.values().any(|g| now - g.foreign_seen_at < FOREIGN_QUIET_MS);
-    window_wait(&sends, &combined_rules(map), now, shy)
+/// 合計の送り方は **一定の間隔 + 小さなバースト** (トークンバケット)。
+///
+/// 2026-09-19 オーナー「裏の巡回回してないのにレート制限なってる。アプリ側で制限かけるの
+/// 良くない気がしてきた。送り方さえ統一して踏まないようにした方が良い」:
+/// 5 分窓で合計を数えていると、短時間に 11 本 (ジェムを 2 つ開いただけ) → 「あと 203 秒」の
+/// 停止、という波ができる。同じ量でも**一定の間隔で流す**なら止まる瞬間が無い。
+///   - 間隔 = 300 秒 ÷ 合計上限 (22 なら 13.6 秒)。429 を踏めば上限が下がって間隔が伸びる
+///   - バースト = 画面でジェムを 1 つ開く 6 本ぶんは待たずに出せる (貯めた分だけ)
+/// 5 分の平均は今までの上限と同じで、最大でも「上限 + バースト」を超えない
+const BURST: f64 = 6.0;
+
+/// 今の合計の間隔 (ms)
+fn pace_ms() -> i64 {
+    300_000 / adaptive_max().max(1) as i64
+}
+
+/// トークンの残り (BURST まで貯まる) と、最後に数えた時刻
+static BUCKET: StdMutex<(f64, i64)> = StdMutex::new((BURST, 0));
+
+/// 貯まった分を足して今の残りを返す (消費はしない)
+fn bucket_tokens(now: i64) -> f64 {
+    let Ok(mut b) = BUCKET.lock() else { return BURST };
+    let (tokens, at) = *b;
+    let refilled = if at == 0 { BURST } else { (tokens + (now - at) as f64 / pace_ms() as f64).min(BURST) };
+    *b = (refilled, now);
+    refilled
+}
+
+/// 1 本ぶん消費する (gate_acquire で枠を取った時)
+fn bucket_take(now: i64) {
+    let t = bucket_tokens(now);
+    if let Ok(mut b) = BUCKET.lock() {
+        *b = ((t - 1.0).max(0.0), now);
+    }
+}
+
+/// 全窓口を合わせた待ち時間 = 次のトークンが貯まるまで
+fn combined_wait(_map: &HashMap<String, Gate>, now: i64) -> i64 {
+    let t = bucket_tokens(now);
+    if t >= 1.0 {
+        0
+    } else {
+        ((1.0 - t) * pace_ms() as f64).ceil() as i64
+    }
 }
 
 /// 待てる上限。これを超える待ちは「今は無理」と返して、呼び側にエラーを出させる
@@ -350,6 +379,7 @@ pub(crate) async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<()
             }
             if wait <= 0 {
                 map.entry(kind.to_string()).or_default().sends.push(now);
+                bucket_take(now);
                 save_gates_locked(map);
             }
             (wait, map.values().any(|g| g.blocked_until > now))
@@ -897,16 +927,33 @@ mod rate_tests {
         assert_eq!(wait_for_rules(&g, now, SPACING), 10_000, "直前の送信から 10.5 秒空ける");
     }
 
-    /// 別経路が枠を使っている間は半分しか使わない
+    /// 別経路が見えても枠は縮めない (2026-09-19 オーナー「アプリ側で制限かけるの良くない」)
     #[test]
-    fn foreign_traffic_halves_the_budget() {
+    fn foreign_traffic_does_not_shrink_the_budget() {
         let now = 1_000_000;
-        // 上限 10 / 600 秒。普段の余裕は 2 (8 件まで)、別経路が見えている時は半分 (5 件まで)
         let sends: Vec<i64> = (0..6).map(|i| now - 300_000 + i * 10_000).collect();
         let mut g = gate(sends, vec![(10, 600)], 0);
-        assert_eq!(wait_for_rules(&g, now, SPACING), 0, "普段は 8 件まで使えるので 6 件なら待たない");
         g.foreign_seen_at = now - 1_000;
-        assert!(wait_for_rules(&g, now, SPACING) > 0, "別経路が見えている間は 5 件で止める");
+        assert_eq!(wait_for_rules(&g, now, SPACING), 0, "余裕 2 (8 件まで) はそのまま");
+    }
+
+    /// 合計はトークンバケット: バーストぶんは待たず、その後は一定の間隔で 1 本ずつ (2026-09-19)
+    #[test]
+    fn combined_pace_is_a_token_bucket() {
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+        *BUCKET.lock().unwrap() = (BURST, 0);
+        let map = HashMap::new();
+        let now = 1_000_000_000;
+        assert_eq!(combined_wait(&map, now), 0, "貯まっていれば待たない");
+        for _ in 0..BURST as usize {
+            bucket_take(now);
+        }
+        let w = combined_wait(&map, now);
+        assert_eq!(w, pace_ms(), "使い切ったら次の 1 本は間隔ぶん待つ (22 回/5 分 = 13.6 秒)");
+        assert_eq!(combined_wait(&map, now + pace_ms()), 0, "間隔が過ぎれば 1 本出せる");
+        assert!(bucket_tokens(now + 10 * pace_ms()) <= BURST, "バースト以上には貯まらない");
+        *BUCKET.lock().unwrap() = (BURST, 0);
     }
 
     /// 上限の手前 (余裕 1) まで使ったら、一番古い送信が窓から出るまで待つ
@@ -1011,10 +1058,9 @@ mod rate_tests {
         map.insert("search".to_string(), gate((0..14).map(|i| now - i * 10_000).collect(), vec![(30, 300)], 0));
         map.insert("fetch".to_string(), gate((0..14).map(|i| now - i * 10_000 - 1_000).collect(), vec![(50, 300)], 0));
         for (kind, g) in map.iter() {
-            assert_eq!(window_wait(&g.sends, &g.rules, now, false), 0, "{kind} 単体では空いている");
+            assert_eq!(window_wait(&g.sends, &g.rules, now), 0, "{kind} 単体では空いている");
         }
-        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "5 分窓は実測に合わせた上限を使う");
-        assert!(combined_wait(&map, now) > 0, "合計 28 回は 5 分の枠を超えているので待つ");
+        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "5 分の合計上限は表示用に残す");
     }
 
     /// 429 を食らったら合計の上限を自分で下げ、下限より下には行かない (2026-09-19)
@@ -1045,10 +1091,10 @@ mod rate_tests {
         fg.foreign_seen_at = now - 1_000;
         map.insert("search".to_string(), sg);
         map.insert("fetch".to_string(), fg);
-        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "合計に当てるのは 5 分窓だけ");
+        *BUCKET.lock().unwrap() = (BURST, 0);
         assert_eq!(combined_wait(&map, now), 0, "3 時間の合計 299 で待ってはいけない");
         for (kind, g) in map.iter() {
-            assert_eq!(window_wait(&g.sends, &g.rules, now, true), 0, "{kind} の 3 時間窓は別経路が見えていても半分にしない");
+            assert_eq!(window_wait(&g.sends, &g.rules, now), 0, "{kind} の 3 時間窓は別経路が見えていても縮めない");
         }
     }
 
