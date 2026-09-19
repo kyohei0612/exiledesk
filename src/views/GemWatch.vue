@@ -37,6 +37,8 @@ import { marketStore } from "../state/market-store";
 import { openGemCorrupt } from "../state/app-nav";
 // 旧「クラフト選定ジェム」タブ。取得と使用率ランキングはここに埋め込む (2026-09-17 タブを統合)
 import GemUsageRanking from "./GemBreak.vue";
+/** 使用率ランキング (下に埋め込んでいる) を上のボタンから押すための参照 */
+const ranking = ref<InstanceType<typeof GemUsageRanking> | null>(null);
 
 /** クラフト選定ジェムが保存した取得結果 (これを基準に上位を決める) */
 const rows = ref<GemUsageRow[]>([]);
@@ -485,19 +487,23 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
               <option value="">全アセンダンシー (リーグ上位)</option>
               <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
-            <span v-if="needUsageFetch" class="text-[10px] text-amber-300">
-              この取得先の使用率ランキングはまだありません。下の「取得」を押してください
-            </span>
           </label>
+          <!-- ランキングの取得は取得先のすぐ隣に (2026-09-19 オーナー「この取得ボタン上でいいな、設定と一緒に」) -->
+          <button
+            type="button"
+            :disabled="!!ranking?.busy"
+            class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
+            :class="needUsageFetch && !ranking?.busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
+            title="選んだ取得先の使用率ランキングを poe.ninja から取り直します (監視するジェムはこの結果から決まります)"
+            @click="ranking?.fetchNow()"
+          >
+            {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "ランキング取得中…") : "ランキングを取得" }}
+          </button>
           <label class="inline-flex flex-col gap-1">
             上位の基準
             <select class="num text-left w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
               <option v-for="(label, key) in WATCH_METRIC_LABEL" :key="key" :value="key">{{ label }}</option>
             </select>
-          </label>
-          <label class="inline-flex flex-col gap-1">
-            上位いくつ
-            <input type="number" min="0" max="25" class="num w-20" :value="s.topN" @change="apply({ topN: Number(($event.target as HTMLInputElement).value) })" />
           </label>
           <label class="inline-flex flex-col gap-1">
             人数の下限
@@ -708,7 +714,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
     <!-- 使用率ランキング (poe.ninja)。ここで取得した結果が上の「上位」の元になる -->
     <div class="mt-4">
-      <GemUsageRanking />
+      <GemUsageRanking ref="ranking" />
     </div>
 
     <SoldListDialog :open="soldFor !== ''" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldFor = ''" />

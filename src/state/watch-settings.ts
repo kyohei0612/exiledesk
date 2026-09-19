@@ -26,8 +26,6 @@ export interface WatchSettings {
   klass: string;
   /** 上位を決める基準 */
   metric: WatchMetric;
-  /** 自動で入れる上位ジェム数 */
-  topN: number;
   /** 基準の人数の下限 (これ未満は入れない) */
   minUsers: number;
   /** 監視できるジェムの上限 (手動を含む)。増やすほど trade2 のリクエストが増える */
@@ -54,7 +52,6 @@ export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   v: 3,
   klass: "",
   metric: "finished",
-  topN: 18,
   minUsers: 5,
   maxGems: 18,
   manual: [],
@@ -75,8 +72,7 @@ function load(): WatchSettings {
       return {
         ...DEFAULT_WATCH_SETTINGS,
         klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
-        // 基準 (metric) だけ既定に戻す。上位いくつ / 人数の下限 / 上限は手で決めた値なので引き継ぐ
-        topN: clamp(s.topN, 0, 25, DEFAULT_WATCH_SETTINGS.topN),
+        // 基準 (metric) だけ既定に戻す。人数の下限 / 上限は手で決めた値なので引き継ぐ
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
         maxGems: clamp(s.maxGems, 1, 25, DEFAULT_WATCH_SETTINGS.maxGems),
         manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
@@ -87,7 +83,6 @@ function load(): WatchSettings {
       v: DEFAULT_WATCH_SETTINGS.v,
       klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
       metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
-      topN: clamp(s.topN, 0, 25, DEFAULT_WATCH_SETTINGS.topN),
       minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
       maxGems: clamp(s.maxGems, 1, 25, DEFAULT_WATCH_SETTINGS.maxGems),
       manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
@@ -190,7 +185,9 @@ export function watchGems(rows: GemUsageRow[], s: WatchSettings = state.value): 
           b.users - a.users ||
           a.name.localeCompare(b.name),
       )
-      .slice(0, s.topN);
+      // 「上位いくつ」は廃止 (2026-09-19 オーナー「上位いくつ要らない、監視ジェムと役割被る」)。
+      // 何ジェム見るかは「監視の上限」だけで決まる (下の out.length >= s.maxGems で止まる)
+      ;
     for (const r of top) {
       if (out.length >= s.maxGems) break;
       if (out.some((x) => x.name === r.name)) continue;

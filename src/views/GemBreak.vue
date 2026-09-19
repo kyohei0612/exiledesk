@@ -294,6 +294,9 @@ onUnmounted(() => {
   unlisten?.();
   stopNetPolling();
 });
+
+// 取得ボタンを上の「自動ジェム監視」に置いたので、親から押せるようにする (2026-09-19)
+defineExpose({ fetchNow, busy, waiting, needFetch });
 </script>
 
 <template>
@@ -302,20 +305,23 @@ onUnmounted(() => {
     <header class="mb-3">
       <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px]">使用率ランキング (poe.ninja)</h3>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        上位プレイヤーが「レベル 21 / 品質 23% / 完成品 (両方)」のジェムを実際に何人使っているかの人数ランキング (値段は見ていません)。
-        <span class="text-[var(--exile-color-text-primary)]">上の「自動ジェム監視」の上位はここの結果から決まります。</span>
-        行を押すと、そのジェムが実際に何レベル / 何 % で使われているかの内訳が出ます。
+        上位プレイヤーが「レベル 21 / 品質 23% / 完成品」のジェムを実際に何人使っているかの人数ランキング。
+        <span class="text-[var(--exile-color-text-primary)]">上の「自動ジェム監視」が見るジェムはここから決まります。</span>
+        行を押すと内訳 (何レベル / 何 % で使われているか) が出ます。
       </p>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
-        poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
-        (1 アセンダンシー = 人数 + 2 リクエスト。一度見たキャラは保存して次からは取りに行かないので、2 回目以降は数分で終わります)。
-        上位プレイヤーMOD一覧と同じ poe.ninja の枠を使うので、そちらが取得中はこちらを待たせます。
-        装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えています。
-        どのジェムを捌き速度の追跡に入れるかは、上の「自動ジェム監視」の設定 (基準 / 上位いくつ / 人数の下限) で決まります
-        (出品 1 件ずつを周期ごとに追って、売れるまでの時間を測る → ジェムコラプトの賭けに表示)。
-        この一覧は<span class="text-[var(--exile-color-text-primary)]">上位プレイヤーMOD一覧の取得が終わった直後に相乗りして取り直します</span>
-        (同じ poe.ninja を叩くので、別々に走らせると枠を取り合うため)。間隔は設定の「自動再取得」(既定 3 日) に従います。
-      </p>
+      <!-- 細かい話はたたんでおく (2026-09-19 オーナー「分かりづらい、簡潔に」) -->
+      <details class="mt-1">
+        <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-text-secondary)]">
+          数え方と取得のしくみ
+        </summary>
+        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
+          poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
+          (1 アセンダンシー = 人数 + 2 リクエスト。見たキャラは保存するので 2 回目以降は数分)。
+          装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えます。
+          上位プレイヤーMOD一覧と同じ poe.ninja を叩くので、そちらの取得が終わった直後に相乗りして取り直します
+          (間隔は設定の「自動再取得」、既定 3 日)。
+        </p>
+      </details>
     </header>
 
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ取得できます。</p>
@@ -349,18 +355,9 @@ onUnmounted(() => {
           <option :value="100">100 人</option>
         </select>
       </label>
-      <button
-        type="button"
-        :disabled="!inApp || busy"
-        class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-        :class="needFetch && !busy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
-        @click="fetchNow"
-      >
-        {{ busy ? (waiting ? "待機中…" : "取得中…") : "取得" }}
-      </button>
-      <!-- 選んだアセンダンシーの結果を持っていない = 取得を促す (2026-09-19 オーナー指示) -->
+      <!-- 取得ボタンは上の「自動ジェム監視」の設定に置いた (2026-09-19 オーナー「この取得ボタン上でいいな、設定と一緒に」) -->
       <span v-if="needFetch && !busy" class="text-[11px] text-amber-300">
-        {{ selectedClass ? jaAscendancy(selectedClass) : "全アセンダンシー" }} はまだ取得していません。「取得」を押してください
+        {{ selectedClass ? jaAscendancy(selectedClass) : "全アセンダンシー" }} はまだ取得していません。上の「ランキングを取得」を押してください
         <template v-if="result">（今出ているのは {{ resultClassJa }} の結果）</template>
       </span>
       <button
