@@ -44,6 +44,22 @@
 
   const ids = (kind, n) => Array.from({ length: n }, (_, i) => `${kind}-${i}`);
 
+  /**
+   * ?nologin=1 を足すと「Tauri で動いていて、未ログイン」を装う。
+   * ログインを促すポップアップ (LoginGate) の見え方を確かめる用。
+   */
+  if (/[?&](no)?login=1/.test(location.search)) {
+    const empty = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
+    window.__TAURI_INTERNALS__ = {
+      invoke: async (cmd) => {
+        // ?nologin=1 は未ログイン、?login=1 ならログイン済みを装う
+        if (cmd === "trade_history_session") return { logged_in: location.search.includes("login=1") && !location.search.includes("nologin=1"), account: "stub" };
+        if (cmd === "market_flow_load") return empty;
+        return null;
+      },
+    };
+  }
+
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input.url;

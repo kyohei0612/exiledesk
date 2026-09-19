@@ -4,11 +4,13 @@ import { invoke } from "@tauri-apps/api/core";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
+import LoginGate from "./components/LoginGate.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
 import { ensureClientLogRotated } from "./services/client-log";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
+import { startSessionWatch } from "./state/poe-session";
 import { isTauriRuntime } from "./utils/isTauriRuntime";
 
 // 2026-09-14: 画面から別の画面へ飛べるよう、表示中の画面は共有状態 (state/app-nav.ts) に置く
@@ -41,6 +43,8 @@ onMounted(() => {
   // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
   // 出品の追跡そのものは Rust 側が周期 (既定 8 時間) ごとに回す
   startWatchAutoRefresh();
+  // ログイン状態を読む。未ログインなら LoginGate が前に出る (枠が半分だとすぐ制限に当たるため)
+  startSessionWatch();
 });
 </script>
 
@@ -55,5 +59,7 @@ onMounted(() => {
     <CenterContent :active-nav="activeNav" class="flex-1" />
 
     <UpdateToast />
+    <!-- 未ログインだと trade2 の枠が半分でレート制限に当たるので、起動時に前へ出して促す (2026-09-20) -->
+    <LoginGate />
   </div>
 </template>
