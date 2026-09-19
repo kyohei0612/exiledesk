@@ -27,7 +27,7 @@ const SOURCE_KEY = "exiledesk.gem.baseSource";
 const PRICE_KEY = "exiledesk.gem.baseBuy";
 
 type SourceBook = Record<string, BaseSource>;
-type PriceBook = Record<string, { exalted: number; at: number }>;
+type PriceBook = Record<string, { exalted: number; at: number; total?: number }>;
 
 function load<T>(key: string): T {
   try {
@@ -68,16 +68,20 @@ export function setBaseSource(nameEn: string, v: BaseSource): void {
   save(SOURCE_KEY, b);
 }
 
-/** 現物 (コラプト無し) の最安 (高貴) を覚える。null は「出品が無かった」なので触らない */
-export function noteBaseBuy(nameEn: string | null | undefined, exalted: number | null | undefined): void {
+/**
+ * 現物 (コラプト無し) の最安 (高貴) を覚える。null は「出品が無かった」なので触らない。
+ * total = 検索に掛かった出品数 (オーナー 2026-09-19「原石素材 1 個しかないのおかしい」→ 何件の中の最安かを
+ * 画面に出せるように残す)
+ */
+export function noteBaseBuy(nameEn: string | null | undefined, exalted: number | null | undefined, total?: number): void {
   if (!nameEn || exalted == null || !Number.isFinite(exalted)) return;
   const b = P();
-  b[nameEn] = { exalted, at: Date.now() };
+  b[nameEn] = { exalted, at: Date.now(), total };
   save(PRICE_KEY, b);
 }
 
-/** 覚えている現物の最安 (高貴) と取った時刻 */
-export function cachedBaseBuy(nameEn: string | null | undefined): { exalted: number; at: number } | null {
+/** 覚えている現物の最安 (高貴)・取った時刻・その時の出品数 */
+export function cachedBaseBuy(nameEn: string | null | undefined): { exalted: number; at: number; total?: number } | null {
   if (!nameEn) return null;
   return P()[nameEn] ?? null;
 }

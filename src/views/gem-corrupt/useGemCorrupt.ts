@@ -14,7 +14,7 @@ import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { isSpiritGem, noteSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
-import { baseSourceOf, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
+import { baseSourceOf, cachedBaseBuy, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
 import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { originalGemQuery, rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
@@ -128,6 +128,11 @@ export function useGemCorrupt() {
     void marketStore.items.value; // 相場が入ったら取り直す
     void baseBump.value;
     return baseGemSourceFor(isSpirit.value, selected.value.en);
+  });
+  /** 現物を買うジェムの、覚えている最安・件数・時刻 (素材表のホバー用) */
+  const baseBuyInfo = computed(() => {
+    void baseBump.value;
+    return baseSource.value === "buy" ? cachedBaseBuy(selected.value?.en) : null;
   });
   /** 素材表に出す名前 (どのレベルの原石を使うか / 現物を買うか) */
   const baseGemLabel = computed(() => {
@@ -313,7 +318,7 @@ export function useGemCorrupt() {
       spiritBump.value++;
     }
     if (baseSourceOf(gem.en) === "buy") {
-      noteBaseBuy(gem.en, r.minExalted);
+      noteBaseBuy(gem.en, r.minExalted, r.total);
       baseBump.value++;
     }
   }
@@ -376,6 +381,7 @@ export function useGemCorrupt() {
     baseGemLabel,
     baseSource,
     setBaseSource,
+    baseBuyInfo,
     materialApiIds,
     exchangeLoading,
     exchangeError,

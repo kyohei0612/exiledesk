@@ -5,6 +5,7 @@
  * オーナー指示: 「追跡するのは品質 23% もレベル +1 もだからね、完成版だけじゃない」。
  */
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
+import { SecurityStatus } from "../../constants/trade2";
 
 export type SaleKey = "level21" | "quality23" | "finished";
 
@@ -58,13 +59,19 @@ export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
  * 「これだけはしっかり元のスキルを見ないといけない」。原石の種類 (スキル / スピリット) は
  * 出品の properties に「リザーブ … Spirit」が出るかで決まるので、素の品を 1 件見る。
  * 結果はジェムごとに覚えるので、1 ジェムにつき一度きり (state/gem-spirit.ts)。
- * ソケット数は問わない (値段ではなく素性を見るため)。
+ * ソケット数は問わない (5 ソケ無しの方が安い出品がある。オーナー 2026-09-19)。
+ *
+ * 原石から作れないジェムはこの最安がそのまま「低レベルのジェム本体」の値段になる。
+ * こちらが**買う側**なので、売値の検索と違って即時購入 (securable) には絞らず、
+ * オンラインの出品全部から最安を取る (2026-09-19 オーナー「原石素材 1 個しかないのおかしい」:
+ * 即時購入だけだとドロップ限定のジェムは出品がほとんど無い)。
  */
 export function originalGemQuery(gemEn: string, meta = false): unknown {
   return buildGemQuery(gemEn, {
     category: meta ? "gem.metagem" : "gem.activegem",
     corrupted: false,
     twiceCorrupted: false,
+    status: SecurityStatus.Online,
   });
 }
 

@@ -171,7 +171,16 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>): GemLedgerApi 
     switch (id) {
       case "craft":
         return [
-          { key: "baseGem", label: "低レベルのジェム本体", market: m.baseGem, buy: null, perAttempt: 1, hint: "" },
+          // 名前と値段は素材表と同じ物 (原石から作る / トレードで現物を買う で変わる。
+          // オーナー 2026-09-19「収支のところ、原石と現物で変わるところ一緒に変えて同期して」)
+          {
+            key: "baseGem",
+            label: g.baseGemLabel.value,
+            market: m.baseGem,
+            buy: null,
+            perAttempt: 1,
+            hint: g.baseSource.value === "buy" ? "原石から作れないので、トレードで現物 (コラプト無し) を買う" : "",
+          },
           { key: "gcp", label: "宝石細工師のプリズム", market: m.gcp, buy: null, perAttempt: 4, hint: "" },
           { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", market: m.perfectJeweller, buy: null, perAttempt: 1, hint: "" },
           { key: "vaal", label: "ヴァールオーブ", market: m.vaal, buy: null, perAttempt: 1, hint: "" },

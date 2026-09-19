@@ -621,7 +621,9 @@ const summary = computed(() => {
                       : m.marketCheaper && m.buy
                         ? `取引所で比べた結果、相場 (${money(m.price)}) の方が取引所 (${m.buy.rawPerUnit} ${currencyJa(m.buy.currency)} / 個 → 繰り上げて ${money(m.buy.exalted)}) より安いので、相場で買う前提で計算します`
                         : m.price != null
-                          ? `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押しても取引所の板が薄い素材はここに出ません`
+                          ? m.key === 'baseGem' && g.baseBuyInfo.value
+                            ? `トレードの現物 (コラプト無し・二重コラプト無し、オンラインの出品${g.baseBuyInfo.value.total != null ? ` ${g.baseBuyInfo.value.total} 件` : ""}) の最安 ${money(m.price)}。${fmtStamp(g.baseBuyInfo.value.at)} 取得。「再取得」で取り直します`
+                            : `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押しても取引所の板が薄い素材はここに出ません`
                           : '相場なし'
                   "
                 >
