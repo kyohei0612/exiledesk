@@ -144,6 +144,12 @@ const sweepClock = computed(() => {
  */
 const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
 /** 選択中の値。0 = 自動取得しない (オーナー指示 2026-09-19) */
+/** 1 巡にかかる見込み (分)。門番が決めた今の間隔 × 本数 */
+const sweepMinutes = computed(() => {
+  const pace = status.value?.pace_secs ?? 0;
+  const reqs = Math.max(1, (status.value?.auto_watches ?? gems.value.length * 3) * 2);
+  return pace > 0 ? Math.max(1, Math.round((pace * reqs) / 60)) : 0;
+});
 const cycleHours = computed(() => {
   const st = status.value;
   if (st?.auto_off) return 0;
@@ -549,11 +555,16 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
         </div>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          自動巡回は <span class="text-[var(--exile-color-text-secondary)]">1 巡およそ 15 分</span>で終わる速さに均して流します
-          (今は {{ status?.pace_secs ?? 8 }} 秒おきに 1 回) のでレート制限に当たりません。
-          手動の「一括取得」だけは上限の許す限り速く回すので、その間だけ待ちが出ます。
-          監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄。1 銘柄あたり {{ cycleHours }} 時間に検索 1 回 + 値段 1 回なので、
-          {{ gems.length * 3 }} 銘柄なら毎時およそ {{ Math.round((gems.length * 3 * 2) / cycleHours) }} 回のリクエストになります (trade2 の上限は毎時 100 回)。手動の一括取得はこれとは別に走ります。
+          <template v-if="status?.auto_off">
+            自動巡回は<span class="text-[var(--exile-color-text-secondary)]">しない設定</span>です。「一括取得」を押した時だけ回ります。
+          </template>
+          <template v-else>
+            自動巡回は <span class="text-[var(--exile-color-text-secondary)]">1 巡およそ {{ sweepMinutes }} 分</span>で終わる速さに均して流します
+            (今は {{ status?.pace_secs ?? 8 }} 秒おきに 1 回)。
+            監視 {{ gems.length }} ジェム = {{ gems.length * 3 }} 銘柄 × 検索 1 回 + 値段 1 回 = 1 巡 {{ gems.length * 6 }} リクエストを、
+            {{ cycleHours }} 時間ごとに回します。
+          </template>
+          手動の「一括取得」は上限の許す限り速く回すので、その間だけ待ちが出ます (自動とは別に走ります)。
           間隔を短くすると「消えた」のに気付くのが早くなる分、売れるまでの時間も細かく出ます。
           監視から外したジェムの記録は消えません。7 日間触られなかった分だけ掃除されるので、その間に戻せば<span class="text-[var(--exile-color-text-secondary)]">前の記録の続きから</span>追えます。
           記録を作り直すのは検索条件そのものが変わった時だけです (別の条件で貯めた記録は混ぜられないため)。
