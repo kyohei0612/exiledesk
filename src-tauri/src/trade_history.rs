@@ -18,6 +18,12 @@ const LOGIN_LABEL: &str = "poe-login";
 const SITE: &str = "https://www.pathofexile.com/";
 const SESSION_COOKIE: &str = "POESESSID";
 
+/// ログイン状態の cookie の中身 (POESESSID の値)。無ければ None。
+/// trade2 の検索にも同じログインを乗せるため (rate limit が IP 単位から account 単位に変わる。2026-09-19)
+pub fn session_value(app: &tauri::AppHandle) -> Option<String> {
+    find_session(app).ok().flatten().map(|c| c.value().to_string())
+}
+
 /// ログイン状態の cookie をメインウィンドウの WebView2 から探す (ログイン用ウィンドウとプロファイルは共通)
 fn find_session(app: &tauri::AppHandle) -> Result<Option<Cookie<'static>>, String> {
     let win = app.get_webview_window("main").ok_or("メインウィンドウがありません")?;

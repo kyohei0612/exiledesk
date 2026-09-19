@@ -543,6 +543,21 @@ pub fn gate_budget_wait_secs() -> i64 {
     (wait + 999) / 1000
 }
 
+/// ログインしていれば POESESSID を乗せる。
+///
+/// 2026-09-19 の調査。GGG スタッフ「レート制限はサイトが受け取ったリクエストが多すぎる時に起きる。
+/// たいていは同じネットワークのサードパーティ製ツールが原因」= **IP 単位**。
+/// コミュニティ側の対処として「トレードサイトに手でログインしておくと枠が増える」が挙がっている
+/// (ログインすると匿名の IP 枠ではなく account の枠で数えられる)。
+/// 取引履歴で使っているログイン (WebView の POESESSID) をそのまま乗せて確かめる。
+/// 効かない / 悪化する時は取引履歴の画面からログアウトすれば元に戻る。
+fn with_session(rb: reqwest::RequestBuilder, session: &Option<String>) -> reqwest::RequestBuilder {
+    match session {
+        Some(v) => rb.header(reqwest::header::COOKIE, format!("POESESSID={v}")),
+        None => rb,
+    }
+}
+
 const TRADE2_BASE: &str = "https://www.pathofexile.com/api/trade2";
 /// 日本語サイト。検索 ID の名前空間が www と別なので、JP サイトで開く検索は JP の API で作る (2026-09-12)
 const TRADE2_BASE_JP: &str = "https://jp.pathofexile.com/api/trade2";
@@ -591,15 +606,20 @@ pub struct SearchRequest {
 /// search を投げて total / id / 結果 ID 列を返す。
 /// rate limit に当たった場合 Err。呼び側で適切に retry / throttle すること。
 #[tauri::command]
-pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, String> {
+pub async fn trade2_search(app: tauri::AppHandle, req: SearchRequest) -> Result<serde_json::Value, String> {
+    trade2_search_with(crate::trade_history::session_value(&app), req).await
+}
+
+/// 本体。session はログイン中の POESESSID (無ければ匿名)。
+/// 診断プローブ (examples) は AppHandle を持てないのでこちらを直接呼ぶ
+pub async fn trade2_search_with(session: Option<String>, req: SearchRequest) -> Result<serde_json::Value, String> {
     let url = format!("{}/search/poe2/{}", base_for(&req.site), urlencode(&req.league));
 
     let client = build_client()?;
 
     // 上限に当たる前にここで待つ (画面の取得も裏の一括取得も同じ門を通る)
     gate_acquire("search").await?;
-    let res = client
-        .post(&url)
+    let res = with_session(client.post(&url), &session)
         .json(&req.query)
         .send()
         .await
@@ -647,8 +667,8 @@ pub async fn trade2_search(req: SearchRequest) -> Result<serde_json::Value, Stri
 
 /// 件数だけを返す軽量版。`total` を取り出してフロントで使いやすく。
 #[tauri::command]
-pub async fn trade2_search_count(req: SearchRequest) -> Result<u64, String> {
-    let body = trade2_search(req).await?;
+pub async fn trade2_search_count(app: tauri::AppHandle, req: SearchRequest) -> Result<u64, String> {
+    let body = trade2_search(app, req).await?;
     let parsed: SearchResponse =
         serde_json::from_value(body).map_err(|e| format!("response parse error: {e}"))?;
     Ok(parsed.total.unwrap_or(0))
@@ -671,7 +691,12 @@ pub struct FetchRequest {
 /// listing 詳細を取得する。レスポンス全体（`{ result: [...] }`）をそのままフロントに返す。
 /// rate limit は門番 (gate_acquire) が待つので、呼び側で sleep は要らない。
 #[tauri::command]
-pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String> {
+pub async fn trade2_fetch(app: tauri::AppHandle, req: FetchRequest) -> Result<serde_json::Value, String> {
+    trade2_fetch_with(crate::trade_history::session_value(&app), req).await
+}
+
+/// 本体 (trade2_search_with と同じ理由で分けてある)
+pub async fn trade2_fetch_with(session: Option<String>, req: FetchRequest) -> Result<serde_json::Value, String> {
     if req.ids.is_empty() {
         return Err("fetch ids is empty".to_string());
     }
@@ -692,8 +717,7 @@ pub async fn trade2_fetch(req: FetchRequest) -> Result<serde_json::Value, String
     let client = build_client()?;
 
     gate_acquire("fetch").await?;
-    let res = client
-        .get(&url)
+    let res = with_session(client.get(&url), &session)
         .send()
         .await
         .map_err(|e| format!("network error: {e}"))?;

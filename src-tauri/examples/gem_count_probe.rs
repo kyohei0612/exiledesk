@@ -9,7 +9,7 @@
 //! 書き戻しはコピー側にしか行かないので、動いているアプリの帳簿を壊さない。
 //!
 //! Usage: cd src-tauri && cargo run --example gem_count_probe -- "Explosive Transmutation" ["リーグ名"]
-use exiledesk_lib::trade2::{trade2_search, SearchRequest};
+use exiledesk_lib::trade2::{trade2_search_with, SearchRequest};
 use serde_json::json;
 
 fn query(gem: &str, corrupted: Option<bool>, quality_min: Option<u32>, sockets_min: Option<u32>) -> serde_json::Value {
@@ -59,7 +59,7 @@ async fn main() {
     ];
     println!("\nジェム: {gem} / リーグ: {league} / status=securable (インスタントバイアウト)\n");
     for (label, q) in cases {
-        match trade2_search(SearchRequest { league: league.clone(), query: q, site: None }).await {
+        match trade2_search_with(None, SearchRequest { league: league.clone(), query: q, site: None }).await {
             Ok(v) => println!("{label} -> {} 件", v["total"].as_u64().unwrap_or(0)),
             Err(e) => println!("{label} -> 失敗: {}", e.chars().take(160).collect::<String>()),
         }

@@ -678,7 +678,9 @@ pub async fn market_flow_verify(app: tauri::AppHandle, key: String) -> Result<Ve
     }
     normalize_track_status(&mut query);
     let search = crate::trade2::SearchRequest { league: store.league.clone(), site: Some("www".to_string()), query };
-    let v = crate::trade2::trade2_search(search).await.map_err(|e| e.to_string())?;
+    let v = crate::trade2::trade2_search_with(crate::trade_history::session_value(&app), search)
+        .await
+        .map_err(|e| e.to_string())?;
     let total = v.get("total").and_then(|x| x.as_u64()).unwrap_or(0);
     let ids: Vec<String> = v
         .get("result")
@@ -1195,7 +1197,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             site: site.clone(),
             query,
         };
-        let body = match crate::trade2::trade2_search(search).await {
+        let body = match crate::trade2::trade2_search_with(crate::trade_history::session_value(app), search).await {
             Ok(v) => Some(v),
             Err(e) => {
                 eprintln!("[market_flow] search {} 失敗: {e}", watch.key);
@@ -1237,7 +1239,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         let top: Vec<String> = ids.iter().take(10).cloned().collect();
         if !top.is_empty() && !query_id.is_empty() {
             let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
-            match crate::trade2::trade2_fetch(fetch).await {
+            match crate::trade2::trade2_fetch_with(crate::trade_history::session_value(app), fetch).await {
                 Ok(v) => {
                     note_rate_headers(&v);
                     if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
