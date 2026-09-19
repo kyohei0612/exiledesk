@@ -265,6 +265,16 @@ export function useGemCorrupt() {
     return rowQueryOptions(key, selected.value?.kind === "meta");
   }
   const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  /**
+   * 現物を買うジェムの「低レベルのジェム本体」をトレードサイトで開く URL
+   * (素のジェム: コラプト無し・二重コラプト無し・即時購入。売値の行の「トレード2へ」と同じ ?q= 方式、API は使わない)。
+   * オーナー 2026-09-19「素材も現物ならトレードサイトへ同じように素材からでも遷移できるように」
+   */
+  function baseTradeUrl(): string | null {
+    const gem = selected.value;
+    if (!gem) return null;
+    return trade2QueryUrl(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"));
+  }
   function tradeUrl(key: SaleKey): string | null {
     if (!selected.value) return null;
     // 自動取得済みなら検索 ID 付き URL (サイト側で ?q= を解釈させなくて済む)
@@ -382,6 +392,7 @@ export function useGemCorrupt() {
     baseSource,
     setBaseSource,
     baseBuyInfo,
+    baseTradeUrl,
     materialApiIds,
     exchangeLoading,
     exchangeError,

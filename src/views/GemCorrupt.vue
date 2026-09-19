@@ -619,6 +619,16 @@ const summary = computed(() => {
                     >
                       {{ g.baseSource.value === "buy" ? "原石から作る に切替" : "現物を買う に切替" }}
                     </button>
+                    <!-- 現物を買う時は、売値の行と同じようにトレードサイトへ (同じ条件: コラプト無し・二重なし・即時購入) -->
+                    <button
+                      v-if="g.baseSource.value === 'buy'"
+                      type="button"
+                      class="underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]"
+                      title="同じ条件 (コラプト無し・二重コラプト無し・即時購入) でトレードサイト (JP) を開く。API は使わない"
+                      @click="open(g.baseTradeUrl())"
+                    >
+                      トレード2へ ↗
+                    </button>
                   </div>
                   <div v-else-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
