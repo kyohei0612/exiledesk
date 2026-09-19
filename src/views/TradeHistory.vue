@@ -10,12 +10,13 @@
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { currencyJa, displayCurrency } from "../state/display-currency";
+import { DAY_MS, dayLabel, fmtAmount, fmtTime } from "./trade-history/format";
+import EntryTable from "./trade-history/EntryTable.vue";
+import { useHistoryView } from "./trade-history/use-history-view";
 import { marketStore } from "../state/market-store";
 import { fetchLeagueStartEpoch } from "../api/poe2scout";
-import { toExalted } from "../services/trade2/pricing";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { waitText } from "../utils/wait-text";
-import { jaTypeName, jaUniqueName } from "../services/trade2/localize";
 import {
   fetchAndMerge,
   historyBudget,
@@ -205,235 +206,12 @@ const fetchLabel = computed(() => {
   if (waitSec.value > 0) return `次の取得まで ${Math.floor(waitSec.value / 60)}:${String(waitSec.value % 60).padStart(2, "0")}`;
   return "履歴を取得";
 });
-/** クライアントと同じ日本語名 (ユニーク名とベース名を別々に引く) */
-const jaName = (e: TradeEntry): string => (e.name ? jaUniqueName(e.name) : "");
-const jaType = (e: TradeEntry): string => (e.typeLine ? jaTypeName(e.typeLine) : "");
 
-// ---- 絞り込みと集計 (2026-09-16: 時間の引き算ではなく日付で仕分ける) ----
-const DAY_MS = 86_400_000;
-// オーナー指示 (2026-09-16): 当日は 7 日間の日付チップで選べるので不要
-const PERIODS = [
-  { id: "7d", label: "7 日間", days: 7 },
-  { id: "all", label: "全部", days: 0 },
-] as const;
-type PeriodId = (typeof PERIODS)[number]["id"];
-const period = ref<PeriodId>("7d");
-const search = ref("");
-
-const pad2 = (n: number): string => String(n).padStart(2, "0");
-/** その日の 0:00 (ローカル) */
-function startOfDay(ms: number): number {
-  const d = new Date(ms);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-const dayKey = (ms: number): string => {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-};
-const WEEK_JA = ["日", "月", "火", "水", "木", "金", "土"];
-/** "9/16 (火)" */
-function dayLabel(ms: number): string {
-  const d = new Date(ms);
-  return `${d.getMonth() + 1}/${d.getDate()} (${WEEK_JA[d.getDay()]})`;
-}
-/** 今日の 0:00 (now を見て日付が変わったら自動で切り替わる) */
-const todayStart = computed(() => startOfDay(now.value));
-/** 選択中の期間の開始時刻 (全部は 0) */
-const since = computed(() => {
-  const p = PERIODS.find((x) => x.id === period.value);
-  if (!p || p.days <= 0) return 0;
-  return todayStart.value - (p.days - 1) * DAY_MS;
-});
-/** 7 日間モードで見ている日 (0 = 今日)。オーナー指示 2026-09-16: 7 日間は日付を選んで時間帯で見る */
-const selectedDay = ref<number>(0);
-const activeDay = computed(() => (selectedDay.value ? startOfDay(selectedDay.value) : todayStart.value));
-
-/** 検索だけ掛けた分 (期間の集計に使う) */
-const searched = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  if (!q) return entries.value;
-  // 検索は日本語名と英語名のどちらでも引っかかるように
-  return entries.value.filter((e) => `${e.name} ${e.typeLine} ${jaName(e)} ${jaType(e)}`.toLowerCase().includes(q));
-});
-const visible = computed(() => {
-  // 7 日間は「選んだ 1 日」だけを出す (日付ごとに見たい、というオーナー指示)
-  if (period.value === "7d") {
-    const from = activeDay.value;
-    const to = from + DAY_MS;
-    return searched.value.filter((e) => e.time >= from && e.time < to);
-  }
-  return searched.value.filter((e) => e.time >= since.value);
-});
-
-/** 7 日間の日付チップ (古い → 新しい)。その日の合計と件数つき */
-const days7 = computed(() => {
-  const out: { start: number; label: string; total: number; count: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const start = todayStart.value - i * DAY_MS;
-    const to = start + DAY_MS;
-    let total = 0;
-    let count = 0;
-    for (const e of searched.value) {
-      if (e.time < start || e.time >= to) continue;
-      total += valueOf(e);
-      count++;
-    }
-    out.push({ start, label: dayLabel(start), total, count });
-  }
-  return out;
-});
-/** PoE2 の通貨だけ高貴に換算できる (換算レートは PoE2 の相場) */
-function exaltedOf(e: TradeEntry): number | null {
-  if (game.value !== "poe2" || e.amount == null || !e.currency) return null;
-  return toExalted(e.amount, e.currency, marketStore.rates.value);
-}
-const totals = computed(() => {
-  const byCurrency = new Map<string, number>();
-  let exalted = 0;
-  let unconverted = 0;
-  for (const e of visible.value) {
-    if (e.amount == null || !e.currency) continue;
-    byCurrency.set(e.currency, (byCurrency.get(e.currency) ?? 0) + e.amount);
-    const ex = exaltedOf(e);
-    if (ex == null) unconverted++;
-    else exalted += ex;
-  }
-  return { byCurrency: [...byCurrency.entries()].sort((a, b) => b[1] - a[1]), exalted, unconverted };
-});
-
-/** 1 件の売上 (グラフと日別合計に使う値)。PoE2 は高貴換算、PoE1 は換算できないので 0 */
-const valueOf = (e: TradeEntry): number => exaltedOf(e) ?? 0;
-
-/** 期間の見出しに出すまとめ (当日 / 7 日間 / 全部 は常に出す) */
-const summary = computed(() => {
-  const sum = (from: number): { total: number; count: number } => {
-    let total = 0;
-    let count = 0;
-    for (const e of searched.value) {
-      if (e.time < from) continue;
-      total += valueOf(e);
-      count++;
-    }
-    return { total, count };
-  };
-  return {
-    week: sum(todayStart.value - 6 * DAY_MS),
-    all: sum(0),
-  };
-});
-
-/** 「全部」の左端。リーグ開始が取れればそれ、駄目なら一番古い記録 (どちらも無ければ今日) */
-const allStartMs = computed<number>(() => {
-  if (leagueStartMs.value) return leagueStartMs.value;
-  let oldest = Number.POSITIVE_INFINITY;
-  for (const e of entries.value) oldest = Math.min(oldest, e.time);
-  return Number.isFinite(oldest) ? oldest : todayStart.value;
-});
-
-/** グラフの棒。当日は時間別 (0-23 時)、それ以外は日別 */
-interface Bar {
-  key: string;
-  label: string;
-  sub: string;
-  value: number;
-  count: number;
-  today: boolean;
-}
-const bars = computed<Bar[]>(() => {
-  const out: Bar[] = [];
-  // 当日 / 7 日間 (選んだ日) は時間別、全部だけ日別
-  if (period.value === "7d") {
-    const base = activeDay.value;
-    const byHour = new Array(24).fill(0).map(() => ({ v: 0, c: 0 }));
-    for (const e of searched.value) {
-      if (e.time < base || e.time >= base + DAY_MS) continue;
-      const h = new Date(e.time).getHours();
-      byHour[h].v += valueOf(e);
-      byHour[h].c++;
-    }
-    // 今日は「今の時間」まで、過去の日は 24 時間ぶん
-    const isToday = base === todayStart.value;
-    const lastHour = isToday ? new Date(now.value).getHours() : 23;
-    for (let h = 0; h <= lastHour; h++) {
-      out.push({ key: `h${h}`, label: `${h}`, sub: `${h}:00`, value: byHour[h].v, count: byHour[h].c, today: isToday && h === lastHour });
-    }
-    return out;
-  }
-  // 日別: 売れた日を拾い、7 日間は売れていない日も 0 で並べる
-  const byDay = new Map<string, { v: number; c: number; start: number }>();
-  for (const e of searched.value) {
-    if (e.time < since.value) continue;
-    const k = dayKey(e.time);
-    const b = byDay.get(k) ?? { v: 0, c: 0, start: startOfDay(e.time) };
-    b.v += valueOf(e);
-    b.c++;
-    byDay.set(k, b);
-  }
-  // 「全部」= リーグ開始から今日まで 1 日ずつ (売れていない日も 0 で並べる)
-  let first = startOfDay(allStartMs.value);
-  const days = Math.floor((todayStart.value - first) / DAY_MS);
-  if (days > 400) first = todayStart.value - 400 * DAY_MS; // 保険 (リーグ開始が取れないほど古い時)
-  for (let t = first; t <= todayStart.value; t += DAY_MS) {
-    const start = startOfDay(t); // 夏時間などでずれても日付境界に戻す
-    const b = byDay.get(dayKey(start));
-    out.push({
-      key: dayKey(start),
-      label: `${new Date(start).getMonth() + 1}/${new Date(start).getDate()}`,
-      sub: dayLabel(start),
-      value: b?.v ?? 0,
-      count: b?.c ?? 0,
-      today: start === todayStart.value,
-    });
-  }
-  return out;
-});
-const barMax = computed(() => Math.max(1, ...bars.value.map((b) => b.value)));
-/** 棒が多い時はラベルを間引く (全部で 30 日を超えるとき) */
-const labelEvery = computed(() => (bars.value.length > 24 ? Math.ceil(bars.value.length / 12) : 1));
-
-/** 一覧は日付ごとにまとめる (新しい日が上) */
-const dayGroups = computed(() => {
-  const map = new Map<string, { start: number; list: TradeEntry[]; total: number }>();
-  for (const e of visible.value) {
-    const k = dayKey(e.time);
-    const g = map.get(k) ?? { start: startOfDay(e.time), list: [], total: 0 };
-    g.list.push(e);
-    g.total += valueOf(e);
-    map.set(k, g);
-  }
-  const out = [...map.values()].sort((a, b) => b.start - a.start);
-  for (const g of out) g.list.sort((a, b) => b.time - a.time);
-  return out;
-});
+// ---- 絞り込みと集計は trade-history/use-history-view.ts へ (2026-09-19 の分割) ----
+const { PERIODS, period, search, selectedDay, todayStart, activeDay, days7, visible, totals, summary, bars, barMax, labelEvery } =
+  useHistoryView({ entries, game, now, leagueStartMs });
 
 const curLabel = currencyJa;
-const fmtAmount = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(2));
-function fmtTime(ms: number): string {
-  if (!ms) return "—";
-  const d = new Date(ms);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-/** 日付ごとにまとめた一覧では時刻だけ出す */
-function fmtHM(ms: number): string {
-  const d = new Date(ms);
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
-function rarityClass(r: string): string {
-  switch (r) {
-    case "Unique":
-      return "text-amber-500";
-    case "Rare":
-      return "text-yellow-200";
-    case "Magic":
-      return "text-indigo-300";
-    case "Gem":
-      return "text-teal-300";
-    default:
-      return "";
-  }
-}
 
 let timer: ReturnType<typeof setInterval> | null = null;
 let unlisten: (() => void) | null = null;
@@ -624,53 +402,7 @@ onUnmounted(() => {
       </template>
     </div>
 
-    <!-- 一覧 -->
-    <div class="rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
-      <p v-if="entries.length === 0" class="text-[var(--exile-color-text-tertiary)]">
-        まだ履歴がありません。ログインして「履歴を取得」を押すと、公式サイトのマーチャント履歴がここに入ります。
-      </p>
-      <table v-else class="w-full">
-        <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-          <tr>
-            <th class="text-left font-normal pb-1 whitespace-nowrap">時刻</th>
-            <th class="text-left font-normal pb-1 pl-3">アイテム</th>
-            <th class="text-right font-normal pb-1 pl-3">数</th>
-            <th class="text-right font-normal pb-1 pl-3">売値</th>
-            <th v-if="game === 'poe2'" class="text-right font-normal pb-1 pl-3">換算</th>
-          </tr>
-        </thead>
-        <tbody v-for="g in dayGroups" :key="g.start">
-          <!-- 日付の見出し (その日の合計つき) -->
-          <tr class="border-t border-[var(--exile-color-border-brass)]">
-            <td :colspan="game === 'poe2' ? 5 : 4" class="pt-3 pb-1">
-              <div class="flex items-baseline gap-3">
-                <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ dayLabel(g.start) }}</span>
-                <span v-if="game === 'poe2'" class="tabular-nums text-emerald-300">{{ money(g.total) }}</span>
-                <span class="text-[11px] text-[var(--exile-color-text-tertiary)] tabular-nums">{{ g.list.length }} 件</span>
-              </div>
-            </td>
-          </tr>
-          <tr v-for="e in g.list" :key="e.key" class="border-t border-[var(--exile-color-border-subtle)]">
-            <td class="py-1 tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ fmtHM(e.time) }}</td>
-            <td class="py-1 pl-3">
-              <div class="flex items-center gap-2 min-w-0">
-                <img v-if="e.icon" :src="e.icon" alt="" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
-                <span class="min-w-0" :class="rarityClass(e.rarity)" :title="`${e.name} ${e.typeLine}`.trim()">
-                  <span v-if="e.name" class="mr-1.5">{{ jaName(e) }}</span><span :class="e.name ? 'text-[var(--exile-color-text-secondary)]' : ''">{{ jaType(e) }}</span>
-                  <span v-if="e.ilvl" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> ilvl {{ e.ilvl }}</span>
-                </span>
-              </div>
-            </td>
-            <td class="py-1 pl-3 text-right tabular-nums">{{ e.stack ?? "" }}</td>
-            <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ e.amount != null ? `${fmtAmount(e.amount)} ${curLabel(e.currency)}` : "—" }}</td>
-            <td v-if="game === 'poe2'" class="py-1 pl-3 text-right tabular-nums whitespace-nowrap text-[var(--exile-color-text-secondary)]">{{ money(exaltedOf(e)) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-        取った履歴はリーグごとにこの PC に残ります (公式サイトは直近の分しか返さないため、古い分も消さずに足していきます)。換算は今の相場 (カレンシーランキング) で、売れた時の相場ではありません。
-      </p>
-    </div>
+    <EntryTable :entries="entries" :visible="visible" :game="game" />
   </section>
 </template>
 
