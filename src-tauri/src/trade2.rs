@@ -277,6 +277,19 @@ const MAX_GATE_WAIT_MS: i64 = 90_000;
 /// 送ってよくなるまで待って、送った記録を残す。全ての trade2 リクエストがここを通る。
 /// 待ちが長すぎる時は Err (呼び側が「レート制限中: あと N 秒」として返す)
 pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
+    gate_acquire_with(kind, MAX_GATE_WAIT_MS).await
+}
+
+/// 裏の巡回が待てる上限。画面の「再取得」と違って人を待たせないので、枠が空くまで粘ってよい。
+///
+/// 2026-09-19 オーナー「だめだ、どうがんばっても中止される、途中で訳わからん」:
+/// 429 を踏んで合計の上限が下がると、枠が空くまでの待ちが 90 秒を超える。門番はそこで
+/// 「今は無理」と返し、巡回はその銘柄を取りこぼしに回す。取り直しの周も同じ理由で即座に
+/// 全滅し、12 周ぶん一瞬で使い切って「9 銘柄が取れませんでした」になっていた。
+/// 待ちは罰則ではなく順番待ちなので、巡回は待てばよい。
+pub(crate) const PATIENT_MAX_WAIT_MS: i64 = 20 * 60 * 1000;
+
+pub(crate) async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), String> {
     let mut waited = 0i64;
     loop {
         let wait = {
@@ -300,7 +313,7 @@ pub(crate) async fn gate_acquire(kind: &str) -> Result<(), String> {
         if wait <= 0 {
             return Ok(());
         }
-        if waited + wait > MAX_GATE_WAIT_MS {
+        if waited + wait > max_wait_ms {
             return Err(format!(
                 "trade2 レート制限中 (あと {} 秒)。少し待ってから取得してください",
                 (wait + 999) / 1000
@@ -601,6 +614,9 @@ pub struct SearchRequest {
     /// trade2 query 全体 (status/type/filters/sort 含む)。
     /// フロントで組み立てる JSON value をそのまま受け取って公式 API に POST する。
     pub query: serde_json::Value,
+    /// 裏の巡回からの呼び出し = 枠が空くまで長く待ってよい (画面の取得は 90 秒で諦める)
+    #[serde(default)]
+    pub patient: bool,
 }
 
 /// search を投げて total / id / 結果 ID 列を返す。
@@ -618,7 +634,7 @@ pub async fn trade2_search_with(session: Option<String>, req: SearchRequest) -> 
     let client = build_client()?;
 
     // 上限に当たる前にここで待つ (画面の取得も裏の一括取得も同じ門を通る)
-    gate_acquire("search").await?;
+    gate_acquire_with("search", if req.patient { PATIENT_MAX_WAIT_MS } else { MAX_GATE_WAIT_MS }).await?;
     let res = with_session(client.post(&url), &session)
         .json(&req.query)
         .send()
@@ -686,6 +702,9 @@ pub struct FetchRequest {
     /// search と同じサイト ("jp" / 既定 www)
     #[serde(default)]
     pub site: Option<String>,
+    /// 裏の巡回からの呼び出し = 枠が空くまで長く待ってよい
+    #[serde(default)]
+    pub patient: bool,
 }
 
 /// listing 詳細を取得する。レスポンス全体（`{ result: [...] }`）をそのままフロントに返す。
@@ -716,7 +735,7 @@ pub async fn trade2_fetch_with(session: Option<String>, req: FetchRequest) -> Re
 
     let client = build_client()?;
 
-    gate_acquire("fetch").await?;
+    gate_acquire_with("fetch", if req.patient { PATIENT_MAX_WAIT_MS } else { MAX_GATE_WAIT_MS }).await?;
     let res = with_session(client.get(&url), &session)
         .send()
         .await

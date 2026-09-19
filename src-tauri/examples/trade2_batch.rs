@@ -32,7 +32,7 @@ async fn main() {
         let mut qid = String::new();
         for body in q["attempts"].as_array().cloned().unwrap_or_default() {
             tokio::time::sleep(gap()).await;
-            match trade2_search_with(None, SearchRequest { league: league.clone(), query: body, site: site.clone() }).await {
+            match trade2_search_with(None, SearchRequest { patient: false, league: league.clone(), query: body, site: site.clone() }).await {
                 Ok(s) => {
                     let total = s["total"].as_u64().unwrap_or(0);
                     rec["total"] = json!(total);
@@ -54,7 +54,7 @@ async fn main() {
         }
         if !ids.is_empty() {
             tokio::time::sleep(gap()).await;
-            match trade2_fetch_with(None, FetchRequest { ids, query_id: qid, site: site.clone() }).await {
+            match trade2_fetch_with(None, FetchRequest { patient: false, ids, query_id: qid, site: site.clone() }).await {
                 Ok(f) => {
                     let listings: Vec<Value> = f["result"]
                         .as_array()

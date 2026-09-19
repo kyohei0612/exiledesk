@@ -59,7 +59,7 @@ async fn main() {
     ];
     println!("\nジェム: {gem} / リーグ: {league} / status=securable (インスタントバイアウト)\n");
     for (label, q) in cases {
-        match trade2_search_with(None, SearchRequest { league: league.clone(), query: q, site: None }).await {
+        match trade2_search_with(None, SearchRequest { patient: false, league: league.clone(), query: q, site: None }).await {
             Ok(v) => println!("{label} -> {} 件", v["total"].as_u64().unwrap_or(0)),
             Err(e) => println!("{label} -> 失敗: {}", e.chars().take(160).collect::<String>()),
         }

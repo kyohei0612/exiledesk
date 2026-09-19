@@ -677,7 +677,7 @@ pub async fn market_flow_verify(app: tauri::AppHandle, key: String) -> Result<Ve
         return Err("この銘柄は検索条件を持っていません".to_string());
     }
     normalize_track_status(&mut query);
-    let search = crate::trade2::SearchRequest { league: store.league.clone(), site: Some("www".to_string()), query };
+    let search = crate::trade2::SearchRequest { patient: true, league: store.league.clone(), site: Some("www".to_string()), query };
     let v = crate::trade2::trade2_search_with(crate::trade_history::session_value(&app), search)
         .await
         .map_err(|e| e.to_string())?;
@@ -1070,9 +1070,10 @@ async fn sample_until_done(app: &tauri::AppHandle) -> Result<(), String> {
         // 取り直しの周は「全体 − 残り」から数え直す (数字が戻らない)
         let all = manual_base().map(|(_, a)| a).unwrap_or(left.len());
         set_manual_base(Some((all.saturating_sub(left.len()), all)));
-        // 罰則で止まっているなら明けるまで待つ (待っている間も画面に出す)
+        // 罰則で止まっている / 枠が空くまで遠い なら、次の 1 本が通るところまで待つ (待っている間も画面に出す)。
+        // 罰則だけを見ていた頃は、枠待ちが 90 秒を超えていると即座に取り直しを始めて即座に全滅していた
         let mut waited = 0;
-        while retry_wait_secs() > 0 && waited < MAX_PENALTY_WAIT_SECS {
+        while (retry_wait_secs() > 0 || crate::trade2::gate_wait_secs() > 60) && waited < MAX_PENALTY_WAIT_SECS {
             if CANCEL_MANUAL.load(Ordering::SeqCst) {
                 return Ok(());
             }
@@ -1192,7 +1193,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         // --- search: 総数と ID 一覧 ---
         let mut query = watch.query.clone();
         normalize_track_status(&mut query);
-        let search = crate::trade2::SearchRequest {
+        let search = crate::trade2::SearchRequest { patient: true,
             league: store.league.clone(),
             site: site.clone(),
             query,
@@ -1238,7 +1239,7 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
         let mut entries: Vec<ListingRef> = Vec::new();
         let top: Vec<String> = ids.iter().take(10).cloned().collect();
         if !top.is_empty() && !query_id.is_empty() {
-            let fetch = crate::trade2::FetchRequest { ids: top, query_id: query_id.clone(), site: site.clone() };
+            let fetch = crate::trade2::FetchRequest { patient: true, ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch_with(crate::trade_history::session_value(app), fetch).await {
                 Ok(v) => {
                     note_rate_headers(&v);

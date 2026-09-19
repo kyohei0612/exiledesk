@@ -651,6 +651,8 @@ const summary = computed(() => {
                 >
                   <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else-if="m.price != null">{{ money(m.price) }}</template>
+                  <!-- 現物を買うジェムで値段がまだ無いのは「相場が無い」のではなく「まだ取れていない」 -->
+                  <template v-else-if="m.key === 'baseGem' && g.baseSource.value === 'buy'">未取得 (再取得で取ります)</template>
                   <template v-else>相場なし</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>

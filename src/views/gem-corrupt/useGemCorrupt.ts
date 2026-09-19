@@ -336,14 +336,19 @@ export function useGemCorrupt() {
   async function measureOriginal(gem: GemInfo, force = false): Promise<void> {
     if (isRateLimited()) return;
     const buying = baseSourceOf(gem.en) === "buy";
+    const cached = cachedBaseBuy(gem.en);
     if (buying && !force) {
       // 自動で開いた時は、覚えている 50 件が新しければ投げ直さない (6 リクエスト節約)
-      const hit = cachedBaseBuy(gem.en);
-      if (hit?.prices?.length && Date.now() - hit.at < BASE_BUY_FRESH_MS) return;
+      if (cached?.prices?.length && Date.now() - cached.at < BASE_BUY_FRESH_MS) return;
     }
+    // 何も覚えていない初回は 10 件 (search 1 + fetch 1) で軽く取って、まず値段を出す。
+    // 50 件 (fetch 5 回) は「再取得」を押した時と、30 分経って取り直す時だけ
+    // (2026-09-19 オーナー「現物あるのに費用が出ない」: 6 リクエスト要る取得が 4 本目に回されて
+    //  枠待ちで落ち、現物の値段が永久に「相場なし」のままだった)
+    const depth = buying ? (force || cached?.prices?.length ? BASE_BUY_DEPTH : undefined) : undefined;
     // 現物を買うジェムは最安 50 件まで見る (N 個買う時の合計を積むため。fetch は 10 件ずつ = 5 回)。
     // 種類の判定 (スピリットか) だけなら 10 件で足りる
-    const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value, buying ? BASE_BUY_DEPTH : undefined);
+    const r = await autoPrice(tradeLeague.value, originalGemQuery(gem.en, gem.kind === "meta"), rates.value, depth);
     if (!r) return;
     if (r.reservesSpirit != null) {
       noteSpiritGem(gem.en, r.reservesSpirit);
@@ -363,6 +368,9 @@ export function useGemCorrupt() {
     pricing.value = true;
     priceError.value = null;
     try {
+      // 現物を買うジェムは、売値より先に現物の値段を取る。素材費が無いと 4 経路すべて計算できないので
+      // 後回しにすると枠待ちで落ちた時に画面が「相場なし」のまま止まる (2026-09-19)
+      if (baseSourceOf(gem.en) === "buy") await measureOriginal(gem, force);
       for (const row of SALE_ROWS) {
         const body = buildGemQuery(gem.en, queryOptions(row.key));
         const r = await autoPrice(tradeLeague.value, body, rates.value);
@@ -376,9 +384,8 @@ export function useGemCorrupt() {
         // 3 条件 (レベル 21 / 品質 23% / 完成品) とも記録する。自動巡回と同じルール
         void recordRowSample(gem.en, row.key, r);
       }
-      // 素のスキルを見る (search + fetch 1 回ずつ):
-      //   原石の種類がまだ実測できていない時 (一度きり) と、現物を買うジェム (値段なので毎回)
-      if (!spiritGemMeasured(gem.en) || baseSourceOf(gem.en) === "buy") await measureOriginal(gem, force);
+      // 原石の種類がまだ実測できていなければ、素のスキルを 1 回だけ見る (現物を買うジェムは上で取り済み)
+      if (!spiritGemMeasured(gem.en) && baseSourceOf(gem.en) !== "buy") await measureOriginal(gem, force);
       priceError.value = tradeAuto.lastError.value;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
