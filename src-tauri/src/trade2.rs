@@ -147,11 +147,18 @@ fn min_spacing_ms(kind: &str) -> i64 {
 }
 
 /// 窓ごとの上限に対して「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
+/// 別経路が見えている時に枠を半分にするのは、この長さまでの窓だけ。
+///
+/// 2026-09-19 22:19 の実測: 3 時間窓 (600 回) まで半分 (300) にしていたので、search + fetch の
+/// 3 時間の合計 (≈300) がそこに当たり、「あと 26 分 52 秒」の待ちを自分で作っていた。
+/// 別経路の使用は数分に 1 回程度なので、長い窓を半分にする理由は無い
+const SHY_MAX_PERIOD: i64 = 600;
+
 fn window_wait(sends: &[i64], rules: &[Rule], now: i64, shy: bool) -> i64 {
     let mut wait = 0;
     for &(max, period) in rules {
         // 上限ぴったりまで使うと他の呼び出しとぶつかるので、少し残して止める
-        let margin = if shy { max / 2 } else if max >= 15 { 2 } else { 1 };
+        let margin = if shy && period <= SHY_MAX_PERIOD { max / 2 } else if max >= 15 { 2 } else { 1 };
         let keep = max.saturating_sub(margin).max(1) as usize;
         let window_ms = period * 1000;
         let in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
@@ -257,18 +264,14 @@ fn rules_widened(old: &[Rule], new: &[Rule]) -> bool {
     }
 }
 
-fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
-    let mut by_period: std::collections::BTreeMap<i64, u32> = std::collections::BTreeMap::new();
-    for g in map.values() {
-        let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
-        for (max, period) in rules {
-            by_period.entry(period).and_modify(|m| *m = (*m).min(max)).or_insert(max);
-        }
-    }
-    // 5 分窓だけは公表値より低い実測 (429 を踏むたびに下がる) に合わせる
-    let cap = adaptive_max();
-    by_period.entry(300).and_modify(|m| *m = (*m).min(cap)).or_insert(cap);
-    by_period.into_iter().map(|(period, max)| (max, period)).collect()
+/// 合計 (search + fetch) に当てる規則は **5 分窓の隠れた上限だけ**。
+///
+/// 2026-09-19 まで「同じ長さの窓は一番きつい上限を合計に当てる」としていたが、3 時間窓
+/// (search 600 / fetch 1000) を合計に当てると、公表どおり窓口ごとに数えられている枠を
+/// 半分以下に自分で縛ることになる (実測: 合計 ≈300 で 27 分の待ちを作った)。
+/// 長い窓は窓口ごとの規則 (wait_for_rules) が守るので、ここでは見ない
+fn combined_rules(_map: &HashMap<String, Gate>) -> Vec<Rule> {
+    vec![(adaptive_max(), 300)]
 }
 
 /// 全窓口の送信を合わせた待ち時間
@@ -1026,6 +1029,27 @@ mod rate_tests {
         }
         assert_eq!(adaptive_max(), COMBINED_MIN_300, "下限より下には行かない");
         *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+    }
+
+    /// 3 時間窓は窓口ごとの枠 (search 600 / fetch 1000)。合計に当てて自分で縛らない (2026-09-19 22:19 の偽の 27 分待ち)
+    #[test]
+    fn long_windows_are_not_combined() {
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+        let now = 1_000_000_000;
+        let mut map = HashMap::new();
+        // 3 時間に search 154 + fetch 145 (実測)。直近 5 分は 3 件だけ。別経路も見えている
+        let mut sg = gate((0..154).map(|i| now - 400_000 - i * 60_000).collect(), vec![(8, 10), (15, 60), (60, 300), (600, 10800)], 0);
+        sg.foreign_seen_at = now - 1_000;
+        let mut fg = gate((0..145).map(|i| now - 400_000 - i * 60_000).collect(), vec![(12, 4), (16, 12), (100, 300), (1000, 10800)], 0);
+        fg.foreign_seen_at = now - 1_000;
+        map.insert("search".to_string(), sg);
+        map.insert("fetch".to_string(), fg);
+        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "合計に当てるのは 5 分窓だけ");
+        assert_eq!(combined_wait(&map, now), 0, "3 時間の合計 299 で待ってはいけない");
+        for (kind, g) in map.iter() {
+            assert_eq!(window_wait(&g.sends, &g.rules, now, true), 0, "{kind} の 3 時間窓は別経路が見えていても半分にしない");
+        }
     }
 
     /// 規則が広がった時だけ「別の環境」とみなす (ログインで 30 → 60)。狭まった / 同じ / 無い は違う

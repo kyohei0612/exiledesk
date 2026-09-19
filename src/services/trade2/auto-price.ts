@@ -53,6 +53,8 @@ export const tradeAuto = {
   pending,
   rateLimitedUntil,
   lastError,
+  /** 今の止まりが枠待ち (罰則ではない) か。監視の画面が行を分けるのに使う */
+  budgetWait,
   /** 止まっている残り秒 (制限中でなければ 0)。どの画面もこれ 1 つを見る */
   rateLimitSecs: computed(() => {
     void now.value;

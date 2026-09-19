@@ -190,7 +190,9 @@ export async function setFlowCycle(secs: number): Promise<number | null> {
 export function tradeRateSecs(st: FlowStatus | null | undefined): number {
   const nowSec = Math.floor(Date.now() / 1000);
   const until = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
-  return Math.max(until > 0 ? until - nowSec : 0, tradeAuto.rateLimitSecs.value);
+  // 画面側の止まりが「枠待ち」なら罰則ではないので、こちらには数えない (tradeBudgetSecs に回す)
+  const ui = tradeAuto.budgetWait.value ? 0 : tradeAuto.rateLimitSecs.value;
+  return Math.max(until > 0 ? until - nowSec : 0, ui);
 }
 
 /**
@@ -205,7 +207,8 @@ export function tradeRateSecs(st: FlowStatus | null | undefined): number {
 export function tradeBudgetSecs(st: FlowStatus | null | undefined): number {
   const nowSec = Math.floor(Date.now() / 1000);
   const until = st?.budget_until ?? 0;
-  return Math.max(0, until > 0 ? until - nowSec : 0);
+  const ui = tradeAuto.budgetWait.value ? tradeAuto.rateLimitSecs.value : 0;
+  return Math.max(0, until > 0 ? until - nowSec : 0, ui);
 }
 
 export async function loadFlowStatus(): Promise<FlowStatus | null> {
