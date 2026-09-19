@@ -27,6 +27,7 @@ import {
   watchGems,
   watchSettings,
   MANUAL_ONLY,
+  MAX_WATCH_GEMS,
   WATCH_METRIC_LABEL,
   type GemUsageRow,
   type WatchMetric,
@@ -264,7 +265,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </label>
           <label class="inline-flex flex-col gap-1">
             監視の上限
-            <input type="number" min="1" max="25" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
+            <input type="number" min="1" :max="MAX_WATCH_GEMS" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
           </label>
           <label class="inline-flex flex-col gap-1">
             自動取得の間隔

@@ -43,11 +43,18 @@ export interface WatchSettings {
   autoTop: boolean;
 }
 
-/**
- * 既定値 (オーナー指示 2026-09-17)。
+/** 監視できるジェムの上限 (オーナー指示 2026-09-20「監視ジェム最大 7 にしよう」)。
  *
- * 「全アセンダンシー・使用率 5 人以上」で今まで通り 18 ジェム前後が監視に入る形にする。
- * 18 ジェム = 54 銘柄 × 2 リクエストを周期 (既定 8 時間) ごとに 1 巡 (trade2 の上限は毎時 100 回)。
+ * 7 ジェム = 21 銘柄 × 2 = **42 リクエスト**で 1 巡。ログイン中に通っている線が
+ * 15 分 60 本 (2026-09-19 の実測) なので、1 巡が 15 分の枠に収まる。
+ * 以前の 18 ジェムは 108 リクエストで、どう間隔を空けても 15 分の枠を 2 周ぶん食べていた。
+ */
+export const MAX_WATCH_GEMS = 7;
+
+/**
+ * 既定値 (オーナー指示 2026-09-17、上限は 2026-09-20 に 18 → 7)。
+ *
+ * 取得先は全アセンダンシー・完成品 5 人以上。そこから上位 7 ジェムを監視する。
  */
 export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   /**
@@ -60,7 +67,7 @@ export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   klass: "",
   metric: "finished",
   minUsers: 5,
-  maxGems: 18,
+  maxGems: MAX_WATCH_GEMS,
   manual: [],
   autoTop: true,
 };
@@ -81,7 +88,7 @@ function load(): WatchSettings {
         klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
         // 基準 (metric) だけ既定に戻す。人数の下限 / 上限は手で決めた値なので引き継ぐ
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
-        maxGems: clamp(s.maxGems, 1, 25, DEFAULT_WATCH_SETTINGS.maxGems),
+        maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
         manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
         autoTop: s.autoTop !== false,
       };
@@ -91,7 +98,7 @@ function load(): WatchSettings {
       klass: typeof s.klass === "string" ? s.klass : DEFAULT_WATCH_SETTINGS.klass,
       metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
       minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
-      maxGems: clamp(s.maxGems, 1, 25, DEFAULT_WATCH_SETTINGS.maxGems),
+      maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
       manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
       autoTop: s.autoTop !== false,
     };
