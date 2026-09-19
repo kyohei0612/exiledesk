@@ -25,6 +25,7 @@ import {
   updateWatchSettings,
   watchGems,
   watchSettings,
+  MANUAL_ONLY,
   WATCH_METRIC_LABEL,
   type GemUsageRow,
   type WatchMetric,
@@ -56,7 +57,9 @@ const gems = computed(() => watchGems(rows.value, s.value));
  * (使用率ランキング側のプルダウンは撤去)。取れていない間は空 = 全アセだけ出す。
  */
 /** 選んだアセンダンシーの結果をまだ持っていない (下の使用率ランキングで「取得」が要る) */
-const needUsageFetch = computed(() => rankingClass.value !== (s.value.klass ?? ""));
+/** カスタム監視スキル = 使用率ランキングを使わない */
+const manualOnly = computed(() => s.value.klass === MANUAL_ONLY);
+const needUsageFetch = computed(() => !manualOnly.value && rankingClass.value !== (s.value.klass ?? ""));
 
 /**
  * 記録を読み直す。読むのはこの PC のファイルだけなので、何回呼んでも通信は発生しない
@@ -486,7 +489,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
           ここで選んだジェムを {{ status?.auto_off ? "手動の一括取得だけで" : `${cycleHours} 時間ごとに 1 巡して` }} 売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件。手動の一括取得もこの時計を進めます)。
-          上位は下の「使用率ランキング」で取得した結果から決まります。
+          {{ manualOnly ? "カスタム監視スキル: 下の「ジェムを足す」で入れたジェムだけを監視します (使用率ランキングは使いません)。" : "上位は下の「使用率ランキング」で取得した結果から決まります。" }}
         </p>
 
         <!-- 設定 -->
@@ -495,6 +498,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             取得先
             <select class="num w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
               <option value="">全アセンダンシー (リーグ上位)</option>
+              <!-- 使用率ランキングを使わず、手で足したジェムだけ監視する (2026-09-19 オーナー指示) -->
+              <option :value="MANUAL_ONLY">カスタム監視スキル (手動で入れた分だけ)</option>
               <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
           </label>
@@ -509,13 +514,13 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           >
             {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "ランキング取得中…") : "ランキングを取得" }}
           </button>
-          <label class="inline-flex flex-col gap-1">
+          <label v-if="!manualOnly" class="inline-flex flex-col gap-1">
             上位の基準
             <select class="num w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
               <option v-for="(label, key) in WATCH_METRIC_LABEL" :key="key" :value="key">{{ label }}</option>
             </select>
           </label>
-          <label class="inline-flex flex-col gap-1">
+          <label v-if="!manualOnly" class="inline-flex flex-col gap-1">
             人数の下限
             <input type="number" min="1" max="100" class="num w-20" :value="s.minUsers" @change="apply({ minUsers: Number(($event.target as HTMLInputElement).value) })" />
           </label>
@@ -535,7 +540,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
               <option :value="0">自動取得しない (手動の一括だけ)</option>
             </select>
           </label>
-          <label class="inline-flex items-center gap-2 pb-1">
+          <label v-if="!manualOnly" class="inline-flex items-center gap-2 pb-1">
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
             上位を自動で入れる
           </label>
@@ -693,10 +698,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
                     v-if="gem.manual"
                     type="button"
                     class="ml-3 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-rose-300"
-                    title="監視から外す (記録は残るので、7 日以内に戻せば続きから追える)"
+                    title="このジェムを監視リストから削除します (記録は残るので、7 日以内に戻せば続きから追えます)"
                     @click="remove(gem.name)"
                   >
-                    外す
+                    🗑 リストから削除
                   </button>
                 </td>
               </tr>

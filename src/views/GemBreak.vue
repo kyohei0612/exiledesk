@@ -16,7 +16,7 @@ import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
-import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../state/watch-settings";
+import { addManualGem, isManualGem, MANUAL_ONLY, removeManualGem, watchSettings } from "../state/watch-settings";
 import { rankingClass, rebuildWatches } from "../state/gem-watch-auto";
 import { loadAscendancies } from "../state/ascendancy-list";
 import gemsRaw from "../i18n/gems-client.json";
@@ -64,7 +64,11 @@ const result = ref<Result | null>(null);
  * 2026-09-19 オーナー指示:「監視で個別アセを選んでも画面が変わらない。選んだら、取得済みなら
  * 変えてくれ。そしたら使用率ランキングのプルダウンは要らないでしょ」。ここは表示専用にした。
  */
-const selectedClass = computed(() => watchSettings.value.klass ?? "");
+// カスタム監視スキル (手動の分だけ監視) の時は、ランキング自体は全アセンダンシーを見せる
+const selectedClass = computed(() => {
+  const k = watchSettings.value.klass ?? "";
+  return k === MANUAL_ONLY ? "" : k;
+});
 /** 今出している結果が 1 アセンダンシーの物ならその名前 (散らした結果や未取得は null) */
 const resultClass = computed(() => {
   const cs = result.value?.classes;

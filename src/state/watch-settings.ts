@@ -19,6 +19,13 @@ export const WATCH_METRIC_LABEL: Record<WatchMetric, string> = {
   users: "そのジェムの使用者数",
 };
 
+/**
+ * 取得先の特別な値: 使用率ランキングを使わず、**手で足したジェムだけ**を監視する。
+ * オーナー指示 2026-09-19:「取得先にカスタム監視スキルって名前の奴を追加して、
+ * そこには手動で入れた監視ジェムだけ表示されるように」。
+ */
+export const MANUAL_ONLY = "__manual__";
+
 export interface WatchSettings {
   /** 設定の版。既定値を変えた時に上げて、古い既定のまま使っている人に反映する */
   v: number;
@@ -172,6 +179,8 @@ export function watchGems(rows: GemUsageRow[], s: WatchSettings = state.value): 
     const r = byName.get(name);
     out.push({ name, manual: true, note: r ? noteOf(r, s.metric) : "手動で追加" });
   }
+  // カスタム監視スキル: 手で足した分だけ。上位は入れない
+  if (s.klass === MANUAL_ONLY) return out;
   if (s.autoTop) {
     const top = rows
       .filter((r) => metricCount(r, s.metric) >= s.minUsers)
