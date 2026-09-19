@@ -334,7 +334,7 @@ const baseBuyTitle = computed(() => {
   const i = g.baseBuyInfo.value;
   if (!i) return "";
   const n = i.total != null ? ` ${i.total} 件` : "";
-  return `トレードの現物 (コラプト無し・二重コラプト無し、オンラインの出品${n}) の最安 ${money(i.exalted)}。${fmtStamp(i.at)} 取得。「再取得」で取り直します`;
+  return `トレードの現物 (コラプト無し・二重コラプト無し、即時購入の出品${n}) の最安 ${money(i.exalted)}。${fmtStamp(i.at)} 取得。「再取得」で取り直します`;
 });
 const fmtStamp = (ms: number): string => {
   const d = new Date(ms);

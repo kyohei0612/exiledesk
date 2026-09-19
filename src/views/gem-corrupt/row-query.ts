@@ -5,7 +5,6 @@
  * オーナー指示: 「追跡するのは品質 23% もレベル +1 もだからね、完成版だけじゃない」。
  */
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
-import { SecurityStatus } from "../../constants/trade2";
 
 export type SaleKey = "level21" | "quality23" | "finished";
 
@@ -62,16 +61,14 @@ export function rowQuery(gemEn: string, key: SaleKey, meta = false): unknown {
  * ソケット数は問わない (5 ソケ無しの方が安い出品がある。オーナー 2026-09-19)。
  *
  * 原石から作れないジェムはこの最安がそのまま「低レベルのジェム本体」の値段になる。
- * こちらが**買う側**なので、売値の検索と違って即時購入 (securable) には絞らず、
- * オンラインの出品全部から最安を取る (2026-09-19 オーナー「原石素材 1 個しかないのおかしい」:
- * 即時購入だけだとドロップ限定のジェムは出品がほとんど無い)。
+ * status は他の検索と同じ**即時購入 (securable) だけ** (オーナー 2026-09-19:「基本、指定なしは使わないよ」。
+ * v0.1.208 で一度 online に広げたが取り消した)。出品が 1 件しか無ければ、それがその時の値段。
  */
 export function originalGemQuery(gemEn: string, meta = false): unknown {
   return buildGemQuery(gemEn, {
     category: meta ? "gem.metagem" : "gem.activegem",
     corrupted: false,
     twiceCorrupted: false,
-    status: SecurityStatus.Online,
   });
 }
 
