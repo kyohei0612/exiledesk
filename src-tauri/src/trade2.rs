@@ -194,7 +194,15 @@ fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
 ///     窓口ごとの上限にはどちらも遠いが、合計で見ると 30 前後にきれいに揃う
 /// ので「合計で 5 分 30 回」を隠れた上限とみなして手前で止める。別々に数えていた頃は
 /// 合計 5 分 57 回投げていて (10.5 秒ごとに search と fetch を 1 組)、2 分ごとに 429 を踏んでいた。
-/// この 30 という数字は観測から置いた推定値で、公表値ではない。
+/// この数字は観測から置いた推定値で、公表値ではない。
+///
+/// 2026-09-19 に引き下げ (オーナー了承)。それまで search の公表値 30 をそのまま合計に当てていたが、
+/// 429 を食らった時の合計 (直近 5 分) の観測が 24 / 25 / 30 / 32 / **21** 回で、
+/// 通ったのは最大 29 回。**21 回で断られた記録が出た**ので 30 では高すぎる。
+/// 22 に下げる (門番は上限から 2 残すので、実際には 5 分 20 回 = 15 秒に 1 回まで)。
+/// 代償: 42 銘柄 (84 リクエスト) の 1 巡が 20 分 → 約 27 分。止まるよりは待つ方を採る。
+const COMBINED_MAX_300: u32 = 22;
+
 fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
     let mut by_period: std::collections::BTreeMap<i64, u32> = std::collections::BTreeMap::new();
     for g in map.values() {
@@ -203,6 +211,11 @@ fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
             by_period.entry(period).and_modify(|m| *m = (*m).min(max)).or_insert(max);
         }
     }
+    // 5 分窓だけは公表値より低い実測に合わせる
+    by_period
+        .entry(300)
+        .and_modify(|m| *m = (*m).min(COMBINED_MAX_300))
+        .or_insert(COMBINED_MAX_300);
     by_period.into_iter().map(|(period, max)| (max, period)).collect()
 }
 
@@ -849,8 +862,8 @@ mod rate_tests {
         for (kind, g) in map.iter() {
             assert_eq!(window_wait(&g.sends, &g.rules, now, false), 0, "{kind} 単体では空いている");
         }
-        assert_eq!(combined_rules(&map), vec![(30, 300)], "きつい方の上限を合計に当てる");
-        assert!(combined_wait(&map, now) > 0, "合計 28 回は 30 回の枠に届いているので待つ");
+        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "5 分窓は実測に合わせた上限を使う");
+        assert!(combined_wait(&map, now) > 0, "合計 28 回は 5 分の枠を超えているので待つ");
     }
 
     /// 罰則中はその解除まで待つ

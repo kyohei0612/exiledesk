@@ -15,7 +15,7 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { fmtClock } from "../utils/format-time";
 import { searchGems } from "./gem-corrupt/search";
 import { averageExalted, displayCurrency } from "../state/display-currency";
@@ -90,14 +90,17 @@ async function sweep(reason?: string): Promise<void> {
     await reload();
     const st = status.value;
     const left = st?.retry_keys ?? 0;
+    const failed = st?.last_failed ?? 0;
     const got = st?.sampled_watches ?? 0;
     const all = st?.auto_watches ?? 0;
     message.value = r.ok
       ? left > 0
         ? { ok: false, text: `一括取得は一周しましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(st?.retry_at ?? 0)} 頃に取り直します` }
-        : all > 0 && got < all
-          ? { ok: false, text: `一括取得は一周しましたが、記録があるのは ${got}/${all} 銘柄です` }
-          : { ok: true, text: "一括取得が終わりました" }
+        : failed > 0
+          ? { ok: false, text: `一括取得は一周しましたが ${failed} 銘柄が取れませんでした (レート制限か通信)。取り直しの上限に達したので、次の巡回か手動でもう一度取ってください` }
+          : all > 0 && got < all
+            ? { ok: false, text: `一括取得は一周しましたが、記録があるのは ${got}/${all} 銘柄です` }
+            : { ok: true, text: "一括取得が終わりました" }
       : { ok: false, text: r.message ?? "一括取得に失敗しました (レート制限か通信)" };
   } finally {
     clearInterval(poll);
@@ -135,8 +138,19 @@ const sweepClock = computed(() => {
  * 前回の一括取得 (手動でも自動でも) からこの時間ぶん経ったら、全銘柄をまとめて 1 巡する。
  */
 const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
-const cycleHours = computed(() => Math.round(((status.value?.cycle_secs ?? DEFAULT_CYCLE_SECS) / 3600) * 10) / 10);
+/** 選択中の値。0 = 自動取得しない (オーナー指示 2026-09-19) */
+const cycleHours = computed(() => {
+  const st = status.value;
+  if (st?.auto_off) return 0;
+  return Math.round(((st?.cycle_secs ?? DEFAULT_CYCLE_SECS) / 3600) * 10) / 10;
+});
 async function applyCycle(hours: number): Promise<void> {
+  if (hours <= 0) {
+    await setFlowCycle(CYCLE_OFF);
+    status.value = await loadFlowStatus();
+    message.value = { ok: true, text: "自動取得をしない設定にしました (一括取得は今まで通り押せます)" };
+    return;
+  }
   const applied = await setFlowCycle(Math.round(hours * 3600));
   status.value = await loadFlowStatus();
   if (applied == null) {
@@ -448,7 +462,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-1">自動ジェム監視</h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] mb-3">
-          ここで選んだジェムを {{ cycleHours }} 時間ごとに 1 巡して、売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件。手動の一括取得もこの時計を進めます)。
+          ここで選んだジェムを {{ status?.auto_off ? "手動の一括取得だけで" : `${cycleHours} 時間ごとに 1 巡して` }} 売れるまでの時間を測ります (1 ジェムにつきレベル 21 / 品質 23% / 完成品 の 3 条件。手動の一括取得もこの時計を進めます)。
           上位は下の「使用率ランキング」で取得した結果から決まります。
         </p>
 
@@ -491,6 +505,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
               @change="applyCycle(Number(($event.target as HTMLSelectElement).value))"
             >
               <option v-for="h in CYCLE_OPTIONS" :key="h" :value="h">{{ h }} 時間ごとに 1 巡</option>
+              <option :value="0">自動取得しない (手動の一括だけ)</option>
             </select>
           </label>
           <label class="inline-flex items-center gap-2 pb-1">

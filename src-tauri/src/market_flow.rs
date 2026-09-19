@@ -270,6 +270,11 @@ pub struct FlowStore {
     /// 薄く流す自動巡回は 1 巡に何時間もかかるので、途中でアプリを閉じても続きから再開する
     #[serde(default)]
     pub sweep_done: Vec<String>,
+    /// 直前の 1 巡で取れなかった銘柄。取り直しを諦めた後も残す
+    /// (2026-09-19 オーナー「制限中で止まったら完了出んの？」: 取り直しの上限に達すると
+    ///  retry_keys が空になり、画面が「一括取得が終わりました」と言ってしまっていた)
+    #[serde(default)]
+    pub last_failed: Vec<String>,
     /// 取り直しを何回続けたか (MAX_RETRY_ROUNDS で諦めて次の周期へ)
     #[serde(default)]
     pub retry_count: u32,
@@ -278,7 +283,9 @@ pub struct FlowStore {
     /// 「前回一括取得してから手動も含めて ● 時間周期で取得する」)
     #[serde(default)]
     pub swept_at: i64,
-    /// 1 巡にかける時間 (秒)。0 なら既定 (CYCLE_DEFAULT_SECS)。
+    /// 1 巡にかける時間 (秒)。0 なら既定 (CYCLE_DEFAULT_SECS)、
+    /// **負なら自動取得しない** (オーナー指示 2026-09-19:「自動取得の間隔だけど無効も追加しといて」
+    /// =「自動取得させないって奴」)。手動の一括取得はいつでも押せる。
     /// オーナー指示 2026-09-17:「自動取得の時間数を UI で変更できるようにしたい」
     #[serde(default)]
     pub cycle_secs: i64,
@@ -332,7 +339,15 @@ pub const CYCLE_MIN_SECS: i64 = 3600;
 pub const CYCLE_MAX_SECS: i64 = 24 * 3600;
 
 
-/// 1 巡の周期 (保存値、未設定や範囲外なら既定)
+/// 自動取得をしない設定の印 (画面から -1 が来る)
+pub const CYCLE_OFF: i64 = -1;
+
+/// 自動取得をしない設定か
+fn auto_off(store: &FlowStore) -> bool {
+    store.cycle_secs < 0
+}
+
+/// 1 巡の周期 (保存値、未設定や範囲外なら既定)。無効の時も「間隔を配る」計算には既定を使う
 fn cycle_secs(store: &FlowStore) -> i64 {
     if store.cycle_secs <= 0 {
         CYCLE_DEFAULT_SECS
@@ -368,11 +383,12 @@ const MAX_RETRY_ROUNDS: u32 = 3;
 /// 別々に数えていたせいで合計 5 分 57 回投げ、2 分ごとに 429 (罰則 10 分) を踏んでいた
 /// (trade2.rs の combined_rules に根拠)。
 ///
-/// 54 銘柄 = 108 リクエスト。門番が合計を 5 分 28 回 (上限 30 から 2 残す) に抑えるので
-/// 10.7 秒に 1 回 = 1 巡 19 分。ここを 15 分のままにしても門番が伸ばすだけで、
+/// 54 銘柄 = 108 リクエスト。門番が合計を 5 分 20 回 (実測に合わせた上限 22 から 2 残す) に
+/// 抑えるので 15 秒に 1 回 = 1 巡 27 分。ここを短くしても門番が伸ばすだけで、
 /// 画面に出る見込み時間が嘘になる。
+/// 2026-09-19: 5 分 21 回で 429 を踏んだ記録が出たので上限を 30 → 22 に下げ、目安も 20 → 30 分に。
 /// 周期がこれより短い時は周期に合わせる (1 巡が次の巡に食い込まないように)。
-const SWEEP_TARGET_SECS: i64 = 20 * 60;
+const SWEEP_TARGET_SECS: i64 = 30 * 60;
 
 /// 自動 (薄く流す巡回 / 取りこぼしの取り直し) が走っているか
 static RUNNING_AUTO: AtomicBool = AtomicBool::new(false);
@@ -1224,6 +1240,9 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, pac
             store_end.sweep_done.clear();
         }
     }
+    if only.is_none() {
+        store_end.last_failed = failed.clone();
+    }
     if failed.is_empty() || store_end.retry_count >= MAX_RETRY_ROUNDS {
         if !failed.is_empty() {
             eprintln!("[market_flow] {} 銘柄が {} 回取れなかったので次の周期まで諦める", failed.len(), MAX_RETRY_ROUNDS);
@@ -1290,6 +1309,10 @@ pub struct FlowStatus {
     pub cycle_secs: i64,
     /// 最後に全銘柄を 1 巡した時刻 (手動の一括取得を含む)
     pub swept_at: i64,
+    /// 自動取得しない設定か (画面の「自動取得しない」)
+    pub auto_off: bool,
+    /// 直前の 1 巡で取れなかった銘柄数 (取り直しを諦めた後も残る。画面が「完了」と言わないため)
+    pub last_failed: usize,
 }
 
 /// 自動追跡が今どうなっているか (ジェムコラプトの画面に出す)
@@ -1312,7 +1335,13 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         total,
         rounds: store.rounds,
         last_at: store.sampled_at,
-        next_at: if store.retry_at > 0 { store.retry_at } else { next_sweep_at(&store) },
+        next_at: if auto_off(&store) {
+            0
+        } else if store.retry_at > 0 {
+            store.retry_at
+        } else {
+            next_sweep_at(&store)
+        },
         swept_at: store.swept_at,
         sampled_watches: store
             .watches
@@ -1335,7 +1364,9 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         retry_keys: store.retry_keys.len(),
         sweep_done: store.sweep_done.len(),
         pace_secs: spread_pace_secs(store.watches.iter().filter(|w| w.auto).count() as i64, cycle_secs(&store)),
-        cycle_secs: cycle_secs(&store),
+        cycle_secs: if auto_off(&store) { CYCLE_OFF } else { cycle_secs(&store) },
+        auto_off: auto_off(&store),
+        last_failed: store.last_failed.len(),
     })
 }
 
@@ -1343,8 +1374,9 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
 #[tauri::command]
 pub fn market_flow_set_cycle(app: tauri::AppHandle, secs: i64) -> Result<i64, String> {
     let mut store = load_store(&app);
-    store.cycle_secs = secs.clamp(CYCLE_MIN_SECS, CYCLE_MAX_SECS);
-    let applied = cycle_secs(&store);
+    // 負は「自動取得しない」。それ以外は 1〜24 時間に収める
+    store.cycle_secs = if secs < 0 { CYCLE_OFF } else { secs.clamp(CYCLE_MIN_SECS, CYCLE_MAX_SECS) };
+    let applied = if auto_off(&store) { CYCLE_OFF } else { cycle_secs(&store) };
     save_store(&app, &store)?;
     Ok(applied)
 }
@@ -1361,6 +1393,11 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
             let store = load_store(&app);
             let now = now_secs();
             if store.watches.is_empty() || store.league.is_empty() {
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            }
+            if auto_off(&store) {
+                // 自動取得しない設定。手動の一括取得だけで動かす
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }
@@ -1396,13 +1433,13 @@ mod tests {
         ListingRef { id: id.to_string(), amount: Some(amount), currency: Some("exalted".into()), listed_at: Some(listed_at) , account: None }
     }
 
-    /// 自動巡回の間隔: 54 銘柄 (108 リクエスト) を 20 分で回る速さになる
+    /// 自動巡回の間隔: 54 銘柄 (108 リクエスト) を 30 分で回る速さになる
     #[test]
     fn spread_pace_finishes_a_sweep_in_the_target_window() {
         let pace = spread_pace_secs(54, 2 * 3600);
-        assert_eq!(pace, 11, "108 リクエスト × 11 秒 = 約 20 分");
-        // 上限は IP 単位 (search と fetch の合計) で 5 分 30 回。この間隔なら 5 分 27 回で収まる
-        assert!(300 / pace <= 30);
+        assert_eq!(pace, 16, "108 リクエスト × 16 秒 = 約 29 分");
+        // 上限は IP 単位 (search と fetch の合計) で 5 分 20 回。この間隔なら 5 分 18 回で収まる
+        assert!(300 / pace <= 20);
         // 周期が短い時はそちらに合わせる (1 巡が次の巡に食い込まない)
         assert_eq!(spread_pace_secs(54, 600), 5);
         // 銘柄が 1 つなら 2 リクエストしかないので間隔は長くなる

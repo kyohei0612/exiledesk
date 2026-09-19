@@ -134,8 +134,12 @@ export interface FlowStatus {
   pace_secs: number;
   /** 1 度でも取れた自動銘柄の数 (1 周目の進捗) */
   sampled_watches: number;
-  /** 今の 1 巡の周期 (秒)。画面の設定で変えられる */
+  /** 今の 1 巡の周期 (秒)。画面の設定で変えられる。無効なら -1 */
   cycle_secs: number;
+  /** 自動取得しない設定か */
+  auto_off: boolean;
+  /** 直前の 1 巡で取れなかった銘柄数 (取り直しを諦めた後も残る) */
+  last_failed: number;
   /** 最後に全銘柄を 1 巡した時刻 (手動の一括取得を含む)。次の自動取得はここから周期ぶん後 */
   swept_at: number;
   /** レート制限の規則 (x-rate-limit-ip) */
@@ -152,6 +156,9 @@ export interface FlowStatus {
 }
 
 /** 1 巡の周期の既定 (秒)。Rust 側 CYCLE_DEFAULT_SECS と同じ */
+/** 自動取得をしない設定の印 (Rust 側と合わせる) */
+export const CYCLE_OFF = -1;
+
 export const DEFAULT_CYCLE_SECS = 8 * 3600;
 
 /** 1 巡の周期を変える (1〜24 時間)。戻り値は実際に入った秒数 */
