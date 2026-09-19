@@ -18,6 +18,7 @@ import { openGemCorrupt } from "../state/app-nav";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { addManualGem, isManualGem, MANUAL_ONLY, removeManualGem, watchSettings } from "../state/watch-settings";
 import { rankingClass, rebuildWatches } from "../state/gem-watch-auto";
+import { sampleGemNow } from "./gem-corrupt/sample-now";
 import { loadAscendancies } from "../state/ascendancy-list";
 import gemsRaw from "../i18n/gems-client.json";
 
@@ -216,9 +217,14 @@ type Key = (typeof SECTIONS)[number]["key"];
 /** 売れ行きを追う下限 (完成品を使っている人数) */
 /** 一覧から自動ジェム監視に入れる / 外す (すぐ追跡に反映する) */
 function toggleWatchGem(name: string): void {
-  if (isManualGem(name)) removeManualGem(name);
-  else if (!addManualGem(name)) return;
-  void rebuildWatches();
+  if (isManualGem(name)) {
+    removeManualGem(name);
+    void rebuildWatches();
+    return;
+  }
+  if (!addManualGem(name)) return;
+  // 足したその場で 3 条件の最安を 1 回ずつ取る (6 リクエスト)。監視の一覧に値段がすぐ出る (2026-09-19)
+  void rebuildWatches().then(() => sampleGemNow(name));
 }
 
 const PAGE = 25;

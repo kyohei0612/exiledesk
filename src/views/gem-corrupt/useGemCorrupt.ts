@@ -15,9 +15,10 @@ import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { isSpiritGem, noteSpiritGem, spiritGemMeasured } from "../../state/gem-spirit";
 import { baseBuyTotal, baseSourceOf, cachedBaseBuy, noteBaseBuy, setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
-import { loadFlow, recordFlow, type FlowStore } from "../../services/market-flow";
+import { loadFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
-import { originalGemQuery, rowQueryOptions, SALE_KEY_LABEL, watchKey } from "./row-query";
+import { originalGemQuery, rowQueryOptions, watchKey } from "./row-query";
+import { recordGemSample } from "./sample-now";
 import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 import { baseGemSourceFor, finisherIsFlux, FINISHER_JA, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
@@ -307,24 +308,9 @@ export function useGemCorrupt() {
    * (消えた判定まで含む。オーナー指示「同じルールで手動でもやればいい」)。
    */
   async function recordRowSample(gemEn: string, key: SaleKey, r: PriceResult): Promise<void> {
-    const gem = GEMS.find((g) => g.en === gemEn);
-    // 出品に「リザーブ … Spirit」が出ていれば、そのジェムはスピリットジェムの原石で作る。
-    // 取った応答から読むだけなので、これ用のリクエストは増えない (2026-09-19)
-    noteSpiritGem(gemEn, r.reservesSpirit ?? null);
+    // 記録の中身は「監視に足した時の 1 回取り」と共通 (sample-now.ts)。スピリット判定もそこで覚える
+    await recordGemSample(gemEn, key, r);
     spiritBump.value++;
-    await recordFlow({
-      key: watchKey(gemEn, key),
-      label: `${gem?.ja ?? gemEn} (${SALE_KEY_LABEL[key]})`,
-      total: r.total,
-      ids: r.allIds ?? r.listingIds ?? [],
-      entries: r.listings.map((l) => ({
-        id: l.id,
-        amount: l.amount,
-        currency: l.currency,
-        account: l.account || null,
-        listed_at: l.indexed ? Math.floor(Date.parse(l.indexed) / 1000) || null : null,
-      })),
-    });
   }
 
   /**

@@ -13,6 +13,7 @@ import BaseCard from "../components/decor/BaseCard.vue";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { GEMS } from "./gem-corrupt/useGemCorrupt";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
+import { sampleGemNow } from "./gem-corrupt/sample-now";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
 import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeBudgetSecs, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
@@ -295,6 +296,20 @@ async function add(en: string): Promise<void> {
   }
   query.value = "";
   await sync();
+  // 足したその場で 3 条件の最安を 1 回ずつ取る (6 リクエスト)。オーナー 2026-09-19
+  // 「監視ボタン押したら各項目の最安値だけ 1 件取れるみたいなのでいい、それでクラフトするか決める」
+  busy.value = true;
+  message.value = { ok: true, text: `監視に入れました。${jaGemName(en)} の 3 条件の最安を取っています… (6 リクエスト、約 40 秒)` };
+  try {
+    const r = await sampleGemNow(en);
+    flowStore.value = await loadFlow();
+    message.value =
+      r.skipped === 0
+        ? { ok: true, text: `${jaGemName(en)} の 3 条件の最安を取りました` }
+        : { ok: false, text: `${jaGemName(en)}: ${r.done} / 3 条件を取りました。残りはトレードの枠待ちで飛ばしたので、次の巡回か「一括」で入ります` };
+  } finally {
+    busy.value = false;
+  }
 }
 async function remove(en: string): Promise<void> {
   removeManualGem(en);
@@ -327,6 +342,8 @@ const EV_ATTEMPTS = 30;
 
 /** スピリットジェムかどうか (期待値の素材が別物なので要る) */
 const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
+/** 画面に出す日本語名 (無ければ英語名のまま) */
+const jaGemName = (en: string): string => GEMS.find((g) => g.en === en)?.ja ?? en;
 
 /**
  * 1 行分の計算。期待値は実売の平均をジェムコラプトの賭けの式に入れて出し、画面には今の最安値を出す。
