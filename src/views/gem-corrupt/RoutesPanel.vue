@@ -10,9 +10,14 @@ import { budgetRisk, roi, type RouteResult } from "./model";
 import { ATTEMPT_OPTIONS, evClass, money, pct, unit } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
-const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; attempts: number }>();
+const props = defineProps<{ g: ReturnType<typeof useGemCorrupt> }>();
 const g = props.g;
-const attempts = computed(() => props.attempts);
+/**
+ * 「N 回やった場合」の N。素材の札と同じ値を見る (親が持っていて、どちらから変えても揃う)。
+ * 2026-09-20 オーナー「収支計算・素材計算周りの同期がエラーかも」: ここが props から作った
+ * **読み取り専用の computed** だったので、この札のプルダウンを 50 にしても表は 10 回のままだった。
+ */
+const attempts = defineModel<number>("attempts", { required: true });
 
 const expanded = ref<Record<string, boolean>>({});
 function isBest(r: RouteResult): boolean {

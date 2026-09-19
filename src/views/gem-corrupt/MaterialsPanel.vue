@@ -7,14 +7,14 @@ import { computed } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { currencyJa } from "../../state/display-currency";
 import { openExternal } from "../../services/trade2/open-external";
-import { ATTEMPT_OPTIONS, MATERIAL_DESC, fmtBuy, fmtStamp, money, unit } from "./ui";
+import { ATTEMPT_OPTIONS, MATERIAL_DESC, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
 import { fmtQty } from "./ledger";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
-const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; attempts: number; refetchExchange: () => void }>();
-const emit = defineEmits<{ "update:attempts": [n: number] }>();
+const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; refetchExchange: () => void }>();
 const g = props.g;
-const attempts = computed(() => props.attempts);
+/** 「N 回やった場合」の N。経路の札と同じ値を見る (親が持っていて、どちらから変えても揃う) */
+const attempts = defineModel<number>("attempts", { required: true });
 const fetchExchangeAndRepin = props.refetchExchange;
 async function open(url: string | null): Promise<void> {
   await openExternal(url);
@@ -96,7 +96,7 @@ const baseBuyTitle = computed(() => {
             </button>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
-              <select :value="attempts" class="num w-20" @change="emit('update:attempts', Number(($event.target as HTMLSelectElement).value))">
+              <select v-model.number="attempts" class="num w-20">
                 <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
               </select>
             </label>
@@ -180,9 +180,9 @@ const baseBuyTitle = computed(() => {
                 <td class="py-1.5 pr-2">合計 (期待)</td>
                 <td></td>
                 <td></td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(craft.expectedCost) : "—" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(craft.expectedCost) : "—" }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]">{{ craft?.ok ? `完成 ${(attempts * craft.pFinished).toFixed(2)} 個` : "" }}</td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? money(attempts * craft.expectedCost) : "—" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(attempts * craft.expectedCost) : "—" }}</td>
               </tr>
             </tbody>
           </table>

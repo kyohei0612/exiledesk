@@ -156,15 +156,10 @@ const { fetchExchangeAndRepin } = ledgerApi;
     <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <SalePanel :g="g" />
 
-      <MaterialsPanel
-        :g="g"
-        :attempts="attempts"
-        :refetch-exchange="fetchExchangeAndRepin"
-        @update:attempts="attempts = $event"
-      />
+      <MaterialsPanel v-model:attempts="attempts" :g="g" :refetch-exchange="fetchExchangeAndRepin" />
     </div>
 
-    <RoutesPanel :g="g" :attempts="attempts" />
+    <RoutesPanel v-model:attempts="attempts" :g="g" />
 
     <LedgerPanel :g="g" :api="ledgerApi" />
 

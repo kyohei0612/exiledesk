@@ -10,6 +10,12 @@ export const money = (n: number | null | undefined, signed = false): string => d
 /** 今の表示通貨の名前 (神 / カオス / 高貴) */
 export const unit = displayCurrency.label;
 
+/**
+ * 合計用の書式。**選んだ表示通貨で固定**して出す (1 未満でも 1 つ下の通貨に落とさない)。
+ * オーナー指示 2026-09-20:「素材の行は取引所の 神 / カオス で見るけど、最終の合計だけは指定カレンシーで」。
+ */
+export const moneyFixed = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed, fixed: true });
+
 /** 確率を % で (10% 未満は小数 1 桁) */
 export function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;

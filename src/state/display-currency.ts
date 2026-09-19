@@ -98,8 +98,15 @@ export const displayCurrency = {
    * 単位を出さない (unit: false) 時は、桁だけ見せる場所なので選んでいる通貨のまま
    * (単位なしで通貨が変わると何の数字か分からなくなるため)。
    */
-  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean }): string {
+  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean; fixed?: boolean }): string {
     if (exalted == null || !Number.isFinite(exalted)) return "—";
+    // 選んだ通貨で固定して出す (段を下げない)。オーナー指示 2026-09-20:
+    // 「素材の行は取引所の 神 / カオス で見るけど、最終の合計だけは指定カレンシーで」
+    if (opts?.fixed) {
+      const d = displayCurrency.toDisplay(exalted);
+      if (d == null) return "—";
+      return `${opts?.signed && d > 0 ? "+" : ""}${fmtNum(d)} ${LABEL[cur.value]}`;
+    }
     if (opts?.unit === false) {
       const d = displayCurrency.toDisplay(exalted);
       if (d == null) return "—";
