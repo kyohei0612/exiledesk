@@ -276,13 +276,13 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
         <CurrencyPicker />
         <label class="inline-flex items-center gap-2">
           レシピ
-          <select v-model="c.recipeId.value" class="num text-left w-40">
+          <select v-model="c.recipeId.value" class="num w-40">
             <option v-for="r in c.RECIPES" :key="r.id" :value="r.id">{{ r.label }}</option>
           </select>
         </label>
         <label v-if="c.recipe.value.pages.length > 1" class="inline-flex items-center gap-2">
           防御タイプ
-          <select v-model="c.pageId.value" class="num text-left w-64 max-w-full">
+          <select v-model="c.pageId.value" class="num w-64 max-w-full">
             <option v-for="p in c.recipe.value.pages" :key="p.id" :value="p.id">{{ p.label }}</option>
           </select>
         </label>
@@ -335,7 +335,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 ({{ unit }})</h2>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
-              <select v-model.number="attempts" class="num text-left w-20">
+              <select v-model.number="attempts" class="num w-20">
                 <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
               </select>
             </label>
@@ -350,27 +350,27 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
           </div>
           <div class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 items-center text-[11px] text-[var(--exile-color-text-secondary)] mb-3">
             <label>ベースの MOD</label>
-            <select v-model.number="c.baseTier.value" class="num text-left w-full min-w-0">
+            <select v-model.number="c.baseTier.value" class="num w-full min-w-0">
               <option v-for="t in c.tiers.value" :key="t.tier" :value="t.tier">{{ c.recipe.value.baseMod.label }} {{ t.min }}〜{{ t.max }} (T{{ t.tier }} · MOD レベル {{ t.level }})</option>
             </select>
             <label>エッセンス</label>
-            <select v-model="c.essenceId.value" class="num text-left w-full min-w-0">
+            <select v-model="c.essenceId.value" class="num w-full min-w-0">
               <option v-for="e in c.essences.value" :key="e.id" :value="e.id" :disabled="!e.ok">{{ e.label }}{{ e.range ? ` ${e.range.min}〜${e.range.max}` : "" }}{{ e.ok ? "" : ` (${e.reason})` }}</option>
             </select>
             <label>肋骨</label>
-            <select v-model="c.rib.value" class="num text-left w-full min-w-0">
+            <select v-model="c.rib.value" class="num w-full min-w-0">
               <option v-for="o in c.RIBS" :key="o.id" :value="o.id">{{ o.label }}{{ o.minLevel ? ` (候補を MOD レベル ${o.minLevel} 以上に絞る)` : "" }}</option>
             </select>
             <label>反響</label>
-            <select v-model="c.echo.value" class="num text-left w-full min-w-0">
+            <select v-model="c.echo.value" class="num w-full min-w-0">
               <option v-for="o in c.ECHOES" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
             <label>高貴なオーブ</label>
-            <select v-model="c.exalt.value" class="num text-left w-full min-w-0">
+            <select v-model="c.exalt.value" class="num w-full min-w-0">
               <option v-for="o in c.EXALTS" :key="o.id" :value="o.id">{{ o.label }} + 偉大なる高貴なお告げ ({{ o.note }})</option>
             </select>
             <label>お告げ</label>
-            <select v-model="c.side.value" class="num text-left w-full min-w-0">
+            <select v-model="c.side.value" class="num w-full min-w-0">
               <option v-for="o in c.SIDES" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
             <template v-if="c.effectiveCount.value < c.EXALT_ADDS">
@@ -378,7 +378,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
               <span class="text-amber-300">空きが {{ c.effectiveCount.value }} つしか無いので {{ c.effectiveCount.value }} つだけ足します</span>
             </template>
             <label>ルーン</label>
-            <select v-model="c.runeId.value" class="num text-left w-full min-w-0">
+            <select v-model="c.runeId.value" class="num w-full min-w-0">
               <option v-for="o in c.recipe.value.runes" :key="o.id" :value="o.id">{{ o.label }}</option>
             </select>
           </div>
@@ -498,7 +498,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
               <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
               <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
                 回数
-                <select v-model.number="attempts" class="num text-left w-20">
+                <select v-model.number="attempts" class="num w-20">
                   <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
                 </select>
               </label>
@@ -728,13 +728,19 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
 
 <style scoped>
 .num {
-  text-align: right;
+  /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」)。
+     以前は右詰めが既定で、テキスト欄やプルダウンに毎回 text-left を足して打ち消していた */
+  text-align: left;
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--exile-color-bg-surface);
   border: 1px solid var(--exile-color-border-subtle);
   font-variant-numeric: tabular-nums;
+}
+/* 数値の欄だけ右詰め (桁を揃えて読むため) */
+.num[type="number"] {
+  text-align: right;
 }
 .num:focus {
   outline: none;

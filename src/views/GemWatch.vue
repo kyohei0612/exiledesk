@@ -489,7 +489,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         <div class="flex items-end gap-x-4 gap-y-2 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
           <label class="inline-flex flex-col gap-1">
             取得先
-            <select class="num text-left w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
+            <select class="num w-56" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">
               <option value="">全アセンダンシー (リーグ上位)</option>
               <option v-for="a in ascendancies" :key="a.class" :value="a.class">{{ jaAscendancy(a.class) }} ({{ a.percentage.toFixed(1) }}%)</option>
             </select>
@@ -507,7 +507,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           </button>
           <label class="inline-flex flex-col gap-1">
             上位の基準
-            <select class="num text-left w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
+            <select class="num w-56" :value="s.metric" @change="apply({ metric: ($event.target as HTMLSelectElement).value as WatchMetric })">
               <option v-for="(label, key) in WATCH_METRIC_LABEL" :key="key" :value="key">{{ label }}</option>
             </select>
           </label>
@@ -522,7 +522,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <label class="inline-flex flex-col gap-1">
             自動取得の間隔
             <select
-              class="num text-left w-36"
+              class="num w-36"
               :value="cycleHours"
               title="前回の一括取得 (手動でも自動でも) から何時間後に、自動でもう 1 巡するか。短いほど売れた時刻が細かく分かりますが、リクエストは増えます (trade2 の上限は毎時 100 回)"
               @change="applyCycle(Number(($event.target as HTMLSelectElement).value))"
@@ -597,7 +597,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-2">ジェムを足す</h3>
         <label class="block text-[11px] text-[var(--exile-color-text-secondary)] mb-1">ジェム (日本語 / 英語 / 正規表現)</label>
-        <input v-model="query" type="text" placeholder="例: アーク / Cast on / ^ヘラルド" class="num text-left w-96 max-w-full" />
+        <input v-model="query" type="text" placeholder="例: アーク / Cast on / ^ヘラルド" class="num w-96 max-w-full" />
         <p v-if="regexError" class="text-[10px] text-amber-300 mt-1">正規表現として読めないので、普通の文字で探しています ({{ regexError }})</p>
         <ul v-if="matches.length" class="mt-2 border border-[var(--exile-color-border-subtle)] rounded divide-y divide-[var(--exile-color-border-subtle)] max-w-xl">
           <li v-for="g in matches" :key="g.en" class="flex items-center justify-between gap-3 px-3 py-1.5 text-[12px]">
@@ -737,6 +737,12 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
   border-radius: 4px;
   background: var(--exile-color-bg-surface);
   border: 1px solid var(--exile-color-border-subtle);
+  /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」)。
+     以前は右詰めが既定で、テキスト欄やプルダウンに毎回 text-left を足して打ち消していた */
+  text-align: left;
+}
+/* 数値の欄だけ右詰め (桁を揃えて読むため) */
+.num[type="number"] {
   text-align: right;
 }
 .num:focus {

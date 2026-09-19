@@ -590,7 +590,7 @@ const summary = computed(() => {
             </button>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
-              <select v-model.number="attempts" class="num text-left w-20">
+              <select v-model.number="attempts" class="num w-20">
                 <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
               </select>
             </label>
@@ -765,13 +765,13 @@ const summary = computed(() => {
               </div>
               <label v-if="compareMode === 'attempts'" class="inline-flex items-center gap-2 text-[var(--exile-color-text-secondary)]">
                 回数
-                <select v-model.number="attempts" class="num text-left w-20">
+                <select v-model.number="attempts" class="num w-20">
                   <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
                 </select>
               </label>
               <label v-else class="inline-flex items-center gap-2 text-[var(--exile-color-text-secondary)]">
                 予算
-                <select v-model.number="budgetDisplay" class="num text-left w-28">
+                <select v-model.number="budgetDisplay" class="num w-28">
                   <option v-for="v in budgetOptions" :key="v" :value="v">{{ v }} {{ unit }}</option>
                 </select>
               </label>
@@ -834,7 +834,7 @@ const summary = computed(() => {
           <div class="mb-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
             <label class="inline-flex items-center gap-2 min-w-0 max-w-full">
               経路
-              <select :value="ledger.route ?? ''" class="num text-left w-72 max-w-full min-w-0" @change="setRoute">
+              <select :value="ledger.route ?? ''" class="num w-72 max-w-full min-w-0" @change="setRoute">
                 <option value="">最も得に合わせる{{ g.best.value ? ` (${g.best.value.label})` : "" }}</option>
                 <option v-for="r in g.routes.value" :key="r.id" :value="r.id">{{ r.label }}</option>
               </select>
@@ -1010,13 +1010,19 @@ const summary = computed(() => {
 <style scoped>
 .num {
   width: 5.5rem;
-  text-align: right;
+  /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」)。
+     以前は右詰めが既定で、テキスト欄やプルダウンに毎回 text-left を足して打ち消していた */
+  text-align: left;
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--exile-color-bg-surface);
   border: 1px solid var(--exile-color-border-subtle);
   font-variant-numeric: tabular-nums;
+}
+/* 数値の欄だけ右詰め (桁を揃えて読むため) */
+.num[type="number"] {
+  text-align: right;
 }
 .num:focus {
   outline: none;

@@ -233,7 +233,7 @@ function evClass(v: number | null): string {
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 ({{ unit }})</h2>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
-              <select v-model.number="attempts" class="num text-left w-20">
+              <select v-model.number="attempts" class="num w-20">
                 <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
               </select>
             </label>
@@ -325,7 +325,7 @@ function evClass(v: number | null): string {
               <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
               <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
                 回数
-                <select v-model.number="attempts" class="num text-left w-20">
+                <select v-model.number="attempts" class="num w-20">
                   <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
                 </select>
               </label>
@@ -454,13 +454,19 @@ function evClass(v: number | null): string {
 
 <style scoped>
 .num {
-  text-align: right;
+  /* 文字が入る欄は左詰め (オーナー指摘 2026-09-19「普通左詰めじゃね？ 文字枠内とかの」)。
+     以前は右詰めが既定で、テキスト欄やプルダウンに毎回 text-left を足して打ち消していた */
+  text-align: left;
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--exile-color-bg-surface);
   border: 1px solid var(--exile-color-border-subtle);
   font-variant-numeric: tabular-nums;
+}
+/* 数値の欄だけ右詰め (桁を揃えて読むため) */
+.num[type="number"] {
+  text-align: right;
 }
 .num:focus {
   outline: none;
