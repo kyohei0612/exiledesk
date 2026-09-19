@@ -238,11 +238,15 @@ function toneClass(tone: string): string {
                   >
                     📋 売り履歴
                   </button>
+                  <!-- 上位から自動で入った分も外せる (オーナー指示 2026-09-20)。外した分は「リストを元に戻す」で戻る -->
                   <button
-                    v-if="gem.manual"
                     type="button"
                     class="ml-3 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-rose-300"
-                    title="このジェムを監視リストから削除します (記録は残るので、7 日以内に戻せば続きから追えます)"
+                    :title="
+                      gem.manual
+                        ? 'このジェムを監視リストから削除します (記録は残るので、7 日以内に戻せば続きから追えます)'
+                        : '使用率ランキングの上位から入った分を外します。次の順位が繰り上がります (「リストを元に戻す」でいつでも戻せます)'
+                    "
                     @click="remove(gem.name)"
                   >
                     🗑 リストから削除

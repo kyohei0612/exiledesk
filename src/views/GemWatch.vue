@@ -22,7 +22,9 @@ import { loadFlow, loadFlowStatus, type FlowStatus, type FlowStore } from "../se
 import { searchGems } from "./gem-corrupt/search";
 import {
   addManualGem,
-  removeManualGem,
+  dropWatchGem,
+  resetWatchList,
+  watchListEdited,
   updateWatchSettings,
   watchGems,
   watchSettings,
@@ -184,9 +186,22 @@ async function add(en: string): Promise<void> {
     busy.value = false;
   }
 }
+/**
+ * 監視リストから 1 件外す。手で足した物は消し、使用率ランキングから入った物は除外に入れる
+ * (オーナー指示 2026-09-20:「アセンダンシー選んでてもジェムのリスト変更できるように」)。
+ */
 async function remove(en: string): Promise<void> {
-  removeManualGem(en);
+  dropWatchGem(en);
   await sync();
+}
+/** 手で足した / 外した分を捨てて、使用率ランキングどおりの並びに戻す */
+const listEdited = computed(() => watchListEdited(s.value));
+async function resetList(): Promise<void> {
+  const n = s.value.manual.length;
+  if (n > 0 && !window.confirm(`手で足した ${n} ジェムも消して、使用率ランキングどおりの並びに戻します。よろしいですか?`)) return;
+  resetWatchList();
+  await sync();
+  message.value = { ok: true, text: "監視リストを最初の並びに戻しました (記録は残っています)" };
 }
 
 /**
@@ -283,6 +298,20 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
             上位を自動で入れる
           </label>
+          <!-- 手で足した / 外した分を捨てて元の並びに戻す (オーナー指示 2026-09-20「いつでも最初の並びに戻せるようにリセット機能つきで」) -->
+          <button
+            type="button"
+            :disabled="!listEdited || busy"
+            class="px-3 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40 disabled:cursor-not-allowed"
+            :title="
+              listEdited
+                ? `手で足した ${s.manual.length} ジェムと外した ${s.excluded.length} ジェムを捨てて、使用率ランキングどおりの並びに戻します (売れ行きの記録は消えません)`
+                : '手を入れていないので、今が最初の並びです'
+            "
+            @click="resetList"
+          >
+            ↺ リストを元に戻す
+          </button>
           <!-- オーナー指示 2026-09-17: 自動巡回と同じ処理を手で 1 巡させるボタン -->
           <button
             type="button"
@@ -375,8 +404,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
       <div class="p-4 pl-5">
         <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">巡回に入っていないジェム ({{ orphans.length }})</h3>
         <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
-          ジェムコラプトの賭けで「再取得」を押して記録は作られたが、監視には入れていないジェムです (記録は 7 日で掃除されます)。
-          続けて測りたい物だけ監視に入れてください。
+          記録はあるが監視には入っていないジェムです (手で外した分と、ジェムコラプトの賭けで「再取得」を押して記録だけ作られた分)。
+          記録は 7 日で掃除されるので、続けて測りたい物は監視に戻してください。
         </p>
         <ul class="flex flex-wrap gap-2">
           <li v-for="o in orphans" :key="o.name" class="flex items-center gap-2 px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px]">

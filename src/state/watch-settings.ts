@@ -39,6 +39,12 @@ export interface WatchSettings {
   maxGems: number;
   /** 手で足したジェム (英語名)。自動の上位より優先して監視する */
   manual: string[];
+  /**
+   * 手で外したジェム (英語名)。使用率ランキングの上位に入っていても監視しない。
+   * オーナー指示 2026-09-20:「アセンダンシー選んでてもジェムのリスト変更できるようにして」。
+   * 上位から自動で入る分も 1 件ずつ外せるようにするための除外リスト。
+   */
+  excluded: string[];
   /** 自動で上位を入れるか (false なら手動のジェムだけ監視する) */
   autoTop: boolean;
 }
@@ -69,6 +75,7 @@ export const DEFAULT_WATCH_SETTINGS: WatchSettings = {
   minUsers: 5,
   maxGems: MAX_WATCH_GEMS,
   manual: [],
+  excluded: [],
   autoTop: true,
 };
 
@@ -89,7 +96,8 @@ function load(): WatchSettings {
         // 基準 (metric) だけ既定に戻す。人数の下限 / 上限は手で決めた値なので引き継ぐ
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
         maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
-        manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
+        manual: strings(s.manual),
+        excluded: strings(s.excluded),
         autoTop: s.autoTop !== false,
       };
     }
@@ -99,13 +107,16 @@ function load(): WatchSettings {
       metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
       minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
       maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
-      manual: Array.isArray(s.manual) ? s.manual.filter((x) => typeof x === "string") : [],
+      manual: strings(s.manual),
+      excluded: strings(s.excluded),
       autoTop: s.autoTop !== false,
     };
   } catch {
     return { ...DEFAULT_WATCH_SETTINGS };
   }
 }
+
+const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
 function clamp(v: unknown, min: number, max: number, fallback: number): number {
   const n = typeof v === "number" && Number.isFinite(v) ? Math.round(v) : fallback;
@@ -131,12 +142,36 @@ export function addManualGem(en: string): boolean {
   const s = state.value;
   if (!en || s.manual.includes(en)) return false;
   if (s.manual.length >= s.maxGems) return false;
-  updateWatchSettings({ manual: [...s.manual, en] });
+  // 一度外した物を手で足し直したら、除外も解く (外したままだと後で自動の上位に戻れない)
+  updateWatchSettings({ manual: [...s.manual, en], excluded: s.excluded.filter((x) => x !== en) });
   return true;
 }
 
 export function removeManualGem(en: string): void {
   updateWatchSettings({ manual: state.value.manual.filter((x) => x !== en) });
+}
+
+/**
+ * 監視リストから 1 件外す。手で足した物は消し、使用率ランキングから入った物は除外に入れる。
+ * どちらも記録は消えない (7 日以内に戻せば続きから追える)。
+ */
+export function dropWatchGem(en: string): void {
+  const s = state.value;
+  if (s.manual.includes(en)) {
+    updateWatchSettings({ manual: s.manual.filter((x) => x !== en) });
+    return;
+  }
+  if (!s.excluded.includes(en)) updateWatchSettings({ excluded: [...s.excluded, en] });
+}
+
+/** 手を入れた跡があるか (リセットを押せるか) */
+export function watchListEdited(s: WatchSettings = state.value): boolean {
+  return s.manual.length > 0 || s.excluded.length > 0;
+}
+
+/** 手で足した / 外した分を全部捨てて、使用率ランキングどおりの並びに戻す */
+export function resetWatchList(): void {
+  updateWatchSettings({ manual: [], excluded: [] });
 }
 
 export function isManualGem(en: string): boolean {
@@ -180,6 +215,7 @@ export interface WatchGem {
  */
 export function watchGems(rows: GemUsageRow[], s: WatchSettings = state.value): WatchGem[] {
   const byName = new Map(rows.map((r) => [r.name, r]));
+  const excluded = new Set(s.excluded);
   const out: WatchGem[] = [];
   for (const name of s.manual) {
     if (out.length >= s.maxGems) break;
@@ -206,6 +242,7 @@ export function watchGems(rows: GemUsageRow[], s: WatchSettings = state.value): 
       ;
     for (const r of top) {
       if (out.length >= s.maxGems) break;
+      if (excluded.has(r.name)) continue; // 手で外した分は飛ばして、次の順位を繰り上げる
       if (out.some((x) => x.name === r.name)) continue;
       out.push({ name: r.name, manual: false, note: noteOf(r, s.metric) });
     }
