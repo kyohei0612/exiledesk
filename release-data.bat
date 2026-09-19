@@ -21,7 +21,13 @@ echo.
 echo ============================================================
 echo  [1/2] 記録を書き出しています...
 echo ============================================================
-node scripts\export-flow-seed.mjs
+node scripts\export-flow-seed.mjs %2
+if errorlevel 2 (
+    echo.
+    echo 配り直しは止めました (この PC は配られた側です)。
+    pause
+    exit /b 0
+)
 if errorlevel 1 (
     echo ERROR: 書き出しに失敗しました
     pause

@@ -334,6 +334,15 @@ pub fn market_flow_import_seed(app: tauri::AppHandle, json: String) -> Result<us
     if n > 0 {
         save_store(&app, &store)?;
     }
+    // 「この機体は配られた側」の印。書き出し (release-data.bat) がこれを見て、
+    // 受け取った側から配り直してしまうのを止める (2026-09-20 オーナー
+    // 「サブ PC でそれやったらそっちのデータはどうなんだ」)
+    if let Ok(dir) = app.path().app_data_dir() {
+        let _ = std::fs::write(
+            dir.join("flow-seed-imported.json"),
+            format!("{{\"imported_at\":{},\"states\":{}}}", now_secs(), n),
+        );
+    }
     Ok(n)
 }
 

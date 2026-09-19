@@ -28,6 +28,23 @@ function maskAccount(name) {
   return chars.slice(0, 3).join("") + "*".repeat(chars.length - 3);
 }
 
+/**
+ * 配られた側 (サブ機) から配り直さないための止め。
+ *
+ * オーナー 2026-09-20「サブ PC でそれやったらそっちのデータはどうなんだ」:
+ * サブ機の記録は「配られた分 + サブが測った分」なので、そのまま書き出すと
+ * 母機がその後に測った分より古い値で上書きされることがある。
+ * 同梱データを 1 度でも取り込んだ機体では止めて、--force でだけ通す。
+ */
+const importedMark = join(process.env.APPDATA ?? "", "com.kyohei.exiledesk", "flow-seed-imported.json");
+if (existsSync(importedMark) && !process.argv.includes("--force")) {
+  const at = JSON.parse(readFileSync(importedMark, "utf8")).imported_at ?? 0;
+  console.error("この PC は配られたデータを取り込んでいます (" + new Date(at * 1000).toLocaleString("ja-JP") + ")。");
+  console.error("受け取った側から配り直すと、母機で測った新しい記録が古い値に戻ることがあります。");
+  console.error("測っている PC で実行してください。どうしても配るなら --force を付けてください。");
+  process.exit(2);
+}
+
 if (!existsSync(src)) {
   console.error(`記録が見つかりません: ${src}`);
   console.error("一括取得を 1 回でも回すとできます。");
