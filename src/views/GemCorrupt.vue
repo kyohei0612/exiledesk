@@ -13,7 +13,6 @@ import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
 import { currencyJa } from "../state/display-currency";
 import { fmtClock } from "../utils/format-time";
-import { DEFAULT_CYCLE_SECS } from "../services/market-flow";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { GEMS, SALE_ROWS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
@@ -23,12 +22,10 @@ import { averageExalted, displayCurrency, type DisplayCurrency } from "../state/
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 import { budgetRisk, roi, type RouteResult } from "./gem-corrupt/model";
-import { flowSentence, fmtAge, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { flowSentence, fmtAge, fmtSellTime, loadFlow, loadFlowStatus, summarizeFlow, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./gem-corrupt/row-query";
 import { fmtQty, useGemLedger } from "./gem-corrupt/ledger";
 import SoldListDialog from "../components/SoldListDialog.vue";
-import { resumeAtText, waitText } from "../utils/wait-text";
-import { tradeErrorJa } from "../utils/trade-error";
 
 const g = useGemCorrupt();
 const nowMs = ref(Date.now());
@@ -193,33 +190,6 @@ function stopStatusPolling(): void {
   statusTimer = null;
 }
 
-/**
- * レート制限の残り秒 (0 なら制限なし)。画面ごとに別の数え方をしないよう、
- * 裏の巡回も画面の取得も同じ関数 (tradeRateSecs) を見る (2026-09-19 に 1 か所へまとめた)
- * (オーナー指示 2026-09-17:「レートは一律で同じところを見るように全部」)。
- */
-const retryLeft = computed(() => {
-  const st = flowStatus.value;
-  const nowSec = Math.floor(nowMs.value / 1000);
-  void nowSec;
-  return tradeRateSecs(st);
-});
-/** 止められている残り秒 (通常の送信間隔は「待ち」として出さない。2026-09-18) */
-const rateWait = computed(() => retryLeft.value);
-/** 使った回数 ("4:10:0,12:60:0" → "10 秒 4 / 60 秒 12") */
-const rateText = computed(() => {
-  const raw = flowStatus.value?.rate_state;
-  if (!raw) return "";
-  return raw
-    .split(",")
-    .map((part) => {
-      const [used, window] = part.split(":");
-      const w = Number(window);
-      const label = w >= 3600 ? `${w / 3600} 時間` : w >= 60 ? `${w / 60} 分` : `${w} 秒`;
-      return `${label} ${used}`;
-    })
-    .join(" · ");
-});
 // 「再取得」の後に記録を読み直す (巡回が裏で回っているので表示を最新にする)
 watch(
   () => g.pricing.value,
@@ -270,18 +240,6 @@ function cheapestTitle(key: SaleKey): string {
 ${who}`;
 }
 
-/** 直近の失敗を短い日本語に (詳細はホバー) */
-const flowErrorJa = computed(() => {
-  const raw = flowStatus.value?.last_error ?? "";
-  if (!raw) return "";
-  // "Arc::finished: trade2 search HTTP 400 ..." の形。銘柄名と本文に分ける
-  const m = /^(.+?::[a-z0-9]+):\s*([\s\S]*)$/i.exec(raw);
-  const key = m?.[1] ?? "";
-  const body = m?.[2] ?? raw;
-  const watch = flowStore.value?.watches?.find((w) => w.key === key);
-  const who = watch?.label || key;
-  return who ? `${who}: ${tradeErrorJa(body)}` : tradeErrorJa(body);
-});
 
 /** ホバーで出す内訳 */
 function flowTitleOf(f: ReturnType<typeof flowOf>): string {
@@ -586,42 +544,14 @@ const summary = computed(() => {
               </tr>
             </tbody>
           </table>
-          <!-- 2026-09-16: 自動追跡が動いているのが分かるように -->
-          <div
-            v-if="flowStatus"
-            class="mt-3 rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-elevated)]/40 px-3 py-2 text-[11px] flex flex-wrap items-center gap-x-4 gap-y-1"
-          >
-            <span class="font-display tracking-[0.06em] text-[var(--exile-color-text-secondary)]">自動追跡</span>
-            <span v-if="flowStatus.sampling" class="inline-flex items-center gap-1.5 text-emerald-300">
-              <span class="inline-block w-2 h-2 rounded-full bg-emerald-300 animate-pulse" aria-hidden="true"></span>
-              取得中 {{ flowStatus.done }}/{{ flowStatus.total }}<span v-if="rateWait > 0"> · トレードのレート待ち {{ rateWait }} 秒</span><span v-if="flowStatus.current"> · {{ flowStatus.current }}</span>
-            </span>
-            <span v-else-if="flowStatus.auto_watches > 0" class="inline-flex items-center gap-1.5" :class="flowStatus.retry_at > 0 ? 'text-amber-300' : 'text-[var(--exile-color-text-secondary)]'">
-              <span class="inline-block w-2 h-2 rounded-full" :class="flowStatus.retry_at > 0 ? 'bg-amber-300 animate-pulse' : 'bg-[var(--exile-color-text-tertiary)]'" aria-hidden="true"></span>
-              {{ flowStatus.retry_at > 0 ? `取りこぼし ${flowStatus.retry_keys} 銘柄を取り直し予定` : "待機中" }} · 次回 {{ fmtClock(flowStatus.next_at, "time") }}
-            </span>
-            <span v-else class="text-amber-300">追跡リスト待ち (起動 30 秒後に自動で用意します)</span>
-
-            <span class="tabular-nums text-[var(--exile-color-text-tertiary)]">
-              {{ flowStatus.rounds }} 周目 · {{ Math.round(flowStatus.cycle_secs / 3600) }} 時間ごと · 前回の一括取得 {{ fmtClock(flowStatus.swept_at) }} · 最終 {{ fmtClock(flowStatus.last_at, "time") }} ·
-              自動 {{ flowStatus.auto_watches }} / 手動 {{ flowStatus.manual_watches }} 銘柄
-            </span>
-            <span v-if="rateText" class="tabular-nums text-[var(--exile-color-text-tertiary)]">使った回数 {{ rateText }}</span>
-
-            <span v-if="retryLeft > 0" class="inline-flex items-center gap-1 text-amber-300 font-medium">
-              <span aria-hidden="true" class="animate-pulse">⏱</span>
-              トレードのリミット待機中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）
-            </span>
-            <span v-else-if="flowStatus.last_error" class="text-amber-300 basis-full" :title="flowStatus.last_error">
-              ⚠ {{ flowErrorJa }}
-            </span>
-          </div>
+          <!-- 自動取得の状態 (周目 / 次回 / レート待ち / 取りこぼし) はここには出さない。
+               オーナー指示 2026-09-19:「レート制限のところややこしいから、ジェムコラのとこに
+               自動取得関係表示しなくていい。別だからややこしくならんでしょ」。
+               自動の様子は「自動ジェム監視」の画面だけで見る。ここは手動の再取得ボタンの状態だけ -->
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
-              捌き速度の追跡: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span> ·
-              {{ flowAuto ? `自動 (${Math.round((flowStatus?.cycle_secs ?? DEFAULT_CYCLE_SECS) / 3600)} 時間ごと)` : flowTracked ? "以前の記録 (今は巡回対象外)" : "まだ記録がありません" }} ·
-              追跡 {{ flowStatus?.auto_watches ?? flowStore?.watches.length ?? 0 }} 銘柄 (自動ジェム監視のリスト × 3 条件)<template v-if="flowStatus && flowStatus.sampled_watches < flowStatus.auto_watches">
-                · <span class="text-[var(--exile-color-accent-focus)]">1 周目 {{ flowStatus.sampled_watches }}/{{ flowStatus.auto_watches }} 銘柄</span></template>。
+              捌き速度の記録: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span>
+              · {{ flowTracked ? (flowAuto ? "自動ジェム監視で追跡中" : "以前の記録 (今は監視対象外)") : "まだ記録がありません" }}。
             </span>
             <br v-if="g.selected.value" />
             売値は<span class="text-[var(--exile-color-text-secondary)]">インスタントバイアウト (今すぐ買える出品) だけ</span>の最安です。トレードサイトのドロップダウンで「インスタントバイアウト」を選んだ時と同じ条件なので、「トレード2へ」で開いた一覧と数が合います。
