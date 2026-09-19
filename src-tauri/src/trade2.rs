@@ -202,6 +202,51 @@ fn wait_for_rules(g: &Gate, now: i64, spacing_ms: i64) -> i64 {
 /// 22 に下げる (門番は上限から 2 残すので、実際には 5 分 20 回 = 15 秒に 1 回まで)。
 /// 代償: 42 銘柄 (84 リクエスト) の 1 巡が 20 分 → 約 27 分。止まるよりは待つ方を採る。
 const COMBINED_MAX_300: u32 = 22;
+/// これ以上は下げない (下げすぎると 1 巡が現実的でなくなる)
+const COMBINED_MIN_300: u32 = 10;
+/// 429 を食らわずにこれだけ経ったら 1 段戻す
+const RECOVER_QUIET_MS: i64 = 45 * 60 * 1000;
+
+/// 今使っている合計の 5 分上限。**429 を食らうたびに自分で下げる**。
+///
+/// 2026-09-19 オーナー「なんか取れんかったっぽい、マジで何でなん」:
+/// 上限を 22 (実効 20) まで下げたのに、**ちょうど 20 回で 429** を 2 回食らった。
+/// サーバーは 429 に規則を返さないので本当の線は分からず、こちらが当て続けるしかない。
+/// 当てるのをやめて、踏んだら 4 分の 3 に下げ、しばらく踏まなければ 1 ずつ戻す。
+static ADAPTIVE_MAX: StdMutex<u32> = StdMutex::new(COMBINED_MAX_300);
+/// 最後に 429 を食らった時刻 (戻すかの判断に使う)
+static LAST_PENALTY_AT: StdMutex<i64> = StdMutex::new(0);
+
+fn adaptive_max() -> u32 {
+    ADAPTIVE_MAX.lock().map(|g| *g).unwrap_or(COMBINED_MAX_300)
+}
+
+/// 429 を踏んだので上限を下げる。下がった値を返す
+fn lower_adaptive_max(now: i64) -> u32 {
+    if let Ok(mut at) = LAST_PENALTY_AT.lock() {
+        *at = now;
+    }
+    let Ok(mut g) = ADAPTIVE_MAX.lock() else { return COMBINED_MAX_300 };
+    *g = (*g * 3 / 4).max(COMBINED_MIN_300);
+    *g
+}
+
+/// しばらく 429 を踏んでいなければ 1 段戻す (静かな時に少しずつ速さを取り戻す)
+fn maybe_recover_adaptive_max(now: i64) {
+    let last = LAST_PENALTY_AT.lock().map(|g| *g).unwrap_or(0);
+    if last == 0 || now - last < RECOVER_QUIET_MS {
+        return;
+    }
+    if let Ok(mut at) = LAST_PENALTY_AT.lock() {
+        *at = now;
+    }
+    if let Ok(mut g) = ADAPTIVE_MAX.lock() {
+        if *g < COMBINED_MAX_300 {
+            *g += 1;
+            crate::app_log::line_static(&format!("[trade2] 静かなので合計の 5 分上限を {} に戻します", *g));
+        }
+    }
+}
 
 fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
     let mut by_period: std::collections::BTreeMap<i64, u32> = std::collections::BTreeMap::new();
@@ -211,11 +256,9 @@ fn combined_rules(map: &HashMap<String, Gate>) -> Vec<Rule> {
             by_period.entry(period).and_modify(|m| *m = (*m).min(max)).or_insert(max);
         }
     }
-    // 5 分窓だけは公表値より低い実測に合わせる
-    by_period
-        .entry(300)
-        .and_modify(|m| *m = (*m).min(COMBINED_MAX_300))
-        .or_insert(COMBINED_MAX_300);
+    // 5 分窓だけは公表値より低い実測 (429 を踏むたびに下がる) に合わせる
+    let cap = adaptive_max();
+    by_period.entry(300).and_modify(|m| *m = (*m).min(cap)).or_insert(cap);
     by_period.into_iter().map(|(period, max)| (max, period)).collect()
 }
 
@@ -401,6 +444,7 @@ pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
             }
         }
     }
+    maybe_recover_adaptive_max(now);
     let g = map.entry(kind.to_string()).or_default();
     g.sends.sort_unstable();
     save_gates_locked(map);
@@ -420,6 +464,10 @@ fn gate_penalty(kind: &str, retry_after_secs: i64, rl: &serde_json::Value, body:
         "[trade2] {kind} で 429 (retry-after {retry_after_secs} 秒)\n  サーバーの規則と現在数: {rl}\n  こちらの送信 (全窓口): {}\n  本文: {}",
         recent_counts(map, now),
         body.chars().take(200).collect::<String>().replace('\n', " ")
+    ));
+    let lowered = lower_adaptive_max(now);
+    crate::app_log::line_static(&format!(
+        "[trade2] 合計の 5 分上限を {lowered} 回に下げました (次からこの線で投げます)"
     ));
     block_all_until(map, now + retry_after_secs.max(1) * 1000 + 500);
     save_gates_locked(map);
@@ -473,7 +521,7 @@ pub fn gate_usage_300() -> (i64, i64) {
         .into_iter()
         .find(|(_, period)| *period == 300)
         .map(|(m, _)| m as i64)
-        .unwrap_or(30);
+        .unwrap_or(adaptive_max() as i64);
     (used, max)
 }
 
@@ -854,6 +902,9 @@ mod rate_tests {
     /// 別々に数えていた頃は、合計で 5 分 57 回投げて 429 を食らっていた (2026-09-18)
     #[test]
     fn search_and_fetch_share_one_budget() {
+        // 適応する上限は全テストで共有なので、ここで基準値に戻してから測る
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
         let now = 1_000_000_000;
         let mut map = HashMap::new();
         // それぞれの上限 (30 / 50) には遠いが、合わせると search の 30 に届く
@@ -864,6 +915,20 @@ mod rate_tests {
         }
         assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "5 分窓は実測に合わせた上限を使う");
         assert!(combined_wait(&map, now) > 0, "合計 28 回は 5 分の枠を超えているので待つ");
+    }
+
+    /// 429 を食らったら合計の上限を自分で下げ、下限より下には行かない (2026-09-19)
+    #[test]
+    fn a_penalty_lowers_the_combined_cap() {
+        let _lock = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+        let now = now_ms();
+        assert_eq!(lower_adaptive_max(now), COMBINED_MAX_300 * 3 / 4, "4 分の 3 に下がる");
+        for _ in 0..20 {
+            lower_adaptive_max(now);
+        }
+        assert_eq!(adaptive_max(), COMBINED_MIN_300, "下限より下には行かない");
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
     }
 
     /// 罰則中はその解除まで待つ
