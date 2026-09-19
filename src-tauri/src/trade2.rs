@@ -43,10 +43,6 @@ struct Gate {
     rules: Vec<Rule>,
     /// 罰則などで送れない時刻 (ミリ秒)
     blocked_until: i64,
-    /// 同じ IP の別経路 (ブラウザのトレード検索や他のツール) を最後に見つけた時刻 (ミリ秒)。
-    /// 2026-09-18: こちらは上限の半分も使っていないのに 429 (retry-after 600 秒) を食らった。
-    /// サーバーの数えた回数がこちらの記録より多い = 別経路が枠を使っているので、その間は半分に抑える
-    foreign_seen_at: i64,
     /// 窓の長さ(秒) → (前回サーバーが返した現在数, その時刻ミリ秒)。
     ///
     /// 「サーバーの数 > こちらの記録」をそのまま別経路の証拠にすると外れる。2026-09-18 の 6 時間窓が
@@ -75,8 +71,6 @@ struct StoredGate {
     sends: Vec<i64>,
     rules: Vec<Rule>,
     blocked_until: i64,
-    #[serde(default)]
-    foreign_seen_at: i64,
 }
 
 /// 起動時に 1 回。保存してあった送信記録を読み込む
@@ -95,7 +89,6 @@ pub fn load_gates(path: std::path::PathBuf) {
         e.sends = sends;
         e.rules = st.rules;
         e.blocked_until = st.blocked_until;
-        e.foreign_seen_at = st.foreign_seen_at;
     }
 }
 
@@ -111,7 +104,6 @@ fn save_gates_locked(map: &HashMap<String, Gate>) {
                     sends: g.sends.clone(),
                     rules: g.rules.clone(),
                     blocked_until: g.blocked_until,
-                    foreign_seen_at: g.foreign_seen_at,
                 },
             )
         })
@@ -255,14 +247,13 @@ fn rules_widened(old: &[Rule], new: &[Rule]) -> bool {
     }
 }
 
-/// 合計 (search + fetch) に当てる規則は **5 分窓の隠れた上限だけ**。
+/// 合計 (search + fetch) に当てるのは **5 分あたりの隠れた上限だけ**。
 ///
-/// 2026-09-19 まで「同じ長さの窓は一番きつい上限を合計に当てる」としていたが、3 時間窓
-/// (search 600 / fetch 1000) を合計に当てると、公表どおり窓口ごとに数えられている枠を
-/// 半分以下に自分で縛ることになる (実測: 合計 ≈300 で 27 分の待ちを作った)。
-/// 長い窓は窓口ごとの規則 (wait_for_rules) が守るので、ここでは見ない
-fn combined_rules(_map: &HashMap<String, Gate>) -> Vec<Rule> {
-    vec![(adaptive_max(), 300)]
+/// 長い窓 (3 時間 600 / 1000 回) は窓口ごとに公表どおり数えられているので、合計に当てて
+/// 自分を縛らない。2026-09-19 まで当てていて、合計 ≈300 で 27 分の偽の待ちを作っていた。
+/// 実際の送り方はこの上限を 300 秒で割った**一定の間隔** (combined_wait のトークンバケット)。
+fn combined_cap() -> i64 {
+    adaptive_max() as i64
 }
 
 /// 合計の送り方は **一定の間隔 + 小さなバースト** (トークンバケット)。
@@ -500,6 +491,8 @@ pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
                 continue;
             }
             // 同じ IP の別経路 (ブラウザで開いたトレード検索など) が枠を使っていないかを見る。
+            // 2026-09-19 から**ログに出すだけ**で枠は縮めない (オーナー「アプリ側で制限かけるの
+            // 良くない。送り方さえ統一して踏まないように」)。どれだけ別経路があるかの記録用。
             //
             // 「サーバーの数 > こちらの記録」では判定できない。2026-09-18 の記録では 6 時間窓が常に
             // 90 回ほど多かったが、これは記録を保存する前の自分の送信で、差はずっと一定だった。
@@ -533,7 +526,6 @@ pub(crate) fn gate_note(kind: &str, headers: &HeaderMap) {
                 cur - prev_cur
             ));
             let g = map.entry(kind.to_string()).or_default();
-            g.foreign_seen_at = now;
             if cur >= keep {
                 // 窓は滑って動くので、平均すると period/max ごとに 1 枠空く。
                 // 超過ぶんだけ待てば上限を下回る (窓の長さぶん丸ごと止めると、
@@ -573,74 +565,41 @@ fn gate_penalty(kind: &str, retry_after_secs: i64, rl: &serde_json::Value, body:
     save_gates_locked(map);
 }
 
-/// 罰則 (429 や x-rate-limit-*-state の restricted) で送れない時の解除予定 (unix 秒)。
+/// 門番の今の状態。画面に出す数字はここだけを見る。
 ///
-/// 上限に当たらないための**通常の間隔待ち**はここに入れない。数秒の間隔まで「レート制限中」と
-/// 出すと画面のボタンがずっと押せなくなるため、止まっている時だけを出す。
-pub fn gate_blocked_until_secs() -> i64 {
-    let Ok(mut guard) = GATES.lock() else { return 0 };
-    let map = guard.get_or_insert_with(HashMap::new);
-    let now = now_ms();
-    let mut until = 0;
-    for g in map.values() {
-        if g.blocked_until > now {
-            until = until.max(g.blocked_until / 1000);
-        }
-    }
-    until
+/// 2026-09-19 のリファクタ以前は `gate_blocked_until_secs` / `gate_wait_secs` /
+/// `gate_usage_300` / `gate_budget_wait_secs` の 4 つに分かれていて、呼ぶ側 (market_flow)
+/// が 4 回 GATES を lock し、画面も「罰則」「枠待ち」「ペース」を別々の式で数えていた。
+/// 同じ瞬間の状態なので 1 回で返す。
+#[derive(serde::Serialize, Clone, Copy, Default)]
+pub struct GateStatus {
+    /// 罰則 (429 / restricted) の解除予定 (unix 秒)。0 = 止まっていない。
+    /// **これだけが「止まっている」**。下の wait_secs は順番待ちで、放っておけば進む
+    pub penalty_until: i64,
+    /// 次の 1 本を投げられるまで (秒)。一定の間隔 (300 秒 ÷ 上限) と最低間隔のうち長い方
+    pub wait_secs: i64,
+    /// 直近 5 分に全窓口あわせて送った数
+    pub used_300: i64,
+    /// 今の合計の 5 分上限 (429 を踏むと下がる)
+    pub max_300: i64,
 }
 
-/// 次に送れるまでの秒数 (通常の間隔待ちを含む)。進捗表示用
-pub fn gate_wait_secs() -> i64 {
-    let Ok(mut guard) = GATES.lock() else { return 0 };
+/// 門番の状態をまとめて返す (GATES の lock は 1 回)
+pub fn gate_status() -> GateStatus {
+    let Ok(mut guard) = GATES.lock() else { return GateStatus::default() };
     let map = guard.get_or_insert_with(HashMap::new);
     let now = now_ms();
-    let mut wait = 0;
-    wait = wait.max(combined_wait(map, now));
-    for (kind, g) in map.iter() {
-        wait = wait.max(wait_for_rules(g, now, min_spacing_ms(kind)));
-    }
-    (wait + 999) / 1000
-}
-
-/// 5 分窓を全窓口あわせて何回使ったか / 上限は何回か (画面の「5 分で n/26 回」用)。
-///
-/// 2026-09-19 オーナー「手動と自動のレート制限が合わんね。レート制限中に手動しても
-/// そこのレート制限が変わらん。一緒にしてよ、ぐちゃぐちゃになる」:
-/// 画面のボタンは JS 側が別に持っている送信記録 (画面から出した分だけ) を数えていたので、
-/// 裏の巡回がどれだけ使っても増えなかった。門番の数を返して 1 つにする。
-pub fn gate_usage_300() -> (i64, i64) {
-    let Ok(mut guard) = GATES.lock() else { return (0, 0) };
-    let map = guard.get_or_insert_with(HashMap::new);
-    let now = now_ms();
-    let used: i64 = map
-        .values()
-        .map(|g| g.sends.iter().filter(|t| **t > now - 300_000).count() as i64)
-        .sum();
-    let max = combined_rules(map)
-        .into_iter()
-        .find(|(_, period)| *period == 300)
-        .map(|(m, _)| m as i64)
-        .unwrap_or(adaptive_max() as i64);
-    (used, max)
-}
-
-/// 「枠が空くまで」の待ち秒。通常の最低間隔 (10 秒前後) は入れない。
-///
-/// 2026-09-19 オーナー「レート制限周りの同期がずれてる」の調査で分かったこと:
-/// 画面が「止まっている」と判断していたのは罰則 (gate_blocked_until_secs) だけだった。
-/// 合計の枠 (combined_wait) で数分待つ場合は罰則が 0 なので、画面は「制限なし」に見えるのに
-/// 実際には何も進まない、という食い違いが起きる。ここを分けて出せるようにする。
-pub fn gate_budget_wait_secs() -> i64 {
-    let Ok(mut guard) = GATES.lock() else { return 0 };
-    let map = guard.get_or_insert_with(HashMap::new);
-    let now = now_ms();
-    // 最低間隔ぶん (spacing) は「待ち」に数えない = spacing を 0 にして測る
+    let mut penalty_until = 0;
     let mut wait = combined_wait(map, now);
-    for g in map.values() {
-        wait = wait.max(wait_for_rules(g, now, 0));
+    let mut used_300 = 0;
+    for (kind, g) in map.iter() {
+        if g.blocked_until > now {
+            penalty_until = penalty_until.max(g.blocked_until / 1000);
+        }
+        wait = wait.max(wait_for_rules(g, now, min_spacing_ms(kind)));
+        used_300 += g.sends.iter().filter(|t| **t > now - 300_000).count() as i64;
     }
-    (wait + 999) / 1000
+    GateStatus { penalty_until, wait_secs: (wait + 999) / 1000, used_300, max_300: combined_cap() }
 }
 
 /// ログインしていれば POESESSID を乗せる。
@@ -927,16 +886,6 @@ mod rate_tests {
         assert_eq!(wait_for_rules(&g, now, SPACING), 10_000, "直前の送信から 10.5 秒空ける");
     }
 
-    /// 別経路が見えても枠は縮めない (2026-09-19 オーナー「アプリ側で制限かけるの良くない」)
-    #[test]
-    fn foreign_traffic_does_not_shrink_the_budget() {
-        let now = 1_000_000;
-        let sends: Vec<i64> = (0..6).map(|i| now - 300_000 + i * 10_000).collect();
-        let mut g = gate(sends, vec![(10, 600)], 0);
-        g.foreign_seen_at = now - 1_000;
-        assert_eq!(wait_for_rules(&g, now, SPACING), 0, "余裕 2 (8 件まで) はそのまま");
-    }
-
     /// 合計はトークンバケット: バーストぶんは待たず、その後は一定の間隔で 1 本ずつ (2026-09-19)
     #[test]
     fn combined_pace_is_a_token_bucket() {
@@ -1060,7 +1009,7 @@ mod rate_tests {
         for (kind, g) in map.iter() {
             assert_eq!(window_wait(&g.sends, &g.rules, now), 0, "{kind} 単体では空いている");
         }
-        assert_eq!(combined_rules(&map), vec![(COMBINED_MAX_300, 300)], "5 分の合計上限は表示用に残す");
+        assert_eq!(combined_cap(), COMBINED_MAX_300 as i64, "5 分の合計上限は表示用に残す");
     }
 
     /// 429 を食らったら合計の上限を自分で下げ、下限より下には行かない (2026-09-19)
@@ -1084,17 +1033,15 @@ mod rate_tests {
         *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
         let now = 1_000_000_000;
         let mut map = HashMap::new();
-        // 3 時間に search 154 + fetch 145 (実測)。直近 5 分は 3 件だけ。別経路も見えている
-        let mut sg = gate((0..154).map(|i| now - 400_000 - i * 60_000).collect(), vec![(8, 10), (15, 60), (60, 300), (600, 10800)], 0);
-        sg.foreign_seen_at = now - 1_000;
-        let mut fg = gate((0..145).map(|i| now - 400_000 - i * 60_000).collect(), vec![(12, 4), (16, 12), (100, 300), (1000, 10800)], 0);
-        fg.foreign_seen_at = now - 1_000;
+        // 3 時間に search 154 + fetch 145 (実測)。直近 5 分は 3 件だけ
+        let sg = gate((0..154).map(|i| now - 400_000 - i * 60_000).collect(), vec![(8, 10), (15, 60), (60, 300), (600, 10800)], 0);
+        let fg = gate((0..145).map(|i| now - 400_000 - i * 60_000).collect(), vec![(12, 4), (16, 12), (100, 300), (1000, 10800)], 0);
         map.insert("search".to_string(), sg);
         map.insert("fetch".to_string(), fg);
         *BUCKET.lock().unwrap() = (BURST, 0);
         assert_eq!(combined_wait(&map, now), 0, "3 時間の合計 299 で待ってはいけない");
         for (kind, g) in map.iter() {
-            assert_eq!(window_wait(&g.sends, &g.rules, now), 0, "{kind} の 3 時間窓は別経路が見えていても縮めない");
+            assert_eq!(window_wait(&g.sends, &g.rules, now), 0, "{kind} の 3 時間窓は公表どおり (600 / 1000) のまま");
         }
     }
 

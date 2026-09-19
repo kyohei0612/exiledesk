@@ -7,12 +7,13 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
-import { gateStoppedUntilMs, isBudgetWait, nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
+import { gatePenaltyUntilMs, isBudgetWait, nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
+/** 画面が直接受けた 429 の解除予定 (門番の罰則と合流する)。null = 受けていない */
 const rateLimitedUntil = ref<number | null>(null);
-/** 今の止まりが「枠待ち」(裏の巡回と分け合い) か、罰則 (429) か。文言を分けるだけ */
-const budgetWait = ref(false);
+/** 門番が「枠待ち」と言って見送った時の、次に投げられる時刻 (罰則ではない) */
+const paceUntil = ref(0);
 const lastError = ref<string | null>(null);
 const now = ref(Date.now());
 setInterval(() => {
@@ -31,30 +32,26 @@ setInterval(() => {
  * @param untilMs 解除予定 (ms)。0 / 過去なら無視
  */
 export function noteExternalRate(untilMs = 0): void {
-  if (untilMs > Date.now() && untilMs > (rateLimitedUntil.value ?? 0)) {
-    rateLimitedUntil.value = untilMs;
-    budgetWait.value = false;
-  }
+  if (untilMs > Date.now() && untilMs > (rateLimitedUntil.value ?? 0)) rateLimitedUntil.value = untilMs;
 }
 
-/** 止まっている理由の文 (秒数付き)。罰則と枠待ちで言い方を変える */
-function stoppedLabel(secs: number): string {
-  return budgetWait.value && gateStoppedUntilMs() <= Date.now()
-    ? `トレードの枠が空くまで ${secs} 秒 (裏の巡回と分け合い)`
-    : `トレード (trade2) のレート制限中 (${secs} 秒)`;
-}
-
-/** 止まっている解除予定 (ms)。画面側で受けた 429 と、門番が言う罰則 / 枠待ちの遅い方 */
+/**
+ * 止まっている解除予定 (ms)。**罰則 (429) だけ**。
+ * 順番待ち (次の 1 本まで数秒〜数十秒) は止まりではないので入れない (cooldownSecs に出る)
+ */
 function stoppedUntilMs(): number {
-  return Math.max(rateLimitedUntil.value ?? 0, gateStoppedUntilMs());
+  return Math.max(rateLimitedUntil.value ?? 0, gatePenaltyUntilMs());
+}
+
+/** 次に投げられる時刻 (ms)。門番の予定と、門番に「枠待ち」で断られた分の遅い方 */
+function nextAtMs(): number {
+  return Math.max(nextSearchAllowedAt(), paceUntil.value);
 }
 
 export const tradeAuto = {
   pending,
   rateLimitedUntil,
   lastError,
-  /** 今の止まりが枠待ち (罰則ではない) か。監視の画面が行を分けるのに使う */
-  budgetWait,
   /** 止まっている残り秒 (制限中でなければ 0)。どの画面もこれ 1 つを見る */
   rateLimitSecs: computed(() => {
     void now.value;
@@ -67,7 +64,7 @@ export const tradeAuto = {
    */
   cooldownSecs: computed(() => {
     void now.value; // 1 秒ごとに再計算
-    return pending.value > 0 ? 0 : Math.max(0, Math.ceil((nextSearchAllowedAt() - Date.now()) / 1000));
+    return pending.value > 0 ? 0 : Math.max(0, Math.ceil((nextAtMs() - Date.now()) / 1000));
   }),
   /** 直近 5 分の検索回数 / 自主上限 (擬似レート制限)。1 秒ごとに更新 */
   budget: computed(() => {
@@ -81,14 +78,14 @@ export const tradeAuto = {
   waitSecs: computed(() => {
     void now.value;
     const limit = Math.max(0, Math.ceil((stoppedUntilMs() - Date.now()) / 1000));
-    const cool = Math.max(0, Math.ceil((nextSearchAllowedAt() - Date.now()) / 1000));
+    const cool = Math.max(0, Math.ceil((nextAtMs() - Date.now()) / 1000));
     return Math.max(limit, cool);
   }),
   /** 画面ヘッダ用の短い状態文 */
   label: computed(() => {
     void now.value;
     const secs = Math.max(0, Math.ceil((stoppedUntilMs() - Date.now()) / 1000));
-    if (secs > 0) return stoppedLabel(secs);
+    if (secs > 0) return `トレード (trade2) のレート制限中 (${secs} 秒)`;
     if (pending.value > 0) return `trade2 検索中… (${pending.value} 件待ち、1 件 約 10 秒)`;
     return lastError.value ? `trade2 エラー: ${lastError.value}` : "";
   }),
@@ -101,7 +98,7 @@ export const tradeAuto = {
 export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trade2 で検索中…"): { label: string; disabled: boolean } {
   if (busy) return { label: busyLabel, disabled: true };
   const limit = tradeAuto.rateLimitSecs.value;
-  if (limit > 0) return { label: stoppedLabel(limit), disabled: true };
+  if (limit > 0) return { label: `トレードのレート制限中 (${limit} 秒)`, disabled: true };
   const cool = tradeAuto.cooldownSecs.value;
   if (cool > 0) return { label: `再取得まで ${cool} 秒`, disabled: true };
   const b = tradeAuto.budget.value;
@@ -124,8 +121,9 @@ export async function autoPrice(league: string, body: unknown, rates: ExaltedRat
   } catch (e) {
     const secs = retryAfterSeconds(e);
     if (secs) {
-      rateLimitedUntil.value = Date.now() + secs * 1000;
-      budgetWait.value = isBudgetWait(e);
+      // 門番の「枠待ち」は順番待ちなので、止まり (罰則) には数えず次の予定だけ動かす
+      if (isBudgetWait(e)) paceUntil.value = Date.now() + secs * 1000;
+      else rateLimitedUntil.value = Date.now() + secs * 1000;
       lastError.value = null;
     } else {
       lastError.value = e instanceof Error ? e.message : String(e);

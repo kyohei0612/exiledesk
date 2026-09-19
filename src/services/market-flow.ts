@@ -144,15 +144,11 @@ export interface FlowStatus {
   swept_at: number;
   /** レート制限の規則 (x-rate-limit-ip) */
   rate_rules: string | null;
-  /** 罰則で止まっている時の解除予定 (unix 秒、0 なら止まっていない) */
+  /** 次の 1 本を投げられる時刻 (unix 秒)。**止まりではなく順番待ち** */
   wait_until: number;
-  /** 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない */
-  budget_until: number;
-  /** 5 分窓を全窓口あわせて何回使ったか / 上限 (画面の「5 分で n/N 回」) */
+  /** 5 分あたり全窓口あわせて何回使ったか / 今の上限 (画面の「5 分で n/N 回」) */
   budget_used: number;
   budget_max: number;
-  /** 次にリクエストを投げられる時刻 (unix 秒。上限に当たらないための通常の間隔待ちを含む) */
-  pace_until: number;
 }
 
 /** 1 巡の周期の既定 (秒)。Rust 側 CYCLE_DEFAULT_SECS と同じ */
@@ -189,26 +185,23 @@ export async function setFlowCycle(secs: number): Promise<number | null> {
  */
 export function tradeRateSecs(st: FlowStatus | null | undefined): number {
   const nowSec = Math.floor(Date.now() / 1000);
-  const until = Math.max(st?.retry_until ?? 0, st?.wait_until ?? 0);
-  // 画面側の止まりが「枠待ち」なら罰則ではないので、こちらには数えない (tradeBudgetSecs に回す)
-  const ui = tradeAuto.budgetWait.value ? 0 : tradeAuto.rateLimitSecs.value;
-  return Math.max(until > 0 ? until - nowSec : 0, ui);
+  const until = st?.retry_until ?? 0;
+  return Math.max(until > 0 ? until - nowSec : 0, tradeAuto.rateLimitSecs.value);
 }
 
 /**
- * 枠が空くまでの待ち秒 (罰則ではない)。
+ * 次の 1 本を投げるまでの秒 (罰則ではない)。
  *
  * 2026-09-19 オーナー「レート待ちのくせになぜか進んでるよ、取得おかしい」:
- * 罰則 (429 で止まる) と枠待ち (順番が来るまで間を空ける) を 1 つの数字にまとめていたので、
+ * 罰則 (429 で止まる) と順番待ち (間を空ける) を 1 つの数字にまとめていたので、
  * 進んでいるのに「解除まで取得は止まります」と出ていた。分けて出す。
- *   - 罰則     … 取得は**止まる**。解除まで何もできない
- *   - 枠待ち   … 取得は**続く**。次の 1 本を投げるまで間を空けているだけ
+ *   - 罰則     … 取得は**止まる**。解除まで何もできない (tradeRateSecs)
+ *   - 順番待ち … 取得は**続く**。門番が一定の間隔で流しているだけ (こちら。最長でも数十秒)
  */
-export function tradeBudgetSecs(st: FlowStatus | null | undefined): number {
+export function tradePaceSecs(st: FlowStatus | null | undefined): number {
   const nowSec = Math.floor(Date.now() / 1000);
-  const until = st?.budget_until ?? 0;
-  const ui = tradeAuto.budgetWait.value ? tradeAuto.rateLimitSecs.value : 0;
-  return Math.max(0, until > 0 ? until - nowSec : 0, ui);
+  const until = st?.wait_until ?? 0;
+  return Math.max(0, until > 0 ? until - nowSec : 0, tradeAuto.cooldownSecs.value);
 }
 
 export async function loadFlowStatus(): Promise<FlowStatus | null> {
@@ -218,10 +211,10 @@ export async function loadFlowStatus(): Promise<FlowStatus | null> {
     // 「止まっている」は罰則だけ。枠待ちは順番待ちなので取得は進む
     // (2026-09-19: 一緒にしていたので、進んでいるのに「止まります」と出ていた。
     //  さらに isRateLimited() が true になって画面の取得が黙って見送られていた)
-    const stopped = Math.max(st.wait_until, st.retry_until) * 1000;
+    const stopped = st.retry_until * 1000;
     noteExternalRate(stopped);
     // 画面のボタンの数字も門番の数に合わせる (手動と自動で別々に数えない)
-    noteGateState(st.pace_until * 1000, st.budget_used, st.budget_max, stopped);
+    noteGateState({ penaltyUntilMs: stopped, nextAtMs: st.wait_until * 1000, used: st.budget_used, max: st.budget_max });
     return st;
   } catch {
     return null;

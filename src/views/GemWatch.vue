@@ -16,7 +16,7 @@ import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
 import { sampleGemNow } from "./gem-corrupt/sample-now";
 import { jaSkill } from "../i18n/skills-ja";
 import { jaAscendancy } from "../i18n/ascendancies-ja";
-import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradeBudgetSecs, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, flowSentence, fmtSellTime, loadFlow, loadFlowStatus, setFlowCycle, summarizeFlow, sweepNow, tradePaceSecs, tradeRateSecs, type FlowStatus, type FlowStore } from "../services/market-flow";
 import { fmtClock } from "../utils/format-time";
 import { searchGems } from "./gem-corrupt/search";
 import { averageExalted, displayCurrency } from "../state/display-currency";
@@ -134,9 +134,9 @@ const retryLeft = computed(() => {
   return tradeRateSecs(status.value);
 });
 /** 枠が空くまでの待ち (罰則ではない。取得は続く) */
-const budgetLeft = computed(() => {
+const paceLeft = computed(() => {
   void nowMs.value;
-  return tradeBudgetSecs(status.value);
+  return tradePaceSecs(status.value);
 });
 
 /** 前回の一括取得 / 次の自動取得 (手動で押した分も同じ時計を使う) */
@@ -213,7 +213,7 @@ const sweepText = computed(() => {
   // 「レート待ち」と出すのは実際に止められている時だけ。通常の間隔 (10 秒前後) は待ちではない
   // (2026-09-18: min_spacing を入れたので pace_until が常に数秒先になり、ずっと待ちに見えていた)
   const stopped = retryLeft.value;
-  const wait = Math.max(stopped, budgetLeft.value);
+  const wait = Math.max(stopped, paceLeft.value);
   // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
   const left = Math.max(0, s.total - s.done);
   const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * 20) / 60))} 分` : "";
@@ -610,8 +610,8 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         <p v-if="retryLeft > 0" class="text-[11px] text-amber-300 mt-1">
           トレードのレート制限中（あと {{ waitText(retryLeft) }}<template v-if="resumeAtText(retryLeft)"> · {{ resumeAtText(retryLeft) }} 頃に再開</template>）。解除まで取得は止まります
         </p>
-        <p v-else-if="budgetLeft > 0" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
-          枠が空くまで {{ waitText(budgetLeft) }} 待っています（止まってはいません。次の 1 本を投げるまでの間隔です）
+        <p v-else-if="paceLeft > 0" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
+          次の 1 本まで {{ waitText(paceLeft) }}（止まってはいません。一定の間隔で流しています）
         </p>
         <p v-if="sweepClock" class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">{{ sweepClock }}</p>
         <p v-if="message" class="text-[12px] mt-2" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>

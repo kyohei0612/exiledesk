@@ -470,12 +470,9 @@ fn note_rate_headers(body: &serde_json::Value) {
         set_rate_state(Some(v));
     }
 }
-/// 罰則で止まっている時の解除予定 (unix 秒)。門番 (trade2.rs) が 429 と state ヘッダから持つ
-/// 罰則 (429 / restricted) で止まっている解除予定 (unix 秒、0 なら止まっていない)。
-/// FlowStatus の wait_until と retry_until は**どちらもこの値** (名前が 2 つあるだけ。画面側の型を
-/// 変えないために両方残している。2026-09-19 リファクタで確認)
+/// 罰則 (429 / restricted) で止まっている解除予定 (unix 秒、0 なら止まっていない)。門番が持つ
 fn penalty_until_secs() -> i64 {
-    crate::trade2::gate_blocked_until_secs()
+    crate::trade2::gate_status().penalty_until
 }
 /// 今から再開までの秒数 (止まっていなければ 0)
 fn retry_wait_secs() -> i64 {
@@ -1073,7 +1070,7 @@ async fn sample_until_done(app: &tauri::AppHandle) -> Result<(), String> {
         // 罰則で止まっている / 枠が空くまで遠い なら、次の 1 本が通るところまで待つ (待っている間も画面に出す)。
         // 罰則だけを見ていた頃は、枠待ちが 90 秒を超えていると即座に取り直しを始めて即座に全滅していた
         let mut waited = 0;
-        while (retry_wait_secs() > 0 || crate::trade2::gate_wait_secs() > 60) && waited < MAX_PENALTY_WAIT_SECS {
+        while (retry_wait_secs() > 0 || crate::trade2::gate_status().wait_secs > 60) && waited < MAX_PENALTY_WAIT_SECS {
             if CANCEL_MANUAL.load(Ordering::SeqCst) {
                 return Ok(());
             }
@@ -1378,16 +1375,15 @@ pub struct FlowStatus {
     pub rate_state: Option<String>,
     /// レート制限の規則 (x-rate-limit-ip)。画面はこれと state から待ち時間を出す
     pub rate_rules: Option<String>,
-    /// 今まさに待っている解除予定 (unix 秒、0 なら待っていない)。罰則で止まっている時だけ
+    /// 次にリクエストを投げられる時刻 (unix 秒)。**止まっているのではなく順番待ち**
+    /// (2026-09-19 リファクタ: wait_until / budget_until / pace_until の 3 つが
+    ///  どれも「次の 1 本まで」を別の式で出していたので 1 つにした)
     pub wait_until: i64,
-    /// 枠が空くまで止まっている時の解除予定 (unix 秒)。罰則ではないが取得は進まない
-    pub budget_until: i64,
-    /// 5 分窓を全窓口あわせて何回使ったか / 上限 (画面の「5 分で n/N 回」)
+    /// 5 分あたり全窓口あわせて何回使ったか / 今の上限 (画面の「5 分で n/N 回」)
     pub budget_used: i64,
     pub budget_max: i64,
-    /// 次にリクエストを投げられる時刻 (unix 秒)。上限に当たらないための通常の間隔待ちを含む
-    pub pace_until: i64,
-    /// 429 を食らっている場合の再開予定 (unix 秒、0 なら制限なし)
+    /// 罰則 (429) で止まっている場合の再開予定 (unix 秒、0 なら制限なし)。
+    /// **これだけが「止まっている」**
     pub retry_until: i64,
     /// 取りこぼした回の再挑戦予定 (unix 秒、0 なら通常運転)
     pub retry_at: i64,
@@ -1414,7 +1410,7 @@ pub struct FlowStatus {
 pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
     let store = load_store(&app);
     let progress = PROGRESS.lock().ok().and_then(|g| g.clone());
-    let (budget_used, budget_max) = crate::trade2::gate_usage_300();
+    let gate = crate::trade2::gate_status();
     let manual_sampling = RUNNING_MANUAL.load(Ordering::SeqCst);
     let sampling = RUNNING_AUTO.load(Ordering::SeqCst) || manual_sampling;
     let (current, done, total) = match progress {
@@ -1447,13 +1443,11 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         last_error: LAST_ERROR.lock().ok().and_then(|g| g.clone()),
         rate_state: RATE_STATE.lock().ok().and_then(|g| g.clone()),
         rate_rules: RATE_RULES.lock().ok().and_then(|g| g.clone()),
-        // 罰則で止まっている解除予定は門番が持つ (画面はこれを 1 秒ごとに数える)
-        wait_until: penalty_until_secs(),
-        budget_until: now_secs() + crate::trade2::gate_budget_wait_secs(),
-        budget_used,
-        budget_max,
-        pace_until: now_secs() + crate::trade2::gate_wait_secs(),
-        retry_until: penalty_until_secs(),
+        // レートの数字は門番の 1 回の呼び出しから全部出す (2026-09-19 リファクタ)
+        budget_used: gate.used_300,
+        budget_max: gate.max_300,
+        wait_until: now_secs() + gate.wait_secs,
+        retry_until: gate.penalty_until,
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),
         sweep_done: store.sweep_done.len(),
