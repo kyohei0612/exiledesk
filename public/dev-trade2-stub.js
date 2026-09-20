@@ -51,7 +51,7 @@
   // ?sweep=auto / ?sweep=manual の初期値 (console から書き換えられる)
   window.__stubSweep = (location.search.match(/[?&]sweep=(auto|manual)/) ?? [])[1] ?? "";
 
-  if (/[?&](no)?login=1/.test(location.search) || window.__stubSweep) {
+  if (/[?&](no)?login=1/.test(location.search) || window.__stubSweep || location.search.includes("flow=1")) {
     const empty = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
     window.__TAURI_INTERNALS__ = {
       // listen() 系が使う。無いと設定画面などがここで落ちる
@@ -63,7 +63,40 @@
       invoke: async (cmd) => {
         // ?nologin=1 は未ログイン、?login=1 ならログイン済みを装う
         if (cmd === "trade_history_session") return { logged_in: location.search.includes("login=1") && !location.search.includes("nologin=1"), account: "stub" };
-        if (cmd === "market_flow_load") return empty;
+        /**
+         * ?flow=1 で捌き速度の記録を仕込む (判定の札の見え方を確かめる用。2026-09-20)。
+         * 1 件だけ 3 時間で売れた = 根拠が薄い判定 (札に「?」が付く) と、
+         * 3 件売れた = 通常の判定 の 2 つを並べる。
+         */
+        if (cmd === "market_flow_load") {
+          if (!location.search.includes("flow=1")) return empty;
+          const now = Math.floor(Date.now() / 1000);
+          const l = (hAgo, goneHAgo) => ({
+            id: `s${hAgo}-${goneHAgo}-${Math.random().toString(36).slice(2, 7)}`,
+            listed_at: now - hAgo * 3600,
+            first_seen: now - hAgo * 3600,
+            last_seen: now - (goneHAgo ?? 0) * 3600,
+            gone_at: goneHAgo == null ? null : now - goneHAgo * 3600,
+            amount: 10,
+            currency: "divine",
+          });
+          const st = (tracked) => ({ tracked, daily: [], total: tracked.length, sampled_at: now, list_complete: true });
+          return {
+            ...empty,
+            league: "Forbidden Rites",
+            sampled_at: now,
+            watches: [
+              { key: "Fireball::level21", label: "ファイアボール (レベル 21)", query: {}, note: "", manual: true, auto: true },
+              { key: "Fireball::quality23", label: "ファイアボール (品質 23%)", query: {}, note: "", manual: true, auto: true },
+            ],
+            states: {
+              // 薄い判定: 1 件だけ 3 時間で売れた → 「速い?」
+              "Fireball::level21": st([l(4, 1), l(2, null)]),
+              // 通常の判定: 3 件売れた → 「速い」
+              "Fireball::quality23": st([l(4, 2), l(5, 2), l(6, 3), l(2, null)]),
+            },
+          };
+        }
         /**
          * ?sweep=auto / ?sweep=manual で「取得が走っている」状態を装う
          * (画面下の帯と、他の取得ボタンが押せなくなるのを確かめる用。2026-09-20)。
@@ -124,6 +157,18 @@
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input.url;
+    /**
+     * 相場 (poe2scout) も止める (2026-09-20)。
+     * ここは trade2 だけをせき止めていたので、ジェムを選ぶと素材の相場を取りに行って
+     * **本物の API に出ていた**。オーナー方針「取得テストはオーナーがアプリでやる」に
+     * 合わせて、確認用の画面からは外に一切出さない。
+     * 中身は空で返す (素材の値段は「相場なし」になるだけで、判定の確認には要らない)。
+     */
+    if (/\/api\/poe2scout\//.test(url)) {
+      window.__stubBlocked = (window.__stubBlocked ?? 0) + 1;
+      const body = /\/History/.test(url) ? [] : { items: [], currencies: [], pages: 0 };
+      return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+    }
     if (!/\/api\/trade2-/.test(url)) return realFetch(input, init);
 
     if (/\/search\//.test(url)) {

@@ -59,7 +59,8 @@ const summaries = computed(() =>
     return {
       key: k.key,
       label: k.label,
-      verdict: f.label || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし"),
+      // 根拠が 3 件未満の判定には「?」を付ける (2026-09-20)
+      verdict: (f.thin ? `${f.label}?` : f.label) || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし"),
       sentence: flowSentence(f),
       tone: f.tone,
       gone: f.gone,

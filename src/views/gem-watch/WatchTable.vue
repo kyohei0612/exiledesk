@@ -140,8 +140,9 @@ function cells(en: string) {
       /** 並べ替えと表示に使う今の最安値 (高貴建て) */
       cheapest,
       label: SALE_KEY_LABEL[k],
+      // 根拠が 3 件未満の判定には「?」を付ける (札しか見えない一覧で区別が付くように。2026-09-20)
       verdict:
-        f.label ||
+        (f.thin ? `${f.label}?` : f.label) ||
         (f.firstLook && f.alive > 0
           ? "次回の取得で判定"
           : f.gone + f.alive > 0

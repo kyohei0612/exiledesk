@@ -232,7 +232,7 @@ const fmtFlowAt = (t: number | null): string => {
                 <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" :title="`${row.label} の記録を一覧で見る`" @click="openSold(row.key)">
                   <template v-for="f in [flowOf(row.key)]" :key="row.key">
                     <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
-                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}</span>
+                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}<span v-if="f.thin" class="opacity-70" title="根拠は 3 件未満です">?</span></span>
                       <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
                         {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)<template v-if="averageExalted(f.soldPrices) != null"> · 平均 {{ money(averageExalted(f.soldPrices)) }}</template><span v-if="f.olderThanMedian > 0" class="text-[var(--exile-color-text-tertiary)]"> · 未売却 {{ f.olderThanMedian }} 件はそれより長い</span>
                       </span>

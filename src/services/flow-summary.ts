@@ -76,6 +76,15 @@ export interface FlowSummary {
   /** 判定に足りるだけのデータがあるか */
   enough: boolean;
   /**
+   * 判定は出ているが、根拠の売れた件数が MIN_KNOWN (3 件) に届いていない。
+   *
+   * 2026-09-19 のオーナー指示「1 件でも短時間で売れたら一応早いんじゃないの?」で、
+   * 6 時間以内に売れた実績が 1 件でもあれば「速い」と言うようにした。文には
+   * 「1 件だけで出した判定です」と書いていたが、一覧で見えるのは札だけなので、
+   * 3 件以上で出した判定と区別が付かなかった (2026-09-20)。札に印を付けるために出す。
+   */
+  thin: boolean;
+  /**
    * この銘柄をまだ 1 回しか見ていない (初回の取得)。
    *
    * 2026-09-19 オーナー「初回の時遅いって出るけど、初回だから次回更新時判断ってやつ追加しなきゃね」:
@@ -117,6 +126,7 @@ const EMPTY_SUMMARY: FlowSummary = {
   total: null,
   lastAt: null,
   enough: false,
+  thin: false,
   firstLook: false,
   stale: 0,
   staleRatio: null,
@@ -247,6 +257,8 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // (「その値段なら 3 時間、それより高いと並んだまま」という読み方ができるように)
   const olderThanMedianEarly = median == null ? 0 : aliveAges.filter((a) => a > median).length;
   const enough = label !== "";
+  // 判定は出したが根拠が 3 件に届いていない (「1 件でも早ければ速い」の規則で出した分)
+  const thin = enough && goneLives.length > 0 && goneLives.length < MIN_KNOWN;
 
   // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか
   aliveAges.sort((a, b) => b - a);
@@ -283,6 +295,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     total: state.total ?? null,
     lastAt: state.sampled_at || null,
     enough,
+    thin,
     firstLook,
     stale,
     staleRatio,

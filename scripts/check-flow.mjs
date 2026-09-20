@@ -131,18 +131,49 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     NOW,
   );
   check(
+    // 3 件以上で出した判定には「薄い」の印を付けない (4b と区別が付くこと)
     "3b. 並んだままの在庫は判定を動かさず、件数だけ併記する",
-    s.label === "速い" && s.olderThanMedian === 4 && /もっと長く並んでいます/.test(flowSentence(s)),
-    `label=${s.label} 表示より長い=${s.olderThanMedian} 文=${flowSentence(s)}`,
+    s.label === "速い" && s.thin === false && s.olderThanMedian === 4 && /もっと長く並んでいます/.test(flowSentence(s)),
+    `label=${s.label} 薄い=${s.thin} 表示より長い=${s.olderThanMedian} 文=${flowSentence(s)}`,
   );
 }
 
 // ---------------------------------------------------------------------------
-// 4. 母数が足りなければ判定しない
+// 4. 母数が足りない時の扱い
+//
+//    2026-09-19 にオーナー指示で規則が変わった:「1 件でも短時間で売れたら一応早いんじゃないの?」
+//    → 6 時間以内に売れた実績が 1 件でもあれば「速い」と言ってよい。
+//      逆に 1 件が長かっただけでは「遅い」と言い切れないので、普通 / 遅い は 3 件を待つ。
+//    この検算はその変更で直し忘れていて、変更前の規則 (1 件なら必ず無判定) のままだった。
+//    今の規則を 4a / 4b の 2 つで押さえる (2026-09-20)。
 // ---------------------------------------------------------------------------
 {
-  const s = summarizeFlow(state([L({ listedHoursAgo: 2, goneHoursAgo: 1 }), L({ listedHoursAgo: 2 })]), NOW);
-  check("4. 母数不足なら判定を出さない", s.label === "" && s.tone === "unknown", `label="${s.label}" 母数=${s.known24}`);
+  // 4a. 1 件だけ、しかも時間がかかった → まだ何も言えない
+  const s = summarizeFlow(state([L({ listedHoursAgo: 12, goneHoursAgo: 2 }), L({ listedHoursAgo: 2 })]), NOW);
+  check(
+    "4a. 1 件しか売れておらず時間もかかっていれば判定を出さない",
+    s.label === "" && s.tone === "unknown" && s.enough === false,
+    `label="${s.label}" 売れた=${s.gone} 中央値=${s.medianMin} 分`,
+  );
+}
+{
+  // 4b. 1 件でも 6 時間以内に売れていれば「速い」。ただし薄い判定だと文で断る
+  const s = summarizeFlow(state([L({ listedHoursAgo: 4, goneHoursAgo: 1 }), L({ listedHoursAgo: 2 })]), NOW);
+  check(
+    "4b. 1 件でも 6 時間以内に売れていれば速い (薄さは札と文に出す)",
+    s.label === "速い" && s.tone === "fast" && s.thin === true && /1 件だけで出した判定です/.test(flowSentence(s)),
+    `label=${s.label} 薄い=${s.thin} 売れた=${s.gone} 文=${flowSentence(s)}`,
+  );
+}
+{
+  // 4c. 境目: 6 時間ちょうどは速い、それを超えたら無判定
+  const at6 = summarizeFlow(state([L({ listedHoursAgo: 8, goneHoursAgo: 2 })]), NOW);
+  const over6 = summarizeFlow(state([L({ listedHoursAgo: 9, goneHoursAgo: 2 })]), NOW);
+  check(
+    "4c. 6 時間ちょうどは速い / 超えたら無判定",
+    at6.label === "速い" && over6.label === "",
+    `6時間=${at6.label || "(無判定)"} 7時間=${over6.label || "(無判定)"}`,
+  );
 }
 
 // ---------------------------------------------------------------------------
