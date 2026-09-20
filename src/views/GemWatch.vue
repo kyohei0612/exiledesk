@@ -8,7 +8,7 @@
   自動取得の動き (8 時間 1 巡) は市場側 (market_flow.rs) のまま。手動の一括取得はいつでも押せる。
 -->
 <script setup lang="ts">
-import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from "vue";
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import BaseCard from "../components/decor/BaseCard.vue";
 import SoldListDialog from "../components/SoldListDialog.vue";
 import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "./gem-corrupt/row-query";
@@ -19,6 +19,8 @@ import { GEMS } from "./gem-corrupt/useGemCorrupt";
 const jaGemName = (en: string): string => GEMS.find((g) => g.en === en)?.ja ?? en;
 import { jaAscendancy } from "../i18n/ascendancies-ja";
 import { loadFlow, loadFlowStatus, type FlowStatus, type FlowStore } from "../services/market-flow";
+import { fmtClock } from "../utils/format-time";
+import { flowBusyStatus } from "../state/fetch-busy";
 import { searchGems } from "./gem-corrupt/search";
 import {
   addManualGem,
@@ -90,6 +92,15 @@ const { sweeping, stopSweep, sweep, retryLeft, paceLeft, sweepClock, CYCLE_OPTIO
   nowMs,
   gemCount: () => gems.value.length,
 });
+/**
+ * 取得の状態はアプリ全体で 1 か所 (state/fetch-busy.ts) が 2 秒ごとに見ている。
+ * この画面は 20 秒ごとの読み直しなので、そのままだと中止を押しても 20 秒近く
+ * 「取得中」のまま押せなかった (2026-09-20 の確認で判明)。新しい方に合わせる。
+ */
+watch(flowBusyStatus, (v) => {
+  if (v) status.value = v;
+});
+
 onMounted(() => {
   reload();
   void loadAscendancies();
@@ -278,21 +289,32 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
             監視の上限
             <input type="number" min="1" :max="MAX_WATCH_GEMS" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
           </label>
-          <!-- 自動巡回と同じ処理を手で 1 巡させる。他の取得が走っている間は押せない (2026-09-20) -->
+          <!--
+            自動巡回と同じ処理を手で 1 巡させる。
+            オーナー指示 2026-09-20:「巡回中は他の取得は触れないようにしよう」。
+            自動巡回が走っている間も押せない (以前は押せたので、押しても順番待ちに並ぶだけで
+            何も起きず「止まって見える」状態だった)。中止すればすぐ押せる。
+          -->
           <button
             type="button"
-            :disabled="sweeping || !!status?.manual_sampling || sampleBusy"
+            :disabled="sweeping || !!status?.sampling || sampleBusy"
             class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-            :title="sampleBusy ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)` : '監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します'"
+            :title="
+              sampleBusy
+                ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)`
+                : status?.auto_sampling && !status?.manual_sampling
+                  ? '自動巡回が走っています。止めたい時は右の「中止」を押してください'
+                  : '監視している全銘柄を今すぐ 1 巡します (自動巡回と同じ処理)。銘柄数 × 2 回ほど検索します'
+            "
             @click="sweep()"
           >
             {{ sampleBusy ? `${jaGemName(sampleTarget)} を取得中…${sampleQueued > 0 ? ` (あと ${sampleQueued} 件)` : ""}` : sweeping || status?.sampling ? sweepText || "取得中…" : "⟳ 一括取得 (今すぐ 1 巡)" }}
           </button>
           <button
-            v-if="sweeping || status?.manual_sampling"
+            v-if="sweeping || !!status?.sampling"
             type="button"
             class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-amber-200 hover:bg-amber-500/20"
-            title="一括取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)"
+            title="取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)。自動巡回も止められます"
             @click="stopSweep"
           >
             ■ 中止
@@ -389,6 +411,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           >
             {{ ranking?.busy ? (ranking?.waiting ? "待機中…" : "取得中…") : ranking?.needFetch ? "ランキングを取得" : "ランキングを取り直す" }}
           </button>
+          <!-- 取り直していないことが分かるように、出している結果の取得時刻を出す (オーナー指摘 2026-09-20) -->
+          <span v-if="ranking?.fetchedAt" class="text-[11px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
+            {{ fmtClock(ranking.fetchedAt) }} に取得した分を表示中
+          </span>
           <label class="inline-flex items-center gap-2">
             <input type="checkbox" :checked="s.autoTop" @change="apply({ autoTop: ($event.target as HTMLInputElement).checked })" />
             上位を自動で監視に入れる

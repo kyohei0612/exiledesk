@@ -3,6 +3,7 @@
   2026-09-19 に GemCorrupt.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import { fetchBusyKind, fetchBusyLabel, fetchBusy as sweepBusy } from "../../state/fetch-busy";
 import { computed } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { currencyJa } from "../../state/display-currency";
@@ -159,12 +160,12 @@ const baseBuyTitle = computed(() => {
                   <template v-else-if="m.key === 'baseGem' && g.baseSource.value === 'buy'">
                     <button
                       type="button"
-                      :disabled="g.pricing.value"
+                      :disabled="g.pricing.value || sweepBusy"
                       class="px-2 py-0.5 rounded border border-amber-500/70 bg-amber-500/15 text-amber-200 text-[11px] hover:bg-amber-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
-                      :title="g.retryWhenFree.value ? 'トレードの枠が空いたら自動で取りますが、今すぐ取りに行くこともできます' : 'トレードで現物 (コラプト無し・二重コラプト無し) の最安を取りに行きます'"
+                      :title="sweepBusy ? `${fetchBusyKind}が終わるまで押せません (同じトレードの枠を使うため)` : g.retryWhenFree.value ? 'トレードの枠が空いたら自動で取りますが、今すぐ取りに行くこともできます' : 'トレードで現物 (コラプト無し・二重コラプト無し) の最安を取りに行きます'"
                       @click="g.fetchSalePrices(true)"
                     >
-                      {{ g.pricing.value ? "取得中…" : g.retryWhenFree.value ? "値段を取る (順番待ち中)" : "値段を取る" }}
+                      {{ g.pricing.value ? "取得中…" : sweepBusy ? fetchBusyLabel : g.retryWhenFree.value ? "値段を取る (順番待ち中)" : "値段を取る" }}
                     </button>
                   </template>
                   <template v-else>相場なし</template>

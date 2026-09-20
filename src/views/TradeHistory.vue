@@ -7,6 +7,7 @@
     src-tauri/src/trade_history.rs  ログイン用ウィンドウ / cookie / 履歴 API
 -->
 <script setup lang="ts">
+import { fetchBusy, fetchBusyLabel } from "../state/fetch-busy";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { currencyJa, displayCurrency } from "../state/display-currency";
@@ -203,6 +204,9 @@ const waitSec = computed(() => Math.max(0, Math.ceil(((budget.value?.allowedAt ?
 const usageText = computed(() => (budget.value?.usage ?? []).map((u) => `${u.label} ${u.used}/${u.max}`).join(" · "));
 const fetchLabel = computed(() => {
   if (busy.value) return "取得中…";
+  // 履歴も同じ門番 (trade2) を通るので、巡回中は押しても順番待ちに並ぶだけ
+  // (オーナー指示 2026-09-20:「巡回中は他の取得は触れないようにしよう」)
+  if (fetchBusyLabel.value) return fetchBusyLabel.value;
   if (waitSec.value > 0) return `次の取得まで ${Math.floor(waitSec.value / 60)}:${String(waitSec.value % 60).padStart(2, "0")}`;
   return "履歴を取得";
 });
@@ -287,7 +291,7 @@ onUnmounted(() => {
       </label>
       <button
         type="button"
-        :disabled="!inApp || !loggedIn || busy || waitSec > 0 || !league"
+        :disabled="!inApp || !loggedIn || busy || waitSec > 0 || !league || fetchBusy"
         class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
         @click="fetchNow"
       >

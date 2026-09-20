@@ -35,7 +35,8 @@ pub fn save_result(app: &tauri::AppHandle, out: &GemBreakResult) {
 #[tauri::command]
 pub fn gem_break_cached(app: tauri::AppHandle, req: GemBreakRequest) -> Option<GemBreakResult> {
     let top_n = req.top_n.unwrap_or(100).clamp(5, 100);
-    try_offline(None, &app, req.class.unwrap_or_default(), top_n, now_ts())
+    // 画面に出すだけなので古くても出す (取り直しは取得ボタンか 3 日周期の自動取得で)
+    try_offline(None, &app, req.class.unwrap_or_default(), top_n, now_ts(), i64::MAX)
 }
 
 #[tauri::command]

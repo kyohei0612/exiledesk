@@ -112,8 +112,10 @@ export async function setWatches(watches: Watch[], league: string, site: string)
 export interface FlowStatus {
   /** 取得中か (自動か手動のどちらか) */
   sampling: boolean;
-  /** 手動の一括が走っているか。一括ボタンはこれだけを見て押せなくする (自動巡回中でも押せる) */
+  /** 手動の一括が走っているか */
   manual_sampling: boolean;
+  /** 自動巡回が走っているか。他の取得ボタンはこれを見て押せなくする (2026-09-20) */
+  auto_sampling: boolean;
   current: string | null;
   done: number;
   total: number;

@@ -145,16 +145,25 @@ pub fn now_ts() -> i64 {
         .unwrap_or(0)
 }
 
+/// `fresh_secs` より古いキャッシュは使わない。
+///
+/// 取得ボタンの経路は 6 時間 (gcache::SEARCH_FRESH_SECS) で切って取り直すが、
+/// **画面に出すだけの経路は古くても出す** (i64::MAX を渡す)。
+/// オーナー指摘 2026-09-20:「使用率のアセンダンシー、一度取得したらキャッシュで表示してくれ。
+/// なんか毎回取得してる気がする」。6 時間で切れると、アセンダンシーを選び直すたびに
+/// 「ランキングを取得」に戻って取り直しになっていた。使用率の顔ぶれは 3 日でしか
+/// 変わらない扱いなので (gem-watch-auto.ts の REFRESH_SECS)、表示は古い物で構わない。
 pub fn try_offline(
     window: Option<&tauri::Window>,
     app: &tauri::AppHandle,
     class: String,
     top_n: usize,
     now: i64,
+    fresh_secs: i64,
 ) -> Option<GemBreakResult> {
     let cache = gcache::load_raw(app)?;
     let hit = cache.searches.get(&gcache::search_key(&class, top_n))?;
-    if now - hit.fetched_at >= gcache::SEARCH_FRESH_SECS || hit.chars.is_empty() {
+    if now.saturating_sub(hit.fetched_at) >= fresh_secs || hit.chars.is_empty() {
         return None;
     }
     let mut per_char: Vec<Vec<GemView>> = Vec::with_capacity(hit.chars.len());

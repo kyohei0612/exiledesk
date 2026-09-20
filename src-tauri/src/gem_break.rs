@@ -120,7 +120,7 @@ pub async fn gem_break_fetch(window: tauri::Window, req: GemBreakRequest) -> Res
     // (2026-09-18 オーナー報告「即レート制限」: 1 人も新しく取らない時でも index-state / search で
     //  3 回問い合わせていたので、IP がブロックされているとそこで弾かれていた)
     if spread <= 1 {
-        if let Some(r) = try_offline(Some(&window), &app, req.class.clone().unwrap_or_default(), top_n, now_ts()) {
+        if let Some(r) = try_offline(Some(&window), &app, req.class.clone().unwrap_or_default(), top_n, now_ts(), crate::gem_break_cache::SEARCH_FRESH_SECS) {
             return Ok(r);
         }
     }

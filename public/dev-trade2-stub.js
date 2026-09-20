@@ -48,7 +48,10 @@
    * ?nologin=1 を足すと「Tauri で動いていて、未ログイン」を装う。
    * ログインを促すポップアップ (LoginGate) の見え方を確かめる用。
    */
-  if (/[?&](no)?login=1/.test(location.search)) {
+  // ?sweep=auto / ?sweep=manual の初期値 (console から書き換えられる)
+  window.__stubSweep = (location.search.match(/[?&]sweep=(auto|manual)/) ?? [])[1] ?? "";
+
+  if (/[?&](no)?login=1/.test(location.search) || window.__stubSweep) {
     const empty = { sampled_at: 0, list_refreshed_at: 0, league: "", site: "", watches: [], states: {} };
     window.__TAURI_INTERNALS__ = {
       // listen() 系が使う。無いと設定画面などがここで落ちる
@@ -61,6 +64,47 @@
         // ?nologin=1 は未ログイン、?login=1 ならログイン済みを装う
         if (cmd === "trade_history_session") return { logged_in: location.search.includes("login=1") && !location.search.includes("nologin=1"), account: "stub" };
         if (cmd === "market_flow_load") return empty;
+        /**
+         * ?sweep=auto / ?sweep=manual で「取得が走っている」状態を装う
+         * (画面下の帯と、他の取得ボタンが押せなくなるのを確かめる用。2026-09-20)。
+         * 走らせたり止めたりは console から window.__stubSweep = "auto" | "manual" | "" でもできる。
+         */
+        if (cmd === "market_flow_status") {
+          const mode = window.__stubSweep ?? "";
+          return {
+            sampling: mode !== "",
+            manual_sampling: mode === "manual",
+            auto_sampling: mode === "auto",
+            current: mode ? "Fireball (レベル 21)" : null,
+            done: mode ? 8 : 0,
+            total: mode ? 21 : 0,
+            rounds: 3,
+            last_at: 0,
+            next_at: 0,
+            auto_watches: 21,
+            manual_watches: 7,
+            last_error: null,
+            rate_state: null,
+            rate_rules: null,
+            wait_until: 0,
+            budget_used: 4,
+            budget_max: 22,
+            retry_until: 0,
+            retry_at: 0,
+            retry_keys: 0,
+            sweep_done: mode ? 8 : 0,
+            pace_secs: 14,
+            sampled_watches: 21,
+            cycle_secs: 14400,
+            swept_at: 0,
+            auto_off: false,
+            last_failed: 0,
+          };
+        }
+        if (cmd === "market_flow_cancel") {
+          window.__stubSweep = "";
+          return null;
+        }
         if (cmd === "settings_load") return { autostart_enabled: false, close_to_tray: true, auto_refetch_interval_secs: 259200 };
         if (cmd === "market_flow_import_seed") return 0;
         if (cmd === "market_flow_export_seed") return ["(スタブ) 実際には書き出していません", 0];

@@ -95,8 +95,30 @@ export const tradeAuto = {
  * 再取得ボタンの文言と押せるか。各ツール共通 (アドニア / ジェム)。
  *   検索中 → "trade2 で検索中…" / 429 → "レート制限中 (N 秒)" / 間隔待ち → "再取得まで N 秒" / それ以外 → idleLabel
  */
+/**
+ * 巡回 (自動巡回 / 一括取得 / 監視に足した直後の取得) が走っている間の一言。
+ * 空なら走っていない。state/fetch-busy.ts が見張って入れる。
+ *
+ * ここに置くのは循環参照を避けるため (fetch-busy → auto-price の一方向だけにする)。
+ */
+const sweepBusyLabel = ref("");
+/** 巡回の状態を知らせる (fetch-busy.ts からのみ呼ぶ) */
+export function noteSweepBusy(label: string): void {
+  sweepBusyLabel.value = label;
+}
+/** 今どこかで巡回・一括取得が走っているか */
+export const sweepBusy = computed(() => sweepBusyLabel.value !== "");
+
+/**
+ * 取得ボタンの見た目 (押せるか / 何と書くか)。
+ *
+ * オーナー指示 2026-09-20:「巡回中は他の取得は触れないようにしよう」。
+ * 取得はどれも同じ門番を通るので、巡回中に押しても順番待ちに並ぶだけで
+ * 画面には何も起きず「止まって見える」。押せなくして、理由をボタンに出す。
+ */
 export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trade2 で検索中…"): { label: string; disabled: boolean } {
   if (busy) return { label: busyLabel, disabled: true };
+  if (sweepBusyLabel.value) return { label: sweepBusyLabel.value, disabled: true };
   const limit = tradeAuto.rateLimitSecs.value;
   if (limit > 0) return { label: `トレードのレート制限中 (${limit} 秒)`, disabled: true };
   const cool = tradeAuto.cooldownSecs.value;

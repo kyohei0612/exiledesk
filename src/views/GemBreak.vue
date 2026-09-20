@@ -125,9 +125,20 @@ async function cancelNow(): Promise<void> {
   }
 }
 
+/** そのアセンダンシーで前に出した結果 (この PC に残っている分) */
+function storedFor(klass: string): Result | null {
+  try {
+    const raw = localStorage.getItem(`${STORE_KEY}.${klass || "all"}`);
+    return raw ? (JSON.parse(raw) as Result) : null;
+  } catch {
+    return null;
+  }
+}
+
 function loadStored(): void {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
+    const mine = storedFor(selectedClass.value);
+    const raw = mine ? JSON.stringify(mine) : localStorage.getItem(STORE_KEY);
     if (raw) result.value = JSON.parse(raw) as Result;
     else void loadSeed(); // この PC でまだ取っていない → 同梱データ / 前回の結果を使う
     const n = Number(localStorage.getItem(TOPN_KEY));
@@ -161,12 +172,22 @@ async function loadSeed(): Promise<void> {
  * 出せなければ何もしない (needFetch が立つので「取得」を促す)。
  */
 async function showCached(): Promise<void> {
-  if (!inApp || busy.value) return;
+  if (busy.value) return;
+  // まずこの PC に残っている前回の結果を出す (通信も IPC もしない)。
+  // オーナー指摘 2026-09-20:「使用率のアセンダンシー、一度取得したらキャッシュで表示してくれ。
+  // なんか毎回取得してる気がする」。Rust 側のキャッシュは 6 時間で切れるので、
+  // 半日空けてアセンダンシーを選び直すと毎回「ランキングを取得」に戻っていた。
+  // 使用率の顔ぶれが変わるのは 3 日に 1 回の扱いなので、表示は前の物で構わない。
+  const mine = storedFor(selectedClass.value);
+  if (mine?.rows?.length) result.value = mine;
+  if (!inApp) return;
   try {
     const r = await invoke<Result | null>("gem_break_cached", {
       req: { class: selectedClass.value, topN: topN.value },
     });
     if (!r?.rows?.length) return;
+    // 手元に残っている方が新しければそのまま (Rust のキャッシュは取り直すと古い方に戻ることがある)
+    if (mine?.rows?.length && (mine.fetched_at ?? 0) > (r.fetched_at ?? 0)) return;
     result.value = r;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(r));
@@ -272,7 +293,10 @@ onUnmounted(() => {
 });
 
 // 取得ボタンを上の「自動ジェム監視」に置いたので、親から押せるようにする (2026-09-19)
-defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, selectedClass });
+/** 今出している結果をいつ取ったか (unix 秒)。0 = まだ何も無い。
+ *  キャッシュで出していることが分かるように画面に出す (オーナー指摘 2026-09-20) */
+const fetchedAt = computed(() => result.value?.fetched_at ?? 0);
+defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, selectedClass, fetchedAt });
 </script>
 
 <template>

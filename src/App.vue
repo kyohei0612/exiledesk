@@ -6,12 +6,14 @@ import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
 import LoginGate from "./components/LoginGate.vue";
 import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
+import FetchBusyBar from "./components/FetchBusyBar.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
 import { ensureClientLogRotated } from "./services/client-log";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
 import { startSessionWatch } from "./state/poe-session";
+import { startFetchBusyWatch } from "./state/fetch-busy";
 import { importFlowSeed } from "./services/flow-seed";
 import { isTauriRuntime } from "./utils/isTauriRuntime";
 
@@ -49,6 +51,9 @@ onMounted(() => {
   startSessionWatch();
   // 同梱の捌き速度データを取り込む (サブ機の初期データ。自分で測った分は消さない)
   void importFlowSeed();
+  // 取得 (自動巡回 / 一括 / 追加時) が走っているかを見張る。走っている間は他の取得を押せなくし、
+  // 画面の下に何が走っているかを出す (オーナー指示 2026-09-20)
+  startFetchBusyWatch();
 });
 </script>
 
@@ -67,5 +72,7 @@ onMounted(() => {
     <LoginGate />
     <!-- 監視の枠が埋まっている時に「どれと入れ替えるか」を聞く (2026-09-20) -->
     <WatchReplaceDialog />
+    <!-- 取得中は他の取得を押せなくするので、何が走っているかを下に出す (2026-09-20) -->
+    <FetchBusyBar />
   </div>
 </template>

@@ -20,11 +20,13 @@ pub fn cycle_secs(store: &FlowStore) -> i64 {
     }
 }
 
-/// 自動巡回の送信間隔 (秒)。1 巡を SWEEP_TARGET_SECS で終える速さ (周期がそれより短ければ周期に合わせる)
-pub fn spread_pace_secs(watches: i64, cycle: i64) -> i64 {
-    let reqs = (watches * 2).max(1);
-    let window = SWEEP_TARGET_SECS.min(cycle.max(60));
-    (window / reqs).clamp(REQUEST_INTERVAL.as_secs() as i64, 600)
+/// 今の送信間隔 (秒)。門番 (trade2/gate.rs) が上限から決めている値をそのまま出す。
+///
+/// 2026-09-20: 以前は自動巡回だけ「周期いっぱいに薄く広げる」別の間隔 (spread_pace_secs) を
+/// 使っていたが、門番が上限を守って待つようになってからは二重に待っているだけだった。
+/// オーナー指示「今の一括取得に合わせてロジック」で廃止。
+pub fn sweep_pace_secs() -> i64 {
+    (crate::trade2::pace_ms() as f64 / 1000.0).ceil() as i64
 }
 
 /// 次に自動で 1 巡する予定時刻 (前回の一括取得から周期ぶん後)。まだ 1 度も取っていなければ今すぐ
@@ -40,38 +42,57 @@ pub const RETRY_GAP_SECS: i64 = 10 * 60;
 /// 取り直しを続ける上限。超えたら諦めて次の周期を待つ (2026-09-18 レビュー: 上限が無いと永久に回る)
 pub const MAX_RETRY_ROUNDS: u32 = 3;
 
-/// 自動巡回で 1 巡にかける時間 (オーナー指示 2026-09-18: 20 分 → 「15 分はどーやろ」→ 20 分に戻す)。
+/// 一括取得を中止する合図 (画面の「中止」)。自動と手動で別々に持つ
 ///
-/// 15 分にしていた時の前提「search と fetch は別の枠」が間違っていた。同日の実測では
-/// 5 分 30 回という上限が**その IP から取引所 API に投げた全部**に掛かっていて、
-/// 別々に数えていたせいで合計 5 分 57 回投げ、2 分ごとに 429 (罰則 10 分) を踏んでいた
-/// (trade2.rs の combined_rules に根拠)。
-///
-/// 54 銘柄 = 108 リクエスト。門番が合計を 5 分 20 回 (実測に合わせた上限 22 から 2 残す) に
-/// 抑えるので 15 秒に 1 回 = 1 巡 27 分。ここを短くしても門番が伸ばすだけで、
-/// 画面に出る見込み時間が嘘になる。
-/// 2026-09-19: 5 分 21 回で 429 を踏んだ記録が出たので上限を 30 → 22 に下げ、目安も 20 → 30 分に。
-/// 周期がこれより短い時は周期に合わせる (1 巡が次の巡に食い込まないように)。
-pub const SWEEP_TARGET_SECS: i64 = 30 * 60;
-
-/// 手動の一括取得を中止する合図 (画面の「中止」)
+/// 2026-09-20 オーナー:「巡回中は他の取得は触れないようにしよう」。触れなくする以上、
+/// 自動巡回も手で止められないといけないので、中止を自動にも効かせる。
 pub static CANCEL_MANUAL: AtomicBool = AtomicBool::new(false);
-/// 手動の一括取得の通し進捗 (これまでに取り終えた数, 全体数)。
+pub static CANCEL_AUTO: AtomicBool = AtomicBool::new(false);
+
+/// 1 巡の通し進捗 (これまでに取り終えた数, 全体数)。自動と手動で別々に持つ。
 ///
-/// 2026-09-19 オーナー「取得中の一括、なんか数字行ったり来たりしてない？」:
+/// 2026-09-19 オーナー「取得中の一括、なんか数字行ったり来たりしてない?」:
 /// 取り切るまで繰り返すようにしたので、取り直しの周は「1/5」のように母数が小さくなり、
 /// 画面の数字が 42/42 → 1/5 と戻って見えていた。周をまたいで通しで数える。
 pub static MANUAL_BASE: StdMutex<Option<(usize, usize)>> = StdMutex::new(None);
+pub static AUTO_BASE: StdMutex<Option<(usize, usize)>> = StdMutex::new(None);
 
-pub fn set_manual_base(v: Option<(usize, usize)>) {
-    if let Ok(mut g) = MANUAL_BASE.lock() {
+fn base_cell(slot: Slot) -> &'static StdMutex<Option<(usize, usize)>> {
+    match slot {
+        Slot::Auto => &AUTO_BASE,
+        Slot::Manual => &MANUAL_BASE,
+    }
+}
+pub fn set_sweep_base(slot: Slot, v: Option<(usize, usize)>) {
+    if let Ok(mut g) = base_cell(slot).lock() {
         *g = v;
     }
 }
-pub fn manual_base() -> Option<(usize, usize)> {
-    MANUAL_BASE.lock().ok().and_then(|g| *g)
+pub fn sweep_base(slot: Slot) -> Option<(usize, usize)> {
+    base_cell(slot).lock().ok().and_then(|g| *g)
 }
-/// 自動 (薄く流す巡回 / 取りこぼしの取り直し) が走っているか
+/// その枠の「中止」の合図を立てる / 下ろす
+pub fn set_cancel(slot: Slot, v: bool) {
+    cancel_flag(slot).store(v, Ordering::SeqCst);
+}
+/// 中止を押されたか
+pub fn cancelled(slot: Slot) -> bool {
+    cancel_flag(slot).load(Ordering::SeqCst)
+}
+fn cancel_flag(slot: Slot) -> &'static AtomicBool {
+    match slot {
+        Slot::Auto => &CANCEL_AUTO,
+        Slot::Manual => &CANCEL_MANUAL,
+    }
+}
+/// その枠が走っているかの旗
+pub fn running_flag(slot: Slot) -> &'static AtomicBool {
+    match slot {
+        Slot::Auto => &RUNNING_AUTO,
+        Slot::Manual => &RUNNING_MANUAL,
+    }
+}
+/// 自動 (周期の巡回 / 取りこぼしの取り直し) が走っているか
 pub static RUNNING_AUTO: AtomicBool = AtomicBool::new(false);
 /// 手動の一括が走っているか。
 ///

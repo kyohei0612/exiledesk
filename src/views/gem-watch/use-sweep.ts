@@ -25,15 +25,25 @@ export function useSweep(opts: {
   const { reload, message, status, nowMs } = opts;
 
   const sweeping = ref(false);
-  /** 一括取得を中止する (取り切るまで繰り返すので途中でやめる口。2026-09-19) */
+  /**
+   * 取得を中止する (取り切るまで繰り返すので途中でやめる口。2026-09-19)。
+   * 2026-09-20 から**自動巡回も止められる**。巡回中は他の取得を押せなくしたので、
+   * 止める手段が無いと待つしかなくなるため。
+   */
   async function stopSweep(): Promise<void> {
-    message.value = { ok: true, text: "中止します (今の銘柄を取り終えたら止まります)" };
+    const auto = !!status.value?.auto_sampling && !status.value?.manual_sampling;
+    message.value = {
+      ok: true,
+      text: auto
+        ? "自動巡回を中止します (今の銘柄を取り終えたら止まります。次の周期でまた回ります)"
+        : "中止します (今の銘柄を取り終えたら止まります)",
+    };
     await cancelSweep();
   }
   async function sweep(reason?: string): Promise<void> {
-    // 自動巡回の途中でも押せる (記録は取った時刻つきなので間に挟まるだけ。オーナー 2026-09-19)。
-    // 押せないのは手動の一括がもう走っている時だけ
-    if (sweeping.value || status.value?.manual_sampling) return;
+    // 取得はどれも同じ門番を通るので、走っている間は押しても順番待ちに並ぶだけ。
+    // 二重に始めない (オーナー指示 2026-09-20:「巡回中は他の取得は触れないようにしよう」)
+    if (sweeping.value || status.value?.sampling) return;
     sweeping.value = true;
     message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
     const poll = window.setInterval(reload, 3000);
@@ -96,7 +106,7 @@ export function useSweep(opts: {
    */
   const CYCLE_OPTIONS = [1, 2, 3, 4, 6, 8, 12, 24];
   /** 選択中の値。0 = 自動取得しない (オーナー指示 2026-09-19) */
-  /** 1 巡にかかる見込み (分)。門番が決めた今の間隔 × 本数 */
+  /** 1 巡にかかる見込み (分)。門番が決めた今の間隔 × 本数 (自動巡回も同じ速さ。2026-09-20) */
   const sweepMinutes = computed(() => {
     const pace = status.value?.pace_secs ?? 0;
     const reqs = Math.max(1, (status.value?.auto_watches ?? opts.gemCount() * 3) * 2);
@@ -147,18 +157,19 @@ export function useSweep(opts: {
   const sweepText = computed(() => {
     const s = status.value;
     if (!s?.sampling) return "";
-    // 自動巡回は周期いっぱいに薄く流すので、「待ち」ではなく間隔として出す
-    if (!sweeping.value && !s.manual_sampling && s.pace_secs > 5) {
-      return `自動巡回中 ${s.sweep_done}/${s.total || opts.gemCount() * 3} 銘柄 · ${s.pace_secs} 秒おき${s.current ? ` · ${s.current}` : ""}`;
-    }
+    // 自動巡回も一括取得も同じ流し方になったので (2026-09-20)、出す物も同じ。
+    // どちらが走っているかだけ頭に付ける
+    const kind = s.manual_sampling || sweeping.value ? "取得中" : "自動巡回中";
     // 「レート待ち」と出すのは実際に止められている時だけ。通常の間隔 (10 秒前後) は待ちではない
     // (2026-09-18: min_spacing を入れたので pace_until が常に数秒先になり、ずっと待ちに見えていた)
     const stopped = retryLeft.value;
     const wait = Math.max(stopped, paceLeft.value);
-    // 残り時間の目安。trade2 の上限 (5 分に 30 回) から、1 銘柄あたり約 20 秒で見積もる
-    const left = Math.max(0, s.total - s.done);
-    const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * 20) / 60))} 分` : "";
-    return `取得中 ${s.done}/${s.total}${eta}${stopped > 0 ? ` · レート制限で停止中 ${stopped} 秒` : wait > 0 ? ` · 次の 1 本まで ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
+    // 残り時間の目安。1 銘柄 = search + fetch の 2 本なので、門番の間隔 × 2 で見積もる
+    const total = s.total || opts.gemCount() * 3;
+    const left = Math.max(0, total - s.done);
+    const per = Math.max(1, s.pace_secs) * 2;
+    const eta = left > 0 ? ` · 残りおよそ ${Math.max(1, Math.round((left * per) / 60))} 分` : "";
+    return `${kind} ${s.done}/${total}${eta}${stopped > 0 ? ` · レート制限で停止中 ${stopped} 秒` : wait > 0 ? ` · 次の 1 本まで ${wait} 秒` : ""}${s.current ? ` · ${s.current}` : ""}`;
   });
 
   return { sweeping, stopSweep, sweep, retryLeft, paceLeft, sweepClock, CYCLE_OPTIONS, sweepMinutes, cycleHours, applyCycle, sweepText };

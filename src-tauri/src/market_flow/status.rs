@@ -12,8 +12,12 @@ use super::*;
 pub struct FlowStatus {
     /// 取得中か (自動か手動のどちらか)
     pub sampling: bool,
-    /// 手動の一括が走っているか (画面の一括ボタンはこれだけを見て押せなくする)
+    /// 手動の一括が走っているか
     pub manual_sampling: bool,
+    /// 自動巡回 (周期の 1 巡 / 取りこぼしの取り直し) が走っているか。
+    /// 画面はこれを見て他の取得ボタンを押せなくする (オーナー指示 2026-09-20:
+    /// 「巡回中は他の取得は触れないようにしよう」)
+    pub auto_sampling: bool,
     /// 取得中の銘柄名 (取得中のみ)
     pub current: Option<String>,
     /// 何件目 / 全体
@@ -48,7 +52,7 @@ pub struct FlowStatus {
     pub retry_keys: usize,
     /// 今の 1 巡で取り終わった銘柄数 (自動巡回は時間をかけて回るので進み具合を出す)
     pub sweep_done: usize,
-    /// 今の送信間隔 (秒)。自動巡回は周期 ÷ 本数で薄く流す
+    /// 今の送信間隔 (秒)。門番が 5 分あたりの上限から決めている値 (自動も手動も同じ)
     pub pace_secs: i64,
     /// 1 度でも取れた自動銘柄の数 (1 周目の進捗。画面で「巡回待ち」を出すのに使う)
     pub sampled_watches: usize,
@@ -69,7 +73,8 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
     let progress = PROGRESS.lock().ok().and_then(|g| g.clone());
     let gate = crate::trade2::gate_status();
     let manual_sampling = RUNNING_MANUAL.load(Ordering::SeqCst);
-    let sampling = RUNNING_AUTO.load(Ordering::SeqCst) || manual_sampling;
+    let auto_sampling = RUNNING_AUTO.load(Ordering::SeqCst);
+    let sampling = auto_sampling || manual_sampling;
     let (current, done, total) = match progress {
         Some((k, d, t)) => (Some(k), d, t),
         None => (None, 0, 0),
@@ -77,6 +82,7 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
     Ok(FlowStatus {
         sampling,
         manual_sampling,
+        auto_sampling,
         current,
         done,
         total,
@@ -108,7 +114,7 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),
         sweep_done: store.sweep_done.len(),
-        pace_secs: spread_pace_secs(store.watches.iter().filter(|w| w.auto).count() as i64, cycle_secs(&store)),
+        pace_secs: sweep_pace_secs(),
         cycle_secs: if auto_off(&store) { CYCLE_OFF } else { cycle_secs(&store) },
         auto_off: auto_off(&store),
         last_failed: store.last_failed.len(),
@@ -131,16 +137,13 @@ mod tests {
     use super::*;
 
 
-    /// 自動巡回の間隔: 54 銘柄 (108 リクエスト) を 30 分で回る速さになる
+    /// 送信間隔は門番が決めた値をそのまま出す (自動巡回だけ別に薄く広げるのはやめた)
     #[test]
-    fn spread_pace_finishes_a_sweep_in_the_target_window() {
-        let pace = spread_pace_secs(54, 2 * 3600);
-        assert_eq!(pace, 16, "108 リクエスト × 16 秒 = 約 29 分");
-        // 上限は IP 単位 (search と fetch の合計) で 5 分 20 回。この間隔なら 5 分 18 回で収まる
-        assert!(300 / pace <= 20);
-        // 周期が短い時はそちらに合わせる (1 巡が次の巡に食い込まない)
-        assert_eq!(spread_pace_secs(54, 600), 5);
-        // 銘柄が 1 つなら 2 リクエストしかないので間隔は長くなる
-        assert_eq!(spread_pace_secs(1, 2 * 3600), 600);
+    fn pace_comes_from_the_gate() {
+        let pace = sweep_pace_secs();
+        assert_eq!(pace, (crate::trade2::pace_ms() as f64 / 1000.0).ceil() as i64);
+        // 5 分あたりの上限から出しているので、この間隔なら 5 分の枠に収まる
+        assert!(pace >= 1, "0 秒間隔にはならない");
+        assert!(300 / pace.max(1) <= crate::trade2::gate_status().max_300.max(1));
     }
 }
