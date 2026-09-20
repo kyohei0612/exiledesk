@@ -76,6 +76,42 @@ export function fmtNum(n: number | null | undefined, digits?: number): string {
   return abs >= 100 ? n.toFixed(0) : abs >= 10 ? n.toFixed(1) : abs >= 1 ? n.toFixed(2) : n.toFixed(3);
 }
 
+
+/** 丸める向き。費用は切り上げ / 収入は切り下げ */
+export type RoundDir = "up" | "down";
+
+/**
+ * 表示用に整数へ丸めた額 (2026-09-20)。
+ *
+ * オーナー指示:「単価は小数点、全ての項目で切り上げで表示してくれ。3.7 神なら 4、
+ * 3.1 神でも 4。収入は逆で、12.5 神で売れますとかなら切り下げの 12 神で」。
+ * 狙いは**費用は多め・収入は少なめに見る**こと (収支を甘く見ないため)。
+ *
+ * 1 未満は 1 つ下の通貨に落としてから丸める (money() と同じ段の下げ方)。
+ * 一番下の通貨 (高貴) でも 1 未満になる額は丸めない。0 高貴 と出しても意味が無く、
+ * 切り上げれば 0.02 → 1 と 50 倍に化けるため。
+ *
+ * 戻り値の exalted は**丸めた後**の高貴建て。オーナー指示「丸めた単価で計算し直す」に
+ * 合わせて、表示だけでなく費用と売上の計算にもこの値を使う。
+ */
+export function roundMoney(
+  exalted: number | null | undefined,
+  dir: RoundDir,
+): { exalted: number; value: number; cur: DisplayCurrency; rounded: boolean } | null {
+  if (exalted == null || !Number.isFinite(exalted)) return null;
+  const { c, value } = pickUnit(exalted);
+  // 一番下の通貨でも 1 未満 = これ以上落とせない。丸めずそのまま出す
+  if (Math.abs(value) < 1) return { exalted, value, cur: c, rounded: false };
+  const v = dir === "up" ? Math.ceil(value) : Math.floor(value);
+  return { exalted: v * rateOf(c), value: v, cur: c, rounded: true };
+}
+
+/** 期待個数の丸め。オーナー指示:「ジェムの期待値も切り下げ」(収入を甘く見ないため) */
+export function roundQty(n: number | null | undefined): number {
+  if (n == null || !Number.isFinite(n) || n <= 0) return 0;
+  return Math.floor(n);
+}
+
 export const displayCurrency = {
   cur,
   rate,
@@ -98,8 +134,15 @@ export const displayCurrency = {
    * 単位を出さない (unit: false) 時は、桁だけ見せる場所なので選んでいる通貨のまま
    * (単位なしで通貨が変わると何の数字か分からなくなるため)。
    */
-  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean; fixed?: boolean }): string {
+  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean; fixed?: boolean; round?: RoundDir }): string {
     if (exalted == null || !Number.isFinite(exalted)) return "—";
+    // 費用は切り上げ / 収入は切り下げ (オーナー指示 2026-09-20)
+    if (opts?.round && !opts.fixed && opts.unit !== false) {
+      const r = roundMoney(exalted, opts.round);
+      if (r == null) return "—";
+      const sign = opts.signed && r.value > 0 ? "+" : "";
+      return `${sign}${r.rounded ? r.value : fmtNum(r.value)} ${LABEL[r.cur]}`;
+    }
     // 選んだ通貨で固定して出す (段を下げない)。オーナー指示 2026-09-20:
     // 「素材の行は取引所の 神 / カオス で見るけど、最終の合計だけは指定カレンシーで」
     if (opts?.fixed) {

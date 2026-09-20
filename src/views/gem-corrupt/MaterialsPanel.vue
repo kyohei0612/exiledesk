@@ -7,9 +7,9 @@ import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { fetchBusyKind, fetchBusyLabel, fetchBusy as sweepBusy } from "../../state/fetch-busy";
 import { computed } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
-import { currencyJa } from "../../state/display-currency";
+import { currencyJa, roundMoney } from "../../state/display-currency";
 import { openExternal } from "../../services/trade2/open-external";
-import { MATERIAL_DESC, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
+import { MATERIAL_DESC, cost, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
 import { fmtQty } from "./ledger";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
@@ -59,9 +59,13 @@ const materialRows = computed(() => {
       marketCheaper,
       // 現物を買う素材は「最安 1 件 × N」ではなく最安から N 件の合計 (オーナー指示 2026-09-19)
       buyTotal: r.key === "baseGem" && qtyN != null ? g.baseBuyTotalFor(Math.ceil(qtyN)) : null,
-      costPerAttempt: r.price == null || r.perAttempt == null ? null : r.price * r.perAttempt,
+      // 費用は**切り上げた単価**で数え直す (オーナー指示 2026-09-20:「丸めた単価で計算し直す」
+      // 「基本経費は多く、収入は厳しくのスタンス」)。表示と縦の掛け算が必ず合う
+      unitUp: r.price == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price),
+      costPerAttempt:
+        r.price == null || r.perAttempt == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price) * r.perAttempt,
       qtyN,
-      costN: r.price == null || qtyN == null ? null : r.price * qtyN,
+      costN: r.price == null || qtyN == null ? null : (roundMoney(r.price, "up")?.exalted ?? r.price) * qtyN,
       // 買う通貨建ての費用 (取引所を取っていれば)
       buyCostPerAttempt: unitAmount == null || r.perAttempt == null ? null : unitAmount * r.perAttempt,
       buyCostN: unitAmount == null || qtyN == null ? null : unitAmount * qtyN,
@@ -154,7 +158,7 @@ const baseBuyTitle = computed(() => {
                   "
                 >
                   <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ currencyJa(m.unitCurrency) }}</template>
-                  <template v-else-if="m.price != null">{{ money(m.price) }}</template>
+                  <template v-else-if="m.price != null">{{ cost(m.price) }}</template>
                   <!-- 現物を買うジェムで値段がまだ無い時は、その場で取りに行けるボタンを出す (オーナー指示 2026-09-20) -->
                   <template v-else-if="m.key === 'baseGem' && g.baseSource.value === 'buy'">
                     <button
@@ -172,16 +176,16 @@ const baseBuyTitle = computed(() => {
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
                   <template v-if="m.buyCostPerAttempt != null">{{ fmtBuy(m.buyCostPerAttempt) }} {{ currencyJa(m.unitCurrency) }}</template>
-                  <template v-else>{{ money(m.costPerAttempt) }}</template>
+                  <template v-else>{{ cost(m.costPerAttempt) }}</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">
                   <!-- 現物を買う素材は最安から N 件を積んだ合計 (1 件 × N ではない。2026-09-19) -->
                   <template v-if="m.buyTotal">
-                    <span :title="`最安から ${attempts} 件の合計。取れている ${m.buyTotal.covered} 件ぶんは実際の値段、足りない分は一番高い値で埋めています`">{{ money(m.buyTotal.total) }}</span>
+                    <span :title="`最安から ${attempts} 件の合計。取れている ${m.buyTotal.covered} 件ぶんは実際の値段、足りない分は一番高い値で埋めています`">{{ cost(m.buyTotal.total) }}</span>
                   </template>
                   <template v-else-if="m.buyCostN != null">{{ fmtBuy(m.buyCostN) }} {{ currencyJa(m.unitCurrency) }}</template>
-                  <template v-else>{{ money(m.costN) }}</template>
+                  <template v-else>{{ cost(m.costN) }}</template>
                 </td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">

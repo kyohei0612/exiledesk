@@ -7,6 +7,13 @@ import { displayCurrency } from "../../state/display-currency";
 
 /** 表示通貨で書く (符号付きにもできる) */
 export const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
+
+/**
+ * 費用は切り上げ / 収入は切り下げで書く (オーナー指示 2026-09-20:
+ * 「基本経費は多く、収入は厳しくのスタンス」)。1 未満は 1 つ下の通貨に落としてから丸める。
+ */
+export const cost = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed, round: "up" });
+export const income = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed, round: "down" });
 /** 今の表示通貨の名前 (神 / カオス / 高貴) */
 export const unit = displayCurrency.label;
 

@@ -14,7 +14,12 @@ import { averageExalted, displayCurrency } from "../../state/display-currency";
 import { openGemCorrupt } from "../../state/app-nav";
 import type { WatchGem } from "../../state/watch-settings";
 
-const props = defineProps<{ gems: WatchGem[]; flowStore: FlowStore | null }>();
+const props = defineProps<{
+  gems: WatchGem[];
+  flowStore: FlowStore | null;
+  /** 期待値を出す回数 (上の「回数」プルダウン。オーナー指示 2026-09-20:「5 ずつ 100 まで回数した時の期待値収益」) */
+  attempts?: number;
+}>();
 const emit = defineEmits<{ remove: [en: string]; openSold: [en: string, key: (typeof SALE_KEYS)[number] | null] }>();
 const gems = computed(() => props.gems);
 const flowStore = computed(() => props.flowStore);
@@ -22,10 +27,10 @@ const openSold = (en: string, key: (typeof SALE_KEYS)[number] | null): void => e
 const remove = (en: string): void => emit("remove", en);
 
 /**
- * 期待値を出す時の試行回数 (オーナー指示 2026-09-17:「期待値は 30 回回した時の期待値で」)。
- * 1 回だと金額が小さすぎて差が見えないため、30 回分でまとめて出す。
+ * 期待値を出す時の試行回数。既定 30 (オーナー指示 2026-09-17:「期待値は 30 回回した時の期待値で」)。
+ * 2026-09-20 からは画面の「回数」プルダウンで 5〜100 に変えられる (props.attempts)。
  */
-const EV_ATTEMPTS = 30;
+const EV_ATTEMPTS = computed(() => (props.attempts && props.attempts > 0 ? props.attempts : 30));
 
 /** スピリットジェムかどうか (期待値の素材が別物なので要る) */
 const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
@@ -63,7 +68,7 @@ const scoredGems = computed(() => {
       /** レベル 21 と完成品が速い (オーナーの言う「2 番目に大事」) */
       coreFast: fastKeys.has("level21") && fastKeys.has("finished"),
       /** 30 回回した時の期待収支 */
-      ev: e ? e.ev * EV_ATTEMPTS : null,
+      ev: e ? e.ev * EV_ATTEMPTS.value : null,
       /** 1 回あたりの期待収支 */
       evPer1: e?.ev ?? null,
       evRoute: e?.route.label ?? "",
@@ -106,7 +111,7 @@ const sortedGems = computed(() => {
   return rows;
 });
 const SORT_NOTE: Record<SortMode, string> = {
-  ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS} 回回した時の手残り) が高い順。売れた実績が無い条件は「売れない = 0」として計算します (判定待ちも同じ扱い)。`,
+  ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS.value} 回回した時の手残り) が高い順。売れた実績が無い条件は「売れない = 0」として計算します (判定待ちも同じ扱い)。`,
   level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の今の最安値が高い順。",
   quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の今の最安値が高い順。",
   finished: "完成品が「速い」ジェムを上に、その中では 完成品の今の最安値が高い順。",
@@ -213,11 +218,14 @@ function toneClass(tone: string): string {
                     v-if="gem.ev != null"
                     class="text-[12px]"
                     :class="gem.ev > 0 ? 'text-emerald-300' : gem.ev < 0 ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'"
-                    :title="`${EV_ATTEMPTS} 回回した時の期待収支 ${displayCurrency.money(gem.ev, { signed: true })} (1 回あたり ${displayCurrency.money(gem.evPer1, { signed: true })})
-入り方: ${gem.evRoute}${gem.evRoi != null ? ` · 利回り ${(gem.evRoi * 100).toFixed(0)}%` : ''}${gem.evUpfront ? ` · 1 回の元手 ${displayCurrency.money(gem.evUpfront)} (${EV_ATTEMPTS} 回で ${displayCurrency.money(gem.evUpfront * EV_ATTEMPTS)})` : ''}
+                    :title="`${EV_ATTEMPTS} 回回した時の期待収支 ${displayCurrency.money(gem.ev, { signed: true, round: 'down' })} (1 回あたり ${displayCurrency.money(gem.evPer1, { signed: true })})
+入り方: ${gem.evRoute}${gem.evRoi != null ? ` · 利回り ${(gem.evRoi * 100).toFixed(0)}%` : ''}${gem.evUpfront ? ` · 1 回の元手 ${displayCurrency.money(gem.evUpfront, { round: 'up' })} (${EV_ATTEMPTS} 回で ${displayCurrency.money(gem.evUpfront * EV_ATTEMPTS, { round: 'up' })})` : ''}
 売値は実際に売れた値段の平均を使っています`"
                   >
-                    {{ displayCurrency.money(gem.ev, { signed: true }) }}
+                    <!-- 収入は切り下げ (オーナー指示 2026-09-20:「基本経費は多く、収入は厳しく」) -->
+                    {{ displayCurrency.money(gem.ev, { signed: true, round: "down" }) }}
+                    <!-- 最も得な入り方 (オーナー指示 2026-09-20:「最も得な期待値 (23% 買った時とか、完成品買った時とか、自作なのか)」) -->
+                    <span v-if="gem.evRoute" class="block text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">{{ gem.evRoute }}</span>
                   </span>
                   <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="売れた記録か素材の相場がまだ足りません">—</span>
                 </td>

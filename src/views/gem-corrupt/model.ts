@@ -70,7 +70,13 @@ export interface SalePrices {
   finished: number | null;
 }
 
-export type RouteId = "craft" | "buy21" | "buy23" | "buyFinished";
+/**
+ * craftPlain = 自作で賭けない (レベル 21 と品質 23% をそのまま売る)。
+ * オーナー指示 2026-09-20:「完成品を売るより普通に品質ジェム 23% とプラ 1 ジェムをそれぞれ
+ * 売った方が得、も追加して欲しい。全計算に加えて」。craft は結晶を賭けるかを期待値で決めるが、
+ * こちらは常に賭けないので、両方並べれば「賭ける価値があるか」が一目で分かる。
+ */
+export type RouteId = "craft" | "craftPlain" | "buy21" | "buy23" | "buyFinished";
 
 /** 収支の「売れた物」の行 (売値の 3 状態 + 外れの生存品) */
 export type SaleSlot = "level21" | "quality23" | "finished" | "other";
@@ -117,6 +123,16 @@ export interface RouteResult {
   /** 自作経路で「片方当たり → 結晶で賭ける」を選ぶか (期待値で決めた結果) */
   gambleAfterLevel?: boolean;
   gambleAfterQuality?: boolean;
+  /**
+   * 「N 回やったら何個できるか」を段ごとに数えるための確率 (2026-09-20)。
+   *
+   * オーナー指示:「完成品 = 期待値 23% ジェムの個数 = コラプト結晶 23% 個数 → 期待値完成品
+   * → できた個数分 20 ジェム追加。プラ 21 はそのまま期待値通りできた個数を 20 ジェム追加。
+   * 最終完成品の期待値の個数と 21 ジェムの個数を足したのが 20 ジェム」。
+   * 期待値どうしを掛けるのではなく、**できた個数を切り下げてから次に渡す**ので、
+   * 1 回あたりの期待値だけでは足りず、段ごとの確率が要る。
+   */
+  stage?: StageProbs;
   /** 不足している相場 */
   missing: string[];
 }
@@ -200,7 +216,7 @@ function finish(
  * 自作経路。ヴァールの結果ごとに「止める / 結晶で賭ける」の良い方を採る。
  * 原石代は「売る物」にだけ掛かる (壊れた物・売らない物には掛からない)。
  */
-function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult {
+function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams, plain = false): RouteResult {
   const missing: string[] = [];
   if (m.baseGem == null) missing.push("低レベルジェム");
   if (m.gcp == null) missing.push("宝石細工師のプリズム");
@@ -211,8 +227,8 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   if (s.quality23 == null) missing.push("売値: 品質 23%");
   if (s.finished == null) missing.push("売値: 完成品");
   const base: RouteResult = {
-    id: "craft",
-    label: "自作 (ヴァール → 結晶)",
+    id: plain ? "craftPlain" : "craft",
+    label: plain ? "自作 (賭けずにそのまま売る)" : "自作 (ヴァール → 結晶)",
     ok: false,
     upfront: 0,
     ev: 0,
@@ -244,12 +260,12 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   // レベル +1 が出た後: 止める (21 として売る) か、結晶で品質を賭けるか
   const hitQ = crystalHitQuality(p);
   const gambleAfterLevel =
-    crystal != null && -crystal + hitQ * sell(sF) + (survive - hitQ) * sell(lf * s21) > sell(s21);
+    !plain && crystal != null && -crystal + hitQ * sell(sF) + (survive - hitQ) * sell(lf * s21) > sell(s21);
 
   // 品質 +3 が出た後: 止める (23% として売る) か、結晶でレベルを賭けるか
   const hitL = crystalHitLevel(p);
   const gambleAfterQuality =
-    crystal != null && -crystal + hitL * sell(sF) + (survive - hitL) * sell(lf * s23) > sell(s23);
+    !plain && crystal != null && -crystal + hitL * sell(sF) + (survive - hitL) * sell(lf * s23) > sell(s23);
 
   const pLevelUp = v.level / 2;
   const pQualityTop = v.quality / steps;
@@ -272,7 +288,20 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
   }
   outcomes.push(leveledSaleLine("外れ (変化なし / レベル −1 / 品質 22% 以下 / ソケット増減)", pJunk, lf * baseGem, "other", uncut));
 
-  return finish(base, upfront, crystal ?? 0, uncut, outcomes, { gambleAfterLevel, gambleAfterQuality });
+  const stage: StageProbs = {
+    pLevel21: pLevelUp,
+    pQuality23: pQualityTop,
+    pJunk,
+    gambleLevel21: !!gambleAfterLevel,
+    hitFromLevel21: hitQ,
+    gambleQuality23: !!gambleAfterQuality,
+    hitFromQuality23: hitL,
+    survive,
+    uncutForFinished: true,
+    uncutForLevel21: true,
+    uncutForQuality23: true,
+  };
+  return finish(base, upfront, crystal ?? 0, uncut, outcomes, { gambleAfterLevel, gambleAfterQuality, stage });
 }
 
 /** レベル 21 を買って結晶で品質を賭ける (買った物は既に 21 なので原石代は不要) */
@@ -292,7 +321,13 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     saleLine("外れ (レベル 21 のまま、品質は崩れる)", survive - hit, lf * s21, "other"),
     lostLine("破壊", 1 - survive),
   ];
-  return finish(base, s21 + m.crystal!, 0, 0, outcomes, { expectedCrystals: 1 });
+  const stage: StageProbs = {
+    pLevel21: 1, pQuality23: 0, pJunk: 0,
+    gambleLevel21: true, hitFromLevel21: hit,
+    gambleQuality23: false, hitFromQuality23: 0,
+    survive, uncutForFinished: false, uncutForLevel21: false, uncutForQuality23: false,
+  };
+  return finish(base, s21 + m.crystal!, 0, 0, outcomes, { expectedCrystals: 1, stage });
 }
 
 /**
@@ -318,18 +353,31 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     leveledSaleLine("外れ (レベル −1)", survive - hit, lf * s23, "other", uncut),
     lostLine("破壊", 1 - survive),
   ];
-  return finish(base, s23 + m.crystal!, 0, uncut, outcomes, { expectedCrystals: 1 });
+  const stage: StageProbs = {
+    pLevel21: 0, pQuality23: 1, pJunk: 0,
+    gambleLevel21: false, hitFromLevel21: 0,
+    gambleQuality23: true, hitFromQuality23: hit,
+    survive, uncutForFinished: true, uncutForLevel21: false, uncutForQuality23: false,
+  };
+  return finish(base, s23 + m.crystal!, 0, uncut, outcomes, { expectedCrystals: 1, stage });
 }
 
 function buyFinishedRoute(s: SalePrices): RouteResult {
   const missing = s.finished == null ? ["売値: 完成品"] : [];
   const base: RouteResult = { id: "buyFinished", label: "完成品を買う (基準)", ok: false, upfront: 0, ev: 0, pFinished: 1, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
   if (missing.length > 0) return base;
-  return finish(base, s.finished!, 0, 0, [saleLine("完成品", 1, s.finished!, "finished")], { expectedCrystals: 0 });
+  const stage: StageProbs = {
+    pLevel21: 0, pQuality23: 0, pJunk: 0,
+    gambleLevel21: false, hitFromLevel21: 0,
+    gambleQuality23: false, hitFromQuality23: 0,
+    survive: 1, uncutForFinished: false, uncutForLevel21: false, uncutForQuality23: false,
+  };
+  // 完成品を買う経路は「1 回 = 完成品 1 個」。段の確率では表せないので個数だけ後で足す
+  return finish(base, s.finished!, 0, 0, [saleLine("完成品", 1, s.finished!, "finished")], { expectedCrystals: 0, stage });
 }
 
 export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult[] {
-  return [craftRoute(m, s, p), buy21Route(m, s, p), buy23Route(m, s, p), buyFinishedRoute(s)];
+  return [craftRoute(m, s, p), craftRoute(m, s, p, true), buy21Route(m, s, p), buy23Route(m, s, p), buyFinishedRoute(s)];
 }
 
 /**
@@ -337,6 +385,100 @@ export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParam
  * 収支で回数を入れた時に売れた数を期待値で埋める (2026-09-15 オーナー指示)。
  * 外れの生存品 (other) は相場が無いので、平均の売値 (前提の割合 × 元の値段) も使う。
  */
+/** 「賭ける前に何が出来上がるか」の確率 (1 回あたり) */
+export interface StageProbs {
+  /** レベル +1 が出る (= レベル 21 の素体) */
+  pLevel21: number;
+  /** 品質 23% が出る */
+  pQuality23: number;
+  /** どちらも外れ */
+  pJunk: number;
+  /** レベル 21 に結晶を使うか / 使った時の当たり (品質 23% になる) 確率 */
+  gambleLevel21: boolean;
+  hitFromLevel21: number;
+  /** 品質 23% に結晶を使うか / 使った時の当たり (レベル +1 になる) 確率 */
+  gambleQuality23: boolean;
+  hitFromQuality23: number;
+  /** 結晶で壊れずに残る確率 */
+  survive: number;
+  /**
+   * 1 個売るのに原石 (レベル 20) が要るか。経路で違う
+   * (自作の完成品と 21 は要る / 買った 21 は既に 21 なので要らない /
+   *  品質 23% はレベル不問で売るので要らない)。
+   */
+  uncutForFinished: boolean;
+  uncutForLevel21: boolean;
+  /**
+   * 品質 23% を売るのにも原石が要るか。
+   * オーナー指示 2026-09-20:「基本的に 23% ジェムは 20 ジェム使うようにしてくれ、
+   * 今までのも含めて全部」。買った 23% (buy23 経路) は元から持っている物なので要らない。
+   */
+  uncutForQuality23: boolean;
+}
+
+/** N 回やった時の個数 (段ごとに切り下げ) */
+export interface ExpectedCounts {
+  /** 売る物 */
+  level21: number;
+  quality23: number;
+  finished: number;
+  other: number;
+  /** 使う物 */
+  crystals: number;
+  /** 原石 (レベル 20)。売る物 (完成品 / レベル 21 / 品質 23%) の個数だけ使う */
+  uncut20: number;
+}
+
+/**
+ * N 回やった時の個数を、段ごとに切り下げながら数える (オーナー指示 2026-09-20)。
+ *
+ * 「期待値 × N」を項目ごとに独立して出すと、23% が 7.4 個できて結晶を 7.4 本使い
+ * 完成品が 1.85 個…と小数のまま話が進む。実際は **7 個できて 7 本使い 1 個できる**。
+ * 出来上がった個数を切り下げてから次の段に渡すので、ここで順に数える。
+ *
+ *   1. できた レベル 21 の素体 = floor(N × pLevel21)
+ *   2. できた 品質 23%        = floor(N × pQuality23)
+ *   3. 賭ける方に結晶を 1 本ずつ  → 当たりは floor(個数 × 当たり確率)
+ *   4. 原石は **完成品 + レベル 21** の個数だけ (23% と外れには使わない)
+ *
+ * 切り下げは「収入は厳しく」の方針どおり (オーナー:「ジェムの期待値も切り下げ」)。
+ */
+export function expectedCounts(r: RouteResult, attempts: number): ExpectedCounts {
+  const zero: ExpectedCounts = { level21: 0, quality23: 0, finished: 0, other: 0, crystals: 0, uncut20: 0 };
+  const n = Math.max(0, Math.floor(attempts));
+  const st = r.stage;
+  if (!r.ok || n <= 0 || !st) return zero;
+  const fl = (x: number): number => (Number.isFinite(x) && x > 0 ? Math.floor(x + 1e-9) : 0);
+
+  // 1-2. 賭ける前に出来上がった個数
+  const made21 = fl(n * st.pLevel21);
+  const made23 = fl(n * st.pQuality23);
+  let other = fl(n * st.pJunk);
+
+  // 3. 結晶を使う方は、できた個数ぶん 1 本ずつ賭ける
+  let crystals = 0;
+  let finished = 0;
+  let level21 = made21;
+  let quality23 = made23;
+  if (st.gambleLevel21 && made21 > 0) {
+    crystals += made21;
+    finished += fl(made21 * st.hitFromLevel21);
+    other += fl(made21 * (st.survive - st.hitFromLevel21));
+    level21 = 0; // 全部賭けたので 21 のままでは残らない
+  }
+  if (st.gambleQuality23 && made23 > 0) {
+    crystals += made23;
+    finished += fl(made23 * st.hitFromQuality23);
+    other += fl(made23 * (st.survive - st.hitFromQuality23));
+    quality23 = 0;
+  }
+
+  // 4. 原石は完成品とレベル 21 にだけ (経路によっては要らない)
+  const uncut20 =
+    (st.uncutForFinished ? finished : 0) + (st.uncutForLevel21 ? level21 : 0) + (st.uncutForQuality23 ? quality23 : 0);
+  return { level21, quality23, finished, other, crystals, uncut20 };
+}
+
 export function expectedSales(r: RouteResult): Record<SaleSlot, { qty: number; price: number | null }> {
   const acc: Record<SaleSlot, { qty: number; value: number }> = {
     level21: { qty: 0, value: 0 },

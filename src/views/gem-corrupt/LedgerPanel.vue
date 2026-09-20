@@ -7,7 +7,7 @@ import BaseCard from "../../components/decor/BaseCard.vue";
 import MoneyInput from "../../components/vaal-scales/MoneyInput.vue";
 import CountInput from "../../components/CountInput.vue";
 import { fmtQty, type GemLedgerApi } from "./ledger";
-import { evClass, fmtStamp, money } from "./ui";
+import { cost, evClass, fmtStamp, income } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
 const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; api: GemLedgerApi }>();
@@ -81,6 +81,7 @@ const {
                   <MoneyInput
                     :model-value="r.each"
                     :placeholder-exalted="r.pinned ?? r.market"
+                    round="up"
                     width="w-24"
                     @update:model-value="setUnit(r.key, $event)"
                   />
@@ -88,13 +89,13 @@ const {
                 <td class="py-1.5 pl-3 text-right">
                   <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setQtyValue(r.key, $event)" />
                 </td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ cost(r.cost) }}</td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
                 <td></td>
                 <td></td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.cost) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ cost(ledgerTotals.cost) }}</td>
               </tr>
             </tbody>
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
@@ -109,28 +110,28 @@ const {
               <tr v-for="r in ledgerSales" :key="r.qtyKey" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">{{ r.label }}</td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
-                  <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setEach(r.eachKey, $event)" />
+                  <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" round="down" width="w-24" @update:model-value="setEach(r.eachKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
                   <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setSoldValue(r.qtyKey, $event)" />
                 </td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ income(r.revenue) }}</td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td class="py-1.5 pr-2 font-display tracking-[0.04em]">売上合計</td>
                 <td></td>
                 <td></td>
-                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.revenue) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ income(ledgerTotals.revenue) }}</td>
               </tr>
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td class="py-1.5 pr-2 font-display tracking-[0.04em]">収支</td>
                 <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
-                  {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${money(ledgerTotals.perFinished)}` : "" }}
+                  {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${cost(ledgerTotals.perFinished)}` : "" }}
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
-                  {{ ledgerTotals.perAttempt != null ? `1 回あたり ${money(ledgerTotals.perAttempt, true)}` : "" }}
+                  {{ ledgerTotals.perAttempt != null ? `1 回あたり ${income(ledgerTotals.perAttempt, true)}` : "" }}
                 </td>
-                <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ money(ledgerTotals.profit, true) }}</td>
+                <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ income(ledgerTotals.profit, true) }}</td>
               </tr>
             </tbody>
           </table>

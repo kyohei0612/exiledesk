@@ -43,6 +43,7 @@ import { marketStore } from "../state/market-store";
 // 旧「クラフト選定ジェム」タブ。取得と使用率ランキングはここに埋め込む (2026-09-17 タブを統合)
 import GemUsageRanking from "./GemBreak.vue";
 import WatchTable from "./gem-watch/WatchTable.vue";
+import AttemptsSelect from "../components/AttemptsSelect.vue";
 import { useSweep } from "./gem-watch/use-sweep";
 /** 使用率ランキング (下に埋め込んでいる) を上のボタンから押すための参照 */
 const ranking = ref<InstanceType<typeof GemUsageRanking> | null>(null);
@@ -68,6 +69,29 @@ const gems = computed(() => watchGems(rows.value, s.value));
  * (オーナー指示 2026-09-17:「自動ジェム監視はアプリ内更新だからレート無い。タブ開くたびに読み直して。
  * 手動で取った情報が反映されないとズレる」)。
  */
+/**
+ * 一覧の期待値を出す回数 (オーナー指示 2026-09-20)。この PC に残す。
+ * ジェムコラプトの賭けの回数とは別 (あちらはジェムごとの帳簿の回数)。
+ */
+const EV_ATTEMPTS_KEY = "exiledesk.gem-watch.evAttempts";
+const evAttempts = ref<number>(
+  (() => {
+    try {
+      const n = Number(localStorage.getItem(EV_ATTEMPTS_KEY));
+      return n >= 1 ? n : 30;
+    } catch {
+      return 30;
+    }
+  })(),
+);
+watch(evAttempts, (n) => {
+  try {
+    localStorage.setItem(EV_ATTEMPTS_KEY, String(n));
+  } catch {
+    /* 残せなくても動く */
+  }
+});
+
 const status = ref<FlowStatus | null>(null);
 function reload(): void {
   rows.value = cachedRows() ?? [];
@@ -270,7 +294,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 <template>
   <section class="p-6 @container">
     <!-- 監視中の一覧 (手で選んだジェム 7 個まで)。操作もこのカードに入れる -->
-    <WatchTable :gems="gems" :flow-store="flowStore" @remove="remove" @open-sold="openSold">
+    <WatchTable :gems="gems" :flow-store="flowStore" :attempts="evAttempts" @remove="remove" @open-sold="openSold">
       <template #controls>
         <div class="flex items-end gap-x-4 gap-y-2 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
           <label class="inline-flex flex-col gap-1">
@@ -288,6 +312,11 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <label class="inline-flex flex-col gap-1">
             監視の上限
             <input type="number" min="1" :max="MAX_WATCH_GEMS" class="num w-20" :value="s.maxGems" @change="apply({ maxGems: Number(($event.target as HTMLInputElement).value) })" />
+          </label>
+          <!-- 期待値を出す回数 (オーナー指示 2026-09-20:「上限の横にプルダウンで回数。5 ずつ 100 まで回数した時の期待値収益」) -->
+          <label class="inline-flex flex-col gap-1" title="一覧の「期待値」をこの回数ぶんで出します (1 回あたり × 回数)">
+            期待値の回数
+            <AttemptsSelect v-model="evAttempts" />
           </label>
           <!--
             自動巡回と同じ処理を手で 1 巡させる。

@@ -14,7 +14,8 @@
  *   - 2026-09-16: 単価も回数を入れた時点で固定する。取引所で比べた後は固定単価も入れ替える
  */
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
-import { expectedSales, type RouteId, type SaleSlot } from "./model";
+import { roundMoney } from "../../state/display-currency";
+import { expectedCounts, expectedSales, type RouteId, type SaleSlot } from "./model";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
 const LEDGER_KEY = "exiledesk.gem.ledger";
@@ -175,6 +176,7 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     });
     switch (id) {
       case "craft":
+      case "craftPlain":
         return [
           // 名前と値段は素材表と同じ物 (原石から作る / トレードで現物を買う で変わる。
           // オーナー 2026-09-19「収支のところ、原石と現物で変わるところ一緒に変えて同期して」)
@@ -223,7 +225,11 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
    */
   function applyAttempts(n: number): void {
     if (!ledgerGem.value) return;
-    const l = ledger.value;
+    // 回数が変わったら、結晶・原石・売れた数の手入力は捨てて期待値の既定に戻す
+    // (オーナー指摘 2026-09-20:「今、前の入力が残ってしまってる」)。素材の確定分 (1 回 × N) はそのまま。
+    // 下の 2 つの書き込みはどちらもこの l を元にするので、ここで消してから渡す
+    const prev = ledger.value;
+    const l: GemLedger = n !== prev.attempts ? { ...prev, qty: dropChained(prev.qty), sold: {} } : prev;
     const route = l.route ?? (n > 0 && g.best.value ? g.best.value.id : null);
     const needPrices = n > 0 && Object.keys(l.prices).length === 0;
     if (route !== l.route || needPrices) {
@@ -297,6 +303,13 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     const v = (ev.target as HTMLSelectElement).value;
     setLedger("route", v === "" ? null : (v as RouteId));
   }
+  /** 結晶と原石の上書きを外す (連鎖で数える既定に戻す) */
+  function dropChained(qty: GemLedger["qty"]): GemLedger["qty"] {
+    const out = { ...qty };
+    delete out.crystal;
+    delete out.uncut20;
+    return out;
+  }
   /** 使った数。null = 空欄 = 灰色の既定値 (1 回の数 × 回数) を使う */
   function setQtyValue(key: RowKey, v: number | null): void {
     const qty = { ...ledger.value.qty };
@@ -334,16 +347,31 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     { deep: true },
   );
 
+  /**
+   * N 回やった時の個数 (段ごとに切り下げ)。結晶・原石・売れた数の既定はこれ
+   * (オーナー指示 2026-09-20:「コラプト結晶、ジェム 20、完成品の割合は期待値のデフォを必ず記載」)。
+   */
+  const counts = computed(() => {
+    const route = g.routes.value.find((x) => x.id === ledgerRouteId.value);
+    return route?.ok ? expectedCounts(route, ledger.value.attempts) : null;
+  });
+
   const ledgerRows = computed(() => {
     const l = ledger.value;
+    const c = counts.value;
     return routeRows(ledgerRouteId.value).map((r) => {
-      const auto = r.perAttempt == null ? 0 : r.perAttempt * l.attempts;
+      // 結晶と原石は「できた個数」から連鎖で数える (期待値 × 回数 ではない)
+      const auto =
+        r.key === "crystal" && c ? c.crystals : r.key === "uncut20" && c ? c.uncut20 : r.perAttempt == null ? 0 : r.perAttempt * l.attempts;
       const override = l.qty[r.key] ?? null;
       const qty = override ?? auto;
       const each = l.unit[r.key] ?? null;
       const pinned = l.prices[r.key] ?? null;
       const unit = each ?? pinned ?? r.market;
-      return { ...r, auto, override, qty, each, pinned, unit, cost: unit == null ? null : unit * qty };
+      // 費用は**切り上げた単価**で数え直す (オーナー指示 2026-09-20:「丸めた単価で計算し直す」
+      // 「基本経費は多く、収入は厳しくのスタンス」)。画面の縦の掛け算が必ず合う
+      const unitUp = unit == null ? null : (roundMoney(unit, "up")?.exalted ?? unit);
+      return { ...r, auto, override, qty, each, pinned, unit: unitUp, cost: unitUp == null ? null : unitUp * qty };
     });
   });
 
@@ -360,12 +388,16 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
       // 外れの生存品は相場が無いので、前提の割合 × 元の値段の平均を空欄時の売値にする
       { slot: "other", qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: exp?.other.price ?? null, each: l.eachOther },
     ];
+    const c = counts.value;
     return rows.map((r) => {
-      const auto = exp ? exp[r.slot].qty * l.attempts : 0;
+      // 売れた数も連鎖で数えた個数 (切り下げ)。相場が揃っていない間は 0
+      const auto = c ? c[r.slot] : exp ? Math.floor(exp[r.slot].qty * l.attempts) : 0;
       const override = l.sold[r.qtyKey] ?? null;
       const qty = override ?? auto;
       const price = r.each ?? r.market;
-      return { ...r, auto, override, qty, price, revenue: price == null ? (qty > 0 ? null : 0) : price * qty };
+      // 売上は**切り下げた売値**で数え直す (収入は厳しく見る)
+      const priceDown = price == null ? null : (roundMoney(price, "down")?.exalted ?? price);
+      return { ...r, auto, override, qty, price: priceDown, revenue: priceDown == null ? (qty > 0 ? null : 0) : priceDown * qty };
     });
   });
 
