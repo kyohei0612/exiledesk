@@ -99,6 +99,9 @@ try {
   check("費用 3.7 → 4 / 3.1 → 4 (切り上げ)", up(3.7).value === 4 && up(3.1).value === 4 && up(3.7).exalted === 4, `${up(3.7).value} / ${up(3.1).value}`);
   check("収入 12.5 → 12 / 12.9 → 12 (切り下げ)", dn(12.5).value === 12 && dn(12.9).value === 12, `${dn(12.5).value} / ${dn(12.9).value}`);
   check("整数はそのまま", up(4).value === 4 && dn(12).value === 12, `${up(4).value} / ${dn(12).value}`);
+  // 換算の往復誤差 (60 神 → 高貴で 2 桁に丸め → 神に戻すと 59.99999) で 1 神落ちない
+  check("誤差 59.99999 → 60 (切り下げでも落ちない) / 10.00001 → 10 (切り上げでも上がらない)", dn(59.99999).value === 60 && up(10.00001).value === 10 && dn(59.9).value === 59 && up(10.1).value === 11,
+    `${dn(59.99999).value} / ${up(10.00001).value} / ${dn(59.9).value} / ${up(10.1).value}`);
   check("一番下の通貨で 1 未満は丸めない (0.02 → 0.02)", up(0.02).rounded === false && Math.abs(up(0.02).value - 0.02) < 1e-9, JSON.stringify(up(0.02)));
   check("money() の書式: 費用 3.7 → '4 高貴' / 収入 12.5 → '12 高貴'", dc.displayCurrency.money(3.7, { round: "up" }) === "4 高貴" && dc.displayCurrency.money(12.5, { round: "down" }) === "12 高貴",
     `${dc.displayCurrency.money(3.7, { round: "up" })} / ${dc.displayCurrency.money(12.5, { round: "down" })}`);

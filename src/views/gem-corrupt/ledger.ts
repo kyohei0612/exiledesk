@@ -114,6 +114,8 @@ export interface GemLedgerApi {
   resetLedger: () => void;
   /** 使った数 / 売れた数の上書きだけ消す (回数・経路・単価は残す) */
   clearCounts: () => void;
+  /** 売れた物の 1 個の売値の上書きを消す (空欄 = 上の売値に戻る)。2026-09-20 */
+  clearEach: () => void;
   refreshLedgerPrices: () => void;
   fetchExchangeAndRepin: () => Promise<void>;
 }
@@ -328,6 +330,10 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     if (!ledgerGem.value) return;
     book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, qty: {}, sold: {} } };
   }
+  function clearEach(): void {
+    if (!ledgerGem.value) return;
+    book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null } };
+  }
   function resetLedger(): void {
     if (!ledgerGem.value) return;
     const next = { ...book.value };
@@ -437,6 +443,7 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     setEach,
     resetLedger,
     clearCounts,
+    clearEach,
     refreshLedgerPrices,
     fetchExchangeAndRepin,
   };

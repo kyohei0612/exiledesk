@@ -15,7 +15,7 @@ const g = props.g;
 const {
   ledger, ledgerRows, ledgerSales, ledgerTotals,
   setAttemptsValue, setRoute, setQtyValue, setSoldValue, setUnit, setEach,
-  resetLedger, clearCounts, refreshLedgerPrices,
+  resetLedger, clearCounts, clearEach, refreshLedgerPrices,
 } = props.api;
 </script>
 
@@ -29,6 +29,7 @@ const {
           <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
             <span>経路と回数を入れると使った数と売れた数が期待値で埋まる。実際と違う数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" title="上書きした数を消して、回数から出る期待値に戻します (回数・経路・単価はそのまま)" @click="clearCounts">数を期待値に戻す</button>
+            <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" title="手で入れた 1 個の売値を消して、上の売値 (取引所の最安) に戻します" @click="clearEach">売値を相場に戻す</button>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" :disabled="!g.selected.value" @click="resetLedger">全部 0 に</button>
           </div>
         </div>
@@ -78,16 +79,20 @@ const {
                   <div v-if="r.hint" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.hint }}</div>
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
+                  <!-- 手で入れた値は琥珀の枠 + × で目立たせる。灰色 (既定) と見分けが付かず「値段がズレてる」と見えた (2026-09-20) -->
                   <MoneyInput
                     :model-value="r.each"
                     :placeholder-exalted="r.pinned ?? r.market"
                     round="up"
                     width="w-24"
+                    :class="r.each != null ? 'ring-1 ring-amber-500/70 rounded' : ''"
                     @update:model-value="setUnit(r.key, $event)"
                   />
+                  <button v-if="r.each != null" type="button" class="ml-1 text-[11px] text-amber-300 hover:text-rose-300" title="手で入れた単価を消して既定 (固定した値 / 相場) に戻す" @click="setUnit(r.key, null)">×</button>
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setQtyValue(r.key, $event)" />
+                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" :class="r.override != null ? 'ring-1 ring-amber-500/70 rounded' : ''" @update:model-value="setQtyValue(r.key, $event)" />
+                  <button v-if="r.override != null" type="button" class="ml-1 text-[11px] text-amber-300 hover:text-rose-300" title="手で入れた数を消して期待値に戻す" @click="setQtyValue(r.key, null)">×</button>
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ cost(r.cost) }}</td>
               </tr>
@@ -110,10 +115,12 @@ const {
               <tr v-for="r in ledgerSales" :key="r.qtyKey" class="border-t border-[var(--exile-color-border-subtle)]">
                 <td class="py-1.5 pr-2">{{ r.label }}</td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
-                  <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" round="down" width="w-24" @update:model-value="setEach(r.eachKey, $event)" />
+                  <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" round="down" width="w-24" :class="r.each != null ? 'ring-1 ring-amber-500/70 rounded' : ''" @update:model-value="setEach(r.eachKey, $event)" />
+                  <button v-if="r.each != null" type="button" class="ml-1 text-[11px] text-amber-300 hover:text-rose-300" title="手で入れた売値を消して上の売値に戻す" @click="setEach(r.eachKey, null)">×</button>
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setSoldValue(r.qtyKey, $event)" />
+                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" :class="r.override != null ? 'ring-1 ring-amber-500/70 rounded' : ''" @update:model-value="setSoldValue(r.qtyKey, $event)" />
+                  <button v-if="r.override != null" type="button" class="ml-1 text-[11px] text-amber-300 hover:text-rose-300" title="手で入れた数を消して期待値に戻す" @click="setSoldValue(r.qtyKey, null)">×</button>
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ income(r.revenue) }}</td>
               </tr>

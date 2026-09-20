@@ -12,6 +12,7 @@ import { openExternal } from "../../services/trade2/open-external";
 import { MATERIAL_DESC, cost, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
 import { fmtQty } from "./ledger";
 import type { useGemCorrupt } from "./useGemCorrupt";
+import { expectedCounts } from "./model";
 
 const props = defineProps<{ g: ReturnType<typeof useGemCorrupt> }>();
 const g = props.g;
@@ -23,9 +24,27 @@ async function open(url: string | null): Promise<void> {
 
 const craft = computed(() => g.routes.value.find((r) => r.id === "craft") ?? null);
 /**
+ * N 回やった時の個数 (段ごとに切り下げ)。**収支の既定と同じ数** (model.ts expectedCounts)。
+ * オーナー指摘 2026-09-20 (サイフォンエレメント 55 回):「20 ジェムの個数が合わない、同期されてない」。
+ * ここは 期待値 × N (原石 0.134 × 55 = 7.37) を出し、収支は連鎖で数えた 6 を出していた。
+ * 同じ表を見て違う数が出ないよう、結晶・原石・完成品の個数はこちらも連鎖で出す。
+ */
+const counts = computed(() => (craft.value?.ok ? expectedCounts(craft.value, attempts.value) : null));
+/**
  * 素材表: 自作 1 回あたりの数と費用、N 回分。
  * 結晶と原石は期待値 (結晶は片方当たった時に賭ける場合だけ、原石は壊れなかった物だけ)。
  */
+/** N 回の費用の合計 = 各行の費用の合計 (丸めた単価 × 個数)。相場が無い行があれば null */
+const totalN = computed<number | null>(() => {
+  let sum = 0;
+  for (const m of materialRows.value) {
+    const c = m.buyTotal ? m.buyTotal.total : m.costN;
+    if (c == null) return null;
+    sum += c;
+  }
+  return sum;
+});
+
 const materialRows = computed(() => {
   const m = g.materials.value;
   const c = craft.value;
@@ -39,8 +58,11 @@ const materialRows = computed(() => {
     { key: "uncut20", label: g.uncutLabel.value, price: m.uncut20, editable: false, perAttempt: c?.ok ? (c.expectedUncut ?? 0) : null, expected: true },
   ];
   const apiIdOf = new Map(g.materialApiIds.value.map((m) => [m.key, m.apiId]));
+  const chain = counts.value;
   return rows.map((r) => {
-    const qtyN = r.perAttempt == null ? null : r.perAttempt * n;
+    // 結晶と原石は連鎖で数えた個数 (収支と同じ)。他は 1 回の数 × N
+    const qtyN =
+      r.key === "crystal" && chain ? chain.crystals : r.key === "uncut20" && chain ? chain.uncut20 : r.perAttempt == null ? null : r.perAttempt * n;
     const apiId = apiIdOf.get(r.key) ?? null;
     const buy = g.bestBuy(apiId);
     // オーナー指示 (2026-09-16): 行の単価と費用は「買う通貨」の単位で出す。合計だけ表示通貨に換算する。
@@ -193,8 +215,9 @@ const baseBuyTitle = computed(() => {
                 <td></td>
                 <td></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(craft.expectedCost) : "—" }}</td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]">{{ craft?.ok ? `完成 ${(attempts * craft.pFinished).toFixed(2)} 個` : "" }}</td>
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(attempts * craft.expectedCost) : "—" }}</td>
+                <!-- 完成の個数と N 回の費用は上の行と同じ連鎖 (切り下げ) と丸めた単価から (収支と一致させる。2026-09-20) -->
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]" :title="craft?.ok ? `確率のまま掛けると ${(attempts * craft.pFinished).toFixed(2)} 個。個数は段ごとに切り下げて数えています` : ''">{{ counts ? `完成 ${counts.finished} 個` : "" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap" :title="craft?.ok ? `確率のまま掛けると ${moneyFixed(attempts * craft.expectedCost)}` : ''">{{ totalN == null ? "—" : moneyFixed(totalN) }}</td>
               </tr>
             </tbody>
           </table>

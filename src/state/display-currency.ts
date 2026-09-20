@@ -102,9 +102,15 @@ export function roundMoney(
   const { c, value } = pickUnit(exalted);
   // 一番下の通貨でも 1 未満 = これ以上落とせない。丸めずそのまま出す
   if (Math.abs(value) < 1) return { exalted, value, cur: c, rounded: false };
-  const v = dir === "up" ? Math.ceil(value) : Math.floor(value);
+  // 丸め誤差の逃げ。取引所の値段は高貴建てで小数 2 桁に丸めて保存されるので、神に戻すと
+  // 60 神が 59.99999 神になり、切り下げで丸ごと 1 神落ちていた
+  // (オーナー報告 2026-09-20「完成品の値段がズレてる」: 売値は 60.0 神なのに収支は 59)。
+  // 2 桁の丸めの誤差は最大 0.005 高貴 ÷ 約 490 ≈ 1e-5 なので、1e-4 だけ寄せてから丸める
+  const v = dir === "up" ? Math.ceil(value - ROUND_EPS) : Math.floor(value + ROUND_EPS);
   return { exalted: v * rateOf(c), value: v, cur: c, rounded: true };
 }
+/** 丸める前に寄せる幅 (通貨換算の往復で生じる誤差より大きく、実際の値段の差より小さい) */
+const ROUND_EPS = 1e-4;
 
 /** 期待個数の丸め。オーナー指示:「ジェムの期待値も切り下げ」(収入を甘く見ないため) */
 export function roundQty(n: number | null | undefined): number {
