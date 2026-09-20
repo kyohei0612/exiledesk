@@ -31,7 +31,7 @@ export function flowSentence(f: FlowSummary): string {
     return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）`;
   }
   const parts = [`${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`];
-  if (!f.enough) parts.push(`判定にはあと ${Math.max(0, MIN_KNOWN - f.gone)} 件`);
+  if (!f.enough) parts.push(`判定にはあと ${Math.max(0, MIN_KNOWN - f.known24)} 件 (結果が分かっている出品が ${MIN_KNOWN} 件要ります)`);
   else if (f.gone < MIN_KNOWN) parts.push(`${f.gone} 件だけで出した判定です`);
   // 「速い」と出していても、それより長く並んでいる出品があるなら必ず併記する
   if (f.olderThanMedian > 0) parts.push(`ただし並んでいる ${f.alive} 件のうち ${f.olderThanMedian} 件はもっと長く並んでいます`);
@@ -218,9 +218,27 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // last_seen が first_seen より後の記録が 1 つでもあれば、2 回目以降を見ている
   const firstLook = !state.tracked.some((t) => t.last_seen > t.first_seen);
 
+  /**
+   * 判定の土台は「結果が分かっている件数」= 売れた分 + 1 日を超えても売れ残った分。
+   * まだ齢が足りない在庫は「売れなかった」と言えないので母数に入らない。
+   * これが MIN_KNOWN に届かないうちは 速い / 普通 / 遅い のどれも出さない。
+   *
+   * 2026-09-20 オーナー「母数不足の判定バグも直して」: 下の「1 件でも短時間で売れたら速い」が
+   * 母数を見ていなかったので、**観測できた結果が 1 件しかなくても「速い」**と出ていた
+   * (売れた 1 件 + まだ 2 時間の在庫 1 件 → 母数 1 で「速い」)。
+   * この判定はジェムコラプトの期待値の判断材料に出るので、まぐれの 1 件で
+   * 「その値段で捌ける」と言い切ると仕込みを誤らせる。
+   *
+   * 母数さえ足りていれば「1 件でも短時間で売れたら速い」(2026-09-19 オーナー指示) は
+   * 今まで通り効く。見ているのは**売れた件数ではなく、結果が出た件数**。
+   */
+  const enoughSample = d1.known >= MIN_KNOWN;
+
   let tone: FlowTone = "unknown";
   let label = "";
-  if (goneLives.length >= MIN_KNOWN && median != null) {
+  if (!enoughSample) {
+    // 母数不足。label は "" のまま = 画面は「判定待ち」
+  } else if (goneLives.length >= MIN_KNOWN && median != null) {
     // 売れた出品の待ち時間そのもので決める。
     // オーナー指摘 (2026-09-17):「観測してる ID が無くなったなら普通に速いだろ。
     // 待機時間によるけどそいつが」= 売れた 1 件ずつの待ち時間が事実であって、
@@ -260,12 +278,13 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   // 判定は出したが根拠が 3 件に届いていない (「1 件でも早ければ速い」の規則で出した分)
   const thin = enough && goneLives.length > 0 && goneLives.length < MIN_KNOWN;
 
-  // まだ判定できない時の目安: 2 日の母数が 3 件になるのはいつか
+  // まだ判定できない時の目安: **判定の門と同じ 1 日の母数**が 3 件になるのはいつか。
+  // 2 日の母数 (d2 / NORMAL_SECS) で数えていたので、門とずれた時刻を出していた (2026-09-20)
   aliveAges.sort((a, b) => b - a);
-  const need = MIN_KNOWN - d2.known;
+  const need = MIN_KNOWN - d1.known;
   let etaSecs: number | null = null;
   if (!enough && need > 0 && aliveAges.length >= need) {
-    etaSecs = Math.max(0, NORMAL_SECS - aliveAges[need - 1]);
+    etaSecs = Math.max(0, FAST_SECS - aliveAges[need - 1]);
   }
 
   // 「3.8 時間で売れる」と出しているのに、それより長く並んでいる出品が何件あるか。

@@ -241,7 +241,7 @@ const fmtFlowAt = (t: number | null): string => {
                     <span
                       v-else-if="f.gone + f.alive > 0"
                       class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap"
-                      :title="`${flowSentence(f)}。判定には売れた出品が 3 件必要です。押すと記録の一覧`"
+                      :title="`${flowSentence(f)}。判定には結果が分かっている出品 (売れた分 + 1 日超えて売れ残った分) が 3 件必要です。押すと記録の一覧`"
                     >
                       <span v-if="f.firstLook && f.gone === 0" class="underline">初回・次回の取得で判定 ({{ f.alive }} 件を記録)</span>
                       <span v-else class="underline">{{ f.gone > 0 ? `${f.gone} 件売れた (${fmtSellTime(f.medianMin)})` : "まだ売れていない" }} / {{ f.alive }} 件並んでいる</span>
