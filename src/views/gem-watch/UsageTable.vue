@@ -117,9 +117,13 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
                 <button
                   type="button"
                   class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border transition-colors"
-                  :class="isManualGem(r.name)
-                    ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
-                    : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
+                  :class="[
+                    isManualGem(r.name)
+                      ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
+                      : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]',
+                    // 押せない時は見た目でも分かるように (2026-09-20「監視へが反応しない」= 枠が埋まっていた)
+                    !isManualGem(r.name) && watchFull ? 'opacity-40 cursor-not-allowed' : '',
+                  ]"
                   :disabled="!isManualGem(r.name) && watchFull"
                   :title="
                     isManualGem(r.name)

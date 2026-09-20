@@ -134,7 +134,13 @@ const {
             </tbody>
           </table>
           </div>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+        <!-- 長い説明は畳んでおく (オーナー指示 2026-09-20:「長ったらしい説明は閉じてて、
+             仕組みを見るって感じでタイトル付けてデフォで閉じててほしい」) -->
+        <details class="mt-2">
+          <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-accent-focus)]">
+            単価の固定と、数の埋まり方
+          </summary>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
             単価は回数を入れた時点の値 (相場と取引所の安い方) で固定します。あとで相場が動いても、やった分の費用は変わりません。実際に払った額が違う時は単価の欄に直接入れてください (空欄に戻すと固定値に戻ります)。素材の「取引所で比べる」を押すと、その結果で固定単価も入れ替えます (手入力した分はそのまま)。「今の相場に更新」でも固定し直せます。
             使った数と売れた数は空欄なら「経路の 1 回の数 × 回数」で、結晶・原石・売れた数のように結果次第の物は期待値です。実際に違った数だけ入れてください。
             回数を入れた時点の「最も得」の経路で帳簿を固定します (相場が変わっても、やった分を別の経路で数え直さない)。
@@ -142,6 +148,7 @@ const {
             <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
             <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>
           </p>
+          </details>
         </template>
       </div>
     </BaseCard>

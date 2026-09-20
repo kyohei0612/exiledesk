@@ -268,7 +268,13 @@ const fmtFlowAt = (t: number | null): string => {
                オーナー指示 2026-09-19:「レート制限のところややこしいから、ジェムコラのとこに
                自動取得関係表示しなくていい。別だからややこしくならんでしょ」。
                自動の様子は「自動ジェム監視」の画面だけで見る。ここは手動の再取得ボタンの状態だけ -->
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+        <!-- 長い説明は畳んでおく (オーナー指示 2026-09-20:「長ったらしい説明は閉じてて、
+             仕組みを見るって感じでタイトル付けてデフォで閉じててほしい」) -->
+        <details class="mt-2">
+          <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-accent-focus)]">
+            読み方と注意 (母数・判定・記録のルール)
+          </summary>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
             <span v-if="g.selected.value" class="text-[var(--exile-color-text-secondary)]">
               捌き速度の記録: 残り {{ flow.alive }} 件 / 消えた {{ flow.gone }} 件<span v-if="flow.lastAt"> (最終 {{ fmtFlowAt(flow.lastAt) }})</span>
               · {{ flowTracked ? (flowAuto ? "自動ジェム監視で追跡中" : "以前の記録 (今は監視対象外)") : "まだ記録がありません" }}。
@@ -279,6 +285,7 @@ const fmtFlowAt = (t: number | null): string => {
             判定は最安 10 件の出品を 1 件ずつ ID で追い、売れるまでの時間の真ん中の値で出します (6 時間以内なら速い / 24 時間以内なら普通 / それより長ければ遅い)。普通 / 遅い は売れた出品が 3 件たまるまで出しませんが、<span class="text-[var(--exile-color-text-secondary)]">6 時間以内に売れた実績が 1 件でもあれば「速い」</span>と出します (1 件でも捌けた事実なので。判定の横の件数で母数が分かります)。
             ジェムを選ぶと自動で trade2 から最安 1 件を取ります (3 件、約 30 秒)。値がおかしい時は「トレード2へ」で一覧を確認してください (取得条件の問題なので手入力はしない方針)。コラプト済みの品はプリズムやオーブで直せないので、検索は常に 5 ソケット (品質 20% 前提) で絞っています。
           </p>
+          </details>
         </div>
   </BaseCard>
   <SoldListDialog :open="soldOpen" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldOpen = false" />

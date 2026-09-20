@@ -187,6 +187,9 @@ async function remove(en: string): Promise<void> {
   dropWatchGem(en);
   await sync();
 }
+/** 監視の枠が埋まっているか (「監視へ +」が押せない理由を画面に出す) */
+const watchFull = computed(() => s.value.manual.length >= s.value.maxGems);
+
 /**
  * 最近外したジェム (8 時間だけ置いておく)。オーナー指示 2026-09-20:
  * 「監視中ジェムの下に除外したジェムたちを 1 日だけ置いておこう。8 時間でキャッシュクリアで
@@ -365,6 +368,10 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
     <div class="mt-4">
       <GemUsageRanking ref="ranking">
         <template #controls>
+          <!-- 押せない理由はその場に出す (オーナー報告 2026-09-20「監視へが反応しない」= 枠が埋まっていた) -->
+          <span v-if="watchFull" class="text-[11px] text-amber-300">
+            監視は {{ s.maxGems }} ジェムまでです (今 {{ s.manual.length }})。上の一覧から外すと「監視へ +」が押せます
+          </span>
           <label class="inline-flex items-center gap-2 min-w-0">
             <span class="text-[var(--exile-color-text-secondary)]">アセンダンシー</span>
             <select class="sel w-64" :value="s.klass" @change="apply({ klass: ($event.target as HTMLSelectElement).value })">

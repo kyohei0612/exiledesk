@@ -108,7 +108,7 @@ function load(): WatchSettings {
         // 基準 (metric) だけ既定に戻す。人数の下限 / 上限は手で決めた値なので引き継ぐ
         minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
         maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
-        manual: strings(s.manual),
+        manual: capManual(s.manual, clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems)),
         excluded: strings(s.excluded),
         droppedAt: stamps(s.droppedAt),
         // v4 で「自動で上位を入れない」を既定にしたので、古い設定の値は引き継がない
@@ -121,7 +121,7 @@ function load(): WatchSettings {
       metric: s.metric && s.metric in WATCH_METRIC_LABEL ? s.metric : DEFAULT_WATCH_SETTINGS.metric,
       minUsers: clamp(s.minUsers, 1, 100, DEFAULT_WATCH_SETTINGS.minUsers),
       maxGems: clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems),
-      manual: strings(s.manual),
+      manual: capManual(s.manual, clamp(s.maxGems, 1, MAX_WATCH_GEMS, DEFAULT_WATCH_SETTINGS.maxGems)),
       excluded: strings(s.excluded),
       droppedAt: stamps(s.droppedAt),
       autoTop: s.autoTop !== false,
@@ -139,6 +139,16 @@ const stamps = (v: unknown): Record<string, number> => {
   }
   return out;
 };
+
+/**
+ * 手で足したジェムを上限まで切り詰める。
+ *
+ * オーナー報告 2026-09-20「監視リストへ追加がなぜかできない、反応しない」:
+ * 上限を 7 に下げる前の設定には 7 個より多く入っていることがあり、画面は 7 個しか出さないのに
+ * 枠は埋まっているので「監視へ +」がずっと押せない (しかも見た目が変わらないので無反応に見える)
+ * 状態になっていた。読み込み時に見えている分だけに揃える。
+ */
+const capManual = (v: unknown, max: number): string[] => strings(v).slice(0, max);
 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 

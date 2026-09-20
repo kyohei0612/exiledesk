@@ -142,7 +142,7 @@ const baseBuyTitle = computed(() => {
                 </td>
                 <td
                   class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
-                  :class="m.buy ? 'text-emerald-300' : m.price == null ? 'text-amber-300' : ''"
+                  :class="m.buy && !m.marketCheaper ? 'text-emerald-300' : m.price != null ? 'text-sky-300' : 'text-amber-300'"
                   :title="
                     m.unitAmount != null && m.buy
                       ? `取引所の最安 ${m.buy.rawPerUnit} ${currencyJa(m.unitCurrency)} / 個 → 実際に払う ${m.unitAmount} ${currencyJa(m.unitCurrency)} (${money(m.buy.exalted)})`
@@ -157,8 +157,18 @@ const baseBuyTitle = computed(() => {
                 >
                   <template v-if="m.unitAmount != null">{{ fmtBuy(m.unitAmount) }} {{ currencyJa(m.unitCurrency) }}</template>
                   <template v-else-if="m.price != null">{{ money(m.price) }}</template>
-                  <!-- 現物を買うジェムで値段がまだ無いのは「相場が無い」のではなく「まだ取れていない」 -->
-                  <template v-else-if="m.key === 'baseGem' && g.baseSource.value === 'buy'">{{ g.retryWhenFree.value ? "未取得 (枠が空いたら自動で取ります)" : "未取得 (再取得で取ります)" }}</template>
+                  <!-- 現物を買うジェムで値段がまだ無い時は、その場で取りに行けるボタンを出す (オーナー指示 2026-09-20) -->
+                  <template v-else-if="m.key === 'baseGem' && g.baseSource.value === 'buy'">
+                    <button
+                      type="button"
+                      :disabled="g.pricing.value"
+                      class="px-2 py-0.5 rounded border border-amber-500/70 bg-amber-500/15 text-amber-200 text-[11px] hover:bg-amber-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                      :title="g.retryWhenFree.value ? 'トレードの枠が空いたら自動で取りますが、今すぐ取りに行くこともできます' : 'トレードで現物 (コラプト無し・二重コラプト無し) の最安を取りに行きます'"
+                      @click="g.fetchSalePrices(true)"
+                    >
+                      {{ g.pricing.value ? "取得中…" : g.retryWhenFree.value ? "値段を取る (順番待ち中)" : "値段を取る" }}
+                    </button>
+                  </template>
                   <template v-else>相場なし</template>
                 </td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.perAttempt) }}<span v-if="m.expected && m.perAttempt != null" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
@@ -186,13 +196,20 @@ const baseBuyTitle = computed(() => {
               </tr>
             </tbody>
           </table>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
+        <!-- 長い説明は畳んでおく (オーナー指示 2026-09-20:「長ったらしい説明は閉じてて、
+             仕組みを見るって感じでタイトル付けてデフォで閉じててほしい」) -->
+        <details class="mt-2">
+          <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-accent-focus)]">
+            単価の決め方と通貨の出し方
+          </summary>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
             <span class="text-emerald-300">緑</span>は「取引所で比べた」行です。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
             単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             仕上げ (レベル 20 に上げる) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。仕上げは調達先と揃えます: <span class="text-[var(--exile-color-text-secondary)]">原石から作るジェムは原石 (レベル 20)</span>、<span class="text-[var(--exile-color-text-secondary)]">現物を買うジェムは ソーマタージ・フラックス (レベル 20)</span> (原石ではレベルを上げられないため)。
             低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です。<span class="text-[var(--exile-color-text-secondary)]">原石から作れないジェム (カルグール系) は、トレードで現物 (コラプト無し・二重コラプト無し) の最安</span>を使います (行の切替で手で変えられます)。スキルの原石かスピリットの原石かは、<span class="text-[var(--exile-color-text-secondary)]">素のスキル (コラプト無し) の出品にスピリットのリザーブが出ているか</span>で決めます (一度見たら覚えます。まだ見ていないジェムはクライアントのタグから推定)。
             結晶は「片方当たった時に賭ける」と決めた場合だけ使うので、1 回の数は期待値 (賭けない判断なら 0)。売値が揃うまでは「—」。
           </p>
+          </details>
         </div>
       </BaseCard>
 </template>

@@ -25,7 +25,8 @@ function isBest(r: RouteResult): boolean {
 }
 
 type CompareMode = "attempts" | "budget";
-const compareMode = ref<CompareMode>("budget");
+// 既定は「回数で比べる」(オーナー指示 2026-09-20:「デフォで期待値計算の選択は予算じゃなくて回数で」)
+const compareMode = ref<CompareMode>("attempts");
 /** 表示通貨 100 を高貴建てにした額 */
 const hundredEx = computed(() => displayCurrency.fromDisplay(100) ?? 100);
 /** 100 (表示通貨) 入れた時の平均損益 (高貴建て) */
@@ -192,15 +193,23 @@ const summary = computed(() => {
               </tbody>
             </table>
           </div>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-1">
-            回数で比べる: どの経路も同じ回数。予算で比べる: 回数 = 予算 ÷ 1 回の費用 (切り捨て)、1 回分に届かない経路は予算不足。
+        </div>
+        <!-- 長い説明は畳んでおく (オーナー指示 2026-09-20) -->
+        <details class="mt-3">
+          <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-accent-focus)]">
+            比べ方と「100 {{ unit }} あたりの損益」の意味
+          </summary>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-1">
+            <span class="text-[var(--exile-color-text-secondary)]">回数で比べる</span>: どの経路も同じ回数。
+            <span class="text-[var(--exile-color-text-secondary)]">予算で比べる</span>: 回数 = 予算 ÷ 1 回の費用 (切り捨て)、1 回分に届かない経路は予算不足。
             期待損益は平均、赤字の確率は結果ごとの損益を回数ぶん引く試行を 1 万回やった中で赤字に終わった割合です (出来た物は全部その相場で売れた前提)。
           </p>
-        </div>
-        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
-          「100 {{ unit }} あたりの損益」= 1 回の期待収支 ÷ 1 回の費用 × 100 {{ unit }}。1 回の費用が経路ごとに数十倍違うので、金額ではなく投資額あたりで比べ、一番高い経路を「最も得」にしています。
-          1 回の費用は確定費用に結晶と原石の期待費用を足した額。完成品を買う経路が 0 の基準です。
-        </p>
+          <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
+            <span class="text-[var(--exile-color-text-secondary)]">「100 {{ unit }} あたりの損益」</span>= 1 回の期待収支 ÷ 1 回の費用 × 100 {{ unit }}。
+            1 回の費用が経路ごとに数十倍違うので、金額ではなく投資額あたりで比べ、一番高い経路を「最も得」にしています。
+            1 回の費用は確定費用に結晶と原石の期待費用を足した額。完成品を買う経路が 0 の基準です。
+          </p>
+        </details>
       </div>
     </BaseCard>
 </template>
