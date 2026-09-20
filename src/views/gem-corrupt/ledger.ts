@@ -63,10 +63,37 @@ const EMPTY_LEDGER: GemLedger = {
 type StoredGemLedger = Partial<GemLedger> & Partial<Record<RowKey | SoldKey, number>>;
 type LedgerBook = Record<string, StoredGemLedger>;
 
+/**
+ * 帳簿の版。2 = 売れた物の「1 個の売値」の上書き (each*) を一度全部消した後。
+ *
+ * オーナー報告 2026-09-21 (サイフォンエレメント):「完成品の値段が同期されてなくね、2 神じゃんコレ。
+ * 他もそうだけど平均売値かなこれ。最安値同期して欲しい」。
+ * 売値は旧形式 (2026-09-15 まで) の記録から each* として引き継がれていて、完成品 2 神のような
+ * 今の相場と無関係な値が「手で入れた値」として居座っていた (数の方は 09-19 に引き継ぎをやめたが、
+ * 売値は残っていた)。一度きり全部消して、以後は空欄 = 上の売値 (取引所の最安) を使う。
+ * 手で入れた実売の額があれば、また入れれば効く。
+ */
+const LEDGER_VERSION_KEY = "exiledesk.gem.ledger.v";
+const LEDGER_VERSION = "2";
+
 function loadBook(): LedgerBook {
   try {
     const raw = localStorage.getItem(LEDGER_KEY);
-    return raw ? (JSON.parse(raw) as LedgerBook) : {};
+    const book = raw ? (JSON.parse(raw) as LedgerBook) : {};
+    if (localStorage.getItem(LEDGER_VERSION_KEY) !== LEDGER_VERSION) {
+      let cleared = 0;
+      for (const l of Object.values(book)) {
+        for (const k of ["eachLevel21", "eachQuality23", "eachFinished", "eachOther"] as const) {
+          if (l[k] != null) {
+            delete l[k];
+            cleared++;
+          }
+        }
+      }
+      if (cleared > 0) localStorage.setItem(LEDGER_KEY, JSON.stringify(book));
+      localStorage.setItem(LEDGER_VERSION_KEY, LEDGER_VERSION);
+    }
+    return book;
   } catch {
     return {};
   }

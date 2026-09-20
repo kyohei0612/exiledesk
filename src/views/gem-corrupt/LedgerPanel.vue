@@ -106,7 +106,7 @@ const {
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pt-3 pb-1">売れた物</th>
-                <th class="text-right font-normal pt-3 pb-1 pl-3">1 個の売値 (空欄なら相場)</th>
+                <th class="text-right font-normal pt-3 pb-1 pl-3">1 個の売値 (空欄なら上の最安値。琥珀の枠は手入力、× で戻す)</th>
                 <th class="text-right font-normal pt-3 pb-1 pl-3">売れた数</th>
                 <th class="text-right font-normal pt-3 pb-1 pl-3">売上</th>
               </tr>
