@@ -64,15 +64,8 @@ const ledger = computed<Ledger>(() => {
 function saveLedger(next: Ledger): void {
   book.value = { ...book.value, [c.recipeId.value]: { ...next, soldV2: true } };
 }
-/** 数の入力。空欄は null (= 自動) */
-function readCount(ev: Event): number | null {
-  const raw = (ev.target as HTMLInputElement).value.trim();
-  if (raw === "") return null;
-  const v = Number(raw);
-  return Number.isFinite(v) && v >= 0 ? v : null;
-}
-function setAttempts(ev: Event): void {
-  const n = Math.floor(readCount(ev) ?? 0);
+function setAttemptsValue(v: number | null): void {
+  const n = Math.max(0, Math.floor(v ?? 0));
   const l = ledger.value;
   // 回数を入れた時点の素材欄の組み合わせ (既定は最も得) で帳簿を固定する (相場が揃ってから)
   const variant = l.variant ?? (n > 0 && c.result.value ? c.currentKey.value : null);
@@ -179,7 +172,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
         <div class="mb-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
           <label class="inline-flex items-center gap-2">
             回数
-            <input :value="ledger.attempts || ''" type="number" min="0" step="1" placeholder="0" class="num w-20" @input="setAttempts" />
+            <CountInput :model-value="ledger.attempts || null" placeholder-text="0" @update:model-value="setAttemptsValue($event)" />
           </label>
           <span class="min-w-0">
             帳簿の組み合わせ: {{ c.variantLabel(ledgerVariantKey) }}

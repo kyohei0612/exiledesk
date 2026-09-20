@@ -275,6 +275,40 @@ table th,
   .num[type="number"] {
     text-align: right;
   }
+
+  /**
+   * ブラウザ既定のスピナー (▲▼) を消す。代わりは NumStep.vue の自前のボタン。
+   * 既定のスピナーは「押した」のか「打った」のか見分けられず、灰色の既定値から
+   * 動かせなかった (オーナー報告 2026-09-20:「アプリだと灰色から 1 から始まる」)。
+   */
+  .no-spin::-webkit-outer-spin-button,
+  .no-spin::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .no-spin {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .numstep-btn {
+    font-size: 7px;
+    line-height: 1;
+    padding: 1px 3px;
+    color: var(--exile-color-text-tertiary);
+    border: 1px solid var(--exile-color-border-subtle);
+    border-radius: 3px;
+    background: var(--exile-color-bg-surface);
+  }
+  .numstep-btn:first-child {
+    margin-bottom: 1px;
+  }
+  .numstep-btn:hover {
+    color: var(--exile-color-accent-focus);
+    border-color: var(--exile-color-accent-focus);
+  }
+  .numstep-btn:disabled {
+    opacity: 0.4;
+  }
   .num:focus {
     outline: none;
     border-color: var(--exile-color-accent-focus);

@@ -14,7 +14,7 @@ const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; api: GemLedgerA
 const g = props.g;
 const {
   ledger, ledgerRows, ledgerSales, ledgerTotals,
-  setAttempts, setRoute, setQtyValue, setSoldValue, setUnit, setEach,
+  setAttemptsValue, setRoute, setQtyValue, setSoldValue, setUnit, setEach,
   resetLedger, clearCounts, refreshLedgerPrices,
 } = props.api;
 </script>
@@ -44,7 +44,7 @@ const {
             </label>
             <label class="inline-flex items-center gap-2">
               回数
-              <input :value="ledger.attempts || ''" type="number" min="0" step="1" placeholder="0" class="num w-20" @input="setAttempts" />
+              <CountInput :model-value="ledger.attempts || null" placeholder-text="0" @update:model-value="setAttemptsValue($event)" />
             </label>
             <span v-if="ledger.pricesAt">
               単価は {{ fmtStamp(ledger.pricesAt) }} 時点で固定

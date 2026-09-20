@@ -103,7 +103,7 @@ export interface GemLedgerApi {
     missingCost: boolean; missingSale: boolean;
     perAttempt: number | null; perFinished: number | null;
   }>;
-  setAttempts: (ev: Event) => void;
+  setAttemptsValue: (n: number | null) => void;
   setRoute: (ev: Event) => void;
   setQtyValue: (key: RowKey, v: number | null) => void;
   setSoldValue: (key: SoldKey, v: number | null) => void;
@@ -117,13 +117,6 @@ export interface GemLedgerApi {
   fetchExchangeAndRepin: () => Promise<void>;
 }
 
-/** 数の入力。空欄は null (= 自動) */
-function readCount(ev: Event): number | null {
-  const raw = (ev.target as HTMLInputElement).value.trim();
-  if (raw === "") return null;
-  const v = Number(raw);
-  return Number.isFinite(v) && v >= 0 ? v : null;
-}
 
 /**
  * @param attempts 「N 回やった場合」の N。**素材・経路の札と同じ物**を受け取る
@@ -252,8 +245,8 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
   watch(attempts, (n) => applyAttempts(n));
 
   /** 収支の「回数」欄。共有の値を動かすので、素材・経路の表も一緒に変わる */
-  function setAttempts(ev: Event): void {
-    attempts.value = Math.floor(readCount(ev) ?? 0);
+  function setAttemptsValue(n: number | null): void {
+    attempts.value = Math.max(0, Math.floor(n ?? 0));
   }
 
   /** 固定した単価を今の相場で取り直す */
@@ -404,7 +397,7 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     ledgerRows,
     ledgerSales,
     ledgerTotals,
-    setAttempts,
+    setAttemptsValue,
     setRoute,
     setQtyValue,
     setSoldValue,
