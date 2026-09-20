@@ -140,9 +140,11 @@ const baseBuyTitle = computed(() => {
                   </div>
                   <div v-else-if="MATERIAL_DESC[m.key]" class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ MATERIAL_DESC[m.key] }}</div>
                 </td>
+                <!-- 値段が入っている行は緑 (オーナー指示 2026-09-20:「前の緑にしようか、水色じゃなくて」)。
+                     相場なしだけ琥珀にして、取れていないことが分かるようにする -->
                 <td
                   class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap"
-                  :class="m.buy && !m.marketCheaper ? 'text-emerald-300' : m.price != null ? 'text-sky-300' : 'text-amber-300'"
+                  :class="m.price != null || m.unitAmount != null ? 'text-emerald-300' : 'text-amber-300'"
                   :title="
                     m.unitAmount != null && m.buy
                       ? `取引所の最安 ${m.buy.rawPerUnit} ${currencyJa(m.unitCurrency)} / 個 → 実際に払う ${m.unitAmount} ${currencyJa(m.unitCurrency)} (${money(m.buy.exalted)})`
@@ -203,7 +205,7 @@ const baseBuyTitle = computed(() => {
             単価の決め方と通貨の出し方
           </summary>
           <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
-            <span class="text-emerald-300">緑</span>は「取引所で比べた」行です。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
+            <span class="text-emerald-300">緑</span>は値段が入っている行です (<span class="text-amber-300">琥珀</span>は相場が取れていない行)。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
             単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             仕上げ (レベル 20 に上げる) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。仕上げは調達先と揃えます: <span class="text-[var(--exile-color-text-secondary)]">原石から作るジェムは原石 (レベル 20)</span>、<span class="text-[var(--exile-color-text-secondary)]">現物を買うジェムは ソーマタージ・フラックス (レベル 20)</span> (原石ではレベルを上げられないため)。
             低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です。<span class="text-[var(--exile-color-text-secondary)]">原石から作れないジェム (カルグール系) は、トレードで現物 (コラプト無し・二重コラプト無し) の最安</span>を使います (行の切替で手で変えられます)。スキルの原石かスピリットの原石かは、<span class="text-[var(--exile-color-text-secondary)]">素のスキル (コラプト無し) の出品にスピリットのリザーブが出ているか</span>で決めます (一度見たら覚えます。まだ見ていないジェムはクライアントのタグから推定)。
