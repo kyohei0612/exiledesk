@@ -90,7 +90,7 @@ pub struct SetWatchesRequest {
 ///   - 新しく入った銘柄     … 追加して次の巡回から取る
 ///   - 外れた銘柄           … 追跡は止めるが記録は消さない。7 日経った物だけ掃除する
 ///     (また一覧に戻ってきた時に続きから使えるように)
-///   - 手動で足した銘柄 (manual=true) は入れ替えで消えない。
+///   - 載っていない銘柄は落とす (2026-09-20 まで manual=true は残していたが、7 ジェムの上限の外に溜まった)。
 ///     自動リストにも載っていたら巡回に入れ、手動で貯めた記録の続きとして判断する
 ///     (飛ばさない。オーナー指示 2026-09-17)
 #[tauri::command]
@@ -125,23 +125,20 @@ pub fn merge_watches(store: &mut FlowStore, incoming: Vec<Watch>, league: &str, 
             }
         }
     }
-    // 手動分は残す。いったん巡回から外し、今回のリストに載っていれば戻す
-    let mut watches: Vec<Watch> = store
-        .watches
-        .iter()
-        .filter(|w| w.manual)
-        .map(|w| Watch { auto: false, ..w.clone() })
-        .collect();
+    // 今回のリスト (= 画面の監視設定。7 ジェムが上限) が全部。
+    //
+    // 2026-09-20 オーナー指摘「巡回は 7 ジェムマックスでしょ、古くね」:
+    // 以前は manual=true の銘柄を入れ替えで消さずに残していた。画面の「再取得」や
+    // 監視に足した時の取得 (market_flow_record) が manual=true で登録するので、
+    // 監視から外したジェムがいつまでも残り、実測で 7 ジェムの上限の外に 7 ジェム分 (26 件) が
+    // 溜まっていた。巡回には入らない (auto=false) が、記録が消えず状態も掃除されない。
+    // 今は載っていない銘柄は落とす。記録 (states) は下の 7 日の掃除に任せるので、
+    // 8 時間以内に戻せば続きから追える (最近外した) し、ジェムコラプトで見ていた銘柄の
+    // 履歴も 7 日は残る。手動の印は、今回も載っている銘柄にだけ引き継ぐ。
+    let mut watches: Vec<Watch> = Vec::with_capacity(incoming.len());
     for w in incoming {
-        match watches.iter_mut().find(|x| x.key == w.key) {
-            Some(existing) => {
-                existing.auto = true;
-                existing.label = w.label;
-                existing.query = w.query;
-                existing.note = w.note;
-            }
-            None => watches.push(Watch { manual: false, auto: true, ..w }),
-        }
+        let was_manual = store.watches.iter().any(|x| x.key == w.key && x.manual);
+        watches.push(Watch { manual: was_manual || w.manual, auto: true, ..w });
     }
     for k in &changed {
         store.states.remove(k);
@@ -164,22 +161,17 @@ mod tests {
 
     /// 自動リストを入れ替えても、手動で足した銘柄は残る
     #[test]
-    fn manual_watches_survive_auto_refresh() {
+    fn manual_watches_not_listed_are_dropped() {
+        // 2026-09-20 オーナー「巡回は 7 ジェムマックスでしょ、古くね」:
+        // 監視から外した銘柄が manual=true のまま残らない。載っている物だけになる
         let manual = Watch { key: "Manual".into(), label: "手動".into(), query: serde_json::json!({}), note: String::new(), manual: true, auto: false };
         let auto_old = Watch { key: "Old".into(), label: String::new(), query: serde_json::json!({}), note: String::new(), manual: false, auto: true };
         let auto_new = Watch { key: "New".into(), label: String::new(), query: serde_json::json!({}), note: String::new(), manual: false, auto: true };
-        // set_watches と同じ合成をここで再現 (ファイル入出力を挟まずに検証)
-        let existing = vec![manual.clone(), auto_old];
-        let incoming = vec![auto_new.clone()];
-        let mut watches: Vec<Watch> = existing.iter().filter(|w| w.manual).map(|w| Watch { auto: false, ..w.clone() }).collect();
-        let manual_keys: HashSet<String> = watches.iter().map(|w| w.key.clone()).collect();
-        for w in incoming {
-            if !manual_keys.contains(&w.key) {
-                watches.push(Watch { manual: false, ..w });
-            }
-        }
-        let keys: Vec<&str> = watches.iter().map(|w| w.key.as_str()).collect();
-        assert_eq!(keys, vec!["Manual", "New"]);
+        let mut store = FlowStore { watches: vec![manual, auto_old], ..Default::default() };
+        merge_watches(&mut store, vec![auto_new], "L", 1_000_000);
+        let keys: Vec<&str> = store.watches.iter().map(|w| w.key.as_str()).collect();
+        assert_eq!(keys, vec!["New"], "載っていない手動分も古い自動分も落ちる");
+        assert!(store.watches[0].auto && !store.watches[0].manual);
     }
 
 
@@ -212,17 +204,11 @@ mod tests {
     fn manual_watch_joins_rotation_when_listed() {
         let manual = Watch { key: "Arc::finished".into(), label: "手動".into(), query: serde_json::json!({"a":1}), note: String::new(), manual: true, auto: false };
         let listed = Watch { key: "Arc::finished".into(), label: "アーク".into(), query: serde_json::json!({"b":2}), note: "完成品 41 人".into(), manual: false, auto: false };
-        let mut watches: Vec<Watch> = vec![manual].into_iter().map(|w| Watch { auto: false, ..w }).collect();
-        for w in vec![listed] {
-            match watches.iter_mut().find(|x| x.key == w.key) {
-                Some(e) => { e.auto = true; e.label = w.label; e.query = w.query; e.note = w.note; }
-                None => watches.push(Watch { manual: false, auto: true, ..w }),
-            }
-        }
-        assert_eq!(watches.len(), 1, "同じ銘柄が 2 つに増えない");
-        assert!(watches[0].manual && watches[0].auto, "手動のまま巡回にも入る");
-        assert_eq!(watches[0].label, "アーク", "自動リストの名前とクエリで上書き");
-        assert_eq!(watches[0].query, serde_json::json!({"b":2}));
+        let mut store = FlowStore { watches: vec![manual], ..Default::default() };
+        merge_watches(&mut store, vec![listed], "L", 1_000_000);
+        assert_eq!(store.watches.len(), 1);
+        assert!(store.watches[0].manual && store.watches[0].auto, "手動のまま巡回にも入る");
+        assert_eq!(store.watches[0].label, "アーク", "名前・条件・メモは今回の物に置き換わる");
     }
 
 
