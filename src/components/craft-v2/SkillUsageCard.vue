@@ -11,6 +11,19 @@ import BaseCard from "../decor/BaseCard.vue";
 import type { NinjaSkillStat, NinjaSkillStats, SkillUsage } from "../../services/craft-v2/types";
 import gemsRaw from "../../i18n/gems-client.json";
 import { openGemCorrupt } from "../../state/app-nav";
+import { isManualGem, removeManualGem } from "../../state/watch-settings";
+import { rebuildWatches } from "../../state/gem-watch-auto";
+import { askReplace } from "../../state/watch-replace";
+
+/** 自動ジェム監視に入れる / 外す (枠が埋まっていれば入れ替えを聞く) */
+function toggleWatch(nameEn: string): void {
+  if (isManualGem(nameEn)) {
+    removeManualGem(nameEn);
+    void rebuildWatches();
+    return;
+  }
+  void askReplace(nameEn);
+}
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名)。ユニークの付与スキルやサポートは対象外 */
 const CORRUPTIBLE = new Set((gemsRaw as { en: string }[]).map((g) => g.en));
@@ -91,6 +104,21 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
                       @click="openGemCorrupt(s.nameEn)"
                     >
                       コラプト計算 ↗
+                    </button>
+                    <!-- ここからも自動ジェム監視に入れられるように (オーナー指示 2026-09-20:
+                         「上位プレイヤーMOD からも監視入れれるようにしてくれ」)。
+                         枠が埋まっていれば、押した時にどれと入れ替えるか聞く -->
+                    <button
+                      v-if="CORRUPTIBLE.has(s.nameEn)"
+                      type="button"
+                      class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border transition-colors"
+                      :class="isManualGem(s.nameEn)
+                        ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
+                        : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
+                      :title="isManualGem(s.nameEn) ? '自動ジェム監視から外す' : `${s.name} を自動ジェム監視に入れて、3 条件の最安を取ります`"
+                      @click="toggleWatch(s.nameEn)"
+                    >
+                      {{ isManualGem(s.nameEn) ? "監視中 ✓" : "監視へ +" }}
                     </button>
                   </div>
                   <span class="tabular-nums text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fmtCount(s.count) }} 人</span>

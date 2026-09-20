@@ -5,6 +5,7 @@ import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
 import LoginGate from "./components/LoginGate.vue";
+import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
@@ -64,5 +65,7 @@ onMounted(() => {
     <UpdateToast />
     <!-- 未ログインだと trade2 の枠が半分でレート制限に当たるので、起動時に前へ出して促す (2026-09-20) -->
     <LoginGate />
+    <!-- 監視の枠が埋まっている時に「どれと入れ替えるか」を聞く (2026-09-20) -->
+    <WatchReplaceDialog />
   </div>
 </template>

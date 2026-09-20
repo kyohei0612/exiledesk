@@ -7,9 +7,9 @@
 import { computed, ref } from "vue";
 import { jaSkill } from "../../i18n/skills-ja";
 import { openGemCorrupt } from "../../state/app-nav";
-import { addManualGem, isManualGem, removeManualGem, watchSettings } from "../../state/watch-settings";
+import { isManualGem, removeManualGem, watchSettings } from "../../state/watch-settings";
 import { rebuildWatches } from "../../state/gem-watch-auto";
-import { queueSample } from "../gem-corrupt/sample-now";
+import { askReplace } from "../../state/watch-replace";
 import gemsRaw from "../../i18n/gems-client.json";
 
 /** ジェムコラプトの賭けで計算できるジェム (英語名) */
@@ -53,9 +53,9 @@ function toggleWatchGem(name: string): void {
     void rebuildWatches();
     return;
   }
-  if (!addManualGem(name)) return;
-  // **まず監視リストに入れて**、取得は待ち行列に回す (取得中でも次のジェムを足せる。2026-09-20)
-  void rebuildWatches().then(() => queueSample(name));
+  // 枠が空いていればそのまま入れて取得を待ち行列へ。埋まっていれば入れ替え先を聞く
+  // (オーナー指示 2026-09-20:「上限設定したら監視押せないけど押せるように、入れ替える先を選択できるように」)
+  void askReplace(name);
 }
 
 const PAGE = 25;
@@ -117,19 +117,14 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
                 <button
                   type="button"
                   class="shrink-0 whitespace-nowrap text-[10px] px-1 rounded border transition-colors"
-                  :class="[
-                    isManualGem(r.name)
-                      ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
-                      : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]',
-                    // 押せない時は見た目でも分かるように (2026-09-20「監視へが反応しない」= 枠が埋まっていた)
-                    !isManualGem(r.name) && watchFull ? 'opacity-40 cursor-not-allowed' : '',
-                  ]"
-                  :disabled="!isManualGem(r.name) && watchFull"
+                  :class="isManualGem(r.name)
+                    ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)] hover:text-rose-300'
+                    : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'"
                   :title="
                     isManualGem(r.name)
                       ? '自動ジェム監視から外す'
                       : watchFull
-                        ? `監視は ${watchSettings.maxGems} ジェムまでです。どれかを外してから入れてください`
+                        ? `監視は ${watchSettings.maxGems} ジェムまでです。押すと、どれと入れ替えるか選べます`
                         : 'このジェムを自動ジェム監視に入れます。取得 (3 条件) は順番待ちで流れるので、続けて他のジェムも足せます'
                   "
                   @click.stop="toggleWatchGem(r.name)"
