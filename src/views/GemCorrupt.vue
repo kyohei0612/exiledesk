@@ -90,7 +90,6 @@ function onQueryKeydown(e: KeyboardEvent): void {
  */
 const attempts = ref(10);
 const ledgerApi = useGemLedger(g, attempts);
-const { fetchExchangeAndRepin } = ledgerApi;
 
 </script>
 
@@ -160,7 +159,7 @@ const { fetchExchangeAndRepin } = ledgerApi;
     <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <SalePanel :g="g" />
 
-      <MaterialsPanel v-model:attempts="attempts" :g="g" :refetch-exchange="fetchExchangeAndRepin" />
+      <MaterialsPanel v-model:attempts="attempts" :g="g" />
     </div>
 
     <RoutesPanel v-model:attempts="attempts" :g="g" />

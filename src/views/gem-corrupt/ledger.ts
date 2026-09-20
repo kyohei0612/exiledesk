@@ -268,13 +268,27 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
   /**
    * 取引所で比べた後は、収支の固定単価もその値に入れ替える (2026-09-16 オーナー指示)。
    * 手入力した単価 (l.unit) は固定単価より優先されるので、ここで上書きされない。
+   *
+   * 2026-09-20: 取引所の比較は「取引所で比べる」ボタンではなくジェムを選んだ時に自動で走るので
+   * (オーナー「取引所価格がデフォだから、別にもうボタンいらんくね」)、取得が終わったのを見て
+   * ここを呼ぶ。ボタンがやっていた入れ替えが自動で続く。
    */
   async function fetchExchangeAndRepin(): Promise<void> {
     await g.fetchExchange();
+    repinFromExchange();
+  }
+  function repinFromExchange(): void {
     if (!ledgerGem.value) return;
     if (Object.keys(ledger.value.prices).length === 0) return; // まだ回数を入れていない = 固定前
     refreshLedgerPrices();
   }
+  // 自動で走った分も拾う (取得中 → 終わった の変わり目)
+  watch(
+    () => g.exchangeLoading.value,
+    (now, prev) => {
+      if (prev && !now) repinFromExchange();
+    },
+  );
 
   /** 単価の手入力 (空欄なら固定値 → 相場) */
   function setUnit(key: RowKey, v: number | null): void {

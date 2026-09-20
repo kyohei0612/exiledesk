@@ -11,11 +11,10 @@ import { ATTEMPT_OPTIONS, MATERIAL_DESC, fmtBuy, fmtStamp, money, moneyFixed, un
 import { fmtQty } from "./ledger";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
-const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; refetchExchange: () => void }>();
+const props = defineProps<{ g: ReturnType<typeof useGemCorrupt> }>();
 const g = props.g;
 /** 「N 回やった場合」の N。経路の札と同じ値を見る (親が持っていて、どちらから変えても揃う) */
 const attempts = defineModel<number>("attempts", { required: true });
-const fetchExchangeAndRepin = props.refetchExchange;
 async function open(url: string | null): Promise<void> {
   await openExternal(url);
 }
@@ -85,15 +84,12 @@ const baseBuyTitle = computed(() => {
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 (自作、{{ unit }})</h2>
-            <button
-              type="button"
-              :disabled="g.exchangeLoading.value"
-              class="text-[11px] px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40"
-              title="公式の取引所で、素材ごとに カオス / 神 のどちらで買うのが安いかを調べます (6 件、約 20 秒)。高貴は取引所の手数料 (ゴールド) が高いので外しています。収支で固定した単価もこの値に入れ替えます (手入力した単価はそのまま)"
-              @click="fetchExchangeAndRepin"
-            >
-              {{ g.exchangeLoading.value ? `取引所で比較中… (${g.exchangeDone.value}/${g.materialApiIds.value.length})` : "取引所で比べる" }}
-            </button>
+            <!-- 取引所の比較はジェムを選んだ時に自動で走るので、ボタンは置かない
+                 (オーナー指示 2026-09-20:「取引所価格がデフォだから、別にもうボタンいらんくね」)。
+                 取っている間だけ進み具合を出す -->
+            <span v-if="g.exchangeLoading.value" class="text-[11px] text-[var(--exile-color-text-secondary)]">
+              取引所で比較中… ({{ g.exchangeDone.value }}/{{ g.materialApiIds.value.length }})
+            </span>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
               <select v-model.number="attempts" class="num w-20">
@@ -153,7 +149,7 @@ const baseBuyTitle = computed(() => {
                         : m.price != null
                           ? m.key === 'baseGem' && baseBuyTitle
                             ? baseBuyTitle
-                            : `カレンシーランキングの相場 (${money(m.price)})。「取引所で比べる」を押しても取引所の板が薄い素材はここに出ません`
+                            : `カレンシーランキングの相場 (${money(m.price)})。取引所の板が薄い素材は取引所の値が出ないので、相場のままです`
                           : '相場なし'
                   "
                 >
@@ -205,7 +201,7 @@ const baseBuyTitle = computed(() => {
             単価の決め方と通貨の出し方
           </summary>
           <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)] mt-2">
-            <span class="text-emerald-300">緑</span>は値段が入っている行です (<span class="text-amber-300">琥珀</span>は相場が取れていない行)。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ボタンで取得、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
+            <span class="text-emerald-300">緑</span>は値段が入っている行です (<span class="text-amber-300">琥珀</span>は相場が取れていない行)。取引所で買う方が安ければ単価と費用をその通貨の単位で、相場の方が安ければ相場の値を出します。公式の取引所で カオス / 神 のうち安く買える方を出します (高貴は手数料が高いので外しています。ジェムを選んだ時に自動で取り、30 分は取り直しません)。取っていない素材はカレンシーランキングの相場 ({{ unit }} 建て) のままです。合計だけ選んだ表示通貨 ({{ unit }}) に換算します。<span class="text-[var(--exile-color-text-secondary)]">1 {{ unit }} 未満になる額は 1 つ下のカレンシーで出します</span> (神 → カオス → 高貴。0.02 神 のような読みにくい表記を避けるため)。
             単価は<span class="text-[var(--exile-color-text-secondary)]">実際に払う額に繰り上げ</span>ています (3.2 神 → 4 神)。通貨は 1 個単位でしか渡せないためで、費用も期待値もこの繰り上げ後の値で計算します (1 未満の単価は束で買う物なのでそのまま)。繰り上げた結果より相場の方が安い素材は相場のまま使います (その行は相場の値を出します)。
             仕上げ (レベル 20 に上げる) は「売る物」にだけ掛かります。壊れた物や売らない物には掛かりません。仕上げは調達先と揃えます: <span class="text-[var(--exile-color-text-secondary)]">原石から作るジェムは原石 (レベル 20)</span>、<span class="text-[var(--exile-color-text-secondary)]">現物を買うジェムは ソーマタージ・フラックス (レベル 20)</span> (原石ではレベルを上げられないため)。
             低レベルのジェム本体は、原石 (レベル 15〜20) のうち一番安い物の相場です。<span class="text-[var(--exile-color-text-secondary)]">原石から作れないジェム (カルグール系) は、トレードで現物 (コラプト無し・二重コラプト無し) の最安</span>を使います (行の切替で手で変えられます)。スキルの原石かスピリットの原石かは、<span class="text-[var(--exile-color-text-secondary)]">素のスキル (コラプト無し) の出品にスピリットのリザーブが出ているか</span>で決めます (一度見たら覚えます。まだ見ていないジェムはクライアントのタグから推定)。
