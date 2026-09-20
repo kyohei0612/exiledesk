@@ -105,8 +105,8 @@ export interface GemLedgerApi {
   }>;
   setAttempts: (ev: Event) => void;
   setRoute: (ev: Event) => void;
-  setQty: (key: RowKey, ev: Event) => void;
-  setSold: (key: SoldKey, ev: Event) => void;
+  setQtyValue: (key: RowKey, v: number | null) => void;
+  setSoldValue: (key: SoldKey, v: number | null) => void;
   setUnit: (key: RowKey, v: number | null) => void;
   /** 実売の 1 個あたり (空欄なら相場) */
   setEach: (key: EachKey, v: number | null) => void;
@@ -304,15 +304,15 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     const v = (ev.target as HTMLSelectElement).value;
     setLedger("route", v === "" ? null : (v as RouteId));
   }
-  function setQty(key: RowKey, ev: Event): void {
-    const v = readCount(ev);
+  /** 使った数。null = 空欄 = 灰色の既定値 (1 回の数 × 回数) を使う */
+  function setQtyValue(key: RowKey, v: number | null): void {
     const qty = { ...ledger.value.qty };
     if (v == null) delete qty[key];
     else qty[key] = v;
     setLedger("qty", qty);
   }
-  function setSold(key: SoldKey, ev: Event): void {
-    const v = readCount(ev);
+  /** 売れた数。null = 空欄 = 期待値を使う */
+  function setSoldValue(key: SoldKey, v: number | null): void {
     const sold = { ...ledger.value.sold };
     if (v == null) delete sold[key];
     else sold[key] = v;
@@ -406,8 +406,8 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     ledgerTotals,
     setAttempts,
     setRoute,
-    setQty,
-    setSold,
+    setQtyValue,
+    setSoldValue,
     setUnit,
     setEach,
     resetLedger,

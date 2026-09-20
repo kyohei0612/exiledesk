@@ -38,7 +38,12 @@ export const fmtStamp = (ms: number): string => {
 };
 
 /** 「N 回やった場合」の N (5 刻み)。アドニアと同じ (オーナー指示 2026-09-13) */
-export const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+/**
+ * 回数のプルダウン。5 ずつ 100 まで (オーナー指示 2026-09-20:
+ * 「回数は 5 ずつプルダウンに出して 100 まで出せるように」)。
+ * 一覧に無い数 (収支で手入力した 37 や 120) は AttemptsSelect が足して出す。
+ */
+export const ATTEMPT_OPTIONS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
 
 /** 素材の説明 (GGG クライアント CurrencyItems.Description の日本語、2026-09-12 書き出し) */
 export const MATERIAL_DESC: Record<string, string> = {

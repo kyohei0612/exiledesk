@@ -6,6 +6,7 @@
 import { computed, ref, watch } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import MoneyInput from "../../components/vaal-scales/MoneyInput.vue";
+import CountInput from "../../components/CountInput.vue";
 import { bucketLabel } from "./recipes";
 import { evClass, money } from "./ui";
 import type { useRareCraft } from "./useRareCraft";
@@ -80,16 +81,16 @@ function setAttempts(ev: Event): void {
 function pinCurrentVariant(): void {
   saveLedger({ ...ledger.value, variant: c.currentKey.value });
 }
-function setCount(key: string, ev: Event): void {
-  const v = readCount(ev);
+/** 使った数。null = 空欄 = 灰色の既定値を使う (CountInput から値で来る。2026-09-20) */
+function setCountValue(key: string, v: number | null): void {
   const l = ledger.value;
   const qty = { ...l.qty };
   if (v == null) delete qty[key];
   else qty[key] = v;
   saveLedger({ ...l, qty });
 }
-function setSold(key: string, ev: Event): void {
-  const v = readCount(ev);
+/** 売れた数。null = 空欄 = 期待値を使う */
+function setSoldValue(key: string, v: number | null): void {
   const l = ledger.value;
   const sold = { ...l.sold };
   if (v == null) delete sold[key];
@@ -199,7 +200,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
             <tr v-for="r in ledgerRows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)]">
               <td class="py-1.5 pr-2">{{ r.label }}</td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap" :class="r.unit == null ? 'text-amber-300' : ''">{{ r.unit == null ? "相場なし" : money(r.unit) }}</td>
-              <td class="py-1.5 pl-3 text-right"><input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtCount(r.auto)" class="num w-24" @input="setCount(r.key, $event)" /></td>
+              <td class="py-1.5 pl-3 text-right"><CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtCount(r.auto)" @update:model-value="setCountValue(r.key, $event)" /></td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
@@ -223,7 +224,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
                 <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setEach(r.key, $event)" />
               </td>
-              <td class="py-1.5 pl-3 text-right"><input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtCount(r.auto)" class="num w-24" @input="setSold(r.key, $event)" /></td>
+              <td class="py-1.5 pl-3 text-right"><CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtCount(r.auto)" @update:model-value="setSoldValue(r.key, $event)" /></td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">

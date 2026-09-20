@@ -3,12 +3,13 @@
   2026-09-19 に GemCorrupt.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { fetchBusyKind, fetchBusyLabel, fetchBusy as sweepBusy } from "../../state/fetch-busy";
 import { computed } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { currencyJa } from "../../state/display-currency";
 import { openExternal } from "../../services/trade2/open-external";
-import { ATTEMPT_OPTIONS, MATERIAL_DESC, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
+import { MATERIAL_DESC, fmtBuy, fmtStamp, money, moneyFixed, unit } from "./ui";
 import { fmtQty } from "./ledger";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
@@ -93,9 +94,7 @@ const baseBuyTitle = computed(() => {
             </span>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
-              <select v-model.number="attempts" class="num w-20">
-                <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
-              </select>
+              <AttemptsSelect v-model="attempts" />
             </label>
           </div>
           <table class="w-full text-[12px]">

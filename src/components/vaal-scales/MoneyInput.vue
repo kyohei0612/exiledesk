@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { displayCurrency, fmtNum } from "../../state/display-currency";
+import { usePlaceholderStep } from "../../composables/usePlaceholderStep";
 
 const props = withDefaults(
   defineProps<{
@@ -21,27 +22,45 @@ const props = withDefaults(
 );
 const model = defineModel<number | null>({ default: null });
 
-const shown = computed<string | number | null>({
-  get: () => {
-    const d = displayCurrency.toDisplay(model.value);
-    if (d == null) return "";
-    // 入力欄なので丸めすぎない (3 桁まで)。
-    // 数値で返す: 文字列だと Vue の v-model (type="number") が入力中の「0.0」を数値 0 と "0" の違いで書き戻し、
-    // 「0.05」と打つと「05」= 5 になっていた (2026-09-15)
-    return Math.round(d * 1000) / 1000;
-  },
-  set: (raw: string | number | null) => {
-    // type="number" の v-model は Vue が数値に変換して渡す (文字列とは限らない) ので、両方受ける
-    const t = raw == null ? "" : String(raw).trim();
-    if (t === "") {
-      model.value = null;
-      return;
-    }
-    const v = Number(t);
-    if (!Number.isFinite(v)) return;
-    model.value = displayCurrency.fromDisplay(v);
-  },
+/** 欄に出す値 (表示通貨建て)。空欄なら "" */
+const shown = computed<string | number>(() => {
+  const d = displayCurrency.toDisplay(model.value);
+  if (d == null) return "";
+  // 入力欄なので丸めすぎない (3 桁まで)。
+  // 数値で返す: 文字列だと Vue の v-model (type="number") が入力中の「0.0」を数値 0 と "0" の違いで書き戻し、
+  // 「0.05」と打つと「05」= 5 になっていた (2026-09-15)
+  return Math.round(d * 1000) / 1000;
 });
+
+/**
+ * 灰色の既定値から動かす (オーナー指示 2026-09-20)。
+ * 空欄でも灰色の値が計算に入っているので、矢印やスピナーはそこから 1 ずつ動かす。
+ */
+const step = usePlaceholderStep();
+
+/** 上下キー。空欄なら灰色の値から、値が入っていればそこから 1 ずつ (表示通貨建て) */
+function onKeydown(ev: KeyboardEvent): void {
+  step.onKeydown(ev, displayCurrency.toDisplay(model.value), displayCurrency.toDisplay(props.placeholderExalted), (v) => {
+    model.value = displayCurrency.fromDisplay(v);
+  });
+}
+
+function onInput(ev: Event): void {
+  const wasEmpty = model.value == null;
+  const stepped = step.stepValue(ev, wasEmpty, displayCurrency.toDisplay(props.placeholderExalted));
+  if (stepped !== undefined) {
+    model.value = displayCurrency.fromDisplay(stepped);
+    return;
+  }
+  const t = (ev.target as HTMLInputElement).value.trim();
+  if (t === "") {
+    model.value = null;
+    return;
+  }
+  const v = Number(t);
+  if (!Number.isFinite(v)) return;
+  model.value = displayCurrency.fromDisplay(v);
+}
 const ph = computed<string>(() => {
   if (props.placeholderExalted != null) {
     const d = displayCurrency.toDisplay(props.placeholderExalted);
@@ -54,10 +73,13 @@ const ph = computed<string>(() => {
 <template>
   <span class="inline-flex items-baseline gap-1 whitespace-nowrap">
     <input
-      v-model="shown"
+      :value="shown"
       type="number"
       min="0"
       step="any"
+      @beforeinput="step.onBeforeInput"
+      @keydown="onKeydown"
+      @input="onInput"
       :placeholder="ph"
       :disabled="disabled"
       :class="[

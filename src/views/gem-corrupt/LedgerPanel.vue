@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import BaseCard from "../../components/decor/BaseCard.vue";
 import MoneyInput from "../../components/vaal-scales/MoneyInput.vue";
+import CountInput from "../../components/CountInput.vue";
 import { fmtQty, type GemLedgerApi } from "./ledger";
 import { evClass, fmtStamp, money } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
@@ -13,7 +14,7 @@ const props = defineProps<{ g: ReturnType<typeof useGemCorrupt>; api: GemLedgerA
 const g = props.g;
 const {
   ledger, ledgerRows, ledgerSales, ledgerTotals,
-  setAttempts, setRoute, setQty, setSold, setUnit, setEach,
+  setAttempts, setRoute, setQtyValue, setSoldValue, setUnit, setEach,
   resetLedger, clearCounts, refreshLedgerPrices,
 } = props.api;
 </script>
@@ -85,7 +86,7 @@ const {
                   />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtQty(r.auto)" class="num w-24" @input="setQty(r.key, $event)" />
+                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setQtyValue(r.key, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
               </tr>
@@ -111,7 +112,7 @@ const {
                   <MoneyInput :model-value="r.each" :placeholder-exalted="r.market" width="w-24" @update:model-value="setEach(r.eachKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right">
-                  <input :value="r.override ?? ''" type="number" min="0" step="1" :placeholder="fmtQty(r.auto)" class="num w-24" @input="setSold(r.qtyKey, $event)" />
+                  <CountInput :model-value="r.override ?? null" :placeholder-value="r.auto" :placeholder-text="fmtQty(r.auto)" @update:model-value="setSoldValue(r.qtyKey, $event)" />
                 </td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
               </tr>

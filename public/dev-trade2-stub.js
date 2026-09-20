@@ -42,6 +42,50 @@
     return "level21";
   }
 
+
+  /**
+   * 相場の決め打ち (高貴建て)。灰色の既定値が小数になる物を混ぜてある
+   * (「12.5 から上は 13・14・15」の確認用。2026-09-20)。
+   */
+  const STUB_PRICE = {
+    gcp: 10.2,
+    "perfect-jewellers-orb": 4.68,
+    vaal: 6.44,
+    "crystallised-corruption": 12.5,
+    "uncut-skill-gem-20": 3.43,
+    "uncut-spirit-gem-20": 8.1,
+    "uncut-skill-gem-18": 2.5,
+    "uncut-skill-gem-16": 1.25,
+    "divine-orb": 1,
+  };
+  const STUB_LEAGUES = [
+    {
+      Value: "Forbidden Rites",
+      IsCurrent: true,
+      DivinePrice: 180,
+      ChaosDivinePrice: 220,
+      BaseCurrencyApiId: "exalted-orb",
+      BaseCurrencyText: "Exalted Orb",
+      BaseCurrencyIconUrl: "",
+      ExaltedCurrencyText: "Exalted Orb",
+      ExaltedCurrencyIconUrl: "",
+      DivineCurrencyText: "Divine Orb",
+      DivineCurrencyIconUrl: "",
+      ChaosCurrencyText: "Chaos Orb",
+      ChaosCurrencyIconUrl: "",
+    },
+  ];
+  const STUB_ITEMS = Object.entries(STUB_PRICE).map(([apiId, price], i) => ({
+    ItemId: 1000 + i,
+    CategoryApiId: "currency",
+    Text: apiId,
+    Name: apiId,
+    Type: null,
+    ApiId: apiId,
+    CurrentPrice: price,
+    IconUrl: "",
+  }));
+
   const ids = (kind, n) => Array.from({ length: n }, (_, i) => `${kind}-${i}`);
 
   /**
@@ -166,7 +210,19 @@
      */
     if (/\/api\/poe2scout\//.test(url)) {
       window.__stubBlocked = (window.__stubBlocked ?? 0) + 1;
-      const body = /\/History/.test(url) ? [] : { items: [], currencies: [], pages: 0 };
+      // 形は呼ぶ側 (src/api/poe2scout.ts) が期待する物に合わせる。
+      // 形が違うと「list.find is not a function」で画面が壊れる (2026-09-20 に踏んだ)。
+      // 値段は決め打ちで入れる。空で返すと全部「相場なし」になって、
+      // 灰色の既定値 (計算に入っている値) の確認ができない。
+      const body = /\/Items\/PriceHistory/.test(url)
+        ? { ItemHistories: [] }
+        : /\/History/.test(url)
+          ? { History: [], PriceHistory: [] }
+          : /\/poe2\/Leagues$/.test(url.split("?")[0])
+          ? STUB_LEAGUES
+          : /\/Items$/.test(url.split("?")[0])
+            ? STUB_ITEMS
+            : [];
       return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
     }
     if (!/\/api\/trade2-/.test(url)) return realFetch(input, init);

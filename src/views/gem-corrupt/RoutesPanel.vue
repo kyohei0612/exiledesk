@@ -3,11 +3,12 @@
   2026-09-19 に GemCorrupt.vue から切り出し。中身は変えていない。
 -->
 <script setup lang="ts">
+import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { displayCurrency, type DisplayCurrency } from "../../state/display-currency";
 import { budgetRisk, roi, type RouteResult } from "./model";
-import { ATTEMPT_OPTIONS, evClass, money, pct, unit } from "./ui";
+import { evClass, money, pct, unit } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
 const props = defineProps<{ g: ReturnType<typeof useGemCorrupt> }>();
@@ -154,9 +155,7 @@ const summary = computed(() => {
               </div>
               <label v-if="compareMode === 'attempts'" class="inline-flex items-center gap-2 text-[var(--exile-color-text-secondary)]">
                 回数
-                <select v-model.number="attempts" class="num w-20">
-                  <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
-                </select>
+                <AttemptsSelect v-model="attempts" />
               </label>
               <label v-else class="inline-flex items-center gap-2 text-[var(--exile-color-text-secondary)]">
                 予算
