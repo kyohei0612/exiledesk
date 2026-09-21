@@ -7,6 +7,7 @@
  *   - tradeAuto: 進行中の件数 / レート制限の解除時刻 / 直近エラー (画面の状態表示用)
  */
 import { computed, ref } from "vue";
+import { tradeErrorJa } from "../../utils/trade-error";
 import { gatePenaltyUntilMs, isBudgetWait, nextSearchAllowedAt, priceMinForQuery, retryAfterSeconds, searchBudgetUsage, type ExaltedRates, type PriceResult } from "./pricing";
 
 const pending = ref(0);
@@ -87,7 +88,10 @@ export const tradeAuto = {
     const secs = Math.max(0, Math.ceil((stoppedUntilMs() - Date.now()) / 1000));
     if (secs > 0) return `トレード (trade2) のレート制限中 (${secs} 秒)`;
     if (pending.value > 0) return `trade2 検索中… (${pending.value} 件待ち、1 件 約 10 秒)`;
-    return lastError.value ? `trade2 エラー: ${lastError.value}` : "";
+    // 生の英語 (trade2 search HTTP 400 ... {"error":{"code":2}}) をそのまま出さない。
+    // 2026-09-16 オーナー指示「どのエラーも UI 上すべて分かりづらい、日本語で端的に」で
+    // tradeErrorJa を作ったが、2026-09-19 の画面整理 (bd64740) で呼ぶ側が消えて素通しに戻っていた
+    return lastError.value ? `trade2 エラー: ${tradeErrorJa(lastError.value)}` : "";
   }),
 };
 
@@ -154,12 +158,6 @@ export async function autoPrice(league: string, body: unknown, rates: ExaltedRat
   } finally {
     pending.value = Math.max(0, pending.value - 1);
   }
-}
-
-/** 最安値だけ (高貴)。0 件 / 失敗は null */
-export async function autoMin(league: string, body: unknown, rates: ExaltedRates): Promise<number | null> {
-  const r = await autoPrice(league, body, rates);
-  return r && r.minExalted != null ? Math.round(r.minExalted * 100) / 100 : null;
 }
 
 /**

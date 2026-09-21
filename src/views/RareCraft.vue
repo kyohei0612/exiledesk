@@ -9,6 +9,8 @@
     views/rare-craft/useRareCraft.ts 状態 / 相場 / trade2
 -->
 <script setup lang="ts">
+// 同じ物を画面にも書いていたので、この機能の ui.ts に寄せた (2026-09-21)
+import { evClass, pct } from "./rare-craft/ui";
 import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
@@ -34,15 +36,6 @@ onMounted(() => {
 });
 const showAllVariants = ref(false);
 
-function pct(p: number | null | undefined): string {
-  if (p == null || !Number.isFinite(p)) return "—";
-  const v = p * 100;
-  return `${v.toFixed(v >= 10 ? 1 : 2)}%`;
-}
-function evClass(v: number | null | undefined): string {
-  if (v == null) return "text-[var(--exile-color-text-tertiary)]";
-  return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
-}
 const bucketKind = (key: string): `b:${string}` => `b:${key}`;
 const refetch = computed(() =>
   refetchState(

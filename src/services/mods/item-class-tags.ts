@@ -58,11 +58,6 @@ const CLASS_TAG_SETS: Record<string, string[][]> = {
   "Fishing Rod": [["fishing_rod"]],
 };
 
-/** 装備種別 → spawn タグ集合の一覧。未知の種別は null (= 絞らない) */
-export function tagSetsForItemClass(itemClass: string): string[][] | null {
-  return CLASS_TAG_SETS[itemClass] ?? null;
-}
-
 const WEAPON_CLASSES = ["Bow", "Crossbow", "Wand", "Sceptre", "Staff", "Warstaff", "One Hand Mace", "Two Hand Mace", "One Hand Sword", "Two Hand Sword", "One Hand Axe", "Two Hand Axe", "Spear", "Flail", "Claw", "Dagger"];
 const OFFHAND_CLASSES = ["Shield", "Buckler", "Focus", "Quiver"];
 

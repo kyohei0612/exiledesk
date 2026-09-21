@@ -6,6 +6,7 @@
     views/overquality/useOverquality.ts プリセット / 相場 / 入力
 -->
 <script setup lang="ts">
+import { evClass } from "../utils/ev-class";
 import { computed, onMounted, ref, watch } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
@@ -161,10 +162,6 @@ const ledgerTotals = computed(() => {
 
 function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 1 : 2)}%`;
-}
-function evClass(v: number | null): string {
-  if (v == null) return "text-[var(--exile-color-text-tertiary)]";
-  return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
 }
 </script>
 

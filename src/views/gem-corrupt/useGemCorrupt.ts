@@ -19,6 +19,7 @@ import { loadFlow, type FlowStore } from "../../services/market-flow";
 import { autoPrice, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { originalGemQuery, rowQueryOptions, watchKey } from "./row-query";
 import { recordGemSample } from "./sample-now";
+import { tradeErrorJa } from "../../utils/trade-error";
 import { cachedBuy, fetchBuy, payable, type BestBuy, type PayCurrency } from "../../services/trade2/exchange";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type MaterialPrices, type RouteResult, type SalePrices } from "./model";
 import { baseGemSourceFor, finisherIsFlux, FINISHER_JA, materialPricesFor, MATERIAL_API, uncut20ApiId, type BaseGemSource } from "./materials";
@@ -384,7 +385,8 @@ export function useGemCorrupt() {
       }
       // 原石の種類がまだ実測できていなければ、素のスキルを 1 回だけ見る (現物を買うジェムは上で取り済み)
       if (!spiritGemMeasured(gem.en) && baseSourceOf(gem.en) !== "buy") await measureOriginal(gem, force);
-      priceError.value = tradeAuto.lastError.value;
+      // 画面に出すのは日本語にしてから (2026-09-21 に戻した)
+      priceError.value = tradeErrorJa(tradeAuto.lastError.value);
       // 途中で待ちに入った (どれかが null で返った) なら、明けたら続きを取る
       if (seq === fetchSeq && isRateLimited()) retryWhenFree.value = true;
     } finally {

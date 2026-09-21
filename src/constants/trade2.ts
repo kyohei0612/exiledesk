@@ -42,9 +42,6 @@ export const SecurityStatus = {
   /** 全て (オフライン含む) */
   Any: "any",
 } as const;
-export type SecurityStatusValue =
-  (typeof SecurityStatus)[keyof typeof SecurityStatus];
-
 /** `type_filters.filters.rarity.option` の代表値。 */
 export const Rarity = {
   Normal: "normal",
@@ -54,4 +51,3 @@ export const Rarity = {
   /** 旧 POE1 互換、POE2 でも `nonunique` などが使われる場合あり */
   NonUnique: "nonunique",
 } as const;
-export type RarityValue = (typeof Rarity)[keyof typeof Rarity];

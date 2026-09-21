@@ -47,8 +47,6 @@ async function tick(): Promise<void> {
 
 /** 今どこかで取得が走っているか */
 export const fetchBusy = computed(() => !!status.value?.sampling || sampleBusy.value);
-/** 自動巡回が走っているか (手で押した一括と区別して文言を変える) */
-export const autoSweeping = computed(() => !!status.value?.auto_sampling);
 /** 一括取得 (画面のボタン) が走っているか */
 export const manualSweeping = computed(() => !!status.value?.manual_sampling);
 /**

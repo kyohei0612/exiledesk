@@ -1,3 +1,5 @@
+/** 損益の色は共通 (utils/ev-class) から (2026-09-21) */
+export { evClass } from "../../utils/ev-class";
 /**
  * ui.ts — 規格外の賭けの画面で使う小物 (2026-09-19 に RareCraft.vue 749 行から切り出し)
  */
@@ -13,11 +15,6 @@ export function pct(p: number | null | undefined): string {
   return `${v.toFixed(v >= 10 ? 1 : 2)}%`;
 }
 
-/** 損益の色 */
-export function evClass(v: number | null | undefined): string {
-  if (v == null) return "text-[var(--exile-color-text-tertiary)]";
-  return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
-}
 
 /** 「N 回やった場合」の N (5 刻み) */
 export const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];

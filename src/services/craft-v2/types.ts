@@ -309,9 +309,6 @@ export interface UniqueUsage {
   representative: UniqueRepresentative;
 }
 
-/** 8 スロット分の SlotMods をまとめた型 */
-export type SlotModsBundle = { [K in SlotKey]: SlotMods };
-
 /** スキル使用率 1 行 (2026-09-12)。poe.ninja のスキルグループから、同キャラ重複を除いて人数集計 */
 export interface SkillUsage {
   /** 表示名 (skills-ja-client で日本語化) */

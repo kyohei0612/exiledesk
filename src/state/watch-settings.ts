@@ -233,16 +233,6 @@ export function forgetDropped(en: string): void {
   updateWatchSettings({ droppedAt });
 }
 
-/** 手を入れた跡があるか (リセットを押せるか) */
-export function watchListEdited(s: WatchSettings = state.value): boolean {
-  return s.manual.length > 0 || s.excluded.length > 0;
-}
-
-/** 手で足した / 外した分を全部捨てて、使用率ランキングどおりの並びに戻す */
-export function resetWatchList(): void {
-  updateWatchSettings({ manual: [], excluded: [], droppedAt: {} });
-}
-
 export function isManualGem(en: string): boolean {
   return state.value.manual.includes(en);
 }

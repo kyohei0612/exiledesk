@@ -112,12 +112,6 @@ export function roundMoney(
 /** 丸める前に寄せる幅 (通貨換算の往復で生じる誤差より大きく、実際の値段の差より小さい) */
 const ROUND_EPS = 1e-4;
 
-/** 期待個数の丸め。オーナー指示:「ジェムの期待値も切り下げ」(収入を甘く見ないため) */
-export function roundQty(n: number | null | undefined): number {
-  if (n == null || !Number.isFinite(n) || n <= 0) return 0;
-  return Math.floor(n);
-}
-
 export const displayCurrency = {
   cur,
   rate,

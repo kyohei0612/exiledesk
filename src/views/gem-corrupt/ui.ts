@@ -1,3 +1,5 @@
+/** 損益の色は共通 (utils/ev-class) から (2026-09-21) */
+export { evClass } from "../../utils/ev-class";
 /**
  * ui.ts — ジェムコラプトの画面で使う小物 (2026-09-19 に GemCorrupt.vue 1033 行から切り出し)
  *
@@ -28,11 +30,6 @@ export function pct(p: number): string {
   return `${(p * 100).toFixed(p * 100 >= 10 ? 0 : 1)}%`;
 }
 
-/** 損益の色 (プラス = 緑 / マイナス = 赤 / 不明 = 灰) */
-export function evClass(v: number | null): string {
-  if (v == null) return "text-[var(--exile-color-text-tertiary)]";
-  return v > 0 ? "text-emerald-300" : v < 0 ? "text-red-300" : "";
-}
 
 /** 取引所の単価 (桁に合わせて小数を減らす) */
 export const fmtBuy = (n: number): string => (n >= 100 ? n.toFixed(0) : n >= 1 ? n.toFixed(2) : n.toFixed(3));
