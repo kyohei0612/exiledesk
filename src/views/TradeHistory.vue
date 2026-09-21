@@ -8,6 +8,7 @@
 -->
 <script setup lang="ts">
 import ScreenHeader from "../components/ScreenHeader.vue";
+import { askConfirm } from "../state/confirm-dialog";
 import RefreshButton from "../components/RefreshButton.vue";
 import { fetchBusy, fetchBusyLabel } from "../state/fetch-busy";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
@@ -149,7 +150,12 @@ async function login(): Promise<void> {
   }
 }
 async function doLogout(): Promise<void> {
-  if (!window.confirm("ExileDesk 内の pathofexile.com のログインを消します。取った履歴はこの PC に残ります。よろしいですか?")) return;
+  const ok = await askConfirm("ExileDesk 内の pathofexile.com のログインを消します。取った履歴はこの PC に残ります。", {
+    title: "ログインを消す",
+    okLabel: "ログアウト",
+    danger: true,
+  });
+  if (!ok) return;
   try {
     await logout();
   } finally {

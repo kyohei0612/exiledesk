@@ -200,7 +200,12 @@ const fmtFlowAt = (t: number | null): string => {
             </div>
           </div>
           <p v-if="g.priceError.value" class="text-[11px] text-amber-300 mb-2">{{ g.priceError.value }}</p>
-          <table class="w-full text-[12px]">
+          <!-- ジェムを選ぶ前は空の表を出さない (オーナー指摘 2026-09-21:
+               案内の下に «—» だけの行が並んで壊れて見えた) -->
+          <p v-if="!g.selected.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">
+            ジェムを選ぶと、その 3 条件 (レベル 21 / 品質 23% / 完成品) の最安と売れ行きが出ます。
+          </p>
+          <table v-else class="w-full text-[12px]">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">状態</th>

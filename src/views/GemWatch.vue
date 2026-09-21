@@ -45,6 +45,7 @@ import GemUsageRanking from "./GemBreak.vue";
 import WatchTable from "./gem-watch/WatchTable.vue";
 import AttemptsSelect from "../components/AttemptsSelect.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
+import { askConfirm } from "../state/confirm-dialog";
 import { useSweep } from "./gem-watch/use-sweep";
 /** 使用率ランキング (下に埋め込んでいる) を上のボタンから押すための参照 */
 const ranking = ref<InstanceType<typeof GemUsageRanking> | null>(null);
@@ -187,8 +188,11 @@ async function sync(confirmDrop = false): Promise<void> {
   // 今測っているジェムが外れる時は先に確認 (間違えて押した時の保険。2026-09-20)
   if (confirmDrop && diff.value.drop.length > 0) {
     const names = diff.value.drop.map((n) => jaGemName(n)).join(" / ");
-    if (!window.confirm(`今の監視から ${diff.value.drop.length} ジェム (${names}) が外れます。
-続けますか?`)) return;
+    const ok = await askConfirm(`今の監視から ${diff.value.drop.length} ジェムが外れます。\n${names}`, {
+      title: "監視リストを入れ替える",
+      okLabel: "入れ替える",
+    });
+    if (!ok) return;
   }
   busy.value = true;
   try {
@@ -250,10 +254,10 @@ function restore(en: string): void {
  */
 async function fetchRanking(): Promise<void> {
   if (s.value.autoTop && gems.value.length > 0) {
-    const ok = window.confirm(
-      `「上位を自動で入れる」が有効です。取り直すと、今の ${gems.value.length} ジェムが新しい上位で置き換わります。
-取得しますか?`,
-    );
+    const ok = await askConfirm(`「上位を自動で入れる」が有効です。取り直すと、今の ${gems.value.length} ジェムが新しい上位で置き換わります。`, {
+      title: "使用率ランキングを取り直す",
+      okLabel: "取得する",
+    });
     if (!ok) return;
   }
   await ranking.value?.fetchNow();

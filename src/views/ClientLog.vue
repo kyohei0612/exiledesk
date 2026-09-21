@@ -6,6 +6,7 @@
     - 消し込み: 要約を履歴に残してログ本体を空にする。週 1 回は起動時に自動実行 (services/client-log.ts)
 -->
 <script setup lang="ts">
+import { askConfirm } from "../state/confirm-dialog";
 import { computed, onMounted, ref } from "vue";
 import {
   clientLogClear,
@@ -71,7 +72,12 @@ async function run(): Promise<void> {
 async function clearLog(): Promise<void> {
   const d = result.value;
   if (!d || clearing.value) return;
-  if (!window.confirm(`診断結果を履歴に残して、ログ本体 (${mb(d.size_bytes)} MB) を空にします。よろしいですか?`)) return;
+  const ok = await askConfirm(`診断結果を履歴に残して、ログ本体 (${mb(d.size_bytes)} MB) を空にします。`, {
+    title: "ログを空にする",
+    okLabel: "空にする",
+    danger: true,
+  });
+  if (!ok) return;
   clearing.value = true;
   error.value = null;
   notice.value = null;
@@ -149,7 +155,7 @@ onMounted(() => {
             {{ clearing ? "消し込み中…" : "🧹 処理済みを消し込む" }}
           </button>
           <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-            ログ全体 {{ mb(status.size_bytes) }} MB<template v-if="nextRotate"> ／ 次回の自動消し込み {{ nextRotate }}</template>
+            ログ全体 {{ mb(status.size_bytes) }} MB<template v-if="nextRotate"> / 次回の自動消し込み {{ nextRotate }}</template>
           </span>
         </div>
       </template>
@@ -171,8 +177,8 @@ onMounted(() => {
           <template v-else>✅ 実害のあるエラーは見つかりませんでした</template>
         </div>
         <div class="mt-1 text-[11px] text-[var(--exile-color-text-secondary)]">
-          {{ shortTs(result.first_ts) }} 〜 {{ shortTs(result.last_ts) }} ／ {{ num(result.lines) }} 行 ({{ mb(result.scanned_bytes) }} MB) を走査
-          ／ 内訳 CRIT {{ num(result.crit) }}・WARN {{ num(result.warn) }}・INFO {{ num(result.info) }}
+          {{ shortTs(result.first_ts) }} 〜 {{ shortTs(result.last_ts) }} / {{ num(result.lines) }} 行 ({{ mb(result.scanned_bytes) }} MB) を走査
+          / 内訳 CRIT {{ num(result.crit) }}・WARN {{ num(result.warn) }}・INFO {{ num(result.info) }}
         </div>
       </div>
 

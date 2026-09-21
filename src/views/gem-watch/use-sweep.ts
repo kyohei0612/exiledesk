@@ -25,12 +25,15 @@ export function useSweep(opts: {
   const { reload, message, status, nowMs } = opts;
 
   const sweeping = ref(false);
+  /** 中止を押したか。押した回の終了メッセージを「終わりました」にしないため (2026-09-21) */
+  const cancelled = ref(false);
   /**
    * 取得を中止する (取り切るまで繰り返すので途中でやめる口。2026-09-19)。
    * 2026-09-20 から**自動巡回も止められる**。巡回中は他の取得を押せなくしたので、
    * 止める手段が無いと待つしかなくなるため。
    */
   async function stopSweep(): Promise<void> {
+    cancelled.value = true;
     const auto = !!status.value?.auto_sampling && !status.value?.manual_sampling;
     message.value = {
       ok: true,
@@ -45,6 +48,7 @@ export function useSweep(opts: {
     // 二重に始めない (オーナー指示 2026-09-20:「巡回中は他の取得は触れないようにしよう」)
     if (sweeping.value || status.value?.sampling) return;
     sweeping.value = true;
+    cancelled.value = false;
     message.value = { ok: true, text: `${reason ? `${reason} ` : ""}一括取得を始めました (終わるまで数分かかります)` };
     const poll = window.setInterval(reload, 3000);
     try {
@@ -55,7 +59,11 @@ export function useSweep(opts: {
       const failed = st?.last_failed ?? 0;
       const got = st?.sampled_watches ?? 0;
       const all = st?.auto_watches ?? 0;
-      message.value = r.ok
+      // 中止で終わった回は「終わりました」と言わない (オーナー指摘 2026-09-21:
+      // 中止したのに完了の文言に上書きされていた)
+      message.value = cancelled.value
+        ? { ok: true, text: `中止しました (${got} 銘柄まで取得。記録は残っています)` }
+        : r.ok
         ? left > 0
           ? { ok: false, text: `一括取得は一周しましたが ${left} 銘柄が取れていません (レート制限か通信)。${fmtClock(st?.retry_at ?? 0)} 頃に取り直します` }
           : failed > 0

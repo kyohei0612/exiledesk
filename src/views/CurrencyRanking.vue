@@ -152,8 +152,8 @@ onActivated(() => {
       <p class="mt-4 text-[10px] text-[var(--exile-color-text-secondary)] text-right">
         Powered by
         <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
-        ／ <span class="font-mono">{{ r.league.value }}</span>
-        ／各列は「1 アイテム = X 神 / 高貴 / カオス」
+        / <span class="font-mono">{{ r.league.value }}</span>
+        / 各列は「1 アイテム = X 神 / 高貴 / カオス」
       </p>
     </div>
 

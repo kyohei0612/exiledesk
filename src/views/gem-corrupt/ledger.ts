@@ -15,6 +15,7 @@
  */
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { roundMoney } from "../../state/display-currency";
+import { askConfirm } from "../../state/confirm-dialog";
 import { expectedCounts, expectedSales, type RouteId, type SaleSlot } from "./model";
 import type { useGemCorrupt } from "./useGemCorrupt";
 
@@ -138,7 +139,7 @@ export interface GemLedgerApi {
   setUnit: (key: RowKey, v: number | null) => void;
   /** 実売の 1 個あたり (空欄なら相場) */
   setEach: (key: EachKey, v: number | null) => void;
-  resetLedger: () => void;
+  resetLedger: () => Promise<void>;
   /** 使った数 / 売れた数の上書きだけ消す (回数・経路・単価は残す) */
   clearCounts: () => void;
   /** 売れた物の 1 個の売値の上書きを消す (空欄 = 上の売値に戻る)。2026-09-20 */
@@ -361,10 +362,20 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     if (!ledgerGem.value) return;
     book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null } };
   }
-  function resetLedger(): void {
-    if (!ledgerGem.value) return;
+  /**
+   * そのジェムの帳簿を丸ごと消す (回数・経路・固定した単価・使った数・売れた数・売値)。
+   * 取り消せないので必ず聞く (オーナー指摘 2026-09-21:「3 も確認したほうがいいね」)。
+   */
+  async function resetLedger(): Promise<void> {
+    const en = ledgerGem.value;
+    if (!en) return;
+    const ok = await askConfirm(
+      `${g.selected.value?.ja ?? en} の帳簿を全部消します。\n回数・経路・固定した単価・使った数・売れた数が消えて、元に戻せません。`,
+      { title: "帳簿を全部 0 に", okLabel: "全部消す", danger: true },
+    );
+    if (!ok) return;
     const next = { ...book.value };
-    delete next[ledgerGem.value];
+    delete next[en];
     book.value = next;
   }
 

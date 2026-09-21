@@ -6,6 +6,7 @@ import CenterContent from "./components/CenterContent.vue";
 import UpdateToast from "./components/UpdateToast.vue";
 import LoginGate from "./components/LoginGate.vue";
 import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
+import ConfirmDialog from "./components/ConfirmDialog.vue";
 import FetchBusyBar from "./components/FetchBusyBar.vue";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
@@ -72,6 +73,8 @@ onMounted(() => {
     <LoginGate />
     <!-- 監視の枠が埋まっている時に「どれと入れ替えるか」を聞く (2026-09-20) -->
     <WatchReplaceDialog />
+    <!-- 「よろしいですか?」は OS の素のダイアログでなくアプリの中で描く (2026-09-21) -->
+    <ConfirmDialog />
     <!-- 取得中は他の取得を押せなくするので、何が走っているかを下に出す (2026-09-20) -->
     <FetchBusyBar />
   </div>

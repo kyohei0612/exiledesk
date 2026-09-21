@@ -205,7 +205,7 @@ function evClass(v: number | null): string {
                 失敗のたびに消える。trade2 の「ノーマル · 未コラプト · ソケット 2」の最安
               </div>
             </label>
-            <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.autoBasePrice.value) }}</span>
+            <span class="tabular-nums text-[13px] text-right" :class="o.autoBasePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.autoBasePrice.value == null ? (o.pricing.value ? "取得中…" : "未取得") : money(o.autoBasePrice.value) }}</span>
             <label>
               <div>
                 完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト)
@@ -215,7 +215,7 @@ function evClass(v: number | null): string {
                 trade2 の「品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト」の最安<span v-if="o.autoSalePrice.value == null && o.auto.value.uniqueRef != null">。取れるまではカレンシーランキングの品質不問の値</span>
               </div>
             </label>
-            <span class="tabular-nums text-[13px] text-right" :class="o.salePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.salePrice.value == null ? (o.pricing.value ? "取得中…" : "—") : money(o.salePrice.value) }}</span>
+            <span class="tabular-nums text-[13px] text-right" :class="o.salePrice.value == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ o.salePrice.value == null ? (o.pricing.value ? "取得中…" : "未取得") : money(o.salePrice.value) }}</span>
           </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
             前提: 目標品質 {{ o.targetQuality.value }}% (完成品の検索条件と同じ、最大品質は 10% まで超過できる) · {{ o.preset.value.qualityCurrencyJa }}は 1 本 +1% なので 0 → 20% に {{ o.qualityCurrencyCount.value }} 本 ·

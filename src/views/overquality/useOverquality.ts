@@ -87,8 +87,10 @@ export function useOverquality() {
   const marketLabel = marketStore.fetchedLabel;
   async function loadMarket(): Promise<void> {
     await marketStore.ensureMarket();
-    // 売値は salePrice の computed で poe2scout のユニーク相場に落ちる
-    void fetchPrices();
+    // 売値は salePrice の computed で poe2scout のユニーク相場に落ちる。
+    // **開いただけでは取引所に投げない** (オーナー指摘 2026-09-21:「2 は手動でおけ」)。
+    // 他の画面は開いても相場を読むだけなので、ここだけ枠を使っていた。
+    // ベースやユニークを選び直した時は下の watch が取りに行く (押した操作なので今まで通り)。
   }
   const priceOf = marketStore.priceOf;
   const uniquePriceOf = marketStore.uniquePriceOf;
