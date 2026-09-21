@@ -7,6 +7,8 @@
     src-tauri/src/trade_history.rs  ログイン用ウィンドウ / cookie / 履歴 API
 -->
 <script setup lang="ts">
+import ScreenHeader from "../components/ScreenHeader.vue";
+import RefreshButton from "../components/RefreshButton.vue";
 import { fetchBusy, fetchBusyLabel } from "../state/fetch-busy";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
@@ -249,18 +251,26 @@ onUnmounted(() => {
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">取引履歴</h1>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        公式サイトのマーチャント履歴を ExileDesk に取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行い、そのログイン状態で履歴を読みます。
-      </p>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
+    <ScreenHeader title="取引履歴">
+      公式サイトのマーチャント履歴を ExileDesk に取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行い、そのログイン状態で履歴を読みます。
+      <template #source>
+        履歴: 公式サイト (非公式 API) · {{ lastFetchAt ? `${fmtTime(lastFetchAt)} 取得` : "未取得" }}<template v-if="usageText"> · 使った回数 {{ usageText }}</template><template v-if="autoNote"> · {{ autoNote }}</template>
+      </template>
+      <template #actions>
+        <RefreshButton
+          :label="fetchLabel"
+          :disabled="!inApp || !loggedIn || busy || waitSec > 0 || !league || fetchBusy"
+          title="公式サイトから取引履歴を取り込みます"
+          @click="fetchNow"
+        />
+      </template>
+      <template #controls><CurrencyPicker /></template>
+      <template #note>
         取引サイトの履歴 API は GGG の非公式 API です (公式の認証には取引履歴を読む権限がありません)。ログイン状態はアプリ内のブラウザにだけ残り、ExileDesk はファイルに保存しません。
         履歴の取得回数の制限はアカウント単位で、公式サイトや他のツール (PoE Overlay II など) の更新と共通です。
         サーバーが返す残り回数に合わせて、上限の 1 回手前で止めます (目安: 1 分 5 回 / 10 分 10 回 / 3 時間 15 回、超えると最長 1 時間締め出し)。
-      </p>
-      <div class="mt-1"><CurrencyPicker /></div>
-    </header>
+      </template>
+    </ScreenHeader>
 
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ動きます。ブラウザ表示では保存済みの履歴だけ出ます。</p>
 
@@ -289,17 +299,7 @@ onUnmounted(() => {
           <option v-for="l in leagues" :key="l" :value="l">{{ l }}</option>
         </select>
       </label>
-      <button
-        type="button"
-        :disabled="!inApp || !loggedIn || busy || waitSec > 0 || !league || fetchBusy"
-        class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-        @click="fetchNow"
-      >
-        {{ fetchLabel }}
-      </button>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-        最終取得 {{ lastFetchAt ? fmtTime(lastFetchAt) : "—" }}<span v-if="usageText"> · 使った回数 {{ usageText }}</span><span v-if="autoNote"> · {{ autoNote }}</span>
-      </span>
+      <!-- 手動更新と取得時刻は見出しに集約した (2026-09-21) -->
       <p v-if="message" class="basis-full text-[12px]" :class="message.ok ? 'text-emerald-300' : 'text-amber-300'">{{ message.text }}</p>
     </div>
 

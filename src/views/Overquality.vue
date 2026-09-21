@@ -12,6 +12,8 @@ import BaseCard from "../components/decor/BaseCard.vue";
 import { useOverquality } from "./overquality/useOverquality";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
+import ScreenHeader from "../components/ScreenHeader.vue";
+import RefreshButton from "../components/RefreshButton.vue";
 import { displayCurrency } from "../state/display-currency";
 import { refetchState } from "../services/trade2/auto-price";
 import { marketStore } from "../state/market-store";
@@ -168,18 +170,22 @@ function evClass(v: number | null): string {
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">アドニアの賭け</h1>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        吸収のワンドをヴァールアルカニストのインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにするクラフトの収支。
-        20% を超えた分だけコラプト化の危険があり、コラプトしたワンドは失敗です。完成品 1 個あたりの実質コストで判定します。
-      </p>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+    <ScreenHeader title="アドニアの賭け" :error="o.marketError.value ? `poe2scout 取得失敗: ${o.marketError.value}` : null">
+      吸収のワンドをヴァールアルカニストのインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにするクラフトの収支。
+      20% を超えた分だけコラプト化の危険があり、コラプトしたワンドは失敗です。完成品 1 個あたりの実質コストで判定します。
+      <template #source>
         素材価格: カレンシーランキングの相場{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
-        <span v-if="o.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ o.marketError.value }}</span>
-      </p>
-      <div class="mt-1"><CurrencyPicker /></div>
-    </header>
+      </template>
+      <template #actions>
+        <RefreshButton
+          :label="refetch.label"
+          :disabled="refetch.disabled || (!o.baseEn.value && !o.uniqueEn.value)"
+          title="ワンドと完成品の最安を trade2 から取り直します"
+          @click="o.fetchPrices"
+        />
+      </template>
+      <template #controls><CurrencyPicker /></template>
+    </ScreenHeader>
 
     <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 入力 -->
@@ -187,15 +193,7 @@ function evClass(v: number | null): string {
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
             <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2 から自動)</h2>
-            <button
-              type="button"
-              :disabled="refetch.disabled || (!o.baseEn.value && !o.uniqueEn.value)"
-              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
-              @click="o.fetchPrices"
-            >
-              <span aria-hidden="true">⟳</span>
-              {{ refetch.label }}
-            </button>
+            <!-- 手動更新は見出しに集約した (2026-09-21) -->
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
             <label>

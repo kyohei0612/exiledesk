@@ -5,6 +5,7 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
 -->
 <script setup lang="ts">
+import RefreshButton from "../RefreshButton.vue";
 import { computed } from "vue";
 import type { SlotKey } from "../../services/craft-v2/types";
 import { craftV2Store, refetchWithSelectedLeague } from "../../state/craft-v2-store";
@@ -41,9 +42,14 @@ const waiting = computed(
         >
       </h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        上位プレイヤーのレア装備 (指輪 / アミュレット / 武器 / オフハンド / 兜 / 手袋 / 胴体 / 靴) の explicit MOD を prefix / suffix で集計 (人数降順)
+        上位プレイヤーのレア装備 (指輪 / アミュレット / 武器 / オフハンド / 兜 / 手袋 / 胴体 / 靴) の explicit MOD を prefix / suffix で集計 (人数降順)。数値は実際に取れた人数分の平均値です。
       </p>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-0.5">※ 数値は実際に取れた人数分の平均値</p>
+      <!-- 出どころと取得時刻は他の画面と同じ並び・同じ字で (2026-09-21) -->
+      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+        MOD と使用率: poe.ninja ·
+        <template v-if="store.lastUpdatedAt">{{ store.lastUpdatedAt }} 取得<template v-if="store.snapshot"> ({{ store.snapshot.snapshot_name }})</template></template>
+        <template v-else>未取得</template>
+      </p>
 
       <!-- リーグ選択 dropdown (動的取得、デフォは現リーグ) -->
       <div v-if="!store.leaguesLoadFailed && store.availableLeagues.length > 0" class="mt-2 flex items-center gap-2 text-[11px]">
@@ -155,17 +161,7 @@ const waiting = computed(
             ({{ store.networkStatus.lastRetryReason }} あと {{ waitText(store.networkStatus.lastRetryRemainingSecs) }})
           </span>
         </span>
-        <span
-          v-if="
-            store.lastUpdatedAt &&
-            !(store.loading && store.networkStatus?.globalPenaltyWaiting) &&
-            !(store.loading && store.networkStatus && store.networkStatus.activeRetryCount > 0)
-          "
-          class="text-[var(--exile-color-text-secondary)]"
-        >
-          最終更新: {{ store.lastUpdatedAt }}
-          <span v-if="store.snapshot" class="ml-1 text-[var(--exile-color-text-tertiary)]">({{ store.snapshot.snapshot_name }})</span>
-        </span>
+        <!-- 最終更新は見出しの出どころの行に移した (2026-09-21) -->
       </div>
 
       <!-- 全体プログレスバー (取得中だけ表示、完了したら自然消失) -->
@@ -234,24 +230,19 @@ const waiting = computed(
       </div>
 
       <!-- 更新 (差分) / 全取得 (キャッシュ削除) -->
-      <button
-        type="button"
-        @click="emit('refresh')"
+      <RefreshButton
+        :label="store.loading ? '取得中…' : '更新'"
         :disabled="store.loading"
-        class="px-3 py-1.5 rounded border text-[13px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         :title="store.loading ? '取得が終わるまで押せません' : 'poe.ninja から差分更新 (キャッシュ活用)'"
-      >
-        <span aria-hidden="true">⟳</span> 更新
-      </button>
-      <button
-        type="button"
-        @click="emit('forceRefetch')"
+        @click="emit('refresh')"
+      />
+      <RefreshButton
+        :label="'全取得'"
+        subtle
         :disabled="store.loading"
-        class="px-3 py-1.5 rounded border text-[12px] font-display tracking-[0.06em] transition-colors border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         :title="store.loading ? '取得が終わるまで押せません' : 'キャッシュ削除 + 全取得 (リーグ更新等のリカバリ用)'"
-      >
-        <span aria-hidden="true">⌫</span> 全取得
-      </button>
+        @click="emit('forceRefetch')"
+      />
     </div>
   </header>
 </template>

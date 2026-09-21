@@ -3,6 +3,7 @@
   2026-09-19 に GemCorrupt.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import RefreshButton from "../../components/RefreshButton.vue";
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import SoldListDialog from "../../components/SoldListDialog.vue";
@@ -190,15 +191,12 @@ const fmtFlowAt = (t: number | null): string => {
               >
                 📋 売れたリスト
               </button>
-              <button
-                type="button"
+              <RefreshButton
+                :label="refetch.label"
                 :disabled="!g.selected.value || refetch.disabled"
-                class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="3 条件の最安を trade2 から取り直します"
                 @click="g.fetchSalePrices(true)"
-              >
-                <span aria-hidden="true">⟳</span>
-                {{ refetch.label }}
-              </button>
+              />
             </div>
           </div>
           <p v-if="g.priceError.value" class="text-[11px] text-amber-300 mb-2">{{ g.priceError.value }}</p>

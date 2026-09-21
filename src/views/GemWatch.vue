@@ -44,6 +44,7 @@ import { marketStore } from "../state/market-store";
 import GemUsageRanking from "./GemBreak.vue";
 import WatchTable from "./gem-watch/WatchTable.vue";
 import AttemptsSelect from "../components/AttemptsSelect.vue";
+import ScreenHeader from "../components/ScreenHeader.vue";
 import { useSweep } from "./gem-watch/use-sweep";
 /** 使用率ランキング (下に埋め込んでいる) を上のボタンから押すための参照 */
 const ranking = ref<InstanceType<typeof GemUsageRanking> | null>(null);
@@ -293,6 +294,14 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 
 <template>
   <section class="p-6 @container">
+    <!-- 他の画面と同じ見出し (2026-09-21 オーナー指示「UI とか UX 周り、統一感持たせて」)。
+         一括取得のボタンはこの画面の主役なので下のカードの操作に残す -->
+    <ScreenHeader title="自動ジェム監視">
+      監視するジェムの 3 条件 (レベル 21 / 品質 23% / 完成品) の最安と出品数を周期ごとに取り、売れるまでの時間を測ります。期待値の高い順に並びます。
+      <template #source>
+        売値と捌き速度: trade2 (一括取得と自動取得) · {{ sweepClock || "まだ 1 巡していません" }} / 使用率: poe.ninja
+      </template>
+    </ScreenHeader>
     <!-- 監視中の一覧 (手で選んだジェム 7 個まで)。操作もこのカードに入れる -->
     <WatchTable :gems="gems" :flow-store="flowStore" :attempts="evAttempts" @remove="remove" @open-sold="openSold">
       <template #controls>
@@ -327,7 +336,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <button
             type="button"
             :disabled="sweeping || !!status?.sampling || sampleBusy"
-            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+            class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] tabular-nums text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             :title="
               sampleBusy
                 ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)`
@@ -342,7 +351,7 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
           <button
             v-if="sweeping || !!status?.sampling"
             type="button"
-            class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-amber-200 hover:bg-amber-500/20"
+            class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-[11px] text-amber-200 hover:bg-amber-500/20 transition-colors"
             title="取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)。自動巡回も止められます"
             @click="stopSweep"
           >

@@ -14,6 +14,7 @@ import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
 import BaseCard from "../components/decor/BaseCard.vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
+import ScreenHeader from "../components/ScreenHeader.vue";
 import { displayCurrency } from "../state/display-currency";
 import { useRareCraft } from "./rare-craft/useRareCraft";
 import { METRIC_LABEL, METRIC_UNIT } from "./rare-craft/sim";
@@ -107,18 +108,13 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">規格外の賭け</h1>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
+    <ScreenHeader title="規格外の賭け" :error="c.marketError.value ? `poe2scout 取得失敗: ${c.marketError.value}` : null">
+      規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
         どこまで伸びるかは poe2db の推定重み × クライアントのティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
-      </p>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+      <template #source>
         素材価格: カレンシーランキングの相場{{ c.league.value ? ` (${c.league.value.Value})` : "" }} · {{ c.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 重み: poe2db の推定 (PoE1 由来、冒涜は一様)
-        <span v-if="c.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ c.marketError.value }}</span>
-        <span v-if="c.priceError.value" class="text-amber-300">— trade2: {{ c.priceError.value }}</span>
-      </p>
-      <div class="mt-1 flex items-center gap-4 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
+      </template>
+      <template #controls>
         <CurrencyPicker />
         <label class="inline-flex items-center gap-2">
           レシピ
@@ -133,9 +129,8 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
           </select>
         </label>
         <span class="px-1.5 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]">規格外 · ソケット 2</span>
-      </div>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">{{ c.recipe.value.note }}</p>
-    </header>
+      </template>
+    </ScreenHeader>
 
     <div class="grid grid-cols-1 @6xl:grid-cols-2 gap-4 mb-4">
       <!-- 相場 (trade2 自動) -->

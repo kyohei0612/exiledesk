@@ -11,6 +11,7 @@
     components/currency/Sparkline          7 日折れ線 + %
 -->
 <script setup lang="ts">
+import RefreshButton from "../components/RefreshButton.vue";
 import { computed, onActivated, onMounted, ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
@@ -61,16 +62,15 @@ onActivated(() => {
 
     <div class="flex-1 overflow-auto p-4">
       <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
-        <div>
-          <h2 class="text-[24px] font-semibold font-display mb-1">💰 カレンシーランキング</h2>
-          <div class="h-px bg-gradient-to-r from-transparent via-[var(--exile-color-border-brass)] to-transparent" />
-          <p class="text-xs text-[var(--exile-color-text-secondary)]">
-            相場時刻: <span class="text-[var(--exile-color-text-primary)]">{{ formatEpoch(r.snapshotEpoch.value) }}</span>
-            <span class="text-[var(--exile-color-text-tertiary)]">（poe2scout更新）</span>
-            ／ 取得 <span>{{ formatTime(r.lastUpdated.value) }}</span>
-            <span v-if="r.fromCache.value" class="text-[var(--exile-color-text-tertiary)]">（前回のデータ）</span>
-            <span v-if="r.ranking.value.length"> ／ {{ r.ranking.value.length }} 件</span>
-            <span v-if="r.autoNote.value" class="text-[var(--exile-color-text-tertiary)]"> ／ {{ r.autoNote.value }}</span>
+        <div class="min-w-0">
+          <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">カレンシーランキング</h1>
+          <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe2scout の相場。素材の単価はこの数字を使います。</p>
+          <!-- 出どころと取得時刻は他の画面と同じ並び (2026-09-21) -->
+          <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+            相場: poe2scout ({{ formatEpoch(r.snapshotEpoch.value) }} 更新) · {{ formatTime(r.lastUpdated.value) }} 取得
+            <span v-if="r.fromCache.value">(前回のデータ)</span>
+            <span v-if="r.ranking.value.length"> / {{ r.ranking.value.length }} 件</span>
+            <span v-if="r.autoNote.value"> / {{ r.autoNote.value }}</span>
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
@@ -82,13 +82,12 @@ onActivated(() => {
             <option v-for="l in r.leagues.value" :key="l.Value" :value="l.Value">{{ l.Value }}{{ l.IsCurrent ? " ★" : "" }}</option>
             <option v-if="!r.leagues.value.length" :value="r.league.value">{{ r.league.value }}</option>
           </select>
-          <button
-            @click="r.refresh"
+          <RefreshButton
+            :label="r.loading.value ? '更新中…' : '更新'"
             :disabled="r.loading.value"
-            class="px-4 py-2 rounded bg-[var(--exile-color-accent-focus)] text-black font-medium text-sm hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 transition"
-          >
-            {{ r.loading.value ? "更新中…" : "🔄 更新" }}
-          </button>
+            title="poe2scout から相場を取り直します"
+            @click="r.refresh"
+          />
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import BaseCard from "../components/decor/BaseCard.vue";
 import { GEMS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
 import { pendingGemCorrupt } from "../state/app-nav";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
+import ScreenHeader from "../components/ScreenHeader.vue";
 import { useGemLedger } from "./gem-corrupt/ledger";
 import SalePanel from "./gem-corrupt/SalePanel.vue";
 import MaterialsPanel from "./gem-corrupt/MaterialsPanel.vue";
@@ -95,18 +96,14 @@ const ledgerApi = useGemLedger(g, attempts);
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <header class="mb-3">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ジェムコラプトの賭け</h1>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う)
+    <ScreenHeader title="ジェムコラプトの賭け" :error="g.marketError.value ? `poe2scout 取得失敗: ${g.marketError.value}` : null">
+      レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う)
         を「1 回あたりの期待収支」で比べます。
-      </p>
-      <div class="mt-1"><CurrencyPicker /></div>
-      <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+      <template #source>
         素材価格: カレンシーランキングの相場{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
-        <span v-if="g.marketError.value" class="text-amber-300">— poe2scout 取得失敗: {{ g.marketError.value }}</span>
-      </p>
-    </header>
+      </template>
+      <template #controls><CurrencyPicker /></template>
+    </ScreenHeader>
 
     <!-- ジェム選択 (候補リストがカードからはみ出すので overflow を解放し、最前面に出す) -->
     <BaseCard class="mb-4 !overflow-visible relative z-30">
