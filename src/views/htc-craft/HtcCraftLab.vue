@@ -25,6 +25,9 @@ function pick(id: string): void {
 onMounted(() => void c.run(text.value));
 
 const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id)?.text ?? id;
+/** 暗黙は複数行のことがある (枠の増減は 2 行)。1 行に畳んで出す */
+const implicitText = (lines: readonly string[]): string =>
+  (lines[0] ?? "").split(String.fromCharCode(10)).join(" / ");
 </script>
 
 <template>
@@ -119,9 +122,32 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         </p>
       </section>
 
+      <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->
+      <section v-if="c.bases.value.length" class="mb-4">
+        <h2 class="mb-1 font-bold">② ベース</h2>
+        <p class="mb-2 text-xs opacity-60">
+          <b>貼り付けた物を真似るなら、ベースは決まっています</b> (先頭の「今の物」)。
+          下は<b>0 から作る時</b>の参考です ── 枠が違うベース、暗黙がタダで乗るベース、
+          <b>品質の最大値を上げるベース</b>があります。後者ならプレフィックスを使わずに高い品質へ
+          行けます (エッセンスで上げる道は枠を食う)。<b>選ぶのは手動です。</b>
+        </p>
+        <table class="w-full text-xs">
+          <tr v-for="b in c.bases.value.slice(0, 8)" :key="b.baseType" class="border-b border-white/5">
+            <td class="w-5">{{ b.fits ? "○" : "×" }}</td>
+            <td class="py-0.5" :class="b.current ? 'text-amber-300 font-bold' : ''">
+              {{ b.ja }}<span v-if="b.current" class="opacity-60"> ← 今の物</span>
+            </td>
+            <td class="w-14 opacity-50">lvl {{ b.lvl }}</td>
+            <td class="w-16 opacity-70">{{ b.prefixes }}P/{{ b.suffixes }}S</td>
+            <td class="w-28 text-emerald-300">{{ b.maxQualityPlus ? "品質上限 +" + b.maxQualityPlus + "%" : "" }}</td>
+            <td class="pl-2 opacity-60">{{ b.why ?? implicitText(b.implicits) }}</td>
+          </tr>
+        </table>
+      </section>
+
       <!-- 段階 0 -->
       <section class="mb-4">
-        <h2 class="mb-1 font-bold">② 買うか自分で出すか (1 個ずつ)</h2>
+        <h2 class="mb-1 font-bold">③ 買うか自分で出すか (1 個ずつ)</h2>
         <p class="mb-1 text-xs opacity-60">
           この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。<br />
           <b>期待費用は厳密解</b>なので一瞬で出ます。<b>「沼った時」の目安 (p75) は押された時だけ</b>
@@ -177,7 +203,7 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
 
       <!-- ルートの比べ。固定済みがあれば、そこから解いた場合と並べる -->
       <section v-if="c.fracturedLines.value.length" class="mb-4">
-        <h2 class="mb-1 font-bold">③ どこから始めるか</h2>
+        <h2 class="mb-1 font-bold">④ どこから始めるか</h2>
         <p class="mb-2 text-xs opacity-70">
           固定済み: <span class="text-emerald-300">{{ c.fracturedLines.value.join(" / ") }}</span><br />
           <b>固定された MOD は消去でも消えません。</b>買った時点でもう手に入っているので、そこから作れます。
@@ -207,7 +233,7 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
       <!-- 設計図。本家と同じく案を並べ、各段が「何を狙うか」まで出す -->
       <section v-if="c.plans.value.length" class="mb-4">
         <h2 class="mb-1 font-bold">
-          ④ 設計図
+          ⑤ 設計図
           <span class="font-normal text-xs opacity-60">数えた手順 {{ c.plansEvaluated.value.toLocaleString() }} / 案 {{ c.plans.value.length }} 件</span>
         </h2>
         <p class="mb-2 text-xs opacity-60">
@@ -233,7 +259,7 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
 
       <!-- 買い方 -->
       <section class="mb-4">
-        <h2 class="mb-1 font-bold">⑤ 途中まで出来た物を買う</h2>
+        <h2 class="mb-1 font-bold">⑥ 途中まで出来た物を買う</h2>
         <button
           class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
           :disabled="c.buysRunning.value"

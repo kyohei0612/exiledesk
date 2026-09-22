@@ -13,6 +13,7 @@ import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
+import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
@@ -70,6 +71,11 @@ export function useHtcCraft() {
   const skipped = ref<string[]>([]);
   /** 確定で乗せる MOD が何個あるか。**解く前に分かる** ([[craft-slots.ts]]) */
   const slots = shallowRef<CraftedSurvey | null>(null);
+  /**
+   * どのベースから始めるか。**並べるだけで選びません** (オーナー方針:「手動の所は手動でいきたい」)。
+   * 1 ミリ秒で出るので開いた時に出す。費用は選んだ 1 つだけ解くこと。
+   */
+  const bases = shallowRef<BaseChoice[]>([]);
 
   const solo = shallowRef<SoloCost[]>([]);
   /** 案は**全部**持つ。本家も 3 案並べる (確率と 1 周の値段の釣り合いを見せるため) */
@@ -194,6 +200,7 @@ export function useHtcCraft() {
       });
       // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
       slots.value = craftedSurvey(d, cls, got.targets);
+      bases.value = baseChoices(d, cls, got.targets, { current: it.baseType });
 
       t = Date.now();
       // **p75 は出さない** (押された時に `findP75`)。ここは厳密解だけで一瞬
@@ -339,7 +346,7 @@ export function useHtcCraft() {
     stepTarget, findFractured, fractured, fracturedBusy,
     fracturedLines, fracturedUnusable, slotsUsed, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
-    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
+    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots, bases,
     p75, p75Busy, findP75,
     money, run, solveBuys,
   };
