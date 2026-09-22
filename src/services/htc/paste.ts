@@ -1,5 +1,5 @@
 /**
- * paste-ja.ts — ゲームから Ctrl+C した**日本語のアイテム**を読む (2026-09-22)
+ * paste.ts — 貼り付けたアイテムを読む (2026-09-22 / 英語と注記の対応は 2026-09-23)
  *
  * ## なぜ要るか
  * 同梱エンジンの `parseItemText` は**英語専用**です (`Rarity:` `Item Level:` を探す)。
@@ -27,6 +27,25 @@
  * ## 取れた値の使い道
  * 値からティアが決まるので、`targetsFor` が「この行は T1」まで出します。これが入力の肝で、
  * 利用者が MOD とティアを手で選ぶ必要がなくなります。
+ *
+ * ## poe.ninja の英語形式 — **注記があるので推測が要りません** (2026-09-23)
+ * ゲームの日本語表示は「どの行がどの種類か」を書いてくれませんが、poe.ninja の書き出しは
+ * 行末に種類を付けます。**こちらのほうが確実**なので、あれば必ず使います。
+ *
+ * ```
+ * Quality (Mana Modifiers): +40% (augmented)
+ * 8% increased maximum Mana (implicit)
+ * 36% increased Mana Cost Efficiency of Spells (fractured)   ← 固定済み。消去で消えない
+ * +14% to all Elemental Resistances (desecrated)             ← 冒涜プール
+ * 8% increased maximum Mana (crafted)                        ← クラフト枠を使う
+ * Allocates Augmented Flesh (enchant)                        ← アノイント。作る対象外
+ * Grants Skill: Level 20 Cast on Elemental Ailment           ← ベースの付与スキル
+ * ```
+ *
+ * これが分かると**開始状態をそのまま組めます**。固定済みの MOD は「もう手に入っている」ので、
+ * そこから解けば道順が桁違いに短くなります (実測: 素から 9,780 神 → 固定済みから 148 神)。
+ *
+ * 英語の MOD 文面は `mod-text-ja.json` の**鍵**のほうを型にします (値が日本語、鍵が英語)。
  */
 import modTextJa from "../../i18n/mod-text-ja.json";
 import itemsJaClient from "../../i18n/items-ja-client.json";
@@ -37,8 +56,16 @@ import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
+/**
+ * 行の種類。poe.ninja の注記から取ります。**日本語の貼り付けには注記が無いので `explicit` 止まり**
+ * (暗黙だけはベースの表から当てます)。
+ */
+export type LineKind = "explicit" | "implicit" | "fractured" | "desecrated" | "crafted" | "enchant" | "rune";
+
 /** 読み取った 1 行 */
 export interface PastedLine {
+  /** 行の種類 (注記があればそれ、無ければ `explicit`) */
+  kind: LineKind;
   /** 貼り付けのままの文面 */
   text: string;
   /** 当たった英語テンプレート (`Adds # to # Fire Damage`) */
@@ -66,6 +93,12 @@ export interface PastedItem {
   lines: PastedLine[];
   /** 当たらなかった行 (暗黙の効果やルーンが多い。画面で断る用) */
   unmatched: string[];
+  /** ベースに元から乗っている付与スキル (`Grants Skill: Level 20 …`)。作る対象ではない */
+  grantedSkill: string | null;
+  /** 注記つきの書き出し (poe.ninja) だったか。true なら種類は推測ではなく事実 */
+  annotated: boolean;
+  /** コラプト済みか。**コラプトした物はもうクラフトできない** */
+  corrupted: boolean;
 }
 
 /** `[Block|ブロック]` → `ブロック`、`[Quality]` → `Quality` */
@@ -80,13 +113,28 @@ const escapeRe = (s: string): string =>
 /** 数値 1 つ。符号も取り込む (「レベル +5」の `+5` で 1 つ) */
 const NUMBER = "([+-]?[0-9]+(?:" + String.fromCharCode(92) + ".[0-9]+)?)";
 
-/** 日本語の MOD 文面の型。1 度だけ組む (2,000 件ほど) */
+/**
+ * MOD 文面の型。1 度だけ組みます。
+ *
+ * **日本語と英語の両方**を入れます。`mod-text-ja.json` は「英語テンプレート → 日本語テンプレート」
+ * なので、値から日本語の型を、鍵から英語の型を作れます。
+ *
+ * 英語側は `+` の扱いが辞書ごとに揺れます (`# to maximum Mana` と `+# to maximum Mana`)。
+ * 数値の型が符号を取り込むので、**先頭の `+` を外した形でも**登録して両方拾います。
+ */
 const patterns: ReadonlyArray<{ re: RegExp; template: string }> = (() => {
   const out: { re: RegExp; template: string }[] = [];
+  const add = (text: string, template: string): void => {
+    const t = stripMarkers(text);
+    if (!t.includes("#")) return;
+    out.push({ re: new RegExp("^" + t.split("#").map(escapeRe).join(NUMBER) + "$"), template });
+  };
   for (const [en, jaRaw] of Object.entries(modTextJa as Record<string, string>)) {
-    const ja = stripMarkers(jaRaw);
-    if (!ja.includes("#")) continue;
-    out.push({ re: new RegExp("^" + ja.split("#").map(escapeRe).join(NUMBER) + "$"), template: en });
+    add(jaRaw, en);
+    add(en, en);
+    // 「# to maximum Mana」は貼り付けでは「+247 to maximum Mana」。符号を数値側に含めて拾う
+    if (en.startsWith("#")) add("+" + en, en);
+    else if (en.startsWith("+#")) add(en.slice(1), en);
   }
   return out;
 })();
@@ -108,6 +156,25 @@ const baseEnSet: ReadonlySet<string> = new Set([
  * 貼り付けを読む。**アイテムでなければ `baseType` が null** になるので、呼び出し側は
  * そこで断ってください (ベースが分からないと MOD のプールが決まりません)。
  */
+/** 行末の注記 (`(fractured)` 等) を種類に直す。poe.ninja の書き出しにだけ付く */
+const KIND_BY_NOTE: Readonly<Record<string, LineKind>> = {
+  implicit: "implicit",
+  fractured: "fractured",
+  desecrated: "desecrated",
+  crafted: "crafted",
+  enchant: "enchant",
+  rune: "rune",
+  // `(augmented)` は「何かで盛られている」という印で、MOD の種類ではない (品質の行に付く)
+};
+
+/** 行末の注記を剥がす。`["36% increased …", "fractured"]` */
+function splitNote(line: string): { text: string; kind: LineKind | null } {
+  const m = /^(.*?)\s*\(([a-z]+)\)$/.exec(line);
+  if (!m) return { text: line, kind: null };
+  const kind = KIND_BY_NOTE[m[2]!];
+  return kind ? { text: m[1]!.trim(), kind } : { text: m[1]!.trim(), kind: null };
+}
+
 export function parseJaItem(text: string): PastedItem {
   const lines = text.replace(/\r\n?/g, String.fromCharCode(10)).split(String.fromCharCode(10))
     .map((l) => l.trim()).filter((l) => l.length > 0 && !/^-{3,}$/.test(l));
@@ -117,10 +184,19 @@ export function parseJaItem(text: string): PastedItem {
   let itemLevel: number | null = null;
   let quality: number | null = null;
   let catalystTag: string | null = null;
+  let grantedSkill: string | null = null;
+  let annotated = false;
+  let corrupted = false;
   const matched: PastedLine[] = [];
   const unmatched: string[] = [];
 
-  for (const line of lines) {
+  for (const raw of lines) {
+    if (raw === "Corrupted" || raw === "コラプト済み") { corrupted = true; continue; }
+    // ベースの付与スキルは作る対象ではない (ベースを選んだ時点で決まる)
+    const gs = /^Grants Skill:\s*(?:Level \d+ )?(.+)$/.exec(raw);
+    if (gs) { grantedSkill = gs[1]!.trim(); continue; }
+    const { text: line, kind: note } = splitNote(raw);
+    if (note) annotated = true;
     // ベース名。**先に見る**: 「イージスクォータースタッフ」は MOD の型には当たらない
     if (!baseType) {
       const en = baseEnByJa.get(line) ?? (baseEnSet.has(line) ? line : null);
@@ -130,11 +206,13 @@ export function parseJaItem(text: string): PastedItem {
         continue;
       }
     }
-    if (itemLevel == null && line.includes("アイテムレベル")) {
+    if (itemLevel == null && (line.includes("アイテムレベル") || /^Item Level:/i.test(line))) {
       const m = /([0-9]+)/.exec(line);
       if (m) { itemLevel = Number(m[1]); continue; }
     }
-    if (quality == null && line.includes("品質")) {
+    // 「品質: +20%」「Quality (Mana Modifiers): +40%」。**防御値の行 (`Energy Shield: 41`) と
+    // 間違えないこと**: あちらも `(augmented)` が付くが品質ではない
+    if (quality == null && (line.includes("品質") || /^Quality[ (:]/i.test(line))) {
       const m = /\+?([0-9]+)%/.exec(line);
       if (m) {
         quality = Number(m[1]);
@@ -146,22 +224,33 @@ export function parseJaItem(text: string): PastedItem {
     const hit = patterns.find((p) => p.re.test(line));
     if (hit) {
       const g = hit.re.exec(line)!;
-      matched.push({ text: line, template: hit.template, values: g.slice(1).map(Number) });
+      matched.push({ kind: note ?? "explicit", text: line, template: hit.template, values: g.slice(1).map(Number) });
     } else {
       unmatched.push(line);
     }
   }
-  return { baseType, baseText, itemLevel, quality, catalystTag, lines: matched, unmatched };
+  return { baseType, baseText, itemLevel, quality, catalystTag, grantedSkill, annotated, corrupted, lines: matched, unmatched };
 }
 
-/** 転がった値がその MOD のどのティアに収まるか。収まらなければ最上位 */
-function tierIndexFor(mod: Mod, values: readonly number[], level: number): number {
+/**
+ * 転がった値がその MOD のどのティアに収まるか。収まらなければ最上位。
+ *
+ * **底上げされた MOD は帯で見ます。**画面の値は `素 × (1 + 品質)` を**切り捨てた**物なので、
+ * 素は `[表示 / (1+品質), (表示+1) / (1+品質))` のどこかです。表示 4・品質 41% なら
+ * `[2.84, 3.55)` で、ティア `3-3` が入ります。
+ *
+ * **帯を「戻した値 〜 表示の値」にしてはいけません。**それだと底上げ前と後の両方のティアに
+ * 掛かって、高いほうを拾います (2026-09-23 に実測: キャストスピード 23% が、素の 16-18 では
+ * なく底上げ後の 22-24 に当たっていた)。
+ */
+function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], level: number): number {
   for (let i = mod.tiers.length - 1; i >= 0; i--) {
     const t = mod.tiers[i];
     if (!t || t.ilvl > level) continue;
     const ranges = t.ranges ?? [];
-    if (ranges.length !== values.length) continue;
-    if (ranges.every((r, k) => values[k]! >= Number(r[0]) && values[k]! <= Number(r[1]))) return i;
+    if (ranges.length !== lo.length) continue;
+    // 範囲 [r0, r1] と幅 [lo, hi] が重なるか
+    if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return i;
   }
   return mod.tiers.length - 1;
 }
@@ -184,11 +273,12 @@ function tierIndexFor(mod: Mod, values: readonly number[], level: number): numbe
 export function targetsFor(
   data: PatchData,
   item: PastedItem,
-): { targets: TierTarget[]; texts: string[]; skipped: string[]; implicits: string[] } {
-  if (!item.baseType) return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [] };
+): { targets: TierTarget[]; texts: string[]; skipped: string[]; implicits: string[]; fractured: string[] } {
+  if (!item.baseType) return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [], fractured: [] };
   const level = item.itemLevel ?? 100;
 
-  // **暗黙の効果を先に抜く。**あとで抜こうとすると手遅れです: 「ブロック率 +17%」は
+  // **暗黙の効果を先に抜く。**注記があればそれに従い、無ければベースの表から当てます。
+  // あとで抜こうとすると手遅れです: 「ブロック率 +17%」は
   // 冒涜プールの `AdditionalBlock` (of Amanamu 20-25) に文面だけ当たってしまい、
   // 範囲の外 (17) なのに目標として通ってしまいました (実物で踏んだ)。
   // 暗黙はベースを選んだ時点で決まっているので、そもそも作る対象ではありません。
@@ -196,21 +286,38 @@ export function targetsFor(
   // **暗黙 1 つにつき 1 行だけ落とす。**同じ文面が暗黙にも通常 MOD にも出ることがあり、
   // 全部消すと本物の目標まで巻き添えになる。実物で踏んだ (2026-09-22 ニーモニックリング):
   // 暗黙が「最大マナが8%増加する」で、プレフィックスにも同じ行がある。両方落として目標が 1 個減った。
-  const quota = new Map<string, number>();
-  for (const im of htcBaseInfo()[item.baseType]?.implicits ?? []) {
-    const k = bare(im.ja);
-    quota.set(k, (quota.get(k) ?? 0) + 1);
-  }
   const implicits: string[] = [];
+  const fractured: string[] = [];
   const rollable: PastedLine[] = [];
-  for (const l of item.lines) {
-    const k = bare(l.text);
-    const left = quota.get(k) ?? 0;
-    if (left > 0) {
-      quota.set(k, left - 1);
-      implicits.push(l.text);
-    } else {
+
+  if (item.annotated) {
+    // **注記があるなら推測しない。**poe.ninja が種類を書いてくれている
+    for (const l of item.lines) {
+      // ルーンとアノイントは作る対象ではない (オーナー指示 2026-09-23「ルーンとかは全無視でいい」)
+      if (l.kind === "rune" || l.kind === "enchant") continue;
+      if (l.kind === "implicit") { implicits.push(l.text); continue; }
+      // 固定済みは**もう手に入っている**。目標には入れるが、開始状態に置ける印を返す
+      if (l.kind === "fractured") fractured.push(l.text);
       rollable.push(l);
+    }
+  } else {
+    // 注記が無い (ゲームの表示をそのまま貼った) 時だけ、ベースの表から暗黙を当てる。
+    // **暗黙 1 つにつき 1 行だけ落とす。**同じ文面が暗黙にも通常 MOD にも出ることがあり、
+    // 全部消すと本物の目標まで巻き添えになる (2026-09-22 ニーモニックリングで踏んだ)
+    const quota = new Map<string, number>();
+    for (const im of htcBaseInfo()[item.baseType]?.implicits ?? []) {
+      const k = bare(im.ja);
+      quota.set(k, (quota.get(k) ?? 0) + 1);
+    }
+    for (const l of item.lines) {
+      const k = bare(l.text);
+      const left = quota.get(k) ?? 0;
+      if (left > 0) {
+        quota.set(k, left - 1);
+        implicits.push(l.text);
+      } else {
+        rollable.push(l);
+      }
     }
   }
 
@@ -241,9 +348,11 @@ export function targetsFor(
     // 押し上げるので、画面の数字のまま読むとティアを高く見積もります。実物で踏んだ:
     // 「品質 (マナモッド) +20%」の最大マナ +183 は、素だと 152.5 で 1 段下のティア。
     const boost = item.quality && item.catalystTag && boostedBy(b.mod, item.catalystTag);
-    const values = boost ? line.values.map((v) => rawValue(v, item.quality!)) : line.values;
-    targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, values, level) });
+    // 切り捨ての分だけ帯になる。底上げが無ければ幅ゼロ (表示がそのまま素)
+    const lo = boost ? line.values.map((v) => rawValue(v, item.quality!)) : line.values;
+    const hi = boost ? line.values.map((v) => rawValue(v + 1, item.quality!) - 1e-9) : line.values;
+    targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, lo, hi, level) });
     texts.push(line.text);
   });
-  return { targets, texts, skipped, implicits };
+  return { targets, texts, skipped, implicits, fractured };
 }

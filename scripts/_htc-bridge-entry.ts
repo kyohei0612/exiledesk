@@ -31,7 +31,7 @@ export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { partialStarts, solveFinish, budgetForBuy, freeSlots } from "../src/services/htc/partial-start";
 export { essenceAlternativesFor, withEssenceAlternatives } from "../src/services/htc/essence-route";
 export { craftedSurvey, isCraftedMod, ASTRID_RUNE } from "../src/services/htc/craft-slots";
-export { parseJaItem, targetsFor } from "../src/services/htc/paste-ja";
+export { parseJaItem, targetsFor } from "../src/services/htc/paste";
 export { soloCosts, buyOrRoll } from "../src/services/htc/solo-cost";
 export { fractureOptions, FRACTURE_MIN_MODS, fracturedBuyQuery } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";

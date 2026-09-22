@@ -11,7 +11,7 @@
  */
 import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
-import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste-ja";
+import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { itemBaseFor } from "../../services/htc/bridge";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { boostedBy } from "../../services/htc/quality";
