@@ -13,7 +13,9 @@
     "build:dicts": "node scripts/build-unique-pages-detail.mjs --offline && node scripts/build-unique-names-ja.mjs --offline && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs",
     "build:dicts:online": "node scripts/build-unique-mods-ja.mjs && node scripts/build-unique-pages-detail.mjs && node scripts/build-unique-names-ja.mjs && node scripts/build-mod-tier-and-group.mjs && node scripts/build-trade2-stat-mapping.mjs && node scripts/build-poe2-flavour-ja.mjs && node scripts/build-currency-effects-ja.mjs && node scripts/build-items-ja-poe2db.mjs",
     "check:deps": "pnpm outdated; cd src-tauri && cargo update --dry-run",
-    "check:flow": "node scripts/check-flow.mjs"
+    "check:flow": "node scripts/check-flow.mjs",
+    "check:gem": "node scripts/check-gem-math.mjs",
+    "check:htc": "node scripts/check-htc-bridge.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
