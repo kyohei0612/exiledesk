@@ -139,6 +139,13 @@ pub struct CachedRareItem {
     /// `socketedItems[0].socketedItems[].typeLine` (付与スキルの穴に入ったジェム)。
     #[serde(default)]
     pub socketed_gems: Vec<String>,
+    /// 2026-09-22: 品質 (%)。`properties` の `[Quality]` から。
+    ///
+    /// ブリーチのエッセンスで最大品質を +20% してから品質を上げ、あとでその MOD を消すと
+    /// **品質だけ残る**。完成品に 40% の品質があって最大品質の MOD が無ければ、その作り方をした証拠になる
+    /// (`services/htc/lingering.ts`)。ここが無いと判定できないので拾う。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality: Option<i64>,
 }
 
 /// ユニーク装備の縮小保存。ホバーオーバーレイ表示に必要な最小サブセット。

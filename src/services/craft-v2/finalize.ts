@@ -343,6 +343,8 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
         grantedSkills: (r.granted_skills ?? []).map((s) => ({ name: "Grants Skill", values: [[s, 25]] })),
         socketedItems: [{ socketedItems: (r.socketed_gems ?? []).map((g) => ({ typeLine: g })) }],
+        // 2026-09-22: 品質も poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
+        properties: r.quality != null ? [{ name: "[Quality]", values: [[`+${r.quality}%`, 1]] }] : [],
       },
     });
   }

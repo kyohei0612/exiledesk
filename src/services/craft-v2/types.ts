@@ -89,6 +89,11 @@ export interface CachedRareItem {
   base_type?: string;
   /** 2026-09-12: 付与スキル (例: "Level 20 Cast on Critical")。古いキャッシュは無い。 */
   granted_skills?: string[];
+  /**
+   * 2026-09-22: 品質 (%)。ブリーチのエッセンスで最大品質を上げてから MOD を消す作り方を
+   * 見分けるのに使う (`services/htc/lingering.ts`)。古いキャッシュには無い。
+   */
+  quality?: number;
   /** 2026-09-12: 付与スキルの穴に入っていたジェム名 (例: ["Frost Wall"])。 */
   socketed_gems?: string[];
 }

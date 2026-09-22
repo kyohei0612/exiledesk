@@ -116,6 +116,8 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                         .collect()
                 })
                 .unwrap_or_default();
+            // 2026-09-22: 品質。最大品質の MOD を途中で消す作り方を見分けるのに要る
+            let quality = gem_property_number(data.get("properties"), "[Quality]");
             rare_items.push(CachedRareItem {
                 inventory_id: inv_id,
                 explicit_mods,
@@ -123,6 +125,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                 base_type,
                 granted_skills,
                 socketed_gems,
+                quality,
             });
         } else if frame_type == 3 {
             // unique
@@ -260,6 +263,8 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                 // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (TS 側 ingest が同じ経路で読む)
                 "grantedSkills": r.granted_skills.iter().map(|s| serde_json::json!({ "name": "Grants Skill", "values": [[s, 25]] })).collect::<Vec<_>>(),
                 "socketedItems": [{ "socketedItems": r.socketed_gems.iter().map(|g| serde_json::json!({ "typeLine": g })).collect::<Vec<_>>() }],
+                // 2026-09-22: 品質も poe.ninja の形に戻す (TS 側が同じ経路で読めるように)
+                "properties": r.quality.map(|q| serde_json::json!([{ "name": "[Quality]", "values": [[format!("+{q}%"), 1]] }])).unwrap_or(serde_json::json!([])),
             }
         }));
     }
