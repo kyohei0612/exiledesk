@@ -46,6 +46,11 @@ export interface Catalyst {
   en: string;
   /** ゲーム公式の日本語名 (「神経のカタリスト」) */
   ja: string;
+  /**
+   * 装備の品質欄にそのまま出る文言 (「品質 (マナモッド)」)。**貼り付けから種類を読むのはこれ。**
+   * カタリストの**アイテム名ではありません**。
+   */
+  label: { en: string; ja: string };
   /** そのタグを持つ MOD の数 (目安) */
   mods: number;
 }
@@ -127,8 +132,23 @@ export function rawValueOfMod(
   return { raw: rawValue(displayed, qualityPct), adjusted: true };
 }
 
-/** 「品質 (マナモッド): +20%」のような表示から種類のタグを当てる。当たらなければ null */
+/**
+ * 「品質 (マナモッド): +20%」のような**品質欄の表示**から種類のタグを当てる。当たらなければ null。
+ *
+ * 合わせるのは `label` (品質欄の文言) で、**カタリストのアイテム名ではありません**。
+ * 最初はアイテム名 (「神経のカタリスト」) と突き合わせていて、装備を貼り付けても 1 件も
+ * 当たりませんでした (2026-09-22 に実物で発覚)。
+ *
+ * 空白は詰めて比べます。クライアントの文言が「品質 (マナモッド)」と「品質(防御力モッド)」で
+ * **揺れている**ためです。
+ */
+const squash = (s: string): string => s.replace(/\s+/g, "");
 export function catalystTagFromLabel(label: string): string | null {
-  for (const c of CATALYSTS) if (label.includes(c.ja) || label.includes(c.en)) return c.tag;
+  const k = squash(label);
+  for (const c of CATALYSTS) {
+    if (c.label && (k.includes(squash(c.label.ja)) || k.includes(squash(c.label.en)))) return c.tag;
+  }
+  // 古い呼び出し (カタリストのアイテム名を渡していた物) も拾う
+  for (const c of CATALYSTS) if (k.includes(squash(c.ja)) || k.includes(squash(c.en))) return c.tag;
   return null;
 }

@@ -33,6 +33,7 @@ import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import { bridgeMods } from "./bridge";
 import { htcBaseInfo } from "./patch";
+import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -54,6 +55,13 @@ export interface PastedItem {
   baseText: string | null;
   itemLevel: number | null;
   quality: number | null;
+  /**
+   * 品質の**種類**のタグ (「品質 (マナモッド)」→ `mana`)。指輪とアミュレットだけ付きます。
+   *
+   * **これが無いとティアを高く読みます。**装飾品の品質はそのタグを持つ MOD の値を押し上げるので、
+   * 画面の数字は素の抽選値ではありません ([[quality.ts]])。
+   */
+  catalystTag: string | null;
   /** 当たった MOD の行 */
   lines: PastedLine[];
   /** 当たらなかった行 (暗黙の効果やルーンが多い。画面で断る用) */
@@ -108,6 +116,7 @@ export function parseJaItem(text: string): PastedItem {
   let baseType: string | null = null;
   let itemLevel: number | null = null;
   let quality: number | null = null;
+  let catalystTag: string | null = null;
   const matched: PastedLine[] = [];
   const unmatched: string[] = [];
 
@@ -127,7 +136,12 @@ export function parseJaItem(text: string): PastedItem {
     }
     if (quality == null && line.includes("品質")) {
       const m = /\+?([0-9]+)%/.exec(line);
-      if (m) { quality = Number(m[1]); continue; }
+      if (m) {
+        quality = Number(m[1]);
+        // 「品質 (マナモッド): +20%」の種類。これが読めないと下で割り戻せない
+        catalystTag = catalystTagFromLabel(line);
+        continue;
+      }
     }
     const hit = patterns.find((p) => p.re.test(line));
     if (hit) {
@@ -137,7 +151,7 @@ export function parseJaItem(text: string): PastedItem {
       unmatched.push(line);
     }
   }
-  return { baseType, baseText, itemLevel, quality, lines: matched, unmatched };
+  return { baseType, baseText, itemLevel, quality, catalystTag, lines: matched, unmatched };
 }
 
 /** 転がった値がその MOD のどのティアに収まるか。収まらなければ最上位 */
@@ -202,7 +216,12 @@ export function targetsFor(
   bridged.mods.forEach((b, i) => {
     const line = rollable[i]!;
     if (!b.mod || b.viaRune) { skipped.push(line.text); return; }
-    targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, line.values, level) });
+    // **ティアを読む前に品質を外す。**装飾品の品質はその種類のタグを持つ MOD の値を
+    // 押し上げるので、画面の数字のまま読むとティアを高く見積もります。実物で踏んだ:
+    // 「品質 (マナモッド) +20%」の最大マナ +183 は、素だと 152.5 で 1 段下のティア。
+    const boost = item.quality && item.catalystTag && boostedBy(b.mod, item.catalystTag);
+    const values = boost ? line.values.map((v) => rawValue(v, item.quality!)) : line.values;
+    targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, values, level) });
   });
   return { targets, skipped, implicits };
 }

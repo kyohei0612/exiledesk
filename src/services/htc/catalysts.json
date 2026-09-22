@@ -7,6 +7,10 @@
    "tag": "life",
    "en": "Flesh Catalyst",
    "ja": "肉体のカタリスト",
+   "label": {
+    "en": "Quality (Life Modifiers)",
+    "ja": "品質 (ライフモッド)"
+   },
    "mods": 625
   },
   {
@@ -14,6 +18,10 @@
    "tag": "mana",
    "en": "Neural Catalyst",
    "ja": "神経のカタリスト",
+   "label": {
+    "en": "Quality (Mana Modifiers)",
+    "ja": "品質 (マナモッド)"
+   },
    "mods": 491
   },
   {
@@ -21,6 +29,10 @@
    "tag": "defences",
    "en": "Carapace Catalyst",
    "ja": "甲羅のカタリスト",
+   "label": {
+    "en": "Quality (Defence Modifiers)",
+    "ja": "品質(防御力モッド)"
+   },
    "mods": 870
   },
   {
@@ -28,6 +40,10 @@
    "tag": "physical",
    "en": "Uul-Netol's Catalyst",
    "ja": "ウール・ネトルのカタリスト",
+   "label": {
+    "en": "Quality (Physical Modifiers)",
+    "ja": "品質 (物理モッド)"
+   },
    "mods": 561
   },
   {
@@ -35,6 +51,10 @@
    "tag": "fire",
    "en": "Xoph's Catalyst",
    "ja": "ゾフのカタリスト",
+   "label": {
+    "en": "Quality (Fire Modifiers)",
+    "ja": "品質 (火モッド)"
+   },
    "mods": 596
   },
   {
@@ -42,6 +62,10 @@
    "tag": "cold",
    "en": "Tul's Catalyst",
    "ja": "トゥルのカタリスト",
+   "label": {
+    "en": "Quality (Cold Modifiers)",
+    "ja": "品質 (冷気モッド)"
+   },
    "mods": 586
   },
   {
@@ -49,6 +73,10 @@
    "tag": "lightning",
    "en": "Esh's Catalyst",
    "ja": "エシュのカタリスト",
+   "label": {
+    "en": "Quality (Lightning Modifiers)",
+    "ja": "品質 (雷モッド)"
+   },
    "mods": 574
   },
   {
@@ -56,6 +84,10 @@
    "tag": "chaos",
    "en": "Chayula's Catalyst",
    "ja": "チャユラのカタリスト",
+   "label": {
+    "en": "Quality (Chaos Modifiers)",
+    "ja": "品質(混沌モッド)"
+   },
    "mods": 402
   },
   {
@@ -63,6 +95,10 @@
    "tag": "attack",
    "en": "Reaver Catalyst",
    "ja": "強奪者のカタリスト",
+   "label": {
+    "en": "Quality (Attack Modifiers)",
+    "ja": "品質 (アタックモッド)"
+   },
    "mods": 1160
   },
   {
@@ -70,6 +106,10 @@
    "tag": "caster",
    "en": "Sibilant Catalyst",
    "ja": "歯擦音のカタリスト",
+   "label": {
+    "en": "Quality (Caster Modifiers)",
+    "ja": "品質 (キャスターモッド)"
+   },
    "mods": 619
   },
   {
@@ -77,6 +117,10 @@
    "tag": "speed",
    "en": "Skittering Catalyst",
    "ja": "軽快のカタリスト",
+   "label": {
+    "en": "Quality (Speed Modifiers)",
+    "ja": "品質 (スピードモッド)"
+   },
    "mods": 389
   },
   {
@@ -84,6 +128,10 @@
    "tag": "attribute",
    "en": "Adaptive Catalyst",
    "ja": "適応のカタリスト",
+   "label": {
+    "en": "Quality (Attribute Modifiers)",
+    "ja": "品質 (能力値モッド)"
+   },
    "mods": 283
   },
   {
@@ -91,6 +139,10 @@
    "tag": "minion",
    "en": "Necrotic Catalyst",
    "ja": "死霊術のカタリスト",
+   "label": {
+    "en": "Quality (Minion Modifiers)",
+    "ja": "品質 (ミニオンモッド)"
+   },
    "mods": 238
   }
  ]

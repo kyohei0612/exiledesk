@@ -66,8 +66,9 @@ const TYPE_TAG = {
 };
 
 const main = async () => {
-  const [A, B, BJa, MODS] = await Promise.all([
+  const [A, AJa, B, BJa, MODS] = await Promise.all([
     rd("English", "AlternateQualityTypes"),
+    rd("Japanese", "AlternateQualityTypes"),
     rd("English", "BaseItemTypes"),
     rd("Japanese", "BaseItemTypes"),
     readFile(resolve(ROOT, "data-cache/mods.en.json"), "utf8").then(JSON.parse),
@@ -106,6 +107,11 @@ const main = async () => {
       tag,
       en: item.Name,
       ja: BJa[r.Item]?.Name ?? item.Name,
+      /**
+       * 装備の品質欄にそのまま出る文言 (`Description`)。**貼り付けから種類を読むのはこれ。**
+       * カタリストの**アイテム名**ではありません (「神経のカタリスト」ではなく「品質 (マナモッド)」)。
+       */
+      label: { en: r.Description ?? "", ja: AJa[r._index]?.Description ?? r.Description ?? "" },
       /** そのタグを持つ MOD の数 (どれくらい効くかの目安) */
       mods: n,
     });

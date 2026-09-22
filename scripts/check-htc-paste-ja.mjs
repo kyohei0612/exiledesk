@@ -74,6 +74,45 @@ if (!implicits.includes("ブロック率 +17%")) fail("暗黙のブロック率�
 if (targets.some((t) => t.modId.includes("AdditionalBlock"))) fail("暗黙が目標に混ざっている");
 console.log("  暗黙 (作る対象外): " + implicits.join(" / "));
 
+// ---- 装飾品の品質を外してからティアを読むか ----
+//
+// 装飾品の品質は**種類つき**で、その種類のタグを持つ MOD だけが押し上げられる。画面の数字の
+// まま読むとティアを高く見積もる。2026-09-22 にオーナーの太陽のアミュレットで実際に踏んだ:
+//   最大マナ +183  → 素は 152.5。Ultramarine (180-189) ではなく Blue (150-164)
+//   最大マナ 7%    → 素は 5.83。Mnemonic (7-8) ではなく Perceptive (5-6)
+// 種類は品質欄の文言 (「品質 (マナモッド)」) から読む。**カタリストのアイテム名ではない** ──
+// 最初はアイテム名 (「神経のカタリスト」) と突き合わせていて 1 件も当たらなかった。
+console.log(String.fromCharCode(10) + "装飾品の品質を外す:");
+{
+  const AMULET = [
+    "アイテムクラス: アミュレット", "レアリティ: レア", "獣の魔除け", "太陽のアミュレット",
+    "品質 (マナモッド): +20%", "アイテムレベル: 80", "スピリット +13",
+    "最大マナ +183", "最大マナが7%増加する", "全てのスペルスキルのレベル +3",
+  ].join(String.fromCharCode(10));
+  const a = M.parseJaItem(AMULET);
+  console.log("  ベース " + a.baseType + " / 品質 " + a.quality + "% / 種類 " + a.catalystTag);
+  if (a.catalystTag !== "mana") fail("品質の種類が " + a.catalystTag + " (mana のはず)");
+  const got = M.targetsFor(data, a).targets;
+  const want = { "Amulets/IncreasedMana": "Blue", "Amulets/MaximumManaIncreasePercent": "Perceptive" };
+  for (const [id, tierName] of Object.entries(want)) {
+    const t = got.find((x) => x.modId === id);
+    if (!t) { fail(id + " が引けていない"); continue; }
+    const tier = data.mods.get(id).tiers[t.minTierIndex];
+    const ok = String(tier.name) === tierName;
+    console.log("  " + (ok ? "○" : "×") + " " + id.split("/")[1].padEnd(30) + " " + tier.name + "  " + (tier.ranges ?? []).map((r) => r.join("-")).join("/"));
+    if (!ok) fail(id + " が " + tier.name + " (" + tierName + " のはず。品質を外していない)");
+  }
+  // マナのタグを持たない MOD は外さない (全部割ると今度は低く見積もる)
+  const spell = got.find((x) => x.modId.includes("GlobalIncreaseSpellSkillGemLevel"));
+  if (!spell) fail("スペルレベルが引けていない");
+  else if (String(data.mods.get(spell.modId).tiers[spell.minTierIndex].name) !== "of the Sorcerer") {
+    fail("スペルレベルのティアがずれている (マナのタグが無いので外してはいけない)");
+  }
+  // 品質欄の文言から読めること (空白の揺れ「品質(防御力モッド)」も含む)
+  if (M.catalystTagFromLabel("品質 (マナモッド): +20%") !== "mana") fail("品質欄の文言からマナを読めない");
+  if (M.catalystTagFromLabel("品質(防御力モッド): +20%") !== "defences") fail("空白無しの文言を読めない");
+}
+
 // 英語の貼り付けも通ること (ベース名が英語でも引ける)
 const EN = TEXT.replace("イージスクォータースタッフ", "Aegis Quarterstaff");
 const en = M.parseJaItem(EN);
