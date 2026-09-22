@@ -48,8 +48,8 @@ const LADDER: readonly DisplayCurrency[] = ["divine", "chaos", "exalted"] as con
  * 選んでいる通貨から始めて、1 未満なら 1 つ下へ (一番下まで来たらそのまま)。
  * 0 と符号は元のまま扱う (絶対値で判断)。
  */
-function pickUnit(exalted: number): { c: DisplayCurrency; value: number } {
-  const start = Math.max(0, LADDER.indexOf(cur.value));
+function pickUnit(exalted: number, from?: DisplayCurrency): { c: DisplayCurrency; value: number } {
+  const start = Math.max(0, LADDER.indexOf(from ?? cur.value));
   for (let i = start; i < LADDER.length; i++) {
     const c = LADDER[i];
     const v = exalted / rateOf(c);
@@ -97,9 +97,10 @@ export type RoundDir = "up" | "down";
 export function roundMoney(
   exalted: number | null | undefined,
   dir: RoundDir,
+  from?: DisplayCurrency,
 ): { exalted: number; value: number; cur: DisplayCurrency; rounded: boolean } | null {
   if (exalted == null || !Number.isFinite(exalted)) return null;
-  const { c, value } = pickUnit(exalted);
+  const { c, value } = pickUnit(exalted, from);
   // 一番下の通貨でも 1 未満 = これ以上落とせない。丸めずそのまま出す
   if (Math.abs(value) < 1) return { exalted, value, cur: c, rounded: false };
   // 丸め誤差の逃げ。取引所の値段は高貴建てで小数 2 桁に丸めて保存されるので、神に戻すと
@@ -131,14 +132,19 @@ export const displayCurrency = {
    * "123 神" 形式。signed で + を付ける。
    *
    * 選んでいる通貨で 1 未満になる額は 1 つ下の通貨で出す (0.02 神 → 8.5 カオス)。
+   *
+   * `ladder: "top"` を渡すと**選んでいる通貨を無視して神から始めます** (神 → 1 未満ならカオス →
+   * 1 未満なら高貴)。オーナー指示 2026-09-22:「全部高貴じゃんややこしい。神優先で 1 以下なら
+   * カオス、1 カオス以下でやっと高貴でやってくれ」。クラフトの費用のように桁が大きく振れる所で使う
+   * (高貴を選んでいると 88,406 高貴 のように読めない数字になるため)。
    * 単位を出さない (unit: false) 時は、桁だけ見せる場所なので選んでいる通貨のまま
    * (単位なしで通貨が変わると何の数字か分からなくなるため)。
    */
-  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean; fixed?: boolean; round?: RoundDir }): string {
+  money(exalted: number | null | undefined, opts?: { signed?: boolean; unit?: boolean; fixed?: boolean; round?: RoundDir; ladder?: "selected" | "top" }): string {
     if (exalted == null || !Number.isFinite(exalted)) return "—";
     // 費用は切り上げ / 収入は切り下げ (オーナー指示 2026-09-20)
     if (opts?.round && !opts.fixed && opts.unit !== false) {
-      const r = roundMoney(exalted, opts.round);
+      const r = roundMoney(exalted, opts.round, opts.ladder === "top" ? LADDER[0] : undefined);
       if (r == null) return "—";
       const sign = opts.signed && r.value > 0 ? "+" : "";
       return `${sign}${r.rounded ? r.value : fmtNum(r.value)} ${LABEL[r.cur]}`;
@@ -155,7 +161,7 @@ export const displayCurrency = {
       if (d == null) return "—";
       return `${opts?.signed && d > 0 ? "+" : ""}${fmtNum(d)}`;
     }
-    const { c, value } = pickUnit(exalted);
+    const { c, value } = pickUnit(exalted, opts?.ladder === "top" ? LADDER[0] : undefined);
     const sign = opts?.signed && value > 0 ? "+" : "";
     return `${sign}${fmtNum(value)} ${LABEL[c]}`;
   },

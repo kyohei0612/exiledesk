@@ -178,8 +178,8 @@ function tierIndexFor(mod: Mod, values: readonly number[], level: number): numbe
 export function targetsFor(
   data: PatchData,
   item: PastedItem,
-): { targets: TierTarget[]; skipped: string[]; implicits: string[] } {
-  if (!item.baseType) return { targets: [], skipped: item.lines.map((l) => l.text), implicits: [] };
+): { targets: TierTarget[]; texts: string[]; skipped: string[]; implicits: string[] } {
+  if (!item.baseType) return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [] };
   const level = item.itemLevel ?? 100;
 
   // **暗黙の効果を先に抜く。**あとで抜こうとすると手遅れです: 「ブロック率 +17%」は
@@ -212,6 +212,8 @@ export function targetsFor(
   }
 
   const targets: TierTarget[] = [];
+  /** `targets` と同じ並びの、貼り付けの文面。画面に日本語のまま出すため */
+  const texts: string[] = [];
   const skipped: string[] = [];
   bridged.mods.forEach((b, i) => {
     const line = rollable[i]!;
@@ -222,6 +224,7 @@ export function targetsFor(
     const boost = item.quality && item.catalystTag && boostedBy(b.mod, item.catalystTag);
     const values = boost ? line.values.map((v) => rawValue(v, item.quality!)) : line.values;
     targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, values, level) });
+    texts.push(line.text);
   });
-  return { targets, skipped, implicits };
+  return { targets, texts, skipped, implicits };
 }

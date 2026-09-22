@@ -8,6 +8,7 @@ import ClientLog from "../views/ClientLog.vue";
 import GemCorrupt from "../views/GemCorrupt.vue";
 import Overquality from "../views/Overquality.vue";
 import RareCraft from "../views/RareCraft.vue";
+import HtcCraftLab from "../views/htc-craft/HtcCraftLab.vue";
 import TradeHistory from "../views/TradeHistory.vue";
 import GemWatch from "../views/GemWatch.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
@@ -37,6 +38,8 @@ const currentView = computed<Component | undefined>(() => {
       return Overquality;
     case "rare-craft":
       return RareCraft;
+    case "htc-craft":
+      return HtcCraftLab;
     case "trade-history":
       return TradeHistory;
     case "gem-watch":
