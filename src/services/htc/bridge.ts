@@ -140,3 +140,31 @@ export function bridgeMods(
   });
   return { cls, mods };
 }
+
+
+/**
+ * **解く時に渡すベース (枠を引いた版)。**
+ *
+ * `itemBaseFor` はそのベース固有の枠を返しますが、**乗ることが決まっている物の分は引いていません**。
+ * クラフトでは付かない MOD (ブリーチの樹の指輪など) も枠は使うので、引かずに解くと
+ * 「まだ空いている」と思い込んで、実際には入らない構成を「作れます」と言います。
+ *
+ * 実例 2026-09-23 (ニーモニックリング): ブリーチの「スペルのマナコスト効率」がプレフィックスを
+ * 1 つ使っているので、作れるプレフィックスは **3 ではなく 2**。
+ *
+ * `either` は側が決まらなかった分です。**両側から引きます** ── どちらに入るか分からない以上、
+ * 入らない構成を「作れる」と言うより、作れる構成を「作れない」と言うほうが安全だからです。
+ */
+export function baseForSolving(
+  data: PatchData,
+  baseType: string,
+  used: { prefixes: number; suffixes: number; either: number },
+): ItemBase | null {
+  const cls = itemBaseFor(data, baseType);
+  if (!cls) return null;
+  const lim = cls.limits ?? DEFAULT_LIMITS;
+  const p = Math.max(0, lim.prefixes - used.prefixes - used.either);
+  const s = Math.max(0, lim.suffixes - used.suffixes - used.either);
+  if (p === lim.prefixes && s === lim.suffixes) return cls;
+  return { ...cls, limits: { ...lim, prefixes: p, suffixes: s } };
+}

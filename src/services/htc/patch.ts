@@ -85,6 +85,7 @@ export function htcPatchExtras(): PatchExtras | null {
 
 let familyTexts: Record<string, Record<string, string[]>> = {};
 let modTags: Record<string, string[]> = {};
+let modSides: Record<string, "P" | "S" | "?"> = {};
 let familyStats: Record<string, Record<string, string[]>> = {};
 let baseLimits: Record<string, { prefixes: number; suffixes: number }> = {};
 let baseInfo: Record<string, BaseInfo> = {};
@@ -143,6 +144,17 @@ export function htcFamilyStats(): Record<string, Record<string, string[]>> {
 /** family → カタリストが見るタグ。`quality.ts` が「この MOD は底上げされるか」に使う */
 export function htcModTags(): Record<string, string[]> {
   return modTags;
+}
+
+/**
+ * 文面 (正規化済み) → どちら側の枠に入るか。
+ *
+ * **エンジンが知らない MOD でも引けます。**クラフトでは付かない MOD (ブリーチの樹の指輪など)
+ * も枠は使うので、これが無いと「まだ空いている」と思い込んで、実際には入らない構成を
+ * 「作れます」と言ってしまいます。両側に同じ文面がある物は `?`。
+ */
+export function htcModSides(): Record<string, "P" | "S" | "?"> {
+  return modSides;
 }
 
 /**
@@ -234,6 +246,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
 
   familyTexts = extra.familyTexts ?? {};
   modTags = extra.modTags ?? {};
+  modSides = (extra as { modSides?: Record<string, "P" | "S" | "?"> }).modSides ?? {};
   familyStats = extra.familyStats ?? {};
   baseLimits = extra.baseLimits ?? {};
   baseInfo = extra.baseInfo ?? {};

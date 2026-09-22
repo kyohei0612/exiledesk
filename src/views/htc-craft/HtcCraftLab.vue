@@ -109,8 +109,12 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
           <b>このベースでは作れない MOD が {{ c.skipped.value.length }} 件あります</b> — {{ c.skipped.value.join(" / ") }}<br />
           <span class="opacity-80">
             <b>クラフトでは付きません</b> (ブリーチの樹からドロップした指輪など、落ちた物にしか乗らない MOD)。
-            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのもので、
-            <b>その分だけ枠が埋まっている</b>ことにも注意してください。
+            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのものです。
+            <b>枠はその分を引いて解いています</b>
+            (<template v-if="c.slotsUsed.value.prefixes">プレフィックス {{ c.slotsUsed.value.prefixes }} </template>
+            <template v-if="c.slotsUsed.value.suffixes">サフィックス {{ c.slotsUsed.value.suffixes }} </template>
+            <template v-if="c.slotsUsed.value.either">側が決まらない分 {{ c.slotsUsed.value.either }} は両側から </template>
+            使用中)。
           </span>
         </p>
       </section>

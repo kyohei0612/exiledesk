@@ -12,7 +12,7 @@
 import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
-import { itemBaseFor } from "../../services/htc/bridge";
+import { baseForSolving } from "../../services/htc/bridge";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, type SoloCost } from "../../services/htc/solo-cost";
@@ -94,6 +94,8 @@ export function useHtcCraft() {
   const fracturedLines = ref<string[]>([]);
   /** 固定済みだが繋がらず、開始状態に置けない数 */
   const fracturedUnusable = ref(0);
+  /** 繋がらなかった行が食っている枠 */
+  const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /**
    * ルートの比べ (素から / 固定済みを買って残りを作る)。
    * **固定済みがある時だけ**出ます。押されたら解く (MDP なので数秒〜数分)。
@@ -143,7 +145,9 @@ export function useHtcCraft() {
         error.value = "ベースが分かりません。アイテムの名前の行が入っているか確認してください。";
         return;
       }
-      const cls = itemBaseFor(d, it.baseType);
+      // **枠は「繋がらなかった行」の分を引いてから解く。**クラフトでは付かない MOD も枠は使う
+      const got0 = targetsFor(d, it);
+      const cls = baseForSolving(d, it.baseType, got0.skippedSides);
       if (!cls) {
         error.value = `「${it.baseText}」はエンジンが知らないベースです。`;
         return;
@@ -154,8 +158,9 @@ export function useHtcCraft() {
       coverage.value = built.coverage;
 
       t = Date.now();
-      const got = targetsFor(d, it);
+      const got = got0;
       timings.value.push(["MOD とティアを決める", Date.now() - t]);
+      slotsUsed.value = got.skippedSides;
       targets.value = got.targets;
       fracturedTargets.value = got.fracturedTargets;
       fracturedLines.value = got.fractured;
@@ -305,7 +310,7 @@ export function useHtcCraft() {
 
   return {
     stepTarget, findFractured, fractured, fracturedBusy,
-    fracturedLines, fracturedUnusable, routes, routesBusy, compareRoutes,
+    fracturedLines, fracturedUnusable, slotsUsed, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
     solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
     money, run, solveBuys,

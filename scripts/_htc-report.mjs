@@ -8,13 +8,13 @@
 
 /** 生成の結果を出す。`o` は本体が持っている物をそのまま渡す */
 export function report(o) {
-  const { OUT, addedBases, baseInfo, baseLimits, modTags, familyStats, grantedN,
+  const { OUT, addedBases, baseInfo, baseLimits, modTags, modSides, familyStats, grantedN,
     outItems, outMods, addedPools, borrowed, placeholder, ASSUMED } = o;
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
   console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / 防御値 ${Object.values(baseInfo).filter((b) => b.defence).length} 件 / 武器 ${Object.values(baseInfo).filter((b) => b.weapon).length} 件 / 付与スキルあり ${grantedN} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
-  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
+  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件 / 側が引ける文面: ${Object.keys(modSides).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {
     const n = outMods.filter((m) => m.id.startsWith(`${it.id}/`)).length;

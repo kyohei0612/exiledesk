@@ -7,6 +7,32 @@
  *   - stat の id          … 取引所の検索に使う ([[buy-or-craft.ts]])
  */
 import { familyOf } from "./_htc-base-tags.mjs";
+import { normalizeModTemplate, stripRichTextMarkers } from "../src/services/mods/normalize.ts";
+
+/**
+ * 文面 -> どちら側の枠に入るか (`P` / `S` / `?`)。
+ *
+ * **繋がらなかった行の枠を引くために要ります。**クラフトでは付かない MOD (ブリーチの樹の
+ * 指輪など) も枠は使うので、数えないと「まだ空いている」と思い込んで、実際には入らない構成を
+ * 「作れます」と言います。エンジンに無い MOD でも**クライアントには側が入っている**ので、
+ * 文面で引けるようにしておきます。
+ *
+ * 両側に同じ文面がある物は `?` にします (どちらとも決められないので、呼び出し側が
+ * 「どちらか 1 枠」として扱う)。実測 2026-09-23: 530 種 / プレ 195・サフ 316・両方 19。
+ */
+export function buildModSides(MODS) {
+  const key = (t) => normalizeModTemplate(stripRichTextMarkers(t)).toLowerCase().replace(/\s+/g, " ");
+  const sides = {};
+  for (const m of Object.values(MODS)) {
+    if (m.domain !== "item" || !m.text) continue;
+    if (m.generation_type !== "prefix" && m.generation_type !== "suffix") continue;
+    const k = key(m.text);
+    const v = m.generation_type === "prefix" ? "P" : "S";
+    if (sides[k] && sides[k] !== v) sides[k] = "?";
+    else sides[k] ??= v;
+  }
+  return sides;
+}
 
 /** クライアントの MOD 表から `{ modTags, familyStats }` を作る */
 export function buildModTags(MODS) {

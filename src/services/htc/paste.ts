@@ -51,7 +51,8 @@ import modTextJa from "../../i18n/mod-text-ja.json";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import { bridgeMods } from "./bridge";
-import { htcBaseInfo } from "./patch";
+import { matchKey } from "./bridge-index";
+import { htcBaseInfo, htcModSides } from "./patch";
 import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -280,6 +281,14 @@ export function targetsFor(
   targets: TierTarget[];
   texts: string[];
   skipped: string[];
+  /**
+   * 繋がらなかった行が**どちら側の枠をいくつ食っているか**。
+   *
+   * クラフトでは付かない MOD (ブリーチの樹の指輪など) も枠は使います。数えずに解くと
+   * 「まだ 3 枠空いている」と思い込んで、実際には入らない構成を「作れます」と言います。
+   * `either` は側が決まらなかった分 (両側に同じ文面がある物)。
+   */
+  skippedSides: { prefixes: number; suffixes: number; either: number };
   implicits: string[];
   /** 固定済みの行 (画面用) */
   fractured: string[];
@@ -291,7 +300,10 @@ export function targetsFor(
   fracturedTargets: TierTarget[];
 } {
   if (!item.baseType) {
-    return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [], fractured: [], fracturedTargets: [] };
+    return {
+      targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [],
+      fractured: [], fracturedTargets: [], skippedSides: { prefixes: 0, suffixes: 0, either: 0 },
+    };
   }
   const level = item.itemLevel ?? 100;
 
@@ -372,7 +384,17 @@ export function targetsFor(
     targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, lo, hi, level) });
     texts.push(line.text);
   });
+  // 繋がらなかった行の側を、クライアント由来の表から引く ([[patch.ts]] の `htcModSides`)
+  const sides = htcModSides();
+  const skippedSides = { prefixes: 0, suffixes: 0, either: 0 };
+  for (const l of rollable) {
+    if (!skipped.includes(l.text)) continue;
+    const v = sides[matchKey(l.template)];
+    if (v === "P") skippedSides.prefixes++;
+    else if (v === "S") skippedSides.suffixes++;
+    else skippedSides.either++;
+  }
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
-  return { targets, texts, skipped, implicits, fractured, fracturedTargets };
+  return { targets, texts, skipped, implicits, fractured, fracturedTargets, skippedSides };
 }

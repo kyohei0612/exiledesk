@@ -206,5 +206,44 @@ console.log(String.fromCharCode(10) + "poe.ninja の英語形式:");
   if (bo.quality !== 20) fail("品質が " + bo.quality);
 }
 
+// ---- 繋がらない MOD が食っている枠を引く ----
+//
+// クラフトでは付かない MOD (創生の樹から落ちた指輪の物など) も**枠は使う**。引かずに解くと
+// 「まだ 3 枠空いている」と思い込み、実際には入らない構成を「作れます」と言う。
+// エンジンに無い MOD でも**クライアントには側が入っている**ので、文面で引ける
+// (`extra-bases.json` の `modSides`、実測 530 種)。
+console.log(String.fromCharCode(10) + "繋がらない MOD の枠:");
+{
+  const NLC = String.fromCharCode(10);
+  const RING = [
+    "Rarity: Rare", "Fate Hold", "Mnemonic Ring", "--------",
+    "Quality (Mana Modifiers): +40% (augmented)", "--------", "Item Level: 81", "--------",
+    "8% increased maximum Mana (implicit)", "--------",
+    "36% increased Mana Cost Efficiency of Spells (fractured)",
+    "+247 to maximum Mana", "23% increased Cast Speed", "+33 to Intelligence",
+    "+14% to all Elemental Resistances (desecrated)", "8% increased maximum Mana (crafted)",
+  ].join(NLC);
+  const it = M.parseJaItem(RING);
+  const got = M.targetsFor(data, it);
+  console.log("  繋がらない: " + got.skipped.join(" / "));
+  console.log("  食っている枠: " + JSON.stringify(got.skippedSides));
+  if (got.skipped.length !== 1) fail("繋がらない行が " + got.skipped.length + " 件 (1 件のはず)");
+  // マナコスト効率はプレフィックス。側が引けていないと枠を引けない
+  if (got.skippedSides.prefixes !== 1) fail("プレフィックスの使用数が " + got.skippedSides.prefixes + " (1 のはず)");
+  if (got.skippedSides.suffixes !== 0) fail("サフィックスの使用数が " + got.skippedSides.suffixes);
+  if (got.skippedSides.either !== 0) fail("側が決まらない分が " + got.skippedSides.either + " (0 のはず)");
+
+  const plain = M.itemBaseFor(data, it.baseType);
+  const solving = M.baseForSolving(data, it.baseType, got.skippedSides);
+  const p0 = plain.limits?.prefixes ?? 3, s0 = plain.limits?.suffixes ?? 3;
+  console.log("  枠 " + p0 + "P/" + s0 + "S → " + solving.limits.prefixes + "P/" + solving.limits.suffixes + "S");
+  if (solving.limits.prefixes !== p0 - 1) fail("プレフィックスが引けていない");
+  if (solving.limits.suffixes !== s0) fail("サフィックスまで引いている");
+
+  // 繋がらない行が無ければ、枠はそのまま (今までと同じ挙動)
+  const same = M.baseForSolving(data, it.baseType, { prefixes: 0, suffixes: 0, either: 0 });
+  if (same.limits?.prefixes !== plain.limits?.prefixes) fail("引く物が無いのに枠が変わった");
+}
+
 console.log(failed ? (String.fromCharCode(10) + "NG: " + failed + " 件") : (String.fromCharCode(10) + "全部 OK"));
 process.exit(failed ? 1 : 0);
