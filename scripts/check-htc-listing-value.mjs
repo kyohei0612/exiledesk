@@ -81,5 +81,22 @@ const withPrice = M.listingValue(data, p, cls, targets, listing, { level: 80, li
 if (withPrice.budget == null || !(withPrice.budget > 0)) fail(`買値の上限が出ていません (${withPrice.budget})`);
 else ok(`売値を ${(v.finish * 3).toFixed(0)} 高貴とした時、この出品に出せるのは ${withPrice.budget.toFixed(0)} 高貴まで`);
 
+// 5. 固定済みなのに段が足りない = 永久に無理。実物 3 件で全部これだった (2026-09-23)
+const low = [
+  { modId: targets[0].modId, side: "suffix", fractured: true, tierIndex: 0 },
+  { modId: targets[1].modId, side: "suffix" },
+];
+const deadTargets = targets.map((t, i) => (i === 0 ? { ...t, minTierIndex: data.mods.get(t.modId).tiers.length - 1 } : t));
+const v3 = M.listingValue(data, p, cls, deadTargets, low, { level: 80 });
+if (v3.feasible) fail("固定済みの段が足りないのに、買える判定になっています");
+else ok(`固定済みの段が足りない出品を断った (永久に無理 ${v3.dead.length} 件)`);
+if (v3.dead.length !== 1) fail(`永久に無理な狙いが ${v3.dead.length} 件 (1 のはず)`);
+else ok("永久に無理な狙いを 1 件として数えた");
+// 固定されていなければ、段が下でも「外して引き直す」道がある
+const notFractured = low.map((m) => ({ ...m, fractured: false }));
+const v4 = M.listingValue(data, p, cls, deadTargets, notFractured, { level: 80 });
+if (!v4.feasible) fail("固定されていないのに永久に無理と判定しました (外して引き直せます)");
+else ok(`固定されていなければ段が下でも道はある (${v4.finish.toFixed(0)} 高貴)`);
+
 console.log(failed === 0 ? "\n通りました" : `\n${failed} 件 NG`);
 process.exit(failed === 0 ? 0 : 1);

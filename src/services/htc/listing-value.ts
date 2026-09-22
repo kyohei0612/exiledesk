@@ -70,8 +70,13 @@ export interface ListingValue {
   locked: { prefixes: number; suffixes: number };
   /** 消さないといけないゴミ */
   junk: { prefixes: number; suffixes: number };
-  /** 既に乗っている狙いの数 */
+  /** 既に乗っている狙いの数 (段が足りている物だけ) */
   held: number;
+  /**
+   * **固定済みなのに段が足りない狙い。**固定された MOD は外せないので、この出品では
+   * その狙いに**永久に届きません**。1 件でもあれば、いくら安くても買ってはいけない。
+   */
+  dead: { modId: string; has: string; need: string }[];
   sides: SideVerdict[];
 }
 
@@ -98,6 +103,8 @@ export function listingValue(
 
   // ---- 1. 乗っている物を 3 つに仕分ける ----
   const locked = { prefixes: 0, suffixes: 0 };
+  /** 固定済みなのに段が足りず、**永久に直せない**狙い */
+  const dead: { modId: string; has: string; need: string }[] = [];
   const junk = { prefixes: 0, suffixes: 0 };
   const placed: { prefix: PlacedMod[]; suffix: PlacedMod[] } = { prefix: [], suffix: [] };
   const heldIds = new Set<string>();
@@ -105,15 +112,23 @@ export function listingValue(
     const key = m.side === "prefix" ? "prefixes" : "suffixes";
     const target = m.modId ? wanted.get(m.modId) : undefined;
     if (target && m.modId) {
-      // 狙いの MOD。固定済みならそのまま印を付けて置く (上流が消去の抽選から外してくれる)
+      // 狙いと同じ MOD。固定済みならそのまま印を付けて置く (上流が消去の抽選から外してくれる)
       const mod = data.mods.get(m.modId)!;
-      const ti = m.tierIndex ?? target.minTierIndex ?? mod.tiers.length - 1;
+      const need = target.minTierIndex ?? 0;
+      const ti = m.tierIndex ?? mod.tiers.length - 1;
       placed[m.side].push({
         modId: m.modId,
         tierName: String(mod.tiers[ti]?.name ?? ""),
         ...(m.fractured ? { fractured: true } : {}),
       });
-      heldIds.add(m.modId);
+      // **段が足りているかを見ること。**乗ってはいるが段が下だと、それは「済み」ではなく
+      // **その family を塞いでいる**状態で、外してから引き直す必要があります。
+      // ここを見ずに済み扱いにすると、直さないといけない物を数えないまま安い答えを出します。
+      if (ti >= need) heldIds.add(m.modId);
+      else if (m.fractured) {
+        // 固定されていて段が下 = **二度と外せない**。この狙いは永久に達成できません。
+        dead.push({ modId: m.modId, has: String(mod.tiers[ti]?.name ?? ""), need: String(mod.tiers[need]?.name ?? "") });
+      }
       continue;
     }
     if (m.fractured) {
@@ -181,11 +196,19 @@ export function listingValue(
   });
 
   // ---- 5. 残りを解く ----
+  if (dead.length > 0) {
+    return {
+      finish: Infinity, budget: null, feasible: false,
+      reason: `固定済みの段が足りません (${dead.map((d) => `${d.modId} は ${d.has}、${d.need} 以上が要る`).join(" / ")})。`
+        + "固定された MOD は外せないので、この出品からは永久に届きません。",
+      locked, junk, held: heldIds.size, dead, sides,
+    };
+  }
   const rest = targets.filter((t) => !heldIds.has(t.modId));
   if (rest.length === 0 && junk.prefixes === 0 && junk.suffixes === 0) {
     return {
       finish: 0, budget: opts.listingDivineAsExalted ?? null, feasible: true,
-      locked, junk, held: heldIds.size, sides,
+      locked, junk, held: heldIds.size, dead, sides,
     };
   }
   const r = markovFromItem(data, prices, start, withEssenceAlternatives(data, solving, rest, level), {
@@ -198,6 +221,6 @@ export function listingValue(
       : null,
     feasible: r.feasible,
     ...(r.reason ? { reason: r.reason } : {}),
-    locked, junk, held: heldIds.size, sides,
+    locked, junk, held: heldIds.size, dead, sides,
   };
 }
