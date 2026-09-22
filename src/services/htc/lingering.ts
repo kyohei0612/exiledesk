@@ -86,6 +86,31 @@ export function maxQualityRoute(base: ItemBase): MaxQualityRoute | null {
   };
 }
 
+/**
+ * もう 1 つの最大品質: **ルーン「Legacy of Serle's Grit」** (2026-09-22 にクライアントで発見)。
+ *
+ * `SoulCoreStats` で `local_maximum_quality_is_% = 40`、`IsSocketBound: false` (= 外せる)、
+ * 必要レベル 65。差している間は最大品質が 40% になり、品質を上げてから差し替えれば品質だけ残る
+ * ── エッセンスの話とまったく同じ形です。
+ *
+ * **上流 POE2HTC はこのルーンを持っていません** (`engine/runes.ts` の 12 本に入っていない)。
+ *
+ * 載るベースは未確認です。ルーンなので**ソケットのある装備**、つまり指輪とアミュレット以外、
+ * という読みになりますが、クライアントに載せられるクラスの表が見つかっていません。
+ * ここを断定しないため、`bases` は null のままにしてあります。
+ */
+export const QUALITY_RUNE = {
+  name: "Legacy of Serle's Grit",
+  maxQuality: 40,
+  requiredLevel: 65,
+  /** 載るベース。**未確認**なので null。分かったら埋める */
+  bases: null as readonly string[] | null,
+  caveats: [
+    LINGERING_CAVEAT,
+    "このルーンが載るベースはまだ確認できていません (クライアントに表が見つからない)。ソケットのある装備という読みです。",
+  ] as const,
+};
+
 /** 文言が「最大品質」の MOD か。`+20% to Maximum Quality` / `Maximum Quality is 40%` の両方 */
 export function isMaxQualityMod(text: string): boolean {
   return /maximum\s*(\[[^\]]*\]\s*)?quality/i.test(text) || /maximum\s*quality/i.test(text);

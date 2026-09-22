@@ -126,19 +126,67 @@ const ROW_NAME = {
 };
 
 /**
- * ルーンを差して初めて出る MOD のプール。`engine/runes.ts` の `RUNES` と対応させること
- * (`{ kind: 'pool', tag }` の 6 つ)。タグはクライアントの spawn_weights にそのまま出てくる
- * (`destruction` / `marksman` / `decay` / `berserking` / `soul` / `chronomancy`)。
- * categories は `runes.ts` の同名フィールドと同じで、空なら全装備。
+ * ルーンを差して初めて出る MOD のプール。
+ *
+ * **ルーンは MOD を直接くれるのではなく、アイテムに「タグ」を足します** (2026-09-22 にクライアントで確認)。
+ * `SoulCoreStats` でルーンが持つ stat は `warping_rune_add_item_tag_N` で、その N → タグは
+ * `Expedition2WarpingRuneStatToTag` に載っている。タグが付いたアイテムは、そのタグに重みを持つ
+ * MOD を引けるようになる ── つまり**差した後の抽選が全部そのプール込みになる**。
+ *
+ * `tag` はその表と突き合わせて検算します (合わなければ落ちる)。`classes` はどのベースに載るかで、
+ * クライアント側に表が無いので `engine/runes.ts` の `categories` と同じ物を手で置いています。
  */
 const RUNE_POOLS = [
-  { id: "thruds-might", tag: "destruction", classes: ["Wand", "Sceptre", "Staff", "Bow", "Crossbow", "Warstaff", "Spear", "One Hand Mace", "Two Hand Mace", "Talisman"] },
-  { id: "uhtreds-sidereus", tag: "chronomancy", classes: ["Boots"] },
-  { id: "kolrs-hunt", tag: "marksman", classes: ["Gloves"] },
-  { id: "katlas-gloom", tag: "decay", classes: ["Gloves"] },
-  { id: "voranas-carnage", tag: "berserking", classes: ["Helmet"] },
-  { id: "medveds-tending", tag: "soul", classes: ["Body Armour"] },
+  { id: "thruds-might", name: "Thrud's Might", tag: "destruction", classes: ["Wand", "Sceptre", "Staff", "Bow", "Crossbow", "Warstaff", "Spear", "One Hand Mace", "Two Hand Mace", "Talisman"] },
+  { id: "uhtreds-sidereus", name: "Uhtred's Sidereus", tag: "chronomancy", classes: ["Boots"] },
+  { id: "kolrs-hunt", name: "Kolr's Hunt", tag: "marksman", classes: ["Gloves"] },
+  { id: "katlas-gloom", name: "Katla's Gloom", tag: "decay", classes: ["Gloves"] },
+  { id: "voranas-carnage", name: "Vorana's Carnage", tag: "berserking", classes: ["Helmet"] },
+  { id: "medveds-tending", name: "Medved's Tending", tag: "soul", classes: ["Body Armour"] },
 ];
+
+/**
+ * 上の `tag` をクライアントの表で検算する。書き出しが無い時は飛ばす (その旨を出す)。
+ * 合わなければ**落とす**: タグが 1 つ違うだけで、そのルーンのプールが丸ごと別物になる。
+ */
+async function verifyRuneTags() {
+  const dir = resolve(ROOT, "data-cache/client-export-runes/tables/English");
+  let W, ST, SCS, SC, B;
+  try {
+    const rd = async (n) => {
+      const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8"));
+      return Array.isArray(j) ? j : j.rows;
+    };
+    [W, ST, SCS, SC, B] = await Promise.all([
+      rd("Expedition2WarpingRuneStatToTag"), rd("Stats"), rd("SoulCoreStats"), rd("SoulCores"), rd("BaseItemTypes"),
+    ]);
+  } catch {
+    console.log("ルーンのタグ表 (data-cache/client-export-runes) がありません。タグの検算は飛ばします。");
+    return;
+  }
+  const TG = JSON.parse(await readFile(resolve(dir, "Tags.json"), "utf8"));
+  const tags = Array.isArray(TG) ? TG : TG.rows;
+  const statToTag = new Map(W.map((r) => [(ST[r.Stat] || {}).Id, (tags[r.Tag] || {}).Id]));
+  const plain = (s) => (s || "").replace(/[’']/g, "'").toLowerCase();
+  const bad = [];
+  for (const rp of RUNE_POOLS) {
+    const i = SC.findIndex((r) => plain((B[r.BaseItemType] || {}).Name) === plain(rp.name));
+    if (i < 0) {
+      bad.push(`${rp.id}: クライアントに "${rp.name}" が無い`);
+      continue;
+    }
+    const got = SCS.filter((s) => s.SoulCore === i)
+      .flatMap((s) => (s.Stats || []).map((x) => statToTag.get((ST[x] || {}).Id)))
+      .filter(Boolean);
+    if (!got.includes(rp.tag)) bad.push(`${rp.id}: 表では ${got.join(",") || "(タグ無し)"} なのに ${rp.tag} と書いてある`);
+  }
+  if (bad.length) {
+    console.log("NG: ルーンのタグがクライアントと合いません");
+    for (const b of bad) console.log(`   ${b}`);
+    process.exit(1);
+  }
+  console.log(`ルーンのタグ ${RUNE_POOLS.length} 件: クライアントの表と一致`);
+}
 
 /**
  * 作らないベース。
@@ -213,6 +261,7 @@ const main = async () => {
       }
     }
   }
+  await verifyRuneTags();
   const pct = total ? (matched / total) * 100 : 0;
   console.log(`検算: 同梱 ${total} ファミリ中 ${matched} を再現 = ${pct.toFixed(1)}%`);
   for (const s of shortfall.slice(0, 12)) console.log(`   落ちた: ${s}`);
