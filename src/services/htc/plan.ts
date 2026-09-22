@@ -31,8 +31,14 @@ import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
 export interface PlanLine {
   /** 何をするか。ゲーム公式の日本語 (「保存された鎖骨 + ブラックブラッドのお告げ」) */
   text: string;
-  /** 何を狙うか (MOD の id)。狙いが無い段は null */
+  /**
+   * 何を狙うか (MOD の id)。狙いが無い段は null。
+   * **偉大なる高貴なお告げのように 2 つ同時に足す段があります** ── その時は `modIds` に 2 つ入り、
+   * `modId` には先頭だけが入ります (画面には `modIds` を出すこと)。
+   */
   modId: string | null;
+  /** その段が狙う MOD 全部。1 つの段もあれば 2 つの段もある */
+  modIds: string[];
   /** この段が当たる確率 (0-1)。分からなければ null */
   prob: number | null;
 }
@@ -105,11 +111,21 @@ export function planPreview(
   });
   // frontier は安い順。画面には**当たりやすい順**で出す (最初に見たいのはそこ)
   const options = [...r.frontier].reverse().map((p) => {
-    const steps = (p.steps ?? []).map((st, i): PlanLine => ({
-      text: labelOfStep(st as PricedStep, cls).text,
-      modId: (st as { add?: string }).add ?? null,
-      prob: p.result?.steps?.[i]?.prob ?? null,
-    }));
+    const steps = (p.steps ?? []).map((st, i): PlanLine => {
+      const one = (st as { add?: string }).add;
+      // 偉大なる高貴なお告げは `adds` に 2 つ入る (`add` は空)。取りこぼすと最終段の狙いが
+      // 画面から消える ── 本家は「++# to Spirit +#% increased maximum Mana」と 2 つ出す
+      const many = ((st as { adds?: ReadonlyArray<{ modId?: string } | string> }).adds ?? [])
+        .map((a) => (typeof a === "string" ? a : a.modId))
+        .filter((x): x is string => !!x);
+      const modIds = one ? [one] : many;
+      return {
+        text: labelOfStep(st as PricedStep, cls).text,
+        modId: modIds[0] ?? null,
+        modIds,
+        prob: p.result?.steps?.[i]?.prob ?? null,
+      };
+    });
     // `cost` は内訳 (`{ expected, perAttempt, expectedAttempts }`)。画面に出すのは 1 回ぶん
     const c = p.cost as unknown as { expected?: number; perAttempt?: number } | undefined;
     const num = (v: number | undefined) => (typeof v === "number" && Number.isFinite(v) ? v : null);

@@ -60,8 +60,9 @@ export function useHtcCraft() {
   const skipped = ref<string[]>([]);
 
   const solo = shallowRef<SoloCost[]>([]);
-  const plan = shallowRef<PlanOption | null>(null);
-  const planOdds = ref<string>("");
+  /** 案は**全部**持つ。本家も 3 案並べる (確率と 1 周の値段の釣り合いを見せるため) */
+  const plans = shallowRef<PlanOption[]>([]);
+  const plansEvaluated = ref(0);
   const buys = shallowRef<BuyRow[]>([]);
   const buysRunning = ref(false);
   /** 相場がどれだけ埋まっているか。空だと費用が出ないので画面で断る */
@@ -147,8 +148,8 @@ export function useHtcCraft() {
       t = Date.now();
       const pv = planPreview(d, prices.value, cls, got.targets, { level: it.itemLevel ?? 82 });
       timings.value.push(["設計図", Date.now() - t]);
-      plan.value = pv.options[0] ?? null;
-      planOdds.value = pv.options[0]?.oddsText ?? "";
+      plans.value = pv.options;
+      plansEvaluated.value = pv.plansEvaluated;
     } catch (e) {
       error.value = String(e);
     } finally {
@@ -190,9 +191,14 @@ export function useHtcCraft() {
     }
   }
 
+  /** 手順の段が狙っている MOD を、貼り付けの文面 (日本語) で返す。2 つ足す段は 2 つ並べる */
+  const stepTarget = (modIds: readonly string[]): string =>
+    modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
+
   return {
+    stepTarget,
     loading, error, item, base, rows, implicits, skipped,
-    solo, plan, planOdds, buys, buysRunning, timings, coverage,
+    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage,
     money, run, solveBuys,
   };
 }

@@ -114,15 +114,31 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         </table>
       </section>
 
-      <!-- 設計図 -->
-      <section v-if="c.plan.value" class="mb-4">
-        <h2 class="mb-1 font-bold">③ 設計図 <span class="font-normal opacity-60">{{ c.planOdds.value }}</span></h2>
-        <ol class="text-xs">
-          <li v-for="(s, i) in c.plan.value.steps" :key="i" class="py-0.5">
-            {{ i + 1 }}. {{ s.text }}
-            <span v-if="s.prob != null" class="opacity-50">({{ (s.prob * 100).toFixed(2) }}%)</span>
-          </li>
-        </ol>
+      <!-- 設計図。本家と同じく案を並べ、各段が「何を狙うか」まで出す -->
+      <section v-if="c.plans.value.length" class="mb-4">
+        <h2 class="mb-1 font-bold">
+          ③ 設計図
+          <span class="font-normal text-xs opacity-60">数えた手順 {{ c.plansEvaluated.value.toLocaleString() }} / 案 {{ c.plans.value.length }} 件</span>
+        </h2>
+        <p class="mb-2 text-xs opacity-60">
+          確率は正確です。<b>1 周の値段は案どうしを比べるための物で、予算には使わないでください</b>
+          (外したら作り直す前提の数字なので)。
+        </p>
+        <div v-for="(p, pi) in c.plans.value" :key="pi" class="mb-3 rounded border border-[var(--exile-color-border-subtle)] p-2">
+          <div class="mb-1 flex gap-4 text-xs">
+            <span><b class="text-amber-300">{{ p.oddsText }}</b> <span class="opacity-50">1 周あたり</span></span>
+            <span><b>{{ c.money(p.perRunCost) }}</b> <span class="opacity-50">1 周の値段</span></span>
+            <span v-if="pi === 0" class="text-emerald-300">一番当たりやすい</span>
+          </div>
+          <table class="w-full text-xs">
+            <tr v-for="(s, i) in p.steps" :key="i" class="border-b border-white/5">
+              <td class="w-5 opacity-40">{{ i + 1 }}</td>
+              <td class="py-0.5">{{ s.text }}</td>
+              <td class="pl-2 text-sky-300">{{ c.stepTarget(s.modIds) }}</td>
+              <td class="w-16 text-right opacity-60">{{ s.prob != null ? (s.prob * 100).toFixed(2) + "%" : "" }}</td>
+            </tr>
+          </table>
+        </div>
       </section>
 
       <!-- 買い方 -->
