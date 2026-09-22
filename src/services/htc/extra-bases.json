@@ -6130,6 +6130,3440 @@
    ]
   }
  },
+ "modTags": {
+  "FissureChance": [
+   "attack"
+  ],
+  "ArmourPenetration": [
+   "fire",
+   "physical"
+  ],
+  "AftershockChance": [
+   "attack"
+  ],
+  "ExertedAttackDamage": [
+   "attack"
+  ],
+  "SummonTotemCastSpeed": [
+   "speed"
+  ],
+  "LocalPhysicalDamagePercent": [
+   "attack",
+   "physical",
+   "speed"
+  ],
+  "ManaCostEfficiency": [
+   "attack",
+   "mana"
+  ],
+  "BodyArmourFromBodyArmour": [
+   "defences"
+  ],
+  "AllDefences": [
+   "defences"
+  ],
+  "InvocatedSpellHalfEnergyChance": [
+   "caster"
+  ],
+  "MaximumEnergyShieldFromBodyArmour": [
+   "defences"
+  ],
+  "MinionCooldown": [
+   "minion"
+  ],
+  "DamageRemovedFromManaBeforeLife": [
+   "life",
+   "mana"
+  ],
+  "EvasionRatingFromBodyArmour": [
+   "defences"
+  ],
+  "GlobalDeflectionRating": [
+   "defences"
+  ],
+  "FireAndChaosDamageResistance": [
+   "chaos",
+   "fire"
+  ],
+  "Strength": [
+   "attribute"
+  ],
+  "ColdAndChaosDamageResistance": [
+   "chaos",
+   "cold"
+  ],
+  "Dexterity": [
+   "attribute"
+  ],
+  "LightningAndChaosDamageResistance": [
+   "chaos",
+   "lightning"
+  ],
+  "Thorns": [
+   "cold",
+   "fire",
+   "physical"
+  ],
+  "IncreasedPhysicalDamageReductionRating": [
+   "defences",
+   "mana",
+   "physical"
+  ],
+  "ManaRegeneration": [
+   "mana"
+  ],
+  "DamageTakenGainedAsLife": [
+   "defences",
+   "life",
+   "physical"
+  ],
+  "ReducedCurseEffect": [
+   "caster"
+  ],
+  "PercentDamageGoesToMana": [
+   "life",
+   "mana"
+  ],
+  "ReducedSelfIgniteDuration": [
+   "fire"
+  ],
+  "ReducedAilmentDuration": [
+   "chaos",
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "CorruptedBlood": [
+   "physical"
+  ],
+  "LifeRegenerationPlusPercentWhileMoving": [
+   "life"
+  ],
+  "MovementVelocityPenalty": [
+   "speed"
+  ],
+  "IncreasedAttackAreaOfEffect": [
+   "attack"
+  ],
+  "CrossbowReloadSpeed": [
+   "attack",
+   "speed"
+  ],
+  "CurseEffectiveness": [
+   "caster"
+  ],
+  "CurseDelay": [
+   "caster"
+  ],
+  "IncreaseSocketedGemLevel": [
+   "attack",
+   "caster",
+   "chaos",
+   "cold",
+   "fire",
+   "lightning",
+   "minion",
+   "physical"
+  ],
+  "WeaponCasterDamagePrefix": [
+   "caster",
+   "life",
+   "mana"
+  ],
+  "SpellAreaOfEffect": [
+   "caster"
+  ],
+  "AdditionalSpellTotem": [
+   "caster"
+  ],
+  "SpellDamage": [
+   "caster"
+  ],
+  "SpellsFire2AdditionalProjectileChance": [
+   "caster"
+  ],
+  "SkillLifeCost": [
+   "caster",
+   "life"
+  ],
+  "FireResistancePenetration": [
+   "attack",
+   "fire"
+  ],
+  "ColdResistancePenetration": [
+   "attack",
+   "cold"
+  ],
+  "LightningResistancePenetration": [
+   "attack",
+   "lightning"
+  ],
+  "LifeCost": [
+   "caster",
+   "life"
+  ],
+  "CurseAreaOfEffect": [
+   "caster"
+  ],
+  "CastSpeedOnFullLife": [
+   "caster",
+   "speed"
+  ],
+  "IncreasedSpeed": [
+   "speed"
+  ],
+  "IncisionChance": [
+   "physical"
+  ],
+  "ArcaneSurgeEffect": [
+   "caster",
+   "mana"
+  ],
+  "LifeCostEfficiency": [
+   "life"
+  ],
+  "AbyssJewelMod": [
+   "attack",
+   "attribute",
+   "caster",
+   "chaos",
+   "cold",
+   "defences",
+   "fire",
+   "life",
+   "lightning",
+   "minion",
+   "physical"
+  ],
+  "FireDamagePercentagePrefix": [
+   "fire"
+  ],
+  "ColdDamagePercentagePrefix": [
+   "cold"
+  ],
+  "RecoverResourceOnExpendingCombo": [
+   "life",
+   "mana"
+  ],
+  "LightningDamagePercentagePrefix": [
+   "lightning"
+  ],
+  "AbyssRadiusJewelMod": [
+   "defences",
+   "life",
+   "mana"
+  ],
+  "LifeLeech": [
+   "attack",
+   "life",
+   "physical"
+  ],
+  "IncreasedMinionDamageIfYouHitEnemy": [
+   "minion"
+  ],
+  "IncreasedSpellDamageOnFullEnergyShield": [
+   "caster"
+  ],
+  "ExposureEffect": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ManaGainedOnKillPercentage": [
+   "mana"
+  ],
+  "RecoverPercentMaxLifeOnKill": [
+   "life"
+  ],
+  "ManaLeechAmount": [
+   "mana"
+  ],
+  "EnergyShieldRechargeRateIfBlockedRecently": [
+   "defences"
+  ],
+  "GainManaOnBlock": [
+   "mana"
+  ],
+  "PhysicalDamageTakenAsLightningWhileActiveBlocking": [
+   "lightning",
+   "physical"
+  ],
+  "ChaosDamage": [
+   "attack",
+   "caster",
+   "chaos"
+  ],
+  "IncreasedCastSpeed": [
+   "attack",
+   "caster",
+   "mana",
+   "speed"
+  ],
+  "MaximumPuppeteerStacks": [
+   "minion"
+  ],
+  "CastSpeedOnLowLife": [
+   "caster",
+   "speed"
+  ],
+  "WarcriesExertAnAdditionalAttack": [
+   "attack"
+  ],
+  "RageOnHit": [
+   "attack"
+  ],
+  "MinionDamage": [
+   "caster",
+   "minion"
+  ],
+  "WeaponDamageTypePrefix": [
+   "chaos",
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "BleedingDamage": [
+   "attack",
+   "physical"
+  ],
+  "MartialWeaponGainedDamage": [
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "ArmourBreak": [
+   "attack",
+   "caster"
+  ],
+  "AccuracyPerIntelligence": [
+   "attack"
+  ],
+  "AccuracyRatingWithMaxFrenzyCharges": [
+   "attack"
+  ],
+  "AddedArmourWhileStationary": [
+   "defences"
+  ],
+  "AddedChaosDamage": [
+   "attack",
+   "chaos"
+  ],
+  "StatsWithBeastialMinion": [
+   "attack",
+   "chaos",
+   "physical",
+   "speed"
+  ],
+  "AddedChaosDamageVsEnemiesWith5Poisons": [
+   "attack",
+   "chaos"
+  ],
+  "ColdDamage": [
+   "attack",
+   "cold"
+  ],
+  "AddedColdDamagePerFrenzyCharge": [
+   "cold"
+  ],
+  "AddedColdDamagePerPowerCharge": [
+   "caster",
+   "cold"
+  ],
+  "AddedColdDamageToSpellsAndAttacks": [
+   "attack",
+   "caster",
+   "cold"
+  ],
+  "PhysicalDamage": [
+   "attack",
+   "caster",
+   "physical"
+  ],
+  "FireDamage": [
+   "attack",
+   "fire"
+  ],
+  "AddedFireDamageIfBlockedRecently": [
+   "fire"
+  ],
+  "LightningDamage": [
+   "attack",
+   "caster",
+   "lightning"
+  ],
+  "AddedLightningDamagePerIntelligence": [
+   "attack",
+   "lightning"
+  ],
+  "AddedLightningDamagePerPowerCharge": [
+   "caster",
+   "lightning"
+  ],
+  "AddedLightningDamagePerShockedEnemyKilled": [
+   "lightning"
+  ],
+  "DevotionBonus": [
+   "attack",
+   "caster",
+   "cold",
+   "defences",
+   "fire",
+   "lightning",
+   "mana",
+   "minion",
+   "speed"
+  ],
+  "AddedPhysicalDamagePerEnduranceCharge": [
+   "physical"
+  ],
+  "AddedPhysicalToMinionAttacks": [
+   "minion",
+   "physical"
+  ],
+  "AdditionalAmmo": [
+   "attack"
+  ],
+  "AdditionalArrows": [
+   "attack"
+  ],
+  "ArrowPierce": [
+   "attack"
+  ],
+  "AdditionalAttackTotems": [
+   "attack"
+  ],
+  "AdditionalCurseOnEnemies": [
+   "caster"
+  ],
+  "MeleeDamageToBurningEnemies": [
+   "attack"
+  ],
+  "MeleeDamageToFrozenEnemies": [
+   "attack"
+  ],
+  "MeleeDamageToShockedEnemies": [
+   "attack"
+  ],
+  "ReducedPhysicalDamageTaken": [
+   "physical"
+  ],
+  "AdditionalPhysicalDamageReductionDuringFlaskEffect": [
+   "physical"
+  ],
+  "AdditionalPhysicalDamageReductionPerSiphoningCharge": [
+   "physical"
+  ],
+  "AdditionalProjectilesAfterAmmoConsumed": [
+   "attack"
+  ],
+  "AdditionalSpellProjectiles": [
+   "caster"
+  ],
+  "AdditionalZombiesPerXStrength": [
+   "minion"
+  ],
+  "AllAttributes": [
+   "attribute"
+  ],
+  "AllResistances": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "IncreasedAccuracy": [
+   "attack",
+   "speed"
+  ],
+  "BellHitLimit": [
+   "attack"
+  ],
+  "LightningDamageCanIgnite": [
+   "fire"
+  ],
+  "MeleeWeaponAndUnarmedRange": [
+   "attack"
+  ],
+  "MinionDamagingAilments": [
+   "minion"
+  ],
+  "MinionGainPuppetMasterOnCommand": [
+   "minion"
+  ],
+  "IncreasedMana": [
+   "mana"
+  ],
+  "TemporaryMinionLimit": [
+   "minion"
+  ],
+  "AlwaysHits": [
+   "attack"
+  ],
+  "AlwaysIgniteWhileBurning": [
+   "fire"
+  ],
+  "IncreasedEnergyShield": [
+   "defences"
+  ],
+  "IncreasedLife": [
+   "life",
+   "mana"
+  ],
+  "Intelligence": [
+   "attribute"
+  ],
+  "LifeRegeneration": [
+   "life"
+  ],
+  "ArborixMoreDamageAtCloseRange": [
+   "attack"
+  ],
+  "ArmourAppliesToElementalDamage": [
+   "defences"
+  ],
+  "ArmourAsLifeRegnerationOnBlock": [
+   "life"
+  ],
+  "IncreasedPhysicalDamageReductionRatingPercent": [
+   "defences"
+  ],
+  "ArmourPerEnduranceCharge": [
+   "defences"
+  ],
+  "ArmourPerTotem": [
+   "defences"
+  ],
+  "ArmourPercent VsProjectiles": [
+   "defences"
+  ],
+  "ArrowDamageAgainstPiercedTargets": [
+   "attack"
+  ],
+  "ArrowPierceAppliesToProjectileDamage": [
+   "attack"
+  ],
+  "ArrowsAlwaysCritAfterPiercing": [
+   "attack"
+  ],
+  "ArrowsThatPierceCauseBleeding": [
+   "attack",
+   "physical"
+  ],
+  "AttackAdditionalProjectiles": [
+   "attack"
+  ],
+  "AttackCastSpeed": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "AttackAndCastSpeedDuringFlaskEffect": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "AttackAndCastSpeedOnUsingMovementSkill": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "AttackAndCastSpeedPerFrenzyCharge": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "AttackCastMoveOnWarcryRecently": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "AttackCastMovementSpeedWhileYouDoNotHaveIronReflexes": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "CriticalStrikeChanceIncrease": [
+   "attack"
+  ],
+  "CriticalStrikeMultiplier": [
+   "attack",
+   "caster"
+  ],
+  "AttackDamageAgainstBleeding": [
+   "attack"
+  ],
+  "AttackDamageIncreasedPerLevel": [
+   "attack"
+  ],
+  "AttackDamageLeechPerFrenzyCharge": [
+   "attack",
+   "life"
+  ],
+  "AttackDamageLifeLeechAgainstBleedingEnemies": [
+   "attack",
+   "life"
+  ],
+  "AttackDamageManaLeechAgainstPoisonedEnemies": [
+   "attack",
+   "mana"
+  ],
+  "AttackDamagePerLowestArmourOrEvasion": [
+   "attack"
+  ],
+  "AttackDamage": [
+   "attack"
+  ],
+  "AttackDamageShaperItem": [
+   "attack"
+  ],
+  "FireDamageAsPortionOfDamage": [
+   "attack",
+   "fire",
+   "physical"
+  ],
+  "LightningDamageAsPortionOfDamage": [
+   "attack",
+   "lightning",
+   "physical"
+  ],
+  "AttackProjectilesForkExtraTimes": [
+   "attack"
+  ],
+  "AttackProjectilesFork": [
+   "attack"
+  ],
+  "AttackSpeedOnFullLife": [
+   "attack",
+   "speed"
+  ],
+  "IncreasedAttackSpeed": [
+   "attack",
+   "speed"
+  ],
+  "AttackSpeedPerGreenSocket": [
+   "attack",
+   "speed"
+  ],
+  "AttackSpeedWithMovementSkills": [
+   "attack",
+   "speed"
+  ],
+  "AttackerTakesChaosDamage": [
+   "chaos"
+  ],
+  "AttackerTakesColdDamage": [
+   "cold"
+  ],
+  "AttackerTakesDamageNoRange": [
+   "physical"
+  ],
+  "AttackerTakesDamage": [
+   "physical"
+  ],
+  "AttackerTakesFireDamageNoRange": [
+   "fire"
+  ],
+  "AttackerTakesLightningDamage": [
+   "lightning"
+  ],
+  "BlindOnHit": [
+   "attack"
+  ],
+  "AttacksByTotemsHaveReducedAttackSpeedPerTotem": [
+   "attack",
+   "speed"
+  ],
+  "AttacksCauseBleedingOnCursedEnemyHit": [
+   "attack",
+   "physical"
+  ],
+  "AttacksCostNoMana": [
+   "attack",
+   "mana"
+  ],
+  "AttacksDealNoPhysicalDamage": [
+   "attack",
+   "physical"
+  ],
+  "LocalShockAsThoughDealingMoreDamage": [
+   "attack",
+   "lightning"
+  ],
+  "AttacksThatStunCauseBleeding": [
+   "attack",
+   "physical"
+  ],
+  "AuraEffectOnMinions": [
+   "minion"
+  ],
+  "AvianModifiers": [
+   "cold",
+   "life",
+   "lightning",
+   "mana"
+  ],
+  "AvoidElementalStatusAilments": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "AvoidIgniteOnLowLife": [
+   "fire"
+  ],
+  "LifeGainedFromEnemyDeath": [
+   "life"
+  ],
+  "LocalChanceToBleed": [
+   "attack",
+   "physical"
+  ],
+  "ManaGainedFromEnemyDeath": [
+   "mana"
+  ],
+  "AxePhysicalDamage": [
+   "attack",
+   "physical"
+  ],
+  "BaseManaRegenerationWhileAllCorruptedItems": [
+   "mana"
+  ],
+  "BeltFlaskRecoveryRate": [
+   "life",
+   "mana"
+  ],
+  "BeltFlaskRecovery": [
+   "life",
+   "mana"
+  ],
+  "ArmourBreakEffect": [
+   "physical"
+  ],
+  "WarcrySpeed": [
+   "speed"
+  ],
+  "BleedDuration": [
+   "attack",
+   "physical"
+  ],
+  "CausesBleeding": [
+   "attack",
+   "physical"
+  ],
+  "CausesBleedingOnCrit": [
+   "attack",
+   "physical"
+  ],
+  "BleedingEnemiesExplode": [
+   "physical"
+  ],
+  "BleedingImmunity": [
+   "attack",
+   "physical"
+  ],
+  "SkillEffectDuration": [
+   "caster"
+  ],
+  "BlindOnHitWithRangedAbyssJewel": [
+   "attack"
+  ],
+  "ChaosResistance": [
+   "chaos"
+  ],
+  "ColdResistance": [
+   "cold"
+  ],
+  "EnergyShieldDelay": [
+   "defences"
+  ],
+  "EnergyShieldRegeneration": [
+   "defences",
+   "mana"
+  ],
+  "FireResistance": [
+   "fire"
+  ],
+  "LifeRegenerationRatePercentage": [
+   "life"
+  ],
+  "LightningResistance": [
+   "lightning"
+  ],
+  "MaximumResistances": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "MovementVelocity": [
+   "speed"
+  ],
+  "BurnDuration": [
+   "fire"
+  ],
+  "BurningDamageToChilledEnemies": [
+   "fire"
+  ],
+  "CannotBeChilledWhenOnslaught": [
+   "cold"
+  ],
+  "CannotBeFrozenWithDexHigherThanInt": [
+   "cold"
+  ],
+  "CannotBeIgnitedWithStrHigherThanDex": [
+   "fire"
+  ],
+  "CannotBePoisoned": [
+   "chaos"
+  ],
+  "CannotBeShockedWhileFrozen": [
+   "lightning"
+  ],
+  "CannotBeShockedWhileMaximumEnduranceCharges": [
+   "lightning"
+  ],
+  "CannotBeShockedWithIntHigherThanStr": [
+   "lightning"
+  ],
+  "CannotBeSlowedBelowBase": [
+   "speed"
+  ],
+  "CannotCastSpells": [
+   "caster"
+  ],
+  "CannotDealSpellDamage": [
+   "caster"
+  ],
+  "CannotLeech": [
+   "defences",
+   "life",
+   "mana"
+  ],
+  "CannotLeechFromCriticalStrikes": [
+   "life"
+  ],
+  "NoManaLeechOrRegen": [
+   "life",
+   "mana"
+  ],
+  "CastSocketedColdSpellsOnMeleeCriticalStrike": [
+   "attack",
+   "caster",
+   "cold"
+  ],
+  "CastSocketedMinionSpellsOnKill": [
+   "attack",
+   "caster",
+   "minion"
+  ],
+  "CastSocketedSpellsOnShockedEnemyKill": [
+   "caster"
+  ],
+  "CastSpeedDuringManaFlaskEffect": [
+   "caster",
+   "speed"
+  ],
+  "AuraPerAttributes": [
+   "caster",
+   "defences",
+   "speed"
+  ],
+  "CausesPoisonOnCrit": [
+   "attack",
+   "chaos"
+  ],
+  "ChanceToAvoidFreezeAndChill": [
+   "cold"
+  ],
+  "FireDamageAvoidance": [
+   "fire"
+  ],
+  "AvoidIgnite": [
+   "fire"
+  ],
+  "ReducedShockChance": [
+   "lightning"
+  ],
+  "ChanceToBeShocked": [
+   "lightning"
+  ],
+  "ChanceToBleed": [
+   "attack",
+   "physical"
+  ],
+  "ChanceToCastOnManaSpent": [
+   "caster"
+  ],
+  "ChanceToChillAttackersOnBlock": [
+   "cold"
+  ],
+  "ChanceToDodgeAttacksWhilePhasing": [
+   "defences"
+  ],
+  "ChanceToFreeze": [
+   "chaos",
+   "cold"
+  ],
+  "ChanceToIgnite": [
+   "fire"
+  ],
+  "PoisonCursedEnemiesOnHit": [
+   "chaos"
+  ],
+  "PoisonOnHit": [
+   "chaos"
+  ],
+  "ChanceToPoisonWithAttacks": [
+   "attack",
+   "chaos"
+  ],
+  "ChanceToRecoverManaOnSkillUse": [
+   "mana"
+  ],
+  "ChanceToReflectChaosDamageToSelf": [
+   "attack",
+   "chaos"
+  ],
+  "ChanceToShockAttackersOnBlock": [
+   "lightning"
+  ],
+  "ChanceToShock": [
+   "lightning"
+  ],
+  "ChaosDamageAsPortionOfDamage": [
+   "chaos",
+   "physical"
+  ],
+  "ChaosDamageCanShock": [
+   "chaos",
+   "lightning"
+  ],
+  "ChaosDamagePoisons": [
+   "chaos"
+  ],
+  "ChaosDamageDoesNotBypassESNotLowLifeOrMana": [
+   "chaos"
+  ],
+  "ChaosDamageOverTimeTaken": [
+   "chaos"
+  ],
+  "IncreasedChaosDamage": [
+   "chaos"
+  ],
+  "ChaosDamageTaken": [
+   "chaos"
+  ],
+  "ChaosDegen": [
+   "chaos"
+  ],
+  "ChaosDegenerationOnKill": [
+   "chaos"
+  ],
+  "ChaosDamageLifeLeech": [
+   "chaos",
+   "life"
+  ],
+  "DamageOverTimeMultiplier": [
+   "chaos",
+   "cold",
+   "fire",
+   "physical"
+  ],
+  "ChaosResistDoubled": [
+   "chaos"
+  ],
+  "ChaosResistancePerEnduranceCharge": [
+   "chaos"
+  ],
+  "ChaosResistanceWhileUsingFlask": [
+   "chaos"
+  ],
+  "ChaosSkillEffectDuration": [
+   "chaos"
+  ],
+  "ChaosTakenOnES": [
+   "chaos"
+  ],
+  "AccuracyRatingPerFrenzyCharge": [
+   "attack",
+   "speed"
+  ],
+  "AddedFireDamage": [
+   "attack",
+   "fire"
+  ],
+  "AddedLightningDamage": [
+   "attack",
+   "lightning"
+  ],
+  "ArcaneSurgeOnHit": [
+   "caster"
+  ],
+  "AttackAndCastSpeed": [
+   "attack",
+   "caster",
+   "speed"
+  ],
+  "ElementalDamagePercentAddedAsChaos": [
+   "chaos",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "IncreasedEvasionRating": [
+   "defences"
+  ],
+  "IronReflexes": [
+   "defences"
+  ],
+  "LifeRegenerationPercentPerEnduranceCharge": [
+   "life"
+  ],
+  "LifeRegenerationPerFrenzyCharge": [
+   "life"
+  ],
+  "ManaShield": [
+   "life",
+   "mana"
+  ],
+  "MovementVelocityPerFrenzyCharge": [
+   "speed"
+  ],
+  "AdditionalPhysicalDamageReduction": [
+   "physical"
+  ],
+  "VaalPact": [
+   "life"
+  ],
+  "ChillAndFreezeDurationBasedOnEnergyShield": [
+   "cold"
+  ],
+  "ChillEnemiesWhenHit": [
+   "cold"
+  ],
+  "ChillOnStun": [
+   "attack",
+   "cold"
+  ],
+  "ChilledGroundEffect": [
+   "cold"
+  ],
+  "ClawAttackSpeedModsAlsoAffectUnarmed": [
+   "attack",
+   "speed"
+  ],
+  "ClawCritModsAlsoAffectUnarmed": [
+   "attack"
+  ],
+  "ClawDamageModsAlsoAffectUnarmed": [
+   "attack"
+  ],
+  "LifeGainPerTarget": [
+   "attack",
+   "life"
+  ],
+  "LocalChanceToPoisonOnHit": [
+   "attack",
+   "chaos"
+  ],
+  "ManaGainPerTarget": [
+   "attack",
+   "mana"
+  ],
+  "ColdDamageCanPoison": [
+   "chaos"
+  ],
+  "ColdDamageAlsoIgnites": [
+   "fire"
+  ],
+  "ColdDamagePercentage": [
+   "cold"
+  ],
+  "ColdPenetrationAgainstChilledEnemies": [
+   "cold"
+  ],
+  "ColdResistanceWhenSocketedWithGreenGem": [
+   "cold"
+  ],
+  "ColdSkillsChanceToPoison": [
+   "chaos"
+  ],
+  "ColdWeaponDamage": [
+   "attack",
+   "cold"
+  ],
+  "CurseReservationCost": [
+   "caster"
+  ],
+  "ConvertColdToFire": [
+   "cold",
+   "fire"
+  ],
+  "ConvertFireToChaos": [
+   "chaos",
+   "fire"
+  ],
+  "ConvertLightningDamageToChaos": [
+   "chaos",
+   "lightning"
+  ],
+  "ConvertLightningToCold": [
+   "cold",
+   "lightning"
+  ],
+  "ConvertPhysicalToCold": [
+   "cold",
+   "physical"
+  ],
+  "PhysicalAddedAsCold": [
+   "attack",
+   "cold",
+   "physical"
+  ],
+  "ConvertPhysicalToFire": [
+   "fire",
+   "physical"
+  ],
+  "ConvertPhysicalToLightning": [
+   "lightning",
+   "physical"
+  ],
+  "ChaosPenetrationWithAttacks": [
+   "attack",
+   "chaos"
+  ],
+  "LocalChaosDamage": [
+   "attack",
+   "chaos"
+  ],
+  "FreezeDamageIncrease": [
+   "cold"
+  ],
+  "GainLifeOnBlock": [
+   "life"
+  ],
+  "IgniteChanceIncrease": [
+   "fire"
+  ],
+  "EnergyShieldPercent": [
+   "defences"
+  ],
+  "EvasionRatingPercent": [
+   "defences"
+  ],
+  "FreezeThreshold": [
+   "cold"
+  ],
+  "LifeRegenerationRate": [
+   "life"
+  ],
+  "LocalMaimOnHit": [
+   "attack"
+  ],
+  "DefencesPercent": [
+   "defences"
+  ],
+  "ManaLeech": [
+   "attack",
+   "mana",
+   "physical"
+  ],
+  "MaximumColdResist": [
+   "cold"
+  ],
+  "MaximumFireResist": [
+   "fire"
+  ],
+  "MaximumLightningResistance": [
+   "lightning"
+  ],
+  "ShockChanceIncrease": [
+   "lightning"
+  ],
+  "SpellCriticalStrikeChanceIncrease": [
+   "caster",
+   "mana"
+  ],
+  "EvasionAppliesToDeflection": [
+   "defences"
+  ],
+  "FlaskManaRecovery": [
+   "mana"
+  ],
+  "FlaskLifeRecovery": [
+   "life"
+  ],
+  "GlobalMaimOnHit": [
+   "attack"
+  ],
+  "IgniteEffect": [
+   "fire"
+  ],
+  "LifeRecoveryRate": [
+   "life"
+  ],
+  "ManaRecoveryRate": [
+   "mana"
+  ],
+  "MaximumChaosResistance": [
+   "chaos"
+  ],
+  "MaximumLifeConvertedToEnergyShield": [
+   "defences",
+   "life"
+  ],
+  "MeleeSplash": [
+   "attack"
+  ],
+  "MinionDuration": [
+   "minion"
+  ],
+  "PercentageAllAttributes": [
+   "attribute"
+  ],
+  "PercentageDexterity": [
+   "attribute"
+  ],
+  "PercentageIntelligence": [
+   "attribute"
+  ],
+  "PercentageStrength": [
+   "attribute"
+  ],
+  "PhysicalDamageOverTimeTaken": [
+   "physical"
+  ],
+  "PhysicalDamageTakenAsChaos": [
+   "chaos",
+   "physical"
+  ],
+  "PhysicalDamageTakenAsElement": [
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "PhysicalDamageTakenAsRandomElement": [
+   "physical"
+  ],
+  "ProjectileSpeed": [
+   "speed"
+  ],
+  "ReducedChillDurationOnSelf": [
+   "cold"
+  ],
+  "ShockEffect": [
+   "lightning"
+  ],
+  "HinderOnHit": [
+   "caster"
+  ],
+  "IncreasedWeaponElementalDamagePercent": [
+   "attack",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "WeaponSwapSpeed": [
+   "attack",
+   "speed"
+  ],
+  "CounterAttacksAddedColdDamage": [
+   "attack",
+   "cold"
+  ],
+  "CriticalStrikeChanceForForkingArrows": [
+   "attack"
+  ],
+  "CriticalStrikesDealIncreasedLightningDamage": [
+   "lightning"
+  ],
+  "CriticalStrikesDoNotFreeze": [
+   "cold"
+  ],
+  "CrushOnHitChance": [
+   "physical"
+  ],
+  "CurseVulnerabilityOnHit": [
+   "caster"
+  ],
+  "CurseTransferOnKill": [
+   "caster"
+  ],
+  "DamageTakenPerCharge": [
+   "caster",
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "DealNoNonElementalDamage": [
+   "chaos",
+   "physical"
+  ],
+  "DealNoPhysicalDamage": [
+   "physical"
+  ],
+  "BaseCurseDuration": [
+   "caster"
+  ],
+  "LifeLeechAmount": [
+   "life"
+  ],
+  "WitheredEffect": [
+   "chaos"
+  ],
+  "DecayOnHit": [
+   "chaos"
+  ],
+  "ChaosModifierEffect": [
+   "chaos"
+  ],
+  "ElementalModifierEffect": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ManaModifierEffect": [
+   "mana"
+  ],
+  "PhysicalModifierEffect": [
+   "physical"
+  ],
+  "SpeedModifierEffect": [
+   "speed"
+  ],
+  "DexterityIntelligence": [
+   "attribute"
+  ],
+  "DisplayChaosDegenerationAura": [
+   "chaos"
+  ],
+  "DisplayIronReflexesFor8Seconds": [
+   "defences"
+  ],
+  "Other": [
+   "life",
+   "mana"
+  ],
+  "DisplayManifestWeapon": [
+   "minion"
+  ],
+  "NearbyEnemiesAreSlowed": [
+   "speed"
+  ],
+  "DisplaySocketedMinionGemsSupportedByLifeLeech": [
+   "minion"
+  ],
+  "DualWieldingPhysicalDamage": [
+   "attack",
+   "physical"
+  ],
+  "ESRechargeRateDuringFlaskEffect": [
+   "defences"
+  ],
+  "ElementalDamageCanShock": [
+   "lightning"
+  ],
+  "ElementalDamageLeechedAsLife": [
+   "life"
+  ],
+  "ElementalDamageTakenAsChaos": [
+   "chaos"
+  ],
+  "ElementalDamagePercent": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ElementalStatusAilmentDuration": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "CurseOnBlock": [
+   "caster"
+  ],
+  "EnemiesExplodeOnDeath": [
+   "fire",
+   "physical"
+  ],
+  "EnemyExtraDamageRolls": [
+   "lightning",
+   "physical"
+  ],
+  "EnergyShieldDelayDuringFlaskEffect": [
+   "defences"
+  ],
+  "EnergyShieldGainedFromEnemyDeath": [
+   "defences"
+  ],
+  "EnergyShieldGainedOnBlock": [
+   "defences"
+  ],
+  "EnergyShieldGainedOnEnemyDeathPerLevel": [
+   "defences"
+  ],
+  "EnergyShieldLeechPermyriad": [
+   "defences"
+  ],
+  "EnergyShieldPerStrength": [
+   "defences"
+  ],
+  "EnergyShieldPerLevel": [
+   "defences"
+  ],
+  "EnergyShieldRechargeOnBlock": [
+   "defences"
+  ],
+  "EnergyShieldRechargeStartsWhenStunned": [
+   "defences"
+  ],
+  "EnergyShieldRecovery": [
+   "defences"
+  ],
+  "EnergyShieldRegenerationPerMinuteWhileAllCorruptedItems": [
+   "defences"
+  ],
+  "EnfeebleOnHit": [
+   "caster"
+  ],
+  "ColdDamageTakenRecoupedAsLife": [
+   "cold",
+   "life"
+  ],
+  "FireDamageTakenRecoupedAsLife": [
+   "fire",
+   "life"
+  ],
+  "MaximumLifeIncreasePercent": [
+   "life"
+  ],
+  "MaximumManaIncreasePercent": [
+   "mana"
+  ],
+  "LightningDamageTakenRecoupedAsLife": [
+   "life",
+   "lightning"
+  ],
+  "Onslaught": [
+   "speed"
+  ],
+  "EvasionIncreasedByUncappedColdResistance": [
+   "defences"
+  ],
+  "EvasionOnFullLife": [
+   "defences"
+  ],
+  "EvasionOnLowLife": [
+   "defences"
+  ],
+  "EvasionRatingIncreasesWeaponDamage": [
+   "attack"
+  ],
+  "EvasionRatingPerIntelligence": [
+   "defences"
+  ],
+  "EvasionRatingPercentOnLowLife": [
+   "defences"
+  ],
+  "GlobalDamageTypeGemLevel": [
+   "chaos",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "FasterBurnFromAttacks": [
+   "attack",
+   "fire"
+  ],
+  "FireBeamLength": [
+   "caster"
+  ],
+  "GrantedSkill": [
+   "attack",
+   "chaos"
+  ],
+  "FireDamageCanPoison": [
+   "chaos"
+  ],
+  "FireDamageLeechedAsLifeWhileIgnited": [
+   "fire",
+   "life"
+  ],
+  "FireDamagePerStrength": [
+   "fire"
+  ],
+  "FireDamagePercentage": [
+   "fire"
+  ],
+  "FireDamageTakenAsPhysical": [
+   "fire",
+   "physical"
+  ],
+  "FirePenetrationIfBlockedRecently": [
+   "fire"
+  ],
+  "FireResistOnLowLife": [
+   "fire"
+  ],
+  "FireResistanceWhenSocketedWithRedGem": [
+   "fire"
+  ],
+  "FireSkillsChanceToPoison": [
+   "chaos"
+  ],
+  "FlammabilityOnHit": [
+   "caster"
+  ],
+  "CurseOnHitLevel": [
+   "caster"
+  ],
+  "FlasksApplyToMinions": [
+   "minion"
+  ],
+  "FortifyOnHitWithMeleeAbyssJewel": [
+   "attack"
+  ],
+  "ChillAndFreezeDuration": [
+   "cold"
+  ],
+  "GainArmourIfBlockedRecently": [
+   "defences"
+  ],
+  "GainESWhenSpiritChargeExpiresOrConsumed": [
+   "defences"
+  ],
+  "GainEnergyShieldOnTrapTriggered": [
+   "defences"
+  ],
+  "RecoverLifeOnBlock": [
+   "life"
+  ],
+  "GainLifeOnIgnitingEnemy": [
+   "life"
+  ],
+  "GainLifeOnTrapTriggered": [
+   "life"
+  ],
+  "GainLifeWhenSpiritChargeExpiresOrConsumed": [
+   "life"
+  ],
+  "GainManaAsExtraEnergyShield": [
+   "defences"
+  ],
+  "GainManaOnKillingFrozenEnemy": [
+   "mana"
+  ],
+  "AnaemiaOnHit": [
+   "physical"
+  ],
+  "ColdDamageAsPortionOfDamage": [
+   "cold",
+   "physical"
+  ],
+  "ArchonUndeathOnOfferingUse": [
+   "minion"
+  ],
+  "ChanceToNotConsumeInfusionIfLostArchonPast6Seconds": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ColdDamageIfColdInfusionCollectedLast8Seconds": [
+   "cold"
+  ],
+  "DamageRemovedFromMinion": [
+   "minion"
+  ],
+  "FireDamageIfFireInfusionCollectedLast8Seconds": [
+   "fire"
+  ],
+  "LightningDamageIfLightningInfusionCollectedLast8Seconds": [
+   "lightning"
+  ],
+  "MinionAdditionalProjectileChance": [
+   "minion"
+  ],
+  "MinionDamagePerDifferentCommandSkillUsedLast15Seconds": [
+   "minion"
+  ],
+  "MinionsGiganticRevivedRecently": [
+   "minion"
+  ],
+  "SpellElementalAilmentMagnitude": [
+   "caster",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "FireSpellBaseCriticalChance": [
+   "caster",
+   "fire"
+  ],
+  "MinionCommandSkillSpeed": [
+   "minion",
+   "speed"
+  ],
+  "MinionArmourBreak": [
+   "minion",
+   "physical"
+  ],
+  "ImpaleEffect": [
+   "caster",
+   "physical"
+  ],
+  "AddedColdDamage": [
+   "attack",
+   "cold"
+  ],
+  "AddedPhysicalDamage": [
+   "attack",
+   "physical"
+  ],
+  "GlobalDefensesPerWhiteSocket": [
+   "defences"
+  ],
+  "GlobalIgniteProlif": [
+   "fire"
+  ],
+  "GrantsLevel20BoneNovaTrigger": [
+   "attack"
+  ],
+  "GroundTarOnCritTaken": [
+   "speed"
+  ],
+  "GroundTarOnHitTaken": [
+   "speed"
+  ],
+  "CurseCastSpeed": [
+   "speed"
+  ],
+  "PoisonChanceAppliesToBleed": [
+   "chaos",
+   "physical"
+  ],
+  "AttackSpeedHitRecently": [
+   "attack",
+   "speed"
+  ],
+  "AggravateBleed": [
+   "attack",
+   "physical"
+  ],
+  "BleedChanceAppliesToPoison": [
+   "chaos",
+   "physical"
+  ],
+  "AreaOfEffect": [
+   "attack",
+   "physical"
+  ],
+  "EnemiesDestroyedOnKillAndExplodeOnKillChance": [
+   "fire"
+  ],
+  "ExplodeOnKillChaos": [
+   "chaos"
+  ],
+  "IncreasedEvasionRatingWhileLeeching": [
+   "defences"
+  ],
+  "AttackSpeedIfCriticalStrikeDealtRecently": [
+   "attack",
+   "speed"
+  ],
+  "GenerateLifeAndManaFlasksChargesPerMinute": [
+   "life",
+   "mana"
+  ],
+  "GlobalSkillGemQualityMeleeLevel": [
+   "attack"
+  ],
+  "MaximumLifeOnKillPercent": [
+   "life"
+  ],
+  "IncreasedLifeLeechRate": [
+   "life"
+  ],
+  "EvasionEnergyShield": [
+   "defences"
+  ],
+  "MaximumManaOnKillPercent": [
+   "mana"
+  ],
+  "IncreasedManaLeechRate": [
+   "mana"
+  ],
+  "ProjectileShockChance": [
+   "lightning"
+  ],
+  "PoisonMagnitudeFromCriticalHits": [
+   "chaos"
+  ],
+  "ChillEffect": [
+   "cold"
+  ],
+  "FacebreakerFireUnarmedDamage": [
+   "attack",
+   "fire"
+  ],
+  "FireDamageGainedAsLightning": [
+   "lightning"
+  ],
+  "AttackCritChanceOverride": [
+   "attack"
+  ],
+  "IgnitedChilledEnemyResistance": [
+   "cold",
+   "fire"
+  ],
+  "PhysicalDamageCanFreezeShockIgnite": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "PhysicalDamageAsPortionOfDamage": [
+   "cold",
+   "fire",
+   "lightning",
+   "physical"
+  ],
+  "AllDamageCanFreeze": [
+   "cold"
+  ],
+  "LowManaThreshold": [
+   "mana"
+  ],
+  "UnarmedAreaOfEffectPerXIntelligence": [
+   "attack"
+  ],
+  "KeystoneHollowPalmTechnique": [
+   "attack",
+   "physical",
+   "speed"
+  ],
+  "MovementVelocityWhileCursed": [
+   "speed"
+  ],
+  "DamageIsLucky": [
+   "attack",
+   "caster"
+  ],
+  "ManaLeechAlsoRecoversEnergyShield": [
+   "defences"
+  ],
+  "ManaDegeneration": [
+   "mana"
+  ],
+  "AllAttackDamageElectrocutes": [
+   "lightning"
+  ],
+  "LightningDamageGainedAsCold": [
+   "cold"
+  ],
+  "IncreasedManaLeechIfCritRecently": [
+   "mana"
+  ],
+  "AvoidChill": [
+   "cold"
+  ],
+  "LifeRegenerationWhileFrozen": [
+   "life"
+  ],
+  "AttackLightningDamageMaximumMana": [
+   "attack",
+   "lightning"
+  ],
+  "LifeLeechNotRemovedOnFullLife": [
+   "life"
+  ],
+  "PhysicalAddedAsFire": [
+   "attack",
+   "fire",
+   "physical"
+  ],
+  "AttackDamageAndBaseMaximumMana": [
+   "attack",
+   "mana"
+  ],
+  "DamageIncreasePerPoisonOnSelfAndReflectPoisonToSelf": [
+   "chaos"
+  ],
+  "ChaosResistancePerPoisonOnSelfAndReflectPoisonToSelf": [
+   "chaos"
+  ],
+  "MovementSpeedPerPoisonOnSelfAndReflectPoisonToSelf": [
+   "chaos",
+   "speed"
+  ],
+  "AvoidShock": [
+   "lightning"
+  ],
+  "IncreaseFlatManaCost": [
+   "mana"
+  ],
+  "ApplyAdditionalChill": [
+   "cold"
+  ],
+  "SacrificeLifeToGainWardOnAttack": [
+   "attack"
+  ],
+  "UnarmedDamageGainedAsFirePerXIntelligence": [
+   "attack",
+   "fire"
+  ],
+  "Keystone": [
+   "attack",
+   "caster",
+   "defences",
+   "life",
+   "mana"
+  ],
+  "AlternateWeaponQuality": [
+   "attack",
+   "physical",
+   "speed"
+  ],
+  "HealOnRampage": [
+   "life"
+  ],
+  "HeraldBonus": [
+   "chaos",
+   "cold",
+   "fire",
+   "lightning",
+   "mana",
+   "minion",
+   "physical"
+  ],
+  "HeraldsAlwaysCost45": [
+   "mana"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-5": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-3": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-4": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-2": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-2": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-7": [
+   "attack"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-10": [
+   "chaos"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-13": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-8": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-3": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-1": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-5": [
+   "life"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-4": [
+   "mana"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-11": [
+   "minion"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-9": [
+   "physical"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-6": [
+   "caster"
+  ],
+  "HitsIgnoreChaosResistance": [
+   "chaos"
+  ],
+  "HybridStat": [
+   "attribute"
+  ],
+  "ImmuneToBurningShockedChilledGround": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ImmuneToFreezeAndChillWhileIgnited": [
+   "cold"
+  ],
+  "BleedDurationPerIntelligence": [
+   "attack"
+  ],
+  "IncreaseLightningDamagePerFrenzyCharge": [
+   "lightning"
+  ],
+  "DegenerationDamagePerDexterity": [
+   "physical"
+  ],
+  "IncreaseProjectileAttackDamagePerAccuracy": [
+   "attack"
+  ],
+  "IncreaseSpecificSocketedGemLevel": [
+   "attribute",
+   "caster"
+  ],
+  "IncreasedAccuracyPercent": [
+   "attack"
+  ],
+  "IncreasedAccuracyWhenOnLowLife": [
+   "attack"
+  ],
+  "IncreasedArmourAndEvasionIfKilledTauntedEnemyRecently": [
+   "defences"
+  ],
+  "IncreasedArmourWhileChilledOrFrozen": [
+   "defences"
+  ],
+  "IncreasedAttackSpeedPerDexterity": [
+   "attack",
+   "speed"
+  ],
+  "IncreasedAttackSpeedWhenOnLowLife": [
+   "attack",
+   "speed"
+  ],
+  "AttackSpeedIncreasedWhileIgnited": [
+   "attack",
+   "speed"
+  ],
+  "IncreasedBurningDamageIfYouHaveIgnitedRecently": [
+   "fire"
+  ],
+  "IncreasedCastSpeedPerPowerCharge": [
+   "caster",
+   "speed"
+  ],
+  "CastSpeedIncreasedWhileIgnited": [
+   "caster",
+   "speed"
+  ],
+  "IncreasedChanceToBeIgnited": [
+   "fire"
+  ],
+  "IncreasedChillDuration": [
+   "cold"
+  ],
+  "IncreasedClawDamageOnLowLife": [
+   "attack",
+   "physical"
+  ],
+  "IncreasedColdDamageIfUsedFireSkillRecently": [
+   "cold"
+  ],
+  "IncreasedColdDamagePerBlockChance": [
+   "cold"
+  ],
+  "IncreasedColdDamagePerFrenzyCharge": [
+   "cold"
+  ],
+  "IncreasedColdDamageWhileOffhandIsEmpty": [
+   "cold"
+  ],
+  "IncreasedCostOfMovementSkills": [
+   "attack",
+   "mana"
+  ],
+  "CurseDuration": [
+   "caster"
+  ],
+  "IncreasedDamagePerEnduranceCharge": [
+   "attack"
+  ],
+  "ElementalDamagePerLevel": [
+   "chaos"
+  ],
+  "EnemyFireResistance": [
+   "fire"
+  ],
+  "IncreasedEvasionIfHitRecently": [
+   "defences"
+  ],
+  "IncreasedEvasionWithOnslaught": [
+   "defences"
+  ],
+  "IncreasedFireDamageIfUsedColdSkillRecently": [
+   "fire"
+  ],
+  "FireDamageTaken": [
+   "fire"
+  ],
+  "IncreasedIntelligencePerUnique": [
+   "attribute"
+  ],
+  "LifeManaESLeechRate": [
+   "defences",
+   "life",
+   "mana"
+  ],
+  "IncreasedLifeWhileNoCorruptedItems": [
+   "life"
+  ],
+  "IncreasedLightningDamagePer10Intelligence": [
+   "lightning"
+  ],
+  "IncreasedLightningDamageTaken": [
+   "lightning"
+  ],
+  "IncreasedManaPerSpellBlockChance": [
+   "mana"
+  ],
+  "ReducedManaReservationsCost": [
+   "mana"
+  ],
+  "IncreasedMeleePhysicalDamageAgainstIgnitedEnemies": [
+   "attack",
+   "physical"
+  ],
+  "MinionAttackSpeed": [
+   "attack",
+   "minion",
+   "speed"
+  ],
+  "IncreasedMinionDamagePerDexterity": [
+   "minion"
+  ],
+  "IncreasedPhysicalDamagePerEndurance": [
+   "physical"
+  ],
+  "PhysicalDamageTaken": [
+   "physical"
+  ],
+  "IncreasedPhysicalDamageTakenWhileMoving": [
+   "physical"
+  ],
+  "SelfCurseDuration": [
+   "caster"
+  ],
+  "SpellDamagePerBlockChance": [
+   "caster"
+  ],
+  "IncreasedSpellDamagePerPowerCharge": [
+   "caster"
+  ],
+  "IncreasedSpellDamageWhileShocked": [
+   "caster"
+  ],
+  "IntimidateOnHitWithMeleeAbyssJewel": [
+   "attack"
+  ],
+  "KnockbackOnCounterattack": [
+   "attack"
+  ],
+  "LeechEnergyShieldInsteadofLife": [
+   "defences",
+   "life"
+  ],
+  "RecoveryRate": [
+   "defences",
+   "life"
+  ],
+  "LifeAndManaLeech": [
+   "attack",
+   "life",
+   "mana",
+   "physical"
+  ],
+  "LifeAndManaOnHit": [
+   "attack",
+   "life",
+   "mana"
+  ],
+  "LifeGainOnEnduranceChargeConsumption": [
+   "life"
+  ],
+  "LifeGainVsBleedingEnemies": [
+   "life"
+  ],
+  "LifeGainedOnEnemyDeathPerFrenzyCharge": [
+   "life"
+  ],
+  "LifeGainedOnEnemyDeathPerLevel": [
+   "life"
+  ],
+  "LifeGainedOnKillingIgnitedEnemies": [
+   "life"
+  ],
+  "LifeGainedOnSpellHit": [
+   "caster",
+   "life"
+  ],
+  "LifeLeechAnyDamage": [
+   "life"
+  ],
+  "LifeLeechFromPhysicalAttackDamagePerRedSocket": [
+   "attack",
+   "life",
+   "physical"
+  ],
+  "LifeLeechPerSiphoningCharge": [
+   "life"
+  ],
+  "LifeLeechPhysicalAgainstBleedingEnemies": [
+   "life"
+  ],
+  "LifeLeechVsCursedEnemies": [
+   "life"
+  ],
+  "LifePerDexterity": [
+   "life"
+  ],
+  "LifePerLevel": [
+   "life"
+  ],
+  "LifeRegenPerBuff": [
+   "life"
+  ],
+  "LifeRegenPerMinutePerEnduranceCharge": [
+   "life"
+  ],
+  "LifeRegeneratedAfterSavageHit": [
+   "life"
+  ],
+  "ShapersSeedAura": [
+   "life",
+   "mana"
+  ],
+  "LifeRegenerationOnLowLife": [
+   "life"
+  ],
+  "LifeRegenerationPerLevel": [
+   "life"
+  ],
+  "LifeRegenerationPerMinuteWhileNoCorruptedItems": [
+   "life"
+  ],
+  "LifeRegenerationWhileMoving": [
+   "life"
+  ],
+  "LightRadiusAndAccuracy": [
+   "attack"
+  ],
+  "LightRadiusAndManaRegeneration": [
+   "mana"
+  ],
+  "LightningDamageCanPoison": [
+   "chaos"
+  ],
+  "LightningDamageOnChargeExpiry": [
+   "lightning"
+  ],
+  "LightningDamagePercentage": [
+   "lightning"
+  ],
+  "LightningDegenAura": [
+   "lightning"
+  ],
+  "LightningResistanceWhenSocketedWithBlueGem": [
+   "lightning"
+  ],
+  "LightningSkillsChanceToPoison": [
+   "chaos"
+  ],
+  "AddedFireDamageVsIgnitedEnemies": [
+   "fire"
+  ],
+  "AlwaysCrit": [
+   "attack"
+  ],
+  "BaseLocalDefences": [
+   "defences"
+  ],
+  "DoubleDamageToChilledEnemies": [
+   "attack"
+  ],
+  "ElementalPenetration": [
+   "attack"
+  ],
+  "BaseLocalDefencesAndDefencePercent": [
+   "defences"
+  ],
+  "BaseLocalDefencesAndLife": [
+   "defences",
+   "life",
+   "mana"
+  ],
+  "BaseLocalDefencesAndMana": [
+   "defences",
+   "mana"
+  ],
+  "LocalIncreasedPhysicalDamagePercentAndAccuracyRating": [
+   "attack",
+   "physical"
+  ],
+  "LocalLifeLeechIsInstant": [
+   "life"
+  ],
+  "LocalPhysicalDamageAddedAsEachElement": [
+   "attack",
+   "physical"
+  ],
+  "LocalPoisonOnHit": [
+   "attack",
+   "chaos"
+  ],
+  "TrapAndMineThrowSpeed": [
+   "speed"
+  ],
+  "LoseEnergyShieldOnBlock": [
+   "defences"
+  ],
+  "MaimOnHitWithRangedAbyssJewel": [
+   "attack"
+  ],
+  "MainHandAddedFireDamage": [
+   "attack",
+   "fire"
+  ],
+  "MainHandChanceToIgnite": [
+   "fire"
+  ],
+  "AuraBonus": [
+   "attack",
+   "caster",
+   "chaos",
+   "defences",
+   "life",
+   "physical",
+   "speed"
+  ],
+  "ManaCostReduction": [
+   "attack",
+   "mana"
+  ],
+  "ManaGainedOnBlock": [
+   "mana"
+  ],
+  "ManaGainedOnEnemyDeathPerLevel": [
+   "mana"
+  ],
+  "LightningManaLeech": [
+   "lightning",
+   "mana"
+  ],
+  "ManaLeechFromPhysicalDamagePerBlueSocket": [
+   "attack",
+   "mana"
+  ],
+  "ManaLeechPerPowerCharge": [
+   "attack",
+   "mana",
+   "physical"
+  ],
+  "ManaPerLevel": [
+   "mana"
+  ],
+  "ManaPerStrength": [
+   "mana"
+  ],
+  "ManaRegeneratedPerSecondPerPowerCharge": [
+   "mana"
+  ],
+  "ManaRegenerationWhileShocked": [
+   "mana"
+  ],
+  "ManaReservationReduced": [
+   "mana"
+  ],
+  "MaximumEnergyShieldAsPercentageOfLife": [
+   "defences"
+  ],
+  "MaximumEnergyShieldOnKillPercent": [
+   "defences"
+  ],
+  "MaximumGolems": [
+   "minion"
+  ],
+  "MaximumLeechAmount": [
+   "life"
+  ],
+  "FlatLifePer10Dexterity": [
+   "life"
+  ],
+  "MaxLifePerItemRarity": [
+   "life"
+  ],
+  "MaximumMinionCount": [
+   "minion"
+  ],
+  "MinionGlobalSkillLevel": [
+   "minion"
+  ],
+  "MaximumShockOverride": [
+   "lightning"
+  ],
+  "MeleeAttacksUsableWithoutMana": [
+   "attack",
+   "mana"
+  ],
+  "MeleeDamageAgainstBleeding": [
+   "attack"
+  ],
+  "MeleeDamage": [
+   "attack"
+  ],
+  "MeleeDamageOnFullLife": [
+   "attack"
+  ],
+  "MeleeDamageTaken": [
+   "attack"
+  ],
+  "MeleePhysicalDamagePerDexterity": [
+   "attack",
+   "physical"
+  ],
+  "MeleeRangePerWhiteSocket": [
+   "attack"
+  ],
+  "MeleeWeaponCriticalStrikeMultiplier": [
+   "attack"
+  ],
+  "MinionAreaOfEffect": [
+   "minion"
+  ],
+  "MinionAttackSpeedAndCastSpeed": [
+   "attack",
+   "caster",
+   "minion",
+   "speed"
+  ],
+  "MinionAttackSpeedPerXDex": [
+   "attack",
+   "minion",
+   "speed"
+  ],
+  "MinionBlindImmunity": [
+   "minion"
+  ],
+  "MinionChanceToBlindOnHit": [
+   "minion"
+  ],
+  "MinionColdResist": [
+   "cold",
+   "minion"
+  ],
+  "MinionCommandSkillDamage": [
+   "minion"
+  ],
+  "MinionCriticalStrikeChance": [
+   "minion"
+  ],
+  "MinionCriticalStrikeMultiplier": [
+   "minion"
+  ],
+  "MinionDamageAlsoAffectsYou": [
+   "minion"
+  ],
+  "MinionDodgeChance": [
+   "minion"
+  ],
+  "MinionElementalResistances": [
+   "cold",
+   "fire",
+   "lightning",
+   "minion"
+  ],
+  "MinionFireResist": [
+   "fire",
+   "minion"
+  ],
+  "MinionHitsOnlyKillIgnitedEnemies": [
+   "minion"
+  ],
+  "MinionImmobilisationBuildup": [
+   "minion"
+  ],
+  "MinionLargerAggroRadius": [
+   "minion"
+  ],
+  "MinionLeechOnPoisonedEnemies": [
+   "life",
+   "minion"
+  ],
+  "MinionLife": [
+   "life",
+   "minion"
+  ],
+  "MinionLifeRecoveryOnBlock": [
+   "life",
+   "minion"
+  ],
+  "MinionMovementSpeed": [
+   "minion",
+   "speed"
+  ],
+  "MinionMovementSpeedPerXDex": [
+   "minion",
+   "speed"
+  ],
+  "MinionPhysicalDamageAddedAsCold": [
+   "cold",
+   "minion",
+   "physical"
+  ],
+  "MinionReviveSpeed": [
+   "minion"
+  ],
+  "MinionSkillManaCost": [
+   "mana",
+   "minion"
+  ],
+  "MinionUnholyMightOnKill": [
+   "minion"
+  ],
+  "MinionsGainYourStrength": [
+   "attribute",
+   "minion"
+  ],
+  "MinionsPoisonEnemiesOnHit": [
+   "chaos",
+   "minion"
+  ],
+  "MinionsRecoverLifeOnKillingPoisonedEnemy": [
+   "life",
+   "minion"
+  ],
+  "MoltenBurstOnMeleeHit": [
+   "attack"
+  ],
+  "MovementCannotBeSlowedBelowBase": [
+   "speed"
+  ],
+  "MovementSkillsCostNoMana": [
+   "mana"
+  ],
+  "MovementSkillsDealNoPhysicalDamage": [
+   "physical"
+  ],
+  "MovementSpeedIfKilledRecently": [
+   "speed"
+  ],
+  "MovementSpeedIfUsedWarcryRecently": [
+   "speed"
+  ],
+  "MovementSpeedOnBurningChilledShockedGround": [
+   "speed"
+  ],
+  "MovementSpeedOnTrapThrow": [
+   "speed"
+  ],
+  "MovementSpeedPerChestOpenedRecently": [
+   "speed"
+  ],
+  "MovementSpeedPerPoisonOnSelf": [
+   "speed"
+  ],
+  "IsSpider": [
+   "speed"
+  ],
+  "MovementVelicityPerEvasion": [
+   "speed"
+  ],
+  "MovementSpeedDuringFlaskEffect": [
+   "speed"
+  ],
+  "MovementVelocityOnFullLife": [
+   "speed"
+  ],
+  "MovementVelocityOnLowLife": [
+   "speed"
+  ],
+  "MovementVelocityWhileBleeding": [
+   "speed"
+  ],
+  "MovementVelocityWhileIgnited": [
+   "speed"
+  ],
+  "MovementSpeedWhileOnFullEnergyShield": [
+   "speed"
+  ],
+  "NearbyEnemiesChilledOnBlock": [
+   "cold"
+  ],
+  "NonChaosDamageAddedAsChaosPerSiphoningCharge": [
+   "chaos"
+  ],
+  "NonInstantManaRecoveryAlsoAffectsLife": [
+   "life"
+  ],
+  "NovaSpellsAreaOfEffect": [
+   "caster"
+  ],
+  "NumberOfZombiesSummonedPercentage": [
+   "minion"
+  ],
+  "OffHandAddedChaosDamage": [
+   "attack",
+   "chaos"
+  ],
+  "OffHandAddedColdDamage": [
+   "attack",
+   "cold"
+  ],
+  "OffHandChillDuration": [
+   "cold"
+  ],
+  "OfferingDuration": [
+   "minion"
+  ],
+  "OnslaughtOnKillWithRangedAbyssJewel": [
+   "attack"
+  ],
+  "AbyssalWasting": [
+   "attack",
+   "minion",
+   "physical"
+  ],
+  "UniqueHybridArmourAndArmourElemental": [
+   "defences",
+   "physical"
+  ],
+  "UniqueHybridStrengthPercentGainAsFire": [
+   "attribute",
+   "fire"
+  ],
+  "UniqueHybridCastSpeedAndArcaneSurgeOnMinionDeath": [
+   "caster",
+   "minion"
+  ],
+  "UniqueHybridEnergyShieldAndDelay": [
+   "defences"
+  ],
+  "UniqueHybridIntelligencePercentGainAsCold": [
+   "attribute",
+   "cold"
+  ],
+  "UniqueHybridManaPercentTakenBeforeLife": [
+   "mana"
+  ],
+  "DamageWithTriggeredSpells": [
+   "caster"
+  ],
+  "UniqueHybridAttackSpeedAndOnslaughtOnMinionDeath": [
+   "attack",
+   "minion",
+   "speed"
+  ],
+  "UniqueHybridChainTerrainAndFork": [
+   "attack"
+  ],
+  "UniqueHybridDexterityAndGainAsLightning": [
+   "attribute",
+   "lightning"
+  ],
+  "UniqueHybridEvasionAndDeflection": [
+   "defences"
+  ],
+  "UniqueHybridLifeRecoverLifeOnDeath": [
+   "life"
+  ],
+  "PenetrateEnemyFireResist": [
+   "fire"
+  ],
+  "PercentLightningDamageTakenFromManaBeforeLife": [
+   "life",
+   "lightning",
+   "mana"
+  ],
+  "PercentManaRecoveredWhenYouShock": [
+   "mana"
+  ],
+  "PhysAddedAsChaosWithMaxPowerCharges": [
+   "chaos",
+   "physical"
+  ],
+  "PhysAddedAsEachElementPerSpiritCharge": [
+   "physical"
+  ],
+  "PhysicalAttackDamageTaken": [
+   "attack",
+   "physical"
+  ],
+  "PhysicalBowDamageAtCloseRange": [
+   "attack"
+  ],
+  "PhysicalDamageCanChill": [
+   "cold"
+  ],
+  "PhysicalDamageCanShock": [
+   "lightning"
+  ],
+  "PhysicalDamageConvertToChaos": [
+   "chaos",
+   "physical"
+  ],
+  "PhysicalDamageConvertedToChaos": [
+   "chaos",
+   "physical"
+  ],
+  "PhysicalDamageFromBeasts": [
+   "physical"
+  ],
+  "PhysicalDamagePercentTakesAsChaosDamage": [
+   "chaos",
+   "physical"
+  ],
+  "PhysicalDamageReductionWhileNotMoving": [
+   "physical"
+  ],
+  "PhysicalDamageTakenPercentToReflect": [
+   "physical"
+  ],
+  "PhysicalDamageToAttacksPerSiphoningCharge": [
+   "attack",
+   "caster",
+   "physical"
+  ],
+  "SelfPhysicalDamageOnMinionDeathPerES": [
+   "physical"
+  ],
+  "SelfPhysicalDamageOnMinionDeath": [
+   "physical"
+  ],
+  "PhysicalDamageWhileFrozen": [
+   "physical"
+  ],
+  "PhysicalDamgePerRedSocket": [
+   "attack",
+   "physical"
+  ],
+  "PoisonDamage": [
+   "chaos"
+  ],
+  "PoisonDamagePerFrenzyCharge": [
+   "chaos"
+  ],
+  "PoisonDamageWithOver300Dexterity": [
+   "chaos"
+  ],
+  "PoisonDuration": [
+   "chaos"
+  ],
+  "PoisonDurationPerPowerCharge": [
+   "chaos"
+  ],
+  "PoisonDurationWithOver150Intelligence": [
+   "chaos"
+  ],
+  "PoisonOnMeleeHit": [
+   "attack",
+   "chaos"
+  ],
+  "PoisonSpreadAndHealOnPoisonedKill": [
+   "chaos",
+   "life"
+  ],
+  "PowerChargeOnKnockback": [
+   "attack"
+  ],
+  "PrimordialJewelCount": [
+   "minion"
+  ],
+  "ProjectileAttackCriticalStrikeChance": [
+   "attack"
+  ],
+  "ProjectileAttackDamage": [
+   "attack"
+  ],
+  "ProjectileFreezeChance": [
+   "cold"
+  ],
+  "ProjectileIgniteChance": [
+   "fire"
+  ],
+  "ProjectileSpeedPerFrenzyCharge": [
+   "speed"
+  ],
+  "ProjectilesFork": [
+   "attack"
+  ],
+  "ArrowSpeed": [
+   "attack",
+   "speed"
+  ],
+  "RageOnHitWithMeleeAbyssJewel": [
+   "attack"
+  ],
+  "RagingSpiritDurationResetOnIgnitedEnemy": [
+   "minion"
+  ],
+  "RandomlyCursedWhenTotemsDie": [
+   "caster"
+  ],
+  "RangedAttackDamageTaken": [
+   "attack",
+   "physical"
+  ],
+  "RangedAttacksConsumeAmmo": [
+   "attack"
+  ],
+  "RangedWeaponPhysicalDamagePlusPercent": [
+   "attack",
+   "physical"
+  ],
+  "ReceiveBleedingWhenHit": [
+   "attack",
+   "physical"
+  ],
+  "RecoverLifeInstantlyOnManaFlask": [
+   "life"
+  ],
+  "RecoverLifePercentOnIgnite": [
+   "life"
+  ],
+  "ReducedAttackSpeedOfMovementSkills": [
+   "attack",
+   "speed"
+  ],
+  "ReducedManaCostOnLowLife": [
+   "mana"
+  ],
+  "DisplaySocketedCurseGemsGetReducedReservation": [
+   "caster"
+  ],
+  "ReflectCurses": [
+   "caster"
+  ],
+  "ReflectDamageToAttackersOnBlock": [
+   "physical"
+  ],
+  "ReflectPhysicalDamageToSelfOnHit": [
+   "physical"
+  ],
+  "ReflectsShockToEnemiesInRadius": [
+   "lightning"
+  ],
+  "ReflectsShocks": [
+   "lightning"
+  ],
+  "MineArmingSpeed": [
+   "speed"
+  ],
+  "MineLayingSpeed": [
+   "speed"
+  ],
+  "RightRingSlotPhysicalReflectDamageTaken": [
+   "physical"
+  ],
+  "RingAttackSpeed": [
+   "attack",
+   "speed"
+  ],
+  "ColdAndLightningResistance": [
+   "cold",
+   "lightning"
+  ],
+  "FireAndColdResistance": [
+   "cold",
+   "fire"
+  ],
+  "FireAndLightningResistance": [
+   "fire",
+   "lightning"
+  ],
+  "ShockDuration": [
+   "lightning"
+  ],
+  "ShockOnMaxPowerCharges": [
+   "lightning"
+  ],
+  "ShockProliferation": [
+   "lightning"
+  ],
+  "ShockedEnemiesExplode": [
+   "lightning"
+  ],
+  "SkeletonDuration": [
+   "minion"
+  ],
+  "SocketedAurasReserveNoMana": [
+   "mana"
+  ],
+  "SocketedGemHasSecretsOfSuffering": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "Supported": [
+   "attack",
+   "caster",
+   "fire",
+   "lightning",
+   "physical",
+   "speed"
+  ],
+  "DisplaySocketedGemsSupportedByBlasphemy": [
+   "caster"
+  ],
+  "DisplaySupportedSkillsHaveAChanceToIgnite": [
+   "fire"
+  ],
+  "FasterDamageAilments": [
+   "attack",
+   "physical"
+  ],
+  "SpectreLife": [
+   "life",
+   "minion"
+  ],
+  "SpellAddedChaosDamage": [
+   "caster",
+   "chaos"
+  ],
+  "SpellAddedElementalDamage": [
+   "caster",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "SpellAddedPhysicalDamage": [
+   "caster",
+   "physical"
+  ],
+  "SpellChanceToShockFrozenEnemies": [
+   "caster",
+   "lightning"
+  ],
+  "CooldownRecovery": [
+   "caster"
+  ],
+  "SpellManaCostEfficiency": [
+   "caster",
+   "mana"
+  ],
+  "SpellDamageAndMana": [
+   "caster",
+   "mana"
+  ],
+  "SpellDamageDuringManaFlaskEffect": [
+   "caster"
+  ],
+  "SpellDamageElderItem": [
+   "caster"
+  ],
+  "SpellDamageIfCritPast8Seconds": [
+   "caster"
+  ],
+  "SpellDamageIfYouHaveCritRecently": [
+   "caster"
+  ],
+  "SpellDamageIncreasedPerLevel": [
+   "caster"
+  ],
+  "SpellDamageModifiersApplyToAttackDamage": [
+   "attack"
+  ],
+  "SpellDamagePerIntelligence": [
+   "caster"
+  ],
+  "SpellDamageTakenOnLowMana": [
+   "caster"
+  ],
+  "SpellsAreDisabled": [
+   "caster"
+  ],
+  "SpellsCastByTotemsHaveReducedCastSpeedPerTotem": [
+   "caster",
+   "speed"
+  ],
+  "SpellsHaveCullingStrike": [
+   "caster"
+  ],
+  "GrantsMinion": [
+   "minion"
+  ],
+  "SpreadChilledGroundOnKill": [
+   "cold"
+  ],
+  "StrengthDexterity": [
+   "attribute"
+  ],
+  "StrengthIntelligence": [
+   "attribute"
+  ],
+  "SummonRagingSpiritOnKill": [
+   "minion"
+  ],
+  "SummonWolfOnCrit": [
+   "minion"
+  ],
+  "SummonWolfOnKill": [
+   "minion"
+  ],
+  "Nothing": [
+   "caster",
+   "physical"
+  ],
+  "SwordAttackSpeed": [
+   "attack",
+   "speed"
+  ],
+  "SwordPhysicalDamageToAddAsFire": [
+   "attack",
+   "fire",
+   "physical"
+  ],
+  "TakeFireDamageOnIgnite": [
+   "fire"
+  ],
+  "TakesDamageWhenAttacked": [
+   "physical"
+  ],
+  "WeaponImplicitDamageType": [
+   "fire",
+   "lightning"
+  ],
+  "WeaponImplicit": [
+   "caster",
+   "minion"
+  ],
+  "TemporalChainsOnHit": [
+   "caster"
+  ],
+  "MovementVelocityWhileSprinting": [
+   "speed"
+  ],
+  "IncreasedTotemLife": [
+   "life"
+  ],
+  "TravelSkillsReflectPoison": [
+   "chaos"
+  ],
+  "SupportedByTrigger": [
+   "attack",
+   "caster"
+  ],
+  "TriggeredLightningWarp": [
+   "caster"
+  ],
+  "MapMonsterLife": [
+   "life"
+  ],
+  "UnaffectedByCurses": [
+   "caster"
+  ],
+  "UnaffectedByShock": [
+   "lightning"
+  ],
+  "UnarmedRange": [
+   "attack"
+  ],
+  "IncreaseSkillGemLevel": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "StackableJewelBonuses": [
+   "cold",
+   "fire",
+   "life",
+   "lightning"
+  ],
+  "SoulCore": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "AncestralBoostOnCondition": [
+   "attack"
+  ],
+  "ArmourAppliesToDeflection": [
+   "defences"
+  ],
+  "ArmourAppliesToLightningDamage": [
+   "defences",
+   "lightning"
+  ],
+  "DamagePerMonsterPower": [
+   "attack"
+  ],
+  "FacebreakerPhysicalUnarmedDamage": [
+   "attack",
+   "physical"
+  ],
+  "ShapeshiftSkillDamageConversion": [
+   "fire"
+  ],
+  "FlaskChargesUsed": [
+   "attack"
+  ],
+  "SpellBreakArmour": [
+   "caster",
+   "physical"
+  ],
+  "BootsGroundEffect": [
+   "fire",
+   "lightning"
+  ],
+  "CannotEvade": [
+   "defences"
+  ],
+  "CannotGainEnergyShield": [
+   "defences"
+  ],
+  "NoEnergyShield": [
+   "defences"
+  ],
+  "ChanceToBePoisoned": [
+   "chaos"
+  ],
+  "PoisonChanceIncrease": [
+   "caster",
+   "chaos"
+  ],
+  "ChaosDamageAvoidance": [
+   "chaos"
+  ],
+  "AllDamageCanElectrocute": [
+   "chaos",
+   "lightning"
+  ],
+  "MaximumEnduranceCharges": [
+   "chaos"
+  ],
+  "ChaosResistanceIsZero": [
+   "chaos"
+  ],
+  "CharmUniqueBonuses": [
+   "attack",
+   "chaos",
+   "defences",
+   "life",
+   "lightning",
+   "mana"
+  ],
+  "TriggeredStatusImmunity": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ChilledWhileBleeding": [
+   "cold"
+  ],
+  "ChilledWhilePoisoned": [
+   "cold"
+  ],
+  "ColdDamageAvoidance": [
+   "cold"
+  ],
+  "ElementalInfusion": [
+   "cold",
+   "fire"
+  ],
+  "ColdIgnites": [
+   "cold",
+   "fire"
+  ],
+  "CompanionLife": [
+   "life",
+   "minion"
+  ],
+  "ConvertArmourToEvasion": [
+   "defences"
+  ],
+  "CorruptedSkillManaCostConvertedToLifeCost": [
+   "life"
+  ],
+  "CriticalWeakness": [
+   "caster"
+  ],
+  "CurseEffect": [
+   "caster"
+  ],
+  "CursesNeverExpire": [
+   "caster"
+  ],
+  "CursesSpreadOnKill": [
+   "caster"
+  ],
+  "PhysicalDamageAddedAsChaos": [
+   "attack",
+   "chaos",
+   "physical"
+  ],
+  "DamageOverTimeDoesNotBypassEnergyShield": [
+   "defences"
+  ],
+  "DamagePerElementalAilment": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "AllDamage": [
+   "minion"
+  ],
+  "DefendWithPercentOfArmour": [
+   "defences"
+  ],
+  "DeflectionRating": [
+   "defences"
+  ],
+  "AccuracyRatingIsDoubled": [
+   "attack"
+  ],
+  "ElementalAilmentDuration": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ElementalDamageTakenAsPhysical": [
+   "physical"
+  ],
+  "EnemiesIgniteChaosDamage": [
+   "fire"
+  ],
+  "ExposureOnHit": [
+   "fire"
+  ],
+  "EnergyShieldCannotBeConverted": [
+   "defences"
+  ],
+  "DivinityResource": [
+   "defences",
+   "life",
+   "mana"
+  ],
+  "EnergyShieldRechargeOnKill": [
+   "defences"
+  ],
+  "FireDamageContributesToBleed": [
+   "fire"
+  ],
+  "FireShocks": [
+   "fire",
+   "lightning"
+  ],
+  "FlaskEffect": [
+   "chaos"
+  ],
+  "FlaskEffectNotRemovedOnFullLife": [
+   "life"
+  ],
+  "FlaskEffectNotRemovedOnFullMana": [
+   "mana"
+  ],
+  "FlaskRecoveryAmount": [
+   "life",
+   "mana"
+  ],
+  "FlatPhysicalDamageTaken": [
+   "physical"
+  ],
+  "ItemGrantsBuff": [
+   "life"
+  ],
+  "FacebreakerArmourFromStrength": [
+   "defences"
+  ],
+  "AttackSpeedPercentIfRareOrUniqueEnemyNearby": [
+   "attack",
+   "speed"
+  ],
+  "FlaskRecoverManaOnCharmUse": [
+   "mana"
+  ],
+  "CompanionDamage": [
+   "minion"
+  ],
+  "FlaskExtraLifeRegeneration": [
+   "life"
+  ],
+  "LuckyLightningDamageChance": [
+   "lightning"
+  ],
+  "ManaRegenerationRateWhileMoving": [
+   "mana"
+  ],
+  "MinionEnergyShield": [
+   "defences",
+   "minion"
+  ],
+  "MinionLifeRegeneration": [
+   "life",
+   "minion"
+  ],
+  "RecoverLifeOnKillingPoisonedEnemy": [
+   "life"
+  ],
+  "BleedChanceIncrease": [
+   "physical"
+  ],
+  "MinionPhysicalDamageReduction": [
+   "minion",
+   "physical"
+  ],
+  "FormCritMultiplier": [
+   "caster"
+  ],
+  "ImpaleOnHit": [
+   "attack",
+   "physical"
+  ],
+  "PhysicalDamagePercent": [
+   "physical"
+  ],
+  "BleedDamageAsFire": [
+   "fire"
+  ],
+  "LifeLeechAlsoBasedOnLightningDamage": [
+   "lightning"
+  ],
+  "AllDamageTakenRecoupedAsLife": [
+   "life"
+  ],
+  "LifeRegenerationPer10Intelligence": [
+   "life"
+  ],
+  "LifeRegenerationWhileIgnited": [
+   "life"
+  ],
+  "LightningDamageAvoidance": [
+   "lightning"
+  ],
+  "GlobalAddedDamagePerAttribute": [
+   "attack",
+   "lightning"
+  ],
+  "LightningFreezes": [
+   "cold",
+   "lightning"
+  ],
+  "LightningResistNoReduction": [
+   "lightning"
+  ],
+  "Chain": [
+   "lightning"
+  ],
+  "Knockback": [
+   "attack"
+  ],
+  "LocalNoEnergyShield": [
+   "defences"
+  ],
+  "ShockedGroundOnWindSkills": [
+   "lightning"
+  ],
+  "ChilledGroundOnWindSkills": [
+   "cold"
+  ],
+  "IgnitedGroundOnWindSkills": [
+   "fire"
+  ],
+  "WitherAlsoIncreasesFireDamage": [
+   "chaos",
+   "fire"
+  ],
+  "EnemiesIgniteWitherNeverExpires": [
+   "fire"
+  ],
+  "BleedOnSelfDamage": [
+   "fire"
+  ],
+  "NonChilledEnemiesPoisonAndChill": [
+   "cold"
+  ],
+  "NonChilledEnemiesBleedAndChill": [
+   "cold"
+  ],
+  "LosePercentLifeDuringFlaskEffect": [
+   "life"
+  ],
+  "ManaOverflow": [
+   "mana"
+  ],
+  "MaximumLifeConvertedToArmour": [
+   "defences"
+  ],
+  "MaximumEnergyShieldIsPercentOfStrength": [
+   "defences"
+  ],
+  "MaximumResistancesOverride": [
+   "chaos"
+  ],
+  "MeleeDamageIfProjectileHitRecently": [
+   "attack"
+  ],
+  "MinionCausticCloudOnDeath": [
+   "chaos",
+   "minion"
+  ],
+  "MinionChaosResistance": [
+   "chaos",
+   "minion"
+  ],
+  "MinionsExplodeOnDeath": [
+   "minion",
+   "physical"
+  ],
+  "UnholyMightBuff": [
+   "minion"
+  ],
+  "CastSpeedIfCriticalStrikeDealtRecently": [
+   "caster",
+   "speed"
+  ],
+  "VivisectionPriceDefences": [
+   "defences"
+  ],
+  "VivisectionPriceLife": [
+   "life"
+  ],
+  "VivisectionPriceMana": [
+   "mana"
+  ],
+  "VivisectionPriceMovementSpeed": [
+   "speed"
+  ],
+  "ZealotsOath": [
+   "defences",
+   "life"
+  ],
+  "NearbyEnemyLightningResistanceEqual": [
+   "lightning"
+  ],
+  "NoExtraBleedDamageWhileMoving": [
+   "attack",
+   "physical"
+  ],
+  "NoLifeRegeneration": [
+   "life"
+  ],
+  "NoMaximumManaPerIntelligence": [
+   "mana"
+  ],
+  "NoManaRegeneration": [
+   "mana"
+  ],
+  "ParriedDebuff": [
+   "caster",
+   "cold"
+  ],
+  "PerandusArrows": [
+   "attack"
+  ],
+  "EvasionRatingAsExtraArmour": [
+   "defences"
+  ],
+  "PhysicalDamageAvoidance": [
+   "physical"
+  ],
+  "PhysicalDamageContributesToChillAndFreeze": [
+   "cold",
+   "physical"
+  ],
+  "PhysicalDamageOnSkillUse": [
+   "physical"
+  ],
+  "PhysicalDamagePin": [
+   "physical"
+  ],
+  "StrengthRequirements": [
+   "attack",
+   "physical"
+  ],
+  "RyuslathaMaximumDamageModifier": [
+   "attack",
+   "physical"
+  ],
+  "RyuslathaMinimumDamageModifier": [
+   "attack",
+   "physical"
+  ],
+  "ProjectileDamageIfMeleeHitRecently": [
+   "attack"
+  ],
+  "RecoverLifePercentOnBlock": [
+   "life"
+  ],
+  "ChillEffectivenessOnSelf": [
+   "cold"
+  ],
+  "LifeRegenerationIfHitRecently": [
+   "life"
+  ],
+  "ReverseChill": [
+   "cold"
+  ],
+  "SacrificeLifeToGainES": [
+   "defences",
+   "life"
+  ],
+  "AdditionalProjectiles": [
+   "caster"
+  ],
+  "WitherOnHitChance": [
+   "caster"
+  ],
+  "DamageAsExtraDamage": [
+   "caster",
+   "physical"
+  ],
+  "ReservesLife": [
+   "life"
+  ],
+  "TotemReflectFireDamage": [
+   "fire"
+  ],
+  "AlliesIncreasedCastSpeed": [
+   "caster"
+  ],
+  "UsingFlasksDispelsBurning": [
+   "fire"
+  ],
+  "ChaosDamagePerCorruptedItem": [
+   "chaos"
+  ],
+  "VolkuurLessPoisonDuration": [
+   "chaos"
+  ],
+  "WeaponPhysicalDamageAddedAsRandomElement": [
+   "attack",
+   "cold",
+   "lightning",
+   "physical"
+  ],
+  "ZombieChaosElementalResists": [
+   "chaos",
+   "minion"
+  ],
+  "ZombieDamage": [
+   "minion",
+   "physical"
+  ],
+  "ZombieLife": [
+   "life",
+   "minion"
+  ],
+  "ZombieSize": [
+   "minion"
+  ],
+  "ZombiesExplodeEnemiesOnHit": [
+   "fire",
+   "minion"
+  ],
+  "ZombiesLeechLifeToYouAt1000Strength": [
+   "life",
+   "minion"
+  ]
+ },
  "source": "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",
  "addedBases": {
   "Gloves_dex_int": [

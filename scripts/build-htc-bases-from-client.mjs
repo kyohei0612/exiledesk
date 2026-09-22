@@ -511,9 +511,32 @@ const main = async () => {
     if (Object.keys(perFamily).length) familyTexts[cls.id] = perFamily;
   }
 
+  /**
+   * family -> カタリストが見るタグ。
+   *
+   * 装飾品の品質は種類つきで、**その種類のタグを持つ MOD だけ**が倍率で押し上げられる
+   * (`services/htc/quality.ts`)。同梱の MOD はこのタグを持っていないので、クライアントから渡す。
+   * カタリストに使われる 13 個のタグだけに絞って小さく保つ。
+   */
+  const CATALYST_TAGS = new Set([
+    "life", "mana", "defences", "physical", "fire", "cold", "lightning",
+    "chaos", "attack", "caster", "speed", "attribute", "minion",
+  ]);
+  const modTags = {};
+  for (const m of Object.values(MODS)) {
+    if (m.domain !== "item" && m.domain !== "desecrated") continue;
+    const f = familyOf(m);
+    if (!f) continue;
+    const tags = (m.implicit_tags || []).filter((t) => CATALYST_TAGS.has(t));
+    if (!tags.length) continue;
+    const cur = modTags[f] ?? [];
+    modTags[f] = [...new Set([...cur, ...tags])].sort();
+  }
+
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     familyTexts,
+    modTags,
     source:
       "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",
     addedBases: Object.fromEntries([...addedBases].map(([k, v]) => [k, v.sort()])),
@@ -526,6 +549,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
+  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {
     const n = outMods.filter((m) => m.id.startsWith(`${it.id}/`)).length;

@@ -24,6 +24,7 @@ export { optimizePlan } from "../src/vendor/poe2htc/optimizer/optimize";
 export { planExpectedCost } from "../src/vendor/poe2htc/optimizer/cost";
 export { tradeFiltersFor, buildFinishedQuery, tradeCategoryOf, buyOrCraft } from "../src/services/htc/buy-or-craft";
 export { labelOfAction, labelOfStep, jaOfPriceKey, jaOfOmen } from "../src/services/htc/labels";
+export { CATALYSTS, catalystsFor, boostedBy, displayedValue, rawValue, rawValueOfMod, BASE_MAX_QUALITY, RAISED_MAX_QUALITY } from "../src/services/htc/quality";
 export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";
 export { listMods } from "../src/vendor/poe2htc/engine/index";
 export { marketStore } from "../src/state/market-store";

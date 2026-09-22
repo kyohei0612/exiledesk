@@ -136,5 +136,43 @@ if (withQuality === 0) {
   console.log("   品質はまだ保存されていません (2026-09-22 に足したところ)。次に取得すると入ります。");
 }
 
+// ---- 品質とカタリスト ----
+console.log("\n=== 品質とカタリスト ===");
+console.log(`  カタリスト ${M.CATALYSTS.length} 種 / 上限 ${M.BASE_MAX_QUALITY}% (ブリーチ等で ${M.RAISED_MAX_QUALITY}%)`);
+if (M.CATALYSTS.length !== 13) fail(`カタリストが ${M.CATALYSTS.length} 種 (13 のはず)`);
+// 素 -> 表示 (ゲームは切り捨て)
+for (const [raw, q, want] of [
+  [182, 20, 218],
+  [8, 20, 9],
+  [189, 40, 264],
+  [50, 0, 50],
+]) {
+  const got = M.displayedValue(raw, q);
+  console.log(`  素 ${raw} / 品質 ${q}% -> ${got}`);
+  if (got !== want) fail(`素 ${raw} / ${q}% が ${got} (${want} のはず)`);
+}
+// オーナーの実物 (2026-09-22): 神経のカタリスト 20% で、マナの MOD だけ素に戻る
+for (const [id, shown, tag, shouldAdjust] of [
+  ["Amulets/IncreasedMana", 218, "mana", true],
+  ["Amulets/MaximumManaIncreasePercent", 9, "mana", true],
+  ["Amulets/BaseSpirit", 50, "mana", false],
+  ["Amulets/CriticalStrikeMultiplier", 36, "mana", false],
+]) {
+  const mod = data.mods.get(id);
+  if (!mod) {
+    fail(`${id} が無い`);
+    continue;
+  }
+  const { raw, adjusted } = M.rawValueOfMod(mod, shown, 20, tag);
+  console.log(`  ${id.padEnd(42)} 表示 ${String(shown).padStart(4)} -> ${adjusted ? `${raw.toFixed(1)} (戻した)` : "素のまま"}`);
+  if (adjusted !== shouldAdjust) fail(`${id}: 戻し判定が逆`);
+  // 戻した値は T1 の範囲に収まるはず (表示値のままだと超えている)
+  if (adjusted) {
+    const top = mod.tiers[mod.tiers.length - 1];
+    const max = Math.max(...top.ranges.map((r) => r[1]));
+    if (raw > max + 1e-6) fail(`${id}: 戻しても T1 上限 ${max} を超えている (${raw.toFixed(1)})`);
+  }
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

@@ -42,6 +42,8 @@ interface ExtraBases {
    * あとで行が増えた MOD が現物と突き合わない。`bridge-index.ts` がここを見て追随する。
    */
   familyTexts: Record<string, Record<string, string[]>>;
+  /** family → カタリストが見るタグ ([[quality.ts]])。同梱の MOD はこれを持っていない */
+  modTags: Record<string, string[]>;
   /** 同梱に無いクラス (タリスマン、全属性の防具など) */
   items: ItemBase[];
   /** 上の items が指す MOD */
@@ -70,6 +72,12 @@ export function htcPatchExtras(): PatchExtras | null {
 }
 
 let familyTexts: Record<string, Record<string, string[]>> = {};
+let modTags: Record<string, string[]> = {};
+
+/** family → カタリストが見るタグ。`quality.ts` が「この MOD は底上げされるか」に使う */
+export function htcModTags(): Record<string, string[]> {
+  return modTags;
+}
 
 /**
  * クラス id → family → 今の文言。`bridge-index.ts` が同梱の古い文言を補うのに使う。
@@ -159,6 +167,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   }
 
   familyTexts = extra.familyTexts ?? {};
+  modTags = extra.modTags ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,

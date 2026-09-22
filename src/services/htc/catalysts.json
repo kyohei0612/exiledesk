@@ -1,0 +1,97 @@
+{
+ "generated": "2026-09-22",
+ "source": "GGG クライアント AlternateQualityTypes + BaseItemTypes。対象 MOD の判定は MOD 側の implicit_tags",
+ "catalysts": [
+  {
+   "id": "JewelleryQualityLife",
+   "tag": "life",
+   "en": "Flesh Catalyst",
+   "ja": "肉体のカタリスト",
+   "mods": 625
+  },
+  {
+   "id": "JewelleryQualityMana",
+   "tag": "mana",
+   "en": "Neural Catalyst",
+   "ja": "神経のカタリスト",
+   "mods": 491
+  },
+  {
+   "id": "JewelleryQualityDefence",
+   "tag": "defences",
+   "en": "Carapace Catalyst",
+   "ja": "甲羅のカタリスト",
+   "mods": 870
+  },
+  {
+   "id": "JewelleryQualityPhysical",
+   "tag": "physical",
+   "en": "Uul-Netol's Catalyst",
+   "ja": "ウール・ネトルのカタリスト",
+   "mods": 561
+  },
+  {
+   "id": "JewelleryQualityFire",
+   "tag": "fire",
+   "en": "Xoph's Catalyst",
+   "ja": "ゾフのカタリスト",
+   "mods": 596
+  },
+  {
+   "id": "JewelleryQualityCold",
+   "tag": "cold",
+   "en": "Tul's Catalyst",
+   "ja": "トゥルのカタリスト",
+   "mods": 586
+  },
+  {
+   "id": "JewelleryQualityLightning",
+   "tag": "lightning",
+   "en": "Esh's Catalyst",
+   "ja": "エシュのカタリスト",
+   "mods": 574
+  },
+  {
+   "id": "JewelleryQualityChaos",
+   "tag": "chaos",
+   "en": "Chayula's Catalyst",
+   "ja": "チャユラのカタリスト",
+   "mods": 402
+  },
+  {
+   "id": "JewelleryQualityAttack",
+   "tag": "attack",
+   "en": "Reaver Catalyst",
+   "ja": "強奪者のカタリスト",
+   "mods": 1160
+  },
+  {
+   "id": "JewelleryQualityCaster",
+   "tag": "caster",
+   "en": "Sibilant Catalyst",
+   "ja": "歯擦音のカタリスト",
+   "mods": 619
+  },
+  {
+   "id": "JewelleryQualitySpeed",
+   "tag": "speed",
+   "en": "Skittering Catalyst",
+   "ja": "軽快のカタリスト",
+   "mods": 389
+  },
+  {
+   "id": "JewelleryQualityAttribute",
+   "tag": "attribute",
+   "en": "Adaptive Catalyst",
+   "ja": "適応のカタリスト",
+   "mods": 283
+  },
+  {
+   "id": "JewelleryQualityMinion",
+   "tag": "minion",
+   "en": "Necrotic Catalyst",
+   "ja": "死霊術のカタリスト",
+   "mods": 238
+  }
+ ]
+}
