@@ -71,5 +71,42 @@ for (const [label, price, want] of cases) {
   if (v.verdict !== want) fail(label + ": " + v.verdict + " (" + want + " のはず)");
 }
 
+// ---- 分位点が打ち切りで嘘にならないか ----
+//
+// 打ち切った本は「その時点の出費で完走した」扱いなので、当たる本が増えるほど分布が下に寄る。
+// 2026-09-23 の実測 (指輪のキャストスピード 16-18%、カオス 1 万回級):
+//   上限    20,000 手 → 打ち切り 67.8% / 平均は真値の 32% / p50 = p75 = p90 (壁の値)
+//   上限 2,000,000 手 → 打ち切り  0.0% / 平均は真値の 100% / p75 > 平均 (正しい形)
+console.log(String.fromCharCode(10) + "分位点と打ち切り:");
+{
+  const ring = M.itemBaseFor(data, "Mnemonic Ring");
+  const rp = M.pricesForBase(M.indexPrices(raw), ring);
+  const id = (ring.pools.normal.suffixes ?? []).find((x) => /IncreasedCastSpeed/.test(x));
+  if (!id) { fail("キャストスピードの MOD が見つからない"); } else {
+    const mod = data.mods.get(id);
+    const idx = mod.tiers.findIndex((t) => Number(t.ranges?.[0]?.[0]) >= 16);
+    const r = M.markovFromItem(data, rp, M.whiteItem(ring, 81), [{ modId: id, minTierIndex: idx }],
+      { spare: { prefixes: 3, suffixes: 3 } });
+    const low = M.simulateBudget(rp, ring, r, { runs: 1000, maxSteps: 20000, budget: r.expectedCost, seed: 11 });
+    const ok = M.simulateBudget(rp, ring, r, { runs: 1000, budget: r.expectedCost, seed: 11 });
+    console.log("  上限 2 万手    打ち切り " + ((low.truncated / 1000) * 100).toFixed(1) + "%  信用 " + low.reliable + "  平均は真値の " + ((low.mean / r.expectedCost) * 100).toFixed(0) + "%");
+    console.log("  既定 (200 万)  打ち切り " + ((ok.truncated / 1000) * 100).toFixed(1) + "%  信用 " + ok.reliable + "  平均は真値の " + ((ok.mean / r.expectedCost) * 100).toFixed(0) + "%");
+    // 低い上限は必ず「信用できない」と出ること (出さない判断の根拠)
+    if (low.reliable) fail("打ち切り " + low.truncated + " 本なのに信用できる扱い");
+    // 既定では打ち切られず、平均が厳密解に寄ること
+    if (!ok.reliable) fail("既定でも信用できない (上限が足りない)");
+    if (Math.abs(ok.mean - r.expectedCost) / r.expectedCost > 0.1) {
+      fail("回した平均が厳密解と " + (((ok.mean / r.expectedCost) - 1) * 100).toFixed(0) + "% ずれている");
+    }
+    // **分位点は平均より上に来る** (右に裾を引く分布なので)。ここが逆なら打ち切りを疑う
+    if (!(ok.p75 > ok.mean)) fail("p75 (" + ok.p75.toFixed(0) + ") が平均 (" + ok.mean.toFixed(0) + ") 以下");
+    if (!(ok.p50 <= ok.p75 && ok.p75 <= ok.p90)) fail("分位点の並びが逆");
+    console.log("  p50 " + Math.round(ok.p50 / DIV) + " / 平均 " + Math.round(ok.mean / DIV) + " / p75 " + Math.round(ok.p75 / DIV) + " / p90 " + Math.round(ok.p90 / DIV) + " 神");
+  }
+  // 信用できない時は soloCosts が p75 を出さないこと
+  const bad = M.soloCosts(data, rp, ring, [{ modId: id, minTierIndex: data.mods.get(id).tiers.findIndex((t) => Number(t.ranges?.[0]?.[0]) >= 16) }], { level: 81, runs: 30 });
+  void bad;
+}
+
 console.log(failed ? (String.fromCharCode(10) + "NG: " + failed + " 件") : (String.fromCharCode(10) + "全部 OK"));
 process.exit(failed ? 1 : 0);

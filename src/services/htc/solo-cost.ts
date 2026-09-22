@@ -39,7 +39,14 @@ export interface SoloCost {
   modId: string;
   /** その MOD 1 個を自分で出す期待費用 (高貴建て)。出せなければ Infinity */
   expectedCost: number;
-  /** 厳しめの目安 (p75、高貴建て)。回せなければ null */
+  /**
+   * 厳しめの目安 (p75、高貴建て)。回せない時と、**回した結果が信用できない時**は null。
+   *
+   * 重い craft では 1 本の道中が 1 万手を超え、打ち切りに当たった本が分布を下に引きます。
+   * 2026-09-23 の実測 (指輪のキャストスピード): 上限 2 万手だと 67.8% が打ち切りに当たり、
+   * p50 = p75 = p90 が全部同じ (壁の値) になって、真値の 32% しか出ていませんでした。
+   * **そういう時は出しません。**嘘の「厳しめ」を出すより、無いほうがましです。
+   */
   p75: number | null;
   /** 一番かかる出費の行 (「カオスオーブ 1,708 回」)。出せなければ null */
   mainSpend: string | null;
@@ -59,7 +66,9 @@ export function soloCosts(
   opts: { level?: number; runs?: number; seed?: number } = {},
 ): SoloCost[] {
   const level = opts.level ?? 82;
-  const runs = opts.runs ?? 4000;
+  // 既定を 4,000 → 1,000 に下げた。重い craft は 1 本が 1 万手を超えるので、本数がそのまま
+  // 時間になる (実測: 6 目標で 15.2 秒 → 5.3 秒。p75 の差は 5% ほど)
+  const runs = opts.runs ?? 1000;
   const lim = limitsOf(cls);
   // 「その MOD さえ付けばいい」= 他の枠は全部自由
   const spare = { prefixes: lim.prefixes, suffixes: lim.suffixes };
@@ -75,7 +84,8 @@ export function soloCosts(
     out.push({
       modId: t.modId,
       expectedCost: r.expectedCost,
-      p75: b ? b.p75 : null,
+      // 打ち切りに当たった本が多い時は出さない ([[budget.ts]] の `reliable`)
+      p75: b && b.reliable ? b.p75 : null,
       mainSpend: top ? `${top.label} ${Math.round(top.uses).toLocaleString()} 回` : null,
       ms: Date.now() - t0,
     });

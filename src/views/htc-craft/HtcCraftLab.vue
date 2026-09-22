@@ -122,12 +122,19 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
       <!-- 段階 0 -->
       <section class="mb-4">
         <h2 class="mb-1 font-bold">② 買うか自分で出すか (1 個ずつ)</h2>
-        <p class="mb-1 text-xs opacity-60">この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。</p>
+        <p class="mb-1 text-xs opacity-60">
+          この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。<br />
+          <b>p75 は「沼った時」の目安</b>です。「—」は道中が長すぎて分布が信用できないもので、
+          <b>嘘の数字を出すより出さない</b>ようにしています。
+        </p>
         <table class="w-full text-xs">
           <tr v-for="s in c.solo.value" :key="s.modId" class="border-b border-white/5">
             <td class="py-0.5">{{ soloText(s.modId) }}</td>
             <td class="w-24 text-right">{{ c.money(s.expectedCost) }}</td>
-            <td class="w-24 text-right opacity-50">p75 {{ c.money(s.p75) }}</td>
+            <td class="w-24 text-right opacity-50">
+              <span v-if="s.p75 != null">p75 {{ c.money(s.p75) }}</span>
+              <span v-else class="opacity-50" title="1 本の道中が長すぎて、回した分布が信用できません">p75 —</span>
+            </td>
             <td class="pl-3 opacity-60">{{ s.mainSpend }}</td>
             <td class="w-44 pl-2 text-right">
               <button

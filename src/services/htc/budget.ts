@@ -63,10 +63,27 @@ export interface BudgetResult {
   spend: SpendRow[];
   /** 打ち切りに当たった本数 (多いと数字が甘く出る) */
   truncated: number;
+  /**
+   * 分位点を信じていいか。**打ち切りが 1% を超えたら false。**
+   *
+   * 打ち切った本は「その時点の出費で完走した」扱いなので、当たるほど分布が下に寄ります。
+   * false の時に p75 を「厳しめの目安」として出すと**嘘になります** (実測では真値の 32%、
+   * しかも p50 = p75 = p90 が全部同じ = 壁の値)。画面では出さないこと。
+   */
+  reliable: boolean;
 }
 
-/** 1 本の道中で踏める手の上限。沼った時に無限に回らないようにする */
-const MAX_STEPS = 20000;
+/**
+ * 1 本の道中で踏める手の上限。沼った時に無限に回らないようにする。
+ *
+ * **低すぎると分位点が嘘になります。**打ち切った本は「その時点の出費で完走した」扱いになるので、
+ * 当たる本が増えるほど分布が丸ごと下に寄ります。2026-09-23 に実測 (指輪のキャストスピード
+ * 16-18%、カオス 1 万回級の craft):
+ *   上限 20,000 → 打ち切り 67.8% / 回した平均 2,014 神 (MDP の厳密解 6,208 神の 32%)
+ *                 p50 = p75 = p90 = 2,426 神 (全部同じ = 壁の値)
+ * 呼び出し側で変えられるようにし、当たった割合を `truncated` で必ず見ること。
+ */
+const DEFAULT_MAX_STEPS = 2000000;
 
 /**
  * 最適方策を回して分布と内訳を出す。
@@ -77,10 +94,11 @@ export function simulateBudget(
   prices: Prices,
   cls: ItemBase,
   res: MarkovResult,
-  opts: { runs?: number; budget?: number | null; seed?: number } = {},
+  opts: { runs?: number; budget?: number | null; seed?: number; maxSteps?: number } = {},
 ): BudgetResult | null {
   if (!res.feasible || !Number.isFinite(res.expectedCost) || res.nodes.length === 0) return null;
   const runs = Math.max(1, opts.runs ?? 3000);
+  const maxSteps = Math.max(1000, opts.maxSteps ?? DEFAULT_MAX_STEPS);
 
   // 状態 → その状態で踏む枝 (確率つき)。edges は最適方策の分だけ入っている
   const out = new Map<string, { to: string; prob: number; action: McAction }[]>();
@@ -118,7 +136,7 @@ export function simulateBudget(
     let spent = 0;
     let steps = 0;
     while (!isGoal(key)) {
-      if (++steps > MAX_STEPS) {
+      if (++steps > maxSteps) {
         truncated++;
         break;
       }
@@ -162,5 +180,6 @@ export function simulateBudget(
       .map(([label, r]) => ({ label, exalted: r.exalted / runs, share: grand > 0 ? r.exalted / grand : 0, uses: r.uses / runs }))
       .sort((a, b) => b.exalted - a.exalted),
     truncated,
+    reliable: truncated / runs <= 0.01,
   };
 }
