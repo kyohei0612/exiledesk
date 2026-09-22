@@ -103,5 +103,28 @@ else {
   if (!des.text.includes("ブラックブラッドのお告げ")) fail(`冒涜の段にボスのお告げが無い: ${des.text}`);
 }
 
+// ---- どれが付いた物を買うか ----
+//
+// オーナーの読み:「一番つきにくいスキルレベル+を買って、そこからクラフトなのか」。
+// 一番付きにくい MOD を買うのが一番効くはず、というのをここで確かめる。
+console.log("\n=== 付いた物を買う (当たりやすい順) ===");
+const sf = M.startFromOptions(data, prices, cls, tiered, { level: 82 });
+console.log(`  白から全部 ${M.oddsText(sf.fromWhite)}  (${sf.ms} ミリ秒)`);
+for (const o of sf.options) {
+  console.log(
+    `    ${o.boughtModId.replace("Amulets/", "").padEnd(34)} 残り ${M.oddsText(o.probability).padEnd(14)} 白の ${o.timesBetter ? o.timesBetter.toFixed(0) : "?"} 倍`,
+  );
+}
+if (sf.ms > 3000) fail(`即時のはずが ${sf.ms} ミリ秒`);
+if (sf.options.length !== tiered.length) fail(`案が ${sf.options.length} 件 (目標と同じ ${tiered.length} 件のはず)`);
+// 1 個買えば必ず楽になる
+for (const o of sf.options) if (!(o.timesBetter > 1)) fail(`${o.boughtModId} を買っても楽になっていない (${o.timesBetter})`);
+// 一番付きにくい MOD を買うのが一番効く
+if (!sf.options[0].boughtModId.includes("GlobalIncreaseSpellSkillGemLevel")) {
+  fail(`先頭が ${sf.options[0].boughtModId} (一番付きにくいスペルレベルのはず)`);
+}
+// 買う物を引く条件が組めている
+if (!sf.options[0].buyQuery || sf.options[0].buyQuery.filters.length !== 1) fail("買う物の検索条件が 1 本になっていない");
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);
