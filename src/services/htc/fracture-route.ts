@@ -23,6 +23,7 @@
  * (別の MOD が固定された物は、この道筋では使えません)。そこは**部品を出して呼び出し側に任せます**。
  */
 import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
+import { buildFinishedQuery } from "./buy-or-craft";
 import { jaOfPriceKey } from "./labels";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
@@ -135,4 +136,36 @@ export function fractureOptions(
   }
   options.sort((a, b) => (a.finishCost ?? Infinity) - (b.finishCost ?? Infinity));
   return { plainCost: opts.plainCost ?? null, options, orbJa, ms: Date.now() - t0 };
+}
+
+
+/**
+ * **フラクチャー済みの物を取引所で引く。**
+ *
+ * オーナー方針 2026-09-22:「先にフラクチャー品みるのがいいかもね。これ 1 神とかだから、
+ * それ消えたら終わるからね」。固定された MOD は消去でも消えないので、**一番つきにくい 1 個が
+ * 固定された物を買うのが最大の梃子**です。実測 (太陽のアミュレット 4 個): 素から 2,015 神 →
+ * 一番つきにくい 1 個を固定した状態から **231 神 (11%)**。1 神で買えるなら桁違いに得。
+ *
+ * ## 引き方
+ * 取引所は固定された MOD を**別の名前空間**で持ちます (`explicit.stat_…` → `fractured.stat_…`)。
+ * stat id はそのままで、頭の `explicit.` だけ差し替えます。
+ *
+ * **未確認**: この差し替えは PoE1 の慣習からの推定で、trade2 では実測していません
+ * ([[api-probing-policy]] の通り外から叩かないため)。アプリで 1 回通して確かめてください。
+ * 外れていても**空振りするだけ**で、間違った値段は出ません (0 件になる)。
+ */
+export function fracturedBuyQuery(
+  data: PatchData,
+  cls: ItemBase,
+  target: TierTarget,
+  opts: { ilvlMin?: number; baseType?: string } = {},
+): ReturnType<typeof buildFinishedQuery> {
+  const built = buildFinishedQuery(data, cls, [target], { ...opts, rarity: "rare" });
+  if (!built) return null;
+  const stats = built.query.query.stats?.[0];
+  if (stats) {
+    stats.filters = stats.filters.map((f) => ({ ...f, id: f.id.replace(/^explicit\./, "fractured.") }));
+  }
+  return { ...built, filters: built.filters.map((f) => ({ ...f, id: f.id.replace(/^explicit\./, "fractured.") })) };
 }

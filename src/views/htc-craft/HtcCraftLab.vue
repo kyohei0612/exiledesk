@@ -104,8 +104,13 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         <p v-if="c.implicits.value.length" class="mt-1 text-xs opacity-50">
           暗黙 (ベースで決まるので作る対象外): {{ c.implicits.value.join(" / ") }}
         </p>
-        <p v-if="c.skipped.value.length" class="mt-1 text-xs text-red-300">
-          繋がらなかった: {{ c.skipped.value.join(" / ") }}
+        <!-- 作れない MOD は黙って外さない。外して解くと別のアイテムの手順が出る -->
+        <p v-if="c.skipped.value.length" class="mt-2 rounded bg-red-900/40 p-2 text-xs">
+          <b>このベースでは作れない MOD が {{ c.skipped.value.length }} 件あります</b> — {{ c.skipped.value.join(" / ") }}<br />
+          <span class="opacity-80">
+            どのプールもこの MOD を出しません (ブリーチの樹など別経路で乗る物)。
+            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのものです。
+          </span>
         </p>
       </section>
 

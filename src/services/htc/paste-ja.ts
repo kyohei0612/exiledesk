@@ -173,7 +173,13 @@ function tierIndexFor(mod: Mod, values: readonly number[], level: number): numbe
  *
  * 落ちた行は 2 つに分けます。**この違いが画面で効きます**:
  *   - `implicits` … そのベースの暗黙の効果。**作る対象ではない** (ベースを選んだ時点で決まる)
- *   - `skipped`   … 本当に繋がらなかった行。黙って外さず、画面で断ること
+ *   - `skipped`   … **そのベースでは作れない行。**どのプールもその MOD を出さないという意味なので、
+ *                   狙いから外して解くと**別のアイテムの手順**が出ます。画面で必ず断ること。
+ *                   オーナー方針 2026-09-22:「作れない奴は物理的に買う方向でいい」。
+ *                   実例: ニーモニックリングの「スペルのマナコスト効率が29%増加する」は
+ *                   クライアントに `Verisium` (プレフィックス 18-29%) として在るが
+ *                   **spawn_weights が全部 0** で、どの装備タグでも出ない。ブリーチの樹など
+ *                   別経路で乗る物と見られる
  */
 export function targetsFor(
   data: PatchData,
@@ -187,12 +193,25 @@ export function targetsFor(
   // 範囲の外 (17) なのに目標として通ってしまいました (実物で踏んだ)。
   // 暗黙はベースを選んだ時点で決まっているので、そもそも作る対象ではありません。
   const bare = (t: string): string => stripMarkers(t).replace(/[0-9()+\-]+/g, "").trim();
-  const implicitBare = new Set((htcBaseInfo()[item.baseType]?.implicits ?? []).map((im) => bare(im.ja)));
+  // **暗黙 1 つにつき 1 行だけ落とす。**同じ文面が暗黙にも通常 MOD にも出ることがあり、
+  // 全部消すと本物の目標まで巻き添えになる。実物で踏んだ (2026-09-22 ニーモニックリング):
+  // 暗黙が「最大マナが8%増加する」で、プレフィックスにも同じ行がある。両方落として目標が 1 個減った。
+  const quota = new Map<string, number>();
+  for (const im of htcBaseInfo()[item.baseType]?.implicits ?? []) {
+    const k = bare(im.ja);
+    quota.set(k, (quota.get(k) ?? 0) + 1);
+  }
   const implicits: string[] = [];
   const rollable: PastedLine[] = [];
   for (const l of item.lines) {
-    if (implicitBare.has(bare(l.text))) implicits.push(l.text);
-    else rollable.push(l);
+    const k = bare(l.text);
+    const left = quota.get(k) ?? 0;
+    if (left > 0) {
+      quota.set(k, left - 1);
+      implicits.push(l.text);
+    } else {
+      rollable.push(l);
+    }
   }
 
   // 素のベースから作る話なので、ルーン由来の MOD は混ぜない
