@@ -28,6 +28,7 @@ import { jaOfPriceKey } from "./labels";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { ItemBase, ItemState, PatchData, PlacedMod } from "../../vendor/poe2htc/engine/types";
+import { withCatalysing } from "./catalysing";
 
 /** フラクチャーオーブが要求する最低の MOD 数 (クライアントの説明) */
 export const FRACTURE_MIN_MODS = 4;
@@ -118,7 +119,7 @@ export function fractureOptions(
     // 固定した 1 個は済んでいるので、残りだけを目標にする
     const rest = targets.filter((x) => x.modId !== t.modId);
     if (rest.length === 0) continue;
-    const res = markovFromItem(data, prices, start, rest, {});
+    const res = markovFromItem(data, prices, start, rest, withCatalysing(data, start.base, rest));
     const finishCost = res.feasible && Number.isFinite(res.expectedCost) ? res.expectedCost : null;
     const expectedOrbs = 1 / hitChance;
     options.push({

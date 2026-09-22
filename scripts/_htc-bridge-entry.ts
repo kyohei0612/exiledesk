@@ -21,7 +21,7 @@ export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/
 export { buildHtcPrices } from "../src/services/htc/prices";
 export { htcBaseInfo, htcBaseLimits, htcModTags, loadHtcPatch, htcPatchExtras } from "../src/services/htc/patch";
 export { whiteItem } from "../src/vendor/poe2htc/engine/item";
-export { indexPrices, pricesForBase, cheapestEssenceLevel, stepCost } from "../src/vendor/poe2htc/optimizer/cost";
+export { indexPrices, pricesForBase, stepOmenIds, cheapestEssenceLevel, stepCost } from "../src/vendor/poe2htc/optimizer/cost";
 export { optimizePlan, optimizePareto } from "../src/vendor/poe2htc/optimizer/optimize";
 export { planExpectedCost } from "../src/vendor/poe2htc/optimizer/cost";
 export { tradeFiltersFor, buildFinishedQuery, tradeCategoryOf, buyOrCraft } from "../src/services/htc/buy-or-craft";
@@ -39,7 +39,7 @@ export { searchPlan, SEARCH_INTERVAL_SEC, SEARCH_BUDGET_PER_5MIN } from "../src/
 export { fractureValue } from "../src/services/htc/fracture-value";
 export { fractureOptions, FRACTURE_MIN_MODS, fracturedBuyQuery } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";
-export { catalysingOdds, catalysingMultiplier, catalysingBand, CATALYSING_SAMPLES, CATALYSING_CAVEAT } from "../src/services/htc/catalysing";
+export { catalysingOdds, catalysingMultiplier, catalysingBand, CATALYSING_SAMPLES, CATALYSING_CAVEAT, catalysingSetup, catalystCountFor, catalystPriceKey, maxQualityForBase, QUALITY_PER_CATALYST } from "../src/services/htc/catalysing";
 export { exaltProbability } from "../src/vendor/poe2htc/engine/probability";
 export { CATALYSTS, catalystsFor, hasCatalysts, boostedBy, displayedValue, rawValue, rawValueOfMod, catalystTagFromLabel, BASE_MAX_QUALITY, RAISED_MAX_QUALITY, INFUSER_OVER_QUALITY, ABSOLUTE_MAX_QUALITY } from "../src/services/htc/quality";
 export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";

@@ -85,6 +85,58 @@
   "essence:breach": {
    "en": "Essence of the Breach",
    "ja": "ブリーチのエッセンス"
+  },
+  "catalyst_life": {
+   "en": "Flesh Catalyst",
+   "ja": "肉体のカタリスト"
+  },
+  "catalyst_mana": {
+   "en": "Neural Catalyst",
+   "ja": "神経のカタリスト"
+  },
+  "catalyst_defences": {
+   "en": "Carapace Catalyst",
+   "ja": "甲羅のカタリスト"
+  },
+  "catalyst_physical": {
+   "en": "Uul-Netol's Catalyst",
+   "ja": "ウール・ネトルのカタリスト"
+  },
+  "catalyst_fire": {
+   "en": "Xoph's Catalyst",
+   "ja": "ゾフのカタリスト"
+  },
+  "catalyst_cold": {
+   "en": "Tul's Catalyst",
+   "ja": "トゥルのカタリスト"
+  },
+  "catalyst_lightning": {
+   "en": "Esh's Catalyst",
+   "ja": "エシュのカタリスト"
+  },
+  "catalyst_chaos": {
+   "en": "Chayula's Catalyst",
+   "ja": "チャユラのカタリスト"
+  },
+  "catalyst_attack": {
+   "en": "Reaver Catalyst",
+   "ja": "強奪者のカタリスト"
+  },
+  "catalyst_caster": {
+   "en": "Sibilant Catalyst",
+   "ja": "歯擦音のカタリスト"
+  },
+  "catalyst_speed": {
+   "en": "Skittering Catalyst",
+   "ja": "軽快のカタリスト"
+  },
+  "catalyst_attribute": {
+   "en": "Adaptive Catalyst",
+   "ja": "適応のカタリスト"
+  },
+  "catalyst_minion": {
+   "en": "Necrotic Catalyst",
+   "ja": "死霊術のカタリスト"
   }
  },
  "bones": {

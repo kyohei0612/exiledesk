@@ -32,15 +32,29 @@ export function modTierWeight(mod: Mod, floor: number, cap: number, minIndex = 0
  */
 export function poolTotalWeight(
   data: PatchData, modIds: readonly string[], floor: number, cap: number, exclude?: ReadonlySet<string>,
+  boost?: WeightBoost,
 ): number {
   let total = 0;
   for (const id of modIds) {
     const mod = resolveMod(data, id);
     if (exclude && excluded(mod, exclude)) continue;
-    total += modTierWeight(mod, floor, cap);
+    total += modTierWeight(mod, floor, cap) * (boost ? boost(mod) : 1);
   }
   return total;
 }
+
+/**
+ * A per-mod weight multiplier, for a currency that tilts the pool rather than filtering it.
+ *
+ * Only the Omen of Catalysing Exaltation does this today: it eats the item's catalyst quality and
+ * multiplies the weight of the mods carrying that catalyst's tag. Handed in as a function because the
+ * tag membership lives in ExileDesk's client-derived data, not in the shipped patch — the engine must
+ * not need to know what a catalyst is to do the arithmetic.
+ *
+ * Returns 1 for "untouched". It must be applied to the NUMERATOR and the DENOMINATOR alike, or the
+ * distribution stops summing to 1.
+ */
+export type WeightBoost = (mod: Mod) => number;
 
 /**
  * EVERY exclusion group a mod belongs to. Usually one, but some mods legitimately span several — a

@@ -40,6 +40,7 @@ import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { Spare } from "../../vendor/poe2htc/optimizer/slots";
 import type { ItemBase, ItemState, PatchData, PlacedMod, Rarity } from "../../vendor/poe2htc/engine/types";
+import { withCatalysing } from "./catalysing";
 
 /** 買い方 1 通り */
 export interface PartialStart {
@@ -205,7 +206,7 @@ export function solveFinish(
     ? o.rest
     : withEssenceAlternatives(data, o.start.base, o.rest, o.start.level);
   const spare = opts.spare === "free" ? freeSlots(data, o.start, rest) : (opts.spare ?? NO_SPARE);
-  const r = markovFromItem(data, prices, o.start, rest, { spare });
+  const r = markovFromItem(data, prices, o.start, rest, { spare, ...withCatalysing(data, o.start.base, rest) });
   return {
     expectedCost: r.expectedCost,
     feasible: r.feasible,

@@ -244,6 +244,13 @@ const implicitText = (lines: readonly string[]): string =>
           確率は正確です。<b>1 周の値段は案どうしを比べるための物で、予算には使わないでください</b>
           (外したら作り直す前提の数字なので)。
         </p>
+        <!-- 触媒の高貴のお告げだけは倍率がゲーム内にもクライアントにも無く、実測からの推定。
+             黙って混ぜると「確率は正確です」が嘘になるので、効いている間は必ず出す -->
+        <p v-if="c.catalysingOn.value" class="mb-2 text-xs text-amber-300/80">
+          ⚠ {{ c.catalysingCaveat }}
+          カタリストを使う手順が出た時だけ、その手順の確率がこの推定に乗っています。
+          なお、お告げは品質を全て消費するので<b>完成品の品質は 0 になります</b> (implicit の値が下がります)。
+        </p>
         <div v-for="(p, pi) in c.plans.value" :key="pi" class="mb-3 rounded border border-[var(--exile-color-border-subtle)] p-2">
           <div class="mb-1 flex gap-4 text-xs">
             <span><b class="text-amber-300">{{ p.oddsText }}</b> <span class="opacity-50">1 周あたり</span></span>

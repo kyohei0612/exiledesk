@@ -38,7 +38,7 @@ import {
   canonicalFilterFor, encoderFor, familiesOfTarget, mergeSlots, permutationClasses, slotMasksOf,
 } from './markovSymmetry.ts';
 import type { ActionDef, McAction } from './markovActions.ts';
-import { createActionSpace } from './markovActions.ts';
+import { createActionSpace, type CatalysingSetup } from './markovActions.ts';
 import type { McTarget, StateKey, McRarity } from './markovState.ts';
 import {
   FLAG_NONE, bit, classifyStart, decodeState,
@@ -173,6 +173,12 @@ export interface MarkovOptions {
    * arithmetic to nine decimals, so they ask for a tolerance that supports it.
    */
   readonly tolerance?: number;
+  /**
+   * Catalyst quality + Omen of Catalysing Exaltation. Passed straight to the action space, which
+   * drops it where the base's pools carry none of the tags. Absent = the omen is never offered, which
+   * is the behaviour every solve had before 2026-09-23.
+   */
+  readonly catalysing?: CatalysingSetup;
   /** Safety cap on iterations. Default 100000. */
   readonly maxIters?: number;
   /** Cap on policy-improvement rounds when `solver: 'policy'`. A runaway guard, not a budget. */
@@ -629,6 +635,7 @@ export function markovFromItem(
   const { actionsOf } = createActionSpace({
     data, prices, level, pools, list, side, desecratable, encode, limits,
     bossTargetable: bossOmenAllowed(start.base.category),
+    ...(opts.catalysing ? { catalysing: opts.catalysing } : {}),
     ...(opts.policy ? { policy: opts.policy } : {}),
     ...(opts.restartCost === undefined
       ? {}

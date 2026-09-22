@@ -73,6 +73,28 @@ const BONES = {
   collarbone_ancient: "Metadata/Items/Currency/AbyssalBenchTicketJewelleryHigh",
 };
 
+/**
+ * カタリスト (指輪 / 首飾りの品質)。キーは `catalyst_<タグ>` で、タグは
+ * `src/services/htc/catalysts.json` (これもクライアント由来) から引く。
+ *
+ * **BaseItemTypes の Id とタグを直に結べない**ので (Id は `...QualityDefences` 複数形、タグは
+ * `defences` だが `...QualityDefence` の物もある)、英語名で突き合わせる。どちらもクライアントから
+ * 出ているので、手で名前を書いていることにはならない。宝石用の `CurrencyJewelQuality*` は別物なので
+ * 拾わない (指輪には使えない)。
+ */
+const catalystKeys = (B, catalysts) => {
+  const byName = new Map(catalysts.map((c) => [c.en, c.tag]));
+  const out = {};
+  const unmatched = [];
+  for (const r of B) {
+    if (!/^Metadata\/Items\/Currency\/CurrencyJewelleryQuality/.test(String(r.Id || ""))) continue;
+    const tag = byName.get(r.Name);
+    if (!tag) { unmatched.push(r.Name); continue; }
+    out[`catalyst_${tag}`] = r.Id;
+  }
+  return { out, unmatched };
+};
+
 /** 最大品質を上げるエッセンス ([[lingering.ts]])。指輪 / アミュレット専用 */
 const EXTRA = {
   "essence:breach": "Metadata/Items/Currency/CurrencyCorruptedEssenceBreach",
@@ -101,7 +123,14 @@ const main = async () => {
     return out;
   };
 
-  const currency = resolveAll({ ...CURRENCY, ...EXTRA });
+  const catalystsJson = JSON.parse(await readFile(resolve(ROOT, "src/services/htc/catalysts.json"), "utf8"));
+  const { out: CATALYSTS, unmatched } = catalystKeys(B, catalystsJson.catalysts);
+  if (unmatched.length) {
+    console.log(`NG: カタリスト ${unmatched.length} 件がタグに結べない (catalysts.json を作り直す)`);
+    for (const u of unmatched) console.log(`   ${u}`);
+    process.exit(1);
+  }
+  const currency = resolveAll({ ...CURRENCY, ...EXTRA, ...CATALYSTS });
   const bones = resolveAll(BONES);
 
   // オーメンは規則で作る: id = 英語名から空白を抜いた物
@@ -127,7 +156,7 @@ const main = async () => {
     omens,
   };
   await writeFile(OUT, JSON.stringify(payload, null, 1) + "\n", "utf8");
-  console.log(`通貨 ${Object.keys(currency).length} / 骨 ${Object.keys(bones).length} / オーメン ${Object.keys(omens).length}`);
+  console.log(`通貨 ${Object.keys(currency).length} (うちカタリスト ${Object.keys(CATALYSTS).length}) / 骨 ${Object.keys(bones).length} / オーメン ${Object.keys(omens).length}`);
   console.log(`-> ${OUT}`);
 };
 

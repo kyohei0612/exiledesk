@@ -74,7 +74,15 @@ function labelOf(step: PricedStep, cls?: ItemBase): StepLabel {
   const key = currencyKey(step);
   const currency = jaOfPriceKey(key, cls) ?? key;
   const omens = stepOmenIds(step).map((id) => jaOfOmen(id) ?? id).filter(Boolean);
-  return { currency, omens, text: omens.length ? `${currency} + ${omens.join(" + ")}` : currency };
+  const text = omens.length ? `${currency} + ${omens.join(" + ")}` : currency;
+  // 触媒の高貴のお告げは「お告げを使う」だけでは手順にならない。**先にカタリストを何個撒くか**が
+  // 本体の費用なので、そこまで書かないと画面を見て真似できない。
+  if (step.catalysing) {
+    const c = step.catalysing;
+    const cat = jaOfPriceKey(`catalyst_${c.tag}`) ?? c.tag;
+    return { currency, omens, text: `${cat} を ${c.catalysts} 個 (品質 ${c.quality}%) → ${text}` };
+  }
+  return { currency, omens, text };
 }
 
 /** MDP が出す手を日本語にする。冒涜の骨を名前で出すにはクラスが要る */

@@ -28,6 +28,7 @@ import { whiteItem } from "../../vendor/poe2htc/engine/item";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
+import { withCatalysing } from "./catalysing";
 
 export interface FractureValue {
   modId: string;
@@ -66,10 +67,10 @@ export function fractureValue(
   const t0 = Date.now();
   const level = opts.level ?? 82;
   const wide = withEssenceAlternatives(data, cls, targets, level);
-  const a = markovFromItem(data, prices, whiteItem(cls, level), wide, {});
+  const a = markovFromItem(data, prices, whiteItem(cls, level), wide, withCatalysing(data, cls, wide));
   const fx = fracturedStart(data, cls, level, targets, [target]);
   const b = fx
-    ? markovFromItem(data, prices, fx.start, withEssenceAlternatives(data, cls, fx.rest, level), {})
+    ? markovFromItem(data, prices, fx.start, withEssenceAlternatives(data, cls, fx.rest, level), withCatalysing(data, cls, fx.rest))
     : null;
   const without = a.expectedCost;
   const withIt = b?.expectedCost ?? Number.POSITIVE_INFINITY;

@@ -43,6 +43,7 @@ import { whiteItem } from "../../vendor/poe2htc/engine/item";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
+import { withCatalysing } from "./catalysing";
 
 /** 1 個ぶんの見積もり */
 export interface SoloCost {
@@ -87,7 +88,7 @@ export function soloCosts(
   const out: SoloCost[] = [];
   for (const t of targets) {
     const t0 = Date.now();
-    const r = markovFromItem(data, prices, whiteItem(cls, level), [t], { spare });
+    const r = markovFromItem(data, prices, whiteItem(cls, level), [t], { spare, ...withCatalysing(data, cls, [t]) });
     const b = runs > 0 && r.feasible && Number.isFinite(r.expectedCost)
       ? simulateBudget(prices, cls, r, { runs, budget: r.expectedCost, seed: opts.seed ?? 11 })
       : null;
@@ -143,6 +144,7 @@ export function soloP75(
   const lim = limitsOf(cls);
   const r = markovFromItem(data, prices, whiteItem(cls, opts.level ?? 82), [target], {
     spare: { prefixes: lim.prefixes, suffixes: lim.suffixes },
+    ...withCatalysing(data, cls, [target]),
   });
   if (!r.feasible || !Number.isFinite(r.expectedCost)) return { p75: null, mainSpend: null, ms: Date.now() - t0 };
   const b = simulateBudget(prices, cls, r, {

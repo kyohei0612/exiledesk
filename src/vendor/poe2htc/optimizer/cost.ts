@@ -75,6 +75,16 @@ export interface PricedStep {
   readonly add?: string;
   /** The orb a THROWAWAY step spends (`ThrowawayStep`, plan.ts) — what it is priced as. */
   readonly orb?: 'regal' | 'exalt';
+  /**
+   * An Omen of Catalysing Exaltation on an Exalt: the item is brought to `quality`% with `catalysts`
+   * catalysts of `tag`, and the omen eats all of it. Priced as the omen PLUS the catalysts, because
+   * the quality is consumed — the next omened exalt has to buy it all over again. That recurrence is
+   * the whole reason this is expensive, and pricing only the omen would understate it by an order of
+   * magnitude.
+   *
+   * The catalyst's own price key is `catalyst_<tag>` (e.g. `catalyst_attribute`).
+   */
+  readonly catalysing?: { readonly tag: string; readonly quality: number; readonly catalysts: number };
 }
 
 /** Where a price sheet came from — carried so the UI can be honest about how firm the numbers are. */
@@ -184,6 +194,8 @@ export function currencyKey(step: PricedStep): string {
 export function stepOmenIds(step: PricedStep): string[] {
   switch (step.currency) {
     case 'exalt':
+      // One omen per orb: Catalysing takes the slot a Sinistral/Dextral would, never both.
+      if (step.catalysing) return ['OmenofCatalysingExaltation'];
       if (step.constrainTo === 'prefix') return ['OmenofSinistralExaltation'];
       if (step.constrainTo === 'suffix') return ['OmenofDextralExaltation'];
       return [];
@@ -352,7 +364,13 @@ export function stepCost(prices: Prices, step: PricedStep): number {
     ?? (key.startsWith('essence:') ? prices.currency[legacyEssenceKey(step)] ?? 0 : 0);
   // Up front only: the Echoes omen is paid on a reroll, if one happens — see ECHOES_OMEN.
   const omens = stepOmenIds(step).reduce((sum, id) => (id === ECHOES_OMEN ? sum : sum + (prices.omens[id] ?? 0)), 0);
-  return base + omens;
+  // The catalysts the omen eats, on top of the omen itself. A missing catalyst price charges 0, the
+  // same reading as everywhere else here — the OFFER is gated on the price existing (markovActions),
+  // so an unpriced catalyst means the action was never built rather than that it came free.
+  const catalysts = step.catalysing
+    ? step.catalysing.catalysts * (prices.currency[`catalyst_${step.catalysing.tag}`] ?? 0)
+    : 0;
+  return base + omens + catalysts;
 }
 
 /** One way an attempt can end: `cost` spent, with probability `prob`. The branches sum to 1. */

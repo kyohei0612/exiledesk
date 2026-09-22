@@ -7,8 +7,8 @@
 // off-tier trap), side-constrained exalts and annuls (Omen of Sinistral/Dextral), and Chaos. A strength
 // or omen with no price is NOT offered, so a missing price can't mint a free super-orb.
 
-import { CURRENCY_FLOOR, type ItemBase, type PatchData } from '../engine/types.ts';
-import { excluded, poolTotalWeight } from '../engine/pool.ts';
+import { CURRENCY_FLOOR, type ItemBase, type Mod, type PatchData } from '../engine/types.ts';
+import { excluded, poolTotalWeight, type WeightBoost } from '../engine/pool.ts';
 import type { DesecrationBossOmen } from '../engine/probability.ts';
 import { ANCIENT_BONE_FLOOR, DESECRATION_OFFER_COUNT, desecrationOmenForMod } from '../engine/probability.ts';
 import type { CurrencyPolicy, Prices, PricedStep } from './cost.ts';
@@ -24,7 +24,13 @@ export type ExaltStrength = 'base' | 'greater' | 'perfect';
 
 /** Every currency+omen the MDP can play. Exalts fan out over {side} × {strength}. */
 export type McAction =
-  | { readonly currency: 'exalt'; readonly strength: ExaltStrength; readonly side?: 'prefix' | 'suffix' }
+  // `catalysing` is an Omen of Catalysing Exaltation: the item is brought to `quality`% with the
+  // catalyst carrying `tag`, and the omen eats all of it to multiply the weight of that tag's mods.
+  // Mutually exclusive with `side` — one omen per orb — and priced as omen + the catalysts spent.
+  | {
+    readonly currency: 'exalt'; readonly strength: ExaltStrength; readonly side?: 'prefix' | 'suffix';
+    readonly catalysing?: { readonly tag: string; readonly quality: number; readonly catalysts: number };
+  }
   // `light` = Omen of Light: removes the item's desecrated mod outright (P=1) instead of rolling the
   // uniform 1/N. Mutually exclusive with a side omen — Light already names its target exactly.
   | { readonly currency: 'annul'; readonly side?: 'prefix' | 'suffix'; readonly light?: true }
@@ -114,7 +120,11 @@ export function pricedStepOf(action: McAction): PricedStep {
     side === 'prefix' ? 'sinistral' : side === 'suffix' ? 'dextral' : undefined;
   switch (action.currency) {
     case 'exalt':
-      return { currency: 'exalt', tier: action.strength, ...(action.side ? { constrainTo: action.side } : {}) };
+      return {
+        currency: 'exalt', tier: action.strength,
+        ...(action.side ? { constrainTo: action.side } : {}),
+        ...(action.catalysing ? { catalysing: action.catalysing } : {}),
+      };
     case 'annul': {
       // Light names its target outright, so it is never combined with a side omen (see McAction).
       const omen = action.light ? 'light' : asOmen(action.side);
@@ -224,6 +234,30 @@ export interface ActionSpaceParams {
    * and every from-white number would come out far too high.
    */
   readonly restart?: { readonly cost: number; readonly dist: Dist };
+  /**
+   * Catalyst quality + Omen of Catalysing Exaltation, where the base can take catalysts at all
+   * (rings and amulets). Absent everywhere else, which is what keeps a quarterstaff from being
+   * offered a move that cannot do anything.
+   *
+   * The tag membership and the measured multiplier both live in ExileDesk, not in the patch, so
+   * they arrive as functions. See src/services/htc/catalysing.ts for where the numbers come from
+   * and how far they can be trusted.
+   */
+  readonly catalysing?: CatalysingSetup;
+}
+
+/** What the caller must supply for the Catalysing omen to be offered. */
+export interface CatalysingSetup {
+  /** Catalyst tags worth offering — normally the distinct tags of the craft's own targets. */
+  readonly tags: readonly string[];
+  /** Quality levels to offer, in %. Each is a separate action: more weight, more catalysts. */
+  readonly qualities: readonly number[];
+  /** How many catalysts that quality costs. ExileDesk's number — the patch does not carry it. */
+  readonly catalystCount: (quality: number) => number;
+  /** Whether this mod carries that catalyst's tag (ExileDesk's `boostedBy`). */
+  readonly boosted: (mod: Mod, tag: string) => boolean;
+  /** Quality % → weight multiplier on the tagged mods (ExileDesk's `catalysingMultiplier`). */
+  readonly multiplier: (quality: number) => number;
 }
 
 /**
@@ -234,7 +268,7 @@ export function createActionSpace(params: ActionSpaceParams): {
   actionsOf: (s: McState) => ActionDef[];
 } {
   const {
-    data, prices, level, pools, list, side, desecratable, policy, bossTargetable, restart,
+    data, prices, level, pools, list, side, desecratable, policy, bossTargetable, restart, catalysing,
     limits = { prefixes: perSideCap('rare'), suffixes: perSideCap('rare') },
   } = params;
   const n = list.length;
@@ -262,6 +296,35 @@ export function createActionSpace(params: ActionSpaceParams): {
     .filter((s) => s === 'base' || prices.currency[strengthPriceKey(s)] !== undefined)
     .filter((s) => notExcluded(strengthPriceKey(s)));
   const omenOk = (id: string): boolean => prices.omens[id] !== undefined && notExcluded(id);
+  // ── Catalysing omen ───────────────────────────────────────────────────────────────────────────
+  // Offered only where the caller says catalysts exist (rings/amulets), the omen has a price, and the
+  // player hasn't excluded it. Each (tag, quality) pair is one action carrying its own weight boost,
+  // built ONCE here rather than per state — the boost depends on the mod and the quality, never on
+  // what the item already has.
+  //
+  // A tag whose boost moves nothing in this base's pools is dropped: it would be a strictly worse
+  // Exalt (same odds, extra omen and catalysts) and would only widen the branching.
+  const CATALYSING_OMEN = 'OmenofCatalysingExaltation';
+  const catalysingVariants: { tag: string; quality: number; catalysts: number; boost: WeightBoost }[] = [];
+  if (catalysing !== undefined && omenOk(CATALYSING_OMEN)) {
+    const poolIds = [...pools.normal.prefixes, ...pools.normal.suffixes];
+    for (const tag of catalysing.tags) {
+      // No price for that catalyst → no action. Same rule as every other lever here: `stepCost`
+      // charges 0 for a missing key, so an ungated offer would mint free catalysts.
+      const catalystKey = `catalyst_${tag}`;
+      if (prices.currency[catalystKey] === undefined || !notExcluded(catalystKey)) continue;
+      const hits = poolIds.some((id) => catalysing.boosted(data.mods.get(id)!, tag));
+      if (!hits) continue;
+      for (const quality of catalysing.qualities) {
+        const m = catalysing.multiplier(quality);
+        if (!(m > 1)) continue;
+        catalysingVariants.push({
+          tag, quality, catalysts: catalysing.catalystCount(quality),
+          boost: (mod: Mod) => (catalysing.boosted(mod, tag) ? m : 1),
+        });
+      }
+    }
+  }
   const sinistralExaltOk = omenOk('OmenofSinistralExaltation');
   const dextralExaltOk = omenOk('OmenofDextralExaltation');
   const lightOk = omenOk('OmenofLight');
@@ -295,12 +358,16 @@ export function createActionSpace(params: ActionSpaceParams): {
     /** Rarity the item ends at. Same as it started for an Exalt/Augment; 'magic' for a Transmute,
      *  'rare' for a Regal — those two convert as they add, which is also what opens the extra slots. */
     into: McRarity = s.rarity,
+    /** Per-mod weight multiplier (the Catalysing omen). Applied to numerator AND denominator, or the
+     *  distribution stops summing to 1. A position is boosted by its representative: members of one
+     *  position share a family, so they share the family's catalyst tags. */
+    boost?: WeightBoost,
   ): Dist => {
     const prefixOpen = constrainTo !== 'suffix' && prefixOpenIn(s, into);
     const suffixOpen = constrainTo !== 'prefix' && suffixOpenIn(s, into);
     const occ = occupiedFamilies(s.present, s.blocked, list);
-    const prefTotal = prefixOpen ? poolTotalWeight(data, pools.normal.prefixes, floor, level, occ) : 0;
-    const sufTotal = suffixOpen ? poolTotalWeight(data, pools.normal.suffixes, floor, level, occ) : 0;
+    const prefTotal = prefixOpen ? poolTotalWeight(data, pools.normal.prefixes, floor, level, occ, boost) : 0;
+    const sufTotal = suffixOpen ? poolTotalWeight(data, pools.normal.suffixes, floor, level, occ, boost) : 0;
     const grand = prefTotal + sufTotal;
     const out: Dist = new Map();
     if (grand <= 0) return out;
@@ -313,8 +380,9 @@ export function createActionSpace(params: ActionSpaceParams): {
       if (excluded(representative(t), occ)) continue; // defensive (validated distinct upstream)
       const open = t.type === 'prefix' ? prefixOpen : suffixOpen;
       if (!open) continue;
-      const succ = succWeight(t, floor);
-      const any = anyWeight(t, floor);
+      const mul = boost ? boost(representative(t)) : 1;
+      const succ = succWeight(t, floor) * mul;
+      const any = anyWeight(t, floor) * mul;
       if (succ > 0) addTo(out, encodeState(s.present | bit(i), s.blocked, s.jp, s.js, s.flagged, into), succ / grand);
       const below = any - succ;
       if (below > 0) addTo(out, encodeState(s.present, s.blocked | bit(i), s.jp, s.js, s.flagged, into), below / grand);
@@ -760,6 +828,15 @@ export function createActionSpace(params: ActionSpaceParams): {
       for (const strength of strengths) {
         push({ currency: 'exalt', strength, ...(constrainTo ? { side: constrainTo } : {}) },
           addOutcomes(s, CURRENCY_FLOOR.exalt[strength], constrainTo));
+      }
+    }
+    // The Catalysing omen takes the orb's own slot, so it never combines with Sinistral/Dextral —
+    // one omen per orb. It does combine with a Greater or Perfect Exalt (same ruling as the other
+    // exalt omens, 2026-09-02), so it fans out over strength like the plain exalt above.
+    for (const v of catalysingVariants) {
+      for (const strength of strengths) {
+        push({ currency: 'exalt', strength, catalysing: { tag: v.tag, quality: v.quality, catalysts: v.catalysts } },
+          addOutcomes(s, CURRENCY_FLOOR.exalt[strength], undefined, s.rarity, v.boost));
       }
     }
     for (const constrainTo of [undefined, 'prefix', 'suffix'] as const) {

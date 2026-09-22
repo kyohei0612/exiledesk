@@ -9,7 +9,7 @@
  *   2. 買い方 (3〜4 個買い 35 通り) … 20 秒ほど。**ボタンを押された時だけ**
  * 上の実測は太陽のアミュレット (ilvl 80 / 6 MOD) です。
  */
-import { ref, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
@@ -30,6 +30,7 @@ import { displayCurrency } from "../../state/display-currency";
 import { marketStore } from "../../state/market-store";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
+import { withCatalysing, catalysingSetup, CATALYSING_CAVEAT } from "../../services/htc/catalysing";
 
 /** 画面に出す 1 目標 */
 export interface TargetRow {
@@ -300,12 +301,12 @@ export function useHtcCraft() {
       // 固定済みがあるほうを先に解く (速いので、待たされても先に答えが出る)
       if (fx) {
         const t0 = Date.now();
-        const r = markovFromItem(d, p, fx.start, withEssenceAlternatives(d, cls, fx.rest, level), {});
+        const r = markovFromItem(d, p, fx.start, withEssenceAlternatives(d, cls, fx.rest, level), withCatalysing(d, cls, fx.rest));
         out.push({ label: "固定済みを買って残りを作る", cost: r.expectedCost, ms: Date.now() - t0, rest: fx.rest.length });
         routes.value = [...out];
       }
       const t1 = Date.now();
-      const r2 = markovFromItem(d, p, whiteItem(cls, level), withEssenceAlternatives(d, cls, targets.value, level), {});
+      const r2 = markovFromItem(d, p, whiteItem(cls, level), withEssenceAlternatives(d, cls, targets.value, level), withCatalysing(d, cls, targets.value));
       out.push({ label: "素から全部作る", cost: r2.expectedCost, ms: Date.now() - t1, rest: targets.value.length });
       routes.value = out;
     } finally {
@@ -345,7 +346,17 @@ export function useHtcCraft() {
     }
   }
 
+  // カタリストが効くベース (指輪 / 首飾り) で、狙う MOD がそのタグを持っている時だけ真。
+  // 真の間は自動クラフトが**実測から推定した倍率**で解いているので、画面で断りを出す。
+  const catalysingOn = computed<boolean>(() => {
+    const cls = base.value;
+    const d = data.value;
+    if (!cls || !d || targets.value.length === 0) return false;
+    return !!catalysingSetup(cls, targets.value.map((t) => t.modId), d);
+  });
+
   return {
+    catalysingOn, catalysingCaveat: CATALYSING_CAVEAT,
     stepTarget, findFractured, fractured, fracturedBusy,
     fracturedLines, fracturedUnusable, slotsUsed, dropOnly, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
