@@ -124,18 +124,29 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         <h2 class="mb-1 font-bold">② 買うか自分で出すか (1 個ずつ)</h2>
         <p class="mb-1 text-xs opacity-60">
           この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。<br />
-          <b>p75 は「沼った時」の目安</b>です。「—」は道中が長すぎて分布が信用できないもので、
-          <b>嘘の数字を出すより出さない</b>ようにしています。
+          <b>期待費用は厳密解</b>なので一瞬で出ます。<b>「沼った時」の目安 (p75) は押された時だけ</b>
+          回します (方策を何千本も回すので秒単位かかる)。道中が長すぎて分布が信用できない時は
+          「出せません」と出ます ── <b>嘘の数字を出すより出さない</b>ようにしています。
         </p>
         <table class="w-full text-xs">
           <tr v-for="s in c.solo.value" :key="s.modId" class="border-b border-white/5">
             <td class="py-0.5">{{ soloText(s.modId) }}</td>
             <td class="w-24 text-right">{{ c.money(s.expectedCost) }}</td>
-            <td class="w-24 text-right opacity-50">
-              <span v-if="s.p75 != null">p75 {{ c.money(s.p75) }}</span>
-              <span v-else class="opacity-50" title="1 本の道中が長すぎて、回した分布が信用できません">p75 —</span>
+            <td class="w-32 text-right">
+              <button
+                v-if="!c.p75.value[s.modId]"
+                class="rounded border border-[var(--exile-color-border-subtle)] px-1.5 py-0.5 opacity-70"
+                :disabled="c.p75Busy.value !== null"
+                @click="c.findP75(s.modId)"
+              >{{ c.p75Busy.value === s.modId ? "回しています…" : "厳しめを見る" }}</button>
+              <span v-else-if="c.p75.value[s.modId].value != null" class="opacity-60">
+                p75 {{ c.money(c.p75.value[s.modId].value) }}
+              </span>
+              <span v-else class="opacity-40" title="1 本の道中が長すぎて、回した分布が信用できません">
+                出せません
+              </span>
             </td>
-            <td class="pl-3 opacity-60">{{ s.mainSpend }}</td>
+            <td class="pl-3 opacity-60">{{ c.p75.value[s.modId]?.mainSpend ?? s.mainSpend }}</td>
             <td class="w-44 pl-2 text-right">
               <button
                 v-if="!c.fractured.value[s.modId]"

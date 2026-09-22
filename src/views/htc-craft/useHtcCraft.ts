@@ -15,7 +15,7 @@ import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/pas
 import { baseForSolving } from "../../services/htc/bridge";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { boostedBy } from "../../services/htc/quality";
-import { soloCosts, type SoloCost } from "../../services/htc/solo-cost";
+import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
 import { planPreview, type PlanOption } from "../../services/htc/plan";
 import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
 import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
@@ -96,6 +96,13 @@ export function useHtcCraft() {
   const fracturedUnusable = ref(0);
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
+  /**
+   * 行ごとの「厳しめの目安」。**押された時だけ出します**。
+   * 期待費用は厳密解で一瞬ですが、p75 は方策を何千本も回すので秒単位かかります
+   * (実測: 5 目標まとめて 5.3 秒 → p75 なしなら 0.7 秒)。
+   */
+  const p75 = ref<Record<string, { value: number | null; mainSpend: string | null }>>({});
+  const p75Busy = ref<string | null>(null);
   /**
    * ルートの比べ (素から / 固定済みを買って残りを作る)。
    * **固定済みがある時だけ**出ます。押されたら解く (MDP なので数秒〜数分)。
@@ -189,7 +196,9 @@ export function useHtcCraft() {
       slots.value = craftedSurvey(d, cls, got.targets);
 
       t = Date.now();
+      // **p75 は出さない** (押された時に `findP75`)。ここは厳密解だけで一瞬
       solo.value = soloCosts(d, prices.value, cls, got.targets, { level: it.itemLevel ?? 82 });
+      p75.value = {};
       timings.value.push(["段階 0 (1 個ずつ自作するといくら)", Date.now() - t]);
 
       t = Date.now();
@@ -241,6 +250,24 @@ export function useHtcCraft() {
   /** 手順の段が狙っている MOD を、貼り付けの文面 (日本語) で返す。2 つ足す段は 2 つ並べる */
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
+
+  /** その 1 個だけ「厳しめの目安」を出す */
+  function findP75(modId: string): void {
+    const d = data.value;
+    const cls = base.value;
+    const pr = prices.value;
+    const it = item.value;
+    if (!d || !cls || !pr || !it) return;
+    const t = targets.value.find((x) => x.modId === modId);
+    if (!t) return;
+    p75Busy.value = modId;
+    try {
+      const r = soloP75(d, pr, cls, t, { level: it.itemLevel ?? 82 });
+      p75.value = { ...p75.value, [modId]: { value: r.p75, mainSpend: r.mainSpend } };
+    } finally {
+      p75Busy.value = null;
+    }
+  }
 
   /**
    * **ルートを比べる。**素から全部作る場合と、固定済みを買って残りを作る場合。
@@ -313,6 +340,7 @@ export function useHtcCraft() {
     fracturedLines, fracturedUnusable, slotsUsed, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
     solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
+    p75, p75Busy, findP75,
     money, run, solveBuys,
   };
 }
