@@ -3,17 +3,23 @@
  *
  * アプリ側の patch.ts は動的 import なので、検算では同期に読める入口を別に用意する。
  * 束ねるのは esbuild なので JSON はそのまま import できる。
+ *
+ * **重ね方は patch.ts の `applyExtras` を借りる。**ここに書き写すと、クライアント由来の追加分を
+ * アプリと検算で別々に扱うことになり、検算が通っても本番で繋がらない事態が起きる。
  */
 import { indexPatch } from "../src/vendor/poe2htc/engine/indexPatch";
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
+import { applyExtras } from "../src/services/htc/patch";
 import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
+import extra from "../src/services/htc/extra-bases.json";
 
 export { bridgeMods, classOfBase } from "../src/services/htc/bridge";
 
 export function loadPatchSync(): PatchData {
-  return indexPatch(
+  const data = indexPatch(
     mods as unknown as Parameters<typeof indexPatch>[0],
     bases as unknown as Parameters<typeof indexPatch>[1],
   );
+  return applyExtras(data, extra as unknown as Parameters<typeof applyExtras>[1]);
 }

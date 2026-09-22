@@ -15,7 +15,9 @@
     "check:deps": "pnpm outdated; cd src-tauri && cargo update --dry-run",
     "check:flow": "node scripts/check-flow.mjs",
     "check:gem": "node scripts/check-gem-math.mjs",
-    "check:htc": "node scripts/check-htc-bridge.mjs"
+    "check:htc": "node scripts/check-htc-bridge.mjs",
+    "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
+    "build:htc-bases": "node scripts/build-htc-bases-from-client.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
