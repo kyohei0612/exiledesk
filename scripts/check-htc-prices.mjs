@@ -45,11 +45,10 @@ console.log(`エンジンのキー ${WANT.length} 件: 対応表にそろって�
 // ---- 3. 偽の相場を流して、全部埋まるか ----
 const fake = [];
 let id = 1;
-for (const group of ["currency", "bones", "omens"]) {
-  for (const nameEn of Object.values(KEYS[group])) {
-    fake.push({ ItemId: id++, CategoryApiId: "currency", Text: nameEn, Name: nameEn, Type: null, ApiId: null, CurrentPrice: 2, IconUrl: "" });
-  }
-}
+const push = (nameEn, price) => fake.push({ ItemId: id++, CategoryApiId: "currency", Text: nameEn, Name: nameEn, Type: null, ApiId: null, CurrentPrice: price, IconUrl: "" });
+for (const group of ["currency", "bones", "omens"]) for (const nameEn of Object.values(KEYS[group])) push(nameEn, 2);
+// エッセンスは名前が重複するので 1 度ずつ
+for (const nameEn of new Set(Object.values(M.essenceKeys.keys))) push(nameEn, 7);
 // ルーンは名前引き (上流の runeIdByName) なので、名前をそのまま入れる
 for (const n of ["Astrid's Creativity", "Serle's Triumph", "Thrud's Might", "Kolr's Hunt"]) {
   fake.push({ ItemId: id++, CategoryApiId: "runes", Text: n, Name: n, Type: null, ApiId: null, CurrentPrice: 3, IconUrl: "" });
@@ -61,6 +60,10 @@ for (const m of coverage.missing.slice(0, 8)) console.log(`   落ちた: ${m}`);
 if (coverage.missing.length) fail(`対応表にあるのに埋まらなかったキーがある`);
 if (file.prices.exalt !== 1) fail(`高貴が 1 になっていない (${file.prices.exalt})`);
 if (file.estimated !== false) fail(`実勢なのに estimated が false になっていない`);
+console.log(`エッセンス ${coverage.essences.filled} / ${coverage.essences.total} 件`);
+if (coverage.essences.filled !== coverage.essences.total) fail("エッセンスが全部埋まらなかった");
+const breach = file.prices["essence:perfect:Rings/PerfectEssence_LocalMaximumQuality"];
+if (breach == null) fail("ブリーチのエッセンス (最大品質) のキーが無い");
 const runeKeys = Object.keys(file.prices).filter((k) => k.startsWith("rune:"));
 console.log(`ルーン ${runeKeys.length} 件: ${runeKeys.join(", ")}`);
 if (runeKeys.length !== 4) fail(`ルーンの名前引きが効いていない (${runeKeys.length} 件)`);

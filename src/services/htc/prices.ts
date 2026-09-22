@@ -16,12 +16,11 @@
  * poe2scout の `CurrentPrice` は**高貴 (Exalted) 建て**で、エンジンの単位も exalt-equivalent。
  * そのまま渡せます。`exalt` 自身は 1。
  *
- * ## エッセンスはまだ入れていない
+ * ## エッセンスは 1 本ずつ
  * エンジンはエッセンスを `essence:<level>:<modId>` と**1 本ずつ**引きます。上流も書いている通り
  * 「グレーターエッセンスの値段」という物は無く (同じ等級でも 0.8 ex から 116 ex まで散る)、
- * 代表値で埋めると期待費用が大きく狂います。**入れないほうが正しい**ので入れていません。
- * その結果、エッセンスを使う手順は解に出てきません。`coverage` でそう断ること。
- * 入れるには「エッセンス → エンジンの MOD id」の対応が要る (クライアントの `EssenceMods` で作れる)。
+ * 代表値で埋めると期待費用が大きく狂うからです。対応表は `essence-keys.json`
+ * (`scripts/build-htc-essence-prices-from-client.mjs`、1,514 件)。
  *
  * ## 冒涜の骨
  * `desecrate` / `desecrate_ancient` は上流の `pricesForBase` が装備の種別から骨を選んで埋めます
@@ -35,6 +34,7 @@ import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import type { PricesFile } from "../../vendor/poe2htc/optimizer/cost";
 import { marketStore } from "../../state/market-store";
 import keys from "./price-keys.json";
+import essenceKeys from "./essence-keys.json";
 
 interface PriceKeys {
   generated: string;
@@ -47,6 +47,9 @@ interface PriceKeys {
 
 const KEYS = keys as PriceKeys;
 
+/** `essence:<level>:<modId>` → ゲーム内の英語名 */
+const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, string> }).keys;
+
 /** 何が埋まって何が埋まらなかったか。画面でそのまま断るために使う */
 export interface HtcPriceCoverage {
   /** 値が入ったキーの数 */
@@ -57,8 +60,8 @@ export interface HtcPriceCoverage {
   fetchedLabel: string;
   /** リーグ名 */
   league: string | null;
-  /** エッセンスを入れていないこと (値段が 1 本ずつ違うので代表値を置けない) */
-  essencesPriced: false;
+  /** 値が入ったエッセンスの数 / 対応表にある数 */
+  essences: { filled: number; total: number };
 }
 
 /** 英語名そのままで相場を引く。見つからない / 0 以下は null */
@@ -87,6 +90,22 @@ export function buildHtcPrices(): { file: PricesFile; coverage: HtcPriceCoverage
   for (const [key, nameEn] of Object.entries(KEYS.currency)) put(prices, key, nameEn);
   for (const [key, nameEn] of Object.entries(KEYS.bones)) put(bones, key, nameEn);
   for (const [key, nameEn] of Object.entries(KEYS.omens)) put(omens, key, nameEn);
+
+  // エッセンスは 1 本ずつ。名前が同じ物が何百とあるので、名前 → 値段は 1 度だけ引いて使い回す
+  const essenceCache = new Map<string, number | null>();
+  let essenceFilled = 0;
+  const essenceMissingNames = new Set<string>();
+  for (const [key, nameEn] of Object.entries(ESSENCE_KEYS)) {
+    if (!essenceCache.has(nameEn)) essenceCache.set(nameEn, priceByText(nameEn));
+    const p = essenceCache.get(nameEn) ?? null;
+    if (p == null) essenceMissingNames.add(nameEn);
+    else {
+      prices[key] = p;
+      essenceFilled++;
+    }
+  }
+  // 落ちたエッセンスは**名前ごと**に 1 行だけ出す (キーで出すと数百行になる)
+  for (const n of essenceMissingNames) missing.push(`エッセンス (${n})`);
 
   // 高貴そのものは 1。相場表にも載っているが、単位である以上ここで固定するほうが確実
   prices.exalt = 1;
@@ -117,7 +136,7 @@ export function buildHtcPrices(): { file: PricesFile; coverage: HtcPriceCoverage
       missing,
       fetchedLabel: marketStore.fetchedLabel.value,
       league: marketStore.league.value?.Value ?? null,
-      essencesPriced: false,
+      essences: { filled: essenceFilled, total: Object.keys(ESSENCE_KEYS).length },
     },
   };
 }
