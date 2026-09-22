@@ -18,6 +18,10 @@ export { bridgeMods, classOfBase } from "../src/services/htc/bridge";
 export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/htc/lingering";
 export { buildHtcPrices } from "../src/services/htc/prices";
+export { whiteItem } from "../src/vendor/poe2htc/engine/item";
+export { indexPrices, pricesForBase } from "../src/vendor/poe2htc/optimizer/cost";
+export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";
+export { listMods } from "../src/vendor/poe2htc/engine/index";
 export { marketStore } from "../src/state/market-store";
 export { default as priceKeys } from "../src/services/htc/price-keys.json";
 

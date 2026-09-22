@@ -7931,7 +7931,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -7955,7 +7955,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        3,
@@ -7979,7 +7979,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8004,7 +8004,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8029,7 +8029,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8054,7 +8054,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8079,7 +8079,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8104,7 +8104,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8129,7 +8129,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -8178,7 +8178,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -8202,7 +8202,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        3,
@@ -8226,7 +8226,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8251,7 +8251,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8276,7 +8276,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8301,7 +8301,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8326,7 +8326,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8351,7 +8351,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8376,7 +8376,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -8425,7 +8425,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8450,7 +8450,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8475,7 +8475,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8500,7 +8500,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8525,7 +8525,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8550,7 +8550,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8575,7 +8575,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -8600,7 +8600,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8625,7 +8625,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8650,7 +8650,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8675,7 +8675,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8700,7 +8700,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8725,7 +8725,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8750,7 +8750,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -8775,7 +8775,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -8799,7 +8799,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        3,
@@ -8823,7 +8823,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8848,7 +8848,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8873,7 +8873,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -8898,7 +8898,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8923,7 +8923,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8948,7 +8948,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -8973,7 +8973,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9022,7 +9022,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -9047,7 +9047,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -9072,7 +9072,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -9097,7 +9097,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9122,7 +9122,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9147,7 +9147,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9172,7 +9172,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9197,7 +9197,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9208,7 +9208,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -9233,7 +9233,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9244,7 +9244,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -9269,7 +9269,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -9280,7 +9280,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -9305,7 +9305,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -9316,7 +9316,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -9327,7 +9327,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -9352,7 +9352,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -9363,7 +9363,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -9388,7 +9388,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -9399,7 +9399,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -9410,7 +9410,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -9435,7 +9435,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9446,7 +9446,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -9471,7 +9471,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9482,7 +9482,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -9507,7 +9507,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -9518,7 +9518,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -9543,7 +9543,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -9554,7 +9554,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -9565,7 +9565,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -9590,7 +9590,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -9601,7 +9601,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -9626,7 +9626,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -9637,7 +9637,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -9648,7 +9648,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -9673,7 +9673,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9684,7 +9684,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -9709,7 +9709,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9720,7 +9720,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -9745,7 +9745,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -9756,7 +9756,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -9781,7 +9781,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -9792,7 +9792,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -9803,7 +9803,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -9828,7 +9828,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -9839,7 +9839,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -9864,7 +9864,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -9875,7 +9875,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -9886,7 +9886,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -9911,7 +9911,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -9922,7 +9922,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -9947,7 +9947,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -9958,7 +9958,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -9983,7 +9983,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -9994,7 +9994,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -10019,7 +10019,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -10030,7 +10030,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -10041,7 +10041,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -10066,7 +10066,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -10077,7 +10077,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -10102,7 +10102,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10113,7 +10113,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -10124,7 +10124,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -10149,7 +10149,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -10160,7 +10160,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -10185,7 +10185,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -10196,7 +10196,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -10221,7 +10221,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -10232,7 +10232,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -10257,7 +10257,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -10268,7 +10268,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -10279,7 +10279,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -10304,7 +10304,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -10315,7 +10315,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -10340,7 +10340,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10351,7 +10351,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -10362,7 +10362,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -10387,7 +10387,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -10398,7 +10398,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -10423,7 +10423,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -10434,7 +10434,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -10459,7 +10459,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -10470,7 +10470,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -10495,7 +10495,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -10506,7 +10506,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -10517,7 +10517,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -10542,7 +10542,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -10553,7 +10553,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -10578,7 +10578,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10589,7 +10589,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -10600,7 +10600,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -10625,7 +10625,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -10650,7 +10650,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -10675,7 +10675,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10700,7 +10700,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10711,7 +10711,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10722,7 +10722,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10733,7 +10733,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10758,7 +10758,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -10783,7 +10783,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -10808,7 +10808,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        25,
@@ -10819,7 +10819,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -10843,7 +10843,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -10868,7 +10868,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -10893,7 +10893,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10918,7 +10918,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10929,7 +10929,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10940,7 +10940,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10951,7 +10951,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -10976,7 +10976,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -11001,7 +11001,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -11049,7 +11049,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -11060,7 +11060,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -11085,7 +11085,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -11096,7 +11096,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -11107,7 +11107,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -11132,7 +11132,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -11143,7 +11143,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -11154,7 +11154,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -11179,7 +11179,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -11190,7 +11190,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11215,7 +11215,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -11226,7 +11226,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -11251,7 +11251,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -11262,7 +11262,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -11287,7 +11287,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -11298,7 +11298,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -11309,7 +11309,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -11334,7 +11334,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -11345,7 +11345,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -11370,7 +11370,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -11381,7 +11381,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -11406,7 +11406,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -11417,7 +11417,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -11428,7 +11428,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -11453,7 +11453,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11464,7 +11464,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -11489,7 +11489,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11500,7 +11500,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -11525,7 +11525,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -11536,7 +11536,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -11561,7 +11561,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11572,7 +11572,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -11597,7 +11597,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11608,7 +11608,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -11633,7 +11633,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -11644,7 +11644,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11669,7 +11669,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -11680,7 +11680,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -11705,7 +11705,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -11716,7 +11716,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -11741,7 +11741,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -11766,7 +11766,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -11791,7 +11791,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -11816,7 +11816,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -11827,7 +11827,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -11852,7 +11852,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -11900,7 +11900,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -11924,7 +11924,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        8,
@@ -11972,7 +11972,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        15,
@@ -11996,7 +11996,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -12007,7 +12007,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -12032,7 +12032,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -12043,7 +12043,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -12054,7 +12054,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -12079,7 +12079,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -12090,7 +12090,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -12101,7 +12101,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -12126,7 +12126,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -12137,7 +12137,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12162,7 +12162,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -12173,7 +12173,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -12198,7 +12198,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -12209,7 +12209,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -12234,7 +12234,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -12245,7 +12245,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -12256,7 +12256,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -12281,7 +12281,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -12292,7 +12292,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -12317,7 +12317,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -12328,7 +12328,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -12353,7 +12353,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -12364,7 +12364,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -12375,7 +12375,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -12400,7 +12400,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12411,7 +12411,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -12436,7 +12436,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12447,7 +12447,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -12472,7 +12472,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -12483,7 +12483,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -12508,7 +12508,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12519,7 +12519,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -12544,7 +12544,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12555,7 +12555,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -12580,7 +12580,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -12591,7 +12591,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12616,7 +12616,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -12627,7 +12627,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -12652,7 +12652,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -12663,7 +12663,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -12688,7 +12688,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -12713,7 +12713,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -12738,7 +12738,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -12763,7 +12763,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -12774,7 +12774,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -12799,7 +12799,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -12823,7 +12823,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        8,
@@ -12871,7 +12871,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        15,
@@ -12895,7 +12895,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -12906,7 +12906,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -12931,7 +12931,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -12942,7 +12942,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -12953,7 +12953,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -12978,7 +12978,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -12989,7 +12989,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -13000,7 +13000,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -13025,7 +13025,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -13036,7 +13036,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13061,7 +13061,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13072,7 +13072,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -13097,7 +13097,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13108,7 +13108,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -13133,7 +13133,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -13144,7 +13144,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -13155,7 +13155,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -13180,7 +13180,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -13191,7 +13191,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -13216,7 +13216,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -13227,7 +13227,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -13252,7 +13252,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -13263,7 +13263,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -13274,7 +13274,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -13299,7 +13299,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13310,7 +13310,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -13335,7 +13335,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13346,7 +13346,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -13371,7 +13371,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -13382,7 +13382,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -13407,7 +13407,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13418,7 +13418,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -13443,7 +13443,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13454,7 +13454,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -13479,7 +13479,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -13490,7 +13490,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13515,7 +13515,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -13526,7 +13526,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -13551,7 +13551,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13562,7 +13562,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -13587,7 +13587,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -13612,7 +13612,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -13637,7 +13637,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -13662,7 +13662,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -13673,7 +13673,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13698,7 +13698,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -13709,7 +13709,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13734,7 +13734,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -13745,7 +13745,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -13756,7 +13756,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -13781,7 +13781,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -13792,7 +13792,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -13803,7 +13803,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -13828,7 +13828,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -13839,7 +13839,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -13864,7 +13864,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13875,7 +13875,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -13900,7 +13900,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -13911,7 +13911,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -13936,7 +13936,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -13947,7 +13947,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -13958,7 +13958,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -13983,7 +13983,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -13994,7 +13994,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -14019,7 +14019,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -14030,7 +14030,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -14055,7 +14055,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -14066,7 +14066,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -14077,7 +14077,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -14102,7 +14102,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14113,7 +14113,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -14138,7 +14138,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14149,7 +14149,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -14174,7 +14174,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -14185,7 +14185,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -14210,7 +14210,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14221,7 +14221,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -14246,7 +14246,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14257,7 +14257,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -14282,7 +14282,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -14293,7 +14293,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14318,7 +14318,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -14329,7 +14329,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -14354,7 +14354,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14365,7 +14365,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -14390,7 +14390,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -14415,7 +14415,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -14440,7 +14440,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -14465,7 +14465,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -14476,7 +14476,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -14501,7 +14501,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -14549,7 +14549,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -14560,7 +14560,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -14585,7 +14585,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -14596,7 +14596,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -14607,7 +14607,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -14632,7 +14632,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -14643,7 +14643,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -14654,7 +14654,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -14679,7 +14679,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -14690,7 +14690,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14715,7 +14715,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -14726,7 +14726,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -14751,7 +14751,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -14762,7 +14762,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -14787,7 +14787,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -14798,7 +14798,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -14809,7 +14809,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -14834,7 +14834,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -14845,7 +14845,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -14870,7 +14870,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -14881,7 +14881,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -14906,7 +14906,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -14917,7 +14917,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -14928,7 +14928,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -14953,7 +14953,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -14964,7 +14964,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -14989,7 +14989,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15000,7 +15000,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -15025,7 +15025,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -15036,7 +15036,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -15061,7 +15061,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15072,7 +15072,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -15097,7 +15097,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15108,7 +15108,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -15133,7 +15133,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -15144,7 +15144,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15169,7 +15169,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -15180,7 +15180,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -15205,7 +15205,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15216,7 +15216,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -15241,7 +15241,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -15266,7 +15266,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -15291,7 +15291,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -15316,7 +15316,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -15327,7 +15327,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -15352,7 +15352,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -15376,7 +15376,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        8,
@@ -15424,7 +15424,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        15,
@@ -15448,7 +15448,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -15459,7 +15459,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -15484,7 +15484,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -15495,7 +15495,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -15506,7 +15506,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -15531,7 +15531,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -15542,7 +15542,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -15553,7 +15553,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -15578,7 +15578,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -15589,7 +15589,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15614,7 +15614,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -15625,7 +15625,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -15650,7 +15650,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -15661,7 +15661,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -15686,7 +15686,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -15697,7 +15697,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -15708,7 +15708,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -15733,7 +15733,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -15744,7 +15744,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -15769,7 +15769,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -15780,7 +15780,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -15805,7 +15805,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -15816,7 +15816,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -15827,7 +15827,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -15852,7 +15852,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15863,7 +15863,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -15888,7 +15888,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15899,7 +15899,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -15924,7 +15924,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -15935,7 +15935,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -15960,7 +15960,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -15971,7 +15971,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -15996,7 +15996,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16007,7 +16007,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -16032,7 +16032,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -16043,7 +16043,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16068,7 +16068,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -16079,7 +16079,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -16104,7 +16104,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16115,7 +16115,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -16140,7 +16140,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -16165,7 +16165,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -16190,7 +16190,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -16215,7 +16215,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -16226,7 +16226,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -16251,7 +16251,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -16299,7 +16299,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        4,
@@ -16323,7 +16323,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -16334,7 +16334,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -16345,7 +16345,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -16370,7 +16370,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16381,7 +16381,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -16392,7 +16392,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -16417,7 +16417,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16428,7 +16428,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -16453,7 +16453,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -16464,7 +16464,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -16489,7 +16489,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16500,7 +16500,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -16525,7 +16525,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16536,7 +16536,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -16561,7 +16561,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -16572,7 +16572,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -16597,7 +16597,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -16608,7 +16608,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -16633,7 +16633,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -16644,7 +16644,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -16669,7 +16669,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -16680,7 +16680,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -16705,7 +16705,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -16716,7 +16716,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -16741,7 +16741,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -16752,7 +16752,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -16777,7 +16777,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -16788,7 +16788,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -16813,7 +16813,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -16824,7 +16824,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -16849,7 +16849,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -16873,7 +16873,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -16921,7 +16921,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        4,
@@ -16945,7 +16945,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -16956,7 +16956,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -16967,7 +16967,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -16992,7 +16992,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17003,7 +17003,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17014,7 +17014,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17039,7 +17039,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17050,7 +17050,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17075,7 +17075,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -17086,7 +17086,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -17111,7 +17111,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17122,7 +17122,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17147,7 +17147,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17158,7 +17158,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17183,7 +17183,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17194,7 +17194,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -17219,7 +17219,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17230,7 +17230,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -17255,7 +17255,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -17266,7 +17266,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -17291,7 +17291,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -17302,7 +17302,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -17327,7 +17327,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -17338,7 +17338,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -17363,7 +17363,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -17374,7 +17374,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -17399,7 +17399,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -17410,7 +17410,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -17435,7 +17435,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -17446,7 +17446,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -17471,7 +17471,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -17495,7 +17495,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -17519,7 +17519,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -17530,7 +17530,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -17541,7 +17541,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -17566,7 +17566,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17577,7 +17577,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17588,7 +17588,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17613,7 +17613,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17624,7 +17624,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17649,7 +17649,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -17660,7 +17660,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -17685,7 +17685,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17696,7 +17696,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17721,7 +17721,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17732,7 +17732,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -17757,7 +17757,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -17768,7 +17768,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -17793,7 +17793,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -17804,7 +17804,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -17829,7 +17829,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -17840,7 +17840,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -17865,7 +17865,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -17876,7 +17876,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -17901,7 +17901,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -17912,7 +17912,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -17937,7 +17937,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -17948,7 +17948,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -17973,7 +17973,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -17984,7 +17984,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -18009,7 +18009,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -18020,7 +18020,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -18045,7 +18045,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18069,7 +18069,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -18093,7 +18093,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18117,7 +18117,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18141,7 +18141,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -18152,7 +18152,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -18163,7 +18163,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -18188,7 +18188,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18199,7 +18199,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -18210,7 +18210,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -18235,7 +18235,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18246,7 +18246,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -18271,7 +18271,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -18282,7 +18282,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -18307,7 +18307,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18318,7 +18318,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -18343,7 +18343,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18354,7 +18354,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -18379,7 +18379,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18390,7 +18390,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -18415,7 +18415,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -18426,7 +18426,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -18451,7 +18451,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -18462,7 +18462,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -18487,7 +18487,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -18498,7 +18498,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -18523,7 +18523,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -18534,7 +18534,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -18559,7 +18559,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -18570,7 +18570,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -18595,7 +18595,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -18606,7 +18606,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -18631,7 +18631,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -18642,7 +18642,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -18667,7 +18667,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18691,7 +18691,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -18715,7 +18715,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18739,7 +18739,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -18787,7 +18787,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        4,
@@ -18811,7 +18811,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -18822,7 +18822,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -18833,7 +18833,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -18858,7 +18858,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18869,7 +18869,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -18880,7 +18880,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -18905,7 +18905,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18916,7 +18916,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -18941,7 +18941,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -18952,7 +18952,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -18977,7 +18977,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -18988,7 +18988,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -19013,7 +19013,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19024,7 +19024,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -19049,7 +19049,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19060,7 +19060,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -19085,7 +19085,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -19096,7 +19096,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -19121,7 +19121,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -19132,7 +19132,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -19157,7 +19157,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -19168,7 +19168,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -19193,7 +19193,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -19204,7 +19204,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -19229,7 +19229,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -19240,7 +19240,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -19265,7 +19265,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -19276,7 +19276,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -19301,7 +19301,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -19312,7 +19312,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -19337,7 +19337,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -19361,7 +19361,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -19385,7 +19385,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -19409,7 +19409,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -19433,7 +19433,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -19457,7 +19457,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -19468,7 +19468,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -19479,7 +19479,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -19504,7 +19504,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19515,7 +19515,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -19526,7 +19526,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -19551,7 +19551,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19562,7 +19562,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -19587,7 +19587,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -19598,7 +19598,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -19623,7 +19623,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19634,7 +19634,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -19659,7 +19659,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19670,7 +19670,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -19695,7 +19695,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -19706,7 +19706,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -19731,7 +19731,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -19742,7 +19742,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -19767,7 +19767,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -19778,7 +19778,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -19803,7 +19803,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -19814,7 +19814,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -19839,7 +19839,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -19850,7 +19850,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -19875,7 +19875,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -19886,7 +19886,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -19911,7 +19911,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -19922,7 +19922,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -19947,7 +19947,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -19958,7 +19958,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -19983,7 +19983,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -20008,7 +20008,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -20033,7 +20033,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20058,7 +20058,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20069,7 +20069,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20080,7 +20080,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20091,7 +20091,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20116,7 +20116,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -20451,7 +20451,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -20476,7 +20476,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -20501,7 +20501,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20526,7 +20526,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20537,7 +20537,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20548,7 +20548,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20559,7 +20559,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20584,7 +20584,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -20753,7 +20753,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -20778,7 +20778,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -20803,7 +20803,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20828,7 +20828,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20839,7 +20839,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20850,7 +20850,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20861,7 +20861,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -20886,7 +20886,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -20911,7 +20911,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -20936,7 +20936,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -20960,7 +20960,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -20984,7 +20984,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21008,7 +21008,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        1,
@@ -21032,7 +21032,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21060,7 +21060,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -21084,7 +21084,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -21108,7 +21108,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21132,7 +21132,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        1,
@@ -21156,7 +21156,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21184,7 +21184,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        25,
@@ -21195,7 +21195,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -21219,7 +21219,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -21243,7 +21243,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -21267,7 +21267,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -21291,7 +21291,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21315,7 +21315,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        1,
@@ -21339,7 +21339,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        40,
@@ -21363,7 +21363,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        30,
@@ -21391,7 +21391,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -21416,7 +21416,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -21441,7 +21441,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21466,7 +21466,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21477,7 +21477,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21488,7 +21488,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21499,7 +21499,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21524,7 +21524,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -21693,7 +21693,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -21718,7 +21718,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -21743,7 +21743,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21768,7 +21768,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21779,7 +21779,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21790,7 +21790,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21801,7 +21801,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -21826,7 +21826,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -21851,7 +21851,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -22020,7 +22020,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -22045,7 +22045,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22070,7 +22070,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22095,7 +22095,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22106,7 +22106,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22117,7 +22117,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22128,7 +22128,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22153,7 +22153,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22178,7 +22178,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -22347,7 +22347,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -22372,7 +22372,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22397,7 +22397,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22422,7 +22422,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22433,7 +22433,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22444,7 +22444,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22455,7 +22455,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22480,7 +22480,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22505,7 +22505,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -22674,7 +22674,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -22699,7 +22699,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22724,7 +22724,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22749,7 +22749,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22760,7 +22760,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22771,7 +22771,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22782,7 +22782,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -22807,7 +22807,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -22832,7 +22832,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -23001,7 +23001,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -23026,7 +23026,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23051,7 +23051,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23076,7 +23076,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23087,7 +23087,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23098,7 +23098,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23109,7 +23109,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23134,7 +23134,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23159,7 +23159,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -23328,7 +23328,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -23353,7 +23353,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23378,7 +23378,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23403,7 +23403,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23414,7 +23414,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23425,7 +23425,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23436,7 +23436,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23461,7 +23461,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23486,7 +23486,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -23511,7 +23511,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -23536,7 +23536,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23561,7 +23561,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23586,7 +23586,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23597,7 +23597,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23608,7 +23608,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23619,7 +23619,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23644,7 +23644,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -23813,7 +23813,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -23838,7 +23838,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23863,7 +23863,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23888,7 +23888,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23899,7 +23899,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23910,7 +23910,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23921,7 +23921,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -23946,7 +23946,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -23971,7 +23971,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -24140,7 +24140,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -24165,7 +24165,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24190,7 +24190,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24215,7 +24215,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24226,7 +24226,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24237,7 +24237,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24248,7 +24248,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24273,7 +24273,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24298,7 +24298,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -24467,7 +24467,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -24492,7 +24492,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24517,7 +24517,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24542,7 +24542,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24553,7 +24553,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24564,7 +24564,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24575,7 +24575,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24600,7 +24600,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24625,7 +24625,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -24794,7 +24794,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -24819,7 +24819,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24844,7 +24844,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24869,7 +24869,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24880,7 +24880,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24891,7 +24891,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24902,7 +24902,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -24927,7 +24927,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -24952,7 +24952,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -25121,7 +25121,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -25146,7 +25146,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -25171,7 +25171,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25196,7 +25196,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25207,7 +25207,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25218,7 +25218,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25229,7 +25229,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25254,7 +25254,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -25279,7 +25279,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -25448,7 +25448,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -25473,7 +25473,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -25498,7 +25498,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25523,7 +25523,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25534,7 +25534,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25545,7 +25545,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25556,7 +25556,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -25581,7 +25581,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -25606,7 +25606,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -28064,7 +28064,7 @@
     {
      "name": "Kurgal's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        1,
@@ -28260,7 +28260,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        39,
@@ -28284,7 +28284,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        3,
@@ -28308,7 +28308,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -28333,7 +28333,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -28358,7 +28358,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -28383,7 +28383,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -28394,7 +28394,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -28405,7 +28405,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -28416,7 +28416,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -28441,7 +28441,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -31249,7 +31249,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -31273,7 +31273,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        3,
@@ -31369,7 +31369,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -31394,7 +31394,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -31419,7 +31419,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1,
@@ -31444,7 +31444,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31459,7 +31459,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31474,7 +31474,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31489,7 +31489,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31504,7 +31504,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31519,7 +31519,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31534,7 +31534,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31549,7 +31549,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31564,7 +31564,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31579,7 +31579,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31594,7 +31594,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31609,7 +31609,7 @@
     {
      "name": "Medved's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -31638,7 +31638,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -31663,7 +31663,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -31688,7 +31688,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -31713,7 +31713,7 @@
     {
      "name": "of the Soul",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -34109,7 +34109,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -34133,7 +34133,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        23,
@@ -34157,7 +34157,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -34205,7 +34205,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -34277,7 +34277,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        20,
@@ -34349,7 +34349,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        4,
@@ -34373,7 +34373,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -34384,7 +34384,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -34395,7 +34395,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -34420,7 +34420,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -34431,7 +34431,7 @@
     {
      "name": "Vorana's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -34442,7 +34442,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -34467,7 +34467,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -34478,7 +34478,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -34503,7 +34503,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -34514,7 +34514,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -34539,7 +34539,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -34550,7 +34550,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -34575,7 +34575,7 @@
     {
      "name": "Vorana's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -34586,7 +34586,7 @@
     {
      "name": "Vorana's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -34611,7 +34611,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -34622,7 +34622,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        40,
@@ -34647,7 +34647,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -34658,7 +34658,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        100,
@@ -34683,7 +34683,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        1000,
@@ -34694,7 +34694,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3000,
@@ -34719,7 +34719,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -34730,7 +34730,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        6,
@@ -34755,7 +34755,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -34766,7 +34766,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -34791,7 +34791,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -34802,7 +34802,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -34827,7 +34827,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        2,
@@ -34838,7 +34838,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -34863,7 +34863,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -34874,7 +34874,7 @@
     {
      "name": "of the Berserker",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -38011,7 +38011,7 @@
     {
      "name": "of Amanamu",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        12,
@@ -38083,7 +38083,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        10,
@@ -38107,7 +38107,7 @@
     {
      "name": "of Kurgal",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        8,
@@ -38203,7 +38203,7 @@
     {
      "name": "of Ulaman",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 2500,
      "ranges": [
       [
        15,
@@ -38251,7 +38251,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -38262,7 +38262,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -38287,7 +38287,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -38298,7 +38298,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -38309,7 +38309,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -38334,7 +38334,7 @@
     {
      "name": "Kolr's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -38345,7 +38345,7 @@
     {
      "name": "Kolr's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        21,
@@ -38356,7 +38356,7 @@
     {
      "name": "Kolr's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        31,
@@ -38381,7 +38381,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -38392,7 +38392,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38417,7 +38417,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -38428,7 +38428,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -38453,7 +38453,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -38464,7 +38464,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -38489,7 +38489,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        16,
@@ -38500,7 +38500,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -38511,7 +38511,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        28,
@@ -38536,7 +38536,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -38547,7 +38547,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        75,
@@ -38572,7 +38572,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        13,
@@ -38583,7 +38583,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -38608,7 +38608,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        23,
@@ -38619,7 +38619,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        37,
@@ -38630,7 +38630,7 @@
     {
      "name": "of the Hunt",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        51,
@@ -38655,7 +38655,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38666,7 +38666,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        26,
@@ -38691,7 +38691,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38702,7 +38702,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -38727,7 +38727,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        8,
@@ -38738,7 +38738,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        14,
@@ -38763,7 +38763,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38774,7 +38774,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -38799,7 +38799,7 @@
     {
      "name": "Katla's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38810,7 +38810,7 @@
     {
      "name": "Katla's",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -38835,7 +38835,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -38846,7 +38846,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38871,7 +38871,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -38882,7 +38882,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        22,
@@ -38907,7 +38907,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -38918,7 +38918,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        35,
@@ -38943,7 +38943,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        -30,
@@ -38968,7 +38968,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -38993,7 +38993,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -39018,7 +39018,7 @@
     {
      "name": "of Decay",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -39029,7 +39029,7 @@
     {
      "name": "of Decay",
      "ilvl": 75,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -41588,7 +41588,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        3,
@@ -41599,7 +41599,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        4,
@@ -41624,7 +41624,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,
@@ -41635,7 +41635,7 @@
     {
      "name": "Uhtred's",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        17,
@@ -41660,7 +41660,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        7,
@@ -41671,7 +41671,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        11,
@@ -41696,7 +41696,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        12,
@@ -41707,7 +41707,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        18,
@@ -41718,7 +41718,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        24,
@@ -41743,7 +41743,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        50,
@@ -41754,7 +41754,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        70,
@@ -41779,7 +41779,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 45,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -41790,7 +41790,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 55,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -41801,7 +41801,7 @@
     {
      "name": "of Chronomancy",
      "ilvl": 78,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        30,
@@ -44385,7 +44385,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        20,
@@ -44410,7 +44410,7 @@
     {
      "name": "Thrud's",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        25,
@@ -44435,7 +44435,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -44460,7 +44460,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -44471,7 +44471,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -44482,7 +44482,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -44493,7 +44493,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        15,
@@ -44518,7 +44518,7 @@
     {
      "name": "of Destruction",
      "ilvl": 65,
-     "weight": 1,
+     "weight": 1000,
      "ranges": [
       [
        10,

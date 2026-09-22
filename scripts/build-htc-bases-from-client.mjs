@@ -317,7 +317,17 @@ const main = async () => {
     }
   let borrowed = 0;
   let placeholder = 0;
-  const buildMod = (classId, family, kind, list, tagSet, source) => {
+  /**
+   * 借りられなかった重みの置き場所。
+   *
+   * クライアントの重みは全 MOD 1 なので、そのまま残すと**通常 MOD (数百〜数千) に対して
+   * 1000 分の 1** になり、そのプールが事実上出ないことになる。上流 POE2HTC は同じ問題に
+   * 一律の値を置いて対処していて (`README` の但し書き)、こちらも同じ値に合わせる。
+   * どちらも**実測ではない**ので `weightSource` は `client-placeholder` のままにする。
+   */
+  const ASSUMED = { desecrated: 2500, rune: 1000 };
+
+  const buildMod = (classId, family, kind, list, tagSet, source, assumed) => {
     let allBorrowed = true;
     const tiers = list
       .slice()
@@ -332,7 +342,7 @@ const main = async () => {
         return {
           name: m.name || "",
           ilvl,
-          weight: got != null ? got : weightOn(m, tagSet),
+          weight: got != null ? got : (assumed ?? weightOn(m, tagSet)),
           ranges: (m.stats || []).map((s) => [s.min, s.max]),
         };
       });
@@ -379,7 +389,7 @@ const main = async () => {
     ]) {
       for (const [family, list] of fams[kind]) {
         if (have.has(family)) continue;
-        const mod = buildMod(cls.id, family, kind, list, tags, "desecrated");
+        const mod = buildMod(cls.id, family, kind, list, tags, "desecrated", ASSUMED.desecrated);
         outMods.push(mod);
         add[side].push(mod.id);
       }
@@ -398,7 +408,7 @@ const main = async () => {
       ]) {
         for (const [family, list] of withRune[kind]) {
           if (fams0[kind].has(family) || have.has(`Rune_${rp.tag}_${family}`)) continue;
-          const mod = buildMod(cls.id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal");
+          const mod = buildMod(cls.id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal", ASSUMED.rune);
           outMods.push({ ...mod, rune: rp.id });
           side[key].push(mod.id);
         }
@@ -428,7 +438,7 @@ const main = async () => {
         ["suffix", "suffixes"],
       ]) {
         for (const [family, list] of fams[kind]) {
-          const mod = buildMod(id, family, kind, list, tags, source);
+          const mod = buildMod(id, family, kind, list, tags, source, source === "desecrated" ? ASSUMED.desecrated : undefined);
           outMods.push(mod);
           pools[poolName][side].push(mod.id);
         }
@@ -446,7 +456,7 @@ const main = async () => {
       ]) {
         for (const [family, list] of withRune[kind]) {
           if (fams0[kind].has(family)) continue; // 素でも出るなら通常プールの分
-          const mod = buildMod(id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal");
+          const mod = buildMod(id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal", ASSUMED.rune);
           outMods.push({ ...mod, rune: rp.id });
           side[key].push(mod.id);
         }
@@ -521,7 +531,14 @@ const main = async () => {
   const desAdds = Object.values(addedPools).reduce((a, p) => a + cnt(p.desecrated), 0);
   const runeAdds = Object.values(addedPools).reduce((a, p) => a + Object.values(p.rune ?? {}).reduce((x, q) => x + cnt(q), 0), 0);
   console.log(`既存クラスに足した MOD: 冒涜 ${desAdds} 件 / ルーン ${runeAdds} 件 (${Object.keys(addedPools).length} クラス)`);
-  console.log(`重み: 同梱から借りた ${borrowed} ティア / 借りられず 1 のまま ${placeholder} ティア`);
+  const stillOne = outMods.filter((m) => m.tiers.some((t) => t.weight === 1));
+  console.log(`重み: 同梱から借りた ${borrowed} ティア / 借りられず仮の値を置いた ${placeholder} ティア`);
+  console.log(`   仮の値: 冒涜 ${ASSUMED.desecrated} / ルーン ${ASSUMED.rune} (上流 POE2HTC と同じ値。どちらも実測ではない)`);
+  if (stillOne.length) {
+    console.log(`   **重み 1 のまま ${stillOne.length} MOD** (通常プールの新しい family で、置く根拠が無い)。`);
+    console.log("   このままだと事実上出ない扱いになる。poe2db の該当ページを取れば埋まる:");
+    for (const m of stillOne) console.log(`      ${m.id}`);
+  }
   console.log(`-> ${OUT}`);
 };
 
