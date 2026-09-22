@@ -6458,12 +6458,22 @@
   "Hardwood Spear": {
    "cls": "Spears",
    "ja": "硬材の槍",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Ironhead Spear": {
    "cls": "Spears",
    "ja": "鉄頭のスピア",
-   "lvl": 5
+   "lvl": 5,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Hunting Spear": {
    "cls": "Spears",
@@ -6474,12 +6484,22 @@
      "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
      "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Winged Spear": {
    "cls": "Spears",
    "ja": "翼刃のスピア",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "War Spear": {
    "cls": "Spears",
@@ -6490,12 +6510,22 @@
      "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
      "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Forked Spear": {
    "cls": "Spears",
    "ja": "双頭の槍",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Barbed Spear": {
    "cls": "Spears",
@@ -6505,6 +6535,11 @@
     {
      "en": "Bleeding you inflict deals Damage (10-20)% faster",
      "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -6517,6 +6552,11 @@
      "en": "25% increased [Melee] [Strike] Range with this weapon",
      "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Crossblade Spear": {
@@ -6528,27 +6568,52 @@
      "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
      "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Seaglass Spear": {
    "cls": "Spears",
    "ja": "シーグラススピア",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Sword Spear": {
    "cls": "Spears",
    "ja": "ソードスピア",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Striking Spear": {
    "cls": "Spears",
    "ja": "打撃の槍",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Helix Spear": {
    "cls": "Spears",
    "ja": "ヘリックススピア",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Wrapped Quarterstaff": {
    "cls": "Quarterstaves",
@@ -6636,72 +6701,142 @@
   "Withered Wand": {
    "cls": "Wands",
    "ja": "枯れたワンド",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Chaos Bolt"
+    }
+   ]
   },
   "Bone Wand": {
    "cls": "Wands",
    "ja": "骨のワンド",
-   "lvl": 2
+   "lvl": 2,
+   "grants": [
+    {
+     "en": "Bone Blast"
+    }
+   ]
   },
   "Attuned Wand": {
    "cls": "Wands",
    "ja": "同調のワンド",
-   "lvl": 2
+   "lvl": 2,
+   "grants": [
+    {
+     "en": "Mana Drain"
+    }
+   ]
   },
   "Siphoning Wand": {
    "cls": "Wands",
    "ja": "吸収のワンド",
-   "lvl": 11
+   "lvl": 11,
+   "grants": [
+    {
+     "en": "Power Siphon"
+    }
+   ]
   },
   "Volatile Wand": {
    "cls": "Wands",
    "ja": "爆発性のワンド",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Volatile Dead"
+    }
+   ]
   },
   "Galvanic Wand": {
    "cls": "Wands",
    "ja": "電撃のワンド",
-   "lvl": 25
+   "lvl": 25,
+   "grants": [
+    {
+     "en": "Galvanic Field"
+    }
+   ]
   },
   "Acrid Wand": {
    "cls": "Wands",
    "ja": "腐食のワンド",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Decompose"
+    }
+   ]
   },
   "Offering Wand": {
    "cls": "Wands",
    "ja": "供物のワンド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Exsanguinate"
+    }
+   ]
   },
   "Frigid Wand": {
    "cls": "Wands",
    "ja": "極寒のワンド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Chaos Bolt"
+    }
+   ]
   },
   "Torture Wand": {
    "cls": "Wands",
    "ja": "拷問のワンド",
-   "lvl": 49
+   "lvl": 49,
+   "grants": [
+    {
+     "en": "Chaos Bolt"
+    }
+   ]
   },
   "Critical Wand": {
    "cls": "Wands",
    "ja": "致命のワンド",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Chaos Bolt"
+    }
+   ]
   },
   "Primordial Wand": {
    "cls": "Wands",
    "ja": "原始のワンド",
-   "lvl": 56
+   "lvl": 56,
+   "grants": [
+    {
+     "en": "Wither"
+    }
+   ]
   },
   "Dueling Wand": {
    "cls": "Wands",
    "ja": "決闘のワンド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Spellslinger"
+    }
+   ]
   },
   "Twisted Wand": {
    "cls": "Wands",
    "ja": "捻じれたワンド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Coiling Bolts"
+    }
+   ]
   },
   "Runic Fork": {
    "cls": "Wands",
@@ -6722,77 +6857,152 @@
   "Ashen Staff": {
    "cls": "Staves",
    "ja": "灰のスタッフ",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Firebolt"
+    }
+   ]
   },
   "Gelid Staff": {
    "cls": "Staves",
    "ja": "極寒のスタッフ",
-   "lvl": 2
+   "lvl": 2,
+   "grants": [
+    {
+     "en": "Freezing Shards"
+    }
+   ]
   },
   "Voltaic Staff": {
    "cls": "Staves",
    "ja": "電撃のスタッフ",
-   "lvl": 2
+   "lvl": 2,
+   "grants": [
+    {
+     "en": "Lightning Bolt"
+    }
+   ]
   },
   "Spriggan Staff": {
    "cls": "Staves",
    "ja": "スプリガンスタッフ",
-   "lvl": 11
+   "lvl": 11,
+   "grants": [
+    {
+     "en": "Firebolt"
+    }
+   ]
   },
   "Pyrophyte Staff": {
    "cls": "Staves",
    "ja": "パイロファイトスタッフ",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Solar Orb"
+    }
+   ]
   },
   "Chiming Staff": {
    "cls": "Staves",
    "ja": "鐘鳴のスタッフ",
-   "lvl": 25
+   "lvl": 25,
+   "grants": [
+    {
+     "en": "Sigil of Power"
+    }
+   ]
   },
   "Rending Staff": {
    "cls": "Staves",
    "ja": "裂断のスタッフ",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Soulrend"
+    }
+   ]
   },
   "Reaping Staff": {
    "cls": "Staves",
    "ja": "死神のスタッフ",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Reap"
+    }
+   ]
   },
   "Icicle Staff": {
    "cls": "Staves",
    "ja": "氷柱のスタッフ",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Firebolt"
+    }
+   ]
   },
   "Roaring Staff": {
    "cls": "Staves",
    "ja": "咆哮のスタッフ",
-   "lvl": 49
+   "lvl": 49,
+   "grants": [
+    {
+     "en": "Unleash"
+    }
+   ]
   },
   "Paralysing Staff": {
    "cls": "Staves",
    "ja": "麻痺のスタッフ",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Enervating Nova"
+    }
+   ]
   },
   "Sanctified Staff": {
    "cls": "Staves",
    "ja": "聖別のスタッフ",
-   "lvl": 56
+   "lvl": 56,
+   "grants": [
+    {
+     "en": "Consecrate"
+    }
+   ]
   },
   "Dark Staff": {
    "cls": "Staves",
    "ja": "闇のスタッフ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Dark Pact"
+    }
+   ]
   },
   "Ravenous Staff": {
    "cls": "Staves",
    "ja": "貪食のスタッフ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Feast of Flesh"
+    }
+   ]
   },
   "Permafrost Staff": {
    "cls": "Staves",
    "ja": "氷結のスタッフ",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Heart of Ice"
+    }
+   ]
   },
   "[DNT] Cragbreaker Staff": {
    "cls": "Staves",
@@ -6802,12 +7012,22 @@
   "Reflecting Staff": {
    "cls": "Staves",
    "ja": "反射のスタッフ",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Mirror of Refraction"
+    }
+   ]
   },
   "Perching Staff": {
    "cls": "Staves",
    "ja": "止まり木のスタッフ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Spiraling Conspiracy"
+    }
+   ]
   },
   "[DNT] Driftwood Oar": {
    "cls": "Staves",
@@ -6995,67 +7215,132 @@
   "Rattling Sceptre": {
    "cls": "Sceptres",
    "ja": "ラトリングセプター",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Stoic Sceptre": {
    "cls": "Sceptres",
    "ja": "不動のセプター",
-   "lvl": 6
+   "lvl": 6,
+   "grants": [
+    {
+     "en": "Discipline"
+    }
+   ]
   },
   "Lupine Sceptre": {
    "cls": "Sceptres",
    "ja": "オオカミのセプター",
-   "lvl": 12
+   "lvl": 12,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Omen Sceptre": {
    "cls": "Sceptres",
    "ja": "お告げのセプター",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Malice"
+    }
+   ]
   },
   "Ochre Sceptre": {
    "cls": "Sceptres",
    "ja": "黄土のセプター",
-   "lvl": 21
+   "lvl": 21,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Shrine Sceptre": {
    "cls": "Sceptres",
    "ja": "神殿のセプター",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Impurity"
+    }
+   ]
   },
   "Devouring Sceptre": {
    "cls": "Sceptres",
    "ja": "貪食のセプター",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Clasped Sceptre": {
    "cls": "Sceptres",
    "ja": "握拳のセプター",
-   "lvl": 36
+   "lvl": 36,
+   "grants": [
+    {
+     "en": "Heart of Ice"
+    }
+   ]
   },
   "Devotional Sceptre": {
    "cls": "Sceptres",
    "ja": "信仰のセプター",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Wrath Sceptre": {
    "cls": "Sceptres",
    "ja": "憤怒のセプター",
-   "lvl": 49
+   "lvl": 49,
+   "grants": [
+    {
+     "en": "Fulmination"
+    }
+   ]
   },
   "Aromatic Sceptre": {
    "cls": "Sceptres",
    "ja": "芳香のセプター",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Pious Sceptre": {
    "cls": "Sceptres",
    "ja": "敬虔のセプター",
-   "lvl": 58
+   "lvl": 58,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Hallowed Sceptre": {
    "cls": "Sceptres",
    "ja": "神聖なセプター",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Skeletal Warrior"
+    }
+   ]
   },
   "Changeling Talisman": {
    "cls": "Talismans",
@@ -8394,242 +8679,482 @@
   "Splintered Tower Shield": {
    "cls": "Shields",
    "ja": "割れたタワーシールド",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Painted Tower Shield": {
    "cls": "Shields",
    "ja": "彩色のタワーシールド",
-   "lvl": 6
+   "lvl": 6,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Braced Tower Shield": {
    "cls": "Shields",
    "ja": "補強のタワーシールド",
-   "lvl": 12
+   "lvl": 12,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Barricade Tower Shield": {
    "cls": "Shields",
    "ja": "防壁のタワーシールド",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Effigial Tower Shield": {
    "cls": "Shields",
    "ja": "立像のタワーシールド",
-   "lvl": 21
+   "lvl": 21,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Rampart Tower Shield": {
    "cls": "Shields",
    "ja": "城壁のタワーシールド",
-   "lvl": 28
+   "lvl": 28,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Heraldric Tower Shield": {
    "cls": "Shields",
    "ja": "紋章のタワーシールド",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Stone Tower Shield": {
    "cls": "Shields",
    "ja": "石のタワーシールド",
-   "lvl": 36
+   "lvl": 36,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Crucible Tower Shield": {
    "cls": "Shields",
    "ja": "試練のタワーシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Ancestor Tower Shield": {
    "cls": "Shields",
    "ja": "先祖のタワーシールド",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Phalanx Tower Shield": {
    "cls": "Shields",
    "ja": "ファランクスのタワーシールド",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Defiant Tower Shield": {
    "cls": "Shields",
    "ja": "反抗のタワーシールド",
-   "lvl": 58
+   "lvl": 58,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Blacksteel Tower Shield": {
    "cls": "Shields",
    "ja": "黒鉄のタワーシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Hardwood Targe": {
    "cls": "Shields",
    "ja": "堅木のタージ",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Pelage Targe": {
    "cls": "Shields",
    "ja": "毛皮のタージ",
-   "lvl": 8
+   "lvl": 8,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Studded Targe": {
    "cls": "Shields",
    "ja": "鋲付きのタージ",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Crescent Targe": {
    "cls": "Shields",
    "ja": "三日月のタージ",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Chiseled Targe": {
    "cls": "Shields",
    "ja": "彫り込みのあるタージ",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Feathered Targe": {
    "cls": "Shields",
    "ja": "羽根付きのタージ",
-   "lvl": 37
+   "lvl": 37,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Stratified Targe": {
    "cls": "Shields",
    "ja": "重層タージ",
-   "lvl": 46
+   "lvl": 46,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Carved Targe": {
    "cls": "Shields",
    "ja": "彫刻のタージ",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Mosaic Targe": {
    "cls": "Shields",
    "ja": "モザイクタージ",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Aureate Targe": {
    "cls": "Shields",
    "ja": "金色のタージ",
-   "lvl": 57
+   "lvl": 57,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Grand Targe": {
    "cls": "Shields",
    "ja": "大いなるタージ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Blazon Crest Shield": {
    "cls": "Shields",
    "ja": "家紋のクレストシールド",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Sigil Crest Shield": {
    "cls": "Shields",
    "ja": "刻印のクレストシールド",
-   "lvl": 7
+   "lvl": 7,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Emblem Crest Shield": {
    "cls": "Shields",
    "ja": "紋章のクレストシールド",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Jingling Crest Shield": {
    "cls": "Shields",
    "ja": "鈴音のクレストシールド",
-   "lvl": 28
+   "lvl": 28,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Sectarian Crest Shield": {
    "cls": "Shields",
    "ja": "教団のクレストシールド",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Omen Crest Shield": {
    "cls": "Shields",
    "ja": "お告げのクレストシールド",
-   "lvl": 36
+   "lvl": 36,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Wayward Crest Shield": {
    "cls": "Shields",
    "ja": "気まぐれなクレストシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Seer Crest Shield": {
    "cls": "Shields",
    "ja": "先見のクレストシールド",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Stoic Crest Shield": {
    "cls": "Shields",
    "ja": "不動のクレストシールド",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Empyreal Crest Shield": {
    "cls": "Shields",
    "ja": "天上のクレストシールド",
-   "lvl": 57
+   "lvl": 57,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Deified Crest Shield": {
    "cls": "Shields",
    "ja": "神聖なクレストシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Leather Buckler": {
    "cls": "Bucklers",
    "ja": "革のバックラー",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Wooden Buckler": {
    "cls": "Bucklers",
    "ja": "木のバックラー",
-   "lvl": 5
+   "lvl": 5,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Plated Buckler": {
    "cls": "Bucklers",
    "ja": "プレートバックラー",
-   "lvl": 11
+   "lvl": 11,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Iron Buckler": {
    "cls": "Bucklers",
    "ja": "鉄のバックラー",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Ridged Buckler": {
    "cls": "Bucklers",
    "ja": "リッジバックラー",
-   "lvl": 22
+   "lvl": 22,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Spiked Buckler": {
    "cls": "Bucklers",
    "ja": "トゲ付きのバックラー",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Ringed Buckler": {
    "cls": "Bucklers",
    "ja": "リングバックラー",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Edged Buckler": {
    "cls": "Bucklers",
    "ja": "エッジバックラー",
-   "lvl": 39
+   "lvl": 39,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Laminate Buckler": {
    "cls": "Bucklers",
    "ja": "ラミネートバックラー",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Pearl Buckler": {
    "cls": "Bucklers",
    "ja": "真珠のバックラー",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Ornate Buckler": {
    "cls": "Bucklers",
    "ja": "華美なバックラー",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Array Buckler": {
    "cls": "Bucklers",
    "ja": "整列のフォーカス",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Aegis Buckler": {
    "cls": "Bucklers",
    "ja": "イージスバックラー",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Twig Focus": {
    "cls": "Foci",
@@ -8973,6 +9498,156 @@
      "en": "-1 Prefix Modifier allowed\n0 Suffix Modifier allowed",
      "ja": "プレフィックスモッド -1個\nサフィックスモッド 0個"
     }
+   ],
+   "grants": [
+    {
+     "level": 11,
+     "en": "Arctic Armour"
+    },
+    {
+     "level": 11,
+     "en": "Herald of Ash"
+    },
+    {
+     "level": 11,
+     "en": "Herald of Ice"
+    },
+    {
+     "level": 11,
+     "en": "Herald of Thunder"
+    },
+    {
+     "level": 11,
+     "en": "Plague Bearer"
+    },
+    {
+     "level": 11,
+     "en": "Barrier Invocation"
+    },
+    {
+     "level": 11,
+     "en": "Lingering Illusion"
+    },
+    {
+     "level": 11,
+     "en": "Ghost Dance"
+    },
+    {
+     "level": 11,
+     "en": "Mana Remnants"
+    },
+    {
+     "level": 11,
+     "en": "Magma Barrier"
+    },
+    {
+     "level": 11,
+     "en": "Raging Spirits"
+    },
+    {
+     "level": 11,
+     "en": "Wind Dancer"
+    },
+    {
+     "level": 11,
+     "en": "Cast on Minion Death"
+    },
+    {
+     "level": 11,
+     "en": "Scavenged Plating"
+    },
+    {
+     "level": 11,
+     "en": "War Banner"
+    },
+    {
+     "level": 11,
+     "en": "Defiance Banner"
+    },
+    {
+     "level": 11,
+     "en": "Dread Banner"
+    },
+    {
+     "level": 11,
+     "en": "Time of Need"
+    },
+    {
+     "level": 11,
+     "en": "Attrition"
+    },
+    {
+     "level": 11,
+     "en": "Charge Regulation"
+    },
+    {
+     "level": 11,
+     "en": "Shard Scavenger"
+    },
+    {
+     "level": 11,
+     "en": "Overwhelming Presence"
+    },
+    {
+     "level": 11,
+     "en": "Alchemist's Boon"
+    },
+    {
+     "level": 11,
+     "en": "Reaper's Invocation"
+    },
+    {
+     "level": 11,
+     "en": "Berserk"
+    },
+    {
+     "level": 11,
+     "en": "Herald of Plague"
+    },
+    {
+     "level": 11,
+     "en": "Herald of Blood"
+    },
+    {
+     "level": 11,
+     "en": "Withering Presence"
+    },
+    {
+     "level": 11,
+     "en": "Ravenous Swarm"
+    },
+    {
+     "level": 11,
+     "en": "Combat Frenzy"
+    },
+    {
+     "level": 11,
+     "en": "Trail of Caltrops"
+    },
+    {
+     "level": 11,
+     "en": "Convalescence"
+    },
+    {
+     "level": 11,
+     "en": "Iron Ward"
+    },
+    {
+     "level": 11,
+     "en": "Siphon Elements"
+    },
+    {
+     "level": 11,
+     "en": "Briarpatch"
+    },
+    {
+     "level": 11,
+     "en": "Savage Fury"
+    },
+    {
+     "level": 11,
+     "en": "Barkskin"
+    }
    ]
   },
   "Portent Amulet": {
@@ -8988,6 +9663,36 @@
      "en": "0 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
      "ja": "プレフィックスモッド 0個\nサフィックスモッド -1個"
     }
+   ],
+   "grants": [
+    {
+     "level": 11,
+     "en": "Wolf Pack"
+    },
+    {
+     "level": 11,
+     "en": "Blink"
+    },
+    {
+     "level": 11,
+     "en": "Elemental Invocation"
+    },
+    {
+     "level": 11,
+     "en": "Elemental Conflux"
+    },
+    {
+     "level": 11,
+     "en": "Sacrifice"
+    },
+    {
+     "level": 11,
+     "en": "Mirage Archer"
+    },
+    {
+     "level": 11,
+     "en": "Feral Invocation"
+    }
    ]
   },
   "Absent Amulet": {
@@ -9002,6 +9707,36 @@
     {
      "en": "-1 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
      "ja": "プレフィックスモッド -1個\nサフィックスモッド -1個"
+    }
+   ],
+   "grants": [
+    {
+     "level": 12,
+     "en": "Cast on Elemental Ailment"
+    },
+    {
+     "level": 12,
+     "en": "Cast on Critical"
+    },
+    {
+     "level": 12,
+     "en": "Cast on Dodge"
+    },
+    {
+     "level": 12,
+     "en": "Rhoa Mount"
+    },
+    {
+     "level": 12,
+     "en": "Archmage"
+    },
+    {
+     "level": 12,
+     "en": "Trinity"
+    },
+    {
+     "level": 12,
+     "en": "Eternal Rage"
     }
    ]
   },
@@ -9945,7 +10680,12 @@
   "Steelhead Spear": {
    "cls": "Spears",
    "ja": "スチールヘッドスピア",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Coursing Spear": {
    "cls": "Spears",
@@ -9955,6 +10695,11 @@
     {
      "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
      "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -9967,12 +10712,22 @@
      "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
      "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Branched Spear": {
    "cls": "Spears",
    "ja": "枝分かれの槍",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Jagged Spear": {
    "cls": "Spears",
@@ -9982,6 +10737,11 @@
     {
      "en": "Bleeding you inflict deals Damage (10-20)% faster",
      "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -9993,6 +10753,11 @@
     {
      "en": "25% increased [Melee] [Strike] Range with this weapon",
      "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -10561,122 +11326,242 @@
   "Aged Tower Shield": {
    "cls": "Shields",
    "ja": "使い古されたタワーシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Metalworked Tower Shield": {
    "cls": "Shields",
    "ja": "金属細工のタワーシールド",
-   "lvl": 48
+   "lvl": 48,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Cultist Tower Shield": {
    "cls": "Shields",
    "ja": "邪教徒のタワーシールド",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Bulwark Tower Shield": {
    "cls": "Shields",
    "ja": "砦のタワーシールド",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Noble Tower Shield": {
    "cls": "Shields",
    "ja": "貴族のタワーシールド",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Goldworked Tower Shield": {
    "cls": "Shields",
    "ja": "金細工のタワーシールド",
-   "lvl": 61
+   "lvl": 61,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Ironwood Targe": {
    "cls": "Shields",
    "ja": "鉄木のタージ",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Fur-lined Targe": {
    "cls": "Shields",
    "ja": "毛皮張りのタージ",
-   "lvl": 48
+   "lvl": 48,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Mercenary Targe": {
    "cls": "Shields",
    "ja": "傭兵のタージ",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Polished Targe": {
    "cls": "Shields",
    "ja": "磨かれたタージ",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Stone Targe": {
    "cls": "Shields",
    "ja": "石のタージ",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Avian Targe": {
    "cls": "Shields",
    "ja": "鳥のタージ",
-   "lvl": 62
+   "lvl": 62,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Painted Crest Shield": {
    "cls": "Shields",
    "ja": "彩色されたクレストシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Engraved Crest Shield": {
    "cls": "Shields",
    "ja": "彫刻のクレストシールド",
-   "lvl": 48
+   "lvl": 48,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Descry Crest Shield": {
    "cls": "Shields",
    "ja": "デスクライ・クレストシールド",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Dekharan Crest Shield": {
    "cls": "Shields",
    "ja": "デカーラ・クレストシールド",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Quartered Crest Shield": {
    "cls": "Shields",
    "ja": "四分割のクレストシールド",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Glowering Crest Shield": {
    "cls": "Shields",
    "ja": "威圧的なクレストシールド",
-   "lvl": 62
+   "lvl": 62,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Oak Buckler": {
    "cls": "Bucklers",
    "ja": "オークのバックラー",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Painted Buckler": {
    "cls": "Bucklers",
    "ja": "彩色されたバックラー",
-   "lvl": 48
+   "lvl": 48,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Coiled Buckler": {
    "cls": "Bucklers",
    "ja": "螺旋のバックラー",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Spikeward Buckler": {
    "cls": "Bucklers",
    "ja": "スパイクワードバックラー",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Jingling Buckler": {
    "cls": "Bucklers",
    "ja": "鈴音のバックラー",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Bladeguard Buckler": {
    "cls": "Bucklers",
    "ja": "ブレードガードバックラー",
-   "lvl": 61
+   "lvl": 61,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Wreath Focus": {
    "cls": "Foci",
@@ -11331,87 +12216,172 @@
   "Royal Tower Shield": {
    "cls": "Shields",
    "ja": "王家のタワーシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Fortress Tower Shield": {
    "cls": "Shields",
    "ja": "要塞のタワーシールド",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Vaal Tower Shield": {
    "cls": "Shields",
    "ja": "ヴァールのタワーシールド",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Tawhoan Tower Shield": {
    "cls": "Shields",
    "ja": "タウホアのタワーシールド",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Glacial Fortress": {
    "cls": "Shields",
    "ja": "氷河の要塞",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Mammoth Targe": {
    "cls": "Shields",
    "ja": "マンモスのタージ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Baroque Targe": {
    "cls": "Shields",
    "ja": "バロックのタージ",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Soaring Targe": {
    "cls": "Shields",
    "ja": "飛翔のタージ",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Golden Targe": {
    "cls": "Shields",
    "ja": "黄金のタージ",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Venerable Defender": {
    "cls": "Shields",
    "ja": "尊き守護者",
-   "lvl": 62
+   "lvl": 62,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Intricate Crest Shield": {
    "cls": "Shields",
    "ja": "精緻なクレストシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Sekheman Crest Shield": {
    "cls": "Shields",
    "ja": "セケマのクレストシールド",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Vaal Crest Shield": {
    "cls": "Shields",
    "ja": "ヴァールのクレストシールド",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Blacksteel Crest Shield": {
    "cls": "Shields",
    "ja": "ブラックスティールクレストシールド",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Gutspike Buckler": {
    "cls": "Bucklers",
    "ja": "ガットスパイクバックラー",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Ancient Buckler": {
    "cls": "Bucklers",
    "ja": "古代のバックラー",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Desert Buckler": {
    "cls": "Bucklers",
    "ja": "砂漠のバックラー",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Druidic Focus": {
    "cls": "Foci",
@@ -12930,122 +13900,242 @@
   "Runeforged Splintered Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの割れたタワーシールド",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Painted Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの彩色のタワーシールド",
-   "lvl": 6
+   "lvl": 6,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Braced Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの補強のタワーシールド",
-   "lvl": 12
+   "lvl": 12,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Barricade Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの防壁のタワーシールド",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Effigial Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの立像のタワーシールド",
-   "lvl": 21
+   "lvl": 21,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Rampart Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの城壁のタワーシールド",
-   "lvl": 28
+   "lvl": 28,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Heraldric Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの紋章のタワーシールド",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Stone Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの石のタワーシールド",
-   "lvl": 36
+   "lvl": 36,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Crucible Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの試練のタワーシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Ancestor Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの先祖のタワーシールド",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Phalanx Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのファランクスのタワーシールド",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Defiant Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの反抗のタワーシールド",
-   "lvl": 58
+   "lvl": 58,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Blacksteel Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの黒鉄のタワーシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Hardwood Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの堅木のタージ",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Pelage Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの毛皮のタージ",
-   "lvl": 8
+   "lvl": 8,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Studded Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの鋲付きのタージ",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Crescent Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの三日月のタージ",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Chiseled Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの彫り込みのあるタージ",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Feathered Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの羽根付きのタージ",
-   "lvl": 37
+   "lvl": 37,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Stratified Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの重層タージ",
-   "lvl": 46
+   "lvl": 46,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Carved Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの彫刻のタージ",
-   "lvl": 51
+   "lvl": 51,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Mosaic Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージのモザイクタージ",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Aureate Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの金色のタージ",
-   "lvl": 57
+   "lvl": 57,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Grand Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの大いなるタージ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "[DNT] Venerable Defender": {
    "cls": "Shields",
@@ -13055,182 +14145,362 @@
   "Runeforged Blazon Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの家紋のクレストシールド",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Sigil Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの刻印のクレストシールド",
-   "lvl": 7
+   "lvl": 7,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Emblem Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの紋章のクレストシールド",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Jingling Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの鈴音のクレストシールド",
-   "lvl": 28
+   "lvl": 28,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Sectarian Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの教団のクレストシールド",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Omen Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのお告げのクレストシールド",
-   "lvl": 36
+   "lvl": 36,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Wayward Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの気まぐれなクレストシールド",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Seer Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの先見のクレストシールド",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Stoic Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの不動のクレストシールド",
-   "lvl": 52
+   "lvl": 52,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Empyreal Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの天上のクレストシールド",
-   "lvl": 57
+   "lvl": 57,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Deified Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの神聖なクレストシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Leather Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの革のバックラー",
-   "lvl": 1
+   "lvl": 1,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Wooden Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの木のバックラー",
-   "lvl": 5
+   "lvl": 5,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Plated Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのプレートバックラー",
-   "lvl": 11
+   "lvl": 11,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Iron Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの鉄のバックラー",
-   "lvl": 16
+   "lvl": 16,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Ridged Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのリッジバックラー",
-   "lvl": 22
+   "lvl": 22,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Spiked Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのトゲ付きのバックラー",
-   "lvl": 26
+   "lvl": 26,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Ringed Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのリングバックラー",
-   "lvl": 33
+   "lvl": 33,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Edged Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのエッジバックラー",
-   "lvl": 39
+   "lvl": 39,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Laminate Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのラミネートバックラー",
-   "lvl": 45
+   "lvl": 45,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Pearl Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの真珠のバックラー",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Ornate Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの華美なバックラー",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Array Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの整列のフォーカス",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Aegis Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのイージスバックラー",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Bulwark Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの砦のタワーシールド",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Noble Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの貴族のタワーシールド",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Goldworked Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの金細工のタワーシールド",
-   "lvl": 61
+   "lvl": 61,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Polished Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの磨かれたタージ",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Stone Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの石のタージ",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Avian Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの鳥のタージ",
-   "lvl": 62
+   "lvl": 62,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Dekharan Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのデカーラ・クレストシールド",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Quartered Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの四分割のクレストシールド",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Glowering Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの威圧的なクレストシールド",
-   "lvl": 62
+   "lvl": 62,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Spikeward Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのスパイクワードバックラー",
-   "lvl": 54
+   "lvl": 54,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Jingling Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの鈴音のバックラー",
-   "lvl": 59
+   "lvl": 59,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Bladeguard Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのブレードガードバックラー",
-   "lvl": 61
+   "lvl": 61,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Twig Focus": {
    "cls": "Foci",
@@ -13898,77 +15168,152 @@
   "Runeforged Royal Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの王家のタワーシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Fortress Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの要塞のタワーシールド",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Vaal Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのヴァールのタワーシールド",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Tawhoan Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのタウホアのタワーシールド",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Mammoth Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージのマンモスのタージ",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Baroque Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージのバロックのタージ",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Soaring Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの飛翔のタージ",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Golden Targe": {
    "cls": "Shields",
    "ja": "ルーンフォージの黄金のタージ",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Intricate Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージの精緻なクレストシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Sekheman Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのセケマのクレストシールド",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Vaal Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのヴァールのクレストシールド",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Blacksteel Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンフォージのブラックスティールクレストシールド",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runeforged Gutspike Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージのガットスパイクバックラー",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Ancient Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの古代のバックラー",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Desert Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンフォージの砂漠のバックラー",
-   "lvl": 80
+   "lvl": 80,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runeforged Druidic Focus": {
    "cls": "Foci",
@@ -14156,17 +15501,32 @@
   "Runeforged Hardwood Spear": {
    "cls": "Spears",
    "ja": "ルーンフォージの硬材の槍",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Runeforged Ironhead Spear": {
    "cls": "Spears",
    "ja": "ルーンフォージの鉄頭のスピア",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Runemastered Ironhead Spear": {
    "cls": "Spears",
    "ja": "ルーンマスターの鉄頭のスピア",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Runeforged Hunting Spear": {
    "cls": "Spears",
@@ -14177,12 +15537,22 @@
      "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
      "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Runeforged Winged Spear": {
    "cls": "Spears",
    "ja": "ルーンフォージの翼刃のスピア",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Runeforged War Spear": {
    "cls": "Spears",
@@ -14193,12 +15563,22 @@
      "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
      "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Runeforged Forked Spear": {
    "cls": "Spears",
    "ja": "ルーンフォージの双頭の槍",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Runeforged Barbed Spear": {
    "cls": "Spears",
@@ -14208,6 +15588,11 @@
     {
      "en": "Bleeding you inflict deals Damage (10-20)% faster",
      "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -14739,17 +16124,32 @@
   "Orichalcum Spear": {
    "cls": "Spears",
    "ja": "オリハルコンスピア",
-   "lvl": 67
+   "lvl": 67,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Soaring Spear": {
    "cls": "Spears",
    "ja": "飛翔のスピア",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Pronged Spear": {
    "cls": "Spears",
    "ja": "二又の槍",
-   "lvl": 72
+   "lvl": 72,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Stalking Spear": {
    "cls": "Spears",
@@ -14759,6 +16159,11 @@
     {
      "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
      "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -14771,6 +16176,11 @@
      "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
      "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Grand Spear": {
@@ -14781,6 +16191,11 @@
     {
      "en": "25% increased [Melee] [Strike] Range with this weapon",
      "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+    }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
     }
    ]
   },
@@ -14793,6 +16208,11 @@
      "en": "Bleeding you inflict deals Damage (10-20)% faster",
      "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Guardian Spear": {
@@ -14804,12 +16224,22 @@
      "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
      "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
     }
+   ],
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
    ]
   },
   "Akoyan Spear": {
    "cls": "Spears",
    "ja": "アコヤのスピア",
-   "lvl": 78
+   "lvl": 78,
+   "grants": [
+    {
+     "en": "Spear Throw"
+    }
+   ]
   },
   "Spiny Talisman": {
    "cls": "Talismans",
@@ -15856,37 +17286,72 @@
   "Runemastered Splintered Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの割れたタワーシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Painted Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの彩色のタワーシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Braced Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの補強のタワーシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Barricade Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの防壁のタワーシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Effigial Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの立像のタワーシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Rampart Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの城壁のタワーシールド",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Heraldric Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの紋章のタワーシールド",
-   "lvl": 50
+   "lvl": 50,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Grand Cuisses": {
    "cls": "Boots",
@@ -15902,107 +17367,212 @@
      "en": "(15-25)% of Damage is taken from Mana before Life",
      "ja": "ダメージの(15-25)%をライフより先にマナで受ける"
     }
+   ],
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
    ]
   },
   "Runemastered Blacksteel Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの黒鉄のタワーシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Vaal Tower Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターのヴァールのタワーシールド",
-   "lvl": 75
+   "lvl": 75,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Glacial Fortress": {
    "cls": "Shields",
    "ja": "ルーンマスターの氷河の要塞",
-   "lvl": 70
+   "lvl": 70,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Hardwood Targe": {
    "cls": "Shields",
    "ja": "ルーンマスターの堅木のタージ",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Crescent Targe": {
    "cls": "Shields",
    "ja": "ルーンマスターの三日月のタージ",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Blazon Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの家紋のクレストシールド",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Sigil Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの刻印のクレストシールド",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Emblem Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの紋章のクレストシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Jingling Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの鈴音のクレストシールド",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Omen Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターのお告げのクレストシールド",
-   "lvl": 48
+   "lvl": 48,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Leather Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターの革のバックラー",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Wooden Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターの木のバックラー",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Plated Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターのプレートバックラー",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Iron Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターの鉄のバックラー",
-   "lvl": 38
+   "lvl": 38,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Ridged Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターのリッジバックラー",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Spiked Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターのトゲ付きのバックラー",
-   "lvl": 40
+   "lvl": 40,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Ornate Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターの装飾のバックラー",
-   "lvl": 55
+   "lvl": 55,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Array Buckler": {
    "cls": "Bucklers",
    "ja": "ルーンマスターの整列のフォーカス",
-   "lvl": 60
+   "lvl": 60,
+   "grants": [
+    {
+     "en": "Parry"
+    }
+   ]
   },
   "Runemastered Venerable Defender": {
    "cls": "Shields",
    "ja": "ルーンマスターの尊き守護者",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Intricate Crest Shield": {
    "cls": "Shields",
    "ja": "ルーンマスターの精緻なクレストシールド",
-   "lvl": 65
+   "lvl": 65,
+   "grants": [
+    {
+     "en": "Raise Shield"
+    }
+   ]
   },
   "Runemastered Twig Focus": {
    "cls": "Foci",

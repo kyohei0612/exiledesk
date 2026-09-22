@@ -22,7 +22,8 @@
     "check:htc-budget": "node scripts/check-htc-budget.mjs",
     "build:htc-price-keys": "node scripts/build-htc-price-keys-from-client.mjs && node scripts/build-htc-essence-prices-from-client.mjs && node scripts/build-htc-catalysts-from-client.mjs",
     "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
-    "build:htc-bases": "node scripts/build-htc-bases-from-client.mjs"
+    "build:htc-bases": "node scripts/build-granted-skills-poe2db.mjs --offline && node scripts/build-htc-bases-from-client.mjs",
+    "build:htc-granted": "node scripts/build-granted-skills-poe2db.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

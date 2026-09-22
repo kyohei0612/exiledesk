@@ -106,6 +106,12 @@ export interface BaseInfo {
   limits?: { prefixes: number; suffixes: number };
   /** 暗黙の効果 (無いベースには入っていない) */
   implicits?: { en: string; ja: string }[];
+  /**
+   * 元から乗っている付与スキル。**クラフトでは変えられない** ── ベースを選ぶ時に決める。
+   * 「不在のアミュレット」は 7 種類から 1 つがランダムなので、狙いの物を買うところから。
+   * `level` はパーフェクトフラックスで 20 に上げられる (確率なし・1 個で確定)。
+   */
+  grants?: { en: string; level?: number }[];
 }
 
 /** ベース名 → 素性。知らないベースは undefined */

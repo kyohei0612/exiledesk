@@ -619,6 +619,29 @@ const main = async () => {
     console.log(`暗黙 MOD の書き出しが読めません (${e.message})。枠の増減と暗黙の効果は飛ばします。`);
   }
 
+  /**
+   * ベースに元から乗っている**付与スキル** (`scripts/build-granted-skills-poe2db.mjs` が poe2db から取る)。
+   *
+   * クラフトでは変えられないので、**ベースを選んだ時点で決まる条件**として扱います
+   * (オーナー方針 2026-09-22)。「不在のアミュレット」は 7 種類から 1 つがランダムで乗るので、
+   * 狙いのスキルの物を買うところからになります。
+   *
+   * クライアントの `ItemInherentSkills` は行はあるのに参照先が解決できない (スキーマのずれ) ので、
+   * ここだけ poe2db 由来です。書き出しが無ければ飛ばします。
+   */
+  let granted = {};
+  try {
+    granted = (await rj(resolve(ROOT, "data-cache/poe2db-granted-skills.json"))).granted ?? {};
+  } catch {
+    console.log("付与スキル (data-cache/poe2db-granted-skills.json) がありません。飛ばします。");
+  }
+  let grantedN = 0;
+  for (const [name, skills] of Object.entries(granted)) {
+    if (!baseInfo[name] || !Array.isArray(skills) || !skills.length) continue;
+    baseInfo[name].grants = skills;
+    grantedN++;
+  }
+
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     familyTexts,
@@ -638,7 +661,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
-  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
+  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / 付与スキルあり ${grantedN} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
   console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {
