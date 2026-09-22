@@ -27,7 +27,6 @@ export { tradeFiltersFor, buildFinishedQuery, tradeCategoryOf, buyOrCraft } from
 export { labelOfAction, labelOfStep, jaOfPriceKey, jaOfOmen } from "../src/services/htc/labels";
 export { simulateBudget } from "../src/services/htc/budget";
 export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
-export { startFromOptions } from "../src/services/htc/start-from";
 export { partialStarts, solveFinish, budgetForBuy } from "../src/services/htc/partial-start";
 export { fractureOptions, FRACTURE_MIN_MODS } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";

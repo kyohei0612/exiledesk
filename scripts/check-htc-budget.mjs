@@ -103,28 +103,36 @@ else {
   if (!des.text.includes("ブラックブラッドのお告げ")) fail(`冒涜の段にボスのお告げが無い: ${des.text}`);
 }
 
-// ---- どれが付いた物を買うか ----
+// ---- 途中まで出来ている物を買う ----
 //
-// オーナーの読み:「一番つきにくいスキルレベル+を買って、そこからクラフトなのか」。
-// 一番付きにくい MOD を買うのが一番効くはず、というのをここで確かめる。
-console.log("\n=== 付いた物を買う (当たりやすい順) ===");
-const sf = M.startFromOptions(data, prices, cls, tiered, { level: 82 });
-console.log(`  白から全部 ${M.oddsText(sf.fromWhite)}  (${sf.ms} ミリ秒)`);
-for (const o of sf.options) {
-  console.log(
-    `    ${o.boughtModId.replace("Amulets/", "").padEnd(34)} 残り ${M.oddsText(o.probability).padEnd(14)} 白の ${o.timesBetter ? o.timesBetter.toFixed(0) : "?"} 倍`,
-  );
+// オーナーの読み:「基本白から始めることはなさそう。3 MOD でも 4 MOD でも安いなら買うべき」。
+// ここは列挙が即時に返ることと、買う物を引く条件が組めることだけ見る。**費用は見ない**
+// (MDP なので 1 個買いは 1 分前後かかる。費用側は check-htc-partial-start.mjs)。
+console.log("\n=== 途中まで出来ている物を買う ===");
+{
+  const t1 = Date.now();
+  const parts = M.partialStarts(data, cls, tiered, { level: 82, maxBought: 4, baseType: "Amber Amulet" });
+  const ms = Date.now() - t1;
+  const byK = {};
+  for (const o of parts) byK[o.bought.length] = (byK[o.bought.length] ?? 0) + 1;
+  console.log(`  ${parts.length} 通り (${ms} ミリ秒)  ${Object.entries(byK).map(([k, n]) => `${k} 個 ${n}`).join(" / ")}`);
+  if (ms > 500) fail(`列挙に ${ms} ミリ秒 (即時のはず)`);
+  if (parts.length === 0) fail("1 通りも出ない");
+  // 全部買う案は出さない (それは完成品を買う話)
+  if (parts.some((o) => o.rest.length === 0)) fail("残り 0 個の案が出ている");
+  // マジックは片側 1 個まで
+  for (const o of parts) {
+    const magicOk = o.prefixes <= 1 && o.suffixes <= 1;
+    if ((o.rarity === "magic") !== magicOk) fail(`P${o.prefixes} S${o.suffixes} を ${o.rarity} にしている`);
+    if (!o.buyQuery) fail(`${o.bought.map((t) => t.modId).join("+")} の検索が組めない`);
+  }
+  // 1 個買いはベース名 + その MOD 1 本で引く
+  const one = parts.find((o) => o.bought.length === 1);
+  if (!one) fail("1 個買いの案が無い");
+  else if (one.buyQuery.filters.length !== 1) fail(`1 個買いの条件が ${one.buyQuery.filters.length} 本`);
+  else if (one.buyQuery.query.query.type?.option !== "Amber Amulet") fail("1 個買いの type がベース名になっていない");
+  console.log(`  1 個買いの検索: type ${one?.buyQuery.query.query.type?.option} / 条件 ${one?.buyQuery.filters.length} 本`);
 }
-if (sf.ms > 3000) fail(`即時のはずが ${sf.ms} ミリ秒`);
-if (sf.options.length !== tiered.length) fail(`案が ${sf.options.length} 件 (目標と同じ ${tiered.length} 件のはず)`);
-// 1 個買えば必ず楽になる
-for (const o of sf.options) if (!(o.timesBetter > 1)) fail(`${o.boughtModId} を買っても楽になっていない (${o.timesBetter})`);
-// 一番付きにくい MOD を買うのが一番効く
-if (!sf.options[0].boughtModId.includes("GlobalIncreaseSpellSkillGemLevel")) {
-  fail(`先頭が ${sf.options[0].boughtModId} (一番付きにくいスペルレベルのはず)`);
-}
-// 買う物を引く条件が組めている
-if (!sf.options[0].buyQuery || sf.options[0].buyQuery.filters.length !== 1) fail("買う物の検索条件が 1 本になっていない");
 
 // ---- フラクチャーで固定してから作る ----
 //
