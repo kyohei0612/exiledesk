@@ -77,6 +77,18 @@ function inferTierFromAverage(tiers: ModEntry["tiers"], av: number): number {
 }
 
 /**
+ * 値が T1 の上限を超えているか。超えている = **品質やルーンで底上げされた表示値**で、
+ * 素の抽選値ではない (`ModEntry.overCap` の説明を参照)。`tierIndexOfValue` はこれを T1 に丸めるので、
+ * 丸めた事実を別に数えておく。
+ */
+function overTopTier(tiers: ModEntry["tiers"], v: number): boolean {
+  if (!tiers.length) return false;
+  let top = -Infinity;
+  for (const t of tiers) if (t.max > top) top = t.max;
+  return Number.isFinite(v) && v > top + 1e-9;
+}
+
+/**
  * 使用率どおりのティア (最頻ティア)。各 occurrence の値を tier 帯にビニングして
  * 件数最多の帯を選ぶ。平均ベースと違い外れ値に強い。trade2 のデフォルトティアに使う。
  */
@@ -151,6 +163,8 @@ function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: Affix
     if (tiersForJudge.length > 0 && judgeValues.length > 0) {
       usageTier = usageTierFromValues(tiersForJudge, judgeValues);
     }
+    // T1 を超えた件数。ティア判定はこれを T1 に丸めるので、丸めた数を持っておく
+    const overCap = tiersForJudge.length > 0 ? judgeValues.filter((v) => overTopTier(tiersForJudge, v)).length : 0;
 
     entries.push({
       text,
@@ -162,6 +176,7 @@ function finalizeBuckets(buckets: Map<string, AggregatedModBucket>, affix: Affix
       groupIds,
       inferredTier,
       usageTier,
+      ...(overCap > 0 ? { overCap } : {}),
     });
   }
   entries.sort((a, b) => b.count - a.count);
