@@ -5,7 +5,7 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { PRESETS } from "./presets";
 import { useHtcCraft } from "./useHtcCraft";
 
@@ -14,13 +14,51 @@ const text = ref(PRESETS[0]!.text);
 const picked = ref(PRESETS[0]!.id);
 const listing = ref<number | null>(PRESETS[0]!.listingDivine);
 
+/**
+ * 画面は**一度に 1 段だけ**出す (オーナー指示 2026-09-23:「情報量が多いから順に表示していく」)。
+ * 全部並べると、まだ決めていない先の話が目に入って判断が濁ります。
+ *
+ * 段は決め打ちの順番ですが、**戻るのも飛ぶのも自由**です。上の見出しを押せばどこへでも行けます
+ * ── 「ベースを見直してから値段に戻る」が普通に起きるので、一方通行にはしません。
+ */
+const STAGES = [
+  { id: "read", label: "① 読み取り", hint: "何の MOD だと読めたか" },
+  { id: "base", label: "② ベース", hint: "どのベースから作るか" },
+  { id: "solo", label: "③ 1 個ずつの値段", hint: "買うか自分で出すか" },
+  { id: "start", label: "④ どこから始めるか", hint: "固定済みを買うか素からか" },
+  { id: "buy", label: "⑤ 途中まで買う", hint: "何個買って残りを作るか" },
+] as const;
+type StageId = (typeof STAGES)[number]["id"];
+
+/** その段に出す物が無ければ見出しごと出さない (空の段を押させない) */
+const stages = computed(() =>
+  STAGES.filter((s) =>
+    s.id === "base" ? c.bases.value.length > 0
+    : s.id === "start" ? c.fracturedLines.value.length > 0
+    : true,
+  ),
+);
+const stage = ref<StageId>("read");
+/** 段が消えた時 (貼り直しで固定済みが無くなった等) に、無い段に居座らせない */
+const current = computed<StageId>(() =>
+  stages.value.some((s) => s.id === stage.value) ? stage.value : "read",
+);
+const nextStage = computed(() => {
+  const i = stages.value.findIndex((s) => s.id === current.value);
+  return i >= 0 && i < stages.value.length - 1 ? stages.value[i + 1]! : null;
+});
+
+async function reread(t: string): Promise<void> {
+  stage.value = "read";
+  await c.run(t);
+}
 function pick(id: string): void {
   const p = PRESETS.find((x) => x.id === id);
   if (!p) return;
   picked.value = id;
   text.value = p.text;
   listing.value = p.listingDivine;
-  void c.run(p.text);
+  void reread(p.text);
 }
 onMounted(() => void c.run(text.value));
 
@@ -56,7 +94,7 @@ const implicitText = (lines: readonly string[]): string =>
       spellcheck="false"
     />
     <div class="mb-4 flex items-center gap-3">
-      <button class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold" :disabled="c.loading.value" @click="c.run(text)">
+      <button class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold" :disabled="c.loading.value" @click="reread(text)">
         {{ c.loading.value ? "計算中…" : "読んで計算する" }}
       </button>
       <label class="text-xs opacity-70">
@@ -78,8 +116,31 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <template v-if="c.item.value?.baseType">
+      <!-- 段の切り替え。押せばどこへでも飛べる (一方通行にしない) -->
+      <nav class="mb-3 flex flex-wrap gap-1">
+        <button
+          v-for="s in stages"
+          :key="s.id"
+          type="button"
+          class="rounded border px-2 py-1 text-xs"
+          :class="current === s.id
+            ? 'border-amber-400 text-amber-300'
+            : 'border-[var(--exile-color-border-subtle)] opacity-60 hover:opacity-100'"
+          :title="s.hint"
+          @click="stage = s.id"
+        >{{ s.label }}</button>
+      </nav>
+
+      <!-- 触媒の高貴のお告げだけは倍率がゲーム内にもクライアントにも無く、実測からの推定。
+           ③④⑤ の金額すべてに乗るので、段を問わず上に出しておく -->
+      <p v-if="c.catalysingOn.value" class="mb-3 rounded bg-amber-900/20 p-2 text-xs text-amber-300/80">
+        ⚠ {{ c.catalysingCaveat }}
+        カタリストを使う手順が出た時だけ、その手順の確率がこの推定に乗っています。
+        なお、お告げは品質を全て消費するので<b>完成品の品質は 0 になります</b> (implicit の値が下がります)。
+      </p>
+
       <!-- 読み取り -->
-      <section class="mb-4">
+      <section v-show="current === 'read'" class="mb-4">
         <h2 class="mb-1 font-bold">① 読み取り</h2>
         <p class="text-xs opacity-80">
           {{ c.item.value.baseText }} ({{ c.item.value.baseType }}) / ilvl {{ c.item.value.itemLevel }}
@@ -127,7 +188,7 @@ const implicitText = (lines: readonly string[]): string =>
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->
-      <section v-if="c.bases.value.length" class="mb-4">
+      <section v-if="c.bases.value.length" v-show="current === 'base'" class="mb-4">
         <h2 class="mb-1 font-bold">② ベース</h2>
         <p class="mb-2 text-xs opacity-60">
           <b>貼り付けた物を真似るなら、ベースは決まっています</b> (先頭の「今の物」)。
@@ -150,7 +211,7 @@ const implicitText = (lines: readonly string[]): string =>
       </section>
 
       <!-- 段階 0 -->
-      <section class="mb-4">
+      <section v-show="current === 'solo'" class="mb-4">
         <h2 class="mb-1 font-bold">③ 買うか自分で出すか (1 個ずつ)</h2>
         <p class="mb-1 text-xs opacity-60">
           この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。<br />
@@ -206,7 +267,7 @@ const implicitText = (lines: readonly string[]): string =>
       </section>
 
       <!-- ルートの比べ。固定済みがあれば、そこから解いた場合と並べる -->
-      <section v-if="c.fracturedLines.value.length" class="mb-4">
+      <section v-if="c.fracturedLines.value.length" v-show="current === 'start'" class="mb-4">
         <h2 class="mb-1 font-bold">④ どこから始めるか</h2>
         <p class="mb-2 text-xs opacity-70">
           固定済み: <span class="text-emerald-300">{{ c.fracturedLines.value.join(" / ") }}</span><br />
@@ -234,43 +295,9 @@ const implicitText = (lines: readonly string[]): string =>
         </table>
       </section>
 
-      <!-- 設計図。本家と同じく案を並べ、各段が「何を狙うか」まで出す -->
-      <section v-if="c.plans.value.length" class="mb-4">
-        <h2 class="mb-1 font-bold">
-          ⑤ 設計図
-          <span class="font-normal text-xs opacity-60">数えた手順 {{ c.plansEvaluated.value.toLocaleString() }} / 案 {{ c.plans.value.length }} 件</span>
-        </h2>
-        <p class="mb-2 text-xs opacity-60">
-          確率は正確です。<b>1 周の値段は案どうしを比べるための物で、予算には使わないでください</b>
-          (外したら作り直す前提の数字なので)。
-        </p>
-        <!-- 触媒の高貴のお告げだけは倍率がゲーム内にもクライアントにも無く、実測からの推定。
-             黙って混ぜると「確率は正確です」が嘘になるので、効いている間は必ず出す -->
-        <p v-if="c.catalysingOn.value" class="mb-2 text-xs text-amber-300/80">
-          ⚠ {{ c.catalysingCaveat }}
-          カタリストを使う手順が出た時だけ、その手順の確率がこの推定に乗っています。
-          なお、お告げは品質を全て消費するので<b>完成品の品質は 0 になります</b> (implicit の値が下がります)。
-        </p>
-        <div v-for="(p, pi) in c.plans.value" :key="pi" class="mb-3 rounded border border-[var(--exile-color-border-subtle)] p-2">
-          <div class="mb-1 flex gap-4 text-xs">
-            <span><b class="text-amber-300">{{ p.oddsText }}</b> <span class="opacity-50">1 周あたり</span></span>
-            <span><b>{{ c.money(p.perRunCost) }}</b> <span class="opacity-50">1 周の値段</span></span>
-            <span v-if="pi === 0" class="text-emerald-300">一番当たりやすい</span>
-          </div>
-          <table class="w-full text-xs">
-            <tr v-for="(s, i) in p.steps" :key="i" class="border-b border-white/5">
-              <td class="w-5 opacity-40">{{ i + 1 }}</td>
-              <td class="py-0.5">{{ s.text }}</td>
-              <td class="pl-2 text-sky-300">{{ c.stepTarget(s.modIds) }}</td>
-              <td class="w-16 text-right opacity-60">{{ s.prob != null ? (s.prob * 100).toFixed(2) + "%" : "" }}</td>
-            </tr>
-          </table>
-        </div>
-      </section>
-
       <!-- 買い方 -->
-      <section class="mb-4">
-        <h2 class="mb-1 font-bold">⑥ 途中まで出来た物を買う</h2>
+      <section v-show="current === 'buy'" class="mb-4">
+        <h2 class="mb-1 font-bold">⑤ 途中まで出来た物を買う</h2>
         <button
           class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
           :disabled="c.buysRunning.value"
@@ -289,6 +316,15 @@ const implicitText = (lines: readonly string[]): string =>
           </tr>
         </table>
       </section>
+
+      <!-- 次の段へ。押さずに上の見出しから飛んでもいい -->
+      <div v-if="nextStage" class="mb-4">
+        <button
+          type="button"
+          class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold"
+          @click="stage = nextStage.id"
+        >次へ: {{ nextStage.label }} — {{ nextStage.hint }}</button>
+      </div>
 
       <!-- 時間 -->
       <section class="text-xs opacity-50">

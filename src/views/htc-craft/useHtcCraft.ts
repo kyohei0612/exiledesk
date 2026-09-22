@@ -17,7 +17,6 @@ import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
-import { planPreview, type PlanOption } from "../../services/htc/plan";
 import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
 import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
 import { withEssenceAlternatives } from "../../services/htc/essence-route";
@@ -80,8 +79,6 @@ export function useHtcCraft() {
 
   const solo = shallowRef<SoloCost[]>([]);
   /** 案は**全部**持つ。本家も 3 案並べる (確率と 1 周の値段の釣り合いを見せるため) */
-  const plans = shallowRef<PlanOption[]>([]);
-  const plansEvaluated = ref(0);
   const buys = shallowRef<BuyRow[]>([]);
   const buysRunning = ref(false);
   /** 相場がどれだけ埋まっているか。空だと費用が出ないので画面で断る */
@@ -212,11 +209,6 @@ export function useHtcCraft() {
       p75.value = {};
       timings.value.push(["段階 0 (1 個ずつ自作するといくら)", Date.now() - t]);
 
-      t = Date.now();
-      const pv = planPreview(d, prices.value, cls, got.targets, { level: it.itemLevel ?? 82 });
-      timings.value.push(["設計図", Date.now() - t]);
-      plans.value = pv.options;
-      plansEvaluated.value = pv.plansEvaluated;
     } catch (e) {
       error.value = String(e);
     } finally {
@@ -360,7 +352,7 @@ export function useHtcCraft() {
     stepTarget, findFractured, fractured, fracturedBusy,
     fracturedLines, fracturedUnusable, slotsUsed, dropOnly, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
-    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots, bases,
+    solo, buys, buysRunning, timings, coverage, slots, bases,
     p75, p75Busy, findP75,
     money, run, solveBuys,
   };
