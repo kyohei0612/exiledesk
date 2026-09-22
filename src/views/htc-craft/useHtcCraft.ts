@@ -14,9 +14,12 @@ import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste-ja";
 import { itemBaseFor } from "../../services/htc/bridge";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
+import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, type SoloCost } from "../../services/htc/solo-cost";
 import { planPreview, type PlanOption } from "../../services/htc/plan";
 import { partialStarts, solveFinish, budgetForBuy } from "../../services/htc/partial-start";
+import { fracturedBuyQuery } from "../../services/htc/fracture-route";
+import { autoMinWithUrl } from "../../services/trade2/auto-price";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
@@ -74,6 +77,15 @@ export function useHtcCraft() {
   const coverage = shallowRef<HtcPriceCoverage | null>(null);
   /** 各段にかかった時間 (ミリ秒) */
   const timings = ref<Array<[string, number]>>([]);
+  /**
+   * 「固定済みの物」の最安 (modId → 高貴建て / 検索 URL)。
+   *
+   * オーナー方針:「先にフラクチャー品みるのがいい。これ 1 神とかだから」。固定された MOD は
+   * 消去でも消えないので、**一番つきにくい 1 個が固定された物を買うのが最大の梃子**
+   * (実測: 素から 2,015 神 → 固定済みから 231 神)。
+   */
+  const fractured = ref<Record<string, { min: number | null; url: string | null; error?: string }>>({});
+  const fracturedBusy = ref<string | null>(null);
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -142,7 +154,9 @@ export function useHtcCraft() {
           side: mod.type === "prefix" ? "P" : "S",
           tierName: String(tier.name ?? ""),
           range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),
-          boosted: !!(it.quality && it.catalystTag && (mod.tags ?? []).includes(it.catalystTag)),
+          // **`boostedBy` を使うこと。**タグだけ見て書き直すと判定がずれる (向こうはクラスも見る)。
+          // 実際ずれていて、割り戻したキャストスピードに印が付いていなかった (2026-09-23)
+          boosted: !!(it.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
           crafted: isCraftedMod(mod),
         };
       });
@@ -203,8 +217,40 @@ export function useHtcCraft() {
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
 
+  /**
+   * その MOD が固定された物を取引所で探す。**1 回で search + fetch を 1 回ずつ**使うので、
+   * 押された時だけ投げる (レート制限は Rust の門番と `autoPrice` が持つ)。
+   */
+  async function findFractured(modId: string): Promise<void> {
+    const d = data.value;
+    const cls = base.value;
+    const it = item.value;
+    if (!d || !cls || !it) return;
+    const t = targets.value.find((x) => x.modId === modId);
+    if (!t) return;
+    fracturedBusy.value = modId;
+    try {
+      const q = fracturedBuyQuery(d, cls, t, {
+        ...(it.itemLevel != null ? { ilvlMin: it.itemLevel } : {}),
+        ...(it.baseType ? { baseType: it.baseType } : {}),
+      });
+      if (!q) {
+        fractured.value = { ...fractured.value, [modId]: { min: null, url: null, error: "検索が組めません" } };
+        return;
+      }
+      // リーグ名は相場と同じ物を使う (取引所に投げる名前は `Value`)
+      const league = marketStore.league.value?.Value ?? "Standard";
+      const r = await autoMinWithUrl(league, q.query, marketStore.rates.value);
+      fractured.value = { ...fractured.value, [modId]: { min: r.min, url: r.url } };
+    } catch (e) {
+      fractured.value = { ...fractured.value, [modId]: { min: null, url: null, error: String(e) } };
+    } finally {
+      fracturedBusy.value = null;
+    }
+  }
+
   return {
-    stepTarget,
+    stepTarget, findFractured, fractured, fracturedBusy,
     loading, error, item, base, rows, implicits, skipped,
     solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
     money, run, solveBuys,

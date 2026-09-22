@@ -124,8 +124,32 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
             <td class="w-24 text-right">{{ c.money(s.expectedCost) }}</td>
             <td class="w-24 text-right opacity-50">p75 {{ c.money(s.p75) }}</td>
             <td class="pl-3 opacity-60">{{ s.mainSpend }}</td>
+            <td class="w-44 pl-2 text-right">
+              <button
+                v-if="!c.fractured.value[s.modId]"
+                class="rounded border border-[var(--exile-color-border-subtle)] px-1.5 py-0.5"
+                :disabled="c.fracturedBusy.value !== null"
+                @click="c.findFractured(s.modId)"
+              >
+                {{ c.fracturedBusy.value === s.modId ? "探しています…" : "固定済みを探す" }}
+              </button>
+              <span v-else-if="c.fractured.value[s.modId].error" class="text-red-300">
+                {{ c.fractured.value[s.modId].error }}
+              </span>
+              <a
+                v-else-if="c.fractured.value[s.modId].min != null"
+                :href="c.fractured.value[s.modId].url ?? undefined"
+                target="_blank"
+                class="text-emerald-300 underline"
+              >固定済み最安 {{ c.money(c.fractured.value[s.modId].min) }}</a>
+              <span v-else class="opacity-40">固定済みの出品なし</span>
+            </td>
           </tr>
         </table>
+        <p class="mt-1 text-xs opacity-60">
+          <b>固定された MOD は消去でも消えません。</b>一番つきにくい 1 個が固定された物を買うのが
+          一番効きます (実測: 素から 2,015 神 → 固定済みから 231 神)。
+        </p>
       </section>
 
       <!-- 設計図。本家と同じく案を並べ、各段が「何を狙うか」まで出す -->
