@@ -567,35 +567,63 @@ const main = async () => {
    * 書き出しが無い時は空にする (その時は今まで通りクラス既定の 3/3)。
    */
   const baseLimits = {};
+  /**
+   * ベース名 -> そのベースの素性 (種別 / 必要レベル / 枠 / 暗黙の効果)。
+   *
+   * **暗黙の効果はベース選びそのもの**です。アミュレットなら「トリニティ」「クリティカル時に発動」
+   * のような付与スキルが暗黙に乗っていて、何を作るかで選ぶベースが変わります。枠の増減
+   * (`local_maximum_prefixes_allowed_+`) も暗黙の 1 つで、同じ表から取れます。
+   *
+   * 文言は `mods.en/ja.json` の `text` をそのまま (数値の範囲つき)。
+   */
+  const baseInfo = {};
   try {
-    const dir = resolve(ROOT, "data-cache/client-export-implicits/tables/English");
-    const rdi = async (n) => {
-      const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8"));
+    const dir = resolve(ROOT, "data-cache/client-export-implicits/tables");
+    const rdi = async (lang, n) => {
+      const j = JSON.parse(await readFile(resolve(dir, lang, `${n}.json`), "utf8"));
       return Array.isArray(j) ? j : j.rows;
     };
-    const [BI, MDI] = await Promise.all([rdi("BaseItemTypes"), rdi("Mods")]);
-    for (const r of BI) {
+    const [BI, BJ, MDI, ICI] = await Promise.all([
+      rdi("English", "BaseItemTypes"), rdi("Japanese", "BaseItemTypes"),
+      rdi("English", "Mods"), rdi("English", "ItemClasses"),
+    ]);
+    const MJ = await rj(resolve(ROOT, "data-cache/mods.ja.json")).catch(() => ({}));
+    for (let i = 0; i < BI.length; i++) {
+      const r = BI[i];
       if (!r.Name) continue;
+      const cid = (ICI[r.ItemClass] || {}).Id;
+      if (!CLASS_TAGS[cid]) continue; // 装備以外は持たない
       let dp = 0;
       let ds = 0;
-      for (const i of r.Implicit_Mods || []) {
-        const m = MODS[(MDI[i] || {}).Id];
-        for (const st of m?.stats || []) {
+      const implicits = [];
+      for (const k of r.Implicit_Mods || []) {
+        const mid = (MDI[k] || {}).Id;
+        const m = MODS[mid];
+        if (!m) continue;
+        for (const st of m.stats || []) {
           if (st.id === "local_maximum_prefixes_allowed_+") dp += st.min ?? 0;
           if (st.id === "local_maximum_suffixes_allowed_+") ds += st.min ?? 0;
         }
+        if (m.text) implicits.push({ en: m.text, ja: MJ[mid]?.text ?? m.text });
       }
-      if (dp === 0 && ds === 0) continue;
-      baseLimits[r.Name] = { prefixes: 3 + dp, suffixes: 3 + ds };
+      if (dp !== 0 || ds !== 0) baseLimits[r.Name] = { prefixes: 3 + dp, suffixes: 3 + ds };
+      baseInfo[r.Name] = {
+        cls: ROW_NAME[cid] || cid.replace(/\s+/g, "_"),
+        ja: BJ[i]?.Name ?? r.Name,
+        lvl: r.DropLevel ?? 0,
+        ...(dp !== 0 || ds !== 0 ? { limits: { prefixes: 3 + dp, suffixes: 3 + ds } } : {}),
+        ...(implicits.length ? { implicits } : {}),
+      };
     }
-  } catch {
-    console.log("暗黙 MOD の書き出し (data-cache/client-export-implicits) がありません。枠の増減は飛ばします。");
+  } catch (e) {
+    console.log(`暗黙 MOD の書き出しが読めません (${e.message})。枠の増減と暗黙の効果は飛ばします。`);
   }
 
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     familyTexts,
     baseLimits,
+    baseInfo,
     familyStats,
     modTags,
     source:
@@ -610,7 +638,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
-  console.log(`枠が素と違うベース: ${Object.keys(baseLimits).length} 件`);
+  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
   console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {

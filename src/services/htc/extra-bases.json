@@ -6184,6 +6184,9872 @@
    "suffixes": 2
   }
  },
+ "baseInfo": {
+  "Golden Hoop": {
+   "cls": "Rings",
+   "ja": "黄金の指輪",
+   "lvl": 12,
+   "implicits": [
+    {
+     "en": "+(8-12) to all [Attributes|Attributes]",
+     "ja": "全ての[Attributes|能力値] +(8-12)"
+    }
+   ]
+  },
+  "Golden Obi": {
+   "cls": "Belts",
+   "ja": "金の帯",
+   "lvl": 12,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [ItemRarity|Rarity of Items] found",
+     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(20-30)%増加する"
+    }
+   ]
+  },
+  "Golden Flame": {
+   "cls": "Shields",
+   "ja": "黄金の炎",
+   "lvl": 15,
+   "implicits": [
+    {
+     "en": "+(11-19)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(11-19)%"
+    }
+   ]
+  },
+  "Golden Wreath": {
+   "cls": "Helmets",
+   "ja": "黄金の花冠",
+   "lvl": 12,
+   "implicits": [
+    {
+     "en": "+(16-24) to all [Attributes|Attributes]",
+     "ja": "全ての[Attributes|能力値] +(16-24)"
+    }
+   ]
+  },
+  "Golden Visage": {
+   "cls": "Helmets",
+   "ja": "黄金の顔飾り",
+   "lvl": 1
+  },
+  "Golden Mantle": {
+   "cls": "Body_Armours",
+   "ja": "黄金の外套",
+   "lvl": 20,
+   "implicits": [
+    {
+     "en": "+(15-25)% to all [ElementalDamage|Elemental] [Resistances]",
+     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(15-25)%"
+    }
+   ]
+  },
+  "Golden Caligae": {
+   "cls": "Boots",
+   "ja": "黄金のカリガ",
+   "lvl": 12,
+   "implicits": [
+    {
+     "en": "+(8-16)% to all [ElementalDamage|Elemental] [Resistances]",
+     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(8-16)%"
+    }
+   ]
+  },
+  "Golden Bracers": {
+   "cls": "Gloves",
+   "ja": "黄金のブレーサー",
+   "lvl": 1
+  },
+  "Wooden Club": {
+   "cls": "OneHand_Maces",
+   "ja": "棍棒",
+   "lvl": 1
+  },
+  "Smithing Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "鍛冶ハンマー",
+   "lvl": 4
+  },
+  "Slim Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "細身のメイス",
+   "lvl": 10
+  },
+  "Spiked Club": {
+   "cls": "OneHand_Maces",
+   "ja": "トゲ付きの棍棒",
+   "lvl": 16
+  },
+  "Warpick": {
+   "cls": "OneHand_Maces",
+   "ja": "ウォーピック",
+   "lvl": 22,
+   "implicits": [
+    {
+     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
+     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+    }
+   ]
+  },
+  "Plated Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "プレートメイス",
+   "lvl": 26
+  },
+  "Brigand Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "盗賊のメイス",
+   "lvl": 33
+  },
+  "Construct Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "建築用ハンマー",
+   "lvl": 36,
+   "implicits": [
+    {
+     "en": "40% chance to [Daze] on [Hit]",
+     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+    }
+   ]
+  },
+  "Morning Star": {
+   "cls": "OneHand_Maces",
+   "ja": "モーニングスター",
+   "lvl": 45
+  },
+  "Jade Club": {
+   "cls": "OneHand_Maces",
+   "ja": "翡翠の棍棒",
+   "lvl": 49,
+   "implicits": [
+    {
+     "en": "[Accuracy|Always Hits]",
+     "ja": "[Accuracy|常にヒットする]"
+    }
+   ]
+  },
+  "Lumen Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "光のメイス",
+   "lvl": 52
+  },
+  "Execratus Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "呪詛のハンマー",
+   "lvl": 55
+  },
+  "Torment Club": {
+   "cls": "OneHand_Maces",
+   "ja": "トーメントクラブ",
+   "lvl": 65
+  },
+  "Runemastered Torment Club": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンマスターのトーメントクラブ",
+   "lvl": 65
+  },
+  "Kalguuran Forgehammer": {
+   "cls": "OneHand_Maces",
+   "ja": "カルグールのフォージハンマー",
+   "lvl": 47,
+   "implicits": [
+    {
+     "en": "Has 3 Sockets",
+     "ja": "ソケットを3個持つ"
+    }
+   ]
+  },
+  "Felled Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "倒木のグレートクラブ",
+   "lvl": 1
+  },
+  "Oak Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "オークグレートハンマー",
+   "lvl": 4,
+   "implicits": [
+    {
+     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
+     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+    }
+   ]
+  },
+  "Forge Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "鍜治場の大槌",
+   "lvl": 11,
+   "implicits": [
+    {
+     "en": "[Crushed|Crushes] Enemies on Hit",
+     "ja": "ヒット時に敵を[Crushed|破砕]する"
+    }
+   ]
+  },
+  "Studded Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "鋲付きの金棒",
+   "lvl": 16
+  },
+  "Cultist Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "カルティストグレートハンマー",
+   "lvl": 22,
+   "implicits": [
+    {
+     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
+     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+    }
+   ]
+  },
+  "Temple Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "寺院の大槌",
+   "lvl": 28
+  },
+  "Leaden Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "鉛のグレートハンマー",
+   "lvl": 33
+  },
+  "Crumbling Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "朽ちた大槌",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
+     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+    }
+   ]
+  },
+  "Pointed Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "尖った大槌",
+   "lvl": 45
+  },
+  "Totemic Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "トーテムのグレートクラブ",
+   "lvl": 50,
+   "implicits": [
+    {
+     "en": "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]",
+     "ja": "[Warcry|ウォークライ]は[Attack|アタック]を追加で1回[Empowered|強化]する"
+    }
+   ]
+  },
+  "Greatmace": {
+   "cls": "TwoHand_Maces",
+   "ja": "グレートメイス",
+   "lvl": 52
+  },
+  "Precise Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "精密なグレートハンマー",
+   "lvl": 54
+  },
+  "Giant Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "巨人の大槌",
+   "lvl": 65
+  },
+  "Hardwood Spear": {
+   "cls": "Spears",
+   "ja": "硬材の槍",
+   "lvl": 1
+  },
+  "Ironhead Spear": {
+   "cls": "Spears",
+   "ja": "鉄頭のスピア",
+   "lvl": 5
+  },
+  "Hunting Spear": {
+   "cls": "Spears",
+   "ja": "ハンティングスピア",
+   "lvl": 10,
+   "implicits": [
+    {
+     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
+     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ]
+  },
+  "Winged Spear": {
+   "cls": "Spears",
+   "ja": "翼刃のスピア",
+   "lvl": 16
+  },
+  "War Spear": {
+   "cls": "Spears",
+   "ja": "ウォースピア",
+   "lvl": 21,
+   "implicits": [
+    {
+     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
+     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+    }
+   ]
+  },
+  "Forked Spear": {
+   "cls": "Spears",
+   "ja": "双頭の槍",
+   "lvl": 26
+  },
+  "Barbed Spear": {
+   "cls": "Spears",
+   "ja": "トゲ付きの槍",
+   "lvl": 33,
+   "implicits": [
+    {
+     "en": "Bleeding you inflict deals Damage (10-20)% faster",
+     "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ]
+  },
+  "Broad Spear": {
+   "cls": "Spears",
+   "ja": "ブロードスピア",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "25% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+    }
+   ]
+  },
+  "Crossblade Spear": {
+   "cls": "Spears",
+   "ja": "十文字槍",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
+     "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
+    }
+   ]
+  },
+  "Seaglass Spear": {
+   "cls": "Spears",
+   "ja": "シーグラススピア",
+   "lvl": 51
+  },
+  "Sword Spear": {
+   "cls": "Spears",
+   "ja": "ソードスピア",
+   "lvl": 52
+  },
+  "Striking Spear": {
+   "cls": "Spears",
+   "ja": "打撃の槍",
+   "lvl": 55
+  },
+  "Helix Spear": {
+   "cls": "Spears",
+   "ja": "ヘリックススピア",
+   "lvl": 65
+  },
+  "Wrapped Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "巻き布のクォータースタッフ",
+   "lvl": 1
+  },
+  "Long Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ロングクォータースタッフ",
+   "lvl": 4,
+   "implicits": [
+    {
+     "en": "16% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+    }
+   ]
+  },
+  "Gothic Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ゴシッククォータースタッフ",
+   "lvl": 11
+  },
+  "Crackling Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "放電のクォータースタッフ",
+   "lvl": 16
+  },
+  "Crescent Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "三日月のクォータースタッフ",
+   "lvl": 20
+  },
+  "Steelpoint Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "スチールポイントクォータースタッフ",
+   "lvl": 28
+  },
+  "Slicing Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "斬撃のクォータースタッフ",
+   "lvl": 33
+  },
+  "Barrier Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "防壁のクォータースタッフ",
+   "lvl": 37,
+   "implicits": [
+    {
+     "en": "+(12-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(12-18)%"
+    }
+   ]
+  },
+  "Hefty Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "重厚なクォータースタッフ",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "(20-50)% chance to [Daze] on [Hit]",
+     "ja": "[Hit|ヒット]時に(20-50)%の確率で[Daze|眩暈]を付与する"
+    }
+   ]
+  },
+  "Smooth Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "滑らかなクォータースタッフ",
+   "lvl": 49
+  },
+  "Anima Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "アニマクォータースタッフ",
+   "lvl": 52
+  },
+  "Graceful Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "優雅なクォータースタッフ",
+   "lvl": 56
+  },
+  "Wyrm Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ワームクォータースタッフ",
+   "lvl": 65
+  },
+  "Withered Wand": {
+   "cls": "Wands",
+   "ja": "枯れたワンド",
+   "lvl": 1
+  },
+  "Bone Wand": {
+   "cls": "Wands",
+   "ja": "骨のワンド",
+   "lvl": 2
+  },
+  "Attuned Wand": {
+   "cls": "Wands",
+   "ja": "同調のワンド",
+   "lvl": 2
+  },
+  "Siphoning Wand": {
+   "cls": "Wands",
+   "ja": "吸収のワンド",
+   "lvl": 11
+  },
+  "Volatile Wand": {
+   "cls": "Wands",
+   "ja": "爆発性のワンド",
+   "lvl": 16
+  },
+  "Galvanic Wand": {
+   "cls": "Wands",
+   "ja": "電撃のワンド",
+   "lvl": 25
+  },
+  "Acrid Wand": {
+   "cls": "Wands",
+   "ja": "腐食のワンド",
+   "lvl": 33
+  },
+  "Offering Wand": {
+   "cls": "Wands",
+   "ja": "供物のワンド",
+   "lvl": 38
+  },
+  "Frigid Wand": {
+   "cls": "Wands",
+   "ja": "極寒のワンド",
+   "lvl": 45
+  },
+  "Torture Wand": {
+   "cls": "Wands",
+   "ja": "拷問のワンド",
+   "lvl": 49
+  },
+  "Critical Wand": {
+   "cls": "Wands",
+   "ja": "致命のワンド",
+   "lvl": 52
+  },
+  "Primordial Wand": {
+   "cls": "Wands",
+   "ja": "原始のワンド",
+   "lvl": 56
+  },
+  "Dueling Wand": {
+   "cls": "Wands",
+   "ja": "決闘のワンド",
+   "lvl": 65
+  },
+  "Twisted Wand": {
+   "cls": "Wands",
+   "ja": "捻じれたワンド",
+   "lvl": 65
+  },
+  "Runic Fork": {
+   "cls": "Wands",
+   "ja": "ルーニックフォーク",
+   "lvl": 65
+  },
+  "Runemastered Runic Fork": {
+   "cls": "Wands",
+   "ja": "ルーンマスターのルーニックフォーク",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+300 to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +300"
+    }
+   ]
+  },
+  "Ashen Staff": {
+   "cls": "Staves",
+   "ja": "灰のスタッフ",
+   "lvl": 1
+  },
+  "Gelid Staff": {
+   "cls": "Staves",
+   "ja": "極寒のスタッフ",
+   "lvl": 2
+  },
+  "Voltaic Staff": {
+   "cls": "Staves",
+   "ja": "電撃のスタッフ",
+   "lvl": 2
+  },
+  "Spriggan Staff": {
+   "cls": "Staves",
+   "ja": "スプリガンスタッフ",
+   "lvl": 11
+  },
+  "Pyrophyte Staff": {
+   "cls": "Staves",
+   "ja": "パイロファイトスタッフ",
+   "lvl": 16
+  },
+  "Chiming Staff": {
+   "cls": "Staves",
+   "ja": "鐘鳴のスタッフ",
+   "lvl": 25
+  },
+  "Rending Staff": {
+   "cls": "Staves",
+   "ja": "裂断のスタッフ",
+   "lvl": 33
+  },
+  "Reaping Staff": {
+   "cls": "Staves",
+   "ja": "死神のスタッフ",
+   "lvl": 38
+  },
+  "Icicle Staff": {
+   "cls": "Staves",
+   "ja": "氷柱のスタッフ",
+   "lvl": 45
+  },
+  "Roaring Staff": {
+   "cls": "Staves",
+   "ja": "咆哮のスタッフ",
+   "lvl": 49
+  },
+  "Paralysing Staff": {
+   "cls": "Staves",
+   "ja": "麻痺のスタッフ",
+   "lvl": 52
+  },
+  "Sanctified Staff": {
+   "cls": "Staves",
+   "ja": "聖別のスタッフ",
+   "lvl": 56
+  },
+  "Dark Staff": {
+   "cls": "Staves",
+   "ja": "闇のスタッフ",
+   "lvl": 65
+  },
+  "Ravenous Staff": {
+   "cls": "Staves",
+   "ja": "貪食のスタッフ",
+   "lvl": 65
+  },
+  "Permafrost Staff": {
+   "cls": "Staves",
+   "ja": "氷結のスタッフ",
+   "lvl": 75
+  },
+  "[DNT] Cragbreaker Staff": {
+   "cls": "Staves",
+   "ja": "[DNT] Cragbreaker Staff",
+   "lvl": 11
+  },
+  "Reflecting Staff": {
+   "cls": "Staves",
+   "ja": "反射のスタッフ",
+   "lvl": 70
+  },
+  "Perching Staff": {
+   "cls": "Staves",
+   "ja": "止まり木のスタッフ",
+   "lvl": 65
+  },
+  "[DNT] Driftwood Oar": {
+   "cls": "Staves",
+   "ja": "[DNT] Driftwood Oar",
+   "lvl": 65
+  },
+  "Crude Bow": {
+   "cls": "Bows",
+   "ja": "粗雑な弓",
+   "lvl": 1
+  },
+  "Shortbow": {
+   "cls": "Bows",
+   "ja": "ショートボウ",
+   "lvl": 5
+  },
+  "Warden Bow": {
+   "cls": "Bows",
+   "ja": "監視者の弓",
+   "lvl": 11,
+   "implicits": [
+    {
+     "en": "(25-35)% chance to [Chain] an additional time",
+     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+    }
+   ]
+  },
+  "Recurve Bow": {
+   "cls": "Bows",
+   "ja": "リカーブボウ",
+   "lvl": 16
+  },
+  "Composite Bow": {
+   "cls": "Bows",
+   "ja": "コンポジットボウ",
+   "lvl": 22
+  },
+  "Dualstring Bow": {
+   "cls": "Bows",
+   "ja": "デュアルストリングボウ",
+   "lvl": 28,
+   "implicits": [
+    {
+     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+    }
+   ]
+  },
+  "Cultist Bow": {
+   "cls": "Bows",
+   "ja": "カルト信者の弓",
+   "lvl": 33
+  },
+  "Zealot Bow": {
+   "cls": "Bows",
+   "ja": "狂信者の弓",
+   "lvl": 39
+  },
+  "Artillery Bow": {
+   "cls": "Bows",
+   "ja": "砲兵の弓",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "50% reduced Projectile Range",
+     "ja": "投射物の範囲が50%減少する"
+    }
+   ]
+  },
+  "Tribal Bow": {
+   "cls": "Bows",
+   "ja": "部族の弓",
+   "lvl": 50
+  },
+  "Greatbow": {
+   "cls": "Bows",
+   "ja": "大弓",
+   "lvl": 52
+  },
+  "Double Limb Bow": {
+   "cls": "Bows",
+   "ja": "ダブルリムボウ",
+   "lvl": 56
+  },
+  "Heavy Bow": {
+   "cls": "Bows",
+   "ja": "ヘビーボウ",
+   "lvl": 65
+  },
+  "Makeshift Crossbow": {
+   "cls": "Crossbows",
+   "ja": "間に合わせのクロスボウ",
+   "lvl": 1
+  },
+  "Tense Crossbow": {
+   "cls": "Crossbows",
+   "ja": "張り詰めたクロスボウ",
+   "lvl": 4,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Bolt Speed",
+     "ja": "ボルトのスピードが(20-30)%増加する"
+    }
+   ]
+  },
+  "Sturdy Crossbow": {
+   "cls": "Crossbows",
+   "ja": "頑丈なクロスボウ",
+   "lvl": 10
+  },
+  "Varnished Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ニス塗りのクロスボウ",
+   "lvl": 16
+  },
+  "Dyad Crossbow": {
+   "cls": "Crossbows",
+   "ja": "対のクロスボウ",
+   "lvl": 20,
+   "implicits": [
+    {
+     "en": "Loads an additional bolt",
+     "ja": "ボルトを追加で1本装填する"
+    }
+   ]
+  },
+  "Alloy Crossbow": {
+   "cls": "Crossbows",
+   "ja": "合金のクロスボウ",
+   "lvl": 26
+  },
+  "Bombard Crossbow": {
+   "cls": "Crossbows",
+   "ja": "爆撃のクロスボウ",
+   "lvl": 33,
+   "implicits": [
+    {
+     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
+     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+    }
+   ]
+  },
+  "Construct Crossbow": {
+   "cls": "Crossbows",
+   "ja": "構造化クロスボウ",
+   "lvl": 38
+  },
+  "Blackfire Crossbow": {
+   "cls": "Crossbows",
+   "ja": "黒炎のクロスボウ",
+   "lvl": 45
+  },
+  "Piercing Crossbow": {
+   "cls": "Crossbows",
+   "ja": "貫通のクロスボウ",
+   "lvl": 50,
+   "implicits": [
+    {
+     "en": "(20-30)% chance to [Pierce|Pierce] an Enemy",
+     "ja": "(20-30)%の確率で敵を[Pierce|貫通]する"
+    }
+   ]
+  },
+  "Cumbrous Crossbow": {
+   "cls": "Crossbows",
+   "ja": "煩雑なクロスボウ",
+   "lvl": 52,
+   "implicits": [
+    {
+     "en": "+1 to maximum number of Summoned Ballista Totems",
+     "ja": "バリスタトーテムの最大召喚数 +1"
+    }
+   ]
+  },
+  "Dedalian Crossbow": {
+   "cls": "Crossbows",
+   "ja": "デダリアンクロスボウ",
+   "lvl": 56
+  },
+  "Esoteric Crossbow": {
+   "cls": "Crossbows",
+   "ja": "秘伝のクロスボウ",
+   "lvl": 65
+  },
+  "Rattling Sceptre": {
+   "cls": "Sceptres",
+   "ja": "ラトリングセプター",
+   "lvl": 1
+  },
+  "Stoic Sceptre": {
+   "cls": "Sceptres",
+   "ja": "不動のセプター",
+   "lvl": 6
+  },
+  "Lupine Sceptre": {
+   "cls": "Sceptres",
+   "ja": "オオカミのセプター",
+   "lvl": 12
+  },
+  "Omen Sceptre": {
+   "cls": "Sceptres",
+   "ja": "お告げのセプター",
+   "lvl": 16
+  },
+  "Ochre Sceptre": {
+   "cls": "Sceptres",
+   "ja": "黄土のセプター",
+   "lvl": 21
+  },
+  "Shrine Sceptre": {
+   "cls": "Sceptres",
+   "ja": "神殿のセプター",
+   "lvl": 26
+  },
+  "Devouring Sceptre": {
+   "cls": "Sceptres",
+   "ja": "貪食のセプター",
+   "lvl": 33
+  },
+  "Clasped Sceptre": {
+   "cls": "Sceptres",
+   "ja": "握拳のセプター",
+   "lvl": 36
+  },
+  "Devotional Sceptre": {
+   "cls": "Sceptres",
+   "ja": "信仰のセプター",
+   "lvl": 45
+  },
+  "Wrath Sceptre": {
+   "cls": "Sceptres",
+   "ja": "憤怒のセプター",
+   "lvl": 49
+  },
+  "Aromatic Sceptre": {
+   "cls": "Sceptres",
+   "ja": "芳香のセプター",
+   "lvl": 52
+  },
+  "Pious Sceptre": {
+   "cls": "Sceptres",
+   "ja": "敬虔のセプター",
+   "lvl": 58
+  },
+  "Hallowed Sceptre": {
+   "cls": "Sceptres",
+   "ja": "神聖なセプター",
+   "lvl": 65
+  },
+  "Changeling Talisman": {
+   "cls": "Talismans",
+   "ja": "変身のタリスマン",
+   "lvl": 1
+  },
+  "Nettle Talisman": {
+   "cls": "Talismans",
+   "ja": "イラクサのタリスマン",
+   "lvl": 5
+  },
+  "Cinderbark Talisman": {
+   "cls": "Talismans",
+   "ja": "灰皮のタリスマン",
+   "lvl": 10,
+   "implicits": [
+    {
+     "en": "(50-80)% increased [Flammability] [BuffMagnitude|Magnitude]",
+     "ja": "[Flammability|可燃性]の[BuffMagnitude|強度]が(50-80)%増加する"
+    }
+   ]
+  },
+  "Familial Talisman": {
+   "cls": "Talismans",
+   "ja": "眷属のタリスマン",
+   "lvl": 16,
+   "implicits": [
+    {
+     "en": "[Minion|Minions] deal (30-50)% increased Damage",
+     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+    }
+   ]
+  },
+  "Frenzied Talisman": {
+   "cls": "Talismans",
+   "ja": "狂乱のタリスマン",
+   "lvl": 22
+  },
+  "Primal Talisman": {
+   "cls": "Talismans",
+   "ja": "原始のタリスマン",
+   "lvl": 28,
+   "implicits": [
+    {
+     "en": "+(14-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(14-18)%"
+    }
+   ]
+  },
+  "Rabid Talisman": {
+   "cls": "Talismans",
+   "ja": "狂犬病のタリスマン",
+   "lvl": 34,
+   "implicits": [
+    {
+     "en": "+(7-10) to Maximum [Rage]",
+     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+    }
+   ]
+  },
+  "Vicious Talisman": {
+   "cls": "Talismans",
+   "ja": "獰猛のタリスマン",
+   "lvl": 40
+  },
+  "Voltfang Talisman": {
+   "cls": "Talismans",
+   "ja": "電牙のタリスマン",
+   "lvl": 46,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [BuffMagnitude|Magnitude] of [Shock|Shock] you inflict",
+     "ja": "プレイヤーが付与した[Shock|感電]の[BuffMagnitude|強度]が(20-30)%増加する"
+    }
+   ]
+  },
+  "Lumbering Talisman": {
+   "cls": "Talismans",
+   "ja": "鈍重のタリスマン",
+   "lvl": 52
+  },
+  "Roaring Talisman": {
+   "cls": "Talismans",
+   "ja": "咆哮のタリスマン",
+   "lvl": 58,
+   "implicits": [
+    {
+     "en": "+(7-10) to Maximum [Rage]",
+     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+    }
+   ]
+  },
+  "Wingbeat Talisman": {
+   "cls": "Talismans",
+   "ja": "翼撃のタリスマン",
+   "lvl": 65
+  },
+  "Condemned Talisman": {
+   "cls": "Talismans",
+   "ja": "断罪のタリスマン",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(10-20)% increased Effect of your [Mark] Skills",
+     "ja": "プレイヤーの[Mark|呪印]スキルの効果が(10-20)%増加する"
+    }
+   ]
+  },
+  "Rusted Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "錆びた胴鎧",
+   "lvl": 1
+  },
+  "Fur Plate": {
+   "cls": "Body_Armours",
+   "ja": "毛皮張りのプレート",
+   "lvl": 4
+  },
+  "Iron Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "鉄の胴鎧",
+   "lvl": 11
+  },
+  "Raider Plate": {
+   "cls": "Body_Armours",
+   "ja": "襲撃者のプレート",
+   "lvl": 16
+  },
+  "Maraketh Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "マラケスの胴鎧",
+   "lvl": 20
+  },
+  "Steel Plate": {
+   "cls": "Body_Armours",
+   "ja": "鋼鉄のプレート",
+   "lvl": 27
+  },
+  "Full Plate": {
+   "cls": "Body_Armours",
+   "ja": "フルプレート",
+   "lvl": 33
+  },
+  "Vaal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ヴァールの胴鎧",
+   "lvl": 37
+  },
+  "Juggernaut Plate": {
+   "cls": "Body_Armours",
+   "ja": "ジャガーノートプレート",
+   "lvl": 45
+  },
+  "Chieftain Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "族長の胴鎧",
+   "lvl": 50
+  },
+  "Colosseum Plate": {
+   "cls": "Body_Armours",
+   "ja": "コロシアムプレート",
+   "lvl": 52
+  },
+  "Champion Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "王者の胴鎧",
+   "lvl": 58
+  },
+  "Glorious Plate": {
+   "cls": "Body_Armours",
+   "ja": "栄光のプレート",
+   "lvl": 65
+  },
+  "Conqueror Plate": {
+   "cls": "Body_Armours",
+   "ja": "征服者のプレート",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Abyssal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "深淵の胴鎧",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "Regenerate (1.5-2.5)% of maximum Life per second",
+     "ja": "毎秒ライフの(1.5-2.5)%を自動回復する"
+    }
+   ]
+  },
+  "Leather Vest": {
+   "cls": "Body_Armours",
+   "ja": "革のベスト",
+   "lvl": 1
+  },
+  "Quilted Vest": {
+   "cls": "Body_Armours",
+   "ja": "キルティングベスト",
+   "lvl": 4
+  },
+  "Pathfinder Coat": {
+   "cls": "Body_Armours",
+   "ja": "開拓者のコート",
+   "lvl": 11
+  },
+  "Shrouded Vest": {
+   "cls": "Body_Armours",
+   "ja": "覆い布のベスト",
+   "lvl": 16
+  },
+  "Rhoahide Coat": {
+   "cls": "Body_Armours",
+   "ja": "ロア革のコート",
+   "lvl": 22
+  },
+  "Studded Vest": {
+   "cls": "Body_Armours",
+   "ja": "鋲打ちのベスト",
+   "lvl": 26
+  },
+  "Scout's Vest": {
+   "cls": "Body_Armours",
+   "ja": "偵察者のベスト",
+   "lvl": 33
+  },
+  "Serpentscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "サーペントスケイルコート",
+   "lvl": 36
+  },
+  "Corsair Vest": {
+   "cls": "Body_Armours",
+   "ja": "コルセアのベスト",
+   "lvl": 45
+  },
+  "Smuggler Coat": {
+   "cls": "Body_Armours",
+   "ja": "密輸業者のコート",
+   "lvl": 51
+  },
+  "Strider Vest": {
+   "cls": "Body_Armours",
+   "ja": "ストライダーベスト",
+   "lvl": 52
+  },
+  "Hardleather Coat": {
+   "cls": "Body_Armours",
+   "ja": "ハードレザーコート",
+   "lvl": 56
+  },
+  "Exquisite Vest": {
+   "cls": "Body_Armours",
+   "ja": "精巧なベスト",
+   "lvl": 65
+  },
+  "Mail Coat": {
+   "cls": "Body_Armours",
+   "ja": "メイルコート",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
+     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+    }
+   ]
+  },
+  "Armoured Vest": {
+   "cls": "Body_Armours",
+   "ja": "装甲ベスト",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
+     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Tattered Robe": {
+   "cls": "Body_Armours",
+   "ja": "擦り切れたローブ",
+   "lvl": 1
+  },
+  "Feathered Robe": {
+   "cls": "Body_Armours",
+   "ja": "羽根飾りのローブ",
+   "lvl": 5
+  },
+  "Hexer's Robe": {
+   "cls": "Body_Armours",
+   "ja": "呪術師のローブ",
+   "lvl": 11
+  },
+  "Bone Raiment": {
+   "cls": "Body_Armours",
+   "ja": "骨の装束",
+   "lvl": 16
+  },
+  "Silk Robe": {
+   "cls": "Body_Armours",
+   "ja": "絹のローブ",
+   "lvl": 22
+  },
+  "Keth Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ケスの装束",
+   "lvl": 28
+  },
+  "Votive Raiment": {
+   "cls": "Body_Armours",
+   "ja": "奉献の装束",
+   "lvl": 33
+  },
+  "Altar Robe": {
+   "cls": "Body_Armours",
+   "ja": "祭壇のローブ",
+   "lvl": 40
+  },
+  "Elementalist Robe": {
+   "cls": "Body_Armours",
+   "ja": "エレメンタリストのローブ",
+   "lvl": 45
+  },
+  "Mystic Raiment": {
+   "cls": "Body_Armours",
+   "ja": "神秘の装束",
+   "lvl": 49
+  },
+  "Imperial Robe": {
+   "cls": "Body_Armours",
+   "ja": "帝国のローブ",
+   "lvl": 52
+  },
+  "Plated Raiment": {
+   "cls": "Body_Armours",
+   "ja": "装甲の装束",
+   "lvl": 58
+  },
+  "Havoc Raiment": {
+   "cls": "Body_Armours",
+   "ja": "破壊の装束",
+   "lvl": 65
+  },
+  "Enlightened Robe": {
+   "cls": "Body_Armours",
+   "ja": "覚者のローブ",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(40-50)% increased Mana Regeneration Rate",
+     "ja": "マナ自動回復レートが(40-50)%増加する"
+    }
+   ]
+  },
+  "Arcane Raiment": {
+   "cls": "Body_Armours",
+   "ja": "神秘の装束",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
+     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+    }
+   ]
+  },
+  "Chain Mail": {
+   "cls": "Body_Armours",
+   "ja": "チェインメイル",
+   "lvl": 1
+  },
+  "Rogue Armour": {
+   "cls": "Body_Armours",
+   "ja": "盗賊の鎧",
+   "lvl": 11
+  },
+  "Vagabond Armour": {
+   "cls": "Body_Armours",
+   "ja": "放浪者の鎧",
+   "lvl": 16
+  },
+  "Cloaked Mail": {
+   "cls": "Body_Armours",
+   "ja": "クロークメイル",
+   "lvl": 26
+  },
+  "Explorer Armour": {
+   "cls": "Body_Armours",
+   "ja": "探検家の鎧",
+   "lvl": 33
+  },
+  "Scale Mail": {
+   "cls": "Body_Armours",
+   "ja": "スケイルメイル",
+   "lvl": 37
+  },
+  "Knight Armour": {
+   "cls": "Body_Armours",
+   "ja": "騎士の鎧",
+   "lvl": 45
+  },
+  "Ancestral Mail": {
+   "cls": "Body_Armours",
+   "ja": "先祖のメイル",
+   "lvl": 50
+  },
+  "Lamellar Mail": {
+   "cls": "Body_Armours",
+   "ja": "ラメラーメイル",
+   "lvl": 52
+  },
+  "Gladiator Armour": {
+   "cls": "Body_Armours",
+   "ja": "剣闘士の鎧",
+   "lvl": 58
+  },
+  "Heroic Armour": {
+   "cls": "Body_Armours",
+   "ja": "英雄の鎧",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(60-80) to maximum Life",
+     "ja": "最大ライフ +(60-80)"
+    }
+   ]
+  },
+  "Tournament Mail": {
+   "cls": "Body_Armours",
+   "ja": "トーナメントメイル",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
+     "ja": "[Resistances|雷]耐性 +(20-25)%"
+    }
+   ]
+  },
+  "Slayer Armour": {
+   "cls": "Body_Armours",
+   "ja": "殺戮者の鎧",
+   "lvl": 73
+  },
+  "Pilgrim Vestments": {
+   "cls": "Body_Armours",
+   "ja": "巡礼者の祭服",
+   "lvl": 1
+  },
+  "Pelt Mantle": {
+   "cls": "Body_Armours",
+   "ja": "生皮の外套",
+   "lvl": 10
+  },
+  "Mail Vestments": {
+   "cls": "Body_Armours",
+   "ja": "鎖帷子の祭服",
+   "lvl": 16
+  },
+  "Shaman Mantle": {
+   "cls": "Body_Armours",
+   "ja": "シャーマンの外套",
+   "lvl": 28
+  },
+  "Ironclad Vestments": {
+   "cls": "Body_Armours",
+   "ja": "甲鉄の祭服",
+   "lvl": 33
+  },
+  "Sacrificial Mantle": {
+   "cls": "Body_Armours",
+   "ja": "生贄の外套",
+   "lvl": 36
+  },
+  "Cleric Vestments": {
+   "cls": "Body_Armours",
+   "ja": "聖職者の祭服",
+   "lvl": 45
+  },
+  "Tideseer Mantle": {
+   "cls": "Body_Armours",
+   "ja": "潮読みの外套",
+   "lvl": 51
+  },
+  "Gilded Vestments": {
+   "cls": "Body_Armours",
+   "ja": "金装の祭服",
+   "lvl": 52
+  },
+  "Venerated Mantle": {
+   "cls": "Body_Armours",
+   "ja": "尊者の外套",
+   "lvl": 54
+  },
+  "Revered Vestments": {
+   "cls": "Body_Armours",
+   "ja": "畏敬の祭服",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
+     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+    }
+   ]
+  },
+  "Corvus Mantle": {
+   "cls": "Body_Armours",
+   "ja": "鴉の外套",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(20-30) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(20-30)"
+    }
+   ]
+  },
+  "Zenith Vestments": {
+   "cls": "Body_Armours",
+   "ja": "天頂の祭服",
+   "lvl": 73
+  },
+  "Ornate Ringmail": {
+   "cls": "Body_Armours",
+   "ja": "豪華なリングメイル",
+   "lvl": 43
+  },
+  "Ancient Mail": {
+   "cls": "Body_Armours",
+   "ja": "古代のメイル",
+   "lvl": 70
+  },
+  "Hermit Garb": {
+   "cls": "Body_Armours",
+   "ja": "隠者の衣",
+   "lvl": 1
+  },
+  "Waxed Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ワックスジャケット",
+   "lvl": 11
+  },
+  "Marabout Garb": {
+   "cls": "Body_Armours",
+   "ja": "マラブーの服",
+   "lvl": 16
+  },
+  "Wayfarer Jacket": {
+   "cls": "Body_Armours",
+   "ja": "旅人のジャケット",
+   "lvl": 28
+  },
+  "Anchorite Garb": {
+   "cls": "Body_Armours",
+   "ja": "隠修士の衣",
+   "lvl": 33
+  },
+  "Scalper's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "転売屋のジャケット",
+   "lvl": 39
+  },
+  "Scoundrel Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ならず者のジャケット",
+   "lvl": 45
+  },
+  "Ascetic Garb": {
+   "cls": "Body_Armours",
+   "ja": "禁欲の衣",
+   "lvl": 45
+  },
+  "Clandestine Jacket": {
+   "cls": "Body_Armours",
+   "ja": "隠密のジャケット",
+   "lvl": 52
+  },
+  "Monastic Garb": {
+   "cls": "Body_Armours",
+   "ja": "修道士の服",
+   "lvl": 56
+  },
+  "Torment Jacket": {
+   "cls": "Body_Armours",
+   "ja": "苦痛のジャケット",
+   "lvl": 65
+  },
+  "Devout Garb": {
+   "cls": "Body_Armours",
+   "ja": "信者の服",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+    }
+   ]
+  },
+  "Assassin Garb": {
+   "cls": "Body_Armours",
+   "ja": "暗殺者の服",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Rusted Greathelm": {
+   "cls": "Helmets",
+   "ja": "錆びたグレートヘルム",
+   "lvl": 1
+  },
+  "Soldier Greathelm": {
+   "cls": "Helmets",
+   "ja": "兵士のグレートヘルム",
+   "lvl": 12
+  },
+  "Wrapped Greathelm": {
+   "cls": "Helmets",
+   "ja": "巻き布のグレートヘルム",
+   "lvl": 16
+  },
+  "Spired Greathelm": {
+   "cls": "Helmets",
+   "ja": "尖塔のグレートヘルム",
+   "lvl": 27
+  },
+  "Elite Greathelm": {
+   "cls": "Helmets",
+   "ja": "精鋭のグレートヘルム",
+   "lvl": 33
+  },
+  "Warrior Greathelm": {
+   "cls": "Helmets",
+   "ja": "戦士のグレートヘルム",
+   "lvl": 36
+  },
+  "Commander Greathelm": {
+   "cls": "Helmets",
+   "ja": "指揮官のグレートヘルム",
+   "lvl": 45
+  },
+  "Fierce Greathelm": {
+   "cls": "Helmets",
+   "ja": "獰猛なグレートヘルム",
+   "lvl": 51
+  },
+  "Sentinel Greathelm": {
+   "cls": "Helmets",
+   "ja": "歩哨のグレートヘルム",
+   "lvl": 52
+  },
+  "Goliath Greathelm": {
+   "cls": "Helmets",
+   "ja": "ゴライアスのグレートヘルム",
+   "lvl": 57
+  },
+  "Guardian Greathelm": {
+   "cls": "Helmets",
+   "ja": "守護者のグレートヘルム",
+   "lvl": 65
+  },
+  "Shabby Hood": {
+   "cls": "Helmets",
+   "ja": "擦り切れたフード",
+   "lvl": 1
+  },
+  "Felt Cap": {
+   "cls": "Helmets",
+   "ja": "フェルトの帽子",
+   "lvl": 10
+  },
+  "Lace Hood": {
+   "cls": "Helmets",
+   "ja": "レースのフード",
+   "lvl": 16
+  },
+  "Swathed Cap": {
+   "cls": "Helmets",
+   "ja": "巻き布の帽子",
+   "lvl": 26
+  },
+  "Hunter Hood": {
+   "cls": "Helmets",
+   "ja": "狩人のフード",
+   "lvl": 33
+  },
+  "Viper Cap": {
+   "cls": "Helmets",
+   "ja": "毒蛇の帽子",
+   "lvl": 38
+  },
+  "Corsair Cap": {
+   "cls": "Helmets",
+   "ja": "コルセアの帽子",
+   "lvl": 45
+  },
+  "Leatherbound Hood": {
+   "cls": "Helmets",
+   "ja": "皮張りのフード",
+   "lvl": 50
+  },
+  "Velvet Cap": {
+   "cls": "Helmets",
+   "ja": "ベルベットの帽子",
+   "lvl": 52
+  },
+  "Covert Hood": {
+   "cls": "Helmets",
+   "ja": "隠密のフード",
+   "lvl": 56
+  },
+  "Armoured Cap": {
+   "cls": "Helmets",
+   "ja": "装甲帽子",
+   "lvl": 65
+  },
+  "Twig Circlet": {
+   "cls": "Helmets",
+   "ja": "小枝のサークレット",
+   "lvl": 1
+  },
+  "Wicker Tiara": {
+   "cls": "Helmets",
+   "ja": "枝編みのティアラ",
+   "lvl": 10
+  },
+  "Beaded Circlet": {
+   "cls": "Helmets",
+   "ja": "ビーズのサークレット",
+   "lvl": 16
+  },
+  "Chain Tiara": {
+   "cls": "Helmets",
+   "ja": "鎖のティアラ",
+   "lvl": 26
+  },
+  "Feathered Tiara": {
+   "cls": "Helmets",
+   "ja": "羽根付きのティアラ",
+   "lvl": 33
+  },
+  "Gold Circlet": {
+   "cls": "Helmets",
+   "ja": "金のサークレット",
+   "lvl": 40
+  },
+  "Vermeil Circlet": {
+   "cls": "Helmets",
+   "ja": "ヴァーミルサークレット",
+   "lvl": 45
+  },
+  "Jade Tiara": {
+   "cls": "Helmets",
+   "ja": "翡翠のティアラ",
+   "lvl": 50
+  },
+  "Noble Circlet": {
+   "cls": "Helmets",
+   "ja": "貴族のサークレット",
+   "lvl": 52
+  },
+  "Twilight Tiara": {
+   "cls": "Helmets",
+   "ja": "黄昏のティアラ",
+   "lvl": 58
+  },
+  "Magus Tiara": {
+   "cls": "Helmets",
+   "ja": "魔導士のティアラ",
+   "lvl": 65
+  },
+  "Brimmed Helm": {
+   "cls": "Helmets",
+   "ja": "つば付き兜",
+   "lvl": 5
+  },
+  "Guarded Helm": {
+   "cls": "Helmets",
+   "ja": "防護兜",
+   "lvl": 11
+  },
+  "Visored Helm": {
+   "cls": "Helmets",
+   "ja": "バイザー付き兜",
+   "lvl": 16
+  },
+  "Cowled Helm": {
+   "cls": "Helmets",
+   "ja": "頭巾付き兜",
+   "lvl": 26
+  },
+  "Shielded Helm": {
+   "cls": "Helmets",
+   "ja": "盾付き兜",
+   "lvl": 33
+  },
+  "Closed Helm": {
+   "cls": "Helmets",
+   "ja": "クローズヘルム",
+   "lvl": 45
+  },
+  "Decorated Helm": {
+   "cls": "Helmets",
+   "ja": "装飾兜",
+   "lvl": 52
+  },
+  "Gallant Helm": {
+   "cls": "Helmets",
+   "ja": "勇士のヘルム",
+   "lvl": 65
+  },
+  "Ancient Visor": {
+   "cls": "Helmets",
+   "ja": "古代のバイザー",
+   "lvl": 65
+  },
+  "Iron Crown": {
+   "cls": "Helmets",
+   "ja": "鉄の冠",
+   "lvl": 5
+  },
+  "Horned Crown": {
+   "cls": "Helmets",
+   "ja": "角の冠",
+   "lvl": 10
+  },
+  "Cultist Crown": {
+   "cls": "Helmets",
+   "ja": "カルト信者の冠",
+   "lvl": 16
+  },
+  "Martyr Crown": {
+   "cls": "Helmets",
+   "ja": "殉教者の冠",
+   "lvl": 28
+  },
+  "Heavy Crown": {
+   "cls": "Helmets",
+   "ja": "重装の冠",
+   "lvl": 33
+  },
+  "Spiritbone Crown": {
+   "cls": "Helmets",
+   "ja": "スピリットボーンの冠",
+   "lvl": 45
+  },
+  "Lavish Crown": {
+   "cls": "Helmets",
+   "ja": "豪華な冠",
+   "lvl": 52
+  },
+  "Archon Crown": {
+   "cls": "Helmets",
+   "ja": "アルコンの冠",
+   "lvl": 65
+  },
+  "Tenebrous Crown": {
+   "cls": "Helmets",
+   "ja": "暗影の冠",
+   "lvl": 65
+  },
+  "Hewn Mask": {
+   "cls": "Helmets",
+   "ja": "粗削りの仮面",
+   "lvl": 5
+  },
+  "Face Mask": {
+   "cls": "Helmets",
+   "ja": "フェースマスク",
+   "lvl": 10
+  },
+  "Hooded Mask": {
+   "cls": "Helmets",
+   "ja": "フード付きの仮面",
+   "lvl": 16
+  },
+  "Veiled Mask": {
+   "cls": "Helmets",
+   "ja": "ベール付きの仮面",
+   "lvl": 28
+  },
+  "Tribal Mask": {
+   "cls": "Helmets",
+   "ja": "部族の仮面",
+   "lvl": 33
+  },
+  "Solid Mask": {
+   "cls": "Helmets",
+   "ja": "頑丈な仮面",
+   "lvl": 45
+  },
+  "Shaded Mask": {
+   "cls": "Helmets",
+   "ja": "遮光の仮面",
+   "lvl": 52
+  },
+  "Death Mask": {
+   "cls": "Helmets",
+   "ja": "デスマスク",
+   "lvl": 65
+  },
+  "Stocky Mitts": {
+   "cls": "Gloves",
+   "ja": "がっしりとしたミット",
+   "lvl": 1
+  },
+  "Riveted Mitts": {
+   "cls": "Gloves",
+   "ja": "リベット付きミット",
+   "lvl": 11
+  },
+  "Tempered Mitts": {
+   "cls": "Gloves",
+   "ja": "焼き入れミット",
+   "lvl": 16
+  },
+  "Bolstered Mitts": {
+   "cls": "Gloves",
+   "ja": "補強ミット",
+   "lvl": 27
+  },
+  "Moulded Mitts": {
+   "cls": "Gloves",
+   "ja": "成形ミット",
+   "lvl": 33
+  },
+  "Detailed Mitts": {
+   "cls": "Gloves",
+   "ja": "精巧なミット",
+   "lvl": 45
+  },
+  "Titan Mitts": {
+   "cls": "Gloves",
+   "ja": "タイタンのミット",
+   "lvl": 52
+  },
+  "Grand Mitts": {
+   "cls": "Gloves",
+   "ja": "大いなるミット",
+   "lvl": 65
+  },
+  "Suede Bracers": {
+   "cls": "Gloves",
+   "ja": "スエードの弓籠手",
+   "lvl": 1
+  },
+  "Firm Bracers": {
+   "cls": "Gloves",
+   "ja": "頑丈な弓籠手",
+   "lvl": 11
+  },
+  "Bound Bracers": {
+   "cls": "Gloves",
+   "ja": "固定式の弓籠手",
+   "lvl": 16
+  },
+  "Sectioned Bracers": {
+   "cls": "Gloves",
+   "ja": "分割式の弓籠手",
+   "lvl": 28
+  },
+  "Spined Bracers": {
+   "cls": "Gloves",
+   "ja": "針付きの弓籠手",
+   "lvl": 33
+  },
+  "Fine Bracers": {
+   "cls": "Gloves",
+   "ja": "上質な弓籠手",
+   "lvl": 45
+  },
+  "Hardened Bracers": {
+   "cls": "Gloves",
+   "ja": "焼き入れの弓籠手",
+   "lvl": 52
+  },
+  "Engraved Bracers": {
+   "cls": "Gloves",
+   "ja": "彫刻の弓籠手",
+   "lvl": 65
+  },
+  "Torn Gloves": {
+   "cls": "Gloves",
+   "ja": "破れた手袋",
+   "lvl": 1
+  },
+  "Sombre Gloves": {
+   "cls": "Gloves",
+   "ja": "陰鬱な手袋",
+   "lvl": 12
+  },
+  "Stitched Gloves": {
+   "cls": "Gloves",
+   "ja": "縫い合わせの手袋",
+   "lvl": 16
+  },
+  "Jewelled Gloves": {
+   "cls": "Gloves",
+   "ja": "宝石をあしらった手袋",
+   "lvl": 26
+  },
+  "Intricate Gloves": {
+   "cls": "Gloves",
+   "ja": "手の込んだ手袋",
+   "lvl": 33
+  },
+  "Pauascale Gloves": {
+   "cls": "Gloves",
+   "ja": "パウアスケール手袋",
+   "lvl": 45
+  },
+  "Embroidered Gloves": {
+   "cls": "Gloves",
+   "ja": "刺繍入りの手袋",
+   "lvl": 52
+  },
+  "Adorned Gloves": {
+   "cls": "Gloves",
+   "ja": "装飾の手袋",
+   "lvl": 65
+  },
+  "Ringmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "リングメイルガントレット",
+   "lvl": 6
+  },
+  "Layered Gauntlets": {
+   "cls": "Gloves",
+   "ja": "層状のガントレット",
+   "lvl": 16
+  },
+  "Doubled Gauntlets": {
+   "cls": "Gloves",
+   "ja": "二重のガントレット",
+   "lvl": 33
+  },
+  "Plate Gauntlets": {
+   "cls": "Gloves",
+   "ja": "プレートガントレット",
+   "lvl": 45
+  },
+  "Burnished Gauntlets": {
+   "cls": "Gloves",
+   "ja": "研磨されたガントレット",
+   "lvl": 52
+  },
+  "Ornate Gauntlets": {
+   "cls": "Gloves",
+   "ja": "装飾のガントレット",
+   "lvl": 65
+  },
+  "Ancient Gauntlets": {
+   "cls": "Gloves",
+   "ja": "古代のガントレット",
+   "lvl": 70
+  },
+  "Rope Cuffs": {
+   "cls": "Gloves",
+   "ja": "縄のカフス",
+   "lvl": 5
+  },
+  "Aged Cuffs": {
+   "cls": "Gloves",
+   "ja": "年季の入ったカフス",
+   "lvl": 16
+  },
+  "Goldcast Cuffs": {
+   "cls": "Gloves",
+   "ja": "金鋳造のカフス",
+   "lvl": 33
+  },
+  "Kalguuran Cuffs": {
+   "cls": "Gloves",
+   "ja": "カルグールのカフス",
+   "lvl": 45
+  },
+  "Righteous Cuffs": {
+   "cls": "Gloves",
+   "ja": "正義のカフス",
+   "lvl": 52
+  },
+  "Signet Cuffs": {
+   "cls": "Gloves",
+   "ja": "印章のカフス",
+   "lvl": 65
+  },
+  "Gauze Wraps": {
+   "cls": "Gloves",
+   "ja": "薄布のラップ",
+   "lvl": 4
+  },
+  "Linen Wraps": {
+   "cls": "Gloves",
+   "ja": "リネンのラップ",
+   "lvl": 16
+  },
+  "Spiral Wraps": {
+   "cls": "Gloves",
+   "ja": "スパイラルラップ",
+   "lvl": 33
+  },
+  "Buckled Wraps": {
+   "cls": "Gloves",
+   "ja": "バックル付きのラップ",
+   "lvl": 45
+  },
+  "Furtive Wraps": {
+   "cls": "Gloves",
+   "ja": "隠密のラップ",
+   "lvl": 52
+  },
+  "Utility Wraps": {
+   "cls": "Gloves",
+   "ja": "実用的なラップ",
+   "lvl": 65
+  },
+  "Rough Greaves": {
+   "cls": "Boots",
+   "ja": "粗末なグリーヴ",
+   "lvl": 1
+  },
+  "Iron Greaves": {
+   "cls": "Boots",
+   "ja": "鉄のグリーヴ",
+   "lvl": 11
+  },
+  "Bronze Greaves": {
+   "cls": "Boots",
+   "ja": "青銅のグリーヴ",
+   "lvl": 16
+  },
+  "Trimmed Greaves": {
+   "cls": "Boots",
+   "ja": "縁取りのグリーヴ",
+   "lvl": 27
+  },
+  "Stone Greaves": {
+   "cls": "Boots",
+   "ja": "石のグリーヴ",
+   "lvl": 33
+  },
+  "Reefsteel Greaves": {
+   "cls": "Boots",
+   "ja": "リーフスチールグリーヴ",
+   "lvl": 45
+  },
+  "Monument Greaves": {
+   "cls": "Boots",
+   "ja": "モニュメントグリーヴ",
+   "lvl": 52
+  },
+  "Totemic Greaves": {
+   "cls": "Boots",
+   "ja": "トーテムのグリーヴ",
+   "lvl": 65
+  },
+  "Rawhide Boots": {
+   "cls": "Boots",
+   "ja": "生皮のブーツ",
+   "lvl": 1
+  },
+  "Laced Boots": {
+   "cls": "Boots",
+   "ja": "レースのブーツ",
+   "lvl": 11
+  },
+  "Embossed Boots": {
+   "cls": "Boots",
+   "ja": "エンボスのブーツ",
+   "lvl": 16
+  },
+  "Steeltoe Boots": {
+   "cls": "Boots",
+   "ja": "鋼製つま先ブーツ",
+   "lvl": 28
+  },
+  "Lizardscale Boots": {
+   "cls": "Boots",
+   "ja": "リザードスケールブーツ",
+   "lvl": 33
+  },
+  "Flared Boots": {
+   "cls": "Boots",
+   "ja": "フレアブーツ",
+   "lvl": 45
+  },
+  "Leatherplate Boots": {
+   "cls": "Boots",
+   "ja": "レザープレートブーツ",
+   "lvl": 52
+  },
+  "Embroidered Boots": {
+   "cls": "Boots",
+   "ja": "刺繍入りブーツ",
+   "lvl": 65
+  },
+  "Straw Sandals": {
+   "cls": "Boots",
+   "ja": "麦わらのサンダル",
+   "lvl": 1
+  },
+  "Wrapped Sandals": {
+   "cls": "Boots",
+   "ja": "巻き布のサンダル",
+   "lvl": 11
+  },
+  "Lattice Sandals": {
+   "cls": "Boots",
+   "ja": "格子のサンダル",
+   "lvl": 16
+  },
+  "Silk Slippers": {
+   "cls": "Boots",
+   "ja": "シルクの履物",
+   "lvl": 27
+  },
+  "Feathered Sandals": {
+   "cls": "Boots",
+   "ja": "羽根付きのサンダル",
+   "lvl": 33
+  },
+  "Flax Sandals": {
+   "cls": "Boots",
+   "ja": "亜麻のサンダル",
+   "lvl": 45
+  },
+  "Studded Sandals": {
+   "cls": "Boots",
+   "ja": "鋲付きのサンダル",
+   "lvl": 52
+  },
+  "Elaborate Sandals": {
+   "cls": "Boots",
+   "ja": "精巧なサバトン",
+   "lvl": 65
+  },
+  "Mail Sabatons": {
+   "cls": "Boots",
+   "ja": "メイルサバトン",
+   "lvl": 6
+  },
+  "Braced Sabatons": {
+   "cls": "Boots",
+   "ja": "補強されたサバトン",
+   "lvl": 16
+  },
+  "Stacked Sabatons": {
+   "cls": "Boots",
+   "ja": "多層サバトン",
+   "lvl": 33
+  },
+  "Covered Sabatons": {
+   "cls": "Boots",
+   "ja": "覆い付きのサバトン",
+   "lvl": 45
+  },
+  "Flexile Sabatons": {
+   "cls": "Boots",
+   "ja": "柔軟なサバトン",
+   "lvl": 52
+  },
+  "Bold Sabatons": {
+   "cls": "Boots",
+   "ja": "剛胆なサバトン",
+   "lvl": 65
+  },
+  "Padded Leggings": {
+   "cls": "Boots",
+   "ja": "パッド入りのレギンス",
+   "lvl": 5
+  },
+  "Secured Leggings": {
+   "cls": "Boots",
+   "ja": "留め具付きのレギンス",
+   "lvl": 16
+  },
+  "Pelt Leggings": {
+   "cls": "Boots",
+   "ja": "獣皮のレギンス",
+   "lvl": 33
+  },
+  "Weaver Leggings": {
+   "cls": "Boots",
+   "ja": "織り手のレギンス",
+   "lvl": 45
+  },
+  "Gilt Leggings": {
+   "cls": "Boots",
+   "ja": "金装のレギンス",
+   "lvl": 52
+  },
+  "Pious Leggings": {
+   "cls": "Boots",
+   "ja": "敬虔なレギンス",
+   "lvl": 65
+  },
+  "Ancient Leggings": {
+   "cls": "Boots",
+   "ja": "古代のレギンス",
+   "lvl": 65
+  },
+  "Frayed Shoes": {
+   "cls": "Boots",
+   "ja": "擦り切れた靴",
+   "lvl": 5
+  },
+  "Threaded Shoes": {
+   "cls": "Boots",
+   "ja": "スレッドシューズ",
+   "lvl": 16
+  },
+  "Hunting Shoes": {
+   "cls": "Boots",
+   "ja": "ハンティングシューズ",
+   "lvl": 33
+  },
+  "Steelpoint Shoes": {
+   "cls": "Boots",
+   "ja": "スチールポイントシューズ",
+   "lvl": 45
+  },
+  "Velour Shoes": {
+   "cls": "Boots",
+   "ja": "ベロアシューズ",
+   "lvl": 52
+  },
+  "Bladed Shoes": {
+   "cls": "Boots",
+   "ja": "刃付きシューズ",
+   "lvl": 65
+  },
+  "Splintered Tower Shield": {
+   "cls": "Shields",
+   "ja": "割れたタワーシールド",
+   "lvl": 1
+  },
+  "Painted Tower Shield": {
+   "cls": "Shields",
+   "ja": "彩色のタワーシールド",
+   "lvl": 6
+  },
+  "Braced Tower Shield": {
+   "cls": "Shields",
+   "ja": "補強のタワーシールド",
+   "lvl": 12
+  },
+  "Barricade Tower Shield": {
+   "cls": "Shields",
+   "ja": "防壁のタワーシールド",
+   "lvl": 16
+  },
+  "Effigial Tower Shield": {
+   "cls": "Shields",
+   "ja": "立像のタワーシールド",
+   "lvl": 21
+  },
+  "Rampart Tower Shield": {
+   "cls": "Shields",
+   "ja": "城壁のタワーシールド",
+   "lvl": 28
+  },
+  "Heraldric Tower Shield": {
+   "cls": "Shields",
+   "ja": "紋章のタワーシールド",
+   "lvl": 33
+  },
+  "Stone Tower Shield": {
+   "cls": "Shields",
+   "ja": "石のタワーシールド",
+   "lvl": 36
+  },
+  "Crucible Tower Shield": {
+   "cls": "Shields",
+   "ja": "試練のタワーシールド",
+   "lvl": 45
+  },
+  "Ancestor Tower Shield": {
+   "cls": "Shields",
+   "ja": "先祖のタワーシールド",
+   "lvl": 50
+  },
+  "Phalanx Tower Shield": {
+   "cls": "Shields",
+   "ja": "ファランクスのタワーシールド",
+   "lvl": 52
+  },
+  "Defiant Tower Shield": {
+   "cls": "Shields",
+   "ja": "反抗のタワーシールド",
+   "lvl": 58
+  },
+  "Blacksteel Tower Shield": {
+   "cls": "Shields",
+   "ja": "黒鉄のタワーシールド",
+   "lvl": 65
+  },
+  "Hardwood Targe": {
+   "cls": "Shields",
+   "ja": "堅木のタージ",
+   "lvl": 1
+  },
+  "Pelage Targe": {
+   "cls": "Shields",
+   "ja": "毛皮のタージ",
+   "lvl": 8
+  },
+  "Studded Targe": {
+   "cls": "Shields",
+   "ja": "鋲付きのタージ",
+   "lvl": 16
+  },
+  "Crescent Targe": {
+   "cls": "Shields",
+   "ja": "三日月のタージ",
+   "lvl": 26
+  },
+  "Chiseled Targe": {
+   "cls": "Shields",
+   "ja": "彫り込みのあるタージ",
+   "lvl": 33
+  },
+  "Feathered Targe": {
+   "cls": "Shields",
+   "ja": "羽根付きのタージ",
+   "lvl": 37
+  },
+  "Stratified Targe": {
+   "cls": "Shields",
+   "ja": "重層タージ",
+   "lvl": 46
+  },
+  "Carved Targe": {
+   "cls": "Shields",
+   "ja": "彫刻のタージ",
+   "lvl": 51
+  },
+  "Mosaic Targe": {
+   "cls": "Shields",
+   "ja": "モザイクタージ",
+   "lvl": 52
+  },
+  "Aureate Targe": {
+   "cls": "Shields",
+   "ja": "金色のタージ",
+   "lvl": 57
+  },
+  "Grand Targe": {
+   "cls": "Shields",
+   "ja": "大いなるタージ",
+   "lvl": 65
+  },
+  "Blazon Crest Shield": {
+   "cls": "Shields",
+   "ja": "家紋のクレストシールド",
+   "lvl": 1
+  },
+  "Sigil Crest Shield": {
+   "cls": "Shields",
+   "ja": "刻印のクレストシールド",
+   "lvl": 7
+  },
+  "Emblem Crest Shield": {
+   "cls": "Shields",
+   "ja": "紋章のクレストシールド",
+   "lvl": 16
+  },
+  "Jingling Crest Shield": {
+   "cls": "Shields",
+   "ja": "鈴音のクレストシールド",
+   "lvl": 28
+  },
+  "Sectarian Crest Shield": {
+   "cls": "Shields",
+   "ja": "教団のクレストシールド",
+   "lvl": 33
+  },
+  "Omen Crest Shield": {
+   "cls": "Shields",
+   "ja": "お告げのクレストシールド",
+   "lvl": 36
+  },
+  "Wayward Crest Shield": {
+   "cls": "Shields",
+   "ja": "気まぐれなクレストシールド",
+   "lvl": 45
+  },
+  "Seer Crest Shield": {
+   "cls": "Shields",
+   "ja": "先見のクレストシールド",
+   "lvl": 50
+  },
+  "Stoic Crest Shield": {
+   "cls": "Shields",
+   "ja": "不動のクレストシールド",
+   "lvl": 52
+  },
+  "Empyreal Crest Shield": {
+   "cls": "Shields",
+   "ja": "天上のクレストシールド",
+   "lvl": 57
+  },
+  "Deified Crest Shield": {
+   "cls": "Shields",
+   "ja": "神聖なクレストシールド",
+   "lvl": 65
+  },
+  "Leather Buckler": {
+   "cls": "Bucklers",
+   "ja": "革のバックラー",
+   "lvl": 1
+  },
+  "Wooden Buckler": {
+   "cls": "Bucklers",
+   "ja": "木のバックラー",
+   "lvl": 5
+  },
+  "Plated Buckler": {
+   "cls": "Bucklers",
+   "ja": "プレートバックラー",
+   "lvl": 11
+  },
+  "Iron Buckler": {
+   "cls": "Bucklers",
+   "ja": "鉄のバックラー",
+   "lvl": 16
+  },
+  "Ridged Buckler": {
+   "cls": "Bucklers",
+   "ja": "リッジバックラー",
+   "lvl": 22
+  },
+  "Spiked Buckler": {
+   "cls": "Bucklers",
+   "ja": "トゲ付きのバックラー",
+   "lvl": 26
+  },
+  "Ringed Buckler": {
+   "cls": "Bucklers",
+   "ja": "リングバックラー",
+   "lvl": 33
+  },
+  "Edged Buckler": {
+   "cls": "Bucklers",
+   "ja": "エッジバックラー",
+   "lvl": 39
+  },
+  "Laminate Buckler": {
+   "cls": "Bucklers",
+   "ja": "ラミネートバックラー",
+   "lvl": 45
+  },
+  "Pearl Buckler": {
+   "cls": "Bucklers",
+   "ja": "真珠のバックラー",
+   "lvl": 50
+  },
+  "Ornate Buckler": {
+   "cls": "Bucklers",
+   "ja": "華美なバックラー",
+   "lvl": 65
+  },
+  "Array Buckler": {
+   "cls": "Bucklers",
+   "ja": "整列のフォーカス",
+   "lvl": 55
+  },
+  "Aegis Buckler": {
+   "cls": "Bucklers",
+   "ja": "イージスバックラー",
+   "lvl": 65
+  },
+  "Twig Focus": {
+   "cls": "Foci",
+   "ja": "小枝のフォーカス",
+   "lvl": 1
+  },
+  "Woven Focus": {
+   "cls": "Foci",
+   "ja": "編み物のフォーカス",
+   "lvl": 6
+  },
+  "Antler Focus": {
+   "cls": "Foci",
+   "ja": "枝角のフォーカス",
+   "lvl": 10
+  },
+  "Engraved Focus": {
+   "cls": "Foci",
+   "ja": "彫刻のフォーカス",
+   "lvl": 16
+  },
+  "Tonal Focus": {
+   "cls": "Foci",
+   "ja": "調性のフォーカス",
+   "lvl": 22
+  },
+  "Crystal Focus": {
+   "cls": "Foci",
+   "ja": "結晶のフォーカス",
+   "lvl": 26
+  },
+  "Voodoo Focus": {
+   "cls": "Foci",
+   "ja": "ブードゥーフォーカス",
+   "lvl": 33
+  },
+  "Plumed Focus": {
+   "cls": "Foci",
+   "ja": "羽飾りのフォーカス",
+   "lvl": 36
+  },
+  "Runed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンのフォーカス",
+   "lvl": 45
+  },
+  "Whorl Focus": {
+   "cls": "Foci",
+   "ja": "渦巻のフォーカス",
+   "lvl": 51
+  },
+  "Elegant Focus": {
+   "cls": "Foci",
+   "ja": "エレガントフォーカス",
+   "lvl": 52
+  },
+  "Attuned Focus": {
+   "cls": "Foci",
+   "ja": "調和のフォーカス",
+   "lvl": 57
+  },
+  "Magus Focus": {
+   "cls": "Foci",
+   "ja": "魔導士のフォーカス",
+   "lvl": 65
+  },
+  "Broadhead Quiver": {
+   "cls": "Quivers",
+   "ja": "太矢じりの矢筒",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "Adds 1 to 3 [Physical|Physical] Damage to [Attack|Attacks]",
+     "ja": "1から3の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+    }
+   ]
+  },
+  "Fire Quiver": {
+   "cls": "Quivers",
+   "ja": "火の矢筒",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "Adds 3 to 5 [Fire] damage to [Attack|Attacks]",
+     "ja": "3から5の[Fire|火]ダメージを[Attack|アタック]に追加する"
+    }
+   ]
+  },
+  "Sacral Quiver": {
+   "cls": "Quivers",
+   "ja": "神聖な矢筒",
+   "lvl": 16,
+   "implicits": [
+    {
+     "en": "Gain (2-3) Life per Enemy Hit with [Attack|Attacks]",
+     "ja": "[Attack|アタック]でヒットを与えた敵1体ごとに(2-3)のライフを獲得する"
+    }
+   ]
+  },
+  "Two-Point Quiver": {
+   "cls": "Quivers",
+   "ja": "二股の矢筒",
+   "lvl": 24,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [Accuracy] Rating",
+     "ja": "グローバル[Accuracy|命中]力が(20-30)%増加する"
+    }
+   ]
+  },
+  "Blunt Quiver": {
+   "cls": "Quivers",
+   "ja": "鈍頭の矢筒",
+   "lvl": 33,
+   "implicits": [
+    {
+     "en": "(25-40)% increased [Stun] Buildup",
+     "ja": "[Stun|スタン]蓄積が(25-40)%増加する"
+    }
+   ]
+  },
+  "Toxic Quiver": {
+   "cls": "Quivers",
+   "ja": "毒の矢筒",
+   "lvl": 39,
+   "implicits": [
+    {
+     "en": "(20-30)% chance to Poison on Hit with [Attack|Attacks]",
+     "ja": "[Attack|アタック]によるヒット時に(20-30)%の確率で毒を付与する"
+    }
+   ]
+  },
+  "Serrated Quiver": {
+   "cls": "Quivers",
+   "ja": "鋸歯の矢筒",
+   "lvl": 44,
+   "implicits": [
+    {
+     "en": "[Attack|Attacks] have (20-30)% chance to cause [Bleeding|Bleeding]",
+     "ja": "[Attack|アタック]は(20-30)%の確率で[Bleeding|出血]を付与する"
+    }
+   ]
+  },
+  "Primed Quiver": {
+   "cls": "Quivers",
+   "ja": "臨戦の矢筒",
+   "lvl": 51,
+   "implicits": [
+    {
+     "en": "(7-10)% increased [Attack] Speed",
+     "ja": "[Attack|アタック]スピードが(7-10)%増加する"
+    }
+   ]
+  },
+  "Penetrating Quiver": {
+   "cls": "Quivers",
+   "ja": "貫通の矢筒",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "100% chance to [Pierce|Pierce] an Enemy",
+     "ja": "100%の確率で敵を[Pierce|貫通]する"
+    }
+   ]
+  },
+  "Volant Quiver": {
+   "cls": "Quivers",
+   "ja": "高速の矢筒",
+   "lvl": 61,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Arrow Speed",
+     "ja": "矢のスピードが(20-30)%増加する"
+    }
+   ]
+  },
+  "Visceral Quiver": {
+   "cls": "Quivers",
+   "ja": "血生臭い矢筒",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [Critical|Critical Hit Chance] for [Attack|Attacks]",
+     "ja": "[Attack|アタック]の[Critical|クリティカルヒット率]が(20-30)%増加する"
+    }
+   ]
+  },
+  "Crimson Amulet": {
+   "cls": "Amulets",
+   "ja": "深紅のアミュレット",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "(2-4) Life Regeneration per second",
+     "ja": "毎秒(2-4)のライフを自動回復する"
+    }
+   ]
+  },
+  "Azure Amulet": {
+   "cls": "Amulets",
+   "ja": "深青のアミュレット",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Mana Regeneration Rate",
+     "ja": "マナ自動回復レートが(20-30)%増加する"
+    }
+   ]
+  },
+  "Amber Amulet": {
+   "cls": "Amulets",
+   "ja": "琥珀のアミュレット",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "+(10-15) to [Strength|Strength]",
+     "ja": "[Strength|筋力] +(10-15)"
+    }
+   ]
+  },
+  "Jade Amulet": {
+   "cls": "Amulets",
+   "ja": "翡翠のアミュレット",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "+(10-15) to [Dexterity|Dexterity]",
+     "ja": "[Dexterity|器用さ] +(10-15)"
+    }
+   ]
+  },
+  "Lapis Amulet": {
+   "cls": "Amulets",
+   "ja": "瑠璃のアミュレット",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "+(10-15) to [Intelligence|Intelligence]",
+     "ja": "[Intelligence|知性] +(10-15)"
+    }
+   ]
+  },
+  "Lunar Amulet": {
+   "cls": "Amulets",
+   "ja": "月のアミュレット",
+   "lvl": 14,
+   "implicits": [
+    {
+     "en": "+(20-30) to maximum [EnergyShield|Energy Shield]",
+     "ja": "最大[EnergyShield|エナジーシールド] +(20-30)"
+    }
+   ]
+  },
+  "Bloodstone Amulet": {
+   "cls": "Amulets",
+   "ja": "血石のアミュレット",
+   "lvl": 18,
+   "implicits": [
+    {
+     "en": "+(30-40) to maximum Life",
+     "ja": "最大ライフ +(30-40)"
+    }
+   ]
+  },
+  "Stellar Amulet": {
+   "cls": "Amulets",
+   "ja": "星のアミュレット",
+   "lvl": 25,
+   "implicits": [
+    {
+     "en": "+(5-7) to all [Attributes|Attributes]",
+     "ja": "全ての[Attributes|能力値] +(5-7)"
+    }
+   ]
+  },
+  "Solar Amulet": {
+   "cls": "Amulets",
+   "ja": "太陽のアミュレット",
+   "lvl": 30,
+   "implicits": [
+    {
+     "en": "+(10-15) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(10-15)"
+    }
+   ]
+  },
+  "Gold Amulet": {
+   "cls": "Amulets",
+   "ja": "金のアミュレット",
+   "lvl": 35,
+   "implicits": [
+    {
+     "en": "(12-20)% increased [ItemRarity|Rarity of Items] found",
+     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(12-20)%増加する"
+    }
+   ]
+  },
+  "Pearlescent Amulet": {
+   "cls": "Amulets",
+   "ja": "真珠のアミュレット",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "+(7-10)% to all [ElementalDamage|Elemental] [Resistances]",
+     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(7-10)%"
+    }
+   ]
+  },
+  "Veridical Chain": {
+   "cls": "Amulets",
+   "ja": "真実の鎖",
+   "lvl": 52,
+   "implicits": [
+    {
+     "en": "+(30-40) to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +(30-40)"
+    }
+   ]
+  },
+  "Runemastered Veridical Chain": {
+   "cls": "Amulets",
+   "ja": "ルーンマスターの真実の鎖",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(15-20)% increased maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード]が(15-20)%増加する"
+    }
+   ]
+  },
+  "Lament Amulet": {
+   "cls": "Amulets",
+   "ja": "悲嘆のアミュレット",
+   "lvl": 42,
+   "limits": {
+    "prefixes": 2,
+    "suffixes": 3
+   },
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed\n0 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド -1個\nサフィックスモッド 0個"
+    }
+   ]
+  },
+  "Portent Amulet": {
+   "cls": "Amulets",
+   "ja": "前兆のアミュレット",
+   "lvl": 42,
+   "limits": {
+    "prefixes": 3,
+    "suffixes": 2
+   },
+   "implicits": [
+    {
+     "en": "0 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド 0個\nサフィックスモッド -1個"
+    }
+   ]
+  },
+  "Absent Amulet": {
+   "cls": "Amulets",
+   "ja": "不在のアミュレット",
+   "lvl": 50,
+   "limits": {
+    "prefixes": 2,
+    "suffixes": 2
+   },
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド -1個\nサフィックスモッド -1個"
+    }
+   ]
+  },
+  "Corona Amulet": {
+   "cls": "Amulets",
+   "ja": "コロナアミュレット",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "This item gains bonuses from Socketed Items as though it was a Helmet",
+     "ja": "このアイテムはソケットされたアイテムからそれが兜にソケットされているかのように仮定してボーナスを獲得する"
+    }
+   ]
+  },
+  "Iron Ring": {
+   "cls": "Rings",
+   "ja": "鉄の指輪",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "Adds 1 to 4 [Physical|Physical] Damage to [Attack|Attacks]",
+     "ja": "1から4の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+    }
+   ]
+  },
+  "Lazuli Ring": {
+   "cls": "Rings",
+   "ja": "青金石の指輪",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "+(20-30) to maximum Mana",
+     "ja": "最大マナ +(20-30)"
+    }
+   ]
+  },
+  "Ruby Ring": {
+   "cls": "Rings",
+   "ja": "ルビーの指輪",
+   "lvl": 8,
+   "implicits": [
+    {
+     "en": "+(20-30)% to [Resistances|Fire Resistance]",
+     "ja": "[Resistances|火]耐性 +(20-30)%"
+    }
+   ]
+  },
+  "Sapphire Ring": {
+   "cls": "Rings",
+   "ja": "サファイアの指輪",
+   "lvl": 12,
+   "implicits": [
+    {
+     "en": "+(20-30)% to [Resistances|Cold Resistance]",
+     "ja": "[Resistances|冷気]耐性 +(20-30)%"
+    }
+   ]
+  },
+  "Topaz Ring": {
+   "cls": "Rings",
+   "ja": "トパーズの指輪",
+   "lvl": 16,
+   "implicits": [
+    {
+     "en": "+(20-30)% to [Resistances|Lightning Resistance]",
+     "ja": "[Resistances|雷]耐性 +(20-30)%"
+    }
+   ]
+  },
+  "Amethyst Ring": {
+   "cls": "Rings",
+   "ja": "アメジストの指輪",
+   "lvl": 20,
+   "implicits": [
+    {
+     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+    }
+   ]
+  },
+  "Emerald Ring": {
+   "cls": "Rings",
+   "ja": "エメラルドの指輪",
+   "lvl": 26,
+   "implicits": [
+    {
+     "en": "+(120-160) to [Accuracy|Accuracy] Rating",
+     "ja": "[Accuracy|命中力] +(120-160)"
+    }
+   ]
+  },
+  "Pearl Ring": {
+   "cls": "Rings",
+   "ja": "真珠の指輪",
+   "lvl": 32,
+   "implicits": [
+    {
+     "en": "(7-10)% increased Cast Speed",
+     "ja": "キャストスピードが(7-10)%増加する"
+    }
+   ]
+  },
+  "Prismatic Ring": {
+   "cls": "Rings",
+   "ja": "プリズムの指輪",
+   "lvl": 35,
+   "implicits": [
+    {
+     "en": "+(7-10)% to all [ElementalDamage|Elemental] [Resistances]",
+     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(7-10)%"
+    }
+   ]
+  },
+  "Gold Ring": {
+   "cls": "Rings",
+   "ja": "金の指輪",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(6-15)% increased [ItemRarity|Rarity of Items] found",
+     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(6-15)%増加する"
+    }
+   ]
+  },
+  "Unset Ring": {
+   "cls": "Rings",
+   "ja": "石無しの指輪",
+   "lvl": 44,
+   "implicits": [
+    {
+     "en": "Grants 1 additional Skill Slot",
+     "ja": "スキルスロットを追加で1個付与する"
+    }
+   ]
+  },
+  "Abyssal Signet": {
+   "cls": "Rings",
+   "ja": "アビスの印章指輪",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "Inflict [AbyssalWasting|Abyssal Wasting] on [Hit]",
+     "ja": "[Hit|ヒット]時に[AbyssalWasting|アビスの消耗]を付与する"
+    }
+   ]
+  },
+  "Two-Stone Ring": {
+   "cls": "Rings",
+   "ja": "ツーストーンリング",
+   "lvl": 35,
+   "implicits": [
+    {
+     "en": "+(12-16)% to Cold and Lightning Resistances",
+     "ja": "冷気および雷耐性 +(12-16)%"
+    }
+   ]
+  },
+  "Biostatic Ring": {
+   "cls": "Rings",
+   "ja": "バイオスタティックリング",
+   "lvl": 52,
+   "implicits": [
+    {
+     "en": "+1% to all maximum Resistances",
+     "ja": "全ての耐性の最大値 +1%"
+    }
+   ]
+  },
+  "Vitalic Ring": {
+   "cls": "Rings",
+   "ja": "バイタリックリング",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(4-6)% increased maximum Life",
+     "ja": "最大ライフが(4-6)%増加する"
+    }
+   ]
+  },
+  "Mnemonic Ring": {
+   "cls": "Rings",
+   "ja": "ニーモニックリング",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(4-6)% increased maximum Mana",
+     "ja": "最大マナが(4-6)%増加する"
+    }
+   ]
+  },
+  "Kinetic Ring": {
+   "cls": "Rings",
+   "ja": "キネティックリング",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "Adds (6-9) to (11-15) [Physical|Physical] Damage to [Attack|Attacks]",
+     "ja": "(6-9)から(11-15)の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+    }
+   ]
+  },
+  "Oneiric Ring": {
+   "cls": "Rings",
+   "ja": "オネイリックリング",
+   "lvl": 47,
+   "implicits": [
+    {
+     "en": "(11-23)% increased [Chaos] Damage",
+     "ja": "[Chaos|混沌]ダメージが(11-23)%増加する"
+    }
+   ]
+  },
+  "Grasping Ring": {
+   "cls": "Rings",
+   "ja": "グラスピングリング",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "This item gains bonuses from Socketed Items as though it was Gloves",
+     "ja": "このアイテムはソケットされたアイテムからそれが手袋にソケットされているかのように仮定してボーナスを獲得する"
+    }
+   ]
+  },
+  "Rawhide Belt": {
+   "cls": "Belts",
+   "ja": "生皮のベルト",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Life Recovery from [Flask|Flasks]",
+     "ja": "[Flask|フラスコ]によるライフ回復量が(20-30)%増加する"
+    }
+   ]
+  },
+  "Linen Belt": {
+   "cls": "Belts",
+   "ja": "リネンのベルト",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Mana Recovery from [Flask|Flasks]",
+     "ja": "[Flask|フラスコ]によるマナ回復量が(20-30)%増加する"
+    }
+   ]
+  },
+  "Wide Belt": {
+   "cls": "Belts",
+   "ja": "幅広のベルト",
+   "lvl": 14,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [Flask|Flask] Charges gained",
+     "ja": "獲得[Flask|フラスコ]チャージが(20-30)%増加する"
+    }
+   ]
+  },
+  "Long Belt": {
+   "cls": "Belts",
+   "ja": "長いベルト",
+   "lvl": 20,
+   "implicits": [
+    {
+     "en": "(15-20)% increased [Charm] Effect Duration",
+     "ja": "[Charm|チャーム]の効果持続時間が(15-20)%増加する"
+    }
+   ]
+  },
+  "Plate Belt": {
+   "cls": "Belts",
+   "ja": "プレートベルト",
+   "lvl": 25,
+   "implicits": [
+    {
+     "en": "+(140-180) to [Armour]",
+     "ja": "[Armour|アーマー] +(140-180)"
+    }
+   ]
+  },
+  "Ornate Belt": {
+   "cls": "Belts",
+   "ja": "華美なベルト",
+   "lvl": 31,
+   "implicits": [
+    {
+     "en": "(15-10)% reduced [Charm] Charges used",
+     "ja": "[Charm|チャーム]の使用チャージが(15-10)%減少する"
+    }
+   ]
+  },
+  "Mail Belt": {
+   "cls": "Belts",
+   "ja": "メイルベルト",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(15-10)% reduced [Flask|Flask] Charges used",
+     "ja": "消費[Flask|フラスコ]チャージが(15-10)%減少する"
+    }
+   ]
+  },
+  "Double Belt": {
+   "cls": "Belts",
+   "ja": "ダブルベルト",
+   "lvl": 44,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [Charm] Charges gained",
+     "ja": "[Charm|チャーム]の獲得チャージが(20-30)%増加する"
+    }
+   ]
+  },
+  "Heavy Belt": {
+   "cls": "Belts",
+   "ja": "ヘビーベルト",
+   "lvl": 50,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(20-30)%増加する"
+    }
+   ]
+  },
+  "Runemastered Heavy Belt": {
+   "cls": "Belts",
+   "ja": "ルーンマスターのヘビーベルト",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(20-30)%増加する"
+    },
+    {
+     "en": "[Flask|Flasks] gain (0.5-1) charges per Second",
+     "ja": "[Flask|フラスコ]は毎秒(0.5-1)のチャージを獲得する"
+    }
+   ]
+  },
+  "Utility Belt": {
+   "cls": "Belts",
+   "ja": "実用的なベルト",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "20% of [Flask|Flask] Recovery applied Instantly",
+     "ja": "[Flask|フラスコ]による回復の20%が即時に適用される"
+    }
+   ]
+  },
+  "Fine Belt": {
+   "cls": "Belts",
+   "ja": "精巧なベルト",
+   "lvl": 62,
+   "implicits": [
+    {
+     "en": "[Flask|Flasks] gain 0.17 charges per Second",
+     "ja": "[Flask|フラスコ]は毎秒0.17のチャージを獲得する"
+    }
+   ]
+  },
+  "Stalking Belt": {
+   "cls": "Belts",
+   "ja": "忍び寄るベルト",
+   "lvl": 50,
+   "implicits": [
+    {
+     "en": "Has 1 [Charm] Slot",
+     "ja": "1個の[Charm|チャーム]スロットを持つ"
+    },
+    {
+     "en": "This item gains bonuses from Socketed Items as though it was Boots",
+     "ja": "このアイテムはソケットされたアイテムからそれが靴にソケットされているかのように仮定してボーナスを獲得する"
+    }
+   ]
+  },
+  "Invoking Belt": {
+   "cls": "Belts",
+   "ja": "招来のベルト",
+   "lvl": 32,
+   "implicits": [
+    {
+     "en": "Has 1 [Charm] Slot",
+     "ja": "1個の[Charm|チャーム]スロットを持つ"
+    },
+    {
+     "en": "(8-12)% increased Cast Speed",
+     "ja": "キャストスピードが(8-12)%増加する"
+    }
+   ]
+  },
+  "Sinew Belt": {
+   "cls": "Belts",
+   "ja": "腱のベルト",
+   "lvl": 32,
+   "implicits": [
+    {
+     "en": "Has 1 [Charm] Slot",
+     "ja": "1個の[Charm|チャーム]スロットを持つ"
+    },
+    {
+     "en": "+(15-20) to [Strength|Strength]",
+     "ja": "[Strength|筋力] +(15-20)"
+    }
+   ]
+  },
+  "Forking Belt": {
+   "cls": "Belts",
+   "ja": "分岐のベルト",
+   "lvl": 32,
+   "implicits": [
+    {
+     "en": "Has 1 [Charm] Slot",
+     "ja": "1個の[Charm|チャーム]スロットを持つ"
+    },
+    {
+     "en": "Adds 1 to (20-30) [Lightning] damage to [Attack|Attacks]",
+     "ja": "1から(20-30)の[Lightning|雷]ダメージを[Attack|アタック]に追加する"
+    }
+   ]
+  },
+  "Ring": {
+   "cls": "Rings",
+   "ja": "指輪",
+   "lvl": 1
+  },
+  "Dusk Ring": {
+   "cls": "Rings",
+   "ja": "黄昏の指輪",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 4,
+    "suffixes": 2
+   },
+   "implicits": [
+    {
+     "en": "+1 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド +1個\nサフィックスモッド -1個"
+    }
+   ]
+  },
+  "Gloam Ring": {
+   "cls": "Rings",
+   "ja": "薄明の指輪",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 2,
+    "suffixes": 4
+   },
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed\n+1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド -1個\nサフィックスモッド +1個"
+    }
+   ]
+  },
+  "Penumbra Ring": {
+   "cls": "Rings",
+   "ja": "半影の指輪",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 5,
+    "suffixes": 1
+   },
+   "implicits": [
+    {
+     "en": "+2 Prefix Modifiers allowed\n-2 Suffix Modifiers allowed",
+     "ja": "プレフィックスモッド +2個\nサフィックスモッド -2個"
+    }
+   ]
+  },
+  "Tenebrous Ring": {
+   "cls": "Rings",
+   "ja": "仄暗い指輪",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 1,
+    "suffixes": 5
+   },
+   "implicits": [
+    {
+     "en": "-2 Prefix Modifiers allowed\n+2 Suffix Modifiers allowed",
+     "ja": "プレフィックスモッド -2個\nサフィックスモッド +2個"
+    }
+   ]
+  },
+  "Dusk Amulet": {
+   "cls": "Amulets",
+   "ja": "黄昏のアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 4,
+    "suffixes": 2
+   },
+   "implicits": [
+    {
+     "en": "+1 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド +1個\nサフィックスモッド -1個"
+    }
+   ]
+  },
+  "Gloam Amulet": {
+   "cls": "Amulets",
+   "ja": "薄明のアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 2,
+    "suffixes": 4
+   },
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed\n+1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド -1個\nサフィックスモッド +1個"
+    }
+   ]
+  },
+  "Penumbra Amulet": {
+   "cls": "Amulets",
+   "ja": "半影のアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 5,
+    "suffixes": 1
+   },
+   "implicits": [
+    {
+     "en": "+2 Prefix Modifiers allowed\n-2 Suffix Modifiers allowed",
+     "ja": "プレフィックスモッド +2個\nサフィックスモッド -2個"
+    }
+   ]
+  },
+  "Tenebrous Amulet": {
+   "cls": "Amulets",
+   "ja": "仄暗いアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 1,
+    "suffixes": 5
+   },
+   "implicits": [
+    {
+     "en": "-2 Prefix Modifiers allowed\n+2 Suffix Modifiers allowed",
+     "ja": "プレフィックスモッド -2個\nサフィックスモッド +2個"
+    }
+   ]
+  },
+  "Twisted Amulet": {
+   "cls": "Amulets",
+   "ja": "捻じれたアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 2,
+    "suffixes": 3
+   },
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed\n0 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド -1個\nサフィックスモッド 0個"
+    }
+   ]
+  },
+  "Distorted Amulet": {
+   "cls": "Amulets",
+   "ja": "歪んだアミュレット",
+   "lvl": 1,
+   "limits": {
+    "prefixes": 3,
+    "suffixes": 2
+   },
+   "implicits": [
+    {
+     "en": "0 Prefix Modifier allowed\n-1 Suffix Modifier allowed",
+     "ja": "プレフィックスモッド 0個\nサフィックスモッド -1個"
+    }
+   ]
+  },
+  "Garment": {
+   "cls": "Body_Armours",
+   "ja": "ガーメント",
+   "lvl": 1
+  },
+  "Grand Regalia": {
+   "cls": "Body_Armours",
+   "ja": "荘厳なレガリア",
+   "lvl": 65
+  },
+  "Sacrificial Regalia": {
+   "cls": "Body_Armours",
+   "ja": "生贄のレガリア",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+1 to Level of all [Corrupted] Skill Gems",
+     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+    }
+   ]
+  },
+  "Grasping Mail": {
+   "cls": "Body_Armours",
+   "ja": "グラスピングメイル",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Can roll Ring Modifiers",
+     "ja": "指輪モッドをロールできる"
+    },
+    {
+     "en": "Catalysts can be applied to this item",
+     "ja": "カタリストをこのアイテムに適用できる"
+    }
+   ]
+  },
+  "Runeforged Grasping Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのグラスピングメイル",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Can roll Ring Modifiers",
+     "ja": "指輪モッドをロールできる"
+    },
+    {
+     "en": "Catalysts can be applied to this item",
+     "ja": "カタリストをこのアイテムに適用できる"
+    }
+   ]
+  },
+  "Runemastered Grasping Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのグラスピングメイル",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Can roll Ring Modifiers",
+     "ja": "指輪モッドをロールできる"
+    },
+    {
+     "en": "Catalysts can be applied to this item",
+     "ja": "カタリストをこのアイテムに適用できる"
+    }
+   ]
+  },
+  "Runefather's Grasping Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンファーザーのグラスピングメイル",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Can roll Ring Modifiers",
+     "ja": "指輪モッドをロールできる"
+    },
+    {
+     "en": "Catalysts can be applied to this item",
+     "ja": "カタリストをこのアイテムに適用できる"
+    }
+   ]
+  },
+  "Grand Visage": {
+   "cls": "Helmets",
+   "ja": "大いなる顔飾り",
+   "lvl": 65
+  },
+  "Grand Manchettes": {
+   "cls": "Gloves",
+   "ja": "大いなるマンシェット",
+   "lvl": 65
+  },
+  "Grand Cuisses": {
+   "cls": "Boots",
+   "ja": "大いなる脛当て",
+   "lvl": 65
+  },
+  "Golden Greaves": {
+   "cls": "Boots",
+   "ja": "黄金のグリーヴ",
+   "lvl": 1
+  },
+  "Golden Plate": {
+   "cls": "Body_Armours",
+   "ja": "黄金のプレート",
+   "lvl": 1
+  },
+  "Golden Shield": {
+   "cls": "Shields",
+   "ja": "黄金の盾",
+   "lvl": 1
+  },
+  "Breach Ring": {
+   "cls": "Rings",
+   "ja": "ブリーチの指輪",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "+20% to Maximum [Quality]",
+     "ja": "[Quality|品質]の最大値 +20%"
+    }
+   ]
+  },
+  "Refined Breach Ring": {
+   "cls": "Rings",
+   "ja": "洗練されたブリーチリング",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "+25% to Maximum [Quality]",
+     "ja": "[Quality|品質]の最大値 +25%"
+    }
+   ]
+  },
+  "Calescent Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "灼熱のハンマー",
+   "lvl": 45
+  },
+  "Flared Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "大頭メイス",
+   "lvl": 48
+  },
+  "Battle Pick": {
+   "cls": "OneHand_Maces",
+   "ja": "バトルピック",
+   "lvl": 51,
+   "implicits": [
+    {
+     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
+     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+    }
+   ]
+  },
+  "Marching Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "行軍のメイス",
+   "lvl": 54
+  },
+  "Runeforged Marching Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージの行軍のメイス",
+   "lvl": 65
+  },
+  "Bandit Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "山賊のメイス",
+   "lvl": 59
+  },
+  "Structured Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "構造化ハンマー",
+   "lvl": 62,
+   "implicits": [
+    {
+     "en": "40% chance to [Daze] on [Hit]",
+     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+    }
+   ]
+  },
+  "Snakewood Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "蛇紋木のグレートハンマー",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
+     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+    }
+   ]
+  },
+  "Blacksmith Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "鍛冶師の大槌",
+   "lvl": 48,
+   "implicits": [
+    {
+     "en": "[Crushed|Crushes] Enemies on Hit",
+     "ja": "ヒット時に敵を[Crushed|破砕]する"
+    }
+   ]
+  },
+  "Zealot Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "狂信者のグレートハンマー",
+   "lvl": 51,
+   "implicits": [
+    {
+     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
+     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+    }
+   ]
+  },
+  "Solemn Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "厳粛な大槌",
+   "lvl": 54
+  },
+  "Heavy Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "ヘビーグレートハンマー",
+   "lvl": 59
+  },
+  "Disintegrating Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "崩壊の大槌",
+   "lvl": 62,
+   "implicits": [
+    {
+     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
+     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+    }
+   ]
+  },
+  "Reaching Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "長柄のクォータースタッフ",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "16% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+    }
+   ]
+  },
+  "Barbarous Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "粗野なクォータースタッフ",
+   "lvl": 48
+  },
+  "Arcing Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "電弧のクォータースタッフ",
+   "lvl": 51
+  },
+  "Waxing Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "蝋塗りのクォータースタッフ",
+   "lvl": 54
+  },
+  "Bladed Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "刃付きのクォータースタッフ",
+   "lvl": 59
+  },
+  "Guardian Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "守護者のクォータースタッフ",
+   "lvl": 62,
+   "implicits": [
+    {
+     "en": "+(12-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(12-18)%"
+    }
+   ]
+  },
+  "Snakewood Shortbow": {
+   "cls": "Bows",
+   "ja": "蛇紋木のショートボウ",
+   "lvl": 45
+  },
+  "Protector Bow": {
+   "cls": "Bows",
+   "ja": "守護の弓",
+   "lvl": 48,
+   "implicits": [
+    {
+     "en": "(25-35)% chance to [Chain] an additional time",
+     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+    }
+   ]
+  },
+  "Rider Bow": {
+   "cls": "Bows",
+   "ja": "ライダーボウ",
+   "lvl": 51
+  },
+  "Twin Bow": {
+   "cls": "Bows",
+   "ja": "ツインボウ",
+   "lvl": 54,
+   "implicits": [
+    {
+     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+    }
+   ]
+  },
+  "Adherent Bow": {
+   "cls": "Bows",
+   "ja": "信奉者の弓",
+   "lvl": 59
+  },
+  "Militant Bow": {
+   "cls": "Bows",
+   "ja": "好戦的な弓",
+   "lvl": 62
+  },
+  "Taut Crossbow": {
+   "cls": "Crossbows",
+   "ja": "強弦のクロスボウ",
+   "lvl": 45,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Bolt Speed",
+     "ja": "ボルトのスピードが(20-30)%増加する"
+    }
+   ]
+  },
+  "Robust Crossbow": {
+   "cls": "Crossbows",
+   "ja": "剛健のクロスボウ",
+   "lvl": 48
+  },
+  "Painted Crossbow": {
+   "cls": "Crossbows",
+   "ja": "彩色のクロスボウ",
+   "lvl": 51
+  },
+  "Twin Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ツインクロスボウ",
+   "lvl": 54,
+   "implicits": [
+    {
+     "en": "Loads an additional bolt",
+     "ja": "ボルトを追加で1本装填する"
+    }
+   ]
+  },
+  "Cannonade Crossbow": {
+   "cls": "Crossbows",
+   "ja": "砲撃のクロスボウ",
+   "lvl": 59,
+   "implicits": [
+    {
+     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
+     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+    }
+   ]
+  },
+  "Bleak Crossbow": {
+   "cls": "Crossbows",
+   "ja": "陰鬱のクロスボウ",
+   "lvl": 62
+  },
+  "Steelhead Spear": {
+   "cls": "Spears",
+   "ja": "スチールヘッドスピア",
+   "lvl": 45
+  },
+  "Coursing Spear": {
+   "cls": "Spears",
+   "ja": "疾走の槍",
+   "lvl": 48,
+   "implicits": [
+    {
+     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
+     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ]
+  },
+  "Swift Spear": {
+   "cls": "Spears",
+   "ja": "スイフトスピア",
+   "lvl": 51,
+   "implicits": [
+    {
+     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
+     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+    }
+   ]
+  },
+  "Branched Spear": {
+   "cls": "Spears",
+   "ja": "枝分かれの槍",
+   "lvl": 54
+  },
+  "Jagged Spear": {
+   "cls": "Spears",
+   "ja": "ギザギザの槍",
+   "lvl": 59,
+   "implicits": [
+    {
+     "en": "Bleeding you inflict deals Damage (10-20)% faster",
+     "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ]
+  },
+  "Massive Spear": {
+   "cls": "Spears",
+   "ja": "巨大なスピア",
+   "lvl": 62,
+   "implicits": [
+    {
+     "en": "25% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+    }
+   ]
+  },
+  "Howling Talisman": {
+   "cls": "Talismans",
+   "ja": "遠吠えのタリスマン",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "+(14-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(14-18)%"
+    }
+   ]
+  },
+  "Fury Talisman": {
+   "cls": "Talismans",
+   "ja": "怒りのタリスマン",
+   "lvl": 59,
+   "implicits": [
+    {
+     "en": "+(7-10) to Maximum [Rage]",
+     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+    }
+   ]
+  },
+  "Cruel Talisman": {
+   "cls": "Talismans",
+   "ja": "残虐のタリスマン",
+   "lvl": 63
+  },
+  "Barbarian Plate": {
+   "cls": "Body_Armours",
+   "ja": "蛮族のプレート",
+   "lvl": 45
+  },
+  "Rugged Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "無骨な胴鎧",
+   "lvl": 48
+  },
+  "Sandsworn Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "砂漠の民の胴鎧",
+   "lvl": 51
+  },
+  "Elegant Plate": {
+   "cls": "Body_Armours",
+   "ja": "エレガントプレート",
+   "lvl": 54
+  },
+  "Heavy Plate": {
+   "cls": "Body_Armours",
+   "ja": "ヘビープレート",
+   "lvl": 59
+  },
+  "Stone Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "石の胴鎧",
+   "lvl": 62
+  },
+  "Patchwork Vest": {
+   "cls": "Body_Armours",
+   "ja": "パッチワークのベスト",
+   "lvl": 45
+  },
+  "Hunting Coat": {
+   "cls": "Body_Armours",
+   "ja": "狩りのコート",
+   "lvl": 48
+  },
+  "Riding Coat": {
+   "cls": "Body_Armours",
+   "ja": "ライディングコート",
+   "lvl": 51
+  },
+  "Layered Vest": {
+   "cls": "Body_Armours",
+   "ja": "レイヤードベスト",
+   "lvl": 54
+  },
+  "Runner Vest": {
+   "cls": "Body_Armours",
+   "ja": "走り手のベスト",
+   "lvl": 59
+  },
+  "Lizardscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "リザードスケールコート",
+   "lvl": 62
+  },
+  "Avian Robe": {
+   "cls": "Body_Armours",
+   "ja": "鳥のローブ",
+   "lvl": 45
+  },
+  "Cursespeaker's Robe": {
+   "cls": "Body_Armours",
+   "ja": "呪詛師のローブ",
+   "lvl": 48
+  },
+  "Luxurious Robe": {
+   "cls": "Body_Armours",
+   "ja": "豪華なローブ",
+   "lvl": 51
+  },
+  "River Raiment": {
+   "cls": "Body_Armours",
+   "ja": "川の装束",
+   "lvl": 54
+  },
+  "Adherent's Raiment": {
+   "cls": "Body_Armours",
+   "ja": "信奉者の装束",
+   "lvl": 59
+  },
+  "Ceremonial Robe": {
+   "cls": "Body_Armours",
+   "ja": "儀式のローブ",
+   "lvl": 62
+  },
+  "Ring Mail": {
+   "cls": "Body_Armours",
+   "ja": "リングメイル",
+   "lvl": 45
+  },
+  "Scoundrel Armour": {
+   "cls": "Body_Armours",
+   "ja": "ならず者の鎧",
+   "lvl": 48
+  },
+  "Wanderer Armour": {
+   "cls": "Body_Armours",
+   "ja": "放浪者の鎧",
+   "lvl": 51
+  },
+  "Mantled Mail": {
+   "cls": "Body_Armours",
+   "ja": "外套付きメイル",
+   "lvl": 54
+  },
+  "Trailblazer Armour": {
+   "cls": "Body_Armours",
+   "ja": "開拓者の鎧",
+   "lvl": 59
+  },
+  "Golden Mail": {
+   "cls": "Body_Armours",
+   "ja": "ゴールデンメイル",
+   "lvl": 62
+  },
+  "Templar Vestments": {
+   "cls": "Body_Armours",
+   "ja": "テンプラーの祭服",
+   "lvl": 45
+  },
+  "Bearskin Mantle": {
+   "cls": "Body_Armours",
+   "ja": "熊皮の外套",
+   "lvl": 48
+  },
+  "Chain Vestments": {
+   "cls": "Body_Armours",
+   "ja": "鎖の祭服",
+   "lvl": 51
+  },
+  "Occultist Mantle": {
+   "cls": "Body_Armours",
+   "ja": "オカルティストの外套",
+   "lvl": 54
+  },
+  "Plated Vestments": {
+   "cls": "Body_Armours",
+   "ja": "板金の祭服",
+   "lvl": 59
+  },
+  "Heartcarver Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ハートカーヴァーの外套",
+   "lvl": 62
+  },
+  "Oiled Jacket": {
+   "cls": "Body_Armours",
+   "ja": "オイルジャケット",
+   "lvl": 48
+  },
+  "Evangelist Garb": {
+   "cls": "Body_Armours",
+   "ja": "伝道者の衣",
+   "lvl": 51
+  },
+  "Itinerant Jacket": {
+   "cls": "Body_Armours",
+   "ja": "旅回りのジャケット",
+   "lvl": 54
+  },
+  "Hatungo Garb": {
+   "cls": "Body_Armours",
+   "ja": "ハトゥンゴの衣",
+   "lvl": 59
+  },
+  "Hawker's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "行商人のジャケット",
+   "lvl": 62
+  },
+  "Corroded Greathelm": {
+   "cls": "Helmets",
+   "ja": "腐食したグレートヘルム",
+   "lvl": 45
+  },
+  "Mercenary Greathelm": {
+   "cls": "Helmets",
+   "ja": "傭兵のグレートヘルム",
+   "lvl": 48
+  },
+  "Homeguard Greathelm": {
+   "cls": "Helmets",
+   "ja": "ホームガードのグレートヘルム",
+   "lvl": 51
+  },
+  "Elegant Greathelm": {
+   "cls": "Helmets",
+   "ja": "エレガントグレートヘルム",
+   "lvl": 54
+  },
+  "Noble Greathelm": {
+   "cls": "Helmets",
+   "ja": "貴族のグレートヘルム",
+   "lvl": 59
+  },
+  "Rotted Hood": {
+   "cls": "Helmets",
+   "ja": "朽ちたフード",
+   "lvl": 45
+  },
+  "Wool Cap": {
+   "cls": "Helmets",
+   "ja": "ウールの帽子",
+   "lvl": 48
+  },
+  "Narrow Hood": {
+   "cls": "Helmets",
+   "ja": "細身のフード",
+   "lvl": 51
+  },
+  "Wrapped Cap": {
+   "cls": "Helmets",
+   "ja": "巻き布の帽子",
+   "lvl": 54
+  },
+  "Deerstalker Hood": {
+   "cls": "Helmets",
+   "ja": "鹿猟師のフード",
+   "lvl": 59
+  },
+  "Druidic Circlet": {
+   "cls": "Helmets",
+   "ja": "ドルイドのサークレット",
+   "lvl": 45
+  },
+  "Avian Tiara": {
+   "cls": "Helmets",
+   "ja": "鳥のティアラ",
+   "lvl": 48
+  },
+  "Desert Circlet": {
+   "cls": "Helmets",
+   "ja": "砂漠のサークレット",
+   "lvl": 51
+  },
+  "Sandsworn Tiara": {
+   "cls": "Helmets",
+   "ja": "砂漠の民のティアラ",
+   "lvl": 54
+  },
+  "Jungle Tiara": {
+   "cls": "Helmets",
+   "ja": "ジャングルティアラ",
+   "lvl": 59
+  },
+  "Domed Helm": {
+   "cls": "Helmets",
+   "ja": "半球の兜",
+   "lvl": 45
+  },
+  "Engraved Helm": {
+   "cls": "Helmets",
+   "ja": "彫刻の兜",
+   "lvl": 48
+  },
+  "Soldier Helm": {
+   "cls": "Helmets",
+   "ja": "兵士の兜",
+   "lvl": 51
+  },
+  "Cabalist Helm": {
+   "cls": "Helmets",
+   "ja": "秘教の冠",
+   "lvl": 54
+  },
+  "Cassis Helm": {
+   "cls": "Helmets",
+   "ja": "カシスヘルム",
+   "lvl": 59
+  },
+  "Mailed Crown": {
+   "cls": "Helmets",
+   "ja": "鎖帷子の冠",
+   "lvl": 45
+  },
+  "Forest Crown": {
+   "cls": "Helmets",
+   "ja": "森の冠",
+   "lvl": 48
+  },
+  "Zealot Crown": {
+   "cls": "Helmets",
+   "ja": "狂信者の冠",
+   "lvl": 51
+  },
+  "Hallowed Crown": {
+   "cls": "Helmets",
+   "ja": "神聖な冠",
+   "lvl": 54
+  },
+  "Inquisitor Crown": {
+   "cls": "Helmets",
+   "ja": "審問官の冠",
+   "lvl": 59
+  },
+  "Oak Mask": {
+   "cls": "Helmets",
+   "ja": "オークの仮面",
+   "lvl": 45
+  },
+  "Bandit Mask": {
+   "cls": "Helmets",
+   "ja": "山賊の仮面",
+   "lvl": 48
+  },
+  "Skulking Mask": {
+   "cls": "Helmets",
+   "ja": "隠密の仮面",
+   "lvl": 51
+  },
+  "Pariah Mask": {
+   "cls": "Helmets",
+   "ja": "追放者の仮面",
+   "lvl": 54
+  },
+  "Avian Mask": {
+   "cls": "Helmets",
+   "ja": "鳥の仮面",
+   "lvl": 59
+  },
+  "Plated Mitts": {
+   "cls": "Gloves",
+   "ja": "プレートミット",
+   "lvl": 45
+  },
+  "Elegant Mitts": {
+   "cls": "Gloves",
+   "ja": "エレガントミット",
+   "lvl": 51
+  },
+  "Ancient Mitts": {
+   "cls": "Gloves",
+   "ja": "古代のミット",
+   "lvl": 54
+  },
+  "Feathered Mitts": {
+   "cls": "Gloves",
+   "ja": "羽根付きのミット",
+   "lvl": 59
+  },
+  "Hunting Bracers": {
+   "cls": "Gloves",
+   "ja": "狩りの弓籠手",
+   "lvl": 45
+  },
+  "Swift Bracers": {
+   "cls": "Gloves",
+   "ja": "俊敏な籠手",
+   "lvl": 51
+  },
+  "Refined Bracers": {
+   "cls": "Gloves",
+   "ja": "洗練された弓籠手",
+   "lvl": 54
+  },
+  "Spiked Bracers": {
+   "cls": "Gloves",
+   "ja": "スパイク付きの弓籠手",
+   "lvl": 59
+  },
+  "Ominous Gloves": {
+   "cls": "Gloves",
+   "ja": "不気味な手袋",
+   "lvl": 45
+  },
+  "Embellished Gloves": {
+   "cls": "Gloves",
+   "ja": "装飾付き手袋",
+   "lvl": 51
+  },
+  "Baroque Gloves": {
+   "cls": "Gloves",
+   "ja": "バロックの手袋",
+   "lvl": 54
+  },
+  "Gold Gloves": {
+   "cls": "Gloves",
+   "ja": "金の手袋",
+   "lvl": 59
+  },
+  "Ironmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "アイアンメイルガントレット",
+   "lvl": 45
+  },
+  "Captain Gauntlets": {
+   "cls": "Gloves",
+   "ja": "部隊長のガントレット",
+   "lvl": 51
+  },
+  "Zealot Gauntlets": {
+   "cls": "Gloves",
+   "ja": "狂信者のガントレット",
+   "lvl": 59
+  },
+  "Braided Cuffs": {
+   "cls": "Gloves",
+   "ja": "編み込みのカフス",
+   "lvl": 45
+  },
+  "Heirloom Cuffs": {
+   "cls": "Gloves",
+   "ja": "家宝のカフス",
+   "lvl": 51
+  },
+  "Ornate Cuffs": {
+   "cls": "Gloves",
+   "ja": "華美なカフス",
+   "lvl": 59
+  },
+  "Bandage Wraps": {
+   "cls": "Gloves",
+   "ja": "バンテージラップ",
+   "lvl": 45
+  },
+  "Cambric Wraps": {
+   "cls": "Gloves",
+   "ja": "キャンブリックのラップ",
+   "lvl": 51
+  },
+  "Adorned Wraps": {
+   "cls": "Gloves",
+   "ja": "装飾のあるラップ",
+   "lvl": 59
+  },
+  "Plated Greaves": {
+   "cls": "Boots",
+   "ja": "プレートグリーヴ",
+   "lvl": 45
+  },
+  "Lionheart Greaves": {
+   "cls": "Boots",
+   "ja": "ライオンハートグリーヴ",
+   "lvl": 51
+  },
+  "Elegant Greaves": {
+   "cls": "Boots",
+   "ja": "エレガントグリーヴ",
+   "lvl": 54
+  },
+  "Carved Greaves": {
+   "cls": "Boots",
+   "ja": "彫刻のあるグリーヴ",
+   "lvl": 59
+  },
+  "Bound Boots": {
+   "cls": "Boots",
+   "ja": "縁取りのブーツ",
+   "lvl": 45
+  },
+  "Sleek Boots": {
+   "cls": "Boots",
+   "ja": "滑らかなブーツ",
+   "lvl": 51
+  },
+  "Studded Boots": {
+   "cls": "Boots",
+   "ja": "鋲付きのブーツ",
+   "lvl": 54
+  },
+  "Serpentscale Boots": {
+   "cls": "Boots",
+   "ja": "サーペントスケールブーツ",
+   "lvl": 59
+  },
+  "Laced Sandals": {
+   "cls": "Boots",
+   "ja": "レースのサンダル",
+   "lvl": 45
+  },
+  "Bangled Sandals": {
+   "cls": "Boots",
+   "ja": "バングルサンダル",
+   "lvl": 51
+  },
+  "Elegant Slippers": {
+   "cls": "Boots",
+   "ja": "エレガントスリッパ",
+   "lvl": 54
+  },
+  "Dunerunner Sandals": {
+   "cls": "Boots",
+   "ja": "デューンランナーサンダル",
+   "lvl": 59
+  },
+  "Soldiering Sabatons": {
+   "cls": "Boots",
+   "ja": "軍人のサバトン",
+   "lvl": 45
+  },
+  "Goldwork Sabatons": {
+   "cls": "Boots",
+   "ja": "金細工のサバトン",
+   "lvl": 51
+  },
+  "Bastion Sabatons": {
+   "cls": "Boots",
+   "ja": "要塞のサバトン",
+   "lvl": 59
+  },
+  "Adherent Leggings": {
+   "cls": "Boots",
+   "ja": "密着したレギンス",
+   "lvl": 45
+  },
+  "Bound Leggings": {
+   "cls": "Boots",
+   "ja": "縁取りのレギンス",
+   "lvl": 51
+  },
+  "Shamanistic Leggings": {
+   "cls": "Boots",
+   "ja": "シャーマンのレギンス",
+   "lvl": 59
+  },
+  "Wayfarer Shoes": {
+   "cls": "Boots",
+   "ja": "旅人の靴",
+   "lvl": 45
+  },
+  "Silverbuckled Shoes": {
+   "cls": "Boots",
+   "ja": "銀のバックルのシューズ",
+   "lvl": 51
+  },
+  "Treerunner Shoes": {
+   "cls": "Boots",
+   "ja": "ツリーランナーシューズ",
+   "lvl": 59
+  },
+  "Aged Tower Shield": {
+   "cls": "Shields",
+   "ja": "使い古されたタワーシールド",
+   "lvl": 45
+  },
+  "Metalworked Tower Shield": {
+   "cls": "Shields",
+   "ja": "金属細工のタワーシールド",
+   "lvl": 48
+  },
+  "Cultist Tower Shield": {
+   "cls": "Shields",
+   "ja": "邪教徒のタワーシールド",
+   "lvl": 51
+  },
+  "Bulwark Tower Shield": {
+   "cls": "Shields",
+   "ja": "砦のタワーシールド",
+   "lvl": 54
+  },
+  "Noble Tower Shield": {
+   "cls": "Shields",
+   "ja": "貴族のタワーシールド",
+   "lvl": 59
+  },
+  "Goldworked Tower Shield": {
+   "cls": "Shields",
+   "ja": "金細工のタワーシールド",
+   "lvl": 61
+  },
+  "Ironwood Targe": {
+   "cls": "Shields",
+   "ja": "鉄木のタージ",
+   "lvl": 45
+  },
+  "Fur-lined Targe": {
+   "cls": "Shields",
+   "ja": "毛皮張りのタージ",
+   "lvl": 48
+  },
+  "Mercenary Targe": {
+   "cls": "Shields",
+   "ja": "傭兵のタージ",
+   "lvl": 51
+  },
+  "Polished Targe": {
+   "cls": "Shields",
+   "ja": "磨かれたタージ",
+   "lvl": 54
+  },
+  "Stone Targe": {
+   "cls": "Shields",
+   "ja": "石のタージ",
+   "lvl": 59
+  },
+  "Avian Targe": {
+   "cls": "Shields",
+   "ja": "鳥のタージ",
+   "lvl": 62
+  },
+  "Painted Crest Shield": {
+   "cls": "Shields",
+   "ja": "彩色されたクレストシールド",
+   "lvl": 45
+  },
+  "Engraved Crest Shield": {
+   "cls": "Shields",
+   "ja": "彫刻のクレストシールド",
+   "lvl": 48
+  },
+  "Descry Crest Shield": {
+   "cls": "Shields",
+   "ja": "デスクライ・クレストシールド",
+   "lvl": 51
+  },
+  "Dekharan Crest Shield": {
+   "cls": "Shields",
+   "ja": "デカーラ・クレストシールド",
+   "lvl": 54
+  },
+  "Quartered Crest Shield": {
+   "cls": "Shields",
+   "ja": "四分割のクレストシールド",
+   "lvl": 59
+  },
+  "Glowering Crest Shield": {
+   "cls": "Shields",
+   "ja": "威圧的なクレストシールド",
+   "lvl": 62
+  },
+  "Oak Buckler": {
+   "cls": "Bucklers",
+   "ja": "オークのバックラー",
+   "lvl": 45
+  },
+  "Painted Buckler": {
+   "cls": "Bucklers",
+   "ja": "彩色されたバックラー",
+   "lvl": 48
+  },
+  "Coiled Buckler": {
+   "cls": "Bucklers",
+   "ja": "螺旋のバックラー",
+   "lvl": 51
+  },
+  "Spikeward Buckler": {
+   "cls": "Bucklers",
+   "ja": "スパイクワードバックラー",
+   "lvl": 54
+  },
+  "Jingling Buckler": {
+   "cls": "Bucklers",
+   "ja": "鈴音のバックラー",
+   "lvl": 59
+  },
+  "Bladeguard Buckler": {
+   "cls": "Bucklers",
+   "ja": "ブレードガードバックラー",
+   "lvl": 61
+  },
+  "Wreath Focus": {
+   "cls": "Foci",
+   "ja": "花冠のフォーカス",
+   "lvl": 45
+  },
+  "Staghorn Focus": {
+   "cls": "Foci",
+   "ja": "鹿角のフォーカス",
+   "lvl": 48
+  },
+  "Jingling Focus": {
+   "cls": "Foci",
+   "ja": "鈴音のフォーカス",
+   "lvl": 51
+  },
+  "Arrayed Focus": {
+   "cls": "Foci",
+   "ja": "整列のフォーカス",
+   "lvl": 54
+  },
+  "Cultist Focus": {
+   "cls": "Foci",
+   "ja": "カルト信者のフォーカス",
+   "lvl": 59
+  },
+  "Hallowed Focus": {
+   "cls": "Foci",
+   "ja": "神聖なフォーカス",
+   "lvl": 61
+  },
+  "Soldier Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "兵士の胴鎧",
+   "lvl": 65
+  },
+  "Ornate Plate": {
+   "cls": "Body_Armours",
+   "ja": "華美なプレート",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "Regenerate (1.5-2.5)% of maximum Life per second",
+     "ja": "毎秒ライフの(1.5-2.5)%を自動回復する"
+    }
+   ]
+  },
+  "Utzaal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ウトザールの胴鎧",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Warlord Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ウォーロードの胴鎧",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "+(15-25)% of [Armour|Armour] also applies to [ElementalDamage|Elemental Damage]",
+     "ja": "[Armour|アーマー]の+(15-25)%が[ElementalDamage|元素ダメージ]にも適用される"
+    }
+   ]
+  },
+  "Swiftstalker Coat": {
+   "cls": "Body_Armours",
+   "ja": "スイフトストーカーコート",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
+     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+    }
+   ]
+  },
+  "Slipstrike Vest": {
+   "cls": "Body_Armours",
+   "ja": "スリップストライクベスト",
+   "lvl": 70
+  },
+  "Wyrmscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "ワームスケイルコート",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
+     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Corsair Coat": {
+   "cls": "Body_Armours",
+   "ja": "海賊のコート",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Vile Robe": {
+   "cls": "Body_Armours",
+   "ja": "悪辣のローブ",
+   "lvl": 65
+  },
+  "Flowing Raiment": {
+   "cls": "Body_Armours",
+   "ja": "緩やかな装束",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "(40-50)% increased Mana Regeneration Rate",
+     "ja": "マナ自動回復レートが(40-50)%増加する"
+    }
+   ]
+  },
+  "Sacramental Robe": {
+   "cls": "Body_Armours",
+   "ja": "聖餐のローブ",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
+     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+    }
+   ]
+  },
+  "Feathered Raiment": {
+   "cls": "Body_Armours",
+   "ja": "羽付きの装束",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(5-10)% of Damage is taken from Mana before Life",
+     "ja": "ダメージの(5-10)%をライフより先にマナで受ける"
+    }
+   ]
+  },
+  "Dastard Armour": {
+   "cls": "Body_Armours",
+   "ja": "卑怯者の鎧",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(60-80) to maximum Life",
+     "ja": "最大ライフ +(60-80)"
+    }
+   ]
+  },
+  "Shrouded Mail": {
+   "cls": "Body_Armours",
+   "ja": "シュラウドメイル",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
+     "ja": "[Resistances|雷]耐性 +(20-25)%"
+    }
+   ]
+  },
+  "Death Mail": {
+   "cls": "Body_Armours",
+   "ja": "デスメイル",
+   "lvl": 75
+  },
+  "Thane Mail": {
+   "cls": "Body_Armours",
+   "ja": "族長のメイル",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "[Hit|Hits] against you have (15-25)% reduced [CriticalDamageBonus|Critical Damage Bonus]",
+     "ja": "プレイヤーに対する[Hit|ヒット]は[CriticalDamageBonus|クリティカルダメージボーナス]が(15-25)%減少する"
+    }
+   ]
+  },
+  "Wolfskin Mantle": {
+   "cls": "Body_Armours",
+   "ja": "狼皮の外套",
+   "lvl": 65
+  },
+  "Conjurer Mantle": {
+   "cls": "Body_Armours",
+   "ja": "祈祷師の外套",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(20-30) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(20-30)"
+    }
+   ]
+  },
+  "Death Mantle": {
+   "cls": "Body_Armours",
+   "ja": "死の外套",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
+     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+    }
+   ]
+  },
+  "Seastorm Mantle": {
+   "cls": "Body_Armours",
+   "ja": "シーストームの外套",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(8-14)% of Damage taken [Recoup|Recouped] as Life",
+     "ja": "受けたダメージの(8-14)%をライフとして[Recoup|回収]する"
+    }
+   ]
+  },
+  "Sleek Jacket": {
+   "cls": "Body_Armours",
+   "ja": "艶のあるジャケット",
+   "lvl": 65
+  },
+  "Rambler Jacket": {
+   "cls": "Body_Armours",
+   "ja": "散策者のジャケット",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+    }
+   ]
+  },
+  "Falconer's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "鷹匠のジャケット",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Austere Garb": {
+   "cls": "Body_Armours",
+   "ja": "禁欲の衣",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(10-15)% reduced Elemental Ailment Duration on you",
+     "ja": "受ける元素系状態異常の持続時間が(10-15)%減少する"
+    }
+   ]
+  },
+  "Primal Markings": {
+   "cls": "Body_Armours",
+   "ja": "原始の刻印",
+   "lvl": 70
+  },
+  "Warmonger Greathelm": {
+   "cls": "Helmets",
+   "ja": "戦争屋のグレートヘルム",
+   "lvl": 65
+  },
+  "Masked Greathelm": {
+   "cls": "Helmets",
+   "ja": "仮面のグレートヘルム",
+   "lvl": 70
+  },
+  "Paragon Greathelm": {
+   "cls": "Helmets",
+   "ja": "パラゴンのグレートヘルム",
+   "lvl": 75
+  },
+  "Imperial Greathelm": {
+   "cls": "Helmets",
+   "ja": "帝国のグレートヘルム",
+   "lvl": 80
+  },
+  "Woven Cap": {
+   "cls": "Helmets",
+   "ja": "織り帽子",
+   "lvl": 65
+  },
+  "Desert Cap": {
+   "cls": "Helmets",
+   "ja": "砂漠の帽子",
+   "lvl": 70
+  },
+  "Trapper Hood": {
+   "cls": "Helmets",
+   "ja": "罠師のフード",
+   "lvl": 75
+  },
+  "Freebooter Cap": {
+   "cls": "Helmets",
+   "ja": "海賊の帽子",
+   "lvl": 80
+  },
+  "Skycrown Tiara": {
+   "cls": "Helmets",
+   "ja": "スカイクラウンティアラ",
+   "lvl": 65
+  },
+  "Sorcerous Tiara": {
+   "cls": "Helmets",
+   "ja": "術師のティアラ",
+   "lvl": 70
+  },
+  "Kamasan Tiara": {
+   "cls": "Helmets",
+   "ja": "カマサのティアラ",
+   "lvl": 75
+  },
+  "Ancestral Tiara": {
+   "cls": "Helmets",
+   "ja": "先祖のティアラ",
+   "lvl": 80
+  },
+  "Warded Helm": {
+   "cls": "Helmets",
+   "ja": "保護兜",
+   "lvl": 65
+  },
+  "Cryptic Helm": {
+   "cls": "Helmets",
+   "ja": "謎めいた兜",
+   "lvl": 70
+  },
+  "Champion Helm": {
+   "cls": "Helmets",
+   "ja": "王者の兜",
+   "lvl": 75
+  },
+  "Gladiatorial Helm": {
+   "cls": "Helmets",
+   "ja": "剣闘士の兜",
+   "lvl": 80
+  },
+  "Druidic Crown": {
+   "cls": "Helmets",
+   "ja": "ドルイドの冠",
+   "lvl": 65
+  },
+  "Saintly Crown": {
+   "cls": "Helmets",
+   "ja": "聖人の冠",
+   "lvl": 70
+  },
+  "Divine Crown": {
+   "cls": "Helmets",
+   "ja": "神の冠",
+   "lvl": 75
+  },
+  "Cryptic Crown": {
+   "cls": "Helmets",
+   "ja": "謎の冠",
+   "lvl": 80
+  },
+  "Brigand Mask": {
+   "cls": "Helmets",
+   "ja": "盗賊の仮面",
+   "lvl": 65
+  },
+  "Faridun Mask": {
+   "cls": "Helmets",
+   "ja": "ファリドゥンの仮面",
+   "lvl": 70
+  },
+  "Soaring Mask": {
+   "cls": "Helmets",
+   "ja": "飛翔の仮面",
+   "lvl": 75
+  },
+  "Grinning Mask": {
+   "cls": "Helmets",
+   "ja": "嘲笑の仮面",
+   "lvl": 80
+  },
+  "Knightly Mitts": {
+   "cls": "Gloves",
+   "ja": "騎士のミット",
+   "lvl": 65
+  },
+  "Ornate Mitts": {
+   "cls": "Gloves",
+   "ja": "華美なミット",
+   "lvl": 70
+  },
+  "Vaal Mitts": {
+   "cls": "Gloves",
+   "ja": "ヴァールのミット",
+   "lvl": 75
+  },
+  "Massive Mitts": {
+   "cls": "Gloves",
+   "ja": "巨大なミット",
+   "lvl": 80
+  },
+  "Stalking Bracers": {
+   "cls": "Gloves",
+   "ja": "追跡者の弓籠手",
+   "lvl": 65
+  },
+  "Grand Bracers": {
+   "cls": "Gloves",
+   "ja": "荘厳な弓籠手",
+   "lvl": 70
+  },
+  "Barbed Bracers": {
+   "cls": "Gloves",
+   "ja": "トゲ付きの弓籠手",
+   "lvl": 75
+  },
+  "Polished Bracers": {
+   "cls": "Gloves",
+   "ja": "磨かれた弓籠手",
+   "lvl": 80
+  },
+  "Grim Gloves": {
+   "cls": "Gloves",
+   "ja": "不気味な手袋",
+   "lvl": 65
+  },
+  "Opulent Gloves": {
+   "cls": "Gloves",
+   "ja": "絢爛な手袋",
+   "lvl": 70
+  },
+  "Vaal Gloves": {
+   "cls": "Gloves",
+   "ja": "ヴァールの手袋",
+   "lvl": 75
+  },
+  "Sirenscale Gloves": {
+   "cls": "Gloves",
+   "ja": "サイレーンスケイルの手袋",
+   "lvl": 80
+  },
+  "Steelmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "スチールメイルガントレット",
+   "lvl": 65
+  },
+  "Commander Gauntlets": {
+   "cls": "Gloves",
+   "ja": "コマンダーガントレット",
+   "lvl": 70
+  },
+  "Cultist Gauntlets": {
+   "cls": "Gloves",
+   "ja": "カルト信者のガントレット",
+   "lvl": 75
+  },
+  "Blacksteel Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ブラックスティールガントレット",
+   "lvl": 80
+  },
+  "Bound Cuffs": {
+   "cls": "Gloves",
+   "ja": "縛られたカフス",
+   "lvl": 65
+  },
+  "Ancient Cuffs": {
+   "cls": "Gloves",
+   "ja": "古代のカフス",
+   "lvl": 70
+  },
+  "Gleaming Cuffs": {
+   "cls": "Gloves",
+   "ja": "輝くカフス",
+   "lvl": 75
+  },
+  "Adherent Cuffs": {
+   "cls": "Gloves",
+   "ja": "密着のカフス",
+   "lvl": 80
+  },
+  "Tethering Bands": {
+   "cls": "Gloves",
+   "ja": "束縛の腕輪",
+   "lvl": 65
+  },
+  "War Wraps": {
+   "cls": "Gloves",
+   "ja": "ウォーラップ",
+   "lvl": 65
+  },
+  "Elegant Wraps": {
+   "cls": "Gloves",
+   "ja": "エレガントラップ",
+   "lvl": 70
+  },
+  "Vaal Wraps": {
+   "cls": "Gloves",
+   "ja": "ヴァールのラップ",
+   "lvl": 75
+  },
+  "Secured Wraps": {
+   "cls": "Gloves",
+   "ja": "固定されたラップ",
+   "lvl": 80
+  },
+  "Fists of Stone": {
+   "cls": "Gloves",
+   "ja": "石の拳",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "Has +3 to [Evasion] Rating per player level\nHas +1 to maximum [EnergyShield|Energy Shield] per player level",
+     "ja": "プレイヤーレベルごとに[Evasion|回避力] +3を持つ\nプレイヤーレベルごとに最大[EnergyShield|エナジーシールド] +1を持つ"
+    }
+   ]
+  },
+  "Runeforged Fists of Stone": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの石の拳",
+   "lvl": 1,
+   "implicits": [
+    {
+     "en": "Has +2 to [Evasion] Rating per player level\nHas +1 to maximum [EnergyShield|Energy Shield] per player level\nHas +1 to maximum [Ward|Runic Ward] per player level",
+     "ja": "プレイヤーレベルごとに[Evasion|回避力] +2を持つ\nプレイヤーレベルごとに最大[EnergyShield|エナジーシールド] +1を持つ\nプレイヤーレベルごとに最大[Ward|ルーンワード] +1を持つ"
+    }
+   ]
+  },
+  "Bulwark Greaves": {
+   "cls": "Boots",
+   "ja": "砦のグリーヴ",
+   "lvl": 65
+  },
+  "Ornate Greaves": {
+   "cls": "Boots",
+   "ja": "華美なグリーヴ",
+   "lvl": 70
+  },
+  "Vaal Greaves": {
+   "cls": "Boots",
+   "ja": "ヴァールのグリーヴ",
+   "lvl": 75
+  },
+  "Tasalian Greaves": {
+   "cls": "Boots",
+   "ja": "タサリオのグリーヴ",
+   "lvl": 80
+  },
+  "Cinched Boots": {
+   "cls": "Boots",
+   "ja": "締め具のブーツ",
+   "lvl": 65
+  },
+  "Cavalry Boots": {
+   "cls": "Boots",
+   "ja": "騎兵隊のブーツ",
+   "lvl": 70
+  },
+  "Dragonscale Boots": {
+   "cls": "Boots",
+   "ja": "竜鱗のブーツ",
+   "lvl": 75
+  },
+  "Drakeskin Boots": {
+   "cls": "Boots",
+   "ja": "ドレイクスキンブーツ",
+   "lvl": 80
+  },
+  "Bound Sandals": {
+   "cls": "Boots",
+   "ja": "縛られたサンダル",
+   "lvl": 65
+  },
+  "Luxurious Slippers": {
+   "cls": "Boots",
+   "ja": "豪華な履物",
+   "lvl": 70
+  },
+  "Sandsworn Sandals": {
+   "cls": "Boots",
+   "ja": "砂漠の民のサンダル",
+   "lvl": 75
+  },
+  "Sekhema Sandals": {
+   "cls": "Boots",
+   "ja": "セケマのサンダル",
+   "lvl": 80
+  },
+  "Veteran Sabatons": {
+   "cls": "Boots",
+   "ja": "老兵のサバトン",
+   "lvl": 65
+  },
+  "Noble Sabatons": {
+   "cls": "Boots",
+   "ja": "貴族のサバトン",
+   "lvl": 70
+  },
+  "Fortress Sabatons": {
+   "cls": "Boots",
+   "ja": "要塞のサバトン",
+   "lvl": 75
+  },
+  "Blacksteel Sabatons": {
+   "cls": "Boots",
+   "ja": "ブラックスティールサバトン",
+   "lvl": 80
+  },
+  "Faithful Leggings": {
+   "cls": "Boots",
+   "ja": "忠義者のレギンス",
+   "lvl": 65
+  },
+  "Apostle Leggings": {
+   "cls": "Boots",
+   "ja": "使徒のレギンス",
+   "lvl": 70
+  },
+  "Warlock Leggings": {
+   "cls": "Boots",
+   "ja": "ウォーロックレギンス",
+   "lvl": 75
+  },
+  "Cryptic Leggings": {
+   "cls": "Boots",
+   "ja": "謎のレギンス",
+   "lvl": 80
+  },
+  "Wanderer Shoes": {
+   "cls": "Boots",
+   "ja": "放浪者の靴",
+   "lvl": 65
+  },
+  "Charmed Shoes": {
+   "cls": "Boots",
+   "ja": "チャームドシューズ",
+   "lvl": 70
+  },
+  "Quickslip Shoes": {
+   "cls": "Boots",
+   "ja": "クイックスリップシューズ",
+   "lvl": 75
+  },
+  "Daggerfoot Shoes": {
+   "cls": "Boots",
+   "ja": "ダガーフットシューズ",
+   "lvl": 80
+  },
+  "Royal Tower Shield": {
+   "cls": "Shields",
+   "ja": "王家のタワーシールド",
+   "lvl": 65
+  },
+  "Fortress Tower Shield": {
+   "cls": "Shields",
+   "ja": "要塞のタワーシールド",
+   "lvl": 70
+  },
+  "Vaal Tower Shield": {
+   "cls": "Shields",
+   "ja": "ヴァールのタワーシールド",
+   "lvl": 75
+  },
+  "Tawhoan Tower Shield": {
+   "cls": "Shields",
+   "ja": "タウホアのタワーシールド",
+   "lvl": 80
+  },
+  "Glacial Fortress": {
+   "cls": "Shields",
+   "ja": "氷河の要塞",
+   "lvl": 70
+  },
+  "Mammoth Targe": {
+   "cls": "Shields",
+   "ja": "マンモスのタージ",
+   "lvl": 65
+  },
+  "Baroque Targe": {
+   "cls": "Shields",
+   "ja": "バロックのタージ",
+   "lvl": 70
+  },
+  "Soaring Targe": {
+   "cls": "Shields",
+   "ja": "飛翔のタージ",
+   "lvl": 75
+  },
+  "Golden Targe": {
+   "cls": "Shields",
+   "ja": "黄金のタージ",
+   "lvl": 80
+  },
+  "Venerable Defender": {
+   "cls": "Shields",
+   "ja": "尊き守護者",
+   "lvl": 62
+  },
+  "Intricate Crest Shield": {
+   "cls": "Shields",
+   "ja": "精緻なクレストシールド",
+   "lvl": 65
+  },
+  "Sekheman Crest Shield": {
+   "cls": "Shields",
+   "ja": "セケマのクレストシールド",
+   "lvl": 70
+  },
+  "Vaal Crest Shield": {
+   "cls": "Shields",
+   "ja": "ヴァールのクレストシールド",
+   "lvl": 75
+  },
+  "Blacksteel Crest Shield": {
+   "cls": "Shields",
+   "ja": "ブラックスティールクレストシールド",
+   "lvl": 80
+  },
+  "Gutspike Buckler": {
+   "cls": "Bucklers",
+   "ja": "ガットスパイクバックラー",
+   "lvl": 70
+  },
+  "Ancient Buckler": {
+   "cls": "Bucklers",
+   "ja": "古代のバックラー",
+   "lvl": 75
+  },
+  "Desert Buckler": {
+   "cls": "Bucklers",
+   "ja": "砂漠のバックラー",
+   "lvl": 80
+  },
+  "Druidic Focus": {
+   "cls": "Foci",
+   "ja": "ドルイドのフォーカス",
+   "lvl": 65
+  },
+  "Leyline Focus": {
+   "cls": "Foci",
+   "ja": "レイラインフォーカス",
+   "lvl": 70
+  },
+  "Sacred Focus": {
+   "cls": "Foci",
+   "ja": "聖なるフォーカス",
+   "lvl": 75
+  },
+  "Tasalian Focus": {
+   "cls": "Foci",
+   "ja": "タサリオのフォーカス",
+   "lvl": 80
+  },
+  "Runeforged Rusted Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの錆びた胴鎧",
+   "lvl": 1
+  },
+  "Runeforged Fur Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの毛皮張りのプレート",
+   "lvl": 38
+  },
+  "Runeforged Iron Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鉄の胴鎧",
+   "lvl": 11
+  },
+  "Runeforged Raider Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの襲撃者のプレート",
+   "lvl": 16
+  },
+  "Runeforged Maraketh Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのマラケスの胴鎧",
+   "lvl": 20
+  },
+  "Runeforged Steel Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鋼鉄のプレート",
+   "lvl": 27
+  },
+  "Runeforged Full Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのフルプレート",
+   "lvl": 33
+  },
+  "Runeforged Vaal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのヴァールの胴鎧",
+   "lvl": 37
+  },
+  "Runeforged Juggernaut Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのジャガーノートプレート",
+   "lvl": 45
+  },
+  "Runeforged Chieftain Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの族長の胴鎧",
+   "lvl": 50
+  },
+  "Runeforged Colosseum Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのコロシアムプレート",
+   "lvl": 52
+  },
+  "Runeforged Champion Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの王者の胴鎧",
+   "lvl": 58,
+   "implicits": [
+    {
+     "en": "+(750-1000) to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +(750-1000)"
+    }
+   ]
+  },
+  "Runeforged Glorious Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの栄光のプレート",
+   "lvl": 65
+  },
+  "Runeforged Conqueror Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの征服者のプレート",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Abyssal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの深淵の胴鎧",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "Regenerate (1.5-2.5)% of maximum Life per second",
+     "ja": "毎秒ライフの(1.5-2.5)%を自動回復する"
+    }
+   ]
+  },
+  "Runeforged Leather Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの革のベスト",
+   "lvl": 1
+  },
+  "Runeforged Quilted Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのキルティングベスト",
+   "lvl": 4
+  },
+  "Runeforged Pathfinder Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの開拓者のコート",
+   "lvl": 11
+  },
+  "Runeforged Shrouded Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの覆い布のベスト",
+   "lvl": 16
+  },
+  "Runeforged Rhoahide Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのロア革のコート",
+   "lvl": 22
+  },
+  "Runeforged Studded Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鋲打ちのベスト",
+   "lvl": 26
+  },
+  "Runeforged Scout's Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの偵察者のベスト",
+   "lvl": 33
+  },
+  "Runeforged Serpentscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのサーペントスケイルコート",
+   "lvl": 36
+  },
+  "Runeforged Corsair Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのコルセアのベスト",
+   "lvl": 45
+  },
+  "Runeforged Smuggler Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの密輸業者のコート",
+   "lvl": 51
+  },
+  "Runeforged Strider Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのストライダーベスト",
+   "lvl": 52
+  },
+  "Runeforged Hardleather Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのハードレザーコート",
+   "lvl": 56
+  },
+  "Runeforged Exquisite Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの精巧なベスト",
+   "lvl": 65
+  },
+  "Runeforged Mail Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのメイルコート",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
+     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+    }
+   ]
+  },
+  "Runeforged Armoured Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの装甲ベスト",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
+     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Tattered Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの擦り切れたローブ",
+   "lvl": 1
+  },
+  "Runeforged Feathered Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの羽根飾りのローブ",
+   "lvl": 5
+  },
+  "Runeforged Hexer's Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの呪術師のローブ",
+   "lvl": 11
+  },
+  "Runeforged Bone Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの骨の装束",
+   "lvl": 16
+  },
+  "Runeforged Silk Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの絹のローブ",
+   "lvl": 22
+  },
+  "Runeforged Keth Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのケスの装束",
+   "lvl": 28
+  },
+  "Runeforged Votive Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの奉献の装束",
+   "lvl": 33
+  },
+  "Runeforged Altar Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの祭壇のローブ",
+   "lvl": 40
+  },
+  "Runeforged Elementalist Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのエレメンタリストのローブ",
+   "lvl": 45
+  },
+  "Runeforged Mystic Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの神秘の装束",
+   "lvl": 49
+  },
+  "Runeforged Imperial Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの帝国のローブ",
+   "lvl": 52
+  },
+  "Runeforged Plated Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの装甲の装束",
+   "lvl": 58
+  },
+  "Runeforged Havoc Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの破壊の装束",
+   "lvl": 65
+  },
+  "Runeforged Enlightened Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの覚者のローブ",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "(40-50)% increased Mana Regeneration Rate",
+     "ja": "マナ自動回復レートが(40-50)%増加する"
+    }
+   ]
+  },
+  "Runeforged Arcane Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの神秘の装束",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
+     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+    }
+   ]
+  },
+  "Runeforged Chain Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのチェインメイル",
+   "lvl": 1
+  },
+  "Runeforged Rogue Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの盗賊の鎧",
+   "lvl": 11
+  },
+  "Runeforged Vagabond Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの放浪者の鎧",
+   "lvl": 16
+  },
+  "Runeforged Cloaked Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのクロークメイル",
+   "lvl": 26
+  },
+  "Runeforged Explorer Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの探検家の鎧",
+   "lvl": 33
+  },
+  "Runeforged Scale Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのスケイルメイル",
+   "lvl": 37
+  },
+  "Runeforged Knight Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの騎士の鎧",
+   "lvl": 45
+  },
+  "Runeforged Ancestral Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの先祖のメイル",
+   "lvl": 50
+  },
+  "Runeforged Lamellar Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのラメラーメイル",
+   "lvl": 52
+  },
+  "Runeforged Gladiator Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの剣闘士の鎧",
+   "lvl": 58
+  },
+  "Runeforged Heroic Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの英雄の鎧",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(60-80) to maximum Life",
+     "ja": "最大ライフ +(60-80)"
+    }
+   ]
+  },
+  "Runeforged Tournament Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのトーナメントメイル",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
+     "ja": "[Resistances|雷]耐性 +(20-25)%"
+    }
+   ]
+  },
+  "Runeforged Slayer Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの殺戮者の鎧",
+   "lvl": 73
+  },
+  "Runeforged Pilgrim Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの巡礼者の祭服",
+   "lvl": 1
+  },
+  "Runeforged Pelt Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの生皮の外套",
+   "lvl": 10
+  },
+  "Runeforged Mail Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鎖帷子の祭服",
+   "lvl": 16
+  },
+  "Runeforged Shaman Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのシャーマンの外套",
+   "lvl": 28
+  },
+  "Runeforged Ironclad Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの甲鉄の祭服",
+   "lvl": 33
+  },
+  "Runeforged Sacrificial Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの生贄の外套",
+   "lvl": 36
+  },
+  "Runeforged Cleric Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの聖職者の祭服",
+   "lvl": 45
+  },
+  "Runeforged Tideseer Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの潮読みの外套",
+   "lvl": 51
+  },
+  "Runeforged Gilded Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの金装の祭服",
+   "lvl": 52
+  },
+  "Runeforged Venerated Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの尊者の外套",
+   "lvl": 54
+  },
+  "Runeforged Revered Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの畏敬の祭服",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
+     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+    }
+   ]
+  },
+  "Runeforged Corvus Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鴉の外套",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(20-30) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(20-30)"
+    }
+   ]
+  },
+  "Runeforged Zenith Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの天頂の祭服",
+   "lvl": 73
+  },
+  "Runeforged Hermit Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの隠者の衣",
+   "lvl": 1
+  },
+  "Runeforged Waxed Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのワックスジャケット",
+   "lvl": 11
+  },
+  "Runeforged Marabout Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのマラブーの服",
+   "lvl": 16
+  },
+  "Runeforged Wayfarer Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの旅人のジャケット",
+   "lvl": 28
+  },
+  "Runeforged Anchorite Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの隠修士の衣",
+   "lvl": 33
+  },
+  "Runeforged Scalper's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの転売屋のジャケット",
+   "lvl": 39
+  },
+  "Runeforged Scoundrel Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのならず者のジャケット",
+   "lvl": 45
+  },
+  "Runeforged Ascetic Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの禁欲者の服",
+   "lvl": 51
+  },
+  "Runeforged Clandestine Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの隠密のジャケット",
+   "lvl": 52
+  },
+  "Runeforged Monastic Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの修道士の服",
+   "lvl": 56
+  },
+  "Runeforged Torment Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの苦痛のジャケット",
+   "lvl": 65
+  },
+  "Runeforged Devout Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの信者の服",
+   "lvl": 68,
+   "implicits": [
+    {
+     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+    }
+   ]
+  },
+  "Runeforged Assassin Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの暗殺者の服",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runeforged Garment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのガーメント",
+   "lvl": 1
+  },
+  "Runeforged Grand Regalia": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの荘厳なレガリア",
+   "lvl": 65
+  },
+  "Runeforged Sacrificial Regalia": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの生贄のレガリア",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+1 to Level of all [Corrupted] Skill Gems",
+     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+    },
+    {
+     "en": "(2-4)% increased Chaos Damage for each Corrupted Item [Equipped]",
+     "ja": "[Equipped|装備中]のコラプト状態のアイテム1個ごとに混沌ダメージが(2-4)%増加する"
+    }
+   ]
+  },
+  "Runeforged Elegant Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのエレガントプレート",
+   "lvl": 54
+  },
+  "Runeforged Heavy Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのヘビープレート",
+   "lvl": 59
+  },
+  "Runeforged Stone Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの石の胴鎧",
+   "lvl": 62
+  },
+  "Runeforged Layered Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのレイヤードベスト",
+   "lvl": 54
+  },
+  "Runeforged Runner Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの走り手のベスト",
+   "lvl": 59
+  },
+  "Runeforged Lizardscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのリザードスケールコート",
+   "lvl": 62
+  },
+  "Runeforged River Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの川の装束",
+   "lvl": 54
+  },
+  "Runeforged Adherent's Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの信奉者の装束",
+   "lvl": 59
+  },
+  "Runeforged Ceremonial Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの儀式のローブ",
+   "lvl": 62
+  },
+  "Runeforged Mantled Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの外套付きメイル",
+   "lvl": 54
+  },
+  "Runeforged Trailblazer Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの開拓者の鎧",
+   "lvl": 59
+  },
+  "Runeforged Golden Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのゴールデンメイル",
+   "lvl": 62
+  },
+  "Runeforged Occultist Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのオカルティストの外套",
+   "lvl": 54
+  },
+  "Runeforged Plated Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの板金の祭服",
+   "lvl": 59
+  },
+  "Runeforged Heartcarver Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのハートカーヴァーの外套",
+   "lvl": 62
+  },
+  "Runeforged Itinerant Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの旅回りのジャケット",
+   "lvl": 54
+  },
+  "Runeforged Hatungo Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのハトゥンゴの衣",
+   "lvl": 59
+  },
+  "Runeforged Hawker's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの行商人のジャケット",
+   "lvl": 62
+  },
+  "Runeforged Primal Markings": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの原始の刻印",
+   "lvl": 70
+  },
+  "Runeforged Rusted Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの錆びたグレートヘルム",
+   "lvl": 1
+  },
+  "Runeforged Soldier Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの兵士のグレートヘルム",
+   "lvl": 12
+  },
+  "Runeforged Wrapped Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの巻き布のグレートヘルム",
+   "lvl": 16
+  },
+  "Runeforged Spired Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの尖塔のグレートヘルム",
+   "lvl": 27
+  },
+  "Runeforged Elite Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの精鋭のグレートヘルム",
+   "lvl": 33
+  },
+  "Runeforged Warrior Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの戦士のグレートヘルム",
+   "lvl": 36
+  },
+  "Runeforged Commander Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの指揮官のグレートヘルム",
+   "lvl": 45
+  },
+  "Runeforged Fierce Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの獰猛なグレートヘルム",
+   "lvl": 51
+  },
+  "Runeforged Sentinel Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの歩哨のグレートヘルム",
+   "lvl": 52
+  },
+  "Runeforged Goliath Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのゴライアスのグレートヘルム",
+   "lvl": 57
+  },
+  "Runeforged Guardian Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの守護者のグレートヘルム",
+   "lvl": 65
+  },
+  "Runeforged Shabby Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの擦り切れたフード",
+   "lvl": 1
+  },
+  "Runeforged Felt Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのフェルトの帽子",
+   "lvl": 10
+  },
+  "Runeforged Lace Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのレースのフード",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "(30-50)% increased [Ignite|Ignite] [BuffMagnitude|Magnitude]",
+     "ja": "[Ignite|発火]の[BuffMagnitude|強度]が(30-50)%増加する"
+    }
+   ]
+  },
+  "Runeforged Swathed Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの巻き布の帽子",
+   "lvl": 26
+  },
+  "Runeforged Hunter Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの狩人のフード",
+   "lvl": 33
+  },
+  "Runeforged Viper Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの毒蛇の帽子",
+   "lvl": 38
+  },
+  "Runeforged Corsair Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのコルセアの帽子",
+   "lvl": 45
+  },
+  "Runeforged Leatherbound Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの皮張りのフード",
+   "lvl": 50
+  },
+  "Runeforged Velvet Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのベルベットの帽子",
+   "lvl": 52
+  },
+  "Runeforged Covert Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの隠密のフード",
+   "lvl": 56
+  },
+  "Runeforged Armoured Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの装甲帽子",
+   "lvl": 65
+  },
+  "Runeforged Twig Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの小枝のサークレット",
+   "lvl": 1
+  },
+  "Runeforged Wicker Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの枝編みのティアラ",
+   "lvl": 10
+  },
+  "Runeforged Beaded Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのビーズのサークレット",
+   "lvl": 16
+  },
+  "Runeforged Chain Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの鎖のティアラ",
+   "lvl": 26
+  },
+  "Runeforged Feathered Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの羽根付きのティアラ",
+   "lvl": 33
+  },
+  "Runeforged Gold Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの金のサークレット",
+   "lvl": 40
+  },
+  "Runeforged Vermeil Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのヴァーミルサークレット",
+   "lvl": 45
+  },
+  "Runeforged Jade Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの翡翠のティアラ",
+   "lvl": 50
+  },
+  "Runeforged Noble Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの貴族のサークレット",
+   "lvl": 52
+  },
+  "Runeforged Twilight Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの黄昏のティアラ",
+   "lvl": 58
+  },
+  "Runeforged Magus Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの魔導士のティアラ",
+   "lvl": 65
+  },
+  "Runeforged Brimmed Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのつば付き兜",
+   "lvl": 5
+  },
+  "Runeforged Guarded Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの防護兜",
+   "lvl": 11
+  },
+  "Runeforged Visored Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのバイザー付き兜",
+   "lvl": 16
+  },
+  "Runeforged Cowled Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの頭巾付き兜",
+   "lvl": 26
+  },
+  "Runeforged Shielded Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの盾付き兜",
+   "lvl": 33
+  },
+  "Runeforged Closed Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのクローズヘルム",
+   "lvl": 45
+  },
+  "Runeforged Decorated Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの装飾兜",
+   "lvl": 52
+  },
+  "Runeforged Gallant Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの勇士のヘルム",
+   "lvl": 65
+  },
+  "Runeforged Iron Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの鉄の冠",
+   "lvl": 5
+  },
+  "Runeforged Horned Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの角の冠",
+   "lvl": 10
+  },
+  "Runeforged Cultist Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのカルト信者の冠",
+   "lvl": 16
+  },
+  "Runeforged Martyr Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの殉教者の冠",
+   "lvl": 28
+  },
+  "Runeforged Heavy Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの重装の冠",
+   "lvl": 33
+  },
+  "Runeforged Spiritbone Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのスピリットボーンの冠",
+   "lvl": 45
+  },
+  "Runeforged Lavish Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの豪華な冠",
+   "lvl": 52
+  },
+  "Runeforged Archon Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのアルコンの冠",
+   "lvl": 65
+  },
+  "Runeforged Hewn Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの粗削りの仮面",
+   "lvl": 5
+  },
+  "Runeforged Face Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのフェースマスク",
+   "lvl": 10
+  },
+  "Runeforged Hooded Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのフード付きの仮面",
+   "lvl": 16
+  },
+  "Runeforged Veiled Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのベール付きの仮面",
+   "lvl": 28
+  },
+  "Runeforged Tribal Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの部族の仮面",
+   "lvl": 33
+  },
+  "Runeforged Solid Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの頑丈な仮面",
+   "lvl": 45
+  },
+  "Runeforged Shaded Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの遮光の仮面",
+   "lvl": 52
+  },
+  "Runeforged Death Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのデスマスク",
+   "lvl": 65
+  },
+  "Runeforged Elegant Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのエレガントグレートヘルム",
+   "lvl": 54
+  },
+  "Runeforged Noble Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの貴族のグレートヘルム",
+   "lvl": 59
+  },
+  "Runeforged Wrapped Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの巻き布の帽子",
+   "lvl": 54
+  },
+  "Runeforged Deerstalker Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの鹿猟師のフード",
+   "lvl": 59
+  },
+  "Runeforged Sandsworn Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの砂漠の民のティアラ",
+   "lvl": 54
+  },
+  "Runeforged Jungle Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのジャングルティアラ",
+   "lvl": 59
+  },
+  "Runeforged Cabalist Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの秘教の冠",
+   "lvl": 54
+  },
+  "Runeforged Gladiatorial Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの剣闘士の兜",
+   "lvl": 80
+  },
+  "Runeforged Hallowed Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの神聖な冠",
+   "lvl": 54
+  },
+  "Runeforged Inquisitor Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの審問官の冠",
+   "lvl": 59
+  },
+  "Runeforged Pariah Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの追放者の仮面",
+   "lvl": 54
+  },
+  "Runeforged Avian Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの鳥の仮面",
+   "lvl": 59
+  },
+  "Runeforged Grand Visage": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの大いなる顔飾り",
+   "lvl": 65
+  },
+  "Runeforged Stocky Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのがっしりとしたミット",
+   "lvl": 1
+  },
+  "Runeforged Riveted Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのリベット付きミット",
+   "lvl": 11
+  },
+  "Runeforged Tempered Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの焼き入れミット",
+   "lvl": 16
+  },
+  "Runeforged Bolstered Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの補強ミット",
+   "lvl": 27
+  },
+  "Runeforged Moulded Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの成形ミット",
+   "lvl": 33
+  },
+  "Runeforged Detailed Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの精巧なミット",
+   "lvl": 45
+  },
+  "Runeforged Titan Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのタイタンのミット",
+   "lvl": 52
+  },
+  "Runeforged Grand Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの大いなるミット",
+   "lvl": 65
+  },
+  "Runeforged Suede Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのスエードの弓籠手",
+   "lvl": 1
+  },
+  "Runeforged Firm Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの頑丈な弓籠手",
+   "lvl": 11
+  },
+  "Runeforged Bound Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの固定式の弓籠手",
+   "lvl": 16
+  },
+  "Runeforged Sectioned Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの分割式の弓籠手",
+   "lvl": 28
+  },
+  "Runeforged Spined Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの針付きの弓籠手",
+   "lvl": 33
+  },
+  "Runeforged Fine Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの上質な弓籠手",
+   "lvl": 45
+  },
+  "Runeforged Hardened Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの焼き入れの弓籠手",
+   "lvl": 52
+  },
+  "Runeforged Engraved Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの彫刻の弓籠手",
+   "lvl": 65
+  },
+  "Runeforged Torn Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの破れた手袋",
+   "lvl": 1
+  },
+  "Runeforged Sombre Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの陰鬱な手袋",
+   "lvl": 12
+  },
+  "Runeforged Stitched Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの縫い合わせの手袋",
+   "lvl": 16
+  },
+  "Runeforged Jewelled Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの宝石をあしらった手袋",
+   "lvl": 26
+  },
+  "Runeforged Intricate Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの手の込んだ手袋",
+   "lvl": 33
+  },
+  "Runeforged Pauascale Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのパウアスケール手袋",
+   "lvl": 45
+  },
+  "Runeforged Embroidered Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの刺繍入りの手袋",
+   "lvl": 52
+  },
+  "Runeforged Adorned Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの装飾の手袋",
+   "lvl": 65
+  },
+  "Runeforged Ringmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのリングメイルガントレット",
+   "lvl": 6
+  },
+  "Runeforged Layered Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの層状のガントレット",
+   "lvl": 16
+  },
+  "Runeforged Doubled Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの二重のガントレット",
+   "lvl": 33
+  },
+  "Runeforged Plate Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのプレートガントレット",
+   "lvl": 45
+  },
+  "Runeforged Burnished Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの研磨されたガントレット",
+   "lvl": 52
+  },
+  "Runeforged Ornate Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの装飾のガントレット",
+   "lvl": 65
+  },
+  "Runeforged Rope Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの縄のカフス",
+   "lvl": 5
+  },
+  "Runeforged Aged Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの年季の入ったカフス",
+   "lvl": 16
+  },
+  "Runeforged Goldcast Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの金鋳造のカフス",
+   "lvl": 33
+  },
+  "Runeforged Kalguuran Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのカルグールのカフス",
+   "lvl": 45
+  },
+  "Runeforged Righteous Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの正義のカフス",
+   "lvl": 52
+  },
+  "Runeforged Signet Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの印章のカフス",
+   "lvl": 65
+  },
+  "Runeforged Gauze Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの薄布のラップ",
+   "lvl": 4
+  },
+  "Runeforged Linen Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのリネンのラップ",
+   "lvl": 16
+  },
+  "Runeforged Spiral Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのスパイラルラップ",
+   "lvl": 33
+  },
+  "Runeforged Buckled Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのバックル付きのラップ",
+   "lvl": 45
+  },
+  "Runeforged Furtive Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの隠密のラップ",
+   "lvl": 52
+  },
+  "Runeforged Utility Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの実用的なラップ",
+   "lvl": 65
+  },
+  "Runeforged Ancient Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの古代のミット",
+   "lvl": 54
+  },
+  "Runeforged Feathered Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの羽根付きのミット",
+   "lvl": 59
+  },
+  "Runeforged Refined Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの洗練された弓籠手",
+   "lvl": 54
+  },
+  "Runeforged Spiked Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのスパイク付きの弓籠手",
+   "lvl": 59
+  },
+  "Runeforged Baroque Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのバロックの手袋",
+   "lvl": 54
+  },
+  "Runeforged Gold Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの金の手袋",
+   "lvl": 59
+  },
+  "Runeforged Zealot Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの狂信者のガントレット",
+   "lvl": 59
+  },
+  "Runeforged Ornate Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの華美なカフス",
+   "lvl": 59
+  },
+  "Runeforged Adorned Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの装飾のあるラップ",
+   "lvl": 59
+  },
+  "Runeforged Grand Manchettes": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの大いなるマンシェット",
+   "lvl": 65
+  },
+  "Runeforged Rough Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの粗末なグリーヴ",
+   "lvl": 1
+  },
+  "Runeforged Iron Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの鉄のグリーヴ",
+   "lvl": 11
+  },
+  "Runeforged Bronze Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの青銅のグリーヴ",
+   "lvl": 16
+  },
+  "Runeforged Trimmed Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの縁取りのグリーヴ",
+   "lvl": 27
+  },
+  "Runeforged Stone Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの石のグリーヴ",
+   "lvl": 33
+  },
+  "Runeforged Reefsteel Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのリーフスチールグリーヴ",
+   "lvl": 45
+  },
+  "Runeforged Monument Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのモニュメントグリーヴ",
+   "lvl": 52
+  },
+  "Runeforged Totemic Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのトーテムのグリーヴ",
+   "lvl": 65
+  },
+  "Runeforged Rawhide Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの生皮のブーツ",
+   "lvl": 1
+  },
+  "Runeforged Laced Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのレースのブーツ",
+   "lvl": 11
+  },
+  "Runeforged Embossed Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのエンボスのブーツ",
+   "lvl": 16
+  },
+  "Runeforged Steeltoe Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの鋼製つま先ブーツ",
+   "lvl": 28
+  },
+  "Runeforged Lizardscale Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのリザードスケールブーツ",
+   "lvl": 33
+  },
+  "Runeforged Flared Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのフレアブーツ",
+   "lvl": 45
+  },
+  "Runeforged Leatherplate Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのレザープレートブーツ",
+   "lvl": 52
+  },
+  "Runeforged Embroidered Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの刺繍入りブーツ",
+   "lvl": 65
+  },
+  "Runeforged Straw Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの麦わらのサンダル",
+   "lvl": 1
+  },
+  "Runeforged Wrapped Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの巻き布のサンダル",
+   "lvl": 11
+  },
+  "Runeforged Lattice Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの格子のサンダル",
+   "lvl": 16
+  },
+  "Runeforged Silk Slippers": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのシルクの履物",
+   "lvl": 27
+  },
+  "Runeforged Feathered Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの羽根付きのサンダル",
+   "lvl": 33
+  },
+  "Runeforged Flax Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの亜麻のサンダル",
+   "lvl": 45
+  },
+  "Runeforged Studded Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの鋲付きのサンダル",
+   "lvl": 52
+  },
+  "Runeforged Elaborate Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの精巧なサバトン",
+   "lvl": 65
+  },
+  "Runeforged Mail Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのメイルサバトン",
+   "lvl": 6
+  },
+  "Runeforged Braced Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの補強されたサバトン",
+   "lvl": 16
+  },
+  "Runeforged Stacked Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの多層サバトン",
+   "lvl": 33
+  },
+  "Runeforged Covered Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの覆い付きのサバトン",
+   "lvl": 45
+  },
+  "Runeforged Flexile Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの柔軟なサバトン",
+   "lvl": 52
+  },
+  "Runeforged Bold Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの剛胆なサバトン",
+   "lvl": 65
+  },
+  "Runeforged Padded Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのパッド入りのレギンス",
+   "lvl": 5
+  },
+  "Runeforged Secured Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの留め具付きのレギンス",
+   "lvl": 16
+  },
+  "Runeforged Pelt Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの獣皮のレギンス",
+   "lvl": 33
+  },
+  "Runeforged Weaver Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの織り手のレギンス",
+   "lvl": 45
+  },
+  "Runeforged Gilt Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの金装のレギンス",
+   "lvl": 52
+  },
+  "Runeforged Pious Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの敬虔なレギンス",
+   "lvl": 65
+  },
+  "Runeforged Frayed Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの擦り切れた靴",
+   "lvl": 5
+  },
+  "Runeforged Threaded Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのスレッドシューズ",
+   "lvl": 16
+  },
+  "Runeforged Hunting Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのハンティングシューズ",
+   "lvl": 33
+  },
+  "Runeforged Steelpoint Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのスチールポイントシューズ",
+   "lvl": 45
+  },
+  "Runeforged Velour Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのベロアシューズ",
+   "lvl": 52
+  },
+  "Runeforged Bladed Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの刃付きシューズ",
+   "lvl": 65
+  },
+  "Runeforged Elegant Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのエレガントグリーヴ",
+   "lvl": 54
+  },
+  "Runeforged Carved Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの彫刻のあるグリーヴ",
+   "lvl": 59
+  },
+  "Runeforged Studded Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの鋲付きのブーツ",
+   "lvl": 54
+  },
+  "Runeforged Serpentscale Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのサーペントスケールブーツ",
+   "lvl": 59
+  },
+  "Runeforged Elegant Slippers": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのエレガントスリッパ",
+   "lvl": 54
+  },
+  "Runeforged Dunerunner Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのデューンランナーサンダル",
+   "lvl": 59
+  },
+  "Runeforged Bastion Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの要塞のサバトン",
+   "lvl": 59
+  },
+  "Runeforged Shamanistic Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのシャーマンのレギンス",
+   "lvl": 59
+  },
+  "Runeforged Treerunner Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのツリーランナーシューズ",
+   "lvl": 59
+  },
+  "Runeforged Grand Cuisses": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの大いなる脛当て",
+   "lvl": 65
+  },
+  "Runeforged Splintered Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの割れたタワーシールド",
+   "lvl": 1
+  },
+  "Runeforged Painted Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの彩色のタワーシールド",
+   "lvl": 6
+  },
+  "Runeforged Braced Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの補強のタワーシールド",
+   "lvl": 12
+  },
+  "Runeforged Barricade Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの防壁のタワーシールド",
+   "lvl": 16
+  },
+  "Runeforged Effigial Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの立像のタワーシールド",
+   "lvl": 21
+  },
+  "Runeforged Rampart Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの城壁のタワーシールド",
+   "lvl": 28
+  },
+  "Runeforged Heraldric Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの紋章のタワーシールド",
+   "lvl": 33
+  },
+  "Runeforged Stone Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの石のタワーシールド",
+   "lvl": 36
+  },
+  "Runeforged Crucible Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの試練のタワーシールド",
+   "lvl": 45
+  },
+  "Runeforged Ancestor Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの先祖のタワーシールド",
+   "lvl": 50
+  },
+  "Runeforged Phalanx Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのファランクスのタワーシールド",
+   "lvl": 52
+  },
+  "Runeforged Defiant Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの反抗のタワーシールド",
+   "lvl": 58
+  },
+  "Runeforged Blacksteel Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの黒鉄のタワーシールド",
+   "lvl": 65
+  },
+  "Runeforged Hardwood Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの堅木のタージ",
+   "lvl": 1
+  },
+  "Runeforged Pelage Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの毛皮のタージ",
+   "lvl": 8
+  },
+  "Runeforged Studded Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの鋲付きのタージ",
+   "lvl": 16
+  },
+  "Runeforged Crescent Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの三日月のタージ",
+   "lvl": 26
+  },
+  "Runeforged Chiseled Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの彫り込みのあるタージ",
+   "lvl": 33
+  },
+  "Runeforged Feathered Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの羽根付きのタージ",
+   "lvl": 37
+  },
+  "Runeforged Stratified Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの重層タージ",
+   "lvl": 46
+  },
+  "Runeforged Carved Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの彫刻のタージ",
+   "lvl": 51
+  },
+  "Runeforged Mosaic Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのモザイクタージ",
+   "lvl": 52
+  },
+  "Runeforged Aureate Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの金色のタージ",
+   "lvl": 57
+  },
+  "Runeforged Grand Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの大いなるタージ",
+   "lvl": 65
+  },
+  "[DNT] Venerable Defender": {
+   "cls": "Shields",
+   "ja": "[DNT-UNUSED] Venerable Defender",
+   "lvl": 62
+  },
+  "Runeforged Blazon Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの家紋のクレストシールド",
+   "lvl": 1
+  },
+  "Runeforged Sigil Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの刻印のクレストシールド",
+   "lvl": 7
+  },
+  "Runeforged Emblem Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの紋章のクレストシールド",
+   "lvl": 16
+  },
+  "Runeforged Jingling Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの鈴音のクレストシールド",
+   "lvl": 28
+  },
+  "Runeforged Sectarian Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの教団のクレストシールド",
+   "lvl": 33
+  },
+  "Runeforged Omen Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのお告げのクレストシールド",
+   "lvl": 36
+  },
+  "Runeforged Wayward Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの気まぐれなクレストシールド",
+   "lvl": 45
+  },
+  "Runeforged Seer Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの先見のクレストシールド",
+   "lvl": 50
+  },
+  "Runeforged Stoic Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの不動のクレストシールド",
+   "lvl": 52
+  },
+  "Runeforged Empyreal Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの天上のクレストシールド",
+   "lvl": 57
+  },
+  "Runeforged Deified Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの神聖なクレストシールド",
+   "lvl": 65
+  },
+  "Runeforged Leather Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの革のバックラー",
+   "lvl": 1
+  },
+  "Runeforged Wooden Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの木のバックラー",
+   "lvl": 5
+  },
+  "Runeforged Plated Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのプレートバックラー",
+   "lvl": 11
+  },
+  "Runeforged Iron Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの鉄のバックラー",
+   "lvl": 16
+  },
+  "Runeforged Ridged Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのリッジバックラー",
+   "lvl": 22
+  },
+  "Runeforged Spiked Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのトゲ付きのバックラー",
+   "lvl": 26
+  },
+  "Runeforged Ringed Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのリングバックラー",
+   "lvl": 33
+  },
+  "Runeforged Edged Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのエッジバックラー",
+   "lvl": 39
+  },
+  "Runeforged Laminate Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのラミネートバックラー",
+   "lvl": 45
+  },
+  "Runeforged Pearl Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの真珠のバックラー",
+   "lvl": 50
+  },
+  "Runeforged Ornate Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの華美なバックラー",
+   "lvl": 65
+  },
+  "Runeforged Array Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの整列のフォーカス",
+   "lvl": 55
+  },
+  "Runeforged Aegis Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのイージスバックラー",
+   "lvl": 65
+  },
+  "Runeforged Bulwark Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの砦のタワーシールド",
+   "lvl": 54
+  },
+  "Runeforged Noble Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの貴族のタワーシールド",
+   "lvl": 59
+  },
+  "Runeforged Goldworked Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの金細工のタワーシールド",
+   "lvl": 61
+  },
+  "Runeforged Polished Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの磨かれたタージ",
+   "lvl": 54
+  },
+  "Runeforged Stone Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの石のタージ",
+   "lvl": 59
+  },
+  "Runeforged Avian Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの鳥のタージ",
+   "lvl": 62
+  },
+  "Runeforged Dekharan Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのデカーラ・クレストシールド",
+   "lvl": 54
+  },
+  "Runeforged Quartered Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの四分割のクレストシールド",
+   "lvl": 59
+  },
+  "Runeforged Glowering Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの威圧的なクレストシールド",
+   "lvl": 62
+  },
+  "Runeforged Spikeward Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのスパイクワードバックラー",
+   "lvl": 54
+  },
+  "Runeforged Jingling Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの鈴音のバックラー",
+   "lvl": 59
+  },
+  "Runeforged Bladeguard Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのブレードガードバックラー",
+   "lvl": 61
+  },
+  "Runeforged Twig Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの小枝のフォーカス",
+   "lvl": 1
+  },
+  "Runeforged Woven Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの編み物のフォーカス",
+   "lvl": 6
+  },
+  "Runeforged Antler Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの枝角のフォーカス",
+   "lvl": 10
+  },
+  "Runeforged Engraved Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの彫刻のフォーカス",
+   "lvl": 16
+  },
+  "Runeforged Tonal Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの調性のフォーカス",
+   "lvl": 22
+  },
+  "Runeforged Crystal Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの結晶のフォーカス",
+   "lvl": 26
+  },
+  "Runeforged Voodoo Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのブードゥーフォーカス",
+   "lvl": 33
+  },
+  "Runeforged Plumed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの羽飾りのフォーカス",
+   "lvl": 36
+  },
+  "Runeforged Runed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのルーンのフォーカス",
+   "lvl": 45
+  },
+  "Runeforged Whorl Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの渦巻のフォーカス",
+   "lvl": 51
+  },
+  "Runeforged Elegant Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのエレガントフォーカス",
+   "lvl": 52
+  },
+  "Runeforged Attuned Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの調和のフォーカス",
+   "lvl": 57
+  },
+  "Runeforged Magus Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの魔導士のフォーカス",
+   "lvl": 65
+  },
+  "Runeforged Arrayed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの整列のフォーカス",
+   "lvl": 54
+  },
+  "Runeforged Cultist Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのカルト信者のフォーカス",
+   "lvl": 59
+  },
+  "Runeforged Hallowed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの神聖なフォーカス",
+   "lvl": 61
+  },
+  "Runeforged Soldier Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの兵士の胴鎧",
+   "lvl": 65
+  },
+  "Runeforged Ornate Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの華美なプレート",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "Regenerate (1.5-2.5)% of maximum Life per second",
+     "ja": "毎秒ライフの(1.5-2.5)%を自動回復する"
+    }
+   ]
+  },
+  "Runeforged Utzaal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのウトザールの胴鎧",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
+     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Warlord Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのウォーロードの胴鎧",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "+(15-25)% of [Armour|Armour] also applies to [ElementalDamage|Elemental Damage]",
+     "ja": "[Armour|アーマー]の+(15-25)%が[ElementalDamage|元素ダメージ]にも適用される"
+    }
+   ]
+  },
+  "Runeforged Swiftstalker Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのスイフトストーカーコート",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
+     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+    }
+   ]
+  },
+  "Runeforged Slipstrike Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのスリップストライクベスト",
+   "lvl": 70
+  },
+  "Runeforged Wyrmscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのワームスケイルコート",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
+     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Corsair Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの海賊のコート",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runeforged Vile Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの悪辣のローブ",
+   "lvl": 65
+  },
+  "Runeforged Flowing Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの緩やかな装束",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [Ward|Runic Ward] Regeneration Rate",
+     "ja": "[Ward|ルーンワード]の自動回復レートが(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Sacramental Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの聖餐のローブ",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
+     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+    }
+   ]
+  },
+  "Runeforged Feathered Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの羽付きの装束",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(5-10)% of Damage is taken from Mana before Life",
+     "ja": "ダメージの(5-10)%をライフより先にマナで受ける"
+    }
+   ]
+  },
+  "Runeforged Dastard Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの卑怯者の鎧",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(60-80) to maximum Life",
+     "ja": "最大ライフ +(60-80)"
+    }
+   ]
+  },
+  "Runeforged Shrouded Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのシュラウドメイル",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
+     "ja": "[Resistances|雷]耐性 +(20-25)%"
+    }
+   ]
+  },
+  "Runeforged Death Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのデスメイル",
+   "lvl": 75
+  },
+  "Runeforged Thane Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの族長のメイル",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "[Hit|Hits] against you have (15-25)% reduced [CriticalDamageBonus|Critical Damage Bonus]",
+     "ja": "プレイヤーに対する[Hit|ヒット]は[CriticalDamageBonus|クリティカルダメージボーナス]が(15-25)%減少する"
+    }
+   ]
+  },
+  "Runeforged Wolfskin Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの狼皮の外套",
+   "lvl": 65
+  },
+  "Runeforged Conjurer Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの祈祷師の外套",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(20-30) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(20-30)"
+    }
+   ]
+  },
+  "Runeforged Death Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの死の外套",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
+     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+    }
+   ]
+  },
+  "Runeforged Seastorm Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージのシーストームの外套",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(8-14)% of Damage taken [Recoup|Recouped] as Life",
+     "ja": "受けたダメージの(8-14)%をライフとして[Recoup|回収]する"
+    }
+   ]
+  },
+  "Runeforged Sleek Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの艶のあるジャケット",
+   "lvl": 65
+  },
+  "Runeforged Rambler Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの散策者のジャケット",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
+     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+    }
+   ]
+  },
+  "Runeforged Falconer's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの鷹匠のジャケット",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runeforged Austere Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンフォージの禁欲の衣",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(10-15)% reduced Elemental Ailment Duration on you",
+     "ja": "受ける元素系状態異常の持続時間が(10-15)%減少する"
+    }
+   ]
+  },
+  "Runeforged Warmonger Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの戦争屋のグレートヘルム",
+   "lvl": 65
+  },
+  "Runeforged Masked Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの仮面のグレートヘルム",
+   "lvl": 70
+  },
+  "Runeforged Paragon Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのパラゴンのグレートヘルム",
+   "lvl": 75
+  },
+  "Runeforged Imperial Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの帝国のグレートヘルム",
+   "lvl": 80
+  },
+  "Runeforged Woven Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの織り帽子",
+   "lvl": 65
+  },
+  "Runeforged Desert Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの砂漠の帽子",
+   "lvl": 70
+  },
+  "Runeforged Trapper Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの罠師のフード",
+   "lvl": 75
+  },
+  "Runeforged Freebooter Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの海賊の帽子",
+   "lvl": 80
+  },
+  "Runeforged Skycrown Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのスカイクラウンティアラ",
+   "lvl": 65
+  },
+  "Runeforged Sorcerous Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの術師のティアラ",
+   "lvl": 70
+  },
+  "Runeforged Kamasan Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのカマサのティアラ",
+   "lvl": 75
+  },
+  "Runeforged Ancestral Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの先祖のティアラ",
+   "lvl": 80
+  },
+  "Runeforged Warded Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの保護兜",
+   "lvl": 65
+  },
+  "Runeforged Cryptic Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの謎めいた兜",
+   "lvl": 70
+  },
+  "Runeforged Champion Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの王者の兜",
+   "lvl": 75
+  },
+  "Runeforged Druidic Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのドルイドの冠",
+   "lvl": 65
+  },
+  "Runeforged Saintly Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの聖人の冠",
+   "lvl": 70
+  },
+  "Runeforged Divine Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの神の冠",
+   "lvl": 75
+  },
+  "Runeforged Cryptic Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの謎の冠",
+   "lvl": 80
+  },
+  "Runeforged Brigand Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの盗賊の仮面",
+   "lvl": 65
+  },
+  "Runeforged Faridun Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージのファリドゥンの仮面",
+   "lvl": 70
+  },
+  "Runeforged Soaring Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの飛翔の仮面",
+   "lvl": 75
+  },
+  "Runeforged Grinning Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンフォージの嘲笑の仮面",
+   "lvl": 80
+  },
+  "Runeforged Knightly Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの騎士のミット",
+   "lvl": 65
+  },
+  "Runeforged Ornate Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの華美なミット",
+   "lvl": 70
+  },
+  "Runeforged Vaal Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのヴァールのミット",
+   "lvl": 75
+  },
+  "Runeforged Massive Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの巨大なミット",
+   "lvl": 80
+  },
+  "Runeforged Stalking Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの追跡者の弓籠手",
+   "lvl": 65
+  },
+  "Runeforged Grand Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの荘厳な弓籠手",
+   "lvl": 70
+  },
+  "Runeforged Barbed Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのトゲ付きの弓籠手",
+   "lvl": 75
+  },
+  "Runeforged Polished Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの磨かれた弓籠手",
+   "lvl": 80
+  },
+  "Runeforged Grim Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの不気味な手袋",
+   "lvl": 65
+  },
+  "Runeforged Opulent Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの絢爛な手袋",
+   "lvl": 70
+  },
+  "Runeforged Vaal Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのヴァールの手袋",
+   "lvl": 75
+  },
+  "Runeforged Sirenscale Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのサイレーンスケイルの手袋",
+   "lvl": 80
+  },
+  "Runeforged Steelmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのスチールメイルガントレット",
+   "lvl": 65
+  },
+  "Runeforged Commander Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのコマンダーガントレット",
+   "lvl": 70
+  },
+  "Runeforged Cultist Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのカルト信者のガントレット",
+   "lvl": 75
+  },
+  "Runeforged Blacksteel Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのブラックスティールガントレット",
+   "lvl": 80
+  },
+  "Runeforged Bound Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの縛られたカフス",
+   "lvl": 65
+  },
+  "Runeforged Ancient Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの古代のカフス",
+   "lvl": 70
+  },
+  "Runeforged Gleaming Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの輝くカフス",
+   "lvl": 75
+  },
+  "Runeforged Adherent Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの密着のカフス",
+   "lvl": 80
+  },
+  "Runeforged War Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのウォーラップ",
+   "lvl": 65
+  },
+  "Runeforged Elegant Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのエレガントラップ",
+   "lvl": 70
+  },
+  "Runeforged Vaal Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージのヴァールのラップ",
+   "lvl": 75
+  },
+  "Runeforged Secured Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンフォージの固定されたラップ",
+   "lvl": 80
+  },
+  "Runeforged Bulwark Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの砦のグリーヴ",
+   "lvl": 65
+  },
+  "Runeforged Ornate Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの華美なグリーヴ",
+   "lvl": 70
+  },
+  "Runeforged Vaal Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのヴァールのグリーヴ",
+   "lvl": 75
+  },
+  "Runeforged Tasalian Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのタサリオのグリーヴ",
+   "lvl": 80
+  },
+  "Runeforged Cinched Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの締め具のブーツ",
+   "lvl": 65
+  },
+  "Runeforged Cavalry Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの騎兵隊のブーツ",
+   "lvl": 70
+  },
+  "Runeforged Dragonscale Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの竜鱗のブーツ",
+   "lvl": 75
+  },
+  "Runeforged Drakeskin Boots": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのドレイクスキンブーツ",
+   "lvl": 80
+  },
+  "Runeforged Bound Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの縛られたサンダル",
+   "lvl": 65
+  },
+  "Runeforged Luxurious Slippers": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの豪華な履物",
+   "lvl": 70
+  },
+  "Runeforged Sandsworn Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの砂漠の民のサンダル",
+   "lvl": 75
+  },
+  "Runeforged Sekhema Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのセケマのサンダル",
+   "lvl": 80
+  },
+  "Runeforged Veteran Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの老兵のサバトン",
+   "lvl": 65
+  },
+  "Runeforged Noble Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの貴族のサバトン",
+   "lvl": 70
+  },
+  "Runeforged Fortress Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの要塞のサバトン",
+   "lvl": 75
+  },
+  "Runeforged Blacksteel Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのブラックスティールサバトン",
+   "lvl": 80
+  },
+  "Runeforged Faithful Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの忠義者のレギンス",
+   "lvl": 65
+  },
+  "Runeforged Apostle Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの使徒のレギンス",
+   "lvl": 70
+  },
+  "Runeforged Warlock Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのウォーロックレギンス",
+   "lvl": 75
+  },
+  "Runeforged Cryptic Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの謎のレギンス",
+   "lvl": 80
+  },
+  "Runeforged Wanderer Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージの放浪者の靴",
+   "lvl": 65
+  },
+  "Runeforged Charmed Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのチャームドシューズ",
+   "lvl": 70
+  },
+  "Runeforged Quickslip Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのクイックスリップシューズ",
+   "lvl": 75
+  },
+  "Runeforged Daggerfoot Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンフォージのダガーフットシューズ",
+   "lvl": 80
+  },
+  "Runeforged Royal Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの王家のタワーシールド",
+   "lvl": 65
+  },
+  "Runeforged Fortress Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの要塞のタワーシールド",
+   "lvl": 70
+  },
+  "Runeforged Vaal Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのヴァールのタワーシールド",
+   "lvl": 75
+  },
+  "Runeforged Tawhoan Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのタウホアのタワーシールド",
+   "lvl": 80
+  },
+  "Runeforged Mammoth Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのマンモスのタージ",
+   "lvl": 65
+  },
+  "Runeforged Baroque Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのバロックのタージ",
+   "lvl": 70
+  },
+  "Runeforged Soaring Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの飛翔のタージ",
+   "lvl": 75
+  },
+  "Runeforged Golden Targe": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの黄金のタージ",
+   "lvl": 80
+  },
+  "Runeforged Intricate Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージの精緻なクレストシールド",
+   "lvl": 65
+  },
+  "Runeforged Sekheman Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのセケマのクレストシールド",
+   "lvl": 70
+  },
+  "Runeforged Vaal Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのヴァールのクレストシールド",
+   "lvl": 75
+  },
+  "Runeforged Blacksteel Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンフォージのブラックスティールクレストシールド",
+   "lvl": 80
+  },
+  "Runeforged Gutspike Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージのガットスパイクバックラー",
+   "lvl": 70
+  },
+  "Runeforged Ancient Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの古代のバックラー",
+   "lvl": 75
+  },
+  "Runeforged Desert Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンフォージの砂漠のバックラー",
+   "lvl": 80
+  },
+  "Runeforged Druidic Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのドルイドのフォーカス",
+   "lvl": 65
+  },
+  "Runeforged Leyline Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのレイラインフォーカス",
+   "lvl": 70
+  },
+  "Runeforged Sacred Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージの聖なるフォーカス",
+   "lvl": 75
+  },
+  "Runeforged Tasalian Focus": {
+   "cls": "Foci",
+   "ja": "ルーンフォージのタサリオのフォーカス",
+   "lvl": 80
+  },
+  "Runeforged Wooden Club": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージの棍棒",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Area of Effect for [Attack|Attacks]",
+     "ja": "[Attack|アタック]の効果範囲が(20-30)%増加する"
+    }
+   ]
+  },
+  "Runemastered Wooden Club": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンマスターの棍棒",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Area of Effect for [Attack|Attacks]",
+     "ja": "[Attack|アタック]の効果範囲が(20-30)%増加する"
+    }
+   ]
+  },
+  "Runeforged Slim Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージの細身のメイス",
+   "lvl": 38
+  },
+  "Runeforged Spiked Club": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージのトゲ付きの棍棒",
+   "lvl": 40
+  },
+  "Runeforged Warpick": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージのウォーピック",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "(30-40)% increased effect of [ArmourBreak|Fully Broken Armour]",
+     "ja": "[ArmourBreak|完全アーマー破壊]の効果が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Kalguuran Forgehammer": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージのカルグールのフォージハンマー",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Has 3 Sockets",
+     "ja": "ソケットを3個持つ"
+    },
+    {
+     "en": "+(100-150) to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +(100-150)"
+    }
+   ]
+  },
+  "Runeforged Morning Star": {
+   "cls": "OneHand_Maces",
+   "ja": "ルーンフォージのモーニングスター",
+   "lvl": 65
+  },
+  "Runeforged Felled Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの倒木のグレートクラブ",
+   "lvl": 38
+  },
+  "Runemastered Felled Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンマスターの倒木のグレートクラブ",
+   "lvl": 55
+  },
+  "Runeforged Oak Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージのオークグレートハンマー",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
+     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+    }
+   ]
+  },
+  "Runemastered Oak Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンマスターのオークグレートハンマー",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
+     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+    }
+   ]
+  },
+  "Runeforged Forge Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの鍜治場の大槌",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "[Crushed|Crushes] Enemies on Hit",
+     "ja": "ヒット時に敵を[Crushed|破砕]する"
+    }
+   ]
+  },
+  "Runeforged Studded Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの鋲付きの金棒",
+   "lvl": 38
+  },
+  "Runemastered Studded Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンマスターの鋲付きの金棒",
+   "lvl": 55
+  },
+  "Runeforged Cultist Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージのカルティストグレートハンマー",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
+     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+    },
+    {
+     "en": "(20-30)% increased Bleeding Duration",
+     "ja": "出血持続時間が(20-30)%増加する"
+    }
+   ]
+  },
+  "Runeforged Temple Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの寺院の大槌",
+   "lvl": 55
+  },
+  "Runeforged Leaden Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの鉛のグレートハンマー",
+   "lvl": 55
+  },
+  "Runeforged Crumbling Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの朽ちた大槌",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
+     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+    }
+   ]
+  },
+  "Runeforged Pointed Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンフォージの尖った大槌",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
+     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+    }
+   ]
+  },
+  "Runeforged Hardwood Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージの硬材の槍",
+   "lvl": 40
+  },
+  "Runeforged Ironhead Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージの鉄頭のスピア",
+   "lvl": 38
+  },
+  "Runemastered Ironhead Spear": {
+   "cls": "Spears",
+   "ja": "ルーンマスターの鉄頭のスピア",
+   "lvl": 55
+  },
+  "Runeforged Hunting Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージのハンティングスピア",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
+     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ]
+  },
+  "Runeforged Winged Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージの翼刃のスピア",
+   "lvl": 40
+  },
+  "Runeforged War Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージのウォースピア",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
+     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+    }
+   ]
+  },
+  "Runeforged Forked Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージの双頭の槍",
+   "lvl": 55
+  },
+  "Runeforged Barbed Spear": {
+   "cls": "Spears",
+   "ja": "ルーンフォージのトゲ付きの槍",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "Bleeding you inflict deals Damage (10-20)% faster",
+     "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ]
+  },
+  "Runeforged Wrapped Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンフォージの巻き布のクォータースタッフ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "50% increased [BuffMagnitude|Magnitude] of [Bleeding|Bleeding] you inflict",
+     "ja": "プレイヤーが付与した[Bleeding|出血]の[BuffMagnitude|強度]が50%増加する"
+    }
+   ]
+  },
+  "Runeforged Long Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンフォージのロングクォータースタッフ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "16% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+    }
+   ]
+  },
+  "Runemastered Long Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンマスターのロングクォータースタッフ",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "16% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+    }
+   ]
+  },
+  "Runeforged Gothic Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンフォージのゴシッククォータースタッフ",
+   "lvl": 38
+  },
+  "Runemastered Gothic Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンマスターのゴシッククォータースタッフ",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "[Ignite|Ignites] you inflict deal Damage (30-40)% faster",
+     "ja": "プレイヤーが付与した[Ignite|発火]がダメージを与える速度が(30-40)%速くなる"
+    }
+   ]
+  },
+  "Runeforged Crescent Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンフォージの三日月のクォータースタッフ",
+   "lvl": 40
+  },
+  "Runeforged Steelpoint Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンフォージのスチールポイントクォータースタッフ",
+   "lvl": 40
+  },
+  "Runeforged Crude Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージの粗雑な弓",
+   "lvl": 55
+  },
+  "Runeforged Shortbow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージのショートボウ",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "Projectiles have 50% chance for an additional Projectile when [Fork|Forking]",
+     "ja": "投射物は[Fork|分岐]する時に50%の確率で追加の投射物を放つ"
+    }
+   ]
+  },
+  "Runeforged Warden Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージの監視者の弓",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "(25-35)% chance to [Chain] an additional time",
+     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+    }
+   ]
+  },
+  "Runeforged Recurve Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージのリカーブボウ",
+   "lvl": 40
+  },
+  "Runeforged Composite Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージのコンポジットボウ",
+   "lvl": 55
+  },
+  "Runeforged Dualstring Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージのデュアルストリングボウ",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+    }
+   ]
+  },
+  "Runeforged Zealot Bow": {
+   "cls": "Bows",
+   "ja": "ルーンフォージの狂信者の弓",
+   "lvl": 55
+  },
+  "Runeforged Makeshift Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンフォージの間に合わせのクロスボウ",
+   "lvl": 38
+  },
+  "Runeforged Tense Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンフォージの張り詰めたクロスボウ",
+   "lvl": 38
+  },
+  "Runemastered Tense Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンマスターの張り詰めたクロスボウ",
+   "lvl": 55
+  },
+  "Runeforged Sturdy Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンフォージの頑丈なクロスボウ",
+   "lvl": 38
+  },
+  "Runeforged Dyad Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンフォージの対のクロスボウ",
+   "lvl": 40
+  },
+  "Runemastered Dyad Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンマスターの対のクロスボウ",
+   "lvl": 65
+  },
+  "Runeforged Bombard Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ルーンフォージの爆撃のクロスボウ",
+   "lvl": 55
+  },
+  "Runeforged Changeling Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンフォージの変身のタリスマン",
+   "lvl": 38
+  },
+  "Runeforged Nettle Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンフォージのイラクサのタリスマン",
+   "lvl": 38
+  },
+  "Runemastered Nettle Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンマスターのイラクサのタリスマン",
+   "lvl": 55
+  },
+  "Runeforged Familial Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンフォージの眷属のタリスマン",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "[Minion|Minions] deal (30-50)% increased Damage",
+     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+    }
+   ]
+  },
+  "Runemastered Familial Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンマスターの眷属のタリスマン",
+   "lvl": 55,
+   "implicits": [
+    {
+     "en": "[Minion|Minions] deal (51-100)% increased Damage",
+     "ja": "[Minion|ミニオン]のダメージが(51-100)%増加する"
+    }
+   ]
+  },
+  "Runeforged Vicious Talisman": {
+   "cls": "Talismans",
+   "ja": "ルーンフォージの獰猛のタリスマン",
+   "lvl": 65
+  },
+  "Flanged Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "フランジメイス",
+   "lvl": 67
+  },
+  "Crown Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "クラウンメイス",
+   "lvl": 72
+  },
+  "Molten Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "溶融ハンマー",
+   "lvl": 77
+  },
+  "Strife Pick": {
+   "cls": "OneHand_Maces",
+   "ja": "ストライフピック",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
+     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+    }
+   ]
+  },
+  "Fortified Hammer": {
+   "cls": "OneHand_Maces",
+   "ja": "頑丈なハンマー",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "40% chance to [Daze] on [Hit]",
+     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+    }
+   ]
+  },
+  "Marauding Mace": {
+   "cls": "OneHand_Maces",
+   "ja": "略奪のメイス",
+   "lvl": 77
+  },
+  "Akoyan Club": {
+   "cls": "OneHand_Maces",
+   "ja": "アコヤのクラブ",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "[Accuracy|Always Hits]",
+     "ja": "[Accuracy|常にヒットする]"
+    }
+   ]
+  },
+  "Anvil Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "金床の大槌",
+   "lvl": 67,
+   "implicits": [
+    {
+     "en": "[Crushed|Crushes] Enemies on Hit",
+     "ja": "ヒット時に敵を[Crushed|破砕]する"
+    }
+   ]
+  },
+  "Sacred Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "聖なる大槌",
+   "lvl": 72
+  },
+  "Ironwood Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "鉄木のグレートハンマー",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "Causes (30-50)% increased [Stun|Stun] Buildup",
+     "ja": "引き起こす[Stun|スタン]蓄積が(30-50)%増加する"
+    }
+   ]
+  },
+  "Fanatic Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "熱狂者のグレートハンマー",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
+     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+    }
+   ]
+  },
+  "Ruination Maul": {
+   "cls": "TwoHand_Maces",
+   "ja": "破滅の大槌",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
+     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+    }
+   ]
+  },
+  "Massive Greathammer": {
+   "cls": "TwoHand_Maces",
+   "ja": "巨大なグレートハンマー",
+   "lvl": 77
+  },
+  "Tawhoan Greatclub": {
+   "cls": "TwoHand_Maces",
+   "ja": "タウホアのグレートクラブ",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]",
+     "ja": "[Warcry|ウォークライ]は[Attack|アタック]を追加で1回[Empowered|強化]する"
+    }
+   ]
+  },
+  "Aberrant Sledge": {
+   "cls": "TwoHand_Maces",
+   "ja": "異形のスレッジ",
+   "lvl": 70
+  },
+  "Runemastered Aberrant Sledge": {
+   "cls": "TwoHand_Maces",
+   "ja": "ルーンマスターの異形のスレッジ",
+   "lvl": 70
+  },
+  "Sinister Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "邪悪なクォータースタッフ",
+   "lvl": 67
+  },
+  "Lunar Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "月のクォータースタッフ",
+   "lvl": 72
+  },
+  "Striking Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ストライキングクォータースタッフ",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "16% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+    }
+   ]
+  },
+  "Bolting Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "雷撃のクォータースタッフ",
+   "lvl": 78
+  },
+  "Aegis Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "イージスクォータースタッフ",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "+(12-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(12-18)%"
+    }
+   ]
+  },
+  "Razor Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "レイザークォータースタッフ",
+   "lvl": 77
+  },
+  "Skullcrusher Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "頭蓋割りのクォータースタッフ",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(20-50)% chance to [Daze] on [Hit]",
+     "ja": "[Hit|ヒット]時に(20-50)%の確率で[Daze|眩暈]を付与する"
+    }
+   ]
+  },
+  "Dreaming Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "夢見るクォータースタッフ",
+   "lvl": 78
+  },
+  "Warding Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "護りのクォータースタッフ",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(30-50) to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +(30-50)"
+    }
+   ]
+  },
+  "Runemastered Warding Quarterstaff": {
+   "cls": "Quarterstaves",
+   "ja": "ルーンマスターの護りのクォータースタッフ",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(30-50) to maximum [Ward|Runic Ward]",
+     "ja": "最大[Ward|ルーンワード] +(30-50)"
+    }
+   ]
+  },
+  "Ironwood Shortbow": {
+   "cls": "Bows",
+   "ja": "鉄木のショートボウ",
+   "lvl": 67
+  },
+  "Cavalry Bow": {
+   "cls": "Bows",
+   "ja": "騎兵隊の弓",
+   "lvl": 72
+  },
+  "Guardian Bow": {
+   "cls": "Bows",
+   "ja": "守護者の弓",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "(25-35)% chance to [Chain] an additional time",
+     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+    }
+   ]
+  },
+  "Gemini Bow": {
+   "cls": "Bows",
+   "ja": "ジェミニボウ",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+    }
+   ]
+  },
+  "Fanatic Bow": {
+   "cls": "Bows",
+   "ja": "熱狂者の弓",
+   "lvl": 79
+  },
+  "Warmonger Bow": {
+   "cls": "Bows",
+   "ja": "戦争屋の弓",
+   "lvl": 77
+  },
+  "Obliterator Bow": {
+   "cls": "Bows",
+   "ja": "殲滅者の弓",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "50% reduced Projectile Range",
+     "ja": "投射物の範囲が50%減少する"
+    }
+   ]
+  },
+  "Heartwood Shortbow": {
+   "cls": "Bows",
+   "ja": "ハートウッドショートボウ",
+   "lvl": 67
+  },
+  "Stout Crossbow": {
+   "cls": "Crossbows",
+   "ja": "堅牢なクロスボウ",
+   "lvl": 67
+  },
+  "Engraved Crossbow": {
+   "cls": "Crossbows",
+   "ja": "彫刻のクロスボウ",
+   "lvl": 72
+  },
+  "Flexed Crossbow": {
+   "cls": "Crossbows",
+   "ja": "フレックスクロスボウ",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "(20-30)% increased Bolt Speed",
+     "ja": "ボルトのスピードが(20-30)%増加する"
+    }
+   ]
+  },
+  "Gemini Crossbow": {
+   "cls": "Crossbows",
+   "ja": "ジェミニクロスボウ",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "Loads an additional bolt",
+     "ja": "ボルトを追加で1本装填する"
+    }
+   ]
+  },
+  "Siege Crossbow": {
+   "cls": "Crossbows",
+   "ja": "シージクロスボウ",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
+     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+    }
+   ]
+  },
+  "Desolate Crossbow": {
+   "cls": "Crossbows",
+   "ja": "隔絶のクロスボウ",
+   "lvl": 77
+  },
+  "Elegant Crossbow": {
+   "cls": "Crossbows",
+   "ja": "エレガントクロスボウ",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "(20-30)% chance to [Pierce|Pierce] an Enemy",
+     "ja": "(20-30)%の確率で敵を[Pierce|貫通]する"
+    }
+   ]
+  },
+  "Trarthan Cannon": {
+   "cls": "Crossbows",
+   "ja": "トラーサスキャノン",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Cannot load or fire [Ammunition]",
+     "ja": "[Ammunition|弾薬]を装填することも発射することもできない"
+    }
+   ]
+  },
+  "Orichalcum Spear": {
+   "cls": "Spears",
+   "ja": "オリハルコンスピア",
+   "lvl": 67
+  },
+  "Soaring Spear": {
+   "cls": "Spears",
+   "ja": "飛翔のスピア",
+   "lvl": 70
+  },
+  "Pronged Spear": {
+   "cls": "Spears",
+   "ja": "二又の槍",
+   "lvl": 72
+  },
+  "Stalking Spear": {
+   "cls": "Spears",
+   "ja": "ストーキングスピア",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
+     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+    }
+   ]
+  },
+  "Flying Spear": {
+   "cls": "Spears",
+   "ja": "フレイングスピア",
+   "lvl": 78,
+   "implicits": [
+    {
+     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
+     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+    }
+   ]
+  },
+  "Grand Spear": {
+   "cls": "Spears",
+   "ja": "グランドスピア",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "25% increased [Melee] [Strike] Range with this weapon",
+     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+    }
+   ]
+  },
+  "Spiked Spear": {
+   "cls": "Spears",
+   "ja": "スパイクスピア",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "Bleeding you inflict deals Damage (10-20)% faster",
+     "ja": "付与した出血がダメージを与える速度が(10-20)%速くなる"
+    }
+   ]
+  },
+  "Guardian Spear": {
+   "cls": "Spears",
+   "ja": "守護者のスピア",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
+     "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
+    }
+   ]
+  },
+  "Akoyan Spear": {
+   "cls": "Spears",
+   "ja": "アコヤのスピア",
+   "lvl": 78
+  },
+  "Spiny Talisman": {
+   "cls": "Talismans",
+   "ja": "棘のタリスマン",
+   "lvl": 67
+  },
+  "Ashbark Talisman": {
+   "cls": "Talismans",
+   "ja": "灰樹皮のタリスマン",
+   "lvl": 72,
+   "implicits": [
+    {
+     "en": "(50-80)% increased [Flammability] [BuffMagnitude|Magnitude]",
+     "ja": "[Flammability|可燃性]の[BuffMagnitude|強度]が(50-80)%増加する"
+    }
+   ]
+  },
+  "Fang Talisman": {
+   "cls": "Talismans",
+   "ja": "牙のタリスマン",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "[Minion|Minions] deal (30-50)% increased Damage",
+     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+    }
+   ]
+  },
+  "Fungal Talisman": {
+   "cls": "Talismans",
+   "ja": "キノコのタリスマン",
+   "lvl": 78
+  },
+  "Alpha Talisman": {
+   "cls": "Talismans",
+   "ja": "アルファのタリスマン",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "+(14-18)% to [Block] chance",
+     "ja": "[Block|ブロック]率 +(14-18)%"
+    }
+   ]
+  },
+  "Maji Talisman": {
+   "cls": "Talismans",
+   "ja": "マジのタリスマン",
+   "lvl": 79,
+   "implicits": [
+    {
+     "en": "+(7-10) to Maximum [Rage]",
+     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+    }
+   ]
+  },
+  "Wildwood Talisman": {
+   "cls": "Talismans",
+   "ja": "原生林のタリスマン",
+   "lvl": 70
+  },
+  "Thunder Talisman": {
+   "cls": "Talismans",
+   "ja": "雷のタリスマン",
+   "lvl": 77,
+   "implicits": [
+    {
+     "en": "(20-30)% increased [BuffMagnitude|Magnitude] of [Shock|Shock] you inflict",
+     "ja": "プレイヤーが付与した[Shock|感電]の[BuffMagnitude|強度]が(20-30)%増加する"
+    }
+   ]
+  },
+  "Jade Talisman": {
+   "cls": "Talismans",
+   "ja": "ヒスイのタリスマン",
+   "lvl": 78
+  },
+  "Runemastered Rusted Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの錆びた胴鎧",
+   "lvl": 38
+  },
+  "Runemastered Iron Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの鉄の胴鎧",
+   "lvl": 38
+  },
+  "Runemastered Raider Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの襲撃者のプレート",
+   "lvl": 38
+  },
+  "Runemastered Maraketh Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのマラケスの胴鎧",
+   "lvl": 38
+  },
+  "Runemastered Steel Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの鋼鉄のプレート",
+   "lvl": 40
+  },
+  "Runemastered Full Plate": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのフルプレート",
+   "lvl": 45
+  },
+  "Runemastered Vaal Cuirass": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのヴァールの胴鎧",
+   "lvl": 55
+  },
+  "Runemastered Leather Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの革のベスト",
+   "lvl": 38
+  },
+  "Runemastered Quilted Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのキルティングベスト",
+   "lvl": 38
+  },
+  "Runemastered Pathfinder Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの開拓者のコート",
+   "lvl": 38
+  },
+  "Runemastered Shrouded Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの覆い布のベスト",
+   "lvl": 38
+  },
+  "Runemastered Rhoahide Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのロア革のコート",
+   "lvl": 38
+  },
+  "Runemastered Studded Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの鋲打ちのベスト",
+   "lvl": 40
+  },
+  "Runemastered Scout's Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの偵察者のベスト",
+   "lvl": 55
+  },
+  "Runemastered Serpentscale Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのサーペントスケイルコート",
+   "lvl": 55
+  },
+  "Runemastered Smuggler Coat": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの密輸業者のコート",
+   "lvl": 65
+  },
+  "Runemastered Strider Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのストライダーベスト",
+   "lvl": 70
+  },
+  "Runemastered Exquisite Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの精巧なベスト",
+   "lvl": 70
+  },
+  "Runemastered Armoured Vest": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの装甲ベスト",
+   "lvl": 80,
+   "implicits": [
+    {
+     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
+     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+    }
+   ]
+  },
+  "Runemastered Tattered Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの擦り切れたローブ",
+   "lvl": 38
+  },
+  "Runemastered Feathered Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの羽根飾りのローブ",
+   "lvl": 38
+  },
+  "Runemastered Hexer's Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの呪術師のローブ",
+   "lvl": 38
+  },
+  "Runemastered Bone Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの骨の装束",
+   "lvl": 38
+  },
+  "Runemastered Silk Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの絹のローブ",
+   "lvl": 38
+  },
+  "Runemastered Keth Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのケスの装束",
+   "lvl": 38
+  },
+  "Runemastered Votive Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの奉献の装束",
+   "lvl": 55
+  },
+  "Runemastered Altar Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの祭壇のローブ",
+   "lvl": 55
+  },
+  "Runemastered Elementalist Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのエレメンタリストのローブ",
+   "lvl": 55
+  },
+  "Runemastered Plated Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの装甲の装束",
+   "lvl": 65
+  },
+  "Runemastered Havoc Raiment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの破壊の装束",
+   "lvl": 70
+  },
+  "Runemastered Enlightened Robe": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの覚者のローブ",
+   "lvl": 75,
+   "implicits": [
+    {
+     "en": "(40-50)% increased Mana Regeneration Rate",
+     "ja": "マナ自動回復レートが(40-50)%増加する"
+    }
+   ]
+  },
+  "Runemastered Chain Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのチェインメイル",
+   "lvl": 38
+  },
+  "Runemastered Rogue Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの盗賊の鎧",
+   "lvl": 38
+  },
+  "Runemastered Vagabond Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの放浪者の鎧",
+   "lvl": 38
+  },
+  "Runemastered Cloaked Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのクロークメイル",
+   "lvl": 40
+  },
+  "Runemastered Explorer Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの探検家の鎧",
+   "lvl": 55
+  },
+  "Runemastered Scale Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのスケイルメイル",
+   "lvl": 55
+  },
+  "Runemastered Knight Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの騎士の鎧",
+   "lvl": 55
+  },
+  "Runemastered Ancestral Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの先祖のメイル",
+   "lvl": 65
+  },
+  "Runemastered Heroic Armour": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの英雄の鎧",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+(60-80) to maximum Life",
+     "ja": "最大ライフ +(60-80)"
+    }
+   ]
+  },
+  "Runemastered Pilgrim Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの巡礼者の祭服",
+   "lvl": 38
+  },
+  "Runemastered Mail Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの鎖帷子の祭服",
+   "lvl": 38
+  },
+  "Runemastered Shaman Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのシャーマンの外套",
+   "lvl": 38
+  },
+  "Runemastered Ironclad Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの甲鉄の祭服",
+   "lvl": 55
+  },
+  "Runemastered Sacrificial Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの生贄の外套",
+   "lvl": 55
+  },
+  "Runemastered Cleric Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの聖職者の祭服",
+   "lvl": 55
+  },
+  "Runemastered Tideseer Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの潮読みの外套",
+   "lvl": 65
+  },
+  "Runemastered Gilded Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの金装の祭服",
+   "lvl": 65
+  },
+  "Runemastered Revered Vestments": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの畏敬の祭服",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
+     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+    }
+   ]
+  },
+  "Runemastered Corvus Mantle": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの鴉の外套",
+   "lvl": 70,
+   "implicits": [
+    {
+     "en": "+(20-30) to [Spirit|Spirit]",
+     "ja": "[Spirit|スピリット] +(20-30)"
+    }
+   ]
+  },
+  "Runemastered Ornate Ringmail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの豪華なリングメイル",
+   "lvl": 55
+  },
+  "Runemastered Ancient Mail": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの古代のメイル",
+   "lvl": 70
+  },
+  "Runemastered Hermit Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの隠者の衣",
+   "lvl": 38
+  },
+  "Runemastered Waxed Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのワックスジャケット",
+   "lvl": 38
+  },
+  "Runemastered Marabout Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのマラブーの服",
+   "lvl": 38
+  },
+  "Runemastered Wayfarer Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの旅人のジャケット",
+   "lvl": 40
+  },
+  "Runemastered Anchorite Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの隠修士の衣",
+   "lvl": 55
+  },
+  "Runemastered Scalper's Jacket": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの転売屋のジャケット",
+   "lvl": 55
+  },
+  "Runemastered Assassin Garb": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの暗殺者の服",
+   "lvl": 73,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Garment": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターのガーメント",
+   "lvl": 38
+  },
+  "Runemastered Grand Regalia": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの荘厳なレガリア",
+   "lvl": 65
+  },
+  "Runemastered Sacrificial Regalia": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの生贄のレガリア",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "+1 to Level of all [Corrupted] Skill Gems",
+     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+    }
+   ]
+  },
+  "Runemastered Rusted Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの錆びたグレートヘルム",
+   "lvl": 38
+  },
+  "Runemastered Soldier Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの兵士のグレートヘルム",
+   "lvl": 38
+  },
+  "Runemastered Wrapped Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの巻き布のグレートヘルム",
+   "lvl": 38
+  },
+  "Runemastered Spired Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの尖塔のグレートヘルム",
+   "lvl": 40
+  },
+  "Runemastered Elite Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの精鋭のグレートヘルム",
+   "lvl": 55
+  },
+  "Runemastered Warrior Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの戦士のグレートヘルム",
+   "lvl": 55
+  },
+  "Runemastered Fierce Greathelm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの獰猛なグレートヘルム",
+   "lvl": 55
+  },
+  "Runemastered Shabby Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの擦り切れたフード",
+   "lvl": 38
+  },
+  "Runemastered Felt Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのフェルトの帽子",
+   "lvl": 38
+  },
+  "Runemastered Hunter Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの狩人のフード",
+   "lvl": 40
+  },
+  "Runemastered Viper Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの毒蛇の帽子",
+   "lvl": 55
+  },
+  "Runemastered Corsair Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのコルセアの帽子",
+   "lvl": 55
+  },
+  "Runemastered Leatherbound Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの皮張りのフード",
+   "lvl": 65
+  },
+  "Runemastered Velvet Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのベルベットの帽子",
+   "lvl": 65
+  },
+  "Runemastered Covert Hood": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの隠密のフード",
+   "lvl": 56
+  },
+  "Runemastered Armoured Cap": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの装甲帽子",
+   "lvl": 65
+  },
+  "Runemastered Twig Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの小枝のサークレット",
+   "lvl": 38
+  },
+  "Runemastered Wicker Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの枝編みのティアラ",
+   "lvl": 38
+  },
+  "Runemastered Beaded Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのビーズのサークレット",
+   "lvl": 38
+  },
+  "Runemastered Chain Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの鎖のティアラ",
+   "lvl": 40
+  },
+  "Runemastered Feathered Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの羽根付きのティアラ",
+   "lvl": 55
+  },
+  "Runemastered Gold Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの金のサークレット",
+   "lvl": 55
+  },
+  "Runemastered Vermeil Circlet": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのヴァーミルサークレット",
+   "lvl": 55
+  },
+  "Runemastered Jade Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの翡翠のティアラ",
+   "lvl": 65
+  },
+  "Runemastered Twilight Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの黄昏のティアラ",
+   "lvl": 65
+  },
+  "Runemastered Magus Tiara": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの魔導士のティアラ",
+   "lvl": 65
+  },
+  "Runemastered Brimmed Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのつば付き兜",
+   "lvl": 38
+  },
+  "Runemastered Guarded Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの防護兜",
+   "lvl": 38
+  },
+  "Runemastered Visored Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのバイザー付き兜",
+   "lvl": 38
+  },
+  "Runemastered Cowled Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの頭巾付き兜",
+   "lvl": 40
+  },
+  "Runemastered Shielded Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの盾付き兜",
+   "lvl": 55
+  },
+  "Runemastered Decorated Helm": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの装飾兜",
+   "lvl": 65
+  },
+  "Runemastered Ancient Visor": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの古代のバイザー",
+   "lvl": 65
+  },
+  "Runemastered Iron Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの鉄の冠",
+   "lvl": 38
+  },
+  "Runemastered Horned Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの角の冠",
+   "lvl": 38
+  },
+  "Runemastered Cultist Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのカルト信者の冠",
+   "lvl": 38
+  },
+  "Runemastered Martyr Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの殉教者の冠",
+   "lvl": 40
+  },
+  "Runemastered Heavy Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの重装の冠",
+   "lvl": 55
+  },
+  "Runemastered Spiritbone Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのスピリットボーンの冠",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "Every 5 seconds, gain a [VerisiumInfusion|Verisium Infusion]",
+     "ja": "5秒ごとに[VerisiumInfusion|ヴェリシウムインフュージョン]を1スタック獲得する"
+    }
+   ]
+  },
+  "Runemastered Grand Visage": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの大いなる顔飾り",
+   "lvl": 65
+  },
+  "Runemastered Tenebrous Crown": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの暗影の冠",
+   "lvl": 65
+  },
+  "Runemastered Hewn Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの粗削りの仮面",
+   "lvl": 38
+  },
+  "Runemastered Face Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのフェースマスク",
+   "lvl": 38
+  },
+  "Runemastered Hooded Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのフード付きの仮面",
+   "lvl": 38
+  },
+  "Runemastered Veiled Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのベール付きの仮面",
+   "lvl": 40
+  },
+  "Runemastered Tribal Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの部族の仮面",
+   "lvl": 52
+  },
+  "Runemastered Solid Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターの頑丈な仮面",
+   "lvl": 55
+  },
+  "Runemastered Death Mask": {
+   "cls": "Helmets",
+   "ja": "ルーンマスターのデスマスク",
+   "lvl": 65
+  },
+  "Runemastered Stocky Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのがっしりとしたミット",
+   "lvl": 38
+  },
+  "Runemastered Riveted Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのリベット付きミット",
+   "lvl": 38
+  },
+  "Runemastered Tempered Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの焼き入れミット",
+   "lvl": 38
+  },
+  "Runemastered Bolstered Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの補強ミット",
+   "lvl": 38
+  },
+  "Runemastered Moulded Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの成形ミット",
+   "lvl": 55
+  },
+  "Runemastered Titan Mitts": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのタイタンのミット",
+   "lvl": 65
+  },
+  "Runemastered Suede Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのスエードの弓籠手",
+   "lvl": 38
+  },
+  "Runemastered Firm Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの頑丈な弓籠手",
+   "lvl": 38
+  },
+  "Runemastered Sectioned Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの分割式の弓籠手",
+   "lvl": 38
+  },
+  "Runemastered Spined Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの針付きの弓籠手",
+   "lvl": 38
+  },
+  "Runemastered Fine Bracers": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの針付きの弓籠手",
+   "lvl": 45
+  },
+  "Runemastered Torn Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの破れた手袋",
+   "lvl": 38
+  },
+  "Runemastered Sombre Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの陰鬱な手袋",
+   "lvl": 39
+  },
+  "Runemastered Stitched Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの縫い合わせの手袋",
+   "lvl": 38
+  },
+  "Runemastered Jewelled Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの宝石をあしらった手袋",
+   "lvl": 38
+  },
+  "Runemastered Intricate Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの手の込んだ手袋",
+   "lvl": 55
+  },
+  "Runemastered Pauascale Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのパウアスケール手袋",
+   "lvl": 55
+  },
+  "Runemastered Embroidered Gloves": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの刺繍入りの手袋",
+   "lvl": 52
+  },
+  "Runemastered Ringmail Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのリングメイルガントレット",
+   "lvl": 38
+  },
+  "Runemastered Layered Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの層状のガントレット",
+   "lvl": 38
+  },
+  "Runemastered Doubled Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの二重のガントレット",
+   "lvl": 55
+  },
+  "Runemastered Plate Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのプレートガントレット",
+   "lvl": 55
+  },
+  "Runemastered Burnished Gauntlets": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの研磨されたガントレット",
+   "lvl": 52
+  },
+  "Runemastered Rope Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの縄のカフス",
+   "lvl": 38
+  },
+  "Runemastered Aged Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの年季の入ったカフス",
+   "lvl": 38
+  },
+  "Runemastered Goldcast Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの金鋳造のカフス",
+   "lvl": 55
+  },
+  "Runemastered Verisium Cuffs": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのカルグールのカフス",
+   "lvl": 55
+  },
+  "Runemastered Gauze Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの薄布のラップ",
+   "lvl": 38
+  },
+  "Runemastered Linen Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのリネンのラップ",
+   "lvl": 38
+  },
+  "Runemastered Spiral Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターのスパイラルラップ",
+   "lvl": 55
+  },
+  "Runemastered Furtive Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの隠密のラップ",
+   "lvl": 55
+  },
+  "Runemastered Utility Wraps": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの実用的なラップ",
+   "lvl": 65
+  },
+  "Runemastered Grand Manchettes": {
+   "cls": "Gloves",
+   "ja": "ルーンマスターの大いなるマンシェット",
+   "lvl": 65
+  },
+  "Runemastered Rough Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの粗末なグリーヴ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "10% increased Movement Speed",
+     "ja": "移動スピードが10%増加する"
+    }
+   ]
+  },
+  "Runemastered Iron Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの鉄のグリーヴ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Bronze Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの青銅のグリーヴ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Trimmed Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの縁取りのグリーヴ",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Stone Greaves": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの石のグリーヴ",
+   "lvl": 55
+  },
+  "Runemastered Laced Boots": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのレースのブーツ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Embossed Boots": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのエンボスのブーツ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Steeltoe Boots": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの鋼製つま先ブーツ",
+   "lvl": 40
+  },
+  "Runemastered Lizardscale Boots": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのリザードスケールブーツ",
+   "lvl": 40
+  },
+  "Runemastered Cinched Boots": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの締め具のブーツ",
+   "lvl": 65
+  },
+  "Runemastered Straw Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの麦わらのサンダル",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Wrapped Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの巻き布のサンダル",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Lattice Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの格子のサンダル",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Silk Slippers": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのシルクの履物",
+   "lvl": 38
+  },
+  "Runemastered Feathered Sandals": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの羽根付きのサンダル",
+   "lvl": 40
+  },
+  "Runemastered Mail Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのメイルサバトン",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Braced Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの補強されたサバトン",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Stacked Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの多層サバトン",
+   "lvl": 40,
+   "implicits": [
+    {
+     "en": "10% increased Movement Speed",
+     "ja": "移動スピードが10%増加する"
+    }
+   ]
+  },
+  "Runemastered Covered Sabatons": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの覆い付きのサバトン",
+   "lvl": 55
+  },
+  "Runemastered Secured Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの留め具付きのレギンス",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Ancient Leggings": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの古代のレギンス",
+   "lvl": 65
+  },
+  "Runemastered Threaded Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのスレッドシューズ",
+   "lvl": 38,
+   "implicits": [
+    {
+     "en": "5% increased Movement Speed",
+     "ja": "移動スピードが5%増加する"
+    }
+   ]
+  },
+  "Runemastered Hunting Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのハンティングシューズ",
+   "lvl": 40
+  },
+  "Runemastered Velour Shoes": {
+   "cls": "Boots",
+   "ja": "ルーンマスターのベロアシューズ",
+   "lvl": 65
+  },
+  "Runemastered Splintered Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの割れたタワーシールド",
+   "lvl": 38
+  },
+  "Runemastered Painted Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの彩色のタワーシールド",
+   "lvl": 38
+  },
+  "Runemastered Braced Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの補強のタワーシールド",
+   "lvl": 38
+  },
+  "Runemastered Barricade Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの防壁のタワーシールド",
+   "lvl": 38
+  },
+  "Runemastered Effigial Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの立像のタワーシールド",
+   "lvl": 38
+  },
+  "Runemastered Rampart Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの城壁のタワーシールド",
+   "lvl": 40
+  },
+  "Runemastered Heraldric Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの紋章のタワーシールド",
+   "lvl": 50
+  },
+  "Runemastered Grand Cuisses": {
+   "cls": "Boots",
+   "ja": "ルーンマスターの大いなる脛当て",
+   "lvl": 65
+  },
+  "Runemastered Crucible Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの試練のタワーシールド",
+   "lvl": 65,
+   "implicits": [
+    {
+     "en": "(15-25)% of Damage is taken from Mana before Life",
+     "ja": "ダメージの(15-25)%をライフより先にマナで受ける"
+    }
+   ]
+  },
+  "Runemastered Blacksteel Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの黒鉄のタワーシールド",
+   "lvl": 65
+  },
+  "Runemastered Vaal Tower Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターのヴァールのタワーシールド",
+   "lvl": 75
+  },
+  "Runemastered Glacial Fortress": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの氷河の要塞",
+   "lvl": 70
+  },
+  "Runemastered Hardwood Targe": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの堅木のタージ",
+   "lvl": 38
+  },
+  "Runemastered Crescent Targe": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの三日月のタージ",
+   "lvl": 38
+  },
+  "Runemastered Blazon Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの家紋のクレストシールド",
+   "lvl": 40
+  },
+  "Runemastered Sigil Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの刻印のクレストシールド",
+   "lvl": 40
+  },
+  "Runemastered Emblem Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの紋章のクレストシールド",
+   "lvl": 38
+  },
+  "Runemastered Jingling Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの鈴音のクレストシールド",
+   "lvl": 38
+  },
+  "Runemastered Omen Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターのお告げのクレストシールド",
+   "lvl": 48
+  },
+  "Runemastered Leather Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターの革のバックラー",
+   "lvl": 38
+  },
+  "Runemastered Wooden Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターの木のバックラー",
+   "lvl": 38
+  },
+  "Runemastered Plated Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターのプレートバックラー",
+   "lvl": 38
+  },
+  "Runemastered Iron Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターの鉄のバックラー",
+   "lvl": 38
+  },
+  "Runemastered Ridged Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターのリッジバックラー",
+   "lvl": 40
+  },
+  "Runemastered Spiked Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターのトゲ付きのバックラー",
+   "lvl": 40
+  },
+  "Runemastered Ornate Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターの装飾のバックラー",
+   "lvl": 55
+  },
+  "Runemastered Array Buckler": {
+   "cls": "Bucklers",
+   "ja": "ルーンマスターの整列のフォーカス",
+   "lvl": 60
+  },
+  "Runemastered Venerable Defender": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの尊き守護者",
+   "lvl": 65
+  },
+  "Runemastered Intricate Crest Shield": {
+   "cls": "Shields",
+   "ja": "ルーンマスターの精緻なクレストシールド",
+   "lvl": 65
+  },
+  "Runemastered Twig Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの小枝のフォーカス",
+   "lvl": 38
+  },
+  "Runemastered Woven Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの編み物のフォーカス",
+   "lvl": 38
+  },
+  "Runemastered Antler Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの枝角のフォーカス",
+   "lvl": 38
+  },
+  "Runemastered Engraved Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの彫刻のフォーカス",
+   "lvl": 38
+  },
+  "Runemastered Tonal Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの調性のフォーカス",
+   "lvl": 38
+  },
+  "Runemastered Crystal Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの結晶のフォーカス",
+   "lvl": 40
+  },
+  "Runemastered Voodoo Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターのブードゥーフォーカス",
+   "lvl": 55
+  },
+  "Runemastered Plumed Focus": {
+   "cls": "Foci",
+   "ja": "ルーンマスターの羽飾りのフォーカス",
+   "lvl": 75
+  },
+  "Runemastered Primal Markings": {
+   "cls": "Body_Armours",
+   "ja": "ルーンマスターの原始の刻印",
+   "lvl": 80
+  }
+ },
  "familyStats": {
   "Nothing": {
    "1": [

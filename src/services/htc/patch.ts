@@ -54,6 +54,8 @@ interface ExtraBases {
    * ベースの暗黙 MOD が増減させる (「不在のアミュレット」は 2/2)。`bridge.ts` の `itemBaseFor` が使う。
    */
   baseLimits: Record<string, { prefixes: number; suffixes: number }>;
+  /** ベース名 → 素性 (種別 / 日本語名 / 必要レベル / 枠 / 暗黙の効果) */
+  baseInfo: Record<string, BaseInfo>;
   /** 同梱に無いクラス (タリスマン、全属性の防具など) */
   items: ItemBase[];
   /** 上の items が指す MOD */
@@ -85,6 +87,31 @@ let familyTexts: Record<string, Record<string, string[]>> = {};
 let modTags: Record<string, string[]> = {};
 let familyStats: Record<string, Record<string, string[]>> = {};
 let baseLimits: Record<string, { prefixes: number; suffixes: number }> = {};
+let baseInfo: Record<string, BaseInfo> = {};
+
+/**
+ * ベース 1 つの素性。
+ *
+ * **暗黙の効果はベース選びそのもの**です。アミュレットなら「トリニティ」のような付与スキルが
+ * 暗黙に乗っていて、何を作るかで選ぶベースが変わります。枠の増減も暗黙の 1 つ。
+ */
+export interface BaseInfo {
+  /** エンジンのクラス (`Amulets`) */
+  cls: string;
+  /** ゲーム公式の日本語名 */
+  ja: string;
+  /** 必要レベル (DropLevel) */
+  lvl: number;
+  /** 枠。素の 3/3 と同じベースには入っていない */
+  limits?: { prefixes: number; suffixes: number };
+  /** 暗黙の効果 (無いベースには入っていない) */
+  implicits?: { en: string; ja: string }[];
+}
+
+/** ベース名 → 素性。知らないベースは undefined */
+export function htcBaseInfo(): Record<string, BaseInfo> {
+  return baseInfo;
+}
 
 /** ベース名 → 枠。素と同じベースは入っていない */
 export function htcBaseLimits(): Record<string, { prefixes: number; suffixes: number }> {
@@ -192,6 +219,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   modTags = extra.modTags ?? {};
   familyStats = extra.familyStats ?? {};
   baseLimits = extra.baseLimits ?? {};
+  baseInfo = extra.baseInfo ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,
