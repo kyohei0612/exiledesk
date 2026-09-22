@@ -36,6 +36,7 @@
  */
 import { buildSpecQuery } from "../trade2/query";
 import { currencyJa, displayCurrency } from "../../state/display-currency";
+import { htcFamilyStats } from "./patch";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -77,6 +78,21 @@ export interface TradeStatFilter {
   statId: string;
 }
 
+/**
+ * そのティアの stat id。
+ *
+ * 同梱の**冒涜 / エッセンス MOD は `tiers[].stats` を持っていません** (上流の既知の穴、1,527 件)。
+ * その時は同じ family のクライアント MOD から借ります。ただし借りるのは
+ * **範囲の数と stat の数が一致する時だけ**。数が違う並びを当てると範囲と stat の対応がずれて、
+ * 下限が別の値になります (複合 MOD の 2 行目の範囲を 1 行目の stat に付けてしまう等)。
+ */
+function statsOf(mod: Mod, tier: Mod["tiers"][number]): string[] {
+  const own = ((tier as { stats?: readonly string[] }).stats ?? []).filter(Boolean);
+  if (own.length) return [...own];
+  const borrowed = htcFamilyStats()[mod.family]?.[String(tier.ranges.length)] ?? [];
+  return borrowed.length === tier.ranges.length ? [...borrowed] : [];
+}
+
 /** 狙う MOD のティア。`minTierIndex` 未指定なら最上位 (T1) を狙う扱い */
 function tierOf(mod: Mod, t: TierTarget) {
   const i = t.minTierIndex ?? mod.tiers.length - 1;
@@ -102,10 +118,9 @@ export function tradeFiltersFor(
       continue;
     }
     const tier = tierOf(mod, t);
-    const statIds = ((tier as { stats?: readonly string[] }).stats ?? []).filter(Boolean);
+    const statIds = statsOf(mod, tier);
     if (statIds.length === 0) {
-      // 冒涜 / エッセンス由来の MOD は同梱データに stat を持っていない (上流の既知の穴)
-      unmatched.push(`${t.modId} (stat を持っていない)`);
+      unmatched.push(`${t.modId} (取引所の条件にできる stat が見つからない)`);
       continue;
     }
     statIds.forEach((statId, i) => {

@@ -44,6 +44,11 @@ interface ExtraBases {
   familyTexts: Record<string, Record<string, string[]>>;
   /** family → カタリストが見るタグ ([[quality.ts]])。同梱の MOD はこれを持っていない */
   modTags: Record<string, string[]>;
+  /**
+   * family → 「stat が何個の時はこの id 並び」。同梱の冒涜 / エッセンス MOD は
+   * `tiers[].stats` を持っていないので、取引所の条件を組む時にここから借りる ([[buy-or-craft.ts]])。
+   */
+  familyStats: Record<string, Record<string, string[]>>;
   /** 同梱に無いクラス (タリスマン、全属性の防具など) */
   items: ItemBase[];
   /** 上の items が指す MOD */
@@ -73,6 +78,12 @@ export function htcPatchExtras(): PatchExtras | null {
 
 let familyTexts: Record<string, Record<string, string[]>> = {};
 let modTags: Record<string, string[]> = {};
+let familyStats: Record<string, Record<string, string[]>> = {};
+
+/** family → 個数ごとの stat id 並び。stat を持たない MOD に貸す */
+export function htcFamilyStats(): Record<string, Record<string, string[]>> {
+  return familyStats;
+}
 
 /** family → カタリストが見るタグ。`quality.ts` が「この MOD は底上げされるか」に使う */
 export function htcModTags(): Record<string, string[]> {
@@ -168,6 +179,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
 
   familyTexts = extra.familyTexts ?? {};
   modTags = extra.modTags ?? {};
+  familyStats = extra.familyStats ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,

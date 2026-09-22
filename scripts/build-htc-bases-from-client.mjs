@@ -533,9 +533,31 @@ const main = async () => {
     modTags[f] = [...new Set([...cur, ...tags])].sort();
   }
 
+  /**
+   * family -> 「stat が何個の時はこの id 並び」。
+   *
+   * **同梱の冒涜 / エッセンス MOD は `tiers[].stats` を持っていません** (上流の既知の穴)。
+   * stat が無いと取引所の条件に変えられないので、`services/htc/buy-or-craft.ts` が
+   * 同じ family のクライアント MOD から借ります。
+   *
+   * **個数で引けるようにする**のが肝心です。同じ family でも複合 MOD (2 行) と単独 (1 行) が
+   * 混ざることがあり、個数が違う並びを当てると**範囲と stat の対応がずれて下限が別物になる**。
+   * 借りる側は `tier.ranges.length` で引き、無ければ借りません。
+   */
+  const familyStats = {};
+  for (const m of Object.values(MODS)) {
+    const f = familyOf(m);
+    const ids = (m.stats || []).map((x) => x.id).filter(Boolean);
+    if (!f || !ids.length) continue;
+    const slot = (familyStats[f] ??= {});
+    // 同じ個数で違う並びが来たら先勝ち (ほぼ起きないが、起きても静かに入れ替えない)
+    slot[ids.length] ??= ids;
+  }
+
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     familyTexts,
+    familyStats,
     modTags,
     source:
       "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",
@@ -549,7 +571,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
-  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件`);
+  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {
     const n = outMods.filter((m) => m.id.startsWith(`${it.id}/`)).length;
