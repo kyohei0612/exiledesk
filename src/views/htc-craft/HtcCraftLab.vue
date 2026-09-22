@@ -108,8 +108,9 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         <p v-if="c.skipped.value.length" class="mt-2 rounded bg-red-900/40 p-2 text-xs">
           <b>このベースでは作れない MOD が {{ c.skipped.value.length }} 件あります</b> — {{ c.skipped.value.join(" / ") }}<br />
           <span class="opacity-80">
-            どのプールもこの MOD を出しません (ブリーチの樹など別経路で乗る物)。
-            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのものです。
+            <b>クラフトでは付きません</b> (ブリーチの樹からドロップした指輪など、落ちた物にしか乗らない MOD)。
+            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのもので、
+            <b>その分だけ枠が埋まっている</b>ことにも注意してください。
           </span>
         </p>
       </section>
@@ -152,10 +153,39 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
         </p>
       </section>
 
+      <!-- ルートの比べ。固定済みがあれば、そこから解いた場合と並べる -->
+      <section v-if="c.fracturedLines.value.length" class="mb-4">
+        <h2 class="mb-1 font-bold">③ どこから始めるか</h2>
+        <p class="mb-2 text-xs opacity-70">
+          固定済み: <span class="text-emerald-300">{{ c.fracturedLines.value.join(" / ") }}</span><br />
+          <b>固定された MOD は消去でも消えません。</b>買った時点でもう手に入っているので、そこから作れます。
+        </p>
+        <p v-if="c.fracturedUnusable.value" class="mb-2 rounded bg-amber-900/40 p-2 text-xs">
+          ただし固定済みのうち {{ c.fracturedUnusable.value }} 件は<b>クラフトでは付かない MOD</b>
+          (落ちた物にしか乗らない) なので、開始状態に置けません。<b>その物を買うのが前提</b>で、
+          比べには入っていません。
+        </p>
+        <button
+          class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
+          :disabled="c.routesBusy.value"
+          @click="c.compareRoutes()"
+        >
+          {{ c.routesBusy.value ? "解いています… (素から作るほうは分単位かかります)" : "ルートを比べる" }}
+        </button>
+        <table v-if="c.routes.value.length" class="w-full text-xs">
+          <tr v-for="(r, i) in c.routes.value" :key="i" class="border-b border-white/5">
+            <td class="py-0.5">{{ r.label }}</td>
+            <td class="w-20 text-right opacity-60">残り {{ r.rest }} 個</td>
+            <td class="w-24 text-right" :class="i === 0 ? 'text-emerald-300 font-bold' : ''">{{ c.money(r.cost) }}</td>
+            <td class="w-24 text-right opacity-40">{{ (r.ms / 1000).toFixed(1) }} 秒</td>
+          </tr>
+        </table>
+      </section>
+
       <!-- 設計図。本家と同じく案を並べ、各段が「何を狙うか」まで出す -->
       <section v-if="c.plans.value.length" class="mb-4">
         <h2 class="mb-1 font-bold">
-          ③ 設計図
+          ④ 設計図
           <span class="font-normal text-xs opacity-60">数えた手順 {{ c.plansEvaluated.value.toLocaleString() }} / 案 {{ c.plans.value.length }} 件</span>
         </h2>
         <p class="mb-2 text-xs opacity-60">
@@ -181,7 +211,7 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
 
       <!-- 買い方 -->
       <section class="mb-4">
-        <h2 class="mb-1 font-bold">④ 途中まで出来た物を買う</h2>
+        <h2 class="mb-1 font-bold">⑤ 途中まで出来た物を買う</h2>
         <button
           class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
           :disabled="c.buysRunning.value"

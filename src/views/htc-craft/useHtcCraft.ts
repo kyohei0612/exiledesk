@@ -17,7 +17,10 @@ import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, type SoloCost } from "../../services/htc/solo-cost";
 import { planPreview, type PlanOption } from "../../services/htc/plan";
-import { partialStarts, solveFinish, budgetForBuy } from "../../services/htc/partial-start";
+import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
+import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
+import { withEssenceAlternatives } from "../../services/htc/essence-route";
+import { whiteItem } from "../../vendor/poe2htc/engine/item";
 import { fracturedBuyQuery } from "../../services/htc/fracture-route";
 import { autoMinWithUrl } from "../../services/trade2/auto-price";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
@@ -61,6 +64,7 @@ export function useHtcCraft() {
   const base = shallowRef<ItemBase | null>(null);
   const prices = shallowRef<Prices | null>(null);
   const targets = shallowRef<TierTarget[]>([]);
+  const fracturedTargets = shallowRef<TierTarget[]>([]);
   const rows = shallowRef<TargetRow[]>([]);
   const implicits = ref<string[]>([]);
   const skipped = ref<string[]>([]);
@@ -86,6 +90,16 @@ export function useHtcCraft() {
    */
   const fractured = ref<Record<string, { min: number | null; url: string | null; error?: string }>>({});
   const fracturedBusy = ref<string | null>(null);
+  /** 固定済みの行 (画面用) と、そこから解くための目標 */
+  const fracturedLines = ref<string[]>([]);
+  /** 固定済みだが繋がらず、開始状態に置けない数 */
+  const fracturedUnusable = ref(0);
+  /**
+   * ルートの比べ (素から / 固定済みを買って残りを作る)。
+   * **固定済みがある時だけ**出ます。押されたら解く (MDP なので数秒〜数分)。
+   */
+  const routes = shallowRef<Array<{ label: string; cost: number; ms: number; rest: number }>>([]);
+  const routesBusy = ref(false);
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -143,6 +157,12 @@ export function useHtcCraft() {
       const got = targetsFor(d, it);
       timings.value.push(["MOD とティアを決める", Date.now() - t]);
       targets.value = got.targets;
+      fracturedTargets.value = got.fracturedTargets;
+      fracturedLines.value = got.fractured;
+      // 固定済みでも**エンジンが知らない MOD は開始状態に置けません**。
+      // 置けないのに「ここから作れます」と出すと、出ないルートを待たせることになる
+      fracturedUnusable.value = got.fractured.length - got.fracturedTargets.length;
+      routes.value = [];
       implicits.value = got.implicits;
       skipped.value = got.skipped;
       rows.value = got.targets.map((tg, i) => {
@@ -218,6 +238,40 @@ export function useHtcCraft() {
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
 
   /**
+   * **ルートを比べる。**素から全部作る場合と、固定済みを買って残りを作る場合。
+   *
+   * 固定された MOD は消去でも消えないので、買った時点でもう手に入っています。実測では
+   * 費用で 66 倍・待ち時間で 100 倍の差が出ました ([[partial-start.ts]] の `fracturedStart`)。
+   * **素から全部は分単位**かかるので、押された時だけ回します。
+   */
+  function compareRoutes(): void {
+    const d = data.value;
+    const cls = base.value;
+    const p = prices.value;
+    const it = item.value;
+    if (!d || !cls || !p || !it) return;
+    routesBusy.value = true;
+    try {
+      const level = it.itemLevel ?? 82;
+      const out: Array<{ label: string; cost: number; ms: number; rest: number }> = [];
+      const fx = fracturedStart(d, cls, level, targets.value, fracturedTargets.value);
+      // 固定済みがあるほうを先に解く (速いので、待たされても先に答えが出る)
+      if (fx) {
+        const t0 = Date.now();
+        const r = markovFromItem(d, p, fx.start, withEssenceAlternatives(d, cls, fx.rest, level), {});
+        out.push({ label: "固定済みを買って残りを作る", cost: r.expectedCost, ms: Date.now() - t0, rest: fx.rest.length });
+        routes.value = [...out];
+      }
+      const t1 = Date.now();
+      const r2 = markovFromItem(d, p, whiteItem(cls, level), withEssenceAlternatives(d, cls, targets.value, level), {});
+      out.push({ label: "素から全部作る", cost: r2.expectedCost, ms: Date.now() - t1, rest: targets.value.length });
+      routes.value = out;
+    } finally {
+      routesBusy.value = false;
+    }
+  }
+
+  /**
    * その MOD が固定された物を取引所で探す。**1 回で search + fetch を 1 回ずつ**使うので、
    * 押された時だけ投げる (レート制限は Rust の門番と `autoPrice` が持つ)。
    */
@@ -251,6 +305,7 @@ export function useHtcCraft() {
 
   return {
     stepTarget, findFractured, fractured, fracturedBusy,
+    fracturedLines, fracturedUnusable, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
     solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
     money, run, solveBuys,

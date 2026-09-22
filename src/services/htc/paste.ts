@@ -265,16 +265,34 @@ function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], le
  *   - `skipped`   … **そのベースでは作れない行。**どのプールもその MOD を出さないという意味なので、
  *                   狙いから外して解くと**別のアイテムの手順**が出ます。画面で必ず断ること。
  *                   オーナー方針 2026-09-22:「作れない奴は物理的に買う方向でいい」。
- *                   実例: ニーモニックリングの「スペルのマナコスト効率が29%増加する」は
- *                   クライアントに `Verisium` (プレフィックス 18-29%) として在るが
- *                   **spawn_weights が全部 0** で、どの装備タグでも出ない。ブリーチの樹など
- *                   別経路で乗る物と見られる
+ *
+ *                   実例: ニーモニックリングの「スペルのマナコスト効率」。クライアントに
+ *                   `Verisium` (プレフィックス 18-29%) として在るが **spawn_weights が全部 0**。
+ *                   **これはデータの穴ではありません** ── オーナー確認 2026-09-23:
+ *                   「ブリーチの樹からドロップした指輪にしかつかない」。つまり**ドロップ限定**で、
+ *                   重み 0 はそれを正しく表しています。こういう MOD は買うしかなく、
+ *                   **その分だけ枠が埋まっている**ことにも注意 (指輪なら残りのプレフィックスは 2 つ)
  */
 export function targetsFor(
   data: PatchData,
   item: PastedItem,
-): { targets: TierTarget[]; texts: string[]; skipped: string[]; implicits: string[]; fractured: string[] } {
-  if (!item.baseType) return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [], fractured: [] };
+): {
+  targets: TierTarget[];
+  texts: string[];
+  skipped: string[];
+  implicits: string[];
+  /** 固定済みの行 (画面用) */
+  fractured: string[];
+  /**
+   * 固定済みの目標。**`fracturedStart` に渡すと開始状態になります。**
+   * 固定された MOD は消去でも消えないので「もう手に入っている」扱いにでき、そこから解くと
+   * 道順が桁違いに短くなります (実測: 素から 9,780 神 → 固定済みから 148 神)。
+   */
+  fracturedTargets: TierTarget[];
+} {
+  if (!item.baseType) {
+    return { targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [], fractured: [], fracturedTargets: [] };
+  }
   const level = item.itemLevel ?? 100;
 
   // **暗黙の効果を先に抜く。**注記があればそれに従い、無ければベースの表から当てます。
@@ -354,5 +372,7 @@ export function targetsFor(
     targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, lo, hi, level) });
     texts.push(line.text);
   });
-  return { targets, texts, skipped, implicits, fractured };
+  const fracturedSet = new Set(fractured);
+  const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
+  return { targets, texts, skipped, implicits, fractured, fracturedTargets };
 }
