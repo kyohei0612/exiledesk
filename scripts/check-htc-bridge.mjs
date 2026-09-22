@@ -10,11 +10,9 @@
  *
  *   node scripts/check-htc-bridge.mjs
  */
-import { existsSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
-import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { bundleEntry } from "./_bundle-ts.mjs";
 
 const CACHE = join(process.env.APPDATA ?? "", "com.kyohei.exiledesk", "craft_v2_cache.json");
 if (!existsSync(CACHE)) {
@@ -22,29 +20,7 @@ if (!existsSync(CACHE)) {
   process.exit(0);
 }
 
-const require_ = createRequire(import.meta.url);
-function findEsbuild() {
-  try {
-    return require_.resolve("esbuild");
-  } catch {
-    const store = "node_modules/.pnpm";
-    const dir = readdirSync(store).find((d) => d.startsWith("esbuild@"));
-    return require_.resolve("esbuild", { paths: [join(store, dir, "node_modules")] });
-  }
-}
-const { build } = await import(pathToFileURL(findEsbuild()).href);
-const out = join(mkdtempSync(join(tmpdir(), "htc-bridge-")), "b.mjs");
-await build({
-  entryPoints: ["scripts/_htc-bridge-entry.ts"],
-  outfile: out,
-  bundle: true,
-  format: "esm",
-  platform: "neutral",
-  logLevel: "error",
-  loader: { ".json": "json" },
-  define: { "import.meta.env.DEV": "false" },
-});
-const { loadPatchSync, bridgeMods } = await import(pathToFileURL(out).href);
+const { loadPatchSync, bridgeMods } = await bundleEntry("scripts/_htc-bridge-entry.ts");
 
 const data = loadPatchSync();
 const cache = JSON.parse(readFileSync(CACHE, "utf8"));

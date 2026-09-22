@@ -406,7 +406,10 @@ const main = async () => {
     }
     if (Object.keys(rune).length) pools.rune = rune;
 
-    outItems.push({ id, name: id, bases: names.sort(), category: cls, class: cls, pools });
+    // category / class は同梱の流儀に合わせる (category = `Body_Armours`、class = `Body Armours`)。
+    // ここを ItemClasses.Id のままにすると `runesFor` などカテゴリで引く処理が全部外れる。
+    const row = ROW_NAME[cls] || cls.replace(/\s+/g, "_");
+    outItems.push({ id, name: id, bases: names.sort(), category: row, class: row.replace(/_/g, " "), pools });
   }
 
   /**

@@ -15,6 +15,7 @@ import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 
 export { bridgeMods, classOfBase } from "../src/services/htc/bridge";
+export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 
 export function loadPatchSync(): PatchData {
   const data = indexPatch(

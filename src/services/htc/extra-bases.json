@@ -7397,8 +7397,8 @@
     "Wildwood Talisman",
     "Wingbeat Talisman"
    ],
-   "category": "Talisman",
-   "class": "Talisman",
+   "category": "Talismans",
+   "class": "Talismans",
    "pools": {
     "normal": {
      "prefixes": [
@@ -7499,8 +7499,8 @@
     "Runemastered Sacrificial Regalia",
     "Sacrificial Regalia"
    ],
-   "category": "Body Armour",
-   "class": "Body Armour",
+   "category": "Body_Armours",
+   "class": "Body Armours",
    "pools": {
     "normal": {
      "prefixes": [
@@ -7574,8 +7574,8 @@
     "Runeforged Grand Visage",
     "Runemastered Grand Visage"
    ],
-   "category": "Helmet",
-   "class": "Helmet",
+   "category": "Helmets",
+   "class": "Helmets",
    "pools": {
     "normal": {
      "prefixes": [
@@ -7844,8 +7844,8 @@
    "bases": [
     "Trarthan Cannon"
    ],
-   "category": "Crossbow",
-   "class": "Crossbow",
+   "category": "Crossbows",
+   "class": "Crossbows",
    "pools": {
     "normal": {
      "prefixes": [
