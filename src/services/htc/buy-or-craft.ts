@@ -74,8 +74,10 @@ export interface TradeStatFilter {
   min: number;
   /** どの MOD から来たか (画面の説明用) */
   modId: string;
-  /** 元のゲーム内 stat id */
+  /** 元のゲーム内 stat id。min/max の対を畳んだ時は 2 本入る */
   statId: string;
+  /** 畳んだ相方の stat id (「# から # のダメージ」の時だけ) */
+  pairedStatId?: string;
 }
 
 /**
@@ -91,6 +93,63 @@ function statsOf(mod: Mod, tier: Mod["tiers"][number]): string[] {
   if (own.length) return [...own];
   const borrowed = htcFamilyStats()[mod.family]?.[String(tier.ranges.length)] ?? [];
   return borrowed.length === tier.ranges.length ? [...borrowed] : [];
+}
+
+/**
+ * 「# から # の火ダメージを追加する」のような **min/max の対**か。
+ *
+ * ゲーム内では `local_minimum_added_fire_damage` と `local_maximum_added_fire_damage` の
+ * 2 stat ですが、取引所は 1 つの stat しか持っていません。名前が minimum / maximum しか
+ * 違わなければ対と見ます (実測 2026-09-22: 対応表で同じ取引所 stat に落ちる 31 件のうち
+ * 17 件がこの形。local / attack / allies_in_presence / thorns の各属性)。
+ */
+function isMinMaxPair(a: string, b: string): boolean {
+  if (a === b) return false;
+  const key = (x: string) => x.replace("minimum", "*").replace("maximum", "*");
+  return key(a) === key(b) && key(a) !== a;
+}
+
+/**
+ * 同じ取引所 stat に落ちた条件をまとめる。
+ *
+ * **畳まないと壊れます。**「# から # の火ダメージ」は範囲を 2 つ持つので、素直に回すと
+ * 同じ id の条件が 2 本並び、しかも 2 本目の下限が**上限側の値** (T1 なら 205) になります。
+ * 取引所はこの stat を**両者の平均**で持っているので、205 以上の平均を要求することになり、
+ * 狙っている個体 (135-205 = 平均 170) が検索から落ちます。
+ *
+ * 平均にすると、そのティアで出うる**一番低い個体**がちょうど下限に乗ります。
+ * min/max の対でない衝突 (別名が同じ stat に落ちている等) は**低いほうを残します** ──
+ * 条件はゆるいほうが取りこぼしません。
+ *
+ * **未確認:** 「取引所の値は平均」は PoE1 からの踏襲で、trade2 で実測はしていません
+ * ([[api-probing-policy]] の通り外から叩かないため)。武器の検索をアプリで 1 回通す時に
+ * 併せて確かめてください。
+ */
+function collapseDuplicates(
+  entries: readonly { id: string; min: number; statId: string }[],
+  modId: string,
+): TradeStatFilter[] {
+  const byId = new Map<string, { id: string; min: number; statId: string }[]>();
+  for (const e of entries) {
+    const got = byId.get(e.id);
+    got ? got.push(e) : byId.set(e.id, [e]);
+  }
+  const out: TradeStatFilter[] = [];
+  for (const [id, group] of byId) {
+    const [first, ...rest] = group;
+    if (!first) continue;
+    if (rest.length === 0) {
+      out.push({ id, min: first.min, modId, statId: first.statId });
+      continue;
+    }
+    const pair = rest.find((r) => isMinMaxPair(first.statId, r.statId));
+    out.push(
+      pair
+        ? { id, min: (first.min + pair.min) / 2, modId, statId: first.statId, pairedStatId: pair.statId }
+        : { id, min: Math.min(...group.map((g) => g.min)), modId, statId: first.statId },
+    );
+  }
+  return out;
 }
 
 /** 狙う MOD のティア。`minTierIndex` 未指定なら最上位 (T1) を狙う扱い */
@@ -123,6 +182,7 @@ export function tradeFiltersFor(
       unmatched.push(`${t.modId} (取引所の条件にできる stat が見つからない)`);
       continue;
     }
+    const entries: { id: string; min: number; statId: string }[] = [];
     statIds.forEach((statId, i) => {
       const id = STAT_MAP[statId];
       if (!id) {
@@ -132,8 +192,10 @@ export function tradeFiltersFor(
       // 範囲は stat と同じ並び。素の下限をそのまま使う
       const range = tier.ranges[i] ?? tier.ranges[0];
       const min = Array.isArray(range) ? Number(range[0]) : 0;
-      filters.push({ id, min: Number.isFinite(min) ? min : 0, modId: t.modId, statId });
+      entries.push({ id, min: Number.isFinite(min) ? min : 0, statId });
     });
+    // 同じ取引所 stat に落ちた物はここで 1 本にする
+    for (const f of collapseDuplicates(entries, t.modId)) filters.push(f);
   }
   return { filters, unmatched };
 }

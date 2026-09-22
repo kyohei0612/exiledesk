@@ -51,7 +51,36 @@ if (!built) { fail("カテゴリが引けない"); } else {
   if (built.query.query.filters.type_filters.filters.category.option !== "accessory.amulet") fail("カテゴリが違う");
 }
 
-// ---- 3. 判定 ----
+// ---- 3. 「# から # のダメージを追加する」を 1 本に畳めているか ----
+//
+// 取引所はこの MOD を **1 つの stat** で持っていて、値は min/max の平均。こちらは 2 stat なので、
+// 畳まないと同じ id が 2 本並び、2 本目の下限が上限側の値 (T1 の火なら 205) になって、
+// 狙っている個体そのものが検索から落ちる。2026-09-22 にイージスクォータースタッフで発覚。
+console.log("\n「# から # のダメージ」の畳み込み:");
+{
+  const qs = data.bases.get("Quarterstaves");
+  const dmg = [
+    { modId: "Quarterstaves/LocalFireDamage", ja: "火ダメージ追加", want: 170 },   // T1 135-156 / 205-236 → (135+205)/2
+    { modId: "Quarterstaves/LocalLightningDamage", ja: "雷ダメージ追加", want: 155.5 }, // T1 1-19 / 310-358 → (1+310)/2
+  ];
+  const got = M.tradeFiltersFor(data, dmg.map((d) => ({ modId: d.modId })));
+  for (const d of dmg) {
+    const mine = got.filters.filter((f) => f.modId === d.modId);
+    if (mine.length !== 1) fail(`${d.ja}: 条件が ${mine.length} 本 (1 本に畳まれるはず)`);
+    else if (mine[0].min !== d.want) fail(`${d.ja}: 下限 ${mine[0].min} (平均 ${d.want} のはず)`);
+    else console.log(`  ${d.ja.padEnd(12)} ${mine[0].id}  下限 ${mine[0].min}  (${mine[0].statId} + ${mine[0].pairedStatId})`);
+  }
+  // 同じ id が 2 本出ていないこと
+  const ids = got.filters.map((f) => f.id);
+  if (new Set(ids).size !== ids.length) fail("同じ取引所 stat の条件が 2 本出ている");
+  // オーナーの実物 (火 150-221 / 雷 6-342) が自分の検索に引っかかること
+  const real = [{ ja: "火", avg: (150 + 221) / 2, min: 170 }, { ja: "雷", avg: (6 + 342) / 2, min: 155.5 }];
+  for (const r of real) if (r.avg < r.min) fail(`${r.ja}: 実物の平均 ${r.avg} が下限 ${r.min} を下回る`);
+  console.log(`  実物 (火 平均 ${real[0].avg} / 雷 平均 ${real[1].avg}) は自分の検索に残る`);
+  void qs;
+}
+
+// ---- 4. 判定 ----
 console.log("\n判定:");
 const cases = [
   { name: "作ると 13 倍 (オーナーの実物)", i: { craftExpected: 3755489, listingPrice: 279180 }, want: "buy" },
