@@ -47,8 +47,11 @@ const STAT_MAP = statMapping as Record<string, string>;
  * エンジンのクラス -> 取引所のカテゴリ。
  *
  * **実物で確認できた 6 つだけ**載せています。残り (帯 / 盾 / 武器 / タリスマン) は取引所の
- * 内部値を確認できていないので、当てずっぽうを書かずに落とします。間違ったカテゴリで引くと
- * **黙って違う値段が返る**ので、出さないほうが安全です。
+ * 内部値を確認できていないので、当てずっぽうを書きません。
+ *
+ * **ただしクラフトの試算では使いません。**狙うベースは必ず 1 つに決まっているので、
+ * `buildFinishedQuery` はベース名 (`type`) で引きます ── カテゴリより厳しく、内部値の
+ * 当てずっぽうも要らない。ここが残っているのは、ベース名が分からない呼び出し向けの保険です。
  */
 const TRADE_CATEGORY: Record<string, string> = {
   Amulets: "accessory.amulet",
@@ -205,13 +208,15 @@ export function buildFinishedQuery(
   data: PatchData,
   cls: ItemBase,
   targets: readonly TierTarget[],
-  opts: { ilvlMin?: number; rarity?: "normal" | "magic" | "rare" } = {},
+  opts: { ilvlMin?: number; rarity?: "normal" | "magic" | "rare"; baseType?: string } = {},
 ): { query: ReturnType<typeof buildSpecQuery>; filters: TradeStatFilter[]; unmatched: string[] } | null {
   const category = tradeCategoryOf(cls);
-  if (!category) return null;
+  // ベース名があればそれで引く。無い時だけカテゴリに頼り、それも無ければ組まない
+  if (!opts.baseType && !category) return null;
   const { filters, unmatched } = tradeFiltersFor(data, targets);
   const query = buildSpecQuery({
-    category,
+    ...(opts.baseType ? { baseType: opts.baseType } : {}),
+    ...(category ? { category } : {}),
     // 取引所に「レア」の option は無く、ユニーク以外でまとめて引く ([[partial-start.ts]] の
     // 途中買いは 3 MOD 以上がレアなので、ここを通る)
     rarity: opts.rarity === "magic" ? "magic" : opts.rarity === "normal" ? "normal" : "nonunique",

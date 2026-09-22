@@ -80,7 +80,47 @@ console.log("\n「# から # のダメージ」の畳み込み:");
   void qs;
 }
 
-// ---- 4. 判定 ----
+// ---- 4. 武器もベース名で引けるか ----
+//
+// 取引所のカテゴリは実物で確認できた 6 つしか無く、武器 / 帯 / 盾は落としていた。だがクラフトは
+// 必ず 1 つのベースを狙うので、カテゴリではなく **ベース名 (type)** で引けばいい。そのほうが厳しく、
+// 内部値の当てずっぽうも要らない。JP サイトの日本語名は localizeQueryForSite が変換する。
+console.log("\n武器 (イージスクォータースタッフ) の検索:");
+{
+  const BASE = "Aegis Quarterstaff";
+  const qs = M.itemBaseFor(data, BASE);
+  if (M.tradeCategoryOf(qs)) fail("武器にカテゴリが入っている (未確認のはず)");
+  const ids = [
+    "Quarterstaves/LocalFireDamage",
+    "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon",
+    "Quarterstaves/PerfectEssence_Onslaught",
+  ].map((modId) => ({ modId }));
+  // ベース名が無ければ今まで通り組まない
+  if (M.buildFinishedQuery(data, qs, ids, { ilvlMin: 83 })) fail("ベース名なしで武器の検索が組めてしまう");
+  const w = M.buildFinishedQuery(data, qs, ids, { ilvlMin: 83, baseType: BASE });
+  if (!w) { fail("ベース名を渡しても組めない"); } else {
+    const t = w.query.query.type;
+    if (t?.option !== BASE) fail(`type が ${JSON.stringify(t)}`);
+    // ベース名で引く時はカテゴリを送らない (同じ物を 2 通りで絞らない)
+    if (w.query.query.filters.type_filters.filters.category) fail("ベース名と一緒にカテゴリも送っている");
+    if (w.query.query.filters.type_filters.filters.ilvl?.min !== 83) fail("ilvl が乗っていない");
+    if (w.unmatched.length) fail(`条件にできない MOD: ${w.unmatched.join(" / ")}`);
+    console.log(`  type ${t.option} / 条件 ${w.filters.length} 本 / カテゴリは送らない`);
+  }
+  // 途中買いの案が全部クエリを持てること
+  const all = [
+    ...ids,
+    { modId: "Quarterstaves/LocalLightningDamage" },
+    { modId: "Quarterstaves/LifeGainedFromEnemyDeath" },
+    { modId: "Quarterstaves/IncreasedWeaponElementalDamagePercent" },
+  ];
+  const parts = M.partialStarts(data, qs, all, { level: 83, maxBought: 4, baseType: BASE });
+  const without = parts.filter((p) => !p.buyQuery).length;
+  if (without) fail(`途中買い ${without} 件が検索を組めない`);
+  console.log(`  途中買い ${parts.length} 通り、全部クエリを持てた`);
+}
+
+// ---- 5. 判定 ----
 console.log("\n判定:");
 const cases = [
   { name: "作ると 13 倍 (オーナーの実物)", i: { craftExpected: 3755489, listingPrice: 279180 }, want: "buy" },

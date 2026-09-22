@@ -237,7 +237,17 @@ export function buildUniqueQualityQuery(nameEn: string, qualityMin: number, rune
  *   stats: stat id と下限 (pseudo.* も可)
  */
 export interface SpecQueryOptions {
-  category: string;
+  /**
+   * trade2 の type_filters.category (armour.helmet 等)。
+   * **`baseType` を渡す時は不要** (ベース名のほうが厳しく、カテゴリは冗長になる)。
+   */
+  category?: string;
+  /**
+   * ベース名で完全一致させる (英語名。JP サイトなら localizeQueryForSite が日本語に直す)。
+   * クラフトの試算は必ず 1 つのベースを狙うので、こちらを使うほうが正確。
+   * カテゴリの内部値が未確認なクラス (武器 / 帯 / 盾) でも引けるのが効く。
+   */
+  baseType?: string;
   rarity: "normal" | "magic" | "nonunique";
   ilvlMin?: number;
   esMin?: number;
@@ -248,7 +258,10 @@ export interface SpecQueryOptions {
   stats?: { id: string; min: number }[];
 }
 export function buildSpecQuery(o: SpecQueryOptions) {
-  const type: Record<string, unknown> = { category: { option: o.category }, rarity: { option: o.rarity } };
+  // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
+  // カテゴリの内部値が未確認のクラスでは間違った値を送りかねない
+  const type: Record<string, unknown> = { rarity: { option: o.rarity } };
+  if (!o.baseType && o.category) type.category = { option: o.category };
   if (o.ilvlMin != null) type.ilvl = { min: o.ilvlMin };
   const equipment: Record<string, unknown> = {};
   if (o.esMin != null) equipment.es = { min: o.esMin };
@@ -259,6 +272,7 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   return {
     query: {
       status: { option: SecurityStatus.Securable },
+      ...(o.baseType ? { type: { discriminator: null, option: o.baseType } } : {}),
       stats,
       filters: {
         type_filters: { filters: type },

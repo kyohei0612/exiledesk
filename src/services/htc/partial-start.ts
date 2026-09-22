@@ -115,7 +115,7 @@ export function partialStarts(
   data: PatchData,
   cls: ItemBase,
   targets: readonly TierTarget[],
-  opts: { level?: number; maxBought?: number } = {},
+  opts: { level?: number; maxBought?: number; baseType?: string } = {},
 ): PartialStart[] {
   const level = opts.level ?? 82;
   // 全部買うのは「完成品を買う」なので、最低 1 個は残す
@@ -133,7 +133,11 @@ export function partialStarts(
         prefixes: start.prefixes.length,
         suffixes: start.suffixes.length,
         start,
-        buyQuery: buildFinishedQuery(data, cls, bought, { ilvlMin: level, rarity: start.rarity }),
+        buyQuery: buildFinishedQuery(data, cls, bought, {
+          ilvlMin: level,
+          rarity: start.rarity,
+          ...(opts.baseType ? { baseType: opts.baseType } : {}),
+        }),
       });
     }
   }
