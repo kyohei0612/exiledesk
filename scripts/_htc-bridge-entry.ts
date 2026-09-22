@@ -19,7 +19,7 @@ export { bridgeMods, classOfBase, itemBaseFor } from "../src/services/htc/bridge
 export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/htc/lingering";
 export { buildHtcPrices } from "../src/services/htc/prices";
-export { htcBaseInfo, htcBaseLimits, htcModTags } from "../src/services/htc/patch";
+export { htcBaseInfo, htcBaseLimits, htcModTags, loadHtcPatch, htcPatchExtras } from "../src/services/htc/patch";
 export { whiteItem } from "../src/vendor/poe2htc/engine/item";
 export { indexPrices, pricesForBase, cheapestEssenceLevel, stepCost } from "../src/vendor/poe2htc/optimizer/cost";
 export { optimizePlan, optimizePareto } from "../src/vendor/poe2htc/optimizer/optimize";

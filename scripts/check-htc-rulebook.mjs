@@ -89,5 +89,41 @@ const eb = JSON.parse(readFileSync(join(ROOT, "src/services/htc/extra-bases.json
 claim("build-htc-bases", "ベースの素性", Object.keys(eb.baseInfo ?? {}).length, 1618);
 claim("build-htc-bases", "枠が素と違うベース", Object.keys(eb.baseLimits ?? {}).length, 13);
 
+// ---- 品質の割り戻し (一度やらかした所) ----
+//
+// `defences` も `life` もカタリストの種類であり、同時に**防具の MOD が持つタグ**でもある。
+// タグだけ見ると兜の MOD を割り戻してしまい、ティアを実際より低く読む。2026-09-22 に実際に
+// やらかして、クラスで弾く形に直した。ここはその再発を見る。
+console.log("\n品質の割り戻し:");
+{
+  const amuletMana = data.mods.get("Amulets/IncreasedMana");
+  const helmEs = data.mods.get("Helmets_int/LocalEnergyShield");
+  claim("quality.ts", "アミュレットのマナは mana で底上げ", amuletMana ? M.boostedBy(amuletMana, "mana") : null, true);
+  // 兜の ES は defences タグを持つが、兜にカタリストは無いので底上げされない
+  claim("quality.ts", "兜の ES は defences でも底上げしない", helmEs ? M.boostedBy(helmEs, "defences") : null, false);
+  // オーナーの実物で検算した数値 (マナのカタリスト 20%)
+  claim("quality.ts", "182 → 表示 218", M.displayedValue(182, 20), 218);
+  claim("quality.ts", "8 → 表示 9 (切り捨て)", M.displayedValue(8, 20), 9);
+  // 戻すと切り捨てぶん下がる = 「素はこれ以上」の下限として使う
+  claim("quality.ts", "表示 9 を戻すと 7.5", M.rawValue(9, 20), 7.5);
+  claim("quality.ts", "品質 0 なら戻さない", M.rawValue(42, 0), 42);
+}
+
+// ---- アプリ本体の読み込み経路 ----
+//
+// 検算はどれも `loadPatchSync` (esbuild で束ねた同期の入口) を通る。だがアプリが実際に使うのは
+// **`loadHtcPatch`** で、4MB の mods.json を動的 import する別の経路。ここが壊れても検算は
+// 全部通ってしまい、UI を開いた瞬間に落ちる。だから 1 回だけ通す。
+// 重ね方 (`applyExtras`) は両経路で共有しているので、ずれるとすればこの配線だけ。
+console.log("\nアプリ本体の読み込み経路 (loadHtcPatch):");
+{
+  const app = await M.loadHtcPatch();
+  claim("patch.ts", "MOD の数が同期経路と一致", app.mods.size, data.mods.size);
+  claim("patch.ts", "クラスの数が同期経路と一致", app.bases.size, data.bases.size);
+  claim("patch.ts", "重ねた追加分を保持している", M.htcPatchExtras() != null, true);
+  const qs = M.itemBaseFor(app, "Aegis Quarterstaff");
+  claim("patch.ts", "クライアント由来のベースが引ける", qs?.id ?? null, "Quarterstaves");
+}
+
 console.log(failed ? `\nNG: ${failed} 件。実態とコメントの両方を直してください` : "\n全部 OK");
 process.exit(failed ? 1 : 0);
