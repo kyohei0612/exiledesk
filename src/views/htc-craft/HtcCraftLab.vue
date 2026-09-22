@@ -90,8 +90,17 @@ const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id
             <td class="opacity-70">{{ r.tierName }}</td>
             <td class="opacity-50">{{ r.range }}</td>
             <td class="w-28 text-amber-300">{{ r.boosted ? "品質を外した" : "" }}</td>
+            <td class="w-32 text-emerald-300">{{ r.crafted ? "確定で乗せられる" : "" }}</td>
           </tr>
         </table>
+        <!-- 解く前に分かる話なので、ここで先に出す -->
+        <p
+          v-if="c.slots.value"
+          class="mt-2 rounded p-2 text-xs"
+          :class="c.slots.value.impossible ? 'bg-red-900/40' : c.slots.value.needsAstrid ? 'bg-amber-900/40' : 'bg-white/5'"
+        >
+          {{ c.slots.value.note }}
+        </p>
         <p v-if="c.implicits.value.length" class="mt-1 text-xs opacity-50">
           暗黙 (ベースで決まるので作る対象外): {{ c.implicits.value.join(" / ") }}
         </p>

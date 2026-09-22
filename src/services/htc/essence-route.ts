@@ -36,6 +36,7 @@
  * (上級のほうが安いことが普通にある ── Essence of Abrasion は Lesser 116ex / Greater 0.81ex)。
  */
 import { matchKey } from "./bridge-index";
+import { craftedSurvey } from "./craft-slots";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -122,21 +123,37 @@ export function essenceAlternativesFor(
  *
  * **これをソルバに渡してください。**候補が無い目標は `slot` を付けずに素通しするので、
  * 繋がる物が 1 つも無ければ今までと完全に同じ挙動になります。
+ *
+ * ## クラフト枠を超えて足しません
+ * アイテムが持てるクラフト MOD (エッセンス / パーフェクトエッセンス / 合金) は**既定で 1 個**
+ * ([[craft-slots.ts]])。ソルバは**枠の候補として置いただけの物も 1 個と数えます**。
+ *
+ * 実測 2026-09-22: 猛攻 (パーフェクトエッセンス) + アタック速度 は **45 神**で解けるのに、
+ * アタック速度に候補を足しただけで「an item can hold at most one crafted modifier」で
+ * **作れない**に変わりました。片方しか使わないのに 2 個と数えられるためです。
+ * だから**残り枠のぶんだけ**足します。
+ *
+ * @param astrid アストリッドの創造性を差す前提なら true (クラフト枠が 1 つ増える)
  */
 export function withEssenceAlternatives(
   data: PatchData,
   cls: ItemBase,
   targets: readonly TierTarget[],
   level: number,
+  opts: { astrid?: boolean } = {},
 ): TierTarget[] {
+  // 既に確定で乗せる目標がいくつあるか。残り枠のぶんしか足せない
+  let headroom = craftedSurvey(data, cls, targets, opts).headroom;
   const out: TierTarget[] = [];
   let slot = 0;
   for (const t of targets) {
-    const alts = essenceAlternativesFor(data, cls, t, level);
+    const alts = headroom > 0 ? essenceAlternativesFor(data, cls, t, level) : [];
     if (alts.length === 0) {
       out.push(t);
       continue;
     }
+    // 1 目標に候補が複数あっても、埋まる枠は 1 つ
+    headroom--;
     slot++;
     out.push({ ...t, slot });
     for (const a of alts) out.push({ ...a.target, slot });

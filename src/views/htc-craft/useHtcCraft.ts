@@ -13,6 +13,7 @@ import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste-ja";
 import { itemBaseFor } from "../../services/htc/bridge";
+import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { soloCosts, type SoloCost } from "../../services/htc/solo-cost";
 import { planPreview, type PlanOption } from "../../services/htc/plan";
 import { partialStarts, solveFinish, budgetForBuy } from "../../services/htc/partial-start";
@@ -34,6 +35,8 @@ export interface TargetRow {
   range: string;
   /** 品質で底上げされている MOD か (装飾品のみ) */
   boosted: boolean;
+  /** 確定で乗せる MOD か (エッセンス / パーフェクトエッセンス / 合金) */
+  crafted: boolean;
 }
 
 /** 買い方 1 通り */
@@ -58,6 +61,8 @@ export function useHtcCraft() {
   const rows = shallowRef<TargetRow[]>([]);
   const implicits = ref<string[]>([]);
   const skipped = ref<string[]>([]);
+  /** 確定で乗せる MOD が何個あるか。**解く前に分かる** ([[craft-slots.ts]]) */
+  const slots = shallowRef<CraftedSurvey | null>(null);
 
   const solo = shallowRef<SoloCost[]>([]);
   /** 案は**全部**持つ。本家も 3 案並べる (確率と 1 周の値段の釣り合いを見せるため) */
@@ -138,8 +143,11 @@ export function useHtcCraft() {
           tierName: String(tier.name ?? ""),
           range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),
           boosted: !!(it.quality && it.catalystTag && (mod.tags ?? []).includes(it.catalystTag)),
+          crafted: isCraftedMod(mod),
         };
       });
+      // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
+      slots.value = craftedSurvey(d, cls, got.targets);
 
       t = Date.now();
       solo.value = soloCosts(d, prices.value, cls, got.targets, { level: it.itemLevel ?? 82 });
@@ -198,7 +206,7 @@ export function useHtcCraft() {
   return {
     stepTarget,
     loading, error, item, base, rows, implicits, skipped,
-    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage,
+    solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots,
     money, run, solveBuys,
   };
 }

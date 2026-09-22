@@ -89,7 +89,53 @@ if (before[0] !== before[1]) fail("枠に入れる前なのにエッセンスの
 console.log(`  (枠に入れる前は値段を動かしても ${before[0].toFixed(0)} 高貴のまま = 候補に入っていなかった)`);
 if (!(normal < before[0] / 5)) fail(`繋いでも安くなっていない (${normal.toFixed(0)} vs ${before[0].toFixed(0)})`);
 
-// ---- 4. T1 狙いでは何も変わらない ----
+// ---- 4. クラフト枠を超えて足さない (実測で踏んだバグ) ----
+//
+// アイテムが持てるクラフト MOD (エッセンス / パーフェクトエッセンス / 合金) は既定で 1 個。
+// ソルバは**枠の候補として置いただけの物も 1 個と数える**ので、枠が埋まっているのに候補を
+// 足すと、解ける craft が「作れない」に変わる。2026-09-22 に実測:
+//   猛攻 (パーフェクトエッセンス) + アタック速度 = 45 神で解ける
+//   → アタック速度に候補を足すと「an item can hold at most one crafted modifier」で拒否
+console.log("\nクラフト枠が埋まっている時:");
+{
+  const withEssence = [
+    { modId: "Quarterstaves/PerfectEssence_Onslaught", minTierIndex: 0 },
+    { modId: "Quarterstaves/LocalIncreasedAttackSpeed", minTierIndex: 6 },
+  ];
+  const sv = M.craftedSurvey(data, cls, withEssence);
+  console.log("  " + sv.note);
+  if (sv.crafted.length !== 1) fail(`確定で乗せる目標が ${sv.crafted.length} 個 (1 個のはず)`);
+  if (sv.headroom !== 0) fail(`残り枠が ${sv.headroom} (0 のはず)`);
+  if (sv.needsAstrid) fail("1 個なのにアストリッドが要ると言っている");
+
+  const wide = M.withEssenceAlternatives(data, cls, withEssence, LVL);
+  if (wide.length !== withEssence.length) fail(`枠が埋まっているのに候補を ${wide.length - withEssence.length} 件足した`);
+  const prices2 = M.pricesForBase(M.indexPrices(raw), cls);
+  const a = M.markovFromItem(data, prices2, M.whiteItem(cls, LVL), withEssence, {});
+  const b2 = M.markovFromItem(data, prices2, M.whiteItem(cls, LVL), wide, {});
+  console.log(`  候補なし ${a.expectedCost.toFixed(0)} 高貴 / 候補あり ${b2.feasible ? b2.expectedCost.toFixed(0) + " 高貴" : "作れない"}`);
+  if (!b2.feasible) fail("候補を足したら作れなくなった (クラフト枠を超えて足している)");
+  if (Math.abs(a.expectedCost - b2.expectedCost) > 1e-6) fail("枠が埋まっているのに費用が変わった");
+
+  // アストリッドを差す前提なら 2 個持てる
+  const sv2 = M.craftedSurvey(data, cls, withEssence, { astrid: true });
+  if (sv2.headroom !== 1) fail(`アストリッドありの残り枠が ${sv2.headroom} (1 のはず)`);
+  const wide2 = M.withEssenceAlternatives(data, cls, withEssence, LVL, { astrid: true });
+  if (wide2.length <= withEssence.length) fail("アストリッドありなのに候補を足していない");
+  console.log(`  アストリッドを差す前提なら候補を ${wide2.length - withEssence.length} 件足せる`);
+
+  // 3 個は差しても作れない
+  const three = [
+    { modId: "Quarterstaves/PerfectEssence_Onslaught", minTierIndex: 0 },
+    { modId: "Quarterstaves/PerfectEssence_BaseRunicWard", minTierIndex: 0 },
+    { modId: "Quarterstaves/PerfectEssence_AilmentEffect", minTierIndex: 0 },
+  ];
+  const sv3 = M.craftedSurvey(data, cls, three, { astrid: true });
+  if (!sv3.impossible) fail("確定 3 個なのに作れる判定になっている");
+  console.log("  " + sv3.note);
+}
+
+// ---- 5. T1 狙いでは何も変わらない ----
 //
 // エッセンスは固定ティアで T1 には届かないので、全部 T1 の craft は今までと同じ数字が出る。
 const ids = ["Quarterstaves/LocalFireDamage", "Quarterstaves/LocalLightningDamage", "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon"];

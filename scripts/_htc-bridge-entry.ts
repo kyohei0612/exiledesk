@@ -30,6 +30,7 @@ export { simulateBudget } from "../src/services/htc/budget";
 export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { partialStarts, solveFinish, budgetForBuy, freeSlots } from "../src/services/htc/partial-start";
 export { essenceAlternativesFor, withEssenceAlternatives } from "../src/services/htc/essence-route";
+export { craftedSurvey, isCraftedMod, ASTRID_RUNE } from "../src/services/htc/craft-slots";
 export { parseJaItem, targetsFor } from "../src/services/htc/paste-ja";
 export { soloCosts, buyOrRoll } from "../src/services/htc/solo-cost";
 export { fractureOptions, FRACTURE_MIN_MODS } from "../src/services/htc/fracture-route";
