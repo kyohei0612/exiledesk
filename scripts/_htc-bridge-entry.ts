@@ -31,6 +31,7 @@ export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { partialStarts, solveFinish, budgetForBuy, freeSlots, fracturedStart } from "../src/services/htc/partial-start";
 export { essenceAlternativesFor, withEssenceAlternatives } from "../src/services/htc/essence-route";
 export { craftedSurvey, isCraftedMod, ASTRID_RUNE } from "../src/services/htc/craft-slots";
+export { htcDropOnly, htcModSides } from "../src/services/htc/patch";
 export { parseJaItem, targetsFor } from "../src/services/htc/paste";
 export { soloCosts, soloP75, buyOrRoll } from "../src/services/htc/solo-cost";
 export { baseChoices } from "../src/services/htc/base-choice";

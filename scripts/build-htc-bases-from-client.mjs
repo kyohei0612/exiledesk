@@ -38,7 +38,7 @@ import { resolve } from "node:path";
 import { ROOT, OUT, rj, rows } from "./_htc-client-tables.mjs";
 import { CLASS_TAGS, RUNE_POOLS, weightOn, familyOf, signature, signatureTags, ROW_NAME, verifyRuneTags, isSkippedBase } from "./_htc-base-tags.mjs";
 import { makeModBuilder } from "./_htc-mod-build.mjs";
-import { buildModTags, buildModSides } from "./_htc-mod-tags.mjs";
+import { buildModTags, buildModSides, buildDropOnly } from "./_htc-mod-tags.mjs";
 import { report } from "./_htc-report.mjs";
 
 const VERIFY = process.argv.includes("--verify");
@@ -311,6 +311,8 @@ const main = async () => {
   const { modTags, familyStats } = buildModTags(MODS);
   // 繋がらなかった行の枠を引くための「文面 -> 側」
   const modSides = buildModSides(MODS);
+  // 創生の樹からしか出ない MOD。狙いに入っていたら「買うしかない」と断るため
+  const dropOnly = buildDropOnly(MODS);
 
   /**
    * ベース名 -> そのベースでの枠 (プレフィックス / サフィックス)。
@@ -457,6 +459,7 @@ const main = async () => {
     familyStats,
     modTags,
     modSides,
+    dropOnly,
     source:
       "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",
     addedBases: Object.fromEntries([...addedBases].map(([k, v]) => [k, v.sort()])),
@@ -467,7 +470,7 @@ const main = async () => {
   await writeFile(OUT, JSON.stringify(payload, null, 1) + "\n", "utf8");
 
   const { borrowed, placeholder } = modBuilder.stats();
-  report({ OUT, addedBases, baseInfo, baseLimits, modTags, modSides, familyStats, grantedN,
+  report({ OUT, addedBases, baseInfo, baseLimits, modTags, modSides, dropOnly, familyStats, grantedN,
     outItems, outMods, addedPools, borrowed, placeholder, ASSUMED });
 };
 

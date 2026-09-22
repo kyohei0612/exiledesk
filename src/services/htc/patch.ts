@@ -86,6 +86,7 @@ export function htcPatchExtras(): PatchExtras | null {
 let familyTexts: Record<string, Record<string, string[]>> = {};
 let modTags: Record<string, string[]> = {};
 let modSides: Record<string, "P" | "S" | "?"> = {};
+let dropOnly: Record<string, { tag: string; side: "P" | "S"; name: string }> = {};
 let familyStats: Record<string, Record<string, string[]>> = {};
 let baseLimits: Record<string, { prefixes: number; suffixes: number }> = {};
 let baseInfo: Record<string, BaseInfo> = {};
@@ -155,6 +156,17 @@ export function htcModTags(): Record<string, string[]> {
  */
 export function htcModSides(): Record<string, "P" | "S" | "?"> {
   return modSides;
+}
+
+/**
+ * 文面 (正規化済み) → 創生の樹 (ブリーチ) からしか出ない MOD の情報。
+ *
+ * **クラフトでは付きません。**狙いに入っていたら「買うしかない」と**理由つきで**断れます。
+ * `tag` は 4 系統 (`genesis_tree_caster` / `genesis_tree_minion` / `breach_desecration` /
+ * `tower_augment_breach`)。通常プールでも出る物は入っていません。
+ */
+export function htcDropOnly(): Record<string, { tag: string; side: "P" | "S"; name: string }> {
+  return dropOnly;
 }
 
 /**
@@ -247,6 +259,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   familyTexts = extra.familyTexts ?? {};
   modTags = extra.modTags ?? {};
   modSides = (extra as { modSides?: Record<string, "P" | "S" | "?"> }).modSides ?? {};
+  dropOnly = (extra as { dropOnly?: typeof dropOnly }).dropOnly ?? {};
   familyStats = extra.familyStats ?? {};
   baseLimits = extra.baseLimits ?? {};
   baseInfo = extra.baseInfo ?? {};

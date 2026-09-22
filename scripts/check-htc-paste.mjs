@@ -245,5 +245,47 @@ console.log(String.fromCharCode(10) + "繋がらない MOD の枠:");
   if (same.limits?.prefixes !== plain.limits?.prefixes) fail("引く物が無いのに枠が変わった");
 }
 
+// ---- 創生の樹からしか出ない MOD ----
+//
+// オーナー指摘 2026-09-23:「創生の樹 MOD のみ DB から片っ端から見つけて覚えておかないと厄介」。
+// **タグは 4 系統ある。**`breach_desecration` だけ見ると足りない (最初にそれで 36 件と数えて漏らした):
+//   genesis_tree_caster 83 / genesis_tree_minion 68 / breach_desecration 36 / tower_augment_breach 7
+// 通常プールでも出る 16 件は**入れない** (「買うしかない」と言うと嘘になる)。
+console.log(String.fromCharCode(10) + "創生の樹からしか出ない MOD:");
+{
+  const tree = M.htcDropOnly();
+  const n = Object.keys(tree).length;
+  console.log("  文面 " + n + " 種 (178 MOD がティア違いで畳まれる)");
+  if (n < 20) fail("創生の樹の表が " + n + " 種 (少なすぎる。生成器が走っているか)");
+  // スペルのマナコスト効率は 6 ティアあり、全部プレフィックスで創生の樹キャスター専用
+  const k = M.matchKey("#% increased Mana Cost Efficiency of Spells");
+  const hit = tree[k];
+  if (!hit) fail("スペルのマナコスト効率が表に無い");
+  else {
+    console.log("  スペルのマナコスト効率 → " + hit.tag + " / " + hit.side);
+    if (hit.tag !== "genesis_tree_caster") fail("タグが " + hit.tag);
+    if (hit.side !== "P") fail("側が " + hit.side + " (プレフィックスのはず)");
+  }
+  // 貼り付けから理由が出ること
+  const NLC = String.fromCharCode(10);
+  const RING = [
+    "Rarity: Rare", "Rage Grip", "Mnemonic Ring", "--------",
+    "Quality (Mana Modifiers): +40% (augmented)", "--------", "Item Level: 82", "--------",
+    "8% increased maximum Mana (implicit)", "--------",
+    "36% increased Mana Cost Efficiency of Spells (fractured)",
+    "+235 to maximum Mana", "+29 to Intelligence", "+14% to all Elemental Resistances",
+    "24% increased Cast Speed (desecrated)", "8% increased maximum Mana (crafted)",
+  ].join(NLC);
+  const got = M.targetsFor(data, M.parseJaItem(RING));
+  if (got.dropOnly.length !== 1) fail("創生の樹と判定された行が " + got.dropOnly.length + " 件 (1 件のはず)");
+  else {
+    console.log("  貼り付けから: " + got.dropOnly[0].tagJa + " — " + got.dropOnly[0].text);
+    if (got.dropOnly[0].tagJa !== "創生の樹 キャスター") fail("日本語のタグ名が " + got.dropOnly[0].tagJa);
+  }
+  // 普通に作れる MOD を巻き込んでいないこと
+  const normal = M.matchKey("+# to maximum Mana");
+  if (tree[normal]) fail("普通に作れる最大マナを創生の樹と判定している");
+}
+
 console.log(failed ? (String.fromCharCode(10) + "NG: " + failed + " 件") : (String.fromCharCode(10) + "全部 OK"));
 process.exit(failed ? 1 : 0);

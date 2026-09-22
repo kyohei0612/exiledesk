@@ -52,7 +52,7 @@ import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import { bridgeMods } from "./bridge";
 import { matchKey } from "./bridge-index";
-import { htcBaseInfo, htcModSides } from "./patch";
+import { htcBaseInfo, htcDropOnly, htcModSides } from "./patch";
 import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -62,6 +62,17 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
  * (暗黙だけはベースの表から当てます)。
  */
 export type LineKind = "explicit" | "implicit" | "fractured" | "desecrated" | "crafted" | "enchant" | "rune";
+
+/**
+ * 創生の樹のタグ → 画面に出す名前。**DB の見出しに合わせています**
+ * (「創生の樹 キャスター プレフィックス」など)。
+ */
+const TREE_JA: Readonly<Record<string, string>> = {
+  genesis_tree_caster: "創生の樹 キャスター",
+  genesis_tree_minion: "創生の樹 ミニオン",
+  breach_desecration: "創生の樹 (冒涜)",
+  tower_augment_breach: "創生の樹 (タワー)",
+};
 
 /** 読み取った 1 行 */
 export interface PastedLine {
@@ -282,6 +293,11 @@ export function targetsFor(
   texts: string[];
   skipped: string[];
   /**
+   * 繋がらなかった行のうち、**創生の樹からしか出ない**と分かった物。
+   * 「クラフトでは付かない」だけでなく**どこから出るか**まで言えます。
+   */
+  dropOnly: Array<{ text: string; tag: string; tagJa: string; name: string }>;
+  /**
    * 繋がらなかった行が**どちら側の枠をいくつ食っているか**。
    *
    * クラフトでは付かない MOD (ブリーチの樹の指輪など) も枠は使います。数えずに解くと
@@ -302,7 +318,7 @@ export function targetsFor(
   if (!item.baseType) {
     return {
       targets: [], texts: [], skipped: item.lines.map((l) => l.text), implicits: [],
-      fractured: [], fracturedTargets: [], skippedSides: { prefixes: 0, suffixes: 0, either: 0 },
+      fractured: [], fracturedTargets: [], dropOnly: [], skippedSides: { prefixes: 0, suffixes: 0, either: 0 },
     };
   }
   const level = item.itemLevel ?? 100;
@@ -386,15 +402,20 @@ export function targetsFor(
   });
   // 繋がらなかった行の側を、クライアント由来の表から引く ([[patch.ts]] の `htcModSides`)
   const sides = htcModSides();
+  const tree = htcDropOnly();
+  const dropOnlyRows: Array<{ text: string; tag: string; tagJa: string; name: string }> = [];
   const skippedSides = { prefixes: 0, suffixes: 0, either: 0 };
   for (const l of rollable) {
     if (!skipped.includes(l.text)) continue;
-    const v = sides[matchKey(l.template)];
+    const k = matchKey(l.template);
+    const t2 = tree[k];
+    if (t2) dropOnlyRows.push({ text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name });
+    const v = sides[k];
     if (v === "P") skippedSides.prefixes++;
     else if (v === "S") skippedSides.suffixes++;
     else skippedSides.either++;
   }
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
-  return { targets, texts, skipped, implicits, fractured, fracturedTargets, skippedSides };
+  return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides };
 }

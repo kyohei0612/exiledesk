@@ -111,7 +111,11 @@ const implicitText = (lines: readonly string[]): string =>
         <p v-if="c.skipped.value.length" class="mt-2 rounded bg-red-900/40 p-2 text-xs">
           <b>このベースでは作れない MOD が {{ c.skipped.value.length }} 件あります</b> — {{ c.skipped.value.join(" / ") }}<br />
           <span class="opacity-80">
-            <b>クラフトでは付きません</b> (ブリーチの樹からドロップした指輪など、落ちた物にしか乗らない MOD)。
+            <b>クラフトでは付きません。</b>
+            <template v-for="d in c.dropOnly.value" :key="d.text">
+              <br /><b class="text-amber-300">{{ d.tagJa }}</b> からしか出ません — {{ d.text }}
+            </template>
+            <br />
             <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのものです。
             <b>枠はその分を引いて解いています</b>
             (<template v-if="c.slotsUsed.value.prefixes">プレフィックス {{ c.slotsUsed.value.prefixes }} </template>

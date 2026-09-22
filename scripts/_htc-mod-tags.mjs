@@ -34,6 +34,46 @@ export function buildModSides(MODS) {
   return sides;
 }
 
+/**
+ * 創生の樹 (ブリーチ) からしか出ない MOD。文面 -> `{ tag, side, name }`。
+ *
+ * オーナー指摘 2026-09-23:「創生の樹 MOD のみ DB から片っ端から見つけて覚えておかないと
+ * 厄介かもね」。**クラフトでは付かない**ので、狙いに入っていたら「買うしかない」と断れます。
+ *
+ * ## タグは 4 系統ある
+ * `breach_desecration` だけ見ると**足りません** (最初にそれで 36 件と数えて漏らした):
+ * ```
+ * genesis_tree_caster    83 件   ← スペルのマナコスト効率 6 ティアはここ
+ * genesis_tree_minion    68 件
+ * breach_desecration     36 件
+ * tower_augment_breach    7 件
+ * ```
+ *
+ * ## 通常プールでも出る物は**入れません**
+ * 194 件のうち 16 件は他のタグでも重み > 0 で、**普通に作れます**。それを「買うしかない」と
+ * 断ると嘘になるので、**創生の樹でしか出ない 178 件だけ**を出します。
+ */
+export function buildDropOnly(MODS) {
+  const key = (t) => normalizeModTemplate(stripRichTextMarkers(t)).toLowerCase().replace(/\s+/g, " ");
+  const TREE = /^(genesis_tree_caster|genesis_tree_minion|breach_desecration|tower_augment_breach)$/;
+  const out = {};
+  for (const m of Object.values(MODS)) {
+    if (m.domain !== "item" || !m.text) continue;
+    const w = m.spawn_weights || [];
+    const tree = w.filter((x) => TREE.test(x.tag) && x.weight > 0);
+    if (!tree.length) continue;
+    // 他のタグでも出るなら普通に作れる。入れない
+    if (w.some((x) => !TREE.test(x.tag) && x.weight > 0)) continue;
+    const k = key(m.text);
+    out[k] ??= {
+      tag: tree[0].tag,
+      side: m.generation_type === "prefix" ? "P" : "S",
+      name: m.name || "",
+    };
+  }
+  return out;
+}
+
 /** クライアントの MOD 表から `{ modTags, familyStats }` を作る */
 export function buildModTags(MODS) {
   /**

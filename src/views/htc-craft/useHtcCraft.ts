@@ -102,6 +102,8 @@ export function useHtcCraft() {
   const fracturedUnusable = ref(0);
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
+  /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
+  const dropOnly = ref<Array<{ text: string; tagJa: string; name: string }>>([]);
   /**
    * 行ごとの「厳しめの目安」。**押された時だけ出します**。
    * 期待費用は厳密解で一瞬ですが、p75 は方策を何千本も回すので秒単位かかります
@@ -174,6 +176,7 @@ export function useHtcCraft() {
       const got = got0;
       timings.value.push(["MOD とティアを決める", Date.now() - t]);
       slotsUsed.value = got.skippedSides;
+      dropOnly.value = got.dropOnly;
       targets.value = got.targets;
       fracturedTargets.value = got.fracturedTargets;
       fracturedLines.value = got.fractured;
@@ -344,7 +347,7 @@ export function useHtcCraft() {
 
   return {
     stepTarget, findFractured, fractured, fracturedBusy,
-    fracturedLines, fracturedUnusable, slotsUsed, routes, routesBusy, compareRoutes,
+    fracturedLines, fracturedUnusable, slotsUsed, dropOnly, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
     solo, plans, plansEvaluated, buys, buysRunning, timings, coverage, slots, bases,
     p75, p75Busy, findP75,
