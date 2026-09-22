@@ -142,6 +142,9 @@ export function judgeQuality(item: {
   const quality = item.quality ?? null;
   const hasMaxQualityMod = (item.explicitMods ?? []).some(isMaxQualityMod);
   return {
+    // **40% を超えていたらインフューザー。**「使い切って消した」では 40% が上限なので、
+    // それ以上はヴァール○○のインフューザー (最大品質を 10% まで超過。ただしコラプトの危険)。
+    // オーナーの読み 2026-09-23 をクライアントの効果文で確認済み
     lingering: quality != null && quality > BASE_MAX_QUALITY && !hasMaxQualityMod,
     quality,
     hasMaxQualityMod,
