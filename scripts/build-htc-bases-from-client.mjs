@@ -344,6 +344,10 @@ const main = async () => {
           ilvl,
           weight: got != null ? got : (assumed ?? weightOn(m, tagSet)),
           ranges: (m.stats || []).map((s) => [s.min, s.max]),
+          // stat の id。取引所の検索に使う (`services/htc/buy-or-craft.ts` が
+          // `i18n/trade2-stat-mapping.json` 越しに trade2 の stat id へ変える)。
+          // 同梱の MOD も `tiers[].stats` に同じ物を持っている
+          stats: (m.stats || []).map((s) => s.id).filter(Boolean),
         };
       });
     const tags = new Set();
