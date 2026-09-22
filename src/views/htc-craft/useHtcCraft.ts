@@ -16,6 +16,8 @@ import { baseForSolving } from "../../services/htc/bridge";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
+import { routeSteps, type RouteStep } from "../../services/htc/route-steps";
+import { simulateBudget, type SpendRow } from "../../services/htc/budget";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
 import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
@@ -116,6 +118,17 @@ export function useHtcCraft() {
    */
   const routes = shallowRef<Array<{ label: string; cost: number; ms: number; rest: number }>>([]);
   const routesBusy = ref(false);
+  /**
+   * ⑥ 手順。**押された時だけ**出します (MDP を解いて方策を回すので数秒〜分単位)。
+   * `steps` は「うまく行った時の並び」で、`spend` は「どこで金が飛ぶか」。
+   */
+  const steps = shallowRef<RouteStep[]>([]);
+  const spend = shallowRef<SpendRow[]>([]);
+  const stepsBusy = ref(false);
+  const stepsNote = ref<string | null>(null);
+  const stepsCost = ref<number | null>(null);
+  const stepsP75 = ref<number | null>(null);
+  const stepsFrom = ref<string>("");
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -376,6 +389,65 @@ export function useHtcCraft() {
   }
 
   /**
+   * ⑥ 手順 — 「で、実際どう動くのか」を出す。
+   *
+   * **重いので押された時だけ**です (MDP を 1 本解いて、そのあと方策を何千回か回す)。
+   * 出すのは 3 つ:
+   *   1. うまく行った時の並び ([[route-steps.ts]])
+   *   2. 手ごとの出費 (どこで金が飛ぶか)
+   *   3. 厳しめの総額 (p75)
+   *
+   * 開始は**固定済みを買う道があればそちら**、無ければ素から。④ で比べた時に安いほうが
+   * 固定済みなのは分かっているので、手順もそちらで出さないと画面の中で話が食い違います。
+   */
+  function solveSteps(): void {
+    const d = data.value;
+    const cls = base.value;
+    const p = prices.value;
+    if (!d || !cls || !p) return;
+    stepsBusy.value = true;
+    steps.value = [];
+    stepsNote.value = null;
+    spend.value = [];
+    stepsP75.value = null;
+    try {
+      const level = item.value?.itemLevel ?? 82;
+      const fx = fracturedTargets.value.length ? fracturedStart(d, cls, level, targets.value, fracturedTargets.value) : null;
+      const start = fx ? fx.start : whiteItem(cls, level);
+      const rest = fx ? fx.rest : targets.value;
+      stepsFrom.value = fx ? "固定済みを買ったところから" : "素 (白いベース) から";
+      const t0 = Date.now();
+      const r = markovFromItem(d, p, start, withEssenceAlternatives(d, cls, rest, level), {
+        keepRoutes: true,
+        ...withCatalysing(d, cls, rest),
+      });
+      timings.value.push(["手順を解く", Date.now() - t0]);
+      stepsCost.value = r.expectedCost;
+      if (!r.feasible) { stepsNote.value = r.reason ?? "解けませんでした"; return; }
+      if (!r.routes) {
+        // `keepRoutes` は**厳密解の時だけ**表を残す。打ち切った解で並びを出すと、
+        // 実際には通らない道を手順として見せることになる
+        stepsNote.value = "収束しきらなかったので、手順の並びは出しません (総額だけ出ます)。";
+      } else {
+        const walk = routeSteps(r.routes, cls);
+        steps.value = walk.steps;
+        if (!walk.reachedGoal) stepsNote.value = walk.stoppedWhy;
+      }
+      const t1 = Date.now();
+      const b = simulateBudget(p, cls, r, {});
+      timings.value.push(["厳しめを回す", Date.now() - t1]);
+      // 回せない時 (道中が長すぎて分布が信用できない等) は **出さない**。
+      // 嘘の数字を出すより出さない、が他の欄と同じ扱い
+      stepsP75.value = b && b.reliable ? b.p75 : null;
+      spend.value = b ? b.spend.slice(0, 6) : [];
+    } catch (e) {
+      stepsNote.value = String(e);
+    } finally {
+      stepsBusy.value = false;
+    }
+  }
+
+  /**
    * その MOD が固定された物を取引所で探す。**1 回で search + fetch を 1 回ずつ**使うので、
    * 押された時だけ投げる (レート制限は Rust の門番と `autoPrice` が持つ)。
    */
@@ -423,6 +495,7 @@ export function useHtcCraft() {
     loading, error, item, base, rows, implicits, skipped,
     solo, buys, buysRunning, timings, coverage, slots, bases,
     runPicked, reset, ensureData, data,
+    steps, spend, stepsBusy, stepsNote, stepsCost, stepsP75, stepsFrom, solveSteps,
     p75, p75Busy, findP75,
     money, run, solveBuys,
   };

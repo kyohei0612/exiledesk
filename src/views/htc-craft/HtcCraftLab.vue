@@ -44,6 +44,7 @@ const STAGES = [
   { id: "solo", label: "③ 1 個ずつの値段", hint: "買うか自分で出すか" },
   { id: "start", label: "④ どこから始めるか", hint: "固定済みを買うか素からか" },
   { id: "buy", label: "⑤ 途中まで買う", hint: "何個買って残りを作るか" },
+  { id: "steps", label: "⑥ 手順", hint: "で、実際どう動くのか" },
 ] as const;
 type StageId = (typeof STAGES)[number]["id"];
 
@@ -165,7 +166,7 @@ const implicitText = (lines: readonly string[]): string =>
           class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
           :disabled="c.loading.value || !text.trim()"
           @click="reread(text)"
-        >{{ c.loading.value ? "計算中…" : "読んで計算する" }}</button>
+        >{{ c.loading.value ? "解析中…" : "MOD 解析" }}</button>
         <label class="text-xs opacity-70">
           完成品の売値 (神)
           <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
@@ -472,6 +473,63 @@ const implicitText = (lines: readonly string[]): string =>
             </td>
           </tr>
         </table>
+      </section>
+
+      <!-- ⑥ 手順。ここが結び。上から順に打てる並びと、どこで金が飛ぶか -->
+      <section v-show="current === 'steps'" class="mb-4">
+        <h2 class="mb-1 font-bold">⑥ 手順</h2>
+        <p class="mb-2 text-xs opacity-60">
+          方策は本来「どの状態で何を打つか」の表で、外した時の手も全部入っています。
+          そのまま出すと地図になるので、<b>うまく行った時の並びを 1 本だけ</b>抜いて出します。
+          外した時の手は各段に 1 行だけ添えます。<br />
+          <b>ここに出る確率を掛け算しないでください。</b>外しても打ち直せる手が多いので、
+          実際の総額は下の「期待費用 / 厳しめ」が答えです。
+        </p>
+        <button
+          class="mb-2 rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
+          :disabled="c.stepsBusy.value"
+          @click="c.solveSteps()"
+        >
+          {{ c.stepsBusy.value ? "解いています… (数秒〜分単位、画面が止まります)" : "手順を出す" }}
+        </button>
+        <template v-if="c.stepsCost.value != null">
+          <p class="mb-2 text-xs">
+            <span class="opacity-50">{{ c.stepsFrom.value }}</span>
+            — 期待費用 <b class="text-amber-300">{{ c.money(c.stepsCost.value) }}</b>
+            <span v-if="c.stepsP75.value != null"> / 厳しめ (4 回に 3 回はここまで) <b>{{ c.money(c.stepsP75.value) }}</b></span>
+          </p>
+          <p v-if="c.stepsNote.value" class="mb-2 rounded bg-amber-900/40 p-2 text-xs">{{ c.stepsNote.value }}</p>
+          <table v-if="c.steps.value.length" class="mb-3 w-full text-xs">
+            <tr class="opacity-50">
+              <th class="w-5"></th><th class="text-left">打つ物</th>
+              <th class="w-16 text-right">当たり</th><th class="w-24 text-right">この手</th><th class="w-24 text-right">残り</th>
+            </tr>
+            <template v-for="s2 in c.steps.value" :key="s2.no">
+              <tr class="border-b border-white/5">
+                <td class="opacity-40">{{ s2.no }}</td>
+                <td class="py-0.5">{{ s2.text }}</td>
+                <td class="text-right text-amber-300">{{ (s2.prob * 100).toFixed(1) }}%</td>
+                <td class="text-right opacity-60">{{ c.money(s2.cost) }}</td>
+                <td class="text-right opacity-60">{{ c.money(s2.remaining) }}</td>
+              </tr>
+              <tr v-if="s2.onMiss" class="border-b border-white/5">
+                <td></td>
+                <td colspan="4" class="pb-1 text-[11px] opacity-40">外したら → {{ s2.onMiss }}</td>
+              </tr>
+            </template>
+          </table>
+          <template v-if="c.spend.value.length">
+            <h3 class="mb-1 text-xs font-bold">どこで金が飛ぶか</h3>
+            <table class="w-full text-xs">
+              <tr v-for="(sp, i) in c.spend.value" :key="i" class="border-b border-white/5">
+                <td class="py-0.5">{{ sp.label }}</td>
+                <td class="w-16 text-right opacity-60">{{ (sp.share * 100).toFixed(0) }}%</td>
+                <td class="w-24 text-right">{{ c.money(sp.exalted) }}</td>
+                <td class="w-24 text-right opacity-40">{{ sp.uses.toFixed(1) }} 回</td>
+              </tr>
+            </table>
+          </template>
+        </template>
       </section>
 
       <!-- 次の段へ。押さずに上の見出しから飛んでもいい -->
