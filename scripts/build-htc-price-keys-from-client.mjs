@@ -55,6 +55,9 @@ const CURRENCY = {
   annul: "Metadata/Items/Currency/CurrencyRemoveMod",
   vaal: "Metadata/Items/Currency/CurrencyCorrupt",
   divine: "Metadata/Items/Currency/CurrencyModValues",
+  // 2026-09-22: レアの MOD 1 個をランダムに固定する。エンジンの通貨ではないが
+  // ([[fracture-route.ts]] が自前で扱う)、値段は同じ表から引きたいのでここに置く
+  fracture: "Metadata/Items/Currency/CurrencyFractureRare",
 };
 
 /**

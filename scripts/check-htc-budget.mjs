@@ -126,5 +126,30 @@ if (!sf.options[0].boughtModId.includes("GlobalIncreaseSpellSkillGemLevel")) {
 // 買う物を引く条件が組めている
 if (!sf.options[0].buyQuery || sf.options[0].buyQuery.filters.length !== 1) fail("買う物の検索条件が 1 本になっていない");
 
+// ---- フラクチャーで固定してから作る ----
+//
+// クライアントの説明:「4 個以上のモッドを持つレアアイテム上のランダムなモッド 1 個をフラクチャーし固定する」。
+// 固定された MOD は消去で消えないので、engine は**固定済みの状態**なら正しく扱える。
+// ここは「固定するとどれだけ楽になるか」を engine に解かせているだけで、確率の創作は無い。
+console.log("\n=== フラクチャーで固定 ===");
+const few = tiered.slice(0, 4);
+const plain = M.markovFromItem(data, prices, M.whiteItem(cls, 82), few, {});
+const fr = M.fractureOptions(data, prices, cls, few, { level: 82, plainCost: plain.expectedCost });
+console.log(`  固定せずに作る ${plain.expectedCost.toFixed(0)} ex / ${fr.orbJa} は ${M.FRACTURE_MIN_MODS} MOD で 1/${M.FRACTURE_MIN_MODS}`);
+for (const o of fr.options) {
+  console.log(
+    `    ${o.lockedModId.replace("Amulets/", "").padEnd(34)} 残り ${o.finishCost != null ? o.finishCost.toFixed(0) : "—"} ex  ${o.timesCheaper ? `1/${o.timesCheaper.toFixed(1)}` : ""}`,
+  );
+}
+if (fr.options.length !== few.length) fail(`案が ${fr.options.length} 件 (目標と同じ ${few.length} 件のはず)`);
+// 固定すれば必ず安くなる
+for (const o of fr.options) if (!(o.timesCheaper > 1)) fail(`${o.lockedModId} を固定しても安くなっていない`);
+// 当たる確率は 1 / MOD 数
+if (Math.abs(fr.options[0].hitChance - 1 / M.FRACTURE_MIN_MODS) > 1e-9) fail(`当たる確率が ${fr.options[0].hitChance}`);
+// 一番付きにくい MOD を固定するのが一番効く
+if (!fr.options[0].lockedModId.includes("GlobalIncreaseSpellSkillGemLevel")) {
+  fail(`先頭が ${fr.options[0].lockedModId} (一番付きにくいスペルレベルのはず)`);
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);
