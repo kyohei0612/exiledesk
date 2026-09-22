@@ -33,15 +33,34 @@ import { withCatalysing } from "./catalysing";
 /** フラクチャーオーブが要求する最低の MOD 数 (クライアントの説明) */
 export const FRACTURE_MIN_MODS = 4;
 
+/**
+ * 固定の抽選から外れる MOD の数 (「当て馬」)。
+ *
+ * オーナーの説明 (2026-09-23):「4 MOD の奴をフラクチャーテクで 3 MOD + 冒涜で 4 MOD に見せて、
+ * フラクチャーを 3 分の 1 の確率にするのが主流」。オーブは 4 MOD 以上を要求しますが、
+ * **数合わせに乗せた冒涜の MOD は固定の抽選に入らない**ので、狙いが 3 個なら 1/3 になります。
+ *
+ * **ゲームのデータに裏づけはありません。オーナーの実使用が根拠です**
+ * ([[lingering.ts]] の「消しても品質が残る」と同じ扱い)。既定は 0 = 当て馬なしで、
+ * 使う時は呼ぶ側が明示します。
+ */
+export const FRACTURE_DECOY_NOTE =
+  "当て馬 (冒涜で数合わせした MOD) は固定の抽選に入らない、というのはオーナーの実使用が根拠で、"
+  + "ゲームのデータには裏づけがありません。";
+
 /** 値段表のキー。`price-keys.json` の `currency.fracture` */
 const FRACTURE_KEY = "fracture";
 
 export interface FractureOption {
   /** 固定する MOD */
   lockedModId: string;
-  /** 打つ時の MOD 数。少ないほど当たりやすいので既定は 4 */
+  /** 打つ時の MOD 数。オーブが 4 MOD 以上を要求するので既定は 4 */
   modsWhenFracturing: number;
-  /** 狙いの MOD に当たる確率 (= 1 / MOD 数) */
+  /** そのうち固定の抽選に入らない当て馬の数 (`FRACTURE_DECOY_NOTE`) */
+  decoys: number;
+  /** 実際に抽選に入る MOD 数 (= modsWhenFracturing - decoys) */
+  drawn: number;
+  /** 狙いの MOD に当たる確率 (= 1 / drawn) */
   hitChance: number;
   /** 当てるまでに要るオーブの本数 (期待値) */
   expectedOrbs: number;
@@ -103,12 +122,19 @@ export function fractureOptions(
   prices: Prices,
   cls: ItemBase,
   targets: readonly TierTarget[],
-  opts: { level?: number; modsWhenFracturing?: number; plainCost?: number | null } = {},
+  opts: {
+    level?: number; modsWhenFracturing?: number; plainCost?: number | null;
+    /** 固定の抽選に入らない当て馬の数 (`FRACTURE_DECOY_NOTE`)。既定 0 */
+    decoys?: number;
+  } = {},
 ): FractureResult {
   const t0 = Date.now();
   const level = opts.level ?? 82;
   const mods = Math.max(FRACTURE_MIN_MODS, opts.modsWhenFracturing ?? FRACTURE_MIN_MODS);
-  const hitChance = 1 / mods;
+  // 当て馬を引いた数が抽選の母数。4 MOD のうち 1 個が当て馬なら 1/3
+  const decoys = Math.max(0, Math.min(opts.decoys ?? 0, mods - 1));
+  const drawn = mods - decoys;
+  const hitChance = 1 / drawn;
   const orbPrice = prices.currency[FRACTURE_KEY] ?? null;
   const orbJa = jaOfPriceKey(FRACTURE_KEY) ?? "フラクチャーオーブ";
 
@@ -125,6 +151,8 @@ export function fractureOptions(
     options.push({
       lockedModId: t.modId,
       modsWhenFracturing: mods,
+      decoys,
+      drawn,
       hitChance,
       expectedOrbs,
       orbCost: orbPrice != null ? orbPrice * expectedOrbs : null,
