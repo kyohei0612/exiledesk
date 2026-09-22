@@ -205,14 +205,16 @@ export function buildFinishedQuery(
   data: PatchData,
   cls: ItemBase,
   targets: readonly TierTarget[],
-  opts: { ilvlMin?: number } = {},
+  opts: { ilvlMin?: number; rarity?: "normal" | "magic" | "rare" } = {},
 ): { query: ReturnType<typeof buildSpecQuery>; filters: TradeStatFilter[]; unmatched: string[] } | null {
   const category = tradeCategoryOf(cls);
   if (!category) return null;
   const { filters, unmatched } = tradeFiltersFor(data, targets);
   const query = buildSpecQuery({
     category,
-    rarity: "nonunique",
+    // 取引所に「レア」の option は無く、ユニーク以外でまとめて引く ([[partial-start.ts]] の
+    // 途中買いは 3 MOD 以上がレアなので、ここを通る)
+    rarity: opts.rarity === "magic" ? "magic" : opts.rarity === "normal" ? "normal" : "nonunique",
     ...(opts.ilvlMin != null ? { ilvlMin: opts.ilvlMin } : {}),
     stats: filters.map((f) => ({ id: f.id, min: f.min })),
   });
