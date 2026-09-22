@@ -21,6 +21,7 @@ import { simulateBudget, type SpendRow } from "../../services/htc/budget";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
 import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
+import { searchCut } from "../../services/htc/search-cut";
 import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
 import { withEssenceAlternatives } from "../../services/htc/essence-route";
 import { whiteItem } from "../../vendor/poe2htc/engine/item";
@@ -333,6 +334,25 @@ export function useHtcCraft() {
   }
 
   /** 手順の段が狙っている MOD を、貼り付けの文面 (日本語) で返す。2 つ足す段は 2 つ並べる */
+  /**
+   * 投げる計画。**何も投げません** ── 何本・何秒かかるかを、押す前に見せるためだけの物です。
+   *
+   * MDP は 1 回も解きません ([[search-cut.ts]])。使うのは ③ で既に出ている 1 個ずつの費用だけ。
+   * だから貼り付け直後から出ていて、待たされません。
+   */
+  const searchCutResult = computed(() => {
+    const d = data.value;
+    const cls = base.value;
+    if (!d || !cls || targets.value.length < 2 || solo.value.length === 0) return null;
+    const level = item.value?.itemLevel ?? 82;
+    const combos = partialStarts(d, cls, targets.value, {
+      level,
+      ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
+    }).map((x) => x.bought);
+    if (combos.length === 0) return null;
+    return searchCut(combos, solo.value);
+  });
+
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
 
@@ -496,6 +516,7 @@ export function useHtcCraft() {
     solo, buys, buysRunning, timings, coverage, slots, bases,
     runPicked, reset, ensureData, data,
     steps, spend, stepsBusy, stepsNote, stepsCost, stepsP75, stepsFrom, solveSteps,
+    searchCutResult,
     p75, p75Busy, findP75,
     money, run, solveBuys,
   };

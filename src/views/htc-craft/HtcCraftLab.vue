@@ -456,6 +456,44 @@ const implicitText = (lines: readonly string[]): string =>
       <!-- 買い方 -->
       <section v-show="current === 'buy'" class="mb-4">
         <h2 class="mb-1 font-bold">⑤ 途中まで出来た物を買う</h2>
+
+        <!-- 投げる前に、何本・何秒かかるかを見せる。押してから待たせない -->
+        <template v-if="c.searchCutResult.value">
+          <p class="mb-1 text-xs opacity-60">
+            取引所の条件は「<b>この MOD を持っている物</b>」なので、
+            <b>{{ "{" }}A{{ "}" }} で投げれば {{ "{" }}A + B{{ "}" }} の出品も返ります</b>。だから投げる価値があるのは
+            <b>極小の組み合わせだけ</b>で、残りは同じ結果から拾えます。<br />
+            一番高い MOD が乗っていない組も落とします (買っても一番高い所が残るので値段が下がらない)。
+          </p>
+          <p class="mb-2 text-xs">
+            組み合わせ <b>{{ c.searchCutResult.value.before }}</b> 通り →
+            投げるのは <b class="text-amber-300">{{ c.searchCutResult.value.signals }} 本</b>
+            (<b>{{ c.searchCutResult.value.seconds }} 秒</b>、10.5 秒間隔)。
+            <span v-if="c.searchCutResult.value.withinBudget" class="text-emerald-300">5 分 30 回の枠に収まります</span>
+            <span v-else class="text-red-300">5 分 30 回の枠を超えます</span>
+            <span class="opacity-50"> — まだ何も投げていません</span>
+          </p>
+          <table class="mb-2 w-full text-xs">
+            <tr class="opacity-50">
+              <th class="w-5"></th><th class="text-left">投げる条件</th>
+              <th class="w-24 text-right">肩代わり</th><th class="w-24 text-right">価値</th>
+            </tr>
+            <tr v-for="f in c.searchCutResult.value.fire" :key="f.rank" class="border-b border-white/5">
+              <td class="opacity-40">{{ f.rank }}</td>
+              <td class="py-0.5">{{ c.stepTarget(f.bought.map((b) => b.modId)) }}</td>
+              <td class="text-right opacity-60">{{ f.covers }} 通り</td>
+              <td class="text-right opacity-60">{{ c.money(f.worth) }}</td>
+            </tr>
+          </table>
+          <details class="mb-3 text-xs opacity-50">
+            <summary class="cursor-pointer">投げない {{ c.searchCutResult.value.dropped.length }} 通りと、その理由</summary>
+            <div v-for="(d, i) in c.searchCutResult.value.dropped" :key="i" class="py-0.5">
+              {{ c.stepTarget(d.bought.map((b) => b.modId)) }}
+              — {{ d.why }}<span v-if="d.coveredBy">（{{ c.stepTarget(d.coveredBy.map((b) => b.modId)) }} の検索で返ります）</span>
+            </div>
+          </details>
+        </template>
+
         <button
           class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
           :disabled="c.buysRunning.value"
