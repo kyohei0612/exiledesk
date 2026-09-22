@@ -8,7 +8,7 @@
  * 品質と「最大品質」は別物です。MOD が上げるのは**上限**だけで、品質そのものはアイテムの数値。
  * だから
  *   1. ブリーチのエッセンスで `+20% to Maximum Quality` を載せる (上限 20% → 40%)
- *   2. 触媒で品質を 40% まで上げる
+ *   2. カタリストで品質を 40% まで上げる
  *   3. その MOD を消す (上限は 20% に戻るが、**品質は 40% のまま**)
  * が通ります。**プレフィックスの枠も空きます**。ここが本当の旨みで、40% 品質かつプレフィックス 3 本
  * 使い切った指輪が作れる。
@@ -80,7 +80,7 @@ export function maxQualityRoute(base: ItemBase): MaxQualityRoute | null {
     qualityKept: max,
     family: MAX_QUALITY_FAMILY,
     side: "prefix",
-    raisedBy: "触媒 (指輪 / アミュレットの品質は触媒で上げる)",
+    raisedBy: "カタリスト (指輪 / アミュレットの品質はカタリストで上げる)",
     keeps: [`品質 ${max}%`, "プレフィックスの枠 1 つ"],
     caveats: [LINGERING_CAVEAT],
   };

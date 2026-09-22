@@ -185,11 +185,11 @@ onMounted(() => {
         <span>サンプル: 上位 {{ d.activeAscendancy.value.sampleSize }} 人 (使用率 {{ d.activeAscendancy.value.usagePercent.toFixed(1) }}%)</span>
         <span class="inline-flex items-center gap-1">
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#9B7BCC]/25 text-[#C7A7E5] ring-1 ring-[#9B7BCC]/50">P</span>
-          = 接頭辞
+          = プレフィックス
         </span>
         <span class="inline-flex items-center gap-1">
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#B8956A]/25 text-[#D6B98A] ring-1 ring-[#B8956A]/50">S</span>
-          = 接尾辞
+          = サフィックス
         </span>
         <span class="italic">チェック → 上部「trade2 検索」ボタンで一括検索</span>
       </footer>

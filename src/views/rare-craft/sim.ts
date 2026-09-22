@@ -110,7 +110,7 @@ export interface SimOptions {
   echo: boolean;
   /** エグザルトごとの MOD レベル下限 (配列の長さ = 足す数) */
   exaltLevels: number[];
-  /** 右側の高貴なお告げ = 接尾辞だけ */
+  /** 右側の高貴なお告げ = サフィックスだけ */
   exaltSide: "any" | "suffix";
   /** 冒涜 3 択の選び方 (指標ごとの重み) */
   priority: Partial<Record<Metric, number>>;
@@ -164,7 +164,7 @@ export function findEssence(page: string, name: string, stat: string): WEssence 
   return WEIGHT_PAGES[page]?.essence.find((e) => e.essence === name && e.stats.some((s) => s.id === stat)) ?? null;
 }
 
-/** 接頭辞 / 接尾辞の空き (ベース MOD + エッセンス + 冒涜のあと) */
+/** プレフィックス / サフィックスの空き (ベース MOD + エッセンス + 冒涜のあと) */
 export function slotsAfterSetup(o: Pick<SimOptions, "page" | "ilvl" | "baseMods" | "essence" | "desecrate">): Slots {
   const page = WEIGHT_PAGES[o.page];
   let prefixUsed = 0;
@@ -181,7 +181,7 @@ export function slotsAfterSetup(o: Pick<SimOptions, "page" | "ilvl" | "baseMods"
   }
   let desecrateGen: Slots["desecrateGen"] = null;
   if (o.desecrate && page) {
-    // アビス専用 MOD がある側に冒涜が付く (兜 / 手袋 / 靴は接尾辞だけ)
+    // アビス専用 MOD がある側に冒涜が付く (兜 / 手袋 / 靴はサフィックスだけ)
     const pool = page.desecrated.filter((m) => m.level <= o.ilvl);
     const suffixes = pool.filter((m) => m.gen === "suffix").length;
     const prefixes = pool.length - suffixes;

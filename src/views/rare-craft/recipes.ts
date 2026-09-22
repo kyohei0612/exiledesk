@@ -7,7 +7,7 @@
  * 0.5 の基本形「マジックベース (MOD 1 つ) → グレーターエッセンス (クラフト MOD 枠) → 肋骨で冒涜 (必ずやる) → 高貴なオーブ 1 個 + 偉大なる高貴なお告げで MOD を 2 つ足す」。
  * オーナー指示 (2026-09-14): 偉大なる高貴なお告げは必ず使う (足す数の選択は無し)。アビスの反響のお告げ (冒涜の 3 択を 1 回引き直す) も選択肢に入れる。
  * 名前は全部クライアントの日本語 (items-ja-client.json)。単価の apiId は poe2scout。
- * 兜 / 手袋 / 靴の冒涜 MOD は接尾辞だけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。
+ * 兜 / 手袋 / 靴の冒涜 MOD はサフィックスだけ (クライアントの MOD 表) なので、ネクロマンシーのお告げは使わない。
  */
 import type { Metric } from "./sim";
 
@@ -191,7 +191,7 @@ export const EXALTS: { id: ExaltId; label: string; apiId: string; minLevel: numb
 export type SideId = "any" | "suffix";
 export const SIDES: { id: SideId; label: string }[] = [
   { id: "any", label: "お告げなし" },
-  { id: "suffix", label: "右側の高貴なお告げ (接尾辞だけ)" },
+  { id: "suffix", label: "右側の高貴なお告げ (サフィックスだけ)" },
 ];
 export type EchoId = "none" | "echoes";
 export const ECHOES: { id: EchoId; label: string }[] = [
@@ -234,7 +234,7 @@ export function materialsFor(
     const ex = EXALTS.find((x) => x.id === o.exalt) ?? EXALTS[0];
     rows.push({ key: "exalt", apiId: ex.apiId, label: ex.label, note: `${ex.note}。1 個で ${o.count} つ付ける`, qty: 1 });
     if (o.count >= 2) rows.push({ key: "gomen", apiId: "omen-of-greater-exaltation", label: "偉大なる高貴なお告げ", note: "次の高貴なオーブで MOD を 2 つ付ける", qty: 1 });
-    if (o.side === "suffix") rows.push({ key: "dextral", apiId: "omen-of-dextral-exaltation", label: "右側の高貴なお告げ", note: "高貴なオーブを接尾辞だけにする", qty: 1 });
+    if (o.side === "suffix") rows.push({ key: "dextral", apiId: "omen-of-dextral-exaltation", label: "右側の高貴なお告げ", note: "高貴なオーブをサフィックスだけにする", qty: 1 });
   }
   const rune = r.runes.find((x) => x.id === o.runeId);
   // ベースは trade2 でソケット 2 以上に絞って買うので、熟練工のオーブは使わない

@@ -322,7 +322,7 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
           </table>
           <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--exile-color-text-secondary)]">
             <span v-for="m in c.recipe.value.metrics" :key="m">{{ METRIC_LABEL[m] }} の平均 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ Math.round(c.result.value.means[m]) }}{{ METRIC_UNIT[m] }}</span></span>
-            <span>冒涜のあとの空き: 接頭辞 {{ c.slots.value.prefixOpen }} / 接尾辞 {{ c.slots.value.suffixOpen }}</span>
+            <span>冒涜のあとの空き: プレフィックス {{ c.slots.value.prefixOpen }} / サフィックス {{ c.slots.value.suffixOpen }}</span>
             <span>高貴なオーブで足す MOD: {{ c.effectiveCount.value }} つ</span>
             <span v-if="c.echo.value === 'echoes'">反響で引き直す割合 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ pct(c.sim.value.pReroll) }}</span></span>
           </div>
@@ -407,7 +407,7 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
           </button>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             冒涜 = 肋骨 (保存 / 古代) と アビスの反響のお告げ の有無。古代の肋骨は冒涜の候補を MOD レベル 40 以上に絞る (通常の MOD の低いティアが出なくなる)。反響は最初の 3 択の一番いい物が「引き直した時の平均」より悪ければ引き直す。
-            高貴なオーブの「右側」= 右側の高貴なお告げ (接尾辞だけに付ける)。一番高い段 = 取れた売値が一番高い段で売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
+            高貴なオーブの「右側」= 右側の高貴なお告げ (サフィックスだけに付ける)。一番高い段 = 取れた売値が一番高い段で売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
           </p>
           <p v-if="c.unpricedOptions.value.length" class="text-[11px] text-amber-300 mt-1">相場が無いので比較に出ていない素材: {{ c.unpricedOptions.value.join("、") }}</p>
         </template>

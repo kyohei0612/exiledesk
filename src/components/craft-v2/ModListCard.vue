@@ -28,7 +28,7 @@ const emit = defineEmits<{ toggle: [mod: ModEntry]; setTier: [mod: ModEntry, idx
 
 const isPrefix = computed(() => props.affix === "P");
 const label = computed(() => (isPrefix.value ? "プレフィックス" : "サフィックス"));
-const ariaLabel = computed(() => (isPrefix.value ? "接頭辞" : "接尾辞"));
+const ariaLabel = computed(() => (isPrefix.value ? "プレフィックス" : "サフィックス"));
 const badge = computed(() =>
   isPrefix.value ? "bg-[#9B7BCC]/25 text-[#C7A7E5] ring-1 ring-[#9B7BCC]/50" : "bg-[#B8956A]/25 text-[#D6B98A] ring-1 ring-[#B8956A]/50",
 );
