@@ -55,6 +55,16 @@ export interface RecipeDef {
   essences: EssenceDef[];
   defaultEssence: string;
   runes: RuneDef[];
+  /**
+   * 既定のルーン。**「ルーンなし」を既定にする** (オーナー 2026-09-22)。
+   *
+   * 「基本作る時って最終完成ルーンは無視でトレードに並べることが多いから、ルーンによって値が
+   * 底上げされる値を検索するんじゃなくて、底上げ前の値で検索したら必ずヒットする」。
+   *
+   * 売値の段は取引所から**出品されている値**で取ってくる。出品がルーンを差していないなら、
+   * その値はルーン抜きの値。こちらの完成品にだけルーンを足して比べると、ルーンのぶんだけ
+   * 上の段に当たったことになって**売値を高く見積もる**。差したまま並べる時だけ選ぶこと。
+   */
   defaultRune: string;
   /** 冒涜 3 択で何を優先するか */
   priority: Partial<Record<Metric, number>>;
@@ -87,7 +97,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "es-helmet",
     label: "ES 兜",
-    note: "フラット ES 付きの規格外マジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 鉄のルーン ×2",
+    note: "フラット ES 付きの規格外マジック兜 → 強化のグレーターエッセンス (%ES) → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す (ルーンは差したまま並べる時だけ足す)",
     category: "armour.helmet",
     ilvl: 80,
     pages: [{ id: "Helmets_int", label: "知性 (ES) 兜", defence: { esMin: 100 }, baseEs: 109 }],
@@ -99,7 +109,7 @@ export const RECIPES: readonly RecipeDef[] = [
       { id: "iron", label: "鉄のグレータールーン (防御 +18%)", apiId: "greater-iron-rune", effect: { esPct: 18 } },
       { id: "iron-perfect", label: "鉄のパーフェクトルーン (防御 +20%)", apiId: "perfect-iron-rune", effect: { esPct: 20 } },
     ],
-    defaultRune: "iron",
+    defaultRune: "none",
     priority: { res: 1, chaos: 0.2 },
     buckets: [
       { key: "a", conds: { es: 450, res: 60 } },
@@ -113,7 +123,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "life-res-gloves",
     label: "ライフ耐性手袋",
-    note: "ライフ付きの規格外マジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 耐性ルーン ×2",
+    note: "ライフ付きの規格外マジック手袋 → 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す (ルーンは差したまま並べる時だけ足す)",
     category: "armour.gloves",
     ilvl: 82,
     pages: [
@@ -124,7 +134,7 @@ export const RECIPES: readonly RecipeDef[] = [
     essences: RES_ESSENCES,
     defaultEssence: "insulation",
     runes: RES_RUNES,
-    defaultRune: "storm",
+    defaultRune: "none",
     priority: { res: 1, chaos: 0.3 },
     buckets: [
       { key: "a", conds: { life: 120, res: 80 } },
@@ -138,7 +148,7 @@ export const RECIPES: readonly RecipeDef[] = [
   {
     id: "ms-boots",
     label: "移動速度靴",
-    note: "移動速度付きの規格外マジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → 耐性ルーン ×2",
+    note: "移動速度付きの規格外マジック靴 → 肉体 / 耐性のグレーターエッセンス → 肋骨で冒涜 (耐性 + 混沌耐性) → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す (ルーンは差したまま並べる時だけ足す)",
     category: "armour.boots",
     ilvl: 82,
     pages: [
@@ -150,7 +160,7 @@ export const RECIPES: readonly RecipeDef[] = [
     essences: [BODY_ESSENCE, ...RES_ESSENCES],
     defaultEssence: "body",
     runes: [...RES_RUNES, { id: "chase", label: "ファルウルの追跡のルーン (移動速度 +5%)", apiId: "farruls-rune-of-the-chase", effect: { ms: 5 } }],
-    defaultRune: "storm",
+    defaultRune: "none",
     priority: { res: 1, chaos: 0.3 },
     // 肉体のグレーターエッセンスがライフ枠を使う (85〜99) ので、ライフの段は 85 (100 は届かない)
     buckets: [

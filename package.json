@@ -17,6 +17,8 @@
     "check:gem": "node scripts/check-gem-math.mjs",
     "check:htc": "node scripts/check-htc-bridge.mjs",
     "check:htc-lingering": "node scripts/check-htc-lingering.mjs",
+    "check:htc-prices": "node scripts/check-htc-prices.mjs",
+    "build:htc-price-keys": "node scripts/build-htc-price-keys-from-client.mjs",
     "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
     "build:htc-bases": "node scripts/build-htc-bases-from-client.mjs"
   },

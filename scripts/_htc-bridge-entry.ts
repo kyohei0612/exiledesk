@@ -17,6 +17,9 @@ import extra from "../src/services/htc/extra-bases.json";
 export { bridgeMods, classOfBase } from "../src/services/htc/bridge";
 export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/htc/lingering";
+export { buildHtcPrices } from "../src/services/htc/prices";
+export { marketStore } from "../src/state/market-store";
+export { default as priceKeys } from "../src/services/htc/price-keys.json";
 
 export function loadPatchSync(): PatchData {
   const data = indexPatch(
