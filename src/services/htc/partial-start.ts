@@ -28,7 +28,9 @@
  * ## 余計な MOD は検索では弾けない
  * 取引所は「この stat を持つ」でしか絞れず、**MOD の総数では絞れません**。4 MOD 狙いで引いた物が
  * 5〜6 MOD 持っていることは普通にあり、枠が埋まっていれば消去のオーブが要ります。
- * ここが出す費用は**狙いの MOD だけが乗っている**前提です。実物は目で見てください。
+ * ここが出す費用は既定では**狙いの MOD だけが乗っている**前提です。`solveFinish` に
+ * `spare: "free"` を渡すと「名指ししていない枠は何でもいい」に変わり、余計な MOD を
+ * 消さずに残せるようになります ([[freeSlots]])。買う物の中身は最後は目で見てください。
  */
 import { buildFinishedQuery } from "./buy-or-craft";
 import { withEssenceAlternatives } from "./essence-route";
@@ -36,6 +38,7 @@ import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
 import { limitsOf } from "../../vendor/poe2htc/engine/item";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
+import type { Spare } from "../../vendor/poe2htc/optimizer/slots";
 import type { ItemBase, ItemState, PatchData, PlacedMod, Rarity } from "../../vendor/poe2htc/engine/types";
 
 /** 買い方 1 通り */
@@ -145,27 +148,69 @@ export function partialStarts(
   return out;
 }
 
+/** 名指ししていない枠は無い、という既定 (完成品は狙った MOD だけ) */
+const NO_SPARE: Spare = { prefixes: 0, suffixes: 0 };
+
+/**
+ * **名指ししていない枠を「何でもいい」にする。**
+ *
+ * 既定は「完成品は名指しした MOD だけ」で、3/3 のベースに 4 個狙うなら**残り 2 枠は空で
+ * なければならない**という意味です。実際のクラフトはそこまで厳しくないことが多く、
+ * 1〜2 枠は何が乗っていても構わないのが普通です。
+ *
+ * ここを伝えると解が変わります。**乗ってしまった要らない MOD を、消さずに残せる**ように
+ * なるからです。実測 2026-09-22 (イージスクォータースタッフ / 撃破時ライフ 1 本狙い、
+ * はずれプレフィックス 0 本): 810 → 746 高貴。
+ *
+ * 数え方は「枠の上限 − (もう乗っている数 + これから足す数)」。エッセンスの代替で同じ枠に
+ * 2 つ入っている目標は 1 つと数えます ([[essence-route.ts]])。
+ */
+export function freeSlots(data: PatchData, start: ItemState, rest: readonly TierTarget[]): Spare {
+  const lim = limitsOf(start.base);
+  let p = start.prefixes.length;
+  let s = start.suffixes.length;
+  const seen = new Set<string>();
+  for (const t of rest) {
+    // 同じ枠の目標 (「通常でもエッセンスでもいい」) は 1 つ
+    const key = t.slot != null ? `slot:${t.slot}` : `mod:${t.modId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const mod = data.mods.get(t.modId);
+    if (!mod) continue;
+    if (mod.type === "prefix") p++;
+    else s++;
+  }
+  return { prefixes: Math.max(0, lim.prefixes - p), suffixes: Math.max(0, lim.suffixes - s) };
+}
+
 /**
  * 残りを仕上げる期待費用 (高貴建て)。作れなければ Infinity。
  *
  * **エッセンスでも付く MOD は自動で候補に入ります** ([[essence-route.ts]])。
  * `essences: false` で今まで通り通常ロールだけにできます (検算用)。
+ *
+ * `spare` は「名指ししていない枠をどう扱うか」:
+ *   - 省略 … 完成品は狙った MOD だけ (今まで通り)
+ *   - `"free"` … 名指ししていない枠は何でもいい ([[freeSlots]])
+ *   - 明示 … 自分で枠数を決める
  */
 export function solveFinish(
   data: PatchData,
   prices: Prices,
   o: PartialStart,
-  opts: { essences?: boolean } = {},
-): { expectedCost: number; feasible: boolean; reason?: string; ms: number } {
+  opts: { essences?: boolean; spare?: "free" | Spare } = {},
+): { expectedCost: number; feasible: boolean; reason?: string; spare: Spare; ms: number } {
   const t0 = Date.now();
   const rest = opts.essences === false
     ? o.rest
     : withEssenceAlternatives(data, o.start.base, o.rest, o.start.level);
-  const r = markovFromItem(data, prices, o.start, rest, {});
+  const spare = opts.spare === "free" ? freeSlots(data, o.start, rest) : (opts.spare ?? NO_SPARE);
+  const r = markovFromItem(data, prices, o.start, rest, { spare });
   return {
     expectedCost: r.expectedCost,
     feasible: r.feasible,
     ...(r.reason ? { reason: r.reason } : {}),
+    spare,
     ms: Date.now() - t0,
   };
 }

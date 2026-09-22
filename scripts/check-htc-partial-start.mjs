@@ -105,5 +105,35 @@ for (const c of costs) {
 if (M.budgetForBuy(100, 200) !== null) fail("作成費が予算を超えているのに上限を返している");
 if (M.budgetForBuy(200, 100) !== 100) fail("引き算が合わない");
 
+// ---- 4. 空き枠を「何でもいい」にする (spare) ----
+//
+// 既定は「完成品は名指しした MOD だけ」で、3/3 のベースに 4 個狙うなら残り 2 枠は空でなければ
+// ならない、という意味になる。実際はそこまで厳しくないことが多く、伝えると**要らない MOD を
+// 消さずに残せる**ぶん安くなる。枠が埋まりきる craft では spare が 0 になり、何も変わらない。
+console.log("\n空き枠を何でもいいにした時:");
+{
+  const four = targets.slice(0, 4);
+  const p4 = M.partialStarts(data, cls, four, { level: LVL, maxBought: 2 });
+  const o = p4.find((x) => x.bought.length === 2);
+  if (!o) { fail("2 個買いの案が無い"); } else {
+    const strict = M.solveFinish(data, prices, o);
+    const free = M.solveFinish(data, prices, o, { spare: "free" });
+    console.log(`  名指しだけ    spare P${strict.spare.prefixes}/S${strict.spare.suffixes}  ${Math.round(strict.expectedCost / DIV)} 神`);
+    console.log(`  空き枠は自由  spare P${free.spare.prefixes}/S${free.spare.suffixes}  ${Math.round(free.expectedCost / DIV)} 神`);
+    if (strict.spare.prefixes !== 0 || strict.spare.suffixes !== 0) fail("既定なのに spare が 0 でない");
+    // 枠 3/3 に プレ 3 + サフ 1 を狙うので、空くのはサフィックス 2 つ
+    if (free.spare.prefixes !== 0 || free.spare.suffixes !== 2) fail(`空き枠が P${free.spare.prefixes}/S${free.spare.suffixes} (P0/S2 のはず)`);
+    // 緩めたのに高くなることはない
+    if (free.expectedCost > strict.expectedCost + 1e-6) fail(`緩めたほうが高い (${free.expectedCost.toFixed(0)} > ${strict.expectedCost.toFixed(0)})`);
+  }
+  // 枠が埋まりきる craft では spare は 0 で、結果も変わらない
+  const full = opts.find((x) => x.bought.length === 4);
+  if (full) {
+    const f = M.solveFinish(data, prices, full, { spare: "free" });
+    if (f.spare.prefixes !== 0 || f.spare.suffixes !== 0) fail(`満杯なのに空き枠が P${f.spare.prefixes}/S${f.spare.suffixes}`);
+    console.log("  満杯の craft  spare P0/S0 (目標 6 個で枠 3/3 を使い切るため)");
+  }
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);
