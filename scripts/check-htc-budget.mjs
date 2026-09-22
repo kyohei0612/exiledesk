@@ -69,5 +69,39 @@ if (!b) {
   for (const r of b.spend.slice(0, 5)) console.log(`    ${(r.share * 100).toFixed(0).padStart(3)}%  ${r.uses.toFixed(1).padStart(7)} 回  ${r.label}`);
 }
 
+// ---- 即時の手順 (本家 poe2htc.com v1.1.0 の実測と突き合わせる) ----
+//
+// 2026-09-22 に本家へ同じ条件 (琥珀のアミュレット / ilvl 82 / 6 MOD 全部 T1) を入れた結果:
+//   3 plans found · Likeliest 1 in 5.7 billion · checked 335,664 plans
+//   1. Transmutation (Perfect) → 2. Augmentation (Perfect) → 3. Regal (Perfect)
+//   4. Desecration + Omen of the Blackblooded → 5. Exalted (Perfect) + Omen of Greater Exaltation
+// **同じ数字が出なくなったら、こちらのデータが本家とずれたということ。**
+console.log("\n=== 即時の手順 (本家と突き合わせ) ===");
+const IDS = [
+  "Amulets/IncreasedMana",
+  "Amulets/MaximumManaIncreasePercent",
+  "Amulets/BaseSpirit",
+  "Amulets/GlobalIncreaseSpellSkillGemLevel",
+  "Amulets/CriticalStrikeMultiplier",
+  "Amulets/Desecrated_GlobalSkillGemQuality",
+];
+const tiered = IDS.map((id) => ({ modId: id, minTierIndex: data.mods.get(id).tiers.length - 1 }));
+const pv = M.planPreview(data, prices, cls, tiered, { level: 82 });
+console.log(`  ${pv.ms} ミリ秒 / 案 ${pv.options.length} 件 / 数えた手順 ${pv.plansEvaluated.toLocaleString()}`);
+for (const [i, o] of pv.options.entries()) console.log(`    案 ${i + 1}  ${o.oddsText}`);
+if (pv.ms > 3000) fail(`即時のはずが ${pv.ms} ミリ秒かかっている`);
+if (pv.options.length !== 3) fail(`案が ${pv.options.length} 件 (本家は 3 件)`);
+if (pv.plansEvaluated !== 335664) fail(`数えた手順が ${pv.plansEvaluated} (本家は 335,664)`);
+const odds = 1 / pv.options[0].probability;
+if (!(odds > 5.0e9 && odds < 6.5e9)) fail(`一番当たりやすい案が 1 in ${odds.toExponential(1)} (本家は 1 in 5.7e9)`);
+// 手順が日本語で、冒涜の段に骨とお告げが出ているか
+const des = pv.options[0].steps.find((s) => s.modId?.includes("Desecrated"));
+if (!des) fail("冒涜の段が無い");
+else {
+  console.log(`    冒涜の段: ${des.text}`);
+  if (!des.text.includes("鎖骨")) fail(`冒涜の段に骨の名前が無い: ${des.text}`);
+  if (!des.text.includes("ブラックブラッドのお告げ")) fail(`冒涜の段にボスのお告げが無い: ${des.text}`);
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

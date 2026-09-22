@@ -20,11 +20,12 @@ export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/
 export { buildHtcPrices } from "../src/services/htc/prices";
 export { whiteItem } from "../src/vendor/poe2htc/engine/item";
 export { indexPrices, pricesForBase, cheapestEssenceLevel, stepCost } from "../src/vendor/poe2htc/optimizer/cost";
-export { optimizePlan } from "../src/vendor/poe2htc/optimizer/optimize";
+export { optimizePlan, optimizePareto } from "../src/vendor/poe2htc/optimizer/optimize";
 export { planExpectedCost } from "../src/vendor/poe2htc/optimizer/cost";
 export { tradeFiltersFor, buildFinishedQuery, tradeCategoryOf, buyOrCraft } from "../src/services/htc/buy-or-craft";
 export { labelOfAction, labelOfStep, jaOfPriceKey, jaOfOmen } from "../src/services/htc/labels";
 export { simulateBudget } from "../src/services/htc/budget";
+export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { CATALYSTS, catalystsFor, boostedBy, displayedValue, rawValue, rawValueOfMod, BASE_MAX_QUALITY, RAISED_MAX_QUALITY } from "../src/services/htc/quality";
 export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";
 export { listMods } from "../src/vendor/poe2htc/engine/index";
