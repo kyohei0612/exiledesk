@@ -34,6 +34,7 @@ export { craftedSurvey, isCraftedMod, ASTRID_RUNE } from "../src/services/htc/cr
 export { parseJaItem, targetsFor } from "../src/services/htc/paste";
 export { soloCosts, soloP75, buyOrRoll } from "../src/services/htc/solo-cost";
 export { baseChoices } from "../src/services/htc/base-choice";
+export { searchPlan, SEARCH_INTERVAL_SEC, SEARCH_BUDGET_PER_5MIN } from "../src/services/htc/search-plan";
 export { fractureOptions, FRACTURE_MIN_MODS, fracturedBuyQuery } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";
 export { CATALYSTS, catalystsFor, hasCatalysts, boostedBy, displayedValue, rawValue, rawValueOfMod, catalystTagFromLabel, BASE_MAX_QUALITY, RAISED_MAX_QUALITY, INFUSER_OVER_QUALITY, ABSOLUTE_MAX_QUALITY } from "../src/services/htc/quality";
