@@ -37,6 +37,10 @@ AGPL-3.0 のコードを取り込んだので、**ExileDesk 全体が AGPL-3.0 �
    - `engine/probability.ts` の `perfectEssenceProbability(data → _data, ...)`
    - `optimizer/optimize.ts` の `buildSteps(data → _data, ...)`
 
+5. **`optimizer/markovActions.ts` の `pricedStepOf` を export しました** (1 語)。MDP の手を
+   「何と何のお告げを使うか」に翻訳する唯一の場所で、画面に日本語名を出すのに要ります
+   (`services/htc/labels.ts`)。写すと上流とずれるので、export して 1 か所のままにしました。
+
 `tsconfig.json` の `lib` を ES2020 → ES2022 に上げています (`Array.prototype.at` を使うため)。
 
 ## 上流の但し書き (そのまま引き継ぐ)

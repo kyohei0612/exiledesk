@@ -36,19 +36,25 @@ import { marketStore } from "../../state/market-store";
 import keys from "./price-keys.json";
 import essenceKeys from "./essence-keys.json";
 
+/** ゲーム内の名前。英語は相場の引き当て用、日本語は画面用 (どちらもクライアント由来) */
+export interface GameName {
+  en: string;
+  ja: string;
+}
+
 interface PriceKeys {
   generated: string;
   source: string;
-  /** エンジンのキー → ゲーム内の英語名 */
-  currency: Record<string, string>;
-  bones: Record<string, string>;
-  omens: Record<string, string>;
+  /** エンジンのキー → ゲーム内の名前 */
+  currency: Record<string, GameName>;
+  bones: Record<string, GameName>;
+  omens: Record<string, GameName>;
 }
 
 const KEYS = keys as PriceKeys;
 
-/** `essence:<level>:<modId>` → ゲーム内の英語名 */
-const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, string> }).keys;
+/** `essence:<level>:<modId>` → ゲーム内の名前 */
+const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, GameName> }).keys;
 
 /** 何が埋まって何が埋まらなかったか。画面でそのまま断るために使う */
 export interface HtcPriceCoverage {
@@ -81,24 +87,24 @@ export function buildHtcPrices(): { file: PricesFile; coverage: HtcPriceCoverage
   const omens: Record<string, number> = {};
   const missing: string[] = [];
 
-  const put = (into: Record<string, number>, key: string, nameEn: string) => {
-    const p = priceByText(nameEn);
-    if (p == null) missing.push(`${key} (${nameEn})`);
+  const put = (into: Record<string, number>, key: string, name: GameName) => {
+    const p = priceByText(name.en);
+    if (p == null) missing.push(`${key} (${name.ja})`);
     else into[key] = p;
   };
 
-  for (const [key, nameEn] of Object.entries(KEYS.currency)) put(prices, key, nameEn);
-  for (const [key, nameEn] of Object.entries(KEYS.bones)) put(bones, key, nameEn);
-  for (const [key, nameEn] of Object.entries(KEYS.omens)) put(omens, key, nameEn);
+  for (const [key, name] of Object.entries(KEYS.currency)) put(prices, key, name);
+  for (const [key, name] of Object.entries(KEYS.bones)) put(bones, key, name);
+  for (const [key, name] of Object.entries(KEYS.omens)) put(omens, key, name);
 
   // エッセンスは 1 本ずつ。名前が同じ物が何百とあるので、名前 → 値段は 1 度だけ引いて使い回す
   const essenceCache = new Map<string, number | null>();
   let essenceFilled = 0;
   const essenceMissingNames = new Set<string>();
-  for (const [key, nameEn] of Object.entries(ESSENCE_KEYS)) {
-    if (!essenceCache.has(nameEn)) essenceCache.set(nameEn, priceByText(nameEn));
-    const p = essenceCache.get(nameEn) ?? null;
-    if (p == null) essenceMissingNames.add(nameEn);
+  for (const [key, name] of Object.entries(ESSENCE_KEYS)) {
+    if (!essenceCache.has(name.en)) essenceCache.set(name.en, priceByText(name.en));
+    const p = essenceCache.get(name.en) ?? null;
+    if (p == null) essenceMissingNames.add(name.ja);
     else {
       prices[key] = p;
       essenceFilled++;

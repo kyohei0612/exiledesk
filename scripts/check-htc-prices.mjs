@@ -27,13 +27,16 @@ const rd = (n) => {
 };
 const names = new Set(rd("BaseItemTypes").map((r) => r.Name).filter(Boolean));
 let checked = 0;
+let noJa = 0;
 for (const group of ["currency", "bones", "omens"]) {
-  for (const [key, nameEn] of Object.entries(KEYS[group])) {
+  for (const [key, name] of Object.entries(KEYS[group])) {
     checked++;
-    if (!names.has(nameEn)) fail(`${group}.${key} の "${nameEn}" がクライアントに無い`);
+    if (!names.has(name.en)) fail(`${group}.${key} の "${name.en}" がクライアントに無い`);
+    // 日本語が英語のままなら、日本語テーブルから引けていない
+    if (!name.ja || name.ja === name.en) { noJa++; fail(`${group}.${key} に日本語名が無い (${name.en})`); }
   }
 }
-console.log(`対応表 ${checked} 件: 英語名はすべてクライアントに実在`);
+console.log(`対応表 ${checked} 件: 英語名はすべてクライアントに実在 / 日本語名が無い ${noJa} 件`);
 
 // ---- 2. エンジンが出しうるキーが表にあるか ----
 // `optimizer/cost.ts` の `currencyKey` が組み立てる形。強度を持つのは transmute/augment/regal/exalt/chaos
@@ -46,9 +49,9 @@ console.log(`エンジンのキー ${WANT.length} 件: 対応表にそろって�
 const fake = [];
 let id = 1;
 const push = (nameEn, price) => fake.push({ ItemId: id++, CategoryApiId: "currency", Text: nameEn, Name: nameEn, Type: null, ApiId: null, CurrentPrice: price, IconUrl: "" });
-for (const group of ["currency", "bones", "omens"]) for (const nameEn of Object.values(KEYS[group])) push(nameEn, 2);
+for (const group of ["currency", "bones", "omens"]) for (const n of Object.values(KEYS[group])) push(n.en, 2);
 // エッセンスは名前が重複するので 1 度ずつ
-for (const nameEn of new Set(Object.values(M.essenceKeys.keys))) push(nameEn, 7);
+for (const n of new Set(Object.values(M.essenceKeys.keys).map((x) => x.en))) push(n, 7);
 // ルーンは名前引き (上流の runeIdByName) なので、名前をそのまま入れる
 for (const n of ["Astrid's Creativity", "Serle's Triumph", "Thrud's Might", "Kolr's Hunt"]) {
   fake.push({ ItemId: id++, CategoryApiId: "runes", Text: n, Name: n, Type: null, ApiId: null, CurrentPrice: 3, IconUrl: "" });
@@ -67,6 +70,27 @@ if (breach == null) fail("ブリーチのエッセンス (最大品質) のキ�
 const runeKeys = Object.keys(file.prices).filter((k) => k.startsWith("rune:"));
 console.log(`ルーン ${runeKeys.length} 件: ${runeKeys.join(", ")}`);
 if (runeKeys.length !== 4) fail(`ルーンの名前引きが効いていない (${runeKeys.length} 件)`);
+
+// ---- 4. 手順の日本語 (勝手に訳さず、クライアントの表記そのまま) ----
+console.log("\n手順の日本語:");
+for (const [key, want] of [
+  ["exalt_greater", "高貴なオーブ (上級)"],
+  ["annul", "消去のオーブ"],
+  ["essence:greater:Amulets/Essence_IncreasedLife", "肉体のグレーターエッセンス"],
+]) {
+  const got = M.jaOfPriceKey(key);
+  console.log(`  ${key.padEnd(46)} -> ${got}`);
+  if (got !== want) fail(`${key} が "${got}" (「${want}」のはず)`);
+}
+for (const [id, want] of [
+  ["OmenofLight", "光のお告げ"],
+  ["OmenoftheBlackblooded", "ブラックブラッドのお告げ"],
+  ["OmenofAbyssalEchoes", "アビスの反響のお告げ"],
+]) {
+  const got = M.jaOfOmen(id);
+  console.log(`  ${id.padEnd(46)} -> ${got}`);
+  if (got !== want) fail(`${id} が "${got}" (「${want}」のはず)`);
+}
 
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

@@ -37,6 +37,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TABLES = resolve(ROOT, "data-cache/client-export/tables/English");
+const TABLES_JA = resolve(ROOT, "data-cache/client-export/tables/Japanese");
 const OUT = resolve(ROOT, "src/services/htc/essence-keys.json");
 
 const rj = async (p) => JSON.parse(await readFile(p, "utf8"));
@@ -54,14 +55,23 @@ const norm = (s) =>
 const LEVEL = { LESSER: "lesser", NORMAL: "normal", GREATER: "greater", PERFECT: "perfect" };
 
 const main = async () => {
-  const [bJson, essences] = await Promise.all([
+  const [bJson, bJa, essences] = await Promise.all([
     rj(resolve(TABLES, "BaseItemTypes.json")),
+    rj(resolve(TABLES_JA, "BaseItemTypes.json")),
     rj(resolve(ROOT, "src/vendor/poe2htc/data/essences.json")),
   ]);
   const B = Array.isArray(bJson) ? bJson : bJson.rows;
-  /** 正規化した名前 -> ゲーム内の表記 */
+  const BJa = Array.isArray(bJa) ? bJa : bJa.rows;
+  if (B.length !== BJa.length) {
+    console.log(`NG: EN ${B.length} 行 / JA ${BJa.length} 行で行数が合わない`);
+    process.exit(1);
+  }
+  /** 正規化した名前 -> { en, ja }。EN / JA は行が対応する */
   const byName = new Map();
-  for (const r of B) if (r.Name) byName.set(norm(r.Name), r.Name);
+  for (let i = 0; i < B.length; i++) {
+    const r = B[i];
+    if (r.Name) byName.set(norm(r.Name), { en: r.Name, ja: BJa[i]?.Name ?? r.Name });
+  }
 
   const keys = {};
   const missing = [];

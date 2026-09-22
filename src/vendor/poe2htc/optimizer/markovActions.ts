@@ -106,7 +106,7 @@ export interface ActionDef {
  * to keep correct. Keeping two is how the D8 desecration mispricing survived: the linear planner
  * charged for a boss omen the MDP did not.
  */
-function pricedStepOf(action: McAction): PricedStep {
+export function pricedStepOf(action: McAction): PricedStep {
   // On exalt and desecrate a side constraint is a Sinistral/Dextral omen on `constrainTo`; on annul
   // and perfect-essence the same idea is spelled `omen`. That split is PlanStep's, and it is load-
   // bearing for probability, so it is mirrored rather than "tidied" here.

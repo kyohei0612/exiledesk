@@ -12,6 +12,7 @@
  * `BaseItemTypes` から取る。1 つでも引けなければ落ちる (リーグでアイテム名が変わったら気づける)。
  * オーメンは規則があるので機械で作る: **id = 英語名から空白を抜いた物** (45 件で確認済み)。
  *
+ * 英語名は相場の引き当て用、日本語名は画面用 (EN/JA は行が対応するので同じ index から取る)。
  * 出力: src/services/htc/price-keys.json
  * Usage: node scripts/build-htc-price-keys-from-client.mjs
  * --------------------------------------------------------------
@@ -22,10 +23,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TABLES = resolve(ROOT, "data-cache/client-export/tables/English");
+const TABLES_JA = resolve(ROOT, "data-cache/client-export/tables/Japanese");
 const OUT = resolve(ROOT, "src/services/htc/price-keys.json");
 
-const rows = async (name) => {
-  const j = JSON.parse(await readFile(resolve(TABLES, `${name}.json`), "utf8"));
+const rows = async (name, dir = TABLES) => {
+  const j = JSON.parse(await readFile(resolve(dir, `${name}.json`), "utf8"));
   return Array.isArray(j) ? j : j.rows || Object.values(j);
 };
 
@@ -74,8 +76,13 @@ const EXTRA = {
 };
 
 const main = async () => {
-  const [B] = await Promise.all([rows("BaseItemTypes")]);
-  const byId = new Map(B.filter((r) => r.Id).map((r) => [r.Id, r]));
+  // EN / JA は行が対応する (同じ index)。公式の日本語名はここから取る
+  const [B, BJa] = await Promise.all([rows("BaseItemTypes"), rows("BaseItemTypes", TABLES_JA)]);
+  if (B.length !== BJa.length) {
+    console.log(`NG: EN ${B.length} 行 / JA ${BJa.length} 行で行数が合わない (書き出し直しが要る)`);
+    process.exit(1);
+  }
+  const byId = new Map(B.map((r, i) => [r.Id, { ...r, NameJa: BJa[i]?.Name ?? null }]));
 
   const missing = [];
   const resolveAll = (table) => {
@@ -86,7 +93,7 @@ const main = async () => {
         missing.push(`${key} -> ${id}`);
         continue;
       }
-      out[key] = row.Name;
+      out[key] = { en: row.Name, ja: row.NameJa ?? row.Name };
     }
     return out;
   };
@@ -96,9 +103,11 @@ const main = async () => {
 
   // オーメンは規則で作る: id = 英語名から空白を抜いた物
   const omens = {};
-  for (const r of B) {
+  for (let i = 0; i < B.length; i++) {
+    const r = B[i];
     if (!r.Name || !/^Omen of /.test(r.Name)) continue;
-    omens[r.Name.replace(/\s+/g, "")] = r.Name;
+    omens[r.Name.replace(/\s+/g, "")] = { en: r.Name, ja: BJa[i]?.Name ?? r.Name };
+    continue;
   }
 
   if (missing.length) {

@@ -2,80 +2,293 @@
  "generated": "2026-09-22",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
-  "transmute": "Orb of Transmutation",
-  "transmute_greater": "Greater Orb of Transmutation",
-  "transmute_perfect": "Perfect Orb of Transmutation",
-  "augment": "Orb of Augmentation",
-  "augment_greater": "Greater Orb of Augmentation",
-  "augment_perfect": "Perfect Orb of Augmentation",
-  "regal": "Regal Orb",
-  "regal_greater": "Greater Regal Orb",
-  "regal_perfect": "Perfect Regal Orb",
-  "exalt": "Exalted Orb",
-  "exalt_greater": "Greater Exalted Orb",
-  "exalt_perfect": "Perfect Exalted Orb",
-  "chaos": "Chaos Orb",
-  "chaos_greater": "Greater Chaos Orb",
-  "chaos_perfect": "Perfect Chaos Orb",
-  "alchemy": "Orb of Alchemy",
-  "annul": "Orb of Annulment",
-  "vaal": "Vaal Orb",
-  "divine": "Divine Orb",
-  "essence:breach": "Essence of the Breach"
+  "transmute": {
+   "en": "Orb of Transmutation",
+   "ja": "変成のオーブ"
+  },
+  "transmute_greater": {
+   "en": "Greater Orb of Transmutation",
+   "ja": "変成のオーブ (上級)"
+  },
+  "transmute_perfect": {
+   "en": "Perfect Orb of Transmutation",
+   "ja": "変成のオーブ (完全)"
+  },
+  "augment": {
+   "en": "Orb of Augmentation",
+   "ja": "増強のオーブ"
+  },
+  "augment_greater": {
+   "en": "Greater Orb of Augmentation",
+   "ja": "増強のオーブ (上級)"
+  },
+  "augment_perfect": {
+   "en": "Perfect Orb of Augmentation",
+   "ja": "増強のオーブ (完全)"
+  },
+  "regal": {
+   "en": "Regal Orb",
+   "ja": "王者のオーブ"
+  },
+  "regal_greater": {
+   "en": "Greater Regal Orb",
+   "ja": "王者のオーブ (上級)"
+  },
+  "regal_perfect": {
+   "en": "Perfect Regal Orb",
+   "ja": "王者のオーブ (完全)"
+  },
+  "exalt": {
+   "en": "Exalted Orb",
+   "ja": "高貴なオーブ"
+  },
+  "exalt_greater": {
+   "en": "Greater Exalted Orb",
+   "ja": "高貴なオーブ (上級)"
+  },
+  "exalt_perfect": {
+   "en": "Perfect Exalted Orb",
+   "ja": "高貴なオーブ (完全)"
+  },
+  "chaos": {
+   "en": "Chaos Orb",
+   "ja": "カオスオーブ"
+  },
+  "chaos_greater": {
+   "en": "Greater Chaos Orb",
+   "ja": "カオスオーブ (上級)"
+  },
+  "chaos_perfect": {
+   "en": "Perfect Chaos Orb",
+   "ja": "カオスオーブ (完全)"
+  },
+  "alchemy": {
+   "en": "Orb of Alchemy",
+   "ja": "錬金術のオーブ"
+  },
+  "annul": {
+   "en": "Orb of Annulment",
+   "ja": "消去のオーブ"
+  },
+  "vaal": {
+   "en": "Vaal Orb",
+   "ja": "ヴァールオーブ"
+  },
+  "divine": {
+   "en": "Divine Orb",
+   "ja": "神のオーブ"
+  },
+  "essence:breach": {
+   "en": "Essence of the Breach",
+   "ja": "ブリーチのエッセンス"
+  }
  },
  "bones": {
-  "jawbone": "Preserved Jawbone",
-  "jawbone_ancient": "Ancient Jawbone",
-  "rib": "Preserved Rib",
-  "rib_ancient": "Ancient Rib",
-  "collarbone": "Preserved Collarbone",
-  "collarbone_ancient": "Ancient Collarbone"
+  "jawbone": {
+   "en": "Preserved Jawbone",
+   "ja": "保存された顎骨"
+  },
+  "jawbone_ancient": {
+   "en": "Ancient Jawbone",
+   "ja": "古代の顎骨"
+  },
+  "rib": {
+   "en": "Preserved Rib",
+   "ja": "保存された肋骨"
+  },
+  "rib_ancient": {
+   "en": "Ancient Rib",
+   "ja": "古代の肋骨"
+  },
+  "collarbone": {
+   "en": "Preserved Collarbone",
+   "ja": "保存された鎖骨"
+  },
+  "collarbone_ancient": {
+   "en": "Ancient Collarbone",
+   "ja": "古代の鎖骨"
+  }
  },
  "omens": {
-  "OmenofRefreshment": "Omen of Refreshment",
-  "OmenofResurgence": "Omen of Resurgence",
-  "OmenofAmelioration": "Omen of Amelioration",
-  "OmenofWhittling": "Omen of Whittling",
-  "OmenofSinistralErasure": "Omen of Sinistral Erasure",
-  "OmenofDextralErasure": "Omen of Dextral Erasure",
-  "OmenofSinistralAlchemy": "Omen of Sinistral Alchemy",
-  "OmenofDextralAlchemy": "Omen of Dextral Alchemy",
-  "OmenofSinistralCoronation": "Omen of Sinistral Coronation",
-  "OmenofDextralCoronation": "Omen of Dextral Coronation",
-  "OmenofCorruption": "Omen of Corruption",
-  "OmenofGreaterExaltation": "Omen of Greater Exaltation",
-  "OmenofSinistralExaltation": "Omen of Sinistral Exaltation",
-  "OmenofDextralExaltation": "Omen of Dextral Exaltation",
-  "OmenofGreaterAnnulment": "Omen of Greater Annulment",
-  "OmenofSinistralAnnulment": "Omen of Sinistral Annulment",
-  "OmenofDextralAnnulment": "Omen of Dextral Annulment",
-  "OmenofAnsweredPrayers": "Omen of Answered Prayers",
-  "OmenofSecretCompartments": "Omen of Secret Compartments",
-  "OmenoftheHunt": "Omen of the Hunt",
-  "OmenofReinforcements": "Omen of Reinforcements",
-  "OmenofHomogenisingExaltation": "Omen of Homogenising Exaltation",
-  "OmenofHomogenisingCoronation": "Omen of Homogenising Coronation",
-  "OmenofGambling": "Omen of Gambling",
-  "OmenofBartering": "Omen of Bartering",
-  "OmenofRecombination": "Omen of Recombination",
-  "OmenoftheBlessed": "Omen of the Blessed",
-  "OmenofChaoticRarity": "Omen of Chaotic Rarity",
-  "OmenofChaoticQuantity": "Omen of Chaotic Quantity",
-  "OmenofChaoticMonsters": "Omen of Chaotic Monsters",
-  "OmenofChaoticEffectiveness": "Omen of Chaotic Effectiveness",
-  "OmenofChance": "Omen of Chance",
-  "OmenoftheAncients": "Omen of the Ancients",
-  "OmenofSanctification": "Omen of Sanctification",
-  "OmenofDextralCrystallisation": "Omen of Dextral Crystallisation",
-  "OmenofSinistralCrystallisation": "Omen of Sinistral Crystallisation",
-  "OmenofCatalysingExaltation": "Omen of Catalysing Exaltation",
-  "OmenofAbyssalEchoes": "Omen of Abyssal Echoes",
-  "OmenoftheSovereign": "Omen of the Sovereign",
-  "OmenoftheLiege": "Omen of the Liege",
-  "OmenoftheBlackblooded": "Omen of the Blackblooded",
-  "OmenofPutrefaction": "Omen of Putrefaction",
-  "OmenofLight": "Omen of Light",
-  "OmenofSinistralNecromancy": "Omen of Sinistral Necromancy",
-  "OmenofDextralNecromancy": "Omen of Dextral Necromancy"
+  "OmenofRefreshment": {
+   "en": "Omen of Refreshment",
+   "ja": "補給のお告げ"
+  },
+  "OmenofResurgence": {
+   "en": "Omen of Resurgence",
+   "ja": "再生のお告げ"
+  },
+  "OmenofAmelioration": {
+   "en": "Omen of Amelioration",
+   "ja": "改善のお告げ"
+  },
+  "OmenofWhittling": {
+   "en": "Omen of Whittling",
+   "ja": "削減のお告げ"
+  },
+  "OmenofSinistralErasure": {
+   "en": "Omen of Sinistral Erasure",
+   "ja": "左側の抹消のお告げ"
+  },
+  "OmenofDextralErasure": {
+   "en": "Omen of Dextral Erasure",
+   "ja": "右側の抹消のお告げ"
+  },
+  "OmenofSinistralAlchemy": {
+   "en": "Omen of Sinistral Alchemy",
+   "ja": "左側の錬金術のお告げ"
+  },
+  "OmenofDextralAlchemy": {
+   "en": "Omen of Dextral Alchemy",
+   "ja": "右側の錬金術のお告げ"
+  },
+  "OmenofSinistralCoronation": {
+   "en": "Omen of Sinistral Coronation",
+   "ja": "左側の王者のお告げ"
+  },
+  "OmenofDextralCoronation": {
+   "en": "Omen of Dextral Coronation",
+   "ja": "右側の王者のお告げ"
+  },
+  "OmenofCorruption": {
+   "en": "Omen of Corruption",
+   "ja": "穢れのお告げ"
+  },
+  "OmenofGreaterExaltation": {
+   "en": "Omen of Greater Exaltation",
+   "ja": "偉大なる高貴なお告げ"
+  },
+  "OmenofSinistralExaltation": {
+   "en": "Omen of Sinistral Exaltation",
+   "ja": "左側の高貴なお告げ"
+  },
+  "OmenofDextralExaltation": {
+   "en": "Omen of Dextral Exaltation",
+   "ja": "右側の高貴なお告げ"
+  },
+  "OmenofGreaterAnnulment": {
+   "en": "Omen of Greater Annulment",
+   "ja": "偉大なる消去のお告げ"
+  },
+  "OmenofSinistralAnnulment": {
+   "en": "Omen of Sinistral Annulment",
+   "ja": "左側の消去のお告げ"
+  },
+  "OmenofDextralAnnulment": {
+   "en": "Omen of Dextral Annulment",
+   "ja": "右側の消去のお告げ"
+  },
+  "OmenofAnsweredPrayers": {
+   "en": "Omen of Answered Prayers",
+   "ja": "成就のお告げ"
+  },
+  "OmenofSecretCompartments": {
+   "en": "Omen of Secret Compartments",
+   "ja": "秘密の区画のお告げ"
+  },
+  "OmenoftheHunt": {
+   "en": "Omen of the Hunt",
+   "ja": "狩りのお告げ"
+  },
+  "OmenofReinforcements": {
+   "en": "Omen of Reinforcements",
+   "ja": "増援のお告げ"
+  },
+  "OmenofHomogenisingExaltation": {
+   "en": "Omen of Homogenising Exaltation",
+   "ja": "均質化の高貴のお告げ"
+  },
+  "OmenofHomogenisingCoronation": {
+   "en": "Omen of Homogenising Coronation",
+   "ja": "均質化の王者のお告げ"
+  },
+  "OmenofGambling": {
+   "en": "Omen of Gambling",
+   "ja": "ギャンブルのお告げ"
+  },
+  "OmenofBartering": {
+   "en": "Omen of Bartering",
+   "ja": "取引のお告げ"
+  },
+  "OmenofRecombination": {
+   "en": "Omen of Recombination",
+   "ja": "リコンビネーションのお告げ"
+  },
+  "OmenoftheBlessed": {
+   "en": "Omen of the Blessed",
+   "ja": "祝福のお告げ"
+  },
+  "OmenofChaoticRarity": {
+   "en": "Omen of Chaotic Rarity",
+   "ja": "カオスのレアリティのお告げ"
+  },
+  "OmenofChaoticQuantity": {
+   "en": "Omen of Chaotic Quantity",
+   "ja": "カオスの数量のお告げ"
+  },
+  "OmenofChaoticMonsters": {
+   "en": "Omen of Chaotic Monsters",
+   "ja": "カオスのモンスターのお告げ"
+  },
+  "OmenofChaoticEffectiveness": {
+   "en": "Omen of Chaotic Effectiveness",
+   "ja": "カオスのエフェクティブのお告げ"
+  },
+  "OmenofChance": {
+   "en": "Omen of Chance",
+   "ja": "可能性のお告げ"
+  },
+  "OmenoftheAncients": {
+   "en": "Omen of the Ancients",
+   "ja": "古代のお告げ"
+  },
+  "OmenofSanctification": {
+   "en": "Omen of Sanctification",
+   "ja": "聖別のお告げ"
+  },
+  "OmenofDextralCrystallisation": {
+   "en": "Omen of Dextral Crystallisation",
+   "ja": "右側の結晶化のお告げ"
+  },
+  "OmenofSinistralCrystallisation": {
+   "en": "Omen of Sinistral Crystallisation",
+   "ja": "左側の結晶化のお告げ"
+  },
+  "OmenofCatalysingExaltation": {
+   "en": "Omen of Catalysing Exaltation",
+   "ja": "触媒の高貴のお告げ"
+  },
+  "OmenofAbyssalEchoes": {
+   "en": "Omen of Abyssal Echoes",
+   "ja": "アビスの反響のお告げ"
+  },
+  "OmenoftheSovereign": {
+   "en": "Omen of the Sovereign",
+   "ja": "支配者のお告げ"
+  },
+  "OmenoftheLiege": {
+   "en": "Omen of the Liege",
+   "ja": "君主のお告げ"
+  },
+  "OmenoftheBlackblooded": {
+   "en": "Omen of the Blackblooded",
+   "ja": "ブラックブラッドのお告げ"
+  },
+  "OmenofPutrefaction": {
+   "en": "Omen of Putrefaction",
+   "ja": "腐食のお告げ"
+  },
+  "OmenofLight": {
+   "en": "Omen of Light",
+   "ja": "光のお告げ"
+  },
+  "OmenofSinistralNecromancy": {
+   "en": "Omen of Sinistral Necromancy",
+   "ja": "左手のネクロマンシーのお告げ"
+  },
+  "OmenofDextralNecromancy": {
+   "en": "Omen of Dextral Necromancy",
+   "ja": "右手のネクロマンシーのお告げ"
+  }
  }
 }
