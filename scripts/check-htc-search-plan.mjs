@@ -69,5 +69,31 @@ const want = Math.max(0, (plan.searches.length - 1) * M.SEARCH_INTERVAL_SEC);
 if (Math.abs(plan.seconds - want) > 1e-6) fail("所要時間が " + plan.seconds + " 秒 (" + want + " のはず)");
 console.log("  所要 " + Math.ceil(plan.seconds) + " 秒 / 枠 " + M.SEARCH_BUDGET_PER_5MIN + " 回中 " + plan.searches.length + " 回");
 
+// ---- 固定済みを探す価値が無いなら外す ----
+//
+// オーナー指摘:「安全に決定論クラフトなら完成品ができる場合もあるだろうから、その場合は別に
+// フラクチャー品探さなくていいよね」。検索 1 回は 10.5 秒で、枠は 5 分で 30 回しかない。
+//
+// **「壊す手 (消去 / カオス) を使うか」では判定できない** ── 1 個狙いでも「外したら消して
+// 振り直す」のが最安なので、ほぼ全部当たる。**固定したらいくら安くなるか**で見る
+// (実測 2026-09-23 / Rage Grip 5 目標: キャストスピードは 1% まで落ちるが、
+//  全元素耐性と知性は 60% 止まり)。
+console.log(NLC + "固定済みを探す価値で絞る:");
+{
+  const worth = order.filter((t) => /CastSpeed/i.test(t.modId)).map((t) => t.modId);
+  const wide = M.searchPlan(data, cls, order, { baseType: it.baseType, ilvlMin: it.itemLevel, mustBuy: got.skipped, max: 6 });
+  const narrow = M.searchPlan(data, cls, order, { baseType: it.baseType, ilvlMin: it.itemLevel, mustBuy: got.skipped, max: 6, fractureWorth: worth });
+  const fxOf = (p) => p.searches.filter((x) => x.fractured).length;
+  console.log("  絞る前 " + wide.searches.length + " 回 (固定済み " + fxOf(wide) + ") = " + Math.ceil(wide.seconds) + " 秒");
+  console.log("  絞った後 " + narrow.searches.length + " 回 (固定済み " + fxOf(narrow) + ") = " + Math.ceil(narrow.seconds) + " 秒");
+  if (fxOf(narrow) !== 1) fail("価値のある 1 件だけにならない (固定済み " + fxOf(narrow) + " 回)");
+  if (narrow.searches.length >= wide.searches.length) fail("絞っても本数が減っていない");
+  if (narrow.seconds >= wide.seconds) fail("絞っても時間が減っていない");
+  // 絞っても先頭は「一番つきにくい MOD の固定済み」のまま (そこが律速)
+  if (!narrow.searches[0]?.fractured) fail("絞ったら先頭が固定済みでなくなった");
+  // 何も渡さなければ今まで通り全部出る
+  if (fxOf(wide) < 2) fail("絞る前なのに固定済みが 1 件しか出ていない");
+}
+
 console.log(failed ? (NLC + "NG: " + failed + " 件") : (NLC + "全部 OK (トレードには 1 回も投げていません)"));
 process.exit(failed ? 1 : 0);

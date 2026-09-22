@@ -27,6 +27,14 @@
  * 「その MOD が乗ったベースを手で探す → 見つけたら貼り直す」が正しい順で、
  * そこからは**固定済みかどうかに関係なく**、乗っている MOD のぶん道が短くなります。
  *
+ * ## 固定済みを探す価値が無いなら、その検索は出しません
+ * オーナー指摘:「安全に決定論クラフトなら完成品ができる場合もあるだろうから、その場合は別に
+ * フラクチャー品探さなくていいよね」。**固定して半分以下にならないなら外します**
+ * ([[fracture-value.ts]])。検索 1 回は 10.5 秒で、枠は 5 分で 30 回しかありません。
+ *
+ * 実測 2026-09-23 (Rage Grip / 5 目標): キャストスピードを固定すると **1%** まで下がるが、
+ * 全元素耐性や知性は **60% 止まり**。探す価値があるのは 1 つだけ。
+ *
  * ## ここは投げません
  * 組み立てるだけです。実際に投げるのは呼び出し側で、**オーナーの指示があるまで投げないこと**
  * ([[api-probing-policy]])。
@@ -82,7 +90,14 @@ export function searchPlan(
   data: PatchData,
   cls: ItemBase,
   order: readonly TierTarget[],
-  opts: { baseType?: string; ilvlMin?: number; max?: number; mustBuy?: readonly string[] } = {},
+  opts: {
+    baseType?: string; ilvlMin?: number; max?: number; mustBuy?: readonly string[];
+    /**
+     * 固定済みを探す価値がある MOD の id。**渡すとここに無い MOD の固定済み検索を外します**
+     * ([[fracture-value.ts]] の `worth`)。省くと今まで通り全部出します。
+     */
+    fractureWorth?: readonly string[];
+  } = {},
 ): SearchPlan {
   const max = Math.max(1, opts.max ?? 6);
   const q = { ...(opts.ilvlMin != null ? { ilvlMin: opts.ilvlMin } : {}), ...(opts.baseType ? { baseType: opts.baseType } : {}) };
@@ -91,9 +106,13 @@ export function searchPlan(
   const out: PlannedSearch[] = [];
   let rank = 0;
 
+  // 渡されていれば、その中の物だけ固定済みを探す
+  const worth = opts.fractureWorth ? new Set(opts.fractureWorth) : null;
+  const wantFractured = (t: TierTarget): boolean => !worth || worth.has(t.modId);
+
   const hardest = order[0];
   if (hardest) {
-    const fx = fracturedBuyQuery(data, cls, hardest, q);
+    const fx = wantFractured(hardest) ? fracturedBuyQuery(data, cls, hardest, q) : null;
     if (fx) {
       out.push({
         label: "一番つきにくい MOD の固定済み",
@@ -127,6 +146,7 @@ export function searchPlan(
   // 残りの MOD の固定済み。ここまで来たら優先度は低い
   for (const t of order.slice(1)) {
     if (out.length >= max) break;
+    if (!wantFractured(t)) continue;
     const fx = fracturedBuyQuery(data, cls, t, q);
     if (!fx) continue;
     out.push({
