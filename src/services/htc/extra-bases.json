@@ -48478,137 +48478,218 @@
   "#% increased effect of arcane surge on you": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Eager"
+   "name": "Eager",
+   "stats": [
+    "arcane_surge_effect_on_self_+%"
+   ]
   },
   "#% increased cast speed during any flask effect": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Hurrying"
+   "name": "of Hurrying",
+   "stats": [
+    "cast_speed_+%_during_mana_flask_effect"
+   ]
   },
   "#% increased curse magnitudes": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Hexing"
+   "name": "Hexing",
+   "stats": [
+    "curse_effect_+%"
+   ]
   },
   "#% of damage is taken from mana before life": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Taxing"
+   "name": "Taxing",
+   "stats": [
+    "base_damage_removed_from_mana_before_life_%"
+   ]
   },
   "+# to level of all spell skills": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Jordan"
+   "name": "of Jordan",
+   "stats": [
+    "spell_skill_gem_level_+"
+   ]
   },
   "minions have #% increased area of effect": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Scurrying"
+   "name": "of Scurrying",
+   "stats": [
+    "minion_skill_area_of_effect_+%"
+   ]
   },
   "minions have #% increased attack and cast speed": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Guidance"
+   "name": "of Guidance",
+   "stats": [
+    "minion_attack_and_cast_speed_+%"
+   ]
   },
   "minions deal #% increased damage with command skills": {
    "tag": "genesis_tree_minion",
    "side": "P",
-   "name": "Guide's"
+   "name": "Guide's",
+   "stats": [
+    "minion_commanded_skill_damage_+%"
+   ]
   },
   "minions have #% increased critical hit chance": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Pricking"
+   "name": "of Pricking",
+   "stats": [
+    "minion_critical_strike_chance_+%"
+   ]
   },
   "minions have #% increased critical damage bonus": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Quashing"
+   "name": "of Quashing",
+   "stats": [
+    "minion_critical_strike_multiplier_+"
+   ]
   },
   "minions deal #% increased damage": {
    "tag": "genesis_tree_minion",
    "side": "P",
-   "name": "Hustler's"
+   "name": "Hustler's",
+   "stats": [
+    "minion_damage_+%"
+   ]
   },
   "minions have +#% to all elemental resistances": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Numbness"
+   "name": "of Numbness",
+   "stats": [
+    "minion_elemental_resistance_%"
+   ]
   },
   "+# to level of all minion skills": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of the Taskmaster"
+   "name": "of the Taskmaster",
+   "stats": [
+    "minion_skill_gem_level_+"
+   ]
   },
   "minions have #% increased immobilisation buildup": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Clutching"
+   "name": "of Clutching",
+   "stats": [
+    "minion_hit_damage_immobilisation_multiplier_+%"
+   ]
   },
   "minions have #% increased maximum life": {
    "tag": "genesis_tree_minion",
    "side": "P",
-   "name": "Bearing"
+   "name": "Bearing",
+   "stats": [
+    "minion_maximum_life_+%"
+   ]
   },
   "minions have #% increased movement speed": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Persuasion"
+   "name": "of Persuasion",
+   "stats": [
+    "minion_movement_speed_+%"
+   ]
   },
   "minions revive #% faster": {
    "tag": "genesis_tree_minion",
    "side": "P",
-   "name": "Stirring"
+   "name": "Stirring",
+   "stats": [
+    "minion_resummon_speed_+%"
+   ]
   },
   "offering skills have #% increased duration": {
    "tag": "genesis_tree_minion",
    "side": "S",
-   "name": "of Tradition"
+   "name": "of Tradition",
+   "stats": [
+    "offering_duration_+%"
+   ]
   },
   "#% chance for remnants you pick up to count as picking up an additional remnant": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Accumulation"
+   "name": "of Accumulation",
+   "stats": [
+    "created_remnants_have_%_chance_to_duplicate_pick_up_results"
+   ]
   },
   "remnants can be collected from #% further away": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Receiving"
+   "name": "of Receiving",
+   "stats": [
+    "remnant_pickup_range_+%"
+   ]
   },
   "spell skills have #% increased area of effect": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Analysis"
+   "name": "of Analysis",
+   "stats": [
+    "spell_area_of_effect_+%"
+   ]
   },
   "spells have #% increased cooldown recovery rate": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Imagninative"
+   "name": "Imagninative",
+   "stats": [
+    "base_spell_cooldown_speed_+%"
+   ]
   },
   "#% increased mana cost efficiency of spells": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Thoughtful"
+   "name": "Thoughtful",
+   "stats": [
+    "base_spell_mana_cost_efficiency_+%"
+   ]
   },
   "#% increased critical hit chance for spells": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Menace"
+   "name": "of Menace",
+   "stats": [
+    "spell_critical_strike_chance_+%"
+   ]
   },
   "#% increased critical spell damage bonus": {
    "tag": "genesis_tree_caster",
    "side": "S",
-   "name": "of Ire"
+   "name": "of Ire",
+   "stats": [
+    "base_spell_critical_strike_multiplier_+"
+   ]
   },
   "#% increased spell damage during any flask effect": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Activating"
+   "name": "Activating",
+   "stats": [
+    "spell_damage_+%_during_mana_flask_effect"
+   ]
   },
   "#% increased spell damage": {
    "tag": "genesis_tree_caster",
    "side": "P",
-   "name": "Apprentice's"
+   "name": "Apprentice's",
+   "stats": [
+    "spell_damage_+%"
+   ]
   }
  },
  "source": "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",

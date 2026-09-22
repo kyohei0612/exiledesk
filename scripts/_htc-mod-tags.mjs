@@ -69,6 +69,10 @@ export function buildDropOnly(MODS) {
       tag: tree[0].tag,
       side: m.generation_type === "prefix" ? "P" : "S",
       name: m.name || "",
+      // 取引所の条件を組むための stat id。**この MOD はエンジンに無い**ので、
+      // 普通の経路 (`tradeFiltersFor`) では引けません。買うしか無い MOD なのに検索も
+      // 組めない、では手詰まりになるので、ここだけクライアントから直に持ってきます。
+      stats: (m.stats || []).map((x) => x.id).filter(Boolean),
     };
   }
   return out;

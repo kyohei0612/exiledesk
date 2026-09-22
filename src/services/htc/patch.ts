@@ -158,6 +158,20 @@ export function htcModSides(): Record<string, "P" | "S" | "?"> {
   return modSides;
 }
 
+/** 創生の樹からしか出ない MOD 1 つ */
+export interface DropOnlyInfo {
+  /** どの樹から出るか (`genesis_tree_caster` など 4 系統) */
+  tag: string;
+  side: "P" | "S";
+  /** MOD の名前 (「Eager」) */
+  name: string;
+  /**
+   * クライアントの stat id。**取引所の条件を組むのはここからだけ**です ── この MOD は
+   * エンジンに無いので、普通の経路では stat を引けません ([[tree-buy.ts]])。
+   */
+  stats?: string[];
+}
+
 /**
  * 文面 (正規化済み) → 創生の樹 (ブリーチ) からしか出ない MOD の情報。
  *
@@ -165,7 +179,7 @@ export function htcModSides(): Record<string, "P" | "S" | "?"> {
  * `tag` は 4 系統 (`genesis_tree_caster` / `genesis_tree_minion` / `breach_desecration` /
  * `tower_augment_breach`)。通常プールでも出る物は入っていません。
  */
-export function htcDropOnly(): Record<string, { tag: string; side: "P" | "S"; name: string }> {
+export function htcDropOnly(): Record<string, DropOnlyInfo> {
   return dropOnly;
 }
 

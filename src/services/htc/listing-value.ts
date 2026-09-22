@@ -42,6 +42,14 @@ export interface ListingMod {
   side: "prefix" | "suffix";
   /** 固定済みか */
   fractured?: boolean;
+  /**
+   * **消してはいけない**が、狙いにも入っていない MOD。
+   *
+   * 創生の樹からしか出ない MOD がこれです。狙いの一部ではないのに、**一度消すと二度と
+   * 付けられない**ので、ゴミとして扱って消しに行くと出品ごと死にます。枠を潰す物として
+   * 扱い、固定されていなければ「飛ぶ危険がある」と別に数えます。
+   */
+  keep?: boolean;
   /** 乗っている段 (`mod.tiers` の添字)。分からなければ省略 */
   tierIndex?: number;
 }
@@ -77,6 +85,12 @@ export interface ListingValue {
    * その狙いに**永久に届きません**。1 件でもあれば、いくら安くても買ってはいけない。
    */
   dead: { modId: string; has: string; need: string }[];
+  /**
+   * **消してはいけないのに固定されていない MOD。**枠として数えて解いているので、この分は
+   * 費用に出てきません。カオスや消去を打つ手順なら、実際には飛ぶ危険があります。
+   * 空でなければ「先に分裂で固定する」か「飛ばさない手順で行く」かの判断が要ります。
+   */
+  atRisk: { side: "prefix" | "suffix"; modId: string | null }[];
   sides: SideVerdict[];
 }
 
@@ -105,6 +119,8 @@ export function listingValue(
   const locked = { prefixes: 0, suffixes: 0 };
   /** 固定済みなのに段が足りず、**永久に直せない**狙い */
   const dead: { modId: string; has: string; need: string }[] = [];
+  /** 消してはいけないのに固定されていない = 手順の途中で飛びうる物 */
+  const atRisk: { side: "prefix" | "suffix"; modId: string | null }[] = [];
   const junk = { prefixes: 0, suffixes: 0 };
   const placed: { prefix: PlacedMod[]; suffix: PlacedMod[] } = { prefix: [], suffix: [] };
   const heldIds = new Set<string>();
@@ -131,10 +147,13 @@ export function listingValue(
       }
       continue;
     }
-    if (m.fractured) {
-      // **狙いでない固定済みは枠を潰す物**。消えないので、ゴミとして数えると要らない消去を
-      // 1 回余計に見積もります (ファイル先頭の実測)
+    if (m.fractured || m.keep) {
+      // **狙いでない固定済み / 消してはいけない物は枠を潰す物**。消えない (消さない) ので、
+      // ゴミとして数えると要らない消去を 1 回余計に見積もります (ファイル先頭の実測)
       locked[key]++;
+      // 固定されていない「消してはいけない物」は、カオスでも消去でも**飛びます**。
+      // 枠として扱うと解は安く出るので、危ないことは別に数えて必ず画面に出す
+      if (m.keep && !m.fractured) atRisk.push({ side: m.side, modId: m.modId });
       continue;
     }
     junk[key]++;
@@ -201,14 +220,14 @@ export function listingValue(
       finish: Infinity, budget: null, feasible: false,
       reason: `固定済みの段が足りません (${dead.map((d) => `${d.modId} は ${d.has}、${d.need} 以上が要る`).join(" / ")})。`
         + "固定された MOD は外せないので、この出品からは永久に届きません。",
-      locked, junk, held: heldIds.size, dead, sides,
+      locked, junk, held: heldIds.size, dead, atRisk, sides,
     };
   }
   const rest = targets.filter((t) => !heldIds.has(t.modId));
   if (rest.length === 0 && junk.prefixes === 0 && junk.suffixes === 0) {
     return {
       finish: 0, budget: opts.listingDivineAsExalted ?? null, feasible: true,
-      locked, junk, held: heldIds.size, dead, sides,
+      locked, junk, held: heldIds.size, dead, atRisk, sides,
     };
   }
   const r = markovFromItem(data, prices, start, withEssenceAlternatives(data, solving, rest, level), {
@@ -221,6 +240,6 @@ export function listingValue(
       : null,
     feasible: r.feasible,
     ...(r.reason ? { reason: r.reason } : {}),
-    locked, junk, held: heldIds.size, dead, sides,
+    locked, junk, held: heldIds.size, dead, atRisk, sides,
   };
 }

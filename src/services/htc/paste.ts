@@ -296,7 +296,7 @@ export function targetsFor(
    * 繋がらなかった行のうち、**創生の樹からしか出ない**と分かった物。
    * 「クラフトでは付かない」だけでなく**どこから出るか**まで言えます。
    */
-  dropOnly: Array<{ text: string; tag: string; tagJa: string; name: string }>;
+  dropOnly: Array<{ text: string; tag: string; tagJa: string; name: string; stats: string[] }>;
   /**
    * 繋がらなかった行が**どちら側の枠をいくつ食っているか**。
    *
@@ -403,13 +403,15 @@ export function targetsFor(
   // 繋がらなかった行の側を、クライアント由来の表から引く ([[patch.ts]] の `htcModSides`)
   const sides = htcModSides();
   const tree = htcDropOnly();
-  const dropOnlyRows: Array<{ text: string; tag: string; tagJa: string; name: string }> = [];
+  const dropOnlyRows: Array<{ text: string; tag: string; tagJa: string; name: string; stats: string[] }> = [];
   const skippedSides = { prefixes: 0, suffixes: 0, either: 0 };
   for (const l of rollable) {
     if (!skipped.includes(l.text)) continue;
     const k = matchKey(l.template);
     const t2 = tree[k];
-    if (t2) dropOnlyRows.push({ text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name });
+    // stats まで持って回る。**ここで引けたのに後で引き直す**と、文面の正規化が
+    // 1 箇所ずれただけで「買うしかない MOD なのに検索も組めない」に落ちます (2026-09-23 に実際そうなった)
+    if (t2) dropOnlyRows.push({ text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name, stats: t2.stats ?? [] });
     const v = sides[k];
     if (v === "P") skippedSides.prefixes++;
     else if (v === "S") skippedSides.suffixes++;
