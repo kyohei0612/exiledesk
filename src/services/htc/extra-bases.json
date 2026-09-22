@@ -6273,8 +6273,8 @@
    "weapon": {
     "dmgMin": 6,
     "dmgMax": 10,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Smithing Hammer": {
@@ -6284,8 +6284,8 @@
    "weapon": {
     "dmgMin": 11,
     "dmgMax": 18,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Slim Mace": {
@@ -6295,8 +6295,8 @@
    "weapon": {
     "dmgMin": 11,
     "dmgMax": 17,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Spiked Club": {
@@ -6306,8 +6306,8 @@
    "weapon": {
     "dmgMin": 15,
     "dmgMax": 24,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Warpick": {
@@ -6323,8 +6323,8 @@
    "weapon": {
     "dmgMin": 18,
     "dmgMax": 24,
-    "crit": 700,
-    "speed": 690
+    "critPct": 7,
+    "aps": 1.45
    }
   },
   "Plated Mace": {
@@ -6334,8 +6334,8 @@
    "weapon": {
     "dmgMin": 18,
     "dmgMax": 38,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Brigand Mace": {
@@ -6345,8 +6345,8 @@
    "weapon": {
     "dmgMin": 28,
     "dmgMax": 38,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Construct Hammer": {
@@ -6362,8 +6362,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 38,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Morning Star": {
@@ -6373,8 +6373,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 49,
-    "crit": 650,
-    "speed": 690
+    "critPct": 6.5,
+    "aps": 1.45
    }
   },
   "Jade Club": {
@@ -6390,8 +6390,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 51,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Lumen Mace": {
@@ -6401,8 +6401,8 @@
    "weapon": {
     "dmgMin": 36,
     "dmgMax": 60,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Execratus Hammer": {
@@ -6412,8 +6412,8 @@
    "weapon": {
     "dmgMin": 40,
     "dmgMax": 60,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Torment Club": {
@@ -6423,8 +6423,8 @@
    "weapon": {
     "dmgMin": 44,
     "dmgMax": 73,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Runemastered Torment Club": {
@@ -6434,8 +6434,8 @@
    "weapon": {
     "dmgMin": 54,
     "dmgMax": 91,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Kalguuran Forgehammer": {
@@ -6451,8 +6451,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 55,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Felled Greatclub": {
@@ -6462,8 +6462,8 @@
    "weapon": {
     "dmgMin": 13,
     "dmgMax": 18,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Oak Greathammer": {
@@ -6479,8 +6479,8 @@
    "weapon": {
     "dmgMin": 16,
     "dmgMax": 30,
-    "crit": 500,
-    "speed": 1000
+    "critPct": 5,
+    "aps": 1
    }
   },
   "Forge Maul": {
@@ -6496,8 +6496,8 @@
    "weapon": {
     "dmgMin": 26,
     "dmgMax": 35,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Studded Greatclub": {
@@ -6507,8 +6507,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 48,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Cultist Greathammer": {
@@ -6524,8 +6524,8 @@
    "weapon": {
     "dmgMin": 36,
     "dmgMax": 49,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Temple Maul": {
@@ -6535,8 +6535,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 72,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Leaden Greathammer": {
@@ -6546,8 +6546,8 @@
    "weapon": {
     "dmgMin": 58,
     "dmgMax": 78,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Crumbling Maul": {
@@ -6563,8 +6563,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 75,
-    "crit": 800,
-    "speed": 909
+    "critPct": 8,
+    "aps": 1.1
    }
   },
   "Pointed Maul": {
@@ -6574,8 +6574,8 @@
    "weapon": {
     "dmgMin": 68,
     "dmgMax": 102,
-    "crit": 650,
-    "speed": 909
+    "critPct": 6.5,
+    "aps": 1.1
    }
   },
   "Totemic Greatclub": {
@@ -6591,8 +6591,8 @@
    "weapon": {
     "dmgMin": 77,
     "dmgMax": 105,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Greatmace": {
@@ -6602,8 +6602,8 @@
    "weapon": {
     "dmgMin": 74,
     "dmgMax": 124,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Precise Greathammer": {
@@ -6613,8 +6613,8 @@
    "weapon": {
     "dmgMin": 87,
     "dmgMax": 118,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Giant Maul": {
@@ -6624,8 +6624,8 @@
    "weapon": {
     "dmgMin": 96,
     "dmgMax": 144,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Hardwood Spear": {
@@ -6635,8 +6635,8 @@
    "weapon": {
     "dmgMin": 5,
     "dmgMax": 9,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6651,8 +6651,8 @@
    "weapon": {
     "dmgMin": 9,
     "dmgMax": 12,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6673,8 +6673,8 @@
    "weapon": {
     "dmgMin": 10,
     "dmgMax": 17,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -6689,8 +6689,8 @@
    "weapon": {
     "dmgMin": 12,
     "dmgMax": 22,
-    "crit": 500,
-    "speed": 588
+    "critPct": 5,
+    "aps": 1.7
    },
    "grants": [
     {
@@ -6711,8 +6711,8 @@
    "weapon": {
     "dmgMin": 16,
     "dmgMax": 27,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6727,8 +6727,8 @@
    "weapon": {
     "dmgMin": 13,
     "dmgMax": 38,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -6749,8 +6749,8 @@
    "weapon": {
     "dmgMin": 20,
     "dmgMax": 38,
-    "crit": 600,
-    "speed": 667
+    "critPct": 6,
+    "aps": 1.5
    },
    "grants": [
     {
@@ -6771,8 +6771,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 48,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    },
    "grants": [
     {
@@ -6793,8 +6793,8 @@
    "weapon": {
     "dmgMin": 25,
     "dmgMax": 52,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6809,8 +6809,8 @@
    "weapon": {
     "dmgMin": 29,
     "dmgMax": 53,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6825,8 +6825,8 @@
    "weapon": {
     "dmgMin": 30,
     "dmgMax": 56,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6841,8 +6841,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 91,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6857,8 +6857,8 @@
    "weapon": {
     "dmgMin": 37,
     "dmgMax": 68,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -6873,8 +6873,8 @@
    "weapon": {
     "dmgMin": 7,
     "dmgMax": 12,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Long Quarterstaff": {
@@ -6890,8 +6890,8 @@
    "weapon": {
     "dmgMin": 9,
     "dmgMax": 18,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Gothic Quarterstaff": {
@@ -6901,8 +6901,8 @@
    "weapon": {
     "dmgMin": 16,
     "dmgMax": 26,
-    "crit": 1200,
-    "speed": 714
+    "critPct": 12,
+    "aps": 1.4
    }
   },
   "Crackling Quarterstaff": {
@@ -6912,8 +6912,8 @@
    "weapon": {
     "dmgMin": 5,
     "dmgMax": 22,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Crescent Quarterstaff": {
@@ -6923,8 +6923,8 @@
    "weapon": {
     "dmgMin": 19,
     "dmgMax": 39,
-    "crit": 1000,
-    "speed": 667
+    "critPct": 10,
+    "aps": 1.5
    }
   },
   "Steelpoint Quarterstaff": {
@@ -6934,8 +6934,8 @@
    "weapon": {
     "dmgMin": 28,
     "dmgMax": 51,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Slicing Quarterstaff": {
@@ -6945,8 +6945,8 @@
    "weapon": {
     "dmgMin": 29,
     "dmgMax": 60,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Barrier Quarterstaff": {
@@ -6962,8 +6962,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 58,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Hefty Quarterstaff": {
@@ -6979,8 +6979,8 @@
    "weapon": {
     "dmgMin": 39,
     "dmgMax": 81,
-    "crit": 1000,
-    "speed": 769
+    "critPct": 10,
+    "aps": 1.3
    }
   },
   "Smooth Quarterstaff": {
@@ -6990,7 +6990,7 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 79,
-    "speed": 667
+    "aps": 1.5
    }
   },
   "Anima Quarterstaff": {
@@ -7000,8 +7000,8 @@
    "weapon": {
     "dmgMin": 47,
     "dmgMax": 79,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Graceful Quarterstaff": {
@@ -7011,8 +7011,8 @@
    "weapon": {
     "dmgMin": 47,
     "dmgMax": 87,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Wyrm Quarterstaff": {
@@ -7022,8 +7022,8 @@
    "weapon": {
     "dmgMin": 57,
     "dmgMax": 94,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Withered Wand": {
@@ -7369,8 +7369,8 @@
    "weapon": {
     "dmgMin": 6,
     "dmgMax": 9,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Shortbow": {
@@ -7380,8 +7380,8 @@
    "weapon": {
     "dmgMin": 7,
     "dmgMax": 14,
-    "crit": 500,
-    "speed": 800
+    "critPct": 5,
+    "aps": 1.25
    }
   },
   "Warden Bow": {
@@ -7397,8 +7397,8 @@
    "weapon": {
     "dmgMin": 12,
     "dmgMax": 20,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Recurve Bow": {
@@ -7408,8 +7408,8 @@
    "weapon": {
     "dmgMin": 15,
     "dmgMax": 31,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Composite Bow": {
@@ -7419,8 +7419,8 @@
    "weapon": {
     "dmgMin": 19,
     "dmgMax": 31,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Dualstring Bow": {
@@ -7436,8 +7436,8 @@
    "weapon": {
     "dmgMin": 19,
     "dmgMax": 35,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Cultist Bow": {
@@ -7447,8 +7447,8 @@
    "weapon": {
     "dmgMin": 22,
     "dmgMax": 36,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Zealot Bow": {
@@ -7458,8 +7458,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 47,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Artillery Bow": {
@@ -7475,8 +7475,8 @@
    "weapon": {
     "dmgMin": 39,
     "dmgMax": 72,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Tribal Bow": {
@@ -7486,8 +7486,8 @@
    "weapon": {
     "dmgMin": 38,
     "dmgMax": 57,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Greatbow": {
@@ -7497,8 +7497,8 @@
    "weapon": {
     "dmgMin": 40,
     "dmgMax": 82,
-    "crit": 650,
-    "speed": 870
+    "critPct": 6.5,
+    "aps": 1.15
    }
   },
   "Double Limb Bow": {
@@ -7508,8 +7508,8 @@
    "weapon": {
     "dmgMin": 42,
     "dmgMax": 63,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Heavy Bow": {
@@ -7519,8 +7519,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 75,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Makeshift Crossbow": {
@@ -7530,8 +7530,8 @@
    "weapon": {
     "dmgMin": 7,
     "dmgMax": 12,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Tense Crossbow": {
@@ -7547,8 +7547,8 @@
    "weapon": {
     "dmgMin": 8,
     "dmgMax": 15,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Sturdy Crossbow": {
@@ -7558,8 +7558,8 @@
    "weapon": {
     "dmgMin": 11,
     "dmgMax": 26,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Varnished Crossbow": {
@@ -7569,8 +7569,8 @@
    "weapon": {
     "dmgMin": 12,
     "dmgMax": 36,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Dyad Crossbow": {
@@ -7586,8 +7586,8 @@
    "weapon": {
     "dmgMin": 9,
     "dmgMax": 37,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Alloy Crossbow": {
@@ -7597,8 +7597,8 @@
    "weapon": {
     "dmgMin": 12,
     "dmgMax": 50,
-    "crit": 500,
-    "speed": 588
+    "critPct": 5,
+    "aps": 1.7
    }
   },
   "Bombard Crossbow": {
@@ -7614,8 +7614,8 @@
    "weapon": {
     "dmgMin": 14,
     "dmgMax": 56,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Construct Crossbow": {
@@ -7625,8 +7625,8 @@
    "weapon": {
     "dmgMin": 18,
     "dmgMax": 72,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Blackfire Crossbow": {
@@ -7636,8 +7636,8 @@
    "weapon": {
     "dmgMin": 20,
     "dmgMax": 80,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    }
   },
   "Piercing Crossbow": {
@@ -7653,8 +7653,8 @@
    "weapon": {
     "dmgMin": 21,
     "dmgMax": 84,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Cumbrous Crossbow": {
@@ -7670,8 +7670,8 @@
    "weapon": {
     "dmgMin": 19,
     "dmgMax": 76,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Dedalian Crossbow": {
@@ -7681,8 +7681,8 @@
    "weapon": {
     "dmgMin": 25,
     "dmgMax": 99,
-    "crit": 700,
-    "speed": 645
+    "critPct": 7,
+    "aps": 1.55
    }
   },
   "Esoteric Crossbow": {
@@ -7692,8 +7692,8 @@
    "weapon": {
     "dmgMin": 28,
     "dmgMax": 113,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Rattling Sceptre": {
@@ -7833,8 +7833,8 @@
    "weapon": {
     "dmgMin": 9,
     "dmgMax": 15,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Nettle Talisman": {
@@ -7844,8 +7844,8 @@
    "weapon": {
     "dmgMin": 12,
     "dmgMax": 20,
-    "crit": 1100,
-    "speed": 800
+    "critPct": 11,
+    "aps": 1.25
    }
   },
   "Cinderbark Talisman": {
@@ -7861,8 +7861,8 @@
    "weapon": {
     "dmgMin": 18,
     "dmgMax": 36,
-    "crit": 800,
-    "speed": 833
+    "critPct": 8,
+    "aps": 1.2
    }
   },
   "Familial Talisman": {
@@ -7878,8 +7878,8 @@
    "weapon": {
     "dmgMin": 20,
     "dmgMax": 34,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Frenzied Talisman": {
@@ -7889,8 +7889,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 38,
-    "crit": 800,
-    "speed": 714
+    "critPct": 8,
+    "aps": 1.4
    }
   },
   "Primal Talisman": {
@@ -7906,8 +7906,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 46,
-    "crit": 900,
-    "speed": 769
+    "critPct": 9,
+    "aps": 1.3
    }
   },
   "Rabid Talisman": {
@@ -7923,8 +7923,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 58,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Vicious Talisman": {
@@ -7934,8 +7934,8 @@
    "weapon": {
     "dmgMin": 43,
     "dmgMax": 71,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Voltfang Talisman": {
@@ -7951,8 +7951,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 130,
-    "crit": 800,
-    "speed": 769
+    "critPct": 8,
+    "aps": 1.3
    }
   },
   "Lumbering Talisman": {
@@ -7962,8 +7962,8 @@
    "weapon": {
     "dmgMin": 71,
     "dmgMax": 107,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Roaring Talisman": {
@@ -7979,8 +7979,8 @@
    "weapon": {
     "dmgMin": 57,
     "dmgMax": 96,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Wingbeat Talisman": {
@@ -7990,8 +7990,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 83,
-    "crit": 700,
-    "speed": 690
+    "critPct": 7,
+    "aps": 1.45
    }
   },
   "Condemned Talisman": {
@@ -8007,8 +8007,8 @@
    "weapon": {
     "dmgMin": 68,
     "dmgMax": 113,
-    "crit": 900,
-    "speed": 800
+    "critPct": 9,
+    "aps": 1.25
    }
   },
   "Rusted Cuirass": {
@@ -12061,8 +12061,8 @@
    "weapon": {
     "dmgMin": 44,
     "dmgMax": 74,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Flared Mace": {
@@ -12072,8 +12072,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 50,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Battle Pick": {
@@ -12089,8 +12089,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 47,
-    "crit": 700,
-    "speed": 690
+    "critPct": 7,
+    "aps": 1.45
    }
   },
   "Marching Mace": {
@@ -12100,8 +12100,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 69,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Runeforged Marching Mace": {
@@ -12111,8 +12111,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 96,
-    "crit": 750,
-    "speed": 714
+    "critPct": 7.5,
+    "aps": 1.4
    }
   },
   "Bandit Mace": {
@@ -12122,8 +12122,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 61,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Structured Hammer": {
@@ -12139,8 +12139,8 @@
    "weapon": {
     "dmgMin": 49,
     "dmgMax": 60,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Snakewood Greathammer": {
@@ -12156,8 +12156,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 115,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Blacksmith Maul": {
@@ -12173,8 +12173,8 @@
    "weapon": {
     "dmgMin": 75,
     "dmgMax": 102,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Zealot Greathammer": {
@@ -12190,8 +12190,8 @@
    "weapon": {
     "dmgMin": 70,
     "dmgMax": 95,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Solemn Maul": {
@@ -12201,8 +12201,8 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 123,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Heavy Greathammer": {
@@ -12212,8 +12212,8 @@
    "weapon": {
     "dmgMin": 94,
     "dmgMax": 127,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Disintegrating Maul": {
@@ -12229,8 +12229,8 @@
    "weapon": {
     "dmgMin": 92,
     "dmgMax": 112,
-    "crit": 800,
-    "speed": 909
+    "critPct": 8,
+    "aps": 1.1
    }
   },
   "Reaching Quarterstaff": {
@@ -12246,8 +12246,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 72,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Barbarous Quarterstaff": {
@@ -12257,8 +12257,8 @@
    "weapon": {
     "dmgMin": 42,
     "dmgMax": 71,
-    "crit": 1200,
-    "speed": 714
+    "critPct": 12,
+    "aps": 1.4
    }
   },
   "Arcing Quarterstaff": {
@@ -12268,8 +12268,8 @@
    "weapon": {
     "dmgMin": 14,
     "dmgMax": 55,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Waxing Quarterstaff": {
@@ -12279,8 +12279,8 @@
    "weapon": {
     "dmgMin": 39,
     "dmgMax": 82,
-    "crit": 1000,
-    "speed": 667
+    "critPct": 10,
+    "aps": 1.5
    }
   },
   "Bladed Quarterstaff": {
@@ -12290,8 +12290,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 94,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Guardian Quarterstaff": {
@@ -12307,8 +12307,8 @@
    "weapon": {
     "dmgMin": 52,
     "dmgMax": 86,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Snakewood Shortbow": {
@@ -12318,8 +12318,8 @@
    "weapon": {
     "dmgMin": 29,
     "dmgMax": 54,
-    "crit": 500,
-    "speed": 800
+    "critPct": 5,
+    "aps": 1.25
    }
   },
   "Protector Bow": {
@@ -12335,8 +12335,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 53,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Rider Bow": {
@@ -12346,8 +12346,8 @@
    "weapon": {
     "dmgMin": 36,
     "dmgMax": 61,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Twin Bow": {
@@ -12363,8 +12363,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 60,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Adherent Bow": {
@@ -12374,8 +12374,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 59,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Militant Bow": {
@@ -12385,8 +12385,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 69,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Taut Crossbow": {
@@ -12402,8 +12402,8 @@
    "weapon": {
     "dmgMin": 20,
     "dmgMax": 79,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Robust Crossbow": {
@@ -12413,8 +12413,8 @@
    "weapon": {
     "dmgMin": 22,
     "dmgMax": 89,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Painted Crossbow": {
@@ -12424,8 +12424,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 92,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Twin Crossbow": {
@@ -12441,8 +12441,8 @@
    "weapon": {
     "dmgMin": 20,
     "dmgMax": 82,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Cannonade Crossbow": {
@@ -12458,8 +12458,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 90,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Bleak Crossbow": {
@@ -12469,8 +12469,8 @@
    "weapon": {
     "dmgMin": 27,
     "dmgMax": 109,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Steelhead Spear": {
@@ -12480,8 +12480,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 44,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -12502,8 +12502,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 52,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -12524,8 +12524,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 53,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -12540,8 +12540,8 @@
    "weapon": {
     "dmgMin": 23,
     "dmgMax": 69,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -12562,8 +12562,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 61,
-    "crit": 600,
-    "speed": 667
+    "critPct": 6,
+    "aps": 1.5
    },
    "grants": [
     {
@@ -12584,8 +12584,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 69,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    },
    "grants": [
     {
@@ -12606,8 +12606,8 @@
    "weapon": {
     "dmgMin": 52,
     "dmgMax": 78,
-    "crit": 900,
-    "speed": 769
+    "critPct": 9,
+    "aps": 1.3
    }
   },
   "Fury Talisman": {
@@ -12623,8 +12623,8 @@
    "weapon": {
     "dmgMin": 49,
     "dmgMax": 91,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Cruel Talisman": {
@@ -12634,8 +12634,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 103,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Barbarian Plate": {
@@ -20061,8 +20061,8 @@
    "weapon": {
     "dmgMin": 83,
     "dmgMax": 138,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Runemastered Wooden Club": {
@@ -20078,8 +20078,8 @@
    "weapon": {
     "dmgMin": 132,
     "dmgMax": 220,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Runeforged Slim Mace": {
@@ -20089,8 +20089,8 @@
    "weapon": {
     "dmgMin": 96,
     "dmgMax": 145,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Runeforged Spiked Club": {
@@ -20100,8 +20100,8 @@
    "weapon": {
     "dmgMin": 56,
     "dmgMax": 93,
-    "crit": 500,
-    "speed": 667
+    "critPct": 5,
+    "aps": 1.5
    }
   },
   "Runeforged Warpick": {
@@ -20117,8 +20117,8 @@
    "weapon": {
     "dmgMin": 75,
     "dmgMax": 102,
-    "crit": 700,
-    "speed": 690
+    "critPct": 7,
+    "aps": 1.45
    }
   },
   "Runeforged Kalguuran Forgehammer": {
@@ -20138,8 +20138,8 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 99,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Runeforged Morning Star": {
@@ -20149,8 +20149,8 @@
    "weapon": {
     "dmgMin": 90,
     "dmgMax": 134,
-    "crit": 650,
-    "speed": 690
+    "critPct": 6.5,
+    "aps": 1.45
    }
   },
   "Runeforged Felled Greatclub": {
@@ -20160,8 +20160,8 @@
    "weapon": {
     "dmgMin": 146,
     "dmgMax": 197,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runemastered Felled Greatclub": {
@@ -20171,8 +20171,8 @@
    "weapon": {
     "dmgMin": 217,
     "dmgMax": 293,
-    "crit": 1000,
-    "speed": 909
+    "critPct": 10,
+    "aps": 1.1
    }
   },
   "Runeforged Oak Greathammer": {
@@ -20188,8 +20188,8 @@
    "weapon": {
     "dmgMin": 73,
     "dmgMax": 135,
-    "crit": 500,
-    "speed": 1000
+    "critPct": 5,
+    "aps": 1
    }
   },
   "Runemastered Oak Greathammer": {
@@ -20205,8 +20205,8 @@
    "weapon": {
     "dmgMin": 111,
     "dmgMax": 207,
-    "crit": 500,
-    "speed": 1000
+    "critPct": 5,
+    "aps": 1
    }
   },
   "Runeforged Forge Maul": {
@@ -20222,8 +20222,8 @@
    "weapon": {
     "dmgMin": 147,
     "dmgMax": 199,
-    "crit": 1000,
-    "speed": 952
+    "critPct": 10,
+    "aps": 1.05
    }
   },
   "Runeforged Studded Greatclub": {
@@ -20233,8 +20233,8 @@
    "weapon": {
     "dmgMin": 94,
     "dmgMax": 249,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runemastered Studded Greatclub": {
@@ -20244,8 +20244,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 561,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runeforged Cultist Greathammer": {
@@ -20265,8 +20265,8 @@
    "weapon": {
     "dmgMin": 144,
     "dmgMax": 194,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Runeforged Temple Maul": {
@@ -20276,8 +20276,8 @@
    "weapon": {
     "dmgMin": 64,
     "dmgMax": 134,
-    "crit": 500,
-    "speed": 769
+    "critPct": 5,
+    "aps": 1.3
    }
   },
   "Runeforged Leaden Greathammer": {
@@ -20287,8 +20287,8 @@
    "weapon": {
     "dmgMin": 132,
     "dmgMax": 179,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runeforged Crumbling Maul": {
@@ -20304,8 +20304,8 @@
    "weapon": {
     "dmgMin": 105,
     "dmgMax": 128,
-    "crit": 800,
-    "speed": 909
+    "critPct": 8,
+    "aps": 1.1
    }
   },
   "Runeforged Pointed Maul": {
@@ -20321,8 +20321,8 @@
    "weapon": {
     "dmgMin": 125,
     "dmgMax": 188,
-    "crit": 650,
-    "speed": 909
+    "critPct": 6.5,
+    "aps": 1.1
    }
   },
   "Runeforged Hardwood Spear": {
@@ -20332,8 +20332,8 @@
    "weapon": {
     "dmgMin": 24,
     "dmgMax": 45,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -20348,8 +20348,8 @@
    "weapon": {
     "dmgMin": 40,
     "dmgMax": 54,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -20364,8 +20364,8 @@
    "weapon": {
     "dmgMin": 94,
     "dmgMax": 127,
-    "crit": 500,
-    "speed": 800
+    "critPct": 5,
+    "aps": 1.25
    },
    "grants": [
     {
@@ -20386,8 +20386,8 @@
    "weapon": {
     "dmgMin": 65,
     "dmgMax": 108,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -20401,8 +20401,8 @@
    "lvl": 40,
    "weapon": {
     "dmgMax": 125,
-    "crit": 500,
-    "speed": 588
+    "critPct": 5,
+    "aps": 1.7
    },
    "grants": [
     {
@@ -20423,8 +20423,8 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 98,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -20439,8 +20439,8 @@
    "weapon": {
     "dmgMin": 8,
     "dmgMax": 57,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -20461,8 +20461,8 @@
    "weapon": {
     "dmgMin": 78,
     "dmgMax": 145,
-    "crit": 600,
-    "speed": 667
+    "critPct": 6,
+    "aps": 1.5
    },
    "grants": [
     {
@@ -20483,8 +20483,8 @@
    "weapon": {
     "dmgMin": 93,
     "dmgMax": 155,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Runeforged Long Quarterstaff": {
@@ -20500,8 +20500,8 @@
    "weapon": {
     "dmgMin": 21,
     "dmgMax": 43,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Runemastered Long Quarterstaff": {
@@ -20517,8 +20517,8 @@
    "weapon": {
     "dmgMin": 43,
     "dmgMax": 89,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Runeforged Gothic Quarterstaff": {
@@ -20528,8 +20528,8 @@
    "weapon": {
     "dmgMin": 80,
     "dmgMax": 134,
-    "crit": 1200,
-    "speed": 714
+    "critPct": 12,
+    "aps": 1.4
    }
   },
   "Runemastered Gothic Quarterstaff": {
@@ -20545,8 +20545,8 @@
    "weapon": {
     "dmgMin": 118,
     "dmgMax": 196,
-    "crit": 1200,
-    "speed": 714
+    "critPct": 12,
+    "aps": 1.4
    }
   },
   "Runeforged Crescent Quarterstaff": {
@@ -20556,8 +20556,8 @@
    "weapon": {
     "dmgMin": 78,
     "dmgMax": 162,
-    "crit": 1000,
-    "speed": 667
+    "critPct": 10,
+    "aps": 1.5
    }
   },
   "Runeforged Steelpoint Quarterstaff": {
@@ -20567,8 +20567,8 @@
    "weapon": {
     "dmgMin": 90,
     "dmgMax": 167,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Runeforged Crude Bow": {
@@ -20578,8 +20578,8 @@
    "weapon": {
     "dmgMin": 42,
     "dmgMax": 62,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Runeforged Shortbow": {
@@ -20595,8 +20595,8 @@
    "weapon": {
     "dmgMin": 44,
     "dmgMax": 81,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Runeforged Warden Bow": {
@@ -20612,8 +20612,8 @@
    "weapon": {
     "dmgMin": 38,
     "dmgMax": 63,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Runeforged Recurve Bow": {
@@ -20623,8 +20623,8 @@
    "weapon": {
     "dmgMin": 41,
     "dmgMax": 84,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runeforged Composite Bow": {
@@ -20634,8 +20634,8 @@
    "weapon": {
     "dmgMin": 53,
     "dmgMax": 88,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Runeforged Dualstring Bow": {
@@ -20651,8 +20651,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 83,
-    "crit": 650,
-    "speed": 870
+    "critPct": 6.5,
+    "aps": 1.15
    }
   },
   "Runeforged Zealot Bow": {
@@ -20662,8 +20662,8 @@
    "weapon": {
     "dmgMin": 44,
     "dmgMax": 67,
-    "crit": 1000,
-    "speed": 833
+    "critPct": 10,
+    "aps": 1.2
    }
   },
   "Runeforged Makeshift Crossbow": {
@@ -20673,8 +20673,8 @@
    "weapon": {
     "dmgMin": 75,
     "dmgMax": 140,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Runeforged Tense Crossbow": {
@@ -20684,8 +20684,8 @@
    "weapon": {
     "dmgMin": 44,
     "dmgMax": 83,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Runemastered Tense Crossbow": {
@@ -20695,8 +20695,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 115,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Runeforged Sturdy Crossbow": {
@@ -20706,8 +20706,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 276,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    }
   },
   "Runeforged Dyad Crossbow": {
@@ -20717,8 +20717,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 127,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Runemastered Dyad Crossbow": {
@@ -20728,8 +20728,8 @@
    "weapon": {
     "dmgMin": 43,
     "dmgMax": 171,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    }
   },
   "Runeforged Bombard Crossbow": {
@@ -20739,8 +20739,8 @@
    "weapon": {
     "dmgMin": 21,
     "dmgMax": 85,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Runeforged Changeling Talisman": {
@@ -20750,8 +20750,8 @@
    "weapon": {
     "dmgMin": 91,
     "dmgMax": 151,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Runeforged Nettle Talisman": {
@@ -20761,8 +20761,8 @@
    "weapon": {
     "dmgMin": 51,
     "dmgMax": 86,
-    "crit": 1100,
-    "speed": 800
+    "critPct": 11,
+    "aps": 1.25
    }
   },
   "Runemastered Nettle Talisman": {
@@ -20772,8 +20772,8 @@
    "weapon": {
     "dmgMin": 68,
     "dmgMax": 114,
-    "crit": 1100,
-    "speed": 800
+    "critPct": 11,
+    "aps": 1.25
    }
   },
   "Runeforged Familial Talisman": {
@@ -20789,8 +20789,8 @@
    "weapon": {
     "dmgMin": 54,
     "dmgMax": 91,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Runemastered Familial Talisman": {
@@ -20806,8 +20806,8 @@
    "weapon": {
     "dmgMin": 73,
     "dmgMax": 122,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Runeforged Vicious Talisman": {
@@ -20817,8 +20817,8 @@
    "weapon": {
     "dmgMin": 123,
     "dmgMax": 205,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Flanged Mace": {
@@ -20828,8 +20828,8 @@
    "weapon": {
     "dmgMin": 45,
     "dmgMax": 67,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Crown Mace": {
@@ -20839,8 +20839,8 @@
    "weapon": {
     "dmgMin": 43,
     "dmgMax": 89,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Molten Hammer": {
@@ -20850,8 +20850,8 @@
    "weapon": {
     "dmgMin": 71,
     "dmgMax": 118,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Strife Pick": {
@@ -20867,8 +20867,8 @@
    "weapon": {
     "dmgMin": 49,
     "dmgMax": 66,
-    "crit": 700,
-    "speed": 690
+    "critPct": 7,
+    "aps": 1.45
    }
   },
   "Fortified Hammer": {
@@ -20884,8 +20884,8 @@
    "weapon": {
     "dmgMin": 60,
     "dmgMax": 73,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Marauding Mace": {
@@ -20895,8 +20895,8 @@
    "weapon": {
     "dmgMin": 51,
     "dmgMax": 84,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Akoyan Club": {
@@ -20912,8 +20912,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 76,
-    "crit": 500,
-    "speed": 690
+    "critPct": 5,
+    "aps": 1.45
    }
   },
   "Anvil Maul": {
@@ -20929,8 +20929,8 @@
    "weapon": {
     "dmgMin": 101,
     "dmgMax": 136,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Sacred Maul": {
@@ -20940,8 +20940,8 @@
    "weapon": {
     "dmgMin": 76,
     "dmgMax": 158,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Ironwood Greathammer": {
@@ -20957,8 +20957,8 @@
    "weapon": {
     "dmgMin": 105,
     "dmgMax": 196,
-    "crit": 500,
-    "speed": 1000
+    "critPct": 5,
+    "aps": 1
    }
   },
   "Fanatic Greathammer": {
@@ -20974,8 +20974,8 @@
    "weapon": {
     "dmgMin": 101,
     "dmgMax": 137,
-    "crit": 500,
-    "speed": 952
+    "critPct": 5,
+    "aps": 1.05
    }
   },
   "Ruination Maul": {
@@ -20991,8 +20991,8 @@
    "weapon": {
     "dmgMin": 104,
     "dmgMax": 127,
-    "crit": 800,
-    "speed": 909
+    "critPct": 8,
+    "aps": 1.1
    }
   },
   "Massive Greathammer": {
@@ -21002,8 +21002,8 @@
    "weapon": {
     "dmgMin": 119,
     "dmgMax": 161,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Tawhoan Greatclub": {
@@ -21019,8 +21019,8 @@
    "weapon": {
     "dmgMin": 113,
     "dmgMax": 153,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Aberrant Sledge": {
@@ -21030,8 +21030,8 @@
    "weapon": {
     "dmgMin": 74,
     "dmgMax": 154,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Runemastered Aberrant Sledge": {
@@ -21041,8 +21041,8 @@
    "weapon": {
     "dmgMin": 148,
     "dmgMax": 308,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Sinister Quarterstaff": {
@@ -21052,8 +21052,8 @@
    "weapon": {
     "dmgMin": 55,
     "dmgMax": 91,
-    "crit": 1200,
-    "speed": 714
+    "critPct": 12,
+    "aps": 1.4
    }
   },
   "Lunar Quarterstaff": {
@@ -21063,8 +21063,8 @@
    "weapon": {
     "dmgMin": 50,
     "dmgMax": 103,
-    "crit": 1000,
-    "speed": 667
+    "critPct": 10,
+    "aps": 1.5
    }
   },
   "Striking Quarterstaff": {
@@ -21080,8 +21080,8 @@
    "weapon": {
     "dmgMin": 53,
     "dmgMax": 111,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Bolting Quarterstaff": {
@@ -21091,8 +21091,8 @@
    "weapon": {
     "dmgMin": 24,
     "dmgMax": 97,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Aegis Quarterstaff": {
@@ -21108,8 +21108,8 @@
    "weapon": {
     "dmgMin": 58,
     "dmgMax": 97,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Razor Quarterstaff": {
@@ -21119,8 +21119,8 @@
    "weapon": {
     "dmgMin": 65,
     "dmgMax": 108,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Skullcrusher Quarterstaff": {
@@ -21136,8 +21136,8 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 122,
-    "crit": 1000,
-    "speed": 769
+    "critPct": 10,
+    "aps": 1.3
    }
   },
   "Dreaming Quarterstaff": {
@@ -21147,7 +21147,7 @@
    "weapon": {
     "dmgMin": 99,
     "dmgMax": 133,
-    "speed": 667
+    "aps": 1.5
    }
   },
   "Warding Quarterstaff": {
@@ -21163,8 +21163,8 @@
    "weapon": {
     "dmgMin": 51,
     "dmgMax": 85,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Runemastered Warding Quarterstaff": {
@@ -21180,8 +21180,8 @@
    "weapon": {
     "dmgMin": 85,
     "dmgMax": 141,
-    "crit": 1000,
-    "speed": 714
+    "critPct": 10,
+    "aps": 1.4
    }
   },
   "Ironwood Shortbow": {
@@ -21191,8 +21191,8 @@
    "weapon": {
     "dmgMin": 41,
     "dmgMax": 76,
-    "crit": 500,
-    "speed": 800
+    "critPct": 5,
+    "aps": 1.25
    }
   },
   "Cavalry Bow": {
@@ -21202,8 +21202,8 @@
    "weapon": {
     "dmgMin": 49,
     "dmgMax": 82,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Guardian Bow": {
@@ -21219,8 +21219,8 @@
    "weapon": {
     "dmgMin": 53,
     "dmgMax": 88,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Gemini Bow": {
@@ -21236,8 +21236,8 @@
    "weapon": {
     "dmgMin": 39,
     "dmgMax": 72,
-    "crit": 500,
-    "speed": 870
+    "critPct": 5,
+    "aps": 1.15
    }
   },
   "Fanatic Bow": {
@@ -21247,8 +21247,8 @@
    "weapon": {
     "dmgMin": 47,
     "dmgMax": 79,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Warmonger Bow": {
@@ -21258,8 +21258,8 @@
    "weapon": {
     "dmgMin": 56,
     "dmgMax": 84,
-    "crit": 500,
-    "speed": 833
+    "critPct": 5,
+    "aps": 1.2
    }
   },
   "Obliterator Bow": {
@@ -21275,8 +21275,8 @@
    "weapon": {
     "dmgMin": 62,
     "dmgMax": 115,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Heartwood Shortbow": {
@@ -21286,8 +21286,8 @@
    "weapon": {
     "dmgMin": 41,
     "dmgMax": 76,
-    "crit": 500,
-    "speed": 800
+    "critPct": 5,
+    "aps": 1.25
    }
   },
   "Stout Crossbow": {
@@ -21297,8 +21297,8 @@
    "weapon": {
     "dmgMin": 30,
     "dmgMax": 119,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    }
   },
   "Engraved Crossbow": {
@@ -21308,8 +21308,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 124,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Flexed Crossbow": {
@@ -21325,8 +21325,8 @@
    "weapon": {
     "dmgMin": 32,
     "dmgMax": 127,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Gemini Crossbow": {
@@ -21342,8 +21342,8 @@
    "weapon": {
     "dmgMin": 28,
     "dmgMax": 112,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Siege Crossbow": {
@@ -21359,8 +21359,8 @@
    "weapon": {
     "dmgMin": 29,
     "dmgMax": 115,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Desolate Crossbow": {
@@ -21370,8 +21370,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 132,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    }
   },
   "Elegant Crossbow": {
@@ -21387,8 +21387,8 @@
    "weapon": {
     "dmgMin": 31,
     "dmgMax": 123,
-    "crit": 500,
-    "speed": 606
+    "critPct": 5,
+    "aps": 1.65
    }
   },
   "Trarthan Cannon": {
@@ -21404,8 +21404,8 @@
    "weapon": {
     "dmgMin": 58,
     "dmgMax": 134,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    }
   },
   "Orichalcum Spear": {
@@ -21415,8 +21415,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 62,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -21431,8 +21431,8 @@
    "weapon": {
     "dmgMin": 35,
     "dmgMax": 65,
-    "crit": 500,
-    "speed": 588
+    "critPct": 5,
+    "aps": 1.7
    },
    "grants": [
     {
@@ -21447,8 +21447,8 @@
    "weapon": {
     "dmgMin": 30,
     "dmgMax": 89,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -21469,8 +21469,8 @@
    "weapon": {
     "dmgMin": 47,
     "dmgMax": 79,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -21491,8 +21491,8 @@
    "weapon": {
     "dmgMin": 46,
     "dmgMax": 77,
-    "crit": 500,
-    "speed": 625
+    "critPct": 5,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -21513,8 +21513,8 @@
    "weapon": {
     "dmgMin": 56,
     "dmgMax": 84,
-    "crit": 500,
-    "speed": 714
+    "critPct": 5,
+    "aps": 1.4
    },
    "grants": [
     {
@@ -21535,8 +21535,8 @@
    "weapon": {
     "dmgMin": 41,
     "dmgMax": 76,
-    "crit": 600,
-    "speed": 667
+    "critPct": 6,
+    "aps": 1.5
    },
    "grants": [
     {
@@ -21557,8 +21557,8 @@
    "weapon": {
     "dmgMin": 38,
     "dmgMax": 79,
-    "crit": 500,
-    "speed": 645
+    "critPct": 5,
+    "aps": 1.55
    },
    "grants": [
     {
@@ -21573,8 +21573,8 @@
    "weapon": {
     "dmgMin": 39,
     "dmgMax": 72,
-    "crit": 700,
-    "speed": 625
+    "critPct": 7,
+    "aps": 1.6
    },
    "grants": [
     {
@@ -21589,8 +21589,8 @@
    "weapon": {
     "dmgMin": 60,
     "dmgMax": 99,
-    "crit": 1100,
-    "speed": 800
+    "critPct": 11,
+    "aps": 1.25
    }
   },
   "Ashbark Talisman": {
@@ -21606,8 +21606,8 @@
    "weapon": {
     "dmgMin": 72,
     "dmgMax": 150,
-    "crit": 800,
-    "speed": 833
+    "critPct": 8,
+    "aps": 1.2
    }
   },
   "Fang Talisman": {
@@ -21623,8 +21623,8 @@
    "weapon": {
     "dmgMin": 70,
     "dmgMax": 116,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Fungal Talisman": {
@@ -21634,8 +21634,8 @@
    "weapon": {
     "dmgMin": 59,
     "dmgMax": 98,
-    "crit": 800,
-    "speed": 714
+    "critPct": 8,
+    "aps": 1.4
    }
   },
   "Alpha Talisman": {
@@ -21651,8 +21651,8 @@
    "weapon": {
     "dmgMin": 63,
     "dmgMax": 94,
-    "crit": 900,
-    "speed": 769
+    "critPct": 9,
+    "aps": 1.3
    }
   },
   "Maji Talisman": {
@@ -21668,8 +21668,8 @@
    "weapon": {
     "dmgMin": 61,
     "dmgMax": 114,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Wildwood Talisman": {
@@ -21679,8 +21679,8 @@
    "weapon": {
     "dmgMin": 67,
     "dmgMax": 112,
-    "crit": 800,
-    "speed": 800
+    "critPct": 8,
+    "aps": 1.25
    }
   },
   "Thunder Talisman": {
@@ -21696,8 +21696,8 @@
    "weapon": {
     "dmgMin": 33,
     "dmgMax": 187,
-    "crit": 800,
-    "speed": 769
+    "critPct": 8,
+    "aps": 1.3
    }
   },
   "Jade Talisman": {
@@ -21707,8 +21707,8 @@
    "weapon": {
     "dmgMin": 101,
     "dmgMax": 151,
-    "crit": 500,
-    "speed": 909
+    "critPct": 5,
+    "aps": 1.1
    }
   },
   "Runemastered Rusted Cuirass": {

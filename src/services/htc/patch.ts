@@ -117,8 +117,12 @@ export interface BaseInfo {
    *   最終 ES = (素の ES + フラット ES の MOD) × (1 + %ES の MOD 合計 + 品質 + ルーン)
    */
   defence?: { ar?: number; ev?: number; es?: number; ward?: number; ms?: number };
-  /** 武器の素の性能 */
-  weapon?: { dmgMin?: number; dmgMax?: number; crit?: number; speed?: number };
+  /**
+   * 武器の素の性能。**画面に出せる単位に直してあります** (クライアントの生値は千分率)。
+   *   `aps`     … 秒あたりの攻撃回数 (1000 ÷ 生値の Speed)
+   *   `critPct` … クリティカル率 % (生値 ÷ 100)
+   */
+  weapon?: { dmgMin?: number; dmgMax?: number; critPct?: number; aps?: number };
 }
 
 /** ベース名 → 素性。知らないベースは undefined */

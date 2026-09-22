@@ -657,14 +657,20 @@ const main = async () => {
       };
       if (Object.keys(d).length) baseInfo[nm].defence = d;
     }
+    // 武器は**生値が千分率**なので、画面に出せる単位へ直してから入れる (2026-09-22)。
+    //   Speed      … 1 回の攻撃にかかるミリ秒。**秒あたりの攻撃回数 = 1000 ÷ Speed**
+    //                (実データは 588〜1000 で、割ると 1.00〜1.70 の 0.05 刻みちょうど)
+    //   CritChance … 100 分の 1 パーセント。**% = CritChance ÷ 100**
+    //                (実データは 500〜1200 で、割ると 5.00〜12.00% ちょうど)
+    // 生値のまま持つと、使う側が毎回この変換を思い出す羽目になる。
     for (const r of WT) {
       const nm = (BD[r.BaseItemType] || {}).Name;
       if (!nm || !baseInfo[nm]) continue;
       const w = {
         ...(num(r.DamageMin) ? { dmgMin: r.DamageMin } : {}),
         ...(num(r.DamageMax) ? { dmgMax: r.DamageMax } : {}),
-        ...(num(r.CritChance) ? { crit: r.CritChance } : {}),
-        ...(num(r.Speed) ? { speed: r.Speed } : {}),
+        ...(num(r.CritChance) ? { critPct: Math.round(r.CritChance) / 100 } : {}),
+        ...(num(r.Speed) ? { aps: Math.round((1000 / r.Speed) * 100) / 100 } : {}),
       };
       if (Object.keys(w).length) baseInfo[nm].weapon = w;
     }
