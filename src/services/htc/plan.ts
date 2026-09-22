@@ -20,6 +20,7 @@
  * こちらは日本語で、骨と片側のお告げまで出るぶん細かい。
  */
 import { optimizePareto } from "../../vendor/poe2htc/optimizer/optimize";
+import { withEssenceAlternatives } from "./essence-route";
 import { labelOfStep } from "./labels";
 import { displayCurrency } from "../../state/display-currency";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -80,19 +81,26 @@ export function oddsText(p: number): string {
 /**
  * 手順を即時に出す。
  *
+ * **エッセンスでも付く MOD は自動で候補に入れます** ([[essence-route.ts]])。同じ行が
+ * エッセンスで確定させられるなら、ソルバが値段を見て安いほうを選びます。T1 狙いだと
+ * エッセンスは届かないので候補は増えず、結果も時間も今までと同じになります。
+ *
  * @param targets 狙う MOD とティア。`minTierIndex` 未指定なら「どのティアでも可」
  * @param level   アイテムレベル
+ * @param opts.essences `false` でエッセンスの代替を入れない (検算で今までの数字と比べる時に使う)
  */
 export function planPreview(
   data: PatchData,
   prices: Prices,
   cls: ItemBase,
   targets: readonly TierTarget[],
-  opts: { level?: number; maxMillis?: number } = {},
+  opts: { level?: number; maxMillis?: number; essences?: boolean } = {},
 ): PlanPreview {
   const t0 = Date.now();
-  const r = optimizePareto(data, prices, cls, targets, {
-    level: opts.level ?? 82,
+  const level = opts.level ?? 82;
+  const wide = opts.essences === false ? targets : withEssenceAlternatives(data, cls, targets, level);
+  const r = optimizePareto(data, prices, cls, wide, {
+    level,
     ...(opts.maxMillis != null ? { maxMillis: opts.maxMillis } : {}),
   });
   // frontier は安い順。画面には**当たりやすい順**で出す (最初に見たいのはそこ)

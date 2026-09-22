@@ -14,6 +14,7 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 
+export { matchKey } from "../src/services/htc/bridge-index";
 export { bridgeMods, classOfBase, itemBaseFor } from "../src/services/htc/bridge";
 export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/htc/lingering";
@@ -28,6 +29,7 @@ export { labelOfAction, labelOfStep, jaOfPriceKey, jaOfOmen } from "../src/servi
 export { simulateBudget } from "../src/services/htc/budget";
 export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { partialStarts, solveFinish, budgetForBuy } from "../src/services/htc/partial-start";
+export { essenceAlternativesFor, withEssenceAlternatives } from "../src/services/htc/essence-route";
 export { fractureOptions, FRACTURE_MIN_MODS } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";
 export { CATALYSTS, catalystsFor, hasCatalysts, boostedBy, displayedValue, rawValue, rawValueOfMod, BASE_MAX_QUALITY, RAISED_MAX_QUALITY } from "../src/services/htc/quality";

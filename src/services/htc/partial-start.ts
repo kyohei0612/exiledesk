@@ -31,6 +31,7 @@
  * ここが出す費用は**狙いの MOD だけが乗っている**前提です。実物は目で見てください。
  */
 import { buildFinishedQuery } from "./buy-or-craft";
+import { withEssenceAlternatives } from "./essence-route";
 import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
 import { limitsOf } from "../../vendor/poe2htc/engine/item";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -144,14 +145,23 @@ export function partialStarts(
   return out;
 }
 
-/** 残りを仕上げる期待費用 (高貴建て)。作れなければ Infinity */
+/**
+ * 残りを仕上げる期待費用 (高貴建て)。作れなければ Infinity。
+ *
+ * **エッセンスでも付く MOD は自動で候補に入ります** ([[essence-route.ts]])。
+ * `essences: false` で今まで通り通常ロールだけにできます (検算用)。
+ */
 export function solveFinish(
   data: PatchData,
   prices: Prices,
   o: PartialStart,
+  opts: { essences?: boolean } = {},
 ): { expectedCost: number; feasible: boolean; reason?: string; ms: number } {
   const t0 = Date.now();
-  const r = markovFromItem(data, prices, o.start, o.rest, {});
+  const rest = opts.essences === false
+    ? o.rest
+    : withEssenceAlternatives(data, o.start.base, o.rest, o.start.level);
+  const r = markovFromItem(data, prices, o.start, rest, {});
   return {
     expectedCost: r.expectedCost,
     feasible: r.feasible,
