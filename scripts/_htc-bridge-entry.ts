@@ -39,6 +39,7 @@ export { jaOfMod, jaOfModLine } from "../src/services/htc/mod-text";
 export { routeSteps } from "../src/services/htc/route-steps";
 export { searchPlan, SEARCH_INTERVAL_SEC, SEARCH_BUDGET_PER_5MIN } from "../src/services/htc/search-plan";
 export { searchCut } from "../src/services/htc/search-cut";
+export { listingValue } from "../src/services/htc/listing-value";
 export { fractureValue } from "../src/services/htc/fracture-value";
 export { fractureOptions, FRACTURE_MIN_MODS, fracturedBuyQuery } from "../src/services/htc/fracture-route";
 export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";
