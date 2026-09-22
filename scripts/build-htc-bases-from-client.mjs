@@ -34,167 +34,14 @@
  * --------------------------------------------------------------
  */
 import { readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import { ROOT, OUT, rj, rows } from "./_htc-client-tables.mjs";
+import { CLASS_TAGS, RUNE_POOLS, weightOn, familyOf, signature, signatureTags, ROW_NAME, verifyRuneTags, isSkippedBase } from "./_htc-base-tags.mjs";
+import { makeModBuilder } from "./_htc-mod-build.mjs";
+import { buildModTags } from "./_htc-mod-tags.mjs";
+import { report } from "./_htc-report.mjs";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TABLES = resolve(ROOT, "data-cache/client-export/tables/English");
-const OUT = resolve(ROOT, "src/services/htc/extra-bases.json");
 const VERIFY = process.argv.includes("--verify");
-
-const rj = async (p) => JSON.parse(await readFile(p, "utf8"));
-const rows = async (name) => {
-  const j = await rj(resolve(TABLES, `${name}.json`));
-  return Array.isArray(j) ? j : j.rows || Object.values(j);
-};
-
-/**
- * ItemClasses.Id -> そのクラスの全ベースが持つタグ。
- *
- * クライアントの `BaseItemTypes.Tags` には**クラス由来のタグが入っていない**。`helmet` も
- * `armour` も `two_hand_weapon` も、`InheritsFrom` が指す抽象アイテム側にあり、そこは .dat に
- * 行として出てこない (`Metadata/.../AbstractGloves` を引いても無い)。上流 POE2HTC も同じ理由で
- * `variants.mjs` に手書きの表を持っている。
- *
- * **勘で足さないこと。** 足したら検算の 100% が落ちないのを見る。
- * 実例: Focus に `shield` を足すと落ちる (先に `shield:0` を踏む)、`armour` は要る (耐性が出る)。
- */
-const CLASS_TAGS = {
-  Helmet: ["helmet", "armour"],
-  "Body Armour": ["body_armour", "armour"],
-  Gloves: ["gloves", "armour"],
-  Boots: ["boots", "armour"],
-  Ring: ["ring"],
-  Amulet: ["amulet"],
-  Belt: ["belt"],
-  Quiver: ["quiver"],
-  Focus: ["focus", "armour"],
-  Shield: ["shield", "armour"],
-  Buckler: ["shield", "armour"],
-  Wand: ["wand", "one_hand_weapon", "weapon"],
-  Sceptre: ["sceptre", "one_hand_weapon", "weapon"],
-  "One Hand Mace": ["mace", "one_hand_weapon", "weapon"],
-  "Two Hand Mace": ["mace", "two_hand_weapon", "weapon"],
-  Bow: ["bow", "two_hand_weapon", "weapon", "ranged"],
-  Crossbow: ["crossbow", "two_hand_weapon", "weapon", "ranged"],
-  Staff: ["staff", "two_hand_weapon", "weapon"],
-  Warstaff: ["warstaff", "staff", "two_hand_weapon", "weapon"],
-  Spear: ["spear", "one_hand_weapon", "weapon"],
-  Talisman: ["talisman", "two_hand_weapon", "weapon"],
-};
-
-/** ゲームと同じ判定: spawn_weights を先頭から見て、装備タグに最初に一致した項目の重み */
-function weightOn(mod, tagSet) {
-  for (const sw of mod.spawn_weights || []) if (tagSet.has(sw.tag)) return sw.weight;
-  return 0;
-}
-
-/** family (排他グループ)。上流と同じ RePoE 流のグループ名 */
-const familyOf = (m) => (m.groups || [])[0] || m.type || null;
-
-/** クラスの持ち物を表す署名。ベース固有のタグ (産地 / ルーン鍛造) は行き先を変えないので外す */
-const signatureTags = (tagSet) =>
-  [...tagSet].filter((t) => !/_basetype$/.test(t) && t !== "runeforged" && t !== "default").sort();
-const signature = (tagSet) => signatureTags(tagSet).join("+");
-
-/**
- * ItemClasses.Id -> 同梱データの行の呼び方。新しいクラスの id を上流と同じ流儀で付けるため。
- * 例: Helmet + str_dex_int_armour -> `Helmets_str_dex_int` (同梱の `Helmets_str_int` と揃う)
- */
-const ROW_NAME = {
-  Helmet: "Helmets",
-  "Body Armour": "Body_Armours",
-  Gloves: "Gloves",
-  Boots: "Boots",
-  Shield: "Shields",
-  Buckler: "Bucklers",
-  Focus: "Foci",
-  Ring: "Rings",
-  Amulet: "Amulets",
-  Belt: "Belts",
-  Quiver: "Quivers",
-  Wand: "Wands",
-  Sceptre: "Sceptres",
-  "One Hand Mace": "OneHand_Maces",
-  "Two Hand Mace": "TwoHand_Maces",
-  Bow: "Bows",
-  Crossbow: "Crossbows",
-  Staff: "Staves",
-  Warstaff: "Quarterstaves",
-  Spear: "Spears",
-  Talisman: "Talismans",
-};
-
-/**
- * ルーンを差して初めて出る MOD のプール。
- *
- * **ルーンは MOD を直接くれるのではなく、アイテムに「タグ」を足します** (2026-09-22 にクライアントで確認)。
- * `SoulCoreStats` でルーンが持つ stat は `warping_rune_add_item_tag_N` で、その N → タグは
- * `Expedition2WarpingRuneStatToTag` に載っている。タグが付いたアイテムは、そのタグに重みを持つ
- * MOD を引けるようになる ── つまり**差した後の抽選が全部そのプール込みになる**。
- *
- * `tag` はその表と突き合わせて検算します (合わなければ落ちる)。`classes` はどのベースに載るかで、
- * クライアント側に表が無いので `engine/runes.ts` の `categories` と同じ物を手で置いています。
- */
-const RUNE_POOLS = [
-  { id: "thruds-might", name: "Thrud's Might", tag: "destruction", classes: ["Wand", "Sceptre", "Staff", "Bow", "Crossbow", "Warstaff", "Spear", "One Hand Mace", "Two Hand Mace", "Talisman"] },
-  { id: "uhtreds-sidereus", name: "Uhtred's Sidereus", tag: "chronomancy", classes: ["Boots"] },
-  { id: "kolrs-hunt", name: "Kolr's Hunt", tag: "marksman", classes: ["Gloves"] },
-  { id: "katlas-gloom", name: "Katla's Gloom", tag: "decay", classes: ["Gloves"] },
-  { id: "voranas-carnage", name: "Vorana's Carnage", tag: "berserking", classes: ["Helmet"] },
-  { id: "medveds-tending", name: "Medved's Tending", tag: "soul", classes: ["Body Armour"] },
-];
-
-/**
- * 上の `tag` をクライアントの表で検算する。書き出しが無い時は飛ばす (その旨を出す)。
- * 合わなければ**落とす**: タグが 1 つ違うだけで、そのルーンのプールが丸ごと別物になる。
- */
-async function verifyRuneTags() {
-  const dir = resolve(ROOT, "data-cache/client-export-runes/tables/English");
-  let W, ST, SCS, SC, B;
-  try {
-    const rd = async (n) => {
-      const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8"));
-      return Array.isArray(j) ? j : j.rows;
-    };
-    [W, ST, SCS, SC, B] = await Promise.all([
-      rd("Expedition2WarpingRuneStatToTag"), rd("Stats"), rd("SoulCoreStats"), rd("SoulCores"), rd("BaseItemTypes"),
-    ]);
-  } catch {
-    console.log("ルーンのタグ表 (data-cache/client-export-runes) がありません。タグの検算は飛ばします。");
-    return;
-  }
-  const TG = JSON.parse(await readFile(resolve(dir, "Tags.json"), "utf8"));
-  const tags = Array.isArray(TG) ? TG : TG.rows;
-  const statToTag = new Map(W.map((r) => [(ST[r.Stat] || {}).Id, (tags[r.Tag] || {}).Id]));
-  const plain = (s) => (s || "").replace(/[’']/g, "'").toLowerCase();
-  const bad = [];
-  for (const rp of RUNE_POOLS) {
-    const i = SC.findIndex((r) => plain((B[r.BaseItemType] || {}).Name) === plain(rp.name));
-    if (i < 0) {
-      bad.push(`${rp.id}: クライアントに "${rp.name}" が無い`);
-      continue;
-    }
-    const got = SCS.filter((s) => s.SoulCore === i)
-      .flatMap((s) => (s.Stats || []).map((x) => statToTag.get((ST[x] || {}).Id)))
-      .filter(Boolean);
-    if (!got.includes(rp.tag)) bad.push(`${rp.id}: 表では ${got.join(",") || "(タグ無し)"} なのに ${rp.tag} と書いてある`);
-  }
-  if (bad.length) {
-    console.log("NG: ルーンのタグがクライアントと合いません");
-    for (const b of bad) console.log(`   ${b}`);
-    process.exit(1);
-  }
-  console.log(`ルーンのタグ ${RUNE_POOLS.length} 件: クライアントの表と一致`);
-}
-
-/**
- * 作らないベース。
- * - `demigods` / `not_for_sale` … デミゴッド装備。落ちも売りもせず、クラフトの対象外
- * - `[DNT]` … 開発用 (Do Not Trade)。ゲームに出ない
- */
-const isSkippedBase = (name, id, tags) =>
-  name.startsWith("[DNT]") || /Demigod/i.test(id || "") || tags.has("demigods") || tags.has("not_for_sale");
 
 const main = async () => {
   const [B, T, C, MODS, htcBases, htcMods] = await Promise.all([
@@ -308,61 +155,10 @@ const main = async () => {
     }
   }
 
-  // ---- 同梱の重みを family + ilvl で借りる ----
-  const borrow = new Map();
-  for (const m of hmods.values())
-    for (const t of m.tiers || []) {
-      const k = `${m.family}@${t.ilvl}`;
-      if (!borrow.has(k)) borrow.set(k, t.weight);
-    }
-  let borrowed = 0;
-  let placeholder = 0;
-  /**
-   * 借りられなかった重みの置き場所。
-   *
-   * クライアントの重みは全 MOD 1 なので、そのまま残すと**通常 MOD (数百〜数千) に対して
-   * 1000 分の 1** になり、そのプールが事実上出ないことになる。上流 POE2HTC は同じ問題に
-   * 一律の値を置いて対処していて (`README` の但し書き)、こちらも同じ値に合わせる。
-   * どちらも**実測ではない**ので `weightSource` は `client-placeholder` のままにする。
-   */
-  const ASSUMED = { desecrated: 2500, rune: 1000 };
+  // ---- 同梱の重みを family + ilvl で借りる ([[_htc-mod-build.mjs]]) ----
+  const modBuilder = makeModBuilder(hmods);
+  const { buildMod, ASSUMED } = modBuilder;
 
-  const buildMod = (classId, family, kind, list, tagSet, source, assumed) => {
-    let allBorrowed = true;
-    const tiers = list
-      .slice()
-      .sort((a, b) => (a.required_level || 0) - (b.required_level || 0))
-      .map((m) => {
-        const ilvl = m.required_level || 0;
-        const got = borrow.get(`${family}@${ilvl}`);
-        if (got == null) {
-          placeholder++;
-          allBorrowed = false;
-        } else borrowed++;
-        return {
-          name: m.name || "",
-          ilvl,
-          weight: got != null ? got : (assumed ?? weightOn(m, tagSet)),
-          ranges: (m.stats || []).map((s) => [s.min, s.max]),
-          // stat の id。取引所の検索に使う (`services/htc/buy-or-craft.ts` が
-          // `i18n/trade2-stat-mapping.json` 越しに trade2 の stat id へ変える)。
-          // 同梱の MOD も `tiers[].stats` に同じ物を持っている
-          stats: (m.stats || []).map((s) => s.id).filter(Boolean),
-        };
-      });
-    const tags = new Set();
-    for (const m of list) for (const sw of m.spawn_weights || []) if (sw.weight > 0 && tagSet.has(sw.tag)) tags.add(sw.tag);
-    return {
-      id: `${classId}/${family}`,
-      source,
-      type: kind,
-      family,
-      tags: [...tags],
-      text: list[0].text ?? null,
-      tiers,
-      weightSource: allBorrowed ? "poe2htc" : "client-placeholder",
-    };
-  };
 
   const outMods = [];
   const outItems = [];
@@ -511,48 +307,8 @@ const main = async () => {
     if (Object.keys(perFamily).length) familyTexts[cls.id] = perFamily;
   }
 
-  /**
-   * family -> カタリストが見るタグ。
-   *
-   * 装飾品の品質は種類つきで、**その種類のタグを持つ MOD だけ**が倍率で押し上げられる
-   * (`services/htc/quality.ts`)。同梱の MOD はこのタグを持っていないので、クライアントから渡す。
-   * カタリストに使われる 13 個のタグだけに絞って小さく保つ。
-   */
-  const CATALYST_TAGS = new Set([
-    "life", "mana", "defences", "physical", "fire", "cold", "lightning",
-    "chaos", "attack", "caster", "speed", "attribute", "minion",
-  ]);
-  const modTags = {};
-  for (const m of Object.values(MODS)) {
-    if (m.domain !== "item" && m.domain !== "desecrated") continue;
-    const f = familyOf(m);
-    if (!f) continue;
-    const tags = (m.implicit_tags || []).filter((t) => CATALYST_TAGS.has(t));
-    if (!tags.length) continue;
-    const cur = modTags[f] ?? [];
-    modTags[f] = [...new Set([...cur, ...tags])].sort();
-  }
-
-  /**
-   * family -> 「stat が何個の時はこの id 並び」。
-   *
-   * **同梱の冒涜 / エッセンス MOD は `tiers[].stats` を持っていません** (上流の既知の穴)。
-   * stat が無いと取引所の条件に変えられないので、`services/htc/buy-or-craft.ts` が
-   * 同じ family のクライアント MOD から借ります。
-   *
-   * **個数で引けるようにする**のが肝心です。同じ family でも複合 MOD (2 行) と単独 (1 行) が
-   * 混ざることがあり、個数が違う並びを当てると**範囲と stat の対応がずれて下限が別物になる**。
-   * 借りる側は `tier.ranges.length` で引き、無ければ借りません。
-   */
-  const familyStats = {};
-  for (const m of Object.values(MODS)) {
-    const f = familyOf(m);
-    const ids = (m.stats || []).map((x) => x.id).filter(Boolean);
-    if (!f || !ids.length) continue;
-    const slot = (familyStats[f] ??= {});
-    // 同じ個数で違う並びが来たら先勝ち (ほぼ起きないが、起きても静かに入れ替えない)
-    slot[ids.length] ??= ids;
-  }
+  // ---- family ごとのタグと stat ([[_htc-mod-tags.mjs]]) ----
+  const { modTags, familyStats } = buildModTags(MODS);
 
   /**
    * ベース名 -> そのベースでの枠 (プレフィックス / サフィックス)。
@@ -707,29 +463,9 @@ const main = async () => {
   };
   await writeFile(OUT, JSON.stringify(payload, null, 1) + "\n", "utf8");
 
-  const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
-  console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
-  for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
-  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / 防御値 ${Object.values(baseInfo).filter((b) => b.defence).length} 件 / 武器 ${Object.values(baseInfo).filter((b) => b.weapon).length} 件 / 付与スキルあり ${grantedN} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
-  console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
-  console.log(`新しいクラス: ${outItems.length} 個`);
-  for (const it of outItems) {
-    const n = outMods.filter((m) => m.id.startsWith(`${it.id}/`)).length;
-    console.log(`   ${it.id}: ベース ${it.bases.length} 件 / MOD ${n} 件`);
-  }
-  const cnt = (p) => (p ? p.prefixes.length + p.suffixes.length : 0);
-  const desAdds = Object.values(addedPools).reduce((a, p) => a + cnt(p.desecrated), 0);
-  const runeAdds = Object.values(addedPools).reduce((a, p) => a + Object.values(p.rune ?? {}).reduce((x, q) => x + cnt(q), 0), 0);
-  console.log(`既存クラスに足した MOD: 冒涜 ${desAdds} 件 / ルーン ${runeAdds} 件 (${Object.keys(addedPools).length} クラス)`);
-  const stillOne = outMods.filter((m) => m.tiers.some((t) => t.weight === 1));
-  console.log(`重み: 同梱から借りた ${borrowed} ティア / 借りられず仮の値を置いた ${placeholder} ティア`);
-  console.log(`   仮の値: 冒涜 ${ASSUMED.desecrated} / ルーン ${ASSUMED.rune} (上流 POE2HTC と同じ値。どちらも実測ではない)`);
-  if (stillOne.length) {
-    console.log(`   **重み 1 のまま ${stillOne.length} MOD** (通常プールの新しい family で、置く根拠が無い)。`);
-    console.log("   このままだと事実上出ない扱いになる。poe2db の該当ページを取れば埋まる:");
-    for (const m of stillOne) console.log(`      ${m.id}`);
-  }
-  console.log(`-> ${OUT}`);
+  const { borrowed, placeholder } = modBuilder.stats();
+  report({ OUT, addedBases, baseInfo, baseLimits, modTags, familyStats, grantedN,
+    outItems, outMods, addedPools, borrowed, placeholder, ASSUMED });
 };
 
 main().catch((e) => {
