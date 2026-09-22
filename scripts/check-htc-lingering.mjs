@@ -14,6 +14,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { bundleEntry } from "./_bundle-ts.mjs";
 
+/** 値段のシート (手元にあれば聖別の検算に使う) */
+const SHEET = join(
+  process.env.TEMP ?? "",
+  "claude/C--Users-kyohei-ExileDesk/241820d2-847f-4544-9d65-4e36f70398cf/scratchpad/upstream-prices.json",
+);
+
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();
 
@@ -173,6 +179,41 @@ for (const [id, shown, tag, shouldAdjust] of [
     if (raw > max + 1e-6) fail(`${id}: 戻しても T1 上限 ${max} を超えている (${raw.toFixed(1)})`);
   }
 }
+
+// ---- 聖別 ----
+//
+// poe2db: 「MOD の数値に 78%〜122% のランダムな倍率が、MOD ごとに独立でかかる」。
+// 丸めは未確認だが、**切り捨てだと +5 が数学的に不可能**になる (4 × 1.22 = 4.88)。
+// 実在のレシピが +5 を作っている以上、四捨五入しかない ── という消去法で既定を決めている。
+console.log("\n=== 聖別 ===");
+if (!existsSync(SHEET)) {
+  console.log("  値段のシートが手元にありません。聖別の検算はスキップします。");
+  console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
+  process.exit(failed ? 1 : 0);
+}
+const sheet2 = JSON.parse(readFileSync(SHEET, "utf8"));
+sheet2.omens = { ...sheet2.omens, OmenofSanctification: 40 };
+const sp = M.indexPrices(sheet2);
+console.log(`  倍率 ${M.SANCTIFY_MIN}〜${M.SANCTIFY_MAX} (MOD ごとに独立)`);
+const spell = { modId: "spell", raw: 3, want: 5, qualityPct: 34 };
+const rRound = M.sanctifyOutlook(sp, [spell], { rounding: "round" });
+const rFloor = M.sanctifyOutlook(sp, [spell], { rounding: "floor" });
+console.log(`  素 +3 / キャスター品質 34% (表示 +4) から +5 を狙う:`);
+console.log(`    四捨五入 … 要る倍率 ${rRound.mods[0].needed.toFixed(3)} / 届く ${(rRound.mods[0].pReach * 100).toFixed(1)}%`);
+console.log(`    切り捨て … 要る倍率 ${rFloor.mods[0].needed.toFixed(3)} / 届く ${(rFloor.mods[0].pReach * 100).toFixed(1)}%`);
+if (!(rRound.mods[0].pReach > 0.2 && rRound.mods[0].pReach < 0.25)) fail(`四捨五入で ${(rRound.mods[0].pReach * 100).toFixed(1)}% (約 23% のはず)`);
+if (!rFloor.mods[0].impossible) fail("切り捨てなのに届く扱いになっている (4 × 1.22 = 4.88 で届かないはず)");
+// 複数 MOD を同時に賭ける = 独立なので掛け算、そして大抵どれかが下がる
+const many = M.sanctifyOutlook(sp, [
+  spell,
+  { modId: "mana", raw: 182, want: 218, qualityPct: 20 },
+  { modId: "spirit", raw: 50, want: 50, qualityPct: 0 },
+]);
+console.log(`  3 個同時: 全部届く ${(many.pAll * 100).toFixed(2)}% / どれか下がる ${(many.pAnyWorse * 100).toFixed(1)}%`);
+const product = many.mods.reduce((a, m) => a * m.pReach, 1);
+if (Math.abs(many.pAll - product) > 1e-9) fail("全部届く確率が掛け算になっていない (MOD ごとに独立のはず)");
+if (!(many.pAnyWorse > many.mods[0].pWorse)) fail("「どれか下がる」が 1 個ぶんより小さい");
+if (many.caveats.length < 2) fail("断り書きが足りない (やり直せない / 丸めが未確認)");
 
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

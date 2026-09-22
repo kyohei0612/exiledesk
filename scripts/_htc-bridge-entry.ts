@@ -28,6 +28,7 @@ export { simulateBudget } from "../src/services/htc/budget";
 export { planPreview, planHeadline, oddsText } from "../src/services/htc/plan";
 export { startFromOptions } from "../src/services/htc/start-from";
 export { fractureOptions, FRACTURE_MIN_MODS } from "../src/services/htc/fracture-route";
+export { sanctifyOutlook, SANCTIFY_MIN, SANCTIFY_MAX } from "../src/services/htc/sanctify";
 export { CATALYSTS, catalystsFor, boostedBy, displayedValue, rawValue, rawValueOfMod, BASE_MAX_QUALITY, RAISED_MAX_QUALITY } from "../src/services/htc/quality";
 export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";
 export { listMods } from "../src/vendor/poe2htc/engine/index";
