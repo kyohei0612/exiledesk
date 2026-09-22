@@ -116,8 +116,14 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                         .collect()
                 })
                 .unwrap_or_default();
-            // 2026-09-22: 品質。最大品質の MOD を途中で消す作り方を見分けるのに要る
-            let quality = gem_property_number(data.get("properties"), "[Quality]");
+            // 2026-09-22: 品質。最大品質の MOD を途中で消す作り方を見分けるのと、
+            // カタリストで底上げされた表示値を素の値に戻すのに要る。
+            //
+            // 装飾品はカタリストで**種類つきの品質**が乗る (ゲームの表示は「品質 (マナモッド): +20%」)。
+            // その時 properties の名前が `[Quality]` ちょうどとは限らないので、
+            // 完全一致で拾えなければ「Quality を含む名前」で拾い直す。
+            let quality = gem_property_number(data.get("properties"), "[Quality]")
+                .or_else(|| quality_any(data.get("properties")));
             rare_items.push(CachedRareItem {
                 inventory_id: inv_id,
                 explicit_mods,
@@ -353,6 +359,28 @@ pub(crate) fn is_target_inventory_id(inv: &str) -> bool {
 }
 
 /// poe.ninja のジェム properties から数値を 1 つ読む ("Level" → 21、"[Quality]" → "+23%" の 23)。
+/// 名前に `Quality` を含む property の数値。種類つきの品質 (カタリスト) 用の受け皿。
+fn quality_any(props: Option<&serde_json::Value>) -> Option<i64> {
+    for p in props?.as_array()? {
+        let name = p.get("name").and_then(|v| v.as_str())?;
+        if !name.contains("Quality") {
+            continue;
+        }
+        let raw = p
+            .get("values")
+            .and_then(|v| v.as_array())
+            .and_then(|a| a.first())
+            .and_then(|v| v.as_array())
+            .and_then(|a| a.first())
+            .and_then(|v| v.as_str())?;
+        let digits: String = raw.chars().filter(|c| c.is_ascii_digit()).collect();
+        if let Ok(n) = digits.parse::<i64>() {
+            return Some(n);
+        }
+    }
+    None
+}
+
 pub(crate) fn gem_property_number(props: Option<&serde_json::Value>, key: &str) -> Option<i64> {
     for p in props?.as_array()? {
         if p.get("name").and_then(|v| v.as_str()) != Some(key) {
