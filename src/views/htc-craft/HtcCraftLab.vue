@@ -326,11 +326,11 @@ const implicitText = (lines: readonly string[]): string =>
         >次へ: {{ nextStage.label }} — {{ nextStage.hint }}</button>
       </div>
 
-      <!-- 時間 -->
-      <section class="text-xs opacity-50">
-        <h2 class="mb-1 font-bold opacity-100">かかった時間</h2>
+      <!-- 時間。動作確認用なので畳んでおく (常に開いていると段の情報量が増える) -->
+      <details class="text-xs opacity-50">
+        <summary class="cursor-pointer font-bold opacity-100">かかった時間</summary>
         <div v-for="([label, ms], i) in c.timings.value" :key="i">{{ label }}: {{ ms }} ミリ秒</div>
-      </section>
+      </details>
     </template>
   </div>
 </template>
