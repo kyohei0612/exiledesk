@@ -18,8 +18,13 @@
  *   - **狙う** (素のベースから作る) … 外す。ルーンを差さない限り出ないので、素の確率に混ぜてはいけない
  * 既定は「読む」(`runes: "include"`)。狙う側は明示的に `"exclude"` を渡してください。
  *
- * 実測 2026-09-22 (上位 200 キャラ、アイテムごとに自分のベースで引く):
- *   クライアント由来のベース追加前 86.7% → 追加後 90.3% → ルーンと文言の追随を入れて下記
+ * 実測 2026-09-22 (上位 200 キャラ、アイテムごとに自分のベースで引く。`check-htc-bridge.mjs`):
+ *   クライアント由来のベース追加前 86.7% → 追加後 90.3% → ルーンと文言の追随を入れて
+ *   **テンプレート 91.8% / 人数 90.4%** (エンジンが知っているベースに限った数字)。
+ *
+ * 残っているのは主に手袋の `Gloves_dex_int` で、`+#% to Quality of all Skills` や
+ * `Attacks Gain #% of Damage as Extra <元素> Damage` が引けません。同梱の spawn_weights が
+ * `default: 0` で、そのクラスで出ない扱いになっているためです (上流のデータが古い)。
  */
 import { modIndexOf, matchKey, type IndexHit, type RuneMode } from "./bridge-index";
 import { htcBaseLimits } from "./patch";
