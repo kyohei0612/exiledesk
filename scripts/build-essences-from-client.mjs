@@ -102,7 +102,9 @@ async function main() {
   }
   essences.sort((a, b) => a.tier - b.tier || Number(a.perfect) - Number(b.perfect) || a.nameEn.localeCompare(b.nameEn));
 
-  await writeFile(OUT_ESSENCES, JSON.stringify({ essences }, null, 2) + "\n", "utf8");
+  // essences.json は 2026-09-12 (50d799d、クラフト収支の廃止) から出力しない。
+  // その時 `OUT_ESSENCES` の宣言とログだけ消えて書き出しが残り、以来 `pnpm build:dicts:client` は
+  // ここで ReferenceError で落ちていた (2026-09-22 に取り直して発覚)。出力する物だけ残す。
   await writeFile(OUT_CLASSES, JSON.stringify(baseClasses, null, 2) + "\n", "utf8");
   const withTargets = essences.filter((e) => e.targets.length > 0).length;
   log(`essences: ${essences.length} (targets あり ${withTargets}) — 2026-09-12 以降 essences.json は出力しない (クラフト収支を廃止)`);

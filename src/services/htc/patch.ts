@@ -14,6 +14,14 @@
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
+interface PoolAdd {
+  prefixes: string[];
+  suffixes: string[];
+}
+
+/** エンジン側のプールは readonly。重ねる時はこちらで受ける */
+type ReadonlyPool = { readonly prefixes: readonly string[]; readonly suffixes: readonly string[] };
+
 /** `build-htc-bases-from-client.mjs` の出力 */
 interface ExtraBases {
   generated: string;
@@ -24,7 +32,16 @@ interface ExtraBases {
    * 同梱の既存クラス id → 足すプール。今は**冒涜だけ**。
    * 通常プールは同梱に欠けが無く、逆に足すと上流の元素別の派生 (`Wands_cold` に火の MOD) が壊れる。
    */
-  addedPools: Record<string, { desecrated?: { prefixes: string[]; suffixes: string[] } }>;
+  addedPools: Record<string, {
+    desecrated?: PoolAdd;
+    /** ルーン id → そのルーンを差した時だけ出る MOD */
+    rune?: Record<string, PoolAdd>;
+  }>;
+  /**
+   * 既存クラスの family → **今の文言**。同梱の MOD 文言は patch 0.5.0 のままなので、
+   * あとで行が増えた MOD が現物と突き合わない。`bridge-index.ts` がここを見て追随する。
+   */
+  familyTexts: Record<string, Record<string, string[]>>;
   /** 同梱に無いクラス (タリスマン、全属性の防具など) */
   items: ItemBase[];
   /** 上の items が指す MOD */
@@ -38,8 +55,8 @@ export interface PatchExtras {
   generated: string;
   /** 既存クラスに足したベースの数 */
   addedBases: number;
-  /** 既存クラスの冒涜プールに足した MOD の数 */
-  addedDesecratedMods: number;
+  /** 既存クラスの冒涜プール / ルーンプールに足した MOD の数 */
+  addedPoolMods: number;
   /** 足したクラスの id */
   newClasses: string[];
   /** 重みを同梱から借りられず、クライアントの 1 のままにした MOD の id */
@@ -50,6 +67,19 @@ let extras: PatchExtras | null = null;
 /** 直前の `loadHtcPatch()` が何を補ったか。読み込み前は null */
 export function htcPatchExtras(): PatchExtras | null {
   return extras;
+}
+
+let familyTexts: Record<string, Record<string, string[]>> = {};
+
+/**
+ * クラス id → family → 今の文言。`bridge-index.ts` が同梱の古い文言を補うのに使う。
+ *
+ * ここに置いてあるのは **`extra-bases.json` を静的 import しないため**です。patch.ts の
+ * 動的 import 1 か所だけが読み、他はこの関数越しに受け取る。そうしないと 192 KB が
+ * 起動時のバンドルに入ります。
+ */
+export function htcFamilyTexts(): Record<string, Record<string, string[]>> {
+  return familyTexts;
 }
 
 /**
@@ -106,23 +136,33 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     bases.set(classId, { ...cls, bases: [...merged].sort() });
   }
 
-  // 既存クラスの冒涜プールを埋める (同梱は patch 0.5.0 のままで、今リーグの分を知らない)
+  // 既存クラスの冒涜プールとルーンプールを埋める (同梱は patch 0.5.0 のままで、今リーグの分を知らない)
   let addedMods = 0;
-  for (const [classId, pools] of Object.entries(extra.addedPools ?? {})) {
+  const merge = (cur: ReadonlyPool | undefined, add: PoolAdd): PoolAdd => {
+    const base = cur ?? { prefixes: [], suffixes: [] };
+    const prefixes = [...new Set([...base.prefixes, ...add.prefixes])];
+    const suffixes = [...new Set([...base.suffixes, ...add.suffixes])];
+    addedMods += prefixes.length - base.prefixes.length + (suffixes.length - base.suffixes.length);
+    return { prefixes, suffixes };
+  };
+  for (const [classId, add] of Object.entries(extra.addedPools ?? {})) {
     const cls = bases.get(classId);
-    const add = pools.desecrated;
-    if (!cls || !add) continue;
-    const cur = cls.pools.desecrated ?? { prefixes: [], suffixes: [] };
-    const prefixes = [...new Set([...cur.prefixes, ...add.prefixes])];
-    const suffixes = [...new Set([...cur.suffixes, ...add.suffixes])];
-    addedMods += prefixes.length - cur.prefixes.length + (suffixes.length - cur.suffixes.length);
-    bases.set(classId, { ...cls, pools: { ...cls.pools, desecrated: { prefixes, suffixes } } });
+    if (!cls) continue;
+    const pools = { ...cls.pools };
+    if (add.desecrated) pools.desecrated = merge(cls.pools.desecrated, add.desecrated);
+    if (add.rune) {
+      const rune: Record<string, ReadonlyPool> = { ...(cls.pools.rune ?? {}) };
+      for (const [runeId, p] of Object.entries(add.rune)) rune[runeId] = merge(rune[runeId], p);
+      pools.rune = rune;
+    }
+    bases.set(classId, { ...cls, pools });
   }
 
+  familyTexts = extra.familyTexts ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,
-    addedDesecratedMods: addedMods,
+    addedPoolMods: addedMods,
     newClasses: extra.items.map((i) => i.id),
     placeholderWeightMods: placeholder,
   };

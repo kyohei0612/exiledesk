@@ -126,6 +126,21 @@ const ROW_NAME = {
 };
 
 /**
+ * ルーンを差して初めて出る MOD のプール。`engine/runes.ts` の `RUNES` と対応させること
+ * (`{ kind: 'pool', tag }` の 6 つ)。タグはクライアントの spawn_weights にそのまま出てくる
+ * (`destruction` / `marksman` / `decay` / `berserking` / `soul` / `chronomancy`)。
+ * categories は `runes.ts` の同名フィールドと同じで、空なら全装備。
+ */
+const RUNE_POOLS = [
+  { id: "thruds-might", tag: "destruction", classes: ["Wand", "Sceptre", "Staff", "Bow", "Crossbow", "Warstaff", "Spear", "One Hand Mace", "Two Hand Mace", "Talisman"] },
+  { id: "uhtreds-sidereus", tag: "chronomancy", classes: ["Boots"] },
+  { id: "kolrs-hunt", tag: "marksman", classes: ["Gloves"] },
+  { id: "katlas-gloom", tag: "decay", classes: ["Gloves"] },
+  { id: "voranas-carnage", tag: "berserking", classes: ["Helmet"] },
+  { id: "medveds-tending", tag: "soul", classes: ["Body Armour"] },
+];
+
+/**
  * 作らないベース。
  * - `demigods` / `not_for_sale` … デミゴッド装備。落ちも売りもせず、クラフトの対象外
  * - `[DNT]` … 開発用 (Do Not Trade)。ゲームに出ない
@@ -320,7 +335,32 @@ const main = async () => {
         add[side].push(mod.id);
       }
     }
-    if (add.prefixes.length || add.suffixes.length) addedPools[cls.id] = { desecrated: add };
+
+    // ルーンのプールも同じく古い。素のタグでは 0 で、ルーンのタグを足した時だけ出る分を採る
+    const fams0 = familiesFor(tags, "item");
+    const rune = {};
+    for (const rp of RUNE_POOLS) {
+      if (!rp.classes.includes(cid)) continue;
+      const withRune = familiesFor(new Set([...tags, rp.tag]), "item");
+      const side = { prefixes: [], suffixes: [] };
+      for (const [kind, key] of [
+        ["prefix", "prefixes"],
+        ["suffix", "suffixes"],
+      ]) {
+        for (const [family, list] of withRune[kind]) {
+          if (fams0[kind].has(family) || have.has(`Rune_${rp.tag}_${family}`)) continue;
+          const mod = buildMod(cls.id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal");
+          outMods.push({ ...mod, rune: rp.id });
+          side[key].push(mod.id);
+        }
+      }
+      if (side.prefixes.length || side.suffixes.length) rune[rp.id] = side;
+    }
+
+    const entry = {};
+    if (add.prefixes.length || add.suffixes.length) entry.desecrated = add;
+    if (Object.keys(rune).length) entry.rune = rune;
+    if (Object.keys(entry).length) addedPools[cls.id] = entry;
   }
   for (const [id, { cls, names, tags }] of newClasses) {
     const pools = {
@@ -328,11 +368,12 @@ const main = async () => {
       desecrated: { prefixes: [], suffixes: [] },
       essence: { prefixes: [], suffixes: [] },
     };
+    const fams0 = familiesFor(tags, "item"); // 素のタグで出る分。ルーンの差分を採る時の引き算に使う
     for (const [domain, poolName, source] of [
       ["item", "normal", "normal"],
       ["desecrated", "desecrated", "desecrated"],
     ]) {
-      const fams = familiesFor(tags, domain);
+      const fams = domain === "item" ? fams0 : familiesFor(tags, domain);
       for (const [kind, side] of [
         ["prefix", "prefixes"],
         ["suffix", "suffixes"],
@@ -344,11 +385,69 @@ const main = async () => {
         }
       }
     }
+    // ルーンを差して初めて出る MOD。素のタグでは 0 なので、ルーンのタグを足した時だけ出る差分を採る
+    const rune = {};
+    for (const rp of RUNE_POOLS) {
+      if (!rp.classes.includes(cls)) continue;
+      const withRune = familiesFor(new Set([...tags, rp.tag]), "item");
+      const side = { prefixes: [], suffixes: [] };
+      for (const [kind, key] of [
+        ["prefix", "prefixes"],
+        ["suffix", "suffixes"],
+      ]) {
+        for (const [family, list] of withRune[kind]) {
+          if (fams0[kind].has(family)) continue; // 素でも出るなら通常プールの分
+          const mod = buildMod(id, `Rune_${rp.tag}_${family}`, kind, list, new Set([...tags, rp.tag]), "normal");
+          outMods.push({ ...mod, rune: rp.id });
+          side[key].push(mod.id);
+        }
+      }
+      if (side.prefixes.length || side.suffixes.length) rune[rp.id] = side;
+    }
+    if (Object.keys(rune).length) pools.rune = rune;
+
     outItems.push({ id, name: id, bases: names.sort(), category: cls, class: cls, pools });
+  }
+
+  /**
+   * 既存クラスの **family -> 今の文言**。同梱の MOD 文言は patch 0.5.0 のままなので、
+   * あとで行が増えた MOD が上位プレイヤーの装備と突き合わない。
+   *
+   * 実例: 手袋の `HandWrapsGlobalMeleeSkillGemLevel2` は今 2 行
+   * (`+#% to Quality of all Skills` / `+# to Level of all Melee Skills`) だが、同梱の文言には
+   * 1 行目が無い。上位 39 人がこれを着けていて、全部「繋がらない」に落ちていた。
+   *
+   * 文言の正規化は `bridge.ts` が持っているので、ここでは**生の文言をそのまま**渡す。
+   * ここで正規化すると同じ規則を 2 か所に書くことになり、片方だけ直る事故になる。
+   */
+  const familyTexts = {};
+  for (const cls of htcBases.items) {
+    const { tags, cls: cid } = tagSetFor(cls.bases || []);
+    if (!cid) continue;
+    const perFamily = {};
+    for (const domain of ["item", "desecrated"]) {
+      const fams = familiesFor(tags, domain);
+      for (const kind of ["prefix", "suffix"]) {
+        for (const [family, list] of fams[kind]) {
+          const seen = new Set();
+          const texts = [];
+          for (const m of list) {
+            if (!m.text) continue;
+            const key = m.text.replace(/[\d.]+/g, "#"); // 数値違いは同じ文言として 1 つに畳む
+            if (seen.has(key)) continue;
+            seen.add(key);
+            texts.push(m.text);
+          }
+          if (texts.length) perFamily[family] = texts;
+        }
+      }
+    }
+    if (Object.keys(perFamily).length) familyTexts[cls.id] = perFamily;
   }
 
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
+    familyTexts,
     source:
       "GGG クライアント (data-cache/client-export + data-cache/mods.en.json)。重みは同梱 poe2htc から family+ilvl で拝借し、借りられない分は 1 のまま (weightSource で区別)",
     addedBases: Object.fromEntries([...addedBases].map(([k, v]) => [k, v.sort()])),
@@ -366,8 +465,10 @@ const main = async () => {
     const n = outMods.filter((m) => m.id.startsWith(`${it.id}/`)).length;
     console.log(`   ${it.id}: ベース ${it.bases.length} 件 / MOD ${n} 件`);
   }
-  const poolAdds = Object.values(addedPools).reduce((a, p) => a + p.desecrated.prefixes.length + p.desecrated.suffixes.length, 0);
-  console.log(`既存クラスの冒涜プールに足した MOD: ${poolAdds} 件 (${Object.keys(addedPools).length} クラス)`);
+  const cnt = (p) => (p ? p.prefixes.length + p.suffixes.length : 0);
+  const desAdds = Object.values(addedPools).reduce((a, p) => a + cnt(p.desecrated), 0);
+  const runeAdds = Object.values(addedPools).reduce((a, p) => a + Object.values(p.rune ?? {}).reduce((x, q) => x + cnt(q), 0), 0);
+  console.log(`既存クラスに足した MOD: 冒涜 ${desAdds} 件 / ルーン ${runeAdds} 件 (${Object.keys(addedPools).length} クラス)`);
   console.log(`重み: 同梱から借りた ${borrowed} ティア / 借りられず 1 のまま ${placeholder} ティア`);
   console.log(`-> ${OUT}`);
 };

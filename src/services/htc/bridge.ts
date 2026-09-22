@@ -1,8 +1,6 @@
 /**
  * bridge.ts — 上位プレイヤーの MOD を、取り込んだクラフトエンジンの MOD に繋ぐ (2026-09-22)
  *
- * オーナー指示:「今の上位 MOD の検索とかなり組み合わせれる気がする」。
- *
  * 上位プレイヤーMOD一覧は poe.ninja の実装備から集めた**英語のテンプレート** (`rawTemplate`、
  * 例 `+# to maximum Energy Shield`) で MOD を持っています。エンジン側は
  * `Helmets_int/LocalEnergyShield` のようなクラス込みの id で持っています。ここが橋です。
@@ -14,22 +12,19 @@
  * 文言だけだと決まりません (「+# to maximum Mana」はアミュレットにも帯にもブーツにもある)。
  * クラスで絞って初めて 1 つになります。だから入口はベース名です。
  *
+ * ## ルーンを入れるか外すかは**用途で変わる**
+ * ルーンを差して初めて出る MOD があります。用途が 2 つあって、答えが逆になります。
+ *   - **読む** (上位プレイヤーが何を着けているか) … 入れる。上位はルーンを差すので、外すと読めない
+ *   - **狙う** (素のベースから作る) … 外す。ルーンを差さない限り出ないので、素の確率に混ぜてはいけない
+ * 既定は「読む」(`runes: "include"`)。狙う側は明示的に `"exclude"` を渡してください。
+ *
  * 実測 2026-09-22 (上位 200 キャラ、アイテムごとに自分のベースで引く):
- *   テンプレート 86.7% / 人数で重み付け 85.2%
- *   エンジンが知っているベースに限れば 94.5% / 94.6%
- * 落ちる主因は 2 つ。(1) 同梱データが patch 0.5.0 なので新しいベース 14 種を知らない
- * (Fists of Stone など)。(2) ミニオン系と Projectile 系がプールに無い。
+ *   クライアント由来のベース追加前 86.7% → 追加後 90.3% → ルーンと文言の追随を入れて下記
  */
-import { normalizeModTemplate, stripRichTextMarkers } from "../mods/normalize";
+import { modIndexOf, matchKey, type IndexHit, type RuneMode } from "./bridge-index";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
-/** エンジンの MOD は効果ごとに改行で区切られている */
-const NEWLINE = String.fromCharCode(10);
-
-/** 突き合わせ用のキー。うちの正規化 + 小文字化 + 空白を 1 つに */
-function matchKey(text: string): string {
-  return normalizeModTemplate(stripRichTextMarkers(text)).toLowerCase().replace(/\s+/g, " ");
-}
+export type { RuneMode } from "./bridge-index";
 
 /**
  * 上流と ExileDesk で言い回しが違う MOD の対応表 (2026-09-22 の実測で出た分)。
@@ -58,53 +53,6 @@ function baseIndex(data: PatchData): Map<string, ItemBase> {
   return m;
 }
 
-/**
- * そのクラスで狙える MOD を「文言 → MOD」で引けるようにする。
- *
- * プールは normal / desecrated / essence / rune に分かれています。**rune は外します**:
- * ルーンを差した時だけ出る MOD なので、素のベースから狙う話には入りません。
- * 同じ文言が normal と essence の両方にある時は **normal を優先**します。エッセンスは
- * 確定で乗せる別の作り方なので、狙う対象としては通常プールが素直です。
- */
-interface ClassIndex {
-  /** MOD 全文で引く */
-  full: Map<string, Mod>;
-  /** 複数の効果を持つ MOD を 1 行ずつでも引けるようにした物 */
-  line: Map<string, Mod>;
-}
-const modIndexCache = new WeakMap<ItemBase, ClassIndex>();
-function modIndexOf(data: PatchData, cls: ItemBase): ClassIndex {
-  const hit = modIndexCache.get(cls);
-  if (hit) return hit;
-  const full = new Map<string, Mod>();
-  const line = new Map<string, Mod>();
-  const pools = (cls.pools ?? {}) as Record<string, unknown>;
-  // normal を最後に入れて上書き勝ちにする
-  for (const poolName of ["essence", "desecrated", "normal"]) {
-    const pool = pools[poolName] as { prefixes?: string[]; suffixes?: string[] } | undefined;
-    if (!pool) continue;
-    for (const ids of [pool.prefixes, pool.suffixes]) {
-      if (!Array.isArray(ids)) continue;
-      for (const id of ids) {
-        const mod = data.mods.get(id);
-        if (!mod?.text) continue;
-        full.set(matchKey(mod.text), mod);
-        // 効果を 2 つ以上持つ MOD (全 2917 件中 166 件) は、エンジンでは 1 件だが
-        // poe.ninja は効果ごとに別の行で出す。1 行だけでも引けるようにする。
-        // 例: 「回避 + ES」の複合 MOD は、ES の行だけでも引ける (指すのは複合 MOD 1 個)
-        const lines = mod.text.split(NEWLINE);
-        if (lines.length > 1) for (const l of lines) {
-          const k = matchKey(l);
-          if (k) line.set(k, mod);
-        }
-      }
-    }
-  }
-  const idx = { full, line };
-  modIndexCache.set(cls, idx);
-  return idx;
-}
-
 /** ベース名 (「Ancestral Tiara」) からアイテムクラスを引く。知らないベースは null */
 export function classOfBase(data: PatchData, baseType: string): ItemBase | null {
   return baseIndex(data).get(baseType) ?? null;
@@ -123,32 +71,47 @@ export interface BridgedMod {
    * true の時、狙うと**同じ MOD の他の効果も一緒に乗ります** (回避 + ES の複合 MOD など)。
    */
   viaLine: boolean;
+  /**
+   * ルーンを差して初めて出る MOD なら、そのルーンの id。
+   * **素のベースからは出ません。**画面では「このルーンが要る」と断ること。
+   */
+  viaRune?: string;
 }
 
+const EMPTY: Omit<BridgedMod, "template"> = { mod: null, viaAlias: false, viaLine: false };
+
 /**
- * 上位 MOD のテンプレートを、そのベースで狙える MOD に繋ぐ。
+ * 上位 MOD のテンプレートを、そのベースで出る MOD に繋ぐ。
  * @param baseType 「Ancestral Tiara」のようなベース名 (poe.ninja の base_type)
+ * @param runes ルーン由来の MOD を含めるか。既定は「読む」用途の `"include"`
  */
-export function bridgeMods(data: PatchData, baseType: string, templates: readonly string[]): {
-  cls: ItemBase | null;
-  mods: BridgedMod[];
-} {
+export function bridgeMods(
+  data: PatchData,
+  baseType: string,
+  templates: readonly string[],
+  runes: RuneMode = "include",
+): { cls: ItemBase | null; mods: BridgedMod[] } {
   const cls = classOfBase(data, baseType);
-  if (!cls) return { cls: null, mods: templates.map((t) => ({ template: t, mod: null, viaAlias: false, viaLine: false })) };
-  const index = modIndexOf(data, cls);
-  const lookup = (k: string): { mod: Mod; viaLine: boolean } | null => {
+  if (!cls) return { cls: null, mods: templates.map((t) => ({ template: t, ...EMPTY })) };
+  const index = modIndexOf(data, cls, runes);
+
+  const lookup = (k: string): { hit: IndexHit; viaLine: boolean } | null => {
     const f = index.full.get(k);
-    if (f) return { mod: f, viaLine: false };
+    if (f) return { hit: f, viaLine: false };
     const l = index.line.get(k);
-    return l ? { mod: l, viaLine: true } : null;
+    return l ? { hit: l, viaLine: true } : null;
   };
-  const mods = templates.map((template) => {
+
+  const mods = templates.map((template): BridgedMod => {
     const k = matchKey(template);
     const direct = lookup(k);
-    if (direct) return { template, mod: direct.mod, viaAlias: false, viaLine: direct.viaLine };
+    if (direct) {
+      return { template, mod: direct.hit.mod, viaAlias: false, viaLine: direct.viaLine, viaRune: direct.hit.rune };
+    }
     const alias = ALIAS_BY_KEY.get(k);
     const viaA = alias ? lookup(alias) : null;
-    return { template, mod: viaA?.mod ?? null, viaAlias: !!viaA, viaLine: viaA?.viaLine ?? false };
+    if (!viaA) return { template, ...EMPTY };
+    return { template, mod: viaA.hit.mod, viaAlias: true, viaLine: viaA.viaLine, viaRune: viaA.hit.rune };
   });
   return { cls, mods };
 }
