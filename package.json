@@ -19,6 +19,7 @@
     "check:htc-lingering": "node scripts/check-htc-lingering.mjs",
     "check:htc-prices": "node scripts/check-htc-prices.mjs",
     "check:htc-buy": "node scripts/check-htc-buy-or-craft.mjs",
+    "check:htc-budget": "node scripts/check-htc-budget.mjs",
     "build:htc-price-keys": "node scripts/build-htc-price-keys-from-client.mjs && node scripts/build-htc-essence-prices-from-client.mjs && node scripts/build-htc-catalysts-from-client.mjs",
     "check:htc-bases": "node scripts/build-htc-bases-from-client.mjs --verify",
     "build:htc-bases": "node scripts/build-htc-bases-from-client.mjs"
