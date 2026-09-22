@@ -23,15 +23,19 @@
  * 選んでいる通貨で 1 を切ったら 1 つ下の通貨に落ちます (0.02 神 → 8.5 カオス)。
  * ジェムコラプトや捌き速度と同じ見え方になります (オーナー指示 2026-09-19 / 2026-09-22)。
  *
- * 作成費も出品価格も**どちらも払う金**なので、**両方とも切り上げ**ます。
- * 片方だけ切り下げると、どちらが得かの判定に偏りが出ます。
+ * 作成費はこちらが計算した額なので、選んでいる通貨に換算して**切り上げ**ます。
+ *
+ * **出品価格は取引所の表記のまま出します** (オーナー指示 2026-09-22:「12 カオスとか表示されてても
+ * 別に神にわざわざトレードの値段をなおさなくて良き」)。売り手が付けた通貨がそのまま情報なので、
+ * 換算すると丸め誤差が乗るうえ、取引所と見比べた時に数字が違って見えます。
+ * 比率の計算にだけ高貴建てを使います。
  *
  * ## 値段は呼び出し側から渡す
  * このファイルは**取引所を叩きません**。問い合わせの中身を組み立てて返すだけで、実際の取得と
  * レート制限 ([[trade2-rate-limit-testing]]) は呼び出し側の役目です。
  */
 import { buildSpecQuery } from "../trade2/query";
-import { displayCurrency } from "../../state/display-currency";
+import { currencyJa, displayCurrency } from "../../state/display-currency";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -147,7 +151,7 @@ export interface BuyOrCraftResult {
   ratio: number | null;
   /** 作成費 (選んでいる通貨、切り上げ)。出せなければ "—" */
   craftText: string;
-  /** 出品価格 (選んでいる通貨、切り上げ)。出せなければ "—" */
+  /** 出品価格。取引所の表記のまま (「600 神」「12 カオス」)。出せなければ "—" */
   listingText: string;
   /** 画面にそのまま出す 1 行 */
   note: string;
@@ -162,15 +166,21 @@ export interface BuyOrCraftResult {
 export function buyOrCraft(o: {
   /** ソルバの期待費用 (ex) */
   craftExpected: number | null;
-  /** 取引所の最安 (ex)。出品が無ければ null */
+  /** 取引所の最安を**高貴建てに直した額** (比率の計算用)。出品が無ければ null */
   listingPrice: number | null;
+  /**
+   * 取引所が出している**そのままの**値段 (`{ amount: 12, currency: "chaos" }`)。
+   * 画面にはこれを出す。省くと高貴建てから換算して出す。
+   */
+  listingRaw?: { amount: number; currency: string } | null;
   /** 取引所の条件にできなかった MOD */
   unmatched?: readonly string[];
 }): BuyOrCraftResult {
-  // 作成費も出品価格もどちらも払う金なので、両方とも切り上げ
-  const money = (v: number | null | undefined) => displayCurrency.money(v, { round: "up" });
-  const craftText = money(o.craftExpected);
-  const listingText = money(o.listingPrice);
+  // 作成費はこちらの計算なので換算して切り上げ。出品価格は取引所の表記のまま
+  const craftText = displayCurrency.money(o.craftExpected, { round: "up" });
+  const listingText = o.listingRaw
+    ? `${o.listingRaw.amount} ${currencyJa(o.listingRaw.currency)}`
+    : displayCurrency.money(o.listingPrice, { round: "up" });
   const base = { craftText, listingText };
   if (o.unmatched?.length) {
     return { ...base, verdict: "unknown", ratio: null, note: `条件にできなかった MOD が ${o.unmatched.length} 件あるので、値段は比べられません。` };
