@@ -5,14 +5,31 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { PRESETS } from "./presets";
 import { useHtcCraft } from "./useHtcCraft";
+import { usePicker } from "./usePicker";
 
 const c = useHtcCraft();
-const text = ref(PRESETS[0]!.text);
-const picked = ref(PRESETS[0]!.id);
-const listing = ref<number | null>(PRESETS[0]!.listingDivine);
+const pk = usePicker();
+watchEffect(() => pk.useData(c.data.value));
+
+/**
+ * 入口。**開いた時は何も計算していません** (オーナー指示 2026-09-23)。
+ * 先に「真似るのか、0 から決めるのか」を選ばせます ── ここが決まらないと、出す数字が
+ * まるで別物になるからです。
+ *   paste … poe.ninja / ゲームからコピーした物を真似る
+ *   base  … ベースと狙う MOD を自分で並べる
+ */
+//
+// **開発ビルドだけ、見本を貼った状態で始めます** (オーナー指示 2026-09-23:「開発環境には
+// さっきのニーモニック貼っといて、デフォで開発しやすいわ」)。毎回貼り直さずに済ませるためで、
+// 配布版は何も入っていない状態から始まります。読み込みまでは自動でしません ── 押すのは人。
+const DEV = import.meta.env.DEV;
+const door = ref<"none" | "paste" | "base">(DEV ? "paste" : "none");
+const text = ref(DEV ? PRESETS[0]!.text : "");
+const picked = ref<string | null>(DEV ? PRESETS[0]!.id : null);
+const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
 
 /**
  * 画面は**一度に 1 段だけ**出す (オーナー指示 2026-09-23:「情報量が多いから順に表示していく」)。
@@ -60,7 +77,25 @@ function pick(id: string): void {
   listing.value = p.listingDivine;
   void reread(p.text);
 }
-onMounted(() => void c.run(text.value));
+
+/** 入口へ戻る。計算結果は捨てる (中途半端に残すと、今どの物の話か分からなくなる) */
+function backToDoor(): void {
+  c.reset();
+  pk.clear();
+  door.value = "none";
+  picked.value = null;
+  text.value = "";
+  stage.value = "read";
+}
+async function openBaseDoor(): Promise<void> {
+  door.value = "base";
+  await c.ensureData();
+}
+async function runPicked(): Promise<void> {
+  if (!pk.baseName.value || !pk.cls.value) return;
+  stage.value = "read";
+  await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value, pk.level.value);
+}
 
 const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id)?.text ?? id;
 /** 暗黙は複数行のことがある (枠の増減は 2 行)。1 行に畳んで出す */
@@ -75,32 +110,149 @@ const implicitText = (lines: readonly string[]): string =>
       ゲームから Ctrl+C した日本語のアイテムをそのまま貼れます。リリース前の動作確認用です。
     </p>
 
-    <!-- 入力 -->
-    <div class="mb-3 flex gap-2">
+    <!-- 入口。開いた時はここだけ。何も計算していない -->
+    <div v-if="door === 'none'" class="mb-4 grid gap-3 sm:grid-cols-2">
       <button
-        v-for="p in PRESETS"
-        :key="p.id"
-        class="rounded border px-2 py-1 text-xs"
-        :class="picked === p.id ? 'border-amber-400 text-amber-300' : 'border-[var(--exile-color-border-subtle)] opacity-70'"
-        @click="pick(p.id)"
+        type="button"
+        class="rounded border border-[var(--exile-color-border-subtle)] p-4 text-left hover:border-amber-400"
+        @click="door = 'paste'"
       >
-        {{ p.label }}
+        <div class="mb-1 font-bold text-amber-300">コピーを貼る</div>
+        <div class="text-xs opacity-60">
+          poe.ninja やゲームから Ctrl+C した物をそのまま貼ります。<b>既にある物を真似る</b>時。
+        </div>
+      </button>
+      <button
+        type="button"
+        class="rounded border border-[var(--exile-color-border-subtle)] p-4 text-left hover:border-amber-400"
+        @click="openBaseDoor()"
+      >
+        <div class="mb-1 font-bold text-amber-300">ベースから選ぶ</div>
+        <div class="text-xs opacity-60">
+          ベースと狙う MOD を自分で並べます。<b>0 から決める</b>時。
+        </div>
       </button>
     </div>
-    <textarea
-      v-model="text"
-      rows="10"
-      class="mb-2 w-full rounded border border-[var(--exile-color-border-subtle)] bg-black/20 p-2 font-mono text-xs"
-      spellcheck="false"
-    />
-    <div class="mb-4 flex items-center gap-3">
-      <button class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold" :disabled="c.loading.value" @click="reread(text)">
-        {{ c.loading.value ? "計算中…" : "読んで計算する" }}
-      </button>
-      <label class="text-xs opacity-70">
-        完成品の売値 (神)
-        <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-      </label>
+
+    <button
+      v-else
+      type="button"
+      class="mb-3 text-xs opacity-60 hover:opacity-100"
+      @click="backToDoor()"
+    >← 入口に戻る</button>
+
+    <!-- 入口 A: 貼り付け -->
+    <div v-if="door === 'paste'" class="mb-4">
+      <div class="mb-2 flex flex-wrap gap-2 text-xs">
+        <span class="opacity-50">見本:</span>
+        <button
+          v-for="p in PRESETS"
+          :key="p.id"
+          class="rounded border px-2 py-0.5"
+          :class="picked === p.id ? 'border-amber-400 text-amber-300' : 'border-[var(--exile-color-border-subtle)] opacity-70'"
+          @click="pick(p.id)"
+        >{{ p.label }}</button>
+      </div>
+      <textarea
+        v-model="text"
+        rows="10"
+        placeholder="ここに貼り付け"
+        class="mb-2 w-full rounded border border-[var(--exile-color-border-subtle)] bg-black/20 p-2 font-mono text-xs"
+        spellcheck="false"
+      />
+      <div class="flex items-center gap-3">
+        <button
+          class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
+          :disabled="c.loading.value || !text.trim()"
+          @click="reread(text)"
+        >{{ c.loading.value ? "計算中…" : "読んで計算する" }}</button>
+        <label class="text-xs opacity-70">
+          完成品の売値 (神)
+          <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
+        </label>
+      </div>
+    </div>
+
+    <!-- 入口 B: ベースから選ぶ -->
+    <div v-if="door === 'base'" class="mb-4">
+      <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
+        <input
+          v-model="pk.baseQuery.value"
+          placeholder="ベースを絞る (サファイア / Ring …)"
+          class="w-56 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-2 py-1"
+        />
+        <label class="opacity-70">
+          ilvl
+          <input v-model.number="pk.level.value" type="number" class="ml-1 w-16 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
+        </label>
+        <span class="opacity-50">段の上限を決めます。先に入れてください</span>
+      </div>
+      <!-- ベース一覧 -->
+      <div v-if="!pk.baseName.value" class="max-h-72 overflow-auto rounded border border-[var(--exile-color-border-subtle)]">
+        <table class="w-full text-xs">
+          <tr
+            v-for="b in pk.baseRows.value"
+            :key="b.en"
+            class="cursor-pointer border-b border-white/5 hover:bg-white/5"
+            @click="c.data.value && pk.chooseBase(c.data.value, b.en)"
+          >
+            <td class="py-0.5 pl-2">{{ b.ja }}</td>
+            <td class="w-24 opacity-50">{{ b.cls }}</td>
+            <td class="w-16 opacity-50">lvl {{ b.lvl }}</td>
+            <td class="pl-2 opacity-60">{{ b.implicits.join(" / ") }}</td>
+          </tr>
+        </table>
+      </div>
+      <!-- MOD 選び -->
+      <div v-else>
+        <p class="mb-2 text-xs">
+          <b class="text-amber-300">{{ pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value }}</b>
+          <button class="ml-2 opacity-60 underline hover:opacity-100" @click="pk.baseName.value = null">ベースを選び直す</button>
+        </p>
+        <input
+          v-model="pk.modQuery.value"
+          placeholder="MOD を絞る (ライフ / 耐性 …)"
+          class="mb-2 w-56 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-2 py-1 text-xs"
+        />
+        <div class="max-h-72 overflow-auto rounded border border-[var(--exile-color-border-subtle)]">
+          <table class="w-full text-xs">
+            <tr
+              v-for="m in pk.modRows.value"
+              :key="m.modId"
+              class="cursor-pointer border-b border-white/5 hover:bg-white/5"
+              :class="pk.isPicked(m.modId) ? 'bg-amber-900/20' : ''"
+              @click="pk.toggle(m)"
+            >
+              <td class="w-6 pl-2 opacity-50">{{ m.side }}</td>
+              <td class="py-0.5">{{ m.ja }}</td>
+              <td class="w-28 text-emerald-300">{{ m.crafted ? "確定で乗せられる" : "" }}</td>
+              <td class="w-48 text-right" @click.stop>
+                <select
+                  v-if="pk.isPicked(m.modId)"
+                  class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1 py-0.5"
+                  :value="pk.tierOf(m.modId)"
+                  @change="pk.setTier(m.modId, Number(($event.target as HTMLSelectElement).value))"
+                >
+                  <option v-for="(t, i) in m.tiers" :key="i" :value="i">
+                    {{ t.name }} ({{ t.range }}) 以上
+                  </option>
+                </select>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="mt-2 flex items-center gap-3">
+          <button
+            class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
+            :disabled="c.loading.value || pk.picks.value.length === 0"
+            @click="runPicked()"
+          >{{ c.loading.value ? "計算中…" : `この ${pk.picks.value.length} 個で計算する` }}</button>
+          <label class="text-xs opacity-70">
+            完成品の売値 (神)
+            <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
+          </label>
+        </div>
+      </div>
     </div>
 
     <p v-if="c.error.value" class="mb-3 rounded bg-red-900/40 p-2 text-xs">{{ c.error.value }}</p>
@@ -115,7 +267,7 @@ const implicitText = (lines: readonly string[]): string =>
       <span v-if="c.coverage.value.missing.length"> (相場に無い {{ c.coverage.value.missing.length }} 件は使えません)</span>
     </p>
 
-    <template v-if="c.item.value?.baseType">
+    <template v-if="c.base.value">
       <!-- 段の切り替え。押せばどこへでも飛べる (一方通行にしない) -->
       <nav class="mb-3 flex flex-wrap gap-1">
         <button
@@ -142,10 +294,15 @@ const implicitText = (lines: readonly string[]): string =>
       <!-- 読み取り -->
       <section v-show="current === 'read'" class="mb-4">
         <h2 class="mb-1 font-bold">① 読み取り</h2>
-        <p class="text-xs opacity-80">
+        <!-- 貼り付けから来た時だけ、読めた見出しを出す (ベースから組んだ時は自分で決めた物なので不要) -->
+        <p v-if="c.item.value" class="text-xs opacity-80">
           {{ c.item.value.baseText }} ({{ c.item.value.baseType }}) / ilvl {{ c.item.value.itemLevel }}
           <span v-if="c.item.value.quality"> / 品質 {{ c.item.value.quality }}%</span>
           <span v-if="c.item.value.catalystTag" class="text-amber-300"> — 種類 {{ c.item.value.catalystTag }} (この種類の MOD は品質を外してから読む)</span>
+        </p>
+        <p v-else class="text-xs opacity-80">
+          {{ pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value }} / ilvl {{ pk.level.value }}
+          <span class="opacity-50">— 自分で並べた {{ c.rows.value.length }} 個</span>
         </p>
         <table class="mt-1 w-full text-xs">
           <tr v-for="r in c.rows.value" :key="r.modId" class="border-b border-white/5">

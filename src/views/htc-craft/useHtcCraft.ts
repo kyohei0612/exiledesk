@@ -15,6 +15,7 @@ import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/pas
 import { baseForSolving } from "../../services/htc/bridge";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
+import { jaOfMod } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
 import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
 import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
@@ -136,19 +137,119 @@ export function useHtcCraft() {
     return { prices: pricesForBase(indexPrices(file), cls), coverage };
   }
 
-  /** 貼り付けを読んで、段階 0 と設計図まで出す (合計 1 秒未満) */
-  async function run(text: string): Promise<void> {
+  /** データを読む (1 回だけ)。どちらの入口からも先に通る */
+  async function ensureData(): Promise<PatchData> {
+    if (!data.value) {
+      const t = Date.now();
+      data.value = await loadHtcPatch();
+      timings.value.push(["データを読む", Date.now() - t]);
+    }
+    return data.value;
+  }
+
+  /** 画面を空に戻す。入口へ帰る時と、計算し直す前に通す */
+  function reset(): void {
     error.value = null;
+    item.value = null;
+    base.value = null;
+    targets.value = [];
+    rows.value = [];
     buys.value = [];
+    routes.value = [];
+    solo.value = [];
+    bases.value = [];
+    slots.value = null;
+    implicits.value = [];
+    skipped.value = [];
+    dropOnly.value = [];
+    fractured.value = {};
+    fracturedLines.value = [];
+    fracturedTargets.value = [];
+    fracturedUnusable.value = 0;
+    slotsUsed.value = { prefixes: 0, suffixes: 0, either: 0 };
+    p75.value = {};
     timings.value = [];
+  }
+
+  /**
+   * ベースと目標が決まったところから先。**貼り付けの道とベースを選ぶ道で共通**です。
+   *
+   * ここを 2 本に分けると、片方だけ直して食い違います (実際、枠の引き算は貼り付け側にしか
+   * 無かった)。入口が違うだけで、決まった後にやることは 1 つしかありません。
+   */
+  function applyTargets(
+    d: PatchData,
+    cls: ItemBase,
+    got: { targets: TierTarget[]; texts: string[] },
+    level: number,
+    /** 実際のベース名 (「サファイアリング」)。`cls` は行 ("Rings") なので別に要る */
+    currentBase: string,
+  ): void {
+    base.value = cls;
+    const built = buildPrices(cls);
+    prices.value = built.prices;
+    coverage.value = built.coverage;
+    targets.value = got.targets;
+    rows.value = got.targets.map((tg, i) => {
+      const mod = d.mods.get(tg.modId)!;
+      const tier = mod.tiers[tg.minTierIndex ?? mod.tiers.length - 1]!;
+      const it = item.value;
+      return {
+        modId: tg.modId,
+        text: got.texts[i] ?? tg.modId,
+        side: mod.type === "prefix" ? "P" : "S",
+        tierName: String(tier.name ?? ""),
+        range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),
+        // **`boostedBy` を使うこと。**タグだけ見て書き直すと判定がずれる (向こうはクラスも見る)。
+        // 実際ずれていて、割り戻したキャストスピードに印が付いていなかった (2026-09-23)
+        boosted: !!(it?.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
+        crafted: isCraftedMod(mod),
+      };
+    });
+    // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
+    slots.value = craftedSurvey(d, cls, got.targets);
+    bases.value = baseChoices(d, cls, got.targets, { current: currentBase });
+
+    const t = Date.now();
+    // **p75 は出さない** (押された時に `findP75`)。ここは厳密解だけで一瞬
+    solo.value = soloCosts(d, built.prices, cls, got.targets, { level });
+    p75.value = {};
+    timings.value.push(["段階 0 (1 個ずつ自作するといくら)", Date.now() - t]);
+  }
+
+  /**
+   * ベースを選んで、MOD を自分で並べた時。**貼り付けは無い**ので、文面は
+   * [[mod-text.ts]] がクライアントの日本語から作ります。
+   */
+  async function runPicked(
+    baseName: string, cls: ItemBase, picks: readonly TierTarget[], level: number,
+  ): Promise<void> {
+    reset();
     loading.value = true;
     try {
-      if (!data.value) {
-        const t = Date.now();
-        data.value = await loadHtcPatch();
-        timings.value.push(["データを読む", Date.now() - t]);
+      const d = await ensureData();
+      if (picks.length === 0) {
+        error.value = "狙う MOD を 1 つ以上選んでください。";
+        return;
       }
-      const d = data.value;
+      applyTargets(
+        d, cls,
+        { targets: [...picks], texts: picks.map((p2) => jaOfMod(d.mods.get(p2.modId)!)) },
+        level, baseName,
+      );
+    } catch (e) {
+      error.value = String(e);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /** 貼り付けを読んで、段階 0 まで出す (合計 1 秒未満) */
+  async function run(text: string): Promise<void> {
+    reset();
+    loading.value = true;
+    try {
+      const d = await ensureData();
 
       let t = Date.now();
       const it = parseJaItem(text);
@@ -159,56 +260,24 @@ export function useHtcCraft() {
         return;
       }
       // **枠は「繋がらなかった行」の分を引いてから解く。**クラフトでは付かない MOD も枠は使う
-      const got0 = targetsFor(d, it);
-      const cls = baseForSolving(d, it.baseType, got0.skippedSides);
+      t = Date.now();
+      const got = targetsFor(d, it);
+      const cls = baseForSolving(d, it.baseType, got.skippedSides);
       if (!cls) {
         error.value = `「${it.baseText}」はエンジンが知らないベースです。`;
         return;
       }
-      base.value = cls;
-      const built = buildPrices(cls);
-      prices.value = built.prices;
-      coverage.value = built.coverage;
-
-      t = Date.now();
-      const got = got0;
       timings.value.push(["MOD とティアを決める", Date.now() - t]);
       slotsUsed.value = got.skippedSides;
       dropOnly.value = got.dropOnly;
-      targets.value = got.targets;
       fracturedTargets.value = got.fracturedTargets;
       fracturedLines.value = got.fractured;
       // 固定済みでも**エンジンが知らない MOD は開始状態に置けません**。
       // 置けないのに「ここから作れます」と出すと、出ないルートを待たせることになる
       fracturedUnusable.value = got.fractured.length - got.fracturedTargets.length;
-      routes.value = [];
       implicits.value = got.implicits;
       skipped.value = got.skipped;
-      rows.value = got.targets.map((tg, i) => {
-        const mod = d.mods.get(tg.modId)!;
-        const tier = mod.tiers[tg.minTierIndex ?? mod.tiers.length - 1]!;
-        return {
-          modId: tg.modId,
-          text: got.texts[i] ?? tg.modId,
-          side: mod.type === "prefix" ? "P" : "S",
-          tierName: String(tier.name ?? ""),
-          range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),
-          // **`boostedBy` を使うこと。**タグだけ見て書き直すと判定がずれる (向こうはクラスも見る)。
-          // 実際ずれていて、割り戻したキャストスピードに印が付いていなかった (2026-09-23)
-          boosted: !!(it.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
-          crafted: isCraftedMod(mod),
-        };
-      });
-      // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
-      slots.value = craftedSurvey(d, cls, got.targets);
-      bases.value = baseChoices(d, cls, got.targets, { current: it.baseType });
-
-      t = Date.now();
-      // **p75 は出さない** (押された時に `findP75`)。ここは厳密解だけで一瞬
-      solo.value = soloCosts(d, prices.value, cls, got.targets, { level: it.itemLevel ?? 82 });
-      p75.value = {};
-      timings.value.push(["段階 0 (1 個ずつ自作するといくら)", Date.now() - t]);
-
+      applyTargets(d, cls, got, it.itemLevel ?? 82, it.baseType);
     } catch (e) {
       error.value = String(e);
     } finally {
@@ -353,6 +422,7 @@ export function useHtcCraft() {
     fracturedLines, fracturedUnusable, slotsUsed, dropOnly, routes, routesBusy, compareRoutes,
     loading, error, item, base, rows, implicits, skipped,
     solo, buys, buysRunning, timings, coverage, slots, bases,
+    runPicked, reset, ensureData, data,
     p75, p75Busy, findP75,
     money, run, solveBuys,
   };

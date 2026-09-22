@@ -336,6 +336,15 @@ const main = async () => {
    *
    * 文言は `mods.en/ja.json` の `text` をそのまま (数値の範囲つき)。
    */
+  /**
+   * ゲームの文言に混ざる `[キー|表示]` を表示側だけにする。
+   *
+   * クライアントの文言はリンク用の印を持っていて (`全ての[Attributes|能力値] +(8-12)`)、
+   * そのまま出すと画面に `[Attributes|` が漏れます。暗黙 291 行のうち **200 行**が該当。
+   * 縦棒が無い `[キー]` はキーがそのまま表示される形なので、括弧だけ落とします。
+   */
+  const stripTags = (t) => String(t).replace(/\[([^\]|]*)\|([^\]]*)\]/g, "$2").replace(/\[([^\]]*)\]/g, "$1");
+
   const baseInfo = {};
   try {
     const dir = resolve(ROOT, "data-cache/client-export-implicits/tables");
@@ -364,7 +373,7 @@ const main = async () => {
           if (st.id === "local_maximum_prefixes_allowed_+") dp += st.min ?? 0;
           if (st.id === "local_maximum_suffixes_allowed_+") ds += st.min ?? 0;
         }
-        if (m.text) implicits.push({ en: m.text, ja: MJ[mid]?.text ?? m.text });
+        if (m.text) implicits.push({ en: stripTags(m.text), ja: stripTags(MJ[mid]?.text ?? m.text) });
       }
       if (dp !== 0 || ds !== 0) baseLimits[r.Name] = { prefixes: 3 + dp, suffixes: 3 + ds };
       baseInfo[r.Name] = {

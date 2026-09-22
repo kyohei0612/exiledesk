@@ -6191,8 +6191,8 @@
    "lvl": 12,
    "implicits": [
     {
-     "en": "+(8-12) to all [Attributes|Attributes]",
-     "ja": "全ての[Attributes|能力値] +(8-12)"
+     "en": "+(8-12) to all Attributes",
+     "ja": "全ての能力値 +(8-12)"
     }
    ]
   },
@@ -6202,8 +6202,8 @@
    "lvl": 12,
    "implicits": [
     {
-     "en": "(20-30)% increased [ItemRarity|Rarity of Items] found",
-     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(20-30)%増加する"
+     "en": "(20-30)% increased Rarity of Items found",
+     "ja": "見つかるアイテムのレアリティが(20-30)%増加する"
     }
    ]
   },
@@ -6213,8 +6213,8 @@
    "lvl": 15,
    "implicits": [
     {
-     "en": "+(11-19)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(11-19)%"
+     "en": "+(11-19)% to Chaos Resistance",
+     "ja": "混沌耐性 +(11-19)%"
     }
    ]
   },
@@ -6224,8 +6224,8 @@
    "lvl": 12,
    "implicits": [
     {
-     "en": "+(16-24) to all [Attributes|Attributes]",
-     "ja": "全ての[Attributes|能力値] +(16-24)"
+     "en": "+(16-24) to all Attributes",
+     "ja": "全ての能力値 +(16-24)"
     }
    ]
   },
@@ -6240,8 +6240,8 @@
    "lvl": 20,
    "implicits": [
     {
-     "en": "+(15-25)% to all [ElementalDamage|Elemental] [Resistances]",
-     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(15-25)%"
+     "en": "+(15-25)% to all Elemental Resistances",
+     "ja": "全ての元素耐性 +(15-25)%"
     }
    ],
    "defence": {
@@ -6256,8 +6256,8 @@
    "lvl": 12,
    "implicits": [
     {
-     "en": "+(8-16)% to all [ElementalDamage|Elemental] [Resistances]",
-     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(8-16)%"
+     "en": "+(8-16)% to all Elemental Resistances",
+     "ja": "全ての元素耐性 +(8-16)%"
     }
    ]
   },
@@ -6316,8 +6316,8 @@
    "lvl": 22,
    "implicits": [
     {
-     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
-     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+     "en": "+(5-10)% to Critical Damage Bonus",
+     "ja": "クリティカルダメージボーナス +(5-10)%"
     }
    ],
    "weapon": {
@@ -6355,8 +6355,8 @@
    "lvl": 36,
    "implicits": [
     {
-     "en": "40% chance to [Daze] on [Hit]",
-     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+     "en": "40% chance to Daze on Hit",
+     "ja": "ヒット時に40%の確率で眩暈を付与する"
     }
    ],
    "weapon": {
@@ -6383,8 +6383,8 @@
    "lvl": 49,
    "implicits": [
     {
-     "en": "[Accuracy|Always Hits]",
-     "ja": "[Accuracy|常にヒットする]"
+     "en": "Always Hits",
+     "ja": "常にヒットする"
     }
    ],
    "weapon": {
@@ -6472,8 +6472,8 @@
    "lvl": 4,
    "implicits": [
     {
-     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
-     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+     "en": "Causes (20-40)% increased Stun Buildup",
+     "ja": "引き起こすスタン蓄積が(20-40)%増加する"
     }
    ],
    "weapon": {
@@ -6489,8 +6489,8 @@
    "lvl": 11,
    "implicits": [
     {
-     "en": "[Crushed|Crushes] Enemies on Hit",
-     "ja": "ヒット時に敵を[Crushed|破砕]する"
+     "en": "Crushes Enemies on Hit",
+     "ja": "ヒット時に敵を破砕する"
     }
    ],
    "weapon": {
@@ -6517,8 +6517,8 @@
    "lvl": 22,
    "implicits": [
     {
-     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
-     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+     "en": "Strikes deal Splash Damage",
+     "ja": "ストライクはスプラッシュダメージを与える"
     }
    ],
    "weapon": {
@@ -6556,8 +6556,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
-     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+     "en": "Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage",
+     "ja": "クリティカルキル時に敵を爆発させ、そのライフの10%を物理ダメージとして与える"
     }
    ],
    "weapon": {
@@ -6584,8 +6584,8 @@
    "lvl": 50,
    "implicits": [
     {
-     "en": "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]",
-     "ja": "[Warcry|ウォークライ]は[Attack|アタック]を追加で1回[Empowered|強化]する"
+     "en": "Warcries Empower an additional Attack",
+     "ja": "ウォークライはアタックを追加で1回強化する"
     }
    ],
    "weapon": {
@@ -6666,8 +6666,8 @@
    "lvl": 10,
    "implicits": [
     {
-     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
-     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+     "en": "(15-25)% chance to Maim on Hit",
+     "ja": "ヒット時に(15-25)%の確率で重傷を付与する"
     }
    ],
    "weapon": {
@@ -6704,8 +6704,8 @@
    "lvl": 21,
    "implicits": [
     {
-     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
-     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+     "en": "(25-35)% increased Projectile Speed with this Weapon",
+     "ja": "この武器による投射物スピードが(25-35)%増加する"
     }
    ],
    "weapon": {
@@ -6764,8 +6764,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "25% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+     "en": "25% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が25%増加する"
     }
    ],
    "weapon": {
@@ -6786,8 +6786,8 @@
    "lvl": 45,
    "implicits": [
     {
-     "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
-     "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
+     "en": "Prevent +(3-7)% of Damage from Deflected Hits",
+     "ja": "受け流したヒットのダメージから防ぐ量が+(3-7)%される"
     }
    ],
    "weapon": {
@@ -6883,8 +6883,8 @@
    "lvl": 4,
    "implicits": [
     {
-     "en": "16% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+     "en": "16% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が16%増加する"
     }
    ],
    "weapon": {
@@ -6955,8 +6955,8 @@
    "lvl": 37,
    "implicits": [
     {
-     "en": "+(12-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(12-18)%"
+     "en": "+(12-18)% to Block chance",
+     "ja": "ブロック率 +(12-18)%"
     }
    ],
    "weapon": {
@@ -6972,8 +6972,8 @@
    "lvl": 45,
    "implicits": [
     {
-     "en": "(20-50)% chance to [Daze] on [Hit]",
-     "ja": "[Hit|ヒット]時に(20-50)%の確率で[Daze|眩暈]を付与する"
+     "en": "(20-50)% chance to Daze on Hit",
+     "ja": "ヒット時に(20-50)%の確率で眩暈を付与する"
     }
    ],
    "weapon": {
@@ -7177,8 +7177,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+300 to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +300"
+     "en": "+300 to maximum Runic Ward",
+     "ja": "最大ルーンワード +300"
     }
    ]
   },
@@ -7390,8 +7390,8 @@
    "lvl": 11,
    "implicits": [
     {
-     "en": "(25-35)% chance to [Chain] an additional time",
-     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+     "en": "(25-35)% chance to Chain an additional time",
+     "ja": "(25-35)%の確率で追加で1回連鎖する"
     }
    ],
    "weapon": {
@@ -7429,8 +7429,8 @@
    "lvl": 28,
    "implicits": [
     {
-     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
-     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+     "en": "+50% Surpassing chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ超過可能確率 +50%"
     }
    ],
    "weapon": {
@@ -7607,8 +7607,8 @@
    "lvl": 33,
    "implicits": [
     {
-     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
-     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+     "en": "Grenade Skills Fire an additional Projectile",
+     "ja": "グレネードスキルは投射物を追加で1個放つ"
     }
    ],
    "weapon": {
@@ -7646,8 +7646,8 @@
    "lvl": 50,
    "implicits": [
     {
-     "en": "(20-30)% chance to [Pierce|Pierce] an Enemy",
-     "ja": "(20-30)%の確率で敵を[Pierce|貫通]する"
+     "en": "(20-30)% chance to Pierce an Enemy",
+     "ja": "(20-30)%の確率で敵を貫通する"
     }
    ],
    "weapon": {
@@ -7854,8 +7854,8 @@
    "lvl": 10,
    "implicits": [
     {
-     "en": "(50-80)% increased [Flammability] [BuffMagnitude|Magnitude]",
-     "ja": "[Flammability|可燃性]の[BuffMagnitude|強度]が(50-80)%増加する"
+     "en": "(50-80)% increased Flammability Magnitude",
+     "ja": "可燃性の強度が(50-80)%増加する"
     }
    ],
    "weapon": {
@@ -7871,8 +7871,8 @@
    "lvl": 16,
    "implicits": [
     {
-     "en": "[Minion|Minions] deal (30-50)% increased Damage",
-     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+     "en": "Minions deal (30-50)% increased Damage",
+     "ja": "ミニオンのダメージが(30-50)%増加する"
     }
    ],
    "weapon": {
@@ -7899,8 +7899,8 @@
    "lvl": 28,
    "implicits": [
     {
-     "en": "+(14-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(14-18)%"
+     "en": "+(14-18)% to Block chance",
+     "ja": "ブロック率 +(14-18)%"
     }
    ],
    "weapon": {
@@ -7916,8 +7916,8 @@
    "lvl": 34,
    "implicits": [
     {
-     "en": "+(7-10) to Maximum [Rage]",
-     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+     "en": "+(7-10) to Maximum Rage",
+     "ja": "憤怒の最大数 +(7-10)"
     }
    ],
    "weapon": {
@@ -7944,8 +7944,8 @@
    "lvl": 46,
    "implicits": [
     {
-     "en": "(20-30)% increased [BuffMagnitude|Magnitude] of [Shock|Shock] you inflict",
-     "ja": "プレイヤーが付与した[Shock|感電]の[BuffMagnitude|強度]が(20-30)%増加する"
+     "en": "(20-30)% increased Magnitude of Shock you inflict",
+     "ja": "プレイヤーが付与した感電の強度が(20-30)%増加する"
     }
    ],
    "weapon": {
@@ -7972,8 +7972,8 @@
    "lvl": 58,
    "implicits": [
     {
-     "en": "+(7-10) to Maximum [Rage]",
-     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+     "en": "+(7-10) to Maximum Rage",
+     "ja": "憤怒の最大数 +(7-10)"
     }
    ],
    "weapon": {
@@ -8000,8 +8000,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(10-20)% increased Effect of your [Mark] Skills",
-     "ja": "プレイヤーの[Mark|呪印]スキルの効果が(10-20)%増加する"
+     "en": "(10-20)% increased Effect of your Mark Skills",
+     "ja": "プレイヤーの呪印スキルの効果が(10-20)%増加する"
     }
    ],
    "weapon": {
@@ -8121,8 +8121,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Stun Threshold",
+     "ja": "スタン閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -8253,8 +8253,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
-     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+     "en": "(30-20)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(30-20)%減少する"
     }
    ],
    "defence": {
@@ -8267,8 +8267,8 @@
    "lvl": 73,
    "implicits": [
     {
-     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
-     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Elemental Ailment Threshold",
+     "ja": "元素系状態異常閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -8399,8 +8399,8 @@
    "lvl": 73,
    "implicits": [
     {
-     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
-     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+     "en": "(20-25)% increased Energy Shield Recharge Rate",
+     "ja": "エナジーシールドリチャージレートが(20-25)%増加する"
     }
    ],
    "defence": {
@@ -8518,8 +8518,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
-     "ja": "[Resistances|雷]耐性 +(20-25)%"
+     "en": "+(20-25)% to Lightning Resistance",
+     "ja": "雷耐性 +(20-25)%"
     }
    ],
    "defence": {
@@ -8632,8 +8632,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
-     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+     "en": "+1% to all Maximum Elemental Resistances",
+     "ja": "全ての元素耐性の最大値 +1%"
     }
    ],
    "defence": {
@@ -8647,8 +8647,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(20-30) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(20-30)"
+     "en": "+(20-30) to Spirit",
+     "ja": "スピリット +(20-30)"
     }
    ],
    "defence": {
@@ -8788,8 +8788,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+     "en": "+(7-13)% to Chaos Resistance",
+     "ja": "混沌耐性 +(7-13)%"
     }
    ],
    "defence": {
@@ -10792,8 +10792,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "Adds 1 to 3 [Physical|Physical] Damage to [Attack|Attacks]",
-     "ja": "1から3の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+     "en": "Adds 1 to 3 Physical Damage to Attacks",
+     "ja": "1から3の物理ダメージをアタックに追加する"
     }
    ]
   },
@@ -10803,8 +10803,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "Adds 3 to 5 [Fire] damage to [Attack|Attacks]",
-     "ja": "3から5の[Fire|火]ダメージを[Attack|アタック]に追加する"
+     "en": "Adds 3 to 5 Fire damage to Attacks",
+     "ja": "3から5の火ダメージをアタックに追加する"
     }
    ]
   },
@@ -10814,8 +10814,8 @@
    "lvl": 16,
    "implicits": [
     {
-     "en": "Gain (2-3) Life per Enemy Hit with [Attack|Attacks]",
-     "ja": "[Attack|アタック]でヒットを与えた敵1体ごとに(2-3)のライフを獲得する"
+     "en": "Gain (2-3) Life per Enemy Hit with Attacks",
+     "ja": "アタックでヒットを与えた敵1体ごとに(2-3)のライフを獲得する"
     }
    ]
   },
@@ -10825,8 +10825,8 @@
    "lvl": 24,
    "implicits": [
     {
-     "en": "(20-30)% increased [Accuracy] Rating",
-     "ja": "グローバル[Accuracy|命中]力が(20-30)%増加する"
+     "en": "(20-30)% increased Accuracy Rating",
+     "ja": "グローバル命中力が(20-30)%増加する"
     }
    ]
   },
@@ -10836,8 +10836,8 @@
    "lvl": 33,
    "implicits": [
     {
-     "en": "(25-40)% increased [Stun] Buildup",
-     "ja": "[Stun|スタン]蓄積が(25-40)%増加する"
+     "en": "(25-40)% increased Stun Buildup",
+     "ja": "スタン蓄積が(25-40)%増加する"
     }
    ]
   },
@@ -10847,8 +10847,8 @@
    "lvl": 39,
    "implicits": [
     {
-     "en": "(20-30)% chance to Poison on Hit with [Attack|Attacks]",
-     "ja": "[Attack|アタック]によるヒット時に(20-30)%の確率で毒を付与する"
+     "en": "(20-30)% chance to Poison on Hit with Attacks",
+     "ja": "アタックによるヒット時に(20-30)%の確率で毒を付与する"
     }
    ]
   },
@@ -10858,8 +10858,8 @@
    "lvl": 44,
    "implicits": [
     {
-     "en": "[Attack|Attacks] have (20-30)% chance to cause [Bleeding|Bleeding]",
-     "ja": "[Attack|アタック]は(20-30)%の確率で[Bleeding|出血]を付与する"
+     "en": "Attacks have (20-30)% chance to cause Bleeding",
+     "ja": "アタックは(20-30)%の確率で出血を付与する"
     }
    ]
   },
@@ -10869,8 +10869,8 @@
    "lvl": 51,
    "implicits": [
     {
-     "en": "(7-10)% increased [Attack] Speed",
-     "ja": "[Attack|アタック]スピードが(7-10)%増加する"
+     "en": "(7-10)% increased Attack Speed",
+     "ja": "アタックスピードが(7-10)%増加する"
     }
    ]
   },
@@ -10880,8 +10880,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "100% chance to [Pierce|Pierce] an Enemy",
-     "ja": "100%の確率で敵を[Pierce|貫通]する"
+     "en": "100% chance to Pierce an Enemy",
+     "ja": "100%の確率で敵を貫通する"
     }
    ]
   },
@@ -10902,8 +10902,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(20-30)% increased [Critical|Critical Hit Chance] for [Attack|Attacks]",
-     "ja": "[Attack|アタック]の[Critical|クリティカルヒット率]が(20-30)%増加する"
+     "en": "(20-30)% increased Critical Hit Chance for Attacks",
+     "ja": "アタックのクリティカルヒット率が(20-30)%増加する"
     }
    ]
   },
@@ -10935,8 +10935,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "+(10-15) to [Strength|Strength]",
-     "ja": "[Strength|筋力] +(10-15)"
+     "en": "+(10-15) to Strength",
+     "ja": "筋力 +(10-15)"
     }
    ]
   },
@@ -10946,8 +10946,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "+(10-15) to [Dexterity|Dexterity]",
-     "ja": "[Dexterity|器用さ] +(10-15)"
+     "en": "+(10-15) to Dexterity",
+     "ja": "器用さ +(10-15)"
     }
    ]
   },
@@ -10957,8 +10957,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "+(10-15) to [Intelligence|Intelligence]",
-     "ja": "[Intelligence|知性] +(10-15)"
+     "en": "+(10-15) to Intelligence",
+     "ja": "知性 +(10-15)"
     }
    ]
   },
@@ -10968,8 +10968,8 @@
    "lvl": 14,
    "implicits": [
     {
-     "en": "+(20-30) to maximum [EnergyShield|Energy Shield]",
-     "ja": "最大[EnergyShield|エナジーシールド] +(20-30)"
+     "en": "+(20-30) to maximum Energy Shield",
+     "ja": "最大エナジーシールド +(20-30)"
     }
    ]
   },
@@ -10990,8 +10990,8 @@
    "lvl": 25,
    "implicits": [
     {
-     "en": "+(5-7) to all [Attributes|Attributes]",
-     "ja": "全ての[Attributes|能力値] +(5-7)"
+     "en": "+(5-7) to all Attributes",
+     "ja": "全ての能力値 +(5-7)"
     }
    ]
   },
@@ -11001,8 +11001,8 @@
    "lvl": 30,
    "implicits": [
     {
-     "en": "+(10-15) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(10-15)"
+     "en": "+(10-15) to Spirit",
+     "ja": "スピリット +(10-15)"
     }
    ]
   },
@@ -11012,8 +11012,8 @@
    "lvl": 35,
    "implicits": [
     {
-     "en": "(12-20)% increased [ItemRarity|Rarity of Items] found",
-     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(12-20)%増加する"
+     "en": "(12-20)% increased Rarity of Items found",
+     "ja": "見つかるアイテムのレアリティが(12-20)%増加する"
     }
    ]
   },
@@ -11023,8 +11023,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "+(7-10)% to all [ElementalDamage|Elemental] [Resistances]",
-     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(7-10)%"
+     "en": "+(7-10)% to all Elemental Resistances",
+     "ja": "全ての元素耐性 +(7-10)%"
     }
    ]
   },
@@ -11034,8 +11034,8 @@
    "lvl": 52,
    "implicits": [
     {
-     "en": "+(30-40) to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +(30-40)"
+     "en": "+(30-40) to maximum Runic Ward",
+     "ja": "最大ルーンワード +(30-40)"
     }
    ]
   },
@@ -11045,8 +11045,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(15-20)% increased maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード]が(15-20)%増加する"
+     "en": "(15-20)% increased maximum Runic Ward",
+     "ja": "最大ルーンワードが(15-20)%増加する"
     }
    ]
   },
@@ -11322,8 +11322,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "Adds 1 to 4 [Physical|Physical] Damage to [Attack|Attacks]",
-     "ja": "1から4の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+     "en": "Adds 1 to 4 Physical Damage to Attacks",
+     "ja": "1から4の物理ダメージをアタックに追加する"
     }
    ]
   },
@@ -11344,8 +11344,8 @@
    "lvl": 8,
    "implicits": [
     {
-     "en": "+(20-30)% to [Resistances|Fire Resistance]",
-     "ja": "[Resistances|火]耐性 +(20-30)%"
+     "en": "+(20-30)% to Fire Resistance",
+     "ja": "火耐性 +(20-30)%"
     }
    ]
   },
@@ -11355,8 +11355,8 @@
    "lvl": 12,
    "implicits": [
     {
-     "en": "+(20-30)% to [Resistances|Cold Resistance]",
-     "ja": "[Resistances|冷気]耐性 +(20-30)%"
+     "en": "+(20-30)% to Cold Resistance",
+     "ja": "冷気耐性 +(20-30)%"
     }
    ]
   },
@@ -11366,8 +11366,8 @@
    "lvl": 16,
    "implicits": [
     {
-     "en": "+(20-30)% to [Resistances|Lightning Resistance]",
-     "ja": "[Resistances|雷]耐性 +(20-30)%"
+     "en": "+(20-30)% to Lightning Resistance",
+     "ja": "雷耐性 +(20-30)%"
     }
    ]
   },
@@ -11377,8 +11377,8 @@
    "lvl": 20,
    "implicits": [
     {
-     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+     "en": "+(7-13)% to Chaos Resistance",
+     "ja": "混沌耐性 +(7-13)%"
     }
    ]
   },
@@ -11388,8 +11388,8 @@
    "lvl": 26,
    "implicits": [
     {
-     "en": "+(120-160) to [Accuracy|Accuracy] Rating",
-     "ja": "[Accuracy|命中力] +(120-160)"
+     "en": "+(120-160) to Accuracy Rating",
+     "ja": "命中力 +(120-160)"
     }
    ]
   },
@@ -11410,8 +11410,8 @@
    "lvl": 35,
    "implicits": [
     {
-     "en": "+(7-10)% to all [ElementalDamage|Elemental] [Resistances]",
-     "ja": "全ての[ElementalDamage|元素][Resistances|耐性] +(7-10)%"
+     "en": "+(7-10)% to all Elemental Resistances",
+     "ja": "全ての元素耐性 +(7-10)%"
     }
    ]
   },
@@ -11421,8 +11421,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "(6-15)% increased [ItemRarity|Rarity of Items] found",
-     "ja": "見つかる[ItemRarity|アイテムのレアリティ]が(6-15)%増加する"
+     "en": "(6-15)% increased Rarity of Items found",
+     "ja": "見つかるアイテムのレアリティが(6-15)%増加する"
     }
    ]
   },
@@ -11443,8 +11443,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "Inflict [AbyssalWasting|Abyssal Wasting] on [Hit]",
-     "ja": "[Hit|ヒット]時に[AbyssalWasting|アビスの消耗]を付与する"
+     "en": "Inflict Abyssal Wasting on Hit",
+     "ja": "ヒット時にアビスの消耗を付与する"
     }
    ]
   },
@@ -11498,8 +11498,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "Adds (6-9) to (11-15) [Physical|Physical] Damage to [Attack|Attacks]",
-     "ja": "(6-9)から(11-15)の[Physical|物理]ダメージを[Attack|アタック]に追加する"
+     "en": "Adds (6-9) to (11-15) Physical Damage to Attacks",
+     "ja": "(6-9)から(11-15)の物理ダメージをアタックに追加する"
     }
    ]
   },
@@ -11509,8 +11509,8 @@
    "lvl": 47,
    "implicits": [
     {
-     "en": "(11-23)% increased [Chaos] Damage",
-     "ja": "[Chaos|混沌]ダメージが(11-23)%増加する"
+     "en": "(11-23)% increased Chaos Damage",
+     "ja": "混沌ダメージが(11-23)%増加する"
     }
    ]
   },
@@ -11531,8 +11531,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "(20-30)% increased Life Recovery from [Flask|Flasks]",
-     "ja": "[Flask|フラスコ]によるライフ回復量が(20-30)%増加する"
+     "en": "(20-30)% increased Life Recovery from Flasks",
+     "ja": "フラスコによるライフ回復量が(20-30)%増加する"
     }
    ]
   },
@@ -11542,8 +11542,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "(20-30)% increased Mana Recovery from [Flask|Flasks]",
-     "ja": "[Flask|フラスコ]によるマナ回復量が(20-30)%増加する"
+     "en": "(20-30)% increased Mana Recovery from Flasks",
+     "ja": "フラスコによるマナ回復量が(20-30)%増加する"
     }
    ]
   },
@@ -11553,8 +11553,8 @@
    "lvl": 14,
    "implicits": [
     {
-     "en": "(20-30)% increased [Flask|Flask] Charges gained",
-     "ja": "獲得[Flask|フラスコ]チャージが(20-30)%増加する"
+     "en": "(20-30)% increased Flask Charges gained",
+     "ja": "獲得フラスコチャージが(20-30)%増加する"
     }
    ]
   },
@@ -11564,8 +11564,8 @@
    "lvl": 20,
    "implicits": [
     {
-     "en": "(15-20)% increased [Charm] Effect Duration",
-     "ja": "[Charm|チャーム]の効果持続時間が(15-20)%増加する"
+     "en": "(15-20)% increased Charm Effect Duration",
+     "ja": "チャームの効果持続時間が(15-20)%増加する"
     }
    ]
   },
@@ -11575,8 +11575,8 @@
    "lvl": 25,
    "implicits": [
     {
-     "en": "+(140-180) to [Armour]",
-     "ja": "[Armour|アーマー] +(140-180)"
+     "en": "+(140-180) to Armour",
+     "ja": "アーマー +(140-180)"
     }
    ]
   },
@@ -11586,8 +11586,8 @@
    "lvl": 31,
    "implicits": [
     {
-     "en": "(15-10)% reduced [Charm] Charges used",
-     "ja": "[Charm|チャーム]の使用チャージが(15-10)%減少する"
+     "en": "(15-10)% reduced Charm Charges used",
+     "ja": "チャームの使用チャージが(15-10)%減少する"
     }
    ]
   },
@@ -11597,8 +11597,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "(15-10)% reduced [Flask|Flask] Charges used",
-     "ja": "消費[Flask|フラスコ]チャージが(15-10)%減少する"
+     "en": "(15-10)% reduced Flask Charges used",
+     "ja": "消費フラスコチャージが(15-10)%減少する"
     }
    ]
   },
@@ -11608,8 +11608,8 @@
    "lvl": 44,
    "implicits": [
     {
-     "en": "(20-30)% increased [Charm] Charges gained",
-     "ja": "[Charm|チャーム]の獲得チャージが(20-30)%増加する"
+     "en": "(20-30)% increased Charm Charges gained",
+     "ja": "チャームの獲得チャージが(20-30)%増加する"
     }
    ]
   },
@@ -11619,8 +11619,8 @@
    "lvl": 50,
    "implicits": [
     {
-     "en": "(20-30)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(20-30)%増加する"
+     "en": "(20-30)% increased Stun Threshold",
+     "ja": "スタン閾値が(20-30)%増加する"
     }
    ]
   },
@@ -11630,12 +11630,12 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(20-30)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(20-30)%増加する"
+     "en": "(20-30)% increased Stun Threshold",
+     "ja": "スタン閾値が(20-30)%増加する"
     },
     {
-     "en": "[Flask|Flasks] gain (0.5-1) charges per Second",
-     "ja": "[Flask|フラスコ]は毎秒(0.5-1)のチャージを獲得する"
+     "en": "Flasks gain (0.5-1) charges per Second",
+     "ja": "フラスコは毎秒(0.5-1)のチャージを獲得する"
     }
    ]
   },
@@ -11645,8 +11645,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "20% of [Flask|Flask] Recovery applied Instantly",
-     "ja": "[Flask|フラスコ]による回復の20%が即時に適用される"
+     "en": "20% of Flask Recovery applied Instantly",
+     "ja": "フラスコによる回復の20%が即時に適用される"
     }
    ]
   },
@@ -11656,8 +11656,8 @@
    "lvl": 62,
    "implicits": [
     {
-     "en": "[Flask|Flasks] gain 0.17 charges per Second",
-     "ja": "[Flask|フラスコ]は毎秒0.17のチャージを獲得する"
+     "en": "Flasks gain 0.17 charges per Second",
+     "ja": "フラスコは毎秒0.17のチャージを獲得する"
     }
    ]
   },
@@ -11667,8 +11667,8 @@
    "lvl": 50,
    "implicits": [
     {
-     "en": "Has 1 [Charm] Slot",
-     "ja": "1個の[Charm|チャーム]スロットを持つ"
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
     },
     {
      "en": "This item gains bonuses from Socketed Items as though it was Boots",
@@ -11682,8 +11682,8 @@
    "lvl": 32,
    "implicits": [
     {
-     "en": "Has 1 [Charm] Slot",
-     "ja": "1個の[Charm|チャーム]スロットを持つ"
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
     },
     {
      "en": "(8-12)% increased Cast Speed",
@@ -11697,12 +11697,12 @@
    "lvl": 32,
    "implicits": [
     {
-     "en": "Has 1 [Charm] Slot",
-     "ja": "1個の[Charm|チャーム]スロットを持つ"
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
     },
     {
-     "en": "+(15-20) to [Strength|Strength]",
-     "ja": "[Strength|筋力] +(15-20)"
+     "en": "+(15-20) to Strength",
+     "ja": "筋力 +(15-20)"
     }
    ]
   },
@@ -11712,12 +11712,12 @@
    "lvl": 32,
    "implicits": [
     {
-     "en": "Has 1 [Charm] Slot",
-     "ja": "1個の[Charm|チャーム]スロットを持つ"
+     "en": "Has 1 Charm Slot",
+     "ja": "1個のチャームスロットを持つ"
     },
     {
-     "en": "Adds 1 to (20-30) [Lightning] damage to [Attack|Attacks]",
-     "ja": "1から(20-30)の[Lightning|雷]ダメージを[Attack|アタック]に追加する"
+     "en": "Adds 1 to (20-30) Lightning damage to Attacks",
+     "ja": "1から(20-30)の雷ダメージをアタックに追加する"
     }
    ]
   },
@@ -11897,8 +11897,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+1 to Level of all [Corrupted] Skill Gems",
-     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+     "en": "+1 to Level of all Corrupted Skill Gems",
+     "ja": "全てのコラプト状態のスキルジェムのレベル +1"
     }
    ],
    "defence": {
@@ -12038,8 +12038,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "+20% to Maximum [Quality]",
-     "ja": "[Quality|品質]の最大値 +20%"
+     "en": "+20% to Maximum Quality",
+     "ja": "品質の最大値 +20%"
     }
    ]
   },
@@ -12049,8 +12049,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "+25% to Maximum [Quality]",
-     "ja": "[Quality|品質]の最大値 +25%"
+     "en": "+25% to Maximum Quality",
+     "ja": "品質の最大値 +25%"
     }
    ]
   },
@@ -12082,8 +12082,8 @@
    "lvl": 51,
    "implicits": [
     {
-     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
-     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+     "en": "+(5-10)% to Critical Damage Bonus",
+     "ja": "クリティカルダメージボーナス +(5-10)%"
     }
    ],
    "weapon": {
@@ -12132,8 +12132,8 @@
    "lvl": 62,
    "implicits": [
     {
-     "en": "40% chance to [Daze] on [Hit]",
-     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+     "en": "40% chance to Daze on Hit",
+     "ja": "ヒット時に40%の確率で眩暈を付与する"
     }
    ],
    "weapon": {
@@ -12149,8 +12149,8 @@
    "lvl": 45,
    "implicits": [
     {
-     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
-     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+     "en": "Causes (20-40)% increased Stun Buildup",
+     "ja": "引き起こすスタン蓄積が(20-40)%増加する"
     }
    ],
    "weapon": {
@@ -12166,8 +12166,8 @@
    "lvl": 48,
    "implicits": [
     {
-     "en": "[Crushed|Crushes] Enemies on Hit",
-     "ja": "ヒット時に敵を[Crushed|破砕]する"
+     "en": "Crushes Enemies on Hit",
+     "ja": "ヒット時に敵を破砕する"
     }
    ],
    "weapon": {
@@ -12183,8 +12183,8 @@
    "lvl": 51,
    "implicits": [
     {
-     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
-     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+     "en": "Strikes deal Splash Damage",
+     "ja": "ストライクはスプラッシュダメージを与える"
     }
    ],
    "weapon": {
@@ -12222,8 +12222,8 @@
    "lvl": 62,
    "implicits": [
     {
-     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
-     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+     "en": "Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage",
+     "ja": "クリティカルキル時に敵を爆発させ、そのライフの10%を物理ダメージとして与える"
     }
    ],
    "weapon": {
@@ -12239,8 +12239,8 @@
    "lvl": 45,
    "implicits": [
     {
-     "en": "16% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+     "en": "16% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が16%増加する"
     }
    ],
    "weapon": {
@@ -12300,8 +12300,8 @@
    "lvl": 62,
    "implicits": [
     {
-     "en": "+(12-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(12-18)%"
+     "en": "+(12-18)% to Block chance",
+     "ja": "ブロック率 +(12-18)%"
     }
    ],
    "weapon": {
@@ -12328,8 +12328,8 @@
    "lvl": 48,
    "implicits": [
     {
-     "en": "(25-35)% chance to [Chain] an additional time",
-     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+     "en": "(25-35)% chance to Chain an additional time",
+     "ja": "(25-35)%の確率で追加で1回連鎖する"
     }
    ],
    "weapon": {
@@ -12356,8 +12356,8 @@
    "lvl": 54,
    "implicits": [
     {
-     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
-     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+     "en": "+50% Surpassing chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ超過可能確率 +50%"
     }
    ],
    "weapon": {
@@ -12451,8 +12451,8 @@
    "lvl": 59,
    "implicits": [
     {
-     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
-     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+     "en": "Grenade Skills Fire an additional Projectile",
+     "ja": "グレネードスキルは投射物を追加で1個放つ"
     }
    ],
    "weapon": {
@@ -12495,8 +12495,8 @@
    "lvl": 48,
    "implicits": [
     {
-     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
-     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+     "en": "(15-25)% chance to Maim on Hit",
+     "ja": "ヒット時に(15-25)%の確率で重傷を付与する"
     }
    ],
    "weapon": {
@@ -12517,8 +12517,8 @@
    "lvl": 51,
    "implicits": [
     {
-     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
-     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+     "en": "(25-35)% increased Projectile Speed with this Weapon",
+     "ja": "この武器による投射物スピードが(25-35)%増加する"
     }
    ],
    "weapon": {
@@ -12577,8 +12577,8 @@
    "lvl": 62,
    "implicits": [
     {
-     "en": "25% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+     "en": "25% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が25%増加する"
     }
    ],
    "weapon": {
@@ -12599,8 +12599,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "+(14-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(14-18)%"
+     "en": "+(14-18)% to Block chance",
+     "ja": "ブロック率 +(14-18)%"
     }
    ],
    "weapon": {
@@ -12616,8 +12616,8 @@
    "lvl": 59,
    "implicits": [
     {
-     "en": "+(7-10) to Maximum [Rage]",
-     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+     "en": "+(7-10) to Maximum Rage",
+     "ja": "憤怒の最大数 +(7-10)"
     }
    ],
    "weapon": {
@@ -13944,8 +13944,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Stun Threshold",
+     "ja": "スタン閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -13958,8 +13958,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "+(15-25)% of [Armour|Armour] also applies to [ElementalDamage|Elemental Damage]",
-     "ja": "[Armour|アーマー]の+(15-25)%が[ElementalDamage|元素ダメージ]にも適用される"
+     "en": "+(15-25)% of Armour also applies to Elemental Damage",
+     "ja": "アーマーの+(15-25)%が元素ダメージにも適用される"
     }
    ],
    "defence": {
@@ -13972,8 +13972,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
-     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+     "en": "(30-20)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(30-20)%減少する"
     }
    ],
    "defence": {
@@ -13994,8 +13994,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
-     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Elemental Ailment Threshold",
+     "ja": "元素系状態異常閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -14044,8 +14044,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
-     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+     "en": "(20-25)% increased Energy Shield Recharge Rate",
+     "ja": "エナジーシールドリチャージレートが(20-25)%増加する"
     }
    ],
    "defence": {
@@ -14087,8 +14087,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
-     "ja": "[Resistances|雷]耐性 +(20-25)%"
+     "en": "+(20-25)% to Lightning Resistance",
+     "ja": "雷耐性 +(20-25)%"
     }
    ],
    "defence": {
@@ -14111,8 +14111,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "[Hit|Hits] against you have (15-25)% reduced [CriticalDamageBonus|Critical Damage Bonus]",
-     "ja": "プレイヤーに対する[Hit|ヒット]は[CriticalDamageBonus|クリティカルダメージボーナス]が(15-25)%減少する"
+     "en": "Hits against you have (15-25)% reduced Critical Damage Bonus",
+     "ja": "プレイヤーに対するヒットはクリティカルダメージボーナスが(15-25)%減少する"
     }
    ],
    "defence": {
@@ -14135,8 +14135,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(20-30) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(20-30)"
+     "en": "+(20-30) to Spirit",
+     "ja": "スピリット +(20-30)"
     }
    ],
    "defence": {
@@ -14150,8 +14150,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
-     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+     "en": "+1% to all Maximum Elemental Resistances",
+     "ja": "全ての元素耐性の最大値 +1%"
     }
    ],
    "defence": {
@@ -14165,8 +14165,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "(8-14)% of Damage taken [Recoup|Recouped] as Life",
-     "ja": "受けたダメージの(8-14)%をライフとして[Recoup|回収]する"
+     "en": "(8-14)% of Damage taken Recouped as Life",
+     "ja": "受けたダメージの(8-14)%をライフとして回収する"
     }
    ],
    "defence": {
@@ -14189,8 +14189,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+     "en": "+(7-13)% to Chaos Resistance",
+     "ja": "混沌耐性 +(7-13)%"
     }
    ],
    "defence": {
@@ -14660,8 +14660,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "Has +3 to [Evasion] Rating per player level\nHas +1 to maximum [EnergyShield|Energy Shield] per player level",
-     "ja": "プレイヤーレベルごとに[Evasion|回避力] +3を持つ\nプレイヤーレベルごとに最大[EnergyShield|エナジーシールド] +1を持つ"
+     "en": "Has +3 to Evasion Rating per player level\nHas +1 to maximum Energy Shield per player level",
+     "ja": "プレイヤーレベルごとに回避力 +3を持つ\nプレイヤーレベルごとに最大エナジーシールド +1を持つ"
     }
    ]
   },
@@ -14671,8 +14671,8 @@
    "lvl": 1,
    "implicits": [
     {
-     "en": "Has +2 to [Evasion] Rating per player level\nHas +1 to maximum [EnergyShield|Energy Shield] per player level\nHas +1 to maximum [Ward|Runic Ward] per player level",
-     "ja": "プレイヤーレベルごとに[Evasion|回避力] +2を持つ\nプレイヤーレベルごとに最大[EnergyShield|エナジーシールド] +1を持つ\nプレイヤーレベルごとに最大[Ward|ルーンワード] +1を持つ"
+     "en": "Has +2 to Evasion Rating per player level\nHas +1 to maximum Energy Shield per player level\nHas +1 to maximum Runic Ward per player level",
+     "ja": "プレイヤーレベルごとに回避力 +2を持つ\nプレイヤーレベルごとに最大エナジーシールド +1を持つ\nプレイヤーレベルごとに最大ルーンワード +1を持つ"
     }
    ]
   },
@@ -15246,8 +15246,8 @@
    "lvl": 58,
    "implicits": [
     {
-     "en": "+(750-1000) to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +(750-1000)"
+     "en": "+(750-1000) to maximum Runic Ward",
+     "ja": "最大ルーンワード +(750-1000)"
     }
    ]
   },
@@ -15265,8 +15265,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Stun Threshold",
+     "ja": "スタン閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -15407,8 +15407,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
-     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+     "en": "(30-20)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(30-20)%減少する"
     }
    ],
    "defence": {
@@ -15421,8 +15421,8 @@
    "lvl": 73,
    "implicits": [
     {
-     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
-     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Elemental Ailment Threshold",
+     "ja": "元素系状態異常閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -15563,8 +15563,8 @@
    "lvl": 73,
    "implicits": [
     {
-     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
-     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+     "en": "(20-25)% increased Energy Shield Recharge Rate",
+     "ja": "エナジーシールドリチャージレートが(20-25)%増加する"
     }
    ],
    "defence": {
@@ -15687,8 +15687,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
-     "ja": "[Resistances|雷]耐性 +(20-25)%"
+     "en": "+(20-25)% to Lightning Resistance",
+     "ja": "雷耐性 +(20-25)%"
     }
    ],
    "defence": {
@@ -15807,8 +15807,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
-     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+     "en": "+1% to all Maximum Elemental Resistances",
+     "ja": "全ての元素耐性の最大値 +1%"
     }
    ],
    "defence": {
@@ -15821,8 +15821,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(20-30) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(20-30)"
+     "en": "+(20-30) to Spirit",
+     "ja": "スピリット +(20-30)"
     }
    ],
    "defence": {
@@ -15947,8 +15947,8 @@
    "lvl": 68,
    "implicits": [
     {
-     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+     "en": "+(7-13)% to Chaos Resistance",
+     "ja": "混沌耐性 +(7-13)%"
     }
    ],
    "defence": {
@@ -15994,12 +15994,12 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+1 to Level of all [Corrupted] Skill Gems",
-     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+     "en": "+1 to Level of all Corrupted Skill Gems",
+     "ja": "全てのコラプト状態のスキルジェムのレベル +1"
     },
     {
-     "en": "(2-4)% increased Chaos Damage for each Corrupted Item [Equipped]",
-     "ja": "[Equipped|装備中]のコラプト状態のアイテム1個ごとに混沌ダメージが(2-4)%増加する"
+     "en": "(2-4)% increased Chaos Damage for each Corrupted Item Equipped",
+     "ja": "装備中のコラプト状態のアイテム1個ごとに混沌ダメージが(2-4)%増加する"
     }
    ],
    "defence": {
@@ -16309,8 +16309,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "(30-50)% increased [Ignite|Ignite] [BuffMagnitude|Magnitude]",
-     "ja": "[Ignite|発火]の[BuffMagnitude|強度]が(30-50)%増加する"
+     "en": "(30-50)% increased Ignite Magnitude",
+     "ja": "発火の強度が(30-50)%増加する"
     }
    ],
    "defence": {
@@ -18814,8 +18814,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(30-40)% increased [StunThreshold|Stun Threshold]",
-     "ja": "[StunThreshold|スタン閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Stun Threshold",
+     "ja": "スタン閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -18829,8 +18829,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "+(15-25)% of [Armour|Armour] also applies to [ElementalDamage|Elemental Damage]",
-     "ja": "[Armour|アーマー]の+(15-25)%が[ElementalDamage|元素ダメージ]にも適用される"
+     "en": "+(15-25)% of Armour also applies to Elemental Damage",
+     "ja": "アーマーの+(15-25)%が元素ダメージにも適用される"
     }
    ],
    "defence": {
@@ -18844,8 +18844,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "(30-20)% reduced [Slow|Slowing] Potency of [Debuff|Debuffs] on You",
-     "ja": "プレイヤーに対する[Slow|減速]の[Debuff|デバフ]のポテンシャルが(30-20)%減少する"
+     "en": "(30-20)% reduced Slowing Potency of Debuffs on You",
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが(30-20)%減少する"
     }
    ],
    "defence": {
@@ -18868,8 +18868,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
-     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Elemental Ailment Threshold",
+     "ja": "元素系状態異常閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -18907,8 +18907,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "(30-40)% increased [Ward|Runic Ward] Regeneration Rate",
-     "ja": "[Ward|ルーンワード]の自動回復レートが(30-40)%増加する"
+     "en": "(30-40)% increased Runic Ward Regeneration Rate",
+     "ja": "ルーンワードの自動回復レートが(30-40)%増加する"
     }
    ],
    "defence": {
@@ -18922,8 +18922,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(20-25)% increased [ESRechargeRate|Energy Shield Recharge Rate]",
-     "ja": "[ESRechargeRate|エナジーシールドリチャージレート]が(20-25)%増加する"
+     "en": "(20-25)% increased Energy Shield Recharge Rate",
+     "ja": "エナジーシールドリチャージレートが(20-25)%増加する"
     }
    ],
    "defence": {
@@ -18968,8 +18968,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(20-25)% to [Resistances|Lightning Resistance]",
-     "ja": "[Resistances|雷]耐性 +(20-25)%"
+     "en": "+(20-25)% to Lightning Resistance",
+     "ja": "雷耐性 +(20-25)%"
     }
    ],
    "defence": {
@@ -18994,8 +18994,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "[Hit|Hits] against you have (15-25)% reduced [CriticalDamageBonus|Critical Damage Bonus]",
-     "ja": "プレイヤーに対する[Hit|ヒット]は[CriticalDamageBonus|クリティカルダメージボーナス]が(15-25)%減少する"
+     "en": "Hits against you have (15-25)% reduced Critical Damage Bonus",
+     "ja": "プレイヤーに対するヒットはクリティカルダメージボーナスが(15-25)%減少する"
     }
    ],
    "defence": {
@@ -19020,8 +19020,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(20-30) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(20-30)"
+     "en": "+(20-30) to Spirit",
+     "ja": "スピリット +(20-30)"
     }
    ],
    "defence": {
@@ -19036,8 +19036,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
-     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+     "en": "+1% to all Maximum Elemental Resistances",
+     "ja": "全ての元素耐性の最大値 +1%"
     }
    ],
    "defence": {
@@ -19052,8 +19052,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "(8-14)% of Damage taken [Recoup|Recouped] as Life",
-     "ja": "受けたダメージの(8-14)%をライフとして[Recoup|回収]する"
+     "en": "(8-14)% of Damage taken Recouped as Life",
+     "ja": "受けたダメージの(8-14)%をライフとして回収する"
     }
    ],
    "defence": {
@@ -19078,8 +19078,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(7-13)% to [Resistances|Chaos Resistance]",
-     "ja": "[Resistances|混沌]耐性 +(7-13)%"
+     "en": "+(7-13)% to Chaos Resistance",
+     "ja": "混沌耐性 +(7-13)%"
     }
    ],
    "defence": {
@@ -20054,8 +20054,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "(20-30)% increased Area of Effect for [Attack|Attacks]",
-     "ja": "[Attack|アタック]の効果範囲が(20-30)%増加する"
+     "en": "(20-30)% increased Area of Effect for Attacks",
+     "ja": "アタックの効果範囲が(20-30)%増加する"
     }
    ],
    "weapon": {
@@ -20071,8 +20071,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "(20-30)% increased Area of Effect for [Attack|Attacks]",
-     "ja": "[Attack|アタック]の効果範囲が(20-30)%増加する"
+     "en": "(20-30)% increased Area of Effect for Attacks",
+     "ja": "アタックの効果範囲が(20-30)%増加する"
     }
    ],
    "weapon": {
@@ -20110,8 +20110,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "(30-40)% increased effect of [ArmourBreak|Fully Broken Armour]",
-     "ja": "[ArmourBreak|完全アーマー破壊]の効果が(30-40)%増加する"
+     "en": "(30-40)% increased effect of Fully Broken Armour",
+     "ja": "完全アーマー破壊の効果が(30-40)%増加する"
     }
    ],
    "weapon": {
@@ -20131,8 +20131,8 @@
      "ja": "ソケットを3個持つ"
     },
     {
-     "en": "+(100-150) to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +(100-150)"
+     "en": "+(100-150) to maximum Runic Ward",
+     "ja": "最大ルーンワード +(100-150)"
     }
    ],
    "weapon": {
@@ -20181,8 +20181,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
-     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+     "en": "Causes (20-40)% increased Stun Buildup",
+     "ja": "引き起こすスタン蓄積が(20-40)%増加する"
     }
    ],
    "weapon": {
@@ -20198,8 +20198,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "Causes (20-40)% increased [Stun|Stun] Buildup",
-     "ja": "引き起こす[Stun|スタン]蓄積が(20-40)%増加する"
+     "en": "Causes (20-40)% increased Stun Buildup",
+     "ja": "引き起こすスタン蓄積が(20-40)%増加する"
     }
    ],
    "weapon": {
@@ -20215,8 +20215,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "[Crushed|Crushes] Enemies on Hit",
-     "ja": "ヒット時に敵を[Crushed|破砕]する"
+     "en": "Crushes Enemies on Hit",
+     "ja": "ヒット時に敵を破砕する"
     }
    ],
    "weapon": {
@@ -20254,8 +20254,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
-     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+     "en": "Strikes deal Splash Damage",
+     "ja": "ストライクはスプラッシュダメージを与える"
     },
     {
      "en": "(20-30)% increased Bleeding Duration",
@@ -20297,8 +20297,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
-     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+     "en": "Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage",
+     "ja": "クリティカルキル時に敵を爆発させ、そのライフの10%を物理ダメージとして与える"
     }
    ],
    "weapon": {
@@ -20314,8 +20314,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
-     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+     "en": "Strikes deal Splash Damage",
+     "ja": "ストライクはスプラッシュダメージを与える"
     }
    ],
    "weapon": {
@@ -20379,8 +20379,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
-     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+     "en": "(15-25)% chance to Maim on Hit",
+     "ja": "ヒット時に(15-25)%の確率で重傷を付与する"
     }
    ],
    "weapon": {
@@ -20416,8 +20416,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
-     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+     "en": "(25-35)% increased Projectile Speed with this Weapon",
+     "ja": "この武器による投射物スピードが(25-35)%増加する"
     }
    ],
    "weapon": {
@@ -20476,8 +20476,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "50% increased [BuffMagnitude|Magnitude] of [Bleeding|Bleeding] you inflict",
-     "ja": "プレイヤーが付与した[Bleeding|出血]の[BuffMagnitude|強度]が50%増加する"
+     "en": "50% increased Magnitude of Bleeding you inflict",
+     "ja": "プレイヤーが付与した出血の強度が50%増加する"
     }
    ],
    "weapon": {
@@ -20493,8 +20493,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "16% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+     "en": "16% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が16%増加する"
     }
    ],
    "weapon": {
@@ -20510,8 +20510,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "16% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+     "en": "16% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が16%増加する"
     }
    ],
    "weapon": {
@@ -20538,8 +20538,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "[Ignite|Ignites] you inflict deal Damage (30-40)% faster",
-     "ja": "プレイヤーが付与した[Ignite|発火]がダメージを与える速度が(30-40)%速くなる"
+     "en": "Ignites you inflict deal Damage (30-40)% faster",
+     "ja": "プレイヤーが付与した発火がダメージを与える速度が(30-40)%速くなる"
     }
    ],
    "weapon": {
@@ -20588,8 +20588,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "Projectiles have 50% chance for an additional Projectile when [Fork|Forking]",
-     "ja": "投射物は[Fork|分岐]する時に50%の確率で追加の投射物を放つ"
+     "en": "Projectiles have 50% chance for an additional Projectile when Forking",
+     "ja": "投射物は分岐する時に50%の確率で追加の投射物を放つ"
     }
    ],
    "weapon": {
@@ -20605,8 +20605,8 @@
    "lvl": 40,
    "implicits": [
     {
-     "en": "(25-35)% chance to [Chain] an additional time",
-     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+     "en": "(25-35)% chance to Chain an additional time",
+     "ja": "(25-35)%の確率で追加で1回連鎖する"
     }
    ],
    "weapon": {
@@ -20644,8 +20644,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
-     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+     "en": "+50% Surpassing chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ超過可能確率 +50%"
     }
    ],
    "weapon": {
@@ -20782,8 +20782,8 @@
    "lvl": 38,
    "implicits": [
     {
-     "en": "[Minion|Minions] deal (30-50)% increased Damage",
-     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+     "en": "Minions deal (30-50)% increased Damage",
+     "ja": "ミニオンのダメージが(30-50)%増加する"
     }
    ],
    "weapon": {
@@ -20799,8 +20799,8 @@
    "lvl": 55,
    "implicits": [
     {
-     "en": "[Minion|Minions] deal (51-100)% increased Damage",
-     "ja": "[Minion|ミニオン]のダメージが(51-100)%増加する"
+     "en": "Minions deal (51-100)% increased Damage",
+     "ja": "ミニオンのダメージが(51-100)%増加する"
     }
    ],
    "weapon": {
@@ -20860,8 +20860,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "+(5-10)% to [CriticalDamageBonus|Critical Damage Bonus]",
-     "ja": "[CriticalDamageBonus|クリティカルダメージボーナス] +(5-10)%"
+     "en": "+(5-10)% to Critical Damage Bonus",
+     "ja": "クリティカルダメージボーナス +(5-10)%"
     }
    ],
    "weapon": {
@@ -20877,8 +20877,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "40% chance to [Daze] on [Hit]",
-     "ja": "[Hit|ヒット]時に40%の確率で[Daze|眩暈]を付与する"
+     "en": "40% chance to Daze on Hit",
+     "ja": "ヒット時に40%の確率で眩暈を付与する"
     }
    ],
    "weapon": {
@@ -20905,8 +20905,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "[Accuracy|Always Hits]",
-     "ja": "[Accuracy|常にヒットする]"
+     "en": "Always Hits",
+     "ja": "常にヒットする"
     }
    ],
    "weapon": {
@@ -20922,8 +20922,8 @@
    "lvl": 67,
    "implicits": [
     {
-     "en": "[Crushed|Crushes] Enemies on Hit",
-     "ja": "ヒット時に敵を[Crushed|破砕]する"
+     "en": "Crushes Enemies on Hit",
+     "ja": "ヒット時に敵を破砕する"
     }
    ],
    "weapon": {
@@ -20950,8 +20950,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "Causes (30-50)% increased [Stun|Stun] Buildup",
-     "ja": "引き起こす[Stun|スタン]蓄積が(30-50)%増加する"
+     "en": "Causes (30-50)% increased Stun Buildup",
+     "ja": "引き起こすスタン蓄積が(30-50)%増加する"
     }
    ],
    "weapon": {
@@ -20967,8 +20967,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "[Strike|Strikes] deal [MeleeSplash|Splash Damage]",
-     "ja": "[Strike|ストライク]は[MeleeSplash|スプラッシュダメージ]を与える"
+     "en": "Strikes deal Splash Damage",
+     "ja": "ストライクはスプラッシュダメージを与える"
     }
    ],
    "weapon": {
@@ -20984,8 +20984,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "Causes Enemies to Explode on [Critical] kill, for 10% of their Life as [Physical|Physical Damage]",
-     "ja": "[Critical|クリティカル]キル時に敵を爆発させ、そのライフの10%を[Physical|物理ダメージ]として与える"
+     "en": "Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage",
+     "ja": "クリティカルキル時に敵を爆発させ、そのライフの10%を物理ダメージとして与える"
     }
    ],
    "weapon": {
@@ -21012,8 +21012,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "[Warcry|Warcries] [Empowered|Empower] an additional [Attack]",
-     "ja": "[Warcry|ウォークライ]は[Attack|アタック]を追加で1回[Empowered|強化]する"
+     "en": "Warcries Empower an additional Attack",
+     "ja": "ウォークライはアタックを追加で1回強化する"
     }
    ],
    "weapon": {
@@ -21073,8 +21073,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "16% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が16%増加する"
+     "en": "16% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が16%増加する"
     }
    ],
    "weapon": {
@@ -21101,8 +21101,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "+(12-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(12-18)%"
+     "en": "+(12-18)% to Block chance",
+     "ja": "ブロック率 +(12-18)%"
     }
    ],
    "weapon": {
@@ -21129,8 +21129,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "(20-50)% chance to [Daze] on [Hit]",
-     "ja": "[Hit|ヒット]時に(20-50)%の確率で[Daze|眩暈]を付与する"
+     "en": "(20-50)% chance to Daze on Hit",
+     "ja": "ヒット時に(20-50)%の確率で眩暈を付与する"
     }
    ],
    "weapon": {
@@ -21156,8 +21156,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+(30-50) to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +(30-50)"
+     "en": "+(30-50) to maximum Runic Ward",
+     "ja": "最大ルーンワード +(30-50)"
     }
    ],
    "weapon": {
@@ -21173,8 +21173,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+(30-50) to maximum [Ward|Runic Ward]",
-     "ja": "最大[Ward|ルーンワード] +(30-50)"
+     "en": "+(30-50) to maximum Runic Ward",
+     "ja": "最大ルーンワード +(30-50)"
     }
    ],
    "weapon": {
@@ -21212,8 +21212,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "(25-35)% chance to [Chain] an additional time",
-     "ja": "(25-35)%の確率で追加で1回[Chain|連鎖]する"
+     "en": "(25-35)% chance to Chain an additional time",
+     "ja": "(25-35)%の確率で追加で1回連鎖する"
     }
    ],
    "weapon": {
@@ -21229,8 +21229,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "+50% [SurpassChance|Surpassing] chance to fire an additional Arrow",
-     "ja": "矢を追加で1個放つ[SurpassChance|超過可能確率] +50%"
+     "en": "+50% Surpassing chance to fire an additional Arrow",
+     "ja": "矢を追加で1個放つ超過可能確率 +50%"
     }
    ],
    "weapon": {
@@ -21352,8 +21352,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "[Grenade] Skills Fire an additional [Projectile|Projectile]",
-     "ja": "[Grenade|グレネード]スキルは[Projectile|投射物]を追加で1個放つ"
+     "en": "Grenade Skills Fire an additional Projectile",
+     "ja": "グレネードスキルは投射物を追加で1個放つ"
     }
    ],
    "weapon": {
@@ -21380,8 +21380,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "(20-30)% chance to [Pierce|Pierce] an Enemy",
-     "ja": "(20-30)%の確率で敵を[Pierce|貫通]する"
+     "en": "(20-30)% chance to Pierce an Enemy",
+     "ja": "(20-30)%の確率で敵を貫通する"
     }
    ],
    "weapon": {
@@ -21397,8 +21397,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "Cannot load or fire [Ammunition]",
-     "ja": "[Ammunition|弾薬]を装填することも発射することもできない"
+     "en": "Cannot load or fire Ammunition",
+     "ja": "弾薬を装填することも発射することもできない"
     }
    ],
    "weapon": {
@@ -21462,8 +21462,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "(15-25)% chance to [Maim|Maim] on [Hit]",
-     "ja": "[Hit|ヒット]時に(15-25)%の確率で[Maim|重傷]を付与する"
+     "en": "(15-25)% chance to Maim on Hit",
+     "ja": "ヒット時に(15-25)%の確率で重傷を付与する"
     }
    ],
    "weapon": {
@@ -21484,8 +21484,8 @@
    "lvl": 78,
    "implicits": [
     {
-     "en": "(25-35)% increased [Projectile|Projectile] Speed with this Weapon",
-     "ja": "この武器による[Projectile|投射物]スピードが(25-35)%増加する"
+     "en": "(25-35)% increased Projectile Speed with this Weapon",
+     "ja": "この武器による投射物スピードが(25-35)%増加する"
     }
    ],
    "weapon": {
@@ -21506,8 +21506,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "25% increased [Melee] [Strike] Range with this weapon",
-     "ja": "この武器の[Melee|近接][Strike|ストライク]距離が25%増加する"
+     "en": "25% increased Melee Strike Range with this weapon",
+     "ja": "この武器の近接ストライク距離が25%増加する"
     }
    ],
    "weapon": {
@@ -21550,8 +21550,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "Prevent +(3-7)% of Damage from [Deflect|Deflected] [Hit|Hits]",
-     "ja": "[Deflect|受け流した][Hit|ヒット]のダメージから防ぐ量が+(3-7)%される"
+     "en": "Prevent +(3-7)% of Damage from Deflected Hits",
+     "ja": "受け流したヒットのダメージから防ぐ量が+(3-7)%される"
     }
    ],
    "weapon": {
@@ -21599,8 +21599,8 @@
    "lvl": 72,
    "implicits": [
     {
-     "en": "(50-80)% increased [Flammability] [BuffMagnitude|Magnitude]",
-     "ja": "[Flammability|可燃性]の[BuffMagnitude|強度]が(50-80)%増加する"
+     "en": "(50-80)% increased Flammability Magnitude",
+     "ja": "可燃性の強度が(50-80)%増加する"
     }
    ],
    "weapon": {
@@ -21616,8 +21616,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "[Minion|Minions] deal (30-50)% increased Damage",
-     "ja": "[Minion|ミニオン]のダメージが(30-50)%増加する"
+     "en": "Minions deal (30-50)% increased Damage",
+     "ja": "ミニオンのダメージが(30-50)%増加する"
     }
    ],
    "weapon": {
@@ -21644,8 +21644,8 @@
    "lvl": 75,
    "implicits": [
     {
-     "en": "+(14-18)% to [Block] chance",
-     "ja": "[Block|ブロック]率 +(14-18)%"
+     "en": "+(14-18)% to Block chance",
+     "ja": "ブロック率 +(14-18)%"
     }
    ],
    "weapon": {
@@ -21661,8 +21661,8 @@
    "lvl": 79,
    "implicits": [
     {
-     "en": "+(7-10) to Maximum [Rage]",
-     "ja": "[Rage|憤怒]の最大数 +(7-10)"
+     "en": "+(7-10) to Maximum Rage",
+     "ja": "憤怒の最大数 +(7-10)"
     }
    ],
    "weapon": {
@@ -21689,8 +21689,8 @@
    "lvl": 77,
    "implicits": [
     {
-     "en": "(20-30)% increased [BuffMagnitude|Magnitude] of [Shock|Shock] you inflict",
-     "ja": "プレイヤーが付与した[Shock|感電]の[BuffMagnitude|強度]が(20-30)%増加する"
+     "en": "(20-30)% increased Magnitude of Shock you inflict",
+     "ja": "プレイヤーが付与した感電の強度が(20-30)%増加する"
     }
    ],
    "weapon": {
@@ -21879,8 +21879,8 @@
    "lvl": 80,
    "implicits": [
     {
-     "en": "(30-40)% increased [AilmentThreshold|Elemental Ailment Threshold]",
-     "ja": "[AilmentThreshold|元素系状態異常閾値]が(30-40)%増加する"
+     "en": "(30-40)% increased Elemental Ailment Threshold",
+     "ja": "元素系状態異常閾値が(30-40)%増加する"
     }
    ],
    "defence": {
@@ -22184,8 +22184,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+1% to all [MaximumResistances|Maximum Elemental Resistances]",
-     "ja": "全ての[MaximumResistances|元素耐性の最大値] +1%"
+     "en": "+1% to all Maximum Elemental Resistances",
+     "ja": "全ての元素耐性の最大値 +1%"
     }
    ],
    "defence": {
@@ -22200,8 +22200,8 @@
    "lvl": 70,
    "implicits": [
     {
-     "en": "+(20-30) to [Spirit|Spirit]",
-     "ja": "[Spirit|スピリット] +(20-30)"
+     "en": "+(20-30) to Spirit",
+     "ja": "スピリット +(20-30)"
     }
    ],
    "defence": {
@@ -22331,8 +22331,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "+1 to Level of all [Corrupted] Skill Gems",
-     "ja": "全ての[Corrupted|コラプト状態]のスキルジェムのレベル +1"
+     "en": "+1 to Level of all Corrupted Skill Gems",
+     "ja": "全てのコラプト状態のスキルジェムのレベル +1"
     }
    ],
    "defence": {
@@ -22700,8 +22700,8 @@
    "lvl": 65,
    "implicits": [
     {
-     "en": "Every 5 seconds, gain a [VerisiumInfusion|Verisium Infusion]",
-     "ja": "5秒ごとに[VerisiumInfusion|ヴェリシウムインフュージョン]を1スタック獲得する"
+     "en": "Every 5 seconds, gain a Verisium Infusion",
+     "ja": "5秒ごとにヴェリシウムインフュージョンを1スタック獲得する"
     }
    ],
    "defence": {
