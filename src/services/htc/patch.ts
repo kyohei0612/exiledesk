@@ -112,6 +112,13 @@ export interface BaseInfo {
    * `level` はパーフェクトフラックスで 20 に上げられる (確率なし・1 個で確定)。
    */
   grants?: { en: string; level?: number }[];
+  /**
+   * 白いベースに元から付いている防御値。**品質はここに効きます** (MOD の値ではなく)。
+   *   最終 ES = (素の ES + フラット ES の MOD) × (1 + %ES の MOD 合計 + 品質 + ルーン)
+   */
+  defence?: { ar?: number; ev?: number; es?: number; ward?: number; ms?: number };
+  /** 武器の素の性能 */
+  weapon?: { dmgMin?: number; dmgMax?: number; crit?: number; speed?: number };
 }
 
 /** ベース名 → 素性。知らないベースは undefined */

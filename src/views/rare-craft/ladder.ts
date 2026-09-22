@@ -51,13 +51,25 @@ export interface LadderResult {
   means: Record<Metric, number>;
 }
 
+/**
+ * **品質は %増加の枠に足すのではなく、最後に別で掛ける** (2026-09-22 に実物 2 個で確定)。
+ *
+ *   ES = (素の ES + フラット ES) × (1 + %ES の合計) × (1 + 品質)
+ *
+ * 検算:
+ *   術師のティアラ (素 97) / 品質なし / ES% 58        → 97 × 1.58 = 153.3 → 表示 153 ✓
+ *   同ベース / 品質 20% / フラット 72 / 36+42+85%     → 169 × 2.63 × 1.2 = 533.4 → 表示 533 ✓
+ *   枠に足す式だと 478 で、実際の 533 に 55 足りない。
+ *
+ * ルーンの %防御は MOD と同じ扱い (枠に足す)。品質だけが別枠。
+ */
 function metricsOf(raw: Float32Array, i: number, post: PostOptions): Record<Metric, number> {
   const b = i * NCOL;
   const rc = post.runeCount;
-  const esPct = raw[b + COL.esPct] + post.quality + (post.rune.esPct ?? 0) * rc;
+  const esPct = raw[b + COL.esPct] + (post.rune.esPct ?? 0) * rc;
   const esFlat = raw[b + COL.esFlat];
   return {
-    es: post.baseEs > 0 || esFlat > 0 ? (post.baseEs + esFlat) * (1 + esPct / 100) : 0,
+    es: post.baseEs > 0 || esFlat > 0 ? (post.baseEs + esFlat) * (1 + esPct / 100) * (1 + post.quality / 100) : 0,
     life: raw[b + COL.life] + (post.rune.life ?? 0) * rc,
     res: raw[b + COL.res] + (post.rune.res ?? 0) * rc,
     chaos: raw[b + COL.chaos],

@@ -629,6 +629,49 @@ const main = async () => {
    * クライアントの `ItemInherentSkills` は行はあるのに参照先が解決できない (スキーマのずれ) ので、
    * ここだけ poe2db 由来です。書き出しが無ければ飛ばします。
    */
+  /**
+   * ベースの**素の防御値 / 武器性能**。白いベースに元から付いている数字で、
+   * 品質はここに効きます (MOD の値ではなく)。
+   *
+   *   最終 ES = (素の ES + フラット ES の MOD) × (1 + %ES の MOD 合計 + 品質 + ルーン)
+   *
+   * これが無いと「ES 533 の兜を作る」という目標の立て方ができません (MOD 単位でしか指定できない)。
+   */
+  try {
+    const dir = resolve(ROOT, "data-cache/client-export-defences/tables/English");
+    const rdd = async (n) => {
+      const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8"));
+      return Array.isArray(j) ? j : j.rows;
+    };
+    const [AT, WT, BD] = await Promise.all([rdd("ArmourTypes"), rdd("WeaponTypes"), rdd("BaseItemTypes")]);
+    const num = (v) => (typeof v === "number" && v > 0 ? v : undefined);
+    for (const r of AT) {
+      const nm = (BD[r.BaseItemType] || {}).Name;
+      if (!nm || !baseInfo[nm]) continue;
+      const d = {
+        ...(num(r.Armour) ? { ar: r.Armour } : {}),
+        ...(num(r.Evasion) ? { ev: r.Evasion } : {}),
+        ...(num(r.EnergyShield) ? { es: r.EnergyShield } : {}),
+        ...(num(r.Ward) ? { ward: r.Ward } : {}),
+        ...(num(r.IncreasedMovementSpeed) ? { ms: r.IncreasedMovementSpeed } : {}),
+      };
+      if (Object.keys(d).length) baseInfo[nm].defence = d;
+    }
+    for (const r of WT) {
+      const nm = (BD[r.BaseItemType] || {}).Name;
+      if (!nm || !baseInfo[nm]) continue;
+      const w = {
+        ...(num(r.DamageMin) ? { dmgMin: r.DamageMin } : {}),
+        ...(num(r.DamageMax) ? { dmgMax: r.DamageMax } : {}),
+        ...(num(r.CritChance) ? { crit: r.CritChance } : {}),
+        ...(num(r.Speed) ? { speed: r.Speed } : {}),
+      };
+      if (Object.keys(w).length) baseInfo[nm].weapon = w;
+    }
+  } catch (e) {
+    console.log(`防御値の書き出しが読めません (${e.message})。素の防御値は飛ばします。`);
+  }
+
   let granted = {};
   try {
     granted = (await rj(resolve(ROOT, "data-cache/poe2db-granted-skills.json"))).granted ?? {};
@@ -661,7 +704,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
-  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / 付与スキルあり ${grantedN} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
+  console.log(`ベースの素性: ${Object.keys(baseInfo).length} 件 / 防御値 ${Object.values(baseInfo).filter((b) => b.defence).length} 件 / 武器 ${Object.values(baseInfo).filter((b) => b.weapon).length} 件 / 付与スキルあり ${grantedN} 件 / うち枠が素と違う ${Object.keys(baseLimits).length} 件 / 暗黙あり ${Object.values(baseInfo).filter((b) => b.implicits).length} 件`);
   console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {
