@@ -180,6 +180,33 @@ for (const [id, shown, tag, shouldAdjust] of [
   }
 }
 
+// ---- 防具はカタリストの対象外 ----
+//
+// 実物で確認 (2026-09-22): 品質 20% の兜で `P1 [39-42]` の MOD が **42** と表示されていた。
+// 品質が乗るなら 50 になるはずで、乗っていない。防具の品質は**素の防御値**のほうを上げる。
+//
+// **タグだけでは弾けない。**`defences` も `life` もカタリストの種類であり、同時に防具の MOD が
+// 持つタグでもある。クラスで弾かないと、知性の兜 20 件のうち 17 件を誤って割り戻す。
+console.log("\n=== 防具はカタリストの対象外 ===");
+const helm = data.bases.get("Helmets_int");
+const catTags = M.CATALYSTS.map((c) => c.tag);
+const helmMods = [...helm.pools.normal.prefixes, ...helm.pools.normal.suffixes].map((i) => data.mods.get(i)).filter(Boolean);
+let overlap = 0;
+let wrong = 0;
+for (const m of helmMods) {
+  // family のタグがカタリストと重なるか (クラスを無視して判定するとどうなるか)
+  const shares = catTags.some((t) => (M.htcModTags?.()?.[m.family] ?? []).includes(t));
+  if (shares) overlap++;
+  for (const t of catTags) if (M.rawValueOfMod(m, 100, 20, t).adjusted) wrong++;
+}
+console.log(`  知性の兜 ${helmMods.length} 件 / カタリストのタグと重なる family ${overlap} 件 / 誤って割り戻した ${wrong} 件`);
+if (wrong > 0) fail(`防具の MOD を ${wrong} 件 割り戻している (カタリストは指輪とアミュレットだけ)`);
+// 対照: アミュレットは割り戻す
+const amu = data.mods.get("Amulets/IncreasedMana");
+if (!M.rawValueOfMod(amu, 218, 20, "mana").adjusted) fail("アミュレットのマナ MOD を割り戻していない");
+if (M.catalystsFor(helmMods[0]).length) fail("防具の MOD に効くカタリストが出ている");
+console.log(`  対照: Amulets/IncreasedMana は割り戻す / 兜の MOD に効くカタリストは ${M.catalystsFor(helmMods[0]).length} 件`);
+
 // ---- 聖別 ----
 //
 // poe2db: 「MOD の数値に 78%〜122% のランダムな倍率が、MOD ごとに独立でかかる」。

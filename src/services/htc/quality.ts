@@ -23,7 +23,15 @@
  * 素は 20%。ブリーチのエッセンスか `Legacy of Serle's Grit` で 40% まで上がる
  * ([[lingering.ts]])。どちらも**使い切ってから消せる**ので、完成品に MOD が残らないことがあります。
  *
- * 防具・武器の品質はここでは扱いません (種類が無く、局所防御値に効く別の仕組み)。
+ * ## 防具・武器は対象外 ── **クラスで弾く必要があります**
+ * 防具の品質は **MOD の数値を動かしません**。素の防御値 (白いベースに元から付いている
+ * アーマー / 回避 / ES) のほうを上げ、`%増加` の MOD と同じ枠に入るだけです。
+ * 実物で確認済み (2026-09-22): 品質 20% の兜で `P1 [39-42]` の MOD が **42** と表示されていた。
+ * 品質が乗るなら 42 × 1.2 = 50 と出るはずで、出ていない。
+ *
+ * **ここが罠で、タグだけ見ると弾けません。**`defences` も `life` もカタリストの種類であり、
+ * 同時に防具の MOD が持つタグでもあります。だから**アイテムのクラスで弾きます**
+ * (カタリストは指輪とアミュレットにしか存在しない)。
  */
 import catalystData from "./catalysts.json";
 import { htcModTags } from "./patch";
@@ -50,13 +58,34 @@ export const BASE_MAX_QUALITY = 20;
 /** ブリーチのエッセンス / Legacy of Serle's Grit で届く最大品質 (%) */
 export const RAISED_MAX_QUALITY = 40;
 
-/** その MOD がこのカタリストで底上げされるか */
+/**
+ * カタリストが存在するクラス。ゲームの文面が「指輪またはアミュレットに追加する」なので、
+ * 防具や武器には**そもそも種類つきの品質が無い**。
+ */
+const CATALYST_CLASSES = ["Rings", "Amulets"];
+
+/** その MOD のクラス (id の頭。`Amulets/IncreasedMana` → `Amulets`) */
+const classOf = (mod: Mod): string => mod.id.split("/")[0] ?? "";
+
+/** そのクラスにカタリストがあるか */
+export function hasCatalysts(mod: Mod): boolean {
+  return CATALYST_CLASSES.includes(classOf(mod));
+}
+
+/**
+ * その MOD がこのカタリストで底上げされるか。
+ *
+ * **タグが合うだけでは不十分**です。`defences` や `life` は防具の MOD も持っているので、
+ * クラスを見ないと兜の MOD を割り戻してしまいます。
+ */
 export function boostedBy(mod: Mod, catalystTag: string): boolean {
+  if (!hasCatalysts(mod)) return false;
   return (htcModTags()[mod.family] ?? []).includes(catalystTag);
 }
 
-/** その MOD を底上げできるカタリスト (無ければ空) */
+/** その MOD を底上げできるカタリスト (無ければ空)。防具・武器は常に空 */
 export function catalystsFor(mod: Mod): Catalyst[] {
+  if (!hasCatalysts(mod)) return [];
   return (htcModTags()[mod.family] ?? []).map((t) => BY_TAG.get(t)).filter((c): c is Catalyst => !!c);
 }
 
