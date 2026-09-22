@@ -14,7 +14,7 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 
-export { bridgeMods, classOfBase } from "../src/services/htc/bridge";
+export { bridgeMods, classOfBase, itemBaseFor } from "../src/services/htc/bridge";
 export { runeRoutes, preferredRoute, runeEffectLabel } from "../src/services/htc/rune-route";
 export { maxQualityRoute, judgeQuality, isMaxQualityMod } from "../src/services/htc/lingering";
 export { buildHtcPrices } from "../src/services/htc/prices";

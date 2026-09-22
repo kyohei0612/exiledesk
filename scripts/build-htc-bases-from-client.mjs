@@ -554,9 +554,48 @@ const main = async () => {
     slot[ids.length] ??= ids;
   }
 
+  /**
+   * ベース名 -> そのベースでの枠 (プレフィックス / サフィックス)。
+   *
+   * **同梱エンジンはクラス単位でしか枠を持っていません** (`ItemBase.limits`)。ところが実際は
+   * **ベースの暗黙 MOD が枠を増減させます** ── 「不在のアミュレット」は -1 プレフィックス /
+   * -1 サフィックスで **2/2**、4 MOD で満杯になります。アミュレットだけで 9 種類あり、
+   * +2/-2 まで振れるので、ここを見ないと解が丸ごと変わります。
+   *
+   * `AmuletImplicitPrefixSuffixAllowed*` / `RingImplicitPrefixSuffixAllowed*` などの
+   * `local_maximum_prefixes_allowed_+` / `local_maximum_suffixes_allowed_+` を素の 3/3 に足す。
+   * 書き出しが無い時は空にする (その時は今まで通りクラス既定の 3/3)。
+   */
+  const baseLimits = {};
+  try {
+    const dir = resolve(ROOT, "data-cache/client-export-implicits/tables/English");
+    const rdi = async (n) => {
+      const j = JSON.parse(await readFile(resolve(dir, `${n}.json`), "utf8"));
+      return Array.isArray(j) ? j : j.rows;
+    };
+    const [BI, MDI] = await Promise.all([rdi("BaseItemTypes"), rdi("Mods")]);
+    for (const r of BI) {
+      if (!r.Name) continue;
+      let dp = 0;
+      let ds = 0;
+      for (const i of r.Implicit_Mods || []) {
+        const m = MODS[(MDI[i] || {}).Id];
+        for (const st of m?.stats || []) {
+          if (st.id === "local_maximum_prefixes_allowed_+") dp += st.min ?? 0;
+          if (st.id === "local_maximum_suffixes_allowed_+") ds += st.min ?? 0;
+        }
+      }
+      if (dp === 0 && ds === 0) continue;
+      baseLimits[r.Name] = { prefixes: 3 + dp, suffixes: 3 + ds };
+    }
+  } catch {
+    console.log("暗黙 MOD の書き出し (data-cache/client-export-implicits) がありません。枠の増減は飛ばします。");
+  }
+
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     familyTexts,
+    baseLimits,
     familyStats,
     modTags,
     source:
@@ -571,6 +610,7 @@ const main = async () => {
   const addedCount = [...addedBases.values()].reduce((a, b) => a + b.length, 0);
   console.log(`\n既存クラスに足したベース: ${addedCount} 件`);
   for (const [k, v] of addedBases) console.log(`   ${k}: ${v.length} 件 (${v.slice(0, 3).join(", ")}${v.length > 3 ? ", …" : ""})`);
+  console.log(`枠が素と違うベース: ${Object.keys(baseLimits).length} 件`);
   console.log(`カタリストのタグを持つ family: ${Object.keys(modTags).length} 件 / stat を貸せる family: ${Object.keys(familyStats).length} 件`);
   console.log(`新しいクラス: ${outItems.length} 個`);
   for (const it of outItems) {

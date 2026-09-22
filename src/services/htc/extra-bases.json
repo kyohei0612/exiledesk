@@ -6130,6 +6130,60 @@
    ]
   }
  },
+ "baseLimits": {
+  "Lament Amulet": {
+   "prefixes": 2,
+   "suffixes": 3
+  },
+  "Portent Amulet": {
+   "prefixes": 3,
+   "suffixes": 2
+  },
+  "Absent Amulet": {
+   "prefixes": 2,
+   "suffixes": 2
+  },
+  "Dusk Ring": {
+   "prefixes": 4,
+   "suffixes": 2
+  },
+  "Gloam Ring": {
+   "prefixes": 2,
+   "suffixes": 4
+  },
+  "Penumbra Ring": {
+   "prefixes": 5,
+   "suffixes": 1
+  },
+  "Tenebrous Ring": {
+   "prefixes": 1,
+   "suffixes": 5
+  },
+  "Dusk Amulet": {
+   "prefixes": 4,
+   "suffixes": 2
+  },
+  "Gloam Amulet": {
+   "prefixes": 2,
+   "suffixes": 4
+  },
+  "Penumbra Amulet": {
+   "prefixes": 5,
+   "suffixes": 1
+  },
+  "Tenebrous Amulet": {
+   "prefixes": 1,
+   "suffixes": 5
+  },
+  "Twisted Amulet": {
+   "prefixes": 2,
+   "suffixes": 3
+  },
+  "Distorted Amulet": {
+   "prefixes": 3,
+   "suffixes": 2
+  }
+ },
  "familyStats": {
   "Nothing": {
    "1": [

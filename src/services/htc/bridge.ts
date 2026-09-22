@@ -22,6 +22,8 @@
  *   クライアント由来のベース追加前 86.7% → 追加後 90.3% → ルーンと文言の追随を入れて下記
  */
 import { modIndexOf, matchKey, type IndexHit, type RuneMode } from "./bridge-index";
+import { htcBaseLimits } from "./patch";
+import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 export type { RuneMode } from "./bridge-index";
@@ -56,6 +58,24 @@ function baseIndex(data: PatchData): Map<string, ItemBase> {
 /** ベース名 (「Ancestral Tiara」) からアイテムクラスを引く。知らないベースは null */
 export function classOfBase(data: PatchData, baseType: string): ItemBase | null {
   return baseIndex(data).get(baseType) ?? null;
+}
+
+/**
+ * **解く時に渡すベース。**`classOfBase` と違い、そのベース固有の**枠**を織り込みます。
+ *
+ * 同梱エンジンは枠をクラス単位でしか持っていませんが、実際は**ベースの暗黙 MOD が枠を増減させます**。
+ * 「不在のアミュレット」は -1 プレフィックス / -1 サフィックスで **2/2** ── 4 MOD で満杯です。
+ * アミュレットだけで 9 種類あり +2/-2 まで振れるので、ここを見ないと解が丸ごと変わります。
+ *
+ * **ソルバに渡すのは必ずこちら**にしてください。`classOfBase` は MOD を引くための物です。
+ */
+export function itemBaseFor(data: PatchData, baseType: string): ItemBase | null {
+  const cls = classOfBase(data, baseType);
+  if (!cls) return null;
+  const lim = htcBaseLimits()[baseType];
+  if (!lim) return cls;
+  const base = cls.limits ?? DEFAULT_LIMITS;
+  return { ...cls, limits: { ...base, prefixes: lim.prefixes, suffixes: lim.suffixes } };
 }
 
 /** 1 件の橋渡しの結果 */

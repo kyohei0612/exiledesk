@@ -151,5 +151,31 @@ if (!fr.options[0].lockedModId.includes("GlobalIncreaseSpellSkillGemLevel")) {
   fail(`先頭が ${fr.options[0].lockedModId} (一番付きにくいスペルレベルのはず)`);
 }
 
+// ---- ベースごとの枠 ----
+//
+// 同梱エンジンはクラス単位でしか枠を持っていないが、実際は**ベースの暗黙 MOD が増減させる**。
+// 「不在のアミュレット」は -1P/-1S で 2/2 ── 4 MOD で満杯。アミュレットだけで 9 種類ある。
+// `itemBaseFor` を通さずに `classOfBase` をソルバに渡すと、この制約が丸ごと落ちる。
+console.log("\n=== ベースごとの枠 ===");
+const threeP = ["Amulets/BaseSpirit", "Amulets/IncreasedMana", "Amulets/MaximumManaIncreasePercent"].map((modId) => ({ modId }));
+for (const [name, wantP, wantS, feasible] of [
+  ["Amber Amulet", 3, 3, true],
+  ["Absent Amulet", 2, 2, false],
+  ["Lament Amulet", 2, 3, false],
+  ["Penumbra Amulet", 5, 1, true],
+]) {
+  const base = M.itemBaseFor(data, name);
+  if (!base) {
+    fail(`${name} が引けない`);
+    continue;
+  }
+  const lim = base.limits ?? { prefixes: 3, suffixes: 3 };
+  const p2 = M.pricesForBase(M.indexPrices(sheet), base);
+  const r = M.markovFromItem(data, p2, M.whiteItem(base, 82), threeP, {});
+  console.log(`  ${name.padEnd(18)} 枠 ${lim.prefixes}P/${lim.suffixes}S  プレフィックス 3 本狙い → ${r.feasible ? `${r.expectedCost.toFixed(0)} ex` : "作れない"}`);
+  if (lim.prefixes !== wantP || lim.suffixes !== wantS) fail(`${name} の枠が ${lim.prefixes}/${lim.suffixes} (${wantP}/${wantS} のはず)`);
+  if (r.feasible !== feasible) fail(`${name}: 作れる判定が逆 (枠 ${lim.prefixes}P に 3 本)`);
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

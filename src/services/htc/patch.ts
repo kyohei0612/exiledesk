@@ -49,6 +49,11 @@ interface ExtraBases {
    * `tiers[].stats` を持っていないので、取引所の条件を組む時にここから借りる ([[buy-or-craft.ts]])。
    */
   familyStats: Record<string, Record<string, string[]>>;
+  /**
+   * ベース名 → そのベースでの枠。**同梱はクラス単位でしか枠を持っていない**が、実際は
+   * ベースの暗黙 MOD が増減させる (「不在のアミュレット」は 2/2)。`bridge.ts` の `itemBaseFor` が使う。
+   */
+  baseLimits: Record<string, { prefixes: number; suffixes: number }>;
   /** 同梱に無いクラス (タリスマン、全属性の防具など) */
   items: ItemBase[];
   /** 上の items が指す MOD */
@@ -79,6 +84,12 @@ export function htcPatchExtras(): PatchExtras | null {
 let familyTexts: Record<string, Record<string, string[]>> = {};
 let modTags: Record<string, string[]> = {};
 let familyStats: Record<string, Record<string, string[]>> = {};
+let baseLimits: Record<string, { prefixes: number; suffixes: number }> = {};
+
+/** ベース名 → 枠。素と同じベースは入っていない */
+export function htcBaseLimits(): Record<string, { prefixes: number; suffixes: number }> {
+  return baseLimits;
+}
 
 /** family → 個数ごとの stat id 並び。stat を持たない MOD に貸す */
 export function htcFamilyStats(): Record<string, Record<string, string[]>> {
@@ -180,6 +191,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
   familyTexts = extra.familyTexts ?? {};
   modTags = extra.modTags ?? {};
   familyStats = extra.familyStats ?? {};
+  baseLimits = extra.baseLimits ?? {};
   extras = {
     generated: extra.generated,
     addedBases: added,
