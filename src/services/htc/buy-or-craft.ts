@@ -18,11 +18,20 @@
  *
  * アノイント (パラゴン等) は装備してから乗せる物なので**勘定に入れません** (オーナー 2026-09-22)。
  *
+ * ## 金額の出し方はアプリ共通の作法に合わせる
+ * 中の計算は全部**高貴建て**。画面に出す時は `displayCurrency.money()` を通すので、
+ * 選んでいる通貨で 1 を切ったら 1 つ下の通貨に落ちます (0.02 神 → 8.5 カオス)。
+ * ジェムコラプトや捌き速度と同じ見え方になります (オーナー指示 2026-09-19 / 2026-09-22)。
+ *
+ * 作成費も出品価格も**どちらも払う金**なので、**両方とも切り上げ**ます。
+ * 片方だけ切り下げると、どちらが得かの判定に偏りが出ます。
+ *
  * ## 値段は呼び出し側から渡す
  * このファイルは**取引所を叩きません**。問い合わせの中身を組み立てて返すだけで、実際の取得と
  * レート制限 ([[trade2-rate-limit-testing]]) は呼び出し側の役目です。
  */
 import { buildSpecQuery } from "../trade2/query";
+import { displayCurrency } from "../../state/display-currency";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -136,6 +145,10 @@ export interface BuyOrCraftResult {
   verdict: BuyOrCraftVerdict;
   /** 作成費 ÷ 出品価格。1 より大きければ買ったほうが安い */
   ratio: number | null;
+  /** 作成費 (選んでいる通貨、切り上げ)。出せなければ "—" */
+  craftText: string;
+  /** 出品価格 (選んでいる通貨、切り上げ)。出せなければ "—" */
+  listingText: string;
   /** 画面にそのまま出す 1 行 */
   note: string;
 }
@@ -154,18 +167,29 @@ export function buyOrCraft(o: {
   /** 取引所の条件にできなかった MOD */
   unmatched?: readonly string[];
 }): BuyOrCraftResult {
+  // 作成費も出品価格もどちらも払う金なので、両方とも切り上げ
+  const money = (v: number | null | undefined) => displayCurrency.money(v, { round: "up" });
+  const craftText = money(o.craftExpected);
+  const listingText = money(o.listingPrice);
+  const base = { craftText, listingText };
   if (o.unmatched?.length) {
-    return { verdict: "unknown", ratio: null, note: `条件にできなかった MOD が ${o.unmatched.length} 件あるので、値段は比べられません。` };
+    return { ...base, verdict: "unknown", ratio: null, note: `条件にできなかった MOD が ${o.unmatched.length} 件あるので、値段は比べられません。` };
   }
   if (o.craftExpected == null || !Number.isFinite(o.craftExpected)) {
-    return { verdict: "buy", ratio: null, note: "この構成は作れない (または費用が出ない) ので、買うしかありません。" };
+    return { ...base, verdict: "buy", ratio: null, note: "この構成は作れない (または費用が出ない) ので、買うしかありません。" };
   }
   if (o.listingPrice == null) {
-    return { verdict: "craft", ratio: null, note: "同じ構成の出品がありません。作るか、条件を緩めて探し直してください。" };
+    return { ...base, verdict: "craft", ratio: null, note: "同じ構成の出品がありません。作るか、条件を緩めて探し直してください。" };
   }
   const ratio = o.listingPrice > 0 ? o.craftExpected / o.listingPrice : null;
-  if (ratio == null) return { verdict: "unknown", ratio: null, note: "出品価格が読めません。" };
+  if (ratio == null) return { ...base, verdict: "unknown", ratio: null, note: "出品価格が読めません。" };
   return ratio > 1
-    ? { verdict: "buy", ratio, note: `買うほうが安い (作ると出品の ${ratio.toFixed(1)} 倍)。` }
-    : { verdict: "craft", ratio, note: `作るほうが安い (出品の ${(ratio * 100).toFixed(0)}% で作れる)。` };
+    ? { ...base, verdict: "buy", ratio, note: `買うほうが安い。作ると ${craftText} / 出品は ${listingText} (${ratio.toFixed(1)} 倍)。` }
+    : {
+        ...base,
+        verdict: "craft",
+        ratio,
+        // 1% を切ると四捨五入で「0%」になって何も言っていないのと同じになる
+        note: `作るほうが安い。作ると ${craftText} / 出品は ${listingText} (出品の ${ratio < 0.01 ? "1% 未満" : `${(ratio * 100).toFixed(0)}%`})。`,
+      };
 }

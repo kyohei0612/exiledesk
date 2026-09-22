@@ -28,6 +28,7 @@ export { CATALYSTS, catalystsFor, boostedBy, displayedValue, rawValue, rawValueO
 export { markovFromItem } from "../src/vendor/poe2htc/optimizer/markovFromItem";
 export { listMods } from "../src/vendor/poe2htc/engine/index";
 export { marketStore } from "../src/state/market-store";
+export { setDisplayCurrency, displayCurrency } from "../src/state/display-currency";
 export { default as priceKeys } from "../src/services/htc/price-keys.json";
 export { default as essenceKeys } from "../src/services/htc/essence-keys.json";
 
