@@ -16,6 +16,7 @@
  */
 import { computed, ref, watch } from "vue";
 import { startOption } from "./craft-settings";
+import { startRows, type StartRow } from "./start-rows";
 import type { useHtcCraft } from "./useHtcCraft";
 
 export function useFractureChoice(c: ReturnType<typeof useHtcCraft>) {
@@ -25,44 +26,10 @@ export function useFractureChoice(c: ReturnType<typeof useHtcCraft>) {
   const picked = ref<string | null>(null);
   watch(() => c.treePlan.value, () => { manual.value = null; picked.value = null; });
 
-  /** link = その行自身の検索 (確かめる用。オーナー 2026-09-24:「トレードサイトに遷移できるように」) */
-  /** status = 値段が無い時に出す言葉 (取得中… / まだ)。manual = 取れて固定済みが無かった時だけ手で入れる欄 */
-  interface Row { id: string; label: string; cost: number | null; note: string; link: { text: string; url: string } | null; manual: boolean; status: string }
-  /** 選択肢を初動の安い順に (値段が無い・選べない物は後ろ) */
-  const options = computed<Row[]>(() => {
+  /** 選択肢を初動の安い順に ([[start-rows.ts]]。候補の MOD の各行と同じ作り) */
+  const options = computed<StartRow[]>(() => {
     if (!c.treePlan.value) return [];
-    const div = c.prices.value?.currency.divine ?? 1;
-    const r = c.treeResult.value;
-    const linkOf = (key: string): Row["link"] => {
-      const f = r?.found.find((x) => x.key === key);
-      return f?.url ? { text: `${f.total} 件`, url: f.url } : null;
-    };
-    const m = manual.value != null && manual.value > 0 ? manual.value * div : null;
-    // 取れるまでは「取得中…」。手で入れる欄は、取れて固定済みが見つからなかった時だけ (オーナー 2026-09-24:「デフォで
-    // 手入力させるような UI なんだ。同じように取得中表示にしてほしい」)
-    const status = c.treeBusy.value ? "取得中…" : "まだ";
-    // 取れなかった検索 (上限など) は 0 件と区別する
-    const errOf = (key: string): string | null => r?.found.find((x) => x.key === key)?.error ?? null;
-    const frErr = errOf("fractured");
-    const rows: Row[] = [{
-      id: "fractured", label: "固定済みを買う", cost: r?.fracturedPrice != null ? r.fracturedPrice * div : m, note: frErr ? `取れず: ${frErr}` : "",
-      link: linkOf("fractured"), manual: !!r && r.fracturedPrice == null, status: r ? (frErr ? "取れず" : "出品なし") : status,
-    }];
-    for (const [key, label] of [["strict", "固定無し・厳しいを買って固定"], ["loose", "固定無し・ゆるいを買って固定"]] as const) {
-      if (!r) { rows.push({ id: key, label, cost: null, note: "", link: null, manual: false, status }); continue; }
-      const err = errOf(key);
-      if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }
-      const b = r[key];
-      const total = r.found.find((x) => x.key === key)?.total ?? 0;
-      // 85% に届く個数をまとめて買う合計。出品が足りない (足りない分を仮に足した) なら挑戦できない
-      const ok = b != null && b.assumed === 0;
-      rows.push({
-        id: key, label, cost: ok ? b.total * div : null, link: linkOf(key), manual: false, status: "-",
-        note: ok ? `${b.count} 個まとめて買う (85%)`
-          : b ? `出品が足りない (${total} 件、85% に ${b.count} 個要る)` : `出品が足りない (${total} 件)`,
-      });
-    }
-    return rows.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));
+    return startRows(c.treeResult.value, c.prices.value?.currency.divine ?? 1, { busy: c.treeBusy.value, manualDivine: manual.value });
   });
   const chosen = computed(() => {
     const rows = options.value;

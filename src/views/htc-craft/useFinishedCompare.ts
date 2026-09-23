@@ -16,7 +16,8 @@ import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { stepHelpers, type ItemState, type Side } from "../../services/htc/step-odds";
 import { buildSpecQuery } from "../../services/trade2/query";
-import { autoPriceWait, tradeAuto } from "../../services/trade2/auto-price";
+import { tradeAuto } from "../../services/trade2/auto-price";
+import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -60,7 +61,7 @@ export function useFinishedCompare(
     busy.value = true;
     error.value = null;
     try {
-      const r = await autoPriceWait(marketStore.league.value?.Value ?? "Standard", query.value, marketStore.rates.value, 5);
+      const r = await autoPriceCached(marketStore.league.value?.Value ?? "Standard", query.value, marketStore.rates.value, 5);
       if (!r) error.value = tradeAuto.lastError.value ?? "取れませんでした (間隔待ちの時は少し待って押し直し)";
       else found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
     } catch (e) {
