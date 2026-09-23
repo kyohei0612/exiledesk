@@ -4,7 +4,8 @@
  * オーナー:「あとは完成品か。比較対象ないよね今」。09-22 の「作るのと買うの、どっちが安いか」([[buy-or-craft.ts]]) を
  * 診断カードに戻した (1 手ずつの一覧カードを外した時に一緒に消えていた)。
  *   - 完成品を買う … 同じ MOD 構成の最安。狙いは素の段の下限、固定済み (樹 MOD・貼り付けで固定済み) は `fractured.` で。
- *     コラプト無し・ユニーク以外・ilvl 以上。押した時だけ 1 本。売値を手で入れてあればそれも使う
+ *     コラプト無し・ユニーク以外・ilvl 以上。MOD 解析の時に 1 本。取引所に無ければ手で値段を入れる
+ *     (貼り付けの画面の「完成品の売値」欄は外した。オーナー 2026-09-24:「ここいらんくね」)
  *   - 作る見込み   … 始め方の初動 + スパムの組み立て (自動) の平均。**あくまで目安** (1 手ずつは人が選ぶ)。
  *     自動の組み立てが組めない時 (品質 40% の順番が決まらない半影の指輪など) は、狙いを 1 つずつ付ける平均
  *     ([[step-odds.ts]] の一番安い打ち方、外れの消去込み) の合計で出す。付けた物が消える分は入らないので安めに出る
@@ -24,8 +25,6 @@ export function useFinishedCompare(
   c: ReturnType<typeof useHtcCraft>,
   /** 始め方で選ばれた物の初動 (高貴換算)。無ければ null */
   startCost: { readonly value: number | null },
-  /** 貼り付けの画面で手で入れた完成品の売値 (神) */
-  listingDivine: { readonly value: number | null },
 ) {
   const query = computed(() => {
     const d = c.data.value, cls = c.base.value;
@@ -50,9 +49,11 @@ export function useFinishedCompare(
   });
 
   const found = shallowRef<{ min: number | null; total: number; url: string | null } | null>(null);
+  /** 取引所に無い時に手で入れた完成品の値段 (神) */
+  const manual = ref<number | null>(null);
   const busy = ref(false);
   const error = ref<string | null>(null);
-  watch(query, () => { found.value = null; error.value = null; });
+  watch(query, () => { found.value = null; error.value = null; manual.value = null; });
 
   async function search(): Promise<void> {
     if (busy.value || !query.value) return;
@@ -69,10 +70,10 @@ export function useFinishedCompare(
     }
   }
 
-  /** 完成品の値段 (高貴換算)。取引所の最安、無ければ手で入れた売値 */
+  /** 完成品の値段 (高貴換算)。取引所の最安、無ければ手で入れた値段 */
   const buyCost = computed(() => {
     const div = c.prices.value?.currency.divine ?? 1;
-    return found.value?.min ?? (listingDivine.value != null && listingDivine.value > 0 ? listingDivine.value * div : null);
+    return found.value?.min ?? (manual.value != null && manual.value > 0 ? manual.value * div : null);
   });
   /** 狙いを 1 つずつ付ける平均の合計 (自動の組み立てが組めない時の目安) */
   const sumOfSteps = computed(() => {
@@ -105,5 +106,5 @@ export function useFinishedCompare(
     return b != null && k != null ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, found, busy, error, search, buyCost, craftCost, craftBasis, verdict };
+  return { query, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
 }

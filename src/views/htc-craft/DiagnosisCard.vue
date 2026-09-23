@@ -15,7 +15,7 @@ import { useFractureChoice } from "./useFractureChoice";
 import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
 
-const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; listingDivine: number | null }>();
+const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 const baseType = computed(() => c.item.value?.baseType ?? zeroStart.value.baseType);
 const baseJa = computed(() => c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? "");
@@ -38,7 +38,7 @@ const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
 /** フラクチャー品から始めるか、無し品から作るか */
 const fc = useFractureChoice(c);
 /** 完成品を買うのと作るのと */
-const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null), computed(() => props.listingDivine));
+const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null));
 /**
  * MOD 解析の時点で取引所を取りに行く (オーナー 2026-09-24:「取得分かれてるけど、そもそも MOD 解析の時点で
  * 取得始めておけ」)。固定済み・固定無しの 3 本 → 完成品の 1 本の順 (門番が 10 秒間隔にそろえる)。
@@ -92,7 +92,10 @@ watch(() => [c.item.value, c.base.value], async () => {
       </p>
       <p>
         完成品を買う: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : "-" }}</b>
-        <span v-if="!fin.found.value?.min && props.listingDivine" class="opacity-60"> (手で入れた売値)</span>
+        <!-- 取引所に無い時だけ手で埋める (売値の欄は外した。オーナー 2026-09-24) -->
+        <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
+          手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-16" /> 神
+        </span>
         <button v-if="fin.found.value?.url" type="button" class="ml-2 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
       </p>
       <p>

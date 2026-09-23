@@ -35,7 +35,6 @@ const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">(DEV ? "base" : "none");
 const text = ref(DEV ? PRESETS[0]!.text : "");
 const picked = ref<string | null>(DEV ? PRESETS[0]!.id : null);
-const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
 
 /**
  * 画面は「診断の結果 (短く) → 1 手ずつ」だけ。MOD 解析とベース診断は一気に通す
@@ -50,7 +49,6 @@ function pick(id: string): void {
   if (!p) return;
   picked.value = id;
   text.value = p.text;
-  listing.value = p.listingDivine;
   void reread(p.text);
 }
 
@@ -153,10 +151,6 @@ const implicitText = (lines: readonly string[]): string =>
           :disabled="c.loading.value || !text.trim()"
           @click="reread(text)"
         >{{ c.loading.value ? "解析中…" : "MOD 解析" }}</button>
-        <label class="text-xs opacity-70">
-          完成品の売値 (神)
-          <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-        </label>
       </div>
     </div>
 
@@ -264,10 +258,6 @@ const implicitText = (lines: readonly string[]): string =>
             :disabled="c.loading.value || pk.picks.value.length === 0"
             @click="runPicked()"
           >{{ c.loading.value ? "計算中…" : `この ${pk.picks.value.length} 個で計算する` }}</button>
-          <label class="text-xs opacity-70">
-            完成品の売値 (神)
-            <input v-model.number="listing" type="number" class="ml-1 w-20 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-          </label>
         </div>
       </div>
     </div>
@@ -285,7 +275,7 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <template v-if="c.base.value">
-      <DiagnosisCard :c="c" :listing-divine="listing" />
+      <DiagnosisCard :c="c" />
       <h2 class="mb-1 font-bold">1 手ずつ</h2>
       <CraftSandboxPanel :c="c" />
 

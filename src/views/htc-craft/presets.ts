@@ -10,8 +10,6 @@
 export interface Preset {
   id: string;
   label: string;
-  /** 売値の実績 (神)。判定の比較に使う。分からなければ null */
-  listingDivine: number | null;
   text: string;
 }
 
@@ -21,7 +19,6 @@ export const PRESETS: readonly Preset[] = [
   {
     id: "ring",
     label: "死体の円環 (ニーモニックリング)",
-    listingDivine: null,
     text: [
       "アイテムクラス: 指輪",
       "レアリティ: レア",
