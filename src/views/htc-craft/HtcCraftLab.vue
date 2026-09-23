@@ -5,15 +5,15 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, ref, watchEffect } from "vue";
+import { ref, watchEffect } from "vue";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
-import TreeFracturePanel from "./TreeFracturePanel.vue";
+import DiagnosisCard from "./DiagnosisCard.vue";
 import SpamPlanPanel from "./SpamPlanPanel.vue";
-import CraftPlayPanel from "./CraftPlayPanel.vue";
+import CraftSandboxPanel from "./CraftSandboxPanel.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -38,35 +38,11 @@ const picked = ref<string | null>(DEV ? PRESETS[0]!.id : null);
 const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
 
 /**
- * 画面は**一度に 1 段だけ**出す (オーナー指示 2026-09-23:「情報量が多いから順に表示していく」)。
- * 全部並べると、まだ決めていない先の話が目に入って判断が濁ります。
- *
- * 段は決め打ちの順番ですが、**戻るのも飛ぶのも自由**です。上の見出しを押せばどこへでも行けます
- * ── 「ベースを見直してから値段に戻る」が普通に起きるので、一方通行にはしません。
+ * 画面は「診断の結果 (短く) → 1 手ずつ」だけ。MOD 解析とベース診断は一気に通す
+ * (オーナー 2026-09-24:「MOD 解析も別に表示せずに直通で通していい。結果だけ分かりやすく簡潔に」)。
+ * 細かい表 (MOD の段・忍者の道・ベース候補) は「詳しく」に畳む。
  */
-const STAGES = [
-  { id: "read", label: "① MOD 解析", hint: "何の MOD だと読めたか" },
-  { id: "base", label: "② ベース", hint: "どのベースから作るか" },
-  { id: "steps", label: "③ 1 手ずつ", hint: "1 手ずつ打って、結果を押して進む" },
-] as const;
-type StageId = (typeof STAGES)[number]["id"];
-
-/** その段に出す物が無ければ見出しごと出さない (空の段を押させない) */
-const stages = computed(() =>
-  STAGES.filter((s) => (s.id === "base" ? c.bases.value.length > 0 : s.id === "steps" ? !!c.spam.value : true)),
-);
-const stage = ref<StageId>("read");
-/** 段が消えた時 (貼り直しで固定済みが無くなった等) に、無い段に居座らせない */
-const current = computed<StageId>(() =>
-  stages.value.some((s) => s.id === stage.value) ? stage.value : "read",
-);
-const nextStage = computed(() => {
-  const i = stages.value.findIndex((s) => s.id === current.value);
-  return i >= 0 && i < stages.value.length - 1 ? stages.value[i + 1]! : null;
-});
-
 async function reread(t: string): Promise<void> {
-  stage.value = "read";
   await c.run(t);
 }
 function pick(id: string): void {
@@ -85,7 +61,6 @@ function backToDoor(): void {
   door.value = "none";
   picked.value = null;
   text.value = "";
-  stage.value = "read";
 }
 async function openBaseDoor(): Promise<void> {
   door.value = "base";
@@ -107,7 +82,6 @@ if (DEV) void c.ensureData().then(() => { if (!pk.baseName.value) pickZero(ZERO_
 async function runPicked(): Promise<void> {
   if (!pk.baseName.value || !pk.cls.value) return;
   zeroStart.value = { ...zeroStart.value, baseType: pk.baseName.value, itemLevel: pk.level.value };
-  stage.value = "read";
   await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
 }
 
@@ -311,23 +285,14 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <template v-if="c.base.value">
-      <!-- 段の切り替え。押せばどこへでも飛べる (一方通行にしない) -->
-      <nav class="mb-3 flex flex-wrap gap-1">
-        <button
-          v-for="s in stages"
-          :key="s.id"
-          type="button"
-          class="rounded border px-2 py-1 text-xs"
-          :class="current === s.id
-            ? 'border-amber-400 text-amber-300'
-            : 'border-[var(--exile-color-border-subtle)] opacity-60 hover:opacity-100'"
-          :title="s.hint"
-          @click="stage = s.id"
-        >{{ s.label }}</button>
-      </nav>
+      <DiagnosisCard :c="c" />
+      <h2 class="mb-1 font-bold">1 手ずつ</h2>
+      <CraftSandboxPanel :c="c" />
 
+      <details class="mb-4 mt-4 text-xs">
+        <summary class="cursor-pointer opacity-60">詳しく (MOD の段・忍者の道・ベース候補)</summary>
       <!-- 読み取り -->
-      <section v-show="current === 'read'" class="mb-4">
+      <section class="mb-4">
         <h2 class="mb-1 font-bold">① MOD 解析</h2>
         <!-- 貼り付けから来た時だけ、読めた見出しを出す (ベースから組んだ時は自分で決めた物なので不要) -->
         <p v-if="c.item.value" class="text-xs opacity-80">
@@ -401,12 +366,11 @@ const implicitText = (lines: readonly string[]): string =>
           </span>
         </p>
 
-        <TreeFracturePanel :c="c" />
         <SpamPlanPanel :c="c" />
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->
-      <section v-if="c.bases.value.length" v-show="current === 'base'" class="mb-4">
+      <section v-if="c.bases.value.length" class="mb-4">
         <h2 class="mb-1 font-bold">② ベース</h2>
         <p class="mb-2 text-xs opacity-60">
           <b>貼り付けた物を真似るなら、ベースは決まっています</b> (先頭の「今の物」)。
@@ -428,20 +392,7 @@ const implicitText = (lines: readonly string[]): string =>
         </table>
       </section>
 
-      <!-- 1 手ずつ。自動はベース決めまで、ここからは 1 手打って結果を押して進む (オーナー 2026-09-23) -->
-      <section v-if="c.spam.value" v-show="current === 'steps'" class="mb-4">
-        <h2 class="mb-1 font-bold">③ 1 手ずつ</h2>
-        <CraftPlayPanel :c="c" />
-      </section>
-
-      <!-- 次の段へ。押さずに上の見出しから飛んでもいい -->
-      <div v-if="nextStage" class="mb-4">
-        <button
-          type="button"
-          class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold"
-          @click="stage = nextStage.id"
-        >次へ: {{ nextStage.label }} — {{ nextStage.hint }}</button>
-      </div>
+      </details>
 
       <!-- 時間。動作確認用なので畳んでおく (常に開いていると段の情報量が増える) -->
       <details class="text-xs opacity-50">

@@ -461,7 +461,7 @@ export function useHtcCraft() {
 
   return {
     stepTarget,
-    fracturedLines, fracturedUnusable, slotsUsed, dropOnly,
+    fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
