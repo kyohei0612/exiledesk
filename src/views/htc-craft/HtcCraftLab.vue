@@ -357,12 +357,24 @@ const implicitText = (lines: readonly string[]): string =>
             成功率は減らしても減らさなくても 1/N (最初の MOD 数分の 1)。1 個成功したら終わり。
             <b>固定済み品の最安がこれより安ければ買う</b>ほうが得です。
           </p>
-          <p class="mt-1">
-            次: 固定済み品の最安を取る —
-            <b>{{ c.treePlan.value.signals }} 本</b>
-            (条件: {{ c.treePlan.value.buys.flatMap((b) => b.filters.map((f) => f.id)).join(" + ") }} / コラプト無し)
+          <!-- 検索の条件。stat は作れない MOD だけ、他は規定通り。手で探す時もこのまま入れればいい -->
+          <p class="mt-2">
+            次: 最安を取る — <b>{{ c.treePlan.value.searches.length }} 本</b>
             <span class="opacity-50">— まだ投げていません</span>
           </p>
+          <table class="mt-1 w-full">
+            <tr v-for="sq in c.treePlan.value.searches" :key="String(sq.fractured)" class="border-b border-white/5 align-top">
+              <td class="py-0.5 pr-2 whitespace-nowrap">{{ sq.label }}</td>
+              <td class="opacity-80">
+                {{ c.item.value?.baseText ?? c.item.value?.baseType }} / ilvl {{ c.item.value?.itemLevel ?? "?" }} 以上 / レア / コラプト無し /
+                <template v-for="b in c.treePlan.value.buys" :key="b.text">
+                  <b>{{ b.text.replace(/[0-9]+/, "#") }}</b>
+                  <span class="text-amber-300">({{ sq.fractured ? "Fractured" : "Explicit" }})</span>
+                </template>
+                <span class="opacity-50"> — 段は問わない</span>
+              </td>
+            </tr>
+          </table>
         </div>
         <!-- 相場が無いと比べられない。黙って消すと「比べる所が無い」のか「相場が無い」のか分からない -->
         <p v-else-if="c.dropOnly.value.length" class="mt-2 rounded bg-amber-900/40 p-2 text-xs">

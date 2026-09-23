@@ -268,13 +268,20 @@ export function useHtcCraft() {
     });
     const cls = base.value;
     const buys = treeBuys(dropOnly.value);
-    const query = cls
-      ? treeBuyQuery(cls, buys, {
-        ilvlMin: item.value?.itemLevel ?? undefined,
-        ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
-      })
-      : null;
-    return { plan, buys, query, signals: query ? 1 : 0 };
+    // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り
+    const common = {
+      ilvlMin: item.value?.itemLevel ?? undefined,
+      ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
+    };
+    const fracturedQuery = cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null;
+    const plainQuery = cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null;
+    return {
+      plan, buys,
+      searches: [
+        { label: "固定済み (買えばそのまま使える)", query: fracturedQuery, fractured: true },
+        { label: "固定無し (自前で固定するベース)", query: plainQuery, fractured: false },
+      ].filter((x) => x.query != null),
+    };
   });
 
   /** 目標の modId を画面の文面に直す */

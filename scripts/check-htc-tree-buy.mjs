@@ -69,5 +69,28 @@ else {
   else ok("status は securable");
 }
 
+// ---- 4. 固定無しの検索 (自前で固定するベース) ----
+// オーナー指示: 固定済みでも固定無しでも、stat は作れない MOD だけ。他は規定通り
+const plain = M.treeBuyQuery(cls, real, { ilvlMin: it.itemLevel ?? 80, baseType: it.baseType, fractured: false });
+if (!plain) fail("固定無しのクエリが組めませんでした");
+else {
+  const ids = plain.query.stats[0].filters.map((f) => f.id);
+  const q2 = M.treeBuyQuery(cls, real, { ilvlMin: it.itemLevel ?? 80, baseType: it.baseType, fractured: true });
+  const ids2 = q2.query.stats[0].filters.map((f) => f.id);
+  if (!ids.every((i) => i.startsWith("explicit."))) fail(`固定無しの条件が explicit. になっていません: ${ids.join(",")}`);
+  else ok(`固定無し: ${ids.join(" + ")}`);
+  // stat は作れない MOD の分だけ (狙う 5 個は入れない)
+  if (ids.length !== real.flatMap((b) => b.filters).length || ids2.length !== ids.length) {
+    fail(`stat が作れない MOD 以外まで入っています (固定無し ${ids.length} 本 / 固定済み ${ids2.length} 本)`);
+  } else ok(`stat は作れない MOD の ${ids.length} 本だけ (固定済みも固定無しも同じ)`);
+  // 他は規定通り
+  const tf = plain.query.filters.type_filters.filters;
+  if (plain.query.filters.misc_filters.filters.corrupted?.option !== "false") fail("コラプト無しが入っていません");
+  else if (tf.ilvl?.min !== (it.itemLevel ?? 80)) fail(`ilvl が ${tf.ilvl?.min}`);
+  else if (plain.query.type?.option !== it.baseType) fail(`ベースが ${plain.query.type?.option}`);
+  else if (plain.query.status.option !== "securable") fail("status が securable ではありません");
+  else ok(`他は規定通り (ベース ${it.baseType} / ilvl ${tf.ilvl.min} 以上 / ${tf.rarity.option} / コラプト無し / securable)`);
+}
+
 console.log(failed === 0 ? "\n通りました" : `\n${failed} 件 NG`);
 process.exit(failed === 0 ? 0 : 1);

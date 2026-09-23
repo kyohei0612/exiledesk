@@ -93,10 +93,25 @@ export function treeBuys(
 export function treeBuyQuery(
   cls: ItemBase,
   buys: readonly TreeBuy[],
-  opts: { ilvlMin?: number; baseType?: string } = {},
+  opts: {
+    ilvlMin?: number; baseType?: string;
+    /**
+     * 固定済みを探すか (`true`、既定)、固定されていない物を探すか (`false`)。
+     *
+     * オーナー指示 (2026-09-23):「フラクチャー品だろうがフラクチャー無しだろうが、検索に投げるのは
+     * **作れない MOD だけ**。他のアイテムレベルとかコラプト無しとかは規定通り」。
+     * 違いは stat の頭だけ ── 取引所は固定済みを `fractured.`、それ以外を `explicit.` で分けて
+     * 持つので、固定無しで探せば固定済みは自然に混ざりません。
+     */
+    fractured?: boolean;
+  } = {},
 ): ReturnType<typeof buildSpecQuery> | null {
+  const fractured = opts.fractured ?? true;
   // 下限が無い条件は min を落として送る (段を問わない検索)
-  const filters = buys.flatMap((b) => b.filters).map((f) => ({ id: f.id, min: f.min ?? 0 }));
+  const filters = buys.flatMap((b) => b.filters).map((f) => ({
+    id: fractured ? f.id : f.id.replace(/^fractured\./, "explicit."),
+    min: f.min ?? 0,
+  }));
   if (filters.length === 0) return null;
   const category = tradeCategoryOf(cls);
   if (!opts.baseType && !category) return null;
