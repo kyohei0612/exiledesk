@@ -38,12 +38,16 @@ export function useSpamPlan(deps: {
   });
   const spam = computed(() => {
     const d = deps.data.value, cls = deps.base.value, p = deps.prices.value, it = deps.item.value;
-    if (!d || !cls || !p || !deps.targets.value.length) return null;
+    // 固定済みの MOD は付いている物なので作る対象から外す (枠は spamUsed で数えている)。
+    // 半影の指輪 (火の追加ダメージが固定済み) で、火を「後で作る」狙いに数えていた (2026-09-23)
+    const fixed = new Set(deps.fracturedTargets.value.map((t) => t.modId));
+    const targets = deps.targets.value.filter((t) => !fixed.has(t.modId));
+    if (!d || !cls || !p || !targets.length) return null;
     const z = zeroStart.value;
     // 貼り付けの品質が 20% を超えていればブリーチのエッセンスで上げている (プレにゴミ MOD が 1 つ)
     const q = it ? it.quality ?? 20 : z.quality;
     return spamPlan({
-      data: d, cls, targets: deps.targets.value, prices: p,
+      data: d, cls, targets, prices: p,
       itemLevel: it ? it.itemLevel ?? 82 : z.itemLevel,
       quality: q,
       breach: q > 20,

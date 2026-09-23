@@ -44,6 +44,28 @@ export interface MissPlan {
   options: Array<{ label: string; loss: number; chosen: boolean; forceKey: string; forced: boolean }>;
 }
 
+/**
+ * 1 手ずつ進める画面の「今の状態で次に打つ手」(オーナー 2026-09-23:「1 手 1 手考えながらやろう。
+ * 1 手進むごとに画面切り替わる感じ」)。結果を押すと、その状態でまた聞き直す
+ */
+export type PlayMove =
+  | {
+      kind: "exalt"; label: string; perTry: number;
+      /** 付く狙いと確率。残りは外れ */
+      hits: Array<{ modId: string; p: number }>;
+      /** この手の後にブリーチの MOD が居るか (付け直しを含む手なら true) */
+      breachAfter: boolean;
+      /** この状態から揃うまでの残りの見込み (高貴換算) */
+      remaining: number;
+    }
+  | {
+      kind: "annul"; label: string; perTry: number;
+      /** 何が消えるか。spam = スパムの狙い (消えたらスパムからやり直し) */
+      removes: Array<{ kind: "junk" | "target" | "spam" | "breach"; modId?: string; p: number }>;
+      remaining: number;
+    }
+  | { kind: "reset"; label: string; perTry: number; remaining: number };
+
 /** 合計の分布。`stages` は段階ごとの**累計**の費用を 1 回ずつ (予算でどこまで行けるかを画面で数える) */
 export interface SpamTotal {
   expected: number; p50: number; p80: number; p90: number;

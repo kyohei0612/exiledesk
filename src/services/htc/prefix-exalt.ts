@@ -17,7 +17,7 @@ import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
 import { KEEP } from "./spam-phase";
-import { mulberry32, type MissPlan, type PathStep } from "./spam-total";
+import { mulberry32, type MissPlan, type PathStep, type PlayMove } from "./spam-total";
 
 export interface PrefixExaltStep {
   have: string[];
@@ -37,6 +37,8 @@ export interface PrefixExaltPhase {
   path: PathStep[];
   /** 回した 1 回ずつの費用 (並べ替えていない。仕上げと足すため) */
   samples: number[];
+  /** 今の状態で次に打つ手 ([[spam-phase.ts]] と同じ)。揃って外れも無ければ null */
+  decide: (held: readonly string[], junk: number, breach: boolean) => PlayMove | null;
 }
 
 export interface PrefixExaltInput {
@@ -71,7 +73,7 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
   const ids = inp.targets.map((t) => t.modId);
   const minTier = new Map(inp.targets.map((t) => [t.modId, t.minTierIndex ?? 0]));
   const n = ids.length;
-  if (n === 0) return { modIds: [], expected: 0, steps: [], path: [], samples: [] };
+  if (n === 0) return { modIds: [], expected: 0, steps: [], path: [], samples: [], decide: () => null };
   if (n > 3) return { reason: `高貴で足すプレが ${n} つ (3 つまでしか数えていません)` };
   const B = inp.breach ? 1 : 0;
   if (n + B + 0 > inp.cap) return { reason: "プレの枠が足りません (ブリーチの MOD を含めて)" };
@@ -233,5 +235,22 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
       spend: V.get(key(h, 0, B))! - V.get(key(h2, 0, B))!, miss: missAt(h, 1 - odds), options });
     h = h2;
   }
-  return { modIds: ids, expected: V.get(start)!, steps, path, samples };
+  const decide = (held: readonly string[], j: number, breach: boolean): PlayMove | null => {
+    const h = ids.reduce((a, id, i) => (held.includes(id) ? a | (1 << i) : a), 0);
+    const bq = breach && B ? 1 : 0;
+    const k0 = key(h, j, bq);
+    const e = pol.get(k0);
+    if ((h === full && j === 0) || !e) return null;
+    const remaining = V.get(k0)!;
+    if (e.kind === "exalt") {
+      const ps = outcomes(e, h, bq);
+      return { kind: "exalt", label: e.label, perTry: e.cost(bq), hits: ids.map((id, i) => ({ modId: id, p: ps[i]! })).filter((x) => x.p > 0), breachAfter: bq === 1, remaining };
+    }
+    const m = bits(h) + j + bq;
+    const removes: Extract<PlayMove, { kind: "annul" }>["removes"] = [{ kind: "junk", p: j / m }];
+    ids.forEach((id, i) => { if (h & (1 << i)) removes.push({ kind: "target", modId: id, p: 1 / m }); });
+    if (bq) removes.push({ kind: "breach", p: 1 / m });
+    return { kind: "annul", label: e.label, perTry: e.cost(bq), removes, remaining };
+  };
+  return { modIds: ids, expected: V.get(start)!, steps, path, samples, decide };
 }

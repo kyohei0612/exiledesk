@@ -95,10 +95,18 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
 
   const essences = inp.targets.filter((t) => mod(t.modId)?.source === "perfect_essence");
   const rolls = inp.targets.filter((t) => mod(t.modId)?.source === "normal");
-  const others = inp.targets.filter((t) => !essences.includes(t) && !rolls.includes(t));
+  // 冒涜でしか付かない MOD (Ulaman's など) は冒涜で引く。冒涜は 1 つだけ (最後の 1 手)
+  const desecrated = inp.targets.filter((t) => mod(t.modId)?.source === "desecrated");
+  const others = inp.targets.filter((t) => !essences.includes(t) && !rolls.includes(t) && !desecrated.includes(t));
   if (others.length) return none("プレに作り方の分からない狙いがあります");
+  if (desecrated.length > 1) return none(`冒涜の MOD が ${desecrated.length} つ (冒涜は最後の 1 回だけで数えています)`);
   if (rolls.length > 4) return none(`プレの普通の狙いが ${rolls.length} つ (4 つまでしか数えていません)`);
-  if (essences.length + rolls.length > inp.prefixCap) return none("プレの枠が足りません");
+  if (essences.length + rolls.length + desecrated.length > inp.prefixCap) return none("プレの枠が足りません");
+  // 品質 40% のブリーチの MOD は、エッセンスの前の削減のお告げで外す。エッセンスが無いと外す手が決まっていない
+  // (半影の指輪でプレが全部埋まる時など。オーナーに作り方を聞いている 2026-09-23)
+  if (inp.breach && !essences.length && rolls.length + desecrated.length >= inp.prefixCap) {
+    return none("品質 40% のブリーチの MOD を外す手が決まっていません (プレが全部狙いで埋まる)");
+  }
 
   const steps: FinishStep[] = [];
   // 1. 最後の品質 (ブリーチの MOD があるうちに上げ切る)
@@ -123,7 +131,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
 
   // 4. 冒涜の光ガチャ (最後の 1 つ)。プレに普通の狙いが 2 つ以上なら、1 つを残して先に高貴で足す
   //    ([[prefix-exalt.ts]])。どれを冒涜に残すかは全部試して一番安い物
-  if (!rolls.length) return { steps, desecrate: null, exalt: null, expected: fixed, sample: () => ({ exalt: 0, fixed, desecrate: 0 }), reason: null };
+  if (!rolls.length && !desecrated.length) return { steps, desecrate: null, exalt: null, expected: fixed, sample: () => ({ exalt: 0, fixed, desecrate: 0 }), reason: null };
   const sw = (m: Mod, minIdx: number, floor: number): number =>
     m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
   const pool = [...cls.pools.normal.prefixes, ...cls.pools.desecrated.prefixes];
@@ -153,7 +161,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
   };
   let pick: { d: Des; ex: PrefixExaltPhase; total: number } | null = null;
   let lastReason = "冒涜で狙いが出ません (段が高すぎる / 相場が無い)";
-  for (const roll of rolls) {
+  for (const roll of desecrated.length ? desecrated : rolls) {
     const rest = rolls.filter((t) => t !== roll);
     const exR = prefixExaltPhase({
       data, cls, prices, itemLevel, targets: rest, quality: inp.quality, breach: inp.breach,

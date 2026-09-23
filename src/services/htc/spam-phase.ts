@@ -4,7 +4,7 @@
  * 状態 (付いた狙い h / 外れ j / ブリーチの MOD が居るか bq) ごとに一番安い手を解き (価値反復)、回して分布を取る。
  */
 import { CATALYSTS } from "./quality";
-import { mulberry32, type MissPlan, type PathStep } from "./spam-total";
+import { mulberry32, type MissPlan, type PathStep, type PlayMove } from "./spam-total";
 import type { Side, SpamPlanInput, TargetMethod } from "./spam-plan";
 
 export interface PhaseStep {
@@ -40,6 +40,8 @@ export interface PhaseResult {
    * 途中品を買って始める時の残り ([[partial-buy.ts]])。品質 40% はブリーチのエッセンス 1 回を含む
    */
   fromHeld: Array<{ held: string[]; expected: number }>;
+  /** 今の状態 (付いた狙い・外れの数・ブリーチの MOD が居るか) で次に打つ手。揃っていれば null */
+  decide: (held: readonly string[], junk: number, breach: boolean) => PlayMove | null;
 }
 
 export const EXALT: ReadonlyArray<[string, number]> = [["exalt", 0], ["exalt_greater", 35], ["exalt_perfect", 50]];
@@ -276,7 +278,29 @@ export function solvePhase(c: PhaseCtx): PhaseResult {
       spend: V.get(key(h, 0, bq))! - V.get(key(h2, 0, bq2))!, miss: missAt(h, bq2, 1 - odds), options });
     h = h2; bq = bq2;
   }
+  const decide = (held: readonly string[], j: number, breach: boolean): PlayMove | null => {
+    const h = ids.reduce((a, id, i) => (held.includes(id) ? a | (1 << i) : a), 0);
+    const bq = breach && c.breach ? 1 : 0;
+    const k0 = key(h, j, bq);
+    const e = pol.get(k0);
+    if (h === full || !e) return null;
+    const remaining = V.get(k0)!;
+    if (e.kind === "reset") return { kind: "reset", label: e.label, perTry: resetCost(h, j) - c.sp.expected, remaining };
+    if (e.kind === "exalt") {
+      const re = needsBreach(e, bq);
+      const ps = outcomes(e, h);
+      return { kind: "exalt", label: (re ? "ブリーチのエッセンスを付け直して " : "") + e.label, perTry: e.cost + (re ? essence : 0),
+        hits: ids.map((id, i) => ({ modId: id, p: ps[i]! })).filter((x) => x.p > 0), breachAfter: re || bq === 1, remaining };
+    }
+    const hitsB = e.breachHit && bq === 1 ? 1 : 0;
+    const m = 1 + bits(h) + j + hitsB;
+    const removes: Extract<PlayMove, { kind: "annul" }>["removes"] = [{ kind: "junk", p: j / m }, { kind: "spam", modId: c.pick.modId, p: 1 / m }];
+    ids.forEach((id, i) => { if (h & (1 << i)) removes.push({ kind: "target", modId: id, p: 1 / m }); });
+    if (hitsB) removes.push({ kind: "breach", p: 1 / m });
+    return { kind: "annul", label: e.label, perTry: e.cost, removes, remaining };
+  };
   return {
+    decide,
     path, breachOnce,
     expected: V.get(key(0, 0, START_B))! + c.sp.expected + breachOnce,
     p50: q(costs, 0.5), p80: q(costs, 0.8), p90: q(costs, 0.9),
