@@ -6,6 +6,7 @@
  *   - カタリストが見るタグ … 装飾品の品質がどの MOD を押し上げるか ([[quality.ts]])
  *   - stat の id          … 取引所の検索に使う ([[buy-or-craft.ts]])
  */
+import { readFileSync } from "node:fs";
 import { familyOf } from "./_htc-base-tags.mjs";
 import { normalizeModTemplate, stripRichTextMarkers } from "../src/services/mods/normalize.ts";
 
@@ -53,11 +54,13 @@ export function buildModSides(MODS) {
  * 194 件のうち 16 件は他のタグでも重み > 0 で、**普通に作れます**。それを「買うしかない」と
  * 断ると嘘になるので、**創生の樹でしか出ない 178 件だけ**を出します。
  */
-/** カタリストが見るタグ (buildModTags の CATALYST_TAGS と同じ 13 個) */
-const QUALITY_TAGS = new Set([
-  "life", "mana", "defences", "physical", "fire", "cold", "lightning",
-  "chaos", "attack", "caster", "speed", "attribute", "minion",
-]);
+/**
+ * カタリストが見るタグ。**手で書かず `src/services/htc/catalysts.json` (クライアントの
+ * AlternateQualityTypes 由来) から引く** ── タグとカタリストを 1 か所で同期させる (2026-09-23 オーナー指示)。
+ */
+const QUALITY_TAGS = new Set(
+  JSON.parse(readFileSync(new URL("../src/services/htc/catalysts.json", import.meta.url), "utf8")).catalysts.map((c) => c.tag),
+);
 
 export function buildDropOnly(MODS) {
   const key = (t) => normalizeModTemplate(stripRichTextMarkers(t)).toLowerCase().replace(/\s+/g, " ");
@@ -109,10 +112,7 @@ export function buildModTags(MODS) {
    * (`services/htc/quality.ts`)。同梱の MOD はこのタグを持っていないので、クライアントから渡す。
    * カタリストに使われる 13 個のタグだけに絞って小さく保つ。
    */
-  const CATALYST_TAGS = new Set([
-    "life", "mana", "defences", "physical", "fire", "cold", "lightning",
-    "chaos", "attack", "caster", "speed", "attribute", "minion",
-  ]);
+  const CATALYST_TAGS = QUALITY_TAGS;
   /**
    * **冒涜 (アビス) の MOD のタグは、普通の MOD がいる family には混ぜない。**2026-09-23 に踏んだ:
    * `IncreasedCastSpeed` family に Kurgal の「マナ満タン中のキャスピ」が居て、その `mana` が

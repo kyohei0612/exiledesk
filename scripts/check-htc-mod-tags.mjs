@@ -15,8 +15,8 @@ const { bundleEntry } = await import("./_bundle-ts.mjs");
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();
 
-const CATALYST_TAGS = new Set(["life", "mana", "defences", "physical", "fire", "cold", "lightning",
-  "chaos", "attack", "caster", "speed", "attribute", "minion"]);
+const CATALYSTS = JSON.parse(readFileSync("src/services/htc/catalysts.json", "utf8")).catalysts;
+const CATALYST_TAGS = new Set(CATALYSTS.map((c) => c.tag));
 const CLIENT = JSON.parse(readFileSync("data-cache/mods.en.json", "utf8"));
 const SPAWN = { Rings: "ring", Amulets: "amulet" };
 
@@ -45,6 +45,16 @@ for (const m of data.mods.values()) {
 for (const id of ["Rings/IncreasedCastSpeed", "Amulets/IncreasedCastSpeed"]) {
   const m = data.mods.get(id);
   if (m && M.boostedBy(m, "mana")) { bad++; console.log(`NG ${id} がマナのカタリストで押し上がる`); }
+}
+// ---- タグとカタリストの同期 (オーナー 2026-09-23:「そこの同期をさせよう」) ----
+// カタリスト 1 種類ずつ: 値段のキーがあるか / 指輪・首飾りに押し上げる MOD が 1 つはあるか
+const PRICE_KEYS = JSON.parse(readFileSync("src/services/htc/price-keys.json", "utf8"));
+const priceKeys = PRICE_KEYS.currency ?? {};
+for (const c of CATALYSTS) {
+  if (!(`catalyst_${c.tag}` in priceKeys)) { bad++; console.log(`NG ${c.ja} (${c.tag}) の値段のキー catalyst_${c.tag} が無い`); }
+  const hits = [...data.mods.values()].filter((m) => SPAWN[m.id.split("/")[0]] && m.source === "normal" && M.boostedBy(m, c.tag)).length;
+  if (!hits) { bad++; console.log(`NG ${c.ja} (${c.tag}) で押し上がる指輪・首飾りの MOD が 1 つも無い`); }
+  console.log(`  ${c.ja.padEnd(14)} ${c.tag.padEnd(10)} 普通 MOD ${hits} 個`);
 }
 console.log(`指輪・首飾りの普通 MOD ${checked} 個を点検 (クライアントに同じ種類が無い ${noClient} 個は対象外)`);
 if (bad) { console.log(`NG ${bad} 件`); process.exit(1); }
