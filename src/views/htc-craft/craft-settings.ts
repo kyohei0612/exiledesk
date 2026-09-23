@@ -15,10 +15,12 @@ export const craftBudgetDivine = ref(500);
 export const craftForce = ref<Record<string, string>>({});
 
 /**
- * 固定済みの MOD が付いたベース (フラクチャー品) から始めるか。false なら無し品から、その MOD も作る
- * (オーナー 2026-09-24:「フラクチャー品かフラクチャー無し品かみたいなところは？」)
+ * ベースの始め方 (オーナー 2026-09-24:「フラクチャー品かフラクチャー無し品か」「選ばせたら、初動安い順」)。
+ *   frac0 … フラクチャー品 (他の MOD 無し)  frac1 … フラクチャー品 (他の MOD 各側 1 つまで = 外れ付き)
+ *   plain … 無し品から、固定済みだった MOD も作る
  */
-export const startFractured = ref(true);
+export type StartOption = "frac0" | "frac1" | "plain";
+export const startOption = ref<StartOption>("frac0");
 
 /**
  * 0 から組む時 (ベースから選ぶ道) の設定。貼り付けの時は貼り付けの値を使うので効かない。

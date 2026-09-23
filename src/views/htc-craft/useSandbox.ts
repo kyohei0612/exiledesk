@@ -15,7 +15,7 @@ import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { stepHelpers, type Cleanup, type ItemState, type Side, type StepMethod } from "../../services/htc/step-odds";
-import { startFractured, zeroStart } from "./craft-settings";
+import { startOption, zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
 /** 既定で「使わない」カタリストの値段 (1 個・神)。[[spam-plan.ts]] と同じ */
@@ -49,23 +49,28 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
   const startItem = (): ItemState => {
     const d = c.data.value;
     // フラクチャー品から始める時だけ、固定済みの MOD を付けた状態で始める
-    const slots: ItemState["slots"] = startFractured.value
+    const frac = startOption.value !== "plain";
+    const slots: ItemState["slots"] = frac
       ? c.fracturedTargets.value.map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }))
       : [];
     const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
     for (let i = 0; i < tree.p; i++) slots.push({ modId: null, side: "prefix", fixed: true, label: "樹 MOD (固定済み)" });
     for (let i = 0; i < tree.s; i++) slots.push({ modId: null, side: "suffix", fixed: true, label: "樹 MOD (固定済み)" });
+    // 「他の MOD 各側 1 つまで」のフラクチャー品は、各側に外れが 1 つ付いている前提
+    if (startOption.value === "frac1" && c.fracturedTargets.value.length) {
+      slots.push({ modId: null, side: "prefix", fixed: false }, { modId: null, side: "suffix", fixed: false });
+    }
     return { slots, breach: false };
   };
   const snap = shallowRef<Snap>({ item: startItem(), spent: 0, moves: 0, log: [] });
   const history = shallowRef<Snap[]>([]);
   const screen = ref<Screen>({ kind: "pick" });
   const restartAll = (): void => { snap.value = { item: startItem(), spent: 0, moves: 0, log: [] }; history.value = []; screen.value = { kind: "pick" }; };
-  watch(() => [c.targets.value, c.base.value, startFractured.value], restartAll);
+  watch(() => [c.targets.value, c.base.value, startOption.value], restartAll);
 
   /** 忍者 (貼り付け) の狙い。★ で上に出すだけで、選ぶのは人 */
   const ninja = computed(() => {
-    const fixed = new Set(startFractured.value ? c.fracturedTargets.value.map((t) => t.modId) : []);
+    const fixed = new Set(startOption.value !== "plain" ? c.fracturedTargets.value.map((t) => t.modId) : []);
     return new Map(c.targets.value.filter((t) => !fixed.has(t.modId)).map((t) => [t.modId, t.minTierIndex ?? 0]));
   });
   const name = (id: string | null, label?: string): string => {

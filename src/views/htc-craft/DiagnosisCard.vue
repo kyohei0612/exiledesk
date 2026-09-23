@@ -41,29 +41,21 @@ const fc = useFractureChoice(c);
     <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
       このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
     </p>
-    <!-- フラクチャー品か無し品か。買う方は押した時だけ検索 -->
+    <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。フラクチャー品の値段は押した時だけ検索 -->
     <div v-if="fixed.length" class="mt-2 rounded bg-black/20 p-2">
-      <p class="mb-1 font-bold">始め方</p>
-      <label class="block">
-        <input v-model="fc.startFractured.value" type="radio" :value="true" />
-        フラクチャー品を買う ({{ fixed.join(" / ") }} が固定済み):
-        <template v-if="fc.found.value">
-          <b>{{ fc.found.value.min != null ? c.money(fc.found.value.min) : "出品なし" }}</b> ({{ fc.found.value.total }} 件)
-          <a v-if="fc.found.value.url" :href="fc.found.value.url" target="_blank" class="underline opacity-70">取引所</a>
-        </template>
-        <button v-else-if="fc.query.value" type="button" class="ml-1 rounded border border-sky-600 px-1" :disabled="fc.busy.value" @click.prevent="fc.search()">
-          {{ fc.busy.value ? "探しています…" : "最安を取る" }}
+      <p class="mb-1 font-bold">
+        始め方 (初動の安い順)
+        <button v-if="!fc.searched.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
+          {{ fc.busy.value ? "探しています…" : "フラクチャー品の最安を取る (2 本 / 約 20 秒)" }}
         </button>
-        <span v-else class="opacity-60">(取引所の条件にできない)</span>
-      </label>
-      <label class="block">
-        <input v-model="fc.startFractured.value" type="radio" :value="false" />
-        無し品から作る: その MOD を付ける平均 <b>{{ fc.craftCost.value != null ? c.money(fc.craftCost.value) : "-" }}</b>
-        <span class="opacity-60">(固定されないので後で消えうる)</span>
-      </label>
-      <p v-if="fc.cheaper.value" class="mt-1">
-        → <b class="text-emerald-300">{{ fc.cheaper.value === "fractured" ? "フラクチャー品を買う" : "無し品から作る" }}</b> 方が安い
       </p>
+      <label v-for="o in fc.options.value" :key="o.key" class="block">
+        <input v-model="fc.startOption.value" type="radio" :value="o.key" />
+        {{ o.label }}:
+        <b>{{ o.cost != null ? c.money(o.cost) : o.found ? "出品なし" : "-" }}</b>
+        <template v-if="o.found"> ({{ o.found.total }} 件<a v-if="o.found.url" :href="o.found.url" target="_blank" class="ml-1 underline opacity-70">取引所</a>)</template>
+        <span v-if="o.note" class="opacity-60"> {{ o.note }}</span>
+      </label>
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
     </div>
     <p class="mt-1">作る MOD {{ targets.length }} つ: {{ targets.map((r) => r.text).join(" / ") }}</p>
