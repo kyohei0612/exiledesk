@@ -254,6 +254,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
       data, cls, prices, itemLevel,
       targets: inp.targets.filter((t) => mod(t.modId)?.type === "prefix"),
       quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: 3 - inp.used.prefix,
+      ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
     });
     if (!finish.reason) {
       const rnd = mulberry32(7);

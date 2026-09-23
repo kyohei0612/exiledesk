@@ -81,13 +81,22 @@ function choose(modId: string): void {
       <p class="mt-2">サフィが揃った後のプレの仕上げ</p>
       <p v-if="c.spam.value.finish.reason" class="text-amber-300">{{ c.spam.value.finish.reason }}</p>
       <table v-else class="mt-1 w-full">
+        <tr v-if="c.spam.value.finish.exalt" class="border-b border-white/5 align-top">
+          <td class="py-0.5 pr-2">
+            1. {{ c.stepTarget(c.spam.value.finish.exalt.modIds) }} を左側の高貴で足す (外れは左側の消去のお告げ)
+            <div v-for="(s, k) in c.spam.value.finish.exalt.steps" :key="k" class="opacity-60">
+              ・{{ s.have.length ? c.stepTarget(s.have) + " あり" : "狙い無し" }}{{ s.junk ? ` / 外れ ${s.junk}` : "" }}{{ s.breachGone ? " / ブリーチ無し" : "" }} → {{ s.action }} ({{ c.money(s.perTry) }})
+            </div>
+          </td>
+          <td class="text-right">平均 {{ c.money(c.spam.value.finish.exalt.expected) }}</td>
+        </tr>
         <tr v-for="(st, i) in c.spam.value.finish.steps" :key="i" class="border-b border-white/5">
-          <td class="py-0.5 pr-2">{{ i + 1 }}. {{ st.label }}<template v-if="st.modId"> で {{ c.stepTarget([st.modId]) }}</template></td>
+          <td class="py-0.5 pr-2">{{ i + (c.spam.value.finish.exalt ? 2 : 1) }}. {{ st.label }}<template v-if="st.modId"> で {{ c.stepTarget([st.modId]) }}</template></td>
           <td class="text-right">{{ c.money(st.cost) }}</td>
         </tr>
         <tr v-if="c.spam.value.finish.desecrate" class="border-b border-white/5">
           <td class="py-0.5 pr-2">
-            {{ c.spam.value.finish.steps.length + 1 }}. 冒涜 ({{ c.spam.value.finish.desecrate.bone }} + 左手のネクロマンシーのお告げ{{ c.spam.value.finish.desecrate.echoes ? " + 反響のお告げ" : "" }})
+            {{ c.spam.value.finish.steps.length + (c.spam.value.finish.exalt ? 2 : 1) }}. 冒涜 ({{ c.spam.value.finish.desecrate.bone }} + 左手のネクロマンシーのお告げ{{ c.spam.value.finish.desecrate.echoes ? " + 反響のお告げ" : "" }})
             で {{ c.stepTarget([c.spam.value.finish.desecrate.modId]) }} — 1 回 1/{{ (1 / c.spam.value.finish.desecrate.odds).toFixed(1) }}、外れたら消去のオーブ + 光のお告げ ({{ c.money(c.spam.value.finish.desecrate.light) }}) で冒涜だけ消して引き直し
           </td>
           <td class="text-right">1 回 {{ c.money(c.spam.value.finish.desecrate.perTry) }}</td>

@@ -95,6 +95,21 @@ if (!/パーフェクトエッセンス/.test(labels)) fail("最大マナ% を�
 if (r.finish?.desecrate?.modId !== "Rings/IncreasedMana") fail("冒涜で最大マナを引いていない");
 if (!r.total || !(r.total.p80 > r.total.p50 && r.total.expected > r.phase.expected)) fail("合計の分布がおかしい");
 
+// ---- プレに普通の狙いが 2 つ (最大ライフ + 最大マナ) ----
+// 1 つを冒涜に残し、もう 1 つを左側の高貴 (+ 触媒) で先に足す。外れは左側の消去のお告げで消し切ってから仕上げ
+{
+  const cls0 = M.baseForSolving(data, "Mnemonic Ring", { prefixes: 0, suffixes: 0, either: 0 });
+  const top = (id, k = 1) => { const m = data.mods.get("Rings/" + id); return { modId: "Rings/" + id, minTierIndex: m.tiers.length - k }; };
+  const t2 = [top("IncreasedLife"), top("IncreasedMana", 2), top("FireResistance", 2), top("ColdResistance", 2), top("LightningResistance", 2)];
+  const r5 = M.spamPlan({ data, cls: cls0, targets: t2, prices, itemLevel: 82, quality: 20, breach: false, qualityTag: "life", used: { prefix: 0, suffix: 0 }, runs: 8000 });
+  console.log(`ライフ + マナ / 3 耐性: スパム ${r5.spam ? name(r5.spam.modId) : "無し"} / プレを高貴で ${(r5.finish?.exalt?.modIds ?? []).map(name).join("・")} 平均 ${((r5.finish?.exalt?.expected ?? 0) / D).toFixed(1)} 神 / 冒涜 ${r5.finish?.desecrate ? name(r5.finish.desecrate.modId) : "-"} / 合計 ${r5.total ? (r5.total.expected / D).toFixed(1) : "-"} 神${r5.finish?.reason ? " / " + r5.finish.reason : ""}`);
+  if (!r5.finish || r5.finish.reason) fail("プレが 2 つの指輪で仕上げが組めない: " + r5.finish?.reason);
+  if (r5.finish?.exalt?.modIds.length !== 1) fail("プレの 1 つを高貴で足していない");
+  if (!r5.finish?.desecrate) fail("最後の 1 つを冒涜で引いていない");
+  if (r5.finish?.exalt?.steps.some((x) => x.action === "消去のオーブ")) fail("サフィが揃った後に素の消去を使っている (サフィの狙いが消える)");
+  if (!r5.total || !(r5.total.expected > r5.phase.expected + r5.finish.exalt.expected)) fail("合計にプレの高貴の段階が入っていない");
+}
+
 // 触媒を全部切る → スパムは全耐性、500 神前後
 const off = Object.fromEntries(["attribute", "cold", "fire", "lightning", "mana"].map((t) => [t, false]));
 const r2 = M.spamPlan({ ...base, catalystChoice: off });
