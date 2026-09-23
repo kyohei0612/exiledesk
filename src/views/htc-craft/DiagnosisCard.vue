@@ -7,6 +7,7 @@
  */
 import { computed } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
+import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -22,6 +23,8 @@ const targets = computed(() => c.rows.value.filter((r) => !fixedIds.value.has(r.
 /** 別のベースの方が合う時だけ 2 つまで (枠が違う・暗黙がタダ・品質の上限) */
 const others = computed(() => c.bases.value.filter((b) => b.fits && !b.current && (b.maxQualityPlus || b.implicits.length)).slice(0, 2));
 const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality);
+/** 英語の行 (忍者のコピー) は日本語に */
+const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 </script>
 
 <template>
@@ -30,10 +33,10 @@ const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality)
     <p class="opacity-70">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 / 品質 {{ quality }}%</p>
     <p v-if="fixed.length" class="mt-1">固定済み (付いたまま): {{ fixed.join(" / ") }}</p>
     <p v-if="c.dropOnly.value.length" class="mt-1">
-      樹 MOD: <b>{{ c.dropOnly.value.map((d) => d.text).join(" / ") }}</b> — 固定済みで付いたベースを買う
+      樹 MOD: <b>{{ c.dropOnly.value.map((d) => ja(d.text)).join(" / ") }}</b> — 固定済みで付いたベースを買う
     </p>
     <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
-      このベースでは作れない MOD: {{ c.skipped.value.join(" / ") }}
+      このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
     </p>
     <p class="mt-1">作る MOD {{ targets.length }} つ: {{ targets.map((r) => r.text).join(" / ") }}</p>
     <p v-if="c.slots.value?.impossible" class="mt-1 text-rose-300">{{ c.slots.value.note }}</p>

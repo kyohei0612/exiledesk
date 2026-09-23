@@ -67,3 +67,4 @@ export function loadPatchSync(): PatchData {
   return applyExtras(data, extra as unknown as Parameters<typeof applyExtras>[1]);
 }
 export { stepHelpers } from "../src/services/htc/step-odds";
+export { jaOfPastedLine } from "../src/services/htc/mod-text";

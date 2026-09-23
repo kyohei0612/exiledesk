@@ -34,7 +34,7 @@ import { baseForSolving } from "../../services/htc/bridge";
 import { useSpamPlan } from "./useSpamPlan";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
-import { jaOfMod } from "../../services/htc/mod-text";
+import { jaOfMod, jaOfPastedLine } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
@@ -226,7 +226,8 @@ export function useHtcCraft() {
       const it = item.value;
       return {
         modId: tg.modId,
-        text: got.texts[i] ?? tg.modId,
+        // 英語の貼り付け (忍者のコピー) は日本語に直す。引けなければ英語のまま
+        text: got.texts[i] ? jaOfPastedLine(got.texts[i]!) ?? got.texts[i]! : tg.modId,
         side: mod.type === "prefix" ? "P" : "S",
         tierName: String(tier.name ?? ""),
         range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),

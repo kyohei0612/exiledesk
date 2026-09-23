@@ -67,3 +67,28 @@ export function jaOfMod(mod: Mod): string {
   if (whole) return whole;
   return text.split(NL).map((l) => jaOfModLine(l) ?? l).join(" / ");
 }
+
+/** 日本語の文字 (かな・漢字) を含むか */
+const HAS_JA = /[぀-ヿ一-鿿]/;
+
+/**
+ * 貼り付けた英語の行 (poe.ninja のコピー) を、クライアントの日本語に直して数字を埋める (2026-09-24)。
+ * オーナー:「忍者コピーで辞書で変換してあげないとね名前」。
+ *
+ * 表の日本語テンプレートの `#` に、英語の行の数字を**出てきた順に**入れる。英語で `+` が付いていた数字は
+ * 日本語にも `+` を付ける (「+235 to maximum Mana」→「最大マナ +235」)。数字の数が合わない・表に無い時は
+ * `null` (呼ぶ側が英語のまま出す)。日本語の行はそのまま返す。
+ */
+export function jaOfPastedLine(line: string): string | null {
+  if (HAS_JA.test(line)) return line;
+  const ja = jaOfModLine(line);
+  if (!ja) return null;
+  const nums = [...line.matchAll(/([+-]?)([0-9]+(?:\.[0-9]+)?)/g)].map((m) => ({ sign: m[1] === "+" ? "+" : m[1] === "-" ? "-" : "", v: m[2]! }));
+  const holes = ja.split("#").length - 1;
+  if (holes !== nums.length) return null;
+  let i = 0;
+  return ja.replace(/([+-]?)#/g, (_, pre: string) => {
+    const n = nums[i++]!;
+    return (pre || n.sign) + n.v;
+  });
+}

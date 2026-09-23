@@ -216,7 +216,8 @@ export function parseJaItem(text: string): PastedItem {
     if (!baseType) {
       const en = baseEnByJa.get(line) ?? (baseEnSet.has(line) ? line : null);
       if (en) {
-        baseText = line;
+        // 英語の貼り付け (忍者のコピー) はベース名も日本語で持つ (画面に出すため)
+        baseText = baseEnByJa.has(line) ? line : (itemsJa as Record<string, string>)[en] ?? line;
         baseType = en;
         continue;
       }
