@@ -92,7 +92,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
   const rolls = inp.targets.filter((t) => mod(t.modId)?.source === "normal");
   const others = inp.targets.filter((t) => !essences.includes(t) && !rolls.includes(t));
   if (others.length) return none("プレに作り方の分からない狙いがあります");
-  if (rolls.length > 3) return none(`プレの普通の狙いが ${rolls.length} つ (3 つまでしか数えていません)`);
+  if (rolls.length > 4) return none(`プレの普通の狙いが ${rolls.length} つ (4 つまでしか数えていません)`);
   if (essences.length + rolls.length > inp.prefixCap) return none("プレの枠が足りません");
 
   const steps: FinishStep[] = [];

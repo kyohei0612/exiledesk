@@ -145,6 +145,8 @@ export interface SpamPlanInput {
   breach: boolean;
   /** 固定済み・樹 MOD で埋まっている枠 */
   used: { prefix: number; suffix: number };
+  /** ベースの枠 (固定済みを引く前)。無ければ 3 / 3。黄昏の指輪はプレ 4 / サフィ 2 (ninja の指輪 2026-09-23) */
+  baseLimits?: { prefix: number; suffix: number };
   /** 利用者が切り替えたカタリスト (tag → 使うか)。無ければ既定 */
   catalystChoice?: Readonly<Record<string, boolean>>;
   /** 完成品の品質の種類 (貼り付けの「品質 (マナモッド)」→ mana)。仕上げで最後の品質を上げる */
@@ -164,6 +166,7 @@ const LABEL: Record<string, string> = {
 
 export function spamPlan(inp: SpamPlanInput): SpamPlan {
   const { data, cls, prices, itemLevel, quality, breach } = inp;
+  const free = (side: "prefix" | "suffix"): number => (inp.baseLimits?.[side] ?? 3) - inp.used[side];
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const divine = prices.currency.divine ?? 1;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
@@ -228,7 +231,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
     const side = pick.side;
     const expensive = side === "prefix" && !breach;
     if (!sp) return { pick, side, expensive, spam: null, others: [], phase: null, reason: "カオスで付きません (段が高すぎる / 相場が無い)" };
-    const cap = 3 - (side === "prefix" ? inp.used.prefix : inp.used.suffix);
+    const cap = free(side);
     const others = methods.filter((x) => x !== pick && x.side === side && x.group !== "later");
     const spam = { modId: pick.modId, currency: LABEL[sp.k] ?? sp.k, odds: sp.odds, expected: sp.expected };
     if (1 + others.length > cap) {
@@ -241,6 +244,26 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
   // ルールで選ぶ (利用者が選び直していればそれ)。**ルールが一番安いとは限らない** ── 完全の高貴は
   // 段の下限 50 で高い段が当たりやすく、スパムで固めなくても安く付く MOD がある (死体の円環では
   // 軽快を使うとキャスピより全耐性をスパムした方が安かった)。だから候補を全部並べて見せる
+  // **サフィに狙いが無い** (ミニオンの樹 MOD を買う指輪で、残りが最大マナ・命中などプレだけ) なら
+  // スパムは要らない。プレの仕上げ ([[prefix-finish.ts]]: 左側の高貴 + 冒涜) だけで組む。
+  // poe.ninja の上位の指輪 (2026-09-23) で、この形が「スパムがプレ = 高額コース」に落ちていた (292 個中 24 件)
+  if (!inp.spamOverride && !cand.some((x) => x.side === "suffix")) {
+    const finish = prefixFinish({
+      data, cls, prices, itemLevel,
+      targets: inp.targets.filter((t) => mod(t.modId)?.type === "prefix"),
+      quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: free("prefix"),
+      ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
+    });
+    for (const m of methods) if (m.side === "prefix" && m.group !== "later") m.role = "later";
+    let total: SpamPlan["total"] = null;
+    if (!finish.reason) {
+      const rnd = mulberry32(7);
+      const sum = Array.from({ length: 4000 }, () => finish.sample(rnd)).sort((a, b) => a - b);
+      const q = (f: number): number => sum[Math.min(sum.length - 1, Math.floor(sum.length * f))]!;
+      total = { expected: finish.expected, p50: q(0.5), p80: q(0.8), p90: q(0.9) };
+    }
+    return { methods, spam: null, side: "prefix", expensive: false, phase: null, finish, total, alternatives: [], reason: null };
+  }
   const chosen = cand.find((x) => x.modId === inp.spamOverride) ?? cand[0]!;
   const main = planFor(chosen, inp.runs ?? 20000);
   main.pick.role = "spam";
@@ -265,7 +288,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
     finish = prefixFinish({
       data, cls, prices, itemLevel,
       targets: inp.targets.filter((t) => mod(t.modId)?.type === "prefix"),
-      quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: 3 - inp.used.prefix,
+      quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: free("prefix"),
       ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
     });
     if (!finish.reason) {

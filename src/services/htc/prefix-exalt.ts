@@ -66,7 +66,7 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
   const minTier = new Map(inp.targets.map((t) => [t.modId, t.minTierIndex ?? 0]));
   const n = ids.length;
   if (n === 0) return { modIds: [], expected: 0, steps: [], samples: [] };
-  if (n > 2) return { reason: `高貴で足すプレが ${n} つ (2 つまでしか数えていません)` };
+  if (n > 3) return { reason: `高貴で足すプレが ${n} つ (3 つまでしか数えていません)` };
   const B = inp.breach ? 1 : 0;
   if (n + B + 0 > inp.cap) return { reason: "プレの枠が足りません (ブリーチの MOD を含めて)" };
 

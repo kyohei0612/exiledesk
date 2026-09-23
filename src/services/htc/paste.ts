@@ -50,7 +50,8 @@
 import modTextJa from "../../i18n/mod-text-ja.json";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
-import { bridgeMods } from "./bridge";
+import { bridgeMods, sideLimits } from "./bridge";
+import { balanceSides, hybridLineParts } from "./paste-sides";
 import { matchKey } from "./bridge-index";
 import { htcBaseInfo, htcDropOnly, htcModSides, type DropOnlyInfo, type DropOnlyTier } from "./patch";
 import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
@@ -438,7 +439,15 @@ export function targetsFor(
     });
   }
   const hybridParts = hybridLineParts(bridged.mods);
-  balanceSides(data, bridged.mods);
+  // 繋がらない行 (樹 MOD など、買うしかない物) が使う枠も数えてから振り分ける
+  const sideTable = htcModSides();
+  const takenBy = { prefix: 0, suffix: 0 };
+  bridged.mods.forEach((b, i) => {
+    if (b.mod || hybridParts.has(i)) return;
+    const v = sideTable[matchKey(rollable[i]!.template)];
+    if (v === "P") takenBy.prefix++; else if (v === "S") takenBy.suffix++;
+  });
+  balanceSides(data, bridged.mods, takenBy, sideLimits(data, item.baseType));
 
   const targets: TierTarget[] = [];
   /** `targets` と同じ並びの、貼り付けの文面。画面に日本語のまま出すため */
@@ -483,53 +492,4 @@ export function targetsFor(
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
   return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides };
-}
-
-/**
- * プレにもサフィにもある MOD (アイテムレアリティ増加など) を、**片側が 3 つを超えたら反対側へ回す**。
- *
- * 文面だけでは側が決まらず、繋ぎ先は片方 (サフィ) に寄る。poe.ninja の指輪 (2026-09-23) で
- * 「レアリティ + 能力値 + 火耐性 + 混沌耐性」がサフィ 4 つになり「枠が足りない」と止まっていた。
- * 同じクラスで文面が同じ・種類 (普通 / エッセンス…) が同じで、側だけ違う MOD を双子として探す。
- */
-function balanceSides(data: PatchData, mods: Array<{ mod?: Mod | null }>): void {
-  const LIMIT = 3;
-  const count = (side: string): number => mods.filter((b) => b.mod?.type === side).length;
-  for (const [over, other] of [["suffix", "prefix"], ["prefix", "suffix"]] as const) {
-    for (const b of mods) {
-      if (count(over) <= LIMIT || count(other) >= LIMIT) break;
-      const m = b.mod;
-      if (!m || m.type !== over) continue;
-      const cls = m.id.split("/")[0];
-      const twin = [...data.mods.values()].find((x) =>
-        x.id.split("/")[0] === cls && x.type === other && x.source === m.source && x.text === m.text);
-      if (twin) b.mod = twin;
-    }
-  }
-}
-
-/**
- * 2 行で 1 つの複合 MOD (光半径 + マナ自動回復 など) の**もう 1 行**を探す。
- *
- * 片方の行は複合 MOD の 1 行 (`viaLine`) として繋がるが、もう片方は単独の MOD
- * (マナ自動回復) としても繋がってしまい、狙いが 1 つ多く数えられていた
- * (poe.ninja の指輪 2026-09-23: サフィが 4 つになって「枠が足りない」)。
- * 複合 MOD と同じ側で、その stat の 1 つだけを持つ単独 MOD / 同じ複合 MOD の重複を「もう 1 行」とする。
- */
-function hybridLineParts(mods: ReadonlyArray<{ mod?: Mod | null; viaLine?: boolean }>): Set<number> {
-  const parts = new Set<number>();
-  // 同梱の型に stats は無いが、データには入っている (tiers[].stats)
-  const statsOf = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
-  mods.forEach((h, i) => {
-    const H = h.mod;
-    if (!H || !h.viaLine || parts.has(i)) return;
-    const hs = statsOf(H);
-    mods.forEach((b, j) => {
-      const Y = b.mod;
-      if (j === i || !Y || parts.has(j)) return;
-      const ys = statsOf(Y);
-      if (Y.id === H.id || (Y.type === H.type && ys.length === 1 && hs.includes(ys[0]!))) parts.add(j);
-    });
-  });
-  return parts;
 }

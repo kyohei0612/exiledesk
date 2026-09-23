@@ -83,6 +83,12 @@ export function itemBaseFor(data: PatchData, baseType: string): ItemBase | null 
   return { ...cls, limits: { ...base, prefixes: lim.prefixes, suffixes: lim.suffixes } };
 }
 
+/** ベースの枠を側ごとに (固定済みを引く前)。ベースが分からなければ 3 / 3 */
+export function sideLimits(data: PatchData, baseType: string | null | undefined): { prefix: number; suffix: number } {
+  const lim = (baseType ? itemBaseFor(data, baseType)?.limits : null) ?? DEFAULT_LIMITS;
+  return { prefix: lim.prefixes, suffix: lim.suffixes };
+}
+
 /** 1 件の橋渡しの結果 */
 export interface BridgedMod {
   /** うちのテンプレート (そのまま) */

@@ -10,6 +10,7 @@
  *     試しておらず、雷 (エシュ) の方が付きやすい (雷のタグを持つ MOD が少なく分母が小さい) ぶん安い
  *   - カタリストを全部切ると、スパムの狙いは全耐性 (同じ「使わない」組で一番付きにくいサフィ) になり 500 神前後
  *   - 回した平均が期待値と合う (乱数や剥がしの数え方が壊れると外れる)
+ *   - プレだけの指輪はスパムを飛ばして仕上げだけ、黄昏の指輪はベースの枠 (プレ 4 / サフィ 2) で数える
  * 値段は 2026-09-23 の相場を固定で持つ (神 = 506 高貴)。
  */
 import { bundleEntry } from "./_bundle-ts.mjs";
@@ -149,10 +150,32 @@ if (!r.alternatives.some((a) => a.byRule && a.chosen)) fail("ルールの物が�
 const over = M.spamPlan({ ...base, spamOverride: "Rings/AllResistances" });
 if (over.spam?.modId !== "Rings/AllResistances") fail("選び直しが効いていない");
 
-// 品質 20% でプレがスパムになる時は高額コースの印
-const r4 = M.spamPlan({ ...base, quality: 20, breach: false, targets: got.targets.filter((t) => /IncreasedMana$/.test(t.modId)) });
+// サフィに狙いが無い (プレだけ) → スパムを飛ばして仕上げだけ (ninja の指輪 2026-09-23)
+const manaOnly = got.targets.filter((t) => /IncreasedMana$/.test(t.modId));
+const r4 = M.spamPlan({ ...base, quality: 20, breach: false, targets: manaOnly });
 show("品質 20% で最大マナだけ", r4);
-if (!r4.expensive) fail("品質 20% でプレのスパムなのに高額コースの印が無い");
+if (r4.spam || !r4.finish || r4.finish.reason || !r4.total) fail("プレだけの指輪がスパム無しの仕上げになっていない: " + (r4.reason ?? r4.finish?.reason));
+// 品質 20% でプレをスパムに選び直した時は高額コースの印
+const r4b = M.spamPlan({ ...base, quality: 20, breach: false, targets: manaOnly, spamOverride: "Rings/IncreasedMana" });
+if (!r4b.expensive) fail("品質 20% でプレのスパムなのに高額コースの印が無い");
+
+// 黄昏の指輪 (プレ 4 / サフィ 2): プレの普通の狙い 4 つ = 3 つを高貴、1 つを冒涜
+{
+  const dusk = M.parseJaItem(["Item Class: Rings", "Rarity: Rare", "Test Loop", "Dusk Ring", "--------", "Item Level: 82", "--------",
+    "Adds 26 to 40 Physical Damage to Attacks", "Adds 25 to 42 Cold damage to Attacks", "24% increased Cold Damage",
+    "30% increased Chaos Damage", "Leech 9.28% of Physical Attack Damage as Mana"].join(NL));
+  const g = M.targetsFor(data, dusk);
+  const lim = M.sideLimits(data, dusk.baseType);
+  if (lim.prefix !== 4 || lim.suffix !== 2) fail(`黄昏の指輪の枠が ${lim.prefix}/${lim.suffix} (4/2 のはず)`);
+  const rd = M.spamPlan({ data, cls: M.baseForSolving(data, dusk.baseType, g.skippedSides), targets: g.targets, prices, itemLevel: 82, quality: 20, breach: false,
+    qualityTag: null, used: { prefix: 0, suffix: 0 }, baseLimits: lim, runs: 2000 });
+  console.log(`黄昏の指輪: スパム ${rd.spam ? name(rd.spam.modId) : "無し"} / 高貴 ${(rd.finish?.exalt?.modIds ?? []).map(name).join("・")} / 冒涜 ${rd.finish?.desecrate ? name(rd.finish.desecrate.modId) : "-"} / 合計 ${rd.total ? (rd.total.expected / D).toFixed(0) : "-"} 神${rd.reason || rd.finish?.reason ? " / " + (rd.reason ?? rd.finish.reason) : ""}`);
+  if (!rd.total) fail("黄昏の指輪 (プレ 4 つ) が組めない");
+  // 素の 3/3 で数えると組めない (枠を見ていることの確認)
+  const r3 = M.spamPlan({ data, cls: M.baseForSolving(data, dusk.baseType, g.skippedSides), targets: g.targets, prices, itemLevel: 82, quality: 20, breach: false,
+    qualityTag: null, used: { prefix: 0, suffix: 0 }, baseLimits: { prefix: 3, suffix: 3 }, runs: 2000 });
+  if (r3.total) fail("枠 3/3 でもプレ 4 つが組めてしまう");
+}
 
 for (const s of r.phase?.steps ?? []) console.log(`     ${s.have.map(name).join("・") || "狙い無し"}${s.junk ? " / 外れ " + s.junk : ""}${s.breachGone ? " / ブリーチ無し" : ""} → ${s.action} (${(s.perTry / D).toFixed(2)} 神)`);
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
