@@ -35,6 +35,7 @@ import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
+import { spamPlan } from "../../services/htc/spam-plan";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
@@ -178,6 +179,7 @@ export function useHtcCraft() {
 
   /** 画面を空に戻す。入口へ帰る時と、読み直す前に通す */
   function reset(): void {
+    spamOverride.value = null;
     error.value = null;
     item.value = null;
     base.value = null;
@@ -315,6 +317,32 @@ export function useHtcCraft() {
    * オーナーの順番: オーブの値段を見る (信号 0) → 固定済み品の最安 1 件 (信号 1) → 比べて起動。
    * ここは 1 段目で、オーブ・消去・鎖骨の実勢から「自前の固定費」と得な道を出します。
    */
+  /**
+   * カオススパムで何を狙い、同じ側の残りをどう足すか ([[spam-plan.ts]])。
+   * カタリストは種類ごとに使う / 使わないを選べる (既定は 1 個 0.2 神以上を使わない)。
+   */
+  const catalystChoice = ref<Record<string, boolean>>({});
+  const spamOverride = ref<string | null>(null);
+  const spam = computed(() => {
+    const d = data.value, cls = base.value, p = prices.value;
+    if (!d || !cls || !p || !targets.value.length) return null;
+    const q = item.value?.quality ?? null;
+    const fr = fracturedTargets.value.map((t) => d.mods.get(t.modId)?.type);
+    return spamPlan({
+      data: d, cls, targets: targets.value, prices: p,
+      itemLevel: item.value?.itemLevel ?? 82,
+      // 貼り付けの品質が 20% を超えていればブリーチのエッセンスで上げている (プレにゴミ MOD が 1 つ)
+      quality: q ?? 20,
+      breach: (q ?? 0) > 20,
+      used: {
+        prefix: slotsUsed.value.prefixes + fr.filter((x) => x === "prefix").length,
+        suffix: slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length,
+      },
+      catalystChoice: catalystChoice.value,
+      ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}),
+    });
+  });
+
   const treePlan = computed(() => {
     const p = prices.value;
     if (!p || dropOnly.value.length === 0) return null;
@@ -459,6 +487,7 @@ export function useHtcCraft() {
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeBusy, treeError, searchTree, treeTierPick,
+    spam, catalystChoice, spamOverride,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
     weightNote: WEIGHT_OVERRIDE_NOTE,
   };

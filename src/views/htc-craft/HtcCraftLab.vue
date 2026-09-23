@@ -10,6 +10,7 @@ import { PRESETS } from "./presets";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
+import SpamPlanPanel from "./SpamPlanPanel.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -352,6 +353,7 @@ const implicitText = (lines: readonly string[]): string =>
         </p>
 
         <TreeFracturePanel :c="c" />
+        <SpamPlanPanel :c="c" />
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->
