@@ -24,7 +24,7 @@
  * ## 品質 40% (ブリーチのエッセンス)
  * 流れ (オーナー): キャスピをスパム → ブリーチのエッセンスで最大品質 40% → カタリストで品質を足して
  * 全耐性・知性を触媒の高貴のお告げで全力で引く → 外れたら消去でやり直し。お告げは 1 回ごとに品質を
- * 使い切るので毎回カタリスト 27 個で戻す (品質 40% の触媒は 20% の約 2 倍効くので途中で品質を足す)。
+ * 使い切るので毎回カタリスト 27 個で戻す (品質 40% のお告げは 20% の約 2 倍効くので途中で品質を足す)。
  * プレにブリーチの MOD (レベル 0) が居座るので、サフィの外れを素の消去で消すとそれが消えることがある。
  * その時はブリーチのエッセンス (安い) を付け直す。右側の消去のお告げより安い (オーナー)。
  * サフィ完成後に削減のお告げで確定で消し、パーフェクトエッセンスを当て、冒涜でプレを仕上げる
@@ -72,6 +72,8 @@ export interface PhaseStep {
   have: string[];
   /** 外れの数 */
   junk: number;
+  /** 品質 40% でブリーチの MOD が消えている (付け直しは次の触媒の高貴のお告げの直前) */
+  breachGone: boolean;
   action: string;
   /** 1 回の値段 (高貴換算) */
   perTry: number;
@@ -280,13 +282,17 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     }
   }
   // 品質 40% はプレにブリーチの MOD が居るので、素の消去はそれを消しうる (サフィ 3 つ + ブリーチ で 1/4)。
-  // 消えたらブリーチのエッセンスを付け直す (オーナー 2026-09-23:「ブリーチエッセンスやすいから消えても
-  // 付けなおせばいい…お告げのが高いか普通に。消去使うか」)。右側の消去のお告げ (1/3) も候補に残し、
-  // 状態ごとに安い方を値反復が選ぶ
+  // **消えてもすぐには付け直さない** (オーナー 2026-09-23:「品質 20% 消えたら即付けなおしではなく、
+  // はずれ MOD だけ消えるが正解」)。無い間は消去の候補がサフィだけになり外れを引きやすい。付け直すのは
+  // **次に触媒の高貴のお告げを打つ直前** (お告げは品質を使い切るので、40% に戻すには上限 40% が要る)。
+  // エッセンスは安いので右側の消去のお告げより付け直しの方が安い (オーナー)。お告げも候補には残す
   const annuls: Act[] = [{ kind: "annul", label: "消去のオーブ", cost: c.cur("annul"), breachHit: c.breach }];
   if (c.breach) annuls.push({ kind: "annul", label: `消去のオーブ + ${c.side === "prefix" ? "左" : "右"}側の消去のお告げ`, cost: c.cur("annul") + c.cur(eraseOmen), breachHit: false });
+  const essence = c.cur("essence:breach");
   /** スパムの後にブリーチのエッセンスで最大品質を 40% にする 1 回ぶん (品質 40% の時だけ) */
-  const breachOnce = c.breach ? c.cur("essence:breach") : 0;
+  const breachOnce = c.breach ? essence : 0;
+  /** その手の前にブリーチのエッセンスを付け直すか (品質 40%、ブリーチが無い、カタリストを使う高貴) */
+  const needsBreach = (e: Act, bq: number): boolean => c.breach && bq === 0 && e.kind === "exalt" && !!e.tag;
 
   const occupied = (held: number): Set<string> => new Set([c.pick.modId, ...ids.filter((_, i) => held & (1 << i))]);
   const outcomes = (e: Act, held: number): number[] => {
@@ -295,34 +301,42 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     return ids.map((id, i) => (held & (1 << i) ? 0 : c.hitW(id, e.floor!, e.tag) / W));
   };
   const bits = (x: number): number => { let s = 0; for (; x; x &= x - 1) s++; return s; };
-  const key = (held: number, j: number): number => held * 8 + j;
-  const states: Array<[number, number]> = [];
-  for (let h = 0; h <= full; h++) for (let j = 0; 1 + bits(h) + j <= c.cap; j++) states.push([h, j]);
+  /** 状態: 付いた狙い h / 外れ j / ブリーチの MOD が居るか bq */
+  const key = (held: number, j: number, bq: number): number => (held * 8 + j) * 2 + bq;
+  const START_B = c.breach ? 1 : 0;
+  const states: Array<[number, number, number]> = [];
+  for (let h = 0; h <= full; h++) for (let j = 0; 1 + bits(h) + j <= c.cap; j++) for (const bq of c.breach ? [0, 1] : [0]) states.push([h, j, bq]);
   // スパムの狙いが消えた時: 残り (h と外れ j) を素の消去で 1 つまで剥がし (ブリーチなら付け直し)、
   // スパムからやり直す。外せる MOD が 1 つの状態がスパムの出発点
   const resetCost = (h: number, j: number): number =>
-    Math.max(0, bits(h) + j - 1) * c.cur("annul") + (c.breach ? c.cur("essence:breach") : 0) + c.sp.expected;
+    Math.max(0, bits(h) + j - 1) * c.cur("annul") + breachOnce + c.sp.expected;
 
-  let V = new Map<number, number>(states.map(([h, j]) => [key(h, j), 0]));
+  let V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
   const pol = new Map<number, Act>();
+  const annulValue = (e: Act, h: number, j: number, bq: number, V: Map<number, number>, R: number): number => {
+    const hitsB = e.breachHit && bq === 1 ? 1 : 0;
+    const m = 1 + bits(h) + j + hitsB;
+    let v = e.cost + (j / m) * V.get(key(h, j - 1, bq))! + (resetCost(h, j) + R) / m;
+    ids.forEach((_, i) => { if (h & (1 << i)) v += V.get(key(h & ~(1 << i), j, bq))! / m; });
+    if (hitsB) v += V.get(key(h, j, 0))! / m;   // ブリーチの MOD が消える。付け直しは後で
+    return v;
+  };
   for (let it = 0; it < 2000; it++) {
-    const R = V.get(key(0, 0))!;
+    const R = V.get(key(0, 0, START_B))!;
     const nv = new Map<number, number>();
-    for (const [h, j] of states) {
-      const k0 = key(h, j);
+    for (const [h, j, bq] of states) {
+      const k0 = key(h, j, bq);
       if (h === full) { nv.set(k0, 0); continue; }
       let best = Infinity; let bp: Act | null = null;
       if (1 + bits(h) + j < c.cap) for (const e of exalts) {
-        const ps = outcomes(e, h); const pj = 1 - ps.reduce((a, b) => a + b, 0);
-        let v = e.cost + pj * V.get(key(h, j + 1))!;
-        ps.forEach((p, i) => { if (p > 0) v += p * V.get(key(h | (1 << i), j))!; });
+        const nb = needsBreach(e, bq) ? 1 : bq;
+        const ps = outcomes(e, h); const pj = 1 - ps.reduce((x, y) => x + y, 0);
+        let v = e.cost + (nb !== bq ? essence : 0) + pj * V.get(key(h, j + 1, nb))!;
+        ps.forEach((p, i) => { if (p > 0) v += p * V.get(key(h | (1 << i), j, nb))!; });
         if (v < best) { best = v; bp = e; }
       }
       if (j > 0) for (const e of annuls) {
-        const m = 1 + bits(h) + j + (e.breachHit ? 1 : 0);
-        let v = e.cost + (j / m) * V.get(key(h, j - 1))! + (resetCost(h, j) + R) / m;
-        ids.forEach((_, i) => { if (h & (1 << i)) v += V.get(key(h & ~(1 << i), j))! / m; });
-        if (e.breachHit) v += (c.cur("essence:breach") + V.get(k0)!) / m;
+        const v = annulValue(e, h, j, bq, V, R);
         if (v < best) { best = v; bp = e; }
       }
       nv.set(k0, best);
@@ -337,39 +351,43 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   const geo = (p: number): number => Math.max(1, Math.ceil(Math.log(1 - rnd()) / Math.log(1 - p)));
   const costs: number[] = []; const exN: number[] = [];
   for (let r = 0; r < runs; r++) {
-    let cost = c.cur(c.sp.k) * geo(c.sp.odds) + breachOnce; let ex = 0; let h = 0; let j = 0;
+    let cost = c.cur(c.sp.k) * geo(c.sp.odds) + breachOnce; let ex = 0; let h = 0; let j = 0; let bq = START_B;
     for (let g = 0; g < 100000 && h !== full; g++) {
-      const e = pol.get(key(h, j));
+      const e = pol.get(key(h, j, bq));
       if (!e) break;
       cost += e.cost;
       if (e.kind === "exalt") {
         ex++;
+        if (needsBreach(e, bq)) { cost += essence; bq = 1; }
         const ps = outcomes(e, h); let u = rnd(); let hit = -1;
         for (let i = 0; i < ps.length; i++) { if (u < ps[i]!) { hit = i; break; } u -= ps[i]!; }
         if (hit >= 0) h |= 1 << hit; else j++;
       } else {
-        const m = 1 + bits(h) + j + (e.breachHit ? 1 : 0);
+        const hitsB = e.breachHit && bq === 1 ? 1 : 0;
+        const m = 1 + bits(h) + j + hitsB;
         const u = Math.floor(rnd() * m);
         const heldIdx = ids.map((_, i) => i).filter((i) => h & (1 << i));
         if (u < j) j--;
-        else if (u === j) { cost += resetCost(h, j) - c.sp.expected + c.cur(c.sp.k) * geo(c.sp.odds); h = 0; j = 0; }
+        else if (u === j) { cost += resetCost(h, j) - c.sp.expected + c.cur(c.sp.k) * geo(c.sp.odds); h = 0; j = 0; bq = START_B; }
         else if (u - j - 1 < heldIdx.length) h &= ~(1 << heldIdx[u - j - 1]!);
-        else cost += c.cur("essence:breach");
+        else bq = 0;
       }
     }
     costs.push(cost); exN.push(ex);
   }
-  costs.sort((a, b) => a - b); exN.sort((a, b) => a - b);
+  costs.sort((x, y) => x - y); exN.sort((x, y) => x - y);
   const q = (arr: number[], f: number): number => arr[Math.min(arr.length - 1, Math.floor(arr.length * f))]!;
 
   const steps: PhaseStep[] = [];
-  for (const [h, j] of states) {
-    const e = pol.get(key(h, j));
+  for (const [h, j, bq] of states) {
+    const e = pol.get(key(h, j, bq));
     if (!e) continue;
-    steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, action: e.label, perTry: e.cost });
+    const re = needsBreach(e, bq);
+    steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, breachGone: c.breach && bq === 0,
+      action: (re ? "ブリーチのエッセンスを付け直す → " : "") + e.label, perTry: e.cost + (re ? essence : 0) });
   }
   return {
-    expected: V.get(key(0, 0))! + c.sp.expected + breachOnce,
+    expected: V.get(key(0, 0, START_B))! + c.sp.expected + breachOnce,
     p50: q(costs, 0.5), p80: q(costs, 0.8), p90: q(costs, 0.9),
     exalts50: q(exN, 0.5), exalts80: q(exN, 0.8),
     steps,

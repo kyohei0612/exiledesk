@@ -68,8 +68,8 @@ function choose(modId: string): void {
       </p>
       <table class="mt-1 w-full">
         <tr class="opacity-50"><th class="text-left">いまの状態</th><th class="text-left">打つ物</th><th class="text-right">1 回</th></tr>
-        <tr v-for="s in c.spam.value.phase.steps" :key="s.have.join() + s.junk" class="border-b border-white/5">
-          <td class="py-0.5 pr-2">{{ s.have.length ? c.stepTarget(s.have) + " あり" : "狙い無し" }}{{ s.junk ? ` / 外れ ${s.junk}` : "" }}</td>
+        <tr v-for="s in c.spam.value.phase.steps" :key="s.have.join() + s.junk + s.breachGone" class="border-b border-white/5">
+          <td class="py-0.5 pr-2">{{ s.have.length ? c.stepTarget(s.have) + " あり" : "狙い無し" }}{{ s.junk ? ` / 外れ ${s.junk}` : "" }}{{ s.breachGone ? " / ブリーチ無し" : "" }}</td>
           <td>{{ s.action }}</td>
           <td class="text-right">{{ c.money(s.perTry) }}</td>
         </tr>

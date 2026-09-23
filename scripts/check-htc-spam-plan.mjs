@@ -4,8 +4,9 @@
  * 死体の円環 (ニーモニックリング、樹 MOD 固定済み + 最大マナ / 最大マナ% / 知性 / 全耐性 / キャスピ) で:
  *   - スパムの狙いはキャスピ (効くカタリストの軽快・歯擦音が高くて既定で「使わない」)
  *   - 同じ側 (サフィ) の残りは知性・全耐性
- *   - 品質 40% でもサフィの外れは素の消去 (ブリーチの MOD が消えたらエッセンスを付け直す方が、右側の
- *     消去のお告げより安い)。平均 172 神前後 (お告げを強制すると 284 神)手で組んだ検算 (197.5 神) は全耐性にトゥル (冷気) しか
+ *   - 品質 40% でもサフィの外れは素の消去。ブリーチの MOD が消えても**すぐには付け直さず**、次に
+ *     触媒の高貴のお告げを打つ直前で付け直す (無い間は消去がサフィだけに当たる)。平均 165 神前後
+ *     (右側の消去のお告げを強制すると 284 神、品質 20% は 173 神)手で組んだ検算 (197.5 神) は全耐性にトゥル (冷気) しか
  *     試しておらず、雷 (エシュ) の方が付きやすい (雷のタグを持つ MOD が少なく分母が小さい) ぶん安い
  *   - カタリストを全部切ると、スパムの狙いは全耐性 (同じ「使わない」組で一番付きにくいサフィ) になり 500 神前後
  *   - 回した平均が期待値と合う (乱数や剥がしの数え方が壊れると外れる)
@@ -62,6 +63,14 @@ if (!cs || cs.group !== "catalyst-off") fail("キャスピが「カタリスト�
 const e = (r.phase?.expected ?? 0) / D;
 if (!(e > 160 && e < 190)) fail(`平均 ${e.toFixed(1)} 神 (172 神前後のはず)`);
 if (!r.phase?.steps.some((x) => x.action === "消去のオーブ")) fail("品質 40% で素の消去を選んでいない (付け直しの方が安いはず)");
+// 付け直しは「ブリーチ無し」で触媒の高貴のお告げを打つ時だけ。消去の前には付け直さない
+for (const x of r.phase?.steps ?? []) {
+  const re = x.action.startsWith("ブリーチのエッセンスを付け直す");
+  if (re && !x.breachGone) fail("ブリーチがあるのに付け直している");
+  if (re && !x.action.includes("触媒の高貴のお告げ")) fail("触媒の高貴のお告げ以外の前で付け直している");
+  if (x.breachGone && x.action.startsWith("消去") && re) fail("消去の前に付け直している");
+}
+if (!r.phase?.steps.some((x) => x.breachGone && x.action.startsWith("消去"))) fail("ブリーチ無しのまま外れを消す手が無い");
 // 品質 20% (ブリーチ無し) なら素の消去で足りる
 const r20 = M.spamPlan({ ...base, quality: 20, breach: false });
 show("品質 20% (ブリーチ無し)", r20);
@@ -97,6 +106,6 @@ const r4 = M.spamPlan({ ...base, quality: 20, breach: false, targets: got.target
 show("品質 20% で最大マナだけ", r4);
 if (!r4.expensive) fail("品質 20% でプレのスパムなのに高額コースの印が無い");
 
-for (const s of r.phase?.steps ?? []) console.log(`     ${s.have.map(name).join("・") || "狙い無し"}${s.junk ? " / 外れ " + s.junk : ""} → ${s.action} (${(s.perTry / D).toFixed(2)} 神)`);
+for (const s of r.phase?.steps ?? []) console.log(`     ${s.have.map(name).join("・") || "狙い無し"}${s.junk ? " / 外れ " + s.junk : ""}${s.breachGone ? " / ブリーチ無し" : ""} → ${s.action} (${(s.perTry / D).toFixed(2)} 神)`);
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
 process.exit(failed ? 1 : 0);
