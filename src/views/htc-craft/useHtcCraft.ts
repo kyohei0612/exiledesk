@@ -107,6 +107,12 @@ export function useHtcCraft() {
     selfFloor: number | null;
   } | null>(null);
   const treeBusy = ref(false);
+  /**
+   * 樹 MOD ごとに「どの段以上を探すか」(文面 → 段の添字)。**既定は貼り付けた物の段**
+   * (オーナー 2026-09-23:「ティア選ばせるでいい、デフォではコピーした忍者の値」)。
+   * 段を見ないと Thoughtful (7-9) のような低い段まで「成功」に数えてしまう。
+   */
+  const treeTierPick = ref<Record<string, number>>({});
   const treeError = ref<string | null>(null);
 
   /**
@@ -157,6 +163,7 @@ export function useHtcCraft() {
     timings.value = [];
     treeResult.value = null;
     treeError.value = null;
+    treeTierPick.value = {};
   }
 
   /**
@@ -286,7 +293,15 @@ export function useHtcCraft() {
       bone: toDiv(p.currency.desecrate) ?? 0,
     });
     const cls = base.value;
-    const buys = treeBuys(dropOnly.value);
+    // 選んだ段の下限を条件に入れる (3 本すべて)。取引所の値は品質込みで出るので、
+    // 下限は素の値の段の下限でいい (品質の乗った出品は表示が大きくなって勝手に引っかかる)
+    const mins: Record<string, number> = {};
+    for (const d of dropOnly.value) {
+      const idx = treeTierPick.value[d.text] ?? d.tier?.index;
+      const t = idx != null ? d.tiers?.[idx] : undefined;
+      if (t) mins[d.text] = t.min;
+    }
+    const buys = treeBuys(dropOnly.value, { mins });
     // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り
     const common = {
       ilvlMin: item.value?.itemLevel ?? undefined,
@@ -390,7 +405,7 @@ export function useHtcCraft() {
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
-    treeResult, treeBusy, treeError, searchTree,
+    treeResult, treeBusy, treeError, searchTree, treeTierPick,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
   };
 }

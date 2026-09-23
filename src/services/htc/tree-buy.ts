@@ -139,5 +139,8 @@ export function treeBuyQuery(
     rarity: "nonunique",
     ...(opts.ilvlMin != null ? { ilvlMin: opts.ilvlMin } : {}),
     stats: filters,
+    // 固定無しを探す時は「フラクチャー: いいえ」も入れる。stat を explicit にしただけだと、
+    // 別の MOD が固定された物 (= もう樹 MOD を固定できない物) が返ってくる
+    ...(fractured ? {} : { fracturedItem: false }),
   });
 }

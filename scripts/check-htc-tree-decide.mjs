@@ -100,6 +100,9 @@ if (!s3 || s3.how !== "necro-desecrate" || Math.abs(s3.hit - 1 / 3) > 1e-12) fai
 else ok("P1+S3 は右側ネクロ冒涜がサフィを 1 個置き換えて 1/3");
 if (d.order.concat(d.skipped).some((c) => c.how === "safe-reduce")) fail("消去のお告げを使う道が残っています (オーナーは使わない)");
 else ok("消去のお告げを使う道は無い");
+const three = M.candidateOf({ source: "loose", price: 0.4, prefixes: 2, suffixes: 1 }, P);
+if (!three || three.how !== "desecrate" || Math.abs(three.hit - 1 / 3) > 1e-12) fail(`ゆるい 3 MOD の扱いが ${three ? three.how : "無し"} (消去なしの冒涜で 1/3 のはず)`);
+else ok(`ゆるい 3 MOD は減らさずに冒涜 → 1/3 (1 回 ${three.perTry.toFixed(2)} 神)`);
 if (!(d.expected <= (d.buyOutright ?? Infinity))) fail("期待費用が、最初から固定済みを買うより高い");
 else ok(`最初から固定済みを買うより ${((d.buyOutright ?? 0) - d.expected).toFixed(2)} 神安い`);
 

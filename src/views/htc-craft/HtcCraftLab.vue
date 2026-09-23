@@ -94,6 +94,7 @@ async function runPicked(): Promise<void> {
 const howJa: Record<string, string> = {
   buy: "そのまま買う",
   "necro-desecrate": "右側ネクロ冒涜 (サフィが足りなければ右側の高貴で足す) → 固定 (1/3)",
+  desecrate: "冒涜 → 固定 (1/3、消去なし)",
   direct: "そのまま固定",
   reduce: "消去で 3 MOD まで減らす → 冒涜 → 固定",
 };
@@ -328,9 +329,22 @@ const implicitText = (lines: readonly string[]): string =>
               <br /><b class="text-amber-300">{{ d.tagJa }}</b> からしか出ません — {{ d.text }}
               <!-- 段は品質を外した値で決める (エンジンに無い MOD なのでクライアントの表を直に引く) -->
               <span v-if="d.tier" class="text-sky-300">
-                (段 {{ d.tier.name }} {{ d.tier.min }}-{{ d.tier.max }}、{{ d.tier.of }} 段中 {{ d.tier.index + 1 }} 段目<template
+                (乗っているのは {{ d.tier.name }} {{ d.tier.min }}-{{ d.tier.max }} = T{{ d.tier.of - d.tier.index }}<template
                   v-if="d.deboosted"> / 品質を外した素の値 {{ d.raw?.toFixed(1) }}</template>)
               </span>
+              <!-- 探す段。既定は貼り付けた物の段。変えると 3 本の検索の下限が変わる -->
+              <label v-if="d.tiers?.length" class="ml-1">
+                探す段
+                <select
+                  class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1"
+                  :value="c.treeTierPick.value[d.text] ?? d.tier?.index ?? 0"
+                  @change="c.treeTierPick.value = { ...c.treeTierPick.value, [d.text]: Number(($event.target as HTMLSelectElement).value) }"
+                >
+                  <option v-for="(t, i) in d.tiers" :key="i" :value="i">
+                    T{{ d.tiers.length - i }} {{ t.name }} ({{ t.min }}-{{ t.max }}) 以上
+                  </option>
+                </select>
+              </label>
             </template>
             <br />
             <b>付いた物を買ってください。</b>しかも<b>固定済み</b>で ──
@@ -374,9 +388,11 @@ const implicitText = (lines: readonly string[]): string =>
               <td class="py-0.5 pr-2 whitespace-nowrap">{{ sq.label }}</td>
               <td class="opacity-80">
                 {{ c.item.value?.baseText ?? c.item.value?.baseType }} / ilvl {{ c.item.value?.itemLevel ?? "?" }} 以上 / レア / コラプト無し /
+                <template v-if="sq.key !== 'fractured'">フラクチャー: いいえ / </template>
                 <template v-for="b in c.treePlan.value.buys" :key="b.text">
                   <b>{{ b.text.replace(/[0-9]+/, "#") }}</b>
-                  <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }})</span>
+                  <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }}<template
+                    v-if="b.filters[0]?.min"> 最小 {{ b.filters[0].min }}</template>)</span>
                 </template>
                 <template v-if="sq.key === 'strict'"> / 疑似 プレフィックスモッド #個 最大 1</template>
                 <span class="opacity-50"> — 最安 {{ sq.take }} 件</span>

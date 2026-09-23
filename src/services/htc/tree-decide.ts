@@ -74,7 +74,7 @@ export interface TreeListing {
 export interface Candidate {
   listing: TreeListing;
   /** どうやって固定するか */
-  how: "buy" | "necro-desecrate" | "direct" | "reduce";
+  how: "buy" | "necro-desecrate" | "desecrate" | "direct" | "reduce";
   /** 1 回試すのにかかる期待費用 (神)。物の値段込み */
   perTry: number;
   hit: number;
@@ -126,7 +126,9 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
     const est = selfFracture(mods, { base: l.price, orb: p.orb, annul: p.annul, bone: p.bone });
     const best = est.best;
     if (!best) return null;
-    return make(best.kind, best.perTry, best.hit);
+    // 最初から 3 MOD なら減らす必要が無い (消去 0 回)。冒涜して 1/3。言葉だけ分ける
+    const how = best.kind === "reduce" && mods === 3 ? "desecrate" : best.kind;
+    return make(how, best.perTry, best.hit);
   }
   // 2 MOD 以下は冒涜 1 回でオーブの要求 (4) に届かない
   return null;

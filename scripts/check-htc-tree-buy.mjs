@@ -89,7 +89,8 @@ else {
   else if (tf.ilvl?.min !== (it.itemLevel ?? 80)) fail(`ilvl が ${tf.ilvl?.min}`);
   else if (plain.query.type?.option !== it.baseType) fail(`ベースが ${plain.query.type?.option}`);
   else if (plain.query.status.option !== "securable") fail("status が securable ではありません");
-  else ok(`他は規定通り (ベース ${it.baseType} / ilvl ${tf.ilvl.min} 以上 / ${tf.rarity.option} / コラプト無し / securable)`);
+  else if (plain.query.filters.misc_filters.filters.fractured_item?.option !== "false") fail("固定無しの検索に「フラクチャー: いいえ」が入っていません");
+  else ok(`他は規定通り (ベース ${it.baseType} / ilvl ${tf.ilvl.min} 以上 / ${tf.rarity.option} / コラプト無し / フラクチャー無し / securable)`);
 }
 
 console.log(failed === 0 ? "\n通りました" : `\n${failed} 件 NG`);

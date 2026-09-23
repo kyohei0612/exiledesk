@@ -257,6 +257,14 @@ export interface SpecQueryOptions {
   socketsMin?: number;
   /** `max` は「プレフィックスモッド #個」のような数の上限に使う (2026-09-23)。無ければ送らない */
   stats?: { id: string; min?: number; max?: number }[];
+  /**
+   * 取引所の「フラクチャー」(misc_filters.fractured_item、data/filters で確認 2026-09-23)。
+   * `false` = いいえ。省略時は送らない (指定なし)。
+   *
+   * **stat を `explicit.` にしただけでは足りません。**別の MOD が固定された物は普通に返り、
+   * そういう物は固定がもう埋まっているので狙いの MOD を固定できない (オーナー指摘 2026-09-23)。
+   */
+  fracturedItem?: boolean;
 }
 export function buildSpecQuery(o: SpecQueryOptions) {
   // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
@@ -287,7 +295,12 @@ export function buildSpecQuery(o: SpecQueryOptions) {
       filters: {
         type_filters: { filters: type },
         equipment_filters: { filters: equipment },
-        misc_filters: { filters: { corrupted: { option: "false" } } },
+        misc_filters: {
+          filters: {
+            corrupted: { option: "false" },
+            ...(o.fracturedItem != null ? { fractured_item: { option: String(o.fracturedItem) } } : {}),
+          },
+        },
       },
     },
     sort: { price: "asc" },
