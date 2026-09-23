@@ -9,25 +9,10 @@ import type { useHtcCraft } from "./useHtcCraft";
 
 defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 
-/** 3 つの道を表の行にする */
+/** 平均が一番安い道 */
 type TreeRes = NonNullable<ReturnType<typeof useHtcCraft>["treeResult"]["value"]>;
-function batchRows(r: TreeRes) {
-  const row = (key: "strict" | "loose", label: string, b: TreeRes["strict"]) => ({
-    key, label,
-    count: b?.count ?? null, chance: b?.chance ?? null, base: b?.base ?? null,
-    craft: b?.craft ?? null, total: b?.total ?? null,
-    note: b ? "" : "出品が足りず 85% に届かない",
-  });
-  return [
-    row("strict", "厳しい (プレフィックス 1 個)", r.strict),
-    row("loose", "ゆるい (消去ガチャ)", r.loose),
-    {
-      key: "fractured" as const, label: "固定済みを買う", count: r.fracturedPrice != null ? 1 : null,
-      chance: r.fracturedPrice != null ? 1 : null, base: r.fracturedPrice, craft: 0, total: r.fracturedPrice,
-      note: "出品なし",
-    },
-  ];
-}
+const bestRoute = (r: TreeRes) => r.routes.find((x) => x.key === r.best) ?? null;
+
 /** 固定のやり方 → 画面の言葉 */
 const howJa: Record<string, string> = {
   buy: "そのまま買う",
@@ -107,48 +92,52 @@ const howJa: Record<string, string> = {
         固定済みが自前の最安 ({{ c.treeResult.value.selfFloor?.toFixed(1) }} 神 = 4 MOD のベースがタダでも) 以下なので、
         <b>買うのが一番安い</b>です。残りの検索は投げていません。
       </p>
-      <!-- オーナーの比べ方: ゆるい / 厳しいを「85% に届く最小の個数だけ買う」総額と、固定済みを並べる -->
-      <table class="mt-2 w-full">
-        <tr class="opacity-50">
-          <th class="text-left">道</th><th class="text-right">買う個数</th><th class="text-right">成功率</th>
-          <th class="text-right">物の値段</th><th class="text-right">加工代</th><th class="text-right">合計</th>
+      <!-- 物差しは平均 (オーナー:「基本確率だけど平均値で計算しよう」)。1 個ずつ買って試し、
+         成功で止め、外れ続けたら固定済みを買う。85% の個数は何個用意するかの目安 -->
+    <table class="mt-2 w-full">
+      <tr class="opacity-50">
+        <th class="text-left">道</th><th class="text-right">平均</th><th class="text-right">平均で買う数</th>
+        <th class="text-right">1 個目で当たり</th><th class="text-right">最悪</th><th class="text-right">85% の目安</th>
+      </tr>
+      <tr
+        v-for="r in c.treeResult.value.routes"
+        :key="r.key"
+        class="border-b border-white/5"
+        :class="c.treeResult.value.best === r.key ? 'text-emerald-300 font-bold' : ''"
+      >
+        <td class="py-0.5">{{ r.label }}<span v-if="c.treeResult.value.best === r.key"> ← 一番安い</span></td>
+        <td class="text-right">{{ r.summary.expected.toFixed(1) }} 神</td>
+        <td class="text-right">{{ r.key === "fractured" ? "—" : r.summary.avgItems.toFixed(1) + " 個" }}</td>
+        <td class="text-right">{{ r.summary.firstHit != null ? r.summary.firstHit.toFixed(1) + " 神" : "—" }}</td>
+        <td class="text-right">
+          {{ r.summary.worst.toFixed(1) }} 神
+          <span v-if="r.summary.allMiss > 0" class="opacity-50">({{ (r.summary.allMiss * 100).toFixed(0) }}%)</span>
+        </td>
+        <td class="text-right opacity-60">{{ r.need85 != null ? r.need85 + " 個" : "—" }}</td>
+      </tr>
+    </table>
+    <p class="mt-1 opacity-60">
+      平均 = 安い物から 1 個ずつ買って試し、固定できたら終わり、全部外れたら固定済みを買った時の平均額。
+      「最悪」は全部外れて固定済みを買った時の額 (括弧はその確率)。
+      「85% の目安」は、その道だけで 85% の確率で 1 個固定するのに要る数です。
+    </p>
+    <!-- 一番安い道で買う物 (試す順) -->
+    <template v-if="bestRoute(c.treeResult.value) && bestRoute(c.treeResult.value)!.key !== 'fractured'">
+      <p class="mt-2 font-bold">試す順 (1 個ずつ買う)</p>
+      <table class="w-full">
+        <tr v-for="(o, i) in bestRoute(c.treeResult.value)!.decision.order" :key="i" class="border-b border-white/5">
+          <td class="w-5 opacity-40">{{ i + 1 }}</td>
+          <td>{{ o.listing.label }}</td>
+          <td>{{ howJa[o.how] }}</td>
+          <td class="text-right">{{ (o.hit * 100).toFixed(0) }}%</td>
         </tr>
-        <tr
-          v-for="r in batchRows(c.treeResult.value)"
-          :key="r.key"
-          class="border-b border-white/5"
-          :class="c.treeResult.value.best === r.key ? 'text-emerald-300 font-bold' : ''"
-        >
-          <td class="py-0.5">{{ r.label }}<span v-if="c.treeResult.value.best === r.key"> ← 一番安い</span></td>
-          <td class="text-right">{{ r.count ?? "—" }}</td>
-          <td class="text-right">{{ r.chance != null ? (r.chance * 100).toFixed(1) + "%" : "—" }}</td>
-          <td class="text-right">{{ r.base != null ? r.base.toFixed(1) + " 神" : "—" }}</td>
-          <td class="text-right">{{ r.craft != null ? r.craft.toFixed(1) + " 神" : "—" }}</td>
-          <td class="text-right">{{ r.total != null ? r.total.toFixed(1) + " 神" : r.note }}</td>
+        <tr v-if="bestRoute(c.treeResult.value)!.decision.fallback" class="opacity-60">
+          <td></td>
+          <td colspan="3">全部外れたら → 固定済み {{ bestRoute(c.treeResult.value)!.decision.fallback!.listing.label }} を買う</td>
         </tr>
       </table>
-      <p class="mt-1 opacity-60">
-        成功率 85% に届く最小の個数だけ、安い順にまとめて買った時の総額です (それ以上は買わない)。
-        加工代は成功した所で止める計算。
-        <template v-for="b in [c.treeResult.value.strict, c.treeResult.value.loose]" :key="String(b?.count)">
-          <span v-if="b?.assumed" class="text-amber-300">
-            取れた出品では {{ b.assumed }} 個足りず、最後の 1 件と同じ物が買える前提で足しています (実際はもう少し高い)。
-          </span>
-        </template>
-      </p>
-      <!-- 一番安い道で買う物 -->
-      <template v-if="c.treeResult.value.best === 'strict' || c.treeResult.value.best === 'loose'">
-        <p class="mt-2 font-bold">買う物 (試す順)</p>
-        <table class="w-full">
-          <tr v-for="(o, i) in (c.treeResult.value.best === 'strict' ? c.treeResult.value.strict : c.treeResult.value.loose)!.items" :key="i" class="border-b border-white/5">
-            <td class="w-5 opacity-40">{{ i + 1 }}</td>
-            <td>{{ o.listing.label }}</td>
-            <td>{{ howJa[o.how] }}</td>
-            <td class="text-right">{{ (o.hit * 100).toFixed(0) }}%</td>
-          </tr>
-        </table>
-      </template>
-      <!-- 1/3 の道はどちらもオーナーの実使用が根拠。数字と一緒に必ず出す -->
+    </template>
+    <!-- 1/3 の道はどちらもオーナーの実使用が根拠。数字と一緒に必ず出す -->
       <p class="mt-1 text-[11px] text-amber-300/70">
         ⚠ <template v-for="n in c.treeNotes" :key="n">{{ n }} </template>
       </p>

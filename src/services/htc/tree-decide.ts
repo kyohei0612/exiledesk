@@ -241,3 +241,36 @@ export function batchFor(
   const base = items.reduce((a, c) => a + c.listing.price, 0);
   return { count: items.length, chance: 1 - miss, base, craft, total: base + craft, assumed, items: tryOrder };
 }
+
+/**
+ * 1 本の道を「平均でいくらか」で要約する (オーナー 2026-09-23:「基本確率だけど平均値で計算しよう。
+ * カオススパムもそういうのあるだろうし」)。**比べる物差しは期待値 1 本にそろえる**。
+ *
+ * 1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う (`decide` の結果) を前提に:
+ */
+export interface RouteSummary {
+  /** 平均でかかる額 (神) */
+  expected: number;
+  /** 平均で買うベースの数 (固定済みは除く) */
+  avgItems: number;
+  /** 1 個目で当たった時の額 */
+  firstHit: number | null;
+  /** 全部外れて固定済みを買った時の額 (一番悪い時) */
+  worst: number;
+  /** 全部外れる確率 */
+  allMiss: number;
+}
+
+export function summarize(d: Decision): RouteSummary {
+  let avgItems = 0;
+  let m = 1;
+  for (const c of d.order) { avgItems += m; m *= 1 - c.hit; }
+  const worst = d.order.reduce((a, c) => a + c.perTry, 0) + (d.fallback?.perTry ?? 0);
+  return {
+    expected: d.expected,
+    avgItems,
+    firstHit: d.order[0]?.perTry ?? d.fallback?.perTry ?? null,
+    worst,
+    allMiss: d.order.length ? m : 0,
+  };
+}

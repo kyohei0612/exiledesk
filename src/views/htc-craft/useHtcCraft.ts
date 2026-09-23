@@ -40,7 +40,7 @@ import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/op
 import { displayCurrency } from "../../state/display-currency";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { batchFor, BATCH_TARGET, decide, NECRO_REPLACE_NOTE, type Batch, type Decision, type TreeListing } from "../../services/htc/tree-decide";
+import { batchFor, BATCH_TARGET, decide, NECRO_REPLACE_NOTE, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/htc/tree-decide";
 import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
 import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
 import { marketStore } from "../../state/market-store";
@@ -61,6 +61,16 @@ export interface TargetRow {
   boosted: boolean;
   /** 確定で乗せる MOD か (エッセンス / パーフェクトエッセンス / 合金) */
   crafted: boolean;
+}
+
+/** 樹 MOD を固定済みにする道 1 本の平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う) */
+export interface TreeRoute {
+  key: "strict" | "loose" | "mixed" | "fractured";
+  label: string;
+  summary: RouteSummary;
+  decision: Decision;
+  /** 85% に届く個数 (何個くらい用意するかの目安) */
+  need85: number | null;
 }
 
 export function useHtcCraft() {
@@ -112,8 +122,13 @@ export function useHtcCraft() {
     strict: Batch | null;
     loose: Batch | null;
     fracturedPrice: number | null;
-    /** 3 つのうち一番安い道 */
-    best: "strict" | "loose" | "fractured" | null;
+    /**
+     * 道ごとの平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う)。
+     * **比べる物差しはこれ** (オーナー:「平均値で計算しよう」)。85% の個数は用意する数の目安。
+     */
+    routes: TreeRoute[];
+    /** 平均が一番安い道 */
+    best: "strict" | "loose" | "mixed" | "fractured" | null;
   } | null>(null);
   const treeBusy = ref(false);
   /**
@@ -399,14 +414,22 @@ export function useHtcCraft() {
       const decision = decide(listings, dp);
       const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
       const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
-      const fr = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price)[0];
-      const fracturedPrice = fr ? fr.price : null;
-      const opts: Array<["strict" | "loose" | "fractured", number]> = [];
-      if (strict) opts.push(["strict", strict.total]);
-      if (loose) opts.push(["loose", loose.total]);
-      if (fracturedPrice != null) opts.push(["fractured", fracturedPrice]);
-      const best = opts.length ? opts.reduce((a, b) => (b[1] < a[1] ? b : a))[0] : null;
-      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, best };
+      const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
+      const fracturedPrice = frList[0]?.price ?? null;
+      const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
+      const routes: TreeRoute[] = [];
+      const add = (key: "strict" | "loose" | "mixed" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
+        if (ls.length === 0) return;
+        const dd = decide(ls, dp);
+        if (dd.order.length === 0 && !dd.fallback) return;
+        routes.push({ key, label, summary: summarize(dd), decision: dd, need85: b?.count ?? null });
+      };
+      add("strict", "厳しいを 1 個ずつ", only("strict"), strict);
+      add("loose", "ゆるいを 1 個ずつ", only("loose"), loose);
+      add("mixed", "両方まぜて安い順に 1 個ずつ", listings, null);
+      if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
+      const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
+      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, routes, best };
     } catch (e) {
       treeError.value = String(e);
     } finally {
