@@ -16,11 +16,11 @@ export const craftForce = ref<Record<string, string>>({});
 
 /**
  * ベースの始め方 (オーナー 2026-09-24:「フラクチャー品かフラクチャー無し品か」「選ばせたら、初動安い順」)。
- *   frac0 … フラクチャー品 (他の MOD 無し)  frac1 … フラクチャー品 (他の MOD 各側 1 つまで = 外れ付き)
+ *   frac  … 固定済みの MOD が付いた物から (買う / 固定無しを買って自前で固定、は [[tree-decide.ts]] の道)
  *   plain … 無し品から、固定済みだった MOD も作る
  */
-export type StartOption = "frac0" | "frac1" | "plain";
-export const startOption = ref<StartOption>("frac0");
+export type StartOption = "frac" | "plain";
+export const startOption = ref<StartOption>("frac");
 
 /**
  * 0 から組む時 (ベースから選ぶ道) の設定。貼り付けの時は貼り付けの値を使うので効かない。

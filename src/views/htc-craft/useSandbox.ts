@@ -14,7 +14,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { jaOfMod } from "../../services/htc/mod-text";
-import { stepHelpers, type Cleanup, type ItemState, type Side, type StepMethod } from "../../services/htc/step-odds";
+import { BREACH_ID, stepHelpers, type Cleanup, type ItemState, type Side, type StepMethod } from "../../services/htc/step-odds";
 import { startOption, zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -56,17 +56,16 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
     const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
     for (let i = 0; i < tree.p; i++) slots.push({ modId: null, side: "prefix", fixed: true, label: "樹 MOD (固定済み)" });
     for (let i = 0; i < tree.s; i++) slots.push({ modId: null, side: "suffix", fixed: true, label: "樹 MOD (固定済み)" });
-    // 「他の MOD 各側 1 つまで」のフラクチャー品は、各側に外れが 1 つ付いている前提
-    if (startOption.value === "frac1" && c.fracturedTargets.value.length) {
-      slots.push({ modId: null, side: "prefix", fixed: false }, { modId: null, side: "suffix", fixed: false });
-    }
     return { slots, breach: false };
   };
   const snap = shallowRef<Snap>({ item: startItem(), spent: 0, moves: 0, log: [] });
   const history = shallowRef<Snap[]>([]);
   const screen = ref<Screen>({ kind: "pick" });
   const restartAll = (): void => { snap.value = { item: startItem(), spent: 0, moves: 0, log: [] }; history.value = []; screen.value = { kind: "pick" }; };
-  watch(() => [c.targets.value, c.base.value, startOption.value], restartAll);
+  // 狙いの段を変えただけ (setTier) ではやり直さない。途中で段を変えて確率を見られるように (オーナー 2026-09-24)
+  watch(() => [c.targets.value.map((t) => t.modId).join(","), c.base.value, c.item.value, startOption.value], restartAll);
+  /** 品質 40% で作る (貼り付けが 40%、または 0 から組む設定が 40%) なら、ブリーチの MOD も 7 つ目の狙い */
+  const wantBreach = computed(() => (c.item.value ? (c.item.value.quality ?? 0) > 20 : zeroStart.value.quality > 20));
 
   /** 忍者 (貼り付け) の狙い。★ で上に出すだけで、選ぶのは人 */
   const ninja = computed(() => {
@@ -75,6 +74,7 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
   });
   const name = (id: string | null, label?: string): string => {
     if (!id) return label ?? "外れ";
+    if (id === BREACH_ID) return "ブリーチの MOD (品質の上限 40%)";
     const row = c.rows.value.find((r) => r.modId === id);
     if (row) return row.text;
     const m = c.data.value?.mods.get(id);
@@ -103,15 +103,21 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
     const h = ctx.value;
     if (!h) return [];
     const s = snap.value.item;
-    return h.candidates(s).map((m) => {
+    const out = h.candidates(s).map((m) => {
       const minTier = ninja.value.get(m.id) ?? Math.max(0, m.tiers.length - 2);
       const best = h.methodsFor(s, m.id, minTier)[0] ?? null;
       return { modId: m.id, side: m.type as Side, name: name(m.id), star: ninja.value.has(m.id), minTier, best };
-    }).filter((r) => r.best).sort((a, b) => Number(b.star) - Number(a.star) || a.best!.avg - b.best!.avg);
+    });
+    // 品質 40% ならブリーチの MOD も入れる順番を選ぶ 1 つ (付いていない間だけ)
+    const b = wantBreach.value ? h.breachMethods(s)[0] ?? null : null;
+    if (b) out.push({ modId: BREACH_ID, side: "prefix", name: name(BREACH_ID), star: true, minTier: 0, best: b });
+    return out.filter((r) => r.best).sort((a, b) => Number(b.star) - Number(a.star) || a.best!.avg - b.best!.avg);
   });
   const methods = computed(() => {
     const sc = screen.value, h = ctx.value;
-    return sc.kind === "method" && h ? h.methodsFor(snap.value.item, sc.modId, sc.minTier).slice(0, 3) : [];
+    if (sc.kind !== "method" || !h) return [];
+    if (sc.modId === BREACH_ID) return h.breachMethods(snap.value.item);
+    return h.methodsFor(snap.value.item, sc.modId, sc.minTier).slice(0, 3);
   });
   const cleanups = computed(() => (ctx.value ? ctx.value.cleanups(snap.value.item).slice(0, 3) : []));
   const junk = computed(() => snap.value.item.slots.filter((x) => !x.fixed && !x.modId).length);
@@ -129,8 +135,17 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
       if (m.kind === "desecrate") {
         return [hit, { text: "外れ (消去のオーブ + 光のお告げで冒涜だけ消した)", apply: () => commit(m.perTry + (m.light ?? 0), s, `${m.label} → 外れ`) }];
       }
+      if (modId === BREACH_ID) {
+        // プレの外せる物 1 つと入れ替わる。無ければ外れを付けてからなので、その外れと入れ替わる (= 何も消えない)
+        const rem = s.slots.map((x, i) => (!x.fixed && x.side === "prefix" ? i : -2)).filter((i) => i >= 0);
+        const put = (r: number | null): ItemState => ({ ...(r == null ? s : remove(s, r)), breach: true });
+        return rem.length
+          ? rem.map((r) => ({ text: `${slotName(r)} と入れ替わった`, apply: () => commit(m.perTry, put(r), `${m.label} (${slotName(r)} と入れ替え)`) }))
+          : [{ text: "やった", apply: () => commit(m.perTry, put(null), m.label) }];
+      }
       if (m.kind === "essence") {
         const rem = [...s.slots.map((x, i) => (!x.fixed && x.side === side ? i : -2)).filter((i) => i >= 0), ...(side === "prefix" && s.breach ? [-1] : [])];
+        if (!rem.length) return [{ text: "やった", apply: () => commit(m.perTry, add(s, modId, side), m.label) }];
         return rem.map((r) => ({ text: `${slotName(r)} と入れ替わった`, apply: () => commit(m.perTry, add(remove(s, r), modId, side), `${m.label} (${slotName(r)} と入れ替え)`) }));
       }
       // カオス: まず何が消えたか
@@ -151,10 +166,24 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
     return [];
   });
 
+  /** 段の選び直し (打ち方の画面)。その場で確率が変わる。ilvl で付かない段は出さない */
+  const tierOptions = computed(() => {
+    const sc = screen.value, d = c.data.value;
+    if (sc.kind !== "method" || sc.modId === BREACH_ID || !d) return [];
+    const m = d.mods.get(sc.modId);
+    const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
+    return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} ${t.name ?? ""} (${(t.ranges ?? []).map((r) => `${r[0]}-${r[1]}`).join(" / ")}) 以上` }))
+      .filter((t) => t.ilvl <= lv).reverse();
+  });
+  const setMethodTier = (i: number): void => {
+    const sc = screen.value;
+    if (sc.kind === "method") screen.value = { ...sc, minTier: i };
+  };
+
   return {
+    tierOptions, setMethodTier,
     snap, screen, rows, methods, cleanups, junk, results, name, restartAll, back,
     canBack: computed(() => history.value.length > 0 || screen.value.kind !== "pick"),
-    toggleBreach: () => { snap.value = { ...snap.value, item: { ...snap.value.item, breach: !snap.value.item.breach } }; },
     room: (side: Side) => ctx.value?.room(snap.value.item, side) ?? false,
   };
 }

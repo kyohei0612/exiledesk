@@ -25,6 +25,8 @@ const shown = computed(() => {
 });
 const item = computed(() => sb.snap.value.item);
 const target = computed(() => ("modId" in sb.screen.value ? sb.screen.value.modId : null));
+/** 打ち方の画面で狙っている段 */
+const methodTier = computed(() => (sb.screen.value.kind === "method" ? sb.screen.value.minTier : 0));
 /** 打ち方を選んだ → 結果の画面へ */
 function chooseMethod(m: StepMethod): void {
   const sc = sb.screen.value;
@@ -42,10 +44,7 @@ function chooseMethod(m: StepMethod): void {
         <span :class="x.modId ? '' : x.fixed ? 'opacity-60' : 'text-rose-300'"> {{ sb.name(x.modId, x.label) }}</span>
         <span v-if="x.fixed && x.modId" class="opacity-50"> (固定済み)</span>
       </div>
-      <label class="mt-1 block opacity-70">
-        <input type="checkbox" :checked="item.breach" @change="sb.toggleBreach()" />
-        ブリーチの MOD がプレに居る (品質の上限 40%)
-      </label>
+      <div v-if="item.breach"><span class="opacity-50">P</span> ブリーチの MOD (品質の上限 40%)</div>
       <div v-if="!item.slots.length && !item.breach" class="opacity-50">まだ何も付いていない</div>
     </div>
 
@@ -74,6 +73,14 @@ function chooseMethod(m: StepMethod): void {
     <!-- 2. 打ち方 (上位 3 つ) -->
     <div v-else-if="sb.screen.value.kind === 'method'">
       <p class="mb-2 text-base font-bold">{{ sb.name(target) }}</p>
+      <!-- 段はいつでも選び直せる (オーナー 2026-09-24:「途中で変更して確率見たりできる」) -->
+      <label v-if="sb.tierOptions.value.length" class="mb-2 block text-xs">
+        狙う段
+        <select class="rounded border border-white/20 bg-black/30 px-1" :value="methodTier"
+          @change="sb.setMethodTier(Number(($event.target as HTMLSelectElement).value))">
+          <option v-for="t in sb.tierOptions.value" :key="t.i" :value="t.i">{{ t.label }}</option>
+        </select>
+      </label>
       <p v-if="!sb.methods.value.length" class="text-xs opacity-60">打てる手がありません (枠が無い / 相場に無い)</p>
       <div class="space-y-2">
         <button

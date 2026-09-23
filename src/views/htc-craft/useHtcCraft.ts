@@ -41,7 +41,7 @@ import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
-import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
+import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
 import { batchFor, BATCH_TARGET, decide, NECRO_REPLACE_NOTE, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/htc/tree-decide";
 import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
 import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
@@ -322,7 +322,8 @@ export function useHtcCraft() {
    */
   const treePlan = computed(() => {
     const p = prices.value;
-    if (!p || dropOnly.value.length === 0) return null;
+    // 樹 MOD に加え、貼り付けで固定済みだった普通の MOD も同じ 3 本で比べる (2026-09-24)
+    if (!p || (dropOnly.value.length === 0 && fracturedTargets.value.length === 0)) return null;
     const div = p.currency.divine;
     if (!div) return null;
     const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
@@ -340,7 +341,8 @@ export function useHtcCraft() {
       const t = idx != null ? d.tiers?.[idx] : undefined;
       if (t) mins[d.text] = t.min;
     }
-    const buys = treeBuys(dropOnly.value, { mins });
+    const d = data.value;
+    const buys = [...treeBuys(dropOnly.value, { mins }), ...(d ? fracturedBuys(d, fracturedTargets.value, (id) => stepTarget([id])) : [])];
     // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り
     const common = {
       ilvlMin: item.value?.itemLevel ?? undefined,
@@ -452,6 +454,21 @@ export function useHtcCraft() {
     }
   }
 
+  /**
+   * 狙う段を選び直す (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」)。狙いのリストそのものを
+   * 書き換えるので、確率・フラクチャー品の検索の下限・無し品の平均・スパムの組み立てが全部ついてくる
+   */
+  function setTier(modId: string, tierIndex: number): void {
+    const mod = data.value?.mods.get(modId);
+    const tier = mod?.tiers[tierIndex];
+    if (!mod || !tier) return;
+    const re = (xs: TierTarget[]): TierTarget[] => xs.map((t) => (t.modId === modId ? { ...t, minTierIndex: tierIndex } : t));
+    targets.value = re(targets.value);
+    fracturedTargets.value = re(fracturedTargets.value);
+    rows.value = rows.value.map((r) => (r.modId === modId
+      ? { ...r, tierName: String(tier.name ?? ""), range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / ") } : r));
+  }
+
   /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => {
@@ -461,7 +478,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget,
+    stepTarget, setTier,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,

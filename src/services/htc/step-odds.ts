@@ -21,6 +21,13 @@ import { CATALYSTS, catalystsFor } from "./quality";
 
 export type Side = "prefix" | "suffix";
 
+/**
+ * 「ブリーチの MOD (品質の上限 40%)」を 1 手ずつの一覧に出す時の仮の id。
+ * オーナー 2026-09-24:「品質 40% がコピーされてたら MOD は 7 MOD だね。品質 20% 追加する順番、追加の時に入れるからな」。
+ * プレに 1 枠使う。付け方はパーフェクトエッセンスと同じ (プレの外せる物 1 つを食わせる)
+ */
+export const BREACH_ID = "__breach__";
+
 /** 指輪に付いている物 1 つ。modId が null なら外れ */
 export interface Slot {
   modId: string | null;
@@ -214,6 +221,24 @@ export function stepHelpers(ctx: StepCtx) {
     return out.sort((a, b) => a.avg - b.avg);
   }
 
+  /** ブリーチの MOD を付ける手 (プレの外れを食わせる / 無ければ外れを付けてから)。付いていれば空 */
+  function breachMethods(s: ItemState): StepMethod[] {
+    if (s.breach) return [];
+    const price = cur("essence:breach") + cur("OmenofSinistralCrystallisation");
+    if (!Number.isFinite(price)) return [];
+    const junk = s.slots.filter((x) => x.side === "prefix" && !x.fixed && !x.modId).length;
+    const removable = s.slots.filter((x) => x.side === "prefix" && !x.fixed).length;
+    const label = "ブリーチのエッセンス + 左側の結晶化のお告げ";
+    if (removable) {
+      return [{ kind: "essence", p: 1, perTry: price, avg: price, missSide: null, label,
+        note: junk === removable ? "プレの外れと入れ替わる" : `プレの外せる ${removable} つから 1 つと入れ替わる (狙いが消えることもある)` }];
+    }
+    const pre = cur("exalt") + cur("OmenofSinistralExaltation");
+    if (!room(s, "prefix") || !Number.isFinite(pre)) return [];
+    return [{ kind: "essence", p: 1, perTry: price + pre, avg: price + pre, missSide: null,
+      label: `高貴なオーブ + 左側の高貴なお告げ (外れを 1 つ) → ${label}`, note: "付けた外れと入れ替わる" }];
+  }
+
   /** 外れを消す手。外れが消える確率の高い順 (同じなら安い順) */
   function cleanups(s: ItemState): Cleanup[] {
     const idx = s.slots.map((x, i) => (x.fixed ? -1 : i)).filter((i) => i >= 0);
@@ -245,5 +270,5 @@ export function stepHelpers(ctx: StepCtx) {
       && (m.source === "normal" || m.source === "desecrated" || m.source === "perfect_essence"));
   }
 
-  return { methodsFor, cleanups, candidates, room, count };
+  return { methodsFor, breachMethods, cleanups, candidates, room, count };
 }

@@ -26,8 +26,9 @@
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import { htcDropOnly } from "./patch";
 import { buildSpecQuery } from "../trade2/query";
-import { tradeCategoryOf } from "./buy-or-craft";
-import type { ItemBase } from "../../vendor/poe2htc/engine/types";
+import { tradeCategoryOf, tradeFiltersFor } from "./buy-or-craft";
+import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 
 const STAT_MAP = statMapping as Record<string, string>;
 
@@ -91,6 +92,25 @@ export function treeBuys(
 }
 
 /**
+ * 貼り付けで固定済みだった**普通の MOD** (半影の指輪の火の追加ダメージなど) も、樹 MOD と同じ 3 本
+ * (固定済み / 固定無し・ゆるい / 固定無し・厳しい) で比べるための行 (2026-09-24)。
+ * オーナー:「フラクチャーありなしでいくなら、フラクチャー無し品とかも選択肢じゃなかったっけ。4 種類くらい」。
+ * 条件は [[buy-or-craft.ts]] の `tradeFiltersFor` (素の段の下限) を `fractured.` にした物。
+ */
+export function fracturedBuys(data: PatchData, targets: readonly TierTarget[], name: (modId: string) => string): TreeBuy[] {
+  return targets.map((t) => {
+    const { filters } = tradeFiltersFor(data, [t]);
+    const side = data.mods.get(t.modId)?.type === "suffix" ? "S" : "P";
+    return {
+      text: name(t.modId), tag: "fractured", side,
+      filters: filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min })),
+      searchable: filters.length > 0,
+      ...(filters.length ? {} : { why: "取引所の条件にできる stat が見つからない" }),
+    };
+  });
+}
+
+/**
  * 固定済みの樹 MOD を持つ出品を探すクエリ。**1 本にまとめます** ── 樹 MOD が 2 つ要るなら
  * 両方を条件に入れた 1 回の検索で済み、上位集合は勝手に返ります ([[search-cut.ts]])。
  */
@@ -129,7 +149,12 @@ export function treeBuyQuery(
     id: fractured ? f.id : f.id.replace(/^fractured\./, "explicit."),
     min: f.min ?? 0,
   }));
-  if (opts.strict && !fractured) filters.push({ id: STRICT_PREFIX, max: 1 });
+  // 厳しい: 固定したい MOD の側は、その MOD だけ (もう片側は問わない)。樹 MOD はプレなので従来どおりプレ 1
+  if (opts.strict && !fractured) {
+    const nP = buys.filter((b) => b.side === "P").length, nS = buys.filter((b) => b.side === "S").length;
+    if (nP) filters.push({ id: STRICT_PREFIX, max: nP });
+    if (nS) filters.push({ id: STRICT_SUFFIX, max: nS });
+  }
   if (filters.length === 0) return null;
   const category = tradeCategoryOf(cls);
   if (!opts.baseType && !category) return null;

@@ -26,6 +26,13 @@ const others = computed(() => c.bases.value.filter((b) => b.fits && !b.current &
 const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality);
 /** 英語の行 (忍者のコピー) は日本語に */
 const ja = (t: string): string => jaOfPastedLine(t) ?? t;
+/** その MOD の段 (良い順、ilvl で付かない段は出さない) */
+const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
+  const m = c.data.value?.mods.get(modId);
+  const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
+  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} ${t.name ?? ""} (${(t.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")}) 以上` }))
+    .filter((t) => t.ilvl <= lv).reverse();
+};
 /** フラクチャー品から始めるか、無し品から作るか */
 const fc = useFractureChoice(c);
 </script>
@@ -41,30 +48,41 @@ const fc = useFractureChoice(c);
     <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
       このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
     </p>
-    <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。フラクチャー品の値段は押した時だけ検索 -->
-    <div v-if="fixed.length" class="mt-2 rounded bg-black/20 p-2">
+    <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。固定済み / 固定無し・厳しい / ゆるい / 無し品。取引所は押した時だけ -->
+    <div v-if="fixed.length || c.dropOnly.value.length" class="mt-2 rounded bg-black/20 p-2">
       <p class="mb-1 font-bold">
         始め方 (初動の安い順)
         <button v-if="!fc.searched.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
-          {{ fc.busy.value ? "探しています…" : "フラクチャー品の最安を取る (2 本 / 約 20 秒)" }}
+          {{ fc.busy.value ? "探しています…" : "固定済み・固定無しを探す (3 本 / 約 30 秒)" }}
         </button>
       </p>
-      <label v-for="o in fc.options.value" :key="o.key" class="block">
-        <input v-model="fc.startOption.value" type="radio" :value="o.key" />
-        {{ o.label }}:
-        <b>{{ o.cost != null ? c.money(o.cost) : o.found ? "出品なし" : "-" }}</b>
-        <template v-if="o.found"> ({{ o.found.total }} 件<a v-if="o.found.url" :href="o.found.url" target="_blank" class="ml-1 underline opacity-70">取引所</a>)</template>
+      <label v-for="o in fc.options.value" :key="o.id" class="block" :class="o.cost == null ? 'opacity-50' : ''">
+        <input type="radio" :checked="fc.chosen.value?.id === o.id" :disabled="o.cost == null" @change="fc.choose(o.id)" />
+        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : "-" }}</b>
+        <!-- 取引所で見つからない時は手で埋める (オーナー 2026-09-24:「足りない情報は手動で」) -->
+        <span v-if="o.id === 'manual'" class="ml-1 opacity-80">
+          <input v-model.number="fc.manual.value" type="number" min="0" class="num w-16" /> 神
+        </span>
         <span v-if="o.note" class="opacity-60"> {{ o.note }}</span>
       </label>
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
     </div>
-    <p class="mt-1">作る MOD {{ targets.length }} つ: {{ targets.map((r) => r.text).join(" / ") }}</p>
+    <!-- 作る MOD と狙う段。段は最初に選べる (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」) -->
+    <p class="mt-1">作る MOD {{ targets.length }} つ</p>
+    <div v-for="r in targets" :key="r.modId" class="flex items-center gap-2 pl-2">
+      <span class="flex-1">{{ r.text }}</span>
+      <select v-if="tiersOf(r.modId).length > 1" class="rounded border border-white/20 bg-black/30 px-1"
+        :value="c.targets.value.find((t) => t.modId === r.modId)?.minTierIndex ?? 0"
+        @change="c.setTier(r.modId, Number(($event.target as HTMLSelectElement).value))">
+        <option v-for="t in tiersOf(r.modId)" :key="t.i" :value="t.i">{{ t.label }}</option>
+      </select>
+    </div>
     <p v-if="c.slots.value?.impossible" class="mt-1 text-rose-300">{{ c.slots.value.note }}</p>
     <p v-for="b in others" :key="b.baseType" class="mt-1 opacity-70">
       別のベースなら: {{ b.ja }} ({{ b.maxQualityPlus ? `品質上限 +${b.maxQualityPlus}%` : b.implicits.join(" / ") }})
     </p>
-    <details v-if="c.dropOnly.value.length" class="mt-2">
-      <summary class="cursor-pointer opacity-70">樹 MOD 入りのベースの値段を見る</summary>
+    <details v-if="c.treeResult.value" class="mt-2">
+      <summary class="cursor-pointer opacity-70">固定済み・固定無しの中身を見る</summary>
       <TreeFracturePanel :c="c" />
     </details>
   </div>
