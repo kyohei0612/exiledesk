@@ -41,12 +41,17 @@ export function useFractureChoice(c: ReturnType<typeof useHtcCraft>) {
     // 取れるまでは「取得中…」。手で入れる欄は、取れて固定済みが見つからなかった時だけ (オーナー 2026-09-24:「デフォで
     // 手入力させるような UI なんだ。同じように取得中表示にしてほしい」)
     const status = c.treeBusy.value ? "取得中…" : "まだ";
+    // 取れなかった検索 (上限など) は 0 件と区別する
+    const errOf = (key: string): string | null => r?.found.find((x) => x.key === key)?.error ?? null;
+    const frErr = errOf("fractured");
     const rows: Row[] = [{
-      id: "fractured", label: "固定済みを買う", cost: r?.fracturedPrice != null ? r.fracturedPrice * div : m, note: "",
-      link: linkOf("fractured"), manual: !!r && r.fracturedPrice == null, status: r ? "出品なし" : status,
+      id: "fractured", label: "固定済みを買う", cost: r?.fracturedPrice != null ? r.fracturedPrice * div : m, note: frErr ? `取れず: ${frErr}` : "",
+      link: linkOf("fractured"), manual: !!r && r.fracturedPrice == null, status: r ? (frErr ? "取れず" : "出品なし") : status,
     }];
     for (const [key, label] of [["strict", "固定無し・厳しいを買って固定"], ["loose", "固定無し・ゆるいを買って固定"]] as const) {
       if (!r) { rows.push({ id: key, label, cost: null, note: "", link: null, manual: false, status }); continue; }
+      const err = errOf(key);
+      if (err) { rows.push({ id: key, label, cost: null, note: `取れず: ${err}`, link: null, manual: false, status: "取れず" }); continue; }
       const b = r[key];
       const total = r.found.find((x) => x.key === key)?.total ?? 0;
       // 85% に届く個数をまとめて買う合計。出品が足りない (足りない分を仮に足した) なら挑戦できない
