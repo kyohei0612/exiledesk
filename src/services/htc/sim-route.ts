@@ -32,8 +32,23 @@ export type SimAction =
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
   | { kind: "check" };
 
-/** ○×の行き先: 手の id / 完成 / 未設定 (そこで止まる) */
-export type Goto = string | "done" | null;
+/**
+ * ○×の行き先: 手の id / 完成 / 自動 / 未設定 (そこで止まる)。
+ *
+ * **自動** (オーナー 2026-09-24:「キャスピ消えたら手 1 に戻るし、触媒成功品が消えても失敗が残るから失敗品が消えるまで消去だし、
+ * 失敗品消えたらもう一度っていう処理は自動でやりたい」):
+ *   1. 本線 (手 1 から○をたどった手の並び) を上から見て、揃っていない一番上の手を探す
+ *   2. それがカオスの手なら、そこへ (外れごと入れ替えるので外れが残っていてよい。スパムの狙いが消えたら最初から)
+ *   3. それ以外で外れが残っていれば、今の手をもう 1 回 (消去を続ける)
+ *   4. 外れが無ければ、その揃っていない手へ (失敗品が消えたら同じ触媒をもう 1 回、成功品が消えていたらその手から)
+ *   5. 全部揃っていれば完成 (本線の最後が「完成」の時)
+ * 揃っている = 狙いのどれかがある かつ 残したい MOD が全部ある (外れ無し・個数の条件は見ない)
+ *
+ * たどる時の決まり (人が自然にやる事):
+ *   - 本線の手で、もう揃っていれば飛ばして○の行き先へ (カオスで付け直した時、前の成功品が残っていれば次の手へ)
+ *   - 打てない (枠が無い等) けれど外れがあれば、先に × の行き先 (消去の手) へ回す (費用は掛からない)
+ */
+export type Goto = string | "done" | "auto" | null;
 
 export interface SimNode {
   id: string;
@@ -295,6 +310,25 @@ export function simulateTree(inp: {
   const doneCosts: number[] = [];
   const stops = new Map<string, number>();
   const tries = nodes.map(() => 0), spent = nodes.map(() => 0);
+  // 本線 = 手 1 から○の行き先をたどった並び (輪になったら止める)
+  const main: number[] = [];
+  let mainEndsDone = false;
+  for (let i: number | undefined = nodes.length ? 0 : undefined; i != null && !main.includes(i);) {
+    main.push(i);
+    const g = nodes[i]!.onHit;
+    if (g === "done") { mainEndsDone = true; break; }
+    i = g && g !== "auto" ? byId.get(g) : undefined;
+  }
+  const goalMet = (st: SimState, x: SimNode): boolean =>
+    (!x.targets.length || x.targets.some((t) => h.has(st, t.modId))) && x.keep.every((id) => (id === "__breach__" ? st.breach : h.has(st, id)));
+  /** 自動の行き先 (上の決まり) */
+  const autoNext = (st: SimState, cur: number): string | "done" | null => {
+    const m = main.find((i) => !goalMet(st, nodes[i]!));
+    if (m == null) return mainEndsDone ? "done" : null;
+    const target = nodes[m]!;
+    if (target.action?.kind !== "chaos" && h.hasJunk(st)) return nodes[cur]!.id;
+    return target.id;
+  };
   for (let r = 0; r < runs; r++) {
     let s: SimState = { slots: inp.start.slots.map((x) => ({ ...x })), breach: inp.start.breach };
     let cost = 0;
@@ -302,13 +336,27 @@ export function simulateTree(inp: {
     let end: string | null = nodes.length ? null : "手が無い";
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
+      // 本線の手で、もう揃っていれば飛ばす (カオスでスパムの狙いを付け直した時、前の触媒の成功品が残っていれば次へ)
+      if (main.includes(at) && n.action?.kind !== "check" && goalMet(s, n) && n.onHit) {
+        const g = n.onHit === "auto" ? autoNext(s, at) : n.onHit;
+        if (g === "done") { end = "done"; break; }
+        const j = g ? byId.get(g) : undefined;
+        if (j != null && j !== at) { at = j; continue; }
+      }
       const why = h.usable(s, n.action);
+      // 打てない (枠が無い等) けれど外れがあるなら、先に × の行き先 (消去の手) へ回す (費用は掛からない)
+      if (why && h.hasJunk(s) && n.onMiss && n.onMiss !== "done") {
+        const g = n.onMiss === "auto" ? autoNext(s, at) : n.onMiss;
+        const j = g && g !== "done" ? byId.get(g) : undefined;
+        if (j != null && j !== at) { at = j; continue; }
+      }
       if (why) { end = `手 ${at + 1} が打てない: ${why}`; break; }
       const price = h.priceOf(s, n.action!);
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
-      const next = h.passes(s, n) ? n.onHit : n.onMiss;
+      let next = h.passes(s, n) ? n.onHit : n.onMiss;
+      if (next === "auto") next = autoNext(s, at);
       if (next === "done") { end = "done"; break; }
       if (next == null) { end = `手 ${at + 1} の${h.passes(s, n) ? "○" : "×"}の行き先が未設定`; break; }
       const j = byId.get(next);

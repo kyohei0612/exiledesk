@@ -57,5 +57,18 @@ if (!h.usable({ breach: false, slots: [start.slots[0]] }, an)) fail("外せる�
 // 行き先が未設定なら止まる
 const cut = M.simulateTree({ ctx, start, nodes: [{ ...nodes[0], onHit: null }], runs: 200 });
 if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未設定の行き先で止まっていない");
+// 自動の行き先 (オーナーの例): スパム → 触媒 1 回目 → 触媒 2 回目、外れたら右側の消去で「自動」
+{
+  const auto = [
+    { id: "a1", action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: CS, minTier: 3 }], keep: [], clean: false, onHit: "a2", onMiss: "a1" },
+    { id: "a2", action: ex, targets: [{ modId: INT, minTier: 6 }, { modId: RES, minTier: 3 }], keep: [CS], clean: false, onHit: "a3", onMiss: "a4" },
+    { id: "a3", action: ex, targets: [{ modId: INT, minTier: 6 }, { modId: RES, minTier: 3 }], keep: [CS, INT, RES], clean: false, onHit: "done", onMiss: "a4" },
+    { id: "a4", action: an, targets: [], keep: [], clean: false, onHit: "auto", onMiss: "auto" },
+  ];
+  const ra = M.simulateTree({ ctx, start, nodes: auto, runs: 2000, budget: 300 * D });
+  console.log(`自動: 完成 ${(ra.pDone * 100).toFixed(1)}% / 平均 ${(ra.expected / D).toFixed(1)} 神 / 8 割 ${(ra.p80 / D).toFixed(1)} 神 / 止まった ${ra.stops.map((x) => x.reason).join(", ") || "無し"}`);
+  for (const p of ra.perNode) console.log(`   手 ${p.id}: 平均 ${p.tries.toFixed(1)} 回 / ${(p.cost / D).toFixed(1)} 神`);
+  if (!(ra.pDone > 0.99)) fail("自動の行き先で最後まで行けていない");
+}
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
 process.exit(failed ? 1 : 0);
