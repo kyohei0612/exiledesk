@@ -83,6 +83,8 @@ export interface FinishInput {
   prefixCap: number;
   /** カタリストの使う / 使わない (tag → bool) */
   catalystChoice?: Readonly<Record<string, boolean>>;
+  /** 利用者が選んだ打ち方・リカバリー ([[prefix-exalt.ts]] へ渡す) */
+  force?: Readonly<Record<string, string>>;
 }
 
 export function prefixFinish(inp: FinishInput): FinishPlan {
@@ -156,6 +158,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
     const exR = prefixExaltPhase({
       data, cls, prices, itemLevel, targets: rest, quality: inp.quality, breach: inp.breach,
       cap: inp.prefixCap, pricey: PRICEY_DIVINE, ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
+      ...(inp.force ? { force: inp.force } : {}),
     });
     if ("reason" in exR) { lastReason = exR.reason; continue; }
     const occupied = new Set([...essences, ...rest].map((t) => mod(t.modId)?.family).filter((f): f is string => !!f));

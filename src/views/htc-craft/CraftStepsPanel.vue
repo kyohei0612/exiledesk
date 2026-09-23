@@ -8,7 +8,7 @@
  * カードは [[craft-steps.ts]]、予算は [[budget.ts]] (スパムの組み立てと共通)。
  */
 import { computed, ref, watch } from "vue";
-import { craftBudgetDivine, reachWithin } from "./budget";
+import { craftBudgetDivine, craftForce, reachWithin } from "./budget";
 import { craftSteps } from "./craft-steps";
 import type { MissPlan } from "../../services/htc/spam-total";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -20,7 +20,15 @@ const div = computed(() => c.prices.value?.currency.divine ?? null);
 const cards = computed(() => (c.spam.value ? craftSteps(c.spam.value, c.stepTarget, c.money) : []));
 /** 0 = ベース、1..n = 手、n+1 = 完成 */
 const at = ref(0);
-watch(cards, () => { at.value = 0; });
+// 貼り直したら最初から、選んだ手も捨てる (選び直しでは今のカードに留まる)
+watch(() => c.item.value, () => { at.value = 0; craftForce.value = {}; });
+/** 手を選ぶ。一番安い手 (おまかせ) を選んだら固定を外す */
+function choose(forceKey: string, label: string | null): void {
+  const next = { ...craftForce.value };
+  if (label == null) delete next[forceKey]; else next[forceKey] = label;
+  craftForce.value = next;
+}
+const forcedCount = computed(() => Object.keys(craftForce.value).length);
 const last = computed(() => cards.value.length + 1);
 const card = computed(() => (at.value >= 1 && at.value <= cards.value.length ? cards.value[at.value - 1]! : null));
 
@@ -61,6 +69,8 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
     <p class="mb-2 opacity-70">
       予算 <input v-model.number="craftBudgetDivine" type="number" min="1" step="50" class="num w-20" /> 神 —
       進めるのは狙いの MOD の数だけ。1 手ごとに当たる確率・支出の期待値と、外れた時のリカバリーを出します。
+      打ち方とリカバリーは選べます (選ぶと全体を解き直す。青枠 = 今使っている手、黄枠 = 選んだ手)。
+      <button v-if="forcedCount" type="button" class="ml-1 rounded border border-white/20 px-1" @click="craftForce = {}">選んだ {{ forcedCount }} 手を全部おまかせに戻す</button>
     </p>
 
     <!-- どこにいるか。押せば飛べる -->
@@ -90,6 +100,18 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
         <b class="text-sm">{{ at }}. {{ card.title }}</b>
         <table class="mt-2">
           <tr><td class="pr-3 opacity-60">打つ物</td><td>{{ card.action }}</td></tr>
+          <tr v-if="card.options.length > 1">
+            <td class="pr-3 align-top opacity-60">打ち方を選ぶ</td>
+            <td>
+              <button type="button" class="mr-1 rounded border px-1" :class="card.options.some((o) => o.forced) ? 'border-white/10 opacity-60' : 'border-amber-400 text-amber-300'"
+                @click="choose(card.options[0]!.forceKey, null)">おまかせ (期待値で一番安い)</button>
+              <div v-for="o in card.options.slice(0, 8)" :key="o.label" class="pl-1">
+                <button type="button" class="rounded border px-1 text-left" :class="o.forced ? 'border-amber-400 text-amber-300' : o.chosen ? 'border-sky-500' : 'border-white/10'"
+                  @click="choose(o.forceKey, o.label)">{{ o.label }}</button>
+                当たる {{ pct(o.odds) }}% / <span :class="o.delta > 0.5 ? 'text-rose-300' : 'text-emerald-300'">{{ o.delta > 0.5 ? "+" + c.money(o.delta) : "一番安い" }}</span>
+              </div>
+            </td>
+          </tr>
           <tr>
             <td class="pr-3 opacity-60">1 回で当たる</td>
             <td><b>{{ card.odds >= 1 ? "確定" : `1/${(1 / card.odds).toFixed(1)} (${pct(card.odds)}%)` }}</b></td>
@@ -116,6 +138,16 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
                 {{ (o.p * 100).toFixed(0) }}%: {{ outcomeJa(o) }}
               </div>
               <div class="mt-0.5">外れ 1 回の損 (リカバリーの期待値) <b class="text-rose-300">{{ c.money(card.miss.loss) }}</b></div>
+              <div v-if="card.miss.options.length > 1" class="mt-1">
+                リカバリーを選ぶ:
+                <button type="button" class="ml-1 rounded border px-1" :class="card.miss.options.some((o) => o.forced) ? 'border-white/10 opacity-60' : 'border-amber-400 text-amber-300'"
+                  @click="choose(card.miss.options[0]!.forceKey, null)">おまかせ</button>
+                <div v-for="o in card.miss.options" :key="o.label" class="pl-1">
+                  <button type="button" class="rounded border px-1 text-left" :class="o.forced ? 'border-amber-400 text-amber-300' : o.chosen ? 'border-sky-500' : 'border-white/10'"
+                    @click="choose(o.forceKey, o.label)">{{ o.label }}</button>
+                  外れ 1 回の損 {{ c.money(o.loss) }}
+                </div>
+              </div>
             </td>
           </tr>
         </table>

@@ -25,6 +25,8 @@ export interface PathStep {
    * 外れ = 狙い以外が付いた。その後に打つ手と、消去が何に当たるか
    */
   miss: MissPlan | null;
+  /** 選べる打ち方 (高貴の段階 × カタリスト)。`delta` は今の手より何高貴高いか。無ければ空 */
+  options: Array<{ label: string; odds: number; delta: number; chosen: boolean; forceKey: string; forced: boolean }>;
 }
 
 export interface MissPlan {
@@ -36,6 +38,8 @@ export interface MissPlan {
   outcomes: Array<{ kind: "junk" | "target" | "spam" | "breach"; modId?: string; p: number }>;
   /** 外れ 1 回で増える費用の期待値 (外れた状態の残り − 外れ無しの残り) */
   loss: number;
+  /** 選べるリカバリーと、それぞれの外れ 1 回の損。`forceKey` に label を入れると固定して解き直す */
+  options: Array<{ label: string; loss: number; chosen: boolean; forceKey: string; forced: boolean }>;
 }
 
 /** 合計の分布。`stages` は段階ごとの**累計**の費用を 1 回ずつ (予算でどこまで行けるかを画面で数える) */

@@ -8,6 +8,12 @@ import type { SpamTotal } from "../../services/htc/spam-total";
 
 export const craftBudgetDivine = ref(500);
 
+/**
+ * 「1 手ずつ」で選んだ打ち方・リカバリー (状態のキー → 手の名前)。無い状態は期待値で一番安い手
+ * (オーナー 2026-09-23:「戻す手順も色んな選択肢から選べるようにしたい」)。貼り直したら捨てる
+ */
+export const craftForce = ref<Record<string, string>>({});
+
 /** 段階ごとに「予算 (高貴換算) の内でそこまで行ける確率」と、その段階までの平均 */
 export function reachWithin(total: SpamTotal, capExalted: number): Array<{ label: string; p: number; mean: number }> {
   return total.stages.map((st) => ({

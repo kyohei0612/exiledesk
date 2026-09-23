@@ -9,7 +9,7 @@
  *   (段階 = サフィが揃う / プレを高貴で足し終わる / 品質・エッセンスまで / 完成)
  */
 import type { SpamPlan } from "../../services/htc/spam-plan";
-import type { MissPlan } from "../../services/htc/spam-total";
+import type { MissPlan, PathStep } from "../../services/htc/spam-total";
 
 export interface StepCard {
   title: string;
@@ -25,6 +25,8 @@ export interface StepCard {
   onMiss: string | null;
   /** 外れた時のリカバリー (消去が何に当たるか・外れ 1 回の損)。高貴の手だけ */
   miss: MissPlan | null;
+  /** 選べる打ち方 (高貴の手だけ。他は空) */
+  options: PathStep["options"];
   /** この手が属する段階 (`SpamTotal.stages` の label)。段階の平均と予算内の確率を引く */
   stage: string | null;
 }
@@ -40,20 +42,20 @@ export function craftSteps(
     out.push({
       title: `カオススパムで ${name([plan.spam.modId])}`,
       action: plan.spam.currency, odds: plan.spam.odds, perTry: plan.spam.expected * plan.spam.odds, spend: plan.spam.expected,
-      onMiss: "そのままもう 1 回 (外せる MOD 1 つを入れ替えるだけ。損はその 1 回の値段だけ)", miss: null, stage: suffixStage,
+      onMiss: "そのままもう 1 回 (外せる MOD 1 つを入れ替えるだけ。損はその 1 回の値段だけ)", miss: null, options: [], stage: suffixStage,
     });
   }
   if (plan.phase?.breachOnce) {
     out.push({
       title: "ブリーチのエッセンスで品質の上限を 40% に",
       action: "高貴 + 左側の高貴なお告げでプレにゴミ → ブリーチのエッセンス + 左側の結晶化のお告げ (ゴミだけ食わせる)",
-      odds: 1, perTry: plan.phase.breachOnce, spend: plan.phase.breachOnce, onMiss: null, miss: null, stage: suffixStage,
+      odds: 1, perTry: plan.phase.breachOnce, spend: plan.phase.breachOnce, onMiss: null, miss: null, options: [], stage: suffixStage,
     });
   }
   for (const p of plan.phase?.path ?? []) {
     out.push({
       title: `高貴で ${name(p.want)}${p.want.length > 1 ? " のどれか" : ""}`, action: p.action, odds: p.odds, perTry: p.perTry, spend: p.spend,
-      onMiss: null, miss: p.miss, stage: suffixStage,
+      onMiss: null, miss: p.miss, options: p.options, stage: suffixStage,
     });
   }
   const f = plan.finish;
@@ -61,14 +63,14 @@ export function craftSteps(
     for (const p of f.exalt?.path ?? []) {
       out.push({
         title: `プレに ${name(p.want)}${p.want.length > 1 ? " のどれか" : ""}`, action: p.action, odds: p.odds, perTry: p.perTry, spend: p.spend,
-        onMiss: null, miss: p.miss, stage: has("プレを高貴で"),
+        onMiss: null, miss: p.miss, options: p.options, stage: has("プレを高貴で"),
       });
     }
     const fixedStage = has("品質・エッセンス") ?? has("完成");
     for (const st of f.steps) {
       out.push({
         title: st.modId ? `確定で ${name([st.modId])}` : st.label.split(" (")[0]!,
-        action: st.label, odds: 1, perTry: st.cost, spend: st.cost, onMiss: null, miss: null, stage: fixedStage,
+        action: st.label, odds: 1, perTry: st.cost, spend: st.cost, onMiss: null, miss: null, options: [], stage: fixedStage,
       });
     }
     if (f.desecrate) {
@@ -77,7 +79,7 @@ export function craftSteps(
         title: `冒涜で ${name([d.modId])}`,
         action: `${d.bone} + 左手のネクロマンシーのお告げ${d.echoes ? " + 反響のお告げ (外れたら 1 回引き直し)" : ""} → 3 択から選ぶ`,
         odds: d.odds, perTry: d.perTry, spend: d.perTry / d.odds + d.light * (1 / d.odds - 1),
-        onMiss: `消去のオーブ + 光のお告げで冒涜だけ消して引き直し (外れ 1 回の損 ${money(d.light)}。他の MOD は消えない)`, miss: null, stage: has("完成"),
+        onMiss: `消去のオーブ + 光のお告げで冒涜だけ消して引き直し (外れ 1 回の損 ${money(d.light)}。他の MOD は消えない)`, miss: null, options: [], stage: has("完成"),
       });
     }
   }

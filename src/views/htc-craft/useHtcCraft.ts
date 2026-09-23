@@ -31,6 +31,7 @@ import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving, sideLimits } from "../../services/htc/bridge";
+import { craftForce } from "./budget";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
@@ -342,7 +343,7 @@ export function useHtcCraft() {
       baseLimits: sideLimits(d, item.value?.baseType),
       catalystChoice: catalystChoice.value,
       qualityTag: item.value?.catalystTag ?? null,
-      ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}),
+      ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}), force: craftForce.value,
     });
   });
 

@@ -16,6 +16,7 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
+import { KEEP } from "./spam-phase";
 import { mulberry32, type MissPlan, type PathStep } from "./spam-total";
 
 export interface PrefixExaltStep {
@@ -53,6 +54,8 @@ export interface PrefixExaltInput {
   catalystChoice?: Readonly<Record<string, boolean>>;
   pricey: number;
   runs?: number;
+  /** 利用者が選んだ打ち方・リカバリー (状態のキー → 手の名前)。[[spam-phase.ts]] と同じ形 */
+  force?: Readonly<Record<string, string>>;
 }
 
 const EXALT: ReadonlyArray<[string, number, string]> = [
@@ -126,6 +129,22 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
 
   const V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
   const pol = new Map<number, Act>();
+  const force = inp.force ?? {};
+  const sKey = (kind: "e" | "r", h: number, bq: number): string =>
+    `prefix-exalt:${kind}:${ids.filter((_, i) => h & (1 << i)).join(",")}:${bq}`;
+  const exaltValue = (e: Act, h: number, j: number, bq: number): number => {
+    const ps = outcomes(e, h, bq); const pj = 1 - ps.reduce((a, b) => a + b, 0);
+    let v = e.cost(bq) + pj * (V.get(key(h, j + 1, bq)) ?? Infinity);
+    ps.forEach((p, i) => { if (p > 0) v += p * V.get(key(h | (1 << i), j, bq))!; });
+    return v;
+  };
+  const annulValue = (h: number, j: number, bq: number): number => {
+    const m = bits(h) + j + bq;
+    let v = annul.cost(bq) + (j / m) * V.get(key(h, j - 1, bq))!;
+    ids.forEach((_, i) => { if (h & (1 << i)) v += V.get(key(h & ~(1 << i), j, bq))! / m; });
+    if (bq) v += V.get(key(h, j, 0))! / m;
+    return v;
+  };
   for (let it = 0; it < 2000; it++) {
     // その場で書き換える (Gauss-Seidel)。外れ → 消去 → 高貴の輪が長いと、1 反復ずつ写すやり方は 2000 回でも収束しなかった
     let diff = 0;
@@ -134,17 +153,15 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
       // 狙いが揃って**外れも消し切ったら**終わり。外れが残ると後のエッセンス・冒涜の枠が無い
       if (h === full && j === 0) { V.set(k0, 0); continue; }
       let best = Infinity; let bp: Act | null = null;
-      if (h !== full && bits(h) + j + bq < inp.cap) for (const e of acts) {
-        const ps = outcomes(e, h, bq); const pj = 1 - ps.reduce((a, b) => a + b, 0);
-        let v = e.cost(bq) + pj * (V.get(key(h, j + 1, bq)) ?? Infinity);
-        ps.forEach((p, i) => { if (p > 0) v += p * V.get(key(h | (1 << i), j, bq))!; });
+      const fe = force[sKey("e", h, bq)], fr = j > 0 ? force[sKey("r", h, bq)] : undefined;
+      const canExalt = h !== full && bits(h) + j + bq < inp.cap;
+      if (canExalt && (!fr || fr === KEEP)) for (const e of acts) {
+        if (fe && e.label !== fe) continue;
+        const v = exaltValue(e, h, j, bq);
         if (v < best) { best = v; bp = e; }
       }
-      if (j > 0) {
-        const m = bits(h) + j + bq;
-        let v = annul.cost(bq) + (j / m) * V.get(key(h, j - 1, bq))!;
-        ids.forEach((_, i) => { if (h & (1 << i)) v += V.get(key(h & ~(1 << i), j, bq))! / m; });
-        if (bq) v += V.get(key(h, j, 0))! / m;
+      if (j > 0 && (fr !== KEEP || !canExalt)) {
+        const v = annulValue(h, j, bq);
         if (v < best) { best = v; bp = annul; }
       }
       const old = V.get(k0)!;
@@ -186,13 +203,21 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
   const missAt = (h: number, p: number): MissPlan | null => {
     const e = pol.get(key(h, 1, B));
     if (!e || !(p > 0)) return null;
-    const loss = V.get(key(h, 1, B))! - V.get(key(h, 0, B))!;
-    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss };
+    const base = V.get(key(h, 0, B))!;
+    const loss = V.get(key(h, 1, B))! - base;
+    const rk = sKey("r", h, B);
+    const options: MissPlan["options"] = [{ label: annul.label, loss: annulValue(h, 1, B) - base, chosen: e === annul, forceKey: rk, forced: force[rk] === annul.label }];
+    if (bits(h) + 1 + B < inp.cap) {
+      const keep = Math.min(...acts.map((x) => exaltValue(x, h, 1, B)));
+      options.push({ label: KEEP, loss: keep - base, chosen: e.kind === "exalt", forceKey: rk, forced: force[rk] === KEEP });
+    }
+    options.sort((a, b) => a.loss - b.loss);
+    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss, options };
     const m = bits(h) + 1 + B;
     const outcomes: MissPlan["outcomes"] = [{ kind: "junk", p: 1 / m }];
     ids.forEach((id, i) => { if (h & (1 << i)) outcomes.push({ kind: "target", modId: id, p: 1 / m }); });
     if (B) outcomes.push({ kind: "breach", p: 1 / m });
-    return { p, action: e.label, outcomes, loss };
+    return { p, action: e.label, outcomes, loss, options };
   };
   const path: PathStep[] = [];
   for (let h = 0; h !== full;) {
@@ -200,8 +225,12 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
     const ps = outcomes(e, h, B);
     const h2 = h | (1 << ps.indexOf(Math.max(...ps)));
     const odds = ps.reduce((a, b) => a + b, 0);
+    const q0 = exaltValue(e, h, 0, B), ek = sKey("e", h, B);
+    const options = acts.map((x) => ({
+      label: x.label, odds: outcomes(x, h, B).reduce((a, b) => a + b, 0), delta: exaltValue(x, h, 0, B) - q0,
+      chosen: x === e, forceKey: ek, forced: force[ek] === x.label })).sort((a, b) => a.delta - b.delta);
     path.push({ want: ids.filter((_, i) => !(h & (1 << i))), action: e.label, odds, perTry: e.cost(B),
-      spend: V.get(key(h, 0, B))! - V.get(key(h2, 0, B))!, miss: missAt(h, 1 - odds) });
+      spend: V.get(key(h, 0, B))! - V.get(key(h2, 0, B))!, miss: missAt(h, 1 - odds), options });
     h = h2;
   }
   return { modIds: ids, expected: V.get(start)!, steps, path, samples };

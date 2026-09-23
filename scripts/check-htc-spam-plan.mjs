@@ -106,6 +106,20 @@ if (r.total) {
   console.log(`1 手ずつ: ${r.phase.path.length} 手 / 支出の合計 ${(spend / D).toFixed(1)} 神 (サフィの段階 ${(r.phase.expected / D).toFixed(1)} 神)`);
   if (Math.abs(spend - r.phase.expected) > 0.01 * r.phase.expected) fail("1 手ずつの支出の合計がサフィの段階の平均と合わない");
   if (!r.phase.path.every((p) => p.miss && p.miss.loss > 0 && Math.abs(p.miss.outcomes.reduce((a, o) => a + o.p, 0) - 1) < 1e-9)) fail("外れた時のリカバリーが出ていない");
+  // リカバリーを選ぶ: 最後の手の外れで「全部剥がしてスパムからやり直し」に固定すると解き直され、高くなる
+  const lastMiss = r.phase.path.at(-1).miss;
+  const reset = lastMiss.options.find((o) => o.label.startsWith("全部剥がして"));
+  if (!reset || lastMiss.options.length < 2) fail("リカバリーの選択肢が出ていない");
+  else {
+    const forced = M.spamPlan({ ...base, runs: 4000, force: { [reset.forceKey]: reset.label } });
+    const m2 = forced.phase.path.at(-1).miss;
+    console.log(`リカバリーを「${reset.label}」に固定: サフィの段階 ${(r.phase.expected / D).toFixed(1)} → ${(forced.phase.expected / D).toFixed(1)} 神 (外れ 1 回の損 ${(lastMiss.loss / D).toFixed(1)} → ${(m2.loss / D).toFixed(1)} 神)`);
+    // 固定した状態を通る手があれば、そこではその手を使う (避ける道に変わることもある: 知性を先に付けるなど)
+    const hit = forced.phase.path.map((p) => p.miss).find((m) => m?.options[0]?.forceKey === reset.forceKey);
+    if (hit && hit.action !== reset.label) fail("固定したリカバリーが使われていない");
+    if (!(forced.phase.expected > r.phase.expected)) fail("固定しても解き直されていない");
+    if (!(forced.phase.expected >= r.phase.expected - 1e-6)) fail("一番安い手より固定した手の方が安くなっている");
+  }
   const last = [...r.total.stages.at(-1).cum].sort((a, b) => a - b);
   if (Math.abs(last[Math.floor(last.length * 0.8)] - r.total.p80) > 1e-6) fail("最後の段階の累計が合計の分布と合わない");
 }
