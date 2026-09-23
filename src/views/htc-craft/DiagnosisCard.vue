@@ -5,7 +5,7 @@
  * オーナー:「MOD 解析も別に表示せずに、MOD 解析 + ベース診断まで直通で通していいよ。その結果だけ
  * 分かりやすく簡潔に表示したらおけ」。細かい表は HtcCraftLab の「詳しく」に畳んである。
  */
-import { computed } from "vue";
+import { computed, nextTick, watch } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
@@ -39,6 +39,16 @@ const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
 const fc = useFractureChoice(c);
 /** 完成品を買うのと作るのと */
 const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null), computed(() => props.listingDivine));
+/**
+ * MOD 解析の時点で取引所を取りに行く (オーナー 2026-09-24:「取得分かれてるけど、そもそも MOD 解析の時点で
+ * 取得始めておけ」)。固定済み・固定無しの 3 本 → 完成品の 1 本の順 (門番が 10 秒間隔にそろえる)。
+ * 自動は解析し直した時だけ。段を変えた時はボタンで取り直す (変えるたびに叩かないため)
+ */
+watch(() => [c.item.value, c.base.value], async () => {
+  await nextTick();
+  if (c.treePlan.value && !fc.searched.value) await fc.search();
+  if (fin.query.value && !fin.found.value) await fin.search();
+}, { immediate: true });
 </script>
 
 <template>
@@ -76,8 +86,8 @@ const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null),
     <div class="mt-2 rounded bg-black/20 p-2">
       <p class="mb-1 font-bold">
         完成品と比べる
-        <button v-if="!fin.found.value && fin.query.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fin.busy.value" @click="fin.search()">
-          {{ fin.busy.value ? "探しています…" : "完成品の最安を取る" }}
+        <button v-if="!fin.found.value && fin.query.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fin.busy.value || fc.busy.value" @click="fin.search()">
+          {{ fin.busy.value ? "探しています…" : fc.busy.value ? "順番待ち…" : "完成品の最安を取る" }}
         </button>
       </p>
       <p>
