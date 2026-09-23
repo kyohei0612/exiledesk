@@ -11,7 +11,7 @@
  */
 import { computed, ref, shallowRef, watch } from "vue";
 import { fracturedBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
+import { autoPriceWait, tradeAuto } from "../../services/trade2/auto-price";
 import { openExternal } from "../../services/trade2/open-external";
 import { marketStore } from "../../state/market-store";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -50,7 +50,7 @@ async function searchAll(): Promise<void> {
     for (const id of checked.value) {
       const q = queryFor(id);
       if (!q) { results.value = { ...results.value, [id]: { min: null, total: 0, url: null, error: "取引所の条件にできない" } }; continue; }
-      const r = await autoPrice(marketStore.league.value?.Value ?? "Standard", q, marketStore.rates.value, 1);
+      const r = await autoPriceWait(marketStore.league.value?.Value ?? "Standard", q, marketStore.rates.value, 1);
       results.value = { ...results.value, [id]: r
         ? { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null }
         : { min: null, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" } };
@@ -82,6 +82,7 @@ const rows = computed(() => candidates.value.map((t) => ({
         <button v-if="r.res.url" type="button" class="text-sky-300 underline" @click="openExternal(r.res.url)">取引所 →</button>
         <button v-if="!r.current && r.res.min != null" type="button" class="rounded border border-amber-500/60 px-1" @click="c.setFractured([r.modId])">これで始める</button>
       </template>
+      <span v-else-if="busy && checked.includes(r.modId)" class="opacity-70">取得中…</span>
     </div>
     <button type="button" class="mt-1 rounded border border-sky-600 px-2" :disabled="busy || !checked.length" @click="searchAll()">
       {{ busy ? "探しています…" : `選んだ ${checked.length} つを一斉に探す (1 本 10 秒)` }}

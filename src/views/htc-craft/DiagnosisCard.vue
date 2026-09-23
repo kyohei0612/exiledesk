@@ -44,9 +44,10 @@ const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null))
 /**
  * MOD 解析の時点で取引所を取りに行く (オーナー 2026-09-24:「取得分かれてるけど、そもそも MOD 解析の時点で
  * 取得始めておけ」)。固定済み・固定無しの 3 本 → 完成品の 1 本の順 (門番が 10 秒間隔にそろえる)。
- * 自動は解析し直した時だけ。段を変えた時はボタンで取り直す (変えるたびに叩かないため)
+ * 自動は解析し直した時と、固定済みの MOD を替えた時だけ。段を変えた時はボタンで取り直す (変えるたびに叩かないため)
  */
-watch(() => [c.item.value, c.base.value], async () => {
+// 固定済みの MOD を替えた時 (「これで始める」) も取り直す (取り直す物が変わるので)
+watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join(",")], async () => {
   await nextTick();
   if (c.treePlan.value && !fc.searched.value) await fc.search();
   if (fin.query.value && !fin.found.value) await fin.search();
@@ -74,7 +75,7 @@ watch(() => [c.item.value, c.base.value], async () => {
       </p>
       <label v-for="o in fc.options.value" :key="o.id" class="block" :class="o.cost == null ? 'opacity-50' : ''">
         <input type="radio" :checked="fc.chosen.value?.id === o.id" :disabled="o.cost == null" @change="fc.choose(o.id)" />
-        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : "-" }}</b>
+        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
         <!-- 取引所で見つからない時は手で埋める (オーナー 2026-09-24:「足りない情報は手動で」) -->
         <span v-if="o.manual" class="ml-1 opacity-80">
           手で入れる <input v-model.number="fc.manual.value" type="number" min="0" class="num w-16" /> 神
@@ -97,7 +98,7 @@ watch(() => [c.item.value, c.base.value], async () => {
         </button>
       </p>
       <p>
-        完成品を買う: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : "-" }}</b>
+        完成品を買う: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value || fc.busy.value ? "取得中…" : "まだ" }}</b>
         <!-- 取引所に無い時だけ手で埋める (売値の欄は外した。オーナー 2026-09-24) -->
         <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
           手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-16" /> 神

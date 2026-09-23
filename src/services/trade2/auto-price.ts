@@ -161,6 +161,34 @@ export async function autoPrice(league: string, body: unknown, rates: ExaltedRat
 }
 
 /**
+ * 止められていたら解けるまで待って投げ直す版 (クラフト計算機の一斉検索用、2026-09-24)。
+ *
+ * `autoPrice` は罰則中はすぐ null、門番の枠待ち (5 分 30 回) は断られて null を返す。どちらも理由 (`lastError`) が
+ * 空なので、画面では「取れませんでした」としか出ず、一斉検索の途中の分が抜けていた。ここでは**決まりは守ったまま**
+ * 解除予定まで待ち、もう一度投げる。本当のエラー (`lastError` あり) や、待ちが `maxWaitMs` を超える時は null。
+ * `onWait` に待つ秒数を知らせる (画面の「上限で待ち」表示用)。
+ */
+export async function autoPriceWait(
+  league: string, body: unknown, rates: ExaltedRates, topN?: number,
+  opts: { maxWaitMs?: number; onWait?: (secs: number) => void } = {},
+): Promise<PriceResult | null> {
+  const maxWait = opts.maxWaitMs ?? 5 * 60_000;
+  const started = Date.now();
+  for (;;) {
+    const r = await autoPrice(league, body, rates, topN);
+    if (r || lastError.value) return r;
+    const until = Math.max(stoppedUntilMs(), nextAtMs());
+    const wait = until - Date.now();
+    if (wait <= 0 || Date.now() + wait - started > maxWait) {
+      if (wait > 0) lastError.value = `取引所の上限で ${Math.ceil(wait / 1000)} 秒待ちが要る`;
+      return null;
+    }
+    opts.onWait?.(Math.ceil(wait / 1000));
+    await new Promise((res) => setTimeout(res, wait + 300));
+  }
+}
+
+/**
  * 最安値と「検索 ID 付きの URL」。API 検索が済んでいれば ?q= より確実に開ける
  * (JP サイトでも同じ ID が使える。Awakened PoE Trade 等の JP Trade ボタンと同じ経路)。
  */

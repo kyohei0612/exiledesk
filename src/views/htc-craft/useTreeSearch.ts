@@ -8,7 +8,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
 import { batchFor, BATCH_TARGET, decide, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/htc/tree-decide";
-import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
+import { autoPriceWait, tradeAuto } from "../../services/trade2/auto-price";
 import { marketStore } from "../../state/market-store";
 import type { DropOnlyRow, PastedItem } from "../../services/htc/paste";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
@@ -152,7 +152,7 @@ export function useTreeSearch(deps: {
       for (const sq of tp.searches) {
         // 固定済みが線以下でも残りは投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
         // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
-        const r = await autoPrice(league, sq.query, rates, sq.take);
+        const r = await autoPriceWait(league, sq.query, rates, sq.take);
         if (!r) {
           // 取れなかった物は 0 件と区別する (理由を持たせる)
           found.push({ key: sq.key, label: sq.label, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" });
