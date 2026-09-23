@@ -45,7 +45,7 @@ export interface FinishPlan {
     odds: number;
     /** 1 回の値段 (骨 + お告げ + 反響を使った時の分の平均) */
     perTry: number;
-    /** 外れた時の光のお告げ */
+    /** 外れた時の消去のオーブ + 光のお告げ */
     light: number;
   } | null;
   /** 仕上げの平均 (高貴換算) */
@@ -110,7 +110,8 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
   const sw = (m: Mod, minIdx: number, floor: number): number =>
     m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
   const pool = [...cls.pools.normal.prefixes, ...cls.pools.desecrated.prefixes];
-  const light = cur("OmenofLight");
+  // 光のお告げは消去のオーブに付けて使う (冒涜の MOD だけを消す)。お告げ代 + 消去 1 個
+  const light = cur("OmenofLight") + cur("annul");
   const necro = cur("OmenofSinistralNecromancy");
   const echoes = cur("OmenofAbyssalEchoes");
   let best: NonNullable<FinishPlan["desecrate"]> & { perSuccess: number } | null = null;

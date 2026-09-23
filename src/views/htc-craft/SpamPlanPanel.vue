@@ -88,7 +88,7 @@ function choose(modId: string): void {
         <tr v-if="c.spam.value.finish.desecrate" class="border-b border-white/5">
           <td class="py-0.5 pr-2">
             {{ c.spam.value.finish.steps.length + 1 }}. 冒涜 ({{ c.spam.value.finish.desecrate.bone }} + 左手のネクロマンシーのお告げ{{ c.spam.value.finish.desecrate.echoes ? " + 反響のお告げ" : "" }})
-            で {{ c.stepTarget([c.spam.value.finish.desecrate.modId]) }} — 1 回 1/{{ (1 / c.spam.value.finish.desecrate.odds).toFixed(1) }}、外れたら光のお告げ {{ c.money(c.spam.value.finish.desecrate.light) }} で消して引き直し
+            で {{ c.stepTarget([c.spam.value.finish.desecrate.modId]) }} — 1 回 1/{{ (1 / c.spam.value.finish.desecrate.odds).toFixed(1) }}、外れたら消去のオーブ + 光のお告げ ({{ c.money(c.spam.value.finish.desecrate.light) }}) で冒涜だけ消して引き直し
           </td>
           <td class="text-right">1 回 {{ c.money(c.spam.value.finish.desecrate.perTry) }}</td>
         </tr>
