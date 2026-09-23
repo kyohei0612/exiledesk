@@ -250,7 +250,7 @@ const implicitText = (lines: readonly string[]): string =>
     <p v-if="c.error.value" class="mb-3 rounded bg-red-900/40 p-2 text-xs">{{ c.error.value }}</p>
 
     <!-- 相場が空だと費用が全部 0 になるので、ここで断る -->
-    <p v-if="c.coverage.value && c.coverage.value.filled === 0" class="mb-3 rounded bg-amber-900/40 p-2 text-xs">
+    <p v-if="c.coverage.value && !c.coverage.value.ready" class="mb-3 rounded bg-amber-900/40 p-2 text-xs">
       相場が未取得です。費用はすべて 0 と出ます。左の「カレンシー」を一度開いて相場を取ってから戻ってください。
     </p>
     <p v-else-if="c.coverage.value" class="mb-3 text-xs opacity-50">
@@ -364,6 +364,11 @@ const implicitText = (lines: readonly string[]): string =>
             <span class="opacity-50">— まだ投げていません</span>
           </p>
         </div>
+        <!-- 相場が無いと比べられない。黙って消すと「比べる所が無い」のか「相場が無い」のか分からない -->
+        <p v-else-if="c.dropOnly.value.length" class="mt-2 rounded bg-amber-900/40 p-2 text-xs">
+          相場が未取得なので、<b>固定済みを買うか自前で固定するか</b>を比べられません。
+          左の「カレンシーランキング」を一度開いて相場を取ってから、もう一度「MOD 解析」を押してください。
+        </p>
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->

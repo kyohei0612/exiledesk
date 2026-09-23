@@ -68,6 +68,12 @@ export interface HtcPriceCoverage {
   league: string | null;
   /** 値が入ったエッセンスの数 / 対応表にある数 */
   essences: { filled: number; total: number };
+  /**
+   * 相場を 1 度でも取れているか。**`filled` では判定できません** ── 高貴は単位なので
+   * 相場が空でも 1 を入れるため、`filled` は 0 にならない (2026-09-23 に実際そうなって、
+   * 「相場が未取得」の警告が一度も出ていなかった)。
+   */
+  ready: boolean;
 }
 
 /** 英語名そのままで相場を引く。見つからない / 0 以下は null */
@@ -143,6 +149,7 @@ export function buildHtcPrices(): { file: PricesFile; coverage: HtcPriceCoverage
       fetchedLabel: marketStore.fetchedLabel.value,
       league: marketStore.league.value?.Value ?? null,
       essences: { filled: essenceFilled, total: Object.keys(ESSENCE_KEYS).length },
+      ready: marketStore.items.value.length > 0 && prices.divine != null,
     },
   };
 }
