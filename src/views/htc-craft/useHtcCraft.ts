@@ -67,7 +67,7 @@ export interface TargetRow {
    * 上書きで埋めた物 (キャストスピード) は false になるが、`overridden` で分かる
    */
   unknownWeight: boolean;
-  /** 重みを別の出どころ (実際の回数からの逆算値) で埋めた MOD か */
+  /** 重みを別の出どころ (Craft of Exile の値など) で埋めた MOD か */
   overridden: boolean;
 }
 

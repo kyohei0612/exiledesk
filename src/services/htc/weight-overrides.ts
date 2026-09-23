@@ -11,20 +11,13 @@
  * という数字が出ていました。**全部仮置きのせい**です。本家 poe2htc.com もキャスピの段が 0.0% と
  * 出ていて、同じ仮置きを使っていると見られます。
  *
- * ## 埋める値 — 実際にやっている人の「カオス約 500 回に 1 回」から逆算 (2026-09-23)
- * 最初は Craft of Exile (beta, PoE2) の 1 段 1,000 (首飾り 800) を借りた。CoE の他の MOD の重みは
- * 私たちの表と全部一致する (指輪の普通 MOD 30 種) が、キャスピだけは CoE も出どころの無い推定値。
- * CoE のシミュレーターで回すと 4 MOD の指輪で 28 回に 1 回 (T2 以上 77 回に 1 回) と、その推定値の
- * 通りに出るだけで、実際の回数 (動画などで約 500 回に 1 回) と 16 倍ほど合わない。
+ * ## 埋める値 — Craft of Exile (beta, PoE2) の重み (2026-09-23 確定)
+ * CoE の普通 MOD の重みは私たちの表 (poe2db) と全部一致する (指輪の普通 MOD 30 種で確認)。
+ * 仮置きの所だけ CoE で埋める。キャスピは**指輪 1 段 1,000 / 首飾り 1 段 800**。
  *
- * 逆算: プレ 3 / サフィ 3 の指輪にカオス 1 回 → サフィが外れる 1/2 × キャスピの重み ÷ (空いた
- * サフィに入れる重み、他のサフィ 2 系統を除いて約 74,000 + キャスピ)。これが 1/500 になるのは
- * キャスピ合計 ≒ 300 = **1 段 60**。同じ式で 1 段 1,000 なら 1/32 になり、CoE の結果と合う。
- * 首飾りは CoE の指輪との比 (800 / 1,000) を保って **1 段 48**。
- *
- * ## 断り
- * - 「約 500 回に 1 回」は動画で見た目安で、段を問わないキャスピとして扱っている。
- * - 首飾りは実測の目安が無く、指輪からの比で置いただけ。
+ * 経緯: 一度「動画でカオス約 500 回に 1 回」から 1 段 60 に下げたが、その 500 回はキャスピ **T1** の
+ * 回数だった。CoE のシミュレーターで、固定済みの樹 MOD 1 つ + 外れ 1 つのニーモニックリングに
+ * カオスを打つと T1 は 152 回に 1 回 (55 個、最悪 566 回)。オーナー判断で CoE に合わせる。
  *
  * ## 他の仮置き MOD (2026-09-23 オーナー:「他の MOD で同じような奴も合わせて重さ変えよう」)
  * 普通 MOD で仮置きのままだったのは 14 個。2 通りで埋める:
@@ -32,43 +25,36 @@
  *    (ES リチャージ率 / アイテムレアリティ / 矢筒の追加の矢)。借りる先は、同じ部位 → 同じ能力値の組
  *    (例: `_int`) → どこでも、の順。段は同じ ilvl、無ければそれ以下で一番近い段。候補が複数なら
  *    **一番小さい重み** (つきにくい側に倒す)。
- * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値 × 0.06**。0.06 は
- *    キャスピで見た「CoE の推定値と実際の回数の比」(60 / 1,000) を、同じ性質の推定値にも当てた物で、
- *    **一番根拠が弱い**。
+ * 2. **どこにも数字が無い物 (クロスボウのグレネード 3 個) は、CoE の値をそのまま使う**。
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** 画面に出す断り書き */
 export const WEIGHT_OVERRIDE_NOTE =
-  "この MOD の重みはデータに無いので推定値です。キャストスピードは実際の目安「カオス約 500 回に 1 回」から"
-  + "逆算 (指輪 1 段 60 / 首飾り 1 段 48)、他の部位に同じ MOD がある物はそこの重みを借り、"
-  + "どこにも無い物は Craft of Exile の値 × 0.06 です。";
-
-/** CoE の推定値を実際の回数に合わせる比 (キャスピ: 実際 60 / CoE 1,000) */
-export const COE_SCALE = 60 / 1000;
-const coe = (w: number) => Math.round(w * COE_SCALE);
+  "この MOD の重みはデータに無いので推定値です。他の部位に同じ MOD がある物はそこの重みを借り、"
+  + "無い物 (キャストスピードなど) は Craft of Exile の値を使っています。";
 
 /** MOD id → 段の出始め ilvl ごとの重み */
 const OVERRIDES: Record<string, { source: string; byIlvl: Record<number, number> }> = {
   "Rings/IncreasedCastSpeed": {
-    source: "カオス約 500 回に 1 回 (プレ 3 / サフィ 3、段を問わない) から逆算",
-    byIlvl: { 1: 60, 18: 60, 35: 60, 51: 60, 60: 60 },
+    source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-5 / ring",
+    byIlvl: { 1: 1000, 18: 1000, 35: 1000, 51: 1000, 60: 1000 },
   },
   "Amulets/IncreasedCastSpeed": {
-    source: "指輪の 60 に Craft of Exile の首飾り / 指輪の比 (800 / 1,000) を掛けた値",
-    byIlvl: { 1: 48, 18: 48, 35: 48, 51: 48, 60: 48, 66: 48 },
+    source: "Craft of Exile (beta, PoE2) CastSpeedJewellery1-6 / amulet",
+    byIlvl: { 1: 800, 18: 800, 35: 800, 51: 800, 60: 800, 66: 800 },
   },
   "Crossbows_cannon/GrenadeCooldownUse": {
-    source: "Craft of Exile GrenadeSkillAdditionalCooldownUse1-2 (500 / 250) × 0.06",
-    byIlvl: { 72: coe(500), 81: coe(250) },
+    source: "Craft of Exile GrenadeSkillAdditionalCooldownUse1-2 (500 / 250)",
+    byIlvl: { 72: 500, 81: 250 },
   },
   "Crossbows_cannon/AdditionalProjectiles": {
-    source: "Craft of Exile GrenadeSkillAdditionalProjectile1-2 (250 / 125) × 0.06",
-    byIlvl: { 72: coe(250), 81: coe(125) },
+    source: "Craft of Exile GrenadeSkillAdditionalProjectile1-2 (250 / 125)",
+    byIlvl: { 72: 250, 81: 125 },
   },
   "Crossbows_cannon/CooldownRecovery": {
-    source: "Craft of Exile GrenadeSkillCooldownRecovery1-6 (1,000) × 0.06",
-    byIlvl: { 4: coe(1000), 16: coe(1000), 33: coe(1000), 46: coe(1000), 60: coe(1000), 81: coe(1000) },
+    source: "Craft of Exile GrenadeSkillCooldownRecovery1-6 (1,000)",
+    byIlvl: { 4: 1000, 16: 1000, 33: 1000, 46: 1000, 60: 1000, 81: 1000 },
   },
 };
 
