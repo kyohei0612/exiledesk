@@ -40,7 +40,8 @@ import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/op
 import { displayCurrency } from "../../state/display-currency";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { decide, type Decision, type TreeListing } from "../../services/htc/tree-decide";
+import { decide, NECRO_REPLACE_NOTE, type Decision, type TreeListing } from "../../services/htc/tree-decide";
+import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
 import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
 import { marketStore } from "../../state/market-store";
 import type { DropOnlyRow } from "../../services/htc/paste";
@@ -368,7 +369,6 @@ export function useHtcCraft() {
         bone: toDiv(p.currency.desecrate) ?? 0,
         exalt: toDiv(p.currency.exalt) ?? 0,
         necro: toDiv(p.omens.OmenofDextralNecromancy),
-        dextralAnnul: toDiv(p.omens.OmenofDextralAnnulment),
         dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
       });
       treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor };
@@ -391,5 +391,6 @@ export function useHtcCraft() {
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeBusy, treeError, searchTree,
+    treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
   };
 }

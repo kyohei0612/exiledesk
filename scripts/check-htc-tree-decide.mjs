@@ -26,7 +26,7 @@ const rnd = () => {
 };
 
 // 実勢に近い値段 (神)
-const P = { orb: 8.52, annul: 0.73, bone: 0.34, necro: 3, dextralAnnul: 9.47, exalt: 0.002, dextralExalt: 0.04 };
+const P = { orb: 8.52, annul: 0.73, bone: 0.34, necro: 3, exalt: 0.002, dextralExalt: 0.04 };
 const L = (source, price, prefixes, suffixes, label) => ({ source, price, prefixes, suffixes, label });
 const listings = [
   L("fractured", 66, 1, 3, "固定済み 66"),
@@ -94,7 +94,12 @@ if (listings.some((l) => l.label.includes("届かない")) && d.order.concat(d.s
 } else ok("2 MOD の物は候補から外した");
 const strictGamble = d.order.concat(d.skipped).filter((c) => c.listing.source === "strict" && c.how === "reduce");
 if (strictGamble.length) fail(`厳しい検索の物を消去ガチャで試しています: ${strictGamble.map((c) => c.listing.label).join(", ")}`);
-else ok("厳しい検索の物は消去ガチャを使わない (そのまま固定 / 右側のお告げで抜く / ネクロ冒涜のどれか)");
+else ok("厳しい検索の物は消去ガチャを使わない (そのまま固定 / 右側の高貴で足してネクロ冒涜のどちらか)");
+const s3 = d.order.concat(d.skipped).find((c) => c.listing.label.includes("P1+S3"));
+if (!s3 || s3.how !== "necro-desecrate" || Math.abs(s3.hit - 1 / 3) > 1e-12) fail(`P1+S3 の扱いが ${s3 ? s3.how + " " + s3.hit : "候補に無い"} (ネクロ冒涜で 1/3 のはず)`);
+else ok("P1+S3 は右側ネクロ冒涜がサフィを 1 個置き換えて 1/3");
+if (d.order.concat(d.skipped).some((c) => c.how === "safe-reduce")) fail("消去のお告げを使う道が残っています (オーナーは使わない)");
+else ok("消去のお告げを使う道は無い");
 if (!(d.expected <= (d.buyOutright ?? Infinity))) fail("期待費用が、最初から固定済みを買うより高い");
 else ok(`最初から固定済みを買うより ${((d.buyOutright ?? 0) - d.expected).toFixed(2)} 神安い`);
 

@@ -93,8 +93,7 @@ async function runPicked(): Promise<void> {
 /** 固定のやり方 → 画面の言葉 */
 const howJa: Record<string, string> = {
   buy: "そのまま買う",
-  "necro-desecrate": "右側の高貴で足す → 右側ネクロ冒涜 → 固定 (1/3)",
-  "safe-reduce": "右側の消去で 1 個抜く → 右側ネクロ冒涜 → 固定 (1/3)",
+  "necro-desecrate": "右側ネクロ冒涜 (サフィが足りなければ右側の高貴で足す) → 固定 (1/3)",
   direct: "そのまま固定",
   reduce: "消去で 3 MOD まで減らす → 冒涜 → 固定",
 };
@@ -431,6 +430,10 @@ const implicitText = (lines: readonly string[]): string =>
                 <td class="text-right opacity-60">{{ (reachOf(c.treeResult.value.decision.order, i) * 100).toFixed(0) }}%</td>
               </tr>
             </table>
+            <!-- 1/3 の道はどちらもオーナーの実使用が根拠。数字と一緒に必ず出す -->
+            <p class="mt-1 text-[11px] text-amber-300/70">
+              ⚠ <template v-for="n in c.treeNotes" :key="n">{{ n }} </template>
+            </p>
             <p v-if="c.treeResult.value.decision.fallback" class="mt-1 opacity-70">
               全部外れたら ({{ (c.treeResult.value.decision.order.reduce((m, o) => m * (1 - o.hit), 1) * 100).toFixed(1) }}%)
               → 固定済み {{ c.treeResult.value.decision.fallback.listing.label }} を買う

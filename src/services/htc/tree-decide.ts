@@ -10,7 +10,10 @@
  *
  *   固定済み品          そのまま買う                     成功率 1
  *   厳しい検索 (P1+S0〜2) 右側の高貴でサフィを 2 個まで足す → 右側ネクロ冒涜 → 固定  1/3 (消去なし)
- *   厳しい検索 (P1+S3)    そのまま固定 1/4、または右側の消去で 1 個抜いてから冒涜 1/3  (消去ガチャなし)
+ *   厳しい検索 (P1+S3)    右側ネクロ冒涜がサフィ 1 個を冒涜 MOD に置き換える → 本物 3 個 → 1/3 (消去なし)
+ *
+ * **消去のお告げは使いません** (オーナー 2026-09-23:「消去ガチャはお告げ使わないよ」)。
+ * 消去は素の消去だけで、それを使うのはゆるい検索の「減らして冒涜」だけです。
  *   ゆるい検索 (N MOD)  減らして冒涜 or そのまま固定       1/N   (安い方)
  *
  * どれも「1 個成功したら終わり」なので、**1 回あたりの費用 ÷ 成功率** (= 成功 1 回あたりの
@@ -33,6 +36,14 @@
 import { selfFracture } from "./self-fracture";
 
 /** 単価 (神) */
+/**
+ * 満杯の側に寄せた冒涜は、既存の MOD を 1 個ランダムに冒涜 MOD へ置き換える。
+ * ゲームのデータに裏づけは無く、**オーナーの実使用が根拠** (2026-09-23)。画面で断ること。
+ */
+export const NECRO_REPLACE_NOTE =
+  "満杯のサフィックスに右側ネクロマンシーで冒涜すると、既存のサフィックスが 1 個ランダムに冒涜 MOD に"
+  + "置き換わる、はオーナーの実使用が根拠で、ゲームのデータには裏づけがありません。";
+
 export interface DecidePrices {
   orb: number;
   annul: number;
@@ -40,8 +51,6 @@ export interface DecidePrices {
   bone: number;
   /** 右側ネクロマンシーのお告げ (冒涜をサフィックスに寄せる)。相場に無ければ null */
   necro: number | null;
-  /** 右側の消去のお告げ (サフィックスだけ消す = プレフィックスの樹 MOD に当たらない)。無ければ null */
-  dextralAnnul: number | null;
   /** 高貴なオーブ */
   exalt: number;
   /** 右側の高貴なお告げ (高貴をサフィックスに寄せる = サフィを確定で 1 個足す)。無ければ null */
@@ -65,7 +74,7 @@ export interface TreeListing {
 export interface Candidate {
   listing: TreeListing;
   /** どうやって固定するか */
-  how: "buy" | "necro-desecrate" | "safe-reduce" | "direct" | "reduce";
+  how: "buy" | "necro-desecrate" | "direct" | "reduce";
   /** 1 回試すのにかかる期待費用 (神)。物の値段込み */
   perTry: number;
   hit: number;
@@ -100,15 +109,15 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
         ways.push(make("necro-desecrate", l.price + addCost + p.necro + p.bone + p.orb, 1 / 3));
       }
     }
-    if (l.prefixes === 1 && l.suffixes === 3) {
-      // サフィ満杯。そのまま固定 (1/4)
-      ways.push(make("direct", l.price + p.orb, 1 / 4));
-      // または右側の消去のお告げでサフィだけ 1 個抜き (樹 MOD はプレフィックスなので当たらない)、
-      // P1+S2 にしてから右側ネクロマンシーで冒涜 → 1/3
-      if (p.dextralAnnul != null && p.necro != null) {
-        ways.push(make("safe-reduce", l.price + p.dextralAnnul + p.annul + p.necro + p.bone + p.orb, 1 / 3));
-      }
+    // サフィ満杯でも、右側ネクロマンシーの冒涜は**既存のサフィを 1 個ランダムに冒涜 MOD に置き換える**
+    // (オーナー 2026-09-23:「サフィ側に冒涜できない場合はランダムでサフィックス 1 つ冒涜してくれる、
+    // システム上」)。置き換わったサフィが当て馬になるので本物は樹 MOD + サフィ 2 = 3 個 → 1/3。
+    // プレフィックスの樹 MOD には当たらず、消去も要らない。**裏づけはオーナーの実使用** (NECRO_REPLACE_NOTE)
+    if (l.prefixes === 1 && l.suffixes === 3 && p.necro != null) {
+      ways.push(make("necro-desecrate", l.price + p.necro + p.bone + p.orb, 1 / 3));
     }
+    // ネクロの値段が無ければ、そのまま固定 (1/4) しか無い
+    if (l.prefixes === 1 && l.suffixes === 3) ways.push(make("direct", l.price + p.orb, 1 / 4));
     return ways.length ? ways.reduce((a, b) => (b.perSuccess < a.perSuccess ? b : a)) : null;
   }
 
