@@ -437,6 +437,7 @@ export function targetsFor(
       if (got?.mod) bridged.mods[i] = got;
     });
   }
+  const hybridParts = hybridLineParts(bridged.mods);
   balanceSides(data, bridged.mods);
 
   const targets: TierTarget[] = [];
@@ -445,6 +446,7 @@ export function targetsFor(
   const skipped: string[] = [];
   bridged.mods.forEach((b, i) => {
     const line = rollable[i]!;
+    if (hybridParts.has(i)) return; // 複合 MOD のもう 1 行 (狙いは複合 MOD の方で数える)
     if (!b.mod || b.viaRune) { skipped.push(line.text); return; }
     // **ティアを読む前に品質を外す。**装飾品の品質はその種類のタグを持つ MOD の値を
     // 押し上げるので、画面の数字のまま読むとティアを高く見積もります。実物で踏んだ:
@@ -504,4 +506,30 @@ function balanceSides(data: PatchData, mods: Array<{ mod?: Mod | null }>): void 
       if (twin) b.mod = twin;
     }
   }
+}
+
+/**
+ * 2 行で 1 つの複合 MOD (光半径 + マナ自動回復 など) の**もう 1 行**を探す。
+ *
+ * 片方の行は複合 MOD の 1 行 (`viaLine`) として繋がるが、もう片方は単独の MOD
+ * (マナ自動回復) としても繋がってしまい、狙いが 1 つ多く数えられていた
+ * (poe.ninja の指輪 2026-09-23: サフィが 4 つになって「枠が足りない」)。
+ * 複合 MOD と同じ側で、その stat の 1 つだけを持つ単独 MOD / 同じ複合 MOD の重複を「もう 1 行」とする。
+ */
+function hybridLineParts(mods: ReadonlyArray<{ mod?: Mod | null; viaLine?: boolean }>): Set<number> {
+  const parts = new Set<number>();
+  // 同梱の型に stats は無いが、データには入っている (tiers[].stats)
+  const statsOf = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
+  mods.forEach((h, i) => {
+    const H = h.mod;
+    if (!H || !h.viaLine || parts.has(i)) return;
+    const hs = statsOf(H);
+    mods.forEach((b, j) => {
+      const Y = b.mod;
+      if (j === i || !Y || parts.has(j)) return;
+      const ys = statsOf(Y);
+      if (Y.id === H.id || (Y.type === H.type && ys.length === 1 && hs.includes(ys[0]!))) parts.add(j);
+    });
+  });
+  return parts;
 }

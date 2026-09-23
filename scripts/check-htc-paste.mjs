@@ -303,5 +303,19 @@ console.log(String.fromCharCode(10) + "創生の樹からしか出ない MOD:");
   if (!g.targets.some((t) => t.modId === "Rings/ItemFoundRarityIncreasePrefix")) fail("レアリティがプレ版に回っていない");
 }
 
+// ---- 2 行で 1 つの複合 MOD (光半径 + マナ自動回復) ----
+{
+  const NL2 = String.fromCharCode(10);
+  const r = M.parseJaItem(["Item Class: Rings", "Rarity: Rare", "Test Loop", "Topaz Ring", "--------", "Item Level: 82", "--------",
+    "+128 to Accuracy Rating", "+95 to maximum Mana", "+29 to Dexterity", "+40% to Fire Resistance",
+    "22% increased Mana Regeneration Rate", "15% increased Light Radius"].join(NL2));
+  const g = M.targetsFor(data, r);
+  const ids = g.targets.map((t) => t.modId.split("/")[1]);
+  console.log("複合 MOD: " + ids.join(", ") + " / 繋がらず " + g.skipped.length);
+  if (ids.includes("ManaRegeneration")) fail("複合 MOD の 1 行を単独のマナ自動回復としても数えている");
+  if (!ids.includes("LightRadiusAndManaRegeneration")) fail("光半径 + マナ自動回復の複合 MOD が狙いに無い");
+  if (g.targets.filter((t) => data.mods.get(t.modId)?.type === "suffix").length > 3) fail("サフィが 3 つを超えている");
+}
+
 console.log(failed ? (String.fromCharCode(10) + "NG: " + failed + " 件") : (String.fromCharCode(10) + "全部 OK"));
 process.exit(failed ? 1 : 0);
