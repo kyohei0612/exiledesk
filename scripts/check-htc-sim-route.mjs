@@ -1,0 +1,61 @@
+/**
+ * check-htc-sim-route.mjs — 作り方のツリーを回すシミュレーター (sim-route.ts, 2026-09-24)
+ *
+ * 死体の円環 (ニーモニックリング、品質 20%) に近い組み方を人が組んだとして回す:
+ *   1. カオス / 狙い: キャスピ                                   → ○ 2、× 1
+ *   2. 完全の高貴 + 右側 + 適応 / 狙い: 知性・全耐性、残す: キャスピ → ○ 4、× 3
+ *   3. 消去 + 右側 / 残す: キャスピ、外れ無し                     → ○ 2、× 8 (キャスピが消えた)
+ *   4. 完全の高貴 + 右側 + 適応 / 残す: キャスピ・知性・全耐性     → ○ 完成、× 5
+ *   5. 消去 + 右側 / 残す: キャスピ、外れ無し                     → ○ 4、× 6
+ *   6. 確認 / 残す: キャスピ                                      → ○ 7、× 8
+ *   7. 消去 + 右側 / 残す: キャスピ、外れ無し                     → ○ 4、× 8
+ *   8. 確認 / 外せる MOD 1 つ以下                                 → ○ 1、× 9 (スパムからやり直す前に剥がす)
+ *   9. 消去                                                       → 8
+ * 最後まで行けること、平均が有限で、予算内の確率が 0〜1、行き先が未設定の手で止まることを見る。
+ */
+import { readFileSync } from "node:fs";
+import { bundleEntry } from "./_bundle-ts.mjs";
+const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
+let failed = 0;
+const fail = (m) => { console.log(`   NG: ${m}`); failed++; };
+const data = M.loadPatchSync();
+const D = 506;
+const src = readFileSync("scripts/check-htc-spam-plan.mjs", "utf8");
+const a = src.indexOf("const div = (v)"), b = src.indexOf("const it = M.parseJaItem");
+const prices = new Function("D", src.slice(a, b) + "; return prices;")(D);
+const cls = M.itemBaseFor(data, "Mnemonic Ring");
+const ctx = { data, cls, prices, itemLevel: 80, limits: { prefix: 3, suffix: 3 }, catalystOk: () => true };
+const start = { breach: false, slots: [{ modId: null, side: "prefix", fixed: true, label: "樹 MOD" }, { modId: null, side: "suffix", fixed: false }] };
+const CS = "Rings/IncreasedCastSpeed", INT = "Rings/Intelligence", RES = "Rings/AllResistances";
+const ex = { kind: "exalt", tier: "exalt_perfect", side: "suffix", catalyst: "attribute" };
+const an = { kind: "annul", side: "suffix" };
+const nodes = [
+  { id: "1", action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: CS, minTier: 3 }], keep: [], clean: false, onHit: "2", onMiss: "1" },
+  { id: "2", action: ex, targets: [{ modId: INT, minTier: 6 }, { modId: RES, minTier: 3 }], keep: [CS], clean: false, onHit: "4", onMiss: "3" },
+  { id: "3", action: an, targets: [], keep: [CS], clean: true, onHit: "2", onMiss: "8" },
+  { id: "4", action: ex, targets: [{ modId: INT, minTier: 6 }, { modId: RES, minTier: 3 }], keep: [CS, INT, RES], clean: false, onHit: "done", onMiss: "5" },
+  { id: "5", action: an, targets: [], keep: [CS], clean: true, onHit: "4", onMiss: "6" },
+  { id: "6", action: { kind: "check" }, targets: [], keep: [CS], clean: false, onHit: "7", onMiss: "8" },
+  { id: "7", action: an, targets: [], keep: [CS], clean: true, onHit: "4", onMiss: "8" },
+  { id: "8", action: { kind: "check" }, targets: [], keep: [], clean: false, maxMods: 1, onHit: "1", onMiss: "9" },
+  { id: "9", action: { kind: "annul", side: null }, targets: [], keep: [], clean: false, onHit: "8", onMiss: "8" },
+];
+const r = M.simulateTree({ ctx, start, nodes, runs: 3000, budget: 300 * D });
+console.log(`完成 ${(r.pDone * 100).toFixed(1)}% / 平均 ${(r.expected / D).toFixed(1)} 神 / 半分 ${(r.p50 / D).toFixed(1)} / 8 割 ${(r.p80 / D).toFixed(1)} / 300 神以内 ${(r.pBudget * 100).toFixed(1)}%`);
+for (const p of r.perNode) console.log(`   手 ${p.id}: 平均 ${p.tries.toFixed(1)} 回 / ${(p.cost / D).toFixed(1)} 神`);
+for (const x of r.stops) console.log(`   止まった: ${x.reason} ${(x.p * 100).toFixed(1)}%`);
+if (!(r.pDone > 0.95)) fail("最後まで行けていない");
+if (!(r.expected > 0 && Number.isFinite(r.expected))) fail("平均が出ていない");
+if (!(r.pBudget >= 0 && r.pBudget <= r.pDone)) fail("予算内の確率がおかしい");
+// 最初の手はカオス 1/79 前後
+const h = M.simHelpers(ctx, nodes);
+if (!(r.perNode[0].tries > 40)) fail("カオスの回数が少なすぎる");
+// 使えるカレンシー: 枠が満杯なら高貴は打てない、外せる物が無ければ消去は打てない
+const full = { breach: false, slots: [...start.slots, { modId: CS, side: "suffix", fixed: false }, { modId: INT, side: "suffix", fixed: false }] };
+if (!h.usable(full, ex)) fail("サフィが満杯なのに右側の高貴が打てることになっている");
+if (!h.usable({ breach: false, slots: [start.slots[0]] }, an)) fail("外せる物が無いのに消去が打てることになっている");
+// 行き先が未設定なら止まる
+const cut = M.simulateTree({ ctx, start, nodes: [{ ...nodes[0], onHit: null }], runs: 200 });
+if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未設定の行き先で止まっていない");
+console.log(failed ? `NG: ${failed} 件` : "全部 OK");
+process.exit(failed ? 1 : 0);
