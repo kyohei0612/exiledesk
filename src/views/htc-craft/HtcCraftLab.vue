@@ -39,22 +39,14 @@ const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
  * ── 「ベースを見直してから値段に戻る」が普通に起きるので、一方通行にはしません。
  */
 const STAGES = [
-  { id: "read", label: "① 読み取り", hint: "何の MOD だと読めたか" },
+  { id: "read", label: "① MOD 解析", hint: "何の MOD だと読めたか" },
   { id: "base", label: "② ベース", hint: "どのベースから作るか" },
-  { id: "solo", label: "③ 1 個ずつの値段", hint: "買うか自分で出すか" },
-  { id: "start", label: "④ どこから始めるか", hint: "固定済みを買うか素からか" },
-  { id: "buy", label: "⑤ 途中まで買う", hint: "何個買って残りを作るか" },
-  { id: "steps", label: "⑥ 手順", hint: "で、実際どう動くのか" },
 ] as const;
 type StageId = (typeof STAGES)[number]["id"];
 
 /** その段に出す物が無ければ見出しごと出さない (空の段を押させない) */
 const stages = computed(() =>
-  STAGES.filter((s) =>
-    s.id === "base" ? c.bases.value.length > 0
-    : s.id === "start" ? c.fracturedLines.value.length > 0
-    : true,
-  ),
+  STAGES.filter((s) => (s.id === "base" ? c.bases.value.length > 0 : true)),
 );
 const stage = ref<StageId>("read");
 /** 段が消えた時 (貼り直しで固定済みが無くなった等) に、無い段に居座らせない */
@@ -95,10 +87,9 @@ async function openBaseDoor(): Promise<void> {
 async function runPicked(): Promise<void> {
   if (!pk.baseName.value || !pk.cls.value) return;
   stage.value = "read";
-  await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value, pk.level.value);
+  await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
 }
 
-const soloText = (id: string): string => c.rows.value.find((r) => r.modId === id)?.text ?? id;
 /** 暗黙は複数行のことがある (枠の増減は 2 行)。1 行に畳んで出す */
 const implicitText = (lines: readonly string[]): string =>
   (lines[0] ?? "").split(String.fromCharCode(10)).join(" / ");
@@ -284,17 +275,9 @@ const implicitText = (lines: readonly string[]): string =>
         >{{ s.label }}</button>
       </nav>
 
-      <!-- 触媒の高貴のお告げだけは倍率がゲーム内にもクライアントにも無く、実測からの推定。
-           ③④⑤ の金額すべてに乗るので、段を問わず上に出しておく -->
-      <p v-if="c.catalysingOn.value" class="mb-3 rounded bg-amber-900/20 p-2 text-xs text-amber-300/80">
-        ⚠ {{ c.catalysingCaveat }}
-        カタリストを使う手順が出た時だけ、その手順の確率がこの推定に乗っています。
-        なお、お告げは品質を全て消費するので<b>完成品の品質は 0 になります</b> (implicit の値が下がります)。
-      </p>
-
       <!-- 読み取り -->
       <section v-show="current === 'read'" class="mb-4">
-        <h2 class="mb-1 font-bold">① 読み取り</h2>
+        <h2 class="mb-1 font-bold">① MOD 解析</h2>
         <!-- 貼り付けから来た時だけ、読めた見出しを出す (ベースから組んだ時は自分で決めた物なので不要) -->
         <p v-if="c.item.value" class="text-xs opacity-80">
           {{ c.item.value.baseText }} ({{ c.item.value.baseType }}) / ilvl {{ c.item.value.itemLevel }}
@@ -335,8 +318,9 @@ const implicitText = (lines: readonly string[]): string =>
               <br /><b class="text-amber-300">{{ d.tagJa }}</b> からしか出ません — {{ d.text }}
             </template>
             <br />
-            <b>付いた物を買ってください。</b>下の手順はこれを除いた残りのものです。
-            <b>枠はその分を引いて解いています</b>
+            <b>付いた物を買ってください。</b>しかも<b>固定済み</b>で ──
+            クラフトでは二度と付けられないので、固定されていないと途中で消えたら終わりです。
+            <b>枠はその分を引いて数えています</b>
             (<template v-if="c.slotsUsed.value.prefixes">プレフィックス {{ c.slotsUsed.value.prefixes }} </template>
             <template v-if="c.slotsUsed.value.suffixes">サフィックス {{ c.slotsUsed.value.suffixes }} </template>
             <template v-if="c.slotsUsed.value.either">側が決まらない分 {{ c.slotsUsed.value.either }} は両側から </template>
@@ -366,208 +350,6 @@ const implicitText = (lines: readonly string[]): string =>
             <td class="pl-2 opacity-60">{{ b.why ?? implicitText(b.implicits) }}</td>
           </tr>
         </table>
-      </section>
-
-      <!-- 段階 0 -->
-      <section v-show="current === 'solo'" class="mb-4">
-        <h2 class="mb-1 font-bold">③ 買うか自分で出すか (1 個ずつ)</h2>
-        <p class="mb-1 text-xs opacity-60">
-          この値段より安く買えるなら買う。0 に近い物はエッセンス確定なので買ってはいけません。<br />
-          <b>期待費用は厳密解</b>なので一瞬で出ます。<b>「沼った時」の目安 (p75) は押された時だけ</b>
-          回します (方策を何千本も回すので秒単位かかる)。道中が長すぎて分布が信用できない時は
-          「出せません」と出ます ── <b>嘘の数字を出すより出さない</b>ようにしています。
-        </p>
-        <table class="w-full text-xs">
-          <tr v-for="s in c.solo.value" :key="s.modId" class="border-b border-white/5">
-            <td class="py-0.5">{{ soloText(s.modId) }}</td>
-            <td class="w-24 text-right">{{ c.money(s.expectedCost) }}</td>
-            <td class="w-32 text-right">
-              <button
-                v-if="!c.p75.value[s.modId]"
-                class="rounded border border-[var(--exile-color-border-subtle)] px-1.5 py-0.5 opacity-70"
-                :disabled="c.p75Busy.value !== null"
-                @click="c.findP75(s.modId)"
-              >{{ c.p75Busy.value === s.modId ? "回しています…" : "厳しめを見る" }}</button>
-              <span v-else-if="c.p75.value[s.modId].value != null" class="opacity-60">
-                p75 {{ c.money(c.p75.value[s.modId].value) }}
-              </span>
-              <span v-else class="opacity-40" title="1 本の道中が長すぎて、回した分布が信用できません">
-                出せません
-              </span>
-            </td>
-            <td class="pl-3 opacity-60">{{ c.p75.value[s.modId]?.mainSpend ?? s.mainSpend }}</td>
-            <td class="w-44 pl-2 text-right">
-              <button
-                v-if="!c.fractured.value[s.modId]"
-                class="rounded border border-[var(--exile-color-border-subtle)] px-1.5 py-0.5"
-                :disabled="c.fracturedBusy.value !== null"
-                @click="c.findFractured(s.modId)"
-              >
-                {{ c.fracturedBusy.value === s.modId ? "探しています…" : "固定済みを探す" }}
-              </button>
-              <span v-else-if="c.fractured.value[s.modId].error" class="text-red-300">
-                {{ c.fractured.value[s.modId].error }}
-              </span>
-              <a
-                v-else-if="c.fractured.value[s.modId].min != null"
-                :href="c.fractured.value[s.modId].url ?? undefined"
-                target="_blank"
-                class="text-emerald-300 underline"
-              >固定済み最安 {{ c.money(c.fractured.value[s.modId].min) }}</a>
-              <span v-else class="opacity-40">固定済みの出品なし</span>
-            </td>
-          </tr>
-        </table>
-        <p class="mt-1 text-xs opacity-60">
-          <b>固定された MOD は消去でも消えません。</b>一番つきにくい 1 個が固定された物を買うのが
-          一番効きます (実測: 素から 2,015 神 → 固定済みから 231 神)。
-        </p>
-      </section>
-
-      <!-- ルートの比べ。固定済みがあれば、そこから解いた場合と並べる -->
-      <section v-if="c.fracturedLines.value.length" v-show="current === 'start'" class="mb-4">
-        <h2 class="mb-1 font-bold">④ どこから始めるか</h2>
-        <p class="mb-2 text-xs opacity-70">
-          固定済み: <span class="text-emerald-300">{{ c.fracturedLines.value.join(" / ") }}</span><br />
-          <b>固定された MOD は消去でも消えません。</b>買った時点でもう手に入っているので、そこから作れます。
-        </p>
-        <p v-if="c.fracturedUnusable.value" class="mb-2 rounded bg-amber-900/40 p-2 text-xs">
-          ただし固定済みのうち {{ c.fracturedUnusable.value }} 件は<b>クラフトでは付かない MOD</b>
-          (落ちた物にしか乗らない) なので、開始状態に置けません。<b>その物を買うのが前提</b>で、
-          比べには入っていません。
-        </p>
-        <button
-          class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
-          :disabled="c.routesBusy.value"
-          @click="c.compareRoutes()"
-        >
-          {{ c.routesBusy.value ? "解いています… (素から作るほうは分単位かかります)" : "ルートを比べる" }}
-        </button>
-        <table v-if="c.routes.value.length" class="w-full text-xs">
-          <tr v-for="(r, i) in c.routes.value" :key="i" class="border-b border-white/5">
-            <td class="py-0.5">{{ r.label }}</td>
-            <td class="w-20 text-right opacity-60">残り {{ r.rest }} 個</td>
-            <td class="w-24 text-right" :class="i === 0 ? 'text-emerald-300 font-bold' : ''">{{ c.money(r.cost) }}</td>
-            <td class="w-24 text-right opacity-40">{{ (r.ms / 1000).toFixed(1) }} 秒</td>
-          </tr>
-        </table>
-      </section>
-
-      <!-- 買い方 -->
-      <section v-show="current === 'buy'" class="mb-4">
-        <h2 class="mb-1 font-bold">⑤ 途中まで出来た物を買う</h2>
-
-        <!-- 投げる前に、何本・何秒かかるかを見せる。押してから待たせない -->
-        <template v-if="c.searchCutResult.value">
-          <p class="mb-1 text-xs opacity-60">
-            取引所の条件は「<b>この MOD を持っている物</b>」なので、
-            <b>{{ "{" }}A{{ "}" }} で投げれば {{ "{" }}A + B{{ "}" }} の出品も返ります</b>。だから投げる価値があるのは
-            <b>極小の組み合わせだけ</b>で、残りは同じ結果から拾えます。<br />
-            一番高い MOD が乗っていない組も落とします (買っても一番高い所が残るので値段が下がらない)。
-          </p>
-          <p class="mb-2 text-xs">
-            組み合わせ <b>{{ c.searchCutResult.value.before }}</b> 通り →
-            投げるのは <b class="text-amber-300">{{ c.searchCutResult.value.signals }} 本</b>
-            (<b>{{ c.searchCutResult.value.seconds }} 秒</b>、10.5 秒間隔)。
-            <span v-if="c.searchCutResult.value.withinBudget" class="text-emerald-300">5 分 30 回の枠に収まります</span>
-            <span v-else class="text-red-300">5 分 30 回の枠を超えます</span>
-            <span class="opacity-50"> — まだ何も投げていません</span>
-          </p>
-          <table class="mb-2 w-full text-xs">
-            <tr class="opacity-50">
-              <th class="w-5"></th><th class="text-left">投げる条件</th>
-              <th class="w-24 text-right">肩代わり</th><th class="w-24 text-right">価値</th>
-            </tr>
-            <tr v-for="f in c.searchCutResult.value.fire" :key="f.rank" class="border-b border-white/5">
-              <td class="opacity-40">{{ f.rank }}</td>
-              <td class="py-0.5">{{ c.stepTarget(f.bought.map((b) => b.modId)) }}</td>
-              <td class="text-right opacity-60">{{ f.covers }} 通り</td>
-              <td class="text-right opacity-60">{{ c.money(f.worth) }}</td>
-            </tr>
-          </table>
-          <details class="mb-3 text-xs opacity-50">
-            <summary class="cursor-pointer">投げない {{ c.searchCutResult.value.dropped.length }} 通りと、その理由</summary>
-            <div v-for="(d, i) in c.searchCutResult.value.dropped" :key="i" class="py-0.5">
-              {{ c.stepTarget(d.bought.map((b) => b.modId)) }}
-              — {{ d.why }}<span v-if="d.coveredBy">（{{ c.stepTarget(d.coveredBy.map((b) => b.modId)) }} の検索で返ります）</span>
-            </div>
-          </details>
-        </template>
-
-        <button
-          class="mb-2 rounded border border-[var(--exile-color-border-subtle)] px-2 py-1 text-xs"
-          :disabled="c.buysRunning.value"
-          @click="c.solveBuys(listing)"
-        >
-          {{ c.buysRunning.value ? "解いています… (20 秒ほど画面が止まります)" : "3〜4 個買いを解く (20 秒ほど)" }}
-        </button>
-        <table v-if="c.buys.value.length" class="w-full text-xs">
-          <tr class="opacity-50"><th class="text-left">買う物</th><th class="w-20 text-right">残り</th><th class="w-28 text-right">買値の上限</th></tr>
-          <tr v-for="(b, i) in c.buys.value.slice(0, 10)" :key="i" class="border-b border-white/5">
-            <td class="py-0.5">{{ b.bought.join(" + ") }}</td>
-            <td class="text-right">{{ c.money(b.finish) }}</td>
-            <td class="text-right" :class="b.budget ? 'text-emerald-300' : 'opacity-40'">
-              {{ b.budget != null ? c.money(b.budget) : "—" }}
-            </td>
-          </tr>
-        </table>
-      </section>
-
-      <!-- ⑥ 手順。ここが結び。上から順に打てる並びと、どこで金が飛ぶか -->
-      <section v-show="current === 'steps'" class="mb-4">
-        <h2 class="mb-1 font-bold">⑥ 手順</h2>
-        <p class="mb-2 text-xs opacity-60">
-          方策は本来「どの状態で何を打つか」の表で、外した時の手も全部入っています。
-          そのまま出すと地図になるので、<b>うまく行った時の並びを 1 本だけ</b>抜いて出します。
-          外した時の手は各段に 1 行だけ添えます。<br />
-          <b>ここに出る確率を掛け算しないでください。</b>外しても打ち直せる手が多いので、
-          実際の総額は下の「期待費用 / 厳しめ」が答えです。
-        </p>
-        <button
-          class="mb-2 rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
-          :disabled="c.stepsBusy.value"
-          @click="c.solveSteps()"
-        >
-          {{ c.stepsBusy.value ? "解いています… (数秒〜分単位、画面が止まります)" : "手順を出す" }}
-        </button>
-        <template v-if="c.stepsCost.value != null">
-          <p class="mb-2 text-xs">
-            <span class="opacity-50">{{ c.stepsFrom.value }}</span>
-            — 期待費用 <b class="text-amber-300">{{ c.money(c.stepsCost.value) }}</b>
-            <span v-if="c.stepsP75.value != null"> / 厳しめ (4 回に 3 回はここまで) <b>{{ c.money(c.stepsP75.value) }}</b></span>
-          </p>
-          <p v-if="c.stepsNote.value" class="mb-2 rounded bg-amber-900/40 p-2 text-xs">{{ c.stepsNote.value }}</p>
-          <table v-if="c.steps.value.length" class="mb-3 w-full text-xs">
-            <tr class="opacity-50">
-              <th class="w-5"></th><th class="text-left">打つ物</th>
-              <th class="w-16 text-right">当たり</th><th class="w-24 text-right">この手</th><th class="w-24 text-right">残り</th>
-            </tr>
-            <template v-for="s2 in c.steps.value" :key="s2.no">
-              <tr class="border-b border-white/5">
-                <td class="opacity-40">{{ s2.no }}</td>
-                <td class="py-0.5">{{ s2.text }}</td>
-                <td class="text-right text-amber-300">{{ (s2.prob * 100).toFixed(1) }}%</td>
-                <td class="text-right opacity-60">{{ c.money(s2.cost) }}</td>
-                <td class="text-right opacity-60">{{ c.money(s2.remaining) }}</td>
-              </tr>
-              <tr v-if="s2.onMiss" class="border-b border-white/5">
-                <td></td>
-                <td colspan="4" class="pb-1 text-[11px] opacity-40">外したら → {{ s2.onMiss }}</td>
-              </tr>
-            </template>
-          </table>
-          <template v-if="c.spend.value.length">
-            <h3 class="mb-1 text-xs font-bold">どこで金が飛ぶか</h3>
-            <table class="w-full text-xs">
-              <tr v-for="(sp, i) in c.spend.value" :key="i" class="border-b border-white/5">
-                <td class="py-0.5">{{ sp.label }}</td>
-                <td class="w-16 text-right opacity-60">{{ (sp.share * 100).toFixed(0) }}%</td>
-                <td class="w-24 text-right">{{ c.money(sp.exalted) }}</td>
-                <td class="w-24 text-right opacity-40">{{ sp.uses.toFixed(1) }} 回</td>
-              </tr>
-            </table>
-          </template>
-        </template>
       </section>
 
       <!-- 次の段へ。押さずに上の見出しから飛んでもいい -->

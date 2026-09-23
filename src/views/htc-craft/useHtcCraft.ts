@@ -1,39 +1,45 @@
 /**
- * useHtcCraft.ts — お試し計算機の中身 (2026-09-22)
+ * useHtcCraft.ts — 貼り付けを読んで MOD を割り出すところまで (2026-09-22 / 2026-09-23 に縮小)
  *
- * オーナー指示:「簡単に UI 実装してみて。マジで簡易的な計算機的な奴でいい。動きが見たい」。
+ * ## 2026-09-23: 「作り方」は廃止しました
+ * オーナー指示:「MOD 解析までの手順はそのままでいいけど、**あとの作り方はカスルールすぎて廃止**だね。
+ * 1 から一緒に考えよう」。
  *
- * ## 段構え — 重い物は押されるまで回さない
- * ソルバは**同期**で回るので、長い物を押されずに走らせると画面が固まります。だから:
- *   1. 読む + 目標 + 段階 0 + 設計図 … 合計 1 秒未満。開いたら自動
- *   2. 買い方 (3〜4 個買い 35 通り) … 20 秒ほど。**ボタンを押された時だけ**
- * 上の実測は太陽のアミュレット (ilvl 80 / 6 MOD) です。
+ * 廃止したのは、同梱 HTC の模型をそのまま画面に載せていた部分です:
+ *   ③ 1 個ずつの期待費用 / 固定済み探し   ④ どこから始めるか   ⑤ 途中まで買う   ⑥ 手順
+ *
+ * **なぜ廃止したか。**あの模型は全部を「通貨で殴る問題」として 1 つの状態空間に押し込みます。
+ * だから「買う」が行動に無く、5 カオスで買える MOD を 1/20,964 で引きに行き、確定で乗る
+ * パーフェクトエッセンスまで確率として混ぜ、結果として**一番細い確率に収束速度を握られて
+ * 答えが出ません**。本家 poe2htc.com v1.1.0 に同じ 5 個を入れても
+ * 「the solver ran out of time before it could put a number on this craft」で、
+ * **実装の問題ではなく模型の選び方の問題**だと確認しました (2026-09-23)。
+ *
+ * 実データで分けたら、計算の前に行き先が決まりました (死体の円環 / ニーモニックリング):
+ *   ドロップ限定      マナコスト効率        → 買う (固定済みで)
+ *   確定手段あり      最大マナが8%増加する   → パーフェクトエッセンスで確定
+ *   ガチャ・現実的    最大マナ 1/70 / 知性 1/42 / 元素耐性 1/52  → **ここだけ解けばいい**
+ *   ガチャ・非現実的  キャストスピード 1/20,964 → 買う or フラクチャー
+ *
+ * **同梱エンジンは捨てていません** (オーナー判断 2026-09-23)。「ガチャ・現実的」の 3〜4 個を
+ * 解く用途に残します ── 確率の計算は本家と一致を確認済みで、その狭い用途なら収束します。
+ * 呼び出しは新しい作り方が決まってから繋ぎ直します。
+ *
+ * 今ここに残っているのは**貼り付け → MOD 解析 → ベース選び**までです。
  */
-import { computed, ref, shallowRef } from "vue";
+import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
-import { routeSteps, type RouteStep } from "../../services/htc/route-steps";
-import { simulateBudget, type SpendRow } from "../../services/htc/budget";
 import { boostedBy } from "../../services/htc/quality";
-import { soloCosts, soloP75, type SoloCost } from "../../services/htc/solo-cost";
-import { partialStarts, solveFinish, budgetForBuy, fracturedStart } from "../../services/htc/partial-start";
-import { searchCut } from "../../services/htc/search-cut";
-import { markovFromItem } from "../../vendor/poe2htc/optimizer/markovFromItem";
-import { withEssenceAlternatives } from "../../services/htc/essence-route";
-import { whiteItem } from "../../vendor/poe2htc/engine/item";
-import { fracturedBuyQuery } from "../../services/htc/fracture-route";
-import { autoMinWithUrl } from "../../services/trade2/auto-price";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
-import { marketStore } from "../../state/market-store";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
-import { withCatalysing, catalysingSetup, CATALYSING_CAVEAT } from "../../services/htc/catalysing";
 
 /** 画面に出す 1 目標 */
 export interface TargetRow {
@@ -50,16 +56,6 @@ export interface TargetRow {
   crafted: boolean;
 }
 
-/** 買い方 1 通り */
-export interface BuyRow {
-  bought: string[];
-  rarity: string;
-  /** 残りを仕上げる費用 (高貴建て) */
-  finish: number;
-  /** 完成品の売値を予算にした時、買値に出せる上限 (高貴建て)。出せなければ null */
-  budget: number | null;
-}
-
 export function useHtcCraft() {
   const data = shallowRef<PatchData | null>(null);
   const loading = ref(false);
@@ -69,7 +65,6 @@ export function useHtcCraft() {
   const base = shallowRef<ItemBase | null>(null);
   const prices = shallowRef<Prices | null>(null);
   const targets = shallowRef<TierTarget[]>([]);
-  const fracturedTargets = shallowRef<TierTarget[]>([]);
   const rows = shallowRef<TargetRow[]>([]);
   const implicits = ref<string[]>([]);
   const skipped = ref<string[]>([]);
@@ -77,64 +72,26 @@ export function useHtcCraft() {
   const slots = shallowRef<CraftedSurvey | null>(null);
   /**
    * どのベースから始めるか。**並べるだけで選びません** (オーナー方針:「手動の所は手動でいきたい」)。
-   * 1 ミリ秒で出るので開いた時に出す。費用は選んだ 1 つだけ解くこと。
+   * 1 ミリ秒で出るので開いた時に出す。
    */
   const bases = shallowRef<BaseChoice[]>([]);
-
-  const solo = shallowRef<SoloCost[]>([]);
-  /** 案は**全部**持つ。本家も 3 案並べる (確率と 1 周の値段の釣り合いを見せるため) */
-  const buys = shallowRef<BuyRow[]>([]);
-  const buysRunning = ref(false);
   /** 相場がどれだけ埋まっているか。空だと費用が出ないので画面で断る */
   const coverage = shallowRef<HtcPriceCoverage | null>(null);
   /** 各段にかかった時間 (ミリ秒) */
   const timings = ref<Array<[string, number]>>([]);
-  /**
-   * 「固定済みの物」の最安 (modId → 高貴建て / 検索 URL)。
-   *
-   * オーナー方針:「先にフラクチャー品みるのがいい。これ 1 神とかだから」。固定された MOD は
-   * 消去でも消えないので、**一番つきにくい 1 個が固定された物を買うのが最大の梃子**
-   * (実測: 素から 2,015 神 → 固定済みから 231 神)。
-   */
-  const fractured = ref<Record<string, { min: number | null; url: string | null; error?: string }>>({});
-  const fracturedBusy = ref<string | null>(null);
   /** 固定済みの行 (画面用) と、そこから解くための目標 */
   const fracturedLines = ref<string[]>([]);
+  const fracturedTargets = shallowRef<TierTarget[]>([]);
   /** 固定済みだが繋がらず、開始状態に置けない数 */
   const fracturedUnusable = ref(0);
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = ref<Array<{ text: string; tagJa: string; name: string }>>([]);
-  /**
-   * 行ごとの「厳しめの目安」。**押された時だけ出します**。
-   * 期待費用は厳密解で一瞬ですが、p75 は方策を何千本も回すので秒単位かかります
-   * (実測: 5 目標まとめて 5.3 秒 → p75 なしなら 0.7 秒)。
-   */
-  const p75 = ref<Record<string, { value: number | null; mainSpend: string | null }>>({});
-  const p75Busy = ref<string | null>(null);
-  /**
-   * ルートの比べ (素から / 固定済みを買って残りを作る)。
-   * **固定済みがある時だけ**出ます。押されたら解く (MDP なので数秒〜数分)。
-   */
-  const routes = shallowRef<Array<{ label: string; cost: number; ms: number; rest: number }>>([]);
-  const routesBusy = ref(false);
-  /**
-   * ⑥ 手順。**押された時だけ**出します (MDP を解いて方策を回すので数秒〜分単位)。
-   * `steps` は「うまく行った時の並び」で、`spend` は「どこで金が飛ぶか」。
-   */
-  const steps = shallowRef<RouteStep[]>([]);
-  const spend = shallowRef<SpendRow[]>([]);
-  const stepsBusy = ref(false);
-  const stepsNote = ref<string | null>(null);
-  const stepsCost = ref<number | null>(null);
-  const stepsP75 = ref<number | null>(null);
-  const stepsFrom = ref<string>("");
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
    * オーナー指示 2026-09-22:「全部高貴じゃんややこしい。神優先で」。
-   * クラフトの費用は桁が大きく振れるので、選んでいる通貨が高貴だと読めなくなる。
    */
   const money = (exalted: number | null): string =>
     displayCurrency.money(exalted, { round: "up", ladder: "top" });
@@ -147,8 +104,8 @@ export function useHtcCraft() {
    * 対応表は `price-keys.json` (クライアント由来) で、それを通すのが `buildHtcPrices`。
    */
   function buildPrices(cls: ItemBase): { prices: Prices; coverage: HtcPriceCoverage } {
-    const { file, coverage } = buildHtcPrices();
-    return { prices: pricesForBase(indexPrices(file), cls), coverage };
+    const built = buildHtcPrices();
+    return { prices: pricesForBase(indexPrices(built.file), cls), coverage: built.coverage };
   }
 
   /** データを読む (1 回だけ)。どちらの入口からも先に通る */
@@ -161,27 +118,22 @@ export function useHtcCraft() {
     return data.value;
   }
 
-  /** 画面を空に戻す。入口へ帰る時と、計算し直す前に通す */
+  /** 画面を空に戻す。入口へ帰る時と、読み直す前に通す */
   function reset(): void {
     error.value = null;
     item.value = null;
     base.value = null;
     targets.value = [];
     rows.value = [];
-    buys.value = [];
-    routes.value = [];
-    solo.value = [];
     bases.value = [];
     slots.value = null;
     implicits.value = [];
     skipped.value = [];
     dropOnly.value = [];
-    fractured.value = {};
     fracturedLines.value = [];
     fracturedTargets.value = [];
     fracturedUnusable.value = 0;
     slotsUsed.value = { prefixes: 0, suffixes: 0, either: 0 };
-    p75.value = {};
     timings.value = [];
   }
 
@@ -195,7 +147,6 @@ export function useHtcCraft() {
     d: PatchData,
     cls: ItemBase,
     got: { targets: TierTarget[]; texts: string[] },
-    level: number,
     /** 実際のベース名 (「サファイアリング」)。`cls` は行 ("Rings") なので別に要る */
     currentBase: string,
   ): void {
@@ -223,12 +174,6 @@ export function useHtcCraft() {
     // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
     slots.value = craftedSurvey(d, cls, got.targets);
     bases.value = baseChoices(d, cls, got.targets, { current: currentBase });
-
-    const t = Date.now();
-    // **p75 は出さない** (押された時に `findP75`)。ここは厳密解だけで一瞬
-    solo.value = soloCosts(d, built.prices, cls, got.targets, { level });
-    p75.value = {};
-    timings.value.push(["段階 0 (1 個ずつ自作するといくら)", Date.now() - t]);
   }
 
   /**
@@ -236,7 +181,9 @@ export function useHtcCraft() {
    * [[mod-text.ts]] がクライアントの日本語から作ります。
    */
   async function runPicked(
-    baseName: string, cls: ItemBase, picks: readonly TierTarget[], level: number,
+    baseName: string,
+    cls: ItemBase,
+    picks: readonly TierTarget[],
   ): Promise<void> {
     reset();
     loading.value = true;
@@ -247,9 +194,10 @@ export function useHtcCraft() {
         return;
       }
       applyTargets(
-        d, cls,
+        d,
+        cls,
         { targets: [...picks], texts: picks.map((p2) => jaOfMod(d.mods.get(p2.modId)!)) },
-        level, baseName,
+        baseName,
       );
     } catch (e) {
       error.value = String(e);
@@ -258,7 +206,7 @@ export function useHtcCraft() {
     }
   }
 
-  /** 貼り付けを読んで、段階 0 まで出す (合計 1 秒未満) */
+  /** 貼り付けを読んで MOD を割り出す (1 秒未満) */
   async function run(text: string): Promise<void> {
     reset();
     loading.value = true;
@@ -273,7 +221,7 @@ export function useHtcCraft() {
         error.value = "ベースが分かりません。アイテムの名前の行が入っているか確認してください。";
         return;
       }
-      // **枠は「繋がらなかった行」の分を引いてから解く。**クラフトでは付かない MOD も枠は使う
+      // **枠は「繋がらなかった行」の分を引く。**クラフトでは付かない MOD も枠は使う
       t = Date.now();
       const got = targetsFor(d, it);
       const cls = baseForSolving(d, it.baseType, got.skippedSides);
@@ -286,12 +234,11 @@ export function useHtcCraft() {
       dropOnly.value = got.dropOnly;
       fracturedTargets.value = got.fracturedTargets;
       fracturedLines.value = got.fractured;
-      // 固定済みでも**エンジンが知らない MOD は開始状態に置けません**。
-      // 置けないのに「ここから作れます」と出すと、出ないルートを待たせることになる
+      // 固定済みでも**エンジンが知らない MOD は開始状態に置けません**
       fracturedUnusable.value = got.fractured.length - got.fracturedTargets.length;
       implicits.value = got.implicits;
       skipped.value = got.skipped;
-      applyTargets(d, cls, got, it.itemLevel ?? 82, it.baseType);
+      applyTargets(d, cls, got, it.baseType);
     } catch (e) {
       error.value = String(e);
     } finally {
@@ -299,225 +246,16 @@ export function useHtcCraft() {
     }
   }
 
-  /**
-   * 買い方を解く。**20 秒ほどかかる**ので押された時だけ。
-   * 3 個以上買う案に絞る (1〜2 個買いは 1 件 5〜50 秒かかるうえ、まず成立しない)。
-   */
-  function solveBuys(listingDivine: number | null): void {
-    const d = data.value;
-    const cls = base.value;
-    const p = prices.value;
-    const it = item.value;
-    if (!d || !cls || !p || !it) return;
-    buysRunning.value = true;
-    try {
-      const t = Date.now();
-      const listing = listingDivine != null ? listingDivine * (marketStore.rates.value.divine || 1) : null;
-      const out: BuyRow[] = [];
-      for (const o of partialStarts(d, cls, targets.value, { level: it.itemLevel ?? 82, maxBought: 4 })) {
-        if (o.bought.length < 3) continue;
-        const r = solveFinish(d, p, o, { spare: "free" });
-        if (!r.feasible || !Number.isFinite(r.expectedCost)) continue;
-        out.push({
-          bought: o.bought.map((x) => rows.value.find((y) => y.modId === x.modId)?.text ?? x.modId),
-          rarity: o.rarity,
-          finish: r.expectedCost,
-          budget: listing != null ? budgetForBuy(listing, r.expectedCost) : null,
-        });
-      }
-      out.sort((a, b) => a.finish - b.finish);
-      buys.value = out;
-      timings.value.push([`買い方を解く (${out.length} 通り)`, Date.now() - t]);
-    } finally {
-      buysRunning.value = false;
-    }
-  }
-
-  /** 手順の段が狙っている MOD を、貼り付けの文面 (日本語) で返す。2 つ足す段は 2 つ並べる */
-  /**
-   * 投げる計画。**何も投げません** ── 何本・何秒かかるかを、押す前に見せるためだけの物です。
-   *
-   * MDP は 1 回も解きません ([[search-cut.ts]])。使うのは ③ で既に出ている 1 個ずつの費用だけ。
-   * だから貼り付け直後から出ていて、待たされません。
-   */
-  const searchCutResult = computed(() => {
-    const d = data.value;
-    const cls = base.value;
-    if (!d || !cls || targets.value.length < 2 || solo.value.length === 0) return null;
-    const level = item.value?.itemLevel ?? 82;
-    const combos = partialStarts(d, cls, targets.value, {
-      level,
-      ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
-    }).map((x) => x.bought);
-    if (combos.length === 0) return null;
-    return searchCut(combos, solo.value);
-  });
-
+  /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
 
-  /** その 1 個だけ「厳しめの目安」を出す */
-  function findP75(modId: string): void {
-    const d = data.value;
-    const cls = base.value;
-    const pr = prices.value;
-    const it = item.value;
-    if (!d || !cls || !pr || !it) return;
-    const t = targets.value.find((x) => x.modId === modId);
-    if (!t) return;
-    p75Busy.value = modId;
-    try {
-      const r = soloP75(d, pr, cls, t, { level: it.itemLevel ?? 82 });
-      p75.value = { ...p75.value, [modId]: { value: r.p75, mainSpend: r.mainSpend } };
-    } finally {
-      p75Busy.value = null;
-    }
-  }
-
-  /**
-   * **ルートを比べる。**素から全部作る場合と、固定済みを買って残りを作る場合。
-   *
-   * 固定された MOD は消去でも消えないので、買った時点でもう手に入っています。実測では
-   * 費用で 66 倍・待ち時間で 100 倍の差が出ました ([[partial-start.ts]] の `fracturedStart`)。
-   * **素から全部は分単位**かかるので、押された時だけ回します。
-   */
-  function compareRoutes(): void {
-    const d = data.value;
-    const cls = base.value;
-    const p = prices.value;
-    const it = item.value;
-    if (!d || !cls || !p || !it) return;
-    routesBusy.value = true;
-    try {
-      const level = it.itemLevel ?? 82;
-      const out: Array<{ label: string; cost: number; ms: number; rest: number }> = [];
-      const fx = fracturedStart(d, cls, level, targets.value, fracturedTargets.value);
-      // 固定済みがあるほうを先に解く (速いので、待たされても先に答えが出る)
-      if (fx) {
-        const t0 = Date.now();
-        const r = markovFromItem(d, p, fx.start, withEssenceAlternatives(d, cls, fx.rest, level), withCatalysing(d, cls, fx.rest));
-        out.push({ label: "固定済みを買って残りを作る", cost: r.expectedCost, ms: Date.now() - t0, rest: fx.rest.length });
-        routes.value = [...out];
-      }
-      const t1 = Date.now();
-      const r2 = markovFromItem(d, p, whiteItem(cls, level), withEssenceAlternatives(d, cls, targets.value, level), withCatalysing(d, cls, targets.value));
-      out.push({ label: "素から全部作る", cost: r2.expectedCost, ms: Date.now() - t1, rest: targets.value.length });
-      routes.value = out;
-    } finally {
-      routesBusy.value = false;
-    }
-  }
-
-  /**
-   * ⑥ 手順 — 「で、実際どう動くのか」を出す。
-   *
-   * **重いので押された時だけ**です (MDP を 1 本解いて、そのあと方策を何千回か回す)。
-   * 出すのは 3 つ:
-   *   1. うまく行った時の並び ([[route-steps.ts]])
-   *   2. 手ごとの出費 (どこで金が飛ぶか)
-   *   3. 厳しめの総額 (p75)
-   *
-   * 開始は**固定済みを買う道があればそちら**、無ければ素から。④ で比べた時に安いほうが
-   * 固定済みなのは分かっているので、手順もそちらで出さないと画面の中で話が食い違います。
-   */
-  function solveSteps(): void {
-    const d = data.value;
-    const cls = base.value;
-    const p = prices.value;
-    if (!d || !cls || !p) return;
-    stepsBusy.value = true;
-    steps.value = [];
-    stepsNote.value = null;
-    spend.value = [];
-    stepsP75.value = null;
-    try {
-      const level = item.value?.itemLevel ?? 82;
-      const fx = fracturedTargets.value.length ? fracturedStart(d, cls, level, targets.value, fracturedTargets.value) : null;
-      const start = fx ? fx.start : whiteItem(cls, level);
-      const rest = fx ? fx.rest : targets.value;
-      stepsFrom.value = fx ? "固定済みを買ったところから" : "素 (白いベース) から";
-      const t0 = Date.now();
-      const r = markovFromItem(d, p, start, withEssenceAlternatives(d, cls, rest, level), {
-        keepRoutes: true,
-        ...withCatalysing(d, cls, rest),
-      });
-      timings.value.push(["手順を解く", Date.now() - t0]);
-      stepsCost.value = r.expectedCost;
-      if (!r.feasible) { stepsNote.value = r.reason ?? "解けませんでした"; return; }
-      if (!r.routes) {
-        // `keepRoutes` は**厳密解の時だけ**表を残す。打ち切った解で並びを出すと、
-        // 実際には通らない道を手順として見せることになる
-        stepsNote.value = "収束しきらなかったので、手順の並びは出しません (総額だけ出ます)。";
-      } else {
-        const walk = routeSteps(r.routes, cls);
-        steps.value = walk.steps;
-        if (!walk.reachedGoal) stepsNote.value = walk.stoppedWhy;
-      }
-      const t1 = Date.now();
-      const b = simulateBudget(p, cls, r, {});
-      timings.value.push(["厳しめを回す", Date.now() - t1]);
-      // 回せない時 (道中が長すぎて分布が信用できない等) は **出さない**。
-      // 嘘の数字を出すより出さない、が他の欄と同じ扱い
-      stepsP75.value = b && b.reliable ? b.p75 : null;
-      spend.value = b ? b.spend.slice(0, 6) : [];
-    } catch (e) {
-      stepsNote.value = String(e);
-    } finally {
-      stepsBusy.value = false;
-    }
-  }
-
-  /**
-   * その MOD が固定された物を取引所で探す。**1 回で search + fetch を 1 回ずつ**使うので、
-   * 押された時だけ投げる (レート制限は Rust の門番と `autoPrice` が持つ)。
-   */
-  async function findFractured(modId: string): Promise<void> {
-    const d = data.value;
-    const cls = base.value;
-    const it = item.value;
-    if (!d || !cls || !it) return;
-    const t = targets.value.find((x) => x.modId === modId);
-    if (!t) return;
-    fracturedBusy.value = modId;
-    try {
-      const q = fracturedBuyQuery(d, cls, t, {
-        ...(it.itemLevel != null ? { ilvlMin: it.itemLevel } : {}),
-        ...(it.baseType ? { baseType: it.baseType } : {}),
-      });
-      if (!q) {
-        fractured.value = { ...fractured.value, [modId]: { min: null, url: null, error: "検索が組めません" } };
-        return;
-      }
-      // リーグ名は相場と同じ物を使う (取引所に投げる名前は `Value`)
-      const league = marketStore.league.value?.Value ?? "Standard";
-      const r = await autoMinWithUrl(league, q.query, marketStore.rates.value);
-      fractured.value = { ...fractured.value, [modId]: { min: r.min, url: r.url } };
-    } catch (e) {
-      fractured.value = { ...fractured.value, [modId]: { min: null, url: null, error: String(e) } };
-    } finally {
-      fracturedBusy.value = null;
-    }
-  }
-
-  // カタリストが効くベース (指輪 / 首飾り) で、狙う MOD がそのタグを持っている時だけ真。
-  // 真の間は自動クラフトが**実測から推定した倍率**で解いているので、画面で断りを出す。
-  const catalysingOn = computed<boolean>(() => {
-    const cls = base.value;
-    const d = data.value;
-    if (!cls || !d || targets.value.length === 0) return false;
-    return !!catalysingSetup(cls, targets.value.map((t) => t.modId), d);
-  });
-
   return {
-    catalysingOn, catalysingCaveat: CATALYSING_CAVEAT,
-    stepTarget, findFractured, fractured, fracturedBusy,
-    fracturedLines, fracturedUnusable, slotsUsed, dropOnly, routes, routesBusy, compareRoutes,
+    stepTarget,
+    fracturedLines, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
-    solo, buys, buysRunning, timings, coverage, slots, bases,
+    timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
-    steps, spend, stepsBusy, stepsNote, stepsCost, stepsP75, stepsFrom, solveSteps,
-    searchCutResult,
-    p75, p75Busy, findP75,
-    money, run, solveBuys,
+    money, run,
   };
 }
