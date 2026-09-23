@@ -121,7 +121,7 @@ export function useHtcCraft() {
   const treeResult = shallowRef<{
     decision: Decision;
     /** 投げた検索ごとの件数と取引所のリンク (`key` = fractured / loose / strict) */
-    found: Array<{ key: string; label: string; total: number; url: string | null }>;
+    found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }>;
     skippedNoMods: number;
     /** 固定済みが自前の最安以下だったので、残りの検索を投げずに止めたか */
     earlyBuy: boolean;
@@ -384,7 +384,7 @@ export function useHtcCraft() {
       const league = marketStore.league.value?.Value ?? "Standard";
       const rates = marketStore.rates.value;
       const listings: TreeListing[] = [];
-      const found: Array<{ key: string; label: string; total: number; url: string | null }> = [];
+      const found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }> = [];
       let skippedNoMods = 0;
       let earlyBuy = false;
       // 自前で固定する時の最安 (4 MOD のベースがタダの時)。固定済みがこれ以下なら自前は絶対に勝てない。
@@ -392,11 +392,12 @@ export function useHtcCraft() {
       // 正確にはオーブが高い時は「減らして冒涜」で打つ回数が 3/N に減るので、約 3.5 倍が線になる
       const selfFloor = tp.plan.rows.find((r) => r.mods === 4)?.fixed ?? null;
       for (const sq of tp.searches) {
-        // 固定済み (1 本目) が線以下なら、残りを投げるだけ信号の無駄
-        if (earlyBuy) break;
+        // 固定済みが線以下でも残りは投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
+        // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
         const r = await autoPrice(league, sq.query, rates, sq.take);
         if (!r) {
-          found.push({ key: sq.key, label: sq.label, total: 0, url: null });
+          // 取れなかった物は 0 件と区別する (理由を持たせる)
+          found.push({ key: sq.key, label: sq.label, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" });
           if (tradeAuto.lastError.value) treeError.value = tradeAuto.lastError.value;
           continue;
         }

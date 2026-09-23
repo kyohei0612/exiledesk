@@ -11,6 +11,7 @@ import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
+import SearchChecks from "./SearchChecks.vue";
 import { useFractureChoice } from "./useFractureChoice";
 import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -81,6 +82,8 @@ watch(() => [c.item.value, c.base.value], async () => {
         <button v-if="o.link" type="button" class="ml-2 text-sky-300 underline" @click.prevent="openExternal(o.link.url)">{{ o.link.text }} →</button>
       </label>
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
+      <!-- 3 本の条件と結果 (バグ確認用。オーナー 2026-09-24) -->
+      <SearchChecks :c="c" />
     </div>
     <!-- 完成品を買うのと比べる (オーナー 2026-09-24:「完成品か比較対象ないよね」)。取引所は押した時だけ 1 本 -->
     <div class="mt-2 rounded bg-black/20 p-2">

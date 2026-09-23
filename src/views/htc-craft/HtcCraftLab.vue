@@ -27,14 +27,11 @@ watchEffect(() => pk.useData(c.data.value));
  *   base  … ベースと狙う MOD を自分で並べる
  */
 //
-// **開発ビルドだけ、見本を並べた状態で始めます**。最初は貼り付けの見本だったが (「開発環境には
-// さっきのニーモニック貼っといて」)、2026-09-23 に「0 の状態からやりたい。貼り付けはネタバレ」で
-// **ベースから選ぶ見本** (ニーモニックリングを 0 から) に替えた。貼り付けの見本も入口 A に残る。
-// 配布版は何も入っていない状態から始まります。計算までは自動でしません ── 押すのは人。
-const DEV = import.meta.env.DEV;
-const door = ref<"none" | "paste" | "base">(DEV ? "base" : "none");
-const text = ref(DEV ? PRESETS[0]!.text : "");
-const picked = ref<string | null>(DEV ? PRESETS[0]!.id : null);
+// **開発ビルドも入口から始める** (オーナー 2026-09-24:「クラフト計算機のデフォ表示ずっとニーモニックリングの所
+// 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
+const door = ref<"none" | "paste" | "base">("none");
+const text = ref("");
+const picked = ref<string | null>(null);
 
 /**
  * 画面は「診断の結果 (短く) → 1 手ずつ」だけ。MOD 解析とベース診断は一気に通す
@@ -76,7 +73,6 @@ function pickZero(id: string): void {
   pk.picks.value = z.picks.map((x) => ({ ...x }));
   zeroStart.value = { ...zeroStart.value, quality: z.quality, qualityTag: z.qualityTag, fixedPrefix: z.fixedPrefix, fixedSuffix: z.fixedSuffix };
 }
-if (DEV) void c.ensureData().then(() => { if (!pk.baseName.value) pickZero(ZERO_PRESETS[0]!.id); });
 async function runPicked(): Promise<void> {
   if (!pk.baseName.value || !pk.cls.value) return;
   zeroStart.value = { ...zeroStart.value, baseType: pk.baseName.value, itemLevel: pk.level.value };
