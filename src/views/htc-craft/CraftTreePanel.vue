@@ -5,16 +5,23 @@
  * オーナー:「ツリー上、シミュレーター方式。完成までの道のりを○×で進める。進むにつれてツリーがデカくなる。
  * 最終的に予算入力してシミュレーターかけて確率と予算内にできるか表示する」。中身は [[useCraftTree.ts]]。
  */
-import { nextTick } from "vue";
+import { computed, nextTick } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import { useCraftTree } from "./useCraftTree";
+import { TREE_PRESETS } from "./tree-presets";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 const t = useCraftTree(c);
 const pct = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
+/** 貼り付けの狙いに合う見本のツリー */
+const presets = computed(() => TREE_PRESETS.filter((x) => x.applies(c.targets.value)));
+function loadPreset(id: string): void {
+  const x = TREE_PRESETS.find((y) => y.id === id), d = c.data.value, p = c.prices.value;
+  if (x && d && p) t.nodes.value = x.build(d, p, c.targets.value);
+}
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
   await nextTick();
@@ -35,6 +42,10 @@ async function focus(id: string): Promise<void> {
       手を組みます。各手で打つ物と○の条件、○ / × の行き先を選びます (最初は何も入っていません)。○ は下へ、× は右へ枝が伸びます。
       打つ物は、その手に来た時の指輪で打てる物だけ出ます。手 1 は ○ と × の両方の行き先が要ります。
     </p>
+    <div v-if="presets.length" class="mb-2 text-xs">
+      <span class="opacity-60">見本のツリー:</span>
+      <button v-for="x in presets" :key="x.id" type="button" class="ml-2 rounded border border-sky-600 px-2" @click="loadPreset(x.id)">{{ x.label }} を読み込む</button>
+    </div>
     <!-- 枝の図: ○ は下へ、× は右へ。横に広がるので横にスクロール -->
     <div class="overflow-x-auto pb-2">
       <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" />

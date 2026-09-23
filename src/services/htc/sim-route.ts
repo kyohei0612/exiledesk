@@ -43,14 +43,15 @@ export type SimAction =
  * **自動** (オーナー 2026-09-24:「キャスピ消えたら手 1 に戻るし、触媒の高貴のお告げの成功品が消えても失敗が残るから失敗品が消えるまで消去だし、
  * 失敗品消えたらもう一度っていう処理は自動でやりたい」):
  *   1. 本線 (手 1 から○をたどった手の並び) を上から見て、揃っていない一番上の手を探す
- *   2. それがカオスの手なら、そこへ (外れごと入れ替えるので外れが残っていてよい。スパムの狙いが消えたら最初から)
+ *   2. それがカオスの手なら、外せる物が 1 つになるまで今の消去を続けてから、そこへ (スパムの狙いが消えたら剥がして最初から)
  *   3. それ以外で外れが残っていれば、今の手をもう 1 回 (消去を続ける)
  *   4. 外れが無ければ、その揃っていない手へ (失敗品が消えたら同じ触媒の高貴のお告げをもう 1 回、成功品が消えていたらその手から)
  *   5. 全部揃っていれば完成 (本線の最後が「完成」の時)
  * 揃っている = 狙いのどれかがある かつ 残したい MOD が全部ある (外れ無し・個数の条件は見ない)
  *
  * たどる時の決まり (人が自然にやる事):
- *   - 本線の手で、もう揃っていれば飛ばして○の行き先へ (カオスで付け直した時、前の成功品が残っていれば次の手へ)
+ *   - 本線の狙いのある手で、もう揃っていれば飛ばして○の行き先へ (カオスで付け直した時、前の成功品が残っていれば次の手へ)。
+ *     狙いの無い手 (品質だけ・削減・確認) は飛ばさない
  *   - 打てない (枠が無い等) けれど外れがあれば、先に × の行き先 (消去の手) へ回す (費用は掛からない)
  */
 export type Goto = string | "done" | "auto" | null;
@@ -357,12 +358,23 @@ export function simulateTree(inp: {
   }
   const goalMet = (st: SimState, x: SimNode): boolean =>
     h.targetsMet(st, x) && x.keep.every((id) => (id === "__breach__" ? st.breach : h.has(st, id)));
-  /** 自動の行き先 (上の決まり) */
+  /** 狙いのある手 (狙う MOD がある / ブリーチの手)。狙いの無い手 (品質だけ・削減・確認) は順番に打つ手 */
+  const hasGoal = (x: SimNode): boolean => x.targets.length > 0 || x.action?.kind === "breach";
+  /**
+   * 自動の行き先 (上の決まり)。本線を上から見て、揃っていない狙いの手か、狙いの無い手 (順番に打つ手) の先に来る方。
+   * 狙いの無い手を「揃っている」と見て飛ばすと、品質の仕上げや削減を抜かしてしまう (2026-09-24 見本のツリーで踏んだ)
+   */
   const autoNext = (st: SimState, cur: number): string | "done" | null => {
-    const m = main.find((i) => !goalMet(st, nodes[i]!));
+    const m = main.find((i) => !hasGoal(nodes[i]!) || !goalMet(st, nodes[i]!));
     if (m == null) return mainEndsDone ? "done" : null;
     const target = nodes[m]!;
-    if (target.action?.kind !== "chaos" && h.hasJunk(st)) return nodes[cur]!.id;
+    // カオスの手へ戻る時は、外せる物が 1 つになるまで今の消去を続けてから (「スパムの狙いが消えたら剥がして最初から」オーナー)。
+    // 剥がさずに戻ると外れが居残り、最後に冒涜の枠を塞いでいた (2026-09-24 見本のツリー)
+    if (target.action?.kind === "chaos") {
+      const removableCount = st.slots.filter((x) => !x.fixed).length + (st.breach ? 1 : 0);
+      return removableCount > 1 && nodes[cur]!.action?.kind === "annul" ? nodes[cur]!.id : target.id;
+    }
+    if (h.hasJunk(st) && hasGoal(target)) return nodes[cur]!.id;
     return target.id;
   };
   for (let r = 0; r < runs; r++) {
@@ -373,7 +385,7 @@ export function simulateTree(inp: {
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
       // 本線の手で、もう揃っていれば飛ばす (カオスでスパムの狙いを付け直した時、前の触媒の高貴のお告げの成功品が残っていれば次へ)
-      if (main.includes(at) && n.action?.kind !== "check" && goalMet(s, n) && n.onHit) {
+      if (main.includes(at) && hasGoal(n) && goalMet(s, n) && n.onHit) {
         const g = n.onHit === "auto" ? autoNext(s, at) : n.onHit;
         if (g === "done") { end = "done"; break; }
         const j = g ? byId.get(g) : undefined;
