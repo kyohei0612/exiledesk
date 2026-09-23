@@ -15,8 +15,8 @@
  *   1. 効くカタリストが無い MOD
  *   2. 効くカタリストが全部「使わない」の MOD (既定では 1 個 {@link PRICEY_CATALYST_DIVINE} 神以上を使わない)
  *   3. それ以外
- * 同じ順位の中では**サフィを先に**、その中で**カオスで一番付きにくい物** (後から高貴で足すと一番高くつく
- * 物を先に固める)。
+ * **サフィを先に** (サフィに候補が無い時だけプレ)、その中で上の順位、同じ順位の中では
+ * **カオスで一番付きにくい物** (後から高貴で足すと一番高くつく物を先に固める)。
  *
  * ## 有識者の話
  * 費用の大半は**触媒の高貴のお告げで足しに行って外した時の消去**。だからカタリストで足す側の枠はスパムの間空けておく。
@@ -209,11 +209,13 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
   }
 
   const rank: Record<Group, number> = { "no-catalyst": 0, "catalyst-off": 1, catalyst: 2, later: 9 };
-  // 同じ順位ならサフィを先に: 品質 40% は「サフィをスパムで」が原則、品質 20% でもプレのスパムは
-  // 削減リロールの高額コース (オーナー 2026-09-23)。その中で一番付きにくい物
+  // **サフィを先に** (側が第 1): 品質 40% は「サフィをスパムで」が原則、品質 20% でもプレのスパムは
+  // 削減リロールの高額コース (オーナー 2026-09-23)。サフィに候補が無い時だけプレ。
+  // 以前は「カタリストの有無」が先で、レアリティ (プレ版) のように効くカタリストが無いプレが
+  // サフィより先に選ばれ、高額コースに落ちていた (poe.ninja の指輪 10 個で 2 件)。その中で一番付きにくい物
   const sideRank = (x: TargetMethod): number => (x.side === "suffix" ? 0 : 1);
   const cand = methods.filter((x) => x.group !== "later")
-    .sort((a, b) => rank[a.group] - rank[b.group] || sideRank(a) - sideRank(b) || a.chaosOdds - b.chaosOdds);
+    .sort((a, b) => sideRank(a) - sideRank(b) || rank[a.group] - rank[b.group] || a.chaosOdds - b.chaosOdds);
   if (!cand.length) return { methods, spam: null, side: null, expensive: false, phase: null, finish: null, total: null, alternatives: [], reason: "カオスで付けられる狙いがありません" };
 
   /** その狙いをスパムにした時の組み立て (同じ側の残りを高貴で足すところまで) */

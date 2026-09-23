@@ -437,6 +437,7 @@ export function targetsFor(
       if (got?.mod) bridged.mods[i] = got;
     });
   }
+  balanceSides(data, bridged.mods);
 
   const targets: TierTarget[] = [];
   /** `targets` と同じ並びの、貼り付けの文面。画面に日本語のまま出すため */
@@ -480,4 +481,27 @@ export function targetsFor(
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
   return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides };
+}
+
+/**
+ * プレにもサフィにもある MOD (アイテムレアリティ増加など) を、**片側が 3 つを超えたら反対側へ回す**。
+ *
+ * 文面だけでは側が決まらず、繋ぎ先は片方 (サフィ) に寄る。poe.ninja の指輪 (2026-09-23) で
+ * 「レアリティ + 能力値 + 火耐性 + 混沌耐性」がサフィ 4 つになり「枠が足りない」と止まっていた。
+ * 同じクラスで文面が同じ・種類 (普通 / エッセンス…) が同じで、側だけ違う MOD を双子として探す。
+ */
+function balanceSides(data: PatchData, mods: Array<{ mod?: Mod | null }>): void {
+  const LIMIT = 3;
+  const count = (side: string): number => mods.filter((b) => b.mod?.type === side).length;
+  for (const [over, other] of [["suffix", "prefix"], ["prefix", "suffix"]] as const) {
+    for (const b of mods) {
+      if (count(over) <= LIMIT || count(other) >= LIMIT) break;
+      const m = b.mod;
+      if (!m || m.type !== over) continue;
+      const cls = m.id.split("/")[0];
+      const twin = [...data.mods.values()].find((x) =>
+        x.id.split("/")[0] === cls && x.type === other && x.source === m.source && x.text === m.text);
+      if (twin) b.mod = twin;
+    }
+  }
 }

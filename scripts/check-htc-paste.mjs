@@ -288,5 +288,20 @@ console.log(String.fromCharCode(10) + "創生の樹からしか出ない MOD:");
   if (tree[normal]) fail("普通に作れる最大マナを創生の樹と判定している");
 }
 
+// ---- プレにもサフィにもある MOD の側 (2026-09-23) ----
+// poe.ninja の指輪: レアリティはプレ版とサフィ版があり、文面だけだとサフィに寄ってサフィが 4 つになっていた
+{
+  const NL2 = String.fromCharCode(10);
+  const r = M.parseJaItem(["Item Class: Rings", "Rarity: Rare", "Test Loop", "Prismatic Ring", "--------", "Item Level: 82", "--------",
+    "Adds 17 to 25 Cold damage to Attacks", "19% increased Fire Damage", "17% increased Rarity of Items found",
+    "+31 to Strength", "+37% to Fire Resistance", "+21% to Chaos Resistance"].join(NL2));
+  const g = M.targetsFor(data, r);
+  const sides = g.targets.map((t) => data.mods.get(t.modId)?.type);
+  const nS = sides.filter((x) => x === "suffix").length, nP = sides.filter((x) => x === "prefix").length;
+  console.log(String.fromCharCode(10) + "両側にある MOD: プレ " + nP + " / サフィ " + nS + " — " + g.targets.map((t) => t.modId.split("/")[1]).join(", "));
+  if (nS > 3 || nP > 3) fail("片側が 3 つを超えている (プレ " + nP + " / サフィ " + nS + ")");
+  if (!g.targets.some((t) => t.modId === "Rings/ItemFoundRarityIncreasePrefix")) fail("レアリティがプレ版に回っていない");
+}
+
 console.log(failed ? (String.fromCharCode(10) + "NG: " + failed + " 件") : (String.fromCharCode(10) + "全部 OK"));
 process.exit(failed ? 1 : 0);
