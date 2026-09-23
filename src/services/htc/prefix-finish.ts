@@ -59,10 +59,13 @@ export interface FinishPlan {
   exalt: PrefixExaltPhase | null;
   /** 仕上げの平均 (高貴換算) */
   expected: number;
-  /** 仕上げの費用を 1 回ぶん引く (分布を足し合わせるため) */
-  sample: (rnd: () => number) => number;
+  /** 仕上げの費用を 1 回ぶん、段階ごとに引く (分布を足し合わせ、予算でどこまで行けるかを出すため)。
+   *  exalt = プレを高貴で足す / fixed = 最後の品質・エッセンスなど決まった手 / desecrate = 冒涜の光ガチャ */
+  sample: (rnd: () => number) => FinishSample;
   reason: string | null;
 }
+
+export interface FinishSample { exalt: number; fixed: number; desecrate: number }
 
 export interface FinishInput {
   data: PatchData;
@@ -86,7 +89,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
   const { data, cls, prices, itemLevel } = inp;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
-  const none = (reason: string): FinishPlan => ({ steps: [], desecrate: null, exalt: null, expected: 0, sample: () => 0, reason });
+  const none = (reason: string): FinishPlan => ({ steps: [], desecrate: null, exalt: null, expected: 0, sample: () => ({ exalt: 0, fixed: 0, desecrate: 0 }), reason });
 
   const essences = inp.targets.filter((t) => mod(t.modId)?.source === "perfect_essence");
   const rolls = inp.targets.filter((t) => mod(t.modId)?.source === "normal");
@@ -118,7 +121,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
 
   // 4. 冒涜の光ガチャ (最後の 1 つ)。プレに普通の狙いが 2 つ以上なら、1 つを残して先に高貴で足す
   //    ([[prefix-exalt.ts]])。どれを冒涜に残すかは全部試して一番安い物
-  if (!rolls.length) return { steps, desecrate: null, exalt: null, expected: fixed, sample: () => fixed, reason: null };
+  if (!rolls.length) return { steps, desecrate: null, exalt: null, expected: fixed, sample: () => ({ exalt: 0, fixed, desecrate: 0 }), reason: null };
   const sw = (m: Mod, minIdx: number, floor: number): number =>
     m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
   const pool = [...cls.pools.normal.prefixes, ...cls.pools.desecrated.prefixes];
@@ -172,7 +175,7 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
     sample: (rnd) => {
       const k = Math.max(1, Math.ceil(Math.log(1 - rnd()) / Math.log(1 - d.odds)));
       const exCost = ex.samples.length ? ex.samples[(si++) % ex.samples.length]! : 0;
-      return fixed + exCost + k * d.perTry + (k - 1) * d.light;
+      return { exalt: exCost, fixed, desecrate: k * d.perTry + (k - 1) * d.light };
     },
     reason: null,
   };

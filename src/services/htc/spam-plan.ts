@@ -40,6 +40,8 @@ import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
 import { prefixFinish, type FinishPlan } from "./prefix-finish";
+import { totalOf, type SpamTotal } from "./spam-total";
+export type { SpamTotal } from "./spam-total";
 
 /** 既定で「使わない」にするカタリストの値段 (1 個・神)。軽快 0.35 / 歯擦音 0.97 / 強奪者 0.37 (2026-09-23) */
 export const PRICEY_CATALYST_DIVINE = 0.2;
@@ -128,7 +130,7 @@ export interface SpamPlan {
   /** サフィが揃った後のプレの仕上げ ([[prefix-finish.ts]])。スパムがサフィの時だけ */
   finish: FinishPlan | null;
   /** サフィ段階 + 仕上げの合計 (高貴換算)。仕上げが組めない時は null */
-  total: { expected: number; p50: number; p80: number; p90: number } | null;
+  total: SpamTotal | null;
   /** 組めなかった理由 */
   reason: string | null;
 }
@@ -255,13 +257,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
       ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
     });
     for (const m of methods) if (m.side === "prefix" && m.group !== "later") m.role = "later";
-    let total: SpamPlan["total"] = null;
-    if (!finish.reason) {
-      const rnd = mulberry32(7);
-      const sum = Array.from({ length: 4000 }, () => finish.sample(rnd)).sort((a, b) => a - b);
-      const q = (f: number): number => sum[Math.min(sum.length - 1, Math.floor(sum.length * f))]!;
-      total = { expected: finish.expected, p50: q(0.5), p80: q(0.8), p90: q(0.9) };
-    }
+    const total = finish.reason ? null : totalOf(finish, finish.expected, new Array<number>(4000).fill(0));
     return { methods, spam: null, side: "prefix", expensive: false, phase: null, finish, total, alternatives: [], reason: null };
   }
   const chosen = cand.find((x) => x.modId === inp.spamOverride) ?? cand[0]!;
@@ -283,7 +279,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
   }).sort((x, y) => (x.expected ?? Infinity) - (y.expected ?? Infinity));
   // ---- サフィが揃った後のプレの仕上げ (スパムがサフィの時だけ) ----
   let finish: FinishPlan | null = null;
-  let total: SpamPlan["total"] = null;
+  let total: SpamTotal | null = null;
   if (main.side === "suffix" && main.phase) {
     finish = prefixFinish({
       data, cls, prices, itemLevel,
@@ -291,12 +287,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
       quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: free("prefix"),
       ...(inp.catalystChoice ? { catalystChoice: inp.catalystChoice } : {}),
     });
-    if (!finish.reason) {
-      const rnd = mulberry32(7);
-      const sum = main.phase.samples.map((x) => x + finish!.sample(rnd)).sort((a, b) => a - b);
-      const q = (f: number): number => sum[Math.min(sum.length - 1, Math.floor(sum.length * f))]!;
-      total = { expected: main.phase.expected + finish.expected, p50: q(0.5), p80: q(0.8), p90: q(0.9) };
-    }
+    if (!finish.reason) total = totalOf(finish, main.phase.expected + finish.expected, main.phase.samples);
   }
   return { methods, spam: main.spam, side: main.side, expensive: main.expensive, phase: main.phase, finish, total, alternatives, reason: main.reason };
 }
@@ -360,10 +351,16 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   const needsBreach = (e: Act, bq: number): boolean => c.breach && bq === 0 && e.kind === "exalt" && !!e.tag;
 
   const occupied = (held: number): Set<string> => new Set([c.pick.modId, ...ids.filter((_, i) => held & (1 << i))]);
+  // 手と付いた狙いだけで決まるので覚えておく (反復のたびに重みを足し直すと、狙い 4〜5 つで数十秒かかった)
+  const memo = new Map<Act, Map<number, number[]>>();
   const outcomes = (e: Act, held: number): number[] => {
+    let byH = memo.get(e); if (!byH) memo.set(e, byH = new Map());
+    const hit = byH.get(held); if (hit) return hit;
     const occ = occupied(held);
     const W = c.pool(c.side).filter((id) => !occ.has(id)).reduce((s, id) => s + c.famW(id, e.floor!, e.tag), 0);
-    return ids.map((id, i) => (held & (1 << i) ? 0 : c.hitW(id, e.floor!, e.tag) / W));
+    const ps = ids.map((id, i) => (held & (1 << i) ? 0 : c.hitW(id, e.floor!, e.tag) / W));
+    byH.set(held, ps);
+    return ps;
   };
   const bits = (x: number): number => { let s = 0; for (; x; x &= x - 1) s++; return s; };
   /** 状態: 付いた狙い h / 外れ j / ブリーチの MOD が居るか bq */
@@ -376,7 +373,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   const resetCost = (h: number, j: number): number =>
     Math.max(0, bits(h) + j - 1) * c.cur("annul") + breachOnce + c.sp.expected;
 
-  let V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
+  const V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
   const pol = new Map<number, Act>();
   const annulValue = (e: Act, h: number, j: number, bq: number, V: Map<number, number>, R: number): number => {
     const hitsB = e.breachHit && bq === 1 ? 1 : 0;
@@ -388,10 +385,11 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   };
   for (let it = 0; it < 2000; it++) {
     const R = V.get(key(0, 0, START_B))!;
-    const nv = new Map<number, number>();
+    // その場で書き換える (Gauss-Seidel)。外れ → 消去 → 高貴の輪が長いと、1 反復ずつ写すやり方は 2000 回でも収束しなかった
+    let diff = 0;
     for (const [h, j, bq] of states) {
       const k0 = key(h, j, bq);
-      if (h === full) { nv.set(k0, 0); continue; }
+      if (h === full) { V.set(k0, 0); continue; }
       let best = Infinity; let bp: Act | null = null;
       if (1 + bits(h) + j < c.cap) for (const e of exalts) {
         const nb = needsBreach(e, bq) ? 1 : bq;
@@ -404,10 +402,13 @@ function solvePhase(c: PhaseCtx): PhaseResult {
         const v = annulValue(e, h, j, bq, V, R);
         if (v < best) { best = v; bp = e; }
       }
-      nv.set(k0, best);
+      const old = V.get(k0)!;
+      if (Number.isFinite(best) && Number.isFinite(old)) diff = Math.max(diff, Math.abs(best - old));
+      else if (Number.isFinite(best) !== Number.isFinite(old)) diff = Infinity;
+      V.set(k0, best);
       if (bp) pol.set(k0, bp);
     }
-    V = nv;
+    if (it > 0 && diff < 1e-6) break;   // 収束したら止める (高貴換算で 100 万分の 1)
   }
 
   // ---- 回して分布を取る ----

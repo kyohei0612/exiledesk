@@ -88,12 +88,24 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
     }
   }
   const annul: Act = { kind: "annul", label: "消去のオーブ + 左側の消去のお告げ", floor: 0, tag: null, q: () => 0, cost: () => cur("annul") + cur("OmenofSinistralErasure") };
+  // 費用はブリーチの有無だけで決まるので先に出しておく (反復のたびに相場を引くと、狙い 4 つで数秒かかった)
+  for (const e of [...acts, annul]) { const c0 = e.cost(0), c1 = e.cost(1); e.cost = (bq) => (bq ? c1 : c0); }
 
   const famW = (id: string, floor: number, tag: string | null, mult: number): number => {
     const m = mod(id); if (!m) return 0;
     return sw(m, 0, floor) * (tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1);
   };
+  // 手・付いた狙い・ブリーチの有無だけで決まるので覚えておく (狙い 4 つで数十秒かかっていた)
+  const memo = new Map<Act, Map<number, number[]>>();
   const outcomes = (e: Act, held: number, bq: number): number[] => {
+    let byH = memo.get(e); if (!byH) memo.set(e, byH = new Map());
+    const k = held * 2 + bq;
+    const got = byH.get(k); if (got) return got;
+    const ps = outcomesRaw(e, held, bq);
+    byH.set(k, ps);
+    return ps;
+  };
+  const outcomesRaw = (e: Act, held: number, bq: number): number[] => {
     const mult = catalysingMultiplier(e.q(bq));
     const occ = new Set(ids.filter((_, i) => held & (1 << i)));
     const W = cls.pools.normal.prefixes.filter((id) => !occ.has(id)).reduce((s, id) => s + famW(id, e.floor, e.tag, mult), 0);
@@ -109,14 +121,15 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
   const states: Array<[number, number, number]> = [];
   for (let h = 0; h <= full; h++) for (const bq of B ? [0, 1] : [0]) for (let j = 0; bits(h) + j + bq <= inp.cap; j++) states.push([h, j, bq]);
 
-  let V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
+  const V = new Map<number, number>(states.map(([h, j, bq]) => [key(h, j, bq), 0]));
   const pol = new Map<number, Act>();
   for (let it = 0; it < 2000; it++) {
-    const nv = new Map<number, number>();
+    // その場で書き換える (Gauss-Seidel)。外れ → 消去 → 高貴の輪が長いと、1 反復ずつ写すやり方は 2000 回でも収束しなかった
+    let diff = 0;
     for (const [h, j, bq] of states) {
       const k0 = key(h, j, bq);
       // 狙いが揃って**外れも消し切ったら**終わり。外れが残ると後のエッセンス・冒涜の枠が無い
-      if (h === full && j === 0) { nv.set(k0, 0); continue; }
+      if (h === full && j === 0) { V.set(k0, 0); continue; }
       let best = Infinity; let bp: Act | null = null;
       if (h !== full && bits(h) + j + bq < inp.cap) for (const e of acts) {
         const ps = outcomes(e, h, bq); const pj = 1 - ps.reduce((a, b) => a + b, 0);
@@ -131,10 +144,13 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
         if (bq) v += V.get(key(h, j, 0))! / m;
         if (v < best) { best = v; bp = annul; }
       }
-      nv.set(k0, best);
+      const old = V.get(k0)!;
+      if (Number.isFinite(best) && Number.isFinite(old)) diff = Math.max(diff, Math.abs(best - old));
+      else if (Number.isFinite(best) !== Number.isFinite(old)) diff = Infinity;
+      V.set(k0, best);
       if (bp) pol.set(k0, bp);
     }
-    V = nv;
+    if (it > 0 && diff < 1e-6) break;   // 収束したら止める (高貴換算で 100 万分の 1)
   }
   const start = key(0, 0, B);
   if (!Number.isFinite(V.get(start)!)) return { reason: "プレを高貴で揃えられません (枠か段が足りない)" };

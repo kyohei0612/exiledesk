@@ -95,6 +95,15 @@ if (!/削減のお告げ/.test(labels)) fail("品質 40% なのに削減のお�
 if (!/パーフェクトエッセンス/.test(labels)) fail("最大マナ% をエッセンスで付けていない");
 if (r.finish?.desecrate?.modId !== "Rings/IncreasedMana") fail("冒涜で最大マナを引いていない");
 if (!r.total || !(r.total.p80 > r.total.p50 && r.total.expected > r.phase.expected)) fail("合計の分布がおかしい");
+// 予算 500 神でどこまで行けるか (段階ごとの累計。後の段階ほど確率は下がる)
+if (r.total) {
+  const reach = r.total.stages.map((st) => ({ label: st.label, p: st.cum.filter((x) => x <= 500 * D).length / st.cum.length }));
+  console.log("予算 500 神: " + reach.map((x) => `${x.label} ${(x.p * 100).toFixed(0)}%`).join(" → "));
+  if (reach.length < 3 || reach[0].label !== "サフィが揃う" || !reach.at(-1).label.startsWith("完成")) fail("予算の段階が並んでいない");
+  if (reach.some((x, i) => i && x.p > reach[i - 1].p + 1e-9)) fail("後の段階の方が予算内に収まりやすくなっている");
+  const last = [...r.total.stages.at(-1).cum].sort((a, b) => a - b);
+  if (Math.abs(last[Math.floor(last.length * 0.8)] - r.total.p80) > 1e-6) fail("最後の段階の累計が合計の分布と合わない");
+}
 
 // ---- 途中品を買って始める (partial-buy.ts) ----
 // スパムの狙い (キャスピ) を含むサフィの組み合わせ 4 本。外れの無い物だけ = サフィ数・プレ数の上限つき

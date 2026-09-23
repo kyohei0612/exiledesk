@@ -5,7 +5,7 @@
  * 計算は [[spam-plan.ts]]、状態は useHtcCraft の `spam` / `catalystChoice` / `spamOverride`。
  * ここは出すだけ。カタリストの使う / 使わないと、スパムの狙いの選び直しだけ受け付けます。
  */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { useHtcCraft } from "./useHtcCraft";
 import { usePartialBuy } from "./usePartialBuy";
 
@@ -22,6 +22,18 @@ const partial = usePartialBuy({
 const bestPartial = computed(() => {
   const rows = (partial.rows.value ?? []).filter((r) => r.sum != null);
   return rows.length ? rows.reduce((a, b) => (b.sum! < a.sum! ? b : a)) : null;
+});
+
+/**
+ * 予算 (神)。既定 500 神 (オーナー 2026-09-23:「基本的に 500 神以内にしてみよう、どこまでできるか」)。
+ * 段階ごとに「予算内でそこまで行ける確率」を数える。計算し直しは要らない (合計の 1 回ずつの累計を数えるだけ)
+ */
+const budgetDivine = ref(500);
+const budgetReach = computed(() => {
+  const t = props.c.spam.value?.total, div = props.c.prices.value?.currency.divine;
+  if (!t || !div || !(budgetDivine.value > 0)) return [];
+  const cap = budgetDivine.value * div;
+  return t.stages.map((st) => ({ label: st.label, p: st.cum.filter((x) => x <= cap).length / Math.max(1, st.cum.length) }));
 });
 
 const roleJa = { spam: "カオススパム", exalt: "高貴で足す", later: "後で" } as const;
@@ -124,6 +136,13 @@ function choose(modId: string): void {
       / 半分の確率で {{ c.money(c.spam.value.total.p50) }}
       / <b>8 割の確率で {{ c.money(c.spam.value.total.p80) }}</b>
       / 9 割 {{ c.money(c.spam.value.total.p90) }}
+    </p>
+    <p v-if="c.spam.value.total && budgetReach.length" class="mt-1">
+      予算 <input v-model.number="budgetDivine" type="number" min="1" step="50" class="num w-20" /> 神で:
+      <template v-for="(r, i) in budgetReach" :key="r.label">
+        <span v-if="i" class="text-[var(--exile-color-text-tertiary)]"> → </span>
+        {{ r.label }} <b :class="r.p >= 0.8 ? 'text-emerald-300' : r.p >= 0.5 ? 'text-amber-300' : 'text-rose-300'">{{ (r.p * 100).toFixed(0) }}%</b>
+      </template>
     </p>
 
     <!-- 途中品を買って始める: スパムの狙いを含む組み合わせごとに「最安 + そこから完成までの平均」 -->
