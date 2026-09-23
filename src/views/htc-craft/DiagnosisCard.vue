@@ -34,7 +34,7 @@ const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
   const m = c.data.value?.mods.get(modId);
   const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
-  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} ${t.name ?? ""} (${(t.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")}) 以上` }))
+  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} 以上 (${(t.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")})` }))
     .filter((t) => t.ilvl <= lv).reverse();
 };
 /** フラクチャー品から始めるか、無し品から作るか */
@@ -55,82 +55,96 @@ watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.m
 </script>
 
 <template>
-  <div class="mb-3 rounded border border-white/15 bg-white/5 p-3 text-xs">
-    <p class="mb-1 text-sm font-bold">{{ baseJa }}</p>
-    <p class="opacity-70">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 / 品質 {{ quality }}%</p>
-    <p v-if="fixed.length" class="mt-1">貼り付けの物で固定済み: {{ fixed.join(" / ") }}</p>
-    <p v-if="c.dropOnly.value.length" class="mt-1">
-      樹 MOD: <b>{{ c.dropOnly.value.map((d) => ja(d.text)).join(" / ") }}</b> — 固定済みで付いたベースを買う
-    </p>
-    <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
-      このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
-    </p>
-    <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。固定済み / 固定無し・厳しい / ゆるい。ベースは買う物。取引所は押した時だけ -->
-    <div v-if="fc.options.value.length || c.targets.value.length" class="mt-2 rounded bg-black/20 p-2">
-      <p class="mb-1 font-bold">
-        始め方 (初動の安い順)
-        <button v-if="!fc.searched.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
-          {{ fc.busy.value ? "探しています…" : "固定済み・固定無しを探す (3 本 / 約 30 秒)" }}
-        </button>
-      </p>
-      <label v-for="o in fc.options.value" :key="o.id" class="block" :class="o.cost == null ? 'opacity-50' : ''">
-        <input type="radio" :checked="fc.chosen.value?.id === o.id" :disabled="o.cost == null" @change="fc.choose(o.id)" />
-        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
-        <!-- 取引所で見つからない時は手で埋める (オーナー 2026-09-24:「足りない情報は手動で」) -->
-        <span v-if="o.manual" class="ml-1 opacity-80">
-          手で入れる <input v-model.number="fc.manual.value" type="number" min="0" class="num w-16" /> 神
-        </span>
-        <span v-if="o.note" class="opacity-60"> {{ o.note }}</span>
-        <button v-if="o.link" type="button" class="ml-2 text-sky-300 underline" @click.prevent="openExternal(o.link.url)">{{ o.link.text }} →</button>
-      </label>
-      <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
-      <!-- 3 本の条件と結果 (バグ確認用。オーナー 2026-09-24) -->
-      <SearchChecks :c="c" />
-      <!-- どの MOD を固定済みにして始めるか、選んで一斉に探す (オーナー 2026-09-24) -->
-      <FractureCandidates :c="c" />
+  <div class="mb-3 text-xs">
+    <!-- 3 枚並べる: ベース / 始め方 / 完成品と比べる (2026-09-24 リリースに向けた見直し: 縦に長かった) -->
+    <div class="grid gap-2 lg:grid-cols-3">
+      <!-- ベース -->
+      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
+        <p class="mb-1 opacity-50">ベース</p>
+        <p class="text-sm font-bold">{{ baseJa }}</p>
+        <p class="opacity-70">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 ・ 品質 {{ quality }}%</p>
+        <p v-if="fixed.length" class="mt-1">固定済み: {{ fixed.join(" / ") }}</p>
+        <p v-if="c.dropOnly.value.length" class="mt-1">
+          樹 MOD (固定済みで買う): <b>{{ c.dropOnly.value.map((d) => ja(d.text)).join(" / ") }}</b>
+        </p>
+        <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
+          このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
+        </p>
+        <p v-if="c.slots.value?.impossible" class="mt-1 text-rose-300">{{ c.slots.value.note }}</p>
+        <p v-for="b in others" :key="b.baseType" class="mt-1 opacity-60">
+          別のベースなら: {{ b.ja }} ({{ b.maxQualityPlus ? `品質上限 +${b.maxQualityPlus}%` : b.implicits.join(" / ") }})
+        </p>
+      </section>
+
+      <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。固定済み / 固定無し・厳しい / ゆるい。ベースは買う物 -->
+      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
+        <p class="mb-1 flex items-center gap-2 opacity-50">
+          始め方 (初動の安い順)
+          <button v-if="!fc.searched.value && c.treePlan.value" type="button" class="rounded border border-sky-600 px-1 opacity-100" :disabled="fc.busy.value" @click="fc.search()">
+            {{ fc.busy.value ? "探しています…" : "探す" }}
+          </button>
+        </p>
+        <p v-if="!fc.options.value.length" class="opacity-60">固定済みの MOD が無いので、素のベースから</p>
+        <label v-for="o in fc.options.value" :key="o.id" class="mb-0.5 block" :class="o.cost == null ? 'opacity-50' : ''">
+          <input type="radio" :checked="fc.chosen.value?.id === o.id" :disabled="o.cost == null" @change="fc.choose(o.id)" />
+          {{ o.label }}: <b class="text-[13px]">{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
+          <!-- 取引所で見つからない時は手で埋める (オーナー 2026-09-24:「足りない情報は手動で」) -->
+          <span v-if="o.manual" class="ml-1 opacity-80">
+            手で入れる <input v-model.number="fc.manual.value" type="number" min="0" class="num w-14" /> 神
+          </span>
+          <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click.prevent="openExternal(o.link.url)">{{ o.link.text }} →</button>
+          <span v-if="o.note" class="block pl-5 opacity-50">{{ o.note }}</span>
+        </label>
+        <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
+        <!-- どの MOD を固定済みにして始めるか (オーナー 2026-09-24) / 3 本の条件と結果 (確認用) -->
+        <FractureCandidates :c="c" />
+        <SearchChecks :c="c" />
+      </section>
+
+      <!-- 完成品を買うのと比べる (オーナー 2026-09-24:「完成品か比較対象ないよね」) -->
+      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
+        <p class="mb-1 flex items-center gap-2 opacity-50">
+          完成品と比べる
+          <button v-if="!fin.found.value && fin.query.value" type="button" class="rounded border border-sky-600 px-1 opacity-100" :disabled="fin.busy.value || fc.busy.value" @click="fin.search()">
+            {{ fin.busy.value ? "探しています…" : fc.busy.value ? "順番待ち…" : "探す" }}
+          </button>
+        </p>
+        <p>
+          完成品を買う: <b class="text-[13px]">{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value || fc.busy.value ? "取得中…" : "まだ" }}</b>
+          <!-- 取引所に無い時だけ手で埋める -->
+          <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
+            手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-14" /> 神
+          </span>
+          <button v-if="fin.found.value?.url" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
+        </p>
+        <p>作る見込み: <b class="text-[13px]">{{ fin.craftCost.value != null ? c.money(fin.craftCost.value) : "-" }}</b></p>
+        <p class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
+        <p v-if="fin.verdict.value" class="mt-2 rounded bg-black/20 px-2 py-1">
+          → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "作る" }}</b>
+          方が {{ c.money(fin.verdict.value.diff) }} 安い
+        </p>
+        <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
+      </section>
     </div>
-    <!-- 完成品を買うのと比べる (オーナー 2026-09-24:「完成品か比較対象ないよね」)。取引所は押した時だけ 1 本 -->
-    <div class="mt-2 rounded bg-black/20 p-2">
-      <p class="mb-1 font-bold">
-        完成品と比べる
-        <button v-if="!fin.found.value && fin.query.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fin.busy.value || fc.busy.value" @click="fin.search()">
-          {{ fin.busy.value ? "探しています…" : fc.busy.value ? "順番待ち…" : "完成品の最安を取る" }}
-        </button>
-      </p>
-      <p>
-        完成品を買う: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value || fc.busy.value ? "取得中…" : "まだ" }}</b>
-        <!-- 取引所に無い時だけ手で埋める (売値の欄は外した。オーナー 2026-09-24) -->
-        <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
-          手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-16" /> 神
-        </span>
-        <button v-if="fin.found.value?.url" type="button" class="ml-2 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
-      </p>
-      <p>
-        作る見込み: <b>{{ fin.craftCost.value != null ? c.money(fin.craftCost.value) : "-" }}</b>
-        <span class="opacity-60"> (始め方の初動 + {{ fin.craftBasis.value }}。目安)</span>
-      </p>
-      <p v-if="fin.verdict.value" class="mt-1">
-        → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "作る" }}</b>
-        方が {{ c.money(fin.verdict.value.diff) }} 安い
-      </p>
-      <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
-    </div>
-    <!-- 作る MOD と狙う段。段は最初に選べる (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」) -->
-    <p class="mt-1">作る MOD {{ targets.length }} つ</p>
-    <div v-for="r in targets" :key="r.modId" class="flex items-center gap-2 pl-2">
-      <span class="flex-1">{{ r.text }}</span>
-      <select v-if="tiersOf(r.modId).length > 1" class="rounded border border-white/20 bg-black/30 px-1"
-        :value="c.targets.value.find((t) => t.modId === r.modId)?.minTierIndex ?? 0"
-        @change="c.setTier(r.modId, Number(($event.target as HTMLSelectElement).value))">
-        <option v-for="t in tiersOf(r.modId)" :key="t.i" :value="t.i">{{ t.label }}</option>
-      </select>
-    </div>
-    <p v-if="c.slots.value?.impossible" class="mt-1 text-rose-300">{{ c.slots.value.note }}</p>
-    <p v-for="b in others" :key="b.baseType" class="mt-1 opacity-70">
-      別のベースなら: {{ b.ja }} ({{ b.maxQualityPlus ? `品質上限 +${b.maxQualityPlus}%` : b.implicits.join(" / ") }})
-    </p>
+
+    <!-- 作る MOD と狙う段 (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」) -->
+    <section class="mt-2 rounded-lg border border-white/15 bg-white/[0.04] p-3">
+      <p class="mb-1 opacity-50">作る MOD {{ targets.length }} つ と狙う段 (段はツリーの手でも選び直せる)</p>
+      <div class="grid gap-x-6 gap-y-1 md:grid-cols-2">
+        <div v-for="r in targets" :key="r.modId" class="flex items-center gap-2">
+          <span class="flex-1">{{ r.text }}</span>
+          <select v-if="tiersOf(r.modId).length > 1" class="rounded border border-white/20 bg-black/30 px-1"
+            :value="c.targets.value.find((t) => t.modId === r.modId)?.minTierIndex ?? 0"
+            @change="c.setTier(r.modId, Number(($event.target as HTMLSelectElement).value))">
+            <option v-for="t in tiersOf(r.modId)" :key="t.i" :value="t.i">{{ t.label }}</option>
+          </select>
+          <span v-else class="opacity-50">確定</span>
+        </div>
+      </div>
+    </section>
+
     <details v-if="c.treeResult.value" class="mt-2">
-      <summary class="cursor-pointer opacity-70">固定済み・固定無しの中身を見る</summary>
+      <summary class="cursor-pointer opacity-50">固定済み・固定無しの詳しい表</summary>
       <TreeFracturePanel :c="c" />
     </details>
   </div>

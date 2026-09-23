@@ -403,7 +403,11 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
-      const pass = h.passes(s, n);
+      // 本線の手は「それより上の本線の手で揃えた物が全部まだある」ことも○の条件 (残したい MOD は自動。オーナー 2026-09-24:
+      // 「残したい MOD とか分からん。ハズレ以外だろ残したいのなんて」)
+      const pos = main.indexOf(at);
+      // ブリーチの MOD は品質のための一時的な物 (最後に削減で消す) なので、自動で残す物には入れない
+      const pass = h.passes(s, n) && (pos < 0 || main.slice(0, pos).every((i) => !nodes[i]!.targets.length || h.targetsMet(s, nodes[i]!)));
       // 確定の手は × が未設定なら○の行き先へ (必ず付くので × は来ない前提)
       let next = pass ? n.onHit : n.onMiss == null && n.action && CERTAIN.has(n.action.kind) ? n.onHit : n.onMiss;
       if (next === "auto") next = autoNext(s, at);

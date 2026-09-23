@@ -66,8 +66,8 @@ const rows = computed(() => candidates.value.map((t) => {
 </script>
 
 <template>
-  <details class="mt-1" open>
-    <summary class="cursor-pointer opacity-70">固定済みにする MOD を選んで探す ({{ MAX }} つまで)</summary>
+  <details class="mt-2">
+    <summary class="cursor-pointer opacity-60">別の MOD を固定済みにして始めたら? ({{ MAX }} つまで選んで探す)</summary>
     <div v-for="r in rows" :key="r.modId" class="pl-2">
       <div class="flex flex-wrap items-center gap-2">
         <label class="flex-1" :class="r.locked ? 'opacity-40' : ''">

@@ -175,15 +175,36 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     }
   }
 
-  /** 手を足す (その手の指輪で付いている狙いを「残したい」に入れておく) */
-  function addNode(fromState: SimState): string {
-    const keep = fromState.slots.filter((x) => !x.fixed && x.modId).map((x) => x.modId!);
-    const n = emptyNode(fromState.breach ? [...keep, "__breach__"] : keep);
-    nodes.value = [...nodes.value, n];
+  /**
+   * 手の並びを画面の順 (手 1 から ○ を先・× を後にたどった順、つながっていない手は後ろ) に並べ直す。
+   * 手の番号がこの並びなので、見本を読み込んだ時に途中の番号がずれない。止まった理由の「手 N」とも揃う
+   */
+  function ordered(list: SimNode[]): SimNode[] {
+    const byId = new Map(list.map((n) => [n.id, n]));
+    const out: SimNode[] = [];
+    const seen = new Set<string>();
+    const visit = (id: string | undefined): void => {
+      const n = id ? byId.get(id) : undefined;
+      if (!n || seen.has(n.id)) return;
+      seen.add(n.id); out.push(n);
+      for (const g of [n.onHit, n.onMiss]) if (g && g !== "done" && g !== "auto") visit(g);
+    };
+    visit(list[0]?.id);
+    return [...out, ...list.filter((n) => !seen.has(n.id))];
+  }
+  /** 手を足す。残したい MOD は自動 (本線の上の手で揃えた物) なので入れない */
+  function addNode(_fromState: SimState): string {
+    const n = emptyNode();
+    nodes.value = ordered([...nodes.value, n]);
     return n.id;
   }
   function update(id: string, patch: Partial<SimNode>): void {
-    nodes.value = nodes.value.map((n) => (n.id === id ? { ...n, ...patch } : n));
+    nodes.value = ordered(nodes.value.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+    result.value = null;
+  }
+  /** 見本などを丸ごと入れる */
+  function setAll(list: SimNode[]): void {
+    nodes.value = ordered(list);
     result.value = null;
   }
   function remove(id: string): void {
@@ -202,5 +223,5 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     return k <= r.doneCosts.length ? r.doneCosts[k - 1]! : null;
   });
 
-  return { ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced };
+  return { setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced };
 }

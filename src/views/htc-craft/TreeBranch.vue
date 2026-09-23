@@ -26,21 +26,25 @@ function chip(g: string | null | undefined): string {
 </script>
 
 <template>
-  <div v-if="node" class="flex items-start gap-3">
-    <!-- 手のカードと、○ の枝 (下へ) -->
-    <div class="flex w-[34rem] shrink-0 flex-col">
-      <TreeNodeCard :c="c" :t="t" :node="node" :index="t.indexOf(id)" @focus="(x) => emit('focus', x)" />
-      <div class="ml-4 mt-1 border-l-2 border-emerald-500/60 pl-3 pt-1">
-        <span class="text-xs font-bold text-emerald-300">○</span>
-        <TreeBranch v-if="hitChild" :c="c" :t="t" :id="hitChild" class="mt-1" @focus="(x) => emit('focus', x)" />
-        <span v-else class="ml-2 rounded border border-emerald-500/40 px-1 text-xs" :class="node.onHit ? '' : 'opacity-50'">{{ chip(node.onHit) }}</span>
+  <!-- ○ の本線はまっすぐ縦に (下にずらさない)、× の枝だけ右へ。2026-09-24: ○ のたびに右へずれて線が何本も並んでいた -->
+  <div v-if="node" class="flex flex-col">
+    <div class="flex items-start gap-3">
+      <div class="w-[31rem] shrink-0">
+        <TreeNodeCard :c="c" :t="t" :node="node" :index="t.indexOf(id)" @focus="(x) => emit('focus', x)" />
+      </div>
+      <!-- × の枝 (右へ) -->
+      <div class="mt-4 shrink-0 border-t-2 border-rose-500/60 pt-1">
+        <span class="text-xs font-bold text-rose-300">×</span>
+        <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" />
+        <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss) }}</span>
       </div>
     </div>
-    <!-- × の枝 (右へ) -->
-    <div class="mt-6 shrink-0 border-t-2 border-rose-500/60 pt-1">
-      <span class="text-xs font-bold text-rose-300">×</span>
-      <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" />
-      <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss) }}</span>
+    <!-- ○ の本線 (下へ) -->
+    <div class="flex items-center gap-2 py-1 pl-6 text-xs">
+      <span class="h-4 border-l-2 border-emerald-500/60" />
+      <span class="font-bold text-emerald-300">○</span>
+      <span v-if="!hitChild" class="rounded border border-emerald-500/40 px-1" :class="node.onHit ? '' : 'opacity-50'">{{ chip(node.onHit) }}</span>
     </div>
+    <TreeBranch v-if="hitChild" :c="c" :t="t" :id="hitChild" @focus="(x) => emit('focus', x)" />
   </div>
 </template>

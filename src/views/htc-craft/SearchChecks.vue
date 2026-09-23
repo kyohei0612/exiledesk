@@ -51,7 +51,7 @@ const rows = computed(() => (c.treePlan.value?.searches ?? []).map((sq) => {
 
 <template>
   <details class="mt-1">
-    <summary class="cursor-pointer opacity-70">検索の中身 (3 本)</summary>
+    <summary class="cursor-pointer opacity-50">検索の条件と件数 (確認用)</summary>
     <div v-for="r in rows" :key="r.key" class="mt-1 pl-2">
       <b>{{ r.label }}</b>:
       <span :class="r.error ? 'text-rose-300' : ''">{{ r.status }}</span>

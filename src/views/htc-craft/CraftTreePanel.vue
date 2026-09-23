@@ -17,10 +17,20 @@ const c = props.c;
 const t = useCraftTree(c);
 const pct = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 貼り付けの狙いに合う見本のツリー */
+/** 結果の表の手の名前 (何をする手か一目で分かるように、2026-09-24) */
+const KIND: Record<string, string> = {
+  chaos: "カオス", exalt: "高貴", annul: "消去", essence: "エッセンス", desecrate: "冒涜", light: "光 + 消去",
+  breach: "ブリーチ", whittle: "削減", quality: "品質", check: "確認",
+};
+function nodeLabel(id: string): string {
+  const n = t.nodes.value.find((x) => x.id === id);
+  const aim = n?.targets.map((x) => c.stepTarget([x.modId])).join(" / ") ?? "";
+  return [n?.action ? KIND[n.action.kind] : "", aim].filter(Boolean).join(" → ");
+}
 const presets = computed(() => TREE_PRESETS.filter((x) => x.applies(c.targets.value)));
 function loadPreset(id: string): void {
   const x = TREE_PRESETS.find((y) => y.id === id), d = c.data.value, p = c.prices.value;
-  if (x && d && p) t.nodes.value = x.build(d, p, c.targets.value);
+  if (x && d && p) t.setAll(x.build(d, p, c.targets.value));
 }
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
@@ -39,8 +49,8 @@ async function focus(id: string): Promise<void> {
       <label>回す回数 <input v-model.number="t.runs.value" type="number" min="100" step="500" class="num w-20" /> 回</label>
     </div>
     <p class="mb-2 text-xs opacity-60">
-      手を組みます。各手で打つ物と○の条件、○ / × の行き先を選びます (最初は何も入っていません)。○ は下へ、× は右へ枝が伸びます。
-      打つ物は、その手に来た時の指輪で打てる物だけ出ます。手 1 は ○ と × の両方の行き先が要ります。
+      手を並べて作り方を組みます。手ごとに「打つ物」と「狙う MOD」、当たった時 (○) と外れた時 (×) にどこへ進むかを選びます。
+      ○ は下へ、× は右へ枝が伸びます。消去の手は「自動」にすると、消えた物を見て戻り先を決めます。最後に回すと、完成の確率と費用が出ます。
     </p>
     <div v-if="presets.length" class="mb-2 text-xs">
       <span class="opacity-60">見本のツリー:</span>
@@ -63,23 +73,41 @@ async function focus(id: string): Promise<void> {
       </button>
       <span v-if="t.blocked.value" class="ml-2 text-rose-300">{{ t.blocked.value }}</span>
       <template v-if="t.result.value">
-        <p class="mt-2">
-          完成する <b class="text-emerald-300">{{ pct(t.result.value.pDone) }}</b>
-          / 予算 {{ t.budgetDivine.value }} 神以内で完成 <b class="text-amber-300">{{ pct(t.result.value.pBudget ?? 0) }}</b>
+        <!-- 大きな数字 4 つ -->
+        <div class="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div class="rounded bg-white/5 p-2">
+            <p class="opacity-50">完成する</p>
+            <p class="text-xl font-bold text-emerald-300">{{ pct(t.result.value.pDone) }}</p>
+          </div>
+          <div class="rounded bg-white/5 p-2">
+            <p class="opacity-50">予算 {{ t.budgetDivine.value }} 神以内で完成</p>
+            <p class="text-xl font-bold" :class="(t.result.value.pBudget ?? 0) >= t.targetPct.value / 100 ? 'text-emerald-300' : 'text-amber-300'">{{ pct(t.result.value.pBudget ?? 0) }}</p>
+          </div>
+          <div class="rounded bg-white/5 p-2">
+            <p class="opacity-50">目標 {{ t.targetPct.value }}% に要る額</p>
+            <p class="text-xl font-bold text-amber-300">{{ t.needForTarget.value != null ? c.money(t.needForTarget.value) : "届かない" }}</p>
+          </div>
+          <div class="rounded bg-white/5 p-2">
+            <p class="opacity-50">平均 (完成した時)</p>
+            <p class="text-xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.expected) : "-" }}</p>
+          </div>
+        </div>
+        <p v-if="t.result.value.pDone > 0" class="mt-1 opacity-60">
+          半分の確率で {{ c.money(t.result.value.p50) }} / 8 割で {{ c.money(t.result.value.p80) }} / 9 割で {{ c.money(t.result.value.p90) }} 以内
         </p>
-        <p>
-          目標 {{ t.targetPct.value }}% で完成させるには
-          <b class="text-amber-300">{{ t.needForTarget.value != null ? c.money(t.needForTarget.value) : "届かない (完成する確率が足りない)" }}</b>
-          を用意
-        </p>
-        <p v-if="t.result.value.pDone > 0">
-          完成した時の費用: 平均 <b>{{ c.money(t.result.value.expected) }}</b>
-          / 半分 {{ c.money(t.result.value.p50) }} / 8 割 {{ c.money(t.result.value.p80) }} / 9 割 {{ c.money(t.result.value.p90) }}
-        </p>
-        <p class="mt-1 opacity-70">
-          手ごと (1 回あたり): <span v-for="(p, i) in t.result.value.perNode" :key="p.id" class="mr-2">手 {{ i + 1 }} {{ p.tries.toFixed(1) }} 回 / {{ c.money(p.cost) }}</span>
-        </p>
-        <p v-for="s in t.result.value.stops" :key="s.reason" class="text-rose-300">止まった {{ pct(s.p) }}: {{ s.reason }}</p>
+        <p v-for="s in t.result.value.stops" :key="s.reason" class="mt-1 text-rose-300">止まった {{ pct(s.p) }}: {{ s.reason }}</p>
+        <!-- 手ごと (1 回の完成あたり)。費用の大きい手が分かるように -->
+        <table class="mt-2 w-full">
+          <tr class="opacity-50"><th class="text-left font-normal">手</th><th class="text-right font-normal">打つ回数</th><th class="text-right font-normal">費用</th><th class="text-left font-normal pl-3">割合</th></tr>
+          <tr v-for="(p, i) in t.result.value.perNode" :key="p.id" class="border-t border-white/5">
+            <td class="py-0.5">手 {{ i + 1 }} <span class="opacity-60">{{ nodeLabel(p.id) }}</span></td>
+            <td class="text-right">{{ p.tries.toFixed(1) }} 回</td>
+            <td class="text-right">{{ c.money(p.cost) }}</td>
+            <td class="pl-3">
+              <div class="h-2 rounded bg-amber-500/60" :style="{ width: `${Math.round(100 * p.cost / Math.max(1, t.result.value.perNode.reduce((a, x) => a + x.cost, 0)))}%` }" />
+            </td>
+          </tr>
+        </table>
       </template>
     </div>
   </div>

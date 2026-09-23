@@ -5,7 +5,7 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { ref, watchEffect } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
@@ -29,6 +29,7 @@ watchEffect(() => pk.useData(c.data.value));
 //
 // **開発ビルドも入口から始める** (オーナー 2026-09-24:「クラフト計算機のデフォ表示ずっとニーモニックリングの所
 // 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
+const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">("none");
 const text = ref("");
 const picked = ref<string | null>(null);
@@ -38,8 +39,14 @@ const picked = ref<string | null>(null);
  * (オーナー 2026-09-24:「MOD 解析も別に表示せずに直通で通していい。結果だけ分かりやすく簡潔に」)。
  * 細かい表 (MOD の段・忍者の道・ベース候補) は「詳しく」に畳む。
  */
+/**
+ * 入力欄を開いているか。解析したらたたんで 1 行にし、結果を上に寄せる (「貼り直す」で開く)。
+ * 2026-09-24 リリースに向けた見直し: 解析後も貼り付け欄が大きく残り、結果が下に押し出されていた
+ */
+const inputOpen = ref(true);
 async function reread(t: string): Promise<void> {
   await c.run(t);
+  if (c.base.value) inputOpen.value = false;
 }
 function pick(id: string): void {
   const p = PRESETS.find((x) => x.id === id);
@@ -56,6 +63,7 @@ function backToDoor(): void {
   door.value = "none";
   picked.value = null;
   text.value = "";
+  inputOpen.value = true;
 }
 async function openBaseDoor(): Promise<void> {
   door.value = "base";
@@ -77,7 +85,15 @@ async function runPicked(): Promise<void> {
   if (!pk.baseName.value || !pk.cls.value) return;
   zeroStart.value = { ...zeroStart.value, baseType: pk.baseName.value, itemLevel: pk.level.value };
   await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
+  if (c.base.value) inputOpen.value = false;
 }
+/** たたんだ入力欄の 1 行 */
+const inputSummary = computed(() => {
+  const it = c.item.value;
+  if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length} 個`;
+  const ja = pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value ?? "";
+  return `${ja} / ilvl ${pk.level.value} / 狙う MOD ${pk.picks.value.length} 個`;
+});
 
 /** 暗黙は複数行のことがある (枠の増減は 2 行)。1 行に畳んで出す */
 const implicitText = (lines: readonly string[]): string =>
@@ -86,9 +102,9 @@ const implicitText = (lines: readonly string[]): string =>
 
 <template>
   <div class="h-full overflow-auto p-4 text-sm">
-    <h1 class="mb-1 text-lg font-bold">クラフトのお試し計算機</h1>
+    <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
     <p class="mb-3 text-xs opacity-60">
-      ゲームから Ctrl+C した日本語のアイテムをそのまま貼れます。リリース前の動作確認用です。
+      作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
     </p>
 
     <!-- 入口。開いた時はここだけ。何も計算していない -->
@@ -122,8 +138,17 @@ const implicitText = (lines: readonly string[]): string =>
       @click="backToDoor()"
     >← 入口に戻る</button>
 
+    <!-- 解析した後は入力欄をたたむ -->
+    <div v-if="door !== 'none' && !inputOpen && c.base.value" class="mb-3 flex items-center gap-3 rounded bg-white/5 px-3 py-2 text-xs">
+      <span class="opacity-60">{{ door === "paste" ? "貼り付け" : "ベースから" }}:</span>
+      <b>{{ inputSummary }}</b>
+      <button type="button" class="ml-auto rounded border border-[var(--exile-color-border-subtle)] px-2 py-0.5 hover:border-amber-400" @click="inputOpen = true">
+        {{ door === "paste" ? "貼り直す" : "選び直す" }}
+      </button>
+    </div>
+
     <!-- 入口 A: 貼り付け -->
-    <div v-if="door === 'paste'" class="mb-4">
+    <div v-if="door === 'paste' && (inputOpen || !c.base.value)" class="mb-4">
       <div class="mb-2 flex flex-wrap gap-2 text-xs">
         <span class="opacity-50">見本:</span>
         <button
@@ -151,7 +176,7 @@ const implicitText = (lines: readonly string[]): string =>
     </div>
 
     <!-- 入口 B: ベースから選ぶ -->
-    <div v-if="door === 'base'" class="mb-4">
+    <div v-if="door === 'base' && (inputOpen || !c.base.value)" class="mb-4">
       <div class="mb-2 flex flex-wrap gap-2 text-xs">
         <span class="opacity-50">見本:</span>
         <button
@@ -265,17 +290,18 @@ const implicitText = (lines: readonly string[]): string =>
       相場が未取得です。費用はすべて 0 と出ます。左の「カレンシー」を一度開いて相場を取ってから戻ってください。
     </p>
     <p v-else-if="c.coverage.value" class="mb-3 text-xs opacity-50">
-      相場 {{ c.coverage.value.league ?? "?" }} / {{ c.coverage.value.fetchedLabel }} —
-      値が入ったキー {{ c.coverage.value.filled }}、エッセンス {{ c.coverage.value.essences.filled }}/{{ c.coverage.value.essences.total }}
-      <span v-if="c.coverage.value.missing.length"> (相場に無い {{ c.coverage.value.missing.length }} 件は使えません)</span>
+      相場: {{ c.coverage.value.league ?? "?" }} ({{ c.coverage.value.fetchedLabel }})
+      <span v-if="c.coverage.value.missing.length">— 相場に無い {{ c.coverage.value.missing.length }} 種類は使えない物として扱います</span>
     </p>
 
     <template v-if="c.base.value">
+      <h2 class="mb-1 text-base font-bold">ベースの診断</h2>
       <DiagnosisCard :c="c" />
-      <h2 class="mb-1 font-bold">作り方 (ツリー)</h2>
+      <h2 class="mb-1 mt-5 text-base font-bold">作り方 (ツリー)</h2>
       <CraftTreePanel :c="c" />
 
-      <details class="mb-4 mt-4 text-xs">
+      <!-- ここから下は開発用 (配布版では出さない) -->
+      <details v-if="DEV" class="mb-4 mt-4 text-xs">
         <summary class="cursor-pointer opacity-60">詳しく (MOD の段・忍者の道・ベース候補)</summary>
       <!-- 読み取り -->
       <section class="mb-4">
@@ -381,7 +407,7 @@ const implicitText = (lines: readonly string[]): string =>
       </details>
 
       <!-- 時間。動作確認用なので畳んでおく (常に開いていると段の情報量が増える) -->
-      <details class="text-xs opacity-50">
+      <details v-if="DEV" class="text-xs opacity-50">
         <summary class="cursor-pointer font-bold opacity-100">かかった時間</summary>
         <div v-for="([label, ms], i) in c.timings.value" :key="i">{{ label }}: {{ ms }} ミリ秒</div>
       </details>

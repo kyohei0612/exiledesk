@@ -199,7 +199,7 @@ function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
     <!-- オーブ (お告げに合う物だけ) -->
     <div class="mt-1 flex flex-wrap items-center gap-1">
       <span class="opacity-60">オーブ:</span>
-      <select class="rounded border border-white/20 bg-black/30 px-1" :value="orb" @change="setOrb(($event.target as HTMLSelectElement).value)">
+      <select class="min-w-0 max-w-full truncate rounded border border-white/20 bg-black/30 px-1" :value="orb" @change="setOrb(($event.target as HTMLSelectElement).value)">
         <option value="" disabled>選ぶ</option>
         <option v-for="o in orbs" :key="o.key" :value="o.key">{{ o.ja }}</option>
       </select>
