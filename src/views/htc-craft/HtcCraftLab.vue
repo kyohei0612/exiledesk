@@ -9,6 +9,7 @@ import { computed, ref, watchEffect } from "vue";
 import { PRESETS } from "./presets";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
+import TreeFracturePanel from "./TreeFracturePanel.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -90,17 +91,6 @@ async function runPicked(): Promise<void> {
   await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
 }
 
-/** 固定のやり方 → 画面の言葉 */
-const howJa: Record<string, string> = {
-  buy: "そのまま買う",
-  "necro-desecrate": "右側ネクロ冒涜 (サフィが足りなければ右側の高貴で足す) → 固定 (1/3)",
-  desecrate: "冒涜 → 固定 (1/3、消去なし)",
-  direct: "そのまま固定",
-  reduce: "消去で 3 MOD まで減らす → 冒涜 → 固定",
-};
-/** 前の候補が全部外れてここまで来る確率 */
-const reachOf = (order: readonly { hit: number }[], i: number): number =>
-  order.slice(0, i).reduce((m, o) => m * (1 - o.hit), 1);
 /** 暗黙は複数行のことがある (枠の増減は 2 行)。1 行に畳んで出す */
 const implicitText = (lines: readonly string[]): string =>
   (lines[0] ?? "").split(String.fromCharCode(10)).join(" / ");
@@ -357,110 +347,7 @@ const implicitText = (lines: readonly string[]): string =>
           </span>
         </p>
 
-        <!-- 固定済みを買うか、自前で固定するか。オーナーの順番: オーブの値段 → 固定済み最安 1 件 → 比べて起動 -->
-        <div v-if="c.treePlan.value" class="mt-2 rounded border border-amber-700/50 p-2 text-xs">
-          <b>固定済みを買うか、自前で固定するか</b>
-          <p class="mt-1">
-            フラクチャーオーブ
-            <b class="text-amber-300">{{ c.treePlan.value.plan.orb == null ? "相場に無い" : c.treePlan.value.plan.orb.toFixed(2) + " 神" }}</b>
-            <template v-if="c.treePlan.value.plan.orb != null && c.treePlan.value.plan.breakEvenOrb != null">
-              — 分かれ目 約 {{ c.treePlan.value.plan.breakEvenOrb.toFixed(1) }} 神なので、自前なら
-              <b>{{ c.treePlan.value.plan.orb > c.treePlan.value.plan.breakEvenOrb ? "3 MOD まで減らして冒涜してから固定" : "減らさずそのまま固定" }}</b>
-              が得
-            </template>
-          </p>
-          <table v-if="c.treePlan.value.plan.rows.length" class="mt-1 w-full">
-            <tr class="opacity-50"><th class="text-left">樹 MOD 入りの物</th><th class="text-right">自前の期待</th><th class="text-right">期待で試す数</th></tr>
-            <tr v-for="r in c.treePlan.value.plan.rows" :key="r.mods" class="border-b border-white/5">
-              <td>{{ r.mods }} MOD</td>
-              <td class="text-right">ベース代 × {{ r.mods }} + <b>{{ r.fixed.toFixed(1) }} 神</b></td>
-              <td class="text-right opacity-60">{{ r.expectedItems }} 個</td>
-            </tr>
-          </table>
-          <p class="mt-1 opacity-60">
-            成功率は減らしても減らさなくても 1/N (最初の MOD 数分の 1)。1 個成功したら終わり。
-            <b>固定済み品の最安がこれより安ければ買う</b>ほうが得です。
-          </p>
-          <!-- 検索の条件。stat は作れない MOD だけ、他は規定通り。手で探す時もこのまま入れればいい -->
-          <p class="mt-2">次: 最安を取る — <b>{{ c.treePlan.value.searches.length }} 本</b></p>
-          <table class="mt-1 w-full">
-            <tr v-for="sq in c.treePlan.value.searches" :key="sq.key" class="border-b border-white/5 align-top">
-              <td class="py-0.5 pr-2 whitespace-nowrap">{{ sq.label }}</td>
-              <td class="opacity-80">
-                {{ c.item.value?.baseText ?? c.item.value?.baseType }} / ilvl {{ c.item.value?.itemLevel ?? "?" }} 以上 / レア / コラプト無し /
-                <template v-if="sq.key !== 'fractured'">フラクチャー: いいえ / </template>
-                <template v-for="b in c.treePlan.value.buys" :key="b.text">
-                  <b>{{ b.text.replace(/[0-9]+/, "#") }}</b>
-                  <span class="text-amber-300">({{ sq.key === "fractured" ? "Fractured" : "Explicit" }}<template
-                    v-if="b.filters[0]?.min"> 最小 {{ b.filters[0].min }}</template>)</span>
-                </template>
-                <template v-if="sq.key === 'strict'"> / 疑似 プレフィックスモッド #個 最大 1</template>
-                <span class="opacity-50"> — 最安 {{ sq.take }} 件</span>
-              </td>
-            </tr>
-          </table>
-          <p v-if="c.treePlan.value.plan.rows.find((r) => r.mods === 4)" class="mt-1 opacity-70">
-            固定済みが <b>{{ c.treePlan.value.plan.rows.find((r) => r.mods === 4)!.fixed.toFixed(1) }} 神</b>
-            (オーブの約 {{ (c.treePlan.value.plan.rows.find((r) => r.mods === 4)!.fixed / (c.treePlan.value.plan.orb ?? 1)).toFixed(1) }} 倍) 以下なら、
-            自前は絶対に勝てないので買い。1 本目で分かれば残りは投げません。
-          </p>
-          <button
-            class="mt-2 rounded bg-amber-600/80 px-3 py-1 font-bold disabled:opacity-40"
-            :disabled="c.treeBusy.value || !c.coverage.value?.ready"
-            @click="c.searchTree()"
-          >
-            {{ c.treeBusy.value ? "取引所に問い合わせ中… (1 本 10.5 秒間隔)" : `最安を取って比べる (${c.treePlan.value.searches.length} 本)` }}
-          </button>
-          <p v-if="c.treeError.value" class="mt-1 rounded bg-red-900/40 p-1">{{ c.treeError.value }}</p>
-
-          <!-- 判定。成功 1 回あたりの安い順に試し、固定済みより高い所で打ち切る -->
-          <template v-if="c.treeResult.value">
-            <p class="mt-2 opacity-70">
-              <template v-for="f in c.treeResult.value.found" :key="f.label">
-                {{ f.label }}: 全 {{ f.total }} 件<a v-if="f.url" :href="f.url" target="_blank" class="ml-1 underline">開く</a> ／
-              </template>
-              <template v-if="c.treeResult.value.skippedNoMods"> MOD 数が読めず外した {{ c.treeResult.value.skippedNoMods }} 件</template>
-            </p>
-            <p v-if="c.treeResult.value.earlyBuy" class="mt-1 rounded bg-emerald-900/40 p-1 text-sm">
-              固定済みが自前の最安 ({{ c.treeResult.value.selfFloor?.toFixed(1) }} 神 = 4 MOD のベースがタダでも) 以下なので、
-              <b>買うのが一番安い</b>です。残りの検索は投げていません。
-            </p>
-            <p class="mt-1 text-sm">
-              期待費用 <b class="text-emerald-300">{{ c.treeResult.value.decision.expected.toFixed(1) }} 神</b>
-              <template v-if="c.treeResult.value.decision.buyOutright != null">
-                ／ 最初から固定済みを買うと <b>{{ c.treeResult.value.decision.buyOutright.toFixed(1) }} 神</b>
-                <span v-if="c.treeResult.value.decision.order.length === 0" class="text-amber-300"> → 固定済みを買うのが一番安い</span>
-              </template>
-            </p>
-            <table v-if="c.treeResult.value.decision.order.length" class="mt-1 w-full">
-              <tr class="opacity-50">
-                <th class="w-5"></th><th class="text-left">試す物</th><th class="text-left">やり方</th>
-                <th class="text-right">成功率</th><th class="text-right">成功1回あたり</th><th class="text-right">ここまで来る確率</th>
-              </tr>
-              <tr v-for="(o, i) in c.treeResult.value.decision.order" :key="i" class="border-b border-white/5">
-                <td class="opacity-40">{{ i + 1 }}</td>
-                <td>{{ o.listing.label }}</td>
-                <td>{{ howJa[o.how] }}</td>
-                <td class="text-right">{{ (o.hit * 100).toFixed(0) }}%</td>
-                <td class="text-right">{{ o.perSuccess.toFixed(1) }} 神</td>
-                <td class="text-right opacity-60">{{ (reachOf(c.treeResult.value.decision.order, i) * 100).toFixed(0) }}%</td>
-              </tr>
-            </table>
-            <!-- 1/3 の道はどちらもオーナーの実使用が根拠。数字と一緒に必ず出す -->
-            <p class="mt-1 text-[11px] text-amber-300/70">
-              ⚠ <template v-for="n in c.treeNotes" :key="n">{{ n }} </template>
-            </p>
-            <p v-if="c.treeResult.value.decision.fallback" class="mt-1 opacity-70">
-              全部外れたら ({{ (c.treeResult.value.decision.order.reduce((m, o) => m * (1 - o.hit), 1) * 100).toFixed(1) }}%)
-              → 固定済み {{ c.treeResult.value.decision.fallback.listing.label }} を買う
-            </p>
-          </template>
-        </div>
-        <!-- 相場が無いと比べられない。黙って消すと「比べる所が無い」のか「相場が無い」のか分からない -->
-        <p v-else-if="c.dropOnly.value.length" class="mt-2 rounded bg-amber-900/40 p-2 text-xs">
-          相場が未取得なので、<b>固定済みを買うか自前で固定するか</b>を比べられません。
-          左の「カレンシーランキング」を一度開いて相場を取ってから、もう一度「MOD 解析」を押してください。
-        </p>
+        <TreeFracturePanel :c="c" />
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->

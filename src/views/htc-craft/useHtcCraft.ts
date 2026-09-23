@@ -40,7 +40,7 @@ import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/op
 import { displayCurrency } from "../../state/display-currency";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { decide, NECRO_REPLACE_NOTE, type Decision, type TreeListing } from "../../services/htc/tree-decide";
+import { batchFor, BATCH_TARGET, decide, NECRO_REPLACE_NOTE, type Batch, type Decision, type TreeListing } from "../../services/htc/tree-decide";
 import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
 import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
 import { marketStore } from "../../state/market-store";
@@ -105,6 +105,15 @@ export function useHtcCraft() {
     earlyBuy: boolean;
     /** 自前の最安 (神)。固定済みがこれ以下なら買う */
     selfFloor: number | null;
+    /**
+     * オーナーの比べ方 (2026-09-23): ゆるい / 厳しいそれぞれ「85% に届く最小の個数だけ買う」総額と、
+     * 固定済みの値段。**それ以上は買う必要が無い**。
+     */
+    strict: Batch | null;
+    loose: Batch | null;
+    fracturedPrice: number | null;
+    /** 3 つのうち一番安い道 */
+    best: "strict" | "loose" | "fractured" | null;
   } | null>(null);
   const treeBusy = ref(false);
   /**
@@ -307,13 +316,14 @@ export function useHtcCraft() {
       ilvlMin: item.value?.itemLevel ?? undefined,
       ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
     };
-    // オーナー指定 (2026-09-23): 固定済みは最安 1 件、固定無しは最安 5 件ずつ
+    // 固定済みは最安 1 件。固定無しは「85% に届く最小の個数」を数えるので最安 10 件まで
+    // (ゆるい方は 85% に 10 個前後要る。fetch は 1 回 10 件なので検索の本数は変わらない)
     const searches = [
       { key: "fractured" as const, label: "固定済み (買えばそのまま使える)", take: 1,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null },
-      { key: "loose" as const, label: "固定無し・ゆるい (消去ガチャで減らす)", take: 5,
+      { key: "loose" as const, label: "固定無し・ゆるい (消去ガチャで減らす)", take: 10,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null },
-      { key: "strict" as const, label: "固定無し・厳しい (プレフィックス 1 個 = 消去ガチャ無し)", take: 5,
+      { key: "strict" as const, label: "固定無し・厳しい (プレフィックス 1 個 = 消去ガチャ無し)", take: 10,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false, strict: true }) : null },
     ].filter((x) => x.query != null);
     return { plan, buys, searches };
@@ -378,15 +388,25 @@ export function useHtcCraft() {
         }
       }
       const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
-      const decision = decide(listings, {
+      const dp = {
         orb: toDiv(p.currency.fracture) ?? Infinity,
         annul: toDiv(p.currency.annul) ?? 0,
         bone: toDiv(p.currency.desecrate) ?? 0,
         exalt: toDiv(p.currency.exalt) ?? 0,
         necro: toDiv(p.omens.OmenofDextralNecromancy),
         dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
-      });
-      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor };
+      };
+      const decision = decide(listings, dp);
+      const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
+      const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
+      const fr = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price)[0];
+      const fracturedPrice = fr ? fr.price : null;
+      const opts: Array<["strict" | "loose" | "fractured", number]> = [];
+      if (strict) opts.push(["strict", strict.total]);
+      if (loose) opts.push(["loose", loose.total]);
+      if (fracturedPrice != null) opts.push(["fractured", fracturedPrice]);
+      const best = opts.length ? opts.reduce((a, b) => (b[1] < a[1] ? b : a))[0] : null;
+      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, best };
     } catch (e) {
       treeError.value = String(e);
     } finally {

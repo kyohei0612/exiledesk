@@ -129,5 +129,30 @@ const fq = M.treeBuyQuery(cls, buys, { baseType: "Mnemonic Ring", ilvlMin: 80, f
 if (fq.query.stats[0].filters.some((x) => x.id.startsWith("pseudo."))) fail("固定済みの検索に数の条件が入っています");
 else ok("固定済みの検索には数の条件を入れない");
 
+// ---- 5. 85% に届く最小の個数 (オーナーの比べ方) ----
+console.log("5. 85% に届く最小の個数");
+const Pl = { orb: 8.523, annul: 0.726, bone: 0.336, exalt: 0.002, necro: 0.006, dextralExalt: 0.032 };
+const st = [5, 5, 7, 8, 8.1].map((p) => ({ source: "strict", price: p, prefixes: 1, suffixes: 3 }));
+const lo = [[1, 7], [2, 6], [3, 5], [3, 6], [4.47, 5]].map(([p, n]) => ({ source: "loose", price: p, prefixes: Math.ceil(n / 2), suffixes: Math.floor(n / 2) }));
+const bs = M.batchFor(st, Pl), bl = M.batchFor(lo, Pl);
+if (bs.count !== 5 || Math.abs(bs.chance - (1 - Math.pow(2 / 3, 5))) > 1e-9) fail(`厳しい: ${bs.count} 個 / ${bs.chance}`);
+else ok(`厳しい: ${bs.count} 個で ${(bs.chance * 100).toFixed(1)}% / 合計 ${bs.total.toFixed(1)} 神`);
+if (bl.count < 8 || bl.chance < 0.85 || bl.assumed === 0) fail(`ゆるい: ${bl.count} 個 / ${bl.chance} / 足した ${bl.assumed}`);
+else ok(`ゆるい: ${bl.count} 個で ${(bl.chance * 100).toFixed(1)}% / 合計 ${bl.total.toFixed(1)} 神 (取れた 5 件で足りず ${bl.assumed} 個足した)`);
+// 1 個少ないと 85% に届かないこと (最小であること)
+const less = (list, n) => 1 - list.slice(0, n).reduce((m, l) => m * (1 - M.candidateOf(l, Pl).hit), 1);
+if (less(st, bs.count - 1) >= 0.85) fail("厳しいの個数が最小になっていません");
+else ok("厳しいは 1 個減らすと 85% を切る (最小)");
+// 回した結果と合うか: まとめて買い、試す順に試して成功で止める
+let bsum = 0;
+const RR = 200_000;
+for (let r = 0; r < RR; r++) {
+  let spent = bs.base;
+  for (const c of bs.items) { spent += c.perTry - c.listing.price; if (rnd() < c.hit) break; }
+  bsum += spent;
+}
+if (Math.abs(bsum / RR - bs.total) / bs.total > 0.01) fail(`厳しいの合計: 式 ${bs.total.toFixed(2)} / 回した ${(bsum / RR).toFixed(2)}`);
+else ok(`厳しいの合計: 式 ${bs.total.toFixed(2)} 神 / 回した平均 ${(bsum / RR).toFixed(2)} 神`);
+
 console.log(failed === 0 ? "\n通りました" : `\n${failed} 件 NG`);
 process.exit(failed === 0 ? 0 : 1);

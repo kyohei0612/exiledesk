@@ -177,3 +177,67 @@ export function decide(listings: readonly TreeListing[], p: DecidePrices): Decis
   const buyOutright = fallback ? fallback.perTry : null;
   return { order, fallback, expected, allMiss: miss, buyOutright, skipped };
 }
+
+/** 1 本の道を「85% に届く最小の個数だけまとめて買う」時の見積もり */
+export interface Batch {
+  /** 買う個数 */
+  count: number;
+  /** その個数で少なくとも 1 個固定できる確率 */
+  chance: number;
+  /** 物の値段の合計 (神)。まとめて買うので全部払う */
+  base: number;
+  /** 加工代の期待値 (神)。**成功した所で止める** (成功後の物には手を付けない) */
+  craft: number;
+  total: number;
+  /** 取れた出品では足りず、最後の 1 件と同じ物が買える前提で足した個数 */
+  assumed: number;
+  /** 買う物 (安い順) */
+  items: Candidate[];
+}
+
+/** 既定の下限。オーナー 2026-09-23:「85% 以上の確率の個数でそれぞれ計算で OK、それ以上は買う必要ない」 */
+export const BATCH_TARGET = 0.85;
+
+/** 何個まで足すか (これで届かなければ届かないと返す) */
+const BATCH_CAP = 30;
+
+/**
+ * 1 本の道 (ゆるい or 厳しい) を、成功率 `target` に届く最小の個数だけ安い順に買った時の総額。
+ *
+ * オーナーの比べ方:「ゆるい検索 → 5 個買って消去スパム → 冒涜 → 固定」と「厳しい検索 → 5 個
+ * 買って冒涜 → 固定」を、同じ成功率で比べてどっちが安いか。**ゆるい方は消去で母数が減るので、
+ * 同じ成功率にするにはたくさん買う必要がある** (実測: 85% に厳しい 5 個 / ゆるい 10 個)。
+ *
+ * 出品が足りない時は、最後の 1 件と同じ物が買える前提で足し、その数を `assumed` に返します
+ * (実際はもっと高い物になるので、その分は少し安めに出る)。
+ */
+export function batchFor(
+  listings: readonly TreeListing[],
+  p: DecidePrices,
+  target = BATCH_TARGET,
+): Batch | null {
+  const cs = listings.map((l) => candidateOf(l, p)).filter((c): c is Candidate => c !== null && c.hit < 1);
+  if (cs.length === 0) return null;
+  // 安い順 (まとめて買う時は値段の安い順に揃える。試す順は成功 1 回あたりの安い順)
+  const byPrice = [...cs].sort((a, b) => a.listing.price - b.listing.price);
+  const items: Candidate[] = [];
+  let miss = 1;
+  let assumed = 0;
+  for (let i = 0; i < BATCH_CAP && 1 - miss < target; i++) {
+    const c = byPrice[i] ?? byPrice[byPrice.length - 1]!;
+    if (i >= byPrice.length) assumed++;
+    items.push(c);
+    miss *= 1 - c.hit;
+  }
+  if (1 - miss < target) return null;
+  // 加工は成功 1 回あたりの安い順に試す (同じ物を買うなら、当たりやすい物から)
+  const tryOrder = [...items].sort((a, b) => a.perSuccess - b.perSuccess);
+  let craft = 0;
+  let m = 1;
+  for (const c of tryOrder) {
+    craft += m * (c.perTry - c.listing.price);
+    m *= 1 - c.hit;
+  }
+  const base = items.reduce((a, c) => a + c.listing.price, 0);
+  return { count: items.length, chance: 1 - miss, base, craft, total: base + craft, assumed, items: tryOrder };
+}
