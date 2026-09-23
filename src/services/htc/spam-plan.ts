@@ -288,8 +288,12 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   // エッセンスは安いので右側の消去のお告げより付け直しの方が安い (オーナー)。お告げも候補には残す
   const annuls: Act[] = [{ kind: "annul", label: "消去のオーブ", cost: c.cur("annul"), breachHit: c.breach }];
   if (c.breach) annuls.push({ kind: "annul", label: `消去のオーブ + ${c.side === "prefix" ? "左" : "右"}側の消去のお告げ`, cost: c.cur("annul") + c.cur(eraseOmen), breachHit: false });
-  const essence = c.cur("essence:breach");
-  /** スパムの後にブリーチのエッセンスで最大品質を 40% にする 1 回ぶん (品質 40% の時だけ) */
+  // ブリーチのエッセンスはレアに当てると既存の MOD を 1 つ食う (CoE も結晶化のお告げ付きで扱う)。
+  // プレは固定済みしか無いので、**安い高貴でプレにゴミを 1 つ付けてから、左側の結晶化のお告げ付きで
+  // 当てる** とゴミだけ食わせられる (オーナー 2026-09-23:「プレフィックスにゴミ高貴打てば解決」)。
+  // 1 回ぶん = エッセンス + 高貴 + 左側の高貴なお告げ + 左側の結晶化のお告げ
+  const essence = c.cur("essence:breach") + c.cur("exalt") + c.cur("OmenofSinistralExaltation") + c.cur("OmenofSinistralCrystallisation");
+  /** スパムの後にブリーチのエッセンスで最大品質を 40% にする 1 回ぶん (品質 40% の時だけ。ゴミ高貴込み) */
   const breachOnce = c.breach ? essence : 0;
   /** その手の前にブリーチのエッセンスを付け直すか (品質 40%、ブリーチが無い、カタリストを使う高貴) */
   const needsBreach = (e: Act, bq: number): boolean => c.breach && bq === 0 && e.kind === "exalt" && !!e.tag;
@@ -384,7 +388,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     if (!e) continue;
     const re = needsBreach(e, bq);
     steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, breachGone: c.breach && bq === 0,
-      action: (re ? "ブリーチのエッセンスを付け直す → " : "") + e.label, perTry: e.cost + (re ? essence : 0) });
+      action: (re ? "高貴 + 左側の高貴なお告げでプレにゴミ → ブリーチのエッセンス + 左側の結晶化のお告げ → " : "") + e.label, perTry: e.cost + (re ? essence : 0) });
   }
   return {
     expected: V.get(key(0, 0, START_B))! + c.sp.expected + breachOnce,

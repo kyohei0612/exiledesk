@@ -34,6 +34,7 @@ const prices = {
   omens: {
     OmenofCatalysingExaltation: div(0.057), OmenofDextralExaltation: div(0.033), OmenofSinistralExaltation: div(0.069),
     OmenofDextralErasure: div(9.516), OmenofSinistralErasure: div(16.286),
+    OmenofSinistralCrystallisation: div(0.384), OmenofDextralCrystallisation: div(0.431),
   },
 };
 const it = M.parseJaItem([
@@ -65,7 +66,7 @@ if (!(e > 160 && e < 190)) fail(`平均 ${e.toFixed(1)} 神 (172 神前後のは
 if (!r.phase?.steps.some((x) => x.action === "消去のオーブ")) fail("品質 40% で素の消去を選んでいない (付け直しの方が安いはず)");
 // 付け直しは「ブリーチ無し」で触媒の高貴のお告げを打つ時だけ。消去の前には付け直さない
 for (const x of r.phase?.steps ?? []) {
-  const re = x.action.startsWith("ブリーチのエッセンスを付け直す");
+  const re = x.action.includes("ブリーチのエッセンス");
   if (re && !x.breachGone) fail("ブリーチがあるのに付け直している");
   if (re && !x.action.includes("触媒の高貴のお告げ")) fail("触媒の高貴のお告げ以外の前で付け直している");
   if (x.breachGone && x.action.startsWith("消去") && re) fail("消去の前に付け直している");
