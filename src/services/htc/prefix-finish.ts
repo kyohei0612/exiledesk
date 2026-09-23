@@ -111,6 +111,9 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
     }
     steps.push({ label: "パーフェクトエッセンス + 左側の結晶化のお告げ", modId: t.modId, cost: cur(`essence:perfect:${t.modId}`) + cur("OmenofSinistralCrystallisation") });
   });
+  // カレンシーランキングに無い物は使えない (オーナー 2026-09-23)
+  const unpriced = steps.find((st) => !Number.isFinite(st.cost));
+  if (unpriced) return none(`相場に無いので使えません: ${unpriced.label}`);
   const fixed = steps.reduce((a, s) => a + s.cost, 0);
 
   // 4. 冒涜の光ガチャ (最後の 1 つ)。プレに普通の狙いが 2 つ以上なら、1 つを残して先に高貴で足す

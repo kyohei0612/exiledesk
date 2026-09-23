@@ -37,9 +37,9 @@ function choose(modId: string): void {
         <td class="text-center">{{ sideJa(m.side) }}</td>
         <td>
           <span v-if="!m.catalysts.length" class="opacity-50">{{ m.group === "later" ? "—" : "無し" }}</span>
-          <label v-for="k in m.catalysts" :key="k.tag" class="mr-2 whitespace-nowrap">
-            <input type="checkbox" :checked="k.enabled" @change="toggle(k.tag, ($event.target as HTMLInputElement).checked)" />
-            {{ k.ja }} {{ c.money(k.perTry) }}
+          <label v-for="k in m.catalysts" :key="k.tag" class="mr-2 whitespace-nowrap" :class="k.unpriced ? 'opacity-40' : ''">
+            <input type="checkbox" :checked="k.enabled" :disabled="k.unpriced" @change="toggle(k.tag, ($event.target as HTMLInputElement).checked)" />
+            {{ k.ja }} {{ k.unpriced ? "相場に無い" : c.money(k.perTry) }}
           </label>
         </td>
         <td :class="m.role === 'spam' ? 'text-sky-300 font-bold' : ''">

@@ -12,7 +12,7 @@ import { excluded, poolTotalWeight, type WeightBoost } from '../engine/pool.ts';
 import type { DesecrationBossOmen } from '../engine/probability.ts';
 import { ANCIENT_BONE_FLOOR, DESECRATION_OFFER_COUNT, desecrationOmenForMod } from '../engine/probability.ts';
 import type { CurrencyPolicy, Prices, PricedStep } from './cost.ts';
-import { ECHOES_OMEN, allowsStep, cheapestEssenceLevel, essenceLevelOf, stepCost } from './cost.ts';
+import { ECHOES_OMEN, allowsStep, cheapestEssenceLevel, essenceLevelOf, isStepPriced, stepCost } from './cost.ts';
 import type { Dist, FlagCode, McRarity, McState, McTarget, SideIndex, StateEncoder } from './markovState.ts';
 import {
   FLAG_JUNK_PREFIX, FLAG_JUNK_SUFFIX, FLAG_NONE, addTo, anyWeightOf, bit, decodeState,
@@ -764,6 +764,8 @@ export function createActionSpace(params: ActionSpaceParams): {
     return (action: McAction, dist: Dist, offer?: number, reroll?: { readonly cost: number }): void => {
       if (dist.size === 0) return;
       if (!allowsAction(policy, action)) return;
+      // Not on the currency ranking = not buyable (ExileDesk 2026-09-23, see isStepPriced).
+      if (action.currency !== 'restart' && !isStepPriced(prices, pricedStepOf(action))) return;
       const cost = actionCostOf(prices, action);
       const def: ActionDef = {
         action, cost, dist, ...(offer === undefined ? {} : { offer }), ...(reroll ? { reroll } : {}),

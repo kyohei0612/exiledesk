@@ -55,6 +55,8 @@ export interface CatalystChoice {
   /** 触媒の高貴のお告げ 1 回ぶんのカタリスト代 + お告げ代 (高貴換算) */
   perTry: number;
   enabled: boolean;
+  /** カレンシーランキングに無い (使えない) */
+  unpriced: boolean;
 }
 
 export interface TargetMethod {
@@ -184,11 +186,14 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
     const side: Side = m.type === "prefix" ? "prefix" : "suffix";
     const catalysts: CatalystChoice[] = catalystsFor(m).map((c) => {
       const unit = cur(catalystPriceKey(c.tag));
+      // カレンシーランキングに無い物は使えない (オーナー 2026-09-23)。お告げも同じ
+      const unpriced = !Number.isFinite(unit) || !Number.isFinite(cur("OmenofCatalysingExaltation"));
       const def = unit / divine < PRICEY_CATALYST_DIVINE;
       return {
         tag: c.tag, ja: CATALYSTS.find((x) => x.tag === c.tag)?.ja ?? c.tag, unit,
         perTry: cur("OmenofCatalysingExaltation") + nCat * unit,
-        enabled: inp.catalystChoice?.[c.tag] ?? def,
+        enabled: !unpriced && (inp.catalystChoice?.[c.tag] ?? def),
+        unpriced,
       };
     });
     const rollable = m.source === "normal";

@@ -357,6 +357,25 @@ function legacyEssenceKey(step: PricedStep): string {
   return lvl === 'lesser' || lvl === 'greater' ? `essence_${lvl}` : 'essence';
 }
 
+/**
+ * Whether every part of a step has a price: its currency (a specific essence may fall back to its
+ * per-level price), every omen it invokes, and the catalyst it eats.
+ *
+ * ExileDesk 2026-09-23 — owner:「カレンシーランキングにないものは使えないでおけ」. The sheet is the
+ * currency ranking, so an unpriced key is something the player cannot buy (the Homogenising omen and the
+ * Recombinator still sit in the client data but are gone from the game). Such a step is never offered;
+ * `stepCost` alone would have charged it 0 and made it look free.
+ */
+export function isStepPriced(prices: Prices, step: PricedStep): boolean {
+  const key = currencyKey(step);
+  const hasCurrency = prices.currency[key] !== undefined
+    || (key.startsWith('essence:') && prices.currency[legacyEssenceKey(step)] !== undefined);
+  if (!hasCurrency) return false;
+  if (!stepOmenIds(step).every((id) => prices.omens[id] !== undefined)) return false;
+  if (step.catalysing && prices.currency[`catalyst_${step.catalysing.tag}`] === undefined) return false;
+  return true;
+}
+
 /** Cost of a single step: its currency price plus any omen surcharge. Unknown keys cost 0. */
 export function stepCost(prices: Prices, step: PricedStep): number {
   const key = currencyKey(step);
