@@ -9,7 +9,7 @@
  */
 import { computed, ref, shallowRef, watch } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
-import { catalystPriceKey } from "../../services/htc/catalysing";
+import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysing";
 import { simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/spam-total";
 import type { Side } from "../../services/htc/step-odds";
@@ -32,6 +32,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
       itemLevel: it ? it.itemLevel ?? 82 : zeroStart.value.itemLevel,
       limits: sideLimits(d, it ? it.baseType : zeroStart.value.baseType),
       catalystOk: (tag: string) => c.catalystChoice.value[tag] ?? (p.currency[catalystPriceKey(tag)] ?? Infinity) / div < 0.2,
+      // ベースの品質の上限 (ブリーチの指輪 +20% など)。ブリーチの MOD が付けばさらに +20%
+      baseQuality: maxQualityForBase((it ? it.baseType : zeroStart.value.baseType) ?? ""),
     };
   });
 

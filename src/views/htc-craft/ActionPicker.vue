@@ -13,7 +13,8 @@
  * 選び終わったら打つ物 ([[sim-route.ts]] の SimAction) にして親へ返す。
  */
 import { computed, ref, watch } from "vue";
-import { catalystsFor } from "../../services/htc/quality";
+import { catalystPriceKey } from "../../services/htc/catalysing";
+import { CATALYSTS, catalystsFor } from "../../services/htc/quality";
 import type { SimAction, SimState } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
@@ -68,12 +69,14 @@ function orbOf(a: SimAction | null): string {
     case "breach": return "essence:breach";
     case "desecrate": return a.bone;
     case "check": return "check";
+    case "quality": return "quality";
   }
 }
 const omens = ref<string[]>(omensOf(props.action));
 const orb = ref<string>(orbOf(props.action));
-const catalyst = ref<string | null>(props.action?.kind === "exalt" ? props.action.catalyst : null);
-watch(() => props.action, (a) => { omens.value = omensOf(a); orb.value = orbOf(a); catalyst.value = a?.kind === "exalt" ? a.catalyst : null; });
+const catOf = (a: SimAction | null): string | null => (a?.kind === "exalt" || a?.kind === "quality" ? a.catalyst : null);
+const catalyst = ref<string | null>(catOf(props.action));
+watch(() => props.action, (a) => { omens.value = omensOf(a); orb.value = orbOf(a); catalyst.value = catOf(a); });
 
 const chosen = computed(() => OMENS.filter((o) => omens.value.includes(o.key)));
 const group = computed<Group | null>(() => chosen.value[0]?.group ?? null);
@@ -87,6 +90,7 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
   const tag = (x: Omen["tag"]) => os.some((o) => o.tag === x);
   if (!orbKey) return null;
   if (orbKey === "check") return g ? null : { kind: "check" };
+  if (orbKey === "quality") return g || !cat ? null : { kind: "quality", catalyst: cat };
   if (orbKey.startsWith("chaos")) {
     if (g && g !== "chaos") return null;
     return tag("whittle") ? { kind: "whittle" } : { kind: "chaos", tier: orbKey as "chaos" };
@@ -134,8 +138,11 @@ const catalysts = computed(() => {
   return [...seen.values()];
 });
 const anyCat = computed(() => catalysts.value[0]?.tag ?? null);
-const orbs = computed(() => [...ORBS, ...essenceOrbs.value, { key: "check", ja: "確認だけ (打たない)" }]
-  .filter((o) => ok(build(o.key, chosen.value, has("catalyst") ? catalyst.value ?? anyCat.value : null))));
+/** カタリストだけの手で選べるカタリスト (値段がある物全部) */
+const allCatalysts = computed(() => CATALYSTS.filter((k) => priced(catalystPriceKey(k.tag))));
+const orbs = computed(() => [...ORBS, ...essenceOrbs.value, { key: "quality", ja: "カタリストだけ (品質を上限まで)" }, { key: "check", ja: "確認だけ (打たない)" }]
+  .filter((o) => ok(build(o.key, chosen.value, o.key === "quality" ? catalyst.value ?? anyCat.value ?? allCatalysts.value[0]?.tag ?? null
+    : has("catalyst") ? catalyst.value ?? anyCat.value : null))));
 
 /** 足せるお告げ (同じ組の中、側は 1 つ、値段がある、その組で打てるオーブがある) */
 const addable = computed(() => OMENS.filter((o) => {
@@ -149,7 +156,7 @@ const addable = computed(() => OMENS.filter((o) => {
 }));
 
 function emitNow(): void {
-  const a = build(orb.value, chosen.value, has("catalyst") ? catalyst.value : null);
+  const a = build(orb.value, chosen.value, has("catalyst") || orb.value === "quality" ? catalyst.value : null);
   emit("change", a);
 }
 function addOmen(key: string): void {
@@ -165,7 +172,11 @@ function removeOmen(key: string): void {
   if (!orbs.value.some((o) => o.key === orb.value)) orb.value = "";
   emitNow();
 }
-function setOrb(key: string): void { orb.value = key; emitNow(); }
+function setOrb(key: string): void {
+  orb.value = key;
+  if (key === "quality" && !catalyst.value) catalyst.value = anyCat.value ?? allCatalysts.value[0]?.tag ?? null;
+  emitNow();
+}
 function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
 </script>
 
@@ -191,6 +202,9 @@ function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
       <select class="rounded border border-white/20 bg-black/30 px-1" :value="orb" @change="setOrb(($event.target as HTMLSelectElement).value)">
         <option value="" disabled>選ぶ</option>
         <option v-for="o in orbs" :key="o.key" :value="o.key">{{ o.ja }}</option>
+      </select>
+      <select v-if="orb === 'quality'" class="rounded border border-white/20 bg-black/30 px-1" :value="catalyst ?? ''" @change="setCatalyst(($event.target as HTMLSelectElement).value)">
+        <option v-for="k in allCatalysts" :key="k.tag" :value="k.tag">{{ k.ja }}</option>
       </select>
       <span v-if="!orbs.length" class="text-rose-300">このお告げで打てるオーブがありません</span>
     </div>

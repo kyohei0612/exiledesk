@@ -6,7 +6,7 @@
  * 最初は何も入っていない (オーナー:「最初から入力はしない、考えてやらせる」)。中身は [[useCraftTree.ts]]。
  */
 import { computed } from "vue";
-import type { Goto, SimAction, SimNode } from "../../services/htc/sim-route";
+import { CERTAIN, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import ActionPicker from "./ActionPicker.vue";
@@ -129,6 +129,7 @@ const pct = (p: number): string => (p >= 0.995 ? "確定" : `${(p * 100).toFixed
           <option value="auto">自動 (消えた物を見て戻る)</option>
           <option value="done">完成</option>
         </select>
+        <span v-if="w === 'onMiss' && !n.onMiss && n.action && CERTAIN.has(n.action.kind)" class="opacity-60"> (確定の手なので空でよい)</span>
       </label>
     </div>
   </div>

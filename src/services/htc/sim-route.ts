@@ -30,7 +30,12 @@ export type SimAction =
   | { kind: "breach" }
   | { kind: "whittle" }
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
-  | { kind: "check" };
+  | { kind: "check" }
+  /**
+   * カタリストだけ入れて品質を上限まで上げる (オーナー 2026-09-24:「品質だけ上げる時もあるから、カタリストのみ付ける手の
+   * ターンもある。○のとこやけど、×は入力しないから無視で進む」)。確定の手
+   */
+  | { kind: "quality"; catalyst: string };
 
 /**
  * ○×の行き先: 手の id / 完成 / 自動 / 未設定 (そこで止まる)。
@@ -108,7 +113,14 @@ const OMEN_CR: Record<Side, string> = { prefix: "OmenofSinistralCrystallisation"
 const OMEN_NE: Record<Side, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
 const SIDES: Side[] = ["prefix", "suffix"];
 
-export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
+/**
+ * 確定の手 (必ず付く・必ず消える)。× の行き先が未設定でも止めずに○の行き先へ進む
+ * (オーナー 2026-09-24:「一応確定やから、そこの手でバツはデフォで入力しなかったら無視するように」)
+ */
+export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality"]);
+
+/** ctx.baseQuality = ベースの品質の上限 (普通 20、ブリーチの指輪 40、洗練されたブリーチリング 45) */
+export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly SimNode[]) {
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
@@ -163,7 +175,12 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
     memo.set(key, dist);
     return dist;
   }
-  const quality = (s: SimState): number => (s.breach ? 40 : 20);
+  /**
+   * 品質の上限 = ベースの上限 + ブリーチの MOD が居れば 20。カタリストはこの上限まで入れ、触媒の高貴のお告げで使い切る
+   * たびに入れ直す (オーナー 2026-09-24:「品質 MOD が付いてたらその数値分カタリストマックス付けて。普段は 20% やけど、
+   * これ付いてたらそれ以降 40%。(触媒の高貴のお告げを) 使わない限り付けっぱなし」)
+   */
+  const quality = (s: SimState): number => (ctx.baseQuality ?? 20) + (s.breach ? 20 : 0);
 
   /** その状態で打てるか (打てないなら理由)。画面は打てる物だけ出す (オーナー:「その状態で使えるカレンシーのみ表示」) */
   function usable(s: SimState, a: SimAction | null): string | null {
@@ -184,7 +201,7 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
       case "breach": return s.breach ? "もう付いている" : removable(s, "prefix").length || room(s, "prefix") ? null : "食わせるプレも枠も無い";
       case "whittle": return removable(s, null).length ? null : "外せる物が無い";
-      case "check": return null;
+      case "check": case "quality": return null;
     }
   }
 
@@ -206,6 +223,7 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
       case "breach": return cur("essence:breach") + cur("OmenofSinistralCrystallisation") + (removable(s, "prefix").length ? 0 : cur("exalt") + cur(OMEN_EX.prefix));
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;
+      case "quality": return catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst));
     }
   }
 
@@ -270,7 +288,7 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
         const t = s.breach ? { ...s, breach: false } : rmRandom(s, null);
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), 0, null, 20)));
       }
-      case "check": return s;
+      case "check": case "quality": return s;
     }
   }
 
@@ -316,7 +334,7 @@ export async function simulateTreeChunked(
 
 /** 回す。手 0 から、○×の行き先をたどる。「完成」で終わり、未設定・打てない所で止まる */
 export function simulateTree(inp: {
-  ctx: StepCtx; start: SimState; nodes: readonly SimNode[]; runs?: number; budget?: number; maxActions?: number; seed?: number;
+  ctx: StepCtx & { baseQuality?: number }; start: SimState; nodes: readonly SimNode[]; runs?: number; budget?: number; maxActions?: number; seed?: number;
 }): SimResult {
   const { ctx, nodes } = inp;
   const h = simHelpers(ctx, nodes);
@@ -373,7 +391,9 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
-      let next = h.passes(s, n) ? n.onHit : n.onMiss;
+      const pass = h.passes(s, n);
+      // 確定の手は × が未設定なら○の行き先へ (必ず付くので × は来ない前提)
+      let next = pass ? n.onHit : n.onMiss == null && n.action && CERTAIN.has(n.action.kind) ? n.onHit : n.onMiss;
       if (next === "auto") next = autoNext(s, at);
       if (next === "done") { end = "done"; break; }
       if (next == null) { end = `手 ${at + 1} の${h.passes(s, n) ? "○" : "×"}の行き先が未設定`; break; }
