@@ -12,6 +12,7 @@
  * ここで重ねて埋めます。上流の `data/` は触りません。
  */
 import { indexPatch } from "../../vendor/poe2htc/engine/indexPatch";
+import { applyWeightOverrides } from "./weight-overrides";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 interface PoolAdd {
@@ -298,5 +299,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     newClasses: extra.items.map((i) => i.id),
     placeholderWeightMods: placeholder,
   };
-  return { patch: data.patch, mods, bases };
+  // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
+  // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
+  return applyWeightOverrides({ patch: data.patch, mods, bases }).data;
 }

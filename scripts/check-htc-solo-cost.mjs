@@ -81,17 +81,20 @@ console.log(String.fromCharCode(10) + "分位点と打ち切り:");
 {
   const ring = M.itemBaseFor(data, "Mnemonic Ring");
   const rp = M.pricesForBase(M.indexPrices(raw), ring);
-  const id = (ring.pools.normal.suffixes ?? []).find((x) => /IncreasedCastSpeed/.test(x));
-  if (!id) { fail("キャストスピードの MOD が見つからない"); } else {
-    const mod = data.mods.get(id);
-    const idx = mod.tiers.findIndex((t) => Number(t.ranges?.[0]?.[0]) >= 16);
-    const r = M.markovFromItem(data, rp, M.whiteItem(ring, 81), [{ modId: id, minTierIndex: idx }],
-      { spare: { prefixes: 3, suffixes: 3 } });
-    const low = M.simulateBudget(rp, ring, r, { runs: 1000, maxSteps: 20000, budget: r.expectedCost, seed: 11 });
+  // 1,000 手 (simulateBudget の下限) を超える重い作業で見る。以前はキャストスピード 1 個が
+  // 「カオス 1 万回級」で打ち切られていたが、それは重みが仮置きの 1 だった時の話
+  // ([[weight-overrides.ts]])。埋めた今は 1 個なら数手で終わるので、T1 を 3 つ狙う形にした
+  // (実測: 上限 1,000 手で打ち切り 9% / 既定で 0%)。
+  const T1 = (x) => ({ modId: x, minTierIndex: data.mods.get(x).tiers.length - 1 });
+  const heavy = ["Rings/IncreasedCastSpeed", "Rings/Intelligence", "Rings/AllResistances"].filter((x) => data.mods.has(x)).map(T1);
+  if (heavy.length !== 3) { fail("指輪の MOD が見つからない"); } else {
+    const r = M.markovFromItem(data, rp, M.whiteItem(ring, 81), heavy, { spare: { prefixes: 3, suffixes: 0 } });
+    const low = M.simulateBudget(rp, ring, r, { runs: 1000, maxSteps: 1000, budget: r.expectedCost, seed: 11 });
     const ok = M.simulateBudget(rp, ring, r, { runs: 1000, budget: r.expectedCost, seed: 11 });
-    console.log("  上限 2 万手    打ち切り " + ((low.truncated / 1000) * 100).toFixed(1) + "%  信用 " + low.reliable + "  平均は真値の " + ((low.mean / r.expectedCost) * 100).toFixed(0) + "%");
+    console.log("  上限 1,000 手  打ち切り " + ((low.truncated / 1000) * 100).toFixed(1) + "%  信用 " + low.reliable + "  平均は真値の " + ((low.mean / r.expectedCost) * 100).toFixed(0) + "%");
     console.log("  既定 (200 万)  打ち切り " + ((ok.truncated / 1000) * 100).toFixed(1) + "%  信用 " + ok.reliable + "  平均は真値の " + ((ok.mean / r.expectedCost) * 100).toFixed(0) + "%");
     // 低い上限は必ず「信用できない」と出ること (出さない判断の根拠)
+    if (low.truncated === 0) fail("上限 1,000 手でも打ち切りが起きない (検算の作業が軽すぎる)");
     if (low.reliable) fail("打ち切り " + low.truncated + " 本なのに信用できる扱い");
     // 既定では打ち切られず、平均が厳密解に寄ること
     if (!ok.reliable) fail("既定でも信用できない (上限が足りない)");
@@ -103,6 +106,7 @@ console.log(String.fromCharCode(10) + "分位点と打ち切り:");
     if (!(ok.p50 <= ok.p75 && ok.p75 <= ok.p90)) fail("分位点の並びが逆");
     console.log("  p50 " + Math.round(ok.p50 / DIV) + " / 平均 " + Math.round(ok.mean / DIV) + " / p75 " + Math.round(ok.p75 / DIV) + " / p90 " + Math.round(ok.p90 / DIV) + " 神");
   }
+  const id = "Rings/IncreasedCastSpeed";
   // 信用できない時は soloCosts が p75 を出さないこと
   const bad = M.soloCosts(data, rp, ring, [{ modId: id, minTierIndex: data.mods.get(id).tiers.findIndex((t) => Number(t.ranges?.[0]?.[0]) >= 16) }], { level: 81, runs: 30 });
   void bad;

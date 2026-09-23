@@ -35,6 +35,7 @@ import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
+import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
@@ -61,6 +62,13 @@ export interface TargetRow {
   boosted: boolean;
   /** 確定で乗せる MOD か (エッセンス / パーフェクトエッセンス / 合金) */
   crafted: boolean;
+  /**
+   * 重みが仮置き (データに無い) か。**true の MOD の確率は信用できない** ([[weight-overrides.ts]])。
+   * 上書きで埋めた物 (キャストスピード) は false になるが、`overridden` で分かる
+   */
+  unknownWeight: boolean;
+  /** 重みを別の出どころ (Craft of Exile の推定値) で埋めた MOD か */
+  overridden: boolean;
 }
 
 /** 樹 MOD を固定済みにする道 1 本の平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う) */
@@ -222,6 +230,8 @@ export function useHtcCraft() {
         // 実際ずれていて、割り戻したキャストスピードに印が付いていなかった (2026-09-23)
         boosted: !!(it?.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
         crafted: isCraftedMod(mod),
+        unknownWeight: isPlaceholderWeight(mod),
+        overridden: OVERRIDDEN.has(mod.id),
       };
     });
     // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
@@ -450,5 +460,6 @@ export function useHtcCraft() {
     money, run, treePlan,
     treeResult, treeBusy, treeError, searchTree, treeTierPick,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
+    weightNote: WEIGHT_OVERRIDE_NOTE,
   };
 }

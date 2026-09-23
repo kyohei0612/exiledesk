@@ -78,9 +78,16 @@ console.log("  所要 " + Math.ceil(plan.seconds) + " 秒 / 枠 " + M.SEARCH_BUD
 // 振り直す」のが最安なので、ほぼ全部当たる。**固定したらいくら安くなるか**で見る
 // (実測 2026-09-23 / Rage Grip 5 目標: キャストスピードは 1% まで落ちるが、
 //  全元素耐性と知性は 60% 止まり)。
+//
+// 2026-09-23 追記: 上の実測はキャストスピードの重みが**仮置きの 1** だった時の物で、
+// Craft of Exile の推定値 (1 段 1,000) で埋めた今はキャスピは一番つきにくい MOD ではない
+// ([[weight-overrides.ts]])。**どの MOD が律速かに依らない**よう、その時点で一番費用が高い
+// MOD を「固定する価値がある 1 件」として渡す。
 console.log(NLC + "固定済みを探す価値で絞る:");
 {
-  const worth = order.filter((t) => /CastSpeed/i.test(t.modId)).map((t) => t.modId);
+  const hardest = [...solo].sort((a, b) => b.expectedCost - a.expectedCost)[0];
+  const worth = hardest ? [hardest.modId] : [];
+  console.log("  一番費用が高い MOD: " + (hardest ? hardest.modId + " (" + Math.round(hardest.expectedCost) + " 高貴)" : "無し"));
   const wide = M.searchPlan(data, cls, order, { baseType: it.baseType, ilvlMin: it.itemLevel, mustBuy: got.skipped, max: 6 });
   const narrow = M.searchPlan(data, cls, order, { baseType: it.baseType, ilvlMin: it.itemLevel, mustBuy: got.skipped, max: 6, fractureWorth: worth });
   const fxOf = (p) => p.searches.filter((x) => x.fractured).length;

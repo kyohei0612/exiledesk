@@ -297,6 +297,10 @@ const implicitText = (lines: readonly string[]): string =>
             <td class="opacity-50">{{ r.range }}</td>
             <td class="w-28 text-amber-300">{{ r.boosted ? "品質を外した" : "" }}</td>
             <td class="w-32 text-emerald-300">{{ r.crafted ? "確定で乗せられる" : "" }}</td>
+            <!-- 重みがデータに無い MOD は確率を信用できない。埋めた物は推定値と断る -->
+            <td class="w-28 text-amber-300" :title="r.overridden ? c.weightNote : ''">
+              {{ r.unknownWeight ? "重み不明" : r.overridden ? "重みは推定値" : "" }}
+            </td>
           </tr>
         </table>
         <!-- 解く前に分かる話なので、ここで先に出す -->

@@ -36,6 +36,7 @@ export { parseJaItem, targetsFor } from "../src/services/htc/paste";
 export { soloCosts, soloP75, buyOrRoll } from "../src/services/htc/solo-cost";
 export { baseChoices } from "../src/services/htc/base-choice";
 export { jaOfMod, jaOfModLine } from "../src/services/htc/mod-text";
+export { isPlaceholderWeight, applyWeightOverrides, WEIGHT_OVERRIDE_NOTE } from "../src/services/htc/weight-overrides";
 export { routeSteps } from "../src/services/htc/route-steps";
 export { searchPlan, SEARCH_INTERVAL_SEC, SEARCH_BUDGET_PER_5MIN } from "../src/services/htc/search-plan";
 export { searchCut } from "../src/services/htc/search-cut";
