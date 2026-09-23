@@ -10,6 +10,7 @@ import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
+import TreeFracturePanel from "./TreeFracturePanel.vue";
 import { useFractureChoice } from "./useFractureChoice";
 import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -51,12 +52,12 @@ const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null),
     <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
       このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
     </p>
-    <!-- 始め方。初動の安い順。自作フラクチャーは無し (オーナー 2026-09-24)。取引所は押した時だけ 1 本 -->
+    <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。固定済み / 固定無し・厳しい / ゆるい。ベースは買う物。取引所は押した時だけ -->
     <div v-if="fc.options.value.length" class="mt-2 rounded bg-black/20 p-2">
       <p class="mb-1 font-bold">
         始め方 (初動の安い順)
-        <button v-if="!fc.searched.value && c.treePlan.value?.query" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
-          {{ fc.busy.value ? "探しています…" : "固定済みの最安を取る" }}
+        <button v-if="!fc.searched.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
+          {{ fc.busy.value ? "探しています…" : "固定済み・固定無しを探す (3 本 / 約 30 秒)" }}
         </button>
       </p>
       <label v-for="o in fc.options.value" :key="o.id" class="block" :class="o.cost == null ? 'opacity-50' : ''">
@@ -108,5 +109,9 @@ const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null),
     <p v-for="b in others" :key="b.baseType" class="mt-1 opacity-70">
       別のベースなら: {{ b.ja }} ({{ b.maxQualityPlus ? `品質上限 +${b.maxQualityPlus}%` : b.implicits.join(" / ") }})
     </p>
+    <details v-if="c.treeResult.value" class="mt-2">
+      <summary class="cursor-pointer opacity-70">固定済み・固定無しの中身を見る</summary>
+      <TreeFracturePanel :c="c" />
+    </details>
   </div>
 </template>
