@@ -15,7 +15,7 @@ import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { stepHelpers, type Cleanup, type ItemState, type Side, type StepMethod } from "../../services/htc/step-odds";
-import { zeroStart } from "./craft-settings";
+import { startFractured, zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
 /** 既定で「使わない」カタリストの値段 (1 個・神)。[[spam-plan.ts]] と同じ */
@@ -48,7 +48,10 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
   /** 出発点: ベース決めの結果 (固定済みの MOD と樹 MOD の枠) */
   const startItem = (): ItemState => {
     const d = c.data.value;
-    const slots: ItemState["slots"] = c.fracturedTargets.value.map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));
+    // フラクチャー品から始める時だけ、固定済みの MOD を付けた状態で始める
+    const slots: ItemState["slots"] = startFractured.value
+      ? c.fracturedTargets.value.map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }))
+      : [];
     const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
     for (let i = 0; i < tree.p; i++) slots.push({ modId: null, side: "prefix", fixed: true, label: "樹 MOD (固定済み)" });
     for (let i = 0; i < tree.s; i++) slots.push({ modId: null, side: "suffix", fixed: true, label: "樹 MOD (固定済み)" });
@@ -58,11 +61,11 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
   const history = shallowRef<Snap[]>([]);
   const screen = ref<Screen>({ kind: "pick" });
   const restartAll = (): void => { snap.value = { item: startItem(), spent: 0, moves: 0, log: [] }; history.value = []; screen.value = { kind: "pick" }; };
-  watch(() => [c.targets.value, c.base.value], restartAll);
+  watch(() => [c.targets.value, c.base.value, startFractured.value], restartAll);
 
   /** 忍者 (貼り付け) の狙い。★ で上に出すだけで、選ぶのは人 */
   const ninja = computed(() => {
-    const fixed = new Set(c.fracturedTargets.value.map((t) => t.modId));
+    const fixed = new Set(startFractured.value ? c.fracturedTargets.value.map((t) => t.modId) : []);
     return new Map(c.targets.value.filter((t) => !fixed.has(t.modId)).map((t) => [t.modId, t.minTierIndex ?? 0]));
   });
   const name = (id: string | null, label?: string): string => {

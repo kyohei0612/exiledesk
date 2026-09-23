@@ -15,6 +15,12 @@ export const craftBudgetDivine = ref(500);
 export const craftForce = ref<Record<string, string>>({});
 
 /**
+ * 固定済みの MOD が付いたベース (フラクチャー品) から始めるか。false なら無し品から、その MOD も作る
+ * (オーナー 2026-09-24:「フラクチャー品かフラクチャー無し品かみたいなところは？」)
+ */
+export const startFractured = ref(true);
+
+/**
  * 0 から組む時 (ベースから選ぶ道) の設定。貼り付けの時は貼り付けの値を使うので効かない。
  * 品質 40% = ブリーチのエッセンスで上限を上げる (プレにブリーチの MOD が 1 つ居る)
  */
