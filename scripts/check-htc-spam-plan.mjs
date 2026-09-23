@@ -30,11 +30,15 @@ const prices = {
     catalyst_fire: div(0.064), catalyst_cold: div(0.049), catalyst_lightning: div(0.055), catalyst_chaos: div(0.030),
     catalyst_attack: div(0.372), catalyst_caster: div(0.968), catalyst_speed: div(0.351), catalyst_attribute: div(0.021),
     catalyst_minion: div(0.054),
+    desecrate: div(0.338), desecrate_ancient: div(5.75),
+    "essence:perfect:Rings/PerfectEssence_MaximumManaIncreasePercent": div(0.034),
   },
   omens: {
     OmenofCatalysingExaltation: div(0.057), OmenofDextralExaltation: div(0.033), OmenofSinistralExaltation: div(0.069),
     OmenofDextralErasure: div(9.516), OmenofSinistralErasure: div(16.286),
     OmenofSinistralCrystallisation: div(0.384), OmenofDextralCrystallisation: div(0.431),
+    OmenofWhittling: div(12.336), OmenofLight: div(7.687), OmenofSinistralNecromancy: div(0.003),
+    OmenofDextralNecromancy: div(0.006), OmenofAbyssalEchoes: div(0.188),
   },
 };
 const it = M.parseJaItem([
@@ -44,7 +48,7 @@ const it = M.parseJaItem([
 ].join(NL));
 const got = M.targetsFor(data, it);
 const cls = M.baseForSolving(data, it.baseType, got.skippedSides);
-const base = { data, cls, targets: got.targets, prices, itemLevel: 80, quality: 40, breach: true, used: { prefix: 1, suffix: 0 }, runs: 20000 };
+const base = { data, cls, targets: got.targets, prices, itemLevel: 80, quality: 40, breach: true, qualityTag: "mana", used: { prefix: 1, suffix: 0 }, runs: 20000 };
 const name = (id) => id.split("/")[1];
 const show = (label, r) => {
   console.log(`${label}: スパム ${r.spam ? name(r.spam.modId) + " / " + r.spam.currency + " 1/" + Math.round(1 / r.spam.odds) : "無し"}`
@@ -77,6 +81,19 @@ const r20 = M.spamPlan({ ...base, quality: 20, breach: false });
 show("品質 20% (ブリーチ無し)", r20);
 if (r20.phase?.steps.some((x) => x.action.includes("消去のお告げ"))) fail("品質 20% で消去のお告げを使っている (プレは固定済みだけなので要らない)");
 if (!(r.phase && r.phase.p80 > r.phase.p50 && r.phase.p90 >= r.phase.p80)) fail("分布の並びがおかしい");
+
+// ---- サフィが揃った後のプレの仕上げ (オーナーの流れ) ----
+console.log("仕上げ:");
+for (const st of r.finish?.steps ?? []) console.log(`   ${st.label} (${(st.cost / D).toFixed(2)} 神)`);
+if (r.finish?.desecrate) console.log(`   冒涜 ${r.finish.desecrate.bone}${r.finish.desecrate.echoes ? " + 反響" : ""}: 1 回 1/${(1 / r.finish.desecrate.odds).toFixed(1)}、1 回 ${(r.finish.desecrate.perTry / D).toFixed(2)} 神、外れたら光 ${(r.finish.desecrate.light / D).toFixed(2)} 神`);
+console.log(`   仕上げ 平均 ${((r.finish?.expected ?? 0) / D).toFixed(1)} 神${r.finish?.reason ? " / " + r.finish.reason : ""}`);
+if (r.total) console.log(`合計: 平均 ${(r.total.expected / D).toFixed(1)} 神 / 半分 ${(r.total.p50 / D).toFixed(1)} / 8 割 ${(r.total.p80 / D).toFixed(1)} / 9 割 ${(r.total.p90 / D).toFixed(1)} 神`);
+if (!r.finish || r.finish.reason) fail("仕上げが組めていない: " + r.finish?.reason);
+const labels = (r.finish?.steps ?? []).map((x) => x.label).join(" / ");
+if (!/削減のお告げ/.test(labels)) fail("品質 40% なのに削減のお告げでブリーチを消していない");
+if (!/パーフェクトエッセンス/.test(labels)) fail("最大マナ% をエッセンスで付けていない");
+if (r.finish?.desecrate?.modId !== "Rings/IncreasedMana") fail("冒涜で最大マナを引いていない");
+if (!r.total || !(r.total.p80 > r.total.p50 && r.total.expected > r.phase.expected)) fail("合計の分布がおかしい");
 
 // 触媒を全部切る → スパムは全耐性、500 神前後
 const off = Object.fromEntries(["attribute", "cold", "fire", "lightning", "mana"].map((t) => [t, false]));

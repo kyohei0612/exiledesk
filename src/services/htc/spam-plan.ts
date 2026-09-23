@@ -39,6 +39,7 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
+import { prefixFinish, type FinishPlan } from "./prefix-finish";
 
 /** 既定で「使わない」にするカタリストの値段 (1 個・神)。軽快 0.35 / 歯擦音 0.97 / 強奪者 0.37 (2026-09-23) */
 export const PRICEY_CATALYST_DIVINE = 0.2;
@@ -89,6 +90,8 @@ export interface PhaseResult {
   exalts50: number;
   exalts80: number;
   steps: PhaseStep[];
+  /** 回した 1 回ずつの費用 (並べ替え済み)。仕上げと足して合計の分布を作る */
+  samples: number[];
 }
 
 /** スパムの狙いの候補 1 つ。安い順に並べて画面に出す */
@@ -115,6 +118,10 @@ export interface SpamPlan {
   /** 品質 20% でプレをスパム = 削減リロールの高額コース */
   expensive: boolean;
   phase: PhaseResult | null;
+  /** サフィが揃った後のプレの仕上げ ([[prefix-finish.ts]])。スパムがサフィの時だけ */
+  finish: FinishPlan | null;
+  /** サフィ段階 + 仕上げの合計 (高貴換算)。仕上げが組めない時は null */
+  total: { expected: number; p50: number; p80: number; p90: number } | null;
   /** 組めなかった理由 */
   reason: string | null;
 }
@@ -133,6 +140,8 @@ export interface SpamPlanInput {
   used: { prefix: number; suffix: number };
   /** 利用者が切り替えたカタリスト (tag → 使うか)。無ければ既定 */
   catalystChoice?: Readonly<Record<string, boolean>>;
+  /** 完成品の品質の種類 (貼り付けの「品質 (マナモッド)」→ mana)。仕上げで最後の品質を上げる */
+  qualityTag?: string | null;
   /** 回す回数 (既定 20,000) */
   runs?: number;
   /** 利用者が選び直したスパムの狙い (modId)。無ければ優先順のルール */
@@ -195,7 +204,7 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
   const sideRank = (x: TargetMethod): number => (x.side === "suffix" ? 0 : 1);
   const cand = methods.filter((x) => x.group !== "later")
     .sort((a, b) => rank[a.group] - rank[b.group] || sideRank(a) - sideRank(b) || a.chaosOdds - b.chaosOdds);
-  if (!cand.length) return { methods, spam: null, side: null, expensive: false, phase: null, alternatives: [], reason: "カオスで付けられる狙いがありません" };
+  if (!cand.length) return { methods, spam: null, side: null, expensive: false, phase: null, finish: null, total: null, alternatives: [], reason: "カオスで付けられる狙いがありません" };
 
   /** その狙いをスパムにした時の組み立て (同じ側の残りを高貴で足すところまで) */
   const planFor = (pick: TargetMethod, runs: number) => {
@@ -237,7 +246,23 @@ export function spamPlan(inp: SpamPlanInput): SpamPlan {
       expected: r.phase?.expected ?? null, p80: r.phase?.p80 ?? null, expensive: r.expensive, reason: r.reason,
     };
   }).sort((x, y) => (x.expected ?? Infinity) - (y.expected ?? Infinity));
-  return { methods, spam: main.spam, side: main.side, expensive: main.expensive, phase: main.phase, alternatives, reason: main.reason };
+  // ---- サフィが揃った後のプレの仕上げ (スパムがサフィの時だけ) ----
+  let finish: FinishPlan | null = null;
+  let total: SpamPlan["total"] = null;
+  if (main.side === "suffix" && main.phase) {
+    finish = prefixFinish({
+      data, cls, prices, itemLevel,
+      targets: inp.targets.filter((t) => mod(t.modId)?.type === "prefix"),
+      quality, qualityTag: inp.qualityTag ?? null, breach, prefixCap: 3 - inp.used.prefix,
+    });
+    if (!finish.reason) {
+      const rnd = mulberry32(7);
+      const sum = main.phase.samples.map((x) => x + finish!.sample(rnd)).sort((a, b) => a - b);
+      const q = (f: number): number => sum[Math.min(sum.length - 1, Math.floor(sum.length * f))]!;
+      total = { expected: main.phase.expected + finish.expected, p50: q(0.5), p80: q(0.8), p90: q(0.9) };
+    }
+  }
+  return { methods, spam: main.spam, side: main.side, expensive: main.expensive, phase: main.phase, finish, total, alternatives, reason: main.reason };
 }
 
 // ================= 同じ側の残りを足す段階 =================
@@ -395,6 +420,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     p50: q(costs, 0.5), p80: q(costs, 0.8), p90: q(costs, 0.9),
     exalts50: q(exN, 0.5), exalts80: q(exN, 0.8),
     steps,
+    samples: costs,
   };
 }
 

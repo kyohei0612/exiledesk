@@ -26,7 +26,7 @@ function choose(modId: string): void {
     <b>カオススパムの組み立て</b>
     <p class="mt-1 opacity-60">
       固定済み + 外せる MOD 1 つにカオスを打ち、狙いが付いたら同じ側の残りを高貴で足します。外れたら消去。
-      スパムの狙いが消えたら剥がしてやり直しです。反対側・エッセンス・冒涜 (一番最後) はまだ数えていません。
+      スパムの狙いが消えたら剥がしてやり直しです。サフィが揃ったら、プレを削減のお告げ → エッセンス → 冒涜 (光ガチャ) で仕上げます。
     </p>
 
     <!-- 狙いごとの手とカタリスト。カタリストは種類ごとに使う / 使わないを選べる -->
@@ -75,6 +75,32 @@ function choose(modId: string): void {
         </tr>
       </table>
     </template>
+
+    <!-- サフィが揃った後のプレの仕上げ (削減のお告げ → エッセンス → 冒涜の光ガチャ) -->
+    <template v-if="c.spam.value.finish">
+      <p class="mt-2">サフィが揃った後のプレの仕上げ</p>
+      <p v-if="c.spam.value.finish.reason" class="text-amber-300">{{ c.spam.value.finish.reason }}</p>
+      <table v-else class="mt-1 w-full">
+        <tr v-for="(st, i) in c.spam.value.finish.steps" :key="i" class="border-b border-white/5">
+          <td class="py-0.5 pr-2">{{ i + 1 }}. {{ st.label }}<template v-if="st.modId"> で {{ c.stepTarget([st.modId]) }}</template></td>
+          <td class="text-right">{{ c.money(st.cost) }}</td>
+        </tr>
+        <tr v-if="c.spam.value.finish.desecrate" class="border-b border-white/5">
+          <td class="py-0.5 pr-2">
+            {{ c.spam.value.finish.steps.length + 1 }}. 冒涜 ({{ c.spam.value.finish.desecrate.bone }} + 左手のネクロマンシーのお告げ{{ c.spam.value.finish.desecrate.echoes ? " + 反響のお告げ" : "" }})
+            で {{ c.stepTarget([c.spam.value.finish.desecrate.modId]) }} — 1 回 1/{{ (1 / c.spam.value.finish.desecrate.odds).toFixed(1) }}、外れたら光のお告げ {{ c.money(c.spam.value.finish.desecrate.light) }} で消して引き直し
+          </td>
+          <td class="text-right">1 回 {{ c.money(c.spam.value.finish.desecrate.perTry) }}</td>
+        </tr>
+      </table>
+      <p v-if="!c.spam.value.finish.reason" class="mt-1">仕上げ 平均 <b>{{ c.money(c.spam.value.finish.expected) }}</b></p>
+    </template>
+    <p v-if="c.spam.value.total" class="mt-2 text-sky-300">
+      合計 (サフィ + 仕上げ): 平均 <b>{{ c.money(c.spam.value.total.expected) }}</b>
+      / 半分の確率で {{ c.money(c.spam.value.total.p50) }}
+      / <b>8 割の確率で {{ c.money(c.spam.value.total.p80) }}</b>
+      / 9 割 {{ c.money(c.spam.value.total.p90) }}
+    </p>
 
     <!-- 優先順のルールが一番安いとは限らないので、同じ側の候補を全部並べる -->
     <p class="mt-2">スパムの狙いの候補 (平均の安い順)</p>

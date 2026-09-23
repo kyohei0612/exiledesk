@@ -339,6 +339,7 @@ export function useHtcCraft() {
         suffix: slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length,
       },
       catalystChoice: catalystChoice.value,
+      qualityTag: item.value?.catalystTag ?? null,
       ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}),
     });
   });
