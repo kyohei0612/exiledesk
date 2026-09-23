@@ -31,7 +31,7 @@ function choose(modId: string): void {
 
     <!-- 狙いごとの手とカタリスト。カタリストは種類ごとに使う / 使わないを選べる -->
     <table class="mt-1 w-full">
-      <tr class="opacity-50"><th class="text-left">狙い</th><th>側</th><th class="text-left">効くカタリスト (触媒の高貴 1 回ぶん)</th><th class="text-left">手</th></tr>
+      <tr class="opacity-50"><th class="text-left">狙い</th><th>側</th><th class="text-left">効くカタリスト (触媒の高貴のお告げ 1 回ぶん)</th><th class="text-left">手</th></tr>
       <tr v-for="m in c.spam.value.methods" :key="m.modId" class="border-b border-white/5 align-top">
         <td class="py-0.5 pr-2">{{ c.stepTarget([m.modId]) }}</td>
         <td class="text-center">{{ sideJa(m.side) }}</td>

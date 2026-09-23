@@ -4,7 +4,7 @@
  * ## オーナーと決めた組み立て
  * 1. **カオススパム**: 固定済み (樹 MOD) + 外せる MOD 1 つの状態でカオスを打つ。外せるのが 1 つだけ
  *    なので毎回そこが入れ替わり、狙いが消える心配が無い。狙いが付いたら止める。
- * 2. **同じ側の残り**を片側の高貴 (触媒あり / なし) で足す。外れたら消去。消去は外せる MOD から
+ * 2. **同じ側の残り**を片側の高貴 (カタリストあり / なし) で足す。外れたら消去。消去は外せる MOD から
  *    一様に 1 つ消すので、**外れ / 足した狙い / スパムで付けた狙い**のどれかが消える。スパムの狙いが
  *    消えたら剥がしてスパムからやり直し (オーナー:「キャスピ消えたら泣ける」)。
  * 3. 反対側・エッセンス・冒涜は**その後** (ここでは数えない)。冒涜は一番最後。
@@ -19,7 +19,7 @@
  * 物を先に固める)。
  *
  * ## 有識者の話
- * 費用の大半は**触媒で足しに行って外した時の消去**。だから触媒で足す側の枠はスパムの間空けておく。
+ * 費用の大半は**触媒の高貴のお告げで足しに行って外した時の消去**。だからカタリストで足す側の枠はスパムの間空けておく。
  *
  * ## 品質 40% (ブリーチのエッセンス)
  * 最大品質を 40% にするとプレに「ゴミ MOD」(レベル 0) が 1 つ居座る。サフィの外れを素の消去で消すと
@@ -48,7 +48,7 @@ export interface CatalystChoice {
   ja: string;
   /** カタリスト 1 個 (高貴換算) */
   unit: number;
-  /** 触媒の高貴 1 回ぶんのカタリスト代 + 触媒のお告げ (高貴換算) */
+  /** 触媒の高貴のお告げ 1 回ぶんのカタリスト代 + お告げ代 (高貴換算) */
   perTry: number;
   enabled: boolean;
 }
@@ -120,7 +120,7 @@ export interface SpamPlanInput {
   targets: readonly TierTarget[];
   prices: Prices;
   itemLevel: number;
-  /** 触媒で使う品質 (%)。品質 40% の貼り付けならブリーチのエッセンスを使っている */
+  /** カタリストで上げる品質 (%)。品質 40% の貼り付けならブリーチのエッセンスを使っている */
   quality: number;
   /** プレにブリーチのゴミ MOD が居るか (品質 40%) */
   breach: boolean;
@@ -273,7 +273,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
       const catCost = tag ? (c.others.flatMap((o) => o.catalysts).find((x) => x.tag === tag)?.perTry ?? Infinity) : 0;
       const ja = tag ? CATALYSTS.find((x) => x.tag === tag)?.ja ?? tag : "";
       exalts.push({ kind: "exalt", k, floor, tag, cost: c.cur(k) + c.cur(sideOmen) + catCost,
-        label: `${LABEL[k]} + ${c.side === "prefix" ? "左" : "右"}側の高貴なお告げ${tag ? ` + 触媒 (${ja})` : ""}` });
+        label: `${LABEL[k]} + ${c.side === "prefix" ? "左" : "右"}側の高貴なお告げ${tag ? ` + 触媒の高貴のお告げ + ${ja}` : ""}` });
     }
   }
   const annuls: Act[] = [{ kind: "annul", label: "消去のオーブ", cost: c.cur("annul"), breachHit: c.breach }];
