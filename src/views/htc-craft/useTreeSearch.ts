@@ -125,7 +125,7 @@ export function useTreeSearch(deps: {
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null },
       { key: "loose" as const, label: "固定無し・ゆるい (消去ガチャで減らす)", take: 10,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null },
-      { key: "strict" as const, label: "固定無し・厳しい (プレフィックス 1 個 = 消去ガチャ無し)", take: 10,
+      { key: "strict" as const, label: "固定無し・厳しい (欲しい MOD の側はその 1 つだけ = 冒涜しやすい)", take: 10,
         query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false, strict: true }) : null },
     ].filter((x) => x.query != null);
     return { plan, buys, searches };

@@ -13,7 +13,7 @@ import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import DiagnosisCard from "./DiagnosisCard.vue";
 import SpamPlanPanel from "./SpamPlanPanel.vue";
-import CraftSandboxPanel from "./CraftSandboxPanel.vue";
+import CraftTreePanel from "./CraftTreePanel.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -272,8 +272,8 @@ const implicitText = (lines: readonly string[]): string =>
 
     <template v-if="c.base.value">
       <DiagnosisCard :c="c" />
-      <h2 class="mb-1 font-bold">1 手ずつ</h2>
-      <CraftSandboxPanel :c="c" />
+      <h2 class="mb-1 font-bold">作り方 (ツリー)</h2>
+      <CraftTreePanel :c="c" />
 
       <details class="mb-4 mt-4 text-xs">
         <summary class="cursor-pointer opacity-60">詳しく (MOD の段・忍者の道・ベース候補)</summary>
