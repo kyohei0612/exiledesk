@@ -6,7 +6,7 @@
  * ここは出すだけ。カタリストの使う / 使わないと、スパムの狙いの選び直しだけ受け付けます。
  */
 import { computed } from "vue";
-import { craftBudgetDivine, reachWithin } from "./budget";
+import { craftBudgetDivine, reachWithin } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 import { usePartialBuy } from "./usePartialBuy";
 
@@ -25,7 +25,7 @@ const bestPartial = computed(() => {
   return rows.length ? rows.reduce((a, b) => (b.sum! < a.sum! ? b : a)) : null;
 });
 
-/** 予算 (神、既定 500)。段階ごとに「予算内でそこまで行ける確率」を数える ([[budget.ts]]) */
+/** 予算 (神、既定 500)。段階ごとに「予算内でそこまで行ける確率」を数える ([[craft-settings.ts]]) */
 const budgetDivine = craftBudgetDivine;
 const budgetReach = computed(() => {
   const t = props.c.spam.value?.total, div = props.c.prices.value?.currency.divine;

@@ -212,12 +212,12 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
       options.push({ label: KEEP, loss: keep - base, chosen: e.kind === "exalt", forceKey: rk, forced: force[rk] === KEEP });
     }
     options.sort((a, b) => a.loss - b.loss);
-    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss, options };
+    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss, options, cost: 0 };
     const m = bits(h) + 1 + B;
     const outcomes: MissPlan["outcomes"] = [{ kind: "junk", p: 1 / m }];
     ids.forEach((id, i) => { if (h & (1 << i)) outcomes.push({ kind: "target", modId: id, p: 1 / m }); });
     if (B) outcomes.push({ kind: "breach", p: 1 / m });
-    return { p, action: e.label, outcomes, loss, options };
+    return { p, action: e.label, outcomes, loss, options, cost: annul.cost(B) };
   };
   const path: PathStep[] = [];
   for (let h = 0; h !== full;) {

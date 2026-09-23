@@ -38,6 +38,8 @@ export interface MissPlan {
   outcomes: Array<{ kind: "junk" | "target" | "spam" | "breach"; modId?: string; p: number }>;
   /** 外れ 1 回で増える費用の期待値 (外れた状態の残り − 外れ無しの残り) */
   loss: number;
+  /** 外れ 1 回の後始末に打つ物の値段 (消去 + お告げ。やり直しならスパムまで込み、残すなら 0)。挑戦回数の予算に使う */
+  cost: number;
   /** 選べるリカバリーと、それぞれの外れ 1 回の損。`forceKey` に label を入れると固定して解き直す */
   options: Array<{ label: string; loss: number; chosen: boolean; forceKey: string; forced: boolean }>;
 }

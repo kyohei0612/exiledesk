@@ -247,14 +247,14 @@ export function solvePhase(c: PhaseCtx): PhaseResult {
       options.push({ label: KEEP, loss: keep - base, chosen: e.kind === "exalt", forceKey: rk, forced: force[rk] === KEEP });
     }
     options.sort((a, b) => a.loss - b.loss);
-    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss, options };
-    if (e.kind === "reset") return { p, action: e.label, outcomes: [], loss, options };
+    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss, options, cost: 0 };
+    if (e.kind === "reset") return { p, action: e.label, outcomes: [], loss, options, cost: resetCost(h, 1) };
     const hitsB = e.breachHit && bq === 1 ? 1 : 0;
     const m = 1 + bits(h) + 1 + hitsB;
     const outcomes: MissPlan["outcomes"] = [{ kind: "junk", p: 1 / m }, { kind: "spam", modId: c.pick.modId, p: 1 / m }];
     ids.forEach((id, i) => { if (h & (1 << i)) outcomes.push({ kind: "target", modId: id, p: 1 / m }); });
     if (hitsB) outcomes.push({ kind: "breach", p: 1 / m });
-    return { p, action: e.label, outcomes, loss, options };
+    return { p, action: e.label, outcomes, loss, options, cost: e.cost };
   };
   // 外れ無しの道: 付いていない狙いを、その状態で選ぶ手で引き、一番付きやすい物から付いたとする
   const path: PathStep[] = [];

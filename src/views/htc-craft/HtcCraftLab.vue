@@ -6,7 +6,9 @@
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
 import { computed, ref, watchEffect } from "vue";
-import { PRESETS } from "./presets";
+import { PRESETS, ZERO_PRESETS } from "./presets";
+import { zeroStart } from "./craft-settings";
+import { CATALYSTS } from "../../services/htc/quality";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
@@ -25,11 +27,12 @@ watchEffect(() => pk.useData(c.data.value));
  *   base  … ベースと狙う MOD を自分で並べる
  */
 //
-// **開発ビルドだけ、見本を貼った状態で始めます** (オーナー指示 2026-09-23:「開発環境には
-// さっきのニーモニック貼っといて、デフォで開発しやすいわ」)。毎回貼り直さずに済ませるためで、
-// 配布版は何も入っていない状態から始まります。読み込みまでは自動でしません ── 押すのは人。
+// **開発ビルドだけ、見本を並べた状態で始めます**。最初は貼り付けの見本だったが (「開発環境には
+// さっきのニーモニック貼っといて」)、2026-09-23 に「0 の状態からやりたい。貼り付けはネタバレ」で
+// **ベースから選ぶ見本** (ニーモニックリングを 0 から) に替えた。貼り付けの見本も入口 A に残る。
+// 配布版は何も入っていない状態から始まります。計算までは自動でしません ── 押すのは人。
 const DEV = import.meta.env.DEV;
-const door = ref<"none" | "paste" | "base">(DEV ? "paste" : "none");
+const door = ref<"none" | "paste" | "base">(DEV ? "base" : "none");
 const text = ref(DEV ? PRESETS[0]!.text : "");
 const picked = ref<string | null>(DEV ? PRESETS[0]!.id : null);
 const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
@@ -88,8 +91,22 @@ async function openBaseDoor(): Promise<void> {
   door.value = "base";
   await c.ensureData();
 }
+/** 0 から組む見本を並べる (計算はしない。押すのは人) */
+const zeroPicked = ref<string | null>(null);
+function pickZero(id: string): void {
+  const z = ZERO_PRESETS.find((x) => x.id === id);
+  const d = c.data.value;
+  if (!z || !d) return;
+  zeroPicked.value = id;
+  pk.level.value = z.itemLevel;
+  pk.chooseBase(d, z.baseType);
+  pk.picks.value = z.picks.map((x) => ({ ...x }));
+  zeroStart.value = { ...zeroStart.value, quality: z.quality, qualityTag: z.qualityTag, fixedPrefix: z.fixedPrefix, fixedSuffix: z.fixedSuffix };
+}
+if (DEV) void c.ensureData().then(() => { if (!pk.baseName.value) pickZero(ZERO_PRESETS[0]!.id); });
 async function runPicked(): Promise<void> {
   if (!pk.baseName.value || !pk.cls.value) return;
+  zeroStart.value = { ...zeroStart.value, baseType: pk.baseName.value, itemLevel: pk.level.value };
   stage.value = "read";
   await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
 }
@@ -171,6 +188,36 @@ const implicitText = (lines: readonly string[]): string =>
 
     <!-- 入口 B: ベースから選ぶ -->
     <div v-if="door === 'base'" class="mb-4">
+      <div class="mb-2 flex flex-wrap gap-2 text-xs">
+        <span class="opacity-50">見本:</span>
+        <button
+          v-for="z in ZERO_PRESETS" :key="z.id" class="rounded border px-2 py-0.5"
+          :class="zeroPicked === z.id ? 'border-amber-400 text-amber-300' : 'border-[var(--exile-color-border-subtle)] opacity-70'"
+          @click="pickZero(z.id)"
+        >{{ z.label }}</button>
+      </div>
+      <!-- 作り方の設定: 貼り付けが無いので品質と固定済みの枠は自分で決める -->
+      <div class="mb-2 flex flex-wrap items-center gap-3 rounded bg-white/5 p-2 text-xs">
+        <b class="opacity-70">作り方の設定</b>
+        <label>品質
+          <select v-model.number="zeroStart.quality" class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1">
+            <option :value="20">20% (カタリストだけ)</option>
+            <option :value="40">40% (ブリーチのエッセンスで上限を上げる)</option>
+          </select>
+        </label>
+        <label>最後に上げる品質の種類
+          <select v-model="zeroStart.qualityTag" class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1">
+            <option :value="null">上げない</option>
+            <option v-for="k in CATALYSTS" :key="k.tag" :value="k.tag">{{ k.ja }}</option>
+          </select>
+        </label>
+        <label>固定済みの樹 MOD (買う物) が使う枠: プレ
+          <input v-model.number="zeroStart.fixedPrefix" type="number" min="0" max="3" class="w-10 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
+        </label>
+        <label>サフィ
+          <input v-model.number="zeroStart.fixedSuffix" type="number" min="0" max="3" class="w-10 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
+        </label>
+      </div>
       <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
         <input
           v-model="pk.baseQuery.value"

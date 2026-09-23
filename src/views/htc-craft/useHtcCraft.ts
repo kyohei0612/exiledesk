@@ -30,13 +30,12 @@
 import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
-import { baseForSolving, sideLimits } from "../../services/htc/bridge";
-import { craftForce } from "./budget";
+import { baseForSolving } from "../../services/htc/bridge";
+import { useSpamPlan } from "./useSpamPlan";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
-import { spamPlan } from "../../services/htc/spam-plan";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
@@ -113,6 +112,8 @@ export function useHtcCraft() {
   const fracturedUnusable = ref(0);
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
+  /** カオススパムの組み立て ([[useSpamPlan.ts]])。貼り付けが無い時は作り方の設定の 0 から組む値 */
+  const { catalystChoice, spamOverride, spamUsed, spam } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
 
@@ -318,35 +319,6 @@ export function useHtcCraft() {
    * オーナーの順番: オーブの値段を見る (信号 0) → 固定済み品の最安 1 件 (信号 1) → 比べて起動。
    * ここは 1 段目で、オーブ・消去・鎖骨の実勢から「自前の固定費」と得な道を出します。
    */
-  /**
-   * カオススパムで何を狙い、同じ側の残りをどう足すか ([[spam-plan.ts]])。
-   * カタリストは種類ごとに使う / 使わないを選べる (既定は 1 個 0.2 神以上を使わない)。
-   */
-  const catalystChoice = ref<Record<string, boolean>>({});
-  const spamOverride = ref<string | null>(null);
-  /** 固定済み・樹 MOD で埋まっている枠 (スパムの組み立てと途中品の検索で共通) */
-  const spamUsed = computed(() => {
-    const fr = fracturedTargets.value.map((t) => data.value?.mods.get(t.modId)?.type);
-    return { prefix: slotsUsed.value.prefixes + fr.filter((x) => x === "prefix").length, suffix: slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length };
-  });
-  const spam = computed(() => {
-    const d = data.value, cls = base.value, p = prices.value;
-    if (!d || !cls || !p || !targets.value.length) return null;
-    const q = item.value?.quality ?? null;
-    return spamPlan({
-      data: d, cls, targets: targets.value, prices: p,
-      itemLevel: item.value?.itemLevel ?? 82,
-      // 貼り付けの品質が 20% を超えていればブリーチのエッセンスで上げている (プレにゴミ MOD が 1 つ)
-      quality: q ?? 20,
-      breach: (q ?? 0) > 20,
-      used: spamUsed.value,
-      baseLimits: sideLimits(d, item.value?.baseType),
-      catalystChoice: catalystChoice.value,
-      qualityTag: item.value?.catalystTag ?? null,
-      ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}), force: craftForce.value,
-    });
-  });
-
   const treePlan = computed(() => {
     const p = prices.value;
     if (!p || dropOnly.value.length === 0) return null;
@@ -481,7 +453,11 @@ export function useHtcCraft() {
 
   /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
-    modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
+    modIds.map((id) => {
+      const r = rows.value.find((x) => x.modId === id);
+      // 0 から組んだ時は文面が「#」のままなので、狙う段を添える
+      return r ? (r.text.includes("#") ? `${r.text} (${r.tierName}: ${r.range} 以上)` : r.text) : id.split("/")[1] ?? "";
+    }).join(" + ");
 
   return {
     stepTarget,

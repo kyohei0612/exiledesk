@@ -5,11 +5,11 @@
  * オーナー:「1 個 1 個確率出していこう、次へ みたいな。実際の UI 適当でいいから作ってみて。
  * 最終完成品はトータルコストの期待値で予算予想って出せばいい」。
  * 「完成品とベースが離れてるほど作った方が良い」ので、最後に売値とベースの差と並べる。
- * カードは [[craft-steps.ts]]、予算は [[budget.ts]] (スパムの組み立てと共通)。
+ * カードは [[craft-steps.ts]]、予算は [[craft-settings.ts]] (スパムの組み立てと共通)。
  */
 import { computed, ref, watch } from "vue";
-import { craftBudgetDivine, craftForce, reachWithin } from "./budget";
-import { craftSteps } from "./craft-steps";
+import { craftAttempts, craftBudgetDivine, craftForce, reachWithin, zeroStart } from "./craft-settings";
+import { craftSteps, withinAttempts, type StepCard } from "./craft-steps";
 import type { MissPlan } from "../../services/htc/spam-total";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -21,7 +21,7 @@ const cards = computed(() => (c.spam.value ? craftSteps(c.spam.value, c.stepTarg
 /** 0 = ベース、1..n = 手、n+1 = 完成 */
 const at = ref(0);
 // 貼り直したら最初から、選んだ手も捨てる (選び直しでは今のカードに留まる)
-watch(() => c.item.value, () => { at.value = 0; craftForce.value = {}; });
+watch(() => c.targets.value, () => { at.value = 0; craftForce.value = {}; craftAttempts.value = {}; });
 /** 手を選ぶ。一番安い手 (おまかせ) を選んだら固定を外す */
 function choose(forceKey: string, label: string | null): void {
   const next = { ...craftForce.value };
@@ -29,6 +29,24 @@ function choose(forceKey: string, label: string | null): void {
   craftForce.value = next;
 }
 const forcedCount = computed(() => Object.keys(craftForce.value).length);
+
+/** 選択肢は期待値の良い上位 3 つだけ (オーナー 2026-09-23)。固定した手は上位でなくても出す */
+const TOP = 3;
+const top = <T extends { forced: boolean }>(xs: readonly T[]): T[] => [...xs.slice(0, TOP), ...xs.slice(TOP).filter((x) => x.forced)];
+/** 手ごとの挑戦回数 (カードの題で覚える) */
+const attemptsOf = (k: StepCard): number => craftAttempts.value[k.title] ?? k.defaultAttempts;
+function setAttempts(k: StepCard, n: number): void {
+  craftAttempts.value = { ...craftAttempts.value, [k.title]: Math.max(1, Math.round(n) || 1) };
+}
+/** 全部の手を決めた回数以内に終える確率と、回数を使い切った時の予算 */
+const capped = computed(() => {
+  let p = 1, budget = 0, expected = 0;
+  for (const k of cards.value) {
+    const w = withinAttempts(k, attemptsOf(k));
+    p *= w.p; budget += w.budget; expected += w.expected;
+  }
+  return { p, budget, expected };
+});
 const last = computed(() => cards.value.length + 1);
 const card = computed(() => (at.value >= 1 && at.value <= cards.value.length ? cards.value[at.value - 1]! : null));
 
@@ -86,8 +104,13 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
       <!-- 0: ベース -->
       <template v-if="at === 0">
         <b class="text-sm">0. ベースを用意する</b>
-        <p class="mt-1">{{ c.item.value?.baseText ?? "" }} ({{ c.item.value?.baseType ?? "" }}) / ilvl {{ c.item.value?.itemLevel ?? "?" }}</p>
-        <p v-if="c.dropOnly.value.length" class="mt-1">
+        <p v-if="c.item.value" class="mt-1">{{ c.item.value.baseText }} ({{ c.item.value.baseType }}) / ilvl {{ c.item.value.itemLevel ?? "?" }}</p>
+        <p v-else class="mt-1">{{ zeroStart.baseType ?? "" }} / ilvl {{ zeroStart.itemLevel }} / 品質 {{ zeroStart.quality }}% (0 から組む)</p>
+        <p v-if="!c.item.value && zeroStart.fixedPrefix + zeroStart.fixedSuffix > 0" class="mt-1">
+          固定済みの樹 MOD (プレ {{ zeroStart.fixedPrefix }} / サフィ {{ zeroStart.fixedSuffix }}) が付いたベースを買う
+          <span class="text-amber-300">(値段は入っていません。作る費用はこの後の手だけ)</span>
+        </p>
+        <p v-else-if="c.dropOnly.value.length" class="mt-1">
           作れない MOD (樹 MOD) が付いた<b>固定済み</b>を買う:
           <b v-if="baseCost != null">平均 {{ c.money(baseCost) }}</b>
           <span v-else class="text-amber-300">値段はまだ取っていません (① の樹 MOD の検索で入ります)</span>
@@ -105,7 +128,7 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
             <td>
               <button type="button" class="mr-1 rounded border px-1" :class="card.options.some((o) => o.forced) ? 'border-white/10 opacity-60' : 'border-amber-400 text-amber-300'"
                 @click="choose(card.options[0]!.forceKey, null)">おまかせ (期待値で一番安い)</button>
-              <div v-for="o in card.options.slice(0, 8)" :key="o.label" class="pl-1">
+              <div v-for="o in top(card.options)" :key="o.label" class="pl-1">
                 <button type="button" class="rounded border px-1 text-left" :class="o.forced ? 'border-amber-400 text-amber-300' : o.chosen ? 'border-sky-500' : 'border-white/10'"
                   @click="choose(o.forceKey, o.label)">{{ o.label }}</button>
                 当たる {{ pct(o.odds) }}% / <span :class="o.delta > 0.5 ? 'text-rose-300' : 'text-emerald-300'">{{ o.delta > 0.5 ? "+" + c.money(o.delta) : "一番安い" }}</span>
@@ -120,6 +143,16 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
           <tr v-if="card.odds < 1">
             <td class="pr-3 opacity-60">当たるまで</td>
             <td>平均 {{ (1 / card.odds).toFixed(1) }} 回</td>
+          </tr>
+          <tr v-if="card.odds < 1">
+            <td class="pr-3 opacity-60">挑戦回数</td>
+            <td>
+              <input :value="attemptsOf(card)" type="number" min="1" class="num w-16" @change="setAttempts(card, Number(($event.target as HTMLInputElement).value))" /> 回まで →
+              当たる確率 <b :class="reachClass(withinAttempts(card, attemptsOf(card)).p)">{{ pct(withinAttempts(card, attemptsOf(card)).p) }}%</b>
+              / 予算 (全部外れた時) <b>{{ c.money(withinAttempts(card, attemptsOf(card)).budget) }}</b>
+              / 支出の見込み {{ c.money(withinAttempts(card, attemptsOf(card)).expected) }}
+              <span class="opacity-60">(外れ 1 回の後始末 {{ c.money(card.missCost) }} 込み)</span>
+            </td>
           </tr>
           <tr>
             <td class="pr-3 opacity-60">この手の支出</td>
@@ -142,7 +175,7 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
                 リカバリーを選ぶ:
                 <button type="button" class="ml-1 rounded border px-1" :class="card.miss.options.some((o) => o.forced) ? 'border-white/10 opacity-60' : 'border-amber-400 text-amber-300'"
                   @click="choose(card.miss.options[0]!.forceKey, null)">おまかせ</button>
-                <div v-for="o in card.miss.options" :key="o.label" class="pl-1">
+                <div v-for="o in top(card.miss.options)" :key="o.label" class="pl-1">
                   <button type="button" class="rounded border px-1 text-left" :class="o.forced ? 'border-amber-400 text-amber-300' : o.chosen ? 'border-sky-500' : 'border-white/10'"
                     @click="choose(o.forceKey, o.label)">{{ o.label }}</button>
                   外れ 1 回の損 {{ c.money(o.loss) }}
@@ -170,6 +203,12 @@ const reachClass = (p: number): string => (p >= 0.8 ? "text-emerald-300" : p >= 
           <template v-for="(r, i) in reach" :key="r.label">
             <span v-if="i" class="opacity-50"> → </span>{{ r.label }} <b :class="reachClass(r.p)">{{ pct(r.p) }}%</b>
           </template>
+        </p>
+        <p class="mt-1 rounded bg-black/20 p-2">
+          決めた挑戦回数で: 全部の手が回数以内に終わる確率 <b :class="reachClass(capped.p)">{{ pct(capped.p) }}%</b>
+          / 予算 (全部の手で回数を使い切った時) <b>{{ c.money(capped.budget) }}</b>
+          / 支出の見込み {{ c.money(capped.expected) }}
+          <br /><span class="opacity-60">消去で前の狙いが消えて戻った分は含みません (その分は上の平均に入っています)</span>
         </p>
         <p class="mt-1 opacity-80">
           予算の目安: 半分の確率で済ませるなら {{ c.money(total.p50) }}、8 割なら {{ c.money(total.p80) }} を用意

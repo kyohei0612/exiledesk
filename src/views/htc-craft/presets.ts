@@ -43,3 +43,41 @@ export const PRESETS: readonly Preset[] = [
     ].join(NL),
   },
 ];
+
+/**
+ * 0 から組む見本 (ベースから選ぶ道)。オーナー 2026-09-23:「最初から 0 の状態からやりたい。
+ * いまネタバレありだからね (貼り付けだと完成品が見える)」。
+ * 狙いと段は死体の円環と同じ。マナコスト効率 (樹 MOD) は固定済みで買う前提なので、プレの枠を 1 つ使うだけ。
+ */
+export interface ZeroPreset {
+  id: string;
+  label: string;
+  baseType: string;
+  itemLevel: number;
+  /** modId と段 (`mod.tiers` の添字。大きいほど良い) */
+  picks: Array<{ modId: string; tierIndex: number }>;
+  quality: 20 | 40;
+  qualityTag: string | null;
+  fixedPrefix: number;
+  fixedSuffix: number;
+}
+
+export const ZERO_PRESETS: readonly ZeroPreset[] = [
+  {
+    id: "ring-zero",
+    label: "ニーモニックリング (0 から / 樹 MOD は固定済みで買う)",
+    baseType: "Mnemonic Ring",
+    itemLevel: 80,
+    picks: [
+      { modId: "Rings/IncreasedMana", tierIndex: 11 },
+      { modId: "Rings/PerfectEssence_MaximumManaIncreasePercent", tierIndex: 0 },
+      { modId: "Rings/Intelligence", tierIndex: 6 },
+      { modId: "Rings/AllResistances", tierIndex: 3 },
+      { modId: "Rings/IncreasedCastSpeed", tierIndex: 3 },
+    ],
+    quality: 40,
+    qualityTag: "mana",
+    fixedPrefix: 1,
+    fixedSuffix: 0,
+  },
+];
