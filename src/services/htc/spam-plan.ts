@@ -22,10 +22,12 @@
  * 費用の大半は**触媒の高貴のお告げで足しに行って外した時の消去**。だからカタリストで足す側の枠はスパムの間空けておく。
  *
  * ## 品質 40% (ブリーチのエッセンス)
- * 最大品質を 40% にするとプレに「ゴミ MOD」(レベル 0) が 1 つ居座る。サフィの外れを素の消去で消すと
- * それが消えることがあり、その時はエッセンスを付け直す。右側の消去のお告げで避けることもでき、
- * 安い方を方策が選ぶ。サフィ完成後に削減のお告げで確定で消し、パーフェクトエッセンスを当て、
- * 冒涜でプレを仕上げる (オーナーの手順。ここでは数えない)。
+ * 流れ (オーナー): キャスピをスパム → ブリーチのエッセンスで最大品質 40% → カタリストで品質を足して
+ * 全耐性・知性を触媒の高貴のお告げで全力で引く → 外れたら消去でやり直し。お告げは 1 回ごとに品質を
+ * 使い切るので毎回カタリスト 27 個で戻す。プレにブリーチの MOD (レベル 0) が居座るので、サフィの外れは
+ * **右側の消去のお告げ**で消す (素の消去だとブリーチの MOD を消して品質を戻せなくなる)。
+ * サフィ完成後に削減のお告げで確定で消し、パーフェクトエッセンスを当て、冒涜でプレを仕上げる
+ * (ここでは数えない)。
  *
  * ## 高額コース
  * 品質 20% でスパムの狙いがプレになると、後で削減のお告げの付け直しが続く (オーナー:「削減リロールの
@@ -276,8 +278,15 @@ function solvePhase(c: PhaseCtx): PhaseResult {
         label: `${LABEL[k]} + ${c.side === "prefix" ? "左" : "右"}側の高貴なお告げ${tag ? ` + 触媒の高貴のお告げ + ${ja}` : ""}` });
     }
   }
-  const annuls: Act[] = [{ kind: "annul", label: "消去のオーブ", cost: c.cur("annul"), breachHit: c.breach }];
-  if (c.breach) annuls.push({ kind: "annul", label: `消去のオーブ + ${c.side === "prefix" ? "左" : "右"}側の消去のお告げ`, cost: c.cur("annul") + c.cur(eraseOmen), breachHit: false });
+  // 品質 40% はプレにブリーチの MOD が居る。素の消去がそれを消すと品質を 40% に戻せなくなる
+  // (触媒の高貴のお告げは 1 回ごとに品質を使い切るので、毎回戻す必要がある)。付け直しが他の MOD を
+  // 壊さないかは裏が取れていないので、**片側の消去のお告げだけ**にする (オーナー 2026-09-23:
+  // 「33% いきたいなら右側消去になるかな」── サフィ 3 つから外れを引く 1/3)
+  const annuls: Act[] = c.breach
+    ? [{ kind: "annul", label: `消去のオーブ + ${c.side === "prefix" ? "左" : "右"}側の消去のお告げ`, cost: c.cur("annul") + c.cur(eraseOmen), breachHit: false }]
+    : [{ kind: "annul", label: "消去のオーブ", cost: c.cur("annul"), breachHit: false }];
+  /** スパムの後にブリーチのエッセンスで最大品質を 40% にする 1 回ぶん (品質 40% の時だけ) */
+  const breachOnce = c.breach ? c.cur("essence:breach") : 0;
 
   const occupied = (held: number): Set<string> => new Set([c.pick.modId, ...ids.filter((_, i) => held & (1 << i))]);
   const outcomes = (e: Act, held: number): number[] => {
@@ -328,7 +337,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
   const geo = (p: number): number => Math.max(1, Math.ceil(Math.log(1 - rnd()) / Math.log(1 - p)));
   const costs: number[] = []; const exN: number[] = [];
   for (let r = 0; r < runs; r++) {
-    let cost = c.cur(c.sp.k) * geo(c.sp.odds); let ex = 0; let h = 0; let j = 0;
+    let cost = c.cur(c.sp.k) * geo(c.sp.odds) + breachOnce; let ex = 0; let h = 0; let j = 0;
     for (let g = 0; g < 100000 && h !== full; g++) {
       const e = pol.get(key(h, j));
       if (!e) break;
@@ -360,7 +369,7 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, action: e.label, perTry: e.cost });
   }
   return {
-    expected: V.get(key(0, 0))! + c.sp.expected,
+    expected: V.get(key(0, 0))! + c.sp.expected + breachOnce,
     p50: q(costs, 0.5), p80: q(costs, 0.8), p90: q(costs, 0.9),
     exalts50: q(exN, 0.5), exalts80: q(exN, 0.8),
     steps,
