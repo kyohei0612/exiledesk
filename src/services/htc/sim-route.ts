@@ -7,7 +7,7 @@
  *
  * ## 形 (CoE と同じ)
  * 手 (ノード) = 打つ物 + ○の条件 + 「○ なら次」「× なら次」(別の手 / 完成 / 未設定)。
- * ○の条件: 狙う MOD のどれかがある (空なら問わない) かつ 残したい MOD が全部ある かつ (選べば) 外れが無い
+ * ○の条件: 狙う MOD のうち N 個ある (既定 1 = どれか、空なら問わない) かつ 残したい MOD が全部ある かつ (選べば) 外れが無い
  * かつ (選べば) 外せる MOD が N 個以下。打たずに条件だけ見る「確認」の手もある。
  * 既定のループは入れない。× で消去してやり直す、スパムの狙いが消えたら最初から、は人が手を足して組む。
  *
@@ -54,8 +54,13 @@ export interface SimNode {
   id: string;
   /** 打つ物。未設定なら null (そこで止まる。最初から何も入れない、オーナー) */
   action: SimAction | null;
-  /** 狙う MOD (どれか 1 つあれば○)。空なら問わない */
+  /** 狙う MOD。このうち `need` 個あれば○ (空なら問わない) */
   targets: Array<{ modId: string; minTier: number }>;
+  /**
+   * 狙う MOD のうち何個あれば○か (既定 1 = どれか)。「知性か全耐性」の手の次に「2 つとも」の手を置くため
+   * (1 つ付いた時点で次の手まで○にならないように。2026-09-24)
+   */
+  need?: number;
   /** 残したい MOD (全部あること)。その手に来るまでに揃えた物を入れておく */
   keep: string[];
   /** 外れが無いことも○の条件にする */
@@ -124,9 +129,12 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
   const has = (s: SimState, id: string): boolean => s.slots.some((x) => x.modId === id);
   const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.modId);
 
+  /** 狙う MOD のうち need 個あるか */
+  const targetsMet = (s: SimState, n: SimNode): boolean =>
+    !n.targets.length || n.targets.filter((t) => has(s, t.modId)).length >= Math.min(n.need ?? 1, n.targets.length);
   /** ○の条件 */
   const passes = (s: SimState, n: SimNode): boolean =>
-    (!n.targets.length || n.targets.some((t) => has(s, t.modId))) && n.keep.every((id) => id === "__breach__" ? s.breach : has(s, id))
+    targetsMet(s, n) && n.keep.every((id) => id === "__breach__" ? s.breach : has(s, id))
     && (!n.clean || !hasJunk(s)) && (n.maxMods == null || s.slots.filter((x) => !x.fixed).length + (s.breach ? 1 : 0) <= n.maxMods);
 
   const memo = new Map<string, Array<{ modId: string | null; side: Side; p: number }>>();
@@ -256,7 +264,7 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
     }
   }
 
-  return { roll, usable, priceOf, apply, passes, desecrateOdds, removable, room, has, hasJunk, cur, mod };
+  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, cur, mod };
 }
 
 /**
@@ -320,7 +328,7 @@ export function simulateTree(inp: {
     i = g && g !== "auto" ? byId.get(g) : undefined;
   }
   const goalMet = (st: SimState, x: SimNode): boolean =>
-    (!x.targets.length || x.targets.some((t) => h.has(st, t.modId))) && x.keep.every((id) => (id === "__breach__" ? st.breach : h.has(st, id)));
+    h.targetsMet(st, x) && x.keep.every((id) => (id === "__breach__" ? st.breach : h.has(st, id)));
   /** 自動の行き先 (上の決まり) */
   const autoNext = (st: SimState, cur: number): string | "done" | null => {
     const m = main.find((i) => !goalMet(st, nodes[i]!));

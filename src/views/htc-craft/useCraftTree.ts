@@ -10,7 +10,7 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
-import { simHelpers, simulateTreeChunked, type SimAction, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
+import { simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/spam-total";
 import type { Side } from "../../services/htc/step-odds";
 import { zeroStart } from "./craft-settings";
@@ -19,7 +19,7 @@ import type { useHtcCraft } from "./useHtcCraft";
 let seq = 0;
 const newId = (): string => `n${Date.now().toString(36)}${(seq++).toString(36)}`;
 /** 空の手 (打つ物も行き先も未設定) */
-export const emptyNode = (keep: string[] = []): SimNode => ({ id: newId(), action: null, targets: [], keep, clean: false, maxMods: null, onHit: null, onMiss: null });
+export const emptyNode = (keep: string[] = []): SimNode => ({ id: newId(), action: null, targets: [], need: 1, keep, clean: false, maxMods: null, onHit: null, onMiss: null });
 
 export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   const ctx = computed(() => {
@@ -90,12 +90,45 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
       } else if (a?.kind === "whittle") {
         hit = { ...s, breach: false };
       }
-      if (n.onHit && n.onHit !== "done") queue.push([n.onHit, hit]);
-      if (n.onMiss && n.onMiss !== "done") queue.push([n.onMiss, miss]);
+      if (n.onHit && n.onHit !== "done" && n.onHit !== "auto") queue.push([n.onHit, hit]);
+      if (n.onMiss && n.onMiss !== "done" && n.onMiss !== "auto") queue.push([n.onMiss, miss]);
     }
     return out;
   });
   const stateOf = (id: string): SimState => states.value.get(id) ?? start.value;
+
+  /**
+   * 枝の置き方 (オーナー 2026-09-24:「ツリーの枝は作って良さそう」)。手 1 から ○ を先に、次に × をたどり、
+   * 最初にたどり着いた枝の子として置く。2 回目以降に来る所 (戻る所) は札で出す
+   */
+  const layout = computed(() => {
+    const byId = new Map(nodes.value.map((n) => [n.id, n]));
+    const parent = new Map<string, { from: string; via: "onHit" | "onMiss" }>();
+    const root = nodes.value[0]?.id;
+    const placed = new Set<string>(root ? [root] : []);
+    const visit = (id: string): void => {
+      const n = byId.get(id);
+      if (!n) return;
+      for (const via of ["onHit", "onMiss"] as const) {
+        const g = n[via];
+        if (g && g !== "done" && g !== "auto" && byId.has(g) && !placed.has(g)) {
+          placed.add(g);
+          parent.set(g, { from: id, via });
+          visit(g);
+        }
+      }
+    };
+    if (root) visit(root);
+    return { parent, placed };
+  });
+  /** その手の ○ / × の枝に子として置く手 (無ければ null = 札で出す) */
+  const childOf = (id: string, via: "onHit" | "onMiss"): string | null => {
+    const g = nodes.value.find((n) => n.id === id)?.[via];
+    const p = g ? layout.value.parent.get(g) : undefined;
+    return g && p && p.from === id && p.via === via ? g : null;
+  };
+  const indexOf = (id: string): number => nodes.value.findIndex((n) => n.id === id);
+  const unplaced = computed(() => nodes.value.filter((n) => !layout.value.placed.has(n.id)));
 
   /** 1 回で○になる確率 (その手の指輪から 400 回打ってみる) */
   function hitOdds(n: SimNode): number | null {
@@ -107,7 +140,13 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     return ok / 400;
   }
 
+  /**
+   * 作り方の設定 (ツリーの上。オーナー 2026-09-24:「成功確率は 8 割になるまで試行とか、ツリーの上部に必要な設定を書くように。
+   * そしたら試行回数も決めれる」): 予算・目標の成功確率・回す回数
+   */
   const budgetDivine = ref(500);
+  const targetPct = ref(80);
+  const runs = ref(2000);
   const running = ref(false);
   const progress = ref<[number, number] | null>(null);
   const result = shallowRef<SimResult | null>(null);
@@ -116,17 +155,17 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     const first = nodes.value[0];
     if (!first?.action) return "手 1 の打つ物を選んでください";
     if (!first.onHit || !first.onMiss) return "手 1 は ○ と × の両方の行き先が要ります";
-    if (!nodes.value.some((n) => n.onHit === "done" || n.onMiss === "done")) return "どこかの行き先を「完成」にしてください";
+    if (!nodes.value.some((n) => n.onHit === "done" || n.onMiss === "done")) return "どこかの行き先を「完成」にしてください (本線の最後の○)";
     return null;
   });
-  async function run(runs = 2000): Promise<void> {
+  async function run(): Promise<void> {
     const x = ctx.value;
     if (!x || running.value || blocked.value) return;
     running.value = true;
     result.value = null;
     try {
       const div = c.prices.value?.currency.divine ?? 1;
-      result.value = await simulateTreeChunked({ ctx: x, start: start.value, nodes: nodes.value, runs, budget: budgetDivine.value * div },
+      result.value = await simulateTreeChunked({ ctx: x, start: start.value, nodes: nodes.value, runs: Math.max(100, runs.value), budget: budgetDivine.value * div },
         (done, total) => { progress.value = [done, total]; });
     } finally {
       running.value = false;
@@ -153,18 +192,13 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     result.value = null;
   }
 
-  return { ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, running, progress, result, blocked, run };
-}
+  /** 目標の確率で完成させるのに要る額 (高貴換算)。完成しなかった回は届かない扱い。届かなければ null */
+  const needForTarget = computed(() => {
+    const r = result.value;
+    if (!r) return null;
+    const k = Math.ceil(r.runs * Math.min(100, Math.max(1, targetPct.value)) / 100);
+    return k <= r.doneCosts.length ? r.doneCosts[k - 1]! : null;
+  });
 
-/** 画面で選べる打つ物の種類 */
-export const ACTION_KINDS: Array<{ kind: SimAction["kind"]; ja: string }> = [
-  { kind: "chaos", ja: "カオスオーブ" },
-  { kind: "exalt", ja: "高貴なオーブ" },
-  { kind: "annul", ja: "消去のオーブ" },
-  { kind: "essence", ja: "パーフェクトエッセンス" },
-  { kind: "desecrate", ja: "冒涜 (鎖骨)" },
-  { kind: "light", ja: "消去のオーブ + 光のお告げ (冒涜だけ消す)" },
-  { kind: "breach", ja: "ブリーチのエッセンス (品質の上限 40%)" },
-  { kind: "whittle", ja: "カオスオーブ + 削減のお告げ" },
-  { kind: "check", ja: "確認だけ (打たない)" },
-];
+  return { ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced };
+}
