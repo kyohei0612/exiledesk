@@ -35,12 +35,12 @@ export type SimAction =
 /**
  * ○×の行き先: 手の id / 完成 / 自動 / 未設定 (そこで止まる)。
  *
- * **自動** (オーナー 2026-09-24:「キャスピ消えたら手 1 に戻るし、触媒成功品が消えても失敗が残るから失敗品が消えるまで消去だし、
+ * **自動** (オーナー 2026-09-24:「キャスピ消えたら手 1 に戻るし、触媒の高貴のお告げの成功品が消えても失敗が残るから失敗品が消えるまで消去だし、
  * 失敗品消えたらもう一度っていう処理は自動でやりたい」):
  *   1. 本線 (手 1 から○をたどった手の並び) を上から見て、揃っていない一番上の手を探す
  *   2. それがカオスの手なら、そこへ (外れごと入れ替えるので外れが残っていてよい。スパムの狙いが消えたら最初から)
  *   3. それ以外で外れが残っていれば、今の手をもう 1 回 (消去を続ける)
- *   4. 外れが無ければ、その揃っていない手へ (失敗品が消えたら同じ触媒をもう 1 回、成功品が消えていたらその手から)
+ *   4. 外れが無ければ、その揃っていない手へ (失敗品が消えたら同じ触媒の高貴のお告げをもう 1 回、成功品が消えていたらその手から)
  *   5. 全部揃っていれば完成 (本線の最後が「完成」の時)
  * 揃っている = 狙いのどれかがある かつ 残したい MOD が全部ある (外れ無し・個数の条件は見ない)
  *
@@ -176,12 +176,13 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
       }
       case "annul": return removable(s, a.side).length ? null : "外せる物が無い";
       case "essence": {
+        // 食わせる物が無ければ、高貴 + 側の高貴なお告げで外れを付けてから (その分も 1 回の値段に入る)
         const side = mod(a.modId)?.type as Side;
-        return removable(s, side).length ? null : "食わせる物が無い (先にこの側へ外れを付ける)";
+        return removable(s, side).length || room(s, side) ? null : "食わせる物も枠も無い";
       }
       case "desecrate": return room(s, a.side) ? null : "冒涜する枠が無い";
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
-      case "breach": return s.breach ? "もう付いている" : removable(s, "prefix").length ? null : "食わせるプレが無い";
+      case "breach": return s.breach ? "もう付いている" : removable(s, "prefix").length || room(s, "prefix") ? null : "食わせるプレも枠も無い";
       case "whittle": return removable(s, null).length ? null : "外せる物が無い";
       case "check": return null;
     }
@@ -194,10 +195,15 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
       case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0)
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0);
       case "annul": return cur("annul") + (a.side ? cur(OMEN_ER[a.side]) : 0);
-      case "essence": return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[mod(a.modId)?.type as Side ?? "prefix"]);
+      case "essence": {
+        const side = (mod(a.modId)?.type ?? "prefix") as Side;
+        return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[side]) + (removable(s, side).length ? 0 : cur("exalt") + cur(OMEN_EX[side]));
+      }
       case "desecrate": return cur(a.bone) + cur(OMEN_NE[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
       case "light": return cur("annul") + cur("OmenofLight");
-      case "breach": return cur("essence:breach") + cur("OmenofSinistralCrystallisation");
+      // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
+      // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
+      case "breach": return cur("essence:breach") + cur("OmenofSinistralCrystallisation") + (removable(s, "prefix").length ? 0 : cur("exalt") + cur(OMEN_EX.prefix));
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;
     }
@@ -243,7 +249,8 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
       case "annul": return rmRandom(s, a.side);
       case "essence": {
         const side = mod(a.modId)?.type as Side;
-        return land(rmRandom(s, side), { modId: a.modId, side });
+        const t = removable(s, side).length ? s : land(s, { modId: null, side });
+        return land(rmRandom(t, side), { modId: a.modId, side });
       }
       case "desecrate": {
         const ok = rnd() < desecrateOdds(s, n, a);
@@ -254,7 +261,10 @@ export function simHelpers(ctx: StepCtx, nodes: readonly SimNode[]) {
         const i = s.slots.findIndex((x) => x.desecrated);
         return i >= 0 ? removeAt(s, i) : s;
       }
-      case "breach": return { ...rmRandom(s, "prefix"), breach: true };
+      case "breach": {
+        const t = removable(s, "prefix").length ? s : land(s, { modId: null, side: "prefix" });
+        return { ...rmRandom(t, "prefix"), breach: true };
+      }
       case "whittle": {
         // 一番レベルの低い物 (ブリーチの MOD はレベル 0) を消して 1 つ付く
         const t = s.breach ? { ...s, breach: false } : rmRandom(s, null);
@@ -344,7 +354,7 @@ export function simulateTree(inp: {
     let end: string | null = nodes.length ? null : "手が無い";
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
-      // 本線の手で、もう揃っていれば飛ばす (カオスでスパムの狙いを付け直した時、前の触媒の成功品が残っていれば次へ)
+      // 本線の手で、もう揃っていれば飛ばす (カオスでスパムの狙いを付け直した時、前の触媒の高貴のお告げの成功品が残っていれば次へ)
       if (main.includes(at) && n.action?.kind !== "check" && goalMet(s, n) && n.onHit) {
         const g = n.onHit === "auto" ? autoNext(s, at) : n.onHit;
         if (g === "done") { end = "done"; break; }

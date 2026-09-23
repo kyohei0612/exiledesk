@@ -124,8 +124,8 @@ const ORBS: Array<{ key: string; ja: string }> = [
 ];
 const essenceOrbs = computed(() => [
   ...props.c.targets.value.filter((x) => props.c.data.value?.mods.get(x.modId)?.source === "perfect_essence")
-    .map((x) => ({ key: `essence:${x.modId}`, ja: `パーフェクトエッセンス: ${props.c.stepTarget([x.modId])}` })),
-  { key: "essence:breach", ja: "ブリーチのエッセンス (品質の上限 40%)" },
+    .map((x) => ({ key: `essence:${x.modId}`, ja: `パーフェクトエッセンス: ${props.c.stepTarget([x.modId])} (その側に外せる物が無ければ外れを付けてから)` })),
+  { key: "essence:breach", ja: "ブリーチのエッセンス (品質の上限 40%。プレに外せる物が無ければ高貴 + 左側の高貴なお告げで外れを付けてから)" },
 ]);
 /** 触媒の高貴のお告げのカタリスト (狙いに効く物) */
 const catalysts = computed(() => {

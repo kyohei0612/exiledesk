@@ -33,10 +33,15 @@ function onPick(a: SimAction | null): void {
   });
 }
 
-/** 狙う MOD の候補 = 作る MOD (固定済みを除く) */
+/**
+ * 狙う MOD の候補 = 作る MOD のうち、その手に来た時の指輪にまだ付いていない物 (固定済みを除く)。
+ * 手を進めるごとに減る (オーナー 2026-09-24:「キャスピ最初に欲しい MOD に選んだら、それ以降の手でキャスピ出ることない」)。
+ * その手で既にチェックしている物は外せるように残す
+ */
 const targetRows = computed(() => {
   const fixed = new Set(props.c.fracturedTargets.value.map((t) => t.modId));
-  return props.c.targets.value.filter((t) => !fixed.has(t.modId));
+  const held = new Set(state.value.slots.filter((x) => x.modId).map((x) => x.modId!));
+  return props.c.targets.value.filter((t) => !fixed.has(t.modId) && (!held.has(t.modId) || n.value.targets.some((x) => x.modId === t.modId)));
 });
 function toggleTarget(modId: string, minTier: number, on: boolean): void {
   const ts = n.value.targets.filter((x) => x.modId !== modId);
