@@ -40,7 +40,7 @@ import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
 import { prefixFinish, type FinishPlan } from "./prefix-finish";
-import { totalOf, type SpamTotal } from "./spam-total";
+import { mulberry32, totalOf, type MissPlan, type PathStep, type SpamTotal } from "./spam-total";
 export type { SpamTotal } from "./spam-total";
 
 /** 既定で「使わない」にするカタリストの値段 (1 個・神)。軽快 0.35 / 歯擦音 0.97 / 強奪者 0.37 (2026-09-23) */
@@ -94,6 +94,10 @@ export interface PhaseResult {
   exalts50: number;
   exalts80: number;
   steps: PhaseStep[];
+  /** 外れ無しで進んだ時の 1 手ずつ (画面の「1 手ずつ」) */
+  path: PathStep[];
+  /** スパムの後に 1 回、ブリーチのエッセンスで品質の上限を 40% にする費用 (品質 40% の時だけ、他は 0) */
+  breachOnce: number;
   /** 回した 1 回ずつの費用 (並べ替え済み)。仕上げと足して合計の分布を作る */
   samples: number[];
   /**
@@ -452,7 +456,36 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, breachGone: c.breach && bq === 0,
       action: (re ? "高貴 + 左側の高貴なお告げでプレにゴミ → ブリーチのエッセンス + 左側の結晶化のお告げ → " : "") + e.label, perTry: e.cost + (re ? essence : 0) });
   }
+  /** 外れが 1 つ付いた状態 (h, 外れ 1, bq) で次に打つ手と、消去なら何に当たるか */
+  const missAt = (h: number, bq: number, p: number): MissPlan | null => {
+    const e = pol.get(key(h, 1, bq));
+    if (!e || !(p > 0)) return null;
+    const loss = V.get(key(h, 1, bq))! - V.get(key(h, 0, bq))!;
+    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss };
+    const hitsB = e.breachHit && bq === 1 ? 1 : 0;
+    const m = 1 + bits(h) + 1 + hitsB;
+    const outcomes: MissPlan["outcomes"] = [{ kind: "junk", p: 1 / m }, { kind: "spam", modId: c.pick.modId, p: 1 / m }];
+    ids.forEach((id, i) => { if (h & (1 << i)) outcomes.push({ kind: "target", modId: id, p: 1 / m }); });
+    if (hitsB) outcomes.push({ kind: "breach", p: 1 / m });
+    return { p, action: e.label, outcomes, loss };
+  };
+  // 外れ無しの道: 付いていない狙いを、その状態で選ぶ手で引き、一番付きやすい物から付いたとする
+  const path: PathStep[] = [];
+  for (let h = 0, bq = START_B; h !== full;) {
+    const e = pol.get(key(h, 0, bq));
+    if (!e || e.kind !== "exalt") break;
+    const re = needsBreach(e, bq);
+    const ps = outcomes(e, h);
+    const best = ps.indexOf(Math.max(...ps));
+    const h2 = h | (1 << best), bq2 = re ? 1 : bq;
+    const odds = ps.reduce((x, y) => x + y, 0);
+    path.push({ want: ids.filter((_, i) => !(h & (1 << i))), odds, perTry: e.cost + (re ? essence : 0),
+      action: (re ? "ブリーチのエッセンスを付け直して " : "") + e.label,
+      spend: V.get(key(h, 0, bq))! - V.get(key(h2, 0, bq2))!, miss: missAt(h, bq2, 1 - odds) });
+    h = h2; bq = bq2;
+  }
   return {
+    path, breachOnce,
     expected: V.get(key(0, 0, START_B))! + c.sp.expected + breachOnce,
     p50: q(costs, 0.5), p80: q(costs, 0.8), p90: q(costs, 0.9),
     exalts50: q(exN, 0.5), exalts80: q(exN, 0.8),
@@ -462,15 +495,5 @@ function solvePhase(c: PhaseCtx): PhaseResult {
       held: ids.filter((_, i) => h & (1 << i)),
       expected: V.get(key(h, 0, START_B))! + breachOnce,
     })),
-  };
-}
-
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }

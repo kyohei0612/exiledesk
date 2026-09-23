@@ -5,7 +5,8 @@
  * 計算は [[spam-plan.ts]]、状態は useHtcCraft の `spam` / `catalystChoice` / `spamOverride`。
  * ここは出すだけ。カタリストの使う / 使わないと、スパムの狙いの選び直しだけ受け付けます。
  */
-import { computed, ref } from "vue";
+import { computed } from "vue";
+import { craftBudgetDivine, reachWithin } from "./budget";
 import type { useHtcCraft } from "./useHtcCraft";
 import { usePartialBuy } from "./usePartialBuy";
 
@@ -24,16 +25,12 @@ const bestPartial = computed(() => {
   return rows.length ? rows.reduce((a, b) => (b.sum! < a.sum! ? b : a)) : null;
 });
 
-/**
- * 予算 (神)。既定 500 神 (オーナー 2026-09-23:「基本的に 500 神以内にしてみよう、どこまでできるか」)。
- * 段階ごとに「予算内でそこまで行ける確率」を数える。計算し直しは要らない (合計の 1 回ずつの累計を数えるだけ)
- */
-const budgetDivine = ref(500);
+/** 予算 (神、既定 500)。段階ごとに「予算内でそこまで行ける確率」を数える ([[budget.ts]]) */
+const budgetDivine = craftBudgetDivine;
 const budgetReach = computed(() => {
   const t = props.c.spam.value?.total, div = props.c.prices.value?.currency.divine;
   if (!t || !div || !(budgetDivine.value > 0)) return [];
-  const cap = budgetDivine.value * div;
-  return t.stages.map((st) => ({ label: st.label, p: st.cum.filter((x) => x <= cap).length / Math.max(1, st.cum.length) }));
+  return reachWithin(t, budgetDivine.value * div);
 });
 
 const roleJa = { spam: "カオススパム", exalt: "高貴で足す", later: "後で" } as const;

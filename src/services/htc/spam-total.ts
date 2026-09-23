@@ -3,6 +3,41 @@
  */
 import type { FinishPlan } from "./prefix-finish";
 
+/**
+ * 「1 手ずつ」の画面に出す 1 手 (オーナー 2026-09-23:「1 個 1 個確率出していこう、次へ みたいな」)。
+ * 外れ無しで進んだ時の道 (一番付きやすい狙いから付いたとして)。外れ・消去の費用は段階の平均に入っている
+ */
+export interface PathStep {
+  /** この手で狙う物 (どれか 1 つが付けば当たり) */
+  want: string[];
+  action: string;
+  /** 1 回で当たる確率 */
+  odds: number;
+  /** 1 回の値段 (高貴換算) */
+  perTry: number;
+  /**
+   * この手で狙いが 1 つ付くまでの**支出の期待値** (外れの消去・狙いが消えた時のやり直しも込み)。
+   * 解いた「残りの期待値」の、この手の前と後の差 (オーナー 2026-09-23:「次の一手が確率と予想期待値による支出」)
+   */
+  spend: number;
+  /**
+   * 外れた時のリカバリー (オーナー 2026-09-23:「進めるのは MOD の数だけ、失敗時のリカバリーどうするかだよね」)。
+   * 外れ = 狙い以外が付いた。その後に打つ手と、消去が何に当たるか
+   */
+  miss: MissPlan | null;
+}
+
+export interface MissPlan {
+  /** 外れる確率 (1 − odds) */
+  p: number;
+  /** 外れた後に打つ手 */
+  action: string;
+  /** 消去の時、何が消えるか。exalt (外れを残して次を打つ) の時は空 */
+  outcomes: Array<{ kind: "junk" | "target" | "spam" | "breach"; modId?: string; p: number }>;
+  /** 外れ 1 回で増える費用の期待値 (外れた状態の残り − 外れ無しの残り) */
+  loss: number;
+}
+
 /** 合計の分布。`stages` は段階ごとの**累計**の費用を 1 回ずつ (予算でどこまで行けるかを画面で数える) */
 export interface SpamTotal {
   expected: number; p50: number; p80: number; p90: number;
@@ -31,7 +66,8 @@ export function totalOf(finish: FinishPlan, expected: number, phase: readonly nu
   return { expected, p50: q(0.5), p80: q(0.8), p90: q(0.9), stages };
 }
 
-function mulberry32(seed: number): () => number {
+/** 決まった種の乱数 (回すたびに同じ分布になるように) */
+export function mulberry32(seed: number): () => number {
   let a = seed;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;

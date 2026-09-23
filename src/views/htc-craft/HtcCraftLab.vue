@@ -11,6 +11,7 @@ import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
 import SpamPlanPanel from "./SpamPlanPanel.vue";
+import CraftStepsPanel from "./CraftStepsPanel.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -43,12 +44,13 @@ const listing = ref<number | null>(DEV ? PRESETS[0]!.listingDivine : null);
 const STAGES = [
   { id: "read", label: "① MOD 解析", hint: "何の MOD だと読めたか" },
   { id: "base", label: "② ベース", hint: "どのベースから作るか" },
+  { id: "steps", label: "③ 1 手ずつ", hint: "1 手ずつの確率と、完成までの費用・予算" },
 ] as const;
 type StageId = (typeof STAGES)[number]["id"];
 
 /** その段に出す物が無ければ見出しごと出さない (空の段を押させない) */
 const stages = computed(() =>
-  STAGES.filter((s) => (s.id === "base" ? c.bases.value.length > 0 : true)),
+  STAGES.filter((s) => (s.id === "base" ? c.bases.value.length > 0 : s.id === "steps" ? !!c.spam.value?.total : true)),
 );
 const stage = ref<StageId>("read");
 /** 段が消えた時 (貼り直しで固定済みが無くなった等) に、無い段に居座らせない */
@@ -377,6 +379,12 @@ const implicitText = (lines: readonly string[]): string =>
             <td class="pl-2 opacity-60">{{ b.why ?? implicitText(b.implicits) }}</td>
           </tr>
         </table>
+      </section>
+
+      <!-- 1 手ずつ。確率を 1 つずつ見て、最後に完成までの費用と予算・売値との比べ -->
+      <section v-if="c.spam.value?.total" v-show="current === 'steps'" class="mb-4">
+        <h2 class="mb-1 font-bold">③ 1 手ずつ</h2>
+        <CraftStepsPanel :c="c" :listing-divine="listing" />
       </section>
 
       <!-- 次の段へ。押さずに上の見出しから飛んでもいい -->

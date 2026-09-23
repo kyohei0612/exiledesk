@@ -16,6 +16,7 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
+import { mulberry32, type MissPlan, type PathStep } from "./spam-total";
 
 export interface PrefixExaltStep {
   have: string[];
@@ -31,6 +32,8 @@ export interface PrefixExaltPhase {
   modIds: string[];
   expected: number;
   steps: PrefixExaltStep[];
+  /** 外れ無しで進んだ時の 1 手ずつ (画面の「1 手ずつ」) */
+  path: PathStep[];
   /** 回した 1 回ずつの費用 (並べ替えていない。仕上げと足すため) */
   samples: number[];
 }
@@ -65,7 +68,7 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
   const ids = inp.targets.map((t) => t.modId);
   const minTier = new Map(inp.targets.map((t) => [t.modId, t.minTierIndex ?? 0]));
   const n = ids.length;
-  if (n === 0) return { modIds: [], expected: 0, steps: [], samples: [] };
+  if (n === 0) return { modIds: [], expected: 0, steps: [], path: [], samples: [] };
   if (n > 3) return { reason: `高貴で足すプレが ${n} つ (3 つまでしか数えていません)` };
   const B = inp.breach ? 1 : 0;
   if (n + B + 0 > inp.cap) return { reason: "プレの枠が足りません (ブリーチの MOD を含めて)" };
@@ -179,15 +182,27 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
     const e = pol.get(key(h, j, bq)); if (!e) continue;
     steps.push({ have: ids.filter((_, i) => h & (1 << i)), junk: j, breachGone: !!B && !bq, action: e.label, perTry: e.cost(bq) });
   }
-  return { modIds: ids, expected: V.get(start)!, steps, samples };
-}
-
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  /** 外れが 1 つ付いた状態で次に打つ手と、左側の消去が何に当たるか */
+  const missAt = (h: number, p: number): MissPlan | null => {
+    const e = pol.get(key(h, 1, B));
+    if (!e || !(p > 0)) return null;
+    const loss = V.get(key(h, 1, B))! - V.get(key(h, 0, B))!;
+    if (e.kind === "exalt") return { p, action: `外れは残して ${e.label} (枠が空いている)`, outcomes: [], loss };
+    const m = bits(h) + 1 + B;
+    const outcomes: MissPlan["outcomes"] = [{ kind: "junk", p: 1 / m }];
+    ids.forEach((id, i) => { if (h & (1 << i)) outcomes.push({ kind: "target", modId: id, p: 1 / m }); });
+    if (B) outcomes.push({ kind: "breach", p: 1 / m });
+    return { p, action: e.label, outcomes, loss };
   };
+  const path: PathStep[] = [];
+  for (let h = 0; h !== full;) {
+    const e = pol.get(key(h, 0, B)); if (!e || e.kind !== "exalt") break;
+    const ps = outcomes(e, h, B);
+    const h2 = h | (1 << ps.indexOf(Math.max(...ps)));
+    const odds = ps.reduce((a, b) => a + b, 0);
+    path.push({ want: ids.filter((_, i) => !(h & (1 << i))), action: e.label, odds, perTry: e.cost(B),
+      spend: V.get(key(h, 0, B))! - V.get(key(h2, 0, B))!, miss: missAt(h, 1 - odds) });
+    h = h2;
+  }
+  return { modIds: ids, expected: V.get(start)!, steps, path, samples };
 }

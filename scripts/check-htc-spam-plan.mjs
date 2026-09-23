@@ -101,6 +101,11 @@ if (r.total) {
   console.log("予算 500 神: " + reach.map((x) => `${x.label} ${(x.p * 100).toFixed(0)}%`).join(" → "));
   if (reach.length < 3 || reach[0].label !== "サフィが揃う" || !reach.at(-1).label.startsWith("完成")) fail("予算の段階が並んでいない");
   if (reach.some((x, i) => i && x.p > reach[i - 1].p + 1e-9)) fail("後の段階の方が予算内に収まりやすくなっている");
+  // 1 手ずつ: 手の支出の期待値を足すとサフィの段階の平均になる (解いた残りの差なので)
+  const spend = (r.spam?.expected ?? 0) + r.phase.breachOnce + r.phase.path.reduce((a, p) => a + p.spend, 0);
+  console.log(`1 手ずつ: ${r.phase.path.length} 手 / 支出の合計 ${(spend / D).toFixed(1)} 神 (サフィの段階 ${(r.phase.expected / D).toFixed(1)} 神)`);
+  if (Math.abs(spend - r.phase.expected) > 0.01 * r.phase.expected) fail("1 手ずつの支出の合計がサフィの段階の平均と合わない");
+  if (!r.phase.path.every((p) => p.miss && p.miss.loss > 0 && Math.abs(p.miss.outcomes.reduce((a, o) => a + o.p, 0) - 1) < 1e-9)) fail("外れた時のリカバリーが出ていない");
   const last = [...r.total.stages.at(-1).cum].sort((a, b) => a - b);
   if (Math.abs(last[Math.floor(last.length * 0.8)] - r.total.p80) > 1e-6) fail("最後の段階の累計が合計の分布と合わない");
 }
