@@ -4,10 +4,10 @@
  * 死体の円環 (ニーモニックリング、樹 MOD 固定済み + 最大マナ / 最大マナ% / 知性 / 全耐性 / キャスピ) で:
  *   - スパムの狙いはキャスピ (効くカタリストの軽快・歯擦音が高くて既定で「使わない」)
  *   - 同じ側 (サフィ) の残りは知性・全耐性
- *   - 品質 40% はサフィの外れを右側の消去のお告げで消す (ブリーチの MOD を守る、1/3)。平均 284 神前後。
- *     (素の消去を許していた時は 170 神前後だった)手で組んだ検算 (197.5 神) は全耐性にトゥル (冷気) しか
+ *   - 品質 40% でもサフィの外れは素の消去 (ブリーチの MOD が消えたらエッセンスを付け直す方が、右側の
+ *     消去のお告げより安い)。平均 172 神前後 (お告げを強制すると 284 神)手で組んだ検算 (197.5 神) は全耐性にトゥル (冷気) しか
  *     試しておらず、雷 (エシュ) の方が付きやすい (雷のタグを持つ MOD が少なく分母が小さい) ぶん安い
- *   - カタリストを全部切ると、スパムの狙いは全耐性 (同じ「使わない」組で一番付きにくいサフィ) になり 870 神前後
+ *   - カタリストを全部切ると、スパムの狙いは全耐性 (同じ「使わない」組で一番付きにくいサフィ) になり 500 神前後
  *   - 回した平均が期待値と合う (乱数や剥がしの数え方が壊れると外れる)
  * 値段は 2026-09-23 の相場を固定で持つ (神 = 506 高貴)。
  */
@@ -60,22 +60,21 @@ if (adds !== "Rings/AllResistances,Rings/Intelligence") fail("足す狙いが知
 const cs = r.methods.find((m) => m.modId === "Rings/IncreasedCastSpeed");
 if (!cs || cs.group !== "catalyst-off") fail("キャスピが「カタリストを使わない」組になっていない: " + cs?.group);
 const e = (r.phase?.expected ?? 0) / D;
-if (!(e > 265 && e < 305)) fail(`平均 ${e.toFixed(1)} 神 (284 神前後のはず)`);
-if (!r.phase?.steps.some((x) => x.action.includes("右側の消去のお告げ"))) fail("品質 40% なのに右側の消去のお告げを使っていない");
-if (r.phase?.steps.some((x) => x.action === "消去のオーブ")) fail("品質 40% なのに素の消去を使っている (ブリーチの MOD が消える)");
+if (!(e > 160 && e < 190)) fail(`平均 ${e.toFixed(1)} 神 (172 神前後のはず)`);
+if (!r.phase?.steps.some((x) => x.action === "消去のオーブ")) fail("品質 40% で素の消去を選んでいない (付け直しの方が安いはず)");
 // 品質 20% (ブリーチ無し) なら素の消去で足りる
 const r20 = M.spamPlan({ ...base, quality: 20, breach: false });
 show("品質 20% (ブリーチ無し)", r20);
 if (r20.phase?.steps.some((x) => x.action.includes("消去のお告げ"))) fail("品質 20% で消去のお告げを使っている (プレは固定済みだけなので要らない)");
 if (!(r.phase && r.phase.p80 > r.phase.p50 && r.phase.p90 >= r.phase.p80)) fail("分布の並びがおかしい");
 
-// 触媒を全部切る → スパムは全耐性、870 神前後
+// 触媒を全部切る → スパムは全耐性、500 神前後
 const off = Object.fromEntries(["attribute", "cold", "fire", "lightning", "mana"].map((t) => [t, false]));
 const r2 = M.spamPlan({ ...base, catalystChoice: off });
 show("触媒を全部使わない", r2);
 const e2 = (r2.phase?.expected ?? 0) / D;
 if (r2.spam?.modId !== "Rings/AllResistances") fail("触媒なしでスパムが全耐性でない");
-if (!(e2 > 820 && e2 < 920)) fail(`触媒なしの平均 ${e2.toFixed(1)} 神 (870 神前後のはず)`);
+if (!(e2 > 470 && e2 < 540)) fail(`触媒なしの平均 ${e2.toFixed(1)} 神 (500 神前後のはず)`);
 
 // 期待値と回した平均の突き合わせ: 平均は分布から直接出していないので、半分〜9 割の間に期待値が入るかで見る
 if (r.phase && !(r.phase.expected > r.phase.p50 * 0.8 && r.phase.expected < r.phase.p90)) fail("期待値が分布の外にある");
