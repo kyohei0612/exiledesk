@@ -50,23 +50,32 @@ export function useFractureChoice(c: ReturnType<typeof useHtcCraft>) {
   const picked = ref<string | null>(null);
   watch(() => c.treePlan.value, () => { manual.value = null; picked.value = null; });
 
-  interface Row { id: string; start: StartOption; label: string; cost: number | null; note: string }
+  /** links = その道の取引所の検索 (確かめる用。オーナー 2026-09-24:「トレードサイトに遷移できるように」) */
+  interface Row { id: string; start: StartOption; label: string; cost: number | null; note: string; links: Array<{ text: string; url: string }> }
   /** 選択肢を初動の安い順に (値段がまだ無い物は後ろ) */
   const options = computed<Row[]>(() => {
     const div = c.prices.value?.currency.divine ?? 1;
     const rows: Row[] = [];
     if (c.fracturedTargets.value.length) {
-      rows.push({ id: "plain", start: "plain", label: "無し品から作る", cost: craftCost.value, note: "固定されないので後で消えうる" });
+      rows.push({ id: "plain", start: "plain", label: "無し品から作る", cost: craftCost.value, note: "固定されないので後で消えうる", links: [] });
     }
     const r = c.treeResult.value;
+    /** 道 → 使った検索 (まぜては固定無しの 2 本、どの道も最後は固定済みを買う逃げ道がある) */
+    const SEARCHES: Record<string, string[]> = { fractured: ["fractured"], strict: ["strict", "fractured"], loose: ["loose", "fractured"], mixed: ["strict", "loose", "fractured"] };
+    const KEY_JA: Record<string, string> = { fractured: "固定済み", strict: "固定無し・厳しい", loose: "固定無し・ゆるい" };
+    const linksOf = (route: string): Row["links"] => (SEARCHES[route] ?? []).flatMap((k) => {
+      const f = r?.found.find((x) => x.key === k);
+      return f?.url ? [{ text: `${KEY_JA[k] ?? k} ${f.total} 件`, url: f.url }] : [];
+    });
     for (const route of r?.routes ?? []) {
       const s = route.summary;
       rows.push({ id: route.key, start: "frac", label: route.label, cost: s.expected * div,
-        note: route.key === "fractured" ? "" : `平均 ${s.avgItems.toFixed(1)} 個買う${route.need85 != null ? ` / 85% に ${route.need85} 個` : ""}` });
+        note: route.key === "fractured" ? "" : `平均 ${s.avgItems.toFixed(1)} 個買う${route.need85 != null ? ` / 85% に ${route.need85} 個` : ""}`,
+        links: linksOf(route.key) });
     }
     // 固定済みが見つからなかった (道に無い) 時は手で入れる欄
     if (!r?.routes.some((x) => x.key === "fractured")) {
-      rows.push({ id: "manual", start: "frac", label: "固定済みを買う (手で入れた値段)", cost: manual.value != null && manual.value > 0 ? manual.value * div : null, note: "" });
+      rows.push({ id: "manual", start: "frac", label: "固定済みを買う (手で入れた値段)", cost: manual.value != null && manual.value > 0 ? manual.value * div : null, note: "", links: linksOf("fractured") });
     }
     return rows.sort((a, b) => (a.cost ?? Infinity) - (b.cost ?? Infinity));
   });

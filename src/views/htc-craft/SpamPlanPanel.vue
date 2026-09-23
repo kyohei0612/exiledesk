@@ -7,6 +7,7 @@
  */
 import { computed } from "vue";
 import { craftBudgetDivine, reachWithin } from "./craft-settings";
+import { openExternal } from "../../services/trade2/open-external";
 import type { useHtcCraft } from "./useHtcCraft";
 import { usePartialBuy } from "./usePartialBuy";
 
@@ -161,9 +162,9 @@ function choose(modId: string): void {
           <td class="py-0.5 pr-2">{{ c.stepTarget(r.held) }}</td>
           <td class="text-right">
             <template v-if="r.unmatched.length">条件にできない</template>
-            <a v-else-if="r.cheapest == null && r.url" :href="r.url" target="_blank" class="underline opacity-70">出品無し ({{ r.total }} 件)</a>
+            <button v-else-if="r.cheapest == null && r.url" type="button" class="underline opacity-70" @click="openExternal(r.url)">出品無し ({{ r.total }} 件)</button>
             <template v-else-if="r.cheapest == null">出品無し</template>
-            <a v-else-if="r.url" :href="r.url" target="_blank" class="underline">{{ c.money(r.cheapest) }} ({{ r.total }} 件)</a>
+            <button v-else-if="r.url" type="button" class="underline" @click="openExternal(r.url)">{{ c.money(r.cheapest) }} ({{ r.total }} 件)</button>
             <template v-else>{{ c.money(r.cheapest) }}</template>
           </td>
           <td class="text-right">{{ c.money(r.remaining) }}</td>

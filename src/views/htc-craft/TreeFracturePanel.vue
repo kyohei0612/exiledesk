@@ -5,6 +5,7 @@
  * HtcCraftLab.vue が 500 行を超えたので切り出しました (オーナーの決まり: 1 ファイル 500 行まで)。
  * 中身は useHtcCraft の `treePlan` / `searchTree` / `treeResult` を出すだけで、計算はしません。
  */
+import { openExternal } from "../../services/trade2/open-external";
 import type { useHtcCraft } from "./useHtcCraft";
 
 defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
@@ -84,7 +85,7 @@ const howJa: Record<string, string> = {
     <template v-if="c.treeResult.value">
       <p class="mt-2 opacity-70">
         <template v-for="f in c.treeResult.value.found" :key="f.label">
-          {{ f.label }}: 全 {{ f.total }} 件<a v-if="f.url" :href="f.url" target="_blank" class="ml-1 underline">開く</a> ／
+          {{ f.label }}: 全 {{ f.total }} 件<button v-if="f.url" type="button" class="ml-1 underline" @click="openExternal(f.url)">開く</button> ／
         </template>
         <template v-if="c.treeResult.value.skippedNoMods"> MOD 数が読めず外した {{ c.treeResult.value.skippedNoMods }} 件</template>
       </p>

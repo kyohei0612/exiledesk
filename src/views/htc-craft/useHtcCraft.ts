@@ -120,7 +120,8 @@ export function useHtcCraft() {
   /** 取引所から取ってきた結果と判定。**押された時だけ**取る (3 本 = 約 21 秒) */
   const treeResult = shallowRef<{
     decision: Decision;
-    found: Array<{ label: string; total: number; url: string | null }>;
+    /** 投げた検索ごとの件数と取引所のリンク (`key` = fractured / loose / strict) */
+    found: Array<{ key: string; label: string; total: number; url: string | null }>;
     skippedNoMods: number;
     /** 固定済みが自前の最安以下だったので、残りの検索を投げずに止めたか */
     earlyBuy: boolean;
@@ -383,7 +384,7 @@ export function useHtcCraft() {
       const league = marketStore.league.value?.Value ?? "Standard";
       const rates = marketStore.rates.value;
       const listings: TreeListing[] = [];
-      const found: Array<{ label: string; total: number; url: string | null }> = [];
+      const found: Array<{ key: string; label: string; total: number; url: string | null }> = [];
       let skippedNoMods = 0;
       let earlyBuy = false;
       // 自前で固定する時の最安 (4 MOD のベースがタダの時)。固定済みがこれ以下なら自前は絶対に勝てない。
@@ -395,11 +396,11 @@ export function useHtcCraft() {
         if (earlyBuy) break;
         const r = await autoPrice(league, sq.query, rates, sq.take);
         if (!r) {
-          found.push({ label: sq.label, total: 0, url: null });
+          found.push({ key: sq.key, label: sq.label, total: 0, url: null });
           if (tradeAuto.lastError.value) treeError.value = tradeAuto.lastError.value;
           continue;
         }
-        found.push({ label: sq.label, total: r.total, url: r.searchUrl || null });
+        found.push({ key: sq.key, label: sq.label, total: r.total, url: r.searchUrl || null });
         if (sq.key === "fractured" && selfFloor != null && r.minExalted != null && r.minExalted / div <= selfFloor) {
           earlyBuy = true;
         }

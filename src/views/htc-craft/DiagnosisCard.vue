@@ -8,6 +8,7 @@
 import { computed } from "vue";
 import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
+import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
 import { useFractureChoice } from "./useFractureChoice";
@@ -64,6 +65,7 @@ const fc = useFractureChoice(c);
           <input v-model.number="fc.manual.value" type="number" min="0" class="num w-16" /> 神
         </span>
         <span v-if="o.note" class="opacity-60"> {{ o.note }}</span>
+        <button v-for="l in o.links" :key="l.url" type="button" class="ml-2 text-sky-300 underline" @click.prevent="openExternal(l.url)">{{ l.text }} →</button>
       </label>
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
     </div>
