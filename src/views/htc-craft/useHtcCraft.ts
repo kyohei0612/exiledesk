@@ -323,21 +323,22 @@ export function useHtcCraft() {
    */
   const catalystChoice = ref<Record<string, boolean>>({});
   const spamOverride = ref<string | null>(null);
+  /** 固定済み・樹 MOD で埋まっている枠 (スパムの組み立てと途中品の検索で共通) */
+  const spamUsed = computed(() => {
+    const fr = fracturedTargets.value.map((t) => data.value?.mods.get(t.modId)?.type);
+    return { prefix: slotsUsed.value.prefixes + fr.filter((x) => x === "prefix").length, suffix: slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length };
+  });
   const spam = computed(() => {
     const d = data.value, cls = base.value, p = prices.value;
     if (!d || !cls || !p || !targets.value.length) return null;
     const q = item.value?.quality ?? null;
-    const fr = fracturedTargets.value.map((t) => d.mods.get(t.modId)?.type);
     return spamPlan({
       data: d, cls, targets: targets.value, prices: p,
       itemLevel: item.value?.itemLevel ?? 82,
       // 貼り付けの品質が 20% を超えていればブリーチのエッセンスで上げている (プレにゴミ MOD が 1 つ)
       quality: q ?? 20,
       breach: (q ?? 0) > 20,
-      used: {
-        prefix: slotsUsed.value.prefixes + fr.filter((x) => x === "prefix").length,
-        suffix: slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length,
-      },
+      used: spamUsed.value,
       catalystChoice: catalystChoice.value,
       qualityTag: item.value?.catalystTag ?? null,
       ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}),
@@ -488,7 +489,7 @@ export function useHtcCraft() {
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeBusy, treeError, searchTree, treeTierPick,
-    spam, catalystChoice, spamOverride,
+    spam, catalystChoice, spamOverride, spamUsed,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
     weightNote: WEIGHT_OVERRIDE_NOTE,
   };

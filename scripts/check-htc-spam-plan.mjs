@@ -95,6 +95,21 @@ if (!/パーフェクトエッセンス/.test(labels)) fail("最大マナ% を�
 if (r.finish?.desecrate?.modId !== "Rings/IncreasedMana") fail("冒涜で最大マナを引いていない");
 if (!r.total || !(r.total.p80 > r.total.p50 && r.total.expected > r.phase.expected)) fail("合計の分布がおかしい");
 
+// ---- 途中品を買って始める (partial-buy.ts) ----
+// スパムの狙い (キャスピ) を含むサフィの組み合わせ 4 本。外れの無い物だけ = サフィ数・プレ数の上限つき
+{
+  const plans = M.partialBuyPlans({ data, cls, plan: r, targets: got.targets, treeBuys: [], used: { prefix: 1, suffix: 0 }, ilvlMin: 80, baseType: "Mnemonic Ring" });
+  console.log("途中品:");
+  for (const p of plans) console.log(`   ${p.held.map(name).join("・").padEnd(40)} 残り ${(p.remaining / D).toFixed(1)} 神${p.unmatched.length ? " / 条件にできない " + p.unmatched.join(",") : ""}`);
+  if (plans.length !== 4) fail("途中品の組み合わせが 4 本でない: " + plans.length);
+  if (!plans.every((p) => p.held.includes("Rings/IncreasedCastSpeed"))) fail("スパムの狙いを含まない組み合わせがある");
+  const json = JSON.stringify(plans[0]?.query ?? {});
+  if (!json.includes("pseudo_number_of_suffix_mods") || !json.includes("pseudo_number_of_prefix_mods")) fail("外れを除く上限 (サフィ数 / プレ数) が条件に無い");
+  const full = plans.find((p) => p.held.length === 3), one = plans.find((p) => p.held.length === 1);
+  if (!full || !one || !(full.remaining < one.remaining)) fail("付いている狙いが多いほど残りが減っていない");
+  if (full && Math.abs(full.remaining - (r.finish.expected + (full.remaining - r.finish.expected))) > 1e-6) fail("揃った物の残りに仕上げが入っていない");
+}
+
 // ---- プレに普通の狙いが 2 つ (最大ライフ + 最大マナ) ----
 // 1 つを冒涜に残し、もう 1 つを左側の高貴 (+ 触媒) で先に足す。外れは左側の消去のお告げで消し切ってから仕上げ
 {

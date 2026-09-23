@@ -94,6 +94,11 @@ export interface PhaseResult {
   steps: PhaseStep[];
   /** 回した 1 回ずつの費用 (並べ替え済み)。仕上げと足して合計の分布を作る */
   samples: number[];
+  /**
+   * スパムの狙い + ここに並ぶ狙いが**もう付いた状態**から、同じ側が揃うまでの平均 (外れ無し)。
+   * 途中品を買って始める時の残り ([[partial-buy.ts]])。品質 40% はブリーチのエッセンス 1 回を含む
+   */
+  fromHeld: Array<{ held: string[]; expected: number }>;
 }
 
 /** スパムの狙いの候補 1 つ。安い順に並べて画面に出す */
@@ -427,6 +432,10 @@ function solvePhase(c: PhaseCtx): PhaseResult {
     exalts50: q(exN, 0.5), exalts80: q(exN, 0.8),
     steps,
     samples: costs,
+    fromHeld: Array.from({ length: full + 1 }, (_, h) => ({
+      held: ids.filter((_, i) => h & (1 << i)),
+      expected: V.get(key(h, 0, START_B))! + breachOnce,
+    })),
   };
 }
 

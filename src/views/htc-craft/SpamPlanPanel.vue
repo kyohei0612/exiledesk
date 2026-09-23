@@ -5,9 +5,24 @@
  * 計算は [[spam-plan.ts]]、状態は useHtcCraft の `spam` / `catalystChoice` / `spamOverride`。
  * ここは出すだけ。カタリストの使う / 使わないと、スパムの狙いの選び直しだけ受け付けます。
  */
+import { computed } from "vue";
 import type { useHtcCraft } from "./useHtcCraft";
+import { usePartialBuy } from "./usePartialBuy";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
+
+/** 途中品を買って始める ([[partial-buy.ts]])。押された時だけ取引所に投げる */
+const partial = usePartialBuy({
+  data: props.c.data, base: props.c.base, prices: props.c.prices, targets: props.c.targets, spam: props.c.spam,
+  treeBuys: computed(() => props.c.treePlan.value?.buys ?? []),
+  used: props.c.spamUsed,
+  ilvlMin: computed(() => props.c.item.value?.itemLevel ?? undefined),
+  baseType: computed(() => props.c.item.value?.baseType ?? undefined),
+});
+const bestPartial = computed(() => {
+  const rows = (partial.rows.value ?? []).filter((r) => r.sum != null);
+  return rows.length ? rows.reduce((a, b) => (b.sum! < a.sum! ? b : a)) : null;
+});
 
 const roleJa = { spam: "カオススパム", exalt: "高貴で足す", later: "後で" } as const;
 const groupJa = { "no-catalyst": "効くカタリスト無し", "catalyst-off": "カタリストを使わない", catalyst: "カタリストあり", later: "" } as const;
@@ -110,6 +125,40 @@ function choose(modId: string): void {
       / <b>8 割の確率で {{ c.money(c.spam.value.total.p80) }}</b>
       / 9 割 {{ c.money(c.spam.value.total.p90) }}
     </p>
+
+    <!-- 途中品を買って始める: スパムの狙いを含む組み合わせごとに「最安 + そこから完成までの平均」 -->
+    <template v-if="c.spam.value.total && partial.plans.value.length">
+      <p class="mt-2">
+        途中品を買って始める ({{ partial.plans.value.length }} 本 / 約 {{ partial.plans.value.length * 11 }} 秒)
+        <button class="ml-2 rounded border border-sky-600 px-2 py-0.5" :disabled="partial.busy.value" @click="partial.search()">
+          {{ partial.busy.value ? "探しています…" : "最安を取って比べる" }}
+        </button>
+      </p>
+      <p class="opacity-60">
+        条件: {{ c.item.value?.baseText ?? c.item.value?.baseType }} / ilvl {{ c.item.value?.itemLevel ?? "?" }} 以上 / コラプト無し /
+        作れない MOD は固定済み / 外れの無い物だけ (同じ側の MOD の数 = 付いている狙いの数、反対側 = 固定済みの数まで)
+      </p>
+      <p v-if="partial.error.value" class="text-amber-300">{{ partial.error.value }}</p>
+      <table v-if="partial.rows.value" class="mt-1 w-full">
+        <tr class="opacity-50"><th class="text-left">付いている狙い</th><th class="text-right">最安</th><th class="text-right">残りの平均</th><th class="text-right">合計</th></tr>
+        <tr v-for="r in partial.rows.value" :key="r.held.join()" class="border-b border-white/5" :class="bestPartial === r ? 'text-sky-300' : ''">
+          <td class="py-0.5 pr-2">{{ c.stepTarget(r.held) }}</td>
+          <td class="text-right">
+            <template v-if="r.unmatched.length">条件にできない</template>
+            <a v-else-if="r.cheapest == null && r.url" :href="r.url" target="_blank" class="underline opacity-70">出品無し ({{ r.total }} 件)</a>
+            <template v-else-if="r.cheapest == null">出品無し</template>
+            <a v-else-if="r.url" :href="r.url" target="_blank" class="underline">{{ c.money(r.cheapest) }} ({{ r.total }} 件)</a>
+            <template v-else>{{ c.money(r.cheapest) }}</template>
+          </td>
+          <td class="text-right">{{ c.money(r.remaining) }}</td>
+          <td class="text-right">{{ r.sum == null ? "—" : c.money(r.sum) }}</td>
+        </tr>
+        <tr class="opacity-70">
+          <td class="py-0.5 pr-2">最初から作る (樹 MOD の固定済みベースの値段は別)</td><td></td><td></td>
+          <td class="text-right">{{ c.money(c.spam.value.total.expected) }}</td>
+        </tr>
+      </table>
+    </template>
 
     <!-- 優先順のルールが一番安いとは限らないので、同じ側の候補を全部並べる -->
     <p class="mt-2">スパムの狙いの候補 (平均の安い順)</p>

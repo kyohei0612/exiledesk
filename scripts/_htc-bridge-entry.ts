@@ -39,6 +39,7 @@ export { jaOfMod, jaOfModLine } from "../src/services/htc/mod-text";
 export { isPlaceholderWeight, applyWeightOverrides, WEIGHT_OVERRIDE_NOTE } from "../src/services/htc/weight-overrides";
 export { routeSteps } from "../src/services/htc/route-steps";
 export { spamPlan, PRICEY_CATALYST_DIVINE } from "../src/services/htc/spam-plan";
+export { partialBuyPlans } from "../src/services/htc/partial-buy";
 export { searchPlan, SEARCH_INTERVAL_SEC, SEARCH_BUDGET_PER_5MIN } from "../src/services/htc/search-plan";
 export { searchCut } from "../src/services/htc/search-cut";
 export { listingValue } from "../src/services/htc/listing-value";
