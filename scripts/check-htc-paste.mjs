@@ -147,14 +147,15 @@ console.log(String.fromCharCode(10) + "poe.ninja の英語形式:");
   const g = M.targetsFor(data, r);
   if (g.fractured.length !== 1) fail("固定済みが " + g.fractured.length + " 件 (1 件のはず)");
   if (g.implicits.length !== 1) fail("暗黙が " + g.implicits.length + " 件 (1 件のはず)");
-  // **底上げされた値は帯で戻す。**23% は品質 40% 込みなので、素は 16.4 → of Expertise (16-18)。
-  // 帯を「戻した値 〜 表示の値」にすると底上げ後の 22-24 に当たってしまう (2026-09-23 に実測)
+  // **マナの品質はキャスピに効かない。**キャスピのタグは caster / speed だけ ([[check-htc-mod-tags.mjs]])。
+  // 以前は family の表に混ざった `mana` で 23% を 16.4 に割り戻し、of Expertise と読んでいた (2026-09-23 修正)。
+  // 23% はそのまま of Legerdemain (22-24)
   const cast = g.targets.find((t) => t.modId.includes("CastSpeed"));
   if (!cast) fail("キャストスピードが引けていない");
   else {
     const tn = String(data.mods.get(cast.modId).tiers[cast.minTierIndex].name);
-    console.log("  キャストスピード 23% → " + tn + " (品質 40% を外して 16.4)");
-    if (tn !== "of Expertise") fail("キャストスピードが " + tn + " (of Expertise のはず。品質の帯がずれている)");
+    console.log("  キャストスピード 23% → " + tn + " (マナ品質は効かないので素のまま)");
+    if (tn !== "of Legerdemain") fail("キャストスピードが " + tn + " (of Legerdemain のはず。マナ品質で割り戻している)");
   }
 
   // 不在のアミュレット: 付与スキル / アノイント / 枠を減らす暗黙 / 冒涜

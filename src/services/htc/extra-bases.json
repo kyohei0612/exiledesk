@@ -44513,8 +44513,7 @@
    "attack"
   ],
   "ArmourPenetration": [
-   "fire",
-   "physical"
+   "fire"
   ],
   "AftershockChance": [
    "attack"
@@ -44527,11 +44526,9 @@
   ],
   "LocalPhysicalDamagePercent": [
    "attack",
-   "physical",
-   "speed"
+   "physical"
   ],
   "ManaCostEfficiency": [
-   "attack",
    "mana"
   ],
   "BodyArmourFromBodyArmour": [
@@ -44645,9 +44642,7 @@
    "physical"
   ],
   "WeaponCasterDamagePrefix": [
-   "caster",
-   "life",
-   "mana"
+   "caster"
   ],
   "SpellAreaOfEffect": [
    "caster"
@@ -44666,15 +44661,12 @@
    "life"
   ],
   "FireResistancePenetration": [
-   "attack",
    "fire"
   ],
   "ColdResistancePenetration": [
-   "attack",
    "cold"
   ],
   "LightningResistancePenetration": [
-   "attack",
    "lightning"
   ],
   "LifeCost": [
@@ -44773,9 +44765,7 @@
    "chaos"
   ],
   "IncreasedCastSpeed": [
-   "attack",
    "caster",
-   "mana",
    "speed"
   ],
   "MaximumPuppeteerStacks": [
@@ -44792,7 +44782,6 @@
    "attack"
   ],
   "MinionDamage": [
-   "caster",
    "minion"
   ],
   "WeaponDamageTypePrefix": [
@@ -44813,8 +44802,248 @@
    "physical"
   ],
   "ArmourBreak": [
+   "attack"
+  ],
+  "AnaemiaOnHit": [
+   "physical"
+  ],
+  "ColdDamageAsPortionOfDamage": [
+   "cold",
+   "physical"
+  ],
+  "ArchonUndeathOnOfferingUse": [
+   "minion"
+  ],
+  "ChanceToNotConsumeInfusionIfLostArchonPast6Seconds": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "ColdDamageIfColdInfusionCollectedLast8Seconds": [
+   "cold"
+  ],
+  "DamageRemovedFromMinion": [
+   "minion"
+  ],
+  "FireDamageIfFireInfusionCollectedLast8Seconds": [
+   "fire"
+  ],
+  "LightningDamageIfLightningInfusionCollectedLast8Seconds": [
+   "lightning"
+  ],
+  "MinionAdditionalProjectileChance": [
+   "minion"
+  ],
+  "MinionDamagePerDifferentCommandSkillUsedLast15Seconds": [
+   "minion"
+  ],
+  "MinionDuration": [
+   "minion"
+  ],
+  "MinionsGiganticRevivedRecently": [
+   "minion"
+  ],
+  "SpellElementalAilmentMagnitude": [
+   "caster",
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "FireSpellBaseCriticalChance": [
+   "caster",
+   "fire"
+  ],
+  "MinionCommandSkillSpeed": [
+   "minion",
+   "speed"
+  ],
+  "MinionDamagingAilments": [
+   "minion"
+  ],
+  "MinionArmourBreak": [
+   "minion",
+   "physical"
+  ],
+  "MinionGainPuppetMasterOnCommand": [
+   "minion"
+  ],
+  "ColdDamage": [
    "attack",
+   "cold"
+  ],
+  "FireDamage": [
+   "attack",
+   "fire"
+  ],
+  "LightningDamage": [
+   "attack",
+   "caster",
+   "lightning"
+  ],
+  "ImpaleEffect": [
+   "caster",
+   "physical"
+  ],
+  "TemporaryMinionLimit": [
+   "minion"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-5": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-3": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-4": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix1-2": [
+   "attribute"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-2": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-7": [
+   "attack"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-10": [
+   "chaos"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-13": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-8": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-3": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-1": [
+   "defences"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-5": [
+   "life"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-4": [
+   "mana"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-11": [
+   "minion"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-9": [
+   "physical"
+  ],
+  "HistoricAbyssJewelVeiledPrefix2-6": [
    "caster"
+  ],
+  "AggravateBleed": [
+   "attack",
+   "physical"
+  ],
+  "AttackSpeedPercentIfRareOrUniqueEnemyNearby": [
+   "attack",
+   "speed"
+  ],
+  "FlaskRecoverManaOnCharmUse": [
+   "mana"
+  ],
+  "CompanionDamage": [
+   "minion"
+  ],
+  "FlaskExtraLifeRegeneration": [
+   "life"
+  ],
+  "LuckyLightningDamageChance": [
+   "lightning"
+  ],
+  "ManaRegenerationRateWhileMoving": [
+   "mana"
+  ],
+  "MaximumResistances": [
+   "cold",
+   "fire",
+   "lightning"
+  ],
+  "MinionEnergyShield": [
+   "defences",
+   "minion"
+  ],
+  "MinionLifeRegeneration": [
+   "life",
+   "minion"
+  ],
+  "MinionReviveSpeed": [
+   "minion"
+  ],
+  "RecoverLifeOnKillingPoisonedEnemy": [
+   "life"
+  ],
+  "BleedChanceIncrease": [
+   "physical"
+  ],
+  "IncreasedAttackSpeed": [
+   "attack",
+   "speed"
+  ],
+  "LifeRegenerationRate": [
+   "life"
+  ],
+  "MaximumColdResist": [
+   "cold"
+  ],
+  "MaximumFireResist": [
+   "fire"
+  ],
+  "MaximumLifeOnKillPercent": [
+   "life"
+  ],
+  "MaximumLightningResistance": [
+   "lightning"
+  ],
+  "MinionAttackSpeedAndCastSpeed": [
+   "attack",
+   "caster",
+   "minion",
+   "speed"
+  ],
+  "MinionCriticalStrikeChance": [
+   "minion"
+  ],
+  "MinionElementalResistances": [
+   "cold",
+   "fire",
+   "lightning",
+   "minion"
+  ],
+  "MinionPhysicalDamageReduction": [
+   "minion",
+   "physical"
+  ],
+  "MovementVelocity": [
+   "speed"
+  ],
+  "FormCritMultiplier": [
+   "caster"
+  ],
+  "SpellCriticalStrikeChanceIncrease": [
+   "caster",
+   "mana"
+  ],
+  "ExplodeOnKillChaos": [
+   "chaos"
+  ],
+  "AlliesIncreasedCastSpeed": [
+   "caster"
+  ],
+  "LifeRegeneration": [
+   "life"
+  ],
+  "MinionLife": [
+   "life",
+   "minion"
   ],
   "AccuracyPerIntelligence": [
    "attack"
@@ -44839,10 +45068,6 @@
    "attack",
    "chaos"
   ],
-  "ColdDamage": [
-   "attack",
-   "cold"
-  ],
   "AddedColdDamagePerFrenzyCharge": [
    "cold"
   ],
@@ -44860,17 +45085,8 @@
    "caster",
    "physical"
   ],
-  "FireDamage": [
-   "attack",
-   "fire"
-  ],
   "AddedFireDamageIfBlockedRecently": [
    "fire"
-  ],
-  "LightningDamage": [
-   "attack",
-   "caster",
-   "lightning"
   ],
   "AddedLightningDamagePerIntelligence": [
    "attack",
@@ -44964,17 +45180,8 @@
   "MeleeWeaponAndUnarmedRange": [
    "attack"
   ],
-  "MinionDamagingAilments": [
-   "minion"
-  ],
-  "MinionGainPuppetMasterOnCommand": [
-   "minion"
-  ],
   "IncreasedMana": [
    "mana"
-  ],
-  "TemporaryMinionLimit": [
-   "minion"
   ],
   "AlwaysHits": [
    "attack"
@@ -44991,9 +45198,6 @@
   ],
   "Intelligence": [
    "attribute"
-  ],
-  "LifeRegeneration": [
-   "life"
   ],
   "ArborixMoreDamageAtCloseRange": [
    "attack"
@@ -45113,10 +45317,6 @@
    "attack"
   ],
   "AttackSpeedOnFullLife": [
-   "attack",
-   "speed"
-  ],
-  "IncreasedAttackSpeed": [
    "attack",
    "speed"
   ],
@@ -45267,14 +45467,6 @@
   ],
   "LightningResistance": [
    "lightning"
-  ],
-  "MaximumResistances": [
-   "cold",
-   "fire",
-   "lightning"
-  ],
-  "MovementVelocity": [
-   "speed"
   ],
   "BurnDuration": [
    "fire"
@@ -45632,9 +45824,6 @@
   "FreezeThreshold": [
    "cold"
   ],
-  "LifeRegenerationRate": [
-   "life"
-  ],
   "LocalMaimOnHit": [
    "attack"
   ],
@@ -45646,21 +45835,8 @@
    "mana",
    "physical"
   ],
-  "MaximumColdResist": [
-   "cold"
-  ],
-  "MaximumFireResist": [
-   "fire"
-  ],
-  "MaximumLightningResistance": [
-   "lightning"
-  ],
   "ShockChanceIncrease": [
    "lightning"
-  ],
-  "SpellCriticalStrikeChanceIncrease": [
-   "caster",
-   "mana"
   ],
   "EvasionAppliesToDeflection": [
    "defences"
@@ -45692,9 +45868,6 @@
   ],
   "MeleeSplash": [
    "attack"
-  ],
-  "MinionDuration": [
-   "minion"
   ],
   "PercentageAllAttributes": [
    "attribute"
@@ -46033,64 +46206,6 @@
   "GainManaOnKillingFrozenEnemy": [
    "mana"
   ],
-  "AnaemiaOnHit": [
-   "physical"
-  ],
-  "ColdDamageAsPortionOfDamage": [
-   "cold",
-   "physical"
-  ],
-  "ArchonUndeathOnOfferingUse": [
-   "minion"
-  ],
-  "ChanceToNotConsumeInfusionIfLostArchonPast6Seconds": [
-   "cold",
-   "fire",
-   "lightning"
-  ],
-  "ColdDamageIfColdInfusionCollectedLast8Seconds": [
-   "cold"
-  ],
-  "DamageRemovedFromMinion": [
-   "minion"
-  ],
-  "FireDamageIfFireInfusionCollectedLast8Seconds": [
-   "fire"
-  ],
-  "LightningDamageIfLightningInfusionCollectedLast8Seconds": [
-   "lightning"
-  ],
-  "MinionAdditionalProjectileChance": [
-   "minion"
-  ],
-  "MinionDamagePerDifferentCommandSkillUsedLast15Seconds": [
-   "minion"
-  ],
-  "MinionsGiganticRevivedRecently": [
-   "minion"
-  ],
-  "SpellElementalAilmentMagnitude": [
-   "caster",
-   "cold",
-   "fire",
-   "lightning"
-  ],
-  "FireSpellBaseCriticalChance": [
-   "caster",
-   "fire"
-  ],
-  "MinionCommandSkillSpeed": [
-   "minion",
-   "speed"
-  ],
-  "MinionArmourBreak": [
-   "minion",
-   "physical"
-  ],
-  "ImpaleEffect": [
-   "caster",
-   "physical"
-  ],
   "AddedColdDamage": [
    "attack",
    "cold"
@@ -46125,10 +46240,6 @@
    "attack",
    "speed"
   ],
-  "AggravateBleed": [
-   "attack",
-   "physical"
-  ],
   "BleedChanceAppliesToPoison": [
    "chaos",
    "physical"
@@ -46139,9 +46250,6 @@
   ],
   "EnemiesDestroyedOnKillAndExplodeOnKillChance": [
    "fire"
-  ],
-  "ExplodeOnKillChaos": [
-   "chaos"
   ],
   "IncreasedEvasionRatingWhileLeeching": [
    "defences"
@@ -46156,9 +46264,6 @@
   ],
   "GlobalSkillGemQualityMeleeLevel": [
    "attack"
-  ],
-  "MaximumLifeOnKillPercent": [
-   "life"
   ],
   "IncreasedLifeLeechRate": [
    "life"
@@ -46316,58 +46421,6 @@
   ],
   "HeraldsAlwaysCost45": [
    "mana"
-  ],
-  "HistoricAbyssJewelVeiledPrefix1-5": [
-   "attribute"
-  ],
-  "HistoricAbyssJewelVeiledPrefix1-3": [
-   "attribute"
-  ],
-  "HistoricAbyssJewelVeiledPrefix1-4": [
-   "attribute"
-  ],
-  "HistoricAbyssJewelVeiledPrefix1-2": [
-   "attribute"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-2": [
-   "defences"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-7": [
-   "attack"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-10": [
-   "chaos"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-13": [
-   "cold",
-   "fire",
-   "lightning"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-8": [
-   "cold",
-   "fire",
-   "lightning"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-3": [
-   "defences"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-1": [
-   "defences"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-5": [
-   "life"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-4": [
-   "mana"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-11": [
-   "minion"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-9": [
-   "physical"
-  ],
-  "HistoricAbyssJewelVeiledPrefix2-6": [
-   "caster"
   ],
   "HitsIgnoreChaosResistance": [
    "chaos"
@@ -46817,12 +46870,6 @@
   "MinionAreaOfEffect": [
    "minion"
   ],
-  "MinionAttackSpeedAndCastSpeed": [
-   "attack",
-   "caster",
-   "minion",
-   "speed"
-  ],
   "MinionAttackSpeedPerXDex": [
    "attack",
    "minion",
@@ -46841,9 +46888,6 @@
   "MinionCommandSkillDamage": [
    "minion"
   ],
-  "MinionCriticalStrikeChance": [
-   "minion"
-  ],
   "MinionCriticalStrikeMultiplier": [
    "minion"
   ],
@@ -46851,12 +46895,6 @@
    "minion"
   ],
   "MinionDodgeChance": [
-   "minion"
-  ],
-  "MinionElementalResistances": [
-   "cold",
-   "fire",
-   "lightning",
    "minion"
   ],
   "MinionFireResist": [
@@ -46876,10 +46914,6 @@
    "life",
    "minion"
   ],
-  "MinionLife": [
-   "life",
-   "minion"
-  ],
   "MinionLifeRecoveryOnBlock": [
    "life",
    "minion"
@@ -46896,9 +46930,6 @@
    "cold",
    "minion",
    "physical"
-  ],
-  "MinionReviveSpeed": [
-   "minion"
   ],
   "MinionSkillManaCost": [
    "mana",
@@ -47651,46 +47682,6 @@
   "FacebreakerArmourFromStrength": [
    "defences"
   ],
-  "AttackSpeedPercentIfRareOrUniqueEnemyNearby": [
-   "attack",
-   "speed"
-  ],
-  "FlaskRecoverManaOnCharmUse": [
-   "mana"
-  ],
-  "CompanionDamage": [
-   "minion"
-  ],
-  "FlaskExtraLifeRegeneration": [
-   "life"
-  ],
-  "LuckyLightningDamageChance": [
-   "lightning"
-  ],
-  "ManaRegenerationRateWhileMoving": [
-   "mana"
-  ],
-  "MinionEnergyShield": [
-   "defences",
-   "minion"
-  ],
-  "MinionLifeRegeneration": [
-   "life",
-   "minion"
-  ],
-  "RecoverLifeOnKillingPoisonedEnemy": [
-   "life"
-  ],
-  "BleedChanceIncrease": [
-   "physical"
-  ],
-  "MinionPhysicalDamageReduction": [
-   "minion",
-   "physical"
-  ],
-  "FormCritMultiplier": [
-   "caster"
-  ],
   "ImpaleOnHit": [
    "attack",
    "physical"
@@ -47899,9 +47890,6 @@
   ],
   "TotemReflectFireDamage": [
    "fire"
-  ],
-  "AlliesIncreasedCastSpeed": [
-   "caster"
   ],
   "UsingFlasksDispelsBurning": [
    "fire"

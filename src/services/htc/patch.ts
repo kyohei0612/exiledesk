@@ -299,7 +299,32 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     newClasses: extra.items.map((i) => i.id),
     placeholderWeightMods: placeholder,
   };
+  fillJewelleryTags(mods);
   // 重みが仮置きの 1 のままの MOD を埋める (キャストスピードなど)。**ここで掛けるのは、アプリと検算が
   // 同じ applyExtras を通るから**。別の場所で掛けると片方だけ直ることになる ([[weight-overrides.ts]])
   return applyWeightOverrides({ patch: data.patch, mods, bases }).data;
+}
+
+/**
+ * 指輪・首飾りの**エッセンス / 冒涜の MOD にタグを付ける** (2026-09-23)。
+ *
+ * カタリストと装飾品の品質は MOD のタグで効く相手が決まる ([[quality.ts]])。同梱の普通 MOD は
+ * 自分のタグを正しく持っているが、エッセンスと冒涜の MOD は空 (上流の穴)。以前は family ごとの表で
+ * 補っていたが、family には別物 (アビス MOD・ライフとマナの複合・別部位の MOD) が同居していて
+ * タグが混ざった (キャスピに `mana`、最大ライフに `mana` など)。
+ *
+ * 補い方: **同じクラスの同じ family の普通 MOD のタグ**を借りる。普通 MOD が無い時だけ family の表。
+ */
+function fillJewelleryTags(mods: Map<string, Mod>): void {
+  const normalTags = new Map<string, readonly string[]>();
+  for (const m of mods.values()) {
+    const cls = m.id.split("/")[0];
+    if ((cls === "Rings" || cls === "Amulets") && m.source === "normal") normalTags.set(`${cls}|${m.family}`, m.tags ?? []);
+  }
+  for (const [id, m] of mods) {
+    const cls = id.split("/")[0];
+    if ((cls !== "Rings" && cls !== "Amulets") || m.source === "normal" || (m.tags ?? []).length) continue;
+    const tags = normalTags.get(`${cls}|${m.family}`) ?? modTags[m.family] ?? [];
+    if (tags.length) mods.set(id, { ...m, tags: [...tags] });
+  }
 }

@@ -113,16 +113,27 @@ export function buildModTags(MODS) {
     "life", "mana", "defences", "physical", "fire", "cold", "lightning",
     "chaos", "attack", "caster", "speed", "attribute", "minion",
   ]);
-  const modTags = {};
+  /**
+   * **冒涜 (アビス) の MOD のタグは、普通の MOD がいる family には混ぜない。**2026-09-23 に踏んだ:
+   * `IncreasedCastSpeed` family に Kurgal の「マナ満タン中のキャスピ」が居て、その `mana` が
+   * family 全体に付き、マナ品質でキャスピまで割り戻して段を 2 つ低く読み、マナのカタリストで
+   * キャスピの重みまで押し上げていた。冒涜の MOD しかいない family だけ、そのタグを使う。
+   * 複数の family にまたがる MOD (同じ所に居た合金の「攻撃速度」、groups が 2 つ) も同じ扱い。
+   */
+  const isAbyss = (m) => m.domain === "desecrated" || (m.implicit_tags || []).includes("unveiled_mod")
+    || (m.groups || []).length > 1;
+  const plain = {};
+  const abyss = {};
   for (const m of Object.values(MODS)) {
     if (m.domain !== "item" && m.domain !== "desecrated") continue;
     const f = familyOf(m);
     if (!f) continue;
     const tags = (m.implicit_tags || []).filter((t) => CATALYST_TAGS.has(t));
     if (!tags.length) continue;
-    const cur = modTags[f] ?? [];
-    modTags[f] = [...new Set([...cur, ...tags])].sort();
+    const into = isAbyss(m) ? abyss : plain;
+    into[f] = [...new Set([...(into[f] ?? []), ...tags])].sort();
   }
+  const modTags = { ...abyss, ...plain };
 
   /**
    * family -> 「stat が何個の時はこの id 並び」。

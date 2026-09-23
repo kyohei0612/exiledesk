@@ -34,7 +34,6 @@
  * (カタリストは指輪とアミュレットにしか存在しない)。
  */
 import catalystData from "./catalysts.json";
-import { htcModTags } from "./patch";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 
 /** 装飾品のカタリスト 1 種 */
@@ -98,18 +97,22 @@ export function hasCatalysts(mod: Mod): boolean {
 /**
  * その MOD がこのカタリストで底上げされるか。
  *
+ * **MOD 自身のタグで見ます** (family の表ではない。family には別物が同居していてタグが混ざる。
+ * 2026-09-23 にキャスピへ `mana` が混ざっていた)。エッセンス / 冒涜の MOD は [[patch.ts]] の
+ * `fillJewelleryTags` で同じ family の普通 MOD のタグを借りています。
+ *
  * **タグが合うだけでは不十分**です。`defences` や `life` は防具の MOD も持っているので、
  * クラスを見ないと兜の MOD を割り戻してしまいます。
  */
 export function boostedBy(mod: Mod, catalystTag: string): boolean {
   if (!hasCatalysts(mod)) return false;
-  return (htcModTags()[mod.family] ?? []).includes(catalystTag);
+  return (mod.tags ?? []).includes(catalystTag);
 }
 
 /** その MOD を底上げできるカタリスト (無ければ空)。防具・武器は常に空 */
 export function catalystsFor(mod: Mod): Catalyst[] {
   if (!hasCatalysts(mod)) return [];
-  return (htcModTags()[mod.family] ?? []).map((t) => BY_TAG.get(t)).filter((c): c is Catalyst => !!c);
+  return (mod.tags ?? []).map((t) => BY_TAG.get(t)).filter((c): c is Catalyst => !!c);
 }
 
 /**
