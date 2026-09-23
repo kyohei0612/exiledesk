@@ -53,6 +53,12 @@ export function buildModSides(MODS) {
  * 194 件のうち 16 件は他のタグでも重み > 0 で、**普通に作れます**。それを「買うしかない」と
  * 断ると嘘になるので、**創生の樹でしか出ない 178 件だけ**を出します。
  */
+/** カタリストが見るタグ (buildModTags の CATALYST_TAGS と同じ 13 個) */
+const QUALITY_TAGS = new Set([
+  "life", "mana", "defences", "physical", "fire", "cold", "lightning",
+  "chaos", "attack", "caster", "speed", "attribute", "minion",
+]);
+
 export function buildDropOnly(MODS) {
   const key = (t) => normalizeModTemplate(stripRichTextMarkers(t)).toLowerCase().replace(/\s+/g, " ");
   const TREE = /^(genesis_tree_caster|genesis_tree_minion|breach_desecration|tower_augment_breach)$/;
@@ -73,8 +79,24 @@ export function buildDropOnly(MODS) {
       // 普通の経路 (`tradeFiltersFor`) では引けません。買うしか無い MOD なのに検索も
       // 組めない、では手詰まりになるので、ここだけクライアントから直に持ってきます。
       stats: (m.stats || []).map((x) => x.id).filter(Boolean),
+      // 品質で底上げされるか。**品質を外してから段を決める**のに要る ([[quality.ts]])
+      qualityTags: (m.implicit_tags || []).filter((t) => QUALITY_TAGS.has(t)),
+      tiers: [],
     };
+    // **段は全部持つ。**同じ文面の段 (Thoughtful 7-9 … Calculating 23-26) は 1 つのキーに
+    // 潰れるので、`??=` だけだと最初の 1 段しか残りません (2026-09-23 に実際そうなっていた)
+    const range = /\((-?\d+)-(-?\d+)\)/.exec(m.text);
+    if (range) {
+      out[k].tiers.push({
+        name: m.name || "",
+        min: Number(range[1]),
+        max: Number(range[2]),
+        level: m.required_level ?? m.level ?? 0,
+      });
+    }
   }
+  // 低い段から並べる (エンジンの `mod.tiers` と同じ向き。添字が大きいほど良い)
+  for (const v of Object.values(out)) v.tiers.sort((a, b) => a.min - b.min);
   return out;
 }
 

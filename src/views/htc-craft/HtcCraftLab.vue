@@ -316,6 +316,11 @@ const implicitText = (lines: readonly string[]): string =>
             <b>クラフトでは付きません。</b>
             <template v-for="d in c.dropOnly.value" :key="d.text">
               <br /><b class="text-amber-300">{{ d.tagJa }}</b> からしか出ません — {{ d.text }}
+              <!-- 段は品質を外した値で決める (エンジンに無い MOD なのでクライアントの表を直に引く) -->
+              <span v-if="d.tier" class="text-sky-300">
+                (段 {{ d.tier.name }} {{ d.tier.min }}-{{ d.tier.max }}、{{ d.tier.of }} 段中 {{ d.tier.index + 1 }} 段目<template
+                  v-if="d.deboosted"> / 品質を外した素の値 {{ d.raw?.toFixed(1) }}</template>)
+              </span>
             </template>
             <br />
             <b>付いた物を買ってください。</b>しかも<b>固定済み</b>で ──
@@ -327,6 +332,38 @@ const implicitText = (lines: readonly string[]): string =>
             使用中)。
           </span>
         </p>
+
+        <!-- 固定済みを買うか、自前で固定するか。オーナーの順番: オーブの値段 → 固定済み最安 1 件 → 比べて起動 -->
+        <div v-if="c.treePlan.value" class="mt-2 rounded border border-amber-700/50 p-2 text-xs">
+          <b>固定済みを買うか、自前で固定するか</b>
+          <p class="mt-1">
+            フラクチャーオーブ
+            <b class="text-amber-300">{{ c.treePlan.value.plan.orb == null ? "相場に無い" : c.treePlan.value.plan.orb.toFixed(2) + " 神" }}</b>
+            <template v-if="c.treePlan.value.plan.orb != null && c.treePlan.value.plan.breakEvenOrb != null">
+              — 分かれ目 約 {{ c.treePlan.value.plan.breakEvenOrb.toFixed(1) }} 神なので、自前なら
+              <b>{{ c.treePlan.value.plan.orb > c.treePlan.value.plan.breakEvenOrb ? "3 MOD まで減らして冒涜してから固定" : "減らさずそのまま固定" }}</b>
+              が得
+            </template>
+          </p>
+          <table v-if="c.treePlan.value.plan.rows.length" class="mt-1 w-full">
+            <tr class="opacity-50"><th class="text-left">樹 MOD 入りの物</th><th class="text-right">自前の期待</th><th class="text-right">期待で試す数</th></tr>
+            <tr v-for="r in c.treePlan.value.plan.rows" :key="r.mods" class="border-b border-white/5">
+              <td>{{ r.mods }} MOD</td>
+              <td class="text-right">ベース代 × {{ r.mods }} + <b>{{ r.fixed.toFixed(1) }} 神</b></td>
+              <td class="text-right opacity-60">{{ r.expectedItems }} 個</td>
+            </tr>
+          </table>
+          <p class="mt-1 opacity-60">
+            成功率は減らしても減らさなくても 1/N (最初の MOD 数分の 1)。1 個成功したら終わり。
+            <b>固定済み品の最安がこれより安ければ買う</b>ほうが得です。
+          </p>
+          <p class="mt-1">
+            次: 固定済み品の最安を取る —
+            <b>{{ c.treePlan.value.signals }} 本</b>
+            (条件: {{ c.treePlan.value.buys.flatMap((b) => b.filters.map((f) => f.id)).join(" + ") }} / コラプト無し)
+            <span class="opacity-50">— まだ投げていません</span>
+          </p>
+        </div>
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->

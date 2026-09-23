@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-22",
+ "generated": "2026-09-23",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -48481,6 +48481,36 @@
    "name": "Eager",
    "stats": [
     "arcane_surge_effect_on_self_+%"
+   ],
+   "qualityTags": [
+    "mana",
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Eager",
+     "min": 12,
+     "max": 18,
+     "level": 24
+    },
+    {
+     "name": "Enthusiastic",
+     "min": 19,
+     "max": 25,
+     "level": 47
+    },
+    {
+     "name": "Spirited",
+     "min": 26,
+     "max": 32,
+     "level": 61
+    },
+    {
+     "name": "Passionate",
+     "min": 33,
+     "max": 39,
+     "level": 79
+    }
    ]
   },
   "#% increased cast speed during any flask effect": {
@@ -48489,6 +48519,36 @@
    "name": "of Hurrying",
    "stats": [
     "cast_speed_+%_during_mana_flask_effect"
+   ],
+   "qualityTags": [
+    "caster",
+    "speed"
+   ],
+   "tiers": [
+    {
+     "name": "of Hurrying",
+     "min": 8,
+     "max": 10,
+     "level": 22
+    },
+    {
+     "name": "of Quickening",
+     "min": 11,
+     "max": 13,
+     "level": 41
+    },
+    {
+     "name": "of Hastening",
+     "min": 14,
+     "max": 16,
+     "level": 59
+    },
+    {
+     "name": "of Accelerating",
+     "min": 17,
+     "max": 19,
+     "level": 76
+    }
    ]
   },
   "#% increased curse magnitudes": {
@@ -48497,6 +48557,35 @@
    "name": "Hexing",
    "stats": [
     "curse_effect_+%"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Hexing",
+     "min": 2,
+     "max": 3,
+     "level": 31
+    },
+    {
+     "name": "Condemning",
+     "min": 4,
+     "max": 6,
+     "level": 47
+    },
+    {
+     "name": "Maledicting",
+     "min": 7,
+     "max": 9,
+     "level": 61
+    },
+    {
+     "name": "Dooming",
+     "min": 10,
+     "max": 12,
+     "level": 77
+    }
    ]
   },
   "#% of damage is taken from mana before life": {
@@ -48505,6 +48594,36 @@
    "name": "Taxing",
    "stats": [
     "base_damage_removed_from_mana_before_life_%"
+   ],
+   "qualityTags": [
+    "life",
+    "mana"
+   ],
+   "tiers": [
+    {
+     "name": "Taxing",
+     "min": 4,
+     "max": 6,
+     "level": 23
+    },
+    {
+     "name": "Draining",
+     "min": 7,
+     "max": 9,
+     "level": 39
+    },
+    {
+     "name": "Exhausting",
+     "min": 10,
+     "max": 12,
+     "level": 52
+    },
+    {
+     "name": "Enervating",
+     "min": 13,
+     "max": 15,
+     "level": 77
+    }
    ]
   },
   "+# to level of all spell skills": {
@@ -48513,7 +48632,11 @@
    "name": "of Jordan",
    "stats": [
     "spell_skill_gem_level_+"
-   ]
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": []
   },
   "minions have #% increased area of effect": {
    "tag": "genesis_tree_minion",
@@ -48521,6 +48644,41 @@
    "name": "of Scurrying",
    "stats": [
     "minion_skill_area_of_effect_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Scurrying",
+     "min": 5,
+     "max": 8,
+     "level": 23
+    },
+    {
+     "name": "of Bustling",
+     "min": 9,
+     "max": 12,
+     "level": 36
+    },
+    {
+     "name": "of Trampling",
+     "min": 13,
+     "max": 16,
+     "level": 49
+    },
+    {
+     "name": "of Storming",
+     "min": 17,
+     "max": 20,
+     "level": 61
+    },
+    {
+     "name": "of Stampeding",
+     "min": 21,
+     "max": 24,
+     "level": 73
+    }
    ]
   },
   "minions have #% increased attack and cast speed": {
@@ -48529,6 +48687,38 @@
    "name": "of Guidance",
    "stats": [
     "minion_attack_and_cast_speed_+%"
+   ],
+   "qualityTags": [
+    "attack",
+    "caster",
+    "speed",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Guidance",
+     "min": 3,
+     "max": 4,
+     "level": 31
+    },
+    {
+     "name": "of Direction",
+     "min": 5,
+     "max": 6,
+     "level": 53
+    },
+    {
+     "name": "of Management",
+     "min": 7,
+     "max": 8,
+     "level": 69
+    },
+    {
+     "name": "of Control",
+     "min": 9,
+     "max": 10,
+     "level": 80
+    }
    ]
   },
   "minions deal #% increased damage with command skills": {
@@ -48537,6 +48727,47 @@
    "name": "Guide's",
    "stats": [
     "minion_commanded_skill_damage_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Guide's",
+     "min": 13,
+     "max": 20,
+     "level": 18
+    },
+    {
+     "name": "Lookout's",
+     "min": 21,
+     "max": 28,
+     "level": 35
+    },
+    {
+     "name": "Watcher's",
+     "min": 29,
+     "max": 36,
+     "level": 44
+    },
+    {
+     "name": "Sentry's",
+     "min": 37,
+     "max": 44,
+     "level": 52
+    },
+    {
+     "name": "Shepherd's",
+     "min": 45,
+     "max": 52,
+     "level": 63
+    },
+    {
+     "name": "Custodian's",
+     "min": 53,
+     "max": 61,
+     "level": 81
+    }
    ]
   },
   "minions have #% increased critical hit chance": {
@@ -48545,6 +48776,47 @@
    "name": "of Pricking",
    "stats": [
     "minion_critical_strike_chance_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Pricking",
+     "min": 5,
+     "max": 12,
+     "level": 18
+    },
+    {
+     "name": "of Stinging",
+     "min": 13,
+     "max": 20,
+     "level": 32
+    },
+    {
+     "name": "of Gouging",
+     "min": 21,
+     "max": 28,
+     "level": 45
+    },
+    {
+     "name": "of Puncturing",
+     "min": 29,
+     "max": 36,
+     "level": 58
+    },
+    {
+     "name": "of Lacinating",
+     "min": 37,
+     "max": 44,
+     "level": 70
+    },
+    {
+     "name": "of Piercing",
+     "min": 45,
+     "max": 52,
+     "level": 81
+    }
    ]
   },
   "minions have #% increased critical damage bonus": {
@@ -48553,6 +48825,47 @@
    "name": "of Quashing",
    "stats": [
     "minion_critical_strike_multiplier_+"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Quashing",
+     "min": 6,
+     "max": 10,
+     "level": 17
+    },
+    {
+     "name": "of Purging",
+     "min": 11,
+     "max": 15,
+     "level": 30
+    },
+    {
+     "name": "of Elimination",
+     "min": 16,
+     "max": 20,
+     "level": 44
+    },
+    {
+     "name": "of Devastation",
+     "min": 21,
+     "max": 25,
+     "level": 57
+    },
+    {
+     "name": "of Eradication",
+     "min": 26,
+     "max": 30,
+     "level": 69
+    },
+    {
+     "name": "of Extinction",
+     "min": 31,
+     "max": 35,
+     "level": 80
+    }
    ]
   },
   "minions deal #% increased damage": {
@@ -48561,6 +48874,59 @@
    "name": "Hustler's",
    "stats": [
     "minion_damage_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Hustler's",
+     "min": 7,
+     "max": 9,
+     "level": 13
+    },
+    {
+     "name": "Conniver's",
+     "min": 10,
+     "max": 12,
+     "level": 26
+    },
+    {
+     "name": "Schemer's",
+     "min": 13,
+     "max": 15,
+     "level": 33
+    },
+    {
+     "name": "Plotter's",
+     "min": 16,
+     "max": 18,
+     "level": 46
+    },
+    {
+     "name": "Conspirator's",
+     "min": 19,
+     "max": 21,
+     "level": 54
+    },
+    {
+     "name": "Exploiter's",
+     "min": 22,
+     "max": 24,
+     "level": 65
+    },
+    {
+     "name": "Manipulator's",
+     "min": 25,
+     "max": 27,
+     "level": 70
+    },
+    {
+     "name": "Puppeteer's",
+     "min": 28,
+     "max": 31,
+     "level": 82
+    }
    ]
   },
   "minions have +#% to all elemental resistances": {
@@ -48569,6 +48935,50 @@
    "name": "of Numbness",
    "stats": [
     "minion_elemental_resistance_%"
+   ],
+   "qualityTags": [
+    "fire",
+    "cold",
+    "lightning",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Numbness",
+     "min": 7,
+     "max": 9,
+     "level": 22
+    },
+    {
+     "name": "of Dullness",
+     "min": 10,
+     "max": 12,
+     "level": 38
+    },
+    {
+     "name": "of Desensitisation",
+     "min": 14,
+     "max": 16,
+     "level": 49
+    },
+    {
+     "name": "of Conditioning",
+     "min": 17,
+     "max": 19,
+     "level": 57
+    },
+    {
+     "name": "of Acclimatisation",
+     "min": 20,
+     "max": 22,
+     "level": 66
+    },
+    {
+     "name": "of Adaptation",
+     "min": 23,
+     "max": 25,
+     "level": 73
+    }
    ]
   },
   "+# to level of all minion skills": {
@@ -48577,7 +48987,11 @@
    "name": "of the Taskmaster",
    "stats": [
     "minion_skill_gem_level_+"
-   ]
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": []
   },
   "minions have #% increased immobilisation buildup": {
    "tag": "genesis_tree_minion",
@@ -48585,6 +48999,47 @@
    "name": "of Clutching",
    "stats": [
     "minion_hit_damage_immobilisation_multiplier_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Clutching",
+     "min": 20,
+     "max": 25,
+     "level": 16
+    },
+    {
+     "name": "of Grasping",
+     "min": 26,
+     "max": 31,
+     "level": 34
+    },
+    {
+     "name": "of Gripping",
+     "min": 32,
+     "max": 37,
+     "level": 48
+    },
+    {
+     "name": "of Snaring",
+     "min": 38,
+     "max": 43,
+     "level": 56
+    },
+    {
+     "name": "of Grappling",
+     "min": 44,
+     "max": 49,
+     "level": 65
+    },
+    {
+     "name": "of Seizing",
+     "min": 50,
+     "max": 55,
+     "level": 74
+    }
    ]
   },
   "minions have #% increased maximum life": {
@@ -48593,6 +49048,48 @@
    "name": "Bearing",
    "stats": [
     "minion_maximum_life_+%"
+   ],
+   "qualityTags": [
+    "life",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Bearing",
+     "min": 7,
+     "max": 10,
+     "level": 18
+    },
+    {
+     "name": "Bracing",
+     "min": 11,
+     "max": 14,
+     "level": 29
+    },
+    {
+     "name": "Toughening",
+     "min": 15,
+     "max": 18,
+     "level": 41
+    },
+    {
+     "name": "Reinforcing",
+     "min": 19,
+     "max": 22,
+     "level": 52
+    },
+    {
+     "name": "Bolstering",
+     "min": 23,
+     "max": 26,
+     "level": 67
+    },
+    {
+     "name": "Fortifying",
+     "min": 27,
+     "max": 30,
+     "level": 75
+    }
    ]
   },
   "minions have #% increased movement speed": {
@@ -48601,6 +49098,36 @@
    "name": "of Persuasion",
    "stats": [
     "minion_movement_speed_+%"
+   ],
+   "qualityTags": [
+    "speed",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Persuasion",
+     "min": 5,
+     "max": 7,
+     "level": 27
+    },
+    {
+     "name": "of Pressure",
+     "min": 8,
+     "max": 10,
+     "level": 48
+    },
+    {
+     "name": "of Coercion",
+     "min": 11,
+     "max": 13,
+     "level": 68
+    },
+    {
+     "name": "of Compulsion",
+     "min": 14,
+     "max": 16,
+     "level": 77
+    }
    ]
   },
   "minions revive #% faster": {
@@ -48609,6 +49136,35 @@
    "name": "Stirring",
    "stats": [
     "minion_resummon_speed_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Stirring",
+     "min": 1,
+     "max": 2,
+     "level": 24
+    },
+    {
+     "name": "Rousing",
+     "min": 3,
+     "max": 5,
+     "level": 45
+    },
+    {
+     "name": "Waking",
+     "min": 7,
+     "max": 9,
+     "level": 63
+    },
+    {
+     "name": "Restless",
+     "min": 10,
+     "max": 12,
+     "level": 76
+    }
    ]
   },
   "offering skills have #% increased duration": {
@@ -48617,6 +49173,41 @@
    "name": "of Tradition",
    "stats": [
     "offering_duration_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Tradition",
+     "min": 6,
+     "max": 15,
+     "level": 15
+    },
+    {
+     "name": "of Observance",
+     "min": 16,
+     "max": 25,
+     "level": 29
+    },
+    {
+     "name": "of the Rite",
+     "min": 26,
+     "max": 35,
+     "level": 47
+    },
+    {
+     "name": "of Ceremony",
+     "min": 36,
+     "max": 45,
+     "level": 68
+    },
+    {
+     "name": "of Liturgy",
+     "min": 46,
+     "max": 55,
+     "level": 79
+    }
    ]
   },
   "#% chance for remnants you pick up to count as picking up an additional remnant": {
@@ -48625,6 +49216,39 @@
    "name": "of Accumulation",
    "stats": [
     "created_remnants_have_%_chance_to_duplicate_pick_up_results"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Accumulation",
+     "min": 4,
+     "max": 6,
+     "level": 24
+    },
+    {
+     "name": "of Proliferation",
+     "min": 7,
+     "max": 9,
+     "level": 37
+    },
+    {
+     "name": "of Expansion",
+     "min": 10,
+     "max": 12,
+     "level": 49
+    },
+    {
+     "name": "of Magnification",
+     "min": 13,
+     "max": 14,
+     "level": 61
+    },
+    {
+     "name": "of Multiplication",
+     "min": 15,
+     "max": 16,
+     "level": 73
+    }
    ]
   },
   "remnants can be collected from #% further away": {
@@ -48633,6 +49257,39 @@
    "name": "of Receiving",
    "stats": [
     "remnant_pickup_range_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Receiving",
+     "min": 12,
+     "max": 19,
+     "level": 26
+    },
+    {
+     "name": "of Collecting",
+     "min": 20,
+     "max": 27,
+     "level": 38
+    },
+    {
+     "name": "of Amassing",
+     "min": 28,
+     "max": 35,
+     "level": 51
+    },
+    {
+     "name": "of Absorbing",
+     "min": 36,
+     "max": 43,
+     "level": 64
+    },
+    {
+     "name": "of Engulfing",
+     "min": 44,
+     "max": 51,
+     "level": 76
+    }
    ]
   },
   "spell skills have #% increased area of effect": {
@@ -48641,6 +49298,29 @@
    "name": "of Analysis",
    "stats": [
     "spell_area_of_effect_+%"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Analysis",
+     "min": 6,
+     "max": 8,
+     "level": 23
+    },
+    {
+     "name": "of Experimentation",
+     "min": 9,
+     "max": 11,
+     "level": 48
+    },
+    {
+     "name": "of Understanding",
+     "min": 12,
+     "max": 14,
+     "level": 69
+    }
    ]
   },
   "spells have #% increased cooldown recovery rate": {
@@ -48649,6 +49329,41 @@
    "name": "Imagninative",
    "stats": [
     "base_spell_cooldown_speed_+%"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Imagninative",
+     "min": 2,
+     "max": 4,
+     "level": 12
+    },
+    {
+     "name": "Inventive",
+     "min": 6,
+     "max": 10,
+     "level": 28
+    },
+    {
+     "name": "Pioneering",
+     "min": 11,
+     "max": 15,
+     "level": 41
+    },
+    {
+     "name": "Trailblazing",
+     "min": 16,
+     "max": 20,
+     "level": 59
+    },
+    {
+     "name": "Ingenious",
+     "min": 21,
+     "max": 25,
+     "level": 74
+    }
    ]
   },
   "#% increased mana cost efficiency of spells": {
@@ -48657,6 +49372,48 @@
    "name": "Thoughtful",
    "stats": [
     "base_spell_mana_cost_efficiency_+%"
+   ],
+   "qualityTags": [
+    "mana",
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Thoughtful",
+     "min": 7,
+     "max": 9,
+     "level": 12
+    },
+    {
+     "name": "Considerate",
+     "min": 10,
+     "max": 12,
+     "level": 29
+    },
+    {
+     "name": "Prudent",
+     "min": 13,
+     "max": 15,
+     "level": 42
+    },
+    {
+     "name": "Astute",
+     "min": 16,
+     "max": 18,
+     "level": 53
+    },
+    {
+     "name": "Sagacious",
+     "min": 19,
+     "max": 22,
+     "level": 64
+    },
+    {
+     "name": "Calculating",
+     "min": 23,
+     "max": 26,
+     "level": 77
+    }
    ]
   },
   "#% increased critical hit chance for spells": {
@@ -48665,6 +49422,47 @@
    "name": "of Menace",
    "stats": [
     "spell_critical_strike_chance_+%"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Menace",
+     "min": 7,
+     "max": 9,
+     "level": 18
+    },
+    {
+     "name": "of Havoc",
+     "min": 10,
+     "max": 12,
+     "level": 32
+    },
+    {
+     "name": "of Disaster",
+     "min": 13,
+     "max": 15,
+     "level": 45
+    },
+    {
+     "name": "of Calamity",
+     "min": 16,
+     "max": 18,
+     "level": 58
+    },
+    {
+     "name": "of Ruin",
+     "min": 19,
+     "max": 21,
+     "level": 70
+    },
+    {
+     "name": "of Unmaking",
+     "min": 22,
+     "max": 25,
+     "level": 81
+    }
    ]
   },
   "#% increased critical spell damage bonus": {
@@ -48673,6 +49471,47 @@
    "name": "of Ire",
    "stats": [
     "base_spell_critical_strike_multiplier_+"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Ire",
+     "min": 8,
+     "max": 10,
+     "level": 17
+    },
+    {
+     "name": "of Anger",
+     "min": 11,
+     "max": 13,
+     "level": 30
+    },
+    {
+     "name": "of Rage",
+     "min": 14,
+     "max": 17,
+     "level": 44
+    },
+    {
+     "name": "of Fury",
+     "min": 18,
+     "max": 21,
+     "level": 57
+    },
+    {
+     "name": "of Ferocity",
+     "min": 22,
+     "max": 25,
+     "level": 69
+    },
+    {
+     "name": "of Destruction",
+     "min": 26,
+     "max": 29,
+     "level": 80
+    }
    ]
   },
   "#% increased spell damage during any flask effect": {
@@ -48681,6 +49520,47 @@
    "name": "Activating",
    "stats": [
     "spell_damage_+%_during_mana_flask_effect"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Activating",
+     "min": 20,
+     "max": 25,
+     "level": 12
+    },
+    {
+     "name": "Stimulating",
+     "min": 26,
+     "max": 31,
+     "level": 26
+    },
+    {
+     "name": "Awakening",
+     "min": 32,
+     "max": 37,
+     "level": 39
+    },
+    {
+     "name": "Elevating",
+     "min": 38,
+     "max": 43,
+     "level": 53
+    },
+    {
+     "name": "Energising",
+     "min": 44,
+     "max": 49,
+     "level": 67
+    },
+    {
+     "name": "Exhilarating",
+     "min": 50,
+     "max": 55,
+     "level": 80
+    }
    ]
   },
   "#% increased spell damage": {
@@ -48689,6 +49569,59 @@
    "name": "Apprentice's",
    "stats": [
     "spell_damage_+%"
+   ],
+   "qualityTags": [
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "Apprentice's",
+     "min": 6,
+     "max": 9,
+     "level": 9
+    },
+    {
+     "name": "Adept's",
+     "min": 10,
+     "max": 13,
+     "level": 20
+    },
+    {
+     "name": "Scholar's",
+     "min": 14,
+     "max": 17,
+     "level": 31
+    },
+    {
+     "name": "Professor's",
+     "min": 18,
+     "max": 21,
+     "level": 46
+    },
+    {
+     "name": "Occultist's",
+     "min": 22,
+     "max": 25,
+     "level": 55
+    },
+    {
+     "name": "Incanter's",
+     "min": 26,
+     "max": 29,
+     "level": 63
+    },
+    {
+     "name": "Glyphic",
+     "min": 30,
+     "max": 34,
+     "level": 71
+    },
+    {
+     "name": "Runic",
+     "min": 35,
+     "max": 39,
+     "level": 82
+    }
    ]
   }
  },

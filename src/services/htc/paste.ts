@@ -52,7 +52,7 @@ import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import { bridgeMods } from "./bridge";
 import { matchKey } from "./bridge-index";
-import { htcBaseInfo, htcDropOnly, htcModSides } from "./patch";
+import { htcBaseInfo, htcDropOnly, htcModSides, type DropOnlyInfo, type DropOnlyTier } from "./patch";
 import { boostedBy, catalystTagFromLabel, rawValue } from "./quality";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -203,7 +203,9 @@ export function parseJaItem(text: string): PastedItem {
   const unmatched: string[] = [];
 
   for (const raw of lines) {
-    if (raw === "Corrupted" || raw === "コラプト済み") { corrupted = true; continue; }
+    // 「コラプト状態」は取引所の日本語表示 (キメラの螺旋のスクショ、2026-09-23)。
+    // ゲーム内のコピーが「コラプト済み」か「コラプト状態」かは未確認なので両方受ける
+    if (raw === "Corrupted" || raw === "コラプト済み" || raw === "コラプト状態") { corrupted = true; continue; }
     // ベースの付与スキルは作る対象ではない (ベースを選んだ時点で決まる)
     const gs = /^Grants Skill:\s*(?:Level \d+ )?(.+)$/.exec(raw);
     if (gs) { grantedSkill = gs[1]!.trim(); continue; }
@@ -255,6 +257,59 @@ export function parseJaItem(text: string): PastedItem {
  * 掛かって、高いほうを拾います (2026-09-23 に実測: キャストスピード 23% が、素の 16-18 では
  * なく底上げ後の 22-24 に当たっていた)。
  */
+/** 創生の樹の MOD 1 行 (買うしかない物) */
+export interface DropOnlyRow {
+  text: string;
+  tag: string;
+  tagJa: string;
+  name: string;
+  stats: string[];
+  /** 乗っている段 (品質を外した後の値で決める)。段が引けなければ無し */
+  tier?: { index: number; name: string; min: number; max: number; of: number };
+  /** 品質を外した素の値 */
+  raw?: number;
+  /** 品質を外したか */
+  deboosted?: boolean;
+  /** 選べる段 (低い方から) */
+  tiers?: DropOnlyTier[];
+}
+
+/**
+ * 創生の樹の MOD の段を、**品質を外した値**で決める。
+ *
+ * エンジンに無い MOD なので `tierIndexFor` は使えません。代わりにクライアントの段の表
+ * (`htcDropOnly().tiers`) を直に引きます。割り戻し方はエンジン側と同じで、表示は
+ * `floor(素 × (1+q))` なので素は `[表示/(1+q), (表示+1)/(1+q))` の帯。その帯が入る段を取ります。
+ *
+ * 実例: 死体の円環のマナコスト効率 29% / 品質 40% → 素 20.7 → Sagacious (19-22)、6 段中の 5 段目。
+ * 品質を外さないと 29 は最上段 (23-26) すら超えてしまうので、外すのが正しいという裏取りにもなる。
+ */
+function treeTierOf(
+  info: DropOnlyInfo,
+  shown: number | undefined,
+  item: PastedItem,
+): Pick<DropOnlyRow, "tier" | "raw" | "deboosted" | "tiers"> {
+  const tiers = info.tiers ?? [];
+  if (shown == null || tiers.length === 0) return tiers.length ? { tiers } : {};
+  const boost = !!(item.quality && item.catalystTag && (info.qualityTags ?? []).includes(item.catalystTag));
+  const lo = boost ? rawValue(shown, item.quality!) : shown;
+  const hi = boost ? rawValue(shown + 1, item.quality!) - 1e-9 : shown;
+  // 帯と重なる段のうち一番高い物 (エンジン側の tierIndexFor と同じ選び方)
+  let index = -1;
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    const t = tiers[i]!;
+    if (t.min <= hi && lo <= t.max) { index = i; break; }
+  }
+  if (index < 0) return { tiers, raw: lo, deboosted: boost };
+  const t = tiers[index]!;
+  return {
+    tiers,
+    raw: lo,
+    deboosted: boost,
+    tier: { index, name: t.name, min: t.min, max: t.max, of: tiers.length },
+  };
+}
+
 function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], level: number): number {
   for (let i = mod.tiers.length - 1; i >= 0; i--) {
     const t = mod.tiers[i];
@@ -296,7 +351,7 @@ export function targetsFor(
    * 繋がらなかった行のうち、**創生の樹からしか出ない**と分かった物。
    * 「クラフトでは付かない」だけでなく**どこから出るか**まで言えます。
    */
-  dropOnly: Array<{ text: string; tag: string; tagJa: string; name: string; stats: string[] }>;
+  dropOnly: DropOnlyRow[];
   /**
    * 繋がらなかった行が**どちら側の枠をいくつ食っているか**。
    *
@@ -403,7 +458,7 @@ export function targetsFor(
   // 繋がらなかった行の側を、クライアント由来の表から引く ([[patch.ts]] の `htcModSides`)
   const sides = htcModSides();
   const tree = htcDropOnly();
-  const dropOnlyRows: Array<{ text: string; tag: string; tagJa: string; name: string; stats: string[] }> = [];
+  const dropOnlyRows: DropOnlyRow[] = [];
   const skippedSides = { prefixes: 0, suffixes: 0, either: 0 };
   for (const l of rollable) {
     if (!skipped.includes(l.text)) continue;
@@ -411,7 +466,12 @@ export function targetsFor(
     const t2 = tree[k];
     // stats まで持って回る。**ここで引けたのに後で引き直す**と、文面の正規化が
     // 1 箇所ずれただけで「買うしかない MOD なのに検索も組めない」に落ちます (2026-09-23 に実際そうなった)
-    if (t2) dropOnlyRows.push({ text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name, stats: t2.stats ?? [] });
+    if (t2) {
+      dropOnlyRows.push({
+        text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name, stats: t2.stats ?? [],
+        ...treeTierOf(t2, l.values[0], item),
+      });
+    }
     const v = sides[k];
     if (v === "P") skippedSides.prefixes++;
     else if (v === "S") skippedSides.suffixes++;

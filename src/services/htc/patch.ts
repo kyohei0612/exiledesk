@@ -170,6 +170,20 @@ export interface DropOnlyInfo {
    * エンジンに無いので、普通の経路では stat を引けません ([[tree-buy.ts]])。
    */
   stats?: string[];
+  /** カタリストで底上げされるタグ (`mana` など)。**品質を外してから段を決める**のに使う */
+  qualityTags?: string[];
+  /** 段。**低い方から**並ぶ (エンジンの `mod.tiers` と同じ向き) */
+  tiers?: DropOnlyTier[];
+}
+
+/** 創生の樹の MOD の 1 段 */
+export interface DropOnlyTier {
+  /** 段の名前 (「Sagacious」) */
+  name: string;
+  min: number;
+  max: number;
+  /** 必要レベル (段が出始める ilvl の目安) */
+  level: number;
 }
 
 /**

@@ -27,7 +27,7 @@
  *
  * 今ここに残っているのは**貼り付け → MOD 解析 → ベース選び**までです。
  */
-import { ref, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
@@ -38,6 +38,9 @@ import { boostedBy } from "../../services/htc/quality";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
+import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
+import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
+import type { DropOnlyRow } from "../../services/htc/paste";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -87,7 +90,7 @@ export function useHtcCraft() {
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
-  const dropOnly = ref<Array<{ text: string; tagJa: string; name: string }>>([]);
+  const dropOnly = shallowRef<DropOnlyRow[]>([]);
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -246,6 +249,34 @@ export function useHtcCraft() {
     }
   }
 
+  /**
+   * 創生の樹の MOD がある時の「買うか自前で固定するか」。**投げる前に出せる分だけ**。
+   *
+   * オーナーの順番: オーブの値段を見る (信号 0) → 固定済み品の最安 1 件 (信号 1) → 比べて起動。
+   * ここは 1 段目で、オーブ・消去・鎖骨の実勢から「自前の固定費」と得な道を出します。
+   */
+  const treePlan = computed(() => {
+    const p = prices.value;
+    if (!p || dropOnly.value.length === 0) return null;
+    const div = p.currency.divine;
+    if (!div) return null;
+    const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
+    const plan = treeFracturePlan({
+      orb: toDiv(p.currency.fracture),
+      annul: toDiv(p.currency.annul) ?? 0,
+      bone: toDiv(p.currency.desecrate) ?? 0,
+    });
+    const cls = base.value;
+    const buys = treeBuys(dropOnly.value);
+    const query = cls
+      ? treeBuyQuery(cls, buys, {
+        ilvlMin: item.value?.itemLevel ?? undefined,
+        ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
+      })
+      : null;
+    return { plan, buys, query, signals: query ? 1 : 0 };
+  });
+
   /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => rows.value.find((r) => r.modId === id)?.text ?? id.split("/")[1] ?? "").join(" + ");
@@ -256,6 +287,6 @@ export function useHtcCraft() {
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
-    money, run,
+    money, run, treePlan,
   };
 }
