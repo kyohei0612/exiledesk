@@ -11,9 +11,10 @@ import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import { useFractureChoice } from "./useFractureChoice";
+import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
 
-const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
+const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; listingDivine: number | null }>();
 const c = props.c;
 const baseType = computed(() => c.item.value?.baseType ?? zeroStart.value.baseType);
 const baseJa = computed(() => c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? "");
@@ -35,6 +36,8 @@ const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
 };
 /** フラクチャー品から始めるか、無し品から作るか */
 const fc = useFractureChoice(c);
+/** 完成品を買うのと作るのと */
+const fin = useFinishedCompare(c, computed(() => fc.chosen.value?.cost ?? null), computed(() => props.listingDivine));
 </script>
 
 <template>
@@ -67,6 +70,29 @@ const fc = useFractureChoice(c);
         <button v-if="o.link" type="button" class="ml-2 text-sky-300 underline" @click.prevent="openExternal(o.link.url)">{{ o.link.text }} →</button>
       </label>
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
+    </div>
+    <!-- 完成品を買うのと比べる (オーナー 2026-09-24:「完成品か比較対象ないよね」)。取引所は押した時だけ 1 本 -->
+    <div class="mt-2 rounded bg-black/20 p-2">
+      <p class="mb-1 font-bold">
+        完成品と比べる
+        <button v-if="!fin.found.value && fin.query.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fin.busy.value" @click="fin.search()">
+          {{ fin.busy.value ? "探しています…" : "完成品の最安を取る" }}
+        </button>
+      </p>
+      <p>
+        完成品を買う: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : "-" }}</b>
+        <span v-if="!fin.found.value?.min && props.listingDivine" class="opacity-60"> (手で入れた売値)</span>
+        <button v-if="fin.found.value?.url" type="button" class="ml-2 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
+      </p>
+      <p>
+        作る見込み: <b>{{ fin.craftCost.value != null ? c.money(fin.craftCost.value) : "-" }}</b>
+        <span class="opacity-60"> (始め方の初動 + {{ fin.craftBasis.value }}。目安)</span>
+      </p>
+      <p v-if="fin.verdict.value" class="mt-1">
+        → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "作る" }}</b>
+        方が {{ c.money(fin.verdict.value.diff) }} 安い
+      </p>
+      <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
     </div>
     <!-- 作る MOD と狙う段。段は最初に選べる (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」) -->
     <p class="mt-1">作る MOD {{ targets.length }} つ</p>

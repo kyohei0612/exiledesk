@@ -285,7 +285,7 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <template v-if="c.base.value">
-      <DiagnosisCard :c="c" />
+      <DiagnosisCard :c="c" :listing-divine="listing" />
       <h2 class="mb-1 font-bold">1 手ずつ</h2>
       <CraftSandboxPanel :c="c" />
 
