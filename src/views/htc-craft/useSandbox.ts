@@ -63,7 +63,7 @@ export function useSandbox(c: ReturnType<typeof useHtcCraft>) {
   const screen = ref<Screen>({ kind: "pick" });
   const restartAll = (): void => { snap.value = { item: startItem(), spent: 0, moves: 0, log: [] }; history.value = []; screen.value = { kind: "pick" }; };
   // 狙いの段を変えただけ (setTier) ではやり直さない。途中で段を変えて確率を見られるように (オーナー 2026-09-24)
-  watch(() => [c.targets.value.map((t) => t.modId).join(","), c.base.value, c.item.value, startOption.value], restartAll);
+  watch(() => [c.targets.value.map((t) => t.modId).join(","), c.fracturedTargets.value.map((t) => t.modId).join(","), c.base.value, c.item.value, startOption.value], restartAll);
   /** 品質 40% で作る (貼り付けが 40%、または 0 から組む設定が 40%) なら、ブリーチの MOD も 7 つ目の狙い */
   const wantBreach = computed(() => (c.item.value ? (c.item.value.quality ?? 0) > 20 : zeroStart.value.quality > 20));
 

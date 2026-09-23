@@ -12,6 +12,7 @@ import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
 import SearchChecks from "./SearchChecks.vue";
+import FractureCandidates from "./FractureCandidates.vue";
 import { useFractureChoice } from "./useFractureChoice";
 import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -64,7 +65,7 @@ watch(() => [c.item.value, c.base.value], async () => {
       このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
     </p>
     <!-- 始め方。初動の安い順 (オーナー 2026-09-24)。固定済み / 固定無し・厳しい / ゆるい。ベースは買う物。取引所は押した時だけ -->
-    <div v-if="fc.options.value.length" class="mt-2 rounded bg-black/20 p-2">
+    <div v-if="fc.options.value.length || c.targets.value.length" class="mt-2 rounded bg-black/20 p-2">
       <p class="mb-1 font-bold">
         始め方 (初動の安い順)
         <button v-if="!fc.searched.value" type="button" class="ml-1 rounded border border-sky-600 px-1 font-normal" :disabled="fc.busy.value" @click="fc.search()">
@@ -84,6 +85,8 @@ watch(() => [c.item.value, c.base.value], async () => {
       <p v-if="fc.error.value" class="mt-1 text-rose-300">{{ fc.error.value }}</p>
       <!-- 3 本の条件と結果 (バグ確認用。オーナー 2026-09-24) -->
       <SearchChecks :c="c" />
+      <!-- どの MOD を固定済みにして始めるか、選んで一斉に探す (オーナー 2026-09-24) -->
+      <FractureCandidates :c="c" />
     </div>
     <!-- 完成品を買うのと比べる (オーナー 2026-09-24:「完成品か比較対象ないよね」)。取引所は押した時だけ 1 本 -->
     <div class="mt-2 rounded bg-black/20 p-2">

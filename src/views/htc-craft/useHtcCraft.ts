@@ -27,11 +27,13 @@
  *
  * 今ここに残っているのは**貼り付け → MOD 解析 → ベース選び**までです。
  */
-import { computed, ref, shallowRef } from "vue";
+import { ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
 import { useSpamPlan } from "./useSpamPlan";
+import { useTreeSearch } from "./useTreeSearch";
+export type { TreeRoute } from "./useTreeSearch";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { jaOfMod, jaOfPastedLine } from "../../services/htc/mod-text";
@@ -40,12 +42,8 @@ import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../ser
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
-import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
-import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
-import { batchFor, BATCH_TARGET, decide, NECRO_REPLACE_NOTE, summarize, type Batch, type Decision, type RouteSummary, type TreeListing } from "../../services/htc/tree-decide";
 import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
-import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
-import { marketStore } from "../../state/market-store";
+import { NECRO_REPLACE_NOTE } from "../../services/htc/tree-decide";
 import type { DropOnlyRow } from "../../services/htc/paste";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -70,16 +68,6 @@ export interface TargetRow {
   unknownWeight: boolean;
   /** 重みを別の出どころ (Craft of Exile の値など) で埋めた MOD か */
   overridden: boolean;
-}
-
-/** 樹 MOD を固定済みにする道 1 本の平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う) */
-export interface TreeRoute {
-  key: "strict" | "loose" | "mixed" | "fractured";
-  label: string;
-  summary: RouteSummary;
-  decision: Decision;
-  /** 85% に届く個数 (何個くらい用意するかの目安) */
-  need85: number | null;
 }
 
 export function useHtcCraft() {
@@ -116,40 +104,9 @@ export function useHtcCraft() {
   const { catalystChoice, spamOverride, spamUsed, spam } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
-
-  /** 取引所から取ってきた結果と判定。**押された時だけ**取る (3 本 = 約 21 秒) */
-  const treeResult = shallowRef<{
-    decision: Decision;
-    /** 投げた検索ごとの件数と取引所のリンク (`key` = fractured / loose / strict) */
-    found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }>;
-    skippedNoMods: number;
-    /** 固定済みが自前の最安以下だったので、残りの検索を投げずに止めたか */
-    earlyBuy: boolean;
-    /** 自前の最安 (神)。固定済みがこれ以下なら買う */
-    selfFloor: number | null;
-    /**
-     * オーナーの比べ方 (2026-09-23): ゆるい / 厳しいそれぞれ「85% に届く最小の個数だけ買う」総額と、
-     * 固定済みの値段。**それ以上は買う必要が無い**。
-     */
-    strict: Batch | null;
-    loose: Batch | null;
-    fracturedPrice: number | null;
-    /**
-     * 道ごとの平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う)。
-     * **比べる物差しはこれ** (オーナー:「平均値で計算しよう」)。85% の個数は用意する数の目安。
-     */
-    routes: TreeRoute[];
-    /** 平均が一番安い道 */
-    best: "strict" | "loose" | "mixed" | "fractured" | null;
-  } | null>(null);
-  const treeBusy = ref(false);
-  /**
-   * 樹 MOD ごとに「どの段以上を探すか」(文面 → 段の添字)。**既定は貼り付けた物の段**
-   * (オーナー 2026-09-23:「ティア選ばせるでいい、デフォではコピーした忍者の値」)。
-   * 段を見ないと Thoughtful (7-9) のような低い段まで「成功」に数えてしまう。
-   */
-  const treeTierPick = ref<Record<string, number>>({});
-  const treeError = ref<string | null>(null);
+  /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
+  const { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree } =
+    useTreeSearch({ data, base, prices, item, dropOnly, fracturedTargets, name: (id) => stepTarget([id]) });
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -316,147 +273,6 @@ export function useHtcCraft() {
   }
 
   /**
-   * 創生の樹の MOD がある時の「買うか自前で固定するか」。**投げる前に出せる分だけ**。
-   *
-   * オーナーの順番: オーブの値段を見る (信号 0) → 固定済み品の最安 1 件 (信号 1) → 比べて起動。
-   * ここは 1 段目で、オーブ・消去・鎖骨の実勢から「自前の固定費」と得な道を出します。
-   */
-  const treePlan = computed(() => {
-    const p = prices.value;
-    // 樹 MOD に加え、貼り付けで固定済みだった普通の MOD も同じ 3 本で比べる (2026-09-24)
-    if (!p || (dropOnly.value.length === 0 && fracturedTargets.value.length === 0)) return null;
-    const div = p.currency.divine;
-    if (!div) return null;
-    const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
-    const plan = treeFracturePlan({
-      orb: toDiv(p.currency.fracture),
-      annul: toDiv(p.currency.annul) ?? 0,
-      bone: toDiv(p.currency.desecrate) ?? 0,
-    });
-    const cls = base.value;
-    // 選んだ段の下限を条件に入れる (3 本すべて)。取引所の値は品質込みで出るので、
-    // 下限は素の値の段の下限でいい (品質の乗った出品は表示が大きくなって勝手に引っかかる)
-    const mins: Record<string, number> = {};
-    for (const d of dropOnly.value) {
-      const idx = treeTierPick.value[d.text] ?? d.tier?.index;
-      const t = idx != null ? d.tiers?.[idx] : undefined;
-      if (t) mins[d.text] = t.min;
-    }
-    const d = data.value;
-    const buys = [...treeBuys(dropOnly.value, { mins }), ...(d ? fracturedBuys(d, fracturedTargets.value, (id) => stepTarget([id])) : [])];
-    // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り
-    const common = {
-      ilvlMin: item.value?.itemLevel ?? undefined,
-      ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
-    };
-    // 固定済みは最安 1 件。固定無しは「85% に届く最小の個数」を数えるので最安 10 件まで
-    // (ゆるい方は 85% に 10 個前後要る。fetch は 1 回 10 件なので検索の本数は変わらない)
-    const searches = [
-      { key: "fractured" as const, label: "固定済み (買えばそのまま使える)", take: 1,
-        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null },
-      { key: "loose" as const, label: "固定無し・ゆるい (消去ガチャで減らす)", take: 10,
-        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null },
-      { key: "strict" as const, label: "固定無し・厳しい (プレフィックス 1 個 = 消去ガチャ無し)", take: 10,
-        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false, strict: true }) : null },
-    ].filter((x) => x.query != null);
-    return { plan, buys, searches };
-  });
-
-
-  /**
-   * 樹 MOD の 3 本を取引所に投げて、何を何個まで試すか決める。
-   *
-   * 投げるのは `treePlan.searches` の 3 本だけ (オーナー指定: 固定済み 1 件、固定無し 5 件ずつ)。
-   * 間隔と上限は `autoPrice` (本番は Rust の門番) が持つので、ここでは並べて待つだけです。
-   * 1 件ごとの MOD 数は fetch の結果から読みます ([[pricing.ts]] の `mods`)。**読めなかった物は
-   * 確率が決まらないので外します** (外した数は画面に出す)。
-   */
-  async function searchTree(): Promise<void> {
-    const tp = treePlan.value;
-    const p = prices.value;
-    if (!tp || !p) return;
-    const div = p.currency.divine;
-    if (!div) { treeError.value = "相場が未取得なので値段を神に直せません。"; return; }
-    treeBusy.value = true;
-    treeError.value = null;
-    treeResult.value = null;
-    try {
-      const league = marketStore.league.value?.Value ?? "Standard";
-      const rates = marketStore.rates.value;
-      const listings: TreeListing[] = [];
-      const found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }> = [];
-      let skippedNoMods = 0;
-      let earlyBuy = false;
-      // 自前で固定する時の最安 (4 MOD のベースがタダの時)。固定済みがこれ以下なら自前は絶対に勝てない。
-      // オーナー:「フラクチャー品がフラクチャーオーブの 4 倍の値段なら買った方が良い、他の経費も含めて」。
-      // 正確にはオーブが高い時は「減らして冒涜」で打つ回数が 3/N に減るので、約 3.5 倍が線になる
-      const selfFloor = tp.plan.rows.find((r) => r.mods === 4)?.fixed ?? null;
-      for (const sq of tp.searches) {
-        // 固定済みが線以下でも残りは投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
-        // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
-        const r = await autoPrice(league, sq.query, rates, sq.take);
-        if (!r) {
-          // 取れなかった物は 0 件と区別する (理由を持たせる)
-          found.push({ key: sq.key, label: sq.label, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" });
-          if (tradeAuto.lastError.value) treeError.value = tradeAuto.lastError.value;
-          continue;
-        }
-        found.push({ key: sq.key, label: sq.label, total: r.total, url: r.searchUrl || null });
-        if (sq.key === "fractured" && selfFloor != null && r.minExalted != null && r.minExalted / div <= selfFloor) {
-          earlyBuy = true;
-        }
-        for (const x of r.listings.slice(0, sq.take)) {
-          if (!Number.isFinite(x.amountExalted)) continue;
-          const mods = x.mods ?? null;
-          if (sq.key !== "fractured" && mods == null) { skippedNoMods++; continue; }
-          const n = mods ?? 4;
-          // 厳しい検索はプレフィックス 1 個 (条件で保証)。ゆるい検索は総数だけで確率が決まる
-          const prefixes = sq.key === "strict" ? 1 : Math.ceil(n / 2);
-          listings.push({
-            source: sq.key,
-            price: x.amountExalted / div,
-            prefixes,
-            suffixes: n - prefixes,
-            label: `${(x.amountExalted / div).toFixed(2)} 神 / ${n} MOD${x.account ? " / " + x.account : ""}`,
-          });
-        }
-      }
-      const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
-      const dp = {
-        orb: toDiv(p.currency.fracture) ?? Infinity,
-        annul: toDiv(p.currency.annul) ?? 0,
-        bone: toDiv(p.currency.desecrate) ?? 0,
-        exalt: toDiv(p.currency.exalt) ?? 0,
-        necro: toDiv(p.omens.OmenofDextralNecromancy),
-        dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
-      };
-      const decision = decide(listings, dp);
-      const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
-      const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
-      const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
-      const fracturedPrice = frList[0]?.price ?? null;
-      const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
-      const routes: TreeRoute[] = [];
-      const add = (key: "strict" | "loose" | "mixed" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
-        if (ls.length === 0) return;
-        const dd = decide(ls, dp);
-        if (dd.order.length === 0 && !dd.fallback) return;
-        routes.push({ key, label, summary: summarize(dd), decision: dd, need85: b?.count ?? null });
-      };
-      add("strict", "厳しいを 1 個ずつ", only("strict"), strict);
-      add("loose", "ゆるいを 1 個ずつ", only("loose"), loose);
-      add("mixed", "両方まぜて安い順に 1 個ずつ", listings, null);
-      if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
-      const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
-      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, routes, best };
-    } catch (e) {
-      treeError.value = String(e);
-    } finally {
-      treeBusy.value = false;
-    }
-  }
-
-  /**
    * 狙う段を選び直す (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」)。狙いのリストそのものを
    * 書き換えるので、確率・フラクチャー品の検索の下限・無し品の平均・スパムの組み立てが全部ついてくる
    */
@@ -471,6 +287,14 @@ export function useHtcCraft() {
       ? { ...r, tierName: String(tier.name ?? ""), range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / ") } : r));
   }
 
+  /**
+   * 固定済みにする MOD を選び直す (オーナー 2026-09-24:「フラクチャー MOD どうするかチェックボックスで選択して
+   * 複数トレードで一斉に検索。安い MOD で開始できるかも」)。狙いのリストから選ぶので段はそのまま
+   */
+  function setFractured(modIds: readonly string[]): void {
+    fracturedTargets.value = targets.value.filter((t) => modIds.includes(t.modId));
+  }
+
   /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
     modIds.map((id) => {
@@ -480,7 +304,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget, setTier,
+    stepTarget, setTier, setFractured,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
