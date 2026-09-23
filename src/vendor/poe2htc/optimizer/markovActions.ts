@@ -330,8 +330,8 @@ export function createActionSpace(params: ActionSpaceParams): {
   const lightOk = omenOk('OmenofLight');
   const necromancyOk = (sd: 'prefix' | 'suffix'): boolean =>
     omenOk(sd === 'prefix' ? 'OmenofSinistralNecromancy' : 'OmenofDextralNecromancy');
-  // The omen is spent only on a reroll, so its price travels as the reroll's cost — never in an action's
-  // up-front `cost` (see ECHOES_OMEN in cost.ts).
+  // The omen is consumed when the Desecration is used (ExileDesk 2026-09-23, see ECHOES_OMEN in cost.ts):
+  // its price is in the action's up-front `cost`, and the one reroll it grants is free.
   const echoesPrice = prices.omens[ECHOES_OMEN];
   const echoesOk = echoesPrice !== undefined && notExcluded(ECHOES_OMEN);
   // The grades of bone this solve can spend: a Preserved one wherever desecration is in play, an Ancient
@@ -862,7 +862,7 @@ export function createActionSpace(params: ActionSpaceParams): {
       // Where the reroll is never worth taking, the solve publishes the step as the plain draw it then
       // is (`published` in markovFromItem.ts).
       const offerDraw = (action: DesecrateAction, dist: Dist): void => {
-        if (echoesOk) push({ ...action, echoes: true }, dist, DESECRATION_OFFER_COUNT, { cost: echoesPrice });
+        if (echoesOk) push({ ...action, echoes: true }, dist, DESECRATION_OFFER_COUNT, { cost: 0 });
         else push(action, dist, DESECRATION_OFFER_COUNT);
       };
       // Preserved first, then Ancient: where the floor changes nothing (every outcome of the draw already

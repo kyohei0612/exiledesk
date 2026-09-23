@@ -22,10 +22,12 @@ import type { AnnulOmen, ChaosOmen, DesecrationBossOmen, EssenceOmen } from '../
 import { desecrationBoneFor } from '../engine/probability.ts';
 
 /**
- * The Omen of Abyssal Echoes — the one omen spent only when it is USED: it rerolls a Desecration's three
- * offered mods, and is consumed by the reroll, not by the Desecration (confirmed 2026-09-10). So it is in
- * `stepOmenIds` — a player without one must never be handed the step — but not in `stepCost`'s up-front
- * price; the solver and the Quick check add its expected spend themselves.
+ * The Omen of Abyssal Echoes — lets a Desecration's three offered mods be rerolled once.
+ *
+ * ExileDesk 2026-09-23: **it is consumed the moment the Desecration is used**, whether or not the reroll
+ * is taken (owner:「反響は毎回だね、使った瞬間消費だからね」; Craft of Exile also spends one per
+ * Desecration). The upstream reading (spent only by the reroll, 2026-09-10) is retired: the omen is part
+ * of `stepCost`'s up-front price, and the reroll itself is free (markovActions pushes it at cost 0).
  */
 export const ECHOES_OMEN = 'OmenofAbyssalEchoes';
 
@@ -362,8 +364,8 @@ export function stepCost(prices: Prices, step: PricedStep): number {
   // charging 0 — a free essence would look like a bargain and dominate every frontier.
   const base = prices.currency[key]
     ?? (key.startsWith('essence:') ? prices.currency[legacyEssenceKey(step)] ?? 0 : 0);
-  // Up front only: the Echoes omen is paid on a reroll, if one happens — see ECHOES_OMEN.
-  const omens = stepOmenIds(step).reduce((sum, id) => (id === ECHOES_OMEN ? sum : sum + (prices.omens[id] ?? 0)), 0);
+  // Every omen is paid up front, the Echoes omen included (it is consumed on use — see ECHOES_OMEN).
+  const omens = stepOmenIds(step).reduce((sum, id) => sum + (prices.omens[id] ?? 0), 0);
   // The catalysts the omen eats, on top of the omen itself. A missing catalyst price charges 0, the
   // same reading as everywhere else here — the OFFER is gated on the price existing (markovActions),
   // so an unpriced catalyst means the action was never built rather than that it came free.

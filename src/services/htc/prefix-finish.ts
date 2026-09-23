@@ -43,7 +43,7 @@ export interface FinishPlan {
     echoes: boolean;
     /** 1 回 (骨 1 本) で当たる確率 */
     odds: number;
-    /** 1 回の値段 (骨 + お告げ + 反響を使った時の分の平均) */
+    /** 1 回の値段 (骨 + お告げ + 反響。反響は使った瞬間に消費) */
     perTry: number;
     /** 外れた時の消去のオーブ + 光のお告げ */
     light: number;
@@ -122,7 +122,8 @@ export function prefixFinish(inp: FinishInput): FinishPlan {
     for (const useEchoes of [false, true]) {
       const miss3 = (1 - p1) ** OFFERS;
       const odds = useEchoes ? 1 - miss3 * miss3 : 1 - miss3;
-      const perTry = cur(key) + necro + (useEchoes ? miss3 * echoes : 0);
+      // 反響のお告げは冒涜を使った瞬間に消費される (引き直さなくても払う。オーナー 2026-09-23)
+      const perTry = cur(key) + necro + (useEchoes ? echoes : 0);
       // 当たるまで: perTry × 回数 + 光 × (回数 - 1)
       const perSuccess = perTry / odds + light * (1 / odds - 1);
       if (!best || perSuccess < best.perSuccess) best = { modId: roll.modId, bone, echoes: useEchoes, odds, perTry, light, perSuccess };
