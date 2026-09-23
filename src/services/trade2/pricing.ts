@@ -162,6 +162,26 @@ export interface PriceListing {
   indexed: string | null;
   /** 値段の種類 ("~b/o" 即決 / "~price" 固定価格 など) */
   priceType?: string | null;
+  /**
+   * MOD の数 (2026-09-23、樹 MOD の自前固定の判定に使う)。
+   *
+   * `mods` は明示 + 固定済み + 冒涜の行数。`prefixes` / `suffixes` は取引所が `extended` に
+   * 載せていれば入る (載っていなければ null)。固定の確率は総数だけで決まるので、`mods` が要。
+   */
+  mods?: number | null;
+  prefixes?: number | null;
+  suffixes?: number | null;
+}
+
+/** fetch 結果の 1 件から MOD の数を読む */
+function modCountsOf(item: FetchItem | undefined): Pick<PriceListing, "mods" | "prefixes" | "suffixes"> {
+  if (!item) return { mods: null, prefixes: null, suffixes: null };
+  const lines = (item.explicitMods?.length ?? 0) + (item.fracturedMods?.length ?? 0) + (item.desecratedMods?.length ?? 0);
+  return {
+    mods: item.explicitMods || item.fracturedMods || item.desecratedMods ? lines : null,
+    prefixes: typeof item.extended?.prefixes === "number" ? item.extended.prefixes : null,
+    suffixes: typeof item.extended?.suffixes === "number" ? item.extended.suffixes : null,
+  };
 }
 
 export interface PriceResult {
@@ -189,10 +209,16 @@ export interface PriceResult {
   reservesSpirit?: boolean | null;
 }
 
+type FetchItem = NonNullable<NonNullable<FetchResponse["result"]>[number]["item"]>;
+
 interface FetchResponse {
   result?: Array<{
     id?: string;
-    item?: { name?: string; typeLine?: string; ilvl?: number };
+    item?: {
+      name?: string; typeLine?: string; ilvl?: number;
+      explicitMods?: string[]; fracturedMods?: string[]; desecratedMods?: string[];
+      extended?: { prefixes?: number; suffixes?: number };
+    };
     listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string; type?: string }; indexed?: string };
   }>;
 }
@@ -281,6 +307,7 @@ async function fetchListings(league: string, search: Trade2SearchResponse, rates
       ilvl: r.item?.ilvl ?? null,
       indexed: r.listing?.indexed ?? null,
       priceType,
+      ...modCountsOf(r.item),
     });
   }
   const finite = listings.filter((l) => Number.isFinite(l.amountExalted)).map((l) => l.amountExalted);

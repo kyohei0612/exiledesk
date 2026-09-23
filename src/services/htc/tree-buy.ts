@@ -31,6 +31,10 @@ import type { ItemBase } from "../../vendor/poe2htc/engine/types";
 
 const STAT_MAP = statMapping as Record<string, string>;
 
+/** 取引所の「プレフィックスモッド #個」「サフィックスモッド #個」(data-cache/trade2-stats-*.json で確認) */
+export const STRICT_PREFIX = "pseudo.pseudo_number_of_prefix_mods";
+export const STRICT_SUFFIX = "pseudo.pseudo_number_of_suffix_mods";
+
 /** 固定済みで買うしかない 1 行 */
 export interface TreeBuy {
   /** 貼り付けの文面 (日本語のまま) */
@@ -104,14 +108,28 @@ export function treeBuyQuery(
      * 持つので、固定無しで探せば固定済みは自然に混ざりません。
      */
     fractured?: boolean;
+    /**
+     * 消去の要らない物だけに絞る (固定無しの時だけ意味がある)。
+     *
+     * オーナー案 (2026-09-23):「プレフィックスモッド #個を上限 1、サフィックスモッド #個を
+     * 上限 3 にしたら、サフィックス冒涜やるだけで楽かも。消去ガチャやりたくない」。
+     * 樹 MOD (プレフィックス) だけがプレフィックスに居る物なら、残りの作業はサフィ側だけで
+     * 済み、樹 MOD に消去を当てる危険がありません。
+     *
+     * **サフィの数は問いません** (オーナー 2026-09-23:「プレフィックス上限 1 だったらサフィは
+     * 何個でもいい。右側高貴使ったら増やせるからね、3 つまで安いし」)。足りなければ右側の高貴な
+     * お告げで足してから冒涜するので、条件はプレフィックスの上限だけです。
+     */
+    strict?: boolean;
   } = {},
 ): ReturnType<typeof buildSpecQuery> | null {
   const fractured = opts.fractured ?? true;
   // 下限が無い条件は min を落として送る (段を問わない検索)
-  const filters = buys.flatMap((b) => b.filters).map((f) => ({
+  const filters: { id: string; min?: number; max?: number }[] = buys.flatMap((b) => b.filters).map((f) => ({
     id: fractured ? f.id : f.id.replace(/^fractured\./, "explicit."),
     min: f.min ?? 0,
   }));
+  if (opts.strict && !fractured) filters.push({ id: STRICT_PREFIX, max: 1 });
   if (filters.length === 0) return null;
   const category = tradeCategoryOf(cls);
   if (!opts.baseType && !category) return null;

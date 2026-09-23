@@ -255,7 +255,8 @@ export interface SpecQueryOptions {
   evMin?: number;
   arMin?: number;
   socketsMin?: number;
-  stats?: { id: string; min: number }[];
+  /** `max` は「プレフィックスモッド #個」のような数の上限に使う (2026-09-23)。無ければ送らない */
+  stats?: { id: string; min?: number; max?: number }[];
 }
 export function buildSpecQuery(o: SpecQueryOptions) {
   // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
@@ -268,7 +269,16 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   if (o.evMin != null) equipment.ev = { min: o.evMin };
   if (o.arMin != null) equipment.ar = { min: o.arMin };
   if (o.socketsMin != null) equipment.rune_sockets = { min: o.socketsMin };
-  const stats = o.stats && o.stats.length > 0 ? [{ type: "and", filters: o.stats.map((s) => ({ id: s.id, disabled: false, value: { min: s.min } })) }] : [];
+  const stats = o.stats && o.stats.length > 0
+    ? [{
+      type: "and",
+      filters: o.stats.map((s) => ({
+        id: s.id,
+        disabled: false,
+        value: { ...(s.min != null ? { min: s.min } : {}), ...(s.max != null ? { max: s.max } : {}) },
+      })),
+    }]
+    : [];
   return {
     query: {
       status: { option: SecurityStatus.Securable },

@@ -40,6 +40,9 @@ import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/op
 import { displayCurrency } from "../../state/display-currency";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
+import { decide, type Decision, type TreeListing } from "../../services/htc/tree-decide";
+import { autoPrice, tradeAuto } from "../../services/trade2/auto-price";
+import { marketStore } from "../../state/market-store";
 import type { DropOnlyRow } from "../../services/htc/paste";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -92,6 +95,19 @@ export function useHtcCraft() {
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
 
+  /** 取引所から取ってきた結果と判定。**押された時だけ**取る (3 本 = 約 21 秒) */
+  const treeResult = shallowRef<{
+    decision: Decision;
+    found: Array<{ label: string; total: number; url: string | null }>;
+    skippedNoMods: number;
+    /** 固定済みが自前の最安以下だったので、残りの検索を投げずに止めたか */
+    earlyBuy: boolean;
+    /** 自前の最安 (神)。固定済みがこれ以下なら買う */
+    selfFloor: number | null;
+  } | null>(null);
+  const treeBusy = ref(false);
+  const treeError = ref<string | null>(null);
+
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
    * オーナー指示 2026-09-22:「全部高貴じゃんややこしい。神優先で」。
@@ -138,6 +154,8 @@ export function useHtcCraft() {
     fracturedUnusable.value = 0;
     slotsUsed.value = { prefixes: 0, suffixes: 0, either: 0 };
     timings.value = [];
+    treeResult.value = null;
+    treeError.value = null;
   }
 
   /**
@@ -273,16 +291,93 @@ export function useHtcCraft() {
       ilvlMin: item.value?.itemLevel ?? undefined,
       ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
     };
-    const fracturedQuery = cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null;
-    const plainQuery = cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null;
-    return {
-      plan, buys,
-      searches: [
-        { label: "固定済み (買えばそのまま使える)", query: fracturedQuery, fractured: true },
-        { label: "固定無し (自前で固定するベース)", query: plainQuery, fractured: false },
-      ].filter((x) => x.query != null),
-    };
+    // オーナー指定 (2026-09-23): 固定済みは最安 1 件、固定無しは最安 5 件ずつ
+    const searches = [
+      { key: "fractured" as const, label: "固定済み (買えばそのまま使える)", take: 1,
+        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: true }) : null },
+      { key: "loose" as const, label: "固定無し・ゆるい (消去ガチャで減らす)", take: 5,
+        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false }) : null },
+      { key: "strict" as const, label: "固定無し・厳しい (プレフィックス 1 個 = 消去ガチャ無し)", take: 5,
+        query: cls ? treeBuyQuery(cls, buys, { ...common, fractured: false, strict: true }) : null },
+    ].filter((x) => x.query != null);
+    return { plan, buys, searches };
   });
+
+
+  /**
+   * 樹 MOD の 3 本を取引所に投げて、何を何個まで試すか決める。
+   *
+   * 投げるのは `treePlan.searches` の 3 本だけ (オーナー指定: 固定済み 1 件、固定無し 5 件ずつ)。
+   * 間隔と上限は `autoPrice` (本番は Rust の門番) が持つので、ここでは並べて待つだけです。
+   * 1 件ごとの MOD 数は fetch の結果から読みます ([[pricing.ts]] の `mods`)。**読めなかった物は
+   * 確率が決まらないので外します** (外した数は画面に出す)。
+   */
+  async function searchTree(): Promise<void> {
+    const tp = treePlan.value;
+    const p = prices.value;
+    if (!tp || !p) return;
+    const div = p.currency.divine;
+    if (!div) { treeError.value = "相場が未取得なので値段を神に直せません。"; return; }
+    treeBusy.value = true;
+    treeError.value = null;
+    treeResult.value = null;
+    try {
+      const league = marketStore.league.value?.Value ?? "Standard";
+      const rates = marketStore.rates.value;
+      const listings: TreeListing[] = [];
+      const found: Array<{ label: string; total: number; url: string | null }> = [];
+      let skippedNoMods = 0;
+      let earlyBuy = false;
+      // 自前で固定する時の最安 (4 MOD のベースがタダの時)。固定済みがこれ以下なら自前は絶対に勝てない。
+      // オーナー:「フラクチャー品がフラクチャーオーブの 4 倍の値段なら買った方が良い、他の経費も含めて」。
+      // 正確にはオーブが高い時は「減らして冒涜」で打つ回数が 3/N に減るので、約 3.5 倍が線になる
+      const selfFloor = tp.plan.rows.find((r) => r.mods === 4)?.fixed ?? null;
+      for (const sq of tp.searches) {
+        // 固定済み (1 本目) が線以下なら、残りを投げるだけ信号の無駄
+        if (earlyBuy) break;
+        const r = await autoPrice(league, sq.query, rates, sq.take);
+        if (!r) {
+          found.push({ label: sq.label, total: 0, url: null });
+          if (tradeAuto.lastError.value) treeError.value = tradeAuto.lastError.value;
+          continue;
+        }
+        found.push({ label: sq.label, total: r.total, url: r.searchUrl || null });
+        if (sq.key === "fractured" && selfFloor != null && r.minExalted != null && r.minExalted / div <= selfFloor) {
+          earlyBuy = true;
+        }
+        for (const x of r.listings.slice(0, sq.take)) {
+          if (!Number.isFinite(x.amountExalted)) continue;
+          const mods = x.mods ?? null;
+          if (sq.key !== "fractured" && mods == null) { skippedNoMods++; continue; }
+          const n = mods ?? 4;
+          // 厳しい検索はプレフィックス 1 個 (条件で保証)。ゆるい検索は総数だけで確率が決まる
+          const prefixes = sq.key === "strict" ? 1 : Math.ceil(n / 2);
+          listings.push({
+            source: sq.key,
+            price: x.amountExalted / div,
+            prefixes,
+            suffixes: n - prefixes,
+            label: `${(x.amountExalted / div).toFixed(2)} 神 / ${n} MOD${x.account ? " / " + x.account : ""}`,
+          });
+        }
+      }
+      const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
+      const decision = decide(listings, {
+        orb: toDiv(p.currency.fracture) ?? Infinity,
+        annul: toDiv(p.currency.annul) ?? 0,
+        bone: toDiv(p.currency.desecrate) ?? 0,
+        exalt: toDiv(p.currency.exalt) ?? 0,
+        necro: toDiv(p.omens.OmenofDextralNecromancy),
+        dextralAnnul: toDiv(p.omens.OmenofDextralAnnulment),
+        dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
+      });
+      treeResult.value = { decision, found, skippedNoMods, earlyBuy, selfFloor };
+    } catch (e) {
+      treeError.value = String(e);
+    } finally {
+      treeBusy.value = false;
+    }
+  }
 
   /** 目標の modId を画面の文面に直す */
   const stepTarget = (modIds: readonly string[]): string =>
@@ -295,5 +390,6 @@ export function useHtcCraft() {
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
+    treeResult, treeBusy, treeError, searchTree,
   };
 }
