@@ -7,7 +7,7 @@
  *
  * 3 枚 (オーナー 2026-09-24:「ベースの所で複数選択で開始フラクチャー選びたい。その時点で検索かけたいから取得は手動。
  * 完成品こそ一番ゆるく。真ん中は結果表示、取得後に表示する形で徐々に」):
- *   ベース (固定済みにして始める MOD を選んで「探す」) / 始め方の結果 (取れた物から安い順) / 完成品と比べる
+ *   ベース (固定済みにして始める MOD を選んで「探す」) / 始め方の結果 (一番安い 1 つ、他は畳む) / 完成品と比べる
  * 取引所へは「探す」を押した時だけ ([[useStartSearch.ts]])。
  */
 import { computed } from "vue";
@@ -16,7 +16,7 @@ import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
-import SearchChecks from "./SearchChecks.vue";
+import StartResults from "./StartResults.vue";
 import ModBreakdown from "./ModBreakdown.vue";
 import { MAX_STARTS, useStartSearch } from "./useStartSearch";
 import { useFinishedCompare } from "./useFinishedCompare";
@@ -90,30 +90,8 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
         </div>
       </section>
 
-      <!-- 始め方の結果 (取れた物から、初動の安い順) -->
-      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
-        <p class="mb-1 opacity-50">始め方 (初動の安い順)</p>
-        <p v-if="!ss.rows.value.some((r) => r.res || r.waiting)" class="opacity-50">{{ c.dropOnly.value.length ? "左の「取引所で探す」" : "左で MOD を選んで「取引所で探す」" }}を押すと、取れた物からここに出ます</p>
-        <div v-for="r in ss.rows.value" :key="r.key" class="mb-2" :class="!r.res && !r.waiting ? 'opacity-40' : ''">
-          <label class="flex items-center gap-2">
-            <input type="radio" :checked="ss.chosen.value?.key === r.key" :disabled="!r.best" @change="ss.choose(r.key)" />
-            <b>{{ r.name }}</b>
-            <span class="ml-auto">
-              <span v-if="r.waiting" class="opacity-70">取得中…</span>
-              <span v-else-if="r.res === 'error'" class="text-rose-300">取れず</span>
-              <b v-else-if="r.best" class="text-[13px]">{{ c.money(r.best.cost!) }}</b>
-              <span v-else-if="r.res" class="opacity-60">どれも選べない</span>
-              <span v-else class="opacity-50">まだ</span>
-            </span>
-          </label>
-          <div v-for="o in r.sub" :key="o.id" class="pl-5" :class="o.cost == null ? 'opacity-50' : ''">
-            {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
-            <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
-            <span v-if="o.note" class="block pl-2 opacity-50">{{ o.note }}</span>
-          </div>
-        </div>
-        <SearchChecks v-if="c.treeResult.value" :c="c" />
-      </section>
+      <!-- 始め方の結果: 一番安い 1 つだけ出して、他は畳む ([[StartResults.vue]]) -->
+      <StartResults :c="c" :ss="ss" />
 
       <!-- 完成品を買うのと比べる。条件は一番ゆるく (MOD だけ、固定済みかは問わない) -->
       <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
