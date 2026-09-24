@@ -98,12 +98,29 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY)
     || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
-  const guarded = new Set(inp.protectedSides ?? []);
+  /** 買った時から触らない MOD がある側 */
+  const shielded = new Set(inp.protectedSides ?? []);
+  const narrow = !!inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
+  /**
+   * 両側とも 2 枠以下 (不在のアミュレット) のカオス: 品質を入れた後、まだ何も付いていないうちに一番出にくい狙いを 1 つだけ
+   * スパムする (消えるのは外れか役目の済んだブリーチの MOD だけなので安全)。付いたらその側は触らない側にして、同じ側の
+   * もう 1 つは冒涜 + 光で作る (消去で消してカオスへ戻らない)。オーナー 2026-09-24:「先に品質付けてあげておいてから
+   * スパムなら安全」「不在は絶対にやり直しのカオススパムには戻らない」
+   */
+  const narrowSpam: TierTarget | null = (() => {
+    if (!narrow || !(inp.chaosOk || inp.chaosSide)) return null;
+    const eat = new Set(essences.map((t) => sideOf(t.modId)));
+    const list = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eat.has(sideOf(t.modId))
+      && !shielded.has(sideOf(t.modId)) && (!inp.chaosSide || sideOf(t.modId) === inp.chaosSide));
+    return list.length ? [...list].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  })();
+  const guarded = new Set([...shielded, ...(narrowSpam ? [sideOf(narrowSpam.modId)] : [])]);
   // 冒涜が使えない時は、触らない MOD の側の普通の狙いも高貴で作るしかない (側の消去で、触らない MOD が消えうる)
   const normal = (side: Side) => guarded.has(side) && !inp.desecratedTaken ? []
     : ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId && t.modId !== toDesecrate?.modId);
   /** 冒涜 + 光で作る狙い (冒涜のみの MOD と、触らない MOD がある側の普通の狙い) */
   const viaDesecrate = (t: TierTarget): boolean => !inp.desecratedTaken
+    && t.modId !== narrowSpam?.modId
     && (mod(t.modId).source === "desecrated" || (mod(t.modId).source === "normal" && guarded.has(sideOf(t.modId))));
   /**
    * 冒涜で作る狙い。冒涜のみの MOD と、触らない MOD がある側の普通の狙いに加え、それが無ければ**一番出にくい普通の狙いを
@@ -112,7 +129,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    */
   const extraDesecrate = (): TierTarget | null => {
     if (inp.desecratedTaken || ts.some((t) => viaDesecrate(t))) return null;
-    const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0);
+    const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && t.modId !== narrowSpam?.modId);
     // エッセンス・ブリーチを使う側 (仕上げで枠が空く側) を優先。反対側は高貴やカオスで埋まり、削減で付いた外れで冒涜の枠が
     // 塞がって回り続けた (2026-09-24 段を問わない死体の円環で、全耐性を冒涜に回した時)
     const eat = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach ? ["prefix" as Side] : [])]);
@@ -166,9 +183,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * ブリーチの MOD (プレ) が残ると、プレに高貴で足す枠が足りないか。不在のアミュレット (プレ 2 枠) でスピリットが固定済みだと、
    * ブリーチで満杯になり、生命を足す手が打てずに止まっていた (2026-09-24)。その時は品質を入れたらすぐブリーチを外す
    */
-  const prefixExalts = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === "prefix" && !guarded.has("prefix") && t.modId !== toDesecrate?.modId).length;
+  const prefixExalts = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === "prefix" && !shielded.has("prefix") && t.modId !== toDesecrate?.modId).length;
   // 冒涜でプレに足す物も同じ (満杯の側への冒涜は 1 つ置き換わるので、触らない MOD を消しうる)
-  const prefixDesec = guarded.has("prefix") ? ts.filter((t) => sideOf(t.modId) === "prefix" && (mod(t.modId).source === "desecrated" || mod(t.modId).source === "normal")).length : 0;
+  const prefixDesec = shielded.has("prefix") ? ts.filter((t) => sideOf(t.modId) === "prefix" && (mod(t.modId).source === "desecrated" || mod(t.modId).source === "normal")).length : 0;
   const breachBlocks = breach && !!inp.limits && !!inp.startCount && prefixExalts + prefixDesec > inp.limits.prefix - inp.startCount.prefix - 1;
   const switchTypes = switchTypes0 && !breachBlocks;
   const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
@@ -192,7 +209,6 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ただし普通の狙いが 5 つ以上だと、素の消去が反対側の狙いを消して揃わない (プリズム 6 つ、本物の段: 素の消去は 6 万手で
   // 完成 56% / 側のお告げ付きは 100%・平均 18,157 神)。多い時は側の消去にする
   // 両側とも 2 枠以下 (不在のアミュレット) は側の消去 (その側の外れは 1 つしか無いので確定で外れだけ消える)
-  const narrow = !!inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
   const plainAnnul = inp.annul ? inp.annul === "plain" && (inp.protectedSides ?? []).length === 0
     : !narrow && (inp.protectedSides ?? []).length === 0 && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
   const annulFor = (side: Side): string => {
@@ -220,9 +236,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const spamPool = pool.some((t) => !boostable(t)) ? pool.filter((t) => !boostable(t)) : pool;
   // 抹消のお告げで側を決めたカオスなら、その側の狙いだけ
   const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
-  // 両側とも 2 枠以下 (不在のアミュレット) はカオスを使わない。側ごとに 高貴 + その側の消去 / 冒涜 + 光 で片方ずつ確定できる
-  // (オーナー 2026-09-24:「不在は絶対にやり直しのカオススパムには戻らない。最後冒涜光リロールで片方完成するから」)
-  const spam = !narrow && (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
+  // 両側とも 2 枠以下 (不在のアミュレット) は最初の 1 つだけ ([[narrowSpam]])
+  const spam = narrow ? narrowSpam : (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
     ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   let spamNode: SimNode | null = null;
   if (spam) {
@@ -239,10 +254,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ブリーチの手自体は常に「ブリーチの MOD があること」を条件にする (無いと最初から揃っている扱いで飛ばされ、1 回も打って
   // いなかった。2026-09-24 金の指輪)。品質を上限まで入れた後は、エンジンが外れと同じに扱う (breachSpent)
   // 結晶化で消す側は、触らない MOD の無い側 (プレのスピリットを買った時のまま残していると、左側の結晶化で消していた。2026-09-24)
-  const breachEat: Side | undefined = guarded.has("prefix") && !guarded.has("suffix") ? "suffix" : undefined;
+  const breachEat: Side | undefined = shielded.has("prefix") && !shielded.has("suffix") ? "suffix" : undefined;
   if (breach) main.push({ ...base, id: id(), action: { kind: "breach", ...(breachEat ? { removeSide: breachEat } : {}) }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
-  if (spamNode && chaosAfterQuality) main.push(spamNode);
+  // 不在のカオスは、ブリーチの MOD を外してから (スパム中に消えるのを待つと、付いた狙いの側を後で消去することになる)
+  const narrowFirst = !!spamNode && narrow && chaosAfterQuality;
+  if (spamNode && chaosAfterQuality && !narrowFirst) main.push(spamNode);
   // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
   // 結晶化は「外れのある側」: エッセンスの側に空きがあって反対側に外れがあれば、その外れを食わせる (オーナー 2026-09-24)
   const essenceNodes: SimNode[] = essences.map((t) => ({
@@ -253,10 +270,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // プレに固定していない MOD が無ければ、左側の消去のお告げ付きの消去で消えるのはブリーチの MOD だけ (確定)。
   // オーナー 2026-09-24:「品質も加味してやりなおしはないはず、特にその形ならお告げで」
   // 買った時の外れがプレに 1 つあっても、ブリーチ (左側の結晶化) がそれを食うので同じ
-  const annulBreach = breachBlocks && !essences.some((t) => sideOf(t.modId) === "prefix") && !guarded.has("prefix")
+  // 不在のカオスの前は削減 (ブリーチの MOD を外して 1 つ付く。消去で外すとフラクチャーだけになってカオスが打てない)
+  const annulBreach = breachBlocks && !narrowFirst && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
     && (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1);
   if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
-  else if (!switchTypes && breach && (essenceNodes.length || breachBlocks)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  else if (!switchTypes && breach && (essenceNodes.length || breachBlocks || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  if (narrowFirst) main.push(spamNode!);
   if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);

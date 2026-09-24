@@ -117,16 +117,21 @@ for (const r of RINGS) {
       return pool > 0 ? w(t.modId, t.minTierIndex ?? 0) / pool : null;
     };
     const cnt = (f) => ({ prefix: slots.filter((x) => x.side === "prefix" && f(x)).length, suffix: slots.filter((x) => x.side === "suffix" && f(x)).length });
+    for (const chaos of [true, false]) {
     const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: c.start.map(([id]) => id).filter(Boolean), qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null,
-      baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))],
+      baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk: chaos && !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))],
       chaosSide: M.chaosSideFor({ slots, breach: false }, limits), limits, fixedSides: [...new Set(slots.filter((x) => x.fixed).map((x) => x.side))],
       startCount: cnt(() => true), startLoose: cnt((x) => !x.fixed), annul: "side", chance });
     const ctx = { data, cls, prices, itemLevel: 81, limits, catalystOk: () => true, baseQuality: M.maxQualityForBase(it.baseType ?? "") };
     const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1000 });
     const kinds = nodes.map((x) => x.action.kind + (x.action.side ? ":" + x.action.side : "")).join(",");
-    console.log(`不在 ${c.name}: 手 ${kinds} / 完成 ${(res.pDone * 100).toFixed(1)}% / 平均 ${(res.expected / D).toFixed(0)} 神`);
-    if (nodes.some((x) => x.action.kind === "chaos")) { console.log("   NG: 不在なのにカオスを使っている"); failed++; }
+    // カオスは最初の 1 つだけ: カオスの手に来るのは、その前の手からとカオス自身の × だけ (後の消去から戻らない)
+    const ci = nodes.findIndex((x) => x.action.kind === "chaos");
+    const back = ci < 0 ? 0 : res.perNode.find((x) => x.id === nodes[ci].id).tries;
+    console.log(`不在 ${c.name}${chaos ? "" : " (カオス無し)"}: 手 ${kinds} / 完成 ${(res.pDone * 100).toFixed(1)}% / 平均 ${(res.expected / D).toFixed(0)} 神${ci >= 0 ? ` / カオス ${back.toFixed(0)} 回` : ""}`);
+    if (nodes.filter((x) => x.action.kind === "chaos").length > 1) { console.log("   NG: カオスの手が 2 つ以上"); failed++; }
     if (res.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
+    }
   }
 }
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
