@@ -90,5 +90,44 @@ for (const r of RINGS) {
     if (r.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
   }
 }
+// 不在のアミュレット (両側 2 枠): スピリットかスキルレベルのフラクチャー品から。カオスでやり直さず、側の消去 / 冒涜 + 光で
+// 片方ずつ確定させる (オーナー 2026-09-24:「不在は絶対にやり直しのカオススパムには戻らない」)。品質 40% はブリーチ →
+// 貼り付けの種類 → 左側の消去でブリーチだけ外す。開始: 固定 1 つ + 買った時の MOD (触らない) + 外れ
+{
+  const AMU = ["Item Class: Amulets", "Rarity: Rare", "Doom Charm", "Absent Amulet", "--------"];
+  const HEAD = ["Item Level: 81", "--------", "-1 Prefix Modifier allowed (implicit)", "-1 Suffix Modifier allowed (implicit)", "--------"];
+  const Q = ["Quality (Caster Modifiers): +40% (augmented)", "--------"];
+  const SP = "Amulets/BaseSpirit", LV = "Amulets/GlobalIncreaseSpellSkillGemLevel";
+  const cases = [
+    { name: "スピリット固定 + レベル", q: true, mods: ["+46 to Spirit (fractured)", "+89 to maximum Life", "+3 to Level of all Spell Skills", "38% increased Critical Hit Chance"], start: [[SP, "prefix", "fixed"], [LV, "suffix", "keep"], [null, "prefix"]] },
+    { name: "レベル固定", q: true, mods: ["+46 to Spirit", "+89 to maximum Life", "+3 to Level of all Spell Skills (fractured)", "38% increased Critical Hit Chance"], start: [[LV, "suffix", "fixed"], [null, "prefix"]] },
+    { name: "レベル固定 品質無し", q: false, mods: ["+46 to Spirit", "+89 to maximum Life", "+3 to Level of all Spell Skills (fractured)", "38% increased Critical Hit Chance"], start: [[LV, "suffix", "fixed"], [null, "prefix"]] },
+  ];
+  for (const c of cases) {
+    const it = M.parseJaItem([...AMU, ...(c.q ? Q : []), ...HEAD, ...c.mods].join(NL));
+    const g = M.targetsFor(data, it);
+    const cls = M.baseForSolving(data, it.baseType, g.skippedSides);
+    const limits = M.sideLimits(data, it.baseType);
+    const slots = c.start.map(([, side, k]) => ({ modId: null, side, fixed: k === "fixed", ...(k === "keep" ? { keep: true } : {}) }));
+    const w = (id, minIdx) => (data.mods.get(id)?.tiers ?? []).reduce((a2, t, i) => a2 + (i >= minIdx && t.ilvl <= 81 ? t.weight : 0), 0);
+    const chance = (t) => {
+      const m = data.mods.get(t.modId);
+      if (!m || m.source !== "normal") return null;
+      const pool = (cls.pools.normal[m.type === "prefix" ? "prefixes" : "suffixes"] ?? []).reduce((a2, id) => a2 + w(id, 0), 0);
+      return pool > 0 ? w(t.modId, t.minTierIndex ?? 0) / pool : null;
+    };
+    const cnt = (f) => ({ prefix: slots.filter((x) => x.side === "prefix" && f(x)).length, suffix: slots.filter((x) => x.side === "suffix" && f(x)).length });
+    const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: c.start.map(([id]) => id).filter(Boolean), qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null,
+      baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))],
+      chaosSide: M.chaosSideFor({ slots, breach: false }, limits), limits, fixedSides: [...new Set(slots.filter((x) => x.fixed).map((x) => x.side))],
+      startCount: cnt(() => true), startLoose: cnt((x) => !x.fixed), annul: "side", chance });
+    const ctx = { data, cls, prices, itemLevel: 81, limits, catalystOk: () => true, baseQuality: M.maxQualityForBase(it.baseType ?? "") };
+    const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1000 });
+    const kinds = nodes.map((x) => x.action.kind + (x.action.side ? ":" + x.action.side : "")).join(",");
+    console.log(`不在 ${c.name}: 手 ${kinds} / 完成 ${(res.pDone * 100).toFixed(1)}% / 平均 ${(res.expected / D).toFixed(0)} 神`);
+    if (nodes.some((x) => x.action.kind === "chaos")) { console.log("   NG: 不在なのにカオスを使っている"); failed++; }
+    if (res.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
+  }
+}
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
 process.exit(failed ? 1 : 0);

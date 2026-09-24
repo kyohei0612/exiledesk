@@ -70,6 +70,11 @@ export interface AutoTreeInput {
   limits?: { prefix: number; suffix: number };
   /** 開始の指輪で固定済みの MOD がある側 (樹 MOD を固定した側を含む) */
   fixedSides?: readonly Side[];
+  /** 開始の指輪の側ごとの MOD の数と、そのうち固定していない物の数 (ブリーチの MOD が枠を塞ぐかを見る) */
+  startCount?: Record<Side, number>;
+  startLoose?: Record<Side, number>;
+  /** 消去の形。"plain" = お告げ無しの素の消去、"side" = 側の消去のお告げ付き。省くと枠と狙いの数で決める */
+  annul?: "plain" | "side";
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -151,12 +156,21 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * 品質を入れ直して触媒の高貴のお告げで狙い、最後に貼り付けの種類で上限まで入れる。貼り付けの種類が効かない狙いに、
    * 別のカタリストが安く効く時だけ (死体の円環 本物の段: マナで固定 701 神 / 見本の替えるやり方 438 神)
    */
-  const switchTypes = breach && !!inp.qualityTag && (["prefix", "suffix"] as Side[]).some((sd) => {
+  const switchTypes0 = breach && !!inp.qualityTag && (["prefix", "suffix"] as Side[]).some((sd) => {
     // 実際に高貴で狙う物だけで見る (冒涜に回す物は除く。金の指輪で回避を数えて「替える」と判定し、使わないブリーチを
     // 残し続けて消えるたびに付け直していた)
     const l = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === sd && !guarded.has(sd) && t.modId !== toDesecrate?.modId);
     return l.length > 0 && !qualityTagBoosts(l) && freeCatalyst(l) != null;
   });
+  /**
+   * ブリーチの MOD (プレ) が残ると、プレに高貴で足す枠が足りないか。不在のアミュレット (プレ 2 枠) でスピリットが固定済みだと、
+   * ブリーチで満杯になり、生命を足す手が打てずに止まっていた (2026-09-24)。その時は品質を入れたらすぐブリーチを外す
+   */
+  const prefixExalts = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === "prefix" && !guarded.has("prefix") && t.modId !== toDesecrate?.modId).length;
+  // 冒涜でプレに足す物も同じ (満杯の側への冒涜は 1 つ置き換わるので、触らない MOD を消しうる)
+  const prefixDesec = guarded.has("prefix") ? ts.filter((t) => sideOf(t.modId) === "prefix" && (mod(t.modId).source === "desecrated" || mod(t.modId).source === "normal")).length : 0;
+  const breachBlocks = breach && !!inp.limits && !!inp.startCount && prefixExalts + prefixDesec > inp.limits.prefix - inp.startCount.prefix - 1;
+  const switchTypes = switchTypes0 && !breachBlocks;
   const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
   /** その側の狙いに使うカタリスト */
   function catalystFor(list: readonly TierTarget[]): string | null {
@@ -177,7 +191,10 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    */
   // ただし普通の狙いが 5 つ以上だと、素の消去が反対側の狙いを消して揃わない (プリズム 6 つ、本物の段: 素の消去は 6 万手で
   // 完成 56% / 側のお告げ付きは 100%・平均 18,157 神)。多い時は側の消去にする
-  const plainAnnul = (inp.protectedSides ?? []).length === 0 && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
+  // 両側とも 2 枠以下 (不在のアミュレット) は側の消去 (その側の外れは 1 つしか無いので確定で外れだけ消える)
+  const narrow = !!inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
+  const plainAnnul = inp.annul ? inp.annul === "plain" && (inp.protectedSides ?? []).length === 0
+    : !narrow && (inp.protectedSides ?? []).length === 0 && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
   const annulFor = (side: Side): string => {
     const aid = plainAnnul ? "x-any" : `x-${side}`;
     if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side: plainAnnul ? null : side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
@@ -203,7 +220,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const spamPool = pool.some((t) => !boostable(t)) ? pool.filter((t) => !boostable(t)) : pool;
   // 抹消のお告げで側を決めたカオスなら、その側の狙いだけ
   const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
-  const spam = (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
+  // 両側とも 2 枠以下 (不在のアミュレット) はカオスを使わない。側ごとに 高貴 + その側の消去 / 冒涜 + 光 で片方ずつ確定できる
+  // (オーナー 2026-09-24:「不在は絶対にやり直しのカオススパムには戻らない。最後冒涜光リロールで片方完成するから」)
+  const spam = !narrow && (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
     ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   let spamNode: SimNode | null = null;
   if (spam) {
@@ -219,7 +238,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const keepBreach: string[] = switchTypes ? ["__breach__"] : [];
   // ブリーチの手自体は常に「ブリーチの MOD があること」を条件にする (無いと最初から揃っている扱いで飛ばされ、1 回も打って
   // いなかった。2026-09-24 金の指輪)。品質を上限まで入れた後は、エンジンが外れと同じに扱う (breachSpent)
-  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
+  // 結晶化で消す側は、触らない MOD の無い側 (プレのスピリットを買った時のまま残していると、左側の結晶化で消していた。2026-09-24)
+  const breachEat: Side | undefined = guarded.has("prefix") && !guarded.has("suffix") ? "suffix" : undefined;
+  if (breach) main.push({ ...base, id: id(), action: { kind: "breach", ...(breachEat ? { removeSide: breachEat } : {}) }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
   if (spamNode && chaosAfterQuality) main.push(spamNode);
   // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
@@ -229,7 +250,13 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   }));
   // クラフト MOD は 1 つまで: ブリーチの MOD が残っているとエッセンスは打てない。品質を入れた後なので、削減でブリーチを消して
   // 代わりに付いた 1 つをエッセンスに食わせる (見本と同じ)
-  if (!switchTypes && breach && essenceNodes.length) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  // プレに固定していない MOD が無ければ、左側の消去のお告げ付きの消去で消えるのはブリーチの MOD だけ (確定)。
+  // オーナー 2026-09-24:「品質も加味してやりなおしはないはず、特にその形ならお告げで」
+  // 買った時の外れがプレに 1 つあっても、ブリーチ (左側の結晶化) がそれを食うので同じ
+  const annulBreach = breachBlocks && !essences.some((t) => sideOf(t.modId) === "prefix") && !guarded.has("prefix")
+    && (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1);
+  if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  else if (!switchTypes && breach && (essenceNodes.length || breachBlocks)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);

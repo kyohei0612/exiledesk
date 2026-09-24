@@ -19,10 +19,14 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 偉大なる高貴の使い方 × カオスを使うか。カオスは付く確率の低い狙いだと割に合わない (不在のアミュレットのクリティカル率
   // T1 = 0.1% をカオスで狙って 1.5 万回打ち、58% が手数の上限。2026-09-24)
   const chaosVariants = inp.chaosOk || inp.chaosSide ? [true, false] : [false];
-  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.map((ch) => ({
-    greater: `${g}${ch ? "" : "・カオス無し"}`,
-    nodes: autoTree({ ...inp, greater: g, ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
-  })));
+  // 両側とも 2 枠以下 (不在のアミュレット) は、側の消去 (確定で外れだけ) と素の消去 (安いが狙いを時々消す) も比べる。
+  // 2026-09-24 不在 (スキルレベル固定): 品質 40% の形は側の消去で 4,127 神・素は 82% 止まり / 品質無しは素 2,387 神・側 5,101 神
+  const narrow = inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
+  const annuls = narrow ? (["side", "plain"] as const) : ([undefined] as const);
+  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.flatMap((ch) => annuls.map((an) => ({
+    greater: `${g}${ch ? "" : "・カオス無し"}${an === "plain" ? "・素の消去" : ""}`,
+    nodes: autoTree({ ...inp, greater: g, ...(an ? { annul: an } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
+  }))));
   // 同じ形になった候補は 1 つにする (回す手間の節約)
   const uniq = variants.filter((v, i) => variants.findIndex((w) => JSON.stringify(w.nodes) === JSON.stringify(v.nodes)) === i);
   if (uniq.length === 1) return uniq[0]!;
@@ -52,5 +56,7 @@ export function autoInputFor(c: ReturnType<typeof useHtcCraft>, ctx: Ctx, start:
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
     limits: ctx.limits,
     fixedSides: [...new Set(start.slots.filter((x) => x.fixed).map((x) => x.side))],
+    startCount: { prefix: start.slots.filter((x) => x.side === "prefix").length, suffix: start.slots.filter((x) => x.side === "suffix").length },
+    startLoose: { prefix: start.slots.filter((x) => x.side === "prefix" && !x.fixed).length, suffix: start.slots.filter((x) => x.side === "suffix" && !x.fixed).length },
   };
 }
