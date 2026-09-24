@@ -136,8 +136,9 @@ const hasExtra = computed(() => n.value.clean || n.value.maxMods != null);
     <div class="mb-2 flex flex-wrap items-center gap-1">
       <span class="opacity-50">この時:</span>
       <span v-for="(x, i) in state.slots" :key="i" class="rounded border px-1"
-        :class="x.fixed ? 'border-white/10 opacity-60' : x.modId ? 'border-emerald-500/40' : 'border-rose-500/40 text-rose-300'">
-        {{ x.fixed ? "🔒 " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
+        :class="x.fixed ? 'border-white/10 opacity-60' : x.keep ? 'border-amber-500/40 text-amber-200/80' : x.modId ? 'border-emerald-500/40' : 'border-rose-500/40 text-rose-300'"
+        :title="x.keep ? '固定されていない。カオス・消去・エッセンスで消えたら終わり (その回は止める)' : undefined">
+        {{ x.fixed ? "🔒 " : x.keep ? "⚠ " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
       </span>
       <span v-if="state.breach" class="rounded border border-sky-500/40 px-1">ブリーチの MOD</span>
     </div>

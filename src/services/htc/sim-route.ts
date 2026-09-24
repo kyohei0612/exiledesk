@@ -85,6 +85,11 @@ export interface SimSlot {
   fixed: boolean;
   /** 冒涜でまだ当たっていない (光で消せる) 外れ */
   desecrated?: boolean;
+  /**
+   * 固定されていないが、消えたら終わりの MOD (付け直せない樹 MOD など)。カオス・消去では普通に消えうるが、外れには数えない。
+   * 消えたらその回は止める (2026-09-24: 固定不要の始め方で、樹 MOD の側に触らない作り方になっているかを確かめる)
+   */
+  keep?: boolean;
   label?: string;
 }
 export interface SimState { slots: SimSlot[]; breach: boolean }
@@ -140,7 +145,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     [...s.slots.map((x, i) => (!x.fixed && (!side || x.side === side) ? i : -2)).filter((i) => i >= 0), ...(s.breach && side !== "suffix" ? [-1] : [])];
   const removeAt = (s: SimState, r: number): SimState => (r === -1 ? { ...s, breach: false } : { ...s, slots: s.slots.filter((_, i) => i !== r) });
   const has = (s: SimState, id: string): boolean => s.slots.some((x) => x.modId === id);
-  const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.modId);
+  const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.keep && !x.modId);
 
   /** 狙う MOD のうち need 個あるか */
   const targetsMet = (s: SimState, n: SimNode): boolean =>
@@ -148,7 +153,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   /** ○の条件 */
   const passes = (s: SimState, n: SimNode): boolean =>
     targetsMet(s, n) && n.keep.every((id) => id === "__breach__" ? s.breach : has(s, id))
-    && (!n.clean || !hasJunk(s)) && (n.maxMods == null || s.slots.filter((x) => !x.fixed).length + (s.breach ? 1 : 0) <= n.maxMods);
+    && (!n.clean || !hasJunk(s)) && (n.maxMods == null || s.slots.filter((x) => !x.fixed && !x.keep).length + (s.breach ? 1 : 0) <= n.maxMods);
 
   const memo = new Map<string, Array<{ modId: string | null; side: Side; p: number }>>();
   /** 1 回で付く物の分布 (数える MOD = modId、それ以外 = 外れ) */
@@ -371,12 +376,13 @@ export function simulateTree(inp: {
     // カオスの手へ戻る時は、外せる物が 1 つになるまで今の消去を続けてから (「スパムの狙いが消えたら剥がして最初から」オーナー)。
     // 剥がさずに戻ると外れが居残り、最後に冒涜の枠を塞いでいた (2026-09-24 見本のツリー)
     if (target.action?.kind === "chaos") {
-      const removableCount = st.slots.filter((x) => !x.fixed).length + (st.breach ? 1 : 0);
+      const removableCount = st.slots.filter((x) => !x.fixed && !x.keep).length + (st.breach ? 1 : 0);
       return removableCount > 1 && nodes[cur]!.action?.kind === "annul" ? nodes[cur]!.id : target.id;
     }
     if (h.hasJunk(st) && hasGoal(target)) return nodes[cur]!.id;
     return target.id;
   };
+  const keepCount = inp.start.slots.filter((x) => x.keep).length;
   for (let r = 0; r < runs; r++) {
     let s: SimState = { slots: inp.start.slots.map((x) => ({ ...x })), breach: inp.start.breach };
     let cost = 0;
@@ -403,6 +409,8 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
+      // 消えたら終わりの MOD (樹 MOD) が消えたら止める
+      if (s.slots.filter((x) => x.keep).length < keepCount) { end = `手 ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }
       // 本線の手は「それより上の本線の手で揃えた物が全部まだある」ことも○の条件 (残したい MOD は自動。オーナー 2026-09-24:
       // 「残したい MOD とか分からん。ハズレ以外だろ残したいのなんて」)
       const pos = main.indexOf(at);

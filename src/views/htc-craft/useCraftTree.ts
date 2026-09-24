@@ -13,6 +13,7 @@ import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysi
 import { simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/spam-total";
 import type { Side } from "../../services/htc/step-odds";
+import { startKindOf } from "./start-kind";
 import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -42,8 +43,22 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     const d = c.data.value;
     const slots: SimState["slots"] = c.fracturedTargets.value.map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));
     const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
-    for (let i = 0; i < tree.p; i++) slots.push({ modId: null, side: "prefix", fixed: true, label: "樹 MOD (固定済み)" });
-    for (let i = 0; i < tree.s; i++) slots.push({ modId: null, side: "suffix", fixed: true, label: "樹 MOD (固定済み)" });
+    // 買った時から付いている MOD (樹 MOD・冒涜のみ・作れない)。固定するのは重い側の樹 MOD 1 つだけで、残りは「消えたら終わり」
+    // ([[start-kind.ts]]、2026-09-24 オーナー:「固定不要の時は触らない書き方に」)。樹 MOD の側が分からない時は前の通り全部固定済み
+    const k = startKindOf(c);
+    const allFixed = !c.item.value || (k.kind === "fix" && !k.fixSide);
+    let fixedDone = false;
+    for (const [side, n, S] of [["prefix", tree.p, "P"], ["suffix", tree.s, "S"]] as const) {
+      const treeOn = c.dropOnly.value.filter((x) => x.side === S).length;
+      for (let i = 0; i < n; i++) {
+        const isTree = i < treeOn;
+        const fix = allFixed || (k.kind === "fix" && k.fixSide === S && isTree && !fixedDone);
+        if (fix && !allFixed) fixedDone = true;
+        slots.push(fix
+          ? { modId: null, side, fixed: true, label: isTree || allFixed ? "樹 MOD (固定済み)" : "買った時の MOD (固定済み)" }
+          : { modId: null, side, fixed: false, keep: true, label: isTree ? "樹 MOD (触らない)" : "買った時の MOD (触らない)" });
+      }
+    }
     // 固定済み 1 つのベースを買った時は、もう 1 つ付いている (フラクチャーオーブは 4 MOD 以上で打つ物なので)。
     // カオスで入れ替える 1 つとして外れを置く。側は空いている方
     const lim = ctx.value?.limits ?? { prefix: 3, suffix: 3 };

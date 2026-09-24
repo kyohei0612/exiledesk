@@ -70,5 +70,23 @@ if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未�
   for (const p of ra.perNode) console.log(`   手 ${p.id}: 平均 ${p.tries.toFixed(1)} 回 / ${(p.cost / D).toFixed(1)} 神`);
   if (!(ra.pDone > 0.99)) fail("自動の行き先で最後まで行けていない");
 }
+// 消えたら終わりの MOD (keep、2026-09-24): サフィの樹 MOD を触らない作り方 (右側の高貴 + 右側の消去だけ) なら消えない。
+// 側の無いカオスを打つと消えて止まる
+{
+  const kstart = { breach: false, slots: [{ modId: null, side: "prefix", fixed: false, keep: true, label: "樹 MOD (触らない)" }, { modId: null, side: "suffix", fixed: false }] };
+  const safe = [
+    { id: "k1", action: ex, targets: [{ modId: INT, minTier: 6 }], keep: [], clean: false, onHit: "done", onMiss: "k2" },
+    { id: "k2", action: an, targets: [], keep: [], clean: false, onHit: "auto", onMiss: "auto" },
+  ];
+  const rs = M.simulateTree({ ctx, start: kstart, nodes: safe, runs: 1000 });
+  const lost = (r) => r.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((a, x) => a + x.p, 0);
+  console.log(`触らない MOD (右側だけで作る): 完成 ${(rs.pDone * 100).toFixed(1)}% / 消えた ${(lost(rs) * 100).toFixed(1)}%`);
+  if (lost(rs) > 0) fail("右側だけで作っているのに、左の触らない MOD が消えた");
+  if (!(rs.pDone > 0.99)) fail("右側だけで作って最後まで行けていない");
+  const risky = [{ id: "c1", action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: CS, minTier: 3 }], keep: [], clean: false, onHit: "done", onMiss: "c1" }];
+  const rr = M.simulateTree({ ctx, start: kstart, nodes: risky, runs: 1000 });
+  console.log(`触らない MOD (側の無いカオス): 完成 ${(rr.pDone * 100).toFixed(1)}% / 消えた ${(lost(rr) * 100).toFixed(1)}%`);
+  if (!(lost(rr) > 0.2)) fail("側の無いカオスで触らない MOD が消えていない (消えたら止まるはず)");
+}
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
 process.exit(failed ? 1 : 0);
