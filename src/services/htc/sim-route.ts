@@ -275,7 +275,8 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       }
       case "desecrate":
         if (s.slots.some((x) => x.desec)) return "冒涜の MOD は 1 つまで";
-        return room(s, a.side) ? null : "冒涜する枠が無い";
+        // 満杯の側でも、固定済みでない MOD があれば 1 つ置き換わる (オーナーの実使用 / 0.5.5 の冒涜の解説)
+        return room(s, a.side) || removable(s, a.side).length ? null : "冒涜する枠も置き換わる MOD も無い";
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
       case "breach": {
         if (s.breach) return "もう付いている";
@@ -365,9 +366,11 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true }] };
       }
       case "desecrate": {
-        const ok = rnd() < desecrateOdds(s, n, a);
-        const t = n.targets.find((x) => mod(x.modId)?.type === a.side && !has(s, x.modId));
-        return { ...s, slots: [...s.slots, ok && t ? { modId: t.modId, side: a.side, fixed: false, desec: true } : { modId: null, side: a.side, fixed: false, desecrated: true, desec: true }] };
+        // 満杯の側なら、固定済みでない MOD が 1 つ冒涜 MOD に置き換わる
+        const base0 = room(s, a.side) ? s : rmRandom(s, a.side);
+        const ok = rnd() < desecrateOdds(base0, n, a);
+        const t = n.targets.find((x) => mod(x.modId)?.type === a.side && !has(base0, x.modId));
+        return { ...base0, slots: [...base0.slots, ok && t ? { modId: t.modId, side: a.side, fixed: false, desec: true } : { modId: null, side: a.side, fixed: false, desecrated: true, desec: true }] };
       }
       case "light": {
         const i = s.slots.findIndex((x) => x.desecrated);

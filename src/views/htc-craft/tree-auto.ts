@@ -66,6 +66,10 @@ export interface AutoTreeInput {
    * "all" = カタリストが無くても、同じ側の狙いが 2 つ以上なら (比べる用)
    */
   greater?: "catalyst" | "all" | "none";
+  /** ベースの枠の数 (枠 2 つの側の冒涜の回し方に使う) */
+  limits?: { prefix: number; suffix: number };
+  /** 開始の指輪で固定済みの MOD がある側 (樹 MOD を固定した側を含む) */
+  fixedSides?: readonly Side[];
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -276,9 +280,33 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     }
   }
   const desecrateNodes: SimNode[] = [];
+  /**
+   * 枠 2 つの側で 1 つが固定済みなら、光のお告げを使わずに回せる (0.5.5 の冒涜の解説): その側に付くエッセンス / 合金で
+   * 上書き → 鎖骨で冒涜 (満杯の側なので、上書きした MOD が冒涜 MOD に置き換わる)。外れならまた上書き。付く側が同じでないと
+   * クラフト MOD が残って次のエッセンスが打てないので、その側に付く一番安い物 (オーナー 2026-09-24:「使える場面は使える」)
+   */
+  const overwriteFor = (side: Side, like: string): string | null => {
+    if (!inp.limits || inp.limits[side] !== 2 || !(inp.fixedSides ?? []).includes(side)) return null;
+    const cls = like.split("/")[0];
+    const cands = [...d.mods.values()].filter((m) => m.id.startsWith(cls + "/") && CRAFTED_SOURCES.has(m.source) && m.type === side
+      && m.family !== BREACH_FAMILY && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
+    cands.sort((a, b) => (p.currency[`essence:perfect:${a.id}`] ?? Infinity) - (p.currency[`essence:perfect:${b.id}`] ?? Infinity));
+    return cands[0]?.id ?? null;
+  };
   for (const t of desecrated) {
     const side = sideOf(t.modId);
     const lightId = `l-${t.modId}`;
+    const ow = overwriteFor(side, t.modId);
+    if (ow) {
+      const did = id(), eid = `o-${t.modId}`;
+      desecrateNodes.push({
+        ...base, id: did, action: { kind: "desecrate", side, bone: "desecrate", echoes: true },
+        targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: [], need: 1, onHit: null, onMiss: eid,
+      });
+      // 外れの冒涜 MOD (その側で唯一外せる物) を、同じ側のエッセンス / 合金で上書きして、また冒涜へ
+      extra.push({ ...base, id: eid, action: { kind: "essence", modId: ow, removeSide: side }, targets: [], need: 1, onHit: did, onMiss: null });
+      continue;
+    }
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
       // 反響のお告げは必ず (3 択を 1 回引き直せる。オーナー 2026-09-24:「反響は冒涜の際必ず」)

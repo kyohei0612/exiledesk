@@ -44,5 +44,7 @@ export function autoInputFor(c: ReturnType<typeof useHtcCraft>, ctx: Ctx, start:
     desecratedTaken: start.slots.some((x) => x.desec),
     chaosSide: chaosSideFor(start, ctx.limits),
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
+    limits: ctx.limits,
+    fixedSides: [...new Set(start.slots.filter((x) => x.fixed).map((x) => x.side))],
   };
 }

@@ -72,5 +72,23 @@ for (const r of RINGS) {
   if (res.pDone < need) { console.log(`   NG: 完成が ${need * 100}% 未満`); failed++; }
   if (lost > 0) { console.log("   NG: 触らない MOD が消えた"); failed++; }
 }
+// 枠 2 つの側で 1 つが固定済み → 光のお告げを使わず、同じ側のエッセンスで上書き → 冒涜 の輪 (0.5.5 の冒涜の解説、2026-09-24)。
+// 組み立て: サフィ 2 枠 (固定済み + 外れ)、狙いはサフィの知性 1 つ。ヒステリーのエッセンス (サフィ) に仮の値段
+{
+  const data2 = data;
+  const cls = M.itemBaseFor(data2, "Mnemonic Ring");
+  const p2 = { ...prices, currency: { ...prices.currency, "essence:perfect:Rings/PerfectEssence_ManaRegeneration": 0.01 * D } };
+  const tgt = [{ modId: "Rings/Intelligence", minTierIndex: 0 }];
+  const start = { breach: false, slots: [{ modId: null, side: "suffix", fixed: true }, { modId: null, side: "suffix", fixed: false }] };
+  for (const lim of [{ prefix: 3, suffix: 2 }, { prefix: 3, suffix: 3 }]) {
+    const nodes = M.autoTree({ data: data2, prices: p2, targets: tgt, fixedIds: [], qualityTag: null, chaosOk: false, protectedSides: [], limits: lim, fixedSides: ["suffix"] });
+    const r = M.simulateTree({ ctx: { data: data2, cls, prices: p2, itemLevel: 82, limits: lim, catalystOk: () => true, baseQuality: 20 }, start, nodes, runs: 1500 });
+    const kinds = nodes.map((x) => x.action.kind).join(",");
+    console.log(`サフィ ${lim.suffix} 枠: 手 ${kinds} / 完成 ${(r.pDone * 100).toFixed(1)}% / 平均 ${(r.expected / D).toFixed(2)} 神`);
+    if (lim.suffix === 2 && (!kinds.includes("essence") || kinds.includes("light"))) { console.log("   NG: 枠 2 つなのにエッセンスの上書きの輪になっていない"); failed++; }
+    if (lim.suffix === 3 && !kinds.includes("light")) { console.log("   NG: 枠 3 つなのに光のお告げを使っていない"); failed++; }
+    if (r.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
+  }
+}
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
 process.exit(failed ? 1 : 0);
