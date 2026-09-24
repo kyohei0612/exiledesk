@@ -3,8 +3,8 @@
  *
  * オーナー:「あとは完成品か。比較対象ないよね今」。09-22 の「作るのと買うの、どっちが安いか」([[buy-or-craft.ts]]) を
  * 診断カードに戻した (1 手ずつの一覧カードを外した時に一緒に消えていた)。
- *   - 完成品を買う … 同じ MOD 構成の最安。狙いは素の段の下限、固定済み (樹 MOD・貼り付けで固定済み) は `fractured.` で。
- *     コラプト無し・ユニーク以外・ilvl 以上。MOD 解析の時に 1 本。取引所に無ければ手で値段を入れる
+ *   - 完成品を買う … 同じ MOD 構成の最安。狙いは素の段の下限、固定済みかどうかは問わない (樹 MOD は固定済み / 普通の 2 択)。
+ *     コラプト無し・ユニーク以外・ilvl 以上。始め方の「探す」の最後に 1 本 (手動)。取引所に無ければ手で値段を入れる
  *     (貼り付けの画面の「完成品の売値」欄は外した。オーナー 2026-09-24:「ここいらんくね」)
  *   - 作る見込み   … 始め方の初動 + スパムの組み立て (自動) の平均。**あくまで目安** (1 手ずつは人が選ぶ)。
  *     自動の組み立てが組めない時 (品質 40% の順番が決まらない半影の指輪など) は、狙いを 1 つずつ付ける平均
@@ -30,9 +30,34 @@ export function useFinishedCompare(
   const query = computed(() => {
     const d = c.data.value, cls = c.base.value;
     if (!d || !cls) return null;
-    const fixed = new Set(c.fracturedTargets.value.map((t) => t.modId));
-    const { filters, unmatched } = tradeFiltersFor(d, c.targets.value.filter((t) => !fixed.has(t.modId)));
+    // **一番ゆるく** (オーナー 2026-09-24:「完成品はフラクチャー指定なしやったら MOD だけ見てくれるでしょ。完成品こそ
+    // 一番ゆるくしたい」): 固定済みかどうかを問わない。ただし全部の MOD を「固定済み or 普通」の 2 択にすると
+    // 取引所に「検索条件が複雑過ぎます」(HTTP 400) で断られた (6 グループ 12 条件、2026-09-24 実機)。
+    // なので 2 択は固定されていそうな物 (樹 MOD) だけ、残りは普通の MOD で
+    const { filters, unmatched } = tradeFiltersFor(d, c.targets.value);
     if (unmatched.length) return null;
+    const both = (id: string, min?: number) => {
+      const bare = id.replace(/^(explicit|fractured)\./, "");
+      return /^(explicit|fractured)\./.test(id)
+        ? { filters: [{ id: `explicit.${bare}`, min }, { id: `fractured.${bare}`, min }] }
+        : null;
+    };
+    const plain: { id: string; min?: number }[] = [];
+    const anyOf: { filters: { id: string; min?: number }[] }[] = [];
+    // 樹 MOD は treePlan の買う物にだけ居る (貼り付けで固定済みだった普通の MOD は targets と重なるので 1 度だけ)
+    const tree = (c.treePlan.value?.buys ?? []).flatMap((b) => b.filters);
+    const seen = new Set<string>();
+    // 2 択にするのは樹 MOD だけ (作る MOD と重ならない物)。始め方で選んだ固定済みで条件が変わらないように
+    const bareOf = (id: string): string => id.replace(/^(explicit|fractured)\./, "");
+    const own = new Set(filters.map((x) => bareOf(x.id)));
+    const fixedKeys = new Set(tree.map((x) => bareOf(x.id)).filter((k) => !own.has(k)));
+    for (const f of [...filters.map((x) => ({ id: x.id, min: x.min })), ...tree.map((x) => ({ id: x.id, min: x.min ?? 0 }))]) {
+      const key = f.id.replace(/^(explicit|fractured)\./, "");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const g = fixedKeys.has(key) ? both(f.id, f.min) : null;
+      if (g) anyOf.push(g); else plain.push(f);
+    }
     const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
     const category = tradeCategoryOf(cls);
     if (!baseType && !category) return null;
@@ -41,11 +66,8 @@ export function useFinishedCompare(
       ...(category ? { category } : {}),
       rarity: "nonunique",
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
-      stats: [
-        ...filters.map((f) => ({ id: f.id, min: f.min })),
-        // 固定済みの MOD (樹 MOD・貼り付けで固定済みだった MOD) は固定済みで ([[tree-buy.ts]] と同じ条件)
-        ...(c.treePlan.value?.buys ?? []).flatMap((b) => b.filters).map((f) => ({ id: f.id, min: f.min ?? 0 })),
-      ],
+      stats: plain,
+      anyOf,
     });
   });
 

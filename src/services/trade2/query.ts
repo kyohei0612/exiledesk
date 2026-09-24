@@ -265,6 +265,11 @@ export interface SpecQueryOptions {
    * そういう物は固定がもう埋まっているので狙いの MOD を固定できない (オーナー指摘 2026-09-23)。
    */
   fracturedItem?: boolean;
+  /**
+   * 「どれか 1 つ」の条件 (取引所の count グループ、1 つ以上)。グループごとに AND。
+   * 完成品を探す時に、同じ MOD を固定済み (`fractured.`) でも普通 (`explicit.`) でも拾う用 (2026-09-24)
+   */
+  anyOf?: { filters: { id: string; min?: number }[] }[];
 }
 export function buildSpecQuery(o: SpecQueryOptions) {
   // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
@@ -287,6 +292,13 @@ export function buildSpecQuery(o: SpecQueryOptions) {
       })),
     }]
     : [];
+  for (const g of o.anyOf ?? []) {
+    stats.push({
+      type: "count",
+      value: { min: 1 },
+      filters: g.filters.map((f) => ({ id: f.id, disabled: false, value: f.min != null ? { min: f.min } : {} })),
+    } as (typeof stats)[number]);
+  }
   return {
     query: {
       status: { option: SecurityStatus.Securable },
