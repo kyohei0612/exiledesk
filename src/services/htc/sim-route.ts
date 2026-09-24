@@ -371,8 +371,10 @@ export function simulateTree(inp: {
    * 自動の行き先 (上の決まり)。本線を上から見て、揃っていない狙いの手か、狙いの無い手 (順番に打つ手) の先に来る方。
    * 狙いの無い手を「揃っている」と見て飛ばすと、品質の仕上げや削減を抜かしてしまう (2026-09-24 見本のツリーで踏んだ)
    */
+  /** この回に打った品質の手 (品質は消去・カオスで消えないので、自動で戻る先にしない。2026-09-24) */
+  let qualityDone = new Set<number>();
   const autoNext = (st: SimState, cur: number): string | "done" | null => {
-    const m = main.find((i) => !hasGoal(nodes[i]!) || !goalMet(st, nodes[i]!));
+    const m = main.find((i) => (!hasGoal(nodes[i]!) && !qualityDone.has(i)) || (hasGoal(nodes[i]!) && !goalMet(st, nodes[i]!)));
     if (m == null) return mainEndsDone ? "done" : null;
     const target = nodes[m]!;
     // カオスの手へ戻る時は、外せる物が 1 つになるまで今の消去を続けてから (「スパムの狙いが消えたら剥がして最初から」オーナー)。
@@ -395,6 +397,7 @@ export function simulateTree(inp: {
   };
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
   for (let r = 0; r < runs; r++) {
+    qualityDone = new Set<number>();
     let s: SimState = { slots: inp.start.slots.map((x) => ({ ...x })), breach: inp.start.breach };
     let cost = 0;
     let at = nodes.length ? 0 : -1;
@@ -420,6 +423,7 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
+      if (n.action?.kind === "quality") qualityDone.add(at);
       if (r === 0) inp.trace?.(n.id, s);
       // 消えたら終わりの MOD (樹 MOD) が消えたら止める
       if (s.slots.filter((x) => x.keep).length < keepCount) { end = `手 ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }

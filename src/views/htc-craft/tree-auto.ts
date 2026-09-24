@@ -10,7 +10,8 @@
  *   3. 普通の狙い … 側ごとに 完全の高貴 + その側の高貴なお告げ (+ 安いカタリストが効くなら触媒の高貴のお告げ)。
  *      1 つずつ「n つ揃って○」を重ね、外れたらその側の消去 (自動で戻る)
  *   4. 冒涜の狙い … その側のネクロマンシー + 古代の鎖骨、外れたら光のお告げでリロール
- *   5. 品質 … 貼り付けの品質の種類のカタリストで上限まで (確定)
+ *   5. 品質 … 触媒の高貴を使う側の前に、そのカタリストで品質を上限まで (品質代を数えるため)。最後に貼り付けの品質の種類で
+ *      上限まで入れ直す (確定)
  * 固定済みの狙いは作らない。クラフト非推奨 (start-kind の unsafe) の時は組まない。
  */
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
@@ -110,9 +111,18 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   }
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);
+  /** 今入っている品質の種類 (自動で組む中で、最後に入れたカタリスト) */
+  let qualityNow: string | null = null;
   for (const side of sides) {
     const list = normal(side);
     const cat = catalystFor(list);
+    // 触媒の高貴を使う前に、そのカタリストで品質を上限まで (オーナー 2026-09-24:「宝飾品で触媒を使える時は品質 20% 上げて、
+    // カタリスト使用後に上級またはパーフェクトで触媒使って試した方がトータル収支変わる」)。シミュレーターは触媒の高貴の倍率を
+    // 品質の上限で数えるので、この手が無いと品質代がタダになっていた
+    if (cat && cat !== qualityNow) {
+      main.push({ ...base, id: id(), action: { kind: "quality", catalyst: cat }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
+      qualityNow = cat;
+    }
     const annulId = `x-${side}`;
     extra.push({ ...base, id: annulId, action: { kind: "annul", side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
     for (let k = 1; k <= list.length; k++) {
@@ -142,7 +152,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     main.push({ ...base, id: fillId, action: { kind: "exalt", tier: "exalt", side: "prefix", catalyst: null }, targets: [], need: 1, onHit: null, onMiss: breachId });
     main.push({ ...base, id: breachId, action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   }
-  if (inp.qualityTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], need: 1, onHit: null, onMiss: null });
+  // 最後に貼り付けの品質の種類で上限まで (ブリーチで上限が上がった後も、ここで埋める)
+  if (inp.qualityTag && (inp.qualityTag !== qualityNow || breachLast)) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], need: 1, onHit: null, onMiss: null });
 
   // 本線をつなぐ (○ は次の手、最後は完成)
   main.forEach((x, i) => { x.onHit = main[i + 1]?.id ?? "done"; });
