@@ -143,6 +143,7 @@ const fixLabel = computed(() => {
           完成品は無かったので、近い物: {{ fin.dropped.value.join(" / ") }} を外して見つけた値段です (買ってから付ける。作るのとは比べていません)
         </p>
         <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
+        <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく、値段が作る見込みよりけた違いに高いので当てにしません (比べていません)</p>
         <p class="mt-1">作る見込み: <b class="text-[13px]">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</b></p>
         <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨なので、作る見込みは出しません</p>
         <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>

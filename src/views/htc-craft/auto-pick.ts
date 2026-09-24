@@ -3,7 +3,7 @@
  *
  * オーナー:「(偉大なる高貴のお告げは) 他にも使えそうな場面があるなら計算して」。偉大なる高貴の使い方は指輪によって得な方が
  * 違った (段は問わず: 死体の円環 カタリストが同じ時だけ 135 神 / 同じ側をまとめる 490 神、金の指輪 1,466 / 1,339 神)。
- * なので両方組んで、完成 90% 以上の中で平均の安い方 (どれも届かなければ完成の多い方)。
+ * なので両方組んで、完成 90% 以上の中で平均の安い方 (どれも届かなければ完成の多い方)。カオスを使う / 使わないも同じく比べる。
  */
 import { simulateTreeChunked, type SimNode, type SimState } from "../../services/htc/sim-route";
 import { autoTree, chaosSideFor, type AutoTreeInput } from "./tree-auto";
@@ -16,7 +16,13 @@ type Ctx = Parameters<typeof simulateTreeChunked>[0]["ctx"];
 const PICK_RUNS = 150;
 
 export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState): Promise<{ nodes: SimNode[]; greater: string }> {
-  const variants = (["catalyst", "all"] as const).map((g) => ({ greater: g, nodes: autoTree({ ...inp, greater: g }) }));
+  // 偉大なる高貴の使い方 × カオスを使うか。カオスは付く確率の低い狙いだと割に合わない (不在のアミュレットのクリティカル率
+  // T1 = 0.1% をカオスで狙って 1.5 万回打ち、58% が手数の上限。2026-09-24)
+  const chaosVariants = inp.chaosOk || inp.chaosSide ? [true, false] : [false];
+  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.map((ch) => ({
+    greater: `${g}${ch ? "" : "・カオス無し"}`,
+    nodes: autoTree({ ...inp, greater: g, ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
+  })));
   // 同じ形になった候補は 1 つにする (回す手間の節約)
   const uniq = variants.filter((v, i) => variants.findIndex((w) => JSON.stringify(w.nodes) === JSON.stringify(v.nodes)) === i);
   if (uniq.length === 1) return uniq[0]!;

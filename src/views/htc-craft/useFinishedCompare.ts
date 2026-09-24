@@ -212,11 +212,20 @@ export function useFinishedCompare(
   const estimate = computed(() => craftEstimate(c, c.fracturedTargets.value.map((t) => t.modId)));
   const craftCost = computed(() => (estimate.value ? (startCost.value ?? 0) + estimate.value.value : null));
   const craftBasis = computed(() => estimate.value?.basis ?? "");
+  /**
+   * 完成品の値段が当てにならない: 出品が 2 件以下で、作る見込みの 10 倍を超える (不在のアミュレットで 1 件 372 万神の出品に
+   * 「作る方が 370 万神安い」と出ていた。2026-09-24)
+   */
+  const outlier = computed(() => {
+    const b = found.value?.min, k = craftCost.value;
+    return b != null && k != null && (found.value?.total ?? 0) <= 2 && b > k * 10;
+  });
   const verdict = computed(() => {
+    if (outlier.value) return null;
     const b = buyCost.value, k = craftCost.value;
     // 外して見つけた物は完成品ではない (外した MOD を後で付ける) ので、比べない
     return b != null && k != null && !dropped.value.length ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, unbuildable, lightNote, dropped, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
+  return { query, unbuildable, lightNote, dropped, outlier, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
 }
