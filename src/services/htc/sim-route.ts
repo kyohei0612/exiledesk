@@ -73,6 +73,11 @@ export interface SimNode {
   clean: boolean;
   /** 外せる MOD (固定済み以外) がこの数以下であることも○の条件にする (「1 つになるまで剥がしてカオスへ」)。無ければ問わない */
   maxMods?: number | null;
+  /**
+   * ブリーチの MOD がある時だけ打つ (無ければ飛ばして○の行き先へ)。削減でブリーチの MOD を消す手用: 無いのに打つと、
+   * 一番レベルの低い狙いの MOD を消してしまう (2026-09-24 自動で組んだツリー)
+   */
+  onlyWithBreach?: boolean;
   onHit: Goto;
   onMiss: Goto;
 }
@@ -392,10 +397,35 @@ export function simulateTree(inp: {
    * 自動の行き先 (上の決まり)。本線を上から見て、揃っていない狙いの手か、狙いの無い手 (順番に打つ手) の先に来る方。
    * 狙いの無い手を「揃っている」と見て飛ばすと、品質の仕上げや削減を抜かしてしまう (2026-09-24 見本のツリーで踏んだ)
    */
-  /** この回に打った品質の手 (品質は消去・カオスで消えないので、自動で戻る先にしない。2026-09-24) */
-  let qualityDone = new Set<number>();
+  /**
+   * 品質の手は、今その種類の品質が入っていれば自動の戻り先にしない (品質は消去・カオスで消えない)。違う種類が入っていれば
+   * 入れ直す (種類を替えると 0 から。オーナー 2026-09-24)。前は 1 回打ったら戻らないにしていて、途中で種類を替えた後に
+   * 戻ると倍率が効かないままだった
+   */
+  // その品質の手の次の手 (本線) が狙いのある手で、もう揃っていれば、その品質は要らない (耐性が付いた後に知性用に替えた品質を、
+  // 耐性用に戻しに行かない)
+  const qualityReady = (st: SimState, pos: number): boolean => {
+    const x = nodes[main[pos]!]!;
+    if (x.action?.kind !== "quality") return false;
+    if (st.quality != null && st.qualityTag === x.action.catalyst) return true;
+    const next = main[pos + 1] != null ? nodes[main[pos + 1]!]! : null;
+    return !!next && hasGoal(next) && goalMet(st, next);
+  };
+  /**
+   * ブリーチはもう要らないか: 本線の最後の品質の手の種類で、ブリーチ込みの上限まで入っていれば、品質は残るので付け直さない
+   * (2026-09-24: 最後の品質の後で外れを消去した時に、ブリーチの手が未完了に見えて付け直しに戻り、満杯の側で止まった)
+   */
+  // 本線の最後の品質の手を、この回で通った後だけ (途中で同じ種類の品質を入れる手があっても、そこでは要る)
+  const lastQualityAt = [...main].reverse().find((i) => nodes[i]!.action?.kind === "quality");
+  let finalQualityDone = false;
+  const breachDone = (st: SimState): boolean => {
+    const a = lastQualityAt != null ? nodes[lastQualityAt]!.action : null;
+    return finalQualityDone && a?.kind === "quality" && st.quality != null && st.qualityTag === a.catalyst && st.quality >= (ctx.baseQuality ?? 20) + 20;
+  };
   const autoNext = (st: SimState, cur: number): string | "done" | null => {
-    const m = main.find((i) => (!hasGoal(nodes[i]!) && !qualityDone.has(i)) || (hasGoal(nodes[i]!) && !goalMet(st, nodes[i]!)));
+    const mp = main.findIndex((i, pos) => (!hasGoal(nodes[i]!) && !qualityReady(st, pos))
+      || (hasGoal(nodes[i]!) && !goalMet(st, nodes[i]!) && !(nodes[i]!.action?.kind === "breach" && breachDone(st))));
+    const m = mp >= 0 ? main[mp] : undefined;
     if (m == null) return mainEndsDone ? "done" : null;
     const target = nodes[m]!;
     // カオスの手へ戻る時は、外せる物が 1 つになるまで今の消去を続けてから (「スパムの狙いが消えたら剥がして最初から」オーナー)。
@@ -414,18 +444,28 @@ export function simulateTree(inp: {
     const annulSide = ca?.kind === "annul" ? ca.side : null;
     const junkHere = st.slots.some((x) => !x.fixed && !x.keep && !x.modId && (!annulSide || x.side === annulSide))
       || (st.breach && !h.breachKept && annulSide !== "suffix");
-    if (junkHere && hasGoal(target)) return nodes[cur]!.id;
+    // (今の手が消去の時だけ。光などから自動で戻る時は狙いの手へ。2026-09-24 光に戻り続けて止まっていた)
+    if (junkHere && hasGoal(target) && ca?.kind === "annul") return nodes[cur]!.id;
     return target.id;
   };
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
   for (let r = 0; r < runs; r++) {
-    qualityDone = new Set<number>();
+    finalQualityDone = false;
     let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })) };
     let cost = 0;
     let at = nodes.length ? 0 : -1;
     let end: string | null = nodes.length ? null : "手が無い";
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
+      // 飛ばす手: ブリーチが無い時の「ブリーチがある時だけ」の手、本線の品質の手で要らない物 (今その種類が入っている /
+      // 次の狙いの手が揃っている。仕上げの後で戻った時に途中の種類へ入れ替えて品質を落としていた)
+      const mpos = main.indexOf(at);
+      if (((n.onlyWithBreach && !s.breach) || (mpos >= 0 && qualityReady(s, mpos))) && n.onHit) {
+        const g = n.onHit === "auto" ? autoNext(s, at) : n.onHit;
+        if (g === "done") { end = "done"; break; }
+        const j = g ? byId.get(g) : undefined;
+        if (j != null && j !== at) { at = j; continue; }
+      }
       // 本線の手で、もう揃っていれば飛ばす (カオスでスパムの狙いを付け直した時、前の触媒の高貴のお告げの成功品が残っていれば次へ)
       if (main.includes(at) && hasGoal(n) && goalMet(s, n) && n.onHit) {
         const g = n.onHit === "auto" ? autoNext(s, at) : n.onHit;
@@ -434,8 +474,9 @@ export function simulateTree(inp: {
         if (j != null && j !== at) { at = j; continue; }
       }
       const why = h.usable(s, n.action);
-      // 打てない (枠が無い等) けれど外れがあるなら、先に × の行き先 (消去の手) へ回す (費用は掛からない)
-      if (why && h.hasJunk(s) && n.onMiss && n.onMiss !== "done") {
+      // 打てない (枠が無い等) けれど外れがあるなら、先に × の行き先 (消去の手) へ回す (費用は掛からない)。
+      // × の行き先が「自動」なら外れが無くても回す (消えた狙いを取り返しに戻る)
+      if (why && (h.hasJunk(s) || n.onMiss === "auto") && n.onMiss && n.onMiss !== "done") {
         const g = n.onMiss === "auto" ? autoNext(s, at) : n.onMiss;
         const j = g && g !== "done" ? byId.get(g) : undefined;
         if (j != null && j !== at) { at = j; continue; }
@@ -445,7 +486,7 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
-      if (n.action?.kind === "quality") qualityDone.add(at);
+      if (at === lastQualityAt) finalQualityDone = true;
       if (r === 0) inp.trace?.(n.id, s);
       // 消えたら終わりの MOD (樹 MOD) が消えたら止める
       if (s.slots.filter((x) => x.keep).length < keepCount) { end = `手 ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }

@@ -80,7 +80,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const extraDesecrate = (): TierTarget | null => {
     if (ts.some((t) => viaDesecrate(t))) return null;
     const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0);
-    return cands.length ? [...cands].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+    // エッセンス・ブリーチを使う側 (仕上げで枠が空く側) を優先。反対側は高貴やカオスで埋まり、削減で付いた外れで冒涜の枠が
+    // 塞がって回り続けた (2026-09-24 段を問わない死体の円環で、全耐性を冒涜に回した時)
+    const eat = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach ? ["prefix" as Side] : [])]);
+    const pref = cands.filter((t) => eat.has(sideOf(t.modId)));
+    const list = pref.length ? pref : cands;
+    return list.length ? [...list].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   };
   const toDesecrate = extraDesecrate();
   const desecrated = ts.filter((t) => viaDesecrate(t) || t.modId === toDesecrate?.modId);
@@ -103,15 +108,30 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * なので要る時は、ブリーチ → 貼り付けの種類で 40% を最初に入れ、その種類のまま作る (触媒の高貴のお告げは、その種類が
    * 狙いに効く時だけ)
    */
-  const lockTag = breach && inp.qualityTag ? inp.qualityTag : null;
-  /** その側の狙いに一番多く効く、安いカタリスト (無ければ null) */
-  function catalystFor(list: readonly TierTarget[]): string | null {
-    if (lockTag) return list.some((t) => catalystsFor(mod(t.modId)).some((k) => k.tag === lockTag)) ? lockTag : null;
+  /** その側の狙いに一番多く効く、安いカタリスト (種類を問わない。無ければ null) */
+  function freeCatalyst(list: readonly TierTarget[]): string | null {
     const count = new Map<string, number>();
     for (const t of list) for (const k of catalystsFor(mod(t.modId))) count.set(k.tag, (count.get(k.tag) ?? 0) + 1);
     const ok = [...count].filter(([tag]) => (p.currency[catalystPriceKey(tag)] ?? Infinity) <= maxCat);
     ok.sort((a, b) => b[1] - a[1] || (p.currency[catalystPriceKey(a[0])] ?? 0) - (p.currency[catalystPriceKey(b[0])] ?? 0));
     return ok[0]?.[0] ?? null;
+  }
+  const qualityTagBoosts = (list: readonly TierTarget[]): boolean =>
+    !!inp.qualityTag && list.some((t) => catalystsFor(mod(t.modId)).some((k) => k.tag === inp.qualityTag));
+  /**
+   * 種類を替えながら狙うか (手で組んだ死体の円環の見本のやり方): ブリーチの MOD を残したまま、狙いごとに効くカタリストで
+   * 品質を入れ直して触媒の高貴のお告げで狙い、最後に貼り付けの種類で上限まで入れる。貼り付けの種類が効かない狙いに、
+   * 別のカタリストが安く効く時だけ (死体の円環 本物の段: マナで固定 701 神 / 見本の替えるやり方 438 神)
+   */
+  const switchTypes = breach && !!inp.qualityTag && (["prefix", "suffix"] as Side[]).some((sd) => {
+    const l = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === sd && !guarded.has(sd));
+    return l.length > 0 && !qualityTagBoosts(l) && freeCatalyst(l) != null;
+  });
+  const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
+  /** その側の狙いに使うカタリスト */
+  function catalystFor(list: readonly TierTarget[]): string | null {
+    if (lockTag) return qualityTagBoosts(list) ? lockTag : null;
+    return freeCatalyst(list);
   }
 
   const base = { clean: false, maxMods: null, keep: [] as string[] };
@@ -120,10 +140,15 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const extra: SimNode[] = [];
   let n = 0;
   const id = (): string => `a${++n}`;
-  /** その側の消去の手 (無ければ作る。自動で戻る) */
+  /**
+   * その側の消去の手 (無ければ作る。自動で戻る)。触らない MOD が無い時はお告げ無しの素の消去 (固定済みは消えないので安全)。
+   * 側のお告げは 1 回 10 神前後するので、素の消去 (1 神未満) で反対側の物を時々消す方がずっと安い。2026-09-24 死体の円環
+   * (本物の段): 右側の消去のお告げ 65 回で 667 神 / 手で組んだ見本は素の消去 28 回で 20 神 (オーナー:「消去は全て普通の消去」)
+   */
+  const plainAnnul = (inp.protectedSides ?? []).length === 0;
   const annulFor = (side: Side): string => {
-    const aid = `x-${side}`;
-    if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
+    const aid = plainAnnul ? "x-any" : `x-${side}`;
+    if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side: plainAnnul ? null : side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
     return aid;
   };
 
@@ -138,8 +163,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // (2026-09-24 実測、段は問わず: 死体の円環 残り 3 つ カオスあり 744 神 / なし 3,680 神、プリズム 残り 5 つ あり 6.5 万神・
   // 完成 70% / なし 1.5 万神・100%)。残りが 3 つ以下の時だけカオスで始める
   const normalCount = ts.filter((t) => mod(t.modId).source === "normal" && t.modId !== toDesecrate?.modId).length;
-  const spam = inp.chaosOk && pool.length && normalCount - 1 <= 3
-    ? [...pool].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  // カオスで狙うのは、カタリスト (触媒の高貴のお告げ) が効かない物を優先。効く物は後で品質を入れて高貴で狙う方が安い
+  // (死体の円環: 見本はキャスピをカオス、全耐性・知性はカタリスト。自動が全耐性をカオスで狙って 2,130 回打っていた)
+  const boostable = (t: TierTarget): boolean => catalystFor([t]) != null;
+  const spamPool = pool.some((t) => !boostable(t)) ? pool.filter((t) => !boostable(t)) : pool;
+  const spam = inp.chaosOk && spamPool.length && normalCount - 1 <= 3
+    ? [...spamPool].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   if (spam) {
     spamId = spam.modId;
     const sid = id();
@@ -148,52 +177,80 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ブリーチは最初に付けて品質を上げる道具。上げた後は消えても品質は残るので、残す対象にしない (外れと同じ扱い。消去で
   // 50% で消える)。オーナー 2026-09-24:「40% 上げて触媒の高貴のお告げで狙って、外れたら左側消去で 50%、それを付くまで」
   // 「品質 20% を必須 MOD として最後まで残しておくなんてことはない」
-  const keepBreach: string[] = [];
-  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], need: 1, onHit: null, onMiss: null });
+  // 種類を替えるやり方の時は、最後に貼り付けの種類で上限 (ブリーチ込み) まで入れるので、それまでブリーチの MOD を残す
+  const keepBreach: string[] = switchTypes ? ["__breach__"] : [];
+  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
-  for (const t of essences) {
-    main.push({ ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: keepBreach, need: 1, onHit: null, onMiss: null });
-  }
+  // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
+  const essenceNodes: SimNode[] = essences.map((t) => ({
+    ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: null,
+  }));
+  if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);
   /** 今入っている品質の種類 (自動で組む中で、最後に入れたカタリスト) */
   let qualityNow: string | null = lockTag;
   for (const side of sides) {
-    const list = normal(side);
-    const cat = catalystFor(list);
-    // 触媒の高貴のお告げを使う前に、そのカタリストで品質を上限まで (オーナー 2026-09-24:「宝飾品で触媒を使える時は品質 20% 上げて、
-    // カタリスト使用後に上級またはパーフェクトで触媒使って試した方がトータル収支変わる」)。シミュレーターは触媒の高貴のお告げの倍率を
-    // 品質の上限で数えるので、この手が無いと品質代がタダになっていた
-    if (cat && cat !== qualityNow) {
-      main.push({ ...base, id: id(), action: { kind: "quality", catalyst: cat }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
-      qualityNow = cat;
+    // 同じ側の狙いを、効くカタリストごとに分けて順に狙う (見本: 全耐性は耐性用、知性は適応用。まとめて 1 つのカタリストで
+    // 狙うと、効かない方の外れが増えて消去とブリーチの付け直しが膨らんだ。2026-09-24 死体の円環)
+    const groups = new Map<string | null, TierTarget[]>();
+    for (const t of normal(side)) {
+      const k = catalystFor([t]);
+      groups.set(k, [...(groups.get(k) ?? []), t]);
     }
+    // カタリストが効く組を先に (品質を入れる回数を減らすため、今の品質の種類の組を一番先に)
+    const order = [...groups.entries()].sort((a, b) => Number(b[0] === qualityNow) - Number(a[0] === qualityNow) || Number(b[0] != null) - Number(a[0] != null));
     const annulId = annulFor(side);
-    for (let k = 1; k <= list.length; k++) {
-      main.push({
-        ...base, id: id(),
-        action: { kind: "exalt", tier: exaltTier(list), side, catalyst: cat },
-        targets: list.map((t) => ({ modId: t.modId, minTier: t.minTierIndex ?? 0 })),
-        keep: keepBreach, need: k, onHit: null, onMiss: annulId,
-      });
+    for (const [cat, list] of order) {
+      // 触媒の高貴のお告げを使う前に、そのカタリストで品質を上限まで (オーナー 2026-09-24:「宝飾品で触媒を使える時は品質 20% 上げて、
+      // カタリスト使用後に上級またはパーフェクトで触媒の高貴のお告げを使った方がトータル収支変わる」)。種類を替えると 0 から
+      if (cat && cat !== qualityNow) {
+        main.push({ ...base, id: id(), action: { kind: "quality", catalyst: cat }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
+        qualityNow = cat;
+      }
+      for (let k = 1; k <= list.length; k++) {
+        main.push({
+          ...base, id: id(),
+          action: { kind: "exalt", tier: exaltTier(list), side, catalyst: cat },
+          targets: list.map((t) => ({ modId: t.modId, minTier: t.minTierIndex ?? 0 })),
+          // ブリーチの MOD を残す条件は、ブリーチと品質の手だけに付ける (高貴の手にも付けると、ブリーチが消えた時に揃った手を
+          // 飛ばせず、満杯の側に高貴を打とうとして止まった。消えれば自動でブリーチの手へ戻る)
+          keep: [], need: k, onHit: null, onMiss: annulId,
+        });
+      }
     }
   }
+  const desecrateNodes: SimNode[] = [];
   for (const t of desecrated) {
     const side = sideOf(t.modId);
     const lightId = `l-${t.modId}`;
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
       ...base, id: id(), action: { kind: "desecrate", side, bone: reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: false },
-      targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: keepBreach, need: 1, onHit: null, onMiss: lightId,
+      targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
-    main.push(node);
-    // 光が打てない (冒涜の外れが無い) のに枠が外れ (ブリーチの MOD など) で埋まっている時は、その側の消去へ。
-    // 触らない MOD がある側は消去を使わない
-    extra.push({ ...base, id: lightId, action: { kind: "light" }, targets: [], need: 1, onHit: node.id, onMiss: guarded.has(side) ? null : annulFor(side) });
+    desecrateNodes.push(node);
+    // 光の後は自動で戻る (冒涜の前に消えた狙いがあれば取り返しに、無ければこの冒涜へ)。光が打てない (冒涜の外れが無い) 時も自動
+    // (2026-09-24: 冒涜 → 光 → 冒涜 の輪に固定していて、消去で消えた最大マナを取り返しに戻れず止まっていた)
+    extra.push({ ...base, id: lightId, action: { kind: "light" }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
   }
 
   // 最後に貼り付けの品質の種類で上限まで (ブリーチで上限が上がった後も、ここで埋める)
-  if (inp.qualityTag && inp.qualityTag !== qualityNow) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], need: 1, onHit: null, onMiss: null });
+  const finalQuality: SimNode | null = inp.qualityTag && inp.qualityTag !== qualityNow
+    ? { ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null } : null;
+  // 仕上げ (冒涜・最後の品質) に入る前の最後の高貴の手は、外れが無いことも○の条件 (外れが残ると冒涜の枠を塞ぐ)
+  const lastExalt = [...main].reverse().find((x) => x.action?.kind === "exalt");
+  if (lastExalt && desecrateNodes.length) lastExalt.clean = true;
+  if (switchTypes) {
+    // 見本と同じ仕上げ: 貼り付けの種類で上限 (ブリーチ込み) → 削減 (一番レベルの低いブリーチの MOD を消して 1 つ付く) →
+    // エッセンス (付いた 1 つを食わせる) → 冒涜。品質は消えても残る
+    if (finalQuality) main.push(finalQuality);
+    main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+    main.push(...essenceNodes, ...desecrateNodes);
+  } else {
+    main.push(...desecrateNodes);
+    if (finalQuality) main.push(finalQuality);
+  }
 
   // 本線をつなぐ (○ は次の手、最後は完成)
   main.forEach((x, i) => { x.onHit = main[i + 1]?.id ?? "done"; });

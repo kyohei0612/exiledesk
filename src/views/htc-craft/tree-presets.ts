@@ -8,7 +8,9 @@
  * 死体の円環 (ニーモニックリング、品質 40%) の流れ:
  *   1 カオス / キャスピ → ○2 ×1
  *   2 左側の結晶化 + ブリーチのエッセンス (確定) → ○3
- *   3 完全の高貴 + 右側 + 触媒の高貴のお告げ + 全耐性に効く一番安いカタリスト / 全耐性 → ○4 ×消去 (自動)
+ *   (q1 全耐性に効く一番安いカタリストで品質を上限まで)
+ *   3 完全の高貴 + 右側 + 触媒の高貴のお告げ + 同じカタリスト / 全耐性 → ○4 ×消去 (自動)
+ *   (q2 適応のカタリストで入れ直し。種類を替えると品質は 0 から、2026-09-24 オーナー)
  *   4 完全の高貴 + 右側 + 触媒の高貴のお告げ + 適応 / 知性 → ○5 ×消去 (自動)
  *     (3 で知性が先に付いても、揃っている手は飛ばすので順不同で動く)
  *   5 カタリストだけ (神経、品質 40% まで) → ○6
@@ -43,8 +45,11 @@ export const TREE_PRESETS: readonly TreePreset[] = [{
     const base = { clean: false, maxMods: null, need: 1 };
     return [
       { ...base, id: "p1", action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: CS, minTier: tier(CS) }], keep: [], onHit: "p2", onMiss: "p1" },
-      { ...base, id: "p2", action: { kind: "breach" }, targets: [], keep: [CS, "__breach__"], onHit: "p3", onMiss: null },
-      { ...base, id: "p3", action: ex(resCat), targets: [{ modId: RES, minTier: tier(RES) }], keep: [CS, "__breach__"], onHit: "p4", onMiss: "pa" },
+      { ...base, id: "p2", action: { kind: "breach" }, targets: [], keep: [CS, "__breach__"], onHit: "q1", onMiss: null },
+      // 触媒の高貴のお告げの前に、そのカタリストで品質を上限 (ブリーチ込み 40%) まで。種類を替えると 0 から入れ直し
+      { ...base, id: "q1", action: { kind: "quality", catalyst: resCat ?? "resistance" }, targets: [], keep: [CS, "__breach__"], onHit: "p3", onMiss: null },
+      { ...base, id: "p3", action: ex(resCat), targets: [{ modId: RES, minTier: tier(RES) }], keep: [CS, "__breach__"], onHit: "q2", onMiss: "pa" },
+      { ...base, id: "q2", action: { kind: "quality", catalyst: "attribute" }, targets: [], keep: [CS, RES, "__breach__"], onHit: "p4", onMiss: null },
       { ...base, id: "p4", action: ex("attribute"), targets: [{ modId: INT, minTier: tier(INT) }], keep: [CS, RES, "__breach__"], onHit: "p5", onMiss: "pa" },
       { ...base, id: "pa", action: { kind: "annul", side: null }, targets: [], keep: [], onHit: "auto", onMiss: "auto" },
       { ...base, id: "p5", action: { kind: "quality", catalyst: "mana" }, targets: [], keep: [CS, RES, INT], onHit: "p6", onMiss: null },
