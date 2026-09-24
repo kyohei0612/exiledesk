@@ -8,13 +8,10 @@
  * × = 外れが付いた / 消去が残したい MOD を消した、の代表の形)。打てる物と「1 回で○になる確率」はこの指輪で出す。
  */
 import { computed, ref, shallowRef, watch } from "vue";
-import { sideLimits } from "../../services/htc/bridge";
-import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysing";
 import { simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/spam-total";
+import { simCtxOf, startStateOf } from "./sim-setup";
 import type { Side } from "../../services/htc/step-odds";
-import { startKindOf } from "./start-kind";
-import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
 let seq = 0;
@@ -23,49 +20,10 @@ const newId = (): string => `n${Date.now().toString(36)}${(seq++).toString(36)}`
 export const emptyNode = (keep: string[] = []): SimNode => ({ id: newId(), action: null, targets: [], need: 1, keep, clean: false, maxMods: null, onHit: null, onMiss: null });
 
 export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
-  const ctx = computed(() => {
-    const d = c.data.value, cls = c.base.value, p = c.prices.value;
-    if (!d || !cls || !p) return null;
-    const it = c.item.value;
-    const div = p.currency.divine ?? 1;
-    return {
-      data: d, cls, prices: p,
-      itemLevel: it ? it.itemLevel ?? 82 : zeroStart.value.itemLevel,
-      limits: sideLimits(d, it ? it.baseType : zeroStart.value.baseType),
-      catalystOk: (tag: string) => c.catalystChoice.value[tag] ?? (p.currency[catalystPriceKey(tag)] ?? Infinity) / div < 0.2,
-      // ベースの品質の上限 (ブリーチの指輪 +20% など)。ブリーチの MOD が付けばさらに +20%
-      baseQuality: maxQualityForBase((it ? it.baseType : zeroStart.value.baseType) ?? ""),
-    };
-  });
+  const ctx = computed(() => simCtxOf(c));
 
-  /** 出発点 = ベース決めの結果 (固定済みの MOD と樹 MOD)。カオスで入れ替える物としてもう 1 つ (外れ) 付いている */
-  const start = computed<SimState>(() => {
-    const d = c.data.value;
-    const slots: SimState["slots"] = c.fracturedTargets.value.map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));
-    const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
-    // 買った時から付いている MOD (樹 MOD・冒涜のみ・作れない)。固定するのは重い側の樹 MOD 1 つだけで、残りは「消えたら終わり」
-    // ([[start-kind.ts]]、2026-09-24 オーナー:「固定不要の時は触らない書き方に」)。樹 MOD の側が分からない時は前の通り全部固定済み
-    const k = startKindOf(c);
-    const allFixed = !c.item.value || (k.kind === "fix" && !k.fixSide);
-    let fixedDone = false;
-    for (const [side, n, S] of [["prefix", tree.p, "P"], ["suffix", tree.s, "S"]] as const) {
-      const treeOn = c.dropOnly.value.filter((x) => x.side === S).length;
-      for (let i = 0; i < n; i++) {
-        const isTree = i < treeOn;
-        const fix = allFixed || (k.kind === "fix" && k.fixSide === S && isTree && !fixedDone);
-        if (fix && !allFixed) fixedDone = true;
-        slots.push(fix
-          ? { modId: null, side, fixed: true, label: isTree || allFixed ? "樹 MOD (固定済み)" : "買った時の MOD (固定済み)" }
-          : { modId: null, side, fixed: false, keep: true, label: isTree ? "樹 MOD (触らない)" : "買った時の MOD (触らない)" });
-      }
-    }
-    // 固定済み 1 つのベースを買った時は、もう 1 つ付いている (フラクチャーオーブは 4 MOD 以上で打つ物なので)。
-    // カオスで入れ替える 1 つとして外れを置く。側は空いている方
-    const lim = ctx.value?.limits ?? { prefix: 3, suffix: 3 };
-    const nP = slots.filter((x) => x.side === "prefix").length, nS = slots.filter((x) => x.side === "suffix").length;
-    slots.push({ modId: null, side: lim.suffix - nS >= lim.prefix - nP ? "suffix" : "prefix", fixed: false });
-    return { slots, breach: false };
-  });
+  /** 出発点 ([[sim-setup.ts]])。固定済みで始める狙いは始め方で選んだ物 */
+  const start = computed<SimState>(() => startStateOf(c, c.fracturedTargets.value.map((t) => t.modId)));
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
   const nodes = ref<SimNode[]>([emptyNode()]);

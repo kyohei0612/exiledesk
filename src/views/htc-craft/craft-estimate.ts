@@ -8,21 +8,76 @@
 import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { stepHelpers, type ItemState, type Side } from "../../services/htc/step-odds";
+import { shallowRef } from "vue";
+import { simulateTreeChunked } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
+import { simCtxOf, startStateOf } from "./sim-setup";
+import { startKindOf } from "./start-kind";
+import { autoTree } from "./tree-auto";
 import type { useHtcCraft } from "./useHtcCraft";
 
 /**
- * 作る見込み (高貴換算) と、どの物差しで出したか。**多めに出る方を使う** (オーナー 2026-09-24:「作る見込みはどっちがいいかな、
- * 多めにした方がいいよね」。作るか完成品を買うかを決める数字なので、安めに出ると赤字を「作る方が安い」と言ってしまう)。
- *   自動の組み立て (カオススパム → 高貴…、付けた物が消える分も入る) の平均。組めない時だけ 1 つずつの合計 (安めに出る)
+ * 作る見込み (高貴換算) と、どの物差しで出したか。
+ *
+ * **自動で組んだツリー ([[tree-auto.ts]]) を回した平均**を使う (オーナー 2026-09-24:「気になったところはその通りだから
+ * それでおけ」)。前の「自動の組み立て」(spam-plan) は樹 MOD の側に触らない縛りを入れずに数えていて、金の指輪で 234 神と
+ * 出た (ツリーを回すと 1,906 神)。作るか買うかを決める数字なので、実際の作り方に近い方を使う。
+ * ツリーは裏で回す (候補ごとに数百回)。回し終わるまでは前の物差しの値を「計算中」として出す。
  * 真ん中の始め方の比べと、右の完成品との比べで同じ物を使う。
  */
 export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): { value: number; basis: string } | null {
+  const key = keyOf(c, fixedIds);
+  const hit = cache.value.get(key);
+  if (hit && hit !== "pending") {
+    return hit.value == null ? null : {
+      value: hit.value,
+      basis: `自動で組んだツリーを ${RUNS} 回回した平均${hit.pDone < 0.95 ? ` (完成 ${(hit.pDone * 100).toFixed(0)}%)` : ""}`,
+    };
+  }
+  if (!hit) queueMicrotask(() => void runAuto(c, [...fixedIds], key));
   const fixed = c.targets.value.filter((t) => fixedIds.includes(t.modId));
   const spam = c.spamFor(fixed)?.total?.expected;
-  if (spam != null) return { value: spam, basis: "自動の組み立ての平均" };
+  if (spam != null) return { value: spam, basis: "計算中 (仮に自動の組み立ての平均)" };
   const steps = stepsEstimate(c, fixedIds);
-  return steps != null ? { value: steps, basis: "狙いを 1 つずつ付ける平均の合計 (付けた物が消える分は入らないので安めに出る)" } : null;
+  return steps != null ? { value: steps, basis: "計算中 (仮に狙いを 1 つずつ付ける合計)" } : null;
+}
+
+/** 自動のツリーを回す回数 (候補ごと。多いと重い) */
+const RUNS = 400;
+/** 回した結果 (鍵 = ベース・狙いと段・固定済み・神の値段)。value が null は組めなかった / 非推奨 */
+const cache = shallowRef(new Map<string, { value: number | null; pDone: number } | "pending">());
+function keyOf(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): string {
+  return [
+    c.item.value?.baseType ?? zeroStart.value.baseType,
+    c.targets.value.map((t) => `${t.modId}:${t.minTierIndex ?? 0}`).join(","),
+    [...fixedIds].sort().join(","),
+    c.prices.value?.currency.divine ?? 0,
+  ].join("|");
+}
+function put(key: string, v: { value: number | null; pDone: number } | "pending"): void {
+  const m = new Map(cache.value);
+  m.set(key, v);
+  cache.value = m;
+}
+async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], key: string): Promise<void> {
+  if (cache.value.has(key)) return;
+  put(key, "pending");
+  const ctx = simCtxOf(c), d = c.data.value, p = c.prices.value;
+  if (!ctx || !d || !p || startKindOf(c).kind === "unsafe") { put(key, { value: null, pDone: 0 }); return; }
+  const start = startStateOf(c, fixedIds);
+  const nodes = autoTree({
+    data: d, prices: p, targets: c.targets.value, fixedIds,
+    qualityTag: c.item.value?.catalystTag ?? null,
+    chaosOk: !start.slots.some((x) => x.keep),
+    chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
+  });
+  if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }
+  try {
+    const r = await simulateTreeChunked({ ctx, start, nodes, runs: RUNS });
+    put(key, { value: r.pDone > 0 ? r.expected : null, pDone: r.pDone });
+  } catch {
+    put(key, { value: null, pDone: 0 });
+  }
 }
 
 /** 高貴換算の合計。組めなければ null */
