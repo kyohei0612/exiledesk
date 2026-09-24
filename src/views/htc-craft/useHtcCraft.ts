@@ -300,7 +300,10 @@ export function useHtcCraft() {
     modIds.map((id) => {
       const r = rows.value.find((x) => x.modId === id);
       // 0 から組んだ時は文面が「#」のままなので、狙う段を添える
-      return r ? (r.text.includes("#") ? `${r.text} (${r.tierName}: ${r.range} 以上)` : r.text) : id.split("/")[1] ?? "";
+      if (r) return r.text.includes("#") ? `${r.text} (${r.tierName}: ${r.range} 以上)` : r.text;
+      // 狙いに入っていない MOD (上書きに使うエッセンスなど) はゲームの日本語の文面で (中の名前のまま出ていた。2026-09-24)
+      const m = data.value?.mods.get(id);
+      return m ? jaOfMod(m) : id.split("/")[1] ?? "";
     }).join(" + ");
 
   return {
