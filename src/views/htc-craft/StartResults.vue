@@ -25,6 +25,11 @@ const otherRoutes = computed(() => top.value?.sub.filter((o) => o.id !== top.val
 const others = computed(() => rows.value.filter((r) => r.key !== top.value?.key && (r.res || r.waiting)));
 const waiting = computed(() => rows.value.filter((r) => r.waiting));
 const started = computed(() => rows.value.some((r) => r.res || r.waiting));
+/** 手入力欄の値 (空なら null) */
+const num = (e: Event): number | null => {
+  const v = (e.target as HTMLInputElement).value;
+  return v === "" ? null : Number(v);
+};
 </script>
 
 <template>
@@ -47,13 +52,26 @@ const started = computed(() => rows.value.some((r) => r.res || r.waiting));
       <button v-if="cheapest && top.key !== cheapest.key" type="button" class="mt-1 underline opacity-70" @click="ss.choose(cheapest.key)">一番安い物に戻す</button>
     </div>
     <p v-for="w in waiting" :key="w.key" class="mt-1 opacity-70">{{ w.name }}: 取得中…</p>
-    <p v-if="started && !waiting.length && !top?.best" class="text-rose-300">選べる始め方がありません (取れなかった・出品が足りない)。下を開いて確認してください</p>
+    <!-- どれも値段が出ない時は畳まずに全部出し、出品が無い物は手で値段を入れられるように (「足りない情報は手動で」) -->
+    <template v-if="started && !waiting.length && !top?.best">
+      <p class="text-rose-300">選べる始め方がありません (取れなかった・出品が足りない)。出品が無い物は値段を手で入れられます</p>
+      <div v-for="r in rows.filter((x) => x.res)" :key="r.key" class="mt-1 pl-1">
+        <b>{{ r.name }}</b>
+        <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
+          {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}
+          <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
+          <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
+          <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>
+        </div>
+      </div>
+    </template>
 
     <!-- その候補の他の買い方 -->
     <details v-if="otherRoutes.length" class="mt-2">
       <summary class="cursor-pointer opacity-60">ほかの買い方 ({{ otherRoutes.length }})</summary>
-      <div v-for="o in otherRoutes" :key="o.id" class="pl-3" :class="o.cost == null ? 'opacity-50' : ''">
+      <div v-for="o in otherRoutes" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
         {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
+        <span v-if="o.manual && top" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[top.key] ?? ''" @change="ss.setManual(top.key, num($event))" /> 神</span>
         <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
         <span v-if="o.note" class="block pl-2 opacity-50">{{ o.note }}</span>
       </div>
@@ -72,8 +90,9 @@ const started = computed(() => rows.value.some((r) => r.res || r.waiting));
           </template>
           <span v-else class="opacity-60">どれも選べない</span>
         </div>
-        <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null ? 'opacity-50' : ''">
+        <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
           {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}
+          <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
           <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
           <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>
         </div>

@@ -77,6 +77,11 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   const busy = ref(false);
   /** 始め方に選んだ候補 (人が選ぶまでは一番安い物) */
   const picked = ref<string | null>(null);
+  /**
+   * 取引所に出品が無かった時に手で入れた値段 (神、候補ごと)。オーナー 2026-09-24:「足りない情報は手動で埋める」。
+   * 固定済みを買う (3 本の時) / 買う (固定不要の時) の出品ゼロに効く
+   */
+  const manual = ref<Record<string, number | null>>({});
 
   // 解析し直したら、チェックを戻す
   watch(() => [c.item.value, c.base.value, kind.value.kind], () => {
@@ -85,6 +90,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     checked.value = init.filter((x) => candidates.value.some((y) => y.key === x)).slice(0, MAX_STARTS);
     results.value = {};
     picked.value = null;
+    manual.value = {};
   }, { immediate: true });
 
   /** 固定不要の時の検索: 樹 MOD (固定の有無は問わない) + 固定済みにする狙い (あれば)。無ければフラクチャー: いいえ */
@@ -133,14 +139,16 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
 
   const div = computed(() => c.prices.value?.currency.divine ?? 1);
   /** 固定不要の 1 本 → 始め方の行 1 つ (買う値段 + 残りを作る見込み) */
-  function sideRow(res: SideResult, modIds: readonly string[]): StartRow {
+  function sideRow(res: SideResult, modIds: readonly string[], manualDivine: number | null): StartRow {
     const link = res.url ? { text: `${res.total} 件`, url: res.url } : null;
     if (res.error) return { id: "buy", label: "買う", cost: null, note: `取れず: ${res.error}`, link, manual: false, status: "取れず" };
-    if (res.price == null) return { id: "buy", label: "買う", cost: null, note: "", link, manual: false, status: "出品なし" };
+    // 出品が無ければ手で入れた値段 (神) で
+    const price = res.price ?? (manualDivine != null && manualDivine > 0 ? manualDivine * div.value : null);
+    if (price == null) return { id: "buy", label: "買う", cost: null, note: "", link, manual: true, status: "出品なし" };
     const est = craftEstimate(c, modIds);
     return {
-      id: "buy", label: "買う + 残りを作る", cost: est != null ? res.price + est.value : null, link, manual: false, status: "作る見込みが出せない",
-      note: `買う ${c.money(res.price)}${est != null ? ` + 作る見込み ${c.money(est.value)} (${est.basis})` : ""}`,
+      id: "buy", label: "買う + 残りを作る", cost: est != null ? price + est.value : null, link, manual: res.price == null, status: "作る見込みが出せない",
+      note: `買う ${c.money(price)}${res.price == null ? " (手で入れた値段)" : ""}${est != null ? ` + 作る見込み ${c.money(est.value)} (${est.basis})` : ""}`,
     };
   }
   /** 探した候補ごとの行と一番安い物。安い順 (取れていない物は後ろ) */
@@ -149,11 +157,12 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     .map((x) => {
       const res = results.value[x.key];
       const side = res && res !== "error" && "kind" in res ? res : null;
-      const sub: StartRow[] = side ? [sideRow(side, x.modIds)]
-        : res && res !== "error" ? startRows(res as TreeResult, div.value, { busy: false, manualDivine: null }) : [];
+      const m = manual.value[x.key] ?? null;
+      const sub: StartRow[] = side ? [sideRow(side, x.modIds, m)]
+        : res && res !== "error" ? startRows(res as TreeResult, div.value, { busy: false, manualDivine: m }) : [];
       const best = sub.find((y) => y.cost != null) ?? null;
       /** 完成品の比べに渡す初動 (買う値段だけ。作る見込みは向こうで足す) */
-      const startCost = side ? side.price : best?.cost ?? null;
+      const startCost = side ? side.price ?? (m != null && m > 0 ? m * div.value : null) : best?.cost ?? null;
       return { ...x, res, sub, best, startCost, waiting: pending.value.includes(x.key) };
     })
     .sort((a, b) => (a.best?.cost ?? Infinity) - (b.best?.cost ?? Infinity)));
@@ -169,7 +178,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   });
 
   return {
-    kind, candidates, checked, results, busy, searchAll, rows, chosen,
+    kind, candidates, checked, results, busy, searchAll, rows, chosen, manual,
+    setManual: (key: string, v: number | null) => { manual.value = { ...manual.value, [key]: v }; },
     choose: (key: string) => { picked.value = key; },
     locked: (key: string) => !checked.value.includes(key) && checked.value.length >= MAX_STARTS,
   };
