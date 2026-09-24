@@ -6,12 +6,13 @@
   すぐレート制限に当たる。そのため起動時に 1 回、前に出して促す。
 
   オーナー指示 2026-09-20:「未ログイン状態の場合、強制的にログインさせるようにポップアップしたら OK」。
-  使えなくはしない (「後で」でこの起動の間は閉じられる)。
+  2026-09-24 からログイン必須 (オーナー:「基本このアプリは認証ありきで仕様にしよう、どの機能も」)。
+  「後で」は無し。ログインするまで閉じない。ログイン窓を閉じると状態を取り直す (「状態を確認」でも取り直せる)。
 -->
 <script setup lang="ts">
 import { ref } from "vue";
 import BaseCard from "./decor/BaseCard.vue";
-import { dismissLoginPrompt, openLogin, poeSession } from "../state/poe-session";
+import { openLogin, poeSession, refreshSession } from "../state/poe-session";
 
 const busy = ref(false);
 async function login(): Promise<void> {
@@ -37,6 +38,7 @@ async function login(): Promise<void> {
         <p class="text-[13px] leading-relaxed text-[var(--exile-color-text-secondary)]">
           ログインすると公式が許す取得の枠が<span class="text-[var(--exile-color-text-primary)]">およそ倍</span>になります。
           未ログインのままだと相場の取得がすぐレート制限に当たり、売値も捌き速度も取れなくなります。
+          ExileDesk はログインしてから使う作りです (ログインするまでこの画面は閉じません)。
         </p>
         <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-2 leading-relaxed">
           実測 (2026-09-19): 未ログインは 15 分あたり 31 回で制限、ログイン後は 60 回投げても制限なし。
@@ -55,10 +57,10 @@ async function login(): Promise<void> {
           <button
             type="button"
             class="text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]"
-            title="このまま使えますが、取得はすぐレート制限に当たります (次の起動でまた出ます)"
-            @click="dismissLoginPrompt"
+            title="ログインしたのに閉じない時に、状態を読み直します"
+            @click="refreshSession()"
           >
-            後で (枠が半分のまま使う)
+            ログインした (状態を確認)
           </button>
         </div>
       </div>

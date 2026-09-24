@@ -8,6 +8,8 @@
  *
  * そのため、未ログインのまま使わせない (オーナー指示 2026-09-20:
  * 「未ログイン状態の場合、強制的にログインさせるようにポップアップしたら OK」)。
+ * 2026-09-24 からは**ログイン必須** (オーナー:「基本このアプリは認証ありきで仕様にしよう、どの機能も」)。
+ * 「後で」は無くし、ログインするまで画面を閉じない。
  *
  * 取引履歴の画面が持っていたログイン処理を、ここに出して共有する。
  */
@@ -17,14 +19,12 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 
 /** null = まだ確かめていない */
 const loggedIn = ref<boolean | null>(null);
-/** 「後で」を押した = このまま起動中は催促しない */
-const dismissed = ref(false);
 let watching = false;
 
 export const poeSession = {
   loggedIn: computed(() => loggedIn.value),
-  /** ログインを促す画面を出すか (未ログインが確定していて、まだ「後で」を押していない) */
-  needLogin: computed(() => loggedIn.value === false && !dismissed.value),
+  /** ログインの画面を出すか (未ログインが確定している間ずっと。閉じる手段は無い) */
+  needLogin: computed(() => loggedIn.value === false),
 };
 
 /** 今のログイン状態を確かめ直す */
@@ -51,10 +51,6 @@ export async function openLogin(): Promise<void> {
   await openLoginWindow();
 }
 
-/** 「後で」= この起動の間は催促しない */
-export function dismissLoginPrompt(): void {
-  dismissed.value = true;
-}
 
 /** 起動時に 1 回。ログイン状態を読んでおく (未ログインならポップアップが出る) */
 export function startSessionWatch(): void {

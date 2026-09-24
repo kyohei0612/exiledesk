@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import ScreenHeader from "../components/ScreenHeader.vue";
 import { askConfirm } from "../state/confirm-dialog";
+import { refreshSession as refreshGlobalSession } from "../state/poe-session";
 import RefreshButton from "../components/RefreshButton.vue";
 import { fetchBusy, fetchBusyLabel } from "../state/fetch-busy";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
@@ -94,6 +95,8 @@ function reloadStored(): void {
 }
 
 async function refreshSession(): Promise<void> {
+  // アプリ全体のログイン状態も取り直す (ログアウトしたらログインの画面を出す。ログイン必須 2026-09-24)
+  void refreshGlobalSession();
   try {
     loggedIn.value = await sessionLoggedIn();
   } catch (e) {
