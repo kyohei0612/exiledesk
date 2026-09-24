@@ -5,14 +5,13 @@
  * オーナー:「ツリー上、シミュレーター方式。完成までの道のりを○×で進める。進むにつれてツリーがデカくなる。
  * 最終的に予算入力してシミュレーターかけて確率と予算内にできるか表示する」。中身は [[useCraftTree.ts]]。
  */
-import { computed, nextTick } from "vue";
+import { computed, nextTick, ref } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
-import { autoTree, chaosSideFor } from "./tree-auto";
+import { autoInputFor, pickAutoTree } from "./auto-pick";
 import { startKindOf } from "./start-kind";
-import { spawnChance } from "./craft-estimate";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
@@ -30,21 +29,19 @@ function loadPreset(id: string): void {
  * 触らない MOD (固定していない樹 MOD など) がある時は側の無いカオスを使わない。クラフト非推奨の時は出さない
  */
 const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.value.length > 0 && startKindOf(c).kind !== "unsafe");
-function loadAuto(): void {
-  const d = c.data.value, p = c.prices.value;
-  if (!d || !p) return;
-  t.setAll(autoTree({
-    data: d, prices: p, targets: c.targets.value,
-    fixedIds: c.fracturedTargets.value.map((x) => x.modId),
-    qualityTag: c.item.value?.catalystTag ?? null,
-    qualityPct: c.item.value?.quality ?? null,
-    baseQuality: t.ctx.value?.baseQuality,
-    chaosOk: !t.start.value.slots.some((x) => x.keep),
-    protectedSides: [...new Set(t.start.value.slots.filter((x) => x.keep).map((x) => x.side))],
-    desecratedTaken: t.start.value.slots.some((x) => x.desec),
-    chaosSide: t.ctx.value ? chaosSideFor(t.start.value, t.ctx.value.limits) : null,
-    chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
-  }));
+/** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
+const autoBusy = ref(false);
+async function loadAuto(): Promise<void> {
+  const ctx = t.ctx.value;
+  if (!ctx || autoBusy.value) return;
+  const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
+  if (!inp) return;
+  autoBusy.value = true;
+  try {
+    t.setAll((await pickAutoTree(inp, ctx, t.start.value)).nodes);
+  } finally {
+    autoBusy.value = false;
+  }
 }
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
@@ -68,7 +65,7 @@ async function focus(id: string): Promise<void> {
     </p>
     <div v-if="presets.length || canAuto" class="mb-2 text-xs">
       <span class="opacity-60">見本のツリー:</span>
-      <button v-if="canAuto" type="button" class="ml-2 rounded border border-emerald-600 px-2" title="狙いの MOD から組む。側を選べる手を中心に、消去は自動で戻る" @click="loadAuto()">この MOD から自動で組む</button>
+      <button v-if="canAuto" type="button" class="ml-2 rounded border border-emerald-600 px-2" title="狙いの MOD から組む。側を選べる手を中心に、消去は自動で戻る" :disabled="autoBusy" @click="loadAuto()">{{ autoBusy ? "組んでいます (候補を回して比べています)…" : "この MOD から自動で組む" }}</button>
       <button v-for="x in presets" :key="x.id" type="button" class="ml-2 rounded border border-sky-600 px-2" @click="loadPreset(x.id)">{{ x.label }} を読み込む</button>
     </div>
     <!-- 枝の図: ○ は下へ、× は右へ。横に広がるので横にスクロール -->

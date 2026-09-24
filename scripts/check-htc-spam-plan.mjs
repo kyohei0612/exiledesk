@@ -42,6 +42,8 @@ const prices = {
     OmenofSinistralCrystallisation: div(0.384), OmenofDextralCrystallisation: div(0.431),
     OmenofWhittling: div(12.336), OmenofLight: div(7.687), OmenofSinistralNecromancy: div(0.003),
     OmenofDextralNecromancy: div(0.006), OmenofAbyssalEchoes: div(0.188),
+    // 偉大なる高貴のお告げ (1 回で 2 つ足す)。2026-09-24 アプリの相場
+    OmenofGreaterExaltation: div(0.017),
   },
 };
 const it = M.parseJaItem([

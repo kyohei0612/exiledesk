@@ -60,6 +60,12 @@ export interface AutoTreeInput {
   chaosSide?: Side | null;
   /** 買った時から冒涜の MOD が付いている (冒涜の MOD は 1 つまでなので、冒涜はもう使えない。0.5 のパッチノート) */
   desecratedTaken?: boolean;
+  /**
+   * 偉大なる高貴のお告げ (1 回で 2 つ足す) を使う場面。"catalyst" = 同じカタリストが効く狙いが 2 つ以上 (オーナー 2026-09-24:
+   * 「(触媒の高貴のお告げを) 使う時に付けたいタグが 2 つ以上なら使うべき。耐性 2 つならそれと偉大、右側高貴、パーフェクト高貴で 2 つともカタリストが乗る」)。
+   * "all" = カタリストが無くても、同じ側の狙いが 2 つ以上なら (比べる用)
+   */
+  greater?: "catalyst" | "all" | "none";
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -213,8 +219,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
   if (spamNode && chaosAfterQuality) main.push(spamNode);
   // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
+  // 結晶化は「外れのある側」: エッセンスの側に空きがあって反対側に外れがあれば、その外れを食わせる (オーナー 2026-09-24)
   const essenceNodes: SimNode[] = essences.map((t) => ({
-    ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: null,
+    ...base, id: id(), action: { kind: "essence", modId: t.modId, removeSide: "auto" }, targets: [{ modId: t.modId, minTier: 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: null,
   }));
   // クラフト MOD は 1 つまで: ブリーチの MOD が残っているとエッセンスは打てない。品質を入れた後なので、削減でブリーチを消して
   // 代わりに付いた 1 つをエッセンスに食わせる (見本と同じ)
@@ -227,10 +234,22 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   for (const side of sides) {
     // 同じ側の狙いを、効くカタリストごとに分けて順に狙う (見本: 全耐性は耐性用、知性は適応用。まとめて 1 つのカタリストで
     // 狙うと、効かない方の外れが増えて消去とブリーチの付け直しが膨らんだ。2026-09-24 死体の円環)
+    // 組の作り方: 残りの狙いのうち一番多くに効くカタリストで 1 組ずつ取る (耐性 2 つに効くカタリストがあれば 1 組にして、
+    // 偉大なる高貴のお告げで 2 つともカタリストを乗せる)。どれにも効かない物は カタリスト無しの組
     const groups = new Map<string | null, TierTarget[]>();
-    for (const t of normal(side)) {
-      const k = catalystFor([t]);
-      groups.set(k, [...(groups.get(k) ?? []), t]);
+    let rest = normal(side);
+    while (rest.length) {
+      const k = catalystFor(rest);
+      const hit = k ? rest.filter((t) => catalystsFor(mod(t.modId)).some((c) => c.tag === k)) : [];
+      if (!k || !hit.length) { groups.set(null, [...(groups.get(null) ?? []), ...rest]); break; }
+      groups.set(k, [...(groups.get(k) ?? []), ...hit]);
+      rest = rest.filter((t) => !hit.includes(t));
+    }
+    // 比べる用: カタリストに関係なく同じ側をまとめる
+    if ((inp.greater ?? "catalyst") === "all" && groups.size > 1) {
+      const all = [...groups.values()].flat();
+      groups.clear();
+      groups.set(catalystFor(all), all);
     }
     // カタリストが効く組を先に (品質を入れる回数を減らすため、今の品質の種類の組を一番先に)
     const order = [...groups.entries()].sort((a, b) => Number(b[0] === qualityNow) - Number(a[0] === qualityNow) || Number(b[0] != null) - Number(a[0] != null));
@@ -242,10 +261,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
         main.push({ ...base, id: id(), action: { kind: "quality", catalyst: cat }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
         qualityNow = cat;
       }
+      const useGreater = list.length >= 2 && ((inp.greater ?? "catalyst") === "all" || ((inp.greater ?? "catalyst") === "catalyst" && cat != null));
       for (let k = 1; k <= list.length; k++) {
         main.push({
           ...base, id: id(),
-          action: { kind: "exalt", tier: exaltTier(list), side, catalyst: cat },
+          // 1 手目だけ偉大なる高貴 (2 つとも当たれば次の手は揃っていて飛ばす)
+          action: { kind: "exalt", tier: exaltTier(list), side, catalyst: cat, ...(useGreater && k === 1 ? { greater: true } : {}) },
           targets: list.map((t) => ({ modId: t.modId, minTier: t.minTierIndex ?? 0 })),
           // ブリーチの MOD を残す条件は、ブリーチと品質の手だけに付ける (高貴の手にも付けると、ブリーチが消えた時に揃った手を
           // 飛ばせず、満杯の側に高貴を打とうとして止まった。消えれば自動でブリーチの手へ戻る)
@@ -260,7 +281,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     const lightId = `l-${t.modId}`;
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
-      ...base, id: id(), action: { kind: "desecrate", side, bone: reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: false },
+      // 反響のお告げは必ず (3 択を 1 回引き直せる。オーナー 2026-09-24:「反響は冒涜の際必ず」)
+      ...base, id: id(), action: { kind: "desecrate", side, bone: reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
       targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
     desecrateNodes.push(node);

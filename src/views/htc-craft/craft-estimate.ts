@@ -13,7 +13,7 @@ import { simulateTreeChunked } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
 import { simCtxOf, startStateOf } from "./sim-setup";
 import { startKindOf } from "./start-kind";
-import { autoTree, chaosSideFor } from "./tree-auto";
+import { autoInputFor, pickAutoTree } from "./auto-pick";
 import type { useHtcCraft } from "./useHtcCraft";
 
 /**
@@ -65,17 +65,9 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
   const ctx = simCtxOf(c), d = c.data.value, p = c.prices.value;
   if (!ctx || !d || !p || startKindOf(c).kind === "unsafe") { put(key, { value: null, pDone: 0 }); return; }
   const start = startStateOf(c, fixedIds);
-  const nodes = autoTree({
-    data: d, prices: p, targets: c.targets.value, fixedIds,
-    qualityTag: c.item.value?.catalystTag ?? null,
-    qualityPct: c.item.value?.quality ?? null,
-    baseQuality: ctx.baseQuality,
-    chaosOk: !start.slots.some((x) => x.keep),
-    protectedSides: [...new Set(start.slots.filter((x) => x.keep).map((x) => x.side))],
-    desecratedTaken: start.slots.some((x) => x.desec),
-    chaosSide: chaosSideFor(start, ctx.limits),
-    chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
-  });
+  const inp = autoInputFor(c, ctx, start, fixedIds);
+  if (!inp) { put(key, { value: null, pDone: 0 }); return; }
+  const { nodes } = await pickAutoTree(inp, ctx, start);
   if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }
   try {
     const r = await simulateTreeChunked({ ctx, start, nodes, runs: RUNS });

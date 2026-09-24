@@ -61,7 +61,7 @@ for (const r of RINGS) {
   };
   const chaosOk = !slots.some((x) => x.keep);
   const protectedSides = [...new Set(slots.filter((x) => x.keep).map((x) => x.side))];
-  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null, baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk, chance, protectedSides, chaosSide: M.chaosSideFor({ slots, breach: false }, limits), desecratedTaken: slots.some((x) => x.desec) });
+  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null, baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk, chance, protectedSides, chaosSide: M.chaosSideFor({ slots, breach: false }, limits), desecratedTaken: slots.some((x) => x.desec), greater: process.env.GREATER ?? "catalyst" });
   const ctx = { data, cls, prices, itemLevel: it.itemLevel ?? 82, limits, catalystOk: () => true, baseQuality: M.maxQualityForBase(it.baseType ?? "") };
   const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1500, budget: 1000 * D });
   const lost = res.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((a2, x) => a2 + x.p, 0);

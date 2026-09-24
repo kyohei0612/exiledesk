@@ -21,11 +21,12 @@ import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
 
 type Group = "exalt" | "annul" | "chaos" | "essence" | "desecrate";
-interface Omen { key: string; ja: string; group: Group; side?: Side; tag?: "catalyst" | "light" | "whittle" | "echoes" }
+interface Omen { key: string; ja: string; group: Group; side?: Side; tag?: "catalyst" | "light" | "whittle" | "echoes" | "greater" }
 const OMENS: Omen[] = [
   { key: "OmenofSinistralExaltation", ja: "左側の高貴なお告げ", group: "exalt", side: "prefix" },
   { key: "OmenofDextralExaltation", ja: "右側の高貴なお告げ", group: "exalt", side: "suffix" },
   { key: "OmenofCatalysingExaltation", ja: "触媒の高貴のお告げ", group: "exalt", tag: "catalyst" },
+  { key: "OmenofGreaterExaltation", ja: "偉大なる高貴のお告げ (1 回で 2 つ足す)", group: "exalt", tag: "greater" },
   { key: "OmenofSinistralAnnulment", ja: "左側の消去のお告げ", group: "annul", side: "prefix" },
   { key: "OmenofDextralAnnulment", ja: "右側の消去のお告げ", group: "annul", side: "suffix" },
   { key: "OmenofLight", ja: "光のお告げ (冒涜だけ消す)", group: "annul", tag: "light" },
@@ -52,12 +53,12 @@ const priced = (key: string): boolean => Number.isFinite(h.value?.cur(key) ?? In
 function omensOf(a: SimAction | null): string[] {
   if (!a) return [];
   switch (a.kind) {
-    case "exalt": return [...(a.side ? [a.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] : []), ...(a.catalyst ? ["OmenofCatalysingExaltation"] : [])];
+    case "exalt": return [...(a.side ? [a.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] : []), ...(a.catalyst ? ["OmenofCatalysingExaltation"] : []), ...(a.greater ? ["OmenofGreaterExaltation"] : [])];
     case "annul": return a.side ? [a.side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"] : [];
     case "light": return ["OmenofLight"];
     case "whittle": return ["OmenofWhittling"];
     case "chaos": return a.side ? [a.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"] : [];
-    case "essence": return [(a.removeSide ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
+    case "essence": return [((a.removeSide === "auto" ? null : a.removeSide) ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
     case "breach": return [a.removeSide === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
     case "desecrate": return [a.side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy", ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
     default: return [];
@@ -103,7 +104,7 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
   if (orbKey.startsWith("exalt")) {
     if (g && g !== "exalt") return null;
     if (tag("catalyst") && !cat) return null;
-    return { kind: "exalt", tier: orbKey as "exalt", side: sd, catalyst: tag("catalyst") ? cat : null };
+    return { kind: "exalt", tier: orbKey as "exalt", side: sd, catalyst: tag("catalyst") ? cat : null, ...(tag("greater") ? { greater: true } : {}) };
   }
   if (orbKey === "annul") {
     if (g && g !== "annul") return null;

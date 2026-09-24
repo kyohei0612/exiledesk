@@ -23,13 +23,14 @@ import type { Side, StepCtx } from "./step-odds";
 export type SimAction =
   /** side = 抹消のお告げ (次のカオスが消すのをその側だけに。足す側は選べない、枠の空いている側に付く) */
   | { kind: "chaos"; tier: "chaos" | "chaos_greater" | "chaos_perfect"; side?: Side | null }
-  | { kind: "exalt"; tier: "exalt" | "exalt_greater" | "exalt_perfect"; side: Side | null; catalyst: string | null }
+  /** greater = 偉大なる高貴のお告げ (1 回で MOD を 2 つ足す。側のお告げ・触媒の高貴のお告げは両方に効く) */
+  | { kind: "exalt"; tier: "exalt" | "exalt_greater" | "exalt_perfect"; side: Side | null; catalyst: string | null; greater?: boolean }
   | { kind: "annul"; side: Side | null }
   /**
    * removeSide = 結晶化のお告げの側 = **消す側** (poe2db: 「次のパーフェクトエッセンスが消すのをその側だけに」)。付く側は
    * エッセンスの MOD で決まる。省略時はエッセンスの MOD と同じ側
    */
-  | { kind: "essence"; modId: string; removeSide?: Side }
+  | { kind: "essence"; modId: string; removeSide?: Side | "auto" }
   | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient"; echoes: boolean }
   | { kind: "light" }
   | { kind: "breach"; removeSide?: Side }
@@ -186,6 +187,23 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   const lastQualityTag = [...nodes].reverse().map((n) => n.action).find((a) => a?.kind === "quality");
   const breachSpent = (s: SimState): boolean =>
     lastQualityTag?.kind === "quality" && s.quality != null && s.qualityTag === lastQualityTag.catalyst && s.quality >= (ctx.baseQuality ?? 20) + 20;
+  /**
+   * エッセンスの消す側。"auto" は、エッセンスの側に空きがあって反対側に外れがあれば反対側 (その外れを食わせる)、無ければ同じ側
+   * (オーナー 2026-09-24:「反対側が外れ 1 あるならエッセンス結晶化でやっていい」)
+   */
+  function removeSideOf(s: SimState, a: Extract<SimAction, { kind: "essence" }>): Side {
+    const side = (mod(a.modId)?.type ?? "prefix") as Side;
+    if (a.removeSide !== "auto") return a.removeSide ?? side;
+    const other: Side = side === "prefix" ? "suffix" : "prefix";
+    const junkOther = s.slots.some((x) => x.side === other && !x.fixed && !x.keep && !x.modId);
+    return room(s, side) && junkOther ? other : side;
+  }
+  /** 偉大なる高貴のお告げを実際に使うか (空きが 2 つ以上ある時だけ。1 つなら普通の高貴で打つ) */
+  function greaterOn(s: SimState, a: Extract<SimAction, { kind: "exalt" }>): boolean {
+    if (!a.greater) return false;
+    const sides = a.side ? [a.side] : SIDES;
+    return sides.reduce((n, x) => n + Math.max(0, ctx.limits[x] - count(s, x)), 0) >= 2;
+  }
   /** クラフト MOD が付いているか (ブリーチの MOD か、エッセンスで付いた MOD) */
   const craftedPresent = (s: SimState): boolean => s.breach || s.slots.some((x) => x.crafted);
   const hasJunk = (s: SimState): boolean =>
@@ -243,6 +261,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       case "chaos": return removable(s, a.side ?? null).length ? null : "外せる物が無い";
       case "exalt": {
         const sides = a.side ? [a.side] : SIDES.filter((x) => room(s, x));
+        // 偉大なる高貴で空きが 1 つしか無い時は、お告げを使わずに普通の高貴として打つ (greaterOn)
         return sides.length && sides.every((x) => room(s, x)) ? null : "足す枠が無い";
       }
       case "annul": return removable(s, a.side).length ? null : "外せる物が無い";
@@ -250,7 +269,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         // 食わせる物が無ければ、高貴 + 側の高貴なお告げで外れを付けてから (その分も 1 回の値段に入る)
         if (craftedPresent(s)) return "クラフト MOD は 1 つまで (ブリーチやエッセンスの MOD が付いている)";
         const side = mod(a.modId)?.type as Side;
-        const rs = a.removeSide ?? side;
+        const rs = removeSideOf(s, a);
         if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
@@ -274,11 +293,11 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   function priceOf(s: SimState, a: SimAction): number {
     switch (a.kind) {
       case "chaos": return cur(a.tier) + (a.side ? cur(OMEN_ER[a.side]) : 0);
-      case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0)
+      case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + (s.quality == null ? catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0) : 0);
       case "annul": return cur("annul") + (a.side ? cur(OMEN_AN[a.side]) : 0);
       case "essence": {
-        const rs = a.removeSide ?? (mod(a.modId)?.type ?? "prefix") as Side;
+        const rs = removeSideOf(s, a);
         return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN_EX[rs]));
       }
       case "desecrate": return cur(a.bone) + cur(OMEN_NE[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
@@ -330,13 +349,17 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
       }
       case "exalt": {
-        const sides = a.side ? [a.side] : SIDES.filter((x) => room(s, x));
-        return land(s, pick(roll(s, sides, FLOOR[a.tier]!, a.catalyst, a.catalyst ? catalystQuality(s, a.catalyst) : 0)));
+        const q = a.catalyst ? catalystQuality(s, a.catalyst) : 0;
+        const one = (st: SimState): SimState => {
+          const sides = a.side ? [a.side] : SIDES.filter((x) => room(st, x));
+          return sides.length && sides.every((x) => room(st, x)) ? land(st, pick(roll(st, sides, FLOOR[a.tier]!, a.catalyst, q))) : st;
+        };
+        return greaterOn(s, a) ? one(one(s)) : one(s);
       }
       case "annul": return rmRandom(s, a.side);
       case "essence": {
         const side = mod(a.modId)?.type as Side;
-        const rs = a.removeSide ?? side;
+        const rs = removeSideOf(s, a);
         const t = removable(s, rs).length ? s : land(s, { modId: null, side: rs });
         const u = rmRandom(t, rs);
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true }] };
