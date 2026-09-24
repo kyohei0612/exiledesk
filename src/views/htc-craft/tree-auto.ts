@@ -40,6 +40,12 @@ export interface AutoTreeInput {
   chaosOk?: boolean;
   /** 付きやすさ (その側に 1 回付けて出る確率)。カオスで狙う物を選ぶのに使う */
   chance?: (t: TierTarget) => number | null;
+  /**
+   * 触らない MOD (固定していない樹 MOD など) がある側。ここは消去を使わず、狙いを冒涜 + 光のお告げのリロールで作る
+   * (光は冒涜の外れだけ消す)。オーナー:「片方が 2 以下の場合は冒涜でリロールできる」。2026-09-24 忍者の上位の指輪で、
+   * 樹 MOD と同じ側を 高貴 + 側の消去 で作って樹 MOD を 24〜26% 消していた
+   */
+  protectedSides?: readonly Side[];
 }
 
 const BREACH_FAMILY = "LocalMaximumQuality";
@@ -52,8 +58,13 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const sideOf = (id: string): Side => (mod(id).type === "prefix" ? "prefix" : "suffix");
   const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY);
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
-  const desecrated = ts.filter((t) => mod(t.modId).source === "desecrated");
-  const normal = (side: Side) => ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId);
+  const guarded = new Set(inp.protectedSides ?? []);
+  const normal = (side: Side) => guarded.has(side) ? []
+    : ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId);
+  /** 冒涜 + 光で作る狙い (冒涜のみの MOD と、触らない MOD がある側の普通の狙い) */
+  const viaDesecrate = (t: TierTarget): boolean =>
+    mod(t.modId).source === "desecrated" || (mod(t.modId).source === "normal" && guarded.has(sideOf(t.modId)));
+  const desecrated = ts.filter((t) => viaDesecrate(t));
   const div = p.currency.divine ?? 1;
   /**
    * 狙いの段が届く一番高い下限。完全の高貴 (段 50 以上) はレベル 50 未満の MOD を出さないので、レアリティのプレ (段は

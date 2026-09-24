@@ -45,7 +45,9 @@ for (const r of RINGS) {
     }
   }
   const nP = slots.filter((x) => x.side === "prefix").length, nS = slots.filter((x) => x.side === "suffix").length;
-  slots.push({ modId: null, side: limits.suffix - nS >= limits.prefix - nP ? "suffix" : "prefix", fixed: false });
+  const keepP = slots.some((x) => x.keep && x.side === "prefix"), keepS = slots.some((x) => x.keep && x.side === "suffix");
+  const roomP = limits.prefix - nP, roomS = limits.suffix - nS;
+  slots.push({ modId: null, side: keepP !== keepS && (keepP ? roomS : roomP) > 0 ? (keepP ? "suffix" : "prefix") : roomS >= roomP ? "suffix" : "prefix", fixed: false });
   // 付きやすさ (craft-estimate の spawnChance と同じ: ベースの MOD 一覧の重みの割合、ilvl で出ない段は除く)
   const lv = it.itemLevel ?? 82;
   const w = (id, minIdx) => (data.mods.get(id)?.tiers ?? []).reduce((a2, t, i) => a2 + (i >= minIdx && t.ilvl <= lv ? t.weight : 0), 0);
@@ -56,7 +58,8 @@ for (const r of RINGS) {
     return pool > 0 ? w(t.modId, t.minTierIndex ?? 0) / pool : null;
   };
   const chaosOk = !slots.some((x) => x.keep);
-  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, chaosOk, chance });
+  const protectedSides = [...new Set(slots.filter((x) => x.keep).map((x) => x.side))];
+  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, chaosOk, chance, protectedSides });
   const ctx = { data, cls, prices, itemLevel: it.itemLevel ?? 82, limits, catalystOk: () => true, baseQuality: 20 };
   const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1500, budget: 1000 * D });
   const lost = res.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((a2, x) => a2 + x.p, 0);

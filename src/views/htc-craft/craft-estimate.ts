@@ -69,6 +69,7 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
     data: d, prices: p, targets: c.targets.value, fixedIds,
     qualityTag: c.item.value?.catalystTag ?? null,
     chaosOk: !start.slots.some((x) => x.keep),
+    protectedSides: [...new Set(start.slots.filter((x) => x.keep).map((x) => x.side))],
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
   });
   if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }

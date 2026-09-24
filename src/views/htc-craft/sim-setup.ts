@@ -57,7 +57,11 @@ export function startStateOf(c: C, fixedIds: readonly string[]): SimState {
   // 固定済み 1 つのベースを買った時は、もう 1 つ付いている (フラクチャーオーブは 4 MOD 以上で打つ物なので)。
   // カオスで入れ替える 1 つとして外れを置く。側は空いている方
   const lim = simCtxOf(c)?.limits ?? { prefix: 3, suffix: 3 };
+  // 触らない MOD がある側は消去を使わない (冒涜 + 光で作る) ので、外れは消せない。なるべく反対側に置く
   const nP = slots.filter((x) => x.side === "prefix").length, nS = slots.filter((x) => x.side === "suffix").length;
-  slots.push({ modId: null, side: lim.suffix - nS >= lim.prefix - nP ? "suffix" : "prefix", fixed: false });
+  const keepP = slots.some((x) => x.keep && x.side === "prefix"), keepS = slots.some((x) => x.keep && x.side === "suffix");
+  const roomP = lim.prefix - nP, roomS = lim.suffix - nS;
+  const side: Side = keepP !== keepS && (keepP ? roomS : roomP) > 0 ? (keepP ? "suffix" : "prefix") : roomS >= roomP ? "suffix" : "prefix";
+  slots.push({ modId: null, side, fixed: false });
   return { slots, breach: false };
 }

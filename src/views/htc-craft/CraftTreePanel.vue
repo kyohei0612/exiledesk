@@ -38,6 +38,7 @@ function loadAuto(): void {
     fixedIds: c.fracturedTargets.value.map((x) => x.modId),
     qualityTag: c.item.value?.catalystTag ?? null,
     chaosOk: !t.start.value.slots.some((x) => x.keep),
+    protectedSides: [...new Set(t.start.value.slots.filter((x) => x.keep).map((x) => x.side))],
     chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
   }));
 }
