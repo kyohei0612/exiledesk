@@ -4,7 +4,7 @@
  *
  * オーナー:「MOD 解析の時、クラフト MOD や特殊な MOD、クラフト可能 MOD を分けて説明付きで表示欲しい。
  * あとプレフィックスとサフィックスで綺麗に並べたりして欲しい」。
- *   - 左にプレフィックス、右にサフィックス。各列の中は 特殊 → 固定済み → クラフトで付く → 冒涜 → エッセンス の順
+ *   - 左にプレフィックス、右にサフィックス。各列の中は 特殊 (樹 MOD) → 特殊 (冒涜のみ) → 作れない → クラフトで付く → エッセンス の順
  *   - 種類の札の色と説明は上の凡例 (その貼り付けに出た種類だけ)
  *   - 段は ここで選び直せる (ツリーの手でも選び直せる)
  *   - 作れない行 (樹 MOD 以外でこのベースに付かない物) も枠を使うので列に入れる。暗黙は下に 1 行
@@ -25,11 +25,13 @@ type Kind = "tree" | "normal" | "desecrated" | "essence" | "cannot";
 const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   tree: { label: "特殊 (樹 MOD)", cls: "border-fuchsia-400/60 text-fuchsia-200", note: "創生の樹からしか出ない。クラフトでは付かないので、固定済みの品を買って始める" },
   normal: { label: "クラフトで付く", cls: "border-emerald-400/60 text-emerald-200", note: "カオス・高貴で確率で狙う。重さ (出やすさ) で確率が決まる" },
-  desecrated: { label: "冒涜で付く", cls: "border-rose-400/60 text-rose-200", note: "鎖骨で冒涜して明かす MOD。ネクロマンシーのお告げで側を決められる" },
+  // オーナー 2026-09-24:「冒涜でしか付かない MOD なら同じように特殊 MOD 扱いがいい。冒涜でも普通の MOD なら無視で
+  // クラフトで付く、みたいな表現でいい」(冒涜するかどうかは作り方で決める)
+  desecrated: { label: "特殊 (冒涜のみ)", cls: "border-violet-400/60 text-violet-200", note: "冒涜 (鎖骨) でしか付かない MOD。冒涜するかは作り方で決める" },
   essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
   cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };
-const ORDER: Kind[] = ["tree", "cannot", "normal", "desecrated", "essence"];
+const ORDER: Kind[] = ["tree", "desecrated", "cannot", "normal", "essence"];
 
 interface Row { key: string; text: string; side: "P" | "S" | null; kind: Kind; fixed: boolean; tier: string | null; modId: string | null }
 
@@ -57,7 +59,11 @@ const rows = computed<Row[]>(() => [
     tier: d.tier ? `T${d.tier.of - d.tier.index} (${d.tier.min}-${d.tier.max})` : null,
   })),
   // 作れない行も枠を使うので列に入れる (2026-09-24 金の指輪: 冒涜のミニオンのクールダウンが列の外に出て「サフィ 2」に見えた)
-  ...cannotLines.value.map((t, i): Row => ({ key: `cannot-${i}`, text: ja(t), side: sideOfLine(t), kind: "cannot", fixed: false, modId: null, tier: null })),
+  // 貼り付けで冒涜の印が付いていた行は、このベースの冒涜の一覧に無くても「冒涜のみ」の特殊として出す
+  ...cannotLines.value.map((t, i): Row => {
+    const desecrated = c.item.value?.lines.find((l) => l.text === t)?.kind === "desecrated";
+    return { key: `cannot-${i}`, text: ja(t), side: sideOfLine(t), kind: desecrated ? "desecrated" : "cannot", fixed: false, modId: null, tier: null };
+  }),
   ...c.rows.value.map((r): Row => ({
     key: r.modId, text: r.text, side: r.side, kind: kindOf(r.modId), fixed: fixedIds.value.has(r.modId), modId: r.modId, tier: null,
   })),
