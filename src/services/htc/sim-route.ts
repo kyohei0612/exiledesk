@@ -295,7 +295,8 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     switch (a.kind) {
       case "chaos": return cur(a.tier) + (a.side ? cur(OMEN_ER[a.side]) : 0);
       case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
-        + (a.catalyst ? cur("OmenofCatalysingExaltation") + (s.quality == null ? catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0) : 0);
+        // 触媒の高貴のお告げは品質を全部使う (ゲーム内の文面)。2 回目からは上限まで入れ直す分も掛かる
+        + (a.catalyst ? cur("OmenofCatalysingExaltation") + catalystCountFor(s.quality == null ? quality(s) : Math.max(0, quality(s) - catalystQuality(s, a.catalyst))) * cur(catalystPriceKey(a.catalyst)) : 0);
       case "annul": return cur("annul") + (a.side ? cur(OMEN_AN[a.side]) : 0);
       case "essence": {
         const rs = removeSideOf(s, a);
@@ -350,12 +351,15 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
       }
       case "exalt": {
-        const q = a.catalyst ? catalystQuality(s, a.catalyst) : 0;
+        // 触媒の高貴のお告げ: 品質を上限まで入れ直してから打ち、打った後は品質 0 (全部使う。2026-09-24 まで使っても残る扱いで、
+        // 2 回目以降の触媒が只になっていた)
+        const q = a.catalyst ? Math.max(quality(s), catalystQuality(s, a.catalyst)) : 0;
         const one = (st: SimState): SimState => {
           const sides = a.side ? [a.side] : SIDES.filter((x) => room(st, x));
           return sides.length && sides.every((x) => room(st, x)) ? land(st, pick(roll(st, sides, FLOOR[a.tier]!, a.catalyst, q))) : st;
         };
-        return greaterOn(s, a) ? one(one(s)) : one(s);
+        const out = greaterOn(s, a) ? one(one(s)) : one(s);
+        return a.catalyst ? { ...out, quality: 0, qualityTag: a.catalyst } : out;
       }
       case "annul": return rmRandom(s, a.side);
       case "essence": {
@@ -474,7 +478,8 @@ export function simulateTree(inp: {
   const qualityReady = (st: SimState, pos: number): boolean => {
     const x = nodes[main[pos]!]!;
     if (x.action?.kind !== "quality") return false;
-    if (st.quality != null && st.qualityTag === x.action.catalyst) return true;
+    // その種類で上限まで入っている時だけ (触媒の高貴で使い切った後の 0 は入れ直す)
+    if (st.quality != null && st.qualityTag === x.action.catalyst && st.quality >= (ctx.baseQuality ?? 20) + (st.breach ? 20 : 0)) return true;
     const next = main[pos + 1] != null ? nodes[main[pos + 1]!]! : null;
     return !!next && hasGoal(next) && goalMet(st, next);
   };

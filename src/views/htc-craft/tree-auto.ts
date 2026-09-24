@@ -271,8 +271,16 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // オーナー 2026-09-24:「品質も加味してやりなおしはないはず、特にその形ならお告げで」
   // 買った時の外れがプレに 1 つあっても、ブリーチ (左側の結晶化) がそれを食うので同じ
   // 不在のカオスの前は削減 (ブリーチの MOD を外して 1 つ付く。消去で外すとフラクチャーだけになってカオスが打てない)
-  const annulBreach = breachBlocks && !narrowFirst && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
-    && (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1);
+  // ただし外せる物が 1 つだけ残る形なら消去で外す: カオスはその 1 つを入れ替え続けるので、狙いが付いた時に外れが残らない
+  // (削減だと外れが 1 つ増え、狙いと同じ側に外れが残ると、消すにも冒涜で置き換えるにも狙いを巻き込む。2026-09-24 不在の
+  // スペル +3: 増えた外れを消せずに高貴と消去を 2,660 回回していた)
+  const eatSide: Side = breachEat ?? "prefix";
+  const eaten = (inp.startLoose?.[eatSide] ?? 0) > 0 ? 1 : 0;
+  const looseAfter = (inp.startLoose?.prefix ?? 9) + (inp.startLoose?.suffix ?? 9) - eaten;
+  const prefixLooseAfter = (inp.startLoose?.prefix ?? 9) - (eatSide === "prefix" ? eaten : 0);
+  const annulBeforeSpam = narrowFirst && !shielded.has("prefix") && prefixLooseAfter === 0 && looseAfter === 1;
+  const annulBreach = (annulBeforeSpam || (breachBlocks && !narrowFirst)) && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
+    && (annulBeforeSpam || (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1));
   if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   else if (!switchTypes && breach && (essenceNodes.length || breachBlocks || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   if (narrowFirst) main.push(spamNode!);
