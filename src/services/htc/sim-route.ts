@@ -341,6 +341,8 @@ export async function simulateTreeChunked(
 /** 回す。手 0 から、○×の行き先をたどる。「完成」で終わり、未設定・打てない所で止まる */
 export function simulateTree(inp: {
   ctx: StepCtx & { baseQuality?: number }; start: SimState; nodes: readonly SimNode[]; runs?: number; budget?: number; maxActions?: number; seed?: number;
+  /** 調べ用: 1 回目の各手 (打った手の id と、打った後の指輪) を知らせる */
+  trace?: (at: string, s: SimState) => void;
 }): SimResult {
   const { ctx, nodes } = inp;
   const h = simHelpers(ctx, nodes);
@@ -376,10 +378,19 @@ export function simulateTree(inp: {
     // カオスの手へ戻る時は、外せる物が 1 つになるまで今の消去を続けてから (「スパムの狙いが消えたら剥がして最初から」オーナー)。
     // 剥がさずに戻ると外れが居残り、最後に冒涜の枠を塞いでいた (2026-09-24 見本のツリー)
     if (target.action?.kind === "chaos") {
-      const removableCount = st.slots.filter((x) => !x.fixed && !x.keep).length + (st.breach ? 1 : 0);
-      return removableCount > 1 && nodes[cur]!.action?.kind === "annul" ? nodes[cur]!.id : target.id;
+      // 側を決めた消去なら、その側の物だけ数える (反対側の MOD まで数えると剥がし切れず「外せる物が無い」で止まった)
+      const ca0 = nodes[cur]!.action;
+      const side0 = ca0?.kind === "annul" ? ca0.side : null;
+      const removableCount = st.slots.filter((x) => !x.fixed && !x.keep && (!side0 || x.side === side0)).length
+        + (st.breach && side0 !== "suffix" ? 1 : 0);
+      return removableCount > 1 && ca0?.kind === "annul" ? nodes[cur]!.id : target.id;
     }
-    if (h.hasJunk(st) && hasGoal(target)) return nodes[cur]!.id;
+    // 外れが残っていれば今の消去を続ける。ただし側を決めた消去なら、その側の外れだけを見る (反対側の外れで打ち続けて
+    // 「外せる物が無い」で止まっていた。2026-09-24 自動で組んだツリー)
+    const ca = nodes[cur]!.action;
+    const annulSide = ca?.kind === "annul" ? ca.side : null;
+    const junkHere = st.slots.some((x) => !x.fixed && !x.keep && !x.modId && (!annulSide || x.side === annulSide));
+    if (junkHere && hasGoal(target)) return nodes[cur]!.id;
     return target.id;
   };
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
@@ -409,6 +420,7 @@ export function simulateTree(inp: {
       if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
+      if (r === 0) inp.trace?.(n.id, s);
       // 消えたら終わりの MOD (樹 MOD) が消えたら止める
       if (s.slots.filter((x) => x.keep).length < keepCount) { end = `手 ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }
       // 本線の手は「それより上の本線の手で揃えた物が全部まだある」ことも○の条件 (残したい MOD は自動。オーナー 2026-09-24:

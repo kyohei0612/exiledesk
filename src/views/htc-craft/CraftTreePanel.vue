@@ -10,6 +10,9 @@ import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
+import { autoTree } from "./tree-auto";
+import { startKindOf } from "./start-kind";
+import { spawnChance } from "./craft-estimate";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
@@ -21,6 +24,22 @@ const presets = computed(() => TREE_PRESETS.filter((x) => x.applies(c.targets.va
 function loadPreset(id: string): void {
   const x = TREE_PRESETS.find((y) => y.id === id), d = c.data.value, p = c.prices.value;
   if (x && d && p) t.setAll(x.build(d, p, c.targets.value));
+}
+/**
+ * 貼った MOD から自動で組む ([[tree-auto.ts]]、オーナー 2026-09-24:「作っていいよ色んなパターン」)。
+ * 触らない MOD (固定していない樹 MOD など) がある時は側の無いカオスを使わない。クラフト非推奨の時は出さない
+ */
+const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.value.length > 0 && startKindOf(c).kind !== "unsafe");
+function loadAuto(): void {
+  const d = c.data.value, p = c.prices.value;
+  if (!d || !p) return;
+  t.setAll(autoTree({
+    data: d, prices: p, targets: c.targets.value,
+    fixedIds: c.fracturedTargets.value.map((x) => x.modId),
+    qualityTag: c.item.value?.catalystTag ?? null,
+    chaosOk: !t.start.value.slots.some((x) => x.keep),
+    chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
+  }));
 }
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
@@ -42,8 +61,9 @@ async function focus(id: string): Promise<void> {
       手を並べて作り方を組みます。手ごとに「打つ物」と「狙う MOD」、当たった時 (○) と外れた時 (×) にどこへ進むかを選びます。
       ○ は下へ、× は右へ枝が伸びます。消去の手は「自動」にすると、消えた物を見て戻り先を決めます。最後に回すと、完成の確率と費用が出ます。
     </p>
-    <div v-if="presets.length" class="mb-2 text-xs">
+    <div v-if="presets.length || canAuto" class="mb-2 text-xs">
       <span class="opacity-60">見本のツリー:</span>
+      <button v-if="canAuto" type="button" class="ml-2 rounded border border-emerald-600 px-2" title="狙いの MOD から組む。側を選べる手を中心に、消去は自動で戻る" @click="loadAuto()">この MOD から自動で組む</button>
       <button v-for="x in presets" :key="x.id" type="button" class="ml-2 rounded border border-sky-600 px-2" @click="loadPreset(x.id)">{{ x.label }} を読み込む</button>
     </div>
     <!-- 枝の図: ○ は下へ、× は右へ。横に広がるので横にスクロール -->
