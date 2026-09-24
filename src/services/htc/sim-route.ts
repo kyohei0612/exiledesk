@@ -92,7 +92,17 @@ export interface SimSlot {
   keep?: boolean;
   label?: string;
 }
-export interface SimState { slots: SimSlot[]; breach: boolean }
+export interface SimState {
+  slots: SimSlot[];
+  breach: boolean;
+  /**
+   * 今の品質 (%) と種類 (カタリストのタグ)。品質の手を打つと入る。**ブリーチの MOD が消えても下がらない**
+   * (オーナー 2026-09-24:「一度 40% に上げた後、品質 MOD 消してもそのままだからね」)。
+   * 未設定 (品質の手を打っていない) の間は、前の数え方 (上限の品質があるとみなし、触媒の高貴のお告げのたびにカタリスト代) のまま
+   */
+  quality?: number;
+  qualityTag?: string | null;
+}
 
 export interface SimResult {
   runs: number;
@@ -145,7 +155,12 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     [...s.slots.map((x, i) => (!x.fixed && (!side || x.side === side) ? i : -2)).filter((i) => i >= 0), ...(s.breach && side !== "suffix" ? [-1] : [])];
   const removeAt = (s: SimState, r: number): SimState => (r === -1 ? { ...s, breach: false } : { ...s, slots: s.slots.filter((_, i) => i !== r) });
   const has = (s: SimState, id: string): boolean => s.slots.some((x) => x.modId === id);
-  const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.keep && !x.modId);
+  /**
+   * ブリーチの MOD を残す手が無ければ、ブリーチの MOD も外れと同じ (品質を上げる道具。上げた後は消えても品質は残る。
+   * オーナー 2026-09-24:「品質 20% を必須 MOD として最後まで残しておくなんてことはない」)
+   */
+  const breachKept = nodes.some((n) => n.keep.includes("__breach__"));
+  const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.keep && !x.modId) || (s.breach && !breachKept);
 
   /** 狙う MOD のうち need 個あるか */
   const targetsMet = (s: SimState, n: SimNode): boolean =>
@@ -186,7 +201,11 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
    * たびに入れ直す (オーナー 2026-09-24:「品質 MOD が付いてたらその数値分カタリストマックス付けて。普段は 20% やけど、
    * これ付いてたらそれ以降 40%。(触媒の高貴のお告げを) 使わない限り付けっぱなし」)
    */
+  /** 品質の上限 (ベース + ブリーチの MOD があれば 20) */
   const quality = (s: SimState): number => (ctx.baseQuality ?? 20) + (s.breach ? 20 : 0);
+  /** 触媒の高貴のお告げで効く品質。品質の手を打っていれば、その種類の今の品質 (違う種類なら 0)。打っていなければ上限とみなす */
+  const catalystQuality = (s: SimState, tag: string): number =>
+    s.quality == null ? quality(s) : s.qualityTag === tag ? s.quality : 0;
 
   /** その状態で打てるか (打てないなら理由)。画面は打てる物だけ出す (オーナー:「その状態で使えるカレンシーのみ表示」) */
   function usable(s: SimState, a: SimAction | null): string | null {
@@ -216,7 +235,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     switch (a.kind) {
       case "chaos": return cur(a.tier);
       case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0)
-        + (a.catalyst ? cur("OmenofCatalysingExaltation") + catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0);
+        + (a.catalyst ? cur("OmenofCatalysingExaltation") + (s.quality == null ? catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0) : 0);
       case "annul": return cur("annul") + (a.side ? cur(OMEN_ER[a.side]) : 0);
       case "essence": {
         const side = (mod(a.modId)?.type ?? "prefix") as Side;
@@ -229,7 +248,8 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       case "breach": return cur("essence:breach") + cur("OmenofSinistralCrystallisation") + (removable(s, "prefix").length ? 0 : cur("exalt") + cur(OMEN_EX.prefix));
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;
-      case "quality": return catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst));
+      // 同じ種類で入っている分は足すだけ。違う種類なら入れ直し (品質の種類は 1 つ)
+      case "quality": return catalystCountFor(Math.max(0, quality(s) - (s.qualityTag === a.catalyst ? s.quality ?? 0 : 0))) * cur(catalystPriceKey(a.catalyst));
     }
   }
 
@@ -268,7 +288,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       }
       case "exalt": {
         const sides = a.side ? [a.side] : SIDES.filter((x) => room(s, x));
-        return land(s, pick(roll(s, sides, FLOOR[a.tier]!, a.catalyst, quality(s))));
+        return land(s, pick(roll(s, sides, FLOOR[a.tier]!, a.catalyst, a.catalyst ? catalystQuality(s, a.catalyst) : 0)));
       }
       case "annul": return rmRandom(s, a.side);
       case "essence": {
@@ -294,11 +314,12 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         const t = s.breach ? { ...s, breach: false } : rmRandom(s, null);
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), 0, null, 20)));
       }
-      case "check": case "quality": return s;
+      case "check": return s;
+      case "quality": return { ...s, quality: Math.max(quality(s), s.qualityTag === a.catalyst ? s.quality ?? 0 : 0), qualityTag: a.catalyst };
     }
   }
 
-  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, cur, mod };
+  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, breachKept, cur, mod };
 }
 
 /**
@@ -391,14 +412,15 @@ export function simulateTree(inp: {
     // 「外せる物が無い」で止まっていた。2026-09-24 自動で組んだツリー)
     const ca = nodes[cur]!.action;
     const annulSide = ca?.kind === "annul" ? ca.side : null;
-    const junkHere = st.slots.some((x) => !x.fixed && !x.keep && !x.modId && (!annulSide || x.side === annulSide));
+    const junkHere = st.slots.some((x) => !x.fixed && !x.keep && !x.modId && (!annulSide || x.side === annulSide))
+      || (st.breach && !h.breachKept && annulSide !== "suffix");
     if (junkHere && hasGoal(target)) return nodes[cur]!.id;
     return target.id;
   };
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
   for (let r = 0; r < runs; r++) {
     qualityDone = new Set<number>();
-    let s: SimState = { slots: inp.start.slots.map((x) => ({ ...x })), breach: inp.start.breach };
+    let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })) };
     let cost = 0;
     let at = nodes.length ? 0 : -1;
     let end: string | null = nodes.length ? null : "手が無い";

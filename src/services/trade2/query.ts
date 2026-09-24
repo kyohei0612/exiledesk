@@ -250,6 +250,8 @@ export interface SpecQueryOptions {
   baseType?: string;
   rarity: "normal" | "magic" | "nonunique";
   ilvlMin?: number;
+  /** 品質の下限 (%)。type_filters.quality (data-cache/trade2-filters-jp.json で確認) */
+  qualityMin?: number;
   esMin?: number;
   /** 防御タイプで絞る (回避 / アーマー) 2026-09-14 */
   evMin?: number;
@@ -277,6 +279,7 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   const type: Record<string, unknown> = { rarity: { option: o.rarity } };
   if (!o.baseType && o.category) type.category = { option: o.category };
   if (o.ilvlMin != null) type.ilvl = { min: o.ilvlMin };
+  if (o.qualityMin != null) type.quality = { min: o.qualityMin };
   const equipment: Record<string, unknown> = {};
   if (o.esMin != null) equipment.es = { min: o.esMin };
   if (o.evMin != null) equipment.ev = { min: o.evMin };

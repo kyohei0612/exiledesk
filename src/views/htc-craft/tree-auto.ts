@@ -60,11 +60,22 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
   const guarded = new Set(inp.protectedSides ?? []);
   const normal = (side: Side) => guarded.has(side) ? []
-    : ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId);
+    : ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId && t.modId !== toDesecrate?.modId);
   /** 冒涜 + 光で作る狙い (冒涜のみの MOD と、触らない MOD がある側の普通の狙い) */
   const viaDesecrate = (t: TierTarget): boolean =>
     mod(t.modId).source === "desecrated" || (mod(t.modId).source === "normal" && guarded.has(sideOf(t.modId)));
-  const desecrated = ts.filter((t) => viaDesecrate(t));
+  /**
+   * 冒涜で作る狙い。冒涜のみの MOD と、触らない MOD がある側の普通の狙いに加え、それが無ければ**一番出にくい普通の狙いを
+   * 1 つ冒涜に回す** (冒涜は 3 択から選べるので高貴 1 回より当たりやすい)。オーナー 2026-09-24:「基本 2 つまでは確定で
+   * MOD 付ける場合が多い。クラフト MOD 1、冒涜 1 のパターンがほとんど」
+   */
+  const extraDesecrate = (): TierTarget | null => {
+    if (ts.some((t) => viaDesecrate(t))) return null;
+    const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0);
+    return cands.length ? [...cands].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  };
+  const toDesecrate = extraDesecrate();
+  const desecrated = ts.filter((t) => viaDesecrate(t) || t.modId === toDesecrate?.modId);
   const div = p.currency.divine ?? 1;
   /**
    * 狙いの段が届く一番高い下限。完全の高貴 (段 50 以上) はレベル 50 未満の MOD を出さないので、レアリティのプレ (段は
@@ -93,17 +104,24 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const extra: SimNode[] = [];
   let n = 0;
   const id = (): string => `a${++n}`;
+  /** その側の消去の手 (無ければ作る。自動で戻る) */
+  const annulFor = (side: Side): string => {
+    const aid = `x-${side}`;
+    if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
+    return aid;
+  };
 
   // カオスで一番出にくい普通の狙いを先に (○ 次へ、× もう一度)
   // 付く確率が 0 (このベース・ilvl では出ない段) の物は狙えないので除く (選ぶと永久にスパムする)。
   // エッセンス・ブリーチを使う側の物も除く (パーフェクトエッセンスはその側の MOD を必ず 1 つ消すので、カオスで付けた物を
   // 食ってしまう。死体の円環で最大マナをカオスで付け、マナ % のエッセンスに食われて回り続けた)
   const eatSides = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach ? ["prefix" as Side] : [])]);
-  const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId)));
+  const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId))
+    && t.modId !== toDesecrate?.modId);
   // カオスで付けた物が後の消去で消えると、カオスからやり直して他の狙いを壊す。残りの普通の狙いが多いと割に合わない
   // (2026-09-24 実測、段は問わず: 死体の円環 残り 3 つ カオスあり 744 神 / なし 3,680 神、プリズム 残り 5 つ あり 6.5 万神・
   // 完成 70% / なし 1.5 万神・100%)。残りが 3 つ以下の時だけカオスで始める
-  const normalCount = ts.filter((t) => mod(t.modId).source === "normal").length;
+  const normalCount = ts.filter((t) => mod(t.modId).source === "normal" && t.modId !== toDesecrate?.modId).length;
   const spam = inp.chaosOk && pool.length && normalCount - 1 <= 3
     ? [...pool].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   if (spam) {
@@ -111,12 +129,11 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     const sid = id();
     main.push({ ...base, id: sid, action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: spam.modId, minTier: spam.minTierIndex ?? 0 }], need: 1, onHit: null, onMiss: sid });
   }
-  // ブリーチは、プレで作る物が無ければ最初に (以降の手でも残っていること、消えたら自動で戻る)。
-  // プレで作る物があれば最後に回す: 先に付けるとプレの消去で半分消え、付け直すたびに付けた狙いを食って終わらなかった
-  // (2026-09-24 金の指輪)。最後なら、左側の高貴で空きを外れで埋めてからブリーチで 1 つ食わせる (外れを食えば完成)
-  const breachLast = breach && normal("prefix").length > 0;
-  const keepBreach = breach && !breachLast ? ["__breach__"] : [];
-  if (breach && !breachLast) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
+  // ブリーチは最初に付けて品質を上げる道具。上げた後は消えても品質は残るので、残す対象にしない (外れと同じ扱い。消去で
+  // 50% で消える)。オーナー 2026-09-24:「40% 上げて触媒の高貴のお告げで狙って、外れたら左側消去で 50%、それを付くまで」
+  // 「品質 20% を必須 MOD として最後まで残しておくなんてことはない」
+  const keepBreach: string[] = [];
+  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], need: 1, onHit: null, onMiss: null });
   for (const t of essences) {
     main.push({ ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: keepBreach, need: 1, onHit: null, onMiss: null });
   }
@@ -134,8 +151,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
       main.push({ ...base, id: id(), action: { kind: "quality", catalyst: cat }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
       qualityNow = cat;
     }
-    const annulId = `x-${side}`;
-    extra.push({ ...base, id: annulId, action: { kind: "annul", side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
+    const annulId = annulFor(side);
     for (let k = 1; k <= list.length; k++) {
       main.push({
         ...base, id: id(),
@@ -154,17 +170,13 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
       targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
     main.push(node);
-    extra.push({ ...base, id: lightId, action: { kind: "light" }, targets: [], need: 1, onHit: node.id, onMiss: null });
+    // 光が打てない (冒涜の外れが無い) のに枠が外れ (ブリーチの MOD など) で埋まっている時は、その側の消去へ。
+    // 触らない MOD がある側は消去を使わない
+    extra.push({ ...base, id: lightId, action: { kind: "light" }, targets: [], need: 1, onHit: node.id, onMiss: guarded.has(side) ? null : annulFor(side) });
   }
-  if (breachLast) {
-    // 空きを埋める (狙いの無い手 = 順番に打つ手)。枠が満杯なら打てないので飛ばす代わりに、確認だけの手にはしない
-    // 枠が既に満杯 (外れで埋まっている) なら打てないので、× (打てない時の行き先) をブリーチへ
-    const fillId = id(), breachId = id();
-    main.push({ ...base, id: fillId, action: { kind: "exalt", tier: "exalt", side: "prefix", catalyst: null }, targets: [], need: 1, onHit: null, onMiss: breachId });
-    main.push({ ...base, id: breachId, action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
-  }
+
   // 最後に貼り付けの品質の種類で上限まで (ブリーチで上限が上がった後も、ここで埋める)
-  if (inp.qualityTag && (inp.qualityTag !== qualityNow || breachLast)) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], need: 1, onHit: null, onMiss: null });
+  if (inp.qualityTag && inp.qualityTag !== qualityNow) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: inp.qualityTag }, targets: [], need: 1, onHit: null, onMiss: null });
 
   // 本線をつなぐ (○ は次の手、最後は完成)
   main.forEach((x, i) => { x.onHit = main[i + 1]?.id ?? "done"; });

@@ -49,7 +49,11 @@ export function useFinishedCompare(
     if (!d || !cls) return null;
     const got = tradeFiltersFor(d, c.targets.value.filter((t) => !drop.has(t.modId)));
     const unmatched = got.unmatched;
-    const filters: { id: string; min?: number }[] = got.filters.map((f) => (withMins ? { id: f.id, min: f.min } : { id: f.id }));
+    // ブリーチの「品質の最大値 +20%」は完成品に残っている必要が無い (品質を上げる道具。上げた後は消えても品質は残る)。
+    // 代わりに品質の下限で探す (オーナー 2026-09-24:「探す時は品質 40% でかつ 6 MOD のやつ」)
+    const filters: { id: string; min?: number }[] = got.filters.filter((f) => f.id !== "crafted.stat_2039822488")
+      .map((f) => (withMins ? { id: f.id, min: f.min } : { id: f.id }));
+    const q = c.item.value?.quality ?? null;
     if (unmatched.length) return null;
     const bareOf = (id: string): string => id.replace(/^(explicit|fractured|desecrated)\./, "");
     const plain: { id: string; min?: number }[] = [];
@@ -82,6 +86,7 @@ export function useFinishedCompare(
       ...(category ? { category } : {}),
       rarity: "nonunique",
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
+      ...(q != null && q > 20 ? { qualityMin: q } : {}),
       stats: plain,
       anyOf,
     });
@@ -115,7 +120,8 @@ export function useFinishedCompare(
     const d = c.data.value;
     if (!d) return [];
     const fixed = new Set(c.fracturedTargets.value.map((t) => t.modId));
-    const ts = c.targets.value.map((t) => {
+    // ブリーチの品質の最大値は元から条件に入れていない (品質の下限で探す) ので外す対象にしない
+    const ts = c.targets.value.filter((t) => d.mods.get(t.modId)?.family !== "LocalMaximumQuality").map((t) => {
       const m = d.mods.get(t.modId);
       const rank = !m || m.source !== "normal" || fixed.has(t.modId) ? 0 : m.type === "suffix" ? 1 : 2;
       return { key: t.modId, name: c.stepTarget([t.modId]), rank, chance: spawnChance(c, t.modId, t.minTierIndex ?? 0) ?? 1 };
