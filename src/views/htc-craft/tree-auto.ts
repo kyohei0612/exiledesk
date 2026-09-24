@@ -283,7 +283,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const annulBeforeSpam = narrowFirst && !shielded.has("prefix") && prefixLooseAfter === 0 && looseAfter === 1;
   const annulBreach = (annulBeforeSpam || (breachBlocks && !narrowFirst)) && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
     && (annulBeforeSpam || (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1));
-  if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  // カオスの前なら、ブリーチの MOD と外れのどちらが消えても 1 つ残るので、お告げ無しの素の消去でいい (オーナー 2026-09-24:
+  // 「左側消去で MOD 消さなくてもスパムで消えるじゃん」。スパム任せだと外れが 1 つ余って狙いの側に残ることがある)
+  if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: annulBeforeSpam ? null : "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   else if (!switchTypes && breach && (essenceNodes.length || breachBlocks || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   if (narrowFirst) main.push(spamNode!);
   if (!switchTypes) main.push(...essenceNodes);
