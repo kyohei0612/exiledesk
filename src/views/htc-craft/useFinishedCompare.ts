@@ -17,7 +17,7 @@ import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { zeroStart } from "./craft-settings";
-import { stepsEstimate } from "./craft-estimate";
+import { craftEstimate } from "./craft-estimate";
 import type { useHtcCraft } from "./useHtcCraft";
 
 export function useFinishedCompare(
@@ -113,14 +113,10 @@ export function useFinishedCompare(
     const div = c.prices.value?.currency.divine ?? 1;
     return found.value?.min ?? (manual.value != null && manual.value > 0 ? manual.value * div : null);
   });
-  /** 狙いを 1 つずつ付ける平均の合計 (自動の組み立てが組めない時の目安、[[craft-estimate.ts]]) */
-  const sumOfSteps = computed(() => stepsEstimate(c, c.fracturedTargets.value.map((t) => t.modId)));
-  /** 作る見込み = 初動 + スパムの組み立ての平均 (組めなければ 1 つずつの合計) */
-  const craftCost = computed(() => {
-    const t = c.spam.value?.total?.expected ?? sumOfSteps.value;
-    return t != null ? (startCost.value ?? 0) + t : null;
-  });
-  const craftBasis = computed(() => (c.spam.value?.total ? "自動の組み立ての平均" : "狙いを 1 つずつ付ける平均の合計 (付けた物が消える分は入らない)"));
+  /** 作る見込み = 初動 + 残りを作る見込み ([[craft-estimate.ts]]、多めに出る自動の組み立てを優先) */
+  const estimate = computed(() => craftEstimate(c, c.fracturedTargets.value.map((t) => t.modId)));
+  const craftCost = computed(() => (estimate.value ? (startCost.value ?? 0) + estimate.value.value : null));
+  const craftBasis = computed(() => estimate.value?.basis ?? "");
   const verdict = computed(() => {
     const b = buyCost.value, k = craftCost.value;
     return b != null && k != null ? { buy: b <= k, diff: Math.abs(b - k) } : null;

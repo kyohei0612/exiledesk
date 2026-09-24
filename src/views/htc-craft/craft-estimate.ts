@@ -11,6 +11,20 @@ import { stepHelpers, type ItemState, type Side } from "../../services/htc/step-
 import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
+/**
+ * 作る見込み (高貴換算) と、どの物差しで出したか。**多めに出る方を使う** (オーナー 2026-09-24:「作る見込みはどっちがいいかな、
+ * 多めにした方がいいよね」。作るか完成品を買うかを決める数字なので、安めに出ると赤字を「作る方が安い」と言ってしまう)。
+ *   自動の組み立て (カオススパム → 高貴…、付けた物が消える分も入る) の平均。組めない時だけ 1 つずつの合計 (安めに出る)
+ * 真ん中の始め方の比べと、右の完成品との比べで同じ物を使う。
+ */
+export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): { value: number; basis: string } | null {
+  const fixed = c.targets.value.filter((t) => fixedIds.includes(t.modId));
+  const spam = c.spamFor(fixed)?.total?.expected;
+  if (spam != null) return { value: spam, basis: "自動の組み立ての平均" };
+  const steps = stepsEstimate(c, fixedIds);
+  return steps != null ? { value: steps, basis: "狙いを 1 つずつ付ける平均の合計 (付けた物が消える分は入らないので安めに出る)" } : null;
+}
+
 /** 高貴換算の合計。組めなければ null */
 export function stepsEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): number | null {
   const d = c.data.value, cls = c.base.value, p = c.prices.value;

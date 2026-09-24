@@ -28,19 +28,22 @@ export function useSpamPlan(deps: {
   const catalystChoice = ref<Record<string, boolean>>({});
   const spamOverride = ref<string | null>(null);
   /** 固定済み・樹 MOD で埋まっている枠 (スパムの組み立てと途中品の検索で共通) */
-  const spamUsed = computed(() => {
-    const fr = deps.fracturedTargets.value.map((t) => deps.data.value?.mods.get(t.modId)?.type);
+  /** 固定済みの組を指定した時の枠 (始め方の候補ごとに作る見込みを出すため、2026-09-24) */
+  const usedFor = (fixedTargets: readonly TierTarget[]) => {
+    const fr = fixedTargets.map((t) => deps.data.value?.mods.get(t.modId)?.type);
     const z = deps.item.value ? { fixedPrefix: 0, fixedSuffix: 0 } : zeroStart.value;
     return {
       prefix: deps.slotsUsed.value.prefixes + fr.filter((x) => x === "prefix").length + z.fixedPrefix,
       suffix: deps.slotsUsed.value.suffixes + fr.filter((x) => x === "suffix").length + z.fixedSuffix,
     };
-  });
-  const spam = computed(() => {
+  };
+  const spamUsed = computed(() => usedFor(deps.fracturedTargets.value));
+  /** 固定済みの組を指定したスパムの組み立て (今の始め方は spam、候補ごとの比べは spamFor で) */
+  function spamFor(fixedTargets: readonly TierTarget[]) {
     const d = deps.data.value, cls = deps.base.value, p = deps.prices.value, it = deps.item.value;
-    // 固定済みの MOD は付いている物なので作る対象から外す (枠は spamUsed で数えている)。
+    // 固定済みの MOD は付いている物なので作る対象から外す (枠は usedFor で数えている)。
     // 半影の指輪 (火の追加ダメージが固定済み) で、火を「後で作る」狙いに数えていた (2026-09-23)
-    const fixed = new Set(deps.fracturedTargets.value.map((t) => t.modId));
+    const fixed = new Set(fixedTargets.map((t) => t.modId));
     const targets = deps.targets.value.filter((t) => !fixed.has(t.modId));
     if (!d || !cls || !p || !targets.length) return null;
     const z = zeroStart.value;
@@ -51,13 +54,14 @@ export function useSpamPlan(deps: {
       itemLevel: it ? it.itemLevel ?? 82 : z.itemLevel,
       quality: q,
       breach: q > 20,
-      used: spamUsed.value,
+      used: usedFor(fixedTargets),
       baseLimits: sideLimits(d, it ? it.baseType : z.baseType),
       catalystChoice: catalystChoice.value,
       qualityTag: it ? it.catalystTag ?? null : z.qualityTag,
       ...(spamOverride.value ? { spamOverride: spamOverride.value } : {}),
       force: craftForce.value,
     });
-  });
-  return { catalystChoice, spamOverride, spamUsed, spam };
+  }
+  const spam = computed(() => spamFor(deps.fracturedTargets.value));
+  return { catalystChoice, spamOverride, spamUsed, spam, spamFor };
 }

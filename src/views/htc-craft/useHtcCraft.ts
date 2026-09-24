@@ -101,7 +101,7 @@ export function useHtcCraft() {
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /** カオススパムの組み立て ([[useSpamPlan.ts]])。貼り付けが無い時は作り方の設定の 0 から組む値 */
-  const { catalystChoice, spamOverride, spamUsed, spam } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
+  const { catalystChoice, spamOverride, spamUsed, spam, spamFor } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
   /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
@@ -311,7 +311,7 @@ export function useHtcCraft() {
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeBusy, treeError, searchTree, treeTierPick, searchFor, planFor, treeFixSide,
-    spam, catalystChoice, spamOverride, spamUsed,
+    spam, spamFor, catalystChoice, spamOverride, spamUsed,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
     weightNote: WEIGHT_OVERRIDE_NOTE,
   };

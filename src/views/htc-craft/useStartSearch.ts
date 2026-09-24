@@ -23,7 +23,7 @@ import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { startRows, type StartRow } from "./start-rows";
 import { startKindOf } from "./start-kind";
-import { stepsEstimate } from "./craft-estimate";
+import { craftEstimate } from "./craft-estimate";
 import { zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -142,10 +142,10 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const link = res.url ? { text: `${res.total} 件`, url: res.url } : null;
     if (res.error) return { id: "buy", label: "買う", cost: null, note: `取れず: ${res.error}`, link, manual: false, status: "取れず" };
     if (res.price == null) return { id: "buy", label: "買う", cost: null, note: "", link, manual: false, status: "出品なし" };
-    const est = stepsEstimate(c, modIds);
+    const est = craftEstimate(c, modIds);
     return {
-      id: "buy", label: "買う + 残りを作る", cost: est != null ? res.price + est : null, link, manual: false, status: "作る見込みが出せない",
-      note: `買う ${c.money(res.price)}${est != null ? ` + 作る見込み ${c.money(est)}` : ""}`,
+      id: "buy", label: "買う + 残りを作る", cost: est != null ? res.price + est.value : null, link, manual: false, status: "作る見込みが出せない",
+      note: `買う ${c.money(res.price)}${est != null ? ` + 作る見込み ${c.money(est.value)} (${est.basis})` : ""}`,
     };
   }
   /** 探した候補ごとの行と一番安い物。安い順 (取れていない物は後ろ) */
