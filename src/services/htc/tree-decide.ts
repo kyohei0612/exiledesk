@@ -130,7 +130,15 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
     const how = best.kind === "reduce" && mods === 3 ? "desecrate" : best.kind;
     return make(how, best.perTry, best.hit);
   }
-  // 2 MOD 以下は冒涜 1 回でオーブの要求 (4) に届かない
+  // 2 MOD 以下は高貴で 3 MOD まで足してから、3 MOD と同じ道 (冒涜で当て馬を足して 4 MOD、1/3)。
+  // オーナー 2026-09-24:「4 MOD 以下なら尚更調整できるから件数数えていいよ。高貴打てば 4 MOD になるし」。
+  // 前は数えずに外していて、安い物ほど MOD が少ないので「出品 6,539 件なのに足りない」になっていた
+  if (mods >= 1) {
+    const pad = 3 - mods;
+    const est = selfFracture(3, { base: l.price + pad * p.exalt, orb: p.orb, annul: p.annul, bone: p.bone });
+    if (!est.best) return null;
+    return make("desecrate", est.best.perTry, est.best.hit);
+  }
   return null;
 }
 

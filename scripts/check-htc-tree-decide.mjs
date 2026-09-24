@@ -37,7 +37,7 @@ const listings = [
   L("loose", 0.6, 2, 2, "ゆるい 4MOD 0.6 神"),
   L("loose", 0.4, 3, 3, "ゆるい 6MOD 0.4 神"),
   L("loose", 0.3, 2, 3, "ゆるい 5MOD 0.3 神"),
-  L("loose", 5, 1, 1, "ゆるい 2MOD (固定まで届かない)"),
+  L("loose", 5, 1, 1, "ゆるい 2MOD (前は届かないで外していた)"),
 ];
 
 const d = M.decide(listings, P);
@@ -89,9 +89,15 @@ if (after.length) fail(`固定済みより安いのに試さない候補があ�
 else ok("試さない候補は全部、固定済みを買うより成功 1 回あたりが高い");
 if (d.order.some((c) => c.perSuccess > (d.buyOutright ?? Infinity))) fail("固定済みより高い候補を試しています");
 else ok("試す候補は全部、固定済みを買うより成功 1 回あたりが安い");
-if (listings.some((l) => l.label.includes("届かない")) && d.order.concat(d.skipped).some((c) => c.listing.label.includes("届かない"))) {
-  fail("2 MOD の物を候補に入れています (冒涜 1 回で 4 MOD に届かない)");
-} else ok("2 MOD の物は候補から外した");
+// 2 MOD 以下は高貴で 3 MOD まで足してから冒涜 (オーナー 2026-09-24:「4 MOD 以下なら尚更調整できるから件数数えていい」)
+{
+  const two = d.order.concat(d.skipped).find((c) => c.listing.label.includes("届かないで外していた"));
+  const dp2 = P;
+  if (!two) fail("2 MOD の物を候補から外しています (高貴で足せば使える)");
+  else if (Math.abs(two.hit - 1 / 3) > 1e-9) fail(`2 MOD の物の当たりが 1/3 ではない (${two.hit})`);
+  else if (two.perTry < two.listing.price + dp2.exalt) fail("2 MOD の物に高貴 1 回分が入っていない");
+  else ok("2 MOD の物は高貴で 3 MOD にしてから冒涜 (1/3、高貴 1 回分込み)");
+}
 const strictGamble = d.order.concat(d.skipped).filter((c) => c.listing.source === "strict" && c.how === "reduce");
 if (strictGamble.length) fail(`厳しい検索の物を消去ガチャで試しています: ${strictGamble.map((c) => c.listing.label).join(", ")}`);
 else ok("厳しい検索の物は消去ガチャを使わない (そのまま固定 / 右側の高貴で足してネクロ冒涜のどちらか)");
