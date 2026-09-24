@@ -59,8 +59,8 @@ for (const r of RINGS) {
   };
   const chaosOk = !slots.some((x) => x.keep);
   const protectedSides = [...new Set(slots.filter((x) => x.keep).map((x) => x.side))];
-  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, chaosOk, chance, protectedSides });
-  const ctx = { data, cls, prices, itemLevel: it.itemLevel ?? 82, limits, catalystOk: () => true, baseQuality: 20 };
+  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null, baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk, chance, protectedSides });
+  const ctx = { data, cls, prices, itemLevel: it.itemLevel ?? 82, limits, catalystOk: () => true, baseQuality: M.maxQualityForBase(it.baseType ?? "") };
   const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1500, budget: 1000 * D });
   const lost = res.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((a2, x) => a2 + x.p, 0);
   console.log(`${r.name} (${kind.kind}): 手 ${nodes.length} / 完成 ${(res.pDone * 100).toFixed(1)}% / 平均 ${(res.expected / D).toFixed(0)} 神 / 8 割 ${(res.p80 / D).toFixed(0)} 神 / 触らない MOD が消えた ${(lost * 100).toFixed(1)}%`);

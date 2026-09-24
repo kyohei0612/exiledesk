@@ -31,6 +31,13 @@ export interface AutoTreeInput {
   fixedIds: readonly string[];
   /** 貼り付けの品質の種類のタグ (「品質 (マナモッド)」→ mana)。無ければ品質の手は入れない */
   qualityTag: string | null;
+  /**
+   * 貼り付けの品質 (%) とベースの品質の上限 (普通 20、ブリーチの指輪 40)。品質が上限を超えていれば、ブリーチの MOD を
+   * 付けて品質を上げ、後で消している (オーナー 2026-09-24:「品質 MOD かまして消してるね」。死体の円環は 40% なのに
+   * ブリーチの MOD の行が無い)。その時もブリーチを道具として使う
+   */
+  qualityPct?: number | null;
+  baseQuality?: number;
   /** 触媒の高貴のお告げに使ってよい値段の上限 (神)。これより高いカタリストは使わない */
   catalystMaxDivine?: number;
   /**
@@ -56,7 +63,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const ts = inp.targets.filter((t) => !fixed.has(t.modId) && d.mods.has(t.modId));
   const mod = (id: string) => d.mods.get(id)!;
   const sideOf = (id: string): Side => (mod(id).type === "prefix" ? "prefix" : "suffix");
-  const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY);
+  const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY)
+    || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
   const guarded = new Set(inp.protectedSides ?? []);
   const normal = (side: Side) => guarded.has(side) ? []
@@ -89,8 +97,16 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     return r >= 50 ? "exalt_perfect" as const : r >= 35 ? "exalt_greater" as const : "exalt" as const;
   };
   const maxCat = (inp.catalystMaxDivine ?? 0.2) * div;
+  /**
+   * 完成品にブリーチ分の品質 (貼り付けの種類で 40%) が要るか。カタリストの種類を替えると品質は 0 から入れ直しで
+   * (オーナー 2026-09-24:「0 からになるよ」)、ブリーチの MOD が消えた後だと上限 20% までしか入らない。
+   * なので要る時は、ブリーチ → 貼り付けの種類で 40% を最初に入れ、その種類のまま作る (触媒の高貴のお告げは、その種類が
+   * 狙いに効く時だけ)
+   */
+  const lockTag = breach && inp.qualityTag ? inp.qualityTag : null;
   /** その側の狙いに一番多く効く、安いカタリスト (無ければ null) */
   function catalystFor(list: readonly TierTarget[]): string | null {
+    if (lockTag) return list.some((t) => catalystsFor(mod(t.modId)).some((k) => k.tag === lockTag)) ? lockTag : null;
     const count = new Map<string, number>();
     for (const t of list) for (const k of catalystsFor(mod(t.modId))) count.set(k.tag, (count.get(k.tag) ?? 0) + 1);
     const ok = [...count].filter(([tag]) => (p.currency[catalystPriceKey(tag)] ?? Infinity) <= maxCat);
@@ -134,13 +150,14 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // 「品質 20% を必須 MOD として最後まで残しておくなんてことはない」
   const keepBreach: string[] = [];
   if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], need: 1, onHit: null, onMiss: null });
+  if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
   for (const t of essences) {
     main.push({ ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: keepBreach, need: 1, onHit: null, onMiss: null });
   }
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);
   /** 今入っている品質の種類 (自動で組む中で、最後に入れたカタリスト) */
-  let qualityNow: string | null = null;
+  let qualityNow: string | null = lockTag;
   for (const side of sides) {
     const list = normal(side);
     const cat = catalystFor(list);

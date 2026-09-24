@@ -68,6 +68,8 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
   const nodes = autoTree({
     data: d, prices: p, targets: c.targets.value, fixedIds,
     qualityTag: c.item.value?.catalystTag ?? null,
+    qualityPct: c.item.value?.quality ?? null,
+    baseQuality: ctx.baseQuality,
     chaosOk: !start.slots.some((x) => x.keep),
     protectedSides: [...new Set(start.slots.filter((x) => x.keep).map((x) => x.side))],
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),

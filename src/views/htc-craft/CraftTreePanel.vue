@@ -37,6 +37,8 @@ function loadAuto(): void {
     data: d, prices: p, targets: c.targets.value,
     fixedIds: c.fracturedTargets.value.map((x) => x.modId),
     qualityTag: c.item.value?.catalystTag ?? null,
+    qualityPct: c.item.value?.quality ?? null,
+    baseQuality: t.ctx.value?.baseQuality,
     chaosOk: !t.start.value.slots.some((x) => x.keep),
     protectedSides: [...new Set(t.start.value.slots.filter((x) => x.keep).map((x) => x.side))],
     chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
