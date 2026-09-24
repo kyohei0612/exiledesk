@@ -90,7 +90,7 @@ async function runPicked(): Promise<void> {
 /** たたんだ入力欄の 1 行 */
 const inputSummary = computed(() => {
   const it = c.item.value;
-  if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length + c.dropOnly.value.length} 個`;
+  if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length + c.skipped.value.length} 個`;
   const ja = pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value ?? "";
   return `${ja} / ilvl ${pk.level.value} / 狙う MOD ${pk.picks.value.length} 個`;
 });

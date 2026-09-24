@@ -7,26 +7,29 @@
  *   - 左にプレフィックス、右にサフィックス。各列の中は 特殊 → 固定済み → クラフトで付く → 冒涜 → エッセンス の順
  *   - 種類の札の色と説明は上の凡例 (その貼り付けに出た種類だけ)
  *   - 段は ここで選び直せる (ツリーの手でも選び直せる)
- *   - 暗黙・作れない行は下に 1 行ずつ
+ *   - 作れない行 (樹 MOD 以外でこのベースに付かない物) も枠を使うので列に入れる。暗黙は下に 1 行
  */
 import { computed } from "vue";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { zeroStart } from "./craft-settings";
+import { htcModSides } from "../../services/htc/patch";
+import { matchKey } from "../../services/htc/bridge-index";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 
-type Kind = "tree" | "normal" | "desecrated" | "essence";
+type Kind = "tree" | "normal" | "desecrated" | "essence" | "cannot";
 /** 種類ごとの札・色・説明 */
 const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   tree: { label: "特殊 (樹 MOD)", cls: "border-fuchsia-400/60 text-fuchsia-200", note: "創生の樹からしか出ない。クラフトでは付かないので、固定済みの品を買って始める" },
   normal: { label: "クラフトで付く", cls: "border-emerald-400/60 text-emerald-200", note: "カオス・高貴で確率で狙う。重さ (出やすさ) で確率が決まる" },
   desecrated: { label: "冒涜で付く", cls: "border-rose-400/60 text-rose-200", note: "鎖骨で冒涜して明かす MOD。ネクロマンシーのお告げで側を決められる" },
   essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
+  cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };
-const ORDER: Kind[] = ["tree", "normal", "desecrated", "essence"];
+const ORDER: Kind[] = ["tree", "cannot", "normal", "desecrated", "essence"];
 
 interface Row { key: string; text: string; side: "P" | "S" | null; kind: Kind; fixed: boolean; tier: string | null; modId: string | null }
 
@@ -37,11 +40,24 @@ const kindOf = (modId: string): Kind => {
   if (src && CRAFTED_SOURCES.has(src)) return "essence";
   return src === "desecrated" ? "desecrated" : "normal";
 };
+/** 樹 MOD 以外で、このベースに付かない行 */
+const cannotLines = computed(() => {
+  const tree = new Set(c.dropOnly.value.map((d) => d.text));
+  return c.skipped.value.filter((t) => !tree.has(t));
+});
+/** 貼り付けの行 → どちら側の枠か (クライアント由来の表) */
+function sideOfLine(text: string): "P" | "S" | null {
+  const line = c.item.value?.lines.find((l) => l.text === text);
+  const v = line ? htcModSides()[matchKey(line.template)] : undefined;
+  return v === "P" || v === "S" ? v : null;
+}
 const rows = computed<Row[]>(() => [
   ...c.dropOnly.value.map((d, i): Row => ({
     key: `tree-${i}`, text: ja(d.text), side: d.side ?? null, kind: "tree", fixed: true, modId: null,
     tier: d.tier ? `T${d.tier.of - d.tier.index} (${d.tier.min}-${d.tier.max})` : null,
   })),
+  // 作れない行も枠を使うので列に入れる (2026-09-24 金の指輪: 冒涜のミニオンのクールダウンが列の外に出て「サフィ 2」に見えた)
+  ...cannotLines.value.map((t, i): Row => ({ key: `cannot-${i}`, text: ja(t), side: sideOfLine(t), kind: "cannot", fixed: false, modId: null, tier: null })),
   ...c.rows.value.map((r): Row => ({
     key: r.modId, text: r.text, side: r.side, kind: kindOf(r.modId), fixed: fixedIds.value.has(r.modId), modId: r.modId, tier: null,
   })),
@@ -53,11 +69,6 @@ const columns = computed(() => [
 const unknownSide = computed(() => rows.value.filter((r) => r.side == null));
 /** 凡例は出た種類だけ */
 const legend = computed(() => ORDER.filter((k) => rows.value.some((r) => r.kind === k)));
-/** 作れない行 (樹 MOD 以外で、このベースに付かない物) */
-const cannot = computed(() => {
-  const tree = new Set(c.dropOnly.value.map((d) => d.text));
-  return c.skipped.value.filter((t) => !tree.has(t)).map(ja);
-});
 
 /** その MOD の段 (良い順、ilvl で付かない段は出さない) */
 function tiersOf(modId: string): Array<{ i: number; label: string }> {
@@ -103,7 +114,6 @@ const tierOf = (modId: string): number => c.targets.value.find((t) => t.modId ==
       </div>
     </div>
     <p v-if="unknownSide.length" class="mt-2 opacity-70">側が分からない: {{ unknownSide.map((r) => r.text).join(" / ") }}</p>
-    <p v-if="cannot.length" class="mt-2 text-rose-300">このベースでは作れない: {{ cannot.join(" / ") }}</p>
     <p v-if="c.implicits.value.length" class="mt-1 opacity-50">暗黙 (ベースに元から付いている、作る対象外): {{ c.implicits.value.map(ja).join(" / ") }}</p>
   </section>
 </template>
