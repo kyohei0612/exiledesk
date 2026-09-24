@@ -42,6 +42,10 @@ import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../ser
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
 import { indexPrices, pricesForBase, type Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { displayCurrency } from "../../state/display-currency";
+import { marketStore } from "../../state/market-store";
+
+/** 押した時に取り直す相場の古さ (これより新しければそのまま使う) */
+const PRICE_MAX_AGE_MS = 5 * 60 * 1000;
 import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
 import { NECRO_REPLACE_NOTE } from "../../services/htc/tree-decide";
 import type { DropOnlyRow } from "../../services/htc/paste";
@@ -127,6 +131,20 @@ export function useHtcCraft() {
   function buildPrices(cls: ItemBase): { prices: Prices; coverage: HtcPriceCoverage } {
     const built = buildHtcPrices();
     return { prices: pricesForBase(indexPrices(built.file), cls), coverage: built.coverage };
+  }
+
+  /**
+   * 押した時に相場 (カレンシーランキング) を取り直してから値段を決める (オーナー 2026-09-25:「カレンシーとか押した時に
+   * ランキング更新してそれから値段決めてね」)。それまでは他の画面が取った相場を使うだけで、ランキングを開いていないと
+   * 空か古いままだった。続けて押しても叩き過ぎないよう、5 分以内に取った物はそのまま使う
+   */
+  async function refreshPrices(): Promise<void> {
+    await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
+    if (base.value) {
+      const built = buildPrices(base.value);
+      prices.value = built.prices;
+      coverage.value = built.coverage;
+    }
   }
 
   /** データを読む (1 回だけ)。どちらの入口からも先に通る */
@@ -218,6 +236,7 @@ export function useHtcCraft() {
     loading.value = true;
     try {
       const d = await ensureData();
+      await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
       if (picks.length === 0) {
         error.value = "狙う MOD を 1 つ以上選んでください。";
         return;
@@ -241,6 +260,7 @@ export function useHtcCraft() {
     loading.value = true;
     try {
       const d = await ensureData();
+      await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
 
       let t = Date.now();
       const it = parseJaItem(text);
@@ -310,7 +330,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget, setTier, setFractured, startPrice,
+    stepTarget, setTier, setFractured, startPrice, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,

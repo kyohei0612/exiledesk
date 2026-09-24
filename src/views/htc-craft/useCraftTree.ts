@@ -176,8 +176,11 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     running.value = true;
     result.value = null;
     try {
+      // 回す前に相場を取り直す (値段は ctx の中の c.prices から引く)
+      await c.refreshPrices();
+      const x2 = ctx.value ?? x;
       const div = c.prices.value?.currency.divine ?? 1;
-      result.value = await simulateTreeChunked({ ctx: x, start: start.value, nodes: nodes.value, runs: Math.max(100, runs.value), budget: Math.max(0, budgetDivine.value - Math.max(0, baseDivine.value || 0)) * div },
+      result.value = await simulateTreeChunked({ ctx: x2, start: start.value, nodes: nodes.value, runs: Math.max(100, runs.value), budget: Math.max(0, budgetDivine.value - Math.max(0, baseDivine.value || 0)) * div },
         (done, total) => { progress.value = [done, total]; });
     } finally {
       running.value = false;

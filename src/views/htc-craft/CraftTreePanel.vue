@@ -32,8 +32,11 @@ const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.v
 /** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
 const autoBusy = ref(false);
 async function loadAuto(): Promise<void> {
+  if (!t.ctx.value || autoBusy.value) return;
+  // 組む前に相場を取り直す (カタリスト・お告げの今の値段で比べる)
+  await c.refreshPrices();
   const ctx = t.ctx.value;
-  if (!ctx || autoBusy.value) return;
+  if (!ctx) return;
   const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
   if (!inp) return;
   autoBusy.value = true;
