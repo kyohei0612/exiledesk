@@ -71,7 +71,7 @@ export type LineKind = "explicit" | "implicit" | "fractured" | "desecrated" | "c
 const TREE_JA: Readonly<Record<string, string>> = {
   genesis_tree_caster: "創生の樹 キャスター",
   genesis_tree_minion: "創生の樹 ミニオン",
-  breach_desecration: "創生の樹 (冒涜)",
+  breach_desecration: "創生の樹 (異界の MOD)",
   tower_augment_breach: "創生の樹 (タワー)",
 };
 

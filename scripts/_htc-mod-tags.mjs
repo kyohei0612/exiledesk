@@ -50,6 +50,8 @@ export function buildModSides(MODS) {
  * tower_augment_breach    7 件
  * ```
  *
+ * domain は item と desecrated (樹が生む指輪などの「異界の MOD」36 件、2026-09-24 に足した)。
+ *
  * ## 通常プールでも出る物は**入れません**
  * 194 件のうち 16 件は他のタグでも重み > 0 で、**普通に作れます**。それを「買うしかない」と
  * 断ると嘘になるので、**創生の樹でしか出ない 178 件だけ**を出します。
@@ -67,7 +69,10 @@ export function buildDropOnly(MODS) {
   const TREE = /^(genesis_tree_caster|genesis_tree_minion|breach_desecration|tower_augment_breach)$/;
   const out = {};
   for (const m of Object.values(MODS)) {
-    if (m.domain !== "item" || !m.text) continue;
+    // domain が desecrated の物は樹が生む指輪などに付く「異界の MOD」(Otherworldly、poe2db の The Genesis Tree)。
+    // 冒涜では出ない (冒涜で出るのは樹 MOD とクラフト MOD 以外) ので、これも買うしかない。2026-09-24 金の指輪の
+    // 「ミニオンのクールダウン (of Invigoration)」が漏れて「作れない」になっていた
+    if ((m.domain !== "item" && m.domain !== "desecrated") || !m.text) continue;
     const w = m.spawn_weights || [];
     const tree = w.filter((x) => TREE.test(x.tag) && x.weight > 0);
     if (!tree.length) continue;
@@ -77,6 +82,8 @@ export function buildDropOnly(MODS) {
     out[k] ??= {
       tag: tree[0].tag,
       side: m.generation_type === "prefix" ? "P" : "S",
+      // 取引所では冒涜の種類 (desecrated.) で持つ
+      ...(m.domain === "desecrated" ? { domain: "desecrated" } : {}),
       name: m.name || "",
       // 取引所の条件を組むための stat id。**この MOD はエンジンに無い**ので、
       // 普通の経路 (`tradeFiltersFor`) では引けません。買うしか無い MOD なのに検索も

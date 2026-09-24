@@ -175,6 +175,8 @@ export interface DropOnlyInfo {
   qualityTags?: string[];
   /** 段。**低い方から**並ぶ (エンジンの `mod.tiers` と同じ向き) */
   tiers?: DropOnlyTier[];
+  /** 樹が生む指輪などの「異界の MOD」。取引所では冒涜 (desecrated.) の種類で持つ */
+  domain?: "desecrated";
 }
 
 /** 創生の樹の MOD の 1 段 */

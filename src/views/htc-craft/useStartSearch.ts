@@ -92,7 +92,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const d = c.data.value;
     const buys = c.planFor([])?.buys ?? [];
     if (!d || !buys.length) return null;
-    const tree = buys.flatMap((b) => b.filters).map((f) => ({ id: f.id.replace(/^fractured\./, "explicit."), min: f.min ?? 0 }));
+    const tree = buys.flatMap((b) => b.filters.map((f) => ({ id: f.id.replace(/^fractured\./, `${b.plain}.`), min: f.min ?? 0 })));
     const { filters, unmatched } = tradeFiltersFor(d, c.targets.value.filter((t) => modIds.includes(t.modId)));
     if (unmatched.length) return null;
     return buildSpecQuery({

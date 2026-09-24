@@ -120,7 +120,7 @@ export function useTreeSearch(deps: {
     // 固定しない側の樹 MOD は「付いていればいい」(explicit)。固定済みの検索でも固定済みにしない
     const fixSide = treeFixSide.value;
     const tree = treeBuys(dropOnly.value, { mins }).map((b, i) => (fixSide && dropOnly.value[i]?.side && dropOnly.value[i]!.side !== fixSide
-      ? { ...b, filters: b.filters.map((f) => ({ ...f, id: f.id.replace(/^fractured\./, "explicit.") })) }
+      ? { ...b, filters: b.filters.map((f) => ({ ...f, id: f.id.replace(/^fractured\./, `${b.plain}.`) })) }
       : b));
     const buys = [...tree, ...(d ? fracturedBuys(d, fixed, (id) => stepTarget([id])) : [])];
     // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り

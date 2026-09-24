@@ -49,6 +49,11 @@ export interface TreeBuy {
   searchable: boolean;
   /** 組めなかった理由 */
   why?: string;
+  /**
+   * 固定済みでない時の取引所の種類。普通は explicit、樹が生む指輪などの「異界の MOD」は desecrated
+   * (2026-09-24 金の指輪の of Invigoration)
+   */
+  plain: "explicit" | "desecrated";
 }
 
 /**
@@ -68,7 +73,8 @@ export function treeBuys(
   const table = htcDropOnly();
   const out: TreeBuy[] = [];
   for (const row of rows) {
-    const side = Object.values(table).find((v) => v.name === row.name)?.side ?? "P";
+    const info = Object.values(table).find((v) => v.name === row.name);
+    const side = info?.side ?? "P";
     const filters: { id: string; min?: number }[] = [];
     const missing: string[] = [];
     for (const sid of row.stats ?? []) {
@@ -81,6 +87,7 @@ export function treeBuys(
       text: row.text,
       tag: row.tag,
       side,
+      plain: info?.domain === "desecrated" ? "desecrated" : "explicit",
       filters,
       searchable: filters.length > 0,
       ...(filters.length === 0
@@ -102,7 +109,7 @@ export function fracturedBuys(data: PatchData, targets: readonly TierTarget[], n
     const { filters } = tradeFiltersFor(data, [t]);
     const side = data.mods.get(t.modId)?.type === "suffix" ? "S" : "P";
     return {
-      text: name(t.modId), tag: "fractured", side,
+      text: name(t.modId), tag: "fractured", side, plain: "explicit",
       filters: filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min })),
       searchable: filters.length > 0,
       ...(filters.length ? {} : { why: "取引所の条件にできる stat が見つからない" }),
@@ -145,10 +152,10 @@ export function treeBuyQuery(
 ): ReturnType<typeof buildSpecQuery> | null {
   const fractured = opts.fractured ?? true;
   // 下限が無い条件は min を落として送る (段を問わない検索)
-  const filters: { id: string; min?: number; max?: number }[] = buys.flatMap((b) => b.filters).map((f) => ({
-    id: fractured ? f.id : f.id.replace(/^fractured\./, "explicit."),
+  const filters: { id: string; min?: number; max?: number }[] = buys.flatMap((b) => b.filters.map((f) => ({
+    id: fractured ? f.id : f.id.replace(/^fractured\./, `${b.plain}.`),
     min: f.min ?? 0,
-  }));
+  })));
   // 厳しい: 固定したい MOD の側は、その MOD だけ (もう片側は問わない)。樹 MOD はプレなので従来どおりプレ 1
   if (opts.strict && !fractured) {
     const nP = buys.filter((b) => b.side === "P").length, nS = buys.filter((b) => b.side === "S").length;

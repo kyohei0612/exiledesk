@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-23",
+ "generated": "2026-09-24",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -48601,6 +48601,12 @@
      "level": 39
     },
     {
+     "name": "Burdensome",
+     "min": 8,
+     "max": 12,
+     "level": 1
+    },
+    {
      "name": "Exhausting",
      "min": 10,
      "max": 12,
@@ -48613,6 +48619,656 @@
      "level": 77
     }
    ]
+  },
+  "sealed skills have +# to maximum seals": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Esh",
+   "stats": [
+    "base_maximum_seals_for_skill"
+   ],
+   "qualityTags": [],
+   "tiers": []
+  },
+  "inflict anaemia on hit anaemia allows +# corrupted blood debuffs to be inflicted on enemies": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Uul-Netol's",
+   "stats": [
+    "apply_anaemia_magnitude_on_hit"
+   ],
+   "qualityTags": [
+    "physical"
+   ],
+   "tiers": [
+    {
+     "name": "Uul-Netol's",
+     "min": 2,
+     "max": 3,
+     "level": 1
+    }
+   ]
+  },
+  "gain #% of physical damage as extra cold damage": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Tul's",
+   "stats": [
+    "non_skill_base_physical_damage_%_to_gain_as_cold"
+   ],
+   "qualityTags": [
+    "physical",
+    "cold"
+   ],
+   "tiers": [
+    {
+     "name": "Tul's",
+     "min": 10,
+     "max": 20,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased archon buff duration": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Exertion",
+   "stats": [
+    "archon_duration_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Exertion",
+     "min": 40,
+     "max": 50,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased effect of archon buffs on you": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Unshackling",
+   "stats": [
+    "archon_effect_on_you_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "Unshackling",
+     "min": 20,
+     "max": 39,
+     "level": 1
+    }
+   ]
+  },
+  "#% to gain archon of undeath when you create an offering": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Unending",
+   "stats": [
+    "chance_%_to_gain_archon_of_undeath_when_you_create_an_offering"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Unending",
+     "min": 35,
+     "max": 50,
+     "level": 1
+    }
+   ]
+  },
+  "skills have #% chance to not remove elemental infusions but still count as consuming them if you've lost an archon buff in the past # seconds": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Reverberation",
+   "stats": [
+    "chance_to_not_consume_infusion_%_if_lost_archon_in_past_6_seconds"
+   ],
+   "qualityTags": [
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "tiers": [
+    {
+     "name": "of Reverberation",
+     "min": 40,
+     "max": 50,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased cold damage if you've collected a cold infusion in the last # seconds": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Glacial",
+   "stats": [
+    "cold_damage_+%_cold_infusion_collected_last_8_seconds"
+   ],
+   "qualityTags": [
+    "cold"
+   ],
+   "tiers": [
+    {
+     "name": "Glacial",
+     "min": 41,
+     "max": 59,
+     "level": 1
+    }
+   ]
+  },
+  "#% of damage from hits is taken from your spectres' life before you": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Underling's",
+   "stats": [
+    "damage_removed_from_spectres_before_life_or_es_%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": []
+  },
+  "#% increased fire damage if you've collected a fire infusion in the last # seconds": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Erupting",
+   "stats": [
+    "fire_damage_+%_if_fire_infusion_collected_last_8_seconds"
+   ],
+   "qualityTags": [
+    "fire"
+   ],
+   "tiers": [
+    {
+     "name": "Erupting",
+     "min": 41,
+     "max": 59,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased lightning damage if you've collected a lightning infusion in the last # seconds": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Energising",
+   "stats": [
+    "lightning_damage_+%_if_lightning_infusion_collected_last_8_seconds"
+   ],
+   "qualityTags": [
+    "lightning"
+   ],
+   "tiers": [
+    {
+     "name": "Energising",
+     "min": 41,
+     "max": 59,
+     "level": 1
+    }
+   ]
+  },
+  "minions have +#% surpassing chance to fire an additional projectile": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Scattering",
+   "stats": [
+    "minion_chance_to_fire_1_additional_projectile_%_with_rollover"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Scattering",
+     "min": 50,
+     "max": 100,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased minion damage per different command skill used in the past # seconds": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Instructor's",
+   "stats": [
+    "minion_damage_+%_per_different_command_skills_used_in_last_15_seconds"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Instructor's",
+     "min": 7,
+     "max": 12,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased minion duration": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Binding",
+   "stats": [
+    "base_minion_duration_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Binding",
+     "min": 35,
+     "max": 49,
+     "level": 1
+    }
+   ]
+  },
+  "minions' strikes have melee splash": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Ravaging",
+   "stats": [
+    "minion_melee_splash"
+   ],
+   "qualityTags": [],
+   "tiers": []
+  },
+  "#% increased reservation efficiency of minion skills": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Coherence",
+   "stats": [
+    "reservation_efficiency_+%_of_minion_skills"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Coherence",
+     "min": 7,
+     "max": 10,
+     "level": 1
+    }
+   ]
+  },
+  "your minions are gigantic if they have revived recently": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Monstrous",
+   "stats": [
+    "minions_are_gigantic_if_have_revived_recently"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": []
+  },
+  "sealed skills have #% increased seal gain frequency": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Expectation",
+   "stats": [
+    "seal_gain_frequency_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Expectation",
+     "min": 21,
+     "max": 35,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased magnitude of elemental ailments you inflict with spells": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Imbuing",
+   "stats": [
+    "spell_elemental_ailment_magnitude_+%"
+   ],
+   "qualityTags": [
+    "fire",
+    "cold",
+    "lightning",
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Imbuing",
+     "min": 30,
+     "max": 40,
+     "level": 1
+    }
+   ]
+  },
+  "+#% to fire spell critical hit chance": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Xoph",
+   "stats": [
+    "fire_spell_additional_critical_strike_chance_permyriad"
+   ],
+   "qualityTags": [
+    "fire",
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Xoph",
+     "min": 4,
+     "max": 5,
+     "level": 1
+    }
+   ]
+  },
+  "minions have #% increased skill speed with command skills": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Punctuality",
+   "stats": [
+    "minion_command_skill_skill_speed_+%"
+   ],
+   "qualityTags": [
+    "speed",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Punctuality",
+     "min": 20,
+     "max": 30,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased exposure effect": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Drenching",
+   "stats": [
+    "exposure_effect_+%"
+   ],
+   "qualityTags": [
+    "fire",
+    "cold",
+    "lightning"
+   ],
+   "tiers": [
+    {
+     "name": "of Drenching",
+     "min": 25,
+     "max": 35,
+     "level": 1
+    }
+   ]
+  },
+  "+# to maximum number of elemental infusions": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Amplification",
+   "stats": [
+    "additional_maximum_infusion_stacks"
+   ],
+   "qualityTags": [],
+   "tiers": []
+  },
+  "invocated skills have #% increased maximum energy": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Vastness",
+   "stats": [
+    "invocation_skill_maximum_energy_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "of Vastness",
+     "min": 25,
+     "max": 35,
+     "level": 1
+    }
+   ]
+  },
+  "minions have #% increased magnitude of damaging ailments": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Contaminating",
+   "stats": [
+    "minion_base_damaging_ailment_effect_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Contaminating",
+     "min": 35,
+     "max": 45,
+     "level": 1
+    }
+   ]
+  },
+  "minions break armour equal to #% of physical damage dealt": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Scratching",
+   "stats": [
+    "minion_armour_break_physical_damage_%_dealt_as_armour_break"
+   ],
+   "qualityTags": [
+    "physical",
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "Scratching",
+     "min": 2,
+     "max": 4,
+     "level": 1
+    }
+   ]
+  },
+  "minions have #% increased cooldown recovery rate": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Invigoration",
+   "stats": [
+    "minion_cooldown_recovery_+%"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of Invigoration",
+     "min": 21,
+     "max": 29,
+     "level": 1
+    }
+   ]
+  },
+  "#% surpassing chance to gain a puppet master stack whenever you use a command skill": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of the Cabal",
+   "stats": [
+    "surpassing_chance_%_to_gain_1_puppeteer_stack_on_using_command_skill"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": [
+    {
+     "name": "of the Cabal",
+     "min": 40,
+     "max": 50,
+     "level": 1
+    }
+   ]
+  },
+  "offering skills have #% increased buff effect": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Dedicated",
+   "stats": [
+    "offering_spells_effect_+%"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "Dedicated",
+     "min": 23,
+     "max": 30,
+     "level": 1
+    }
+   ]
+  },
+  "spells gain #% of damage as extra chaos damage": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Soul Stealer's",
+   "stats": [
+    "non_skill_base_all_damage_%_to_gain_as_chaos_with_spells"
+   ],
+   "qualityTags": [],
+   "tiers": [
+    {
+     "name": "Soul Stealer's",
+     "min": 8,
+     "max": 12,
+     "level": 1
+    }
+   ]
+  },
+  "gain #% of damage as extra cold damage with spells": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Tempest Rider's",
+   "stats": [
+    "non_skill_base_all_damage_%_to_gain_as_cold_with_spells"
+   ],
+   "qualityTags": [
+    "cold"
+   ],
+   "tiers": [
+    {
+     "name": "Tempest Rider's",
+     "min": 8,
+     "max": 12,
+     "level": 1
+    }
+   ]
+  },
+  "gain #% of damage as extra fire damage with spells": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Fire Breather's",
+   "stats": [
+    "non_skill_base_all_damage_%_to_gain_as_fire_with_spells"
+   ],
+   "qualityTags": [
+    "fire"
+   ],
+   "tiers": [
+    {
+     "name": "Fire Breather's",
+     "min": 8,
+     "max": 12,
+     "level": 1
+    }
+   ]
+  },
+  "gain #% of damage as extra lightning damage with spells": {
+   "tag": "breach_desecration",
+   "side": "P",
+   "domain": "desecrated",
+   "name": "Storm Chaser's",
+   "stats": [
+    "non_skill_base_all_damage_%_to_gain_as_lightning_with_spells"
+   ],
+   "qualityTags": [
+    "lightning"
+   ],
+   "tiers": [
+    {
+     "name": "Storm Chaser's",
+     "min": 8,
+     "max": 12,
+     "level": 1
+    }
+   ]
+  },
+  "#% increased magnitude of impales inflicted with spells": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Lancing",
+   "stats": [
+    "spell_impale_magnitude_+%"
+   ],
+   "qualityTags": [
+    "physical",
+    "caster"
+   ],
+   "tiers": [
+    {
+     "name": "of Lancing",
+     "min": 20,
+     "max": 30,
+     "level": 1
+    }
+   ]
+  },
+  "temporary minion skills have +# to limit of minions summoned": {
+   "tag": "breach_desecration",
+   "side": "S",
+   "domain": "desecrated",
+   "name": "of Multitudes",
+   "stats": [
+    "temporary_minion_limit_+"
+   ],
+   "qualityTags": [
+    "minion"
+   ],
+   "tiers": []
   },
   "+# to level of all spell skills": {
    "tag": "genesis_tree_caster",
