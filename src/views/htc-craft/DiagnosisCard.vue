@@ -139,6 +139,9 @@ const fixLabel = computed(() => {
         </p>
         <p class="opacity-50">条件は MOD だけ (普通・固定済み・冒涜のどれで付いていてもいい)</p>
         <p v-if="fin.lightNote.value" class="text-amber-300/80">{{ fin.lightNote.value }}</p>
+        <p v-if="fin.dropped.value.length" class="rounded bg-amber-500/10 px-1 text-amber-200">
+          完成品は無かったので、近い物: {{ fin.dropped.value.join(" / ") }} を外して見つけた値段です (買ってから付ける。作るのとは比べていません)
+        </p>
         <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
         <p class="mt-1">作る見込み: <b class="text-[13px]">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</b></p>
         <p class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>

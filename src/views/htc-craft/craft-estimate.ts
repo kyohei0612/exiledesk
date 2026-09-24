@@ -46,3 +46,18 @@ export function stepsEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
   }
   return sum;
 }
+
+/**
+ * その MOD (狙いの段以上) が、その側に 1 回付けた時に出る確率。ベースの MOD 一覧 (normal) の重みの割合、ilvl で出ない段は除く。
+ * 普通の MOD 以外 (エッセンス・冒涜など) は null。始め方の候補の % と、完成品を探す時に外す順で使う
+ */
+export function spawnChance(c: ReturnType<typeof useHtcCraft>, modId: string, minTierIndex: number): number | null {
+  const d = c.data.value, cls = c.base.value;
+  const m = d?.mods.get(modId);
+  if (!d || !cls || !m || m.source !== "normal") return null;
+  const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
+  const w = (id: string, minIdx: number): number =>
+    (d.mods.get(id)?.tiers ?? []).reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= lv ? t.weight : 0), 0);
+  const pool = (cls.pools.normal[m.type === "prefix" ? "prefixes" : "suffixes"] ?? []).reduce((a, id) => a + w(id, 0), 0);
+  return pool > 0 ? w(modId, minTierIndex) / pool : null;
+}

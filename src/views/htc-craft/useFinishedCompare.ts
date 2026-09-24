@@ -18,7 +18,8 @@ import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { zeroStart } from "./craft-settings";
 import { matchKey } from "../../services/htc/bridge-index";
-import { craftEstimate } from "./craft-estimate";
+import { craftEstimate, spawnChance } from "./craft-estimate";
+import { jaOfPastedLine } from "../../services/htc/mod-text";
 import type { useHtcCraft } from "./useHtcCraft";
 
 export function useFinishedCompare(
@@ -38,10 +39,10 @@ export function useFinishedCompare(
    * withMins = false は値 (段の下限) を外して MOD の組み合わせだけ (オーナー 2026-09-24:「完成版で出なかったら MOD の値だけ
    * 消して組み合わせだけで完成品としておけ」)。
    */
-  function build(level: "full" | "light", withMins = true) {
+  function build(level: "full" | "light", withMins = true, drop: ReadonlySet<string> = new Set()) {
     const d = c.data.value, cls = c.base.value;
     if (!d || !cls) return null;
-    const got = tradeFiltersFor(d, c.targets.value);
+    const got = tradeFiltersFor(d, c.targets.value.filter((t) => !drop.has(t.modId)));
     const unmatched = got.unmatched;
     const filters: { id: string; min?: number }[] = got.filters.map((f) => (withMins ? { id: f.id, min: f.min } : { id: f.id }));
     if (unmatched.length) return null;
@@ -63,7 +64,7 @@ export function useFinishedCompare(
       else plain.push(f.min != null ? f : { id: f.id });
     }
     // 狙い以外の付いている MOD (冒涜のみ・作れない)。値は問わず、付いていること (冒涜の物は冒涜で)
-    for (const x of extraLines.value) if (!seen.has(x.bare)) { seen.add(x.bare); plain.push({ id: `${x.desecrated ? "desecrated" : "explicit"}.${x.bare}` }); }
+    for (const x of extraLines.value) if (!seen.has(x.bare) && !drop.has(`extra:${x.bare}`)) { seen.add(x.bare); plain.push({ id: `${x.desecrated ? "desecrated" : "explicit"}.${x.bare}` }); }
     const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
     const category = tradeCategoryOf(cls);
     if (!baseType && !category) return null;
@@ -87,14 +88,34 @@ export function useFinishedCompare(
     const tree = new Set(c.dropOnly.value.map((x) => x.text));
     const byText = new Map<string, string>();
     for (const m of d.mods.values()) if (m.text && !byText.has(matchKey(m.text))) byText.set(matchKey(m.text), m.id);
-    return c.skipped.value.filter((t) => !tree.has(t)).flatMap((t) => {
+    return c.skipped.value.filter((t) => !tree.has(t)).flatMap((t): Array<{ bare: string; desecrated: boolean; text: string }> => {
       const line = it.lines.find((l) => l.text === t);
       const modId = line ? byText.get(matchKey(line.template)) : undefined;
       // stat はエンジンの段に無いことがあるので、同じ系統から借りる tradeFiltersFor で引く
       const trade = modId ? tradeFiltersFor(d, [{ modId, minTierIndex: 0 }]).filters[0]?.id : undefined;
-      return trade ? [{ bare: trade.replace(/^[a-z]+\./, ""), desecrated: line!.kind === "desecrated" }] : [];
+      return trade ? [{ bare: trade.replace(/^[a-z]+\./, ""), desecrated: line!.kind === "desecrated", text: t }] : [];
     });
   });
+  /**
+   * 組み合わせだけでも無い時に外していく順 (オーナー 2026-09-24:「つきやすい確率順で MOD 消して検索かけようか。特にサフィとか
+   * クラフト MOD やフラクチャーで探す MOD は優先度低いから外して、徐々に緩くしていこう。値は 0 で MOD が付いていればいい」):
+   *   クラフト MOD (エッセンス等)・固定済みで探す MOD → サフィ (付きやすい順) → プレ (付きやすい順) → 樹の冒涜 MOD など。
+   * 樹 MOD は外さない (クラフトではどうにもならない物なので)
+   */
+  const dropOrder = computed(() => {
+    const d = c.data.value;
+    if (!d) return [];
+    const fixed = new Set(c.fracturedTargets.value.map((t) => t.modId));
+    const ts = c.targets.value.map((t) => {
+      const m = d.mods.get(t.modId);
+      const rank = !m || m.source !== "normal" || fixed.has(t.modId) ? 0 : m.type === "suffix" ? 1 : 2;
+      return { key: t.modId, name: c.stepTarget([t.modId]), rank, chance: spawnChance(c, t.modId, t.minTierIndex ?? 0) ?? 1 };
+    });
+    const ex = extraLines.value.map((x) => ({ key: `extra:${x.bare}`, name: jaOfPastedLine(x.text) ?? x.text, rank: 3, chance: 0 }));
+    return [...ts, ...ex].sort((a, b) => a.rank - b.rank || b.chance - a.chance);
+  });
+  /** 外して見つかった時の、外した MOD の名前 (完成品ではない) */
+  const dropped = ref<string[]>([]);
   const query = computed(() => build("full"));
   /** 組めない理由 (取引所の条件にできない MOD がある) */
   const unbuildable = computed(() => {
@@ -111,7 +132,7 @@ export function useFinishedCompare(
   const manual = ref<number | null>(null);
   const busy = ref(false);
   const error = ref<string | null>(null);
-  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; });
+  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; });
 
   async function search(): Promise<void> {
     if (busy.value || !query.value) return;
@@ -120,6 +141,7 @@ export function useFinishedCompare(
     try {
       const league = marketStore.league.value?.Value ?? "Standard";
       lightNote.value = null;
+      dropped.value = [];
       let level: "full" | "light" = "full";
       let r = await autoPriceCached(league, query.value, marketStore.rates.value, 5);
       const light = build("light");
@@ -136,6 +158,17 @@ export function useFinishedCompare(
           r = r2;
           lightNote.value = [lightNote.value, "同じ値の完成品が無かったので、値 (段) は問わず MOD の組み合わせだけで探しました"].filter(Boolean).join("。");
         }
+      }
+      // それでも無ければ、優先度の低い MOD から 1 つずつ外していく (値は問わない)
+      const drop: string[] = [];
+      for (const x of dropOrder.value) {
+        if (!r || r.total > 0) break;
+        drop.push(x.key);
+        const q = build(level, false, new Set(drop));
+        const r3 = q ? await autoPriceCached(league, q, marketStore.rates.value, 5) : null;
+        if (!r3) break;
+        r = r3;
+        if (r3.total > 0) dropped.value = dropOrder.value.slice(0, drop.length).map((y) => y.name);
       }
       if (!r) error.value = tradeAuto.lastError.value ?? "取れませんでした (間隔待ちの時は少し待って押し直し)";
       else found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
@@ -157,8 +190,9 @@ export function useFinishedCompare(
   const craftBasis = computed(() => estimate.value?.basis ?? "");
   const verdict = computed(() => {
     const b = buyCost.value, k = craftCost.value;
-    return b != null && k != null ? { buy: b <= k, diff: Math.abs(b - k) } : null;
+    // 外して見つけた物は完成品ではない (外した MOD を後で付ける) ので、比べない
+    return b != null && k != null && !dropped.value.length ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, unbuildable, lightNote, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
+  return { query, unbuildable, lightNote, dropped, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
 }

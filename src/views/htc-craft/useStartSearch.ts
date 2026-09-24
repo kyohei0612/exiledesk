@@ -23,7 +23,7 @@ import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { startRows, type StartRow } from "./start-rows";
 import { startKindOf } from "./start-kind";
-import { craftEstimate } from "./craft-estimate";
+import { craftEstimate, spawnChance } from "./craft-estimate";
 import { zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -57,17 +57,12 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const k = kind.value.kind;
     if (k === "unsafe") return [];
     if (k === "fix") return [{ key: TREE_ONLY, modIds: [], name: "樹 MOD を固定", side: null, chance: null }];
-    const d = c.data.value, cls = c.base.value;
-    const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
-    const w = (id: string, minIdx: number): number =>
-      (d?.mods.get(id)?.tiers ?? []).reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= lv ? t.weight : 0), 0);
-    const pool = (side: "prefixes" | "suffixes"): number => (cls?.pools.normal[side] ?? []).reduce((a, id) => a + w(id, 0), 0);
-    const total = { P: pool("prefixes"), S: pool("suffixes") };
+    const d = c.data.value;
     const mods = c.targets.value
       .filter((t) => d?.mods.get(t.modId)?.source === "normal")
       .map((t) => {
         const side = d!.mods.get(t.modId)!.type === "prefix" ? "P" as const : "S" as const;
-        const chance = total[side] > 0 ? w(t.modId, t.minTierIndex ?? 0) / total[side] : null;
+        const chance = spawnChance(c, t.modId, t.minTierIndex ?? 0);
         const label = c.stepTarget([t.modId]);
         return { key: t.modId, modIds: [t.modId], name: k === "separate" ? `${label} が固定済みの物を買う` : `${label} を固定`, side, chance };
       })
