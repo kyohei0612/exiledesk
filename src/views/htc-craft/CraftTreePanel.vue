@@ -10,7 +10,7 @@ import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
-import { autoTree } from "./tree-auto";
+import { autoTree, chaosSideFor } from "./tree-auto";
 import { startKindOf } from "./start-kind";
 import { spawnChance } from "./craft-estimate";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -41,6 +41,7 @@ function loadAuto(): void {
     baseQuality: t.ctx.value?.baseQuality,
     chaosOk: !t.start.value.slots.some((x) => x.keep),
     protectedSides: [...new Set(t.start.value.slots.filter((x) => x.keep).map((x) => x.side))],
+    chaosSide: t.ctx.value ? chaosSideFor(t.start.value, t.ctx.value.limits) : null,
     chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
   }));
 }

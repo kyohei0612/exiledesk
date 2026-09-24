@@ -13,7 +13,7 @@ import { simulateTreeChunked } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
 import { simCtxOf, startStateOf } from "./sim-setup";
 import { startKindOf } from "./start-kind";
-import { autoTree } from "./tree-auto";
+import { autoTree, chaosSideFor } from "./tree-auto";
 import type { useHtcCraft } from "./useHtcCraft";
 
 /**
@@ -72,6 +72,7 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
     baseQuality: ctx.baseQuality,
     chaosOk: !start.slots.some((x) => x.keep),
     protectedSides: [...new Set(start.slots.filter((x) => x.keep).map((x) => x.side))],
+    chaosSide: chaosSideFor(start, ctx.limits),
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
   });
   if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }

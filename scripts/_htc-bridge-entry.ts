@@ -71,4 +71,4 @@ export { jaOfPastedLine } from "../src/services/htc/mod-text";
 export { simulateTree, simHelpers } from "../src/services/htc/sim-route";
 export { TREE_PRESETS } from "../src/views/htc-craft/tree-presets";
 export { startKindOf } from "../src/views/htc-craft/start-kind";
-export { autoTree } from "../src/views/htc-craft/tree-auto";
+export { autoTree, chaosSideFor } from "../src/views/htc-craft/tree-auto";

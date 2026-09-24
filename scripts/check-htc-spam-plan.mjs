@@ -37,6 +37,8 @@ const prices = {
   omens: {
     OmenofCatalysingExaltation: div(0.057), OmenofDextralExaltation: div(0.033), OmenofSinistralExaltation: div(0.069),
     OmenofDextralErasure: div(9.516), OmenofSinistralErasure: div(16.286),
+    // 消去のお告げ (消去用。前は消去の値段に抹消 = カオス用の値を使っていた)。2026-09-24 アプリの相場
+    OmenofDextralAnnulment: div(10.124), OmenofSinistralAnnulment: div(18.144),
     OmenofSinistralCrystallisation: div(0.384), OmenofDextralCrystallisation: div(0.431),
     OmenofWhittling: div(12.336), OmenofLight: div(7.687), OmenofSinistralNecromancy: div(0.003),
     OmenofDextralNecromancy: div(0.006), OmenofAbyssalEchoes: div(0.188),

@@ -81,7 +81,7 @@ export function solvePhase(c: PhaseCtx): PhaseResult {
   const ids = c.others.map((o) => o.modId);
   const full = (1 << n) - 1;
   const sideOmen = c.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation";
-  const eraseOmen = c.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure";
+  const eraseOmen = c.side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment";
   const tags = [...new Set(c.others.flatMap((o) => o.catalysts.filter((x) => x.enabled).map((x) => x.tag)))];
   const exalts: Act[] = [];
   for (const [k, floor] of EXALT) {

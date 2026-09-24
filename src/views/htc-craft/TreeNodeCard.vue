@@ -36,7 +36,7 @@ const catJa = (tag: string | null): string => CATALYSTS.find((k) => k.tag === ta
 function actionText(a: SimAction | null): string {
   if (!a) return "打つ物を選ぶ";
   switch (a.kind) {
-    case "chaos": return `カオスオーブ${TIER[a.tier]}`;
+    case "chaos": return `${a.side ? `${SIDE[a.side]}の抹消のお告げ + ` : ""}カオスオーブ${TIER[a.tier]}`;
     case "exalt": return [a.side ? `${SIDE[a.side]}の高貴なお告げ` : "", a.catalyst ? `触媒の高貴のお告げ (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`].filter(Boolean).join(" + ");
     case "annul": return `${a.side ? `${SIDE[a.side]}の消去のお告げ + ` : ""}消去のオーブ`;
     case "essence": return `${SIDE[(props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]}の結晶化のお告げ + パーフェクトエッセンス`;

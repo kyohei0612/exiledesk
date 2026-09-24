@@ -21,7 +21,8 @@ import { mulberry32 } from "./spam-total";
 import type { Side, StepCtx } from "./step-odds";
 
 export type SimAction =
-  | { kind: "chaos"; tier: "chaos" | "chaos_greater" | "chaos_perfect" }
+  /** side = 抹消のお告げ (次のカオスが消すのをその側だけに。足す側は選べない、枠の空いている側に付く) */
+  | { kind: "chaos"; tier: "chaos" | "chaos_greater" | "chaos_perfect"; side?: Side | null }
   | { kind: "exalt"; tier: "exalt" | "exalt_greater" | "exalt_perfect"; side: Side | null; catalyst: string | null }
   | { kind: "annul"; side: Side | null }
   | { kind: "essence"; modId: string }
@@ -129,7 +130,10 @@ export interface SimResult {
 
 const FLOOR: Record<string, number> = { chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50 };
 const OMEN_EX: Record<Side, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
+/** 抹消のお告げ = 次のカオスが消すのをその側だけに (poe2db で確認 2026-09-24) */
 const OMEN_ER: Record<Side, string> = { prefix: "OmenofSinistralErasure", suffix: "OmenofDextralErasure" };
+/** 消去のお告げ = 次の消去がその側だけを消す。前は消去の値段に抹消 (カオス用) のお告げを使っていた */
+const OMEN_AN: Record<Side, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
 const OMEN_CR: Record<Side, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
 const OMEN_NE: Record<Side, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
 const SIDES: Side[] = ["prefix", "suffix"];
@@ -224,7 +228,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   function usable(s: SimState, a: SimAction | null): string | null {
     if (!a) return "打つ物が未設定";
     switch (a.kind) {
-      case "chaos": return removable(s, null).length ? null : "外せる物が無い";
+      case "chaos": return removable(s, a.side ?? null).length ? null : "外せる物が無い";
       case "exalt": {
         const sides = a.side ? [a.side] : SIDES.filter((x) => room(s, x));
         return sides.length && sides.every((x) => room(s, x)) ? null : "足す枠が無い";
@@ -246,10 +250,10 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   /** 1 回の値段 */
   function priceOf(s: SimState, a: SimAction): number {
     switch (a.kind) {
-      case "chaos": return cur(a.tier);
+      case "chaos": return cur(a.tier) + (a.side ? cur(OMEN_ER[a.side]) : 0);
       case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0)
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + (s.quality == null ? catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0) : 0);
-      case "annul": return cur("annul") + (a.side ? cur(OMEN_ER[a.side]) : 0);
+      case "annul": return cur("annul") + (a.side ? cur(OMEN_AN[a.side]) : 0);
       case "essence": {
         const side = (mod(a.modId)?.type ?? "prefix") as Side;
         return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[side]) + (removable(s, side).length ? 0 : cur("exalt") + cur(OMEN_EX[side]));
@@ -296,7 +300,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     };
     switch (a.kind) {
       case "chaos": {
-        const t = rmRandom(s, null);
+        const t = rmRandom(s, a.side ?? null);
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), FLOOR[a.tier]!, null, 20)));
       }
       case "exalt": {

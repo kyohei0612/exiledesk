@@ -253,7 +253,7 @@ export function stepHelpers(ctx: StepCtx) {
       [...idx.filter((i) => !side || s.slots[i]!.side === side), ...(s.breach && side !== "suffix" ? [-1] : [])];
     mk("消去のオーブ", cur("annul"), withB(null));
     for (const side of ["prefix", "suffix"] as Side[]) {
-      mk(`消去のオーブ + ${SIDE_JA[side]}側の消去のお告げ`, cur("annul") + cur(side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"), withB(side));
+      mk(`消去のオーブ + ${SIDE_JA[side]}側の消去のお告げ`, cur("annul") + cur(side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"), withB(side));
     }
     return out.sort((a, b) => b.pJunk - a.pJunk || a.perTry - b.perTry);
   }

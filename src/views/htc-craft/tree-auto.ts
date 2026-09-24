@@ -17,7 +17,7 @@
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import type { SimNode } from "../../services/htc/sim-route";
+import type { SimNode, SimState } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -53,6 +53,21 @@ export interface AutoTreeInput {
    * 樹 MOD と同じ側を 高貴 + 側の消去 で作って樹 MOD を 24〜26% 消していた
    */
   protectedSides?: readonly Side[];
+  /**
+   * 抹消のお告げ付きのカオス (消すのをこの側だけに) を使ってよい側。触らない MOD の側が満杯なら、足される MOD も
+   * この側にしか付かないので安全 ([[chaosSideFor]])。金の指輪: サフィが樹 MOD 3 つで満杯 → プレをカオスで回せる
+   */
+  chaosSide?: Side | null;
+}
+
+/** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
+export function chaosSideFor(start: SimState, limits: { prefix: number; suffix: number }): Side | null {
+  const keepSides = new Set(start.slots.filter((x) => x.keep).map((x) => x.side));
+  if (!keepSides.size) return null;
+  const count = (sd: Side): number => start.slots.filter((x) => x.side === sd).length;
+  const full = [...keepSides].every((sd) => count(sd) >= limits[sd]);
+  const rest = (["prefix", "suffix"] as Side[]).filter((sd) => !keepSides.has(sd));
+  return full && rest.length === 1 ? rest[0]! : null;
 }
 
 const BREACH_FAMILY = "LocalMaximumQuality";
@@ -171,12 +186,14 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // (死体の円環: 見本はキャスピをカオス、全耐性・知性はカタリスト。自動が全耐性をカオスで狙って 2,130 回打っていた)
   const boostable = (t: TierTarget): boolean => catalystFor([t]) != null;
   const spamPool = pool.some((t) => !boostable(t)) ? pool.filter((t) => !boostable(t)) : pool;
-  const spam = inp.chaosOk && spamPool.length && normalCount - 1 <= 3
-    ? [...spamPool].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  // 抹消のお告げで側を決めたカオスなら、その側の狙いだけ
+  const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
+  const spam = (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
+    ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   if (spam) {
     spamId = spam.modId;
     const sid = id();
-    main.push({ ...base, id: sid, action: { kind: "chaos", tier: "chaos" }, targets: [{ modId: spam.modId, minTier: spam.minTierIndex ?? 0 }], need: 1, onHit: null, onMiss: sid });
+    main.push({ ...base, id: sid, action: { kind: "chaos", tier: "chaos", side: inp.chaosOk ? null : inp.chaosSide ?? null }, targets: [{ modId: spam.modId, minTier: spam.minTierIndex ?? 0 }], need: 1, onHit: null, onMiss: sid });
   }
   // ブリーチは最初に付けて品質を上げる道具。上げた後は消えても品質は残るので、残す対象にしない (外れと同じ扱い。消去で
   // 50% で消える)。オーナー 2026-09-24:「40% 上げて触媒の高貴のお告げで狙って、外れたら左側消去で 50%、それを付くまで」

@@ -26,10 +26,13 @@ const OMENS: Omen[] = [
   { key: "OmenofSinistralExaltation", ja: "左側の高貴なお告げ", group: "exalt", side: "prefix" },
   { key: "OmenofDextralExaltation", ja: "右側の高貴なお告げ", group: "exalt", side: "suffix" },
   { key: "OmenofCatalysingExaltation", ja: "触媒の高貴のお告げ", group: "exalt", tag: "catalyst" },
-  { key: "OmenofSinistralErasure", ja: "左側の消去のお告げ", group: "annul", side: "prefix" },
-  { key: "OmenofDextralErasure", ja: "右側の消去のお告げ", group: "annul", side: "suffix" },
+  { key: "OmenofSinistralAnnulment", ja: "左側の消去のお告げ", group: "annul", side: "prefix" },
+  { key: "OmenofDextralAnnulment", ja: "右側の消去のお告げ", group: "annul", side: "suffix" },
   { key: "OmenofLight", ja: "光のお告げ (冒涜だけ消す)", group: "annul", tag: "light" },
   { key: "OmenofWhittling", ja: "削減のお告げ (一番レベルの低い MOD を消す)", group: "chaos", tag: "whittle" },
+  // 抹消のお告げ = 次のカオスが消すのをその側だけに (poe2db で確認 2026-09-24。足す側は選べない)
+  { key: "OmenofSinistralErasure", ja: "左側の抹消のお告げ (カオスが消すのをプレだけに)", group: "chaos", side: "prefix" },
+  { key: "OmenofDextralErasure", ja: "右側の抹消のお告げ (カオスが消すのをサフィだけに)", group: "chaos", side: "suffix" },
   { key: "OmenofSinistralCrystallisation", ja: "左側の結晶化のお告げ", group: "essence", side: "prefix" },
   { key: "OmenofDextralCrystallisation", ja: "右側の結晶化のお告げ", group: "essence", side: "suffix" },
   { key: "OmenofSinistralNecromancy", ja: "左手のネクロマンシーのお告げ", group: "desecrate", side: "prefix" },
@@ -50,9 +53,10 @@ function omensOf(a: SimAction | null): string[] {
   if (!a) return [];
   switch (a.kind) {
     case "exalt": return [...(a.side ? [a.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] : []), ...(a.catalyst ? ["OmenofCatalysingExaltation"] : [])];
-    case "annul": return a.side ? [a.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"] : [];
+    case "annul": return a.side ? [a.side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"] : [];
     case "light": return ["OmenofLight"];
     case "whittle": return ["OmenofWhittling"];
+    case "chaos": return a.side ? [a.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"] : [];
     case "essence": return [props.c.data.value?.mods.get(a.modId)?.type === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
     case "breach": return ["OmenofSinistralCrystallisation"];
     case "desecrate": return [a.side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy", ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
@@ -93,7 +97,8 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
   if (orbKey === "quality") return g || !cat ? null : { kind: "quality", catalyst: cat };
   if (orbKey.startsWith("chaos")) {
     if (g && g !== "chaos") return null;
-    return tag("whittle") ? { kind: "whittle" } : { kind: "chaos", tier: orbKey as "chaos" };
+    if (tag("whittle")) return sd ? null : { kind: "whittle" };
+    return { kind: "chaos", tier: orbKey as "chaos", side: sd };
   }
   if (orbKey.startsWith("exalt")) {
     if (g && g !== "exalt") return null;

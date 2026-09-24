@@ -93,7 +93,7 @@ export function prefixExaltPhase(inp: PrefixExaltInput): PrefixExaltPhase | { re
       });
     }
   }
-  const annul: Act = { kind: "annul", label: "消去のオーブ + 左側の消去のお告げ", floor: 0, tag: null, q: () => 0, cost: () => cur("annul") + cur("OmenofSinistralErasure") };
+  const annul: Act = { kind: "annul", label: "消去のオーブ + 左側の消去のお告げ", floor: 0, tag: null, q: () => 0, cost: () => cur("annul") + cur("OmenofSinistralAnnulment") };
   // 費用はブリーチの有無だけで決まるので先に出しておく (反復のたびに相場を引くと、狙い 4 つで数秒かかった)
   for (const e of [...acts, annul]) { const c0 = e.cost(0), c1 = e.cost(1); e.cost = (bq) => (bq ? c1 : c0); }
 

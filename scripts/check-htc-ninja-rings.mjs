@@ -51,7 +51,7 @@ for (const asc of cache.ascendancies) {
     const keepP = slots.some((x) => x.keep && x.side === "prefix"), keepS = slots.some((x) => x.keep && x.side === "suffix");
   const roomP = limits.prefix - nP, roomS = limits.suffix - nS;
   slots.push({ modId: null, side: keepP !== keepS && (keepP ? roomS : roomP) > 0 ? (keepP ? "suffix" : "prefix") : roomS >= roomP ? "suffix" : "prefix", fixed: false });
-    const nodes = M.autoTree({ data, prices, targets: g.targets.map((t) => ({ ...t, minTierIndex: 0 })), fixedIds: [], qualityTag: null, chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))] });
+    const nodes = M.autoTree({ data, prices, targets: g.targets.map((t) => ({ ...t, minTierIndex: 0 })), fixedIds: [], qualityTag: null, chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))], chaosSide: M.chaosSideFor({ slots, breach: false }, limits) });
     const r = M.simulateTree({ ctx: { data, cls, prices, itemLevel: 82, limits, catalystOk: () => true, baseQuality: 20 }, start: { slots, breach: false }, nodes, runs: 100 });
     const lost = r.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((s2, x) => s2 + x.p, 0);
     if (r.pDone < 0.95 || lost > 0) failed++;
