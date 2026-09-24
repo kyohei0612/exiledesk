@@ -36,6 +36,12 @@ const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 const fin = useFinishedCompare(c, computed(() => ss.chosen.value?.best?.cost ?? null));
 /** 始め方: 選んで押した時だけ探す。候補を全部取ったら完成品を 1 本 */
 const ss = useStartSearch(c, async () => { if (fin.query.value && !fin.found.value) await fin.search(); });
+/** 候補をプレ / サフィに分ける (中は確率の高い順のまま) */
+const candGroups = computed(() => [
+  { title: "プレフィックス", list: ss.candidates.value.filter((x) => x.side === "P") },
+  { title: "サフィックス", list: ss.candidates.value.filter((x) => x.side === "S") },
+].filter((g) => g.list.length));
+const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 取引所へ投げる回数の目安 (検索 + 取得で 2 回ずつ) */
 const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !fin.found.value ? 2 : 0));
 </script>
@@ -66,10 +72,16 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
           <p v-if="c.dropOnly.value.length" class="opacity-80">
             🔒 樹 MOD を固定 <span class="opacity-60">(樹 MOD はクラフトで付け直せず、スパムや消去で消えるので必ず固定。ほかの MOD は選べません)</span>
           </p>
+          <!-- プレ / サフィに分けて、ベースに付く確率の高い順 (オーナー 2026-09-24) -->
           <template v-else>
-            <label v-for="x in ss.candidates.value" :key="x.key" class="block" :class="ss.locked(x.key) ? 'opacity-40' : ''">
-              <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" /> {{ x.name }}
-            </label>
+            <div v-for="g in candGroups" :key="g.title" class="mb-1">
+              <p class="opacity-60">{{ g.title }} <span class="opacity-70">(% = その側に 1 回付けて出る確率、狙いの段以上)</span></p>
+              <label v-for="x in g.list" :key="x.key" class="flex items-center gap-1 pl-1" :class="ss.locked(x.key) ? 'opacity-40' : ''">
+                <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
+                <span class="flex-1">{{ x.name }}</span>
+                <b class="tabular-nums">{{ x.chance != null ? pctOf(x.chance) : "?" }}</b>
+              </label>
+            </div>
           </template>
           <button type="button" class="mt-2 rounded border border-sky-600 px-2 py-0.5 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
             {{ ss.busy.value ? "探しています…" : c.dropOnly.value.length ? "取引所で探す (樹 MOD + 完成品)" : `取引所で探す (${ss.checked.value.length} つ + 完成品)` }}

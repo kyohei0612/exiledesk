@@ -11,6 +11,7 @@
  */
 import { computed, nextTick, ref, shallowRef, watch } from "vue";
 import { startRows, type StartRow } from "./start-rows";
+import { zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -24,6 +25,12 @@ export interface StartCandidate {
   /** 固定済みにする普通の MOD (樹 MOD だけなら空) */
   modIds: string[];
   name: string;
+  side: "P" | "S" | null;
+  /**
+   * その側に 1 回付けた時に、この MOD (狙いの段以上) が出る確率。ベースの MOD 一覧 (normal) の重みの割合、ilvl で出ない段は除く。
+   * オーナー 2026-09-24:「ベースにそれぞれ付く可能性の % を書いて、高い順に並べよう。それぞれプレとサフィに」
+   */
+  chance: number | null;
 }
 
 export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () => Promise<void>) {
@@ -31,10 +38,21 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     // 樹 MOD がある時は樹 MOD を固定する 1 択 (オーナー 2026-09-24:「木 MOD があると必ず木 MOD 固定にしないとダメ。
     // スパムで消えるから。木 MOD の場合は他の選択肢選ばせないように」)。固定できるのは 1 つだけなので、他の MOD と
     // 両方固定済みの候補 (前の「樹 MOD + キャスピ」) は取引所に無く、意味も無かった
-    if (c.dropOnly.value.length) return [{ key: TREE_ONLY, modIds: [], name: "樹 MOD を固定" }];
+    if (c.dropOnly.value.length) return [{ key: TREE_ONLY, modIds: [], name: "樹 MOD を固定", side: null, chance: null }];
+    const d = c.data.value, cls = c.base.value;
+    const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
+    const w = (id: string, minIdx: number): number =>
+      (d?.mods.get(id)?.tiers ?? []).reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= lv ? t.weight : 0), 0);
+    const pool = (side: "prefixes" | "suffixes"): number => (cls?.pools.normal[side] ?? []).reduce((a, id) => a + w(id, 0), 0);
+    const total = { P: pool("prefixes"), S: pool("suffixes") };
     return c.targets.value
-      .filter((t) => c.data.value?.mods.get(t.modId)?.source === "normal")
-      .map((t) => ({ key: t.modId, modIds: [t.modId], name: `${c.stepTarget([t.modId])} を固定` }));
+      .filter((t) => d?.mods.get(t.modId)?.source === "normal")
+      .map((t) => {
+        const side = d!.mods.get(t.modId)!.type === "prefix" ? "P" as const : "S" as const;
+        const chance = total[side] > 0 ? w(t.modId, t.minTierIndex ?? 0) / total[side] : null;
+        return { key: t.modId, modIds: [t.modId], name: `${c.stepTarget([t.modId])} を固定`, side, chance };
+      })
+      .sort((a, b) => (b.chance ?? -1) - (a.chance ?? -1));
   });
   const checked = ref<string[]>([]);
   const results = shallowRef<Record<string, TreeResult | "error">>({});
