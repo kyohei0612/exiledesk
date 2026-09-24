@@ -75,6 +75,8 @@ export interface AutoTreeInput {
   startLoose?: Record<Side, number>;
   /** 消去の形。"plain" = お告げ無しの素の消去、"side" = 側の消去のお告げ付き。省くと枠と狙いの数で決める */
   annul?: "plain" | "side";
+  /** 冒涜の骨。"preserved" = 段を問わない骨だけ (古代の鎖骨は高いので、比べる用)。省くと段 40 以上に届けば古代 */
+  bone?: "preserved";
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -341,6 +343,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    */
   const overwriteFor = (side: Side, like: string): string | null => {
     if (!inp.limits || inp.limits[side] !== 2 || !(inp.fixedSides ?? []).includes(side)) return null;
+    // クラフト MOD は 1 つまで: ブリーチの MOD が残る組み方 (外す手が無い) や、エッセンスの狙いがある時はエッセンスで上書きできない
+    // (2026-09-24 オーナーの不在のアミュレット: 「打てない: クラフト MOD は 1 つまで」で止まっていた)
+    if ((breach && !main.some((n) => n.onlyWithBreach)) || essences.length) return null;
     const cls = like.split("/")[0];
     const cands = [...d.mods.values()].filter((m) => m.id.startsWith(cls + "/") && CRAFTED_SOURCES.has(m.source) && m.type === side
       && m.family !== BREACH_FAMILY && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
@@ -354,7 +359,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     if (ow) {
       const did = id(), eid = `o-${t.modId}`;
       desecrateNodes.push({
-        ...base, id: did, action: { kind: "desecrate", side, bone: "desecrate", echoes: true },
+        // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨 (下の光の輪と同じ)
+        ...base, id: did, action: { kind: "desecrate", side, bone: inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
         targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: [], need: 1, onHit: null, onMiss: eid,
       });
       // 外れの冒涜 MOD (その側で唯一外せる物) を、同じ側のエッセンス / 合金で上書きして、また冒涜へ
@@ -364,7 +370,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
       // 反響のお告げは必ず (3 択を 1 回引き直せる。オーナー 2026-09-24:「反響は冒涜の際必ず」)
-      ...base, id: id(), action: { kind: "desecrate", side, bone: reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
+      ...base, id: id(), action: { kind: "desecrate", side, bone: inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
       targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
     desecrateNodes.push(node);

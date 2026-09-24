@@ -81,7 +81,7 @@ for (const r of RINGS) {
   const tgt = [{ modId: "Rings/Intelligence", minTierIndex: 0 }];
   const start = { breach: false, slots: [{ modId: null, side: "suffix", fixed: true }, { modId: null, side: "suffix", fixed: false }] };
   for (const lim of [{ prefix: 3, suffix: 2 }, { prefix: 3, suffix: 3 }]) {
-    const nodes = M.autoTree({ data: data2, prices: p2, targets: tgt, fixedIds: [], qualityTag: null, chaosOk: false, protectedSides: [], limits: lim, fixedSides: ["suffix"] });
+    const nodes = M.autoTree({ data: data2, prices: p2, targets: tgt, fixedIds: [], qualityTag: null, chaosOk: false, protectedSides: [], limits: lim, fixedSides: ["suffix"], bone: "preserved" });
     const r = M.simulateTree({ ctx: { data: data2, cls, prices: p2, itemLevel: 82, limits: lim, catalystOk: () => true, baseQuality: 20 }, start, nodes, runs: 1500 });
     const kinds = nodes.map((x) => x.action.kind).join(",");
     console.log(`サフィ ${lim.suffix} 枠: 手 ${kinds} / 完成 ${(r.pDone * 100).toFixed(1)}% / 平均 ${(r.expected / D).toFixed(2)} 神`);

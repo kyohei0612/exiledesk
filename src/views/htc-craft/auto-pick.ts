@@ -23,10 +23,12 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 2026-09-24 不在 (スキルレベル固定): 品質 40% の形は側の消去で 4,127 神・素は 82% 止まり / 品質無しは素 2,387 神・側 5,101 神
   const narrow = inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
   const annuls = narrow ? (["side", "plain"] as const) : ([undefined] as const);
-  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.flatMap((ch) => annuls.map((an) => ({
-    greater: `${g}${ch ? "" : "・カオス無し"}${an === "plain" ? "・素の消去" : ""}`,
-    nodes: autoTree({ ...inp, greater: g, ...(an ? { annul: an } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
-  }))));
+  // 冒涜の骨も比べる (古代の鎖骨は出る物を絞れるが高い。知性のような重い MOD は普通の骨の方が安かった)
+  const bones = [undefined, "preserved"] as const;
+  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.flatMap((ch) => annuls.flatMap((an) => bones.map((bn) => ({
+    greater: `${g}${ch ? "" : "・カオス無し"}${an === "plain" ? "・素の消去" : ""}${bn ? "・普通の骨" : ""}`,
+    nodes: autoTree({ ...inp, greater: g, ...(an ? { annul: an } : {}), ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
+  })))));
   // 同じ形になった候補は 1 つにする (回す手間の節約)
   const uniq = variants.filter((v, i) => variants.findIndex((w) => JSON.stringify(w.nodes) === JSON.stringify(v.nodes)) === i);
   if (uniq.length === 1) return uniq[0]!;
