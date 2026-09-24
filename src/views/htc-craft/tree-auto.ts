@@ -124,7 +124,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * 別のカタリストが安く効く時だけ (死体の円環 本物の段: マナで固定 701 神 / 見本の替えるやり方 438 神)
    */
   const switchTypes = breach && !!inp.qualityTag && (["prefix", "suffix"] as Side[]).some((sd) => {
-    const l = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === sd && !guarded.has(sd));
+    // 実際に高貴で狙う物だけで見る (冒涜に回す物は除く。金の指輪で回避を数えて「替える」と判定し、使わないブリーチを
+    // 残し続けて消えるたびに付け直していた)
+    const l = ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === sd && !guarded.has(sd) && t.modId !== toDesecrate?.modId);
     return l.length > 0 && !qualityTagBoosts(l) && freeCatalyst(l) != null;
   });
   const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
@@ -181,7 +183,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // 「品質 20% を必須 MOD として最後まで残しておくなんてことはない」
   // 種類を替えるやり方の時は、最後に貼り付けの種類で上限 (ブリーチ込み) まで入れるので、それまでブリーチの MOD を残す
   const keepBreach: string[] = switchTypes ? ["__breach__"] : [];
-  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: keepBreach, need: 1, onHit: null, onMiss: null });
+  // ブリーチの手自体は常に「ブリーチの MOD があること」を条件にする (無いと最初から揃っている扱いで飛ばされ、1 回も打って
+  // いなかった。2026-09-24 金の指輪)。品質を上限まで入れた後は、エンジンが外れと同じに扱う (breachSpent)
+  if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
   // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
   const essenceNodes: SimNode[] = essences.map((t) => ({

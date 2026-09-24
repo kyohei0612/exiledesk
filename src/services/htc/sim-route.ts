@@ -165,7 +165,15 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
    * オーナー 2026-09-24:「品質 20% を必須 MOD として最後まで残しておくなんてことはない」)
    */
   const breachKept = nodes.some((n) => n.keep.includes("__breach__"));
-  const hasJunk = (s: SimState): boolean => s.slots.some((x) => !x.fixed && !x.keep && !x.modId) || (s.breach && !breachKept);
+  /**
+   * ブリーチの MOD の役目が済んだか: 最後の品質の手の種類で、ブリーチ込みの上限まで入っている (品質は消えても残るので、
+   * あとは外れと同じ。2026-09-24 自動で組んだツリーで、ブリーチの手を常に「残す」にした代わり)
+   */
+  const lastQualityTag = [...nodes].reverse().map((n) => n.action).find((a) => a?.kind === "quality");
+  const breachSpent = (s: SimState): boolean =>
+    lastQualityTag?.kind === "quality" && s.quality != null && s.qualityTag === lastQualityTag.catalyst && s.quality >= (ctx.baseQuality ?? 20) + 20;
+  const hasJunk = (s: SimState): boolean =>
+    s.slots.some((x) => !x.fixed && !x.keep && !x.modId) || (s.breach && (!breachKept || breachSpent(s)));
 
   /** 狙う MOD のうち need 個あるか */
   const targetsMet = (s: SimState, n: SimNode): boolean =>
@@ -324,7 +332,7 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
     }
   }
 
-  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, breachKept, cur, mod };
+  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, breachKept, breachSpent, cur, mod };
 }
 
 /**
@@ -443,7 +451,7 @@ export function simulateTree(inp: {
     const ca = nodes[cur]!.action;
     const annulSide = ca?.kind === "annul" ? ca.side : null;
     const junkHere = st.slots.some((x) => !x.fixed && !x.keep && !x.modId && (!annulSide || x.side === annulSide))
-      || (st.breach && !h.breachKept && annulSide !== "suffix");
+      || (st.breach && (!h.breachKept || h.breachSpent(st)) && annulSide !== "suffix");
     // (今の手が消去の時だけ。光などから自動で戻る時は狙いの手へ。2026-09-24 光に戻り続けて止まっていた)
     if (junkHere && hasGoal(target) && ca?.kind === "annul") return nodes[cur]!.id;
     return target.id;
