@@ -105,7 +105,7 @@ export function useHtcCraft() {
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
   /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
-  const { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor } =
+  const { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor, planFor, treeFixSide } =
     useTreeSearch({ data, base, prices, item, dropOnly, fracturedTargets, targets, name: (id) => stepTarget([id]) });
 
   /**
@@ -310,7 +310,7 @@ export function useHtcCraft() {
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
-    treeResult, treeBusy, treeError, searchTree, treeTierPick, searchFor,
+    treeResult, treeBusy, treeError, searchTree, treeTierPick, searchFor, planFor, treeFixSide,
     spam, catalystChoice, spamOverride, spamUsed,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
     weightNote: WEIGHT_OVERRIDE_NOTE,

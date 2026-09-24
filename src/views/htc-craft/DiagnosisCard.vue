@@ -33,7 +33,7 @@ const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality)
 /** 英語の行 (忍者のコピー) は日本語に */
 const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 /** 完成品を買うのと作るのと (始め方で選んだ物の初動を足す) */
-const fin = useFinishedCompare(c, computed(() => ss.chosen.value?.best?.cost ?? null));
+const fin = useFinishedCompare(c, computed(() => ss.chosen.value?.startCost ?? null));
 /** 始め方: 選んで押した時だけ探す。候補を全部取ったら完成品を 1 本 */
 const ss = useStartSearch(c, async () => { if (fin.query.value && !fin.found.value) await fin.search(); });
 /** 候補をプレ / サフィに分ける (中は確率の高い順のまま) */
@@ -43,7 +43,15 @@ const candGroups = computed(() => [
 ].filter((g) => g.list.length));
 const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 取引所へ投げる回数の目安 (検索 + 取得で 2 回ずつ) */
-const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !fin.found.value ? 2 : 0));
+const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 2 : 6) + (fin.query.value && !fin.found.value ? 2 : 0));
+const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
+const omenSide = computed(() => (ss.kind.value.craftSide === "P" ? "左側" : ss.kind.value.craftSide === "S" ? "右側" : "その側"));
+/** 固定する樹 MOD の名前 (樹 MOD が 2 つある時は重い側の物だけ) */
+const fixLabel = computed(() => {
+  const side = ss.kind.value.fixSide;
+  const rows = c.dropOnly.value.filter((d) => !side || d.side === side);
+  return rows.length === 1 ? `樹 MOD (${ja(rows[0]!.text)}) ` : "樹 MOD ";
+});
 </script>
 
 <template>
@@ -64,16 +72,33 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
           別のベースなら: {{ b.ja }} ({{ b.maxQualityPlus ? `品質上限 +${b.maxQualityPlus}%` : b.implicits.join(" / ") }})
         </p>
 
-        <div v-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
-          <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD
-            <span v-if="!c.dropOnly.value.length" class="font-normal opacity-50">{{ MAX_STARTS }} つまで</span>
-          </p>
-          <!-- 樹 MOD がある時は樹 MOD の固定だけ (スパムで消えるので必ず固定。選ばせない) -->
-          <p v-if="c.dropOnly.value.length" class="opacity-80">
-            🔒 樹 MOD を固定 <span class="opacity-60">(樹 MOD はクラフトで付け直せず、スパムや消去で消えるので必ず固定。ほかの MOD は選べません)</span>
-          </p>
-          <!-- プレ / サフィに分けて、ベースに付く確率の高い順 (オーナー 2026-09-24) -->
+        <!-- クラフト非推奨 (満杯の側の両方に樹 MOD。固定は 1 つしかできず、もう片方がガチャで消える) -->
+        <div v-if="ss.kind.value.kind === 'unsafe'" class="mt-3 rounded border border-rose-500/50 bg-rose-500/10 p-2 text-rose-200">
+          <b>クラフト非推奨</b>: 作る側 (枠が満杯になる側) の両方に樹 MOD があります。固定できるのは 1 つだけなので、
+          もう片方はカオス・消去で消えると付け直せません。完成品を買うのをすすめます (右で探せます)
+        </div>
+        <div v-else-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
+          <!-- 樹 MOD を固定 (作る側に樹 MOD が 1 つ) -->
+          <template v-if="ss.kind.value.kind === 'fix'">
+            <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD</p>
+            <p class="opacity-80">
+              🔒 {{ fixLabel }}を固定 <span class="opacity-60">(樹 MOD はクラフトで付け直せず、カオスや消去で消えるので固定。ほかの MOD は選べません)</span>
+            </p>
+          </template>
           <template v-else>
+            <p class="mb-1 font-bold">{{ ss.kind.value.kind === "separate" ? "買う物" : "固定済み (フラクチャー) にして始める MOD" }}
+              <span class="font-normal opacity-50">{{ MAX_STARTS }} つまで</span>
+            </p>
+            <!-- 固定不要 (作る側に樹 MOD が無い) -->
+            <p v-if="ss.kind.value.kind === 'separate'" class="mb-1 text-emerald-300/90">
+              固定不要: 作るのは{{ sideJa(ss.kind.value.craftSide) }}だけなので、{{ omenSide }}のお告げで作れば樹 MOD は消えません。
+              樹 MOD が付いた物を買って始めます (固定の有無は問わない)
+            </p>
+            <label v-for="x in ss.candidates.value.filter((y) => !y.side)" :key="x.key" class="flex items-center gap-1 pl-1" :class="ss.locked(x.key) ? 'opacity-40' : ''">
+              <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
+              <span class="flex-1">{{ x.name }}</span>
+            </label>
+            <!-- プレ / サフィに分けて、ベースに付く確率の高い順 (オーナー 2026-09-24) -->
             <div v-for="g in candGroups" :key="g.title" class="mb-1">
               <p class="opacity-60">{{ g.title }} <span class="opacity-70">(% = その側に 1 回付けて出る確率、狙いの段以上)</span></p>
               <label v-for="x in g.list" :key="x.key" class="flex items-center gap-1 pl-1" :class="ss.locked(x.key) ? 'opacity-40' : ''">
@@ -84,9 +109,11 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
             </div>
           </template>
           <button type="button" class="mt-2 rounded border border-sky-600 px-2 py-0.5 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
-            {{ ss.busy.value ? "探しています…" : c.dropOnly.value.length ? "取引所で探す (樹 MOD + 完成品)" : `取引所で探す (${ss.checked.value.length} つ + 完成品)` }}
+            {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)` }}
           </button>
-          <p class="mt-1 opacity-50">1 つにつき 固定済み / 固定無し・厳しい / ゆるい の 3 本。取引所へ約 {{ calls }} 回 (5 分 20 回まで、30 分は覚えておく)</p>
+          <p class="mt-1 opacity-50">
+            {{ ss.kind.value.kind === "separate" ? "1 つにつき最安 1 件を 1 本" : "1 つにつき 固定済み / 固定無し・厳しい / ゆるい の 3 本" }}。取引所へ約 {{ calls }} 回 (5 分 20 回まで、30 分は覚えておく)
+          </p>
         </div>
       </section>
 
@@ -109,7 +136,9 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
           </span>
           <button v-if="fin.found.value?.url" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
         </p>
-        <p class="opacity-50">条件は MOD だけ (固定済みかどうかは問わない)</p>
+        <p class="opacity-50">条件は MOD だけ (普通・固定済み・冒涜のどれで付いていてもいい)</p>
+        <p v-if="fin.lightNote.value" class="text-amber-300/80">{{ fin.lightNote.value }}</p>
+        <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
         <p class="mt-1">作る見込み: <b class="text-[13px]">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</b></p>
         <p class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
         <p v-if="fin.verdict.value && ss.chosen.value" class="mt-2 rounded bg-black/20 px-2 py-1">

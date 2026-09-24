@@ -10,7 +10,7 @@
 import type { TreeResult } from "./useTreeSearch";
 
 export interface StartRow {
-  id: "fractured" | "strict" | "loose";
+  id: string;
   label: string;
   /** 初動 (高貴換算)。選べない時は null */
   cost: number | null;

@@ -179,6 +179,12 @@ export function tradeFiltersFor(
       unmatched.push(`${t.modId} (エンジンに無い)`);
       continue;
     }
+    // ブリーチのエッセンスの「品質の最大値 +20%」はデータに stat も範囲も無い (ranges: [])。取引所ではクラフト MOD
+    // (crafted.stat_2039822488「#% to Maximum Quality」、trade2-stats で確認)。無いと完成品の検索が組めなかった (2026-09-24 金の指輪)
+    if (mod.family === "LocalMaximumQuality") {
+      filters.push({ id: "crafted.stat_2039822488", min: 20, modId: t.modId, statId: "local_maximum_quality" });
+      continue;
+    }
     const tier = tierOf(mod, t);
     const statIds = statsOf(mod, tier);
     if (statIds.length === 0) {

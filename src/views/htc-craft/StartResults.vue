@@ -30,8 +30,9 @@ const started = computed(() => rows.value.some((r) => r.res || r.waiting));
 <template>
   <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
     <p class="mb-1 opacity-50">始め方</p>
-    <p v-if="!started" class="opacity-50">
-      {{ c.dropOnly.value.length ? "左の「取引所で探す」" : "左で MOD を選んで「取引所で探す」" }}を押すと、取れた物からここに出ます
+    <p v-if="ss.kind.value.kind === 'unsafe'" class="text-rose-300">クラフト非推奨なので、始め方はありません。完成品を買うのをすすめます</p>
+    <p v-else-if="!started" class="opacity-50">
+      {{ ss.kind.value.kind === "fix" ? "左の「取引所で探す」" : "左で選んで「取引所で探す」" }}を押すと、取れた物からここに出ます
     </p>
 
     <!-- 一番安い始め方 (選び直していればそれ) -->
@@ -60,7 +61,7 @@ const started = computed(() => rows.value.some((r) => r.res || r.waiting));
 
     <!-- ほかの候補 (固定する MOD 違い) -->
     <details v-if="others.filter((r) => r.res).length" class="mt-1">
-      <summary class="cursor-pointer opacity-60">ほかの MOD を固定する始め方 ({{ others.filter((r) => r.res).length }})</summary>
+      <summary class="cursor-pointer opacity-60">ほかの始め方 ({{ others.filter((r) => r.res).length }})</summary>
       <div v-for="r in others.filter((x) => x.res)" :key="r.key" class="mt-1 pl-3">
         <div class="flex items-center gap-2">
           <b class="flex-1">{{ r.name }}</b>

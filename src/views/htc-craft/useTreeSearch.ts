@@ -78,6 +78,11 @@ export function useTreeSearch(deps: {
    */
   const treeTierPick = ref<Record<string, number>>({});
   const treeError = ref<string | null>(null);
+  /**
+   * 固定する樹 MOD の側 (null = 全部の樹 MOD を固定済みで探す、前の扱い)。樹 MOD が 2 つある時、固定するのは重い側の
+   * 1 つだけで、もう片方は付いていればいい (固定は 1 つしかできない。[[start-kind.ts]]、オーナー 2026-09-24)
+   */
+  const treeFixSide = ref<"P" | "S" | null>(null);
 
   /**
    * 創生の樹の MOD がある時の「買うか自前で固定するか」。**投げる前に出せる分だけ**。
@@ -112,7 +117,12 @@ export function useTreeSearch(deps: {
       if (t) mins[d.text] = t.min;
     }
     const d = data.value;
-    const buys = [...treeBuys(dropOnly.value, { mins }), ...(d ? fracturedBuys(d, fixed, (id) => stepTarget([id])) : [])];
+    // 固定しない側の樹 MOD は「付いていればいい」(explicit)。固定済みの検索でも固定済みにしない
+    const fixSide = treeFixSide.value;
+    const tree = treeBuys(dropOnly.value, { mins }).map((b, i) => (fixSide && dropOnly.value[i]?.side && dropOnly.value[i]!.side !== fixSide
+      ? { ...b, filters: b.filters.map((f) => ({ ...f, id: f.id.replace(/^fractured\./, "explicit.") })) }
+      : b));
+    const buys = [...tree, ...(d ? fracturedBuys(d, fixed, (id) => stepTarget([id])) : [])];
     // stat に入れるのは作れない MOD だけ。ベース・ilvl・レア・コラプト無しは規定通り
     const common = {
       ilvlMin: item.value?.itemLevel ?? undefined,
@@ -244,5 +254,5 @@ export function useTreeSearch(deps: {
 
   // 固定済みにする MOD を選び直したら (setFractured)、前の結果は捨てる (別の物の値段になる)
   watch(() => treePlan.value?.searches.map((x) => JSON.stringify(x.query)).join("|"), () => { treeResult.value = null; treeError.value = null; });
-  return { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor, planFor };
+  return { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor, planFor, treeFixSide };
 }
