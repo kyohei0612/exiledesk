@@ -59,12 +59,20 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
         </p>
 
         <div v-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
-          <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD <span class="font-normal opacity-50">{{ MAX_STARTS }} つまで</span></p>
-          <label v-for="x in ss.candidates.value" :key="x.key" class="block" :class="ss.locked(x.key) ? 'opacity-40' : ''">
-            <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" /> {{ x.name }}
-          </label>
+          <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD
+            <span v-if="!c.dropOnly.value.length" class="font-normal opacity-50">{{ MAX_STARTS }} つまで</span>
+          </p>
+          <!-- 樹 MOD がある時は樹 MOD の固定だけ (スパムで消えるので必ず固定。選ばせない) -->
+          <p v-if="c.dropOnly.value.length" class="opacity-80">
+            🔒 樹 MOD を固定 <span class="opacity-60">(樹 MOD はクラフトで付け直せず、スパムや消去で消えるので必ず固定。ほかの MOD は選べません)</span>
+          </p>
+          <template v-else>
+            <label v-for="x in ss.candidates.value" :key="x.key" class="block" :class="ss.locked(x.key) ? 'opacity-40' : ''">
+              <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" /> {{ x.name }}
+            </label>
+          </template>
           <button type="button" class="mt-2 rounded border border-sky-600 px-2 py-0.5 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
-            {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.checked.value.length} つ + 完成品)` }}
+            {{ ss.busy.value ? "探しています…" : c.dropOnly.value.length ? "取引所で探す (樹 MOD + 完成品)" : `取引所で探す (${ss.checked.value.length} つ + 完成品)` }}
           </button>
           <p class="mt-1 opacity-50">1 つにつき 固定済み / 固定無し・厳しい / ゆるい の 3 本。取引所へ約 {{ calls }} 回 (5 分 20 回まで、30 分は覚えておく)</p>
         </div>
@@ -73,7 +81,7 @@ const calls = computed(() => ss.checked.value.length * 6 + (fin.query.value && !
       <!-- 始め方の結果 (取れた物から、初動の安い順) -->
       <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
         <p class="mb-1 opacity-50">始め方 (初動の安い順)</p>
-        <p v-if="!ss.rows.value.some((r) => r.res || r.waiting)" class="opacity-50">左で MOD を選んで「取引所で探す」を押すと、取れた物からここに出ます</p>
+        <p v-if="!ss.rows.value.some((r) => r.res || r.waiting)" class="opacity-50">{{ c.dropOnly.value.length ? "左の「取引所で探す」" : "左で MOD を選んで「取引所で探す」" }}を押すと、取れた物からここに出ます</p>
         <div v-for="r in ss.rows.value" :key="r.key" class="mb-2" :class="!r.res && !r.waiting ? 'opacity-40' : ''">
           <label class="flex items-center gap-2">
             <input type="radio" :checked="ss.chosen.value?.key === r.key" :disabled="!r.best" @change="ss.choose(r.key)" />

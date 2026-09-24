@@ -3,7 +3,7 @@
  *
  * オーナー:「ベースの所で複数選択で開始フラクチャー選びたいな。その時点で検索かけたいから、やっぱ取得は手動がいい。
  * 真ん中は結果表示にしよう。取得後に表示する形で徐々にやってく感じでいい」。
- *   - 候補 = 樹 MOD だけ (樹 MOD がある時) + 作る MOD のうち普通に付く物 1 つずつ。樹 MOD は常に固定済みの前提
+ *   - 候補 = 樹 MOD がある時は「樹 MOD を固定」だけ (スパムで消えるので必ず固定)。無い時は作る MOD のうち普通に付く物 1 つずつ
  *   - チェックは 3 つまで (取引所の上限。1 つ 3 本 = 検索 + 取得で 6 回、3 つで 18 回 + 完成品 2 回 = 5 分 20 回に収まる)
  *   - 「探す」で上から 1 つずつ取り、取れた物から真ん中に出す (30 分は覚えておく)。最後に完成品を 1 本
  *   - 真ん中で選んだ物が始め方 (固定済みの MOD を差し替え、ツリーの開始の指輪もそれになる)
@@ -28,13 +28,13 @@ export interface StartCandidate {
 
 export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () => Promise<void>) {
   const candidates = computed<StartCandidate[]>(() => {
-    const out: StartCandidate[] = [];
-    if (c.dropOnly.value.length) out.push({ key: TREE_ONLY, modIds: [], name: "樹 MOD だけ" });
-    for (const t of c.targets.value) {
-      if (c.data.value?.mods.get(t.modId)?.source !== "normal") continue;
-      out.push({ key: t.modId, modIds: [t.modId], name: c.dropOnly.value.length ? `樹 MOD + ${c.stepTarget([t.modId])}` : c.stepTarget([t.modId]) });
-    }
-    return out;
+    // 樹 MOD がある時は樹 MOD を固定する 1 択 (オーナー 2026-09-24:「木 MOD があると必ず木 MOD 固定にしないとダメ。
+    // スパムで消えるから。木 MOD の場合は他の選択肢選ばせないように」)。固定できるのは 1 つだけなので、他の MOD と
+    // 両方固定済みの候補 (前の「樹 MOD + キャスピ」) は取引所に無く、意味も無かった
+    if (c.dropOnly.value.length) return [{ key: TREE_ONLY, modIds: [], name: "樹 MOD を固定" }];
+    return c.targets.value
+      .filter((t) => c.data.value?.mods.get(t.modId)?.source === "normal")
+      .map((t) => ({ key: t.modId, modIds: [t.modId], name: `${c.stepTarget([t.modId])} を固定` }));
   });
   const checked = ref<string[]>([]);
   const results = shallowRef<Record<string, TreeResult | "error">>({});
@@ -43,10 +43,10 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   /** 始め方に選んだ候補 (人が選ぶまでは一番安い物) */
   const picked = ref<string | null>(null);
 
-  // 解析し直したら、チェックを戻す (貼り付けで固定済みだった MOD、無ければ樹 MOD だけ)
+  // 解析し直したら、チェックを戻す (樹 MOD があれば樹 MOD、無ければ貼り付けで固定済みだった MOD)
   watch(() => [c.item.value, c.base.value], () => {
     const fr = c.fracturedTargets.value.map((t) => t.modId);
-    const init = fr.length ? fr : c.dropOnly.value.length ? [TREE_ONLY] : [];
+    const init = c.dropOnly.value.length ? [TREE_ONLY] : fr;
     checked.value = init.filter((k) => candidates.value.some((x) => x.key === k)).slice(0, MAX_STARTS);
     results.value = {};
     picked.value = null;
