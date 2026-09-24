@@ -33,6 +33,8 @@ export function startKindOf(c: ReturnType<typeof useHtcCraft>): {
   fixSide: S | null;
   /** 重い側の樹 MOD の数 */
   atRisk: number;
+  /** 非推奨の理由 (側ごとに、なぜ重いか・樹 MOD がいくつあるか)。unsafe 以外は空 */
+  reasons?: string[];
 } {
   const tree = c.dropOnly.value;
   if (!tree.length) return { kind: "none", craftSide: null, fixSide: null, atRisk: 0 };
@@ -61,5 +63,13 @@ export function startKindOf(c: ReturnType<typeof useHtcCraft>): {
   const craftSide = heavy.length === 1 ? heavy[0]! : null;
   if (risky.length === 0) return { kind: "separate", craftSide, fixSide: null, atRisk: 0 };
   if (risky.length === 1) return { kind: "fix", craftSide, fixSide: risky[0]!.side!, atRisk: 1 };
-  return { kind: "unsafe", craftSide, fixSide: null, atRisk: risky.length };
+  // 非推奨の理由を側ごとに (オーナー 2026-09-24:「非推奨パターン入れて非推奨って出そう」)
+  const jaSide = (x: S): string => (x === "P" ? "プレ" : "サフィ");
+  const reasons = heavy.map((x) => {
+    const n = risky.filter((t) => t.side === x).length;
+    const why = [count[x] >= full[x] && rolls[x] ? `枠が満杯 (${count[x]}/${full[x]}) でカオス・消去を使う` : "", essence[x] ? "エッセンスを使う (必ず 1 つ消える)" : ""].filter(Boolean).join("、");
+    return n ? `${jaSide(x)}: ${why}のに樹 MOD が ${n} つ` : "";
+  }).filter(Boolean);
+  if (risky.length > 1 && heavy.length === 1) reasons.push("同じ側の樹 MOD は 1 つしか固定できない");
+  return { kind: "unsafe", craftSide, fixSide: null, atRisk: risky.length, reasons };
 }

@@ -74,8 +74,9 @@ const fixLabel = computed(() => {
 
         <!-- クラフト非推奨 (満杯の側の両方に樹 MOD。固定は 1 つしかできず、もう片方がガチャで消える) -->
         <div v-if="ss.kind.value.kind === 'unsafe'" class="mt-3 rounded border border-rose-500/50 bg-rose-500/10 p-2 text-rose-200">
-          <b>クラフト非推奨</b>: 作る側 (枠が満杯になる側) の両方に樹 MOD があります。固定できるのは 1 つだけなので、
-          もう片方はカオス・消去で消えると付け直せません。完成品を買うのをすすめます (右で探せます)
+          <b>クラフト非推奨</b>: 固定 (フラクチャー) できるのは 1 つだけで、残りの樹 MOD はクラフト中に消えると付け直せません。
+          <span v-for="r in ss.kind.value.reasons ?? []" :key="r" class="block pl-2">・{{ r }}</span>
+          完成品を買うのをすすめます (右で探せます)
         </div>
         <div v-else-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
           <!-- 樹 MOD を固定 (作る側に樹 MOD が 1 つ) -->

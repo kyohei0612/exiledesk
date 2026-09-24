@@ -21,7 +21,7 @@ function fromPaste(lines) {
 function expect(name, c, kind, extra = {}) {
   const r = M.startKindOf(c);
   const bad = r.kind !== kind || Object.entries(extra).some(([k, x]) => r[k] !== x);
-  console.log(`${bad ? "NG" : "ok"}: ${name} → ${r.kind} (重い側 ${r.craftSide ?? "-"} / 固定 ${r.fixSide ?? "-"} / 危ない樹 MOD ${r.atRisk})`);
+  console.log(`${bad ? "NG" : "ok"}: ${name} → ${r.kind} (重い側 ${r.craftSide ?? "-"} / 固定 ${r.fixSide ?? "-"} / 危ない樹 MOD ${r.atRisk})${r.reasons?.length ? " — " + r.reasons.join(" / ") : ""}`);
   if (bad) failed++;
 }
 
