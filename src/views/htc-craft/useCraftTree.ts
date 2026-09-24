@@ -145,9 +145,22 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   const budgetDivine = ref(500);
   const targetPct = ref(80);
   const runs = ref(2000);
+  /**
+   * ベース代 (神)。始め方で選んだ候補の値段が入る (手で直せる)。予算と結果の額はこれ込み
+   * (オーナー 2026-09-24:「最終収支に買ったベースの値段含めてなさそう」)
+   */
+  const baseDivine = ref(0);
+  watch(() => c.startPrice.value, (v) => {
+    const div = c.prices.value?.currency.divine ?? 1;
+    baseDivine.value = v != null && v > 0 ? Math.round((v / div) * 10) / 10 : 0;
+  }, { immediate: true });
+  /** ベース代 (高貴建て) */
+  const baseEx = computed(() => Math.max(0, baseDivine.value || 0) * (c.prices.value?.currency.divine ?? 1));
   const running = ref(false);
   const progress = ref<[number, number] | null>(null);
   const result = shallowRef<SimResult | null>(null);
+  // 予算以内の確率はベース代込みで回した時の物なので、ベース代を変えたら回し直し
+  watch(baseDivine, () => { result.value = null; });
   /** 回せない理由 (手 1 の○×が未設定、など) */
   const blocked = computed(() => {
     const first = nodes.value[0];
@@ -164,7 +177,7 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     result.value = null;
     try {
       const div = c.prices.value?.currency.divine ?? 1;
-      result.value = await simulateTreeChunked({ ctx: x, start: start.value, nodes: nodes.value, runs: Math.max(100, runs.value), budget: budgetDivine.value * div },
+      result.value = await simulateTreeChunked({ ctx: x, start: start.value, nodes: nodes.value, runs: Math.max(100, runs.value), budget: Math.max(0, budgetDivine.value - Math.max(0, baseDivine.value || 0)) * div },
         (done, total) => { progress.value = [done, total]; });
     } finally {
       running.value = false;
@@ -217,8 +230,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     const r = result.value;
     if (!r) return null;
     const k = Math.ceil(r.runs * Math.min(100, Math.max(1, targetPct.value)) / 100);
-    return k <= r.doneCosts.length ? r.doneCosts[k - 1]! : null;
+    return k <= r.doneCosts.length ? r.doneCosts[k - 1]! + baseEx.value : null;
   });
 
-  return { setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced, ancestors, descendants, labelOf };
+  return { baseDivine, baseEx, setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced, ancestors, descendants, labelOf };
 }

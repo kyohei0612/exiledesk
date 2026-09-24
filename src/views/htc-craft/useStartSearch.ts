@@ -170,6 +170,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
 
   // 選んだ候補の固定済みにして、ツリーの開始の指輪と確認用の表 (treeResult) をそれに合わせる
   watch(chosen, async (x) => {
+    c.startPrice.value = x?.startCost ?? null;
     if (!x || x.res === "error" || !x.res) return;
     const same = x.modIds.length === c.fracturedTargets.value.length && x.modIds.every((id) => c.fracturedTargets.value.some((t) => t.modId === id));
     if (!same) c.setFractured(x.modIds);

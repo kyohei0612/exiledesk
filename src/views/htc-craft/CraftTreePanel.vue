@@ -57,6 +57,7 @@ async function focus(id: string): Promise<void> {
       <b class="opacity-70">作り方の設定</b>
       <label>予算 <input v-model.number="t.budgetDivine.value" type="number" min="1" step="50" class="num w-20" /> 神</label>
       <label>目標の成功確率 <input v-model.number="t.targetPct.value" type="number" min="1" max="100" step="5" class="num w-14" /> %</label>
+      <label title="始め方で選んだベースの値段が入ります。予算と結果の額はこれ込み">ベース代 <input v-model.number="t.baseDivine.value" type="number" min="0" step="1" class="num w-20" /> 神</label>
       <label>回す回数 <input v-model.number="t.runs.value" type="number" min="100" step="500" class="num w-20" /> 回</label>
     </div>
     <p class="mb-2 text-xs opacity-60">
@@ -101,11 +102,12 @@ async function focus(id: string): Promise<void> {
           </div>
           <div class="rounded bg-white/5 p-2">
             <p class="opacity-50">平均 (完成した時)</p>
-            <p class="text-xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.expected) : "-" }}</p>
+            <p class="text-xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.expected + t.baseEx.value) : "-" }}</p>
           </div>
         </div>
         <p v-if="t.result.value.pDone > 0" class="mt-1 opacity-60">
-          半分の確率で {{ c.money(t.result.value.p50) }} / 8 割で {{ c.money(t.result.value.p80) }} / 9 割で {{ c.money(t.result.value.p90) }} 以内
+          半分の確率で {{ c.money(t.result.value.p50 + t.baseEx.value) }} / 8 割で {{ c.money(t.result.value.p80 + t.baseEx.value) }} / 9 割で {{ c.money(t.result.value.p90 + t.baseEx.value) }} 以内
+          <span v-if="t.baseEx.value > 0">(ベース代 {{ c.money(t.baseEx.value) }} 込み。クラフトだけなら平均 {{ c.money(t.result.value.expected) }})</span>
         </p>
         <p v-for="s in t.result.value.stops" :key="s.reason" class="mt-1 text-rose-300">止まった {{ pct(s.p) }}: {{ s.reason }}</p>
         <!-- 手ごと (1 回の完成あたり)。費用の大きい手が分かるように -->
