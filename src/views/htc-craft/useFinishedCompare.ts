@@ -153,8 +153,7 @@ export function useFinishedCompare(
       dropped.value = [];
       // ログインしていれば一番ゆるい条件から (取引所の検索はアプリのログインの POESESSID を乗せて投げる。trade2.rs)。
       // ログインしていないと full はまず断られ、その 1 回が取引所の回数を食うので light から (2026-09-24)。
-      // ただしログインしていても、樹 MOD 3 つ + 狙い 3 つの full は「複雑過ぎます」で断られた (2026-09-24 開発版・ログイン済み)。
-      // なので「ログインすれば通る」とは画面に出さない
+      // (開発版で断られていたのは、開発ビルドの検索がプロキシ経由でログインが乗っていなかったため。pricing.ts の DEV_TRADE)
       const loggedIn = await sessionLoggedIn().catch(() => false);
       let level: Level = loggedIn ? "full" : "light";
       let r = await autoPriceCached(league, build(level) ?? query.value, marketStore.rates.value, 5);
@@ -168,7 +167,7 @@ export function useFinishedCompare(
           ? "条件が複雑過ぎると断られたので、冒涜で付いた MOD は拾わない条件で探しました"
           : "条件が複雑過ぎると断られたので、固定済みの MOD も拾わない条件で探しました";
       }
-      if (!loggedIn && !lightNote.value) lightNote.value = "ログインしていないので、冒涜で付いた MOD は拾わない条件で探しました";
+      if (!loggedIn && !lightNote.value) lightNote.value = "ログインしていないので、冒涜で付いた MOD は拾わない条件で探しました (取引履歴の画面でログインすると、ゆるい条件で探せます)";
       // 出品が無ければ、値 (段) を外して MOD の組み合わせだけで探し直す
       const loose = build(level, false);
       if (r && r.total === 0 && loose) {

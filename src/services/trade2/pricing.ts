@@ -8,12 +8,17 @@
  * 開発時 (vite のプロキシで直接叩く) だけ、ここで最小間隔と窓の予算を守る。
  */
 
+import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { invoke } from "@tauri-apps/api/core";
 import { trade2Site, trade2SiteOrigin } from "./league";
 import { localizeQueryForSite } from "./localize";
 
-/** 開発時は vite のプロキシで直接叩く (Rust の門番を通らないので、ここで待つ) */
-const DEV_TRADE = import.meta.env.DEV;
+/**
+ * ブラウザ (vite dev) で開いた時だけ vite のプロキシで直接叩く (Rust の門番を通らないので、ここで待つ)。
+ * **アプリの中 (開発ビルドの Tauri) では門番を通す。**前は開発ビルドなら常にプロキシで、ログイン (POESESSID) が乗らず
+ * 匿名の上限で「検索条件が複雑過ぎます」になっていた (2026-09-24。本番ビルドは最初から門番経由)
+ */
+const DEV_TRADE = import.meta.env.DEV && !isTauriRuntime();
 import type { Trade2SearchResponse } from "./query";
 
 /**
