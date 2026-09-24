@@ -41,17 +41,19 @@ for (const asc of cache.ascendancies) {
     let fixedDone = false;
     for (const [side, n, S] of [["prefix", g.skippedSides.prefixes, "P"], ["suffix", g.skippedSides.suffixes, "S"]]) {
       const treeOn = g.dropOnly.filter((x) => x.side === S).length;
+      // 買った時から付いている冒涜の MOD (冒涜は 1 つまで)。sim-setup.ts と同じ
+      const desecLeft = g.skipped.filter((t) => { const l = it.lines.find((x) => x.text === t); return l?.kind === "desecrated" && M.htcModSides()[M.matchKey(l.template)] === S; }).length;
       for (let i = 0; i < n; i++) {
         const fix = kind.kind === "fix" && kind.fixSide === S && i < treeOn && !fixedDone;
         if (fix) fixedDone = true;
-        slots.push(fix ? { modId: null, side, fixed: true } : { modId: null, side, fixed: false, keep: true });
+        slots.push({ ...(fix ? { modId: null, side, fixed: true } : { modId: null, side, fixed: false, keep: true }), ...(i >= n - desecLeft ? { desec: true } : {}) });
       }
     }
     const nP = slots.filter((x) => x.side === "prefix").length, nS = slots.filter((x) => x.side === "suffix").length;
     const keepP = slots.some((x) => x.keep && x.side === "prefix"), keepS = slots.some((x) => x.keep && x.side === "suffix");
   const roomP = limits.prefix - nP, roomS = limits.suffix - nS;
   slots.push({ modId: null, side: keepP !== keepS && (keepP ? roomS : roomP) > 0 ? (keepP ? "suffix" : "prefix") : roomS >= roomP ? "suffix" : "prefix", fixed: false });
-    const nodes = M.autoTree({ data, prices, targets: g.targets.map((t) => ({ ...t, minTierIndex: 0 })), fixedIds: [], qualityTag: null, chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))], chaosSide: M.chaosSideFor({ slots, breach: false }, limits) });
+    const nodes = M.autoTree({ data, prices, targets: g.targets.map((t) => ({ ...t, minTierIndex: 0 })), fixedIds: [], qualityTag: null, chaosOk: !slots.some((x) => x.keep), protectedSides: [...new Set(slots.filter((x) => x.keep).map((x) => x.side))], chaosSide: M.chaosSideFor({ slots, breach: false }, limits), desecratedTaken: slots.some((x) => x.desec) });
     const r = M.simulateTree({ ctx: { data, cls, prices, itemLevel: 82, limits, catalystOk: () => true, baseQuality: 20 }, start: { slots, breach: false }, nodes, runs: 100 });
     const lost = r.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((s2, x) => s2 + x.p, 0);
     if (r.pDone < 0.95 || lost > 0) failed++;

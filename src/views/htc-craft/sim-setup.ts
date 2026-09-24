@@ -8,6 +8,8 @@ import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysi
 import type { SimState } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import { startKindOf } from "./start-kind";
+import { htcModSides } from "../../services/htc/patch";
+import { matchKey } from "../../services/htc/bridge-index";
 import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -43,15 +45,23 @@ export function startStateOf(c: C, fixedIds: readonly string[]): SimState {
   const k = startKindOf(c);
   const allFixed = !c.item.value || (k.kind === "fix" && !k.fixSide);
   let fixedDone = false;
+  // 買った時から付いている冒涜の MOD (樹が生む異界の MOD も冒涜の種類)。冒涜の MOD は 1 つまでなので、付いていれば冒涜はもう使えない
+  const lines = c.item.value?.lines ?? [];
+  const desecOn = (S: "P" | "S"): number => c.skipped.value.filter((t) => {
+    const l = lines.find((x) => x.text === t);
+    return l?.kind === "desecrated" && htcModSides()[matchKey(l.template)] === S;
+  }).length;
   for (const [side, n, S] of [["prefix", tree.p, "P"], ["suffix", tree.s, "S"]] as const) {
+    let desecLeft = desecOn(S);
     const treeOn = c.dropOnly.value.filter((x) => x.side === S).length;
     for (let i = 0; i < n; i++) {
       const isTree = i < treeOn;
       const fix = allFixed || (k.kind === "fix" && k.fixSide === S && isTree && !fixedDone);
       if (fix && !allFixed) fixedDone = true;
+      const desec = i >= n - desecLeft;
       slots.push(fix
-        ? { modId: null, side, fixed: true, label: isTree || allFixed ? "樹 MOD (固定済み)" : "買った時の MOD (固定済み)" }
-        : { modId: null, side, fixed: false, keep: true, label: isTree ? "樹 MOD (触らない)" : "買った時の MOD (触らない)" });
+        ? { modId: null, side, fixed: true, label: isTree || allFixed ? "樹 MOD (固定済み)" : "買った時の MOD (固定済み)", ...(desec ? { desec: true } : {}) }
+        : { modId: null, side, fixed: false, keep: true, label: isTree ? "樹 MOD (触らない)" : "買った時の MOD (触らない)", ...(desec ? { desec: true } : {}) });
     }
   }
   // 固定済み 1 つのベースを買った時は、もう 1 つ付いている (フラクチャーオーブは 4 MOD 以上で打つ物なので)。

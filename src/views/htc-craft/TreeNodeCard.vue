@@ -39,8 +39,8 @@ function actionText(a: SimAction | null): string {
     case "chaos": return `${a.side ? `${SIDE[a.side]}の抹消のお告げ + ` : ""}カオスオーブ${TIER[a.tier]}`;
     case "exalt": return [a.side ? `${SIDE[a.side]}の高貴なお告げ` : "", a.catalyst ? `触媒の高貴のお告げ (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`].filter(Boolean).join(" + ");
     case "annul": return `${a.side ? `${SIDE[a.side]}の消去のお告げ + ` : ""}消去のオーブ`;
-    case "essence": return `${SIDE[(props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]}の結晶化のお告げ + パーフェクトエッセンス`;
-    case "breach": return "左側の結晶化のお告げ + ブリーチのエッセンス (品質の上限 +20%)";
+    case "essence": return `${SIDE[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]}の結晶化のお告げ + パーフェクトエッセンス`;
+    case "breach": return `${SIDE[a.removeSide ?? "prefix"]}の結晶化のお告げ + ブリーチのエッセンス (品質の上限 +20%)`;
     case "desecrate": return `${a.side === "prefix" ? "左手" : "右手"}のネクロマンシーのお告げ${a.echoes ? " + 反響のお告げ" : ""} + ${a.bone === "desecrate_ancient" ? "古代の鎖骨" : "保存された鎖骨"}`;
     case "light": return "光のお告げ + 消去のオーブ (冒涜だけ消す)";
     case "whittle": return "削減のお告げ + カオスオーブ (一番レベルの低い MOD を消す)";

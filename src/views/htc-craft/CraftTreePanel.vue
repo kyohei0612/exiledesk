@@ -41,6 +41,7 @@ function loadAuto(): void {
     baseQuality: t.ctx.value?.baseQuality,
     chaosOk: !t.start.value.slots.some((x) => x.keep),
     protectedSides: [...new Set(t.start.value.slots.filter((x) => x.keep).map((x) => x.side))],
+    desecratedTaken: t.start.value.slots.some((x) => x.desec),
     chaosSide: t.ctx.value ? chaosSideFor(t.start.value, t.ctx.value.limits) : null,
     chance: (x) => spawnChance(c, x.modId, x.minTierIndex ?? 0),
   }));

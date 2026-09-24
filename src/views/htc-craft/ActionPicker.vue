@@ -33,8 +33,8 @@ const OMENS: Omen[] = [
   // 抹消のお告げ = 次のカオスが消すのをその側だけに (poe2db で確認 2026-09-24。足す側は選べない)
   { key: "OmenofSinistralErasure", ja: "左側の抹消のお告げ (カオスが消すのをプレだけに)", group: "chaos", side: "prefix" },
   { key: "OmenofDextralErasure", ja: "右側の抹消のお告げ (カオスが消すのをサフィだけに)", group: "chaos", side: "suffix" },
-  { key: "OmenofSinistralCrystallisation", ja: "左側の結晶化のお告げ", group: "essence", side: "prefix" },
-  { key: "OmenofDextralCrystallisation", ja: "右側の結晶化のお告げ", group: "essence", side: "suffix" },
+  { key: "OmenofSinistralCrystallisation", ja: "左側の結晶化のお告げ (エッセンスが消すのをプレだけに)", group: "essence", side: "prefix" },
+  { key: "OmenofDextralCrystallisation", ja: "右側の結晶化のお告げ (エッセンスが消すのをサフィだけに)", group: "essence", side: "suffix" },
   { key: "OmenofSinistralNecromancy", ja: "左手のネクロマンシーのお告げ", group: "desecrate", side: "prefix" },
   { key: "OmenofDextralNecromancy", ja: "右手のネクロマンシーのお告げ", group: "desecrate", side: "suffix" },
   { key: "OmenofAbyssalEchoes", ja: "反響のお告げ (冒涜を 1 回引き直し)", group: "desecrate", tag: "echoes" },
@@ -57,8 +57,8 @@ function omensOf(a: SimAction | null): string[] {
     case "light": return ["OmenofLight"];
     case "whittle": return ["OmenofWhittling"];
     case "chaos": return a.side ? [a.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"] : [];
-    case "essence": return [props.c.data.value?.mods.get(a.modId)?.type === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
-    case "breach": return ["OmenofSinistralCrystallisation"];
+    case "essence": return [(a.removeSide ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
+    case "breach": return [a.removeSide === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
     case "desecrate": return [a.side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy", ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
     default: return [];
   }
@@ -109,11 +109,13 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
     if (g && g !== "annul") return null;
     return tag("light") ? { kind: "light" } : { kind: "annul", side: sd };
   }
-  if (orbKey === "essence:breach") return g === "essence" && sd === "prefix" ? { kind: "breach" } : null;
+  // 結晶化のお告げは「消す側」(付く側はエッセンスの MOD で決まる。poe2db で確認 2026-09-24)。反対側を選べば、そっちの外れを
+  // 食わせてエッセンスの側に付けられる
+  if (orbKey === "essence:breach") return g === "essence" && sd ? { kind: "breach", ...(sd !== "prefix" ? { removeSide: sd } : {}) } : null;
   if (orbKey.startsWith("essence:")) {
     const modId = orbKey.slice("essence:".length);
     const ms = props.c.data.value?.mods.get(modId)?.type as Side | undefined;
-    return g === "essence" && sd === ms ? { kind: "essence", modId } : null;
+    return g === "essence" && sd && ms ? { kind: "essence", modId, ...(sd !== ms ? { removeSide: sd } : {}) } : null;
   }
   if (orbKey === "desecrate" || orbKey === "desecrate_ancient") {
     if (g !== "desecrate" || !sd) return null;

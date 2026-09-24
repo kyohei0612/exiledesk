@@ -58,6 +58,8 @@ export interface AutoTreeInput {
    * この側にしか付かないので安全 ([[chaosSideFor]])。金の指輪: サフィが樹 MOD 3 つで満杯 → プレをカオスで回せる
    */
   chaosSide?: Side | null;
+  /** 買った時から冒涜の MOD が付いている (冒涜の MOD は 1 つまでなので、冒涜はもう使えない。0.5 のパッチノート) */
+  desecratedTaken?: boolean;
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -82,18 +84,19 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
   const guarded = new Set(inp.protectedSides ?? []);
-  const normal = (side: Side) => guarded.has(side) ? []
+  // 冒涜が使えない時は、触らない MOD の側の普通の狙いも高貴で作るしかない (側の消去で、触らない MOD が消えうる)
+  const normal = (side: Side) => guarded.has(side) && !inp.desecratedTaken ? []
     : ts.filter((t) => mod(t.modId).source === "normal" && sideOf(t.modId) === side && t.modId !== spamId && t.modId !== toDesecrate?.modId);
   /** 冒涜 + 光で作る狙い (冒涜のみの MOD と、触らない MOD がある側の普通の狙い) */
-  const viaDesecrate = (t: TierTarget): boolean =>
-    mod(t.modId).source === "desecrated" || (mod(t.modId).source === "normal" && guarded.has(sideOf(t.modId)));
+  const viaDesecrate = (t: TierTarget): boolean => !inp.desecratedTaken
+    && (mod(t.modId).source === "desecrated" || (mod(t.modId).source === "normal" && guarded.has(sideOf(t.modId))));
   /**
    * 冒涜で作る狙い。冒涜のみの MOD と、触らない MOD がある側の普通の狙いに加え、それが無ければ**一番出にくい普通の狙いを
    * 1 つ冒涜に回す** (冒涜は 3 択から選べるので高貴 1 回より当たりやすい)。オーナー 2026-09-24:「基本 2 つまでは確定で
    * MOD 付ける場合が多い。クラフト MOD 1、冒涜 1 のパターンがほとんど」
    */
   const extraDesecrate = (): TierTarget | null => {
-    if (ts.some((t) => viaDesecrate(t))) return null;
+    if (inp.desecratedTaken || ts.some((t) => viaDesecrate(t))) return null;
     const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0);
     // エッセンス・ブリーチを使う側 (仕上げで枠が空く側) を優先。反対側は高貴やカオスで埋まり、削減で付いた外れで冒涜の枠が
     // 塞がって回り続けた (2026-09-24 段を問わない死体の円環で、全耐性を冒涜に回した時)
@@ -175,7 +178,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // 付く確率が 0 (このベース・ilvl では出ない段) の物は狙えないので除く (選ぶと永久にスパムする)。
   // エッセンス・ブリーチを使う側の物も除く (パーフェクトエッセンスはその側の MOD を必ず 1 つ消すので、カオスで付けた物を
   // 食ってしまう。死体の円環で最大マナをカオスで付け、マナ % のエッセンスに食われて回り続けた)
-  const eatSides = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach ? ["prefix" as Side] : [])]);
+  // ブリーチを先に付けて品質を入れる形 (lockTag) なら、カオスはその後に置くので、ブリーチに食われない
+  const chaosAfterQuality = breach && !!inp.qualityTag && !switchTypes;
+  const eatSides = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach && !chaosAfterQuality ? ["prefix" as Side] : [])]);
   const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId))
     && t.modId !== toDesecrate?.modId);
   // カオスで付けた物が後の消去で消えると、カオスからやり直して他の狙いを壊す。残りの普通の狙いが多いと割に合わない
@@ -190,10 +195,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
   const spam = (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
     ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  let spamNode: SimNode | null = null;
   if (spam) {
     spamId = spam.modId;
     const sid = id();
-    main.push({ ...base, id: sid, action: { kind: "chaos", tier: "chaos", side: inp.chaosOk ? null : inp.chaosSide ?? null }, targets: [{ modId: spam.modId, minTier: spam.minTierIndex ?? 0 }], need: 1, onHit: null, onMiss: sid });
+    spamNode = { ...base, id: sid, action: { kind: "chaos", tier: "chaos", side: inp.chaosOk ? null : inp.chaosSide ?? null }, targets: [{ modId: spam.modId, minTier: spam.minTierIndex ?? 0 }], need: 1, onHit: null, onMiss: sid };
+    if (!chaosAfterQuality) main.push(spamNode);
   }
   // ブリーチは最初に付けて品質を上げる道具。上げた後は消えても品質は残るので、残す対象にしない (外れと同じ扱い。消去で
   // 50% で消える)。オーナー 2026-09-24:「40% 上げて触媒の高貴のお告げで狙って、外れたら左側消去で 50%、それを付くまで」
@@ -204,10 +211,14 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // いなかった。2026-09-24 金の指輪)。品質を上限まで入れた後は、エンジンが外れと同じに扱う (breachSpent)
   if (breach) main.push({ ...base, id: id(), action: { kind: "breach" }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
+  if (spamNode && chaosAfterQuality) main.push(spamNode);
   // エッセンス。種類を替えるやり方の時は、最後の品質の後で削減がブリーチを消して付けた 1 つを食わせる (見本と同じ) ので後回し
   const essenceNodes: SimNode[] = essences.map((t) => ({
     ...base, id: id(), action: { kind: "essence", modId: t.modId }, targets: [{ modId: t.modId, minTier: 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: null,
   }));
+  // クラフト MOD は 1 つまで: ブリーチの MOD が残っているとエッセンスは打てない。品質を入れた後なので、削減でブリーチを消して
+  // 代わりに付いた 1 つをエッセンスに食わせる (見本と同じ)
+  if (!switchTypes && breach && essenceNodes.length) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
   const sides = (["prefix", "suffix"] as Side[]).filter((s) => normal(s).length).sort((a, b) => normal(b).length - normal(a).length);

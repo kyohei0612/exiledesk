@@ -38,10 +38,12 @@ for (const r of RINGS) {
   let fixedDone = false;
   for (const [side, n, S] of [["prefix", g.skippedSides.prefixes, "P"], ["suffix", g.skippedSides.suffixes, "S"]]) {
     const treeOn = g.dropOnly.filter((x) => x.side === S).length;
+    // 買った時から付いている冒涜の MOD (冒涜は 1 つまで)。sim-setup.ts と同じ
+    const desecLeft = g.skipped.filter((t) => { const l = it.lines.find((x) => x.text === t); return l?.kind === "desecrated" && M.htcModSides()[M.matchKey(l.template)] === S; }).length;
     for (let i = 0; i < n; i++) {
       const fix = kind.kind === "fix" && kind.fixSide === S && i < treeOn && !fixedDone;
       if (fix) fixedDone = true;
-      slots.push(fix ? { modId: null, side, fixed: true } : { modId: null, side, fixed: false, keep: true });
+      slots.push({ ...(fix ? { modId: null, side, fixed: true } : { modId: null, side, fixed: false, keep: true }), ...(i >= n - desecLeft ? { desec: true } : {}) });
     }
   }
   const nP = slots.filter((x) => x.side === "prefix").length, nS = slots.filter((x) => x.side === "suffix").length;
@@ -59,7 +61,7 @@ for (const r of RINGS) {
   };
   const chaosOk = !slots.some((x) => x.keep);
   const protectedSides = [...new Set(slots.filter((x) => x.keep).map((x) => x.side))];
-  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null, baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk, chance, protectedSides, chaosSide: M.chaosSideFor({ slots, breach: false }, limits) });
+  const nodes = M.autoTree({ data, prices, targets: g.targets, fixedIds: [], qualityTag: it.catalystTag ?? null, qualityPct: it.quality ?? null, baseQuality: M.maxQualityForBase(it.baseType ?? ""), chaosOk, chance, protectedSides, chaosSide: M.chaosSideFor({ slots, breach: false }, limits), desecratedTaken: slots.some((x) => x.desec) });
   const ctx = { data, cls, prices, itemLevel: it.itemLevel ?? 82, limits, catalystOk: () => true, baseQuality: M.maxQualityForBase(it.baseType ?? "") };
   const res = M.simulateTree({ ctx, start: { slots, breach: false }, nodes, runs: 1500, budget: 1000 * D });
   const lost = res.stops.filter((x) => x.reason.includes("消えたら終わり")).reduce((a2, x) => a2 + x.p, 0);

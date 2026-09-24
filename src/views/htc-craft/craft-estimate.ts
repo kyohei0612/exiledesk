@@ -72,6 +72,7 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
     baseQuality: ctx.baseQuality,
     chaosOk: !start.slots.some((x) => x.keep),
     protectedSides: [...new Set(start.slots.filter((x) => x.keep).map((x) => x.side))],
+    desecratedTaken: start.slots.some((x) => x.desec),
     chaosSide: chaosSideFor(start, ctx.limits),
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
   });

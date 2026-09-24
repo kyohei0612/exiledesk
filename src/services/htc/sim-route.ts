@@ -25,10 +25,14 @@ export type SimAction =
   | { kind: "chaos"; tier: "chaos" | "chaos_greater" | "chaos_perfect"; side?: Side | null }
   | { kind: "exalt"; tier: "exalt" | "exalt_greater" | "exalt_perfect"; side: Side | null; catalyst: string | null }
   | { kind: "annul"; side: Side | null }
-  | { kind: "essence"; modId: string }
+  /**
+   * removeSide = 結晶化のお告げの側 = **消す側** (poe2db: 「次のパーフェクトエッセンスが消すのをその側だけに」)。付く側は
+   * エッセンスの MOD で決まる。省略時はエッセンスの MOD と同じ側
+   */
+  | { kind: "essence"; modId: string; removeSide?: Side }
   | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient"; echoes: boolean }
   | { kind: "light" }
-  | { kind: "breach" }
+  | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
   | { kind: "check" }
@@ -96,6 +100,12 @@ export interface SimSlot {
    * 消えたらその回は止める (2026-09-24: 固定不要の始め方で、樹 MOD の側に触らない作り方になっているかを確かめる)
    */
   keep?: boolean;
+  /**
+   * クラフト MOD (エッセンス・合金で付いた物) / 冒涜で付いた MOD か。0.5 から、クラフト MOD は同時に 1 つまで・冒涜の MOD も
+   * 1 つまで (パッチノート。2026-09-24 調べ)。ブリーチの MOD もクラフト MOD (state.breach で数える)
+   */
+  crafted?: boolean;
+  desec?: boolean;
   label?: string;
 }
 export interface SimState {
@@ -176,6 +186,8 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
   const lastQualityTag = [...nodes].reverse().map((n) => n.action).find((a) => a?.kind === "quality");
   const breachSpent = (s: SimState): boolean =>
     lastQualityTag?.kind === "quality" && s.quality != null && s.qualityTag === lastQualityTag.catalyst && s.quality >= (ctx.baseQuality ?? 20) + 20;
+  /** クラフト MOD が付いているか (ブリーチの MOD か、エッセンスで付いた MOD) */
+  const craftedPresent = (s: SimState): boolean => s.breach || s.slots.some((x) => x.crafted);
   const hasJunk = (s: SimState): boolean =>
     s.slots.some((x) => !x.fixed && !x.keep && !x.modId) || (s.breach && (!breachKept || breachSpent(s)));
 
@@ -236,12 +248,23 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       case "annul": return removable(s, a.side).length ? null : "外せる物が無い";
       case "essence": {
         // 食わせる物が無ければ、高貴 + 側の高貴なお告げで外れを付けてから (その分も 1 回の値段に入る)
+        if (craftedPresent(s)) return "クラフト MOD は 1 つまで (ブリーチやエッセンスの MOD が付いている)";
         const side = mod(a.modId)?.type as Side;
-        return removable(s, side).length || room(s, side) ? null : "食わせる物も枠も無い";
+        const rs = a.removeSide ?? side;
+        if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
+        return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
-      case "desecrate": return room(s, a.side) ? null : "冒涜する枠が無い";
+      case "desecrate":
+        if (s.slots.some((x) => x.desec)) return "冒涜の MOD は 1 つまで";
+        return room(s, a.side) ? null : "冒涜する枠が無い";
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
-      case "breach": return s.breach ? "もう付いている" : removable(s, "prefix").length || room(s, "prefix") ? null : "食わせるプレも枠も無い";
+      case "breach": {
+        if (s.breach) return "もう付いている";
+        if (craftedPresent(s)) return "クラフト MOD は 1 つまで (エッセンスの MOD が付いている)";
+        const rs = a.removeSide ?? "prefix";
+        if (rs !== "prefix" && !room(s, "prefix")) return "プレに枠が無い";
+        return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
+      }
       case "whittle": return removable(s, null).length ? null : "外せる物が無い";
       case "check": case "quality": return null;
     }
@@ -255,14 +278,17 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + (s.quality == null ? catalystCountFor(quality(s)) * cur(catalystPriceKey(a.catalyst)) : 0) : 0);
       case "annul": return cur("annul") + (a.side ? cur(OMEN_AN[a.side]) : 0);
       case "essence": {
-        const side = (mod(a.modId)?.type ?? "prefix") as Side;
-        return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[side]) + (removable(s, side).length ? 0 : cur("exalt") + cur(OMEN_EX[side]));
+        const rs = a.removeSide ?? (mod(a.modId)?.type ?? "prefix") as Side;
+        return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN_EX[rs]));
       }
       case "desecrate": return cur(a.bone) + cur(OMEN_NE[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
       case "light": return cur("annul") + cur("OmenofLight");
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
-      case "breach": return cur("essence:breach") + cur("OmenofSinistralCrystallisation") + (removable(s, "prefix").length ? 0 : cur("exalt") + cur(OMEN_EX.prefix));
+      case "breach": {
+        const rs = a.removeSide ?? "prefix";
+        return cur("essence:breach") + cur(OMEN_CR[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN_EX[rs]));
+      }
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;
       // 同じ種類で入っている分は足すだけ。違う種類なら入れ直し (品質の種類は 1 つ)
@@ -310,21 +336,24 @@ export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: reado
       case "annul": return rmRandom(s, a.side);
       case "essence": {
         const side = mod(a.modId)?.type as Side;
-        const t = removable(s, side).length ? s : land(s, { modId: null, side });
-        return land(rmRandom(t, side), { modId: a.modId, side });
+        const rs = a.removeSide ?? side;
+        const t = removable(s, rs).length ? s : land(s, { modId: null, side: rs });
+        const u = rmRandom(t, rs);
+        return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true }] };
       }
       case "desecrate": {
         const ok = rnd() < desecrateOdds(s, n, a);
         const t = n.targets.find((x) => mod(x.modId)?.type === a.side && !has(s, x.modId));
-        return { ...s, slots: [...s.slots, ok && t ? { modId: t.modId, side: a.side, fixed: false } : { modId: null, side: a.side, fixed: false, desecrated: true }] };
+        return { ...s, slots: [...s.slots, ok && t ? { modId: t.modId, side: a.side, fixed: false, desec: true } : { modId: null, side: a.side, fixed: false, desecrated: true, desec: true }] };
       }
       case "light": {
         const i = s.slots.findIndex((x) => x.desecrated);
         return i >= 0 ? removeAt(s, i) : s;
       }
       case "breach": {
-        const t = removable(s, "prefix").length ? s : land(s, { modId: null, side: "prefix" });
-        return { ...rmRandom(t, "prefix"), breach: true };
+        const rs = a.removeSide ?? "prefix";
+        const t = removable(s, rs).length ? s : land(s, { modId: null, side: rs });
+        return { ...rmRandom(t, rs), breach: true };
       }
       case "whittle": {
         // 一番レベルの低い物 (ブリーチの MOD はレベル 0) を消して 1 つ付く
