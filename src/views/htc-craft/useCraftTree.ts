@@ -8,7 +8,7 @@
  * × = 外れが付いた / 消去が残したい MOD を消した、の代表の形)。打てる物と「1 回で○になる確率」はこの指輪で出す。
  */
 import { computed, ref, shallowRef, watch } from "vue";
-import { simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
+import { CERTAIN, simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/spam-total";
 import { simCtxOf, startStateOf } from "./sim-setup";
 import type { Side } from "../../services/htc/step-odds";
@@ -152,7 +152,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   const blocked = computed(() => {
     const first = nodes.value[0];
     if (!first?.action) return "手 1 の打つ物を選んでください";
-    if (!first.onHit || !first.onMiss) return "手 1 は ○ と × の両方の行き先が要ります";
+    // 確定の手 (ブリーチ・品質など) は × が来ないので ○ だけでいい (自動で組むと手 1 がブリーチになる。2026-09-24)
+    if (!first.onHit || (!first.onMiss && !CERTAIN.has(first.action.kind))) return "手 1 は ○ と × の両方の行き先が要ります";
     if (!nodes.value.some((n) => n.onHit === "done" || n.onMiss === "done")) return "どこかの行き先を「完成」にしてください (本線の最後の○)";
     return null;
   });

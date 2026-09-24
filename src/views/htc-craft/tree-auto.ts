@@ -145,7 +145,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * 側のお告げは 1 回 10 神前後するので、素の消去 (1 神未満) で反対側の物を時々消す方がずっと安い。2026-09-24 死体の円環
    * (本物の段): 右側の消去のお告げ 65 回で 667 神 / 手で組んだ見本は素の消去 28 回で 20 神 (オーナー:「消去は全て普通の消去」)
    */
-  const plainAnnul = (inp.protectedSides ?? []).length === 0;
+  // ただし普通の狙いが 5 つ以上だと、素の消去が反対側の狙いを消して揃わない (プリズム 6 つ、本物の段: 素の消去は 6 万手で
+  // 完成 56% / 側のお告げ付きは 100%・平均 18,157 神)。多い時は側の消去にする
+  const plainAnnul = (inp.protectedSides ?? []).length === 0 && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
   const annulFor = (side: Side): string => {
     const aid = plainAnnul ? "x-any" : `x-${side}`;
     if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side: plainAnnul ? null : side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
