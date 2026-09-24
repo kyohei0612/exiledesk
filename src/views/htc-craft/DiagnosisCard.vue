@@ -13,6 +13,7 @@ import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
 import SearchChecks from "./SearchChecks.vue";
 import FractureCandidates from "./FractureCandidates.vue";
+import ModBreakdown from "./ModBreakdown.vue";
 import { useFractureChoice } from "./useFractureChoice";
 import { useFinishedCompare } from "./useFinishedCompare";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -23,20 +24,11 @@ const baseType = computed(() => c.item.value?.baseType ?? zeroStart.value.baseTy
 const baseJa = computed(() => c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? "");
 const lim = computed(() => (c.data.value ? sideLimits(c.data.value, baseType.value) : { prefix: 3, suffix: 3 }));
 const fixed = computed(() => c.fracturedTargets.value.map((t) => c.stepTarget([t.modId])));
-const fixedIds = computed(() => new Set(c.fracturedTargets.value.map((t) => t.modId)));
-const targets = computed(() => c.rows.value.filter((r) => !fixedIds.value.has(r.modId)));
 /** 別のベースの方が合う時だけ 2 つまで (枠が違う・暗黙がタダ・品質の上限) */
 const others = computed(() => c.bases.value.filter((b) => b.fits && !b.current && (b.maxQualityPlus || b.implicits.length)).slice(0, 2));
 const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality);
 /** 英語の行 (忍者のコピー) は日本語に */
 const ja = (t: string): string => jaOfPastedLine(t) ?? t;
-/** その MOD の段 (良い順、ilvl で付かない段は出さない) */
-const tiersOf = (modId: string): Array<{ i: number; label: string }> => {
-  const m = c.data.value?.mods.get(modId);
-  const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
-  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} 以上 (${(t.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")})` }))
-    .filter((t) => t.ilvl <= lv).reverse();
-};
 /** フラクチャー品から始めるか、無し品から作るか */
 const fc = useFractureChoice(c);
 /** 完成品を買うのと作るのと */
@@ -56,6 +48,8 @@ watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.m
 
 <template>
   <div class="mb-3 text-xs">
+    <!-- MOD 解析: 種類ごと・プレ / サフィごと (オーナー 2026-09-24) -->
+    <ModBreakdown :c="c" />
     <!-- 3 枚並べる: ベース / 始め方 / 完成品と比べる (2026-09-24 リリースに向けた見直し: 縦に長かった) -->
     <div class="grid gap-2 lg:grid-cols-3">
       <!-- ベース -->
@@ -66,9 +60,6 @@ watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.m
         <p v-if="fixed.length" class="mt-1">固定済み: {{ fixed.join(" / ") }}</p>
         <p v-if="c.dropOnly.value.length" class="mt-1">
           樹 MOD (固定済みで買う): <b>{{ c.dropOnly.value.map((d) => ja(d.text)).join(" / ") }}</b>
-        </p>
-        <p v-if="c.skipped.value.length > c.dropOnly.value.length" class="mt-1 text-rose-300">
-          このベースでは作れない MOD: {{ c.skipped.value.map(ja).join(" / ") }}
         </p>
         <p v-if="c.slots.value?.impossible" class="mt-1 text-rose-300">{{ c.slots.value.note }}</p>
         <p v-for="b in others" :key="b.baseType" class="mt-1 opacity-60">
@@ -126,22 +117,6 @@ watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.m
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
       </section>
     </div>
-
-    <!-- 作る MOD と狙う段 (オーナー 2026-09-24:「一応ティア選べるようにね、最初で」) -->
-    <section class="mt-2 rounded-lg border border-white/15 bg-white/[0.04] p-3">
-      <p class="mb-1 opacity-50">作る MOD {{ targets.length }} つ と狙う段 (段はツリーの手でも選び直せる)</p>
-      <div class="grid gap-x-6 gap-y-1 md:grid-cols-2">
-        <div v-for="r in targets" :key="r.modId" class="flex items-center gap-2">
-          <span class="flex-1">{{ r.text }}</span>
-          <select v-if="tiersOf(r.modId).length > 1" class="rounded border border-white/20 bg-black/30 px-1"
-            :value="c.targets.value.find((t) => t.modId === r.modId)?.minTierIndex ?? 0"
-            @change="c.setTier(r.modId, Number(($event.target as HTMLSelectElement).value))">
-            <option v-for="t in tiersOf(r.modId)" :key="t.i" :value="t.i">{{ t.label }}</option>
-          </select>
-          <span v-else class="opacity-50">確定</span>
-        </div>
-      </div>
-    </section>
 
     <details v-if="c.treeResult.value" class="mt-2">
       <summary class="cursor-pointer opacity-50">固定済み・固定無しの詳しい表</summary>

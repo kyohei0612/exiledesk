@@ -87,8 +87,22 @@ function toggleTarget(modId: string, minTier: number): void {
   props.t.update(n.value.id, { targets: next, need: Math.min(n.value.need ?? 1, Math.max(1, next.length)) });
 }
 
-/** 行き先の選択肢: 既にある手 / 新しい手 / 自動 / 完成 / 未設定 */
-const gotoOptions = computed(() => props.t.nodes.value.map((x, i) => ({ value: x.id, label: `手 ${i + 1}` })));
+/**
+ * 行き先の選択肢。2026-09-24 オーナー:「手を追加する際、プルダウンの中身おかしいよね、手 1 とかあんま選択肢ない」。
+ * 全部の手を番号だけで並べていたのをやめて、意味で分ける:
+ *   新しい手 / この手をもう一度 / 上の手へ戻る (手 1 からここまで通った手) / ほかの枝の手 (消去の手を共有する時など)。
+ * 自分の枝の下の手は出さない (先回りになる)。今入っている行き先は必ず残す
+ */
+function gotoGroups(which: "onHit" | "onMiss") {
+  const id = n.value.id;
+  const opt = (x: string) => ({ value: x, label: `手 ${props.t.indexOf(x) + 1}  ${props.t.labelOf(x)}` });
+  const up = props.t.ancestors(id);
+  const below = props.t.descendants(id);
+  const current = n.value[which];
+  const others = props.t.nodes.value.map((x) => x.id)
+    .filter((x) => x !== id && !up.includes(x) && (!below.has(x) || x === current));
+  return { up: up.map(opt), others: others.map(opt) };
+}
 function setGoto(which: "onHit" | "onMiss", v: string): void {
   let g: Goto = v === "" ? null : v;
   if (v === "__new__") {
@@ -149,10 +163,18 @@ const hasExtra = computed(() => n.value.clean || n.value.maxMods != null);
         <b :class="w === 'onHit' ? 'text-emerald-300' : 'text-rose-300'">{{ w === "onHit" ? "○" : "×" }}</b>
         <select class="rounded border border-white/20 bg-black/30 px-1" :value="n[w] ?? ''" @change="setGoto(w, ($event.target as HTMLSelectElement).value)">
           <option value="">{{ w === "onMiss" && certain ? "(確定の手なので要らない)" : "未設定" }}</option>
-          <option v-for="o in gotoOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          <option value="__new__">+ 新しい手</option>
-          <option value="auto">自動 (消えた物を見て戻る)</option>
+          <option value="__new__">+ 新しい手を足す</option>
           <option value="done">完成</option>
+          <option value="auto">自動 (消えた物を見て戻る)</option>
+          <option :value="n.id">この手をもう一度</option>
+          <template v-for="g in [gotoGroups(w)]" :key="w">
+            <optgroup v-if="g.up.length" label="上の手へ戻る">
+              <option v-for="o in g.up" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </optgroup>
+            <optgroup v-if="g.others.length" label="ほかの枝の手">
+              <option v-for="o in g.others" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </optgroup>
+          </template>
         </select>
       </label>
     </div>

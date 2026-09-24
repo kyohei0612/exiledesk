@@ -17,16 +17,6 @@ const c = props.c;
 const t = useCraftTree(c);
 const pct = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 貼り付けの狙いに合う見本のツリー */
-/** 結果の表の手の名前 (何をする手か一目で分かるように、2026-09-24) */
-const KIND: Record<string, string> = {
-  chaos: "カオス", exalt: "高貴", annul: "消去", essence: "エッセンス", desecrate: "冒涜", light: "光 + 消去",
-  breach: "ブリーチ", whittle: "削減", quality: "品質", check: "確認",
-};
-function nodeLabel(id: string): string {
-  const n = t.nodes.value.find((x) => x.id === id);
-  const aim = n?.targets.map((x) => c.stepTarget([x.modId])).join(" / ") ?? "";
-  return [n?.action ? KIND[n.action.kind] : "", aim].filter(Boolean).join(" → ");
-}
 const presets = computed(() => TREE_PRESETS.filter((x) => x.applies(c.targets.value)));
 function loadPreset(id: string): void {
   const x = TREE_PRESETS.find((y) => y.id === id), d = c.data.value, p = c.prices.value;
@@ -100,7 +90,7 @@ async function focus(id: string): Promise<void> {
         <table class="mt-2 w-full">
           <tr class="opacity-50"><th class="text-left font-normal">手</th><th class="text-right font-normal">打つ回数</th><th class="text-right font-normal">費用</th><th class="text-left font-normal pl-3">割合</th></tr>
           <tr v-for="(p, i) in t.result.value.perNode" :key="p.id" class="border-t border-white/5">
-            <td class="py-0.5">手 {{ i + 1 }} <span class="opacity-60">{{ nodeLabel(p.id) }}</span></td>
+            <td class="py-0.5">手 {{ i + 1 }} <span class="opacity-60">{{ t.labelOf(p.id) }}</span></td>
             <td class="text-right">{{ p.tries.toFixed(1) }} 回</td>
             <td class="text-right">{{ c.money(p.cost) }}</td>
             <td class="pl-3">

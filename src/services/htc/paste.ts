@@ -274,6 +274,8 @@ export interface DropOnlyRow {
   deboosted?: boolean;
   /** 選べる段 (低い方から) */
   tiers?: DropOnlyTier[];
+  /** どちら側の枠か (クライアント由来の表。引けなければ無し) */
+  side?: "P" | "S";
 }
 
 /**
@@ -477,15 +479,16 @@ export function targetsFor(
     if (!skipped.includes(l.text)) continue;
     const k = matchKey(l.template);
     const t2 = tree[k];
+    const v = sides[k];
     // stats まで持って回る。**ここで引けたのに後で引き直す**と、文面の正規化が
     // 1 箇所ずれただけで「買うしかない MOD なのに検索も組めない」に落ちます (2026-09-23 に実際そうなった)
     if (t2) {
       dropOnlyRows.push({
         text: l.text, tag: t2.tag, tagJa: TREE_JA[t2.tag] ?? t2.tag, name: t2.name, stats: t2.stats ?? [],
         ...treeTierOf(t2, l.values[0], item),
+        ...(v === "P" || v === "S" ? { side: v } : {}),
       });
     }
-    const v = sides[k];
     if (v === "P") skippedSides.prefixes++;
     else if (v === "S") skippedSides.suffixes++;
     else skippedSides.either++;

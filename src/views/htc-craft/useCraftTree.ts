@@ -130,6 +130,29 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     return g && p && p.from === id && p.via === via ? g : null;
   };
   const indexOf = (id: string): number => nodes.value.findIndex((n) => n.id === id);
+  /** 手 1 からその手までに通る手 (枝の親をたどる。自分は入れない、手 1 が先頭) */
+  const ancestors = (id: string): string[] => {
+    const out: string[] = [];
+    for (let p = layout.value.parent.get(id); p; p = layout.value.parent.get(p.from)) {
+      if (out.includes(p.from)) break;
+      out.unshift(p.from);
+    }
+    return out;
+  };
+  /** その手の枝の下にぶら下がっている手 (○ でも × でも) */
+  const descendants = (id: string): Set<string> =>
+    new Set(nodes.value.filter((n) => n.id !== id && ancestors(n.id).includes(id)).map((n) => n.id));
+  /** 手の短い名前 (「カオス → キャストスピード…」)。行き先の選択肢と結果の表で使う */
+  const KIND: Record<string, string> = {
+    chaos: "カオス", exalt: "高貴", annul: "消去", essence: "エッセンス", desecrate: "冒涜", light: "光 + 消去",
+    breach: "ブリーチ", whittle: "削減", quality: "品質", check: "確認",
+  };
+  const labelOf = (id: string): string => {
+    const n = nodes.value.find((x) => x.id === id);
+    if (!n?.action) return "打つ物まだ";
+    const aim = n.action.kind === "essence" ? [c.stepTarget([n.action.modId])] : n.targets.map((x) => c.stepTarget([x.modId]));
+    return [KIND[n.action.kind], aim.join(" / ")].filter(Boolean).join(" → ");
+  };
   const unplaced = computed(() => nodes.value.filter((n) => !layout.value.placed.has(n.id)));
 
   /** 1 回で○になる確率 (その手の指輪から 400 回打ってみる) */
@@ -223,5 +246,5 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     return k <= r.doneCosts.length ? r.doneCosts[k - 1]! : null;
   });
 
-  return { setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced };
+  return { setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced, ancestors, descendants, labelOf };
 }

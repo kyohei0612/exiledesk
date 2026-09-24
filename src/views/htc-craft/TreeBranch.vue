@@ -7,6 +7,7 @@
  */
 import { computed } from "vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
+import { CERTAIN } from "../../services/htc/sim-route";
 import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -17,8 +18,11 @@ const node = computed(() => props.t.nodes.value.find((n) => n.id === props.id)!)
 const hitChild = computed(() => props.t.childOf(props.id, "onHit"));
 const missChild = computed(() => props.t.childOf(props.id, "onMiss"));
 /** 子として置かない行き先の札 */
-function chip(g: string | null | undefined): string {
-  if (g == null) return "未設定";
+/** 確定の手 (外れない) は × が要らない */
+const certain = computed(() => !!node.value?.action && CERTAIN.has(node.value.action.kind));
+function chip(g: string | null | undefined, miss = false): string {
+  if (g == null) return miss && certain.value ? "要らない (確定の手)" : "未設定";
+  if (g === props.id) return "↻ もう一度";
   if (g === "done") return "完成";
   if (g === "auto") return "自動 (消えた物を見て戻る)";
   return `↩ 手 ${props.t.indexOf(g) + 1} へ`;
@@ -36,7 +40,7 @@ function chip(g: string | null | undefined): string {
       <div class="mt-4 shrink-0 border-t-2 border-rose-500/60 pt-1">
         <span class="text-xs font-bold text-rose-300">×</span>
         <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" />
-        <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss) }}</span>
+        <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss, true) }}</span>
       </div>
     </div>
     <!-- ○ の本線 (下へ) -->

@@ -90,7 +90,7 @@ async function runPicked(): Promise<void> {
 /** たたんだ入力欄の 1 行 */
 const inputSummary = computed(() => {
   const it = c.item.value;
-  if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length} 個`;
+  if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length + c.dropOnly.value.length} 個`;
   const ja = pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value ?? "";
   return `${ja} / ilvl ${pk.level.value} / 狙う MOD ${pk.picks.value.length} 個`;
 });
@@ -295,7 +295,7 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <template v-if="c.base.value">
-      <h2 class="mb-1 text-base font-bold">ベースの診断</h2>
+      <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />
       <h2 class="mb-1 mt-5 text-base font-bold">作り方 (ツリー)</h2>
       <CraftTreePanel :c="c" />

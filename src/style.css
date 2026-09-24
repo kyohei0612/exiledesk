@@ -195,6 +195,22 @@ button {
   cursor: pointer;
 }
 
+/*
+ * プルダウンを開いた時の一覧を暗い地 + 明るい字に。2026-09-24 オーナー:「オーブとかお告げ見づらい色がプルダウンの」。
+ * 閉じた時の地が半透明 (bg-black/30) だと、開いた一覧は WebView2 の既定 (白地) になり字の色と噛み合わない
+ */
+select {
+  color-scheme: dark;
+}
+select option,
+select optgroup {
+  background-color: var(--exile-color-bg-elevated);
+  color: var(--exile-color-text-primary);
+}
+select option:disabled {
+  color: var(--exile-color-text-tertiary);
+}
+
 /* tabular numeric は body 既定で ON（文章中の数字も等幅で揃える） */
 table td,
 table th,
