@@ -17,6 +17,7 @@ import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { zeroStart } from "./craft-settings";
+import { matchKey } from "../../services/htc/bridge-index";
 import { craftEstimate } from "./craft-estimate";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -32,12 +33,17 @@ export function useFinishedCompare(
    *   full  … どの MOD も 3 つのどれでもいい (樹 MOD は普通 / 固定済み)
    *   light … 2 択は樹 MOD だけ、他は普通だけ
    * full は条件が多く、ログインしていないと「検索条件が複雑過ぎます」(HTTP 400) で断られる (2026-09-24 実機、エラー文に
-   * 「ログインすればこの上限が増えます」)。断られたら light で投げ直す
+   * 「ログインすればこの上限が増えます」)。断られたら light で投げ直す。
+   * 完成品には狙い以外の付いている MOD (樹の冒涜 MOD など、[[extraLines]]) も入れる。
+   * withMins = false は値 (段の下限) を外して MOD の組み合わせだけ (オーナー 2026-09-24:「完成版で出なかったら MOD の値だけ
+   * 消して組み合わせだけで完成品としておけ」)。
    */
-  function build(level: "full" | "light") {
+  function build(level: "full" | "light", withMins = true) {
     const d = c.data.value, cls = c.base.value;
     if (!d || !cls) return null;
-    const { filters, unmatched } = tradeFiltersFor(d, c.targets.value);
+    const got = tradeFiltersFor(d, c.targets.value);
+    const unmatched = got.unmatched;
+    const filters: { id: string; min?: number }[] = got.filters.map((f) => (withMins ? { id: f.id, min: f.min } : { id: f.id }));
     if (unmatched.length) return null;
     const bareOf = (id: string): string => id.replace(/^(explicit|fractured)\./, "");
     const plain: { id: string; min?: number }[] = [];
@@ -47,15 +53,17 @@ export function useFinishedCompare(
     const own = new Set(filters.map((x) => bareOf(x.id)));
     const treeKeys = new Set(tree.map((x) => bareOf(x.id)).filter((k) => !own.has(k)));
     const seen = new Set<string>();
-    for (const f of [...filters.map((x) => ({ id: x.id, min: x.min })), ...tree.map((x) => ({ id: x.id, min: x.min ?? 0 }))]) {
+    for (const f of [...filters, ...tree.map((x) => ({ id: x.id, min: withMins ? x.min ?? 0 : undefined }))]) {
       const key = bareOf(f.id);
       if (seen.has(key)) continue;
       seen.add(key);
       if (!/^(explicit|fractured)\./.test(f.id)) { plain.push(f); continue; }
       const kinds = treeKeys.has(key) ? ["explicit", "fractured"] : level === "full" ? ["explicit", "fractured", "desecrated"] : null;
-      if (kinds) anyOf.push({ filters: kinds.map((k) => ({ id: `${k}.${key}`, min: f.min })) });
-      else plain.push(f);
+      if (kinds) anyOf.push({ filters: kinds.map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) })) });
+      else plain.push(f.min != null ? f : { id: f.id });
     }
+    // 狙い以外の付いている MOD (冒涜のみ・作れない)。値は問わず、付いていること (冒涜の物は冒涜で)
+    for (const x of extraLines.value) if (!seen.has(x.bare)) { seen.add(x.bare); plain.push({ id: `${x.desecrated ? "desecrated" : "explicit"}.${x.bare}` }); }
     const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
     const category = tradeCategoryOf(cls);
     if (!baseType && !category) return null;
@@ -68,6 +76,25 @@ export function useFinishedCompare(
       anyOf,
     });
   }
+  /**
+   * 狙い以外で完成品に付いている MOD (樹 MOD 以外で繋がらなかった行 = 樹の冒涜 MOD・作れない物)。取引所の stat は、
+   * 同じ文面のエンジンの MOD (別のクラスでもいい) の stat から引く (樹の冒涜のミニオンのクールダウンは、アミュの冒涜
+   * MOD と同じ stat)。引けない行は入れない
+   */
+  const extraLines = computed(() => {
+    const d = c.data.value, it = c.item.value;
+    if (!d || !it) return [];
+    const tree = new Set(c.dropOnly.value.map((x) => x.text));
+    const byText = new Map<string, string>();
+    for (const m of d.mods.values()) if (m.text && !byText.has(matchKey(m.text))) byText.set(matchKey(m.text), m.id);
+    return c.skipped.value.filter((t) => !tree.has(t)).flatMap((t) => {
+      const line = it.lines.find((l) => l.text === t);
+      const modId = line ? byText.get(matchKey(line.template)) : undefined;
+      // stat はエンジンの段に無いことがあるので、同じ系統から借りる tradeFiltersFor で引く
+      const trade = modId ? tradeFiltersFor(d, [{ modId, minTierIndex: 0 }]).filters[0]?.id : undefined;
+      return trade ? [{ bare: trade.replace(/^[a-z]+\./, ""), desecrated: line!.kind === "desecrated" }] : [];
+    });
+  });
   const query = computed(() => build("full"));
   /** 組めない理由 (取引所の条件にできない MOD がある) */
   const unbuildable = computed(() => {
@@ -93,11 +120,22 @@ export function useFinishedCompare(
     try {
       const league = marketStore.league.value?.Value ?? "Standard";
       lightNote.value = null;
+      let level: "full" | "light" = "full";
       let r = await autoPriceCached(league, query.value, marketStore.rates.value, 5);
       const light = build("light");
       if (!r && (tradeAuto.lastError.value ?? "").includes("複雑") && light) {
+        level = "light";
         r = await autoPriceCached(league, light, marketStore.rates.value, 5);
         if (r) lightNote.value = "条件が複雑過ぎると断られたので、冒涜で付いた MOD は拾わない条件で探しました (ログインすると、もっとゆるい条件で探せます)";
+      }
+      // 出品が無ければ、値 (段) を外して MOD の組み合わせだけで探し直す
+      const loose = build(level, false);
+      if (r && r.total === 0 && loose) {
+        const r2 = await autoPriceCached(league, loose, marketStore.rates.value, 5);
+        if (r2) {
+          r = r2;
+          lightNote.value = [lightNote.value, "同じ値の完成品が無かったので、値 (段) は問わず MOD の組み合わせだけで探しました"].filter(Boolean).join("。");
+        }
       }
       if (!r) error.value = tradeAuto.lastError.value ?? "取れませんでした (間隔待ちの時は少し待って押し直し)";
       else found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
