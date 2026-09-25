@@ -33,19 +33,19 @@ const num = (e: Event): number | null => {
 </script>
 
 <template>
-  <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
-    <p class="mb-1 opacity-50">始め方</p>
+  <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">一番安い始め方</b></p>
     <p v-if="ss.kind.value.kind === 'unsafe'" class="text-rose-300">クラフト非推奨なので、始め方はありません。完成品を買うのをすすめます</p>
     <p v-else-if="!started" class="opacity-50">
       {{ ss.kind.value.kind === "fix" ? "左の「取引所で探す」" : "左で選んで「取引所で探す」" }}を押すと、取れた物からここに出ます
     </p>
 
     <!-- 一番安い始め方 (選び直していればそれ) -->
-    <div v-if="top?.best" class="rounded border border-amber-500/40 bg-amber-500/10 p-2">
+    <div v-if="top?.best" class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2">
       <p class="opacity-80">{{ top.key === cheapest?.key ? "→ これで作るのが安い" : "→ 選んだ始め方" }}</p>
       <p class="text-sm"><b>{{ top.name }}</b></p>
       <p>
-        {{ top.best.label }}: <b class="text-[15px] text-amber-200">{{ c.money(top.best.cost!) }}</b><span v-if="top.best.total != null && top.best.id !== 'buy'" class="opacity-70"> + 作る見込み = <b>{{ c.money(top.best.total) }}</b></span>
+        {{ top.best.label }}: <b class="text-[15px] text-amber-200">{{ c.money(top.best.cost!) }}</b><span v-if="top.best.total != null && top.best.id !== 'buy'" class="opacity-70"> + 作る見込み = <b class="text-amber-200">{{ c.money(top.best.total) }}</b></span>
         <button v-if="top.best.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(top.best.link.url)">{{ top.best.link.text }} →</button>
       </p>
       <p v-if="top.best.note" class="opacity-60">{{ top.best.note }}</p>

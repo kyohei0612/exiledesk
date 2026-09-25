@@ -56,7 +56,10 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
       const want = n.targets.find((t) => !h.has(s, t.modId));
       const junkAt = s.slots.findIndex((x) => !x.fixed && !x.modId);
       if (a && (a.kind === "chaos" || a.kind === "exalt" || a.kind === "essence" || a.kind === "desecrate")) {
-        const base = a.kind === "chaos" || a.kind === "essence" ? (junkAt >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : s) : s;
+        // カオスは 1 つ外して 1 つ付ける。外れが無ければブリーチの MOD が外れる (守っていなければ)。
+        // 2026-09-25: これを見ていなくて「足す枠が無い」の赤札が出たまま自動が組んでいた
+        const breachGoes = a.kind === "chaos" && junkAt < 0 && s.breach && a.side !== "suffix" && !n.keep.includes("__breach__");
+        const base = a.kind === "chaos" || a.kind === "essence" ? (junkAt >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : breachGoes ? { ...s, breach: false } : s) : s;
         hit = want ? { ...base, slots: [...base.slots, { modId: want.modId, side: sideOf(want.modId), fixed: false }] } : base;
         const jSide: Side = a.kind === "exalt" && a.side ? a.side : a.kind === "desecrate" ? a.side : (h.room(s, "suffix") ? "suffix" : "prefix");
         miss = a.kind === "chaos" ? s : { ...s, slots: [...s.slots, { modId: null, side: jSide, fixed: false, ...(a.kind === "desecrate" ? { desecrated: true } : {}) }] };

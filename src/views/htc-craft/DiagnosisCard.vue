@@ -109,12 +109,11 @@ const fixLabel = computed(() => {
     </div>
     <!-- MOD 解析: 種類ごと・プレ / サフィごと (オーナー 2026-09-24) -->
     <ModBreakdown :c="c" />
-    <div class="grid gap-2 lg:grid-cols-3">
-      <!-- ベース + 固定済みにして始める MOD を選ぶ -->
-      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
-        <p class="mb-1 opacity-50">ベース</p>
-        <p class="text-sm font-bold">{{ baseJa }}</p>
-        <p class="opacity-70">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 ・ 品質 {{ quality }}%</p>
+    <div class="grid gap-3 lg:grid-cols-3">
+      <!-- ① 固定済みにして始める MOD を選ぶ -->
+      <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span><b class="text-sm">固定する MOD を選ぶ</b></p>
+        <p class="opacity-70">{{ baseJa }} ・ プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 ・ 品質 {{ quality }}%</p>
         <p v-if="c.dropOnly.value.length" class="mt-1">
           樹 MOD (固定済みで買う): <b>{{ c.dropOnly.value.map((d) => ja(d.text)).join(" / ") }}</b>
         </p>
@@ -130,6 +129,7 @@ const fixLabel = computed(() => {
           完成品を買うのをすすめます (右で探せます)
         </div>
         <div v-else-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
+          <p class="mb-1 opacity-60">出にくい MOD ほど固定 (フラクチャー) の価値が高い。出にくい順に 3 つまで選んであります</p>
           <!-- 樹 MOD を固定 (作る側に樹 MOD が 1 つ) -->
           <template v-if="ss.kind.value.kind === 'fix'">
             <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD</p>
@@ -138,7 +138,7 @@ const fixLabel = computed(() => {
             </p>
           </template>
           <template v-else>
-            <p class="mb-1 font-bold">{{ ss.kind.value.kind === "separate" ? "買う物" : "固定済み (フラクチャー) にして始める MOD" }}
+            <p class="mb-1 font-bold">{{ ss.kind.value.kind === "separate" ? "買う物" : "固定する MOD" }}
               <span class="font-normal opacity-50">{{ MAX_STARTS }} つまで</span>
             </p>
             <!-- 固定不要 (作る側に樹 MOD が無い) -->
@@ -146,42 +146,49 @@ const fixLabel = computed(() => {
               固定不要: 作るのは{{ sideJa(ss.kind.value.craftSide) }}だけなので、{{ omenSide }}のお告げで作れば樹 MOD は消えません。
               樹 MOD が付いた物を買って始めます (固定の有無は問わない)
             </p>
-            <label v-for="x in ss.candidates.value.filter((y) => !y.side)" :key="x.key" class="flex items-center gap-1 pl-1" :class="ss.locked(x.key) ? 'opacity-40' : ''">
+            <label v-for="x in ss.candidates.value.filter((y) => !y.side)" :key="x.key" class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/5" :class="ss.locked(x.key) ? 'opacity-40' : ''">
               <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
               <span class="flex-1">{{ x.name }}</span>
             </label>
             <!-- プレ / サフィに分けて、ベースに付く確率の高い順 (オーナー 2026-09-24) -->
             <div v-for="g in candGroups" :key="g.title" class="mb-1">
-              <p class="opacity-60">{{ g.title }} <span class="opacity-70">(% = その側に 1 回付けて出る確率、狙いの段以上)</span></p>
-              <label v-for="x in g.list" :key="x.key" class="flex items-center gap-1 pl-1" :class="ss.locked(x.key) ? 'opacity-40' : ''">
+              <p class="mt-1 opacity-60">{{ g.title }} <span class="opacity-60">(% = 1 回で出る確率)</span></p>
+              <label v-for="x in g.list" :key="x.key" class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/5" :class="ss.locked(x.key) ? 'opacity-40' : ss.checked.value.includes(x.key) ? 'bg-amber-500/10' : ''">
                 <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
                 <span class="flex-1">{{ x.name }}</span>
-                <b class="tabular-nums">{{ x.chance != null ? pctOf(x.chance) : "?" }}</b>
+                <span class="rounded-md bg-white/5 px-1.5 tabular-nums opacity-80" title="その側に 1 回付けて出る確率 (狙いの段以上)">{{ x.chance != null ? pctOf(x.chance) : "?" }}</span>
               </label>
             </div>
           </template>
           <button type="button" class="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 font-bold text-black shadow hover:bg-sky-400 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
             {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)` }}
           </button>
-          <p class="mt-1 opacity-50">
-            {{ ss.kind.value.kind === "separate" ? "1 つにつき最安 1 件を 1 本" : "1 つにつき 固定済み / 固定無し・厳しい / ゆるい の 3 本" }}。取引所へ約 {{ calls }} 回 (5 分 20 回まで、30 分は覚えておく)
-          </p>
+          <p class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 (5 分に 20 回まで。30 分は結果を覚えておきます)</p>
         </div>
       </section>
 
       <!-- 始め方の結果: 一番安い 1 つだけ出して、他は畳む ([[StartResults.vue]]) -->
       <StartResults :c="c" :ss="ss" />
 
-      <!-- 完成品を買うのと比べる。条件は一番ゆるく (MOD だけ、固定済みかは問わない) -->
-      <section class="rounded-lg border border-white/15 bg-white/[0.04] p-3">
-        <p class="mb-1 flex items-center gap-2 opacity-50">
-          完成品と比べる
-          <button v-if="fin.query.value && !ss.busy.value" type="button" class="rounded border border-sky-600 px-1 opacity-100" :disabled="fin.busy.value" @click="fin.search()">
-            {{ fin.busy.value ? "探しています…" : fin.found.value ? "探し直す" : "完成品だけ探す" }}
+      <!-- ③ 買うか作るか。完成品の条件は一番ゆるく (MOD だけ、固定済みかは問わない) -->
+      <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span><b class="text-sm">買うか、作るか</b>
+          <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" :disabled="fin.busy.value" @click="fin.search()">
+            {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}
           </button>
         </p>
+        <div class="mb-2 grid grid-cols-2 gap-2">
+          <div class="rounded-lg bg-black/30 p-2" :class="fin.verdict.value?.buy ? 'ring-1 ring-emerald-400/50' : ''">
+            <p class="text-[11px] opacity-60">完成品を買う</p>
+            <p class="text-lg font-bold">{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</p>
+          </div>
+          <div class="rounded-lg bg-black/30 p-2" :class="fin.verdict.value && !fin.verdict.value.buy ? 'ring-1 ring-emerald-400/50' : ''">
+            <p class="text-[11px] opacity-60">素材から作る (初動 + 作る見込み)</p>
+            <p class="text-lg font-bold">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</p>
+          </div>
+        </div>
         <p>
-          完成品を買う: <b class="text-[13px]">{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
+          完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
           <!-- 取引所に無い時だけ手で埋める -->
           <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
             手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-14" /> 神
@@ -195,12 +202,11 @@ const fixLabel = computed(() => {
         </p>
         <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
         <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく、値段が作る見込みよりけた違いに高いので当てにしません (比べていません)</p>
-        <p class="mt-1">作る見込み: <b class="text-[13px]">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</b></p>
         <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨なので、作る見込みは出しません</p>
         <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
         <p v-else class="opacity-50">始め方を探すと出ます</p>
-        <p v-if="fin.verdict.value && ss.chosen.value" class="mt-2 rounded bg-black/20 px-2 py-1">
-          → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
+        <p v-if="fin.verdict.value && ss.chosen.value" class="mt-2 rounded-lg bg-emerald-500/10 px-2 py-1">
+          → <b class="text-emerald-300">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
           方が {{ c.money(fin.verdict.value.diff) }} 安い
         </p>
         <!-- 3 つの道の中身 (上の要約の内訳) -->
