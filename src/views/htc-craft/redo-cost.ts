@@ -183,7 +183,10 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
 
   // 組み合わせ: カオスで引く 1 つ (無しも) × 冒涜に回す 1 つ (無しも)。残りの普通の狙いは高貴 (側ごとに、当たりやすい順に置く)
   const desecCands: Array<TierTarget | null> = desecOnly.length ? [desecOnly[0]!] : [null, ...normals];
-  const chaosCands: Array<TierTarget | null> = [null, ...(inp.chaosOk || inp.chaosSide ? normals : [])];
+  // フラクチャーの後の 1 発目はカオススパム (オーナー 2026-09-25、確率実験場の結果: 守る物が無い間は素のカオスが全部の
+  // MOD・段で最安か 2 番目。上級・完全のカオスは 1.4 倍 / 10〜20 倍)。カオスが使える形なら「使わない」は候補にしない。
+  // どの狙いをカオスで引くかは見積もりで決める
+  const chaosCands: Array<TierTarget | null> = (inp.chaosOk || inp.chaosSide) && normals.length ? normals : [null];
   let best: RedoPlan | null = null;
   for (const dc of desecCands) for (const cc of chaosCands) {
     if (dc && cc && dc.modId === cc.modId) continue;

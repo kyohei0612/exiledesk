@@ -251,10 +251,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const eatSides = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach && !chaosAfterQuality ? ["prefix" as Side] : [])]);
   const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId))
     && t.modId !== toDesecrate?.modId);
-  // カオスで付けた物が後の消去で消えると、カオスからやり直して他の狙いを壊す。残りの普通の狙いが多いと割に合わない
-  // (2026-09-24 実測、段は問わず: 死体の円環 残り 3 つ カオスあり 744 神 / なし 3,680 神、プリズム 残り 5 つ あり 6.5 万神・
-  // 完成 70% / なし 1.5 万神・100%)。残りが 3 つ以下の時だけカオスで始める
-  const normalCount = ts.filter((t) => mod(t.modId).source === "normal" && t.modId !== toDesecrate?.modId).length;
+  // 2026-09-24 は「残りの普通の狙いが 3 つ以下の時だけカオス」だったが (プリズム 残り 5 つでカオスあり 6.5 万神・完成 70%)、
+  // 素の消去の巻き込みや外れの処理を直した後は残り 5 つでも 998 神・100% になったので、縛りは外した (2026-09-25)
   // カオスで狙うのは、カタリスト (触媒の高貴のお告げ) が効かない物を優先。効く物は後で品質を入れて高貴で狙う方が安い
   // (死体の円環: 見本はキャスピをカオス、全耐性・知性はカタリスト。自動が全耐性をカオスで狙って 2,130 回打っていた)
   const boostable = (t: TierTarget): boolean => catalystFor([t]) != null;
@@ -262,9 +260,11 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // 抹消のお告げで側を決めたカオスなら、その側の狙いだけ
   const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
   // 両側とも 2 枠以下 (不在のアミュレット) は最初の 1 つだけ ([[narrowSpam]])
+  // フラクチャーの後の 1 発目はカオススパム (オーナー 2026-09-25、確率実験場: 守る物が無い間は素のカオスが最安)。
+  // どれを引くかは見積もり (chaosPick) が決める。指定が無い時は一番出にくい物
   const spam = narrow ? narrowSpam
     : inp.chaosPick !== undefined ? spamPool2.find((t) => t.modId === inp.chaosPick) ?? null
-    : (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
+    : (inp.chaosOk || !!inp.chaosSide) && spamPool2.length
       ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   let spamNode: SimNode | null = null;
   if (spam) {
