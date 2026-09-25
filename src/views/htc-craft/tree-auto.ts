@@ -249,7 +249,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // カオスはブリーチより前 (カオスはブリーチの MOD も消すので、後に置くと消しては付け直しの輪になる。2026-09-25 金の指輪で
   // カオス 1 万回)。ブリーチの結晶化は、カオスで付けた物の反対側を食わせる。両側 2 枠以下 (不在) だけは、側が埋まる前に
   // ブリーチを入れないと 40% に出来ないので、ブリーチ → 品質 → 外す → カオス の順
-  const chaosAfterQuality = narrow && breach && !!inp.qualityTag && !switchTypes;
+  // カオスがプレで反対側 (サフィ) に触らない MOD がある時も、結晶化で食わせる先が無いので前の順 (ブリーチ → カオス) のまま
+  // (金の指輪: サフィが樹 MOD で満杯、プレを抹消のお告げ付きカオスで回す形)
+  const chaosAfterQuality = breach && !!inp.qualityTag && !switchTypes && (narrow || shielded.has("suffix"));
   const eatSides = new Set<Side>(essences.map((t) => sideOf(t.modId)));
   const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId))
     && t.modId !== toDesecrate?.modId);
@@ -283,7 +285,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ブリーチの手自体は常に「ブリーチの MOD があること」を条件にする (無いと最初から揃っている扱いで飛ばされ、1 回も打って
   // いなかった。2026-09-24 金の指輪)。品質を上限まで入れた後は、エンジンが外れと同じに扱う (breachSpent)
   // 結晶化で消す側は、触らない MOD の無い側 (プレのスピリットを買った時のまま残していると、左側の結晶化で消していた。2026-09-24)
-  const breachEat: Side | undefined = (shielded.has("prefix") && !shielded.has("suffix")) || (spam && !chaosAfterQuality && sideOf(spam.modId) === "prefix") ? "suffix" : undefined;
+  const breachEat: Side | undefined = !shielded.has("suffix") && (shielded.has("prefix") || (spam && !chaosAfterQuality && sideOf(spam.modId) === "prefix")) ? "suffix" : undefined;
   if (breach) main.push({ ...base, id: id(), action: { kind: "breach", ...(breachEat ? { removeSide: breachEat } : {}) }, targets: [], keep: ["__breach__"], need: 1, onHit: null, onMiss: null });
   if (lockTag) main.push({ ...base, id: id(), action: { kind: "quality", catalyst: lockTag }, targets: [], need: 1, onHit: null, onMiss: null });
   // 不在のカオスは、ブリーチの MOD を外してから (スパム中に消えるのを待つと、付いた狙いの側を後で消去することになる)
