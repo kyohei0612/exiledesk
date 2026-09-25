@@ -50,7 +50,7 @@ const threeWay = computed(() => {
   const tw = ss.threeWay.value;
   if (!ss.chosen.value && !fin.buyCost.value) return [];
   const list = [
-    { key: "buy", name: "完成品を買う", cost: fin.outlier.value || fin.dropped.value.length ? null : fin.buyCost.value, why: fin.found.value ? (fin.dropped.value.length ? "同じ物は無い" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ", detail: "" },
+    { key: "buy", name: "完成品を買う", cost: fin.outlier.value || fin.dropped.value.length || fin.tierless.value ? null : fin.buyCost.value, why: fin.found.value ? (fin.dropped.value.length || fin.tierless.value ? "同じ物は無い" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ", detail: "" },
     { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "" },
     { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "" },
   ];

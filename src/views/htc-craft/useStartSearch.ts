@@ -91,8 +91,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     // 貼り付けに固定済みが無ければ、一番出にくい普通の MOD を固定する候補にしておく (押せばすぐ探せる。忍者のコピーは
     // フラクチャーの印が無いので、これが無いと毎回選び直しだった。2026-09-25)
     if (!checked.value.length && k === "none") {
-      const rarest = [...candidates.value].filter((x) => x.chance != null).sort((x, y) => (x.chance ?? 1) - (y.chance ?? 1))[0];
-      if (rarest) checked.value = [rarest.key];
+      const rare = [...candidates.value].filter((x) => x.chance != null).sort((x, y) => (x.chance ?? 1) - (y.chance ?? 1));
+      checked.value = rare.slice(0, MAX_STARTS).map((x) => x.key);
     }
     results.value = {};
     picked.value = null;
@@ -184,12 +184,15 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const out: { fixed: { cost: number; label: string } | null; self: { cost: number; label: string } | null } = { fixed: null, self: null };
     for (const x of rows.value) {
       const est = craftEstimate(c, x.modIds);
-      if (!est) continue;
+      // 固定無しをそのまま作る (固定しない): その MOD は触らない扱いで別に見積もる
+      const estKeep = craftEstimate(c, [], { keepIds: x.modIds });
       for (const r of x.sub) {
         if (r.cost == null) continue;
+        const e = r.id === "keep" ? estKeep : est;
+        if (!e) continue;
         // 固定不要 (separate) の「買う + 残りを作る」は作る見込み込みの値
-        const total = r.id === "buy" ? r.cost : r.cost + est.value;
-        const which = r.id === "fractured" || r.id === "buy" ? "fixed" : "self";
+        const total = r.id === "buy" ? r.cost : r.cost + e.value;
+        const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
         const cur = out[which];
         if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}` };
       }

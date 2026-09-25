@@ -143,13 +143,15 @@ export function useFinishedCompare(
   });
   /** ゆるい条件を断られて、軽い条件で探した時の注記 */
   const lightNote = ref<string | null>(null);
+  /** 段を問わずに探して見つけた (= 同じ段の完成品は無い)。値段は比べに使わない (2026-09-25 琥珀のアミュレットで 1 カオスと出ていた) */
+  const tierless = ref(false);
 
   const found = shallowRef<{ min: number | null; total: number; url: string | null } | null>(null);
   /** 取引所に無い時に手で入れた完成品の値段 (神) */
   const manual = ref<number | null>(null);
   const busy = ref(false);
   const error = ref<string | null>(null);
-  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; });
+  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; });
 
   async function search(): Promise<void> {
     if (busy.value || !query.value) return;
@@ -158,6 +160,7 @@ export function useFinishedCompare(
     try {
       const league = marketStore.league.value?.Value ?? "Standard";
       lightNote.value = null;
+      tierless.value = false;
       dropped.value = [];
       // ログインしていれば一番ゆるい条件から (取引所の検索はアプリのログインの POESESSID を乗せて投げる。trade2.rs)。
       // ログインしていないと full はまず断られ、その 1 回が取引所の回数を食うので light から (2026-09-24)。
@@ -183,6 +186,7 @@ export function useFinishedCompare(
         if (r2) {
           r = r2;
           lightNote.value = [lightNote.value, "同じ値の完成品が無かったので、値 (段) は問わず MOD の組み合わせだけで探しました"].filter(Boolean).join("。");
+          tierless.value = true;
         }
       }
       // それでも無ければ、優先度の低い MOD から 1 つずつ外していく (値は問わない)
@@ -227,8 +231,8 @@ export function useFinishedCompare(
     if (outlier.value) return null;
     const b = buyCost.value, k = craftCost.value;
     // 外して見つけた物は完成品ではない (外した MOD を後で付ける) ので、比べない
-    return b != null && k != null && !dropped.value.length ? { buy: b <= k, diff: Math.abs(b - k) } : null;
+    return b != null && k != null && !dropped.value.length && !tierless.value ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, unbuildable, lightNote, dropped, outlier, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
+  return { query, unbuildable, lightNote, dropped, tierless, outlier, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
 }

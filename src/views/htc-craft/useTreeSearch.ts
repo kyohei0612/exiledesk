@@ -45,6 +45,8 @@ export type TreeResult = {
   strict: Batch | null;
   loose: Batch | null;
   fracturedPrice: number | null;
+  /** 固定無し・ゆるいの最安 1 件 (神)。固定せずにそのまま作る時の初動 (オーナー 2026-09-25:「フラクチャー無し品の方が安い場合もある」) */
+  loosePrice: number | null;
   /**
    * 道ごとの平均 (1 個ずつ買って試し、成功で止め、外れ続けたら固定済みを買う)。
    * **比べる物差しはこれ** (オーナー:「平均値で計算しよう」)。85% の個数は用意する数の目安。
@@ -210,6 +212,7 @@ export function useTreeSearch(deps: {
       const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
       const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
       const fracturedPrice = frList[0]?.price ?? null;
+      const loosePrice = listings.filter((l) => l.source === "loose").sort((a, b) => a.price - b.price)[0]?.price ?? null;
       const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
       const routes: TreeRoute[] = [];
       const add = (key: "strict" | "loose" | "mixed" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
@@ -223,7 +226,7 @@ export function useTreeSearch(deps: {
       add("mixed", "両方まぜて安い順に 1 個ずつ", listings, null);
       if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
       const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
-      return { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, routes, best };
+      return { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, loosePrice, routes, best };
     }
   }
 

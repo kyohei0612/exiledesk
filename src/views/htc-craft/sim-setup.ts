@@ -35,10 +35,14 @@ export function simCtxOf(c: C) {
  * 出発点 = ベース決めの結果 (固定済みの MOD と樹 MOD)。カオスで入れ替える物としてもう 1 つ (外れ) 付いている。
  * fixedIds = 固定済みで始める狙い (始め方の候補ごとに変わる)
  */
-export function startStateOf(c: C, fixedIds: readonly string[]): SimState {
+export function startStateOf(c: C, fixedIds: readonly string[], keepIds: readonly string[] = []): SimState {
   const d = c.data.value;
   const slots: SimState["slots"] = c.targets.value.filter((t) => fixedIds.includes(t.modId))
     .map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));
+  // 固定せずに買った時の狙い (触らない: 消えたらその回は失敗。オーナー 2026-09-25「固定無し品の方が安い場合もある」)
+  for (const t of c.targets.value.filter((t) => keepIds.includes(t.modId) && !fixedIds.includes(t.modId))) {
+    slots.push({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: false, keep: true, label: "買った時の MOD (触らない)" });
+  }
   const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
   // 買った時から付いている MOD (樹 MOD・冒涜のみ・作れない)。固定するのは重い側の樹 MOD 1 つだけで、残りは「消えたら終わり」
   // ([[start-kind.ts]]、2026-09-24 オーナー:「固定不要の時は触らない書き方に」)。樹 MOD の側が分からない時は前の通り全部固定済み

@@ -25,8 +25,9 @@ import type { useHtcCraft } from "./useHtcCraft";
  * ツリーは裏で回す (候補ごとに数百回)。回し終わるまでは前の物差しの値を「計算中」として出す。
  * 真ん中の始め方の比べと、右の完成品との比べで同じ物を使う。
  */
-export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): { value: number; basis: string; pDone?: number } | null {
-  const key = keyOf(c, fixedIds);
+export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[], opts: { keepIds?: readonly string[] } = {}): { value: number; basis: string; pDone?: number } | null {
+  const keepIds = opts.keepIds ?? [];
+  const key = keyOf(c, fixedIds, keepIds);
   const hit = cache.value.get(key);
   if (hit && hit !== "pending") {
     return hit.value == null ? null : {
@@ -34,7 +35,7 @@ export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
       basis: `自動で組んだツリーを ${RUNS} 回回した平均${hit.pDone < 0.95 ? ` (完成 ${(hit.pDone * 100).toFixed(0)}%)` : ""}`,
     };
   }
-  if (!hit) queueMicrotask(() => void runAuto(c, [...fixedIds], key));
+  if (!hit) queueMicrotask(() => void runAuto(c, [...fixedIds], key, [...keepIds]));
   const fixed = c.targets.value.filter((t) => fixedIds.includes(t.modId));
   const spam = c.spamFor(fixed)?.total?.expected;
   if (spam != null) return { value: spam, basis: "計算中 (仮に自動の組み立ての平均)" };
@@ -46,8 +47,9 @@ export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
 const RUNS = 400;
 /** 回した結果 (鍵 = ベース・狙いと段・固定済み・神の値段)。value が null は組めなかった / 非推奨 */
 const cache = shallowRef(new Map<string, { value: number | null; pDone: number } | "pending">());
-function keyOf(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): string {
+function keyOf(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[], keepIds: readonly string[] = []): string {
   return [
+    keepIds.length ? `触らない:${[...keepIds].sort().join(",")}` : "",
     c.item.value?.baseType ?? zeroStart.value.baseType,
     c.targets.value.map((t) => `${t.modId}:${t.minTierIndex ?? 0}`).join(","),
     [...fixedIds].sort().join(","),
@@ -59,12 +61,12 @@ function put(key: string, v: { value: number | null; pDone: number } | "pending"
   m.set(key, v);
   cache.value = m;
 }
-async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], key: string): Promise<void> {
+async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], key: string, keepIds: string[] = []): Promise<void> {
   if (cache.value.has(key)) return;
   put(key, "pending");
   const ctx = simCtxOf(c), d = c.data.value, p = c.prices.value;
   if (!ctx || !d || !p || startKindOf(c).kind === "unsafe") { put(key, { value: null, pDone: 0 }); return; }
-  const start = startStateOf(c, fixedIds);
+  const start = startStateOf(c, fixedIds, keepIds);
   const inp = autoInputFor(c, ctx, start, fixedIds);
   if (!inp) { put(key, { value: null, pDone: 0 }); return; }
   const { nodes } = await pickAutoTree(inp, ctx, start);

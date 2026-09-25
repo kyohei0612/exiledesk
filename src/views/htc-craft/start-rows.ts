@@ -36,6 +36,10 @@ export function startRows(r: TreeResult | null, div: number, opts: { busy: boole
     id: "fractured", label: "固定済みを買う", cost: r?.fracturedPrice != null ? r.fracturedPrice * div : m, note: frErr ? `取れず: ${frErr}` : "",
     link: linkOf("fractured"), manual: !!r && r.fracturedPrice == null, status: r ? (frErr ? "取れず" : "出品なし") : waiting,
   }];
+  // 固定無しの最安 1 件を、固定せずにそのまま作る (その MOD は触らない: 消去は使わず冒涜 + 光で作る側になる)
+  if (r && r.loosePrice != null) {
+    rows.push({ id: "keep", label: "固定無しを買ってそのまま作る (固定しない)", cost: r.loosePrice * div, note: "その MOD は触らない (消去を使わない側)", link: linkOf("loose"), manual: false, status: "-" });
+  }
   for (const [key, label] of [["strict", "固定無し・厳しいを買って固定"], ["loose", "固定無し・ゆるいを買って固定"]] as const) {
     if (!r) { rows.push({ id: key, label, cost: null, note: "", link: null, manual: false, status: waiting }); continue; }
     const err = errOf(key);
