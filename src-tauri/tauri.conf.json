@@ -14,10 +14,10 @@
       {
         "title": "ExileDesk",
         "visible": false,
-        "width": 1280,
+        "width": 1660,
         "height": 900,
-        "minWidth": 1280,
-        "minHeight": 600,
+        "minWidth": 1660,
+        "minHeight": 860,
         "center": true
       }
     ],

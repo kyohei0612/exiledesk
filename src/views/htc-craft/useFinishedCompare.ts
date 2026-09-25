@@ -151,12 +151,20 @@ export function useFinishedCompare(
   const manual = ref<number | null>(null);
   const busy = ref(false);
   const error = ref<string | null>(null);
-  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; deepDone.value = false; });
+  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; deepDone.value = false; exhausted.value = false; });
 
-  /** 探し直し (段なし → 外し) を済ませたか。自動では投げず、「近い物を探す」で (2026-09-26: 判定に使わない情報なので本数を減らす) */
+  /**
+   * 探し直し (段なし → MOD を外す) まで済ませたか。オーナー 2026-09-26:「完成品も自動で出るまで必ず回す。徐々に最後まで行き切る。
+   * MOD は 3 つまで合っていたらおｋでそれ以上減らせない。そこまで行き切ったら初めて『条件を緩めても出ませんでした』」
+   */
   const deepDone = ref(false);
+  /** 3 つまで緩めても無かった */
+  const exhausted = ref(false);
+  /** 外して残す MOD の下限 */
+  const KEEP_MIN = 3;
   async function search(opts: { deep?: boolean } = {}): Promise<void> {
     if (busy.value || !query.value) return;
+    const deep = opts.deep ?? true;
     busy.value = true;
     error.value = null;
     const ownStage = !c.stage.value;
@@ -191,8 +199,9 @@ export function useFinishedCompare(
       }
       if (!loggedIn && !lightNote.value) lightNote.value = "ログインしていないので、冒涜で付いた MOD は拾わない条件で探しました (取引履歴の画面でログインすると、ゆるい条件で探せます)";
       // 出品が無ければ、値 (段) を外して MOD の組み合わせだけで探し直す (「近い物を探す」を押した時だけ)
-      const loose = opts.deep ? build(level, false) : null;
-      if (opts.deep) deepDone.value = true;
+      const loose = deep ? build(level, false) : null;
+      if (deep) deepDone.value = true;
+      exhausted.value = false;
       if (r && r.total === 0 && loose) {
         const r2 = await autoPriceCached(league, loose, marketStore.rates.value, 5);
         guard();
@@ -204,8 +213,11 @@ export function useFinishedCompare(
       }
       // それでも無ければ、優先度の低い MOD から 1 つずつ外していく (値は問わない)
       const drop: string[] = [];
-      for (const x of opts.deep ? dropOrder.value : []) {
+      const modCount = c.targets.value.length + extraLines.value.length;
+      for (const x of deep ? dropOrder.value : []) {
         if (!r || r.total > 0) break;
+        // 3 つは残す (それ以上減らすと別物)
+        if (modCount - drop.length - 1 < KEEP_MIN) break;
         drop.push(x.key);
         const q = build(level, false, new Set(drop));
         const r3 = q ? await autoPriceCached(league, q, marketStore.rates.value, 5) : null;
@@ -215,7 +227,10 @@ export function useFinishedCompare(
         if (r3.total > 0) dropped.value = dropOrder.value.slice(0, drop.length).map((y) => y.name);
       }
       if (!r) error.value = tradeAuto.lastError.value ?? "取れませんでした (間隔待ちの時は少し待って押し直し)";
-      else found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
+      else {
+        found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
+        if (deep && r.total === 0) exhausted.value = true;
+      }
     } catch (e) {
       if (e !== ABORT) error.value = String(e);
     } finally {
@@ -245,9 +260,10 @@ export function useFinishedCompare(
   const verdict = computed(() => {
     if (outlier.value) return null;
     const b = buyCost.value, k = craftCost.value;
-    // 外して見つけた物は完成品ではない (外した MOD を後で付ける) ので、比べない
-    return b != null && k != null && !dropped.value.length && !tierless.value ? { buy: b <= k, diff: Math.abs(b - k) } : null;
+    // 段なし・MOD を外して見つけた物も「妥協して買う」として比べる (オーナー 2026-09-26:「完成版が無くても似たような奴あります
+    // でおｋ、完成品を買うでおｋ。MOD のみ同じ形、完成品で妥協みたいな表示」)
+    return b != null && k != null ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, unbuildable, lightNote, dropped, tierless, outlier, found, manual, busy, error, search, deepDone, buyCost, craftCost, craftBasis, verdict };
+  return { query, unbuildable, lightNote, dropped, tierless, outlier, found, manual, busy, error, search, deepDone, exhausted, buyCost, craftCost, craftBasis, verdict };
 }

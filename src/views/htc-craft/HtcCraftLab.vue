@@ -5,7 +5,7 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, ref, watchEffect } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
@@ -31,6 +31,37 @@ watchEffect(() => pk.useData(c.data.value));
 // 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
 const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">("none");
+/**
+ * 中身は 1400px で組み、窓が狭ければそのまま縮める (zoom)。オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても
+ * 変わらない感じで」「相変わらず UI 壊れてる、縮小版」(横スクロールで右が切れていた)
+ */
+const DESIGN_W = 1400;
+const rootEl = ref<HTMLElement | null>(null);
+const zoom = ref(1);
+let ro: ResizeObserver | null = null;
+onMounted(() => {
+  const fit = () => { const w = rootEl.value?.clientWidth ?? DESIGN_W; zoom.value = Math.min(1, Math.max(0.5, (w - 32) / DESIGN_W)); };
+  fit();
+  ro = new ResizeObserver(fit);
+  if (rootEl.value) ro.observe(rootEl.value);
+});
+onBeforeUnmount(() => ro?.disconnect());
+/** 前回貼った物 (この端末で覚える)。入口に「前回の続きから」を出す */
+const LAST_PASTE_KEY = "exiledesk.htc.lastPaste";
+const lastPaste = ref<string | null>(null);
+try { lastPaste.value = localStorage.getItem(LAST_PASTE_KEY); } catch { /* 無し */ }
+const lastPasteLabel = computed(() => {
+  const t = lastPaste.value ?? "";
+  const lines = t.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+  return lines[2] ?? lines[1] ?? lines[0] ?? "";
+});
+function resumeLast(): void {
+  if (!lastPaste.value) return;
+  door.value = "paste";
+  text.value = lastPaste.value;
+  c.resumeFlow.value = true;
+  void reread(lastPaste.value);
+}
 const text = ref("");
 const picked = ref<string | null>(null);
 
@@ -46,7 +77,10 @@ const picked = ref<string | null>(null);
 const inputOpen = ref(true);
 async function reread(t: string): Promise<void> {
   await c.run(t);
-  if (c.base.value) inputOpen.value = false;
+  if (c.base.value) {
+    inputOpen.value = false;
+    try { localStorage.setItem(LAST_PASTE_KEY, t); lastPaste.value = t; } catch { /* 無視 */ }
+  }
 }
 function pick(id: string): void {
   const p = PRESETS.find((x) => x.id === id);
@@ -103,15 +137,20 @@ const implicitText = (lines: readonly string[]): string =>
 <template>
   <!-- 中身は幅 1400px で固定 (オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても変わらない感じで。ウィンドウによって崩れる」)。
        狭い窓では横にスクロール、広い窓では余白 -->
-  <div class="h-full overflow-auto p-4 text-sm">
-   <div class="w-[1400px] min-w-[1400px]">
+  <div ref="rootEl" class="h-full overflow-auto p-4 text-sm">
+   <div class="w-[1400px]" :style="{ zoom }">
     <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
     <p class="mb-3 text-xs opacity-60">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
     </p>
 
     <!-- 入口。開いた時はここだけ。何も計算していない -->
-    <div v-if="door === 'none'" class="mb-4 grid gap-3 sm:grid-cols-2">
+    <div v-if="door === 'none'" class="mb-4 grid gap-3" :class="lastPaste ? 'sm:grid-cols-3' : 'sm:grid-cols-2'">
+      <!-- 前回の続き: 貼り直し → おｋ → 探す (キャッシュ) → 作り方 まで 1 押しで -->
+      <button v-if="lastPaste" type="button" class="rounded border border-amber-500/40 bg-amber-500/10 p-4 text-left hover:border-amber-400" @click="resumeLast()">
+        <div class="mb-1 font-bold text-amber-300">前回の続きから</div>
+        <div class="text-xs opacity-70">{{ lastPasteLabel }} — 解析 → 探す → 作り方まで自動で通します (取引所は 30 分の覚えを使う)</div>
+      </button>
       <button
         type="button"
         class="rounded border border-[var(--exile-color-border-subtle)] p-4 text-left hover:border-amber-400"

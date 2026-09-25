@@ -31,16 +31,16 @@ export interface CardData {
   mods: CardMod[];
 }
 
-/** MOD のタグの日本語 (ゲームの詳細表示の並び) */
+/** MOD のタグの日本語。クライアント由来の辞書の言い回しに合わせる (元素 496 件 vs エレメント 6 件、アタック 1224 vs 攻撃 45。2026-09-26 オーナー「タグの日本語訳をチェック」) */
 const TAG_JA: Record<string, string> = {
-  mana: "マナ", life: "ライフ", caster: "キャスター", attack: "アタック", speed: "スピード", elemental: "エレメント",
+  mana: "マナ", life: "ライフ", caster: "キャスター", attack: "アタック", speed: "スピード", elemental: "元素",
   fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌", physical: "物理", resistance: "耐性", defences: "防御",
   armour: "アーマー", evasion: "回避", energy_shield: "エナジーシールド", minion: "ミニオン", critical: "クリティカル",
   damage: "ダメージ", attribute: "属性", resource: "リソース", gem: "ジェム", curse: "呪い", aura: "オーラ", ailment: "状態異常",
   bleed: "出血", poison: "毒", block: "ブロック", flask: "フラスコ", charm: "チャーム", drop: "ドロップ",
-  elemental_damage: "エレメントダメージ", physical_damage: "物理ダメージ", chaos_damage: "混沌ダメージ", caster_damage: "キャスターダメージ",
+  elemental_damage: "元素ダメージ", physical_damage: "物理ダメージ", chaos_damage: "混沌ダメージ", caster_damage: "キャスターダメージ",
   caster_speed: "キャストスピード", caster_critical: "スペルクリティカル", fire_resistance: "火耐性", cold_resistance: "冷気耐性",
-  lightning_resistance: "雷耐性", elemental_resistance: "エレメント耐性", chaos_resistance: "混沌耐性", flat_life_regen: "ライフ再生",
+  lightning_resistance: "雷耐性", elemental_resistance: "元素耐性", chaos_resistance: "混沌耐性", flat_life_regen: "ライフ再生",
 };
 /** 見出しに出す主なタグ (細かい派生タグは省く) */
 const HEAD_TAGS = ["mana", "life", "caster", "attack", "speed", "elemental", "fire", "cold", "lightning", "chaos", "physical", "resistance", "defences", "armour", "evasion", "energy_shield", "minion", "critical", "attribute", "gem", "curse", "aura"];
@@ -61,11 +61,9 @@ function headOf(c: ReturnType<typeof useHtcCraft>, modId: string, tierIndex: num
   const i = tierIndex ?? (c.targets.value.find((t) => t.modId === modId)?.minTierIndex ?? 0);
   const tier = tiers[i];
   const tags = (m.tags ?? []).filter((t) => HEAD_TAGS.includes(t)).map((t) => TAG_JA[t] ?? t);
-  const parts = [
-    side ? `${SIDE_JA[side]} MOD` : "MOD",
-    tier?.name ? `"${tier.name}"` : "",
-    tiers.length ? `(T${tiers.length - i})` : "",
-  ].filter(Boolean).join(" ");
+  // オーナー 2026-09-26:「詳細の中身はプレフィックス T● — その MOD に付いているタグ。無ければ表示なし」
+  void tier;
+  const parts = [side ? SIDE_JA[side] : "MOD", tiers.length ? `T${tiers.length - i}` : ""].filter(Boolean).join(" ");
   return tags.length ? `${parts} — ${tags.join(", ")}` : parts;
 }
 function toneOf(c: ReturnType<typeof useHtcCraft>, modId: string): CardMod["tone"] {

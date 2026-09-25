@@ -168,6 +168,9 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         pending.value = [];
       }
       current.value = null;
+      // 最安候補が決まると setFractured → 完成品の条件が作り直されて見つけた物が消える (watch(query))。
+      // キャッシュ即答だとその後に消されるので、落ち着かせてから完成品を探す (2026-09-26: ② で完成品が「まだ」のままだった)
+      await nextTick(); await nextTick();
       c.stage.value = "③ 完成品を探しています…";
       await afterAll();
     } finally {
@@ -227,14 +230,14 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
    *   fixed = 固定済み (フラクチャー済み) の素材を買って作る / self = 固定無しを買って自分でフラクチャーして作る
    */
   const threeWay = computed(() => {
-    const out: { fixed: { cost: number; label: string } | null; self: { cost: number; label: string } | null } = { fixed: null, self: null };
+    const out: { fixed: { cost: number; label: string; url: string | null } | null; self: { cost: number; label: string; url: string | null } | null } = { fixed: null, self: null };
     for (const x of rows.value) {
       for (const r of x.sub) {
         if (r.total == null) continue;
         const total = r.total;
         const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
         const cur = out[which];
-        if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}` };
+        if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}`, url: r.link?.url ?? null };
       }
     }
     return out;

@@ -10,7 +10,7 @@
  *   ベース (固定済みにして始める MOD を選んで「探す」) / 始め方の結果 (一番安い 1 つ、他は畳む) / 完成品と比べる
  * 取引所へは「探す」を押した時だけ ([[useStartSearch.ts]])。
  */
-import { computed, onBeforeUnmount } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
@@ -47,6 +47,13 @@ function goPick(): void {
   if (ss.kind.value.kind === "unsafe") { finishDiag(); return; }
   c.phase.value = "pick";
 }
+// 「前回の続きから」: 解析おｋ → ① → 探す (キャッシュ) → done まで自動で
+watch(() => [c.phase.value, ss.busy.value] as const, ([ph, busy]) => {
+  if (!c.resumeFlow.value) return;
+  if (ph === "analyzed") goPick();
+  else if (ph === "pick" && !busy) { if (ss.kind.value.kind !== "unsafe" && ss.checked.value.length) void ss.searchAll(); else finishDiag(); }
+  else if (ph === "done") c.resumeFlow.value = false;
+}, { immediate: true });
 /** 探さずに (or 探せずに) ②③ と作り方へ */
 function finishDiag(): void {
   c.phase.value = "done";
@@ -95,10 +102,15 @@ const threeWay = computed(() => {
   if (c.phase.value !== "done" || (!ss.chosen.value && !fin.buyCost.value)) return [];
   const best = ss.chosen.value?.res;
   const selfSkipped = !!best && best !== "error" && !("kind" in best) && !!best.earlyBuy;
+  // 完成品が無くても近い物 (MOD だけ同じ形) は「妥協」として比べる
+  const compromise = !!fin.found.value && fin.buyCost.value != null && (fin.tierless.value || fin.dropped.value.length > 0);
   const list = [
-    { key: "buy", name: "完成品を買う", cost: fin.outlier.value || fin.dropped.value.length || fin.tierless.value ? null : fin.buyCost.value, why: fin.found.value ? (fin.dropped.value.length || fin.tierless.value ? "同じ物は無い" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ", detail: "" },
-    { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "" },
-    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : selfSkipped ? "固定済みが安いので省略" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "" },
+    { key: "buy", name: compromise ? "完成品を買う (妥協)" : "完成品を買う", cost: fin.outlier.value ? null : fin.buyCost.value,
+      why: fin.found.value ? (fin.exhausted.value ? "緩めても無し" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ",
+      detail: compromise ? (fin.dropped.value.length ? `MOD だけ同じ形。${fin.dropped.value.join(" / ")} は付いていない (買ってから付ける)` : "MOD だけ同じ形 (段は問わず)") : "",
+      url: fin.found.value?.url ?? null },
+    { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "", url: tw.fixed?.url ?? null },
+    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : selfSkipped ? "固定済みが安いので省略" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
   ];
   const min = Math.min(...list.map((w) => w.cost ?? Infinity));
   return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));
@@ -266,7 +278,11 @@ const fixLabel = computed(() => {
           <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
             <p class="text-[11px] opacity-70">{{ w.name }}</p>
             <p class="text-lg font-bold leading-tight" :class="w.best ? 'text-emerald-300' : w.cost == null ? 'text-sm opacity-60' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
-            <p v-if="w.best" class="mt-0.5 inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</p>
+            <p class="mt-0.5 flex items-center gap-2">
+              <span v-if="w.best" class="inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</span>
+              <!-- 取引所へそのまま (オーナー 2026-09-26) -->
+              <button v-if="w.url" type="button" class="text-[11px] text-sky-300 underline hover:text-sky-200" @click="openExternal(w.url)">取引所で見る →</button>
+            </p>
           </div>
         </div>
         <p v-if="verdict3" class="mb-3 rounded-lg bg-emerald-500/10 px-2 py-1">
@@ -292,11 +308,9 @@ const fixLabel = computed(() => {
         </p>
         <p class="opacity-50">条件は MOD だけ (普通・固定済み・冒涜のどれで付いていてもいい)</p>
         <p v-if="fin.lightNote.value" class="text-amber-300/80">{{ fin.lightNote.value }}</p>
-        <p v-if="fin.found.value && fin.found.value.total === 0 && !fin.deepDone.value && !fin.busy.value" class="mt-1">
-          <button type="button" class="rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" @click="fin.search({ deep: true })">近い物を探す (値を問わず → MOD を外して、最大 3 本)</button>
-        </p>
+        <p v-if="fin.exhausted.value" class="rounded bg-amber-500/10 px-1 text-amber-200">条件を緩めても (段を問わず、MOD を 3 つまで減らして) 完成品は出ませんでした</p>
         <p v-if="fin.dropped.value.length" class="rounded bg-amber-500/10 px-1 text-amber-200">
-          完成品は無かったので、近い物: {{ fin.dropped.value.join(" / ") }} を外して見つけた値段です (買ってから付ける。作るのとは比べていません)
+          同じ完成品は無かったので、近い物 (MOD だけ同じ形): {{ fin.dropped.value.join(" / ") }} を外して見つけた値段です。妥協して買うならこれ (足りない MOD は買ってから付ける)
         </p>
         <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
         <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく、値段が作る見込みよりけた違いに高いので当てにしません (比べていません)</p>

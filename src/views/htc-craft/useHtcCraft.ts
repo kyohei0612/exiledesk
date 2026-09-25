@@ -112,6 +112,11 @@ export function useHtcCraft() {
    */
   const phase = ref<"analyzed" | "pick" | "done">("analyzed");
   /**
+   * 「前回の続きから」: 解析 → おｋ → 探す (30 分のキャッシュで即答) → 作り方 まで自動で通す (オーナー 2026-09-26:
+   * 「キャッシュでそこまで行け」)。DiagnosisCard が段階を見て進め、done で下ろす
+   */
+  const resumeFlow = ref(false);
+  /**
    * 取得の世代。入口に戻る・画面を離れる時に進めて、走っている ②③ の取得を打ち切る (オーナー 2026-09-25:「入口に戻るとか
    * このページ離れたら取得中止して強制終了」)。取得側は始めに世代を控え、await のたびに変わっていないか見る。
    * 取引所へ投げ終えた 1 本は戻るまで待つしかないが、次は投げない
@@ -395,7 +400,7 @@ export function useHtcCraft() {
   return {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
-    loading, stage, diagBusy, phase, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
+    loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,

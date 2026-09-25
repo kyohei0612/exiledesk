@@ -19,6 +19,8 @@ import { TREE_PRESETS } from "./tree-presets";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
 import { startKindOf } from "./start-kind";
 import { RULES, type RedoPlan } from "./redo-cost";
+import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
+import { CATALYSTS } from "../../services/htc/quality";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
@@ -44,10 +46,39 @@ const autoBusy = ref(false);
 const plan = ref<RedoPlan | null>(null);
 /** 回して採った候補の名前と平均 (見積もりと違う候補が勝つこともある) */
 const picked = ref<{ label: string; expected: number | null; done: number | null } | null>(null);
-const methodJa: Record<string, string> = { chaos: "カオス", exalt: "高貴 + 側のお告げ", desecrate: "冒涜", essence: "エッセンス (確定)" };
-const rerollJa = (r: RedoPlan["rows"][number]): string =>
-  r.method === "desecrate" ? `${r.bone === "desecrate_ancient" ? "古代" : "普通の骨"}・外れは${r.reroll === "overwrite" ? "天体で上書き" : "光 + 消去"}`
-  : r.method === "exalt" ? `${r.catalyst ? "触媒あり・" : ""}外れは${r.plainAnnul ? "素の消去" : "側の消去"}${r.safe ? " (確定)" : " (巻き込む)"}` : r.method === "chaos" ? "外れは打ち直し" : "";
+/**
+ * 取り方の文言はゲームの正式名で (オーナー 2026-09-26:「お告げの名前しっかり機能したい。その MOD がサフィ産かプレ産か
+ * 分かるでしょ、ちゃんとお告げの名前を書いて」)。プレ = 左側 (Sinistral)、サフィ = 右側 (Dextral)
+ */
+const omen = (id: string): string => jaOfOmen(id) ?? id;
+const OMEN_EX: Record<string, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
+const OMEN_AN: Record<string, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
+const OMEN_NE: Record<string, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
+const OMEN_CR: Record<string, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
+const ORB_JA: Record<string, string> = { exalt: "高貴なオーブ", exalt_greater: "高貴なオーブ (上級)", exalt_perfect: "高貴なオーブ (完全)" };
+const priceJa = (key: string): string => jaOfPriceKey(key, c.base.value ?? undefined) ?? key;
+/** 何で狙うか (通貨 + お告げ) */
+const howJa = (r: RedoPlan["rows"][number]): string => {
+  switch (r.method) {
+    case "chaos": return "カオスオーブ";
+    case "exalt": {
+      const cat = r.catalyst ? CATALYSTS.find((k) => k.tag === r.catalyst) : null;
+      return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"} + ${omen(OMEN_EX[r.side]!)}${cat ? ` + 触媒の高貴なお告げ (${cat.ja})` : ""}`;
+    }
+    case "desecrate": return `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN_NE[r.side]!)}`;
+    case "essence": return "パーフェクトエッセンス (確定)";
+    default: return r.method;
+  }
+};
+/** 外れた時にどうするか */
+const missJa = (r: RedoPlan["rows"][number]): string => {
+  switch (r.method) {
+    case "chaos": return "外れはカオスで打ち直し";
+    case "exalt": return `外れは ${r.plainAnnul ? "消去のオーブ" : `${omen(OMEN_AN[r.side]!)} + 消去のオーブ`}${r.safe ? " (狙い以外は消えない)" : " (ほかの MOD を巻き込む)"}`;
+    case "desecrate": return `外れは ${r.reroll === "overwrite" ? `${omen(OMEN_CR[r.side]!)} + エッセンスで上書き` : `${omen("OmenofLight")} + 消去のオーブ`}`;
+    default: return "";
+  }
+};
 /**
  * 守る価値 = その狙いの作り直し費用 (見込み)。側の消去のお告げ 1 回より高ければ「守る」(オーナー 2026-09-25:「反対側に本当に
  * 守りたい物があるのかというポイント制。T5 なら守りたい物に入らないし、カオスで付くような物もお告げは要らない」)
@@ -105,7 +136,7 @@ async function focus(id: string): Promise<void> {
  */
 const cardMode = ref<"step" | "target">("step");
 /** 絵に段・タグの小見出しを出す (ゲームの Alt 表示) */
-const cardDetail = ref(false);
+const cardDetail = ref(true);
 const selected = ref<string | null>(null);
 /** 本線: STEP 1 から ○ をたどった並び */
 const mainLine = computed(() => {
@@ -168,7 +199,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     <div v-if="showSettings" class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
       <label>予算 <input v-model.number="t.budgetDivine.value" type="number" min="1" step="50" class="num w-20" /> 神</label>
       <label>目標の成功確率 <input v-model.number="t.targetPct.value" type="number" min="1" max="100" step="5" class="num w-14" /> %</label>
-      <label title="始め方で選んだベースの値段が入ります。予算と結果の額はこれ込み">ベース代 <input v-model.number="t.baseDivine.value" type="number" min="0" step="1" class="num w-20" /> 神</label>
+      <label title="始め方で選んだ物の初動 (固定済みを買う値段、または自分でフラクチャーする費用の見込み) が入ります。予算と結果の額はこれ込み">初動 (素材・フラクチャー) <input v-model.number="t.baseDivine.value" type="number" min="0" step="1" class="num w-20" /> 神</label>
       <label>回す回数 <input v-model.number="t.runs.value" type="number" min="100" step="500" class="num w-20" /> 回</label>
     </div>
 
@@ -180,9 +211,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
           <p class="text-2xl font-bold" :class="t.result.value.pDone >= 0.95 ? 'text-emerald-300' : 'text-rose-300'">{{ pct(t.result.value.pDone) }}</p>
         </div>
         <div class="rounded-lg bg-black/30 p-3">
-          <p class="text-[11px] opacity-60">平均 (完成した時)</p>
+          <p class="text-[11px] opacity-60">平均 (完成した時) <span class="opacity-70">全額</span></p>
           <p class="text-2xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.expected + t.baseEx.value) : "-" }}</p>
-          <p v-if="t.baseEx.value > 0" class="text-[11px] opacity-50">ベース代 {{ c.money(t.baseEx.value) }} 込み</p>
+          <p v-if="t.baseEx.value > 0 && t.result.value.pDone > 0" class="text-[11px] opacity-60">初動 {{ c.money(t.baseEx.value) }} + クラフト {{ c.money(t.result.value.expected) }}</p>
         </div>
         <div class="rounded-lg bg-black/30 p-3">
           <p class="text-[11px] opacity-60">{{ t.targetPct.value }}% の人が収まる額</p>
@@ -211,23 +242,32 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     <!-- やり直しの費用から決めた取り方 (自動で組んだ時)。決まりは畳んで出す -->
     <details v-if="plan" class="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs" open>
       <summary class="cursor-pointer select-none">
-        <b>取り方</b> <span class="opacity-60">見込みの合計 {{ c.money(plan.total) }}</span>
+        <b>取り方</b> <span class="opacity-60">見込み {{ t.baseEx.value > 0 ? `初動 ${c.money(t.baseEx.value)} + クラフト ${c.money(plan.total)} = ` : "" }}<b class="opacity-100">{{ c.money(plan.total + t.baseEx.value) }}</b></span>
         <template v-if="picked"><span class="opacity-60"> ・ 候補を回して採ったのは「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
       </summary>
-      <table class="mt-2 w-full [&_td:nth-child(n+3)]:whitespace-nowrap [&_th:nth-child(n+3)]:whitespace-nowrap">
-        <thead><tr class="opacity-50"><th class="text-left font-normal">狙い</th><th class="text-left font-normal">取り方</th><th class="text-right font-normal">1 回</th><th class="text-right font-normal">当たる</th><th class="text-right font-normal">外れ 1 回のやり直し</th><th class="text-right font-normal">見込み = 作り直し</th><th class="text-left font-normal pl-2" title="作り直しが側の消去のお告げ 1 回 (10〜18 神) より高ければ、消去で巻き込まないように守る価値がある">守る価値</th></tr></thead>
-        <tbody>
-          <tr v-for="r in plan.rows" :key="r.modId">
-            <td class="py-1.5">{{ c.stepTarget([r.modId]) }} <span class="opacity-50">({{ r.side === "prefix" ? "プレ" : "サフィ" }})</span></td>
-            <td>{{ methodJa[r.method] }} <span class="opacity-60">{{ rerollJa(r) }}</span></td>
-            <td class="text-right">{{ c.money(r.perTry) }}</td>
-            <td class="text-right">{{ pctHit(r.p) }}</td>
-            <td class="text-right" :class="r.safe ? '' : 'text-amber-300'">{{ r.perMiss > 0 ? c.money(r.perMiss) : "-" }}</td>
-            <td class="text-right">{{ c.money(r.expected) }}</td>
-            <td class="pl-2" :class="r.expected > omenPrice(r.side) ? 'text-amber-200' : 'opacity-50'">{{ guardJa(r) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
+      <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.08]">
+        <div v-for="(r, i) in plan.rows" :key="r.modId" class="grid grid-cols-[minmax(13rem,1fr)_minmax(18rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
+          <!-- 狙い -->
+          <div class="flex items-center gap-2">
+            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold" :class="r.side === 'prefix' ? 'bg-sky-500/20 text-sky-200' : 'bg-fuchsia-500/20 text-fuchsia-200'">{{ r.side === "prefix" ? "プレ" : "サフィ" }}</span>
+            <b>{{ c.stepTarget([r.modId]) }}</b>
+          </div>
+          <!-- 取り方 -->
+          <div class="min-w-0">
+            <p class="text-amber-100">{{ howJa(r) }}</p>
+            <p class="opacity-60">{{ missJa(r) }}</p>
+          </div>
+          <!-- 数字 -->
+          <div class="flex items-center gap-1.5 tabular-nums">
+            <div class="w-[4.6rem] rounded bg-black/30 px-2 py-1 text-right"><p class="text-[10px] opacity-50">1 回</p><p>{{ c.money(r.perTry) }}</p></div>
+            <div class="w-[4.6rem] rounded bg-black/30 px-2 py-1 text-right"><p class="text-[10px] opacity-50">当たる</p><p class="text-emerald-300">{{ pctHit(r.p) }}</p></div>
+            <div class="w-[5.4rem] rounded bg-black/30 px-2 py-1 text-right"><p class="text-[10px] opacity-50">外れのやり直し</p><p :class="r.safe ? '' : 'text-amber-300'">{{ r.perMiss > 0 ? c.money(r.perMiss) : "-" }}</p></div>
+            <div class="w-[5.4rem] rounded bg-amber-500/10 px-2 py-1 text-right"><p class="text-[10px] opacity-50">見込み</p><p class="font-bold text-amber-200">{{ c.money(r.expected) }}</p></div>
+            <span class="w-[5.2rem] text-center text-[11px]" :class="r.expected > omenPrice(r.side) ? 'text-amber-200' : 'opacity-40'">{{ guardJa(r) }}</span>
+          </div>
+        </div>
+      </div>
       <details class="mt-1 opacity-60"><summary class="cursor-pointer">決まり</summary><ul class="list-disc pl-4"><li v-for="x in RULES" :key="x">{{ x }}</li></ul></details>
     </details>
 
@@ -245,11 +285,11 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     </div>
    </div>
    <!-- 右: アイテムの絵 (完成図 / 今の STEP の形)。上に貼り付いて、ツリーを進めても見え続ける -->
-   <aside class="sticky top-2 w-[22rem] shrink-0">
+    <aside class="sticky top-2 w-[22rem] shrink-0">
      <div class="mb-1.5 flex items-center gap-1 text-xs">
        <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'step'">STEP の時の形</button>
        <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'target'">完成図</button>
-       <button type="button" class="rounded-lg px-2 py-1" :class="cardDetail ? 'bg-white/15' : 'border border-white/15 hover:bg-white/5'" title="段とタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">詳細</button>
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardDetail ? 'bg-white/15' : 'border border-white/15 hover:bg-white/5'" title="段とタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">{{ cardDetail ? "詳細を隠す" : "詳細" }}</button>
        <template v-if="cardMode === 'step' && mainLine.length">
          <button type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>
          <span class="tabular-nums opacity-70">STEP {{ shownId ? t.indexOf(shownId) + 1 : "-" }}</span>
@@ -258,6 +298,6 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
      </div>
      <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :detail="cardDetail" :footer="card.footer" />
      <p class="mt-1.5 text-[11px] opacity-40">STEP を押すとその時の形。金の帯 = 固定、青 = 狙い、赤 = 外れ (消す)、紫 = 冒涜、桃 = 樹 MOD</p>
-   </aside>
+    </aside>
   </div>
 </template>
