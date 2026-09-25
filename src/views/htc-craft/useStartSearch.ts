@@ -88,6 +88,12 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const k = kind.value.kind;
     const init = k === "fix" ? [TREE_ONLY] : k === "separate" ? [CLEAN] : c.fracturedTargets.value.map((t) => t.modId);
     checked.value = init.filter((x) => candidates.value.some((y) => y.key === x)).slice(0, MAX_STARTS);
+    // 貼り付けに固定済みが無ければ、一番出にくい普通の MOD を固定する候補にしておく (押せばすぐ探せる。忍者のコピーは
+    // フラクチャーの印が無いので、これが無いと毎回選び直しだった。2026-09-25)
+    if (!checked.value.length && k === "none") {
+      const rarest = [...candidates.value].filter((x) => x.chance != null).sort((x, y) => (x.chance ?? 1) - (y.chance ?? 1))[0];
+      if (rarest) checked.value = [rarest.key];
+    }
     results.value = {};
     picked.value = null;
     manual.value = {};
