@@ -57,6 +57,8 @@ const OMEN_NE: Record<string, string> = { prefix: "OmenofSinistralNecromancy", s
 const OMEN_CR: Record<string, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
 const ORB_JA: Record<string, string> = { exalt: "高貴なオーブ", exalt_greater: "高貴なオーブ (上級)", exalt_perfect: "高貴なオーブ (完全)" };
 const priceJa = (key: string): string => jaOfPriceKey(key, c.base.value ?? undefined) ?? key;
+/** 取り方の行はプレフィックスを上、サフィックスを下に (オーナー 2026-09-26:「プレフィックスは上でサフィは下だろ、順番ね」) */
+const planRows = computed(() => [...(plan.value?.rows ?? [])].sort((a, b) => (a.side === b.side ? 0 : a.side === "prefix" ? -1 : 1)));
 /** 何で狙うか (通貨 + お告げ) */
 const howJa = (r: RedoPlan["rows"][number]): string => {
   switch (r.method) {
@@ -247,7 +249,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       </summary>
       <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
       <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.08]">
-        <div v-for="(r, i) in plan.rows" :key="r.modId" class="grid grid-cols-[minmax(13rem,1fr)_minmax(18rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
+        <div v-for="(r, i) in planRows" :key="r.modId" class="grid grid-cols-[minmax(13rem,1fr)_minmax(18rem,1.6fr)_auto] items-center gap-x-4 px-3 py-2" :class="i % 2 ? 'bg-white/[0.03]' : 'bg-black/20'">
           <!-- 狙い -->
           <div class="flex items-center gap-2">
             <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold" :class="r.side === 'prefix' ? 'bg-sky-500/20 text-sky-200' : 'bg-fuchsia-500/20 text-fuchsia-200'">{{ r.side === "prefix" ? "プレ" : "サフィ" }}</span>
