@@ -101,7 +101,10 @@ const implicitText = (lines: readonly string[]): string =>
 </script>
 
 <template>
+  <!-- 中身は幅 1400px で固定 (オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても変わらない感じで。ウィンドウによって崩れる」)。
+       狭い窓では横にスクロール、広い窓では余白 -->
   <div class="h-full overflow-auto p-4 text-sm">
+   <div class="w-[1400px] min-w-[1400px]">
     <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
     <p class="mb-3 text-xs opacity-60">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
@@ -420,5 +423,6 @@ const implicitText = (lines: readonly string[]): string =>
         <div v-for="([label, ms], i) in c.timings.value" :key="i">{{ label }}: {{ ms }} ミリ秒</div>
       </details>
     </template>
+     </div>
   </div>
 </template>
