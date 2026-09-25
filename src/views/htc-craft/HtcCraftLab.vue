@@ -172,6 +172,7 @@ const implicitText = (lines: readonly string[]): string =>
           :disabled="c.loading.value || !text.trim()"
           @click="reread(text)"
         >{{ c.loading.value ? "解析中…" : "MOD 解析" }}</button>
+        <span v-if="c.loading.value" class="text-xs text-amber-200/90"><span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }}</span>
       </div>
     </div>
 
@@ -294,6 +295,9 @@ const implicitText = (lines: readonly string[]): string =>
       <span v-if="c.coverage.value.missing.length">— 相場に無い {{ c.coverage.value.missing.length }} 種類は使えない物として扱います</span>
     </p>
 
+    <p v-if="c.loading.value && !c.base.value" class="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+      <span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }} <span class="opacity-60">— 済むと診断 → 始め方 → 完成品 → 作り方の順に埋まります</span>
+    </p>
     <template v-if="c.base.value">
       <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />

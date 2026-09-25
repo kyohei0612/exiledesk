@@ -34,6 +34,8 @@ function loadPreset(id: string): void {
  * 触らない MOD (固定していない樹 MOD など) がある時は側の無いカオスを使わない。クラフト非推奨の時は出さない
  */
 const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.value.length > 0 && startKindOf(c).kind !== "unsafe");
+/** 診断 (② 始め方 → ③ 完成品) が済んでから回す (オーナー 2026-09-25:「完成終わったらシミュレーションって順番」) */
+const autoReady = computed(() => canAuto.value && !c.diagBusy.value);
 /** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
 const autoBusy = ref(false);
 /** やり直しの費用から決めた取り方 ([[redo-cost.ts]]、自動で組んだ時に出す) */
@@ -78,7 +80,7 @@ async function loadAuto(): Promise<void> {
  * 開始の指輪 (貼り付け・固定済み) が変わるたびに組み直す。自分で組みたい時は「1 から組む」で空にする
  */
 // 開始は中身で比べる (相場を取り直すと ctx が作り直され、同じ開始でも別の物として組み直しの輪になっていた。2026-09-25)
-watch(() => [JSON.stringify(t.start.value), canAuto.value] as const, async ([, ok]) => {
+watch(() => [JSON.stringify(t.start.value), autoReady.value] as const, async ([, ok]) => {
   if (!ok) return;
   await nextTick();
   void loadAuto();
@@ -103,7 +105,7 @@ const perNode = computed(() => {
   const total = Math.max(1, r.perNode.reduce((a, x) => a + x.cost, 0));
   return r.perNode.map((p, i) => ({ ...p, index: i, share: p.cost / total })).sort((a, b) => b.cost - a.cost);
 });
-const busyText = computed(() => autoBusy.value ? "組んでいます… (候補をいくつか回して比べています)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : "");
+const busyText = computed(() => autoBusy.value ? "組んでいます… (候補をいくつか回して比べています)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "上の ② ③ の取得が終わってから自動で組みます" : "");
 </script>
 
 <template>

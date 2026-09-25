@@ -124,23 +124,36 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     return { kind: "side", price: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
   }
 
+  /** 今探している候補 (何番目か・3 本のどれか)。真ん中と上の要約に「今なにで止まっているか」を出す */
+  const current = ref<{ key: string; name: string; index: number; count: number; step: string } | null>(null);
   async function searchAll(): Promise<void> {
     if (busy.value) return;
     busy.value = true;
+    c.diagBusy.value = true;
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
-      for (const cand of keys) {
+      for (const [i, cand] of keys.entries()) {
+        const at = (step: string) => {
+          current.value = { key: cand.key, name: cand.name, index: i + 1, count: keys.length, step };
+          c.stage.value = `② 始め方を探しています (${i + 1}/${keys.length}) ${cand.name}: ${step}`;
+        };
+        at(kind.value.kind === "separate" ? "最安 1 件" : "固定済み");
         const r = kind.value.kind === "separate"
           ? await searchSide(cand.modIds).catch(() => null)
-          : await c.searchFor(cand.modIds).catch(() => null);
+          : await c.searchFor(cand.modIds, at).catch(() => null);
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
       }
+      current.value = null;
+      c.stage.value = "③ 完成品を探しています…";
       await afterAll();
     } finally {
       busy.value = false;
       pending.value = [];
+      current.value = null;
+      c.stage.value = "";
+      c.diagBusy.value = false;
     }
   }
 
@@ -218,7 +231,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   });
 
   return {
-    kind, candidates, checked, results, busy, searchAll, rows, chosen, manual, threeWay,
+    kind, candidates, checked, results, busy, current, searchAll, rows, chosen, manual, threeWay,
     setManual: (key: string, v: number | null) => { manual.value = { ...manual.value, [key]: v }; },
     choose: (key: string) => { picked.value = key; },
     locked: (key: string) => !checked.value.includes(key) && checked.value.length >= MAX_STARTS,

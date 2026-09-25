@@ -77,6 +77,16 @@ export interface TargetRow {
 export function useHtcCraft() {
   const data = shallowRef<PatchData | null>(null);
   const loading = ref(false);
+  /**
+   * 今どこで待っているか (オーナー 2026-09-25:「MOD 解析押して暇な時解析中って出そうか」「真ん中で止まったらまだ検索中で
+   * 今なにで止まってるかしっかり表示して」)。解析中は run() が、②③ の取得中は useStartSearch / useFinishedCompare が入れる
+   */
+  const stage = ref("");
+  /**
+   * 診断 (② 始め方 → ③ 完成品) がまだ済んでいない。解析が通ったら立て、取得が終わる (or 取得しない) と下ろす。
+   * 作り方のシミュレーションはこれが下りてから回す (オーナー:「真ん中終わったら次、完成終わったらシミュレーションって順番」)
+   */
+  const diagBusy = ref(false);
   const error = ref<string | null>(null);
 
   const item = shallowRef<PastedItem | null>(null);
@@ -185,6 +195,8 @@ export function useHtcCraft() {
     startKeep.value = [];
     treeError.value = null;
     treeTierPick.value = {};
+    stage.value = "";
+    diagBusy.value = false;
   }
 
   /**
@@ -241,8 +253,11 @@ export function useHtcCraft() {
     reset();
     loading.value = true;
     try {
+      stage.value = "解析中: MOD のデータを読んでいます…";
       const d = await ensureData();
+      stage.value = "解析中: 相場を確かめています…";
       await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
+      stage.value = "解析中: MOD と段を決めています…";
       if (picks.length === 0) {
         error.value = "狙う MOD を 1 つ以上選んでください。";
         return;
@@ -253,10 +268,12 @@ export function useHtcCraft() {
         { targets: [...picks], texts: picks.map((p2) => jaOfMod(d.mods.get(p2.modId)!)) },
         baseName,
       );
+      diagBusy.value = true;
     } catch (e) {
       error.value = String(e);
     } finally {
       loading.value = false;
+      stage.value = "";
     }
   }
 
@@ -265,8 +282,11 @@ export function useHtcCraft() {
     reset();
     loading.value = true;
     try {
+      stage.value = "解析中: MOD のデータを読んでいます…";
       const d = await ensureData();
+      stage.value = "解析中: 相場を確かめています…";
       await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
+      stage.value = "解析中: 貼り付けを読んで MOD と段を決めています…";
 
       let t = Date.now();
       const it = parseJaItem(text);
@@ -294,10 +314,12 @@ export function useHtcCraft() {
       implicits.value = got.implicits;
       skipped.value = got.skipped;
       applyTargets(d, cls, got, it.baseType);
+      diagBusy.value = true;
     } catch (e) {
       error.value = String(e);
     } finally {
       loading.value = false;
+      stage.value = "";
     }
   }
 
@@ -338,7 +360,7 @@ export function useHtcCraft() {
   return {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
-    loading, error, item, base, rows, implicits, skipped,
+    loading, stage, diagBusy, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,

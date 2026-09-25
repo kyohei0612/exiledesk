@@ -10,7 +10,8 @@
  *   ベース (固定済みにして始める MOD を選んで「探す」) / 始め方の結果 (一番安い 1 つ、他は畳む) / 完成品と比べる
  * 取引所へは「探す」を押した時だけ ([[useStartSearch.ts]])。
  */
-import { computed } from "vue";
+import { computed, nextTick, watch } from "vue";
+import { tradeAuto } from "../../services/trade2/auto-price";
 import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
@@ -36,6 +37,25 @@ const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 const fin = useFinishedCompare(c, computed(() => ss.chosen.value?.startCost ?? null));
 /** 始め方: 選んで押した時だけ探す。候補を全部取ったら完成品を 1 本 */
 const ss = useStartSearch(c, async () => { if (fin.query.value && !fin.found.value) await fin.search(); });
+/**
+ * 解析が通ったら、順に取る: ② 始め方 (候補を上から 1 つずつ) → ③ 完成品 → 下の作り方のシミュレーション
+ * (オーナー 2026-09-25:「順に取得してから表示していってくれ。真ん中終わったら次、完成終わったらシミュレーションって順番」)。
+ * 探せない時 (非推奨・候補なし) は診断の印を下ろして、すぐシミュレーションへ
+ */
+watch(() => c.diagBusy.value, async (busy) => {
+  if (!busy || ss.busy.value) return;
+  await nextTick();
+  if (!c.diagBusy.value || ss.busy.value) return;
+  if (ss.kind.value.kind !== "unsafe" && ss.checked.value.length) void ss.searchAll();
+  else c.diagBusy.value = false;
+}, { immediate: true });
+/** 取引所で待たされている時の一言 (間隔待ち・レート制限) */
+const tradeWait = computed(() => {
+  const secs = tradeAuto.waitSecs.value;
+  if (tradeAuto.rateLimitSecs.value > 0) return `取引所のレート制限中 (あと ${secs} 秒)`;
+  if (secs > 0) return `取引所の間隔待ち (あと ${secs} 秒)`;
+  return tradeAuto.pending.value > 0 ? "取引所に問い合わせ中…" : "";
+});
 /** 候補をプレ / サフィに分ける (中は確率の高い順のまま) */
 const candGroups = computed(() => [
   { title: "プレフィックス", list: ss.candidates.value.filter((x) => x.side === "P") },
@@ -59,8 +79,9 @@ const threeWay = computed(() => {
 });
 /** 道しるべ: 貼る → 固定を決めて探す → 買うか作るか → 作り方を回す */
 const steps = computed(() => {
-  const searched = !!ss.chosen.value || !!fin.found.value;
-  const decided = threeWay.value.some((w) => w.best);
+  // 取得中 (②③) はまだ「済み」にしない (2026-09-25: ③ を探している最中に ③ ✓ ④ が出ていた)
+  const searched = (!!ss.chosen.value || !!fin.found.value) && !ss.busy.value;
+  const decided = threeWay.value.some((w) => w.best) && !c.diagBusy.value && !fin.busy.value;
   const s = (label: string, state: "done" | "now" | "todo") => ({ label, state });
   return [
     s("アイテムを貼る", "done"),
@@ -103,9 +124,15 @@ const fixLabel = computed(() => {
           </p>
         </template>
         <p v-else class="ml-auto opacity-60">
-          {{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨 (完成品を買う)" : ss.busy.value ? "取引所で探しています…" : "左で固定する MOD を選んで「取引所で探す」を押すと、ここに 3 つの道が出ます" }}
+          {{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨 (完成品を買う)" : ss.busy.value ? "取引所で探しています… 取れた物から順に埋まります" : "左で固定する MOD を選んで「取引所で探す」を押すと、ここに 3 つの道が出ます" }}
         </p>
       </div>
+      <!-- 今なにで止まっているか (② 何番目の候補の何本目 / ③ 完成品 / 取引所の待ち) -->
+      <p v-if="c.stage.value" class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-amber-200/90">
+        <span class="inline-block animate-pulse">●</span>{{ c.stage.value }}
+        <span v-if="tradeWait" class="rounded bg-amber-500/15 px-1.5 py-0.5">{{ tradeWait }}</span>
+        <span class="opacity-60">→ 終わると下の作り方が自動で回ります</span>
+      </p>
     </div>
     <!-- MOD 解析: 種類ごと・プレ / サフィごと (オーナー 2026-09-24) -->
     <ModBreakdown :c="c" />

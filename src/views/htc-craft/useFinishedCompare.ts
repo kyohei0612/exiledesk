@@ -157,6 +157,8 @@ export function useFinishedCompare(
     if (busy.value || !query.value) return;
     busy.value = true;
     error.value = null;
+    const ownStage = !c.stage.value;
+    if (ownStage) c.stage.value = "③ 完成品を探しています…";
     try {
       const league = marketStore.league.value?.Value ?? "Standard";
       lightNote.value = null;
@@ -206,6 +208,7 @@ export function useFinishedCompare(
       error.value = String(e);
     } finally {
       busy.value = false;
+      if (ownStage) c.stage.value = "";
     }
   }
 

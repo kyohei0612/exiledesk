@@ -51,7 +51,13 @@ const num = (e: Event): number | null => {
       <p v-if="top.best.note" class="opacity-60">{{ top.best.note }}</p>
       <button v-if="cheapest && top.key !== cheapest.key" type="button" class="mt-1 underline opacity-70" @click="ss.choose(cheapest.key)">一番安い物に戻す</button>
     </div>
-    <p v-for="w in waiting" :key="w.key" class="mt-1 opacity-70">{{ w.name }}: 取得中…</p>
+    <p v-for="w in waiting" :key="w.key" class="mt-1 flex items-center gap-1 opacity-80">
+      <template v-if="ss.current.value?.key === w.key">
+        <span class="inline-block animate-pulse text-amber-300">●</span>
+        <span class="text-amber-200">{{ w.name }}: 検索中 ({{ ss.current.value.index }}/{{ ss.current.value.count }}) — {{ ss.current.value.step }}</span>
+      </template>
+      <span v-else class="opacity-60">{{ w.name }}: 順番待ち</span>
+    </p>
     <!-- どれも値段が出ない時は畳まずに全部出し、出品が無い物は手で値段を入れられるように (「足りない情報は手動で」) -->
     <template v-if="started && !waiting.length && !top?.best">
       <p class="text-rose-300">選べる始め方がありません (取れなかった・出品が足りない)。出品が無い物は値段を手で入れられます</p>
