@@ -105,7 +105,7 @@ const perNode = computed(() => {
   const total = Math.max(1, r.perNode.reduce((a, x) => a + x.cost, 0));
   return r.perNode.map((p, i) => ({ ...p, index: i, share: p.cost / total })).sort((a, b) => b.cost - a.cost);
 });
-const busyText = computed(() => autoBusy.value ? "組んでいます… (候補をいくつか回して比べています)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "上の ② ③ の取得が終わってから自動で組みます" : "");
+const busyText = computed(() => autoBusy.value ? "組んでいます… (候補をいくつか回して比べています)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "上の ② の取得が終わってから自動で組みます" : "");
 </script>
 
 <template>

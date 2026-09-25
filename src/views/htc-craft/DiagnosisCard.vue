@@ -61,7 +61,7 @@ const flow = computed(() => {
     { label: `候補の「固定済み」を 1 本ずつ (${ss.current.value && at === 0 ? `${ss.current.value.index}/${ss.current.value.count}` : `${n} 本`})`, state: at > 0 ? "done" : at === 0 ? "now" : "todo" },
     { label: "一番安い候補の「固定無し」(自分でフラクチャーする道。固定済みが安すぎれば飛ばす)", state: at > 1 ? "done" : at === 1 ? "now" : "todo" },
     { label: "完成品を 1 本", state: at === 2 ? "now" : "todo" },
-    { label: "→ ② ③ を出して、作り方を自動で組む", state: "todo" },
+    { label: "→ ② 買うか作るか を出して、作り方を自動で組む", state: "todo" },
   ];
 });
 // 画面を離れたら取得を打ち切る (入口に戻るは c.reset() が打ち切る)
@@ -126,12 +126,12 @@ const verdict3 = computed(() => {
 });
 /** 今やることの一言 (上の要約) */
 const hint = computed(() => {
-  if (ss.kind.value.kind === "unsafe") return "クラフト非推奨: ③ で完成品を探して買う";
+  if (ss.kind.value.kind === "unsafe") return "クラフト非推奨: ② で完成品を探して買う";
   const ph = c.phase.value;
   if (ph === "analyzed") return "MOD と段を確かめて「おｋ」を押す";
   if (ph === "pick") return "固定する MOD を選んで「取引所で探す」を押す";
   const best = threeWay.value.find((w) => w.best);
-  return best ? `${best.name} が一番安い → 下の作り方 (STEP) を回して確かめる` : "③ で買うか作るかを見る";
+  return best ? `${best.name} が一番安い → 下の作り方 (STEP) を回して確かめる` : "② で買うか作るかを見る";
 });
 const omenSide = computed(() => (ss.kind.value.craftSide === "P" ? "左側" : ss.kind.value.craftSide === "S" ? "右側" : "その側"));
 /** 固定する樹 MOD の名前 (樹 MOD が 2 つある時は重い側の物だけ) */
@@ -253,16 +253,15 @@ const fixLabel = computed(() => {
       </section>
 
       <!-- 始め方の結果: 一番安い 1 つだけ出して、他は畳む ([[StartResults.vue]]) -->
-      <StartResults v-if="show2 && c.phase.value === 'done'" :c="c" :ss="ss" />
 
-      <!-- ③ 買うか作るか。完成品の条件は一番ゆるく (MOD だけ、固定済みかは問わない) -->
-      <section v-if="show3 && c.phase.value === 'done'" class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-        <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span><b class="text-sm">買うか、作るか</b>
+      <!-- ② 買うか、作るか (始め方の結果もここに。オーナー 2026-09-26:「2 番と 3 番一緒に」)。完成品の条件は一番ゆるく (MOD だけ) -->
+      <section v-if="(show2 || show3) && c.phase.value === 'done'" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 lg:col-span-2">
+        <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">買うか、作るか</b>
           <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" :disabled="fin.busy.value" @click="fin.search()">
             {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}
           </button>
         </p>
-        <!-- 3 つの道 (オーナー 2026-09-26: 上の要約から移した)。一番安い物を強調 -->
+        <!-- 3 つの道。一番安い物を強調 -->
         <div v-if="threeWay.length" class="mb-2 grid grid-cols-3 gap-2">
           <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
             <p class="text-[11px] opacity-70">{{ w.name }}</p>
@@ -270,9 +269,19 @@ const fixLabel = computed(() => {
             <p v-if="w.best" class="mt-0.5 inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</p>
           </div>
         </div>
-        <p v-if="verdict3" class="mb-2 rounded-lg bg-emerald-500/10 px-2 py-1">
+        <p v-if="verdict3" class="mb-3 rounded-lg bg-emerald-500/10 px-2 py-1">
           → <b class="text-emerald-300">{{ verdict3.name }}</b> が一番安い<span v-if="verdict3.diff != null" class="opacity-70"> ({{ verdict3.second }} より <b class="text-emerald-200">{{ c.money(verdict3.diff) }}</b> 安い)</span>
         </p>
+        <div class="grid gap-3 md:grid-cols-2">
+          <!-- 作る側: 始め方 (固定済みを買って途中から作る / 自分でフラクチャーして作る の中身) -->
+          <div class="rounded-lg border border-white/10 bg-black/20 p-2">
+            <p class="mb-1 font-bold text-amber-100">作るなら: 一番安い始め方</p>
+            <StartResults v-if="show2" :c="c" :ss="ss" embedded />
+            <p v-else class="opacity-50">{{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨なので、始め方はありません" : "始め方は取れていません" }}</p>
+          </div>
+          <!-- 買う側: 完成品 -->
+          <div class="rounded-lg border border-white/10 bg-black/20 p-2">
+            <p class="mb-1 font-bold text-amber-100">買うなら: 完成品</p>
         <p>
           完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
           <!-- 取引所に無い時だけ手で埋める -->
@@ -294,11 +303,12 @@ const fixLabel = computed(() => {
         <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨なので、作る見込みは出しません</p>
         <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
         <p v-else class="opacity-50">始め方を探すと出ます</p>
-        <!-- 3 つの道の中身 (上の要約の内訳) -->
+          </div>
+        </div>
+        <!-- 3 つの道の中身 -->
         <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
           <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
         </div>
-
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
       </section>
     </div>

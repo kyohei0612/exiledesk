@@ -15,7 +15,8 @@ import SearchChecks from "./SearchChecks.vue";
 import type { useStartSearch } from "./useStartSearch";
 import type { useHtcCraft } from "./useHtcCraft";
 
-const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; ss: ReturnType<typeof useStartSearch> }>();
+/** embedded: ② 買うか作るか の中に置く (枠と見出し無し。2026-09-26 に ② と ③ を 1 枚にした) */
+const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; ss: ReturnType<typeof useStartSearch>; embedded?: boolean }>();
 const c = props.c;
 const rows = computed(() => props.ss.rows.value);
 const top = computed(() => props.ss.chosen.value);
@@ -33,8 +34,8 @@ const num = (e: Event): number | null => {
 </script>
 
 <template>
-  <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-    <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">一番安い始め方</b></p>
+  <section :class="embedded ? '' : 'rounded-xl border border-white/10 bg-white/[0.03] p-3'">
+    <p v-if="!embedded" class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">一番安い始め方</b></p>
     <p v-if="ss.kind.value.kind === 'unsafe'" class="text-rose-300">クラフト非推奨なので、始め方はありません。完成品を買うのをすすめます</p>
     <p v-else-if="!started" class="opacity-50">
       {{ ss.kind.value.kind === "fix" ? "左の「取引所で探す」" : "左で選んで「取引所で探す」" }}を押すと、取れた物からここに出ます
