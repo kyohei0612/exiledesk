@@ -297,7 +297,7 @@ const implicitText = (lines: readonly string[]): string =>
     <template v-if="c.base.value">
       <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />
-      <h2 class="mb-1 mt-5 text-base font-bold">作り方 (ツリー)</h2>
+      <h2 class="mb-1 mt-5 text-base font-bold">作り方 (STEP の並び)</h2>
       <CraftTreePanel :c="c" />
 
       <!-- ここから下は開発用 (配布版では出さない) -->

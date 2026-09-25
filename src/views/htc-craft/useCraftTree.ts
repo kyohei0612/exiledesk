@@ -169,9 +169,9 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   /** 回せない理由 (手 1 の○×が未設定、など) */
   const blocked = computed(() => {
     const first = nodes.value[0];
-    if (!first?.action) return "手 1 の打つ物を選んでください";
+    if (!first?.action) return "STEP 1 の打つ物を選んでください";
     // 確定の手 (ブリーチ・品質など) は × が来ないので ○ だけでいい (自動で組むと手 1 がブリーチになる。2026-09-24)
-    if (!first.onHit || (!first.onMiss && !CERTAIN.has(first.action.kind))) return "手 1 は ○ と × の両方の行き先が要ります";
+    if (!first.onHit || (!first.onMiss && !CERTAIN.has(first.action.kind))) return "STEP 1 は ○ と × の両方の行き先が要ります";
     if (!nodes.value.some((n) => n.onHit === "done" || n.onMiss === "done")) return "どこかの行き先を「完成」にしてください (本線の最後の○)";
     return null;
   });

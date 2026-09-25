@@ -19,13 +19,13 @@ const hitChild = computed(() => props.t.childOf(props.id, "onHit"));
 const missChild = computed(() => props.t.childOf(props.id, "onMiss"));
 /** 子として置かない行き先の札 */
 /** 確定の手 (外れない) は × が要らない */
-const certain = computed(() => !!node.value?.action && CERTAIN.has(node.value.action.kind));
+const certain = computed(() => !!node.value?.action && (CERTAIN.has(node.value.action.kind) || node.value.targets.length === 0));
 function chip(g: string | null | undefined, miss = false): string {
-  if (g == null) return miss && certain.value ? "要らない (確定の手)" : "未設定";
-  if (g === props.id) return "↻ もう一度";
+  if (g == null) return miss && certain.value ? "外れない手" : "行き先を決める";
+  if (g === props.id) return "↻ もう一度打つ";
   if (g === "done") return "完成";
-  if (g === "auto") return "自動 (消えた物を見て戻る)";
-  return `↩ 手 ${props.t.indexOf(g) + 1} へ`;
+  if (g === "auto") return "自動で戻る";
+  return `↩ STEP ${props.t.indexOf(g) + 1} へ`;
 }
 </script>
 

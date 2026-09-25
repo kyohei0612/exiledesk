@@ -57,6 +57,18 @@ const threeWay = computed(() => {
   const min = Math.min(...list.map((w) => w.cost ?? Infinity));
   return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));
 });
+/** 道しるべ: 貼る → 固定を決めて探す → 買うか作るか → 作り方を回す */
+const steps = computed(() => {
+  const searched = !!ss.chosen.value || !!fin.found.value;
+  const decided = threeWay.value.some((w) => w.best);
+  const s = (label: string, state: "done" | "now" | "todo") => ({ label, state });
+  return [
+    s("アイテムを貼る", "done"),
+    s("固定する MOD を選んで探す", searched ? "done" : "now"),
+    s("買うか作るかを見る", decided ? "done" : searched ? "now" : "todo"),
+    s("下の作り方を回して確かめる", decided ? "now" : "todo"),
+  ];
+});
 const omenSide = computed(() => (ss.kind.value.craftSide === "P" ? "左側" : ss.kind.value.craftSide === "S" ? "右側" : "その側"));
 /** 固定する樹 MOD の名前 (樹 MOD が 2 つある時は重い側の物だけ) */
 const fixLabel = computed(() => {
@@ -68,6 +80,33 @@ const fixLabel = computed(() => {
 
 <template>
   <div class="mb-3 text-xs">
+    <!-- 上に貼り付いた要約 (2026-09-25 オーナー:「見やすく使いやすく」): 何を作るか + 3 つの道 + 判定。取れた物から埋まる -->
+    <div class="sticky top-0 z-10 -mx-1 mb-3 rounded-xl border border-white/10 bg-[var(--exile-color-bg-surface)]/95 px-3 py-2 shadow-lg backdrop-blur">
+      <!-- 道しるべ (初見でも最後まで行けるように。オーナー 2026-09-25) -->
+      <ol class="mb-2 flex flex-wrap gap-1 text-[11px]">
+        <li v-for="(st, i) in steps" :key="st.label" class="flex items-center gap-1 rounded-full px-2 py-0.5" :class="st.state === 'done' ? 'bg-emerald-500/15 text-emerald-200' : st.state === 'now' ? 'bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60' : 'bg-white/5 opacity-50'">
+          <span class="font-bold">{{ i + 1 }}</span>{{ st.label }}<span v-if="st.state === 'done'">✓</span>
+        </li>
+      </ol>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div class="min-w-[10rem]">
+          <p class="text-sm font-bold">{{ baseJa }}</p>
+          <p class="opacity-60">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 ・ 品質 {{ quality }}% ・ 狙い {{ c.targets.value.length }} 個</p>
+        </div>
+        <template v-if="threeWay.length">
+          <div v-for="w in threeWay" :key="w.key" class="rounded-lg px-3 py-1" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.04]'">
+            <p class="text-[11px] opacity-60">{{ w.name }}</p>
+            <p class="text-base font-bold" :class="w.best ? 'text-emerald-300' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
+          </div>
+          <p v-if="threeWay.some((w) => w.best)" class="ml-auto text-sm">
+            → <b class="text-emerald-300">{{ threeWay.find((w) => w.best)?.name }}</b> <span class="opacity-60">が一番安い</span>
+          </p>
+        </template>
+        <p v-else class="ml-auto opacity-60">
+          {{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨 (完成品を買う)" : ss.busy.value ? "取引所で探しています…" : "左で固定する MOD を選んで「取引所で探す」を押すと、ここに 3 つの道が出ます" }}
+        </p>
+      </div>
+    </div>
     <!-- MOD 解析: 種類ごと・プレ / サフィごと (オーナー 2026-09-24) -->
     <ModBreakdown :c="c" />
     <div class="grid gap-2 lg:grid-cols-3">
@@ -121,7 +160,7 @@ const fixLabel = computed(() => {
               </label>
             </div>
           </template>
-          <button type="button" class="mt-2 rounded border border-sky-600 px-2 py-0.5 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
+          <button type="button" class="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 font-bold text-black shadow hover:bg-sky-400 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
             {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)` }}
           </button>
           <p class="mt-1 opacity-50">
@@ -164,13 +203,9 @@ const fixLabel = computed(() => {
           → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
           方が {{ c.money(fin.verdict.value.diff) }} 安い
         </p>
-        <!-- 3 つの道を一気に (オーナー 2026-09-25)。作る見込みは各候補の固定済みで組んだ自動のツリーの平均 -->
+        <!-- 3 つの道の中身 (上の要約の内訳) -->
         <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
-          <p class="mb-1 opacity-60">3 つの道 (初動 + 作る見込み)</p>
-          <p v-for="w in threeWay" :key="w.key" :class="w.best ? 'text-emerald-300' : ''">
-            {{ w.best ? "→ " : "　" }}{{ w.name }}: <b class="text-[13px]">{{ w.cost != null ? c.money(w.cost) : w.why }}</b>
-            <span v-if="w.detail" class="opacity-60"> ({{ w.detail }})</span>
-          </p>
+          <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
         </div>
 
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>

@@ -141,7 +141,10 @@ export function useHtcCraft() {
    * 空か古いままだった。続けて押しても叩き過ぎないよう、5 分以内に取った物はそのまま使う
    */
   async function refreshPrices(): Promise<void> {
+    const before = marketStore.fetchedAt.value;
     await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
+    // 取り直していなければ値段表も作り直さない (作り直すと下流が「変わった」と見て組み直す)
+    if (marketStore.fetchedAt.value === before && prices.value) return;
     if (base.value) {
       const built = buildPrices(base.value);
       prices.value = built.prices;

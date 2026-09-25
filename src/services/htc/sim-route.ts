@@ -526,7 +526,7 @@ export function simulateTree(inp: {
     let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })) };
     let cost = 0;
     let at = nodes.length ? 0 : -1;
-    let end: string | null = nodes.length ? null : "手が無い";
+    let end: string | null = nodes.length ? null : "STEP が無い";
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
       // 飛ばす手: ブリーチが無い時の「ブリーチがある時だけ」の手、本線の品質の手で要らない物 (今その種類が入っている /
@@ -553,15 +553,15 @@ export function simulateTree(inp: {
         const j = g && g !== "done" ? byId.get(g) : undefined;
         if (j != null && j !== at) { at = j; continue; }
       }
-      if (why) { end = `手 ${at + 1} が打てない: ${why}`; break; }
+      if (why) { end = `STEP ${at + 1} が打てない: ${why}`; break; }
       const price = h.priceOf(s, n.action!);
-      if (!Number.isFinite(price)) { end = `手 ${at + 1} が相場に無い物を使っている`; break; }
+      if (!Number.isFinite(price)) { end = `STEP ${at + 1} が相場に無い物を使っている`; break; }
       cost += price; tries[at]! += 1; spent[at]! += price;
       s = h.apply(s, n, rnd);
       if (at === lastQualityAt) finalQualityDone = true;
       if (r === 0) inp.trace?.(n.id, s);
       // 消えたら終わりの MOD (樹 MOD) が消えたら止める
-      if (s.slots.filter((x) => x.keep).length < keepCount) { end = `手 ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }
+      if (s.slots.filter((x) => x.keep).length < keepCount) { end = `STEP ${at + 1} で消えたら終わりの MOD (樹 MOD など) が消えた`; break; }
       // 本線の手は「それより上の本線の手で揃えた物が全部まだある」ことも○の条件 (残したい MOD は自動。オーナー 2026-09-24:
       // 「残したい MOD とか分からん。ハズレ以外だろ残したいのなんて」)
       const pos = main.indexOf(at);
@@ -571,12 +571,12 @@ export function simulateTree(inp: {
       let next = pass ? n.onHit : n.onMiss == null && n.action && CERTAIN.has(n.action.kind) ? n.onHit : n.onMiss;
       if (next === "auto") next = autoNext(s, at);
       if (next === "done") { end = "done"; break; }
-      if (next == null) { end = `手 ${at + 1} の${h.passes(s, n) ? "○" : "×"}の行き先が未設定`; break; }
+      if (next == null) { end = `STEP ${at + 1} の${h.passes(s, n) ? "○" : "×"}の行き先が未設定`; break; }
       const j = byId.get(next);
-      if (j == null) { end = `手 ${at + 1} の行き先が無い手`; break; }
+      if (j == null) { end = `STEP ${at + 1} の行き先が無い STEP`; break; }
       at = j;
     }
-    if (end == null) end = `手数の上限 (${maxActions}) で止まった`;
+    if (end == null) end = `STEP の数が上限 (${maxActions}) に届いて止まった`;
     costs.push(cost);
     if (end === "done") doneCosts.push(cost);
     else stops.set(end, (stops.get(end) ?? 0) + 1);

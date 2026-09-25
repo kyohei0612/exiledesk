@@ -10,7 +10,7 @@
  *   - 残したい MOD は画面から外した (本線の手は「上の手で揃えた物が全部まだある」を自動で○の条件にする。[[sim-route.ts]])
  *   - 頭に「何をする手か」を 1 行で出す。狙う MOD は押せる札。細かい条件はたたむ
  */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { CERTAIN, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
 import { CATALYSTS } from "../../services/htc/quality";
 import type { Side } from "../../services/htc/step-odds";
@@ -95,7 +95,7 @@ function toggleTarget(modId: string, minTier: number): void {
  */
 function gotoGroups(which: "onHit" | "onMiss") {
   const id = n.value.id;
-  const opt = (x: string) => ({ value: x, label: `手 ${props.t.indexOf(x) + 1}  ${props.t.labelOf(x)}` });
+  const opt = (x: string) => ({ value: x, label: `STEP ${props.t.indexOf(x) + 1}  ${props.t.labelOf(x)}` });
   const up = props.t.ancestors(id);
   const below = props.t.descendants(id);
   const current = n.value[which];
@@ -114,82 +114,107 @@ function setGoto(which: "onHit" | "onMiss", v: string): void {
   props.t.update(n.value.id, { [which]: g });
   if (v === "__new__" && g) emit("focus", g);
 }
-const certain = computed(() => !!n.value.action && CERTAIN.has(n.value.action.kind));
+// 外れない STEP = 確定の手 (ブリーチ・品質など) と、狙いの無い手 (消去・削減など: 打てば必ず何かが起きる)
+const certain = computed(() => !!n.value.action && (CERTAIN.has(n.value.action.kind) || n.value.targets.length === 0));
 const hasExtra = computed(() => n.value.clean || n.value.maxMods != null);
+/**
+ * 畳む / 開く (2026-09-25 オーナー:「見やすく使いやすく」)。打つ物や行き先が決まっていない手は開いたまま、それ以外は
+ * 畳んで 1 行に (何をする手か・当たり・値段・行き先)。押すと開いて直せる
+ */
+const needsAttention = computed(() => !n.value.action || !n.value.onHit || (!n.value.onMiss && !certain.value) || !!why.value);
+const opened = ref<boolean | null>(null);
+const open = computed(() => opened.value ?? needsAttention.value);
+const gotoJa = (g: string | null | undefined, miss: boolean): string => {
+  if (g == null) return miss && certain.value ? "外れない" : "まだ決めていない";
+  if (g === n.value.id) return "もう一度打つ";
+  if (g === "done") return "完成";
+  if (g === "auto") return "自動で戻る";
+  return `STEP ${props.t.indexOf(g) + 1} へ`;
+};
 </script>
 
 <template>
-  <div class="rounded-lg border border-white/15 bg-white/[0.04] p-3 text-xs" :id="`node-${n.id}`">
-    <!-- 1 行目: 何をする手か -->
-    <div class="mb-1 flex items-start gap-2">
-      <span class="shrink-0 rounded bg-amber-600/80 px-1.5 py-0.5 text-[11px] font-bold text-black">手 {{ index + 1 }}</span>
-      <b class="flex-1 text-[13px] leading-snug" :class="n.action ? '' : 'opacity-50'">{{ headline }}</b>
-      <button v-if="index > 0" type="button" class="shrink-0 opacity-40 hover:opacity-100" title="この手を消す" @click="t.remove(n.id)">✕</button>
+  <div class="rounded-xl border bg-white/[0.04] text-xs transition" :class="open ? 'border-amber-500/40 p-3' : 'border-white/10 p-2 hover:border-white/25'" :id="`node-${n.id}`">
+    <!-- 1 行目: 何をする手か (押すと開閉) -->
+    <div class="flex items-start gap-2">
+      <button type="button" class="flex flex-1 items-start gap-2 text-left" :title="open ? '畳む' : '開いて直す'" @click="opened = !open">
+        <span class="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold" :class="why ? 'bg-rose-500/80 text-black' : certain ? 'bg-sky-500/80 text-black' : 'bg-amber-500/80 text-black'">STEP {{ index + 1 }}</span>
+        <b class="flex-1 text-[13px] leading-snug" :class="n.action ? '' : 'opacity-50'">{{ headline }}</b>
+        <span class="shrink-0 opacity-40">{{ open ? "▴" : "▾" }}</span>
+      </button>
+      <button v-if="index > 0" type="button" class="shrink-0 opacity-40 hover:opacity-100" title="この STEP を消す" @click="t.remove(n.id)">✕</button>
     </div>
-    <div class="mb-2 flex flex-wrap gap-2 pl-9">
-      <span v-if="odds != null" class="rounded bg-amber-500/15 px-1.5 text-amber-300">1 回で○ {{ pct(odds) }}</span>
-      <span v-if="price != null" class="rounded bg-white/5 px-1.5 opacity-80">1 回 {{ c.money(price) }}</span>
-      <span v-if="why" class="rounded bg-rose-500/15 px-1.5 text-rose-300">打てない: {{ why }}</span>
-    </div>
-
-    <!-- この時の指輪 -->
-    <div class="mb-2 flex flex-wrap items-center gap-1">
-      <span class="opacity-50">この時:</span>
-      <span v-for="(x, i) in state.slots" :key="i" class="rounded border px-1"
-        :class="x.fixed ? 'border-white/10 opacity-60' : x.keep ? 'border-amber-500/40 text-amber-200/80' : x.modId ? 'border-emerald-500/40' : 'border-rose-500/40 text-rose-300'"
-        :title="x.keep ? '固定されていない。カオス・消去・エッセンスで消えたら終わり (その回は止める)' : undefined">
-        {{ x.fixed ? "🔒 " : x.keep ? "⚠ " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
-      </span>
-      <span v-if="state.breach" class="rounded border border-sky-500/40 px-1">ブリーチの MOD</span>
+    <div class="mt-1 flex flex-wrap items-center gap-1.5 pl-9">
+      <span v-if="odds != null" class="rounded-md px-1.5 py-0.5" :class="odds >= 0.995 ? 'bg-sky-500/15 text-sky-200' : 'bg-amber-500/15 text-amber-200'">1 回で○ {{ pct(odds) }}</span>
+      <span v-if="price != null" class="rounded-md bg-white/5 px-1.5 py-0.5 opacity-80">1 回 {{ c.money(price) }}</span>
+      <span v-if="why" class="rounded-md bg-rose-500/15 px-1.5 py-0.5 text-rose-300" title="この STEP に来た時の状態では打てない。シミュレーターは × の先 (消去など) を先に通してから戻ります">この時点では打てない: {{ why }}</span>
+      <template v-if="!open">
+        <span class="rounded-md border border-emerald-500/40 px-1.5 py-0.5 text-emerald-200">○ → {{ gotoJa(n.onHit, false) }}</span>
+        <span v-if="!(certain && n.onMiss == null)" class="rounded-md border border-rose-500/40 px-1.5 py-0.5 text-rose-200">× → {{ gotoJa(n.onMiss, true) }}</span>
+      </template>
     </div>
 
-    <!-- 打つ物 -->
-    <ActionPicker :c="c" :t="t" :action="n.action" :state="state" :targets="n.targets" @change="onPick" />
+    <template v-if="open">
+      <!-- この時の指輪 -->
+      <div class="mb-2 mt-2 flex flex-wrap items-center gap-1">
+        <span class="opacity-50">この時:</span>
+        <span v-for="(x, i) in state.slots" :key="i" class="rounded-md border px-1"
+          :class="x.fixed ? 'border-white/10 opacity-60' : x.keep ? 'border-amber-500/40 text-amber-200/80' : x.modId ? 'border-emerald-500/40' : 'border-rose-500/40 text-rose-300'"
+          :title="x.keep ? '固定されていない。カオス・消去・エッセンスで消えたら終わり (その回は止める)' : undefined">
+          {{ x.fixed ? "🔒 " : x.keep ? "⚠ " : "" }}{{ x.modId ? name(x.modId) : x.label ?? (x.desecrated ? "冒涜の外れ" : "外れ") }}
+        </span>
+        <span v-if="state.breach" class="rounded-md border border-sky-500/40 px-1">ブリーチの MOD</span>
+      </div>
 
-    <!-- 狙う MOD (押して選ぶ) -->
-    <div v-if="n.action && ['chaos', 'exalt', 'desecrate', 'whittle'].includes(n.action.kind)" class="mb-2 flex flex-wrap items-center gap-1">
-      <span class="opacity-50">狙う:</span>
-      <button v-for="r in targetRows" :key="r.modId" type="button" class="rounded border px-1.5 py-0.5"
-        :class="aimed(r.modId) ? 'border-amber-400 bg-amber-500/15 text-amber-200' : 'border-white/15 opacity-70 hover:opacity-100'"
-        @click="toggleTarget(r.modId, r.minTierIndex ?? 0)">{{ name(r.modId) }}</button>
-      <select v-if="n.targets.length > 1" class="rounded border border-white/20 bg-black/30 px-1" :value="n.need ?? 1"
-        @change="t.update(n.id, { need: Number(($event.target as HTMLSelectElement).value) })">
-        <option v-for="k in n.targets.length" :key="k" :value="k">{{ k === 1 ? "どれか 1 つで○" : `${k} つ揃って○` }}</option>
-      </select>
-    </div>
+      <!-- 打つ物 -->
+      <ActionPicker :c="c" :t="t" :action="n.action" :state="state" :targets="n.targets" @change="onPick" />
 
-    <!-- 行き先 -->
-    <div class="flex flex-wrap gap-3">
-      <label v-for="w in (['onHit', 'onMiss'] as const)" :key="w" class="flex items-center gap-1">
-        <b :class="w === 'onHit' ? 'text-emerald-300' : 'text-rose-300'">{{ w === "onHit" ? "○" : "×" }}</b>
-        <select class="rounded border border-white/20 bg-black/30 px-1" :value="n[w] ?? ''" @change="setGoto(w, ($event.target as HTMLSelectElement).value)">
-          <option value="">{{ w === "onMiss" && certain ? "(確定の手なので要らない)" : "未設定" }}</option>
-          <option value="__new__">+ 新しい手を足す</option>
-          <option value="done">完成</option>
-          <option value="auto">自動 (消えた物を見て戻る)</option>
-          <option :value="n.id">この手をもう一度</option>
-          <template v-for="g in [gotoGroups(w)]" :key="w">
-            <optgroup v-if="g.up.length" label="上の手へ戻る">
-              <option v-for="o in g.up" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </optgroup>
-            <optgroup v-if="g.others.length" label="ほかの枝の手">
-              <option v-for="o in g.others" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </optgroup>
-          </template>
+      <!-- 狙う MOD (押して選ぶ) -->
+      <div v-if="n.action && ['chaos', 'exalt', 'desecrate', 'whittle'].includes(n.action.kind)" class="mb-2 flex flex-wrap items-center gap-1">
+        <span class="opacity-50">狙う:</span>
+        <button v-for="r in targetRows" :key="r.modId" type="button" class="rounded-md border px-1.5 py-0.5"
+          :class="aimed(r.modId) ? 'border-amber-400 bg-amber-500/15 text-amber-200' : 'border-white/15 opacity-70 hover:opacity-100'"
+          @click="toggleTarget(r.modId, r.minTierIndex ?? 0)">{{ name(r.modId) }}</button>
+        <select v-if="n.targets.length > 1" class="sel" :value="n.need ?? 1"
+          @change="t.update(n.id, { need: Number(($event.target as HTMLSelectElement).value) })">
+          <option v-for="k in n.targets.length" :key="k" :value="k">{{ k === 1 ? "どれか 1 つで○" : `${k} つ揃って○` }}</option>
         </select>
-      </label>
-    </div>
+      </div>
 
-    <!-- 条件を足す (たたむ) -->
-    <details class="mt-2" :open="hasExtra">
-      <summary class="cursor-pointer opacity-50">条件を足す</summary>
-      <div class="mt-1 flex flex-wrap gap-3 pl-2">
-        <label><input type="checkbox" :checked="n.clean" @change="t.update(n.id, { clean: ($event.target as HTMLInputElement).checked })" /> 外れが無いことも○の条件にする</label>
-        <label>外せる MOD が
-          <input type="number" min="0" class="num w-10" :value="n.maxMods ?? ''" @change="t.update(n.id, { maxMods: ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value) })" />
-          個以下で○ (剥がす手用)
+      <!-- 行き先 -->
+      <p class="mb-1 opacity-60">○ = 狙いが付いた時、× = 外れた時に、次に何をするか</p>
+      <div class="flex flex-wrap gap-3">
+        <label v-for="w in (['onHit', 'onMiss'] as const)" :key="w" class="flex items-center gap-1">
+          <b :class="w === 'onHit' ? 'text-emerald-300' : 'text-rose-300'">{{ w === "onHit" ? "○" : "×" }}</b>
+          <select class="sel" :value="n[w] ?? ''" @change="setGoto(w, ($event.target as HTMLSelectElement).value)">
+            <option value="">{{ w === "onMiss" && certain ? "(外れない STEP なので要らない)" : "まだ決めていない" }}</option>
+            <option value="__new__">＋ 次の STEP を新しく作る</option>
+            <option value="done">完成 (ここで終わり)</option>
+            <option value="auto">自動 (消えた MOD を付け直す手に戻る)</option>
+            <option :value="n.id">もう一度この STEP を打つ</option>
+            <template v-for="g in [gotoGroups(w)]" :key="w">
+              <optgroup v-if="g.up.length" label="前の STEP へ戻る">
+                <option v-for="o in g.up" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </optgroup>
+              <optgroup v-if="g.others.length" label="ほかの枝の STEP">
+                <option v-for="o in g.others" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </optgroup>
+            </template>
+          </select>
         </label>
       </div>
-    </details>
+
+      <!-- 条件を足す (たたむ) -->
+      <details class="mt-2" :open="hasExtra">
+        <summary class="cursor-pointer opacity-50">条件を足す</summary>
+        <div class="mt-1 flex flex-wrap gap-3 pl-2">
+          <label><input type="checkbox" :checked="n.clean" @change="t.update(n.id, { clean: ($event.target as HTMLInputElement).checked })" /> 外れが無いことも○の条件にする</label>
+          <label>外せる MOD が
+            <input type="number" min="0" class="num w-10" :value="n.maxMods ?? ''" @change="t.update(n.id, { maxMods: ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value) })" />
+            個以下で○ (剥がす手用)
+          </label>
+        </div>
+      </details>
+    </template>
   </div>
 </template>

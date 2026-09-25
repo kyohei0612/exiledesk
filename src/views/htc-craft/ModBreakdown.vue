@@ -88,7 +88,7 @@ const tierOf = (modId: string): number => c.targets.value.find((t) => t.modId ==
 
 <template>
   <section class="mb-2 rounded-lg border border-white/15 bg-white/[0.04] p-3 text-xs">
-    <p class="mb-2 opacity-50">MOD 解析 ({{ rows.length }} 個。段はツリーの手でも選び直せる)</p>
+    <p class="mb-2 opacity-50">MOD 解析 ({{ rows.length }} 個。段は作り方の STEP でも選び直せる)</p>
     <!-- 凡例 -->
     <div class="mb-3 grid max-w-6xl gap-1 md:grid-cols-2">
       <p v-for="k in legend" :key="k" class="flex items-start gap-2">

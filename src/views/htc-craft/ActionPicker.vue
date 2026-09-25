@@ -197,7 +197,7 @@ function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
         {{ o.ja }} <button type="button" class="opacity-60 hover:opacity-100" @click="removeOmen(o.key)">×</button>
       </span>
       <select v-if="addable.length" class="rounded border border-white/20 bg-black/30 px-1" value="" @change="addOmen(($event.target as HTMLSelectElement).value)">
-        <option value="">{{ chosen.length ? "+ お告げを追加" : "指定なし" }}</option>
+        <option value="">{{ chosen.length ? "＋ お告げを足す" : "お告げなし" }}</option>
         <option v-for="o in addable" :key="o.key" :value="o.key">{{ o.ja }}</option>
       </select>
       <select v-if="has('catalyst')" class="rounded border border-white/20 bg-black/30 px-1" :value="catalyst ?? ''" @change="setCatalyst(($event.target as HTMLSelectElement).value)">
@@ -208,7 +208,7 @@ function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
     <div class="mt-1 flex flex-wrap items-center gap-1">
       <span class="opacity-60">オーブ:</span>
       <select class="min-w-0 max-w-full truncate rounded border border-white/20 bg-black/30 px-1" :value="orb" @change="setOrb(($event.target as HTMLSelectElement).value)">
-        <option value="" disabled>選ぶ</option>
+        <option value="" disabled>使うオーブを選ぶ</option>
         <option v-for="o in orbs" :key="o.key" :value="o.key">{{ o.ja }}</option>
       </select>
       <select v-if="orb === 'quality'" class="rounded border border-white/20 bg-black/30 px-1" :value="catalyst ?? ''" @change="setCatalyst(($event.target as HTMLSelectElement).value)">
