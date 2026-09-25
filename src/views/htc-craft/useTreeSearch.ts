@@ -127,6 +127,7 @@ export function useTreeSearch(deps: {
     const common = {
       ilvlMin: item.value?.itemLevel ?? undefined,
       ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
+      grantedSkill: item.value?.grantedSkill ?? null,
     };
     // 固定済みは最安 1 件。固定無しは「85% に届く最小の個数」を数えるので最安 10 件まで
     // (ゆるい方は 85% に 10 個前後要る。fetch は 1 回 10 件なので検索の本数は変わらない)

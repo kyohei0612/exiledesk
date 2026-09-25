@@ -107,6 +107,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
       stats: [...tree, ...filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min }))],
       ...(modIds.length ? {} : { fracturedItem: false }),
+      grantedSkill: c.item.value?.grantedSkill ?? null,
     });
   }
   async function searchSide(modIds: readonly string[]): Promise<SideResult | null> {
@@ -168,6 +169,28 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     .sort((a, b) => (a.best?.cost ?? Infinity) - (b.best?.cost ?? Infinity)));
   const chosen = computed(() => rows.value.find((x) => x.key === picked.value && x.best) ?? rows.value.find((x) => x.best) ?? null);
 
+  /**
+   * 3 つの道を一気に比べる (オーナー 2026-09-25:「結局買うのがいいのか、途中からクラフトがいいのか、自分でベース買って
+   * フラクチャーするのがいいのかが知りたい、一気に」)。候補の行ごとに 初動 + 作る見込み を出し、道ごとの最安を返す。
+   *   fixed = 固定済み (フラクチャー済み) の素材を買って作る / self = 固定無しを買って自分でフラクチャーして作る
+   */
+  const threeWay = computed(() => {
+    const out: { fixed: { cost: number; label: string } | null; self: { cost: number; label: string } | null } = { fixed: null, self: null };
+    for (const x of rows.value) {
+      const est = craftEstimate(c, x.modIds);
+      if (!est) continue;
+      for (const r of x.sub) {
+        if (r.cost == null) continue;
+        // 固定不要 (separate) の「買う + 残りを作る」は作る見込み込みの値
+        const total = r.id === "buy" ? r.cost : r.cost + est.value;
+        const which = r.id === "fractured" || r.id === "buy" ? "fixed" : "self";
+        const cur = out[which];
+        if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}` };
+      }
+    }
+    return out;
+  });
+
   // 選んだ候補の固定済みにして、ツリーの開始の指輪と確認用の表 (treeResult) をそれに合わせる
   watch(chosen, async (x) => {
     c.startPrice.value = x?.startCost ?? null;
@@ -179,7 +202,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   });
 
   return {
-    kind, candidates, checked, results, busy, searchAll, rows, chosen, manual,
+    kind, candidates, checked, results, busy, searchAll, rows, chosen, manual, threeWay,
     setManual: (key: string, v: number | null) => { manual.value = { ...manual.value, [key]: v }; },
     choose: (key: string) => { picked.value = key; },
     locked: (key: string) => !checked.value.includes(key) && checked.value.length >= MAX_STARTS,

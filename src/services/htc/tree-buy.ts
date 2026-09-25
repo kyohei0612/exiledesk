@@ -148,6 +148,8 @@ export function treeBuyQuery(
      * お告げで足してから冒涜するので、条件はプレフィックスの上限だけです。
      */
     strict?: boolean;
+    /** ベースの付与スキル (不在のアミュレットなど。同じ付与スキルの素材だけ探す) */
+    grantedSkill?: string | null;
   } = {},
 ): ReturnType<typeof buildSpecQuery> | null {
   const fractured = opts.fractured ?? true;
@@ -174,5 +176,6 @@ export function treeBuyQuery(
     // 固定無しを探す時は「フラクチャー: いいえ」も入れる。stat を explicit にしただけだと、
     // 別の MOD が固定された物 (= もう樹 MOD を固定できない物) が返ってくる
     ...(fractured ? {} : { fracturedItem: false }),
+    grantedSkill: opts.grantedSkill ?? null,
   });
 }

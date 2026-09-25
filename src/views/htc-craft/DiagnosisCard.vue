@@ -45,6 +45,18 @@ const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 取引所へ投げる回数の目安 (検索 + 取得で 2 回ずつ) */
 const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 2 : 6) + (fin.query.value && !fin.found.value ? 2 : 0));
 const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
+/** 3 つの道: 完成品を買う / 固定済みを買って作る / 自分でフラクチャーして作る。一番安い物に印 */
+const threeWay = computed(() => {
+  const tw = ss.threeWay.value;
+  if (!ss.chosen.value && !fin.buyCost.value) return [];
+  const list = [
+    { key: "buy", name: "完成品を買う", cost: fin.outlier.value || fin.dropped.value.length ? null : fin.buyCost.value, why: fin.found.value ? (fin.dropped.value.length ? "同じ物は無い" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ", detail: "" },
+    { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "" },
+    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "" },
+  ];
+  const min = Math.min(...list.map((w) => w.cost ?? Infinity));
+  return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));
+});
 const omenSide = computed(() => (ss.kind.value.craftSide === "P" ? "左側" : ss.kind.value.craftSide === "S" ? "右側" : "その側"));
 /** 固定する樹 MOD の名前 (樹 MOD が 2 つある時は重い側の物だけ) */
 const fixLabel = computed(() => {
@@ -152,6 +164,14 @@ const fixLabel = computed(() => {
           → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
           方が {{ c.money(fin.verdict.value.diff) }} 安い
         </p>
+        <!-- 3 つの道を一気に (オーナー 2026-09-25)。作る見込みは各候補の固定済みで組んだ自動のツリーの平均 -->
+        <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
+          <p class="mb-1 opacity-60">3 つの道 (初動 + 作る見込み)</p>
+          <p v-for="w in threeWay" :key="w.key" :class="w.best ? 'text-emerald-300' : ''">
+            {{ w.best ? "→ " : "　" }}{{ w.name }}: <b class="text-[13px]">{{ w.cost != null ? c.money(w.cost) : w.why }}</b>
+            <span v-if="w.detail" class="opacity-60"> ({{ w.detail }})</span>
+          </p>
+        </div>
 
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
       </section>

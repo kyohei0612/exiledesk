@@ -7,6 +7,7 @@
 import { SecurityStatus, Rarity } from "../../constants/trade2";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
+import trade2Skills from "../../i18n/trade2-skills.json";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
 
 /**
@@ -272,6 +273,16 @@ export interface SpecQueryOptions {
    * 完成品を探す時に、同じ MOD を固定済み (`fractured.`) でも普通 (`explicit.`) でも拾う用 (2026-09-24)
    */
   anyOf?: { filters: { id: string; min?: number }[] }[];
+  /**
+   * ベースの付与スキル (「Grants Skill: Level 20 Cast on Critical」の名前)。不在のアミュレットは付与スキルで値段が別物なので、
+   * 完成品も素材も同じ付与スキルで探す (オーナー 2026-09-25)。取引所の `skill.` の stat (i18n/trade2-skills.json、
+   * data-cache/trade2-stats-en.json の skill グループから作る)。表に無い名前なら送らない
+   */
+  grantedSkill?: string | null;
+}
+/** 付与スキルの名前 → 取引所の stat id (無ければ null) */
+export function grantedSkillStatId(name: string | null | undefined): string | null {
+  return name ? (trade2Skills as Record<string, string>)[name] ?? null : null;
 }
 export function buildSpecQuery(o: SpecQueryOptions) {
   // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
@@ -285,16 +296,17 @@ export function buildSpecQuery(o: SpecQueryOptions) {
   if (o.evMin != null) equipment.ev = { min: o.evMin };
   if (o.arMin != null) equipment.ar = { min: o.arMin };
   if (o.socketsMin != null) equipment.rune_sockets = { min: o.socketsMin };
-  const stats = o.stats && o.stats.length > 0
-    ? [{
-      type: "and",
-      filters: o.stats.map((s) => ({
-        id: s.id,
-        disabled: false,
-        value: { ...(s.min != null ? { min: s.min } : {}), ...(s.max != null ? { max: s.max } : {}) },
-      })),
-    }]
-    : [];
+  const skillId = grantedSkillStatId(o.grantedSkill);
+  type StatFilter = { id: string; disabled: boolean; value?: { min?: number; max?: number } };
+  const andFilters: StatFilter[] = [
+    ...(o.stats ?? []).map((s) => ({
+      id: s.id,
+      disabled: false,
+      value: { ...(s.min != null ? { min: s.min } : {}), ...(s.max != null ? { max: s.max } : {}) },
+    })),
+    ...(skillId ? [{ id: skillId, disabled: false }] : []),
+  ];
+  const stats: Array<{ type: string; value?: { min: number }; filters: StatFilter[] }> = andFilters.length > 0 ? [{ type: "and", filters: andFilters }] : [];
   for (const g of o.anyOf ?? []) {
     stats.push({
       type: "count",

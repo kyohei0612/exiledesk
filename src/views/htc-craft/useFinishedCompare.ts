@@ -86,9 +86,11 @@ export function useFinishedCompare(
       ...(category ? { category } : {}),
       rarity: "nonunique",
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
-      ...(q != null && q > 20 ? { qualityMin: q } : {}),
+      // 品質は段で見る: 41% のような端数は 40% の物 (同じ作り) を落としてしまう (2026-09-25 に 999 神の完成品を逃していた)
+      ...(q != null && q > 20 ? { qualityMin: q >= 40 ? 40 : q } : {}),
       stats: plain,
       anyOf,
+      grantedSkill: c.item.value?.grantedSkill ?? null,
     });
   }
   /**
