@@ -86,6 +86,8 @@ export interface AutoTreeInput {
   chaosPick?: string | null;
   /** 冒涜に回す普通の狙い (同上。null = 普通の狙いは冒涜に回さない) */
   desecratePick?: string | null;
+  /** 狙いごとの高貴のオーブ (やり直しの費用から決めた物。無い狙いは段が届く一番強い物) */
+  exaltTiers?: Record<string, "exalt_perfect" | "exalt_greater" | "exalt">;
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -161,6 +163,9 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const reach = (list: readonly TierTarget[]): number =>
     Math.min(...list.map((t) => Math.max(...mod(t.modId).tiers.filter((_, i) => i >= (t.minTierIndex ?? 0)).map((x) => x.ilvl), 0)));
   const exaltTier = (list: readonly TierTarget[]) => {
+    // 見積もりで決めた物があればそれ (組の中で一番弱い物 = 全員に届く)
+    const picks = list.map((t) => inp.exaltTiers?.[t.modId]).filter((x): x is NonNullable<typeof x> => !!x);
+    if (picks.length === list.length) return picks.includes("exalt") ? "exalt" as const : picks.includes("exalt_greater") ? "exalt_greater" as const : "exalt_perfect" as const;
     const r = reach(list);
     return r >= 50 ? "exalt_perfect" as const : r >= 35 ? "exalt_greater" as const : "exalt" as const;
   };

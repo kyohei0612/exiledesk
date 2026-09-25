@@ -27,7 +27,7 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   const narrow = inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
   const annuls = narrow ? (["side", "plain"] as const) : ([undefined] as const);
   const picks: Array<Partial<AutoTreeInput> & { label: string }> = [];
-  if (plan) picks.push({ label: "やり直しの費用から", chaosPick: plan.chaosPick, desecratePick: plan.desecratePick, ...(plan.reroll ? { reroll: plan.reroll } : {}), ...(plan.bone ? { bone: plan.bone } : {}), ...(plan.chaosPick ? {} : { chaosOk: false, chaosSide: null }) });
+  if (plan) picks.push({ label: "やり直しの費用から", chaosPick: plan.chaosPick, desecratePick: plan.desecratePick, exaltTiers: plan.exaltTiers, ...(plan.reroll ? { reroll: plan.reroll } : {}), ...(plan.bone ? { bone: plan.bone } : {}), ...(plan.chaosPick ? {} : { chaosOk: false, chaosSide: null }) });
   for (const ch of chaosVariants) for (const bn of [undefined, "preserved"] as const) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });
   const variants = picks.flatMap((pk) => (["catalyst", "all"] as const).flatMap((g) => annuls.map((an) => ({
     greater: `${pk.label}・${g}${an === "plain" ? "・素の消去" : ""}`,

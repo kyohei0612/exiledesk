@@ -28,6 +28,8 @@ export interface MethodEstimate {
   reroll?: Reroll;
   /** 触媒の高貴のお告げを使う (品質の入れ直し代込み) */
   catalyst?: string | null;
+  /** 高貴のオーブ (完全 / 上級 / 普通) */
+  orb?: "exalt_perfect" | "exalt_greater" | "exalt";
   /** 1 回の値段 (高貴建て) */
   perTry: number;
   /** 1 回で当たる確率 */
@@ -50,6 +52,8 @@ export interface RedoPlan {
   /** autoTree に渡す指定 */
   chaosPick: string | null;
   desecratePick: string | null;
+  /** 狙いごとの高貴のオーブ (見積もりで安かった物) */
+  exaltTiers: Record<string, "exalt_perfect" | "exalt_greater" | "exalt">;
   reroll?: Reroll;
   bone?: "preserved";
 }
@@ -92,41 +96,48 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const fixedSides = new Set(inp.fixedSides ?? []);
   const limits = inp.limits ?? { prefix: 3, suffix: 3 };
   const loose = (s: Side): number => inp.startLoose?.[s] ?? 0;
-  const div = p.currency.divine ?? 1;
-  const maxCat = 0.2 * div;
   const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY) || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
   const qualityMax = (inp.baseQuality ?? 20) + (breach ? 20 : 0);
 
   /** 狙いの段が届く一番高い下限 (完全の高貴は段 50 未満を出さない) */
   const reach = (t: TierTarget): number => Math.max(...mod(t.modId).tiers.filter((_, i) => i >= (t.minTierIndex ?? 0)).map((x) => x.ilvl), 0);
-  const exaltTier = (t: TierTarget): { k: string; floor: number } => {
-    const r = reach(t);
-    return r >= 50 ? { k: "exalt_perfect", floor: 50 } : r >= 35 ? { k: "exalt_greater", floor: 35 } : { k: "exalt", floor: 0 };
-  };
   const finish = (e: Omit<MethodEstimate, "expected">): MethodEstimate => {
     const tries = e.p > 0 ? 1 / e.p : Infinity;
     return { ...e, expected: e.why ? Infinity : e.perTry * tries + e.perMiss * Math.max(0, tries - 1) };
   };
 
   /** 高貴で取る (k = その側に先に置いた固定でない狙いの数、redoPrior = それらの作り直し費用の平均) */
+  /**
+   * 高貴で取る (k = その側に先に置いた固定でない狙いの数、redoPrior = それらの作り直し費用の平均)。
+   * オーブ (完全 / 上級 / 普通) と触媒 (無し / 効くカタリストの一番安い物) を全部見積もって安い物 (2026-09-25 実測:
+   * 合格の下限がレベル 50 以上なら完全、それ未満なら上級が安い。触媒はカタリストが安ければ 3〜5 倍安く、アタックのように
+   * 高い物でも触媒無しよりは安いが、同じ MOD に安い物が効くならそちら)
+   */
   function exaltEst(t: TierTarget, k: number, redoPrior: number): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
-    const { k: orb, floor } = exaltTier(t);
-    // 触媒: 安いカタリストが効く時だけ (貼り付けの品質の種類が効くならそれ、種類を替える時は入れ直し代)
     // 貼り付けに品質の種類があるなら、その種類が効く狙いだけ触媒を使う (種類を替えると品質が 0 からになり、側が埋まった後は
-    // 元の種類に戻せない)。品質の種類が無ければ安いカタリストならどれでも
+    // 元の種類に戻せない)。品質の種類が無ければ効くカタリストの一番安い物。
     // ブリーチの MOD を先に外す組み方 (両側 2 枠以下) では入れ直しが 20% までしか戻らないので触媒は使わない
     const narrow = limits.prefix <= 2 && limits.suffix <= 2;
-    const cats = breach && narrow ? [] : catalystsFor(m).map((c) => c.tag).filter((tag) => cur(catalystPriceKey(tag)) <= maxCat);
+    const cats = breach && narrow ? [] : catalystsFor(m).map((c) => c.tag).sort((a, b) => cur(catalystPriceKey(a)) - cur(catalystPriceKey(b)));
     const tag = inp.qualityTag ? (cats.includes(inp.qualityTag) ? inp.qualityTag : null) : cats[0] ?? null;
-    const mult = tag ? catalysingMultiplier(qualityMax) : 1;
-    const refill = tag ? catalystCountFor(qualityMax) * cur(catalystPriceKey(tag)) + cur("OmenofCatalysingExaltation") : 0;
-    const pHit = (w(m, t.minTierIndex ?? 0, floor) * mult) / poolW(s, floor, false, tag, mult);
     const others = k + (shielded.has(s) ? loose(s) : 0);
     const risky = shielded.has(s);
     const perMiss = cur("annul") + cur(OMEN_AN[s]) + (others > 0 ? (others / (others + 1)) * redoPrior : 0);
-    return finish({ modId: t.modId, side: s, method: "exalt", catalyst: tag, perTry: cur(orb) + cur(OMEN_EX[s]) + refill, p: pHit, perMiss, safe: others === 0,
-      ...(risky ? { why: "触らない MOD がある側 (消去で巻き込む)" } : {}) });
+    const r = reach(t);
+    let best: MethodEstimate | null = null;
+    for (const [orb, floor] of [["exalt_perfect", 50], ["exalt_greater", 35], ["exalt", 0]] as const) {
+      if (r < floor) continue;
+      for (const useTag of tag ? [tag, null] : [null]) {
+        const mult = useTag ? catalysingMultiplier(qualityMax) : 1;
+        const refill = useTag ? catalystCountFor(qualityMax) * cur(catalystPriceKey(useTag)) + cur("OmenofCatalysingExaltation") : 0;
+        const pHit = (w(m, t.minTierIndex ?? 0, floor) * mult) / poolW(s, floor, false, useTag, mult);
+        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, perTry: cur(orb) + cur(OMEN_EX[s]) + refill, p: pHit, perMiss, safe: others === 0,
+          ...(risky ? { why: "触らない MOD がある側 (消去で巻き込む)" } : {}) });
+        if (!best || e.expected < best.expected) best = e;
+      }
+    }
+    return best!;
   }
   /** 冒涜で取る (その側に固定でない物が k 個ある = 満杯なら置き換えで巻き込む) */
   function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll): MethodEstimate {
@@ -193,7 +204,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     if (!Number.isFinite(total)) continue;
     if (!best || total < best.total) {
       const dr = rows.find((r) => r.method === "desecrate");
-      best = { rows, total, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null,
+      const exaltTiers = Object.fromEntries(rows.filter((r) => r.method === "exalt" && r.orb).map((r) => [r.modId, r.orb!]));
+      best = { rows, total, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null, exaltTiers,
         ...(dr?.reroll ? { reroll: dr.reroll } : {}), ...(dr?.bone === "desecrate" ? { bone: "preserved" as const } : {}) };
     }
   }
