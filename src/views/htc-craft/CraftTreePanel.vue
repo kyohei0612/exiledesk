@@ -104,6 +104,8 @@ async function focus(id: string): Promise<void> {
  * 押した STEP の時の形を出す。押していなければ本線 (○ をたどった) の最後の STEP = 最新手順
  */
 const cardMode = ref<"step" | "target">("step");
+/** 絵に段・タグの小見出しを出す (ゲームの Alt 表示) */
+const cardDetail = ref(false);
 const selected = ref<string | null>(null);
 /** 本線: STEP 1 から ○ をたどった並び */
 const mainLine = computed(() => {
@@ -212,11 +214,11 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
         <b>取り方</b> <span class="opacity-60">見込みの合計 {{ c.money(plan.total) }}</span>
         <template v-if="picked"><span class="opacity-60"> ・ 候補を回して採ったのは「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
       </summary>
-      <table class="mt-2 w-full">
+      <table class="mt-2 w-full [&_td:nth-child(n+3)]:whitespace-nowrap [&_th:nth-child(n+3)]:whitespace-nowrap">
         <thead><tr class="opacity-50"><th class="text-left font-normal">狙い</th><th class="text-left font-normal">取り方</th><th class="text-right font-normal">1 回</th><th class="text-right font-normal">当たる</th><th class="text-right font-normal">外れ 1 回のやり直し</th><th class="text-right font-normal">見込み = 作り直し</th><th class="text-left font-normal pl-2" title="作り直しが側の消去のお告げ 1 回 (10〜18 神) より高ければ、消去で巻き込まないように守る価値がある">守る価値</th></tr></thead>
         <tbody>
-          <tr v-for="r in plan.rows" :key="r.modId" class="border-t border-white/5">
-            <td class="py-1">{{ c.stepTarget([r.modId]) }} <span class="opacity-50">({{ r.side === "prefix" ? "プレ" : "サフィ" }})</span></td>
+          <tr v-for="r in plan.rows" :key="r.modId">
+            <td class="py-1.5">{{ c.stepTarget([r.modId]) }} <span class="opacity-50">({{ r.side === "prefix" ? "プレ" : "サフィ" }})</span></td>
             <td>{{ methodJa[r.method] }} <span class="opacity-60">{{ rerollJa(r) }}</span></td>
             <td class="text-right">{{ c.money(r.perTry) }}</td>
             <td class="text-right">{{ pctHit(r.p) }}</td>
@@ -230,8 +232,8 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     </details>
 
     <!-- ツリー: ○ は下へ、× は右へ。手を押すと開いて直せる -->
-    <div class="rounded-xl border border-white/10 bg-black/20 p-3">
-      <p class="mb-2 text-xs opacity-60">作り方は STEP の並びです。STEP を押すと開いて直せます。○ (狙いが付いた) は下へ、× (外れた) は右へ進みます。× の先の「自動で戻る」は、消えた MOD を付け直す STEP に自動で戻ります。</p>
+    <div class="rounded-xl border border-white/[0.07] bg-black/20 p-3">
+      <p class="mb-2 text-xs opacity-50">作り方は STEP の並びです。STEP を押すと開いて直せます。○ (狙いが付いた) は下へ、× (外れた) は右へ進みます。× の先の「自動で戻る」は、消えた MOD を付け直す STEP に自動で戻ります。</p>
       <div class="overflow-x-auto pb-2">
         <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" @select="selectStep" />
       </div>
@@ -243,18 +245,19 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     </div>
    </div>
    <!-- 右: アイテムの絵 (完成図 / 今の STEP の形)。上に貼り付いて、ツリーを進めても見え続ける -->
-   <aside class="sticky top-2 w-[21rem] shrink-0">
-     <div class="mb-1 flex items-center gap-1 text-xs">
+   <aside class="sticky top-2 w-[22rem] shrink-0">
+     <div class="mb-1.5 flex items-center gap-1 text-xs">
        <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'step'">STEP の時の形</button>
        <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'target'">完成図</button>
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardDetail ? 'bg-white/15' : 'border border-white/15 hover:bg-white/5'" title="段とタグの小見出し (ゲームの Alt 表示)" @click="cardDetail = !cardDetail">詳細</button>
        <template v-if="cardMode === 'step' && mainLine.length">
          <button type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>
          <span class="tabular-nums opacity-70">STEP {{ shownId ? t.indexOf(shownId) + 1 : "-" }}</span>
          <button type="button" class="rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の次の STEP" @click="stepCard(1)">▶</button>
        </template>
      </div>
-     <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :footer="card.footer" />
-     <p class="mt-1 text-[11px] opacity-50">STEP を押すとその時の形になります。固定 = フラクチャー、青 = 狙い、赤 = 外れ (消す)、紫 = 冒涜、桃 = 樹 MOD</p>
+     <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :detail="cardDetail" :footer="card.footer" />
+     <p class="mt-1.5 text-[11px] opacity-40">STEP を押すとその時の形。金の帯 = 固定、青 = 狙い、赤 = 外れ (消す)、紫 = 冒涜、桃 = 樹 MOD</p>
    </aside>
   </div>
 </template>

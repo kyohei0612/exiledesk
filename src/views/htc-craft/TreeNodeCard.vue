@@ -134,23 +134,23 @@ const gotoJa = (g: string | null | undefined, miss: boolean): string => {
 </script>
 
 <template>
-  <div class="rounded-xl border bg-white/[0.04] text-xs transition" :class="open ? 'border-amber-500/40 p-3' : 'border-white/10 p-2 hover:border-white/25'" :id="`node-${n.id}`">
+  <div class="rounded-lg border text-xs transition" :class="open ? 'border-amber-500/50 bg-amber-500/[0.06] p-3' : 'border-white/[0.07] bg-white/[0.025] p-2 hover:bg-white/[0.05]'" :id="`node-${n.id}`">
     <!-- 1 行目: 何をする手か (押すと開閉) -->
     <div class="flex items-start gap-2">
       <button type="button" class="flex flex-1 items-start gap-2 text-left" :title="open ? '畳む' : '開いて直す'" @click="opened = !open; emit('select', n.id)">
-        <span class="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold" :class="why ? 'bg-rose-500/80 text-black' : certain ? 'bg-sky-500/80 text-black' : 'bg-amber-500/80 text-black'">STEP {{ index + 1 }}</span>
+        <span class="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold tabular-nums" :class="why ? 'bg-rose-500/80 text-black' : open ? 'bg-amber-400 text-black' : 'bg-white/10 text-white/70'">{{ index + 1 }}</span>
         <b class="flex-1 text-[13px] leading-snug" :class="n.action ? '' : 'opacity-50'">{{ headline }}</b>
         <span class="shrink-0 opacity-40">{{ open ? "▴" : "▾" }}</span>
       </button>
       <button v-if="index > 0" type="button" class="shrink-0 opacity-40 hover:opacity-100" title="この STEP を消す" @click="t.remove(n.id)">✕</button>
     </div>
-    <div class="mt-1 flex flex-wrap items-center gap-1.5 pl-9">
-      <span v-if="odds != null" class="rounded-md px-1.5 py-0.5" :class="odds >= 0.995 ? 'bg-sky-500/15 text-sky-200' : 'bg-amber-500/15 text-amber-200'">1 回で○ {{ pct(odds) }}</span>
-      <span v-if="price != null" class="rounded-md bg-white/5 px-1.5 py-0.5 opacity-80">1 回 {{ c.money(price) }}</span>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-8 text-[11px]">
+      <span v-if="odds != null" :class="odds >= 0.995 ? 'text-sky-300/90' : 'text-emerald-300'"><span class="opacity-60">1 回で</span> ○ {{ pct(odds) }}</span>
+      <span v-if="price != null" class="opacity-60">1 回 {{ c.money(price) }}</span>
       <span v-if="why" class="rounded-md bg-rose-500/15 px-1.5 py-0.5 text-rose-300" title="この STEP に来た時の状態では打てない。シミュレーターは × の先 (消去など) を先に通してから戻ります">この時点では打てない: {{ why }}</span>
       <template v-if="!open">
-        <span class="rounded-md border border-emerald-500/40 px-1.5 py-0.5 text-emerald-200">○ → {{ gotoJa(n.onHit, false) }}</span>
-        <span v-if="!(certain && n.onMiss == null)" class="rounded-md border border-rose-500/40 px-1.5 py-0.5 text-rose-200">× → {{ gotoJa(n.onMiss, true) }}</span>
+        <span class="opacity-70"><span class="text-emerald-300">○</span> {{ gotoJa(n.onHit, false) }}</span>
+        <span v-if="!(certain && n.onMiss == null)" class="opacity-70"><span class="text-rose-300">×</span> {{ gotoJa(n.onMiss, true) }}</span>
       </template>
     </div>
 

@@ -37,17 +37,17 @@ function chip(g: string | null | undefined, miss = false): string {
         <TreeNodeCard :c="c" :t="t" :node="node" :index="t.indexOf(id)" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
       </div>
       <!-- × の枝 (右へ) -->
-      <div class="mt-4 shrink-0 border-t-2 border-rose-500/60 pt-1">
-        <span class="text-xs font-bold text-rose-300">×</span>
+      <div class="mt-4 shrink-0 border-t border-white/15 pt-1">
+        <span class="text-xs text-rose-300/90">×</span>
         <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
-        <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss, true) }}</span>
+        <span v-else class="ml-1.5 text-[11px]" :class="node.onMiss ? 'opacity-60' : 'opacity-40'">{{ chip(node.onMiss, true) }}</span>
       </div>
     </div>
     <!-- ○ の本線 (下へ) -->
-    <div class="flex items-center gap-2 py-1 pl-6 text-xs">
-      <span class="h-4 border-l-2 border-emerald-500/60" />
-      <span class="font-bold text-emerald-300">○</span>
-      <span v-if="!hitChild" class="rounded border border-emerald-500/40 px-1" :class="node.onHit ? '' : 'opacity-50'">{{ chip(node.onHit) }}</span>
+    <div class="flex items-center gap-2 py-0.5 pl-5 text-xs">
+      <span class="h-4 border-l border-white/15" />
+      <span class="text-emerald-300/90">○</span>
+      <span v-if="!hitChild" class="text-[11px]" :class="node.onHit ? 'opacity-60' : 'opacity-40'">{{ chip(node.onHit) }}</span>
     </div>
     <TreeBranch v-if="hitChild" :c="c" :t="t" :id="hitChild" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
   </div>
