@@ -251,8 +251,10 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ブリーチを入れないと 40% に出来ないので、ブリーチ → 品質 → 外す → カオス の順
   // カオスがプレで反対側 (サフィ) に触らない MOD がある時も、結晶化で食わせる先が無いので前の順 (ブリーチ → カオス) のまま
   // (金の指輪: サフィが樹 MOD で満杯、プレを抹消のお告げ付きカオスで回す形)
-  const chaosAfterQuality = breach && !!inp.qualityTag && !switchTypes && (narrow || shielded.has("suffix"));
-  const eatSides = new Set<Side>(essences.map((t) => sideOf(t.modId)));
+  const chaosAfterQuality = narrow && breach && !!inp.qualityTag && !switchTypes;
+  // ブリーチ (プレ) を入れる時にサフィが触らない MOD で埋まっていると、結晶化で食わせる先がプレしか無く、カオスで付けた
+  // プレの物を食う。その形ではプレはカオスで狙わない (金の指輪: 高貴で作って 1,467 神)
+  const eatSides = new Set<Side>([...essences.map((t) => sideOf(t.modId)), ...(breach && shielded.has("suffix") ? ["prefix" as Side] : [])]);
   const pool = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eatSides.has(sideOf(t.modId))
     && t.modId !== toDesecrate?.modId);
   // 2026-09-24 は「残りの普通の狙いが 3 つ以下の時だけカオス」だったが (プリズム 残り 5 つでカオスあり 6.5 万神・完成 70%)、

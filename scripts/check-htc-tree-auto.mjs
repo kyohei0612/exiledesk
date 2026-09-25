@@ -195,5 +195,25 @@ for (const r of RINGS) {
     if (r.expected > pl.total * 1.6 + 60 * D) { console.log("   NG: 回した平均が見積もりから離れ過ぎ"); failed++; }
   }
 }
+// 金の指輪: プレにフラクチャー、サフィにキャスピ T1 + 火耐性 T2+ + 雷耐性 T2+ (品質 40%)。カオスで付けた物と同じ側に高貴を
+// 何度も打つ形なので、カオス先 (523 神) より 耐性を高貴 → キャスピを冒涜 (365 神) が安い。候補比べでその形を採ること (2026-09-25)
+{
+  const cls = M.itemBaseFor(data, "Gold Ring");
+  const limits = M.sideLimits(data, "Gold Ring");
+  const CS = "Rings/IncreasedCastSpeed", FR = "Rings/FireResistance", LR = "Rings/LightningResistance";
+  const top = (id) => data.mods.get(id).tiers.length - 1;
+  const tgt = [{ modId: CS, minTierIndex: top(CS) }, { modId: FR, minTierIndex: top(FR) - 1 }, { modId: LR, minTierIndex: top(LR) - 1 }];
+  const w = (id, minIdx) => (data.mods.get(id)?.tiers ?? []).reduce((s2, t, i) => s2 + (i >= minIdx && t.ilvl <= 82 ? t.weight : 0), 0);
+  const chance = (t) => { const m = data.mods.get(t.modId); const pool = cls.pools.normal[m.type === "prefix" ? "prefixes" : "suffixes"].reduce((s2, id) => s2 + w(id, 0), 0); return w(t.modId, t.minTierIndex) / pool; };
+  const start = { slots: [{ modId: null, side: "prefix", fixed: true }, { modId: null, side: "suffix", fixed: false }], breach: false };
+  const ctx = { data, cls, prices, itemLevel: 82, limits, catalystOk: () => true, baseQuality: 20 };
+  const inp = { data, prices, targets: tgt, fixedIds: [], qualityTag: "fire", qualityPct: 40, baseQuality: 20, chaosOk: true, chance, protectedSides: [], chaosSide: null, desecratedTaken: false, limits, fixedSides: ["prefix"], startCount: { prefix: 1, suffix: 1 }, startLoose: { prefix: 0, suffix: 1 } };
+  const pick = await M.pickAutoTree(inp, ctx, start);
+  const r = M.simulateTree({ ctx, start, nodes: pick.nodes, runs: 1500 });
+  const kinds = pick.nodes.map((x) => x.action.kind).join(",");
+  console.log(`金の指輪 サフィ 3 つ (キャスピ T1 + 耐性 2 つ): 採った ${pick.greater} / 手 ${kinds} / 完成 ${(r.pDone * 100).toFixed(0)}% / 平均 ${(r.expected / D).toFixed(0)} 神`);
+  if (r.pDone < 0.95) { console.log("   NG: 完成 95% 未満"); failed++; }
+  if (r.expected / D > 480) { console.log("   NG: 480 神を超えた (耐性の高貴 → キャスピ冒涜 なら 365 神前後)"); failed++; }
+}
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
 process.exit(failed ? 1 : 0);
