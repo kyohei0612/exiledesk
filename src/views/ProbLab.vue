@@ -20,7 +20,7 @@ const pct = (p: number): string => (p >= 1 ? "確定" : p <= 0 ? "-" : `${(p * 1
     <p class="mt-1 text-xs opacity-60">
       狙いの MOD を 1 つ付けるのに、どの取り方が当たりやすく、やり直し込みで幾らかかるかを比べます。
       外れは「その側の消去のお告げ」で消す前提です (その側に他の狙いが無ければ確定。あれば巻き込む分を足します)。
-      相場: {{ lab.priceLabel.value || "取得中…" }}
+      相場: {{ lab.priceLabel.value || "取得中…" }} (回す時にランキングを取り直してから値段を決めます。5 分以内ならそのまま)
     </p>
     <p v-if="lab.error.value" class="mt-1 text-rose-300">{{ lab.error.value }}</p>
 

@@ -212,10 +212,15 @@ export function useProbLab() {
 
   const running = ref(false);
   async function runAll(): Promise<void> {
-    const d = data.value, p = prices.value, c = cls.value;
-    if (!d || !p || !c || running.value) return;
+    if (running.value) return;
     running.value = true;
     try {
+      // 回す前に相場 (カレンシーランキング) を取り直してから値段を決める (オーナー 2026-09-25:「使うカレンシーとかはランキング更新後取得してね」)。
+      // 5 分以内に取った物はそのまま。値段が変われば表を作り直してから回す
+      await ensure();
+      build();
+      const d = data.value, p = prices.value, c = cls.value;
+      if (!d || !p || !c) return;
       const ctx = { data: d, cls: c, prices: p, itemLevel: itemLevel.value, limits: limits.value, catalystOk: () => true, baseQuality: maxQualityForBase(baseName.value) };
       for (const r of rows.value) {
         if (r.why || !r.nodes.length) continue;
