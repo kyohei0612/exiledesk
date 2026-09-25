@@ -86,6 +86,12 @@ for (const r of RINGS) {
     const kinds = nodes.map((x) => x.action.kind).join(",");
     console.log(`サフィ ${lim.suffix} 枠: 手 ${kinds} / 完成 ${(r.pDone * 100).toFixed(1)}% / 平均 ${(r.expected / D).toFixed(2)} 神`);
     if (lim.suffix === 2 && (!kinds.includes("essence") || kinds.includes("light"))) { console.log("   NG: 枠 2 つなのにエッセンスの上書きの輪になっていない"); failed++; }
+    if (lim.suffix === 2) {
+      // 光で回す指定なら光の輪 (比べる用)
+      const n2 = M.autoTree({ data: data2, prices: p2, targets: tgt, fixedIds: [], qualityTag: null, chaosOk: false, protectedSides: [], limits: lim, fixedSides: ["suffix"], bone: "preserved", reroll: "light" });
+      const k2 = n2.map((x) => x.action.kind).join(",");
+      if (!k2.includes("light") || k2.includes("essence")) { console.log(`   NG: 光で回す指定なのに ${k2}`); failed++; }
+    }
     if (lim.suffix === 3 && !kinds.includes("light")) { console.log("   NG: 枠 3 つなのに光のお告げを使っていない"); failed++; }
     if (r.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
   }
@@ -133,6 +139,27 @@ for (const r of RINGS) {
     if (res.pDone < 0.95) { console.log("   NG: 完成が 95% 未満"); failed++; }
     }
   }
+}
+// 不在のアミュレット: スピリット固定 (プレ) + プレに外れ 1 つ、サフィはスペル・キャスピ (触らない)、狙いはプレのマナ % だけ。
+// 品質 40% が要るのでブリーチを入れるが、最初の冒涜がブリーチの MOD を置き換えるので、光を使わず天体 (プレのエッセンス) で回せる
+// (オーナー 2026-09-25:「20% でもブリーチで 40% まで上げてから冒涜したらええ」)。天体 1.1 神なら平均 110 神前後
+{
+  const cls = M.itemBaseFor(data, "Absent Amulet");
+  const limits = M.sideLimits(data, "Absent Amulet");
+  const ESS = "Amulets/PerfectEssence_AllDefences";
+  const p2 = { ...prices, currency: { ...prices.currency, [`essence:perfect:${ESS}`]: 1.1 * D } };
+  const tgt = [{ modId: "Amulets/MaximumManaIncreasePercent", minTierIndex: 2 }];
+  const slots = [{ modId: null, side: "prefix", fixed: true }, { modId: null, side: "prefix", fixed: false }, { modId: null, side: "suffix", fixed: false, keep: true }, { modId: null, side: "suffix", fixed: false, keep: true }];
+  const start = { slots, breach: false, quality: 20, qualityTag: "caster" };
+  const ctx = { data, cls, prices: p2, itemLevel: 79, limits, catalystOk: () => true, baseQuality: 20 };
+  const inp = { data, prices: p2, targets: tgt, fixedIds: [], qualityTag: "caster", qualityPct: 40, baseQuality: 20, chaosOk: false, protectedSides: ["suffix"], chaosSide: null, desecratedTaken: false, limits, fixedSides: ["prefix"], startCount: { prefix: 2, suffix: 2 }, startLoose: { prefix: 1, suffix: 2 } };
+  const pick = await M.pickAutoTree(inp, ctx, start);
+  const kinds = pick.nodes.map((x) => x.action.kind + (x.action.bone ? ":" + x.action.bone : "")).join(",");
+  const r = M.simulateTree({ ctx, start, nodes: pick.nodes, runs: 1500 });
+  console.log(`不在 マナ % だけ (天体 1.1 神): 選ばれた ${pick.greater} / 手 ${kinds} / 完成 ${(r.pDone * 100).toFixed(1)}% / 平均 ${(r.expected / D).toFixed(0)} 神`);
+  if (!kinds.includes("essence") || kinds.includes("light")) { console.log("   NG: 天体の上書きで回していない"); failed++; }
+  if (!kinds.includes("desecrate:desecrate")) { console.log("   NG: 普通の骨を選んでいない"); failed++; }
+  if (r.pDone < 0.99 || r.expected / D > 200) { console.log("   NG: 完成 99% 未満か 200 神超"); failed++; }
 }
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
 process.exit(failed ? 1 : 0);

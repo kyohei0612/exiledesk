@@ -77,6 +77,11 @@ export interface AutoTreeInput {
   annul?: "plain" | "side";
   /** 冒涜の骨。"preserved" = 段を問わない骨だけ (古代の鎖骨は高いので、比べる用)。省くと段 40 以上に届けば古代 */
   bone?: "preserved";
+  /**
+   * 冒涜の外れの回し方。"overwrite" = その側のエッセンスで上書き (固定 1 + 外れ 1 の枠 2 つの側だけ)、"light" = 光のお告げ + 消去。
+   * 省くと上書きできる時は上書き。比べる用 (オーナー 2026-09-25:「安いリロール優先。骨も光を使うなら古代が良かったりする。確率計算で判断して」)
+   */
+  reroll?: "overwrite" | "light";
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -281,12 +286,15 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const looseAfter = (inp.startLoose?.prefix ?? 9) + (inp.startLoose?.suffix ?? 9) - eaten;
   const prefixLooseAfter = (inp.startLoose?.prefix ?? 9) - (eatSide === "prefix" ? eaten : 0);
   const annulBeforeSpam = narrowFirst && !shielded.has("prefix") && prefixLooseAfter === 0 && looseAfter === 1;
-  const annulBreach = (annulBeforeSpam || (breachBlocks && !narrowFirst)) && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
+  // プレに高貴の狙いが無く、冒涜の狙いがプレにあるなら外す手は要らない: 満杯のプレへの最初の冒涜が、固定でない唯一の MOD である
+  // ブリーチの MOD を置き換える (オーナー 2026-09-25:「20% でもブリーチで 40% まで上げてから冒涜したらええ」)。左側の消去 18 神が浮く
+  const desecrateEatsBreach = prefixExalts === 0 && desecrated.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix");
+  const annulBreach = (annulBeforeSpam || (breachBlocks && !narrowFirst && !desecrateEatsBreach)) && !essences.some((t) => sideOf(t.modId) === "prefix") && !shielded.has("prefix")
     && (annulBeforeSpam || (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1));
   // カオスの前なら、ブリーチの MOD と外れのどちらが消えても 1 つ残るので、お告げ無しの素の消去でいい (オーナー 2026-09-24:
   // 「左側消去で MOD 消さなくてもスパムで消えるじゃん」。スパム任せだと外れが 1 つ余って狙いの側に残ることがある)
   if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: annulBeforeSpam ? null : "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
-  else if (!switchTypes && breach && (essenceNodes.length || breachBlocks || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  else if (!switchTypes && breach && (essenceNodes.length || (breachBlocks && !desecrateEatsBreach) || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
   if (narrowFirst) main.push(spamNode!);
   if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)
@@ -344,10 +352,12 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    * クラフト MOD が残って次のエッセンスが打てないので、その側に付く一番安い物 (オーナー 2026-09-24:「使える場面は使える」)
    */
   const overwriteFor = (side: Side, like: string): string | null => {
+    if (inp.reroll === "light") return null;
     if (!inp.limits || inp.limits[side] !== 2 || !(inp.fixedSides ?? []).includes(side)) return null;
-    // クラフト MOD は 1 つまで: ブリーチの MOD が残る組み方 (外す手が無い) や、エッセンスの狙いがある時はエッセンスで上書きできない
-    // (2026-09-24 オーナーの不在のアミュレット: 「打てない: クラフト MOD は 1 つまで」で止まっていた)
-    if ((breach && !main.some((n) => n.onlyWithBreach)) || essences.length) return null;
+    // クラフト MOD は 1 つまで: エッセンスの狙いがある時は上書きできない。ブリーチの MOD が残る組み方でも、プレなら最初の冒涜が
+    // (満杯の側の固定でない唯一の MOD として) ブリーチの MOD を置き換えるので回せる。サフィだとブリーチが残ったままで
+    // エッセンスが打てない (2026-09-24 オーナーの不在のアミュレット: 「打てない: クラフト MOD は 1 つまで」で止まっていた)
+    if ((breach && !main.some((n) => n.onlyWithBreach) && side !== "prefix") || essences.length) return null;
     const cls = like.split("/")[0];
     const cands = [...d.mods.values()].filter((m) => m.id.startsWith(cls + "/") && CRAFTED_SOURCES.has(m.source) && m.type === side
       && m.family !== BREACH_FAMILY && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
