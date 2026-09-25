@@ -40,6 +40,12 @@ const methodJa: Record<string, string> = { chaos: "カオス", exalt: "高貴 + 
 const rerollJa = (r: RedoPlan["rows"][number]): string =>
   r.method === "desecrate" ? `${r.bone === "desecrate_ancient" ? "古代" : "普通の骨"}・外れは${r.reroll === "overwrite" ? "天体で上書き" : "光 + 消去"}`
   : r.method === "exalt" ? `${r.catalyst ? "触媒あり・" : ""}外れは側の消去${r.safe ? " (確定)" : " (巻き込む)"}` : r.method === "chaos" ? "外れは打ち直し" : "";
+/**
+ * 守る価値 = その狙いの作り直し費用 (見込み)。側の消去のお告げ 1 回より高ければ「守る」(オーナー 2026-09-25:「反対側に本当に
+ * 守りたい物があるのかというポイント制。T5 なら守りたい物に入らないし、カオスで付くような物もお告げは要らない」)
+ */
+const omenPrice = (side: string): number => (c.prices.value?.omens[side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"] ?? Infinity);
+const guardJa = (r: RedoPlan["rows"][number]): string => (r.expected > omenPrice(r.side) ? "守る" : "守らなくていい");
 const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
 /** 組んでいる最中に開始が変わった (始め方の選び直しなど) → 終わってから組み直す */
 let autoAgain = false;
@@ -112,7 +118,7 @@ async function focus(id: string): Promise<void> {
         <template v-if="picked">候補を回して採ったのは「{{ picked.label }}」<template v-if="picked.expected != null">、平均 {{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い。どの候補も届かなかった)</span></template></template>
       </summary>
       <table class="mt-1 w-full">
-        <tr class="opacity-50"><th class="text-left font-normal">狙い</th><th class="text-left font-normal">取り方</th><th class="text-right font-normal">1 回</th><th class="text-right font-normal">当たる</th><th class="text-right font-normal">外れ 1 回のやり直し</th><th class="text-right font-normal">見込み</th></tr>
+        <tr class="opacity-50"><th class="text-left font-normal">狙い</th><th class="text-left font-normal">取り方</th><th class="text-right font-normal">1 回</th><th class="text-right font-normal">当たる</th><th class="text-right font-normal">外れ 1 回のやり直し</th><th class="text-right font-normal">見込み = 作り直し</th><th class="text-left font-normal pl-2" title="作り直しが側の消去のお告げ 1 回 (10〜18 神) より高ければ、消去で巻き込まないように守る価値がある">守る価値</th></tr>
         <tr v-for="r in plan.rows" :key="r.modId" class="border-t border-white/5">
           <td class="py-0.5">{{ c.stepTarget([r.modId]) }} <span class="opacity-50">({{ r.side === "prefix" ? "プレ" : "サフィ" }})</span></td>
           <td>{{ methodJa[r.method] }} <span class="opacity-60">{{ rerollJa(r) }}</span></td>
@@ -120,6 +126,7 @@ async function focus(id: string): Promise<void> {
           <td class="text-right">{{ pctHit(r.p) }}</td>
           <td class="text-right" :class="r.safe ? '' : 'text-amber-300'">{{ r.perMiss > 0 ? c.money(r.perMiss) : "-" }}</td>
           <td class="text-right">{{ c.money(r.expected) }}</td>
+          <td class="pl-2" :class="r.expected > omenPrice(r.side) ? 'text-amber-200' : 'opacity-50'">{{ guardJa(r) }}</td>
         </tr>
       </table>
       <details class="mt-1 opacity-60"><summary class="cursor-pointer">決まり</summary><ul class="list-disc pl-4"><li v-for="x in RULES" :key="x">{{ x }}</li></ul></details>
