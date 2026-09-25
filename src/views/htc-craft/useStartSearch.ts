@@ -130,10 +130,14 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     if (busy.value) return;
     busy.value = true;
     c.diagBusy.value = true;
+    // 打ち切り (入口に戻る・画面を離れる): 世代が進んだら次は投げず、戻ってきた結果も捨てる
+    const gen = c.fetchGen.value;
+    const alive = (): boolean => c.fetchGen.value === gen;
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
       for (const [i, cand] of keys.entries()) {
+        if (!alive()) return;
         const at = (step: string) => {
           current.value = { key: cand.key, name: cand.name, index: i + 1, count: keys.length, step };
           c.stage.value = `② 始め方を探しています (${i + 1}/${keys.length}) ${cand.name}: ${step}`;
@@ -142,6 +146,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         const r = kind.value.kind === "separate"
           ? await searchSide(cand.modIds).catch(() => null)
           : await c.searchFor(cand.modIds, at).catch(() => null);
+        if (!alive()) return;
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
       }
@@ -152,8 +157,10 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       busy.value = false;
       pending.value = [];
       current.value = null;
-      c.stage.value = "";
-      c.diagBusy.value = false;
+      if (alive()) {
+        c.stage.value = "";
+        c.diagBusy.value = false;
+      }
     }
   }
 

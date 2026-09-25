@@ -27,7 +27,8 @@
  *
  * 今ここに残っているのは**貼り付け → MOD 解析 → ベース選び**までです。
  */
-import { ref, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
+import { zeroStart } from "./craft-settings";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
@@ -78,6 +79,21 @@ export function useHtcCraft() {
   const data = shallowRef<PatchData | null>(null);
   const loading = ref(false);
   /**
+   * その ilvl では出ない段を狙っている普通の MOD (重み 0)。これがあると自動の組み立て・見込み・シミュレーションは回さない
+   * (回すと当たりが無いまま手数の上限まで回り続けて画面が固まる。2026-09-26)。貼り付けの段は paste.ts が ilvl に収めるので、
+   * 出るのは段を手で上げた時くらい
+   */
+  const unreachableTargets = computed(() => {
+    const d = data.value;
+    if (!d) return [] as string[];
+    const lv = item.value?.itemLevel ?? zeroStart.value.itemLevel;
+    return targets.value.filter((t) => {
+      const m = d.mods.get(t.modId);
+      return !!m && m.source === "normal" && !fracturedTargets.value.some((f) => f.modId === t.modId)
+        && !m.tiers.some((x, i) => i >= (t.minTierIndex ?? 0) && x.ilvl <= lv);
+    }).map((t) => t.modId);
+  });
+  /**
    * 今どこで待っているか (オーナー 2026-09-25:「MOD 解析押して暇な時解析中って出そうか」「真ん中で止まったらまだ検索中で
    * 今なにで止まってるかしっかり表示して」)。解析中は run() が、②③ の取得中は useStartSearch / useFinishedCompare が入れる
    */
@@ -87,6 +103,17 @@ export function useHtcCraft() {
    * 作り方のシミュレーションはこれが下りてから回す (オーナー:「真ん中終わったら次、完成終わったらシミュレーションって順番」)
    */
   const diagBusy = ref(false);
+  /**
+   * 取得の世代。入口に戻る・画面を離れる時に進めて、走っている ②③ の取得を打ち切る (オーナー 2026-09-25:「入口に戻るとか
+   * このページ離れたら取得中止して強制終了」)。取得側は始めに世代を控え、await のたびに変わっていないか見る。
+   * 取引所へ投げ終えた 1 本は戻るまで待つしかないが、次は投げない
+   */
+  const fetchGen = ref(0);
+  function abortFetch(): void {
+    fetchGen.value++;
+    diagBusy.value = false;
+    stage.value = "";
+  }
   const error = ref<string | null>(null);
 
   const item = shallowRef<PastedItem | null>(null);
@@ -195,8 +222,7 @@ export function useHtcCraft() {
     startKeep.value = [];
     treeError.value = null;
     treeTierPick.value = {};
-    stage.value = "";
-    diagBusy.value = false;
+    abortFetch();
   }
 
   /**
@@ -360,7 +386,7 @@ export function useHtcCraft() {
   return {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
-    loading, stage, diagBusy, error, item, base, rows, implicits, skipped,
+    loading, stage, diagBusy, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,

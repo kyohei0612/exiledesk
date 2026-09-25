@@ -171,6 +171,7 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   watch(baseDivine, () => { result.value = null; });
   /** 回せない理由 (手 1 の○×が未設定、など) */
   const blocked = computed(() => {
+    if (c.unreachableTargets.value.length) return `ilvl ${c.item.value?.itemLevel ?? "?"} では出ない段を狙っています (${c.unreachableTargets.value.map((id: string) => c.stepTarget([id])).join(" / ")})。MOD 解析で段を下げてください`;
     const first = nodes.value[0];
     if (!first?.action) return "STEP 1 の打つ物を選んでください";
     // 確定の手 (ブリーチ・品質など) は × が来ないので ○ だけでいい (自動で組むと手 1 がブリーチになる。2026-09-24)

@@ -10,7 +10,7 @@
  *   ベース (固定済みにして始める MOD を選んで「探す」) / 始め方の結果 (一番安い 1 つ、他は畳む) / 完成品と比べる
  * 取引所へは「探す」を押した時だけ ([[useStartSearch.ts]])。
  */
-import { computed, nextTick, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, watch } from "vue";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { sideLimits } from "../../services/htc/bridge";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
@@ -49,6 +49,8 @@ watch(() => c.diagBusy.value, async (busy) => {
   if (ss.kind.value.kind !== "unsafe" && ss.checked.value.length) void ss.searchAll();
   else c.diagBusy.value = false;
 }, { immediate: true });
+// 画面を離れたら取得を打ち切る (入口に戻るは c.reset() が打ち切る)
+onBeforeUnmount(() => c.abortFetch());
 /** 取引所で待たされている時の一言 (間隔待ち・レート制限) */
 const tradeWait = computed(() => {
   const secs = tradeAuto.waitSecs.value;
@@ -56,6 +58,12 @@ const tradeWait = computed(() => {
   if (secs > 0) return `取引所の間隔待ち (あと ${secs} 秒)`;
   return tradeAuto.pending.value > 0 ? "取引所に問い合わせ中…" : "";
 });
+/**
+ * ① → ② → ③ の順に出す (オーナー 2026-09-25:「1 から順に表示しろ。取得中で真ん中表示させないで」)。
+ * ② は取れてから、③ は完成品が取れてから (探せない時はすぐ)。取得中の「今どこか」は ① のボタンの下と上の要約に出す
+ */
+const show2 = computed(() => !ss.busy.value && ss.rows.value.some((r) => r.res));
+const show3 = computed(() => !ss.busy.value && !fin.busy.value && (show2.value || ss.kind.value.kind === "unsafe" || !!fin.found.value || !!fin.error.value || !!fin.unbuildable.value));
 /** 候補をプレ / サフィに分ける (中は確率の高い順のまま) */
 const candGroups = computed(() => [
   { title: "プレフィックス", list: ss.candidates.value.filter((x) => x.side === "P") },
@@ -190,15 +198,20 @@ const fixLabel = computed(() => {
           <button type="button" class="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 font-bold text-black shadow hover:bg-sky-400 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
             {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)` }}
           </button>
-          <p class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 (5 分に 20 回まで。30 分は結果を覚えておきます)</p>
+          <p v-if="ss.busy.value" class="mt-2 rounded-lg bg-amber-500/10 px-2 py-1 text-amber-100">
+            <span class="inline-block animate-pulse">●</span> {{ c.stage.value || "取引所で探しています…" }}
+            <span v-if="tradeWait" class="ml-1 rounded bg-amber-500/15 px-1.5 py-0.5">{{ tradeWait }}</span>
+            <span class="block opacity-60">取れたら ② に出ます → 次に ③ 完成品 → 下の作り方が自動で回ります</span>
+          </p>
+          <p v-else class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 (5 分に 20 回まで。30 分は結果を覚えておきます)</p>
         </div>
       </section>
 
       <!-- 始め方の結果: 一番安い 1 つだけ出して、他は畳む ([[StartResults.vue]]) -->
-      <StartResults :c="c" :ss="ss" />
+      <StartResults v-if="show2" :c="c" :ss="ss" />
 
       <!-- ③ 買うか作るか。完成品の条件は一番ゆるく (MOD だけ、固定済みかは問わない) -->
-      <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <section v-if="show3" class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span><b class="text-sm">買うか、作るか</b>
           <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" :disabled="fin.busy.value" @click="fin.search()">
             {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}

@@ -159,6 +159,10 @@ export function useFinishedCompare(
     error.value = null;
     const ownStage = !c.stage.value;
     if (ownStage) c.stage.value = "③ 完成品を探しています…";
+    // 打ち切り (入口に戻る・画面を離れる): await のたびに世代を見て、進んでいたら次は投げずに抜ける
+    const gen = c.fetchGen.value;
+    const ABORT = Symbol("abort");
+    const guard = (): void => { if (c.fetchGen.value !== gen) throw ABORT; };
     try {
       const league = marketStore.league.value?.Value ?? "Standard";
       lightNote.value = null;
@@ -168,14 +172,17 @@ export function useFinishedCompare(
       // ログインしていないと full はまず断られ、その 1 回が取引所の回数を食うので light から (2026-09-24)。
       // (開発版で断られていたのは、開発ビルドの検索がプロキシ経由でログインが乗っていなかったため。pricing.ts の DEV_TRADE)
       const loggedIn = await sessionLoggedIn().catch(() => false);
+      guard();
       let level: Level = loggedIn ? "full" : "light";
       let r = await autoPriceCached(league, build(level) ?? query.value, marketStore.rates.value, 5);
+      guard();
       // 複雑過ぎと断られたら、軽い条件に落として投げ直す (full → light → min)
       for (const next of (loggedIn ? ["light", "min"] : ["min"]) as Level[]) {
         const q = build(next);
         if (r || !(tradeAuto.lastError.value ?? "").includes("複雑") || !q) break;
         level = next;
         r = await autoPriceCached(league, q, marketStore.rates.value, 5);
+        guard();
         if (r) lightNote.value = next === "light"
           ? "条件が複雑過ぎると断られたので、冒涜で付いた MOD は拾わない条件で探しました"
           : "条件が複雑過ぎると断られたので、固定済みの MOD も拾わない条件で探しました";
@@ -185,6 +192,7 @@ export function useFinishedCompare(
       const loose = build(level, false);
       if (r && r.total === 0 && loose) {
         const r2 = await autoPriceCached(league, loose, marketStore.rates.value, 5);
+        guard();
         if (r2) {
           r = r2;
           lightNote.value = [lightNote.value, "同じ値の完成品が無かったので、値 (段) は問わず MOD の組み合わせだけで探しました"].filter(Boolean).join("。");
@@ -198,6 +206,7 @@ export function useFinishedCompare(
         drop.push(x.key);
         const q = build(level, false, new Set(drop));
         const r3 = q ? await autoPriceCached(league, q, marketStore.rates.value, 5) : null;
+        guard();
         if (!r3) break;
         r = r3;
         if (r3.total > 0) dropped.value = dropOrder.value.slice(0, drop.length).map((y) => y.name);
@@ -205,10 +214,10 @@ export function useFinishedCompare(
       if (!r) error.value = tradeAuto.lastError.value ?? "取れませんでした (間隔待ちの時は少し待って押し直し)";
       else found.value = { min: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
     } catch (e) {
-      error.value = String(e);
+      if (e !== ABORT) error.value = String(e);
     } finally {
       busy.value = false;
-      if (ownStage) c.stage.value = "";
+      if (ownStage && c.fetchGen.value === gen) c.stage.value = "";
     }
   }
 

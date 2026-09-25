@@ -65,7 +65,7 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
   if (cache.value.has(key)) return;
   put(key, "pending");
   const ctx = simCtxOf(c), d = c.data.value, p = c.prices.value;
-  if (!ctx || !d || !p || startKindOf(c).kind === "unsafe") { put(key, { value: null, pDone: 0 }); return; }
+  if (!ctx || !d || !p || startKindOf(c).kind === "unsafe" || c.unreachableTargets.value.length) { put(key, { value: null, pDone: 0 }); return; }
   const start = startStateOf(c, fixedIds, keepIds);
   const inp = autoInputFor(c, ctx, start, fixedIds);
   if (!inp) { put(key, { value: null, pDone: 0 }); return; }

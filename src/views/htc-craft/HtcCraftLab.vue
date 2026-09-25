@@ -301,8 +301,12 @@ const implicitText = (lines: readonly string[]): string =>
     <template v-if="c.base.value">
       <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />
-      <h2 class="mb-1 mt-5 text-base font-bold">作り方 (STEP の並び)</h2>
-      <CraftTreePanel :c="c" />
+      <!-- 作り方は ②③ が済んでから (順に出す。v-show で組んだツリーは保つ) -->
+      <p v-if="c.diagBusy.value" class="mb-1 mt-5 text-xs opacity-50">作り方 (STEP の並び) は、上の ② ③ が終わってから自動で組んで出します</p>
+      <div v-show="!c.diagBusy.value">
+        <h2 class="mb-1 mt-5 text-base font-bold">作り方 (STEP の並び)</h2>
+        <CraftTreePanel :c="c" />
+      </div>
 
       <!-- ここから下は開発用 (配布版では出さない) -->
       <details v-if="DEV" class="mb-4 mt-4 text-xs">

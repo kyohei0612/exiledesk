@@ -323,6 +323,9 @@ function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], le
     // 範囲 [r0, r1] と幅 [lo, hi] が重なるか
     if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return i;
   }
+  // どの段にも合わない時は、その ilvl で出る一番上の段 (2026-09-26: ilvl 79 の指輪に混沌耐性 +33% (T1 は ilvl 81) を貼ると
+  // 最上段のまま狙いになり、出る重みが 0 で自動の組み立てとシミュレーションが延々と回って画面が固まった)
+  for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return i;
   return mod.tiers.length - 1;
 }
 
