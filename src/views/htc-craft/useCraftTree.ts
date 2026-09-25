@@ -27,7 +27,7 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
   const nodes = ref<SimNode[]>([emptyNode()]);
-  watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join()], () => { nodes.value = [emptyNode()]; result.value = null; });
+  watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join(), c.fromScratch.value], () => { nodes.value = [emptyNode()]; result.value = null; });
 
   const helpers = computed(() => (ctx.value ? simHelpers(ctx.value, nodes.value) : null));
 

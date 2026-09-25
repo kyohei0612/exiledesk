@@ -161,5 +161,39 @@ for (const r of RINGS) {
   if (!kinds.includes("desecrate:desecrate")) { console.log("   NG: 普通の骨を選んでいない"); failed++; }
   if (r.pDone < 0.99 || r.expected / D > 200) { console.log("   NG: 完成 99% 未満か 200 神超"); failed++; }
 }
+// やり直しの費用から決めた取り方 ([[redo-cost.ts]])。不在 (スピリット固定・スペルは買った時のまま・キャスピは冒涜、狙いは
+// スペル / マナ % / キャスピ): マナ % は高貴 + 左側の消去 (サフィのスペルを巻き込まない)、キャスピは冒涜、スペルはカオス
+{
+  const cls = M.itemBaseFor(data, "Absent Amulet");
+  const limits = M.sideLimits(data, "Absent Amulet");
+  const T = (id, i) => ({ modId: id, minTierIndex: i });
+  const tgt = [T("Amulets/BaseSpirit", 4), T("Amulets/MaximumManaIncreasePercent", 2), T("Amulets/GlobalIncreaseSpellSkillGemLevel", 2), T("Amulets/IncreasedCastSpeed", 5)];
+  const inp = { data, prices, targets: tgt, fixedIds: ["Amulets/BaseSpirit"], qualityTag: "caster", qualityPct: 40, baseQuality: 20, chaosOk: true, protectedSides: [], chaosSide: null, desecratedTaken: false, limits, fixedSides: ["prefix"], startCount: { prefix: 1, suffix: 1 }, startLoose: { prefix: 0, suffix: 1 } };
+  const plan = M.planByRedoCost(inp, cls, 79);
+  const by = Object.fromEntries((plan?.rows ?? []).map((r) => [r.modId.split("/")[1], r]));
+  console.log("やり直しの費用から:", plan ? `合計 ${(plan.total / D).toFixed(0)} 神 / ` + plan.rows.map((r) => `${r.modId.split("/")[1]} = ${r.method}${r.bone ? ":" + r.bone : ""}${r.reroll ? ":" + r.reroll : ""} (1 回 ${(r.perTry / D).toFixed(2)} / 当たる ${(r.p * 100).toFixed(2)}% / やり直し ${(r.perMiss / D).toFixed(1)} / 見込み ${(r.expected / D).toFixed(0)} 神)`).join(" | ") : "無し");
+  if (by.GlobalIncreaseSpellSkillGemLevel?.method !== "chaos") { console.log("   NG: スペル +3 をカオスで引いていない"); failed++; }
+  if (by.IncreasedCastSpeed?.method !== "desecrate") { console.log("   NG: キャスピを冒涜にしていない"); failed++; }
+  if (by.MaximumManaIncreasePercent?.method !== "exalt") { console.log("   NG: マナ % を高貴にしていない"); failed++; }
+  // スペル固定 + スピリットは自分で: マナ % は冒涜 + 光、キャスピは高貴 + 右側 (スペル固定なので確定)
+  const inp2 = { ...inp, fixedIds: ["Amulets/GlobalIncreaseSpellSkillGemLevel"], fixedSides: ["suffix"], startCount: { prefix: 1, suffix: 1 }, startLoose: { prefix: 1, suffix: 0 } };
+  const plan2 = M.planByRedoCost(inp2, cls, 79);
+  const by2 = Object.fromEntries((plan2?.rows ?? []).map((r) => [r.modId.split("/")[1], r]));
+  console.log("スペル固定:", plan2 ? `合計 ${(plan2.total / D).toFixed(0)} 神 / ` + plan2.rows.map((r) => `${r.modId.split("/")[1]} = ${r.method}${r.reroll ? ":" + r.reroll : ""} 見込み ${(r.expected / D).toFixed(0)}`).join(" | ") : "無し");
+  if (by2.IncreasedCastSpeed?.method !== "exalt" || !by2.IncreasedCastSpeed.safe) { console.log("   NG: スペル固定ならキャスピは高貴 + 右側 (確定) のはず"); failed++; }
+  if (!(plan2.total < plan.total)) { console.log("   NG: スペル固定の方が安いはず"); failed++; }
+  // 見積もりで決めた取り方を実際に組んで回し、見積もりと大きくずれない (1.6 倍以内) ことと完成 95% 以上を見る
+  const ctx = { data, cls, prices, itemLevel: 79, limits, catalystOk: () => true, baseQuality: 20 };
+  for (const [name, i2, pl, start] of [
+    ["スピリット固定", inp, plan, { slots: [{ modId: null, side: "prefix", fixed: true }, { modId: null, side: "suffix", fixed: false }], breach: false }],
+    ["スペル固定", inp2, plan2, { slots: [{ modId: null, side: "suffix", fixed: true }, { modId: null, side: "prefix", fixed: false }], breach: false }],
+  ]) {
+    const pick = await M.pickAutoTree(i2, ctx, start);
+    const r = M.simulateTree({ ctx, start, nodes: pick.nodes, runs: 1000 });
+    console.log(`   ${name}: 選ばれた ${pick.greater} / 手 ${pick.nodes.map((x) => x.action.kind).join(",")} / 完成 ${(r.pDone * 100).toFixed(0)}% / 回した平均 ${(r.expected / D).toFixed(0)} 神 (見積もり ${(pl.total / D).toFixed(0)} 神)`);
+    if (r.pDone < 0.95) { console.log("   NG: 完成 95% 未満"); failed++; }
+    if (r.expected > pl.total * 1.6 + 60 * D) { console.log("   NG: 回した平均が見積もりから離れ過ぎ"); failed++; }
+  }
+}
 console.log(failed ? `${NL}NG: ${failed} 件` : `${NL}全部 OK`);
 process.exit(failed ? 1 : 0);

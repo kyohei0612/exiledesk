@@ -8,6 +8,7 @@
 import { simulateTreeChunked, type SimNode, type SimState } from "../../services/htc/sim-route";
 import { autoTree, chaosSideFor, type AutoTreeInput } from "./tree-auto";
 import { spawnChance } from "./craft-estimate";
+import { planByRedoCost, type RedoPlan } from "./redo-cost";
 import type { useHtcCraft } from "./useHtcCraft";
 
 type Ctx = Parameters<typeof simulateTreeChunked>[0]["ctx"];
@@ -15,27 +16,26 @@ type Ctx = Parameters<typeof simulateTreeChunked>[0]["ctx"];
 /** 比べる時の回す回数 (候補ごと) */
 const PICK_RUNS = 150;
 
-export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState): Promise<{ nodes: SimNode[]; greater: string }> {
-  // 偉大なる高貴の使い方 × カオスを使うか。カオスは付く確率の低い狙いだと割に合わない (不在のアミュレットのクリティカル率
-  // T1 = 0.1% をカオスで狙って 1.5 万回打ち、58% が手数の上限。2026-09-24)
+export interface AutoPick { nodes: SimNode[]; greater: string; plan: RedoPlan | null; /** 比べた時の平均 (高貴建て) と完成の割合 (候補が 1 つなら null) */ simExpected: number | null; simDone: number | null }
+
+export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState): Promise<AutoPick> {
+  // やり直しの費用から取り方を決める ([[redo-cost.ts]])。カオスで引く物・冒涜に回す物・骨・外れの回し方はここで決め、
+  // 残り (偉大なる高貴の使い方、側の消去か素の消去か) はシミュレーターで比べる。決めた物が組めない時の保険に、
+  // 今までの決め打ち (一番出にくい物をカオス・冒涜) も候補に入れる
+  const plan = planByRedoCost(inp, ctx.cls, ctx.itemLevel);
   const chaosVariants = inp.chaosOk || inp.chaosSide ? [true, false] : [false];
-  // 両側とも 2 枠以下 (不在のアミュレット) は、側の消去 (確定で外れだけ) と素の消去 (安いが狙いを時々消す) も比べる。
-  // 2026-09-24 不在 (スキルレベル固定): 品質 40% の形は側の消去で 4,127 神・素は 82% 止まり / 品質無しは素 2,387 神・側 5,101 神
   const narrow = inp.limits && inp.limits.prefix <= 2 && inp.limits.suffix <= 2;
   const annuls = narrow ? (["side", "plain"] as const) : ([undefined] as const);
-  // 冒涜の骨も比べる (古代の鎖骨は出る物を絞れるが高い。知性のような重い MOD は普通の骨の方が安かった)
-  const bones = [undefined, "preserved"] as const;
-  // 冒涜の外れの回し方も比べる (固定 1 + 外れ 1 の枠 2 つの側がある時だけ、上書きと光の両方を組む)。
-  // オーナー 2026-09-25:「安いリロール優先。骨も光を使うなら古代が良かったりする。確率計算で判断して」
-  const canOverwrite = !!inp.limits && (inp.fixedSides ?? []).some((sd) => inp.limits![sd] === 2);
-  const rerolls = canOverwrite ? (["overwrite", "light"] as const) : ([undefined] as const);
-  const variants = (["catalyst", "all"] as const).flatMap((g) => chaosVariants.flatMap((ch) => annuls.flatMap((an) => bones.flatMap((bn) => rerolls.map((rr) => ({
-    greater: `${g}${ch ? "" : "・カオス無し"}${an === "plain" ? "・素の消去" : ""}${bn ? "・普通の骨" : ""}${rr === "light" ? "・光で回す" : ""}`,
-    nodes: autoTree({ ...inp, greater: g, ...(an ? { annul: an } : {}), ...(bn ? { bone: bn } : {}), ...(rr ? { reroll: rr } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) }),
-  }))))));
+  const picks: Array<Partial<AutoTreeInput> & { label: string }> = [];
+  if (plan) picks.push({ label: "やり直しの費用から", chaosPick: plan.chaosPick, desecratePick: plan.desecratePick, ...(plan.reroll ? { reroll: plan.reroll } : {}), ...(plan.bone ? { bone: plan.bone } : {}), ...(plan.chaosPick ? {} : { chaosOk: false, chaosSide: null }) });
+  for (const ch of chaosVariants) for (const bn of [undefined, "preserved"] as const) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });
+  const variants = picks.flatMap((pk) => (["catalyst", "all"] as const).flatMap((g) => annuls.map((an) => ({
+    greater: `${pk.label}・${g}${an === "plain" ? "・素の消去" : ""}`,
+    nodes: autoTree({ ...inp, ...pk, greater: g, ...(an ? { annul: an } : {}) }),
+  }))));
   // 同じ形になった候補は 1 つにする (回す手間の節約)
   const uniq = variants.filter((v, i) => variants.findIndex((w) => JSON.stringify(w.nodes) === JSON.stringify(v.nodes)) === i);
-  if (uniq.length === 1) return uniq[0]!;
+  if (uniq.length === 1) return { ...uniq[0]!, plan, simExpected: null, simDone: null };
   const scored: Array<{ v: (typeof uniq)[number]; pDone: number; expected: number }> = [];
   for (const v of uniq) {
     const r = await simulateTreeChunked({ ctx, start, nodes: v.nodes, runs: PICK_RUNS });
@@ -43,7 +43,7 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   }
   const ok = scored.filter((x) => x.pDone >= 0.9);
   const best = ok.length ? ok.reduce((a, b) => (b.expected < a.expected ? b : a)) : scored.reduce((a, b) => (b.pDone > a.pDone ? b : a));
-  return best.v;
+  return { ...best.v, plan, simExpected: best.expected, simDone: best.pDone };
 }
 
 /** 自動で組む入力を、計算機の状態と開始の指輪から作る (作り方のツリーと作る見込みで共通) */

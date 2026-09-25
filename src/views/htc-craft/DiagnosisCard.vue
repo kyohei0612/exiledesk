@@ -149,8 +149,14 @@ const fixLabel = computed(() => {
         <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
         <p v-else class="opacity-50">始め方を探すと出ます</p>
         <p v-if="fin.verdict.value && ss.chosen.value" class="mt-2 rounded bg-black/20 px-2 py-1">
-          → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "作る" }}</b>
+          → <b :class="fin.verdict.value.buy ? 'text-amber-300' : 'text-emerald-300'">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
           方が {{ c.money(fin.verdict.value.diff) }} 安い
+        </p>
+        <!-- 1 から (素材を買わずに) 作る見込みと、そのツリーを組むボタン (オーナー 2026-09-25) -->
+        <p class="mt-1 flex flex-wrap items-center gap-2">
+          <span>1 から作る見込み: <b class="text-[13px]">{{ fin.scratchCost.value != null ? c.money(fin.scratchCost.value) : c.dropOnly.value.length ? "樹 MOD があるので無理" : "計算中…" }}</b>
+            <span v-if="fin.scratchDone.value != null && fin.scratchDone.value < 0.9" class="text-rose-300">(完成 {{ (fin.scratchDone.value * 100).toFixed(0) }}% しか無い。フラクチャー無しでは運で引く物が多く、当てになりません)</span></span>
+          <button type="button" class="rounded border border-emerald-600 px-2 disabled:opacity-40" :disabled="!!c.dropOnly.value.length" title="素材を買わず、何も付いていないベースから組む作り方を下のツリーに出す" @click="c.fromScratch.value = true">1 から組む</button>
         </p>
         <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
       </section>

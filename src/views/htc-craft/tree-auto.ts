@@ -82,6 +82,10 @@ export interface AutoTreeInput {
    * 省くと上書きできる時は上書き。比べる用 (オーナー 2026-09-25:「安いリロール優先。骨も光を使うなら古代が良かったりする。確率計算で判断して」)
    */
   reroll?: "overwrite" | "light";
+  /** カオスで引く狙い (やり直しの費用から決めた指定。null = カオスは使わない、省くと一番出にくい物) */
+  chaosPick?: string | null;
+  /** 冒涜に回す普通の狙い (同上。null = 普通の狙いは冒涜に回さない) */
+  desecratePick?: string | null;
 }
 
 /** 抹消のお告げ付きのカオスを使える側: 触らない MOD がある側が全部満杯で、残りが 1 側だけの時 */
@@ -116,6 +120,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    */
   const narrowSpam: TierTarget | null = (() => {
     if (!narrow || !(inp.chaosOk || inp.chaosSide)) return null;
+    if (inp.chaosPick !== undefined) return ts.find((t) => t.modId === inp.chaosPick && mod(t.modId).source === "normal") ?? null;
     const eat = new Set(essences.map((t) => sideOf(t.modId)));
     const list = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && !eat.has(sideOf(t.modId))
       && !shielded.has(sideOf(t.modId)) && (!inp.chaosSide || sideOf(t.modId) === inp.chaosSide));
@@ -136,6 +141,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
    */
   const extraDesecrate = (): TierTarget | null => {
     if (inp.desecratedTaken || ts.some((t) => viaDesecrate(t))) return null;
+    if (inp.desecratePick !== undefined) return ts.find((t) => t.modId === inp.desecratePick && mod(t.modId).source === "normal") ?? null;
     const cands = ts.filter((t) => mod(t.modId).source === "normal" && (inp.chance?.(t) ?? 1) > 0 && t.modId !== narrowSpam?.modId);
     // エッセンス・ブリーチを使う側 (仕上げで枠が空く側) を優先。反対側は高貴やカオスで埋まり、削減で付いた外れで冒涜の枠が
     // 塞がって回り続けた (2026-09-24 段を問わない死体の円環で、全耐性を冒涜に回した時)
@@ -197,7 +203,14 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   const switchTypes = switchTypes0 && !breachBlocks;
   const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
   /** その側の狙いに使うカタリスト */
+  /**
+   * 触媒の高貴のお告げは品質を全部使う。ブリーチの MOD を外した後だと入れ直しは 20% までしか戻らない (上限 +20 はブリーチの
+   * MOD がある間だけ) ので、ブリーチを先に外す組み方では触媒を使わない (2026-09-25: 不在で触媒の後に品質が 0 になり、
+   * ブリーチを入れ直す手がプレの狙いを食っていた)
+   */
+  let catalystOff = false;
   function catalystFor(list: readonly TierTarget[]): string | null {
+    if (catalystOff) return null;
     if (lockTag) return qualityTagBoosts(list) ? lockTag : null;
     return freeCatalyst(list);
   }
@@ -244,8 +257,10 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // 抹消のお告げで側を決めたカオスなら、その側の狙いだけ
   const spamPool2 = inp.chaosSide ? spamPool.filter((t) => sideOf(t.modId) === inp.chaosSide) : spamPool;
   // 両側とも 2 枠以下 (不在のアミュレット) は最初の 1 つだけ ([[narrowSpam]])
-  const spam = narrow ? narrowSpam : (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
-    ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
+  const spam = narrow ? narrowSpam
+    : inp.chaosPick !== undefined ? spamPool2.find((t) => t.modId === inp.chaosPick) ?? null
+    : (inp.chaosOk || !!inp.chaosSide) && spamPool2.length && normalCount - 1 <= 3
+      ? [...spamPool2].sort((a, b) => (inp.chance?.(a) ?? 1) - (inp.chance?.(b) ?? 1))[0]! : null;
   let spamNode: SimNode | null = null;
   if (spam) {
     spamId = spam.modId;
@@ -293,8 +308,10 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     && (annulBeforeSpam || (inp.startLoose?.prefix ?? 9) <= (breachEat ? 0 : 1));
   // カオスの前なら、ブリーチの MOD と外れのどちらが消えても 1 つ残るので、お告げ無しの素の消去でいい (オーナー 2026-09-24:
   // 「左側消去で MOD 消さなくてもスパムで消えるじゃん」。スパム任せだと外れが 1 つ余って狙いの側に残ることがある)
-  if (!switchTypes && breach && annulBreach) main.push({ ...base, id: id(), action: { kind: "annul", side: annulBeforeSpam ? null : "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
-  else if (!switchTypes && breach && (essenceNodes.length || (breachBlocks && !desecrateEatsBreach) || narrowFirst)) main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+  if (!switchTypes && breach && annulBreach) { main.push({ ...base, id: id(), action: { kind: "annul", side: annulBeforeSpam ? null : "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true }); catalystOff = true; }
+  else if (!switchTypes && breach && (essenceNodes.length || (breachBlocks && !desecrateEatsBreach) || narrowFirst)) { main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true }); catalystOff = true; }
+  // プレの冒涜がブリーチの MOD を食う形 (外す手は無いが、以後ブリーチは無い) も同じ
+  if (!switchTypes && breach && desecrateEatsBreach) catalystOff = true;
   if (narrowFirst) main.push(spamNode!);
   if (!switchTypes) main.push(...essenceNodes);
   // 普通の狙いは多い側から (枠が詰まる前に付けたい物を先に)

@@ -5,12 +5,13 @@
  * オーナー:「ツリー上、シミュレーター方式。完成までの道のりを○×で進める。進むにつれてツリーがデカくなる。
  * 最終的に予算入力してシミュレーターかけて確率と予算内にできるか表示する」。中身は [[useCraftTree.ts]]。
  */
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
+import { RULES, type RedoPlan } from "./redo-cost";
 import { startKindOf } from "./start-kind";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -31,21 +32,41 @@ function loadPreset(id: string): void {
 const canAuto = computed(() => !!c.data.value && !!c.prices.value && c.targets.value.length > 0 && startKindOf(c).kind !== "unsafe");
 /** 組んでいる最中 (候補を短く回して比べるので数秒かかる) */
 const autoBusy = ref(false);
+/** やり直しの費用から決めた取り方 ([[redo-cost.ts]]、自動で組んだ時に出す) */
+const plan = ref<RedoPlan | null>(null);
+/** 回して採った候補の名前と平均 (見積もりと違う候補が勝つこともある) */
+const picked = ref<{ label: string; expected: number | null; done: number | null } | null>(null);
+const methodJa: Record<string, string> = { chaos: "カオス", exalt: "高貴 + 側のお告げ", desecrate: "冒涜", essence: "エッセンス (確定)" };
+const rerollJa = (r: RedoPlan["rows"][number]): string =>
+  r.method === "desecrate" ? `${r.bone === "desecrate_ancient" ? "古代" : "普通の骨"}・外れは${r.reroll === "overwrite" ? "天体で上書き" : "光 + 消去"}`
+  : r.method === "exalt" ? `${r.catalyst ? "触媒あり・" : ""}外れは側の消去${r.safe ? " (確定)" : " (巻き込む)"}` : r.method === "chaos" ? "外れは打ち直し" : "";
+const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
 async function loadAuto(): Promise<void> {
   if (!t.ctx.value || autoBusy.value) return;
   // 組む前に相場を取り直す (カタリスト・お告げの今の値段で比べる)
   await c.refreshPrices();
   const ctx = t.ctx.value;
   if (!ctx) return;
-  const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
+  // 1 から組む時は固定済みを使わない
+  const inp = autoInputFor(c, ctx, t.start.value, c.fromScratch.value ? [] : c.fracturedTargets.value.map((x) => x.modId));
   if (!inp) return;
   autoBusy.value = true;
   try {
-    t.setAll((await pickAutoTree(inp, ctx, t.start.value)).nodes);
+    const got = await pickAutoTree(inp, ctx, t.start.value);
+    plan.value = got.plan;
+    picked.value = { label: got.greater, expected: got.simExpected, done: got.simDone };
+    t.setAll(got.nodes);
   } finally {
     autoBusy.value = false;
   }
 }
+// 「1 から組む」を押したら、そのまま自動で組んでツリーへ (オーナー 2026-09-25)
+watch(() => c.fromScratch.value, async (v) => {
+  if (!v) return;
+  await nextTick();
+  await loadAuto();
+  document.getElementById("craft-tree-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
   await nextTick();
@@ -54,7 +75,7 @@ async function focus(id: string): Promise<void> {
 </script>
 
 <template>
-  <div class="text-sm">
+  <div id="craft-tree-panel" class="text-sm">
     <!-- 作り方の設定 (ツリーの上。オーナー 2026-09-24:「成功確率は 8 割になるまで試行とか、ツリーの上部に必要な設定」) -->
     <div class="mb-2 flex flex-wrap items-center gap-3 rounded bg-white/5 p-2 text-xs">
       <b class="opacity-70">作り方の設定</b>
@@ -67,11 +88,34 @@ async function focus(id: string): Promise<void> {
       手を並べて作り方を組みます。手ごとに「打つ物」と「狙う MOD」、当たった時 (○) と外れた時 (×) にどこへ進むかを選びます。
       ○ は下へ、× は右へ枝が伸びます。消去の手は「自動」にすると、消えた物を見て戻り先を決めます。最後に回すと、完成の確率と費用が出ます。
     </p>
+    <p v-if="c.fromScratch.value" class="mb-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
+      1 から組んでいます (素材を買わず、外れ 2 つのレアから。固定済みは使いません)
+      <button type="button" class="ml-2 rounded border border-emerald-600 px-2" @click="c.fromScratch.value = false">素材から組むに戻す</button>
+    </p>
     <div v-if="presets.length || canAuto" class="mb-2 text-xs">
       <span class="opacity-60">見本のツリー:</span>
       <button v-if="canAuto" type="button" class="ml-2 rounded border border-emerald-600 px-2" title="狙いの MOD から組む。側を選べる手を中心に、消去は自動で戻る" :disabled="autoBusy" @click="loadAuto()">{{ autoBusy ? "組んでいます (候補を回して比べています)…" : "この MOD から自動で組む" }}</button>
       <button v-for="x in presets" :key="x.id" type="button" class="ml-2 rounded border border-sky-600 px-2" @click="loadPreset(x.id)">{{ x.label }} を読み込む</button>
     </div>
+    <!-- やり直しの費用から決めた取り方 (自動で組んだ時)。決まりは畳んで出す -->
+    <details v-if="plan" class="mb-2 rounded border border-white/10 bg-white/[0.03] p-2 text-xs" open>
+      <summary class="cursor-pointer opacity-70">
+        やり直しの費用から決めた取り方 (見込みの合計 {{ c.money(plan.total) }})。
+        <template v-if="picked">候補を回して採ったのは「{{ picked.label }}」<template v-if="picked.expected != null">、平均 {{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い。どの候補も届かなかった)</span></template></template>
+      </summary>
+      <table class="mt-1 w-full">
+        <tr class="opacity-50"><th class="text-left font-normal">狙い</th><th class="text-left font-normal">取り方</th><th class="text-right font-normal">1 回</th><th class="text-right font-normal">当たる</th><th class="text-right font-normal">外れ 1 回のやり直し</th><th class="text-right font-normal">見込み</th></tr>
+        <tr v-for="r in plan.rows" :key="r.modId" class="border-t border-white/5">
+          <td class="py-0.5">{{ c.stepTarget([r.modId]) }} <span class="opacity-50">({{ r.side === "prefix" ? "プレ" : "サフィ" }})</span></td>
+          <td>{{ methodJa[r.method] }} <span class="opacity-60">{{ rerollJa(r) }}</span></td>
+          <td class="text-right">{{ c.money(r.perTry) }}</td>
+          <td class="text-right">{{ pctHit(r.p) }}</td>
+          <td class="text-right" :class="r.safe ? '' : 'text-amber-300'">{{ r.perMiss > 0 ? c.money(r.perMiss) : "-" }}</td>
+          <td class="text-right">{{ c.money(r.expected) }}</td>
+        </tr>
+      </table>
+      <details class="mt-1 opacity-60"><summary class="cursor-pointer">決まり</summary><ul class="list-disc pl-4"><li v-for="x in RULES" :key="x">{{ x }}</li></ul></details>
+    </details>
     <!-- 枝の図: ○ は下へ、× は右へ。横に広がるので横にスクロール -->
     <div class="overflow-x-auto pb-2">
       <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" />
