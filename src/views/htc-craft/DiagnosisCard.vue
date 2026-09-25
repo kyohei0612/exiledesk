@@ -118,6 +118,21 @@ const steps = computed(() => {
     s("下の作り方を回して確かめる", ph === "done" && decided ? "now" : "todo"),
   ];
 });
+/** 一番安い道と、2 番目との差 */
+const verdict3 = computed(() => {
+  const list = threeWay.value.filter((w) => w.cost != null).sort((x, y) => x.cost! - y.cost!);
+  const best = list[0], second = list[1];
+  return best ? { name: best.name, diff: second ? second.cost! - best.cost! : null, second: second?.name ?? "" } : null;
+});
+/** 今やることの一言 (上の要約) */
+const hint = computed(() => {
+  if (ss.kind.value.kind === "unsafe") return "クラフト非推奨: ③ で完成品を探して買う";
+  const ph = c.phase.value;
+  if (ph === "analyzed") return "MOD と段を確かめて「おｋ」を押す";
+  if (ph === "pick") return "固定する MOD を選んで「取引所で探す」を押す";
+  const best = threeWay.value.find((w) => w.best);
+  return best ? `${best.name} が一番安い → 下の作り方 (STEP) を回して確かめる` : "③ で買うか作るかを見る";
+});
 const omenSide = computed(() => (ss.kind.value.craftSide === "P" ? "左側" : ss.kind.value.craftSide === "S" ? "右側" : "その側"));
 /** 固定する樹 MOD の名前 (樹 MOD が 2 つある時は重い側の物だけ) */
 const fixLabel = computed(() => {
@@ -131,35 +146,34 @@ const fixLabel = computed(() => {
   <div class="mb-3 text-xs">
     <!-- 上に貼り付いた要約 (2026-09-25 オーナー:「見やすく使いやすく」): 何を作るか + 3 つの道 + 判定。取れた物から埋まる -->
     <div class="sticky top-0 z-10 -mx-1 mb-3 rounded-xl border border-white/10 bg-[var(--exile-color-bg-surface)]/95 px-3 py-2 shadow-lg backdrop-blur">
-      <!-- 道しるべ (初見でも最後まで行けるように。オーナー 2026-09-25) -->
-      <ol class="mb-2 flex flex-wrap gap-1 text-[11px]">
-        <li v-for="(st, i) in steps" :key="st.label" class="flex items-center gap-1 rounded-full px-2 py-0.5" :class="st.state === 'done' ? 'bg-emerald-500/15 text-emerald-200' : st.state === 'now' ? 'bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60' : 'bg-white/5 opacity-50'">
-          <span class="font-bold">{{ i + 1 }}</span>{{ st.label }}<span v-if="st.state === 'done'">✓</span>
-        </li>
-      </ol>
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <div class="min-w-[10rem]">
-          <p class="text-sm font-bold">{{ baseJa }}</p>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <!-- 作る物 -->
+        <div class="min-w-[12rem]">
+          <p class="text-[10px] tracking-widest opacity-50">作る物</p>
+          <p class="text-sm font-bold text-amber-100">{{ baseJa }}</p>
           <p class="opacity-60">プレ {{ lim.prefix }} / サフィ {{ lim.suffix }} 枠 ・ 品質 {{ quality }}% ・ 狙い {{ c.targets.value.length }} 個</p>
         </div>
-        <template v-if="threeWay.length">
-          <div v-for="w in threeWay" :key="w.key" class="rounded-lg px-3 py-1" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/50' : 'bg-white/[0.04]'">
-            <p class="text-[11px] opacity-60">{{ w.name }}</p>
-            <p class="text-base font-bold" :class="w.best ? 'text-emerald-300' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
-          </div>
-          <p v-if="threeWay.some((w) => w.best)" class="ml-auto text-sm">
-            → <b class="text-emerald-300">{{ threeWay.find((w) => w.best)?.name }}</b> <span class="opacity-60">が一番安い</span>
-          </p>
-        </template>
-        <p v-else class="ml-auto opacity-60">
-          {{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨 (完成品を買う)" : c.phase.value === "analyzed" ? "MOD と段を確かめて「おｋ」を押してください" : ss.busy.value ? "取引所で探しています… 全部取れたら ② ③ が出ます" : "左で固定する MOD を選んで「取引所で探す」を押すと、ここに 3 つの道が出ます" }}
-        </p>
+        <!-- 今どこか (道しるべ) -->
+        <ol class="flex flex-1 flex-wrap items-center gap-y-1 text-[11px]">
+          <li v-for="(st, i) in steps" :key="st.label" class="flex items-center">
+            <span class="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold transition-colors"
+              :class="st.state === 'done' ? 'bg-emerald-500/15 text-emerald-200' : st.state === 'now' ? 'bg-amber-500/25 text-amber-50 ring-1 ring-amber-400/70 shadow-[0_0_14px_rgba(245,158,11,0.35)]' : 'bg-white/5 text-white/40'">
+              <span class="grid h-4 w-4 place-items-center rounded-full text-[10px]" :class="st.state === 'done' ? 'bg-emerald-400 text-black' : st.state === 'now' ? 'bg-amber-400 text-black' : 'bg-white/10'">{{ st.state === "done" ? "✓" : i + 1 }}</span>
+              {{ st.label }}
+            </span>
+            <span v-if="i < steps.length - 1" class="mx-1 h-px w-3" :class="st.state === 'done' ? 'bg-emerald-400/60' : 'bg-white/15'" />
+          </li>
+        </ol>
       </div>
-      <!-- 今なにで止まっているか (② 何番目の候補の何本目 / ③ 完成品 / 取引所の待ち) -->
-      <p v-if="c.stage.value" class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-amber-200/90">
-        <span class="inline-block animate-pulse">●</span>{{ c.stage.value }}
-        <span v-if="tradeWait" class="rounded bg-amber-500/15 px-1.5 py-0.5">{{ tradeWait }}</span>
-        <span class="opacity-60">→ 終わると下の作り方が自動で回ります</span>
+      <!-- 今やること / 今なにで止まっているか -->
+      <p class="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+        <template v-if="c.stage.value">
+          <span class="inline-block animate-pulse text-amber-300">●</span><span class="text-amber-200/90">{{ c.stage.value }}</span>
+          <span v-if="tradeWait" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-200">{{ tradeWait }}</span>
+        </template>
+        <template v-else>
+          <span class="text-amber-300">▶</span><span class="text-amber-100/90">{{ hint }}</span>
+        </template>
       </p>
     </div>
     <!-- MOD 解析: 種類ごと・プレ / サフィごと (オーナー 2026-09-24) -->
@@ -248,16 +262,17 @@ const fixLabel = computed(() => {
             {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}
           </button>
         </p>
-        <div class="mb-2 grid grid-cols-2 gap-2">
-          <div class="rounded-lg bg-black/30 p-2" :class="fin.verdict.value?.buy ? 'ring-1 ring-emerald-400/50' : ''">
-            <p class="text-[11px] opacity-60">完成品を買う</p>
-            <p class="text-lg font-bold">{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</p>
-          </div>
-          <div class="rounded-lg bg-black/30 p-2" :class="fin.verdict.value && !fin.verdict.value.buy ? 'ring-1 ring-emerald-400/50' : ''">
-            <p class="text-[11px] opacity-60">素材から作る (初動 + 作る見込み)</p>
-            <p class="text-lg font-bold">{{ fin.craftCost.value != null && ss.chosen.value ? c.money(fin.craftCost.value) : "-" }}</p>
+        <!-- 3 つの道 (オーナー 2026-09-26: 上の要約から移した)。一番安い物を強調 -->
+        <div v-if="threeWay.length" class="mb-2 grid grid-cols-3 gap-2">
+          <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
+            <p class="text-[11px] opacity-70">{{ w.name }}</p>
+            <p class="text-lg font-bold leading-tight" :class="w.best ? 'text-emerald-300' : w.cost == null ? 'text-sm opacity-60' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
+            <p v-if="w.best" class="mt-0.5 inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</p>
           </div>
         </div>
+        <p v-if="verdict3" class="mb-2 rounded-lg bg-emerald-500/10 px-2 py-1">
+          → <b class="text-emerald-300">{{ verdict3.name }}</b> が一番安い<span v-if="verdict3.diff != null" class="opacity-70"> ({{ verdict3.second }} より <b class="text-emerald-200">{{ c.money(verdict3.diff) }}</b> 安い)</span>
+        </p>
         <p>
           完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
           <!-- 取引所に無い時だけ手で埋める -->
@@ -279,10 +294,6 @@ const fixLabel = computed(() => {
         <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨なので、作る見込みは出しません</p>
         <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
         <p v-else class="opacity-50">始め方を探すと出ます</p>
-        <p v-if="fin.verdict.value && ss.chosen.value" class="mt-2 rounded-lg bg-emerald-500/10 px-2 py-1">
-          → <b class="text-emerald-300">{{ fin.verdict.value.buy ? "完成品を買う" : "素材から作る" }}</b>
-          方が {{ c.money(fin.verdict.value.diff) }} 安い
-        </p>
         <!-- 3 つの道の中身 (上の要約の内訳) -->
         <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
           <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
