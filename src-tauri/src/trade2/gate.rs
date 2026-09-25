@@ -113,9 +113,14 @@ pub fn now_ms() -> i64 {
 /// 「Rust の門番があるから二重待ちになる」と外していた。門番は窓の上限しか見ないので、
 /// 手動の再取得が **3 発を 1 秒以内**に出せるようになり (記録で確認: 18:28:49-50 に 3 発)、
 /// そこから 429 (retry-after 600 秒) を踏んでいた。昨日まで効いていた値をこちらに移す。
+///
+/// 2026-09-26 オーナー「間隔だけど 8 割使いにしようか」: search の最低間隔を 10.5 秒 → 2.6 秒に。10.5 秒は
+/// 「5 分 30 回」を 1 本ずつ均した値で、10 秒 5 回の burst 枠を全く使っていなかった (クラフト計算機の 1 回の
+/// 貼り付け = 6 本で 60 秒待ち)。窓の上限 (10 秒 5 / 60 秒 15 / 5 分 30) は `window_wait` が 8 割で止めるので、
+/// 2.6 秒は「10 秒に 4 本」の burst の中の並び間隔。連打でぶつかった 2026-09-18 の再発は窓の 8 割で防ぐ
 pub fn min_spacing_ms(kind: &str) -> i64 {
     match kind {
-        "search" => 10_500,
+        "search" => 2_600,
         _ => 2_500,
     }
 }
@@ -124,9 +129,9 @@ pub fn min_spacing_ms(kind: &str) -> i64 {
 pub fn window_wait(sends: &[i64], rules: &[Rule], now: i64) -> i64 {
     let mut wait = 0;
     for &(max, period) in rules {
-        // 上限ぴったりまで使うと他の呼び出しとぶつかるので、少し残して止める
-        let margin = if max >= 15 { 2 } else { 1 };
-        let keep = max.saturating_sub(margin).max(1) as usize;
+        // 上限の 8 割で止める (オーナー 2026-09-26:「8 割使い」。同じ IP の別経路 (ブラウザのトレードサイト等) の分が
+        // サーバー側で足されるので、ぴったりまで使わない)。5:10 → 4、15:60 → 12、30:300 → 24
+        let keep = ((max * 8) / 10).max(1) as usize;
         let window_ms = period * 1000;
         let in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
         if in_window.len() >= keep {

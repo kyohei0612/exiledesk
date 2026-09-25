@@ -136,6 +136,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
+      // 1) 候補ごとに「固定済み」だけ (1 本ずつ)。「固定済みを買って途中から作る」はこれで決まる
+      //    (オーナー 2026-09-26:「即終わらせて欲しい。個々の処理結果でもう要らなくなる検索を切る」。前は 3 候補 × 3 本 = 9 本)
       for (const [i, cand] of keys.entries()) {
         if (!alive()) return;
         const at = (step: string) => {
@@ -145,10 +147,25 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         at(kind.value.kind === "separate" ? "最安 1 件" : "固定済み");
         const r = kind.value.kind === "separate"
           ? await searchSide(cand.modIds).catch(() => null)
-          : await c.searchFor(cand.modIds, at).catch(() => null);
+          : await c.searchFor(cand.modIds, at, ["fractured"]).catch(() => null);
         if (!alive()) return;
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
+      }
+      // 2) 一番安い候補だけ「固定無し・厳しい / ゆるい」(= 自分でフラクチャーして作る道) を足す。固定済みが
+      //    「フラクチャーオーブ代 × 見込み回数」以下 (earlyBuy) なら自前は絶対に勝てないので投げない。固定済みの 1 本は
+      //    30 分キャッシュなので、全部投げ直しても取引所に行くのは 2 本
+      const best = chosen.value;
+      if (kind.value.kind !== "separate" && best && best.res && best.res !== "error" && !("kind" in best.res) && !best.res.earlyBuy) {
+        const at = (step: string) => {
+          current.value = { key: best.key, name: best.name, index: keys.length, count: keys.length, step };
+          c.stage.value = `② 一番安い候補 (${best.name}) の固定無しを探しています: ${step}`;
+        };
+        pending.value = [best.key];
+        const r = await c.searchFor(best.modIds, at, ["fractured", "loose", "strict"]).catch(() => null);
+        if (!alive()) return;
+        if (r) results.value = { ...results.value, [best.key]: r };
+        pending.value = [];
       }
       current.value = null;
       c.stage.value = "③ 完成品を探しています…";
@@ -160,6 +177,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       if (alive()) {
         c.stage.value = "";
         c.diagBusy.value = false;
+        c.phase.value = "done";
       }
     }
   }

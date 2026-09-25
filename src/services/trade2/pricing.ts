@@ -28,7 +28,7 @@ import type { Trade2SearchResponse } from "./query";
  *   → 5 分で 30 回を超えると 30 分ペナルティ。2.5 秒間隔だと 75 秒で 429 (Retry-After 600) を食らった。
  * 一括調査 (20 件超) を通すには search を 10 秒間隔にする必要がある (30 回 / 300 秒ちょうど)。
  */
-const SEARCH_INTERVAL_MS = 10500;
+const SEARCH_INTERVAL_MS = 2600;
 const FETCH_INTERVAL_MS = 2500;
 
 /**

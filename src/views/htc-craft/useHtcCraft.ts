@@ -104,6 +104,14 @@ export function useHtcCraft() {
    */
   const diagBusy = ref(false);
   /**
+   * 診断の段階 (オーナー 2026-09-26:「MOD 解析でおｋなら設定へ進むで ① を表示、取引所へ探す → 取得中で流れ解説しながら取得、
+   * 全部終わってから ② → ③ → そのまま自動クラフト。目が疲れない」)。
+   *   analyzed … MOD 解析を見せて「おｋ」を待つ (段を直せる)
+   *   pick     … ① 固定する MOD を選んで「取引所で探す」
+   *   done     … ②③ を出し、作り方を自動で組む
+   */
+  const phase = ref<"analyzed" | "pick" | "done">("analyzed");
+  /**
    * 取得の世代。入口に戻る・画面を離れる時に進めて、走っている ②③ の取得を打ち切る (オーナー 2026-09-25:「入口に戻るとか
    * このページ離れたら取得中止して強制終了」)。取得側は始めに世代を控え、await のたびに変わっていないか見る。
    * 取引所へ投げ終えた 1 本は戻るまで待つしかないが、次は投げない
@@ -223,6 +231,7 @@ export function useHtcCraft() {
     treeError.value = null;
     treeTierPick.value = {};
     abortFetch();
+    phase.value = "analyzed";
   }
 
   /**
@@ -386,7 +395,7 @@ export function useHtcCraft() {
   return {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
-    loading, stage, diagBusy, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
+    loading, stage, diagBusy, phase, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,

@@ -44,9 +44,9 @@ import { buildFinishedQuery } from "./buy-or-craft";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
 
-/** 検索は 10.5 秒間隔 (`services/trade2/pricing.ts` と同じ値) */
-export const SEARCH_INTERVAL_SEC = 10.5;
-/** 5 分で送れる上限。超えると 30 分の罰則 */
+/** 検索の並び間隔 (門番 gate.rs の min_spacing_ms と同じ値。10 秒に 4 本の burst の中の間隔、2026-09-26 に 10.5 → 2.6) */
+export const SEARCH_INTERVAL_SEC = 2.6;
+/** 5 分で送れる上限 (門番はこの 8 割 = 24 で止める)。超えると 30 分の罰則 */
 export const SEARCH_BUDGET_PER_5MIN = 30;
 
 /** 投げる 1 本 */
