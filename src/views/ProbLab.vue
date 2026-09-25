@@ -44,6 +44,9 @@ const pct = (p: number): string => (p >= 1 ? "確定" : p <= 0 ? "-" : `${(p * 1
           <option v-for="t in [...lab.tiers.value].reverse()" :key="t.index" :value="t.index" :disabled="t.ilvl > lab.itemLevel.value">T{{ lab.tiers.value.length - t.index }} ({{ t.ranges }}、レベル {{ t.ilvl }}、重み {{ t.weight }}){{ t.ilvl > lab.itemLevel.value ? " — このアイテムレベルでは出ない" : "" }}</option>
         </select>
       </label>
+      <label>外れの消し方
+        <select v-model="lab.missMode.value" class="sel ml-1"><option value="first">1 MOD 目 (他に何も無い: 素の消去で確定)</option><option value="omen">他の MOD を守る (側のお告げ / 光)</option></select>
+      </label>
       <label>触媒の品質
         <select v-model="lab.catalystQuality.value" class="sel ml-1"><option value="max">上限まで (40%)</option><option value="20">20% (ブリーチ無し)</option></select>
       </label>
