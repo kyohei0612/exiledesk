@@ -213,10 +213,6 @@ export function useFinishedCompare(
   const craftCost = computed(() => (estimate.value ? (startCost.value ?? 0) + estimate.value.value : null));
   const craftBasis = computed(() => estimate.value?.basis ?? "");
   /** 1 から作る見込み (素材を買わない。樹 MOD があれば組めないので null) */
-  const scratchEstimate = computed(() => craftEstimate(c, [], { scratch: true }));
-  const scratchCost = computed(() => scratchEstimate.value?.value ?? null);
-  /** 1 から作った時の完成の割合 (フラクチャー無しで狙いが多いと、手数の上限で止まる回が多く当てにならない) */
-  const scratchDone = computed(() => scratchEstimate.value?.pDone ?? null);
   /**
    * 完成品の値段が当てにならない: 出品が 2 件以下で、作る見込みの 10 倍を超える (不在のアミュレットで 1 件 372 万神の出品に
    * 「作る方が 370 万神安い」と出ていた。2026-09-24)
@@ -232,5 +228,5 @@ export function useFinishedCompare(
     return b != null && k != null && !dropped.value.length ? { buy: b <= k, diff: Math.abs(b - k) } : null;
   });
 
-  return { query, unbuildable, lightNote, dropped, outlier, found, manual, busy, error, search, buyCost, craftCost, craftBasis, scratchCost, scratchDone, verdict };
+  return { query, unbuildable, lightNote, dropped, outlier, found, manual, busy, error, search, buyCost, craftCost, craftBasis, verdict };
 }

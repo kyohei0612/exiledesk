@@ -106,11 +106,6 @@ export function useHtcCraft() {
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /** カオススパムの組み立て ([[useSpamPlan.ts]])。貼り付けが無い時は作り方の設定の 0 から組む値 */
   const { catalystChoice, spamOverride, spamUsed, spam, spamFor } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
-  /**
-   * 1 から組む (素材を買わず、何も付いていないベースから。オーナー 2026-09-25:「1 から組むボタンも用意してあげたら組むこともできる」)。
-   * 作り方のツリーと作る見込みの開始が、固定済み・樹 MOD 無しの外れ 2 つになる
-   */
-  const fromScratch = ref(false);
   /** 始め方で選んだベースの買う値段 (高貴建て)。作り方の結果に足す (オーナー 2026-09-24:「最終収支に買ったベースの値段含めてなさそう」) */
   const startPrice = ref<number | null>(null);
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
@@ -182,7 +177,6 @@ export function useHtcCraft() {
     timings.value = [];
     treeResult.value = null;
     startPrice.value = null;
-    fromScratch.value = false;
     treeError.value = null;
     treeTierPick.value = {};
   }
@@ -336,7 +330,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget, setTier, setFractured, startPrice, refreshPrices, fromScratch,
+    stepTarget, setTier, setFractured, startPrice, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,

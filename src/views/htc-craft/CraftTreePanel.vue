@@ -47,8 +47,7 @@ async function loadAuto(): Promise<void> {
   await c.refreshPrices();
   const ctx = t.ctx.value;
   if (!ctx) return;
-  // 1 から組む時は固定済みを使わない
-  const inp = autoInputFor(c, ctx, t.start.value, c.fromScratch.value ? [] : c.fracturedTargets.value.map((x) => x.modId));
+  const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
   if (!inp) return;
   autoBusy.value = true;
   try {
@@ -60,13 +59,21 @@ async function loadAuto(): Promise<void> {
     autoBusy.value = false;
   }
 }
-// 「1 から組む」を押したら、そのまま自動で組んでツリーへ (オーナー 2026-09-25)
-watch(() => c.fromScratch.value, async (v) => {
-  if (!v) return;
+/**
+ * 自動はデフォルトで回す (オーナー 2026-09-25:「自動はデフォで回した後にその作り方を自分でやる時にボタン押したらリセット」)。
+ * 開始の指輪 (貼り付け・固定済み) が変わるたびに組み直す。自分で組みたい時は「1 から組む」で空にする
+ */
+watch(() => [t.start.value, canAuto.value] as const, async ([, ok]) => {
+  if (!ok) return;
   await nextTick();
-  await loadAuto();
-  document.getElementById("craft-tree-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-});
+  void loadAuto();
+}, { immediate: true });
+/** ツリーを空にして自分で組む */
+function startOver(): void {
+  t.clear();
+  plan.value = null;
+  picked.value = null;
+}
 /** 新しい手を足したらそこへ */
 async function focus(id: string): Promise<void> {
   await nextTick();
@@ -88,12 +95,9 @@ async function focus(id: string): Promise<void> {
       手を並べて作り方を組みます。手ごとに「打つ物」と「狙う MOD」、当たった時 (○) と外れた時 (×) にどこへ進むかを選びます。
       ○ は下へ、× は右へ枝が伸びます。消去の手は「自動」にすると、消えた物を見て戻り先を決めます。最後に回すと、完成の確率と費用が出ます。
     </p>
-    <p v-if="c.fromScratch.value" class="mb-2 rounded bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
-      1 から組んでいます (素材を買わず、外れ 2 つのレアから。固定済みは使いません)
-      <button type="button" class="ml-2 rounded border border-emerald-600 px-2" @click="c.fromScratch.value = false">素材から組むに戻す</button>
-    </p>
     <div v-if="presets.length || canAuto" class="mb-2 text-xs">
       <span class="opacity-60">見本のツリー:</span>
+      <button type="button" class="ml-2 rounded border border-white/30 px-2" title="ツリーを空にして、手 1 から自分で組む" :disabled="autoBusy" @click="startOver()">1 から組む (空にする)</button>
       <button v-if="canAuto" type="button" class="ml-2 rounded border border-emerald-600 px-2" title="狙いの MOD から組む。側を選べる手を中心に、消去は自動で戻る" :disabled="autoBusy" @click="loadAuto()">{{ autoBusy ? "組んでいます (候補を回して比べています)…" : "この MOD から自動で組む" }}</button>
       <button v-for="x in presets" :key="x.id" type="button" class="ml-2 rounded border border-sky-600 px-2" @click="loadPreset(x.id)">{{ x.label }} を読み込む</button>
     </div>

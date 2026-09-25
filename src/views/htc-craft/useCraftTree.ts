@@ -27,7 +27,12 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
   const nodes = ref<SimNode[]>([emptyNode()]);
-  watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join(), c.fromScratch.value], () => { nodes.value = [emptyNode()]; result.value = null; });
+  watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join()], () => { nodes.value = [emptyNode()]; result.value = null; });
+  /** ツリーを空にして自分で組む (「1 から組む」。オーナー 2026-09-25: 自動で組んだ後、自分でやる時に押したらリセット) */
+  function clear(): void {
+    nodes.value = [emptyNode()];
+    result.value = null;
+  }
 
   const helpers = computed(() => (ctx.value ? simHelpers(ctx.value, nodes.value) : null));
 
@@ -236,5 +241,5 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     return k <= r.doneCosts.length ? r.doneCosts[k - 1]! + baseEx.value : null;
   });
 
-  return { baseDivine, baseEx, setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced, ancestors, descendants, labelOf };
+  return { baseDivine, baseEx, clear, setAll, ctx, start, nodes, helpers, stateOf, hitOdds, addNode, update, remove, budgetDivine, targetPct, runs, needForTarget, running, progress, result, blocked, run, childOf, indexOf, unplaced, ancestors, descendants, labelOf };
 }

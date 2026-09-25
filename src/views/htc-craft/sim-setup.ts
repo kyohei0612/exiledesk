@@ -35,10 +35,8 @@ export function simCtxOf(c: C) {
  * 出発点 = ベース決めの結果 (固定済みの MOD と樹 MOD)。カオスで入れ替える物としてもう 1 つ (外れ) 付いている。
  * fixedIds = 固定済みで始める狙い (始め方の候補ごとに変わる)
  */
-export function startStateOf(c: C, fixedIds: readonly string[], scratch: boolean = c.fromScratch.value): SimState {
+export function startStateOf(c: C, fixedIds: readonly string[]): SimState {
   const d = c.data.value;
-  // 1 から組む: 固定済みも樹 MOD も無し。錬金したレアの外れが両側に 1 つずつある形 (カオス・消去・ブリーチの食わせ先)
-  if (scratch) return { slots: [{ modId: null, side: "prefix", fixed: false }, { modId: null, side: "suffix", fixed: false }], breach: false };
   const slots: SimState["slots"] = c.targets.value.filter((t) => fixedIds.includes(t.modId))
     .map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));
   const tree = c.item.value ? { p: c.slotsUsed.value.prefixes, s: c.slotsUsed.value.suffixes } : { p: zeroStart.value.fixedPrefix, s: zeroStart.value.fixedSuffix };
