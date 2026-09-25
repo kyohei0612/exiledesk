@@ -115,7 +115,17 @@ export function useProbLab() {
   const mod = computed(() => (modId.value && data.value ? data.value.mods.get(modId.value) ?? null : null));
   const tiers = computed(() => (mod.value?.tiers ?? []).map((t, i) => ({ index: i, ilvl: t.ilvl, weight: t.weight, ranges: (t.ranges ?? []).map((r) => `${r[0]}-${r[1]}`).join(" / ") })));
   watch([baseName, data], () => { if (mods.value.length && !mods.value.some((m) => m.id === modId.value)) modId.value = mods.value[0]!.id; void ensure(); });
-  watch(modId, () => { minTier.value = Math.max(0, (mod.value?.tiers.length ?? 1) - 1); });
+  /** 段の既定 = そのアイテムレベルで出る一番上の段 (上の段はレベルが足りず永久に出ない) */
+  const topReachable = (): number => {
+    const ts = mod.value?.tiers ?? [];
+    let best = 0;
+    ts.forEach((t, i) => { if (t.ilvl <= itemLevel.value) best = i; });
+    return best;
+  };
+  watch(modId, () => { minTier.value = topReachable(); });
+  watch(itemLevel, () => { if ((mod.value?.tiers[minTier.value]?.ilvl ?? 0) > itemLevel.value) minTier.value = topReachable(); });
+  /** 触媒の品質 (オーナー 2026-09-25:「触媒は 40% で使うものとして設定」。ブリーチのある指輪はその上限 + 20) */
+  const catalystQuality = ref<"max" | "20">("max");
 
   /** 使う物の値段 (その時の相場)。表の数字の元が見えるように (オーナー 2026-09-25:「値段」) */
   const usedPrices = computed(() => {
@@ -158,16 +168,19 @@ export function useProbLab() {
     const baseQ = maxQualityForBase(baseName.value);
     const out: LabRow[] = [];
     const base = { keep: [] as string[], need: 1, clean: false, maxMods: null, targets: [] as SimNode["targets"] };
-    // 開始: 反対側は固定済みで埋まっている (消えない)。この側は空 + 他の狙い (触らない) が others 個
+    // 開始: 反対側は固定済みで満杯 (消えないし、そちらに付きもしない)。この側は空 + 他の狙い (触らない) が others 個
+    const other: Side = side === "prefix" ? "suffix" : "prefix";
+    const otherFull = Array.from({ length: limits.value[other] }, () => ({ modId: null, side: other, fixed: true }));
     const startOf = (extra: Partial<SimState>): SimState => ({
-      slots: [{ modId: null, side: side === "prefix" ? "suffix" : "prefix", fixed: true }, ...Array.from({ length: others }, () => ({ modId: null, side, fixed: false, keep: true }))],
+      slots: [...otherFull, ...Array.from({ length: others }, () => ({ modId: null, side, fixed: false, keep: true }))],
       breach: false, ...extra,
     });
     const target = [{ modId: m.id, minTier: tmin }];
     const tags = catalystsFor(m).map((q) => q.tag).sort((a, b) => cur(catalystPriceKey(a)) - cur(catalystPriceKey(b)));
     for (const [orb, floor, label] of [["exalt_perfect", 50, "完全の高貴"], ["exalt_greater", 35, "上級の高貴"], ["exalt", 0, "普通の高貴"]] as const) {
       if (reach < floor) { out.push({ key: orb, method: label, detail: "段が届かない (このオーブは段の下限より上しか出ない)", p: 0, perTry: 0, perMiss: 0, safe: true, expected: Infinity, why: "段が届かない", nodes: [], start: startOf({}) }); continue; }
-      const variants: Array<{ q: number; tag: string | null }> = [{ q: 0, tag: null }, ...tags.flatMap((tag) => [{ q: 20, tag }, { q: baseQ + 20, tag }])];
+      const qCat = catalystQuality.value === "20" ? 20 : baseQ + 20;
+      const variants: Array<{ q: number; tag: string | null }> = [{ q: 0, tag: null }, ...tags.map((tag) => ({ q: qCat, tag }))];
       for (const v of variants) {
         const mult = v.tag ? catalysingMultiplier(v.q) : 1;
         const pHit = (w(m, tmin, floor) * mult) / poolW(floor, false, v.tag, mult);
@@ -210,20 +223,23 @@ export function useProbLab() {
         out.push({ key: `${bone}:${rr}`, method: `冒涜 (${label}、反響あり) + ${rr === "light" ? "光 + 消去" : "天体で上書き"}`, detail: `1 候補 ${(p1 * 100).toFixed(2)}%、6 候補で`, p: pHit, perTry, perMiss, safe: true, expected: perTry * tries + perMiss * (tries - 1), nodes, start: startOf({}) });
       }
     }
-    // カオス (何も守る物が無い時。両側に空きがある前提で半々)
-    {
-      const pHit = w(m, tmin, 0) / (poolW(0, false, null, 1) + [...c.pools.normal[side === "prefix" ? "suffixes" : "prefixes"]].reduce((s, id) => { const x = d.mods.get(id); return x ? s + w(x, 0, 0) : s; }, 0));
-      const perTry = cur("chaos");
-      out.push({ key: "chaos", method: "カオス (何も付いていない状態で打ち続ける)", detail: "外れは打ち直し。他の狙いがあると消す", p: pHit, perTry, perMiss: 0, safe: others === 0, expected: perTry / pHit,
-        nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: "chaos" }, targets: target, onHit: "done", onMiss: "c" }], start: { slots: [{ modId: null, side, fixed: false }], breach: false } });
-      const pErs = w(m, tmin, 0) / poolW(0, false, null, 1);
-      const perTry2 = cur("chaos") + cur(OMEN_ER[side]);
-      out.push({ key: "chaos:erasure", method: `カオス + ${side === "prefix" ? "左側" : "右側"}の抹消のお告げ`, detail: "その側だけ入れ替える", p: pErs, perTry: perTry2, perMiss: 0, safe: others === 0, expected: perTry2 / pErs,
-        nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: "chaos", side }, targets: target, onHit: "done", onMiss: "c" }], start: startOf({ slots: [{ modId: null, side: side === "prefix" ? "suffix" : "prefix", fixed: true }, { modId: null, side, fixed: false }] }) });
+    // カオス (普通 / 上級 / 完全)。外れはカオスで消えるので消去は要らない。何も守る物が無い時 (両側に空きがある前提で半々) と、
+    // 抹消のお告げでその側だけ入れ替える時 (反対側は固定済みで埋まっている)
+    const otherPool = [...c.pools.normal[side === "prefix" ? "suffixes" : "prefixes"]];
+    for (const [orb, floor, label] of [["chaos", 0, "カオス"], ["chaos_greater", 35, "上級のカオス"], ["chaos_perfect", 50, "完全のカオス"]] as const) {
+      if (reach < floor) { out.push({ key: orb, method: label, detail: "段が届かない", p: 0, perTry: 0, perMiss: 0, safe: true, expected: Infinity, why: "段が届かない", nodes: [], start: startOf({}) }); continue; }
+      const pHit = w(m, tmin, floor) / (poolW(floor, false, null, 1) + otherPool.reduce((s, id) => { const x = d.mods.get(id); return x ? s + w(x, 0, floor) : s; }, 0));
+      const perTry = cur(orb);
+      out.push({ key: orb, method: `${label} (何も付いていない状態で打ち続ける)`, detail: "外れは打ち直し。両側に出るので半々", p: pHit, perTry, perMiss: 0, safe: others === 0, expected: perTry / pHit,
+        nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: orb }, targets: target, onHit: "done", onMiss: "c" }], start: { slots: [{ modId: null, side, fixed: false }], breach: false } });
+      const pErs = w(m, tmin, floor) / poolW(floor, false, null, 1);
+      const perTry2 = cur(orb) + cur(OMEN_ER[side]);
+      out.push({ key: `${orb}:erasure`, method: `${label} + ${side === "prefix" ? "左側" : "右側"}の抹消のお告げ`, detail: "その側だけ入れ替える (反対側は埋まっている)", p: pErs, perTry: perTry2, perMiss: 0, safe: others === 0, expected: perTry2 / pErs,
+        nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: orb, side }, targets: target, onHit: "done", onMiss: "c" }], start: startOf({ slots: [...otherFull, { modId: null, side, fixed: false }] }) });
     }
     rows.value = out.sort((a, b) => a.expected - b.expected);
   }
-  watch([mod, minTier, itemLevel, othersOnSide, redoOthersDivine, prices], () => build());
+  watch([mod, minTier, itemLevel, othersOnSide, redoOthersDivine, prices, catalystQuality], () => build());
 
   const running = ref(false);
   async function runAll(): Promise<void> {
@@ -259,5 +275,5 @@ export function useProbLab() {
   }
   function unpin(i: number): void { pinned.value = pinned.value.filter((_, k) => k !== i); }
 
-  return { data, prices, error, loading, baseName, itemLevel, modId, minTier, othersOnSide, redoOthersDivine, priceLabel, runs, pinned, usedPrices, bases, cls, limits, mods, mod, tiers, rows, running, ensure, build, runAll, pin, unpin, jaOfBase, money };
+  return { data, prices, error, loading, baseName, itemLevel, modId, minTier, othersOnSide, redoOthersDivine, priceLabel, runs, pinned, usedPrices, catalystQuality, bases, cls, limits, mods, mod, tiers, rows, running, ensure, build, runAll, pin, unpin, jaOfBase, money };
 }

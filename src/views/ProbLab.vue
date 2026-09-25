@@ -41,8 +41,11 @@ const pct = (p: number): string => (p >= 1 ? "確定" : p <= 0 ? "-" : `${(p * 1
       </label>
       <label>段 (これ以上で合格)
         <select v-model.number="lab.minTier.value" class="sel ml-1">
-          <option v-for="t in [...lab.tiers.value].reverse()" :key="t.index" :value="t.index">T{{ lab.tiers.value.length - t.index }} ({{ t.ranges }}、レベル {{ t.ilvl }}、重み {{ t.weight }})</option>
+          <option v-for="t in [...lab.tiers.value].reverse()" :key="t.index" :value="t.index" :disabled="t.ilvl > lab.itemLevel.value">T{{ lab.tiers.value.length - t.index }} ({{ t.ranges }}、レベル {{ t.ilvl }}、重み {{ t.weight }}){{ t.ilvl > lab.itemLevel.value ? " — このアイテムレベルでは出ない" : "" }}</option>
         </select>
+      </label>
+      <label>触媒の品質
+        <select v-model="lab.catalystQuality.value" class="sel ml-1"><option value="max">上限まで (40%)</option><option value="20">20% (ブリーチ無し)</option></select>
       </label>
       <label title="その側に固定でない他の狙いが何個あるか。外れを消す時に巻き込む">同じ側の他の狙い <input v-model.number="lab.othersOnSide.value" type="number" min="0" max="2" class="num w-12" /> 個</label>
       <label v-if="lab.othersOnSide.value > 0" title="巻き込んで消えた時の作り直し費用">その作り直し <input v-model.number="lab.redoOthersDivine.value" type="number" min="0" class="num w-16" /> 神</label>
