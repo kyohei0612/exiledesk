@@ -56,6 +56,10 @@ const pct = (p: number): string => (p >= 1 ? "確定" : p <= 0 ? "-" : `${(p * 1
       枠: プレ {{ lab.limits.value.prefix }} / サフィ {{ lab.limits.value.suffix }}。触媒 40% はブリーチの MOD がある間だけ (ブリーチのある指輪は上限が違います)
     </p>
 
+    <details v-if="lab.usedPrices.value.length" class="mt-2 text-xs">
+      <summary class="cursor-pointer opacity-60">使う物の値段 ({{ lab.priceLabel.value }})</summary>
+      <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 opacity-80"><span v-for="x in lab.usedPrices.value" :key="x.name">{{ x.name }} <b>{{ lab.money(x.price) }}</b></span></p>
+    </details>
     <table v-if="lab.rows.value.length" class="mt-3 w-full text-xs">
       <thead>
         <tr class="opacity-50">

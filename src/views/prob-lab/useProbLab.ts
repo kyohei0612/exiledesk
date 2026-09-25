@@ -117,6 +117,21 @@ export function useProbLab() {
   watch([baseName, data], () => { if (mods.value.length && !mods.value.some((m) => m.id === modId.value)) modId.value = mods.value[0]!.id; void ensure(); });
   watch(modId, () => { minTier.value = Math.max(0, (mod.value?.tiers.length ?? 1) - 1); });
 
+  /** 使う物の値段 (その時の相場)。表の数字の元が見えるように (オーナー 2026-09-25:「値段」) */
+  const usedPrices = computed(() => {
+    const p = prices.value, m = mod.value;
+    if (!p) return [] as Array<{ name: string; price: number }>;
+    const cur = (k: string): number => p.currency[k] ?? p.omens[k] ?? NaN;
+    const side: Side = m?.type === "prefix" ? "prefix" : "suffix";
+    const sideJa = side === "prefix" ? "左側" : "右側";
+    const list: Array<[string, string]> = [
+      ["神のオーブ", "divine"], ["完全の高貴", "exalt_perfect"], ["上級の高貴", "exalt_greater"], ["高貴", "exalt"], ["カオス", "chaos"], ["消去", "annul"],
+      [`${sideJa}の高貴なお告げ`, OMEN_EX[side]], [`${sideJa}の消去のお告げ`, OMEN_AN[side]], [`${sideJa}の抹消のお告げ`, OMEN_ER[side]], ["触媒の高貴のお告げ", "OmenofCatalysingExaltation"],
+      ...(m ? catalystsFor(m).map((c) => [`${c.tag} のカタリスト`, catalystPriceKey(c.tag)] as [string, string]) : []),
+      ["普通の骨", "desecrate"], ["古代の骨", "desecrate_ancient"], [`${sideJa}のネクロマンシー`, OMEN_NE[side]], ["反響のお告げ", "OmenofAbyssalEchoes"], ["光のお告げ", "OmenofLight"], [`${sideJa}の結晶化`, OMEN_CR[side]],
+    ];
+    return list.map(([name, k]) => ({ name, price: cur(k) })).filter((x) => Number.isFinite(x.price));
+  });
   const rows = shallowRef<LabRow[]>([]);
   function build(): void {
     const d = data.value, p = prices.value, c = cls.value, m = mod.value;
@@ -244,5 +259,5 @@ export function useProbLab() {
   }
   function unpin(i: number): void { pinned.value = pinned.value.filter((_, k) => k !== i); }
 
-  return { data, prices, error, loading, baseName, itemLevel, modId, minTier, othersOnSide, redoOthersDivine, priceLabel, runs, pinned, bases, cls, limits, mods, mod, tiers, rows, running, ensure, build, runAll, pin, unpin, jaOfBase, money };
+  return { data, prices, error, loading, baseName, itemLevel, modId, minTier, othersOnSide, redoOthersDivine, priceLabel, runs, pinned, usedPrices, bases, cls, limits, mods, mod, tiers, rows, running, ensure, build, runAll, pin, unpin, jaOfBase, money };
 }
