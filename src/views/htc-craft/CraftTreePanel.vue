@@ -41,8 +41,11 @@ const rerollJa = (r: RedoPlan["rows"][number]): string =>
   r.method === "desecrate" ? `${r.bone === "desecrate_ancient" ? "古代" : "普通の骨"}・外れは${r.reroll === "overwrite" ? "天体で上書き" : "光 + 消去"}`
   : r.method === "exalt" ? `${r.catalyst ? "触媒あり・" : ""}外れは側の消去${r.safe ? " (確定)" : " (巻き込む)"}` : r.method === "chaos" ? "外れは打ち直し" : "";
 const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
+/** 組んでいる最中に開始が変わった (始め方の選び直しなど) → 終わってから組み直す */
+let autoAgain = false;
 async function loadAuto(): Promise<void> {
-  if (!t.ctx.value || autoBusy.value) return;
+  if (!t.ctx.value) return;
+  if (autoBusy.value) { autoAgain = true; return; }
   // 組む前に相場を取り直す (カタリスト・お告げの今の値段で比べる)
   await c.refreshPrices();
   const ctx = t.ctx.value;
@@ -57,6 +60,7 @@ async function loadAuto(): Promise<void> {
     t.setAll(got.nodes);
   } finally {
     autoBusy.value = false;
+    if (autoAgain) { autoAgain = false; void loadAuto(); }
   }
 }
 /**

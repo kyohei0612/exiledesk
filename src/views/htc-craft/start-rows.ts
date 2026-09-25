@@ -20,6 +20,8 @@ export interface StartRow {
   manual: boolean;
   /** 値段が無い時に出す言葉 */
   status: string;
+  /** 初動 + 作る見込み (useStartSearch で足す。見込みが出るまでは null) */
+  total?: number | null;
 }
 
 /** r = 3 本の結果 (まだなら null)。div = 神の値段 (高貴)。manualDivine = 手で入れた固定済みの値段 (神) */

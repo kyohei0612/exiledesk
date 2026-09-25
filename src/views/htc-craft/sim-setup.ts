@@ -35,7 +35,7 @@ export function simCtxOf(c: C) {
  * 出発点 = ベース決めの結果 (固定済みの MOD と樹 MOD)。カオスで入れ替える物としてもう 1 つ (外れ) 付いている。
  * fixedIds = 固定済みで始める狙い (始め方の候補ごとに変わる)
  */
-export function startStateOf(c: C, fixedIds: readonly string[], keepIds: readonly string[] = []): SimState {
+export function startStateOf(c: C, fixedIds: readonly string[], keepIds: readonly string[] = c.startKeep.value): SimState {
   const d = c.data.value;
   const slots: SimState["slots"] = c.targets.value.filter((t) => fixedIds.includes(t.modId))
     .map((t) => ({ modId: t.modId, side: (d?.mods.get(t.modId)?.type ?? "prefix") as Side, fixed: true }));

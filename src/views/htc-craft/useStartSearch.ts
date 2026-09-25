@@ -165,14 +165,22 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       const res = results.value[x.key];
       const side = res && res !== "error" && "kind" in res ? res : null;
       const m = manual.value[x.key] ?? null;
-      const sub: StartRow[] = side ? [sideRow(side, x.modIds, m)]
+      const sub0: StartRow[] = side ? [sideRow(side, x.modIds, m)]
         : res && res !== "error" ? startRows(res as TreeResult, div.value, { busy: false, manualDivine: m }) : [];
-      const best = sub.find((y) => y.cost != null) ?? null;
+      // 行ごとの合計 = 初動 + 作る見込み (固定しない行はその MOD を触らない扱いの見込み)。一番安い行はこの合計で選ぶ
+      // (2026-09-25: 初動だけで選んでいて、22 神の「固定しない」素材が 3 万神の作り方になっていた)
+      const est = craftEstimate(c, x.modIds), estKeep = craftEstimate(c, [], { keepIds: x.modIds });
+      const sub = sub0.map((r) => {
+        const e = r.id === "keep" ? estKeep : est;
+        const total = r.cost == null ? null : r.id === "buy" ? r.cost : e ? r.cost + e.value : null;
+        return { ...r, total };
+      }).sort((a, b) => (a.total ?? Infinity) - (b.total ?? Infinity));
+      const best = sub.find((y) => y.total != null) ?? sub.find((y) => y.cost != null) ?? null;
       /** 完成品の比べに渡す初動 (買う値段だけ。作る見込みは向こうで足す) */
       const startCost = side ? side.price ?? (m != null && m > 0 ? m * div.value : null) : best?.cost ?? null;
       return { ...x, res, sub, best, startCost, waiting: pending.value.includes(x.key) };
     })
-    .sort((a, b) => (a.best?.cost ?? Infinity) - (b.best?.cost ?? Infinity)));
+    .sort((a, b) => (a.best?.total ?? a.best?.cost ?? Infinity) - (b.best?.total ?? b.best?.cost ?? Infinity)));
   const chosen = computed(() => rows.value.find((x) => x.key === picked.value && x.best) ?? rows.value.find((x) => x.best) ?? null);
 
   /**
@@ -183,15 +191,9 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   const threeWay = computed(() => {
     const out: { fixed: { cost: number; label: string } | null; self: { cost: number; label: string } | null } = { fixed: null, self: null };
     for (const x of rows.value) {
-      const est = craftEstimate(c, x.modIds);
-      // 固定無しをそのまま作る (固定しない): その MOD は触らない扱いで別に見積もる
-      const estKeep = craftEstimate(c, [], { keepIds: x.modIds });
       for (const r of x.sub) {
-        if (r.cost == null) continue;
-        const e = r.id === "keep" ? estKeep : est;
-        if (!e) continue;
-        // 固定不要 (separate) の「買う + 残りを作る」は作る見込み込みの値
-        const total = r.id === "buy" ? r.cost : r.cost + e.value;
+        if (r.total == null) continue;
+        const total = r.total;
         const which = r.id === "fractured" || r.id === "buy" || r.id === "keep" ? "fixed" : "self";
         const cur = out[which];
         if (!cur || total < cur.cost) out[which] = { cost: total, label: `${x.name}: ${r.label}${r.note ? ` (${r.note})` : ""}` };
@@ -204,8 +206,13 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   watch(chosen, async (x) => {
     c.startPrice.value = x?.startCost ?? null;
     if (!x || x.res === "error" || !x.res) return;
-    const same = x.modIds.length === c.fracturedTargets.value.length && x.modIds.every((id) => c.fracturedTargets.value.some((t) => t.modId === id));
-    if (!same) c.setFractured(x.modIds);
+    // 「固定無しを買ってそのまま作る」なら固定ではなく触らない狙い (2026-09-25: 固定扱いにしていて、消去で巻き込む形を
+    // 確定と見ていた)
+    const keep = x.best?.id === "keep";
+    const fixedIds = keep ? [] : x.modIds;
+    c.startKeep.value = keep ? [...x.modIds] : [];
+    const same = fixedIds.length === c.fracturedTargets.value.length && fixedIds.every((id) => c.fracturedTargets.value.some((t) => t.modId === id));
+    if (!same) c.setFractured(fixedIds);
     await nextTick();
     if (!("kind" in x.res)) c.treeResult.value = x.res;
   });

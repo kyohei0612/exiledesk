@@ -45,7 +45,7 @@ const num = (e: Event): number | null => {
       <p class="opacity-80">{{ top.key === cheapest?.key ? "→ これで作るのが安い" : "→ 選んだ始め方" }}</p>
       <p class="text-sm"><b>{{ top.name }}</b></p>
       <p>
-        {{ top.best.label }}: <b class="text-[15px] text-amber-200">{{ c.money(top.best.cost!) }}</b>
+        {{ top.best.label }}: <b class="text-[15px] text-amber-200">{{ c.money(top.best.cost!) }}</b><span v-if="top.best.total != null && top.best.id !== 'buy'" class="opacity-70"> + 作る見込み = <b>{{ c.money(top.best.total) }}</b></span>
         <button v-if="top.best.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(top.best.link.url)">{{ top.best.link.text }} →</button>
       </p>
       <p v-if="top.best.note" class="opacity-60">{{ top.best.note }}</p>
@@ -58,7 +58,7 @@ const num = (e: Event): number | null => {
       <div v-for="r in rows.filter((x) => x.res)" :key="r.key" class="mt-1 pl-1">
         <b>{{ r.name }}</b>
         <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
-          {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}
+          {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}<span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
           <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
           <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
           <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>
@@ -70,7 +70,7 @@ const num = (e: Event): number | null => {
     <details v-if="otherRoutes.length" class="mt-2">
       <summary class="cursor-pointer opacity-60">ほかの買い方 ({{ otherRoutes.length }})</summary>
       <div v-for="o in otherRoutes" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
-        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b>
+        {{ o.label }}: <b>{{ o.cost != null ? c.money(o.cost) : o.status }}</b><span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
         <span v-if="o.manual && top" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[top.key] ?? ''" @change="ss.setManual(top.key, num($event))" /> 神</span>
         <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
         <span v-if="o.note" class="block pl-2 opacity-50">{{ o.note }}</span>
@@ -85,13 +85,13 @@ const num = (e: Event): number | null => {
           <b class="flex-1">{{ r.name }}</b>
           <span v-if="r.res === 'error'" class="text-rose-300">取れず</span>
           <template v-else-if="r.best">
-            <b>{{ c.money(r.best.cost!) }}</b>
+            <b>{{ c.money(r.best.cost!) }}</b><span v-if="r.best.total != null && r.best.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(r.best.total) }})</span>
             <button type="button" class="rounded border border-white/20 px-1" @click="ss.choose(r.key)">これにする</button>
           </template>
           <span v-else class="opacity-60">どれも選べない</span>
         </div>
         <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">
-          {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}
+          {{ o.label }}: {{ o.cost != null ? c.money(o.cost) : o.status }}<span v-if="o.total != null && o.id !== 'buy'" class="opacity-60"> (合計 {{ c.money(o.total) }})</span>
           <span v-if="o.manual" class="ml-1">手で入れる <input type="number" min="0" class="num w-14" :value="ss.manual.value[r.key] ?? ''" @change="ss.setManual(r.key, num($event))" /> 神</span>
           <button v-if="o.link" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(o.link.url)">{{ o.link.text }} →</button>
           <span v-if="o.note" class="opacity-50"> {{ o.note }}</span>

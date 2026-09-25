@@ -106,6 +106,8 @@ export function useHtcCraft() {
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
   /** カオススパムの組み立て ([[useSpamPlan.ts]])。貼り付けが無い時は作り方の設定の 0 から組む値 */
   const { catalystChoice, spamOverride, spamUsed, spam, spamFor } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
+  /** 始め方で「固定無しを買ってそのまま作る」を選んだ時の、触らない狙い (固定ではない。消えたらその回は失敗) */
+  const startKeep = ref<string[]>([]);
   /** 始め方で選んだベースの買う値段 (高貴建て)。作り方の結果に足す (オーナー 2026-09-24:「最終収支に買ったベースの値段含めてなさそう」) */
   const startPrice = ref<number | null>(null);
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
@@ -177,6 +179,7 @@ export function useHtcCraft() {
     timings.value = [];
     treeResult.value = null;
     startPrice.value = null;
+    startKeep.value = [];
     treeError.value = null;
     treeTierPick.value = {};
   }
@@ -330,7 +333,7 @@ export function useHtcCraft() {
     }).join(" + ");
 
   return {
-    stepTarget, setTier, setFractured, startPrice, refreshPrices,
+    stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
     loading, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
