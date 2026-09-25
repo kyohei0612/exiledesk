@@ -13,7 +13,7 @@ import type { useHtcCraft } from "./useHtcCraft";
 
 defineOptions({ name: "TreeBranch" });
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; t: ReturnType<typeof useCraftTree>; id: string }>();
-const emit = defineEmits<{ (e: "focus", id: string): void }>();
+const emit = defineEmits<{ (e: "focus", id: string): void; (e: "select", id: string): void }>();
 const node = computed(() => props.t.nodes.value.find((n) => n.id === props.id)!);
 const hitChild = computed(() => props.t.childOf(props.id, "onHit"));
 const missChild = computed(() => props.t.childOf(props.id, "onMiss"));
@@ -34,12 +34,12 @@ function chip(g: string | null | undefined, miss = false): string {
   <div v-if="node" class="flex flex-col">
     <div class="flex items-start gap-3">
       <div class="w-[31rem] shrink-0">
-        <TreeNodeCard :c="c" :t="t" :node="node" :index="t.indexOf(id)" @focus="(x) => emit('focus', x)" />
+        <TreeNodeCard :c="c" :t="t" :node="node" :index="t.indexOf(id)" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
       </div>
       <!-- × の枝 (右へ) -->
       <div class="mt-4 shrink-0 border-t-2 border-rose-500/60 pt-1">
         <span class="text-xs font-bold text-rose-300">×</span>
-        <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" />
+        <TreeBranch v-if="missChild" :c="c" :t="t" :id="missChild" class="mt-1" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
         <span v-else class="ml-2 rounded border border-rose-500/40 px-1 text-xs" :class="node.onMiss ? '' : 'opacity-50'">{{ chip(node.onMiss, true) }}</span>
       </div>
     </div>
@@ -49,6 +49,6 @@ function chip(g: string | null | undefined, miss = false): string {
       <span class="font-bold text-emerald-300">○</span>
       <span v-if="!hitChild" class="rounded border border-emerald-500/40 px-1" :class="node.onHit ? '' : 'opacity-50'">{{ chip(node.onHit) }}</span>
     </div>
-    <TreeBranch v-if="hitChild" :c="c" :t="t" :id="hitChild" @focus="(x) => emit('focus', x)" />
+    <TreeBranch v-if="hitChild" :c="c" :t="t" :id="hitChild" @focus="(x) => emit('focus', x)" @select="(x) => emit('select', x)" />
   </div>
 </template>

@@ -12,6 +12,8 @@
 import { computed, nextTick, ref, watch } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
+import ItemCard from "./ItemCard.vue";
+import { cardOfState, cardOfTarget } from "./item-card-data";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
@@ -96,6 +98,44 @@ async function focus(id: string): Promise<void> {
   await nextTick();
   document.getElementById(`node-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+/**
+ * 右のアイテムの絵 (オーナー 2026-09-26:「POE2 のリングの画面みたいな日本語 MOD 版。完成図と、STEP ごとに何の MOD が
+ * できるのか最新手順を表示し続ける。シミュレーター・自動の横が余っているのでそこに」)。
+ * 押した STEP の時の形を出す。押していなければ本線 (○ をたどった) の最後の STEP = 最新手順
+ */
+const cardMode = ref<"step" | "target">("step");
+const selected = ref<string | null>(null);
+/** 本線: STEP 1 から ○ をたどった並び */
+const mainLine = computed(() => {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  let id: string | null | undefined = t.nodes.value[0]?.id;
+  while (id && !seen.has(id) && t.nodes.value.some((n) => n.id === id)) {
+    seen.add(id); out.push(id);
+    const g: string | null | undefined = t.nodes.value.find((n) => n.id === id)?.onHit;
+    id = g === "done" || g === "auto" ? null : g;
+  }
+  return out;
+});
+const shownId = computed(() => (selected.value && t.nodes.value.some((n) => n.id === selected.value) ? selected.value : mainLine.value[mainLine.value.length - 1] ?? null));
+/** 絵の中身 */
+const card = computed(() => {
+  if (cardMode.value === "target" || !shownId.value) return { data: cardOfTarget(c), footer: "完成図 (狙いの MOD)" };
+  const id = shownId.value;
+  const i = t.indexOf(id);
+  const st = t.stateOf(id);
+  const after = t.nodes.value.find((n) => n.id === id);
+  return { data: cardOfState(c, st), footer: `STEP ${i + 1} を打つ前の形${after?.action ? ` → 次: ${t.labelOf(id)}` : ""}` };
+});
+/** 本線を前後に (押した STEP が本線に無ければ最後から) */
+function stepCard(d: number): void {
+  const line = mainLine.value;
+  const cur = shownId.value ? line.indexOf(shownId.value) : -1;
+  const next = Math.min(line.length - 1, Math.max(0, (cur < 0 ? line.length - 1 : cur) + d));
+  selected.value = line[next] ?? null;
+  cardMode.value = "step";
+}
+function selectStep(id: string): void { selected.value = id; cardMode.value = "step"; }
 /** 設定 (予算・目標・回数・ベース代) を出すか */
 const showSettings = ref(false);
 /** 手ごとの費用 (割合つき、高い順) */
@@ -109,7 +149,8 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
 </script>
 
 <template>
-  <div id="craft-tree-panel" class="text-sm">
+  <div id="craft-tree-panel" class="flex items-start gap-3 text-sm">
+   <div class="min-w-0 flex-1">
     <!-- 道具の列 -->
     <div class="mb-3 flex flex-wrap items-center gap-2">
       <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-bold text-black shadow hover:bg-amber-400 disabled:opacity-40" :disabled="t.running.value || autoBusy || !!t.blocked.value" @click="t.run()">
@@ -192,13 +233,28 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     <div class="rounded-xl border border-white/10 bg-black/20 p-3">
       <p class="mb-2 text-xs opacity-60">作り方は STEP の並びです。STEP を押すと開いて直せます。○ (狙いが付いた) は下へ、× (外れた) は右へ進みます。× の先の「自動で戻る」は、消えた MOD を付け直す STEP に自動で戻ります。</p>
       <div class="overflow-x-auto pb-2">
-        <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" />
+        <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" @select="selectStep" />
       </div>
       <!-- どこからも来ない手 (行き先から外した手など) -->
       <div v-if="t.unplaced.value.length" class="mt-2 space-y-2">
         <p class="text-xs opacity-60">つながっていない STEP (どの ○ / × からも来ない)</p>
-        <TreeNodeCard v-for="n in t.unplaced.value" :key="n.id" :c="c" :t="t" :node="n" :index="t.indexOf(n.id)" @focus="focus" />
+        <TreeNodeCard v-for="n in t.unplaced.value" :key="n.id" :c="c" :t="t" :node="n" :index="t.indexOf(n.id)" @focus="focus" @select="selectStep" />
       </div>
     </div>
+   </div>
+   <!-- 右: アイテムの絵 (完成図 / 今の STEP の形)。上に貼り付いて、ツリーを進めても見え続ける -->
+   <aside class="sticky top-2 w-[21rem] shrink-0">
+     <div class="mb-1 flex items-center gap-1 text-xs">
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'step' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'step'">STEP の時の形</button>
+       <button type="button" class="rounded-lg px-2 py-1" :class="cardMode === 'target' ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="cardMode = 'target'">完成図</button>
+       <template v-if="cardMode === 'step' && mainLine.length">
+         <button type="button" class="ml-auto rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の前の STEP" @click="stepCard(-1)">◀</button>
+         <span class="tabular-nums opacity-70">STEP {{ shownId ? t.indexOf(shownId) + 1 : "-" }}</span>
+         <button type="button" class="rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の次の STEP" @click="stepCard(1)">▶</button>
+       </template>
+     </div>
+     <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :footer="card.footer" />
+     <p class="mt-1 text-[11px] opacity-50">STEP を押すとその時の形になります。固定 = フラクチャー、青 = 狙い、赤 = 外れ (消す)、紫 = 冒涜、桃 = 樹 MOD</p>
+   </aside>
   </div>
 </template>

@@ -19,7 +19,7 @@ import ActionPicker from "./ActionPicker.vue";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft>; t: ReturnType<typeof useCraftTree>; node: SimNode; index: number }>();
-const emit = defineEmits<{ (e: "focus", id: string): void }>();
+const emit = defineEmits<{ (e: "focus", id: string): void; (e: "select", id: string): void }>();
 const n = computed(() => props.node);
 const state = computed(() => props.t.stateOf(n.value.id));
 const h = computed(() => props.t.helpers.value);
@@ -137,7 +137,7 @@ const gotoJa = (g: string | null | undefined, miss: boolean): string => {
   <div class="rounded-xl border bg-white/[0.04] text-xs transition" :class="open ? 'border-amber-500/40 p-3' : 'border-white/10 p-2 hover:border-white/25'" :id="`node-${n.id}`">
     <!-- 1 行目: 何をする手か (押すと開閉) -->
     <div class="flex items-start gap-2">
-      <button type="button" class="flex flex-1 items-start gap-2 text-left" :title="open ? '畳む' : '開いて直す'" @click="opened = !open">
+      <button type="button" class="flex flex-1 items-start gap-2 text-left" :title="open ? '畳む' : '開いて直す'" @click="opened = !open; emit('select', n.id)">
         <span class="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold" :class="why ? 'bg-rose-500/80 text-black' : certain ? 'bg-sky-500/80 text-black' : 'bg-amber-500/80 text-black'">STEP {{ index + 1 }}</span>
         <b class="flex-1 text-[13px] leading-snug" :class="n.action ? '' : 'opacity-50'">{{ headline }}</b>
         <span class="shrink-0 opacity-40">{{ open ? "▴" : "▾" }}</span>
