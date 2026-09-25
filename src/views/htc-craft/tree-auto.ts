@@ -73,8 +73,8 @@ export interface AutoTreeInput {
   /** 開始の指輪の側ごとの MOD の数と、そのうち固定していない物の数 (ブリーチの MOD が枠を塞ぐかを見る) */
   startCount?: Record<Side, number>;
   startLoose?: Record<Side, number>;
-  /** 消去の形。"plain" = お告げ無しの素の消去、"side" = 側の消去のお告げ付き。省くと枠と狙いの数で決める */
-  annul?: "plain" | "side";
+  /** 消去の形。"plain" = お告げ無しの素の消去、"side" = 側の消去のお告げ付き。側ごとに指定もできる。省くと枠と狙いの数で決める */
+  annul?: "plain" | "side" | Partial<Record<Side, "plain" | "side">>;
   /** 冒涜の骨。"preserved" = 段を問わない骨だけ (古代の鎖骨は高いので、比べる用)。省くと段 40 以上に届けば古代 */
   bone?: "preserved";
   /**
@@ -234,11 +234,20 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // ただし普通の狙いが 5 つ以上だと、素の消去が反対側の狙いを消して揃わない (プリズム 6 つ、本物の段: 素の消去は 6 万手で
   // 完成 56% / 側のお告げ付きは 100%・平均 18,157 神)。多い時は側の消去にする
   // 両側とも 2 枠以下 (不在のアミュレット) は側の消去 (その側の外れは 1 つしか無いので確定で外れだけ消える)
-  const plainAnnul = inp.annul ? inp.annul === "plain" && (inp.protectedSides ?? []).length === 0
-    : !narrow && (inp.protectedSides ?? []).length === 0 && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
+  const noShield = (inp.protectedSides ?? []).length === 0;
+  const plainDefault = !narrow && noShield && ts.filter((t) => mod(t.modId).source === "normal").length <= 4;
+  /** その側の外れを素の消去で消すか (触らない MOD があれば素の消去は使わない) */
+  const plainFor = (side: Side): boolean => {
+    if (!noShield) return false;
+    const a = inp.annul;
+    if (a == null) return plainDefault;
+    if (typeof a === "string") return a === "plain";
+    return (a[side] ?? (plainDefault ? "plain" : "side")) === "plain";
+  };
   const annulFor = (side: Side): string => {
-    const aid = plainAnnul ? "x-any" : `x-${side}`;
-    if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side: plainAnnul ? null : side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
+    const plain = plainFor(side);
+    const aid = plain ? "x-any" : `x-${side}`;
+    if (!extra.some((x) => x.id === aid)) extra.push({ ...base, id: aid, action: { kind: "annul", side: plain ? null : side }, targets: [], need: 1, onHit: "auto", onMiss: "auto" });
     return aid;
   };
 

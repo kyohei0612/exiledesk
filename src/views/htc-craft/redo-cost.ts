@@ -30,6 +30,8 @@ export interface MethodEstimate {
   catalyst?: string | null;
   /** 高貴のオーブ (完全 / 上級 / 普通) */
   orb?: "exalt_perfect" | "exalt_greater" | "exalt";
+  /** 外れは素の消去 (お告げ無し) の方が安いか */
+  plainAnnul?: boolean;
   /** 1 回の値段 (高貴建て) */
   perTry: number;
   /** 1 回で当たる確率 */
@@ -54,6 +56,8 @@ export interface RedoPlan {
   desecratePick: string | null;
   /** 狙いごとの高貴のオーブ (見積もりで安かった物) */
   exaltTiers: Record<string, "exalt_perfect" | "exalt_greater" | "exalt">;
+  /** 側ごとの外れの消し方 (見積もりで安かった物。その側に高貴の狙いが無ければ無し) */
+  annulSides: Partial<Record<Side, "plain" | "side">>;
   reroll?: Reroll;
   bone?: "preserved";
 }
@@ -113,7 +117,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
    * 合格の下限がレベル 50 以上なら完全、それ未満なら上級が安い。触媒はカタリストが安ければ 3〜5 倍安く、アタックのように
    * 高い物でも触媒無しよりは安いが、同じ MOD に安い物が効くならそちら)
    */
-  function exaltEst(t: TierTarget, k: number, redoPrior: number): MethodEstimate {
+  function exaltEst(t: TierTarget, k: number, redoPrior: number, kOther = 0, redoOther = 0): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
     // 貼り付けに品質の種類があるなら、その種類が効く狙いだけ触媒を使う (種類を替えると品質が 0 からになり、側が埋まった後は
     // 元の種類に戻せない)。品質の種類が無ければ効くカタリストの一番安い物。
@@ -123,7 +127,17 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const tag = inp.qualityTag ? (cats.includes(inp.qualityTag) ? inp.qualityTag : null) : cats[0] ?? null;
     const others = k + (shielded.has(s) ? loose(s) : 0);
     const risky = shielded.has(s);
-    const perMiss = cur("annul") + cur(OMEN_AN[s]) + (others > 0 ? (others / (others + 1)) * redoPrior : 0);
+    // 外れの消し方は 2 通りを見積もって安い方 (オーナー 2026-09-25:「お告げ使って消去回す時も決めなあかん」):
+    //   側の消去のお告げ … 消えるのはその側の物だけ。同じ側の狙いは巻き込む (お告げ代 10〜18 神)
+    //   素の消去 … 両側の固定でない物から 1 つ (6 カオス)。反対側の狙いも巻き込む
+    // 巻き込む分 = (巻き込む確率) × (作り直しの費用)。守りたい物が反対側にしか無ければお告げは要らず、同じ側にあるなら
+    // お告げを払っても守れない (2026-09-25 金の指輪: 素の消去 523 神 / 右側のお告げ 1,162 神)
+    const otherSide = kOther + (shielded.has(s === "prefix" ? "suffix" : "prefix") ? loose(s === "prefix" ? "suffix" : "prefix") : 0);
+    const missSide = cur("annul") + cur(OMEN_AN[s]) + (others > 0 ? (others / (others + 1)) * redoPrior : 0);
+    const nAll = others + otherSide + 1;
+    const missPlain = cur("annul") + (others > 0 ? (others / nAll) * redoPrior : 0) + (otherSide > 0 ? (otherSide / nAll) * redoOther : 0);
+    const perMiss = Math.min(missSide, missPlain);
+    const plainAnnul = missPlain <= missSide;
     const r = reach(t);
     let best: MethodEstimate | null = null;
     for (const [orb, floor] of [["exalt_perfect", 50], ["exalt_greater", 35], ["exalt", 0]] as const) {
@@ -132,7 +146,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
         const mult = useTag ? catalysingMultiplier(qualityMax) : 1;
         const refill = useTag ? catalystCountFor(qualityMax) * cur(catalystPriceKey(useTag)) + cur("OmenofCatalysingExaltation") : 0;
         const pHit = (w(m, t.minTierIndex ?? 0, floor) * mult) / poolW(s, floor, false, useTag, mult);
-        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, perTry: cur(orb) + cur(OMEN_EX[s]) + refill, p: pHit, perMiss, safe: others === 0,
+        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, plainAnnul, perTry: cur(orb) + cur(OMEN_EX[s]) + refill, p: pHit, perMiss, safe: plainAnnul ? others + otherSide === 0 : others === 0,
           ...(risky ? { why: "触らない MOD がある側 (消去で巻き込む)" } : {}) });
         if (!best || e.expected < best.expected) best = e;
       }
@@ -200,7 +214,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
       .sort((a, b) => exaltEst(b, 0, 0).p - exaltEst(a, 0, 0).p);
     for (const t of rest) {
       const s = sideOf(t.modId);
-      const e = exaltEst(t, placed[s], placed[s] ? redoSum[s] / placed[s] : 0);
+      const o: Side = s === "prefix" ? "suffix" : "prefix";
+      const e = exaltEst(t, placed[s], placed[s] ? redoSum[s] / placed[s] : 0, placed[o], placed[o] ? redoSum[o] / placed[o] : 0);
       rows.push(e); placed[s] += 1; redoSum[s] += e.expected;
     }
     if (dc) rows.push(bestDesec(dc, placed[sideOf(dc.modId)]));
@@ -209,7 +224,13 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     if (!best || total < best.total) {
       const dr = rows.find((r) => r.method === "desecrate");
       const exaltTiers = Object.fromEntries(rows.filter((r) => r.method === "exalt" && r.orb).map((r) => [r.modId, r.orb!]));
-      best = { rows, total, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null, exaltTiers,
+      // 側ごと: その側の高貴の狙いのうち、外れの多い (見込みの大きい) 物の消し方に合わせる
+      const annulSides: Partial<Record<Side, "plain" | "side">> = {};
+      for (const sd of ["prefix", "suffix"] as Side[]) {
+        const ex = rows.filter((r) => r.method === "exalt" && r.side === sd).sort((x, y) => y.expected - x.expected)[0];
+        if (ex) annulSides[sd] = ex.plainAnnul ? "plain" : "side";
+      }
+      best = { rows, total, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null, exaltTiers, annulSides,
         ...(dr?.reroll ? { reroll: dr.reroll } : {}), ...(dr?.bone === "desecrate" ? { bone: "preserved" as const } : {}) };
     }
   }
