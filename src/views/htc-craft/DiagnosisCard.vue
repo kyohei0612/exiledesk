@@ -66,9 +66,9 @@ const flow = computed(() => {
   const n = ss.checked.value.length;
   return [
     { label: `候補の「固定済み」を 1 本ずつ (${ss.current.value && at === 0 ? `${ss.current.value.index}/${ss.current.value.count}` : `${n} 本`})`, state: at > 0 ? "done" : at === 0 ? "now" : "todo" },
-    { label: "一番安い候補の「固定無し」(自分でフラクチャーする道。固定済みが安すぎれば飛ばす)", state: at > 1 ? "done" : at === 1 ? "now" : "todo" },
-    { label: "完成品を 1 本", state: at === 2 ? "now" : "todo" },
-    { label: "→ ② 買うか作るか を出して、作り方を自動で組む", state: "todo" },
+    { label: "最安候補の固定無し (自分でフラクチャーする道)", state: at > 1 ? "done" : at === 1 ? "now" : "todo" },
+    { label: "完成品", state: at === 2 ? "now" : "todo" },
+    { label: "→ ② を出して作り方を組む", state: "todo" },
   ];
 });
 // 画面を離れたら取得を打ち切る (入口に戻るは c.reset() が打ち切る)
@@ -192,7 +192,7 @@ const fixLabel = computed(() => {
     <ModBreakdown :c="c" />
     <!-- 解析おｋ → ① へ (段を直したい時はここで直してから) -->
     <div v-if="c.phase.value === 'analyzed'" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-      <span>MOD と段はこれでおｋ？ <span class="opacity-60">(段は上の枠で選び直せます)</span></span>
+      <span>MOD と段はこれでおｋ？</span>
       <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 font-bold text-black shadow hover:bg-amber-400" @click="goPick()">おｋ → ① 固定する MOD を選ぶ</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" title="取引所で探さずに、貼った物のまま作り方を組む" @click="finishDiag()">探さずに作り方へ</button>
     </div>
@@ -216,12 +216,12 @@ const fixLabel = computed(() => {
           完成品を買うのをすすめます (右で探せます)
         </div>
         <div v-else-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
-          <p class="mb-1 opacity-60">出にくい MOD ほど固定 (フラクチャー) の価値が高い。出にくい順に 3 つまで選んであります</p>
+          <p class="mb-1 opacity-60">出にくい MOD ほど固定の価値が高い (出にくい順に 3 つ選択済み)</p>
           <!-- 樹 MOD を固定 (作る側に樹 MOD が 1 つ) -->
           <template v-if="ss.kind.value.kind === 'fix'">
             <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD</p>
             <p class="opacity-80">
-              🔒 {{ fixLabel }}を固定 <span class="opacity-60">(樹 MOD はクラフトで付け直せず、カオスや消去で消えるので固定。ほかの MOD は選べません)</span>
+              🔒 {{ fixLabel }}を固定 <span class="opacity-60">(樹 MOD は付け直せないので固定。ほかは選べない)</span>
             </p>
           </template>
           <template v-else>
@@ -230,8 +230,7 @@ const fixLabel = computed(() => {
             </p>
             <!-- 固定不要 (作る側に樹 MOD が無い) -->
             <p v-if="ss.kind.value.kind === 'separate'" class="mb-1 text-emerald-300/90">
-              固定不要: 作るのは{{ sideJa(ss.kind.value.craftSide) }}だけなので、{{ omenSide }}のお告げで作れば樹 MOD は消えません。
-              樹 MOD が付いた物を買って始めます (固定の有無は問わない)
+              固定不要: {{ sideJa(ss.kind.value.craftSide) }}だけ作るので樹 MOD は消えない ({{ omenSide }}のお告げで側を守る)。樹 MOD 付きを買って始める
             </p>
             <label v-for="x in ss.candidates.value.filter((y) => !y.side)" :key="x.key" class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/5" :class="ss.locked(x.key) ? 'opacity-40' : ''">
               <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
@@ -260,7 +259,7 @@ const fixLabel = computed(() => {
               </li>
             </ol>
           </div>
-          <p v-else class="mt-1 opacity-50">取引所へ約 {{ calls }} 本 (10 秒に 4 本まで。30 分は結果を覚えておきます)</p>
+          <p v-else class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 (結果は 30 分覚える)</p>
         </div>
       </section>
 
@@ -306,17 +305,17 @@ const fixLabel = computed(() => {
           </span>
           <button v-if="fin.found.value?.url" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
         </p>
-        <p class="opacity-50">条件は MOD だけ (普通・固定済み・冒涜のどれで付いていてもいい)</p>
+        <p class="opacity-50">MOD が同じ物 (固定済み・冒涜でも可)</p>
         <p v-if="fin.lightNote.value" class="text-amber-300/80">{{ fin.lightNote.value }}</p>
-        <p v-if="fin.exhausted.value" class="rounded bg-amber-500/10 px-1 text-amber-200">条件を緩めても (段を問わず、MOD を 3 つまで減らして) 完成品は出ませんでした</p>
+        <p v-if="fin.exhausted.value" class="rounded bg-amber-500/10 px-1 text-amber-200">3 MOD まで緩めても出品なし</p>
         <p v-if="fin.dropped.value.length" class="rounded bg-amber-500/10 px-1 text-amber-200">
-          同じ完成品は無かったので、近い物 (MOD だけ同じ形): {{ fin.dropped.value.join(" / ") }} を外して見つけた値段です。妥協して買うならこれ (足りない MOD は買ってから付ける)
+          近い物: {{ fin.dropped.value.join(" / ") }} が無い (買ってから付ける)
         </p>
         <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
-        <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく、値段が作る見込みよりけた違いに高いので当てにしません (比べていません)</p>
-        <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨なので、作る見込みは出しません</p>
-        <p v-else-if="fin.craftBasis.value" class="opacity-50">始め方の初動 + {{ fin.craftBasis.value }}。目安で、下の作り方で回すと正確になります</p>
-        <p v-else class="opacity-50">始め方を探すと出ます</p>
+        <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく高すぎるので比べない</p>
+        <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨 (見込みなし)</p>
+        <p v-else-if="fin.craftBasis.value" class="opacity-50">初動 + 作る見込み ({{ fin.craftBasis.value }})。正確な額は下の作り方で</p>
+        <p v-else class="opacity-50">始め方を探すと出る</p>
           </div>
         </div>
         <!-- 3 つの道の中身 -->

@@ -61,7 +61,7 @@ const num = (e: Event): number | null => {
     </p>
     <!-- どれも値段が出ない時は畳まずに全部出し、出品が無い物は手で値段を入れられるように (「足りない情報は手動で」) -->
     <template v-if="started && !waiting.length && !top?.best">
-      <p class="text-rose-300">選べる始め方がありません (取れなかった・出品が足りない)。出品が無い物は値段を手で入れられます</p>
+      <p class="text-rose-300">始め方なし (出品なし)。値段は手で入れられる</p>
       <div v-for="r in rows.filter((x) => x.res)" :key="r.key" class="mt-1 pl-1">
         <b>{{ r.name }}</b>
         <div v-for="o in r.sub" :key="o.id" class="pl-3" :class="o.cost == null && !o.manual ? 'opacity-50' : ''">

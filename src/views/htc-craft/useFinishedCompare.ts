@@ -194,10 +194,10 @@ export function useFinishedCompare(
         r = await autoPriceCached(league, q, marketStore.rates.value, 5);
         guard();
         if (r) lightNote.value = next === "light"
-          ? "条件が複雑過ぎると断られたので、冒涜で付いた MOD は拾わない条件で探しました"
-          : "条件が複雑過ぎると断られたので、固定済みの MOD も拾わない条件で探しました";
+          ? "冒涜で付いた物は除外 (条件が多すぎた)"
+          : "固定済みも除外 (条件が多すぎた)";
       }
-      if (!loggedIn && !lightNote.value) lightNote.value = "ログインしていないので、冒涜で付いた MOD は拾わない条件で探しました (取引履歴の画面でログインすると、ゆるい条件で探せます)";
+      if (!loggedIn && !lightNote.value) lightNote.value = "未ログインのため冒涜で付いた物は除外 (取引履歴でログインすると拾える)";
       // 出品が無ければ、値 (段) を外して MOD の組み合わせだけで探し直す (「近い物を探す」を押した時だけ)
       const loose = deep ? build(level, false) : null;
       if (deep) deepDone.value = true;
@@ -207,7 +207,7 @@ export function useFinishedCompare(
         guard();
         if (r2) {
           r = r2;
-          lightNote.value = [lightNote.value, "同じ値の完成品が無かったので、値 (段) は問わず MOD の組み合わせだけで探しました"].filter(Boolean).join("。");
+          lightNote.value = [lightNote.value, "同じ段は無し → 段を問わずに探した"].filter(Boolean).join("。");
           tierless.value = true;
         }
       }

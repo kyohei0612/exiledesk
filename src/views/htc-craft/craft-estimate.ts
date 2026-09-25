@@ -32,15 +32,15 @@ export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
   if (hit && hit !== "pending") {
     return hit.value == null ? null : {
       value: hit.value, pDone: hit.pDone,
-      basis: `自動で組んだツリーを ${RUNS} 回回した平均${hit.pDone < 0.95 ? ` (完成 ${(hit.pDone * 100).toFixed(0)}%)` : ""}`,
+      basis: `自動ツリー ${RUNS} 回の平均${hit.pDone < 0.95 ? `、完成 ${(hit.pDone * 100).toFixed(0)}%` : ""}`,
     };
   }
   if (!hit) queueMicrotask(() => void runAuto(c, [...fixedIds], key, [...keepIds]));
   const fixed = c.targets.value.filter((t) => fixedIds.includes(t.modId));
   const spam = c.spamFor(fixed)?.total?.expected;
-  if (spam != null) return { value: spam, basis: "計算中 (仮に自動の組み立ての平均)" };
+  if (spam != null) return { value: spam, basis: "計算中" };
   const steps = stepsEstimate(c, fixedIds);
-  return steps != null ? { value: steps, basis: "計算中 (仮に狙いを 1 つずつ付ける合計)" } : null;
+  return steps != null ? { value: steps, basis: "計算中" } : null;
 }
 
 /** 自動のツリーを回す回数 (候補ごと。多いと重い) */

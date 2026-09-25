@@ -180,7 +180,7 @@ const perNode = computed(() => {
   const total = Math.max(1, r.perNode.reduce((a, x) => a + x.cost, 0));
   return r.perNode.map((p, i) => ({ ...p, index: i, share: p.cost / total })).sort((a, b) => b.cost - a.cost);
 });
-const busyText = computed(() => autoBusy.value ? "組んでいます… (候補をいくつか回して比べています)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "上の ② の取得が終わってから自動で組みます" : "");
+const busyText = computed(() => autoBusy.value ? "組んでいます… (候補を比べ中)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "② が終わると自動で組む" : "");
 </script>
 
 <template>
@@ -245,7 +245,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     <details v-if="plan" class="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs" open>
       <summary class="cursor-pointer select-none">
         <b>取り方</b> <span class="opacity-60">見込み {{ t.baseEx.value > 0 ? `初動 ${c.money(t.baseEx.value)} + クラフト ${c.money(plan.total)} = ` : "" }}<b class="opacity-100">{{ c.money(plan.total + t.baseEx.value) }}</b></span>
-        <template v-if="picked"><span class="opacity-60"> ・ 候補を回して採ったのは「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
+        <template v-if="picked"><span class="opacity-60"> ・ 採用「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
       </summary>
       <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
       <div class="mt-2 overflow-hidden rounded-lg border border-white/[0.08]">
@@ -275,7 +275,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
 
     <!-- ツリー: ○ は下へ、× は右へ。手を押すと開いて直せる -->
     <div class="rounded-xl border border-white/[0.07] bg-black/20 p-3">
-      <p class="mb-2 text-xs opacity-50">作り方は STEP の並びです。STEP を押すと開いて直せます。○ (狙いが付いた) は下へ、× (外れた) は右へ進みます。× の先の「自動で戻る」は、消えた MOD を付け直す STEP に自動で戻ります。</p>
+      <p class="mb-2 text-xs opacity-50">STEP を押すと開いて直せる。○ = 付いた → 下へ、× = 外れ → 右へ。「自動で戻る」= 消えた MOD を付け直す STEP へ</p>
       <div class="overflow-x-auto pb-2">
         <TreeBranch v-if="t.nodes.value[0]" :c="c" :t="t" :id="t.nodes.value[0].id" @focus="focus" @select="selectStep" />
       </div>
@@ -299,7 +299,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
        </template>
      </div>
      <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :detail="cardDetail" :footer="card.footer" />
-     <p class="mt-1.5 text-[11px] opacity-40">STEP を押すとその時の形。金の帯 = 固定、青 = 狙い、赤 = 外れ (消す)、紫 = 冒涜、桃 = 樹 MOD</p>
+     <p class="mt-1.5 text-[11px] opacity-40">金の帯 = 固定、青 = 狙い、赤 = 外れ、紫 = 冒涜、桃 = 樹 MOD</p>
     </aside>
   </div>
 </template>

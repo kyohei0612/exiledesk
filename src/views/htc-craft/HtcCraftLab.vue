@@ -149,7 +149,7 @@ const implicitText = (lines: readonly string[]): string =>
       <!-- 前回の続き: 貼り直し → おｋ → 探す (キャッシュ) → 作り方 まで 1 押しで -->
       <button v-if="lastPaste" type="button" class="rounded border border-amber-500/40 bg-amber-500/10 p-4 text-left hover:border-amber-400" @click="resumeLast()">
         <div class="mb-1 font-bold text-amber-300">前回の続きから</div>
-        <div class="text-xs opacity-70">{{ lastPasteLabel }} — 解析 → 探す → 作り方まで自動で通します (取引所は 30 分の覚えを使う)</div>
+        <div class="text-xs opacity-70">{{ lastPasteLabel }} — 作り方まで自動で進む</div>
       </button>
       <button
         type="button"
@@ -338,13 +338,13 @@ const implicitText = (lines: readonly string[]): string =>
     </p>
 
     <p v-if="c.loading.value && !c.base.value" class="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-      <span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }} <span class="opacity-60">— 済むと診断 → 始め方 → 完成品 → 作り方の順に埋まります</span>
+      <span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }} <span class="opacity-60">— 済むと順に埋まる</span>
     </p>
     <template v-if="c.base.value">
       <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />
       <!-- 作り方は ②③ が済んでから (順に出す。v-show で組んだツリーは保つ) -->
-      <p v-if="c.diagBusy.value" class="mb-1 mt-5 text-xs opacity-50">作り方 (STEP の並び) は、上の取得 (②) が終わってから自動で組んで出します</p>
+      <p v-if="c.diagBusy.value" class="mb-1 mt-5 text-xs opacity-50">作り方は ② が終わると自動で出る</p>
       <div v-show="!c.diagBusy.value">
         <h2 class="mb-1 mt-5 text-base font-bold">作り方 (STEP の並び)</h2>
         <CraftTreePanel :c="c" />
