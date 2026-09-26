@@ -75,6 +75,11 @@ export interface AutoTreeInput {
   /** 開始の指輪の側ごとの MOD の数と、そのうち固定していない物の数 (ブリーチの MOD が枠を塞ぐかを見る) */
   startCount?: Record<Side, number>;
   startLoose?: Record<Side, number>;
+  /**
+   * 開始の指輪の側ごとの触らない MOD (固定していない樹 MOD など、消えない前提の物。狙いの MOD は targets で数えるので入れない) の数。
+   * 側のお告げが要るかの見積もりに使う
+   */
+  startKeep?: Record<Side, number>;
   /** 消去の形。"plain" = お告げ無しの素の消去、"side" = 側の消去のお告げ付き。側ごとに指定もできる。省くと枠と狙いの数で決める */
   annul?: "plain" | "side" | Partial<Record<Side, "plain" | "side">>;
   /** 冒涜の骨。"preserved" = 段を問わない骨だけ (古代の鎖骨は高いので、比べる用)。省くと段 40 以上に届けば古代 */

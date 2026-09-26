@@ -138,7 +138,10 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   };
   const unplaced = computed(() => nodes.value.filter((n) => !layout.value.placed.has(n.id)));
 
-  /** 1 回で○になる確率 (その手の指輪から 400 回打ってみる) */
+  /**
+   * 1 回で○になる確率 (その手の指輪から 400 回打ってみる)。付いている系統は apply (roll) が外す: 狙い・固定済み・触らない狙いは
+   * modId から、外れは family があれば (代表の指輪の外れは系統が分からないので外さない。貼り付けの樹 MOD 等もエンジンに無い)。2026-09-26 確認
+   */
   function hitOdds(n: SimNode): number | null {
     const h = helpers.value;
     if (!h || !n.action || h.usable(stateOf(n.id), n.action)) return null;

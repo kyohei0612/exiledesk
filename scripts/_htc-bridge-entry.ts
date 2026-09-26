@@ -52,6 +52,7 @@ export function loadPatchSync(): PatchData {
 export { stepHelpers } from "../src/services/htc/step-odds";
 export { jaOfPastedLine } from "../src/services/htc/mod-text";
 export { simulateTree, simHelpers } from "../src/services/htc/sim-route";
+export { mulberry32 } from "../src/services/htc/rng";
 export { TREE_PRESETS } from "../src/views/htc-craft/tree-presets";
 export { startKindOf } from "../src/views/htc-craft/start-kind";
 export { autoTree, chaosSideFor } from "../src/views/htc-craft/tree-auto";

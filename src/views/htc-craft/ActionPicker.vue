@@ -16,7 +16,7 @@ import { computed, ref, watch } from "vue";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { CATALYSTS, catalystsFor } from "../../services/htc/quality";
-import type { SimAction, SimState } from "../../services/htc/sim-route";
+import { hasSideOmen, type SimAction, type SimState } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -91,6 +91,14 @@ const chosen = computed(() => OMENS.filter((o) => omens.value.includes(o.key)));
 const group = computed<Group | null>(() => chosen.value[0]?.group ?? null);
 const side = computed<Side | null>(() => chosen.value.find((o) => o.side)?.side ?? null);
 const has = (tag: Omen["tag"]): boolean => chosen.value.some((o) => o.tag === tag);
+/**
+ * 選んだ側のお告げが、この手の形 (その手に来た時の指輪の代表) では効かないか (反対側に枠が無い・外せる物がこの側にしか無い等)。
+ * 効かなければ値段にも入らない ([[sim-route.ts]] の omenNeeded。2026-09-26 オーナー承認)
+ */
+const sideOmenOff = computed(() => {
+  const a = props.action;
+  return !!h.value && hasSideOmen(a) && !h.value.usable(props.state, a) && !h.value.omenNeeded(props.state, a!);
+});
 
 /** お告げとオーブから打つ物を作る (揃っていなければ null) */
 function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null {
@@ -200,7 +208,7 @@ function setCatalyst(tag: string): void { catalyst.value = tag; emitNow(); }
     <div class="flex flex-wrap items-center gap-1">
       <span class="opacity-60">お告げ:</span>
       <span v-for="o in chosen" :key="o.key" class="rounded border border-sky-600/60 px-1">
-        {{ o.ja }} <button type="button" class="opacity-60 hover:opacity-100" @click="removeOmen(o.key)">×</button>
+        {{ o.ja }}<span v-if="o.side && sideOmenOff" class="ml-1 text-amber-300" title="反対側に枠が無い・外せる物がこの側にしか無い等で、この形では結果が変わりません (値段にも入れていません)">(この形ではお告げ不要)</span> <button type="button" class="opacity-60 hover:opacity-100" @click="removeOmen(o.key)">×</button>
       </span>
       <select v-if="addable.length" class="rounded border border-white/20 bg-black/30 px-1" value="" @change="addOmen(($event.target as HTMLSelectElement).value)">
         <option value="">{{ chosen.length ? "＋ お告げを足す" : "お告げなし" }}</option>

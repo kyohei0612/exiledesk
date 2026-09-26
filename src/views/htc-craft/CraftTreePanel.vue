@@ -63,10 +63,11 @@ const howJa = (r: RedoPlan["rows"][number]): string => {
     case "chaos": return "カオスオーブ";
     case "exalt": {
       const cat = r.catalyst ? CATALYSTS.find((k) => k.tag === r.catalyst) : null;
-      return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"} + ${omen(OMEN.exalt[r.side])}${cat ? ` + ${omen("OmenofCatalysingExaltation")} (${cat.ja})` : ""}`;
+      // 反対側が埋まっていて側のお告げが効かない時は書かない (値段にも入れていない。2026-09-26 オーナー承認)
+      return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"}${r.noSideOmen ? "" : ` + ${omen(OMEN.exalt[r.side])}`}${cat ? ` + ${omen("OmenofCatalysingExaltation")} (${cat.ja})` : ""}${r.noSideOmen ? " (反対側が埋まっているのでお告げ不要)" : ""}`;
     }
-    case "desecrate": return `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}`;
-    case "essence": return "パーフェクトエッセンス (確定)";
+    case "desecrate": return r.noSideOmen ? `${priceJa(r.bone ?? "desecrate")} (反対側が埋まっているのでお告げ不要)` : `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}`;
+    case "essence": return r.noSideOmen ? "パーフェクトエッセンス (確定・反対側に外せる物が無いのでお告げ不要)" : `パーフェクトエッセンス + ${omen(OMEN.crystallisation[r.side])} (確定)`;
     default: return r.method;
   }
 };

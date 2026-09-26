@@ -11,7 +11,7 @@
  *   - 頭に「何をする手か」を 1 行で出す。狙う MOD は押せる札。細かい条件はたたむ
  */
 import { computed, ref } from "vue";
-import { CERTAIN, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
+import { CERTAIN, hasSideOmen, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
 import { CATALYSTS } from "../../services/htc/quality";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { OMEN } from "../../services/htc/omens";
@@ -36,16 +36,26 @@ const omenJa = (key: string): string => jaOfOmen(key) ?? key;
 const boneJa = (key: string): string => jaOfPriceKey(key, props.c.base.value ?? undefined) ?? key;
 const TIER: Record<string, string> = { chaos: "", chaos_greater: " (上級)", chaos_perfect: " (完全)", exalt: "", exalt_greater: " (上級)", exalt_perfect: " (完全)" };
 const catJa = (tag: string | null): string => CATALYSTS.find((k) => k.tag === tag)?.ja ?? tag ?? "";
-/** 打つ物を 1 行の言葉に */
-function actionText(a: SimAction | null): string {
+/**
+ * 側のお告げがこの手の形 (その手に来た時の指輪の代表) では効かないか。効かなければ値段にも入れない ([[sim-route.ts]] の
+ * omenNeeded)。2026-09-26 オーナー承認: 効かないお告げの代を取るのをやめた時、画面が「お告げを使う」のままだった
+ */
+const omenOff = computed(() => {
+  const a = n.value.action;
+  return !!h.value && hasSideOmen(a) && !why.value && !h.value.omenNeeded(state.value, a!);
+});
+/** 打つ物を 1 行の言葉に (off = 側のお告げを省いて「この形ではお告げ不要」と添える) */
+function actionText(a: SimAction | null, off = false): string {
   if (!a) return "打つ物を選ぶ";
+  const so = (key: string): string => (off ? "" : omenJa(key));
+  const join = (...xs: string[]): string => xs.filter(Boolean).join(" + ") + (off ? " (この形ではお告げ不要)" : "");
   switch (a.kind) {
-    case "chaos": return `${a.side ? `${omenJa(OMEN.erasure[a.side])} + ` : ""}カオスオーブ${TIER[a.tier]}`;
-    case "exalt": return [a.side ? omenJa(OMEN.exalt[a.side]) : "", a.greater ? omenJa("OmenofGreaterExaltation") : "", a.catalyst ? `${omenJa("OmenofCatalysingExaltation")} (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`].filter(Boolean).join(" + ");
-    case "annul": return `${a.side ? `${omenJa(OMEN.annul[a.side])} + ` : ""}消去のオーブ`;
-    case "essence": return `${a.removeSide === "auto" ? "外れのある側の結晶化のお告げ" : omenJa(OMEN.crystallisation[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side])} + パーフェクトエッセンス`;
-    case "breach": return `${omenJa(OMEN.crystallisation[a.removeSide ?? "prefix"])} + ブリーチのエッセンス (品質の上限 +20%)`;
-    case "desecrate": return `${omenJa(OMEN.necromancy[a.side])}${a.echoes ? ` + ${omenJa("OmenofAbyssalEchoes")}` : ""} + ${boneJa(a.bone)}`;
+    case "chaos": return join(a.side ? so(OMEN.erasure[a.side]) : "", `カオスオーブ${TIER[a.tier]}`);
+    case "exalt": return join(a.side ? so(OMEN.exalt[a.side]) : "", a.greater ? omenJa("OmenofGreaterExaltation") : "", a.catalyst ? `${omenJa("OmenofCatalysingExaltation")} (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`);
+    case "annul": return join(a.side ? so(OMEN.annul[a.side]) : "", "消去のオーブ");
+    case "essence": return join(off ? "" : a.removeSide === "auto" ? "外れのある側の結晶化のお告げ" : omenJa(OMEN.crystallisation[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]), "パーフェクトエッセンス");
+    case "breach": return join(so(OMEN.crystallisation[a.removeSide ?? "prefix"]), "ブリーチのエッセンス (品質の上限 +20%)");
+    case "desecrate": return join(so(OMEN.necromancy[a.side]), a.echoes ? omenJa("OmenofAbyssalEchoes") : "", boneJa(a.bone));
     case "light": return `${omenJa("OmenofLight")} + 消去のオーブ (冒涜だけ消す)`;
     case "whittle": return `${omenJa("OmenofWhittling")} + カオスオーブ (一番レベルの低い MOD を消す)`;
     case "check": return "確認だけ (打たない)";
@@ -60,7 +70,8 @@ const headline = computed(() => {
   const aim = a.kind === "essence" ? name(a.modId)
     : ts.length ? `${ts.map((x) => name(x.modId)).join(" / ")}${ts.length > 1 ? ((n.value.need ?? 1) > 1 ? ` の ${n.value.need} つ` : " のどれか") : ""}`
       : a.kind === "annul" ? "外れを消す" : "";
-  return aim ? `${actionText(a)} → ${aim}` : actionText(a);
+  const text = actionText(a, omenOff.value);
+  return aim ? `${text} → ${aim}` : text;
 });
 
 /** 打つ物を選んだ。消去・光の手は、行き先が空なら「自動」を入れておく (消えた物を見て戻り先を決める) */

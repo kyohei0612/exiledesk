@@ -31,6 +31,11 @@ export interface Slot {
   fixed: boolean;
   /** 画面の名前 (樹 MOD など、エンジンに無い物) */
   label?: string;
+  /**
+   * 付いている MOD の系統 (外れでも分かれば)。同じ系統はもう付かないので抽選の元から外す (シミュレーターの SimSlot.family と
+   * 同じ。2026-09-26: 前は狙いの MOD の系統だけ外していて、外れの系統がまた出る扱いだった)。modId があればそちらから引く
+   */
+  family?: string;
 }
 
 export interface ItemState {
@@ -101,8 +106,9 @@ export function stepHelpers(ctx: StepCtx) {
   const sw = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   const count = (s: ItemState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
   const room = (s: ItemState, side: Side): boolean => count(s, side) < ctx.limits[side];
+  /** 付いている系統 (狙いも外れも。系統が分からない物は数えない。[[sim-route.ts]] の families と同じ) */
   const families = (s: ItemState, skip = -1): Set<string> =>
-    new Set(s.slots.flatMap((x, i) => (i !== skip && x.modId ? [mod(x.modId)?.family ?? ""] : [])));
+    new Set(s.slots.flatMap((x, i) => { const f = i !== skip ? x.family ?? (x.modId ? mod(x.modId)?.family : undefined) : undefined; return f ? [f] : []; }));
   /** その側で付きうる普通の MOD の重み (付いている系統を除く)。tag のカタリストが効く物は mult 倍 */
   const poolW = (side: Side, occ: Set<string>, floor: number, tag: string | null, mult: number): number =>
     cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"].reduce((a, id) => {

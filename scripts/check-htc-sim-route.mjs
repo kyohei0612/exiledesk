@@ -84,5 +84,45 @@ if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未�
   console.log(`触らない MOD (側の無いカオス): 完成 ${(rr.pDone * 100).toFixed(1)}% / 消えた ${(lost(rr) * 100).toFixed(1)}%`);
   if (!(lost(rr) > 0.2)) fail("側の無いカオスで触らない MOD が消えていない (消えたら止まるはず)");
 }
+// 側のお告げは効く時だけ払う (2026-09-26 オーナー承認)。効かない形では、お告げ有りと無しで値段も動き (同じ乱数で同じ結果) も同じ
+{
+  const O = (k) => prices.omens[k] ?? prices.currency[k];
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const applySame = (st, a, b, tag) => {
+    const ra = M.mulberry32(5), rb = M.mulberry32(5);
+    for (let i = 0; i < 300; i++) {
+      const x = h.apply(st, { id: "x", action: a, targets: [], keep: [], clean: false, onHit: null, onMiss: null }, ra);
+      const y = h.apply(st, { id: "x", action: b, targets: [], keep: [], clean: false, onHit: null, onMiss: null }, rb);
+      if (!same(x, y)) { fail(`${tag}: お告げ有りと無しで打った結果が違う`); return; }
+    }
+  };
+  // プレが満杯 (樹 MOD + 外れ 2 つ) → 右側の高貴なお告げは効かない
+  const preFull = { breach: false, slots: [start.slots[0], { modId: null, side: "prefix", fixed: false, family: "IncreasedLife" }, { modId: null, side: "prefix", fixed: false }, { modId: CS, side: "suffix", fixed: false }] };
+  const exS = { kind: "exalt", tier: "exalt_perfect", side: "suffix", catalyst: null }, ex0 = { ...exS, side: null };
+  const pS = h.priceOf(preFull, exS), p0 = h.priceOf(preFull, ex0);
+  console.log(`高貴 (プレ満杯): 右側のお告げ付き ${(pS / D).toFixed(3)} 神 / 無し ${(p0 / D).toFixed(3)} 神`);
+  if (pS !== p0) fail("反対側が満杯なのに右側の高貴なお告げの代が掛かっている");
+  applySame(preFull, exS, ex0, "高貴 (プレ満杯)");
+  // 反対側に枠があれば払う
+  const pOpen = h.priceOf(start, { ...exS, side: "prefix" }) - h.priceOf(start, { ...ex0 });
+  if (Math.abs(pOpen - O("OmenofSinistralExaltation")) > 1e-9) fail("反対側に枠があるのに左側の高貴なお告げの代が掛かっていない");
+  // 消去: 外せる物がサフィにしか無い → 右側の消去のお告げは効かない。両側にあれば払う
+  const sufOnly = { breach: false, slots: [start.slots[0], { modId: null, side: "suffix", fixed: false }, { modId: CS, side: "suffix", fixed: false }] };
+  const anS = { kind: "annul", side: "suffix" }, an0 = { kind: "annul", side: null };
+  if (h.priceOf(sufOnly, anS) !== h.priceOf(sufOnly, an0)) fail("外せる物がサフィだけなのに右側の消去のお告げの代が掛かっている");
+  applySame(sufOnly, anS, an0, "消去 (サフィだけ)");
+  const both = { ...sufOnly, slots: [...sufOnly.slots, { modId: null, side: "prefix", fixed: false }] };
+  if (Math.abs(h.priceOf(both, anS) - h.priceOf(both, an0) - O("OmenofDextralAnnulment")) > 1e-9) fail("両側に外せる物があるのに右側の消去のお告げの代が掛かっていない");
+  // 抹消のお告げ付きのカオスも同じ
+  const chS = { kind: "chaos", tier: "chaos", side: "suffix" }, ch0 = { kind: "chaos", tier: "chaos", side: null };
+  if (h.priceOf(sufOnly, chS) !== h.priceOf(sufOnly, ch0)) fail("外せる物がサフィだけなのに抹消のお告げの代が掛かっている");
+  applySame(sufOnly, chS, ch0, "カオス (サフィだけ)");
+  if (!(h.priceOf(both, chS) > h.priceOf(both, ch0))) fail("両側に外せる物があるのに抹消のお告げの代が掛かっていない");
+  // 冒涜: サフィに枠がありプレが満杯 → ネクロマンシーは効かない
+  const de = { kind: "desecrate", side: "suffix", bone: "desecrate", echoes: false };
+  if (h.omenNeeded({ ...preFull, slots: preFull.slots.slice(0, 3) }, de)) fail("プレが満杯なのに右側のネクロマンシーが要ることになっている");
+  if (!h.omenNeeded(sufOnly, de)) fail("プレに枠があるのに右側のネクロマンシーが要らないことになっている");
+  console.log("側のお告げ: 効かない形では代を取らない / 動きも同じ");
+}
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
 process.exit(failed ? 1 : 0);

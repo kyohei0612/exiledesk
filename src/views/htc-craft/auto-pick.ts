@@ -68,5 +68,6 @@ export function autoInputFor(c: ReturnType<typeof useHtcCraft>, ctx: Ctx, start:
     fixedSides: [...new Set(start.slots.filter((x) => x.fixed).map((x) => x.side))],
     startCount: { prefix: start.slots.filter((x) => x.side === "prefix").length, suffix: start.slots.filter((x) => x.side === "suffix").length },
     startLoose: { prefix: start.slots.filter((x) => x.side === "prefix" && !x.fixed).length, suffix: start.slots.filter((x) => x.side === "suffix" && !x.fixed).length },
+    startKeep: { prefix: start.slots.filter((x) => x.side === "prefix" && x.keep && !x.modId).length, suffix: start.slots.filter((x) => x.side === "suffix" && x.keep && !x.modId).length },
   };
 }

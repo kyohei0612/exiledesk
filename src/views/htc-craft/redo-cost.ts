@@ -33,6 +33,11 @@ export interface MethodEstimate {
   orb?: "exalt_perfect" | "exalt_greater" | "exalt";
   /** 外れは素の消去 (お告げ無し) の方が安いか */
   plainAnnul?: boolean;
+  /**
+   * 側のお告げ (高貴・ネクロマンシー・結晶化) が要らない (反対側が埋まっている / 外せる物が無い) ので 1 回の値段に入れていない。
+   * シミュレーターの omenNeeded と同じ決まり (2026-09-26 オーナー承認)
+   */
+  noSideOmen?: boolean;
   /** 1 回の値段 (高貴建て) */
   perTry: number;
   /** 1 回で当たる確率 */
@@ -111,6 +116,17 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
    * 組み合わせ (カオス・冒涜に回す物) ごとに変わるので、組み合わせを回す所で入れ直す (2026-09-26: 前は使えない時も 40% の倍率で数えていた)
    */
   let catalystOff = false;
+  /** カオスで取る狙いの側 (組み合わせごと。カオスは最初の手なので、以降その側に 1 つ残っている) */
+  let chaosOn: Side | null = null;
+  const otherOf = (s: Side): Side => (s === "prefix" ? "suffix" : "prefix");
+  /**
+   * 側のお告げが要らない形か (シミュレーターの omenNeeded と同じ決まりを、見積もりで分かる範囲だけ。2026-09-26 オーナー承認:
+   * 効かないお告げの代を取らない)。消えない物 = 固定済み + 触らない MOD。分からない時はお告げを払う側に倒す
+   */
+  const lockedOn = (s: Side): number => {
+    const c0 = inp.startCount?.[s], l0 = inp.startLoose?.[s];
+    return (c0 != null && l0 != null ? c0 - l0 : 0) + (inp.startKeep?.[s] ?? 0);
+  };
   const qualityMax = (inp.baseQuality ?? 20) + (breach ? 20 : 0);
 
   /** 狙いの段が届く一番高い下限 (完全の高貴は段 50 未満を出さない) */
@@ -149,6 +165,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const perMiss = Math.min(missSide, missPlain);
     const plainAnnul = missPlain <= missSide;
     const r = reach(t);
+    // 反対側が消えない物 (+ 先にカオスで取った狙い) で埋まっていれば、高貴はこの側にしか付かないのでお告げは要らない
+    const o = otherOf(s);
+    const noOmen = lockedOn(o) + (chaosOn === o ? 1 : 0) >= limits[o];
     let best: MethodEstimate | null = null;
     for (const [orb, floor] of [["exalt_perfect", 50], ["exalt_greater", 35], ["exalt", 0]] as const) {
       if (r < floor) continue;
@@ -156,7 +175,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
         const mult = useTag ? catalysingMultiplier(qualityMax) : 1;
         const refill = useTag ? catalystCountFor(qualityMax) * cur(catalystPriceKey(useTag)) + cur("OmenofCatalysingExaltation") : 0;
         const pHit = (w(m, t.minTierIndex ?? 0, floor) * mult) / poolW(s, floor, false, useTag, mult);
-        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, plainAnnul, perTry: cur(orb) + cur(OMEN.exalt[s]) + refill, p: pHit, perMiss, safe: plainAnnul ? others + otherSide === 0 : others === 0,
+        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, plainAnnul, perTry: cur(orb) + (noOmen ? 0 : cur(OMEN.exalt[s])) + refill, p: pHit, perMiss, safe: plainAnnul ? others + otherSide === 0 : others === 0,
+          ...(noOmen ? { noSideOmen: true } : {}),
           ...(risky ? { why: "触らない MOD がある側 (消去で巻き込む)" } : {}) });
         if (!best || e.expected < best.expected) best = e;
       }
@@ -169,7 +189,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const floor = bone === "desecrate_ancient" ? 40 : 0;
     const p1 = w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, true, null, 1);
     const pHit = 1 - (1 - p1) ** 6;
-    const perTry = cur(bone) + cur(OMEN.necromancy[s]) + cur("OmenofAbyssalEchoes");
+    // 冒涜は最後の手。反対側が消えない物 + 狙い全部で埋まり、この側に枠があれば、ネクロマンシーのお告げは要らない
+    const o = otherOf(s);
+    const noOmen = lockedOn(o) + ts.filter((x) => sideOf(x.modId) === o).length >= limits[o]
+      && limits[s] - (inp.startCount?.[s] ?? limits[s]) - k > 0;
+    const perTry = cur(bone) + (noOmen ? 0 : cur(OMEN.necromancy[s])) + cur("OmenofAbyssalEchoes");
     let why: string | undefined;
     if (inp.desecratedTaken) why = "冒涜の MOD がもう付いている";
     if (reach(t) < floor) why = "古代の骨では段が届かない";
@@ -185,7 +209,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 満杯の側への冒涜は、最初の 1 回だけ固定でない物を置き換える (後は冒涜の外れが枠を埋め、光で消して打ち直すので
     // 巻き込まない)。その 1 回分の作り直し費用を足す (2026-09-26 レビュー: クラフター C の指摘で risk * 0 だったのを直した。
     // 外れのたびに足すと数えすぎで、見積もりが回した平均の 2 倍になった)
-    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}) });
+    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen ? { noSideOmen: true } : {}) });
     return risk > 0 ? { ...e, expected: e.expected + risk * redoPrior } : e;
   }
   /**
@@ -217,7 +241,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   }
   function essenceEst(t: TierTarget): MethodEstimate {
     const s = sideOf(t.modId);
-    return finish({ modId: t.modId, side: s, method: "essence", perTry: cur(`essence:perfect:${t.modId}`) + cur(OMEN.crystallisation[s]), p: 1, perMiss: 0, safe: true });
+    // 反対側に外せる物 (開始の固定していない物・先にカオスで取った狙い・ブリーチの MOD) が無ければ、結晶化のお告げは要らない
+    const o = otherOf(s);
+    const noOmen = inp.startLoose != null && inp.startLoose[o] === 0 && chaosOn !== o && !(breach && o === "prefix");
+    return finish({ modId: t.modId, side: s, method: "essence", perTry: cur(`essence:perfect:${t.modId}`) + (noOmen ? 0 : cur(OMEN.crystallisation[s])), p: 1, perMiss: 0, safe: true,
+      ...(noOmen ? { noSideOmen: true } : {}) });
   }
 
   const normals = ts.filter((t) => mod(t.modId).source === "normal");
@@ -243,6 +271,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 自動で組む時と同じ入力で、触媒を使う組み方かを見る (pickAutoTree が渡す物と同じ)
     catalystOff = autoTreeMeta({ ...inp, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null,
       ...(cc ? {} : { chaosOk: false, chaosSide: null }) }).catalystOff;
+    chaosOn = cc ? sideOf(cc.modId) : null;
     const rows: MethodEstimate[] = essences.map(essenceEst);
     if (cc) rows.push(chaosEst(cc));
     const placed: Record<Side, number> = { prefix: 0, suffix: 0 };

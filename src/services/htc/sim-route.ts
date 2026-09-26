@@ -168,6 +168,16 @@ const SIDES: Side[] = ["prefix", "suffix"];
  */
 export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality"]);
 
+/** 側のお告げを使う手か (高貴・消去・カオスは側を選んだ時、エッセンス・ブリーチ・冒涜はいつも)。画面の「お告げ不要」の出し分け用 */
+export function hasSideOmen(a: SimAction | null): boolean {
+  if (!a) return false;
+  switch (a.kind) {
+    case "exalt": case "annul": case "chaos": return !!a.side;
+    case "essence": case "breach": case "desecrate": return true;
+    default: return false;
+  }
+}
+
 /** ctx.baseQuality = ベースの品質の上限 (普通 20、ブリーチの指輪 40、洗練されたブリーチリング 45) */
 /**
  * 同じ ctx・同じ手の並びなら helpers (中の memo) を使い回す。2026-09-26: 小分けに回すたびに作り直して roll の memo が
@@ -328,25 +338,49 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
     }
   }
 
-  /** 1 回の値段 */
-  function priceOf(s: SimState, a: SimAction): number {
+  /**
+   * 側のお告げ (高貴・消去・抹消・結晶化・ネクロマンシー) が、その状態で結果を変えるか (2026-09-26 オーナー承認:
+   * 効かないお告げの代を取らない。画面の「お告げ不要」もこれで出す)。側のお告げの無い手は false。
+   * 要らない時は apply() もお告げ無しと同じ動きになる (消す・足す先の候補が同じ並びになる):
+   *   高貴 … 反対側に枠が無い (どうせこの側にしか付かない。偉大なるで 2 つ足す時も枠は増えない)
+   *   消去・カオス (抹消) … 外せる物がこの側にしか無い
+   *   エッセンス・ブリーチ (結晶化) … 消す側の反対に外せる物が無い
+   *   冒涜 (ネクロマンシー) … この側に枠があり、反対側が満杯 (この側が満杯の置き換えは、お告げ無しの動きが分からないので払う)
+   */
+  function omenNeeded(s: SimState, a: SimAction): boolean {
+    const other = (x: Side): Side => (x === "prefix" ? "suffix" : "prefix");
     switch (a.kind) {
-      case "chaos": return cur(a.tier) + (a.side ? cur(OMEN.erasure[a.side]) : 0);
-      case "exalt": return cur(a.tier) + (a.side ? cur(OMEN.exalt[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
+      case "exalt": return !!a.side && room(s, other(a.side));
+      case "chaos": case "annul": return !!a.side && removable(s, other(a.side)).length > 0;
+      case "essence": return removable(s, other(removeSideOf(s, a))).length > 0;
+      case "breach": return removable(s, other(a.removeSide ?? "prefix")).length > 0;
+      case "desecrate": return !room(s, a.side) || room(s, other(a.side));
+      default: return false;
+    }
+  }
+  /** 食わせる外れを付ける高貴の側のお告げ (反対側に枠が無ければ要らない) */
+  const feedOmen = (s: SimState, rs: Side): number => (room(s, rs === "prefix" ? "suffix" : "prefix") ? cur(OMEN.exalt[rs]) : 0);
+
+  /** 1 回の値段 (側のお告げは効く時だけ。[[omenNeeded]]) */
+  function priceOf(s: SimState, a: SimAction): number {
+    const need = omenNeeded(s, a);
+    switch (a.kind) {
+      case "chaos": return cur(a.tier) + (a.side && need ? cur(OMEN.erasure[a.side]) : 0);
+      case "exalt": return cur(a.tier) + (a.side && need ? cur(OMEN.exalt[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
         // 触媒の高貴のお告げは品質を全部使う (ゲーム内の文面)。2 回目からは上限まで入れ直す分も掛かる
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + catalystCountFor(s.quality == null ? quality(s) : Math.max(0, quality(s) - catalystQuality(s, a.catalyst))) * cur(catalystPriceKey(a.catalyst)) : 0);
-      case "annul": return cur("annul") + (a.side ? cur(OMEN.annul[a.side]) : 0);
+      case "annul": return cur("annul") + (a.side && need ? cur(OMEN.annul[a.side]) : 0);
       case "essence": {
         const rs = removeSideOf(s, a);
-        return cur(`essence:perfect:${a.modId}`) + cur(OMEN.crystallisation[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN.exalt[rs]));
+        return cur(`essence:perfect:${a.modId}`) + (need ? cur(OMEN.crystallisation[rs]) : 0) + (removable(s, rs).length ? 0 : cur("exalt") + feedOmen(s, rs));
       }
-      case "desecrate": return cur(a.bone) + cur(OMEN.necromancy[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
+      case "desecrate": return cur(a.bone) + (need ? cur(OMEN.necromancy[a.side]) : 0) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
       case "light": return cur("annul") + cur("OmenofLight");
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
       case "breach": {
         const rs = a.removeSide ?? "prefix";
-        return cur("essence:breach") + cur(OMEN.crystallisation[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN.exalt[rs]));
+        return cur("essence:breach") + (need ? cur(OMEN.crystallisation[rs]) : 0) + (removable(s, rs).length ? 0 : cur("exalt") + feedOmen(s, rs));
       }
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;
@@ -515,7 +549,7 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
     }
   }
 
-  return { roll, usable, priceOf, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, breachKept, breachSpent, cur, mod };
+  return { roll, usable, priceOf, omenNeeded, apply, passes, targetsMet, desecrateOdds, removable, room, has, hasJunk, breachKept, breachSpent, cur, mod };
 }
 
 /**
