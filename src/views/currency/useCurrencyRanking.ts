@@ -4,6 +4,7 @@
  * CurrencyRanking.vue から切り出し (2026-09-07)。
  *   - refresh(): リーグ一覧 → 価格 / 24h 履歴 / スナップショット時刻 → 基準レート 7 日 → 表示中の 7 日
  *   - filteredRanking: カテゴリ + 検索で絞り、神換算降順
+ *   - 前回表示の保存 / カテゴリ集計 / 絞り込み / 7 日の並列取得は [[currency-ranking-cache.ts]] (2026-09-26 分割)
  */
 import { computed, reactive, ref, watch } from "vue";
 import {
@@ -19,29 +20,17 @@ import {
   type ItemTrend,
   type League,
 } from "../../api/poe2scout";
-import { jaCurrency } from "../../i18n/currencies-ja";
 import { adoptMarket } from "../../state/market-store";
-import { categoryOrderIndex } from "./format";
+import {
+  buildCategoryDisplayList,
+  fetchTrends7dPooled,
+  filterRanking,
+  readSnapshot,
+  writeSnapshot,
+  type CategoryDisplay,
+} from "./currency-ranking-cache";
 
-export interface CategoryDisplay {
-  id: string;
-  count: number;
-  icon: string;
-  /** アイコンの代わりに出す 1 文字 (お気に入りの ♥ など) */
-  glyph?: string;
-}
-
-/** 前回の表示内容を残しておく場所 (取得中に画面が真っ白になるのを防ぐ) */
-const CACHE_KEY = "exiledesk.currency.snapshot";
-const CACHE_VERSION = 1;
-interface Snapshot {
-  v: number;
-  league: string;
-  leagues: League[];
-  ranking: RankedItem[];
-  snapshotEpoch: number | null;
-  savedAt: number;
-}
+export type { CategoryDisplay } from "./currency-ranking-cache";
 
 export function useCurrencyRanking() {
   const leagues = ref<League[]>([]);
@@ -89,26 +78,14 @@ export function useCurrencyRanking() {
    */
   const AUTO_MIN_GAP_MS = 5 * 60_000;
 
-  /**
-   * 前回の取得結果を保存する。
-   *
-   * オーナー指摘 (2026-09-17):「更新中でも前のキャッシュを読み込んで表示してほしい。
-   * 何も表示がない現象をやめたい」。トレンド (履歴) は数秒で埋まり量も多いので保存しない。
-   */
+  /** 前回の取得結果を保存する (中身は currency-ranking-cache.ts の writeSnapshot) */
   function saveSnapshot() {
-    try {
-      const snap: Snapshot = {
-        v: CACHE_VERSION,
-        league: league.value,
-        leagues: leagues.value,
-        ranking: ranking.value,
-        snapshotEpoch: snapshotEpoch.value,
-        savedAt: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(snap));
-    } catch {
-      /* 容量超過などで保存できなくても表示は続く */
-    }
+    writeSnapshot({
+      league: league.value,
+      leagues: leagues.value,
+      ranking: ranking.value,
+      snapshotEpoch: snapshotEpoch.value,
+    });
   }
 
   /**
@@ -131,22 +108,8 @@ export function useCurrencyRanking() {
   /** 起動直後に前回の内容を出す (この後 refresh() が上書きする) */
   function hydrateFromCache() {
     try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return;
-      const snap = JSON.parse(raw) as Snapshot;
-      if (snap?.v !== CACHE_VERSION || !Array.isArray(snap.ranking) || snap.ranking.length === 0) return;
-      // 形が違う (古い版で保存した等) キャッシュで画面を壊さない。1 件検査して駄目なら捨てる
-      const sample = snap.ranking[0] as Partial<RankedItem>;
-      const shapeOk =
-        typeof sample?.apiId === "string" &&
-        typeof sample?.itemId === "number" &&
-        typeof sample?.text === "string" &&
-        typeof sample?.groupId === "string" &&
-        typeof sample?.exaltedPrice === "number";
-      if (!shapeOk) {
-        localStorage.removeItem(CACHE_KEY);
-        return;
-      }
+      const snap = readSnapshot();
+      if (!snap) return;
       leagues.value = Array.isArray(snap.leagues) ? snap.leagues : [];
       if (!league.value) league.value = snap.league ?? "";
       const sel = leagues.value.find((l) => l.Value === league.value);
@@ -276,17 +239,12 @@ export function useCurrencyRanking() {
     const todo = filteredRanking.value.map((p) => p.itemId).filter((id) => !trend7d.has(id));
     if (!todo.length) return;
     loading7d.value = true;
-    const CONC = 8;
-    let idx = 0;
-    const worker = async () => {
-      while (idx < todo.length) {
-        const id = todo[idx++];
-        if (league.value !== lg) return;
-        const t = await fetchItemTrend7d(lg, id);
-        if (league.value === lg && t) trend7d.set(id, t);
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(CONC, todo.length) }, () => worker()));
+    await fetchTrends7dPooled(
+      lg,
+      todo,
+      () => league.value === lg,
+      (id, t) => trend7d.set(id, t),
+    );
     if (league.value === lg) loading7d.value = false;
   }
 
@@ -296,34 +254,10 @@ export function useCurrencyRanking() {
     void refresh();
   }
 
-  /** カテゴリ別の表示用リスト。ranking は神換算降順なので各カテゴリ最初のアイテム = 最高額を代表アイコンに使う。 */
-  const categoryDisplayList = computed<CategoryDisplay[]>(() => {
-    const acc = new Map<string, { count: number; icon: string }>();
-    for (const r of ranking.value) {
-      const entry = acc.get(r.groupId);
-      if (entry) entry.count += 1;
-      else acc.set(r.groupId, { count: 1, icon: r.icon });
-    }
-    return Array.from(acc.entries())
-      .map(([id, e]) => ({ id, count: e.count, icon: e.icon }))
-      .sort((a, b) => {
-        const d = categoryOrderIndex(a.id) - categoryOrderIndex(b.id);
-        return d !== 0 ? d : a.id.localeCompare(b.id);
-      });
-  });
+  /** カテゴリ別の表示用リスト (集計は currency-ranking-cache.ts) */
+  const categoryDisplayList = computed<CategoryDisplay[]>(() => buildCategoryDisplayList(ranking.value));
 
-  const filteredRanking = computed(() => {
-    let list = ranking.value;
-    if (categoryFilter.value !== "all") {
-      list = list.filter((r) => r.groupId === categoryFilter.value);
-    }
-    const q = searchQuery.value.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) => r.text.toLowerCase().includes(q) || jaCurrency(r.text).toLowerCase().includes(q));
-    }
-    // 表示順は「神換算」降順 (オーナー指示 2026-06-01)。同一参照になりうるので slice() してから sort
-    return list.slice().sort((a, b) => b.divinePrice - a.divinePrice);
-  });
+  const filteredRanking = computed(() => filterRanking(ranking.value, categoryFilter.value, searchQuery.value));
 
   // カテゴリ切替時、新たに表示されるアイテムの 7 日トレンドを取得 (取得済みはスキップ)
   watch(categoryFilter, () => {

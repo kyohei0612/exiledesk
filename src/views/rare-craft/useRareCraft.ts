@@ -7,141 +7,68 @@
  *   → 当たり方は sim.ts (poe2db の推定重み × クライアントのティア値)、売値の段で期待収支を出す
  *   → 選択肢 (エッセンス × 肋骨 × 反響のお告げ × 高貴なオーブ × 右側のお告げ × ルーン。高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に使って 2 つ足す) を全部比べ、既定では一番収支がいい組み合わせを素材に出す
  * trade2 の検索は条件ごとに 5 回。擬似レート制限 (5 分 26 回 + サーバーの残り回数) の中で直列に取る。
+ *
+ * 2026-09-26 の分割: レシピと選択は useRareSelection.ts、選択肢の比較は useRareVariants.ts。返す物の形は変えていない。
  */
-import { computed, nextTick, ref, watch } from "vue";
+import { computed } from "vue";
 import { marketStore } from "../../state/market-store";
 import {
   ECHOES,
-  ECHO_API_ID,
   EXALT_ADDS,
   EXALTS,
-  EXCEPTIONAL_SOCKETS,
   RECIPES,
   RIBS,
   SIDES,
   bucketLabel,
   exaltLevelsFor,
   materialsFor,
-  type BucketDef,
   type EchoId,
   type ExaltId,
-  type RecipeDef,
-  type RecipeId,
   type RibId,
   type SideId,
 } from "./recipes";
 import {
-  DEFAULT_NORMAL_SHARE,
-  baseModTiers,
   effectiveExaltCount,
-  findEssence,
   simulate,
   slotsAfterSetup,
-  type Metric,
   type SimOptions,
 } from "./sim";
-import { evaluateLadder, type LadderBucket, type LadderResult, type PostOptions } from "./ladder";
+import { evaluateLadder, type LadderBucket, type PostOptions } from "./ladder";
 import { useRarePrices } from "./prices";
+import { useRareSelection } from "./useRareSelection";
+import { useRareVariants } from "./useRareVariants";
 
-const RECIPE_KEY = "exiledesk.rare-craft.recipe";
-
-
-/** 比較表の 1 行 */
-export interface Variant {
-  key: string;
-  essenceId: string;
-  rib: RibId;
-  echo: EchoId;
-  exalt: ExaltId;
-  count: number;
-  side: SideId;
-  runeId: string;
-  labels: { essence: string; rib: string; echo: string; exalt: string; side: string; rune: string };
-  cost: number;
-  expectedSale: number;
-  ev: number;
-  pProfit: number;
-  pTop: number;
-  current: boolean;
-}
-
-function loadRecipe(): RecipeId {
-  try {
-    const v = localStorage.getItem(RECIPE_KEY);
-    if (v && RECIPES.some((r) => r.id === v)) return v as RecipeId;
-  } catch {
-    /* 読めなくても動く */
-  }
-  return "es-helmet";
-}
+/** 比較表の 1 行 (useRareVariants.ts へ移した。ここから同じ名前で出す) */
+export type { Variant } from "./useRareVariants";
 
 export function useRareCraft() {
-  // ---- レシピと選択 ----
-  const recipeId = ref<RecipeId>(loadRecipe());
-  const recipe = computed<RecipeDef>(() => RECIPES.find((r) => r.id === recipeId.value) ?? RECIPES[0]);
-  const pageId = ref(recipe.value.pages[0].id);
-  const page = computed(() => recipe.value.pages.find((p) => p.id === pageId.value) ?? recipe.value.pages[0]);
-  const ilvl = ref(recipe.value.ilvl);
-  const baseTier = ref(recipe.value.baseMod.defaultTier);
-  /** 規格外 = ソケット 2 固定 (オーナー指示 2026-09-14) */
-  const sockets = computed(() => EXCEPTIONAL_SOCKETS);
-  const quality = ref(recipe.value.quality);
-  const baseEs = ref(page.value.baseEs);
-  const essenceId = ref(recipe.value.defaultEssence);
-  const rib = ref<RibId>("preserved");
-  const exalt = ref<ExaltId>("greater");
-  const echo = ref<EchoId>("none");
-  const side = ref<SideId>("any");
-  const runeId = ref(recipe.value.defaultRune);
-  const buckets = ref<BucketDef[]>(recipe.value.buckets.map((b) => ({ key: b.key, conds: { ...b.conds } })));
-  const floorConds = ref<Partial<Record<Metric, number>>>({ ...recipe.value.floor });
-  /** 冒涜の 3 択で 2 つ目・3 つ目が通常の MOD になる確率 */
-  const normalShare = ref(DEFAULT_NORMAL_SHARE);
-
-  /**
-   * 一番収支がいい組み合わせを素材に自動で出す (オーナー指示 2026-09-14)。
-   * 素材の選択を手で変えたら自動は切れる (比較表の「これにする」も同じ)。
-   */
-  const autoBest = ref(true);
-  let applying = false;
-  async function programmatic(fn: () => void): Promise<void> {
-    applying = true;
-    fn();
-    await nextTick();
-    applying = false;
-  }
-
-  function resetForRecipe(): void {
-    const r = recipe.value;
-    void programmatic(() => {
-      pageId.value = r.pages[0].id;
-      ilvl.value = r.ilvl;
-      baseTier.value = r.baseMod.defaultTier;
-      quality.value = r.quality;
-      baseEs.value = r.pages[0].baseEs;
-      essenceId.value = r.defaultEssence;
-      runeId.value = r.defaultRune;
-      buckets.value = r.buckets.map((b) => ({ key: b.key, conds: { ...b.conds } }));
-      floorConds.value = { ...r.floor };
-    });
-  }
-  function resetThresholds(): void {
-    const r = recipe.value;
-    buckets.value = r.buckets.map((b) => ({ key: b.key, conds: { ...b.conds } }));
-    floorConds.value = { ...r.floor };
-  }
-  watch(recipeId, (id) => {
-    try {
-      localStorage.setItem(RECIPE_KEY, id);
-    } catch {
-      /* 保存できなくても動く */
-    }
-    autoBest.value = true;
-    resetForRecipe();
-  });
-  watch(pageId, () => {
-    baseEs.value = page.value.baseEs;
-  });
+  // ---- レシピと選択 (useRareSelection.ts) ----
+  const sel = useRareSelection();
+  const {
+    recipeId,
+    recipe,
+    pageId,
+    page,
+    ilvl,
+    baseTier,
+    sockets,
+    quality,
+    baseEs,
+    essenceId,
+    rib,
+    exalt,
+    echo,
+    side,
+    runeId,
+    buckets,
+    floorConds,
+    normalShare,
+    autoBest,
+    resetThresholds,
+    tiers,
+    currentTier,
+    essences,
+  } = sel;
 
   // ---- 相場 (アプリ共通) ----
   const league = marketStore.league;
@@ -158,27 +85,6 @@ export function useRareCraft() {
   async function loadMarket(): Promise<void> {
     await marketStore.ensureMarket();
   }
-
-  // ---- ベース MOD のティアとエッセンス ----
-  const tiers = computed(() => baseModTiers(pageId.value, recipe.value.baseMod.family, recipe.value.baseMod.stat, ilvl.value));
-  const currentTier = computed(() => tiers.value[Math.min(Math.max(1, baseTier.value), Math.max(1, tiers.value.length)) - 1] ?? null);
-  const essences = computed(() =>
-    recipe.value.essences.map((e) => {
-      const pe = findEssence(pageId.value, e.name, e.stat);
-      const clash = !!pe && pe.family === recipe.value.baseMod.family;
-      return { ...e, ok: !!pe && !clash, reason: !pe ? "この装備に付かない" : clash ? "ベースの MOD と同じ系統" : "", gen: pe?.gen ?? null, range: pe?.stats.find((s) => s.id === e.stat) ?? null };
-    }),
-  );
-  watch(
-    essences,
-    (list) => {
-      if (!list.find((e) => e.id === essenceId.value)?.ok) {
-        const first = list.find((e) => e.ok);
-        if (first) void programmatic(() => (essenceId.value = first.id));
-      }
-    },
-    { immediate: true },
-  );
 
   // ---- シミュレーションの条件 ----
   function simOptionsFor(o: { essenceId: string; exalt: ExaltId; side: SideId; rib: RibId; echo: EchoId }, samples: number): SimOptions {
@@ -281,125 +187,20 @@ export function useRareCraft() {
     return priced.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))[0] ?? null;
   });
 
-  // ---- 選択肢の比較 ----
-  const variants = computed<Variant[]>(() => {
-    const out: Variant[] = [];
-    if (basePrice.value == null || floorPrice.value == null) return out;
-    for (const es of essences.value) {
-      if (!es.ok) continue;
-      for (const rb of RIBS) {
-        for (const ec of ECHOES) {
-          for (const ex of EXALTS) {
-            for (const sd of SIDES) {
-              const so = simOptionsFor({ essenceId: es.id, exalt: ex.id, side: sd.id, rib: rb.id, echo: ec.id }, 2500);
-              const eff = so.exaltLevels.length;
-              const s = simulate(so);
-              if (!s.ok) continue;
-              for (const ru of recipe.value.runes) {
-                const c = costOf(materialRows({ essenceId: es.id, exalt: ex.id, count: eff, side: sd.id, rib: rb.id, echo: ec.id, runeId: ru.id }));
-                if (c == null) continue;
-                const lr = evaluateLadder(s, postFor(ru.id), ladderBuckets.value, floorConds.value, floorPrice.value, c);
-                const top = lr.rows.filter((x) => x.price != null).sort((a, b) => (b.price ?? 0) - (a.price ?? 0))[0];
-                out.push({
-                  key: `${es.id}|${rb.id}|${ec.id}|${ex.id}|${sd.id}|${ru.id}`,
-                  essenceId: es.id,
-                  rib: rb.id,
-                  echo: ec.id,
-                  exalt: ex.id,
-                  count: eff,
-                  side: sd.id,
-                  runeId: ru.id,
-                  labels: { essence: es.label, rib: rb.label, echo: ec.label, exalt: ex.label, side: sd.label, rune: ru.label },
-                  cost: c,
-                  expectedSale: lr.expectedSale,
-                  ev: lr.ev,
-                  pProfit: lr.pProfit,
-                  pTop: top?.pSold ?? 0,
-                  current: es.id === essenceId.value && rb.id === rib.value && ec.id === echo.value && ex.id === exalt.value && sd.id === side.value && ru.id === runeId.value,
-                });
-              }
-            }
-          }
-        }
-      }
-    }
-    return out.sort((a, b) => b.ev - a.ev);
+  // ---- 選択肢の比較 / 収支の組み合わせ (useRareVariants.ts) ----
+  const { variants, bestVariant, unpricedOptions, selectVariant, currentKey, variantLabel, detailFor } = useRareVariants({
+    sel,
+    basePrice,
+    floorPrice,
+    ladderBuckets,
+    materials,
+    result,
+    priceOf,
+    simOptionsFor,
+    materialRows,
+    costOf,
+    postFor,
   });
-  const bestVariant = computed(() => variants.value[0] ?? null);
-  /** 相場が無くて比較表に出せない素材 (その素材を使う組み合わせは表から消える) */
-  const unpricedOptions = computed(() => {
-    const ids = new Map<string, string>();
-    for (const e of essences.value) if (e.ok) ids.set(e.apiId, e.label.replace(/ \(.+\)$/, ""));
-    for (const rb of RIBS) ids.set(rb.apiId, rb.label);
-    ids.set(ECHO_API_ID, "アビスの反響のお告げ");
-    for (const ex of EXALTS) ids.set(ex.apiId, ex.label);
-    ids.set("omen-of-greater-exaltation", "偉大なる高貴なお告げ");
-    ids.set("omen-of-dextral-exaltation", "右側の高貴なお告げ");
-    if (recipe.value.metrics.includes("es") && quality.value > 0) ids.set("scrap", "鎧鍛冶の端材");
-    for (const ru of recipe.value.runes) if (ru.apiId) ids.set(ru.apiId, ru.label.replace(/ \(.+\)$/, ""));
-    return [...ids].filter(([id]) => priceOf(id) == null).map(([, label]) => label);
-  });
-
-  function applyVariant(key: string): Promise<void> {
-    const [es, rb, ec, ex, sd, ru] = key.split("|");
-    return programmatic(() => {
-      essenceId.value = es;
-      rib.value = rb as RibId;
-      echo.value = ec as EchoId;
-      exalt.value = ex as ExaltId;
-      side.value = sd as SideId;
-      runeId.value = ru;
-    });
-  }
-  /** 比較表の「これにする」(手で選んだので自動は切る) */
-  function selectVariant(key: string): void {
-    autoBest.value = false;
-    void applyVariant(key);
-  }
-  // 素材の選択を手で変えたら自動を切る
-  watch([essenceId, rib, echo, exalt, side, runeId], () => {
-    if (!applying) autoBest.value = false;
-  });
-  // 自動のときは一番収支がいい組み合わせを出す
-  watch(
-    [() => bestVariant.value?.key ?? null, autoBest],
-    ([key, on]) => {
-      if (on && key && !bestVariant.value?.current) void applyVariant(key);
-    },
-    { immediate: true },
-  );
-
-  // ---- 収支の組み合わせ (2026-09-15) ----
-  /** 素材欄の組み合わせのキー (比較表の Variant.key と同じ形) */
-  const currentKey = computed(() => [essenceId.value, rib.value, echo.value, exalt.value, side.value, runeId.value].join("|"));
-  function variantLabel(key: string): string {
-    const [es, rb, ec, ex, sd, ru] = key.split("|");
-    const r = recipe.value;
-    const parts = [
-      r.essences.length > 1 ? r.essences.find((e) => e.id === es)?.label.replace(/ \(.+\)$/, "") : null,
-      RIBS.find((x) => x.id === rb)?.label,
-      ec === "echoes" ? "アビスの反響のお告げ" : null,
-      EXALTS.find((x) => x.id === ex)?.label,
-      sd === "suffix" ? "右側の高貴なお告げ" : null,
-      r.runes.find((x) => x.id === ru)?.label.replace(/ \(.+\)$/, ""),
-    ];
-    return parts.filter(Boolean).join(" · ");
-  }
-  /**
-   * 組み合わせ 1 つの「1 回の素材」と「売値の段ごとに売る確率」(収支の自動入力用)。
-   * 素材欄の組み合わせなら上の計算 (2 万回) をそのまま使い、別の組み合わせなら同じ回数で計算し直す。
-   */
-  function detailFor(key: string): { materials: ReturnType<typeof materialRows>; ladder: LadderResult | null } {
-    if (key === currentKey.value) return { materials: materials.value, ladder: result.value };
-    const [es, rb, ec, ex, sd, ru] = key.split("|");
-    const o = { essenceId: es, rib: rb as RibId, echo: ec as EchoId, exalt: ex as ExaltId, side: sd as SideId };
-    const so = simOptionsFor(o, 20000);
-    const mats = materialRows({ ...o, count: so.exaltLevels.length, runeId: ru });
-    const c0 = costOf(mats);
-    const s = simulate(so);
-    const ladder = s.ok && c0 != null && floorPrice.value != null ? evaluateLadder(s, postFor(ru), ladderBuckets.value, floorConds.value, floorPrice.value, c0) : null;
-    return { materials: mats, ladder };
-  }
 
   return {
     currentKey,

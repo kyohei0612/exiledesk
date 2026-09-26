@@ -45,57 +45,12 @@
 import { limitsOf } from "../../vendor/poe2htc/engine/item";
 import { excluded, familyAvailable, itemFamilies, modTierWeight, resolveMod } from "../../vendor/poe2htc/engine/pool";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import type { CurrencyTier, ItemBase, ItemState, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { CatalysingSetup } from "../../vendor/poe2htc/optimizer/markovActions";
-import { ABSOLUTE_MAX_QUALITY, BASE_MAX_QUALITY, boostedBy, catalystsFor } from "./quality";
-
-/** 実測 1 点。`quality` は %、`multiplier` はタグ付き MOD の重みに掛かる倍率。 */
-export interface CatalysingSample {
-  readonly quality: number;
-  readonly multiplier: number;
-  /** 二項の 95% 区間 (n=100) を倍率に直したもの */
-  readonly lo: number;
-  readonly hi: number;
-  readonly hits: string;
-}
-
-/** 出典: reddit /r/PathOfExile2 "Omen of Catalysing Exaltation seem to scale on Quality amount" */
-export const CATALYSING_SAMPLES: readonly CatalysingSample[] = [
-  { quality: 1.5, multiplier: 1.65, lo: 1.09, hi: 2.44, hits: "42/100" },
-  { quality: 40, multiplier: 7.63, lo: 5.01, hi: 13.17, hits: "77/100" },
-];
-
-/** 画面に出す但し書き。`LINGERING_CAVEAT` と同じ扱いで、必ず倍率と一緒に見せる。 */
-export const CATALYSING_CAVEAT =
-  "触媒の高貴のお告げの倍率はゲーム内にもクライアントにも数字が無く、" +
-  "コミュニティの実測 200 個 (各 100 個) から引いた推定です。" +
-  "40% 側の 95% 区間は 5 - 13 倍と広く、2 群のベースが同じとは書かれていないため " +
-  "品質が低い側ほど当てになりません。";
-
-/** 2 点を通る直線。`q` は % 。 */
-function lineThrough(loSample: number, hiSample: number): (q: number) => number {
-  const [a, b] = CATALYSING_SAMPLES as readonly [CatalysingSample, CatalysingSample];
-  const slope = (hiSample - loSample) / (b.quality - a.quality);
-  const intercept = loSample - slope * a.quality;
-  return (q) => intercept + slope * q;
-}
-
-const CENTRAL = lineThrough(CATALYSING_SAMPLES[0]!.multiplier, CATALYSING_SAMPLES[1]!.multiplier);
-const LOWER = lineThrough(CATALYSING_SAMPLES[0]!.lo, CATALYSING_SAMPLES[1]!.lo);
-const UPPER = lineThrough(CATALYSING_SAMPLES[0]!.hi, CATALYSING_SAMPLES[1]!.hi);
-
-/** 品質 (%) → タグ付き MOD の重みに掛かる倍率。品質 0 ではお告げを使う意味が無いので 1。 */
-export function catalysingMultiplier(qualityPct: number): number {
-  if (!(qualityPct > 0)) return 1;
-  return Math.max(1, CENTRAL(Math.min(qualityPct, ABSOLUTE_MAX_QUALITY)));
-}
-
-/** 同じ品質での 95% 区間。画面には幅ごと出す。 */
-export function catalysingBand(qualityPct: number): { lo: number; hi: number } {
-  if (!(qualityPct > 0)) return { lo: 1, hi: 1 };
-  const q = Math.min(qualityPct, ABSOLUTE_MAX_QUALITY);
-  return { lo: Math.max(1, LOWER(q)), hi: Math.max(1, UPPER(q)) };
-}
+import type { CurrencyTier, ItemState, PatchData } from "../../vendor/poe2htc/engine/types";
+import { boostedBy } from "./quality";
+import { catalysingMultiplier } from "./catalysing-multiplier";
+// 中身は 2026-09-26 に分けた: 倍率は catalysing-multiplier.ts、自動クラフトへの口は catalysing-setup.ts
+export * from "./catalysing-multiplier";
+export * from "./catalysing-setup";
 
 export interface CatalysingOptions {
   /** オーブの強さ (ilvl 下限)。既定 'base'。 */
@@ -203,109 +158,4 @@ export function catalysingOdds(
     taggedShare: total > 0 ? tagged / total : 0,
     boosted,
   };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
-// 自動クラフト (MDP) に差し込む口
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
-
-/**
- * カタリスト 1 個で上がる品質 (%)。
- *
- * **クライアントから取れません** (品質の増分を持つテーブルが抽出対象に無い)。実測スレの
- * 「カタリストを 1 個だけ使ったら品質 1-2%」だけが根拠なので、中間の 1.5 を採ります。
- * 数を多めに見れば費用も多めに出るので、**迷ったら 1.0 側に寄せるのが安全側**です。
- * Craft of Exile (PoE2 beta) は 1 個 +2% で数えているが、オーナー判断で平均の 1.5 のまま
- * (2026-09-23:「基本 1% ずつだっけ、平均なら 1.5% で」)。
- * ここを変えると自動クラフトがカタリストを使う頻度が直に動くので、定数 1 つにしてあります。
- */
-export const QUALITY_PER_CATALYST = 1.5;
-
-/** その品質にするのに要るカタリストの数 */
-export function catalystCountFor(qualityPct: number): number {
-  return Math.ceil(Math.max(0, qualityPct) / QUALITY_PER_CATALYST);
-}
-
-/**
- * そのベースで届く最大品質 (%)。ブリーチリングだけが上限を持ち上げます
- * (「最大品質」を +20 / +25 する implicit を持つため)。神殿のインフューザーによる超過は
- * **1 回の消耗品**で、自動クラフトのように毎回品質を盛り直す前提とは噛み合わないので入れません。
- */
-export function maxQualityForBase(baseNameEn: string): number {
-  if (baseNameEn === "Refined Breach Ring") return BASE_MAX_QUALITY + 25;
-  if (baseNameEn === "Breach Ring") return BASE_MAX_QUALITY + 20;
-  return BASE_MAX_QUALITY;
-}
-
-/** エンジンの価格表で使うカタリストのキー */
-export function catalystPriceKey(tag: string): string {
-  return `catalyst_${tag}`;
-}
-
-export interface CatalysingSetupOptions {
-  /** 提示する品質の段 (%)。省略時はベースの最大品質 1 段だけ。 */
-  qualities?: readonly number[];
-}
-
-/**
- * `markovFromItem` に渡す設定を作ります。**指輪と首飾り以外では `undefined`** を返すので、
- * 呼ぶ側がベースの種類を気にする必要はありません。
- *
- * 段を増やすほど行動が増えて解くのが遅くなるので、既定は**そのベースの最大品質 1 段だけ**です。
- * 「20% で上限の半分まで来て、その先は伸びが鈍る」という性質があるため、段を刻みたい時は
- * 呼ぶ側が `qualities` に明示します (check-htc-catalysing.mjs が解く時間を測っています)。
- *
- * ## 状態に品質を持たせていない理由
- * お告げは品質を**全部**食うので、使った後は必ず品質 0 に戻ります。そして品質は運ではなく
- * カタリストを買えばいつでも作れるので、「今いくつ品質があるか」は状態ではなく**手順の値段**に
- * 畳めます。1 回の「カタリスト + 触媒の高貴のお告げ」の値段に「お告げ + カタリスト N 個」を丸ごと入れてあるのはそのためで、
- * これで状態空間を 1 ビットも増やさずに済んでいます。
- *
- * 取りこぼすのは「最初から品質が付いたアイテムを買った」場合の得だけで、こちらは**安全側**
- * (実際より高く見積もる) に外れます。完成品の品質が 0 になる (implicit の値が落ちる) 点は
- * この模型の外なので、画面で断る必要があります。
- */
-export function catalysingSetup(
-  base: ItemBase,
-  targetModIds: readonly string[],
-  data: PatchData,
-  opts: CatalysingSetupOptions = {},
-): CatalysingSetup | undefined {
-  // 目標 MOD が持っているカタリストタグだけを出す。無関係なタグを出すと行動が増えるだけ。
-  const tags = new Set<string>();
-  for (const id of targetModIds) {
-    const mod = data.mods.get(id);
-    if (!mod) continue;
-    for (const c of catalystsFor(mod)) tags.add(c.tag);
-  }
-  if (tags.size === 0) return undefined;
-
-  const max = maxQualityForBase(base.name);
-  const qualities = (opts.qualities ?? [max]).filter((q) => q > 0 && q <= max);
-  if (qualities.length === 0) return undefined;
-
-  return {
-    tags: [...tags],
-    qualities,
-    boosted: (mod, tag) => boostedBy(mod, tag),
-    multiplier: catalysingMultiplier,
-    catalystCount: catalystCountFor,
-  };
-}
-
-/**
- * `markovFromItem` の options に混ぜるだけの薄い包み。**指輪と首飾り以外では空** を返すので、
- * 呼ぶ側は `{ ...withCatalysing(data, base, targets), spare }` と書けば足ります。
- *
- * 呼ぶ側ごとに「このベースはカタリストが使えるか」を判定させると、必ずどこかで食い違います。
- * 判定はここ 1 箇所。
- */
-export function withCatalysing(
-  data: PatchData,
-  base: ItemBase,
-  targets: readonly { readonly modId: string }[],
-  opts: CatalysingSetupOptions = {},
-): { catalysing?: CatalysingSetup } {
-  const setup = catalysingSetup(base, targets.map((t) => t.modId), data, opts);
-  return setup ? { catalysing: setup } : {};
 }

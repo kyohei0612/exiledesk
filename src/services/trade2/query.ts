@@ -2,13 +2,17 @@
  * trade2 API の検索クエリ組み立て (純関数、ネットワークなし)
  *
  * craft-discovery-v2.ts から切り出し (2026-09-07)。
+ *
+ * 2026-09-26: ジェム / ベース / ユニークの検索 (query/item-queries.ts) と条件で絞る検索 (query/spec.ts) を分割 (ここから再 export)。
  */
 
 import { SecurityStatus, Rarity } from "../../constants/trade2";
 import { getModStatIds } from "../../data/mod-translations";
 import trade2StatMapping from "../../i18n/trade2-stat-mapping.json";
-import trade2Skills from "../../i18n/trade2-skills.json";
 import type { ModEntry, SlotKey } from "../craft-v2/types";
+
+export * from "./query/item-queries";
+export * from "./query/spec";
 
 /**
  * GGG 内部 stat ID → trade2 stat ID 辞書 (例: `base_maximum_life` → `explicit.stat_3299347043`)。
@@ -124,226 +128,6 @@ export function buildRareSearchQuery(slot: SlotKey, statFilters: Trade2StatFilte
           },
         },
       },
-    },
-    sort: { price: "asc" },
-  };
-}
-
-/** ジェム検索の条件 (ジェムコラプト収支 2026-09-12)。未指定の項目は絞らない。 */
-export interface GemQueryOptions {
-  /** trade2 の category (gem.activegem / gem.metagem) */
-  category: "gem.activegem" | "gem.metagem";
-  levelMin?: number;
-  levelMax?: number;
-  qualityMin?: number;
-  qualityMax?: number;
-  corrupted?: boolean;
-  /** 2 重コラプト (Twice Corrupted)。ジェムコラプトの賭けは 1 回のコラプトで得る品なので false で絞る (オーナー指摘 2026-09-13) */
-  twiceCorrupted?: boolean;
-  socketsMin?: number;
-  /**
-   * `query.status.option`。既定は securable = トレードサイトの「インスタントバイアウト」。
-   *
-   * サイトのドロップダウンとの対応 (2026-09-17 に確定):
-   *   available … インスタントバイアウトおよび対面トレード (サイトの既定)
-   *   securable … インスタントバイアウト (即時購入できる出品だけ)
-   *   onlineleague / online … 対面トレード
-   *   any … 指定なし (オフラインの出品も全部)
-   *
-   * 売値も捌き速度の追跡も securable (即時購入のみ)。
-   * オーナー指示 (2026-09-17):「インスタントバイアウトだけ見ればいい。エニーで見る必要が全くない」。
-   */
-  status?: string;
-}
-
-/**
- * ジェム名完全一致 + レベル / 品質 / コラプト / ソケット数で絞る検索クエリ。
- * 品質は type_filters、レベル・ソケット・コラプトは misc_filters (trade2 の data/filters で確認、2026-09-12)。
- */
-export function buildGemQuery(gemEn: string, o: GemQueryOptions) {
-  const range = (min?: number, max?: number): Record<string, number> | null => {
-    const r: Record<string, number> = {};
-    if (min != null) r.min = min;
-    if (max != null) r.max = max;
-    return Object.keys(r).length ? r : null;
-  };
-  const typeFilters: Record<string, unknown> = { category: { option: o.category } };
-  const quality = range(o.qualityMin, o.qualityMax);
-  if (quality) typeFilters.quality = quality;
-  const misc: Record<string, unknown> = {};
-  const level = range(o.levelMin, o.levelMax);
-  if (level) misc.gem_level = level;
-  const sockets = range(o.socketsMin, undefined);
-  if (sockets) misc.gem_sockets = sockets;
-  if (o.corrupted != null) misc.corrupted = { option: o.corrupted ? "true" : "false" };
-  if (o.twiceCorrupted != null) misc.twice_corrupted = { option: o.twiceCorrupted ? "true" : "false" };
-  return {
-    query: {
-      status: { option: o.status ?? SecurityStatus.Securable },
-      type: { discriminator: null, option: gemEn },
-      filters: {
-        type_filters: { filters: typeFilters },
-        misc_filters: { filters: misc },
-      },
-    },
-    sort: { price: "asc" },
-  };
-}
-
-/**
- * ベース名完全一致 (レアリティ指定、未コラプト、ルーンソケット数の下限) の最安。アドニアの賭けの「素のワンド」用 (2026-09-12)。
- * オーナー指示: アドニアの材料は「コラプトなし・ノーマル・2 ソケットの吸収のワンド」。trade2 の装備フィルタ id は rune_sockets。
- */
-export function buildBaseTypeQuery(baseEn: string, rarity: "normal" | "rare" = "normal", runeSocketsMin?: number) {
-  const equipment: Record<string, unknown> = {};
-  if (runeSocketsMin != null) equipment.rune_sockets = { min: runeSocketsMin };
-  return {
-    query: {
-      status: { option: SecurityStatus.Securable },
-      type: { discriminator: null, option: baseEn },
-      filters: {
-        type_filters: { filters: { rarity: { option: rarity === "normal" ? Rarity.Normal : Rarity.Rare } } },
-        equipment_filters: { filters: equipment },
-        misc_filters: { filters: { corrupted: { option: "false" } } },
-      },
-    },
-    sort: { price: "asc" },
-  };
-}
-
-/** ユニーク名 + 品質下限 (+ ルーンソケット下限)、未コラプト。アドニアの賭けの完成品用 (オーナー指示: アドニアのエゴ · 品質 30% · ソケット 2) */
-export function buildUniqueQualityQuery(nameEn: string, qualityMin: number, runeSocketsMin?: number) {
-  const equipment: Record<string, unknown> = {};
-  if (runeSocketsMin != null) equipment.rune_sockets = { min: runeSocketsMin };
-  return {
-    query: {
-      status: { option: SecurityStatus.Securable },
-      name: { discriminator: null, option: nameEn },
-      filters: {
-        type_filters: { filters: { rarity: { option: Rarity.Unique }, quality: { min: qualityMin } } },
-        equipment_filters: { filters: equipment },
-        // 未コラプトに限定 (コラプト品は同じ 30% でも 20 神前後と安く、完成品の相場を下に引っ張る。オーナーの検索と同条件)
-        misc_filters: { filters: { corrupted: { option: "false" } } },
-      },
-    },
-    sort: { price: "asc" },
-  };
-}
-
-/**
- * レアクラフト用の「条件で絞る」検索 (2026-09-14、ES 兜のクラフトから)。ベース (ノーマル / マジック) と完成品 (レア) の両方に使う。
- *   category: trade2 の type_filters.category (armour.helmet 等)
- *   rarity: normal / magic / nonunique (レア = ユニーク以外)
- *   ilvlMin / esMin / socketsMin: type_filters.ilvl / equipment_filters.es / equipment_filters.rune_sockets
- *   stats: stat id と下限 (pseudo.* も可)
- */
-export interface SpecQueryOptions {
-  /**
-   * trade2 の type_filters.category (armour.helmet 等)。
-   * **`baseType` を渡す時は不要** (ベース名のほうが厳しく、カテゴリは冗長になる)。
-   */
-  category?: string;
-  /**
-   * ベース名で完全一致させる (英語名。JP サイトなら localizeQueryForSite が日本語に直す)。
-   * クラフトの試算は必ず 1 つのベースを狙うので、こちらを使うほうが正確。
-   * カテゴリの内部値が未確認なクラス (武器 / 帯 / 盾) でも引けるのが効く。
-   */
-  baseType?: string;
-  rarity: "normal" | "magic" | "nonunique";
-  ilvlMin?: number;
-  /** 品質の下限 (%)。type_filters.quality (data-cache/trade2-filters-jp.json で確認) */
-  qualityMin?: number;
-  esMin?: number;
-  /** 防御タイプで絞る (回避 / アーマー) 2026-09-14 */
-  evMin?: number;
-  arMin?: number;
-  socketsMin?: number;
-  /** `max` は「プレフィックスモッド #個」のような数の上限に使う (2026-09-23)。無ければ送らない */
-  stats?: { id: string; min?: number; max?: number }[];
-  /**
-   * 取引所の「フラクチャー」(misc_filters.fractured_item、data/filters で確認 2026-09-23)。
-   * `false` = いいえ。省略時は送らない (指定なし)。
-   *
-   * **stat を `explicit.` にしただけでは足りません。**別の MOD が固定された物は普通に返り、
-   * そういう物は固定がもう埋まっているので狙いの MOD を固定できない (オーナー指摘 2026-09-23)。
-   */
-  fracturedItem?: boolean;
-  /**
-   * 「どれか 1 つ」の条件 (取引所の count グループ、1 つ以上)。グループごとに AND。
-   * 完成品を探す時に、同じ MOD を固定済み (`fractured.`) でも普通 (`explicit.`) でも拾う用 (2026-09-24)
-   */
-  anyOf?: { filters: { id: string; min?: number }[] }[];
-  /**
-   * ベースの付与スキル (「Grants Skill: Level 20 Cast on Critical」の名前)。不在のアミュレットは付与スキルで値段が別物なので、
-   * 完成品も素材も同じ付与スキルで探す (オーナー 2026-09-25)。取引所の `skill.` の stat (i18n/trade2-skills.json、
-   * data-cache/trade2-stats-en.json の skill グループから作る)。表に無い名前なら送らない
-   */
-  grantedSkill?: string | null;
-}
-/** 付与スキルの名前 → 取引所の stat id (無ければ null) */
-export function grantedSkillStatId(name: string | null | undefined): string | null {
-  return name ? (trade2Skills as Record<string, string>)[name] ?? null : null;
-}
-export function buildSpecQuery(o: SpecQueryOptions) {
-  // ベース名を指定した時はカテゴリを送らない。同じ物を 2 通りで絞ることになるうえ、
-  // カテゴリの内部値が未確認のクラスでは間違った値を送りかねない
-  const type: Record<string, unknown> = { rarity: { option: o.rarity } };
-  if (!o.baseType && o.category) type.category = { option: o.category };
-  if (o.ilvlMin != null) type.ilvl = { min: o.ilvlMin };
-  if (o.qualityMin != null) type.quality = { min: o.qualityMin };
-  const equipment: Record<string, unknown> = {};
-  if (o.esMin != null) equipment.es = { min: o.esMin };
-  if (o.evMin != null) equipment.ev = { min: o.evMin };
-  if (o.arMin != null) equipment.ar = { min: o.arMin };
-  if (o.socketsMin != null) equipment.rune_sockets = { min: o.socketsMin };
-  const skillId = grantedSkillStatId(o.grantedSkill);
-  type StatFilter = { id: string; disabled: boolean; value?: { min?: number; max?: number } };
-  const andFilters: StatFilter[] = [
-    ...(o.stats ?? []).map((s) => ({
-      id: s.id,
-      disabled: false,
-      value: { ...(s.min != null ? { min: s.min } : {}), ...(s.max != null ? { max: s.max } : {}) },
-    })),
-    ...(skillId ? [{ id: skillId, disabled: false }] : []),
-  ];
-  const stats: Array<{ type: string; value?: { min: number }; filters: StatFilter[] }> = andFilters.length > 0 ? [{ type: "and", filters: andFilters }] : [];
-  for (const g of o.anyOf ?? []) {
-    stats.push({
-      type: "count",
-      value: { min: 1 },
-      filters: g.filters.map((f) => ({ id: f.id, disabled: false, value: f.min != null ? { min: f.min } : {} })),
-    } as (typeof stats)[number]);
-  }
-  return {
-    query: {
-      status: { option: SecurityStatus.Securable },
-      ...(o.baseType ? { type: { discriminator: null, option: o.baseType } } : {}),
-      stats,
-      filters: {
-        type_filters: { filters: type },
-        equipment_filters: { filters: equipment },
-        misc_filters: {
-          filters: {
-            corrupted: { option: "false" },
-            ...(o.fracturedItem != null ? { fractured_item: { option: String(o.fracturedItem) } } : {}),
-          },
-        },
-      },
-    },
-    sort: { price: "asc" },
-  };
-}
-
-/** ユニーク名で絞り込む検索クエリ */
-export function buildUniqueNameQuery(nameEn: string, opts: { noCorrupted?: boolean; baseType?: string } = {}) {
-  return {
-    query: {
-      status: { option: SecurityStatus.Securable },
-      name: { discriminator: null, option: nameEn },
-      // baseType: ルーンの熟達品 (Runemastered …) は同じ名前の別物なのでベースも絞る (poe.ninja の行ごと。2026-09-26)
-      ...(opts.baseType ? { type: opts.baseType } : {}),
-      // noCorrupted: コラプト品は外す (ユニーク装備価格推移で最安がコラプト品になっていた。2026-09-26)
-      filters: { type_filters: { filters: { rarity: { option: Rarity.Unique } } }, ...(opts.noCorrupted ? { misc_filters: { filters: { corrupted: { option: "false" } } } } : {}) },
     },
     sort: { price: "asc" },
   };

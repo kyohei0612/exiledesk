@@ -12,43 +12,17 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
-import { jaAscendancy, ascendancyIcon } from "../i18n/ascendancies-ja";
 import { resumeAtText, waitText } from "../utils/wait-text";
 import { MANUAL_ONLY, watchSettings } from "../state/watch-settings";
 import { rankingClass } from "../state/gem-watch-auto";
 import { loadAscendancies } from "../state/ascendancy-list";
 import UsageTable from "./gem-watch/UsageTable.vue";
+import UsageRankingHeader from "./gem-watch/UsageRankingHeader.vue";
+// 型・poe.ninja の待ち状態・見出しの文は gem-watch/ へ (2026-09-26 の分割)
+import type { Progress, Result } from "./gem-watch/gem-break-types";
+import { useNetStatus } from "./gem-watch/use-net-status";
+import { useUsageDisplay } from "./gem-watch/usage-display";
 
-
-interface Row {
-  name: string;
-  users: number;
-  lvl21: number;
-  q23: number;
-  both: number;
-  max_level: number;
-  max_quality: number;
-  /** コラプト済みで使っていた人数 */
-  corrupted: number;
-  /** [レベル, 人数] 昇順 */
-  level_dist: [number, number][];
-  /** [品質, 人数] 昇順 */
-  quality_dist: [number, number][];
-}
-interface Result {
-  class: string;
-  classes?: string[];
-  percentage: number;
-  characters: number;
-  /** そのうちキャッシュ / 同梱データから流用した人数 */
-  reused?: number;
-  requested?: number;
-  cancelled?: boolean;
-  league: string;
-  snapshot: string;
-  fetched_at: number;
-  rows: Row[];
-}
 const inApp = isTauriRuntime();
 const STORE_KEY = "exiledesk.gem-break.result";
 const TOPN_KEY = "exiledesk.gem-break.topn";
@@ -85,35 +59,9 @@ const topN = ref<number>(100);
 const spread = ref<number>(1);
 const busy = ref(false);
 const error = ref("");
-const progress = ref<{ phase: string; done: number; total: number; reused?: number } | null>(null);
+const progress = ref<Progress | null>(null);
 /** poe.ninja のレート制限 / 再試行の状態 (MOD 一覧のヘッダーと同じ物を出す) */
-interface NetworkStatusRaw {
-  global_penalty_waiting: boolean;
-  global_penalty_remaining_secs: number;
-  global_penalty_reason?: string | null;
-  active_retry_count: number;
-  last_retry_reason?: string | null;
-  last_retry_remaining_secs: number;
-}
-const net = ref<NetworkStatusRaw | null>(null);
-let netTimer: ReturnType<typeof setInterval> | null = null;
-
-function startNetPolling(): void {
-  if (netTimer || !inApp) return;
-  netTimer = setInterval(async () => {
-    try {
-      const s = await invoke<NetworkStatusRaw>("get_network_status");
-      net.value = s.global_penalty_waiting || s.active_retry_count > 0 ? s : null;
-    } catch {
-      net.value = null;
-    }
-  }, 1000);
-}
-function stopNetPolling(): void {
-  if (netTimer) clearInterval(netTimer);
-  netTimer = null;
-  net.value = null;
-}
+const { net, startNetPolling, stopNetPolling } = useNetStatus(inApp);
 
 /** 取得を中止する (レート制限待ちが長い時の逃げ道)。取れた分までで結果が返る */
 async function cancelNow(): Promise<void> {
@@ -235,43 +183,8 @@ async function fetchNow(): Promise<void> {
   }
 }
 
-/** 集計対象の表示名 (1 アセなら日本語名、複数なら「上位 N アセ合算」) */
-const resultClassJa = computed(() => {
-  const r = result.value;
-  if (!r) return "";
-  const cs = (r.classes ?? []).filter((c) => c);
-  if (cs.length === 0) return "全アセンダンシー";
-  if (cs.length === 1) return `${ascendancyIcon(cs[0])} ${jaAscendancy(cs[0])}`;
-  if (cs.length > 1) return `${cs.map((c) => jaAscendancy(c)).join(" / ")}`;
-  return jaAscendancy(r.class);
-});
-const fetchedAtText = computed(() => {
-  const t = result.value?.fetched_at;
-  if (!t) return "";
-  const d = new Date(t * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-});
-/** レート制限 / 再試行の待ち中は「取得中」ではない (オーナー指摘 2026-09-16) */
-const waiting = computed(() => busy.value && !!net.value && (net.value.global_penalty_waiting || net.value.active_retry_count > 0));
-/** 待機中に出す「ここまで取れた」表示 */
-const doneText = computed(() => (progress.value ? `${progress.value.done}/${progress.value.total} 人 取得済み` : ""));
-/** 取ろうとした人数より大幅に少ない = レート制限や中止で打ち切られた (数字があてにならない) */
-const shortfall = computed(() => {
-  const r = result.value;
-  if (!r || !r.requested) return null;
-  if (r.characters >= r.requested) return null;
-  return { got: r.characters, want: r.requested, cancelled: !!r.cancelled };
-});
-const progressText = computed(() => {
-  const p = progress.value;
-  if (!p) return "";
-  if (p.phase === "search") return "上位プレイヤーを検索中…";
-  if (p.phase === "completed") return "集計中…";
-  // キャッシュから流用した人数を出す (poe.ninja に取りに行くのは差分だけ)
-  const reused = p.reused ? ` (うちキャッシュ ${p.reused} 人)` : "";
-  return `キャラ取得中 ${p.done}/${p.total}${reused}`;
-});
+/** 集計対象の表示名・取得時刻・待機中・進み具合・母数不足 (gem-watch/usage-display.ts) */
+const { resultClassJa, fetchedAtText, waiting, doneText, shortfall, progressText } = useUsageDisplay(result, progress, busy, net);
 
 let unlisten: UnlistenFn | null = null;
 watch(selectedClass, () => void showCached());
@@ -282,7 +195,7 @@ onMounted(async () => {
   await loadAscendancies();
   void showCached();
   if (inApp) {
-    unlisten = await listen<{ phase: string; done: number; total: number; reused?: number }>("gem-break-progress", (e) => {
+    unlisten = await listen<Progress>("gem-break-progress", (e) => {
       progress.value = e.payload;
     });
   }
@@ -302,27 +215,7 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
 <template>
   <!-- 自動ジェム監視のページに埋め込まれる (2026-09-17 タブ統合)。単独ページの余白と h1 は持たない -->
   <section class="@container block rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4 pl-5 text-[var(--exile-color-text-primary)]">
-    <header class="mb-3">
-      <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px]">使用率ランキング (poe.ninja)</h3>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        上位プレイヤーが「レベル 21 / 品質 23% / 完成品」のジェムを実際に何人使っているかの人数ランキング。
-        <span class="text-[var(--exile-color-text-primary)]">気になるジェムの「監視へ +」で、上の監視リストに入れられます (7 ジェムまで)。</span>
-        行を押すと内訳 (何レベル / 何 % で使われているか) が出ます。
-      </p>
-      <!-- 細かい話はたたんでおく (2026-09-19 オーナー「分かりづらい、簡潔に」) -->
-      <details class="mt-1">
-        <summary class="text-[11px] text-[var(--exile-color-text-tertiary)] cursor-pointer select-none hover:text-[var(--exile-color-text-secondary)]">
-          数え方と取得のしくみ
-        </summary>
-        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-1">
-          poe.ninja の全体集計にはジェムのレベル・品質が無いので、選んだアセンダンシーの上位キャラを直接読んで数えます
-          (1 アセンダンシー = 人数 + 2 リクエスト。見たキャラは保存するので 2 回目以降は数分)。
-          装備やアセンダンシーの「+1 to Level of Skills」は差し引き、コラプト済みのジェムだけを 21 / 23% として数えます。
-          上位プレイヤーMOD一覧と同じ poe.ninja を叩くので、そちらの取得が終わった直後に相乗りして取り直します
-          (間隔は設定の「自動再取得」、既定 3 日)。
-        </p>
-      </details>
-    </header>
+    <UsageRankingHeader />
 
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ取得できます。</p>
 

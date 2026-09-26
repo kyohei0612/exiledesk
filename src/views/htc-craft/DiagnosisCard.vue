@@ -15,10 +15,10 @@ import { tradeAuto } from "../../services/trade2/auto-price";
 import { sideLimits } from "../../services/htc/bridge";
 import { withSocketLimits } from "../../services/htc/sockets";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
-import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
 import TreeFracturePanel from "./TreeFracturePanel.vue";
-import StartResults from "./StartResults.vue";
+import BuyOrCraftSection from "./BuyOrCraftSection.vue";
+import { useThreeWay } from "./three-way";
 import ModBreakdown from "./ModBreakdown.vue";
 import { MAX_STARTS, useStartSearch } from "./useStartSearch";
 import { useFinishedCompare } from "./useFinishedCompare";
@@ -96,24 +96,8 @@ const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 取引所へ投げる本数の目安 (候補ごとに 3 本 + 完成品 1 本) */
 const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 1 : 3) + (fin.query.value && !fin.found.value ? 1 : 0));
 const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
-/** 3 つの道: 完成品を買う / 固定済みを買って作る / 自分でフラクチャーして作る。一番安い物に印 */
-const threeWay = computed(() => {
-  const tw = ss.threeWay.value;
-  // 全部取れてから出す (オーナー 2026-09-26:「全部終わってから ② → ③。目が疲れない」。取得中に値が入れ替わって見えていた)
-  if (c.phase.value !== "done" || (!ss.chosen.value && !fin.buyCost.value)) return [];
-  // 完成品が無くても近い物 (MOD だけ同じ形) は「妥協」として比べる
-  const compromise = !!fin.found.value && fin.buyCost.value != null && (fin.tierless.value || fin.dropped.value.length > 0);
-  const list = [
-    { key: "buy", name: compromise ? "完成品を買う (妥協)" : "完成品を買う", cost: fin.outlier.value ? null : fin.buyCost.value,
-      why: fin.found.value ? (fin.exhausted.value ? "緩めても無し" : fin.outlier.value ? "当てにならない" : "出品なし") : "まだ",
-      detail: compromise ? (fin.dropped.value.length ? `MOD だけ同じ形。${fin.dropped.value.join(" / ")} は付いていない (買ってから付ける)` : "MOD だけ同じ形 (段は問わず)") : "",
-      url: fin.found.value?.url ?? null },
-    { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "", url: tw.fixed?.url ?? null },
-    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
-  ];
-  const min = Math.min(...list.map((w) => w.cost ?? Infinity));
-  return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));
-});
+/** 3 つの道と一番安い道 ([[three-way.ts]]) */
+const { threeWay, verdict3 } = useThreeWay(c, ss, fin);
 /** 道しるべ: 貼る → 固定を決めて探す → 買うか作るか → 作り方を回す */
 const steps = computed(() => {
   // 取得中 (②③) はまだ「済み」にしない (2026-09-25: ③ を探している最中に ③ ✓ ④ が出ていた)
@@ -128,12 +112,6 @@ const steps = computed(() => {
     s("買うか作るかを見る", ph !== "done" ? "todo" : decided ? "done" : "now"),
     s("下の作り方を回して確かめる", ph === "done" && decided ? "now" : "todo"),
   ];
-});
-/** 一番安い道と、2 番目との差 */
-const verdict3 = computed(() => {
-  const list = threeWay.value.filter((w) => w.cost != null).sort((x, y) => x.cost! - y.cost!);
-  const best = list[0], second = list[1];
-  return best ? { name: best.name, diff: second ? second.cost! - best.cost! : null, second: second?.name ?? "" } : null;
 });
 /** 今やることの一言 (上の要約) */
 const hint = computed(() => {
@@ -264,65 +242,8 @@ const fixLabel = computed(() => {
 
       <!-- 始め方の結果: 一番安い 1 つだけ出して、他は畳む ([[StartResults.vue]]) -->
 
-      <!-- ② 買うか、作るか (始め方の結果もここに。オーナー 2026-09-26:「2 番と 3 番一緒に」)。完成品の条件は一番ゆるく (MOD だけ) -->
-      <section v-if="(show2 || show3) && c.phase.value === 'done'" class="rounded-xl border border-white/10 bg-white/[0.03] p-3 lg:col-span-2">
-        <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">買うか、作るか</b>
-          <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" :disabled="fin.busy.value" @click="fin.search()">
-            {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}
-          </button>
-        </p>
-        <!-- 3 つの道。一番安い物を強調 -->
-        <div v-if="threeWay.length" class="mb-2 grid grid-cols-3 gap-2">
-          <div v-for="w in threeWay" :key="w.key" class="rounded-lg p-2" :class="w.best ? 'bg-emerald-500/15 ring-1 ring-emerald-400/60 shadow-[0_0_14px_rgba(52,211,153,0.25)]' : 'bg-black/30'">
-            <p class="text-[11px] opacity-70">{{ w.name }}</p>
-            <p class="text-lg font-bold leading-tight" :class="w.best ? 'text-emerald-300' : w.cost == null ? 'text-sm opacity-60' : ''">{{ w.cost != null ? c.money(w.cost) : w.why }}</p>
-            <p class="mt-0.5 flex items-center gap-2">
-              <span v-if="w.best" class="inline-block rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-black">一番安い</span>
-              <!-- 取引所へそのまま (オーナー 2026-09-26) -->
-              <button v-if="w.url" type="button" class="text-[11px] text-sky-300 underline hover:text-sky-200" @click="openExternal(w.url)">取引所で見る →</button>
-            </p>
-          </div>
-        </div>
-        <p v-if="verdict3" class="mb-3 rounded-lg bg-emerald-500/10 px-2 py-1">
-          → <b class="text-emerald-300">{{ verdict3.name }}</b> が一番安い<span v-if="verdict3.diff != null" class="opacity-70"> ({{ verdict3.second }} より <b class="text-emerald-200">{{ c.money(verdict3.diff) }}</b> 安い)</span>
-        </p>
-        <div class="grid gap-3 md:grid-cols-2">
-          <!-- 作る側: 始め方 (固定済みを買って途中から作る / 自分でフラクチャーして作る の中身) -->
-          <div class="rounded-lg border border-white/10 bg-black/20 p-2">
-            <p class="mb-1 font-bold text-amber-100">作るなら: 一番安い始め方</p>
-            <StartResults v-if="show2" :c="c" :ss="ss" />
-            <p v-else class="opacity-50">{{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨なので、始め方はありません" : "始め方は取れていません" }}</p>
-          </div>
-          <!-- 買う側: 完成品 -->
-          <div class="rounded-lg border border-white/10 bg-black/20 p-2">
-            <p class="mb-1 font-bold text-amber-100">買うなら: 完成品</p>
-        <p>
-          完成品: <b>{{ fin.buyCost.value != null ? c.money(fin.buyCost.value) : fin.found.value ? "出品なし" : fin.busy.value ? "取得中…" : "まだ" }}</b>
-          <!-- 取引所に無い時だけ手で埋める -->
-          <span v-if="fin.found.value && fin.found.value.min == null" class="ml-1 opacity-80">
-            手で入れる <input v-model.number="fin.manual.value" type="number" min="0" class="num w-14" /> 神
-          </span>
-          <button v-if="fin.found.value?.url" type="button" class="ml-1 text-sky-300 underline" @click="openExternal(fin.found.value.url)">{{ fin.found.value.total }} 件 →</button>
-        </p>
-        <p class="opacity-50">MOD が同じ物 (固定済み・冒涜でも可)</p>
-        <p v-if="fin.lightNote.value" class="text-amber-300/80">{{ fin.lightNote.value }}</p>
-        <p v-if="fin.exhausted.value" class="rounded bg-amber-500/10 px-1 text-amber-200">3 MOD まで緩めても出品なし</p>
-        <p v-if="fin.dropped.value.length" class="rounded bg-amber-500/10 px-1 text-amber-200">
-          近い物: {{ fin.dropped.value.join(" / ") }} が無い (買ってから付ける)
-        </p>
-        <p v-if="fin.unbuildable.value" class="text-rose-300">{{ fin.unbuildable.value }}</p>
-        <p v-if="fin.outlier.value" class="text-amber-300/80">出品が少なく高すぎるので比べない</p>
-        <p v-if="ss.kind.value.kind === 'unsafe'" class="opacity-50">クラフト非推奨 (見込みなし)</p>
-        <p v-else-if="fin.craftBasis.value" class="opacity-50">初動 + 作る見込み ({{ fin.craftBasis.value }})。正確な額は下の作り方で</p>
-        <p v-else class="opacity-50">始め方を探すと出る</p>
-          </div>
-        </div>
-        <!-- 3 つの道の中身 -->
-        <div v-if="threeWay.length" class="mt-2 rounded border border-white/10 bg-black/20 p-2">
-          <p v-for="w in threeWay.filter((x) => x.detail)" :key="w.key" class="opacity-70">{{ w.name }}: {{ w.detail }}</p>
-        </div>
-        <p v-if="fin.error.value" class="mt-1 text-rose-300">{{ fin.error.value }}</p>
-      </section>
+      <!-- ② 買うか、作るか ([[BuyOrCraftSection.vue]]) -->
+      <BuyOrCraftSection v-if="(show2 || show3) && c.phase.value === 'done'" :c="c" :ss="ss" :fin="fin" :three-way="threeWay" :verdict3="verdict3" :show2="show2" />
     </div>
 
     <details v-if="c.treeResult.value" class="mt-2">

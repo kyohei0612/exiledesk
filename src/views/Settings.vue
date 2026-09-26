@@ -18,15 +18,18 @@
  *   - 見出し: Cinzel (`font-display`)
  *   - 区切り: brass 系の薄罫 (`--exile-color-border-subtle`)
  *   - 補助テキスト: `--exile-color-text-secondary`
+ *
+ * 分割 (2026-09-26): 設定の読み書きは useAppSettings.ts、
+ * 「配布データ」欄は SettingsSeedSection.vue、「更新」欄は SettingsUpdateSection.vue。
  */
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { setTrade2Site, trade2Site, type Trade2Site } from "../services/trade2/league";
 import { getVersion } from "@tauri-apps/api/app";
-import { requestUpdateCheck, updateCheckError, updateCheckState } from "../state/update-check";
-import { updateErrorJa } from "../utils/trade-error";
-import { exportFlowSeed, seedCount } from "../services/flow-seed";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { useAppSettings } from "./useAppSettings";
+import SettingsSeedSection from "./SettingsSeedSection.vue";
+import SettingsUpdateSection from "./SettingsUpdateSection.vue";
 
 // トレードサイトの言語 (ブラウザで開く先)。localStorage のみ (2026-09-12)
 const tradeSite = ref<Trade2Site>(trade2Site());
@@ -34,162 +37,12 @@ function onTradeSiteChange(v: Trade2Site): void {
   tradeSite.value = v;
   setTrade2Site(v);
 }
-import {
-  enable as autostartEnable,
-  disable as autostartDisable,
-  isEnabled as autostartIsEnabled,
-} from "@tauri-apps/plugin-autostart";
 
-interface AppSettings {
-  autostart_enabled: boolean;
-  close_to_tray: boolean;
-  auto_refetch_interval_secs: number;
-}
-
-const settings = ref<AppSettings>({
-  autostart_enabled: false,
-  close_to_tray: true,
-  auto_refetch_interval_secs: 6 * 3600,
-});
-
-const loading = ref(true);
-const saving = ref(false);
-const errorMessage = ref<string | null>(null);
-const savedAt = ref<Date | null>(null);
-
-// dev (cargo tauri dev) で動かしている時に autostart を ON にすると、
-// `std::env::current_exe()` の debug exe 絶対パスが HKCU\Run に焼き付き、
-// PC 起動時に黒コンソール窓が出てしまう (CUI subsystem)。
-// debug ビルドでは toggle を構造的に押せないようにして再発防止する (2026-05-25)。
-const isDebugBuild = ref<boolean>(false);
+const { settings, loading, saving, errorMessage, savedAt, isDebugBuild, autoRefetchDays, loadSettings, saveSettings, formatHms } =
+  useAppSettings();
 
 /** 更新確認 (2026-09-16): 実際のチェックとトーストは UpdateToast.vue が持つ */
 const appVersion = ref("");
-
-// ---- 配布データ (捌き速度の記録をリポジトリに書き出す) ----
-const SEED_PATH_KEY = "exiledesk.flow-seed.path";
-const seedPath = ref(localStorage.getItem(SEED_PATH_KEY) ?? "");
-const seedBusy = ref(false);
-const seedMsg = ref("");
-const seedOk = ref(true);
-watch(seedPath, (v) => {
-  try {
-    localStorage.setItem(SEED_PATH_KEY, v);
-  } catch {
-    /* 保存できなくてもその場では使える */
-  }
-});
-async function doExportSeed(): Promise<void> {
-  seedBusy.value = true;
-  seedMsg.value = "";
-  try {
-    const r = await exportFlowSeed(seedPath.value.trim());
-    seedOk.value = true;
-    seedMsg.value = `書き出しました (${Math.round(r.bytes / 1024)} KB) → ${r.path}`;
-  } catch (e) {
-    seedOk.value = false;
-    seedMsg.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    seedBusy.value = false;
-  }
-}
-const updateStatusText = computed(() => {
-  switch (updateCheckState.value) {
-    case "checking":
-      return "確認中…";
-    case "none":
-      return "最新版です";
-    case "available":
-      return "新しいバージョンがあります (右下のお知らせから更新)";
-    case "error":
-      return `確認できませんでした: ${updateErrorJa(updateCheckError.value)}`;
-    default:
-      return "";
-  }
-});
-
-// 自動再取得間隔は UI 側で「日」単位、永続化は秒単位
-// (オーナー指示 2026-09-18: MOD 一覧も使用率ランキングも 3 日に 1 回のペース)
-const autoRefetchDays = computed<number>({
-  get: () => Math.round(settings.value.auto_refetch_interval_secs / 86_400),
-  set: (v) => {
-    const clamped = Math.max(0, Math.min(7, Math.round(v)));
-    settings.value.auto_refetch_interval_secs = clamped * 86_400;
-  },
-});
-
-async function loadSettings(): Promise<void> {
-  loading.value = true;
-  errorMessage.value = null;
-  try {
-    const loaded = await invoke<AppSettings>("settings_load");
-    settings.value = loaded;
-    // OS 側 autostart の実状態と settings.json を念のため照合
-    //
-    // debug ビルドではこのブロックを必ずスキップする:
-    //   `autostartEnable()` は `std::env::current_exe()` (= debug exe 絶対パス) を
-    //   HKCU\Run に書き込むため、debug 起動 1 回で release exe パスが debug パスに
-    //   差し戻されてしまう (2026-05-25 統合判断ドキュメント参照)。
-    //   debug 中は OS 同期そのものを行わず、registry を温存する。
-    if (!isDebugBuild.value) {
-      try {
-        const osEnabled = await autostartIsEnabled();
-        if (osEnabled !== settings.value.autostart_enabled) {
-          // settings.json を真値として扱い、OS 側を寄せる
-          if (settings.value.autostart_enabled) {
-            await autostartEnable();
-          } else {
-            await autostartDisable();
-          }
-        }
-      } catch {
-        // autostart plugin の問い合わせ失敗は致命ではないので握りつぶし
-      }
-    }
-  } catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function saveSettings(): Promise<void> {
-  saving.value = true;
-  errorMessage.value = null;
-  try {
-    await invoke("settings_save", { settings: settings.value });
-    // OS 側 autostart 登録/解除
-    //
-    // debug ビルドではこのブロックを必ずスキップ。
-    // close_to_tray や auto_refetch_interval_secs だけを変更した場合でも
-    // saveSettings は呼ばれるため、isDebugBuild ガード無しだと
-    // 「他設定変更 → autostart_enabled=true なら autostartEnable() 呼出 →
-    //  current_exe (= debug exe) が HKCU\Run に焼き付く」経路が生きる。
-    // toggle の disabled 表示だけでは構造的修正にならない (2026-05-25 cross-review)。
-    if (!isDebugBuild.value) {
-      try {
-        if (settings.value.autostart_enabled) {
-          await autostartEnable();
-        } else {
-          await autostartDisable();
-        }
-      } catch (e) {
-        // OS 側登録失敗時は警告のみ (設定 JSON は保存済)
-        console.warn("[Settings] autostart toggle failed:", e);
-      }
-    }
-    savedAt.value = new Date();
-  } catch (e) {
-    errorMessage.value = e instanceof Error ? e.message : String(e);
-  } finally {
-    saving.value = false;
-  }
-}
-
-function formatHms(d: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
 
 onMounted(async () => {
   try {
@@ -333,71 +186,9 @@ onMounted(async () => {
           </p>
         </section>
 
-        <!-- 配布データ (2026-09-20 オーナー指示: 測った記録をビルドに同梱してサブ機に配る) -->
-        <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">配布データ (捌き速度)</h2>
-          <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
-            この PC で測った売れ行きの記録を、リポジトリの <span class="font-mono">src/data/flow-seed.json</span> に書き出します。
-            そのまま release.bat を回すと、次の版に同梱されてサブ機に配られます (サブ機は起動時に取り込み、
-            自分で測った分は消しません)。今の同梱データは {{ seedCount() }} 銘柄です。
-          </p>
-          <div class="flex flex-wrap items-center gap-3">
-            <input
-              v-model="seedPath"
-              type="text"
-              spellcheck="false"
-              placeholder="C:\Users\kyohei\ExileDesk\src\data\flow-seed.json"
-              class="text-xs px-2 py-1 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] focus:outline-none focus:border-[var(--exile-color-accent-focus)] w-[28rem] max-w-full font-mono"
-            />
-            <button
-              type="button"
-              :disabled="!seedPath || seedBusy"
-              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] text-sm text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="doExportSeed"
-            >
-              {{ seedBusy ? "書き出し中…" : "配布データを書き出す" }}
-            </button>
-            <span v-if="seedMsg" class="text-xs" :class="seedOk ? 'text-emerald-300' : 'text-amber-300'">{{ seedMsg }}</span>
-          </div>
-        </section>
+        <SettingsSeedSection />
 
-        <!-- 更新 (2026-09-16 オーナー要望: アプリを開いたまま確認したい) -->
-        <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
-            更新
-          </h2>
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="text-sm">
-              現在のバージョン
-              <span class="font-mono text-[var(--exile-color-accent-focus)]">{{ appVersion ? `v${appVersion}` : "—" }}</span>
-            </span>
-            <button
-              type="button"
-              :disabled="updateCheckState === 'checking'"
-              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] text-sm text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="requestUpdateCheck"
-            >
-              {{ updateCheckState === "checking" ? "確認中…" : "更新を確認" }}
-            </button>
-            <span
-              v-if="updateStatusText"
-              class="text-xs"
-              :class="
-                updateCheckState === 'available'
-                  ? 'text-[var(--exile-color-accent-focus)]'
-                  : updateCheckState === 'error'
-                    ? 'text-[var(--exile-color-signal-error)]'
-                    : 'text-[var(--exile-color-text-secondary)]'
-              "
-            >
-              {{ updateStatusText }}
-            </span>
-          </div>
-          <p class="mt-2 text-xs text-[var(--exile-color-text-secondary)]">
-            起動時と同じ確認を今すぐ実行します。新しいバージョンがあれば、起動時と同じように画面右下にお知らせが出ます
-            (そこから「今すぐ更新」でダウンロード → 再起動)。
-          </p>
-        </section>
+        <SettingsUpdateSection :app-version="appVersion" />
 
         <!-- 保存状態 -->
         <footer class="pt-4 border-t border-[var(--exile-color-border-subtle)] text-xs">

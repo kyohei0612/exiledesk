@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 // 同じ物を画面にも書いていたので、この機能の ui.ts に寄せた (2026-09-21)
-import { evClass, pct } from "./rare-craft/ui";
+import { ATTEMPT_OPTIONS, evClass } from "./rare-craft/ui";
 import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import { refetchState } from "../services/trade2/auto-price";
@@ -19,10 +19,12 @@ import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
 import { displayCurrency } from "../state/display-currency";
 import { useRareCraft } from "./rare-craft/useRareCraft";
-import { METRIC_LABEL, METRIC_UNIT } from "./rare-craft/sim";
 import { bucketLabel } from "./rare-craft/recipes";
 import LedgerPanel from "./rare-craft/LedgerPanel.vue";
 import AssumptionsPanel from "./rare-craft/AssumptionsPanel.vue";
+// 「1 回あたり」と「選択肢の比較」は切り出した (2026-09-26 の分割)
+import PerAttemptPanel from "./rare-craft/PerAttemptPanel.vue";
+import VariantsPanel from "./rare-craft/VariantsPanel.vue";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 
@@ -34,7 +36,6 @@ const c = useRareCraft();
 onMounted(() => {
   void c.loadMarket();
 });
-const showAllVariants = ref(false);
 
 const bucketKind = (key: string): `b:${string}` => `b:${key}`;
 const refetch = computed(() =>
@@ -64,23 +65,8 @@ const priceRows = computed(() => {
   });
 });
 
-/** 「N 回やった場合」 */
-const ATTEMPT_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+/** 「N 回やった場合」の N (素材欄と 1 回あたりで共有。選べる値は ui.ts の ATTEMPT_OPTIONS) */
 const attempts = ref(10);
-const atN = computed(() => {
-  const r = c.result.value;
-  const top = c.topRow.value;
-  const n = attempts.value;
-  if (!r || c.cost.value == null) return null;
-  return {
-    cost: n * c.cost.value,
-    revenue: n * r.expectedSale,
-    profit: n * r.ev,
-    topLabel: top?.label ?? null,
-    topExpected: top ? n * top.pSold : 0,
-    pTopAny: top ? 1 - Math.pow(1 - top.pSold, n) : 0,
-  };
-});
 const materialTable = computed(() => {
   const n = attempts.value;
   const rows = [
@@ -89,13 +75,6 @@ const materialTable = computed(() => {
   ];
   return rows.map((r) => ({ ...r, costPerAttempt: r.unit == null ? null : r.unit * r.qty, qtyN: r.qty * n, costN: r.unit == null ? null : r.unit * r.qty * n }));
 });
-const variantRows = computed(() => (showAllVariants.value ? c.variants.value : c.variants.value.slice(0, 12)));
-/** 比較表は横に収めるため短い名前にする (フル名は title) */
-const shortExalt: Record<string, string> = { normal: "通常", greater: "上級", perfect: "完全" };
-const shortEssence = (label: string): string => label.match(/\((.+)\)$/)?.[1] ?? label.replace("のグレーターエッセンス", "");
-/** エッセンスを選べるレシピだけエッセンスの列を出す */
-const essenceCol = computed(() => c.essences.value.filter((e) => e.ok).length > 1);
-const shortRune = (label: string): string => (label === "ルーンなし" ? "—" : label.replace(/ \(.+\)$/, "").replace("のグレータールーン", " G").replace("のパーフェクトルーン", " P").replace("ファルウルの追跡のルーン", "追跡"));
 
 </script>
 
@@ -253,166 +232,11 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
       </BaseCard>
     </div>
 
-    <!-- 1 回あたり -->
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">1 回あたり</h2>
-        <p v-if="!c.sim.value.ok" class="text-[12px] text-amber-300">計算できません: {{ c.sim.value.reason }}</p>
-        <p v-else-if="!c.result.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">不足: {{ c.missing.value.join("、") || "相場を取得中" }}</p>
-        <template v-else>
-          <div class="grid grid-cols-2 @3xl:grid-cols-4 gap-3 text-[12px]">
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
-              <div class="text-[var(--exile-color-text-secondary)]">1 回の費用</div>
-              <div class="tabular-nums text-[16px]">{{ money(c.cost.value) }}</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース + 素材</div>
-            </div>
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
-              <div class="text-[var(--exile-color-text-secondary)]">期待売上</div>
-              <div class="tabular-nums text-[16px]">{{ money(c.result.value.expectedSale) }}</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">結果ごとの売値の平均</div>
-            </div>
-            <div class="rounded border p-3" :class="c.result.value.ev > 0 ? 'border-emerald-500/40' : 'border-[var(--exile-color-border-subtle)]'">
-              <div class="text-[var(--exile-color-text-secondary)]">期待収支</div>
-              <div class="tabular-nums text-[16px]" :class="evClass(c.result.value.ev)">{{ money(c.result.value.ev, true) }}</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">期待売上 − 費用</div>
-            </div>
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
-              <div class="text-[var(--exile-color-text-secondary)]">黒字になる確率</div>
-              <div class="tabular-nums text-[16px]">{{ pct(c.result.value.pProfit) }}</div>
-              <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">売値が費用以上になる 1 回の割合</div>
-            </div>
-          </div>
-          <p class="text-[13px] mt-3" :class="evClass(c.result.value.ev)">
-            {{ c.result.value.ev > 0 ? `作る価値あり: 1 回につき平均 ${money(c.result.value.ev)} の利益` : `作らない方が得: 1 回につき平均 ${money(-c.result.value.ev)} の赤字` }}
-          </p>
+    <!-- 1 回あたり ([[PerAttemptPanel.vue]]、回数は素材欄と共有) -->
+    <PerAttemptPanel v-model:attempts="attempts" :c="c" />
 
-          <table class="mt-3 text-[12px] w-full max-w-4xl break-words">
-            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-              <tr>
-                <th class="text-left font-normal pb-1">売値の段</th>
-                <th class="text-right font-normal pb-1 pl-2">条件を満たす確率</th>
-                <th class="text-right font-normal pb-1 pl-2">この段で売る確率</th>
-                <th class="text-right font-normal pb-1 pl-2">売値</th>
-                <th class="text-right font-normal pb-1 pl-2">期待売上への寄与</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="r in c.result.value.rows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)] tabular-nums">
-                <td class="py-1 pr-2">{{ r.label }}</td>
-                <td class="py-1 pl-2 text-right">{{ pct(r.pReach) }}</td>
-                <td class="py-1 pl-2 text-right">{{ pct(r.pSold) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ r.price == null ? "出品なし" : money(r.price) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(r.contribution) }}</td>
-              </tr>
-              <tr class="border-t border-[var(--exile-color-border-brass)] tabular-nums">
-                <td class="py-1 pr-2">外れ ({{ bucketLabel(c.floorConds.value) }} の最安で売る)</td>
-                <td></td>
-                <td class="py-1 pl-2 text-right">{{ pct(c.result.value.floor.pSold) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(c.result.value.floor.price) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(c.result.value.floor.contribution) }}</td>
-              </tr>
-              <tr class="border-t border-[var(--exile-color-border-subtle)] tabular-nums">
-                <td class="py-1 pr-2">外れの条件にも届かない (売れない扱い)</td>
-                <td></td>
-                <td class="py-1 pl-2 text-right">{{ pct(c.result.value.below.pSold) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(0) }}</td>
-                <td class="py-1 pl-2 text-right whitespace-nowrap">{{ money(0) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[var(--exile-color-text-secondary)]">
-            <span v-for="m in c.recipe.value.metrics" :key="m">{{ METRIC_LABEL[m] }} の平均 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ Math.round(c.result.value.means[m]) }}{{ METRIC_UNIT[m] }}</span></span>
-            <span>冒涜のあとの空き: プレフィックス {{ c.slots.value.prefixOpen }} / サフィックス {{ c.slots.value.suffixOpen }}</span>
-            <span>高貴なオーブで足す MOD: {{ c.effectiveCount.value }} つ</span>
-            <span v-if="c.echo.value === 'echoes'">反響で引き直す割合 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ pct(c.sim.value.pReroll) }}</span></span>
-          </div>
-
-          <div class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px] max-w-3xl">
-            <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
-              <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
-              <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
-                回数
-                <select v-model.number="attempts" class="num w-20">
-                  <option v-for="n in ATTEMPT_OPTIONS" :key="n" :value="n">{{ n }} 回</option>
-                </select>
-              </label>
-            </div>
-            <div v-if="atN" class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1">
-              <span class="text-[var(--exile-color-text-secondary)]">総費用</span>
-              <span class="text-right tabular-nums">{{ money(atN.cost) }}</span>
-              <span class="text-[var(--exile-color-text-secondary)]">期待売上</span>
-              <span class="text-right tabular-nums">{{ money(atN.revenue) }}</span>
-              <span class="text-[var(--exile-color-text-secondary)]">期待損益</span>
-              <span class="text-right tabular-nums" :class="evClass(atN.profit)">{{ money(atN.profit, true) }}</span>
-              <template v-if="atN.topLabel">
-                <span class="text-[var(--exile-color-text-secondary)]">一番高い段 ({{ atN.topLabel }}) が 1 個以上出る確率</span>
-                <span class="text-right tabular-nums">{{ pct(atN.pTopAny) }} (期待 {{ atN.topExpected.toFixed(2) }} 個)</span>
-              </template>
-            </div>
-          </div>
-        </template>
-      </div>
-    </BaseCard>
-
-    <!-- 選択肢の比較 -->
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">選択肢の比較 (エッセンス × 肋骨 × 反響 × 高貴なオーブ × お告げ × ルーン)</h2>
-          <span class="text-[11px] text-[var(--exile-color-text-secondary)]">期待収支の高い順。ベースは上の選択のまま。高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に 1 個使って 2 つ足す</span>
-        </div>
-        <p v-if="c.variants.value.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場が揃うと出ます (不足: {{ c.missing.value.join("、") || "取得中" }})</p>
-        <template v-else>
-          <table class="w-full text-[12px] break-words">
-            <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-              <tr>
-                <th v-if="essenceCol" class="text-left font-normal pb-1 pr-2">エッセンス</th>
-                <th class="text-left font-normal pb-1">冒涜</th>
-                <th class="text-left font-normal pb-1 pl-2">高貴なオーブ</th>
-                <th class="text-left font-normal pb-1 pl-2">ルーン</th>
-                <th class="text-right font-normal pb-1 pl-2">1 回の費用</th>
-                <th class="text-right font-normal pb-1 pl-2">期待売上</th>
-                <th class="text-right font-normal pb-1 pl-2">期待収支</th>
-                <th class="text-right font-normal pb-1 pl-2">黒字の確率</th>
-                <th class="text-right font-normal pb-1 pl-2">一番高い段</th>
-                <th class="pb-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(v, i) in variantRows"
-                :key="v.key"
-                class="border-t border-[var(--exile-color-border-subtle)] tabular-nums"
-                :class="[v.current ? 'text-[var(--exile-color-accent-focus)]' : '', i === 0 ? 'bg-emerald-500/10' : '']"
-              >
-                <td v-if="essenceCol" class="py-1 pr-2" :title="v.labels.essence">{{ shortEssence(v.labels.essence) }}</td>
-                <td class="py-1 pr-2" :title="`${v.labels.rib} / 反響: ${v.labels.echo}`">{{ v.rib === "ancient" ? "古代" : "保存" }}{{ v.echo === "echoes" ? " + 反響" : "" }}</td>
-                <td class="py-1 pl-2" :title="`${v.labels.exalt} + 偉大なる高貴なお告げ / ${v.labels.side}`">{{ shortExalt[v.exalt] }}{{ v.side === "suffix" ? " 右側" : "" }}{{ v.count < c.EXALT_ADDS ? ` (${v.count} つ)` : "" }}</td>
-                <td class="py-1 pl-2" :title="v.labels.rune">{{ shortRune(v.labels.rune) }}</td>
-                <td class="py-1 pl-2 text-right">{{ money(v.cost) }}</td>
-                <td class="py-1 pl-2 text-right">{{ money(v.expectedSale) }}</td>
-                <td class="py-1 pl-2 text-right" :class="evClass(v.ev)">{{ money(v.ev, true) }}</td>
-                <td class="py-1 pl-2 text-right">{{ pct(v.pProfit) }}</td>
-                <td class="py-1 pl-2 text-right">{{ pct(v.pTop) }}</td>
-                <td class="py-1 pl-2 text-right">
-                  <span v-if="i === 0" class="text-[10px] px-1 rounded bg-emerald-500/20 text-emerald-300">最も得</span>
-                  <button v-if="!v.current" type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="c.selectVariant(v.key)">これにする</button>
-                  <span v-else class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">選択中</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <button v-if="c.variants.value.length > 12" type="button" class="mt-2 text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="showAllVariants = !showAllVariants">
-            {{ showAllVariants ? "▲ 上位 12 件だけ" : `▼ 全 ${c.variants.value.length} 件を見る` }}
-          </button>
-          <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-            冒涜 = 肋骨 (保存 / 古代) と アビスの反響のお告げ の有無。古代の肋骨は冒涜の候補を MOD レベル 40 以上に絞る (通常の MOD の低いティアが出なくなる)。反響は最初の 3 択の一番いい物が「引き直した時の平均」より悪ければ引き直す。
-            高貴なオーブの「右側」= 右側の高貴なお告げ (サフィックスだけに付ける)。一番高い段 = 取れた売値が一番高い段で売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
-          </p>
-          <p v-if="c.unpricedOptions.value.length" class="text-[11px] text-amber-300 mt-1">相場が無いので比較に出ていない素材: {{ c.unpricedOptions.value.join("、") }}</p>
-        </template>
-      </div>
-    </BaseCard>
+    <!-- 選択肢の比較 ([[VariantsPanel.vue]]) -->
+    <VariantsPanel :c="c" />
 
     <!-- 収支 (実績入力、回数で素材欄の組み合わせを埋める 2026-09-14) -->
     <LedgerPanel :c="c" />

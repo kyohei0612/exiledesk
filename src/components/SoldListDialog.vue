@@ -10,9 +10,11 @@
  *   - 判定は実測そのままを書く (「速い · 3 時間で売れる」「14 件が売れました (売れるまで 3 時間)」)
  */
 import { computed, ref } from "vue";
-import { fateOf, flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
-import { averageExalted, currencyJa, displayCurrency, setDisplayCurrency, type DisplayChoice } from "../state/display-currency";
+import { fmtSellTime, verifyFlow, type FlowStore, type VerifyResult } from "../services/market-flow";
+import { currencyJa, displayCurrency, setDisplayCurrency, type DisplayChoice } from "../state/display-currency";
 import { fmtClock, fmtSpan } from "../utils/format-time";
+// 行の組み立ては sold-list-rows.ts へ (2026-09-26 の分割)
+import { buildAliveRows, buildSoldRows, buildSummaries, fmtAmount, groupByCheck, sumBy, toneClass, type Row } from "./sold-list-rows";
 
 const props = defineProps<{
   open: boolean;
@@ -27,131 +29,14 @@ const emit = defineEmits<{ (e: "close"): void }>();
 const curLabel = currencyJa;
 const nowSec = (): number => Math.floor(Date.now() / 1000);
 
-function fmtAmount(n: number | null | undefined): string {
-  if (n == null || !Number.isFinite(n)) return "—";
-  return n >= 100 ? String(Math.round(n)) : n.toFixed(n < 10 ? 1 : 0).replace(/\.0$/, "");
-}
-const startOf = (t: Tracked): number => t.listed_at ?? t.first_seen;
-
-interface Row {
-  id: string;
-  cond: string;
-  account: string;
-  amount: number | null | undefined;
-  currency: string | null | undefined;
-  listedAt: number | null;
-  firstSeen: number;
-  goneAt: number;
-  /** 出品されてから消えるまで (並んでいた時間) */
-  life: number;
-  /** 出品時刻が取れていない (並んでいた時間は「初めて見てから」で数えた) */
-  estimated: boolean;
-  /** 値段の付け替え (消えた直後に同じ出品者が並べ直した) */
-  relisted: boolean;
-  /** 出品時刻か出品者が分からず、売れたと言えない (2026-09-26 監査。売れた件数に入れない) */
-  unknown: boolean;
-}
-
 /** 条件ごとのまとめ */
-const summaries = computed(() =>
-  props.keys.map((k) => {
-    const st = props.store?.states?.[k.key];
-    const f = summarizeFlow(st);
-    const watched = props.store?.watches?.some((w) => w.key === k.key);
-    return {
-      key: k.key,
-      label: k.label,
-      // 根拠が 3 件未満の判定には「?」を付ける (2026-09-20)
-      verdict: (f.thin ? `${f.label}?` : f.label) || (f.gone + f.alive > 0 ? "判定待ち" : watched ? "巡回待ち" : "記録なし"),
-      sentence: flowSentence(f),
-      tone: f.tone,
-      gone: f.gone,
-      alive: f.alive,
-      medianMin: f.medianMin,
-      olderThanMedian: f.olderThanMedian,
-      avgSold: averageExalted(f.soldPrices),
-      droppedUnsold: f.droppedUnsold,
-      truncated: f.truncated,
-      total: st?.total ?? null,
-      cheapest: st?.cheapest_amount ?? null,
-      cheapestCur: st?.cheapest_currency ?? null,
-      sampledAt: st?.sampled_at ?? 0,
-      stale: f.stale,
-    };
-  }),
-);
+const summaries = computed(() => buildSummaries(props.keys, props.store));
 
 /** 消えた出品 (新しい順) */
-const soldRows = computed<Row[]>(() => {
-  const rows: Row[] = [];
-  for (const k of props.keys) {
-    const st = props.store?.states?.[k.key];
-    if (!st?.tracked) continue;
-    for (const t of st.tracked) {
-      if (!t.gone_at) continue;
-      rows.push({
-        id: t.id,
-        cond: k.label,
-        account: t.account ?? "",
-        amount: t.amount,
-        currency: t.currency,
-        listedAt: t.listed_at ?? null,
-        firstSeen: t.first_seen,
-        goneAt: t.gone_at,
-        life: t.gone_at - startOf(t),
-        estimated: t.listed_at == null,
-        relisted: fateOf(t) === "relisted",
-        unknown: fateOf(t) === "unknown",
-      });
-    }
-  }
-  return rows.sort((a, b) => b.goneAt - a.goneAt);
-});
+const soldRows = computed<Row[]>(() => buildSoldRows(props.keys, props.store));
 
-/** 通貨ごとに足す (神とカオスが混ざるので合算しない) */
-function sumBy(list: { amount?: number | null; currency?: string | null }[]): [string, number][] {
-  const m = new Map<string, number>();
-  for (const r of list) {
-    if (r.amount == null || !r.currency) continue;
-    m.set(r.currency, (m.get(r.currency) ?? 0) + r.amount);
-  }
-  return [...m.entries()].sort((a, b) => b[1] - a[1]);
-}
-
-/**
- * 「確認した時刻」でまとめる。
- *
- * 周期ごとに確認しているので、その間に売れた分は同じ時刻でまとめて出てくる。
- * 「同時に 14 件消えた」ように見えるのはそのため、というのが分かる形にする。
- * 1 巡の中で 3 条件は数秒〜数十秒ずれて取られるので、秒ではなく分でまとめる
- * (秒で分けていた頃は同じ確認が 2〜3 つの見出しに割れていた。2026-09-18 レビュー指摘)
- */
-const checkGroups = computed(() => {
-  const map = new Map<number, Row[]>();
-  for (const r of soldRows.value) {
-    const at = Math.floor(r.goneAt / 60) * 60;
-    const list = map.get(at);
-    if (list) list.push(r);
-    else map.set(at, [r]);
-  }
-  const times = [...map.keys()].sort((a, b) => b - a);
-  return times.map((at, i) => {
-    const list = map.get(at)!;
-    const sellers = new Map<string, number>();
-    for (const r of list) sellers.set(r.account || "不明", (sellers.get(r.account || "不明") ?? 0) + 1);
-    const top = [...sellers.entries()].sort((a, b) => b[1] - a[1])[0];
-    void i;
-    return {
-      at,
-      list,
-      totals: sumBy(list.filter((r) => !r.relisted && !r.unknown)),
-      sold: list.filter((r) => !r.relisted && !r.unknown).length,
-      relisted: list.filter((r) => r.relisted).length,
-      unknown: list.filter((r) => r.unknown).length,
-      topSeller: top && top[1] > 1 ? { name: top[0], n: top[1] } : null,
-    };
-  });
-});
+/** 「確認した時刻」でまとめる (まとめ方の説明は sold-list-rows.ts の groupByCheck) */
+const checkGroups = computed(() => groupByCheck(soldRows.value));
 
 const grandTotal = computed(() => sumBy(soldRows.value.filter((r) => !r.relisted && !r.unknown)));
 const soldCount = computed(() => soldRows.value.filter((r) => !r.relisted && !r.unknown).length);
@@ -159,35 +44,10 @@ const relistedCount = computed(() => soldRows.value.filter((r) => r.relisted).le
 const unknownCount = computed(() => soldRows.value.filter((r) => r.unknown).length);
 
 /** まだ出品されている分 (並んでいる時間が長い順) */
-const aliveRows = computed(() => {
-  const now = nowSec();
-  const rows: { id: string; cond: string; account: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean }[] = [];
-  for (const k of props.keys) {
-    const st = props.store?.states?.[k.key];
-    if (!st?.tracked) continue;
-    for (const t of st.tracked) {
-      if (t.gone_at) continue;
-      rows.push({ id: t.id, cond: k.label, account: t.account ?? "", amount: t.amount, currency: t.currency, listedAt: t.listed_at ?? null, age: now - startOf(t), estimated: t.listed_at == null });
-    }
-  }
-  return rows.sort((a, b) => b.age - a.age);
-});
+const aliveRows = computed(() => buildAliveRows(props.keys, props.store, nowSec()));
 
 /** 登録元のメモ (「品質 23% を 12 / 47 人」など) */
 const note = computed(() => props.store?.watches?.find((w) => props.keys.some((k) => k.key === w.key))?.note ?? "");
-
-function toneClass(tone: string): string {
-  switch (tone) {
-    case "fast":
-      return "text-emerald-300 border-emerald-400/50";
-    case "normal":
-      return "text-amber-200 border-amber-300/40";
-    case "slow":
-      return "text-rose-300 border-rose-400/40";
-    default:
-      return "text-[var(--exile-color-text-tertiary)] border-[var(--exile-color-border-subtle)]";
-  }
-}
 
 /** 記録と今の検索結果の突き合わせ (検索 1 回) */
 const verifying = ref("");

@@ -7,17 +7,19 @@
 -->
 <script setup lang="ts">
 import { evClass } from "../utils/ev-class";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { useOverquality } from "./overquality/useOverquality";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
-import MoneyInput from "../components/vaal-scales/MoneyInput.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
 import RefreshButton from "../components/RefreshButton.vue";
 import { displayCurrency } from "../state/display-currency";
 import { refetchState } from "../services/trade2/auto-price";
-import { marketStore } from "../state/market-store";
+// 収支 (実績入力) と前提は切り出した (2026-09-26 の分割)
+import LedgerCard from "./overquality/LedgerCard.vue";
+import AssumptionsCard from "./overquality/AssumptionsCard.vue";
+import { pct } from "./overquality/format";
 const money = (n: number | null | undefined, signed = false): string => displayCurrency.money(n, { signed });
 const unit = displayCurrency.label;
 
@@ -29,7 +31,6 @@ const o = useOverquality();
 onMounted(() => {
   void o.loadMarket();
 });
-const showAssumptions = ref(false);
 const showLadder = ref(false);
 
 /** 「N 回やった場合」の N (5 刻み)。オーナー指示 2026-09-13 */
@@ -81,88 +82,6 @@ const materialRows = computed(() => {
 const fmtQty = (q: number): string => (Number.isInteger(q) ? String(q) : q.toFixed(2));
 /** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
 const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り直す"));
-
-/**
- * 収支 (実績): 実際に使った素材の数と、完成した数、神のオーブでリロールした回数を手で入れて損益を出す (オーナー指示 2026-09-13)。
- * 数は手入力、単価は相場 (ワンド・完成品は trade2、その他はカレンシーランキング)。売値だけは実際に売った額に直せる。
- * 入力は localStorage に残す (この PC だけ)。
- */
-const LEDGER_KEY = "exiledesk.adonia.ledger";
-interface Ledger {
-  wands: number;
-  etchers: number;
-  infusers: number;
-  omens: number;
-  chances: number;
-  divines: number;
-  finished: number;
-  /** 実際に売った 1 個あたりの額 (高貴)。null なら相場の売値 */
-  soldEach: number | null;
-}
-const EMPTY_LEDGER: Ledger = { wands: 0, etchers: 0, infusers: 0, omens: 0, chances: 0, divines: 0, finished: 0, soldEach: null };
-function loadLedger(): Ledger {
-  try {
-    const raw = localStorage.getItem(LEDGER_KEY);
-    return raw ? { ...EMPTY_LEDGER, ...(JSON.parse(raw) as Partial<Ledger>) } : { ...EMPTY_LEDGER };
-  } catch {
-    return { ...EMPTY_LEDGER };
-  }
-}
-const ledger = ref<Ledger>(loadLedger());
-watch(
-  ledger,
-  (v) => {
-    try {
-      localStorage.setItem(LEDGER_KEY, JSON.stringify(v));
-    } catch {
-      /* 保存できなくても動く */
-    }
-  },
-  { deep: true },
-);
-function resetLedger(): void {
-  ledger.value = { ...EMPTY_LEDGER };
-}
-const divinePrice = computed(() => marketStore.priceOf("divine"));
-const ledgerRows = computed(() => {
-  const l = ledger.value;
-  const n = (x: number) => (Number.isFinite(x) && x > 0 ? x : 0);
-  const rows = [
-    { key: "wands", label: "吸収のワンド", unit: o.autoBasePrice.value, qty: n(l.wands) },
-    { key: "etchers", label: o.preset.value.qualityCurrencyJa, unit: o.auto.value.qualityCurrency, qty: n(l.etchers) },
-    { key: "infusers", label: o.preset.value.infuserJa, unit: o.auto.value.infuser, qty: n(l.infusers) },
-    { key: "omens", label: "可能性のお告げ", unit: o.auto.value.omen, qty: n(l.omens) },
-    { key: "chances", label: "可能性のオーブ", unit: o.auto.value.chance, qty: n(l.chances) },
-    { key: "divines", label: "神のオーブ (完成品のリロール)", unit: divinePrice.value, qty: n(l.divines) },
-  ];
-  return rows.map((r) => ({ ...r, cost: r.unit == null ? null : r.unit * r.qty }));
-});
-const ledgerTotals = computed(() => {
-  const l = ledger.value;
-  const rows = ledgerRows.value;
-  const missing = rows.some((r) => r.qty > 0 && r.cost == null);
-  const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
-  const each = l.soldEach ?? o.salePrice.value;
-  const finished = Number.isFinite(l.finished) && l.finished > 0 ? l.finished : 0;
-  const revenue = each == null ? null : each * finished;
-  const attempts = Number.isFinite(l.wands) && l.wands > 0 ? l.wands : 0;
-  return {
-    cost,
-    missing,
-    each,
-    finished,
-    revenue,
-    profit: revenue == null ? null : revenue - cost,
-    /** 実測の生存率 (完成数 ÷ ワンド数) */
-    rate: attempts > 0 ? finished / attempts : null,
-    /** 完成 1 個あたりの実コスト */
-    perFinished: finished > 0 ? cost / finished : null,
-  };
-});
-
-function pct(p: number): string {
-  return `${(p * 100).toFixed(p * 100 >= 10 ? 1 : 2)}%`;
-}
 </script>
 
 <template>
@@ -361,89 +280,10 @@ function pct(p: number): string {
       </div>
     </BaseCard>
 
-    <!-- 収支 (実績入力) 2026-09-13 -->
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">収支</h2>
-          <div class="flex items-center gap-3 text-[11px] text-[var(--exile-color-text-secondary)]">
-            <span>実際に使った数を入れる。単価は上の相場、売値は相場か実売</span>
-            <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)]" @click="resetLedger">全部 0 に</button>
-          </div>
-        </div>
-        <table class="w-full text-[12px]">
-          <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
-            <tr>
-              <th class="text-left font-normal pb-1">素材</th>
-              <th class="text-right font-normal pb-1 pl-3">単価</th>
-              <th class="text-right font-normal pb-1 pl-3">使った数</th>
-              <th class="text-right font-normal pb-1 pl-3">費用</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in ledgerRows" :key="r.key" class="border-t border-[var(--exile-color-border-subtle)]">
-              <td class="py-1.5 pr-2">{{ r.label }}</td>
-              <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.unit) }}</td>
-              <td class="py-1.5 pl-3 text-right">
-                <input v-model.number="ledger[r.key as keyof typeof ledger]" type="number" min="0" step="1" class="num w-24" />
-              </td>
-              <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
-            </tr>
-            <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
-              <td></td>
-              <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
-                {{ ledgerTotals.rate != null ? `実測生存率 ${pct(ledgerTotals.rate)}` : "" }}
-              </td>
-              <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.cost) }}</td>
-            </tr>
-            <tr class="border-t border-[var(--exile-color-border-subtle)]">
-              <td class="py-1.5 pr-2">完成したアドニアのエゴ</td>
-              <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">
-                <MoneyInput v-model="ledger.soldEach" :placeholder-exalted="o.salePrice.value" width="w-24" />
-              </td>
-              <td class="py-1.5 pl-3 text-right">
-                <input v-model.number="ledger.finished" type="number" min="0" step="1" class="num w-24" />
-              </td>
-              <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.revenue) }}</td>
-            </tr>
-            <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">収支</td>
-              <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
-                {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${money(ledgerTotals.perFinished)}` : "" }}
-              </td>
-              <td></td>
-              <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ ledgerTotals.profit == null ? "—" : money(ledgerTotals.profit, true) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          売値の欄は空欄なら上の相場 (アドニアのエゴ 30% の最安)、実際に売れた額があればそれを入れてください。神のオーブは完成品のロール直しに使った数。入力はこの PC に残ります。
-          <span v-if="ledgerTotals.missing" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
-        </p>
-      </div>
-    </BaseCard>
+    <!-- 収支 (実績入力) 2026-09-13 ([[LedgerCard.vue]]) -->
+    <LedgerCard :o="o" />
 
-    <BaseCard class="mb-4">
-      <div class="p-4 pl-5">
-        <button type="button" class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2" @click="showAssumptions = !showAssumptions">
-          <span>{{ showAssumptions ? "▲" : "▼" }}</span>
-          <span>前提 (確率は非公開。プレイヤー計測の既定値、ここで変えられます)</span>
-        </button>
-        <div v-if="showAssumptions" class="mt-3 text-[12px] space-y-2">
-          <div class="grid grid-cols-[auto_auto] gap-x-4 gap-y-1 items-center w-max">
-            <label>インフューザー 1 回で +2 になる確率</label><input v-model.number="o.params.value.plusTwoChance" type="number" min="0" max="1" step="0.05" class="num w-24" />
-            <label>品質 1 ポイント超過ごとのコラプト確率の増分</label><input v-model.number="o.params.value.brickRatePerPoint" type="number" min="0" max="1" step="0.001" class="num w-24" />
-          </div>
-          <button type="button" class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)]" @click="o.resetParams">既定値に戻す</button>
-          <p class="text-[11px] text-[var(--exile-color-text-tertiary)] leading-relaxed">
-            品質 q (20 以上) でインフューザーを使うと、コラプト確率 = 増分 × (q − 20)。20% ちょうどからの 1 回目は 0 で、21% で約 5%、29% で約 47% (既定)。
-            コラプトしなければ +1 (既定 80%) か +2 (20%)、目標を超えた分は目標で止まります。既定の増分 0.052 はコミュニティのインフューザー使用ログ (約 2,300 回) から出た値で、20 → 30 の生存率は約 9.8% になります。
-            クライアントにあるのは「最大品質を最大 10% まで超過できるが、一定確率でコラプト化する」の説明文までです。
-          </p>
-        </div>
-      </div>
-    </BaseCard>
+    <AssumptionsCard :o="o" />
   </section>
 </template>
 

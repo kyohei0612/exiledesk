@@ -12,142 +12,18 @@
  *   - 2026-09-15: 売れた数も「1 回の期待数 × 回数」で埋める。結果次第の結晶と原石も期待数で。
  *     回数を入れた時点の経路を固定する (相場で「最も得」が変わっても、やった分を数え直さない)
  *   - 2026-09-16: 単価も回数を入れた時点で固定する。取引所で比べた後は固定単価も入れ替える
+ *
+ * 2026-09-26: 型と保存は ledger-book.ts、行と合計の組み立ては ledger-rows.ts へ分けた。
+ * ここには帳簿の状態と書き込みだけが残る。呼ぶ側は今まで通り ledger から取れる。
  */
-import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
-import { roundMoney } from "../../state/display-currency";
+import { computed, ref, watch, type Ref } from "vue";
 import { askConfirm } from "../../state/confirm-dialog";
-import { expectedCounts, expectedSales, type RouteId, type SaleSlot } from "./model";
+import type { RouteId } from "./model";
 import type { useGemCorrupt } from "./useGemCorrupt";
+import { EMPTY_LEDGER, LEDGER_KEY, loadBook, type EachKey, type GemLedger, type GemLedgerApi, type LedgerBook, type RowKey, type SoldKey } from "./ledger-book";
+import { routeRows, useLedgerTotals } from "./ledger-rows";
 
-const LEDGER_KEY = "exiledesk.gem.ledger";
-
-type BuyKey = "buyLevel21" | "buyQuality23" | "buyFinished";
-export type RowKey = "baseGem" | "gcp" | "perfectJeweller" | "vaal" | "crystal" | "uncut20" | BuyKey;
-export type SoldKey = "soldLevel21" | "soldQuality23" | "soldFinished" | "soldOther";
-export type EachKey = "eachLevel21" | "eachQuality23" | "eachFinished" | "eachOther";
-
-export interface GemLedger {
-  /** null = 最も得の経路に合わせる */
-  route: RouteId | null;
-  /** やった回数 */
-  attempts: number;
-  /** 手で上書きした使った数 (無い行は 1 回の数 × 回数) */
-  qty: Partial<Record<RowKey, number>>;
-  /** 手で入れた 1 個の値段 (高貴)。無ければ下の固定値 → 今の相場 の順 */
-  unit: Partial<Record<RowKey, number>>;
-  /** 回数を入れた時点の単価 (高貴)。あとで相場が動いても、やった分の費用を数え直さない (2026-09-16) */
-  prices: Partial<Record<RowKey, number>>;
-  /** 上の単価を取った時刻 (ms) */
-  pricesAt: number;
-  /** 手で上書きした売れた数 (無い行は 1 回の期待数 × 回数) */
-  sold: Partial<Record<SoldKey, number>>;
-  /** 実売の 1 個あたり (高貴)。null なら相場 */
-  eachLevel21: number | null;
-  eachQuality23: number | null;
-  eachFinished: number | null;
-  eachOther: number | null;
-}
-
-const EMPTY_LEDGER: GemLedger = {
-  route: null, attempts: 0, qty: {}, unit: {}, prices: {}, pricesAt: 0, sold: {},
-  eachLevel21: null, eachQuality23: null, eachFinished: null, eachOther: null,
-};
-
-/**
- * 旧形式 (回数を入れる前、素材ごとの数と売れた数を全部手で入れていた 2026-09-15 まで) の置き場。
- *
- * 2026-09-19 オーナー「なにも触ってないね。そこデフォルトで期待値入れて欲しい」:
- * これを「手で入れた上書き」として引き継いでいたので、回数を入れても期待値が出ず、
- * 何年も前の数が居座って見えていた。旧形式の数は回数と結びついていない
- * (当時の記録は attempts が 0 のまま) ので、もう引き継がない。
- */
-type StoredGemLedger = Partial<GemLedger> & Partial<Record<RowKey | SoldKey, number>>;
-type LedgerBook = Record<string, StoredGemLedger>;
-
-/**
- * 帳簿の版。2 = 売れた物の「1 個の売値」の上書き (each*) を一度全部消した後。
- *
- * オーナー報告 2026-09-21 (サイフォンエレメント):「完成品の値段が同期されてなくね、2 神じゃんコレ。
- * 他もそうだけど平均売値かなこれ。最安値同期して欲しい」。
- * 売値は旧形式 (2026-09-15 まで) の記録から each* として引き継がれていて、完成品 2 神のような
- * 今の相場と無関係な値が「手で入れた値」として居座っていた (数の方は 09-19 に引き継ぎをやめたが、
- * 売値は残っていた)。一度きり全部消して、以後は空欄 = 上の売値 (取引所の最安) を使う。
- * 手で入れた実売の額があれば、また入れれば効く。
- */
-const LEDGER_VERSION_KEY = "exiledesk.gem.ledger.v";
-const LEDGER_VERSION = "2";
-
-function loadBook(): LedgerBook {
-  try {
-    const raw = localStorage.getItem(LEDGER_KEY);
-    const book = raw ? (JSON.parse(raw) as LedgerBook) : {};
-    if (localStorage.getItem(LEDGER_VERSION_KEY) !== LEDGER_VERSION) {
-      let cleared = 0;
-      for (const l of Object.values(book)) {
-        for (const k of ["eachLevel21", "eachQuality23", "eachFinished", "eachOther"] as const) {
-          if (l[k] != null) {
-            delete l[k];
-            cleared++;
-          }
-        }
-      }
-      if (cleared > 0) localStorage.setItem(LEDGER_KEY, JSON.stringify(book));
-      localStorage.setItem(LEDGER_VERSION_KEY, LEDGER_VERSION);
-    }
-    return book;
-  } catch {
-    return {};
-  }
-}
-
-/** 個数の表示 (整数はそのまま、期待値は小数 2 桁)。帳簿の説明文と素材表で使う */
-export const fmtQty = (q: number | null): string => (q == null ? "—" : Number.isInteger(q) ? String(q) : q.toFixed(2));
-
-export interface LedgerRowDef {
-  key: RowKey;
-  label: string;
-  market: number | null;
-  /** 買った物 (実際の買値を入れられる) */
-  buy: BuyKey | null;
-  /** 1 回の数。null は結果次第 (自動では埋めない) */
-  perAttempt: number | null;
-  hint: string;
-}
-
-export interface GemLedgerApi {
-  ledger: ComputedRef<GemLedger>;
-  /** 帳簿の経路 (既定は最も得。相場が揃わず決まらない間は自作) */
-  ledgerRouteId: ComputedRef<RouteId>;
-  ledgerRows: ComputedRef<(LedgerRowDef & {
-    auto: number; override: number | null; qty: number;
-    each: number | null; pinned: number | null; unit: number | null; cost: number | null;
-  })[]>;
-  ledgerSales: ComputedRef<{
-    slot: SaleSlot; qtyKey: SoldKey; eachKey: EachKey; label: string;
-    market: number | null; each: number | null;
-    auto: number; override: number | null; qty: number; price: number | null; revenue: number | null;
-  }[]>;
-  ledgerTotals: ComputedRef<{
-    cost: number; revenue: number; profit: number;
-    missingCost: boolean; missingSale: boolean;
-    perAttempt: number | null; perFinished: number | null;
-  }>;
-  setAttemptsValue: (n: number | null) => void;
-  setRoute: (ev: Event) => void;
-  setQtyValue: (key: RowKey, v: number | null) => void;
-  setSoldValue: (key: SoldKey, v: number | null) => void;
-  setUnit: (key: RowKey, v: number | null) => void;
-  /** 実売の 1 個あたり (空欄なら相場) */
-  setEach: (key: EachKey, v: number | null) => void;
-  resetLedger: () => Promise<void>;
-  /** 使った数 / 売れた数の上書きだけ消す (回数・経路・単価は残す) */
-  clearCounts: () => void;
-  /** 売れた物の 1 個の売値の上書きを消す (空欄 = 上の売値に戻る)。2026-09-20 */
-  clearEach: () => void;
-  refreshLedgerPrices: () => void;
-  fetchExchangeAndRepin: () => Promise<void>;
-}
-
+export { fmtQty, type EachKey, type GemLedger, type GemLedgerApi, type LedgerRowDef, type RowKey, type SoldKey } from "./ledger-book";
 
 /**
  * @param attempts 「N 回やった場合」の N。**素材・経路の札と同じ物**を受け取る
@@ -190,61 +66,10 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
 
   const ledgerRouteId = computed<RouteId>(() => ledger.value.route ?? g.best.value?.id ?? "craft");
 
-  function routeRows(id: RouteId): LedgerRowDef[] {
-    const m = g.materials.value;
-    const s = g.sale.value;
-    const r = g.routes.value.find((x) => x.id === id);
-    const crystal: LedgerRowDef = { key: "crystal", label: "コラプトの結晶", market: m.crystal, buy: null, perAttempt: 1, hint: "" };
-    /** 原石は結果次第なので 1 回の期待個数 (相場が揃うまでは埋めない) */
-    const uncut = (hint: string): LedgerRowDef => ({
-      key: "uncut20",
-      label: g.uncutLabel.value,
-      market: m.uncut20,
-      buy: null,
-      perAttempt: r?.ok ? (r.expectedUncut ?? 0) : null,
-      hint: `${hint}。空欄は期待 ${r?.ok ? fmtQty(r.expectedUncut ?? 0) : "—"} 個 × 回数`,
-    });
-    switch (id) {
-      case "craft":
-      case "craftPlain":
-        return [
-          // 名前と値段は素材表と同じ物 (原石から作る / トレードで現物を買う で変わる。
-          // オーナー 2026-09-19「収支のところ、原石と現物で変わるところ一緒に変えて同期して」)
-          {
-            key: "baseGem",
-            label: g.baseGemLabel.value,
-            market: m.baseGem,
-            buy: null,
-            perAttempt: 1,
-            hint: g.baseSource.value === "buy" ? "原石から作れないので、トレードで現物 (コラプト無し) を買う" : "",
-          },
-          { key: "gcp", label: "宝石細工師のプリズム", market: m.gcp, buy: null, perAttempt: 4, hint: "" },
-          { key: "perfectJeweller", label: "宝飾職人のオーブ (完全)", market: m.perfectJeweller, buy: null, perAttempt: 1, hint: "" },
-          { key: "vaal", label: "ヴァールオーブ", market: m.vaal, buy: null, perAttempt: 1, hint: "" },
-          {
-            ...crystal,
-            perAttempt: r?.ok ? (r.expectedCrystals ?? 0) : null,
-            hint: `片方当たった時だけ使う。空欄は期待 ${r?.ok ? fmtQty(r.expectedCrystals ?? 0) : "—"} 本 × 回数`,
-          },
-          uncut("売る物にだけ使う"),
-        ];
-      case "buy21":
-        return [{ key: "buyLevel21", label: "レベル 21 (品質 20%) のジェム", market: s.level21, buy: "buyLevel21", perAttempt: 1, hint: "買った物" }, crystal];
-      case "buy23":
-        return [
-          { key: "buyQuality23", label: "品質 23% のジェム", market: s.quality23, buy: "buyQuality23", perAttempt: 1, hint: "買った物" },
-          crystal,
-          uncut("結晶の後、残った物にだけ使う"),
-        ];
-      case "buyFinished":
-        return [{ key: "buyFinished", label: "完成品 (21 · 23%)", market: s.finished, buy: "buyFinished", perAttempt: 1, hint: "買った物" }];
-    }
-  }
-
   /** 今の単価を写し取る (行ごと、相場 or 取引所の安い方) */
   function snapshotPrices(routeId: RouteId): Partial<Record<RowKey, number>> {
     const out: Partial<Record<RowKey, number>> = {};
-    for (const r of routeRows(routeId)) if (r.market != null) out[r.key] = r.market;
+    for (const r of routeRows(g, routeId)) if (r.market != null) out[r.key] = r.market;
     return out;
   }
 
@@ -394,81 +219,8 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
     { deep: true },
   );
 
-  /**
-   * N 回やった時の個数 (段ごとに切り下げ)。結晶・原石・売れた数の既定はこれ
-   * (オーナー指示 2026-09-20:「コラプト結晶、ジェム 20、完成品の割合は期待値のデフォを必ず記載」)。
-   */
-  const counts = computed(() => {
-    const route = g.routes.value.find((x) => x.id === ledgerRouteId.value);
-    return route?.ok ? expectedCounts(route, ledger.value.attempts, { exact: true }) : null;
-  });
-
-  const ledgerRows = computed(() => {
-    const l = ledger.value;
-    const c = counts.value;
-    return routeRows(ledgerRouteId.value).map((r) => {
-      // 結晶と原石は「できた個数」から連鎖で数える (期待値 × 回数 ではない)
-      const auto =
-        r.key === "crystal" && c ? c.crystals : r.key === "uncut20" && c ? c.uncut20 : r.perAttempt == null ? 0 : r.perAttempt * l.attempts;
-      const override = l.qty[r.key] ?? null;
-      const qty = override ?? auto;
-      const each = l.unit[r.key] ?? null;
-      const pinned = l.prices[r.key] ?? null;
-      const unit = each ?? pinned ?? r.market;
-      // 費用は**切り上げた単価**で数え直す (オーナー指示 2026-09-20:「丸めた単価で計算し直す」
-      // 「基本経費は多く、収入は厳しくのスタンス」)。画面の縦の掛け算が必ず合う
-      const unitUp = unit == null ? null : (roundMoney(unit, "up")?.exalted ?? unit);
-      return { ...r, auto, override, qty, each, pinned, unit: unitUp, cost: unitUp == null ? null : unitUp * qty };
-    });
-  });
-
-  const ledgerSales = computed(() => {
-    const l = ledger.value;
-    const s = g.sale.value;
-    const route = g.routes.value.find((x) => x.id === ledgerRouteId.value);
-    // 経路の内訳から 1 回あたりの売れた数の期待値 (相場が揃うまでは自動で埋めない)
-    const exp = route?.ok ? expectedSales(route) : null;
-    const rows: { slot: SaleSlot; qtyKey: SoldKey; eachKey: EachKey; label: string; market: number | null; each: number | null }[] = [
-      { slot: "level21", qtyKey: "soldLevel21", eachKey: "eachLevel21", label: "レベル 21 (品質 20%)", market: s.level21, each: l.eachLevel21 },
-      { slot: "quality23", qtyKey: "soldQuality23", eachKey: "eachQuality23", label: "品質 23%", market: s.quality23, each: l.eachQuality23 },
-      { slot: "finished", qtyKey: "soldFinished", eachKey: "eachFinished", label: "完成品 (21 · 23%)", market: s.finished, each: l.eachFinished },
-      // 外れの生存品は相場が無いので、前提の割合 × 元の値段の平均を空欄時の売値にする
-      { slot: "other", qtyKey: "soldOther", eachKey: "eachOther", label: "その他 (外れの生存品など)", market: exp?.other.price ?? null, each: l.eachOther },
-    ];
-    const c = counts.value;
-    return rows.map((r) => {
-      // 売れた数も連鎖で数えた個数 (切り下げ)。相場が揃っていない間は 0
-      const auto = c ? c[r.slot] : exp ? Math.floor(exp[r.slot].qty * l.attempts) : 0;
-      const override = l.sold[r.qtyKey] ?? null;
-      const qty = override ?? auto;
-      const price = r.each ?? r.market;
-      // 売上は**切り下げた売値**で数え直す (収入は厳しく見る)
-      const priceDown = price == null ? null : (roundMoney(price, "down")?.exalted ?? price);
-      return { ...r, auto, override, qty, price: priceDown, revenue: priceDown == null ? (qty > 0 ? null : 0) : priceDown * qty };
-    });
-  });
-
-  const ledgerTotals = computed(() => {
-    const rows = ledgerRows.value;
-    const sales = ledgerSales.value;
-    const missingCost = rows.some((r) => r.qty > 0 && r.cost == null);
-    const missingSale = sales.some((r) => r.qty > 0 && r.revenue == null);
-    const cost = rows.reduce((s, r) => s + (r.cost ?? 0), 0);
-    const revenue = sales.reduce((s, r) => s + (r.revenue ?? 0), 0);
-    const n = ledger.value.attempts;
-    const finished = sales.find((r) => r.slot === "finished")?.qty ?? 0;
-    return {
-      cost,
-      revenue,
-      profit: revenue - cost,
-      missingCost,
-      missingSale,
-      /** 1 回あたりの損益 */
-      perAttempt: n > 0 ? (revenue - cost) / n : null,
-      /** 完成品 1 個あたりの実コスト */
-      perFinished: finished > 0 ? cost / finished : null,
-    };
-  });
+  // 使った物 / 売れた物 / 合計の行は ledger-rows.ts (2026-09-26 の分割)
+  const { ledgerRows, ledgerSales, ledgerTotals } = useLedgerTotals(g, ledger, ledgerRouteId);
 
   return {
     ledger,

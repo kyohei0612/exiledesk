@@ -32,9 +32,11 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 mod gate;
 mod pace;
 mod headers;
+mod util;
 pub use gate::*;
 pub use pace::*;
 pub use headers::*;
+pub(crate) use util::*;
 
 /// テスト共通の道具 (GATES は 1 つしか無いので、そこを触るテストは順番に走らせる)
 #[cfg(test)]
@@ -272,33 +274,3 @@ pub async fn trade2_fetch_with(session: Option<String>, req: FetchRequest) -> Re
     }
     Ok(body)
 }
-
-/// x-rate-limit-* ヘッダをそのまま JSON にする (2026-09-14)。
-/// フロントの擬似レート制限がサーバー側の実カウント (同じ IP の手動検索も含む) に合わせるために使う。
-pub(crate) fn rate_limit_headers(h: &HeaderMap) -> serde_json::Value {
-    let mut m = serde_json::Map::new();
-    for (k, v) in h.iter() {
-        let name = k.as_str();
-        if name.starts_with("x-rate-limit-") {
-            if let Ok(s) = v.to_str() {
-                m.insert(name.to_string(), serde_json::Value::String(s.to_string()));
-            }
-        }
-    }
-    serde_json::Value::Object(m)
-}
-
-/// 簡易 URL encode (Rust 標準は無いので手書き、ASCII + - _ . ~ 以外はパーセント符号化)。
-pub(crate) fn urlencode(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for b in s.bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                out.push(b as char);
-            }
-            _ => out.push_str(&format!("%{:02X}", b)),
-        }
-    }
-    out
-}
-
