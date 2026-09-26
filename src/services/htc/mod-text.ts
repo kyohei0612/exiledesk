@@ -18,14 +18,17 @@
  *      (表の見出しは `# to #`)
  * どちらも「数字を全部 # に潰し、+ を落とし、空白を詰めて小文字」で吸収できます。
  *
- * 引けなかった 1 件は `#% reduced Attribute Requirements` (クォータースタッフ)。**表に無い**
- * ものなので、ここでは英語のまま返します ── **勝手に訳さない**。翻訳を自作すると
- * クライアントの表記とズレて、[[check-ja-terms]] が見ている前提が崩れます。
+ * 表に無い行 (`#% reduced Attribute Requirements` など 29 種) は、クライアント原本 (mods.en/ja.json) の同じ MOD の
+ * 日本語から作った `mod-text-ja-htc.json` で引きます (2026-09-26、オーナー「MOD 辞書の英語のやつ直しといて」)。
+ * ここで訳を自作はしない ── クライアントの表記とズレて、[[check-ja-terms]] が見ている前提が崩れます。
  */
 import jaTable from "../../i18n/mod-text-ja.json";
+// 表に無い poe2htc の行 (reduced 側・大文字違い等) をクライアント原本から訳した物 (scripts/build-mod-text-ja-htc.mjs、2026-09-26)
+import jaHtc from "../../i18n/mod-text-ja-htc.json";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 
 const TABLE = jaTable as Record<string, string>;
+const HTC = jaHtc as Record<string, string>;
 const NL = String.fromCharCode(10);
 
 /** 数字を潰し、符号を落とし、空白を詰める。見出しと `Mod.text` の書き方の差を吸収するため */
@@ -52,7 +55,7 @@ for (const [k, v] of Object.entries(TABLE)) {
  */
 export function jaOfModLine(line: string): string | null {
   if (TABLE[line]) return TABLE[line];
-  return BY_NORM.get(normalise(line)) ?? null;
+  return BY_NORM.get(normalise(line)) ?? HTC[line] ?? null;
 }
 
 /**
