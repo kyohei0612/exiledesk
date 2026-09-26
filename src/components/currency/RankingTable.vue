@@ -27,7 +27,7 @@ type Cur = keyof typeof JA;
 /**
  * 行ごとの値段 (2026-09-26 オーナー:「前提は適正のルールで表示。一番安く取引できるのを横に 1 つ置いとこか、取引時の推奨カレンシー」)。
  *   main: 相場の値段を表示通貨で (適正なら 神 → 1 未満はカオス → 1 カオス未満は高貴)
- *   rec:  取引所のペアで一番安く交換できる通貨 (カオスと神で安い方)。1 未満は「1 通貨で N 個」。
+ *   rec:  取引所のペアで一番安く交換できる通貨 (カオスと神で安い方)。「51.4/個 カオス」の形。
  *         値段の列と同じ通貨の時と、ペアが薄い / 無い時は null (「—」)
  */
 const cells = computed(() => {
@@ -92,9 +92,8 @@ function iconOf(c: Cur): string {
           <!-- 取引の推奨: 一番安く交換できる通貨 -->
           <td class="px-2 py-3 text-right">
             <div v-if="cells.get(p.apiId)!.rec" class="flex items-center justify-end gap-1 text-xs tabular-nums text-[var(--exile-color-text-secondary)]" :title="`${cells.get(p.apiId)!.rec!.label}で交換するのが一番安い (取引所のペアの値)`">
-              <!-- いつも「A 個 = B 通貨」の形 (片方が 1)。オーナー 2026-09-26「表示がぶれる、統一」 -->
-              <template v-if="cells.get(p.apiId)!.rec!.value < 1">{{ fmt(1 / cells.get(p.apiId)!.rec!.value) }} 個 = 1</template>
-              <template v-else>1 個 = {{ fmt(cells.get(p.apiId)!.rec!.value) }}</template>
+              <!-- いつも「数字/個」の形 (51.4/個 カオス)。オーナー 2026-09-26「/個にしようか、数字の後」 -->
+              <span>{{ fmt(cells.get(p.apiId)!.rec!.value) }}/個</span>
               <img v-if="iconOf(cells.get(p.apiId)!.rec!.cur)" :src="iconOf(cells.get(p.apiId)!.rec!.cur)" :alt="cells.get(p.apiId)!.rec!.label" class="w-4 h-4 object-contain" loading="lazy" />
               <span>{{ cells.get(p.apiId)!.rec!.label }}</span>
             </div>
