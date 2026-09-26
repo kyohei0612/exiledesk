@@ -34,6 +34,7 @@ interface NinjaItem {
     desecratedMods?: string[];
     craftedMods?: string[];
     socketedItems?: Array<{ typeLine?: string; socketedItems?: unknown[] }>;
+    sockets?: unknown[];
     properties?: Array<{ name?: string; values?: unknown[][] }>;
   };
 }
@@ -62,7 +63,10 @@ function toItem(x: NinjaItem, slot: string, kind: BuildItemKind, swap: boolean):
   if (!d) return null;
   const rarity = RARITY[d.frameType ?? 0] ?? "NORMAL";
   const hasName = rarity === "RARE" || rarity === "UNIQUE" || rarity === "RELIC";
-  const quality = Number(String(d.properties?.find((p) => p.name === "Quality")?.values?.[0]?.[0] ?? "").replace(/[^0-9]/g, "")) || 0;
+  // 項目名は「[EnergyShield|Energy Shield]」のような印つきのことがあるので、表示の側で比べる
+  const prop = (name: string) =>
+    Number(String(d.properties?.find((p) => (p.name ?? "").replace(/\[([^\]|]+\|)?([^\]]+)\]/g, "$2") === name)?.values?.[0]?.[0] ?? "").replace(/[^0-9]/g, "")) || 0;
+  const quality = prop("Quality");
   return {
     slot,
     swap,
@@ -78,6 +82,10 @@ function toItem(x: NinjaItem, slot: string, kind: BuildItemKind, swap: boolean):
     sanctified: !!d.sanctified,
     quality,
     itemLevel: d.ilvl ?? 0,
+    armour: prop("Armour"),
+    evasion: prop("Evasion Rating") || prop("Evasion"),
+    energyShield: prop("Energy Shield"),
+    sockets: d.sockets?.length ?? 0,
   };
 }
 

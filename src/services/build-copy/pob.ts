@@ -28,6 +28,12 @@ export interface BuildItem {
   sanctified: boolean;
   quality: number;
   itemLevel: number;
+  /** 防御値 (品質込みの表示の値)。取引所の条件に入れる (オーナー 2026-09-27「トレードみたいにベースについてるエナシやらアーマーやらの値とソケットも検索に」) */
+  armour: number;
+  evasion: number;
+  energyShield: number;
+  /** ソケットの数 (ルーンを差す穴) */
+  sockets: number;
 }
 
 export interface BuildGem {
@@ -89,6 +95,10 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
   let itemLevel = 0;
   let corrupted = false;
   let sanctified = false;
+  let armour = 0;
+  let evasion = 0;
+  let energyShield = 0;
+  let sockets = 0;
   let implicitCount = 0;
   let i = hasBase ? 3 : 2;
   for (; i < lines.length; i++) {
@@ -102,6 +112,10 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
     if (l.startsWith("Rune: ")) runes.push(l.slice(6));
     else if (l.startsWith("Quality: ")) quality = Number(l.slice(9)) || 0;
     else if (l.startsWith("Item Level: ")) itemLevel = Number(l.slice(12)) || 0;
+    else if (l.startsWith("Armour: ")) armour = Number(l.slice(8)) || 0;
+    else if (l.startsWith("Evasion: ")) evasion = Number(l.slice(9)) || 0;
+    else if (l.startsWith("Energy Shield: ")) energyShield = Number(l.slice(15)) || 0;
+    else if (l.startsWith("Sockets: ")) sockets = l.slice(9).split(/[\s-]+/).filter(Boolean).length;
   }
   const rest = lines.slice(i).filter((l) => !l.startsWith("<"));
   const implicits: string[] = [];
@@ -124,7 +138,7 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
     }
     mods.push(plain);
   });
-  return { rarity, name, base, runes, implicits, mods, corrupted, sanctified, quality, itemLevel };
+  return { rarity, name, base, runes, implicits, mods, corrupted, sanctified, quality, itemLevel, armour, evasion, energyShield, sockets };
 }
 
 const unescape = (s: string) => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");

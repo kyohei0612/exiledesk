@@ -72,26 +72,34 @@ export function isVariantUnique(name: string): boolean {
 }
 
 /**
- * 種類違いのあるユニークの検索: 名前 + ベース + 種類を決める MOD (数値なし)。コラプトの指定はしない (一番ゆるく)。
+ * ユニークを取引所で探す条件 (種類違いのある物・ソケットのある物)。名前 + ベース + 種類を決める MOD (数値なし) + ソケット数。
+ * コラプトの指定はしない (一番ゆるく)。
  * 種類を決める MOD = poe.ninja で「どれかが付く」行 (1 行目だけでも合わせる) と、選ぶ形の MOD (From Nothing のキーストーン)。
  * queries は きつい順 (全部 → 1 つ欠けても可 → 2 つ欠けても可)。井戸の心臓のように全部が「どれかが付く」行の物は、
  * 全部一致だと出品が無い (2026-09-27 実測 0 件)。
- * 種類を決める MOD が付いていない (アドニアのエゴのパワーチャージ 0) / 取引所の条件にできない時は reason
+ * ソケットは poe.ninja の相場が区別しない (オーナー 2026-09-27「ユニークもソケット無視してるからそこも加味して」)。
+ * 探さない時 (種類違いもソケットも無い) は null、種類の MOD が付いていない / 条件にできない時は reason
  */
-export function uniqueVariantQuery(name: string, base: string, mods: readonly string[]): { queries: unknown[] } | { reason: string } {
-  const keys = variantKeys.get(name) ?? new Set<string>();
+export function uniqueTradeQuery(it: { name: string; base: string; mods: readonly string[]; sockets: number }): { queries: unknown[] } | { reason: string } | null {
+  const keys = variantKeys.get(it.name) ?? new Set<string>();
+  if (!keys.size && it.sockets <= 0) return null;
   const key = (t: string) => statKey(t).replace(/(^|\s)-(?=#)/g, "$1");
-  const { lines } = textStats(mods);
-  const optional = mods.filter((m) => keys.has(key(m)));
-  const pick = lines.filter((l) => keys.has(key(l.text)) || l.ids.some((id) => id.includes("|")));
-  if (!pick.length) return { reason: optional.length ? "種類を決める MOD を取引所の条件にできないので poe.ninja の相場のまま" : "種類を決める MOD は付いていないので poe.ninja の相場のまま" };
+  const { lines } = textStats(it.mods);
+  const optional = it.mods.filter((m) => keys.has(key(m)));
+  const pick = keys.size ? lines.filter((l) => keys.has(key(l.text)) || l.ids.some((id) => id.includes("|"))) : [];
+  if (keys.size && !pick.length && it.sockets <= 0)
+    return { reason: optional.length ? "種類を決める MOD を取引所の条件にできないので poe.ninja の相場のまま" : "種類を決める MOD は付いていないので poe.ninja の相場のまま" };
   const filters = [...new Set(pick.flatMap((l) => l.ids))].map((id) => statFilter(id));
   const q = (need: number | null) => ({
     query: {
       status: { option: SecurityStatus.Securable },
-      name,
-      ...(base ? { type: base } : {}),
-      stats: [need == null ? { type: "and", filters } : { type: "count", value: { min: need }, filters }],
+      name: { discriminator: null, option: it.name },
+      ...(it.base ? { type: it.base } : {}),
+      stats: filters.length ? [need == null ? { type: "and", filters } : { type: "count", value: { min: need }, filters }] : [],
+      filters: {
+        type_filters: { filters: { rarity: { option: "unique" } } },
+        ...(it.sockets > 0 ? { equipment_filters: { filters: { rune_sockets: { min: it.sockets } } } } : {}),
+      },
     },
     sort: { price: "asc" },
   });
