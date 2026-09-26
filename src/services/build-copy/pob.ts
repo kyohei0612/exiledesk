@@ -24,6 +24,8 @@ export interface BuildItem {
   /** 明示 MOD (ルーン・エンチャントの行は除く) */
   mods: string[];
   corrupted: boolean;
+  /** 聖別済み (MOD の数値が 78%〜122% に振り直されている) */
+  sanctified: boolean;
   quality: number;
   itemLevel: number;
 }
@@ -86,6 +88,7 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
   let quality = 0;
   let itemLevel = 0;
   let corrupted = false;
+  let sanctified = false;
   let implicitCount = 0;
   let i = hasBase ? 3 : 2;
   for (; i < lines.length; i++) {
@@ -108,6 +111,10 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
       corrupted = true;
       return;
     }
+    if (l === "Sanctified") {
+      sanctified = true;
+      return;
+    }
     // {enchant}{rune} の行はルーンの効果 (値段はルーンの側で数える)
     const plain = l.replace(/\{[^}]*\}/g, "").trim();
     if (!plain) return;
@@ -117,7 +124,7 @@ function parseItemText(text: string): Omit<BuildItem, "slot" | "swap" | "kind"> 
     }
     mods.push(plain);
   });
-  return { rarity, name, base, runes, implicits, mods, corrupted, quality, itemLevel };
+  return { rarity, name, base, runes, implicits, mods, corrupted, sanctified, quality, itemLevel };
 }
 
 const unescape = (s: string) => s.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");

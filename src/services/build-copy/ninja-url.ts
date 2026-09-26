@@ -27,6 +27,7 @@ interface NinjaItem {
     baseType?: string;
     ilvl?: number;
     corrupted?: boolean;
+    sanctified?: boolean;
     implicitMods?: string[];
     explicitMods?: string[];
     fracturedMods?: string[];
@@ -74,6 +75,7 @@ function toItem(x: NinjaItem, slot: string, kind: BuildItemKind, swap: boolean):
     implicits: d.implicitMods ?? [],
     mods: [...(d.fracturedMods ?? []), ...(d.explicitMods ?? []), ...(d.desecratedMods ?? []), ...(d.craftedMods ?? [])],
     corrupted: !!d.corrupted,
+    sanctified: !!d.sanctified,
     quality,
     itemLevel: d.ilvl ?? 0,
   };

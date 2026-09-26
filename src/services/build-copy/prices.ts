@@ -87,10 +87,20 @@ export async function loadStatText(): Promise<void> {
 }
 const statKey = (t: string) => t.replace(/[0-9]+(\.[0-9]+)?/g, "#").replace(/[+]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 
-/** 1 つの MOD → 明示の番号と、条件の値 (reduced は increased の側を負の値で) */
-function statFor(mod: string): { ids: string[]; value?: { min?: number; max?: number } } | null {
+/** 文面から引いた 1 行 (条件の番号と、付いている数値) */
+export interface TextStat {
+  /** 元の文 (英語) */
+  text: string;
+  ids: string[];
+  /** 付いている数値 (「Adds 5 to 10」は平均)。数値の無い行は null */
+  value: number | null;
+  /** reduced の行 (取引所では increased の負の値なので、条件は上限になる) */
+  negative: boolean;
+}
+
+/** 1 つの MOD → 明示の番号と数値 */
+function statFor(mod: string): TextStat | null {
   const d = statText ?? {};
-  const v = valueOf(mod);
   const pick = (k: string) => (d[k] ?? []).filter((id) => id.startsWith("explicit."));
   let ids = pick(statKey(mod));
   let negative = false;
@@ -99,32 +109,20 @@ function statFor(mod: string): { ids: string[]; value?: { min?: number; max?: nu
     negative = ids.length > 0;
   }
   if (!ids.length) return null;
-  if (v == null || v < 1) return { ids };
-  const lim = Math.floor(v * 0.8);
-  return { ids, value: negative ? { max: -lim } : { min: lim } };
+  return { text: mod, ids, value: valueOf(mod), negative };
 }
 
 /**
- * 文面から条件を作る (ジュエルなど計算機に無い物の検索用。rare-query.ts)。数値は 8 割以上 (reduced は負の値の上限)。
- * 直せない行は missing に
+ * 文面から条件を引く (ジュエルなど計算機に無い物・計算機で作れない特殊な MOD の検索用。rare-query.ts)。
+ * 数値をどこまで下げるかは rare-query.ts の側で決める。直せない行は missing に
  */
-export function textStats(mods: readonly string[]): { filters: Array<{ id: string; value?: { min?: number; max?: number } }>; used: number; missing: string[] } {
-  const filters: Array<{ id: string; value?: { min?: number; max?: number } }> = [];
+export function textStats(mods: readonly string[]): { lines: TextStat[]; missing: string[] } {
+  const lines: TextStat[] = [];
   const missing: string[] = [];
-  const seen = new Set<string>();
-  let used = 0;
   for (const mod of mods) {
     const st = statFor(mod);
-    if (!st) {
-      missing.push(mod);
-      continue;
-    }
-    used++;
-    for (const id of st.ids) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      filters.push(st.value ? { id, value: st.value } : { id });
-    }
+    if (st) lines.push(st);
+    else missing.push(mod);
   }
-  return { filters, used, missing };
+  return { lines, missing };
 }

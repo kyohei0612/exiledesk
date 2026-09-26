@@ -39,7 +39,7 @@ export interface ItemRow {
   /** 値段の出どころ */
   src: "unique" | "rare" | "none";
   /** レアの解析 (MOD と段) と、選んだ段で作った取引所リンク (ゆるさ違い) */
-  rare: { analysis: RareAnalysis; links: RareLink[]; picked: Record<number, number> } | null;
+  rare: { analysis: RareAnalysis; links: RareLink[]; picked: Record<number, number>; ratio: number } | null;
 }
 export interface BulkRow {
   nameEn: string;
@@ -59,6 +59,20 @@ export function useBuildCopy() {
   const analyses = shallowRef(new Map<number, RareAnalysis>());
   /** 選び直した段 (行の番号 → MOD の並び → tiers の添字)。オーナー 2026-09-26「ティアはいじれる様に」 */
   const picked = reactive(new Map<number, Record<number, number>>());
+  /**
+   * 数値で条件にする行 (ジュエル・特殊な MOD) の下限の割合 (%、行の番号 → 割合。無ければ 100)。
+   * オーナー 2026-09-26「ジュエルはティアじゃなくて数値にしようか、割合で減らす感じで」
+   */
+  const ratios = reactive(new Map<number, number>());
+  const RATIO_STEP = 10;
+  const RATIO_MIN = 10;
+  const RATIO_MAX = 150;
+  function shiftRatio(row: number, dir: 1 | -1): void {
+    const a = analyses.value.get(row);
+    if (!a?.lines.length) return;
+    const now = ratios.get(row) ?? 100;
+    ratios.set(row, Math.min(RATIO_MAX, Math.max(RATIO_MIN, now + dir * RATIO_STEP)));
+  }
   function pickTier(row: number, mod: number, tier: number): void {
     picked.set(row, { ...(picked.get(row) ?? {}), [mod]: tier });
   }
@@ -75,8 +89,9 @@ export function useBuildCopy() {
   }
   /** 選べる段の中で 1 つ上 (dir = 1) / 下 (dir = -1) へ。端ならそのまま */
   function shiftTiers(row: number, dir: 1 | -1): void {
+    shiftRatio(row, dir);
     const a = analyses.value.get(row);
-    if (!a) return;
+    if (!a?.mods.length) return;
     const cur = picked.get(row) ?? {};
     const next: Record<number, number> = { ...cur };
     a.mods.forEach((m, k) => {
@@ -87,9 +102,19 @@ export function useBuildCopy() {
     });
     picked.set(row, next);
   }
-  /** その行の段を付いている段に戻す */
+  /** その行の段を付いている段に、割合を 100% に戻す */
   function resetTiers(row: number): void {
     picked.delete(row);
+    ratios.delete(row);
+  }
+  /** 読み込んだビルドを消して、貼る前に戻す (オーナー 2026-09-26「読み込んだあとリセットするボタン」) */
+  function clear(): void {
+    code.value = "";
+    build.value = null;
+    error.value = null;
+    analyses.value = new Map();
+    picked.clear();
+    ratios.clear();
   }
   /** 相場を読み込み直したら数え直す */
   const priceTick = ref(0);
@@ -112,6 +137,7 @@ export function useBuildCopy() {
       progress.value = "MOD のデータを読んでいます…";
       await prepareRareQueries();
       picked.clear();
+      ratios.clear();
       analyses.value = new Map((build.value?.items ?? []).map((it, i) => [i, it] as const).filter(([, it]) => it.rarity === "RARE").map(([i, it]) => [i, analyzeRare(it)]));
       progress.value = "ユニークの相場を取得中…";
       await loadUniquePrices((d, t) => (progress.value = `ユニークの相場を取得中 (${d}/${t})…`));
@@ -143,7 +169,8 @@ export function useBuildCopy() {
           const a = analyses.value.get(i);
           if (!a) return null;
           const p = picked.get(i) ?? {};
-          return { analysis: a, links: rareLinks(a, p), picked: p };
+          const ratio = ratios.get(i) ?? 100;
+          return { analysis: a, links: rareLinks(a, p, ratio), picked: p, ratio };
         })(),
       };
     });
@@ -194,5 +221,5 @@ export function useBuildCopy() {
     void openQuery(q);
   }
 
-  return { code, build, error, loading, progress, load, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
+  return { code, build, error, loading, progress, load, clear, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
 }

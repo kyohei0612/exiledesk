@@ -50,13 +50,23 @@ const money = (ex: number) => displayCurrency.money(ex);
           >
             {{ b.loading.value ? "読み込み中…" : "読み込む" }}
           </button>
+          <button
+            v-if="(b.build.value || b.code.value) && !b.loading.value"
+            type="button"
+            class="px-3 py-1.5 rounded border border-[var(--exile-color-border-subtle)] text-[12px] text-[var(--exile-color-text-secondary)] hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)]"
+            title="貼ったコードと読み込んだ一覧を消す"
+            @click="b.clear()"
+          >
+            リセット
+          </button>
           <span v-if="b.progress.value" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ b.progress.value }}</span>
           <span v-if="b.error.value" class="text-[12px] text-amber-300">{{ b.error.value }}</span>
         </div>
       </div>
     </BaseCard>
 
-    <template v-if="b.build.value">
+    <!-- 合計も表も、相場を全部取り終えてから出す (オーナー 2026-09-26「合計表示するのは全部取得終わってから」) -->
+    <template v-if="b.build.value && !b.loading.value">
       <!-- 合計 -->
       <BaseCard class="mb-4">
         <div class="p-4 pl-5 flex items-center gap-6 flex-wrap">
@@ -65,7 +75,7 @@ const money = (ex: number) => displayCurrency.money(ex);
             <p class="text-2xl tabular-nums text-[var(--exile-color-accent-focus)] mt-0.5">合計 {{ money(b.totals.value.sum) }}</p>
           </div>
           <div class="text-[12px] text-[var(--exile-color-text-secondary)] space-y-0.5">
-            <p v-if="b.totals.value.rares">レア {{ b.totals.value.rares }} 点は相場が無いので、「トレード2へ」で取引所を見てください (合計に入っていません)</p>
+            <p v-if="b.totals.value.rares">レア {{ b.totals.value.rares }} 点は合計に入っていません (相場が無いので、「トレード2へ」で取引所を見てください)</p>
             <p v-if="b.totals.value.unknown">相場の無い物 {{ b.totals.value.unknown }} 件 (合計に入っていません)</p>
           </div>
         </div>
