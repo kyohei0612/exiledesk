@@ -22,7 +22,10 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // やり直しの費用から取り方を決める ([[redo-cost.ts]])。カオスで引く物・冒涜に回す物・骨・外れの回し方はここで決め、
   // 残り (偉大なる高貴の使い方、側の消去か素の消去か) はシミュレーターで比べる。決めた物が組めない時の保険に、
   // 今までの決め打ち (一番出にくい物をカオス・冒涜) も候補に入れる
+  // 候補を作る所は同期で重い (見積もり + 候補ごとの autoTree)。途中で画面に手を返す (2026-09-26: 前回の続きで最初に 0.2 秒固まった)
+  const yieldUi = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
   const plan = planByRedoCost(inp, ctx.cls, ctx.itemLevel);
+  await yieldUi();
   const chaosVariants = inp.chaosOk || inp.chaosSide ? [true, false] : [false];
   // 外れの消し方 (側のお告げ / 素の消去) も候補にする。見積もりの側ごとの選択に加え、全部側 / 全部素 も比べる
   // 候補が多いと組むのに数分かかる (30 通り × 150 回)。見積もりの側ごと (undefined) と 素の消去 の 2 通り
@@ -33,10 +36,14 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 決め打ちの骨は、上書きの輪が組める形 (固定 1 + 外れ 1 の枠 2 つの側) だけ普通の骨も試す (天体で回すなら普通の骨が安い)
   const bones = canOverwrite ? ([undefined, "preserved"] as const) : ([undefined] as const);
   for (const ch of chaosVariants) for (const bn of bones) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });
-  const variants = picks.flatMap((pk) => (["catalyst", "all"] as const).flatMap((g) => annuls.map((an) => ({
-    greater: `${pk.label}・${g}${an === "plain" ? "・素の消去" : an === "side" ? "・側の消去" : pk.annul ? "・側ごと" : ""}`,
-    nodes: autoTree({ ...inp, ...pk, greater: g, ...(an ? { annul: an } : {}) }),
-  }))));
+  const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
+  for (const pk of picks) {
+    for (const g of ["catalyst", "all"] as const) for (const an of annuls) variants.push({
+      greater: `${pk.label}・${g}${an === "plain" ? "・素の消去" : an === "side" ? "・側の消去" : pk.annul ? "・側ごと" : ""}`,
+      nodes: autoTree({ ...inp, ...pk, greater: g, ...(an ? { annul: an } : {}) }),
+    });
+    await yieldUi();
+  }
   // 同じ形になった候補は 1 つにする (回す手間の節約)
   const uniq = variants.filter((v, i) => variants.findIndex((w) => JSON.stringify(w.nodes) === JSON.stringify(v.nodes)) === i);
   if (uniq.length === 1) return { ...uniq[0]!, plan, simExpected: null, simDone: null };

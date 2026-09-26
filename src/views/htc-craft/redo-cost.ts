@@ -38,6 +38,8 @@ export interface MethodEstimate {
    * シミュレーターの omenNeeded と同じ決まり (2026-09-26 オーナー承認)
    */
   noSideOmen?: boolean;
+  /** カオスに抹消のお告げを付ける (触らない MOD がある側を消させない)。代は perTry に入っている */
+  erasure?: boolean;
   /** 1 回の値段 (高貴建て) */
   perTry: number;
   /** 1 回で当たる確率 */
@@ -237,7 +239,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
       }, 0);
     }
     const ok = inp.chaosOk || (inp.chaosSide && inp.chaosSide === s);
-    return finish({ modId: t.modId, side: s, method: "chaos", perTry: cur("chaos") + (inp.chaosOk ? 0 : cur(OMEN.erasure[s])), p: pHit, perMiss: 0, safe: true, ...(ok ? {} : { why: "触らない MOD があるのでカオスは使えない" }) });
+    return finish({ modId: t.modId, side: s, method: "chaos", erasure: !inp.chaosOk, perTry: cur("chaos") + (inp.chaosOk ? 0 : cur(OMEN.erasure[s])), p: pHit, perMiss: 0, safe: true, ...(ok ? {} : { why: "触らない MOD があるのでカオスは使えない" }) });
   }
   function essenceEst(t: TierTarget): MethodEstimate {
     const s = sideOf(t.modId);

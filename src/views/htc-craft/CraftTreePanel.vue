@@ -60,7 +60,7 @@ const planRows = computed(() => [...(plan.value?.rows ?? [])].sort((a, b) => (a.
 /** 何で狙うか (通貨 + お告げ) */
 const howJa = (r: RedoPlan["rows"][number]): string => {
   switch (r.method) {
-    case "chaos": return "カオスオーブ";
+    case "chaos": return r.erasure ? `カオスオーブ + ${omen(OMEN.erasure[r.side])}` : "カオスオーブ";
     case "exalt": {
       const cat = r.catalyst ? CATALYSTS.find((k) => k.tag === r.catalyst) : null;
       // 反対側が埋まっていて側のお告げが効かない時は書かない (値段にも入れていない。2026-09-26 オーナー承認)
