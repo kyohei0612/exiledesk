@@ -165,7 +165,9 @@ export function analyzeRare(it: BuildItem): RareAnalysis {
         });
         // 計算機で作れない行も、取引所の文面で引けた物は条件にする
         // 計算機の型に無い行 (「13% reduced Slowing Potency of Debuffs on You」など) は p.unmatched に落ちる。黙って抜けないよう文面から
-        const extra = textStats([...refetch, ...got.skipped, ...p.unmatched]);
+        // (貼り付けの見出し「Rarity: Rare」・固有名も p.unmatched に入るので、MOD の行だけ)
+        const own = new Set(it.mods);
+        const extra = textStats([...refetch, ...got.skipped, ...p.unmatched.filter((l) => own.has(l))]);
         return { base: it.base, via: "tier", mods, lines: extra.lines.filter(notQuality).map((x) => ({ ...toLine(x, sanctified), weight: weightByText.get(x.text) })), missing: extra.missing, sanctified, ilvl: it.itemLevel || 100, equip: equipOf(it) };
       }
     } catch {

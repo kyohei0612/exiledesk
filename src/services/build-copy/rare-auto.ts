@@ -114,7 +114,7 @@ export async function autoRarePrice(a: RareAnalysis, picked: Readonly<Record<num
     }
   }
   // 3. 数値なしの、取れた出品の平均
-  return { exalted: averageOf(bare), total: bare.total, stage: "bare", note: `${head}数値なしで ${bare.total} 件 (安い方 ${Math.min(TOP_N, bare.total)} 件の平均)`, query: bareQ };
+  return { exalted: averageOf(bare), total: bare.total, stage: "bare", note: `${head}数値なしで ${bare.total} 件${bare.total > 1 ? ` (安い方 ${Math.min(TOP_N, bare.total)} 件の平均)` : ""}`, query: bareQ };
 }
 
 /**
