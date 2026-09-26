@@ -89,13 +89,21 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const key = (s: Side): "prefixes" | "suffixes" => (s === "prefix" ? "prefixes" : "suffixes");
   const w = (m: Mod, minIdx: number, floor: number): number =>
     m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
-  const poolW = (s: Side, floor: number, desec: boolean, tag: string | null, mult: number): number =>
-    [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : [])].reduce((a, id) => {
+  // 同じ引数で何度も呼ばれる (候補の組み合わせごと) ので覚えておく。2026-09-26: 前回の続きで 0.2 秒固まっていた
+  const poolMemo = new Map<string, number>();
+  const poolW = (s: Side, floor: number, desec: boolean, tag: string | null, mult: number): number => {
+    const mk = `${s}|${floor}|${desec}|${tag}|${mult}`;
+    const hit = poolMemo.get(mk);
+    if (hit != null) return hit;
+    const v = [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : [])].reduce((a, id) => {
       const m = d.mods.get(id);
       if (!m) return a;
       const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
       return a + w(m, 0, floor) * k;
     }, 0);
+    poolMemo.set(mk, v);
+    return v;
+  };
   const shielded = new Set(inp.protectedSides ?? []);
   const fixedSides = new Set(inp.fixedSides ?? []);
   const limits = inp.limits ?? { prefix: 3, suffix: 3 };
