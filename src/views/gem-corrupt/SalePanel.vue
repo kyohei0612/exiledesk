@@ -208,37 +208,42 @@ const fmtFlowAt = (t: number | null): string => {
           <table v-else class="w-full text-[12px]">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
-                <th class="text-left font-normal pb-1">状態</th>
-                <th class="text-right font-normal pb-1 w-28">売値</th>
-                <th class="text-right font-normal pb-1 w-20">出品数</th>
-                <th class="text-right font-normal pb-1 w-48">売れ行き</th>
-                <th class="text-right font-normal pb-1 w-16"></th>
+                <!-- 状態は幅を決め、売れ行きは段に分ける (2026-09-26「UI があまりにもブス」: 最小幅で状態の列が潰れていた) -->
+                <th class="text-left font-normal pb-1 w-40">状態</th>
+                <th class="text-right font-normal pb-1 w-24">売値</th>
+                <th class="text-right font-normal pb-1 w-14 pr-3">出品数</th>
+                <th class="text-right font-normal pb-1">売れ行き</th>
+                <th class="text-right font-normal pb-1 w-24"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in SALE_ROWS" :key="row.key" class="border-t border-[var(--exile-color-border-subtle)]">
-                <td class="py-1.5 pr-2">
-                  <div>{{ row.label }}</div>
-                  <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ row.condition }}</div>
+                <td class="py-2 pr-2 align-top">
+                  <div class="whitespace-nowrap">{{ row.label }}</div>
+                  <div class="text-[10px] leading-snug text-[var(--exile-color-text-tertiary)]">{{ row.condition }}</div>
                 </td>
-                <td class="py-1.5 text-right">
+                <td class="py-2 text-right align-top whitespace-nowrap">
                   <!-- 2026-09-17: 変な値段の時に中身が分かるように、最安 1 件の内訳をホバーで出す -->
                   <span class="tabular-nums text-[13px]" :title="cheapestTitle(row.key)" :class="g.sale.value[row.key] == null ? 'text-[var(--exile-color-text-tertiary)]' : ''">{{ g.sale.value[row.key] == null ? (g.pricing.value ? "取得中…" : "—") : money(g.sale.value[row.key]) }}</span>
                   <!-- オーナー指示 2026-09-17: レート制限中でも一括取得の最終値で計算する。どこから来た値かは出す -->
                   <div v-if="recordedAt(row.key)" class="text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">記録 {{ fmtRecordedAt(recordedAt(row.key)!) }}</div>
                 </td>
-                <td class="py-1.5 text-right tabular-nums text-[var(--exile-color-text-secondary)]">
+                <td class="py-2 pr-3 text-right align-top tabular-nums text-[var(--exile-color-text-secondary)]">
                   {{ g.saleInfo.value[row.key] ? g.saleInfo.value[row.key]!.total : "" }}
                 </td>
                 <!-- 2026-09-16: 捌き速度 (出品を ID で追って生存分析)。3 条件とも出す -->
                 <!-- 2026-09-17 オーナー指示: 押すと売れたリスト (値段つき) を出す -->
-                <td class="py-1.5 text-right cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" :title="`${row.label} の記録を一覧で見る`" @click="openSold(row.key)">
+                <td class="py-2 text-right align-top cursor-pointer hover:bg-[var(--exile-color-bg-elevated)]" :title="`${row.label} の記録を一覧で見る`" @click="openSold(row.key)">
                   <template v-for="f in [flowOf(row.key)]" :key="row.key">
-                    <div v-if="f.label" class="flex items-center justify-end gap-2" :title="flowTitleOf(f)">
-                      <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}<span v-if="f.thin" class="opacity-70" title="根拠は 3 件未満です">?</span></span>
-                      <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">
-                        {{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)<template v-if="averageExalted(f.soldPrices) != null"> · 平均 {{ money(averageExalted(f.soldPrices)) }}</template><span v-if="f.olderThanMedian > 0" class="text-[var(--exile-color-text-tertiary)]"> · 未売却 {{ f.olderThanMedian }} 件はそれより長い</span>
-                      </span>
+                    <!-- 段に分ける: 札と売れる時間 / 平均と未売却 / 売れたリスト -->
+                    <div v-if="f.label" class="flex flex-col items-end gap-0.5" :title="flowTitleOf(f)">
+                      <div class="flex items-center gap-2">
+                        <span class="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11px] font-display tracking-[0.06em] border leading-none" :class="badgeClassOf(f.tone)">{{ f.label }}<span v-if="f.thin" class="opacity-70" title="根拠は 3 件未満です">?</span></span>
+                        <span class="tabular-nums text-[11px] text-[var(--exile-color-text-secondary)] whitespace-nowrap">{{ fmtSellTime(f.medianMin) }}で売れる ({{ f.gone }} 件)</span>
+                      </div>
+                      <div v-if="averageExalted(f.soldPrices) != null || f.olderThanMedian > 0" class="tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)]">
+                        <template v-if="averageExalted(f.soldPrices) != null">平均 {{ money(averageExalted(f.soldPrices)) }}</template><template v-if="averageExalted(f.soldPrices) != null && f.olderThanMedian > 0"> · </template><template v-if="f.olderThanMedian > 0">未売却 {{ f.olderThanMedian }} 件はそれより長い</template>
+                      </div>
                       <span class="text-[10px] underline text-[var(--exile-color-text-tertiary)] whitespace-nowrap">売れたリスト</span>
                     </div>
                     <span
@@ -253,11 +258,11 @@ const fmtFlowAt = (t: number | null): string => {
                     <span v-else class="text-[10px] text-[var(--exile-color-text-tertiary)]">—</span>
                   </template>
                 </td>
-                <td class="py-1.5 text-right">
+                <td class="py-2 pl-3 text-right align-top whitespace-nowrap">
                   <button
                     type="button"
                     :disabled="!g.selected.value"
-                    class="text-[11px] underline text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
+                    class="text-[11px] underline whitespace-nowrap text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
                     title="同じ条件でトレードサイト (JP) を開く。API は使わない"
                     @click="open(g.tradeUrl(row.key))"
                   >

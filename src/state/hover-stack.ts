@@ -45,8 +45,21 @@ function cancel(): void {
   if (timer) clearTimeout(timer);
   timer = null;
 }
+/**
+ * 閉じる時に、カーソルが今どのカードの上にあるかを実際に確かめる (2026-09-26 オーナー「ホバー → ホバーすると、
+ * 前面のカードからカーソルずらすと消えるね。カード内にマウスがある場合、表示されてるカード全部閉じないように」)。
+ * 入った / 出たの合図だけだと、カードが重なった所で抜けて全部閉じていた。
+ * 乗っているカードのうち一番上の段までは残し、それより上 (ピン留め以外) を閉じる。どれにも乗っていなければ全部閉じる
+ */
 function closeUnpinned(): void {
-  layers.value = layers.value.filter((l) => l.pinned);
+  const hovered = new Set(
+    [...document.querySelectorAll<HTMLElement>("[data-hover-layer]")].filter((el) => el.matches(":hover")).map((el) => Number(el.dataset.hoverLayer)),
+  );
+  let top = -1;
+  layers.value.forEach((l, i) => {
+    if (hovered.has(l.key)) top = i;
+  });
+  layers.value = layers.value.filter((l, i) => i <= top || l.pinned);
 }
 
 export const hoverStack = {
@@ -74,7 +87,7 @@ export const hoverStack = {
   /** カードから出た (すぐ閉じる。親のカードへ戻った時は enterLayer が取り消す) */
   leaveCard(): void {
     cancel();
-    timer = setTimeout(closeUnpinned, 0);
+    timer = setTimeout(closeUnpinned, 30);
   },
   /** カードに入った: 閉じる予定を取り消し、それより上の段 (ピン留め以外) を閉じる */
   enterLayer(key: number): void {

@@ -29,6 +29,8 @@ const craft = computed(() => g.routes.value.find((r) => r.id === "craft") ?? nul
  * ここは 期待値 × N (原石 0.134 × 55 = 7.37) を出し、収支は連鎖で数えた 6 を出していた。
  * 同じ表を見て違う数が出ないよう、結晶・原石・完成品の個数はこちらも連鎖で出す。
  */
+/** 完成の個数 (「0.08928571428571427 個」と丸めずに出ていた。2026-09-26) */
+const fmtFinished = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(2));
 const counts = computed(() => (craft.value?.ok ? expectedCounts(craft.value, attempts.value, { exact: true }) : null));
 /**
  * 素材表: 自作 1 回あたりの数と費用、N 回分。
@@ -216,7 +218,7 @@ const baseBuyTitle = computed(() => {
                 <td></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(craft.expectedCost) : "—" }}</td>
                 <!-- 完成の個数と N 回の費用は上の行と同じ連鎖 (切り下げ) と丸めた単価から (収支と一致させる。2026-09-20) -->
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]" :title="craft?.ok ? `確率のまま掛けると ${(attempts * craft.pFinished).toFixed(2)} 個。個数は段ごとに切り下げて数えています` : ''">{{ counts ? `完成 ${counts.finished} 個` : "" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]" :title="craft?.ok ? `確率のまま掛けると ${(attempts * craft.pFinished).toFixed(2)} 個。個数は段ごとに切り下げて数えています` : ''">{{ counts ? `完成 ${fmtFinished(counts.finished)} 個` : "" }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap" :title="craft?.ok ? `確率のまま掛けると ${moneyFixed(attempts * craft.expectedCost)}` : ''">{{ totalN == null ? "—" : moneyFixed(totalN) }}</td>
               </tr>
             </tbody>

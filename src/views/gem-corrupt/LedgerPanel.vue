@@ -6,6 +6,7 @@
 import BaseCard from "../../components/decor/BaseCard.vue";
 import MoneyInput from "../../components/vaal-scales/MoneyInput.vue";
 import CountInput from "../../components/CountInput.vue";
+import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { fmtQty, type GemLedgerApi } from "./ledger";
 import { cost, evClass, fmtStamp, income } from "./ui";
 import type { useGemCorrupt } from "./useGemCorrupt";
@@ -45,7 +46,8 @@ const {
             </label>
             <label class="inline-flex items-center gap-2">
               回数
-              <CountInput :model-value="ledger.attempts || null" placeholder-text="0" @update:model-value="setAttemptsValue($event)" />
+              <!-- 素材・経路の回数と同じプルダウン (同じ値につながっている。オーナー 2026-09-26「収支の回数も同じようなプルダウン式に、同期させる感じで」) -->
+              <AttemptsSelect :model-value="ledger.attempts" @update:model-value="setAttemptsValue($event)" />
             </label>
             <span v-if="ledger.pricesAt">
               単価は {{ fmtStamp(ledger.pricesAt) }} 時点で固定

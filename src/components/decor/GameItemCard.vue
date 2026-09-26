@@ -72,6 +72,7 @@ const position = computed(() => {
       v-if="show"
       ref="card"
       class="fixed"
+      :data-hover-layer="layerKey"
       :style="{ zIndex: z, left: position.left + 'px', top: position.top + 'px', width: width + 'px', transform: `scale(${scale})`, transformOrigin: 'top left', visibility: height ? 'visible' : 'hidden' }"
       role="tooltip"
       @mouseenter="hoverStack.enterLayer(layerKey)"
