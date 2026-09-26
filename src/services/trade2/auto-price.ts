@@ -120,17 +120,25 @@ export function refetchState(busy: boolean, idleLabel: string, busyLabel = "trad
   return { label: `${idleLabel} (5 分で ${b.used}/${b.max} 回)`, disabled: false };
 }
 
+/** 次に投げられるまでの残り ms (罰則と門番の予定の遅い方)。0 ならすぐ投げてよい */
+export function msUntilSendable(): number {
+  return Math.max(0, Math.max(stoppedUntilMs(), nextAtMs()) - Date.now());
+}
+
 /** 今は投げても止められる (罰則か枠待ち)。画面の取得はこれで見送る */
 export function isRateLimited(): boolean {
   return stoppedUntilMs() > Date.now();
 }
 
-/** 1 クエリの最安。制限中は即 null。 */
-export async function autoPrice(league: string, body: unknown, rates: ExaltedRates, topN?: number): Promise<PriceResult | null> {
+/**
+ * 1 クエリの最安。制限中は即 null。
+ * @param opts.patient 裏で回る取得 (監視に入れた直後の取得)。門番が枠の空きを長く待つ
+ */
+export async function autoPrice(league: string, body: unknown, rates: ExaltedRates, topN?: number, opts: { patient?: boolean } = {}): Promise<PriceResult | null> {
   if (isRateLimited()) return null;
   pending.value += 1;
   try {
-    const r = await priceMinForQuery(league, body, rates, topN);
+    const r = await priceMinForQuery(league, body, rates, topN, opts.patient ?? false);
     lastError.value = null;
     return r;
   } catch (e) {

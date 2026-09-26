@@ -118,8 +118,12 @@ interface FetchResponse {
   }>;
 }
 
-/** 検索 1 回 (直列化 + 間隔ガード) */
-export async function searchOnce(league: string, body: unknown): Promise<Trade2SearchResponse> {
+/**
+ * 検索 1 回 (直列化 + 間隔ガード)。
+ * patient: 裏で回る取得 (監視に入れた直後の取得など)。門番 (trade2.rs) が枠が空くまで長く待つ (画面の取得は 90 秒で諦める)。
+ * 2026-09-26: 監視に入れた直後の取得が画面用の窓口で投げ、枠待ちで断られては 5 秒ごとに投げ直して空回りしていた
+ */
+export async function searchOnce(league: string, body: unknown, patient = false): Promise<Trade2SearchResponse> {
   // JP サイト設定なら JP の API に日本語名で投げる (検索 ID を JP サイトで開けるようにする)
   const site = trade2Site();
   const query = localizeQueryForSite(body);
@@ -132,7 +136,7 @@ export async function searchOnce(league: string, body: unknown): Promise<Trade2S
       }),
     );
   }
-  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site } }));
+  return throttled("search", () => invoke<Trade2SearchResponse>("trade2_search", { req: { league, query, site, patient } }), { patient });
 }
 
 /**
@@ -143,7 +147,7 @@ export async function searchOnce(league: string, body: unknown): Promise<Trade2S
  * — 素材として N 個買う時の合計は「最安 1 件 × N」ではなく**最安から N 件の合計**なので、
  * 積み上げられるだけの深さが要る。
  */
-export async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates, topN = FETCH_TOP_N): Promise<PriceResult> {
+export async function fetchListings(league: string, search: Trade2SearchResponse, rates: ExaltedRates, topN = FETCH_TOP_N, patient = false): Promise<PriceResult> {
   const searchUrl = search.id
     ? `${trade2SiteOrigin()}/trade2/search/poe2/${encodeURIComponent(league)}/${search.id}`
     : "";
@@ -158,7 +162,7 @@ export async function fetchListings(league: string, search: Trade2SearchResponse
   for (const chunk of chunks) {
     const part = DEV_TRADE
       ? await throttled("fetch", () => devJson<FetchResponse>(`/api/trade2-${site}/fetch/${chunk.join(",")}?query=${encodeURIComponent(search.id!)}`))
-      : await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids: chunk, queryId: search.id, site } }));
+      : await throttled("fetch", () => invoke<FetchResponse>("trade2_fetch", { req: { ids: chunk, queryId: search.id, site, patient } }), { patient });
     for (const r of part.result ?? []) results.push(r);
   }
   const fetched: FetchResponse = { result: results };

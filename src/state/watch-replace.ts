@@ -9,7 +9,7 @@
  * 選ばれたら外して入れ替え、キャンセルなら何もしない。
  */
 import { computed, ref } from "vue";
-import { addManualGem, dropWatchGem, watchSettings } from "./watch-settings";
+import { addManualGem, dropWatchGem, isManualGem, removeManualGem, watchSettings } from "./watch-settings";
 import { rebuildWatches } from "./gem-watch-auto";
 import { queueSample } from "../views/gem-corrupt/sample-now";
 
@@ -53,4 +53,18 @@ export async function replaceWith(dropEn: string): Promise<void> {
 /** 聞くのをやめる (何も変えない) */
 export function cancelReplace(): void {
   pending.value = null;
+}
+
+/**
+ * 自動ジェム監視に入れる / 外す (2026-09-26、スキル使用率の画面から共通化)。
+ * 入っていれば外す。入っていなければ入れる (枠が埋まっていれば入れ替え先を聞く = askReplace)。
+ * オーナー:「ジェムコラの名前の横に監視リストへ追加ボタン、監視済みなら外せる、上書きするかの挙動までみんなと同じで」
+ */
+export function toggleWatchGem(gemEn: string): void {
+  if (isManualGem(gemEn)) {
+    removeManualGem(gemEn);
+    void rebuildWatches();
+    return;
+  }
+  void askReplace(gemEn);
 }

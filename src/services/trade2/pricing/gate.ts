@@ -103,7 +103,13 @@ export function searchBudgetUsage(): { used: number; max: number } {
  * 直列化 + (開発時だけ) エンドポイント別の最小間隔。
  * 本番は Rust の門番が間隔もバーストも決めるので、ここで待つと二重になる
  */
-export function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
+export function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>, opts: { patient?: boolean } = {}): Promise<T> {
+  // 長く待つ取得 (patient) は列に並べない。門番 (trade2.rs) の中で最大 20 分待つので、列に入ると
+  // その間は画面の取得まで後ろで待たされる (2026-09-26)。間隔と合計の上限は門番が全部の送信で守る
+  if (opts.patient && !DEV_TRADE) {
+    lastRequestAt[kind] = Date.now();
+    return fn();
+  }
   const run = async () => {
     if (DEV_TRADE) {
       // 開発ブラウザ (門番を通らない) は検索と取得を合わせて 13.6 秒に 1 本 (本番の門番の合計の間隔と同じ。2026-09-26 レビュー:

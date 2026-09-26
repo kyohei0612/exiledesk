@@ -16,7 +16,7 @@ import { computed, ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { noteSpiritGem } from "../../state/gem-spirit";
 import { buildGemQuery } from "../../services/trade2/query";
-import { autoPrice, isRateLimited } from "../../services/trade2/auto-price";
+import { autoPrice, isRateLimited, msUntilSendable, tradeAuto } from "../../services/trade2/auto-price";
 import { type PriceResult } from "../../services/trade2/pricing";
 import { recordFlow } from "../../services/market-flow";
 import { rowQueryOptions, SALE_KEYS, SALE_KEY_LABEL, watchKey, type SaleKey } from "./row-query";
@@ -85,8 +85,10 @@ export const sampleTarget = computed(() => current.value);
 const START_DELAY_MS = 10_000;
 /** 1 条件あたりの待ちの上限 (レート制限が明けるのを待つが、永久には待たない) */
 const MAX_WAIT_MS = 30 * 60 * 1000;
-/** レート制限中の見直し間隔 */
+/** 待つ時の最短 (門番の予定が 0 でも、投げ直しの連打にしない) */
 const POLL_MS = 5_000;
+/** 本物のエラー (通信が落ちた等) は何回まで投げ直すか。超えたらその条件は次の巡回に任せる */
+const MAX_ERRORS = 3;
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
@@ -109,25 +111,33 @@ export async function sampleGemNow(gemEn: string): Promise<{ done: number; skipp
     await sleep(START_DELAY_MS);
     for (const key of SALE_KEYS) {
       const body = buildGemQuery(gemEn, rowQueryOptions(key, gem?.kind === "meta"));
+      // 2026-09-26 オーナー「1 ジェムなのにずっとまわってる、ループ系はまずい」:
+      // 画面用の窓口で投げていたので、枠待ちで断られては 5 秒ごとに投げ直して空回りしていた
+      // (その間は裏の巡回も「画面が待っている」と譲るので、両方が足踏みしていた)。
+      // 今は patient (門番が枠の空きを長く待つ) で投げる。それでも取れない時は、門番が「次に投げられる」と
+      // 言う時刻まで待つ。本物のエラーは MAX_ERRORS 回で諦める
       let waited = 0;
+      let errors = 0;
       for (;;) {
-        // 罰則で止まっている間は投げずに待つ (門番の順番待ちは autoPrice の中で待つ)
+        // 罰則で止まっている間は投げずに待つ
         if (isRateLimited()) {
           if (waited >= MAX_WAIT_MS) break;
-          await sleep(POLL_MS);
-          waited += POLL_MS;
+          const w = Math.max(POLL_MS, msUntilSendable());
+          await sleep(w);
+          waited += w;
           continue;
         }
-        const r = await autoPrice(league, body, marketStore.rates.value);
+        const r = await autoPrice(league, body, marketStore.rates.value, undefined, { patient: true });
         if (r) {
           await recordGemSample(gemEn, key, r);
           done++;
           break;
         }
-        // 取れなかった = 制限に入ったか通信が落ちた。少し置いてもう一度
+        if (tradeAuto.lastError.value && ++errors >= MAX_ERRORS) break;
         if (waited >= MAX_WAIT_MS) break;
-        await sleep(POLL_MS);
-        waited += POLL_MS;
+        const w = Math.max(POLL_MS, msUntilSendable());
+        await sleep(w);
+        waited += w;
       }
     }
   } finally {

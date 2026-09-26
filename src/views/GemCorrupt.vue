@@ -20,6 +20,7 @@ import MaterialsPanel from "./gem-corrupt/MaterialsPanel.vue";
 import AssumptionsPanel from "./gem-corrupt/AssumptionsPanel.vue";
 import RoutesPanel from "./gem-corrupt/RoutesPanel.vue";
 import LedgerPanel from "./gem-corrupt/LedgerPanel.vue";
+import WatchToggleButton from "../components/WatchToggleButton.vue";
 
 const g = useGemCorrupt();
 // 売値と捌き速度 (時計・巡回の読み直しを含む) は SalePanel.vue が自分で面倒を見る
@@ -142,7 +143,11 @@ const ledgerApi = useGemLedger(g, attempts);
           </ul>
         </div>
         <div v-if="g.selected.value" class="text-[13px] leading-relaxed">
-          <div class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-base">{{ g.selected.value.ja }}</div>
+          <!-- 名前の横に監視へ入れる / 外すボタン (スキル使用率と同じ動き。オーナー 2026-09-26) -->
+          <div class="flex items-center gap-2">
+            <span class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-base">{{ g.selected.value.ja }}</span>
+            <WatchToggleButton :gem-en="g.selected.value.en" :name-ja="g.selected.value.ja" class="text-[11px] py-0.5" />
+          </div>
           <div class="text-[11px] text-[var(--exile-color-text-secondary)]">
             {{ g.selected.value.en }} · {{ g.selected.value.spirit ? "スピリットジェム (原石はスピリット用)" : "スキルジェム" }}
             <span v-if="g.selected.value.kind === 'meta'"> · メタジェム</span>

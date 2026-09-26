@@ -27,7 +27,8 @@ export { toExalted, type ExaltedRates, type PriceListing, type PriceResult } fro
  * 任意の検索クエリ (buildGemQuery 等) の最安値。search 1 回 + fetch 1 回。
  * ジェムコラプト収支 (2026-09-12) 用。
  */
-export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates, topN = FETCH_TOP_N): Promise<PriceResult> {
-  const search = await searchOnce(league, body);
-  return fetchListings(league, search, rates, topN);
+/** @param patient 裏で回る取得。門番が枠の空きを長く待つ (listings.ts の searchOnce) */
+export async function priceMinForQuery(league: string, body: unknown, rates: ExaltedRates, topN = FETCH_TOP_N, patient = false): Promise<PriceResult> {
+  const search = await searchOnce(league, body, patient);
+  return fetchListings(league, search, rates, topN, patient);
 }
