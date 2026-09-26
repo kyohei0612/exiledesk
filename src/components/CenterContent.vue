@@ -2,6 +2,7 @@
 import { computed, type Component } from "vue";
 import CurrencyRanking from "../views/CurrencyRanking.vue";
 import UniqueTrend from "../views/UniqueTrend.vue";
+import BuildCopy from "../views/BuildCopy.vue";
 import CraftDiscoveryV2B from "../views/CraftDiscoveryV2B.vue";
 import Settings from "../views/Settings.vue";
 import PobLauncher from "../views/PobLauncher.vue";
@@ -27,6 +28,8 @@ const currentView = computed<Component | undefined>(() => {
       return CurrencyRanking;
     case "unique-trend":
       return UniqueTrend;
+    case "build-copy":
+      return BuildCopy;
     case "craft-v2":
       return CraftDiscoveryV2B;
     case "settings":
