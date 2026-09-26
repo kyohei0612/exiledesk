@@ -158,6 +158,8 @@ export function useBuildCopy() {
   const autoBusy = ref(false);
   const autoDone = ref(0);
   const autoTotal = ref(0);
+  /** 全部を取っている途中 (行ごとの取り直しでは合計を隠さない) */
+  const autoAll = ref(false);
   let autoGen = 0;
   /** 自動で取る行: ジュエル以外のレア + 種類違いのあるユニーク */
   const autoTargets = () =>
@@ -167,6 +169,7 @@ export function useBuildCopy() {
     const rows = row == null ? autoTargets() : [row];
     const gen = ++autoGen;
     autoBusy.value = true;
+    autoAll.value = row == null;
     autoDone.value = 0;
     autoTotal.value = rows.length;
     try {
@@ -189,12 +192,16 @@ export function useBuildCopy() {
       }
     } finally {
       autoStep.clear();
-      if (gen === autoGen) autoBusy.value = false;
+      if (gen === autoGen) {
+        autoBusy.value = false;
+        autoAll.value = false;
+      }
     }
   }
   function stopAuto(): void {
     autoGen++;
     autoBusy.value = false;
+    autoAll.value = false;
     autoStep.clear();
   }
   /** 高貴建て → 手入れの欄の数と通貨 (1 以上になる一番大きい通貨、小数 2 桁) */
@@ -244,6 +251,9 @@ export function useBuildCopy() {
       progress.value = "ユニークの相場を取得中…";
       await loadUniquePrices((d, t) => (progress.value = `ユニークの相場を取得中 (${d}/${t})…`));
       priceTick.value++;
+      // 読み込んだらそのままレア・種類違いユニークの相場も取る。合計は取り終えてから出す
+      // (オーナー 2026-09-27「その最安値を自動で計算に加えてはくれないの？」、2026-09-26「合計表示するのは全部取得終わってから」)
+      void autoPrices();
     } catch (e) {
       build.value = null;
       error.value = `読めませんでした: ${e instanceof Error ? e.message : String(e)}`;
@@ -329,5 +339,5 @@ export function useBuildCopy() {
     void openQuery(q);
   }
 
-  return { code, build, error, loading, progress, load, clear, setManual, autoPrices, stopAuto, autoBusy, autoDone, autoTotal, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
+  return { code, build, error, loading, progress, load, clear, setManual, autoPrices, stopAuto, autoBusy, autoAll, autoDone, autoTotal, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
 }

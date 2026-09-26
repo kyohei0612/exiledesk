@@ -72,10 +72,12 @@ const money = (ex: number) => displayCurrency.money(ex);
         <div class="p-4 pl-5 flex items-center gap-6 flex-wrap">
           <div>
             <p class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ b.build.value.ascendancy || b.build.value.className }} · レベル {{ b.build.value.level }}</p>
-            <p class="text-2xl tabular-nums text-[var(--exile-color-accent-focus)] mt-0.5">合計 {{ money(b.totals.value.sum) }}</p>
+            <!-- 合計は取引所の相場を取り終えてから (途中の合計は出さない) -->
+            <p v-if="b.autoAll.value" class="text-lg tabular-nums text-amber-300 mt-0.5">相場を取得中 {{ b.autoDone.value }} / {{ b.autoTotal.value }}…</p>
+            <p v-else class="text-2xl tabular-nums text-[var(--exile-color-accent-focus)] mt-0.5">合計 {{ money(b.totals.value.sum) }}</p>
           </div>
           <div class="text-[12px] text-[var(--exile-color-text-secondary)] space-y-0.5">
-            <p v-if="b.totals.value.rares">値段を入れていないレア {{ b.totals.value.rares }} 点は合計に入っていません (「トレード2へ」で見た値段を行に打つと足します)</p>
+            <p v-if="!b.autoAll.value && b.totals.value.rares">値段の無いレア {{ b.totals.value.rares }} 点は合計に入っていません (出品が無い物・ジュエル。「トレード2へ」で見た値段を行に打つと足します)</p>
             <!-- レアの相場を自動で (ジュエル以外。取引所の制限を守るので 1 回 10 秒ほど) -->
             <div class="flex items-center gap-2">
               <button
@@ -85,10 +87,10 @@ const money = (ex: number) => displayCurrency.money(ex);
                 title="レア (ジュエル以外) は MOD の組み合わせ → 段の順に、種類違いのあるユニークは同じ MOD の物を取引所で探して値段を入れます (取引所の制限を守るので数分かかります)"
                 @click="b.autoPrices()"
               >
-                レア・種類違いユニークの相場を取る
+                相場を取り直す
               </button>
               <template v-else>
-                <span class="text-amber-300">相場を取得中 {{ b.autoDone.value }} / {{ b.autoTotal.value }}</span>
+                <span class="text-[var(--exile-color-text-tertiary)]">取引所の制限を守るので 1 点 10〜40 秒ほど</span>
                 <button type="button" class="px-2 py-0.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:border-[var(--exile-color-accent-focus)]" @click="b.stopAuto()">止める</button>
               </template>
             </div>
@@ -104,7 +106,7 @@ const money = (ex: number) => displayCurrency.money(ex);
       </div>
       <p class="mt-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
         ユニーク: poe.ninja の相場 (コラプトしていない純正品。種類違いのある物は「相場を取る」で同じ MOD の最安値) / ルーン・リネージュサポート: poe2scout の相場 /
-        レア: 「相場を取る」を押した時だけ取引所で探します (MOD の組み合わせを数値なしで確かめ、無ければ付きやすい MOD から外す → 選んだ段・1 段下げ・2 段下げの順)。値段は安い方から 5 件の真ん中。ジュエルは手入れのみ。
+        レア: 読み込んだら取引所で探します (MOD の組み合わせを数値なしで確かめ、無ければ付きやすい MOD から外す → 選んだ段・1 段下げ・2 段下げの順)。値段は安い方から 5 件の真ん中。ジュエルは手入れのみ。
       </p>
     </template>
   </div>
