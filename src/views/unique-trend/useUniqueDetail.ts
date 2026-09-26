@@ -1,35 +1,20 @@
 /**
- * ユニーク装備価格推移: 開いた 1 件の詳細 (長い履歴 + 取引所の即時購入の最安) (2026-09-26)
+ * ユニーク装備価格推移: 開いた 1 件の詳細 (長い履歴のグラフ) (2026-09-26)
  *
  * - 長い履歴: 行を開いた時だけ poe.ninja の日ごとの推移 (リーグ開始から) を取る。値段は神建てなので高貴に直す
- * - 取引所: オーナー指示「インスタントバイアウトで」「コラプトは指定なしで単純に最安値」(2026-09-26)。ボタンを押した時だけ 1 回検索する (自動では投げない)。
- *   検索は status = securable (即時購入だけ) の既存クエリで、門番 (レート制限) を通る autoPriceCached に乗せる
+ * - 取引所は開くだけ (最安は取らない。オーナー 2026-09-26「最安値をとるはいらない」)
  */
 import { computed, ref, watch, type Ref } from "vue";
 import type { HistoryPoint } from "../../api/poe2scout";
 import { fetchNinjaHistory } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
-import { autoPriceCached } from "../../services/trade2/query-cache";
-import { refetchState, tradeAuto } from "../../services/trade2/auto-price";
-import { buildUniqueNameQuery } from "../../services/trade2/query";
 import type { UniqueRow, UniqueTrend } from "./useUniqueTrend";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export interface InstantResult {
-  minExalted: number | null;
-  total: number;
-  url: string | null;
-  at: number;
-}
-
 export function useUniqueDetail(row: Ref<UniqueRow>, trend: Ref<UniqueTrend | undefined>) {
   const longPoints = ref<HistoryPoint[] | null>(null);
   const loadingLong = ref(false);
-  const busy = ref(false);
-  const waitSecs = ref(0);
-  const result = ref<InstantResult | null>(null);
-  const error = ref<string | null>(null);
 
   /** グラフに出す点列: 長い方が取れていればそちら */
   const points = computed<HistoryPoint[]>(() => {
@@ -71,43 +56,15 @@ export function useUniqueDetail(row: Ref<UniqueRow>, trend: Ref<UniqueTrend | un
     }
   }
 
-  /** 取引所で即時購入の最安を 1 回だけ取る (押した時だけ) */
-  async function fetchInstant(): Promise<void> {
-    const lg = marketStore.league.value?.Value;
-    if (!lg || busy.value) return;
-    const id = row.value.itemId;
-    busy.value = true;
-    error.value = null;
-    waitSecs.value = 0;
-    try {
-      const r = await autoPriceCached(lg, buildUniqueNameQuery(row.value.nameEn, { baseType: row.value.baseEn || undefined }), marketStore.rates.value, undefined, {
-        onWait: (s) => (waitSecs.value = s),
-      });
-      if (row.value.itemId !== id) return;
-      if (r) result.value = { minExalted: r.minExalted, total: r.total, url: r.searchUrl || null, at: Date.now() };
-      else error.value = tradeAuto.lastError.value ?? "取引所から取れませんでした";
-    } finally {
-      busy.value = false;
-      waitSecs.value = 0;
-    }
-  }
-
-  const button = computed(() => {
-    if (busy.value && waitSecs.value > 0) return { label: `上限のため ${waitSecs.value} 秒待ち…`, disabled: true };
-    return refetchState(busy.value, "取引所で即時購入の最安を取る");
-  });
-
   // 別の行に切り替わったら作り直す
   watch(
     () => row.value.itemId,
     () => {
       longPoints.value = null;
-      result.value = null;
-      error.value = null;
       void loadLong();
     },
     { immediate: true },
   );
 
-  return { points, stats, loadingLong, result, error, button, fetchInstant };
+  return { points, stats, loadingLong };
 }

@@ -35,8 +35,21 @@ export interface NinjaLine {
   primaryValue: number;
   listingCount: number;
   corrupted: boolean;
+  flavourText?: string;
+  /** MOD 文 (英語、[Tag|表示] の印つき)。optional は「どれかが付く」行 */
+  implicitModifiers?: NinjaModLine[];
+  explicitModifiers?: NinjaModLine[];
+  /** 防御値など (「[EnergyShield|Energy Shield]: (164-300)」) */
+  propertyModifiers?: NinjaModLine[];
+  /** 要求 (「Level: 64」「[Intelligence|Int]: 37」) */
+  requirementModifiers?: NinjaModLine[];
   /** data: 7 日分の、最初の日からの変化率 (%)。欠けた日は null */
   sparkLine?: { totalChange: number; data: Array<number | null> };
+}
+
+export interface NinjaModLine {
+  text: string;
+  optional?: boolean;
 }
 
 export interface NinjaOverview {

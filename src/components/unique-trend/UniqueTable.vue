@@ -4,7 +4,10 @@
   見出しを押すと並び替え、行を押すと詳細が開く。名前の右の ♡ でお気に入り。
 -->
 <script setup lang="ts">
+import { ref } from "vue";
 import Sparkline from "../currency/Sparkline.vue";
+import UniqueHoverCard from "./UniqueHoverCard.vue";
+import { toCss } from "../../utils/zoom";
 import UniqueDetail from "./UniqueDetail.vue";
 import { displayCurrency } from "../../state/display-currency";
 import { uniqueFavorites } from "../../state/unique-favorites";
@@ -28,6 +31,24 @@ async function openTrade(r: UniqueRow): Promise<void> {
   } catch {
     /* 開けない環境 (ブラウザ開発) は何もしない */
   }
+}
+/** ホバーのカード (ゲームのアイテム画面と同じ見た目。オーナー 2026-09-26) */
+const hovered = ref<UniqueRow | null>(null);
+const hx = ref(0);
+const hy = ref(0);
+function hoverAt(r: UniqueRow, ev: MouseEvent): void {
+  hovered.value = r;
+  hx.value = toCss(ev.clientX);
+  hy.value = toCss(ev.clientY);
+}
+function hoverMove(ev: MouseEvent): void {
+  if (!hovered.value) return;
+  hx.value = toCss(ev.clientX);
+  hy.value = toCss(ev.clientY);
+}
+function tradeFromRow(r: UniqueRow): void {
+  hovered.value = null;
+  void openTrade(r);
 }
 const th = "px-3 py-3 whitespace-nowrap";
 const sortable = "cursor-pointer hover:text-[var(--exile-color-text-primary)]";
@@ -60,6 +81,9 @@ function clickChange() {
             class="border-t border-[var(--exile-color-border-subtle)] cursor-pointer transition"
             :class="openId === r.itemId ? 'bg-[var(--exile-color-bg-elevated)]' : 'hover:bg-[var(--exile-color-bg-elevated)]'"
             @click="emit('toggle', r.itemId)"
+            @mouseenter="(ev) => hoverAt(r, ev)"
+            @mousemove="hoverMove"
+            @mouseleave="hovered = null"
           >
             <td class="px-3 py-2.5 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
             <td class="px-3 py-2.5">
@@ -79,6 +103,15 @@ function clickChange() {
                     >
                       {{ uniqueFavorites.set.value.has(r.fav) ? "♥" : "♡" }}
                     </button>
+                    <!-- 取引所へ (右端の「開く」と同じ。オーナー 2026-09-26「ハートの横にもトレードサイトへいかすボタン」) -->
+                    <button
+                      type="button"
+                      class="shrink-0 h-6 -my-1 px-1 rounded text-[13px] leading-none text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] transition"
+                      title="取引所 (即時購入) をブラウザで開く"
+                      @click.stop="tradeFromRow(r)"
+                    >
+                      ↗
+                    </button>
                   </div>
                   <div class="text-[11px] text-[var(--exile-color-text-tertiary)] truncate">
                     <span v-if="r.baseJa">{{ r.baseJa }} · </span>{{ r.nameEn }}{{ r.baseEn ? ` ${r.baseEn}` : "" }}
@@ -95,16 +128,17 @@ function clickChange() {
             <!-- 取引所へそのまま (即時購入。API は使わず ?q= の URL を開く。オーナー 2026-09-26) -->
             <td class="px-3 py-2.5 text-right">
               <button type="button" class="rounded border border-[var(--exile-color-border-subtle)] px-2 py-0.5 text-xs hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)]"
-                title="取引所 (即時購入・コラプトの指定なし) をブラウザで開く" @click.stop="openTrade(r)">開く ↗</button>
+                title="取引所 (即時購入・コラプトの指定なし) をブラウザで開く" @click.stop="tradeFromRow(r)">開く ↗</button>
             </td>
           </tr>
           <tr v-if="openId === r.itemId" class="border-t border-[var(--exile-color-border-subtle)]">
             <td colspan="6" class="p-0">
-              <UniqueDetail :row="r" :trend="trends.get(r.itemId)" />
+              <UniqueDetail :row="r" :trend="trends.get(r.itemId)" @trade="tradeFromRow(r)" />
             </td>
           </tr>
         </template>
       </tbody>
     </table>
+    <UniqueHoverCard :row="hovered" :x="hx" :y="hy" />
   </div>
 </template>

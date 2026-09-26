@@ -11,7 +11,7 @@ import { marketStore } from "./market-store";
 export type DisplayCurrency = "exalted" | "chaos" | "divine";
 /**
  * 選べる物。「適正」は 1 種類に決めず額に合わせる (神 → 1 未満はカオス → 1 カオス未満は高貴)。
- * カレンシーランキングでは「一番安く交換できる通貨」(カオスと神で安い方) で出す。
+ * カレンシーランキングも同じ。一番安く交換できる通貨は横の「取引の推奨」に出す。
  * オーナー指示 2026-09-26:「表示通貨は神じゃないし、その合わせて表示は適正って名前で」
  */
 export type DisplayChoice = DisplayCurrency | "fair";

@@ -96,6 +96,7 @@ pub async fn trade_history_login(app: tauri::AppHandle) -> Result<(), String> {
         })
         .build()
         .map_err(|e| format!("ログイン画面を開けません: {e}"))?;
+    enable_password_autosave(&win);
     let handle = app.clone();
     win.on_window_event(move |event| {
         if let WindowEvent::Destroyed = event {
@@ -104,6 +105,27 @@ pub async fn trade_history_login(app: tauri::AppHandle) -> Result<(), String> {
     });
     Ok(())
 }
+
+/// ログインの窓で、WebView2 のパスワード保存 (「パスワードを保存しますか」) と自動入力を有効にする (2026-09-26)。
+///
+/// オーナー:「ID / PW 保存して一瞬でログイン通過できるように。一回打ったら保存しますかで保存」。
+/// 保存するのは WebView2 (アプリ内ブラウザ) 自身で、プロファイルの中に暗号化して持つ。ExileDesk のファイルには書かない。
+/// WebView2 の既定はどちらも無効なので、この窓だけ有効にする。
+#[cfg(windows)]
+fn enable_password_autosave(win: &tauri::WebviewWindow) {
+    let _ = win.with_webview(|wv| unsafe {
+        use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings4;
+        use windows::core::Interface;
+        let Ok(core) = wv.controller().CoreWebView2() else { return };
+        let Ok(settings) = core.Settings() else { return };
+        if let Ok(s4) = settings.cast::<ICoreWebView2Settings4>() {
+            let _ = s4.SetIsPasswordAutosaveEnabled(true);
+            let _ = s4.SetIsGeneralAutofillEnabled(true);
+        }
+    });
+}
+#[cfg(not(windows))]
+fn enable_password_autosave(_win: &tauri::WebviewWindow) {}
 
 /// ExileDesk 内のログイン状態 (POESESSID) を消す
 #[tauri::command]

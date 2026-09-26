@@ -11,7 +11,7 @@
  */
 import { computed, ref, shallowRef, watch } from "vue";
 import type { HistoryPoint } from "../../api/poe2scout";
-import { fetchNinjaOverview, NINJA_UNIQUE_KINDS, type NinjaLine, type NinjaUniqueKind } from "../../api/ninja-economy";
+import { fetchNinjaOverview, NINJA_UNIQUE_KINDS, type NinjaLine, type NinjaModLine, type NinjaUniqueKind } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
 import { favKey, uniqueFavorites } from "../../state/unique-favorites";
 import { jaTypeName, jaUniqueName } from "../../services/trade2/localize";
@@ -34,6 +34,14 @@ export interface UniqueRow {
   corrupted: boolean;
   /** お気に入りのキー */
   fav: string;
+  /** ホバーのカード用 (poe.ninja の行そのまま) */
+  hover: {
+    implicit: NinjaModLine[];
+    explicit: NinjaModLine[];
+    properties: NinjaModLine[];
+    requirements: NinjaModLine[];
+    flavour: string;
+  };
 }
 
 /** 7 日の推移 (古→新)。changePct は 7 日の変化率、qty は出品数。points は使わない (詳細で日ごとに取る) */
@@ -100,6 +108,13 @@ function toRow(kind: NinjaUniqueKind, l: NinjaLine, exPerDiv: number): UniqueRow
     listings: l.listingCount ?? 0,
     corrupted: !!l.corrupted,
     fav: favKey(l.name, base),
+    hover: {
+      implicit: l.implicitModifiers ?? [],
+      explicit: l.explicitModifiers ?? [],
+      properties: l.propertyModifiers ?? [],
+      requirements: l.requirementModifiers ?? [],
+      flavour: l.flavourText ?? "",
+    },
   };
 }
 

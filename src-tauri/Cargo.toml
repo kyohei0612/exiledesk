@@ -52,4 +52,6 @@ tauri-plugin-single-instance = "2"
 winreg = "0.10"
 # ウィンドウを確実に前面へ出す (AttachThreadInput + SetForegroundWindow)。tauri が既に持っている版
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
-
+# ログインの窓で WebView2 のパスワード保存を有効にする (2026-09-26、trade_history.rs)。tauri が既に持っている版
+webview2-com = "0.38"
+windows = "0.61"
