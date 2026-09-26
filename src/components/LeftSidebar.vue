@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { poeSession } from "../state/poe-session";
 
 const props = defineProps<{ active: string }>();
 const emit = defineEmits<{ "update:active": [value: string] }>();
@@ -103,9 +104,14 @@ function onClick(item: NavItem): void {
 <template>
   <aside class="bg-[var(--exile-color-bg-surface)] flex flex-col py-3 select-none">
     <div class="px-4 pb-3">
-      <h1 class="text-lg font-semibold tracking-wide text-[var(--exile-color-accent-focus)]">
-        ExileDesk
-      </h1>
+      <div class="flex items-baseline gap-2">
+        <h1 class="text-lg font-semibold tracking-wide text-[var(--exile-color-accent-focus)]">
+          ExileDesk
+        </h1>
+        <!-- ログイン状態を小さく (オーナー 2026-09-26「ExileDesk の横にちっちゃくログイン済みって出そうか」) -->
+        <span v-if="poeSession.loggedIn.value === true" class="text-[10px] text-emerald-300" title="pathofexile.com にログインしています">● ログイン済み</span>
+        <span v-else-if="poeSession.loggedIn.value === false" class="text-[10px] text-amber-300" title="pathofexile.com にログインしていません">● 未ログイン</span>
+      </div>
       <p class="text-xs text-[var(--exile-color-text-secondary)]">POE2 Secretary</p>
     </div>
 

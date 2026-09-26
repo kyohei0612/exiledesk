@@ -71,6 +71,7 @@ function fmtClock(t: number): string {
           </div>
           <p v-else-if="d.error.value" class="mt-2 text-xs text-[var(--exile-color-signal-error)]">{{ d.error.value }}</p>
           <p v-else class="mt-2 text-[11px] text-[var(--exile-color-text-tertiary)]">押した時だけ取引所を 1 回検索します (即時購入の出品だけ)</p>
+          <p class="mt-2 text-[11px] text-[var(--exile-color-text-tertiary)]">※ 左の値段とグラフは poe.ninja の相場で、コラプトしていない純正品の値段です。取引所の最安はコラプト品も含むので、安く出ることがあります</p>
         </div>
       </div>
     </div>

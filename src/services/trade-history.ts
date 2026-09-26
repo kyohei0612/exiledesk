@@ -46,6 +46,8 @@ export interface FetchOutcome {
   ok: boolean;
   added: number;
   message: string;
+  /** サイトがログインを受け付けなかった (401 / 403)。cookie は残っていても切れている */
+  expired?: boolean;
 }
 
 /** 連打よけの最小間隔 (制限は下の窓で見る) */
@@ -305,7 +307,7 @@ export async function fetchAndMerge(game: Game, league: string): Promise<FetchOu
   save(game, league, s);
   const apiMessage = (res.body as { error?: { message?: string } } | null)?.error?.message;
   if (res.status === 401 || res.status === 403) {
-    return { ok: false, added: 0, message: "ログインが切れています。もう一度 pathofexile.com にログインしてください" };
+    return { ok: false, added: 0, expired: true, message: "ログインが切れています。もう一度 pathofexile.com にログインしてください" };
   }
   if (res.status === 429) {
     return {

@@ -9,6 +9,8 @@ import { computed, reactive, ref, watch } from "vue";
 import {
   fetchItems,
   buildRankedItems,
+  fetchSnapshotPairs,
+  bestPayByApiId,
   fetchLeagues,
   fetchPriceTrends,
   fetchItemTrend7d,
@@ -223,18 +225,30 @@ export function useCurrencyRanking() {
     try {
       await syncLeagues();
       // 履歴 / 時刻は任意なので失敗しても本体は出す
-      const [items, trendMap, snapEpoch] = await Promise.all([
+      const [items, trendMap, snapEpoch, pairs] = await Promise.all([
         fetchItems(league.value),
         fetchPriceTrends(league.value).catch((e) => {
           console.warn("Failed to load price trends:", e);
           return new Map<number, ItemTrend>();
         }),
         fetchLatestSnapshotEpoch(league.value),
+        // 一番安く交換できる通貨 (取れなければ相場の値段で出す)
+        fetchSnapshotPairs(league.value).catch((e) => {
+          console.warn("Failed to load snapshot pairs:", e);
+          return [];
+        }),
       ]);
       snapshotEpoch.value = snapEpoch;
       // 2026-09-12: 取った価格表を相場ストアに流し、ヴァールの天秤の素材価格に流用する (二重取得しない)
       adoptMarket(leagues.value, league.value, items);
-      ranking.value = buildRankedItems(items, divinePrice.value, chaosDivinePrice.value);
+      const ranked = buildRankedItems(items, divinePrice.value, chaosDivinePrice.value);
+      const best = bestPayByApiId(
+        pairs,
+        new Map(ranked.map((r) => [r.apiId, r.exaltedPrice])),
+        { chaos: chaosDivinePrice.value > 0 ? divinePrice.value / chaosDivinePrice.value : 0, divine: divinePrice.value },
+      );
+      for (const r of ranked) r.bestPay = best.get(r.apiId) ?? null;
+      ranking.value = ranked;
       trend7d.clear(); // 新データなので 7 日キャッシュは破棄して取り直す
       trends.value = trendMap;
       lastUpdated.value = new Date();

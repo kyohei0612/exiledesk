@@ -11,7 +11,7 @@
  */
 import { computed, ref } from "vue";
 import { fateOf, flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
-import { averageExalted, currencyJa, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
+import { averageExalted, currencyJa, displayCurrency, setDisplayCurrency, type DisplayChoice } from "../state/display-currency";
 import { fmtClock, fmtSpan } from "../utils/format-time";
 
 const props = defineProps<{
@@ -216,8 +216,8 @@ async function verify(key: string): Promise<void> {
             表示通貨
             <select
               class="text-[11px] px-1 py-0.5 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)]"
-              :value="displayCurrency.cur.value"
-              @change="setDisplayCurrency(($event.target as HTMLSelectElement).value as DisplayCurrency)"
+              :value="displayCurrency.choice.value"
+              @change="setDisplayCurrency(($event.target as HTMLSelectElement).value as DisplayChoice)"
             >
               <option value="exalted">高貴</option>
               <option value="chaos">カオス</option>

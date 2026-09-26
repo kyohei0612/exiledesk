@@ -20,6 +20,12 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 /** null = まだ確かめていない */
 const loggedIn = ref<boolean | null>(null);
 let watching = false;
+/**
+ * サイトに断られた (401 / 403)。cookie は残るので「ある / 無い」だけ見ると ログイン済み のままになる
+ * (オーナー 2026-09-26:「ログインしてないのか済みなのかわからん」。ログイン済みと ログインが切れています が同時に出ていた)。
+ * ログインの窓を閉じるまでは未ログイン扱い
+ */
+let expired = false;
 
 export const poeSession = {
   loggedIn: computed(() => loggedIn.value),
@@ -34,11 +40,22 @@ export async function refreshSession(): Promise<boolean> {
     return false;
   }
   try {
-    loggedIn.value = await sessionLoggedIn();
+    loggedIn.value = expired ? false : await sessionLoggedIn();
   } catch {
     loggedIn.value = false;
   }
   return loggedIn.value === true;
+}
+
+/** サイトがログインを受け付けなかった時に呼ぶ (ログインの画面が出る) */
+export function markSessionExpired(): void {
+  expired = true;
+  loggedIn.value = false;
+}
+
+function afterLoginClosed(): void {
+  expired = false;
+  void refreshSession();
 }
 
 /** アプリ内のウィンドウで pathofexile.com を開く。閉じたら状態を取り直す */
@@ -46,7 +63,7 @@ export async function openLogin(): Promise<void> {
   if (!isTauriRuntime()) return;
   if (!watching) {
     watching = true;
-    void onLoginClosed(() => void refreshSession());
+    void onLoginClosed(afterLoginClosed);
   }
   await openLoginWindow();
 }
@@ -56,6 +73,6 @@ export async function openLogin(): Promise<void> {
 export function startSessionWatch(): void {
   if (!isTauriRuntime() || watching) return;
   watching = true;
-  void onLoginClosed(() => void refreshSession());
+  void onLoginClosed(afterLoginClosed);
   void refreshSession();
 }

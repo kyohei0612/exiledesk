@@ -17,14 +17,13 @@ const sortKey = defineModel<SortKey>("sortKey", { required: true });
 const emit = defineEmits<{ toggle: [id: number] }>();
 
 const money = (ex: number) => displayCurrency.money(ex);
-/** 取引所をブラウザで開く (設定の開く先 = 日本語サイト。即時購入。コラプトでない行はコラプト品を外す) */
+/** 取引所をブラウザで開く (設定の開く先 = 日本語サイト。即時購入。コラプトは指定しない。オーナー 2026-09-26) */
 async function openTrade(r: UniqueRow): Promise<void> {
   try {
     await openTrade2ForUnique({
       nameEn: r.nameEn,
       baseType: r.baseEn || undefined,
       league: (marketStore.league.value?.Value ?? "").toLowerCase().replace(/\s+/g, "-"),
-      noCorrupted: !r.corrupted,
     });
   } catch {
     /* 開けない環境 (ブラウザ開発) は何もしない */
@@ -96,7 +95,7 @@ function clickChange() {
             <!-- 取引所へそのまま (即時購入。API は使わず ?q= の URL を開く。オーナー 2026-09-26) -->
             <td class="px-3 py-2.5 text-right">
               <button type="button" class="rounded border border-[var(--exile-color-border-subtle)] px-2 py-0.5 text-xs hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)]"
-                title="取引所 (即時購入) をブラウザで開く" @click.stop="openTrade(r)">開く ↗</button>
+                title="取引所 (即時購入・コラプトの指定なし) をブラウザで開く" @click.stop="openTrade(r)">開く ↗</button>
             </td>
           </tr>
           <tr v-if="openId === r.itemId" class="border-t border-[var(--exile-color-border-subtle)]">

@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import ScreenHeader from "../components/ScreenHeader.vue";
 import { askConfirm } from "../state/confirm-dialog";
-import { refreshSession as refreshGlobalSession } from "../state/poe-session";
+import { markSessionExpired, refreshSession as refreshGlobalSession } from "../state/poe-session";
 import RefreshButton from "../components/RefreshButton.vue";
 import { fetchBusy, fetchBusyLabel } from "../state/fetch-busy";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
@@ -29,7 +29,6 @@ import {
   logout,
   onLoginClosed,
   openLogin,
-  sessionLoggedIn,
   tradeLeagues,
   type Game,
   type TradeEntry,
@@ -95,10 +94,10 @@ function reloadStored(): void {
 }
 
 async function refreshSession(): Promise<void> {
-  // アプリ全体のログイン状態も取り直す (ログアウトしたらログインの画面を出す。ログイン必須 2026-09-24)
-  void refreshGlobalSession();
+  // アプリ全体のログイン状態と同じ物を見る (ログアウトしたらログインの画面を出す。ログイン必須 2026-09-24)。
+  // 2026-09-26: 別々に見ていたので、サイトに断られても この画面だけ ログイン済み のままだった
   try {
-    loggedIn.value = await sessionLoggedIn();
+    loggedIn.value = await refreshGlobalSession();
   } catch (e) {
     loggedIn.value = false;
     message.value = { ok: false, text: e instanceof Error ? e.message : String(e) };
@@ -173,7 +172,10 @@ async function fetchNow(): Promise<void> {
     const r = await fetchAndMerge(game.value, league.value);
     message.value = { ok: r.ok, text: r.message };
     reloadStored();
-    if (!r.ok) await refreshSession();
+    if (r.expired) {
+      markSessionExpired();
+      loggedIn.value = false;
+    } else if (!r.ok) await refreshSession();
   } finally {
     busy.value = false;
   }

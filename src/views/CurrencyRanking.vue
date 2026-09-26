@@ -156,7 +156,7 @@ onActivated(() => {
         Powered by
         <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
         / <span class="font-mono">{{ r.league.value }}</span>
-        / 値段は選んだ表示通貨 (1 未満なら 神 → カオス → 高貴 と下げる)
+        / 値段は 適正 = カオスと神で交換の安い方 (取引所のペアが薄い物は相場を灰色で)、通貨を選べばその通貨
       </p>
     </div>
 

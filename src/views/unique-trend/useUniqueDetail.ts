@@ -2,7 +2,7 @@
  * ユニーク装備価格推移: 開いた 1 件の詳細 (長い履歴 + 取引所の即時購入の最安) (2026-09-26)
  *
  * - 長い履歴: 行を開いた時だけ poe.ninja の日ごとの推移 (リーグ開始から) を取る。値段は神建てなので高貴に直す
- * - 取引所: オーナー指示「インスタントバイアウトで」。ボタンを押した時だけ 1 回検索する (自動では投げない)。
+ * - 取引所: オーナー指示「インスタントバイアウトで」「コラプトは指定なしで単純に最安値」(2026-09-26)。ボタンを押した時だけ 1 回検索する (自動では投げない)。
  *   検索は status = securable (即時購入だけ) の既存クエリで、門番 (レート制限) を通る autoPriceCached に乗せる
  */
 import { computed, ref, watch, type Ref } from "vue";
@@ -80,7 +80,7 @@ export function useUniqueDetail(row: Ref<UniqueRow>, trend: Ref<UniqueTrend | un
     error.value = null;
     waitSecs.value = 0;
     try {
-      const r = await autoPriceCached(lg, buildUniqueNameQuery(row.value.nameEn, { noCorrupted: !row.value.corrupted, baseType: row.value.baseEn || undefined }), marketStore.rates.value, undefined, {
+      const r = await autoPriceCached(lg, buildUniqueNameQuery(row.value.nameEn, { baseType: row.value.baseEn || undefined }), marketStore.rates.value, undefined, {
         onWait: (s) => (waitSecs.value = s),
       });
       if (row.value.itemId !== id) return;
