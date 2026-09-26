@@ -79,10 +79,16 @@ export function sparkPoints(vals: number[], w = 72, h = 20): string {
 }
 
 /** 変化率の表示文字列 (+12.3% / −4.5% / 0%)。 */
+/**
+ * 変化率 (%) を倍率で出す (オーナー 2026-09-26「% より倍数のがイイかもね、1.2 倍とか」。「+38047%」が枠からはみ出してもいた)。
+ * +16% → 1.16倍、−29% → 0.71倍、+38047% → 381倍。10 倍未満は小数 2 桁、100 倍未満は 1 桁、それ以上は整数
+ */
 export function fmtPct(n: number): string {
-  if (!Number.isFinite(n) || Math.abs(n) < 0.05) return "0%";
-  const sign = n > 0 ? "+" : "−";
-  return `${sign}${Math.abs(n).toFixed(0)}%`;
+  if (!Number.isFinite(n)) return "—";
+  const r = Math.max(0, 1 + n / 100);
+  if (r < 10) return `${r.toFixed(2)}倍`;
+  if (r < 100) return `${r.toFixed(1)}倍`;
+  return `${Math.round(r).toLocaleString("en-US")}倍`;
 }
 
 // ---------------------------------------------------------------------------

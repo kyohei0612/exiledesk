@@ -27,7 +27,7 @@ const down = computed(() => props.trend.changePct < 0);
       />
     </svg>
     <span
-      class="text-xs tabular-nums w-12 text-right"
+      class="text-xs tabular-nums w-14 text-right whitespace-nowrap"
       :class="down ? 'text-[var(--exile-color-signal-error)]' : 'text-[var(--exile-color-signal-success)]'"
       >{{ fmtPct(trend.changePct) }}</span
     >

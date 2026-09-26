@@ -127,7 +127,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
       <p class="mt-4 text-[10px] text-[var(--exile-color-text-secondary)] text-right">
         Powered by
         <a href="https://poe.ninja/poe2/economy" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe.ninja</a>
-        / 値段は表示通貨 (適正 = 神、1 未満はカオス、1 カオス未満は高貴) / 相場はコラプトしていない純正品 (poe.ninja) / 変化率は直近 7 日の最初と最後の比 / 高騰率・下落率は 1 神未満と出品 3 件未満を後ろに
+        / 値段は表示通貨 (適正 = 神、1 未満はカオス、1 カオス未満は高貴) / 相場はコラプトしていない純正品 (poe.ninja) / 7 日の推移は最初と最後の比 (倍) / 高騰率・下落率は 1 神未満と出品 3 件未満を後ろに
       </p>
     </div>
   </div>
