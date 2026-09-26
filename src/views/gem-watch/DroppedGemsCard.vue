@@ -3,6 +3,7 @@
   GemWatch.vue から切り出し (2026-09-26)。見た目・文言・動きは変えていない。
 -->
 <script setup lang="ts">
+import GemName from "../../components/decor/GemName.vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { forgetDropped } from "../../state/watch-settings";
 import { jaGemName } from "./ja-gem-name";
@@ -20,7 +21,7 @@ const emit = defineEmits<{ (e: "restore", en: string): void }>();
       </p>
       <ul class="flex flex-wrap gap-2">
         <li v-for="d in dropped" :key="d.name" class="flex items-center gap-2 px-2 py-1 rounded border border-[var(--exile-color-border-subtle)] text-[11px]">
-          <span>{{ jaGemName(d.name) }}</span>
+          <GemName :en="d.name" :label="jaGemName(d.name)" />
           <button type="button" class="underline text-[var(--exile-color-accent-focus)] hover:opacity-80" @click="emit('restore', d.name)">戻す</button>
           <button type="button" class="underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]" title="ここから消すだけ (監視には入りません)" @click="forgetDropped(d.name)">×</button>
         </li>

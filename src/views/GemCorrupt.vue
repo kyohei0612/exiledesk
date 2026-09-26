@@ -8,6 +8,7 @@
     i18n/gems-client.json              ジェム一覧 (GGG クライアント由来)
 -->
 <script setup lang="ts">
+import GemName from "../components/decor/GemName.vue";
 import { nextTick, onMounted, ref, watch } from "vue";
 import BaseCard from "../components/decor/BaseCard.vue";
 import { GEMS, useGemCorrupt } from "./gem-corrupt/useGemCorrupt";
@@ -145,7 +146,7 @@ const ledgerApi = useGemLedger(g, attempts);
         <div v-if="g.selected.value" class="text-[13px] leading-relaxed">
           <!-- 名前の横に監視へ入れる / 外すボタン (スキル使用率と同じ動き。オーナー 2026-09-26) -->
           <div class="flex items-center gap-2">
-            <span class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-base">{{ g.selected.value.ja }}</span>
+            <span class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-base"><GemName :en="g.selected.value.en" :label="g.selected.value.ja" /></span>
             <WatchToggleButton :gem-en="g.selected.value.en" :name-ja="g.selected.value.ja" class="text-[11px] py-0.5" />
           </div>
           <div class="text-[11px] text-[var(--exile-color-text-secondary)]">

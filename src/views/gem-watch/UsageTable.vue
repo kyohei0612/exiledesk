@@ -4,6 +4,7 @@
   2026-09-19 に GemBreak.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import GemName from "../../components/decor/GemName.vue";
 import { computed, ref } from "vue";
 import { jaSkill } from "../../i18n/skills-ja";
 import { openGemCorrupt } from "../../state/app-nav";
@@ -101,7 +102,7 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
               <span class="tabular-nums text-[10px] w-5 text-right text-[var(--exile-color-text-tertiary)]">{{ i + 1 }}</span>
               <div class="flex items-baseline gap-1.5 min-w-0">
                 <span class="min-w-0 truncate text-[13px]" :title="r.name">
-                  {{ jaSkill(r.name) }}
+                  <GemName :en="r.name" :label="jaSkill(r.name)" />
                   <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ isOpen(sec.key, r.name) ? "▲" : "▼" }}</span>
                 </span>
                 <button

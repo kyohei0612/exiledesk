@@ -4,6 +4,7 @@
   検索欄の文字は親が持つ (監視に入れた後に親が空にするため、v-model:query)。
 -->
 <script setup lang="ts">
+import GemName from "../../components/decor/GemName.vue";
 import { computed } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { searchGems } from "../gem-corrupt/search";
@@ -29,7 +30,7 @@ const regexError = computed(() => search.value.regexError);
       <ul v-if="matches.length" class="mt-2 border border-[var(--exile-color-border-subtle)] rounded divide-y divide-[var(--exile-color-border-subtle)] max-w-xl">
         <li v-for="g in matches" :key="g.en" class="flex items-center justify-between gap-3 px-3 py-1.5 text-[12px]">
           <span>
-            {{ g.ja }}
+            <GemName :en="g.en" :label="g.ja" />
             <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ g.en }}<span v-if="g.kind === 'meta'"> · メタジェム</span></span>
           </span>
           <button

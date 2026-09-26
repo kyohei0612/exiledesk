@@ -6,6 +6,7 @@
   サポートの内訳だけは、装備の集計に使っている上位キャラのスキルグループから出す (poe.ninja の集計には無いため)。
 -->
 <script setup lang="ts">
+import GemName from "../decor/GemName.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../decor/BaseCard.vue";
 import type { NinjaSkillStat, NinjaSkillStats, SkillUsage } from "../../services/craft-v2/types";
@@ -81,7 +82,7 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
                       :disabled="supportsOf(s.nameEn).length === 0"
                       @click="expanded[sec.key + s.nameEn] = !expanded[sec.key + s.nameEn]"
                     >
-                      {{ s.name }}
+                      <GemName :en="s.nameEn" :label="s.name" />
                       <span v-if="supportsOf(s.nameEn).length > 0" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ expanded[sec.key + s.nameEn] ? "▲" : "▼" }}</span>
                     </button>
                     <!-- 2026-09-14: ジェムコラプトの賭けへ (そのジェムで計算開始) -->

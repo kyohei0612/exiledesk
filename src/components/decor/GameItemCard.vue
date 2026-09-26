@@ -22,7 +22,7 @@ const props = withDefaults(
     name: string;
     sub?: string | null;
     /** 名前の色: ユニーク (橙) / カレンシー (ベージュ) */
-    tone?: "unique" | "currency" | "keyword";
+    tone?: "unique" | "currency" | "keyword" | "gem";
     width?: number;
     /** 段の番号 (hover-stack)。中の下線がこの上に次の段を開く */
     layerKey: number;
@@ -78,7 +78,7 @@ const position = computed(() => {
       @mouseenter="hoverStack.enterLayer(layerKey)"
       @mouseleave="hoverStack.leaveCard()"
     >
-      <div class="g-card text-center relative" :class="tone === 'unique' ? 'g-unique' : tone === 'keyword' ? 'g-keyword' : 'g-currency'">
+      <div class="g-card text-center relative" :class="tone === 'unique' ? 'g-unique' : tone === 'keyword' ? 'g-keyword' : tone === 'gem' ? 'g-gem' : 'g-currency'">
         <!-- ピン留め (外へ出ても残す) と、留めた時の × -->
         <div class="absolute right-1.5 top-1.5 flex items-center gap-1 z-10">
           <button
@@ -124,6 +124,10 @@ const position = computed(() => {
 .g-currency { border: 1px solid #6a5f48; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #22201a, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-currency .g-head { background: linear-gradient(180deg, #34302a 0%, #1d1b17 55%, #0c0b09 100%); border-bottom: 1px solid #7d7156; box-shadow: inset 0 1px 0 #9c8f70, inset 0 -1px 0 #2e2a22; }
 .g-currency .g-name { color: #aa9e82; }
+/* ジェム: 青緑の名前 (ゲームのジェムの色) */
+.g-gem { border: 1px solid #2f5d5a; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #10201f, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-gem .g-head { background: linear-gradient(180deg, #16302e 0%, #0d1c1b 55%, #070d0d 100%); border-bottom: 1px solid #3c6f6a; box-shadow: inset 0 1px 0 #4f8a84, inset 0 -1px 0 #16302e; }
+.g-gem .g-name { color: #1ba29b; }
 /* キーワードの説明: 灰の枠と白の見出し (ゲームの説明の吹き出しに寄せる) */
 .g-keyword { border: 1px solid #5a5a5a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-keyword .g-head { background: linear-gradient(180deg, #2b2b2b 0%, #171717 100%); border-bottom: 1px solid #555; }

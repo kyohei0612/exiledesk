@@ -27,7 +27,9 @@ const r = useCurrencyRanking();
 
 // ホバーカード (名前にカーソル。ユニーク装備価格推移と同じ重なり hover-stack。説明が無い物も「説明のデータがありません」で出す)
 function showTip(p: RankedItem, ev: MouseEvent) {
-  hoverStack.openRoot({ kind: "currency", item: p }, toCss(ev.clientX), toCss(ev.clientY));
+  // リネージュサポートはジェムのカード (タグ・レベルごとの効果まで。オーナー 2026-09-26「ゲーム内表記くらい詳しく」)
+  const payload = p.categoryApiId === "lineagesupportgems" ? { kind: "gem" as const, en: p.text } : { kind: "currency" as const, item: p };
+  hoverStack.openRoot(payload, toCss(ev.clientX), toCss(ev.clientY));
 }
 function moveTip(_ev: MouseEvent) {
   /* 位置は開いた時のまま (カードへカーソルを移せるように) */

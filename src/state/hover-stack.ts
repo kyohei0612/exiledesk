@@ -23,6 +23,7 @@ import type { UniqueRow } from "../views/unique-trend/useUniqueTrend";
 export type HoverPayload =
   | { kind: "unique"; row: UniqueRow }
   | { kind: "currency"; item: RankedItem }
+  | { kind: "gem"; en: string }
   | { kind: "keyword"; id: string; label: string };
 
 export interface HoverLayer {

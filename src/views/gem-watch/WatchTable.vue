@@ -3,6 +3,7 @@
   2026-09-19 に GemWatch.vue から切り出した。中身は変えていない。
 -->
 <script setup lang="ts">
+import GemName from "../../components/decor/GemName.vue";
 import { computed, ref } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import { GEMS } from "../gem-corrupt/useGemCorrupt";
@@ -223,7 +224,7 @@ function toneClass(tone: string): string {
                   <span v-else class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="売れた記録か素材の相場がまだ足りません">—</span>
                 </td>
                 <td class="py-1.5 pl-3">
-                  {{ jaSkill(gem.name) }}
+                  <GemName :en="gem.name" :label="jaSkill(gem.name)" />
                   <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ gem.name }}</span>
                 </td>
                 <td class="py-1.5 pl-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ gem.note }}</td>
