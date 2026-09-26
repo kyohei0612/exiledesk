@@ -12,7 +12,7 @@ import { catalystsFor } from "../../services/htc/quality";
 import { tierWeight, type Side } from "../../services/htc/step-odds";
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
-import type { AutoTreeInput } from "./tree-auto";
+import { autoTreeMeta, breachPlanned, type AutoTreeInput } from "./tree-auto";
 import { OMEN, BREACH_FAMILY } from "../../services/htc/omens";
 
 export type Method = "chaos" | "exalt" | "desecrate" | "essence";
@@ -86,13 +86,15 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const w = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   // 同じ引数で何度も呼ばれる (候補の組み合わせごと) ので覚えておく。2026-09-26: 前回の続きで 0.2 秒固まっていた
   const poolMemo = new Map<string, number>();
+  // 付いている系統 (固定済みの狙い) はもう付かないので、抽選の元から外す (Craft of Exile と同じ。2026-09-26 精度上げ)
+  const occupied = new Set(inp.fixedIds.flatMap((id) => { const m = d.mods.get(id); return m ? [m.family] : []; }));
   const poolW = (s: Side, floor: number, desec: boolean, tag: string | null, mult: number): number => {
     const mk = `${s}|${floor}|${desec}|${tag}|${mult}`;
     const hit = poolMemo.get(mk);
     if (hit != null) return hit;
     const v = [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : [])].reduce((a, id) => {
       const m = d.mods.get(id);
-      if (!m) return a;
+      if (!m || occupied.has(m.family)) return a;
       const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
       return a + w(m, 0, floor) * k;
     }, 0);
@@ -103,7 +105,12 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const fixedSides = new Set(inp.fixedSides ?? []);
   const limits = inp.limits ?? { prefix: 3, suffix: 3 };
   const loose = (s: Side): number => inp.startLoose?.[s] ?? 0;
-  const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY) || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
+  const breach = breachPlanned(inp);
+  /**
+   * 触媒の高貴のお告げを使わない組み方か (自動で組む時と同じ決め事: ブリーチを先に外す・プレの冒涜がブリーチを食う等)。
+   * 組み合わせ (カオス・冒涜に回す物) ごとに変わるので、組み合わせを回す所で入れ直す (2026-09-26: 前は使えない時も 40% の倍率で数えていた)
+   */
+  let catalystOff = false;
   const qualityMax = (inp.baseQuality ?? 20) + (breach ? 20 : 0);
 
   /** 狙いの段が届く一番高い下限 (完全の高貴は段 50 未満を出さない) */
@@ -126,7 +133,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 元の種類に戻せない)。品質の種類が無ければ効くカタリストの一番安い物。
     // ブリーチの MOD を先に外す組み方 (両側 2 枠以下) では入れ直しが 20% までしか戻らないので触媒は使わない
     const narrow = limits.prefix <= 2 && limits.suffix <= 2;
-    const cats = breach && narrow ? [] : catalystsFor(m).map((c) => c.tag).sort((a, b) => cur(catalystPriceKey(a)) - cur(catalystPriceKey(b)));
+    const cats = (breach && narrow) || catalystOff ? [] : catalystsFor(m).map((c) => c.tag).sort((a, b) => cur(catalystPriceKey(a)) - cur(catalystPriceKey(b)));
     const tag = inp.qualityTag ? (cats.includes(inp.qualityTag) ? inp.qualityTag : null) : cats[0] ?? null;
     const others = k + (shielded.has(s) ? loose(s) : 0);
     const risky = shielded.has(s);
@@ -181,9 +188,30 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}) });
     return risk > 0 ? { ...e, expected: e.expected + risk * redoPrior } : e;
   }
+  /**
+   * カオスで取る (最初の 1 つ)。カオスは固定でない物を 1 つ消してから、**枠の空いている側に** 1 つ足す。消える物で空く側が
+   * 変わるので、消える物ごとに「空いている側の重み」の中の狙いの割合を出して平均する (2026-09-26 精度上げ: 前は満杯の側の
+   * 重みも分母に入れて低く出ていた)
+   */
   function chaosEst(t: TierTarget): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
-    const pHit = w(m, t.minTierIndex ?? 0, 0) / (poolW("prefix", 0, false, null, 1) + poolW("suffix", 0, false, null, 1));
+    const good = w(m, t.minTierIndex ?? 0, 0);
+    const cnt = inp.startCount, lo = inp.startLoose;
+    let pHit: number;
+    if (!cnt || !lo) {
+      pHit = good / (poolW("prefix", 0, false, null, 1) + poolW("suffix", 0, false, null, 1));
+    } else {
+      // 消える側 (抹消のお告げならその側だけ)。固定でない物が無ければ消えずに足すだけ
+      const from = (["prefix", "suffix"] as Side[]).filter((x) => !(inp.chaosSide && !inp.chaosOk && x !== inp.chaosSide));
+      const n = from.reduce((a, x) => a + lo[x], 0);
+      const cases: Array<[Side | null, number]> = n > 0 ? from.filter((x) => lo[x] > 0).map((x) => [x, lo[x] / n]) : [[null, 1]];
+      pHit = cases.reduce((acc, [r, pr]) => {
+        const open = (["prefix", "suffix"] as Side[]).filter((x) => cnt[x] - (x === r ? 1 : 0) < limits[x]);
+        if (!open.includes(s)) return acc;
+        const W = open.reduce((a, x) => a + poolW(x, 0, false, null, 1), 0);
+        return acc + (W > 0 ? pr * (good / W) : 0);
+      }, 0);
+    }
     const ok = inp.chaosOk || (inp.chaosSide && inp.chaosSide === s);
     return finish({ modId: t.modId, side: s, method: "chaos", perTry: cur("chaos") + (inp.chaosOk ? 0 : cur(OMEN.erasure[s])), p: pHit, perMiss: 0, safe: true, ...(ok ? {} : { why: "触らない MOD があるのでカオスは使えない" }) });
   }
@@ -212,6 +240,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   let best: RedoPlan | null = null;
   for (const dc of desecCands) for (const cc of chaosCands) {
     if (dc && cc && dc.modId === cc.modId) continue;
+    // 自動で組む時と同じ入力で、触媒を使う組み方かを見る (pickAutoTree が渡す物と同じ)
+    catalystOff = autoTreeMeta({ ...inp, chaosPick: cc?.modId ?? null, desecratePick: dc && mod(dc.modId).source === "normal" ? dc.modId : null,
+      ...(cc ? {} : { chaosOk: false, chaosSide: null }) }).catalystOff;
     const rows: MethodEstimate[] = essences.map(essenceEst);
     if (cc) rows.push(chaosEst(cc));
     const placed: Record<Side, number> = { prefix: 0, suffix: 0 };

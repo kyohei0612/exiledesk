@@ -11,15 +11,18 @@
  * かつ (選べば) 外せる MOD が N 個以下。打たずに条件だけ見る「確認」の手もある。
  * 既定のループは入れない。× で消去してやり直す、スパムの狙いが消えたら最初から、は人が手を足して組む。
  *
- * 重みは [[step-odds.ts]] と同じ (段の下限・完全 50 / 上級 35 の足切り・カタリストの倍率・付いている系統を除く)。
+ * 重みは [[step-odds.ts]] の tierWeight と同じ数え方 (段の下限・完全 50 / 上級 35 の足切り・カタリストの倍率・付いている系統を除く)。
  * 狙いの MOD でも段が足りなければ外れ。
  */
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { catalystsFor } from "./quality";
 import { mulberry32 } from "./rng";
-import { tierWeight, type Side, type StepCtx } from "./step-odds";
-import { OMEN } from "./omens";
+import { type Side, type StepCtx } from "./step-odds";
+import { OMEN, BREACH_FAMILY } from "./omens";
+
+/** 1 回で付く物 1 つ (数える MOD = modId、それ以外 = 外れ)。tiers = 付いた時の段の MOD レベルの分布 (この中の割合) */
+export interface RollOutcome { modId: string | null; family: string; side: Side; p: number; tiers: ReadonlyArray<{ lvl: number; p: number }> }
 
 export type SimAction =
   /** side = 抹消のお告げ (次のカオスが消すのをその側だけに。足す側は選べない、枠の空いている側に付く) */
@@ -109,6 +112,13 @@ export interface SimSlot {
   crafted?: boolean;
   desec?: boolean;
   label?: string;
+  /**
+   * 実際に付いた MOD の系統 (外れでも)。同じ系統はもう付かないので、以後の抽選から外す (2026-09-26 精度上げ: 前は狙いの MOD
+   * だけ系統を数えていて、外れの系統が次の高貴でまた出る扱いだった)。modId があればそちらから引く
+   */
+  family?: string;
+  /** 付いた段の MOD レベル (削減のお告げが一番低い物を消すのに使う)。分からなければ無し */
+  lvl?: number;
 }
 export interface SimState {
   slots: SimSlot[];
@@ -175,10 +185,13 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
-  const sw = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   const count = (s: SimState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
   const room = (s: SimState, side: Side): boolean => count(s, side) < ctx.limits[side];
-  const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => (x.modId ? [mod(x.modId)?.family ?? ""] : [])));
+  /** 付いている系統 (狙いの MOD も外れも。系統が分からない物は数えない) */
+  const familyOf = (x: SimSlot): string | undefined => x.family ?? (x.modId ? mod(x.modId)?.family : undefined);
+  const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => { const f = familyOf(x); return f ? [f] : []; }));
+  /** ブリーチの MOD のレベル (削減のお告げで比べる。データの段のレベル、無ければ 1) */
+  const breachLvl = Math.min(...[...data.mods.values()].filter((m) => m.family === BREACH_FAMILY).flatMap((m) => m.tiers.map((t) => t.ilvl)), 1);
   /** ツリー全体で「数える」MOD と段の下限 (狙い・残したいに出てくる物) */
   const minTierOf = new Map<string, number>();
   for (const n of nodes) {
@@ -231,29 +244,34 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
     targetsMet(s, n) && n.keep.every((id) => id === "__breach__" ? s.breach : has(s, id))
     && (!n.clean || !hasJunk(s)) && (n.maxMods == null || s.slots.filter((x) => !x.fixed && !x.keep).length + (s.breach ? 1 : 0) <= n.maxMods);
 
-  const memo = new Map<string, Array<{ modId: string | null; side: Side; p: number }>>();
-  /** 1 回で付く物の分布 (数える MOD = modId、それ以外 = 外れ) */
-  function roll(s: SimState, sides: Side[], floor: number, tag: string | null, q: number): Array<{ modId: string | null; side: Side; p: number }> {
+  const memo = new Map<string, RollOutcome[]>();
+  /**
+   * 1 回で付く物の分布 (数える MOD = modId、それ以外 = 外れ)。MOD ごとに 1 行 (狙いの段以上と未満で 2 行) で、付いている系統は
+   * 除く (Craft of Exile と同じ: その側の、ilvl と下限で出る段の重みの割合)。外れも系統と段のレベルを持つ
+   */
+  function roll(s: SimState, sides: Side[], floor: number, tag: string | null, q: number): RollOutcome[] {
     const occ = families(s);
     const key = `${sides.join()}|${floor}|${tag}|${q}|${[...occ].sort().join()}`;
     const hit = memo.get(key);
     if (hit) return hit;
     const mult = tag ? catalysingMultiplier(q) : 1;
-    const out: Array<{ modId: string | null; side: Side; w: number }> = [];
+    const out: Array<{ modId: string | null; family: string; side: Side; w: number; tiers: Array<{ lvl: number; p: number }> }> = [];
     for (const side of sides) {
       for (const id of cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"]) {
         const m = mod(id);
         if (!m || occ.has(m.family)) continue;
         const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
-        const all = sw(m, 0, floor) * k;
-        const min = minTierOf.get(id);
-        const good = min != null ? sw(m, min, floor) * k : 0;
-        if (good > 0) out.push({ modId: id, side, w: good });
-        if (all - good > 0) out.push({ modId: null, side, w: all - good });
+        const min = minTierOf.get(id) ?? Infinity;
+        const good: Array<{ lvl: number; p: number }> = [], bad: Array<{ lvl: number; p: number }> = [];
+        m.tiers.forEach((t, i) => { if (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0) (i >= min ? good : bad).push({ lvl: t.ilvl, p: t.weight }); });
+        for (const [list, mid] of [[good, id], [bad, null]] as const) {
+          const w = list.reduce((a, x) => a + x.p, 0);
+          if (w > 0) out.push({ modId: mid, family: m.family, side, w: w * k, tiers: list.map((x) => ({ lvl: x.lvl, p: x.p / w })) });
+        }
       }
     }
     const W = out.reduce((a, x) => a + x.w, 0);
-    const dist = W > 0 ? out.map((x) => ({ modId: x.modId, side: x.side, p: x.w / W })) : [];
+    const dist = W > 0 ? out.map((x) => ({ modId: x.modId, family: x.family, side: x.side, p: x.w / W, tiers: x.tiers })) : [];
     memo.set(key, dist);
     return dist;
   }
@@ -285,6 +303,12 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
         const side = mod(a.modId)?.type as Side;
         const rs = removeSideOf(s, a);
         if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
+        // 同じ系統の MOD が付いていれば付かない (ゲームは打てない)。ただしそれが消える側で唯一外せる物なら、先に消えるので付く
+        // (枠 2 つの側の上書きの輪: 冒涜の外れがエッセンスと同じ系統のことがある)
+        const fam = mod(a.modId)?.family;
+        const clash = fam ? s.slots.map((x, i) => (familyOf(x) === fam ? i : -2)).filter((i) => i >= 0) : [];
+        const rem = removable(s, rs);
+        if (clash.length && !(clash.length === 1 && rem.length === 1 && rem[0] === clash[0])) return "同じ系統の MOD が付いている";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
       case "desecrate":
@@ -331,17 +355,58 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
     }
   }
 
-  /** 冒涜 1 回で「その手の狙い」が出る確率 (3 択、反響なら引き直し 1 回) */
-  function desecrateOdds(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>): number {
+  /**
+   * 冒涜の選択肢の元 (その側の普通 + 冒涜の MOD、付いている系統を除く)。1 行 = MOD 1 つ: 重み w、狙いの段以上の重み good、
+   * 段ごとの MOD レベル。3 択は同じ MOD が 2 回出ない (重みで引いて、引いた物を除いて次を引く)
+   */
+  type DesecOpt = { id: string; family: string; w: number; good: number; tiers: Array<{ lvl: number; w: number; good: boolean }> };
+  const desecMemo = new Map<string, { opts: DesecOpt[]; pMiss3?: number }>();
+  function desecrateOpts(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>): { opts: DesecOpt[]; pMiss3?: number } {
     const occ = families(s);
     const floor = a.bone === "desecrate_ancient" ? 40 : 0;
-    const key = a.side === "prefix" ? "prefixes" : "suffixes";
-    const pool = [...cls.pools.normal[key], ...cls.pools.desecrated[key]];
-    const W = pool.reduce((acc, id) => { const m = mod(id); return m && !occ.has(m.family) ? acc + sw(m, 0, floor) : acc; }, 0);
-    const good = n.targets.reduce((acc, t) => { const m = mod(t.modId); return m && m.type === a.side && !occ.has(m.family) ? acc + sw(m, t.minTier, floor) : acc; }, 0);
-    const p1 = W > 0 ? good / W : 0;
-    const miss3 = (1 - p1) ** 3;
-    return a.echoes ? 1 - miss3 * miss3 : 1 - miss3;
+    const want = new Map(n.targets.filter((t) => !has(s, t.modId)).map((t) => [t.modId, t.minTier] as const));
+    const key = `${a.side}|${floor}|${[...want].join()}|${[...occ].sort().join()}`;
+    const hit = desecMemo.get(key);
+    if (hit) return hit;
+    const k = a.side === "prefix" ? "prefixes" : "suffixes";
+    const ids = [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k]])];
+    const opts: DesecOpt[] = ids.flatMap((id) => {
+      const m = mod(id);
+      if (!m || occ.has(m.family)) return [];
+      const min = want.get(id);
+      const tiers = m.tiers.flatMap((t, i) => (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ lvl: t.ilvl, w: t.weight, good: min != null && i >= min }] : []));
+      const w = tiers.reduce((x, t) => x + t.w, 0);
+      const good = tiers.reduce((x, t) => x + (t.good ? t.w : 0), 0);
+      return w > 0 ? [{ id, family: m.family, w, good, tiers }] : [];
+    });
+    const v = { opts };
+    desecMemo.set(key, v);
+    return v;
+  }
+  /** 冒涜 1 回で「その手の狙い」が出る確率 (3 択は別々の MOD、反響なら引き直し 1 回) */
+  function desecrateOdds(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>): number {
+    const v = desecrateOpts(s, n, a);
+    if (v.pMiss3 == null) {
+      // 3 つとも外れる確率 (引いた物を除いて引く。選択肢ごとに段は独立)
+      const { opts } = v;
+      const W = opts.reduce((x, o) => x + o.w, 0);
+      const miss = (o: DesecOpt): number => 1 - o.good / o.w;
+      const WM = opts.reduce((x, o) => x + o.w * miss(o), 0);
+      let pm = 0;
+      for (const a1 of opts) {
+        const p1 = a1.w / W, W1 = W - a1.w;
+        if (W1 <= 1e-9) { pm += p1 * miss(a1); continue; }
+        for (const a2 of opts) {
+          if (a2 === a1) continue;
+          const W2 = W1 - a2.w;
+          const m3 = W2 > 1e-9 ? (WM - a1.w * miss(a1) - a2.w * miss(a2)) / W2 : 1;
+          pm += p1 * miss(a1) * (a2.w / W1) * miss(a2) * m3;
+        }
+      }
+      v.pMiss3 = W > 0 ? pm : 1;
+    }
+    const m3 = v.pMiss3;
+    return a.echoes ? 1 - m3 * m3 : 1 - m3;
   }
 
   /** 打つ (rnd で 1 回分)。値段は呼ぶ側が足す */
@@ -353,11 +418,29 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
       for (const x of xs) { if (u < x.p) return x; u -= x.p; }
       return xs[xs.length - 1] ?? null;
     };
-    const land = (st: SimState, o: { modId: string | null; side: Side } | null): SimState =>
-      o ? { ...st, slots: [...st.slots, { modId: o.modId, side: o.side, fixed: false }] } : st;
+    /** 付く物を付ける (段の MOD レベルも引く) */
+    const land = (st: SimState, o: RollOutcome | null): SimState => {
+      if (!o) return st;
+      const lv = pick(o.tiers)?.lvl;
+      return { ...st, slots: [...st.slots, { modId: o.modId, side: o.side, fixed: false, family: o.family, ...(lv != null ? { lvl: lv } : {}) }] };
+    };
     const rmRandom = (st: SimState, side: Side | null): SimState => {
       const rem = removable(st, side);
       return rem.length ? removeAt(st, rem[Math.floor(rnd() * rem.length)]!) : st;
+    };
+    /**
+     * 削減のお告げ: 一番レベルの低い物を消す (同じレベルなら等しく)。ブリーチの MOD はそのレベル (1)。レベルの分からない物
+     * (貼り付けの時からある MOD など) とは比べられないので、レベルの分かる物の中の一番低い物。全部分からなければその中からランダム
+     */
+    const rmLowest = (st: SimState): SimState => {
+      const rem = removable(st, null);
+      if (!rem.length) return st;
+      const lvOf = (r: number): number | undefined => (r === -1 ? breachLvl : st.slots[r]!.lvl);
+      const known = rem.filter((r) => lvOf(r) != null);
+      if (!known.length) return removeAt(st, rem[Math.floor(rnd() * rem.length)]!);
+      const lo = Math.min(...known.map((r) => lvOf(r)!));
+      const ties = known.filter((r) => lvOf(r) === lo);
+      return removeAt(st, ties[Math.floor(rnd() * ties.length)]!);
     };
     switch (a.kind) {
       case "chaos": {
@@ -379,16 +462,39 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
       case "essence": {
         const side = mod(a.modId)?.type as Side;
         const rs = removeSideOf(s, a);
-        const t = removable(s, rs).length ? s : land(s, { modId: null, side: rs });
+        const t = removable(s, rs).length ? s : land(s, pick(roll(s, [rs], 0, null, 20)));
         const u = rmRandom(t, rs);
-        return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true }] };
+        const em = mod(a.modId);
+        return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true, ...(em ? { family: em.family, lvl: em.tiers[0]?.ilvl ?? 1 } : {}) }] };
       }
       case "desecrate": {
         // 満杯の側なら、固定済みでない MOD が 1 つ冒涜 MOD に置き換わる
         const base0 = room(s, a.side) ? s : rmRandom(s, a.side);
-        const ok = rnd() < desecrateOdds(base0, n, a);
-        const t = n.targets.find((x) => mod(x.modId)?.type === a.side && !has(base0, x.modId));
-        return { ...base0, slots: [...base0.slots, ok && t ? { modId: t.modId, side: a.side, fixed: false, desec: true } : { modId: null, side: a.side, fixed: false, desecrated: true, desec: true }] };
+        // 3 択 (別々の MOD) を引き、狙いの段が出ていればそれを選ぶ。無ければ反響で 1 回引き直し。外れは最初の選択肢を付ける
+        const { opts } = desecrateOpts(base0, n, a);
+        type Drawn = { o: DesecOpt; lvl: number; good: boolean };
+        const draw3 = (): Drawn[] => {
+          const left = [...opts];
+          const got: Drawn[] = [];
+          for (let i = 0; i < 3 && left.length; i++) {
+            let u = rnd() * left.reduce((x, o) => x + o.w, 0), j = 0;
+            for (; j < left.length - 1 && u >= left[j]!.w; j++) u -= left[j]!.w;
+            const o = left.splice(j, 1)[0]!;
+            let v = rnd() * o.w, ti = 0;
+            for (; ti < o.tiers.length - 1 && v >= o.tiers[ti]!.w; ti++) v -= o.tiers[ti]!.w;
+            const tr = o.tiers[ti]!;
+            got.push({ o, lvl: tr.lvl, good: tr.good });
+          }
+          return got;
+        };
+        let three = draw3();
+        if (a.echoes && !three.some((x) => x.good)) three = draw3();
+        const win = three.find((x) => x.good);
+        const first = three[0];
+        const slot: SimSlot = win
+          ? { modId: win.o.id, side: a.side, fixed: false, desec: true, family: win.o.family, lvl: win.lvl }
+          : { modId: null, side: a.side, fixed: false, desecrated: true, desec: true, ...(first ? { family: first.o.family, lvl: first.lvl } : {}) };
+        return { ...base0, slots: [...base0.slots, slot] };
       }
       case "light": {
         const i = s.slots.findIndex((x) => x.desecrated);
@@ -396,12 +502,12 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
       }
       case "breach": {
         const rs = a.removeSide ?? "prefix";
-        const t = removable(s, rs).length ? s : land(s, { modId: null, side: rs });
+        const t = removable(s, rs).length ? s : land(s, pick(roll(s, [rs], 0, null, 20)));
         return { ...rmRandom(t, rs), breach: true };
       }
       case "whittle": {
-        // 一番レベルの低い物 (ブリーチの MOD はレベル 0) を消して 1 つ付く
-        const t = s.breach ? { ...s, breach: false } : rmRandom(s, null);
+        // 一番レベルの低い物 (ブリーチの MOD はそのレベル 1。同じレベルの物があれば等しく) を消して 1 つ付く
+        const t = rmLowest(s);
         return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), 0, null, 20)));
       }
       case "check": return s;

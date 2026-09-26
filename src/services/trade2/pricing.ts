@@ -181,16 +181,19 @@ export interface PriceListing {
   mods?: number | null;
   prefixes?: number | null;
   suffixes?: number | null;
+  /** マジックか (frameType 1 / rarity "Magic")。読めなければ null */
+  magic?: boolean | null;
 }
 
 /** fetch 結果の 1 件から MOD の数を読む */
-function modCountsOf(item: FetchItem | undefined): Pick<PriceListing, "mods" | "prefixes" | "suffixes"> {
-  if (!item) return { mods: null, prefixes: null, suffixes: null };
+function modCountsOf(item: FetchItem | undefined): Pick<PriceListing, "mods" | "prefixes" | "suffixes" | "magic"> {
+  if (!item) return { mods: null, prefixes: null, suffixes: null, magic: null };
   const lines = (item.explicitMods?.length ?? 0) + (item.fracturedMods?.length ?? 0) + (item.desecratedMods?.length ?? 0);
   return {
     mods: item.explicitMods || item.fracturedMods || item.desecratedMods ? lines : null,
     prefixes: typeof item.extended?.prefixes === "number" ? item.extended.prefixes : null,
     suffixes: typeof item.extended?.suffixes === "number" ? item.extended.suffixes : null,
+    magic: item.frameType === 1 || item.rarity === "Magic" ? true : item.frameType != null || item.rarity != null ? false : null,
   };
 }
 
@@ -227,6 +230,7 @@ interface FetchResponse {
     item?: {
       name?: string; typeLine?: string; ilvl?: number;
       explicitMods?: string[]; fracturedMods?: string[]; desecratedMods?: string[];
+      frameType?: number; rarity?: string;
       extended?: { prefixes?: number; suffixes?: number };
     };
     listing?: { account?: { name?: string }; price?: { amount?: number; currency?: string; type?: string }; indexed?: string };

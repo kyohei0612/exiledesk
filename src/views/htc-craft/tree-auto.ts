@@ -23,6 +23,7 @@ import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../../services/htc/omens";
+import { INFUSER_OVER_QUALITY } from "../../services/htc/quality";
 
 export interface AutoTreeInput {
   data: PatchData;
@@ -102,14 +103,38 @@ export function chaosSideFor(start: SimState, limits: { prefix: number; suffix: 
 }
 
 
+/**
+ * ブリーチの MOD を道具に使うか (品質 +20% を狙う / 貼り付けの品質から、ブリーチで上げてから消したと読める時)。
+ * 自動で組む時とやり直しの費用 ([[redo-cost.ts]]) で同じ物を使う。
+ *
+ * 2026-09-26 精度上げ: 品質から読むのは、ブリーチのエッセンスが付く指輪・アミュレットだけ。上限を超えていても
+ * インフューザーで超えられる幅 (+10%) 以内ならインフューザーの分と区別できないので、ブリーチとは読まない
+ */
+export function breachPlanned(inp: Pick<AutoTreeInput, "data" | "targets" | "fixedIds" | "qualityPct" | "baseQuality">): boolean {
+  const d = inp.data;
+  const fixed = new Set(inp.fixedIds);
+  const ts = inp.targets.filter((t) => !fixed.has(t.modId) && d.mods.has(t.modId));
+  if (ts.some((t) => d.mods.get(t.modId)!.family === BREACH_FAMILY)) return true;
+  // クラスは MOD の id の頭 (Rings/..., Amulets/...)
+  const jewellery = inp.targets.some((t) => /^(Rings|Amulets)\//.test(t.modId));
+  return jewellery && inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20) + INFUSER_OVER_QUALITY;
+}
+
 export function autoTree(inp: AutoTreeInput): SimNode[] {
+  return autoTreeMeta(inp).nodes;
+}
+
+/**
+ * 組んだ手と、組み方の決め事 (やり直しの費用が同じ前提で見積もれるように)。catalystOff = 触媒の高貴のお告げを使わない
+ * (ブリーチを先に外す組み方など。2026-09-26: 見積もりは使う前提の 40% で数えていた)
+ */
+export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOff: boolean } {
   const { data: d, prices: p } = inp;
   const fixed = new Set(inp.fixedIds);
   const ts = inp.targets.filter((t) => !fixed.has(t.modId) && d.mods.has(t.modId));
   const mod = (id: string) => d.mods.get(id)!;
   const sideOf = (id: string): Side => (mod(id).type === "prefix" ? "prefix" : "suffix");
-  const breach = ts.some((t) => mod(t.modId).family === BREACH_FAMILY)
-    || (inp.qualityPct != null && inp.qualityPct > (inp.baseQuality ?? 20));
+  const breach = breachPlanned(inp);
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
   /** 買った時から触らない MOD がある側 */
   const shielded = new Set(inp.protectedSides ?? []);
@@ -329,7 +354,8 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
   // カオスの前なら、ブリーチの MOD と外れのどちらが消えても 1 つ残るので、お告げ無しの素の消去でいい (オーナー 2026-09-24:
   // 「左側消去で MOD 消さなくてもスパムで消えるじゃん」。スパム任せだと外れが 1 つ余って狙いの側に残ることがある)
   if (!switchTypes && breach && annulBreach) { main.push({ ...base, id: id(), action: { kind: "annul", side: annulBeforeSpam ? null : "prefix" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true }); catalystOff = true; }
-  else if (!switchTypes && breach && (essenceNodes.length || (breachBlocks && !desecrateEatsBreach) || narrowFirst)) { main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true }); catalystOff = true; }
+  // 削減は一番レベルの低い物を消す。ブリーチの MOD (レベル 1) と同じレベルの狙いがあればそれが消えうるので、× は自動 (消えた狙いを取り返しに戻る。2026-09-26 精度上げ)
+  else if (!switchTypes && breach && (essenceNodes.length || (breachBlocks && !desecrateEatsBreach) || narrowFirst)) { main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: "auto", onlyWithBreach: true }); catalystOff = true; }
   // プレの冒涜がブリーチの MOD を食う形 (外す手は無いが、以後ブリーチは無い) も同じ
   if (!switchTypes && breach && desecrateEatsBreach) catalystOff = true;
   if (narrowFirst) main.push(spamNode!);
@@ -438,7 +464,7 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
     // 見本と同じ仕上げ: 貼り付けの種類で上限 (ブリーチ込み) → 削減 (一番レベルの低いブリーチの MOD を消して 1 つ付く) →
     // エッセンス (付いた 1 つを食わせる) → 冒涜。品質は消えても残る
     if (finalQuality) main.push(finalQuality);
-    main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: null, onlyWithBreach: true });
+    main.push({ ...base, id: id(), action: { kind: "whittle" }, targets: [], need: 1, onHit: null, onMiss: "auto", onlyWithBreach: true });
     main.push(...essenceNodes, ...desecrateNodes);
   } else {
     main.push(...desecrateNodes);
@@ -447,5 +473,5 @@ export function autoTree(inp: AutoTreeInput): SimNode[] {
 
   // 本線をつなぐ (○ は次の手、最後は完成)
   main.forEach((x, i) => { x.onHit = main[i + 1]?.id ?? "done"; });
-  return [...main, ...extra];
+  return { nodes: [...main, ...extra], catalystOff };
 }

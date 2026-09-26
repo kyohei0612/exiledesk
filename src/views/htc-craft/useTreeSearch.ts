@@ -181,6 +181,7 @@ export function useTreeSearch(deps: {
           price: x.amountExalted / div,
           prefixes,
           suffixes: n - prefixes,
+          magic: x.magic ?? null,
           label: `${(x.amountExalted / div).toFixed(2)} 神 / ${n} MOD${x.account ? " / " + x.account : ""}`,
         });
       }
@@ -193,6 +194,7 @@ export function useTreeSearch(deps: {
       exalt: toDiv(p.currency.exalt) ?? 0,
       necro: toDiv(p.omens.OmenofDextralNecromancy),
       dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
+      regal: toDiv(p.currency.regal),
     };
     const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
     const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);

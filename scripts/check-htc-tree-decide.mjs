@@ -97,6 +97,14 @@ else ok("試す候補は全部、固定済みを買うより成功 1 回あた�
   else if (Math.abs(two.hit - 1 / 3) > 1e-9) fail(`2 MOD の物の当たりが 1/3 ではない (${two.hit})`);
   else if (two.perTry < two.listing.price + dp2.exalt) fail("2 MOD の物に高貴 1 回分が入っていない");
   else ok("2 MOD の物は高貴で 3 MOD にしてから冒涜 (1/3、高貴 1 回分込み)");
+  // マジック (2 MOD 以下で分からない時もそうみなす) は王者のオーブで 3 MOD、レアと分かっていれば高貴 (2026-09-26)
+  const Pr = { ...P, regal: 0.05 };
+  const mg = M.candidateOf(L("loose", 5, 1, 1, "2MOD"), Pr);
+  const rare = M.candidateOf({ ...L("loose", 5, 1, 1, "2MOD"), magic: false }, Pr);
+  const one = M.candidateOf(L("loose", 5, 1, 0, "1MOD"), Pr);
+  if (Math.abs(mg.perTry - rare.perTry - (Pr.regal - Pr.exalt)) > 1e-9) fail(`マジックの 2 MOD に王者のオーブが入っていない (${mg.perTry} / ${rare.perTry})`);
+  else if (Math.abs(one.perTry - mg.perTry - Pr.exalt) > 1e-9) fail("マジックの 1 MOD は王者 + 高貴 1 回のはず");
+  else ok("マジックは王者のオーブで 1 個足してから (1 MOD は王者 + 高貴、レアと分かっていれば高貴だけ)");
 }
 const strictGamble = d.order.concat(d.skipped).filter((c) => c.listing.source === "strict" && c.how === "reduce");
 if (strictGamble.length) fail(`厳しい検索の物を消去ガチャで試しています: ${strictGamble.map((c) => c.listing.label).join(", ")}`);

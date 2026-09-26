@@ -63,6 +63,8 @@ export interface DecidePrices {
   exalt: number;
   /** 右側の高貴なお告げ (高貴をサフィックスに寄せる = サフィを確定で 1 個足す)。無ければ null */
   dextralExalt: number | null;
+  /** 王者のオーブ (マジックをレアにして 1 個足す)。無ければ高貴と同じ値段とみなす */
+  regal?: number | null;
 }
 
 /** 取引所から返ってきた 1 件 */
@@ -74,6 +76,11 @@ export interface TreeListing {
   /** 樹 MOD を含むプレフィックスの数 */
   prefixes: number;
   suffixes: number;
+  /**
+   * マジックか (取引所の frameType / rarity)。分からなければ null で、2 MOD 以下はマジックとみなす
+   * (レアで 1〜2 MOD はほぼ無い。マジックには高貴が打てないので、先に王者のオーブが要る)
+   */
+  magic?: boolean | null;
   /** 画面の見出し (出品者や名前など、呼ぶ側が決める) */
   label?: string;
 }
@@ -141,9 +148,13 @@ export function candidateOf(l: TreeListing, p: DecidePrices): Candidate | null {
   // 2 MOD 以下は高貴で 3 MOD まで足してから、3 MOD と同じ道 (冒涜で当て馬を足して 4 MOD、1/3)。
   // オーナー 2026-09-24:「4 MOD 以下なら尚更調整できるから件数数えていいよ。高貴打てば 4 MOD になるし」。
   // 前は数えずに外していて、安い物ほど MOD が少ないので「出品 6,539 件なのに足りない」になっていた
+  // マジック (2 MOD 以下で分からない時もそうみなす) は高貴を打てないので、1 個目は王者のオーブ (レアにして 1 個足す)。
+  // 2026-09-26 精度上げ: 前はレア扱いで高貴だけ数えていた
   if (mods >= 1) {
     const pad = 3 - mods;
-    const est = selfFracture(3, { base: l.price + pad * p.exalt, orb: p.orb, annul: p.annul, bone: p.bone });
+    const magic = l.magic ?? true;
+    const padCost = magic ? (p.regal ?? p.exalt) + (pad - 1) * p.exalt : pad * p.exalt;
+    const est = selfFracture(3, { base: l.price + padCost, orb: p.orb, annul: p.annul, bone: p.bone });
     if (!est.best) return null;
     return make("desecrate", est.best.perTry, est.best.hit);
   }
