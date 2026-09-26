@@ -89,11 +89,12 @@ function iconOf(c: Cur): string {
               <span v-else class="text-xs text-[var(--exile-color-text-secondary)]">{{ cells.get(p.apiId)!.main.label }}</span>
             </div>
           </td>
-          <!-- 取引の推奨: 一番安く交換できる通貨。1 未満は「1 通貨で N 個」 -->
+          <!-- 取引の推奨: 一番安く交換できる通貨 -->
           <td class="px-2 py-3 text-right">
             <div v-if="cells.get(p.apiId)!.rec" class="flex items-center justify-end gap-1 text-xs tabular-nums text-[var(--exile-color-text-secondary)]" :title="`${cells.get(p.apiId)!.rec!.label}で交換するのが一番安い (取引所のペアの値)`">
-              <template v-if="cells.get(p.apiId)!.rec!.value < 1">{{ fmt(1 / cells.get(p.apiId)!.rec!.value) }} 個<span class="text-[var(--exile-color-text-tertiary)]">/</span>1</template>
-              <template v-else>{{ fmt(cells.get(p.apiId)!.rec!.value) }}</template>
+              <!-- いつも「A 個 = B 通貨」の形 (片方が 1)。オーナー 2026-09-26「表示がぶれる、統一」 -->
+              <template v-if="cells.get(p.apiId)!.rec!.value < 1">{{ fmt(1 / cells.get(p.apiId)!.rec!.value) }} 個 = 1</template>
+              <template v-else>1 個 = {{ fmt(cells.get(p.apiId)!.rec!.value) }}</template>
               <img v-if="iconOf(cells.get(p.apiId)!.rec!.cur)" :src="iconOf(cells.get(p.apiId)!.rec!.cur)" :alt="cells.get(p.apiId)!.rec!.label" class="w-4 h-4 object-contain" loading="lazy" />
               <span>{{ cells.get(p.apiId)!.rec!.label }}</span>
             </div>

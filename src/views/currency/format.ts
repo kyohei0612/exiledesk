@@ -24,16 +24,18 @@ export function effectFor(p: RankedItem): ItemEffect | null {
 
 // ---------------------------------------------------------------------------
 // 数値表示
-//  - >=1億: "X.X億" / >=1万: "X.X万" / >=1000: "1,234" (漢字 "千" は使わない、オーナー指示 2026-05-22)
+//  - >=1億: "X.X億" / >=1万: "X.X万" / >=100: "1,234" の整数 (漢字 "千" は使わない、オーナー指示 2026-05-22)
 //  - >=1: "X.X" / 小数: 0.1/0.01 帯は桁を潰さない / 0.0001 未満は "<0.0001" 固定
+//  - 2026-09-26 オーナー「表示がぶれる、統一させて」: 1,000 以上だけ小数 1 桁が付くことがあり (4,303.2 と 1,066 が並ぶ)、
+//    100 以上は整数に揃えた
 // ---------------------------------------------------------------------------
-const numFormat1k = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const numFormat1k = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 export function fmt(n: number): string {
   if (!Number.isFinite(n) || n === 0) return "—";
   const abs = Math.abs(n);
   if (abs >= 100_000_000) return (n / 100_000_000).toFixed(1) + "億";
   if (abs >= 10_000) return (n / 10_000).toFixed(1) + "万";
-  if (abs >= 1_000) return numFormat1k.format(n);
+  if (abs >= 100) return numFormat1k.format(n);
   if (abs >= 1) return n.toFixed(1);
   if (abs >= 0.1) return n.toFixed(2);
   if (abs >= 0.01) return n.toFixed(3);
