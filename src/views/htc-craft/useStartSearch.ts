@@ -30,6 +30,8 @@ import type { useHtcCraft } from "./useHtcCraft";
 
 /** 同時に探せるのは 3 つまで (オーナー 2026-09-24) */
 export const MAX_STARTS = 3;
+/** 既定でチェックしておく数 */
+export const DEFAULT_STARTS = 2;
 const TREE_ONLY = "__tree__";
 const CLEAN = "__clean__";
 
@@ -92,7 +94,9 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     // フラクチャーの印が無いので、これが無いと毎回選び直しだった。2026-09-25)
     if (!checked.value.length && k === "none") {
       const rare = [...candidates.value].filter((x) => x.chance != null).sort((x, y) => (x.chance ?? 1) - (y.chance ?? 1));
-      checked.value = rare.slice(0, MAX_STARTS).map((x) => x.key);
+      // 既定は出にくい順に 2 つ (オーナー 2026-09-26:「3 番目で大抵分かる」。取引所は検索と取得を合わせて 5 分 22 本までで、
+      // 3 つ全部検索は約 20 本 = 約 3 分、2 つなら約 14 本 = 約 2 分)。自分で 3 つにすればそのまま 3 つとも全部検索する
+      checked.value = rare.slice(0, DEFAULT_STARTS).map((x) => x.key);
     }
     results.value = {};
     picked.value = null;

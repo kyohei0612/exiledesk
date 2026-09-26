@@ -213,7 +213,7 @@ const fixLabel = computed(() => {
           完成品を買うのをすすめます (右で探せます)
         </div>
         <div v-else-if="ss.candidates.value.length" class="mt-3 border-t border-white/10 pt-2">
-          <p class="mb-1 opacity-60">出にくい MOD ほど固定の価値が高い (出にくい順に 3 つ選択済み)</p>
+          <p class="mb-1 opacity-60">出にくい MOD ほど固定の価値が高い (出にくい順に 2 つ選択済み。3 つまで増やせる)</p>
           <!-- 樹 MOD を固定 (作る側に樹 MOD が 1 つ) -->
           <template v-if="ss.kind.value.kind === 'fix'">
             <p class="mb-1 font-bold">固定済み (フラクチャー) にして始める MOD</p>
@@ -256,7 +256,7 @@ const fixLabel = computed(() => {
               </li>
             </ol>
           </div>
-          <p v-else class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 (結果は 30 分覚える)</p>
+          <p v-else class="mt-1 opacity-50">取引所へ約 {{ calls }} 回 ≒ {{ Math.max(1, Math.round((calls * 2 - 6) * 13.6 / 60)) }} 分 (結果は 30 分覚える)</p>
         </div>
       </section>
 
