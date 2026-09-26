@@ -157,6 +157,8 @@ export interface SimResult {
   stops: Array<{ reason: string; p: number }>;
   /** 完成した回の費用 (まとめる用) */
   doneCosts: number[];
+  /** うちソケットに差す物の代 (1 回あたり。各回の初めに 1 度。差さなければ 0) */
+  socketCost: number;
 }
 
 const FLOOR: Record<string, number> = { chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50 };
@@ -178,20 +180,26 @@ export function hasSideOmen(a: SimAction | null): boolean {
   }
 }
 
-/** ctx.baseQuality = ベースの品質の上限 (普通 20、ブリーチの指輪 40、洗練されたブリーチリング 45) */
+/**
+ * シミュレーターの設定。baseQuality = ベースの品質の上限 (普通 20、ブリーチの指輪 40、洗練されたブリーチリング 45)。
+ * craftedLimit = 持てるクラフト MOD の数 (既定 1、アストリッドの創造性で 2)。socketCost = ソケットに差す物の代 (1 回の作成に
+ * 1 度、各回の初めに足す)。2026-09-26 オーナー「アストリッドやら追加しとこうか」([[sockets.ts]])
+ */
+export type SimCtx = StepCtx & { baseQuality?: number; craftedLimit?: number; socketCost?: number };
+
 /**
  * 同じ ctx・同じ手の並びなら helpers (中の memo) を使い回す。2026-09-26: 小分けに回すたびに作り直して roll の memo が
  * 毎回空になり、段を変えただけで 10 秒固まっていた (roll が 5 秒)
  */
 const HELPERS = new WeakMap<object, WeakMap<readonly SimNode[], ReturnType<typeof makeHelpers>>>();
-export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly SimNode[]) {
+export function simHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   let byNodes = HELPERS.get(ctx);
   if (!byNodes) { byNodes = new WeakMap(); HELPERS.set(ctx, byNodes); }
   let h = byNodes.get(nodes);
   if (!h) { h = makeHelpers(ctx, nodes); byNodes.set(nodes, h); }
   return h;
 }
-function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly SimNode[]) {
+function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
@@ -241,8 +249,14 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
     const sides = a.side ? [a.side] : SIDES;
     return sides.reduce((n, x) => n + Math.max(0, ctx.limits[x] - count(s, x)), 0) >= 2;
   }
-  /** クラフト MOD が付いているか (ブリーチの MOD か、エッセンスで付いた MOD) */
-  const craftedPresent = (s: SimState): boolean => s.breach || s.slots.some((x) => x.crafted);
+  /**
+   * 付いているクラフト MOD の数 (ブリーチの MOD + エッセンスで付いた MOD)。持てるのは ctx.craftedLimit (既定 1、アストリッドの
+   * 創造性で 2)。2026-09-26: 前は「付いているか」だけ見ていて、アストリッドを差しても 2 つ目のエッセンスが打てなかった
+   */
+  const craftedCount = (s: SimState): number => (s.breach ? 1 : 0) + s.slots.filter((x) => x.crafted).length;
+  const craftedLimit = ctx.craftedLimit ?? 1;
+  const craftedFull = (s: SimState): boolean => craftedCount(s) >= craftedLimit;
+  const craftedMsg = (): string => `クラフト MOD は ${craftedLimit} つまで${craftedLimit < 2 ? " (アストリッドの創造性で 2 つ)" : ""}`;
   const hasJunk = (s: SimState): boolean =>
     s.slots.some((x) => !x.fixed && !x.keep && !x.modId) || (s.breach && (!breachKept || breachSpent(s)));
 
@@ -309,7 +323,7 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
       case "annul": return removable(s, a.side).length ? null : "外せる物が無い";
       case "essence": {
         // 食わせる物が無ければ、高貴 + 側の高貴なお告げで外れを付けてから (その分も 1 回の値段に入る)
-        if (craftedPresent(s)) return "クラフト MOD は 1 つまで (ブリーチやエッセンスの MOD が付いている)";
+        if (craftedFull(s)) return `${craftedMsg()} (ブリーチやエッセンスの MOD が付いている)`;
         const side = mod(a.modId)?.type as Side;
         const rs = removeSideOf(s, a);
         if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
@@ -328,7 +342,7 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
       case "breach": {
         if (s.breach) return "もう付いている";
-        if (craftedPresent(s)) return "クラフト MOD は 1 つまで (エッセンスの MOD が付いている)";
+        if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
         const rs = a.removeSide ?? "prefix";
         if (rs !== "prefix" && !room(s, "prefix")) return "プレに枠が無い";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
@@ -595,12 +609,13 @@ export async function simulateTreeChunked(
     })),
     stops: [...stops].map(([reason, c]) => ({ reason, p: c / runs })).sort((a, b) => b.p - a.p),
     doneCosts: done,
+    socketCost: parts[0]?.socketCost ?? 0,
   };
 }
 
 /** 回す。手 0 から、○×の行き先をたどる。「完成」で終わり、未設定・打てない所で止まる */
 export function simulateTree(inp: {
-  ctx: StepCtx & { baseQuality?: number }; start: SimState; nodes: readonly SimNode[]; runs?: number; budget?: number; maxActions?: number; seed?: number;
+  ctx: SimCtx; start: SimState; nodes: readonly SimNode[]; runs?: number; budget?: number; maxActions?: number; seed?: number;
   /** 調べ用: 1 回目の各手 (打った手の id と、打った後の指輪) を知らせる */
   trace?: (at: string, s: SimState) => void;
 }): SimResult {
@@ -684,12 +699,15 @@ export function simulateTree(inp: {
     return target.id;
   };
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
+  // ソケットに差す物 (ルーン + 熟練工のオーブ) は 1 回の作成に 1 度、初めに払う。相場に無ければ回さずに止める
+  const socketCost = ctx.socketCost ?? 0;
   for (let r = 0; r < runs; r++) {
     finalQualityDone = false;
     let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })) };
-    let cost = 0;
+    let cost = Number.isFinite(socketCost) ? socketCost : 0;
     let at = nodes.length ? 0 : -1;
-    let end: string | null = nodes.length ? null : "STEP が無い";
+    let end: string | null = !Number.isFinite(socketCost) ? "ソケットに差す物 (ルーン・熟練工のオーブ) が相場に無い" : nodes.length ? null : "STEP が無い";
+    if (end) at = -1;
     for (let k = 0; k < maxActions && at >= 0; k++) {
       const n = nodes[at]!;
       // 飛ばす手: ブリーチが無い時の「ブリーチがある時だけ」の手、本線の品質の手で要らない物 (今その種類が入っている /
@@ -757,5 +775,6 @@ export function simulateTree(inp: {
     perNode: nodes.map((n, i) => ({ id: n.id, tries: tries[i]! / runs, cost: spent[i]! / runs })),
     stops: [...stops].map(([reason, c]) => ({ reason, p: c / runs })).sort((a, b) => b.p - a.p),
     doneCosts,
+    socketCost: Number.isFinite(socketCost) ? socketCost : 0,
   };
 }

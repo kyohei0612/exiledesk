@@ -124,5 +124,61 @@ if (!(cut.pDone === 0 && cut.stops[0]?.reason.includes("未設定"))) fail("未�
   if (!h.omenNeeded(sufOnly, de)) fail("プレに枠があるのに右側のネクロマンシーが要らないことになっている");
   console.log("側のお告げ: 効かない形では代を取らない / 動きも同じ");
 }
+// ソケットに差す物 (2026-09-26 オーナー「アストリッドやら追加しとこうか」): アストリッドの創造性でクラフト MOD 2 つ、
+// セールの凱旋でサフィ 4 枠、代 (ルーン + 足りない穴の熟練工のオーブ) は 1 回の作成に 1 度。武器・防具は規格外 (ソケット 2 つ) が既定
+{
+  const MANA = "Rings/PerfectEssence_MaximumManaIncreasePercent", REGEN = "Rings/PerfectEssence_ManaRegeneration";
+  const sp = {
+    ...prices,
+    currency: { ...prices.currency, [`essence:perfect:${REGEN}`]: D * 0.05, "rune:astrids-creativity": D * 3, "rune:serles-triumph": D * 2, artificer: D * 0.01 },
+  };
+  const two = [
+    { id: "e1", action: { kind: "essence", modId: MANA }, targets: [{ modId: MANA, minTier: 0 }], keep: [], clean: false, onHit: "e2", onMiss: null },
+    { id: "e2", action: { kind: "essence", modId: REGEN, removeSide: "suffix" }, targets: [{ modId: REGEN, minTier: 0 }], keep: [MANA], clean: false, onHit: "done", onMiss: null },
+  ];
+  const base = { data, cls, prices: sp, itemLevel: 80, limits: { prefix: 3, suffix: 3 }, catalystOk: () => true };
+  const no = M.simulateTree({ ctx: base, start, nodes: two, runs: 50 });
+  console.log(`エッセンス 2 つ (アストリッド無し): 完成 ${(no.pDone * 100).toFixed(0)}% / ${no.stops.map((x) => x.reason).join(", ")}`);
+  if (!(no.pDone === 0 && no.stops[0]?.reason.includes("クラフト MOD は 1 つまで"))) fail("アストリッド無しでエッセンスが 2 つ付いている");
+  // 穴の無いベース (0) に差す = 熟練工のオーブ 1 個
+  const pick = { astrid: true, serle: false, baseSockets: 0 };
+  const withA = M.simulateTree({ ctx: { ...base, craftedLimit: M.craftedLimitWith(1, pick) }, start, nodes: two, runs: 50 });
+  if (!(withA.pDone === 1)) fail(`アストリッド有り (クラフト MOD 2 つ) でエッセンス 2 つが付かない: ${withA.stops.map((x) => x.reason).join(", ")}`);
+  // 代: ルーン + 熟練工のオーブ 1 個ずつ、1 回の作成に 1 度
+  const sc = M.socketCostOf(sp, pick);
+  if (!(sc.lines.length === 2 && Math.abs(sc.total - (D * 3 + D * 0.01)) < 1e-9)) fail(`アストリッドの代がルーン + 熟練工のオーブになっていない: ${JSON.stringify(sc)}`);
+  // 規格外 (ソケット 2 つ) のベースなら熟練工のオーブは要らない。両方差しても穴は 1 つで足りる (アストリッドは入れ替え可)
+  const sc2 = M.socketCostOf(sp, { astrid: true, serle: true, baseSockets: 2 });
+  if (Math.abs(sc2.total - (D * 3 + D * 2)) > 1e-9) fail(`規格外のベースで熟練工のオーブの代が掛かっている: ${JSON.stringify(sc2)}`);
+  const sc0 = M.socketCostOf(sp, { astrid: true, serle: true, baseSockets: 0 });
+  if (Math.abs(sc0.total - (D * 3 + D * 2 + D * 0.01)) > 1e-9) fail(`穴の無いベースに両方差す時の熟練工のオーブが 1 個になっていない: ${JSON.stringify(sc0)}`);
+  const paid = M.simulateTree({ ctx: { ...base, craftedLimit: 2, socketCost: sc.total }, start, nodes: two, runs: 50 });
+  console.log(`エッセンス 2 つ (アストリッド有り): 完成 ${(paid.pDone * 100).toFixed(0)}% / 平均 ${(paid.expected / D).toFixed(2)} 神 (うちソケット ${(paid.socketCost / D).toFixed(2)} 神)`);
+  if (Math.abs(paid.expected - withA.expected - sc.total) > 1e-6) fail("ソケットの代が 1 回の作成に 1 度だけ足されていない");
+  if (paid.socketCost !== sc.total) fail("結果にソケットの代が出ていない");
+  // 相場に無ければ回さずに止める (0 で埋めるとタダに見える)
+  const miss = M.simulateTree({ ctx: { ...base, craftedLimit: 2, socketCost: M.socketCostOf(prices, pick).total }, start, nodes: two, runs: 10 });
+  if (!(miss.pDone === 0 && miss.stops[0]?.reason.includes("相場に無い"))) fail("ルーンの相場が無いのに回っている");
+  // セールの凱旋: サフィ 4 枠。サフィ 3 つで満杯の指輪に、4 つ目の高貴が打てる
+  const lim4 = M.withSocketLimits({ prefix: 3, suffix: 3 }, { astrid: false, serle: true });
+  if (!(lim4.prefix === 3 && lim4.suffix === 4)) fail(`セールの凱旋でサフィ 4 枠になっていない: ${JSON.stringify(lim4)}`);
+  const suf3 = { breach: false, slots: [{ modId: null, side: "suffix", fixed: true }, { modId: null, side: "suffix", fixed: false }, { modId: null, side: "suffix", fixed: false }] };
+  const exS = { kind: "exalt", tier: "exalt", side: "suffix", catalyst: null };
+  if (!M.simHelpers(base, []).usable(suf3, exS)) fail("サフィ 3 つなのに (セール無しで) 右側の高貴が打てる");
+  if (M.simHelpers({ ...base, limits: lim4 }, []).usable(suf3, exS)) fail("セールの凱旋でサフィ 4 つ目の高貴が打てない");
+  const serleCost = M.socketCostOf(sp, { astrid: false, serle: true, baseSockets: 0 });
+  if (Math.abs(serleCost.total - (D * 2 + D * 0.01)) > 1e-9) fail("セールの凱旋の代がルーン + 熟練工のオーブになっていない");
+  // 差せる種類: 指輪・アミュレット・ベルト・矢筒は 0、武器・防具は規格外で 2。コラプト済みは差せない
+  const cnt = (k) => M.socketCountFor(k);
+  if (cnt("Rings") || cnt("Amulets") || cnt("Belts") || cnt("Quivers")) fail("装飾品・矢筒にソケットが付くことになっている");
+  if (cnt("Body_Armours") !== 2 || cnt("Helmets") !== 2 || cnt("Wands") !== 2) fail("武器・防具の穴の数が 2 になっていない");
+  const both = { astrid: true, serle: true, baseSockets: 2 };
+  if (!M.effectiveSocket("Helmets", false, both).serle || M.socketBlock("Helmets", false, { ...both, serle: false }, "serle")) fail("兜に両方差せない");
+  if (M.effectiveSocket("Body_Armours", true, both).astrid) fail("コラプト済みに差せている");
+  if (!M.socketBlock("Rings", false, { ...both, astrid: false, serle: false }, "astrid")) fail("指輪にアストリッドが押せる");
+  // 素材の検索: 武器・防具はソケット 2 以上 (既定)、指輪は条件に入れない
+  if (M.socketsMinFor("Helmets", false, both) !== 2 || M.socketsMinFor("Rings", false, both) !== null || M.socketsMinFor("Helmets", false, { ...both, baseSockets: 0 }) !== null) fail("素材の検索のソケットの下限がおかしい");
+  console.log("ソケット: アストリッドでクラフト MOD 2 つ / セールでサフィ 4 枠 / 代は 1 度だけ / 差せる種類と穴の数");
+}
 console.log(failed ? `NG: ${failed} 件` : "全部 OK");
 process.exit(failed ? 1 : 0);

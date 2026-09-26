@@ -60,6 +60,8 @@ export function useTreeSearch(deps: {
   fracturedTargets: Src<TierTarget[]>;
   /** 狙い全部 (候補の MOD を固定済みにして探す時に段を引く) */
   targets: Src<TierTarget[]>;
+  /** 素材のルーンソケットの下限 (武器・防具は規格外の 2 が既定。null = 条件に入れない。2026-09-26) */
+  socketsMin: Src<number | null>;
   /** modId → 画面の文面 */
   name: (modId: string) => string;
 }) {
@@ -123,6 +125,8 @@ export function useTreeSearch(deps: {
       ilvlMin: item.value?.itemLevel ?? undefined,
       ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
       grantedSkill: item.value?.grantedSkill ?? null,
+      // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
+      socketsMin: deps.socketsMin.value,
     };
     // 固定済みは最安 1 件。固定無しは「85% に届く最小の個数」を数えるので最安 10 件まで
     // (ゆるい方は 85% に 10 個前後要る。fetch は 1 回 10 件なので検索の本数は変わらない)

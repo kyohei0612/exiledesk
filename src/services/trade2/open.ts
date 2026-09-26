@@ -45,9 +45,11 @@ export async function openTrade2ForUnique(args: {
   league: string;
   /** 互換のため残置 (未使用)。名前が未登録ならサイト側で直してもらう */
   baseType?: string;
+  /** コラプト品を外す (ユニーク装備価格推移) */
+  noCorrupted?: boolean;
 }): Promise<{ openedUrl: string }> {
   if (!isTauriRuntime()) throw new Error(TAURI_ONLY);
-  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), buildUniqueNameQuery(args.nameEn));
+  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), buildUniqueNameQuery(args.nameEn, { noCorrupted: args.noCorrupted }));
   await openUrl(url);
   return { openedUrl: url };
 }

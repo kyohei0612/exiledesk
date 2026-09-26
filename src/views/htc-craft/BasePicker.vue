@@ -9,6 +9,8 @@
  */
 import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
+import SocketPicker from "./SocketPicker.vue";
+import { effectiveSocket, socketEffects, socketLabel, withSocketLimits } from "../../services/htc/sockets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
 import { sideLimits } from "../../services/htc/bridge";
@@ -51,10 +53,13 @@ function choose(en: string): void {
 /** よく使う ilvl */
 const ILVLS = [75, 79, 82, 84, 86];
 
+/** ソケットに差す物 (③ で選ぶ。種類で差せない物は落とす) */
+const sockOn = computed(() => effectiveSocket(chosen.value?.cls, false, props.c.socket.value));
 /** 枠 (固定済みの樹 MOD が使う分を引く) */
 const limits = computed(() => {
   const d = props.c.data.value;
-  const lim = d && pk.baseName.value ? sideLimits(d, pk.baseName.value) : { prefix: 3, suffix: 3 };
+  // セールの凱旋を差せばサフィは 1 つ多い (③ で選ぶ。2026-09-26)
+  const lim = withSocketLimits(d && pk.baseName.value ? sideLimits(d, pk.baseName.value) : { prefix: 3, suffix: 3 }, sockOn.value);
   return { P: Math.max(0, lim.prefix - (zeroStart.value.fixedPrefix ?? 0)), S: Math.max(0, lim.suffix - (zeroStart.value.fixedSuffix ?? 0)) };
 });
 const pickedCount = (side: "P" | "S"): number => pk.picks.value.filter((p) => pk.modRows.value.find((m) => m.modId === p.modId)?.side === side).length;
@@ -182,6 +187,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
               <option v-for="k in CATALYSTS" :key="k.tag" :value="k.tag">{{ k.ja }}</option>
             </select>
           </label>
+          <SocketPicker :c="c" :category="chosen.cls" class="basis-full" />
           <details class="opacity-80">
             <summary class="cursor-pointer opacity-70">樹 MOD (固定済みで買う物) がある時</summary>
             <span class="mt-1 flex items-center gap-2">
@@ -200,7 +206,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
     <!-- 右: 完成図 -->
     <aside class="sticky top-2 w-[22rem] shrink-0">
       <p class="mb-1.5 text-[11px] opacity-50">完成図 (選んだ物がここに並ぶ)</p>
-      <ItemCard v-if="chosen" :base="chosen.ja" :ilvl="pk.level.value" :quality="zeroStart.quality" :quality-label="qualityLabelOf(zeroStart.qualityTag)" :implicits="chosen.implicits" :mods="cardMods" detail />
+      <ItemCard v-if="chosen" :base="chosen.ja" :ilvl="pk.level.value" :quality="zeroStart.quality" :quality-label="qualityLabelOf(zeroStart.qualityTag)" :implicits="chosen.implicits" :mods="cardMods" :socket="socketLabel(sockOn)" :socket-effects="socketEffects(sockOn)" detail />
       <div v-else class="rounded-xl border border-dashed border-white/15 p-6 text-center opacity-50">ベースを選ぶとここに出ます</div>
     </aside>
   </div>

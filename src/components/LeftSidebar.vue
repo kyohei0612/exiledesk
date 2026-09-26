@@ -18,6 +18,8 @@ interface NavItem {
 // 2026-05-23: 設定画面 (autostart / close_to_tray / 自動再取得) を実装し復活。
 const items: NavItem[] = [
   { id: "econ-currency", icon: "☉", label: "カレンシーランキング", group: "economy" },
+  // 2026-09-26: ユニーク装備の相場と 7 日の推移 (オーナー指示「カレンシーランキングの下らへんに同じように」)
+  { id: "unique-trend", icon: "🜚", label: "ユニーク装備価格推移", group: "economy" },
   // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
   // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
   { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },

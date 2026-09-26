@@ -19,6 +19,7 @@
  */
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { sideLimits } from "../../services/htc/bridge";
+import { socketOnOf, withSocketLimits } from "../../services/htc/sockets";
 import { zeroStart } from "./craft-settings";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -54,7 +55,8 @@ export function startKindOf(c: ReturnType<typeof useHtcCraft>): {
     if (CRAFTED_SOURCES.has(m.source)) essence[sideOf(m.type)] = true;
   }
   // 満杯はベースの枠で見る (指輪によってプレ・サフィの数が違う。オーナー 2026-09-24:「接辞が変化する指輪でも出る時ある」)
-  const lim = d ? sideLimits(d, c.item.value?.baseType ?? zeroStart.value.baseType) : { prefix: 3, suffix: 3 };
+  // セールの凱旋を差せばサフィは 1 つ多い (2026-09-26 オーナー「アストリッドやら追加しとこうか」)
+  const lim = withSocketLimits(d ? sideLimits(d, c.item.value?.baseType ?? zeroStart.value.baseType) : { prefix: 3, suffix: 3 }, socketOnOf(c));
   const full: Record<S, number> = { P: lim.prefix, S: lim.suffix };
   // 重い側 = 満杯で普通の MOD を作る側、またはエッセンスを使う側 (オーナー 2026-09-24:「プレ 4 サフィ 2 の特殊なリングで、
   // 樹 MOD がプレ 1・サフィ 1、サフィにエッセンス必要とかだとクラフト出来ん」)

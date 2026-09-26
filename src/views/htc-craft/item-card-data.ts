@@ -10,6 +10,7 @@ import { CATALYSTS } from "../../services/htc/quality";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import type { SimState } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
+import { socketEffects, socketLabel, socketOnOf } from "../../services/htc/sockets";
 import type { useHtcCraft } from "./useHtcCraft";
 
 export interface CardMod {
@@ -29,6 +30,10 @@ export interface CardData {
   qualityLabel: string | null;
   implicits: string[];
   mods: CardMod[];
+  /** ソケットに差す物の 1 行 (「ソケット: アストリッドの創造性」)。差さなければ null (2026-09-26) */
+  socket: string | null;
+  /** 差したルーンの効果の行 (ゲームの日本語) */
+  socketEffects: string[];
 }
 
 /** MOD のタグの日本語。クライアント由来の辞書の言い回しに合わせる (元素 496 件 vs エレメント 6 件、アタック 1224 vs 攻撃 45。2026-09-26 オーナー「タグの日本語訳をチェック」) */
@@ -77,7 +82,7 @@ function sideOfMod(c: ReturnType<typeof useHtcCraft>, modId: string): "P" | "S" 
 }
 const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 
-function header(c: ReturnType<typeof useHtcCraft>): Pick<CardData, "name" | "base" | "ilvl" | "quality" | "qualityLabel" | "implicits"> {
+function header(c: ReturnType<typeof useHtcCraft>): Pick<CardData, "name" | "base" | "ilvl" | "quality" | "qualityLabel" | "implicits" | "socket" | "socketEffects"> {
   const it = c.item.value;
   const base = it?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? it?.baseType ?? zeroStart.value.baseType ?? "";
   return {
@@ -87,6 +92,8 @@ function header(c: ReturnType<typeof useHtcCraft>): Pick<CardData, "name" | "bas
     quality: it?.quality ?? zeroStart.value.quality ?? null,
     qualityLabel: qualityLabelOf(it?.catalystTag ?? zeroStart.value.qualityTag),
     implicits: c.implicits.value.map(ja),
+    socket: socketLabel(socketOnOf(c)),
+    socketEffects: socketEffects(socketOnOf(c)),
   };
 }
 const byside = (a: CardMod, b: CardMod): number => (a.side === b.side ? 0 : a.side === "P" ? -1 : b.side === "P" ? 1 : 0);

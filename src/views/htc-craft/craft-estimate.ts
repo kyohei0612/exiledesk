@@ -5,12 +5,12 @@
  * 固定済みにする MOD (fixedIds) は付いている前提で数えない。[[step-odds.ts]] の一番安い打ち方 (外れの消去込み) の合計。
  * 付けた物が消える分は入らないので安めに出る。
  */
-import { sideLimits } from "../../services/htc/bridge";
+import { socketOnOf } from "../../services/htc/sockets";
 import { stepHelpers, tierWeight, type ItemState, type Side } from "../../services/htc/step-odds";
 import { shallowRef } from "vue";
 import { simulateTreeChunked } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
-import { catalystOk, simCtxOf, startStateOf } from "./sim-setup";
+import { catalystOk, craftLimitsOf, simCtxOf, startStateOf } from "./sim-setup";
 import { startKindOf } from "./start-kind";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -56,6 +56,8 @@ function keyOf(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[], k
     c.targets.value.map((t) => `${t.modId}:${t.minTierIndex ?? 0}`).join(","),
     [...fixedIds].sort().join(","),
     c.prices.value?.currency.divine ?? 0,
+    // ソケットに差す物で枠・クラフト MOD の上限・代が変わる (2026-09-26)
+    `ソケット:${socketOnOf(c).astrid ? "A" : ""}${socketOnOf(c).serle ? "S" : ""}${socketOnOf(c).baseSockets}`,
   ].join("|");
 }
 function put(key: string, v: { value: number | null; pDone: number } | "pending"): void {
@@ -85,15 +87,16 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
 export function stepsEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[]): number | null {
   const d = c.data.value, cls = c.base.value, p = c.prices.value;
   if (!d || !cls || !p) return null;
-  const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
   const h = stepHelpers({
-    data: d, cls, prices: p, itemLevel: c.item.value?.itemLevel ?? zeroStart.value.itemLevel, limits: sideLimits(d, baseType),
+    data: d, cls, prices: p, itemLevel: c.item.value?.itemLevel ?? zeroStart.value.itemLevel, limits: craftLimitsOf(c),
     catalystOk: catalystOk(p),
   });
   const fixed = new Set(fixedIds);
   const sideOf = (id: string): Side => d.mods.get(id)!.type as Side;
   let s: ItemState = { breach: false, slots: [...fixed].map((id) => ({ modId: id, side: sideOf(id), fixed: true })) };
-  let sum = 0;
+  // ソケットに差す物の代 (1 度だけ。相場に無ければ出さない)
+  let sum = simCtxOf(c)?.socketCost ?? 0;
+  if (!Number.isFinite(sum)) return null;
   for (const t of c.targets.value.filter((x) => !fixed.has(x.modId))) {
     const best = h.methodsFor(s, t.modId, t.minTierIndex ?? 0)[0];
     if (!best) return null;

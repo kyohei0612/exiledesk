@@ -14,6 +14,7 @@ import { useTreeSearch } from "./useTreeSearch";
 export type { TreeRoute } from "./useTreeSearch";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
+import { NO_SOCKET, effectiveSocket, socketCountFor, socketsMinFor, type SocketPick } from "../../services/htc/sockets";
 import { jaOfMod, jaOfPastedLine, fillHashes } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
@@ -112,8 +113,23 @@ export function useHtcCraft() {
   const rows = shallowRef<TargetRow[]>([]);
   const implicits = ref<string[]>([]);
   const skipped = ref<string[]>([]);
-  /** 確定で乗せる MOD が何個あるか。**解く前に分かる** ([[craft-slots.ts]]) */
-  const slots = shallowRef<CraftedSurvey | null>(null);
+  /**
+   * ソケットに差す物 (アストリッドの創造性 / セールの凱旋)。2026-09-26 オーナー「アストリッドやら追加しとこうか」([[sockets.ts]])。
+   * 画面のトグルが入れる。計算は種類・コラプトで差せない物を落とした socketOn を使う
+   */
+  const socket = ref<SocketPick>({ ...NO_SOCKET });
+  /** ソケットの数 (0 = 付けられない種類)。ベースが決まる前は 0 */
+  const socketSlots = computed(() => socketCountFor(base.value?.category));
+  /** 実際に効く差し方。シミュレーター・自動の組み立て・見積もりは全部これ ([[sim-setup.ts]] の simCtxOf) */
+  const socketOn = computed<SocketPick>(() => effectiveSocket(base.value?.category, !!item.value?.corrupted, socket.value));
+  /**
+   * 素材 (始め方のベース) を探す時のルーンソケットの下限。武器・防具は規格外 (2 つ) が既定 (オーナー 2026-09-26:
+   * 武器・防具のクラフトはほぼ規格外でやる)。指輪など・0 を選んだ時は条件に入れない
+   */
+  const socketsMin = computed(() => socketsMinFor(base.value?.category, !!item.value?.corrupted, socket.value));
+  /** 確定で乗せる MOD が何個あるか。**解く前に分かる** ([[craft-slots.ts]])。アストリッドを差せば枠が 2 つ */
+  const slots = computed<CraftedSurvey | null>(() => (data.value && base.value && targets.value.length
+    ? craftedSurvey(data.value, base.value, targets.value, { astrid: socketOn.value.astrid }) : null));
   /**
    * どのベースから始めるか。**並べるだけで選びません** (オーナー方針:「手動の所は手動でいきたい」)。
    * 1 ミリ秒で出るので開いた時に出す。
@@ -135,7 +151,7 @@ export function useHtcCraft() {
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
   /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
   const { treeResult, treeTierPick, treePlan, searchFor, planFor, treeFixSide } =
-    useTreeSearch({ data, base, prices, item, dropOnly, fracturedTargets, targets, name: (id) => stepTarget([id]) });
+    useTreeSearch({ data, base, prices, item, dropOnly, fracturedTargets, targets, socketsMin, name: (id) => stepTarget([id]) });
 
   /**
    * 高貴建て → 画面の文字列。**神から始めます** (神 → 1 未満ならカオス → 1 未満なら高貴)。
@@ -191,7 +207,7 @@ export function useHtcCraft() {
     targets.value = [];
     rows.value = [];
     bases.value = [];
-    slots.value = null;
+    socket.value = { ...NO_SOCKET };
     implicits.value = [];
     skipped.value = [];
     dropOnly.value = [];
@@ -243,8 +259,11 @@ export function useHtcCraft() {
         overridden: OVERRIDDEN.has(mod.id),
       };
     });
-    // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要る
-    slots.value = craftedSurvey(d, cls, got.targets);
+    // 確定で乗せる MOD の数は解かなくても分かる。2 個ならアストリッドが要るので、差せる物なら最初から差しておく
+    // (2026-09-26 オーナー「アストリッドやら追加しとこうか」。差さないと絶対に作れない)
+    if (craftedSurvey(d, cls, got.targets).needsAstrid && socketCountFor(cls.category) > 0 && !item.value?.corrupted) {
+      socket.value = { ...socket.value, astrid: true };
+    }
     bases.value = baseChoices(d, cls, got.targets, { current: currentBase });
   }
 
@@ -257,7 +276,10 @@ export function useHtcCraft() {
     cls: ItemBase,
     picks: readonly TierTarget[],
   ): Promise<void> {
+    // ソケットの選び方は ③ (作り方の設定) で先に決めるので、空に戻しても残す
+    const sock = socket.value;
     reset();
+    socket.value = { ...sock };
     loading.value = true;
     try {
       stage.value = "解析中: MOD のデータを読んでいます…";
@@ -365,7 +387,7 @@ export function useHtcCraft() {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedTargets, slotsUsed, dropOnly,
     loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
-    timings, coverage, slots, bases, targets, prices,
+    timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeTierPick, searchFor, planFor, treeFixSide,

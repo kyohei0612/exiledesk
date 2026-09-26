@@ -19,6 +19,10 @@ defineProps<{
   qualityLabel?: string | null;
   implicits?: readonly string[];
   mods: readonly CardMod[];
+  /** ソケットに差す物の 1 行 (「ソケット: アストリッドの創造性」、2026-09-26) */
+  socket?: string | null;
+  /** 差したルーンの効果の行 (ゲームの日本語、「クラフトモッドを追加で1個持つことができる」) */
+  socketEffects?: readonly string[];
   /** 小見出し (段・タグ) を出す (ゲームの Alt 表示) */
   detail?: boolean;
   footer?: string | null;
@@ -47,6 +51,11 @@ const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
     <div class="px-4 pb-2.5 pt-2">
       <p v-if="quality != null && quality > 0" class="poe-dim">{{ qualityLabel ?? "品質" }}: <span class="poe-val">+{{ quality }}%</span></p>
       <p v-if="ilvl != null" class="poe-dim">アイテムレベル: <span class="poe-white">{{ ilvl }}</span></p>
+      <p v-if="socket" class="poe-dim">{{ socket.split(": ")[0] }}: <span class="poe-white">{{ socket.split(": ").slice(1).join(": ") }}</span></p>
+      <template v-if="socketEffects?.length">
+        <div class="poe-sep" />
+        <p v-for="x in socketEffects" :key="x" class="poe-mod text-[#b4b4ff]">{{ x }}</p>
+      </template>
       <template v-if="implicits?.length">
         <div class="poe-sep" />
         <p v-for="x in implicits" :key="x" class="poe-mod text-[#8888ff]">{{ x }}</p>

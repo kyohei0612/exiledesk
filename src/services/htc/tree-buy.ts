@@ -150,6 +150,8 @@ export function treeBuyQuery(
     strict?: boolean;
     /** ベースの付与スキル (不在のアミュレットなど。同じ付与スキルの素材だけ探す) */
     grantedSkill?: string | null;
+    /** ルーンソケットの下限 (equipment_filters.rune_sockets)。武器・防具の規格外ベース用 (2026-09-26)。null なら送らない */
+    socketsMin?: number | null;
   } = {},
 ): ReturnType<typeof buildSpecQuery> | null {
   const fractured = opts.fractured ?? true;
@@ -177,5 +179,6 @@ export function treeBuyQuery(
     // 別の MOD が固定された物 (= もう樹 MOD を固定できない物) が返ってくる
     ...(fractured ? {} : { fracturedItem: false }),
     grantedSkill: opts.grantedSkill ?? null,
+    ...(opts.socketsMin != null ? { socketsMin: opts.socketsMin } : {}),
   });
 }

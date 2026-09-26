@@ -7,6 +7,7 @@
  * 手ごとの「その手に来た時の指輪」は、手 1 から○×の行き先をたどって作る (○ = 狙いが付いた / 消去が外れを消した、
  * × = 外れが付いた / 消去が残したい MOD を消した、の代表の形)。打てる物と「1 回で○になる確率」はこの指輪で出す。
  */
+import { socketOnOf } from "../../services/htc/sockets";
 import { computed, ref, shallowRef, watch } from "vue";
 import { CERTAIN, simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
 import { mulberry32 } from "../../services/htc/rng";
@@ -30,6 +31,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
   // 文字列のキーで見る (配列を返す getter は再評価のたびに新しい配列 = 必ず発火し、見積もりが 1 件届くたびにツリーと
   // 回した結果が消えていた。2026-09-26 レビュー B)
   watch([() => c.item.value, () => c.base.value, () => c.fracturedTargets.value.map((t) => t.modId).join(), () => c.startKeep.value.join()], () => { nodes.value = [emptyNode()]; result.value = null; });
+  // ソケットに差す物を変えたら、回した結果は古い (枠・クラフト MOD の上限・代が違う。2026-09-26)
+  watch(() => JSON.stringify(socketOnOf(c)), () => { result.value = null; });
   /** ツリーを空にして自分で組む (「1 から組む」。オーナー 2026-09-25: 自動で組んだ後、自分でやる時に押したらリセット) */
   function clear(): void {
     nodes.value = [emptyNode()];

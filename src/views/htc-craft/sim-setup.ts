@@ -5,7 +5,9 @@
  */
 import { sideLimits } from "../../services/htc/bridge";
 import { catalystPriceKey, maxQualityForBase } from "../../services/htc/catalysing";
-import type { SimState } from "../../services/htc/sim-route";
+import type { SimCtx, SimState } from "../../services/htc/sim-route";
+import { craftedLimitWith, socketCostOf, socketOnOf, withSocketLimits } from "../../services/htc/sockets";
+import { limitsOf } from "../../vendor/poe2htc/engine/item";
 import type { Side } from "../../services/htc/step-odds";
 import { startKindOf } from "./start-kind";
 import { htcModSides } from "../../services/htc/patch";
@@ -25,18 +27,32 @@ export function catalystOk(p: Prices): (tag: string) => boolean {
   return (tag) => (p.currency[catalystPriceKey(tag)] ?? Infinity) / div < PRICEY_CATALYST_DIVINE;
 }
 
+/**
+ * 側の枠 (ベースの枠 + セールの凱旋)。シミュレーター・自動の組み立て・見積もり・始め方の判定で同じ物を使う
+ * (2026-09-26 オーナー「アストリッドやら追加しとこうか」。ソケットに差す物は [[sockets.ts]])
+ */
+export function craftLimitsOf(c: C): { prefix: number; suffix: number } {
+  const d = c.data.value;
+  const lim = d ? sideLimits(d, c.item.value ? c.item.value.baseType : zeroStart.value.baseType) : { prefix: 3, suffix: 3 };
+  return withSocketLimits(lim, socketOnOf(c));
+}
+
 /** シミュレーターの設定。データ・ベース・相場が揃っていなければ null */
-export function simCtxOf(c: C) {
+export function simCtxOf(c: C): SimCtx | null {
   const d = c.data.value, cls = c.base.value, p = c.prices.value;
   if (!d || !cls || !p) return null;
   const it = c.item.value;
+  const sock = socketOnOf(c);
   return {
     data: d, cls, prices: p,
     itemLevel: it ? it.itemLevel ?? 82 : zeroStart.value.itemLevel,
-    limits: sideLimits(d, it ? it.baseType : zeroStart.value.baseType),
+    limits: craftLimitsOf(c),
     catalystOk: catalystOk(p),
     // ベースの品質の上限 (ブリーチの指輪 +20% など)。ブリーチの MOD が付けばさらに +20%
     baseQuality: maxQualityForBase((it ? it.baseType : zeroStart.value.baseType) ?? ""),
+    // クラフト MOD の上限 (アストリッドの創造性で +1) と、差す物の代 (ルーン + 熟練工のオーブ。各回の初めに 1 度)
+    craftedLimit: craftedLimitWith(limitsOf(cls).crafted ?? 1, sock),
+    socketCost: socketCostOf(p, sock).total,
   };
 }
 

@@ -49,6 +49,16 @@ const categoryJaMap: Record<string, string> = {
   vaultkeys: "聖遺物の鍵",
   verisium: "ヴェリシウム",
 
+  // === ユニーク装備 (poe2scout の Uniques のカテゴリ。2026-09-26 ユニーク装備価格推移用) ===
+  accessory: "アクセサリー",
+  armour: "防具",
+  weapon: "武器",
+  flask: "フラスコ",
+  map: "マップ",
+  relic: "レリック",
+  charm: "チャーム",
+  waystone: "ウェイストーン",
+
   // === ジェム系（参考、Currency Exchange に通常無いが将来用） ===
   "skill-gem": "スキルジェム",
   "support-gem": "サポートジェム",

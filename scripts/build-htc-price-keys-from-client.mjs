@@ -58,6 +58,9 @@ const CURRENCY = {
   // 2026-09-22: レアの MOD 1 個をランダムに固定する。エンジンの通貨ではないが
   // ([[tree-decide.ts]] / [[self-fracture.ts]] が自前で扱う)、値段は同じ表から引きたいのでここに置く
   fracture: "Metadata/Items/Currency/CurrencyFractureRare",
+  // 2026-09-26: ソケットを 1 つ足す (アストリッドの創造性 / セールの凱旋を差す穴。オーナー「アストリッドやら追加しとこうか」)。
+  // これもエンジンの通貨ではなく、ソケットに差す物の代 ([[sim-setup.ts]] の socketCost) で引く
+  artificer: "Metadata/Items/Currency/CurrencyAddEquipmentSocket",
 };
 
 /**

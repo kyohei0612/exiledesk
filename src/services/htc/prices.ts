@@ -107,8 +107,11 @@ export function buildHtcPrices(): { file: PricesFile; coverage: HtcPriceCoverage
   const essenceCache = new Map<string, number | null>();
   let essenceFilled = 0;
   const essenceMissingNames = new Set<string>();
+  // 1 高貴以下のエッセンス・合金は相場不明にする (出品がほぼ無い物に置き値の 1 が入る。2026-09-26: ルーンファーザーの合金が
+  // 1 高貴になっていて、その MOD の費用がありえないほど安く出た。オーナー「不明にしようか」)
+  const ESSENCE_FLOOR = 1;
   for (const [key, name] of Object.entries(ESSENCE_KEYS)) {
-    if (!essenceCache.has(name.en)) essenceCache.set(name.en, priceByText(name.en));
+    if (!essenceCache.has(name.en)) { const p0 = priceByText(name.en); essenceCache.set(name.en, p0 != null && p0 <= ESSENCE_FLOOR ? null : p0); }
     const p = essenceCache.get(name.en) ?? null;
     if (p == null) essenceMissingNames.add(name.ja);
     else {

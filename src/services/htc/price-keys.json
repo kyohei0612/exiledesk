@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-22",
+ "generated": "2026-09-26",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
   "transmute": {
@@ -81,6 +81,10 @@
   "fracture": {
    "en": "Fracturing Orb",
    "ja": "フラクチャーオーブ"
+  },
+  "artificer": {
+   "en": "Artificer's Orb",
+   "ja": "熟練工のオーブ"
   },
   "essence:breach": {
    "en": "Essence of the Breach",

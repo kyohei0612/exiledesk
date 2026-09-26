@@ -119,6 +119,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       stats: [...tree, ...filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min }))],
       ...(modIds.length ? {} : { fracturedItem: false }),
       grantedSkill: c.item.value?.grantedSkill ?? null,
+      // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
+      ...(c.socketsMin?.value != null ? { socketsMin: c.socketsMin.value } : {}),
     });
   }
   async function searchSide(modIds: readonly string[]): Promise<SideResult | null> {

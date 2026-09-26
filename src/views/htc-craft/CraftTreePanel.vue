@@ -13,6 +13,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import TreeBranch from "./TreeBranch.vue";
 import TreeNodeCard from "./TreeNodeCard.vue";
 import ItemCard from "./ItemCard.vue";
+import SocketPicker from "./SocketPicker.vue";
 import { cardOfState, cardOfTarget } from "./item-card-data";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
@@ -121,7 +122,8 @@ async function loadAuto(): Promise<void> {
  */
 // 開始は中身で比べる (相場を取り直すと ctx が作り直され、同じ開始でも別の物として組み直しの輪になっていた。2026-09-25)
 // 複数ソースの形で見る (配列を返す getter だと毎回発火して、相場の取り直しのたびに組み直していた。2026-09-26 レビュー B)
-watch([() => JSON.stringify(t.start.value), autoReady], async ([, ok]) => {
+// ソケットに差す物を変えたら (枠・クラフト MOD の上限・代が変わる) 組み直す (2026-09-26)
+watch([() => JSON.stringify(t.start.value), autoReady, () => JSON.stringify(c.socketOn.value)], async ([, ok]) => {
   if (!ok) return;
   await nextTick();
   void loadAuto();
@@ -186,6 +188,8 @@ const perNode = computed(() => {
   const total = Math.max(1, r.perNode.reduce((a, x) => a + x.cost, 0));
   return r.perNode.map((p, i) => ({ ...p, index: i, share: p.cost / total })).sort((a, b) => b.cost - a.cost);
 });
+/** ソケットに差す物の代 (1 回の作成に 1 度。高貴建て) */
+const socketEx = computed(() => { const v = t.ctx.value?.socketCost ?? 0; return Number.isFinite(v) ? v : 0; });
 const busyText = computed(() => autoBusy.value ? "組んでいます… (候補を比べ中)" : t.running.value ? `回しています… ${t.progress.value?.[0] ?? 0} / ${t.progress.value?.[1] ?? 0}` : c.diagBusy.value && canAuto.value ? "② が終わると自動で組む" : "");
 </script>
 
@@ -201,6 +205,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5 disabled:opacity-40" title="ツリーを空にして、STEP 1 から自分で組む" :disabled="autoBusy" @click="startOver()">1 から組む</button>
       <button v-for="x in presets" :key="x.id" type="button" class="rounded-lg border border-sky-500/50 px-3 py-1.5 text-sky-200 hover:bg-sky-500/10" @click="loadPreset(x.id)">見本: {{ x.label }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" :class="showSettings ? 'bg-white/10' : ''" @click="showSettings = !showSettings">設定 {{ showSettings ? "▴" : "▾" }}</button>
+      <SocketPicker :c="c" :category="c.base.value?.category" class="basis-full" />
       <span v-if="busyText" class="ml-1 text-xs text-amber-200/80"><span class="inline-block animate-pulse">●</span> {{ busyText }}</span>
       <span v-else-if="autoError" class="ml-1 text-xs text-rose-300">{{ autoError }}</span>
       <span v-else-if="t.blocked.value" class="ml-1 text-xs text-rose-300">{{ t.blocked.value }}</span>
@@ -222,7 +227,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
         <div class="rounded-lg bg-black/30 p-3">
           <p class="text-[11px] opacity-60">1 個完成あたり <span class="opacity-70">全額 (失敗した回の分も込み)</span></p>
           <p class="text-2xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.perDone + t.baseEx.value / t.result.value.pDone) : "-" }}</p>
-          <p v-if="t.baseEx.value > 0 && t.result.value.pDone > 0" class="text-[11px] opacity-60">初動 {{ c.money(t.baseEx.value / t.result.value.pDone) }} + クラフト {{ c.money(t.result.value.perDone) }}</p>
+          <p v-if="(t.baseEx.value > 0 || t.result.value.socketCost > 0) && t.result.value.pDone > 0" class="text-[11px] opacity-60">
+            初動 {{ c.money(t.baseEx.value / t.result.value.pDone) }}<template v-if="t.result.value.socketCost > 0"> + ソケット {{ c.money(t.result.value.socketCost / t.result.value.pDone) }}</template> + クラフト {{ c.money(t.result.value.perDone - t.result.value.socketCost / t.result.value.pDone) }}
+          </p>
         </div>
         <div class="rounded-lg bg-black/30 p-3">
           <p class="text-[11px] opacity-60">{{ t.targetPct.value }}% の人が収まる額</p>
@@ -251,7 +258,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
     <!-- やり直しの費用から決めた取り方 (自動で組んだ時)。決まりは畳んで出す -->
     <details v-if="plan" class="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs" open>
       <summary class="cursor-pointer select-none">
-        <b>取り方</b> <span class="opacity-60">見込み {{ t.baseEx.value > 0 ? `初動 ${c.money(t.baseEx.value)} + クラフト ${c.money(plan.total)} = ` : "" }}<b class="opacity-100">{{ c.money(plan.total + t.baseEx.value) }}</b></span>
+        <b>取り方</b> <span class="opacity-60">見込み {{ t.baseEx.value > 0 || socketEx > 0 ? `初動 ${c.money(t.baseEx.value)}${socketEx > 0 ? ` + ソケット ${c.money(socketEx)}` : ""} + クラフト ${c.money(plan.total)} = ` : "" }}<b class="opacity-100">{{ c.money(plan.total + t.baseEx.value + socketEx) }}</b></span>
         <template v-if="picked"><span class="opacity-60"> ・ 採用「{{ picked.label }}」</span><template v-if="picked.expected != null"><span class="opacity-60">、平均 </span>{{ c.money(picked.expected) }}<span v-if="picked.done != null && picked.done < 0.9" class="text-rose-300"> (完成 {{ (picked.done * 100).toFixed(0) }}% しか無い)</span></template></template>
       </summary>
       <!-- 狙いごとの行 (オーナー 2026-09-26:「境目が分かりづらくてブス」→ 縞の行 + 数字は見出し付きの小さな枠) -->
@@ -305,7 +312,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
          <button type="button" class="rounded-lg border border-white/15 px-2 py-1 hover:bg-white/5" title="本線の次の STEP" @click="stepCard(1)">▶</button>
        </template>
      </div>
-     <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :detail="cardDetail" :footer="card.footer" />
+     <ItemCard :name="card.data.name" :base="card.data.base" :ilvl="card.data.ilvl" :quality="card.data.quality" :quality-label="card.data.qualityLabel" :implicits="card.data.implicits" :mods="card.data.mods" :socket="card.data.socket" :socket-effects="card.data.socketEffects" :detail="cardDetail" :footer="card.footer" />
      <p class="mt-1.5 text-[11px] opacity-40">金の帯 = 固定、青 = 狙い、赤 = 外れ、紫 = 冒涜、桃 = 樹 MOD</p>
     </aside>
   </div>

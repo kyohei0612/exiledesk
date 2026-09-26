@@ -13,6 +13,7 @@
 import { computed, onBeforeUnmount, watch } from "vue";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { sideLimits } from "../../services/htc/bridge";
+import { withSocketLimits } from "../../services/htc/sockets";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { openExternal } from "../../services/trade2/open-external";
 import { zeroStart } from "./craft-settings";
@@ -27,7 +28,8 @@ const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 const baseType = computed(() => c.item.value?.baseType ?? zeroStart.value.baseType);
 const baseJa = computed(() => c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? "");
-const lim = computed(() => (c.data.value ? sideLimits(c.data.value, baseType.value) : { prefix: 3, suffix: 3 }));
+// セールの凱旋を差せばサフィは 1 つ多い (2026-09-26)
+const lim = computed(() => withSocketLimits(c.data.value ? sideLimits(c.data.value, baseType.value) : { prefix: 3, suffix: 3 }, c.socketOn.value));
 /** 別のベースの方が合う時だけ 2 つまで (枠が違う・暗黙がタダ・品質の上限) */
 const others = computed(() => c.bases.value.filter((b) => b.fits && !b.current && (b.maxQualityPlus || b.implicits.length)).slice(0, 2));
 const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality);

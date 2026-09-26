@@ -351,3 +351,46 @@ export async function fetchPriceTrends(
   }
   return trends;
 }
+
+// =================== 1 アイテムの価格履歴 (点列そのまま) ===================
+
+/** 履歴の 1 点。price は高貴 (Exalted) 建て、t は ms、qty は poe2scout の Quantity (出品の数) */
+export interface HistoryPoint {
+  t: number;
+  price: number;
+  qty: number;
+}
+
+/**
+ * 1 アイテムの価格履歴を点列 (古→新) で返す (2026-09-26、ユニーク装備価格推移用)。
+ *
+ * オーナー指示「価格推移を知りたい。グラフで分かりやすくトレースして欲しい」。
+ * fetchItemTrend7d と同じ `/Items/{id}/History` だが、グラフのホバーに日時と件数を出すため
+ * 時刻と Quantity も捨てずに返す。ユニーク (ApiId 無し) も ItemId で同じように引ける。
+ * 失敗時は null (画面は「—」のまま)。
+ */
+export async function fetchItemHistory(leagueName: string, itemId: number, logCount = 200): Promise<HistoryPoint[] | null> {
+  try {
+    const url = `${BASE}/poe2/Leagues/${encodeURIComponent(leagueName)}/Items/${itemId}/History?LogCount=${logCount}`;
+    const res = await httpFetch(url, NO_STORE);
+    if (!res.ok) return null;
+    const data: unknown = await res.json();
+    const arr: unknown = Array.isArray(data)
+      ? data
+      : data && typeof data === "object"
+        ? (data as Record<string, unknown>).PriceHistory
+        : null;
+    if (!Array.isArray(arr)) return null;
+    return arr
+      .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
+      .map((p) => ({
+        t: Date.parse(String(p.Time ?? "")),
+        price: parseFloat(String(p.Price ?? "0")),
+        qty: typeof p.Quantity === "number" ? p.Quantity : 0,
+      }))
+      .filter((p) => Number.isFinite(p.price) && p.price > 0 && !Number.isNaN(p.t))
+      .sort((a, b) => a.t - b.t);
+  } catch {
+    return null;
+  }
+}
