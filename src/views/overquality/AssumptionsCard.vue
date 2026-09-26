@@ -15,7 +15,7 @@ const showAssumptions = ref(false);
 <template>
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <button type="button" class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2" @click="showAssumptions = !showAssumptions">
+        <button type="button" class="text-sm font-bold text-amber-100 flex items-center gap-2" @click="showAssumptions = !showAssumptions">
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>
           <span>前提 (確率は非公開。プレイヤー計測の既定値、ここで変えられます)</span>
         </button>

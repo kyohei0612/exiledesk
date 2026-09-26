@@ -184,7 +184,7 @@ const waiting = computed(
     <div class="flex items-center gap-2 flex-wrap">
       <!-- 8 スロット横並びタブ -->
       <div
-        class="flex flex-wrap max-w-full border border-[var(--exile-color-border-subtle)] rounded overflow-hidden text-[12px] font-display tracking-[0.04em]"
+        class="flex flex-wrap max-w-full border border-[var(--exile-color-border-subtle)] rounded overflow-hidden text-[12px] font-bold"
         role="tablist"
         aria-label="スロット切替"
       >

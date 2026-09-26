@@ -99,7 +99,7 @@ const ledgerTotals = computed(() => {
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">収支</h2>
+          <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">4</span>収支</h2>
           <div class="flex items-center gap-3 text-[11px] text-[var(--exile-color-text-secondary)]">
             <span>実際に使った数を入れる。単価は上の相場、売値は相場か実売</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)]" @click="resetLedger">全部 0 に</button>
@@ -124,7 +124,7 @@ const ledgerTotals = computed(() => {
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
+              <td class="py-1.5 pr-2 font-bold">費用合計</td>
               <td></td>
               <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
                 {{ ledgerTotals.rate != null ? `実測生存率 ${pct(ledgerTotals.rate)}` : "" }}
@@ -142,7 +142,7 @@ const ledgerTotals = computed(() => {
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.revenue) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">収支</td>
+              <td class="py-1.5 pr-2 font-bold">収支</td>
               <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">
                 {{ ledgerTotals.perFinished != null ? `完成 1 個あたり ${money(ledgerTotals.perFinished)}` : "" }}
               </td>

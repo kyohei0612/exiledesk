@@ -82,7 +82,7 @@ onMounted(async () => {
       <div v-else class="space-y-6">
         <!-- スタートアップ -->
         <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
+          <h2 class="text-sm font-bold text-amber-100 mb-2">
             起動
           </h2>
           <label
@@ -115,7 +115,7 @@ onMounted(async () => {
 
         <!-- × ボタン挙動 -->
         <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
+          <h2 class="text-sm font-bold text-amber-100 mb-2">
             ウィンドウ
           </h2>
           <label class="flex items-start gap-3 cursor-pointer select-none">
@@ -139,7 +139,7 @@ onMounted(async () => {
 
         <!-- 自動再取得 -->
         <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
+          <h2 class="text-sm font-bold text-amber-100 mb-2">
             自動再取得
           </h2>
           <label class="flex items-center gap-3">
@@ -166,7 +166,7 @@ onMounted(async () => {
 
         <!-- トレードサイト (2026-09-12) -->
         <section>
-          <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">
+          <h2 class="text-sm font-bold text-amber-100 mb-2">
             トレードサイト
           </h2>
           <label class="flex items-center gap-3">

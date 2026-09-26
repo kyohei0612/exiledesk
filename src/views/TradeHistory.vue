@@ -76,7 +76,7 @@ const curLabel = currencyJa;
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ動きます。ブラウザ表示では保存済みの履歴だけ出ます。</p>
 
     <!-- ログインと取得 -->
-    <div class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+    <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
       <div class="flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">ログイン</span>
         <span v-if="loggedIn === null" class="text-[var(--exile-color-text-tertiary)]">確認中…</span>
@@ -127,19 +127,19 @@ const curLabel = currencyJa;
         @click="period = card.id as typeof period"
       >
         <div class="flex items-baseline justify-between gap-2">
-          <span class="font-display tracking-[0.08em] text-[13px]" :class="period === card.id ? 'text-[var(--exile-color-accent-focus)]' : ''">{{ card.label }}</span>
+          <span class="text-[13px] font-bold" :class="period === card.id ? 'text-[var(--exile-color-accent-focus)]' : ''">{{ card.label }}</span>
           <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ card.note }}</span>
         </div>
-        <div class="mt-1 tabular-nums text-[20px] text-emerald-300 font-display">{{ money(card.s.total) }}</div>
+        <div class="mt-1 tabular-nums text-[20px] font-bold text-emerald-300">{{ money(card.s.total) }}</div>
         <div class="text-[11px] text-[var(--exile-color-text-secondary)] tabular-nums">{{ card.s.count }} 件</div>
       </button>
     </div>
 
     <!-- 日別グラフ -->
-    <div class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 mb-4">
+    <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 mb-4">
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
         <div class="flex items-center gap-2">
-          <h2 class="font-display tracking-[0.08em] text-[13px] text-[var(--exile-color-accent-focus)]">
+          <h2 class="text-sm font-bold text-amber-100">
             {{
               period === "7d" ? `${dayLabel(activeDay)} の売上 (時間別)` : "リーグ開始からの売上 (1 日ずつ)"
             }}

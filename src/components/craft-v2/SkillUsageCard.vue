@@ -65,7 +65,7 @@ const fmtCount = (n: number): string => n.toLocaleString("ja-JP");
         <BaseCard v-for="sec in sections" :key="sec.key">
           <div class="p-4 pl-5">
             <div class="flex items-baseline justify-between mb-2 gap-2">
-              <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-baseline gap-2 min-w-0">
+              <h2 class="text-sm font-bold text-amber-100 flex items-baseline gap-2 min-w-0">
                 <span aria-hidden="true">{{ sec.icon }}</span>
                 <span class="shrink-0">{{ sec.label }}</span>
                 <span class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)] truncate">{{ sec.en }}</span>

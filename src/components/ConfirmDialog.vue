@@ -16,9 +16,9 @@ import { answerConfirm, confirmDialog } from "../state/confirm-dialog";
     class="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-[1px]"
     @click.self="answerConfirm(false)"
   >
-    <BaseCard class="max-w-lg mx-6">
+    <BaseCard solid class="max-w-lg mx-6">
       <div class="p-5 pl-6">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">
+        <h2 class="text-sm font-bold text-amber-100 mb-2">
           {{ confirmDialog.pending.value.title ?? "確認" }}
         </h2>
         <p class="text-[12px] text-[var(--exile-color-text-secondary)] leading-relaxed whitespace-pre-line mb-4">
@@ -34,7 +34,7 @@ import { answerConfirm, confirmDialog } from "../state/confirm-dialog";
           </button>
           <button
             type="button"
-            class="px-3 py-1 rounded border font-display tracking-[0.06em] text-[12px] transition-colors"
+            class="px-3 py-1 rounded-lg border text-[12px] transition-colors"
             :class="
               confirmDialog.pending.value.danger
                 ? 'border-rose-500/70 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'

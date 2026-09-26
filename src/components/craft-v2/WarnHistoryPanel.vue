@@ -44,7 +44,7 @@ async function copyWarns(): Promise<void> {
   </div>
   <div
     v-else-if="store.warnHistory.length > 0"
-    class="mb-3 px-3 py-2 rounded border border-[var(--exile-color-border-brass)]/60 bg-[var(--exile-color-bg-elevated)] text-[11px]"
+    class="mb-3 px-3 py-2 rounded-lg border border-amber-400/30 bg-amber-500/[0.05] text-[11px]"
   >
     <div class="flex items-center justify-between mb-1.5">
       <strong class="font-display tracking-[0.05em] text-[var(--exile-color-accent-focus)]">

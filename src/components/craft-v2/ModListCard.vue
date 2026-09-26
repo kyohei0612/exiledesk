@@ -38,7 +38,7 @@ const badge = computed(() =>
   <BaseCard :class="orderClass">
     <div class="p-4 pl-5">
       <div class="flex items-baseline justify-between mb-2">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2">
+        <h2 class="text-sm font-bold text-amber-100 flex items-center gap-2">
           <span :class="['inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold leading-none', badge]" aria-hidden="true">{{ affix }}</span>
           <span>{{ label }}</span>
           <span class="text-[10px] tracking-wider text-[var(--exile-color-text-secondary)]">人数降順</span>

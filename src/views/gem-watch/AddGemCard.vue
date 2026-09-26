@@ -23,7 +23,7 @@ const regexError = computed(() => search.value.regexError);
 <template>
   <BaseCard class="mb-4">
     <div class="p-4 pl-5">
-      <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-2">ジェムを足す</h3>
+      <h3 class="text-sm font-bold text-amber-100 mb-2"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span>ジェムを足す</h3>
       <label class="block text-[11px] text-[var(--exile-color-text-secondary)] mb-1">ジェム (日本語 / 英語 / 正規表現)</label>
       <input v-model="query" type="text" placeholder="例: アーク / Cast on / ^ヘラルド" class="num w-96 max-w-full" />
       <p v-if="regexError" class="text-[10px] text-amber-300 mt-1">正規表現として読めないので、普通の文字で探しています ({{ regexError }})</p>

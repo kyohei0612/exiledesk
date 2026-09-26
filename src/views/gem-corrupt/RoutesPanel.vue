@@ -82,7 +82,7 @@ const summary = computed(() => {
 <template>
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">経路の比較</h2>
+        <h2 class="text-sm font-bold text-amber-100 mb-2"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span>経路の比較</h2>
         <p v-if="summary" class="text-[14px] mb-3 leading-relaxed">
           <template v-if="summary.buyFinished">今の相場では、どの経路も<span class="font-display text-[var(--exile-color-accent-focus)]">完成品を買う</span>より損です。</template>
           <template v-else>
@@ -145,9 +145,9 @@ const summary = computed(() => {
           </table>
         </div>
 
-        <div v-if="atCompare.length > 0" class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+        <div v-if="atCompare.length > 0" class="mt-3 rounded-lg bg-black/20 p-3 text-[12px]">
           <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
-            <span class="font-display tracking-[0.04em]">やった場合</span>
+            <span class="font-bold">やった場合</span>
             <div class="flex items-center gap-3 flex-wrap text-[11px]">
               <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden">
                 <button type="button" class="px-2 py-0.5" :class="compareMode === 'attempts' ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]' : 'text-[var(--exile-color-text-secondary)]'" @click="compareMode = 'attempts'">回数で比べる</button>

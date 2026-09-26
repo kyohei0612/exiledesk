@@ -84,8 +84,8 @@ const distText = (d: [number, number][] | undefined, suffix = ""): string =>
 <template>
     <!-- 段組みは他の「賭け」画面と同じ刻み (狭い時に無理に横並びにしない) -->
     <div class="grid grid-cols-1 @6xl:grid-cols-2 @7xl:grid-cols-3 gap-4 items-start">
-      <div v-for="sec in SECTIONS" :key="sec.key" class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-4">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-baseline gap-2">
+      <div v-for="sec in SECTIONS" :key="sec.key" class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+        <h2 class="text-sm font-bold text-amber-100 flex items-baseline gap-2">
           <span aria-hidden="true">{{ sec.icon }}</span>
           <span>{{ sec.label }}</span>
         </h2>

@@ -93,14 +93,14 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
 
       <div
         v-else-if="!u.rows.value.length"
-        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]"
+        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-xl border border-white/10 bg-white/[0.03]"
       >
         ユニークの相場がまだありません (新リーグ直後は poe.ninja に入るまで空のことがあります)
       </div>
 
       <div
         v-else-if="!u.sorted.value.length"
-        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]"
+        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-xl border border-white/10 bg-white/[0.03]"
       >
         <p v-if="u.categoryFilter.value === FAV_CATEGORY && !u.searchQuery.value" class="mb-2">お気に入りはまだありません。行の ♡ を押すとここに集まります</p>
         <p v-else class="mb-2">該当するアイテムがありません</p>

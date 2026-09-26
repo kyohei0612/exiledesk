@@ -21,7 +21,7 @@ function setNormalShare(ev: Event): void {
 <template>
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <button type="button" class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2" @click="showAssumptions = !showAssumptions">
+        <button type="button" class="text-sm font-bold text-amber-100 flex items-center gap-2" @click="showAssumptions = !showAssumptions">
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>
           <span>前提 (売値の段の条件と計算の入力。ここで変えられます)</span>
         </button>

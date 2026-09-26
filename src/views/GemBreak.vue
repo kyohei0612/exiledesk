@@ -220,7 +220,7 @@ defineExpose({ fetchNow, cancelNow, busy, waiting, needFetch, topN, spread, sele
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ取得できます。</p>
 
     <div
-      class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
+      class="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
       <!-- アセンダンシーの選択と取得は親から差し込む (オーナー指示 2026-09-20:
            「使用率ランキングと監視ジェム設定を一緒に。ここは使用率ランキングで統一」) -->

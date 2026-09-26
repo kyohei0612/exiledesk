@@ -109,11 +109,11 @@ const materialTable = computed(() => {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2)</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>相場 (trade2)</h2>
             <button
               type="button"
               :disabled="refetch.disabled"
-              class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
+              class="px-3 py-1 rounded-lg border border-amber-400/50 text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
               @click="c.fetchPrices(c.missingCount.value === 0)"
             >
               <span aria-hidden="true">⟳</span>
@@ -128,7 +128,7 @@ const materialTable = computed(() => {
               <label>
                 <div>
                   {{ r.label }} ({{ unit }})
-                  <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!c.tradeUrl(r.kind)" @click="open(c.tradeUrl(r.kind))">トレード2へ ↗</button>
+                  <button type="button" class="ml-1 text-[10px] text-sky-300 underline hover:text-sky-200" :disabled="!c.tradeUrl(r.kind)" @click="open(c.tradeUrl(r.kind))">トレード2へ ↗</button>
                 </div>
                 <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">{{ r.note }}</div>
               </label>
@@ -145,7 +145,7 @@ const materialTable = computed(() => {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 ({{ unit }})</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span>素材 ({{ unit }})</h2>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
               <select v-model.number="attempts" class="num w-20">
@@ -218,7 +218,7 @@ const materialTable = computed(() => {
                 <td class="py-1.5 pl-2 text-right tabular-nums">{{ m.qtyN }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ money(m.costN) }}</td>
               </tr>
-              <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
+              <tr class="border-t border-[var(--exile-color-border-brass)] font-bold">
                 <td class="py-1.5 pr-2">合計</td>
                 <td></td>
                 <td></td>

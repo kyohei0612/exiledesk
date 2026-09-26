@@ -30,7 +30,7 @@ const subtotal = computed(() => props.rows.reduce((s, r) => s + (r.unit ?? 0) * 
   <BaseCard>
     <div class="p-4 pl-5">
       <div class="flex items-baseline justify-between mb-2">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">{{ title }} <span class="text-[11px] font-sans tracking-normal text-[var(--exile-color-text-tertiary)]">カレンシー取引所で買えます</span></h2>
+        <h2 class="text-sm font-bold text-amber-100">{{ title }} <span class="text-[11px] font-sans tracking-normal text-[var(--exile-color-text-tertiary)]">カレンシー取引所で買えます</span></h2>
         <span v-if="rows.length" class="tabular-nums text-[13px] text-[var(--exile-color-accent-focus)]">小計 {{ money(subtotal) }}</span>
       </div>
       <p v-if="!rows.length" class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ empty }}</p>

@@ -17,7 +17,7 @@ const showAssumptions = ref(false);
       <div class="p-4 pl-5">
         <button
           type="button"
-          class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2"
+          class="text-sm font-bold text-amber-100 flex items-center gap-2"
           @click="showAssumptions = !showAssumptions"
         >
           <span>{{ showAssumptions ? "▲" : "▼" }}</span>

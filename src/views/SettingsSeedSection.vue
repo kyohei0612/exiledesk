@@ -38,7 +38,7 @@ async function doExportSeed(): Promise<void> {
 <template>
   <!-- 配布データ (2026-09-20 オーナー指示: 測った記録をビルドに同梱してサブ機に配る) -->
   <section>
-    <h2 class="font-display tracking-[0.08em] text-[15px] mb-2 text-[var(--exile-color-text-primary)]">配布データ (捌き速度)</h2>
+    <h2 class="text-sm font-bold text-amber-100 mb-2">配布データ (捌き速度)</h2>
     <p class="text-xs text-[var(--exile-color-text-secondary)] mb-2 leading-relaxed">
       この PC で測った売れ行きの記録を、リポジトリの <span class="font-mono">src/data/flow-seed.json</span> に書き出します。
       そのまま release.bat を回すと、次の版に同梱されてサブ機に配られます (サブ機は起動時に取り込み、

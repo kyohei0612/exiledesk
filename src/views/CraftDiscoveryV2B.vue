@@ -102,7 +102,7 @@ onMounted(() => {
         <button
           type="button"
           @click="refreshCraftV2"
-          class="mt-3 px-4 py-1.5 rounded border border-[var(--exile-color-border-brass)] text-[13px] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
+          class="mt-3 px-4 py-1.5 rounded-lg border border-amber-400/50 text-[13px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] transition-colors"
         >
           <span aria-hidden="true">⟳</span> 更新
         </button>

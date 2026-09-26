@@ -123,7 +123,7 @@ onActivated(() => {
       <!-- フィルタ後 0 件案内 (元データはあるが categoryFilter / searchQuery で消えた時) -->
       <div
         v-else-if="r.ranking.value.length && r.filteredRanking.value.length === 0"
-        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)]"
+        class="p-12 text-center text-[var(--exile-color-text-secondary)] text-sm rounded-xl border border-white/10 bg-white/[0.03]"
       >
         <p class="mb-2">該当するアイテムがありません</p>
         <p class="text-xs text-[var(--exile-color-text-tertiary)]">

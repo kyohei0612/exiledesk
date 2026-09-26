@@ -139,7 +139,7 @@ const inputSummary = computed(() => {
       </button>
       <button
         type="button"
-        class="rounded border border-[var(--exile-color-border-subtle)] p-4 text-left hover:border-amber-400"
+        class="rounded-lg border border-white/10 p-4 text-left hover:border-amber-400"
         @click="door = 'paste'"
       >
         <div class="mb-1 font-bold text-amber-300">コピーを貼る</div>
@@ -149,7 +149,7 @@ const inputSummary = computed(() => {
       </button>
       <button
         type="button"
-        class="rounded border border-[var(--exile-color-border-subtle)] p-4 text-left hover:border-amber-400"
+        class="rounded-lg border border-white/10 p-4 text-left hover:border-amber-400"
         @click="openBaseDoor()"
       >
         <div class="mb-1 font-bold text-amber-300">ベースから選ぶ</div>

@@ -35,17 +35,17 @@ const atN = computed(() => {
 <template>
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">1 回あたり</h2>
+        <h2 class="text-sm font-bold text-amber-100 mb-2"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span>1 回あたり</h2>
         <p v-if="!c.sim.value.ok" class="text-[12px] text-amber-300">計算できません: {{ c.sim.value.reason }}</p>
         <p v-else-if="!c.result.value" class="text-[12px] text-[var(--exile-color-text-tertiary)]">不足: {{ c.missing.value.join("、") || "相場を取得中" }}</p>
         <template v-else>
           <div class="grid grid-cols-2 @3xl:grid-cols-4 gap-3 text-[12px]">
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
+            <div class="rounded-lg bg-black/30 p-3">
               <div class="text-[var(--exile-color-text-secondary)]">1 回の費用</div>
               <div class="tabular-nums text-[16px]">{{ money(c.cost.value) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">ベース + 素材</div>
             </div>
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
+            <div class="rounded-lg bg-black/30 p-3">
               <div class="text-[var(--exile-color-text-secondary)]">期待売上</div>
               <div class="tabular-nums text-[16px]">{{ money(c.result.value.expectedSale) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">結果ごとの売値の平均</div>
@@ -55,7 +55,7 @@ const atN = computed(() => {
               <div class="tabular-nums text-[16px]" :class="evClass(c.result.value.ev)">{{ money(c.result.value.ev, true) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">期待売上 − 費用</div>
             </div>
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
+            <div class="rounded-lg bg-black/30 p-3">
               <div class="text-[var(--exile-color-text-secondary)]">黒字になる確率</div>
               <div class="tabular-nums text-[16px]">{{ pct(c.result.value.pProfit) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">売値が費用以上になる 1 回の割合</div>
@@ -106,9 +106,9 @@ const atN = computed(() => {
             <span v-if="c.echo.value === 'echoes'">反響で引き直す割合 <span class="tabular-nums text-[var(--exile-color-text-primary)]">{{ pct(c.sim.value.pReroll) }}</span></span>
           </div>
 
-          <div class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px] max-w-3xl">
+          <div class="mt-3 rounded-lg bg-black/20 p-3 text-[12px] max-w-3xl">
             <div class="flex items-baseline justify-between mb-1 gap-2 flex-wrap">
-              <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
+              <span class="font-bold">{{ attempts }} 回やった場合</span>
               <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
                 回数
                 <select v-model.number="attempts" class="num w-20">

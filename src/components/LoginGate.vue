@@ -32,11 +32,11 @@ async function login(): Promise<void> {
     v-if="poeSession.needLogin.value"
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-[1px]"
   >
-    <BaseCard class="max-w-md mx-6">
+    <BaseCard solid class="max-w-md mx-6">
       <div class="p-5 pl-6">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-[11px] px-2 py-0.5 rounded border border-amber-300/60 text-amber-300">● 未ログイン</span>
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">pathofexile.com にログイン</h2>
+          <h2 class="text-sm font-bold text-amber-100">pathofexile.com にログイン</h2>
         </div>
 
         <ol class="text-[13px] leading-relaxed text-[var(--exile-color-text-primary)] space-y-1 list-decimal pl-5">
@@ -49,7 +49,7 @@ async function login(): Promise<void> {
           <button
             type="button"
             :disabled="busy"
-            class="px-4 py-1.5 rounded border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] hover:brightness-110 disabled:opacity-40"
+            class="px-4 py-1.5 rounded-lg border border-amber-400/50 bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)] hover:brightness-110 disabled:opacity-40"
             @click="login"
           >
             {{ poeSession.loginOpen.value ? "ログインの窓を前に出す" : "ログインする" }}

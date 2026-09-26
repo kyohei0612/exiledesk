@@ -108,14 +108,14 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">相場 (trade2 から自動)</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>相場 (trade2 から自動)</h2>
             <!-- 手動更新は見出しに集約した (2026-09-21) -->
           </div>
           <div class="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 items-center text-[12px]">
             <label>
               <div>
                 {{ o.preset.value.baseJa }} 1 個 ({{ unit }})
-                <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.baseTradeUrl.value" @click="open(o.baseTradeUrl.value)">トレード2へ ↗</button>
+                <button type="button" class="ml-1 text-[10px] text-sky-300 underline hover:text-sky-200" :disabled="!o.baseTradeUrl.value" @click="open(o.baseTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
                 失敗のたびに消える。trade2 の「ノーマル · 未コラプト · ソケット 2」の最安
@@ -125,7 +125,7 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
             <label>
               <div>
                 完成品の売値 ({{ o.preset.value.uniqueJa }} · 品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト)
-                <button type="button" class="ml-1 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
+                <button type="button" class="ml-1 text-[10px] text-sky-300 underline hover:text-sky-200" :disabled="!o.saleTradeUrl.value" @click="open(o.saleTradeUrl.value)">トレード2へ ↗</button>
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">
                 trade2 の「品質 {{ o.targetQuality.value }}% 以上 · ソケット 2 · 未コラプト」の最安<span v-if="o.autoSalePrice.value == null && o.auto.value.uniqueRef != null">。取れるまではカレンシーランキングの品質不問の値</span>
@@ -144,7 +144,7 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 ({{ unit }})</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span>素材 ({{ unit }})</h2>
             <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
               回数
               <select v-model.number="attempts" class="num w-20">
@@ -175,7 +175,7 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtQty(m.qtyN) }}<span v-if="m.onSuccess" class="text-[10px] text-[var(--exile-color-text-tertiary)]"> (期待)</span></td>
                 <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(m.costN) }}</td>
               </tr>
-              <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
+              <tr class="border-t border-[var(--exile-color-border-brass)] font-bold">
                 <td class="py-1.5 pr-2">合計</td>
                 <td></td>
                 <td></td>
@@ -195,10 +195,10 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
     <!-- 判定 -->
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">完成品 1 個あたり</h2>
+        <h2 class="text-sm font-bold text-amber-100 mb-2"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span>完成品 1 個あたり</h2>
         <template v-if="o.result.value.ok">
           <div class="grid grid-cols-1 @3xl:grid-cols-3 gap-3 text-[12px]">
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
+            <div class="rounded-lg bg-black/30 p-3">
               <div class="text-[var(--exile-color-text-secondary)]">実質コスト</div>
               <div class="tabular-nums text-[16px]">{{ money(o.result.value.costPerFinished) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">(ベース + 品質通貨 + インフューザー期待値) ÷ 生存率 + お告げ + オーブ</div>
@@ -210,7 +210,7 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
               </div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">利益率 {{ (o.result.value.margin * 100).toFixed(1) }}% (利益 ÷ 売値)</div>
             </div>
-            <div class="rounded border border-[var(--exile-color-border-subtle)] p-3">
+            <div class="rounded-lg bg-black/30 p-3">
               <div class="text-[var(--exile-color-text-secondary)]">損益分岐のベース価格</div>
               <div class="tabular-nums text-[16px]">{{ money(o.result.value.breakEvenBasePrice) }}</div>
               <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">これより高いベースを買うと赤字</div>
@@ -234,9 +234,9 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             資金は「少なくとも 1 個成功するまでに要る手持ち」で、期待総費用ではありません。期待総費用は実質コスト × 作る個数です。
           </p>
-          <div class="mt-3 rounded border border-[var(--exile-color-border-subtle)] p-3 text-[12px]">
+          <div class="mt-3 rounded-lg bg-black/20 p-3 text-[12px]">
             <div class="flex items-baseline justify-between mb-1">
-              <span class="font-display tracking-[0.04em]">{{ attempts }} 回やった場合</span>
+              <span class="font-bold">{{ attempts }} 回やった場合</span>
               <label class="text-[11px] text-[var(--exile-color-text-secondary)] inline-flex items-center gap-2">
                 回数
                 <select v-model.number="attempts" class="num w-20">

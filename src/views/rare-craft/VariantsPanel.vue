@@ -25,7 +25,7 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">選択肢の比較 (エッセンス × 肋骨 × 反響 × 高貴なオーブ × お告げ × ルーン)</h2>
+          <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">4</span>選択肢の比較 (エッセンス × 肋骨 × 反響 × 高貴なオーブ × お告げ × ルーン)</h2>
           <span class="text-[11px] text-[var(--exile-color-text-secondary)]">期待収支の高い順。ベースは上の選択のまま。高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に 1 個使って 2 つ足す</span>
         </div>
         <p v-if="c.variants.value.length === 0" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場が揃うと出ます (不足: {{ c.missing.value.join("、") || "取得中" }})</p>

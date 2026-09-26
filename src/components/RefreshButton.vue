@@ -29,11 +29,11 @@ withDefaults(
     :disabled="disabled"
     :title="title"
     :class="[
-      'px-3 py-1 rounded border font-display tracking-[0.06em] text-[11px] tabular-nums transition-colors',
-      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent hover:bg-[var(--exile-color-bg-elevated)]',
+      'px-3 py-1 rounded-lg border text-[11px] tabular-nums transition-colors',
+      'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent hover:bg-white/5',
       subtle
-        ? 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
-        : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]',
+        ? 'border-white/15 text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
+        : 'border-amber-400/50 text-amber-200',
     ]"
   >
     <span aria-hidden="true">⟳</span>

@@ -4,7 +4,7 @@
 -->
 <template>
   <header class="mb-3">
-    <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px]">使用率ランキング (poe.ninja)</h3>
+    <h3 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">3</span>使用率ランキング (poe.ninja)</h3>
     <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
       上位プレイヤーが「レベル 21 / 品質 23% / 完成品」のジェムを実際に何人使っているかの人数ランキング。
       <span class="text-[var(--exile-color-text-primary)]">気になるジェムの「監視へ +」で、上の監視リストに入れられます (7 ジェムまで)。</span>

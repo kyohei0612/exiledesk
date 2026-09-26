@@ -179,7 +179,7 @@ const fmtFlowAt = (t: number | null): string => {
   <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">売値 ({{ unit }})</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>売値 ({{ unit }})</h2>
             <div class="flex items-center gap-3 text-[11px]">
               <!-- 2026-09-17 オーナー指摘「売れたIDと金額の一覧が見当たらない」: 常設の入口を置く -->
               <button

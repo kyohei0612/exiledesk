@@ -15,7 +15,7 @@ const emit = defineEmits<{ (e: "restore", en: string): void }>();
 <template>
   <BaseCard v-if="dropped.length" class="mb-4">
     <div class="p-4 pl-5">
-      <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">最近外したジェム ({{ dropped.length }})</h3>
+      <h3 class="text-sm font-bold text-amber-100 mb-1">最近外したジェム ({{ dropped.length }})</h3>
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mb-2">
         監視から外した分をしばらく置いておきます (8 時間で消えます)。売れ行きの記録は 7 日残るので、戻せば続きから測れます。
       </p>

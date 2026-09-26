@@ -65,9 +65,9 @@ async function verify(key: string): Promise<void> {
 
 <template>
   <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-black/80" @click.self="emit('close')">
-    <div class="w-full max-w-4xl my-8 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] shadow-xl">
+    <div class="w-full max-w-4xl my-8 rounded-xl border border-amber-400/40 bg-[var(--exile-color-bg-surface)] shadow-xl">
       <div class="flex items-baseline justify-between gap-3 p-4 pb-2">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">
+        <h2 class="text-sm font-bold text-amber-100">
           売れたリスト<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ title }}</span>
           <span v-if="note" class="ml-2 text-[11px] text-[var(--exile-color-text-tertiary)] tracking-normal">{{ note }}</span>
         </h2>
@@ -90,7 +90,7 @@ async function verify(key: string): Promise<void> {
 
       <!-- 条件ごとの判定 -->
       <div class="px-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <div v-for="s in summaries" :key="s.key" class="rounded border border-[var(--exile-color-border-subtle)] p-2 text-[11px]">
+        <div v-for="s in summaries" :key="s.key" class="rounded-lg bg-black/20 p-2 text-[11px]">
           <div class="flex items-center justify-between gap-2">
             <span class="text-[var(--exile-color-text-secondary)]">{{ s.label }}</span>
             <span class="px-1.5 py-0.5 rounded border text-[10px] font-display tracking-[0.06em] leading-none whitespace-nowrap" :class="toneClass(s.tone)">
@@ -129,9 +129,9 @@ async function verify(key: string): Promise<void> {
 
       <div class="p-4 pt-3">
         <!-- 売れた一覧 -->
-        <div class="rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
+        <div class="rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
           <div class="flex items-baseline gap-3 flex-wrap mb-2">
-            <h3 class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">売れた出品</h3>
+            <h3 class="text-[13px] font-bold text-amber-100">売れた出品</h3>
             <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ soldCount }} 件</span>
             <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
             <span v-if="relistedCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ relistedCount }} 件は除外</span>
@@ -157,7 +157,7 @@ async function verify(key: string): Promise<void> {
               <tr class="border-t border-[var(--exile-color-border-brass)]">
                 <td colspan="5" class="pt-3 pb-1">
                   <div class="flex items-baseline gap-2 flex-wrap">
-                    <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ fmtClock(g.at) }} の確認</span>
+                    <span class="text-[13px] font-bold text-amber-100">{{ fmtClock(g.at) }} の確認</span>
                     <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ g.sold }} 件が売れていた</span>
                     <!-- 「前の確認」の時刻は記録に無い (売れた物があった確認しか分からない) ので、間隔は出さない -->
                     <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
@@ -193,8 +193,8 @@ async function verify(key: string): Promise<void> {
         </div>
 
         <!-- まだ並んでいる -->
-        <div class="mt-3 rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
-          <h3 class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)] mb-1">まだ並んでいる出品 ({{ aliveRows.length }} 件・長い順)</h3>
+        <div class="mt-3 rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
+          <h3 class="text-[13px] font-bold text-amber-100 mb-1">まだ並んでいる出品 ({{ aliveRows.length }} 件・長い順)</h3>
           <p v-if="aliveRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">追跡中の出品はありません。</p>
           <table v-else class="w-full">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">

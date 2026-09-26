@@ -1,26 +1,26 @@
 <!--
-  Phase A.7: visual-concept §5.2 カード共通ラッパ。
-    - 背景 bg.surface / 外周 border.subtle 1px / radius 4px
-    - hover で border.brass に切替（transition-colors のみ、shadow 無し）
-    - 左上隅に CornerMark を自動配置（absolute、pointer-events-none、aria-hidden）
-    - shadow / グラデは §4.5 / §5.2 で禁止のため使用しない
-    - スロット: default（カード本体）/ corner（左上装飾の差し替え）/ overlay（追加 absolute 装飾）
-  各カードは固有 padding やヘッダー pl-* を子要素側に持つ前提で、
-  BaseCard 自体は内側の余白を強制しない（最小干渉）。
+  BaseCard.vue — カード共通ラッパ
+    - 2026-09-27 からクラフト計算機と同じ見た目: 角丸 (rounded-xl) / 薄い白の枠 / うっすら明るい背景。hover で枠を少し明るく
+    - solid: ダイアログなど下が透けると読めない物は不透明の面
+    - スロット: default（カード本体）/ overlay（追加 absolute 装飾）
+  各カードは固有 padding を子要素側に持つ前提で、BaseCard 自体は内側の余白を強制しない（最小干渉）。
 -->
 <script setup lang="ts">
-import CornerMark from "./CornerMark.vue";
-
+// 2026-09-27 見た目をクラフト計算機にそろえた (オーナー「全体的に全タブの UI この感じに合わせようか」):
+// 角丸・薄い白の枠・うっすら明るい背景。真鍮の L 字 (CornerMark) はやめた。ダイアログは solid で不透明に
 withDefaults(
   defineProps<{
-    /** hover で border を真鍮に切替えるか（デフォルト true） */
+    /** hover で枠を少し明るくするか（デフォルト true） */
     hover?: boolean;
     /** ラップタグ（デフォルト 'div'。`li` や `article` に差し替え可） */
     as?: string;
+    /** 背景を不透明に (ダイアログなど、下が透けると読めない物) */
+    solid?: boolean;
   }>(),
   {
     hover: true,
     as: "div",
+    solid: false,
   },
 );
 </script>
@@ -28,16 +28,9 @@ withDefaults(
 <template>
   <component
     :is="as"
-    class="relative overflow-hidden rounded border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] transition-colors"
-    :class="hover ? 'hover:border-[var(--exile-color-border-brass)]' : ''"
+    class="relative overflow-hidden rounded-xl border border-white/10 transition-colors"
+    :class="[hover ? 'hover:border-white/20' : '', solid ? 'bg-[var(--exile-color-bg-surface)]' : 'bg-white/[0.03]']"
   >
-    <!-- 左上隅の真鍮 L 字。差し替えたい場合は `#corner` slot を渡す。 -->
-    <span class="absolute top-1 left-1 z-10 pointer-events-none">
-      <slot name="corner">
-        <CornerMark />
-      </slot>
-    </span>
-
     <!-- カード本体 -->
     <slot />
 

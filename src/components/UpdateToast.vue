@@ -17,8 +17,8 @@ const { update, phase, errorMsg, downloadedBytes, totalBytes, forced, runCheck, 
 <template>
   <!-- 起動時に見つけた更新: 全面に出して、入れ終わったら再起動する (2026-09-20) -->
   <div v-if="forced" class="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-[1px]">
-    <div class="max-w-md mx-6 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] p-6 shadow-lg text-center">
-      <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base mb-2">アップデート中です</h2>
+    <div class="max-w-md mx-6 rounded-xl border border-amber-400/40 bg-[var(--exile-color-bg-surface)] p-6 shadow-lg text-center">
+      <h2 class="text-sm font-bold text-amber-100 mb-2">アップデート中です</h2>
       <p class="text-[13px] text-[var(--exile-color-text-secondary)] leading-relaxed">
         新しい版<template v-if="update?.version"> ({{ update.version }})</template>を入れています。終わると自動で再起動します。
       </p>

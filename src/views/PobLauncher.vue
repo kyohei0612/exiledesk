@@ -89,7 +89,7 @@ onActivated(() => {
     </header>
 
     <!-- 未インストール -->
-    <div v-if="b.status && !b.status.installed" class="rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] p-4 max-w-[720px]">
+    <div v-if="b.status && !b.status.installed" class="rounded-xl border border-amber-400/40 bg-white/[0.03] p-4 max-w-[720px]">
       <p class="text-[13px]">PoB はまだこの PC にありません。</p>
       <div class="mt-3 flex items-center gap-3">
         <button
@@ -106,7 +106,7 @@ onActivated(() => {
     </div>
 
     <!-- インストール済み -->
-    <div v-else class="rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] p-4 max-w-[720px]">
+    <div v-else class="rounded-xl border border-amber-400/40 bg-white/[0.03] p-4 max-w-[720px]">
       <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">状態</dt>
         <dd>

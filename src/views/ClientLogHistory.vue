@@ -14,7 +14,7 @@ const showHistory = ref(false);
 
 <template>
   <!-- 消し込み履歴 -->
-  <div v-if="history.length" class="mt-3 rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3">
+  <div v-if="history.length" class="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
     <button type="button" @click="showHistory = !showHistory" class="w-full flex items-center gap-2 text-left">
       <span class="text-[13px] font-medium">消し込み履歴</span>
       <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ history.length }} 回</span>

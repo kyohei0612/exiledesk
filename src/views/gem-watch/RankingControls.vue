@@ -58,7 +58,7 @@ const topAscendancies = computed(() => {
   <button
     type="button"
     :disabled="rankingBusy"
-    class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
+    class="px-3 py-1 rounded-lg border hover:bg-[var(--exile-color-bg-elevated)] disabled:cursor-not-allowed"
     :class="rankingNeedFetch && !rankingBusy ? 'border-amber-500/70 bg-amber-500/15 text-amber-200' : 'border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)]'"
     title="選んだアセンダンシーの使用率を poe.ninja から取り直します (上位 100 人)。一度取った分はそのまま出るので、取り直したい時だけ押してください"
     @click="emit('fetch')"

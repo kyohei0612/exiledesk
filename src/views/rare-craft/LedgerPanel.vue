@@ -163,7 +163,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
     <BaseCard class="mb-4">
       <div class="p-4 pl-5">
         <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-          <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">収支<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ c.recipe.value.label }}</span></h2>
+          <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">5</span>収支<span class="text-[12px] text-[var(--exile-color-text-secondary)] tracking-normal"> · {{ c.recipe.value.label }}</span></h2>
           <div class="flex items-center gap-3 flex-wrap text-[11px] text-[var(--exile-color-text-secondary)]">
             <span>回数を入れると使った数と売れた数が期待値で埋まる。実際と違う数だけ上書き</span>
             <button type="button" class="underline hover:text-[var(--exile-color-accent-focus)]" @click="resetLedger">全部 0 に</button>
@@ -197,7 +197,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.cost) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">費用合計</td>
+              <td class="py-1.5 pr-2 font-bold">費用合計</td>
               <td></td>
               <td></td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.cost) }}</td>
@@ -221,13 +221,13 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(r.revenue) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">売上合計</td>
+              <td class="py-1.5 pr-2 font-bold">売上合計</td>
               <td></td>
               <td></td>
               <td class="py-1.5 pl-3 text-right tabular-nums whitespace-nowrap">{{ money(ledgerTotals.revenue) }}</td>
             </tr>
             <tr class="border-t border-[var(--exile-color-border-brass)]">
-              <td class="py-1.5 pr-2 font-display tracking-[0.04em]">収支</td>
+              <td class="py-1.5 pr-2 font-bold">収支</td>
               <td></td>
               <td class="py-1.5 pl-3 text-right tabular-nums text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-nowrap">{{ ledgerTotals.perAttempt != null ? `1 回あたり ${money(ledgerTotals.perAttempt, true)}` : "" }}</td>
               <td class="py-1.5 pl-3 text-right tabular-nums text-[14px] whitespace-nowrap" :class="evClass(ledgerTotals.profit)">{{ money(ledgerTotals.profit, true) }}</td>

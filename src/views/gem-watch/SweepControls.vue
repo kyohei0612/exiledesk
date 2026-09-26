@@ -68,7 +68,7 @@ const emit = defineEmits<{
     <button
       type="button"
       :disabled="sweeping || !!status?.sampling || sampleBusy"
-      class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] font-display tracking-[0.06em] text-[11px] tabular-nums text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      class="px-3 py-1 rounded-lg border border-amber-400/50 text-[11px] tabular-nums text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       :title="
         sampleBusy
           ? `${jaGemName(sampleTarget)} の取得中です。終わってから押せます (通信が重ならないように 1 本ずつ流します)`
@@ -83,7 +83,7 @@ const emit = defineEmits<{
     <button
       v-if="sweeping || !!status?.sampling"
       type="button"
-      class="px-3 py-1 rounded border border-amber-500/70 bg-amber-500/10 font-display tracking-[0.06em] text-[11px] text-amber-200 hover:bg-amber-500/20 transition-colors"
+      class="px-3 py-1 rounded-lg border border-amber-500/70 bg-amber-500/10 text-[11px] text-amber-200 hover:bg-amber-500/20 transition-colors"
       title="取得をやめます。今取っている銘柄を取り終えたら止まります (取れた分の記録は残ります)。自動巡回も止められます"
       @click="emit('stopSweep')"
     >
@@ -92,7 +92,7 @@ const emit = defineEmits<{
     <button
       type="button"
       :disabled="busy || !diff.changed"
-      class="px-3 py-1 rounded border font-display tracking-[0.06em] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
+      class="px-3 py-1 rounded-lg border hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed"
       :class="diff.changed ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-tertiary)]'"
       :title="diff.changed ? `入れる ${diff.add.map(jaSkill).join(', ') || 'なし'} / 外す ${diff.drop.map(jaSkill).join(', ') || 'なし'}` : '設定と監視中の銘柄は一致しています'"
       @click="emit('sync', true)"

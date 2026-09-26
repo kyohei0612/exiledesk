@@ -21,7 +21,7 @@ const showLowCount = defineModel<boolean>("showLowCount", { required: true });
   <BaseCard :class="orderClass">
     <div class="p-4 pl-5">
       <div class="flex items-baseline justify-between mb-2">
-        <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base flex items-center gap-2">
+        <h2 class="text-sm font-bold text-amber-100 flex items-center gap-2">
           <span
             class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold leading-none bg-[#6AA0B8]/25 text-[#9CC9DA] ring-1 ring-[#6AA0B8]/50"
             aria-hidden="true"

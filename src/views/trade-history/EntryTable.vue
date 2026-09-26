@@ -43,7 +43,7 @@ const dayGroups = computed(() => {
 </script>
 
 <template>
-    <div class="rounded-lg border border-[var(--exile-color-border-subtle)] p-3 text-[12px] overflow-x-auto">
+    <div class="rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
       <p v-if="entries.length === 0" class="text-[var(--exile-color-text-tertiary)]">
         まだ履歴がありません。ログインして「履歴を取得」を押すと、公式サイトのマーチャント履歴がここに入ります。
       </p>
@@ -62,7 +62,7 @@ const dayGroups = computed(() => {
           <tr class="border-t border-[var(--exile-color-border-brass)]">
             <td :colspan="game === 'poe2' ? 5 : 4" class="pt-3 pb-1">
               <div class="flex items-baseline gap-3">
-                <span class="font-display tracking-[0.06em] text-[13px] text-[var(--exile-color-accent-focus)]">{{ dayLabel(g.start) }}</span>
+                <span class="text-[13px] font-bold text-amber-100">{{ dayLabel(g.start) }}</span>
                 <span v-if="game === 'poe2'" class="tabular-nums text-emerald-300">{{ money(g.total) }}</span>
                 <span class="text-[11px] text-[var(--exile-color-text-tertiary)] tabular-nums">{{ g.list.length }} 件</span>
               </div>

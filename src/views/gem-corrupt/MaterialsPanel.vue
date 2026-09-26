@@ -113,7 +113,7 @@ const baseBuyTitle = computed(() => {
       <BaseCard>
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
-            <h2 class="font-display tracking-[0.08em] text-[var(--exile-color-accent-focus)] text-base">素材 (自作、{{ unit }})</h2>
+            <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span>素材 (自作、{{ unit }})</h2>
             <!-- 取引所の比較はジェムを選んだ時に自動で走るので、ボタンは置かない
                  (オーナー指示 2026-09-20:「取引所価格がデフォだから、別にもうボタンいらんくね」)。
                  取っている間だけ進み具合を出す -->
@@ -212,7 +212,7 @@ const baseBuyTitle = computed(() => {
                   <template v-else>{{ cost(m.costN) }}</template>
                 </td>
               </tr>
-              <tr class="border-t border-[var(--exile-color-border-brass)] font-display tracking-[0.04em]">
+              <tr class="border-t border-[var(--exile-color-border-brass)] font-bold">
                 <td class="py-1.5 pr-2">合計 (期待)</td>
                 <td></td>
                 <td></td>

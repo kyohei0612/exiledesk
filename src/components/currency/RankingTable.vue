@@ -49,7 +49,7 @@ function iconOf(c: Cur): string {
 </script>
 
 <template>
-  <div class="rounded-lg border border-[var(--exile-color-border-subtle)] overflow-hidden">
+  <div class="rounded-xl border border-white/10 overflow-hidden">
     <table class="w-full text-base">
       <thead class="bg-[var(--exile-color-bg-surface)] text-xs uppercase tracking-wider text-[var(--exile-color-text-secondary)]">
         <tr>

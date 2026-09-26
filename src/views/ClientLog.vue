@@ -117,7 +117,7 @@ onMounted(() => {
     </header>
 
     <!-- ログの所在 + 実行 -->
-    <div class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3 text-[12px]">
+    <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
       <template v-if="status?.found">
         <div class="font-mono text-[11px] break-all text-[var(--exile-color-text-secondary)]">{{ status.path }}</div>
         <div class="mt-2 flex items-center gap-3 flex-wrap">
@@ -180,7 +180,7 @@ onMounted(() => {
 
       <!-- 実害あり / 注意 -->
       <div v-if="result.findings.length" class="mt-3 space-y-2">
-        <div v-for="f in result.findings" :key="f.id" class="rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3">
+        <div v-for="f in result.findings" :key="f.id" class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <div class="flex items-baseline gap-2 flex-wrap">
             <span
               class="px-1.5 py-0.5 rounded text-[10px] font-bold"
@@ -212,7 +212,7 @@ onMounted(() => {
       </div>
 
       <!-- 未分類: 解決案が未登録 -->
-      <div v-if="result.unknown.length" class="mt-3 rounded-lg border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)] p-3">
+      <div v-if="result.unknown.length" class="mt-3 rounded-xl border border-amber-400/40 bg-white/[0.03] p-3">
         <div class="text-[13px] font-medium">解決案が未登録のエラー</div>
         <p class="mt-1 text-[12px] text-amber-200">
           分類表に無いエラーです。<strong>エラー解決案を追加してください。</strong>コピーボタンで内容を控えて登録すると、次回から対処法付きで表示されます。
@@ -233,7 +233,7 @@ onMounted(() => {
       </div>
 
       <!-- 既知の無害 -->
-      <div class="mt-3 rounded-lg border border-[var(--exile-color-border-subtle)] bg-[var(--exile-color-bg-surface)] p-3">
+      <div class="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <button type="button" @click="showNoise = !showNoise" class="w-full flex items-center gap-2 text-left">
           <span class="text-[13px] font-medium">既知の無害なエラー</span>
           <span class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ num(noiseTotal) }} 件 / {{ result.noise.length }} 種類</span>

@@ -174,7 +174,7 @@ function toneClass(tone: string): string {
 <template>
     <BaseCard>
       <div class="p-4 pl-5">
-        <h3 class="font-display tracking-[0.06em] text-[var(--exile-color-accent-focus)] text-[13px] mb-1">監視中 ({{ gems.length }} ジェム)</h3>
+        <h3 class="text-sm font-bold text-amber-100 mb-1"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>監視中 ({{ gems.length }} ジェム)</h3>
         <!-- 一括取得 / 自動取得の間隔 などの操作 (親から差し込む。オーナー指示 2026-09-20:
              「監視中ジェムに一括取得ボタンと自動取得の間隔プルダウンを置こうか」) -->
         <div class="mb-2"><slot name="controls" /></div>
