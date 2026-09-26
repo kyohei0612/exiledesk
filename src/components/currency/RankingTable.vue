@@ -27,7 +27,8 @@ type Cur = keyof typeof JA;
 /**
  * 行ごとの値段 (2026-09-26 オーナー:「前提は適正のルールで表示。一番安く取引できるのを横に 1 つ置いとこか、取引時の推奨カレンシー」)。
  *   main: 相場の値段を表示通貨で (適正なら 神 → 1 未満はカオス → 1 カオス未満は高貴)
- *   rec:  取引所のペアで一番安く交換できる通貨 (カオスと神で安い方)。1 未満は「1 通貨で N 個」。ペアが薄ければ null
+ *   rec:  取引所のペアで一番安く交換できる通貨 (カオスと神で安い方)。1 未満は「1 通貨で N 個」。
+ *         値段の列と同じ通貨の時と、ペアが薄い / 無い時は null (「—」)
  */
 const cells = computed(() => {
   const m = new Map<string, { main: { value: number; cur: Cur; label: string }; rec: { value: number; cur: Cur; label: string } | null }>();
@@ -36,7 +37,8 @@ const cells = computed(() => {
     const bp = p.bestPay;
     m.set(p.apiId, {
       main: { value: u.value, cur: u.cur, label: u.label },
-      rec: bp ? { value: bp.perUnit, cur: bp.currency, label: JA[bp.currency] } : null,
+      // 値段の列と同じ通貨なら出さない (オーナー 2026-09-26「推奨が同じなら表示はいらない、ハイフンで」)
+      rec: bp && bp.currency !== u.cur ? { value: bp.perUnit, cur: bp.currency, label: JA[bp.currency] } : null,
     });
   }
   return m;
@@ -95,7 +97,7 @@ function iconOf(c: Cur): string {
               <img v-if="iconOf(cells.get(p.apiId)!.rec!.cur)" :src="iconOf(cells.get(p.apiId)!.rec!.cur)" :alt="cells.get(p.apiId)!.rec!.label" class="w-4 h-4 object-contain" loading="lazy" />
               <span>{{ cells.get(p.apiId)!.rec!.label }}</span>
             </div>
-            <div v-else class="text-xs text-[var(--exile-color-text-tertiary)]" title="取引所のペアが薄くて決められない">—</div>
+            <div v-else class="text-xs text-[var(--exile-color-text-tertiary)]" title="値段の列と同じ通貨か、取引所のペアが無い">—</div>
           </td>
           <td class="px-2 py-3">
             <Sparkline v-if="rowTrend(p) && rowTrend(p)!.spark.length >= 2" :trend="rowTrend(p)!" class="gap-2" />
