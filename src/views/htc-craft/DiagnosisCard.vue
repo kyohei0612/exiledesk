@@ -120,7 +120,7 @@ const steps = computed(() => {
   const s = (label: string, state: "done" | "now" | "todo") => ({ label, state });
   const ph = c.phase.value;
   return [
-    s("アイテムを貼る", "done"),
+    s(c.item.value ? "アイテムを貼る" : "アイテムを決める", "done"),
     s("MOD と段を確かめる", ph === "analyzed" ? "now" : "done"),
     s("固定する MOD を選んで探す", ph === "analyzed" ? "todo" : searched && ph === "done" ? "done" : "now"),
     s("買うか作るかを見る", ph !== "done" ? "todo" : decided ? "done" : "now"),

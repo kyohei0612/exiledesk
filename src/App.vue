@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import CenterContent from "./components/CenterContent.vue";
@@ -17,6 +17,22 @@ import { startSessionWatch } from "./state/poe-session";
 import { startFetchBusyWatch } from "./state/fetch-busy";
 import { importFlowSeed } from "./services/flow-seed";
 import { isTauriRuntime } from "./utils/isTauriRuntime";
+
+/**
+ * 画面全体を「最小の窓 (1660 幅) で組んだ絵」として扱い、窓が広ければそのまま拡大する (オーナー 2026-09-26:「ウィンドウ
+ * 小さくしても大きくしても変わらない感じで」「今の最小 px に合わせた UI に」)。前は広い窓でタブごとに横へ伸びたり
+ * (表が間延び)、クラフト計算機だけ左に寄って右が空いたりしていた。窓の最小は tauri.conf.json の minWidth 1660
+ */
+const DESIGN_WIDTH = 1660;
+/** 外枠の大きさ (拡大前の CSS ピクセル)。100vw / 100vh は拡大で窓より大きくなり、右と下が切れていたので実寸 ÷ 拡大率で持つ */
+const frame = ref({ w: DESIGN_WIDTH, h: 900 });
+function fitZoom(): void {
+  const z = Math.max(1, window.innerWidth / DESIGN_WIDTH);
+  document.documentElement.style.zoom = String(z);
+  frame.value = { w: window.innerWidth / z, h: window.innerHeight / z };
+}
+fitZoom();
+window.addEventListener("resize", fitZoom);
 
 // 2026-09-14: 画面から別の画面へ飛べるよう、表示中の画面は共有状態 (state/app-nav.ts) に置く
 import { activeNav } from "./state/app-nav";
@@ -59,7 +75,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen w-screen">
+  <div class="flex" :style="{ width: `${frame.w}px`, height: `${frame.h}px` }">
     <LeftSidebar
       :active="activeNav"
       @update:active="activeNav = $event"

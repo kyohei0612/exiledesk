@@ -14,7 +14,7 @@ import { useTreeSearch } from "./useTreeSearch";
 export type { TreeRoute } from "./useTreeSearch";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
-import { jaOfMod, jaOfPastedLine } from "../../services/htc/mod-text";
+import { jaOfMod, jaOfPastedLine, fillHashes } from "../../services/htc/mod-text";
 import { boostedBy } from "../../services/htc/quality";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
@@ -272,7 +272,7 @@ export function useHtcCraft() {
       applyTargets(
         d,
         cls,
-        { targets: [...picks], texts: picks.map((p2) => jaOfMod(d.mods.get(p2.modId)!)) },
+        { targets: [...picks], texts: picks.map((p2) => { const m = d.mods.get(p2.modId)!; return fillHashes(jaOfMod(m), m.tiers[p2.minTierIndex ?? 0]?.ranges ?? []); }) },
         baseName,
       );
       diagBusy.value = true;

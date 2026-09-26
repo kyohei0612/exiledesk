@@ -158,7 +158,7 @@ export function usePicker() {
   }
 
   return {
-    baseQuery, baseRows, baseName, cls, chooseBase,
+    baseQuery, baseRows, allBases, baseName, cls, chooseBase,
     modQuery, modRows, picks, isPicked, toggle, setTier, tierOf,
     level, targets, useData, clear,
   };

@@ -5,14 +5,14 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { computed, ref, watchEffect } from "vue";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
-import { CATALYSTS } from "../../services/htc/quality";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import DiagnosisCard from "./DiagnosisCard.vue";
 import CraftTreePanel from "./CraftTreePanel.vue";
+import BasePicker from "./BasePicker.vue";
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -30,21 +30,6 @@ watchEffect(() => pk.useData(c.data.value));
 // 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
 const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">("none");
-/**
- * 中身は 1400px で組み、窓が狭ければそのまま縮める (zoom)。オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても
- * 変わらない感じで」「相変わらず UI 壊れてる、縮小版」(横スクロールで右が切れていた)
- */
-const DESIGN_W = 1400;
-const rootEl = ref<HTMLElement | null>(null);
-const zoom = ref(1);
-let ro: ResizeObserver | null = null;
-onMounted(() => {
-  const fit = () => { const w = rootEl.value?.clientWidth ?? DESIGN_W; zoom.value = Math.min(1, Math.max(0.5, (w - 32) / DESIGN_W)); };
-  fit();
-  ro = new ResizeObserver(fit);
-  if (rootEl.value) ro.observe(rootEl.value);
-});
-onBeforeUnmount(() => ro?.disconnect());
 /** 前回貼った物 (この端末で覚える)。入口に「前回の続きから」を出す */
 const LAST_PASTE_KEY = "exiledesk.htc.lastPaste";
 const lastPaste = ref<string | null>(null);
@@ -126,7 +111,7 @@ async function runPicked(): Promise<void> {
 const inputSummary = computed(() => {
   const it = c.item.value;
   if (it) return `${it.baseText ?? it.baseType} / ilvl ${it.itemLevel ?? "?"}${it.quality ? ` / 品質 ${it.quality}%` : ""} / MOD ${c.rows.value.length + c.skipped.value.length} 個`;
-  const ja = pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value ?? "";
+  const ja = pk.allBases.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value ?? "";
   return `${ja} / ilvl ${pk.level.value} / 狙う MOD ${pk.picks.value.length} 個`;
 });
 
@@ -138,8 +123,9 @@ const implicitText = (lines: readonly string[]): string =>
 <template>
   <!-- 中身は幅 1400px で固定 (オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても変わらない感じで。ウィンドウによって崩れる」)。
        狭い窓では横にスクロール、広い窓では余白 -->
-  <div ref="rootEl" class="h-full overflow-auto p-4 text-sm">
-   <div class="w-[1400px]" :style="{ zoom }">
+  <!-- 窓の大きさへの合わせ込みはアプリ全体でする (App.vue の fitZoom)。ここは最小の窓の幅いっぱい -->
+  <div class="h-full overflow-auto p-4 text-sm">
+   <div>
     <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
     <p class="mb-3 text-xs opacity-60">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
@@ -219,113 +205,8 @@ const implicitText = (lines: readonly string[]): string =>
       </div>
     </div>
 
-    <!-- 入口 B: ベースから選ぶ -->
-    <div v-if="door === 'base' && (inputOpen || !c.base.value)" class="mb-4">
-      <div class="mb-2 flex flex-wrap gap-2 text-xs">
-        <span class="opacity-50">見本:</span>
-        <button
-          v-for="z in ZERO_PRESETS" :key="z.id" class="rounded border px-2 py-0.5"
-          :class="zeroPicked === z.id ? 'border-amber-400 text-amber-300' : 'border-[var(--exile-color-border-subtle)] opacity-70'"
-          @click="pickZero(z.id)"
-        >{{ z.label }}</button>
-      </div>
-      <!-- 作り方の設定: 貼り付けが無いので品質と固定済みの枠は自分で決める -->
-      <div class="mb-2 flex flex-wrap items-center gap-3 rounded bg-white/5 p-2 text-xs">
-        <b class="opacity-70">作り方の設定</b>
-        <label>品質
-          <select v-model.number="zeroStart.quality" class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1">
-            <option :value="20">20% (カタリストだけ)</option>
-            <option :value="40">40% (ブリーチのエッセンスで上限を上げる)</option>
-          </select>
-        </label>
-        <label>最後に上げる品質の種類
-          <select v-model="zeroStart.qualityTag" class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1">
-            <option :value="null">上げない</option>
-            <option v-for="k in CATALYSTS" :key="k.tag" :value="k.tag">{{ k.ja }}</option>
-          </select>
-        </label>
-        <label>固定済みの樹 MOD (買う物) が使う枠: プレ
-          <input v-model.number="zeroStart.fixedPrefix" type="number" min="0" max="3" class="w-10 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-        </label>
-        <label>サフィ
-          <input v-model.number="zeroStart.fixedSuffix" type="number" min="0" max="3" class="w-10 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-        </label>
-      </div>
-      <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
-        <input
-          v-model="pk.baseQuery.value"
-          placeholder="ベースを絞る (サファイア / Ring …)"
-          class="w-56 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-2 py-1"
-        />
-        <label class="opacity-70">
-          ilvl
-          <input v-model.number="pk.level.value" type="number" class="ml-1 w-16 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-1" />
-        </label>
-        <span class="opacity-50">段の上限を決めます。先に入れてください</span>
-      </div>
-      <!-- ベース一覧 -->
-      <div v-if="!pk.baseName.value" class="max-h-72 overflow-auto rounded border border-[var(--exile-color-border-subtle)]">
-        <table class="w-full text-xs">
-          <tr
-            v-for="b in pk.baseRows.value"
-            :key="b.en"
-            class="cursor-pointer border-b border-white/5 hover:bg-white/5"
-            @click="c.data.value && pk.chooseBase(c.data.value, b.en)"
-          >
-            <td class="py-0.5 pl-2">{{ b.ja }}</td>
-            <td class="w-24 opacity-50">{{ b.cls }}</td>
-            <td class="w-16 opacity-50">lvl {{ b.lvl }}</td>
-            <td class="pl-2 opacity-60">{{ b.implicits.join(" / ") }}</td>
-          </tr>
-        </table>
-      </div>
-      <!-- MOD 選び -->
-      <div v-else>
-        <p class="mb-2 text-xs">
-          <b class="text-amber-300">{{ pk.baseRows.value.find((b) => b.en === pk.baseName.value)?.ja ?? pk.baseName.value }}</b>
-          <button class="ml-2 opacity-60 underline hover:opacity-100" @click="pk.baseName.value = null">ベースを選び直す</button>
-        </p>
-        <input
-          v-model="pk.modQuery.value"
-          placeholder="MOD を絞る (ライフ / 耐性 …)"
-          class="mb-2 w-56 rounded border border-[var(--exile-color-border-subtle)] bg-black/20 px-2 py-1 text-xs"
-        />
-        <div class="max-h-72 overflow-auto rounded border border-[var(--exile-color-border-subtle)]">
-          <table class="w-full text-xs">
-            <tr
-              v-for="m in pk.modRows.value"
-              :key="m.modId"
-              class="cursor-pointer border-b border-white/5 hover:bg-white/5"
-              :class="pk.isPicked(m.modId) ? 'bg-amber-900/20' : ''"
-              @click="pk.toggle(m)"
-            >
-              <td class="w-6 pl-2 opacity-50">{{ m.side }}</td>
-              <td class="py-0.5">{{ m.ja }}</td>
-              <td class="w-28 text-emerald-300">{{ m.crafted ? "確定で乗せられる" : "" }}</td>
-              <td class="w-48 text-right" @click.stop>
-                <select
-                  v-if="pk.isPicked(m.modId)"
-                  class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1 py-0.5"
-                  :value="pk.tierOf(m.modId)"
-                  @change="pk.setTier(m.modId, Number(($event.target as HTMLSelectElement).value))"
-                >
-                  <option v-for="(t, i) in m.tiers" :key="i" :value="i">
-                    {{ t.name }} ({{ t.range }}) 以上
-                  </option>
-                </select>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <div class="mt-2 flex items-center gap-3">
-          <button
-            class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
-            :disabled="c.loading.value || pk.picks.value.length === 0"
-            @click="runPicked()"
-          >{{ c.loading.value ? "計算中…" : `この ${pk.picks.value.length} 個で計算する` }}</button>
-        </div>
-      </div>
-    </div>
+    <!-- 入口 B: ベースから選ぶ (2026-09-26 作り直し: ① ベース → ② 狙う MOD → ③ 作り方 + 右に完成図) -->
+    <BasePicker v-if="door === 'base' && (inputOpen || !c.base.value)" :c="c" :pk="pk" :presets="ZERO_PRESETS" :preset-picked="zeroPicked" @preset="pickZero" @run="runPicked()" />
 
     <p v-if="c.error.value" class="mb-3 rounded bg-red-900/40 p-2 text-xs">{{ c.error.value }}</p>
 

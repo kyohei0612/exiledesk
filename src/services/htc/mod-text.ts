@@ -92,3 +92,18 @@ export function jaOfPastedLine(line: string): string | null {
     return (pre || n.sign) + n.v;
   });
 }
+
+/**
+ * 文面の `#` を段の値の幅で埋める (「最大マナ #」→「最大マナ +(165-179)」)。0 から組む時の一覧と狙いの名前に使う
+ * (2026-09-26: 「#」のまま出ていた)。`ranges` は段の `[[下, 上], …]`。幅が 1 点なら数字だけ
+ */
+export function fillHashes(text: string, ranges: ReadonlyArray<ReadonlyArray<number | string>>): string {
+  let i = 0;
+  return text.replace(/([+-]?)#/g, (_m, pre: string) => {
+    const r = ranges[i++];
+    if (!r) return `${pre}#`;
+    const [a, b] = r.map(Number);
+    const v = a === b ? `${a}` : `(${a}-${b})`;
+    return `${pre}${v}`;
+  });
+}

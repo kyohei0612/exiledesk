@@ -11,6 +11,7 @@
     components/currency/Sparkline          7 日折れ線 + %
 -->
 <script setup lang="ts">
+import { toCss } from "../utils/zoom";
 import RefreshButton from "../components/RefreshButton.vue";
 import { computed, onActivated, onMounted, ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
@@ -30,11 +31,11 @@ const hoverEffect = computed(() => (hoverItem.value ? effectFor(hoverItem.value)
 function showTip(p: RankedItem, ev: MouseEvent) {
   if (effectFor(p)) {
     hoverItem.value = p;
-    tip.value = { x: ev.clientX, y: ev.clientY };
+    tip.value = { x: toCss(ev.clientX), y: toCss(ev.clientY) };
   }
 }
 function moveTip(ev: MouseEvent) {
-  if (hoverItem.value) tip.value = { x: ev.clientX, y: ev.clientY };
+  if (hoverItem.value) tip.value = { x: toCss(ev.clientX), y: toCss(ev.clientY) };
 }
 function hideTip() {
   hoverItem.value = null;

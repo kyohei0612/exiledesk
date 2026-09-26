@@ -4,6 +4,7 @@
   CurrencyRanking.vue から切り出し (2026-09-07)。
 -->
 <script setup lang="ts">
+import { toCss } from "../../utils/zoom";
 import { computed } from "vue";
 import type { RankedItem } from "../../api/poe2scout";
 import { jaCurrency } from "../../i18n/currencies-ja";
@@ -16,8 +17,8 @@ const style = computed(() => {
   let x = props.x + 18;
   let y = props.y + 18;
   if (typeof window !== "undefined") {
-    if (x + w > window.innerWidth - 8) x = props.x - w - 18;
-    if (y > window.innerHeight - 220) y = Math.max(8, window.innerHeight - 240);
+    if (x + w > toCss(window.innerWidth) - 8) x = props.x - w - 18;
+    if (y > toCss(window.innerHeight) - 220) y = Math.max(8, toCss(window.innerHeight) - 240);
   }
   return { left: `${x}px`, top: `${y}px`, width: `${w}px` };
 });

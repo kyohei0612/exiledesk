@@ -17,6 +17,7 @@
     - z-50 の position: fixed
 -->
 <script setup lang="ts">
+import { toCss } from "../../utils/zoom";
 import { computed } from "vue";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import type { UniqueUsage } from "../../services/craft-v2/types";
@@ -214,8 +215,8 @@ const position = computed<{ left: number; top: number }>(() => {
   if (typeof window === "undefined") {
     return { left: props.x, top: props.y };
   }
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const vw = toCss(window.innerWidth);
+  const vh = toCss(window.innerHeight);
   // 2026-05-22: マウス直近だとカーソルとカード端が被って邪魔という指摘 (#36)
   // → 右側オフセットをやや広げ、上方向にも少し持ち上げる
   let left = props.x + 32;

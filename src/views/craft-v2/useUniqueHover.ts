@@ -3,6 +3,7 @@
  *
  * CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
  */
+import { toCss } from "../../utils/zoom";
 import { ref, watch, type Ref } from "vue";
 import type { SlotKey, UniqueUsage } from "../../services/craft-v2/types";
 import { openTrade2ForUnique } from "../../services/trade2/open";
@@ -21,13 +22,13 @@ export function useUniqueHover(deps: {
 
   function showUniqueTooltip(u: UniqueUsage, ev: MouseEvent): void {
     hoveredUnique.value = u;
-    hoverX.value = ev.clientX;
-    hoverY.value = ev.clientY;
+    hoverX.value = toCss(ev.clientX);
+    hoverY.value = toCss(ev.clientY);
   }
   function moveUniqueTooltip(ev: MouseEvent): void {
     if (!hoveredUnique.value) return;
-    hoverX.value = ev.clientX;
-    hoverY.value = ev.clientY;
+    hoverX.value = toCss(ev.clientX);
+    hoverY.value = toCss(ev.clientY);
   }
   function hideUniqueTooltip(): void {
     hoveredUnique.value = null;
