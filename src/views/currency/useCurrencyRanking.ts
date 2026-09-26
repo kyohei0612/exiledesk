@@ -25,6 +25,8 @@ export interface CategoryDisplay {
   id: string;
   count: number;
   icon: string;
+  /** アイコンの代わりに出す 1 文字 (お気に入りの ♥ など) */
+  glyph?: string;
 }
 
 /** 前回の表示内容を残しておく場所 (取得中に画面が真っ白になるのを防ぐ) */

@@ -400,6 +400,8 @@ pub fn run() {
             poe_ninja_client::craft_v2_cancel,
             poe_ninja_client::get_network_status,
             poe_ninja_client::fetch_economy_leagues,
+            poe_ninja_client::ninja_economy_overview,
+            poe_ninja_client::ninja_economy_history,
             health_check::health_check_all,
             settings::settings_load,
             settings::settings_save,

@@ -1,20 +1,20 @@
 /**
  * ユニーク装備価格推移: 開いた 1 件の詳細 (長い履歴 + 取引所の即時購入の最安) (2026-09-26)
  *
- * - 長い履歴: 行を開いた時だけ poe2scout から多めに取り直す。取れなければ 7 日分のままグラフにする
+ * - 長い履歴: 行を開いた時だけ poe.ninja の日ごとの推移 (リーグ開始から) を取る。値段は神建てなので高貴に直す
  * - 取引所: オーナー指示「インスタントバイアウトで」。ボタンを押した時だけ 1 回検索する (自動では投げない)。
  *   検索は status = securable (即時購入だけ) の既存クエリで、門番 (レート制限) を通る autoPriceCached に乗せる
  */
 import { computed, ref, watch, type Ref } from "vue";
-import { fetchItemHistory, type HistoryPoint } from "../../api/poe2scout";
+import type { HistoryPoint } from "../../api/poe2scout";
+import { fetchNinjaHistory } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { refetchState, tradeAuto } from "../../services/trade2/auto-price";
 import { buildUniqueNameQuery } from "../../services/trade2/query";
 import type { UniqueRow, UniqueTrend } from "./useUniqueTrend";
 
-/** 詳細で取る履歴の点数 (1 時間刻みなら 40 日強) */
-const LONG_LOG_COUNT = 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface InstantResult {
   minExalted: number | null;
@@ -56,7 +56,15 @@ export function useUniqueDetail(row: Ref<UniqueRow>, trend: Ref<UniqueTrend | un
     const id = row.value.itemId;
     loadingLong.value = true;
     try {
-      const pts = await fetchItemHistory(lg, id, LONG_LOG_COUNT);
+      const hist = await fetchNinjaHistory(lg, row.value.kind, id);
+      // 神 → 高貴は一覧と同じ比 (一覧の値段 / 最新の点)。取れなければ相場ストアの比
+      const latest = hist.find((h) => h.daysAgo === 0) ?? hist[hist.length - 1];
+      const exPerDiv = latest && latest.value > 0 ? row.value.exalted / latest.value : marketStore.rates.value.divine || 1;
+      const now = Date.now();
+      const pts = hist
+        .filter((h) => h.value > 0)
+        .map((h) => ({ t: now - h.daysAgo * DAY_MS, price: h.value * exPerDiv, qty: h.count }))
+        .sort((a, b) => a.t - b.t);
       if (row.value.itemId === id) longPoints.value = pts;
     } finally {
       loadingLong.value = false;
@@ -72,7 +80,7 @@ export function useUniqueDetail(row: Ref<UniqueRow>, trend: Ref<UniqueTrend | un
     error.value = null;
     waitSecs.value = 0;
     try {
-      const r = await autoPriceCached(lg, buildUniqueNameQuery(row.value.nameEn, { noCorrupted: true }), marketStore.rates.value, undefined, {
+      const r = await autoPriceCached(lg, buildUniqueNameQuery(row.value.nameEn, { noCorrupted: !row.value.corrupted, baseType: row.value.baseEn || undefined }), marketStore.rates.value, undefined, {
         onWait: (s) => (waitSecs.value = s),
       });
       if (row.value.itemId !== id) return;

@@ -16,12 +16,16 @@ export function currencyJa(c: string | null | undefined): string {
   return c ? (LABEL[c as DisplayCurrency] ?? c) : "";
 }
 
+/**
+ * 何も選んでいなければ神 (1 神未満はカオス、1 カオス未満は高貴)。
+ * オーナー指示 2026-09-26:「カレンシーは 1 種類に統一。要は神に合わせろ。表示カレンシーは選べるように、デフォでその設定」
+ */
 function load(): DisplayCurrency {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "chaos" || v === "divine" ? v : "exalted";
+    return v === "chaos" || v === "exalted" ? v : "divine";
   } catch {
-    return "exalted";
+    return "divine";
   }
 }
 const cur = ref<DisplayCurrency>(load());
@@ -118,6 +122,11 @@ export const displayCurrency = {
   rate,
   label: computed(() => LABEL[cur.value]),
   options: (Object.keys(LABEL) as DisplayCurrency[]).map((k) => ({ value: k, label: LABEL[k] })),
+  /** 選んでいる通貨から段を下げた 1 種類の通貨と数値 (アイコンを付けて出す所用) */
+  unit(exalted: number): { cur: DisplayCurrency; value: number; label: string } {
+    const { c, value } = pickUnit(exalted);
+    return { cur: c, value, label: LABEL[c] };
+  },
   /** 高貴建て → 表示通貨の数値 */
   toDisplay(exalted: number | null | undefined): number | null {
     if (exalted == null || !Number.isFinite(exalted)) return null;

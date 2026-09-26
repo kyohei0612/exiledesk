@@ -3,29 +3,40 @@
  *
  * オーナー指示:「価格推移を知りたいから、カレンシーランキングと同じように作って欲しい。
  * グラフで分かりやすくトレース、UI はシンプルで、値段順や高騰率で並び替えも」。
- *   - 価格表は相場ストア (poe2scout /Items) をそのまま使う。ユニークは ApiId が無い行
- *   - 7 日の推移は 1 件ずつ `/Items/{id}/History` を取る (一括 PriceHistory は約 24 時間しか無いため)
- *   - 取引所 (trade2) には開いただけでは投げない。詳細の「取引所で即時購入の最安を取る」だけ
+ * 2026-09-26 poe.ninja に乗せ換え (「丁度忍者使ってるしな」)。poe2scout はユニークの点がまばらだった。
+ *   - 種類ごとの一覧 (8 種) を順に取る。一覧に 値段・7 日の推移・出品数 が入っているので、行ごとに取りに行かない
+ *   - 日ごとの推移は行を開いた時だけ ([[useUniqueDetail.ts]])
+ *   - お気に入り ([[unique-favorites.ts]]) はカテゴリ欄の一番上
+ *   - 取った一覧はリーグごとに 30 分覚える (タブを開き直すたびに取らない)
  */
-import { computed, reactive, ref, watch } from "vue";
-import { fetchItemHistory, type CurrencyItem, type HistoryPoint } from "../../api/poe2scout";
+import { computed, ref, shallowRef, watch } from "vue";
+import type { HistoryPoint } from "../../api/poe2scout";
+import { fetchNinjaOverview, NINJA_UNIQUE_KINDS, type NinjaLine, type NinjaUniqueKind } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
+import { favKey, uniqueFavorites } from "../../state/unique-favorites";
 import { jaTypeName, jaUniqueName } from "../../services/trade2/localize";
 import type { CategoryDisplay } from "../currency/useCurrencyRanking";
 
 export interface UniqueRow {
+  /** poe.ninja の行 ID */
   itemId: number;
+  kind: NinjaUniqueKind;
   nameEn: string;
   nameJa: string;
   baseEn: string;
   baseJa: string;
+  /** カテゴリ欄の ID (weapon / armour …) */
   category: string;
   icon: string;
   /** 高貴建て */
   exalted: number;
+  listings: number;
+  corrupted: boolean;
+  /** お気に入りのキー */
+  fav: string;
 }
 
-/** 7 日の推移 (古→新)。changePct は窓の最初と最後の比、qty は最新点の出品数 */
+/** 7 日の推移 (古→新)。changePct は 7 日の変化率、qty は出品数。points は使わない (詳細で日ごとに取る) */
 export interface UniqueTrend {
   spark: number[];
   changePct: number;
@@ -41,118 +52,122 @@ export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "name", label: "名前" },
 ];
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-/** 同時に取る本数 (poe2scout に制限の公開は無いので礼儀として控えめに) */
-const CONC = 6;
+/** poe.ninja の種類 → カテゴリ欄の ID (日本語は categories-ja) */
+const CAT_OF: Record<NinjaUniqueKind, string> = {
+  UniqueWeapons: "weapon",
+  UniqueArmours: "armour",
+  UniqueAccessories: "accessory",
+  UniqueJewels: "jewel",
+  UniqueFlasks: "flask",
+  UniqueCharms: "charm",
+  UniqueSanctumRelics: "relic",
+  UniqueTablets: "tablet",
+};
+export const FAV_CATEGORY = "favorites";
+/** 高騰率 / 下落率で信用しない出品数 (これ未満は後ろ) */
+const THIN_LISTINGS = 3;
+/** 一覧を覚えておく時間 */
+const TTL_MS = 30 * 60 * 1000;
+/** 画面に一度に出す行数 (「もっと見る」で増やす) */
+const LIMIT_STEP = 100;
 
-/** poe2scout の行 → ユニークの行。Name が無い物 (ベースだけの行) は落とす */
-function toRow(it: CurrencyItem): UniqueRow | null {
-  if (it.ApiId || typeof it.CurrentPrice !== "number" || it.CurrentPrice <= 0) return null;
-  const nameEn = it.Name ?? "";
-  if (!nameEn) return null;
-  const baseEn = it.Type ?? (it.Text.startsWith(nameEn) ? it.Text.slice(nameEn.length).trim() : "");
+/** 7 日の変化率 (欠けた日は null) → 折れ線用の値 (100 基準、欠けは前の日で埋める) */
+function sparkOf(data: Array<number | null>): number[] {
+  const out: number[] = [];
+  let last: number | null = null;
+  for (const v of data) {
+    if (v != null) last = 100 + v;
+    if (last != null) out.push(last);
+  }
+  return out;
+}
+
+function toRow(kind: NinjaUniqueKind, l: NinjaLine, exPerDiv: number): UniqueRow | null {
+  if (!l.name || !(l.primaryValue > 0)) return null;
+  const base = l.baseType ?? "";
+  // ルーンの熟達品 (Runemastered …) は出さない (オーナー 2026-09-26「ルーンマスターはいらん」)
+  if (/^Runemastered /.test(base)) return null;
   return {
-    itemId: it.ItemId,
-    nameEn,
-    nameJa: jaUniqueName(nameEn),
-    baseEn,
-    baseJa: baseEn ? jaTypeName(baseEn) : "",
-    category: it.CategoryApiId,
-    icon: it.IconUrl,
-    exalted: it.CurrentPrice,
+    itemId: l.id,
+    kind,
+    nameEn: l.name,
+    nameJa: jaUniqueName(l.name),
+    baseEn: base,
+    baseJa: base ? jaTypeName(base) : "",
+    category: CAT_OF[kind],
+    icon: l.icon,
+    exalted: l.primaryValue * exPerDiv,
+    listings: l.listingCount ?? 0,
+    corrupted: !!l.corrupted,
+    fav: favKey(l.name, base),
   };
 }
 
-/** 点列から 7 日窓の推移を作る (2 点未満なら null)。窓に 2 点無ければ全件で見る */
-export function toTrend(points: HistoryPoint[]): UniqueTrend | null {
-  if (points.length < 2) return null;
-  const cutoff = points[points.length - 1].t - SEVEN_DAYS_MS;
-  const recent = points.filter((p) => p.t >= cutoff);
-  const series = recent.length >= 2 ? recent : points;
-  const first = series[0].price;
-  const last = series[series.length - 1].price;
-  return {
-    spark: series.map((p) => p.price),
-    changePct: first > 0 ? ((last - first) / first) * 100 : 0,
-    qty: series[series.length - 1].qty || null,
-    points,
-  };
-}
-
-/** 固定の並び (件数で毎回変わらないように)。知らないカテゴリは後ろに名前順 */
-const CATEGORY_ORDER = ["weapon", "armour", "accessory", "flask", "jewel", "charm", "relic", "map", "waystone", "sanctum"];
-function catIndex(id: string): number {
-  const i = CATEGORY_ORDER.indexOf(id);
-  return i === -1 ? CATEGORY_ORDER.length : i;
-}
+interface KindCache { at: number; rows: UniqueRow[]; trends: Map<number, UniqueTrend> }
+/** リーグ → 種類 → 一覧 (画面を作り直しても残す) */
+const cache = new Map<string, Map<NinjaUniqueKind, KindCache>>();
 
 export function useUniqueTrend() {
   const categoryFilter = ref<string>("all");
   const searchQuery = ref<string>("");
   const sortKey = ref<SortKey>("price");
-  /** ItemId → 7 日の推移。取った物だけ入る */
-  const trends = reactive(new Map<number, UniqueTrend>());
-  /** 取りに行って取れなかった ItemId (何度も叩かない) */
-  const failed = new Set<number>();
-  const loadingTrends = ref(false);
-  let trendLeague = "";
+  /** 取れた種類の一覧 (取った順に増える) */
+  const byKind = shallowRef(new Map<NinjaUniqueKind, KindCache>());
+  const loading = ref(false);
+  /** 取っている途中の種類 (画面の「◯◯を取得中」) */
+  const loadingKind = ref<NinjaUniqueKind | null>(null);
+  const progress = ref({ done: 0, total: 0 });
+  const error = ref<string | null>(null);
+  const fetchedAt = ref<number | null>(null);
+  let gen = 0;
 
   const league = computed(() => marketStore.league.value?.Value ?? "");
 
-  const rows = computed<UniqueRow[]>(() => {
-    const out: UniqueRow[] = [];
-    for (const it of marketStore.items.value) {
-      const r = toRow(it);
-      if (r) out.push(r);
+  const rows = computed<UniqueRow[]>(() => [...byKind.value.values()].flatMap((c) => c.rows));
+  const trends = computed(() => {
+    const m = new Map<number, UniqueTrend>();
+    for (const c of byKind.value.values()) for (const [k, v] of c.trends) m.set(k, v);
+    return m;
+  });
+
+  const favCount = computed(() => rows.value.filter((r) => uniqueFavorites.set.value.has(r.fav)).length);
+  const categories = computed<CategoryDisplay[]>(() => {
+    const out: CategoryDisplay[] = [{ id: FAV_CATEGORY, count: favCount.value, icon: "", glyph: "♥" }];
+    for (const { kind } of NINJA_UNIQUE_KINDS) {
+      const c = byKind.value.get(kind);
+      // 代表アイコンは一番高い物
+      const top = c?.rows.reduce<UniqueRow | null>((a, b) => (!a || b.exalted > a.exalted ? b : a), null);
+      out.push({ id: CAT_OF[kind], count: c?.rows.length ?? 0, icon: top?.icon ?? "" });
     }
     return out;
   });
 
-  const categories = computed<CategoryDisplay[]>(() => {
-    const acc = new Map<string, { count: number; icon: string; top: number }>();
-    for (const r of rows.value) {
-      const e = acc.get(r.category);
-      // 代表アイコンは一番高い物
-      if (!e) acc.set(r.category, { count: 1, icon: r.icon, top: r.exalted });
-      else {
-        e.count += 1;
-        if (r.exalted > e.top) Object.assign(e, { icon: r.icon, top: r.exalted });
-      }
-    }
-    return Array.from(acc.entries())
-      .map(([id, e]) => ({ id, count: e.count, icon: e.icon }))
-      .sort((a, b) => catIndex(a.id) - catIndex(b.id) || a.id.localeCompare(b.id));
-  });
-
   const filtered = computed<UniqueRow[]>(() => {
     let list = rows.value;
-    if (categoryFilter.value !== "all") list = list.filter((r) => r.category === categoryFilter.value);
+    const cat = categoryFilter.value;
+    if (cat === FAV_CATEGORY) list = list.filter((r) => uniqueFavorites.set.value.has(r.fav));
+    else if (cat !== "all") list = list.filter((r) => r.category === cat);
     const q = searchQuery.value.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) =>
-        [r.nameJa, r.nameEn, r.baseJa, r.baseEn].some((s) => s.toLowerCase().includes(q)),
-      );
-    }
+    if (q) list = list.filter((r) => [r.nameJa, r.nameEn, r.baseJa, r.baseEn].some((s) => s.toLowerCase().includes(q)));
     return list;
   });
 
-  /** 並び替え。推移がまだ無い行は高騰率 / 下落率では後ろ (値段順) */
+  /** 並び替え。高騰率 / 下落率は、1 神未満と出品の少ない物を後ろにする (安い物・薄い物の揺れが上を埋める) */
   const sorted = computed<UniqueRow[]>(() => {
     const list = filtered.value.slice();
-    const pct = (r: UniqueRow) => trends.get(r.itemId)?.changePct;
+    const tr = trends.value;
     switch (sortKey.value) {
       case "name":
         return list.sort((a, b) => a.nameJa.localeCompare(b.nameJa, "ja"));
       case "rise":
       case "fall": {
         const dir = sortKey.value === "rise" ? -1 : 1;
-        // 1 神未満は後ろ (2 → 35 高貴で +1650% のように、安い物の揺れが上を埋めていた。2026-09-26)
         const floor = marketStore.rates.value.divine || 1;
-        const cheap = (r: UniqueRow) => r.exalted < floor;
+        const weak = (r: UniqueRow) => r.exalted < floor || r.listings < THIN_LISTINGS;
         return list.sort((a, b) => {
-          if (cheap(a) !== cheap(b)) return cheap(a) ? 1 : -1;
-          const pa = pct(a);
-          const pb = pct(b);
+          if (weak(a) !== weak(b)) return weak(a) ? 1 : -1;
+          const pa = tr.get(a.itemId)?.changePct;
+          const pb = tr.get(b.itemId)?.changePct;
           if (pa == null || pb == null) return pa == null && pb == null ? b.exalted - a.exalted : pa == null ? 1 : -1;
           return dir * (pa - pb) || b.exalted - a.exalted;
         });
@@ -162,68 +177,87 @@ export function useUniqueTrend() {
     }
   });
 
-  /**
-   * 推移を取るのは値段の高い順に上から LIMIT 件まで (「もっと見る」で増やす)。2026-09-26: 全件 (数百件) を開くたびに
-   * poe2scout へ 1 件ずつ取りに行っていた。高騰率 / 下落率の並びも、この取れた範囲の中で並べる
-   */
-  const LIMIT_STEP = 50;
   const limit = ref(LIMIT_STEP);
-  const byPrice = computed(() => filtered.value.slice().sort((a, b) => b.exalted - a.exalted));
-  const inScope = computed(() => new Set(byPrice.value.slice(0, limit.value).map((r) => r.itemId)));
-  /** 画面に出す行 (取る範囲の中を並び替えた物) */
-  const shown = computed(() => sorted.value.filter((r) => inScope.value.has(r.itemId)));
+  const shown = computed(() => sorted.value.slice(0, limit.value));
   function more(): void {
     limit.value += LIMIT_STEP;
-    void loadVisibleTrends();
   }
-  /** 表示中の行の推移を並列で取る (取得済み / 失敗済みは飛ばす)。リーグが変わったら止める */
-  async function loadVisibleTrends(): Promise<void> {
+
+  /** 種類を順に取る (覚えている物で新しい物は飛ばす)。今見ているカテゴリの種類から先に */
+  async function fetchAll(force: boolean): Promise<void> {
     const lg = league.value;
     if (!lg) return;
-    if (trendLeague !== lg) {
-      trends.clear();
-      failed.clear();
-      trendLeague = lg;
+    const my = ++gen;
+    let lcache = cache.get(lg);
+    if (!lcache) {
+      lcache = new Map();
+      cache.set(lg, lcache);
     }
-    const todo = [...inScope.value].filter((id) => !trends.has(id) && !failed.has(id));
-    if (!todo.length || loadingTrends.value) return;
-    loadingTrends.value = true;
-    let idx = 0;
-    const worker = async () => {
-      while (idx < todo.length) {
-        const id = todo[idx++];
-        if (league.value !== lg) return;
-        const pts = await fetchItemHistory(lg, id);
-        const t = pts ? toTrend(pts) : null;
-        if (league.value !== lg) return;
-        if (t) trends.set(id, t);
-        else failed.add(id);
-      }
-    };
+    const lc = lcache;
+    byKind.value = new Map(lc);
+    const first = (k: NinjaUniqueKind) => Number(CAT_OF[k] === categoryFilter.value);
+    const want = NINJA_UNIQUE_KINDS.map((k) => k.kind).sort((a, b) => first(b) - first(a));
+    const todo = want.filter((k) => force || !lc.has(k) || Date.now() - lc.get(k)!.at > TTL_MS);
+    if (!todo.length) {
+      fetchedAt.value = Math.min(...[...lc.values()].map((c) => c.at));
+      return;
+    }
+    loading.value = true;
+    error.value = null;
+    progress.value = { done: 0, total: todo.length };
     try {
-      await Promise.all(Array.from({ length: Math.min(CONC, todo.length) }, () => worker()));
+      for (const kind of todo) {
+        if (my !== gen) return;
+        loadingKind.value = kind;
+        progress.value = { done: todo.indexOf(kind), total: todo.length };
+        try {
+          const ov = await fetchNinjaOverview(lg, kind);
+          if (my !== gen) return;
+          const exPerDiv = ov.exaltedPerDivine || marketStore.rates.value.divine || 1;
+          const kRows: UniqueRow[] = [];
+          const kTrends = new Map<number, UniqueTrend>();
+          for (const l of ov.lines) {
+            const r = toRow(kind, l, exPerDiv);
+            if (!r) continue;
+            kRows.push(r);
+            const spark = l.sparkLine ? sparkOf(l.sparkLine.data) : [];
+            if (spark.length >= 2) kTrends.set(r.itemId, { spark, changePct: l.sparkLine!.totalChange, qty: r.listings, points: [] });
+          }
+          lc.set(kind, { at: Date.now(), rows: kRows, trends: kTrends });
+          byKind.value = new Map(lc);
+        } catch (e) {
+          error.value = `${NINJA_UNIQUE_KINDS.find((k) => k.kind === kind)?.ja ?? kind}: ${String(e)}`;
+        }
+      }
+      fetchedAt.value = Date.now();
     } finally {
-      loadingTrends.value = false;
+      if (my === gen) {
+        loading.value = false;
+        loadingKind.value = null;
+      }
     }
-    // 取っている間に絞り込みが変わっていたら残りを取る
-    if ([...inScope.value].some((id) => !trends.has(id) && !failed.has(id))) void loadVisibleTrends();
   }
 
-  /** 開いた時: 相場ストアが古ければ取り直し、表示中の推移を取る */
+  /** 開いた時: リーグと換算レート (相場ストア) を揃えてから一覧を取る */
   async function load(): Promise<void> {
     await marketStore.ensureMarket();
-    void loadVisibleTrends();
+    await fetchAll(false);
   }
 
-  /** 更新ボタン: 価格表も推移も取り直す */
+  /** 更新ボタン: 全部取り直す */
   async function refresh(): Promise<void> {
-    await marketStore.refreshMarket();
-    trends.clear();
-    failed.clear();
-    void loadVisibleTrends();
+    await fetchAll(true);
   }
 
-  watch([categoryFilter, searchQuery], () => { limit.value = LIMIT_STEP; void loadVisibleTrends(); });
+  watch([categoryFilter, searchQuery], () => (limit.value = LIMIT_STEP));
+  watch(league, () => void fetchAll(false));
+
+  const loadingLabel = computed(() => {
+    const k = loadingKind.value;
+    if (!k) return null;
+    const ja = NINJA_UNIQUE_KINDS.find((x) => x.kind === k)?.ja ?? k;
+    return `${ja}を取得中 (${progress.value.done + 1}/${progress.value.total})`;
+  });
 
   return {
     league,
@@ -235,7 +269,10 @@ export function useUniqueTrend() {
     limit,
     more,
     trends,
-    loadingTrends,
+    loading,
+    loadingLabel,
+    error,
+    fetchedAt,
     categoryFilter,
     searchQuery,
     sortKey,

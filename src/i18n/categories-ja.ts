@@ -58,6 +58,7 @@ const categoryJaMap: Record<string, string> = {
   relic: "レリック",
   charm: "チャーム",
   waystone: "ウェイストーン",
+  favorites: "お気に入り",
 
   // === ジェム系（参考、Currency Exchange に通常無いが将来用） ===
   "skill-gem": "スキルジェム",

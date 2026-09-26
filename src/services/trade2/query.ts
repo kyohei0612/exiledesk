@@ -335,11 +335,13 @@ export function buildSpecQuery(o: SpecQueryOptions) {
 }
 
 /** ユニーク名で絞り込む検索クエリ */
-export function buildUniqueNameQuery(nameEn: string, opts: { noCorrupted?: boolean } = {}) {
+export function buildUniqueNameQuery(nameEn: string, opts: { noCorrupted?: boolean; baseType?: string } = {}) {
   return {
     query: {
       status: { option: SecurityStatus.Securable },
       name: { discriminator: null, option: nameEn },
+      // baseType: ルーンの熟達品 (Runemastered …) は同じ名前の別物なのでベースも絞る (poe.ninja の行ごと。2026-09-26)
+      ...(opts.baseType ? { type: opts.baseType } : {}),
       // noCorrupted: コラプト品は外す (ユニーク装備価格推移で最安がコラプト品になっていた。2026-09-26)
       filters: { type_filters: { filters: { rarity: { option: Rarity.Unique } } }, ...(opts.noCorrupted ? { misc_filters: { filters: { corrupted: { option: "false" } } } } : {}) },
     },

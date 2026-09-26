@@ -53,6 +53,7 @@ use crate::craft_v2_storage::{
 mod ascendancy_fetch;
 mod cache_convert;
 mod config;
+mod economy;
 mod http;
 mod leagues;
 mod metrics;
@@ -71,6 +72,7 @@ mod tests;
 pub(crate) use ascendancy_fetch::*;
 pub(crate) use cache_convert::*;
 pub(crate) use config::*;
+pub use economy::*;
 pub(crate) use http::*;
 pub use leagues::*;
 pub(crate) use metrics::*;

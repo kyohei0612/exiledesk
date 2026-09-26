@@ -50,7 +50,7 @@ export function useUniqueHover(deps: {
     try {
       // 正式名 (representative.name) を優先、無ければ typeLine、それも 400 なら baseType で fallback
       const tradeName = u.representative?.name || u.nameEn;
-      await openTrade2ForUnique({ nameEn: tradeName, league: deps.leagueName(), baseType: u.representative?.baseType });
+      await openTrade2ForUnique({ nameEn: tradeName, league: deps.leagueName() });
     } catch (e) {
       console.warn("[CraftDiscoveryV2B] unique trade2 search failed:", e);
       pushWarn("warn", "trade2 検索失敗: " + (e instanceof Error ? e.message : String(e)), "trade2-search");

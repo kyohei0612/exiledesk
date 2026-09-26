@@ -50,7 +50,8 @@ const btnIdle = "border-transparent hover:bg-[var(--exile-color-bg-elevated)]";
         @click="categoryFilter = cat.id"
         :class="[btnBase, categoryFilter === cat.id ? btnActive : btnIdle]"
       >
-        <img v-if="cat.icon" :src="cat.icon" :alt="cat.id" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
+        <span v-if="cat.glyph" class="w-6 h-6 inline-flex items-center justify-center text-base text-[#e25c6a]">{{ cat.glyph }}</span>
+        <img v-else-if="cat.icon" :src="cat.icon" :alt="cat.id" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
         <span v-else class="w-6 h-6 inline-flex items-center justify-center text-base">·</span>
         <span class="truncate">{{ jaCategory(cat.id) }}</span>
         <span class="ml-auto text-[10px] text-[var(--exile-color-text-secondary)] tabular-nums">{{ cat.count }}</span>

@@ -18,6 +18,7 @@ import type { RankedItem } from "../api/poe2scout";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import RateHeader from "../components/currency/RateHeader.vue";
 import RankingTable from "../components/currency/RankingTable.vue";
+import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import EffectHoverCard from "../components/currency/EffectHoverCard.vue";
 import { effectFor, formatEpoch, formatTime } from "./currency/format";
 import { useCurrencyRanking } from "./currency/useCurrencyRanking";
@@ -75,6 +76,7 @@ onActivated(() => {
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
+          <CurrencyPicker />
           <select
             v-model="r.league.value"
             @change="r.onLeagueChange"
@@ -154,7 +156,7 @@ onActivated(() => {
         Powered by
         <a href="https://poe2scout.com" target="_blank" class="hover:text-[var(--exile-color-accent-focus)] underline">poe2scout</a>
         / <span class="font-mono">{{ r.league.value }}</span>
-        / 各列は「1 アイテム = X 神 / 高貴 / カオス」
+        / 値段は選んだ表示通貨 (1 未満なら 神 → カオス → 高貴 と下げる)
       </p>
     </div>
 

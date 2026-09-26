@@ -43,13 +43,13 @@ export async function openTrade2ForSelectedMods(args: {
 export async function openTrade2ForUnique(args: {
   nameEn: string;
   league: string;
-  /** 互換のため残置 (未使用)。名前が未登録ならサイト側で直してもらう */
+  /** ベースも絞る (ルーンの熟達品は同じ名前の別物。2026-09-26) */
   baseType?: string;
   /** コラプト品を外す (ユニーク装備価格推移) */
   noCorrupted?: boolean;
 }): Promise<{ openedUrl: string }> {
   if (!isTauriRuntime()) throw new Error(TAURI_ONLY);
-  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), buildUniqueNameQuery(args.nameEn, { noCorrupted: args.noCorrupted }));
+  const url = trade2QueryUrl(snapshotNameToTradeLeague(args.league), buildUniqueNameQuery(args.nameEn, { noCorrupted: args.noCorrupted, baseType: args.baseType }));
   await openUrl(url);
   return { openedUrl: url };
 }

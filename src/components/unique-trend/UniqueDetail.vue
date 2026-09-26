@@ -13,7 +13,7 @@ import type { UniqueRow, UniqueTrend } from "../../views/unique-trend/useUniqueT
 const props = defineProps<{ row: UniqueRow; trend: UniqueTrend | undefined }>();
 const d = useUniqueDetail(toRef(props, "row"), toRef(props, "trend"));
 
-const money = (ex: number | null | undefined) => displayCurrency.money(ex, { ladder: "top" });
+const money = (ex: number | null | undefined) => displayCurrency.money(ex);
 function fmtDay(t: number): string {
   return new Date(t).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
@@ -29,7 +29,7 @@ function fmtClock(t: number): string {
         <div class="flex items-baseline gap-3 mb-6">
           <span class="text-sm text-[var(--exile-color-text-secondary)]">価格の推移</span>
           <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-            poe2scout の記録 {{ d.points.value.length }} 点<span v-if="d.loadingLong.value"> · 長い履歴を読込中…</span>
+            poe.ninja の日ごとの記録 {{ d.points.value.length }} 日分<span v-if="d.loadingLong.value"> · 読込中…</span>
           </span>
         </div>
         <LineChart :points="d.points.value" :format="money" />
