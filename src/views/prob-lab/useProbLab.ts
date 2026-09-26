@@ -20,15 +20,10 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { marketStore } from "../../state/market-store";
 import { displayCurrency } from "../../state/display-currency";
 import itemsJaClient from "../../i18n/items-ja-client.json";
-import type { Side } from "../../services/htc/step-odds";
+import { tierWeight, type Side } from "../../services/htc/step-odds";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import { OMEN, BREACH_FAMILY } from "../../services/htc/omens";
 
-const OMEN_EX: Record<Side, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
-const OMEN_AN: Record<Side, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
-const OMEN_CR: Record<Side, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
-const OMEN_NE: Record<Side, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
-const OMEN_ER: Record<Side, string> = { prefix: "OmenofSinistralErasure", suffix: "OmenofDextralErasure" };
-const BREACH_FAMILY = "LocalMaximumQuality";
 
 export interface LabRow {
   key: string;
@@ -142,9 +137,9 @@ export function useProbLab() {
     const sideJa = side === "prefix" ? "左側" : "右側";
     const list: Array<[string, string]> = [
       ["神のオーブ", "divine"], ["完全の高貴", "exalt_perfect"], ["上級の高貴", "exalt_greater"], ["高貴", "exalt"], ["カオス", "chaos"], ["消去", "annul"],
-      [`${sideJa}の高貴なお告げ`, OMEN_EX[side]], [`${sideJa}の消去のお告げ`, OMEN_AN[side]], [`${sideJa}の抹消のお告げ`, OMEN_ER[side]], ["触媒の高貴のお告げ", "OmenofCatalysingExaltation"],
+      [`${sideJa}の高貴なお告げ`, OMEN.exalt[side]], [`${sideJa}の消去のお告げ`, OMEN.annul[side]], [`${sideJa}の抹消のお告げ`, OMEN.erasure[side]], ["触媒の高貴のお告げ", "OmenofCatalysingExaltation"],
       ...(m ? catalystsFor(m).map((c) => [`${c.tag} のカタリスト`, catalystPriceKey(c.tag)] as [string, string]) : []),
-      ["普通の骨", "desecrate"], ["古代の骨", "desecrate_ancient"], [`${sideJa}のネクロマンシー`, OMEN_NE[side]], ["反響のお告げ", "OmenofAbyssalEchoes"], ["光のお告げ", "OmenofLight"], [`${sideJa}の結晶化`, OMEN_CR[side]],
+      ["普通の骨", "desecrate"], ["古代の骨", "desecrate_ancient"], [`${sideJa}のネクロマンシー`, OMEN.necromancy[side]], ["反響のお告げ", "OmenofAbyssalEchoes"], ["光のお告げ", "OmenofLight"], [`${sideJa}の結晶化`, OMEN.crystallisation[side]],
     ];
     return list.map(([name, k]) => ({ name, price: cur(k) })).filter((x) => Number.isFinite(x.price));
   });
@@ -157,7 +152,7 @@ export function useProbLab() {
     const side: Side = m.type === "prefix" ? "prefix" : "suffix";
     const key = side === "prefix" ? "prefixes" : "suffixes";
     const lv = itemLevel.value, tmin = minTier.value;
-    const w = (x: Mod, minIdx: number, floor: number): number => x.tiers.reduce((s, t, i) => s + (i >= minIdx && t.ilvl <= lv && t.ilvl >= floor ? t.weight : 0), 0);
+    const w = (x: Mod, minIdx: number, floor: number): number => tierWeight(x, minIdx, lv, floor);
     const poolW = (floor: number, desec: boolean, tag: string | null, mult: number): number =>
       [...c.pools.normal[key], ...(desec ? c.pools.desecrated[key] : [])].reduce((s, id) => {
         const x = d.mods.get(id);
@@ -170,7 +165,7 @@ export function useProbLab() {
     const redo = redoOthersDivine.value * div;
     const first = missMode.value === "first" && others === 0;
     // 外れ 1 回 = 1 MOD 目なら素の消去 (確定)。それ以外はその側の消去のお告げ + 消去。他の狙いがあれば巻き込む分
-    const annulMiss = first ? cur("annul") : cur("annul") + cur(OMEN_AN[side]) + (others > 0 ? (others / (others + 1)) * redo : 0);
+    const annulMiss = first ? cur("annul") : cur("annul") + cur(OMEN.annul[side]) + (others > 0 ? (others / (others + 1)) * redo : 0);
     const reach = Math.max(...m.tiers.filter((_, i) => i >= tmin).map((t) => t.ilvl), 0);
     const baseQ = maxQualityForBase(baseName.value);
     const out: LabRow[] = [];
@@ -197,7 +192,7 @@ export function useProbLab() {
         const otherW = first ? otherPoolW(floor) : 0;
         const pHit = (w(m, tmin, floor) * mult) / (poolW(floor, false, v.tag, mult) + otherW);
         const refill = v.tag ? cur("OmenofCatalysingExaltation") + catalystCountFor(v.q) * cur(catalystPriceKey(v.tag)) : 0;
-        const perTry = cur(orb) + (first ? 0 : cur(OMEN_EX[side])) + refill;
+        const perTry = cur(orb) + (first ? 0 : cur(OMEN.exalt[side])) + refill;
         const tries = 1 / pHit;
         const nodes: SimNode[] = [
           ...(v.tag ? [{ ...base, id: "q", action: { kind: "quality" as const, catalyst: v.tag }, onHit: "e", onMiss: null }] : []),
@@ -219,12 +214,12 @@ export function useProbLab() {
       if (reach < floor) { out.push({ key: bone, method: `冒涜 (${label})`, detail: "段が届かない", p: 0, perTry: 0, perMiss: 0, safe: true, expected: Infinity, why: "段が届かない", nodes: [], start: startOf({}) }); continue; }
       const p1 = w(m, tmin, floor) / poolW(floor, true, null, 1);
       const pHit = 1 - (1 - p1) ** 6;
-      const perTry = cur(bone) + cur(OMEN_NE[side]) + cur("OmenofAbyssalEchoes");
+      const perTry = cur(bone) + cur(OMEN.necromancy[side]) + cur("OmenofAbyssalEchoes");
       const canOw = limits.value[side] === 2 && others === 0 && !!ess;
       for (const rr of ["light", "overwrite"] as const) {
         if (rr === "overwrite" && !canOw) { out.push({ key: `${bone}:ow`, method: `冒涜 (${label}) + 天体で上書き`, detail: "枠 2 つで残りがフラクチャーの側だけ", p: pHit, perTry, perMiss: 0, safe: true, expected: Infinity, why: "この形では使えない", nodes: [], start: startOf({}) }); continue; }
         // 1 MOD 目なら冒涜の外れも素の消去で確定 (光は要らない)
-        const perMiss = rr === "light" ? (first ? cur("annul") : cur("OmenofLight") + cur("annul")) : cur(OMEN_CR[side]) + ess!.price;
+        const perMiss = rr === "light" ? (first ? cur("annul") : cur("OmenofLight") + cur("annul")) : cur(OMEN.crystallisation[side]) + ess!.price;
         const tries = 1 / pHit;
         const nodes: SimNode[] = rr === "light" ? [
           { ...base, id: "d", action: { kind: "desecrate", side, bone, echoes: true }, targets: target, onHit: "done", onMiss: "l" },
@@ -245,7 +240,7 @@ export function useProbLab() {
       out.push({ key: orb, method: `${label} (何も付いていない状態で打ち続ける)`, detail: "外れは打ち直し。両側に出るので半々", p: pHit, perTry, perMiss: 0, safe: others === 0, expected: perTry / pHit,
         nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: orb }, targets: target, onHit: "done", onMiss: "c" }], start: { slots: [{ modId: null, side, fixed: false }], breach: false } });
       const pErs = w(m, tmin, floor) / poolW(floor, false, null, 1);
-      const perTry2 = cur(orb) + cur(OMEN_ER[side]);
+      const perTry2 = cur(orb) + cur(OMEN.erasure[side]);
       out.push({ key: `${orb}:erasure`, method: `${label} + ${side === "prefix" ? "左側" : "右側"}の抹消のお告げ`, detail: "その側だけ入れ替える (反対側は埋まっている)", p: pErs, perTry: perTry2, perMiss: 0, safe: others === 0, expected: perTry2 / pErs,
         nodes: [{ ...base, id: "c", action: { kind: "chaos", tier: orb, side }, targets: target, onHit: "done", onMiss: "c" }], start: startOf({ slots: [...otherFull, { modId: null, side, fixed: false }] }) });
     }

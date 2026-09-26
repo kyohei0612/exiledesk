@@ -3,20 +3,15 @@
  *
  * 死体の円環 (ニーモニックリング、品質 40%) の途中:
  *   樹 MOD (プレ、固定済み) + キャスピ + 全耐性 + ブリーチの MOD、次に知性を狙う
- * スパムの組み立て ([[spam-phase.ts]]) の同じ状態の手 (完全の高貴 + 右側の高貴なお告げ + 触媒 + 適応) と
- * 同じ確率 (19%) が出ること。一番安い手が適応のカタリストの高貴であること (外れの消去込みの平均で並べる)。
+ * 同じ状態の手 (完全の高貴 + 右側の高貴なお告げ + 触媒 + 適応) が 19% (前のスパムの組み立てと同じ確率) になること。一番安い手が適応のカタリストの高貴であること (外れの消去込みの平均で並べる)。
  * 外れを消す手・カオス・エッセンス・冒涜も出ること。
  */
-import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { D, prices } from "./_htc-test-prices.mjs";
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 let failed = 0;
 const fail = (m) => { console.log(`   NG: ${m}`); failed++; };
 const data = M.loadPatchSync();
-const D = 506;
-const src = readFileSync("scripts/check-htc-spam-plan.mjs", "utf8");
-const a = src.indexOf("const div = (v)"), b = src.indexOf("const it = M.parseJaItem");
-const prices = new Function("D", src.slice(a, b) + "; return prices;")(D);
 const cls = M.itemBaseFor(data, "Mnemonic Ring");
 const h = M.stepHelpers({ data, cls, prices, itemLevel: 80, limits: { prefix: 3, suffix: 3 }, catalystOk: (tag) => (prices.currency[`catalyst_${tag}`] ?? Infinity) / D < 0.2 });
 const state = { breach: true, slots: [
@@ -30,9 +25,9 @@ for (const m of ms.slice(0, 5)) console.log(`   ${m.label}: 1 回 ${(m.p * 100).
 const best = ms[0];
 if (!best || best.kind !== "exalt" || !best.label.includes("適応")) fail("一番安い手が適応のカタリストの高貴になっていない: " + best?.label);
 if (!(best?.loseRisk > 0)) fail("外れた後の消去で狙いが消える確率が出ていない");
-// 同じ手 (完全 + 右側 + 適応) の確率はスパムの組み立て ([[spam-phase.ts]]) の 19% と同じ
+// 同じ手 (完全 + 右側 + 適応) の確率は 19% (前のスパムの組み立てで出ていた値)
 const same = ms.find((m) => m.label.startsWith("高貴なオーブ (完全) + 右側の高貴なお告げ + 触媒の高貴のお告げ + 適応"));
-if (!same || Math.abs(same.p - 0.19) > 0.01) fail(`完全 + 適応の知性の確率が ${same ? (same.p * 100).toFixed(1) : "-"}% (スパムの組み立ては 19%)`);
+if (!same || Math.abs(same.p - 0.19) > 0.01) fail(`完全 + 適応の知性の確率が ${same ? (same.p * 100).toFixed(1) : "-"}% (19% のはず)`);
 if (!ms.some((m) => m.kind === "chaos" && m.note)) fail("カオスの手 (付いた狙いが消えうる断り付き) が無い");
 if (!ms.some((m) => m.kind === "desecrate")) fail("冒涜の手が無い");
 // エッセンス: 最大マナ% はプレ。プレの外せる物はブリーチの MOD だけ

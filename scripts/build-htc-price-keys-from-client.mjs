@@ -56,7 +56,7 @@ const CURRENCY = {
   vaal: "Metadata/Items/Currency/CurrencyCorrupt",
   divine: "Metadata/Items/Currency/CurrencyModValues",
   // 2026-09-22: レアの MOD 1 個をランダムに固定する。エンジンの通貨ではないが
-  // ([[fracture-route.ts]] が自前で扱う)、値段は同じ表から引きたいのでここに置く
+  // ([[tree-decide.ts]] / [[self-fracture.ts]] が自前で扱う)、値段は同じ表から引きたいのでここに置く
   fracture: "Metadata/Items/Currency/CurrencyFractureRare",
 };
 
@@ -95,7 +95,7 @@ const catalystKeys = (B, catalysts) => {
   return { out, unmatched };
 };
 
-/** 最大品質を上げるエッセンス ([[lingering.ts]])。指輪 / アミュレット専用 */
+/** 最大品質を上げるエッセンス。指輪 / アミュレット専用 */
 const EXTRA = {
   "essence:breach": "Metadata/Items/Currency/CurrencyCorruptedEssenceBreach",
 };

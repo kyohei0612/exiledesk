@@ -9,7 +9,7 @@
  */
 import { computed, ref, shallowRef, watch } from "vue";
 import { CERTAIN, simHelpers, simulateTreeChunked, type SimNode, type SimResult, type SimState } from "../../services/htc/sim-route";
-import { mulberry32 } from "../../services/htc/spam-total";
+import { mulberry32 } from "../../services/htc/rng";
 import { simCtxOf, startStateOf } from "./sim-setup";
 import type { Side } from "../../services/htc/step-odds";
 import type { useHtcCraft } from "./useHtcCraft";

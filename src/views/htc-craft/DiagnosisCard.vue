@@ -288,7 +288,7 @@ const fixLabel = computed(() => {
           <!-- 作る側: 始め方 (固定済みを買って途中から作る / 自分でフラクチャーして作る の中身) -->
           <div class="rounded-lg border border-white/10 bg-black/20 p-2">
             <p class="mb-1 font-bold text-amber-100">作るなら: 一番安い始め方</p>
-            <StartResults v-if="show2" :c="c" :ss="ss" embedded />
+            <StartResults v-if="show2" :c="c" :ss="ss" />
             <p v-else class="opacity-50">{{ ss.kind.value.kind === "unsafe" ? "クラフト非推奨なので、始め方はありません" : "始め方は取れていません" }}</p>
           </div>
           <!-- 買う側: 完成品 -->

@@ -6,12 +6,11 @@
  * 付けた物が消える分は入らないので安めに出る。
  */
 import { sideLimits } from "../../services/htc/bridge";
-import { catalystPriceKey } from "../../services/htc/catalysing";
-import { stepHelpers, type ItemState, type Side } from "../../services/htc/step-odds";
+import { stepHelpers, tierWeight, type ItemState, type Side } from "../../services/htc/step-odds";
 import { shallowRef } from "vue";
 import { simulateTreeChunked } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
-import { simCtxOf, startStateOf } from "./sim-setup";
+import { catalystOk, simCtxOf, startStateOf } from "./sim-setup";
 import { startKindOf } from "./start-kind";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -89,7 +88,7 @@ export function stepsEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
   const baseType = c.item.value?.baseType ?? zeroStart.value.baseType;
   const h = stepHelpers({
     data: d, cls, prices: p, itemLevel: c.item.value?.itemLevel ?? zeroStart.value.itemLevel, limits: sideLimits(d, baseType),
-    catalystOk: (tag) => c.catalystChoice.value[tag] ?? (p.currency[catalystPriceKey(tag)] ?? Infinity) / (p.currency.divine ?? 1) < 0.2,
+    catalystOk: catalystOk(p),
   });
   const fixed = new Set(fixedIds);
   const sideOf = (id: string): Side => d.mods.get(id)!.type as Side;
@@ -113,8 +112,10 @@ export function spawnChance(c: ReturnType<typeof useHtcCraft>, modId: string, mi
   const m = d?.mods.get(modId);
   if (!d || !cls || !m || m.source !== "normal") return null;
   const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
-  const w = (id: string, minIdx: number): number =>
-    (d.mods.get(id)?.tiers ?? []).reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= lv ? t.weight : 0), 0);
+  const w = (id: string, minIdx: number): number => {
+    const x = d.mods.get(id);
+    return x ? tierWeight(x, minIdx, lv) : 0;
+  };
   const pool = (cls.pools.normal[m.type === "prefix" ? "prefixes" : "suffixes"] ?? []).reduce((a, id) => a + w(id, 0), 0);
   return pool > 0 ? w(modId, minTierIndex) / pool : null;
 }

@@ -11,21 +11,30 @@ import { startKindOf } from "./start-kind";
 import { htcModSides } from "../../services/htc/patch";
 import { matchKey } from "../../services/htc/bridge-index";
 import { zeroStart } from "./craft-settings";
+import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { useHtcCraft } from "./useHtcCraft";
 
 type C = ReturnType<typeof useHtcCraft>;
+
+/** カタリスト 1 個がこれ (神) 以上なら使わない。軽快 0.35 / 歯擦音 0.97 / 強奪者 0.37 (2026-09-23) */
+export const PRICEY_CATALYST_DIVINE = 0.2;
+
+/** そのカタリスト (タグ) を使うか。値段だけで決める (相場に無い物は使わない) */
+export function catalystOk(p: Prices): (tag: string) => boolean {
+  const div = p.currency.divine ?? 1;
+  return (tag) => (p.currency[catalystPriceKey(tag)] ?? Infinity) / div < PRICEY_CATALYST_DIVINE;
+}
 
 /** シミュレーターの設定。データ・ベース・相場が揃っていなければ null */
 export function simCtxOf(c: C) {
   const d = c.data.value, cls = c.base.value, p = c.prices.value;
   if (!d || !cls || !p) return null;
   const it = c.item.value;
-  const div = p.currency.divine ?? 1;
   return {
     data: d, cls, prices: p,
     itemLevel: it ? it.itemLevel ?? 82 : zeroStart.value.itemLevel,
     limits: sideLimits(d, it ? it.baseType : zeroStart.value.baseType),
-    catalystOk: (tag: string) => c.catalystChoice.value[tag] ?? (p.currency[catalystPriceKey(tag)] ?? Infinity) / div < 0.2,
+    catalystOk: catalystOk(p),
     // ベースの品質の上限 (ブリーチの指輪 +20% など)。ブリーチの MOD が付けばさらに +20%
     baseQuality: maxQualityForBase((it ? it.baseType : zeroStart.value.baseType) ?? ""),
   };

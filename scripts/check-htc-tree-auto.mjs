@@ -2,20 +2,16 @@
 /**
  * check-htc-tree-auto.mjs — 貼った MOD から自動で組むツリー (tree-auto.ts) を実物 3 つで回す (2026-09-24)
  *
- * 取引所は叩かない (値段は check-htc-spam-plan の固定値)。**組み方の流れを見るので、狙いの段は問わない (T 何でも)**。
+ * 取引所は叩かない (値段は _htc-test-prices.mjs の固定値)。**組み方の流れを見るので、狙いの段は問わない (T 何でも)**。
  * 貼り付けの段 (T1 など) のままだと、揃うまでに手数の上限を超える物がある (金の指輪の回避 T1 + レアリティ T1)。見ること:
  *   - 最後まで行ける (完成 95% 以上)
  *   - 触らない MOD (樹 MOD) が消えて止まる回が無い (側を選べる手だけで組んでいるので)
  *   node scripts/check-htc-tree-auto.mjs
  */
-import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { D, prices } from "./_htc-test-prices.mjs";
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();
-const D = 506;
-const src = readFileSync("scripts/check-htc-spam-plan.mjs", "utf8");
-const a = src.indexOf("const div = (v)"), b = src.indexOf("const it = M.parseJaItem");
-const prices = new Function("D", src.slice(a, b) + "; return prices;")(D);
 const NL = String.fromCharCode(10);
 let failed = 0;
 

@@ -13,16 +13,12 @@
  *   9. 消去                                                       → 8
  * 最後まで行けること、平均が有限で、予算内の確率が 0〜1、行き先が未設定の手で止まることを見る。
  */
-import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { D, prices } from "./_htc-test-prices.mjs";
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 let failed = 0;
 const fail = (m) => { console.log(`   NG: ${m}`); failed++; };
 const data = M.loadPatchSync();
-const D = 506;
-const src = readFileSync("scripts/check-htc-spam-plan.mjs", "utf8");
-const a = src.indexOf("const div = (v)"), b = src.indexOf("const it = M.parseJaItem");
-const prices = new Function("D", src.slice(a, b) + "; return prices;")(D);
 const cls = M.itemBaseFor(data, "Mnemonic Ring");
 const ctx = { data, cls, prices, itemLevel: 80, limits: { prefix: 3, suffix: 3 }, catalystOk: () => true };
 const start = { breach: false, slots: [{ modId: null, side: "prefix", fixed: true, label: "樹 MOD" }, { modId: null, side: "suffix", fixed: false }] };

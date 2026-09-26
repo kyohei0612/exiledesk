@@ -17,8 +17,9 @@
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { catalystsFor } from "./quality";
-import { mulberry32 } from "./spam-total";
-import type { Side, StepCtx } from "./step-odds";
+import { mulberry32 } from "./rng";
+import { tierWeight, type Side, type StepCtx } from "./step-odds";
+import { OMEN } from "./omens";
 
 export type SimAction =
   /** side = 抹消のお告げ (次のカオスが消すのをその側だけに。足す側は選べない、枠の空いている側に付く) */
@@ -149,13 +150,6 @@ export interface SimResult {
 }
 
 const FLOOR: Record<string, number> = { chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50 };
-const OMEN_EX: Record<Side, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
-/** 抹消のお告げ = 次のカオスが消すのをその側だけに (poe2db で確認 2026-09-24) */
-const OMEN_ER: Record<Side, string> = { prefix: "OmenofSinistralErasure", suffix: "OmenofDextralErasure" };
-/** 消去のお告げ = 次の消去がその側だけを消す。前は消去の値段に抹消 (カオス用) のお告げを使っていた */
-const OMEN_AN: Record<Side, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
-const OMEN_CR: Record<Side, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
-const OMEN_NE: Record<Side, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
 const SIDES: Side[] = ["prefix", "suffix"];
 
 /**
@@ -181,8 +175,7 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
-  const sw = (m: Mod, minIdx: number, floor: number): number =>
-    m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
+  const sw = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   const count = (s: SimState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
   const room = (s: SimState, side: Side): boolean => count(s, side) < ctx.limits[side];
   const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => (x.modId ? [mod(x.modId)?.family ?? ""] : [])));
@@ -314,22 +307,22 @@ function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly Si
   /** 1 回の値段 */
   function priceOf(s: SimState, a: SimAction): number {
     switch (a.kind) {
-      case "chaos": return cur(a.tier) + (a.side ? cur(OMEN_ER[a.side]) : 0);
-      case "exalt": return cur(a.tier) + (a.side ? cur(OMEN_EX[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
+      case "chaos": return cur(a.tier) + (a.side ? cur(OMEN.erasure[a.side]) : 0);
+      case "exalt": return cur(a.tier) + (a.side ? cur(OMEN.exalt[a.side]) : 0) + (greaterOn(s, a) ? cur("OmenofGreaterExaltation") : 0)
         // 触媒の高貴のお告げは品質を全部使う (ゲーム内の文面)。2 回目からは上限まで入れ直す分も掛かる
         + (a.catalyst ? cur("OmenofCatalysingExaltation") + catalystCountFor(s.quality == null ? quality(s) : Math.max(0, quality(s) - catalystQuality(s, a.catalyst))) * cur(catalystPriceKey(a.catalyst)) : 0);
-      case "annul": return cur("annul") + (a.side ? cur(OMEN_AN[a.side]) : 0);
+      case "annul": return cur("annul") + (a.side ? cur(OMEN.annul[a.side]) : 0);
       case "essence": {
         const rs = removeSideOf(s, a);
-        return cur(`essence:perfect:${a.modId}`) + cur(OMEN_CR[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN_EX[rs]));
+        return cur(`essence:perfect:${a.modId}`) + cur(OMEN.crystallisation[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN.exalt[rs]));
       }
-      case "desecrate": return cur(a.bone) + cur(OMEN_NE[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
+      case "desecrate": return cur(a.bone) + cur(OMEN.necromancy[a.side]) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0);
       case "light": return cur("annul") + cur("OmenofLight");
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
       case "breach": {
         const rs = a.removeSide ?? "prefix";
-        return cur("essence:breach") + cur(OMEN_CR[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN_EX[rs]));
+        return cur("essence:breach") + cur(OMEN.crystallisation[rs]) + (removable(s, rs).length ? 0 : cur("exalt") + cur(OMEN.exalt[rs]));
       }
       case "whittle": return cur("chaos") + cur("OmenofWhittling");
       case "check": return 0;

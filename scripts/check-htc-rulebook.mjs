@@ -51,33 +51,6 @@ const pairs = dup.filter(([, ks]) => ks.length === 2 && norm(ks[0]) === norm(ks[
 claim("buy-or-craft.ts", "同じ取引所 stat に落ちる対応", dup.length, 31);
 claim("buy-or-craft.ts", "うち min-max の対", pairs.length, 17);
 
-// essence-route.ts:「通常 MOD 1,274 件のうち 303 件 (23.8%) / MOD × ティアで 1,734 通り / T1 は 22 通り」
-let mods = 0, withAlt = 0, anyPairs = 0, t1Pairs = 0;
-for (const cls of data.bases.values()) {
-  for (const ids of [cls.pools?.normal?.prefixes, cls.pools?.normal?.suffixes]) {
-    for (const id of ids ?? []) {
-      const m = data.mods.get(id);
-      if (!m || m.source !== "normal") continue;
-      mods++;
-      let any = false;
-      for (let i = 0; i < m.tiers.length; i++) {
-        if (!M.essenceAlternativesFor(data, cls, { modId: id, minTierIndex: i }, 83).length) continue;
-        any = true;
-        anyPairs++;
-        if (i === m.tiers.length - 1) t1Pairs++;
-      }
-      if (any) withAlt++;
-    }
-  }
-}
-claim("essence-route.ts", "通常プールの MOD", mods, 1274);
-claim("essence-route.ts", "エッセンスで代替できる MOD", withAlt, 303);
-claim("essence-route.ts", "MOD × ティアの組", anyPairs, 1734);
-claim("essence-route.ts", "うち T1 に届く組", t1Pairs, 22);
-
-// fracture-route.ts:「4 個以上のモッドを持つレアアイテム上のランダムなモッド 1 個」
-claim("fracture-route.ts", "フラクチャーに要る MOD 数", M.FRACTURE_MIN_MODS, 4);
-
 // quality.ts:「カタリストは指輪とアミュレットにしか存在しない」
 const ring = data.mods.get("Rings/IncreasedMana");
 const helm = data.mods.get("Helmets_int/LocalEnergyShield");

@@ -153,14 +153,12 @@ export function useFinishedCompare(
   const error = ref<string | null>(null);
   // 条件は中身で比べる (相場の取り直しや固定の選び直しで computed が作り直されるだけで、見つけた完成品・手で入れた値段が
   // 消えていた。2026-09-26 レビュー B)
-  watch(() => JSON.stringify(query.value), () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; deepDone.value = false; exhausted.value = false; });
+  watch(() => JSON.stringify(query.value), () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; exhausted.value = false; });
 
   /**
-   * 探し直し (段なし → MOD を外す) まで済ませたか。オーナー 2026-09-26:「完成品も自動で出るまで必ず回す。徐々に最後まで行き切る。
+   * 3 つまで緩めても無かった。オーナー 2026-09-26:「完成品も自動で出るまで必ず回す。徐々に最後まで行き切る。
    * MOD は 3 つまで合っていたらおｋでそれ以上減らせない。そこまで行き切ったら初めて『条件を緩めても出ませんでした』」
    */
-  const deepDone = ref(false);
-  /** 3 つまで緩めても無かった */
   const exhausted = ref(false);
   /** 外して残す MOD の下限 */
   const KEEP_MIN = 3;
@@ -202,7 +200,6 @@ export function useFinishedCompare(
       if (!loggedIn && !lightNote.value) lightNote.value = "未ログインのため冒涜で付いた物は除外 (取引履歴でログインすると拾える)";
       // 出品が無ければ、値 (段) を外して MOD の組み合わせだけで探し直す (「近い物を探す」を押した時だけ)
       const loose = deep ? build(level, false) : null;
-      if (deep) deepDone.value = true;
       exhausted.value = false;
       if (r && r.total === 0 && loose) {
         const r2 = await autoPriceCached(league, loose, marketStore.rates.value, 5);
@@ -250,7 +247,6 @@ export function useFinishedCompare(
   const estimate = computed(() => craftEstimate(c, c.fracturedTargets.value.map((t) => t.modId)));
   const craftCost = computed(() => (estimate.value ? (startCost.value ?? 0) + estimate.value.value : null));
   const craftBasis = computed(() => estimate.value?.basis ?? "");
-  /** 1 から作る見込み (素材を買わない。樹 MOD があれば組めないので null) */
   /**
    * 完成品の値段が当てにならない: 出品が 2 件以下で、作る見込みの 10 倍を超える (不在のアミュレットで 1 件 372 万神の出品に
    * 「作る方が 370 万神安い」と出ていた。2026-09-24)
@@ -259,13 +255,5 @@ export function useFinishedCompare(
     const b = found.value?.min, k = craftCost.value;
     return b != null && k != null && (found.value?.total ?? 0) <= 2 && b > k * 10;
   });
-  const verdict = computed(() => {
-    if (outlier.value) return null;
-    const b = buyCost.value, k = craftCost.value;
-    // 段なし・MOD を外して見つけた物も「妥協して買う」として比べる (オーナー 2026-09-26:「完成版が無くても似たような奴あります
-    // でおｋ、完成品を買うでおｋ。MOD のみ同じ形、完成品で妥協みたいな表示」)
-    return b != null && k != null ? { buy: b <= k, diff: Math.abs(b - k) } : null;
-  });
-
-  return { query, unbuildable, lightNote, dropped, tierless, outlier, found, manual, busy, error, search, deepDone, exhausted, buyCost, craftCost, craftBasis, verdict };
+  return { query, unbuildable, lightNote, dropped, tierless, outlier, found, manual, busy, error, search, exhausted, buyCost, craftBasis };
 }

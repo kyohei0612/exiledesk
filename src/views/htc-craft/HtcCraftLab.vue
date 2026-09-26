@@ -12,7 +12,6 @@ import { CATALYSTS } from "../../services/htc/quality";
 import { useHtcCraft } from "./useHtcCraft";
 import { usePicker } from "./usePicker";
 import DiagnosisCard from "./DiagnosisCard.vue";
-import SpamPlanPanel from "./SpamPlanPanel.vue";
 import CraftTreePanel from "./CraftTreePanel.vue";
 
 const c = useHtcCraft();
@@ -31,8 +30,6 @@ watchEffect(() => pk.useData(c.data.value));
 // 表示してるから直してくれ」)。09-23 に開発ビルドだけ見本を並べて始めていたのをやめた。見本は入口の先のボタンで選ぶ。
 const DEV = import.meta.env.DEV;
 const door = ref<"none" | "paste" | "base">("none");
-/** 開発用の「詳しく」を開いているか */
-const devOpen = ref(false);
 /**
  * 中身は 1400px で組み、窓が狭ければそのまま縮める (zoom)。オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても
  * 変わらない感じで」「相変わらず UI 壊れてる、縮小版」(横スクロールで右が切れていた)
@@ -355,8 +352,7 @@ const implicitText = (lines: readonly string[]): string =>
       </div>
 
       <!-- ここから下は開発用 (配布版では出さない) -->
-      <!-- 開いた時だけ中身を作る (閉じていても古いスパムの計算が裏で走り、前回の続きで 0.6 秒固まっていた。2026-09-26) -->
-      <details v-if="DEV" class="mb-4 mt-4 text-xs" @toggle="devOpen = ($event.target as HTMLDetailsElement).open">
+      <details v-if="DEV" class="mb-4 mt-4 text-xs">
         <summary class="cursor-pointer opacity-60">詳しく (MOD の段・忍者の道・ベース候補)</summary>
       <!-- 読み取り -->
       <section class="mb-4">
@@ -432,8 +428,6 @@ const implicitText = (lines: readonly string[]): string =>
             使用中)。
           </span>
         </p>
-
-        <SpamPlanPanel v-if="devOpen" :c="c" />
       </section>
 
       <!-- ベース選び。ここが分岐点なので、段階 0 より前に置く -->

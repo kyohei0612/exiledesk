@@ -22,6 +22,8 @@ import { RULES, type RedoPlan } from "./redo-cost";
 import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { CATALYSTS } from "../../services/htc/quality";
 import type { useHtcCraft } from "./useHtcCraft";
+import { OMEN } from "../../services/htc/omens";
+import type { Side } from "../../services/htc/step-odds";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
@@ -51,10 +53,6 @@ const picked = ref<{ label: string; expected: number | null; done: number | null
  * 分かるでしょ、ちゃんとお告げの名前を書いて」)。プレ = 左側 (Sinistral)、サフィ = 右側 (Dextral)
  */
 const omen = (id: string): string => jaOfOmen(id) ?? id;
-const OMEN_EX: Record<string, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
-const OMEN_AN: Record<string, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
-const OMEN_NE: Record<string, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
-const OMEN_CR: Record<string, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
 const ORB_JA: Record<string, string> = { exalt: "高貴なオーブ", exalt_greater: "高貴なオーブ (上級)", exalt_perfect: "高貴なオーブ (完全)" };
 const priceJa = (key: string): string => jaOfPriceKey(key, c.base.value ?? undefined) ?? key;
 /** 取り方の行はプレフィックスを上、サフィックスを下に (オーナー 2026-09-26:「プレフィックスは上でサフィは下だろ、順番ね」) */
@@ -65,9 +63,9 @@ const howJa = (r: RedoPlan["rows"][number]): string => {
     case "chaos": return "カオスオーブ";
     case "exalt": {
       const cat = r.catalyst ? CATALYSTS.find((k) => k.tag === r.catalyst) : null;
-      return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"} + ${omen(OMEN_EX[r.side]!)}${cat ? ` + 触媒の高貴なお告げ (${cat.ja})` : ""}`;
+      return `${ORB_JA[r.orb ?? "exalt"] ?? "高貴なオーブ"} + ${omen(OMEN.exalt[r.side])}${cat ? ` + ${omen("OmenofCatalysingExaltation")} (${cat.ja})` : ""}`;
     }
-    case "desecrate": return `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN_NE[r.side]!)}`;
+    case "desecrate": return `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}`;
     case "essence": return "パーフェクトエッセンス (確定)";
     default: return r.method;
   }
@@ -76,8 +74,8 @@ const howJa = (r: RedoPlan["rows"][number]): string => {
 const missJa = (r: RedoPlan["rows"][number]): string => {
   switch (r.method) {
     case "chaos": return "外れはカオスで打ち直し";
-    case "exalt": return `外れは ${r.plainAnnul ? "消去のオーブ" : `${omen(OMEN_AN[r.side]!)} + 消去のオーブ`}${r.safe ? " (狙い以外は消えない)" : " (ほかの MOD を巻き込む)"}`;
-    case "desecrate": return `外れは ${r.reroll === "overwrite" ? `${omen(OMEN_CR[r.side]!)} + エッセンスで上書き` : `${omen("OmenofLight")} + 消去のオーブ`}`;
+    case "exalt": return `外れは ${r.plainAnnul ? "消去のオーブ" : `${omen(OMEN.annul[r.side])} + 消去のオーブ`}${r.safe ? " (狙い以外は消えない)" : " (ほかの MOD を巻き込む)"}`;
+    case "desecrate": return `外れは ${r.reroll === "overwrite" ? `${omen(OMEN.crystallisation[r.side])} + エッセンスで上書き` : `${omen("OmenofLight")} + 消去のオーブ`}`;
     default: return "";
   }
 };
@@ -85,7 +83,7 @@ const missJa = (r: RedoPlan["rows"][number]): string => {
  * 守る価値 = その狙いの作り直し費用 (見込み)。側の消去のお告げ 1 回より高ければ「守る」(オーナー 2026-09-25:「反対側に本当に
  * 守りたい物があるのかというポイント制。T5 なら守りたい物に入らないし、カオスで付くような物もお告げは要らない」)
  */
-const omenPrice = (side: string): number => (c.prices.value?.omens[side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"] ?? Infinity);
+const omenPrice = (side: Side): number => (c.prices.value?.omens[OMEN.annul[side]] ?? Infinity);
 const guardJa = (r: RedoPlan["rows"][number]): string => (r.expected > omenPrice(r.side) ? "守る" : "守らなくていい");
 const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
 /** 組んでいる最中に開始が変わった (始め方の選び直しなど) → 終わってから組み直す */

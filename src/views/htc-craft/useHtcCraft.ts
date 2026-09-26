@@ -1,38 +1,15 @@
 /**
- * useHtcCraft.ts — 貼り付けを読んで MOD を割り出すところまで (2026-09-22 / 2026-09-23 に縮小)
+ * useHtcCraft.ts — クラフト計算の状態の中心 (2026-09-22、2026-09-26 に流れを書き直し)
  *
- * ## 2026-09-23: 「作り方」は廃止しました
- * オーナー指示:「MOD 解析までの手順はそのままでいいけど、**あとの作り方はカスルールすぎて廃止**だね。
- * 1 から一緒に考えよう」。
- *
- * 廃止したのは、同梱 HTC の模型をそのまま画面に載せていた部分です:
- *   ③ 1 個ずつの期待費用 / 固定済み探し   ④ どこから始めるか   ⑤ 途中まで買う   ⑥ 手順
- *
- * **なぜ廃止したか。**あの模型は全部を「通貨で殴る問題」として 1 つの状態空間に押し込みます。
- * だから「買う」が行動に無く、5 カオスで買える MOD を 1/20,964 で引きに行き、確定で乗る
- * パーフェクトエッセンスまで確率として混ぜ、結果として**一番細い確率に収束速度を握られて
- * 答えが出ません**。本家 poe2htc.com v1.1.0 に同じ 5 個を入れても
- * 「the solver ran out of time before it could put a number on this craft」で、
- * **実装の問題ではなく模型の選び方の問題**だと確認しました (2026-09-23)。
- *
- * 実データで分けたら、計算の前に行き先が決まりました (死体の円環 / ニーモニックリング):
- *   ドロップ限定      マナコスト効率        → 買う (固定済みで)
- *   確定手段あり      最大マナが8%増加する   → パーフェクトエッセンスで確定
- *   ガチャ・現実的    最大マナ 1/70 / 知性 1/42 / 元素耐性 1/52  → **ここだけ解けばいい**
- *   ガチャ・非現実的  キャストスピード 1/20,964 → 買う or フラクチャー
- *
- * **同梱エンジンは捨てていません** (オーナー判断 2026-09-23)。「ガチャ・現実的」の 3〜4 個を
- * 解く用途に残します ── 確率の計算は本家と一致を確認済みで、その狭い用途なら収束します。
- * 呼び出しは新しい作り方が決まってから繋ぎ直します。
- *
- * 今ここに残っているのは**貼り付け → MOD 解析 → ベース選び**までです。
+ * 流れ: 貼り付け (または ベース + MOD を選ぶ) → MOD 解析 (段・側・固定済み・樹 MOD) → ① 固定の候補を選ぶ →
+ * 取引所で探す ([[useStartSearch.ts]] / [[useTreeSearch.ts]]) → ② 買うか作るか ([[useFinishedCompare.ts]]) →
+ * 作り方のツリー ([[useCraftTree.ts]])。ここは解析までと、各段が共通に読む状態 (狙い・相場・ベース・段階) を持つ。
  */
 import { computed, ref, shallowRef } from "vue";
 import { zeroStart } from "./craft-settings";
 import { loadHtcPatch } from "../../services/htc/patch";
 import { parseJaItem, targetsFor, type PastedItem } from "../../services/htc/paste";
 import { baseForSolving } from "../../services/htc/bridge";
-import { useSpamPlan } from "./useSpamPlan";
 import { useTreeSearch } from "./useTreeSearch";
 export type { TreeRoute } from "./useTreeSearch";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
@@ -47,8 +24,7 @@ import { marketStore } from "../../state/market-store";
 
 /** 押した時に取り直す相場の古さ (これより新しければそのまま使う) */
 const PRICE_MAX_AGE_MS = 5 * 60 * 1000;
-import { FRACTURE_DECOY_NOTE } from "../../services/htc/fracture-route";
-import { NECRO_REPLACE_NOTE } from "../../services/htc/tree-decide";
+import { FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE } from "../../services/htc/tree-decide";
 import type { DropOnlyRow } from "../../services/htc/paste";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -147,15 +123,10 @@ export function useHtcCraft() {
   const coverage = shallowRef<HtcPriceCoverage | null>(null);
   /** 各段にかかった時間 (ミリ秒) */
   const timings = ref<Array<[string, number]>>([]);
-  /** 固定済みの行 (画面用) と、そこから解くための目標 */
-  const fracturedLines = ref<string[]>([]);
+  /** 固定済みだった MOD (解くための目標) */
   const fracturedTargets = shallowRef<TierTarget[]>([]);
-  /** 固定済みだが繋がらず、開始状態に置けない数 */
-  const fracturedUnusable = ref(0);
   /** 繋がらなかった行が食っている枠 */
   const slotsUsed = ref({ prefixes: 0, suffixes: 0, either: 0 });
-  /** カオススパムの組み立て ([[useSpamPlan.ts]])。貼り付けが無い時は作り方の設定の 0 から組む値 */
-  const { catalystChoice, spamOverride, spamUsed, spam, spamFor } = useSpamPlan({ data, base, prices, targets, item, fracturedTargets, slotsUsed });
   /** 始め方で「固定無しを買ってそのまま作る」を選んだ時の、触らない狙い (固定ではない。消えたらその回は失敗) */
   const startKeep = ref<string[]>([]);
   /** 始め方で選んだベースの買う値段 (高貴建て)。作り方の結果に足す (オーナー 2026-09-24:「最終収支に買ったベースの値段含めてなさそう」) */
@@ -163,7 +134,7 @@ export function useHtcCraft() {
   /** 繋がらなかった行のうち、創生の樹からしか出ないと分かった物 */
   const dropOnly = shallowRef<DropOnlyRow[]>([]);
   /** 固定済み・固定無しの検索と判定 ([[useTreeSearch.ts]]) */
-  const { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor, planFor, treeFixSide } =
+  const { treeResult, treeTierPick, treePlan, searchFor, planFor, treeFixSide } =
     useTreeSearch({ data, base, prices, item, dropOnly, fracturedTargets, targets, name: (id) => stepTarget([id]) });
 
   /**
@@ -214,7 +185,6 @@ export function useHtcCraft() {
 
   /** 画面を空に戻す。入口へ帰る時と、読み直す前に通す */
   function reset(): void {
-    spamOverride.value = null;
     error.value = null;
     item.value = null;
     base.value = null;
@@ -225,15 +195,12 @@ export function useHtcCraft() {
     implicits.value = [];
     skipped.value = [];
     dropOnly.value = [];
-    fracturedLines.value = [];
     fracturedTargets.value = [];
-    fracturedUnusable.value = 0;
     slotsUsed.value = { prefixes: 0, suffixes: 0, either: 0 };
     timings.value = [];
     treeResult.value = null;
     startPrice.value = null;
     startKeep.value = [];
-    treeError.value = null;
     treeTierPick.value = {};
     abortFetch();
     phase.value = "analyzed";
@@ -348,9 +315,6 @@ export function useHtcCraft() {
       slotsUsed.value = got.skippedSides;
       dropOnly.value = got.dropOnly;
       fracturedTargets.value = got.fracturedTargets;
-      fracturedLines.value = got.fractured;
-      // 固定済みでも**エンジンが知らない MOD は開始状態に置けません**
-      fracturedUnusable.value = got.fractured.length - got.fracturedTargets.length;
       implicits.value = got.implicits;
       skipped.value = got.skipped;
       applyTargets(d, cls, got, it.baseType);
@@ -399,13 +363,12 @@ export function useHtcCraft() {
 
   return {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
-    fracturedLines, fracturedTargets, fracturedUnusable, slotsUsed, dropOnly,
+    fracturedTargets, slotsUsed, dropOnly,
     loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
     timings, coverage, slots, bases, targets, prices,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
-    treeResult, treeBusy, treeError, searchTree, treeTierPick, searchFor, planFor, treeFixSide,
-    spam, spamFor, catalystChoice, spamOverride, spamUsed,
+    treeResult, treeTierPick, searchFor, planFor, treeFixSide,
     treeNotes: [FRACTURE_DECOY_NOTE, NECRO_REPLACE_NOTE],
     weightNote: WEIGHT_OVERRIDE_NOTE,
   };

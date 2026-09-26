@@ -30,14 +30,9 @@ export interface TreeRoute {
 
 /** 固定済み・固定無しの 3 本を取って判定した結果 */
 export type TreeResult = {
-  decision: Decision;
   /** 投げた検索ごとの件数と取引所のリンク (`key` = fractured / loose / strict) */
   found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }>;
   skippedNoMods: number;
-  /** 固定済みが自前の最安以下だったので、残りの検索を投げずに止めたか */
-  earlyBuy: boolean;
-  /** 自前の最安 (神)。固定済みがこれ以下なら買う */
-  selfFloor: number | null;
   /**
    * オーナーの比べ方 (2026-09-23): ゆるい / 厳しいそれぞれ「85% に届く最小の個数だけ買う」総額と、
    * 固定済みの値段。**それ以上は買う必要が無い**。
@@ -70,16 +65,14 @@ export function useTreeSearch(deps: {
 }) {
   const { data, base, prices, item, dropOnly, fracturedTargets } = deps;
   const stepTarget = (ids: readonly string[]): string => ids.map(deps.name).join(" + ");
-  /** 取引所から取ってきた結果と判定。**押された時だけ**取る (3 本 = 約 21 秒) */
+  /** 取引所から取ってきた結果と判定 (始め方の候補で選んだ物。[[useStartSearch.ts]] が入れる) */
   const treeResult = shallowRef<TreeResult | null>(null);
-  const treeBusy = ref(false);
   /**
    * 樹 MOD ごとに「どの段以上を探すか」(文面 → 段の添字)。**既定は貼り付けた物の段**
    * (オーナー 2026-09-23:「ティア選ばせるでいい、デフォではコピーした忍者の値」)。
    * 段を見ないと Thoughtful (7-9) のような低い段まで「成功」に数えてしまう。
    */
   const treeTierPick = ref<Record<string, number>>({});
-  const treeError = ref<string | null>(null);
   /**
    * 固定する樹 MOD の側 (null = 全部の樹 MOD を固定済みで探す、前の扱い)。樹 MOD が 2 つある時、固定するのは重い側の
    * 1 つだけで、もう片方は付いていればいい (固定は 1 つしかできない。[[start-kind.ts]]、オーナー 2026-09-24)
@@ -158,97 +151,68 @@ export function useTreeSearch(deps: {
   async function runPlan(tp: NonNullable<ReturnType<typeof planFor>>, onStep?: (label: string) => void, alive?: () => boolean): Promise<TreeResult> {
     const p = prices.value!;
     const div = p.currency.divine!;
-    {
-      const league = marketStore.league.value?.Value ?? "Standard";
-      const rates = marketStore.rates.value;
-      const listings: TreeListing[] = [];
-      const found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }> = [];
-      let skippedNoMods = 0;
-      let earlyBuy = false;
-      // 自前で固定する時の最安 (4 MOD のベースがタダの時)。固定済みがこれ以下なら自前は絶対に勝てない。
-      // オーナー:「フラクチャー品がフラクチャーオーブの 4 倍の値段なら買った方が良い、他の経費も含めて」。
-      // 正確にはオーブが高い時は「減らして冒涜」で打つ回数が 3/N に減るので、約 3.5 倍が線になる
-      const selfFloor = tp.plan.rows.find((r) => r.mods === 4)?.fixed ?? null;
-      for (const sq of tp.searches) {
-        // 入口に戻る・画面を離れたら残りは投げない
-        if (alive && !alive()) break;
-        onStep?.(sq.label);
-        // 固定済みが線以下でも残りは投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
-        // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
-        const r = await autoPriceCached(league, sq.query, rates, sq.take);
-        if (!r) {
-          // 取れなかった物は 0 件と区別する (理由を持たせる)
-          found.push({ key: sq.key, label: sq.label, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" });
-          continue;
-        }
-        found.push({ key: sq.key, label: sq.label, total: r.total, url: r.searchUrl || null });
-        if (sq.key === "fractured" && selfFloor != null && r.minExalted != null && r.minExalted / div <= selfFloor) {
-          earlyBuy = true;
-        }
-        for (const x of r.listings.slice(0, sq.take)) {
-          if (!Number.isFinite(x.amountExalted)) continue;
-          const mods = x.mods ?? null;
-          if (sq.key !== "fractured" && mods == null) { skippedNoMods++; continue; }
-          const n = mods ?? 4;
-          // 厳しい検索はプレフィックス 1 個 (条件で保証)。ゆるい検索は総数だけで確率が決まる
-          const prefixes = sq.key === "strict" ? 1 : Math.ceil(n / 2);
-          listings.push({
-            source: sq.key,
-            price: x.amountExalted / div,
-            prefixes,
-            suffixes: n - prefixes,
-            label: `${(x.amountExalted / div).toFixed(2)} 神 / ${n} MOD${x.account ? " / " + x.account : ""}`,
-          });
-        }
+    const league = marketStore.league.value?.Value ?? "Standard";
+    const rates = marketStore.rates.value;
+    const listings: TreeListing[] = [];
+    const found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }> = [];
+    let skippedNoMods = 0;
+    for (const sq of tp.searches) {
+      // 入口に戻る・画面を離れたら残りは投げない
+      if (alive && !alive()) break;
+      onStep?.(sq.label);
+      // 3 本とも投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
+      // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
+      const r = await autoPriceCached(league, sq.query, rates, sq.take);
+      if (!r) {
+        // 取れなかった物は 0 件と区別する (理由を持たせる)
+        found.push({ key: sq.key, label: sq.label, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" });
+        continue;
       }
-      const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
-      const dp = {
-        orb: toDiv(p.currency.fracture) ?? Infinity,
-        annul: toDiv(p.currency.annul) ?? 0,
-        bone: toDiv(p.currency.desecrate) ?? 0,
-        exalt: toDiv(p.currency.exalt) ?? 0,
-        necro: toDiv(p.omens.OmenofDextralNecromancy),
-        dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
-      };
-      const decision = decide(listings, dp);
-      const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
-      const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
-      const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
-      const fracturedPrice = frList[0]?.price ?? null;
-      const loosePrice = listings.filter((l) => l.source === "loose").sort((a, b) => a.price - b.price)[0]?.price ?? null;
-      const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
-      const routes: TreeRoute[] = [];
-      const add = (key: "strict" | "loose" | "mixed" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
-        if (ls.length === 0) return;
-        const dd = decide(ls, dp);
-        if (dd.order.length === 0 && !dd.fallback) return;
-        routes.push({ key, label, summary: summarize(dd), decision: dd, need85: b?.count ?? null });
-      };
-      add("strict", "厳しいを 1 個ずつ", only("strict"), strict);
-      add("loose", "ゆるいを 1 個ずつ", only("loose"), loose);
-      add("mixed", "両方まぜて安い順に 1 個ずつ", listings, null);
-      if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
-      const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
-      return { decision, found, skippedNoMods, earlyBuy, selfFloor, strict, loose, fracturedPrice, loosePrice, routes, best };
+      found.push({ key: sq.key, label: sq.label, total: r.total, url: r.searchUrl || null });
+      for (const x of r.listings.slice(0, sq.take)) {
+        if (!Number.isFinite(x.amountExalted)) continue;
+        const mods = x.mods ?? null;
+        if (sq.key !== "fractured" && mods == null) { skippedNoMods++; continue; }
+        const n = mods ?? 4;
+        // 厳しい検索はプレフィックス 1 個 (条件で保証)。ゆるい検索は総数だけで確率が決まる
+        const prefixes = sq.key === "strict" ? 1 : Math.ceil(n / 2);
+        listings.push({
+          source: sq.key,
+          price: x.amountExalted / div,
+          prefixes,
+          suffixes: n - prefixes,
+          label: `${(x.amountExalted / div).toFixed(2)} 神 / ${n} MOD${x.account ? " / " + x.account : ""}`,
+        });
+      }
     }
-  }
-
-  /** 今の固定済みで 3 本を取る (始め方) */
-  async function searchTree(): Promise<void> {
-    const tp = treePlan.value;
-    if (!tp || !prices.value) return;
-    if (!prices.value.currency.divine) { treeError.value = "相場が未取得なので値段を神に直せません。"; return; }
-    treeBusy.value = true;
-    treeError.value = null;
-    treeResult.value = null;
-    try {
-      treeResult.value = await runPlan(tp);
-      treeError.value = treeResult.value.found.find((f) => f.error)?.error ?? null;
-    } catch (e) {
-      treeError.value = String(e);
-    } finally {
-      treeBusy.value = false;
-    }
+    const toDiv = (v: number | undefined): number | null => (v == null ? null : v / div);
+    const dp = {
+      orb: toDiv(p.currency.fracture) ?? Infinity,
+      annul: toDiv(p.currency.annul) ?? 0,
+      bone: toDiv(p.currency.desecrate) ?? 0,
+      exalt: toDiv(p.currency.exalt) ?? 0,
+      necro: toDiv(p.omens.OmenofDextralNecromancy),
+      dextralExalt: toDiv(p.omens.OmenofDextralExaltation),
+    };
+    const strict = batchFor(listings.filter((l) => l.source === "strict"), dp, BATCH_TARGET);
+    const loose = batchFor(listings.filter((l) => l.source === "loose"), dp, BATCH_TARGET);
+    const frList = listings.filter((l) => l.source === "fractured").sort((a, b) => a.price - b.price);
+    const fracturedPrice = frList[0]?.price ?? null;
+    const loosePrice = listings.filter((l) => l.source === "loose").sort((a, b) => a.price - b.price)[0]?.price ?? null;
+    const only = (src: TreeListing["source"]) => [...listings.filter((l) => l.source === src), ...frList.slice(0, 1)];
+    const routes: TreeRoute[] = [];
+    const add = (key: "strict" | "loose" | "mixed" | "fractured", label: string, ls: TreeListing[], b: Batch | null) => {
+      if (ls.length === 0) return;
+      const dd = decide(ls, dp);
+      if (dd.order.length === 0 && !dd.fallback) return;
+      routes.push({ key, label, summary: summarize(dd), decision: dd, need85: b?.count ?? null });
+    };
+    add("strict", "厳しいを 1 個ずつ", only("strict"), strict);
+    add("loose", "ゆるいを 1 個ずつ", only("loose"), loose);
+    add("mixed", "両方まぜて安い順に 1 個ずつ", listings, null);
+    if (fracturedPrice != null) add("fractured", "固定済みを買う", frList.slice(0, 1), null);
+    const best = routes.length ? routes.reduce((a, b) => (b.summary.expected < a.summary.expected ? b : a)).key : null;
+    return { found, skippedNoMods, strict, loose, fracturedPrice, loosePrice, routes, best };
   }
 
   /** 固定済みにする MOD を指定して 3 本を取る (候補の各行)。組めなければ null */
@@ -260,6 +224,6 @@ export function useTreeSearch(deps: {
   }
 
   // 固定済みにする MOD を選び直したら (setFractured)、前の結果は捨てる (別の物の値段になる)
-  watch(() => treePlan.value?.searches.map((x) => JSON.stringify(x.query)).join("|"), () => { treeResult.value = null; treeError.value = null; });
-  return { treeResult, treeBusy, treeError, treeTierPick, treePlan, searchTree, searchFor, planFor, treeFixSide };
+  watch(() => treePlan.value?.searches.map((x) => JSON.stringify(x.query)).join("|"), () => { treeResult.value = null; });
+  return { treeResult, treeTierPick, treePlan, searchFor, planFor, treeFixSide };
 }

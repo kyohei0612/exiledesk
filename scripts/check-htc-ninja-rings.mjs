@@ -10,16 +10,13 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { D, prices } from "./_htc-test-prices.mjs";
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();
 const CACHE = (process.env.APPDATA ?? "") + "/com.kyohei.exiledesk/craft_v2_cache.json";
 if (!existsSync(CACHE)) { console.log("上位プレイヤーの保存が無いので飛ばします: " + CACHE); process.exit(0); }
 const cache = JSON.parse(readFileSync(CACHE, "utf8"));
 let failed = 0;
-const D = 506;
-const src = readFileSync("scripts/check-htc-spam-plan.mjs", "utf8");
-const a = src.indexOf("const div = (v)"), b = src.indexOf("const it = M.parseJaItem");
-const prices = new Function("D", src.slice(a, b) + "; return prices;")(D);
 const NL = String.fromCharCode(10);
 const strip = (t) => t.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 const v = (x) => ({ value: x });

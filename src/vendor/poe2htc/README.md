@@ -40,6 +40,9 @@ AGPL-3.0 のコードを取り込んだので、**ExileDesk 全体が AGPL-3.0 �
 5. **`optimizer/markovActions.ts` の `pricedStepOf` を export しました** (1 語)。MDP の手を
    「何と何のお告げを使うか」に翻訳する唯一の場所で、画面に日本語名を出すのに要ります
    (`services/htc/labels.ts`)。写すと上流とずれるので、export して 1 か所のままにしました。
+6. **使っていない optimizer の 5 ファイルを外しました** (2026-09-26)。`optimizer/index.ts` / `fromItem.ts` /
+   `alternatives.ts` / `validate.ts` / `simulate.ts`。ExileDesk の画面からも検算からも届かないため。
+   上流のコメントがこれらの名前を指している所 (`optimize.ts` など) はそのままです。
 
 `tsconfig.json` の `lib` を ES2020 → ES2022 に上げています (`Array.prototype.at` を使うため)。
 

@@ -119,7 +119,7 @@ export function fracturedBuys(data: PatchData, targets: readonly TierTarget[], n
 
 /**
  * 固定済みの樹 MOD を持つ出品を探すクエリ。**1 本にまとめます** ── 樹 MOD が 2 つ要るなら
- * 両方を条件に入れた 1 回の検索で済み、上位集合は勝手に返ります ([[search-cut.ts]])。
+ * 両方を条件に入れた 1 回の検索で済み、上位集合は勝手に返ります。
  */
 export function treeBuyQuery(
   cls: ItemBase,

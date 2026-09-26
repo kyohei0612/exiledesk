@@ -3,7 +3,7 @@
  * TreeFracturePanel.vue — 創生の樹の MOD を「固定済みで買う / 自前で固定する」比べ (2026-09-23)
  *
  * HtcCraftLab.vue が 500 行を超えたので切り出しました (オーナーの決まり: 1 ファイル 500 行まで)。
- * 中身は useHtcCraft の `treePlan` / `searchTree` / `treeResult` を出すだけで、計算はしません。
+ * 中身は useHtcCraft の `treePlan` / `treeResult` (始め方の候補で選んだ物の結果) を出すだけで、計算も検索もしません。
  */
 import { openExternal } from "../../services/trade2/open-external";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -70,16 +70,8 @@ const howJa: Record<string, string> = {
     <p v-if="c.treePlan.value.plan.rows.find((r) => r.mods === 4)" class="mt-1 opacity-70">
       固定済みが <b>{{ c.treePlan.value.plan.rows.find((r) => r.mods === 4)!.fixed.toFixed(1) }} 神</b>
       (オーブの約 {{ (c.treePlan.value.plan.rows.find((r) => r.mods === 4)!.fixed / (c.treePlan.value.plan.orb ?? 1)).toFixed(1) }} 倍) 以下なら、
-      自前は絶対に勝てないので買い。1 本目で分かれば残りは投げません。
+      自前は絶対に勝てないので買い。
     </p>
-    <button
-      class="mt-2 rounded bg-amber-600/80 px-3 py-1 font-bold disabled:opacity-40"
-      :disabled="c.treeBusy.value || !c.coverage.value?.ready"
-      @click="c.searchTree()"
-    >
-      {{ c.treeBusy.value ? "取引所に問い合わせ中… (1 本 10.5 秒間隔)" : `最安を取って比べる (${c.treePlan.value.searches.length} 本)` }}
-    </button>
-    <p v-if="c.treeError.value" class="mt-1 rounded bg-red-900/40 p-1">{{ c.treeError.value }}</p>
 
     <!-- 判定。成功 1 回あたりの安い順に試し、固定済みより高い所で打ち切る -->
     <template v-if="c.treeResult.value">
@@ -88,10 +80,6 @@ const howJa: Record<string, string> = {
           {{ f.label }}: 全 {{ f.total }} 件<button v-if="f.url" type="button" class="ml-1 underline" @click="openExternal(f.url)">開く</button> ／
         </template>
         <template v-if="c.treeResult.value.skippedNoMods"> MOD 数が読めず外した {{ c.treeResult.value.skippedNoMods }} 件</template>
-      </p>
-      <p v-if="c.treeResult.value.earlyBuy" class="mt-1 rounded bg-emerald-900/40 p-1 text-sm">
-        固定済みが自前の最安 ({{ c.treeResult.value.selfFloor?.toFixed(1) }} 神 = 4 MOD のベースがタダでも) 以下なので、
-        <b>買うのが一番安い</b>です。残りの検索は投げていません。
       </p>
       <!-- 物差しは平均 (オーナー:「基本確率だけど平均値で計算しよう」)。1 個ずつ買って試し、
          成功で止め、外れ続けたら固定済みを買う。85% の個数は何個用意するかの目安 -->

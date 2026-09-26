@@ -8,7 +8,7 @@
  *   - 高貴 (素 / 上級 35 / 完全 50) × 側のお告げ (あり / なし) × 触媒の高貴のお告げ + カタリスト (効く物だけ)
  *   - カオス (素 / 上級 / 完全): 外せる MOD 1 つが一様に消えて 1 つ付く (付いている狙いが消えることもある)
  *   - パーフェクトエッセンス + 側の結晶化のお告げ: 確定。その側の外せる MOD 1 つと入れ替わる
- *   - 冒涜 (保存された / 古代の鎖骨) + 側のネクロマンシーのお告げ (+ 反響): 3 択。外れは光のお告げで消す
+ *   - 冒涜 (保存された / 古代の骨) + 側のネクロマンシーのお告げ (+ 反響): 3 択。外れは光のお告げで消す
  * 外れを消す手 (消去 / 消去 + 側の消去のお告げ) も、何が消えるかの確率付きで出す。
  *
  * 重みは [[weight-overrides.ts]] を通した poe2db の値、カタリストの倍率は [[catalysing.ts]]。
@@ -18,15 +18,10 @@ import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { CATALYSTS, catalystsFor } from "./quality";
+import { jaOfOmen, jaOfPriceKey } from "./labels";
+import { OMEN } from "./omens";
 
 export type Side = "prefix" | "suffix";
-
-/**
- * 「ブリーチの MOD (品質の上限 40%)」を 1 手ずつの一覧に出す時の仮の id。
- * オーナー 2026-09-24:「品質 40% がコピーされてたら MOD は 7 MOD だね。品質 20% 追加する順番、追加の時に入れるからな」。
- * プレに 1 枠使う。付け方はパーフェクトエッセンスと同じ (プレの外せる物 1 つを食わせる)
- */
-export const BREACH_ID = "__breach__";
 
 /** 指輪に付いている物 1 つ。modId が null なら外れ */
 export interface Slot {
@@ -91,12 +86,19 @@ const CHAOS: ReadonlyArray<[string, number, string]> = [
 ];
 const SIDE_JA: Record<Side, string> = { prefix: "左", suffix: "右" };
 
+/**
+ * MOD の重み (minIdx の段より上で、ilvl で出る段の合計)。floor = 上級・完全のオーブや古代の骨の段の足切り。
+ * シミュレーター・1 手ずつ・自動の組み立て・確率の実験室で同じ式を使う
+ */
+export function tierWeight(m: Mod, minIdx: number, ilvl: number, floor = 0): number {
+  return m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= ilvl && t.ilvl >= floor ? t.weight : 0), 0);
+}
+
 export function stepHelpers(ctx: StepCtx) {
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
-  const sw = (m: Mod, minIdx: number, floor: number): number =>
-    m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
+  const sw = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   const count = (s: ItemState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
   const room = (s: ItemState, side: Side): boolean => count(s, side) < ctx.limits[side];
   const families = (s: ItemState, skip = -1): Set<string> =>
@@ -143,7 +145,7 @@ export function stepHelpers(ctx: StepCtx) {
             const mult = tag ? catalysingMultiplier(q) : 1;
             const W = sides.reduce((a, x) => a + poolW(x, occ, floor, tag, mult), 0);
             const p = (sw(t, minTier, floor) * (tag ? mult : 1)) / W;
-            const perTry = cur(k) + (omen ? cur(side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation") : 0)
+            const perTry = cur(k) + (omen ? cur(OMEN.exalt[side]) : 0)
               + (tag ? cur("OmenofCatalysingExaltation") + catalystCountFor(q) * cur(catalystPriceKey(tag)) : 0);
             if (!(p > 0) || !Number.isFinite(perTry)) continue;
             const cja = tag ? CATALYSTS.find((c) => c.tag === tag)?.ja ?? tag : "";
@@ -181,7 +183,7 @@ export function stepHelpers(ctx: StepCtx) {
     }
     // パーフェクトエッセンス: その側の外せる物 1 つと入れ替わる (外れが居れば外れと)
     if (t.source === "perfect_essence") {
-      const price = cur(`essence:perfect:${modId}`) + cur(side === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation");
+      const price = cur(`essence:perfect:${modId}`) + cur(OMEN.crystallisation[side]);
       const onSide = s.slots.filter((x) => x.side === side && !x.fixed);
       const junk = onSide.filter((x) => !x.modId).length + (side === "prefix" && s.breach ? 1 : 0);
       if (Number.isFinite(price) && onSide.length + (side === "prefix" && s.breach ? 1 : 0) > 0) {
@@ -191,7 +193,7 @@ export function stepHelpers(ctx: StepCtx) {
           note: junk === n ? "外れ (かブリーチの MOD) と入れ替わる" : `${SIDE_JA[side]}側の外せる ${n} つから 1 つと入れ替わる (狙いが消えることもある)` });
       } else if (Number.isFinite(price) && room(s, side)) {
         // 食わせる物が無い: 先に高貴 + 側のお告げで外れを 1 つ付ける (その分も 1 回の値段に入れる)
-        const junk = cur("exalt") + cur(side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation");
+        const junk = cur("exalt") + cur(OMEN.exalt[side]);
         if (Number.isFinite(junk)) {
           out.push({ kind: "essence", p: 1, perTry: price + junk, avg: price + junk, missSide: null,
             label: `高貴なオーブ + ${SIDE_JA[side]}側の高貴なお告げ (外れを 1 つ) → パーフェクトエッセンス + ${SIDE_JA[side]}側の結晶化のお告げ`,
@@ -202,9 +204,11 @@ export function stepHelpers(ctx: StepCtx) {
     // 冒涜: 3 択。側のネクロマンシーのお告げで側を決める
     if ((t.source === "normal" || t.source === "desecrated") && room(s, side)) {
       const pool = [...cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"], ...cls.pools.desecrated[side === "prefix" ? "prefixes" : "suffixes"]];
-      const necro = cur(side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy");
+      const necro = cur(OMEN.necromancy[side]);
       const light = cur("OmenofLight") + cur("annul");
-      for (const [bone, k, floor] of [["保存された鎖骨", "desecrate", 0], ["古代の鎖骨", "desecrate_ancient", 40]] as const) {
+      for (const [k, floor] of [["desecrate", 0], ["desecrate_ancient", 40]] as const) {
+        // 骨の名前はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨)
+        const bone = jaOfPriceKey(k, cls) ?? k;
         const W = pool.reduce((a, id) => { const m = mod(id); return m && !occ.has(m.family) ? a + sw(m, 0, floor) : a; }, 0);
         const p1 = sw(t, minTier, floor) / W;
         if (!(p1 > 0)) continue;
@@ -214,7 +218,7 @@ export function stepHelpers(ctx: StepCtx) {
           const perTry = cur(k) + necro + (echoes ? cur("OmenofAbyssalEchoes") : 0);
           if (!Number.isFinite(perTry)) continue;
           out.push({ kind: "desecrate", p, perTry, avg: perTry / p + light * (1 / p - 1), missSide: side, light,
-            label: `冒涜 (${bone} + ${side === "prefix" ? "左手" : "右手"}のネクロマンシーのお告げ${echoes ? " + 反響のお告げ" : ""}) → 3 択から選ぶ` });
+            label: `冒涜 (${bone} + ${jaOfOmen(OMEN.necromancy[side]) ?? ""}${echoes ? ` + ${jaOfOmen("OmenofAbyssalEchoes") ?? ""}` : ""}) → 3 択から選ぶ` });
         }
       }
     }
@@ -224,7 +228,7 @@ export function stepHelpers(ctx: StepCtx) {
   /** ブリーチの MOD を付ける手 (プレの外れを食わせる / 無ければ外れを付けてから)。付いていれば空 */
   function breachMethods(s: ItemState): StepMethod[] {
     if (s.breach) return [];
-    const price = cur("essence:breach") + cur("OmenofSinistralCrystallisation");
+    const price = cur("essence:breach") + cur(OMEN.crystallisation.prefix);
     if (!Number.isFinite(price)) return [];
     const junk = s.slots.filter((x) => x.side === "prefix" && !x.fixed && !x.modId).length;
     const removable = s.slots.filter((x) => x.side === "prefix" && !x.fixed).length;
@@ -233,7 +237,7 @@ export function stepHelpers(ctx: StepCtx) {
       return [{ kind: "essence", p: 1, perTry: price, avg: price, missSide: null, label,
         note: junk === removable ? "プレの外れと入れ替わる" : `プレの外せる ${removable} つから 1 つと入れ替わる (狙いが消えることもある)` }];
     }
-    const pre = cur("exalt") + cur("OmenofSinistralExaltation");
+    const pre = cur("exalt") + cur(OMEN.exalt.prefix);
     if (!room(s, "prefix") || !Number.isFinite(pre)) return [];
     return [{ kind: "essence", p: 1, perTry: price + pre, avg: price + pre, missSide: null,
       label: `高貴なオーブ + 左側の高貴なお告げ (外れを 1 つ) → ${label}`, note: "付けた外れと入れ替わる" }];
@@ -253,7 +257,7 @@ export function stepHelpers(ctx: StepCtx) {
       [...idx.filter((i) => !side || s.slots[i]!.side === side), ...(s.breach && side !== "suffix" ? [-1] : [])];
     mk("消去のオーブ", cur("annul"), withB(null));
     for (const side of ["prefix", "suffix"] as Side[]) {
-      mk(`消去のオーブ + ${SIDE_JA[side]}側の消去のお告げ`, cur("annul") + cur(side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"), withB(side));
+      mk(`消去のオーブ + ${SIDE_JA[side]}側の消去のお告げ`, cur("annul") + cur(OMEN.annul[side]), withB(side));
     }
     return out.sort((a, b) => b.pJunk - a.pJunk || a.perTry - b.perTry);
   }

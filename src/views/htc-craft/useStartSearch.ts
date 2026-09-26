@@ -11,7 +11,8 @@
  *              比べるのは 買う値段 + 残りを作る見込み ([[craft-estimate.ts]])
  *   unsafe   … クラフト非推奨。候補は出さない
  * 条件に入れるのはクラフトでどうにもならない MOD (樹 MOD) だけ。冒涜の MOD は後で付けられるので入れない (オーナー 2026-09-24)。
- *   - チェックは 3 つまで (取引所の上限。3 本の候補 3 つで 18 回 + 完成品 2 回 = 5 分 20 回に収まる)
+ *   - チェックは既定 2 つ、3 つまで。1 つ 3 本 (1 本 = 検索 + 取得)。門番が検索 + 取得の合計を 5 分 22 回 (≈ 13.6 秒に 1 回、
+ *     貯めれば 6 回まで続けて) で流し、5 分の合計も見張るので、3 つ + 完成品だと数分かかる
  *   - 「探す」で上から 1 つずつ取り、取れた物から真ん中に出す (30 分は覚えておく)。最後に完成品を 1 本
  *   - 真ん中で選んだ物が始め方 (固定済みの MOD を差し替え、ツリーの開始の指輪もそれになる)
  */
@@ -142,7 +143,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     try {
       // 候補ごとに 3 本 (固定済み / 固定無し・ゆるい / 厳しい) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
       // 固定済みだけにすると、固定済みは高いが固定無しなら安い候補を見逃していた)。1 回の貼り付けで最大 9 本 + 完成品。
-      // 門番は上限の 8 割 (10 秒 4 / 60 秒 12 / 5 分 24) で止め、超える分は待ってから投げる
+      // 門番が検索 + 取得の合計を ≈ 13.6 秒に 1 回 (バースト 6、5 分 22 回) で流し、超える分は待ってから投げる
       for (const [i, cand] of keys.entries()) {
         if (!alive()) return;
         const at = (step: string) => {
@@ -254,7 +255,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   });
 
   return {
-    kind, candidates, checked, results, busy, current, searchAll, rows, chosen, manual, threeWay,
+    kind, candidates, checked, busy, current, searchAll, rows, chosen, manual, threeWay,
     setManual: (key: string, v: number | null) => { manual.value = { ...manual.value, [key]: v }; },
     choose: (key: string) => { picked.value = key; },
     locked: (key: string) => !checked.value.includes(key) && checked.value.length >= MAX_STARTS,

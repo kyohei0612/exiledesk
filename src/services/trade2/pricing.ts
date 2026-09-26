@@ -26,7 +26,8 @@ import type { Trade2SearchResponse } from "./query";
  * 2026-09-08 実測 (X-Rate-Limit-Ip, policy trade-search-request-limit):
  *   search = 5:10:60, 15:60:300, 30:300:1800, 600:21600:3600
  *   → 5 分で 30 回を超えると 30 分ペナルティ。2.5 秒間隔だと 75 秒で 429 (Retry-After 600) を食らった。
- * 一括調査 (20 件超) を通すには search を 10 秒間隔にする必要がある (30 回 / 300 秒ちょうど)。
+ * 今は検索 + 取得の合計を 5 分 22 回 (≈ 13.6 秒に 1 回、バースト 6) で流し、5 分の合計も見張る (本番は Rust の門番、
+ * 開発ブラウザは下の DEV_COMBINED_INTERVAL_MS)。窓口ごとの間隔 (下の 2 つ) はその中の並び間隔。
  */
 const SEARCH_INTERVAL_MS = 2600;
 const FETCH_INTERVAL_MS = 2500;

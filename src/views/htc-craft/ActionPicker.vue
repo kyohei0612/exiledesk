@@ -14,31 +14,35 @@
  */
 import { computed, ref, watch } from "vue";
 import { catalystPriceKey } from "../../services/htc/catalysing";
+import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
 import { CATALYSTS, catalystsFor } from "../../services/htc/quality";
 import type { SimAction, SimState } from "../../services/htc/sim-route";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import type { useHtcCraft } from "./useHtcCraft";
+import { OMEN } from "../../services/htc/omens";
 
 type Group = "exalt" | "annul" | "chaos" | "essence" | "desecrate";
 interface Omen { key: string; ja: string; group: Group; side?: Side; tag?: "catalyst" | "light" | "whittle" | "echoes" | "greater" }
+/** 名前はゲームの正式名 ([[labels.ts]] の jaOfOmen)。括弧は何をするか */
+const omenJa = (key: string, note?: string): string => `${jaOfOmen(key) ?? key}${note ? ` (${note})` : ""}`;
 const OMENS: Omen[] = [
-  { key: "OmenofSinistralExaltation", ja: "左側の高貴なお告げ", group: "exalt", side: "prefix" },
-  { key: "OmenofDextralExaltation", ja: "右側の高貴なお告げ", group: "exalt", side: "suffix" },
-  { key: "OmenofCatalysingExaltation", ja: "触媒の高貴のお告げ", group: "exalt", tag: "catalyst" },
-  { key: "OmenofGreaterExaltation", ja: "偉大なる高貴のお告げ (1 回で 2 つ足す)", group: "exalt", tag: "greater" },
-  { key: "OmenofSinistralAnnulment", ja: "左側の消去のお告げ", group: "annul", side: "prefix" },
-  { key: "OmenofDextralAnnulment", ja: "右側の消去のお告げ", group: "annul", side: "suffix" },
-  { key: "OmenofLight", ja: "光のお告げ (冒涜だけ消す)", group: "annul", tag: "light" },
-  { key: "OmenofWhittling", ja: "削減のお告げ (一番レベルの低い MOD を消す)", group: "chaos", tag: "whittle" },
+  { key: OMEN.exalt.prefix, ja: omenJa(OMEN.exalt.prefix), group: "exalt", side: "prefix" },
+  { key: OMEN.exalt.suffix, ja: omenJa(OMEN.exalt.suffix), group: "exalt", side: "suffix" },
+  { key: "OmenofCatalysingExaltation", ja: omenJa("OmenofCatalysingExaltation"), group: "exalt", tag: "catalyst" },
+  { key: "OmenofGreaterExaltation", ja: omenJa("OmenofGreaterExaltation", "1 回で 2 つ足す"), group: "exalt", tag: "greater" },
+  { key: OMEN.annul.prefix, ja: omenJa(OMEN.annul.prefix), group: "annul", side: "prefix" },
+  { key: OMEN.annul.suffix, ja: omenJa(OMEN.annul.suffix), group: "annul", side: "suffix" },
+  { key: "OmenofLight", ja: omenJa("OmenofLight", "冒涜だけ消す"), group: "annul", tag: "light" },
+  { key: "OmenofWhittling", ja: omenJa("OmenofWhittling", "一番レベルの低い MOD を消す"), group: "chaos", tag: "whittle" },
   // 抹消のお告げ = 次のカオスが消すのをその側だけに (poe2db で確認 2026-09-24。足す側は選べない)
-  { key: "OmenofSinistralErasure", ja: "左側の抹消のお告げ (カオスが消すのをプレだけに)", group: "chaos", side: "prefix" },
-  { key: "OmenofDextralErasure", ja: "右側の抹消のお告げ (カオスが消すのをサフィだけに)", group: "chaos", side: "suffix" },
-  { key: "OmenofSinistralCrystallisation", ja: "左側の結晶化のお告げ (エッセンスが消すのをプレだけに)", group: "essence", side: "prefix" },
-  { key: "OmenofDextralCrystallisation", ja: "右側の結晶化のお告げ (エッセンスが消すのをサフィだけに)", group: "essence", side: "suffix" },
-  { key: "OmenofSinistralNecromancy", ja: "左手のネクロマンシーのお告げ", group: "desecrate", side: "prefix" },
-  { key: "OmenofDextralNecromancy", ja: "右手のネクロマンシーのお告げ", group: "desecrate", side: "suffix" },
-  { key: "OmenofAbyssalEchoes", ja: "反響のお告げ (冒涜を 1 回引き直し)", group: "desecrate", tag: "echoes" },
+  { key: OMEN.erasure.prefix, ja: omenJa(OMEN.erasure.prefix, "カオスが消すのをプレだけに"), group: "chaos", side: "prefix" },
+  { key: OMEN.erasure.suffix, ja: omenJa(OMEN.erasure.suffix, "カオスが消すのをサフィだけに"), group: "chaos", side: "suffix" },
+  { key: OMEN.crystallisation.prefix, ja: omenJa(OMEN.crystallisation.prefix, "エッセンスが消すのをプレだけに"), group: "essence", side: "prefix" },
+  { key: OMEN.crystallisation.suffix, ja: omenJa(OMEN.crystallisation.suffix, "エッセンスが消すのをサフィだけに"), group: "essence", side: "suffix" },
+  { key: OMEN.necromancy.prefix, ja: omenJa(OMEN.necromancy.prefix), group: "desecrate", side: "prefix" },
+  { key: OMEN.necromancy.suffix, ja: omenJa(OMEN.necromancy.suffix), group: "desecrate", side: "suffix" },
+  { key: "OmenofAbyssalEchoes", ja: omenJa("OmenofAbyssalEchoes", "冒涜を 1 回引き直し"), group: "desecrate", tag: "echoes" },
 ];
 
 const props = defineProps<{
@@ -53,14 +57,14 @@ const priced = (key: string): boolean => Number.isFinite(h.value?.cur(key) ?? In
 function omensOf(a: SimAction | null): string[] {
   if (!a) return [];
   switch (a.kind) {
-    case "exalt": return [...(a.side ? [a.side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] : []), ...(a.catalyst ? ["OmenofCatalysingExaltation"] : []), ...(a.greater ? ["OmenofGreaterExaltation"] : [])];
-    case "annul": return a.side ? [a.side === "prefix" ? "OmenofSinistralAnnulment" : "OmenofDextralAnnulment"] : [];
+    case "exalt": return [...(a.side ? [OMEN.exalt[a.side]] : []), ...(a.catalyst ? ["OmenofCatalysingExaltation"] : []), ...(a.greater ? ["OmenofGreaterExaltation"] : [])];
+    case "annul": return a.side ? [OMEN.annul[a.side]] : [];
     case "light": return ["OmenofLight"];
     case "whittle": return ["OmenofWhittling"];
-    case "chaos": return a.side ? [a.side === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure"] : [];
-    case "essence": return [((a.removeSide === "auto" ? null : a.removeSide) ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
-    case "breach": return [a.removeSide === "suffix" ? "OmenofDextralCrystallisation" : "OmenofSinistralCrystallisation"];
-    case "desecrate": return [a.side === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy", ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
+    case "chaos": return a.side ? [OMEN.erasure[a.side]] : [];
+    case "essence": return [OMEN.crystallisation[((a.removeSide === "auto" ? null : a.removeSide) ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "suffix" : "prefix"]];
+    case "breach": return [OMEN.crystallisation[a.removeSide === "suffix" ? "suffix" : "prefix"]];
+    case "desecrate": return [OMEN.necromancy[a.side], ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
     default: return [];
   }
 }
@@ -127,13 +131,15 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
 /** 打てる物か (その指輪で打てて、値段がある) */
 const ok = (a: SimAction | null): boolean => !!a && !!h.value && !h.value.usable(props.state, a) && Number.isFinite(h.value.priceOf(props.state, a));
 
+/** 冒涜の骨の名前はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨。[[labels.ts]] の jaOfPriceKey) */
+const boneJa = (key: string): string => jaOfPriceKey(key, props.c.base.value ?? undefined) ?? (key === "desecrate_ancient" ? "古代の骨" : "保存された骨");
 /** オーブの候補 (お告げに合う物だけ) */
-const ORBS: Array<{ key: string; ja: string }> = [
+const ORBS = computed((): Array<{ key: string; ja: string }> => [
   { key: "chaos", ja: "カオスオーブ" }, { key: "chaos_greater", ja: "カオスオーブ (上級・段 35 以上)" }, { key: "chaos_perfect", ja: "カオスオーブ (完全・段 50 以上)" },
   { key: "exalt", ja: "高貴なオーブ" }, { key: "exalt_greater", ja: "高貴なオーブ (上級・段 35 以上)" }, { key: "exalt_perfect", ja: "高貴なオーブ (完全・段 50 以上)" },
   { key: "annul", ja: "消去のオーブ" },
-  { key: "desecrate", ja: "保存された鎖骨 (冒涜)" }, { key: "desecrate_ancient", ja: "古代の鎖骨 (冒涜・段 40 以上)" },
-];
+  { key: "desecrate", ja: `${boneJa("desecrate")} (冒涜)` }, { key: "desecrate_ancient", ja: `${boneJa("desecrate_ancient")} (冒涜・段 40 以上)` },
+]);
 const essenceOrbs = computed(() => [
   ...props.c.targets.value.filter((x) => props.c.data.value?.mods.get(x.modId)?.source === "perfect_essence")
     .map((x) => ({ key: `essence:${x.modId}`, ja: `パーフェクトエッセンス: ${props.c.stepTarget([x.modId])} (その側に外せる物が無ければ外れを付けてから)` })),
@@ -148,7 +154,7 @@ const catalysts = computed(() => {
 const anyCat = computed(() => catalysts.value[0]?.tag ?? null);
 /** カタリストだけの手で選べるカタリスト (値段がある物全部) */
 const allCatalysts = computed(() => CATALYSTS.filter((k) => priced(catalystPriceKey(k.tag))));
-const orbs = computed(() => [...ORBS, ...essenceOrbs.value, { key: "quality", ja: "カタリストだけ (品質を上限まで)" }, { key: "check", ja: "確認だけ (打たない)" }]
+const orbs = computed(() => [...ORBS.value, ...essenceOrbs.value, { key: "quality", ja: "カタリストだけ (品質を上限まで)" }, { key: "check", ja: "確認だけ (打たない)" }]
   .filter((o) => ok(build(o.key, chosen.value, o.key === "quality" ? catalyst.value ?? anyCat.value ?? allCatalysts.value[0]?.tag ?? null
     : has("catalyst") ? catalyst.value ?? anyCat.value : null))));
 
@@ -160,7 +166,7 @@ const addable = computed(() => OMENS.filter((o) => {
   if (o.tag === "light" && side.value) return false;
   if (o.side && has("light")) return false;
   const next = [...chosen.value, o];
-  return [...ORBS, ...essenceOrbs.value].some((x) => ok(build(x.key, next, o.tag === "catalyst" || has("catalyst") ? anyCat.value : null)));
+  return [...ORBS.value, ...essenceOrbs.value].some((x) => ok(build(x.key, next, o.tag === "catalyst" || has("catalyst") ? anyCat.value : null)));
 }));
 
 function emitNow(): void {

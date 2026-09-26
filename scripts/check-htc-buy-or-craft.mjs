@@ -107,46 +107,9 @@ console.log("\n武器 (イージスクォータースタッフ) の検索:");
     if (w.unmatched.length) fail(`条件にできない MOD: ${w.unmatched.join(" / ")}`);
     console.log(`  type ${t.option} / 条件 ${w.filters.length} 本 / カテゴリは送らない`);
   }
-  // 途中買いの案が全部クエリを持てること
-  const all = [
-    ...ids,
-    { modId: "Quarterstaves/LocalLightningDamage" },
-    { modId: "Quarterstaves/LifeGainedFromEnemyDeath" },
-    { modId: "Quarterstaves/IncreasedWeaponElementalDamagePercent" },
-  ];
-  const parts = M.partialStarts(data, qs, all, { level: 83, maxBought: 4, baseType: BASE });
-  const without = parts.filter((p) => !p.buyQuery).length;
-  if (without) fail(`途中買い ${without} 件が検索を組めない`);
-  console.log(`  途中買い ${parts.length} 通り、全部クエリを持てた`);
 }
 
-// ---- 5. フラクチャー品を引く検索 ----
-//
-// オーナー方針 2026-09-22:「先にフラクチャー品みるのがいい。これ 1 神とかだから、それ消えたら
-// 終わるからね」。固定された MOD は消去でも消えないので、一番つきにくい 1 個が固定された物を
-// 買うのが最大の梃子。実測 (太陽のアミュレット 4 個): 素から 2,015 神 → 固定済みなら 231 神 (11%)。
-// 取引所は固定された MOD を別の名前空間で持つ (頭が explicit. ではなく fractured.)。
-console.log("\nフラクチャー品の検索:");
-{
-  const BASE = "Aegis Quarterstaff";
-  const qs = M.itemBaseFor(data, BASE);
-  const t = { modId: "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon" };
-  const q = M.fracturedBuyQuery(data, qs, t, { ilvlMin: 83, baseType: BASE });
-  if (!q) { fail("フラクチャー品の検索が組めない"); } else {
-    const f = q.query.query.stats[0].filters;
-    if (f.length !== 1) fail(`条件が ${f.length} 本 (1 本のはず)`);
-    else if (!f[0].id.startsWith("fractured.")) fail(`頭が ${f[0].id} (fractured. のはず)`);
-    // ベース名と ilvl は普通の検索と同じ
-    if (q.query.query.type?.option !== BASE) fail("ベース名が入っていない");
-    if (q.query.query.filters.type_filters.filters.rarity?.option !== "nonunique") fail("レアで引いていない");
-    console.log(`  ${f[0].id} >= ${f[0].value.min}  (ベース ${q.query.query.type.option})`);
-  }
-  // 普通の検索は explicit のまま (取り違えていないこと)
-  const plain = M.buildFinishedQuery(data, qs, [t], { ilvlMin: 83, baseType: BASE });
-  if (!plain.query.query.stats[0].filters[0].id.startsWith("explicit.")) fail("普通の検索まで fractured になっている");
-}
-
-// ---- 6. 判定 ----
+// ---- 5. 判定 ----
 console.log("\n判定:");
 const cases = [
   { name: "作ると 13 倍 (オーナーの実物)", i: { craftExpected: 3755489, listingPrice: 279180 }, want: "buy" },

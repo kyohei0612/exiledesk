@@ -9,10 +9,11 @@
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import type { Side } from "../../services/htc/step-odds";
+import { tierWeight, type Side } from "../../services/htc/step-odds";
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { AutoTreeInput } from "./tree-auto";
+import { OMEN, BREACH_FAMILY } from "../../services/htc/omens";
 
 export type Method = "chaos" | "exalt" | "desecrate" | "essence";
 export type Reroll = "light" | "overwrite";
@@ -72,11 +73,6 @@ export const RULES: readonly string[] = [
   "カオスで引くのは最初の 1 つだけ (何も付いていないうちなら消えるのは外れだけ)",
 ];
 
-const OMEN_EX: Record<Side, string> = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" };
-const OMEN_AN: Record<Side, string> = { prefix: "OmenofSinistralAnnulment", suffix: "OmenofDextralAnnulment" };
-const OMEN_CR: Record<Side, string> = { prefix: "OmenofSinistralCrystallisation", suffix: "OmenofDextralCrystallisation" };
-const OMEN_NE: Record<Side, string> = { prefix: "OmenofSinistralNecromancy", suffix: "OmenofDextralNecromancy" };
-const BREACH_FAMILY = "LocalMaximumQuality";
 
 export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: number): RedoPlan | null {
   const { data: d, prices: p } = inp;
@@ -87,8 +83,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const mod = (id: string): Mod => d.mods.get(id)!;
   const sideOf = (id: string): Side => (mod(id).type === "prefix" ? "prefix" : "suffix");
   const key = (s: Side): "prefixes" | "suffixes" => (s === "prefix" ? "prefixes" : "suffixes");
-  const w = (m: Mod, minIdx: number, floor: number): number =>
-    m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= itemLevel && t.ilvl >= floor ? t.weight : 0), 0);
+  const w = (m: Mod, minIdx: number, floor: number): number => tierWeight(m, minIdx, itemLevel, floor);
   // 同じ引数で何度も呼ばれる (候補の組み合わせごと) ので覚えておく。2026-09-26: 前回の続きで 0.2 秒固まっていた
   const poolMemo = new Map<string, number>();
   const poolW = (s: Side, floor: number, desec: boolean, tag: string | null, mult: number): number => {
@@ -141,7 +136,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 巻き込む分 = (巻き込む確率) × (作り直しの費用)。守りたい物が反対側にしか無ければお告げは要らず、同じ側にあるなら
     // お告げを払っても守れない (2026-09-25 金の指輪: 素の消去 523 神 / 右側のお告げ 1,162 神)
     const otherSide = kOther + (shielded.has(s === "prefix" ? "suffix" : "prefix") ? loose(s === "prefix" ? "suffix" : "prefix") : 0);
-    const missSide = cur("annul") + cur(OMEN_AN[s]) + (others > 0 ? (others / (others + 1)) * redoPrior : 0);
+    const missSide = cur("annul") + cur(OMEN.annul[s]) + (others > 0 ? (others / (others + 1)) * redoPrior : 0);
     const nAll = others + otherSide + 1;
     const missPlain = cur("annul") + (others > 0 ? (others / nAll) * redoPrior : 0) + (otherSide > 0 ? (otherSide / nAll) * redoOther : 0);
     const perMiss = Math.min(missSide, missPlain);
@@ -154,7 +149,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
         const mult = useTag ? catalysingMultiplier(qualityMax) : 1;
         const refill = useTag ? catalystCountFor(qualityMax) * cur(catalystPriceKey(useTag)) + cur("OmenofCatalysingExaltation") : 0;
         const pHit = (w(m, t.minTierIndex ?? 0, floor) * mult) / poolW(s, floor, false, useTag, mult);
-        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, plainAnnul, perTry: cur(orb) + cur(OMEN_EX[s]) + refill, p: pHit, perMiss, safe: plainAnnul ? others + otherSide === 0 : others === 0,
+        const e = finish({ modId: t.modId, side: s, method: "exalt", catalyst: useTag, orb, plainAnnul, perTry: cur(orb) + cur(OMEN.exalt[s]) + refill, p: pHit, perMiss, safe: plainAnnul ? others + otherSide === 0 : others === 0,
           ...(risky ? { why: "触らない MOD がある側 (消去で巻き込む)" } : {}) });
         if (!best || e.expected < best.expected) best = e;
       }
@@ -167,7 +162,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const floor = bone === "desecrate_ancient" ? 40 : 0;
     const p1 = w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, true, null, 1);
     const pHit = 1 - (1 - p1) ** 6;
-    const perTry = cur(bone) + cur(OMEN_NE[s]) + cur("OmenofAbyssalEchoes");
+    const perTry = cur(bone) + cur(OMEN.necromancy[s]) + cur("OmenofAbyssalEchoes");
     let why: string | undefined;
     if (inp.desecratedTaken) why = "冒涜の MOD がもう付いている";
     if (reach(t) < floor) why = "古代の骨では段が届かない";
@@ -176,7 +171,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const ess = [...d.mods.values()].filter((x) => x.id.startsWith(m.id.split("/")[0] + "/") && CRAFTED_SOURCES.has(x.source) && x.type === s && x.family !== BREACH_FAMILY)
       .map((x) => cur(`essence:perfect:${x.id}`)).filter((v) => Number.isFinite(v)).sort((a, b) => a - b)[0];
     if (reroll === "overwrite" && (!canOw || ess == null)) why = why ?? "上書きは残りがフラクチャーの枠 2 つの側だけ";
-    const perMiss = reroll === "overwrite" ? cur(OMEN_CR[s]) + (ess ?? Infinity) : cur("OmenofLight") + cur("annul");
+    const perMiss = reroll === "overwrite" ? cur(OMEN.crystallisation[s]) + (ess ?? Infinity) : cur("OmenofLight") + cur("annul");
     // 満杯の側への冒涜は固定でない物を 1 つ置き換える (光で回す時)。上書きの形 (k = 0) は確定
     const full = limits[s] - (inp.startCount?.[s] ?? 0) - k <= 0;
     const risk = reroll === "light" && full && k > 0 ? k / (k + 1) : 0;
@@ -190,11 +185,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const s = sideOf(t.modId), m = mod(t.modId);
     const pHit = w(m, t.minTierIndex ?? 0, 0) / (poolW("prefix", 0, false, null, 1) + poolW("suffix", 0, false, null, 1));
     const ok = inp.chaosOk || (inp.chaosSide && inp.chaosSide === s);
-    return finish({ modId: t.modId, side: s, method: "chaos", perTry: cur("chaos") + (inp.chaosOk ? 0 : cur(s === "prefix" ? "OmenofSinistralErasure" : "OmenofDextralErasure")), p: pHit, perMiss: 0, safe: true, ...(ok ? {} : { why: "触らない MOD があるのでカオスは使えない" }) });
+    return finish({ modId: t.modId, side: s, method: "chaos", perTry: cur("chaos") + (inp.chaosOk ? 0 : cur(OMEN.erasure[s])), p: pHit, perMiss: 0, safe: true, ...(ok ? {} : { why: "触らない MOD があるのでカオスは使えない" }) });
   }
   function essenceEst(t: TierTarget): MethodEstimate {
     const s = sideOf(t.modId);
-    return finish({ modId: t.modId, side: s, method: "essence", perTry: cur(`essence:perfect:${t.modId}`) + cur(OMEN_CR[s]), p: 1, perMiss: 0, safe: true });
+    return finish({ modId: t.modId, side: s, method: "essence", perTry: cur(`essence:perfect:${t.modId}`) + cur(OMEN.crystallisation[s]), p: 1, perMiss: 0, safe: true });
   }
 
   const normals = ts.filter((t) => mod(t.modId).source === "normal");

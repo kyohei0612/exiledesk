@@ -27,7 +27,7 @@ const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   normal: { label: "クラフトで付く", cls: "border-emerald-400/60 text-emerald-200", note: "カオス・高貴で確率で狙う。重さ (出やすさ) で確率が決まる" },
   // オーナー 2026-09-24:「冒涜でしか付かない MOD なら同じように特殊 MOD 扱いがいい。冒涜でも普通の MOD なら無視で
   // クラフトで付く、みたいな表現でいい」(冒涜するかどうかは作り方で決める)
-  desecrated: { label: "特殊 (冒涜のみ)", cls: "border-violet-400/60 text-violet-200", note: "冒涜 (鎖骨) でしか付かない MOD。冒涜するかは作り方で決める" },
+  desecrated: { label: "特殊 (冒涜のみ)", cls: "border-violet-400/60 text-violet-200", note: "冒涜 (骨) でしか付かない MOD。冒涜するかは作り方で決める" },
   essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
   cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };

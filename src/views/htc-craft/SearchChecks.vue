@@ -44,7 +44,7 @@ function conditions(q: unknown): string[] {
 
 const rows = computed(() => (c.treePlan.value?.searches ?? []).map((sq) => {
   const f = c.treeResult.value?.found.find((x) => x.key === sq.key);
-  const status = f ? (f.error ? `取れず: ${f.error}` : `${f.total} 件`) : c.treeBusy.value ? "探しています…" : "まだ";
+  const status = f ? (f.error ? `取れず: ${f.error}` : `${f.total} 件`) : "まだ";
   return { key: sq.key, label: sq.label, cond: conditions(sq.query), status, error: !!f?.error, url: f?.url ?? null };
 }));
 </script>

@@ -91,7 +91,7 @@ export interface CachedRareItem {
   granted_skills?: string[];
   /**
    * 2026-09-22: 品質 (%)。ブリーチのエッセンスで最大品質を上げてから MOD を消す作り方を
-   * 見分けるのに使う (`services/htc/lingering.ts`)。古いキャッシュには無い。
+   * 見分けるのに使う。古いキャッシュには無い。
    */
   quality?: number;
   /** 2026-09-12: 付与スキルの穴に入っていたジェム名 (例: ["Frost Wall"])。 */

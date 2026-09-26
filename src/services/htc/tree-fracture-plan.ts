@@ -67,33 +67,3 @@ export function treeFracturePlan(prices: OrbPrices): TreeFracturePlan {
   const be = selfFracture(4, { base: 0, orb: prices.orb, annul: prices.annul, bone: prices.bone }).breakEvenOrb;
   return { orb: prices.orb, breakEvenOrb: be, rows };
 }
-
-export interface TreeFractureVerdict {
-  /** 固定済み品の最安 (神) */
-  fracturedPrice: number;
-  /** 自前の期待 (神)。ベース代を入れた総額 */
-  selfCost: number;
-  /** 安い方 */
-  choice: "buy-fractured" | "self-fracture";
-  /** どれだけ差があるか (神、正の数) */
-  margin: number;
-}
-
-/**
- * 固定済み品の最安 1 件が取れたら比べる (信号 1 の後)。
- *
- * `basePrice` は**固定されていない**樹 MOD 入りの物の値段。分からなければ 0 で渡すと
- * 「自前の下限」との比較になります (その時でも固定済みが高ければ、買うのは損と言える)。
- */
-export function treeFractureVerdict(
-  plan: TreeFracturePlan,
-  fracturedPrice: number,
-  basePrice: number,
-  mods: number,
-): TreeFractureVerdict | null {
-  const row = plan.rows.find((r) => r.mods === mods) ?? plan.rows[0];
-  if (!row) return null;
-  const selfCost = row.fixed + row.mods * basePrice;
-  const choice = fracturedPrice <= selfCost ? "buy-fractured" : "self-fracture";
-  return { fracturedPrice, selfCost, choice, margin: Math.abs(selfCost - fracturedPrice) };
-}

@@ -22,6 +22,7 @@ import type { Side } from "../../services/htc/step-odds";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { BREACH_FAMILY } from "../../services/htc/omens";
 
 export interface AutoTreeInput {
   data: PatchData;
@@ -100,7 +101,6 @@ export function chaosSideFor(start: SimState, limits: { prefix: number; suffix: 
   return full && rest.length === 1 ? rest[0]! : null;
 }
 
-const BREACH_FAMILY = "LocalMaximumQuality";
 
 export function autoTree(inp: AutoTreeInput): SimNode[] {
   const { data: d, prices: p } = inp;

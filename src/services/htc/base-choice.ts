@@ -21,7 +21,7 @@
  *   - **0 から作る** … ここが本番。枠と暗黙で選ぶ
  * どちらも**選ぶのは人**です ([[htc-craft-engine-direction]]「手動の所は手動でいきたい」)。
  *
- * 費用まで出すと重いので、**選ばれた 1 つだけ**解いてください ([[solo-cost.ts]] と同じ分け方)。
+ * 費用まで出すと重いので、**選ばれた 1 つだけ**解いてください。
  */
 import { htcBaseInfo, htcBaseLimits } from "./patch";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";

@@ -13,6 +13,8 @@
 import { computed, ref } from "vue";
 import { CERTAIN, type Goto, type SimAction, type SimNode } from "../../services/htc/sim-route";
 import { CATALYSTS } from "../../services/htc/quality";
+import { jaOfOmen, jaOfPriceKey } from "../../services/htc/labels";
+import { OMEN } from "../../services/htc/omens";
 import type { Side } from "../../services/htc/step-odds";
 import type { useCraftTree } from "./useCraftTree";
 import ActionPicker from "./ActionPicker.vue";
@@ -29,21 +31,23 @@ const price = computed(() => (h.value && n.value.action && !why.value ? h.value.
 const odds = computed(() => props.t.hitOdds(n.value));
 const pct = (p: number): string => (p >= 0.995 ? "確定" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`);
 
-const SIDE: Record<Side, string> = { prefix: "左側", suffix: "右側" };
+/** お告げ・骨の名前はゲームの正式名 ([[labels.ts]])。骨はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨) */
+const omenJa = (key: string): string => jaOfOmen(key) ?? key;
+const boneJa = (key: string): string => jaOfPriceKey(key, props.c.base.value ?? undefined) ?? key;
 const TIER: Record<string, string> = { chaos: "", chaos_greater: " (上級)", chaos_perfect: " (完全)", exalt: "", exalt_greater: " (上級)", exalt_perfect: " (完全)" };
 const catJa = (tag: string | null): string => CATALYSTS.find((k) => k.tag === tag)?.ja ?? tag ?? "";
 /** 打つ物を 1 行の言葉に */
 function actionText(a: SimAction | null): string {
   if (!a) return "打つ物を選ぶ";
   switch (a.kind) {
-    case "chaos": return `${a.side ? `${SIDE[a.side]}の抹消のお告げ + ` : ""}カオスオーブ${TIER[a.tier]}`;
-    case "exalt": return [a.side ? `${SIDE[a.side]}の高貴なお告げ` : "", a.greater ? "偉大なる高貴のお告げ" : "", a.catalyst ? `触媒の高貴のお告げ (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`].filter(Boolean).join(" + ");
-    case "annul": return `${a.side ? `${SIDE[a.side]}の消去のお告げ + ` : ""}消去のオーブ`;
-    case "essence": return `${a.removeSide === "auto" ? "外れのある側" : SIDE[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side]}の結晶化のお告げ + パーフェクトエッセンス`;
-    case "breach": return `${SIDE[a.removeSide ?? "prefix"]}の結晶化のお告げ + ブリーチのエッセンス (品質の上限 +20%)`;
-    case "desecrate": return `${a.side === "prefix" ? "左手" : "右手"}のネクロマンシーのお告げ${a.echoes ? " + 反響のお告げ" : ""} + ${a.bone === "desecrate_ancient" ? "古代の鎖骨" : "保存された鎖骨"}`;
-    case "light": return "光のお告げ + 消去のオーブ (冒涜だけ消す)";
-    case "whittle": return "削減のお告げ + カオスオーブ (一番レベルの低い MOD を消す)";
+    case "chaos": return `${a.side ? `${omenJa(OMEN.erasure[a.side])} + ` : ""}カオスオーブ${TIER[a.tier]}`;
+    case "exalt": return [a.side ? omenJa(OMEN.exalt[a.side]) : "", a.greater ? omenJa("OmenofGreaterExaltation") : "", a.catalyst ? `${omenJa("OmenofCatalysingExaltation")} (${catJa(a.catalyst)})` : "", `高貴なオーブ${TIER[a.tier]}`].filter(Boolean).join(" + ");
+    case "annul": return `${a.side ? `${omenJa(OMEN.annul[a.side])} + ` : ""}消去のオーブ`;
+    case "essence": return `${a.removeSide === "auto" ? "外れのある側の結晶化のお告げ" : omenJa(OMEN.crystallisation[a.removeSide ?? (props.c.data.value?.mods.get(a.modId)?.type ?? "prefix") as Side])} + パーフェクトエッセンス`;
+    case "breach": return `${omenJa(OMEN.crystallisation[a.removeSide ?? "prefix"])} + ブリーチのエッセンス (品質の上限 +20%)`;
+    case "desecrate": return `${omenJa(OMEN.necromancy[a.side])}${a.echoes ? ` + ${omenJa("OmenofAbyssalEchoes")}` : ""} + ${boneJa(a.bone)}`;
+    case "light": return `${omenJa("OmenofLight")} + 消去のオーブ (冒涜だけ消す)`;
+    case "whittle": return `${omenJa("OmenofWhittling")} + カオスオーブ (一番レベルの低い MOD を消す)`;
     case "check": return "確認だけ (打たない)";
     case "quality": return `${catJa(a.catalyst)}で品質を上限まで`;
   }

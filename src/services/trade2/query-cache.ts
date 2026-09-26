@@ -36,12 +36,6 @@ function save(all: Record<string, Entry>): void {
   }
 }
 
-/** 覚えている結果の取れた時刻 (画面で「○分前」と出す用)。無ければ null */
-export function cachedAt(league: string, body: unknown, topN?: number): number | null {
-  const e = load()[`${league}|${topN ?? ""}|${JSON.stringify(body)}`];
-  return e && Date.now() - e.at < TTL_MS ? e.at : null;
-}
-
 /** 30 分以内に同じ条件で取っていればそれを返し、無ければ取引所へ (上限で止められたら待って取り直す) */
 export async function autoPriceCached(
   league: string, body: unknown, rates: ExaltedRates, topN?: number,

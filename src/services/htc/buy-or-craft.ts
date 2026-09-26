@@ -223,8 +223,7 @@ export function buildFinishedQuery(
   const query = buildSpecQuery({
     ...(opts.baseType ? { baseType: opts.baseType } : {}),
     ...(category ? { category } : {}),
-    // 取引所に「レア」の option は無く、ユニーク以外でまとめて引く ([[partial-start.ts]] の
-    // 途中買いは 3 MOD 以上がレアなので、ここを通る)
+    // 取引所に「レア」の option は無く、ユニーク以外でまとめて引く
     rarity: opts.rarity === "magic" ? "magic" : opts.rarity === "normal" ? "normal" : "nonunique",
     ...(opts.ilvlMin != null ? { ilvlMin: opts.ilvlMin } : {}),
     stats: filters.map((f) => ({ id: f.id, min: f.min })),
