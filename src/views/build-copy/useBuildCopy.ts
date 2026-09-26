@@ -16,6 +16,7 @@ import { loadFromNinjaUrl, parseNinjaUrl } from "../../services/build-copy/ninja
 import { currencyPrice, isLineage, loadUniquePrices, typeQuery, uniquePrice } from "../../services/build-copy/prices";
 import { analyzeRare, prepareRareQueries, rareLinks, type RareAnalysis, type RareLink } from "../../services/build-copy/rare-query";
 import { marketStore } from "../../state/market-store";
+import { rateOf, type DisplayCurrency } from "../../state/display-currency";
 import { snapshotNameToTradeLeague, trade2QueryUrl } from "../../services/trade2/league";
 import { buildUniqueNameQuery } from "../../services/trade2/query";
 import { jaTypeName, jaUniqueName } from "../../services/trade2/localize";
@@ -40,6 +41,8 @@ export interface ItemRow {
   src: "unique" | "rare" | "none";
   /** レアの解析 (MOD と段) と、選んだ段で作った取引所リンク (ゆるさ違い) */
   rare: { analysis: RareAnalysis; links: RareLink[]; picked: Record<number, number>; ratio: number } | null;
+  /** レアの手入れの値段 (取引所で見た値段を打つ) */
+  manual: ManualPrice | null;
 }
 export interface BulkRow {
   nameEn: string;
@@ -47,6 +50,24 @@ export interface BulkRow {
   count: number;
   unit: number | null;
 }
+export interface ManualPrice {
+  amount: number;
+  currency: DisplayCurrency;
+}
+/**
+ * レアの手入れの値段 (オーナー 2026-09-26「レア装備どうしようか」→ 取引所で見た値段を打って合計に入れる)。
+ * 同じビルドを読み直しても残るよう、固有名・ベース・部位で覚える
+ */
+const MANUAL_KEY = "exiledesk.buildCopy.manualPrices";
+function loadManual(): Record<string, ManualPrice> {
+  try {
+    const v = JSON.parse(localStorage.getItem(MANUAL_KEY) ?? "{}") as unknown;
+    return v && typeof v === "object" ? (v as Record<string, ManualPrice>) : {};
+  } catch {
+    return {};
+  }
+}
+const manualKey = (it: BuildItem) => `${it.slot}|${it.name}|${it.base}`;
 const leagueSlug = () => (marketStore.league.value?.Value ?? "").toLowerCase().replace(/\s+/g, "-");
 
 export function useBuildCopy() {
@@ -107,6 +128,20 @@ export function useBuildCopy() {
     picked.delete(row);
     ratios.delete(row);
   }
+  const manual = reactive(loadManual());
+  /** レアの値段を打つ (amount が空・0 なら値段は消し、選んだ通貨だけ覚える) */
+  function setManual(row: number, amount: number | null, currency: DisplayCurrency): void {
+    const it = build.value?.items[row];
+    if (!it) return;
+    const k = manualKey(it);
+    if ((amount == null || !(amount > 0)) && currency === "divine") delete manual[k];
+    else manual[k] = { amount: amount != null && amount > 0 ? amount : 0, currency };
+    try {
+      localStorage.setItem(MANUAL_KEY, JSON.stringify(manual));
+    } catch {
+      /* 保存できなくても画面では効く */
+    }
+  }
   /** 読み込んだビルドを消して、貼る前に戻す (オーナー 2026-09-26「読み込んだあとリセットするボタン」) */
   function clear(): void {
     code.value = "";
@@ -157,13 +192,15 @@ export function useBuildCopy() {
       const unique = item.rarity === "UNIQUE" || item.rarity === "RELIC";
       const base = item.base || baseOfMagic(item.name);
       const up = unique ? uniquePrice(item.name, item.base) : null;
+      const man = item.rarity === "RARE" ? (manual[manualKey(item)] ?? null) : null;
       return {
         i,
         item,
         // レアの名前はでたらめな組み合わせなので、主にはベースの日本語名を出す (固有の名前は画面で小さく)
         nameJa: unique ? jaUniqueName(item.name) : base ? jaTypeName(base) : item.name,
         baseJa: base ? jaTypeName(base) : "",
-        price: unique ? (up?.exalted ?? null) : null,
+        price: unique ? (up?.exalted ?? null) : man && man.amount > 0 ? man.amount * rateOf(man.currency) : null,
+        manual: man,
         src: unique ? "unique" : item.rarity === "RARE" ? "rare" : "none",
         rare: (() => {
           const a = analyses.value.get(i);
@@ -221,5 +258,5 @@ export function useBuildCopy() {
     void openQuery(q);
   }
 
-  return { code, build, error, loading, progress, load, clear, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
+  return { code, build, error, loading, progress, load, clear, setManual, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
 }

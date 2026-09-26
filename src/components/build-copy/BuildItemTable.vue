@@ -12,10 +12,13 @@ import { jaCurrency } from "../../i18n/currencies-ja";
 import RichText from "../decor/RichText.vue";
 import { jaUniqueText } from "../../services/mods/unique-mod-ja";
 import type { ItemRow } from "../../views/build-copy/useBuildCopy";
+import type { DisplayCurrency } from "../../state/display-currency";
 import { lineMin, type RareLine, type RareMod } from "../../services/build-copy/rare-query";
 
 defineProps<{ rows: ItemRow[] }>();
-const emit = defineEmits<{ trade: [r: ItemRow]; link: [query: unknown]; tier: [row: number, mod: number, tier: number]; lower: [row: number]; raise: [row: number]; reset: [row: number] }>();
+const emit = defineEmits<{ trade: [r: ItemRow]; link: [query: unknown]; tier: [row: number, mod: number, tier: number]; lower: [row: number]; raise: [row: number]; reset: [row: number]; manual: [row: number, amount: number | null, currency: DisplayCurrency] }>();
+/** 値段の欄の入力 → 数 (空なら null) */
+const num = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 const money = (ex: number) => displayCurrency.money(ex);
 /** ゲームのレアリティの色 */
 const COLOR: Record<string, string> = { UNIQUE: "text-[#af6025]", RELIC: "text-[#82ad6a]", RARE: "text-[#e8d77a]", MAGIC: "text-[#8888ff]", NORMAL: "text-[#c8c8c8]" };
@@ -111,8 +114,29 @@ function lineLabel(l: RareLine, ratio: number): string {
             <p v-if="r.rare?.analysis.missing.length" class="mt-1 text-[10px] text-[var(--exile-color-text-tertiary)]">取引所の条件に無い行: <RichText :text="r.rare.analysis.missing.map((x) => jaUniqueText(x)).join(' / ')" /></p>
           </td>
           <td class="px-3 py-2 text-right tabular-nums whitespace-nowrap">
-            <span v-if="r.price != null" class="text-[var(--exile-color-accent-focus)]">{{ money(r.price) }}</span>
-            <span v-else-if="r.src === 'rare'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">取引所で確認</span>
+            <!-- レアは取引所で見た値段を打つ (オーナー 2026-09-26「レア装備どうしようか」→ 手入れで合計に入れる) -->
+            <div v-if="r.src === 'rare'" class="flex items-center justify-end gap-1">
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="値段"
+                :value="r.manual?.amount || ''"
+                class="num w-16 text-right text-[12px] py-0"
+                title="取引所で見た値段を打つと合計に入ります"
+                @change="emit('manual', r.i, num(($event.target as HTMLInputElement).value), r.manual?.currency ?? 'divine')"
+              />
+              <select
+                :value="r.manual?.currency ?? 'divine'"
+                class="num text-[11px] py-0"
+                @change="emit('manual', r.i, r.manual?.amount ?? null, ($event.target as HTMLSelectElement).value as DisplayCurrency)"
+              >
+                <option value="divine">神</option>
+                <option value="chaos">カオス</option>
+                <option value="exalted">高貴</option>
+              </select>
+            </div>
+            <span v-else-if="r.price != null" class="text-[var(--exile-color-accent-focus)]">{{ money(r.price) }}</span>
             <span v-else-if="r.src === 'unique'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場なし</span>
             <span v-else class="text-[12px] text-[var(--exile-color-text-tertiary)]" title="マジック・ノーマルは安いので数えません">—</span>
           </td>

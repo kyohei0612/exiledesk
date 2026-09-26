@@ -75,13 +75,13 @@ const money = (ex: number) => displayCurrency.money(ex);
             <p class="text-2xl tabular-nums text-[var(--exile-color-accent-focus)] mt-0.5">合計 {{ money(b.totals.value.sum) }}</p>
           </div>
           <div class="text-[12px] text-[var(--exile-color-text-secondary)] space-y-0.5">
-            <p v-if="b.totals.value.rares">レア {{ b.totals.value.rares }} 点は合計に入っていません (相場が無いので、「トレード2へ」で取引所を見てください)</p>
+            <p v-if="b.totals.value.rares">値段を入れていないレア {{ b.totals.value.rares }} 点は合計に入っていません (「トレード2へ」で見た値段を行に打つと足します)</p>
             <p v-if="b.totals.value.unknown">相場の無い物 {{ b.totals.value.unknown }} 件 (合計に入っていません)</p>
           </div>
         </div>
       </BaseCard>
 
-      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" @lower="b.lowerTiers" @raise="b.raiseTiers" @reset="b.resetTiers" />
+      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" @lower="b.lowerTiers" @raise="b.raiseTiers" @reset="b.resetTiers" @manual="b.setManual" />
       <div class="grid grid-cols-1 @5xl:grid-cols-2 gap-4">
         <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" />
         <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" />

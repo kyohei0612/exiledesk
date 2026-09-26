@@ -45,7 +45,8 @@ const cur = computed<DisplayCurrency>(() => (choice.value === "fair" ? "divine" 
 /** 1 表示通貨 = ? 高貴 */
 const rate = computed<number>(() => rateOf(cur.value));
 
-function rateOf(c: DisplayCurrency): number {
+/** 1 枚が高貴何枚か (相場が無ければ 1) */
+export function rateOf(c: DisplayCurrency): number {
   const r = marketStore.rates.value;
   if (c === "chaos") return r.chaos > 0 ? r.chaos : 1;
   if (c === "divine") return r.divine > 0 ? r.divine : 1;
