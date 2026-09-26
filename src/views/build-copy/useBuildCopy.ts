@@ -62,6 +62,35 @@ export function useBuildCopy() {
   function pickTier(row: number, mod: number, tier: number): void {
     picked.set(row, { ...(picked.get(row) ?? {}), [mod]: tier });
   }
+  /**
+   * その行の全 MOD の段を 1 つずつ下げる (選べる段の中で、今より 1 つ下。一番下ならそのまま)。
+   * オーナー 2026-09-26「各項目にティアを 1 つずつ下げる設定と、リセットを追加して」
+   */
+  function lowerTiers(row: number): void {
+    shiftTiers(row, -1);
+  }
+  /** その行の全 MOD の段を 1 つずつ上げる (オーナー「上げるも一応ね、上下ティア変化させたい」) */
+  function raiseTiers(row: number): void {
+    shiftTiers(row, 1);
+  }
+  /** 選べる段の中で 1 つ上 (dir = 1) / 下 (dir = -1) へ。端ならそのまま */
+  function shiftTiers(row: number, dir: 1 | -1): void {
+    const a = analyses.value.get(row);
+    if (!a) return;
+    const cur = picked.get(row) ?? {};
+    const next: Record<number, number> = { ...cur };
+    a.mods.forEach((m, k) => {
+      const now = cur[k] ?? m.tier;
+      // tiers の添字は大きいほど上の段
+      const cand = m.options.map((o) => o.i).filter((i) => (dir < 0 ? i < now : i > now));
+      if (cand.length) next[k] = dir < 0 ? Math.max(...cand) : Math.min(...cand);
+    });
+    picked.set(row, next);
+  }
+  /** その行の段を付いている段に戻す */
+  function resetTiers(row: number): void {
+    picked.delete(row);
+  }
   /** 相場を読み込み直したら数え直す */
   const priceTick = ref(0);
 
@@ -165,5 +194,5 @@ export function useBuildCopy() {
     void openQuery(q);
   }
 
-  return { code, build, error, loading, progress, load, items, runes, lineage, totals, tradeItem, tradeLink, pickTier };
+  return { code, build, error, loading, progress, load, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
 }

@@ -71,7 +71,7 @@ const money = (ex: number) => displayCurrency.money(ex);
         </div>
       </BaseCard>
 
-      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" />
+      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" @lower="b.lowerTiers" @raise="b.raiseTiers" @reset="b.resetTiers" />
       <div class="grid grid-cols-1 @5xl:grid-cols-2 gap-4">
         <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" />
         <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" />

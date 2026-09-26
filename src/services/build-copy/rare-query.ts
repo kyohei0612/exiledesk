@@ -42,6 +42,8 @@ export interface RareMod {
   tier: number;
   /** 選べる段 (その装備レベルで付く物、上の段から)。label は「T1 以上 (80-89)」 */
   options: Array<{ i: number; label: string }>;
+  /** プレフィックス / サフィックス (オーナー 2026-09-26「サフィとプレフィックス簡単に分けて表示」) */
+  side: "prefix" | "suffix" | null;
 }
 export interface RareAnalysis {
   base: string;
@@ -111,14 +113,16 @@ export function analyzeRare(it: BuildItem): RareAnalysis {
       const cls = p.baseType ? baseForSolving(data, p.baseType, got.skippedSides) : null;
       if (cls && got.targets.length) {
         const mods: RareMod[] = got.targets.map((t, k) => {
-          const tiers = data!.mods.get(t.modId)?.tiers ?? [];
+          const mod = data!.mods.get(t.modId);
+          const tiers = mod?.tiers ?? [];
+          const side = mod?.type === "prefix" || mod?.type === "suffix" ? mod.type : null;
           const cur = t.minTierIndex ?? 0;
           const options = tiers
             .map((tr, i) => ({ i, ilvl: tr.ilvl, label: `T${tiers.length - i} 以上 (${(tr.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")})` }))
             .filter((o) => o.ilvl <= (it.itemLevel || 100) || o.i === cur)
             .reverse()
             .map(({ i, label }) => ({ i, label }));
-          return { modId: t.modId, text: jaUniqueText(got.texts[k] ?? t.modId), tier: cur, options };
+          return { modId: t.modId, text: jaUniqueText(got.texts[k] ?? t.modId), tier: cur, options, side };
         });
         return { base: it.base, via: "tier", mods, textFilters: [], textLines: [], missing: got.skipped };
       }
