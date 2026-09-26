@@ -36,9 +36,7 @@ export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
     };
   }
   if (!hit) queueMicrotask(() => void runAuto(c, [...fixedIds], key, [...keepIds]));
-  const fixed = c.targets.value.filter((t) => fixedIds.includes(t.modId));
-  const spam = c.spamFor(fixed)?.total?.expected;
-  if (spam != null) return { value: spam, basis: "計算中" };
+  // 仮の値は軽い 1 つずつの合計だけ (古いスパムの組み立ては同期で 4 秒かかり、段を変えるたびに固まっていた。2026-09-26)
   const steps = stepsEstimate(c, fixedIds);
   return steps != null ? { value: steps, basis: "計算中" } : null;
 }

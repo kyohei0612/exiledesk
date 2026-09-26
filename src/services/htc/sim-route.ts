@@ -156,7 +156,19 @@ const SIDES: Side[] = ["prefix", "suffix"];
 export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality"]);
 
 /** ctx.baseQuality = ベースの品質の上限 (普通 20、ブリーチの指輪 40、洗練されたブリーチリング 45) */
+/**
+ * 同じ ctx・同じ手の並びなら helpers (中の memo) を使い回す。2026-09-26: 小分けに回すたびに作り直して roll の memo が
+ * 毎回空になり、段を変えただけで 10 秒固まっていた (roll が 5 秒)
+ */
+const HELPERS = new WeakMap<object, WeakMap<readonly SimNode[], ReturnType<typeof makeHelpers>>>();
 export function simHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly SimNode[]) {
+  let byNodes = HELPERS.get(ctx);
+  if (!byNodes) { byNodes = new WeakMap(); HELPERS.set(ctx, byNodes); }
+  let h = byNodes.get(nodes);
+  if (!h) { h = makeHelpers(ctx, nodes); byNodes.set(nodes, h); }
+  return h;
+}
+function makeHelpers(ctx: StepCtx & { baseQuality?: number }, nodes: readonly SimNode[]) {
   const { data, cls, prices, itemLevel } = ctx;
   const cur = (k: string): number => prices.currency[k] ?? prices.omens[k] ?? Infinity;
   const mod = (id: string): Mod | undefined => data.mods.get(id);
@@ -409,11 +421,18 @@ export async function simulateTreeChunked(
 ): Promise<SimResult> {
   const total = inp.runs ?? 4000;
   const parts: SimResult[] = [];
-  for (let i = 0; i < total; i += chunk) {
-    parts.push(simulateTree({ ...inp, runs: Math.min(chunk, total - i), seed: 20260924 + i }));
-    onProgress?.(Math.min(total, i + chunk), total);
-    await new Promise((r) => setTimeout(r, 0));
+  // 画面を止めないように、12 ミリ秒ごとに手を離す (小分けは 2 回ずつ。helpers は使い回すので小分けでも重くならない)
+  const step = Math.min(chunk, 2);
+  let t0 = performance.now();
+  for (let i = 0; i < total; i += step) {
+    parts.push(simulateTree({ ...inp, runs: Math.min(step, total - i), seed: 20260924 + i }));
+    if (performance.now() - t0 > 12) {
+      onProgress?.(Math.min(total, i + step), total);
+      await new Promise((r) => setTimeout(r, 0));
+      t0 = performance.now();
+    }
   }
+  onProgress?.(total, total);
   const runs = parts.reduce((a, p) => a + p.runs, 0);
   const done = parts.flatMap((p) => p.doneCosts).sort((a, b) => a - b);
   const q = (f: number): number => done[Math.min(done.length - 1, Math.floor(done.length * f))] ?? 0;
