@@ -13,9 +13,10 @@ import { computed, reactive, ref, shallowRef } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { decodePobCode, parseBuild, type BuildItem, type ParsedBuild } from "../../services/build-copy/pob";
 import { loadFromNinjaUrl, parseNinjaUrl } from "../../services/build-copy/ninja-url";
-import { currencyPrice, isLineage, loadUniquePrices, typeQuery, uniquePrice } from "../../services/build-copy/prices";
+import { currencyPrice, isLineage, isVariantUnique, loadUniquePrices, typeQuery, uniquePrice, uniqueVariantQuery } from "../../services/build-copy/prices";
 import { analyzeRare, prepareRareQueries, rareLinks, type RareAnalysis, type RareLink } from "../../services/build-copy/rare-query";
 import { marketStore } from "../../state/market-store";
+import { autoRarePrice, autoUniquePrice, type RareAutoResult } from "../../services/build-copy/rare-auto";
 import { rateOf, type DisplayCurrency } from "../../state/display-currency";
 import { snapshotNameToTradeLeague, trade2QueryUrl } from "../../services/trade2/league";
 import { buildUniqueNameQuery } from "../../services/trade2/query";
@@ -41,8 +42,13 @@ export interface ItemRow {
   src: "unique" | "rare" | "none";
   /** レアの解析 (MOD と段) と、選んだ段で作った取引所リンク (ゆるさ違い) */
   rare: { analysis: RareAnalysis; links: RareLink[]; picked: Record<number, number>; ratio: number } | null;
-  /** レアの手入れの値段 (取引所で見た値段を打つ) */
+  /** レアの手入れの値段 (取引所で見た値段を打つ / 自動で取った値段) */
   manual: ManualPrice | null;
+  /** 種類違いのあるユニーク (poe.ninja の相場は種類を区別しないので、取引所で同じ MOD の物を探す) */
+  variant: boolean;
+  /** 自動で取った結果 (どこで何件) と、取っている途中の段階 */
+  auto: RareAutoResult | null;
+  autoStep: string | null;
 }
 export interface BulkRow {
   nameEn: string;
@@ -67,6 +73,7 @@ function loadManual(): Record<string, ManualPrice> {
     return {};
   }
 }
+const isVariantUniqueItem = (it: BuildItem) => (it.rarity === "UNIQUE" || it.rarity === "RELIC") && isVariantUnique(it.name);
 const manualKey = (it: BuildItem) => `${it.slot}|${it.name}|${it.base}`;
 const leagueSlug = () => (marketStore.league.value?.Value ?? "").toLowerCase().replace(/\s+/g, "-");
 
@@ -142,6 +149,62 @@ export function useBuildCopy() {
       /* 保存できなくても画面では効く */
     }
   }
+  /**
+   * レアの相場を自動で取る (オーナー 2026-09-27「やっぱ自動がいいよね」。ジュエルは除く)。
+   * 取った値段は手入れの欄に入れる (上書きできる)。row を渡すとその行だけ
+   */
+  const autoResults = reactive(new Map<number, RareAutoResult>());
+  const autoStep = reactive(new Map<number, string>());
+  const autoBusy = ref(false);
+  const autoDone = ref(0);
+  const autoTotal = ref(0);
+  let autoGen = 0;
+  /** 自動で取る行: ジュエル以外のレア + 種類違いのあるユニーク */
+  const autoTargets = () =>
+    (build.value?.items ?? []).flatMap((it, i) => ((it.rarity === "RARE" && analyses.value.has(i) && it.kind !== "jewel") || isVariantUniqueItem(it) ? [i] : []));
+  async function autoPrices(row?: number): Promise<void> {
+    if (autoBusy.value) return;
+    const rows = row == null ? autoTargets() : [row];
+    const gen = ++autoGen;
+    autoBusy.value = true;
+    autoDone.value = 0;
+    autoTotal.value = rows.length;
+    try {
+      for (const i of rows) {
+        const it = build.value?.items[i];
+        const a = analyses.value.get(i);
+        if (!it || gen !== autoGen) break;
+        const opts = { aborted: () => gen !== autoGen, onStep: (s: string) => autoStep.set(i, s) };
+        const r = isVariantUniqueItem(it)
+          ? await autoUniquePrice(uniqueVariantQuery(it.name, it.base, it.mods), opts)
+          : a
+            ? await autoRarePrice(a, picked.get(i) ?? {}, ratios.get(i) ?? 100, opts)
+            : null;
+        autoStep.delete(i);
+        if (!r) break;
+        autoResults.set(i, r);
+        // レアは手入れの欄に入れる (上書きできる)。ユニークは取った値段をそのまま使う
+        if (r.exalted != null && it.rarity === "RARE") setManual(i, ...unitOf(r.exalted));
+        autoDone.value++;
+      }
+    } finally {
+      autoStep.clear();
+      if (gen === autoGen) autoBusy.value = false;
+    }
+  }
+  function stopAuto(): void {
+    autoGen++;
+    autoBusy.value = false;
+    autoStep.clear();
+  }
+  /** 高貴建て → 手入れの欄の数と通貨 (1 以上になる一番大きい通貨、小数 2 桁) */
+  function unitOf(exalted: number): [number, DisplayCurrency] {
+    for (const c of ["divine", "chaos"] as const) {
+      const v = exalted / rateOf(c);
+      if (v >= 1) return [Math.round(v * 100) / 100, c];
+    }
+    return [Math.round(exalted * 100) / 100, "exalted"];
+  }
   /** 読み込んだビルドを消して、貼る前に戻す (オーナー 2026-09-26「読み込んだあとリセットするボタン」) */
   function clear(): void {
     code.value = "";
@@ -150,6 +213,8 @@ export function useBuildCopy() {
     analyses.value = new Map();
     picked.clear();
     ratios.clear();
+    stopAuto();
+    autoResults.clear();
   }
   /** 相場を読み込み直したら数え直す */
   const priceTick = ref(0);
@@ -173,6 +238,8 @@ export function useBuildCopy() {
       await prepareRareQueries();
       picked.clear();
       ratios.clear();
+      stopAuto();
+      autoResults.clear();
       analyses.value = new Map((build.value?.items ?? []).map((it, i) => [i, it] as const).filter(([, it]) => it.rarity === "RARE").map(([i, it]) => [i, analyzeRare(it)]));
       progress.value = "ユニークの相場を取得中…";
       await loadUniquePrices((d, t) => (progress.value = `ユニークの相場を取得中 (${d}/${t})…`));
@@ -192,6 +259,7 @@ export function useBuildCopy() {
       const unique = item.rarity === "UNIQUE" || item.rarity === "RELIC";
       const base = item.base || baseOfMagic(item.name);
       const up = unique ? uniquePrice(item.name, item.base) : null;
+      const au = autoResults.get(i);
       const man = item.rarity === "RARE" ? (manual[manualKey(item)] ?? null) : null;
       return {
         i,
@@ -199,8 +267,11 @@ export function useBuildCopy() {
         // レアの名前はでたらめな組み合わせなので、主にはベースの日本語名を出す (固有の名前は画面で小さく)
         nameJa: unique ? jaUniqueName(item.name) : base ? jaTypeName(base) : item.name,
         baseJa: base ? jaTypeName(base) : "",
-        price: unique ? (up?.exalted ?? null) : man && man.amount > 0 ? man.amount * rateOf(man.currency) : null,
+        price: unique ? (au?.exalted ?? up?.exalted ?? null) : man && man.amount > 0 ? man.amount * rateOf(man.currency) : null,
+        variant: isVariantUniqueItem(item),
         manual: man,
+        auto: autoResults.get(i) ?? null,
+        autoStep: autoStep.get(i) ?? null,
         src: unique ? "unique" : item.rarity === "RARE" ? "rare" : "none",
         rare: (() => {
           const a = analyses.value.get(i);
@@ -258,5 +329,5 @@ export function useBuildCopy() {
     void openQuery(q);
   }
 
-  return { code, build, error, loading, progress, load, clear, setManual, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
+  return { code, build, error, loading, progress, load, clear, setManual, autoPrices, stopAuto, autoBusy, autoDone, autoTotal, items, runes, lineage, totals, tradeItem, tradeLink, pickTier, lowerTiers, raiseTiers, resetTiers };
 }

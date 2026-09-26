@@ -76,19 +76,35 @@ const money = (ex: number) => displayCurrency.money(ex);
           </div>
           <div class="text-[12px] text-[var(--exile-color-text-secondary)] space-y-0.5">
             <p v-if="b.totals.value.rares">値段を入れていないレア {{ b.totals.value.rares }} 点は合計に入っていません (「トレード2へ」で見た値段を行に打つと足します)</p>
+            <!-- レアの相場を自動で (ジュエル以外。取引所の制限を守るので 1 回 10 秒ほど) -->
+            <div class="flex items-center gap-2">
+              <button
+                v-if="!b.autoBusy.value"
+                type="button"
+                class="px-3 py-1 rounded border border-[var(--exile-color-border-brass)] text-[12px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]"
+                title="レア (ジュエル以外) は MOD の組み合わせ → 段の順に、種類違いのあるユニークは同じ MOD の物を取引所で探して値段を入れます (取引所の制限を守るので数分かかります)"
+                @click="b.autoPrices()"
+              >
+                レア・種類違いユニークの相場を取る
+              </button>
+              <template v-else>
+                <span class="text-amber-300">相場を取得中 {{ b.autoDone.value }} / {{ b.autoTotal.value }}</span>
+                <button type="button" class="px-2 py-0.5 rounded border border-[var(--exile-color-border-subtle)] text-[11px] hover:border-[var(--exile-color-accent-focus)]" @click="b.stopAuto()">止める</button>
+              </template>
+            </div>
             <p v-if="b.totals.value.unknown">相場の無い物 {{ b.totals.value.unknown }} 件 (合計に入っていません)</p>
           </div>
         </div>
       </BaseCard>
 
-      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" @lower="b.lowerTiers" @raise="b.raiseTiers" @reset="b.resetTiers" @manual="b.setManual" />
+      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" @lower="b.lowerTiers" @raise="b.raiseTiers" @reset="b.resetTiers" @manual="b.setManual" @auto="(i) => b.autoPrices(i)" :auto-busy="b.autoBusy.value" />
       <div class="grid grid-cols-1 @5xl:grid-cols-2 gap-4">
         <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" />
         <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" />
       </div>
       <p class="mt-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
-        ユニーク: poe.ninja の相場 (コラプトしていない純正品) / ルーン・リネージュサポート: poe2scout の相場 / レア: 相場は取りません。
-        検索はクラフト計算機の完成品と同じく MOD の段の下限で組み、見つからない時のためにゆるめた検索も並べます (アプリから取引所には通信しません)。
+        ユニーク: poe.ninja の相場 (コラプトしていない純正品。種類違いのある物は「相場を取る」で同じ MOD の最安値) / ルーン・リネージュサポート: poe2scout の相場 /
+        レア: 「相場を取る」を押した時だけ取引所で探します (MOD の組み合わせを数値なしで確かめ、無ければ付きやすい MOD から外す → 選んだ段・1 段下げ・2 段下げの順)。値段は安い方から 5 件の真ん中。ジュエルは手入れのみ。
       </p>
     </template>
   </div>

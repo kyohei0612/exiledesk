@@ -15,8 +15,8 @@ import type { ItemRow } from "../../views/build-copy/useBuildCopy";
 import type { DisplayCurrency } from "../../state/display-currency";
 import { lineMin, type RareLine, type RareMod } from "../../services/build-copy/rare-query";
 
-defineProps<{ rows: ItemRow[] }>();
-const emit = defineEmits<{ trade: [r: ItemRow]; link: [query: unknown]; tier: [row: number, mod: number, tier: number]; lower: [row: number]; raise: [row: number]; reset: [row: number]; manual: [row: number, amount: number | null, currency: DisplayCurrency] }>();
+defineProps<{ rows: ItemRow[]; autoBusy: boolean }>();
+const emit = defineEmits<{ trade: [r: ItemRow]; link: [query: unknown]; tier: [row: number, mod: number, tier: number]; lower: [row: number]; raise: [row: number]; reset: [row: number]; manual: [row: number, amount: number | null, currency: DisplayCurrency]; auto: [row: number] }>();
 /** 値段の欄の入力 → 数 (空なら null) */
 const num = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 const money = (ex: number) => displayCurrency.money(ex);
@@ -139,9 +139,24 @@ function lineLabel(l: RareLine, ratio: number): string {
             <span v-else-if="r.price != null" class="text-[var(--exile-color-accent-focus)]">{{ money(r.price) }}</span>
             <span v-else-if="r.src === 'unique'" class="text-[12px] text-[var(--exile-color-text-tertiary)]">相場なし</span>
             <span v-else class="text-[12px] text-[var(--exile-color-text-tertiary)]" title="マジック・ノーマルは安いので数えません">—</span>
+            <!-- 種類違いのあるユニークは poe.ninja の相場が種類を区別しない -->
+            <p v-if="r.variant && !r.auto && !r.autoStep" class="mt-1 text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-normal">種類違いあり (poe.ninja の相場)</p>
+            <!-- 自動で取った値段の出どころ / 取っている途中 (オーナー 2026-09-27「やっぱ自動がいいよね」) -->
+            <p v-if="r.autoStep" class="mt-1 text-[10px] text-amber-300 whitespace-normal">{{ r.autoStep }}…</p>
+            <p v-else-if="r.auto" class="mt-1 text-[10px] text-[var(--exile-color-text-tertiary)] whitespace-normal max-w-[14rem] ml-auto"><RichText :text="r.auto.note" /></p>
+            <button
+              v-if="((r.src === 'rare' && r.item.kind !== 'jewel') || r.variant) && !r.autoStep"
+              type="button"
+              :disabled="autoBusy"
+              class="mt-0.5 text-[10px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40"
+              :title="r.variant ? '同じ MOD の物を取引所で探して最安値を取る' : 'この行の相場を取引所で取る (今の段・割合で)'"
+              @click="emit('auto', r.i)"
+            >
+              {{ r.auto ? "取り直す" : "相場を取る" }}
+            </button>
           </td>
           <td class="px-3 py-2 text-right whitespace-nowrap">
-            <!-- レアはゆるさ違いの 3 本 (オーナー「完成品ヒットなしで徐々にゆるく」。取引所には通信しないので手で順に開く) -->
+            <!-- レアはゆるさ違いの 2 本 (完成品 → 数値なし) と、自動で値段を取った条件 -->
             <div v-if="r.src === 'rare' && r.rare" class="flex flex-col items-end gap-1">
               <button
                 v-for="(l, li) in r.rare.links"
@@ -154,6 +169,15 @@ function lineLabel(l: RareLine, ratio: number): string {
               >
                 {{ li === 0 ? "トレード2へ" : l.label }}
               </button>
+              <button
+                v-if="r.auto?.query"
+                type="button"
+                class="px-2 py-0.5 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]"
+                title="自動で値段を取った条件で取引所を開く"
+                @click="emit('link', r.auto.query)"
+              >
+                値段の条件
+              </button>
             </div>
             <button
               v-else-if="r.src !== 'none' || r.baseJa"
@@ -163,6 +187,15 @@ function lineLabel(l: RareLine, ratio: number): string {
               @click="emit('trade', r)"
             >
               トレード2へ
+            </button>
+            <button
+              v-if="r.src === 'unique' && r.auto?.query"
+              type="button"
+              class="block ml-auto mt-1 px-2 py-0.5 text-[11px] underline text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]"
+              title="同じ MOD の物で取引所を開く (コラプト問わず)"
+              @click="emit('link', r.auto.query)"
+            >
+              値段の条件
             </button>
           </td>
         </tr>

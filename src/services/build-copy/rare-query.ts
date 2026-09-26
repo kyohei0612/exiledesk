@@ -25,7 +25,7 @@ import { baseForSolving } from "../htc/bridge";
 import { tradeFiltersFor } from "../htc/buy-or-craft";
 import { jaUniqueText, loadUniqueHoverDict } from "../mods/unique-mod-ja";
 import { Rarity, SecurityStatus } from "../../constants/trade2";
-import { loadStatText, textStats, type TextStat } from "./prices";
+import { loadStatText, statFilter, textStats, type TextStat } from "./prices";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { BuildItem } from "./pob";
@@ -74,11 +74,13 @@ export interface RareAnalysis {
   /** 条件にできなかった行 */
   missing: string[];
   sanctified: boolean;
+  /** アイテムレベル (付きやすさを出す段の範囲) */
+  ilvl: number;
 }
 /** 聖別で掛かる倍率の上限 (78%〜122%) */
 const SANCTIFY_MAX = 1.22;
 
-type Filter = { id: string; value?: { min?: number; max?: number } };
+type Filter = { id: string; value?: { min?: number; max?: number; option?: number } };
 
 function query(base: string, filters: Filter[], need: number | null): unknown {
   return {
@@ -109,14 +111,22 @@ function mergeSame(filters: Filter[]): Filter[] {
   return [...m.values()];
 }
 
-/** ゆるさの違う 3 本 (MOD の数から 1 つ欠けの数を出す) */
-function ladder(base: string, raw: Filter[], mods: number): RareLink[] {
+/** 数値を外した条件 (選ぶ形の MOD の選択肢は残す) */
+function bareOf(f: Filter): Filter {
+  return f.value?.option != null ? { id: f.id, value: { option: f.value.option } } : { id: f.id };
+}
+
+/**
+ * ゆるさの違う 2 本: 完成品 → 数値なし (MOD は全部そろえる)。
+ * MOD を欠けさせる検索は並べない (オーナー 2026-09-27「MOD 減らすと別のものになるでしょ」)
+ */
+function ladder(base: string, raw: Filter[]): RareLink[] {
   const filters = mergeSame(raw);
-  const bare = filters.map((f) => ({ id: f.id }));
-  const links: RareLink[] = [{ label: "完成品", query: query(base, filters, null) }];
-  if (mods >= 3) links.push({ label: "1 つ欠けても可", query: query(base, filters, mods - 1) });
-  links.push({ label: "数値なし", query: query(base, bare, null) });
-  return links;
+  const bare = filters.map(bareOf);
+  return [
+    { label: "完成品", query: query(base, filters, null) },
+    { label: "数値なし", query: query(base, bare, null) },
+  ];
 }
 
 /** ゲームのコピーの形に並べ直す (計算機の貼り付けの解析に通すため)。コラプト品は固有の行を入れない */
@@ -179,14 +189,14 @@ export function analyzeRare(it: BuildItem): RareAnalysis {
         });
         // 計算機で作れない行も、取引所の文面で引けた物は条件にする
         const extra = textStats(got.skipped);
-        return { base: it.base, via: "tier", mods, lines: extra.lines.map((x) => toLine(x, sanctified)), missing: extra.missing, sanctified };
+        return { base: it.base, via: "tier", mods, lines: extra.lines.map((x) => toLine(x, sanctified)), missing: extra.missing, sanctified, ilvl: it.itemLevel || 100 };
       }
     } catch {
       /* 解析できない物は文面から */
     }
   }
   const t = textStats(it.mods);
-  return { base: it.base, via: "text", mods: [], lines: t.lines.map((x) => toLine(x, sanctified)), missing: t.missing, sanctified };
+  return { base: it.base, via: "text", mods: [], lines: t.lines.map((x) => toLine(x, sanctified)), missing: t.missing, sanctified, ilvl: it.itemLevel || 100 };
 }
 
 /** 数値の行の下限 (数値 × 割合、固定の値はそのまま)。条件に数値を入れない時は null */
@@ -202,19 +212,69 @@ function lineFilters(lines: readonly RareLine[], ratio: number): Filter[] {
   const out: Filter[] = [];
   for (const l of lines) {
     const lim = lineMin(l, ratio);
-    for (const id of l.ids) out.push(lim == null ? { id } : { id, value: l.negative ? { max: -lim } : { min: lim } });
+    for (const id of l.ids) out.push(statFilter(id, lim == null ? undefined : l.negative ? { max: -lim } : { min: lim }));
   }
   return out;
 }
 
+/** 条件の鍵 (段の MOD は m番号、数値の行は l番号)。自動の相場取りで外す単位 */
+export type CondKey = `m${number}` | `l${number}`;
+
+/** 選んだ段から shift 段下げた段 (選べる段の中で。一番下ならそのまま) */
+function shifted(m: RareMod, now: number, shift: number): number {
+  if (shift <= 0) return now;
+  const below = m.options.map((o) => o.i).filter((i) => i < now).sort((x, y) => y - x);
+  return below.length ? below[Math.min(shift, below.length) - 1]! : now;
+}
+
+/** 条件 (選んだ段・割合から shift 段下げ、drop の条件は外す)。数値なしの時は values = false */
+function filtersFor(
+  a: RareAnalysis,
+  picked: Readonly<Record<number, number>>,
+  ratio: number,
+  opts: { shift?: number; drop?: ReadonlySet<CondKey>; values?: boolean } = {},
+): Filter[] {
+  const shift = opts.shift ?? 0;
+  const drop = opts.drop ?? new Set<CondKey>();
+  const lines = a.lines.filter((_, k) => !drop.has(`l${k}`));
+  const extra = lineFilters(lines, Math.max(10, ratio - shift * 10));
+  let filters: Filter[] = extra;
+  if (a.via === "tier" && data) {
+    const targets: TierTarget[] = a.mods.flatMap((m, k) => (drop.has(`m${k}`) ? [] : [{ modId: m.modId, minTierIndex: shifted(m, picked[k] ?? m.tier, shift) }]));
+    const tf = tradeFiltersFor(data, targets);
+    filters = [...tf.filters.map((f): Filter => (f.min ? { id: f.id, value: { min: f.min } } : { id: f.id })), ...extra];
+  }
+  const merged = mergeSame(filters);
+  return opts.values === false ? merged.map(bareOf) : merged;
+}
+
 /** 選んだ段 (MOD の並び → tiers の添字) と数値の割合 (%) でリンクを作る */
 export function rareLinks(a: RareAnalysis, picked: Readonly<Record<number, number>> = {}, ratio = 100): RareLink[] {
-  const extra = lineFilters(a.lines, ratio);
-  if (a.via === "tier" && data) {
-    const targets: TierTarget[] = a.mods.map((m, k) => ({ modId: m.modId, minTierIndex: picked[k] ?? m.tier }));
-    const tf = tradeFiltersFor(data, targets);
-    const filters: Filter[] = tf.filters.map((f) => (f.min ? { id: f.id, value: { min: f.min } } : { id: f.id }));
-    return ladder(a.base, [...filters, ...extra], a.mods.length + a.lines.length);
-  }
-  return ladder(a.base, extra, a.lines.length);
+  return ladder(a.base, filtersFor(a, picked, ratio));
+}
+
+/** 自動の相場取りの検索 1 本 (rare-auto.ts) */
+export function rareQuery(
+  a: RareAnalysis,
+  picked: Readonly<Record<number, number>>,
+  ratio: number,
+  opts: { shift?: number; drop?: ReadonlySet<CondKey>; values?: boolean },
+): unknown {
+  return query(a.base, filtersFor(a, picked, ratio, opts), null);
+}
+
+/** その MOD の付きやすさ (アイテムレベルで出る段の重みの合計。データが無ければ 0) */
+function weightOf(modId: string, ilvl: number): number {
+  const m = data?.mods.get(modId);
+  return (m?.tiers ?? []).filter((t) => t.ilvl <= ilvl).reduce((s, t) => s + (t.weight || 0), 0);
+}
+
+/**
+ * 出品が無い時に外していく順: 付きやすい MOD から (オーナー 2026-09-27「MOD 付きやすい順で無くしていって検索かけよう」)。
+ * 計算機で作れない特殊な MOD は重みが無い (= 珍しい) ので最後
+ */
+export function dropOrder(a: RareAnalysis): Array<{ key: CondKey; text: string }> {
+  const mods = a.mods.map((m, k) => ({ key: `m${k}` as CondKey, text: m.text, w: weightOf(m.modId, a.ilvl) })).sort((x, y) => y.w - x.w);
+  const lines = a.lines.map((l, k) => ({ key: `l${k}` as CondKey, text: l.text }));
+  return [...mods.map(({ key, text }) => ({ key, text })), ...lines];
 }

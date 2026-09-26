@@ -3,7 +3,9 @@
  *
  * - ユニーク: poe.ninja の相場 (ユニーク装備価格推移と同じ一覧。ここはルーンの熟達品などの行も残す)。名前 + ベースで引き、無ければ名前だけ
  * - ルーン / ソウルコア / リネージュサポート: カレンシーランキングの相場 (poe2scout)
- * - レア: 相場は取らない (取引所に通信しない)。検索のリンクは rare-query.ts
+ * - レア: 検索のリンクは rare-query.ts、「相場を取る」を押した時だけ取引所で取る (rare-auto.ts)
+ * - 種類違いのあるユニーク (通過儀礼など、poe.ninja の MOD に「どれかが付く」行がある物): 付いている MOD で取引所を検索して最安値
+ *   (オーナー 2026-09-27「1 ユニークだけど複数あるやつは MOD で検索してあげて最安値取ろうか。コラプト等の指定はなしで一番緩く」)
  * 取引所へはどれも即時購入 (status: securable) で開く。
  */
 import { fetchNinjaOverview, NINJA_UNIQUE_KINDS } from "../../api/ninja-economy";
@@ -14,6 +16,8 @@ import { SecurityStatus } from "../../constants/trade2";
 // ---- ユニーク (poe.ninja) ----
 interface UniquePrice { exalted: number; listings: number }
 let uniqueMap: Map<string, UniquePrice> | null = null;
+/** 種類違いのあるユニーク → 「どれかが付く」MOD の文面の鍵 (statKey) */
+let variantKeys = new Map<string, Set<string>>();
 let uniqueAt = 0;
 let uniqueLoading: Promise<void> | null = null;
 const UNIQUE_TTL = 30 * 60 * 1000;
@@ -24,12 +28,15 @@ export function loadUniquePrices(onProgress?: (done: number, total: number) => v
   uniqueLoading ??= (async () => {
     const lg = marketStore.league.value?.Value ?? "";
     const m = new Map<string, UniquePrice>();
+    const vk = new Map<string, Set<string>>();
     let done = 0;
     for (const { kind } of NINJA_UNIQUE_KINDS) {
       try {
         const ov = await fetchNinjaOverview(lg, kind);
         const per = ov.exaltedPerDivine || marketStore.rates.value.divine || 1;
         for (const l of ov.lines) {
+          const opt = (l.explicitModifiers ?? []).filter((x) => x.optional).flatMap((x) => [statKey(plainNinja(x.text)), statKey(plainNinja(x.text.split("\n")[0] ?? ""))]);
+          if (opt.length) vk.set(l.name, new Set([...(vk.get(l.name) ?? []), ...opt]));
           if (!(l.primaryValue > 0) || l.corrupted) continue;
           const p = { exalted: l.primaryValue * per, listings: l.listingCount ?? 0 };
           const k = `${l.name}|${l.baseType}`;
@@ -44,6 +51,7 @@ export function loadUniquePrices(onProgress?: (done: number, total: number) => v
       onProgress?.(++done, NINJA_UNIQUE_KINDS.length);
     }
     uniqueMap = m;
+    variantKeys = vk;
     uniqueAt = Date.now();
   })().finally(() => (uniqueLoading = null));
   return uniqueLoading;
@@ -51,6 +59,55 @@ export function loadUniquePrices(onProgress?: (done: number, total: number) => v
 
 export function uniquePrice(name: string, base: string): UniquePrice | null {
   return uniqueMap?.get(`${name}|${base}`) ?? uniqueMap?.get(name) ?? null;
+}
+
+/** poe.ninja の MOD 文の印 ([Tag|表示]) と範囲 ((10-20)) を外す */
+function plainNinja(t: string): string {
+  return t.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1").replace(/\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g, "1");
+}
+
+/** 種類違いのあるユニークか */
+export function isVariantUnique(name: string): boolean {
+  return variantKeys.has(name);
+}
+
+/**
+ * 種類違いのあるユニークの検索: 名前 + ベース + 種類を決める MOD (数値なし)。コラプトの指定はしない (一番ゆるく)。
+ * 種類を決める MOD = poe.ninja で「どれかが付く」行 (1 行目だけでも合わせる) と、選ぶ形の MOD (From Nothing のキーストーン)。
+ * queries は きつい順 (全部 → 1 つ欠けても可 → 2 つ欠けても可)。井戸の心臓のように全部が「どれかが付く」行の物は、
+ * 全部一致だと出品が無い (2026-09-27 実測 0 件)。
+ * 種類を決める MOD が付いていない (アドニアのエゴのパワーチャージ 0) / 取引所の条件にできない時は reason
+ */
+export function uniqueVariantQuery(name: string, base: string, mods: readonly string[]): { queries: unknown[] } | { reason: string } {
+  const keys = variantKeys.get(name) ?? new Set<string>();
+  const key = (t: string) => statKey(t).replace(/(^|\s)-(?=#)/g, "$1");
+  const { lines } = textStats(mods);
+  const optional = mods.filter((m) => keys.has(key(m)));
+  const pick = lines.filter((l) => keys.has(key(l.text)) || l.ids.some((id) => id.includes("|")));
+  if (!pick.length) return { reason: optional.length ? "種類を決める MOD を取引所の条件にできないので poe.ninja の相場のまま" : "種類を決める MOD は付いていないので poe.ninja の相場のまま" };
+  const filters = [...new Set(pick.flatMap((l) => l.ids))].map((id) => statFilter(id));
+  const q = (need: number | null) => ({
+    query: {
+      status: { option: SecurityStatus.Securable },
+      name,
+      ...(base ? { type: base } : {}),
+      stats: [need == null ? { type: "and", filters } : { type: "count", value: { min: need }, filters }],
+    },
+    sort: { price: "asc" },
+  });
+  const queries: unknown[] = [q(null)];
+  for (let need = filters.length - 1; need >= Math.max(1, filters.length - 2); need--) queries.push(q(need));
+  return { queries };
+}
+
+/**
+ * 条件の番号 → 取引所の条件。「番号|選択肢」(From Nothing の範囲内のノータブルなど、選ぶ形の MOD) は option で指定する
+ * (数値の下限は付けない)
+ */
+export function statFilter(id: string, value?: { min?: number; max?: number }): { id: string; value?: { min?: number; max?: number; option?: number } } {
+  const [sid, opt] = id.split("|");
+  if (opt != null) return { id: sid!, value: { option: Number(opt) } };
+  return value ? { id, value } : { id };
 }
 
 // ---- カレンシー (poe2scout) ----
@@ -102,7 +159,9 @@ export interface TextStat {
 function statFor(mod: string): TextStat | null {
   const d = statText ?? {};
   const pick = (k: string) => (d[k] ?? []).filter((id) => id.startsWith("explicit."));
+  // 「-10% to all Elemental Resistances per Power Charge」は取引所では「#% to …」(負の値)
   let ids = pick(statKey(mod));
+  if (!ids.length) ids = pick(statKey(mod).replace(/(^|\s)-(?=#)/g, "$1"));
   let negative = false;
   if (!ids.length && /reduced/i.test(mod)) {
     ids = pick(statKey(mod.replace(/reduced/i, "increased")));
