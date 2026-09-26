@@ -61,7 +61,7 @@ pub async fn trade_history_session(app: tauri::AppHandle) -> Result<HistorySessi
     Ok(HistorySession { logged_in: read_session(app).await?.is_some() })
 }
 
-/// ログイン用ウィンドウを開く。閉じたらメインに `trade-history-login-closed` を送る
+/// ログイン用ウィンドウを開く。ログインが済めば自分で閉じる。閉じたらメインに `trade-history-login-closed` を送る
 #[tauri::command]
 pub async fn trade_history_login(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(w) = app.get_webview_window(LOGIN_LABEL) {
@@ -71,9 +71,29 @@ pub async fn trade_history_login(app: tauri::AppHandle) -> Result<(), String> {
         return Ok(());
     }
     let url = Url::parse("https://www.pathofexile.com/login").map_err(|e| e.to_string())?;
+    // ログインが終わったら自分で閉じる (オーナー 2026-09-26「ログインしてないのか済みなのかわからん」)。
+    // pathofexile.com の /login 以外へ移った時 (ログイン後はマイアカウント等へ飛ぶ) に cookie を見て、あれば閉じる。
+    // Google / Steam 等の外部の画面や /login の途中 (2 段階認証など) では閉じない
+    let nav_app = app.clone();
     let win = WebviewWindowBuilder::new(&app, LOGIN_LABEL, WebviewUrl::External(url))
-        .title("pathofexile.com にログイン (ログインしたら閉じてください)")
+        .title("pathofexile.com にログイン (終わると自動で閉じます)")
         .inner_size(900.0, 860.0)
+        .on_navigation(move |u| {
+            let on_site = u.host_str() == Some("www.pathofexile.com");
+            if on_site && !u.path().starts_with("/login") {
+                let app = nav_app.clone();
+                tauri::async_runtime::spawn(async move {
+                    // 遷移の直後は cookie がまだ書かれていないことがある
+                    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+                    if matches!(read_session(app.clone()).await, Ok(Some(_))) {
+                        if let Some(w) = app.get_webview_window(LOGIN_LABEL) {
+                            let _ = w.close();
+                        }
+                    }
+                });
+            }
+            true
+        })
         .build()
         .map_err(|e| format!("ログイン画面を開けません: {e}"))?;
     let handle = app.clone();

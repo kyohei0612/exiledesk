@@ -26,11 +26,14 @@ let watching = false;
  * ログインの窓を閉じるまでは未ログイン扱い
  */
 let expired = false;
+/** ログインの窓を開いている間 true (画面に「ログインを待っています」を出す) */
+const loginOpen = ref(false);
 
 export const poeSession = {
   loggedIn: computed(() => loggedIn.value),
   /** ログインの画面を出すか (未ログインが確定している間ずっと。閉じる手段は無い) */
   needLogin: computed(() => loggedIn.value === false),
+  loginOpen: computed(() => loginOpen.value),
 };
 
 /** 今のログイン状態を確かめ直す */
@@ -54,6 +57,7 @@ export function markSessionExpired(): void {
 }
 
 function afterLoginClosed(): void {
+  loginOpen.value = false;
   expired = false;
   void refreshSession();
 }
@@ -66,6 +70,7 @@ export async function openLogin(): Promise<void> {
     void onLoginClosed(afterLoginClosed);
   }
   await openLoginWindow();
+  loginOpen.value = true;
 }
 
 
