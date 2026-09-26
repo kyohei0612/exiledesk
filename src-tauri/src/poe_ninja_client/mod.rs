@@ -51,6 +51,7 @@ use crate::craft_v2_storage::{
 };
 
 mod ascendancy_fetch;
+mod build_copy;
 mod cache_convert;
 mod config;
 mod economy;
@@ -70,6 +71,7 @@ mod tests;
 // glob 再エクスポート: pub item は crate 外へ、pub(crate) item は crate 内 (health_check 等) と
 // 子モジュール (`use super::*`) へ見える。
 pub(crate) use ascendancy_fetch::*;
+pub use build_copy::*;
 pub(crate) use cache_convert::*;
 pub(crate) use config::*;
 pub use economy::*;

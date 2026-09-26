@@ -19,11 +19,13 @@
 import { ref } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import type { UniqueRow } from "../views/unique-trend/useUniqueTrend";
+import type { BuildItem } from "../services/build-copy/pob";
 
 export type HoverPayload =
   | { kind: "unique"; row: UniqueRow }
   | { kind: "currency"; item: RankedItem }
   | { kind: "gem"; en: string }
+  | { kind: "build"; item: BuildItem }
   | { kind: "keyword"; id: string; label: string };
 
 export interface HoverLayer {

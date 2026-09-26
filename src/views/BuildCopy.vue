@@ -28,7 +28,7 @@ const money = (ex: number) => displayCurrency.money(ex);
     <div class="flex items-start justify-between gap-4 mb-4">
       <div>
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">忍者ビルドコピー</h1>
-        <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe.ninja のビルドページの「PoB のコード」を貼ると、そろえるのに要る物と値段を一覧にします。</p>
+        <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe.ninja のビルドページの URL か「PoB のコード」を貼ると、そろえるのに要る物と値段を一覧にします。</p>
       </div>
       <CurrencyPicker />
     </div>
@@ -38,7 +38,7 @@ const money = (ex: number) => displayCurrency.money(ex);
         <textarea
           v-model="b.code.value"
           rows="3"
-          placeholder="PoB のコードを貼る (eNrt… で始まる長い文字列)"
+          placeholder="poe.ninja のビルドページの URL か、PoB のコード (eNrt… で始まる長い文字列) を貼る"
           class="w-full rounded bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)] px-3 py-2 text-[12px] font-mono focus:outline-none focus:border-[var(--exile-color-accent-focus)]"
         />
         <div class="flex items-center gap-3 mt-2">
@@ -71,10 +71,10 @@ const money = (ex: number) => displayCurrency.money(ex);
         </div>
       </BaseCard>
 
-      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" />
+      <BuildItemTable :rows="b.items.value" class="mb-4" @trade="b.tradeItem" @link="b.tradeLink" @tier="b.pickTier" />
       <div class="grid grid-cols-1 @5xl:grid-cols-2 gap-4">
-        <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" @trade="b.tradeName" />
-        <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" @trade="b.tradeName" />
+        <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" />
+        <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" />
       </div>
       <p class="mt-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
         ユニーク: poe.ninja の相場 (コラプトしていない純正品) / ルーン・リネージュサポート: poe2scout の相場 / レア: 相場は取りません。

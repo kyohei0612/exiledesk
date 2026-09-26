@@ -22,7 +22,7 @@ const props = withDefaults(
     name: string;
     sub?: string | null;
     /** 名前の色: ユニーク (橙) / カレンシー (ベージュ) */
-    tone?: "unique" | "currency" | "keyword" | "gem";
+    tone?: "unique" | "currency" | "keyword" | "gem" | "rare" | "magic";
     width?: number;
     /** 段の番号 (hover-stack)。中の下線がこの上に次の段を開く */
     layerKey: number;
@@ -78,7 +78,7 @@ const position = computed(() => {
       @mouseenter="hoverStack.enterLayer(layerKey)"
       @mouseleave="hoverStack.leaveCard()"
     >
-      <div class="g-card text-center relative" :class="tone === 'unique' ? 'g-unique' : tone === 'keyword' ? 'g-keyword' : tone === 'gem' ? 'g-gem' : 'g-currency'">
+      <div class="g-card text-center relative" :class="`g-${tone}`">
         <!-- ピン留め (外へ出ても残す) と、留めた時の × -->
         <div class="absolute right-1.5 top-1.5 flex items-center gap-1 z-10">
           <button
@@ -124,6 +124,13 @@ const position = computed(() => {
 .g-currency { border: 1px solid #6a5f48; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #22201a, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-currency .g-head { background: linear-gradient(180deg, #34302a 0%, #1d1b17 55%, #0c0b09 100%); border-bottom: 1px solid #7d7156; box-shadow: inset 0 1px 0 #9c8f70, inset 0 -1px 0 #2e2a22; }
 .g-currency .g-name { color: #aa9e82; }
+/* レア: 金の枠と黄色の名前 (ItemCard.vue と同じ) / マジック: 青の名前 */
+.g-rare { border: 1px solid #6a5630; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #2a2214, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-rare .g-head { background: linear-gradient(180deg, #3d3116 0%, #221b0c 55%, #0f0c05 100%); border-bottom: 1px solid #8a7040; box-shadow: inset 0 1px 0 #a8895a, inset 0 -1px 0 #3a2f18; }
+.g-rare .g-name { color: #ffff77; }
+.g-magic { border: 1px solid #3d3d6a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-magic .g-head { background: linear-gradient(180deg, #202038 0%, #121220 100%); border-bottom: 1px solid #4a4a80; }
+.g-magic .g-name { color: #8888ff; }
 /* ジェム: 青緑の名前 (ゲームのジェムの色) */
 .g-gem { border: 1px solid #2f5d5a; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #10201f, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-gem .g-head { background: linear-gradient(180deg, #16302e 0%, #0d1c1b 55%, #070d0d 100%); border-bottom: 1px solid #3c6f6a; box-shadow: inset 0 1px 0 #4f8a84, inset 0 -1px 0 #16302e; }

@@ -9,11 +9,12 @@
  *   リネージュサポート: 同じ物をまとめて × 個数 × 単価
  * 合計は値段の分かった物だけ足し、分からない物の数を横に出す。
  */
-import { computed, ref } from "vue";
+import { computed, reactive, ref, shallowRef } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { decodePobCode, parseBuild, type BuildItem, type ParsedBuild } from "../../services/build-copy/pob";
+import { loadFromNinjaUrl, parseNinjaUrl } from "../../services/build-copy/ninja-url";
 import { currencyPrice, isLineage, loadUniquePrices, typeQuery, uniquePrice } from "../../services/build-copy/prices";
-import { prepareRareQueries, rareLinks, type RareLinks } from "../../services/build-copy/rare-query";
+import { analyzeRare, prepareRareQueries, rareLinks, type RareAnalysis, type RareLink } from "../../services/build-copy/rare-query";
 import { marketStore } from "../../state/market-store";
 import { snapshotNameToTradeLeague, trade2QueryUrl } from "../../services/trade2/league";
 import { buildUniqueNameQuery } from "../../services/trade2/query";
@@ -37,8 +38,8 @@ export interface ItemRow {
   price: number | null;
   /** 値段の出どころ */
   src: "unique" | "rare" | "none";
-  /** レアの取引所リンク (ゆるさ違い) */
-  rare: RareLinks | null;
+  /** レアの解析 (MOD と段) と、選んだ段で作った取引所リンク (ゆるさ違い) */
+  rare: { analysis: RareAnalysis; links: RareLink[]; picked: Record<number, number> } | null;
 }
 export interface BulkRow {
   nameEn: string;
@@ -54,6 +55,13 @@ export function useBuildCopy() {
   const error = ref<string | null>(null);
   const loading = ref(false);
   const progress = ref("");
+  /** レアの解析 (読み込みの時に 1 回。行の番号 → 解析) */
+  const analyses = shallowRef(new Map<number, RareAnalysis>());
+  /** 選び直した段 (行の番号 → MOD の並び → tiers の添字)。オーナー 2026-09-26「ティアはいじれる様に」 */
+  const picked = reactive(new Map<number, Record<number, number>>());
+  function pickTier(row: number, mod: number, tier: number): void {
+    picked.set(row, { ...(picked.get(row) ?? {}), [mod]: tier });
+  }
   /** 相場を読み込み直したら数え直す */
   const priceTick = ref(0);
 
@@ -63,12 +71,19 @@ export function useBuildCopy() {
     if (!c) return;
     loading.value = true;
     try {
-      const xml = await decodePobCode(c);
-      build.value = parseBuild(xml);
+      // poe.ninja のビルドページの URL か、PoB のコードか (オーナー 2026-09-26「URL からも読めるように」)
+      if (parseNinjaUrl(c)) {
+        progress.value = "poe.ninja からキャラクターを読んでいます…";
+        build.value = await loadFromNinjaUrl(c);
+      } else {
+        build.value = parseBuild(await decodePobCode(c));
+      }
       if (!build.value.items.length) error.value = "装備が見つかりません (PoB のコードか確かめてください)";
       await marketStore.ensureMarket();
       progress.value = "MOD のデータを読んでいます…";
       await prepareRareQueries();
+      picked.clear();
+      analyses.value = new Map((build.value?.items ?? []).map((it, i) => [i, it] as const).filter(([, it]) => it.rarity === "RARE").map(([i, it]) => [i, analyzeRare(it)]));
       progress.value = "ユニークの相場を取得中…";
       await loadUniquePrices((d, t) => (progress.value = `ユニークの相場を取得中 (${d}/${t})…`));
       priceTick.value++;
@@ -95,7 +110,12 @@ export function useBuildCopy() {
         baseJa: base ? jaTypeName(base) : "",
         price: unique ? (up?.exalted ?? null) : null,
         src: unique ? "unique" : item.rarity === "RARE" ? "rare" : "none",
-        rare: item.rarity === "RARE" ? rareLinks(item) : null,
+        rare: (() => {
+          const a = analyses.value.get(i);
+          if (!a) return null;
+          const p = picked.get(i) ?? {};
+          return { analysis: a, links: rareLinks(a, p), picked: p };
+        })(),
       };
     });
   });
@@ -144,9 +164,6 @@ export function useBuildCopy() {
   function tradeLink(q: unknown): void {
     void openQuery(q);
   }
-  function tradeName(nameEn: string): void {
-    void openQuery(typeQuery(nameEn));
-  }
 
-  return { code, build, error, loading, progress, load, items, runes, lineage, totals, tradeItem, tradeLink, tradeName };
+  return { code, build, error, loading, progress, load, items, runes, lineage, totals, tradeItem, tradeLink, pickTier };
 }

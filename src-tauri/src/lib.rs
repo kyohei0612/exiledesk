@@ -225,6 +225,7 @@ pub fn run() {
             poe_ninja_client::fetch_economy_leagues,
             poe_ninja_client::ninja_economy_overview,
             poe_ninja_client::ninja_economy_history,
+            poe_ninja_client::ninja_build_character,
             health_check::health_check_all,
             settings::settings_load,
             settings::settings_save,
