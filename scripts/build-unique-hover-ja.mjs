@@ -20,6 +20,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const J = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
 const NL = String.fromCharCode(10);
 
+/** [Tag|表示] の印の外だけに fn を当てる (印の中の Tag 名の数字を置き換えないため) */
+const outsideMarkup = (t, fn) => t.split(/(\[[^\]]+\])/).map((seg) => (seg.startsWith("[") ? seg : fn(seg))).join("");
 const stripMarkup = (t) => t.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1");
 /** 数字の塊 (幅 (a-b) か 1 つの数) */
 // 「-(13-8)%」のようにマイナスの付いた幅もまとめて 1 つ (画面側の KEY_TOKEN と同じ)
@@ -36,18 +38,18 @@ function add(eLine, jLine) {
   const k = key(eLine);
   if (!k || mods[k]) return;
   const eTok = eLine.match(TOKEN) ?? [];
-  const jTok = jLine.match(TOKEN) ?? [];
+  const jTok = stripMarkup(jLine).match(TOKEN) ?? [];
   if (jTok.length < eTok.length) { skipped++; return; }
   // 日本語の数字が英語の何番目か (語順が入れ替わる文がある) を値で対応させる。同じ値は前から順に使う。
   // 日本語にだけある数字 (「フレンジーチャージ1個ごとに」の 1) はそのまま残す
   const same = (a, b) => a.replace(/[—–]/g, "-") === b.replace(/[—–]/g, "-");
   const used = new Set();
-  const t = jLine.replace(TOKEN, (tok) => {
+  const t = outsideMarkup(jLine, (seg) => seg.replace(TOKEN, (tok) => {
     const at = eTok.findIndex((e, j) => !used.has(j) && same(e, tok));
     if (at < 0) return tok;
     used.add(at);
     return `{${at}}`;
-  });
+  }));
   if (used.size !== eTok.length) { skipped++; return; }
   mods[k] = eTok.length ? { t, n: eTok.length } : { t };
 }
@@ -57,7 +59,8 @@ const ids = Object.keys(en).sort((a, b) => Number(isUniqueLike(b)) - Number(isUn
 for (const id of ids) {
   const e = en[id]?.text, j = ja[id]?.text;
   if (!e || !j) continue;
-  const el = e.split(NL).map(stripMarkup), jl = j.split(NL).map(stripMarkup);
+  // 日本語は [Tag|表示] の印を残す (画面でキーワードの説明のホバーにする。オーナー 2026-09-26「詳細の詳細みれるように」)
+  const el = e.split(NL).map(stripMarkup), jl = j.split(NL);
   // 英語は 2 行・日本語は 1 行の文がある (折り返しの違い)。英語を繋いで 1 行として入れる
   if (el.length !== jl.length) {
     if (jl.length === 1) add(el.join(" "), jl[0]);
@@ -71,7 +74,7 @@ const mlE = J("data-cache/client-export-uniques/tables/English/UniqueMagesLegacy
 const mlJ = J("data-cache/client-export-uniques/tables/Japanese/UniqueMagesLegacy.json");
 mlE.forEach((r, i) => {
   const name = stripMarkup(r.DisplayText ?? r.Name ?? "");
-  const nameJa = stripMarkup(mlJ[i]?.DisplayText ?? "");
+  const nameJa = mlJ[i]?.DisplayText ?? "";
   if (name && nameJa) mods[key(`Legacy of ${name}`)] = { t: `${nameJa}の遺産` };
 });
 
@@ -102,7 +105,7 @@ let csdAdded = 0;
         if (!k || mods[k]) return;
         let bare = 0;
         let ok = true;
-        const t = stripMarkup(jParts[pi]).replace(PH, (_m, idx, spec) => {
+        const t = jParts[pi].replace(PH, (_m, idx, spec) => {
           const stat = idx === "" ? bare++ : Number(idx);
           const pos = eOrd.indexOf(stat);
           if (pos < 0) { ok = false; return "#"; }

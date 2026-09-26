@@ -8,7 +8,7 @@
 import { computed } from "vue";
 import type { ItemTrend, RankedItem } from "../../api/poe2scout";
 import { jaCurrency } from "../../i18n/currencies-ja";
-import { effectFor, fmt } from "../../views/currency/format";
+import { fmt } from "../../views/currency/format";
 import { displayCurrency } from "../../state/display-currency";
 import Sparkline from "./Sparkline.vue";
 
@@ -67,17 +67,17 @@ function iconOf(c: Cur): string {
           v-for="(p, i) in rows"
           :key="p.apiId"
           class="border-t border-[var(--exile-color-border-subtle)] hover:bg-[var(--exile-color-bg-elevated)] transition"
-          @mouseenter="(ev) => emit('hover', p, ev)"
-          @mousemove="(ev) => emit('move', ev)"
-          @mouseleave="emit('leave')"
         >
           <td class="px-3 py-3 text-[var(--exile-color-text-secondary)] tabular-nums whitespace-nowrap">{{ i + 1 }}</td>
           <td class="px-3 py-3 whitespace-nowrap">
-            <div class="flex items-center gap-2 whitespace-nowrap" :class="effectFor(p) ? 'cursor-help' : ''">
+            <div class="flex items-center gap-2 whitespace-nowrap">
               <img v-if="p.icon" :src="p.icon" :alt="p.text" class="w-6 h-6 object-contain shrink-0" loading="lazy" />
+              <!-- 名前に下線。名前にカーソルでゲームと同じカード (ユニーク装備価格推移と同じ。オーナー 2026-09-26「列でホバーしちゃうね」) -->
               <span
-                class="text-[var(--exile-color-text-primary)]"
-                :class="effectFor(p) ? 'underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4' : ''"
+                class="text-[var(--exile-color-text-primary)] underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help"
+                @mouseenter="(ev) => emit('hover', p, ev)"
+                @mousemove="(ev) => emit('move', ev)"
+                @mouseleave="emit('leave')"
                 >{{ jaCurrency(p.text) }}</span
               >
             </div>

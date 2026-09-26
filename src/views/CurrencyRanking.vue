@@ -7,39 +7,33 @@
     components/currency/CategorySidebar    左サイドバー (検索 + カテゴリ)
     components/currency/RateHeader         基準レート帯 (3 行)
     components/currency/RankingTable       本体テーブル
-    components/currency/EffectHoverCard    poe2db 風ホバーカード
+    components/currency/CurrencyHoverCard  ゲーム風ホバーカード (ユニーク装備価格推移と同じ枠 GameItemCard)
     components/currency/Sparkline          7 日折れ線 + %
 -->
 <script setup lang="ts">
 import { toCss } from "../utils/zoom";
 import RefreshButton from "../components/RefreshButton.vue";
-import { computed, onActivated, onMounted, ref } from "vue";
+import { onActivated, onMounted } from "vue";
 import type { RankedItem } from "../api/poe2scout";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import RateHeader from "../components/currency/RateHeader.vue";
 import RankingTable from "../components/currency/RankingTable.vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
-import EffectHoverCard from "../components/currency/EffectHoverCard.vue";
-import { effectFor, formatEpoch, formatTime } from "./currency/format";
+import { hoverStack } from "../state/hover-stack";
+import { formatEpoch, formatTime } from "./currency/format";
 import { useCurrencyRanking } from "./currency/useCurrencyRanking";
 
 const r = useCurrencyRanking();
 
-// ホバーカード (効果説明があるアイテムだけ出す)
-const hoverItem = ref<RankedItem | null>(null);
-const tip = ref({ x: 0, y: 0 });
-const hoverEffect = computed(() => (hoverItem.value ? effectFor(hoverItem.value) : null));
+// ホバーカード (名前にカーソル。ユニーク装備価格推移と同じ重なり hover-stack。説明が無い物も「説明のデータがありません」で出す)
 function showTip(p: RankedItem, ev: MouseEvent) {
-  if (effectFor(p)) {
-    hoverItem.value = p;
-    tip.value = { x: toCss(ev.clientX), y: toCss(ev.clientY) };
-  }
+  hoverStack.openRoot({ kind: "currency", item: p }, toCss(ev.clientX), toCss(ev.clientY));
 }
-function moveTip(ev: MouseEvent) {
-  if (hoverItem.value) tip.value = { x: toCss(ev.clientX), y: toCss(ev.clientY) };
+function moveTip(_ev: MouseEvent) {
+  /* 位置は開いた時のまま (カードへカーソルを移せるように) */
 }
 function hideTip() {
-  hoverItem.value = null;
+  hoverStack.leave();
 }
 
 onMounted(() => {
@@ -160,6 +154,5 @@ onActivated(() => {
       </p>
     </div>
 
-    <EffectHoverCard :item="hoverItem" :effect="hoverEffect" :x="tip.x" :y="tip.y" />
   </div>
 </template>

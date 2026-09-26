@@ -122,6 +122,37 @@ interface KindCache { at: number; rows: UniqueRow[]; trends: Map<number, UniqueT
 /** リーグ → 種類 → 一覧 (画面を作り直しても残す) */
 const cache = new Map<string, Map<NinjaUniqueKind, KindCache>>();
 
+/**
+ * 取った一覧を localStorage にも残す (30 分)。読み込み直しても poe.ninja から取り直さない
+ * (オーナー 2026-09-26「開発版キャッシュでユニーク表示おｋだよ、取り直すと手間でしょ」)。
+ * 残せない環境 (容量など) では今までどおりメモリだけ
+ */
+const LS_KEY = "exiledesk.uniqueTrend.cache.v1";
+function saveLs(league: string, lc: Map<NinjaUniqueKind, KindCache>): void {
+  try {
+    const kinds = Object.fromEntries([...lc.entries()].map(([k, c]) => [k, { at: c.at, rows: c.rows, trends: [...c.trends.entries()] }]));
+    localStorage.setItem(LS_KEY, JSON.stringify({ league, kinds }));
+  } catch {
+    /* 残せなくても動く */
+  }
+}
+function loadLs(league: string): Map<NinjaUniqueKind, KindCache> | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_KEY) ?? "null") as
+      | { league: string; kinds: Record<string, { at: number; rows: UniqueRow[]; trends: Array<[number, UniqueTrend]> }> }
+      | null;
+    if (!raw || raw.league !== league) return null;
+    const m = new Map<NinjaUniqueKind, KindCache>();
+    for (const [k, c] of Object.entries(raw.kinds)) {
+      if (Date.now() - c.at > TTL_MS) continue;
+      m.set(k as NinjaUniqueKind, { at: c.at, rows: c.rows, trends: new Map(c.trends) });
+    }
+    return m.size ? m : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useUniqueTrend() {
   const categoryFilter = ref<string>("all");
   const searchQuery = ref<string>("");
@@ -205,7 +236,7 @@ export function useUniqueTrend() {
     const my = ++gen;
     let lcache = cache.get(lg);
     if (!lcache) {
-      lcache = new Map();
+      lcache = loadLs(lg) ?? new Map();
       cache.set(lg, lcache);
     }
     const lc = lcache;
@@ -240,6 +271,7 @@ export function useUniqueTrend() {
           }
           lc.set(kind, { at: Date.now(), rows: kRows, trends: kTrends });
           byKind.value = new Map(lc);
+          saveLs(lg, lc);
         } catch (e) {
           error.value = `${NINJA_UNIQUE_KINDS.find((k) => k.kind === kind)?.ja ?? kind}: ${String(e)}`;
         }

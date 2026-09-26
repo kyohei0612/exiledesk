@@ -91,10 +91,10 @@ function fillTokens(template: string, tokens: string[]): string {
  */
 export function jaUniqueText(text: string): string {
   const whole = jaOne(text);
-  if (!/\r?\n/.test(text) || !/[A-Za-z]{3,}/.test(whole)) return whole;
+  if (!/\r?\n/.test(text) || !hasEnglish(whole)) return whole;
   // 行ごと (フレーバーは行ごとには引けないので、まとめて引けた時は上で返っている)
   const joined = jaOne(text.replace(/\s*\r?\n\s*/g, " "));
-  if (!/[A-Za-z]{3,}/.test(joined)) return joined;
+  if (!hasEnglish(joined)) return joined;
   return text.split(/\r?\n/).map((l) => jaOne(l.trim())).join("\n");
 }
 
@@ -106,6 +106,11 @@ function skillLower(d: HoverDict): Record<string, string> {
     for (const [k, v] of [...Object.entries(skillsJa), ...Object.entries(d.skills)]) skillLowerMap[k.toLowerCase()] ??= v;
   }
   return skillLowerMap;
+}
+
+/** 英語が残っているか ([Tag|表示] の印の Tag は数えない) */
+function hasEnglish(s: string): boolean {
+  return /[A-Za-z]{3,}/.test(stripRichTextMarkers(s));
 }
 
 /** 辞書の {0} を英語の数字で埋める。「+{0}」に負の数が入る時は + を落とす */
@@ -122,7 +127,7 @@ function jaComposite(plain: string): string | null {
   const grant = plain.match(/^(Small|Notable) Passive Skills in Radius also grant (.+)$/s);
   if (grant) {
     const inner = jaOne(grant[2]!);
-    if (/[A-Za-z]{3,}/.test(inner)) return null;
+    if (hasEnglish(inner)) return null;
     const who = grant[1] === "Small" ? "スモール" : "ノータブル";
     // 「回避力が(2-3)%増加する」→「回避力(2-3)%増加」(原本の「… も付与する」の書き方に寄せる)
     const body = inner.endsWith("する") ? inner.replace(/が/, "").slice(0, -2) : `「${inner}」`;
