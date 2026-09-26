@@ -136,8 +136,9 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
-      // 1) 候補ごとに「固定済み」だけ (1 本ずつ)。「固定済みを買って途中から作る」はこれで決まる
-      //    (オーナー 2026-09-26:「即終わらせて欲しい。個々の処理結果でもう要らなくなる検索を切る」。前は 3 候補 × 3 本 = 9 本)
+      // 候補ごとに 3 本 (固定済み / 固定無し・ゆるい / 厳しい) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
+      // 固定済みだけにすると、固定済みは高いが固定無しなら安い候補を見逃していた)。1 回の貼り付けで最大 9 本 + 完成品。
+      // 門番は上限の 8 割 (10 秒 4 / 60 秒 12 / 5 分 24) で止め、超える分は待ってから投げる
       for (const [i, cand] of keys.entries()) {
         if (!alive()) return;
         const at = (step: string) => {
@@ -147,25 +148,10 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         at(kind.value.kind === "separate" ? "最安 1 件" : "固定済み");
         const r = kind.value.kind === "separate"
           ? await searchSide(cand.modIds).catch(() => null)
-          : await c.searchFor(cand.modIds, at, ["fractured"]).catch(() => null);
+          : await c.searchFor(cand.modIds, at).catch(() => null);
         if (!alive()) return;
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
-      }
-      // 2) 一番安い候補だけ「固定無し・厳しい / ゆるい」(= 自分でフラクチャーして作る道) を足す。固定済みが
-      //    「フラクチャーオーブ代 × 見込み回数」以下 (earlyBuy) なら自前は絶対に勝てないので投げない。固定済みの 1 本は
-      //    30 分キャッシュなので、全部投げ直しても取引所に行くのは 2 本
-      const best = chosen.value;
-      if (kind.value.kind !== "separate" && best && best.res && best.res !== "error" && !("kind" in best.res) && !best.res.earlyBuy) {
-        const at = (step: string) => {
-          current.value = { key: best.key, name: best.name, index: keys.length, count: keys.length, step };
-          c.stage.value = `② 一番安い候補 (${best.name}) の固定無しを探しています: ${step}`;
-        };
-        pending.value = [best.key];
-        const r = await c.searchFor(best.modIds, at, ["fractured", "loose", "strict"]).catch(() => null);
-        if (!alive()) return;
-        if (r) results.value = { ...results.value, [best.key]: r };
-        pending.value = [];
       }
       current.value = null;
       // 最安候補が決まると setFractured → 完成品の条件が作り直されて見つけた物が消える (watch(query))。

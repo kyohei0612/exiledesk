@@ -62,11 +62,10 @@ function finishDiag(): void {
 /** 取得中の流れ (今どこか)。① のボタンの下に出す */
 const flow = computed(() => {
   const st = c.stage.value;
-  const at = st.includes("固定無し") ? 1 : st.startsWith("③") ? 2 : st.startsWith("②") ? 0 : -1;
+  const at = st.startsWith("③") ? 2 : st.startsWith("②") ? 0 : -1;
   const n = ss.checked.value.length;
   return [
-    { label: `候補の「固定済み」を 1 本ずつ (${ss.current.value && at === 0 ? `${ss.current.value.index}/${ss.current.value.count}` : `${n} 本`})`, state: at > 0 ? "done" : at === 0 ? "now" : "todo" },
-    { label: "最安候補の固定無し (自分でフラクチャーする道)", state: at > 1 ? "done" : at === 1 ? "now" : "todo" },
+    { label: `候補ごとに 固定済み・ゆるい・厳しい (${ss.current.value && at === 0 ? `${ss.current.value.index}/${ss.current.value.count}` : `${n} 候補`})`, state: at > 0 ? "done" : at === 0 ? "now" : "todo" },
     { label: "完成品", state: at === 2 ? "now" : "todo" },
     { label: "→ ② を出して作り方を組む", state: "todo" },
   ];
@@ -92,16 +91,14 @@ const candGroups = computed(() => [
   { title: "サフィックス", list: ss.candidates.value.filter((x) => x.side === "S") },
 ].filter((g) => g.list.length));
 const pctOf = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
-/** 取引所へ投げる本数の目安 (候補ごとに固定済み 1 本 + 最安候補の固定無し 2 本 + 完成品 1 本。1 本 約 10 秒) */
-const calls = computed(() => ss.checked.value.length + (ss.kind.value.kind === "separate" ? 0 : 2) + (fin.query.value && !fin.found.value ? 1 : 0));
+/** 取引所へ投げる本数の目安 (候補ごとに 3 本 + 完成品 1 本) */
+const calls = computed(() => ss.checked.value.length * (ss.kind.value.kind === "separate" ? 1 : 3) + (fin.query.value && !fin.found.value ? 1 : 0));
 const sideJa = (x: "P" | "S" | null): string => (x === "P" ? "プレ" : x === "S" ? "サフィ" : "片側");
 /** 3 つの道: 完成品を買う / 固定済みを買って作る / 自分でフラクチャーして作る。一番安い物に印 */
 const threeWay = computed(() => {
   const tw = ss.threeWay.value;
   // 全部取れてから出す (オーナー 2026-09-26:「全部終わってから ② → ③。目が疲れない」。取得中に値が入れ替わって見えていた)
   if (c.phase.value !== "done" || (!ss.chosen.value && !fin.buyCost.value)) return [];
-  const best = ss.chosen.value?.res;
-  const selfSkipped = !!best && best !== "error" && !("kind" in best) && !!best.earlyBuy;
   // 完成品が無くても近い物 (MOD だけ同じ形) は「妥協」として比べる
   const compromise = !!fin.found.value && fin.buyCost.value != null && (fin.tierless.value || fin.dropped.value.length > 0);
   const list = [
@@ -110,7 +107,7 @@ const threeWay = computed(() => {
       detail: compromise ? (fin.dropped.value.length ? `MOD だけ同じ形。${fin.dropped.value.join(" / ")} は付いていない (買ってから付ける)` : "MOD だけ同じ形 (段は問わず)") : "",
       url: fin.found.value?.url ?? null },
     { key: "fixed", name: "固定済みを買って途中から作る", cost: tw.fixed?.cost ?? null, why: ss.busy.value ? "取得中…" : "出品なし", detail: tw.fixed?.label ?? "", url: tw.fixed?.url ?? null },
-    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : selfSkipped ? "固定済みが安いので省略" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
+    { key: "self", name: "自分でフラクチャーして作る", cost: tw.self?.cost ?? null, why: ss.kind.value.kind === "separate" ? "固定不要" : ss.busy.value ? "取得中…" : "出品が足りない", detail: tw.self?.label ?? "", url: tw.self?.url ?? null },
   ];
   const min = Math.min(...list.map((w) => w.cost ?? Infinity));
   return list.map((w) => ({ ...w, best: w.cost != null && w.cost === min }));
