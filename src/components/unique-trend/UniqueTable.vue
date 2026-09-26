@@ -81,9 +81,6 @@ function clickChange() {
             class="border-t border-[var(--exile-color-border-subtle)] cursor-pointer transition"
             :class="openId === r.itemId ? 'bg-[var(--exile-color-bg-elevated)]' : 'hover:bg-[var(--exile-color-bg-elevated)]'"
             @click="emit('toggle', r.itemId)"
-            @mouseenter="(ev) => hoverAt(r, ev)"
-            @mousemove="hoverMove"
-            @mouseleave="hovered = null"
           >
             <td class="px-3 py-2.5 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
             <td class="px-3 py-2.5">
@@ -91,7 +88,13 @@ function clickChange() {
                 <img v-if="r.icon" :src="r.icon" :alt="r.nameEn" class="w-9 h-9 object-contain shrink-0" loading="lazy" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 min-w-0 text-[var(--exile-color-text-primary)]">
-                    <span class="truncate">{{ r.nameJa }}</span>
+                    <!-- 名前に下線。名前にカーソルでゲームと同じカード (オーナー 2026-09-26「列にホバーで表示されるから分かりづらい」) -->
+                    <span
+                      class="truncate underline decoration-dotted decoration-[var(--exile-color-text-tertiary)] underline-offset-4 cursor-help"
+                      @mouseenter="(ev) => hoverAt(r, ev)"
+                      @mousemove="hoverMove"
+                      @mouseleave="hovered = null"
+                    >{{ r.nameJa }}</span>
                     <span v-if="r.corrupted" class="shrink-0 text-[11px] text-[var(--exile-color-signal-error)]">コラプト</span>
                     <!-- お気に入りは名前の右 (オーナー 2026-09-26) -->
                     <button
@@ -103,14 +106,14 @@ function clickChange() {
                     >
                       {{ uniqueFavorites.set.value.has(r.fav) ? "♥" : "♡" }}
                     </button>
-                    <!-- 取引所へ (右端の「開く」と同じ。オーナー 2026-09-26「ハートの横にもトレードサイトへいかすボタン」) -->
+                    <!-- 取引所へ (右端のボタンと同じ。オーナー 2026-09-26「ハートの横にもトレードサイトへいかすボタン」) -->
                     <button
                       type="button"
-                      class="shrink-0 h-6 -my-1 px-1 rounded text-[13px] leading-none text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)] transition"
+                      class="shrink-0 -my-1 px-1.5 py-0.5 rounded border border-[var(--exile-color-border-subtle)] text-[10px] leading-none text-[var(--exile-color-text-secondary)] hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)] transition"
                       title="取引所 (即時購入) をブラウザで開く"
                       @click.stop="tradeFromRow(r)"
                     >
-                      ↗
+                      トレード2へ
                     </button>
                   </div>
                   <div class="text-[11px] text-[var(--exile-color-text-tertiary)] truncate">
@@ -128,7 +131,7 @@ function clickChange() {
             <!-- 取引所へそのまま (即時購入。API は使わず ?q= の URL を開く。オーナー 2026-09-26) -->
             <td class="px-3 py-2.5 text-right">
               <button type="button" class="rounded border border-[var(--exile-color-border-subtle)] px-2 py-0.5 text-xs hover:border-[var(--exile-color-accent-focus)] hover:text-[var(--exile-color-accent-focus)]"
-                title="取引所 (即時購入・コラプトの指定なし) をブラウザで開く" @click.stop="tradeFromRow(r)">開く ↗</button>
+                title="取引所 (即時購入・コラプトの指定なし) をブラウザで開く" @click.stop="tradeFromRow(r)">トレード2へ</button>
             </td>
           </tr>
           <tr v-if="openId === r.itemId" class="border-t border-[var(--exile-color-border-subtle)]">
