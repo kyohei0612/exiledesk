@@ -162,7 +162,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     return best!;
   }
   /** 冒涜で取る (その側に固定でない物が k 個ある = 満杯なら置き換えで巻き込む) */
-  function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll): MethodEstimate {
+  function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll, redoPrior = 0): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
     const floor = bone === "desecrate_ancient" ? 40 : 0;
     const p1 = w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, true, null, 1);
@@ -180,7 +180,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 満杯の側への冒涜は固定でない物を 1 つ置き換える (光で回す時)。上書きの形 (k = 0) は確定
     const full = limits[s] - (inp.startCount?.[s] ?? 0) - k <= 0;
     const risk = reroll === "light" && full && k > 0 ? k / (k + 1) : 0;
-    return finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss: perMiss + risk * 0, safe: risk === 0, ...(why ? { why } : {}) });
+    // 満杯の側への冒涜は、最初の 1 回だけ固定でない物を置き換える (後は冒涜の外れが枠を埋め、光で消して打ち直すので
+    // 巻き込まない)。その 1 回分の作り直し費用を足す (2026-09-26 レビュー: クラフター C の指摘で risk * 0 だったのを直した。
+    // 外れのたびに足すと数えすぎで、見積もりが回した平均の 2 倍になった)
+    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}) });
+    return risk > 0 ? { ...e, expected: e.expected + risk * redoPrior } : e;
   }
   function chaosEst(t: TierTarget): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
@@ -197,9 +201,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const essences = ts.filter((t) => CRAFTED_SOURCES.has(mod(t.modId).source) && mod(t.modId).family !== BREACH_FAMILY);
   const desecOnly = ts.filter((t) => mod(t.modId).source === "desecrated");
   if (desecOnly.length > 1) return null;
-  const bestDesec = (t: TierTarget, k: number): MethodEstimate => {
+  const bestDesec = (t: TierTarget, k: number, redoPrior = 0): MethodEstimate => {
     const cands: MethodEstimate[] = [];
-    for (const bone of ["desecrate", "desecrate_ancient"] as const) for (const rr of ["overwrite", "light"] as const) cands.push(desecrateEst(t, k, bone, rr));
+    for (const bone of ["desecrate", "desecrate_ancient"] as const) for (const rr of ["overwrite", "light"] as const) cands.push(desecrateEst(t, k, bone, rr, redoPrior));
     return cands.reduce((a, b) => (b.expected < a.expected ? b : a));
   };
 
@@ -226,7 +230,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
       const e = exaltEst(t, placed[s], placed[s] ? redoSum[s] / placed[s] : 0, placed[o], placed[o] ? redoSum[o] / placed[o] : 0);
       rows.push(e); placed[s] += 1; redoSum[s] += e.expected;
     }
-    if (dc) rows.push(bestDesec(dc, placed[sideOf(dc.modId)]));
+    if (dc) { const ds = sideOf(dc.modId); rows.push(bestDesec(dc, placed[ds], placed[ds] ? redoSum[ds] / placed[ds] : 0)); }
     const total = rows.reduce((a, r) => a + r.expected, 0);
     if (!Number.isFinite(total)) continue;
     if (!best || total < best.total) {

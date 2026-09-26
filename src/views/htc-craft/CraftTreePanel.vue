@@ -90,21 +90,27 @@ const guardJa = (r: RedoPlan["rows"][number]): string => (r.expected > omenPrice
 const pctHit = (p: number): string => (p >= 1 ? "確定" : `${(p * 100).toFixed(p < 0.01 ? 2 : 1)}%`);
 /** 組んでいる最中に開始が変わった (始め方の選び直しなど) → 終わってから組み直す */
 let autoAgain = false;
+/** 自動で組めなかった理由 (例外) */
+const autoError = ref<string | null>(null);
 async function loadAuto(): Promise<void> {
   if (!t.ctx.value) return;
   if (autoBusy.value) { autoAgain = true; return; }
-  // 組む前に相場を取り直す (カタリスト・お告げの今の値段で比べる)
-  await c.refreshPrices();
-  const ctx = t.ctx.value;
-  if (!ctx) return;
-  const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
-  if (!inp) return;
+  // 印は await の前に立てる (後ろだと、相場の取り直しを待つ間に 2 本目が入って並行し、古い開始の結果が勝つことがあった)
   autoBusy.value = true;
+  autoError.value = null;
   try {
+    // 組む前に相場を取り直す (カタリスト・お告げの今の値段で比べる)
+    await c.refreshPrices();
+    const ctx = t.ctx.value;
+    if (!ctx) return;
+    const inp = autoInputFor(c, ctx, t.start.value, c.fracturedTargets.value.map((x) => x.modId));
+    if (!inp) return;
     const got = await pickAutoTree(inp, ctx, t.start.value);
     plan.value = got.plan;
     picked.value = { label: got.greater, expected: got.simExpected, done: got.simDone };
     t.setAll(got.nodes);
+  } catch (e) {
+    autoError.value = `自動で組めませんでした: ${e instanceof Error ? e.message : String(e)}`;
   } finally {
     autoBusy.value = false;
     if (autoAgain) { autoAgain = false; void loadAuto(); }
@@ -115,7 +121,8 @@ async function loadAuto(): Promise<void> {
  * 開始の指輪 (貼り付け・固定済み) が変わるたびに組み直す。自分で組みたい時は「1 から組む」で空にする
  */
 // 開始は中身で比べる (相場を取り直すと ctx が作り直され、同じ開始でも別の物として組み直しの輪になっていた。2026-09-25)
-watch(() => [JSON.stringify(t.start.value), autoReady.value] as const, async ([, ok]) => {
+// 複数ソースの形で見る (配列を返す getter だと毎回発火して、相場の取り直しのたびに組み直していた。2026-09-26 レビュー B)
+watch([() => JSON.stringify(t.start.value), autoReady], async ([, ok]) => {
   if (!ok) return;
   await nextTick();
   void loadAuto();
@@ -196,6 +203,7 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       <button v-for="x in presets" :key="x.id" type="button" class="rounded-lg border border-sky-500/50 px-3 py-1.5 text-sky-200 hover:bg-sky-500/10" @click="loadPreset(x.id)">見本: {{ x.label }}</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" :class="showSettings ? 'bg-white/10' : ''" @click="showSettings = !showSettings">設定 {{ showSettings ? "▴" : "▾" }}</button>
       <span v-if="busyText" class="ml-1 text-xs text-amber-200/80"><span class="inline-block animate-pulse">●</span> {{ busyText }}</span>
+      <span v-else-if="autoError" class="ml-1 text-xs text-rose-300">{{ autoError }}</span>
       <span v-else-if="t.blocked.value" class="ml-1 text-xs text-rose-300">{{ t.blocked.value }}</span>
     </div>
     <div v-if="showSettings" class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
@@ -213,9 +221,9 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
           <p class="text-2xl font-bold" :class="t.result.value.pDone >= 0.95 ? 'text-emerald-300' : 'text-rose-300'">{{ pct(t.result.value.pDone) }}</p>
         </div>
         <div class="rounded-lg bg-black/30 p-3">
-          <p class="text-[11px] opacity-60">平均 (完成した時) <span class="opacity-70">全額</span></p>
-          <p class="text-2xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.expected + t.baseEx.value) : "-" }}</p>
-          <p v-if="t.baseEx.value > 0 && t.result.value.pDone > 0" class="text-[11px] opacity-60">初動 {{ c.money(t.baseEx.value) }} + クラフト {{ c.money(t.result.value.expected) }}</p>
+          <p class="text-[11px] opacity-60">1 個完成あたり <span class="opacity-70">全額 (失敗した回の分も込み)</span></p>
+          <p class="text-2xl font-bold">{{ t.result.value.pDone > 0 ? c.money(t.result.value.perDone + t.baseEx.value / t.result.value.pDone) : "-" }}</p>
+          <p v-if="t.baseEx.value > 0 && t.result.value.pDone > 0" class="text-[11px] opacity-60">初動 {{ c.money(t.baseEx.value / t.result.value.pDone) }} + クラフト {{ c.money(t.result.value.perDone) }}</p>
         </div>
         <div class="rounded-lg bg-black/30 p-3">
           <p class="text-[11px] opacity-60">{{ t.targetPct.value }}% の人が収まる額</p>

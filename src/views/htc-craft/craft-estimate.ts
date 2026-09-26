@@ -41,6 +41,11 @@ export function craftEstimate(c: ReturnType<typeof useHtcCraft>, fixedIds: reado
   return steps != null ? { value: steps, basis: "計算中" } : null;
 }
 
+/** その見積もりが本物 (自動のツリーを回した値) まで届いたか。仮の値や計算中なら false */
+export function estimateSettled(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[], opts: { keepIds?: readonly string[] } = {}): boolean {
+  const hit = cache.value.get(keyOf(c, fixedIds, opts.keepIds ?? []));
+  return !!hit && hit !== "pending";
+}
 /** 自動のツリーを回す回数 (候補ごと。多いと重い) */
 const RUNS = 400;
 /** 回した結果 (鍵 = ベース・狙いと段・固定済み・神の値段)。value が null は組めなかった / 非推奨 */
@@ -67,11 +72,11 @@ async function runAuto(c: ReturnType<typeof useHtcCraft>, fixedIds: string[], ke
   const start = startStateOf(c, fixedIds, keepIds);
   const inp = autoInputFor(c, ctx, start, fixedIds);
   if (!inp) { put(key, { value: null, pDone: 0 }); return; }
-  const { nodes } = await pickAutoTree(inp, ctx, start);
-  if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }
   try {
+    const { nodes } = await pickAutoTree(inp, ctx, start);
+    if (!nodes.length) { put(key, { value: 0, pDone: 1 }); return; }
     const r = await simulateTreeChunked({ ctx, start, nodes, runs: RUNS });
-    put(key, { value: r.pDone > 0 ? r.expected : null, pDone: r.pDone });
+    put(key, { value: r.pDone > 0 ? r.perDone : null, pDone: r.pDone });
   } catch {
     put(key, { value: null, pDone: 0 });
   }

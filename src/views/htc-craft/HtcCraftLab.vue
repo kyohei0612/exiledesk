@@ -87,6 +87,7 @@ async function reread(t: string): Promise<void> {
 function pick(id: string): void {
   const p = PRESETS.find((x) => x.id === id);
   if (!p) return;
+  c.resumeFlow.value = false;
   picked.value = id;
   text.value = p.text;
   void reread(p.text);
@@ -94,6 +95,7 @@ function pick(id: string): void {
 
 /** 入口へ戻る。計算結果は捨てる (中途半端に残すと、今どの物の話か分からなくなる) */
 function backToDoor(): void {
+  c.resumeFlow.value = false;
   c.reset();
   pk.clear();
   door.value = "none";
@@ -214,7 +216,7 @@ const implicitText = (lines: readonly string[]): string =>
         <button
           class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
           :disabled="c.loading.value || !text.trim()"
-          @click="reread(text)"
+          @click="c.resumeFlow.value = false; reread(text)"
         >{{ c.loading.value ? "解析中…" : "MOD 解析" }}</button>
         <span v-if="c.loading.value" class="text-xs text-amber-200/90"><span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }}</span>
       </div>

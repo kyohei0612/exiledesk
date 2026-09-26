@@ -27,7 +27,9 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
 
   /** 手の並び。最初は空の手 1 つだけ (オーナー:「最初から入力はしない」) */
   const nodes = ref<SimNode[]>([emptyNode()]);
-  watch(() => [c.item.value, c.base.value, c.fracturedTargets.value.map((t) => t.modId).join(), c.startKeep.value.join()], () => { nodes.value = [emptyNode()]; result.value = null; });
+  // 文字列のキーで見る (配列を返す getter は再評価のたびに新しい配列 = 必ず発火し、見積もりが 1 件届くたびにツリーと
+  // 回した結果が消えていた。2026-09-26 レビュー B)
+  watch([() => c.item.value, () => c.base.value, () => c.fracturedTargets.value.map((t) => t.modId).join(), () => c.startKeep.value.join()], () => { nodes.value = [emptyNode()]; result.value = null; });
   /** ツリーを空にして自分で組む (「1 から組む」。オーナー 2026-09-25: 自動で組んだ後、自分でやる時に押したらリセット) */
   function clear(): void {
     nodes.value = [emptyNode()];

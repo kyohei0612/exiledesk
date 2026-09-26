@@ -130,20 +130,47 @@ pub fn bucket_take(now: i64) {
     }
 }
 
-/// 全窓口を合わせた待ち時間 = 次のトークンが貯まるまで
-pub fn combined_wait(_map: &HashMap<String, Gate>, now: i64) -> i64 {
+/// 全窓口を合わせた待ち時間 = 次のトークンが貯まるまで、と直近 5 分の合計が上限に届いていれば一番古い送信が抜けるまで。
+///
+/// 2026-09-26 レビュー: バケットだけだと最初の 5 分でバースト 6 + 補充 22 = 合計 28 本まで出せた
+/// (隠れた上限は合計 20〜21 本で 429 を踏んだ記録がある)。送信記録はファイルに残るので、再起動で満タンのバーストに
+/// 戻っても、この窓の判定で止まる
+pub fn combined_wait(map: &HashMap<String, Gate>, now: i64) -> i64 {
     let t = bucket_tokens(now);
-    if t >= 1.0 {
-        0
+    let bucket = if t >= 1.0 { 0 } else { ((1.0 - t) * pace_ms() as f64).ceil() as i64 };
+    let window_ms = 300_000;
+    let mut recent: Vec<i64> = map.values().flat_map(|g| g.sends.iter().copied()).filter(|x| *x > now - window_ms).collect();
+    let cap = adaptive_max() as usize;
+    let window = if recent.len() >= cap {
+        recent.sort_unstable();
+        // 上限ちょうどまで使っているなら、(送信数 - 上限 + 1) 本目の古い送信が窓から出るまで
+        let oldest = recent[recent.len() - cap];
+        (oldest + window_ms + 300 - now).max(0)
     } else {
-        ((1.0 - t) * pace_ms() as f64).ceil() as i64
-    }
+        0
+    };
+    bucket.max(window)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::trade2::testutil::*;
+
+    /// 直近 5 分の合計が上限に届いていれば、バケットに残りがあっても待つ (最初の 5 分で 28 本出ていた。2026-09-26)
+    #[test]
+    fn combined_window_caps_the_first_five_minutes() {
+        let _l = GLOBAL_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        *ADAPTIVE_MAX.lock().unwrap() = COMBINED_MAX_300;
+        let now = 10_000_000;
+        *BUCKET.lock().unwrap() = (BURST, now);
+        let mut map = HashMap::new();
+        let sends: Vec<i64> = (0..COMBINED_MAX_300 as i64).map(|i| now - 200_000 + i * 1_000).collect();
+        map.insert("search".to_string(), gate(sends, vec![(30, 300)], 0));
+        let w = combined_wait(&map, now);
+        assert!(w >= 100_000, "5 分で上限ぶん送っていれば、一番古い送信が抜けるまで待つ (待ち {w} ms)");
+        *BUCKET.lock().unwrap() = (BURST, 0);
+    }
 
     /// 合計はトークンバケット: バーストぶんは待たず、その後は一定の間隔で 1 本ずつ (2026-09-19)
     #[test]

@@ -151,7 +151,9 @@ export function useFinishedCompare(
   const manual = ref<number | null>(null);
   const busy = ref(false);
   const error = ref<string | null>(null);
-  watch(query, () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; deepDone.value = false; exhausted.value = false; });
+  // 条件は中身で比べる (相場の取り直しや固定の選び直しで computed が作り直されるだけで、見つけた完成品・手で入れた値段が
+  // 消えていた。2026-09-26 レビュー B)
+  watch(() => JSON.stringify(query.value), () => { found.value = null; error.value = null; manual.value = null; lightNote.value = null; dropped.value = []; tierless.value = false; deepDone.value = false; exhausted.value = false; });
 
   /**
    * 探し直し (段なし → MOD を外す) まで済ませたか。オーナー 2026-09-26:「完成品も自動で出るまで必ず回す。徐々に最後まで行き切る。

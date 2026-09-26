@@ -30,6 +30,8 @@ import type { Trade2SearchResponse } from "./query";
  */
 const SEARCH_INTERVAL_MS = 2600;
 const FETCH_INTERVAL_MS = 2500;
+/** 開発ブラウザの合計の間隔 (本番の門番の 300 秒 ÷ 22) */
+const DEV_COMBINED_INTERVAL_MS = 13600;
 
 /**
  * エラー文字列から「あと何秒待てば投げられるか」を取り出す。該当しなければ null。
@@ -116,8 +118,10 @@ export function searchBudgetUsage(): { used: number; max: number } {
 function throttled<T>(kind: "search" | "fetch", fn: () => Promise<T>): Promise<T> {
   const run = async () => {
     if (DEV_TRADE) {
-      const interval = kind === "search" ? SEARCH_INTERVAL_MS : FETCH_INTERVAL_MS;
-      const wait = lastRequestAt[kind] + interval - Date.now();
+      // 開発ブラウザ (門番を通らない) は検索と取得を合わせて 13.6 秒に 1 本 (本番の門番の合計の間隔と同じ。2026-09-26 レビュー:
+      // 窓口ごとに 2.6 秒空けるだけで、クラフト計算機の全検索で隠れた合計の上限を超えて IP ごと罰則を受け得た)
+      void kind; void SEARCH_INTERVAL_MS; void FETCH_INTERVAL_MS;
+      const wait = Math.max(lastRequestAt.search, lastRequestAt.fetch) + DEV_COMBINED_INTERVAL_MS - Date.now();
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     }
     lastRequestAt[kind] = Date.now();

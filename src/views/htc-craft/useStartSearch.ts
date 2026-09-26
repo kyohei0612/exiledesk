@@ -23,7 +23,7 @@ import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
 import { startRows, type StartRow } from "./start-rows";
 import { startKindOf } from "./start-kind";
-import { craftEstimate, spawnChance } from "./craft-estimate";
+import { craftEstimate, estimateSettled, spawnChance } from "./craft-estimate";
 import { zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -152,15 +152,12 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
         at(kind.value.kind === "separate" ? "最安 1 件" : "固定済み");
         const r = kind.value.kind === "separate"
           ? await searchSide(cand.modIds).catch(() => null)
-          : await c.searchFor(cand.modIds, at).catch(() => null);
+          : await c.searchFor(cand.modIds, at, alive).catch(() => null);
         if (!alive()) return;
         results.value = { ...results.value, [cand.key]: r ?? "error" };
         pending.value = pending.value.filter((k) => k !== cand.key);
       }
       current.value = null;
-      // 最安候補が決まると setFractured → 完成品の条件が作り直されて見つけた物が消える (watch(query))。
-      // キャッシュ即答だとその後に消されるので、落ち着かせてから完成品を探す (2026-09-26: ② で完成品が「まだ」のままだった)
-      await nextTick(); await nextTick();
       c.stage.value = "③ 完成品を探しています…";
       await afterAll();
     } finally {
@@ -233,6 +230,13 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     return out;
   });
 
+  /**
+   * 全部の候補の見積もりが本物まで届いたら、その時一番安い物を始め方に決めて固定する (2026-09-26 レビュー B: 決めないままだと、
+   * 見積もりが後から届くたびに「一番安い始め方」が入れ替わり、そのたびに固定し直し → ツリーと完成品の結果が消えていた)
+   */
+  const settled = computed(() => !busy.value && rows.value.length > 0 && rows.value.every((x) =>
+    !x.res || x.res === "error" || (estimateSettled(c, x.modIds) && estimateSettled(c, [], { keepIds: x.modIds }))));
+  watch(settled, (ok) => { if (ok && picked.value == null) picked.value = rows.value.find((x) => x.best)?.key ?? null; });
   // 選んだ候補の固定済みにして、ツリーの開始の指輪と確認用の表 (treeResult) をそれに合わせる
   watch(chosen, async (x) => {
     c.startPrice.value = x?.startCost ?? null;
@@ -241,7 +245,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     // 確定と見ていた)
     const keep = x.best?.id === "keep";
     const fixedIds = keep ? [] : x.modIds;
-    c.startKeep.value = keep ? [...x.modIds] : [];
+    const keepIds = keep ? [...x.modIds] : [];
+    if (keepIds.join() !== c.startKeep.value.join()) c.startKeep.value = keepIds;
     const same = fixedIds.length === c.fracturedTargets.value.length && fixedIds.every((id) => c.fracturedTargets.value.some((t) => t.modId === id));
     if (!same) c.setFractured(fixedIds);
     await nextTick();

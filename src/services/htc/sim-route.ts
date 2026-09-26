@@ -127,7 +127,16 @@ export interface SimResult {
   pDone: number;
   /** 完成して予算内だった割合 */
   pBudget: number | null;
+  /** 完成した回だけの平均 (表示の分布と揃える用。比べる・選ぶには perDone を使う) */
   expected: number;
+  /**
+   * 1 個完成させるのに掛かる平均 = 全部の回の費用の合計 ÷ 完成した回数 (完成しなければ Infinity)。
+   * 2026-09-26 レビュー (エンジニア B / クラフター C 一致): expected は失敗した回の費用を捨てていて、
+   * 途中で壊れやすい組み方ほど安く見えていた
+   */
+  perDone: number;
+  /** 全部の回の費用の合計 (まとめる用) */
+  spentAll: number;
   p50: number;
   p80: number;
   p90: number;
@@ -443,6 +452,8 @@ export async function simulateTreeChunked(
     pDone: done.length / runs,
     pBudget: inp.budget != null ? done.filter((c) => c <= inp.budget!).length / runs : null,
     expected: done.length ? done.reduce((a, b) => a + b, 0) / done.length : 0,
+    perDone: done.length ? parts.reduce((a, p) => a + p.spentAll, 0) / done.length : Infinity,
+    spentAll: parts.reduce((a, p) => a + p.spentAll, 0),
     p50: q(0.5), p80: q(0.8), p90: q(0.9),
     perNode: (parts[0]?.perNode ?? []).map((n, i) => ({
       id: n.id,
@@ -607,6 +618,8 @@ export function simulateTree(inp: {
     pDone: doneCosts.length / runs,
     pBudget: inp.budget != null ? doneCosts.filter((c) => c <= inp.budget!).length / runs : null,
     expected: doneCosts.length ? doneCosts.reduce((a, b) => a + b, 0) / doneCosts.length : 0,
+    perDone: doneCosts.length ? costs.reduce((a, b) => a + b, 0) / doneCosts.length : Infinity,
+    spentAll: costs.reduce((a, b) => a + b, 0),
     p50: q(0.5), p80: q(0.8), p90: q(0.9),
     perNode: nodes.map((n, i) => ({ id: n.id, tries: tries[i]! / runs, cost: spent[i]! / runs })),
     stops: [...stops].map(([reason, c]) => ({ reason, p: c / runs })).sort((a, b) => b.p - a.p),

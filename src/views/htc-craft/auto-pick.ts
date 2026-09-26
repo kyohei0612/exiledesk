@@ -43,7 +43,7 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   const scored: Array<{ v: (typeof uniq)[number]; pDone: number; expected: number }> = [];
   for (const v of uniq) {
     const r = await simulateTreeChunked({ ctx, start, nodes: v.nodes, runs: PICK_RUNS });
-    scored.push({ v, pDone: r.pDone, expected: r.expected });
+    scored.push({ v, pDone: r.pDone, expected: r.perDone });
   }
   const ok = scored.filter((x) => x.pDone >= 0.9);
   const best = ok.length ? ok.reduce((a, b) => (b.expected < a.expected ? b : a)) : scored.reduce((a, b) => (b.pDone > a.pDone ? b : a));

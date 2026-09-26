@@ -155,7 +155,7 @@ export function useTreeSearch(deps: {
    * 確率が決まらないので外します** (外した数は画面に出す)。
    */
   /** 計画の 3 本を取って判定する (30 分以内に同じ条件で取った物はキャッシュ)。取れなかった本は理由付きで found に残る */
-  async function runPlan(tp: NonNullable<ReturnType<typeof planFor>>, onStep?: (label: string) => void, pick?: readonly string[]): Promise<TreeResult> {
+  async function runPlan(tp: NonNullable<ReturnType<typeof planFor>>, onStep?: (label: string) => void, alive?: () => boolean): Promise<TreeResult> {
     const p = prices.value!;
     const div = p.currency.divine!;
     {
@@ -170,8 +170,8 @@ export function useTreeSearch(deps: {
       // 正確にはオーブが高い時は「減らして冒涜」で打つ回数が 3/N に減るので、約 3.5 倍が線になる
       const selfFloor = tp.plan.rows.find((r) => r.mods === 4)?.fixed ?? null;
       for (const sq of tp.searches) {
-        // 本を絞る (オーナー 2026-09-26:「即終わらせて欲しい。要らん検索を切る」。まず固定済みだけ、厳しい / ゆるい は最安候補だけ)
-        if (pick && !pick.includes(sq.key)) continue;
+        // 入口に戻る・画面を離れたら残りは投げない
+        if (alive && !alive()) break;
         onStep?.(sq.label);
         // 固定済みが線以下でも残りは投げる (オーナー 2026-09-24:「ゆるい厳しい条件の奴も検索して 0 件だったのか
         // どうなのか確認する」。バグ確認のため 3 本とも結果を出す)
@@ -252,11 +252,11 @@ export function useTreeSearch(deps: {
   }
 
   /** 固定済みにする MOD を指定して 3 本を取る (候補の各行)。組めなければ null */
-  async function searchFor(modIds: readonly string[], onStep?: (label: string) => void, pick?: readonly string[]): Promise<TreeResult | null> {
+  async function searchFor(modIds: readonly string[], onStep?: (label: string) => void, alive?: () => boolean): Promise<TreeResult | null> {
     const fixed = deps.targets.value.filter((t) => modIds.includes(t.modId));
     const tp = planFor(fixed);
     if (!tp || !prices.value?.currency.divine) return null;
-    return runPlan(tp, onStep, pick);
+    return runPlan(tp, onStep, alive);
   }
 
   // 固定済みにする MOD を選び直したら (setFractured)、前の結果は捨てる (別の物の値段になる)
