@@ -45,6 +45,8 @@ const L = ({ id = Math.random().toString(36).slice(2), price = 10, listedHoursAg
   gone_at: goneHoursAgo == null ? null : NOW - Math.round(goneHoursAgo * HOUR),
   amount: price,
   currency: "divine",
+  // 出品者が分からない記録は「不明」で売れたに数えないので、ダミーには必ず入れる (2026-09-26)
+  account: `S-${id}`,
 });
 const state = (tracked) => ({ tracked, daily: [], total: tracked.length, sampled_at: NOW });
 
@@ -261,6 +263,25 @@ const { summarizeFlow, soldWithin, flowSentence } = await import(pathToFileURL(o
     "8. 売値と追跡が同じ条件 (securable = 即時購入のみ)",
     ok,
     `売値 status=${sale.query.status.option} / 追跡 status=${track.query.status.option} / ソケット=${sale.query.filters.misc_filters.filters.gem_sockets?.min}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 9. 確定待ち (1 回だけ消えた) / 不明 (出品時刻か出品者が無い) / 付け替え は
+//    売れた件数・速さ・実売の値段に入れない (2026-09-26 監査「売れた判定を厳しく」)
+// ---------------------------------------------------------------------------
+{
+  const sold = [L({ listedHoursAgo: 3, goneHoursAgo: 1 }), L({ listedHoursAgo: 4, goneHoursAgo: 1 }), L({ listedHoursAgo: 2, goneHoursAgo: 0.5 })];
+  const pending = { ...L({ listedHoursAgo: 3, price: 999 }), missing_since: NOW - HOUR };
+  const noSeller = { ...L({ listedHoursAgo: 3, goneHoursAgo: 1, price: 999 }), account: null };
+  const noTime = { ...L({ listedHoursAgo: 3, goneHoursAgo: 1, price: 999 }), listed_at: null };
+  const flagged = { ...L({ listedHoursAgo: 3, goneHoursAgo: 1, price: 999 }), unknown: true };
+  const relisted = { ...L({ listedHoursAgo: 3, goneHoursAgo: 1, price: 999 }), relisted: true };
+  const s = summarizeFlow(state([...sold, pending, noSeller, noTime, flagged, relisted]), NOW);
+  check(
+    "9. 確定待ち・不明・付け替えは売れたに数えない",
+    s.gone === 3 && s.pending === 1 && s.unknown === 3 && s.alive === 0 && s.soldPrices.every((p) => p.amount !== 999) && s.label === "速い",
+    `売れた=${s.gone} 確定待ち=${s.pending} 不明=${s.unknown} 並んでいる=${s.alive} 値段=${s.soldPrices.map((p) => p.amount).join(",")} label=${s.label}`,
   );
 }
 

@@ -160,10 +160,22 @@ function craftRoute(m: MaterialPrices, s: SalePrices, p: CorruptParams, plain = 
   return finish(base, upfront, crystal ?? 0, uncut, outcomes, { gambleAfterLevel, gambleAfterQuality, stage });
 }
 
+/**
+ * 買う経路の仕入れ値。`buy` を渡さなければ今まで通り売値と同じ値で買う (ジェムコラプトの賭けの画面)。
+ * 渡した時は**その値だけ**を使い、無い (null / 0 以下) なら経路を計算しない (2026-09-26 監査:
+ * 自動ジェム監視が「売れない = 0」の売値をそのまま仕入れ値にして、21 / 23% を 0 で買う偽の黒字を出していた)
+ */
+function buyPriceOf(key: keyof SalePrices, s: SalePrices, buy?: SalePrices): number | null {
+  const v = buy ? buy[key] : s[key];
+  return v != null && v > 0 ? v : null;
+}
+
 /** レベル 21 を買って結晶で品質を賭ける (買った物は既に 21 なので原石代は不要) */
-function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult {
+function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: SalePrices): RouteResult {
   const missing: string[] = [];
+  const cost21 = buyPriceOf("level21", s, buy);
   if (s.level21 == null) missing.push("売値: レベル 21");
+  if (cost21 == null) missing.push("買値: レベル 21");
   if (s.finished == null) missing.push("売値: 完成品");
   if (m.crystal == null) missing.push("コラプトの結晶");
   const base: RouteResult = { id: "buy21", label: "レベル 21 を買って結晶", ok: false, upfront: 0, ev: 0, pFinished: 0, costPerFinished: null, expectedCost: 0, outcomes: [], missing };
@@ -183,7 +195,7 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     gambleQuality23: false, hitFromQuality23: 0,
     survive, uncutForFinished: false, uncutForLevel21: false, uncutForQuality23: false,
   };
-  return finish(base, s21 + m.crystal!, 0, 0, outcomes, { expectedCrystals: 1, stage });
+  return finish(base, cost21! + m.crystal!, 0, 0, outcomes, { expectedCrystals: 1, stage });
 }
 
 /**
@@ -191,9 +203,11 @@ function buy21Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
  * 買う 23% はレベル不問なので、生き残った物 (当たり / 外れ) は結晶の後に原石でレベル 20 に上げてから売る
  * (2026-09-15 オーナー確認: 原石は結晶の後、残った物にだけ使う)。
  */
-function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult {
+function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: SalePrices): RouteResult {
   const missing: string[] = [];
+  const cost23 = buyPriceOf("quality23", s, buy);
   if (s.quality23 == null) missing.push("売値: 品質 23%");
+  if (cost23 == null) missing.push("買値: 品質 23%");
   if (s.finished == null) missing.push("売値: 完成品");
   if (m.crystal == null) missing.push("コラプトの結晶");
   if (m.uncut20 == null) missing.push("原石 (レベル 20)");
@@ -215,7 +229,7 @@ function buy23Route(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteRe
     gambleQuality23: true, hitFromQuality23: hit,
     survive, uncutForFinished: true, uncutForLevel21: false, uncutForQuality23: false,
   };
-  return finish(base, s23 + m.crystal!, 0, uncut, outcomes, { expectedCrystals: 1, stage });
+  return finish(base, cost23! + m.crystal!, 0, uncut, outcomes, { expectedCrystals: 1, stage });
 }
 
 function buyFinishedRoute(s: SalePrices): RouteResult {
@@ -232,8 +246,12 @@ function buyFinishedRoute(s: SalePrices): RouteResult {
   return finish(base, s.finished!, 0, 0, [saleLine("完成品", 1, s.finished!, "finished")], { expectedCrystals: 0, stage });
 }
 
-export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParams): RouteResult[] {
-  return [craftRoute(m, s, p), craftRoute(m, s, p, true), buy21Route(m, s, p), buy23Route(m, s, p), buyFinishedRoute(s)];
+/**
+ * @param buy 買う経路の仕入れ値 (省略時は売値と同じ)。自動ジェム監視は「今の最安値」を渡す
+ *            (売値は実売の中央値、売れていなければ 0。仕入れ値とは別物)
+ */
+export function evaluateRoutes(m: MaterialPrices, s: SalePrices, p: CorruptParams, buy?: SalePrices): RouteResult[] {
+  return [craftRoute(m, s, p), craftRoute(m, s, p, true), buy21Route(m, s, p, buy), buy23Route(m, s, p, buy), buyFinishedRoute(s)];
 }
 
 /**

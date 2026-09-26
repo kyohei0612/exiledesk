@@ -10,7 +10,7 @@
  *   - 判定は実測そのままを書く (「速い · 3 時間で売れる」「14 件が売れました (売れるまで 3 時間)」)
  */
 import { computed, ref } from "vue";
-import { flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
+import { fateOf, flowSentence, fmtSellTime, summarizeFlow, verifyFlow, type FlowStore, type Tracked, type VerifyResult } from "../services/market-flow";
 import { averageExalted, currencyJa, displayCurrency, setDisplayCurrency, type DisplayCurrency } from "../state/display-currency";
 import { fmtClock, fmtSpan } from "../utils/format-time";
 
@@ -48,6 +48,8 @@ interface Row {
   estimated: boolean;
   /** 値段の付け替え (消えた直後に同じ出品者が並べ直した) */
   relisted: boolean;
+  /** 出品時刻か出品者が分からず、売れたと言えない (2026-09-26 監査。売れた件数に入れない) */
+  unknown: boolean;
 }
 
 /** 条件ごとのまとめ */
@@ -98,7 +100,8 @@ const soldRows = computed<Row[]>(() => {
         goneAt: t.gone_at,
         life: t.gone_at - startOf(t),
         estimated: t.listed_at == null,
-        relisted: !!t.relisted,
+        relisted: fateOf(t) === "relisted",
+        unknown: fateOf(t) === "unknown",
       });
     }
   }
@@ -141,17 +144,19 @@ const checkGroups = computed(() => {
     return {
       at,
       list,
-      totals: sumBy(list.filter((r) => !r.relisted)),
-      sold: list.filter((r) => !r.relisted).length,
+      totals: sumBy(list.filter((r) => !r.relisted && !r.unknown)),
+      sold: list.filter((r) => !r.relisted && !r.unknown).length,
       relisted: list.filter((r) => r.relisted).length,
+      unknown: list.filter((r) => r.unknown).length,
       topSeller: top && top[1] > 1 ? { name: top[0], n: top[1] } : null,
     };
   });
 });
 
-const grandTotal = computed(() => sumBy(soldRows.value.filter((r) => !r.relisted)));
-const soldCount = computed(() => soldRows.value.filter((r) => !r.relisted).length);
+const grandTotal = computed(() => sumBy(soldRows.value.filter((r) => !r.relisted && !r.unknown)));
+const soldCount = computed(() => soldRows.value.filter((r) => !r.relisted && !r.unknown).length);
 const relistedCount = computed(() => soldRows.value.filter((r) => r.relisted).length);
+const unknownCount = computed(() => soldRows.value.filter((r) => r.unknown).length);
 
 /** まだ出品されている分 (並んでいる時間が長い順) */
 const aliveRows = computed(() => {
@@ -270,6 +275,7 @@ async function verify(key: string): Promise<void> {
             <span class="tabular-nums text-[var(--exile-color-text-secondary)]">{{ soldCount }} 件</span>
             <span v-for="[c, amt] in grandTotal" :key="c" class="tabular-nums text-emerald-300">{{ fmtAmount(amt) }} {{ curLabel(c) }}</span>
             <span v-if="relistedCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ relistedCount }} 件は除外</span>
+            <span v-if="unknownCount" class="text-[11px] text-[var(--exile-color-text-tertiary)]" title="出品時刻か出品者が取れておらず、売れたとも付け替えとも言えない分">売れたか不明 {{ unknownCount }} 件は除外</span>
           </div>
 
           <p v-if="soldRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">
@@ -297,12 +303,13 @@ async function verify(key: string): Promise<void> {
                     <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">(前の確認からこの時刻までの間に売れた)</span>
                     <span v-if="g.topSeller" class="text-[10px] text-amber-300">同じ出品者 {{ g.topSeller.name }} が {{ g.topSeller.n }} 件</span>
                     <span v-if="g.relisted" class="text-[10px] text-[var(--exile-color-text-tertiary)]">値段の付け替え {{ g.relisted }} 件を含む (除外済み)</span>
+                    <span v-if="g.unknown" class="text-[10px] text-[var(--exile-color-text-tertiary)]">売れたか不明 {{ g.unknown }} 件を含む (除外済み)</span>
                   </div>
                 </td>
               </tr>
-              <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="r.relisted ? 'text-[var(--exile-color-text-tertiary)]' : ''">
+              <tr v-for="r in g.list" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]" :class="r.relisted || r.unknown ? 'text-[var(--exile-color-text-tertiary)]' : ''">
                 <td class="py-1 whitespace-nowrap">
-                  {{ r.cond }}<span v-if="r.relisted" class="text-[10px]"> · 付け替え</span>
+                  {{ r.cond }}<span v-if="r.relisted" class="text-[10px]"> · 付け替え</span><span v-else-if="r.unknown" class="text-[10px]"> · 不明</span>
                 </td>
                 <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
                 <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>

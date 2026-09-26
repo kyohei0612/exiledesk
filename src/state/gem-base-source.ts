@@ -17,6 +17,7 @@
  * 現物の値段は売値の取得 (再取得) のついでに同じ検索で取り、ここに覚える
  * (自動ジェム監視の期待値もこれを読む)。
  */
+import { shallowRef } from "vue";
 import gemsRaw from "../i18n/gems-client.json";
 
 export type BaseSource = "uncut" | "buy";
@@ -36,7 +37,14 @@ function load<T>(key: string): T {
     return {} as T;
   }
 }
+/**
+ * 覚えている調達先 / 現物の値段の版。書くたびに上がる (2026-09-26 監査: 読み出しがただの変数なので、
+ * 自動ジェム監視の期待値が再取得した後も古い現物の値段のまま残っていた)。読む関数の中で触っておく
+ */
+export const baseBookVersion = shallowRef(0);
+
 function save(key: string, v: unknown): void {
+  baseBookVersion.value++;
   try {
     localStorage.setItem(key, JSON.stringify(v));
   } catch {
@@ -56,6 +64,7 @@ export function defaultBaseSource(nameEn: string | null | undefined): BaseSource
 
 /** そのジェムの調達先 (手で変えた物があればそれ、無ければ既定) */
 export function baseSourceOf(nameEn: string | null | undefined): BaseSource {
+  void baseBookVersion.value;
   if (!nameEn) return "uncut";
   return S()[nameEn] ?? defaultBaseSource(nameEn);
 }
@@ -87,6 +96,7 @@ export function noteBaseBuy(
 
 /** 覚えている現物の最安 (高貴)・取った時刻・その時の出品数・最安から順の値段 */
 export function cachedBaseBuy(nameEn: string | null | undefined): { exalted: number; at: number; total?: number; prices?: number[] } | null {
+  void baseBookVersion.value;
   if (!nameEn) return null;
   return P()[nameEn] ?? null;
 }

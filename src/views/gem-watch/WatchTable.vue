@@ -10,7 +10,7 @@ import { SALE_KEYS, SALE_KEY_LABEL, watchKey } from "../gem-corrupt/row-query";
 import { expectedValueOf } from "../gem-corrupt/expected-value";
 import { jaSkill } from "../../i18n/skills-ja";
 import { flowSentence, fmtSellTime, summarizeFlow, type FlowStore } from "../../services/market-flow";
-import { averageExalted, displayCurrency } from "../../state/display-currency";
+import { averageExalted, displayCurrency, medianExalted, MEDIAN_MIN_SALES } from "../../state/display-currency";
 import { openGemCorrupt } from "../../state/app-nav";
 import type { WatchGem } from "../../state/watch-settings";
 
@@ -36,37 +36,33 @@ const EV_ATTEMPTS = computed(() => (props.attempts && props.attempts > 0 ? props
 const SPIRIT = new Map(GEMS.map((g) => [g.en, g.spirit]));
 
 /**
- * 1 行分の計算。期待値は実売の平均をジェムコラプトの賭けの式に入れて出し、画面には今の最安値を出す。
+ * 1 行分の計算。期待値は実売の中央値をジェムコラプトの賭けの式に入れて出し、画面には今の最安値を出す。
  * 「1 回回したら手元にいくら残るか」(期待値) を出す (オーナー指示 2026-09-17)。
  */
 const scoredGems = computed(() => {
   return gems.value.map((gem) => {
     const cs = cells(gem.name);
+    // 見出しを押した時の並べ替えと、21 / 23% を買う経路の**仕入れ値**は、画面に出ている今の最安値
     const price: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
-    const fastKeys = new Set<string>();
-    for (const c of cs) {
-      // 見出しを押した時の並べ替えは、画面に出ている値 (今の最安値) で
-      price[c.key] = c.cheapest;
-      if (c.tone === "fast") fastKeys.add(c.key);
-    }
-    // 期待値は**実売の平均**で計算する (画面に出す最安値ではない。オーナー指示 2026-09-18:
-    // 「並び順だけ上から 3 つの平均で期待値を出すだけ」)
-    // 売れた実績が無い条件は **0 (売れない)** として計算する
+    for (const c of cs) price[c.key] = c.cheapest;
+    // 売値は**実売の中央値**で計算する (画面に出す最安値ではない。オーナー指示 2026-09-18:
+    // 「並び順だけ上から 3 つの平均で期待値を出すだけ」。2026-09-26 監査で平均 → 中央値)
+    // 売れた実績が無い条件は **売値 0 (売れない)** として計算する
     // (オーナー指示 2026-09-19:「判定待ちは売れてない判定でおｋ。売れない = 遅いでおｋだし、
     //  遅いは 0 として期待値出して」)。追跡記録そのものが無い条件だけ null にして、
-    // 3 条件とも記録が無いジェムは今まで通り「—」にする (見ていないだけで、売れないとは言えないため)
-    const soldAvg: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
-    for (const c of cs) soldAvg[c.key] = c.avgExalted ?? (c.gone + c.alive > 0 ? 0 : null);
-    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false, en: gem.name }, soldAvg);
+    // 3 条件とも記録が無いジェムは今まで通り「—」にする (見ていないだけで、売れないとは言えないため)。
+    // この 0 はあくまで**売値**。以前は同じ値を 21 / 23% を買う経路の仕入れ値にも使っていたので、
+    // 売れていない条件を 0 で買えることになり、30 回で +16,000 高貴のような偽の黒字が出ていた (2026-09-26 監査)
+    const sale: Record<(typeof SALE_KEYS)[number], number | null> = { level21: null, quality23: null, finished: null };
+    for (const c of cs) sale[c.key] = c.soldExalted ?? (c.records > 0 ? 0 : null);
+    const e = expectedValueOf({ spirit: SPIRIT.get(gem.name) ?? false, en: gem.name }, sale, price);
+    // 売値が 1〜2 件の実売から出ている条件 (根拠が薄い)
+    const thinKeys = cs.filter((c) => c.soldThin).map((c) => c.label);
     return {
       ...gem,
       cells: cs,
       price,
-      fastKeys,
-      fast: fastKeys.size,
-      allFast: fastKeys.size === 3,
-      /** レベル 21 と完成品が速い (オーナーの言う「2 番目に大事」) */
-      coreFast: fastKeys.has("level21") && fastKeys.has("finished"),
+      thinKeys,
       /** 30 回回した時の期待収支 */
       ev: e ? e.ev * EV_ATTEMPTS.value : null,
       /** 1 回あたりの期待収支 */
@@ -79,10 +75,10 @@ const scoredGems = computed(() => {
 });
 
 /**
- * 並べ替え (オーナー指示 2026-09-17)。
- *   既定「期待値」: 3 条件とも速い物を一番上 → レベル 21 と完成品が速い物 → 速い数 → 期待値の高い順
- *   条件名 (レベル 21 / 品質 23% / 完成品) を押した時: その条件が速い物を上に、その中で今の最安値が高い順
- * どちらも記録が増えれば勝手に並び替わる (flowStore が変われば再計算される)。
+ * 並べ替え。売れる速さは関係なく、押した列の数字だけで並べる (オーナー 2026-09-26:「売れる速度関係なく並び替えは機能させて。
+ * 期待値順、早さ優先でごちゃごちゃするから値段順でおｋ」。前は「速い」物を先に出してから数字で並べていた)。
+ *   期待値: 期待値の高い順 / レベル 21・品質 23%・完成品: その条件の今の最安値の高い順
+ * 記録が増えれば勝手に並び替わる (flowStore が変われば再計算される)
  */
 type SortMode = "ev" | (typeof SALE_KEYS)[number];
 const sortBy = ref<SortMode>("ev");
@@ -90,32 +86,17 @@ const sortedGems = computed(() => {
   const mode = sortBy.value;
   const rows = scoredGems.value.slice();
   const num = (v: number | null): number => (v == null ? Number.NEGATIVE_INFINITY : v);
-  if (mode === "ev") {
-    rows.sort((a, b) => {
-      if (a.allFast !== b.allFast) return a.allFast ? -1 : 1;
-      if (a.coreFast !== b.coreFast) return a.coreFast ? -1 : 1;
-      if (a.fast !== b.fast) return b.fast - a.fast;
-      if (num(a.ev) !== num(b.ev)) return num(b.ev) - num(a.ev);
-      return a.name.localeCompare(b.name);
-    });
-  } else {
-    rows.sort((a, b) => {
-      const af = a.fastKeys.has(mode);
-      const bf = b.fastKeys.has(mode);
-      if (af !== bf) return af ? -1 : 1;
-      if (num(a.price[mode]) !== num(b.price[mode])) return num(b.price[mode]) - num(a.price[mode]);
-      if (num(a.ev) !== num(b.ev)) return num(b.ev) - num(a.ev);
-      return a.name.localeCompare(b.name);
-    });
-  }
+  const key = (g: (typeof rows)[number]): number => num(mode === "ev" ? g.ev : g.price[mode]);
+  rows.sort((a, b) => (key(a) !== key(b) ? key(b) - key(a) : num(b.ev) - num(a.ev) || a.name.localeCompare(b.name)));
   return rows;
 });
-const SORT_NOTE: Record<SortMode, string> = {
-  ev: `3 条件とも「速い」ジェムを一番上、次にレベル 21 と完成品が速い物。その中では期待値 (${EV_ATTEMPTS.value} 回回した時の手残り) が高い順。売れた実績が無い条件は「売れない = 0」として計算します (判定待ちも同じ扱い)。`,
-  level21: "レベル 21 が「速い」ジェムを上に、その中では レベル 21 の今の最安値が高い順。",
-  quality23: "品質 23% が「速い」ジェムを上に、その中では 品質 23% の今の最安値が高い順。",
-  finished: "完成品が「速い」ジェムを上に、その中では 完成品の今の最安値が高い順。",
-};
+// 回数のプルダウンを変えたら文も変わるように computed にする (起動時の回数で固まっていた。2026-09-26 監査)
+const SORT_NOTE = computed<Record<SortMode, string>>(() => ({
+  ev: `期待値 (${EV_ATTEMPTS.value} 回回した時の手残り) の高い順。売値は実際に売れた値段の中央値で、売れた実績が無い条件は「売れない = 0」として計算します (判定待ちも同じ扱い)。21 / 23% を買う経路の仕入れ値は今の最安値です。`,
+  level21: "レベル 21 の今の最安値の高い順。",
+  quality23: "品質 23% の今の最安値の高い順。",
+  finished: "完成品の今の最安値の高い順。",
+}));
 function sortHead(mode: SortMode): string {
   return sortBy.value === mode ? "text-[var(--exile-color-accent-focus)]" : "hover:text-[var(--exile-color-text-secondary)]";
 }
@@ -135,13 +116,20 @@ function cells(en: string) {
       st?.cheapest_amount != null && st.cheapest_currency
         ? averageExalted([{ amount: st.cheapest_amount, currency: st.cheapest_currency }])
         : null;
-    /** 期待値の計算に使う実売の平均 (画面には出さない) */
-    const avg = averageExalted(f.soldPrices);
+    /**
+     * 期待値の売値に使う実売の中央値 (画面には出さない)。
+     * 2026-09-26 監査で平均 → 中央値。3 件未満 (1〜2 件) でも使うが、根拠が薄いと印を付ける
+     */
+    const med = medianExalted(f.soldPrices);
     const parts = [f.gone > 0 ? fmtSellTime(f.medianMin) : "", cheapest != null ? displayCurrency.money(cheapest) : ""].filter(Boolean);
     return {
       key: k,
-      /** 期待値に渡す実売の平均 (高貴建て) */
-      avgExalted: avg,
+      /** 期待値に渡す実売の中央値 (高貴建て)。売れた実績が無ければ null */
+      soldExalted: med?.value ?? null,
+      /** 実売が MEDIAN_MIN_SALES 件未満 (1〜2 件) で、売値の根拠が薄い */
+      soldThin: med?.thin ?? false,
+      /** 追跡記録の件数 (並んでいる / 確定待ち / 売れた / 不明。付け替えは除く) */
+      records: f.gone + f.alive + f.pending + f.unknown,
       /** 並べ替えと表示に使う今の最安値 (高貴建て) */
       cheapest,
       label: SALE_KEY_LABEL[k],
@@ -150,14 +138,18 @@ function cells(en: string) {
         (f.thin ? `${f.label}?` : f.label) ||
         (f.firstLook && f.alive > 0
           ? "次回の取得で判定"
-          : f.gone + f.alive > 0
-            ? `判定待ち ${f.gone + f.alive} 件`
+          : f.gone + f.alive + f.pending + f.unknown > 0
+            ? `判定待ち ${f.gone + f.alive + f.pending + f.unknown} 件`
             : watched
               ? "巡回待ち"
               : "未登録"),
       // 判定の横: 売れるまでの時間と、今の最安値
       detail: parts.join(" · "),
-      title: `${flowSentence(f)}${avg != null ? `。売れた値段の平均は ${displayCurrency.money(avg)} (期待値の計算に使う値)` : ""}`,
+      title: `${flowSentence(f)}${
+        med != null
+          ? `。売れた値段の中央値は ${displayCurrency.money(med.value)} (${med.n} 件、期待値の計算に使う値)${med.thin ? `。${MEDIAN_MIN_SALES} 件未満なので根拠が薄い値です` : ""}`
+          : ""
+      }`,
       tone: f.tone,
       gone: f.gone,
       alive: f.alive,
@@ -197,14 +189,14 @@ function toneClass(tone: string): string {
               <tr>
                 <!-- 一番左が期待値。見出しを押すとその条件で並べ替える (オーナー指示 2026-09-17) -->
                 <th class="text-left font-normal pb-1 whitespace-nowrap">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の平均、素材はジェムコラプトの賭けと同じ (相場と取引所の繰り上げ単価の安い方)、前提の確率は既定値です`" @click="sortBy = 'ev'">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead('ev')" :title="`${EV_ATTEMPTS} 回回した時の手残り (期待値) の高い順に並べる。売値は実際に売れた値段の中央値 (21 / 23% を買う経路の仕入れ値は今の最安値)、素材はジェムコラプトの賭けと同じ (相場と取引所の繰り上げ単価の安い方)、前提の確率は既定値です`" @click="sortBy = 'ev'">
                     期待値{{ sortBy === "ev" ? " ▼" : "" }}
                   </button>
                 </th>
                 <th class="text-left font-normal pb-1 pl-3">ジェム</th>
                 <th class="text-left font-normal pb-1 pl-3">使用状況</th>
                 <th v-for="k in SALE_KEYS" :key="k" class="text-left font-normal pb-1 pl-3">
-                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} が速い物を上に、その中で今の最安値が高い順に並べる`" @click="sortBy = k">
+                  <button type="button" class="underline decoration-dotted" :class="sortHead(k)" :title="`${SALE_KEY_LABEL[k]} の今の最安値が高い順に並べる`" @click="sortBy = k">
                     {{ SALE_KEY_LABEL[k] }}{{ sortBy === k ? " ▼" : "" }}
                   </button>
                 </th>
@@ -220,7 +212,8 @@ function toneClass(tone: string): string {
                     :class="gem.ev > 0 ? 'text-emerald-300' : gem.ev < 0 ? 'text-rose-300' : 'text-[var(--exile-color-text-tertiary)]'"
                     :title="`${EV_ATTEMPTS} 回回した時の期待収支 ${displayCurrency.money(gem.ev, { signed: true, round: 'down' })} (1 回あたり ${displayCurrency.money(gem.evPer1, { signed: true })})
 入り方: ${gem.evRoute}${gem.evRoi != null ? ` · 利回り ${(gem.evRoi * 100).toFixed(0)}%` : ''}${gem.evUpfront ? ` · 1 回の元手 ${displayCurrency.money(gem.evUpfront, { round: 'up' })} (${EV_ATTEMPTS} 回で ${displayCurrency.money(gem.evUpfront * EV_ATTEMPTS, { round: 'up' })})` : ''}
-売値は実際に売れた値段の平均を使っています`"
+売値は実際に売れた値段の中央値、21 / 23% の仕入れ値は今の最安値を使っています${gem.thinKeys.length ? `
+根拠が薄い売値 (売れたのが ${MEDIAN_MIN_SALES} 件未満): ${gem.thinKeys.join(' / ')}` : ''}`"
                   >
                     <!-- 収入は切り下げ (オーナー指示 2026-09-20:「基本経費は多く、収入は厳しく」) -->
                     {{ displayCurrency.money(gem.ev, { signed: true, round: "down" }) }}

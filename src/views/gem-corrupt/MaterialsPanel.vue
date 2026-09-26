@@ -29,7 +29,7 @@ const craft = computed(() => g.routes.value.find((r) => r.id === "craft") ?? nul
  * ここは 期待値 × N (原石 0.134 × 55 = 7.37) を出し、収支は連鎖で数えた 6 を出していた。
  * 同じ表を見て違う数が出ないよう、結晶・原石・完成品の個数はこちらも連鎖で出す。
  */
-const counts = computed(() => (craft.value?.ok ? expectedCounts(craft.value, attempts.value) : null));
+const counts = computed(() => (craft.value?.ok ? expectedCounts(craft.value, attempts.value, { exact: true }) : null));
 /**
  * 素材表: 自作 1 回あたりの数と費用、N 回分。
  * 結晶と原石は期待値 (結晶は片方当たった時に賭ける場合だけ、原石は壊れなかった物だけ)。

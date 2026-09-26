@@ -35,12 +35,14 @@ export interface ExpectedCounts {
  *
  * 切り下げは「収入は厳しく」の方針どおり (オーナー:「ジェムの期待値も切り下げ」)。
  */
-export function expectedCounts(r: RouteResult, attempts: number): ExpectedCounts {
+export function expectedCounts(r: RouteResult, attempts: number, opts: { exact?: boolean } = {}): ExpectedCounts {
   const zero: ExpectedCounts = { level21: 0, quality23: 0, finished: 0, other: 0, crystals: 0, uncut20: 0 };
   const n = Math.max(0, Math.floor(attempts));
   const st = r.stage;
   if (!r.ok || n <= 0 || !st) return zero;
-  const fl = (x: number): number => (Number.isFinite(x) && x > 0 ? Math.floor(x + 1e-9) : 0);
+  // exact: 切り下げずに期待値そのまま (収支と素材の既定。オーナー 2026-09-26:「期待値でそのまま個数に出して」。
+  // 切り下げだと回数が少ないうちは結晶や当たりが 0 のまま動かず、経路を変えても固定に見えた)
+  const fl = (x: number): number => (!Number.isFinite(x) || x <= 0 ? 0 : opts.exact ? x : Math.floor(x + 1e-9));
 
   // 1-2. 賭ける前に出来上がった個数
   const made21 = fl(n * st.pLevel21);

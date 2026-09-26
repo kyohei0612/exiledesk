@@ -23,6 +23,15 @@ const MAX_MANUAL_PASSES: u32 = 12;
 const MAX_AUTO_PASSES: u32 = 3;
 /// 罰則が明けるのを待つ上限 (1 回の待ちあたり)
 const MAX_PENALTY_WAIT_SECS: i64 = 40 * 60;
+/// 追加の fetch (最安 10 件の外の出品者を見る) が門番で待ってよい上限 (秒)。
+/// これを超える待ちなら取らずに、その銘柄の消えた判定を次の巡へ見送る (2026-09-26)
+const EXTRA_FETCH_MAX_WAIT_SECS: i64 = 60;
+
+/// 追加の fetch を今投げてよいか。罰則中 / 枠待ちが長い時は見送る (門番の判断を読むだけで、枠は緩めない)
+fn extra_fetch_allowed() -> bool {
+    let g = crate::trade2::gate_status();
+    g.penalty_until <= now_secs() && g.wait_secs <= EXTRA_FETCH_MAX_WAIT_SECS
+}
 
 /// 全銘柄を 1 周する (手動ボタン)。
 pub async fn sample_once(app: &tauri::AppHandle) -> Result<(), String> {
@@ -232,36 +241,65 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, slo
         // 発火しており、値段も新規も 3.6 時間に 1 回しか入っていなかった。
         let mut entries: Vec<ListingRef> = Vec::new();
         let top: Vec<String> = ids.iter().take(10).cloned().collect();
+        let requested = top.len();
         if !top.is_empty() && !query_id.is_empty() {
             let fetch = crate::trade2::FetchRequest { patient: true, ids: top, query_id: query_id.clone(), site: site.clone() };
             match crate::trade2::trade2_fetch_with(crate::trade_history::session_value(app), fetch).await {
                 Ok(v) => {
                     note_rate_headers(&v);
-                    if let Some(arr) = v.get("result").and_then(|x| x.as_array()) {
-                        for item in arr {
-                            let Some(id) = item.get("id").and_then(|x| x.as_str()) else { continue };
-                            let listing = item.get("listing");
-                            let price = listing.and_then(|l| l.get("price"));
-                            entries.push(ListingRef {
-                                id: id.to_string(),
-                                amount: price.and_then(|p| p.get("amount")).and_then(|x| x.as_f64()),
-                                currency: price.and_then(|p| p.get("currency")).and_then(|x| x.as_str()).map(str::to_string),
-                                account: listing
-                                    .and_then(|l| l.get("account"))
-                                    .and_then(|a| a.get("name"))
-                                    .and_then(|x| x.as_str())
-                                    .map(str::to_string),
-                                listed_at: listing
-                                    .and_then(|l| l.get("indexed"))
-                                    .and_then(|x| x.as_str())
-                                    .and_then(parse_indexed),
-                            });
-                        }
-                    }
+                    entries = parse_fetch_result(&v);
                 }
                 Err(e) => eprintln!("[market_flow] fetch {} 失敗: {e}", watch.key),
             }
             tokio::time::sleep(pace).await;
+        }
+
+        // --- 追加の fetch: 消えた出品があった時だけ、最安 10 件の外の出品者を見る (2026-09-26 オーナー承認) ---
+        // 値段を上げて並べ直した人は最安 10 件の外に出るので、10 件だけでは「同じ出品者がまだ並べている」
+        // を見分けられず、売れたと数えていた。一覧の 11 件目以降で出品者が分からない物を 10 件ずつ最大 2 回取る。
+        // 門番 (8 割 / 5 分の合計枠) は通すだけで緩めない。枠待ちが長い時は取らずに、
+        // この巡の消えた判定を見送る (確定待ちのまま。売れたにはしない)。
+        // ID を直接照会する裏取りは使わない (消えた出品にもキャッシュを返す。オーナー確認 2026-09-26)
+        let mut details_ok = fetch_details_ok(requested, &entries);
+        let mut extra: Vec<ListingRef> = Vec::new();
+        if details_ok && !query_id.is_empty() {
+            let want = {
+                let cur = load_store(app);
+                let empty = WatchState::default();
+                let st = cur.states.get(&watch.key).unwrap_or(&empty);
+                let complete = list_is_complete(&ids, total, &st.tracked);
+                extra_detail_ids(st, &ids, complete)
+            };
+            for batch in want.chunks(10) {
+                if cancelled(slot) || !extra_fetch_allowed() {
+                    eprintln!("[market_flow] {} の追加 fetch を見送り (枠待ち)。消えた判定はこの巡は保留", watch.key);
+                    details_ok = false;
+                    break;
+                }
+                let fetch = crate::trade2::FetchRequest { patient: true, ids: batch.to_vec(), query_id: query_id.clone(), site: site.clone() };
+                let got = tokio::time::timeout(
+                    Duration::from_secs(EXTRA_FETCH_MAX_WAIT_SECS as u64),
+                    crate::trade2::trade2_fetch_with(crate::trade_history::session_value(app), fetch),
+                )
+                .await;
+                match got {
+                    Ok(Ok(v)) => {
+                        note_rate_headers(&v);
+                        extra.extend(parse_fetch_result(&v));
+                    }
+                    Ok(Err(e)) => {
+                        eprintln!("[market_flow] 追加 fetch {} 失敗: {e}", watch.key);
+                        details_ok = false;
+                        break;
+                    }
+                    Err(_) => {
+                        eprintln!("[market_flow] 追加 fetch {} が枠待ちで {} 秒を超えたので見送り", watch.key, EXTRA_FETCH_MAX_WAIT_SECS);
+                        details_ok = false;
+                        break;
+                    }
+                }
+                tokio::time::sleep(pace).await;
+            }
         }
 
         // --- 反映 ---
@@ -270,22 +308,24 @@ async fn sample_inner(app: &tauri::AppHandle, only: Option<HashSet<String>>, slo
         let _store_guard = store_lock();
         let mut store_now = load_store(app);
         let state = store_now.states.entry(watch.key.clone()).or_default();
-        // 総数が 100 未満なら search の一覧が全部 = 一覧に無い物は消えたと判断できる
-        // 検索結果だけでは「消えた = 売れた」と判定しない (2026-09-17)。
+        // 生死は search の ID 一覧だけで見る (ID を直接 fetch する裏取りは、消えた出品にも
+        // キャッシュを 200 で返すので使えない。2026-09-17 に実測)。
+        // 一覧が出品全部を含んでいる時 (総数 100 未満、応答が空でない) だけ「一覧に無い」を判定に使う。
         //
-        // securable (即時購入のみ) は出品者の状況で出入りするので、検索から消えただけでは
-        // 売れたと言えない。消えた候補は下の確認 fetch (ID 直接照会。status の絞り込みを
-        // 受けないので実在が確実に分かる) に回し、そこで居なければ売れたと数える。
-        // 即時購入の一覧が全部取れていれば、そこから消えた出品を「売れた」と数える。
-        //
-        // オーナー指摘 (2026-09-17):「インスタから対面トレードに切り替える人は存在しない」。
-        // 即時購入の一覧から消える = 売れた (か取り下げた) とみなしてよい。
+        // オーナー指摘 (2026-09-17):「インスタから対面トレードに切り替える人は存在しない」ので、
+        // 即時購入の一覧から消えることは売れた (か取り下げた) とみなしてよい。ただし 2026-09-26 の監査で
+        // 次の条件を足した (判定の中身は tally.rs の apply_sample):
+        //   - 1 回消えただけでは確定待ち。次の判定できる巡でも居なければ売れた (消えた時刻は 1 回目)
+        //   - 同じ出品者が今もこの条件で並べていれば付け替え (売れたに数えない)
+        //   - details_ok が false の巡 (最安 10 件 / 追加の fetch が失敗・見送り / 出品者が取れない) は判定しない
+        //   - 出品時刻か出品者が分からない物は不明 (売れたに数えない)
         // 値段を変えただけなら ID は変わらないので一覧に残り、売れた扱いにはならない。
-        //
-        // ID を直接 fetch する裏取りは使えない (消えた出品にもキャッシュを 200 で返す。
-        // 2026-09-17 に実測)。応答が空の時や、100 件を超えて一覧が切れている時は判定しない。
         let list_complete = list_is_complete(&ids, total, &state.tracked);
-        apply_sample(state, now, total, &ids, &entries, list_complete);
+        // 詳細 (出品者) が取れなかった巡は付け替えを見分けられないので、消えた判定をしない (2026-09-26 監査)。
+        // fetch と反映の間に追跡が増えて、追加で要る出品者が変わっていたら (手動の再取得が割り込んだ等) も見送る
+        let covered = extra_detail_ids(state, &ids, list_complete).iter().all(|id| extra.iter().any(|e| &e.id == id));
+        let details: Option<&[ListingRef]> = if details_ok && covered { Some(extra.as_slice()) } else { None };
+        apply_sample(state, now, total, &ids, &entries, list_complete, details);
         state.list_complete = list_complete;
         mark_buried(state, &ids, list_complete);
         prune(state, now);

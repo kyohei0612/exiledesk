@@ -39,6 +39,10 @@ export interface Tracked {
   account?: string | null;
   /** 消えたのと同時に同じ出品者が並べ直した = 値段の付け替え。売れた件数には数えない */
   relisted?: boolean;
+  /** 一覧から 1 回だけ消えている (確定待ち) 時の、最初に消えた時刻。2 回続けて居なければ売れた (2026-09-26) */
+  missing_since?: number | null;
+  /** 消えたが出品時刻か出品者が分からず、売れたとも付け替えとも言えない (2026-09-26)。売れた件数に数えない */
+  unknown?: boolean;
 }
 export interface Daily {
   day: number;
@@ -288,6 +292,7 @@ export async function verifyFlow(key: string): Promise<VerifyResult | null> {
 // 捌き速度の「読み方」(速い / 普通 / 遅い の判定と言い回し) は flow-summary.ts へ。
 // 呼ぶ側は今まで通り market-flow から取れるようにしておく (2026-09-19 の分割)
 export {
+  fateOf,
   flowSentence,
   fmtAge,
   fmtPct,
@@ -296,4 +301,5 @@ export {
   summarizeFlow,
   type FlowSummary,
   type FlowTone,
+  type TrackedFate,
 } from "./flow-summary";

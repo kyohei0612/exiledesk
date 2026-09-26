@@ -6,7 +6,25 @@
  *
  * 2026-09-19 に market-flow.ts (582 行) から切り出した。
  */
-import type { WatchState } from "./market-flow";
+import type { Tracked, WatchState } from "./market-flow";
+
+/**
+ * 追跡 1 件の行き先 (2026-09-26 監査「売れた判定を厳しく」)。
+ *   alive    … 並んでいる
+ *   pending  … 一覧から 1 回だけ消えた (次の巡回でも居なければ売れた。戻れば取り消し)
+ *   sold     … 2 回続けて居ない + 出品時刻と出品者が分かっている + 同じ出品者が並べ直していない
+ *   relisted … 同じ出品者がまだ同じ条件で並べている (値段の付け替え)
+ *   unknown  … 消えたが出品時刻か出品者が分からない (売れたと言い切れない)
+ * 売れた件数・速さの判定・実売の値段・期待値に入るのは sold だけ。
+ * 古い記録 (unknown の欄が無い頃の物) も、出品時刻か出品者が欠けていれば unknown に倒す。
+ */
+export type TrackedFate = "alive" | "pending" | "sold" | "relisted" | "unknown";
+export function fateOf(t: Tracked): TrackedFate {
+  if (!t.gone_at) return t.missing_since ? "pending" : "alive";
+  if (t.relisted) return "relisted";
+  if (t.unknown || t.listed_at == null || !t.account) return "unknown";
+  return "sold";
+}
 
 /** 分 → 「3 時間」「25 分」「2 日」 */
 export function fmtSellTime(min: number | null): string {
@@ -27,14 +45,21 @@ export function flowSentence(f: FlowSummary): string {
     return `初回の取得です。今並んでいる ${f.alive} 件（最長 ${fmtSellTime(f.oldestMin)}）を覚えたところなので、次回の取得でこのうち何件が売れたかを見て判定します`;
   }
   if (f.gone === 0) {
-    if (f.alive === 0) return "まだ記録がありません";
-    return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）`;
+    const extra = [
+      f.pending > 0 ? `一覧から 1 回消えただけの ${f.pending} 件は次の取得で確定します` : "",
+      f.unknown > 0 ? `売れたか分からない ${f.unknown} 件は数えていません` : "",
+    ].filter(Boolean);
+    const tail = extra.length > 0 ? `。${extra.join("。")}` : "";
+    if (f.alive === 0) return `${f.pending + f.unknown > 0 ? "まだ売れた記録がありません" : "まだ記録がありません"}${tail}`;
+    return `まだ 1 件も売れていません（並んでいる ${f.alive} 件・最長 ${fmtSellTime(f.oldestMin)}）${tail}`;
   }
   const parts = [`${f.gone} 件が売れました（売れるまで ${fmtSellTime(f.medianMin)}）`];
   if (!f.enough) parts.push(`判定にはあと ${Math.max(0, MIN_KNOWN - f.known24)} 件 (結果が分かっている出品が ${MIN_KNOWN} 件要ります)`);
   else if (f.gone < MIN_KNOWN) parts.push(`${f.gone} 件だけで出した判定です`);
   // 「速い」と出していても、それより長く並んでいる出品があるなら必ず併記する
   if (f.olderThanMedian > 0) parts.push(`ただし並んでいる ${f.alive} 件のうち ${f.olderThanMedian} 件はもっと長く並んでいます`);
+  if (f.pending > 0) parts.push(`一覧から 1 回消えただけの ${f.pending} 件は次の取得で確定します`);
+  if (f.unknown > 0) parts.push(`出品時刻か出品者が分からず売れたと言えない ${f.unknown} 件は数えていません`);
   if (f.stale > 0) parts.push(`2 日以上売れ残り ${f.stale} 件`);
   if (f.droppedUnsold > 0) parts.push(`7 日売れずに打ち切り ${f.droppedUnsold} 件`);
   if (f.droppedBuried > 0) parts.push(`最安帯から沈んで追跡をやめた ${f.droppedBuried} 件`);
@@ -53,7 +78,11 @@ export interface FlowSummary {
   droppedUnsold: number;
   /** 最安帯から沈んで追跡をやめた件数 (売れたかは分からないので売れ残りとは分ける) */
   droppedBuried: number;
-  /** 売れた出品の値段 (出品時の通貨のまま)。平均売値の計算に使う */
+  /** 一覧から 1 回だけ消えた確定待ちの件数 (売れたにも並んでいるにも数えない) */
+  pending: number;
+  /** 消えたが売れたと言えない件数 (出品時刻か出品者が不明) */
+  unknown: number;
+  /** 売れた出品の値段 (出品時の通貨のまま)。実売の中央値 (期待値の売値) の計算に使う */
   soldPrices: { amount: number; currency: string }[];
   /** 出品が 100 件を超えていて「消えた」を判定できない状態か */
   truncated: boolean;
@@ -112,6 +141,8 @@ const EMPTY_SUMMARY: FlowSummary = {
   olderThanMedian: 0,
   droppedUnsold: 0,
   droppedBuried: 0,
+  pending: 0,
+  unknown: 0,
   soldPrices: [],
   truncated: false,
   medianMin: null,
@@ -170,12 +201,24 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   let stale = 0;
   const stalePrices: number[] = [];
   const allPrices: number[] = [];
+  let pending = 0;
+  let unknown = 0;
   for (const t of state.tracked) {
-    // 値段の付け替え (消えた直後に同じ出品者が並べ直した) は売れても売れ残ってもいないので外す
-    if (t.relisted) continue;
+    // 売れた (sold) と並んでいる (alive) 以外は、速さにも値段にも入れない (2026-09-26 監査)。
+    //   付け替え … 売れても売れ残ってもいない / 確定待ち・不明 … 売れたと言い切れない
+    const fate = fateOf(t);
+    if (fate === "pending") {
+      pending++;
+      continue;
+    }
+    if (fate === "unknown") {
+      unknown++;
+      continue;
+    }
+    if (fate === "relisted") continue;
     const start = t.listed_at ?? t.first_seen;
     const life = Math.max(60, (t.gone_at ?? nowSec) - start);
-    const gone = !!t.gone_at;
+    const gone = fate === "sold";
     records.push({ life, gone });
     if (gone) {
       goneLives.push(life);
@@ -191,7 +234,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     if (t.amount != null) allPrices.push(t.amount);
   }
   if (records.length === 0) {
-    return { ...EMPTY_SUMMARY, total: state.total ?? null, lastAt: state.sampled_at || null };
+    return { ...EMPTY_SUMMARY, pending, unknown, total: state.total ?? null, lastAt: state.sampled_at || null };
   }
 
   const d1 = soldWithin(records, FAST_SECS);
@@ -300,6 +343,8 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
     olderThanMedian,
     droppedUnsold,
     droppedBuried,
+    pending,
+    unknown,
     soldPrices,
     truncated: state.list_complete === false,
     medianMin: median != null ? Math.round(median / 60) : null,

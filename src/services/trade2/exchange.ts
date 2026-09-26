@@ -7,6 +7,7 @@
  *   実測 (2026-09-16): ヴァールオーブ = カオス経由 4.32 / 高貴経由 4.47 (高貴換算)
  * 板が薄いペアは値が飛ぶので、在庫のあるペアを優先する。結果は 30 分そのまま使う (localStorage)。
  */
+import { shallowRef } from "vue";
 import { fetchPairRate } from "../../api/poe2scout";
 import { marketStore } from "../../state/market-store";
 
@@ -64,6 +65,23 @@ const FRESH_MS = 30 * 60 * 1000;
 
 type Cache = Record<string, BestBuy>;
 
+/**
+ * キャッシュの版 (書いた時と、どれかが 30 分の期限を過ぎた時に上がる)。
+ *
+ * cachedBuy は localStorage を読むだけなので、computed から呼んでも Vue は変化に気づかない。
+ * 自動ジェム監視の期待値が、取り直した / 期限が切れた後も古い単価のまま残っていた (2026-09-26 監査)。
+ * cachedBuy の中でこれを読んでおけば、呼んだ computed が書き込みと期限切れで計算し直される。
+ */
+export const exchangeCacheVersion = shallowRef(0);
+/** fetchedAt の 30 分後に版を上げる (期限切れを computed に知らせる) */
+function scheduleExpiry(fetchedAt: number): void {
+  const wait = fetchedAt + FRESH_MS - Date.now();
+  if (wait <= 0 || typeof setTimeout !== "function") return;
+  setTimeout(() => {
+    exchangeCacheVersion.value++;
+  }, wait + 1000);
+}
+
 function loadCache(): Cache {
   try {
     return JSON.parse(localStorage.getItem(CACHE_KEY) ?? "{}") as Cache;
@@ -81,6 +99,7 @@ function saveCache(c: Cache): void {
 
 /** 取ってある分だけ返す (取りに行かない) */
 export function cachedBuy(apiId: string): BestBuy | null {
+  void exchangeCacheVersion.value; // 書き込み・期限切れで呼び出し元の computed を計算し直させる
   const hit = loadCache()[apiId];
   return hit && Date.now() - hit.fetchedAt < FRESH_MS ? hit : null;
 }
@@ -135,5 +154,10 @@ export async function fetchBuy(league: string, apiId: string): Promise<BestBuy |
   const cache = loadCache();
   cache[apiId] = entry;
   saveCache(cache);
+  exchangeCacheVersion.value++;
+  scheduleExpiry(entry.fetchedAt);
   return entry;
 }
+
+// 起動時に localStorage に残っている分も、期限が来たら版を上げる (前回の起動で取った単価)
+for (const e of Object.values(loadCache())) if (e && typeof e.fetchedAt === "number") scheduleExpiry(e.fetchedAt);

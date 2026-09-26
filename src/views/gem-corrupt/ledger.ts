@@ -331,7 +331,10 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
   }
   function setRoute(ev: Event): void {
     const v = (ev.target as HTMLSelectElement).value;
-    setLedger("route", v === "" ? null : (v as RouteId));
+    // 経路を変えたら、結晶・原石・売れた数の手入力は捨てて、新しい経路の期待値に戻す (オーナー 2026-09-26:「プルダウンで
+    // 項目を変えた時、そこだけなぜか固定」。前の経路の数が上書きとして残っていた)
+    if (!ledgerGem.value) return;
+    book.value = { ...book.value, [ledgerGem.value]: { ...ledger.value, route: v === "" ? null : (v as RouteId), qty: dropChained(ledger.value.qty), sold: {} } };
   }
   /** 結晶と原石の上書きを外す (連鎖で数える既定に戻す) */
   function dropChained(qty: GemLedger["qty"]): GemLedger["qty"] {
@@ -397,7 +400,7 @@ export function useGemLedger(g: ReturnType<typeof useGemCorrupt>, attempts: Ref<
    */
   const counts = computed(() => {
     const route = g.routes.value.find((x) => x.id === ledgerRouteId.value);
-    return route?.ok ? expectedCounts(route, ledger.value.attempts) : null;
+    return route?.ok ? expectedCounts(route, ledger.value.attempts, { exact: true }) : null;
   });
 
   const ledgerRows = computed(() => {

@@ -5,7 +5,7 @@
 //! 公式 API は一切叩かない (全部この中で作ったダミーの応答)。
 //!
 //!   cargo run --example flow_audit
-use exiledesk_lib::market_flow::{apply_sample, prune, ListingRef, WatchState};
+use exiledesk_lib::market_flow::{apply_sample, fetch_details_ok, prune, ListingRef, WatchState};
 
 const HOUR: i64 = 3600;
 
@@ -32,14 +32,16 @@ struct Response {
 /// 生死は search が返す ID 一覧だけで決める。ID 直接 fetch は消えた出品にも
 /// キャッシュを返すので使えない (2026-09-17 実測)。
 /// ID 一覧が総数に届いていない時と、応答が空の時は判定しない。
+/// 2026-09-26 から: 1 回消えただけでは確定待ち。2 回続けて居なければ売れた
 fn sample(state: &mut WatchState, now: i64, r: &Response) {
     let complete = r.ids.len() as u64 >= r.total && !(r.ids.is_empty() && !state.tracked.is_empty());
-    apply_sample(state, now, r.total, &r.ids, &r.entries, complete);
+    let details: Option<&[ListingRef]> = if fetch_details_ok(r.ids.len().min(10), &r.entries) { Some(&[]) } else { None };
+    apply_sample(state, now, r.total, &r.ids, &r.entries, complete, details);
     prune(state, now);
 }
 
 fn gone_count(state: &WatchState) -> usize {
-    state.tracked.iter().filter(|t| t.gone_at.is_some() && !t.relisted).count()
+    state.tracked.iter().filter(|t| t.gone_at.is_some() && !t.relisted && !t.unknown).count()
 }
 fn alive_count(state: &WatchState) -> usize {
     state.tracked.iter().filter(|t| t.gone_at.is_none()).count()
@@ -53,9 +55,10 @@ fn check(name: &str, ok: bool, detail: String) -> bool {
     ok
 }
 
-/// 出品を並べた応答を作る (全部同じ出品者・同じ値段)
+/// 出品を並べた応答を作る (出品者は 1 件ごとに別人・同じ値段。
+/// 同じ人がまだ並べていると付け替え扱いになるので、2026-09-26 から別人にしてある)
 fn shop(ids: &[&str], now: i64, price: f64) -> Response {
-    let entries: Vec<ListingRef> = ids.iter().take(10).map(|i| listing(i, price, now - 2 * HOUR, "Seller")).collect();
+    let entries: Vec<ListingRef> = ids.iter().take(10).map(|i| listing(i, price, now - 2 * HOUR, &format!("Seller-{i}"))).collect();
     Response { total: ids.len() as u64, ids: ids.iter().map(|s| s.to_string()).collect(), entries }
 }
 
@@ -63,14 +66,15 @@ fn main() {
     let t0 = 1_700_000_000i64;
     let mut ok = true;
 
-    // 1. 一覧から消えたら売れた扱い (一覧が全部取れている時)
+    // 1. 一覧から 2 回続けて消えたら売れた扱い (一覧が全部取れている時)
     {
         let mut st = WatchState::default();
         sample(&mut st, t0, &shop(&["a", "b", "c", "d", "e"], t0, 10.0));
         sample(&mut st, t0 + HOUR, &shop(&["b", "c", "d", "e"], t0, 10.0));
         sample(&mut st, t0 + 2 * HOUR, &shop(&["c", "d", "e"], t0, 10.0));
+        sample(&mut st, t0 + 3 * HOUR, &shop(&["c", "d", "e"], t0, 10.0));
         ok &= check(
-            "1. 一覧から消えた出品は売れた扱い",
+            "1. 一覧から 2 回続けて消えた出品は売れた扱い",
             gone_count(&st) == 2 && daily_gone(&st) == 2,
             format!("消えた {} / 追跡中 {} / 日次 {}", gone_count(&st), alive_count(&st), daily_gone(&st)),
         );
@@ -117,10 +121,11 @@ fn main() {
         sample(&mut st, t0, &Response { total: 2, ids: vec!["a".into(), "b".into()], entries: vec![a, b.clone()] });
         let t1 = t0 + HOUR;
         let c = listing("c", 9.0, t1 - 60, "S1"); // 同じ出品者が 1 分前に並べ直した
-        sample(&mut st, t1, &Response { total: 2, ids: vec!["b".into(), "c".into()], entries: vec![b, c] });
-        let relisted = st.tracked.iter().filter(|t| t.relisted).count();
+        sample(&mut st, t1, &Response { total: 2, ids: vec!["b".into(), "c".into()], entries: vec![b.clone(), c.clone()] });
+        sample(&mut st, t1 + HOUR, &Response { total: 2, ids: vec!["b".into(), "c".into()], entries: vec![b, c] });
+        let relisted = st.tracked.iter().filter(|t| t.relisted && t.gone_at.is_some()).count();
         ok &= check(
-            "5. 5 分以内の並べ直しは売れた扱いにしない",
+            "5. 同じ出品者がまだ並べている分は売れた扱いにしない",
             relisted == 1 && gone_count(&st) == 0 && daily_gone(&st) == 0,
             format!("並べ直し {relisted} / 売れた {} / 日次 {}", gone_count(&st), daily_gone(&st)),
         );
@@ -131,8 +136,9 @@ fn main() {
         let mut st = WatchState::default();
         sample(&mut st, t0, &shop(&["a", "b", "c"], t0, 10.0));
         sample(&mut st, t0 + HOUR, &shop(&["a", "b"], t0, 10.0));
+        sample(&mut st, t0 + 2 * HOUR, &shop(&["a", "b"], t0, 10.0));
         let after_gone = (gone_count(&st), daily_gone(&st));
-        sample(&mut st, t0 + 2 * HOUR, &shop(&["a", "b", "c"], t0, 10.0));
+        sample(&mut st, t0 + 3 * HOUR, &shop(&["a", "b", "c"], t0, 10.0));
         let after_revive = (gone_count(&st), daily_gone(&st));
         ok &= check(
             "6. 戻ってきた出品は売れた件数から取り消す",

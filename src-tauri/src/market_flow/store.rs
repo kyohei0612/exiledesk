@@ -228,7 +228,7 @@ mod tests {
         merge_watches(&mut store, vec![watch("Arc::level21"), watch("Comet::level21")], "L", now);
         // 記録を作る
         let st = store.states.entry("Arc::level21".into()).or_default();
-        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None, buried: 0, relisted: false });
+        st.tracked.push(Tracked { id: "a".into(), listed_at: Some(now - 3600), first_seen: now, last_seen: now, gone_at: None, amount: Some(9.0), currency: Some("divine".into()), account: None, buried: 0, relisted: false, missing_since: None, unknown: false });
         st.sampled_at = now;
 
         // 監視から外す (コメットだけにする)

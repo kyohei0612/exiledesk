@@ -177,7 +177,14 @@ export const displayCurrency = {
  * @returns 高貴建ての平均。1 件も無い / 相場が取れていない時は null
  */
 export function averageExalted(prices: { amount: number; currency: string }[]): number | null {
-  if (prices.length === 0) return null;
+  const ex = toExaltedList(prices);
+  if (ex.length === 0) return null;
+  return ex.reduce((a, b) => a + b, 0) / ex.length;
+}
+
+/** 通貨がバラバラな値段を高貴建ての数字の列にする (相場が取れていない通貨の分は落とす) */
+function toExaltedList(prices: { amount: number; currency: string }[]): number[] {
+  if (prices.length === 0) return [];
   const r = marketStore.rates.value;
   const toExalted = (p: { amount: number; currency: string }): number | null => {
     if (p.currency === "exalted") return p.amount;
@@ -185,7 +192,23 @@ export function averageExalted(prices: { amount: number; currency: string }[]): 
     if (p.currency === "chaos") return r.chaos > 0 ? p.amount * r.chaos : null;
     return null;
   };
-  const ex = prices.map(toExalted).filter((v): v is number => v != null);
-  if (ex.length === 0) return null;
-  return ex.reduce((a, b) => a + b, 0) / ex.length;
+  return prices.map(toExalted).filter((v): v is number => v != null);
+}
+
+/** 中央値を「確か」と言える最低の件数 */
+export const MEDIAN_MIN_SALES = 3;
+
+/**
+ * 実売の値段の**中央値** (高貴建て) と件数 (2026-09-26 監査)。
+ *
+ * 期待値の売値は平均だと 1 件の高値売れ (まぐれ) に引っ張られるので中央値にする。
+ * 3 件未満 (1〜2 件) でも使うが、thin = true を返して画面で「根拠が薄い」と出す。
+ * 1 件も無い / 相場が取れていない時は null。
+ */
+export function medianExalted(prices: { amount: number; currency: string }[]): { value: number; n: number; thin: boolean } | null {
+  const ex = toExaltedList(prices).sort((a, b) => a - b);
+  const n = ex.length;
+  if (n === 0) return null;
+  const value = n % 2 === 1 ? ex[(n - 1) / 2] : (ex[n / 2 - 1] + ex[n / 2]) / 2;
+  return { value, n, thin: n < MEDIAN_MIN_SALES };
 }

@@ -109,5 +109,19 @@ try {
   check("丸めの検算 (読み込み)", false, String(e).slice(0, 200));
 }
 
+// ---------------------------------------------------------------------------
+// 買う経路の仕入れ値は売値と別 (2026-09-26 監査)。自動ジェム監視は売値 = 実売の中央値 (売れていなければ 0)、
+// 仕入れ値 = 今の最安値。売れていない条件を 0 で買える偽の黒字を出さない
+// ---------------------------------------------------------------------------
+{
+  const sale = { level21: 900, quality23: 0, finished: 3000 };
+  const noBuy = Object.fromEntries(evaluateRoutes(m, sale, DEFAULT_PARAMS, { level21: 900, quality23: null, finished: 3000 }).map((r) => [r.id, r]));
+  check("仕入れ値が無い条件を買う経路は計算しない", noBuy.buy23.ok === false && noBuy.buy23.missing.includes("買値: 品質 23%"), `buy23 ok=${noBuy.buy23.ok} missing=${noBuy.buy23.missing.join("/")}`);
+  const withBuy = Object.fromEntries(evaluateRoutes(m, sale, DEFAULT_PARAMS, { level21: 900, quality23: 700, finished: 3000 }).map((r) => [r.id, r]));
+  check("仕入れ値は今の最安値 (売値 0 ではない)", withBuy.buy23.ok && withBuy.buy23.upfront === 700 + m.crystal && withBuy.buy23.ev < 100, `upfront=${withBuy.buy23.upfront} ev=${withBuy.buy23.ev.toFixed(1)}`);
+  const legacy = Object.fromEntries(evaluateRoutes(m, s, DEFAULT_PARAMS).map((r) => [r.id, r]));
+  check("仕入れ値を渡さなければ今まで通り売値で買う (ジェムコラプトの賭けの画面)", legacy.buy21.upfront === s.level21 + m.crystal && legacy.buy23.upfront === s.quality23 + m.crystal, `buy21=${legacy.buy21.upfront} buy23=${legacy.buy23.upfront}`);
+}
+
 console.log(ng === 0 ? "\n全部 OK" : `\nNG ${ng} 件`);
 process.exit(ng === 0 ? 0 : 1);

@@ -16,7 +16,7 @@
 //!
 //! ## 2. 数え方: 出品 1 件ずつを ID で追う
 //! 照合は **ID だけ**で行う (値段や順位は使わない)。安い出品が大量に増えて順位が下がっても、
-//! ID 一覧に載っていれば生存。一覧 (最大 100) から溢れた分は直接照会に回す。
+//! ID 一覧に載っていれば生存。一覧 (最大 100) から溢れた分は「沈んだ」として数え、判定しない (下の 3.)。
 //! 追跡中の出品が最安 10 件に入っていれば値段を今の値に更新する (値下げに追従)。
 //! 最安 10 件の listing ID を追跡対象に入れ、search が返す ID 一覧に載っているかを見る。
 //! 「出品された時刻 (listing.indexed) → 消えた時刻」がその出品の寿命。
@@ -39,8 +39,12 @@
 //!   - ID 一覧が総数に届いていない時 (100 件超で切れている) は判定しない。
 //!     載っていない追跡分は「値段で沈んだ」として buried を進め、3 回続いたら追跡終了
 //!   - 応答が空の時は判定しない (通信不良で全滅させない)
-//!   - 消えた出品と同じ出品者が、前回その出品を見た後に新しく並べていたら値段の付け替えとみなし、
-//!     売れた件数には数えない (RELIST_SLACK_SECS。見るのは最安 10 件の範囲)
+//!   - 一覧から消えた 1 回目は確定待ち。次の判定できる巡でも居なければ売れた (消えた時刻は 1 回目)。
+//!     途中で戻れば取り消す (2026-09-26 監査)
+//!   - 消えた出品と同じ出品者が、今もこの条件で 1 件でも並べていれば値段の付け替えとみなし、
+//!     売れた件数には数えない (見るのは今回の最安 10 件の出品者 + 追跡中で一覧に居る出品の出品者)
+//!   - 最安 10 件の詳細 (出品者) が取れなかった巡は消えた判定をしない
+//!   - 出品時刻か出品者が分からない物は「不明」にして、売れた件数に数えない
 //!   - 消えた扱いの ID がまた現れたら復活させ、日次の件数からも引く
 //!
 //! ### 出品が増えても回数は増えない
@@ -247,7 +251,12 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     // ID 一覧が出品全部を含んでいる時だけ「消えた = 売れた」と数える。
     // 応答が空の時は判定しない (通信不良で全滅させないため)
     let list_complete = list_is_complete(&req.ids, req.total, &state.tracked);
-    apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete);
+    // 画面は最安 10 件の詳細しか取ってこない。出品者が 1 人も取れていない時と、消えた出品があって
+    // 11 件目以降の出品者も見ないと付け替えか分からない時は、消えた判定をしない (次の巡回で確定させる。2026-09-26)
+    let details_ok = fetch_details_ok(req.ids.len().min(10), &req.entries)
+        && extra_detail_ids(state, &req.ids, list_complete).is_empty();
+    let details: Option<&[ListingRef]> = if details_ok { Some(&[]) } else { None };
+    apply_sample(state, now, req.total, &req.ids, &req.entries, list_complete, details);
     // 自動経路と同じく、一覧が全部取れたかを画面に出す (手動経路だけ更新していなかった 2026-09-18)
     state.list_complete = list_complete;
     mark_buried(state, &req.ids, list_complete);
