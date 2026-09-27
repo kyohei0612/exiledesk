@@ -1,0 +1,88 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】白い装備がオーブ3個でレアになる",
+  "target_seconds": 60,
+  "result_file": "contracts/examples/result-transmute-augment-regal.json",
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 10,
+      "lines": [
+        { "speaker": "zundamon", "emotion": "troubled",
+          "text": "ストーリーはクリアしたのに、装備がずっと白いままなのだ。",
+          "scene": { "kind": "talk" } },
+        { "speaker": "metan", "emotion": "proud",
+          "text": "白い装備は、オーブ3個で黄色いレアに化けるわよ。",
+          "scene": { "kind": "talk" } },
+        { "speaker": "zundamon", "emotion": "surprised",
+          "text": "たった3個なのだ！？",
+          "scene": { "kind": "talk" } }
+      ]
+    },
+    {
+      "name": "仕組み",
+      "target_seconds": 28,
+      "lines": [
+        { "speaker": "metan",
+          "text": "1個目、変成のオーブ。白を青にして、MODを1つ付けるわ。",
+          "speech": "1個目、変成のオーブ。白を青にして、モッドを1つ付けるわ。",
+          "scene": { "kind": "stack", "step": 1, "show_steps": [1], "highlight": "step" } },
+        { "speaker": "zundamon", "emotion": "troubled",
+          "text": "MODって何なのだ？",
+          "speech": "モッドって何なのだ？",
+          "scene": { "kind": "stack", "step": 1, "show_steps": [1] } },
+        { "speaker": "metan",
+          "text": "「最大ライフ+52」みたいな、装備の能力のことよ。",
+          "speech": "「最大ライフ、プラス52」みたいな、装備の能力のことよ。",
+          "scene": { "kind": "item", "step": 1, "highlight": "added" } },
+        { "speaker": "metan",
+          "text": "2個目、増強のオーブ。青のまま、MODをもう1つ足すの。",
+          "speech": "2個目、増強のオーブ。青のまま、モッドをもう1つ足すの。",
+          "scene": { "kind": "stack", "step": 2, "show_steps": [1, 2], "highlight": "step" } },
+        { "speaker": "zundamon", "emotion": "happy",
+          "text": "火耐性が付いたのだ。",
+          "scene": { "kind": "stack", "step": 2, "show_steps": [1, 2], "highlight": "added" } },
+        { "speaker": "metan",
+          "text": "3個目、王者のオーブ。青が黄色のレアになって、3つ目が付くわ。",
+          "scene": { "kind": "stack", "step": 3, "show_steps": [1, 2, 3], "highlight": "rarity" } },
+        { "speaker": "zundamon", "emotion": "surprised",
+          "text": "おお、名前まで変わったのだ！",
+          "scene": { "kind": "item", "step": 3, "highlight": "name" } }
+      ]
+    },
+    {
+      "name": "実践",
+      "target_seconds": 17,
+      "lines": [
+        { "speaker": "metan",
+          "text": "じゃあ実際にやってみるわね。記憶の指輪、アイテムレベル80。",
+          "scene": { "kind": "stage", "step": 0 } },
+        { "speaker": "metan",
+          "text": "まず変成。",
+          "scene": { "kind": "stage", "step": 1, "highlight": "added" } },
+        { "speaker": "zundamon", "emotion": "happy",
+          "text": "ライフが付いたのだ。",
+          "scene": { "kind": "stage", "step": 1, "highlight": "added" } },
+        { "speaker": "metan",
+          "text": "増強で火耐性。",
+          "scene": { "kind": "stage", "step": 2, "highlight": "added" } },
+        { "speaker": "metan", "emotion": "proud",
+          "text": "そして王者。黄色くなって、冷気耐性が付いたわ。",
+          "scene": { "kind": "stage", "step": 3, "highlight": "rarity" } }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 5,
+      "lines": [
+        { "speaker": "zundamon",
+          "text": "全部でいくらかかったのだ？",
+          "scene": { "kind": "cost", "highlight": "cost" } },
+        { "speaker": "metan",
+          "text": "今の相場で0.63エグザルト。ストーリー直後でも払えるわね。",
+          "speech": "今の相場で、れいてんろくさんエグザルト。ストーリー直後でも払えるわね。",
+          "scene": { "kind": "cost", "highlight": "cost" } }
+      ]
+    }
+  ]
+}
