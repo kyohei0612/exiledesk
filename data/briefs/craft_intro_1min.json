@@ -1,5 +1,6 @@
 {
   "name": "craft_intro_1min",
+  "player_stage": "endgame",
   "title_hint": "白い装備がオーブ3個でレアになる (クラフト入門)",
   "goal": "変成・増強・王者の3個で、白い装備を黄色いレアにできるようになる",
   "target_seconds": 60,
@@ -11,9 +12,15 @@
     "start_rarity": "normal",
     "seed": 20260927,
     "steps": [
-      { "currency": "transmute" },
-      { "currency": "augment" },
-      { "currency": "regal" }
+      {
+        "currency": "transmute"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      }
     ]
   },
   "notes": [

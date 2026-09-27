@@ -1,5 +1,6 @@
 {
   "name": "exalt_4th_mod_1min",
+  "player_stage": "endgame",
   "title_hint": "レアに4つ目のMODを足す「高貴なオーブ」の使い方 (前回の続き)",
   "goal": "黄色いレアに高貴なオーブを使うと MOD が 1 つ増えることと、接頭・接尾の枠 (3+3) を理解する",
   "target_seconds": 60,
@@ -11,10 +12,20 @@
     "start_rarity": "normal",
     "seed": 20260928,
     "steps": [
-      { "currency": "transmute", "note": "前回のおさらい。3手はテンポよく" },
-      { "currency": "augment" },
-      { "currency": "regal" },
-      { "currency": "exalt", "note": "今回の主役。黄色にしか使えない、MODが1つ増える" }
+      {
+        "currency": "transmute",
+        "note": "前回のおさらい。3手はテンポよく"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      },
+      {
+        "currency": "exalt",
+        "note": "今回の主役。黄色にしか使えない、MODが1つ増える"
+      }
     ]
   },
   "notes": [

@@ -1,5 +1,6 @@
 {
   "name": "craft_intro_8min",
+  "player_stage": "endgame",
   "title_hint": "白い装備からレアを作る クラフト入門 完全版 (変成→増強→王者→高貴、失敗したらカオス/消去)",
   "goal": "ストーリークリア直後の人が、白い指輪からMOD 6つのレアを自分で作れて、要らないMODが付いた時の対処 (カオス/消去) も分かる",
   "target_seconds": 480,
@@ -12,14 +13,38 @@
     "start_rarity": "normal",
     "seed": 20260929,
     "steps": [
-      { "currency": "transmute", "note": "白→青、MOD 1つ" },
-      { "currency": "augment", "note": "青のまま MOD 2つ目" },
-      { "currency": "regal", "note": "青→黄、3つ目" },
-      { "currency": "exalt", "note": "4つ目" },
-      { "currency": "exalt", "note": "5つ目" },
-      { "currency": "exalt", "note": "6つ目 = 完成 (枠が全部埋まる)" },
-      { "currency": "annul", "note": "実験1: 消去のオーブ。MODを1つランダムに消す (要らないMODが付いた時の対処)" },
-      { "currency": "chaos", "note": "実験2: カオスオーブ。PoE2 ではMODを1つランダムに消して、新しいMODを1つ足す (全部振り直しではない)" }
+      {
+        "currency": "transmute",
+        "note": "白→青、MOD 1つ"
+      },
+      {
+        "currency": "augment",
+        "note": "青のまま MOD 2つ目"
+      },
+      {
+        "currency": "regal",
+        "note": "青→黄、3つ目"
+      },
+      {
+        "currency": "exalt",
+        "note": "4つ目"
+      },
+      {
+        "currency": "exalt",
+        "note": "5つ目"
+      },
+      {
+        "currency": "exalt",
+        "note": "6つ目 = 完成 (枠が全部埋まる)"
+      },
+      {
+        "currency": "annul",
+        "note": "実験1: 消去のオーブ。MODを1つランダムに消す (要らないMODが付いた時の対処)"
+      },
+      {
+        "currency": "chaos",
+        "note": "実験2: カオスオーブ。PoE2 ではMODを1つランダムに消して、新しいMODを1つ足す (全部振り直しではない)"
+      }
     ]
   },
   "notes": [
