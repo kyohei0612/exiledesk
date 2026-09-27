@@ -1,7 +1,7 @@
-"""クラフトステージの撮影: 再生モード URL (?stage-plan=…&step=N) を Playwright で開いて PNG にする.
+"""クラフトステージの撮影: ExileDesk の動画モード (video=1) を Playwright で開いて PNG にする.
 
 - Vite dev (port 1420) が動いていなければ `pnpm dev` を隠し窓で起動する
-- 撮るのは左サイドバーを除いた本体 (clip)。2 倍密度で撮って動画側で縮める
+- 1920x1080 で開けば動画と同じ解像度なので、縮めず貼れる (サイドバー・操作欄は動画モードが隠す)
 - キャッシュ: cache/stage/<手順のハッシュ>/step_N.png。同じ手順 JSON なら撮り直さない
 """
 
@@ -25,11 +25,10 @@ from poe2tube.contracts.craft_stage import CraftStagePlan
 log = structlog.get_logger()
 CACHE_DIR = REPO_ROOT / "cache" / "stage"
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
-SIDEBAR_W = 208
-HEADER_H = 64  # 「クラフトステージ」の見出しと説明文 (動画では要らない)
-# 本体を動画のパネル (幅 1180) に等倍で入れる: 縮小しないのが一番読みやすい
-VIEWPORT = (SIDEBAR_W + 1180, HEADER_H + 640)
-CAPTURE_VER = "v2"  # 撮り方を変えたらキャッシュを切り替える
+# ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
+# 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
+VIEWPORT = (1920, 1080)
+CAPTURE_VER = "v3-video"  # 撮り方を変えたらキャッシュを切り替える
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 
 
@@ -44,7 +43,7 @@ def cached_path(plan: CraftStagePlan, step: int) -> Path:
 
 def replay_url(plan: CraftStagePlan, step: int, base: str) -> str:
     raw = json.dumps(plan.model_dump(by_alias=True, exclude_none=True), ensure_ascii=False)
-    return f"{base}/?stage-plan={urllib.parse.quote(raw)}&step={step}"
+    return f"{base}/?stage-plan={urllib.parse.quote(raw)}&step={step}&video=1&controls=0"
 
 
 def port_open(host: str, port: int) -> bool:
@@ -100,21 +99,13 @@ def capture_plan(plan: CraftStagePlan, steps: list[int], force: bool = False) ->
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(
-            viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=2
+            viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=1
         )
         for st in todo:
             page.goto(replay_url(plan, st, base), wait_until="networkidle", timeout=60000)
-            page.wait_for_selector("text=再生中", timeout=30000)
+            page.wait_for_selector("text=CRAFT STAGE", timeout=30000)
             page.wait_for_timeout(SETTLE_MS)
-            page.screenshot(
-                path=str(paths[st]),
-                clip={
-                    "x": SIDEBAR_W,
-                    "y": HEADER_H,
-                    "width": VIEWPORT[0] - SIDEBAR_W,
-                    "height": VIEWPORT[1] - HEADER_H,
-                },
-            )
+            page.screenshot(path=str(paths[st]))
             log.info("stage captured", step=st, path=paths[st].name)
         browser.close()
     return paths

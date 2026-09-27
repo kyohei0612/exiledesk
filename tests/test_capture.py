@@ -23,7 +23,7 @@ def test_replay_url_and_cache_key_are_stable() -> None:
     plan = _plan()
     url = stage.replay_url(plan, 2, "http://localhost:1420")
     q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
-    assert q["step"] == ["2"]
+    assert q["step"] == ["2"] and q["video"] == ["1"] and q["controls"] == ["0"]
     assert json.loads(q["stage-plan"][0])["base"] == "Mnemonic Ring"
     assert stage.plan_key(plan) == stage.plan_key(_plan())
     other = plan.model_copy(update={"seed": plan.seed + 1})
@@ -52,4 +52,4 @@ def test_real_capture_when_vite_is_running(tmp_path: Path, monkeypatch: pytest.M
     from PIL import Image
 
     im = Image.open(paths[1])
-    assert im.width >= 2000 and im.height >= 1000  # 2 倍密度
+    assert (im.width, im.height) == (1920, 1080)  # 動画モードは 16:9 をそのまま
