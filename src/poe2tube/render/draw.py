@@ -41,10 +41,15 @@ def pill(
     color: RGB = WHITE,
     size: int = 30,
     pad: int = 18,
+    max_w: int | None = None,
 ) -> Box:
-    """角丸ラベル。左上座標で置き、占有した箱を返す."""
-    f = font(size)
+    """角丸ラベル。左上座標で置き、占有した箱を返す。``max_w`` 超なら文字を縮める (下限 14)."""
     d = ImageDraw.Draw(img)
+    f = font(size)
+    if max_w is not None:
+        while size > 14 and d.textlength(text, font=font(size)) + pad * 2 > max_w:
+            size -= 2
+        f = font(size)
     w = int(d.textlength(text, font=f))
     h = size + pad
     box = (xy[0], xy[1], xy[0] + w + pad * 2, xy[1] + h)
