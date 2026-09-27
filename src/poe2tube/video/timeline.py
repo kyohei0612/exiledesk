@@ -96,10 +96,25 @@ def concat_audio(cues: list[Cue], out: Path, sr: int = 24000) -> Path:
             samples = np.concatenate([samples, np.zeros(need - len(samples), dtype=np.float32)])
         parts.append(samples[:need])
     mixed = np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)
+    return write_wav(out, mixed, sr)
+
+
+def write_wav(out: Path, samples: npt.NDArray[np.float32], sr: int) -> Path:
+    """float32 (-1..1) を 16bit モノラル wav に."""
     out.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(out), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes((np.clip(mixed, -1, 1) * 32767).astype(np.int16).tobytes())
+        w.writeframes((np.clip(samples, -1, 1) * 32767).astype(np.int16).tobytes())
     return out
+
+
+def scene_changed(prev: Line | None, cur: Line) -> bool:
+    """画面が切り替わる行か (シーンの種類・工程・並びのどれかが違う)."""
+    if prev is None:
+        return True
+    a, b = prev.scene, cur.scene
+    key_a = (a.kind, a.step, tuple(a.show_steps or ()))
+    key_b = (b.kind, b.step, tuple(b.show_steps or ()))
+    return key_a != key_b

@@ -25,7 +25,12 @@ class Settings(BaseSettings):
     )
     speaker_zundamon: int = 3
     speaker_metan: int = 2
-    fps: int = 12
+    fps: int = Field(default=24, description="スライドイン等の動きが滑らかに見える最低ライン")
+    bgm: str | None = Field(
+        default="bgm_bright_1", description="youtube-pipeline assets/bgm のファイル名 (拡張子なし)"
+    )
+    bgm_gain_db: float = -20.0
+    se_gain_db: float = -10.0
     width: int = 1920
     height: int = 1080
     background_rgb: tuple[int, int, int] = Field(default=(255, 255, 255), description="白背景固定")

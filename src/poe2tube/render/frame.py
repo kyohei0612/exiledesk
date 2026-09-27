@@ -28,19 +28,36 @@ CHAR_H_PANEL = 520
 Box = tuple[int, int, int, int]
 
 
+def render_base(section_name: str, progress: float) -> Image.Image:
+    """下地: 白背景 + 外枠 + セクション名 + 進行バー."""
+    s = get_settings()
+    img = Image.new("RGBA", (s.width, s.height), (*s.background_rgb, 255))
+    _decor(img, section_name, progress)
+    return img
+
+
+def render_panel_layer(line: Line, result: CraftStageResult) -> Image.Image | None:
+    """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
+    if line.scene.kind == "talk":
+        return None
+    s = get_settings()
+    w, h = s.width, s.height
+    layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    panel = (330, 130, w - 330, h - TELOP_H - 40)
+    shadow_panel(layer, panel, fill=WHITE, outline=LINE, radius=32, blur=24)
+    x0, y0, x1, y1 = panel
+    draw_scene_panel(layer, (x0 + 40, y0 + 40, x1 - 40, y1 - 40), line.scene, result, ICON_DIR)
+    return layer
+
+
 def render_static(
     line: Line, result: CraftStageResult, section_name: str, progress: float
 ) -> Image.Image:
-    """1 行の間変わらない層: 背景 + 装飾 + シーンパネル."""
-    s = get_settings()
-    w, h = s.width, s.height
-    img = Image.new("RGBA", (w, h), (*s.background_rgb, 255))
-    _decor(img, section_name, progress)
-    if line.scene.kind != "talk":
-        panel = (330, 130, w - 330, h - TELOP_H - 40)
-        shadow_panel(img, panel, fill=WHITE, outline=LINE, radius=32, blur=24)
-        x0, y0, x1, y1 = panel
-        draw_scene_panel(img, (x0 + 40, y0 + 40, x1 - 40, y1 - 40), line.scene, result, ICON_DIR)
+    """1 行の間変わらない層: 下地 + シーンパネル."""
+    img = render_base(section_name, progress)
+    layer = render_panel_layer(line, result)
+    if layer is not None:
+        img.alpha_composite(layer)
     return img
 
 

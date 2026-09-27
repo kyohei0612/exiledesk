@@ -11,12 +11,13 @@ from pathlib import Path
 
 import structlog
 
+from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
-from poe2tube.video.animate import write_frames
+from poe2tube.video.animate import sound_events, write_frames
 from poe2tube.video.timeline import build_cues, concat_audio
 
 log = structlog.get_logger()
@@ -89,9 +90,14 @@ def build_video(
     wavs = [vv.synthesize(ln) for ln in script.lines]
     log.info("voice ready", lines=len(wavs))
 
+    book = NameBook.load()
     cues = build_cues(script.sections, wavs, s.fps)
-    audio = concat_audio(cues, work / "audio.wav")
-    frames = write_frames(cues, result, NameBook.load(), work / "frames")
+    voice = concat_audio(cues, work / "voice.wav")
+    audio = mix(
+        voice, work / "audio.wav", s.bgm, sound_events(cues, book), s.bgm_gain_db, s.se_gain_db
+    )
+    log.info("audio mixed", bgm=s.bgm, events=len(sound_events(cues, book)))
+    frames = write_frames(cues, result, book, work / "frames")
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 
     out.parent.mkdir(parents=True, exist_ok=True)
