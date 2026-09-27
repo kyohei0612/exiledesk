@@ -26,6 +26,7 @@ const money = (ex: number) => displayCurrency.money(ex);
       <div class="min-w-0 flex-1">
         <p>
           <b>{{ s.out.currency_ja }}</b>
+          <span v-if="s.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.out.omen_ja }}</span>
           <span v-if="s.out.changed.rarity_from !== s.out.changed.rarity_to" class="ml-1.5">
             <span :class="RARITY_CLS[s.out.changed.rarity_from]">{{ RARITY_JA[s.out.changed.rarity_from] }}</span> →
             <span :class="RARITY_CLS[s.out.changed.rarity_to]">{{ RARITY_JA[s.out.changed.rarity_to] }}</span>

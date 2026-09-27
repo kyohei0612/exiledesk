@@ -7,6 +7,8 @@
  *   - 1 手ごとの seed は plan.seed + 手の番号 (1 から)。同じ手順 JSON なら結果 JSON も同じ
  *   - 費用は price_unit (ここでは高貴) の相場。キーは price-keys.json のカレンシー
  * 画面 (手で打つ) も同じ playStep を使うので、画面で打った手を手順 JSON にして流すと同じ結果になる。
+ * お告げは 1 手に何枚でも重ねられるので、omen は id を「+」でつなぐ (例 "OmenofGreaterExaltation+OmenofSinistralExaltation")。
+ * 結果の omen はその手で実際に食った物 (関係の無いお告げは食わない)。費用はカレンシー + 食ったお告げ。
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { itemBaseFor } from "../htc/bridge";
@@ -38,6 +40,7 @@ export function outMod(m: StageMod): OutMod {
     ...(m.fractured ? { fractured: true } : {}),
     ...(m.desecrated ? { desecrated: true } : {}),
     ...(m.crafted ? { crafted: true } : {}),
+    ...(m.unrevealed ? ({ unrevealed: true } as object) : {}),
     // 足したキー (POE2Tube は無視してよい): 段の添字と接頭 / 接尾語
     ...({ tier_index: m.tierIndex, affix: m.affix } as object),
   } as OutMod;
@@ -51,6 +54,8 @@ export function outItem(it: StageItem): OutItem {
     rarity: it.rarity,
     quality: it.quality,
     corrupted: it.corrupted,
+    // 足したキー (POE2Tube は無視してよい): 品質の種類とソケットの数
+    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0 } as object),
     prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
     suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
   };
@@ -65,30 +70,41 @@ export interface PlayedStep {
   removed: StageMod[];
 }
 
+export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
+/** 手の日本語名 (開示は「開示 (2 番目)」) */
+export function stepJa(currency: string, item: StageItem): string {
+  const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
+  if (rv) return `開示 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
+  return jaOfPriceKey(currency, item.cls) ?? currency;
+}
+
 /**
- * 1 手打つ。seed はその手の種 (開始の seed + 手の番号)。each はカレンシー 1 個の値段 (高貴)、cumulative は前の手までの累計
+ * 1 手打つ。seed はその手の種 (開始の seed + 手の番号)。price はキー (カレンシー・お告げ) → 1 個の値段 (高貴)、cumulative は前の手までの累計
  */
 export function playStep(
   data: PatchData, item: StageItem, currency: string,
-  o: { index: number; seed: number; each: number; cumulative: number; omen?: string | null },
+  o: { index: number; seed: number; price: (key: string) => number; cumulative: number; omen?: string | null },
 ): PlayedStep {
-  const r = applyCurrency(data, item, currency, mulberry32(o.seed));
-  // 使えない手は使っていない (費用も 0)
-  const amount = r.applied ? 1 : 0;
-  const cumulative = o.cumulative + o.each * amount;
+  const r = applyCurrency(data, item, currency, mulberry32(o.seed), splitOmens(o.omen));
+  const used = r.omensUsed ?? [];
+  // 使えない手は使っていない (費用も 0)。each はカレンシー 1 個、subtotal はお告げ込み
+  const each = o.price(currency);
+  const amount = r.applied ? 1 + used.length : 0;
+  const subtotal = r.applied ? each + used.reduce((a, k) => a + o.price(k), 0) : 0;
+  const cumulative = o.cumulative + subtotal;
   const out: OutStep = {
     index: o.index,
     currency,
-    currency_ja: jaOfPriceKey(currency, item.cls) ?? currency,
-    omen: o.omen ?? null,
-    omen_ja: o.omen ? jaOfOmen(o.omen) : null,
+    currency_ja: stepJa(currency, item),
+    omen: used.length ? used.join("+") : null,
+    omen_ja: used.length ? used.map((k) => jaOfOmen(k) ?? k).join("・") : null,
     seed: o.seed,
     applied: r.applied,
     reason: r.reason ?? null,
     before: outItem(item),
     after: outItem(r.item),
     changed: { added: r.added.map(outMod), removed: r.removed.map(outMod), rarity_from: item.rarity, rarity_to: r.item.rarity },
-    cost: { each: o.each, amount, subtotal: o.each * amount, cumulative },
+    cost: { each, amount, subtotal, cumulative },
   };
   return { out, before: item, after: r.item, added: r.added, removed: r.removed };
 }
@@ -114,7 +130,7 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
     for (let k = 0; k < (ps.times ?? 1); k++) {
       if (index >= upTo) return { steps, final: item };
       index++;
-      const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, each: prices[ps.currency] ?? 0, cumulative, omen: ps.omen ?? null });
+      const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null });
       steps.push(p);
       item = p.after;
       cumulative = p.out.cost.cumulative;

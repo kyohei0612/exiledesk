@@ -29,7 +29,13 @@ export interface StageMod {
   textEn: string;
   fractured?: boolean;
   desecrated?: boolean;
+  /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで) */
   crafted?: boolean;
+  /**
+   * 骨で付いたまだ開示していない冒涜 MOD (ゲームと同じく、開示の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
+   * altered は変質した鎖骨 (異界の MOD も出る)、faction は王 / 君主 / 黒血のお告げで絞った勢力のタグ
+   */
+  unrevealed?: { floor: number; altered: boolean; faction: string | null };
 }
 
 export interface StageItem {
@@ -43,6 +49,10 @@ export interface StageItem {
   prefixes: StageMod[];
   suffixes: StageMod[];
   quality: number;
+  /** 品質の種類 (カタリストのタグ。指輪・アミュレットだけ) */
+  qualityTag?: string | null;
+  /** ソケットの数 (アーティファサー) */
+  sockets?: number;
   corrupted: boolean;
 }
 
@@ -54,4 +64,6 @@ export interface StageApply {
   item: StageItem;
   added: StageMod[];
   removed: StageMod[];
+  /** この手で食ったお告げ (持っていても関係の無い物は残る) */
+  omensUsed?: string[];
 }

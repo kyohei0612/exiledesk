@@ -61,6 +61,8 @@ export { autoTree, chaosSideFor } from "../src/views/htc-craft/tree-auto";
 export { pickAutoTree } from "../src/views/htc-craft/auto-pick";
 export { planByRedoCost } from "../src/views/htc-craft/redo-cost";
 // クラフトステージ (2026-09-27、ADR-001)
-export { applyCurrency, makeStageMod } from "../src/services/craft-stage/apply-currency";
+export { applyCurrency } from "../src/services/craft-stage/apply-currency";
+export { makeStageMod } from "../src/services/craft-stage/stage-core";
+export { revealOffers } from "../src/services/craft-stage/apply-desecrate";
 export { runPlan, freshItem } from "../src/services/craft-stage/run-plan";
 export { addNormalAffixProbability } from "../src/vendor/poe2htc/engine/probability";

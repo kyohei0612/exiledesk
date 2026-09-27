@@ -2,68 +2,64 @@
  * craft-stage.ts — クラフトステージの画面の状態 (2026-09-27、ADR-001 docs/decisions/001-craft-stage.md)
  *
  * オーナー:「動画映えするシミュレーター、配信用。実際に同じ挙動でカレンシーをクリックして押すと変化する」
- * 「操作は Craft of Exile 仕様 (アイコンを持ってアイテムをクリック)」「カレンシーの種類・アイコン・名前・値段は計算機の物にリンク」。
- *   - 手で打つ: 棚のカレンシーを持って (held) アイテムを押すと 1 手。seed は 開始の seed + 手の番号 なので、打った手をそのまま
- *     手順 JSON にして scripts/craft-stage-run.mjs に流すと同じ結果になる
+ * 「操作は Craft of Exile 仕様 (アイコンを持ってアイテムをクリック)」「カレンシーっていうかクラフトに使える奴全部」。
+ *   - 手で打つ: 棚の物を持って (held) アイテムを押すと 1 手。お告げは押すと「掛けておく」(何枚でも)。次の手に関係する物だけ食う。
+ *     seed は 開始の seed + 手の番号 なので、打った手をそのまま手順 JSON にして scripts/craft-stage-run.mjs に流すと同じ結果になる
+ *   - 冒涜: 骨で未開示の MOD が付き、開示の候補 3 つ (revealOffers) から選ぶと reveal:N の手になる
  *   - 再生: 手順 JSON と step (URL の ?stage-plan=…&step=N) で、その手まで進めた状態を出す (POE2Tube の撮影用)
- * 1 手の中身は services/craft-stage (計算機と同じ規則)。値段は相場 (market-store、高貴建て)。
+ * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
 import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../services/htc/patch";
-import { jaOfPriceKey } from "../services/htc/labels";
-import priceKeys from "../services/htc/price-keys.json";
-import { applyCurrency } from "../services/craft-stage/apply-currency";
+import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
+import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
 import { freshItem, playPlan, playStep, resultOf, type PlayedStep } from "../services/craft-stage/run-plan";
 import { mulberry32 } from "../services/htc/rng";
 import { marketStore } from "./market-store";
+import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./craft-stage-shelf";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
-
-/** 棚に並べるカレンシー (Phase 1 の 7 種。強さは 普通 / 上級 / 完全) */
-export const SHELF: Array<{ kind: string; keys: string[] }> = [
-  { kind: "transmute", keys: ["transmute", "transmute_greater", "transmute_perfect"] },
-  { kind: "augment", keys: ["augment", "augment_greater", "augment_perfect"] },
-  { kind: "regal", keys: ["regal", "regal_greater", "regal_perfect"] },
-  { kind: "alchemy", keys: ["alchemy"] },
-  { kind: "exalt", keys: ["exalt", "exalt_greater", "exalt_perfect"] },
-  { kind: "chaos", keys: ["chaos", "chaos_greater", "chaos_perfect"] },
-  { kind: "annul", keys: ["annul"] },
-];
-const KEYS = (priceKeys as { currency: Record<string, { en: string; ja: string }> }).currency;
 
 const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
 const log = shallowRef<PlayedStep[]>([]);
 const held = ref<string | null>(null);
+/** 掛けてあるお告げ */
+const omens = ref<string[]>([]);
 const seed = ref(0);
 const error = ref<string | null>(null);
 /** 再生モード (URL の手順)。手で打つ操作は止める */
 const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
 const base = ref("Gold Ring");
 const itemLevel = ref(82);
+/** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
+const miss = ref<{ n: number; reason: string } | null>(null);
 
-/** カレンシーの英語名 (相場の行・アイコンを引く鍵) */
-export const currencyEn = (key: string): string => KEYS[key]?.en ?? key;
-/** 1 個の値段 (高貴建て、相場。無ければ 0) */
-export function priceOf(key: string): number {
-  const it = marketStore.items.value.find((x) => x.Text === currencyEn(key));
-  return it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
-}
-export const iconOf = (key: string): string => marketStore.items.value.find((x) => x.Text === currencyEn(key))?.IconUrl ?? "";
-export const nameOf = (key: string): string => jaOfPriceKey(key, item.value?.cls) ?? KEYS[key]?.ja ?? key;
+export const priceOf = (key: string): number => priceOfKey(key, item.value);
+export const iconOf = (key: string): string => iconOfKey(key, item.value);
+export const nameOf = (key: string): string => nameOfKey(key, item.value);
 
 function newSeed(): number {
   return Math.floor(Date.now() % 1_000_000_000);
 }
+/** 手順・再生で値段を引くキー全部 (相場 JSON 用) */
+function priceKeysAll(): string[] {
+  return [...ORBS.flatMap((g) => g.keys), ...BONES, ...CATALYSTS, ...OMEN_GROUPS.flatMap((g) => g.keys), ...log.value.map((s) => s.out.currency)];
+}
 
 export const craftStage = {
-  data, item, log, held, seed, error, replay, base, itemLevel,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
   /** 直前の手 */
   last: computed(() => log.value[log.value.length - 1] ?? null),
+  /** 開示の候補 (未開示の冒涜 MOD がある時。次の手の seed で引くので、選んだ手の結果と一致する) */
+  offers: computed(() => {
+    if (!data.value || !item.value || !unrevealedOf(item.value)) return null;
+    return revealOffers(data.value, item.value, mulberry32(seed.value + log.value.length + 1));
+  }),
 
   async init(): Promise<void> {
     if (data.value) return;
@@ -86,35 +82,54 @@ export const craftStage = {
     try {
       item.value = freshItem(data.value, base.value, itemLevel.value);
       log.value = [];
+      omens.value = [];
       seed.value = newSeed();
       error.value = null;
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     }
   },
-  /** その状態で打てるか (打てないなら理由) */
+  /** その状態で打てるか (打てないなら理由)。掛けてあるお告げ込み */
   usable(key: string): string | null {
     if (!data.value || !item.value) return "準備中";
-    const r = applyCurrency(data.value, item.value, key, mulberry32(0));
+    const r = applyCurrency(data.value, item.value, key, mulberry32(0), omens.value);
     return r.applied ? null : (r.reason ?? "打てない");
   },
-  /** 持っているカレンシーを 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
+  /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
   use(key: string | null = held.value): void {
     if (!key || !data.value || !item.value || replay.value) return;
+    const why = craftStage.usable(key);
+    if (why) {
+      miss.value = { n: (miss.value?.n ?? 0) + 1, reason: why };
+      return;
+    }
     const index = log.value.length + 1;
-    const p = playStep(data.value, item.value, key, { index, seed: seed.value + index, each: priceOf(key), cumulative: craftStage.total.value });
+    const want = omensFor(key, omens.value);
+    const p = playStep(data.value, item.value, key, {
+      index, seed: seed.value + index, price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
+    });
     log.value = [...log.value, p];
     item.value = p.after;
+    // 食ったお告げは外す
+    const ate = p.out.omen ? p.out.omen.split("+") : [];
+    if (ate.length) omens.value = omens.value.filter((o) => !ate.includes(o));
   },
-  /** 1 手戻す */
+  /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
     const l = log.value;
     if (!l.length || replay.value) return;
-    item.value = l[l.length - 1]!.before;
+    const last = l[l.length - 1]!;
+    item.value = last.before;
     log.value = l.slice(0, -1);
+    const ate = last.out.omen ? last.out.omen.split("+") : [];
+    omens.value = [...new Set([...omens.value, ...ate])];
   },
   hold(key: string | null): void {
     held.value = key;
+  },
+  /** お告げを掛ける / 外す */
+  toggleOmen(id: string): void {
+    omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id];
   },
   /** 今までの手を手順 JSON に (同じ seed なので CLI に流すと同じ結果) */
   plan(): CraftStagePlan {
@@ -126,7 +141,7 @@ export const craftStage = {
       start_rarity: "normal",
       start_paste: null,
       seed: seed.value,
-      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: null, times: 1, note: null })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
+      steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: 1, note: null })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };
   },
   /** 結果 JSON (今の相場の値段で) */
@@ -138,17 +153,19 @@ export const craftStage = {
   },
   /** CLI (craft-stage-run.mjs --prices) に渡す相場 (高貴建て) */
   prices(): Record<string, number> {
-    return Object.fromEntries(SHELF.flatMap((s) => s.keys).map((k) => [k, priceOf(k)]).filter(([, v]) => (v as number) > 0));
+    return Object.fromEntries(priceKeysAll().map((k) => [k, priceOf(k)]).filter(([, v]) => (v as number) > 0));
   },
   /** 再生: 手順 JSON を step 手目まで打った状態 */
   loadReplay(plan: CraftStagePlan, step: number): void {
     if (!data.value) return;
     try {
-      const prices = Object.fromEntries(SHELF.flatMap((s) => s.keys).map((k) => [k, priceOf(k)]));
-      const { steps, final } = playPlan(data.value, plan, prices, step);
-      replay.value = { plan, step };
       base.value = plan.base;
       itemLevel.value = plan.item_level ?? 80;
+      item.value = freshItem(data.value, plan.base, itemLevel.value);
+      const keys = [...new Set([...plan.steps.flatMap((s) => [s.currency, ...(s.omen ? s.omen.split("+") : [])]), ...priceKeysAll()])];
+      const prices = Object.fromEntries(keys.map((k) => [k, priceOf(k)]));
+      const { steps, final } = playPlan(data.value, plan, prices, step);
+      replay.value = { plan, step };
       seed.value = plan.seed;
       log.value = steps;
       item.value = final;

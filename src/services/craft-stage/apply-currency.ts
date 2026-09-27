@@ -1,23 +1,25 @@
 /**
- * クラフトステージ: カレンシー 1 個を打った結果を 1 回抽選する (2026-09-27、ADR-001)
+ * クラフトステージ: クラフトに使える物 1 個を打った結果を 1 回抽選する (2026-09-27、ADR-001)
  *
- * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply) と同じ:
- *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の
- *     重みで引く (Craft of Exile と同じ)。どちらの側に付くかも重みで決まる (枠のある側を合わせた中から 1 つ)
+ * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
+ * ここはオーブ (変成 / 増強 / 王者 / 錬金 / 高貴 / カオス / 消去) とそれに掛かるお告げ、そして他の物への振り分け:
+ *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / 破砕 / カタリスト / アーティファサー → [[apply-other.ts]]
+ * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
+ *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
  *   - 上級・完全の段の下限はエンジンの CURRENCY_FLOOR (変成・増強 55 / 70、王者・高貴 35 / 50)。カオスは計算機と同じ 35 / 50
- *   - 枠: マジックはプレ 1 / サフィ 1、レアはベースの上限 (ItemBase.limits)
  *   - 消す (カオス・消去) のは固定済み (フラクチャー) 以外から等しく 1 つ
- * Phase 1: 変成 / 増強 / 王者 / 高貴 / カオス / 消去 / 錬金。その他は applied:false (未対応) で返す。
+ * お告げは持っている物を渡し、その手に関係する物だけ食う (omensUsed)。
  */
-import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { familiesOf } from "../../vendor/poe2htc/engine/pool";
-import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
-import { jaOfMod } from "../htc/mod-text";
+import { catalysingMultiplier } from "../htc/catalysing-multiplier";
+import { boostedBy } from "../htc/quality";
+import { addOne, allMods, removeOne, room, SIDES, skip, without, type PoolOpts } from "./stage-core";
+import { applyEssence } from "./apply-essence";
+import { applyBone, applyReveal } from "./apply-desecrate";
+import { applyOther, OTHER_KINDS } from "./apply-other";
+import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
-
-const SIDES: StageSide[] = ["prefix", "suffix"];
-const MAGIC_LIMIT = 1;
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
@@ -31,134 +33,55 @@ function floorOf(kind: string, strength: "base" | "greater" | "perfect"): number
   return t ? t[strength] : 0;
 }
 
-/** 側の枠 (マジックは 1 / 1) */
-function limitOf(item: StageItem, side: StageSide): number {
-  if (item.rarity === "magic") return MAGIC_LIMIT;
-  if (item.rarity === "normal") return 0;
-  const lim = item.cls.limits ?? DEFAULT_LIMITS;
-  return side === "prefix" ? lim.prefixes : lim.suffixes;
+/** その手の種類 (お告げの対応を引く鍵) */
+export function kindOf(currency: string): string {
+  if (currency.startsWith("essence:")) return currency === "essence:breach" || currency.startsWith("essence:perfect:") ? "essence_perfect" : "essence";
+  if (currency.startsWith("desecrate")) return "desecrate";
+  if (currency.startsWith("reveal")) return "reveal";
+  if (currency.startsWith("catalyst_")) return "catalyst";
+  return parseKey(currency).kind;
 }
-const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
-const room = (item: StageItem, side: StageSide): boolean => listOf(item, side).length < limitOf(item, side);
-const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
-
-/** 数値を 1 つ転がす (範囲の両端を含む。小数の範囲は 0.01 刻み) */
-function rollValue(min: number, max: number, rng: () => number): number {
-  const lo = Math.min(min, max), hi = Math.max(min, max);
-  if (Number.isInteger(lo) && Number.isInteger(hi)) return lo + Math.floor(rng() * (hi - lo + 1));
-  return Math.round((lo + rng() * (hi - lo)) * 100) / 100;
-}
-/**
- * 文面の # に数値を順に入れる (英語・日本語どちらも)。signs は英語の文面の各 # の前の符号 (「+# to Evasion Rating」の +)。
- * 日本語の文面は「回避力 #」のように符号を持たないので、ゲームの表示 (回避力 +151) に合わせて英語の符号を引き継ぐ
- */
-function fillValues(text: string, values: readonly number[], signs: readonly string[] = []): string {
-  let i = 0;
-  return text.replace(/([+-]?)#/g, (_m, pre: string) => {
-    const k = i++;
-    const v = values[k];
-    if (v == null) return `${pre}#`;
-    const sign = pre || (signs[k] === "+" && v >= 0 ? "+" : "");
-    return `${sign}${v}`;
-  });
-}
-const signsOf = (text: string): string[] => [...text.matchAll(/([+-]?)#/g)].map((m) => m[1] ?? "");
-/**
- * 英語文に値を入れる。元文は「#」の物のほか、最下段の数値や「(a-b)」で書かれた物 (約 470 個、例 "Loads an additional bolt")、
- * 一部だけ潰れた物 ("Adds 1 to # Cold damage" — 最小側の範囲が 1-1) がある。
- * 「#」・数値・「(a-b)」を合わせた並びが値の数と同じなら順に差し替える。合わなければ「#」だけ埋める。
- */
-const RANGE = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g;
-const SLOT = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|\d+(?:\.\d+)?/g;
-function fillEn(text: string, values: readonly number[]): string {
-  // 「(41-59)% … in the last 8 seconds」のように固定の数値が混ざる物は、範囲と「#」だけで数が合えばそこを埋める
-  const re = [RANGE, SLOT].find((r) => (text.match(r) ?? []).length === values.length);
-  if (!re) return fillValues(text, values);
-  let i = 0;
-  return text.replace(re, () => String(values[i++]));
+/** その手に掛かるお告げ (持っている中から) */
+export function omensFor(currency: string, held: readonly string[]): string[] {
+  const ok = OMEN_FOR[kindOf(currency)] ?? [];
+  return held.filter((o) => ok.includes(o));
 }
 
-/** 付けられる MOD の候補 (側ごとの置き場から、付いている系統を除き、段の重み > 0 の物) */
-interface Candidate { mod: Mod; side: StageSide; tiers: Array<{ index: number; w: number }>; w: number }
-function candidates(data: PatchData, item: StageItem, sides: StageSide[], floor: number): Candidate[] {
-  const taken = new Set(allMods(item).flatMap((m) => { const md = data.mods.get(m.modId); return md ? familiesOf(md) : [m.family]; }));
-  const out: Candidate[] = [];
-  for (const side of sides) {
-    for (const id of item.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"]) {
-      const mod = data.mods.get(id);
-      if (!mod || familiesOf(mod).some((f) => taken.has(f))) continue;
-      const tiers = mod.tiers.flatMap((t, index) => (t.ilvl <= item.itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ index, w: t.weight }] : []));
-      const w = tiers.reduce((a, t) => a + t.w, 0);
-      if (w > 0) out.push({ mod, side, tiers, w });
-    }
-  }
-  return out;
+/** お告げの側 (左 = プレ / 右 = サフィ) */
+function sideOmen(used: readonly string[], left: string, right: string): StageSide | null {
+  if (used.includes(left)) return "prefix";
+  if (used.includes(right)) return "suffix";
+  return null;
 }
-function pickWeighted<T extends { w: number }>(xs: readonly T[], rng: () => number): T | null {
-  const total = xs.reduce((a, x) => a + x.w, 0);
-  if (!(total > 0)) return null;
-  let u = rng() * total;
-  for (const x of xs) {
-    if (u < x.w) return x;
-    u -= x.w;
-  }
-  return xs[xs.length - 1] ?? null;
-}
-
-/** MOD の段を 1 つ確定させて表示に要る物を埋める */
-export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: () => number): StageMod {
-  const tier = mod.tiers[tierIndex]!;
-  const ranges = (tier.ranges ?? []).map((r) => [Number(r[0]), Number(r[1])]);
-  const values = ranges.map(([a, b]) => rollValue(a!, b!, rng));
-  const en = mod.text ?? mod.id;
-  return {
-    modId: mod.id,
-    family: mod.family,
-    side,
-    tierIndex,
-    tierName: `T${mod.tiers.length - tierIndex}`,
-    affix: String(tier.name ?? ""),
-    modLevel: tier.ilvl,
-    values,
-    ranges,
-    textJa: fillValues(jaOfMod(mod), values, signsOf(en)),
-    textEn: fillEn(en, values),
-  };
-}
-
-/** MOD を 1 つ引いて付ける (付けられなければ null) */
-function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number): { item: StageItem; mod: StageMod } | null {
-  const sides = SIDES.filter((s) => room(item, s));
-  const c = pickWeighted(candidates(data, item, sides, floor), rng);
-  if (!c) return null;
-  const t = pickWeighted(c.tiers, rng)!;
-  const sm = makeStageMod(c.mod, c.side, t.index, rng);
-  return { item: c.side === "prefix" ? { ...item, prefixes: [...item.prefixes, sm] } : { ...item, suffixes: [...item.suffixes, sm] }, mod: sm };
-}
-/** 固定済み以外から等しく 1 つ消す */
-function removeOne(item: StageItem, rng: () => number): { item: StageItem; mod: StageMod } | null {
-  const rem = allMods(item).filter((m) => !m.fractured);
-  if (!rem.length) return null;
-  const mod = rem[Math.floor(rng() * rem.length)]!;
-  return { item: { ...item, prefixes: item.prefixes.filter((m) => m !== mod), suffixes: item.suffixes.filter((m) => m !== mod) }, mod };
-}
-
-const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
 
 /**
- * カレンシー 1 個を打つ。打てない状態なら applied:false と理由 (item はそのまま)。
- * rng は 1 手ごとに mulberry32(seed) を渡す (同じ seed なら同じ結果)
+ * 1 個打つ。打てない状態なら applied:false と理由 (item はそのまま)。
+ * rng は 1 手ごとに mulberry32(seed) を渡す (同じ seed なら同じ結果)。omens は持っているお告げ
  */
-export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number): StageApply {
+export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = []): StageApply {
   if (item.corrupted) return skip(item, "コラプトしたアイテムには使えない");
-  const { kind, strength } = parseKey(currency);
+  const used = omensFor(currency, omens);
+  const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
+  if (bad) return skip(item, "このお告げの効果はまだ入れていない");
+  const r = applyInner(data, item, currency, rng, used);
+  return r.applied ? { ...r, omensUsed: used } : r;
+}
+
+function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[]): StageApply {
+  const kind = kindOf(currency);
+  if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
+  if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
+  if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
+  if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng);
+
+  const { strength } = parseKey(currency);
   const floor = floorOf(kind, strength);
   const count = allMods(item).length;
-  const add = (it: StageItem, n: number): StageApply => {
+  const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
     const added: StageMod[] = [];
     for (let i = 0; i < n; i++) {
-      const r = addOne(data, cur, floor, rng);
+      const r = addOne(data, cur, floor, rng, { sides: pick(i, cur), boost });
       if (!r) break;
       cur = r.item;
       added.push(r.mod);
@@ -173,30 +96,76 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
       if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える");
       if (count >= 2) return skip(item, "MOD が 2 つ付いている (マジックはプレ 1 / サフィ 1 まで)");
       return add(item, 1);
-    case "regal":
+    case "regal": {
       if (item.rarity !== "magic") return skip(item, "マジックのアイテムにだけ使える");
-      return add({ ...item, rarity: "rare" }, 1);
-    case "alchemy":
+      // 左右の戴冠のお告げ: 足すのをその側だけに
+      const side = sideOmen(used, "OmenofSinistralCoronation", "OmenofDextralCoronation");
+      const rare = { ...item, rarity: "rare" as const };
+      if (side && !room(rare, side)) return skip(item, "お告げの側に空きが無い");
+      return add(rare, 1, () => (side ? [side] : SIDES));
+    }
+    case "alchemy": {
       if (item.rarity !== "normal") return skip(item, "ノーマルのアイテムにだけ使える");
-      return add({ ...item, rarity: "rare" }, 4);
-    case "exalt":
+      // 左右の錬金のお告げ: その側を上限まで (残りは反対側)
+      const side = sideOmen(used, "OmenofSinistralAlchemy", "OmenofDextralAlchemy");
+      return add({ ...item, rarity: "rare" }, 4, (_k, cur) => (side ? (room(cur, side) ? [side] : SIDES.filter((s) => s !== side)) : SIDES));
+    }
+    case "exalt": {
       if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
-      if (!SIDES.some((s) => room(item, s))) return skip(item, "足す枠が無い");
-      return add(item, 1);
+      const side = sideOmen(used, "OmenofSinistralExaltation", "OmenofDextralExaltation");
+      const sides = side ? [side] : SIDES;
+      if (!sides.some((s) => room(item, s))) return skip(item, side ? "お告げの側に空きが無い" : "足す枠が無い");
+      // 大いなる高貴のお告げ: 2 つ足す (枠が 1 つなら 1 つ)。触媒の高貴のお告げ: 品質の種類の MOD を重く引いて、品質を使い切る
+      const n = used.includes("OmenofGreaterExaltation") ? 2 : 1;
+      if (used.includes("OmenofCatalysingExaltation")) {
+        const tag = item.qualityTag;
+        if (!tag || !(item.quality > 0)) return skip(item, "触媒の高貴のお告げは品質 (カタリスト) が要る");
+        const r = add(item, n, () => sides, { test: (m) => boostedBy(m, tag), mult: catalysingMultiplier(item.quality) });
+        return r.applied ? { ...r, item: { ...r.item, quality: 0 } } : r;
+      }
+      return add(item, n, () => sides);
+    }
     case "chaos": {
       if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
-      const r = removeOne(item, rng);
+      let r: { item: StageItem; mod: StageMod } | null;
+      if (used.includes("OmenofWhittling")) {
+        // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)
+        const rem = allMods(item).filter((m) => !m.fractured);
+        const low = Math.min(...rem.map((m) => m.modLevel));
+        const lows = rem.filter((m) => m.modLevel === low);
+        const mod = lows[Math.floor(rng() * lows.length)];
+        r = mod ? { item: without(item, mod), mod } : null;
+      } else {
+        // 左右の抹消のお告げ: 消すのをその側だけに (足す側は選べない)
+        const side = sideOmen(used, "OmenofSinistralErasure", "OmenofDextralErasure");
+        r = removeOne(item, rng, side ? [side] : SIDES);
+      }
       if (!r) return skip(item, "外せる MOD が無い");
       const a = addOne(data, r.item, floor, rng);
       return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod] };
     }
     case "annul": {
       if (item.rarity === "normal") return skip(item, "マジックかレアのアイテムにだけ使える");
-      const r = removeOne(item, rng);
-      if (!r) return skip(item, "外せる MOD が無い");
-      return { applied: true, item: r.item, added: [], removed: [r.mod] };
+      if (used.includes("OmenofLight")) {
+        // 光のお告げ: 冒涜の MOD を消す
+        const d = allMods(item).find((m) => m.desecrated && !m.fractured);
+        if (!d) return skip(item, "光のお告げ: 冒涜の MOD が無い");
+        return { applied: true, item: without(item, d), added: [], removed: [d] };
+      }
+      const side = sideOmen(used, "OmenofSinistralAnnulment", "OmenofDextralAnnulment");
+      const n = used.includes("OmenofGreaterAnnulment") ? 2 : 1;
+      let cur = item;
+      const removed: StageMod[] = [];
+      for (let i = 0; i < n; i++) {
+        const r = removeOne(cur, rng, side ? [side] : SIDES);
+        if (!r) break;
+        cur = r.item;
+        removed.push(r.mod);
+      }
+      if (!removed.length) return skip(item, side ? "お告げの側に外せる MOD が無い" : "外せる MOD が無い");
+      return { applied: true, item: cur, added: [], removed };
     }
     default:
-      return skip(item, `このカレンシーはまだ使えない (Phase 2 以降: ${currency})`);
+      return skip(item, `このアイテムはまだ使えない (${currency})`);
   }
 }

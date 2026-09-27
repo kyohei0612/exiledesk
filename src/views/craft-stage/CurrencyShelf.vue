@@ -1,40 +1,72 @@
 <!--
-  CurrencyShelf.vue — クラフトステージのカレンシー棚 (2026-09-27、ADR-001)
+  CurrencyShelf.vue — クラフトステージの棚 (2026-09-27、ADR-001)
 
   オーナー:「操作は Craft of Exile 仕様 — カレンシーアイコンをクリックしてカーソルに持ち、アイテムをクリックで適用」
-  「カレンシーの種類・アイコン・名前・値段は計算機にリンクして実体化」。
-  種類ごとに 普通 / 上級 / 完全 を並べる。アイコンと値段は相場 (market-store)、名前は計算機の jaOfPriceKey。
-  その状態で打てない物は灰色 (カーソルを乗せると理由)。持っている物は枠を光らせる。
+  「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
+  タブ: オーブ・骨 / エッセンス (そのベースで使える物) / カタリスト (指輪・アミュレット) / お告げ (掛けておくと次の関係する手で食う)。
+  並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { craftStage, iconOf, nameOf, priceOf, SHELF } from "../../state/craft-stage";
-import { displayCurrency } from "../../state/display-currency";
+import { computed, ref } from "vue";
+import ShelfButton from "./ShelfButton.vue";
+import { craftStage } from "../../state/craft-stage";
+import { BONES, CATALYSTS, essenceShelf, OMEN_GROUPS, ORBS } from "../../state/craft-stage-shelf";
 
 const emit = defineEmits<{ hold: [key: string] }>();
-const STRENGTH = (k: string): string => (k.endsWith("_greater") ? "上級" : k.endsWith("_perfect") ? "完全" : "");
+const tab = ref<"orb" | "essence" | "catalyst" | "omen">("orb");
+const essences = computed(() => essenceShelf(craftStage.data.value, craftStage.item.value));
+const hasCatalyst = computed(() => ["Rings", "Amulets"].includes(craftStage.item.value?.cls.category ?? ""));
+const TABS = computed(() => [
+  { id: "orb" as const, label: "オーブ・骨" },
+  { id: "essence" as const, label: `エッセンス (${essences.value.length})` },
+  ...(hasCatalyst.value ? [{ id: "catalyst" as const, label: "カタリスト" }] : []),
+  { id: "omen" as const, label: craftStage.omens.value.length ? `お告げ (${craftStage.omens.value.length} 枚掛け)` : "お告げ" },
+]);
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-x-4 gap-y-2">
-    <div v-for="s in SHELF" :key="s.kind" class="flex gap-1.5">
+  <div>
+    <div class="mb-2 flex flex-wrap gap-1 text-[12px]">
       <button
-        v-for="k in s.keys"
-        :key="k"
+        v-for="t in TABS"
+        :key="t.id"
         type="button"
-        class="group relative flex w-[74px] flex-col items-center rounded-lg border px-1 pb-1 pt-1.5 text-[10px] transition"
-        :class="[
-          craftStage.held.value === k ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/60' : 'border-white/10 bg-black/30 hover:border-white/30',
-          craftStage.usable(k) ? 'opacity-35' : '',
-        ]"
-        :title="`${nameOf(k)}${craftStage.usable(k) ? ` — ${craftStage.usable(k)}` : ''}`"
-        @click="emit('hold', k)"
-      >
-        <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain" draggable="false" />
-        <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
-        <span class="mt-0.5 line-clamp-2 text-center leading-tight">{{ nameOf(k) }}</span>
-        <span v-if="STRENGTH(k)" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px]" :class="STRENGTH(k) === '完全' ? 'text-amber-300' : 'text-sky-300'">{{ STRENGTH(k) }}</span>
-        <span v-if="priceOf(k)" class="text-[9px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
-      </button>
+        class="rounded-lg px-2.5 py-1"
+        :class="tab === t.id ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'"
+        @click="tab = t.id"
+      >{{ t.label }}</button>
+    </div>
+
+    <div v-if="tab === 'orb'" class="flex flex-wrap gap-x-4 gap-y-2">
+      <div v-for="g in ORBS" :key="g.kind" class="flex gap-1.5">
+        <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+      </div>
+      <div class="flex gap-1.5">
+        <ShelfButton v-for="k in BONES" :key="k" :k="k" @pick="emit('hold', $event)" />
+      </div>
+    </div>
+
+    <div v-else-if="tab === 'essence'" class="flex flex-wrap gap-x-4 gap-y-2">
+      <div v-for="g in essences" :key="g.kind" class="flex gap-1.5">
+        <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
+      </div>
+      <p v-if="!essences.length" class="text-[12px] opacity-50">このベースに使えるエッセンスはありません</p>
+    </div>
+
+    <div v-else-if="tab === 'catalyst'" class="flex flex-wrap gap-1.5">
+      <ShelfButton v-for="k in CATALYSTS" :key="k" :k="k" @pick="emit('hold', $event)" />
+    </div>
+
+    <div v-else>
+      <p class="mb-2 text-[11px] opacity-60">押すと掛けておきます (何枚でも)。次に打つ手に関係する物だけ使われます。</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+      <div v-for="g in OMEN_GROUPS" :key="g.kind">
+        <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
+        <div class="flex gap-1.5">
+          <ShelfButton v-for="k in g.keys" :key="k" :k="k" omen @pick="craftStage.toggleOmen($event)" />
+        </div>
+      </div>
+      </div>
     </div>
   </div>
 </template>

@@ -13,6 +13,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
+import RevealPanel from "./RevealPanel.vue";
+import { useStageFx } from "./use-stage-fx";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -52,6 +54,9 @@ onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.
 function hold(k: string): void {
   s.hold(s.held.value === k ? null : k);
 }
+/** 打った瞬間の演出 (波紋・枠の光・「レアに!」など) */
+const fx = useStageFx(mouse);
+const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
 /** 付いた / 消えた MOD を光らせ直すための番号 (手ごとに変わる) */
 const flashKey = computed(() => s.log.value.length);
 
@@ -74,7 +79,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <div class="mb-3 flex items-start justify-between gap-4">
       <div>
         <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">クラフトステージ</h1>
-        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">カレンシーを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。確率はクラフト計算機と同じ規則です。</p>
+        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">カレンシー・骨・エッセンス・カタリストを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは掛けておくと次の関係する手で使われます。確率はクラフト計算機と同じ規則です。</p>
       </div>
       <CurrencyPicker />
     </div>
@@ -116,6 +121,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <div v-if="s.ready.value" class="grid gap-4 @5xl:grid-cols-[auto_1fr]">
       <!-- アイテム枠 + 直前の変化 -->
       <div class="flex flex-col items-center gap-8">
+        <div class="relative" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :item="s.item.value!"
           :added="s.last.value?.added ?? []"
@@ -124,10 +130,13 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
           :flash-key="flashKey"
           @use="s.use()"
         />
+        <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'text-sm' : 'text-2xl'">{{ fx.text }}</span>
+        </div>
+        <RevealPanel />
         <div class="w-[380px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
           <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.log.value.length }} 手</span></p>
           <template v-if="s.last.value">
-            <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
+            <p class="opacity-80">{{ s.last.value.out.currency_ja }}<span v-if="s.last.value.out.omen_ja" class="ml-1 text-violet-300">+ {{ s.last.value.out.omen_ja }}</span><span v-if="!s.last.value.out.applied" class="ml-1 text-rose-300/80">— {{ s.last.value.out.reason }}</span></p>
             <p v-for="m in s.last.value.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }}</p>
             <p v-for="m in s.last.value.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
           </template>
@@ -142,6 +151,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
             <b class="text-sm text-amber-100">カレンシー</b>
             <span v-if="s.held.value" class="rounded-full bg-amber-500/20 px-2 text-amber-200">持っている: {{ nameOf(s.held.value) }}</span>
             <span v-else class="opacity-50">押して持つ → アイテムを押す</span>
+            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer rounded-full bg-violet-500/20 px-2 text-violet-200" title="押すと外す" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span>
           </p>
           <CurrencyShelf @hold="hold" />
         </section>
@@ -152,6 +162,11 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       </div>
     </div>
 
+    <!-- 押した所の波紋と、吸い込まれるアイコン -->
+    <template v-if="fx && fx.kind !== 'shake'">
+      <span :key="'r' + fx.n" class="stage-ripple" :style="{ left: `${fx.x}px`, top: `${fx.y}px`, '--fx': fx.color }" />
+      <img v-if="fx.icon" :key="'d' + fx.n" :src="fx.icon" alt="" class="stage-drop object-contain" :style="{ left: `${fx.x}px`, top: `${fx.y}px` }" />
+    </template>
     <!-- カーソルに付いたカレンシー -->
     <img
       v-if="s.held.value && iconOf(s.held.value)"

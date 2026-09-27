@@ -8,6 +8,8 @@
  *      2 つ付かない、段がアイテムレベル以下で強さの下限以上、数値が段の範囲の中、打てない手は何も変えない
  *   3. 計算機の確率と実演の頻度が一致する: 同じ状態・同じカレンシーで、計算機の addNormalAffixProbability と、
  *      applyCurrency を多数回引いた MOD ごとの頻度の差が小さい
+ *   4. クラフトに使える物全部 (エッセンス・骨と開示・お告げ・神・破砕・アーティファサー・カタリスト) をお告げ付きででたらめに打っても
+ *      規則が崩れない (枠・系統・冒涜 / エッセンス / 破砕は 1 つまで・掛けていないお告げは食わない)。開示の候補と結果が一致する
  *   node scripts/check-craft-stage.mjs
  */
 import { readFileSync } from "node:fs";
@@ -106,6 +108,83 @@ function compare(label, item, cur, n = 40000) {
   while (rare.prefixes.length + rare.suffixes.length > 3) rare = M.applyCurrency(data, rare, "annul", M.mulberry32(13)).item;
   compare(`高貴 (MOD ${rare.prefixes.length + rare.suffixes.length} つのレアの金の指輪)`, rare, "exalt");
   compare("完全の高貴 (段 50 以上)", rare, "exalt_perfect");
+}
+
+// ---- 4. クラフトに使える物全部 (エッセンス・骨と開示・お告げ・神・破砕・アーティファサー・カタリスト) で規則が崩れないか ----
+{
+  const OMENS = ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofWhittling", "OmenofSinistralErasure",
+    "OmenofGreaterAnnulment", "OmenofLight", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralNecromancy",
+    "OmenoftheSovereign", "OmenofAbyssalEchoes", "OmenofSinistralCoronation", "OmenofDextralAlchemy", "OmenofCatalysingExaltation"];
+  const BASE_KEYS = ["transmute", "augment", "regal", "alchemy", "exalt", "exalt_greater", "chaos", "annul", "divine", "fracture", "artificer",
+    "desecrate", "desecrate_ancient", "desecrate_altered", "reveal:1", "reveal:2", "reveal:3", "reveal:1:reroll", "catalyst_mana", "catalyst_life", "essence:breach"];
+  const BASES2 = ["Gold Ring", "Absent Amulet", "Siphoning Wand", "Ancestral Tiara", "Heavy Belt"];
+  let ok = 0, no = 0;
+  const kinds = new Map();
+  for (const base of BASES2) {
+    const probe = M.freshItem(data, base, 82);
+    const ess = [...probe.cls.pools.essence.prefixes, ...probe.cls.pools.essence.suffixes].flatMap((id) => {
+      const md = data.mods.get(id);
+      return md.source === "perfect_essence" ? [`essence:perfect:${id}`] : [`essence:lesser:${id}`, `essence:greater:${id}`];
+    });
+    const keys = [...BASE_KEYS, ...ess];
+    const rnd = M.mulberry32(base.length * 104729);
+    for (let run = 0; run < 250; run++) {
+      let item = M.freshItem(data, base, [65, 82, 86][run % 3]);
+      for (let k = 0; k < 20; k++) {
+        const cur = keys[Math.floor(rnd() * keys.length)];
+        const om = OMENS.filter(() => rnd() < 0.12);
+        const r = M.applyCurrency(data, item, cur, M.mulberry32(run * 1000 + k), om);
+        const kind = cur.split(":")[0].replace(/_(greater|perfect|ancient|altered)$/, "");
+        const c = kinds.get(kind) ?? [0, 0]; c[r.applied ? 0 : 1]++; kinds.set(kind, c);
+        if (!r.applied) { no++; if (r.item !== item) ng(`${base} ${cur}: 打てないのに変わった`); continue; }
+        ok++;
+        const it = r.item;
+        for (const o of r.omensUsed ?? []) if (!om.includes(o)) ng(`${cur}: 掛けていないお告げを食った ${o}`);
+        const lim = it.rarity === "magic" ? { prefixes: 1, suffixes: 1 } : it.cls.limits ?? { prefixes: 3, suffixes: 3 };
+        if (it.prefixes.length > lim.prefixes || it.suffixes.length > lim.suffixes) ng(`${base} ${cur}: 枠を超えた (${it.rarity} ${it.prefixes.length}/${it.suffixes.length})`);
+        const all = [...it.prefixes, ...it.suffixes];
+        const fams = all.map((m) => m.family);
+        if (new Set(fams).size !== fams.length) ng(`${base} ${cur}: 同じ系統が 2 つ (${fams.join(",")})`);
+        if (all.filter((m) => m.desecrated).length > 1) ng(`${base} ${cur}: 冒涜の MOD が 2 つ`);
+        if (all.filter((m) => m.crafted).length > 1) ng(`${base} ${cur}: エッセンスの MOD が 2 つ`);
+        if (all.filter((m) => m.fractured).length > 1) ng(`${base} ${cur}: 破砕が 2 つ`);
+        if (all.some((m) => m.side === "prefix") !== it.prefixes.length > 0) ng("側の並びが違う");
+        for (const m of all) if (m.side !== (it.prefixes.includes(m) ? "prefix" : "suffix")) ng(`${m.modId}: 側と置き場が違う`);
+        for (const m of r.added) if (!m.unrevealed && (/#/.test(m.textJa) || m.modLevel > it.itemLevel)) ng(`${cur} ${m.modId}: 数値か段がおかしい`);
+        if (cur.startsWith("exalt") && om.includes("OmenofSinistralExaltation") && r.added.some((m) => m.side !== "prefix")) ng("左の高貴のお告げでサフィが付いた");
+        if (cur === "chaos" && (r.omensUsed ?? []).includes("OmenofWhittling")) {
+          const low = Math.min(...[...item.prefixes, ...item.suffixes].filter((m) => !m.fractured).map((m) => m.modLevel));
+          if (r.removed[0].modLevel !== low) ng("削りのお告げで一番低い MOD が消えていない");
+        }
+        if ((it.quality ?? 0) > 45) ng("品質が上限を超えた");
+        item = it;
+      }
+    }
+  }
+  console.log(`全部の物: 打てた ${ok} 回 / 打てない手 ${no} 回`);
+  console.log("   " + [...kinds].map(([k, [a, b]]) => `${k} ${a}/${a + b}`).join("  "));
+  for (const k of ["essence", "desecrate", "reveal", "divine", "fracture", "catalyst_mana", "artificer"]) if (!(kinds.get(k)?.[0] > 0)) ng(`${k} が 1 回も打てていない`);
+
+  // 開示: 画面で見せる候補と、選んだ手の結果が一致するか
+  let rare = M.applyCurrency(data, M.freshItem(data, "Gold Ring", 82), "alchemy", M.mulberry32(3)).item;
+  rare = M.applyCurrency(data, rare, "annul", M.mulberry32(4)).item;
+  const boned = M.applyCurrency(data, rare, "desecrate", M.mulberry32(5));
+  if (!boned.applied || !boned.added[0].unrevealed) ng("骨で未開示の MOD が付いていない");
+  const off = M.revealOffers(data, boned.item, M.mulberry32(99));
+  if (off.first.length !== 3 || new Set(off.first.map((m) => m.modId)).size !== 3) ng("開示の候補が 3 つの別々の MOD でない");
+  for (let i = 0; i < 3; i++) {
+    const r = M.applyCurrency(data, boned.item, `reveal:${i + 1}`, M.mulberry32(99));
+    if (r.added[0]?.textJa !== off.first[i].textJa) ng(`開示 ${i + 1}: 候補と結果が違う`);
+  }
+  const rr = M.applyCurrency(data, boned.item, "reveal:2:reroll", M.mulberry32(99), ["OmenofAbyssalEchoes"]);
+  if (rr.added[0]?.textJa !== off.reroll[1].textJa) ng("引き直しの候補と結果が違う");
+  if (M.applyCurrency(data, boned.item, "reveal:2:reroll", M.mulberry32(99)).applied) ng("お告げ無しで引き直せた");
+  console.log(`開示: 候補 ${off.first.map((m) => m.textJa).join(" / ")}`);
+  const lit = M.applyCurrency(data, M.applyCurrency(data, boned.item, "reveal:1", M.mulberry32(99)).item, "annul", M.mulberry32(1), ["OmenofLight"]);
+  if (!lit.applied || !lit.removed[0]?.desecrated) ng("光のお告げで冒涜の MOD が消えていない");
+  // 大いなる高貴: 枠が 2 つ以上なら 2 つ足す
+  const two = M.applyCurrency(data, rare, "exalt", M.mulberry32(8), ["OmenofGreaterExaltation"]);
+  if (two.added.length !== 2) ng(`大いなる高貴のお告げで 2 つ付いていない (${two.added.length})`);
 }
 
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");

@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
+import { CATALYSTS } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number }>();
@@ -23,6 +24,16 @@ const tone = computed(() => TONE[props.item.rarity]);
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア" } as const;
 const implicits = computed(() => (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
+/** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
+const qualityLabel = computed(() => CATALYSTS.find((c) => c.tag === props.item.qualityTag)?.label.ja ?? "品質");
+/** MOD の種類ごとの色と札 (ゲームの色に寄せる: 破砕 = 金、冒涜 = 赤、エッセンス = 薄い青) */
+function look(m: StageMod): { cls: string; tag: string } {
+  if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
+  if (m.fractured) return { cls: "text-[#c8a86a]", tag: "破砕" };
+  if (m.desecrated) return { cls: "text-[#e0a0a0]", tag: "冒涜" };
+  if (m.crafted) return { cls: "text-[#b8c8ff]", tag: "エッセンス" };
+  return { cls: "text-[#8888ff]", tag: "" };
+}
 const rows = computed(() => [
   ...props.item.prefixes.map((m) => ({ m, side: "プレ" })),
   ...props.item.suffixes.map((m) => ({ m, side: "サフィ" })),
@@ -42,6 +53,8 @@ const rows = computed(() => [
     </div>
     <div class="space-y-1 px-4 pb-4 text-center text-[13px]">
       <p class="text-[12px] text-white/50">{{ RARITY_JA[item.rarity] }} · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></p>
+      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-[#8888ff]">+{{ item.quality }}%</span></p>
+      <p v-if="item.sockets" class="text-[12px] text-white/50">ソケット: <span class="tracking-[0.2em] text-white/80">{{ "●".repeat(item.sockets) }}</span></p>
       <template v-if="implicits.length">
         <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
         <p v-for="(t, i) in implicits" :key="'i' + i" class="text-[#8888ff]">{{ t }}</p>
@@ -52,11 +65,11 @@ const rows = computed(() => [
         <p
           v-for="r in rows"
           :key="isNew(r.m) ? `${r.m.modId}#${flashKey}` : r.m.modId"
-          class="relative rounded px-2 py-0.5 text-[#8888ff]"
-          :class="isNew(r.m) ? 'stage-mod-new' : ''"
+          class="relative rounded px-2 py-0.5"
+          :class="[look(r.m).cls, isNew(r.m) ? 'stage-mod-new' : '']"
         >
           {{ r.m.textJa }}
-          <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'">{{ r.side }} {{ r.m.tierName }}</span>
+          <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
       </div>
       <p v-if="!rows.length" class="py-1 text-white/30">MOD なし</p>
