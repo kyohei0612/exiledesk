@@ -5,7 +5,7 @@ PSD の描画は 1 枚 2〜3 秒かかるので、(キャラ, 感情, 口) ご�
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from PIL import Image
@@ -30,6 +30,8 @@ class CharSpec:
     emotions: dict[Emotion, Selection]
     mouths: dict[int, str]
     mouth_group: str = "!口"
+    # 感情ごとの「閉じ口」の差し替え (待機顔をムッとさせないため。無ければ mouths[0])
+    closed_mouth: dict[Emotion, str] = field(default_factory=dict)
 
 
 ZUNDAMON = CharSpec(
@@ -41,14 +43,16 @@ ZUNDAMON = CharSpec(
         ("!枝豆", "*枝豆通常"),
     ],
     emotions={
-        "normal": [("!眉", "*基本眉"), ("!目", "*基本目")],
+        "normal": [("!眉", "*基本眉2"), ("!目", "*基本目")],
         "troubled": [("!眉", "*困り眉"), ("!目", "*基本目↑")],
         "surprised": [("!眉", "*上がり眉"), ("!目", "*〇〇")],
-        "happy": [("!眉", "*基本眉"), ("!目", "*にっこり")],
+        "happy": [("!眉", "*基本眉2"), ("!目", "*にっこり")],
         "proud": [("!眉", "*基本眉2"), ("!目", "*細め目")],
         "sad": [("!眉", "*困り眉"), ("!目", "*UU")],
     },
     mouths={0: "*ん", 1: "*ほう", 2: "*ほあ"},
+    # 待機・機嫌のいい時は口を「むふ」(候補 C、2026-09-27 kyohei 指示で待機顔を柔らかく)
+    closed_mouth={"normal": "*むふ", "happy": "*えへ", "proud": "*にやり"},
 )
 METAN = CharSpec(
     psd=CHAR_DIR / "metan/四国めたん立ち絵素材2.1/四国めたん立ち絵素材2.1.psd",
@@ -104,7 +108,10 @@ def render_tachie(speaker: Speaker, emotion: Emotion, mouth: int, height: int) -
     psd = PSDImage.open(spec.psd)
     _apply(psd, spec.fixed)
     _apply(psd, spec.emotions[emotion])
-    _select(psd, spec.mouth_group, spec.mouths[mouth])
+    mouth_layer = spec.mouths[mouth]
+    if mouth == 0:
+        mouth_layer = spec.closed_mouth.get(emotion, mouth_layer)
+    _select(psd, spec.mouth_group, mouth_layer)
     img = psd.composite(force=True).convert("RGBA")
     img = img.resize((int(img.width * height / img.height), height), Image.Resampling.LANCZOS)
     img.save(cache)
