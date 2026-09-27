@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from poe2tube.capture.stage import cached_path
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.render.draw import load_icon, pill
 from poe2tube.render.item_card import card_height, draw_item_card
@@ -34,9 +35,28 @@ def draw_scene_panel(
         cy = (y0 + y1) // 2 - ch // 2
         draw_item_card(img, (cx, cy, cx + cw, cy + ch), item, hl, scene.highlight == "name")
     elif scene.kind == "stage":
-        _stage_placeholder(img, inner, scene, result, icon_dir)
+        shot = cached_path(result.plan, scene.step or 0)
+        if shot.exists():
+            _stage_capture(img, inner, shot, scene.step or 0)
+        else:
+            _stage_placeholder(img, inner, scene, result, icon_dir)
     elif scene.kind == "cost":
         _cost(img, inner, result)
+
+
+def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int) -> None:
+    """ExileDesk クラフトステージの実画面 (再生モードの撮影) を枠いっぱいに収めて貼る."""
+    x0, y0, x1, y1 = box
+    im = Image.open(shot).convert("RGBA")
+    scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
+    im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)
+    px = x0 + (x1 - x0 - im.width) // 2
+    py = y0 + 44
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle((px - 6, py - 6, px + im.width + 6, py + im.height + 6), 16, fill=INK)
+    img.alpha_composite(im, (px, py))
+    label = "クラフトステージ (ExileDesk)" + (f"  {step} 手目" if step else "  開始前")
+    pill(img, (x0, y0), label, ACCENT, size=24)
 
 
 def _stage_placeholder(

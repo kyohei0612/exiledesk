@@ -13,6 +13,7 @@ import structlog
 
 from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
+from poe2tube.capture.stage import capture_plan
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
@@ -77,6 +78,19 @@ def encode(frames_dir: Path, audio: Path, fps: int, out: Path, nvenc: bool = Fal
         raise RuntimeError(f"ffmpeg 失敗 rc={r.returncode}: {r.stderr[-800:]}")
 
 
+def capture_stage_scenes(script: VideoScript, result: CraftStageResult) -> None:
+    """台本の stage シーンが指す手を ExileDesk の実画面で撮っておく (失敗時は図解で代用)."""
+    s = get_settings()
+    steps = sorted({ln.scene.step or 0 for ln in script.lines if ln.scene.kind == "stage"})
+    if not steps or not s.stage_capture:
+        return
+    try:
+        paths = capture_plan(result.plan, steps)
+        log.info("stage scenes ready", steps=steps, cached=len(paths))
+    except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
+        log.warning("stage capture failed, falling back to drawn panel", error=str(e)[:300])
+
+
 def build_video(
     script_path: Path, out: Path | None = None, keep_frames: bool = False
 ) -> BuildResult:
@@ -96,6 +110,7 @@ def build_video(
     events = sound_events(cues, book, len(result.steps))
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
+    capture_stage_scenes(script, result)
     frames = write_frames(cues, result, book, work / "frames")
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 

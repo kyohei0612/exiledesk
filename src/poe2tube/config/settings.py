@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     )
     youtube_pipeline_root: Path = Field(default=Path.home() / "youtube-pipeline")
     voicevox_url: str = "http://127.0.0.1:50021"
+    exiledesk_dev_url: str = Field(
+        default="http://localhost:1420",
+        description="ExileDesk の Vite dev (クラフトステージ撮影用)",
+    )
+    stage_capture: bool = Field(
+        default=True, description="stage シーンを ExileDesk の実画面で撮る (False なら図解で代用)"
+    )
     voicevox_speed: float = Field(
         default=1.2, description="話速 (kyohei 指示 2026-09-27: 1.2 倍くらい)"
     )
