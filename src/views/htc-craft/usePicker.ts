@@ -37,7 +37,15 @@ export interface ModRow {
   tiers: { name: string; ilvl: number; range: string }[];
   /** 確定で乗せられる MOD (エッセンス / 合金) か */
   crafted: boolean;
+  /**
+   * 種類 (オーナー 2026-09-27「DB みたいに普通の MOD、エッセンス、冒涜、変質とか分けて表示」)。
+   * normal = カオス・高貴 / essence = パーフェクトエッセンス・合金で確定 / desecrated = 冒涜 (骨) / otherworldly = 変質した鎖骨の冒涜 (異界の MOD)
+   */
+  group: ModGroup;
+  /** 合金 (エッセンスの種類の中で名前を分ける) */
+  alloy?: boolean;
 }
+export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
 
 /** 選んだ MOD と、狙う段 */
 export interface Pick {
@@ -102,10 +110,22 @@ export function usePicker() {
     if (!c || !d) return [];
     const q = modQuery.value.trim().toLowerCase();
     const out: ModRow[] = [];
-    for (const [side, ids] of [["P", c.pools.normal.prefixes], ["S", c.pools.normal.suffixes]] as const) {
+    const seen = new Set<string>();
+    const pool = (p: { prefixes: readonly string[]; suffixes: readonly string[] } | undefined, group: ModGroup) =>
+      p ? ([["P", p.prefixes, group], ["S", p.suffixes, group]] as const) : [];
+    const lists = [
+      ...pool(c.pools.normal, "normal"),
+      ...pool(c.pools.essence, "essence"),
+      ...pool(c.pools.desecrated, "desecrated"),
+      ...pool(c.pools.otherworldly, "otherworldly"),
+    ];
+    for (const [side, ids, group] of lists) {
       for (const id of ids) {
         const mod: Mod | undefined = d.mods.get(id);
-        if (!mod) continue;
+        if (!mod || seen.has(id)) continue;
+        // 普通のエッセンスはマジックにしか打てない (レアを作る流れでは使えない)。パーフェクトエッセンスと合金だけ
+        if (group === "essence" && mod.source !== "perfect_essence") continue;
+        seen.add(id);
         const ja = jaOfMod(mod);
         if (q && !ja.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) continue;
         const tiers = mod.tiers
@@ -117,7 +137,7 @@ export function usePicker() {
             range: (t.ranges ?? []).map((r) => `${r[0]}-${r[1]}`).join(" / "),
           }));
         if (tiers.length === 0) continue; // この ilvl では 1 段も取れない
-        out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod) });
+        out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, ...(mod.alloy ? { alloy: true } : {}) });
       }
     }
     return out;

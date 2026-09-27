@@ -10,6 +10,7 @@
 import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
 import SocketPicker from "./SocketPicker.vue";
+import ModPickColumn from "./ModPickColumn.vue";
 import { effectiveSocket, socketEffects, socketLabel, withSocketLimits } from "../../services/htc/sockets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
@@ -17,7 +18,7 @@ import { sideLimits } from "../../services/htc/bridge";
 import { qualityLabelOf, type CardMod } from "./item-card-data";
 import { fillHashes } from "../../services/htc/mod-text";
 import type { ZeroPreset } from "./presets";
-import type { usePicker, ModRow } from "./usePicker";
+import type { usePicker, ModRow, ModGroup } from "./usePicker";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{
@@ -69,6 +70,19 @@ function toggle(m: ModRow): void {
   if (!pk.isPicked(m.modId) && full(m.side)) return;
   pk.toggle(m);
 }
+/** 種類の絞り込み (オーナー 2026-09-27「普通の MOD、エッセンス、冒涜、変質とか分けて」) */
+const groupFilter = ref<ModGroup | "all">("all");
+const GROUP_CHIPS: Array<{ k: ModGroup | "all"; ja: string; on: string }> = [
+  { k: "all", ja: "すべて", on: "bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60" },
+  { k: "normal", ja: "普通", on: "bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60" },
+  { k: "essence", ja: "エッセンス・合金", on: "bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60" },
+  { k: "desecrated", ja: "冒涜", on: "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/60" },
+  { k: "otherworldly", ja: "変質した鎖骨 (異界)", on: "bg-teal-500/25 text-teal-100 ring-1 ring-teal-400/60" },
+];
+/** 種類ごとの数 (そのベースに無い種類のチップは出さない) */
+const groupCount = (k: ModGroup | "all"): number => (k === "all" ? pk.modRows.value.length : pk.modRows.value.filter((m) => m.group === k).length);
+/** 冒涜の MOD (異界の MOD も) をもう選んでいるか (冒涜の MOD は 1 つまで) */
+const desecTaken = computed(() => pk.picks.value.some((p) => { const g = pk.modRows.value.find((m) => m.modId === p.modId)?.group; return g === "desecrated" || g === "otherworldly"; }));
 /** 文面の # を段の幅で埋める (入れた物はその段、まだの物は一番上の段) */
 function named(m: ModRow): string {
   const i = pk.tierOf(m.modId) ?? m.tiers.length - 1;
@@ -81,7 +95,7 @@ const tierLabel = (m: ModRow, i: number): string => `T${m.tiers.length - i} 以�
 /** 右の完成図 */
 const cardMods = computed<CardMod[]>(() => pk.picks.value.map((p): CardMod => {
   const m = pk.modRows.value.find((x) => x.modId === p.modId);
-  return { key: p.modId, side: m?.side ?? null, text: m ? named(m) : p.modId, head: m ? `${m.side === "P" ? "プレフィックス" : "サフィックス"} ${tierLabel(m, p.tierIndex)}` : undefined, tone: m?.crafted ? "crafted" : "normal" };
+  return { key: p.modId, side: m?.side ?? null, text: m ? named(m) : p.modId, head: m ? `${m.side === "P" ? "プレフィックス" : "サフィックス"} ${tierLabel(m, p.tierIndex)}` : undefined, tone: m?.crafted ? "crafted" : m?.group === "desecrated" || m?.group === "otherworldly" ? "desecrated" : "normal" };
 }).sort((a, b) => (a.side === b.side ? 0 : a.side === "P" ? -1 : 1)));
 const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 : 2));
 </script>
@@ -145,26 +159,29 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
           <span class="opacity-50">押すと入る / 外れる。段は入れた後に選べる</span>
           <input v-model="pk.modQuery.value" placeholder="MOD を探す (ライフ / 耐性 …)" class="ml-auto w-56 rounded-lg border border-white/15 bg-black/30 px-2 py-1" />
         </div>
+        <!-- 種類で絞る -->
+        <div class="mb-2 flex flex-wrap items-center gap-1.5">
+          <template v-for="g in GROUP_CHIPS" :key="g.k">
+            <button v-if="groupCount(g.k)" type="button" class="rounded-full px-2.5 py-0.5" :class="groupFilter === g.k ? g.on : 'bg-white/5 hover:bg-white/10'" @click="groupFilter = g.k">
+              {{ g.ja }} <span class="opacity-50">{{ groupCount(g.k) }}</span>
+            </button>
+          </template>
+        </div>
         <div class="grid grid-cols-2 gap-3">
-          <div v-for="col in columns" :key="col.side">
-            <p class="mb-1 flex items-center gap-2 border-b border-white/10 pb-1 font-bold">
-              {{ col.title }}
-              <span class="rounded-full px-1.5 text-[10.5px] font-normal" :class="full(col.side) ? 'bg-amber-500/20 text-amber-200' : 'bg-white/5 opacity-70'">{{ pickedCount(col.side) }} / {{ limits[col.side] }} 枠</span>
-            </p>
-            <div class="max-h-[22rem] space-y-0.5 overflow-auto pr-1">
-              <div v-for="m in col.rows" :key="m.modId" class="flex items-center gap-2 rounded-lg px-2 py-1"
-                :class="pk.isPicked(m.modId) ? 'bg-amber-500/10 ring-1 ring-amber-400/40' : full(col.side) ? 'opacity-35' : 'cursor-pointer hover:bg-white/5'"
-                @click="toggle(m)">
-                <span class="grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
-                <span class="min-w-0 flex-1">{{ named(m) }}</span>
-                <span v-if="m.crafted" class="shrink-0 rounded bg-sky-500/15 px-1 text-[10px] text-sky-200">エッセンスで確定</span>
-                <select v-if="pk.isPicked(m.modId)" class="shrink-0 rounded border border-white/20 bg-black/40 px-1 py-0.5" :value="pk.tierOf(m.modId)"
-                  @click.stop @change="pk.setTier(m.modId, Number(($event.target as HTMLSelectElement).value))">
-                  <option v-for="(_t, i) in m.tiers" :key="i" :value="i">{{ tierLabel(m, i) }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <ModPickColumn
+            v-for="col in columns"
+            :key="col.side"
+            :title="col.title"
+            :rows="col.rows"
+            :filter="groupFilter"
+            :count="pickedCount(col.side)"
+            :limit="limits[col.side]"
+            :desec-taken="desecTaken"
+            :pk="pk"
+            :named="named"
+            :tier-label="tierLabel"
+            @toggle="toggle"
+          />
         </div>
       </section>
 
