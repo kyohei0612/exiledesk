@@ -43,20 +43,27 @@ def draw_stack(
     """``show_steps`` の工程カードを ``box`` に並べる。``focus`` は大きく、完成の手は金縁."""
     x0, y0, x1, y1 = box
     n = len(show_steps)
+    # 枚数が増えるほど隙間とミニ札を詰め、フルカードは最低 300px を確保する (6〜8 工程でも崩れない)
+    arrow, gap, mini_w = (ARROW, GAP, MINI_W) if n <= 4 else (36, 16, 110)
     full = show_steps if n <= 3 else show_steps[-FULL_MAX:]
     minis = [s for s in show_steps if s not in full]
-    total_gap = (ARROW + GAP) * (n - 1)
-    full_w = min(560, (x1 - x0 - total_gap - MINI_W * len(minis)) // max(1, len(full)))
-    width = MINI_W * len(minis) + full_w * len(full) + total_gap
-    x = x0 + (x1 - x0 - width) // 2
+    total_gap = (arrow + gap) * (n - 1)
+    full_w = min(560, (x1 - x0 - total_gap - mini_w * len(minis)) // max(1, len(full)))
+    if full_w < 300 and len(full) > 1:
+        full = show_steps[-1:]
+        minis = [s for s in show_steps if s not in full]
+        full_w = min(560, (x1 - x0 - total_gap - mini_w * len(minis)) // 1)
+    full_w = max(full_w, 240)
+    width = mini_w * len(minis) + full_w * len(full) + total_gap
+    x = x0 + max(0, (x1 - x0 - width) // 2)
     cy = (y0 + y1) // 2
     final_index = final_step or len(result.steps)
     for i, s in enumerate(show_steps):
         step = result.steps[s - 1]
         is_focus = s == focus
         if s in minis:
-            _mini_card(img, (x, cy - 150, x + MINI_W, cy + 150), step, icon_dir)
-            w = MINI_W
+            _mini_card(img, (x, cy - 150, x + mini_w, cy + 150), step, icon_dir)
+            w = mini_w
         else:
             is_final = s == final_index and is_focus
             ch = HEADER_H + card_height(step.after, compact=True) + (90 if is_focus else 30)
@@ -67,8 +74,8 @@ def draw_stack(
             )
             w = full_w
         if i < n - 1:
-            arrow_right(img, x + w + GAP // 2, cy, ARROW, color=MUTED)
-        x += w + ARROW + GAP
+            arrow_right(img, x + w + gap // 2, cy, arrow, color=MUTED)
+        x += w + arrow + gap
 
 
 def _mini_card(img: Image.Image, box: Box, step: StageStep, icon_dir: Path) -> None:

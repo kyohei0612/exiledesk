@@ -66,3 +66,23 @@ def test_draft_script_renders_without_check_problems(result: CraftStageResult) -
     p = ROOT / "data/scripts/test_1min_craft_intro.json"
     script = VideoScript.model_validate(json.loads(p.read_text(encoding="utf-8")))
     assert script.check_against(result) == []
+
+
+def test_stack_handles_eight_steps_without_negative_boxes() -> None:
+    p = ROOT / "data/results/craft_intro_8min.json"
+    if not p.exists():
+        pytest.skip("8 分の結果 JSON が無い")
+    r8 = CraftStageResult.model_validate(json.loads(p.read_text(encoding="utf-8")))
+    for n in (5, 6, 8):
+        img = Image.new("RGBA", (1920, 1080), (255, 255, 255, 255))
+        draw_stack(
+            img,
+            (370, 170, 1550, 870),
+            r8,
+            list(range(1, n + 1)),
+            n,
+            "added",
+            ROOT / "assets/icons",
+            6,
+        )
+        assert _ink_ratio(img) > 0.05
