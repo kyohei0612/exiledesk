@@ -38,11 +38,8 @@ class WriteResult:
     raw: str
 
 
-def build_prompt(
-    brief: Brief, result: CraftStageResult, result_file: str, feedback: list[str]
-) -> str:
-    rules = RULES_PATH.read_text(encoding="utf-8")
-    example = EXAMPLE_PATH.read_text(encoding="utf-8") if EXAMPLE_PATH.exists() else "(無し)"
+def result_digest(result: CraftStageResult) -> str:
+    """結果 JSON のうち台本に要る部分だけを JSON 文字列に (プロンプト用)."""
     steps = [
         {
             "index": s.index,
@@ -55,22 +52,30 @@ def build_prompt(
         }
         for s in result.steps
     ]
+    return json.dumps(
+        {
+            "base_ja": result.final.base_ja,
+            "item_level": result.final.item_level,
+            "final_rarity": result.final.rarity,
+            "final_mods": [m.text_ja for m in result.final.prefixes + result.final.suffixes],
+            "steps": steps,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+def build_prompt(
+    brief: Brief, result: CraftStageResult, result_file: str, feedback: list[str]
+) -> str:
+    rules = RULES_PATH.read_text(encoding="utf-8")
+    example = EXAMPLE_PATH.read_text(encoding="utf-8") if EXAMPLE_PATH.exists() else "(無し)"
     parts = [
         "あなたは POE2Tube の台本作家です。以下のルール集に従い、台本 JSON だけを返してください。",
         "```markdown\n" + rules + "\n```",
         "## 題材 (brief)\n```json\n" + brief.model_dump_json(indent=2, by_alias=True) + "\n```",
         "## クラフトステージの結果 (この数字と名前だけを使う)\n```json\n"
-        + json.dumps(
-            {
-                "base_ja": result.final.base_ja,
-                "item_level": result.final.item_level,
-                "final_rarity": result.final.rarity,
-                "final_mods": [m.text_ja for m in result.final.prefixes + result.final.suffixes],
-                "steps": steps,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
+        + result_digest(result)
         + "\n```",
         f"## 出力\n- `result_file` は `{result_file}`\n"
         f"- `target_seconds` は {brief.target_seconds}\n"

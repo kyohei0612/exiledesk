@@ -81,7 +81,7 @@ def stage_hit(prev: Line | None, cur: Line) -> bool:
 
 
 def iter_frames(
-    cues: list[Cue], result: CraftStageResult, book: NameBook
+    cues: list[Cue], result: CraftStageResult, book: NameBook, final_step: int | None = None
 ) -> Iterator[tuple[int, Image.Image]]:
     """(通し番号, フレーム) を順に返す。番号は 0 始まり."""
     total = sum(c.frames for c in cues)
@@ -91,7 +91,7 @@ def iter_frames(
     for c in cues:
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
-        panel = render_panel_layer(c.line, result)
+        panel = render_panel_layer(c.line, result, final_step=final_step)
         # 打った瞬間の連番 (ExileDesk の演出そのもの) があれば、行の頭はそれを 1 コマずつ貼る
         clip = clip_frames(result.plan, c.line.scene.step or 0) if stage_hit(prev, c.line) else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip
@@ -100,7 +100,10 @@ def iter_frames(
             t = k / fps
             if k < len(clip):
                 frame_static = _with_panel(
-                    base, render_panel_layer(c.line, result, stage_shot=clip[k]), 0, 1.0
+                    base,
+                    render_panel_layer(c.line, result, stage_shot=clip[k], final_step=final_step),
+                    0,
+                    1.0,
                 )
             elif animate and t < SLIDE_SECONDS and panel is not None:
                 dy, alpha = slide_in(t)
@@ -126,13 +129,19 @@ def _with_panel(base: Image.Image, panel: Image.Image | None, dy: int, alpha: fl
     return img
 
 
-def write_frames(cues: list[Cue], result: CraftStageResult, book: NameBook, out_dir: Path) -> int:
+def write_frames(
+    cues: list[Cue],
+    result: CraftStageResult,
+    book: NameBook,
+    out_dir: Path,
+    final_step: int | None = None,
+) -> int:
     """連番 PNG を書き出して枚数を返す (ffmpeg の image2 入力用)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     for old in out_dir.glob("f*.png"):
         old.unlink()
     count = 0
-    for n, frame in iter_frames(cues, result, book):
+    for n, frame in iter_frames(cues, result, book, final_step):
         frame.convert("RGB").save(out_dir / f"f{n:05d}.png", compress_level=1)
         count = n + 1
     return count

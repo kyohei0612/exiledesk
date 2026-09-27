@@ -39,7 +39,10 @@ def render_base(section_name: str, progress: float) -> Image.Image:
 
 
 def render_panel_layer(
-    line: Line, result: CraftStageResult, stage_shot: Path | None = None
+    line: Line,
+    result: CraftStageResult,
+    stage_shot: Path | None = None,
+    final_step: int | None = None,
 ) -> Image.Image | None:
     """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
     if line.scene.kind == "talk":
@@ -51,7 +54,13 @@ def render_panel_layer(
     shadow_panel(layer, panel, fill=WHITE, outline=LINE, radius=32, blur=24)
     x0, y0, x1, y1 = panel
     draw_scene_panel(
-        layer, (x0 + 40, y0 + 40, x1 - 40, y1 - 40), line.scene, result, ICON_DIR, stage_shot
+        layer,
+        (x0 + 40, y0 + 40, x1 - 40, y1 - 40),
+        line.scene,
+        result,
+        ICON_DIR,
+        stage_shot,
+        final_step,
     )
     return layer
 

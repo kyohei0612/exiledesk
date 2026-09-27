@@ -24,12 +24,13 @@ def draw_scene_panel(
     result: CraftStageResult,
     icon_dir: Path,
     stage_shot: Path | None = None,
+    final_step: int | None = None,
 ) -> None:
     """``stage_shot`` を渡すと stage シーンにその画像 (打った瞬間の 1 コマ) を使う."""
     x0, y0, x1, y1 = inner
     if scene.kind == "stack":
         steps = scene.show_steps or list(range(1, (scene.step or 0) + 1))
-        draw_stack(img, inner, result, steps, scene.step, scene.highlight, icon_dir)
+        draw_stack(img, inner, result, steps, scene.step, scene.highlight, icon_dir, final_step)
     elif scene.kind == "item":
         item = result.steps[scene.step - 1].after if scene.step else result.steps[0].before
         hl: set[str] = set()

@@ -1,0 +1,264 @@
+"""長い台本 (3 分以上) を「構成表 → 章ごと → 全体検査」で書かせる.
+
+1. 構成表: Claude が章の名前・秒数・要点・使う工程と画面・橋渡しを JSON で決める (Outline)
+2. 章ごと: ルール集 + brief + 結果 + 構成表 + ここまでの本文 を渡して、その章の lines を書かせる。
+   章の検査 (文体・用語・画面の連続・尺 ±35%) を通るまで最大 N 回
+3. 全体: 組み立てて check_against + lint_script。行番号付きの問題は該当章だけ書き直す
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+
+import structlog
+from pydantic import ValidationError
+
+from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.script.brief import Brief
+from poe2tube.script.lint import lint_script, lint_section
+from poe2tube.script.model import Section, VideoScript
+from poe2tube.script.outline import Outline
+from poe2tube.script.writer import RULES_PATH, Runner, extract_json, result_digest
+
+log = structlog.get_logger()
+LINE_REF = re.compile(r"line (\d+)")
+
+
+@dataclass
+class LongWriteResult:
+    script: VideoScript
+    outline: Outline
+    attempts: dict[str, int] = field(default_factory=dict)
+
+
+def _rules() -> str:
+    return RULES_PATH.read_text(encoding="utf-8")
+
+
+def outline_prompt(brief: Brief, result: CraftStageResult, feedback: list[str]) -> str:
+    parts = [
+        "あなたは POE2Tube の台本作家です。"
+        "まず 8 分級の台本の「構成表」だけを JSON で返してください。",
+        "```markdown\n" + _rules() + "\n```",
+        "## 題材 (brief)\n```json\n" + brief.model_dump_json(indent=2, by_alias=True) + "\n```",
+        "## クラフトステージの結果\n```json\n" + result_digest(result) + "\n```",
+        "## 構成表の形 (JSON だけを返す)\n```json\n"
+        + json.dumps(
+            {
+                "title": "【PoE2 初心者】…",
+                "sections": [
+                    {
+                        "name": "導入",
+                        "target_seconds": 30,
+                        "goal": "この章で視聴者ができるようになること",
+                        "points": ["要点 1", "要点 2"],
+                        "steps": [1, 2],
+                        "scenes": ["talk", "item"],
+                        "bridge": "次の章へ渡す最後の一言の方向性",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n```",
+        f"## 決まり\n- 章の秒数の合計は {brief.target_seconds} 秒 (±10%)\n"
+        "- 最初の章は導入で 30 秒以内\n"
+        "- stage を使う章の steps を全部合わせると、結果 JSON の全工程 (1〜"
+        f"{len(result.steps)}) を漏れなく含む (実践は 1 手 1 行)\n"
+        + (
+            f"- 完成とみなす手は {brief.final_step} 手目。"
+            "それ以降の手は『実際に打つとこうなる』の実験として扱う\n"
+            if brief.final_step
+            else ""
+        )
+        + "- brief の notes を全部どこかの章に割り当てる",
+    ]
+    if feedback:
+        parts.append("## 前回の構成表の問題 (全部直すこと)\n- " + "\n- ".join(feedback))
+    return "\n\n".join(parts)
+
+
+def section_prompt(
+    brief: Brief,
+    result: CraftStageResult,
+    outline: Outline,
+    index: int,
+    done: list[Section],
+    feedback: list[str],
+) -> str:
+    spec = outline.sections[index]
+    so_far = [
+        {"section": s.name, "lines": [f"{ln.speaker}: {ln.text}" for ln in s.lines]} for s in done
+    ]
+    parts = [
+        f"あなたは POE2Tube の台本作家です。構成表の第 {index + 1} 章「{spec.name}」の本文だけを"
+        " JSON で返してください。",
+        "```markdown\n" + _rules() + "\n```",
+        "## 題材 (brief)\n```json\n" + brief.model_dump_json(indent=2, by_alias=True) + "\n```",
+        "## クラフトステージの結果 (この数字と名前だけを使う)\n```json\n"
+        + result_digest(result)
+        + "\n```",
+        "## 構成表 (全体)\n```json\n" + outline.model_dump_json(indent=2) + "\n```",
+        "## ここまでの本文 (続きとして自然につながるように。同じ説明を繰り返さない)\n```json\n"
+        + json.dumps(so_far, ensure_ascii=False, indent=1)
+        + "\n```",
+        f"## この章の指定\n- name: {spec.name}\n- target_seconds: {spec.target_seconds}"
+        f" (約 {spec.target_chars} 字、±35%)\n- goal: {spec.goal}\n- points: {spec.points}\n"
+        f"- steps: {spec.steps}\n- scenes: {spec.scenes}\n- bridge: {spec.bridge}\n"
+        "- 章の最後の行は bridge の方向性で締める (最終章は次回予告)",
+        "## 出力の形 (JSON だけ)\n```json\n"
+        + json.dumps(
+            {
+                "name": spec.name,
+                "target_seconds": spec.target_seconds,
+                "lines": [
+                    {
+                        "speaker": "zundamon",
+                        "emotion": "troubled",
+                        "text": "…なのだ。",
+                        "speech": "(読みが素直なら省略)",
+                        "scene": {"kind": "talk"},
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n```",
+    ]
+    if feedback:
+        parts.append("## 前回のこの章の問題 (全部直すこと)\n- " + "\n- ".join(feedback))
+    return "\n\n".join(parts)
+
+
+def write_outline(
+    brief: Brief, result: CraftStageResult, runner: Runner, max_attempts: int = 3
+) -> tuple[Outline, int]:
+    feedback: list[str] = []
+    for attempt in range(1, max_attempts + 1):
+        raw = runner(outline_prompt(brief, result, feedback))
+        try:
+            outline = Outline.model_validate(json.loads(extract_json(raw)))
+        except (ValueError, ValidationError) as e:
+            feedback = [f"JSON が形式に合わない: {str(e)[:400]}"]
+            continue
+        problems = outline.check_against(brief, result)
+        if not problems:
+            log.info(
+                "outline accepted", attempt=attempt, sections=[s.name for s in outline.sections]
+            )
+            return outline, attempt
+        feedback = problems
+        log.warning("outline rejected", attempt=attempt, problems=problems)
+    raise RuntimeError(f"構成表が {max_attempts} 回で通らなかった: {feedback}")
+
+
+def write_section(
+    brief: Brief,
+    result: CraftStageResult,
+    outline: Outline,
+    index: int,
+    done: list[Section],
+    runner: Runner,
+    max_attempts: int = 3,
+    extra_feedback: list[str] | None = None,
+) -> tuple[Section, int]:
+    feedback = list(extra_feedback or [])
+    offset = sum(len(s.lines) for s in done)
+    for attempt in range(1, max_attempts + 1):
+        raw = runner(section_prompt(brief, result, outline, index, done, feedback))
+        try:
+            section = Section.model_validate(json.loads(extract_json(raw)))
+        except (ValueError, ValidationError) as e:
+            feedback = [f"JSON が形式に合わない: {str(e)[:400]}"]
+            continue
+        problems = lint_section(section, len(result.steps), offset)
+        if not problems:
+            log.info(
+                "section accepted", name=section.name, attempt=attempt, lines=len(section.lines)
+            )
+            return section, attempt
+        feedback = problems
+        log.warning("section rejected", name=section.name, attempt=attempt, problems=problems)
+    raise RuntimeError(
+        f"章「{outline.sections[index].name}」が {max_attempts} 回で通らなかった: {feedback}"
+    )
+
+
+def write_script_long(
+    brief: Brief,
+    result: CraftStageResult,
+    result_file: str,
+    runner: Runner,
+    max_attempts: int = 3,
+    max_global_passes: int = 2,
+) -> LongWriteResult:
+    outline, n = write_outline(brief, result, runner, max_attempts)
+    attempts = {"outline": n}
+    sections: list[Section] = []
+    for i in range(len(outline.sections)):
+        sec, n = write_section(brief, result, outline, i, sections, runner, max_attempts)
+        sections.append(sec)
+        attempts[sec.name] = n
+    script = _assemble(brief, outline, sections, result_file)
+    for _ in range(max_global_passes):
+        problems = script.check_against(result) + lint_script(script, len(result.steps))
+        if not problems:
+            break
+        log.warning("script (long) rejected", problems=problems)
+        targets = _sections_to_rewrite(script, problems)
+        for i in targets:
+            sec, n = write_section(
+                brief, result, outline, i, sections[:i], runner, max_attempts, problems
+            )
+            sections[i] = sec
+            attempts[f"{sec.name}#rewrite"] = attempts.get(f"{sec.name}#rewrite", 0) + n
+        script = _assemble(brief, outline, sections, result_file)
+    else:
+        problems = script.check_against(result) + lint_script(script, len(result.steps))
+        if problems:
+            raise RuntimeError(f"全体検査が通らなかった: {problems}")
+    return LongWriteResult(script, outline, attempts)
+
+
+def _assemble(
+    brief: Brief, outline: Outline, sections: list[Section], result_file: str
+) -> VideoScript:
+    return VideoScript(
+        title=outline.title,
+        target_seconds=brief.target_seconds,
+        result_file=result_file,
+        final_step=brief.final_step,
+        sections=sections,
+    )
+
+
+def _sections_to_rewrite(script: VideoScript, problems: list[str]) -> list[int]:
+    """問題文の line N から章の番号へ。行の特定が無い問題 (尺・比率) は一番長い章."""
+    bounds: list[tuple[int, int]] = []
+    start = 1
+    for s in script.sections:
+        bounds.append((start, start + len(s.lines) - 1))
+        start += len(s.lines)
+    targets: set[int] = set()
+    for p in problems:
+        m = LINE_REF.search(p)
+        if m:
+            n = int(m.group(1))
+            for i, (a, b) in enumerate(bounds):
+                if a <= n <= b:
+                    targets.add(i)
+        elif "尺" in p or "比率" in p:
+            longest = max(range(len(script.sections)), key=lambda i: len(script.sections[i].lines))
+            targets.add(longest)
+        elif "stage" in p or "実践" in p:
+            stage_secs = [
+                i
+                for i, s in enumerate(script.sections)
+                if any(ln.scene.kind == "stage" for ln in s.lines)
+            ]
+            targets.add(stage_secs[-1] if stage_secs else len(script.sections) - 1)
+    return sorted(targets)

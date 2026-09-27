@@ -20,3 +20,8 @@ class Brief(BaseModel):
     target_seconds: int = Field(ge=30, le=900)
     plan: CraftStagePlan = Field(description="クラフトステージに回す手順")
     notes: list[str] = Field(default_factory=list, description="台本に入れたい要点・避けたい事")
+    final_step: int | None = Field(
+        default=None,
+        ge=1,
+        description="完成とみなす手 (それ以降はカオス/消去などの実験)。無ければ最後の手",
+    )

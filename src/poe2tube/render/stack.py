@@ -38,8 +38,9 @@ def draw_stack(
     focus: int | None,
     highlight: str | None,
     icon_dir: Path,
+    final_step: int | None = None,
 ) -> None:
-    """``show_steps`` の工程カードを ``box`` に並べる。``focus`` は大きく、最後 (完成) は金縁."""
+    """``show_steps`` の工程カードを ``box`` に並べる。``focus`` は大きく、完成の手は金縁."""
     x0, y0, x1, y1 = box
     n = len(show_steps)
     full = show_steps if n <= 3 else show_steps[-FULL_MAX:]
@@ -49,7 +50,7 @@ def draw_stack(
     width = MINI_W * len(minis) + full_w * len(full) + total_gap
     x = x0 + (x1 - x0 - width) // 2
     cy = (y0 + y1) // 2
-    final_index = len(result.steps)
+    final_index = final_step or len(result.steps)
     for i, s in enumerate(show_steps):
         step = result.steps[s - 1]
         is_focus = s == focus

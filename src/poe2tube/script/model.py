@@ -88,6 +88,9 @@ class VideoScript(BaseModel):
     result_file: str = Field(
         description="数字の出どころ (CraftStageResult の JSON パス、リポジトリ相対)"
     )
+    final_step: int | None = Field(
+        default=None, ge=1, description="完成とみなす手 (積み上げ図解の「完成！」と成功音)"
+    )
     sections: list[Section] = Field(min_length=1)
 
     @property
