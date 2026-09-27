@@ -95,3 +95,14 @@ def test_thumbnail_renders_1280x720() -> None:
     img = render_thumbnail(spec)
     assert img.size == (1280, 720)
     assert _ink_ratio(img) > 0.3  # 暗い背景 + 文字で大半が濃い
+
+
+def test_giftcut_telop_style_renders() -> None:
+    from poe2tube.render.telop_style import load_presets, render_telop
+
+    if "textstyle025" not in load_presets():
+        pytest.skip("GiftCut のプリセットが無い環境")
+    im = render_telop("textstyle025", "クラフト入門", 0.5)
+    assert im.width > 200 and im.height > 40
+    dict_style = {"fontFamily": "x", "fontSize": 60, "fill": {"color": "#ffffff"}, "strokes": []}
+    assert render_telop(dict_style, "あ").width > 10

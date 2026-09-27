@@ -19,6 +19,9 @@ class Settings(BaseSettings):
         description="ExileDesk のリポジトリ。公式日本語名 (price-keys.json 等) の出どころ",
     )
     youtube_pipeline_root: Path = Field(default=Path.home() / "youtube-pipeline")
+    giftcut_root: Path = Field(
+        default=Path.home() / "GiftCut", description="テロップスタイル (telop-presets) の出どころ"
+    )
     voicevox_url: str = "http://127.0.0.1:50021"
     exiledesk_dev_url: str = Field(
         default="http://localhost:1420",
