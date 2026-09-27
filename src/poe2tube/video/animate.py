@@ -26,6 +26,7 @@ POP_SECONDS = 0.35
 POP_DELAY = 0.15
 SLIDE_SECONDS = 0.3
 SLIDE_PX = 60
+CLIP_SLOWMO = 2  # 打った瞬間の録画を 1/2 速で (kyohei 2026-09-28「速くて何が変わったか分からない」)
 
 
 def pop_scale(t: float) -> float:
@@ -98,10 +99,11 @@ def iter_frames(
         static = _with_panel(base, panel, 0, 1.0)
         for k, mouth in enumerate(c.mouth_levels):
             t = k / fps
-            if k < len(clip):
+            if k < len(clip) * CLIP_SLOWMO:
+                shot = clip[k // CLIP_SLOWMO]
                 frame_static = _with_panel(
                     base,
-                    render_panel_layer(c.line, result, stage_shot=clip[k], final_step=final_step),
+                    render_panel_layer(c.line, result, stage_shot=shot, final_step=final_step),
                     0,
                     1.0,
                 )

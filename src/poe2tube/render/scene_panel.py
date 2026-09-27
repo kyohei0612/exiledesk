@@ -7,10 +7,10 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from poe2tube.capture.stage import cached_path
-from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.render.draw import load_icon, pill
 from poe2tube.render.item_card import card_height, draw_item_card
-from poe2tube.render.palette import ACCENT, GOLD, INK, LINE, MUTED, font
+from poe2tube.render.palette import ACCENT, GOLD, GREEN, INK, LINE, MUTED, font
 from poe2tube.render.stack import draw_stack
 from poe2tube.script.model import Scene
 
@@ -45,6 +45,8 @@ def draw_scene_panel(
         shot = stage_shot or cached_path(result.plan, scene.step or 0)
         if shot.exists():
             _stage_capture(img, inner, shot, scene.step or 0)
+            if scene.step:
+                _change_callout(img, inner, result.steps[scene.step - 1], icon_dir)
         else:
             _stage_placeholder(img, inner, scene, result, icon_dir)
     elif scene.kind == "cost":
@@ -64,6 +66,29 @@ def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int) -> None:
     img.alpha_composite(im, (px, py))
     label = "クラフトステージ (ExileDesk)" + (f"  {step} 手目" if step else "  開始前")
     pill(img, (x0, y0), label, ACCENT, size=24)
+
+
+def _change_callout(img: Image.Image, box: Box, step: StageStep, icon_dir: Path) -> None:
+    """撮影画面の右上に「この手で何が消えて何が付いたか」を文字で重ねる (速い演出の補助)."""
+    x0, y0, x1, _ = box
+    lines: list[tuple[str, tuple[int, int, int]]] = [(f"{step.currency_ja} を使った", INK)]
+    lines += [(f"− {m.text_ja}", (200, 60, 60)) for m in step.changed.removed]
+    lines += [(f"+ {m.text_ja}", GREEN) for m in step.changed.added]
+    if not step.applied:
+        lines.append((f"使えない: {step.reason or ''}", MUTED))
+    d = ImageDraw.Draw(img)
+    f = font(24)
+    w = max(int(d.textlength(s, font=f)) for s, _ in lines) + 40 + 60
+    h = 20 + 36 * len(lines)
+    bx, by = x1 - w - 8, y0 + 52
+    d.rounded_rectangle(
+        (bx, by, bx + w, by + h), 14, fill=(255, 255, 255, 235), outline=GOLD, width=3
+    )
+    icon_path = icon_dir / f"{step.currency}.png"
+    if icon_path.exists():
+        img.alpha_composite(load_icon(icon_path, 48), (bx + 12, by + 8))
+    for i, (s, col) in enumerate(lines):
+        d.text((bx + 70, by + 10 + 36 * i), s, font=f, fill=col)
 
 
 def _stage_placeholder(
