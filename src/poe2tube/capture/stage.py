@@ -26,13 +26,16 @@ log = structlog.get_logger()
 CACHE_DIR = REPO_ROOT / "cache" / "stage"
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 SIDEBAR_W = 208
-VIEWPORT = (SIDEBAR_W + 1400, 760)
+HEADER_H = 64  # 「クラフトステージ」の見出しと説明文 (動画では要らない)
+# 本体を動画のパネル (幅 1180) に等倍で入れる: 縮小しないのが一番読みやすい
+VIEWPORT = (SIDEBAR_W + 1180, HEADER_H + 640)
+CAPTURE_VER = "v2"  # 撮り方を変えたらキャッシュを切り替える
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 
 
 def plan_key(plan: CraftStagePlan) -> str:
     raw = plan.model_dump_json(by_alias=True, exclude_none=True)
-    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+    return hashlib.sha256(f"{CAPTURE_VER}|{raw}".encode()).hexdigest()[:16]
 
 
 def cached_path(plan: CraftStagePlan, step: int) -> Path:
@@ -107,9 +110,9 @@ def capture_plan(plan: CraftStagePlan, steps: list[int], force: bool = False) ->
                 path=str(paths[st]),
                 clip={
                     "x": SIDEBAR_W,
-                    "y": 0,
+                    "y": HEADER_H,
                     "width": VIEWPORT[0] - SIDEBAR_W,
-                    "height": VIEWPORT[1],
+                    "height": VIEWPORT[1] - HEADER_H,
                 },
             )
             log.info("stage captured", step=st, path=paths[st].name)
