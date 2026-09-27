@@ -1,0 +1,42 @@
+<!--
+  StageHistory.vue — クラフトステージの工程履歴 (2026-09-27、ADR-001)
+
+  1 手ずつ下に積み上がる (POE2Tube の「積み上げ図解」と同じ見え方)。手の番号・カレンシー・付いた / 消えた MOD・レアリティの変化・累計の費用。
+  打てなかった手は理由を薄く出す。
+-->
+<script setup lang="ts">
+import { craftStage, iconOf } from "../../state/craft-stage";
+import { displayCurrency } from "../../state/display-currency";
+
+const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア" } as const;
+const RARITY_CLS = { normal: "text-[#c8c8c8]", magic: "text-[#8888ff]", rare: "text-[#e8d77a]" } as const;
+const money = (ex: number) => displayCurrency.money(ex);
+</script>
+
+<template>
+  <ol class="space-y-1">
+    <li
+      v-for="s in craftStage.log.value"
+      :key="s.out.index"
+      class="flex items-start gap-2 rounded-lg border px-2 py-1.5 text-[12px]"
+      :class="s.out.applied ? 'border-white/10 bg-black/20' : 'border-white/5 bg-black/10 opacity-50'"
+    >
+      <span class="w-6 shrink-0 text-right tabular-nums opacity-50">{{ s.out.index }}</span>
+      <img v-if="iconOf(s.out.currency)" :src="iconOf(s.out.currency)" alt="" class="h-5 w-5 shrink-0 object-contain" />
+      <div class="min-w-0 flex-1">
+        <p>
+          <b>{{ s.out.currency_ja }}</b>
+          <span v-if="s.out.changed.rarity_from !== s.out.changed.rarity_to" class="ml-1.5">
+            <span :class="RARITY_CLS[s.out.changed.rarity_from]">{{ RARITY_JA[s.out.changed.rarity_from] }}</span> →
+            <span :class="RARITY_CLS[s.out.changed.rarity_to]">{{ RARITY_JA[s.out.changed.rarity_to] }}</span>
+          </span>
+          <span v-if="!s.out.applied" class="ml-1.5 text-rose-300/80">{{ s.out.reason }}</span>
+        </p>
+        <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span></p>
+        <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
+      </div>
+      <span class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
+    </li>
+    <li v-if="!craftStage.log.value.length" class="rounded-lg bg-black/20 px-3 py-2 text-[12px] opacity-50">まだ何も使っていません。右の棚からカレンシーを選んでアイテムを押してください</li>
+  </ol>
+</template>

@@ -63,6 +63,20 @@ function fillValues(text: string, values: readonly number[], signs: readonly str
   });
 }
 const signsOf = (text: string): string[] => [...text.matchAll(/([+-]?)#/g)].map((m) => m[1] ?? "");
+/**
+ * 英語文に値を入れる。元文は「#」の物のほか、最下段の数値や「(a-b)」で書かれた物 (約 470 個、例 "Loads an additional bolt")、
+ * 一部だけ潰れた物 ("Adds 1 to # Cold damage" — 最小側の範囲が 1-1) がある。
+ * 「#」・数値・「(a-b)」を合わせた並びが値の数と同じなら順に差し替える。合わなければ「#」だけ埋める。
+ */
+const RANGE = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g;
+const SLOT = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|\d+(?:\.\d+)?/g;
+function fillEn(text: string, values: readonly number[]): string {
+  // 「(41-59)% … in the last 8 seconds」のように固定の数値が混ざる物は、範囲と「#」だけで数が合えばそこを埋める
+  const re = [RANGE, SLOT].find((r) => (text.match(r) ?? []).length === values.length);
+  if (!re) return fillValues(text, values);
+  let i = 0;
+  return text.replace(re, () => String(values[i++]));
+}
 
 /** 付けられる MOD の候補 (側ごとの置き場から、付いている系統を除き、段の重み > 0 の物) */
 interface Candidate { mod: Mod; side: StageSide; tiers: Array<{ index: number; w: number }>; w: number }
@@ -108,7 +122,7 @@ export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: 
     values,
     ranges,
     textJa: fillValues(jaOfMod(mod), values, signsOf(en)),
-    textEn: fillValues(en, values),
+    textEn: fillEn(en, values),
   };
 }
 

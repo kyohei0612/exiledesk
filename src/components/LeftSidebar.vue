@@ -48,6 +48,8 @@ const items: NavItem[] = [
   // 2026-09-22: 貼り付けたアイテムから「買うか自分で出すか」と設計図を出すお試し計算機。
   // 賭けではないので「ヴァールの天秤」の下ではなく経済の直下に置く
   { id: "htc-craft", icon: "🧪", label: "クラフト計算機", group: "economy" },
+  // 2026-09-27: カレンシーを 1 個ずつ使って変化を見せる実演 (動画・配信用。ADR-001 docs/decisions/001-craft-stage.md)
+  { id: "craft-stage", icon: "🜖", label: "クラフトステージ", group: "economy" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す
