@@ -265,8 +265,11 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
             let g = map.entry(kind.to_string()).or_default();
             g.sends.retain(|t| *t > now - 6 * 3600 * 1000);
             let own = wait_for_rules(g, now, min_spacing_ms(kind));
-            // 枠は IP 単位なので、全窓口を合わせた分も見る
-            let mut wait = own.max(combined_wait(map, now));
+            // 枠は IP 単位なので、全窓口を合わせた分も見る。予約で最後まで収まると確かめた画面の取得 (通し券) は、
+            // 1 本ごとの間隔 (バケット) を待たず 5 分の合計窓だけ見る (2026-09-28 オーナー「取得待ちのストレスは与えたくない」)
+            let pass = !patient && super::reserve::pass_left(kind, now);
+            let combined = if pass { combined_window_wait(map, now) } else { combined_wait(map, now) };
+            let mut wait = own.max(combined);
             // 空いていても、画面が待っているなら巡回は譲る
             if wait <= 0 && patient && IMPATIENT_WAITING.load(std::sync::atomic::Ordering::SeqCst) > 0 {
                 wait = PATIENT_YIELD_MS;
@@ -274,6 +277,9 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
             if wait <= 0 {
                 map.entry(kind.to_string()).or_default().sends.push(now);
                 bucket_take(now);
+                if pass {
+                    super::reserve::pass_take(kind);
+                }
                 save_gates_locked(map);
             }
             (wait, map.values().any(|g| g.blocked_until > now))

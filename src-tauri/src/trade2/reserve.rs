@@ -14,6 +14,38 @@ static RESERVE_GEN: AtomicU64 = AtomicU64::new(0);
 /// 今待っている予約 (解除予定 ms, 理由, 枠の長さ 秒)。待っていなければ None
 pub static RESERVE_WAIT: StdMutex<Option<(i64, WaitWhy, i64)>> = StdMutex::new(None);
 
+/// 予約で「最後まで収まる」と確かめた本数 (検索, 取得, 期限 ms)。この本数までは門番が 1 本ごとの間隔 (バケット) を待たずに通す。
+/// 枠 (各窓の 8 割・最低間隔・全窓口の 5 分合計) の判定はそのまま効く。使い切ったら、今までどおり間隔を待つ
+static PASS: StdMutex<Option<(u32, u32, i64)>> = StdMutex::new(None);
+/// 通し券の期限 (予約してから、これを過ぎたら使わない)
+const PASS_TTL_MS: i64 = 10 * 60 * 1000;
+
+/// その窓口の通し券が残っているか (門番が見る。減らさない)
+pub fn pass_left(kind: &str, now: i64) -> bool {
+    let Ok(g) = PASS.lock() else { return false };
+    match *g {
+        Some((s, f, until)) if now < until => if kind == "search" { s > 0 } else { f > 0 },
+        _ => false,
+    }
+}
+/// 通し券を 1 本使う (門番が実際に送った時)
+pub fn pass_take(kind: &str) {
+    if let Ok(mut g) = PASS.lock() {
+        if let Some((s, f, _)) = g.as_mut() {
+            if kind == "search" { *s = s.saturating_sub(1) } else { *f = f.saturating_sub(1) }
+        }
+    }
+}
+fn pass_clear(why: &str) {
+    if let Ok(mut g) = PASS.lock() {
+        if let Some((s, f, _)) = g.take() {
+            if s + f > 0 {
+                crate::app_log::line_static(&format!("[予約] 通し券の残り (検索 {s} / 取得 {f}) を捨てた ({why})"));
+            }
+        }
+    }
+}
+
 /// 取得 1 回 (n 本) を**途中で制限にかからず最後まで回り切れるか**。回り切れないなら、回り切れるようになるまでの待ち。
 ///
 /// 2026-09-27 オーナー:「取得して途中で制限にならないように作りたい。自動監視後すぐに忍者コピーで検索したら多分制限なるでしょ。
@@ -113,6 +145,11 @@ pub async fn trade2_reserve(searches: u32, fetches: u32, max_wait_ms: i64) -> Re
     if let Ok(mut w) = RESERVE_WAIT.lock() {
         *w = None;
     }
+    if result.is_ok() {
+        if let Ok(mut g) = PASS.lock() {
+            *g = Some((searches, fetches, now_ms() + PASS_TTL_MS));
+        }
+    }
     match &result {
         Ok(()) if waited > 0 => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: {} 秒待って開始", waited / 1000)),
         Ok(()) => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: 待たずに開始")),
@@ -129,6 +166,9 @@ pub fn ui_trade_busy() -> bool {
 /// 画面から: 取引所を使い始めた / 終えた (オーナー 2026-09-27「トレード使えるのは 1 タブだけ」)
 #[tauri::command]
 pub fn trade2_set_ui_busy(busy: bool) {
+    if !busy {
+        pass_clear("使用権を離した");
+    }
     if UI_BUSY.swap(busy, Ordering::SeqCst) != busy {
         crate::app_log::line_static(if busy { "[使用中] 画面の機能が取引所を使い始めた (巡回は始めない)" } else { "[使用中] 画面の機能が取引所を離した" });
     }
@@ -139,6 +179,7 @@ pub fn trade2_set_ui_busy(busy: bool) {
 pub fn trade2_reserve_cancel() {
     RESERVE_GEN.fetch_add(1, Ordering::SeqCst);
     crate::app_log::line_static("[予約] 中止 (待っている予約を止めた)");
+    pass_clear("中止");
 }
 
 #[cfg(test)]
