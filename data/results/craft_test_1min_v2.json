@@ -1,0 +1,685 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-27T17:05:39.075Z",
+  "exiledesk_version": "0.1.309",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "1分テスト: 変成 → 増強 → 王者 → 消去の実験",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20260930,
+    "steps": [
+      {
+        "currency": "transmute",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "augment",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "regal",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "annul",
+        "omen": null,
+        "times": 1,
+        "note": "実験: 要らないMODを1つ消せるか (ランダム)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260931,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260932,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260933,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          },
+          {
+            "mod_id": "Rings/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "冷気耐性 +37%",
+            "text_en": "+37% to Cold Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Ice"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "冷気耐性 +37%",
+            "text_en": "+37% to Cold Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Ice"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "annul",
+      "currency_ja": "消去のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260934,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          },
+          {
+            "mod_id": "Rings/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "冷気耐性 +37%",
+            "text_en": "+37% to Cold Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Ice"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          },
+          {
+            "mod_id": "Rings/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "冷気耐性 +37%",
+            "text_en": "+37% to Cold Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Ice"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 46,
+            "text_ja": "火ダメージが22%増加する",
+            "text_en": "22% increased Fire Damage",
+            "values": [
+              22
+            ],
+            "ranges": [
+              [
+                18,
+                22
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Cauterising"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 369.38,
+        "amount": 1,
+        "subtotal": 369.38,
+        "cumulative": 369.38
+      }
+    }
+  ],
+  "final": {
+    "name": "ニーモニックリング",
+    "base": "Mnemonic Ring",
+    "base_ja": "ニーモニックリング",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": [
+      {
+        "mod_id": "Rings/Dexterity",
+        "family": "Dexterity",
+        "side": "suffix",
+        "tier_name": "T7",
+        "mod_level": 11,
+        "text_ja": "器用さ +9",
+        "text_en": "+9 to Dexterity",
+        "values": [
+          9
+        ],
+        "ranges": [
+          [
+            9,
+            12
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "of the Lynx"
+      },
+      {
+        "mod_id": "Rings/ColdResistance",
+        "family": "ColdResistance",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 71,
+        "text_ja": "冷気耐性 +37%",
+        "text_en": "+37% to Cold Resistance",
+        "values": [
+          37
+        ],
+        "ranges": [
+          [
+            36,
+            40
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "of the Ice"
+      }
+    ]
+  },
+  "total_cost": 369.38
+}
