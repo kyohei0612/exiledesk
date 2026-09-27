@@ -130,7 +130,7 @@ function build(orbKey: string, os: Omen[], cat: string | null): SimAction | null
     const ms = props.c.data.value?.mods.get(modId)?.type as Side | undefined;
     return g === "essence" && sd && ms ? { kind: "essence", modId, ...(sd !== ms ? { removeSide: sd } : {}) } : null;
   }
-  if (orbKey === "desecrate" || orbKey === "desecrate_ancient") {
+  if (orbKey === "desecrate" || orbKey === "desecrate_ancient" || orbKey === "desecrate_altered") {
     if (g !== "desecrate" || !sd) return null;
     return { kind: "desecrate", side: sd, bone: orbKey, echoes: tag("echoes") };
   }
@@ -147,6 +147,8 @@ const ORBS = computed((): Array<{ key: string; ja: string }> => [
   { key: "exalt", ja: "高貴なオーブ" }, { key: "exalt_greater", ja: "高貴なオーブ (上級・段 35 以上)" }, { key: "exalt_perfect", ja: "高貴なオーブ (完全・段 50 以上)" },
   { key: "annul", ja: "消去のオーブ" },
   { key: "desecrate", ja: `${boneJa("desecrate")} (冒涜)` }, { key: "desecrate_ancient", ja: `${boneJa("desecrate_ancient")} (冒涜・段 40 以上)` },
+  // 変質した鎖骨: 冒涜に異界の MOD も混ざる。装飾品 (異界の MOD があるベース) だけ (2026-09-27)
+  ...(props.c.base.value?.pools.otherworldly ? [{ key: "desecrate_altered", ja: `${boneJa("desecrate_altered")} (冒涜・異界の MOD も出る)` }] : []),
 ]);
 const essenceOrbs = computed(() => [
   ...props.c.targets.value.filter((x) => props.c.data.value?.mods.get(x.modId)?.source === "perfect_essence")

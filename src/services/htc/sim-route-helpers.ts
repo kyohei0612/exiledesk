@@ -234,12 +234,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   function desecrateOpts(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>): { opts: DesecOpt[]; pMiss3?: number } {
     const occ = families(s);
     const floor = a.bone === "desecrate_ancient" ? 40 : 0;
+    // 変質した鎖骨は、その側の異界の MOD も候補に入る (2026-09-27)
+    const ow = a.bone === "desecrate_altered" ? (cls.pools.otherworldly?.[a.side === "prefix" ? "prefixes" : "suffixes"] ?? []) : [];
     const want = new Map(n.targets.filter((t) => !has(s, t.modId)).map((t) => [t.modId, t.minTier] as const));
-    const key = `${a.side}|${floor}|${[...want].join()}|${[...occ].sort().join()}`;
+    const key = `${a.side}|${a.bone}|${[...want].join()}|${[...occ].sort().join()}`;
     const hit = desecMemo.get(key);
     if (hit) return hit;
     const k = a.side === "prefix" ? "prefixes" : "suffixes";
-    const ids = [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k]])];
+    const ids = [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k], ...ow])];
     const opts: DesecOpt[] = ids.flatMap((id) => {
       const m = mod(id);
       if (!m || occ.has(m.family)) return [];

@@ -74,6 +74,8 @@ const BONES = {
   rib_ancient: "Metadata/Items/Currency/AbyssalBenchTicketArmourHigh",
   collarbone: "Metadata/Items/Currency/AbyssalBenchTicketJewellery",
   collarbone_ancient: "Metadata/Items/Currency/AbyssalBenchTicketJewelleryHigh",
+  // 変質した鎖骨: 冒涜に「異界の MOD」も混ざる (2026-09-27)。装飾品だけ
+  collarbone_altered: "Metadata/Items/Currency/AbyssalBenchTicketBreach",
 };
 
 /**

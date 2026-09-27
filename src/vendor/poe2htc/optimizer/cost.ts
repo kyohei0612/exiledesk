@@ -268,13 +268,17 @@ export function pricesForBase(prices: Prices, base: ItemBase): Prices {
   const bone = desecrationBoneFor(base.category);
   const preserved = prices.bones?.[bone];
   const ancient = prices.bones?.[`${bone}_ancient`];
-  if (preserved === undefined && ancient === undefined) return prices;
+  // ExileDesk 2026-09-27: the Altered Collarbone (jewellery only) — a desecration whose pool also holds
+  // the otherworldly mods. Priced as its own listing under `desecrate_altered`.
+  const altered = prices.bones?.[`${bone}_altered`];
+  if (preserved === undefined && ancient === undefined && altered === undefined) return prices;
   return {
     ...prices,
     currency: {
       ...prices.currency,
       ...(preserved === undefined ? {} : { desecrate: preserved }),
       ...(ancient === undefined ? {} : { desecrate_ancient: ancient }),
+      ...(altered === undefined ? {} : { desecrate_altered: altered }),
     },
   };
 }

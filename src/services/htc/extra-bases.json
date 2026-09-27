@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-24",
+ "generated": "2026-09-27",
  "familyTexts": {
   "Amulets": {
    "IncreasedAccuracy": [
@@ -50277,6 +50277,42 @@
   ]
  },
  "addedPools": {
+  "Amulets": {
+   "otherworldly": {
+    "prefixes": [
+     "Amulets/Otherworldly_AnaemiaOnHit",
+     "Amulets/Otherworldly_ColdDamageAsPortionOfDamage"
+    ],
+    "suffixes": [
+     "Amulets/Otherworldly_AdditionalMaximumSeals",
+     "Amulets/Otherworldly_FireSpellBaseCriticalChance"
+    ]
+   }
+  },
+  "Belts": {
+   "otherworldly": {
+    "prefixes": [
+     "Belts/Otherworldly_ArchonEffect",
+     "Belts/Otherworldly_ColdDamageIfColdInfusionCollectedLast8Seconds",
+     "Belts/Otherworldly_DamageRemovedFromMinion",
+     "Belts/Otherworldly_FireDamageIfFireInfusionCollectedLast8Seconds",
+     "Belts/Otherworldly_LightningDamageIfLightningInfusionCollectedLast8Seconds",
+     "Belts/Otherworldly_MinionDamagePerDifferentCommandSkillUsedLast15Seconds",
+     "Belts/Otherworldly_MinionsGiganticRevivedRecently"
+    ],
+    "suffixes": [
+     "Belts/Otherworldly_ArchonDuration",
+     "Belts/Otherworldly_ArchonUndeathOnOfferingUse",
+     "Belts/Otherworldly_ChanceToNotConsumeInfusionIfLostArchonPast6Seconds",
+     "Belts/Otherworldly_MinionAdditionalProjectileChance",
+     "Belts/Otherworldly_MinionDuration",
+     "Belts/Otherworldly_MinionMeleeSplash",
+     "Belts/Otherworldly_MinionReservationEfficiency",
+     "Belts/Otherworldly_SealGainFrequency",
+     "Belts/Otherworldly_SpellElementalAilmentMagnitude"
+    ]
+   }
+  },
   "Body_Armours_dex": {
    "desecrated": {
     "prefixes": [],
@@ -51063,6 +51099,29 @@
       "Quarterstaves/Rune_destruction_PhysicalModifierEffect"
      ]
     }
+   }
+  },
+  "Rings": {
+   "otherworldly": {
+    "prefixes": [
+     "Rings/Otherworldly_DamageRemovedFromManaBeforeLife",
+     "Rings/Otherworldly_MinionDamagingAilments",
+     "Rings/Otherworldly_MinionArmourBreak",
+     "Rings/Otherworldly_OfferingEffect",
+     "Rings/Otherworldly_ChaosDamage",
+     "Rings/Otherworldly_ColdDamage",
+     "Rings/Otherworldly_FireDamage",
+     "Rings/Otherworldly_LightningDamage"
+    ],
+    "suffixes": [
+     "Rings/Otherworldly_MinionCommandSkillSpeed",
+     "Rings/Otherworldly_ElementalInfusion",
+     "Rings/Otherworldly_InvocationMaximumEnergy",
+     "Rings/Otherworldly_MinionCooldown",
+     "Rings/Otherworldly_MinionGainPuppetMasterOnCommand",
+     "Rings/Otherworldly_ImpaleEffect",
+     "Rings/Otherworldly_TemporaryMinionLimit"
+    ]
    }
   },
   "Sceptres": {
@@ -52057,6 +52116,566 @@
   }
  ],
  "mods": [
+  {
+   "id": "Amulets/Otherworldly_AnaemiaOnHit",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "AnaemiaOnHit",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "Inflict [Anaemia] on [Hit]\n[Anaemia] allows +(2-3) [CorruptedBlood|Corrupted Blood] debuffs to be inflicted on enemies",
+   "tiers": [
+    {
+     "name": "Uul-Netol's",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       2,
+       3
+      ]
+     ],
+     "stats": [
+      "apply_anaemia_magnitude_on_hit"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Amulets/Otherworldly_ColdDamageAsPortionOfDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ColdDamageAsPortionOfDamage",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Gain] (10-20)% of [Physical] Damage as Extra [Cold] Damage",
+   "tiers": [
+    {
+     "name": "Tul's",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       10,
+       20
+      ]
+     ],
+     "stats": [
+      "non_skill_base_physical_damage_%_to_gain_as_cold"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Amulets/Otherworldly_AdditionalMaximumSeals",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "AdditionalMaximumSeals",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Seal|Sealed] Skills have +1 to maximum [Seal|Seals]",
+   "tiers": [
+    {
+     "name": "of Esh",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "base_maximum_seals_for_skill"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Amulets/Otherworldly_FireSpellBaseCriticalChance",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "FireSpellBaseCriticalChance",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "+(4-5)% to Fire Spell [Critical|Critical Hit] Chance",
+   "tiers": [
+    {
+     "name": "of Xoph",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       400,
+       500
+      ]
+     ],
+     "stats": [
+      "fire_spell_additional_critical_strike_chance_permyriad"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_ArchonEffect",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ArchonEffect",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(20-39)% increased effect of [Archon] [Buff|Buffs] on you",
+   "tiers": [
+    {
+     "name": "Unshackling",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       39
+      ]
+     ],
+     "stats": [
+      "archon_effect_on_you_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_ColdDamageIfColdInfusionCollectedLast8Seconds",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ColdDamageIfColdInfusionCollectedLast8Seconds",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(41-59)% increased [Cold] Damage if you've collected a [ElementalInfusion|Cold Infusion] in the last 8 seconds",
+   "tiers": [
+    {
+     "name": "Glacial",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       41,
+       59
+      ]
+     ],
+     "stats": [
+      "cold_damage_+%_cold_infusion_collected_last_8_seconds"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_DamageRemovedFromMinion",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "DamageRemovedFromMinion",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "5% of Damage from Hits is taken from your Spectres' Life before you",
+   "tiers": [
+    {
+     "name": "Underling's",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       5,
+       5
+      ]
+     ],
+     "stats": [
+      "damage_removed_from_spectres_before_life_or_es_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_FireDamageIfFireInfusionCollectedLast8Seconds",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "FireDamageIfFireInfusionCollectedLast8Seconds",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(41-59)% increased [Fire] Damage if you've collected a [ElementalInfusion|Fire Infusion] in the last 8 seconds",
+   "tiers": [
+    {
+     "name": "Erupting",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       41,
+       59
+      ]
+     ],
+     "stats": [
+      "fire_damage_+%_if_fire_infusion_collected_last_8_seconds"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_LightningDamageIfLightningInfusionCollectedLast8Seconds",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "LightningDamageIfLightningInfusionCollectedLast8Seconds",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(41-59)% increased [Lightning] Damage if you've collected a [ElementalInfusion|Lightning Infusion] in the last 8 seconds",
+   "tiers": [
+    {
+     "name": "Energising",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       41,
+       59
+      ]
+     ],
+     "stats": [
+      "lightning_damage_+%_if_lightning_infusion_collected_last_8_seconds"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionDamagePerDifferentCommandSkillUsedLast15Seconds",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "MinionDamagePerDifferentCommandSkillUsedLast15Seconds",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(7-12)% increased Minion Damage per different [Command] Skill used in the past 15 seconds",
+   "tiers": [
+    {
+     "name": "Instructor's",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       7,
+       12
+      ]
+     ],
+     "stats": [
+      "minion_damage_+%_per_different_command_skills_used_in_last_15_seconds"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionsGiganticRevivedRecently",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "MinionsGiganticRevivedRecently",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "Your Minions are [Gigantic] if they have [Reviving|Revived] [Recently]",
+   "tiers": [
+    {
+     "name": "Monstrous",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "minions_are_gigantic_if_have_revived_recently"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_ArchonDuration",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ArchonDuration",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(40-50)% increased [Archon] Buff duration",
+   "tiers": [
+    {
+     "name": "of Exertion",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       40,
+       50
+      ]
+     ],
+     "stats": [
+      "archon_duration_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_ArchonUndeathOnOfferingUse",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ArchonUndeathOnOfferingUse",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(35-50)% to gain [UndeadArchon|Archon of Undeath] when you create an [Offering]",
+   "tiers": [
+    {
+     "name": "of Unending",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       35,
+       50
+      ]
+     ],
+     "stats": [
+      "chance_%_to_gain_archon_of_undeath_when_you_create_an_offering"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_ChanceToNotConsumeInfusionIfLostArchonPast6Seconds",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ChanceToNotConsumeInfusionIfLostArchonPast6Seconds",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "Skills have (40-50)% chance to not remove [ElementalInfusion|Elemental Infusions] but still count as consuming them if you've lost an [Archon|Archon] [Buff] in the past 6 seconds",
+   "tiers": [
+    {
+     "name": "of Reverberation",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       40,
+       50
+      ]
+     ],
+     "stats": [
+      "chance_to_not_consume_infusion_%_if_lost_archon_in_past_6_seconds"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionAdditionalProjectileChance",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionAdditionalProjectileChance",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "Minions have +(50-100)% [SurpassChance|Surpassing] chance to fire an additional [Projectile]",
+   "tiers": [
+    {
+     "name": "of Scattering",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       50,
+       100
+      ]
+     ],
+     "stats": [
+      "minion_chance_to_fire_1_additional_projectile_%_with_rollover"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionDuration",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionDuration",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(35-49)% increased Minion Duration",
+   "tiers": [
+    {
+     "name": "of Binding",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       35,
+       49
+      ]
+     ],
+     "stats": [
+      "base_minion_duration_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionMeleeSplash",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionMeleeSplash",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Minion|Minions]' [Strike|Strikes] have [MeleeSplash|Melee Splash]",
+   "tiers": [
+    {
+     "name": "of Ravaging",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "minion_melee_splash"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_MinionReservationEfficiency",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionReservationEfficiency",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(7-10)% increased [Reservation] [Efficiency] of [Minion] Skills",
+   "tiers": [
+    {
+     "name": "of Coherence",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       7,
+       10
+      ]
+     ],
+     "stats": [
+      "reservation_efficiency_+%_of_minion_skills"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_SealGainFrequency",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "SealGainFrequency",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Seal|Sealed] Skills have (21-35)% increased [Seal] gain frequency",
+   "tiers": [
+    {
+     "name": "of Expectation",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       21,
+       35
+      ]
+     ],
+     "stats": [
+      "seal_gain_frequency_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Belts/Otherworldly_SpellElementalAilmentMagnitude",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "SpellElementalAilmentMagnitude",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(30-40)% increased [BuffMagnitude|Magnitude] of [ElementalAilments|Elemental Ailments] you inflict with [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "of Imbuing",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       30,
+       40
+      ]
+     ],
+     "stats": [
+      "spell_elemental_ailment_magnitude_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
   {
    "id": "Body_Armours_dex/CompanionReservationEfficiency",
    "source": "desecrated",
@@ -66762,6 +67381,426 @@
    ],
    "weightSource": "client-placeholder",
    "rune": "thruds-might"
+  },
+  {
+   "id": "Rings/Otherworldly_DamageRemovedFromManaBeforeLife",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "DamageRemovedFromManaBeforeLife",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(8-12)% of Damage is taken from Mana before Life",
+   "tiers": [
+    {
+     "name": "Burdensome",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "base_damage_removed_from_mana_before_life_%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_MinionDamagingAilments",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "MinionDamagingAilments",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Minion|Minions] have (35-45)% increased [BuffMagnitude|Magnitude] of [DamagingAilments|Damaging Ailments]",
+   "tiers": [
+    {
+     "name": "Contaminating",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       35,
+       45
+      ]
+     ],
+     "stats": [
+      "minion_base_damaging_ailment_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_MinionArmourBreak",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "MinionArmourBreak",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Minion|Minions] [ArmourBreak|Break Armour] equal to (2-4)% of [Physical] damage dealt",
+   "tiers": [
+    {
+     "name": "Scratching",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       2,
+       4
+      ]
+     ],
+     "stats": [
+      "minion_armour_break_physical_damage_%_dealt_as_armour_break"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_OfferingEffect",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "OfferingEffect",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Offering] Skills have (23-30)% increased [Buff] effect",
+   "tiers": [
+    {
+     "name": "Dedicated",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       23,
+       30
+      ]
+     ],
+     "stats": [
+      "offering_spells_effect_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_ChaosDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ChaosDamage",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Spell|Spells] [Gain] (8-12)% of Damage as extra [Chaos|Chaos] Damage",
+   "tiers": [
+    {
+     "name": "Soul Stealer's",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "non_skill_base_all_damage_%_to_gain_as_chaos_with_spells"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_ColdDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "ColdDamage",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Gain] (8-12)% of Damage as Extra [Cold|Cold] Damage with [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "Tempest Rider's",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "non_skill_base_all_damage_%_to_gain_as_cold_with_spells"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_FireDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "FireDamage",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Gain] (8-12)% of Damage as Extra [Fire|Fire] Damage with [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "Fire Breather's",
+     "ilvl": 1,
+     "weight": 800,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "non_skill_base_all_damage_%_to_gain_as_fire_with_spells"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_LightningDamage",
+   "source": "desecrated",
+   "type": "prefix",
+   "family": "LightningDamage",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Gain] (8-12)% of Damage as Extra [Lightning|Lightning] Damage with [Spell|Spells]",
+   "tiers": [
+    {
+     "name": "Storm Chaser's",
+     "ilvl": 1,
+     "weight": 1200,
+     "ranges": [
+      [
+       8,
+       12
+      ]
+     ],
+     "stats": [
+      "non_skill_base_all_damage_%_to_gain_as_lightning_with_spells"
+     ]
+    }
+   ],
+   "weightSource": "poe2htc",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_MinionCommandSkillSpeed",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionCommandSkillSpeed",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Minion|Minions] have (20-30)% increased [SkillSpeed|Skill Speed] with [Command|Command] Skills",
+   "tiers": [
+    {
+     "name": "of Punctuality",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "minion_command_skill_skill_speed_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_ElementalInfusion",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ElementalInfusion",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "+1 to maximum number of [ElementalInfusion|Elemental Infusions]",
+   "tiers": [
+    {
+     "name": "of Amplification",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "additional_maximum_infusion_stacks"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_InvocationMaximumEnergy",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "InvocationMaximumEnergy",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[Invoke|Invocated] skills have (25-35)% increased Maximum [Energy]",
+   "tiers": [
+    {
+     "name": "of Vastness",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       25,
+       35
+      ]
+     ],
+     "stats": [
+      "invocation_skill_maximum_energy_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_MinionCooldown",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionCooldown",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "Minions have (21-29)% increased Cooldown Recovery Rate",
+   "tiers": [
+    {
+     "name": "of Invigoration",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       21,
+       29
+      ]
+     ],
+     "stats": [
+      "minion_cooldown_recovery_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_MinionGainPuppetMasterOnCommand",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "MinionGainPuppetMasterOnCommand",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(40-50)% [SurpassChance|Surpassing Chance] to gain a [PuppetMaster|Puppet Master] stack whenever you use a [Command|Command] Skill",
+   "tiers": [
+    {
+     "name": "of the Cabal",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       40,
+       50
+      ]
+     ],
+     "stats": [
+      "surpassing_chance_%_to_gain_1_puppeteer_stack_on_using_command_skill"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_ImpaleEffect",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "ImpaleEffect",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "(20-30)% increased [BuffMagnitude|Magnitude] of [Impale]s inflicted with Spells",
+   "tiers": [
+    {
+     "name": "of Lancing",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       20,
+       30
+      ]
+     ],
+     "stats": [
+      "spell_impale_magnitude_+%"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
+  },
+  {
+   "id": "Rings/Otherworldly_TemporaryMinionLimit",
+   "source": "desecrated",
+   "type": "suffix",
+   "family": "TemporaryMinionLimit",
+   "tags": [
+    "breach_desecration"
+   ],
+   "text": "[TemporaryMinion|Temporary Minion] Skills have +1 to [Limit] of [Minion|Minions] summoned",
+   "tiers": [
+    {
+     "name": "of Multitudes",
+     "ilvl": 1,
+     "weight": 2500,
+     "ranges": [
+      [
+       1,
+       1
+      ]
+     ],
+     "stats": [
+      "temporary_minion_limit_+"
+     ]
+    }
+   ],
+   "weightSource": "client-placeholder",
+   "otherworldly": true
   },
   {
    "id": "Sceptres/FireResistancePenetration",

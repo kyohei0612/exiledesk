@@ -156,6 +156,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases): PatchData {
     if (!cls) continue;
     const pools = { ...cls.pools };
     if (add.desecrated) pools.desecrated = merge(cls.pools.desecrated, add.desecrated);
+    if (add.otherworldly) pools.otherworldly = merge(cls.pools.otherworldly, add.otherworldly);
     if (add.rune) {
       const rune: Record<string, ReadonlyPool> = { ...(cls.pools.rune ?? {}) };
       for (const [runeId, p] of Object.entries(add.rune)) rune[runeId] = merge(rune[runeId], p);

@@ -3,7 +3,8 @@ import type { Side } from "../../services/htc/step-odds";
 
 export type Method = "chaos" | "exalt" | "desecrate" | "essence";
 export type Reroll = "light" | "overwrite";
-export type Bone = "desecrate" | "desecrate_ancient";
+/** 骨: 保存 / 古代 (段 40 以上) / 変質した鎖骨 (装飾品だけ。冒涜に異界の MOD も混ざる、2026-09-27) */
+export type Bone = "desecrate" | "desecrate_ancient" | "desecrate_altered";
 
 /** 狙い 1 つの取り方 1 つの見積もり */
 export interface MethodEstimate {

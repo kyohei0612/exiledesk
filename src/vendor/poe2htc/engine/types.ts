@@ -110,6 +110,12 @@ export interface ItemBase {
      * ones into `normal`, so no planner ever reads this directly. Absent where no rune fits the base.
      */
     readonly rune?: Readonly<Record<string, Pool>>;
+    /**
+     * ExileDesk 2026-09-27: the "otherworldly" (breach_desecration) desecrated mods that only an ALTERED
+     * Collarbone can offer, on top of the base's normal + desecrated pools. Kept apart so the Preserved /
+     * Ancient bones' odds are untouched. Present only on Amulets / Rings / Belts.
+     */
+    readonly otherworldly?: Pool;
   };
   /** Absent means the game's own limits — see `ItemLimits` and `limitsOf` (item.ts). */
   readonly limits?: ItemLimits;

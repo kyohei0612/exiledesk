@@ -136,7 +136,13 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
   // 冒涜でプレに足す物も同じ (満杯の側への冒涜は 1 つ置き換わるので、触らない MOD を消しうる)
   const prefixDesec = shielded.has("prefix") ? ts.filter((t) => sideOf(t.modId) === "prefix" && (mod(t.modId).source === "desecrated" || mod(t.modId).source === "normal")).length : 0;
   const breachBlocks = breach && !!inp.limits && !!inp.startCount && prefixExalts + prefixDesec > inp.limits.prefix - inp.startCount.prefix - 1;
-  const switchTypes = switchTypes0 && !breachBlocks;
+  /**
+   * 触らない MOD (樹 MOD) がある側に冒涜の狙いがあるなら、品質の種類は替えない (替える組み方は最後に削減でブリーチの MOD を外し、
+   * 削減で付いた 1 つがその側を埋めて、満杯の側への冒涜が樹 MOD を置き換える。冒涜を先にしても、削減が異界の MOD (レベル 1、
+   * ブリーチの MOD と同じ) を消して同じことになる。2026-09-27 金の指輪の「ミニオンのクールダウン」を変質した鎖骨で取る形で 4 割消えた)
+   */
+  const shieldedDesec = ts.some((t) => viaDesecrate(t) && shielded.has(sideOf(t.modId)));
+  const switchTypes = switchTypes0 && !breachBlocks && !shieldedDesec;
   const lockTag = breach && inp.qualityTag && !switchTypes ? inp.qualityTag : null;
   /** その側の狙いに使うカタリスト */
   /**
@@ -316,6 +322,12 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
   }
   const desecrateNodes: SimNode[] = [];
   /**
+   * 冒涜の骨: 異界の MOD は変質した鎖骨でしか付かない (2026-09-27 オーナー「変質した鎖骨 MOD も全部に追加」)。
+   * それ以外は、古代の鎖骨は段 40 以上だけ・届かなければ普通の鎖骨
+   */
+  const boneFor = (t: TierTarget): "desecrate" | "desecrate_ancient" | "desecrate_altered" =>
+    mod(t.modId).tags.includes("breach_desecration") ? "desecrate_altered" : inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate";
+  /**
    * 枠 2 つの側で 1 つが固定済みなら、光のお告げを使わずに回せる (0.5.5 の冒涜の解説): その側に付くエッセンス / 合金で
    * 上書き → 鎖骨で冒涜 (満杯の側なので、上書きした MOD が冒涜 MOD に置き換わる)。外れならまた上書き。付く側が同じでないと
    * クラフト MOD が残って次のエッセンスが打てないので、その側に付く一番安い物 (オーナー 2026-09-24:「使える場面は使える」)
@@ -341,7 +353,7 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
       const did = id(), eid = `o-${t.modId}`;
       desecrateNodes.push({
         // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨 (下の光の輪と同じ)
-        ...base, id: did, action: { kind: "desecrate", side, bone: inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
+        ...base, id: did, action: { kind: "desecrate", side, bone: boneFor(t), echoes: true },
         targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: [], need: 1, onHit: null, onMiss: eid,
       });
       // 外れの冒涜 MOD (その側で唯一外せる物) を、同じ側のエッセンス / 合金で上書きして、また冒涜へ
@@ -351,7 +363,7 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     const node: SimNode = {
       // 古代の鎖骨は段 40 以上だけ。届かなければ普通の鎖骨
       // 反響のお告げは必ず (3 択を 1 回引き直せる。オーナー 2026-09-24:「反響は冒涜の際必ず」)
-      ...base, id: id(), action: { kind: "desecrate", side, bone: inp.bone !== "preserved" && reach([t]) >= 40 ? "desecrate_ancient" : "desecrate", echoes: true },
+      ...base, id: id(), action: { kind: "desecrate", side, bone: boneFor(t), echoes: true },
       targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: switchTypes ? [] : keepBreach, need: 1, onHit: null, onMiss: lightId,
     };
     desecrateNodes.push(node);

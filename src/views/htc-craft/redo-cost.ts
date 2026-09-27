@@ -32,11 +32,13 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   const poolMemo = new Map<string, number>();
   // 付いている系統 (固定済みの狙い) はもう付かないので、抽選の元から外す (Craft of Exile と同じ。2026-09-26 精度上げ)
   const occupied = new Set(inp.fixedIds.flatMap((id) => { const m = d.mods.get(id); return m ? [m.family] : []; }));
-  const poolW = (s: Side, floor: number, desec: boolean, tag: string | null, mult: number): number => {
+  // desec = "altered" は変質した鎖骨 (異界の MOD も引く元に入る。2026-09-27)
+  const poolW = (s: Side, floor: number, desec: boolean | "altered", tag: string | null, mult: number): number => {
     const mk = `${s}|${floor}|${desec}|${tag}|${mult}`;
     const hit = poolMemo.get(mk);
     if (hit != null) return hit;
-    const v = [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : [])].reduce((a, id) => {
+    const ow = desec === "altered" ? (cls.pools.otherworldly?.[key(s)] ?? []) : [];
+    const v = [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : []), ...ow].reduce((a, id) => {
       const m = d.mods.get(id);
       if (!m || occupied.has(m.family)) return a;
       const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
@@ -45,6 +47,11 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     poolMemo.set(mk, v);
     return v;
   };
+  /** 異界の MOD (変質した鎖骨で冒涜した時だけ候補に入る。装飾品だけ) */
+  const owIds = new Set([...(cls.pools.otherworldly?.prefixes ?? []), ...(cls.pools.otherworldly?.suffixes ?? [])]);
+  const isOtherworldly = (id: string): boolean => owIds.has(id);
+  /** 比べる骨 (変質した鎖骨は装飾品だけ) */
+  const BONES: Bone[] = ["desecrate", "desecrate_ancient", ...(owIds.size ? (["desecrate_altered"] as const) : [])];
   const shielded = new Set(inp.protectedSides ?? []);
   const fixedSides = new Set(inp.fixedSides ?? []);
   const limits = inp.limits ?? { prefix: 3, suffix: 3 };
@@ -126,7 +133,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   function desecrateEst(t: TierTarget, k: number, bone: Bone, reroll: Reroll, redoPrior = 0): MethodEstimate {
     const s = sideOf(t.modId), m = mod(t.modId);
     const floor = bone === "desecrate_ancient" ? 40 : 0;
-    const p1 = w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, true, null, 1);
+    // 異界の MOD は変質した鎖骨でしか付かない
+    const owOnly = isOtherworldly(t.modId);
+    const p1 = owOnly && bone !== "desecrate_altered" ? 0 : w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, bone === "desecrate_altered" ? "altered" : true, null, 1);
     const pHit = 1 - (1 - p1) ** 6;
     // 冒涜は最後の手。反対側が消えない物 + 狙い全部で埋まり、この側に枠があれば、ネクロマンシーのお告げは要らない
     const o = otherOf(s);
@@ -136,6 +145,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     let why: string | undefined;
     if (inp.desecratedTaken) why = "冒涜の MOD がもう付いている";
     if (reach(t) < floor) why = "古代の骨では段が届かない";
+    if (owOnly && bone !== "desecrate_altered") why = "異界の MOD は変質した鎖骨でしか付かない";
     // 上書き: 枠 2 つの側で残りがフラクチャーだけ
     const canOw = limits[s] === 2 && fixedSides.has(s) && k === 0 && !(shielded.has(s) && loose(s) > 0);
     const ess = [...d.mods.values()].filter((x) => x.id.startsWith(m.id.split("/")[0] + "/") && CRAFTED_SOURCES.has(x.source) && x.type === s && x.family !== BREACH_FAMILY)
@@ -193,7 +203,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   if (desecOnly.length > 1) return null;
   const bestDesec = (t: TierTarget, k: number, redoPrior = 0): MethodEstimate => {
     const cands: MethodEstimate[] = [];
-    for (const bone of ["desecrate", "desecrate_ancient"] as const) for (const rr of ["overwrite", "light"] as const) cands.push(desecrateEst(t, k, bone, rr, redoPrior));
+    for (const bone of BONES) for (const rr of ["overwrite", "light"] as const) cands.push(desecrateEst(t, k, bone, rr, redoPrior));
     return cands.reduce((a, b) => (b.expected < a.expected ? b : a));
   };
 

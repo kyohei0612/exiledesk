@@ -42,6 +42,8 @@ import { buildModTags, buildModSides, buildDropOnly } from "./_htc-mod-tags.mjs"
 import { report } from "./_htc-report.mjs";
 
 const VERIFY = process.argv.includes("--verify");
+/** 変質した鎖骨が使える (鎖骨で冒涜できる) クラス = アミュレット・指輪・ベルト */
+const OTHERWORLDLY_CLASSES = new Set(["Amulet", "Ring", "Belt"]);
 
 const main = async () => {
   const [B, T, C, MODS, htcBases, htcMods] = await Promise.all([
@@ -216,9 +218,32 @@ const main = async () => {
       if (side.prefixes.length || side.suffixes.length) rune[rp.id] = side;
     }
 
+    // 変質した鎖骨 (Altered Collarbone) の「異界の MOD」(2026-09-27 オーナー「変質した鎖骨 MOD も全部に追加してくれ。
+    // 冒涜と同じでその中に異界の MOD がつくってだけ。確率は冒涜と同じ」「ベースごとに違う MOD つくからね」)。
+    // 異界の MOD の出現重みは breach_desecration のタグでだけ正 (指輪 0 / ベルト 0 など、クラスごとに行き先が違う)。
+    // 冒涜のタグ集合に breach_desecration を足した時だけ出る差分を、冒涜とは別の置き場に入れる
+    // (冒涜のプールに混ぜると普通の鎖骨の確率が変わる)。重みは冒涜と同じ仮の値
+    const otherworldly = { prefixes: [], suffixes: [] };
+    if (OTHERWORLDLY_CLASSES.has(cid)) {
+      const withOw = familiesFor(new Set([...tags, "breach_desecration"]), "desecrated");
+      for (const [kind, side] of [
+        ["prefix", "prefixes"],
+        ["suffix", "suffixes"],
+      ]) {
+        for (const [family, list] of withOw[kind]) {
+          if (fams[kind].has(family)) continue; // 素でも冒涜で出る物は冒涜のプールの分
+          const mod = buildMod(cls.id, family, kind, list, new Set([...tags, "breach_desecration"]), "desecrated", ASSUMED.desecrated);
+          const id = `${cls.id}/Otherworldly_${family}`;
+          outMods.push({ ...mod, id, otherworldly: true });
+          otherworldly[side].push(id);
+        }
+      }
+    }
+
     const entry = {};
     if (add.prefixes.length || add.suffixes.length) entry.desecrated = add;
     if (Object.keys(rune).length) entry.rune = rune;
+    if (otherworldly.prefixes.length || otherworldly.suffixes.length) entry.otherworldly = otherworldly;
     if (Object.keys(entry).length) addedPools[cls.id] = entry;
   }
   for (const [id, { cls, names, tags }] of newClasses) {

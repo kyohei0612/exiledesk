@@ -15,6 +15,8 @@ export const prices = {
     catalyst_attack: div(0.372), catalyst_caster: div(0.968), catalyst_speed: div(0.351), catalyst_attribute: div(0.021),
     catalyst_minion: div(0.054),
     desecrate: div(0.338), desecrate_ancient: div(5.75),
+    // 変質した鎖骨 (装飾品、異界の MOD も出る)。2026-09-27 追加。相場は仮 (検算は流れを見るだけ)
+    desecrate_altered: div(1.5),
     "essence:perfect:Rings/PerfectEssence_MaximumManaIncreasePercent": div(0.034),
   },
   omens: {

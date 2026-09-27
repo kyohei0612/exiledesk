@@ -20,7 +20,7 @@ import type { useHtcCraft } from "./useHtcCraft";
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 
-type Kind = "tree" | "normal" | "desecrated" | "essence" | "cannot";
+type Kind = "tree" | "normal" | "desecrated" | "otherworldly" | "essence" | "cannot";
 /** 種類ごとの札・色・説明 */
 const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   tree: { label: "特殊 (樹 MOD)", cls: "border-fuchsia-400/60 text-fuchsia-200", note: "創生の樹からしか出ない。クラフトでは付かないので、固定済みの品を買って始める" },
@@ -28,18 +28,22 @@ const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   // オーナー 2026-09-24:「冒涜でしか付かない MOD なら同じように特殊 MOD 扱いがいい。冒涜でも普通の MOD なら無視で
   // クラフトで付く、みたいな表現でいい」(冒涜するかどうかは作り方で決める)
   desecrated: { label: "特殊 (冒涜のみ)", cls: "border-violet-400/60 text-violet-200", note: "冒涜 (骨) でしか付かない MOD。冒涜するかは作り方で決める" },
+  // 変質した鎖骨 (装飾品) の冒涜でだけ出る「異界の MOD」(2026-09-27。前は樹 MOD 扱いで買うしかなかった)
+  otherworldly: { label: "特殊 (異界の MOD)", cls: "border-teal-400/60 text-teal-200", note: "変質した鎖骨の冒涜でしか付かない。外れは普通の冒涜と同じく光のお告げか合金の上書きで回す" },
   essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
   cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };
-const ORDER: Kind[] = ["tree", "desecrated", "cannot", "normal", "essence"];
+const ORDER: Kind[] = ["tree", "otherworldly", "desecrated", "cannot", "normal", "essence"];
 
 interface Row { key: string; text: string; side: "P" | "S" | null; kind: Kind; fixed: boolean; tier: string | null; modId: string | null }
 
 const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 const fixedIds = computed(() => new Set(c.fracturedTargets.value.map((t) => t.modId)));
 const kindOf = (modId: string): Kind => {
-  const src = c.data.value?.mods.get(modId)?.source;
+  const m = c.data.value?.mods.get(modId);
+  const src = m?.source;
   if (src && CRAFTED_SOURCES.has(src)) return "essence";
+  if (m?.tags.includes("breach_desecration")) return "otherworldly";
   return src === "desecrated" ? "desecrated" : "normal";
 };
 /** 樹 MOD 以外で、このベースに付かない行 */

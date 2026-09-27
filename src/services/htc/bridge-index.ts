@@ -65,8 +65,9 @@ export function modIndexOf(data: PatchData, cls: ItemBase, mode: RuneMode): Clas
   };
 
   const pools = (cls.pools ?? {}) as Record<string, unknown>;
-  // normal を最後に入れて上書き勝ちにする
-  for (const poolName of ["essence", "desecrated", "normal"]) {
+  // normal を最後に入れて上書き勝ちにする。異界の MOD (変質した鎖骨で付く、装飾品だけ) も結び付ける (2026-09-27)。
+  // 前は「創生の樹からしか出ない = 買うしかない」扱いだった
+  for (const poolName of ["otherworldly", "essence", "desecrated", "normal"]) {
     const pool = pools[poolName] as { prefixes?: string[]; suffixes?: string[] } | undefined;
     if (!pool) continue;
     for (const ids of [pool.prefixes, pool.suffixes]) {

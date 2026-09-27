@@ -209,13 +209,19 @@ export function stepHelpers(ctx: StepCtx) {
     }
     // 冒涜: 3 択。側のネクロマンシーのお告げで側を決める
     if ((t.source === "normal" || t.source === "desecrated") && room(s, side)) {
-      const pool = [...cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"], ...cls.pools.desecrated[side === "prefix" ? "prefixes" : "suffixes"]];
+      const sk = side === "prefix" ? "prefixes" : "suffixes";
+      const pool = [...cls.pools.normal[sk], ...cls.pools.desecrated[sk]];
+      // 変質した鎖骨 (装飾品) は異界の MOD も候補に入る。異界の MOD は変質した鎖骨でしか付かない (2026-09-27)
+      const ow = cls.pools.otherworldly?.[sk] ?? [];
+      const isOw = ow.includes(t.id);
       const necro = cur(OMEN.necromancy[side]);
       const light = cur("OmenofLight") + cur("annul");
-      for (const [k, floor] of [["desecrate", 0], ["desecrate_ancient", 40]] as const) {
+      const bones: Array<readonly ["desecrate" | "desecrate_ancient" | "desecrate_altered", number]> = [["desecrate", 0], ["desecrate_ancient", 40], ...(ow.length ? [["desecrate_altered", 0] as const] : [])];
+      for (const [k, floor] of bones) {
+        if (isOw && k !== "desecrate_altered") continue;
         // 骨の名前はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨)
         const bone = jaOfPriceKey(k, cls) ?? k;
-        const W = pool.reduce((a, id) => { const m = mod(id); return m && !occ.has(m.family) ? a + sw(m, 0, floor) : a; }, 0);
+        const W = [...pool, ...(k === "desecrate_altered" ? ow : [])].reduce((a, id) => { const m = mod(id); return m && !occ.has(m.family) ? a + sw(m, 0, floor) : a; }, 0);
         const p1 = sw(t, minTier, floor) / W;
         if (!(p1 > 0)) continue;
         for (const echoes of [false, true]) {
@@ -275,6 +281,8 @@ export function stepHelpers(ctx: StepCtx) {
       ...cls.pools.normal.prefixes, ...cls.pools.normal.suffixes,
       ...cls.pools.desecrated.prefixes, ...cls.pools.desecrated.suffixes,
       ...cls.pools.essence.prefixes, ...cls.pools.essence.suffixes,
+      // 変質した鎖骨で付く異界の MOD (装飾品だけ)
+      ...(cls.pools.otherworldly?.prefixes ?? []), ...(cls.pools.otherworldly?.suffixes ?? []),
     ];
     return [...new Set(ids)].map((id) => mod(id)).filter((m): m is Mod => !!m && !occ.has(m.family)
       && (m.source === "normal" || m.source === "desecrated" || m.source === "perfect_essence"));

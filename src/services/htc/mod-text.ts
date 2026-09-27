@@ -55,7 +55,12 @@ for (const [k, v] of Object.entries(TABLE)) {
  */
 export function jaOfModLine(line: string): string | null {
   if (TABLE[line]) return TABLE[line];
-  return BY_NORM.get(normalise(line)) ?? HTC[line] ?? null;
+  const hit = BY_NORM.get(normalise(line)) ?? HTC[line];
+  if (hit) return hit;
+  // クライアントから足した MOD (今リーグの冒涜・異界の MOD など) の文面は「(12-18)% increased [Reservation] …」の形。
+  // 印を外し、範囲を # にしてから引く (2026-09-27: 足した MOD が英語のまま出ていた)
+  const plain = line.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1").replace(/\(-?[0-9.]+--?[0-9.]+\)/g, "#");
+  return plain !== line ? (BY_NORM.get(normalise(plain)) ?? null) : null;
 }
 
 /**

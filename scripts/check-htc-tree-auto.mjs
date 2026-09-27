@@ -64,6 +64,8 @@ for (const r of RINGS) {
   console.log(`${r.name} (${kind.kind}): 手 ${nodes.length} / 完成 ${(res.pDone * 100).toFixed(1)}% / 平均 ${(res.expected / D).toFixed(0)} 神 / 8 割 ${(res.p80 / D).toFixed(0)} 神 / 触らない MOD が消えた ${(lost * 100).toFixed(1)}%`);
   for (const s of res.stops) console.log(`   止まった ${(s.p * 100).toFixed(1)}%: ${s.reason}`);
   // 狙いが 5 つ以上 (プリズム) は、素の消去が反対側の狙いを消して長引く回が手数の上限 (2 万手) に当たる。止まりではなく長引きなので 90%
+  if (process.env.DUMP === r.name) { console.log(JSON.stringify(slots)); for (const [i, n] of nodes.entries()) console.log(`   STEP ${i + 1}`, JSON.stringify(n.action), n.targets.map((t) => t.modId).join(","), "hit", n.onHit, "miss", n.onMiss); }
+  if (process.env.DUMP === r.name) for (const [i, pn] of res.perNode.entries()) console.log(`   STEP ${i + 1} ${nodes[i].action.kind} 回 ${pn.tries.toFixed(1)} / ${(pn.cost / D).toFixed(0)} 神`);
   const need = g.targets.length >= 5 ? 0.9 : 0.95;
   if (res.pDone < need) { console.log(`   NG: 完成が ${need * 100}% 未満`); failed++; }
   if (lost > 0) { console.log("   NG: 触らない MOD が消えた"); failed++; }

@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-26",
+ "generated": "2026-09-27",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
   "transmute": {
@@ -167,6 +167,10 @@
   "collarbone_ancient": {
    "en": "Ancient Collarbone",
    "ja": "古代の鎖骨"
+  },
+  "collarbone_altered": {
+   "en": "Altered Collarbone",
+   "ja": "変質した鎖骨"
   }
  },
  "omens": {

@@ -15,7 +15,7 @@ export type SimAction =
    * エッセンスの MOD で決まる。省略時はエッセンスの MOD と同じ側
    */
   | { kind: "essence"; modId: string; removeSide?: Side | "auto" }
-  | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient"; echoes: boolean }
+  | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient" | "desecrate_altered"; echoes: boolean }
   | { kind: "light" }
   | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }

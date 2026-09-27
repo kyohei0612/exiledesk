@@ -8,7 +8,9 @@
  *
  * 段 (layer) の決まり:
  *   - 表の名前にカーソル → 段 0 を開く (ピン留めしていない段は全部入れ替え)
- *   - カードの中の下線 (キーワード) にカーソル → そのカードの 1 つ上の段を開く (それより上は閉じる)
+ *   - カードの中の下線 (キーワード) にカーソル → **0.5 秒乗せ続けたら**そのカードの 1 つ上の段を開く (それより上は閉じる)。
+ *     すぐ開くとカードの上でカーソルを動かすだけで誤爆する (オーナー 2026-09-27「0.5 秒くらいホバーしないとでないように」)。
+ *     表の名前から開く 1 枚目はすぐ
  *   - カードにカーソルが入る → 閉じる予定を取り消し、そのカードより上の段 (ピン留め以外) を閉じる
  *   - 名前 / 下線から出る → 少し待って、ピン留めしていない段を全部閉じる (待つのはカードへ移る間のため)
  *   - カードから出る → すぐ閉じる (オーナー 2026-09-26「説明外に入った瞬間即閉じて欲しい」)。
@@ -39,14 +41,23 @@ export interface HoverLayer {
 
 /** 名前 / 下線からカードへ移る間に消えないための待ち (ms) */
 const CLOSE_DELAY = 140;
+/** 2 枚目以降 (カードの中の下線) を開くまでの待ち (ms) */
+const CHILD_OPEN_DELAY = 500;
 
 const layers = ref<HoverLayer[]>([]);
 let seq = 0;
 let timer: ReturnType<typeof setTimeout> | null = null;
 
+/** 2 枚目以降を開く予定 (下線から離れたら取り消す) */
+let openTimer: ReturnType<typeof setTimeout> | null = null;
+
 function cancel(): void {
   if (timer) clearTimeout(timer);
   timer = null;
+}
+function cancelOpen(): void {
+  if (openTimer) clearTimeout(openTimer);
+  openTimer = null;
 }
 /**
  * 閉じる時に、カーソルが今どのカードの上にあるかを実際に確かめる (2026-09-26 オーナー「ホバー → ホバーすると、
@@ -70,21 +81,30 @@ export const hoverStack = {
   /** 表の名前から開く (段 0) */
   openRoot(payload: HoverPayload, x: number, y: number): void {
     cancel();
+    cancelOpen();
     layers.value = [...layers.value.filter((l) => l.pinned), { key: ++seq, payload, x, y, pinned: false }];
   },
   /** カードの中の下線から開く (そのカードの上の段) */
   openChild(parentKey: number, payload: HoverPayload, x: number, y: number): void {
     cancel();
     const i = layers.value.findIndex((l) => l.key === parentKey);
-    // 同じ物がすぐ上に開いていれば位置だけ直す (下線の上でカーソルが動いた時)
+    // 同じ物がすぐ上に開いていれば何もしない (下線の上でカーソルが動いた時)
     const next = layers.value[i + 1];
     if (next && !next.pinned && JSON.stringify(next.payload) === JSON.stringify(payload)) return;
-    const keep = layers.value.filter((l, j) => j <= i || l.pinned);
-    layers.value = [...keep, { key: ++seq, payload, x, y, pinned: false }];
+    // 0.5 秒乗せ続けたら開く (その間に下線から離れれば leave が取り消す)
+    cancelOpen();
+    openTimer = setTimeout(() => {
+      openTimer = null;
+      const j = layers.value.findIndex((l) => l.key === parentKey);
+      if (j < 0) return; // 親のカードが先に閉じた
+      const keep = layers.value.filter((l, k) => k <= j || l.pinned);
+      layers.value = [...keep, { key: ++seq, payload, x, y, pinned: false }];
+    }, CHILD_OPEN_DELAY);
   },
   /** 名前 / 下線から出た (カードへ移る間だけ待つ) */
   leave(): void {
     cancel();
+    cancelOpen();
     timer = setTimeout(closeUnpinned, CLOSE_DELAY);
   },
   /** カードから出た (すぐ閉じる。親のカードへ戻った時は enterLayer が取り消す) */
@@ -108,6 +128,7 @@ export const hoverStack = {
   /** 画面を切り替えた時など (ピン留めも含めて全部) */
   clear(): void {
     cancel();
+    cancelOpen();
     layers.value = [];
   },
 };
