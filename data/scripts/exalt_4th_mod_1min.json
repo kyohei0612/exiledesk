@@ -6,11 +6,12 @@
   "sections": [
     {
       "name": "導入",
-      "target_seconds": 10,
+      "target_seconds": 9,
       "lines": [
         {
           "speaker": "zundamon",
-          "text": "黄色いレアは作れたのだ。次はどうするのだ？",
+          "text": "前回レアにしたけど、MODが3つで止まってるのだ。",
+          "speech": "前回レアにしたけど、モッドが3つで止まってるのだ。",
           "emotion": "troubled",
           "scene": {
             "kind": "talk"
@@ -18,47 +19,31 @@
         },
         {
           "speaker": "metan",
-          "text": "高貴なオーブで、4つ目のMODを足せるわ。",
-          "speech": "高貴なオーブで、4つ目のモッドを足せるわ。",
+          "text": "高貴なオーブなら、4つ目が付くわよ。",
           "emotion": "proud",
-          "scene": {
-            "kind": "talk"
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "text": "まだ増えるのだ！？",
-          "emotion": "surprised",
           "scene": {
             "kind": "item",
             "step": 4,
             "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "4つ目なのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
           }
         }
       ]
     },
     {
       "name": "仕組み",
-      "target_seconds": 29,
+      "target_seconds": 27,
       "lines": [
         {
           "speaker": "metan",
-          "text": "変成のオーブと増強のオーブで、青にMODが2つ。",
-          "speech": "変成のオーブと増強のオーブで、青にモッドが2つ。",
-          "emotion": "normal",
-          "scene": {
-            "kind": "stack",
-            "step": 2,
-            "show_steps": [
-              1,
-              2
-            ],
-            "highlight": "step"
-          }
-        },
-        {
-          "speaker": "metan",
-          "text": "王者のオーブで黄色いレアになって、3つ目が付いたわ。",
+          "text": "おさらい。変成のオーブ、増強のオーブ、王者のオーブで黄色いレアになるわ。",
           "emotion": "normal",
           "scene": {
             "kind": "stack",
@@ -73,18 +58,18 @@
         },
         {
           "speaker": "zundamon",
-          "text": "ここまでは前回やったのだ。",
-          "emotion": "normal",
+          "text": "MODが3つ付いたのだ。",
+          "speech": "モッドが3つ付いたのだ。",
+          "emotion": "happy",
           "scene": {
             "kind": "item",
-            "step": 3,
-            "highlight": "rarity"
+            "step": 3
           }
         },
         {
           "speaker": "metan",
-          "text": "4個目が高貴なオーブ。レアにMODを1つ足すの。",
-          "speech": "4個目が高貴なオーブ。レアにモッドを1つ足すの。",
+          "text": "4個目は高貴なオーブ。黄色いレアのMODを1つ増やすわ。",
+          "speech": "4個目は高貴なオーブ。黄色いレアのモッドを1つ増やすわ。",
           "emotion": "normal",
           "scene": {
             "kind": "stack",
@@ -115,47 +100,49 @@
         },
         {
           "speaker": "metan",
-          "text": "いいえ、高貴なオーブは黄色いレア専用よ。白や青には使えないの。",
-          "emotion": "normal",
+          "text": "駄目よ。黄色いレア専用なの。",
+          "emotion": "troubled",
           "scene": {
-            "kind": "item",
-            "step": 3
+            "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "MODは接頭が3つ、接尾が3つ、合計6つまで入るわ。",
-          "speech": "モッドは接頭が3つ、接尾が3つ、合計6つまで入るわ。",
+          "text": "枠は接頭が3つ、接尾が3つ。合計6つまでよ。",
           "emotion": "normal",
           "scene": {
             "kind": "item",
-            "step": 3
+            "step": 4,
+            "highlight": "added"
           }
         },
         {
           "speaker": "zundamon",
-          "text": "じゃあ、あと3つ入るのだ！",
-          "emotion": "happy",
+          "text": "接頭と接尾ってなんなのだ？",
+          "emotion": "surprised",
           "scene": {
-            "kind": "stack",
-            "step": 4,
-            "show_steps": [
-              1,
-              2,
-              3,
-              4
-            ]
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "MODの置き場所のことよ。",
+          "speech": "モッドの置き場所のことよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
           }
         }
       ]
     },
     {
       "name": "実践",
-      "target_seconds": 16,
+      "target_seconds": 18,
       "lines": [
         {
           "speaker": "metan",
-          "text": "ニーモニックリング、アイテムレベル80で試すわ。",
+          "text": "実際にやるわね。ニーモニックリング、アイテムレベル80。",
           "emotion": "normal",
           "scene": {
             "kind": "stage",
@@ -164,8 +151,31 @@
         },
         {
           "speaker": "metan",
-          "text": "変成のオーブ、増強のオーブ、王者のオーブで黄色いレアよ。",
+          "text": "変成のオーブで命中力+188。",
+          "speech": "変成のオーブで命中力プラス188。",
           "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "増強のオーブでマナ自動回復が68%増加。",
+          "speech": "増強のオーブでマナ自動回復が68パーセント増加。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "王者のオーブで黄色くなって、器用さ+9なのだ。",
+          "speech": "王者のオーブで黄色くなって、器用さプラス9なのだ。",
+          "emotion": "happy",
           "scene": {
             "kind": "stage",
             "step": 3,
@@ -173,17 +183,8 @@
           }
         },
         {
-          "speaker": "zundamon",
-          "text": "もう3つ付いてるのだ。",
-          "emotion": "normal",
-          "scene": {
-            "kind": "item",
-            "step": 3
-          }
-        },
-        {
           "speaker": "metan",
-          "text": "そして高貴なオーブ。",
+          "text": "最後に高貴なオーブ。",
           "emotion": "proud",
           "scene": {
             "kind": "stage",
@@ -193,11 +194,10 @@
         },
         {
           "speaker": "zundamon",
-          "text": "倒した敵1体ごとに28のライフが付いたのだ！",
-          "speech": "倒した敵1体ごとに、28のライフが付いたのだ！",
-          "emotion": "happy",
+          "text": "敵を倒すとライフ28回復なのだ！4つ目なのだ！",
+          "emotion": "surprised",
           "scene": {
-            "kind": "item",
+            "kind": "stage",
             "step": 4,
             "highlight": "added"
           }
@@ -206,11 +206,12 @@
     },
     {
       "name": "まとめ",
-      "target_seconds": 5,
+      "target_seconds": 6,
       "lines": [
         {
           "speaker": "zundamon",
-          "text": "高貴なオーブで4つ目なのだ！",
+          "text": "高貴なオーブで、黄色いレアのMODが4つになるのだ！",
+          "speech": "高貴なオーブで、黄色いレアのモッドが4つになるのだ！",
           "emotion": "happy",
           "scene": {
             "kind": "stack",
@@ -225,7 +226,7 @@
         },
         {
           "speaker": "metan",
-          "text": "6つ埋まったらどうするか、次回話すわ。",
+          "text": "次は6つ埋まった後の話よ。",
           "emotion": "proud",
           "scene": {
             "kind": "talk"

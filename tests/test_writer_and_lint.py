@@ -108,3 +108,26 @@ def test_write_script_retries_with_feedback() -> None:
 def test_build_prompt_contains_rules_and_result() -> None:
     p = build_prompt(_brief(), _result(), "data/results/x.json", [])
     assert "台本ルール集" in p and "回避力 +151" in p and "data/results/x.json" in p
+
+
+def test_lint_stage_coverage_requires_every_step() -> None:
+    def line(kind: str, step: int | None, who: str = "metan") -> Line:
+        text = "テストなのだ。" if who == "zundamon" else "テストよ。"
+        return Line(speaker=who, text=text, scene=Scene(kind=kind, step=step))  # type: ignore[arg-type]
+
+    lines = [
+        line("talk", None),
+        line("stage", 1),
+        line("stage", 3),
+        line("talk", None, "zundamon"),
+    ]
+    script = VideoScript(
+        title="t",
+        target_seconds=20,
+        result_file="x",
+        sections=[Section(name="s", target_seconds=20, lines=lines)],
+    )
+    problems = lint_script(script, n_steps=3)
+    assert any("step [2]" in p for p in problems)
+    script.sections[0].lines.insert(2, line("stage", 2))
+    assert not any("飛ばした" in p for p in lint_script(script, n_steps=3))

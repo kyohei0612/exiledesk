@@ -141,7 +141,7 @@ def write_script(
             feedback = [f"JSON が形式に合わない: {str(e)[:400]}"]
             log.warning("script invalid", attempt=attempt, error=str(e)[:200])
             continue
-        problems = script.check_against(result) + lint_script(script)
+        problems = script.check_against(result) + lint_script(script, len(result.steps))
         if not problems:
             log.info("script accepted", attempt=attempt, lines=len(script.lines))
             return WriteResult(script, attempt, raw)

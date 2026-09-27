@@ -16,8 +16,8 @@ INTRO_MAX_RATIO = 0.2
 POLITE = re.compile(r"(です|ます|ました|でしょう)[。！？]")
 
 
-def lint_script(script: VideoScript) -> list[str]:
-    """問題を文で返す (空なら OK)."""
+def lint_script(script: VideoScript, n_steps: int | None = None) -> list[str]:
+    """問題を文で返す (空なら OK)。``n_steps`` は結果 JSON の手数 (実践の抜け検出用)."""
     problems: list[str] = []
     lines = script.lines
     for i, ln in enumerate(lines, start=1):
@@ -55,4 +55,19 @@ def lint_script(script: VideoScript) -> list[str]:
     est = script.estimated_seconds()
     if not lo <= est <= hi:
         problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
+    problems += stage_coverage(script, n_steps)
     return problems
+
+
+def stage_coverage(script: VideoScript, n_steps: int | None) -> list[str]:
+    """実践は 1 手 1 行以上: stage の step が 1..n を 1 つも飛ばさず出てくる (kyohei 2026-09-27)."""
+    stage_steps = sorted(
+        {ln.scene.step for ln in script.lines if ln.scene.kind == "stage" and ln.scene.step}
+    )
+    if not stage_steps:
+        return ["実践 (stage) の行が無い"]
+    last = n_steps or max(stage_steps)
+    missing = [s for s in range(1, last + 1) if s not in stage_steps]
+    if missing:
+        return [f"実践で飛ばした手がある (1 手 1 行以上): step {missing} の stage 行が無い"]
+    return []
