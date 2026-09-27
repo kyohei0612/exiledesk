@@ -39,7 +39,7 @@ pub fn reserve_wait(sends: &[i64], rules: &[Rule], now: i64, n: usize, spacing_m
             continue;
         }
         let (wait, why) = if n >= keep {
-            (in_window.last().map(|t| t + window_ms + 300 - now).unwrap_or(0), WaitWhy::Reset)
+            (in_window.last().map(|t| t + window_ms + 300 - now).unwrap_or(0), WaitWhy::Whole)
         } else {
             let out = (used + n - keep).min(used);
             (in_window.get(out.saturating_sub(1)).map(|t| t + window_ms + 300 - now).unwrap_or(0), WaitWhy::Slot)
@@ -153,7 +153,7 @@ mod tests {
         let now = 10_000_000;
         let sends = vec![now - 100_000, now - 30_000];
         let (wait, why, period) = reserve_wait(&sends, &RULES, now, 40, 2_600);
-        assert_eq!((why, period), (WaitWhy::Reset, 300));
+        assert_eq!((why, period), (WaitWhy::Whole, 300));
         assert_eq!(wait, 270_300);
     }
 }

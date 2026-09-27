@@ -5,11 +5,12 @@
 -->
 <script setup lang="ts">
 import Sparkline from "../currency/Sparkline.vue";
+import { ref } from "vue";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 import UniqueDetail from "./UniqueDetail.vue";
 import { displayCurrency } from "../../state/display-currency";
-import { uniqueFavorites } from "../../state/unique-favorites";
+import { FAV_MAX, uniqueFavorites } from "../../state/unique-favorites";
 import { openTrade2ForUnique } from "../../services/trade2/open";
 import { marketStore } from "../../state/market-store";
 import type { SortKey, UniqueRow, UniqueTrend } from "../../views/unique-trend/useUniqueTrend";
@@ -46,6 +47,13 @@ const on = "text-[var(--exile-color-accent-focus)]";
 /** 変化率の見出しは 高騰率 ↔ 下落率 を切り替える */
 function clickChange() {
   sortKey.value = sortKey.value === "rise" ? "fall" : "rise";
+}
+/** お気に入りは 5 個まで (取引所で最安値を記録するため。オーナー 2026-09-27)。付けられなかった行に数秒だけ断りを出す */
+const favFull = ref<string | null>(null);
+function onFav(key: string): void {
+  if (uniqueFavorites.toggle(key)) return;
+  favFull.value = key;
+  setTimeout(() => { if (favFull.value === key) favFull.value = null; }, 3000);
 }
 </script>
 
@@ -90,10 +98,11 @@ function clickChange() {
                       class="shrink-0 w-6 h-6 -my-1 rounded text-base leading-none transition"
                       :class="uniqueFavorites.set.value.has(r.fav) ? 'text-[#e25c6a]' : 'text-[var(--exile-color-text-tertiary)] hover:text-[#e25c6a]'"
                       :title="uniqueFavorites.set.value.has(r.fav) ? 'お気に入りから外す' : 'お気に入りに入れる'"
-                      @click.stop="uniqueFavorites.toggle(r.fav)"
+                      @click.stop="onFav(r.fav)"
                     >
                       {{ uniqueFavorites.set.value.has(r.fav) ? "♥" : "♡" }}
                     </button>
+                    <span v-if="favFull === r.fav" class="shrink-0 rounded bg-rose-500/15 px-1.5 text-[10px] text-rose-300">お気に入りは {{ FAV_MAX }} 個まで</span>
                     <!-- 取引所へ (右端のボタンと同じ。オーナー 2026-09-26「ハートの横にもトレードサイトへいかすボタン」) -->
                     <button
                       type="button"

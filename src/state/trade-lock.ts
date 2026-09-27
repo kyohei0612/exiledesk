@@ -15,13 +15,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { refetchState } from "../services/trade2/auto-price";
 
-export type TradeUser = "build-copy" | "craft" | "gem-corrupt" | "overquality" | "rare-craft";
+export type TradeUser = "build-copy" | "craft" | "gem-corrupt" | "overquality" | "rare-craft" | "unique-fav";
 export const TRADE_USER_JA: Record<TradeUser, string> = {
   "build-copy": "忍者ビルドコピー",
   craft: "クラフト計算機",
   "gem-corrupt": "ジェムコラプトの賭け",
   overquality: "アドニアの賭け",
   "rare-craft": "規格外の賭け",
+  "unique-fav": "ユニークのお気に入りの記録",
 };
 
 const owner = ref<TradeUser | null>(null);

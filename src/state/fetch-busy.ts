@@ -115,9 +115,9 @@ export const tradeWaitText = computed(() => {
   const left = (st.wait_until ?? 0) - nowSec.value;
   if (left <= 0 || !st.wait_why || st.wait_why === "none") return "";
   const p = periodJa(st.wait_period ?? 0);
-  return st.wait_why === "reset"
-    ? `${p}の枠を 8 割使ったので、空になるまで あと ${left} 秒`
-    : `${p}の枠が 8 割に近いので、この取得の分が空くまで あと ${left} 秒`;
+  if (st.wait_why === "reset") return `${p}の枠を 8 割使ったので、空になるまで あと ${left} 秒`;
+  if (st.wait_why === "whole") return `この取得は${p}の枠の 8 割より多く使うので、枠が空になってから始めます あと ${left} 秒`;
+  return `${p}の枠が 8 割に近いので、この取得の分が空くまで あと ${left} 秒`;
 });
 
 /** 起動時に 1 回だけ。取得の状態を見張り始める */

@@ -109,7 +109,7 @@ export interface FlowStatus {
   /** 次の 1 本を投げられる時刻 (unix 秒)。**止まりではなく順番待ち** */
   wait_until: number;
   /** 待っている理由 ("reset" = 枠の 8 割を超えるので空になるまで / "slot" = その取得の分が空くまで / "none")。2026-09-27 */
-  wait_why?: "reset" | "slot" | "none";
+  wait_why?: "reset" | "slot" | "whole" | "none";
   /** その枠の長さ (秒) */
   wait_period?: number;
   /** 5 分あたり全窓口あわせて何回使ったか / 今の上限 (画面の「5 分で n/N 回」) */

@@ -118,6 +118,7 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         wait_why: match gate.wait_why {
             crate::trade2::WaitWhy::Reset => "reset",
             crate::trade2::WaitWhy::Slot => "slot",
+            crate::trade2::WaitWhy::Whole => "whole",
             crate::trade2::WaitWhy::None => "none",
         },
         wait_period: gate.wait_period,

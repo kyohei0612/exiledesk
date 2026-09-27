@@ -16,6 +16,7 @@ import { onActivated, onMounted, ref } from "vue";
 import RefreshButton from "../components/RefreshButton.vue";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import UniqueTable from "../components/unique-trend/UniqueTable.vue";
+import UniqueWatchBar from "../components/unique-trend/UniqueWatchBar.vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { marketStore } from "../state/market-store";
 import { FAV_CATEGORY, SORT_OPTIONS, useUniqueTrend } from "./unique-trend/useUniqueTrend";
@@ -80,6 +81,8 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
         </div>
       </div>
 
+      <!-- お気に入りの取引所の最安値の記録 (オーナー 2026-09-27) -->
+      <UniqueWatchBar />
       <p v-if="u.loadingLabel.value" class="mb-3 text-xs text-[var(--exile-color-text-secondary)]">{{ u.loadingLabel.value }}…</p>
       <div
         v-if="u.error.value"

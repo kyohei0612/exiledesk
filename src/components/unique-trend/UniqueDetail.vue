@@ -3,7 +3,9 @@
   取引所の最安を取るのはやめ、取引所を開くだけにした (オーナー「最安値をとるはいらない。普通にトレードサイトへ促すボタンで」)。
 -->
 <script setup lang="ts">
-import { toRef } from "vue";
+import { computed, toRef } from "vue";
+import { uniqueFavorites } from "../../state/unique-favorites";
+import { uniqueWatch } from "../../state/unique-watch";
 import LineChart from "./LineChart.vue";
 import { displayCurrency } from "../../state/display-currency";
 import { useUniqueDetail } from "../../views/unique-trend/useUniqueDetail";
@@ -14,6 +16,16 @@ const emit = defineEmits<{ trade: [] }>();
 const d = useUniqueDetail(toRef(props, "row"), toRef(props, "trend"));
 
 const money = (ex: number | null | undefined) => displayCurrency.money(ex);
+/**
+ * お気に入りの取引所の最安値の記録 (取るたびに 1 点。オーナー 2026-09-27「ユニークのグラフみたいな感じで、取得するたびに記載」)。
+ * 出品が無かった回は線に入れない
+ */
+const isFav = computed(() => uniqueFavorites.set.value.has(props.row.fav));
+const myPoints = computed(() => (uniqueWatch.history.value[props.row.fav] ?? []).filter((p) => p.ex != null).map((p) => ({ t: p.t, price: p.ex as number, qty: p.total })));
+const myLast = computed(() => { const h = uniqueWatch.history.value[props.row.fav] ?? []; return h[h.length - 1] ?? null; });
+function fmtTime(t: number): string {
+  return new Date(t).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 function fmtDay(t: number): string {
   return new Date(t).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
@@ -30,6 +42,19 @@ function fmtDay(t: number): string {
           </span>
         </div>
         <LineChart :points="d.points.value" :format="money" />
+        <!-- お気に入りだけ: 取引所の最安値の記録 -->
+        <template v-if="isFav">
+          <div class="mt-6 mb-3 flex items-baseline gap-3">
+            <span class="text-sm text-sky-200">取引所の最安値 (自分の記録)</span>
+            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">
+              名前だけで探した即時購入の最安 · {{ myPoints.length }} 回分<span v-if="myLast"> · 最後 {{ fmtTime(myLast.t) }} ({{ myLast.total }} 件)</span>
+            </span>
+          </div>
+          <LineChart v-if="myPoints.length >= 2" :points="myPoints" :format="money" />
+          <p v-else class="rounded-lg bg-black/20 px-3 py-2 text-[12px] opacity-70">
+            {{ myPoints.length ? `今 ${money(myPoints[0].price)}。` : "" }}記録が 2 回分たまるとグラフが出ます (上の「お気に入りの最安値」で自動取得の間隔を選ぶか、今すぐ取得)
+          </p>
+        </template>
       </div>
 
       <div class="w-72 shrink-0 space-y-3 text-sm">

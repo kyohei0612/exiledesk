@@ -8,6 +8,8 @@
 import { ref } from "vue";
 
 const KEY = "exiledesk.uniqueFavorites.v1";
+/** お気に入りの上限 */
+export const FAV_MAX = 5;
 
 function load(): string[] {
   try {
@@ -29,9 +31,11 @@ export const uniqueFavorites = {
   has(key: string): boolean {
     return favs.value.has(key);
   },
-  toggle(key: string): void {
+  /** 付け外し。上限 (5 個) で付けられなければ false (オーナー 2026-09-27「お気に入りは最大 5 個まで」。取引所で最安値を記録するため) */
+  toggle(key: string): boolean {
     const next = new Set(favs.value);
     if (next.has(key)) next.delete(key);
+    else if (next.size >= FAV_MAX) return false;
     else next.add(key);
     favs.value = next;
     try {
@@ -39,5 +43,6 @@ export const uniqueFavorites = {
     } catch {
       /* 保存できない環境は今回だけ */
     }
+    return true;
   },
 };

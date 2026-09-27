@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { uniqueWatch } from "./state/unique-watch";
 import { onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import LeftSidebar from "./components/LeftSidebar.vue";
@@ -72,6 +73,8 @@ onMounted(() => {
   // 取得 (自動巡回 / 一括 / 追加時) が走っているかを見張る。走っている間は他の取得を押せなくし、
   // 画面の下に何が走っているかを出す (オーナー指示 2026-09-20)
   startFetchBusyWatch();
+  // ユニークのお気に入りの最安値の見回り (1 分おき。間隔が来ていて取引所が空いていれば取る。2026-09-27)
+  uniqueWatch.start();
 });
 </script>
 
