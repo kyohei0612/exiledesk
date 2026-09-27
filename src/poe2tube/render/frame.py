@@ -109,7 +109,9 @@ def _decor(img: Image.Image, section_name: str, progress: float) -> None:
     d = ImageDraw.Draw(img)
     # 外枠 (角に色を置いて白の単調さを消す)
     d.rounded_rectangle((16, 16, w - 16, h - 16), 36, outline=LINE, width=4)
-    d.rounded_rectangle((16, 16, 420, 90), 36, fill=ACCENT_SOFT)
+    # 章名の長さに合わせて薄青の下地を伸ばす (8 分の構成表は章名が長い)
+    label_w = int(d.textlength(section_name, font=font(28))) + 36
+    d.rounded_rectangle((16, 16, max(420, 40 + label_w + 40), 90), 36, fill=ACCENT_SOFT)
     pill(img, (40, 34), section_name, ACCENT, size=28)
     # 進行バー
     d.rounded_rectangle((w - 440, 44, w - 60, 62), 9, fill=PANEL, outline=LINE)
