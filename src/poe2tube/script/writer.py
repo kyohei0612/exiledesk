@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -108,23 +109,28 @@ def claude_cli_runner(model: str | None = None, timeout: int = 900) -> Runner:
         cmd = [exe, "-p", "--output-format", "json", "--max-turns", "1"]
         if model:
             cmd += ["--model", model]
-        r = subprocess.run(
-            cmd,
-            input=prompt,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=timeout,
-            creationflags=CREATE_NO_WINDOW,
-            cwd=REPO_ROOT,
-        )
-        if r.returncode != 0:
-            raise RuntimeError(f"claude CLI rc={r.returncode}: {r.stderr[-500:]}")
-        try:
-            data = json.loads(r.stdout.strip().splitlines()[-1])
-            return str(data.get("result") or "")
-        except (json.JSONDecodeError, IndexError):
-            return r.stdout
+        last = ""
+        for attempt in range(1, 4):  # API の一時エラー (rc=1、stderr 空) は少し待って撃ち直す
+            r = subprocess.run(
+                cmd,
+                input=prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=timeout,
+                creationflags=CREATE_NO_WINDOW,
+                cwd=REPO_ROOT,
+            )
+            if r.returncode == 0:
+                try:
+                    data = json.loads(r.stdout.strip().splitlines()[-1])
+                    return str(data.get("result") or "")
+                except (json.JSONDecodeError, IndexError):
+                    return r.stdout
+            last = f"rc={r.returncode} stderr={r.stderr[-300:]!r} stdout={r.stdout[-300:]!r}"
+            log.warning("claude cli failed, retrying", attempt=attempt, detail=last[:300])
+            time.sleep(15 * attempt)
+        raise RuntimeError(f"claude CLI が 3 回とも失敗: {last}")
 
     return run
 

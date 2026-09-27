@@ -16,7 +16,7 @@ OUTLINE_TOLERANCE = 0.12
 
 
 class OutlineSection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")  # Claude が余計なキーを足しても弾かない
 
     name: str = Field(description="章の名前 (画面左上のラベルになる。例: 導入 / 基礎知識 / 実践)")
     target_seconds: int = Field(ge=10)
@@ -34,7 +34,7 @@ class OutlineSection(BaseModel):
 
 
 class Outline(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     title: str
     sections: list[OutlineSection] = Field(min_length=3)
