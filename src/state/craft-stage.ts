@@ -7,6 +7,8 @@
  *     seed は 開始の seed + 手の番号 なので、打った手をそのまま手順 JSON にして scripts/craft-stage-run.mjs に流すと同じ結果になる
  *   - 冒涜: 骨で未開示の MOD が付き、開示の候補 3 つ (revealOffers) から選ぶと reveal:N の手になる
  *   - 再生: 手順 JSON と step (URL の ?stage-plan=…&step=N) で、その手まで進めた状態を出す (POE2Tube の撮影用)
+ *   - 動画モード: 打った手 (か手順 JSON) を 16:9 の撮影用画面で 1 手ずつ再生する ([[VideoStage.vue]])。
+ *     URL に &video=1 を付けると最初から動画モード (step=N でその手から、autoplay=1 で自動再生、controls=0 で操作欄を出さない)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
 import { computed, ref, shallowRef } from "vue";
@@ -33,6 +35,8 @@ const error = ref<string | null>(null);
 const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
 const base = ref("Gold Ring");
 const itemLevel = ref(82);
+/** 動画モード (開始の手・自動再生・操作欄) */
+const video = ref<{ from: number; autoplay: boolean; controls: boolean } | null>(null);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -49,7 +53,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -70,8 +74,12 @@ export const craftStage = {
       const raw = q.get("stage-plan");
       // 再生は費用も出すので相場を待つ (手で打つ時は待たない。値段は打った時に引く)
       if (raw) await market;
-      if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, Number(q.get("step") ?? "9999"));
+      const step = Number(q.get("step") ?? "9999");
+      const wantVideo = q.get("video") === "1";
+      // 動画モードは手順を最後まで打っておき、step の手から見せる (前後に動かせるように)
+      if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
       else craftStage.reset();
+      if (raw && wantVideo) video.value = { from: Math.min(step, log.value.length), autoplay: q.get("autoplay") === "1", controls: q.get("controls") !== "0" };
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     }

@@ -11,6 +11,7 @@
 import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf } from "../../state/craft-stage";
 import type { StageItem } from "../../services/craft-stage/types";
+import type { PlayedStep } from "../../services/craft-stage/run-plan";
 
 export interface StageFx {
   n: number;
@@ -32,13 +33,17 @@ function vaalText(before: StageItem, after: StageItem, changed: number): string 
   return "コラプト — 変化なし";
 }
 
-export function useStageFx(mouse: Ref<{ x: number; y: number }>) {
+/** 演出の元: 手の数 (増えた時だけ動く) と直前の手。既定は手で打つ画面 (動画モードは自分のテープを渡す) */
+export interface FxSource { count: () => number; last: () => PlayedStep | null; quiet?: () => boolean }
+const MANUAL: FxSource = { count: () => craftStage.log.value.length, last: () => craftStage.last.value, quiet: () => !!craftStage.replay.value };
+
+export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource = MANUAL) {
   const fx = ref<StageFx | null>(null);
   let n = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  watch(() => craftStage.log.value.length, (len, old) => {
-    if (len <= old || craftStage.replay.value) return;
-    const st = craftStage.last.value;
+  watch(src.count, (len, old) => {
+    if (len <= old || src.quiet?.()) return;
+    const st = src.last();
     if (!st) return;
     const o = st.out;
     const top = st.added.find((m) => m.tierName === "T1" && !m.unrevealed);
@@ -57,6 +62,7 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>) {
   });
   watch(() => craftStage.miss.value?.n, () => {
     const m = craftStage.miss.value;
+    if (src !== MANUAL) return;
     if (m) show({ kind: "shake", color: COLOR.miss, text: m.reason }, "");
   });
   function show(next: Omit<StageFx, "n" | "x" | "y" | "icon">, icon: string): void {

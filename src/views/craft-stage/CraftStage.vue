@@ -15,6 +15,7 @@ import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
+import VideoStage from "./VideoStage.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -88,7 +89,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">再生中</b>
       <span>{{ s.replay.value.plan.title ?? s.replay.value.plan.base }} · {{ s.log.value.length }} 手目まで (seed {{ s.replay.value.plan.seed }})</span>
-      <button type="button" :class="btn" class="ml-auto" @click="s.leaveReplay()">手で打つ</button>
+      <button type="button" :class="btn" class="ml-auto" @click="s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
+      <button type="button" :class="btn" @click="s.leaveReplay()">手で打つ</button>
     </div>
 
     <!-- 設定と操作 -->
@@ -107,6 +109,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       </span>
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
       <button type="button" :class="btn" :disabled="!s.log.value.length" title="Ctrl+Z" @click="s.undo()">1 手戻す</button>
+      <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
         <button type="button" :class="btn" :disabled="!s.log.value.length" title="今までの手を手順 JSON に (同じ seed なので craft-stage-run.mjs に流すと同じ結果)" @click="copy('手順 JSON', s.plan())">手順 JSON</button>
@@ -175,5 +178,6 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       class="pointer-events-none fixed z-[200] h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"
       :style="{ left: `${mouse.x + 8}px`, top: `${mouse.y + 8}px` }"
     />
+    <VideoStage v-if="s.video.value && s.ready.value" />
   </div>
 </template>
