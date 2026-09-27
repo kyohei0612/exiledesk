@@ -6,15 +6,31 @@ kyohei が見本にした「初心者必見！/ 最初から知りたかった /
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from pydantic import BaseModel, ConfigDict, Field
 
-from poe2tube.render.palette import font
+from poe2tube.render.palette import FONT_PATH
 from poe2tube.render.tachie import render_tachie
 
 W, H = 1280, 720
+# 極太のロゴ用フォント (PC にあれば使う。無ければメイリオ太字)
+LOGO_FONT_CANDIDATES = [
+    Path.home() / "AppData/Local/Microsoft/Windows/Fonts/07LogoTypeGothic7.ttf",
+    Path(r"C:/Windows/Fonts/BIZ-UDGothicB.ttc"),
+]
+
+
+@lru_cache(maxsize=16)
+def font(size: int) -> ImageFont.FreeTypeFont:
+    for cand in LOGO_FONT_CANDIDATES:
+        if cand.exists():
+            return ImageFont.truetype(str(cand), size)
+    return ImageFont.truetype(str(FONT_PATH), size)
+
+
 BADGE_COLORS = [(214, 40, 40), (31, 111, 235), (222, 120, 0), (46, 160, 67)]
 
 
