@@ -75,13 +75,12 @@
       "name": "まとめ",
       "target_seconds": 5,
       "lines": [
-        { "speaker": "zundamon",
-          "text": "全部でいくらかかったのだ？",
-          "scene": { "kind": "cost", "highlight": "cost" } },
-        { "speaker": "metan",
-          "text": "今の相場で0.63エグザルト。ストーリー直後でも払えるわね。",
-          "speech": "今の相場で、れいてんろくさんエグザルト。ストーリー直後でも払えるわね。",
-          "scene": { "kind": "cost", "highlight": "cost" } }
+        { "speaker": "zundamon", "emotion": "happy",
+          "text": "変成、増強、王者。3個で白がレアになるのだ！",
+          "scene": { "kind": "stack", "step": 3, "show_steps": [1, 2, 3] } },
+        { "speaker": "metan", "emotion": "proud",
+          "text": "次は高貴なオーブで、4つ目を足す回よ。",
+          "scene": { "kind": "talk" } }
       ]
     }
   ]

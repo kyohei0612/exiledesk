@@ -44,7 +44,8 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
         "desecrate_altered",
     }
 )
-_CURRENCY_PREFIX = re.compile(r"^(essence:[a-z0-9_]+|catalyst_[a-z]+)$")
+# エッセンスの実キーは "essence:lesser:Bows/Essence_PhysicalDamage" のように ":" と "/" を含む
+_CURRENCY_PREFIX = re.compile(r"^(essence:\S+|catalyst_[a-z]+)$")
 
 
 def _check_currency(value: str) -> str:
