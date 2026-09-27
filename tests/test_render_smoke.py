@@ -86,3 +86,12 @@ def test_stack_handles_eight_steps_without_negative_boxes() -> None:
             6,
         )
         assert _ink_ratio(img) > 0.05
+
+
+def test_thumbnail_renders_1280x720() -> None:
+    from poe2tube.render.thumbnail import ThumbnailSpec, render_thumbnail
+
+    spec = ThumbnailSpec(top="最初から知りたかった", main="クラフト入門", badges=["変成", "増強"])
+    img = render_thumbnail(spec)
+    assert img.size == (1280, 720)
+    assert _ink_ratio(img) > 0.3  # 暗い背景 + 文字で大半が濃い
