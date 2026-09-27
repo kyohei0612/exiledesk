@@ -131,3 +131,18 @@ def test_lint_stage_coverage_requires_every_step() -> None:
     assert any("step [2]" in p for p in problems)
     script.sections[0].lines.insert(2, line("stage", 2))
     assert not any("飛ばした" in p for p in lint_script(script, n_steps=3))
+
+
+def test_lint_bans_settou_setsubi() -> None:
+    lines = [
+        Line(speaker="metan", text="接頭が3つよ。", scene=Scene(kind="talk")),
+        Line(speaker="zundamon", text="プレフィックスなのだ。", scene=Scene(kind="stage", step=1)),
+    ]
+    script = VideoScript(
+        title="t",
+        target_seconds=10,
+        result_file="x",
+        sections=[Section(name="s", target_seconds=10, lines=lines)],
+    )
+    problems = lint_script(script, n_steps=1)
+    assert any("接頭" in p and "プレフィックス" in p for p in problems)

@@ -13,9 +13,11 @@ import os
 import shutil
 import socket
 import subprocess
+import tempfile
 import time
 import urllib.parse
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -30,6 +32,7 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 VIEWPORT = (1920, 1080)
 CAPTURE_VER = "v3-video"  # 撮り方を変えたらキャッシュを切り替える
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
+CLIP_SECONDS = 2.2  # 「打った瞬間」の動きを録る長さ (演出 1.4 秒 + 行の滑り込み)
 
 
 def plan_key(plan: CraftStagePlan) -> str:
@@ -39,6 +42,15 @@ def plan_key(plan: CraftStagePlan) -> str:
 
 def cached_path(plan: CraftStagePlan, step: int) -> Path:
     return CACHE_DIR / plan_key(plan) / f"step_{step}.png"
+
+
+def clip_dir(plan: CraftStagePlan, step: int) -> Path:
+    return CACHE_DIR / plan_key(plan) / f"step_{step}_clip"
+
+
+def clip_frames(plan: CraftStagePlan, step: int) -> list[Path]:
+    """打った瞬間の連番 PNG (無ければ空)。step 0 (開始前) には無い."""
+    return sorted(clip_dir(plan, step).glob("f*.png")) if step >= 1 else []
 
 
 def replay_url(plan: CraftStagePlan, step: int, base: str) -> str:
@@ -85,11 +97,18 @@ def ensure_vite(wait_seconds: int = 60) -> str:
     raise TimeoutError(f"Vite dev が {wait_seconds} 秒で起動しない: {base}")
 
 
-def capture_plan(plan: CraftStagePlan, steps: list[int], force: bool = False) -> dict[int, Path]:
-    """必要な手の画面を撮って {step: png} を返す (キャッシュ済みは撮らない)."""
+def capture_plan(
+    plan: CraftStagePlan, steps: list[int], force: bool = False, clips: bool = True, fps: int = 24
+) -> dict[int, Path]:
+    """必要な手の静止画 (と打った瞬間の連番) を撮って {step: png} を返す (キャッシュ済みは撮らない).
+
+    静止画 = その手まで進めた止め絵。連番 = 1 つ前の手から → キーで進めた瞬間の演出
+    (kyohei 2026-09-27「クリックして付けた時の挙動が寂しい、動いてる感が欲しい」)。
+    """
     todo = [st for st in steps if force or not cached_path(plan, st).exists()]
+    todo_clips = [st for st in steps if clips and st >= 1 and (force or not clip_frames(plan, st))]
     paths = {st: cached_path(plan, st) for st in steps}
-    if not todo:
+    if not todo and not todo_clips:
         return paths
     from playwright.sync_api import sync_playwright
 
@@ -107,5 +126,56 @@ def capture_plan(plan: CraftStagePlan, steps: list[int], force: bool = False) ->
             page.wait_for_timeout(SETTLE_MS)
             page.screenshot(path=str(paths[st]))
             log.info("stage captured", step=st, path=paths[st].name)
+        page.close()
+        for st in todo_clips:
+            _record_clip(browser, base, plan, st, fps)
         browser.close()
     return paths
+
+
+def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: int) -> None:
+    """1 つ前の手で開き、→ キーで 1 手進めた瞬間を Playwright の動画録画で撮って連番 PNG にする."""
+    out_dir = clip_dir(plan, step)
+    shutil.rmtree(out_dir, ignore_errors=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        ctx = browser.new_context(
+            viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]},
+            record_video_dir=tmp,
+            record_video_size={"width": VIEWPORT[0], "height": VIEWPORT[1]},
+        )
+        t0 = time.perf_counter()
+        page = ctx.new_page()
+        page.goto(replay_url(plan, step - 1, base), wait_until="networkidle", timeout=60000)
+        page.wait_for_selector("text=CRAFT STAGE", timeout=30000)
+        page.wait_for_timeout(800)
+        page.keyboard.press("ArrowRight")
+        t_press = time.perf_counter() - t0
+        page.wait_for_timeout(int(CLIP_SECONDS * 1000) + 400)
+        video = page.video
+        ctx.close()
+        if video is None:
+            raise RuntimeError("Playwright の動画録画が無効")
+        webm = Path(video.path())
+        exe = shutil.which("ffmpeg")
+        if not exe:
+            raise FileNotFoundError("ffmpeg が PATH に無い")
+        cmd = [
+            exe,
+            "-y",
+            "-loglevel",
+            "error",
+            "-i",
+            str(webm),
+            "-ss",
+            f"{max(0.0, t_press - 0.05):.3f}",
+            "-t",
+            f"{CLIP_SECONDS:.2f}",
+            "-vf",
+            f"fps={fps},scale={VIEWPORT[0]}:{VIEWPORT[1]}",
+            str(out_dir / "f%03d.png"),
+        ]
+        r = subprocess.run(cmd, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
+        if r.returncode != 0:
+            raise RuntimeError(f"ffmpeg 連番化 失敗: {r.stderr[-300:]}")
+    log.info("stage clip recorded", step=step, frames=len(clip_frames(plan, step)))

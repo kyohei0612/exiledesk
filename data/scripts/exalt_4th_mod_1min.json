@@ -108,7 +108,7 @@
         },
         {
           "speaker": "metan",
-          "text": "枠は接頭が3つ、接尾が3つ。合計6つまでよ。",
+          "text": "枠はプレフィックスが3つ、サフィックスが3つ。合計6つまでよ。",
           "emotion": "normal",
           "scene": {
             "kind": "item",
@@ -118,7 +118,7 @@
         },
         {
           "speaker": "zundamon",
-          "text": "接頭と接尾ってなんなのだ？",
+          "text": "プレフィックスとサフィックスってなんなのだ？",
           "emotion": "surprised",
           "scene": {
             "kind": "item",

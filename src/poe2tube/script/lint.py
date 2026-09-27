@@ -14,6 +14,8 @@ MAX_SENTENCE = 40
 MAX_SAME_SCENE_RUN = 3
 INTRO_MAX_RATIO = 0.2
 POLITE = re.compile(r"(です|ます|ました|でしょう)[。！？]")
+# ゲーム内表記に合わせる (kyohei 2026-09-27)。左は使わない、右に言い換える
+BANNED_TERMS = {"接頭": "プレフィックス", "接尾": "サフィックス"}
 
 
 def lint_script(script: VideoScript, n_steps: int | None = None) -> list[str]:
@@ -28,6 +30,9 @@ def lint_script(script: VideoScript, n_steps: int | None = None) -> list[str]:
             problems.append(f"line {i}: ずんだもんの語尾に「のだ」が無い: {ln.text}")
         if POLITE.search(ln.text):
             problems.append(f"line {i}: 敬語 (です/ます) は使わない: {ln.text}")
+        for ng, ok in BANNED_TERMS.items():
+            if ng in ln.text:
+                problems.append(f"line {i}: 「{ng}」は使わない → 「{ok}」: {ln.text}")
     zunda = sum(1 for ln in lines if ln.speaker == "zundamon")
     ratio = zunda / len(lines) if lines else 0
     if not 0.25 <= ratio <= 0.5:

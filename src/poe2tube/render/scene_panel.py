@@ -18,8 +18,14 @@ Box = tuple[int, int, int, int]
 
 
 def draw_scene_panel(
-    img: Image.Image, inner: Box, scene: Scene, result: CraftStageResult, icon_dir: Path
+    img: Image.Image,
+    inner: Box,
+    scene: Scene,
+    result: CraftStageResult,
+    icon_dir: Path,
+    stage_shot: Path | None = None,
 ) -> None:
+    """``stage_shot`` を渡すと stage シーンにその画像 (打った瞬間の 1 コマ) を使う."""
     x0, y0, x1, y1 = inner
     if scene.kind == "stack":
         steps = scene.show_steps or list(range(1, (scene.step or 0) + 1))
@@ -35,7 +41,7 @@ def draw_scene_panel(
         cy = (y0 + y1) // 2 - ch // 2
         draw_item_card(img, (cx, cy, cx + cw, cy + ch), item, hl, scene.highlight == "name")
     elif scene.kind == "stage":
-        shot = cached_path(result.plan, scene.step or 0)
+        shot = stage_shot or cached_path(result.plan, scene.step or 0)
         if shot.exists():
             _stage_capture(img, inner, shot, scene.step or 0)
         else:

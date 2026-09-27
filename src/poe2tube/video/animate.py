@@ -14,9 +14,11 @@ import structlog
 from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
+from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
+from poe2tube.script.model import Line
 from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
@@ -60,13 +62,22 @@ def sound_events(cues: list[Cue], book: NameBook, n_steps: int = 0) -> list[Soun
                     "name",
                 )
             )
-            events.append(SoundEvent(c.start, "complete" if is_final else "slide"))
+            kind = "hit" if stage_hit(prev, c.line) else ("complete" if is_final else "slide")
+            events.append(SoundEvent(c.start, kind))
         if book.find_in_text(c.line.text):
             events.append(SoundEvent(c.start + POP_DELAY, "pop"))
         if c.line.emotion == "surprised":
             events.append(SoundEvent(c.start, "shock"))
         prev = c.line
     return events
+
+
+def stage_hit(prev: Line | None, cur: Line) -> bool:
+    """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く)."""
+    sc = cur.scene
+    if sc.kind != "stage" or not sc.step:
+        return False
+    return prev is None or prev.scene.kind != "stage" or prev.scene.step != sc.step
 
 
 def iter_frames(
@@ -81,11 +92,17 @@ def iter_frames(
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
         panel = render_panel_layer(c.line, result)
-        animate = panel is not None and scene_changed(prev, c.line)
+        # 打った瞬間の連番 (ExileDesk の演出そのもの) があれば、行の頭はそれを 1 コマずつ貼る
+        clip = clip_frames(result.plan, c.line.scene.step or 0) if stage_hit(prev, c.line) else []
+        animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
         for k, mouth in enumerate(c.mouth_levels):
             t = k / fps
-            if animate and t < SLIDE_SECONDS and panel is not None:
+            if k < len(clip):
+                frame_static = _with_panel(
+                    base, render_panel_layer(c.line, result, stage_shot=clip[k]), 0, 1.0
+                )
+            elif animate and t < SLIDE_SECONDS and panel is not None:
                 dy, alpha = slide_in(t)
                 frame_static = _with_panel(base, panel, dy, alpha)
             else:

@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 from poe2tube.config.settings import REPO_ROOT, get_settings
@@ -36,7 +38,9 @@ def render_base(section_name: str, progress: float) -> Image.Image:
     return img
 
 
-def render_panel_layer(line: Line, result: CraftStageResult) -> Image.Image | None:
+def render_panel_layer(
+    line: Line, result: CraftStageResult, stage_shot: Path | None = None
+) -> Image.Image | None:
     """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
     if line.scene.kind == "talk":
         return None
@@ -46,7 +50,9 @@ def render_panel_layer(line: Line, result: CraftStageResult) -> Image.Image | No
     panel = (330, 130, w - 330, h - TELOP_H - 40)
     shadow_panel(layer, panel, fill=WHITE, outline=LINE, radius=32, blur=24)
     x0, y0, x1, y1 = panel
-    draw_scene_panel(layer, (x0 + 40, y0 + 40, x1 - 40, y1 - 40), line.scene, result, ICON_DIR)
+    draw_scene_panel(
+        layer, (x0 + 40, y0 + 40, x1 - 40, y1 - 40), line.scene, result, ICON_DIR, stage_shot
+    )
     return layer
 
 

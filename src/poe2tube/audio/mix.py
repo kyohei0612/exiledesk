@@ -32,13 +32,17 @@ class SoundEvent:
     kind: str  # start / slide / pop / shock / complete / miss
 
 
+SE_ALIAS = {"hit": "se_pop_2.mp3"}  # クラフトステージで手を打った瞬間 (ピコッ)
+
+
 def se_path(kind: str) -> Path:
     """POE2Tube 自前の assets/se を先に、無ければ youtube-pipeline の物 (assets/se/README.md)."""
     s = get_settings()
-    own = REPO_ROOT / "assets" / "se" / f"se_{kind}_1.mp3"
+    name = SE_ALIAS.get(kind, f"se_{kind}_1.mp3")
+    own = REPO_ROOT / "assets" / "se" / name
     if own.exists():
         return own
-    return s.youtube_pipeline_root / "assets" / "se" / f"se_{kind}_1.mp3"
+    return s.youtube_pipeline_root / "assets" / "se" / name
 
 
 def bgm_path(name: str) -> Path:

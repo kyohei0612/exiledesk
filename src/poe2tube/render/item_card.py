@@ -84,7 +84,7 @@ def draw_item_card(
     if not item.prefixes and not item.suffixes:
         d.text((x0 + 24, y + 8), "MOD なし", font=font(28 if not compact else 22), fill=MUTED)
         return
-    for side, mods in (("接頭", item.prefixes), ("接尾", item.suffixes)):
+    for side, mods in (("プレ", item.prefixes), ("サフィ", item.suffixes)):
         for m in mods:
             y = _mod_row(img, (x0, y, x1), m, side, m.mod_id in hl, compact)
     d.line((x0 + 16, y1 - 1, x1 - 16, y1 - 1), fill=LINE, width=1)
@@ -99,7 +99,7 @@ def _mod_row(
     h = ROW_H[compact] * rows
     if hot:
         d.rounded_rectangle((x0 + 12, y - 4, x1 - 12, y + h - 6), 12, fill=GOLD_SOFT)
-    side_col = (72, 104, 255) if side == "接頭" else (222, 120, 0)
+    side_col = (72, 104, 255) if side == "プレ" else (222, 120, 0)
     label = m.tier_name if compact else f"{side} {m.tier_name}"
     box = pill(img, (x0 + 20, y + 4), label, side_col, size=16 if compact else 20, pad=8)
     tx = box[2] + 14
