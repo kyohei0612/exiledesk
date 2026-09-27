@@ -18,7 +18,8 @@ from PIL import Image, ImageDraw
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.render.draw import load_icon, pill, shadow_panel
-from poe2tube.render.palette import ACCENT, ACCENT_SOFT, GOLD, INK, LINE, PANEL, WHITE, font
+from poe2tube.render.overlay_fx import draw_emphasis_text
+from poe2tube.render.palette import ACCENT, ACCENT_SOFT, GOLD, LINE, PANEL, WHITE, font
 from poe2tube.render.scene_panel import draw_scene_panel
 from poe2tube.render.tachie import render_tachie
 from poe2tube.script.model import Emotion, Line, Speaker
@@ -175,8 +176,5 @@ def _telop(img: Image.Image, line: Line) -> None:
     d.rounded_rectangle((60, y0, w - 60, h - 30), 28, fill=WHITE, outline=color, width=5)
     name = "ずんだもん" if line.speaker == "zundamon" else "四国めたん"
     pill(img, (90, y0 - 26), name, color, size=26)
-    size = 56
-    while d.textlength(line.text, font=font(size)) > w - 240 and size > 30:
-        size -= 2
-    tw = d.textlength(line.text, font=font(size))
-    d.text(((w - tw) / 2, y0 + (TELOP_H - size) / 2 - 8), line.text, font=font(size), fill=INK)
+    # 数字・ティア・個数だけ GiftCut スタイルで強調 (overlay_fx)
+    draw_emphasis_text(img, line.text, (w // 2, y0 + TELOP_H // 2 - 4), w - 240)

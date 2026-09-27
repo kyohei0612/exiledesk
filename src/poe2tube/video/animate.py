@@ -18,6 +18,7 @@ from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
+from poe2tube.render.overlay_fx import draw_chapter, draw_hit
 from poe2tube.script.model import Line
 from poe2tube.video.timeline import Cue, scene_changed
 
@@ -89,6 +90,7 @@ def iter_frames(
     n = 0
     fps = cues[0].frames / cues[0].duration if cues else 24
     prev = None
+    prev_section: str | None = None
     for c in cues:
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
@@ -97,6 +99,12 @@ def iter_frames(
         clip = clip_frames(result.plan, c.line.scene.step or 0) if stage_hit(prev, c.line) else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
+        hit_step = (
+            result.steps[c.line.scene.step - 1]
+            if stage_hit(prev, c.line) and c.line.scene.step
+            else None
+        )
+        new_chapter = prev_section is not None and prev_section != c.section
         for k, mouth in enumerate(c.mouth_levels):
             t = k / fps
             if k < len(clip) * CLIP_SLOWMO:
@@ -113,9 +121,15 @@ def iter_frames(
             else:
                 frame_static = static
             scale = pop_scale(t) if props else 1.0
-            yield n, compose_frame(frame_static, c.line, mouth, props, scale)
+            frame = compose_frame(frame_static, c.line, mouth, props, scale)
+            if hit_step is not None:
+                draw_hit(frame, hit_step, t)
+            if new_chapter:
+                draw_chapter(frame, c.section, t)
+            yield n, frame
             n += 1
         prev = c.line
+        prev_section = c.section
         log.info("frames", line=c.index, scene=c.line.scene.kind, done=n, total=total)
 
 

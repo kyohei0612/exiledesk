@@ -1,0 +1,138 @@
+"""GiftCut テロップスタイルを使った動画内の演出 (kyohei 2026-09-28「全部入れて」).
+
+1. 打った瞬間の結果: 「レアに!」「+ 雷耐性 +40%」を実践パネルの上にポップ
+2. 章の区切り: 章が変わった行の頭で章名を大きく (帯 + フェード)
+3. 強調ワード: 下のテロップの数字・ティア・個数だけを色付きスタイルで
+"""
+
+from __future__ import annotations
+
+import re
+from functools import lru_cache
+
+from PIL import Image, ImageDraw
+
+from poe2tube.contracts.craft_stage import StageStep
+from poe2tube.render.palette import INK, font
+from poe2tube.render.telop_style import load_presets, render_telop
+
+HIT_START, HIT_END = 0.5, 3.4  # 打った瞬間の結果を出す時間 (録画の 1/2 速再生の間)
+CHAPTER_SECONDS = 1.4
+EMPHASIS = re.compile(r"(T\d+|[+＋−-]\s?\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:つ|個|手目|手|枠))")
+STYLE_RARITY = "textstyle010"  # 黄
+STYLE_ADDED = "textstyle025"  # 赤メタリック
+STYLE_REMOVED = "textstyle100"  # 青
+STYLE_CHAPTER = "textstyle025"
+STYLE_EMPHASIS = "textstyle033"  # 赤・3 重縁
+FALLBACK = {
+    "fontFamily": "Noto Sans JP Black",
+    "fontSize": 100,
+    "fill": {"color": "#ffe040"},
+    "strokes": [{"color": "#a01010", "width": 12, "position": "outside"}],
+}
+RARITY_JA = {"magic": "マジックに!", "rare": "レアに!"}
+
+
+def _style(name: str) -> str | dict[str, object]:
+    return name if name in load_presets() else FALLBACK
+
+
+@lru_cache(maxsize=256)
+def telop_image(style: str, text: str, height: int) -> Image.Image:
+    """``height`` px 前後の高さに合わせて描いた透過画像 (同じ物はキャッシュ)."""
+    s = _style(style)
+    base = render_telop(s, text, 1.0)
+    return render_telop(s, text, max(0.1, height / max(1, base.height)))
+
+
+def _pop(t: float) -> float:
+    """0.25 秒で 1.15 倍まで膨らんで 1 に戻る."""
+    if t <= 0:
+        return 0.0
+    if t < 0.25:
+        return 1.15 * t / 0.25
+    if t < 0.4:
+        return 1.15 - 0.15 * (t - 0.25) / 0.15
+    return 1.0
+
+
+def _paste_center(
+    img: Image.Image, im: Image.Image, cx: int, cy: int, scale: float, alpha: float
+) -> None:
+    if scale <= 0.02 or alpha <= 0:
+        return
+    if scale != 1.0:
+        im = im.resize((max(1, int(im.width * scale)), max(1, int(im.height * scale))))
+    if alpha < 1.0:
+        im = im.copy()
+        im.putalpha(im.getchannel("A").point(lambda a: int(a * alpha)))
+    img.alpha_composite(im, (cx - im.width // 2, cy - im.height // 2))
+
+
+def hit_label(step: StageStep) -> tuple[str, str]:
+    """(文字, スタイル)。レアリティが変われば最優先、次に付いた MOD、消えただけなら消えた MOD."""
+    ch = step.changed
+    if ch.rarity_from != ch.rarity_to and ch.rarity_to in RARITY_JA:
+        return RARITY_JA[ch.rarity_to], STYLE_RARITY
+    if ch.added:
+        return "+ " + _short(ch.added[0].text_ja), STYLE_ADDED
+    if ch.removed:
+        return "消えた! " + _short(ch.removed[0].text_ja), STYLE_REMOVED
+    return ("使えない!", STYLE_REMOVED) if not step.applied else ("変化なし", STYLE_REMOVED)
+
+
+def _short(text: str, n: int = 14) -> str:
+    return text if len(text) <= n else text[: n - 1] + "…"
+
+
+def draw_hit(img: Image.Image, step: StageStep, t: float) -> None:
+    """実践パネルの中央下あたりに結果をポップ (t は行の頭からの秒)."""
+    if not HIT_START <= t <= HIT_END:
+        return
+    text, style = hit_label(step)
+    im = telop_image(style, text, 110)
+    if im.width > 1100:
+        im = im.resize((1100, int(im.height * 1100 / im.width)))
+    fade = min(1.0, (HIT_END - t) / 0.3)
+    _paste_center(img, im, img.width // 2, 560, _pop(t - HIT_START), fade)
+
+
+def draw_chapter(img: Image.Image, name: str, t: float) -> None:
+    """章の頭に章名を大きく (半透明の帯 + ポップ + フェードアウト)."""
+    if t > CHAPTER_SECONDS:
+        return
+    fade = min(1.0, (CHAPTER_SECONDS - t) / 0.35)
+    band = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(band).rectangle((0, 380, img.width, 620), fill=(0, 0, 0, int(150 * fade)))
+    img.alpha_composite(band)
+    im = telop_image(STYLE_CHAPTER, name.replace(": ", "　"), 150)
+    if im.width > 1500:
+        im = im.resize((1500, int(im.height * 1500 / im.width)))
+    _paste_center(img, im, img.width // 2, 500, _pop(t), fade)
+
+
+def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max_w: int) -> None:
+    """テロップ本文: 強調語 (数字・ティア・個数) だけ GiftCut スタイル、他は普通の文字で並べる."""
+    parts = [p for p in EMPHASIS.split(text) if p]
+    d = ImageDraw.Draw(img)
+    size = 56
+    while True:
+        f = font(size)
+        pieces: list[tuple[str, Image.Image | None, int]] = []
+        for p in parts:
+            if EMPHASIS.fullmatch(p):
+                em = telop_image(STYLE_EMPHASIS, p, int(size * 1.3))
+                pieces.append((p, em, em.width + int(size * 0.05)))
+            else:
+                pieces.append((p, None, int(d.textlength(p, font=f))))
+        total = sum(w for _, _, w in pieces)
+        if total <= max_w or size <= 30:
+            break
+        size -= 2
+    x = center[0] - total // 2
+    for p, piece, w in pieces:
+        if piece is None:
+            d.text((x, center[1]), p, font=f, fill=INK, anchor="lm")
+        else:
+            img.alpha_composite(piece, (x, center[1] - piece.height // 2))
+        x += w

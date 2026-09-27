@@ -106,3 +106,25 @@ def test_giftcut_telop_style_renders() -> None:
     assert im.width > 200 and im.height > 40
     dict_style = {"fontFamily": "x", "fontSize": 60, "fill": {"color": "#ffffff"}, "strokes": []}
     assert render_telop(dict_style, "あ").width > 10
+
+
+def test_overlay_fx_hit_chapter_emphasis() -> None:
+    from poe2tube.render.overlay_fx import EMPHASIS, draw_chapter, draw_hit, hit_label
+
+    p = ROOT / "data/results/craft_intro_8min.json"
+    if not p.exists():
+        pytest.skip("8 分の結果 JSON が無い")
+    r8 = CraftStageResult.model_validate(json.loads(p.read_text(encoding="utf-8")))
+    assert hit_label(r8.steps[2])[0] == "レアに!"  # 王者 = 青→黄
+    assert hit_label(r8.steps[6])[0].startswith("消えた!")  # 消去
+    assert [m for m in EMPHASIS.findall("3手目のT2で雷耐性 +40% が2つ")] == [
+        "3手目",
+        "T2",
+        "+40%",
+        "2つ",
+    ]
+    img = Image.new("RGBA", (1920, 1080), (255, 255, 255, 255))
+    before = _ink_ratio(img)
+    draw_hit(img, r8.steps[2], 1.0)
+    draw_chapter(img, "実践: 1手目〜3手目", 0.5)
+    assert _ink_ratio(img) > before
