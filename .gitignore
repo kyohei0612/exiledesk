@@ -5,3 +5,5 @@ output/
 cache/
 .env
 assets/characters/*.psd
+assets/characters/*.zip
+assets/characters/*/**/*.psd
