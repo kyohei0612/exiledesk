@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     voicevox_speed: float = Field(
         default=1.2, description="話速 (kyohei 指示 2026-09-27: 1.2 倍くらい)"
     )
+    target_chars_per_sec: float = Field(
+        default=7.3, description="めたんノーマル 1.2 倍の実測。遅いスタイルはここまで速める"
+    )
+    voicevox_max_speed: float = 1.7
     speaker_zundamon: int = 3
     speaker_metan: int = 2
     fps: int = Field(default=24, description="スライドイン等の動きが滑らかに見える最低ライン")

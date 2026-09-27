@@ -27,7 +27,8 @@ CACHE_DIR = REPO_ROOT / "cache" / "voice"
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 STYLE: dict[Speaker, dict[Emotion, int]] = {
-    "zundamon": {"normal": 3, "troubled": 75, "surprised": 7, "happy": 1, "proud": 7, "sad": 76},
+    # troubled はヘロヘロ (75) だと極端に遅く弱いので ノーマル (顔で困りを出す)
+    "zundamon": {"normal": 3, "troubled": 3, "surprised": 7, "happy": 1, "proud": 7, "sad": 76},
     "metan": {"normal": 2, "troubled": 0, "surprised": 6, "happy": 0, "proud": 6, "sad": 36},
 }
 ENGINE_EXE = (
@@ -37,11 +38,25 @@ ENGINE_EXE = (
 )
 
 
+def predicted_seconds(query: dict[str, Any]) -> float:
+    """audio_query の各モーラ長 + 句読点ポーズ + 前後の無音から speed 1.0 の発話秒を出す."""
+    total = float(query.get("prePhonemeLength", 0)) + float(query.get("postPhonemeLength", 0))
+    for phrase in query.get("accent_phrases", []):
+        for mora in phrase.get("moras", []):
+            total += float(mora.get("consonant_length") or 0) + float(mora.get("vowel_length") or 0)
+        pause = phrase.get("pause_mora")
+        if pause:
+            total += float(pause.get("vowel_length") or 0)
+    return total
+
+
 class VoicevoxClient:
     def __init__(self, base_url: str | None = None, speed: float | None = None) -> None:
         s = get_settings()
         self.base = (base_url or s.voicevox_url).rstrip("/")
         self.speed = speed if speed is not None else s.voicevox_speed
+        self.target_rate = s.target_chars_per_sec
+        self.max_speed = s.voicevox_max_speed
         self.session = requests.Session()
 
     # --- エンジン -------------------------------------------------------
@@ -90,11 +105,32 @@ class VoicevoxClient:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         style = self.style_of(line)
         query = self._post("/audio_query", params={"text": line.spoken, "speaker": style}).json()
-        query["speedScale"] = self.speed
+        query["speedScale"] = self.speed_for(query, line.spoken)
         wav = self._post("/synthesis", params={"speaker": style}, json_body=query).content
         path.write_bytes(wav)
-        log.info("voice synthesized", speaker=line.speaker, style=style, chars=len(line.spoken))
+        log.info(
+            "voice synthesized",
+            speaker=line.speaker,
+            style=style,
+            chars=len(line.spoken),
+            speed=round(query["speedScale"], 2),
+        )
         return path
+
+    def speed_for(self, query: dict[str, Any], text: str) -> float:
+        """話者・スタイルで速さがばらつくのを揃える (kyohei 2026-09-27: ずんだもんが遅すぎる).
+
+        audio_query のモーラ長から speed 1.0 の発話秒を予測し、目標の字/秒
+        (settings.target_chars_per_sec) に届かない時だけ speedScale を上げる。
+        速い方は基準の speed のまま (上限 max_speed)。
+        """
+        base_sec = predicted_seconds(query)
+        if base_sec <= 0 or not text:
+            return self.speed
+        rate_at_base = len(text) / (base_sec / self.speed)
+        if rate_at_base >= self.target_rate:
+            return self.speed
+        return min(self.max_speed, self.speed * self.target_rate / rate_at_base)
 
     def _post(
         self, route: str, params: dict[str, Any], json_body: dict[str, Any] | None = None
