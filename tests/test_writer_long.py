@@ -215,3 +215,27 @@ def test_stack_marks_final_step(final_step: int | None) -> None:
         img, (20, 20, 1580, 680), result, [1, 2, 3], 2, "rarity", ROOT / "assets/icons", final_step
     )
     assert img.size == (1600, 700)
+
+
+def test_write_script_long_resumes_from_cache(tmp_path: Path) -> None:
+    brief, result = _brief(), _result()
+    names = ("導入", "仕組み", "実践", "まとめ")
+    secs = _outline_json()["sections"]
+    calls: list[str] = []
+
+    def runner(prompt: str) -> str:
+        calls.append(prompt)
+        if "「構成表」" in prompt:
+            return json.dumps(_outline_json(), ensure_ascii=False)
+        for name, sec in zip(names, secs, strict=True):  # type: ignore[arg-type]
+            if f"「{name}」の本文" in prompt:
+                seconds = int(sec["target_seconds"])  # type: ignore[index]
+                return json.dumps(_section_json(name, seconds), ensure_ascii=False)
+        raise AssertionError("unknown prompt")
+
+    rf = "contracts/examples/result-transmute-augment-regal.json"
+    write_script_long(brief, result, rf, runner, cache_dir=tmp_path)
+    assert (tmp_path / "outline.json").exists() and (tmp_path / "section_03.json").exists()
+    n_first = len(calls)
+    write_script_long(brief, result, rf, runner, cache_dir=tmp_path)
+    assert len(calls) == n_first  # 2 回目は Claude を呼ばない

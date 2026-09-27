@@ -42,7 +42,8 @@ def main() -> None:
     )
     runner = claude_cli_runner(a.model)
     if a.sections or brief.target_seconds >= LONG_THRESHOLD_SECONDS:
-        lw = write_script_long(brief, result, result_file, runner, a.attempts)
+        cache_dir = ROOT / "output" / "work" / brief.name / "script_cache"
+        lw = write_script_long(brief, result, result_file, runner, a.attempts, cache_dir=cache_dir)
         script, attempts = lw.script, lw.attempts
         outline_path = ROOT / "data" / "outlines" / f"{brief.name}.json"
         outline_path.parent.mkdir(parents=True, exist_ok=True)

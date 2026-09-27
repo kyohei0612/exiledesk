@@ -38,7 +38,7 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
         if n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
             problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
     run = 1
-    for prev, cur in zip(lines, lines[1:], strict=False):
+    for k, (prev, cur) in enumerate(zip(lines, lines[1:], strict=False), start=2):
         same = (prev.scene.kind, prev.scene.step, prev.scene.show_steps) == (
             cur.scene.kind,
             cur.scene.step,
@@ -46,7 +46,10 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
         )
         run = run + 1 if same else 1
         if run > MAX_SAME_SCENE_RUN:
-            problems.append(f"同じ画面が {run} 行続く: {cur.scene.kind} step={cur.scene.step}")
+            problems.append(
+                f"line {offset + k}: 同じ画面が {run} 行続く (前の章の終わりも含む): "
+                f"{cur.scene.kind} step={cur.scene.step} → この行の画面を変える"
+            )
             run = 1
     return problems
 

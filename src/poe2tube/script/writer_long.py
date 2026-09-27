@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import structlog
 from pydantic import ValidationError
@@ -195,14 +196,28 @@ def write_script_long(
     runner: Runner,
     max_attempts: int = 3,
     max_global_passes: int = 2,
+    cache_dir: Path | None = None,
 ) -> LongWriteResult:
-    outline, n = write_outline(brief, result, runner, max_attempts)
-    attempts = {"outline": n}
+    """``cache_dir`` を渡すと、通った構成表と章をその都度保存し、次回はそこから再開する
+    (Claude 呼び出し 1 回 1〜3 分なので、途中で落ちた時に最初からやり直さない)。"""
+    cache = _Cache(cache_dir)
+    outline = cache.load_outline()
+    attempts = {"outline": 0}
+    if outline is None:
+        outline, n = write_outline(brief, result, runner, max_attempts)
+        attempts["outline"] = n
+        cache.save_outline(outline)
     sections: list[Section] = []
     for i in range(len(outline.sections)):
+        cached = cache.load_section(i, outline.sections[i].name)
+        if cached is not None:
+            sections.append(cached)
+            attempts[cached.name] = 0
+            continue
         sec, n = write_section(brief, result, outline, i, sections, runner, max_attempts)
         sections.append(sec)
         attempts[sec.name] = n
+        cache.save_section(i, sec)
     script = _assemble(brief, outline, sections, result_file)
     for _ in range(max_global_passes):
         problems = script.check_against(result) + lint_script(script, len(result.steps))
@@ -215,6 +230,7 @@ def write_script_long(
                 brief, result, outline, i, sections[:i], runner, max_attempts, problems
             )
             sections[i] = sec
+            cache.save_section(i, sec)
             attempts[f"{sec.name}#rewrite"] = attempts.get(f"{sec.name}#rewrite", 0) + n
         script = _assemble(brief, outline, sections, result_file)
     else:
@@ -222,6 +238,48 @@ def write_script_long(
         if problems:
             raise RuntimeError(f"全体検査が通らなかった: {problems}")
     return LongWriteResult(script, outline, attempts)
+
+
+class _Cache:
+    """構成表と章の途中保存 (cache_dir が None なら何もしない)."""
+
+    def __init__(self, root: Path | None) -> None:
+        self.root = root
+        if root:
+            root.mkdir(parents=True, exist_ok=True)
+
+    def load_outline(self) -> Outline | None:
+        if not self.root or not (self.root / "outline.json").exists():
+            return None
+        raw = (self.root / "outline.json").read_text(encoding="utf-8")
+        log.info("outline loaded from cache", path=str(self.root))
+        return Outline.model_validate_json(raw)
+
+    def save_outline(self, outline: Outline) -> None:
+        if self.root:
+            (self.root / "outline.json").write_text(
+                outline.model_dump_json(indent=2), encoding="utf-8"
+            )
+
+    def _section_path(self, i: int) -> Path:
+        assert self.root is not None
+        return self.root / f"section_{i:02d}.json"
+
+    def load_section(self, i: int, name: str) -> Section | None:
+        if not self.root or not self._section_path(i).exists():
+            return None
+        sec = Section.model_validate_json(self._section_path(i).read_text(encoding="utf-8"))
+        if sec.name != name:
+            return None
+        log.info("section loaded from cache", name=name)
+        return sec
+
+    def save_section(self, i: int, sec: Section) -> None:
+        if self.root:
+            self._section_path(i).write_text(
+                json.dumps(sec.model_dump(exclude_none=True), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
 
 
 def _assemble(
