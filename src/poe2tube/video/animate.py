@@ -44,13 +44,23 @@ def slide_in(t: float) -> tuple[int, float]:
     return int(SLIDE_PX * (1 - e)), e
 
 
-def sound_events(cues: list[Cue], book: NameBook) -> list[SoundEvent]:
-    """SE を鳴らす時刻: 冒頭 / 画面切替 / 小道具ポップ / 驚きの台詞."""
+def sound_events(cues: list[Cue], book: NameBook, n_steps: int = 0) -> list[SoundEvent]:
+    """SE を鳴らす時刻: 冒頭 / 画面切替 (完成工程なら成功音) / 小道具ポップ / 驚きの台詞."""
     events = [SoundEvent(0.0, "start")]
     prev = None
     for c in cues:
+        sc = c.line.scene
         if prev is not None and scene_changed(prev, c.line):
-            events.append(SoundEvent(c.start, "emphasis"))
+            is_final = (
+                sc.kind in ("stack", "item")
+                and sc.step == n_steps
+                and sc.highlight
+                in (
+                    "rarity",
+                    "name",
+                )
+            )
+            events.append(SoundEvent(c.start, "complete" if is_final else "slide"))
         if book.find_in_text(c.line.text):
             events.append(SoundEvent(c.start + POP_DELAY, "pop"))
         if c.line.emotion == "surprised":

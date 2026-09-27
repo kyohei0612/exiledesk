@@ -93,10 +93,9 @@ def build_video(
     book = NameBook.load()
     cues = build_cues(script.sections, wavs, s.fps)
     voice = concat_audio(cues, work / "voice.wav")
-    audio = mix(
-        voice, work / "audio.wav", s.bgm, sound_events(cues, book), s.bgm_gain_db, s.se_gain_db
-    )
-    log.info("audio mixed", bgm=s.bgm, events=len(sound_events(cues, book)))
+    events = sound_events(cues, book, len(result.steps))
+    audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
+    log.info("audio mixed", bgm=s.bgm, events=len(events))
     frames = write_frames(cues, result, book, work / "frames")
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 
