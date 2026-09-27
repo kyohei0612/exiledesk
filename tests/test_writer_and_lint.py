@@ -146,3 +146,18 @@ def test_lint_bans_settou_setsubi() -> None:
     )
     problems = lint_script(script, n_steps=1)
     assert any("接頭" in p and "プレフィックス" in p for p in problems)
+
+
+def test_lint_bans_next_time_preview() -> None:
+    lines = [
+        Line(speaker="metan", text="次は高貴なオーブで枠を埋める回よ。", scene=Scene(kind="talk")),
+        Line(speaker="zundamon", text="次回も見るのだ。", scene=Scene(kind="stage", step=1)),
+    ]
+    script = VideoScript(
+        title="t",
+        target_seconds=10,
+        result_file="x",
+        sections=[Section(name="s", target_seconds=10, lines=lines)],
+    )
+    problems = [p for p in lint_script(script, n_steps=1) if "次回" in p]
+    assert len(problems) == 2

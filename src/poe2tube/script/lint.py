@@ -18,6 +18,8 @@ SECTION_TOLERANCE = 0.35  # 章ごとの尺のずれ許容 (全体は ±25%)
 POLITE = re.compile(r"(です|ます|ました|でしょう)[。！？]")
 # ゲーム内表記に合わせる (kyohei 2026-09-27)。左は使わない、右に言い換える
 BANNED_TERMS = {"接頭": "プレフィックス", "接尾": "サフィックス"}
+# 次回予告・次回の内容には触れない (kyohei 2026-09-28 確定)
+NEXT_TIME = re.compile(r"次回|次の動画|次は.{0,20}(回|動画)|お楽しみに")
 
 
 def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -> list[str]:
@@ -32,6 +34,8 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
             problems.append(f"line {i}: ずんだもんの語尾に「のだ」が無い: {ln.text}")
         if POLITE.search(ln.text):
             problems.append(f"line {i}: 敬語 (です/ます) は使わない: {ln.text}")
+        if NEXT_TIME.search(ln.text):
+            problems.append(f"line {i}: 次回予告・次回の内容には触れない: {ln.text}")
         for ng, ok in BANNED_TERMS.items():
             if ng in ln.text:
                 problems.append(f"line {i}: 「{ng}」は使わない → 「{ok}」: {ln.text}")

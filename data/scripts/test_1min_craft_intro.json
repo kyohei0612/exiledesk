@@ -79,7 +79,7 @@
           "text": "変成、増強、王者。3個で白がレアになるのだ！",
           "scene": { "kind": "stack", "step": 3, "show_steps": [1, 2, 3] } },
         { "speaker": "metan", "emotion": "proud",
-          "text": "次は高貴なオーブで、4つ目を足す回よ。",
+          "text": "拾った白い装備で、さっそく試してみてね。",
           "scene": { "kind": "talk" } }
       ]
     }

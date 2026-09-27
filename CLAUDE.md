@@ -5,7 +5,7 @@
 
 ## 絶対に守ること
 
-1. **台本を書く前に `docs/script_rules/_intake.md` の 11 問を kyohei に聞く**。答えを `data/briefs/<name>.json` に落とし `Brief.problems()` を通す
+1. **台本を書く前に `docs/script_rules/_intake.md` の 10 問を kyohei に聞く**。答えを `data/briefs/<name>.json` に落とし `Brief.problems()` を通す
 2. **数字・MOD 名・カレンシー名は結果 JSON (`data/results/<name>.json`) が正**。台本側で作らない。ゲームの仕様は `docs/script_rules/_facts.md` に無い事を断定しない
 3. 名前はゲーム公式日本語 (`NameBook`、ExileDesk `price-keys.json` 由来)。「高貴なオーブ」「プレフィックス / サフィックス」。自分で訳さない
 4. 台本の型は `docs/script_rules/_all.md`。機械チェック (`script/lint.py`) を通らない台本は使わない
@@ -50,5 +50,5 @@ python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック�
 
 - 視聴者: ストーリークリア直後〜アクト中の初心者。値段の話はしない。週 1〜2 本
 - 白背景固定、話速 1.2 倍 (遅い声は 7.3 字/秒まで自動で速める)、24fps
-- 導入で完成品を見せてよい。実践は 1 手 = 2 行以上 (宣言 → 結果)、使う瞬間は急がない
+- 次回予告はしない、次回の内容にも触れない。導入で完成品を見せてよい。実践は 1 手 = 2 行以上 (宣言 → 結果)、使う瞬間は急がない
 - 説明している状態と画面を一致させる (白の話は `item` の `step: 0`)

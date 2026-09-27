@@ -13,16 +13,24 @@
     "start_rarity": "normal",
     "seed": 20260930,
     "steps": [
-      { "currency": "transmute" },
-      { "currency": "augment" },
-      { "currency": "regal" },
-      { "currency": "annul", "note": "実験: 要らないMODを1つ消せるか (ランダム)" }
+      {
+        "currency": "transmute"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      },
+      {
+        "currency": "annul",
+        "note": "実験: 要らないMODを1つ消せるか (ランダム)"
+      }
     ]
   },
   "notes": [
     "新ルールの確認: 実践は1手2行 (『○○を持って使うわね』→『△△が付いた/消えた』)",
     "白の話をしている時は白の画面 (item step 0)",
-    "尺を口にしない、値段の話はしない",
-    "最後は『次は高貴なオーブで枠を埋める回』で次回予告"
+    "尺を口にしない、値段の話はしない"
   ]
 }
