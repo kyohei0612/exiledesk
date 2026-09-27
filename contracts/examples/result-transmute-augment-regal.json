@@ -1,0 +1,173 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-27T21:00:00+09:00",
+  "exiledesk_version": "0.1.306",
+  "patch": "0.5.0",
+  "league": "Forbidden Rites",
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "レア装備クラフト入門: 変成 → 増強 → 王者",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "seed": 20260927,
+    "steps": [
+      { "currency": "transmute", "note": "白 → 青。MOD が 1 つ付く" },
+      { "currency": "augment", "note": "青のまま MOD が 2 つ目" },
+      { "currency": "regal", "note": "青 → 黄。3 つ目が付く" }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "seed": 20260928,
+      "before": {
+        "name": "記憶の指輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "normal", "prefixes": [], "suffixes": []
+      },
+      "after": {
+        "name": "記憶の指輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "magic",
+        "prefixes": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "removed": [],
+        "rarity_from": "normal", "rarity_to": "magic"
+      },
+      "cost": { "each": 0.05, "amount": 1, "subtotal": 0.05, "cumulative": 0.05 }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "seed": 20260929,
+      "before": {
+        "name": "記憶の指輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "magic",
+        "prefixes": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "suffixes": []
+      },
+      "after": {
+        "name": "記憶の指輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "magic",
+        "prefixes": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "suffixes": [
+          { "mod_id": "fire_res_ring_t4", "family": "FireResistance", "side": "suffix",
+            "tier_name": "T4", "mod_level": 36,
+            "text_ja": "火耐性 +23%", "text_en": "+23% to Fire Resistance",
+            "values": [23], "ranges": [[18, 23]] }
+        ]
+      },
+      "changed": {
+        "added": [
+          { "mod_id": "fire_res_ring_t4", "family": "FireResistance", "side": "suffix",
+            "tier_name": "T4", "mod_level": 36,
+            "text_ja": "火耐性 +23%", "text_en": "+23% to Fire Resistance",
+            "values": [23], "ranges": [[18, 23]] }
+        ],
+        "removed": [],
+        "rarity_from": "magic", "rarity_to": "magic"
+      },
+      "cost": { "each": 0.08, "amount": 1, "subtotal": 0.08, "cumulative": 0.13 }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "seed": 20260930,
+      "before": {
+        "name": "記憶の指輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "magic",
+        "prefixes": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "suffixes": [
+          { "mod_id": "fire_res_ring_t4", "family": "FireResistance", "side": "suffix",
+            "tier_name": "T4", "mod_level": 36,
+            "text_ja": "火耐性 +23%", "text_en": "+23% to Fire Resistance",
+            "values": [23], "ranges": [[18, 23]] }
+        ]
+      },
+      "after": {
+        "name": "終末の輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+        "item_level": 80, "rarity": "rare",
+        "prefixes": [
+          { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+            "tier_name": "T3", "mod_level": 44,
+            "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+            "values": [52], "ranges": [[50, 59]] }
+        ],
+        "suffixes": [
+          { "mod_id": "fire_res_ring_t4", "family": "FireResistance", "side": "suffix",
+            "tier_name": "T4", "mod_level": 36,
+            "text_ja": "火耐性 +23%", "text_en": "+23% to Fire Resistance",
+            "values": [23], "ranges": [[18, 23]] },
+          { "mod_id": "cold_res_ring_t6", "family": "ColdResistance", "side": "suffix",
+            "tier_name": "T6", "mod_level": 12,
+            "text_ja": "冷気耐性 +9%", "text_en": "+9% to Cold Resistance",
+            "values": [9], "ranges": [[6, 11]] }
+        ]
+      },
+      "changed": {
+        "added": [
+          { "mod_id": "cold_res_ring_t6", "family": "ColdResistance", "side": "suffix",
+            "tier_name": "T6", "mod_level": 12,
+            "text_ja": "冷気耐性 +9%", "text_en": "+9% to Cold Resistance",
+            "values": [9], "ranges": [[6, 11]] }
+        ],
+        "removed": [],
+        "rarity_from": "magic", "rarity_to": "rare"
+      },
+      "cost": { "each": 0.5, "amount": 1, "subtotal": 0.5, "cumulative": 0.63 }
+    }
+  ],
+  "final": {
+    "name": "終末の輪", "base": "Mnemonic Ring", "base_ja": "記憶の指輪",
+    "item_level": 80, "rarity": "rare",
+    "prefixes": [
+      { "mod_id": "life_ring_t3", "family": "IncreasedLife", "side": "prefix",
+        "tier_name": "T3", "mod_level": 44,
+        "text_ja": "最大ライフ +52", "text_en": "+52 to maximum Life",
+        "values": [52], "ranges": [[50, 59]] }
+    ],
+    "suffixes": [
+      { "mod_id": "fire_res_ring_t4", "family": "FireResistance", "side": "suffix",
+        "tier_name": "T4", "mod_level": 36,
+        "text_ja": "火耐性 +23%", "text_en": "+23% to Fire Resistance",
+        "values": [23], "ranges": [[18, 23]] },
+      { "mod_id": "cold_res_ring_t6", "family": "ColdResistance", "side": "suffix",
+        "tier_name": "T6", "mod_level": 12,
+        "text_ja": "冷気耐性 +9%", "text_en": "+9% to Cold Resistance",
+        "values": [9], "ranges": [[6, 11]] }
+    ]
+  },
+  "total_cost": 0.63
+}

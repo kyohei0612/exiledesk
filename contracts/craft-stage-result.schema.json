@@ -1,0 +1,534 @@
+{
+  "$defs": {
+    "CraftStagePlan": {
+      "additionalProperties": false,
+      "description": "手順 JSON (POE2Tube → ExileDesk).",
+      "properties": {
+        "schema": {
+          "default": "craft-stage-plan/1",
+          "title": "Schema",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "動画の題材名 (表示用)",
+          "title": "Title"
+        },
+        "base": {
+          "description": "HTC の英語ベース名。ExileDesk 側は itemBaseFor(data, base) で引く",
+          "title": "Base",
+          "type": "string"
+        },
+        "item_level": {
+          "default": 80,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Item Level",
+          "type": "integer"
+        },
+        "start_rarity": {
+          "default": "normal",
+          "enum": [
+            "normal",
+            "magic",
+            "rare"
+          ],
+          "title": "Start Rarity",
+          "type": "string"
+        },
+        "start_paste": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "途中から始める時のゲーム内アイテムテキスト (Ctrl+C 貼り付け)。無ければ白",
+          "title": "Start Paste"
+        },
+        "seed": {
+          "description": "mulberry32 の起点。1 手ごとの seed は ExileDesk が seed+index で派生させる",
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/PlanStep"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "base",
+        "seed",
+        "steps"
+      ],
+      "title": "CraftStagePlan",
+      "type": "object"
+    },
+    "PlanStep": {
+      "additionalProperties": false,
+      "description": "手順 1 つ。``times`` で同じカレンシーの連打を表す (Chaos ×5 など).",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "お告げ id (price-keys.json の omens キー、例 OmenofDextralExaltation)",
+          "title": "Omen"
+        },
+        "times": {
+          "default": 1,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Times",
+          "type": "integer"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "台本用の覚え書き (ExileDesk は無視してよい)",
+          "title": "Note"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "title": "PlanStep",
+      "type": "object"
+    },
+    "StageChange": {
+      "properties": {
+        "added": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "title": "Added",
+          "type": "array"
+        },
+        "removed": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "title": "Removed",
+          "type": "array"
+        },
+        "rarity_from": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare"
+          ],
+          "title": "Rarity From",
+          "type": "string"
+        },
+        "rarity_to": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare"
+          ],
+          "title": "Rarity To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rarity_from",
+        "rarity_to"
+      ],
+      "title": "StageChange",
+      "type": "object"
+    },
+    "StageCost": {
+      "properties": {
+        "each": {
+          "description": "カレンシー 1 個の相場 (price_unit 建て)",
+          "minimum": 0,
+          "title": "Each",
+          "type": "number"
+        },
+        "amount": {
+          "description": "この手で使った個数 (お告げ込みなら 2)",
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        },
+        "subtotal": {
+          "minimum": 0,
+          "title": "Subtotal",
+          "type": "number"
+        },
+        "cumulative": {
+          "description": "ここまでの累計",
+          "minimum": 0,
+          "title": "Cumulative",
+          "type": "number"
+        }
+      },
+      "required": [
+        "each",
+        "amount",
+        "subtotal",
+        "cumulative"
+      ],
+      "title": "StageCost",
+      "type": "object"
+    },
+    "StageItem": {
+      "description": "ある時点のアイテム全体.",
+      "properties": {
+        "name": {
+          "description": "表示名 (レアなら生成名、それ以外はベース名)",
+          "title": "Name",
+          "type": "string"
+        },
+        "base": {
+          "title": "Base",
+          "type": "string"
+        },
+        "base_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Base Ja"
+        },
+        "item_level": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Item Level",
+          "type": "integer"
+        },
+        "rarity": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare"
+          ],
+          "title": "Rarity",
+          "type": "string"
+        },
+        "quality": {
+          "default": 0,
+          "maximum": 30,
+          "minimum": 0,
+          "title": "Quality",
+          "type": "integer"
+        },
+        "corrupted": {
+          "default": false,
+          "title": "Corrupted",
+          "type": "boolean"
+        },
+        "prefixes": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "maxItems": 3,
+          "title": "Prefixes",
+          "type": "array"
+        },
+        "suffixes": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "maxItems": 3,
+          "title": "Suffixes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "base",
+        "item_level",
+        "rarity"
+      ],
+      "title": "StageItem",
+      "type": "object"
+    },
+    "StageMod": {
+      "description": "アイテムに付いている MOD 1 行 (数値まで確定した本物).",
+      "properties": {
+        "mod_id": {
+          "title": "Mod Id",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "prefix",
+            "suffix"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "tier_name": {
+          "description": "HTC の Tier.name (例 'T3')",
+          "title": "Tier Name",
+          "type": "string"
+        },
+        "mod_level": {
+          "description": "その段の要求アイテムレベル (Tier.ilvl)",
+          "minimum": 0,
+          "title": "Mod Level",
+          "type": "integer"
+        },
+        "text_ja": {
+          "description": "公式日本語 1 行、数値埋め込み済 (jaOfMod + fillHashes)",
+          "title": "Text Ja",
+          "type": "string"
+        },
+        "text_en": {
+          "title": "Text En",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "ranges": {
+          "description": "[[min,max], ...] 段の幅",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Ranges",
+          "type": "array"
+        },
+        "fractured": {
+          "default": false,
+          "title": "Fractured",
+          "type": "boolean"
+        },
+        "desecrated": {
+          "default": false,
+          "title": "Desecrated",
+          "type": "boolean"
+        },
+        "crafted": {
+          "default": false,
+          "title": "Crafted",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mod_id",
+        "family",
+        "side",
+        "tier_name",
+        "mod_level",
+        "text_ja",
+        "text_en"
+      ],
+      "title": "StageMod",
+      "type": "object"
+    },
+    "StageStep": {
+      "description": "1 手の記録。``applied=False`` はその状態では使えなかった手 (理由は ``reason``).",
+      "properties": {
+        "index": {
+          "minimum": 1,
+          "title": "Index",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "currency_ja": {
+          "title": "Currency Ja",
+          "type": "string"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Omen"
+        },
+        "omen_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Omen Ja"
+        },
+        "seed": {
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "applied": {
+          "default": true,
+          "title": "Applied",
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "before": {
+          "$ref": "#/$defs/StageItem"
+        },
+        "after": {
+          "$ref": "#/$defs/StageItem"
+        },
+        "changed": {
+          "$ref": "#/$defs/StageChange"
+        },
+        "cost": {
+          "$ref": "#/$defs/StageCost"
+        }
+      },
+      "required": [
+        "index",
+        "currency",
+        "currency_ja",
+        "seed",
+        "before",
+        "after",
+        "changed",
+        "cost"
+      ],
+      "title": "StageStep",
+      "type": "object"
+    }
+  },
+  "description": "結果 JSON (ExileDesk → POE2Tube)。ExileDesk が将来足すキーは無視する (extra=ignore).",
+  "properties": {
+    "schema": {
+      "title": "Schema",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "exiledesk_version": {
+      "title": "Exiledesk Version",
+      "type": "string"
+    },
+    "patch": {
+      "description": "HTC データのパッチ (例 '0.5.0')",
+      "title": "Patch",
+      "type": "string"
+    },
+    "league": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "League"
+    },
+    "price_unit": {
+      "enum": [
+        "exalted",
+        "divine",
+        "chaos"
+      ],
+      "title": "Price Unit",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/CraftStagePlan"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/StageStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "final": {
+      "$ref": "#/$defs/StageItem"
+    },
+    "total_cost": {
+      "minimum": 0,
+      "title": "Total Cost",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema",
+    "generated_at",
+    "exiledesk_version",
+    "patch",
+    "price_unit",
+    "plan",
+    "steps",
+    "final",
+    "total_cost"
+  ],
+  "title": "CraftStageResult",
+  "type": "object",
+  "$id": "https://github.com/kyohei0612/POE2Tube/contracts/craft-stage-result.schema.json"
+}

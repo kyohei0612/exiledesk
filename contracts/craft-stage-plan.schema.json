@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "PlanStep": {
+      "additionalProperties": false,
+      "description": "手順 1 つ。``times`` で同じカレンシーの連打を表す (Chaos ×5 など).",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "お告げ id (price-keys.json の omens キー、例 OmenofDextralExaltation)",
+          "title": "Omen"
+        },
+        "times": {
+          "default": 1,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Times",
+          "type": "integer"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "台本用の覚え書き (ExileDesk は無視してよい)",
+          "title": "Note"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "title": "PlanStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "手順 JSON (POE2Tube → ExileDesk).",
+  "properties": {
+    "schema": {
+      "default": "craft-stage-plan/1",
+      "title": "Schema",
+      "type": "string"
+    },
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "動画の題材名 (表示用)",
+      "title": "Title"
+    },
+    "base": {
+      "description": "HTC の英語ベース名。ExileDesk 側は itemBaseFor(data, base) で引く",
+      "title": "Base",
+      "type": "string"
+    },
+    "item_level": {
+      "default": 80,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Item Level",
+      "type": "integer"
+    },
+    "start_rarity": {
+      "default": "normal",
+      "enum": [
+        "normal",
+        "magic",
+        "rare"
+      ],
+      "title": "Start Rarity",
+      "type": "string"
+    },
+    "start_paste": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "途中から始める時のゲーム内アイテムテキスト (Ctrl+C 貼り付け)。無ければ白",
+      "title": "Start Paste"
+    },
+    "seed": {
+      "description": "mulberry32 の起点。1 手ごとの seed は ExileDesk が seed+index で派生させる",
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/PlanStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "base",
+    "seed",
+    "steps"
+  ],
+  "title": "CraftStagePlan",
+  "type": "object",
+  "$id": "https://github.com/kyohei0612/POE2Tube/contracts/craft-stage-plan.schema.json"
+}
