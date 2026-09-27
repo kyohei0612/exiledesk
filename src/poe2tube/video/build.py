@@ -107,7 +107,7 @@ def build_video(
     book = NameBook.load()
     cues = build_cues(script.sections, wavs, s.fps)
     voice = concat_audio(cues, work / "voice.wav")
-    events = sound_events(cues, book, script.final_step or len(result.steps))
+    events = sound_events(cues, book, script.final_step or len(result.steps), result)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
     capture_stage_scenes(script, result)

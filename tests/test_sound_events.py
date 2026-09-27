@@ -42,7 +42,10 @@ def test_sound_events_kinds_and_times() -> None:
     assert not any(k == "slide" and t == 4.0 for k, t in kinds)  # 同じ画面なら鳴らさない
 
 
-def test_own_se_preferred_over_youtube_pipeline() -> None:
-    assert se_path("pop") == REPO_ROOT / "assets" / "se" / "se_pop_1.mp3"
-    assert se_path("pop").exists()
+def test_se_lookup_order() -> None:
+    # 1) GiftCut の SE (あれば) → 2) POE2Tube 自前 → 3) youtube-pipeline
+    p = se_path("pop")
+    assert p.exists()
+    assert "GiftCut" in str(p) or p == REPO_ROOT / "assets" / "se" / "se_pop_1.mp3"
+    assert se_path("miss") == REPO_ROOT / "assets" / "se" / "se_miss_1.mp3"  # GiftCut に無い種類
     assert "youtube-pipeline" in str(se_path("start")) or se_path("start").exists()

@@ -33,11 +33,29 @@ class SoundEvent:
 
 
 SE_ALIAS = {"hit": "se_pop_2.mp3"}  # クラフトステージで手を打った瞬間 (ピコッ)
+# GiftCut の SE (kyohei 了承 2026-09-28)。場面 → (フォルダ, ファイル)。無ければ下の探し方に戻る
+GIFTCUT_SE = {
+    "start": ("03_登場・場面転換", "タイトル1.mp3"),
+    "chapter": ("03_登場・場面転換", "シーン切替1.mp3"),
+    "slide": ("03_登場・場面転換", "パッ1.mp3"),
+    "pop": ("03_登場・場面転換", "ニュッ1.mp3"),
+    "hit": ("01_強調・キラーン", "シャキーン1.mp3"),
+    "hit_rarity": ("04_演出・ファンファーレ", "レベルアップ1.mp3"),
+    "hit_added": ("04_演出・ファンファーレ", "アイテム入手1.mp3"),
+    "hit_removed": ("02_ツッコミ・リアクション", "チーン1.mp3"),
+    "complete": ("04_演出・ファンファーレ", "ジャジャーン1.mp3"),
+    "shock": ("02_ツッコミ・リアクション", "驚き1.mp3"),
+}
 
 
 def se_path(kind: str) -> Path:
     """POE2Tube 自前の assets/se を先に、無ければ youtube-pipeline の物 (assets/se/README.md)."""
     s = get_settings()
+    if kind in GIFTCUT_SE:
+        folder, file = GIFTCUT_SE[kind]
+        gc = s.giftcut_root / "SE" / folder / file
+        if gc.exists():
+            return gc
     name = SE_ALIAS.get(kind, f"se_{kind}_1.mp3")
     own = REPO_ROOT / "assets" / "se" / name
     if own.exists():

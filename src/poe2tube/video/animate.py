@@ -15,10 +15,10 @@ from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
 from poe2tube.capture.stage import clip_frames
-from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
-from poe2tube.render.overlay_fx import draw_chapter, draw_hit
+from poe2tube.render.overlay_fx import HIT_START, draw_chapter, draw_hit
 from poe2tube.script.model import Line
 from poe2tube.video.timeline import Cue, scene_changed
 
@@ -48,12 +48,22 @@ def slide_in(t: float) -> tuple[int, float]:
     return int(SLIDE_PX * (1 - e)), e
 
 
-def sound_events(cues: list[Cue], book: NameBook, n_steps: int = 0) -> list[SoundEvent]:
+def sound_events(
+    cues: list[Cue],
+    book: NameBook,
+    n_steps: int = 0,
+    result: CraftStageResult | None = None,
+) -> list[SoundEvent]:
     """SE を鳴らす時刻: 冒頭 / 画面切替 (完成工程なら成功音) / 小道具ポップ / 驚きの台詞."""
     events = [SoundEvent(0.0, "start")]
     prev = None
+    prev_section: str | None = None
     for c in cues:
         sc = c.line.scene
+        if prev is not None and c.section != prev_section:
+            events.append(SoundEvent(c.start, "chapter"))
+        if result is not None and stage_hit(prev, c.line) and sc.step:
+            events.append(SoundEvent(c.start + HIT_START, hit_sound(result.steps[sc.step - 1])))
         if prev is not None and scene_changed(prev, c.line):
             is_final = (
                 sc.kind in ("stack", "item")
@@ -71,7 +81,16 @@ def sound_events(cues: list[Cue], book: NameBook, n_steps: int = 0) -> list[Soun
         if c.line.emotion == "surprised":
             events.append(SoundEvent(c.start, "shock"))
         prev = c.line
+        prev_section = c.section
     return events
+
+
+def hit_sound(step: StageStep) -> str:
+    """結果ポップに合わせた SE: 色が変わった / MOD が付いた / 消えただけ."""
+    ch = step.changed
+    if ch.rarity_from != ch.rarity_to:
+        return "hit_rarity"
+    return "hit_added" if ch.added else "hit_removed"
 
 
 def stage_hit(prev: Line | None, cur: Line) -> bool:

@@ -37,6 +37,27 @@ def _style(name: str) -> str | dict[str, object]:
     return name if name in load_presets() else FALLBACK
 
 
+@lru_cache(maxsize=1)
+def emphasis_style() -> dict[str, object]:
+    """強調語用: textstyle033 の塗りと縁だけ (影を外す)。影があると画像の中心が右下にずれて
+    本文と高さが合わない (kyohei 2026-09-28「デカフォントだけ下にずれる」)。"""
+    base = load_presets().get(STYLE_EMPHASIS)
+    if not base:
+        return dict(FALLBACK)
+    return {**base, "shadow": {"enabled": False}, "shadows": []}
+
+
+def emphasis_image(text: str, height: int) -> Image.Image:
+    return _emphasis_cached(text, height)
+
+
+@lru_cache(maxsize=256)
+def _emphasis_cached(text: str, height: int) -> Image.Image:
+    s = emphasis_style()
+    base = render_telop(s, text, 1.0)
+    return render_telop(s, text, max(0.1, height / max(1, base.height)))
+
+
 @lru_cache(maxsize=256)
 def telop_image(style: str, text: str, height: int) -> Image.Image:
     """``height`` px 前後の高さに合わせて描いた透過画像 (同じ物はキャッシュ)."""
@@ -115,14 +136,14 @@ def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max
     """テロップ本文: 強調語 (数字・ティア・個数) だけ GiftCut スタイル、他は普通の文字で並べる."""
     parts = [p for p in EMPHASIS.split(text) if p]
     d = ImageDraw.Draw(img)
-    size = 56
+    size = 62
     while True:
         f = font(size)
         pieces: list[tuple[str, Image.Image | None, int]] = []
         for p in parts:
             if EMPHASIS.fullmatch(p):
-                em = telop_image(STYLE_EMPHASIS, p, int(size * 1.3))
-                pieces.append((p, em, em.width + int(size * 0.05)))
+                em = emphasis_image(p, int(size * 1.2))
+                pieces.append((p, em, em.width + int(size * 0.08)))
             else:
                 pieces.append((p, None, int(d.textlength(p, font=f))))
         total = sum(w for _, _, w in pieces)
