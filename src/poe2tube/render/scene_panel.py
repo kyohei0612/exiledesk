@@ -42,29 +42,58 @@ def draw_scene_panel(
 def _stage_placeholder(
     img: Image.Image, box: Box, scene: Scene, result: CraftStageResult, icon_dir: Path
 ) -> None:
-    """クラフトステージの撮影画面が来るまでの仮: 左に工程アイコン列、右に現在のアイテム."""
-    x0, y0, x1, _ = box
+    """クラフトステージ (結果 JSON から描く版): 上にカレンシー棚、中央にアイテム、下に工程履歴.
+
+    ExileDesk のクラフトステージ画面 (Craft of Exile 式) と同じ並びにして、後で撮影画面に
+    差し替えても見え方が変わらないようにする。
+    """
+    x0, y0, x1, y1 = box
     d = ImageDraw.Draw(img)
-    pill(img, (x0, y0), "実践: クラフトステージ (仮画面)", MUTED, size=24)
+    pill(img, (x0, y0), "クラフトステージ", ACCENT, size=24)
     step = scene.step or 0
     item = result.steps[step - 1].after if step else result.steps[0].before
-    y = y0 + 80
+    # カレンシー棚: 手順に出る種類を並べ、いま使った物に金の枠
+    shelf_y = y0 + 70
+    x = x0
+    seen: list[str] = []
     for st in result.steps:
-        done = st.index <= step
+        if st.currency in seen:
+            continue
+        seen.append(st.currency)
         icon_path = icon_dir / f"{st.currency}.png"
+        current = st.index == step
+        if current:
+            d.rounded_rectangle(
+                (x - 10, shelf_y - 10, x + 110, shelf_y + 110), 18, outline=GOLD, width=5
+            )
         if icon_path.exists():
-            ic = load_icon(icon_path, 110)
-            if not done:
-                ic = ic.copy()
-                ic.putalpha(ic.getchannel("A").point(lambda a: a // 4))
-            img.alpha_composite(ic, (x0, y))
-        d.text((x0 + 130, y + 30), st.currency_ja, font=font(30), fill=INK if done else MUTED)
-        if st.index == step:
-            pill(img, (x0 + 130, y + 72), "← いま使った", GOLD, INK, size=20, pad=10)
-        y += 150
+            img.alpha_composite(load_icon(icon_path, 100), (x, shelf_y))
+        d.text((x, shelf_y + 108), st.currency_ja, font=font(18), fill=INK if current else MUTED)
+        x += 200
+    # 使用中のカレンシー: 棚からアイテムへ飛んだ先 (アイテムの左上に重ねる)
     hl = {m.mod_id for m in result.steps[step - 1].changed.added} if step else set()
     ch = card_height(item)
-    draw_item_card(img, (x0 + 520, y0 + 60, x1, y0 + 60 + ch), item, hl)
+    cw = min(880, x1 - x0 - 40)
+    cx = x0 + (x1 - x0 - cw) // 2
+    cy = shelf_y + 190
+    draw_item_card(img, (cx, cy, cx + cw, cy + ch), item, hl)
+    if step:
+        cur = result.steps[step - 1]
+        icon_path = icon_dir / f"{cur.currency}.png"
+        if icon_path.exists():
+            img.alpha_composite(load_icon(icon_path, 90), (cx - 45, cy - 45))
+        label = f"{cur.currency_ja} を使った" if cur.applied else f"使えない: {cur.reason or ''}"
+        pill(img, (cx + 60, cy - 46), label, GOLD if cur.applied else MUTED, INK, size=20, pad=10)
+    # 工程履歴 (下に積み上がる)
+    hy = min(y1 - 60, cy + ch + 30)
+    hx = x0
+    for st in result.steps[:step]:
+        added = "、".join(m.text_ja for m in st.changed.added) or "変化なし"
+        text = f"{st.index}. {st.currency_ja} → {added}"
+        box_ = pill(img, (hx, hy), text, ACCENT if st.index == step else LINE, INK, size=20, pad=12)
+        hx = box_[2] + 12
+        if hx > x1 - 300:
+            hx, hy = x0, hy + 52
 
 
 def _cost(img: Image.Image, box: Box, result: CraftStageResult) -> None:
