@@ -18,4 +18,14 @@ export const zeroStart = ref({
   /** 固定済みの樹 MOD (買う物) が使う枠 */
   fixedPrefix: 0,
   fixedSuffix: 0,
+  /**
+   * ベースの付与スキル (不在のアミュレットなど候補から 1 つ付くベースだけ。i18n/inherent-skills.json)。取引所では付与スキルで
+   * 別物になるので、検索に入れる (オーナー 2026-09-27「つけるもの選べるようにしないと検索で出ないぞ」)。null = 問わない
+   */
+  grantedSkill: null as string | null,
 });
+
+/** 検索に入れる付与スキル: 貼り付けがあればその付与スキル、ベースから選ぶ道なら選んだ物 */
+export function grantedSkillFor(item: { grantedSkill: string | null } | null | undefined): string | null {
+  return item ? item.grantedSkill : zeroStart.value.grantedSkill;
+}

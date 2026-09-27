@@ -4,6 +4,7 @@
  */
 import { Rarity, SecurityStatus } from "../../constants/trade2";
 import { statFilter } from "./prices";
+import { grantedSkillStatId } from "../trade2/query/spec";
 import type { Equip, RareLine, RareLink } from "./rare-query";
 
 export type Filter = { id: string; value?: { min?: number; max?: number; option?: number } };
@@ -21,11 +22,13 @@ export function query(base: string, filters: Filter[], equip: Equip, defScale: n
     if (equip.energyShield > 0) eq.es = { min: d(equip.energyShield) };
   }
   if (equip.sockets > 0) eq.rune_sockets = { min: equip.sockets };
+  const skillId = grantedSkillStatId(equip.grantedSkill);
   return {
     query: {
       status: { option: SecurityStatus.Securable },
       ...(base ? { type: base } : {}),
-      stats: statGroups(filters),
+      // 付与スキル (不在のアミュレットなど候補から 1 つ付くベース) はどの段階でも入れる。付与スキル違いは別物
+      stats: statGroups([...filters, ...(skillId ? [{ id: skillId }] : [])]),
       filters: {
         type_filters: { filters: { rarity: { option: Rarity.Rare }, ...(defScale === 1 && equip.quality > 0 ? { quality: { min: equip.quality } } : {}) } },
         ...(Object.keys(eq).length ? { equipment_filters: { filters: eq } } : {}),

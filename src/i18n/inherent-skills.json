@@ -1,0 +1,212 @@
+{
+ "Lament Amulet": [
+  {
+   "en": "Arctic Armour",
+   "ja": "アークティックアーマー"
+  },
+  {
+   "en": "Herald of Ash",
+   "ja": "ヘラルドオブアッシュ"
+  },
+  {
+   "en": "Herald of Ice",
+   "ja": "ヘラルドオブアイス"
+  },
+  {
+   "en": "Herald of Thunder",
+   "ja": "ヘラルドオブサンダー"
+  },
+  {
+   "en": "Plague Bearer",
+   "ja": "プレイグベアラー"
+  },
+  {
+   "en": "Barrier Invocation",
+   "ja": "バリアーインボケーション"
+  },
+  {
+   "en": "Lingering Illusion",
+   "ja": "リンガーリングイリュージョン"
+  },
+  {
+   "en": "Ghost Dance",
+   "ja": "ゴーストダンス"
+  },
+  {
+   "en": "Mana Remnants",
+   "ja": "マナレムナント"
+  },
+  {
+   "en": "Magma Barrier",
+   "ja": "マグマバリアー"
+  },
+  {
+   "en": "Raging Spirits",
+   "ja": "レイジングスピリット"
+  },
+  {
+   "en": "Wind Dancer",
+   "ja": "ウィンドダンサー"
+  },
+  {
+   "en": "Cast on Minion Death",
+   "ja": "ミニオン死亡時キャスト"
+  },
+  {
+   "en": "Scavenged Plating",
+   "ja": "スカベンジドプレーティング"
+  },
+  {
+   "en": "War Banner",
+   "ja": "ウォーバナー"
+  },
+  {
+   "en": "Defiance Banner",
+   "ja": "ディファイアンスバナー"
+  },
+  {
+   "en": "Dread Banner",
+   "ja": "ドレッドバナー"
+  },
+  {
+   "en": "Time of Need",
+   "ja": "タイムオブニード"
+  },
+  {
+   "en": "Attrition",
+   "ja": "アトリション"
+  },
+  {
+   "en": "Charge Regulation",
+   "ja": "チャージレギュレーション"
+  },
+  {
+   "en": "Shard Scavenger",
+   "ja": "シャードスカベンジャー"
+  },
+  {
+   "en": "Overwhelming Presence",
+   "ja": "オーバーウェルミングプレゼンス"
+  },
+  {
+   "en": "Alchemist's Boon",
+   "ja": "錬金術師の恩恵"
+  },
+  {
+   "en": "Reaper's Invocation",
+   "ja": "リーパーズインボケーション"
+  },
+  {
+   "en": "Berserk",
+   "ja": "バーサーク"
+  },
+  {
+   "en": "Herald of Plague",
+   "ja": "ヘラルドオブプレイグ"
+  },
+  {
+   "en": "Herald of Blood",
+   "ja": "ヘラルドオブブラッド"
+  },
+  {
+   "en": "Withering Presence",
+   "ja": "ウィザリングプレゼンス"
+  },
+  {
+   "en": "Ravenous Swarm",
+   "ja": "ラヴェナススウォーム"
+  },
+  {
+   "en": "Combat Frenzy",
+   "ja": "コンバットフレンジー"
+  },
+  {
+   "en": "Trail of Caltrops",
+   "ja": "トレイルオブカルトロップ"
+  },
+  {
+   "en": "Convalescence",
+   "ja": "コンヴァレッセンス"
+  },
+  {
+   "en": "Iron Ward",
+   "ja": "アイアンワード"
+  },
+  {
+   "en": "Siphon Elements",
+   "ja": "サイフォンエレメント"
+  },
+  {
+   "en": "Briarpatch",
+   "ja": "ブライアパッチ"
+  },
+  {
+   "en": "Savage Fury",
+   "ja": "サベージフューリー"
+  },
+  {
+   "en": "Barkskin",
+   "ja": "バークスキン"
+  }
+ ],
+ "Portent Amulet": [
+  {
+   "en": "Wolf Pack",
+   "ja": "ウルフパック"
+  },
+  {
+   "en": "Blink",
+   "ja": "ブリンク"
+  },
+  {
+   "en": "Elemental Invocation",
+   "ja": "エレメンタルインボケーション"
+  },
+  {
+   "en": "Elemental Conflux",
+   "ja": "エレメンタルコンフラックス"
+  },
+  {
+   "en": "Sacrifice",
+   "ja": "サクリファイス"
+  },
+  {
+   "en": "Mirage Archer",
+   "ja": "ミラージュアーチャー"
+  },
+  {
+   "en": "Feral Invocation",
+   "ja": "フェラルインヴォケーション"
+  }
+ ],
+ "Absent Amulet": [
+  {
+   "en": "Cast on Elemental Ailment",
+   "ja": "元素系状態異常時キャスト"
+  },
+  {
+   "en": "Cast on Critical",
+   "ja": "クリティカル時キャスト"
+  },
+  {
+   "en": "Cast on Dodge",
+   "ja": "ドッジ時キャスト"
+  },
+  {
+   "en": "Rhoa Mount",
+   "ja": "ロア騎乗"
+  },
+  {
+   "en": "Archmage",
+   "ja": "アーチメイジ"
+  },
+  {
+   "en": "Trinity",
+   "ja": "トリニティ"
+  },
+  {
+   "en": "Eternal Rage",
+   "ja": "エターナルレイジ"
+  }
+ ]
+}

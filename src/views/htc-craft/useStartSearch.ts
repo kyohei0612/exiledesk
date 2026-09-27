@@ -25,7 +25,7 @@ import { marketStore } from "../../state/market-store";
 import { startRows, type StartRow } from "./start-rows";
 import { startKindOf } from "./start-kind";
 import { craftEstimate, estimateSettled, spawnChance } from "./craft-estimate";
-import { zeroStart } from "./craft-settings";
+import { grantedSkillFor, zeroStart } from "./craft-settings";
 import type { TreeResult } from "./useTreeSearch";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -118,7 +118,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
       stats: [...tree, ...filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min }))],
       ...(modIds.length ? {} : { fracturedItem: false }),
-      grantedSkill: c.item.value?.grantedSkill ?? null,
+      grantedSkill: grantedSkillFor(c.item.value),
       // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
       ...(c.socketsMin?.value != null ? { socketsMin: c.socketsMin.value } : {}),
     });

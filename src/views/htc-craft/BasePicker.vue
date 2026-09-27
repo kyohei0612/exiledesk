@@ -18,6 +18,7 @@ import { sideLimits } from "../../services/htc/bridge";
 import { qualityLabelOf, type CardMod } from "./item-card-data";
 import { fillHashes } from "../../services/htc/mod-text";
 import type { ZeroPreset } from "./presets";
+import inherentSkills from "../../i18n/inherent-skills.json";
 import type { usePicker, ModRow, ModGroup } from "./usePicker";
 import type { useHtcCraft } from "./useHtcCraft";
 
@@ -50,7 +51,16 @@ const chosen = computed(() => pk.allBases.value.find((b) => b.en === pk.baseName
 function choose(en: string): void {
   const d = props.c.data.value;
   if (d) pk.chooseBase(d, en);
+  zeroStart.value = { ...zeroStart.value, grantedSkill: null };
 }
+/**
+ * そのベースの付与スキルの候補 (不在 / 嘆き / 前兆のアミュレットなど、候補から 1 つ付く物だけ)。取引所では付与スキルで別物になるので
+ * 選んでから探す (オーナー 2026-09-27「つけるもの選べるようにしないと検索で出ないぞ」)
+ */
+const SKILLS = inherentSkills as Record<string, Array<{ en: string; ja: string }>>;
+const skillsOf = (en: string | null | undefined) => (en ? (SKILLS[en] ?? []) : []);
+const skillOptions = computed(() => skillsOf(chosen.value?.en));
+const pickSkill = (en: string | null): void => void (zeroStart.value = { ...zeroStart.value, grantedSkill: en });
 /** よく使う ilvl */
 const ILVLS = [75, 79, 82, 84, 86];
 
@@ -135,6 +145,18 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
             <button v-for="z in presets" :key="z.id" type="button" class="rounded-lg border px-2 py-0.5" :class="presetPicked === z.id ? 'border-amber-400 text-amber-300' : 'border-white/15 opacity-70 hover:opacity-100'" @click="emit('preset', z.id)">{{ z.label }}</button>
           </span>
         </div>
+        <!-- 付与スキル (候補から 1 つ付くベースだけ)。選ばないと付与スキル違いも混ざる -->
+        <div v-if="chosen && skillOptions.length" class="mb-2 rounded-lg p-2" :class="zeroStart.grantedSkill ? 'bg-black/20' : 'bg-amber-500/10 ring-1 ring-amber-400/40'">
+          <p class="mb-1 flex items-center gap-2">
+            <b class="text-amber-100">付与スキル</b>
+            <span class="opacity-60">このベースは {{ skillOptions.length }} 種から 1 つ付く。取引所の検索に入れる</span>
+            <span v-if="!zeroStart.grantedSkill" class="text-amber-200">選ばないと付与スキル違いの物も混ざります</span>
+          </p>
+          <div class="flex flex-wrap gap-1">
+            <button type="button" class="rounded-full px-2 py-0.5" :class="!zeroStart.grantedSkill ? 'bg-white/15 text-white' : 'bg-white/5 opacity-60 hover:opacity-100'" @click="pickSkill(null)">問わない</button>
+            <button v-for="k in skillOptions" :key="k.en" type="button" class="rounded-full px-2 py-0.5" :class="zeroStart.grantedSkill === k.en ? 'bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60' : 'bg-white/5 hover:bg-white/10'" :title="k.en" @click="pickSkill(k.en)">{{ k.ja }}</button>
+          </div>
+        </div>
         <template v-if="!chosen">
           <div class="mb-2 flex flex-wrap items-center gap-1">
             <button v-for="k in CLS_ORDER" :key="k" type="button" class="rounded-full px-2.5 py-0.5" :class="!pk.baseQuery.value && clsFilter === k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'bg-white/5 hover:bg-white/10'" @click="clsFilter = k; pk.baseQuery.value = ''">{{ clsJa(k) }}</button>
@@ -145,6 +167,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
               <p class="font-bold text-amber-100">{{ b.ja }}</p>
               <p class="text-[10.5px] opacity-50">{{ clsJa(b.cls) }} ・ 必要レベル {{ b.lvl }}</p>
               <p v-if="b.implicits.length" class="text-[10.5px] text-[#8888ff]">{{ b.implicits.join(" / ") }}</p>
+              <p v-if="skillsOf(b.en).length" class="text-[10.5px] text-sky-300">付与スキル {{ skillsOf(b.en).length }} 種から 1 つ</p>
             </button>
             <p v-if="!bases.length" class="col-span-3 py-4 text-center opacity-50">見つかりません</p>
           </div>

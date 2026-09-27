@@ -25,6 +25,7 @@ import { baseForSolving } from "../htc/bridge";
 import { tradeFiltersFor } from "../htc/buy-or-craft";
 import { jaUniqueText, loadUniqueHoverDict } from "../mods/unique-mod-ja";
 import { loadStatText, textStats, type TextStat } from "./prices";
+import inherentSkills from "../../i18n/inherent-skills.json";
 import { bareOf, defScaleOf, ladder, lineFilters, mergeSame, query, type Filter } from "./rare-trade-query";
 export { lineMin } from "./rare-trade-query";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -89,6 +90,11 @@ export interface Equip {
   sockets: number;
   /** 品質 (%)。完成品の検索だけ下限に入れる (オーナー 2026-09-27「元のコピーが 40% なら 40% で探すべき。条件緩めるならその限りではない」) */
   quality: number;
+  /**
+   * 付与スキル (不在 / 嘆き / 前兆のアミュレットなど、候補から 1 つ付くベースだけ)。取引所では付与スキルで別物になる
+   * (オーナー 2026-09-27「スキル付与されてるアミュレットとかは…選べるようにしないと検索で出ないぞ」)
+   */
+  grantedSkill: string | null;
 }
 /** 聖別で掛かる倍率の上限 (78%〜122%) */
 const SANCTIFY_MAX = 1.22;
@@ -132,7 +138,16 @@ function nearestTier(mod: Mod, text: string, level: number): number | null {
 
 /** 品質の最大値 (+20% to Maximum Quality) の行ではない */
 const notQuality = (t: TextStat) => !t.ids.some((id) => id.endsWith(".stat_2039822488"));
-const equipOf = (it: BuildItem): Equip => ({ armour: it.armour, evasion: it.evasion, energyShield: it.energyShield, sockets: it.sockets, quality: it.quality });
+const equipOf = (it: BuildItem): Equip => ({ armour: it.armour, evasion: it.evasion, energyShield: it.energyShield, sockets: it.sockets, quality: it.quality, grantedSkill: grantedSkillOf(it) });
+/** 付与スキルの行 (「Grants Skill: Level 20 Cast on Critical」) から名前。候補から 1 つ付くベースの時だけ */
+function grantedSkillOf(it: BuildItem): string | null {
+  if (!(inherentSkills as Record<string, unknown>)[it.base]) return null;
+  for (const l of it.implicits) {
+    const m = /^Grants Skill:\s*(?:Level \d+ )?(.+)$/.exec(l);
+    if (m) return m[1]!.trim();
+  }
+  return null;
+}
 
 /** 1 つのレアを解析する (読み込みの時に 1 回) */
 export function analyzeRare(it: BuildItem): RareAnalysis {

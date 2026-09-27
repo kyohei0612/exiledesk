@@ -16,7 +16,7 @@ import { buildSpecQuery } from "../../services/trade2/query";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
 import { marketStore } from "../../state/market-store";
-import { zeroStart } from "./craft-settings";
+import { grantedSkillFor, zeroStart } from "./craft-settings";
 import { matchKey } from "../../services/htc/bridge-index";
 import { craftEstimate, spawnChance } from "./craft-estimate";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
@@ -90,7 +90,7 @@ export function useFinishedCompare(
       ...(q != null && q > 20 ? { qualityMin: q >= 40 ? 40 : q } : {}),
       stats: plain,
       anyOf,
-      grantedSkill: c.item.value?.grantedSkill ?? null,
+      grantedSkill: grantedSkillFor(c.item.value),
     });
   }
   /**

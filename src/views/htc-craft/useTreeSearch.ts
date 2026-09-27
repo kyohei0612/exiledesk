@@ -4,6 +4,7 @@
  * useHtcCraft.ts が 500 行を超えるので分けた (中身は 09-23 の樹 MOD の判定のまま)。
  * 固定済みの MOD = 樹 MOD と、貼り付けで固定済みだった普通の MOD ([[tree-buy.ts]] の `fracturedBuys`)。
  */
+import { grantedSkillFor } from "./craft-settings";
 import { computed, ref, shallowRef, watch } from "vue";
 import { treeFracturePlan } from "../../services/htc/tree-fracture-plan";
 import { fracturedBuys, treeBuys, treeBuyQuery } from "../../services/htc/tree-buy";
@@ -124,7 +125,7 @@ export function useTreeSearch(deps: {
     const common = {
       ilvlMin: item.value?.itemLevel ?? undefined,
       ...(item.value?.baseType ? { baseType: item.value.baseType } : {}),
-      grantedSkill: item.value?.grantedSkill ?? null,
+      grantedSkill: grantedSkillFor(item.value),
       // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
       socketsMin: deps.socketsMin.value,
     };
