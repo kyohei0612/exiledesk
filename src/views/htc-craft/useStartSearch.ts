@@ -16,6 +16,7 @@
  *   - 「探す」で上から 1 つずつ取り、取れた物から真ん中に出す (30 分は覚えておく)。最後に完成品を 1 本
  *   - 真ん中で選んだ物が始め方 (固定済みの MOD を差し替え、ツリーの開始の指輪もそれになる)
  */
+import { tradeLock } from "../../state/trade-lock";
 import { computed, nextTick, ref, shallowRef, watch } from "vue";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query";
@@ -135,6 +136,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   const current = ref<{ key: string; name: string; index: number; count: number; step: string } | null>(null);
   async function searchAll(): Promise<void> {
     if (busy.value) return;
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
+    if (!tradeLock.begin("craft", () => c.abortFetch())) return;
     busy.value = true;
     c.diagBusy.value = true;
     // 打ち切り (入口に戻る・画面を離れる): 世代が進んだら次は投げず、戻ってきた結果も捨てる
@@ -143,6 +146,10 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const keys = candidates.value.filter((x) => checked.value.includes(x.key));
     pending.value = keys.map((x) => x.key);
     try {
+      // 使う信号の数 (候補ごとに 3 本、分けて買う形は 1 本 + 完成品 2 本) で、途中で制限にかからず回り切れるまで待つ
+      c.stage.value = "② 取引所の枠が空くのを待っています (途中で制限にかからず回り切れるように。残りは下のタイマー)";
+      const n = keys.length * (kind.value.kind === "separate" ? 1 : 3) + 2;
+      if (!(await tradeLock.reserve("craft", n)) || !alive()) return;
       // 候補ごとに 3 本 (固定済み / 固定無し・ゆるい / 厳しい) を全部取る (オーナー 2026-09-26:「そっちでやろう」。
       // 固定済みだけにすると、固定済みは高いが固定無しなら安い候補を見逃していた)。1 回の貼り付けで最大 9 本 + 完成品。
       // 門番が検索 + 取得の合計を ≈ 13.6 秒に 1 回 (バースト 6、5 分 22 回) で流し、超える分は待ってから投げる
@@ -164,6 +171,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       c.stage.value = "③ 完成品を探しています…";
       await afterAll();
     } finally {
+      tradeLock.end("craft");
       busy.value = false;
       pending.value = [];
       current.value = null;

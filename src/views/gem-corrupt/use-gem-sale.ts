@@ -5,6 +5,7 @@
  *   売値: 手入力、または trade2 で最安を 3 回検索 (レベル 21 / 品質 23% / 完成品)。
  *         「鑑定 ↗」は API を叩かず ?q= でトレードサイトを開く (レート制限に当たらない)。
  */
+import { tradeLock } from "../../state/trade-lock";
 import { ref, watch, type ComputedRef, type Ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
@@ -186,10 +187,16 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
     }
     retryWhenFree.value = false;
     const gem = selected.value;
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
+    if (!tradeLock.begin("gem-corrupt", () => abandonFetch())) return;
     const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
     try {
+      // 使う信号の数 (売値 3 本 + 元のジェム 1 本。現物を買うジェムを取り直す時は取得が 5 本多い) で、途中で制限にかからず
+      // 回り切れるまで待ってから始める
+      const buyDeep = baseSourceOf(gem.en) === "buy" && force;
+      if (!(await tradeLock.reserve("gem-corrupt", 4, buyDeep ? 9 : 4)) || seq !== fetchSeq) return;
       // 現物を買うジェムは、売値より先に現物の値段を取る。素材費が無いと 4 経路すべて計算できないので
       // 後回しにすると枠待ちで落ちた時に画面が「相場なし」のまま止まる (2026-09-19)
       if (baseSourceOf(gem.en) === "buy") await measureOriginal(gem, force);
@@ -214,6 +221,7 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
       if (seq === fetchSeq && isRateLimited()) retryWhenFree.value = true;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
+      tradeLock.end("gem-corrupt");
     }
   }
   // 待ちが明けた瞬間に取り直す (1 秒ごとに数え直している残り秒を見る)

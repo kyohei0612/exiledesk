@@ -40,6 +40,11 @@ pub struct FlowStatus {
     /// (2026-09-19 リファクタ: wait_until / budget_until / pace_until の 3 つが
     ///  どれも「次の 1 本まで」を別の式で出していたので 1 つにした)
     pub wait_until: i64,
+    /// 待っている理由 ("reset" = 枠の 8 割を超えるので空になるまで / "slot" = その取得の分が空くまで / "none")。
+    /// 画面のタイマーに出す (2026-09-27)
+    pub wait_why: &'static str,
+    /// その窓の長さ (秒)
+    pub wait_period: i64,
     /// 5 分あたり全窓口あわせて何回使ったか / 今の上限 (画面の「5 分で n/N 回」)
     pub budget_used: i64,
     pub budget_max: i64,
@@ -110,6 +115,12 @@ pub fn market_flow_status(app: tauri::AppHandle) -> Result<FlowStatus, String> {
         budget_used: gate.used_300,
         budget_max: gate.max_300,
         wait_until: now_secs() + gate.wait_secs,
+        wait_why: match gate.wait_why {
+            crate::trade2::WaitWhy::Reset => "reset",
+            crate::trade2::WaitWhy::Slot => "slot",
+            crate::trade2::WaitWhy::None => "none",
+        },
+        wait_period: gate.wait_period,
         retry_until: gate.penalty_until,
         retry_at: store.retry_at,
         retry_keys: store.retry_keys.len(),

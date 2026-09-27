@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { tradeLock, tradeRefetch } from "../../state/trade-lock";
 /**
  * BuyOrCraftSection.vue — 診断の ②「買うか、作るか」(3 つの道 + 作る側の始め方 + 買う側の完成品)
  * DiagnosisCard.vue から切り出し (2026-09-26)。中身は変えていない。
@@ -21,14 +23,20 @@ const props = defineProps<{
 const c = props.c;
 const ss = props.ss;
 const fin = props.fin;
+/** 完成品を探すボタン (使用中 = 中止 / 止めた = 再開 / 他の機能が取引所を使っていたら押せない。オーナー 2026-09-27) */
+const finBtn = computed(() => tradeRefetch("craft", props.fin.busy.value, props.fin.found.value ? "完成品を探し直す" : "完成品だけ探す"));
+function onFin(): void {
+  if (finBtn.value.action === "stop") tradeLock.stop("craft");
+  else void props.fin.search();
+}
 </script>
 
 <template>
       <!-- ② 買うか、作るか (始め方の結果もここに。オーナー 2026-09-26:「2 番と 3 番一緒に」)。完成品の条件は一番ゆるく (MOD だけ) -->
       <section class="rounded-xl border border-white/10 bg-white/[0.03] p-3 lg:col-span-2">
         <p class="mb-2 flex items-center gap-2"><span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span><b class="text-sm">買うか、作るか</b>
-          <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" :disabled="fin.busy.value" @click="fin.search()">
-            {{ fin.busy.value ? "探しています…" : fin.found.value ? "完成品を探し直す" : "完成品だけ探す" }}
+          <button v-if="fin.query.value && !ss.busy.value" type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5 disabled:opacity-40" :disabled="finBtn.disabled" @click="onFin">
+            {{ finBtn.label }}
           </button>
         </p>
         <!-- 3 つの道。一番安い物を強調 -->

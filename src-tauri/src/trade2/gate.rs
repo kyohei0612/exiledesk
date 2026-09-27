@@ -125,22 +125,66 @@ pub fn min_spacing_ms(kind: &str) -> i64 {
     }
 }
 
-/// 窓ごとの上限に対して「あと何ミリ秒待てば 1 枠空くか」。空いていれば 0
-pub fn window_wait(sends: &[i64], rules: &[Rule], now: i64) -> i64 {
-    let mut wait = 0;
+/// 待っている理由 (画面のタイマーに出す)
+#[derive(serde::Serialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum WaitWhy {
+    /// 待ちなし / 最低間隔だけ
+    #[default]
+    None,
+    /// 枠の 8 割を超えるので、枠が空になるまで待つ
+    Reset,
+    /// 枠の 8 割を超えるが、空になるまでが長いので、その取得の分が空くまで待つ (簡易措置)
+    Slot,
+}
+
+/// 空になるまで待つのはここまで。これより長い枠 (5 分・3 時間) は、その取得の分が空くまで待つ (簡易措置)
+pub const RESET_WAIT_MAX_MS: i64 = 90_000;
+
+/// 枠ごとに「あと n 本送ると 8 割を超えるか」を見て、超えるなら待つ時間と理由と枠の長さ (秒)。
+///
+/// 2026-09-27 オーナー:「レート 8 割はいくつか門があるんだよね。最小制限からマックス制限まで門があって、それ超したらその
+/// フレームの枠に設定してる待ち時間待つ。8 割をマックスとしてフレームを設ける」「制限にならなかったら使えるから、その取得で
+/// 制限になりそうなら待つ。それぞれ取得ボタンの信号の数違うから一括一緒にしたらダメ」「管理は信号の数」。
+///   - 枠 (10 秒 / 60 秒 / 5 分 / 3 時間 …) ごとに上限の 8 割 (keep) まで。使った数 + n が keep 以下ならその枠は待たない
+///   - 超えるなら、短い枠 (RESET_WAIT_MAX_MS 以下) は空になるまで (一番新しい送信が出るまで) 待つ
+///     (「30 秒の枠 8 割使い切ったら 30 秒待たす」)
+///   - 長い枠は空になるまで待つと長すぎるので、n 本分が空くまで (古い方から出ていくのを待つ) = 簡易措置
+/// 8 割なのは、同じ IP の別経路 (ブラウザのトレードサイト等) の分がサーバー側で足されるため (2026-09-26「8 割使い」)
+pub fn window_wait_n(sends: &[i64], rules: &[Rule], now: i64, n: usize) -> (i64, WaitWhy, i64) {
+    let mut best = (0i64, WaitWhy::None, 0i64);
     for &(max, period) in rules {
-        // 上限の 8 割で止める (オーナー 2026-09-26:「8 割使い」。同じ IP の別経路 (ブラウザのトレードサイト等) の分が
-        // サーバー側で足されるので、ぴったりまで使わない)。5:10 → 4、15:60 → 12、30:300 → 24
         let keep = ((max * 8) / 10).max(1) as usize;
+        let need = n.clamp(1, keep);
         let window_ms = period * 1000;
-        let in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
-        if in_window.len() >= keep {
-            // 一番古い物が窓から出た瞬間に 1 枠空く
-            let oldest = in_window[in_window.len() - keep];
-            wait = wait.max(oldest + window_ms + 300 - now);
+        let mut in_window: Vec<i64> = sends.iter().copied().filter(|t| *t > now - window_ms).collect();
+        in_window.sort_unstable();
+        let used = in_window.len();
+        if used + need <= keep {
+            continue;
+        }
+        let (wait, why) = if window_ms <= RESET_WAIT_MAX_MS {
+            (in_window.last().map(|t| t + window_ms + 300 - now).unwrap_or(0), WaitWhy::Reset)
+        } else {
+            // need 本入る所まで古い方から出ていくのを待つ
+            let out = (used + need - keep).min(used);
+            (in_window.get(out.saturating_sub(1)).map(|t| t + window_ms + 300 - now).unwrap_or(0), WaitWhy::Slot)
+        };
+        if wait > best.0 {
+            best = (wait, why, period);
         }
     }
-    wait
+    best
+}
+
+/// 1 本送る時の待ち (理由つき)
+pub fn window_wait_why(sends: &[i64], rules: &[Rule], now: i64) -> (i64, WaitWhy, i64) {
+    window_wait_n(sends, rules, now, 1)
+}
+
+/// 窓ごとの上限に対して「あと何ミリ秒待つか」
+pub fn window_wait(sends: &[i64], rules: &[Rule], now: i64) -> i64 {
+    window_wait_why(sends, rules, now).0
 }
 
 /// その窓口だけで見た待ち時間
@@ -260,6 +304,10 @@ pub struct GateStatus {
     pub used_300: i64,
     /// 今の合計の 5 分上限 (429 を踏むと下がる)
     pub max_300: i64,
+    /// 待っている理由 (窓の 8 割で空になるまで / 1 枠空くまで / 均している)。画面のタイマーに出す (2026-09-27)
+    pub wait_why: WaitWhy,
+    /// その窓の長さ (秒)
+    pub wait_period: i64,
 }
 
 /// 門番の状態をまとめて返す (GATES の lock は 1 回)
@@ -270,14 +318,27 @@ pub fn gate_status() -> GateStatus {
     let mut penalty_until = 0;
     let mut wait = combined_wait(map, now);
     let mut used_300 = 0;
+    let (mut why_wait, mut wait_why, mut wait_period) = (0i64, WaitWhy::None, 0i64);
     for (kind, g) in map.iter() {
         if g.blocked_until > now {
             penalty_until = penalty_until.max(g.blocked_until / 1000);
         }
         wait = wait.max(wait_for_rules(g, now, min_spacing_ms(kind)));
         used_300 += g.sends.iter().filter(|t| **t > now - 300_000).count() as i64;
+        let rules = if g.rules.is_empty() { default_rules() } else { g.rules.clone() };
+        let (w, why, period) = window_wait_why(&g.sends, &rules, now);
+        if w > why_wait {
+            (why_wait, wait_why, wait_period) = (w, why, period);
+        }
     }
-    GateStatus { penalty_until, wait_secs: (wait + 999) / 1000, used_300, max_300: combined_cap() }
+    // 取得の予約 (信号の数で枠の空きを待っている) の方が長ければ、そちらをタイマーに出す
+    if let Some((until, why, period)) = super::reserve::RESERVE_WAIT.lock().ok().and_then(|g| *g) {
+        if until - now > wait {
+            wait = until - now;
+            (wait_why, wait_period) = (why, period);
+        }
+    }
+    GateStatus { penalty_until, wait_secs: (wait + 999) / 1000, used_300, max_300: combined_cap(), wait_why, wait_period }
 }
 
 #[cfg(test)]

@@ -33,9 +33,11 @@ mod gate;
 mod pace;
 mod headers;
 mod util;
+mod reserve;
 pub use gate::*;
 pub use pace::*;
 pub use headers::*;
+pub use reserve::*;
 pub(crate) use util::*;
 
 /// テスト共通の道具 (GATES は 1 つしか無いので、そこを触るテストは順番に走らせる)

@@ -20,6 +20,7 @@ import BuildBulkTable from "../components/build-copy/BuildBulkTable.vue";
 import BuildProgress from "../components/build-copy/BuildProgress.vue";
 import { displayCurrency } from "../state/display-currency";
 import { useBuildCopy } from "./build-copy/useBuildCopy";
+import { tradeButton, tradeLock } from "../state/trade-lock";
 
 const b = useBuildCopy();
 const money = (ex: number) => displayCurrency.money(ex);
@@ -41,6 +42,13 @@ const parts = computed(() => {
   ];
 });
 const busy = computed(() => b.loading.value || a.all.value);
+/** 取得ボタン (使用中 = 中止 / 中止した = 再開 / 他が使用中 = 押せない。オーナー 2026-09-27) */
+const tb = computed(() => tradeButton("build-copy", "相場を取り直す"));
+function onTrade(): void {
+  const act = tb.value.action;
+  if (act === "stop") tradeLock.stop("build-copy");
+  else void a.run(undefined, act === "resume");
+}
 </script>
 
 <template>
@@ -93,8 +101,8 @@ const busy = computed(() => b.loading.value || a.all.value);
       :done="a.done.value"
       :total="a.total.value"
       :current-name="currentName"
-      :current-step="a.currentStep.value"
-      @stop="a.stop()"
+      :current-step="a.waiting.value ? '取引所の枠が空くのを待っています (途中で制限にかからず回り切れるように。残りは下のタイマー)' : a.currentStep.value"
+      @stop="tradeLock.stop('build-copy')"
     />
 
     <template v-if="b.build.value && !b.loading.value">
@@ -111,7 +119,7 @@ const busy = computed(() => b.loading.value || a.all.value);
               <p class="tabular-nums">{{ money(p.value) }}</p>
             </div>
           </div>
-          <button type="button" class="rounded-lg border border-white/20 px-2 py-1 text-[11px] hover:bg-white/5" title="今の段・割合で、取引所の相場を全部取り直す" @click="a.run()">相場を取り直す</button>
+          <button type="button" :disabled="tb.disabled" class="rounded-lg border px-2 py-1 text-[11px] disabled:opacity-40" :class="tb.action === 'resume' ? 'border-amber-400/60 text-amber-200 hover:bg-amber-500/10' : 'border-white/20 hover:bg-white/5'" title="今の段・割合で、取引所の相場を取り直す (再開は取れていない物だけ)" @click="onTrade">{{ tb.label }}</button>
         </div>
         <p v-if="b.totals.value.rares || b.totals.value.unknown" class="mt-2 text-[11px] text-amber-200/90">
           <template v-if="b.totals.value.rares">値段の無いレア {{ b.totals.value.rares }} 点 (出品なし・ジュエル) </template>
@@ -135,7 +143,7 @@ const busy = computed(() => b.loading.value || a.all.value);
           v-for="r in b.items.value"
           :key="r.i"
           :r="r"
-          :auto-busy="a.busy.value"
+          :auto-busy="a.busy.value || !!tradeLock.busyOther('build-copy')"
           @trade="b.tradeItem(r)"
           @link="b.tradeLink"
           @tier="(k, t) => b.pickTier(r.i, k, t)"

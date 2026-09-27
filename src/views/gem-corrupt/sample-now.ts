@@ -12,6 +12,7 @@
  * 記録の形は自動巡回・ジェムコラプトの「再取得」と同じ (market_flow_record) なので、
  * 捌き速度の判定にもそのまま使われる。
  */
+import { tradeOwner } from "../../state/trade-lock";
 import { computed, ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { noteSpiritGem } from "../../state/gem-spirit";
@@ -65,6 +66,8 @@ export function queueSample(gemEn: string): void {
 async function pump(): Promise<void> {
   if (running.value) return;
   for (;;) {
+    // 画面の機能が取引所を使っている間は始めない (使えるのは 1 つだけ。オーナー 2026-09-27)
+    while (tradeOwner.value) await sleep(POLL_MS);
     const next = queue.shift();
     if (!next) return;
     await sampleGemNow(next);

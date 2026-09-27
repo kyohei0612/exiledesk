@@ -15,7 +15,7 @@ import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
 import RefreshButton from "../components/RefreshButton.vue";
 import { displayCurrency } from "../state/display-currency";
-import { refetchState } from "../services/trade2/auto-price";
+import { tradeLock, tradeRefetch } from "../state/trade-lock";
 // 収支 (実績入力) と前提は切り出した (2026-09-26 の分割)
 import LedgerCard from "./overquality/LedgerCard.vue";
 import AssumptionsCard from "./overquality/AssumptionsCard.vue";
@@ -81,7 +81,12 @@ const materialRows = computed(() => {
 });
 const fmtQty = (q: number): string => (Number.isInteger(q) ? String(q) : q.toFixed(2));
 /** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
-const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り直す"));
+const refetch = computed(() => tradeRefetch("overquality", o.pricing.value, "trade2 で取り直す"));
+/** 取得中なら中止、止めた / まだなら取り直す (オーナー 2026-09-27) */
+function onRefetch(): void {
+  if (refetch.value.action === "stop") tradeLock.stop("overquality");
+  else void o.fetchPrices();
+}
 </script>
 
 <template>
@@ -97,7 +102,7 @@ const refetch = computed(() => refetchState(o.pricing.value, "trade2 で取り�
           :label="refetch.label"
           :disabled="refetch.disabled || (!o.baseEn.value && !o.uniqueEn.value)"
           title="ワンドと完成品の最安を trade2 から取り直します"
-          @click="o.fetchPrices"
+          @click="onRefetch"
         />
       </template>
       <template #controls><CurrencyPicker /></template>

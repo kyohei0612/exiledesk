@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tradeLock, tradeRefetch } from "../../state/trade-lock";
 /**
  * DiagnosisCard.vue — MOD 解析 + ベース診断 (2026-09-24)
  *
@@ -129,6 +130,12 @@ const fixLabel = computed(() => {
   const rows = c.dropOnly.value.filter((d) => !side || d.side === side);
   return rows.length === 1 ? `樹 MOD (${ja(rows[0]!.text)}) ` : "樹 MOD ";
 });
+/** 取引所で探すボタン (使用中 = 中止 / 止めた = 再開 / 他が使用中 = 押せない) */
+const searchBtn = computed(() => tradeRefetch("craft", ss.busy.value, `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)`));
+function onSearch(): void {
+  if (searchBtn.value.action === "stop") tradeLock.stop("craft");
+  else void ss.searchAll();
+}
 </script>
 
 <template>
@@ -223,8 +230,9 @@ const fixLabel = computed(() => {
               </label>
             </div>
           </template>
-          <button type="button" class="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 font-bold text-black shadow hover:bg-sky-400 disabled:opacity-40" :disabled="ss.busy.value || !ss.checked.value.length" @click="ss.searchAll()">
-            {{ ss.busy.value ? "探しています…" : `取引所で探す (${ss.kind.value.kind === "fix" ? "樹 MOD" : `${ss.checked.value.length} つ`} + 完成品)` }}
+          <!-- 探している間は「中止」、止めたら「再開」、他の機能が取引所を使っていたら押せない (オーナー 2026-09-27) -->
+          <button type="button" class="mt-2 rounded-lg px-3 py-1.5 font-bold shadow disabled:opacity-40" :class="searchBtn.action === 'stop' ? 'border border-rose-400/60 text-rose-200 hover:bg-rose-500/10' : 'bg-sky-500 text-black hover:bg-sky-400'" :disabled="searchBtn.disabled || (!ss.busy.value && !ss.checked.value.length)" @click="onSearch">
+            {{ searchBtn.label }}
           </button>
           <button v-if="c.phase.value !== 'done' && !ss.busy.value" type="button" class="ml-2 mt-2 rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5" @click="finishDiag()">探さずに作り方へ</button>
           <div v-if="ss.busy.value" class="mt-2 rounded-lg bg-amber-500/10 px-2 py-1 text-amber-100">

@@ -3,6 +3,7 @@
   GemWatch.vue から切り出し (2026-09-26)。見た目・文言・動きは変えていない。状態は親が持つ。
 -->
 <script setup lang="ts">
+import { tradeOwner } from "../../state/trade-lock";
 import AttemptsSelect from "../../components/AttemptsSelect.vue";
 import { sampleBusy, sampleQueued, sampleTarget } from "../gem-corrupt/sample-now";
 import { jaSkill } from "../../i18n/skills-ja";
@@ -67,7 +68,7 @@ const emit = defineEmits<{
     -->
     <button
       type="button"
-      :disabled="sweeping || !!status?.sampling || sampleBusy"
+      :disabled="sweeping || !!status?.sampling || sampleBusy || !!tradeOwner"
       class="px-3 py-1 rounded-lg border border-amber-400/50 text-[11px] tabular-nums text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       :title="
         sampleBusy

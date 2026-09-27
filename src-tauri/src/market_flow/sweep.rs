@@ -164,6 +164,11 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }
+            if crate::trade2::ui_trade_busy() {
+                // 画面の機能が取引所を使っている間は自動の巡回を始めない (取引所を使えるのは 1 つだけ。オーナー 2026-09-27)
+                tokio::time::sleep(Duration::from_secs(60)).await;
+                continue;
+            }
             if RUNNING_AUTO.load(Ordering::SeqCst) {
                 // 自動 (巡回か取り直し) が走っている。終わってから次の判断をする
                 tokio::time::sleep(Duration::from_secs(60)).await;

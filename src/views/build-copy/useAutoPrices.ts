@@ -11,6 +11,7 @@ import { computed, reactive, ref, type Ref, type ShallowRef } from "vue";
 import { autoRarePrice, autoUniquePrice, type RareAutoResult } from "../../services/build-copy/rare-auto";
 import { uniqueTradeQuery } from "../../services/build-copy/prices";
 import { setManualOf, unitOf } from "./manual-prices";
+import { tradeLock } from "../../state/trade-lock";
 import type { ParsedBuild, BuildItem } from "../../services/build-copy/pob";
 import type { RareAnalysis } from "../../services/build-copy/rare-query";
 
@@ -34,14 +35,20 @@ export function useAutoPrices(deps: {
   const total = ref(0);
   /** 今取っている行 */
   const current = ref<number | null>(null);
+  /** 取引所の枠の空きを待っている (始める前) */
+  const waiting = ref(false);
   let gen = 0;
 
   const targets = () =>
     (deps.build.value?.items ?? []).flatMap((it, i) => ((it.rarity === "RARE" && it.kind !== "jewel" && deps.analyses.value.has(i)) || tradeSearchedUnique(it) ? [i] : []));
 
-  async function run(row?: number): Promise<void> {
+  /** resume = 中止した所から (取れた行は飛ばす) */
+  async function run(row?: number, resume = false): Promise<void> {
     if (busy.value) return;
-    const rows = row == null ? targets() : [row];
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
+    if (!tradeLock.begin("build-copy", () => stop())) return;
+    // 再開は続きから (取れた行は飛ばす)
+    const rows = row != null ? [row] : resume ? targets().filter((i) => !results.has(i) || results.get(i)!.stage === "error") : targets();
     const g = ++gen;
     busy.value = true;
     all.value = row == null;
@@ -49,6 +56,13 @@ export function useAutoPrices(deps: {
     total.value = rows.length;
     rows.forEach((i) => queued.add(i));
     try {
+      // 取得全体で使う信号の数 (レア 1 点 = 数値なし → 段 で 3 本、ユニーク = 1 本。検索と取得が同じ数) を先に数え、
+      // 途中で制限にかからず回り切れるまで待ってから始める (オーナー 2026-09-27「取得中に制限かかるなら既定の時間まで待つ」)
+      const n = rows.reduce((a, i) => { const x = deps.build.value?.items[i]; return a + (x && isUnique(x) ? 1 : 3); }, 0);
+      waiting.value = true;
+      const ok = await tradeLock.reserve("build-copy", n);
+      waiting.value = false;
+      if (!ok) return;
       for (const i of rows) {
         const it = deps.build.value?.items[i];
         if (!it || g !== gen) break;
@@ -66,11 +80,13 @@ export function useAutoPrices(deps: {
       }
     } finally {
       if (g === gen) finish();
+      tradeLock.end("build-copy");
     }
   }
   function finish(): void {
     busy.value = false;
     all.value = false;
+    waiting.value = false;
     current.value = null;
     steps.clear();
     queued.clear();
@@ -82,8 +98,9 @@ export function useAutoPrices(deps: {
   function reset(): void {
     stop();
     results.clear();
+    tradeLock.clearPaused("build-copy");
   }
   /** 今の行の段階 (画面の進み具合) */
   const currentStep = computed(() => (current.value == null ? null : (steps.get(current.value) ?? null)));
-  return { results, steps, queued, busy, all, done, total, current, currentStep, run, stop, reset };
+  return { results, steps, queued, busy, all, done, total, current, currentStep, waiting, run, stop, reset };
 }

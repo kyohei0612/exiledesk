@@ -47,6 +47,7 @@ const pct = computed(() => (props.total ? Math.round((props.done / props.total) 
       <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-black/40">
         <div class="h-full rounded-full bg-amber-400 transition-all" :style="{ width: `${pct}%` }" />
       </div>
+      <p v-if="!currentName && currentStep" class="mt-1.5 text-sky-200">{{ currentStep }}</p>
       <p v-if="currentName" class="mt-1.5">
         今: <b class="text-amber-100">{{ currentName }}</b> <span class="text-amber-200/90">{{ currentStep ?? "準備中" }}</span>
       </p>

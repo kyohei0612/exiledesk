@@ -5,6 +5,7 @@
  *   素材価格:   poe2scout。売値の初期値は poe2scout のユニーク価格 (品質を問わない値なので目安)
  *   期待値:     overquality/model.ts
  */
+import { tradeLock } from "../../state/trade-lock";
 import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildBaseTypeQuery, buildUniqueQualityQuery } from "../../services/trade2/query";
@@ -127,9 +128,14 @@ export function useOverquality() {
   /** 素のベース (ノーマル・未コラプト) と 目標品質以上のユニーク を trade2 で取る */
   async function fetchPrices(): Promise<void> {
     if (pricing.value || isRateLimited()) return;
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
+    if (!tradeLock.begin("overquality", () => { fetchSeq++; pricing.value = false; })) return;
     const seq = ++fetchSeq;
     pricing.value = true;
     try {
+      // 使う信号の数 (ベース 1 本 + 完成品 1 本) で、途中で制限にかからず回り切れるまで待つ
+      const n = (baseEn.value ? 1 : 0) + (uniqueEn.value ? 1 : 0);
+      if (!(await tradeLock.reserve("overquality", n)) || seq !== fetchSeq) return;
       if (baseEn.value) {
         const { min: v, url } = await autoMinWithUrl(tradeLeague.value, buildBaseTypeQuery(baseEn.value, "normal", BASE_RUNE_SOCKETS), marketStore.rates.value);
         if (seq !== fetchSeq) return;
@@ -144,6 +150,7 @@ export function useOverquality() {
       }
     } finally {
       if (seq === fetchSeq) pricing.value = false;
+      tradeLock.end("overquality");
     }
   }
   // 名前 / 目標品質 / プリセットが変わったら取り直す (相場が来てから)

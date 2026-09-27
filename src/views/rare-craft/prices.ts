@@ -8,6 +8,7 @@
  *
  * 2026-09-19 に useRareCraft.ts (551 行) から切り出した。中身は変えていない。
  */
+import { tradeLock } from "../../state/trade-lock";
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from "vue";
 import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
 import { trade2QueryUrl } from "../../services/trade2/league";
@@ -90,11 +91,16 @@ export function useRarePrices(o: {
       return;
     }
     if (isRateLimited()) return;
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
+    if (!tradeLock.begin("rare-craft", () => { fetchSeq++; pricing.value = false; remaining.value = 0; })) return;
     const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
     const done = new Set<string>();
     try {
+      // 使う信号の数 (取る種類の数) で、途中で制限にかからず回り切れるまで待つ
+      const n = kinds.value.filter((k) => force || !get(k)).length;
+      if (!(await tradeLock.reserve("rare-craft", n)) || seq !== fetchSeq) return;
       for (;;) {
         const todo = kinds.value.filter((k) => (force ? !done.has(cacheKey(k)) : !get(k)));
         remaining.value = todo.length;
@@ -111,6 +117,7 @@ export function useRarePrices(o: {
         FETCHED.value = { ...FETCHED.value, [key]: { price: min, url } };
       }
     } finally {
+      tradeLock.end("rare-craft");
       if (seq === fetchSeq) {
         pricing.value = false;
         remaining.value = 0;

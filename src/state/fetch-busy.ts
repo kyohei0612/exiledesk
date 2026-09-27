@@ -26,6 +26,7 @@ import { noteSweepBusy } from "../services/trade2/auto-price";
 import { sampleBusy, sampleQueued, sampleTarget } from "../views/gem-corrupt/sample-now";
 import { jaSkill } from "../i18n/skills-ja";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { noteBackgroundTrade, tradeOwner } from "./trade-lock";
 
 /** 走っている時の見直し間隔 (進捗を出すので短め) */
 const BUSY_MS = 2000;
@@ -42,7 +43,8 @@ async function tick(): Promise<void> {
     // 読めない時は前の値を捨てる。取れない状態でボタンを押せないままにしない
     status.value = null;
   }
-  setTimeout(() => void tick(), status.value?.sampling ? BUSY_MS : IDLE_MS);
+  // 画面の機能が取引所を使っている間も短く (枠待ちのタイマーを出すため)
+  setTimeout(() => void tick(), status.value?.sampling || tradeOwner.value ? BUSY_MS : IDLE_MS);
 }
 
 /** 今どこかで取得が走っているか */
@@ -93,11 +95,38 @@ export const fetchBusyStopped = computed(() => {
   return until > 0 ? Math.max(0, until - Math.floor(Date.now() / 1000)) : 0;
 });
 
+/** 枠の長さ (秒) → 「10 秒」「5 分」「3 時間」 */
+function periodJa(sec: number): string {
+  if (sec >= 3600) return `${Math.round(sec / 3600)} 時間`;
+  if (sec >= 60) return `${Math.round(sec / 60)} 分`;
+  return `${sec} 秒`;
+}
+/** 1 秒ごとに数え直す時計 (タイマーの残り秒) */
+const nowSec = ref(Math.floor(Date.now() / 1000));
+setInterval(() => (nowSec.value = Math.floor(Date.now() / 1000)), 1000);
+
+/**
+ * 枠の 8 割で待っている時のタイマー (2026-09-27 オーナー「8 割レート制限に使ってる奴あったら回復まで待たせる感じでタイマーセット」)。
+ * 待っていなければ ""
+ */
+export const tradeWaitText = computed(() => {
+  const st = status.value;
+  if (!st) return "";
+  const left = (st.wait_until ?? 0) - nowSec.value;
+  if (left <= 0 || !st.wait_why || st.wait_why === "none") return "";
+  const p = periodJa(st.wait_period ?? 0);
+  return st.wait_why === "reset"
+    ? `${p}の枠を 8 割使ったので、空になるまで あと ${left} 秒`
+    : `${p}の枠が 8 割に近いので、この取得の分が空くまで あと ${left} 秒`;
+});
+
 /** 起動時に 1 回だけ。取得の状態を見張り始める */
 export function startFetchBusyWatch(): void {
   if (started || !isTauriRuntime()) return;
   started = true;
   // 取得ボタン共通の判定 (refetchState) にも同じ状態を渡す
   watch(fetchBusyLabel, (v) => noteSweepBusy(v), { immediate: true });
+  // 裏の取得 (巡回・一括取得・監視に足した直後) も「取引所を使用中」(使えるのは 1 つだけ。2026-09-27)
+  watch(fetchBusyKind, (v) => noteBackgroundTrade(v ? `自動ジェム監視 (${v})` : ""), { immediate: true });
   void tick();
 }

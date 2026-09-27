@@ -7,7 +7,7 @@ import RefreshButton from "../../components/RefreshButton.vue";
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from "vue";
 import BaseCard from "../../components/decor/BaseCard.vue";
 import SoldListDialog from "../../components/SoldListDialog.vue";
-import { refetchState } from "../../services/trade2/auto-price";
+import { tradeLock, tradeRefetch } from "../../state/trade-lock";
 import { openExternal } from "../../services/trade2/open-external";
 import { averageExalted } from "../../state/display-currency";
 import { fmtClock } from "../../utils/format-time";
@@ -40,7 +40,12 @@ async function open(url: string | null): Promise<void> {
   await openExternal(url);
 }
 /** 再取得ボタン (検索中 / レート制限 / 間隔待ち のカウントダウン) */
-const refetch = computed(() => refetchState(g.pricing.value, "再取得", "trade2 で検索中… (3 件、約 30 秒)"));
+const refetch = computed(() => tradeRefetch("gem-corrupt", g.pricing.value, "再取得"));
+/** 取得中なら中止、止めた / まだなら取り直す (オーナー 2026-09-27「使ってたら中止ボタン、動いてたやつは再開ボタン」) */
+function onRefetch(): void {
+  if (refetch.value.action === "stop") tradeLock.stop("gem-corrupt");
+  else void g.fetchSalePrices(true);
+}
 
 // ---- 売れ行き (2026-09-16: market_flow が巡回で記録した物を読むだけ) ----
 const flowStore = ref<FlowStore | null>(null);
@@ -194,8 +199,9 @@ const fmtFlowAt = (t: number | null): string => {
               <RefreshButton
                 :label="refetch.label"
                 :disabled="!g.selected.value || refetch.disabled"
+                :subtle="refetch.action !== 'start'"
                 title="3 条件の最安を trade2 から取り直します"
-                @click="g.fetchSalePrices(true)"
+                @click="onRefetch"
               />
             </div>
           </div>

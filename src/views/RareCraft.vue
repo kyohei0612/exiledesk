@@ -13,7 +13,7 @@
 import { ATTEMPT_OPTIONS, evClass } from "./rare-craft/ui";
 import { computed, onMounted, ref } from "vue";
 import { openExternal } from "../services/trade2/open-external";
-import { refetchState } from "../services/trade2/auto-price";
+import { tradeLock, tradeRefetch } from "../state/trade-lock";
 import BaseCard from "../components/decor/BaseCard.vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
@@ -39,13 +39,18 @@ onMounted(() => {
 
 const bucketKind = (key: string): `b:${string}` => `b:${key}`;
 const refetch = computed(() =>
-  refetchState(
+  tradeRefetch(
+    "rare-craft",
     c.pricing.value,
     // 2026-09-16: 画面を開いただけでは取りに行かない。未取得なら「取得」、揃っていれば「取り直す」
     c.missingCount.value > 0 ? `取得 (${c.missingCount.value} 件、1 件 約 10 秒)` : "trade2 で取り直す",
-    `trade2 で検索中… (残り ${c.remaining.value} 件、1 件 約 10 秒)`,
   ),
 );
+/** 取得中なら中止、止めた / まだなら取る (オーナー 2026-09-27) */
+function onRefetch(): void {
+  if (refetch.value.action === "stop") tradeLock.stop("rare-craft");
+  else void c.fetchPrices(c.missingCount.value === 0);
+}
 
 /** 相場カードの行 */
 const priceRows = computed(() => {
@@ -114,7 +119,7 @@ const materialTable = computed(() => {
               type="button"
               :disabled="refetch.disabled"
               class="px-3 py-1 rounded-lg border border-amber-400/50 text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
-              @click="c.fetchPrices(c.missingCount.value === 0)"
+              @click="onRefetch"
             >
               <span aria-hidden="true">⟳</span>
               {{ refetch.label }}

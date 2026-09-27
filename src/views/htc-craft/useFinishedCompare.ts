@@ -10,6 +10,7 @@
  *     自動の組み立てが組めない時 (品質 40% の順番が決まらない半影の指輪など) は、狙いを 1 つずつ付ける平均
  *     ([[step-odds.ts]] の一番安い打ち方、外れの消去込み) の合計で出す。付けた物が消える分は入らないので安めに出る
  */
+import { tradeLock } from "../../state/trade-lock";
 import { computed, ref, shallowRef, watch } from "vue";
 import { tradeCategoryOf, tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query";
@@ -164,6 +165,9 @@ export function useFinishedCompare(
   const KEEP_MIN = 3;
   async function search(opts: { deep?: boolean } = {}): Promise<void> {
     if (busy.value || !query.value) return;
+    // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。始め方の検索の続きで呼ばれた時は同じ使用権のまま
+    const own = !tradeLock.isMine("craft");
+    if (own && !tradeLock.begin("craft", () => c.abortFetch())) return;
     const deep = opts.deep ?? true;
     busy.value = true;
     error.value = null;
@@ -181,6 +185,8 @@ export function useFinishedCompare(
       // ログインしていれば一番ゆるい条件から (取引所の検索はアプリのログインの POESESSID を乗せて投げる。trade2.rs)。
       // ログインしていないと full はまず断られ、その 1 回が取引所の回数を食うので light から (2026-09-24)。
       // (開発版で断られていたのは、開発ビルドの検索がプロキシ経由でログインが乗っていなかったため。pricing.ts の DEV_TRADE)
+      // 使う信号の数 (完成品 → ゆるめる で 3 本ほど) で、途中で制限にかからず回り切れるまで待つ
+      if (own && !(await tradeLock.reserve("craft", 3))) return;
       const loggedIn = await sessionLoggedIn().catch(() => false);
       guard();
       let level: Level = loggedIn ? "full" : "light";
@@ -233,6 +239,7 @@ export function useFinishedCompare(
     } catch (e) {
       if (e !== ABORT) error.value = String(e);
     } finally {
+      if (own) tradeLock.end("craft");
       busy.value = false;
       if (ownStage && c.fetchGen.value === gen) c.stage.value = "";
     }
