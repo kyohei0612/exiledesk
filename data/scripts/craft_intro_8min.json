@@ -1,0 +1,1220 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】白い指輪からMOD6つのレアを作る クラフト入門 完全版 (変成→増強→王者→高貴×3、失敗したら消去/カオス)",
+  "target_seconds": 480,
+  "result_file": "data/results/craft_intro_8min.json",
+  "final_step": 6,
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "ストーリーはクリアしたのだ！でも装備が弱すぎるのだ…",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "強い黄色い装備は、ぼくには手が届かないのだ",
+          "emotion": "sad",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "手に入れなくていいのよ。これ、拾った白い指輪から作ったの",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 6,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "えっ、効果が6つも付いてるのだ！？",
+          "speech": "えっ、こうかがむっつもついてるのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "使ったオーブは、そこらで山ほど落ちる3種類だけよ",
+          "speech": "つかったオーブは、そこらでやまほどおちるさんしゅるいだけよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "たった3種類なのだ！？",
+          "speech": "たったさんしゅるいなのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "この8分で、同じ指輪を最後まで作るわ",
+          "speech": "このはっぷんで、おなじゆびわをさいごまでつくるわ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "作る前に、白・青・黄の違いだけ覚えてね",
+          "speech": "つくるまえに、しろ・あお・きのちがいだけおぼえてね",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "基礎: 白・青・黄とMOD",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "白・青・黄って、色が違うだけじゃないのだ？",
+          "speech": "しろとあおときいろって、色が違うだけじゃないのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "見た目は似てても、中身の数が全然違うのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "中身…？よく聞くMODって何なのだ？",
+          "speech": "中身…？よく聞くモッドって何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "装備に付く追加の効果のこと。これが強さを決めるの",
+          "speech": "装備に付く追加の効果のこと。これが強さを決めるの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ色は何の違いなのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白はMODがゼロ。まだ何も付いていない素の状態よ",
+          "speech": "しろはモッドがゼロ。まだ何も付いていない素の状態よ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青は最大2つ、黄は最大6つまで付けられるわ",
+          "speech": "あおは最大2つ、きいろは最大6つまで付けられるわ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "色がそのまま枠の数なのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。だから黄色い装備が強いのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "でも素材からして違うのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同じよ。この指輪、拾ったままのニーモニックリングだもの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "え、ぼくが拾った指輪と同じなのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "違うのは中身のMODが強いかどうかだけよ",
+          "speech": "違うのは中身のモッドが強いかどうかだけよ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "白い指輪でも、中身を6つ埋めれば強くなるのだ？",
+          "speech": "しろい指輪でも、中身を6つ埋めれば強くなるのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そういうこと。だから自分で作れるのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "6個って多いのだ、埋める順番はあるのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "基礎: 6つの枠とティア",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "順番の前に、枠の呼び名を覚えて。2種類あるの",
+          "speech": "順番の前に、枠の呼び名を覚えて。にしゅるいあるの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "プレフィックスが3つ、サフィックスが3つで6つよ",
+          "speech": "プレフィックスがみっつ、サフィックスがみっつで、むっつよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "プレフィックス…？ 難しい言葉なのだ",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "効果が入る枠の名前なのよ。上の3つと下の3つ",
+          "speech": "効果が入る枠の名前なのよ。上のみっつと、下のみっつ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "どっちにどれが入るのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上は攻撃力や回避力、下は耐性やステータスが多いわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "この雷耐性 +40% のT2って何なのだ？",
+          "speech": "この、かみなりたいせい プラス40パーセントの、ティア2って何なのだ？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ティアっていうMODの強さの段階よ。T1が一番強いの",
+          "speech": "ティアっていう、モッドの強さの段階よ。ティア1が一番強いの",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "T1が最強なら、このT2は弱いのだ？",
+          "speech": "ティア1が最強なら、このティア2は弱いのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上から2番目よ。雷耐性 +40% なら十分強いわ",
+          "speech": "上からにばんめよ。かみなりたいせい プラス40パーセントなら、十分強いわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アイテムレベル80の指輪だから、強いティアが出やすいの",
+          "speech": "アイテムレベル はちじゅうの指輪だから、強いティアが出やすいの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "じゃあ枠をどう埋めるか。オーブは4種類あるわ",
+          "speech": "じゃあ枠をどう埋めるか。オーブは よんしゅるい あるわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み: 変成のオーブと増強のオーブ",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "最初の1手は変成のオーブ。白い装備に打つのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これ1回で白が青になって、MODが1つ付くわ",
+          "speech": "これ1回で白が青になって、モッドが1つ付くわ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ],
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "1回で色が変わるのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白は枠がゼロなの。まずMODを入れる器を作るのよ",
+          "speech": "白は枠がゼロなの。まずモッドを入れる器を作るのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回付いたのは雷耐性 +40%。いきなり当たりね",
+          "speech": "今回付いたのは雷耐性 プラス40パーセント。いきなり当たりね",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "耐性が付くとやられにくいのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "2手目が増強のオーブ。青のまま2つ目の枠を埋めるの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ],
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "色は青のままMODだけ増えるのだ？",
+          "speech": "色は青のままモッドだけ増えるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。物理ダメージが付いて、これで2つよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "増強のオーブは青専用、空き枠があるときだけよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "空きが無いと打てないのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。青は最大2個だから、3つ目はもう入らないわ",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "2個で止まるのだ？残りの4個はどうするのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み: 王者のオーブと高貴なオーブ×3",
+      "target_seconds": 55,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "王者のオーブを打つと、青が黄色いレアに変わるわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ],
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "一気に黄色なのだ！MODはどうなるのだ？",
+          "speech": "一気に黄色なのだ！モッドはどうなるのだ？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上げながら1つ足すの。ライフを得るMODが増えたわ",
+          "speech": "上げながらひとつ足すの。ライフを得るモッドが増えたわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同時に枠も6つまで広がるのよ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "残りの3つはどう埋めるのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "高貴なオーブよ。空いた枠にMODを1つ足すだけ",
+          "speech": "高貴なオーブよ。空いた枠にモッドをひとつ足すだけ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "火耐性 +37% が付いたのだ！",
+          "speech": "火耐性 プラス37パーセントが付いたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 4,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ただし高貴なオーブは黄色専用。青には打てないの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "王者のオーブで黄色にしてから足すのだ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "レアリティは変わらないわ。2回目も1つ足すだけ",
+          "speech": "レアリティは変わらないわ。にかいめもひとつ足すだけ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 5,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "6つ埋まったらどうなるのだ？",
+          "speech": "むっつ埋まったらどうなるのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "もう高貴なオーブは打てないの。そこが完成よ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stack",
+            "step": 6,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "必要なのは変成・増強・王者の3個だけなのだ！？",
+          "speech": "必要なのは変成、増強、王者のさんこだけなのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stack",
+            "step": 6,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうよ。理屈は終わり。実際に打ってみるわ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践: 1手目〜3手目 (白→青→黄)",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "1手目は変成のオーブ。白い指輪が青に変わったわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "サフィックスに雷耐性 +40% が付いたのだ！",
+          "speech": "サフィックスにかみなりたいせい プラス40パーセントがついたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "耐性は最優先で欲しいMODよ。しかもティアはT2",
+          "speech": "たいせいはさいゆうせんでほしいモッドよ。しかもティアはティーツー",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "上から2番目なのだ！1回目からいきなり当たりなのだ",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "2手目は増強のオーブ。青のまま2つ目の枠を埋めるわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "プレフィックスに、2から5の物理ダメージが増えたのだ",
+          "speech": "プレフィックスに、にからごのぶつりダメージがふえたのだ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ただしこれはT8。正直に言うと、かなり弱めのティアよ",
+          "speech": "ただしこれはティーエイト。しょうじきにいうと、かなりよわめのティアよ",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "当たりの次は外れなのだ…運が絡むのだね",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3手目は王者のオーブ。今、青が黄色いレアに変わったわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "本当に一瞬で黄色くなったのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "倒した敵1体ごとに28のライフを獲得する、も増えたわ",
+          "speech": "たおしたてきいったいごとに にじゅうはちのライフをかくとくする、もふえたわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "MODが3つになったのだ！",
+          "speech": "モッドが3つになったのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同時に枠も6つに広がったの。空きはあと3つよ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "もう黄色なのだ！残りの枠には高貴なオーブなのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践: 4手目〜6手目 (高貴なオーブで完成)",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "4手目は高貴なオーブ。空いた枠に1つ足すだけよ",
+          "speech": "よん手目は高貴なオーブ。空いた枠に1つ足すだけよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "サフィックスに火耐性 +37% が付いたのだ！",
+          "speech": "サフィックスに火耐性プラス37パーセントが付いたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これもT2。耐性が2つ揃って狙い通りね",
+          "speech": "これもティー2。耐性が2つ揃って狙い通りね",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "色は黄色のままなのだ。空きが1つ減っただけなのだ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "5手目も高貴なオーブ。最大マナ +23 が付いたわ",
+          "speech": "ご手目も高貴なオーブ。最大マナプラス23が付いたわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ティアはT11…なんだか微妙なのだ…",
+          "speech": "ティアはティー11…なんだか微妙なのだ…",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "枠も中身も選べないの。何が付くかは運なのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "当たりばっかりじゃないのだね…",
+          "emotion": "sad",
+          "scene": {
+            "kind": "item",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "6手目、最後の高貴なオーブ。回避力 +98 よ",
+          "speech": "ろく手目、最後の高貴なオーブ。回避力プラス98よ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "プレフィックスも埋まって、6つ全部埋まったのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これが最初に見せた指輪。同じものだったのよ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "雷耐性、火耐性、物理ダメージ、ライフ、マナ、回避力なのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "空きが無くなったから、もう高貴なオーブは打てないの",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "でも5手目の最大マナは要らないのだ。消せないのだ？",
+          "speech": "でもご手目の最大マナは要らないのだ。消せないのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "実験: 消去のオーブとカオスオーブ",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "消せるわ。7手目は消去のオーブ。打ってみるわね",
+          "speech": "消せるわ。ななて目は消去のオーブ。打ってみるわね",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "要らなかった最大マナ +23 が消えたのだ！",
+          "speech": "要らなかった最大マナ プラス23が消えたのだ",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "消去のオーブはMODを1つランダムに消すの。選べないわ",
+          "speech": "消去のオーブはモッドを1つランダムに消すの。選べないわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "たまたま要らないのが消えただけなのだ！？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そういうことね。8手目はカオスオーブを打つわ",
+          "speech": "そういうことね。はちて目はカオスオーブを打つわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 8
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ライフのMODが消えて、筋力 +13 が付いたのだ！",
+          "speech": "ライフのモッドが消えて、筋力 プラス13が付いたのだ",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "PoE2 では1つ消して1つ足すの。全部の振り直しじゃないわ",
+          "speech": "ポーイーツーでは1つ消して1つ足すの。全部の振り直しじゃないわ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 8
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "直すつもりで、いいMODが消えたのだ！？",
+          "speech": "直すつもりで、いいモッドが消えたのだ",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 8
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "筋力 +13 だから、強くなったとは言い切れないわ",
+          "speech": "筋力 プラス13だから、強くなったとは言い切れないわ",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "運任せが嫌なら、狙って付ける方法もあるのよ",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "今日のおさらいなのだ！変成・増強・王者の3個で、白が黄色いレアになるのだ",
+          "speech": "今日のおさらいなのだ！へんせい・ぞうきょう・おうじゃの さんこで、白が黄色いレアになるのだ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "そこに高貴なオーブを足して、MODが6つで完成なのだ",
+          "speech": "そこに高貴なオーブを足して、モッドが むっつで完成なのだ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stack",
+            "step": 6,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "よく覚えてるわね。3つ目は？",
+          "speech": "よく覚えてるわね。みっつめは？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "要らないMODは、消去のオーブかカオスオーブなのだ！",
+          "speech": "要らないモッドは、しょうきょのオーブか カオスオーブなのだ！",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 8
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ただし、どれが消えるかは運よ。そこだけは忘れないでね",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ぼくも拾った白い装備で、さっそく試してみるのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まずは1回打ってみて。それが一番の近道よ",
+          "speech": "まずは いっかい打ってみて。それが一番の近道よ",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次回はエッセンスで、狙ったMODを付ける回よ",
+          "speech": "次回はエッセンスで、狙ったモッドを付ける回よ",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}
