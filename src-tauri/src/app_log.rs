@@ -69,6 +69,14 @@ pub fn line<R: tauri::Runtime>(_app: &tauri::AppHandle<R>, msg: &str) {
     }
 }
 
+/// 画面から 1 行 (2026-09-28 オーナー「今どこで止まってどこで動いてるのかもっと細かく見た方が良い」:
+/// 取引所の使用権 (trade-lock.ts) の出入りを残す。長すぎる行は切る)
+#[tauri::command]
+pub fn app_log_write(msg: String) {
+    let short: String = msg.chars().take(400).collect();
+    line_static(&format!("[画面] {short}"));
+}
+
 /// app が手元に無い所 (panic hook、スケジューラ) 用
 pub fn line_static(msg: &str) {
     if let Some(p) = path() {

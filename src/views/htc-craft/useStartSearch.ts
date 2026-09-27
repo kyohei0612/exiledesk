@@ -138,6 +138,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     if (busy.value) return;
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
     if (!tradeLock.begin("craft", () => c.abortFetch())) return;
+    const ticket = tradeLock.ticket();
     busy.value = true;
     c.diagBusy.value = true;
     // 打ち切り (入口に戻る・画面を離れる): 世代が進んだら次は投げず、戻ってきた結果も捨てる
@@ -171,7 +172,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       c.stage.value = "③ 完成品を探しています…";
       await afterAll();
     } finally {
-      tradeLock.end("craft");
+      tradeLock.end("craft", ticket);
       busy.value = false;
       pending.value = [];
       current.value = null;

@@ -47,6 +47,7 @@ export function useAutoPrices(deps: {
     if (busy.value) return;
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
     if (!tradeLock.begin("build-copy", () => stop())) return;
+    const ticket = tradeLock.ticket();
     // 再開は続きから (取れた行は飛ばす)
     const rows = row != null ? [row] : resume ? targets().filter((i) => !results.has(i) || results.get(i)!.stage === "error") : targets();
     const g = ++gen;
@@ -80,7 +81,7 @@ export function useAutoPrices(deps: {
       }
     } finally {
       if (g === gen) finish();
-      tradeLock.end("build-copy");
+      tradeLock.end("build-copy", ticket);
     }
   }
   function finish(): void {

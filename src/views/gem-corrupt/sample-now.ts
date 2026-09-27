@@ -12,7 +12,7 @@
  * 記録の形は自動巡回・ジェムコラプトの「再取得」と同じ (market_flow_record) なので、
  * 捌き速度の判定にもそのまま使われる。
  */
-import { tradeOwner } from "../../state/trade-lock";
+import { tradeOwner, tradeTrace } from "../../state/trade-lock";
 import { computed, ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { noteSpiritGem } from "../../state/gem-spirit";
@@ -63,14 +63,30 @@ export function queueSample(gemEn: string): void {
   void pump();
 }
 
+/**
+ * 中止 (画面下の帯の「中止」)。待ち行列を捨て、走っている取得は次の区切りで止める。
+ * 2026-09-28 オーナー「中止にならない」: 帯の中止は巡回 (market_flow_cancel) にしか効かず、ここは止まらなかった
+ */
+let cancelled = false;
+export function cancelSampleQueue(): void {
+  if (!running.value && !queue.length) return;
+  tradeTrace(`監視に足した直後の取得: 中止 (残り ${queue.length} 件を捨てる)`);
+  queue.length = 0;
+  cancelled = true;
+}
+
 async function pump(): Promise<void> {
   if (running.value) return;
+  cancelled = false;
   for (;;) {
     // 画面の機能が取引所を使っている間は始めない (使えるのは 1 つだけ。オーナー 2026-09-27)
+    if (tradeOwner.value) tradeTrace(`監視に足した直後の取得: 画面の機能が使用中なので待つ`);
     while (tradeOwner.value) await sleep(POLL_MS);
     const next = queue.shift();
-    if (!next) return;
-    await sampleGemNow(next);
+    if (!next || cancelled) return;
+    tradeTrace(`監視に足した直後の取得: ${next} を始める (残り ${queue.length} 件)`);
+    const r = await sampleGemNow(next);
+    tradeTrace(`監視に足した直後の取得: ${next} を終えた (取れた ${r.done} / 見送り ${r.skipped})`);
   }
 }
 
@@ -113,6 +129,7 @@ export async function sampleGemNow(gemEn: string): Promise<{ done: number; skipp
     // 押した直後に投げない (連打や、直前の取得と重ならないように 10 秒空ける)
     await sleep(START_DELAY_MS);
     for (const key of SALE_KEYS) {
+      if (cancelled) break;
       const body = buildGemQuery(gemEn, rowQueryOptions(key, gem?.kind === "meta"));
       // 2026-09-26 オーナー「1 ジェムなのにずっとまわってる、ループ系はまずい」:
       // 画面用の窓口で投げていたので、枠待ちで断られては 5 秒ごとに投げ直して空回りしていた
@@ -122,6 +139,7 @@ export async function sampleGemNow(gemEn: string): Promise<{ done: number; skipp
       let waited = 0;
       let errors = 0;
       for (;;) {
+        if (cancelled) break;
         // 罰則で止まっている間は投げずに待つ
         if (isRateLimited()) {
           if (waited >= MAX_WAIT_MS) break;

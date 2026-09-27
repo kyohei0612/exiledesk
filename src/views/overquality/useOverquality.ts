@@ -130,6 +130,7 @@ export function useOverquality() {
     if (pricing.value || isRateLimited()) return;
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
     if (!tradeLock.begin("overquality", () => { fetchSeq++; pricing.value = false; })) return;
+    const ticket = tradeLock.ticket();
     const seq = ++fetchSeq;
     pricing.value = true;
     try {
@@ -150,7 +151,7 @@ export function useOverquality() {
       }
     } finally {
       if (seq === fetchSeq) pricing.value = false;
-      tradeLock.end("overquality");
+      tradeLock.end("overquality", ticket);
     }
   }
   // 名前 / 目標品質 / プリセットが変わったら取り直す (相場が来てから)

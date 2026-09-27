@@ -168,6 +168,7 @@ export function useFinishedCompare(
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。始め方の検索の続きで呼ばれた時は同じ使用権のまま
     const own = !tradeLock.isMine("craft");
     if (own && !tradeLock.begin("craft", () => c.abortFetch())) return;
+    const ticket = tradeLock.ticket();
     const deep = opts.deep ?? true;
     busy.value = true;
     error.value = null;
@@ -239,7 +240,7 @@ export function useFinishedCompare(
     } catch (e) {
       if (e !== ABORT) error.value = String(e);
     } finally {
-      if (own) tradeLock.end("craft");
+      if (own) tradeLock.end("craft", ticket);
       busy.value = false;
       if (ownStage && c.fetchGen.value === gen) c.stage.value = "";
     }

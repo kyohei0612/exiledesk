@@ -93,6 +93,7 @@ export function useRarePrices(o: {
     if (isRateLimited()) return;
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
     if (!tradeLock.begin("rare-craft", () => { fetchSeq++; pricing.value = false; remaining.value = 0; })) return;
+    const ticket = tradeLock.ticket();
     const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
@@ -117,7 +118,7 @@ export function useRarePrices(o: {
         FETCHED.value = { ...FETCHED.value, [key]: { price: min, url } };
       }
     } finally {
-      tradeLock.end("rare-craft");
+      tradeLock.end("rare-craft", ticket);
       if (seq === fetchSeq) {
         pricing.value = false;
         remaining.value = 0;

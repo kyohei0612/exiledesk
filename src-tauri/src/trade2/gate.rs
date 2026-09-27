@@ -251,6 +251,8 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
     let patient = max_wait_ms > MAX_GATE_WAIT_MS;
     let _impatient = if patient { None } else { Some(ImpatientGuard::new()) };
     let mut waited = 0i64;
+    // 長い待ち (画面は 3 秒、巡回は 30 秒以上) だけ 1 回書く。最低間隔の短い待ちは書かない
+    let mut logged = false;
     loop {
         // (待ち ms, 罰則で止まっているか)
         let (wait, penalized) = {
@@ -279,9 +281,19 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
         if wait <= 0 {
             return Ok(());
         }
+        if !logged && wait >= if patient { 30_000 } else { 3_000 } {
+            logged = true;
+            crate::app_log::line_static(&format!(
+                "[門番] {kind} ({}) あと {} 秒待つ{}",
+                if patient { "巡回" } else { "画面" },
+                (wait + 999) / 1000,
+                if penalized { " — 罰則 (429) 中" } else { "" }
+            ));
+        }
         if waited + wait > max_wait_ms {
             // 罰則 (429) と枠待ち (自分の上限) は別物なので文を分ける。画面はどちらも秒数として読む
             let secs = (wait + 999) / 1000;
+            crate::app_log::line_static(&format!("[門番] {kind} ({}) 諦めた: {waited} ms 待って、まだ あと {secs} 秒", if patient { "巡回" } else { "画面" }));
             return Err(if penalized {
                 format!("trade2 レート制限中 (あと {secs} 秒)。少し待ってから取得してください")
             } else {

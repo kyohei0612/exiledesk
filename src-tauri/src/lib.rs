@@ -214,6 +214,7 @@ pub fn run() {
             trade2::trade2_fetch,
             trade2::trade2_reserve,
             trade2::trade2_reserve_cancel,
+            app_log::app_log_write,
             trade2::trade2_set_ui_busy,
             craft_discovery_storage::discovery_save,
             craft_discovery_storage::discovery_load,

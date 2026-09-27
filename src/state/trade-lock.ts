@@ -9,6 +9,9 @@
  *   - stop(id) … 中止。待っている予約を止め、機能の止め方 (begin で渡す) を呼び、「再開」にする
  *   - end(id) … 終わった
  * 自動ジェム監視の巡回・一括取得・監視に足した直後の取得は fetch-busy.ts の状態 (fetchBusyKind) を「使用中」とみなす。
+ *
+ * 2026-09-28 オーナー「今どこで止まってどこで動いてるのかもっと細かく見た方が良い」: 出入りを全部 exiledesk.log に書く
+ * ([画面] [使用権] …)。本体側の予約・門番・巡回も同じファイルに書くので、1 本の時系列で追える。
  */
 import { computed, reactive, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -26,6 +29,12 @@ export const TRADE_USER_JA: Record<TradeUser, string> = {
 };
 
 const owner = ref<TradeUser | null>(null);
+/**
+ * 掴むたびに振る番号。終わる時は自分の番号の時だけ外す (2026-09-28: 中止した古い取得が通信を終えた時に、
+ * 後から始めた新しい取得の使用権まで外していた → 動いているのに「空き」になり、他のタブも同時に使えた)
+ */
+let seq = 0;
+let ownerTicket = 0;
 /** 中止した / 他が使っていて始められなかった機能 (ボタンを「再開」にする) */
 const paused = reactive(new Set<TradeUser>());
 const stoppers = new Map<TradeUser, () => void>();
@@ -37,8 +46,16 @@ export const tradeUserLabel = computed(() => (owner.value ? TRADE_USER_JA[owner.
 export const tradeOwner = computed(() => owner.value);
 
 export function noteBackgroundTrade(label: string): void {
+  if (background.value !== label) tradeTrace(label ? `裏の取得が使い始めた: ${label}` : `裏の取得が終わった: ${background.value}`);
   background.value = label;
 }
+
+/** exiledesk.log に 1 行 (本体の古い版・ブラウザでは何もしない) */
+export function tradeTrace(msg: string): void {
+  if (!isTauriRuntime()) return;
+  void invoke("app_log_write", { msg: `[使用権] ${msg}` }).catch(() => undefined);
+}
+const who = (): string => (owner.value ? TRADE_USER_JA[owner.value] : background.value ? `裏: ${background.value}` : "空き");
 
 async function tellRust(busy: boolean): Promise<void> {
   if (!isTauriRuntime()) return;
@@ -63,26 +80,43 @@ export const tradeLock = {
     return paused.has(id);
   },
   /** 使い始める。他が使っていれば false (再開待ちにする) */
-  begin(id: TradeUser, stop?: () => void): boolean {
-    if (tradeLock.busyOther(id)) {
+  begin(id: TradeUser, stop?: () => void, why = ""): boolean {
+    const other = tradeLock.busyOther(id);
+    if (other) {
       paused.add(id);
+      tradeTrace(`${TRADE_USER_JA[id]}: 始められない (${other} が使用中) → 再開待ち${why ? ` [${why}]` : ""}`);
       return false;
     }
     owner.value = id;
+    ownerTicket = ++seq;
+    tradeTrace(`${TRADE_USER_JA[id]}: 使い始めた (#${ownerTicket})${why ? ` [${why}]` : ""}`);
     paused.delete(id);
     if (stop) stoppers.set(id, stop);
     void tellRust(true);
     return true;
   },
-  /** 終わった (自分の物だけ外す) */
-  end(id: TradeUser): void {
+  /** 今の使用権の番号 (begin の直後に取って、end に渡す) */
+  ticket(): number {
+    return ownerTicket;
+  },
+  /** 終わった (自分の物だけ外す)。ticket を渡すと、その番号の時だけ外す (古い取得の終わりで新しい方を外さない) */
+  end(id: TradeUser, ticket?: number): void {
+    if (ticket !== undefined && owner.value === id && ticket !== ownerTicket) {
+      tradeTrace(`${TRADE_USER_JA[id]}: 古い取得 (#${ticket}) が終わった。今の取得 (#${ownerTicket}) が使っているので外さない`);
+      return;
+    }
     stoppers.delete(id);
-    if (owner.value !== id) return;
+    if (owner.value !== id) {
+      tradeTrace(`${TRADE_USER_JA[id]}: 終わった (持ち主ではないので何もしない。今は ${who()})`);
+      return;
+    }
+    tradeTrace(`${TRADE_USER_JA[id]}: 終わって離した (#${ownerTicket})`);
     owner.value = null;
     void tellRust(false);
   },
   /** 中止: 待っている予約を止め、機能の止め方を呼んで、「再開」にする */
   stop(id: TradeUser): void {
+    tradeTrace(`${TRADE_USER_JA[id]}: 中止を押された (今は ${who()})`);
     if (isTauriRuntime()) void invoke("trade2_reserve_cancel").catch(() => undefined);
     const s = stoppers.get(id);
     tradeLock.end(id);
@@ -91,6 +125,7 @@ export const tradeLock = {
   },
   /** 再開を押した / 取り直しが要らなくなった */
   clearPaused(id: TradeUser): void {
+    if (paused.has(id)) tradeTrace(`${TRADE_USER_JA[id]}: 再開待ちを外した`);
     paused.delete(id);
   },
   /**
@@ -98,12 +133,19 @@ export const tradeLock = {
    * 中止されたか、長すぎる (15 分) なら false
    */
   async reserve(id: TradeUser, searches: number, fetches = searches): Promise<boolean> {
-    if (owner.value !== id) return false;
+    if (owner.value !== id) {
+      tradeTrace(`${TRADE_USER_JA[id]}: 予約しない (持ち主ではない。今は ${who()})`);
+      return false;
+    }
     if (!isTauriRuntime()) return true;
+    tradeTrace(`${TRADE_USER_JA[id]}: 予約 検索 ${searches} / 取得 ${fetches} 本`);
     try {
       await invoke("trade2_reserve", { searches, fetches, maxWaitMs: 15 * 60_000 });
-      return owner.value === id;
-    } catch {
+      const ok = owner.value === id;
+      if (!ok) tradeTrace(`${TRADE_USER_JA[id]}: 予約は通ったが、待つ間に持ち主が変わった (今は ${who()}) → 始めない`);
+      return ok;
+    } catch (e) {
+      tradeTrace(`${TRADE_USER_JA[id]}: 予約できず始めない (${String(e)})`);
       return false;
     }
   },

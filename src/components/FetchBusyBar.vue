@@ -9,14 +9,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { fetchBusy, fetchBusyKind, fetchBusyStopped, fetchBusyText, manualSweeping, tradeWaitText } from "../state/fetch-busy";
-import { tradeLock, tradeOwner, tradeUserLabel, TRADE_USER_JA } from "../state/trade-lock";
+import { tradeLock, tradeOwner, tradeTrace, tradeUserLabel, TRADE_USER_JA } from "../state/trade-lock";
 import { cancelSweep } from "../services/market-flow";
+import { cancelSampleQueue } from "../views/gem-corrupt/sample-now";
 
 const show = computed(() => fetchBusy.value || !!tradeOwner.value);
 const title = computed(() => (tradeOwner.value ? `${TRADE_USER_JA[tradeOwner.value]}が取引所を使用中` : `${fetchBusyKind.value}中`));
 function stop(): void {
   if (tradeOwner.value) tradeLock.stop(tradeOwner.value);
-  else void cancelSweep();
+  else {
+    // 裏の取得: 巡回 / 一括取得 と、監視に足した直後の取得 (こちらは巡回の中止では止まらない)
+    tradeTrace(`帯の中止を押された (${fetchBusyKind.value || "裏の取得"})`);
+    cancelSampleQueue();
+    void cancelSweep();
+  }
 }
 </script>
 
@@ -31,7 +37,7 @@ function stop(): void {
     <!-- 枠の 8 割で待っている時のタイマー -->
     <span v-if="tradeWaitText" class="whitespace-nowrap rounded-full bg-sky-500/15 px-2 text-sky-200">⏱ {{ tradeWaitText }}</span>
     <span v-if="fetchBusyStopped > 0" class="whitespace-nowrap text-rose-300">レート制限で停止中 {{ fetchBusyStopped }} 秒</span>
-    <span class="ml-auto whitespace-nowrap text-[var(--exile-color-text-tertiary)]">終わるまで他の取得は押せません ({{ tradeUserLabel }})</span>
+    <span class="ml-auto whitespace-nowrap text-[var(--exile-color-text-tertiary)]">終わるまで他の機能の取得は押せません ({{ tradeUserLabel }})</span>
     <button
       type="button"
       class="whitespace-nowrap rounded-lg border border-white/20 px-2 py-0.5 hover:border-rose-400/60 hover:text-rose-300"

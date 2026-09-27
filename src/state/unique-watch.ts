@@ -68,6 +68,7 @@ async function runOnce(): Promise<void> {
   const favs = [...uniqueFavorites.set.value];
   if (busy.value || !favs.length) return;
   if (!tradeLock.begin("unique-fav", () => stop())) return;
+  const ticket = tradeLock.ticket();
   const g = ++gen;
   busy.value = true;
   try {
@@ -92,7 +93,7 @@ async function runOnce(): Promise<void> {
       busy.value = false;
       current.value = "";
     }
-    tradeLock.end("unique-fav");
+    tradeLock.end("unique-fav", ticket);
   }
 }
 function stop(): void {

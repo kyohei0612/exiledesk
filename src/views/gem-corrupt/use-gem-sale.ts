@@ -5,7 +5,7 @@
  *   売値: 手入力、または trade2 で最安を 3 回検索 (レベル 21 / 品質 23% / 完成品)。
  *         「鑑定 ↗」は API を叩かず ?q= でトレードサイトを開く (レート制限に当たらない)。
  */
-import { tradeLock } from "../../state/trade-lock";
+import { tradeLock, tradeTrace } from "../../state/trade-lock";
 import { ref, watch, type ComputedRef, type Ref } from "vue";
 import { marketStore } from "../../state/market-store";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
@@ -179,16 +179,18 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
    * 明けても誰も取りに行かず「未取得 (再取得で取ります)」のまま。人が押さなくても取るようにする
    */
   const retryWhenFree = ref(false);
-  async function fetchSalePrices(force = false): Promise<void> {
+  async function fetchSalePrices(force = false, why = force ? "再取得を押した" : "ジェムを選んだ"): Promise<void> {
     if (!selected.value || pricing.value) return;
     if (isRateLimited()) {
+      tradeTrace(`ジェムコラプトの賭け: レート制限中なので見送り、明けたら取り直す [${why}]`);
       retryWhenFree.value = true;
       return;
     }
     retryWhenFree.value = false;
     const gem = selected.value;
     // 取引所を使えるのは 1 つだけ (オーナー 2026-09-27)。他が使っていれば始めず「再開」にする
-    if (!tradeLock.begin("gem-corrupt", () => abandonFetch())) return;
+    if (!tradeLock.begin("gem-corrupt", () => { retryWhenFree.value = false; abandonFetch(); }, `${why}: ${gem.en}`)) return;
+    const ticket = tradeLock.ticket();
     const seq = ++fetchSeq;
     pricing.value = true;
     priceError.value = null;
@@ -221,14 +223,15 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
       if (seq === fetchSeq && isRateLimited()) retryWhenFree.value = true;
     } finally {
       if (seq === fetchSeq) pricing.value = false;
-      tradeLock.end("gem-corrupt");
+      tradeLock.end("gem-corrupt", ticket);
     }
   }
   // 待ちが明けた瞬間に取り直す (1 秒ごとに数え直している残り秒を見る)
   watch(
     () => tradeAuto.rateLimitSecs.value,
     (secs) => {
-      if (secs === 0 && retryWhenFree.value && selected.value && !pricing.value) void fetchSalePrices();
+      // 中止した物は勝手に取り直さない (2026-09-28 オーナー「中止にならない」: 中止の後も待ちが明けると走り出していた)
+      if (secs === 0 && retryWhenFree.value && selected.value && !pricing.value && !tradeLock.isPaused("gem-corrupt")) void fetchSalePrices(false, "待ちが明けた");
     },
   );
   // オーナー指示 (2026-09-12): ジェムを選んだら自動で取る。ソケット条件を変えた時も取り直す。

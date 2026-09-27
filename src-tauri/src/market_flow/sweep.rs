@@ -62,7 +62,16 @@ async fn run_sweep(app: &tauri::AppHandle, slot: Slot) -> Result<(), String> {
     set_cancel(slot, false);
     let all = load_store(app).watches.iter().filter(|w| w.auto).count();
     set_sweep_base(slot, Some((0, all)));
+    let name = if slot == Slot::Manual { "一括取得" } else { "自動巡回" };
+    crate::app_log::line_static(&format!("[巡回] {name} を始めた ({all} 銘柄)"));
+    let started = std::time::Instant::now();
     let result = sample_until_done(app, slot).await;
+    crate::app_log::line_static(&format!(
+        "[巡回] {name} を終えた ({} 秒{}{})",
+        started.elapsed().as_secs(),
+        if cancelled(slot) { "、中止で" } else { "" },
+        match &result { Err(e) => format!("、失敗: {e}"), Ok(()) => String::new() }
+    ));
     // 途中で ? で抜けても進捗表示を残さない。相手の巡回が走っている間はその進捗を消さない
     if slot == Slot::Manual || !manual_running() {
         set_progress(None);
@@ -117,6 +126,7 @@ async fn sample_until_done(app: &tauri::AppHandle, slot: Slot) -> Result<(), Str
 /// 自動巡回も手で止められないと待つしかなくなるので、中止は両方に効かせる。
 #[tauri::command]
 pub fn market_flow_cancel() {
+    crate::app_log::line_static("[巡回] 中止を押された");
     set_cancel(Slot::Manual, true);
     set_cancel(Slot::Auto, true);
 }
@@ -136,7 +146,9 @@ async fn sample_retry(app: &tauri::AppHandle) -> Result<(), String> {
         return Err("取得中です".to_string());
     }
     set_cancel(Slot::Auto, false);
+    crate::app_log::line_static(&format!("[巡回] 取りこぼし {} 銘柄の取り直しを始めた", keys.len()));
     let result = sample_inner(app, Some(keys), Slot::Auto).await;
+    crate::app_log::line_static("[巡回] 取りこぼしの取り直しを終えた");
     if !manual_running() {
         set_progress(None);
     }
@@ -166,6 +178,9 @@ pub fn spawn_scheduler(app: tauri::AppHandle) {
             }
             if crate::trade2::ui_trade_busy() {
                 // 画面の機能が取引所を使っている間は自動の巡回を始めない (取引所を使えるのは 1 つだけ。オーナー 2026-09-27)
+                if now >= next_sweep_at(&store) {
+                    crate::app_log::line_static("[巡回] 時間だが、画面の機能が取引所を使用中なので見送り (1 分後に見直す)");
+                }
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 continue;
             }

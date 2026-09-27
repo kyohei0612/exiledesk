@@ -73,6 +73,8 @@ fn wait_for(map: &HashMap<String, Gate>, kind: &str, n: usize, now: i64) -> (i64
 pub async fn trade2_reserve(searches: u32, fetches: u32, max_wait_ms: i64) -> Result<(), String> {
     let gen = RESERVE_GEN.load(Ordering::SeqCst);
     let mut waited = 0i64;
+    // 待ちの理由が変わった時だけ書く (1 秒ごとに書かない)
+    let mut logged: Option<(WaitWhy, i64)> = None;
     let result = loop {
         if RESERVE_GEN.load(Ordering::SeqCst) != gen {
             break Err("中止しました".to_string());
@@ -94,6 +96,13 @@ pub async fn trade2_reserve(searches: u32, fetches: u32, max_wait_ms: i64) -> Re
         if waited + wait > max_wait_ms {
             break Err(format!("trade2 の枠待ち (あと {} 秒)", (wait + 999) / 1000));
         }
+        if logged != Some((why, period)) {
+            logged = Some((why, period));
+            crate::app_log::line_static(&format!(
+                "[予約] 検索 {searches} / 取得 {fetches} 本: 待つ あと {} 秒 (理由 {why:?}、枠 {period} 秒)",
+                (wait + 999) / 1000
+            ));
+        }
         if let Ok(mut w) = RESERVE_WAIT.lock() {
             *w = Some((now_ms() + wait, why, period));
         }
@@ -103,6 +112,11 @@ pub async fn trade2_reserve(searches: u32, fetches: u32, max_wait_ms: i64) -> Re
     };
     if let Ok(mut w) = RESERVE_WAIT.lock() {
         *w = None;
+    }
+    match &result {
+        Ok(()) if waited > 0 => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: {} 秒待って開始", waited / 1000)),
+        Ok(()) => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: 待たずに開始")),
+        Err(e) => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: 始めない ({e}、{} 秒待った)", waited / 1000)),
     }
     result
 }
@@ -115,13 +129,16 @@ pub fn ui_trade_busy() -> bool {
 /// 画面から: 取引所を使い始めた / 終えた (オーナー 2026-09-27「トレード使えるのは 1 タブだけ」)
 #[tauri::command]
 pub fn trade2_set_ui_busy(busy: bool) {
-    UI_BUSY.store(busy, Ordering::SeqCst);
+    if UI_BUSY.swap(busy, Ordering::SeqCst) != busy {
+        crate::app_log::line_static(if busy { "[使用中] 画面の機能が取引所を使い始めた (巡回は始めない)" } else { "[使用中] 画面の機能が取引所を離した" });
+    }
 }
 
 /// 待っている予約を止める (中止ボタン)
 #[tauri::command]
 pub fn trade2_reserve_cancel() {
     RESERVE_GEN.fetch_add(1, Ordering::SeqCst);
+    crate::app_log::line_static("[予約] 中止 (待っている予約を止めた)");
 }
 
 #[cfg(test)]
