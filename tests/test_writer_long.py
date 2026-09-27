@@ -106,14 +106,12 @@ def _section_json(name: str, seconds: int) -> dict[str, object]:
     # 320 字/分 → seconds 秒ぶんの行を作る (1 行 ≈ 30 字)
     n = max(2, round(seconds * 320 / 60 / 30))
     if name == "実践":
-        lines: list[dict[str, object]] = []
-        for st in (1, 2, 3):
+        lines = []
+        st = 0
+        while len(lines) < n:  # 手を巡回して 1 手 1 行以上、同じ画面が 3 行以上続かない
+            st = st % 3 + 1
             lines += _lines(1, 1, {"kind": "stage", "step": st, "highlight": "added"})
-        lines = (
-            lines[:n]
-            if len(lines) >= n
-            else lines + _lines(n - len(lines), 0, {"kind": "stage", "step": 3})
-        )
+        lines = lines[:n]
     elif name == "仕組み":
         lines = []
         st = 0
