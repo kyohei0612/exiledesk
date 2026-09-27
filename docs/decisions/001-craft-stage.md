@@ -60,6 +60,7 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
   - **Phase 1 (1 分テスト用)**: Transmute / Augment / Regal / Exalt / Chaos / Annul / Alchemy (強さ 3 種は Exalt / Chaos / Regal に)
   - **Phase 2**: Essence (普通 / パーフェクト) / Desecrate / お告げ各種 / 触媒 (品質)
   - **Phase 3**: Vaal (結果表を poe2db から確認してから。現状 "corruption is not modelled")
+    - 2026-09-27 実装: poe2db は付加 MOD の一覧だけなので、分岐は PoE2 Wiki の Corrupted「Corruption outcomes / Non-unique equipment」(変化なし / 最大 3 つ振り直し / エンチャント / 武器・防具はソケット +1、等分と仮定)。腐食・聖別・コラプトのお告げも同時に (`src/services/craft-stage/apply-vaal.ts`)
 - 乱数は `mulberry32(seed)` を **1 手ごとに seed を持つ** (StageStep.seed)。同じ seed 列なら何度でも同じ結果 = 動画の再撮り・検算が可能。
 
 ### 4. 2 つの入力、1 つのエンジン

@@ -6,7 +6,7 @@
  *     計算機の self-fracture.ts と同じ)
  *   - アーティファサーのオーブ: 武器・防具にソケットを 1 つ (規格外で 2 つまで。計算機の sockets.ts)
  *   - カタリスト: 指輪・アミュレットに品質 +1.5% (計算機の QUALITY_PER_CATALYST)。種類を変えると品質は 0 からやり直し。上限はベースの最大品質
- *   - ヴァールのオーブ: コラプトの結果の表がまだ無い (ADR の Phase 3。確かめてから入れる)
+ *   - ヴァールのオーブと聖別は [[apply-vaal.ts]]
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { maxQualityForBase, QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
@@ -14,7 +14,7 @@ import { socketCountFor } from "../htc/sockets";
 import { allMods, replaced, skip, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 
-export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer", "vaal"];
+export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
 const FRACTURE_NEEDS = 4;
 const CATALYST_CLASSES = ["Rings", "Amulets"];
 
@@ -60,8 +60,6 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       if (n >= max) return skip(item, `ソケットが上限 (${max})`);
       return { applied: true, item: { ...item, sockets: n + 1 }, added: [], removed: [] };
     }
-    case "vaal":
-      return skip(item, "コラプトの結果の表がまだ無い (確かめてから入れる)");
     default:
       return skip(item, `このアイテムはまだ使えない (${currency})`);
   }

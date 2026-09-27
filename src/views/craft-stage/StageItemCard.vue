@@ -55,6 +55,11 @@ const rows = computed(() => [
       <p class="text-[12px] text-white/50">{{ RARITY_JA[item.rarity] }} · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-[#8888ff]">+{{ item.quality }}%</span></p>
       <p v-if="item.sockets" class="text-[12px] text-white/50">ソケット: <span class="tracking-[0.2em] text-white/80">{{ "●".repeat(item.sockets) }}</span></p>
+      <!-- ヴァールのエンチャント (ゲームと同じく固有の上) -->
+      <template v-if="item.enchant">
+        <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
+        <p class="text-[#b8daf2]">{{ item.enchant.textJa }}</p>
+      </template>
       <template v-if="implicits.length">
         <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
         <p v-for="(t, i) in implicits" :key="'i' + i" class="text-[#8888ff]">{{ t }}</p>
@@ -75,6 +80,8 @@ const rows = computed(() => [
       <p v-if="!rows.length" class="py-1 text-white/30">MOD なし</p>
       <!-- 消えた MOD (直前の手) -->
       <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ m.textJa }}</p>
+      <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">コラプト</p>
+      <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">聖別</p>
     </div>
     <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90">押すと使う (右クリック / Esc で手放す)</p>
   </div>

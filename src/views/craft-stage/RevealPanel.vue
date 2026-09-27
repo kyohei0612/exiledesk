@@ -11,6 +11,7 @@ import { craftStage } from "../../state/craft-stage";
 
 const rerolled = ref(false);
 watch(() => craftStage.log.value.length, () => (rerolled.value = false));
+const left = () => { const it = craftStage.item.value; return it ? [...it.prefixes, ...it.suffixes].filter((m) => m.unrevealed).length : 0; };
 const canReroll = () => craftStage.omens.value.includes("OmenofAbyssalEchoes");
 function pick(i: number): void {
   craftStage.use(`reveal:${i + 1}${rerolled.value ? ":reroll" : ""}`);
@@ -20,7 +21,7 @@ function pick(i: number): void {
 <template>
   <section v-if="craftStage.offers.value && !craftStage.replay.value" class="w-[380px] rounded-xl border border-rose-400/40 bg-rose-500/10 p-3 text-[12px]">
     <p class="mb-2 flex items-center justify-between">
-      <b class="text-rose-200">開示する — 1 つ選ぶ</b>
+      <b class="text-rose-200">開示する — 1 つ選ぶ<span v-if="left() > 1" class="ml-1 font-normal opacity-70">(未開示 残り {{ left() }})</span></b>
       <button
         v-if="canReroll() && !rerolled"
         type="button"

@@ -35,6 +35,10 @@ const money = (ex: number) => displayCurrency.money(ex);
         </p>
         <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
+        <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">＋ {{ s.after.enchant.textJa }} <span class="text-[10px] opacity-60">エンチャント</span></p>
+        <p v-if="(s.after.sockets ?? 0) > (s.before.sockets ?? 0)" class="text-sky-200">＋ ソケット ({{ s.after.sockets }})</p>
+        <p v-if="s.after.corrupted && !s.before.corrupted" class="text-[#ff5050]">コラプト<span v-if="!s.added.length && !s.removed.length && s.after.enchant === s.before.enchant && s.after.sockets === s.before.sockets"> (変化なし)</span></p>
+        <p v-if="s.after.sanctified && !s.before.sanctified" class="text-amber-200">聖別</p>
       </div>
       <span class="shrink-0 text-right tabular-nums text-[11px] opacity-70">{{ s.out.cost.cumulative ? money(s.out.cost.cumulative) : "" }}</span>
     </li>

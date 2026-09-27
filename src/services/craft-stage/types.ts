@@ -35,7 +35,7 @@ export interface StageMod {
    * 骨で付いたまだ開示していない冒涜 MOD (ゲームと同じく、開示の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
    * altered は変質した鎖骨 (異界の MOD も出る)、faction は王 / 君主 / 黒血のお告げで絞った勢力のタグ
    */
-  unrevealed?: { floor: number; altered: boolean; faction: string | null };
+  unrevealed?: { floor: number; altered: boolean; faction: string | null; plain?: boolean };
 }
 
 export interface StageItem {
@@ -51,9 +51,13 @@ export interface StageItem {
   quality: number;
   /** 品質の種類 (カタリストのタグ。指輪・アミュレットだけ) */
   qualityTag?: string | null;
-  /** ソケットの数 (アーティファサー) */
+  /** ソケットの数 (アーティファサー、ヴァール) */
   sockets?: number;
   corrupted: boolean;
+  /** ヴァールのエンチャント (コラプトで付く。1 つまで) */
+  enchant?: { id: string; textJa: string; textEn: string } | null;
+  /** 聖別 (聖別のお告げ + 神)。コラプトと同じくもう手を加えられない */
+  sanctified?: boolean;
 }
 
 /** 1 手の結果 */

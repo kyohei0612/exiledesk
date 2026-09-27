@@ -3,7 +3,8 @@
  *
  * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
  * ここはオーブ (変成 / 増強 / 王者 / 錬金 / 高貴 / カオス / 消去) とそれに掛かるお告げ、そして他の物への振り分け:
- *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / 破砕 / カタリスト / アーティファサー → [[apply-other.ts]]
+ *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / 破砕 / カタリスト / アーティファサー → [[apply-other.ts]]、
+ *   ヴァールと聖別 → [[apply-vaal.ts]]
  * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
  *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
  *   - 上級・完全の段の下限はエンジンの CURRENCY_FLOOR (変成・増強 55 / 70、王者・高貴 35 / 50)。カオスは計算機と同じ 35 / 50
@@ -18,6 +19,7 @@ import { addOne, allMods, removeOne, room, SIDES, skip, without, type PoolOpts }
 import { applyEssence } from "./apply-essence";
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
+import { applySanctify, applyVaal } from "./apply-vaal";
 import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
@@ -59,7 +61,9 @@ function sideOmen(used: readonly string[], left: string, right: string): StageSi
  * rng は 1 手ごとに mulberry32(seed) を渡す (同じ seed なら同じ結果)。omens は持っているお告げ
  */
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = []): StageApply {
-  if (item.corrupted) return skip(item, "コラプトしたアイテムには使えない");
+  // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
+  if (item.sanctified) return skip(item, "聖別したアイテムには使えない");
+  if (item.corrupted && kindOf(currency) !== "reveal") return skip(item, "コラプトしたアイテムには使えない");
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
   if (bad) return skip(item, "このお告げの効果はまだ入れていない");
@@ -72,6 +76,8 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
+  if (kind === "vaal") return applyVaal(data, item, rng, used);
+  if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(item, rng);
   if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng);
 
   const { strength } = parseKey(currency);

@@ -11,15 +11,15 @@ export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   chaos: ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
   annul: ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofGreaterAnnulment", "OmenofLight"],
   essence_perfect: ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
-  desecrate: ["OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded"],
+  desecrate: ["OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded", "OmenofPutrefaction"],
   reveal: ["OmenofAbyssalEchoes"],
-  vaal: ["OmenofCorruption", "OmenofPutrefaction"],
+  vaal: ["OmenofCorruption"],
   divine: ["OmenofSanctification"],
 };
 /** 棚に出す順 (手の種類ごと) */
 export const OMEN_SHELF: readonly string[] = Object.values(OMEN_FOR).flat();
-/** 効果の規則をまだ入れていない物 (結果の表を確かめてから。棚には出すが打つと理由を返す) */
-export const UNMODELLED_OMENS: readonly string[] = ["OmenofCorruption", "OmenofPutrefaction", "OmenofSanctification"];
+/** 効果の規則をまだ入れていない物 (棚には出すが打つと理由を返す)。2026-09-27 にヴァール・腐食・聖別を入れて空 */
+export const UNMODELLED_OMENS: readonly string[] = [];
 /** 勢力のお告げ → 冒涜の MOD のタグ (エンジンの DES_BOSS_TAG と同じ) */
 export const FACTION_TAG: Readonly<Record<string, string>> = {
   OmenoftheSovereign: "ulaman_mod", OmenoftheLiege: "amanamu_mod", OmenoftheBlackblooded: "kurgal_mod",

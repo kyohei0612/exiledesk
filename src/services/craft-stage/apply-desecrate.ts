@@ -18,16 +18,19 @@ import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 const OFFERS = 3;
 
-function poolsFor(item: StageItem, altered: boolean) {
+/** 開示で出うる置き場。plain (腐食のお告げ) は冒涜専用の MOD (勢力の MOD・異界) を出さない = 普通の MOD だけ */
+function poolsFor(item: StageItem, altered: boolean, plain = false) {
   return (side: StageSide): string[] => {
     const k = side === "prefix" ? "prefixes" : "suffixes";
     const p = item.cls.pools;
+    if (plain) return [...p.normal[k]];
     return [...p.normal[k], ...p.desecrated[k], ...(altered ? p.otherworldly?.[k] ?? [] : [])];
   };
 }
 
 export function applyBone(data: PatchData, item: StageItem, key: string, rng: () => number, used: readonly string[]): StageApply {
   if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+  if (used.includes("OmenofPutrefaction")) return putrefy(item, key);
   if (allMods(item).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
   const altered = key === "desecrate_altered";
   if (altered && !item.cls.pools.otherworldly) return skip(item, "変質した鎖骨はアミュレット・指輪・ベルトだけ");
@@ -66,8 +69,8 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
 }
 
 /** 開示の候補の置き場 (勢力のお告げなら、その勢力の冒涜の MOD だけを MOD ごとに等しく) */
-function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, altered: boolean, faction: string | null, except: StageMod | undefined): Candidate[] {
-  const c = candidates(data, item, [side], floor, { pools: poolsFor(item, altered), except });
+function pool(data: PatchData, item: StageItem, side: StageSide, floor: number, altered: boolean, faction: string | null, except: StageMod | undefined, plain = false): Candidate[] {
+  const c = candidates(data, item, [side], floor, { pools: poolsFor(item, altered, plain), except });
   if (!faction) return c;
   return c.filter((x) => x.mod.tags.includes(faction)).map((x) => ({ ...x, w: 1 }));
 }
@@ -81,9 +84,9 @@ export const unrevealedOf = (item: StageItem): StageMod | undefined => allMods(i
 export function revealOffers(data: PatchData, item: StageItem, rng: () => number): { first: StageMod[]; reroll: StageMod[] } {
   const hidden = unrevealedOf(item);
   if (!hidden?.unrevealed) return { first: [], reroll: [] };
-  const { floor, altered, faction } = hidden.unrevealed;
+  const { floor, altered, faction, plain } = hidden.unrevealed;
   const draw = (): StageMod[] => {
-    let rest = pool(data, item, hidden.side, floor, altered, faction, hidden);
+    let rest = pool(data, item, hidden.side, floor, altered, faction, hidden, plain);
     const out: StageMod[] = [];
     for (let i = 0; i < OFFERS && rest.length; i++) {
       const c = pickWeighted(rest, rng)!;
@@ -111,3 +114,28 @@ export function applyReveal(data: PatchData, item: StageItem, key: string, rng: 
   return { applied: true, item: replaced(item, hidden, pick), added: [pick], removed: [hidden] };
 }
 
+const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
+  modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 0,
+  values: [], ranges: [], textJa: `未開示の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
+  textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,
+  desecrated: true, unrevealed: u,
+});
+
+/**
+ * 腐食のお告げ: 固定済み (破砕) 以外の MOD を全部外し、枠いっぱいまで未開示の MOD にしてコラプトする (普通 6 つ、破砕があれば 5 つ)。
+ * 開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)。古びた骨でも段の下限は掛からない (PoE2 Wiki の Omen of Putrefaction)
+ */
+function putrefy(item: StageItem, key: string): StageApply {
+  const removed = allMods(item).filter((m) => !m.fractured);
+  let cur: StageItem = { ...item, prefixes: item.prefixes.filter((m) => m.fractured), suffixes: item.suffixes.filter((m) => m.fractured) };
+  const u = { floor: 0, altered: key === "desecrate_altered", faction: null, plain: true };
+  const added: StageMod[] = [];
+  for (const side of SIDES) {
+    while (room(cur, side)) {
+      const m = unrevealedMod(side, u);
+      cur = withMod(cur, m);
+      added.push(m);
+    }
+  }
+  return { applied: true, item: { ...cur, corrupted: true }, added, removed };
+}

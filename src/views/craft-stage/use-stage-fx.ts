@@ -10,6 +10,7 @@
  */
 import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf } from "../../state/craft-stage";
+import type { StageItem } from "../../services/craft-stage/types";
 
 export interface StageFx {
   n: number;
@@ -22,7 +23,14 @@ export interface StageFx {
 }
 
 const RARITY_TEXT = { magic: "マジックに!", rare: "レアに!", normal: "" } as const;
-const COLOR = { magic: "#8888ff", rare: "#e8d77a", normal: "#c8c8c8", desecrated: "#f07070", fractured: "#c8a86a", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24" };
+const COLOR = { magic: "#8888ff", rare: "#e8d77a", normal: "#c8c8c8", desecrated: "#f07070", fractured: "#c8a86a", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
+/** コラプトの結果の文字 */
+function vaalText(before: StageItem, after: StageItem, changed: number): string {
+  if (after.enchant !== before.enchant) return "コラプト — エンチャント!";
+  if ((after.sockets ?? 0) > (before.sockets ?? 0)) return "コラプト — ソケット +1!";
+  if (changed) return "コラプト — 振り直し!";
+  return "コラプト — 変化なし";
+}
 
 export function useStageFx(mouse: Ref<{ x: number; y: number }>) {
   const fx = ref<StageFx | null>(null);
@@ -36,6 +44,9 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>) {
     const top = st.added.find((m) => m.tierName === "T1" && !m.unrevealed);
     let next: Omit<StageFx, "n" | "x" | "y" | "icon">;
     if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? "使えない" };
+    else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };
+    else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
+    else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
     else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: RARITY_TEXT[o.changed.rarity_to] };
     else if (top) next = { kind: "up", color: COLOR.top, text: "T1!" };
     else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "破砕!" };

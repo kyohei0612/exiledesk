@@ -10,6 +10,7 @@
  *      applyCurrency を多数回引いた MOD ごとの頻度の差が小さい
  *   4. クラフトに使える物全部 (エッセンス・骨と開示・お告げ・神・破砕・アーティファサー・カタリスト) をお告げ付きででたらめに打っても
  *      規則が崩れない (枠・系統・冒涜 / エッセンス / 破砕は 1 つまで・掛けていないお告げは食わない)。開示の候補と結果が一致する
+ *   5. ヴァールの 4 つの結果が等分 (コラプトのお告げで変化なしが消える、指輪はソケットの代わりに変化なし)、腐食のお告げ、聖別
  *   node scripts/check-craft-stage.mjs
  */
 import { readFileSync } from "node:fs";
@@ -185,6 +186,54 @@ function compare(label, item, cur, n = 40000) {
   // 大いなる高貴: 枠が 2 つ以上なら 2 つ足す
   const two = M.applyCurrency(data, rare, "exalt", M.mulberry32(8), ["OmenofGreaterExaltation"]);
   if (two.added.length !== 2) ng(`大いなる高貴のお告げで 2 つ付いていない (${two.added.length})`);
+}
+
+// ---- 5. ヴァール (4 つの結果を等分、コラプトのお告げで「変化なし」を外す)・腐食のお告げ・聖別 ----
+{
+  let rare = M.applyCurrency(data, M.freshItem(data, "Ancestral Tiara", 82), "alchemy", M.mulberry32(21)).item;
+  const kinds = (it, n, omens) => {
+    const c = { none: 0, reroll: 0, enchant: 0, socket: 0 };
+    for (let i = 0; i < n; i++) {
+      const r = M.applyCurrency(data, it, "vaal", M.mulberry32(5_000_000 + i), omens);
+      if (!r.applied || !r.item.corrupted) { ng("ヴァールでコラプトしていない"); break; }
+      if (r.item.enchant) c.enchant++;
+      else if ((r.item.sockets ?? 0) > (it.sockets ?? 0)) c.socket++;
+      else if (r.added.length || r.removed.length) { c.reroll++; if (r.removed.length > 3) ng("振り直しが 4 つ以上"); }
+      else c.none++;
+      if (M.applyCurrency(data, r.item, "exalt", M.mulberry32(1)).applied) ng("コラプトの後に高貴が打てた");
+    }
+    return c;
+  };
+  const a = kinds(rare, 8000, []);
+  console.log(`ヴァール (兜): ${JSON.stringify(a)}`);
+  for (const k of Object.keys(a)) if (Math.abs(a[k] / 8000 - 0.25) > 0.02) ng(`ヴァールの結果 ${k} が 1/4 から外れた`);
+  const b = kinds(rare, 3000, ["OmenofCorruption"]);
+  console.log(`ヴァール + コラプトのお告げ: ${JSON.stringify(b)}`);
+  if (b.none) ng("コラプトのお告げで変化なしが出た");
+  const ring = M.applyCurrency(data, M.freshItem(data, "Gold Ring", 82), "alchemy", M.mulberry32(22)).item;
+  const c = kinds(ring, 4000, []);
+  console.log(`ヴァール (指輪、ソケットの代わりに変化なし): ${JSON.stringify(c)}`);
+  if (c.socket) ng("指輪にソケットが付いた");
+  // 腐食: 未開示で枠いっぱい + コラプト、開示はできて普通の MOD だけ
+  const p = M.applyCurrency(data, rare, "desecrate", M.mulberry32(23), ["OmenofPutrefaction"]);
+  const hid = [...p.item.prefixes, ...p.item.suffixes];
+  if (!p.item.corrupted || hid.length !== 6 || hid.some((m) => !m.unrevealed)) ng(`腐食: 未開示 6 つ + コラプトになっていない (${hid.length})`);
+  let it = p.item;
+  for (let i = 0; i < 6; i++) {
+    const r = M.applyCurrency(data, it, `reveal:${1 + (i % 3)}`, M.mulberry32(30 + i));
+    if (!r.applied) { ng(`腐食の後の開示 ${i + 1} が打てない: ${r.reason}`); break; }
+    if (r.added[0].modId.includes("Desecrated")) ng("腐食の開示で冒涜専用の MOD が出た");
+    it = r.item;
+  }
+  const fams = [...it.prefixes, ...it.suffixes].map((m) => m.family);
+  if (new Set(fams).size !== fams.length) ng("腐食の開示で同じ系統が 2 つ");
+  console.log(`腐食 → 開示 6 回: ${[...it.prefixes, ...it.suffixes].map((m) => m.textJa).join(" / ")}`);
+  // 聖別: 0.78〜1.22 倍、聖別済みは以後打てない
+  const s = M.applyCurrency(data, rare, "divine", M.mulberry32(40), ["OmenofSanctification"]);
+  if (!s.item.sanctified) ng("聖別になっていない");
+  s.removed.forEach((m, i) => m.values.forEach((v, j) => { const w = s.added[i].values[j]; if (v && (Math.abs(w) < Math.abs(v) * 0.78 - 1 || Math.abs(w) > Math.abs(v) * 1.22 + 1)) ng(`聖別の値が範囲外 ${v} → ${w}`); }));
+  if (M.applyCurrency(data, s.item, "vaal", M.mulberry32(1)).applied) ng("聖別の後にヴァールが打てた");
+  console.log(`聖別: ${s.removed.map((m, i) => `${m.values.join(",")}→${s.added[i].values.join(",")}`).join("  ")}`);
 }
 
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");

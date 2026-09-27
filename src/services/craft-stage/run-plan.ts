@@ -55,7 +55,7 @@ export function outItem(it: StageItem): OutItem {
     quality: it.quality,
     corrupted: it.corrupted,
     // 足したキー (POE2Tube は無視してよい): 品質の種類とソケットの数
-    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0 } as object),
+    ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
     suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
   };
