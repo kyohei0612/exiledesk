@@ -77,6 +77,12 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
 - **クラフトの規則も計算機と同一**: 側・枠・クラフト MOD 上限・冒涜 1 つ・お告げの効き方は HTC の規則を移植し、計算機の確率と実演の抽選が食い違わないこと
   (検算: 同じ状態・同じカレンシーで `stepProbability` の分布と `applyCurrency` を多数回引いた頻度が一致する)。
 - 再生モードは 1 手ごとに `StageStep` を配列に積み、**結果 JSON を書き出す** (POE2Tube の台本生成の入力)。
+- **JSON の形は POE2Tube が正** (2026-09-27 取り決め、POE2Tube ADR-002):
+  `C:\Users\kyohei\POE2Tube\contracts\craft-stage-plan.schema.json` (手順、入力) と
+  `craft-stage-result.schema.json` (結果、出力)。見本は `contracts/examples/`、決まりは `contracts/README.md`。
+  TS 型は schema から `json-schema-to-typescript` で `src/services/craft-stage/contract.ts` に生成し、手書きしない。
+  キーは snake_case、カレンシーは `price-keys.json` のキー、冒涜は `desecrate` / `desecrate_ancient` / `desecrate_altered`、
+  使えない手は `applied:false` + `reason` で `before == after`、seed は `plan.seed` から 1 手ごとに派生。
 - 画面は「アイテム枠 / カレンシー棚 / 変化ハイライト / 工程履歴 (下に積み上がる)」の 4 パネル。
   積み上がる履歴が POE2Tube の「積み上げ図解」と同じ見え方になるようにする。
 - 撮影は POE2Tube 側の責務 (ヘッドレスブラウザで再生モードのページを開き、1 手ごとに PNG)。
