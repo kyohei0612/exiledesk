@@ -29,6 +29,9 @@ STAGE_CURRENCIES: dict[PlayerStage, frozenset[str] | None] = {
     "endgame": None,  # 制限なし
 }
 STAGE_JA = {"act": "アクト中", "early_endgame": "エンド序盤", "endgame": "エンド"}
+# ベースの入手段階 (docs/script_rules/_facts.md と揃える)。表に無いベースは検査しない
+BASE_STAGE: dict[str, PlayerStage] = {"Mnemonic Ring": "endgame"}  # 創生の木限定
+STAGE_ORDER = {"act": 0, "early_endgame": 1, "endgame": 2}
 
 
 class Brief(BaseModel):
@@ -68,6 +71,12 @@ class Brief(BaseModel):
                     f"「{STAGE_JA[self.player_stage]}」では手に入りにくいカレンシー: {bad}"
                     " (設定を変えるか手順から外す)"
                 )
+        need = BASE_STAGE.get(self.plan.base)
+        if need and STAGE_ORDER[need] > STAGE_ORDER[self.player_stage]:
+            out.append(
+                f"{self.plan.base} は「{STAGE_JA[need]}」で手に入るベース"
+                f" (視聴者は「{STAGE_JA[self.player_stage]}」)。段階に合うベースにする"
+            )
         n = len(self.plan.expanded_steps())
         if self.final_step is not None and self.final_step > n:
             out.append(f"final_step {self.final_step} が手数 {n} を超えている")

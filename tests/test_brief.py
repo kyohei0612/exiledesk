@@ -36,3 +36,8 @@ def test_all_briefs_on_disk_are_consistent() -> None:
     for p in (ROOT / "data/briefs").glob("*.json"):
         b = Brief.model_validate(json.loads(p.read_text(encoding="utf-8")))
         assert b.problems() == [], f"{p.name}: {b.problems()}"
+
+
+def test_base_must_be_obtainable_at_stage() -> None:
+    b = _brief(player_stage="act")
+    assert any("Mnemonic Ring" in p for p in b.problems())
