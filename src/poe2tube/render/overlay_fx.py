@@ -1,7 +1,8 @@
 """GiftCut テロップスタイルを使った動画内の演出 (kyohei 2026-09-28「全部入れて」).
 
-1. 打った瞬間の結果: 「レアに!」「+ 雷耐性 +40%」を実践パネルの上にポップ
-2. 章の区切り: 章が変わった行の頭で章名を大きく (帯 + フェード)
+1. 打った瞬間の結果: 「+ 雷耐性 +40%」「消えた! 火ダメージ」を拡大したアイテムの**下**にポップ
+   (クラフト画面に文字を被せない。「レアに!」は ExileDesk の演出が出すので出さない)
+2. 章の区切り: 章が変わった行の頭で、パネルを出す前の白地に章名を大きく
 3. 強調ワード: 下のテロップの数字・ティア・個数だけを色付きスタイルで
 """
 
@@ -18,6 +19,7 @@ from poe2tube.render.telop_style import load_presets, render_telop
 
 HIT_START, HIT_END = 0.5, 3.4  # 打った瞬間の結果を出す時間 (録画の 1/2 速再生の間)
 CHAPTER_SECONDS = 1.4
+HIT_Y = 772  # 拡大したアイテムの下 (パネル内の下端寄り)
 EMPHASIS = re.compile(r"(T\d+|[+＋−-]\s?\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:つ|個|手目|手|枠))")
 STYLE_RARITY = "textstyle010"  # 黄
 STYLE_ADDED = "textstyle025"  # 赤メタリック
@@ -93,8 +95,6 @@ def _paste_center(
 def hit_label(step: StageStep) -> tuple[str, str]:
     """(文字, スタイル)。レアリティが変われば最優先、次に付いた MOD、消えただけなら消えた MOD."""
     ch = step.changed
-    if ch.rarity_from != ch.rarity_to and ch.rarity_to in RARITY_JA:
-        return RARITY_JA[ch.rarity_to], STYLE_RARITY
     if ch.added:
         return "+ " + _short(ch.added[0].text_ja), STYLE_ADDED
     if ch.removed:
@@ -102,8 +102,20 @@ def hit_label(step: StageStep) -> tuple[str, str]:
     return ("使えない!", STYLE_REMOVED) if not step.applied else ("変化なし", STYLE_REMOVED)
 
 
-def _short(text: str, n: int = 14) -> str:
-    return text if len(text) <= n else text[: n - 1] + "…"
+NUMBER = re.compile(r"[+＋-]?\d+(?:\.\d+)?%?")
+
+
+def _short(text: str, n: int = 12) -> str:
+    """MOD 文を短い名前に: 「火ダメージが22%増加する」→「火ダメージ 22%」."""
+    if len(text) <= n:
+        return text
+    if "が" in text:
+        head = text.split("が", 1)[0]
+        num = NUMBER.search(text)
+        short = f"{head} {num.group(0)}" if num and num.group(0) not in head else head
+        if len(short) <= n + 2:
+            return short
+    return text[: n - 1] + "…"
 
 
 def draw_hit(img: Image.Image, step: StageStep, t: float) -> None:
@@ -111,11 +123,11 @@ def draw_hit(img: Image.Image, step: StageStep, t: float) -> None:
     if not HIT_START <= t <= HIT_END:
         return
     text, style = hit_label(step)
-    im = telop_image(style, text, 110)
+    im = telop_image(style, text, 100)
     if im.width > 1100:
         im = im.resize((1100, int(im.height * 1100 / im.width)))
     fade = min(1.0, (HIT_END - t) / 0.3)
-    _paste_center(img, im, img.width // 2, 560, _pop(t - HIT_START), fade)
+    _paste_center(img, im, img.width // 2, HIT_Y, _pop(t - HIT_START), fade)
 
 
 def draw_chapter(img: Image.Image, name: str, t: float) -> None:
@@ -123,9 +135,6 @@ def draw_chapter(img: Image.Image, name: str, t: float) -> None:
     if t > CHAPTER_SECONDS:
         return
     fade = min(1.0, (CHAPTER_SECONDS - t) / 0.35)
-    band = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ImageDraw.Draw(band).rectangle((0, 380, img.width, 620), fill=(0, 0, 0, int(150 * fade)))
-    img.alpha_composite(band)
     im = telop_image(STYLE_CHAPTER, name.replace(": ", "　"), 150)
     if im.width > 1500:
         im = im.resize((1500, int(im.height * 1500 / im.width)))
@@ -142,7 +151,7 @@ def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max
         pieces: list[tuple[str, Image.Image | None, int]] = []
         for p in parts:
             if EMPHASIS.fullmatch(p):
-                em = emphasis_image(p, int(size * 1.2))
+                em = emphasis_image(p, int(size * 1.12))
                 pieces.append((p, em, em.width + int(size * 0.08)))
             else:
                 pieces.append((p, None, int(d.textlength(p, font=f))))
@@ -150,10 +159,13 @@ def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max
         if total <= max_w or size <= 30:
             break
         size -= 2
+    # 本文の「字の見た目の中心」に強調の中心を合わせる (anchor の基準線とはずれる)
+    top, bottom = d.textbbox((0, 0), "あ漢", font=f, anchor="lm")[1::2]
+    ink_cy = int(center[1] + (top + bottom) / 2)
     x = center[0] - total // 2
     for p, piece, w in pieces:
         if piece is None:
             d.text((x, center[1]), p, font=f, fill=INK, anchor="lm")
         else:
-            img.alpha_composite(piece, (x, center[1] - piece.height // 2))
+            img.alpha_composite(piece, (x, ink_cy - piece.height // 2))
         x += w

@@ -44,6 +44,7 @@ def render_panel_layer(
     result: CraftStageResult,
     stage_shot: Path | None = None,
     final_step: int | None = None,
+    zoom: float = 0.0,
 ) -> Image.Image | None:
     """シーンパネルだけの透明レイヤー (talk なら None)。スライドイン演出のため下地と分ける."""
     if line.scene.kind == "talk":
@@ -62,6 +63,7 @@ def render_panel_layer(
         ICON_DIR,
         stage_shot,
         final_step,
+        zoom,
     )
     return layer
 

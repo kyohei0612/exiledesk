@@ -115,8 +115,8 @@ def test_overlay_fx_hit_chapter_emphasis() -> None:
     if not p.exists():
         pytest.skip("8 分の結果 JSON が無い")
     r8 = CraftStageResult.model_validate(json.loads(p.read_text(encoding="utf-8")))
-    assert hit_label(r8.steps[2])[0] == "レアに!"  # 王者 = 青→黄
-    assert hit_label(r8.steps[6])[0].startswith("消えた!")  # 消去
+    assert hit_label(r8.steps[2])[0].startswith("+ ")  # 王者: レアに! は ExileDesk 側が出す
+    assert hit_label(r8.steps[6])[0] == "消えた! 最大マナ +23"  # 消去 (短い名前)
     assert [m for m in EMPHASIS.findall("3手目のT2で雷耐性 +40% が2つ")] == [
         "3手目",
         "T2",

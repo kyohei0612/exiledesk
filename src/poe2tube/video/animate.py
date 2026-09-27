@@ -18,7 +18,7 @@ from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
-from poe2tube.render.overlay_fx import HIT_START, draw_chapter, draw_hit
+from poe2tube.render.overlay_fx import CHAPTER_SECONDS, HIT_START, draw_chapter, draw_hit
 from poe2tube.script.model import Line
 from poe2tube.video.timeline import Cue, scene_changed
 
@@ -27,6 +27,14 @@ POP_SECONDS = 0.35
 POP_DELAY = 0.15
 SLIDE_SECONDS = 0.3
 SLIDE_PX = 60
+ZOOM_SECONDS = 0.35  # アイテムへ寄っていく時間
+
+
+def chapter_lead(new_chapter: bool) -> float:
+    """章が変わった行は、章カードを出す間だけパネルと打った瞬間を後ろへずらす."""
+    return CHAPTER_SECONDS if new_chapter else 0.0
+
+
 CLIP_SLOWMO = 2  # 打った瞬間の録画を 1/2 速で (kyohei 2026-09-28「速くて何が変わったか分からない」)
 
 
@@ -60,10 +68,13 @@ def sound_events(
     prev_section: str | None = None
     for c in cues:
         sc = c.line.scene
-        if prev is not None and c.section != prev_section:
+        new_chapter = prev is not None and c.section != prev_section
+        lead = chapter_lead(new_chapter)
+        if new_chapter:
             events.append(SoundEvent(c.start, "chapter"))
         if result is not None and stage_hit(prev, c.line) and sc.step:
-            events.append(SoundEvent(c.start + HIT_START, hit_sound(result.steps[sc.step - 1])))
+            at = c.start + lead + HIT_START
+            events.append(SoundEvent(at, hit_sound(result.steps[sc.step - 1])))
         if prev is not None and scene_changed(prev, c.line):
             is_final = (
                 sc.kind in ("stack", "item")
@@ -110,43 +121,57 @@ def iter_frames(
     fps = cues[0].frames / cues[0].duration if cues else 24
     prev = None
     prev_section: str | None = None
-    for c in cues:
+    prev_zoom = False
+    for i, c in enumerate(cues):
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
-        panel = render_panel_layer(c.line, result, final_step=final_step)
+        nxt = cues[i + 1].line if i + 1 < len(cues) else None
+        is_hit = stage_hit(prev, c.line)
+        # 拡大: 手を打つ直前の行 (「○○を使うわね」) から、打った行まで
+        zoom_on = c.line.scene.kind == "stage" and (
+            is_hit or (nxt is not None and stage_hit(c.line, nxt))
+        )
+        panel = render_panel_layer(
+            c.line, result, final_step=final_step, zoom=1.0 if zoom_on else 0.0
+        )
         # 打った瞬間の連番 (ExileDesk の演出そのもの) があれば、行の頭はそれを 1 コマずつ貼る
-        clip = clip_frames(result.plan, c.line.scene.step or 0) if stage_hit(prev, c.line) else []
+        clip = clip_frames(result.plan, c.line.scene.step or 0) if is_hit else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
-        hit_step = (
-            result.steps[c.line.scene.step - 1]
-            if stage_hit(prev, c.line) and c.line.scene.step
-            else None
-        )
+        hit_step = result.steps[c.line.scene.step - 1] if is_hit and c.line.scene.step else None
         new_chapter = prev_section is not None and prev_section != c.section
+        lead = chapter_lead(new_chapter)
         for k, mouth in enumerate(c.mouth_levels):
             t = k / fps
-            if k < len(clip) * CLIP_SLOWMO:
-                shot = clip[k // CLIP_SLOWMO]
-                frame_static = _with_panel(
-                    base,
-                    render_panel_layer(c.line, result, stage_shot=shot, final_step=final_step),
-                    0,
-                    1.0,
+            tl = t - lead  # 章カードの後の時間
+            kl = int(round(tl * fps))
+            if tl < 0:
+                frame_static = base  # 章カードの間はパネルを出さない (被せない)
+            elif 0 <= kl < len(clip) * CLIP_SLOWMO:
+                shot = clip[kl // CLIP_SLOWMO]
+                layer = render_panel_layer(
+                    c.line, result, stage_shot=shot, final_step=final_step, zoom=1.0
                 )
-            elif animate and t < SLIDE_SECONDS and panel is not None:
-                dy, alpha = slide_in(t)
+                frame_static = _with_panel(base, layer, 0, 1.0)
+            elif zoom_on and not prev_zoom and tl < ZOOM_SECONDS:
+                layer = render_panel_layer(
+                    c.line, result, final_step=final_step, zoom=tl / ZOOM_SECONDS
+                )
+                frame_static = _with_panel(base, layer, 0, 1.0)
+            elif (animate or lead > 0) and tl < SLIDE_SECONDS and panel is not None:
+                dy, alpha = slide_in(tl)
                 frame_static = _with_panel(base, panel, dy, alpha)
             else:
                 frame_static = static
             scale = pop_scale(t) if props else 1.0
             frame = compose_frame(frame_static, c.line, mouth, props, scale)
             if hit_step is not None:
-                draw_hit(frame, hit_step, t)
+                draw_hit(frame, hit_step, tl)
             if new_chapter:
                 draw_chapter(frame, c.section, t)
             yield n, frame
             n += 1
+        prev_zoom = zoom_on
         prev = c.line
         prev_section = c.section
         log.info("frames", line=c.index, scene=c.line.scene.kind, done=n, total=total)

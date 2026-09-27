@@ -25,6 +25,7 @@ def draw_scene_panel(
     icon_dir: Path,
     stage_shot: Path | None = None,
     final_step: int | None = None,
+    zoom: float = 0.0,
 ) -> None:
     """``stage_shot`` を渡すと stage シーンにその画像 (打った瞬間の 1 コマ) を使う."""
     x0, y0, x1, y1 = inner
@@ -44,19 +45,31 @@ def draw_scene_panel(
     elif scene.kind == "stage":
         shot = stage_shot or cached_path(result.plan, scene.step or 0)
         if shot.exists():
-            _stage_capture(img, inner, shot, scene.step or 0)
-            if scene.step:
-                _change_callout(img, inner, result.steps[scene.step - 1], icon_dir)
+            _stage_capture(img, inner, shot, scene.step or 0, zoom)
         else:
             _stage_placeholder(img, inner, scene, result, icon_dir)
     elif scene.kind == "cost":
         _cost(img, inner, result)
 
 
-def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int) -> None:
-    """ExileDesk クラフトステージの実画面 (再生モードの撮影) を枠いっぱいに収めて貼る."""
+# 撮影画面 (1920x1080) のうちアイテム枠 (+ 上の「レアに!」演出) の範囲。拡大で見せる所
+CARD_REGION = (170, 128, 970, 720)
+ZOOM_TEXT_H = 130  # 拡大中はパネルの下にこれだけ空けて、結果の文字をそこに出す
+
+
+def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: float = 0.0) -> None:
+    """ExileDesk クラフトステージの実画面を貼る。``zoom`` 1 でアイテム枠を拡大 (0〜1 で途中).
+
+    kyohei 2026-09-28: 付く瞬間の前から付いた時までアイテムを拡大、文字はクラフト画面に被せない。
+    """
     x0, y0, x1, y1 = box
     im = Image.open(shot).convert("RGBA")
+    if zoom > 0:
+        e = 1 - (1 - min(1.0, zoom)) ** 3
+        full = (0, 0, im.width, im.height)
+        c = [int(full[i] + (CARD_REGION[i] - full[i]) * e) for i in range(4)]
+        im = im.crop((c[0], c[1], c[2], c[3]))
+        y1 = int(y1 - ZOOM_TEXT_H * e)
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
     im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)
     px = x0 + (x1 - x0 - im.width) // 2
