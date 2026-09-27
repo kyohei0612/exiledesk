@@ -22,7 +22,8 @@ STAGE_ILVL: dict[PlayerStage, tuple[int, int]] = {
     "endgame": (78, 84),
 }
 STAGE_CURRENCIES: dict[PlayerStage, frozenset[str] | None] = {
-    "act": frozenset({"transmute", "augment", "regal", "alchemy", "exalt", "annul"}),
+    # カオスはアクトでもたまに拾える (kyohei 2026-09-28)
+    "act": frozenset({"transmute", "augment", "regal", "alchemy", "exalt", "annul", "chaos"}),
     "early_endgame": frozenset(
         {"transmute", "augment", "regal", "alchemy", "exalt", "annul", "chaos", "artificer"}
     ),
@@ -30,7 +31,10 @@ STAGE_CURRENCIES: dict[PlayerStage, frozenset[str] | None] = {
 }
 STAGE_JA = {"act": "アクト中", "early_endgame": "エンド序盤", "endgame": "エンド"}
 # ベースの入手段階 (docs/script_rules/_facts.md と揃える)。表に無いベースは検査しない
-BASE_STAGE: dict[str, PlayerStage] = {"Mnemonic Ring": "endgame"}  # 創生の木限定
+BASE_STAGE: dict[str, PlayerStage] = {
+    "Mnemonic Ring": "endgame",  # 創生の木限定
+    "Sapphire Ring": "act",  # 通常ドロップ、ドロップレベル 12
+}
 STAGE_ORDER = {"act": 0, "early_endgame": 1, "endgame": 2}
 
 
