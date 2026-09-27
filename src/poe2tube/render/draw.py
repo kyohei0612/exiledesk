@@ -74,7 +74,7 @@ def text_fit(
 def load_icon(path: Path, height: int) -> Image.Image:
     im = Image.open(path).convert("RGBA")
     scale = height / im.height
-    return im.resize((max(1, int(im.width * scale)), height), Image.LANCZOS)
+    return im.resize((max(1, int(im.width * scale)), height), Image.Resampling.LANCZOS)
 
 
 def placeholder_icon(label: str, height: int) -> Image.Image:

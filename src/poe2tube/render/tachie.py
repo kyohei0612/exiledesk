@@ -106,7 +106,7 @@ def render_tachie(speaker: Speaker, emotion: Emotion, mouth: int, height: int) -
     _apply(psd, spec.emotions[emotion])
     _select(psd, spec.mouth_group, spec.mouths[mouth])
     img = psd.composite(force=True).convert("RGBA")
-    img = img.resize((int(img.width * height / img.height), height), Image.LANCZOS)
+    img = img.resize((int(img.width * height / img.height), height), Image.Resampling.LANCZOS)
     img.save(cache)
     return img
 
