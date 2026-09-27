@@ -27,6 +27,16 @@ from poe2tube.script.model import VideoScript
 
 log = structlog.get_logger()
 RULES_PATH = REPO_ROOT / "docs" / "script_rules" / "_all.md"
+FACTS_PATH = REPO_ROOT / "docs" / "script_rules" / "_facts.md"
+
+
+def load_rules() -> str:
+    """ルール集 + 仕様の事実。台本を書かせる全プロンプトに同じ物を渡す (セッションに依らない)."""
+    rules = RULES_PATH.read_text(encoding="utf-8")
+    facts = FACTS_PATH.read_text(encoding="utf-8") if FACTS_PATH.exists() else ""
+    return rules + "\n\n" + facts
+
+
 EXAMPLE_PATH = REPO_ROOT / "data" / "scripts" / "test_1min_craft_intro.json"
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 Runner = Callable[[str], str]
@@ -69,7 +79,7 @@ def result_digest(result: CraftStageResult) -> str:
 def build_prompt(
     brief: Brief, result: CraftStageResult, result_file: str, feedback: list[str]
 ) -> str:
-    rules = RULES_PATH.read_text(encoding="utf-8")
+    rules = load_rules()
     example = EXAMPLE_PATH.read_text(encoding="utf-8") if EXAMPLE_PATH.exists() else "(無し)"
     parts = [
         "あなたは POE2Tube の台本作家です。以下のルール集に従い、台本 JSON だけを返してください。",

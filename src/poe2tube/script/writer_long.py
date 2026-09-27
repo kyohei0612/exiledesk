@@ -21,7 +21,7 @@ from poe2tube.script.brief import Brief
 from poe2tube.script.lint import lint_script, lint_section
 from poe2tube.script.model import Section, VideoScript
 from poe2tube.script.outline import Outline
-from poe2tube.script.writer import RULES_PATH, Runner, extract_json, result_digest
+from poe2tube.script.writer import Runner, extract_json, load_rules, result_digest
 
 log = structlog.get_logger()
 LINE_REF = re.compile(r"line (\d+)")
@@ -35,7 +35,7 @@ class LongWriteResult:
 
 
 def _rules() -> str:
-    return RULES_PATH.read_text(encoding="utf-8")
+    return load_rules()
 
 
 def outline_prompt(brief: Brief, result: CraftStageResult, feedback: list[str]) -> str:

@@ -27,6 +27,35 @@ LONG_THRESHOLD_SECONDS = 180  # これ以上は「構成表 → 章ごと」で�
 log = structlog.get_logger()
 
 
+def write_provenance(script_path: Path, model: str | None) -> None:
+    """何で作ったかを隣の .meta.json に残す (後で「どのルール・どの CLI で書いたか」を辿れる)."""
+    import hashlib
+    import shutil
+    import subprocess
+    from datetime import datetime
+
+    from poe2tube.script.writer import FACTS_PATH, RULES_PATH
+
+    def sha(p: Path) -> str:
+        return hashlib.sha256(p.read_bytes()).hexdigest()[:12] if p.exists() else ""
+
+    exe = shutil.which("claude")
+    ver = ""
+    if exe:
+        r = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=30)
+        ver = r.stdout.strip()
+    meta = {
+        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "claude_cli": ver,
+        "model_flag": model or "(CLI 既定)",
+        "rules_sha": sha(RULES_PATH),
+        "facts_sha": sha(FACTS_PATH),
+    }
+    script_path.with_suffix(".meta.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("brief", type=Path)
@@ -52,6 +81,7 @@ def main() -> None:
         wr = write_script(brief, result, result_file, runner, a.attempts)
         script, attempts = wr.script, {"all": wr.attempts}
     out = save_script(script, a.out or ROOT / "data" / "scripts" / f"{brief.name}.json")
+    write_provenance(out, a.model)
     log.info(
         "script written",
         path=str(out.relative_to(ROOT)),
