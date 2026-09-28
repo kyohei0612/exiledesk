@@ -135,7 +135,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         </header>
 
         <!-- アイテム -->
-        <div class="absolute left-[60px] top-[120px] flex w-[640px] justify-center">
+        <div class="absolute left-[40px] top-[120px] flex w-[560px] justify-center">
           <div ref="cardEl" class="relative origin-top scale-[1.3]" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">
             <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'text-sm' : 'text-2xl'">{{ fx.text }}</span>
@@ -143,7 +143,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         </div>
 
         <!-- 開示の候補 (アイテムの上に出して、選ぶ物を点ける) -->
-        <div v-if="hand.reveal.value" class="stage-row-in absolute left-[110px] top-[260px] z-20 w-[540px] space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+        <div v-if="hand.reveal.value" class="stage-row-in absolute left-[50px] top-[260px] z-20 w-[540px] space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
           <p class="text-[15px] font-bold text-rose-200">開示する — 1 つ選ぶ</p>
           <div
             v-for="(m, i) in hand.reveal.value.offers"
