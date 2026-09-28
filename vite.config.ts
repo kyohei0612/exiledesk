@@ -7,7 +7,16 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [vue(), tailwindcss()],
+  // 画像パック (public/base-art・public/mtx-art) は本番のビルドに入れない (2026-09-29、scripts/asset-packs.mjs で別に配る)。
+  // 開発版は public/ から出すので残る
+  plugins: [vue(), tailwindcss(), {
+    name: "exiledesk-drop-asset-packs",
+    apply: "build" as const,
+    async closeBundle() {
+      const { rm } = await import("node:fs/promises");
+      for (const p of ["base-art", "mtx-art"]) await rm(`dist/${p}`, { recursive: true, force: true });
+    },
+  }],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

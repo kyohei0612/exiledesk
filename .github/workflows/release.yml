@@ -104,6 +104,13 @@ jobs:
           VENDOR_KEY: ${{ steps.pob.outputs.key }}
         run: node scripts/publish-pob-bundle.mjs
 
+      # 画像 (public/base-art・public/mtx-art) はインストーラーに入れず、固定タグ asset-packs に zip + manifest で置く
+      # (画像が変わった時だけ上書き)。アプリは要る版と違う時だけ落とす (src-tauri/src/asset_packs.rs、2026-09-29)
+      - name: Publish image packs (rolling release "asset-packs")
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/asset-packs.mjs --publish
+
       - name: Build & Release (tauri-action)
         uses: tauri-apps/tauri-action@v0
         env:

@@ -10,6 +10,8 @@ import HoverStack from "./components/decor/HoverStack.vue";
 import WatchReplaceDialog from "./components/WatchReplaceDialog.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import FetchBusyBar from "./components/FetchBusyBar.vue";
+import AssetPackToast from "./components/AssetPackToast.vue";
+import { ensureAssetPacks } from "./services/assets/asset-packs";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
@@ -61,6 +63,8 @@ onMounted(() => {
   void ensureCraftV2Started();
   // PoB 同梱物: 30 日空いていたら manifest を確認して自動更新 (未インストールなら PoB 画面で案内)
   void ensurePobBundleFresh();
+  // 画像パック (ベースの絵・スキンの画像): 要る版と違う時だけ落とす (初回と画像が変わった時だけ。2026-09-29)
+  void ensureAssetPacks();
   // ゲームログ: 前回の消し込みから 7 日経っていれば診断 → 履歴保存 → 本体を空に
   void ensureClientLogRotated();
   // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
@@ -99,5 +103,6 @@ onMounted(() => {
     <ConfirmDialog />
     <!-- 取得中は他の取得を押せなくするので、何が走っているかを下に出す (2026-09-20) -->
     <FetchBusyBar />
+    <AssetPackToast />
   </div>
 </template>

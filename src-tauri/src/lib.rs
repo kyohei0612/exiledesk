@@ -9,6 +9,7 @@ pub mod poe_ninja_client;  // Phase β: poe.ninja クライアント (search pro
 pub mod health_check;  // Phase ο-A: 起動時の外部 API / HTML / trade2 健全性チェック
 pub mod settings;  // 設定画面 (2026-05-23): autostart / close_to_tray / auto-refetch 永続化
 pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を外部プロセスで開く
+pub mod asset_packs; // 画像パック (2026-09-29): 画像はインストーラーに入れず GitHub Release asset-packs から 1 回だけ落とす
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
 pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
@@ -256,6 +257,7 @@ pub fn run() {
             market_flow::market_flow_verify,
             pob_launcher::pob_launcher_status,
             pob_launcher::pob_launcher_open,
+            asset_packs::asset_pack_ensure,
             pob_bundle::pob_bundle_status,
             pob_bundle::pob_bundle_check,
             pob_bundle::pob_bundle_install,
