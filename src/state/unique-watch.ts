@@ -16,6 +16,13 @@ import { buildUniqueNameQuery } from "../services/trade2/query";
 import { marketStore } from "./market-store";
 import { uniqueFavorites } from "./unique-favorites";
 import { tradeLock } from "./trade-lock";
+import { invoke } from "@tauri-apps/api/core";
+import { isTauriRuntime } from "../utils/isTauriRuntime";
+
+/** exiledesk.log に 1 行 (取った最安値の中身を後から確かめるため) */
+function appLog(msg: string): void {
+  if (isTauriRuntime()) void invoke("app_log_write", { msg }).catch(() => undefined);
+}
 
 /** 選べる間隔 (時間)。0 = 自動取得なし */
 export const UNIQUE_WATCH_HOURS = [0, 1, 3, 6, 12, 24] as const;
@@ -26,7 +33,12 @@ export interface UniquePoint {
   ex: number | null;
   /** 出品数 */
   total: number;
+  /** 最安値にした出品の元の値段 (後から「どの出品だったか」を辿れるように。2026-09-28 ルーンシーカーの 272 神の件) */
+  src?: { amount: number; currency: string; account: string; type: string | null };
 }
+
+/** 1 回の取得で見る件数。取得 1 回で 10 件まで取れる (信号の数は 1 件と同じ) */
+const WATCH_TOP_N = 10;
 
 const KEY_HOURS = "exiledesk.uniqueWatch.hours";
 const KEY_HIST = "exiledesk.uniqueWatch.history.v1";
@@ -79,10 +91,18 @@ async function runOnce(): Promise<void> {
       if (g !== gen) return;
       const { name, base } = split(key);
       current.value = name;
-      const r = await autoPrice(league, buildUniqueNameQuery(name, base ? { baseType: base } : {}), marketStore.rates.value, 1);
+      // 10 件取って、うちのレートで換算した一番安い物を採る。取引所の「安い順」は取引所自身の通貨の値付けで並ぶので、
+      // 先頭 1 件だけだと変わった通貨の出品を高く (安く) 見誤ることがある (2026-09-28 ルーンシーカーの呼び声が 272 神と記録された)
+      const r = await autoPrice(league, buildUniqueNameQuery(name, base ? { baseType: base } : {}), marketStore.rates.value, WATCH_TOP_N);
       if (g !== gen) return;
       if (!r) continue;
-      const list = [...(history.value[key] ?? []), { t: Date.now(), ex: r.minExalted ?? null, total: r.total }].slice(-MAX_POINTS);
+      const top = r.listings.find((l) => Number.isFinite(l.amountExalted));
+      const src = top ? { amount: top.amount, currency: top.currency, account: top.account, type: top.priceType ?? null } : undefined;
+      appLog(
+        `[お気に入り] ${name} (${base || "ベース指定なし"}): 出品 ${r.total} 件、最安 ${top ? `${top.amount} ${top.currency} (${top.account || "?"}、${top.priceType ?? "?"}) = ${Math.round(top.amountExalted)} 高貴` : "なし"}` +
+          ` / 取った 10 件: ${r.listings.slice(0, 10).map((l) => `${l.amount}${l.currency}`).join(", ")}`,
+      );
+      const list = [...(history.value[key] ?? []), { t: Date.now(), ex: r.minExalted ?? null, total: r.total, ...(src ? { src } : {}) }].slice(-MAX_POINTS);
       history.value = { ...history.value, [key]: list };
       write(KEY_HIST, history.value);
     }

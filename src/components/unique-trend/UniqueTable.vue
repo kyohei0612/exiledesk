@@ -2,10 +2,14 @@
   UniqueTable.vue — ユニーク装備価格推移の本体テーブル (2026-09-26)
   1 行 = 1 ユニーク (poe.ninja の行。ルーンの熟達品は別の行)。日本語名を大きく、英名とベースを小さく。
   見出しを押すと並び替え、行を押すと詳細が開く。名前の右の ♡ でお気に入り。
+  お気に入りの一覧 (favMode) は、値段を取引所の最安値 (名前だけ・コラプト等の指定なし。unique-watch.ts が記録) にし、
+  「(コラプトなし)」「コラプト」の札を出さず、純正品とコラプト品の行を 1 行にまとめる
+  (2026-09-28 オーナー「お気に入りは文字通り最安値だから、コラプト等の指定はお気に入りリスト内の場合は外して。最安値指定なしの金額を表示」)。
 -->
 <script setup lang="ts">
 import Sparkline from "../currency/Sparkline.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { uniqueWatch } from "../../state/unique-watch";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 import UniqueDetail from "./UniqueDetail.vue";
@@ -15,7 +19,25 @@ import { openTrade2ForUnique } from "../../services/trade2/open";
 import { marketStore } from "../../state/market-store";
 import type { SortKey, UniqueRow, UniqueTrend } from "../../views/unique-trend/useUniqueTrend";
 
-defineProps<{ rows: UniqueRow[]; trends: Map<number, UniqueTrend>; openId: number | null }>();
+const props = defineProps<{ rows: UniqueRow[]; trends: Map<number, UniqueTrend>; openId: number | null; favMode?: boolean }>();
+/** お気に入りの一覧は 名前 + ベース で 1 行 (poe.ninja の純正品とコラプト品の行をまとめる) */
+const list = computed(() => {
+  if (!props.favMode) return props.rows;
+  const seen = new Set<string>();
+  return props.rows.filter((r) => (seen.has(r.fav) ? false : (seen.add(r.fav), true)));
+});
+/** 取引所の最安値の一番新しい記録 (無ければ null) */
+function lastCheapest(r: UniqueRow): { ex: number | null; t: number; src: string } | null {
+  const pts = uniqueWatch.history.value[r.fav];
+  const p = pts?.[pts.length - 1];
+  if (!p) return null;
+  const src = p.src ? `出品の値段: ${p.src.amount} ${p.src.currency} (出品者 ${p.src.account || "?"}${p.src.type ? `、${p.src.type}` : ""}) / 出品 ${p.total} 件` : `出品 ${p.total} 件`;
+  return { ex: p.ex, t: p.t, src };
+}
+const agoJa = (t: number): string => {
+  const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+  return m < 60 ? `${m} 分前` : m < 1440 ? `${Math.round(m / 60)} 時間前` : `${Math.round(m / 1440)} 日前`;
+};
 const sortKey = defineModel<SortKey>("sortKey", { required: true });
 const emit = defineEmits<{ toggle: [id: number] }>();
 
@@ -64,7 +86,7 @@ function onFav(key: string): void {
         <tr>
           <th :class="th" class="text-left w-12">#</th>
           <th :class="[th, sortable, sortKey === 'name' ? on : '']" class="text-left" @click="sortKey = 'name'">アイテム{{ sortKey === "name" ? " ▲" : "" }}</th>
-          <th :class="[th, sortable, sortKey === 'price' ? on : '']" class="text-right" @click="sortKey = 'price'">今の値段{{ sortKey === "price" ? " ▼" : "" }}</th>
+          <th :class="[th, sortable, sortKey === 'price' ? on : '']" class="text-right" @click="sortKey = 'price'">{{ favMode ? "最安値 (指定なし)" : "今の値段" }}{{ sortKey === "price" ? " ▼" : "" }}</th>
           <th :class="th" class="text-right">出品数</th>
           <th :class="[th, sortable, sortKey === 'rise' || sortKey === 'fall' ? on : '']" class="text-right w-48" @click="clickChange">
             7 日の推移{{ sortKey === "rise" ? " ▼" : sortKey === "fall" ? " ▲" : "" }}
@@ -73,7 +95,7 @@ function onFav(key: string): void {
         </tr>
       </thead>
       <tbody>
-        <template v-for="(r, i) in rows" :key="r.itemId">
+        <template v-for="(r, i) in list" :key="r.itemId">
           <tr
             class="border-t border-[var(--exile-color-border-subtle)] cursor-pointer transition"
             :class="openId === r.itemId ? 'bg-[var(--exile-color-bg-elevated)]' : 'hover:bg-[var(--exile-color-bg-elevated)]'"
@@ -91,7 +113,7 @@ function onFav(key: string): void {
                       @mouseenter="(ev) => hoverAt(r, ev)"
                       @mouseleave="hoverStack.leave()"
                     >{{ r.nameJa }}</span>
-                    <span v-if="r.corrupted" class="shrink-0 text-[11px] text-[var(--exile-color-signal-error)]">コラプト</span>
+                    <span v-if="r.corrupted && !favMode" class="shrink-0 text-[11px] text-[var(--exile-color-signal-error)]">コラプト</span>
                     <!-- お気に入りは名前の右 (オーナー 2026-09-26) -->
                     <button
                       type="button"
@@ -119,7 +141,16 @@ function onFav(key: string): void {
                 </div>
               </div>
             </td>
-            <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-sm text-[var(--exile-color-accent-focus)]">
+            <!-- お気に入りの一覧: 取引所の最安値 (指定なし) -->
+            <td v-if="favMode" class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-sm text-[var(--exile-color-accent-focus)]">
+              <template v-if="lastCheapest(r)?.ex != null">
+                <span :title="lastCheapest(r)!.src">{{ money(lastCheapest(r)!.ex!) }}</span>
+                <div class="text-[10px] text-[var(--exile-color-text-tertiary)]">取引所の最安値 · {{ agoJa(lastCheapest(r)!.t) }}</div>
+              </template>
+              <span v-else-if="lastCheapest(r)" class="text-xs text-[var(--exile-color-text-tertiary)]">出品なし</span>
+              <span v-else class="text-xs text-[var(--exile-color-text-tertiary)]" title="上の「お気に入りの最安値を記録」で取ると出ます">未取得</span>
+            </td>
+            <td v-else class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-sm text-[var(--exile-color-accent-focus)]">
               {{ money(r.exalted) }}
               <!-- poe.ninja の値段はコラプトしていない純正品 (オーナー 2026-09-26「コラプトなしってちっさく書こうか、値段の後ろに ()」) -->
               <span v-if="!r.corrupted" class="ml-1 text-[10px] text-[var(--exile-color-text-tertiary)]">(コラプトなし)</span>

@@ -119,6 +119,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
         :rows="u.shown.value"
         :trends="u.trends.value"
         :open-id="openId"
+        :fav-mode="u.categoryFilter.value === FAV_CATEGORY"
         @toggle="toggle"
       />
       <!-- 一度に出すのは 100 件ずつ (数百行を一度に描かない) -->
