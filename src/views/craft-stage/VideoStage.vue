@@ -8,9 +8,12 @@
   テープは開いた時の工程の写し (打ち直しても変わらない)。演出は手で打つ画面と同じ [[use-stage-fx.ts]]。
   2026-09-28 オーナー「ゲームないみたいなつくまで道を描いて欲しい」: 1 手進む時は、棚 ([[VideoTray.vue]]) からカーソルが
   カレンシーを拾ってアイテムまで運び、押した瞬間に MOD が付く ([[use-video-hand.ts]])。戻る・最初へは一気に。
+  layout=clip (POE2Tube 要望 ⑤「拡大処理がだるいから拡大せずに使える形で」): アイテム + 右横の棚だけを 1 つの塊で 1.45 倍、
+  上寄りの真ん中に置く。見出し・右の欄・進行バーは出さず、下 15% (108px) は空ける (POE2Tube が結果の文字を重ねる)。
+  倍率は固定 (手ごとに変えると画面が揺れる)。MOD 6 つ + エンチャント + コラプトの一番長いアイテムでも下 15% に入らない高さ。
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import { useStageFx } from "./use-stage-fx";
@@ -20,6 +23,20 @@ import { displayCurrency } from "../../state/display-currency";
 
 const s = craftStage;
 const opts = s.video.value ?? { from: 0, autoplay: false, controls: true };
+/** 見た目 (操作欄から切り替えられる。URL の layout=clip が撮影用) */
+const layout = ref<"default" | "clip">(opts.layout ?? "default");
+const clip = computed(() => layout.value === "clip");
+/**
+ * 撮影用の倍率。普段は 1.45 倍。アイテムが伸びて下 15% (枠 720 の 612 から下) に入りそうな時だけ、収まるまで下げる
+ * (MOD 6 つ + エンチャント + コラプト + 品質で 81%。文が折り返すと越えうるので保険)
+ */
+const CLIP_SCALE = 1.45;
+const CLIP_TOP = 22;
+const clipScale = ref(CLIP_SCALE);
+function fitClip(): void {
+  const h = cardEl.value?.offsetHeight ?? 0;
+  clipScale.value = h > 0 ? Math.min(CLIP_SCALE, (612 - CLIP_TOP - 6) / h) : CLIP_SCALE;
+}
 const tape = [...s.log.value];
 const start = tape[0]?.before ?? s.item.value!;
 const idx = ref(Math.min(opts.from, tape.length));
@@ -43,6 +60,9 @@ const trayKeys = [...new Set(tape.map((st) => st.out.currency).filter((c) => !c.
 const trayOmens = [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
 const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
+// 手が変わる (アイテムの高さが変わる) たびに撮影用の倍率を見直す
+watch([idx, layout], () => void nextTick(fitClip));
+onMounted(() => void nextTick(fitClip));
 
 /**
  * n 手目へ。1 手進む時は手つきを見せてから付ける (押した瞬間に idx を進める)。戻る・飛ぶ時は一気に
@@ -125,8 +145,8 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
   <Teleport to="body">
     <div ref="rootEl" class="fixed inset-0 z-[400] grid place-items-center overflow-hidden bg-black" :class="awake ? '' : 'cursor-none'" @mousemove="poke">
       <div ref="frameEl" class="stage-video-bg relative h-[720px] w-[1280px] shrink-0 overflow-hidden text-[var(--exile-color-text-primary,#e8e2d6)]" :style="{ transform: `scale(${scale})` }">
-        <!-- 見出しと進み -->
-        <header class="absolute left-10 right-10 top-7 flex items-end justify-between">
+        <!-- 見出しと進み (撮影用では出さない) -->
+        <header v-if="!clip" class="absolute left-10 right-10 top-7 flex items-end justify-between">
           <div>
             <p class="text-[13px] tracking-[0.3em] text-amber-200/60">CRAFT STAGE</p>
             <h1 class="font-display text-[30px] tracking-[0.06em] text-amber-100">{{ title }}</h1>
@@ -134,16 +154,20 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           <p class="text-[18px] tabular-nums text-white/70"><b class="text-[28px] text-white">{{ idx }}</b> / {{ tape.length }} 手</p>
         </header>
 
-        <!-- アイテム -->
-        <div class="absolute left-[40px] top-[120px] flex w-[560px] justify-center">
-          <div ref="cardEl" class="relative origin-top scale-[1.3]" :class="fxCls" :style="fx ? { '--fx': fx.color } : undefined">
+        <!-- アイテム (撮影用はアイテム + 棚を 1 つの塊で大きく、上寄りの真ん中。下 15% は空ける) -->
+        <div
+          :class="clip ? 'absolute left-1/2 top-[22px] flex origin-top items-start gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
+          :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
+        >
+          <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
             <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'text-sm' : 'text-2xl'">{{ fx.text }}</span>
           </div>
+          <VideoTray v-if="clip" inline :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
         </div>
 
         <!-- 開示の候補 (アイテムの上に出して、選ぶ物を点ける) -->
-        <div v-if="hand.reveal.value" class="stage-row-in absolute left-[50px] top-[260px] z-20 w-[540px] space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+        <div v-if="hand.reveal.value" class="stage-row-in absolute z-20 space-y-2 rounded-2xl border border-rose-400/50 bg-black/85 p-4 shadow-[0_0_40px_rgba(0,0,0,0.8)]" :class="clip ? 'left-1/2 top-[190px] w-[640px] -translate-x-[55%] text-[20px]' : 'left-[50px] top-[260px] w-[540px]'">
           <p class="text-[15px] font-bold text-rose-200">開示する — 1 つ選ぶ</p>
           <div
             v-for="(m, i) in hand.reveal.value.offers"
@@ -157,21 +181,24 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         </div>
 
         <!-- 棚 (カーソルがここから拾う) -->
-        <VideoTray :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+        <VideoTray v-if="!clip" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
 
         <!-- カーソル (横と縦で動き方を変えて弧を描く) -->
         <div v-if="hand.hand.visible" class="pointer-events-none absolute left-0 top-0 z-30" :style="{ transform: `translateX(${hand.hand.x}px)`, transition: `transform ${hand.hand.dur}ms cubic-bezier(0.45, 0.05, 0.3, 1)` }">
           <div :style="{ transform: `translateY(${hand.hand.y}px)`, transition: `transform ${hand.hand.dur}ms cubic-bezier(0.15, 0.7, 0.35, 1)` }">
+            <!-- 撮影用はアイテムと同じ倍率 (カーソルと持っているアイコンがアイテムに対して小さく見えないように) -->
+            <div :style="clip ? { transform: `scale(${clipScale})`, transformOrigin: '0 0' } : undefined">
             <img v-if="hand.hand.held && iconOf(hand.hand.held)" :src="iconOf(hand.hand.held)" alt="" class="absolute left-2 top-3 h-12 w-12 object-contain drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]" />
             <span v-if="hand.hand.hint" class="absolute left-7 top-5 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[11px] text-orange-200">{{ hand.hand.hint }}</span>
             <svg :key="hand.hand.press" class="stage-press relative h-7 w-7 drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]" viewBox="0 0 24 24">
               <path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="#f5efe2" stroke="#1a140c" stroke-width="1.4" stroke-linejoin="round" />
             </svg>
+            </div>
           </div>
         </div>
 
-        <!-- 今使った物 -->
-        <aside class="absolute right-10 top-[120px] w-[460px] space-y-4">
+        <!-- 今使った物 (撮影用では出さない) -->
+        <aside v-if="!clip" class="absolute right-10 top-[120px] w-[460px] space-y-4">
           <div :key="'u' + idx" class="stage-row-in flex min-h-[112px] items-center gap-4 rounded-2xl border border-amber-300/25 bg-black/50 px-5 py-4">
             <template v-if="last">
               <img v-if="iconOf(last.out.currency)" :src="iconOf(last.out.currency)" alt="" class="h-20 w-20 object-contain drop-shadow-[0_0_14px_rgba(250,204,21,0.45)]" />
@@ -202,8 +229,8 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           </ol>
         </aside>
 
-        <!-- 進みの棒 -->
-        <div class="absolute bottom-6 left-10 right-10 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <!-- 進みの棒 (撮影用では出さない) -->
+        <div v-if="!clip" class="absolute bottom-6 left-10 right-10 h-1.5 overflow-hidden rounded-full bg-white/10">
           <div class="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-200 transition-[width] duration-500" :style="{ width: `${tape.length ? (idx / tape.length) * 100 : 0}%` }" />
         </div>
       </div>
@@ -215,6 +242,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         <button type="button" :class="btn" class="min-w-[88px]" title="再生 / 一時停止 (Space)" @click="toggle()">{{ playing ? "⏸ 止める" : "▶ 再生" }}</button>
         <button type="button" :class="btn" title="1 手進む (→)" @click="playing = false; hand.isBusy() ? hand.skip() : void go(idx + 1)">▶|</button>
         <button v-for="v in [0.5, 1, 2]" :key="v" type="button" :class="[btn, speed === v ? 'ring-1 ring-amber-300' : '']" @click="speed = v">×{{ v }}</button>
+        <button type="button" :class="btn" title="見た目を切り替える (撮影用 = アイテムと棚だけ大きく、下 15% 空け。URL の layout=clip と同じ)" @click="layout = clip ? 'default' : 'clip'">{{ clip ? "通常の見た目" : "撮影用の見た目" }}</button>
         <button type="button" :class="btn" title="閉じる (Esc)" @click="close()">閉じる</button>
       </div>
 

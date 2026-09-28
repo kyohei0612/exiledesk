@@ -8,7 +8,8 @@
  *   - 冒涜: 骨で未開示の MOD が付き、開示の候補 3 つ (revealOffers) から選ぶと reveal:N の手になる
  *   - 再生: 手順 JSON と step (URL の ?stage-plan=…&step=N) で、その手まで進めた状態を出す (POE2Tube の撮影用)
  *   - 動画モード: 打った手 (か手順 JSON) を 16:9 の撮影用画面で 1 手ずつ再生する ([[VideoStage.vue]])。
- *     URL に &video=1 を付けると最初から動画モード (step=N でその手から、autoplay=1 で自動再生、controls=0 で操作欄を出さない)
+ *     URL に &video=1 を付けると最初から動画モード (step=N でその手から、autoplay=1 で自動再生、controls=0 で操作欄を出さない、
+ *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
 import { computed, ref, shallowRef } from "vue";
@@ -37,7 +38,11 @@ const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
 const base = ref("Gold Ring");
 const itemLevel = ref(82);
 /** 動画モード (開始の手・自動再生・操作欄) */
-const video = ref<{ from: number; autoplay: boolean; controls: boolean } | null>(null);
+/**
+ * 動画モード (開始の手・自動再生・操作欄・見た目)。layout "clip" は POE2Tube の撮影用 (要望 ⑤、2026-09-28):
+ * アイテム + 棚だけを大きく、見出し・右の欄・進行バー無し、下 15% 空け (結果の文字を重ねる所)
+ */
+const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip" } | null>(null);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -81,7 +86,14 @@ export const craftStage = {
       // 動画モードは手順を最後まで打っておき、step の手から見せる (前後に動かせるように)
       if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
       else craftStage.reset();
-      if (raw && wantVideo) video.value = { from: Math.min(step, log.value.length), autoplay: q.get("autoplay") === "1", controls: q.get("controls") !== "0" };
+      if (raw && wantVideo) {
+        video.value = {
+          from: Math.min(step, log.value.length),
+          autoplay: q.get("autoplay") === "1",
+          controls: q.get("controls") !== "0",
+          layout: q.get("layout") === "clip" ? "clip" : "default",
+        };
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     }

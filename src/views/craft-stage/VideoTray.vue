@@ -10,11 +10,18 @@
 import { computed, type ComponentPublicInstance } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
 
-const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement> }>();
+const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean }>();
 /** 並べる数が多い時は小さくする (枠の幅 640 に収める) */
 const size = computed(() => ((props.keys.length + props.omens.length) > 8 ? 52 : 56));
-/** 1 列に 8 つまで (高さ 560 に収める)。超えたら 2 列 */
-const cols = computed(() => ((props.keys.length + props.omens.length) > 8 ? 2 : 1));
+/**
+ * 1 列に 8 つまで (高さ 560 に収める)。超えたら 2 列 (さらに超えたら 3 列)。
+ * 撮影用 (inline、1.45 倍) は 5 段まで: 下 15% を空けるため (6 段で 912px / 1080 まで伸びて境目すれすれだった)
+ */
+const cols = computed(() => {
+  const n = props.keys.length + props.omens.length;
+  const rows = props.inline ? 5 : 8;
+  return n > rows * 2 ? 3 : n > rows ? 2 : 1;
+});
 const grid = computed(() => ({ gridTemplateColumns: `repeat(${cols.value}, ${size.value}px)` }));
 function reg(k: string, el: Element | ComponentPublicInstance | null): void {
   if (el instanceof HTMLElement) props.slots.set(k, el);
@@ -22,7 +29,7 @@ function reg(k: string, el: Element | ComponentPublicInstance | null): void {
 </script>
 
 <template>
-  <div class="absolute left-[612px] top-[120px] max-h-[560px] space-y-2 rounded-2xl border border-white/10 bg-black/55 p-2 shadow-[inset_0_0_24px_rgba(0,0,0,0.6)]">
+  <div class="max-h-[560px] shrink-0 space-y-2 rounded-2xl border border-white/10 bg-black/55 p-2 shadow-[inset_0_0_24px_rgba(0,0,0,0.6)]" :class="inline ? '' : 'absolute left-[612px] top-[120px]'">
     <div class="grid gap-2" :style="grid">
       <div
         v-for="k in keys"
