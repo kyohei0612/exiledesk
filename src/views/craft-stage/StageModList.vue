@@ -1,0 +1,124 @@
+<!--
+  StageModList.vue — クラフトステージの「このベースに付く MOD」一覧 (2026-09-29)
+
+  オーナー「そのベースに付く MOD 全て、アイテムレベルは無視して重み付きで。DB にならって。DB は見づらいので UI はシンプルに、
+  色や形にこだわって」「表示する場所もシンプルかつ使いやすく」。
+  置き場所: ステージの下 (カレンシーを打ちながら見られる)。見出しを押すと畳める。
+  種類 (普通 / エッセンス / 冒涜 / 異界) をタブで切り替え、プレフィックス / サフィックスを 2 列。1 行 = 1 系統:
+  文面 (一番上の段の数値)・タグ (色付き)・段の数・一番上の段の MOD レベル・出やすさ (同じ側の重みに対する割合を棒と %)。
+  行を押すと段ごと (T1〜) の表。今付いている系統は緑、同じ系統が付いていて付かない物は薄く。中身は [[mod-list.ts]]。
+-->
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { craftStage } from "../../state/craft-stage";
+import { GROUP_JA, modListFor, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import essenceKeys from "../../services/htc/essence-keys.json";
+
+const s = craftStage;
+const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
+
+/** 畳んだかどうか (見る人ごとの好み。保存できなくても動く) */
+const KEY = "exiledesk.craftStage.modListOpen";
+const open = ref(true);
+try { open.value = localStorage.getItem(KEY) !== "0"; } catch { /* 無くてよい */ }
+watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 無くてよい */ } });
+
+const GROUPS: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly"];
+const group = ref<ModGroup>("normal");
+const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => r.group === g).length])) as Record<ModGroup, number>);
+// ベースが変わって今の種類が空になったら普通に戻す
+watch(counts, (c) => { if (!c[group.value]) group.value = "normal"; });
+
+const query = ref("");
+const expanded = ref<string | null>(null);
+const columns = computed(() => {
+  const q = query.value.trim();
+  const list = rows.value.filter((r) => r.group === group.value && (!q || r.text.includes(q) || r.tags.some((t) => TAG_STYLE[t]?.ja.includes(q))));
+  return (["prefix", "suffix"] as const).map((side) => {
+    const items = list.filter((r) => r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel);
+    return { side, title: side === "prefix" ? "プレフィックス" : "サフィックス", items, top: Math.max(0.0001, ...items.map((r) => r.share)) };
+  });
+});
+
+/** エッセンスの段の名前 (英語) → 日本語 */
+const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
+const tierName = (r: ListRow, name: string): string => (r.group === "essence" ? (ESS_JA.get(name) ?? name) : name);
+const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
+/** 種類の色 (ゲームの MOD の色: 普通 = 青、エッセンス = 薄い青、冒涜 = 赤、異界 = 緑がかった青) */
+const TONE: Record<ModGroup, { tab: string; bar: string }> = {
+  normal: { tab: "bg-[#8888ff]/25 text-[#c8c8ff] ring-1 ring-[#8888ff]/60", bar: "bg-[#8888ff]/20" },
+  essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/15" },
+  desecrated: { tab: "bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60", bar: "bg-rose-500/15" },
+  otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/15" },
+};
+</script>
+
+<template>
+  <section class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] text-[12px]">
+    <!-- 見出し (押すと畳む) -->
+    <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
+      <b class="text-sm text-amber-100">このベースに付く MOD</b>
+      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合</span>
+      <span class="ml-auto opacity-60">{{ open ? "▲ 畳む" : "▼ 開く" }}</span>
+    </button>
+
+    <div v-if="open" class="border-t border-white/10 px-3 pb-3 pt-2">
+      <!-- 種類のタブと検索 -->
+      <div class="mb-2 flex flex-wrap items-center gap-1.5">
+        <template v-for="g in GROUPS" :key="g">
+          <button v-if="counts[g]" type="button" class="rounded-full px-3 py-0.5" :class="group === g ? TONE[g].tab : 'border border-white/15 opacity-70 hover:opacity-100'" @click="group = g; expanded = null">
+            {{ GROUP_JA[g] }} <span class="opacity-60">{{ counts[g] }}</span>
+          </button>
+        </template>
+        <input v-model="query" type="search" placeholder="文面やタグで探す (例: 耐性、ライフ)" class="ml-auto w-60 rounded-lg border border-white/15 bg-black/30 px-2 py-0.5" />
+      </div>
+
+      <div class="grid gap-3 md:grid-cols-2">
+        <div v-for="col in columns" :key="col.side" class="min-w-0">
+          <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1">
+            <b :class="col.side === 'prefix' ? 'text-sky-200' : 'text-violet-200'">{{ col.title }}</b>
+            <span class="opacity-50">{{ col.items.length }} 系統</span>
+          </p>
+          <p v-if="!col.items.length" class="py-2 opacity-40">無し</p>
+          <div v-for="r in col.items" :key="r.id" class="mb-1">
+            <!-- 1 系統 1 行。後ろの棒が出やすさ (列の一番出やすい物を 100%) -->
+            <button
+              type="button"
+              class="relative w-full overflow-hidden rounded-lg border px-2 py-1 text-left transition"
+              :class="[r.on ? 'border-emerald-400/70' : 'border-white/5 hover:border-white/25', r.blocked ? 'opacity-40' : '', expanded === r.id ? 'bg-white/[0.06]' : 'bg-black/20']"
+              :title="r.blocked ? '同じ系統の MOD が付いているので、今は付かない' : undefined"
+              @click="expanded = expanded === r.id ? null : r.id"
+            >
+              <span class="pointer-events-none absolute inset-y-0 left-0" :class="TONE[group].bar" :style="{ width: `${(r.share / col.top) * 100}%` }" />
+              <span class="relative flex items-center gap-2">
+                <span class="min-w-0 flex-1">
+                  <span class="text-[13px] text-[#c8c8ff]">{{ r.text }}</span>
+                  <span v-if="r.on" class="ml-1.5 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">付いている</span>
+                  <span class="mt-0.5 flex flex-wrap gap-1">
+                    <span v-for="t in shownTags(r.tags)" :key="t" class="rounded px-1.5 text-[10px]" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
+                  </span>
+                </span>
+                <span class="shrink-0 text-right tabular-nums">
+                  <span class="block text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
+                  <span class="block text-[10px] opacity-60">{{ r.tiers.length }} 段 · Lv {{ r.topLevel }}</span>
+                </span>
+              </span>
+            </button>
+            <!-- 段の表 -->
+            <table v-if="expanded === r.id" class="mt-1 w-full text-[11px]">
+              <tbody>
+                <tr v-for="t in r.tiers" :key="t.rank" class="border-b border-white/5">
+                  <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
+                  <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}</td>
+                  <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
+                  <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
+                  <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>

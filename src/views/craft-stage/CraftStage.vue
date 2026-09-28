@@ -17,6 +17,7 @@ import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
+import StageModList from "./StageModList.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -154,6 +155,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         </section>
       </div>
     </div>
+    <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
+    <StageModList v-if="s.ready.value && s.item.value" />
 
     <!-- 押した所の波紋と、吸い込まれるアイコン -->
     <template v-if="fx && fx.kind !== 'shake'">
