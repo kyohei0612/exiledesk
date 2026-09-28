@@ -7,7 +7,7 @@
  *
  *   const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
  */
-import { mkdtempSync, readdirSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -27,10 +27,33 @@ function findEsbuild() {
   }
 }
 
+/**
+ * 前の実行の束ねの残り (1 日以上前) を消す。
+ * 2026-09-28: 実行のたびに約 10 MB の一時フォルダを作って消していなかったので、Temp に 2,448 個・24.7 GB 溜まっていた
+ */
+function sweepOld() {
+  const day = 24 * 3600 * 1000;
+  try {
+    for (const d of readdirSync(tmpdir())) {
+      if (!d.startsWith("exiledesk-ts-")) continue;
+      const p = join(tmpdir(), d);
+      try {
+        if (Date.now() - statSync(p).mtimeMs > day) rmSync(p, { recursive: true, force: true });
+      } catch {
+        /* 使用中などは次の回に */
+      }
+    }
+  } catch {
+    /* Temp が読めなければ何もしない */
+  }
+}
+
 /** 入口の TS を束ねて import し、その module を返す */
 export async function bundleEntry(entryPoint) {
+  sweepOld();
   const { build } = await import(pathToFileURL(findEsbuild()).href);
-  const out = join(mkdtempSync(join(tmpdir(), "exiledesk-ts-")), "bundle.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "exiledesk-ts-"));
+  const out = join(dir, "bundle.mjs");
   await build({
     entryPoints: [entryPoint],
     outfile: out,
@@ -41,5 +64,12 @@ export async function bundleEntry(entryPoint) {
     loader: { ".json": "json" },
     define: { "import.meta.env.DEV": "false" },
   });
-  return import(pathToFileURL(out).href);
+  const mod = await import(pathToFileURL(out).href);
+  // 読み込んだら要らない (module はもうメモリにある)。消し忘れで Temp が膨らんでいた
+  try {
+    rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* 消せなければ次の回の sweepOld に任せる */
+  }
+  return mod;
 }
