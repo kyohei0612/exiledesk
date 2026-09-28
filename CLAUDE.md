@@ -23,6 +23,7 @@ python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック�
 ```
 
 - **台本ができたら動画にする前に kyohei と 1 章ずつチェック** (問題 → 直した案の表 → OK で反映 → 次の章)
+- **全章 OK になったら、聞かずにそのまま build_video で動画まで作って送る** (kyohei 2026-09-28「台本の後に基本的に動画作る」)
 - 台本生成は `claude -p` (MAX プラン)。途中で落ちても `output/work/<name>/script_cache/` から再開
 - 1 章だけ書き直す: `script_cache/section_NN.json` を消して write_script を再実行
 - 尺の目安: **400 字/分** (実測)。8 分 = 3,200 字。台本の中で尺を口にしない
