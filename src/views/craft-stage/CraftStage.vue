@@ -16,38 +16,15 @@ import StageHistory from "./StageHistory.vue";
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
+import StageBasePicker from "./StageBasePicker.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { htcBaseInfo } from "../../services/htc/patch";
-import { FLASK_BASES, GEM_BASES } from "../../services/craft-stage/stage-bases";
-import { jaTypeName } from "../../services/trade2/localize";
 import pkg from "../../../package.json";
 
 const s = craftStage;
 onMounted(() => void s.init());
 
-/** ベースの一覧 (種類ごと) */
-const CLS_JA: Record<string, string> = {
-  Rings: "指輪", Amulets: "アミュレット", Belts: "ベルト", Helmets: "兜", Gloves: "手袋", Boots: "靴", Body_Armours: "鎧", Shields: "盾",
-  Bucklers: "バックラー", Foci: "焦点具", Quivers: "矢筒", Wands: "ワンド", Sceptres: "セプター", Staves: "スタッフ", Quarterstaves: "クォータースタッフ",
-  Bows: "弓", Crossbows: "クロスボウ", Spears: "槍", OneHand_Maces: "片手メイス", TwoHand_Maces: "両手メイス", Talismans: "タリスマン",
-};
-const baseGroups = computed(() => {
-  if (!s.data.value) return [];
-  const by = new Map<string, Array<{ en: string; ja: string; lvl: number }>>();
-  for (const [en, info] of Object.entries(htcBaseInfo())) {
-    const list = by.get(info.cls) ?? [];
-    list.push({ en, ja: info.ja, lvl: info.lvl });
-    by.set(info.cls, list);
-  }
-  const groups = [...by.entries()].map(([cls, list]) => ({ cls, ja: CLS_JA[cls] ?? cls.replace(/_/g, " "), list: list.sort((a, b) => a.lvl - b.lvl) }));
-  // 計算機に無いフラスコ・スキルジェム (要望 ⑧。品質のカレンシー・宝飾職人のオーブを見せるため)
-  groups.push({ cls: "LifeFlask", ja: "ライフフラスコ", list: FLASK_BASES.filter((f) => f.cls === "LifeFlask").map((f) => ({ en: f.en, ja: jaTypeName(f.en), lvl: f.lvl })) });
-  groups.push({ cls: "ManaFlask", ja: "マナフラスコ", list: FLASK_BASES.filter((f) => f.cls === "ManaFlask").map((f) => ({ en: f.en, ja: jaTypeName(f.en), lvl: f.lvl })) });
-  groups.push({ cls: "SkillGem", ja: "スキルジェム", list: GEM_BASES.map((g) => ({ en: g.en, ja: g.ja, lvl: 1 })) });
-  return groups;
-});
 const ILVLS = [45, 65, 75, 82, 86];
 
 /** 持っているカレンシーのアイコンをカーソルに付ける */
@@ -102,14 +79,8 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
 
     <!-- 設定と操作 -->
     <section v-if="!s.replay.value" class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px]">
-      <label class="flex items-center gap-1.5">
-        <span class="opacity-60">ベース</span>
-        <select :value="s.base.value" class="num w-56 py-0.5" @change="s.base.value = ($event.target as HTMLSelectElement).value; s.reset()">
-          <optgroup v-for="g in baseGroups" :key="g.cls" :label="g.ja">
-            <option v-for="b in g.list" :key="b.en" :value="b.en">{{ b.ja }}</option>
-          </optgroup>
-        </select>
-      </label>
+      <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
+      <StageBasePicker :base="s.base.value" :ready="!!s.data.value" @pick="(en) => { s.base.value = en; s.reset(); }" />
       <span class="flex items-center gap-1">
         <span class="opacity-60">アイテムレベル</span>
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
