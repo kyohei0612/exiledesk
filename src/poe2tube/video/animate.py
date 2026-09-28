@@ -30,12 +30,20 @@ SLIDE_PX = 60
 ZOOM_SECONDS = 0.35  # アイテムへ寄っていく時間
 
 
+def hit_zoom(t: float) -> float:
+    """打つ行の拡大: 手つきの間は棚とアイテム (1)、付く直前から 0.35 秒でアイテムへ寄る (2)."""
+    start = HIT_START - 0.35
+    if t <= start:
+        return 1.0
+    return 1.0 + min(1.0, (t - start) / 0.35)
+
+
 def chapter_lead(new_chapter: bool) -> float:
     """章が変わった行は、章カードを出す間だけパネルと打った瞬間を後ろへずらす."""
     return CHAPTER_SECONDS if new_chapter else 0.0
 
 
-CLIP_SLOWMO = 2  # 打った瞬間の録画を 1/2 速で (kyohei 2026-09-28「速くて何が変わったか分からない」)
+CLIP_SLOWMO = 1  # ExileDesk 側で手つきが見やすくなったので等速 (v0.1.311)
 
 
 def pop_scale(t: float) -> float:
@@ -150,8 +158,11 @@ def iter_frames(
             elif 0 <= kl < len(clip) * CLIP_SLOWMO:
                 shot = clip[kl // CLIP_SLOWMO]
                 layer = render_panel_layer(
-                    c.line, result, stage_shot=shot, final_step=final_step, zoom=1.0
+                    c.line, result, stage_shot=shot, final_step=final_step, zoom=hit_zoom(tl)
                 )
+                frame_static = _with_panel(base, layer, 0, 1.0)
+            elif is_hit and clip:
+                layer = render_panel_layer(c.line, result, final_step=final_step, zoom=2.0)
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif zoom_on and not prev_zoom and tl < ZOOM_SECONDS:
                 layer = render_panel_layer(

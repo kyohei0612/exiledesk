@@ -52,24 +52,34 @@ def draw_scene_panel(
         _cost(img, inner, result)
 
 
-# 撮影画面 (1920x1080) のうちアイテム枠 (+ 上の「レアに!」演出) の範囲。拡大で見せる所
-CARD_REGION = (170, 128, 970, 720)
+# 撮影画面 (1920x1080、ExileDesk v0.1.311 の動画モード) の見せる範囲
+HAND_REGION = (60, 150, 1080, 1050)  # アイテム枠 + 下の棚: 手つき (拾って運ぶ) が見える
+CARD_REGION = (180, 150, 960, 650)  # アイテム枠だけ: 付いた瞬間に寄る
 ZOOM_TEXT_H = 130  # 拡大中はパネルの下にこれだけ空けて、結果の文字をそこに出す
 
 
+def _lerp_box(a: tuple[int, int, int, int], b: tuple[int, int, int, int], e: float) -> list[int]:
+    return [int(a[i] + (b[i] - a[i]) * e) for i in range(4)]
+
+
 def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: float = 0.0) -> None:
-    """ExileDesk クラフトステージの実画面を貼る。``zoom`` 1 でアイテム枠を拡大 (0〜1 で途中).
+    """ExileDesk クラフトステージの実画面を貼る。``zoom``: 0 = 全体、1 = 棚とアイテム (手つき)、
+    2 = アイテムだけ (付いた瞬間)。間の値はなめらかに寄る.
 
     kyohei 2026-09-28: 付く瞬間の前から付いた時までアイテムを拡大、文字はクラフト画面に被せない。
     """
     x0, y0, x1, y1 = box
     im = Image.open(shot).convert("RGBA")
     if zoom > 0:
-        e = 1 - (1 - min(1.0, zoom)) ** 3
         full = (0, 0, im.width, im.height)
-        c = [int(full[i] + (CARD_REGION[i] - full[i]) * e) for i in range(4)]
+        if zoom <= 1:
+            e = 1 - (1 - zoom) ** 3
+            c = _lerp_box(full, HAND_REGION, e)
+        else:
+            e = 1 - (1 - min(1.0, zoom - 1)) ** 3
+            c = _lerp_box(HAND_REGION, CARD_REGION, e)
         im = im.crop((c[0], c[1], c[2], c[3]))
-        y1 = int(y1 - ZOOM_TEXT_H * e)
+        y1 = int(y1 - ZOOM_TEXT_H * min(1.0, zoom))
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
     im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)
     px = x0 + (x1 - x0 - im.width) // 2
