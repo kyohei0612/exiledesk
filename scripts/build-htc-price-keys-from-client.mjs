@@ -74,6 +74,8 @@ const CURRENCY = {
   chance_shard: "Metadata/Items/Currency/CurrencyUpgradeRandomlyShard",
   jeweller_lesser: "Metadata/Items/Currency/CurrencyAddSkillGemSocket3",
   jeweller_greater: "Metadata/Items/Currency/CurrencyAddSkillGemSocket4",
+  // 2026-09-29 オーナー「完全宝飾職人とかなくね?」: 完全 = サポート枠 5 (説明文「スキルジェムに5個のサポートジェムソケットをセットする」)
+  jeweller_perfect: "Metadata/Items/Currency/CurrencyAddSkillGemSocket5",
 };
 
 /**

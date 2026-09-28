@@ -42,10 +42,12 @@ export function collectShard(item: StageItem, key: string): StageApply & { madeO
 }
 export const SHARD_REASON = `シャードは ${SHARDS_PER_ORB} 個集めるとオーブになる (アイテムには使えない)`;
 
-/** 宝飾職人のオーブ: スキルジェムのサポート枠を 3 (見習い) / 4 (上級) にする。それ以上ある時は打てない */
+/** 宝飾職人のオーブ: スキルジェムのサポート枠を 3 (見習い) / 4 (上級) / 5 (完全) にする。それ以上ある時は打てない */
+/** 宝飾職人のオーブ → サポート枠の数 (クライアントの説明文) */
+export const JEWELLER_TO: Record<string, number> = { jeweller_lesser: 3, jeweller_greater: 4, jeweller_perfect: 5 };
 export function applyJeweller(item: StageItem, key: string): StageApply {
   if (!isGem(item.cls.category)) return skip(item, "スキルジェムにだけ使える");
-  const to = key === "jeweller_greater" ? 4 : 3;
+  const to = JEWELLER_TO[key] ?? 3;
   const now = item.gemSockets ?? 0;
   if (now >= to) return skip(item, `サポート枠がもう ${now} つある (${to} つ未満にだけ使える)`);
   return { applied: true, item: { ...item, gemSockets: to }, added: [], removed: [] };

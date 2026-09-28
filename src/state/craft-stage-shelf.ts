@@ -13,6 +13,7 @@ import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { jaOfOmen } from "../services/htc/labels";
 import { stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
+import { isFlask, isGem } from "../services/craft-stage/stage-bases";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import { marketStore } from "./market-store";
@@ -34,10 +35,18 @@ export const ORBS: ShelfGroup[] = [
   { kind: "annul", label: "消去", keys: ["annul"] },
   { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal"] },
   // アクト中に落ちる物 (2026-09-28、POE2Tube 要望 ⑧)
-  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater"] },
+  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater", "jeweller_perfect"] },
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
 ];
 export const BONES = ["desecrate", "desecrate_ancient", "desecrate_altered"];
+/**
+ * 今のアイテムに出す骨。変質した鎖骨は装飾品だけ (武器・防具には「変質した」骨が無く、相場の行も絵も引けなかった。2026-09-29 オーナー「イラストエラー」)。
+ * フラスコ・スキルジェムは冒涜できないので出さない
+ */
+export function bonesFor(item: StageItem | null): string[] {
+  if (!item || isFlask(item.cls.category) || isGem(item.cls.category)) return [];
+  return desecrationBoneFor(item.cls.category) === "collarbone" ? BONES : BONES.filter((k) => k !== "desecrate_altered");
+}
 export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));
 const OMEN_LABEL: Record<string, string> = {
   exalt: "高貴", regal: "王者", alchemy: "錬金", chaos: "カオス", annul: "消去", essence_perfect: "パーフェクトエッセンス",

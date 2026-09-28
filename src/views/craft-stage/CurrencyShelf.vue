@@ -10,7 +10,7 @@
 import { computed, ref } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import { craftStage } from "../../state/craft-stage";
-import { BONES, CATALYSTS, essenceShelf, OMEN_GROUPS, ORBS } from "../../state/craft-stage-shelf";
+import { bonesFor, CATALYSTS, essenceShelf, OMEN_GROUPS, ORBS } from "../../state/craft-stage-shelf";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 const tab = ref<"orb" | "essence" | "catalyst" | "omen">("orb");
@@ -41,8 +41,8 @@ const TABS = computed(() => [
       <div v-for="g in ORBS" :key="g.kind" class="flex gap-1.5">
         <ShelfButton v-for="k in g.keys" :key="k" :k="k" @pick="emit('hold', $event)" />
       </div>
-      <div class="flex gap-1.5">
-        <ShelfButton v-for="k in BONES" :key="k" :k="k" @pick="emit('hold', $event)" />
+      <div v-if="bonesFor(craftStage.item.value).length" class="flex gap-1.5">
+        <ShelfButton v-for="k in bonesFor(craftStage.item.value)" :key="k" :k="k" @pick="emit('hold', $event)" />
       </div>
     </div>
 

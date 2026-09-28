@@ -89,7 +89,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
   if (currency === "wisdom") return applyWisdom(item);
   if (currency in QUALITY_TARGET) return applyQuality(item, currency);
-  if (currency === "jeweller_lesser" || currency === "jeweller_greater") return applyJeweller(item, currency);
+  if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
