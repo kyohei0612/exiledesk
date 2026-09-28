@@ -15,6 +15,7 @@ import { htcBaseInfo } from "../../services/htc/patch";
 import { classOfBase } from "../../services/htc/bridge";
 import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../../services/craft-stage/stage-bases";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { baseArt } from "../../services/craft-stage/base-art";
 import { jaTypeName } from "../../services/trade2/localize";
 
 const props = defineProps<{ base: string; data: PatchData | null }>();
@@ -106,6 +107,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
     <!-- 今のベース (押すと開く) -->
     <button type="button" class="flex items-center gap-2 rounded-lg border px-3 py-1 text-left hover:bg-white/5" :class="open ? 'border-amber-400/70 bg-amber-500/10' : 'border-white/20'" @click="open = !open">
       <span class="opacity-60">ベース</span>
+      <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="h-7 w-7 object-contain" draggable="false" />
       <b class="text-[13px] text-amber-100">{{ current?.ja ?? base }}</b>
       <span v-if="current" class="opacity-50">{{ CLS_JA.get(current.cls) ?? current.cls }}</span>
       <span class="ml-1 opacity-60">{{ open ? "▲ 閉じる" : "▼ 変える" }}</span>
@@ -132,10 +134,14 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
           v-for="b in list"
           :key="b.en"
           type="button"
-          class="rounded-lg border px-2.5 py-1.5 text-left"
+          class="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left"
           :class="b.en === base ? 'border-amber-400/70 bg-amber-500/15' : 'border-white/10 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.07]'"
           @click="choose(b.en)"
         >
+          <!-- ゲーム内と同じ絵 (無いベースは空けておく) -->
+          <img v-if="baseArt(b.en)" :src="baseArt(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain" draggable="false" />
+          <span v-else class="h-12 w-12 shrink-0" />
+          <span class="min-w-0 flex-1">
           <p class="flex items-baseline gap-2">
             <b class="text-[13px]" :class="b.en === base ? 'text-amber-100' : ''">{{ b.ja }}</b>
             <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50">Lv {{ b.lvl }}</span>
@@ -143,6 +149,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
           <p v-if="query.trim()" class="text-[10px] opacity-50">{{ CLS_JA.get(b.cls) ?? b.cls }}</p>
           <p v-if="b.stats" class="truncate text-[11px] text-white/70" :title="b.stats">{{ b.stats }}</p>
           <p v-if="b.implicit" class="truncate text-[11px] text-[#8888ff]" :title="b.implicit">{{ b.implicit }}</p>
+          </span>
         </button>
       </div>
     </div>
