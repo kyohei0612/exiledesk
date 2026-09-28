@@ -55,6 +55,7 @@ def draw_scene_panel(
 # 撮影画面 (1920x1080、ExileDesk v0.1.311 の動画モード) の見せる範囲
 # v0.1.312 から棚がアイテムの右横に縦並び → アイテム + 棚を 1 つの範囲で拡大
 # したまま手つきも全部見える (kyohei 2026-09-28)。MOD 6 つ分の高さまで取る
+USE_CLIP_LAYOUT = True
 HAND_REGION = (80, 150, 1060, 760)
 CARD_REGION = HAND_REGION
 ZOOM_TEXT_H = 130  # 拡大中はパネルの下にこれだけ空けて、結果の文字をそこに出す
@@ -72,6 +73,9 @@ def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: floa
     """
     x0, y0, x1, y1 = box
     im = Image.open(shot).convert("RGBA")
+    # ExileDesk v0.1.313 の撮影用レイアウト (layout=clip) はアイテム + 棚だけを大きく描き、下 15% を
+    # 空けてくれる → POE2Tube では拡大しない (kyohei 2026-09-28「拡大せずに使える形で」)
+    zoom = 0.0 if USE_CLIP_LAYOUT else zoom
     if zoom > 0:
         full = (0, 0, im.width, im.height)
         if zoom <= 1:

@@ -30,7 +30,7 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 # ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
 # 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
 VIEWPORT = (1920, 1080)
-CAPTURE_VER = "v5-side-tray"  # 撮り方を変えたらキャッシュを切り替える
+CAPTURE_VER = "v6-clip"  # 撮り方を変えたらキャッシュを切替 (v6 = ExileDesk layout=clip)
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
@@ -55,7 +55,9 @@ def clip_frames(plan: CraftStagePlan, step: int) -> list[Path]:
 
 def replay_url(plan: CraftStagePlan, step: int, base: str) -> str:
     raw = json.dumps(plan.model_dump(by_alias=True, exclude_none=True), ensure_ascii=False)
-    return f"{base}/?stage-plan={urllib.parse.quote(raw)}&step={step}&video=1&controls=0"
+    return (
+        f"{base}/?stage-plan={urllib.parse.quote(raw)}&step={step}&video=1&controls=0&layout=clip"
+    )
 
 
 def port_open(host: str, port: int) -> bool:
@@ -122,7 +124,9 @@ def capture_plan(
         )
         for st in todo:
             page.goto(replay_url(plan, st, base), wait_until="networkidle", timeout=60000)
-            page.wait_for_selector("text=CRAFT STAGE", timeout=30000)
+            page.wait_for_selector(
+                f"text={plan.base}", timeout=30000
+            )  # アイテム枠の英語名 (どの見た目にも出る)
             page.wait_for_timeout(SETTLE_MS)
             page.screenshot(path=str(paths[st]))
             log.info("stage captured", step=st, path=paths[st].name)
@@ -147,7 +151,9 @@ def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: 
         t0 = time.perf_counter()
         page = ctx.new_page()
         page.goto(replay_url(plan, step - 1, base), wait_until="networkidle", timeout=60000)
-        page.wait_for_selector("text=CRAFT STAGE", timeout=30000)
+        page.wait_for_selector(
+            f"text={plan.base}", timeout=30000
+        )  # アイテム枠の英語名 (どの見た目にも出る)
         page.wait_for_timeout(800)
         page.keyboard.press("ArrowRight")
         t_press = time.perf_counter() - t0
