@@ -19,21 +19,29 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from poe2tube.config.settings import get_settings  # noqa: E402
-from poe2tube.contracts.craft_stage import CraftStageResult  # noqa: E402
+from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult  # noqa: E402
 from poe2tube.script.brief import Brief  # noqa: E402
 
 log = structlog.get_logger()
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
-def run_stage(brief_path: Path) -> Path:
+def run_stage(brief_path: Path) -> list[Path]:
+    """メインと追加の実演を全部回す → data/results/<name>.json と <name>__<キー>.json."""
     brief = Brief.model_validate(json.loads(brief_path.read_text(encoding="utf-8")))
+    outs = [run_plan(brief.plan, brief.name, brief.name)]
+    for key, plan in brief.demos.items():
+        outs.append(run_plan(plan, brief.name, f"{brief.name}__{key}"))
+    return outs
+
+
+def run_plan(plan: CraftStagePlan, name: str, out_name: str) -> Path:
     s = get_settings()
-    work = ROOT / "output" / "work" / brief.name
+    work = ROOT / "output" / "work" / name
     work.mkdir(parents=True, exist_ok=True)
-    plan_path = work / "plan.json"
-    plan_path.write_text(brief.plan.model_dump_json(by_alias=True, indent=2), encoding="utf-8")
-    out = ROOT / "data" / "results" / f"{brief.name}.json"
+    plan_path = work / f"plan_{out_name}.json"
+    plan_path.write_text(plan.model_dump_json(by_alias=True, indent=2), encoding="utf-8")
+    out = ROOT / "data" / "results" / f"{out_name}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     node = shutil.which("node")
     if not node:

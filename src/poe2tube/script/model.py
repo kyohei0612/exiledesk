@@ -44,6 +44,10 @@ class Scene(BaseModel):
         default=None, description="stack で並べる工程 (省略時は 1..step)"
     )
     highlight: Highlight | None = None
+    demo: str | None = Field(
+        default=None,
+        description="どの実演の画面か (VideoScript.demos のキー)。省略 = メイン (result_file)",
+    )
 
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:
@@ -92,6 +96,10 @@ class VideoScript(BaseModel):
     final_step: int | None = Field(
         default=None, ge=1, description="完成とみなす手 (積み上げ図解の「完成！」と成功音)"
     )
+    demos: dict[str, str] = Field(
+        default_factory=dict,
+        description="追加の実演 {キー: 結果 JSON パス}。1 本で複数のアイテムを見せる回 (ADR 004)",
+    )
     sections: list[Section] = Field(min_length=1)
 
     @property
@@ -104,19 +112,26 @@ class VideoScript(BaseModel):
     def estimated_seconds(self) -> float:
         return self.char_count() / CHARS_PER_MINUTE * 60
 
-    def check_against(self, result: CraftStageResult) -> list[str]:
+    def check_against(
+        self, result: CraftStageResult, demos: dict[str, CraftStageResult] | None = None
+    ) -> list[str]:
         """画面指示が結果 JSON と噛み合っているかを点検し、問題を文で返す (空なら OK)."""
         problems: list[str] = []
-        n = len(result.steps)
+        demos = demos or {}
         for i, ln in enumerate(self.lines, start=1):
             sc = ln.scene
+            if sc.demo is not None and sc.demo not in demos:
+                problems.append(f"line {i}: 実演 {sc.demo!r} が demos に無い")
+                continue
+            res = demos[sc.demo] if sc.demo is not None else result
+            n = len(res.steps)
             if sc.step is not None and sc.step > n:
                 problems.append(f"line {i}: step {sc.step} は結果 JSON に無い (最大 {n})")
             for s in sc.show_steps or []:
                 if not 1 <= s <= n:
                     problems.append(f"line {i}: show_steps に無効な工程 {s}")
             if sc.highlight == "added" and sc.step:
-                if not result.steps[sc.step - 1].changed.added:
+                if not res.steps[sc.step - 1].changed.added:
                     problems.append(
                         f"line {i}: step {sc.step} は MOD が増えていないのに highlight=added"
                     )

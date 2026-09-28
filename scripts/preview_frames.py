@@ -14,20 +14,18 @@ import structlog
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from poe2tube.contracts.craft_stage import CraftStageResult  # noqa: E402
 from poe2tube.names import NameBook  # noqa: E402
 from poe2tube.render.frame import render_frame  # noqa: E402
 from poe2tube.script.model import VideoScript  # noqa: E402
+from poe2tube.video.results import load_results  # noqa: E402
 
 log = structlog.get_logger()
 
 
 def main(script_path: Path) -> None:
     script = VideoScript.model_validate(json.loads(script_path.read_text(encoding="utf-8")))
-    result = CraftStageResult.model_validate(
-        json.loads((ROOT / script.result_file).read_text(encoding="utf-8"))
-    )
-    problems = script.check_against(result)
+    rs = load_results(script, ROOT)
+    problems = script.check_against(rs.main, rs.demos)
     if problems:
         raise SystemExit("台本と結果 JSON が噛み合わない: " + "; ".join(problems))
     book = NameBook.load()
@@ -39,7 +37,9 @@ def main(script_path: Path) -> None:
         for line in section.lines:
             i += 1
             props = [f.key for f in book.find_in_text(line.text)]
-            img = render_frame(line, result, section.name, i / total, mouth=0, props=props)
+            img = render_frame(
+                line, rs.of(line.scene), section.name, i / total, mouth=0, props=props
+            )
             path = out / f"{i:02d}_{line.scene.kind}.png"
             img.convert("RGB").save(path)
             log.info("frame", n=i, scene=line.scene.kind, props=props, path=path.name)

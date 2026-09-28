@@ -39,7 +39,8 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
         for ng, ok in BANNED_TERMS.items():
             if ng in ln.text:
                 problems.append(f"line {i}: 「{ng}」は使わない → 「{ok}」: {ln.text}")
-        if n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
+        main = ln.scene.demo is None  # 追加の実演の手数は stage_coverage で見る
+        if main and n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
             problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
     run = 1
     for k, (prev, cur) in enumerate(zip(lines, lines[1:], strict=False), start=2):
@@ -75,8 +76,10 @@ def lint_section(section: Section, n_steps: int | None = None, offset: int = 0) 
     return problems
 
 
-def lint_script(script: VideoScript, n_steps: int | None = None) -> list[str]:
-    """全体の検査。``n_steps`` は結果 JSON の手数 (実践の抜け検出用)."""
+def lint_script(
+    script: VideoScript, n_steps: int | None = None, demo_steps: dict[str, int] | None = None
+) -> list[str]:
+    """全体の検査。``n_steps`` はメインの結果 JSON の手数、``demo_steps`` は追加の実演ごとの手数."""
     lines = script.lines
     problems = lint_lines(lines, 0, n_steps)
     zunda = sum(1 for ln in lines if ln.speaker == "zundamon")
@@ -95,19 +98,34 @@ def lint_script(script: VideoScript, n_steps: int | None = None) -> list[str]:
     est = script.estimated_seconds()
     if not lo <= est <= hi:
         problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
-    problems += stage_coverage(script, n_steps)
+    problems += stage_coverage(script, n_steps, demo_steps)
     return problems
 
 
-def stage_coverage(script: VideoScript, n_steps: int | None) -> list[str]:
-    """実践は 1 手 1 行以上: stage の step が 1..n を 1 つも飛ばさず出てくる (kyohei 2026-09-27)."""
-    stage_steps = sorted(
-        {ln.scene.step for ln in script.lines if ln.scene.kind == "stage" and ln.scene.step}
-    )
-    if not stage_steps:
+def stage_coverage(
+    script: VideoScript, n_steps: int | None, demo_steps: dict[str, int] | None = None
+) -> list[str]:
+    """実践は 1 手 1 行以上: 実演ごとに stage の step が 1..n を飛ばさず出る (2026-09-27)."""
+    by_demo: dict[str | None, set[int]] = {}
+    for ln in script.lines:
+        if ln.scene.kind == "stage" and ln.scene.step:
+            by_demo.setdefault(ln.scene.demo, set()).add(ln.scene.step)
+    if not by_demo:
         return ["実践 (stage) の行が無い"]
-    last = n_steps or max(stage_steps)
-    missing = [s for s in range(1, last + 1) if s not in stage_steps]
-    if missing:
-        return [f"実践で飛ばした手がある (1 手 1 行以上): step {missing} の stage 行が無い"]
-    return []
+    wanted: dict[str | None, int | None] = {None: n_steps}
+    wanted.update((k, v) for k, v in (demo_steps or {}).items())
+    problems: list[str] = []
+    for key, n in wanted.items():
+        steps = by_demo.get(key)
+        if not steps:
+            if key is not None:
+                problems.append(f"実演 {key!r} の stage 行が無い")
+            continue
+        last = n or max(steps)
+        missing = [s for s in range(1, last + 1) if s not in steps]
+        if missing:
+            name = "" if key is None else f"実演 {key!r} の"
+            problems.append(
+                f"実践で飛ばした手がある (1 手 1 行以上): {name}step {missing} の stage 行が無い"
+            )
+    return problems

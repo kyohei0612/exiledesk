@@ -7,6 +7,7 @@ ExileDesk の手つきの速さはバージョンで変わる (v0.1.311 は約 2
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -17,7 +18,7 @@ from PIL import Image
 
 from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStagePlan
-from poe2tube.script.model import Line
+from poe2tube.script.model import Line, Scene
 
 # アイテム枠 + 棚のあたり (1920x1080 の撮影画面を 1/4 にした座標)。下 15% の空きは見ない
 _REGION = (40, 0, 380, 230)
@@ -48,16 +49,21 @@ def attach_index(clip: list[Path]) -> int:
     return _attach_index(tuple(str(p) for p in clip))
 
 
-def stage_hit(prev: Line | None, cur: Line, shown: set[int] | None = None) -> bool:
+HitKey = tuple[str | None, int]  # (実演, 手)
+
+
+def stage_hit(prev: Line | None, cur: Line, shown: set[HitKey] | None = None) -> bool:
     """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く).
 
     ``shown`` (もう打った step) を渡すと、雑談を挟んで同じ step に戻った行では打ち直さない
     (kyohei 2026-09-28: 「王者を使うわね」で前の手の撮影と結果の文字がもう一度出ていた)。
     """
     sc = cur.scene
-    if sc.kind != "stage" or not sc.step or (shown is not None and sc.step in shown):
+    if sc.kind != "stage" or not sc.step or (shown is not None and (sc.demo, sc.step) in shown):
         return False
-    return prev is None or prev.scene.kind != "stage" or prev.scene.step != sc.step
+    if prev is None or prev.scene.kind != "stage":
+        return True
+    return prev.scene.step != sc.step or prev.scene.demo != sc.demo
 
 
 @dataclass(frozen=True)
@@ -73,6 +79,7 @@ class HitPlan:
     attach: int
     preroll: bool
     fps: int = 24
+    demo: str | None = None
 
     @property
     def start(self) -> int:
@@ -95,21 +102,33 @@ class HitPlan:
 
 
 def plan_hits(
-    lines: list[tuple[str, Line]], plan: CraftStagePlan, fps: int = 24
+    lines: list[tuple[str, Line]],
+    plan: CraftStagePlan | Callable[[Scene], CraftStagePlan],
+    fps: int = 24,
 ) -> dict[int, HitPlan]:
-    """{行の位置 (0 始まり): HitPlan}。(章名, 行) の並びだけで決まる (尺を作る前に使える)."""
+    """{行の位置 (0 始まり): HitPlan}。(章名, 行) の並びだけで決まる (尺を作る前に使える).
+
+    ``plan`` は 1 つの手順か、場面から手順を引く関数 (複数の実演がある回、ResultSet.plan_of)。
+    """
+    plan_of = plan if callable(plan) else (lambda _sc: plan)
     out: dict[int, HitPlan] = {}
-    shown: set[int] = set()
+    shown: set[HitKey] = set()
     prev: Line | None = None
     prev_section: str | None = None
     for i, (section, line) in enumerate(lines):
         new_chapter = prev_section is not None and prev_section != section
         if stage_hit(prev, line, shown) and line.scene.step:
-            step = line.scene.step
-            shown.add(step)
-            clip = clip_frames(plan, step)
+            step, demo = line.scene.step, line.scene.demo
+            shown.add((demo, step))
+            clip = clip_frames(plan_of(line.scene), step)
             if clip:
-                preroll = prev is not None and prev.scene.kind == "stage" and not new_chapter
-                out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps)
+                # 手つきは同じ実演の「使うわね」の行でだけ流す (別のアイテムの画面には流さない)
+                preroll = (
+                    prev is not None
+                    and prev.scene.kind == "stage"
+                    and prev.scene.demo == demo
+                    and not new_chapter
+                )
+                out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps, demo)
         prev, prev_section = line, section
     return out

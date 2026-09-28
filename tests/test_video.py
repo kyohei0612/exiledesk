@@ -122,10 +122,10 @@ def test_stage_hit_not_replayed_after_talk() -> None:
     def ln(kind: str, step: int | None = None) -> Line:
         return Line(speaker="metan", text="あ", scene=Scene(kind=kind, step=step))  # type: ignore[arg-type]
 
-    shown: set[int] = set()
+    shown: set[tuple[str | None, int]] = set()
     first = ln("stage", 2)
     assert stage_hit(ln("stage", 1), first, shown)
-    shown.add(2)
+    shown.add((None, 2))
     # 雑談を挟んで同じ 2 手目に戻っても打ち直さない
     assert not stage_hit(ln("talk"), ln("stage", 2), shown)
     assert stage_hit(ln("talk"), ln("stage", 2))  # shown 無しは従来どおり

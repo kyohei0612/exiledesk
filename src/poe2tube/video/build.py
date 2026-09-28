@@ -15,11 +15,11 @@ from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
 from poe2tube.capture.stage import capture_plan
 from poe2tube.config.settings import REPO_ROOT, get_settings
-from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events, write_frames
 from poe2tube.video.clip_timing import plan_hits
+from poe2tube.video.results import ResultSet, load_results
 from poe2tube.video.timeline import Cue, build_cues, concat_audio
 
 log = structlog.get_logger()
@@ -33,14 +33,14 @@ class BuildResult:
     frames: int
 
 
-def load_script(path: Path) -> tuple[VideoScript, CraftStageResult]:
+def load_script(path: Path) -> tuple[VideoScript, ResultSet]:
+    """台本と、台本が指す結果 JSON の組 (メイン + 追加の実演) を読んで噛み合わせを点検する."""
     script = VideoScript.model_validate(json.loads(path.read_text(encoding="utf-8")))
-    result_path = REPO_ROOT / script.result_file
-    result = CraftStageResult.model_validate(json.loads(result_path.read_text(encoding="utf-8")))
-    problems = script.check_against(result)
+    rs = load_results(script)
+    problems = script.check_against(rs.main, rs.demos)
     if problems:
         raise ValueError("台本と結果 JSON が噛み合わない: " + "; ".join(problems))
-    return script, result
+    return script, rs
 
 
 def ffmpeg_path() -> str:
@@ -79,17 +79,28 @@ def encode(frames_dir: Path, audio: Path, fps: int, out: Path, nvenc: bool = Fal
         raise RuntimeError(f"ffmpeg 失敗 rc={r.returncode}: {r.stderr[-800:]}")
 
 
-def capture_stage_scenes(script: VideoScript, result: CraftStageResult) -> None:
-    """台本の stage シーンが指す手を ExileDesk の実画面で撮っておく (失敗時は図解で代用)."""
+def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
+    """stage シーンが指す手を実演ごとに ExileDesk の実画面で撮る (失敗時は図解で代用)."""
     s = get_settings()
-    steps = sorted({ln.scene.step or 0 for ln in script.lines if ln.scene.kind == "stage"})
-    if not steps or not s.stage_capture:
+    if not s.stage_capture:
         return
-    try:
-        paths = capture_plan(result.plan, steps)
-        log.info("stage scenes ready", steps=steps, cached=len(paths))
-    except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
-        log.warning("stage capture failed, falling back to drawn panel", error=str(e)[:300])
+    for key, res in rs.items():
+        steps = sorted(
+            {
+                ln.scene.step or 0
+                for ln in script.lines
+                if ln.scene.kind == "stage" and ln.scene.demo == key
+            }
+        )
+        if not steps:
+            continue
+        try:
+            paths = capture_plan(res.plan, steps)
+            log.info("stage scenes ready", demo=key, steps=steps, cached=len(paths))
+        except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
+            log.warning(
+                "stage capture failed, falling back to drawn panel", demo=key, error=str(e)[:300]
+            )
 
 
 def write_chapters(cues: list[Cue], path: Path) -> None:
@@ -106,7 +117,7 @@ def build_video(
     script_path: Path, out: Path | None = None, keep_frames: bool = False
 ) -> BuildResult:
     s = get_settings()
-    script, result = load_script(script_path)
+    script, rs = load_script(script_path)
     work = REPO_ROOT / "output" / "work" / script_path.stem
     out = out or REPO_ROOT / "output" / f"{script_path.stem}.mp4"
 
@@ -116,17 +127,17 @@ def build_video(
     log.info("voice ready", lines=len(wavs))
 
     book = NameBook.load()
-    capture_stage_scenes(script, result)  # 手つきの長さを測るので先に撮る
+    capture_stage_scenes(script, rs)  # 手つきの長さを測るので先に撮る
     lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
-    hits = plan_hits(lines, result.plan, s.fps)
+    hits = plan_hits(lines, rs.plan_of, s.fps)
     hold = {i: h.min_seconds for i, h in hits.items()}
     cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold)
     write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")
-    events = sound_events(cues, book, script.final_step or len(result.steps), result)
+    events = sound_events(cues, book, script.final_step or len(rs.main.steps), rs)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
-    frames = write_frames(cues, result, book, work / "frames", script.final_step)
+    frames = write_frames(cues, rs, book, work / "frames", script.final_step)
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 
     out.parent.mkdir(parents=True, exist_ok=True)

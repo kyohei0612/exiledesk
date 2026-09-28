@@ -19,6 +19,7 @@ from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
 from poe2tube.render.overlay_fx import CHAPTER_SECONDS, HIT_START, draw_chapter, draw_hit
 from poe2tube.video.clip_timing import HitPlan, plan_hits
+from poe2tube.video.results import ResultSet, as_set
 from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
@@ -67,13 +68,14 @@ def sound_events(
     cues: list[Cue],
     book: NameBook,
     n_steps: int = 0,
-    result: CraftStageResult | None = None,
+    result: CraftStageResult | ResultSet | None = None,
 ) -> list[SoundEvent]:
     """SE を鳴らす時刻: 冒頭 / 画面切替 (完成工程なら成功音) / 小道具ポップ / 驚きの台詞."""
     events = [SoundEvent(0.0, "start")]
     prev = None
     prev_section: str | None = None
-    hits = plan_hits([(c.section, c.line) for c in cues], result.plan) if result else {}
+    rs = as_set(result) if result is not None else None
+    hits = plan_hits([(c.section, c.line) for c in cues], rs.plan_of) if rs else {}
     for i, c in enumerate(cues):
         sc = c.line.scene
         hp = hits.get(i)
@@ -81,14 +83,14 @@ def sound_events(
         lead = chapter_lead(new_chapter)
         if new_chapter:
             events.append(SoundEvent(c.start, "chapter"))
-        if result is not None and hp is not None:
+        if rs is not None and hp is not None:
             # 付いた瞬間に鳴らす (手つきは前の行で流し終わっている)
-            events.append(
-                SoundEvent(c.start + lead + hp.land_at, hit_sound(result.steps[hp.step - 1]))
-            )
+            step = rs.of(sc).steps[hp.step - 1]
+            events.append(SoundEvent(c.start + lead + hp.land_at, hit_sound(step)))
         if prev is not None and scene_changed(prev, c.line) and hp is None:
             is_final = (
                 sc.kind in ("stack", "item")
+                and sc.demo is None
                 and sc.step == n_steps
                 and sc.highlight
                 in (
@@ -116,7 +118,10 @@ def hit_sound(step: StageStep) -> str:
 
 
 def iter_frames(
-    cues: list[Cue], result: CraftStageResult, book: NameBook, final_step: int | None = None
+    cues: list[Cue],
+    result: CraftStageResult | ResultSet,
+    book: NameBook,
+    final_step: int | None = None,
 ) -> Iterator[tuple[int, Image.Image]]:
     """(通し番号, フレーム) を順に返す。番号は 0 始まり."""
     total = sum(c.frames for c in cues)
@@ -125,8 +130,11 @@ def iter_frames(
     prev = None
     prev_section: str | None = None
     prev_zoom = False
-    hits = plan_hits([(c.section, c.line) for c in cues], result.plan, round(fps))
+    rs = as_set(result)
+    hits = plan_hits([(c.section, c.line) for c in cues], rs.plan_of, round(fps))
     for i, c in enumerate(cues):
+        res = rs.of(c.line.scene)  # この行の画面が指す実演の結果
+        fin = final_step if c.line.scene.demo is None else None
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
         hp: HitPlan | None = hits.get(i)
@@ -137,14 +145,12 @@ def iter_frames(
         pre = pre[-len(c.mouth_levels) :] if pre else []
         pre_from = len(c.mouth_levels) - len(pre)
         zoom_on = c.line.scene.kind == "stage" and (is_hit or nxt_hp is not None)
-        panel = render_panel_layer(
-            c.line, result, final_step=final_step, zoom=1.0 if zoom_on else 0.0
-        )
+        panel = render_panel_layer(c.line, res, final_step=fin, zoom=1.0 if zoom_on else 0.0)
         # 反応の行は付いた瞬間 (preroll 無しなら少し手前) から連番を貼る
         clip = list(hp.clip[hp.start :]) if hp else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
-        hit_step = result.steps[hp.step - 1] if hp else None
+        hit_step = res.steps[hp.step - 1] if hp else None
         new_chapter = prev_section is not None and prev_section != c.section
         lead = chapter_lead(new_chapter)
         for k, mouth in enumerate(c.mouth_levels):
@@ -155,22 +161,20 @@ def iter_frames(
                 frame_static = base  # 章カードの間はパネルを出さない (被せない)
             elif pre and k >= pre_from:
                 layer = render_panel_layer(
-                    c.line, result, stage_shot=pre[k - pre_from], final_step=final_step
+                    c.line, res, stage_shot=pre[k - pre_from], final_step=fin
                 )
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif 0 <= kl < len(clip) * CLIP_SLOWMO:
                 shot = clip[kl // CLIP_SLOWMO]
                 layer = render_panel_layer(
-                    c.line, result, stage_shot=shot, final_step=final_step, zoom=hit_zoom(tl)
+                    c.line, res, stage_shot=shot, final_step=fin, zoom=hit_zoom(tl)
                 )
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif is_hit and clip:
-                layer = render_panel_layer(c.line, result, final_step=final_step, zoom=2.0)
+                layer = render_panel_layer(c.line, res, final_step=fin, zoom=2.0)
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif zoom_on and not prev_zoom and tl < ZOOM_SECONDS:
-                layer = render_panel_layer(
-                    c.line, result, final_step=final_step, zoom=tl / ZOOM_SECONDS
-                )
+                layer = render_panel_layer(c.line, res, final_step=fin, zoom=tl / ZOOM_SECONDS)
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif (animate or lead > 0) and tl < SLIDE_SECONDS and panel is not None:
                 dy, alpha = slide_in(tl)
@@ -205,7 +209,7 @@ def _with_panel(base: Image.Image, panel: Image.Image | None, dy: int, alpha: fl
 
 def write_frames(
     cues: list[Cue],
-    result: CraftStageResult,
+    result: CraftStageResult | ResultSet,
     book: NameBook,
     out_dir: Path,
     final_step: int | None = None,

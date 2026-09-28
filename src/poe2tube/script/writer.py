@@ -76,8 +76,41 @@ def result_digest(result: CraftStageResult) -> str:
     )
 
 
+Demos = dict[str, CraftStageResult]
+
+
+def demo_block(demos: Demos | None) -> list[str]:
+    """追加の実演 (別のアイテム) の結果と、画面での指し方 (ADR 004)。無ければ空."""
+    if not demos:
+        return []
+    body = "\n\n".join(f"### {k}\n```json\n{result_digest(r)}\n```" for k, r in demos.items())
+    return [
+        "## 追加の実演 (別のアイテム。この数字と名前だけを使う)\n"
+        "- この実演の画面 (stage / item / stack) は `scene.demo` にキーを入れる。"
+        "キーが無い場面は上のメインの結果を指す\n"
+        "- 追加の実演も、実践は 1 手 1 行以上 (手を飛ばさない)\n\n" + body
+    ]
+
+
+def demo_files(name: str, demos: Demos) -> dict[str, str]:
+    """追加の実演の結果 JSON のパス (scripts/run_stage.py の出力先と同じ)."""
+    return {k: f"data/results/{name}__{k}.json" for k in demos}
+
+
+def demo_problems(script: VideoScript, result: CraftStageResult, demos: Demos | None) -> list[str]:
+    """画面と結果の噛み合わせ + 台本の規則 (追加の実演の手数も見る)."""
+    demos = demos or {}
+    return script.check_against(result, demos) + lint_script(
+        script, len(result.steps), {k: len(r.steps) for k, r in demos.items()}
+    )
+
+
 def build_prompt(
-    brief: Brief, result: CraftStageResult, result_file: str, feedback: list[str]
+    brief: Brief,
+    result: CraftStageResult,
+    result_file: str,
+    feedback: list[str],
+    demos: Demos | None = None,
 ) -> str:
     rules = load_rules()
     example = EXAMPLE_PATH.read_text(encoding="utf-8") if EXAMPLE_PATH.exists() else "(無し)"
@@ -88,6 +121,7 @@ def build_prompt(
         "## クラフトステージの結果 (この数字と名前だけを使う)\n```json\n"
         + result_digest(result)
         + "\n```",
+        *demo_block(demos),
         f"## 出力\n- `result_file` は `{result_file}`\n"
         f"- `target_seconds` は {brief.target_seconds}\n"
         "- JSON 以外の文字 (前置き・コードフェンス・注釈) を出力しない",
@@ -156,18 +190,21 @@ def write_script(
     result_file: str,
     runner: Runner,
     max_attempts: int = 3,
+    demos: Demos | None = None,
 ) -> WriteResult:
     feedback: list[str] = []
     raw = ""
     for attempt in range(1, max_attempts + 1):
-        raw = runner(build_prompt(brief, result, result_file, feedback))
+        raw = runner(build_prompt(brief, result, result_file, feedback, demos))
         try:
             script = VideoScript.model_validate(json.loads(extract_json(raw)))
         except (ValueError, ValidationError) as e:
             feedback = [f"JSON が形式に合わない: {str(e)[:400]}"]
             log.warning("script invalid", attempt=attempt, error=str(e)[:200])
             continue
-        problems = script.check_against(result) + lint_script(script, len(result.steps))
+        if demos:
+            script = script.model_copy(update={"demos": demo_files(brief.name, demos)})
+        problems = demo_problems(script, result, demos)
         if not problems:
             log.info("script accepted", attempt=attempt, lines=len(script.lines))
             return WriteResult(script, attempt, raw)

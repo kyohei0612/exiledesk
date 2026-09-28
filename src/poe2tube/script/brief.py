@@ -22,8 +22,36 @@ STAGE_ILVL: dict[PlayerStage, tuple[int, int]] = {
     "endgame": (78, 84),
 }
 STAGE_CURRENCIES: dict[PlayerStage, frozenset[str] | None] = {
-    # カオスはアクトでもたまに拾える (kyohei 2026-09-28)
-    "act": frozenset({"transmute", "augment", "regal", "alchemy", "exalt", "annul", "chaos"}),
+    # カオスはアクトでもたまに拾える (kyohei 2026-09-28)。品質系・熟練工・可能性・鑑定・シャード・
+    # ヴァールもアクト中の解説回で使う (2026-09-28)。神のオーブは「取っておく」前提なので入れない
+    "act": frozenset(
+        {
+            "transmute",
+            "augment",
+            "regal",
+            "alchemy",
+            "exalt",
+            "annul",
+            "chaos",
+            "vaal",
+            "whetstone",
+            "scrap",
+            "bauble",
+            "gemcutter",
+            "etcher",
+            "artificer",
+            "chance",
+            "wisdom",
+            "scroll_fragment",
+            "transmute_shard",
+            "alchemy_shard",
+            "regal_shard",
+            "artificer_shard",
+            "chance_shard",
+            "jeweller_lesser",
+            "jeweller_greater",
+        }
+    ),
     "early_endgame": frozenset(
         {"transmute", "augment", "regal", "alchemy", "exalt", "annul", "chaos", "artificer"}
     ),
@@ -50,7 +78,11 @@ class Brief(BaseModel):
     )
     goal: str = Field(description="この動画を見た人ができるようになること (1 文)")
     target_seconds: int = Field(ge=30, le=900)
-    plan: CraftStagePlan = Field(description="クラフトステージに回す手順")
+    plan: CraftStagePlan = Field(description="クラフトステージに回す手順 (メインの実演)")
+    demos: dict[str, CraftStagePlan] = Field(
+        default_factory=dict,
+        description="追加の実演 {キー: 手順}。武器・防具など別のアイテムでも見せる回 (ADR 004)",
+    )
     notes: list[str] = Field(default_factory=list, description="台本に入れたい要点・避けたい事")
     final_step: int | None = Field(
         default=None,
@@ -59,29 +91,35 @@ class Brief(BaseModel):
     )
 
     def problems(self) -> list[str]:
-        """設定と手順の食い違い (段階に合わない ilvl・カレンシー、final_step の範囲) を文で返す."""
-        out: list[str] = []
-        lo, hi = STAGE_ILVL[self.player_stage]
-        if not lo <= self.plan.item_level <= hi:
-            out.append(
-                f"視聴者が「{STAGE_JA[self.player_stage]}」なのに ilvl {self.plan.item_level}"
-                f" ({lo}〜{hi} にする)"
-            )
-        allowed = STAGE_CURRENCIES[self.player_stage]
-        if allowed is not None:
-            bad = sorted({s.currency for s in self.plan.steps if s.currency not in allowed})
-            if bad:
-                out.append(
-                    f"「{STAGE_JA[self.player_stage]}」では手に入りにくいカレンシー: {bad}"
-                    " (設定を変えるか手順から外す)"
-                )
-        need = BASE_STAGE.get(self.plan.base)
-        if need and STAGE_ORDER[need] > STAGE_ORDER[self.player_stage]:
-            out.append(
-                f"{self.plan.base} は「{STAGE_JA[need]}」で手に入るベース"
-                f" (視聴者は「{STAGE_JA[self.player_stage]}」)。段階に合うベースにする"
-            )
+        """設定と手順の食い違い (段階に合わない ilvl・カレンシー・ベース、final_step) を文で返す."""
+        out = self._plan_problems(self.plan, "")
+        for key, plan in self.demos.items():
+            out += self._plan_problems(plan, f"[{key}] ")
         n = len(self.plan.expanded_steps())
         if self.final_step is not None and self.final_step > n:
             out.append(f"final_step {self.final_step} が手数 {n} を超えている")
+        return out
+
+    def _plan_problems(self, plan: CraftStagePlan, label: str) -> list[str]:
+        out: list[str] = []
+        stage = STAGE_JA[self.player_stage]
+        lo, hi = STAGE_ILVL[self.player_stage]
+        if not lo <= plan.item_level <= hi:
+            out.append(
+                f"{label}視聴者が「{stage}」なのに ilvl {plan.item_level} ({lo}〜{hi} にする)"
+            )
+        allowed = STAGE_CURRENCIES[self.player_stage]
+        if allowed is not None:
+            bad = sorted({s.currency for s in plan.steps if s.currency not in allowed})
+            if bad:
+                out.append(
+                    f"{label}「{stage}」では手に入りにくいカレンシー: {bad}"
+                    " (設定を変えるか手順から外す)"
+                )
+        need = BASE_STAGE.get(plan.base)
+        if need and STAGE_ORDER[need] > STAGE_ORDER[self.player_stage]:
+            out.append(
+                f"{label}{plan.base} は「{STAGE_JA[need]}」で手に入るベース"
+                f" (視聴者は「{stage}」)。段階に合うベースにする"
+            )
         return out

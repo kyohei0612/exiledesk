@@ -43,7 +43,7 @@ python scripts/publish_video.py <name> --execute  # チョコバナナに「非�
 
 | 何 | どこ |
 |---|---|
-| 設計 (ADR) | `docs/decisions/001-poe2tube-architecture.md`, `002-craft-stage-contract.md` |
+| 設計 (ADR) | `docs/decisions/001-poe2tube-architecture.md`, `002-craft-stage-contract.md`, `003-youtube-publish.md`, `004-multi-demo.md` (1 本で複数アイテム) |
 | 台本ルール / 既定の質問 / 仕様の事実 | `docs/script_rules/_all.md`, `_intake.md`, `_facts.md` |
 | ExileDesk との受け渡し JSON (正) | `src/poe2tube/contracts/craft_stage.py` → `contracts/*.schema.json` |
 | 台本モデル / lint / 生成 | `src/poe2tube/script/{model,lint,brief,outline,writer,writer_long}.py` |

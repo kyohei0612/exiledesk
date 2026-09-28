@@ -69,16 +69,25 @@ def main() -> None:
     result = CraftStageResult.model_validate(
         json.loads((ROOT / result_file).read_text(encoding="utf-8"))
     )
+    # 追加の実演 (武器・防具など別のアイテム) の結果。run_stage.py が <name>__<キー>.json に出す
+    demos = {
+        k: CraftStageResult.model_validate(
+            json.loads((ROOT / f"data/results/{brief.name}__{k}.json").read_text(encoding="utf-8"))
+        )
+        for k in brief.demos
+    }
     runner = claude_cli_runner(a.model)
     if a.sections or brief.target_seconds >= LONG_THRESHOLD_SECONDS:
         cache_dir = ROOT / "output" / "work" / brief.name / "script_cache"
-        lw = write_script_long(brief, result, result_file, runner, a.attempts, cache_dir=cache_dir)
+        lw = write_script_long(
+            brief, result, result_file, runner, a.attempts, cache_dir=cache_dir, demos=demos
+        )
         script, attempts = lw.script, lw.attempts
         outline_path = ROOT / "data" / "outlines" / f"{brief.name}.json"
         outline_path.parent.mkdir(parents=True, exist_ok=True)
         outline_path.write_text(lw.outline.model_dump_json(indent=2), encoding="utf-8")
     else:
-        wr = write_script(brief, result, result_file, runner, a.attempts)
+        wr = write_script(brief, result, result_file, runner, a.attempts, demos=demos)
         script, attempts = wr.script, {"all": wr.attempts}
     out = save_script(script, a.out or ROOT / "data" / "scripts" / f"{brief.name}.json")
     write_provenance(out, a.model)

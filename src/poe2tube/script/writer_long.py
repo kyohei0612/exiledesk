@@ -18,10 +18,19 @@ from pydantic import ValidationError
 
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.script.brief import Brief
-from poe2tube.script.lint import lint_script, lint_section
+from poe2tube.script.lint import lint_section
 from poe2tube.script.model import Section, VideoScript
 from poe2tube.script.outline import Outline
-from poe2tube.script.writer import Runner, extract_json, load_rules, result_digest
+from poe2tube.script.writer import (
+    Demos,
+    Runner,
+    demo_block,
+    demo_files,
+    demo_problems,
+    extract_json,
+    load_rules,
+    result_digest,
+)
 
 log = structlog.get_logger()
 LINE_REF = re.compile(r"line (\d+)")
@@ -38,13 +47,16 @@ def _rules() -> str:
     return load_rules()
 
 
-def outline_prompt(brief: Brief, result: CraftStageResult, feedback: list[str]) -> str:
+def outline_prompt(
+    brief: Brief, result: CraftStageResult, feedback: list[str], demos: Demos | None = None
+) -> str:
     parts = [
         "あなたは POE2Tube の台本作家です。"
         "まず 8 分級の台本の「構成表」だけを JSON で返してください。",
         "```markdown\n" + _rules() + "\n```",
         "## 題材 (brief)\n```json\n" + brief.model_dump_json(indent=2, by_alias=True) + "\n```",
         "## クラフトステージの結果\n```json\n" + result_digest(result) + "\n```",
+        *demo_block(demos),
         "## 構成表の形 (JSON だけを返す)\n```json\n"
         + json.dumps(
             {
@@ -89,6 +101,7 @@ def section_prompt(
     index: int,
     done: list[Section],
     feedback: list[str],
+    demos: Demos | None = None,
 ) -> str:
     spec = outline.sections[index]
     so_far = [
@@ -102,6 +115,7 @@ def section_prompt(
         "## クラフトステージの結果 (この数字と名前だけを使う)\n```json\n"
         + result_digest(result)
         + "\n```",
+        *demo_block(demos),
         "## 構成表 (全体)\n```json\n" + outline.model_dump_json(indent=2) + "\n```",
         "## ここまでの本文 (続きとして自然につながるように。同じ説明を繰り返さない)\n```json\n"
         + json.dumps(so_far, ensure_ascii=False, indent=1)
@@ -109,7 +123,8 @@ def section_prompt(
         f"## この章の指定\n- name: {spec.name}\n- target_seconds: {spec.target_seconds}"
         f" (約 {spec.target_chars} 字、±35%)\n- goal: {spec.goal}\n- points: {spec.points}\n"
         f"- steps: {spec.steps}\n- scenes: {spec.scenes}\n- bridge: {spec.bridge}\n"
-        "- 章の最後の行は bridge の方向性で締める (最終章は次回予告)",
+        "- 章の最後の行は bridge の方向性で締める (最終章はチャンネルの方針と、"
+        "チャンネル登録・コメントのお願いで締める。次回予告はしない)",
         "## 出力の形 (JSON だけ)\n```json\n"
         + json.dumps(
             {
@@ -136,11 +151,15 @@ def section_prompt(
 
 
 def write_outline(
-    brief: Brief, result: CraftStageResult, runner: Runner, max_attempts: int = 3
+    brief: Brief,
+    result: CraftStageResult,
+    runner: Runner,
+    max_attempts: int = 3,
+    demos: Demos | None = None,
 ) -> tuple[Outline, int]:
     feedback: list[str] = []
     for attempt in range(1, max_attempts + 1):
-        raw = runner(outline_prompt(brief, result, feedback))
+        raw = runner(outline_prompt(brief, result, feedback, demos))
         try:
             outline = Outline.model_validate(json.loads(extract_json(raw)))
         except (ValueError, ValidationError) as e:
@@ -166,11 +185,12 @@ def write_section(
     runner: Runner,
     max_attempts: int = 3,
     extra_feedback: list[str] | None = None,
+    demos: Demos | None = None,
 ) -> tuple[Section, int]:
     feedback = list(extra_feedback or [])
     offset = sum(len(s.lines) for s in done)
     for attempt in range(1, max_attempts + 1):
-        raw = runner(section_prompt(brief, result, outline, index, done, feedback))
+        raw = runner(section_prompt(brief, result, outline, index, done, feedback, demos))
         try:
             section = Section.model_validate(json.loads(extract_json(raw)))
         except (ValueError, ValidationError) as e:
@@ -197,6 +217,7 @@ def write_script_long(
     max_attempts: int = 3,
     max_global_passes: int = 2,
     cache_dir: Path | None = None,
+    demos: Demos | None = None,
 ) -> LongWriteResult:
     """``cache_dir`` を渡すと、通った構成表と章をその都度保存し、次回はそこから再開する
     (Claude 呼び出し 1 回 1〜3 分なので、途中で落ちた時に最初からやり直さない)。"""
@@ -204,7 +225,7 @@ def write_script_long(
     outline = cache.load_outline()
     attempts = {"outline": 0}
     if outline is None:
-        outline, n = write_outline(brief, result, runner, max_attempts)
+        outline, n = write_outline(brief, result, runner, max_attempts, demos)
         attempts["outline"] = n
         cache.save_outline(outline)
     sections: list[Section] = []
@@ -214,27 +235,29 @@ def write_script_long(
             sections.append(cached)
             attempts[cached.name] = 0
             continue
-        sec, n = write_section(brief, result, outline, i, sections, runner, max_attempts)
+        sec, n = write_section(
+            brief, result, outline, i, sections, runner, max_attempts, demos=demos
+        )
         sections.append(sec)
         attempts[sec.name] = n
         cache.save_section(i, sec)
-    script = _assemble(brief, outline, sections, result_file)
+    script = _assemble(brief, outline, sections, result_file, demos)
     for _ in range(max_global_passes):
-        problems = script.check_against(result) + lint_script(script, len(result.steps))
+        problems = demo_problems(script, result, demos)
         if not problems:
             break
         log.warning("script (long) rejected", problems=problems)
         targets = _sections_to_rewrite(script, problems)
         for i in targets:
             sec, n = write_section(
-                brief, result, outline, i, sections[:i], runner, max_attempts, problems
+                brief, result, outline, i, sections[:i], runner, max_attempts, problems, demos
             )
             sections[i] = sec
             cache.save_section(i, sec)
             attempts[f"{sec.name}#rewrite"] = attempts.get(f"{sec.name}#rewrite", 0) + n
-        script = _assemble(brief, outline, sections, result_file)
+        script = _assemble(brief, outline, sections, result_file, demos)
     else:
-        problems = script.check_against(result) + lint_script(script, len(result.steps))
+        problems = demo_problems(script, result, demos)
         if problems:
             raise RuntimeError(f"全体検査が通らなかった: {problems}")
     return LongWriteResult(script, outline, attempts)
@@ -283,13 +306,18 @@ class _Cache:
 
 
 def _assemble(
-    brief: Brief, outline: Outline, sections: list[Section], result_file: str
+    brief: Brief,
+    outline: Outline,
+    sections: list[Section],
+    result_file: str,
+    demos: Demos | None = None,
 ) -> VideoScript:
     return VideoScript(
         title=outline.title,
         target_seconds=brief.target_seconds,
         result_file=result_file,
         final_step=brief.final_step,
+        demos=demo_files(brief.name, demos) if demos else {},
         sections=sections,
     )
 
