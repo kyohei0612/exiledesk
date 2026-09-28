@@ -34,7 +34,7 @@ FALLBACK = {
     "fill": {"color": "#ffe040"},
     "strokes": [{"color": "#a01010", "width": 12, "position": "outside"}],
 }
-RARITY_JA = {"magic": "マジックに!", "rare": "レアに!"}
+RARITY_JA = {"magic": "マジックに!", "rare": "レアに!", "unique": "ユニークに!"}
 
 
 def _style(name: str) -> str | dict[str, object]:

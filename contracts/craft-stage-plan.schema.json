@@ -87,7 +87,8 @@
       "enum": [
         "normal",
         "magic",
-        "rare"
+        "rare",
+        "unique"
       ],
       "title": "Start Rarity",
       "type": "string"

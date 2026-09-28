@@ -26,13 +26,20 @@ RARITY: dict[str, RGB] = {
     "normal": (170, 176, 186),
     "magic": (72, 104, 255),
     "rare": (222, 170, 0),
+    "unique": (175, 96, 37),
 }
 RARITY_SOFT: dict[str, RGB] = {
     "normal": (240, 241, 244),
     "magic": (228, 233, 255),
     "rare": (255, 246, 205),
+    "unique": (250, 232, 214),
 }
-RARITY_JA = {"normal": "ノーマル (白)", "magic": "マジック (青)", "rare": "レア (黄)"}
+RARITY_JA = {
+    "normal": "ノーマル (白)",
+    "magic": "マジック (青)",
+    "rare": "レア (黄)",
+    "unique": "ユニーク (茶)",
+}
 
 FONT_PATH = Path(r"C:\Windows\Fonts\meiryob.ttc")
 

@@ -39,7 +39,8 @@
           "enum": [
             "normal",
             "magic",
-            "rare"
+            "rare",
+            "unique"
           ],
           "title": "Start Rarity",
           "type": "string"
@@ -148,7 +149,8 @@
           "enum": [
             "normal",
             "magic",
-            "rare"
+            "rare",
+            "unique"
           ],
           "title": "Rarity From",
           "type": "string"
@@ -157,7 +159,8 @@
           "enum": [
             "normal",
             "magic",
-            "rare"
+            "rare",
+            "unique"
           ],
           "title": "Rarity To",
           "type": "string"
@@ -239,7 +242,8 @@
           "enum": [
             "normal",
             "magic",
-            "rare"
+            "rare",
+            "unique"
           ],
           "title": "Rarity",
           "type": "string"
@@ -254,6 +258,26 @@
         "corrupted": {
           "default": false,
           "title": "Corrupted",
+          "type": "boolean"
+        },
+        "identified": {
+          "default": true,
+          "description": "False = 未鑑定 (MOD を隠す)。鑑定の巻物で True",
+          "title": "Identified",
+          "type": "boolean"
+        },
+        "sockets": {
+          "default": 0,
+          "description": "熟練工のオーブで増える",
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Sockets",
+          "type": "integer"
+        },
+        "destroyed": {
+          "default": false,
+          "description": "可能性のオーブ等でアイテムが壊れた",
+          "title": "Destroyed",
           "type": "boolean"
         },
         "prefixes": {

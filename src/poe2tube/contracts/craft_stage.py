@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 PLAN_SCHEMA = "craft-stage-plan/1"
 RESULT_SCHEMA = "craft-stage-result/1"
 
-Rarity = Literal["normal", "magic", "rare"]
+Rarity = Literal["normal", "magic", "rare", "unique"]
 Side = Literal["prefix", "suffix"]
 PriceUnit = Literal["exalted", "divine", "chaos"]
 
@@ -42,6 +42,19 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
         "desecrate",
         "desecrate_ancient",
         "desecrate_altered",
+        # アクト中に落ちるカレンシー解説用 (2026-09-28 追加、ExileDesk 要望 ⑧)
+        "whetstone",  # 鍛冶屋の砥石 (武器の品質)
+        "scrap",  # 鎧鍛冶の端材 (防具の品質)
+        "bauble",  # ガラス吹きの飾り玉 (フラスコの品質)
+        "gemcutter",  # 宝石細工師のプリズム (ジェムの品質)
+        "chance",  # 可能性のオーブ
+        "wisdom",  # 鑑定の巻物
+        "transmute_shard",  # 変成のシャード
+        "regal_shard",  # 王者のシャード
+        "artificer_shard",  # 熟練工のシャード
+        "chance_shard",  # 可能性のシャード
+        "jeweller_lesser",  # 宝飾職人のオーブ (見習い)
+        "jeweller_greater",  # 宝飾職人のオーブ (上級)
     }
 )
 # エッセンスの実キーは "essence:lesser:Bows/Essence_PhysicalDamage" のように ":" と "/" を含む
@@ -137,6 +150,11 @@ class StageItem(BaseModel):
     rarity: Rarity
     quality: int = Field(default=0, ge=0, le=30)
     corrupted: bool = False
+    identified: bool = Field(
+        default=True, description="False = 未鑑定 (MOD を隠す)。鑑定の巻物で True"
+    )
+    sockets: int = Field(default=0, ge=0, le=6, description="熟練工のオーブで増える")
+    destroyed: bool = Field(default=False, description="可能性のオーブ等でアイテムが壊れた")
     prefixes: list[StageMod] = Field(default_factory=list, max_length=3)
     suffixes: list[StageMod] = Field(default_factory=list, max_length=3)
 
