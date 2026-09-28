@@ -11,7 +11,8 @@ import { computed, type ComponentPublicInstance } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
 
 /** height: 撮影用 (inline) で合わせるアイテム枠の高さ (px)。棚の上端・下端をこの中に収める (POE2Tube 要望 ⑥) */
-const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number }>();
+/** glow: 撮影用。拾われた物を薄くせず光らせる (要望 ⑦) */
+const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number; glow?: boolean }>();
 const GAP = 8;
 const PAD = 8;
 /**
@@ -58,11 +59,12 @@ function reg(k: string, el: Element | ComponentPublicInstance | null): void {
         v-for="k in keys"
         :key="k"
         :ref="(el) => reg(k, el)"
-        class="relative grid shrink-0 place-items-center rounded-lg border border-amber-200/20 bg-[#16120c]"
+        class="relative grid shrink-0 place-items-center rounded-lg border bg-[#16120c] transition-all duration-150"
+        :class="glow && held === k ? 'border-amber-300 shadow-[0_0_16px_4px_rgba(250,204,21,0.75)]' : 'border-amber-200/20'"
         :style="{ width: `${size}px`, height: `${size}px` }"
         :title="nameOf(k)"
       >
-        <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-[78%] w-[78%] object-contain transition-opacity duration-150" :class="held === k ? 'opacity-20' : ''" />
+        <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-[78%] w-[78%] object-contain transition-opacity duration-150" :class="held === k && !glow ? 'opacity-20' : ''" />
         <span v-else class="text-[10px] text-white/60">{{ nameOf(k).slice(0, 4) }}</span>
       </div>
     </div>

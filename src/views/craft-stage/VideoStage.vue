@@ -19,7 +19,7 @@ import StageItemCard from "./StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import { useStageFx } from "./use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
-import { craftStage, iconOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 
 const s = craftStage;
@@ -30,7 +30,9 @@ const clip = computed(() => layout.value === "clip");
 /**
  * 撮影用の倍率 (POE2Tube 要望 ⑥、2026-09-28 kyohei「動画用ならアイテムの枠に収まるように」「装備も小さいからもっと大きく」)。
  * 手順の全部の段階のアイテムを見えない所に並べて**一番高い物**を測り (clipMaxH)、下 15% (枠 720 の 612 から下) の上まで
- * いっぱいになる倍率を**1 回だけ**決める (手ごとに変えると動画でガタつく)。枠の高さも一番高い時に合わせて確保し、中身は上詰め。
+ * いっぱいになる倍率を**1 回だけ**決める (手ごとに変えると動画でガタつく)。
+ * 要望 ⑦ (2026-09-28): 枠の高さは中身に合わせる (白・青の手で下半分が空の大きな箱になっていた)。倍率と上端は固定なのでガタつかない。
+ * 棚は一番高い時の枠の高さのまま (手ごとにアイコンの大きさが変わらないように)
  * 横 (アイテム + 棚) が枠からはみ出す時だけ、その分下げる
  */
 const CLIP_TOP = 12;
@@ -181,10 +183,10 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
         >
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
-            <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :min-h="clip ? clipMaxH : undefined" :compact="clip" />
+            <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :compact="clip" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="[fx.kind === 'shake' ? 'text-sm' : 'text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
-          <VideoTray v-if="clip" inline :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+          <VideoTray v-if="clip" inline glow :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
         </div>
 
         <!-- 撮影用の倍率を決めるため、全部の段階のアイテムを見えない所に並べて高さを測る (測ったら消す) -->
@@ -218,6 +220,9 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             <div :style="clip ? { transform: `scale(${clipScale})`, transformOrigin: '0 0' } : undefined">
             <img v-if="hand.hand.held && iconOf(hand.hand.held)" :src="iconOf(hand.hand.held)" alt="" class="absolute left-2 top-3 h-12 w-12 object-contain drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]" />
             <span v-if="hand.hand.hint" class="absolute left-7 top-5 whitespace-nowrap rounded bg-black/80 px-1.5 py-0.5 text-[11px] text-orange-200">{{ hand.hand.hint }}</span>
+            <!-- 撮影用: 持っている物の名前 (要望 ⑦「初心者は棚のアイコンだけではどれか分からない」)。カーソルの左に出す (右は棚の外にはみ出す)。
+                 撮影用は倍率 (約 1.8) × 1080/720 が掛かるので 13px → 1080p で約 35px -->
+            <span v-if="clip && hand.hand.held" class="absolute right-full top-1 mr-1 whitespace-nowrap rounded-md border border-amber-300/50 bg-black/85 px-2 py-0.5 text-[13px] font-bold text-amber-100 shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{{ nameOf(hand.hand.held) }}</span>
             <svg :key="hand.hand.press" class="stage-press relative h-7 w-7 drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]" viewBox="0 0 24 24">
               <path d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L17.5 13.3 Z" fill="#f5efe2" stroke="#1a140c" stroke-width="1.4" stroke-linejoin="round" />
             </svg>
