@@ -18,6 +18,10 @@ export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", essence: "
 export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string }
 export interface ListRow {
   id: string;
+  /** 系統 (URL の mod= で id の代わりに使える) */
+  family: string;
+  /** 文面 (数値は #) */
+  template: string;
   side: StageSide;
   group: ModGroup;
   /** 一番上の段の数値で埋めた文面 */
@@ -54,7 +58,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
         const weight = m.tiers.reduce((a, t) => a + t.weight, 0);
         const on = onIds.has(m.id);
         return {
-          id: m.id, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
+          id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
           topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyKeys(m).some((f) => taken.has(f)),
         };
       });

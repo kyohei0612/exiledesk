@@ -9,7 +9,7 @@ import { ref } from "vue";
 
 /** 表示中の画面 (LeftSidebar の id) */
 // 再生モードの URL (?stage-plan=…) で開いた時はクラフトステージから (POE2Tube の撮影用。2026-09-27)
-export const activeNav = ref<string>(typeof location !== "undefined" && new URLSearchParams(location.search).has("stage-plan") ? "craft-stage" : "econ-currency");
+export const activeNav = ref<string>(typeof location !== "undefined" && (new URLSearchParams(location.search).has("stage-plan") || new URLSearchParams(location.search).has("view")) ? "craft-stage" : "econ-currency");
 
 /** ジェムコラプトの賭けで開いてほしいジェム (英語名)。画面側が受け取ったら null に戻す */
 export const pendingGemCorrupt = ref<string | null>(null);

@@ -43,6 +43,17 @@ const itemLevel = ref(82);
  * アイテム + 棚だけを大きく、見出し・右の欄・進行バー無し、下 15% 空け (結果の文字を重ねる所)
  */
 const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip" } | null>(null);
+/**
+ * 動画用の別の画面 (POE2Tube 要望 ⑪、2026-09-29)。URL の view= で開く (手順は要らない):
+ *   view=tiers&base=<英語のベース名>&mod=<MOD の id か系統>&ilvl=N … 段の表
+ *   view=compare&a=<手順 JSON>&b=<手順 JSON>[&a_step=N&b_step=N] … 2 つのアイテムを並べて違いを出す
+ */
+export type StageExtra =
+  | { kind: "tiers"; base: string; mod: string; ilvl: number | null }
+  | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number };
+const extra = ref<StageExtra | null>(null);
+/** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
+const focus = ref<string | null>(null);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -59,7 +70,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -92,6 +103,15 @@ export const craftStage = {
       const market = marketStore.ensureMarket();
       const q = new URLSearchParams(location.search);
       const raw = q.get("stage-plan");
+      focus.value = q.get("focus");
+      const view = q.get("view");
+      if (view === "tiers") {
+        const ilvl = Number(q.get("ilvl"));
+        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null };
+      } else if (view === "compare") {
+        const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
+        extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step") };
+      }
       // 再生は費用も出すので相場を待つ (手で打つ時は待たない。値段は打った時に引く)
       if (raw) await market;
       const step = Number(q.get("step") ?? "9999");

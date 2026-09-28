@@ -18,6 +18,7 @@ import { useStageFx } from "./use-stage-fx";
 import VideoStage from "./VideoStage.vue";
 import StageBasePicker from "./StageBasePicker.vue";
 import StageModList from "./StageModList.vue";
+import VideoExtra from "./VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -172,5 +173,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
       :style="{ left: `${mouse.x + 8}px`, top: `${mouse.y + 8}px` }"
     />
     <VideoStage v-if="s.video.value && s.ready.value" />
+    <!-- 動画用の別の画面 (URL の view=、要望 ⑪) -->
+    <VideoExtra v-if="s.extra.value && s.ready.value" />
   </div>
 </template>
