@@ -1,7 +1,8 @@
 """サムネ: act_currency_8min (鞄に溜まったカレンシー、何に使う？).
 
 案: 白地に、画面を「使う / 取っておく / 集める」の 3 色の箱に割り、それぞれにオーブを入れて見せる。
-上に「そのオーブ、使っていいの？」、右下に困り顔のずんだもん。一目で「仕分けの動画」と分かる絵。
+上に「そのオーブ、使っていいの？」、背面の右上に困り顔のずんだもんの顔アップ (箱で下半分を隠す)。
+一目で「仕分けの動画」と分かる絵。
 
     python scripts/thumbs/act_currency_8min.py
 """
@@ -48,6 +49,12 @@ def glow_icon(img: Image.Image, key: str, cx: int, cy: int, size: int) -> None:
 
 def main() -> None:
     img = Image.new("RGBA", (W, H), (255, 255, 255, 255))
+    # 背面: 困り顔のずんだもんの顔アップ (右上、下半分は箱の後ろに隠れる)
+    # 立ち絵 1200 高で頭は x 192〜576、目は y 288 あたり。見出しの右 (x 880〜) に頭を収め、
+    # 目を y 190 に置く → あごから下は箱 (TOP) の後ろに隠れる
+    z = render_tachie("zundamon", "troubled", 0, 1200)
+    face = z.crop((0, 0, z.width, 420))
+    img.alpha_composite(face, (W - 10 - 576, 190 - 288))
     d = ImageDraw.Draw(img)
     # 3 つの箱 (少し斜めの帯で「仕分け」らしく)
     cols = [(0, 430), (430, 860), (860, W)]
@@ -77,9 +84,6 @@ def main() -> None:
     big = fit(render_telop("textstyle025", "使っていいの？", 1.6), 900, TOP - y - 6)
     img.alpha_composite(big, (40, y))
     assert y + big.height <= TOP, "見出しが箱に被る"
-    # 右上: 困り顔のずんだもん (見出しの右、箱の上)
-    z = render_tachie("zundamon", "troubled", 0, 300)
-    img.alpha_composite(z, (W - z.width - 20, -30))
     OUT.parent.mkdir(parents=True, exist_ok=True)
     img.convert("RGB").save(OUT, quality=92)
     print(OUT)
