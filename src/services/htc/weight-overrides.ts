@@ -115,5 +115,14 @@ export function applyWeightOverrides(data: PatchData): { data: PatchData; applie
     overridden.add(m.id);
     applied.push(m.id);
   }
+  // 一部の段だけ仮置き (2026-09-29: 弓・クロスボウ・タリスマン等のリーチの一番上の段 65 だけ 1。メイスや槍の同じ段は 1,000)。
+  // その段だけ、同じ MOD の本物の重みの段 (同じ ilvl → それ以下で一番近い段) から借りる
+  for (const m of [...mods.values()]) {
+    if (m.source !== "normal" || isPlaceholderWeight(m) || !m.tiers.some((t) => t.weight <= 1)) continue;
+    const tiers = m.tiers.map((t) => (t.weight <= 1 ? { ...t, weight: weightAt(m, t.ilvl) } : t));
+    mods.set(m.id, { ...m, tiers });
+    overridden.add(m.id);
+    applied.push(m.id);
+  }
   return { data: { ...data, mods }, applied };
 }
