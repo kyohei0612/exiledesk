@@ -1,6 +1,6 @@
 """サムネ: act_currency_8min (鞄に溜まったカレンシー、何に使う？).
 
-案: 画面を「使う / 取っておく / 集める」の 3 色の箱に割り、それぞれにオーブを入れて見せる。
+案: 白地に、画面を「使う / 取っておく / 集める」の 3 色の箱に割り、それぞれにオーブを入れて見せる。
 上に「そのオーブ、使っていいの？」、右下に困り顔のずんだもん。一目で「仕分けの動画」と分かる絵。
 
     python scripts/thumbs/act_currency_8min.py
@@ -46,14 +46,14 @@ def glow_icon(img: Image.Image, key: str, cx: int, cy: int, size: int) -> None:
 
 
 def main() -> None:
-    img = Image.new("RGBA", (W, H), (20, 18, 24, 255))
+    img = Image.new("RGBA", (W, H), (255, 255, 255, 255))
     d = ImageDraw.Draw(img)
     # 3 つの箱 (少し斜めの帯で「仕分け」らしく)
     cols = [(0, 430), (430, 860), (860, W)]
     for (label, color, orbs), (x0, x1) in zip(BOXES, cols, strict=True):
         poly = [(x0 + 30, 250), (x1 + 30, 250), (x1 - 10, H), (x0 - 10, H)]
         d.polygon(poly, fill=(*color, 255))
-        d.line([(x1 + 30, 250), (x1 - 10, H)], fill=(20, 18, 24, 255), width=14)
+        d.line([(x1 + 30, 250), (x1 - 10, H)], fill=(255, 255, 255, 255), width=14)
         tag = render_telop("textstyle025", label, 0.9)
         tag = fit(tag, x1 - x0 - 40, 120)
         img.alpha_composite(tag, ((x0 + x1) // 2 + 10 - tag.width // 2, 262))
