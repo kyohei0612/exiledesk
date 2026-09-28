@@ -11,36 +11,30 @@
       "lines": [
         {
           "speaker": "zundamon",
-          "text": "アクトを進めてるのに、指輪は拾ったままで弱いのだ。",
           "emotion": "troubled",
+          "text": "アクトを進めてるのに、指輪は拾ったままなのだ。",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "なら、その指輪を自分で強くする話をするわね。",
-          "emotion": "normal",
+          "text": "拾った白い指輪は、オーブで自分で強くできるわ。",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "これがオーブを6回使った後のサファイアの指輪よ。",
-          "speech": "これがオーブを ろっかい 使った後の サファイアの指輪よ。",
-          "emotion": "proud",
+          "text": "例えばこれ。アクト中に拾えるオーブだけで作った指輪よ。",
           "scene": {
             "kind": "item",
-            "step": 6,
-            "highlight": "rarity"
+            "step": 6
           }
         },
         {
           "speaker": "zundamon",
-          "text": "最大マナ +27 に、火と混沌のダメージ増加なのだ！？",
-          "speech": "さいだいマナ プラス27 に、火と混沌のダメージ増加なのだ！？",
-          "emotion": "surprised",
+          "text": "MOD がいっぱい付いてるのだ。これは強いのだ？",
           "scene": {
             "kind": "item",
             "step": 6
@@ -48,52 +42,47 @@
         },
         {
           "speaker": "metan",
-          "text": "マナ獲得、ライフ自動回復、知性 +9 も付いているわ。",
-          "speech": "マナ獲得、ライフ自動回復、雷耐性 プラス7パーセント も付いているわ。",
-          "emotion": "normal",
+          "text": "良いのと微妙なのが混ざってるわ。そこを見分けるのが大事なの。",
           "scene": {
-            "kind": "talk"
+            "kind": "item",
+            "step": 6
           }
         },
         {
           "speaker": "zundamon",
-          "text": "そんなの、ぼくには作れないのだ…。",
-          "emotion": "sad",
+          "emotion": "troubled",
+          "text": "見分けるって、どうやるのだ？",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "使ったのは、アクト中に拾えるオーブだけよ。",
+          "text": "MOD のティアを見て、今の装備と替えるか決めるのよ。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
           "emotion": "happy",
-          "scene": {
-            "kind": "item",
-            "step": 6
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "text": "拾ったオーブだけで、ここまでいけるのだ！？",
-          "emotion": "surprised",
-          "scene": {
-            "kind": "item",
-            "step": 6
-          }
-        },
-        {
-          "speaker": "metan",
-          "text": "1.0 の正式リリースが来る前に、土台を押さえておくといいわ。",
-          "speech": "いってんゼロ の正式リリースが来る前に、土台を押さえておくといいわ。",
-          "emotion": "normal",
+          "text": "作り方と、付いた後の見方が分かるのだ。",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "まずアイテムの色と枠を知らないと、オーブは使えないわ。",
-          "emotion": "normal",
+          "text": "1.0 までに、この土台を押さえておくといいわ。",
+          "speech": "いってんゼロまでに、この土台を押さえておくといいわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まずはアイテムの色と枠から見ていくわね。",
           "scene": {
             "kind": "talk"
           }
@@ -107,8 +96,6 @@
         {
           "speaker": "metan",
           "text": "拾ったままの指輪は白のノーマル。MOD は 0 個よ。",
-          "speech": "拾ったままの指輪は白のノーマル。モッドはゼロ個よ。",
-          "emotion": "normal",
           "scene": {
             "kind": "item",
             "step": 0
@@ -116,9 +103,8 @@
         },
         {
           "speaker": "zundamon",
-          "text": "MOD って何なのだ？",
-          "speech": "モッドって何なのだ？",
           "emotion": "troubled",
+          "text": "MOD って何なのだ？",
           "scene": {
             "kind": "item",
             "step": 0
@@ -127,33 +113,13 @@
         {
           "speaker": "metan",
           "text": "アイテムに付く、追加の効果のことよ。",
-          "emotion": "normal",
-          "scene": {
-            "kind": "talk"
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "text": "白は、その効果が 1 つも無いのだ。",
-          "speech": "白は、その効果がひとつも無いのだ。",
-          "emotion": "normal",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "だから白のままだと、拾った時の性能だけなの。",
-          "emotion": "normal",
-          "scene": {
-            "kind": "item",
-            "step": 0
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "text": "ぼくの指輪も、ずっと白なのだ…。",
-          "emotion": "sad",
+          "text": "白は MOD が無いから、拾った時の性能だけなの。",
           "scene": {
             "kind": "item",
             "step": 0
@@ -162,19 +128,14 @@
         {
           "speaker": "metan",
           "text": "青のマジックになると、MOD が最大 2 個入るわ。",
-          "speech": "青のマジックになると、モッドが最大 2 個入るわ。",
-          "emotion": "normal",
           "scene": {
             "kind": "item",
-            "step": 1,
-            "highlight": "rarity"
+            "step": 1
           }
         },
         {
           "speaker": "metan",
           "text": "プレフィックスが 1 つと、サフィックスが 1 つね。",
-          "speech": "プレフィックスがひとつと、サフィックスがひとつね。",
-          "emotion": "normal",
           "scene": {
             "kind": "item",
             "step": 1
@@ -182,8 +143,8 @@
         },
         {
           "speaker": "zundamon",
-          "text": "プレフィックス？サフィックス？難しい言葉なのだ。",
           "emotion": "troubled",
+          "text": "プレフィックス？サフィックス？難しい言葉なのだ。",
           "scene": {
             "kind": "talk"
           }
@@ -191,25 +152,13 @@
         {
           "speaker": "metan",
           "text": "MOD が入る枠の名前よ。枠の種類が 2 つあるの。",
-          "speech": "モッドが入る枠の名前よ。枠の種類がふたつあるの。",
-          "emotion": "normal",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "どっちに何が入るかは、後で実際に見ればいいわ。",
-          "emotion": "normal",
-          "scene": {
-            "kind": "item",
-            "step": 1
-          }
-        },
-        {
-          "speaker": "zundamon",
-          "text": "今は名前だけ覚えておくのだ。",
-          "emotion": "normal",
+          "text": "最大マナやダメージ系は、プレフィックスに多いわ。",
           "scene": {
             "kind": "item",
             "step": 1
@@ -217,20 +166,14 @@
         },
         {
           "speaker": "metan",
-          "text": "そして黄のレアは、MOD が最大 6 個入るわ。",
-          "speech": "そして黄のレアは、モッドが最大 6 個入るわ。",
-          "emotion": "normal",
+          "text": "耐性や能力値は、サフィックスに多いわね。",
           "scene": {
-            "kind": "item",
-            "step": 3,
-            "highlight": "rarity"
+            "kind": "talk"
           }
         },
         {
           "speaker": "zundamon",
-          "text": "2 個から一気に 6 個なのだ！？",
-          "speech": "に個から一気に、ろく個なのだ！？",
-          "emotion": "surprised",
+          "text": "黄のレアだと、何個入るのだ？",
           "scene": {
             "kind": "item",
             "step": 3
@@ -238,18 +181,15 @@
         },
         {
           "speaker": "metan",
-          "text": "プレフィックス 3 つと、サフィックス 3 つよ。",
-          "speech": "プレフィックスみっつと、サフィックスみっつよ。",
-          "emotion": "proud",
+          "text": "最大 6 個よ。プレフィックス 3 つと、サフィックス 3 つね。",
           "scene": {
-            "kind": "talk"
+            "kind": "item",
+            "step": 3
           }
         },
         {
           "speaker": "zundamon",
           "text": "白が 0 個、青が 2 個、黄が 6 個なのだ。",
-          "speech": "白がゼロ個、青がに個、黄がろく個なのだ。",
-          "emotion": "normal",
           "scene": {
             "kind": "talk"
           }
@@ -257,7 +197,6 @@
         {
           "speaker": "metan",
           "text": "そう。色が、入る枠の数を表しているの。",
-          "emotion": "normal",
           "scene": {
             "kind": "item",
             "step": 3
@@ -265,9 +204,7 @@
         },
         {
           "speaker": "metan",
-          "text": "それと MOD には、ティアという強さの段階があるわ。",
-          "speech": "それとモッドには、ティアという強さの段階があるわ。",
-          "emotion": "normal",
+          "text": "次はティア。MOD の強さの段階よ。",
           "scene": {
             "kind": "item",
             "step": 3
@@ -275,8 +212,8 @@
         },
         {
           "speaker": "zundamon",
-          "text": "ティアは、数字が大きいほど強いのだ？",
           "emotion": "troubled",
+          "text": "ティアは、数字が大きいほど強いのだ？",
           "scene": {
             "kind": "talk"
           }
@@ -284,16 +221,13 @@
         {
           "speaker": "metan",
           "text": "逆よ。T1 が一番強くて、数字が大きいほど弱いの。",
-          "speech": "逆よ。ティーワンが一番強くて、数字が大きいほど弱いの。",
-          "emotion": "normal",
           "scene": {
             "kind": "talk"
           }
         },
         {
           "speaker": "metan",
-          "text": "アイテムレベルが高いほど、強いティアが出うるわ。",
-          "emotion": "normal",
+          "text": "同じ MOD でも、ティアで数字の大きさが変わるわ。",
           "scene": {
             "kind": "item",
             "step": 3
@@ -301,8 +235,137 @@
         },
         {
           "speaker": "zundamon",
-          "text": "枠の数は分かったのだ。何の指輪で試すのだ？",
+          "text": "じゃあ、装備はどうやって選べばいいのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今の装備と同じ MOD があれば、ティアを比べるの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "新しい方の数字が小さければ、入れ替えを考えていいわ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "同じ MOD が無い時はどうするのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中は、耐性が付いている方を優先するといいわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後にアイテムレベル。拾った場所の強さで決まる数字よ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "それが高いと、何がいいのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "強いティアほど、出るのに高いアイテムレベルが要るの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今のデータだと、指輪の火耐性の T1 はアイテムレベル 82 からよ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アクト中の指輪だと、T1 は出ないのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。アイテムレベル 36 なら、火耐性は T5 までね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "だからアクト中は、出うる一番上に近ければ当たりなの。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "数字だけ見て、ハズレと決めなくていいのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。ティアは、アイテムレベルと一緒に見てね。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "もっと詳しく知りたい時は、どうするのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "poe2db というサイトに、ティアとアイテムレベルが全部載ってるわ。",
+          "speech": "ポエツーディービーというサイトに、ティアとアイテムレベルが全部載ってるわ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
           "emotion": "happy",
+          "text": "眺めるだけでも、けっこう面白いわよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "見方は分かったのだ。何の指輪で試すのだ？",
           "scene": {
             "kind": "talk"
           }

@@ -22,6 +22,7 @@ python scripts/build_video.py  data/scripts/<name>.json  # 音声・図解・撮
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
 ```
 
+- **台本ができたら動画にする前に kyohei と 1 章ずつチェック** (問題 → 直した案の表 → OK で反映 → 次の章)
 - 台本生成は `claude -p` (MAX プラン)。途中で落ちても `output/work/<name>/script_cache/` から再開
 - 1 章だけ書き直す: `script_cache/section_NN.json` を消して write_script を再実行
 - 尺の目安: **400 字/分** (実測)。8 分 = 3,200 字。台本の中で尺を口にしない
