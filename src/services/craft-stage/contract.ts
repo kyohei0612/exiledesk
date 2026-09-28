@@ -19,7 +19,7 @@ export type Title = string | null;
  */
 export type Base = string;
 export type ItemLevel = number;
-export type StartRarity = "normal" | "magic" | "rare";
+export type StartRarity = "normal" | "magic" | "rare" | "unique";
 /**
  * 途中から始める時のゲーム内アイテムテキスト (Ctrl+C 貼り付け)。無ければ白
  */
@@ -61,9 +61,21 @@ export type Name = string;
 export type Base1 = string;
 export type BaseJa = string | null;
 export type ItemLevel1 = number;
-export type Rarity = "normal" | "magic" | "rare";
+export type Rarity = "normal" | "magic" | "rare" | "unique";
 export type Quality = number;
 export type Corrupted = boolean;
+/**
+ * False = 未鑑定 (MOD を隠す)。鑑定の巻物で True
+ */
+export type Identified = boolean;
+/**
+ * 熟練工のオーブで増える
+ */
+export type Sockets = number;
+/**
+ * 可能性のオーブ等でアイテムが壊れた
+ */
+export type Destroyed = boolean;
 /**
  * @maxItems 3
  */
@@ -98,8 +110,8 @@ export type Crafted = boolean;
 export type Suffixes = [] | [StageMod] | [StageMod, StageMod] | [StageMod, StageMod, StageMod];
 export type Added = StageMod[];
 export type Removed = StageMod[];
-export type RarityFrom = "normal" | "magic" | "rare";
-export type RarityTo = "normal" | "magic" | "rare";
+export type RarityFrom = "normal" | "magic" | "rare" | "unique";
+export type RarityTo = "normal" | "magic" | "rare" | "unique";
 /**
  * カレンシー 1 個の相場 (price_unit 建て)
  */
@@ -182,6 +194,9 @@ export interface StageItem {
   rarity: Rarity;
   quality?: Quality;
   corrupted?: Corrupted;
+  identified?: Identified;
+  sockets?: Sockets;
+  destroyed?: Destroyed;
   prefixes?: Prefixes;
   suffixes?: Suffixes;
   [k: string]: unknown;

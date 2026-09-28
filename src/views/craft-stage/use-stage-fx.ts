@@ -23,8 +23,23 @@ export interface StageFx {
   icon: string;
 }
 
-const RARITY_TEXT = { magic: "マジックに!", rare: "レアに!", normal: "" } as const;
-const COLOR = { magic: "#8888ff", rare: "#e8d77a", normal: "#c8c8c8", desecrated: "#f07070", fractured: "#c8a86a", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
+const RARITY_TEXT = { magic: "マジックに!", rare: "レアに!", normal: "", unique: "ユニークに!" } as const;
+const COLOR = { magic: "#8888ff", rare: "#e8d77a", normal: "#c8c8c8", unique: "#ff9a4a", desecrated: "#f07070", fractured: "#c8a86a", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
+/**
+ * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
+ */
+function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {
+  if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: `品質 +${Math.round((after.quality - before.quality) * 10) / 10}%` };
+  if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: "鑑定!" };
+  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: `サポート枠 ${after.gemSockets} つ!` };
+  const sh = Object.keys(after.shards ?? {}).find((k) => (after.shards?.[k] ?? 0) !== (before.shards?.[k] ?? 0));
+  if (sh) {
+    const n = after.shards![sh]!;
+    return n === 0 ? { kind: "up", color: COLOR.top, text: "10 個でオーブに!" } : { kind: "hit", color: "#c8c8c8", text: `+1 (${n}/10)` };
+  }
+  if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: "#c8a86a", text: "ソケット +1!" };
+  return null;
+}
 /** コラプトの結果の文字 */
 function vaalText(before: StageItem, after: StageItem, changed: number): string {
   if (after.enchant !== before.enchant) return "コラプト — エンチャント!";
@@ -48,7 +63,10 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     const o = st.out;
     const top = st.added.find((m) => m.tierName === "T1" && !m.unrevealed);
     let next: Omit<StageFx, "n" | "x" | "y" | "icon">;
+    const act = actText(st.before, st.after);
     if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? "使えない" };
+    else if (st.after.destroyed && !st.before.destroyed) next = { kind: "shake", color: COLOR.miss, text: "壊れた…" };
+    else if (act) next = act;
     else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };

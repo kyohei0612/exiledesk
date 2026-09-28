@@ -20,6 +20,8 @@ import { applyEssence } from "./apply-essence";
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
+import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, SHARD_REASON } from "./apply-act";
+import { isFlask, isGem, uniquesForBase } from "./stage-bases";
 import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
@@ -60,19 +62,37 @@ function sideOmen(used: readonly string[], left: string, right: string): StageSi
  * 1 個打つ。打てない状態なら applied:false と理由 (item はそのまま)。
  * rng は 1 手ごとに mulberry32(seed) を渡す (同じ seed なら同じ結果)。omens は持っているお告げ
  */
-export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = []): StageApply {
+/**
+ * hint: 手順の手の追加の指定 (要望 ⑧)。collect = シャードを拾う手 (手で打つ画面でアイテムに使う時は無し → 打てない)、
+ * outcome = 可能性のオーブの結果を指定 ("unique" / "destroyed")
+ */
+export interface ApplyHint { collect?: boolean; outcome?: string }
+
+export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
+  // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
+  if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, SHARD_REASON);
+  if (item.destroyed) return skip(item, "壊れたアイテムには何も使えない");
+  // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
+  if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
   if (item.sanctified) return skip(item, "聖別したアイテムには使えない");
   if (item.corrupted && kindOf(currency) !== "reveal") return skip(item, "コラプトしたアイテムには使えない");
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
   if (bad) return skip(item, "このお告げの効果はまだ入れていない");
-  const r = applyInner(data, item, currency, rng, used);
+  const r = applyInner(data, item, currency, rng, used, hint);
   return r.applied ? { ...r, omensUsed: used } : r;
 }
 
-function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[]): StageApply {
+function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[], hint: ApplyHint): StageApply {
   const kind = kindOf(currency);
+  // アクト中に落ちる物 (要望 ⑧、apply-act.ts)
+  if (currency === "wisdom") return applyWisdom(item);
+  if (currency in QUALITY_TARGET) return applyQuality(item, currency);
+  if (currency === "jeweller_lesser" || currency === "jeweller_greater") return applyJeweller(item, currency);
+  if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
+  // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
+  if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);

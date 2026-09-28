@@ -15,15 +15,25 @@ import { itemBaseFor } from "../htc/bridge";
 import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
 import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
-import { applyCurrency } from "./apply-currency";
+import { applyCurrency, type ApplyHint } from "./apply-currency";
+import { isShard } from "./apply-act";
+import { extraBaseFor } from "./stage-bases";
+
+/** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
+export const GEM_START_SOCKETS = 2;
 import type { CraftStagePlan, CraftStageResult, StageItem as OutItem, StageMod as OutMod, StageStep as OutStep } from "./contract";
 import type { StageItem, StageMod } from "./types";
 
 /** 白 (か手順の開始のレアリティ) の新品 */
 export function freshItem(data: PatchData, base: string, itemLevel: number, rarity: StageItem["rarity"] = "normal"): StageItem {
-  const cls = itemBaseFor(data, base);
+  // 計算機のベースに無ければ、フラスコ・スキルジェムの仮のベース (要望 ⑧)
+  const extra = itemBaseFor(data, base) ? null : extraBaseFor(base);
+  const cls = itemBaseFor(data, base) ?? extra?.cls;
   if (!cls) throw new Error(`ベースが見つからない: ${base}`);
-  return { base, baseJa: jaTypeName(base), cls, itemLevel, rarity, prefixes: [], suffixes: [], quality: 0, corrupted: false };
+  const baseJa = extra?.ja ?? jaTypeName(base);
+  const gem = cls.category === "SkillGem";
+  // スキルジェムのサポート枠の最初の数: **一次ソースなし (未確定)**。宝飾職人のオーブ (見習い) の「3 つ未満にだけ使える」から 2 と置く
+  return { base, baseJa, cls, itemLevel, rarity: gem ? "normal" : rarity, prefixes: [], suffixes: [], quality: 0, corrupted: false, ...(gem ? { gemSockets: GEM_START_SOCKETS } : {}) };
 }
 
 export function outMod(m: StageMod): OutMod {
@@ -54,7 +64,10 @@ export function outItem(it: StageItem): OutItem {
     rarity: it.rarity,
     quality: it.quality,
     corrupted: it.corrupted,
-    // 足したキー (POE2Tube は無視してよい): 品質の種類とソケットの数
+    identified: it.identified !== false,
+    destroyed: !!it.destroyed,
+    // 足したキー (POE2Tube は無視してよい): 品質の種類・ソケットの数 (sockets は POE2Tube の型にもある)・ユニーク名・ジェムの枠・シャード
+    ...({ unique: it.unique ?? null, gem_sockets: it.gemSockets ?? null, shards: it.shards ?? null } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
     suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
@@ -83,9 +96,9 @@ export function stepJa(currency: string, item: StageItem): string {
  */
 export function playStep(
   data: PatchData, item: StageItem, currency: string,
-  o: { index: number; seed: number; price: (key: string) => number; cumulative: number; omen?: string | null },
+  o: { index: number; seed: number; price: (key: string) => number; cumulative: number; omen?: string | null; hint?: ApplyHint },
 ): PlayedStep {
-  const r = applyCurrency(data, item, currency, mulberry32(o.seed), splitOmens(o.omen));
+  const r = applyCurrency(data, item, currency, mulberry32(o.seed), splitOmens(o.omen), o.hint);
   const used = r.omensUsed ?? [];
   // 使えない手は使っていない (費用も 0)。each はカレンシー 1 個、subtotal はお告げ込み
   const each = o.price(currency);
@@ -119,10 +132,31 @@ export interface RunMeta {
   generatedAt?: string;
 }
 
+/**
+ * 手順の始めのアイテム。start_rarity がマジック / レアなら、落ちた物のように MOD を付けて始める
+ * (マジック = 変成 + 半分の確率で増強、レア = 錬金。seed は plan.seed - 1 で決まる)。
+ * start_unidentified: true (手順 JSON の追加キー、要望 ⑧) なら未鑑定で始める (MOD は隠れ、鑑定の巻物で見える)
+ */
+export function startItem(data: PatchData, plan: CraftStagePlan): StageItem {
+  const rarity = plan.start_rarity ?? "normal";
+  let item = freshItem(data, plan.base, plan.item_level ?? 80);
+  const rng = mulberry32(plan.seed - 1);
+  if (rarity === "magic") {
+    item = applyCurrency(data, item, "transmute", rng).item;
+    if (rng() < 0.5) item = applyCurrency(data, item, "augment", rng).item;
+  } else if (rarity === "rare") {
+    item = applyCurrency(data, item, "alchemy", rng).item;
+  } else if (rarity === "unique") {
+    item = { ...item, rarity: "unique" };
+  }
+  if ((plan as { start_unidentified?: boolean }).start_unidentified && (rarity === "magic" || rarity === "rare")) item = { ...item, identified: false };
+  return item;
+}
+
 /** 手順を 1 手ずつ打って、全部の手の記録を返す (upTo まで。画面の再生モードの ?step=N) */
 export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly<Record<string, number>>, upTo = Infinity): { steps: PlayedStep[]; final: StageItem } {
   if (plan.start_paste) throw new Error("途中からの開始 (start_paste) はまだ使えない (Phase 2)");
-  let item = freshItem(data, plan.base, plan.item_level ?? 80, plan.start_rarity ?? "normal");
+  let item = startItem(data, plan);
   const steps: PlayedStep[] = [];
   let cumulative = 0;
   let index = 0;
@@ -130,7 +164,10 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
     for (let k = 0; k < (ps.times ?? 1); k++) {
       if (index >= upTo) return { steps, final: item };
       index++;
-      const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null });
+      // シャードの手は「1 個拾う」、可能性のオーブは outcome で結果を指定できる (要望 ⑧。outcome は POE2Tube の手順 JSON の追加キー)
+      const outcome = (ps as { outcome?: string }).outcome;
+      const hint = { collect: isShard(ps.currency), ...(outcome ? { outcome } : {}) };
+      const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null, hint });
       steps.push(p);
       item = p.after;
       cumulative = p.out.cost.cumulative;

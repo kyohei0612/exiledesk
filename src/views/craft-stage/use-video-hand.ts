@@ -14,6 +14,7 @@ import { reactive, ref, type Ref } from "vue";
 import { revealOffers } from "../../services/craft-stage/apply-desecrate";
 import { mulberry32 } from "../../services/htc/rng";
 import { craftStage } from "../../state/craft-stage";
+import { isShard } from "../../services/craft-stage/apply-act";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import type { StageMod } from "../../services/craft-stage/types";
 
@@ -63,6 +64,14 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
     try {
       const cur = st.out.currency;
       const rv = /^reveal:(\d)(:reroll)?$/.exec(cur);
+      // シャード: 棚の上で拾うだけ (アイテムには使えない。10 個でオーブになる。要望 ⑧)
+      if (isShard(cur)) {
+        await moveTo(pointOf(slots.get(cur)), 520);
+        await click();
+        apply();
+        await wait(300);
+        return;
+      }
       // 1. お告げを有効にする (ゲームと同じく右クリック。有効になると赤金に脈打つ)
       for (const o of st.out.omen ? st.out.omen.split("+") : []) {
         await moveTo(pointOf(slots.get(o)), 520);

@@ -33,6 +33,9 @@ export const ORBS: ShelfGroup[] = [
   { kind: "chaos", label: "カオス", keys: ["chaos", "chaos_greater", "chaos_perfect"] },
   { kind: "annul", label: "消去", keys: ["annul"] },
   { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal"] },
+  // アクト中に落ちる物 (2026-09-28、POE2Tube 要望 ⑧)
+  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater"] },
+  { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
 ];
 export const BONES = ["desecrate", "desecrate_ancient", "desecrate_altered"];
 export const CATALYSTS = Object.keys(KEYS.currency).filter((k) => k.startsWith("catalyst_"));

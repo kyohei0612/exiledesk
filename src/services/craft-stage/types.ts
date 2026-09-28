@@ -6,7 +6,7 @@
  */
 import type { ItemBase } from "../../vendor/poe2htc/engine/types";
 
-export type StageRarity = "normal" | "magic" | "rare";
+export type StageRarity = "normal" | "magic" | "rare" | "unique";
 export type StageSide = "prefix" | "suffix";
 
 /** アイテムに付いている MOD 1 つ (数値まで確定した物) */
@@ -58,6 +58,16 @@ export interface StageItem {
   enchant?: { id: string; textJa: string; textEn: string } | null;
   /** 聖別 (聖別のお告げ + 神)。コラプトと同じくもう手を加えられない */
   sanctified?: boolean;
+  /** 未鑑定 (false)。MOD を隠す。鑑定の巻物で true。無ければ鑑定済み (POE2Tube 要望 ⑧) */
+  identified?: boolean;
+  /** 壊れた (可能性のオーブの外れ)。以後何も打てない */
+  destroyed?: boolean;
+  /** ユニークになった時の名前 (英語 / 日本語) */
+  unique?: { en: string; ja: string } | null;
+  /** スキルジェムのサポート枠の数 (宝飾職人のオーブ) */
+  gemSockets?: number;
+  /** 拾ったシャードの数 (キー → 個数)。10 個でオーブになる。アイテムの状態ではないが、手順の流れで持ち回すためここに置く */
+  shards?: Record<string, number>;
 }
 
 /** 1 手の結果 */

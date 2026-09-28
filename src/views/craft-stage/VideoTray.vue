@@ -9,10 +9,12 @@
 <script setup lang="ts">
 import { computed, type ComponentPublicInstance } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
+import { isShard, SHARDS_PER_ORB } from "../../services/craft-stage/apply-act";
 
 /** height: 撮影用 (inline) で合わせるアイテム枠の高さ (px)。棚の上端・下端をこの中に収める (POE2Tube 要望 ⑥) */
 /** glow: 撮影用。拾われた物を薄くせず光らせる (要望 ⑦) */
-const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number; glow?: boolean }>();
+/** counts: 拾ったシャードの数 (キー → 個数)。シャードの棚に「n/10」を出す (要望 ⑧) */
+const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number; glow?: boolean; counts?: Record<string, number> }>();
 const GAP = 8;
 const PAD = 8;
 /**
@@ -66,6 +68,7 @@ function reg(k: string, el: Element | ComponentPublicInstance | null): void {
       >
         <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-[78%] w-[78%] object-contain transition-opacity duration-150" :class="held === k && !glow ? 'opacity-20' : ''" />
         <span v-else class="text-[10px] text-white/60">{{ nameOf(k).slice(0, 4) }}</span>
+        <span v-if="isShard(k)" :key="`c${counts?.[k] ?? 0}`" class="stage-row-in absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/85 px-1 text-[10px] font-bold tabular-nums text-amber-100">{{ counts?.[k] ?? 0 }}/{{ SHARDS_PER_ORB }}</span>
       </div>
     </div>
     <template v-if="omens.length">

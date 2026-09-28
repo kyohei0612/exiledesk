@@ -20,6 +20,8 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { htcBaseInfo } from "../../services/htc/patch";
+import { FLASK_BASES, GEM_BASES } from "../../services/craft-stage/stage-bases";
+import { jaTypeName } from "../../services/trade2/localize";
 import pkg from "../../../package.json";
 
 const s = craftStage;
@@ -39,7 +41,12 @@ const baseGroups = computed(() => {
     list.push({ en, ja: info.ja, lvl: info.lvl });
     by.set(info.cls, list);
   }
-  return [...by.entries()].map(([cls, list]) => ({ cls, ja: CLS_JA[cls] ?? cls.replace(/_/g, " "), list: list.sort((a, b) => a.lvl - b.lvl) }));
+  const groups = [...by.entries()].map(([cls, list]) => ({ cls, ja: CLS_JA[cls] ?? cls.replace(/_/g, " "), list: list.sort((a, b) => a.lvl - b.lvl) }));
+  // 計算機に無いフラスコ・スキルジェム (要望 ⑧。品質のカレンシー・宝飾職人のオーブを見せるため)
+  groups.push({ cls: "LifeFlask", ja: "ライフフラスコ", list: FLASK_BASES.filter((f) => f.cls === "LifeFlask").map((f) => ({ en: f.en, ja: jaTypeName(f.en), lvl: f.lvl })) });
+  groups.push({ cls: "ManaFlask", ja: "マナフラスコ", list: FLASK_BASES.filter((f) => f.cls === "ManaFlask").map((f) => ({ en: f.en, ja: jaTypeName(f.en), lvl: f.lvl })) });
+  groups.push({ cls: "SkillGem", ja: "スキルジェム", list: GEM_BASES.map((g) => ({ en: g.en, ja: g.ja, lvl: 1 })) });
+  return groups;
 });
 const ILVLS = [45, 65, 75, 82, 86];
 

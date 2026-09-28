@@ -61,6 +61,19 @@ const CURRENCY = {
   // 2026-09-26: ソケットを 1 つ足す (アストリッドの創造性 / セールの凱旋を差す穴。オーナー「アストリッドやら追加しとこうか」)。
   // これもエンジンの通貨ではなく、ソケットに差す物の代 ([[sim-setup.ts]] の socketCost) で引く
   artificer: "Metadata/Items/Currency/CurrencyAddEquipmentSocket",
+  // 2026-09-28 クラフトステージ (POE2Tube 要望 ⑧「アクト中に落ちるカレンシーの解説」)。キーは POE2Tube の contracts と同じ
+  whetstone: "Metadata/Items/Currency/CurrencyWeaponQuality",
+  scrap: "Metadata/Items/Currency/CurrencyArmourQuality",
+  bauble: "Metadata/Items/Currency/CurrencyFlaskQuality",
+  gemcutter: "Metadata/Items/Currency/CurrencyGemQuality",
+  chance: "Metadata/Items/Currency/CurrencyUpgradeRandomly",
+  wisdom: "Metadata/Items/Currency/CurrencyIdentification",
+  transmute_shard: "Metadata/Items/Currency/CurrencyUpgradeToMagicShard",
+  regal_shard: "Metadata/Items/Currency/CurrencyUpgradeMagicToRareShard",
+  artificer_shard: "Metadata/Items/Currency/CurrencyAddEquipmentSocketShard",
+  chance_shard: "Metadata/Items/Currency/CurrencyUpgradeRandomlyShard",
+  jeweller_lesser: "Metadata/Items/Currency/CurrencyAddSkillGemSocket3",
+  jeweller_greater: "Metadata/Items/Currency/CurrencyAddSkillGemSocket4",
 };
 
 /**

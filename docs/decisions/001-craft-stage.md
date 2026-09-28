@@ -119,3 +119,22 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
 1. `src/services/craft-stage/types.ts` + `apply-currency.ts` (Phase 1 の 7 種) + `check-craft-stage.mjs`
 2. `views/craft-stage/` の 4 パネルと左メニュー登録、再生モード (`?step=N`)
 3. POE2Tube から `scripts/craft-stage-run.mjs` を叩いて結果 JSON を受け取る疎通
+
+## 追記 2026-09-28: アクト中に落ちるカレンシー (POE2Tube 要望 ⑧)
+
+実装: `src/services/craft-stage/apply-act.ts` (+ `stage-bases.ts` / `stage-bases.json`)。数値の出典:
+
+| 物 | 決まり | 出典 |
+|---|---|---|
+| 鑑定の巻物 | 未鑑定を鑑定 | クライアント「Identifies an item」 |
+| シャード 4 種 | **10 個**で 1 個のオーブ (アイテムには使えない) | クライアント「A stack of 10 shards becomes …」(stack_size 10) |
+| 宝飾職人 (見習い / 上級) | スキルジェムのサポート枠を 3 / 4 に (未満の時だけ) | クライアント「Sets a Skill Gem to have 3 / 4 Support Gem Sockets」 |
+| 可能性のオーブ | ノーマル → ユニークか破壊 | クライアント「Unpredictably either upgrades a Normal item to Unique rarity or destroys it」 |
+| 砥石 / 端材 / 飾り玉 / プリズム | 物理武器 / 防具 / フラスコ / スキルジェムの品質。上限 20% | クライアントの説明文、poe2db の Quality |
+| 品質の効果 | 武器は物理 1% more / 防具は防御 1% more / フラスコは回復量 1% more (品質 1% ごと) | poe2db の Quality |
+| ベースの数値 | 防御力・物理ダメージ・速度・クリティカル・フラスコの回復量 | クライアント (data-cache/base_items.json) |
+
+**未確定 (一次ソースなし。確かめたら apply-act.ts の定数だけ直す)**:
+- 品質の 1 回の上がり幅: ノーマル 5 / マジック 2 / レア・ユニーク 1 (攻略サイト aoeah のみ。PoE1 と同じ)。プリズムは 1% と 5% の記述が食い違う (仮に 5)
+- 可能性のオーブのユニークになる確率 (公開値なし、仮に 10%)。動画は手順の `outcome` で結果を指定する。なるユニークはベースのユニークから等分 (重みは公開値なし)
+- スキルジェムの最初のサポート枠 (宝飾職人の「3 未満にだけ」から 2 と置いた)

@@ -79,8 +79,17 @@ const fx = useStageFx(anchor, { count: () => idx.value, last: () => last.value }
 const fxCls = computed(() => (fx.value ? { hit: "stage-hit", up: "stage-up", shake: "stage-shake" }[fx.value.kind] : ""));
 
 /** 棚に並べる物 (工程で使うカレンシー等とお告げ。開示の手は棚を使わない) */
-const trayKeys = [...new Set(tape.map((st) => st.out.currency).filter((c) => !c.startsWith("reveal:")))];
-const trayOmens = [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
+/**
+ * 手順 JSON の tray (追加キー、POE2Tube 要望 ⑧「棚に並べる物を手順 JSON で決められるように (使う物だけ、使う順)」) があればその順。
+ * 無ければ工程で使う順。お告げは下の段 (id が Omenof…)
+ */
+const planTray = (s.replay.value?.plan as { tray?: string[] } | undefined)?.tray;
+const trayKeys = planTray
+  ? planTray.filter((k) => !k.startsWith("Omenof"))
+  : [...new Set(tape.map((st) => st.out.currency).filter((c) => !c.startsWith("reveal:")))];
+const trayOmens = planTray
+  ? planTray.filter((k) => k.startsWith("Omenof"))
+  : [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
 const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
 // 撮影用の倍率は開いた時と見た目を切り替えた時に 1 回だけ決める
@@ -189,7 +198,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :compact="clip" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="[fx.kind === 'shake' ? 'text-sm' : 'text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
-          <VideoTray v-if="clip" inline glow :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+          <VideoTray v-if="clip" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
         </div>
 
         <!-- 撮影用の倍率を決めるため、全部の段階のアイテムを見えない所に並べて高さを測る (測ったら消す) -->
@@ -214,7 +223,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         </div>
 
         <!-- 棚 (カーソルがここから拾う) -->
-        <VideoTray v-if="!clip" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+        <VideoTray v-if="!clip" :counts="item.shards" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
 
         <!-- カーソル (横と縦で動き方を変えて弧を描く) -->
         <div v-if="hand.hand.visible" class="pointer-events-none absolute left-0 top-0 z-30" :style="{ transform: `translateX(${hand.hand.x}px)`, transition: `transform ${hand.hand.dur}ms cubic-bezier(0.45, 0.05, 0.3, 1)` }">

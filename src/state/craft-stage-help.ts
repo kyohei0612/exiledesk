@@ -12,6 +12,7 @@ import { enchantPool } from "../services/craft-stage/apply-vaal";
 import { socketCountFor } from "../services/htc/sockets";
 import { maxQualityForBase } from "../services/htc/catalysing-setup";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
+import { CHANCE_UNIQUE_P, isShard, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 
@@ -113,6 +114,29 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
       ].filter(Boolean);
     }
   }
+  // アクト中に落ちる物 (2026-09-28、要望 ⑧。出典は apply-act.ts)
+  if (key in QUALITY_TARGET) {
+    const t = QUALITY_TARGET[key]!;
+    const st = QUALITY_STEP;
+    return [
+      `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "whetstone" ? "。物理武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
+      key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)`,
+      key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
+    ];
+  }
+  if (key === "wisdom") return ["**未鑑定** のアイテムを鑑定する (隠れていた MOD が見える)", "未鑑定のアイテムには、ほかのカレンシーは打てない"];
+  if (key === "chance") {
+    return [
+      "**ノーマル** のアイテムを **ユニーク** にするか、**壊す** (クライアントの説明文)",
+      `ユニークになる確率は公開されていない (**未確定**、仮に ${Math.round(CHANCE_UNIQUE_P * 100)}%。手順の outcome で結果を指定できる)`,
+      "なるユニークはそのベースのユニークから等しく 1 つ (重みは公開値なし)",
+    ];
+  }
+  if (key === "jeweller_lesser" || key === "jeweller_greater") {
+    const n = key === "jeweller_greater" ? 4 : 3;
+    return [`**スキルジェム** のサポート枠を **${n} つ** にする (1 つずつではなく一気に)`, `サポート枠が ${n} つ未満のジェムにだけ使える`, "装備には使えない"];
+  }
+  if (isShard(key)) return [`**${SHARDS_PER_ORB} 個** 集めると ${SHARD_TO_ORB[key] === "transmute" ? "変成" : SHARD_TO_ORB[key] === "regal" ? "王者" : SHARD_TO_ORB[key] === "artificer" ? "熟練工" : "可能性"}のオーブ 1 個になる (クライアントの説明文)`, "アイテムには使えない", "動画の手順では 1 手 = 1 個拾う"];
   if (key.startsWith("catalyst_")) {
     const max = item ? maxQualityForBase(item.base) : 20;
     return [

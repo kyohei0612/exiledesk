@@ -236,5 +236,32 @@ function compare(label, item, cur, n = 40000) {
   console.log(`聖別: ${s.removed.map((m, i) => `${m.values.join(",")}→${s.added[i].values.join(",")}`).join("  ")}`);
 }
 
+// ---- 6. アクト中に落ちる物 (POE2Tube 要望 ⑧): 品質・鑑定・可能性・シャード・宝飾職人・熟練工 ----
+{
+  const META6 = { prices: {}, exiledeskVersion: "t", patch: "0.5.0", league: null };
+  const P = (base, steps, extra = {}) => ({ schema: "craft-stage-plan/1", base, item_level: 30, seed: 7, steps, ...extra });
+  const run = (plan) => M.runPlan(data, plan, META6);
+  const q = run(P("Hardwood Spear", [{ currency: "whetstone", times: 5 }, { currency: "scrap" }]));
+  if (q.final.quality !== 20) ng(`砥石 5 回で品質 20% でない (${q.final.quality})`);
+  if (q.steps[4].applied) ng("品質 20% の後に砥石が打てた");
+  if (q.steps[5].applied) ng("槍に端材が打てた");
+  const w = run(P("Rusted Cuirass", [{ currency: "scrap" }, { currency: "wisdom" }, { currency: "scrap" }], { start_rarity: "magic", start_unidentified: true }));
+  if (w.steps[0].applied || w.steps[0].after.identified !== false) ng("未鑑定に端材が打てた");
+  if (!w.steps[1].applied || w.steps[1].after.identified === false) ng("鑑定の巻物で鑑定されない");
+  if (w.steps[2].after.quality !== 2) ng(`マジックの端材が +2% でない (${w.steps[2].after.quality})`);
+  const g = run(P("Arc", [{ currency: "jeweller_lesser" }, { currency: "jeweller_greater" }, { currency: "jeweller_lesser" }]));
+  if (g.steps[1].after.gem_sockets !== 4 || g.steps[2].applied) ng("宝飾職人の枠 (3 → 4、4 の後の見習いは打てない) が違う");
+  const cu = run(P("Gold Ring", [{ currency: "chance", outcome: "unique" }]));
+  const cd = run(P("Gold Ring", [{ currency: "chance", outcome: "destroyed" }, { currency: "transmute" }]));
+  if (cu.final.rarity !== "unique" || !cu.final.unique) ng("可能性のオーブ (unique 指定) でユニークにならない");
+  if (!cd.final.destroyed || cd.steps[1].applied) ng("可能性のオーブ (destroyed 指定) で壊れない / 壊れた後に打てた");
+  const sh = run(P("Gold Ring", [{ currency: "regal_shard", times: 11 }]));
+  if (sh.steps[9].after.shards.regal_shard !== 0 || sh.final.shards.regal_shard !== 1) ng("シャード 10 個でオーブにならない");
+  if (M.applyCurrency(data, M.freshItem(data, "Gold Ring", 30), "regal_shard", M.mulberry32(1)).applied) ng("手で打つ時にシャードがアイテムに使えた");
+  const a = run(P("Hardwood Spear", [{ currency: "artificer", times: 3 }]));
+  if (a.final.sockets !== 2 || a.steps[2].applied) ng("熟練工のソケット (2 まで) が違う");
+  console.log(`アクト: 砥石 20% / 鑑定 / 端材 +2% (マジック) / 宝飾職人 3→4 / 可能性 (ユニーク ${cu.final.unique?.ja}・壊れた) / シャード 10 個 / 熟練工 2 まで`);
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

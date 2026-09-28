@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-27",
+ "generated": "2026-09-28",
  "source": "GGG クライアント BaseItemTypes (data-cache/client-export)。キーは poe2htc の optimizer/cost.ts",
  "currency": {
   "transmute": {
@@ -85,6 +85,54 @@
   "artificer": {
    "en": "Artificer's Orb",
    "ja": "熟練工のオーブ"
+  },
+  "whetstone": {
+   "en": "Blacksmith's Whetstone",
+   "ja": "鍛冶屋の砥石"
+  },
+  "scrap": {
+   "en": "Armourer's Scrap",
+   "ja": "鎧鍛冶の端材"
+  },
+  "bauble": {
+   "en": "Glassblower's Bauble",
+   "ja": "ガラス吹きの飾り玉"
+  },
+  "gemcutter": {
+   "en": "Gemcutter's Prism",
+   "ja": "宝石細工師のプリズム"
+  },
+  "chance": {
+   "en": "Orb of Chance",
+   "ja": "可能性のオーブ"
+  },
+  "wisdom": {
+   "en": "Scroll of Wisdom",
+   "ja": "鑑定の巻物"
+  },
+  "transmute_shard": {
+   "en": "Transmutation Shard",
+   "ja": "変成のシャード"
+  },
+  "regal_shard": {
+   "en": "Regal Shard",
+   "ja": "王者のシャード"
+  },
+  "artificer_shard": {
+   "en": "Artificer's Shard",
+   "ja": "熟練工のシャード"
+  },
+  "chance_shard": {
+   "en": "Chance Shard",
+   "ja": "可能性のシャード"
+  },
+  "jeweller_lesser": {
+   "en": "Lesser Jeweller's Orb",
+   "ja": "宝飾職人のオーブ (見習い)"
+  },
+  "jeweller_greater": {
+   "en": "Greater Jeweller's Orb",
+   "ja": "宝飾職人のオーブ (上級)"
   },
   "essence:breach": {
    "en": "Essence of the Breach",
