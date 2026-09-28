@@ -20,7 +20,7 @@ def test_act_stage_rejects_high_ilvl_and_endgame_currency() -> None:
     b = _brief(player_stage="act")  # 8 分 brief は ilvl 80 + chaos を含む
     problems = b.problems()
     assert any("ilvl 80" in p for p in problems)
-    assert any("chaos" in p for p in problems)
+    assert not any("chaos" in p for p in problems)  # カオスはアクトでも拾える (kyohei 2026-09-28)
 
 
 def test_endgame_stage_accepts_everything() -> None:
@@ -41,3 +41,10 @@ def test_all_briefs_on_disk_are_consistent() -> None:
 def test_base_must_be_obtainable_at_stage() -> None:
     b = _brief(player_stage="act")
     assert any("Mnemonic Ring" in p for p in b.problems())
+
+
+def test_act_rejects_endgame_only_currency() -> None:
+    raw = json.loads((ROOT / "data/briefs/act_craft_8min.json").read_text(encoding="utf-8"))
+    raw["plan"]["steps"].append({"currency": "divine"})
+    problems = Brief.model_validate(raw).problems()
+    assert any("divine" in p for p in problems)
