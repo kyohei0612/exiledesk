@@ -55,7 +55,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
     }
     case "artificer": {
       const max = socketCountFor(item.cls.category);
-      if (!max) return skip(item, "ソケットを付けられない種類");
+      // 言葉はゲームの説明文「マーシャル武器、ワンド、スタッフまたは防具にオーグメントソケットを1個追加する」
+      if (!max) return skip(item, "マーシャル武器・ワンド・スタッフ・防具にだけ使える");
       const n = item.sockets ?? 0;
       if (n >= max) return skip(item, `ソケットが上限 (${max})`);
       return { applied: true, item: { ...item, sockets: n + 1 }, added: [], removed: [] };

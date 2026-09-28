@@ -129,7 +129,8 @@ const rows = computed(() => [
           <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
       </div>
-      <p v-if="!rows.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category)" class="py-1 text-white/30">{{ item.rarity === "unique" ? "(ユニークの MOD はこのステージでは出さない)" : "MOD なし" }}</p>
+      <!-- ユニークの効果は出さない: ユニーク → MOD の対応がクライアントの表に無く確実に引けない。撮影用 (compact) は注記も出さない (要望 ⑨) -->
+      <p v-if="!rows.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : "(ユニークの MOD はこのステージでは出さない)") : "MOD なし" }}</p>
       <!-- 消えた MOD (直前の手) -->
       <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ m.textJa }}</p>
       <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">コラプト</p>

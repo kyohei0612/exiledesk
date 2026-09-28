@@ -140,7 +140,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
           :flash-key="flashKey"
           @use="s.use()"
         />
-        <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'text-sm' : 'text-2xl'">{{ fx.text }}</span>
+        <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
         <RevealPanel />
         <div class="w-[380px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">

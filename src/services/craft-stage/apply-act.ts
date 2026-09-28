@@ -57,8 +57,8 @@ export function applyJeweller(item: StageItem, key: string): StageApply {
 const MARTIAL = ["Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Spears", "Talismans"];
 const ARMOUR = ["Body_Armours", "Helmets", "Gloves", "Boots", "Shields", "Bucklers", "Foci"];
 export const QUALITY_TARGET: Record<string, { cats: string[]; ja: string }> = {
-  // ja は打てない時の短い理由にも使う (POE2Tube「理由を短く表示」)。ワンド・セプター・スタッフは物理武器ではない (説明は詳細カード)
-  whetstone: { cats: MARTIAL, ja: "物理武器" },
+  // ja は打てない時の短い理由にも使う。言葉はゲームの説明文 (currency-hover-ja.json) と同じ (POE2Tube 要望 ⑨「マーシャル武器」)
+  whetstone: { cats: MARTIAL, ja: "マーシャル武器" },
   scrap: { cats: ARMOUR, ja: "防具" },
   bauble: { cats: ["LifeFlask", "ManaFlask"], ja: "フラスコ" },
   gemcutter: { cats: ["SkillGem"], ja: "スキルジェム" },

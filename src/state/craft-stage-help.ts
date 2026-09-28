@@ -119,7 +119,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const t = QUALITY_TARGET[key]!;
     const st = QUALITY_STEP;
     return [
-      `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "whetstone" ? "。物理武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
+      `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
       key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)`,
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
     ];
