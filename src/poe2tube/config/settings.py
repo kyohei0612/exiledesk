@@ -12,7 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="POE2TUBE_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="POE2TUBE_", env_file=REPO_ROOT / ".env", extra="ignore"
+    )
 
     exiledesk_root: Path = Field(
         default=Path.home() / "ExileDesk",
@@ -48,6 +50,17 @@ class Settings(BaseSettings):
     width: int = 1920
     height: int = 1080
     background_rgb: tuple[int, int, int] = Field(default=(255, 255, 255), description="白背景固定")
+    youtube_client_id: str | None = Field(
+        default=None, description="ニュースと同じ OAuth クライアント"
+    )
+    youtube_client_secret: str | None = None
+    youtube_refresh_token: str | None = Field(
+        default=None, description="チョコバナナ用 (scripts/youtube_auth.py が書く)"
+    )
+    channel_profile: Path = Field(
+        default=REPO_ROOT / "data" / "channel" / "chocobanana.json",
+        description="チャンネル設定 (ADR 003)",
+    )
 
     @property
     def price_keys_path(self) -> Path:

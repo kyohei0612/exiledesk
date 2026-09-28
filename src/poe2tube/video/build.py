@@ -19,7 +19,7 @@ from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events, write_frames
-from poe2tube.video.timeline import build_cues, concat_audio
+from poe2tube.video.timeline import Cue, build_cues, concat_audio
 
 log = structlog.get_logger()
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -91,6 +91,16 @@ def capture_stage_scenes(script: VideoScript, result: CraftStageResult) -> None:
         log.warning("stage capture failed, falling back to drawn panel", error=str(e)[:300])
 
 
+def write_chapters(cues: list[Cue], path: Path) -> None:
+    """章 (section) の頭の時刻。投稿時の説明文のチャプターに使う (ADR 003)."""
+    seen: list[dict[str, object]] = []
+    for c in cues:
+        if not seen or seen[-1]["title"] != c.section:
+            seen.append({"title": c.section, "start": round(c.start, 2)})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(seen, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def build_video(
     script_path: Path, out: Path | None = None, keep_frames: bool = False
 ) -> BuildResult:
@@ -106,6 +116,7 @@ def build_video(
 
     book = NameBook.load()
     cues = build_cues(script.sections, wavs, s.fps)
+    write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")
     events = sound_events(cues, book, script.final_step or len(result.steps), result)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)

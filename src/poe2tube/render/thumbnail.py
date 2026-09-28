@@ -22,8 +22,9 @@ from poe2tube.render.telop_style import render_telop
 
 W, H = 1280, 720
 ICON_DIR = REPO_ROOT / "assets" / "icons"
-# 実画面 (動画モード 1920x1080) の完成アイテム枠
-ITEM_CARD_BOX = (200, 175, 945, 680)
+# 実画面 (ExileDesk 撮影用 layout=clip、v0.1.314〜) の完成アイテム枠
+ITEM_CARD_BOX = (205, 45, 1450, 890)
+ITEM_CARD_W = 560  # サムネ上の幅
 DEFAULT_ORBS = ["exalt", "chaos", "regal", "transmute", "divine", "augment", "annul", "vaal"]
 # (中心 x, 中心 y, 直径, 傾き) — 左右の帯に大小をつけて。中央の題名と右下の再生時間を避ける
 ORB_SLOTS = [
@@ -110,7 +111,8 @@ def _background(img: Image.Image, src_path: Path | None) -> None:
     img.alpha_composite(dark)
     # 完成アイテムを中央下に (金の光)
     card = src.crop(ITEM_CARD_BOX)
-    card = card.resize((int(card.width * 0.6), int(card.height * 0.6)), Image.Resampling.LANCZOS)
+    k = ITEM_CARD_W / card.width
+    card = card.resize((ITEM_CARD_W, int(card.height * k)), Image.Resampling.LANCZOS)
     cx, cy = (W - card.width) // 2, H - card.height - 26
     glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     ImageDraw.Draw(glow).rounded_rectangle(

@@ -20,7 +20,18 @@ python scripts/run_stage.py    data/briefs/<name>.json   # ExileDesk で手順�
 python scripts/write_script.py data/briefs/<name>.json   # Claude が台本 (180 秒以上は 構成表→章ごと) → data/scripts/<name>.json
 python scripts/build_video.py  data/scripts/<name>.json  # 音声・図解・撮影・合成 → output/<name>.mp4
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
+python scripts/make_thumbnail.py --top ... --main ... --bg cache/stage/<hash>/step_N.png --out output/<name>_thumb.jpg
+python scripts/publish_video.py <name>            # 投稿情報 data/publish/<name>.json を作って表示 (dry-run)
+python scripts/publish_video.py <name> --execute  # チョコバナナに「非公開」で上げる (--publish-at で予約)
 ```
+
+### YouTube チャンネル「チョコバナナ」(ADR 003)
+
+- 設定は全部 `data/channel/chocobanana.json` (説明・キーワード・再生リスト・クレジット・既定の公開範囲)。変えたら `python scripts/apply_channel.py --execute`
+- 初回だけ: `python scripts/youtube_auth.py` → ブラウザで「チョコバナナ」を選ぶ (違うチャンネルを選ぶと保存しない)
+- 書き込み系は全部 **既定 dry-run**、`--execute` の時だけ。接続先のチャンネル名が違えば止まる (ニュースへの誤投稿防止)
+- アイコン / チャンネル名は API で変えられない → YouTube Studio で手で。素材は `assets/brand/`
+- API の 1 日の枠はニュースと共有 (動画 1 本 ≒ 1,700 / 10,000)
 
 - **台本ができたら動画にする前に kyohei と 1 章ずつチェック** (問題 → 直した案の表 → OK で反映 → 次の章)
 - **全章 OK になったら、聞かずにそのまま build_video で動画まで作って送る** (kyohei 2026-09-28「台本の後に基本的に動画作る」)
@@ -40,6 +51,7 @@ python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック�
 | 撮影 (ExileDesk 動画モード) | `src/poe2tube/capture/stage.py` (Playwright、Vite 1420 自動起動) |
 | 音声 / 音 | `src/poe2tube/audio/{voicevox,mix}.py` |
 | 動画化 | `src/poe2tube/video/{timeline,animate,build}.py` |
+| 投稿 / チャンネル設定 | `src/poe2tube/publish/{models,youtube,channel,meta}.py`、`data/channel/`、`data/publish/` |
 | 設定 | `src/poe2tube/config/settings.py` (env `POE2TUBE_*`) |
 | 素材 | `assets/characters` (坂本アヒル氏 PSD、git 外)、`assets/icons`、`assets/se` |
 
