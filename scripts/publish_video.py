@@ -54,6 +54,7 @@ def main() -> None:
     ap.add_argument("--summary", default=None, help="説明文の 1 段落目 (初回作成時)")
     ap.add_argument("--rebuild", action="store_true", help="data/publish/<name>.json を作り直す")
     ap.add_argument("--publish-at", default=None, help="予約公開 ISO 8601 (+09:00)")
+    ap.add_argument("--video-id", default=None, help="上げ済みの動画にサムネと再生リストだけ付ける")
     ap.add_argument("--execute", action="store_true", help="付けた時だけ YouTube に上げる")
     a = ap.parse_args()
 
@@ -69,7 +70,9 @@ def main() -> None:
         verify_channel(service, profile.expected_title)
         pl_actions, ids = ensure_playlists(service, profile, a.execute)
         playlist_id = ids.get(meta.playlist_key or "")
-        actions, video_id = upload_video(service, meta, playlist_id, execute=a.execute, root=ROOT)
+        actions, video_id = upload_video(
+            service, meta, playlist_id, execute=a.execute, root=ROOT, video_id=a.video_id
+        )
     for act in pl_actions + actions:
         log.info("done" if a.execute else "plan", action=str(act))
     if video_id:

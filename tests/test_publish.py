@@ -221,3 +221,27 @@ def test_envfile_roundtrip(tmp_path: Path) -> None:
     set_env(env, "B", "x=y")
     assert read_env(env) == {"A": "2", "B": "x=y"}
     assert env.read_text(encoding="utf-8").startswith("# c\n")
+
+
+def test_thumbnail_403_does_not_stop_playlist(tmp_path: Path) -> None:
+    import httplib2  # type: ignore[import-untyped]
+    from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+
+    (tmp_path / "v.mp4").write_bytes(b"x")
+    (tmp_path / "t.jpg").write_bytes(b"x")
+    fake = FakeYouTube()
+
+    class _Thumb:
+        def set(self, **kw: Any) -> Any:
+            class _R:
+                def execute(self) -> None:
+                    raise HttpError(httplib2.Response({"status": 403}), b"forbidden")
+
+            return _R()
+
+    fake.thumbnails = lambda: _Thumb()  # type: ignore[method-assign]
+    m = VideoMeta(video="v.mp4", thumbnail="t.jpg", title="t", description="d")
+    actions, vid = upload_video(fake, m, "PL", execute=True, root=tmp_path, video_id="VID")
+    assert vid == "VID" and "videos.insert" not in fake.names()
+    assert "playlistItems.insert" in fake.names()
+    assert any("サムネ未設定" in str(a) for a in actions)

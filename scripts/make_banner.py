@@ -23,7 +23,7 @@ def main() -> None:
     img = render_banner(
         BRAND / "chocobanana_icon_flat_bg.png",
         title="チョコバナナ",
-        subtitle="PoE2 1.0 に向けた基礎知識まとめ",
+        subtitle="PoE2 初心者向け 解説チャンネル",
         tagline="ずんだもん × 四国めたん で、初心者向けにやさしく解説",
     )
     out = BRAND / "chocobanana_banner_2560x1440.png"

@@ -123,8 +123,12 @@ def upload_video(
     playlist_id: str | None = None,
     execute: bool = False,
     root: Path = REPO_ROOT,
+    video_id: str | None = None,
 ) -> tuple[list[Action], str | None]:
-    """動画 → サムネ → 再生リストの順に上げる。戻り値は (やった/やる事, video_id)."""
+    """動画 → サムネ → 再生リストの順に上げる。戻り値は (やった/やる事, video_id).
+
+    ``video_id`` を渡すと動画は上げ直さず、サムネと再生リストだけ付ける (途中で止まった時の続き)。
+    """
     video = root / meta.video
     if not video.exists():
         raise FileNotFoundError(f"動画が無い: {video}")
@@ -132,7 +136,11 @@ def upload_video(
     if thumb is not None and not thumb.exists():
         raise FileNotFoundError(f"サムネが無い: {thumb}")
     when = f"予約 {meta.publish_at}" if meta.publish_at else meta.privacy
-    actions = [Action("動画を上げる", f"{meta.title} ({video.name}, {when})")]
+    actions = (
+        [Action("動画は上げ済み", video_id)]
+        if video_id
+        else [Action("動画を上げる", f"{meta.title} ({video.name}, {when})")]
+    )
     if thumb is not None:
         actions.append(Action("サムネを付ける", thumb.name))
     if playlist_id:
@@ -142,18 +150,25 @@ def upload_video(
 
     from googleapiclient.http import MediaFileUpload  # type: ignore[import-untyped]
 
-    media = MediaFileUpload(str(video), chunksize=8 * 1024 * 1024, resumable=True)
-    req = service.videos().insert(part="snippet,status", body=video_body(meta), media_body=media)
-    res = None
-    while res is None:
-        status, res = req.next_chunk()
-        if status is not None:
-            log.info("uploading", progress=round(status.progress() * 100))
-    video_id = str(res["id"])
-    log.info("video uploaded", video_id=video_id)
+    if video_id is None:
+        media = MediaFileUpload(str(video), chunksize=8 * 1024 * 1024, resumable=True)
+        req = service.videos().insert(
+            part="snippet,status", body=video_body(meta), media_body=media
+        )
+        res = None
+        while res is None:
+            status, res = req.next_chunk()
+            if status is not None:
+                log.info("uploading", progress=round(status.progress() * 100))
+        video_id = str(res["id"])
+        log.info("video uploaded", video_id=video_id)
     if thumb is not None:
-        service.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumb))).execute()
-    if playlist_id:
+        failed = set_thumbnail(service, video_id, thumb)
+        if failed:
+            actions = [a for a in actions if a.what != "サムネを付ける"] + failed
+    if playlist_id and in_playlist(service, playlist_id, video_id):
+        actions = [a for a in actions if a.what != "再生リストに入れる"]
+    elif playlist_id:
         service.playlistItems().insert(
             part="snippet",
             body={
@@ -164,3 +179,39 @@ def upload_video(
             },
         ).execute()
     return actions, video_id
+
+
+def set_thumbnail(service: Any, video_id: str, thumb: Path) -> list[Action]:
+    """サムネを付ける。電話番号未確認のチャンネルは 403 → 止めずに「未設定」を返す.
+
+    動画は上がっているので、ここで落とすと再生リストへの追加まで止まる (2026-09-28 実際に起きた)。
+    """
+    from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+    from googleapiclient.http import MediaFileUpload
+
+    try:
+        service.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(str(thumb))).execute()
+    except HttpError as e:
+        if getattr(e, "status_code", None) != 403 and "403" not in str(e)[:40]:
+            raise
+        log.warning(
+            "thumbnail not set (channel not verified?)", video_id=video_id, error=str(e)[:200]
+        )
+        return [
+            Action(
+                "【要対応】サムネ未設定",
+                "youtube.com/verify で電話番号確認 → publish_video.py <name> --video-id "
+                f"{video_id} --execute",
+            )
+        ]
+    return []
+
+
+def in_playlist(service: Any, playlist_id: str, video_id: str) -> bool:
+    """もう入っていれば二重に入れない (--video-id で続きをやり直した時)."""
+    res = (
+        service.playlistItems()
+        .list(part="id", playlistId=playlist_id, videoId=video_id, maxResults=1)
+        .execute()
+    )
+    return bool(res.get("items"))
