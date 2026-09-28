@@ -31,8 +31,9 @@ const clip = computed(() => layout.value === "clip");
  * 撮影用の倍率 (POE2Tube 要望 ⑥、2026-09-28 kyohei「動画用ならアイテムの枠に収まるように」「装備も小さいからもっと大きく」)。
  * 手順の全部の段階のアイテムを見えない所に並べて**一番高い物**を測り (clipMaxH)、下 15% (枠 720 の 612 から下) の上まで
  * いっぱいになる倍率を**1 回だけ**決める (手ごとに変えると動画でガタつく)。
- * 要望 ⑦ (2026-09-28): 枠の高さは中身に合わせる (白・青の手で下半分が空の大きな箱になっていた)。倍率と上端は固定なのでガタつかない。
- * 棚は一番高い時の枠の高さのまま (手ごとにアイコンの大きさが変わらないように)
+ * 要望 ⑦ (2026-09-28): 枠の高さは中身に合わせる (白・青の手で下半分が空の大きな箱になっていた)。
+ * 棚は一番高い時 (最後のレア) の枠の高さのまま固定し、アイテムの枠は棚の**上下の真ん中**に置く (kyohei「マジックとか白はカレンシー棚の
+ * 真ん中に設置して MOD に応じて増える形に、縦は対称で。最終マックスはレアの枠」)。MOD が増えると上下に同じだけ広がり、最後に棚と揃う
  * 横 (アイテム + 棚) が枠からはみ出す時だけ、その分下げる
  */
 const CLIP_TOP = 12;
@@ -98,6 +99,8 @@ async function go(n: number): Promise<void> {
     });
   } else {
     hand.skip();
+    // 戻る・飛ぶ時は、前の手の演出 (「レアに!」や吸い込まれるアイコン) を残さない
+    if (to <= idx.value) fx.value = null;
     const r = cardEl.value?.getBoundingClientRect();
     if (r) anchor.value = { x: r.x + r.width / 2, y: r.y + r.height / 3 };
     idx.value = to;
@@ -179,7 +182,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         <!-- アイテム (撮影用はアイテム + 棚を 1 つの塊で大きく、上寄りの真ん中。下 15% は空ける) -->
         <div
           ref="groupEl"
-          :class="clip ? 'absolute left-1/2 top-[12px] flex origin-top items-start gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
+          :class="clip ? 'absolute left-1/2 top-[12px] flex origin-top items-center gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
           :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
         >
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
