@@ -2,6 +2,10 @@
 //!
 //! tally.rs から分割 (2026-09-26)。通信もファイル I/O もしない純粋関数。
 use super::*;
+use std::collections::HashMap;
+
+/// 付け替えとみなす猶予: 消えてから 15 分以内に同じ出品者が出した出品 (オーナー 2026-09-28)
+pub const RELIST_GRACE_SECS: i64 = 15 * 60;
 
 /// 1 回のサンプルを状態に反映する。
 ///
@@ -17,10 +21,11 @@ use super::*;
 ///   1. 一覧から消えた 1 回目は「確定待ち」(missing_since = その時刻) にするだけ
 ///   2. 次の判定できる巡でも居なければ確定。消えた時刻は**最初に居なかった時刻**
 ///      (途中で戻ってきたら確定待ちを取り消す)
-///   3. 確定した時、同じ出品者が**今この条件で 1 件でも並べていれば**値段の付け替え (relisted)。
-///      見るのは今回の最安 10 件の出品者、消えた物がある巡に追加で取る 11 件目以降 (最大 20 件)、
-///      追跡中で今回の一覧に居る出品の出品者
-///      (新しい ID だけ・最安 10 件だけを見ていた頃は、古い出品を残したまま 1 件下げただけの人を売れたと数えていた)
+///   3. 確定した時、同じ出品者が**消えてから 15 分以内に出した出品**をこの条件で並べていれば値段の付け替え (relisted)。
+///      「消えてから」= 前回見えた時刻 (last_seen) 〜 初めて居なかった時刻 + 15 分 の間に出品された物 (出品時刻が分かる物だけ)。
+///      2026-09-28 オーナー「同じ ID が売れて即出品は付け直し判断だけど、その猶予は 15 分以内に」: 前は時間の制限が無く、
+///      ずっと前から並べていた別の出品が残っているだけでも付け替えにしていた (在庫を複数並べている人の 1 個が売れても数えなかった)。
+///      見るのは今回の最安 10 件、消えた物がある巡に追加で取る 11 件目以降 (最大 20 件)、追跡中で今回の一覧に居る出品
 ///   4. 出品時刻か出品者が分からない物は unknown (売れたとは言えないので数えない)
 /// 売れた件数 (日次の gone) に入るのは 1〜4 を抜けた物だけ。
 pub fn apply_sample(
@@ -33,20 +38,28 @@ pub fn apply_sample(
     details: Option<&[ListingRef]>,
 ) {
     let present: HashSet<&str> = ids.iter().map(String::as_str).collect();
-    // 今この条件で並べている出品者 = 今回取った最安 10 件 + 追加で取った 11 件目以降 (今回の一覧に居る物)
-    // + 追跡中で今回の一覧に居る出品の出品者
-    let live_sellers: HashSet<String> = entries
+    // 今この条件で並べている出品者 → その出品の出品時刻 = 今回取った最安 10 件 + 追加で取った 11 件目以降 (今回の一覧に居る物)
+    // + 追跡中で今回の一覧に居る出品
+    let mut live: HashMap<String, Vec<i64>> = HashMap::new();
+    for (acc, at) in entries
         .iter()
         .chain(details.unwrap_or(&[]).iter().filter(|e| present.contains(e.id.as_str())))
-        .filter_map(|e| e.account.clone())
+        .filter_map(|e| Some((e.account.clone()?, e.listed_at?)))
         .chain(
             state
                 .tracked
                 .iter()
                 .filter(|t| t.gone_at.is_none() && present.contains(t.id.as_str()))
-                .filter_map(|t| t.account.clone()),
+                .filter_map(|t| Some((t.account.clone()?, t.listed_at?))),
         )
-        .collect();
+    {
+        live.entry(acc).or_default().push(at);
+    }
+    // 同じ出品者が、消えてから (前回見えた時刻 〜 初めて居なかった時刻 + 猶予) の間に出した出品を並べているか
+    let relisted_soon = |acc: Option<&str>, last_seen: i64, first_missing: i64| -> bool {
+        acc.and_then(|a| live.get(a))
+            .is_some_and(|ats| ats.iter().any(|&at| at >= last_seen - 60 && at <= first_missing + RELIST_GRACE_SECS))
+    };
     // 売れたと確定した出品の「消えた日」(日次の gone に足す)
     let mut sold_days: Vec<i64> = Vec::new();
     // 生き返った出品が「売れた」として数えられていた日 (集計から引く)
@@ -81,19 +94,18 @@ pub fn apply_sample(
             // 一覧が切れている / 出品者が取れなかった巡は判断を保留 (確定待ちもそのまま)
             continue;
         }
-        // 同じ出品者が今この条件で並べているか (確定待ちの間に 1 回でも見えたら付け替え)
-        let seller_live = t.account.as_deref().is_some_and(|acc| live_sellers.contains(acc));
+        // 同じ出品者が消えてから 15 分以内に出した出品を並べているか (確定待ちの間に 1 回でも見えたら付け替え)
         match t.missing_since {
             None => {
                 // 1 回目: 確定待ちにするだけ
                 t.missing_since = Some(now);
-                t.relisted = seller_live;
+                t.relisted = relisted_soon(t.account.as_deref(), t.last_seen, now);
             }
             Some(first) => {
                 // 2 回続けて居ない: 確定。消えた時刻は最初に居なかった時刻
                 t.gone_at = Some(first);
                 t.missing_since = None;
-                t.relisted = t.relisted || seller_live;
+                t.relisted = t.relisted || relisted_soon(t.account.as_deref(), t.last_seen, first);
                 t.unknown = !t.relisted && (t.listed_at.is_none() || t.account.is_none());
                 if !t.relisted && !t.unknown {
                     sold_days.push(day_of(first));

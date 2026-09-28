@@ -32,8 +32,11 @@ const nowSec = (): number => Math.floor(Date.now() / 1000);
 /** 条件ごとのまとめ */
 const summaries = computed(() => buildSummaries(props.keys, props.store));
 
-/** 消えた出品 (新しい順) */
-const soldRows = computed<Row[]>(() => buildSoldRows(props.keys, props.store));
+/**
+ * 消えた出品 (新しい順)。値段の付け替え (売れて 15 分以内に同じ出品者が出し直した物) は出さない
+ * (2026-09-28 オーナー「付け直しは表示させなくていい、ややこしい」。売れた件数・合計には前から入れていない)
+ */
+const soldRows = computed<Row[]>(() => buildSoldRows(props.keys, props.store).filter((r) => !r.relisted));
 
 /** 「確認した時刻」でまとめる (まとめ方の説明は sold-list-rows.ts の groupByCheck) */
 const checkGroups = computed(() => groupByCheck(soldRows.value));
@@ -185,7 +188,7 @@ async function verify(key: string): Promise<void> {
             出品の一覧は自動取得の周期ごと (「再取得」や「一括取得」を押した時はその時も) に見ています。見た時に消えていれば売れたと数えるので、
             <span class="text-[var(--exile-color-text-secondary)]">1 回の確認で何件もまとめて出てくるのが普通</span>です。
             消えた正確な時刻は分からないので、「並んでいた時間」は出品時刻から確認時刻までの長さです (実際はもっと短い可能性があります)。
-            消えたのと同時に同じ出品者が並べ直していた分は、値段の付け替えとみなして売れた件数から外しています。
+            消えてから 15 分以内に同じ出品者が並べ直した分は、値段の付け替えとみなして売れた件数から外し、この一覧にも出していません。
             追跡しているのは<span class="text-[var(--exile-color-text-secondary)]">その時点で最安 10 件の出品</span>なので、
             「売れるまで ◯ 時間」は<span class="text-[var(--exile-color-text-secondary)]">最安帯に並べた場合の時間</span>です。
             それより高い値段で並んでいる物は「まだ並んでいる出品」に残り続けます。

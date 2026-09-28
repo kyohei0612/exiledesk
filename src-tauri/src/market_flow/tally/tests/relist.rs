@@ -28,10 +28,10 @@ fn immediate_relist_is_not_counted_as_sold() {
     assert_eq!(daily_gone(&st), 1);
 }
 
-/// B2: 同じ出品者が**前から**並べている別の出品 (新しい ID ではない / 最安 10 件の外) が
-/// 残っていれば付け替え扱い (売れたにしない)
+/// 2026-09-28 オーナー「売れて即出品の猶予は 15 分以内」: 同じ出品者が**前から**並べている別の出品 (最安 10 件の外) が
+/// 残っているだけなら売れた扱い (在庫を複数並べている人の 1 個が売れた)。前はこれを付け替えにしていた
 #[test]
-fn older_listing_by_same_seller_counts_as_relist() {
+fn older_listing_by_same_seller_is_sold() {
     let now = 1_700_000_000i64;
     let mut st = WatchState::default();
     // S1 が a (安い) と z (高い、12 件目) を前から並べている。z は最安 10 件の外なので追跡していない
@@ -50,14 +50,14 @@ fn older_listing_by_same_seller_counts_as_relist() {
     apply_sample(&mut st, now + 3600, rest.len() as u64, &rest, &top2, true, Some(&extra));
     apply_sample(&mut st, now + 7200, rest.len() as u64, &rest, &top2, true, Some(&extra));
     let a = find(&st, "a");
-    assert!(a.gone_at.is_some() && a.relisted, "同じ出品者が前からの出品を残している = 付け替え");
-    assert_eq!(daily_gone(&st), 0);
+    assert!(a.gone_at.is_some() && !a.relisted, "前からの出品が残っているだけ = 売れた (15 分以内の出品ではない)");
+    assert_eq!(daily_gone(&st), 1);
     assert!(st.tracked.iter().all(|t| t.id != "z"), "追加で取った出品は追跡には入れない");
 }
 
-/// B2: 追跡中で今も一覧に居る出品の出品者も見る (その回の fetch に出てこなくても)
+/// 追跡中で今も一覧に居る出品の出品者も見る (その回の fetch に出てこなくても)。前から並べていた b だけなら売れた扱い (2026-09-28)
 #[test]
-fn tracked_live_listing_of_same_seller_counts_as_relist() {
+fn tracked_live_listing_of_same_seller_is_sold_when_old() {
     let now = 1_700_000_000i64;
     let mut st = WatchState::default();
     apply_sample(&mut st, now, 2, &ids(&["a", "b"]), &[by("a", 5.0, "S1", now - 9000), by("b", 7.0, "S1", now - 9000)], true, OK);
@@ -68,8 +68,28 @@ fn tracked_live_listing_of_same_seller_counts_as_relist() {
     apply_sample(&mut st, now + 3600, 11, &now_ids, &flood, true, OK);
     apply_sample(&mut st, now + 7200, 11, &now_ids, &flood, true, OK);
     let a = find(&st, "a");
-    assert!(a.gone_at.is_some() && a.relisted, "追跡中の b (S1) が居るので付け替え");
-    assert_eq!(daily_gone(&st), 0);
+    assert!(a.gone_at.is_some() && !a.relisted, "追跡中の b (S1) は前からの出品なので付け替えではない");
+    assert_eq!(daily_gone(&st), 1);
+}
+
+/// 猶予 15 分の境目: 消えてから 14 分後に出した出品は付け替え、20 分後なら売れた (2026-09-28 オーナー)
+#[test]
+fn relist_grace_is_15_minutes() {
+    for (after_min, want_relist) in [(14i64, true), (20i64, false)] {
+        let now = 1_700_000_000i64;
+        let mut st = WatchState::default();
+        apply_sample(&mut st, now, 2, &ids(&["a", "b"]), &[by("a", 10.0, "S1", now - 7200), by("b", 11.0, "S2", now - 7200)], true, OK);
+        // a は now の後に消えた (初めて居ないのは t1)。S1 の新しい出品 c は t1 + after_min 分に出た
+        let t1 = now + 1800;
+        let c_at = t1 + after_min * 60;
+        let cur = [by("b", 11.0, "S2", now - 7200), by("c", 9.0, "S1", c_at)];
+        apply_sample(&mut st, t1, 1, &ids(&["b"]), &[by("b", 11.0, "S2", now - 7200)], true, OK);
+        apply_sample(&mut st, c_at + 60, 2, &ids(&["b", "c"]), &cur, true, OK);
+        let a = find(&st, "a");
+        assert!(a.gone_at.is_some(), "{after_min} 分: 消えたことは記録する");
+        assert_eq!(a.relisted, want_relist, "{after_min} 分後の出品");
+        assert_eq!(daily_gone(&st), if want_relist { 0 } else { 1 });
+    }
 }
 
 /// S2: 値段を上げて最安 10 件の外に並べ直した → 追加の fetch で出品者を見て付け替え (売れたにしない)
