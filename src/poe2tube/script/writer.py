@@ -121,16 +121,21 @@ def claude_cli_runner(model: str | None = None, timeout: int = 900) -> Runner:
             cmd += ["--model", model]
         last = ""
         for attempt in range(1, 4):  # API の一時エラー (rc=1、stderr 空) は少し待って撃ち直す
-            r = subprocess.run(
-                cmd,
-                input=prompt,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                timeout=timeout,
-                creationflags=CREATE_NO_WINDOW,
-                cwd=REPO_ROOT,
-            )
+            try:
+                r = subprocess.run(
+                    cmd,
+                    input=prompt,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    timeout=timeout,
+                    creationflags=CREATE_NO_WINDOW,
+                    cwd=REPO_ROOT,
+                )
+            except subprocess.TimeoutExpired:
+                last = f"timeout {timeout}s"
+                log.warning("claude cli timed out, retrying", attempt=attempt, timeout=timeout)
+                continue
             if r.returncode == 0:
                 try:
                     data = json.loads(r.stdout.strip().splitlines()[-1])
