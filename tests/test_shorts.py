@@ -58,3 +58,13 @@ def _res(name: str) -> CraftStageResult:
 )
 def test_hit_label_non_mod_changes(name: str, want: list[str]) -> None:
     assert [hit_label(s)[0] for s in _res(name).steps] == want
+
+
+def test_countdown_number_and_ticks() -> None:
+    from poe2tube.render.overlay_fx import countdown_number
+
+    assert countdown_number(5.0, 3, 1.9) is None
+    assert [countdown_number(5.0, 3, t) for t in (2.0, 3.2, 4.9)] == [3, 2, 1]
+    assert countdown_number(5.0, 3, 5.0) is None
+    with pytest.raises(ValueError):
+        Scene(kind="talk", countdown=3)

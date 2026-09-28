@@ -10,7 +10,7 @@ from __future__ import annotations
 from PIL import Image, ImageDraw
 
 from poe2tube.render.draw import pill
-from poe2tube.render.overlay_fx import draw_emphasis_text
+from poe2tube.render.overlay_fx import draw_countdown, draw_emphasis_text
 from poe2tube.render.palette import ACCENT, INK, WHITE, font
 from poe2tube.render.tachie import render_tachie
 from poe2tube.script.model import Emotion, Line, Speaker
@@ -101,7 +101,13 @@ def _telop(img: Image.Image, line: Line) -> None:
         draw_emphasis_text(img, row, (SW // 2, top + i * step), SW - 120)
 
 
-def compose_short(static: Image.Image, line: Line, mouth: int, title: str | None) -> Image.Image:
+def compose_short(
+    static: Image.Image,
+    line: Line,
+    mouth: int,
+    title: str | None,
+    countdown: int | None = None,
+) -> Image.Image:
     """``static`` は横長の下地 + パネル (+ 結果の文字)。立ち絵・字幕は描かないで渡す."""
     img = Image.new("RGBA", (SW, SH), (255, 255, 255, 255))
     _header(img, title)
@@ -111,5 +117,7 @@ def compose_short(static: Image.Image, line: Line, mouth: int, title: str | None
         panel = panel.resize((SW, int(panel.height * k)), Image.Resampling.LANCZOS)
         img.alpha_composite(panel, (0, PANEL_Y))
     _characters(img, line, mouth)
+    if countdown is not None:  # 2 人の間の空き (カードに被せない)
+        draw_countdown(img, countdown, (SW // 2, 1230), 300)
     _telop(img, line)
     return img

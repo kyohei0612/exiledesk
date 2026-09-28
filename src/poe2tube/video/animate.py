@@ -17,7 +17,14 @@ from poe2tube.audio.mix import SoundEvent
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
-from poe2tube.render.overlay_fx import CHAPTER_SECONDS, HIT_START, draw_chapter, draw_hit
+from poe2tube.render.overlay_fx import (
+    CHAPTER_SECONDS,
+    HIT_START,
+    countdown_number,
+    draw_chapter,
+    draw_countdown,
+    draw_hit,
+)
 from poe2tube.render.short_frame import compose_short
 from poe2tube.video.clip_timing import HitPlan, plan_hits
 from poe2tube.video.results import ResultSet, as_set
@@ -25,6 +32,7 @@ from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
 POP_SECONDS = 0.35
+COUNTDOWN_AT = (960, 495)  # パネルの真ん中 (横長の座標、ショートでは切り出した中に入る)
 POP_DELAY = 0.15
 SLIDE_SECONDS = 0.3
 SLIDE_PX = 60
@@ -101,6 +109,11 @@ def sound_events(
             )
             kind = "complete" if is_final else "slide"
             events.append(SoundEvent(c.start, kind))
+        if sc.countdown:  # クイズ: 行の最後の秒で 1 秒ごとにピッ
+            first = c.start + c.duration - sc.countdown
+            events += [SoundEvent(first + k, "tick") for k in range(sc.countdown)]
+        if prev is not None and prev.scene.countdown:
+            events.append(SoundEvent(c.start, "correct"))
         if book.find_in_text(c.line.text):
             events.append(SoundEvent(c.start + POP_DELAY, "pop"))
         if c.line.emotion == "surprised":
@@ -192,18 +205,22 @@ def iter_frames(
                 frame_static = _with_panel(base, panel, dy, alpha)
             else:
                 frame_static = static
+            cd = c.line.scene.countdown
+            num = countdown_number(c.duration, cd, t) if cd else None
             if short:
-                # 縦: 結果の文字はパネルの中に描いてから切り出す。章カードは出さない (ADR 005)
+                # 縦: 結果の文字・数字はパネルの中に描いてから切り出す。章カードは出さない (ADR 005)
                 tmp = frame_static.copy() if hit_step is not None else frame_static
                 if hit_step is not None:
                     draw_hit(tmp, hit_step, tl)
-                yield n, compose_short(tmp, c.line, mouth, short_title)
+                yield n, compose_short(tmp, c.line, mouth, short_title, num)
                 n += 1
                 continue
             scale = pop_scale(t) if props else 1.0
             frame = compose_frame(frame_static, c.line, mouth, props, scale)
             if hit_step is not None:
                 draw_hit(frame, hit_step, tl)
+            if num is not None:
+                draw_countdown(frame, num, COUNTDOWN_AT)
             if new_chapter:
                 draw_chapter(frame, c.section, t)
             yield n, frame

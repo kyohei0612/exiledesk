@@ -189,3 +189,20 @@ def draw_emphasis_text(img: Image.Image, text: str, center: tuple[int, int], max
         else:
             img.alpha_composite(piece, (x, ink_cy - piece.height // 2))
         x += w
+
+
+def countdown_number(duration: float, seconds: int, t: float) -> int | None:
+    """行の最後 ``seconds`` 秒で数える数字 (3→2→1)。数える前と、行の外は None."""
+    start = duration - seconds
+    if t < start or t >= duration:
+        return None
+    return seconds - int(t - start)
+
+
+def draw_countdown(img: Image.Image, number: int, center: tuple[int, int], size: int = 260) -> None:
+    """大きい丸に数字 (クイズのカウントダウン)."""
+    d = ImageDraw.Draw(img)
+    cx, cy = center
+    r = size // 2
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255, 235), outline=INK, width=10)
+    d.text((cx, cy), str(number), font=font(int(size * 0.62)), fill=INK, anchor="mm")

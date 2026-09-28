@@ -20,7 +20,7 @@ from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events, write_frames
 from poe2tube.video.clip_timing import plan_hits
 from poe2tube.video.results import ResultSet, load_results
-from poe2tube.video.timeline import Cue, build_cues, concat_audio
+from poe2tube.video.timeline import Cue, build_cues, concat_audio, read_wav
 
 log = structlog.get_logger()
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
@@ -131,6 +131,10 @@ def build_video(
     lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
     hold = {i: h.min_seconds for i, h in hits.items()}
+    for i, (_sec, ln) in enumerate(lines):
+        if ln.scene.countdown:  # クイズ: 読み上げの後に数える秒ぶん延ばす (ADR 005)
+            samples, sr = read_wav(wavs[i])
+            hold[i] = max(hold.get(i, 0.0), len(samples) / sr + 0.3 + ln.scene.countdown)
     cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold)
     write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")

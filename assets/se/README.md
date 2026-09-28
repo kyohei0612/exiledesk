@@ -13,3 +13,4 @@
 
 冒頭 (se_start) と驚き (se_shock) は youtube-pipeline/assets/se を流用。
 探す順: `POE2Tube/assets/se/se_<kind>_1.mp3` → `youtube-pipeline/assets/se/se_<kind>_1.mp3`。
+- se_tick_1.mp3: 効果音ラボ「ビープ音1」(button/beep1.mp3、2026-09-28 取得)。ショートのクイズのカウントダウン

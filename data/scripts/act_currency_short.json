@@ -44,7 +44,8 @@
               "alchemy",
               "chaos",
               "divine"
-            ]
+            ],
+            "countdown": 3
           }
         },
         {

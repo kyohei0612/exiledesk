@@ -55,6 +55,9 @@ class Scene(BaseModel):
     badges: list[str] | None = Field(
         default=None, description="quiz: カードごとの札 (例「使う」「取っておく」)"
     )
+    countdown: int | None = Field(
+        default=None, ge=1, le=10, description="quiz: 行の後に数える秒 (3→2→1 と音、ADR 005)"
+    )
 
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
@@ -81,8 +84,8 @@ class Scene(BaseModel):
                 raise ValueError("quiz の answer が choices の外")
             if self.badges is not None and len(self.badges) != len(self.choices):
                 raise ValueError("quiz の badges は choices と同じ数")
-        elif self.choices or self.answer is not None or self.badges:
-            raise ValueError("choices / answer / badges は quiz 専用")
+        elif self.choices or self.answer is not None or self.badges or self.countdown:
+            raise ValueError("choices / answer / badges / countdown は quiz 専用")
         return self
 
 
