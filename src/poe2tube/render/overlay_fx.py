@@ -95,13 +95,31 @@ def _paste_center(
 
 
 def hit_label(step: StageStep) -> tuple[str, str]:
-    """(文字, スタイル)。レアリティが変われば最優先、次に付いた MOD、消えただけなら消えた MOD."""
+    """(文字, スタイル)。打てない / 壊れた / ユニーク → MOD の増減 → 品質・ソケット・コラプト.
+
+    数値 (品質の上がり幅など) は出さない (kyohei 2026-09-28: 未確定の値は言わない)。
+    """
+    if not step.applied:
+        return "使えない!", STYLE_REMOVED
+    a, b = step.after, step.before
+    if a.destroyed:
+        return "壊れた!", STYLE_REMOVED
+    if a.unique is not None and b.unique is None:
+        return "ユニークに!", STYLE_ADDED
     ch = step.changed
     if ch.added:
         return "+ " + _short(ch.added[0].text_ja), STYLE_ADDED
     if ch.removed:
         return "消えた! " + _short(ch.removed[0].text_ja), STYLE_REMOVED
-    return ("使えない!", STYLE_REMOVED) if not step.applied else ("変化なし", STYLE_REMOVED)
+    if a.quality > b.quality:
+        return "品質アップ!", STYLE_ADDED
+    if a.sockets > b.sockets:
+        return "ソケット +1", STYLE_ADDED
+    if (a.gem_sockets or 0) > (b.gem_sockets or 0):
+        return "サポート枠が増えた!", STYLE_ADDED
+    if a.corrupted and not b.corrupted:
+        return "コラプト!", STYLE_REMOVED
+    return "変化なし", STYLE_REMOVED
 
 
 NUMBER = re.compile(r"[+＋-]?\d+(?:\.\d+)?%?")

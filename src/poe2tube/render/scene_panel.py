@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 from poe2tube.capture.stage import cached_path
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
-from poe2tube.render.draw import load_icon, pill
+from poe2tube.names import NameBook
+from poe2tube.render.draw import load_icon, pill, shadow_panel
 from poe2tube.render.item_card import card_height, draw_item_card
-from poe2tube.render.palette import ACCENT, GOLD, GREEN, INK, LINE, MUTED, font
+from poe2tube.render.palette import ACCENT, GOLD, GREEN, INK, LINE, MUTED, WHITE, font
 from poe2tube.render.stack import draw_stack
 from poe2tube.script.model import Scene
 
@@ -50,6 +52,8 @@ def draw_scene_panel(
             _stage_placeholder(img, inner, scene, result, icon_dir)
     elif scene.kind == "cost":
         _cost(img, inner, result)
+    elif scene.kind == "quiz":
+        draw_quiz(img, inner, scene, icon_dir)
 
 
 # 撮影画面 (1920x1080、ExileDesk v0.1.311 の動画モード) の見せる範囲
@@ -224,3 +228,56 @@ def _cost(img: Image.Image, box: Box, result: CraftStageResult) -> None:
     d.text((x0 + 40, y + 30), "合計", font=font(48), fill=INK)
     total = f"{result.total_cost:.2f} {result.price_unit}"
     d.text((x1 - 420, y + 30), total, font=font(48), fill=ACCENT)
+
+
+@lru_cache(maxsize=1)
+def _names() -> NameBook:
+    return NameBook.load()
+
+
+def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
+    """クイズ: カレンシーをアイコン + 公式名のカードで横に並べる (ADR 005).
+
+    ``answer`` の番号のカードを緑で囲み、``badges`` があればカードの下に札を付ける。
+    """
+    choices = scene.choices or []
+    x0, y0, x1, y1 = box
+    gap = 36
+    cw = (x1 - x0 - gap * (len(choices) - 1)) // max(1, len(choices))
+    ch = min(y1 - y0 - 20, int(cw * 1.25))
+    top = y0 + (y1 - y0 - ch) // 2
+    d = ImageDraw.Draw(img)
+    for i, key in enumerate(choices):
+        cx0 = x0 + i * (cw + gap)
+        right = scene.answer is not None and i == scene.answer
+        dim = scene.answer is not None and not right
+        shadow_panel(
+            img,
+            (cx0, top, cx0 + cw, top + ch),
+            fill=WHITE,
+            outline=GREEN if right else (LINE if dim else GOLD),
+            radius=28,
+        )
+        if right:
+            d.rounded_rectangle((cx0, top, cx0 + cw, top + ch), 28, outline=GREEN, width=10)
+        icon = icon_dir / f"{key}.png"
+        size = int(cw * 0.58)
+        if icon.exists():
+            ic = load_icon(icon, size)
+            if dim:
+                ic.putalpha(ic.getchannel("A").point(lambda a: int(a * 0.45)))
+            img.alpha_composite(ic, (cx0 + (cw - ic.width) // 2, top + 30))
+        name = _names().ja(key)
+        f = font(40 if len(name) <= 6 else 32)
+        d.text(
+            (cx0 + cw // 2, top + 60 + size),
+            name,
+            font=f,
+            fill=MUTED if dim else INK,
+            anchor="ma",
+        )
+        if scene.badges:
+            color = GREEN if right else ACCENT
+            label = scene.badges[i]
+            bw = int(d.textlength(label, font=font(30))) + 44
+            pill(img, (cx0 + (cw - bw) // 2, top + ch - 70), label, color, size=30)

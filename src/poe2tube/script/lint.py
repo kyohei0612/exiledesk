@@ -82,6 +82,12 @@ def lint_script(
     """全体の検査。``n_steps`` はメインの結果 JSON の手数、``demo_steps`` は追加の実演ごとの手数."""
     lines = script.lines
     problems = lint_lines(lines, 0, n_steps)
+    if script.layout == "short":
+        # ショートは導入・聞き役の比率・実践の手の抜けを見ない (ADR 005)。尺だけ見る
+        est = script.estimated_seconds()
+        if not script.target_seconds * 0.75 <= est <= script.target_seconds * 1.25:
+            problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
+        return problems
     zunda = sum(1 for ln in lines if ln.speaker == "zundamon")
     ratio = zunda / len(lines) if lines else 0
     if not 0.25 <= ratio <= 0.5:

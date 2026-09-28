@@ -18,6 +18,7 @@ from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
 from poe2tube.render.overlay_fx import CHAPTER_SECONDS, HIT_START, draw_chapter, draw_hit
+from poe2tube.render.short_frame import compose_short
 from poe2tube.video.clip_timing import HitPlan, plan_hits
 from poe2tube.video.results import ResultSet, as_set
 from poe2tube.video.timeline import Cue, scene_changed
@@ -111,10 +112,18 @@ def sound_events(
 
 def hit_sound(step: StageStep) -> str:
     """結果ポップに合わせた SE: 色が変わった / MOD が付いた / 消えただけ."""
-    ch = step.changed
-    if ch.rarity_from != ch.rarity_to:
+    ch, a, b = step.changed, step.after, step.before
+    if not step.applied or a.destroyed or (ch.removed and not ch.added):
+        return "hit_removed"
+    if ch.rarity_from != ch.rarity_to or (a.unique is not None and b.unique is None):
         return "hit_rarity"
-    return "hit_added" if ch.added else "hit_removed"
+    improved = (
+        ch.added
+        or a.quality > b.quality
+        or a.sockets > b.sockets
+        or (a.gem_sockets or 0) > (b.gem_sockets or 0)
+    )
+    return "hit_added" if improved else "hit_removed"
 
 
 def iter_frames(
@@ -122,6 +131,8 @@ def iter_frames(
     result: CraftStageResult | ResultSet,
     book: NameBook,
     final_step: int | None = None,
+    short: bool = False,
+    short_title: str | None = None,
 ) -> Iterator[tuple[int, Image.Image]]:
     """(通し番号, フレーム) を順に返す。番号は 0 始まり."""
     total = sum(c.frames for c in cues)
@@ -181,6 +192,14 @@ def iter_frames(
                 frame_static = _with_panel(base, panel, dy, alpha)
             else:
                 frame_static = static
+            if short:
+                # 縦: 結果の文字はパネルの中に描いてから切り出す。章カードは出さない (ADR 005)
+                tmp = frame_static.copy() if hit_step is not None else frame_static
+                if hit_step is not None:
+                    draw_hit(tmp, hit_step, tl)
+                yield n, compose_short(tmp, c.line, mouth, short_title)
+                n += 1
+                continue
             scale = pop_scale(t) if props else 1.0
             frame = compose_frame(frame_static, c.line, mouth, props, scale)
             if hit_step is not None:
@@ -213,13 +232,15 @@ def write_frames(
     book: NameBook,
     out_dir: Path,
     final_step: int | None = None,
+    short: bool = False,
+    short_title: str | None = None,
 ) -> int:
     """連番 PNG を書き出して枚数を返す (ffmpeg の image2 入力用)."""
     out_dir.mkdir(parents=True, exist_ok=True)
     for old in out_dir.glob("f*.png"):
         old.unlink()
     count = 0
-    for n, frame in iter_frames(cues, result, book, final_step):
+    for n, frame in iter_frames(cues, result, book, final_step, short, short_title):
         frame.convert("RGB").save(out_dir / f"f{n:05d}.png", compress_level=1)
         count = n + 1
     return count

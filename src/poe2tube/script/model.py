@@ -18,7 +18,7 @@ SCRIPT_SCHEMA = "poe2tube-script/1"
 
 Speaker = Literal["zundamon", "metan"]
 Emotion = Literal["normal", "troubled", "surprised", "happy", "proud", "sad"]
-SceneKind = Literal["talk", "stack", "item", "stage", "cost"]
+SceneKind = Literal["talk", "stack", "item", "stage", "cost", "quiz"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分
@@ -48,6 +48,13 @@ class Scene(BaseModel):
         default=None,
         description="どの実演の画面か (VideoScript.demos のキー)。省略 = メイン (result_file)",
     )
+    choices: list[str] | None = Field(
+        default=None, description="quiz: 並べるカレンシーキー (2〜4 個、ADR 005)"
+    )
+    answer: int | None = Field(default=None, ge=0, description="quiz: 正解の番号 (緑にする)")
+    badges: list[str] | None = Field(
+        default=None, description="quiz: カードごとの札 (例「使う」「取っておく」)"
+    )
 
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:
@@ -55,6 +62,15 @@ class Scene(BaseModel):
             raise ValueError(f"scene.kind={self.kind} には step が必要")
         if self.show_steps is not None and self.kind != "stack":
             raise ValueError("show_steps は stack 専用")
+        if self.kind == "quiz":
+            if not self.choices or not 2 <= len(self.choices) <= 4:
+                raise ValueError("quiz には choices が 2〜4 個必要")
+            if self.answer is not None and self.answer >= len(self.choices):
+                raise ValueError("quiz の answer が choices の外")
+            if self.badges is not None and len(self.badges) != len(self.choices):
+                raise ValueError("quiz の badges は choices と同じ数")
+        elif self.choices or self.answer is not None or self.badges:
+            raise ValueError("choices / answer / badges は quiz 専用")
         return self
 
 
@@ -96,6 +112,10 @@ class VideoScript(BaseModel):
     final_step: int | None = Field(
         default=None, ge=1, description="完成とみなす手 (積み上げ図解の「完成！」と成功音)"
     )
+    layout: Literal["wide", "short"] = Field(
+        default="wide", description="short = 縦 1080x1920 のショート (ADR 005)"
+    )
+    short_title: str | None = Field(default=None, description="ショートの上に出す題")
     demos: dict[str, str] = Field(
         default_factory=dict,
         description="追加の実演 {キー: 結果 JSON パス}。1 本で複数のアイテムを見せる回 (ADR 004)",

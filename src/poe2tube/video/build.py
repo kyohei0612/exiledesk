@@ -137,7 +137,10 @@ def build_video(
     events = sound_events(cues, book, script.final_step or len(rs.main.steps), rs)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
-    frames = write_frames(cues, rs, book, work / "frames", script.final_step)
+    short = script.layout == "short"
+    frames = write_frames(
+        cues, rs, book, work / "frames", script.final_step, short, script.short_title
+    )
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 
     out.parent.mkdir(parents=True, exist_ok=True)
