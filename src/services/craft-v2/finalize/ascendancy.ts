@@ -19,7 +19,7 @@ import type {
 } from "../types";
 import type { AscendancyCounter, BaseBucket, SlotCounter, UniqueBucket } from "../ingest";
 import { displayUniqueNameJa } from "../../mods/dictionaries";
-import { tagSetsForSlotWithClasses } from "../../mods/item-class-tags";
+import { tagSetsForSlotWithBases } from "../../mods/item-class-tags";
 import { baseClassOf } from "../../trade2/category";
 import { finalizeBuckets } from "./mods";
 import { GEM_INFO } from "./gems";
@@ -50,8 +50,8 @@ function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
  * (武器スロットなら弓 / 杖 / メイス … の和集合)。ベースが取れていない古いキャッシュはスロット既定タグ。
  */
 function finalizeSlot(slot: SlotCounter, slotKey: SlotKey): SlotMods {
-  const classes = [...slot.bases.values()].map((b) => baseClassOf(b.nameEn)?.cls).filter((c): c is string => !!c);
-  const tagSets = tagSetsForSlotWithClasses(slotKey, classes);
+  // 防具・盾は計算機のエンジンの行 (Gloves_str 等) の属性で絞る (2026-09-29、属性違いの段が混ざっていた)
+  const tagSets = tagSetsForSlotWithBases(slotKey, [...slot.bases.values()].map((b) => ({ nameEn: b.nameEn, cls: baseClassOf(b.nameEn)?.cls })));
   return {
     prefix: finalizeBuckets(slot.prefix, "P", tagSets),
     suffix: finalizeBuckets(slot.suffix, "S", tagSets),

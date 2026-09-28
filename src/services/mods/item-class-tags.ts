@@ -2,8 +2,11 @@
  * 装備種別 (GGG ItemClasses.Id) / 発見 V2 のスロット → クライアントの spawn タグ (2026-09-08)
  *
  * mods-bundle の spawn[].t と突合してティア表を絞るために使う (services/mods/tiers.ts)。
- * 防具の str / dex / int 系タグはベースごとに違うので、種別単位では全部含める (やや広め)。
+ * 防具の str / dex / int 系タグはベースごとに違う。ベース名が分かる時は計算機のエンジンの行 (Gloves_str 等、
+ * src/services/htc/base-rows.json) から属性を引いて絞る (2026-09-29 オーナー「ベースの能力値によってつく MOD 違う」。
+ * 前は種別単位で全属性を含めていて、STR の手袋しか使われていなくてもエナジーシールドの段が出ていた)。
  */
+import baseRows from "../htc/base-rows.json";
 
 import type { SlotKey } from "../craft-v2/types";
 
@@ -90,8 +93,31 @@ function tagSetsForSlot(slot: SlotKey): string[][] {
   }
 }
 
-/** スロットで実際に使われていたベースの種別 (Id 列) に絞る。種別が引けなければスロット既定 */
-export function tagSetsForSlotWithClasses(slot: SlotKey, classes: string[]): string[][] {
-  const known = setsOf([...new Set(classes)]);
-  return known.length ? known : tagSetsForSlot(slot);
+const ROWS = baseRows as Record<string, string>;
+const ARMOUR_ROW = /^(Gloves|Boots|Helmets|Body_Armours)_((?:str|dex|int)(?:_(?:str|dex|int))*)$/;
+const SLOT_TAG: Record<string, string> = { Gloves: "gloves", Boots: "boots", Helmets: "helmet", Body_Armours: "body_armour" };
+const SHIELD_ROW = /^Shields_((?:str|dex|int)(?:_(?:str|dex|int))*)$/;
+/**
+ * ベース 1 つのタグ集合。防具・盾はエンジンの行の属性だけ (手袋 STR なら gloves / armour / str_armour)、
+ * それ以外は種別の集合。どちらも引けなければ null
+ */
+function setsOfBase(nameEn: string, cls: string | undefined): string[][] | null {
+  const row = ROWS[nameEn];
+  const a = row ? ARMOUR_ROW.exec(row) : null;
+  if (a) return [[SLOT_TAG[a[1]!]!, "armour", `${a[2]}_armour`]];
+  const s = row ? SHIELD_ROW.exec(row) : null;
+  if (s) return [["shield", `${s[1]}_shield`]];
+  return cls ? (CLASS_TAG_SETS[cls] ?? null) : null;
+}
+/** スロットで実際に使われていたベースに絞る (防具・盾は属性まで)。1 つも引けなければスロット既定 */
+export function tagSetsForSlotWithBases(slot: SlotKey, bases: Array<{ nameEn: string; cls: string | undefined }>): string[][] {
+  const seen = new Set<string>();
+  const out: string[][] = [];
+  for (const b of bases) {
+    for (const set of setsOfBase(b.nameEn, b.cls) ?? []) {
+      const k = [...set].sort().join(",");
+      if (!seen.has(k)) (seen.add(k), out.push(set));
+    }
+  }
+  return out.length ? out : tagSetsForSlot(slot);
 }
