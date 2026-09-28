@@ -17,7 +17,7 @@ export type RecipeId = "es-helmet" | "life-res-gloves" | "ms-boots";
 export const EXCEPTIONAL_SOCKETS = 2;
 
 export interface PageDef {
-  /** poe2db の重み表のページ */
+  /** 重み表の行 (計算機のエンジンの行 id。Helmets_int 等) */
   id: string;
   label: string;
   /** trade2 で同じ防御タイプに絞る下限 */

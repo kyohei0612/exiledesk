@@ -1,8 +1,12 @@
 /**
  * 規格外の賭け — シミュレーターの土台 (重み表・型・列・ティア・枠の数え方)
  * sim.ts から切り出し (2026-09-26)。中身は変えていない。sim.ts が同じ名前で出し直すので、読み込み側は sim.ts のまま。
+ * 2026-09-29: 重み表は計算機のエンジン (HTC) から作る (htc-pages.ts)。poe2db の重み表 (mod-weights-poe2db.json) は使わない
+ * (オーナー「複数の MOD 計算機を使ってるなら 1 つにして」)。エンジンは動的に読むので、loadRarePages が済むまで表は空。
  */
-import weightsJson from "../../i18n/mod-weights-poe2db.json";
+import { shallowReactive } from "vue";
+import { htcFamilyStats, loadHtcPatch } from "../../services/htc/patch";
+import { pageFromHtc } from "./htc-pages";
 
 export interface WStat {
   id: string;
@@ -36,7 +40,19 @@ export interface WPage {
   desecrated: WMod[];
   essence: WEssence[];
 }
-export const WEIGHT_PAGES = (weightsJson as unknown as { pages: Record<string, WPage> }).pages;
+/** 行 (エンジンの行 id、Helmets_int 等) → 重み表。loadRarePages で埋まる (画面は埋まった時に計算し直す) */
+export const WEIGHT_PAGES = shallowReactive<Record<string, WPage>>({});
+let loading: Promise<void> | null = null;
+/** 計算機のエンジンを読んで、使う行の重み表を作る (1 回だけ) */
+export function loadRarePages(ids: readonly string[]): Promise<void> {
+  loading ??= loadHtcPatch().then((data) => {
+    for (const id of ids) {
+      const p = pageFromHtc(data, id, htcFamilyStats());
+      if (p) WEIGHT_PAGES[id] = p;
+    }
+  });
+  return loading;
+}
 
 export type Metric = "es" | "life" | "res" | "chaos" | "ms";
 export const METRIC_LABEL: Record<Metric, string> = { es: "ES", life: "ライフ", res: "元素耐性", chaos: "混沌耐性", ms: "移動速度" };

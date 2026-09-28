@@ -2,7 +2,7 @@
   RareCraft.vue — 規格外の賭け (2026-09-14、「ヴァールの天秤」の 1 つ。旧「ES 兜のクラフト」を一般化)
   規格外 (ルーンソケット 2) のマジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
   1 ソケットの通常ベースは今の相場で全部赤字なので扱わない (オーナー指示 2026-09-14)。
-  当たり方は poe2db の推定重み × クライアントのティア値でシミュレーションし、trade2 の「売値の段」で期待収支を出す。
+  当たり方はクラフト計算機と同じエンジンの重み × ティア値でシミュレーションし (2026-09-29 から。前は poe2db の重み表を別に持っていた)、trade2 の「売値の段」で期待収支を出す。
     views/rare-craft/sim.ts          シミュレーター (純粋関数)
  *    views/rare-craft/ladder.ts       売値の段 (ラダー) の判定
     views/rare-craft/recipes.ts      レシピ (ES 兜 / ライフ耐性手袋 / 移動速度靴) と素材
@@ -87,9 +87,9 @@ const materialTable = computed(() => {
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <ScreenHeader title="規格外の賭け" :error="c.marketError.value ? `poe2scout 取得失敗: ${c.marketError.value}` : null">
       規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
-        どこまで伸びるかは poe2db の推定重み × クライアントのティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
+        どこまで伸びるかはクラフト計算機と同じ重み × ティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
       <template #source>
-        素材価格: カレンシーランキングの相場{{ c.league.value ? ` (${c.league.value.Value})` : "" }} · {{ c.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 重み: poe2db の推定 (PoE1 由来、冒涜は一様)
+        素材価格: カレンシーランキングの相場{{ c.league.value ? ` (${c.league.value.Value})` : "" }} · {{ c.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 重み: クラフト計算機と同じ (冒涜は一様)
       </template>
       <template #controls>
         <CurrencyPicker />
@@ -248,7 +248,7 @@ const materialTable = computed(() => {
     <AssumptionsPanel :c="c" />
 
     <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-      素材価格: カレンシーランキングの相場 (poe2scout 由来) · ベースと売値: trade2 (JP API、ソケット 2、検索は 10 秒間隔、条件ごとに 5 回) · 重み: poe2db (推定) · ティア値: ゲームクライアント
+      素材価格: カレンシーランキングの相場 (poe2scout 由来) · ベースと売値: trade2 (JP API、ソケット 2、検索は 10 秒間隔、条件ごとに 5 回) · 重み: クラフト計算機と同じエンジン · ティア値: ゲームクライアント
     </p>
   </section>
 </template>

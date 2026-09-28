@@ -4,7 +4,7 @@
  *   レシピ (ES 兜 / ライフ耐性手袋 / 移動速度靴) を選ぶ
  *   → trade2 で「ベース (マジック + ベース MOD のティア)」「売値の段 ×3」「外れ」の最安を自動で取る (クエリごとに覚える)
  *   → 素材はカレンシーランキングの相場
- *   → 当たり方は sim.ts (poe2db の推定重み × クライアントのティア値)、売値の段で期待収支を出す
+ *   → 当たり方は sim.ts (計算機のエンジンの重み × ティア値、2026-09-29 から。前は poe2db の重み表)、売値の段で期待収支を出す
  *   → 選択肢 (エッセンス × 肋骨 × 反響のお告げ × 高貴なオーブ × 右側のお告げ × ルーン。高貴なオーブは毎回 偉大なる高貴なお告げ と一緒に使って 2 つ足す) を全部比べ、既定では一番収支がいい組み合わせを素材に出す
  * trade2 の検索は条件ごとに 5 回。擬似レート制限 (5 分 26 回 + サーバーの残り回数) の中で直列に取る。
  *
@@ -29,6 +29,7 @@ import {
 } from "./recipes";
 import {
   effectiveExaltCount,
+  loadRarePages,
   simulate,
   slotsAfterSetup,
   type SimOptions,
@@ -42,6 +43,8 @@ import { useRareVariants } from "./useRareVariants";
 export type { Variant } from "./useRareVariants";
 
 export function useRareCraft() {
+  // 重み表は計算機のエンジンから作る (2026-09-29、sim-data.ts)。読み終わると画面が計算し直す
+  void loadRarePages(RECIPES.flatMap((r) => r.pages.map((p) => p.id)));
   // ---- レシピと選択 (useRareSelection.ts) ----
   const sel = useRareSelection();
   const {

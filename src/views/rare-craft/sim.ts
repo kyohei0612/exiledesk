@@ -40,6 +40,7 @@ export {
   baseModTiers,
   effectiveExaltCount,
   findEssence,
+  loadRarePages,
   slotsAfterSetup,
 } from "./sim-data";
 export type { BaseModSpec, Metric, SimOptions, SimResult, Slots, WEssence, WMod, WPage, WStat } from "./sim-data";
@@ -62,6 +63,8 @@ export function simulate(o: SimOptions): SimResult {
   const hit = cache.get(key);
   if (hit) return hit;
   const res = run(o);
+  // 失敗は覚えない (重み表の読み込み前の「表が無い」を読み込み後も返してしまう)
+  if (!res.ok) return res;
   if (cache.size > 400) cache.clear();
   cache.set(key, res);
   return res;
