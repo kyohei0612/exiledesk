@@ -10,7 +10,7 @@
  *     PoE2 だけのクラス (ソーサレス・ドルイド・ハントレス) のスキンは 19 番 false・20 番 true、
  *     PoE2 に無いスキル (サイクロン等) のエフェクトは 20 番 false、PoE2 にあるヘラルド (雷・氷) は true、テスト用・Tencent 専用は両方 false
  *   - MtxTypeGameSpecific: 画像 (DDSFile) と分類 (MicrotransactionCategory、日本語名あり)
- * 画像は ffmpeg で 64px の webp に (RGBA の DDS は赤と青を入れ替える。build-base-art-from-client.mjs と同じ)。
+ * 画像は ffmpeg で 128px の webp に (2026-09-29 オーナー「2 列で大きく確認したい」で 64 → 128) (RGBA の DDS は赤と青を入れ替える。build-base-art-from-client.mjs と同じ)。
  *   out: src/services/mtx/mtx.json、public/mtx-art/<行番号>.webp
  *   node scripts/build-mtx-from-client.mjs [--no-art]
  * 表の定義は data-cache/client-export/schema.min.json (名前の無い列も読むため、書き出しツールを通さず直接読む)。
@@ -95,15 +95,18 @@ if (!NO_ART) {
   const tmp = join(tmpdir(), "exiledesk-mtx-art");
   mkdirSync(tmp, { recursive: true });
   const done = new Map();
+  // 仮の絵 (「MTX」の赤い文字。まだ絵の無い物がまとめて指している) は絵なし扱い: 30 件以上が同じ絵を指していたら仮
+  const uses = new Map();
+  for (const it of items) if (it.dds) uses.set(it.dds, (uses.get(it.dds) ?? 0) + 1);
   for (const it of items) {
-    if (!it.dds) continue;
+    if (!it.dds || uses.get(it.dds) >= 30) continue;
     if (done.has(it.dds)) { it.a = done.get(it.dds); continue; }
     try {
       const buf = Buffer.from(await loader.getFileContents(it.dds));
       const dxgi = buf.toString("latin1", 84, 88) === "DX10" ? buf.readUInt32LE(128) : 0;
       const swap = dxgi >= 27 && dxgi <= 29 ? "colorchannelmixer=rr=0:rb=1:bb=0:br=1," : "";
       writeFileSync(join(tmp, "in.dds"), buf);
-      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", join(tmp, "in.dds"), "-vf", `${swap}scale=64:64:force_original_aspect_ratio=decrease`, "-c:v", "libwebp", "-quality", "75", join(ART, `${it.i}.webp`)]);
+      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", join(tmp, "in.dds"), "-vf", `${swap}scale=128:128:force_original_aspect_ratio=decrease`, "-c:v", "libwebp", "-quality", "75", join(ART, `${it.i}.webp`)]);
       done.set(it.dds, it.i);
       it.a = it.i;
       made++;
