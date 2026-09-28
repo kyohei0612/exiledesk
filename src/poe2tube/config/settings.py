@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     bgm: str | None = Field(
         default="bgm_bright_1", description="youtube-pipeline assets/bgm のファイル名 (拡張子なし)"
     )
-    bgm_gain_db: float = -20.0
+    bgm_gain_db: float = Field(default=-26.0, description="BGM 音量 (2026-09-28 半分に)")
     se_gain_db: float = -10.0
     width: int = 1920
     height: int = 1080
