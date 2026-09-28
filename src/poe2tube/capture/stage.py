@@ -30,7 +30,7 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 # ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
 # 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
 VIEWPORT = (1920, 1080)
-CAPTURE_VER = "v4-hand"  # 撮り方を変えたらキャッシュを切り替える
+CAPTURE_VER = "v5-side-tray"  # 撮り方を変えたらキャッシュを切り替える
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
