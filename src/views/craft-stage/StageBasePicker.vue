@@ -3,34 +3,71 @@
 
   オーナー:「ベースのプルダウンの UI があまりにも悪い。全部一緒になってるからシンプルに使いやすく再設計」。
   前は 1 つのプルダウンに全種類 (指輪〜スキルジェム) の全ベースが入っていた。
-  今: 今のベースを 1 行で出し、押すと下に開く。① 種類 (装飾品 / 防具 / 武器 / その他 の 4 段のチップ) → ② その種類のベースのカード
-  (名前・必要レベル・固有の効果)。名前で探すこともできる (種類をまたいで)。選ぶと閉じる。計算機の BasePicker と同じ流れ。
+  今: 今のベースを 1 行で出し、押すと下に開く。① 種類 (poe2db と同じ並びの段) → ② その種類のベースのカード
+  (名前・必要レベル・素の数値・固有の効果)。名前で探すこともできる (種類をまたいで)。選ぶと閉じる。
+  2026-09-29 オーナー「DB 通りに STR / DEX / INT で分ける」「素の数値 (アーマー・エナシ) を最初から出す」「ルーン○○はベースではない」:
+  - 種類は計算機のエンジンの行 (Gloves_str など)。**行ごとに MOD の置き場が違う** (STR はアーマー、INT はエナジーシールドの MOD) ので分ける
+  - ルーンフォージ / ルーンマスター / ルーンファーザーのベースは出さない (ヴェリシウムで普通のベースから作る物で、最初から選ぶ物ではない)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { FLASK_BASES, GEM_BASES } from "../../services/craft-stage/stage-bases";
+import { classOfBase } from "../../services/htc/bridge";
+import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../../services/craft-stage/stage-bases";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { jaTypeName } from "../../services/trade2/localize";
 
-const props = defineProps<{ base: string; ready: boolean }>();
+const props = defineProps<{ base: string; data: PatchData | null }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 
-/** 種類 (ゲームのアイテムクラス名) を 4 段に分ける */
+/** 種類の段 (poe2db のモッドの一覧と同じ並び)。キーはエンジンの行 (MOD の置き場の単位) */
+const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja}(${x})`]);
+const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja}(${j})`])];
 const ROWS: Array<{ ja: string; cls: Array<[string, string]> }> = [
-  { ja: "装飾品", cls: [["Rings", "指輪"], ["Amulets", "アミュレット"], ["Belts", "ベルト"]] },
-  { ja: "防具", cls: [["Helmets", "兜"], ["Body_Armours", "鎧"], ["Gloves", "手袋"], ["Boots", "靴"], ["Shields", "盾"], ["Bucklers", "バックラー"], ["Foci", "焦点具"], ["Quivers", "矢筒"]] },
-  { ja: "武器", cls: [["OneHand_Maces", "片手メイス"], ["TwoHand_Maces", "両手メイス"], ["Quarterstaves", "クォータースタッフ"], ["Spears", "槍"], ["Bows", "弓"], ["Crossbows", "クロスボウ"], ["Talismans", "タリスマン"], ["Wands", "ワンド"], ["Sceptres", "セプター"], ["Staves", "スタッフ"]] },
-  { ja: "その他", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"], ["SkillGem", "スキルジェム"]] },
+  { ja: "片手武器", cls: [...EL("Wands", "ワンド"), ["OneHand_Maces", "片手メイス"], ["Sceptres", "セプター"], ["Spears", "スピア"]] },
+  { ja: "両手武器", cls: [["Bows", "弓"], ...EL("Staves", "スタッフ"), ["TwoHand_Maces", "両手メイス"], ["Quarterstaves", "クォータースタッフ"], ["Crossbows", "クロスボウ"], ["Talismans", "タリスマン"]] },
+  { ja: "宝飾品", cls: [["Amulets", "アミュレット"], ["Rings", "指輪"], ["Belts", "ベルト"]] },
+  { ja: "手袋", cls: A("Gloves", "手袋") },
+  { ja: "靴", cls: A("Boots", "靴") },
+  { ja: "鎧", cls: A("Body_Armours", "鎧") },
+  { ja: "兜", cls: A("Helmets", "兜") },
+  { ja: "オフハンド", cls: [["Quivers", "矢筒"], ["Shields_str", "盾(str)"], ["Shields_str_dex", "盾(str_dex)"], ["Shields_str_int", "盾(str_int)"], ["Bucklers", "バックラー"], ["Foci", "フォーカス"]] },
+  { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
+  { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
 const CLS_JA = new Map(ROWS.flatMap((r) => r.cls));
+/** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */
+const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;
+/** 素の数値を 1 行に (範囲はそのまま) */
+const num = (v: number | [number, number] | undefined): string => (v === undefined ? "" : Array.isArray(v) ? `${v[0]}-${v[1]}` : String(v));
+function statLine(en: string): string {
+  const b = baseStatsOf(en);
+  if (!b) return "";
+  const out: string[] = [];
+  if (b.armour) out.push(`アーマー ${num(b.armour)}`);
+  if (b.evasion) out.push(`回避力 ${num(b.evasion)}`);
+  if (b.es) out.push(`エナジーシールド ${num(b.es)}`);
+  if (b.block) out.push(`ブロック ${b.block}%`);
+  if (b.phys) out.push(`物理 ${b.phys[0]}-${b.phys[1]}`);
+  if (b.aps) out.push(`${b.aps.toFixed(2)} 回/秒`);
+  if (b.crit && b.phys) out.push(`クリ ${b.crit.toFixed(2)}%`);
+  if (b.life) out.push(`ライフ ${b.life}`);
+  if (b.mana) out.push(`マナ ${b.mana}`);
+  return out.join(" · ");
+}
 
-interface Row { en: string; ja: string; cls: string; lvl: number; implicit: string }
+interface Row { en: string; ja: string; cls: string; lvl: number; implicit: string; stats: string }
 /** 全ベース (計算機のベース + 計算機に無いフラスコ・スキルジェム) */
 const all = computed<Row[]>(() => {
-  if (!props.ready) return [];
-  const out: Row[] = Object.entries(htcBaseInfo()).map(([en, i]) => ({ en, ja: i.ja, cls: i.cls, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => x.ja).join(" / ") }));
-  for (const f of FLASK_BASES) out.push({ en: f.en, ja: jaTypeName(f.en), cls: f.cls, lvl: f.lvl, implicit: "" });
-  for (const g of GEM_BASES) out.push({ en: g.en, ja: g.ja, cls: "SkillGem", lvl: 0, implicit: "" });
+  const d = props.data;
+  if (!d) return [];
+  // エンジンの行が無いベース (ユニーク専用の Golden〜・開発用の [DNT] など) は MOD の置き場が無く打てないので出さない
+  const out: Row[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): Row[] => {
+    const row = RUNE_MADE.test(en) ? null : classOfBase(d, en);
+    return row ? [{ en, ja: i.ja, cls: row.id, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => x.ja).join(" / "), stats: statLine(en) }] : [];
+  });
+  for (const f of FLASK_BASES) out.push({ en: f.en, ja: jaTypeName(f.en), cls: f.cls, lvl: f.lvl, implicit: "", stats: statLine(f.en) });
+  for (const g of GEM_BASES) out.push({ en: g.en, ja: g.ja, cls: "SkillGem", lvl: 0, implicit: "", stats: "" });
   return out;
 });
 const current = computed(() => all.value.find((b) => b.en === props.base) ?? null);
@@ -83,7 +120,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
       <!-- ① 種類 -->
       <div v-if="!query.trim()" class="mb-3 space-y-1.5">
         <div v-for="r in ROWS" :key="r.ja" class="flex flex-wrap items-center gap-1.5">
-          <span class="w-14 shrink-0 text-[11px] opacity-50">{{ r.ja }}</span>
+          <span class="w-16 shrink-0 text-[11px] opacity-50">{{ r.ja }}</span>
           <template v-for="[c, ja] in r.cls" :key="c">
             <button v-if="count.get(c)" type="button" class="rounded-lg px-2.5 py-0.5" :class="chip(cls === c)" @click="cls = c">{{ ja }}</button>
           </template>
@@ -104,6 +141,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
             <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50">Lv {{ b.lvl }}</span>
           </p>
           <p v-if="query.trim()" class="text-[10px] opacity-50">{{ CLS_JA.get(b.cls) ?? b.cls }}</p>
+          <p v-if="b.stats" class="truncate text-[11px] text-white/70" :title="b.stats">{{ b.stats }}</p>
           <p v-if="b.implicit" class="truncate text-[11px] text-[#8888ff]" :title="b.implicit">{{ b.implicit }}</p>
         </button>
       </div>
