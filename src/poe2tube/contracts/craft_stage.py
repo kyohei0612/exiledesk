@@ -53,6 +53,9 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
         "regal_shard",  # 王者のシャード
         "artificer_shard",  # 熟練工のシャード
         "chance_shard",  # 可能性のシャード
+        "alchemy_shard",  # 錬金術のシャード
+        "scroll_fragment",  # 巻物の断片 (5 個で鑑定の巻物)
+        "etcher",  # 秘術師の彫刻針 (ワンド・スタッフ・セプターの品質)
         "jeweller_lesser",  # 宝飾職人のオーブ (見習い)
         "jeweller_greater",  # 宝飾職人のオーブ (上級)
     }
