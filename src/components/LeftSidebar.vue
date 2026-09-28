@@ -41,7 +41,7 @@ const items: NavItem[] = [
       // 2026-09-16: クラフトするジェムを選ぶ画面 (ジェムコラプトの直下に置く)
       // 2026-09-17: 自動ジェム監視 (使用率ランキングの取得もここに統合。旧「クラフト選定ジェム」)
       { id: "gem-watch", icon: "👁", label: "自動ジェム監視", group: "economy" },
-      // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。poe2db の重みでシミュレーション
+      // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。2026-09-29 から計算機のエンジンの重みでシミュレーション
       { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
     ],
   },
@@ -50,6 +50,8 @@ const items: NavItem[] = [
   { id: "htc-craft", icon: "🧪", label: "クラフト計算機", group: "economy" },
   // 2026-09-27: カレンシーを 1 個ずつ使って変化を見せる実演 (動画・配信用。ADR-001 docs/decisions/001-craft-stage.md)
   { id: "craft-stage", icon: "🜖", label: "クラフトステージ", group: "economy" },
+  // 2026-09-29: PoE1 のスキン (マイクロトランザクション) が PoE2 でも使えるか (views/mtx/MtxList.vue)
+  { id: "mtx", icon: "✦", label: "スキン", group: "tools" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す
