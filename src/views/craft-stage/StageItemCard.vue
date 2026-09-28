@@ -74,7 +74,7 @@ const rows = computed(() => [
           :class="[look(r.m).cls, isNew(r.m) ? 'stage-mod-new' : '']"
         >
           {{ r.m.textJa }}
-          <span class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
+          <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
       </div>
       <p v-if="!rows.length" class="py-1 text-white/30">MOD なし</p>

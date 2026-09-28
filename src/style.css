@@ -423,6 +423,52 @@ table th,
   .stage-row-in {
     animation: stage-row-in 0.45s ease-out;
   }
+  /* お告げを有効にした (ゲームの右クリックの有効化と同じく赤金に脈打つ)。2026-09-28 オーナー「ゲーム内リスペクトで」 */
+  .stage-omen-on {
+    animation: stage-omen-pulse 1.4s ease-in-out infinite;
+    background: radial-gradient(circle at 50% 45%, rgba(255, 140, 50, 0.35), rgba(120, 20, 10, 0.35) 70%);
+  }
+  @keyframes stage-omen-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 6px 1px rgba(255, 120, 40, 0.55), inset 0 0 8px rgba(255, 170, 60, 0.35);
+    }
+    50% {
+      box-shadow: 0 0 16px 4px rgba(255, 90, 30, 0.85), inset 0 0 14px rgba(255, 190, 80, 0.55);
+    }
+  }
+  /* 使われたお告げが消える (ゲームでは有効なお告げは使うと無くなる) */
+  .stage-omen-spent {
+    animation: stage-omen-spent 0.7s ease-in forwards;
+  }
+  @keyframes stage-omen-spent {
+    0% {
+      transform: scale(1);
+      filter: brightness(1.8);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.4) rotate(-12deg);
+      filter: brightness(0.6) blur(1px);
+      opacity: 0;
+    }
+  }
+  /* 動画モードのカーソルが押した時 */
+  .stage-press {
+    animation: stage-press 0.22s ease-out;
+    transform-origin: 20% 10%;
+  }
+  @keyframes stage-press {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(0.78);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
   @keyframes stage-row-in {
     0% {
       opacity: 0;

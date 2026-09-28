@@ -13,6 +13,7 @@
  */
 import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../services/htc/patch";
+import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
 import { freshItem, playPlan, playStep, resultOf, type PlayedStep } from "../services/craft-stage/run-plan";
@@ -69,6 +70,7 @@ export const craftStage = {
     if (data.value) return;
     try {
       data.value = await loadHtcPatch();
+      void loadCurrencyHover(); // 棚の詳細カードの公式の説明 (約 330KB、使う時に読む)
       const market = marketStore.ensureMarket();
       const q = new URLSearchParams(location.search);
       const raw = q.get("stage-plan");
