@@ -11,7 +11,11 @@ import { htcBaseInfo } from "../../services/htc/patch";
 import { CATALYSTS } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number }>();
+/**
+ * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
+ * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
+ */
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean }>();
 const emit = defineEmits<{ use: [] }>();
 
 /** ゲームのレアリティの色 */
@@ -43,28 +47,29 @@ const rows = computed(() => [
 <template>
   <div
     class="relative w-[380px] select-none rounded-lg border-2 bg-black/70 shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
+    :style="minH ? { minHeight: `${minH}px` } : undefined"
     :class="[tone.frame, holding ? 'cursor-pointer ring-2 ring-amber-400/70 hover:ring-amber-300' : '']"
     @click="holding && emit('use')"
   >
     <!-- 見出し -->
-    <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 pb-2 pt-3 text-center" :class="tone.head">
+    <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3']">
       <p class="text-lg font-bold" :class="tone.name">{{ item.baseJa }}</p>
-      <p class="text-[11px] opacity-60">{{ item.base }}</p>
+      <p v-if="!compact" class="text-[11px] opacity-60">{{ item.base }}</p>
     </div>
-    <div class="space-y-1 px-4 pb-4 text-center text-[13px]">
+    <div class="space-y-1 px-4 text-center text-[13px]" :class="compact ? 'pb-2' : 'pb-4'">
       <p class="text-[12px] text-white/50">{{ RARITY_JA[item.rarity] }} · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-[#8888ff]">+{{ item.quality }}%</span></p>
       <p v-if="item.sockets" class="text-[12px] text-white/50">ソケット: <span class="tracking-[0.2em] text-white/80">{{ "●".repeat(item.sockets) }}</span></p>
       <!-- ヴァールのエンチャント (ゲームと同じく固有の上) -->
       <template v-if="item.enchant">
-        <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
+        <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
         <p class="text-[#b8daf2]">{{ item.enchant.textJa }}</p>
       </template>
       <template v-if="implicits.length">
-        <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
+        <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
         <p v-for="(t, i) in implicits" :key="'i' + i" class="text-[#8888ff]">{{ t }}</p>
       </template>
-      <div class="mx-auto my-2 h-px w-4/5 bg-white/15" />
+      <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
       <!-- MOD (付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
       <div class="space-y-1">
         <p

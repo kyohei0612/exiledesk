@@ -453,6 +453,10 @@ table th,
       opacity: 0;
     }
   }
+  /* 撮影用 (layout=clip) はアイテムが画面の上端近くまで来るので、「レアに!」などは枠の内側の上の方に出す (はみ出して切れていた) */
+  .stage-float.stage-float-in {
+    top: 72px;
+  }
   /* 動画モードのカーソルが押した時 */
   .stage-press {
     animation: stage-press 0.22s ease-out;

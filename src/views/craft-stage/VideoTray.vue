@@ -10,14 +10,33 @@
 import { computed, type ComponentPublicInstance } from "vue";
 import { iconOf, nameOf } from "../../state/craft-stage";
 
-const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean }>();
+/** height: 撮影用 (inline) で合わせるアイテム枠の高さ (px)。棚の上端・下端をこの中に収める (POE2Tube 要望 ⑥) */
+const props = defineProps<{ keys: string[]; omens: string[]; held: string; armed: string[]; spent: string[]; slots: Map<string, HTMLElement>; inline?: boolean; height?: number }>();
+const GAP = 8;
+const PAD = 8;
+/**
+ * 撮影用: 枠の高さに収まる一番少ない列数と、その時のアイコンの大きさ (枠の高さ ÷ 段数。大きくても 64)。
+ * 2026-09-28 kyohei「使うクラフト素材が 2 列になるなら上限下限をアイテムの横枠から飛び出さないように」
+ */
+const fit = computed(() => {
+  const h = props.height ?? 0;
+  if (!props.inline || !h) return null;
+  const sep = props.omens.length ? GAP * 2 + 1 : 0;
+  for (let c = 1; c <= 4; c++) {
+    const rows = Math.ceil(props.keys.length / c) + Math.ceil(props.omens.length / c);
+    const size = Math.floor((h - PAD * 2 - sep - (rows - 1) * GAP) / Math.max(1, rows));
+    if (size >= 44 || c === 4) return { cols: c, size: Math.min(64, size) };
+  }
+  return null;
+});
 /** 並べる数が多い時は小さくする (枠の幅 640 に収める) */
-const size = computed(() => ((props.keys.length + props.omens.length) > 8 ? 52 : 56));
+const size = computed(() => fit.value?.size ?? ((props.keys.length + props.omens.length) > 8 ? 52 : 56));
 /**
  * 1 列に 8 つまで (高さ 560 に収める)。超えたら 2 列 (さらに超えたら 3 列)。
  * 撮影用 (inline、1.45 倍) は 5 段まで: 下 15% を空けるため (6 段で 912px / 1080 まで伸びて境目すれすれだった)
  */
 const cols = computed(() => {
+  if (fit.value) return fit.value.cols;
   const n = props.keys.length + props.omens.length;
   const rows = props.inline ? 5 : 8;
   return n > rows * 2 ? 3 : n > rows ? 2 : 1;
@@ -29,7 +48,11 @@ function reg(k: string, el: Element | ComponentPublicInstance | null): void {
 </script>
 
 <template>
-  <div class="max-h-[560px] shrink-0 space-y-2 rounded-2xl border border-white/10 bg-black/55 p-2 shadow-[inset_0_0_24px_rgba(0,0,0,0.6)]" :class="inline ? '' : 'absolute left-[612px] top-[120px]'">
+  <div
+    class="shrink-0 space-y-2 rounded-2xl border border-white/10 bg-black/55 p-2 shadow-[inset_0_0_24px_rgba(0,0,0,0.6)]"
+    :class="inline ? '' : 'absolute left-[612px] top-[120px] max-h-[560px]'"
+    :style="fit && height ? { height: `${height}px` } : undefined"
+  >
     <div class="grid gap-2" :style="grid">
       <div
         v-for="k in keys"

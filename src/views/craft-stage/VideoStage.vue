@@ -14,6 +14,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import StageItemCard from "./StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import { useStageFx } from "./use-stage-fx";
@@ -27,15 +28,34 @@ const opts = s.video.value ?? { from: 0, autoplay: false, controls: true };
 const layout = ref<"default" | "clip">(opts.layout ?? "default");
 const clip = computed(() => layout.value === "clip");
 /**
- * 撮影用の倍率。普段は 1.45 倍。アイテムが伸びて下 15% (枠 720 の 612 から下) に入りそうな時だけ、収まるまで下げる
- * (MOD 6 つ + エンチャント + コラプト + 品質で 81%。文が折り返すと越えうるので保険)
+ * 撮影用の倍率 (POE2Tube 要望 ⑥、2026-09-28 kyohei「動画用ならアイテムの枠に収まるように」「装備も小さいからもっと大きく」)。
+ * 手順の全部の段階のアイテムを見えない所に並べて**一番高い物**を測り (clipMaxH)、下 15% (枠 720 の 612 から下) の上まで
+ * いっぱいになる倍率を**1 回だけ**決める (手ごとに変えると動画でガタつく)。枠の高さも一番高い時に合わせて確保し、中身は上詰め。
+ * 横 (アイテム + 棚) が枠からはみ出す時だけ、その分下げる
  */
-const CLIP_SCALE = 1.45;
-const CLIP_TOP = 22;
-const clipScale = ref(CLIP_SCALE);
-function fitClip(): void {
-  const h = cardEl.value?.offsetHeight ?? 0;
-  clipScale.value = h > 0 ? Math.min(CLIP_SCALE, (612 - CLIP_TOP - 6) / h) : CLIP_SCALE;
+const CLIP_TOP = 12;
+const CLIP_BOTTOM = 612;
+const clipScale = ref(1.45);
+const clipMaxH = ref(0);
+const measureEls: HTMLElement[] = [];
+const groupEl = ref<HTMLElement | null>(null);
+/** 測る段階: 始め + 各手の後 (消えた MOD の取り消し線の行も高さに入れる) */
+const measureStates = computed(() => [
+  { item: start, removed: [] as PlayedStep["removed"] },
+  ...tape.map((st) => ({ item: st.after, removed: st.removed })),
+]);
+async function fitClip(): Promise<void> {
+  if (!clip.value) return;
+  await document.fonts?.ready;
+  await nextTick();
+  if (!clipMaxH.value) clipMaxH.value = Math.max(0, ...measureEls.map((e) => e?.offsetHeight ?? 0));
+  await nextTick();
+  const h = clipMaxH.value;
+  const w = groupEl.value?.offsetWidth ?? 0;
+  if (!h) return;
+  const byH = (CLIP_BOTTOM - CLIP_TOP - 4) / h;
+  const byW = w ? (1280 - 48) / w : byH;
+  clipScale.value = Math.min(byH, byW);
 }
 const tape = [...s.log.value];
 const start = tape[0]?.before ?? s.item.value!;
@@ -60,9 +80,9 @@ const trayKeys = [...new Set(tape.map((st) => st.out.currency).filter((c) => !c.
 const trayOmens = [...new Set(tape.flatMap((st) => (st.out.omen ? st.out.omen.split("+") : [])))];
 const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
-// 手が変わる (アイテムの高さが変わる) たびに撮影用の倍率を見直す
-watch([idx, layout], () => void nextTick(fitClip));
-onMounted(() => void nextTick(fitClip));
+// 撮影用の倍率は開いた時と見た目を切り替えた時に 1 回だけ決める
+watch(layout, () => void fitClip());
+onMounted(() => void fitClip());
 
 /**
  * n 手目へ。1 手進む時は手つきを見せてから付ける (押した瞬間に idx を進める)。戻る・飛ぶ時は一気に
@@ -156,14 +176,22 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
 
         <!-- アイテム (撮影用はアイテム + 棚を 1 つの塊で大きく、上寄りの真ん中。下 15% は空ける) -->
         <div
-          :class="clip ? 'absolute left-1/2 top-[22px] flex origin-top items-start gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
+          ref="groupEl"
+          :class="clip ? 'absolute left-1/2 top-[12px] flex origin-top items-start gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
           :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
         >
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
-            <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" />
-            <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'text-sm' : 'text-2xl'">{{ fx.text }}</span>
+            <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :min-h="clip ? clipMaxH : undefined" :compact="clip" />
+            <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="[fx.kind === 'shake' ? 'text-sm' : 'text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
-          <VideoTray v-if="clip" inline :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+          <VideoTray v-if="clip" inline :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
+        </div>
+
+        <!-- 撮影用の倍率を決めるため、全部の段階のアイテムを見えない所に並べて高さを測る (測ったら消す) -->
+        <div v-if="clip && !clipMaxH" class="pointer-events-none invisible absolute left-0 top-0" aria-hidden="true">
+          <div v-for="(m, i) in measureStates" :key="i" :ref="(el) => { if (el) measureEls[i] = el as HTMLElement; }">
+            <StageItemCard :item="m.item" :added="[]" :removed="m.removed" :holding="false" :flash-key="0" compact />
+          </div>
         </div>
 
         <!-- 開示の候補 (アイテムの上に出して、選ぶ物を点ける) -->
