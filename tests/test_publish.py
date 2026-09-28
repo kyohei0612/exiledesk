@@ -245,3 +245,14 @@ def test_thumbnail_403_does_not_stop_playlist(tmp_path: Path) -> None:
     assert vid == "VID" and "videos.insert" not in fake.names()
     assert "playlistItems.insert" in fake.names()
     assert any("サムネ未設定" in str(a) for a in actions)
+
+
+def test_set_privacy() -> None:
+    from poe2tube.publish.youtube import set_privacy
+
+    fake = FakeYouTube()
+    set_privacy(fake, "VID", "public", execute=False)
+    assert fake.names() == []
+    set_privacy(fake, "VID", "public", execute=True)
+    body = dict(fake.calls)["videos.update"]["body"]
+    assert body["status"]["privacyStatus"] == "public" and body["id"] == "VID"

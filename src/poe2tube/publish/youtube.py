@@ -215,3 +215,18 @@ def in_playlist(service: Any, playlist_id: str, video_id: str) -> bool:
         .execute()
     )
     return bool(res.get("items"))
+
+
+def set_privacy(service: Any, video_id: str, privacy: str, execute: bool = False) -> Action:
+    """上げ済み動画の公開範囲を変える (予約は解除される)."""
+    act = Action("公開範囲を変える", f"{video_id} → {privacy}")
+    if execute:
+        service.videos().update(
+            part="status",
+            body={
+                "id": video_id,
+                "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False},
+            },
+        ).execute()
+        log.info("privacy changed", video_id=video_id, privacy=privacy)
+    return act
