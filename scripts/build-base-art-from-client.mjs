@@ -7,7 +7,8 @@
  *   1. data-cache/client-export-art/tables (npx pathofexile-dat、config.json は BaseItemTypes と ItemVisualIdentity) で
  *      ベース名 → DDSFile を引く
  *   2. pathofexile-dat の読み込み部分でクライアントから DDS を取り出す (付属の書き出しは ImageMagick が要るので使わない)
- *   3. ffmpeg で高さ 128px の webp にする → public/base-art/<ファイル名>.webp と src/services/craft-stage/base-art.json (英語名 → ファイル名)
+ *   3. ffmpeg で高さ 128px の webp にする。**RGBA 並びの DDS (DXGI 27〜29) は ffmpeg が BGRA として読むので赤と青を入れ替える**
+ *      (2026-09-29 オーナー「色が全体的に淡い」: 金の指輪が青く出ていた) → public/base-art/<ファイル名>.webp と src/services/craft-stage/base-art.json (英語名 → ファイル名)
  * 対象は計算機のベース (ルーンフォージ等・[DNT] を除く) とフラスコ。
  *   (cd data-cache/client-export-art && npx pathofexile-dat) && node scripts/build-base-art-from-client.mjs
  */
@@ -46,14 +47,21 @@ const tmp = join(tmpdir(), "exiledesk-base-art");
 mkdirSync(tmp, { recursive: true });
 const map = {};
 const done = new Map();
+/** DDS の形式 (DXGI) ごとの枚数 (確認用) */
+const formats = new Map();
 let fail = 0;
 for (const [name, file] of [...dds.entries()].sort()) {
   const id = file.replace(/^Art\/2DItems\//, "").replace(/\.dds$/, "").replace(/[^A-Za-z0-9]+/g, "_");
   if (!done.has(file)) {
     try {
       const src = join(tmp, "in.dds");
-      writeFileSync(src, await loader.getFileContents(file));
-      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(OUT, `${id}.webp`)]);
+      const buf = Buffer.from(await loader.getFileContents(file));
+      writeFileSync(src, buf);
+      const dx10 = buf.toString("latin1", 84, 88) === "DX10";
+      const dxgi = dx10 ? buf.readUInt32LE(128) : 0;
+      formats.set(dxgi, (formats.get(dxgi) ?? 0) + 1);
+      const swap = dxgi >= 27 && dxgi <= 29 ? "colorchannelmixer=rr=0:rb=1:bb=0:br=1," : "";
+      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(OUT, `${id}.webp`)]);
       done.set(file, id);
     } catch (e) {
       fail++;
@@ -66,4 +74,5 @@ for (const [name, file] of [...dds.entries()].sort()) {
 rmSync(tmp, { recursive: true, force: true });
 writeFileSync(resolve(ROOT, "src/services/craft-stage/base-art.json"), JSON.stringify(map, null, 1) + "\n");
 const missing = [...want].filter((n) => !map[n]);
+console.log(`DDS の形式: ${[...formats].map(([k, v]) => `${k || "旧形式"}=${v}`).join(" ")}`);
 console.log(`ベース ${Object.keys(map).length} / ${want.size} 件、絵 ${done.size} 枚 (失敗 ${fail}、絵の無いベース ${missing.length}${missing.length ? ": " + missing.slice(0, 8).join(", ") : ""})`);
