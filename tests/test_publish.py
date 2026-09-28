@@ -52,7 +52,7 @@ class _Endpoint:
 
 class FakeYouTube:
     def __init__(
-        self, title: str = "チョコバナナ", playlists: dict[str, str] | None = None
+        self, title: str = "チョコバナナch", playlists: dict[str, str] | None = None
     ) -> None:
         self.calls: list[tuple[str, dict[str, Any]]] = []
         items = [{"id": v, "snippet": {"title": k}} for k, v in (playlists or {}).items()]
@@ -82,7 +82,7 @@ class FakeYouTube:
 
 def test_profile_file_is_valid() -> None:
     p = load_profile(PROFILE)
-    assert p.expected_title == "チョコバナナ"
+    assert p.expected_title == "チョコバナナch"
     assert "VOICEVOX:ずんだもん" in p.video.credits and "VOICEVOX:四国めたん" in p.video.credits
     assert p.video.privacy == "private"
     assert '"Path of Exile 2"' in p.keywords_str()
@@ -90,8 +90,8 @@ def test_profile_file_is_valid() -> None:
 
 def test_verify_channel_blocks_wrong_channel() -> None:
     with pytest.raises(WrongChannelError):
-        verify_channel(FakeYouTube(title="中学生でも分かる1分ニュース"), "チョコバナナ")
-    assert verify_channel(FakeYouTube(), "チョコバナナ")["id"] == "UC_choco"
+        verify_channel(FakeYouTube(title="中学生でも分かる1分ニュース"), "チョコバナナch")
+    assert verify_channel(FakeYouTube(), "チョコバナナch")["id"] == "UC_choco"
 
 
 def test_apply_profile_dry_run_writes_nothing() -> None:
