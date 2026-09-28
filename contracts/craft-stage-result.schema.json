@@ -64,6 +64,28 @@
           "title": "Seed",
           "type": "integer"
         },
+        "start_unidentified": {
+          "default": false,
+          "description": "未鑑定から始める (鑑定の巻物の実演、マジック / レアの時)",
+          "title": "Start Unidentified",
+          "type": "boolean"
+        },
+        "tray": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
+          "title": "Tray"
+        },
         "steps": {
           "items": {
             "$ref": "#/$defs/PlanStep"
@@ -108,6 +130,23 @@
           "minimum": 1,
           "title": "Times",
           "type": "integer"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "unique",
+                "destroyed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "可能性のオーブの結果を決め打ちする (動画で見せたい方)。無ければ乱数",
+          "title": "Outcome"
         },
         "note": {
           "anyOf": [
@@ -250,10 +289,11 @@
         },
         "quality": {
           "default": 0,
+          "description": "カタリストで 1.5 刻みの小数もある",
           "maximum": 30,
           "minimum": 0,
           "title": "Quality",
-          "type": "integer"
+          "type": "number"
         },
         "corrupted": {
           "default": false,

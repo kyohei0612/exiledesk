@@ -81,6 +81,10 @@ class PlanStep(BaseModel):
         description="お告げ id (price-keys.json の omens キー、例 OmenofDextralExaltation)",
     )
     times: int = Field(default=1, ge=1, le=200)
+    outcome: Literal["unique", "destroyed"] | None = Field(
+        default=None,
+        description="可能性のオーブの結果を決め打ちする (動画で見せたい方)。無ければ乱数",
+    )
     note: str | None = Field(
         default=None, description="台本用の覚え書き (ExileDesk は無視してよい)"
     )
@@ -107,6 +111,13 @@ class CraftStagePlan(BaseModel):
     seed: int = Field(
         ge=0,
         description="mulberry32 の起点。1 手ごとの seed は ExileDesk が seed+index で派生させる",
+    )
+    start_unidentified: bool = Field(
+        default=False, description="未鑑定から始める (鑑定の巻物の実演、マジック / レアの時)"
+    )
+    tray: list[str] | None = Field(
+        default=None,
+        description="動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
     )
     steps: list[PlanStep] = Field(min_length=1)
 
@@ -151,7 +162,7 @@ class StageItem(BaseModel):
     base_ja: str | None = None
     item_level: int = Field(ge=1, le=100)
     rarity: Rarity
-    quality: int = Field(default=0, ge=0, le=30)
+    quality: float = Field(default=0, ge=0, le=30, description="カタリストで 1.5 刻みの小数もある")
     corrupted: bool = False
     identified: bool = Field(
         default=True, description="False = 未鑑定 (MOD を隠す)。鑑定の巻物で True"
