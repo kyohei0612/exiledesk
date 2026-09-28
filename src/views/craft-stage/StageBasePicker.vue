@@ -147,7 +147,7 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
             <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50">Lv {{ b.lvl }}</span>
           </p>
           <p v-if="query.trim()" class="text-[10px] opacity-50">{{ CLS_JA.get(b.cls) ?? b.cls }}</p>
-          <p v-if="b.stats" class="truncate text-[11px] text-white/70" :title="b.stats">{{ b.stats }}</p>
+          <p v-if="b.stats" class="truncate text-[11px] text-[#8888ff]" :title="b.stats">{{ b.stats }}</p>
           <p v-if="b.implicit" class="truncate text-[11px] text-[#8888ff]" :title="b.implicit">{{ b.implicit }}</p>
           </span>
         </button>

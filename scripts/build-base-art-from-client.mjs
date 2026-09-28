@@ -9,6 +9,8 @@
  *   2. pathofexile-dat の読み込み部分でクライアントから DDS を取り出す (付属の書き出しは ImageMagick が要るので使わない)
  *   3. ffmpeg で高さ 128px の webp にする。**RGBA 並びの DDS (DXGI 27〜29) は ffmpeg が BGRA として読むので赤と青を入れ替える**
  *      (2026-09-29 オーナー「色が全体的に淡い」: 金の指輪が青く出ていた) → public/base-art/<ファイル名>.webp と src/services/craft-stage/base-art.json (英語名 → ファイル名)
+ * フラスコの DDS は 3 枚横並び (枠 / 暗いガラス / 液体)。ゲームの見た目は「液体の上に枠を重ねる」(枠のガラスの所は透けている) なので、そう合成して 1 枚にする
+ * (2026-09-29 オーナー「フラスコとか画像ちょっとおかしい奴」: 3 つ並んで出ていた)。
  * 対象は計算機のベース (ルーンフォージ等・[DNT] を除く) とフラスコ。
  *   (cd data-cache/client-export-art && npx pathofexile-dat) && node scripts/build-base-art-from-client.mjs
  */
@@ -50,6 +52,14 @@ const done = new Map();
 /** DDS の形式 (DXGI) ごとの枚数 (確認用) */
 const formats = new Map();
 let fail = 0;
+/** フラスコ: 3 枚 (枠 / 暗いガラス / 液体) のうち、液体の上に枠を重ねて 1 枚にする (枠のガラスの所は透けている) */
+function flask(src, vf, out) {
+  const [w] = execFileSync("ffprobe", ["-loglevel", "error", "-show_entries", "stream=width", "-of", "csv=p=0", src]).toString().trim().split(",").map(Number);
+  const cw = Math.floor(w / 3);
+  const pre = vf ? `${vf},` : "";
+  const graph = `[0]${pre}split=2[x][z];[z]crop=${cw}:ih:${2 * cw}:0[liq];[x]crop=${cw}:ih:0:0[frame];[liq][frame]overlay=0:0,scale=-1:${HEIGHT}`;
+  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-filter_complex", graph, "-c:v", "libwebp", "-quality", "85", out]);
+}
 for (const [name, file] of [...dds.entries()].sort()) {
   const id = file.replace(/^Art\/2DItems\//, "").replace(/\.dds$/, "").replace(/[^A-Za-z0-9]+/g, "_");
   if (!done.has(file)) {
@@ -61,6 +71,12 @@ for (const [name, file] of [...dds.entries()].sort()) {
       const dxgi = dx10 ? buf.readUInt32LE(128) : 0;
       formats.set(dxgi, (formats.get(dxgi) ?? 0) + 1);
       const swap = dxgi >= 27 && dxgi <= 29 ? "colorchannelmixer=rr=0:rb=1:bb=0:br=1," : "";
+      if (/^Art\/2DItems\/Flasks\//.test(file)) {
+        flask(src, swap.replace(/,$/, ""), join(OUT, `${id}.webp`));
+        done.set(file, id);
+        map[name] = id;
+        continue;
+      }
       execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(OUT, `${id}.webp`)]);
       done.set(file, id);
     } catch (e) {
