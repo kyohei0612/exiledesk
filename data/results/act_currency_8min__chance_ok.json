@@ -1,0 +1,119 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-28T12:25:04.728Z",
+  "exiledesk_version": "0.1.316",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Wooden Club",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261108,
+    "start_unidentified": false,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "chance",
+        "omen": null,
+        "times": 1,
+        "outcome": "unique",
+        "note": null
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "chance",
+      "currency_ja": "可能性のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261109,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "棍棒",
+        "base": "Wooden Club",
+        "base_ja": "棍棒",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "棍棒",
+        "base": "Wooden Club",
+        "base_ja": "棍棒",
+        "item_level": 36,
+        "rarity": "unique",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": {
+          "en": "Brynhand's Mark",
+          "ja": "ブリンハンドの印"
+        },
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "unique"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "棍棒",
+    "base": "Wooden Club",
+    "base_ja": "棍棒",
+    "item_level": 36,
+    "rarity": "unique",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": {
+      "en": "Brynhand's Mark",
+      "ja": "ブリンハンドの印"
+    },
+    "gem_sockets": null,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": []
+  },
+  "total_cost": 0
+}

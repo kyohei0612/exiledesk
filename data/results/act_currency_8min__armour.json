@@ -1,0 +1,182 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-28T12:25:02.960Z",
+  "exiledesk_version": "0.1.316",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Chain Mail",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261105,
+    "start_unidentified": false,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "scrap",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": null
+      },
+      {
+        "currency": "artificer",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": null
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "scrap",
+      "currency_ja": "鎧鍛冶の端材",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261106,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "normal"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261107,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "normal"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "チェインメイル",
+    "base": "Chain Mail",
+    "base_ja": "チェインメイル",
+    "item_level": 36,
+    "rarity": "normal",
+    "quality": 5,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": []
+  },
+  "total_cost": 0
+}

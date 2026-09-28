@@ -320,6 +320,33 @@
           "title": "Destroyed",
           "type": "boolean"
         },
+        "unique": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UniqueRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ユニークになった時の名前"
+        },
+        "gem_sockets": {
+          "anyOf": [
+            {
+              "maximum": 6,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "スキルジェムのサポート枠 (宝飾職人のオーブ)",
+          "title": "Gem Sockets"
+        },
         "prefixes": {
           "items": {
             "$ref": "#/$defs/StageMod"
@@ -517,6 +544,25 @@
         "cost"
       ],
       "title": "StageStep",
+      "type": "object"
+    },
+    "UniqueRef": {
+      "description": "可能性のオーブ等でなったユニークの名前.",
+      "properties": {
+        "en": {
+          "title": "En",
+          "type": "string"
+        },
+        "ja": {
+          "title": "Ja",
+          "type": "string"
+        }
+      },
+      "required": [
+        "en",
+        "ja"
+      ],
+      "title": "UniqueRef",
       "type": "object"
     }
   },

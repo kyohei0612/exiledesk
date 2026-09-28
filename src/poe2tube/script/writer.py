@@ -20,7 +20,7 @@ import structlog
 from pydantic import ValidationError
 
 from poe2tube.config.settings import REPO_ROOT
-from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.contracts.craft_stage import CraftStageResult, StageItem
 from poe2tube.script.brief import Brief
 from poe2tube.script.lint import lint_script
 from poe2tube.script.model import VideoScript
@@ -60,6 +60,7 @@ def result_digest(result: CraftStageResult) -> str:
             "rarity": f"{s.changed.rarity_from}→{s.changed.rarity_to}",
             "added": [f"{m.side} {m.tier_name} {m.text_ja}" for m in s.changed.added],
             "removed": [m.text_ja for m in s.changed.removed],
+            "after": _state(s.after),
         }
         for s in result.steps
     ]
@@ -103,6 +104,21 @@ def demo_problems(script: VideoScript, result: CraftStageResult, demos: Demos | 
     return script.check_against(result, demos) + lint_script(
         script, len(result.steps), {k: len(r.steps) for k, r in demos.items()}
     )
+
+
+def _state(item: StageItem) -> dict[str, object]:
+    """MOD 以外の状態 (品質・ソケット・ユニーク名・壊れた等)。変わった物だけ台本で触れる."""
+    st: dict[str, object] = {"quality": item.quality, "sockets": item.sockets}
+    if item.gem_sockets is not None:
+        st["gem_support_sockets"] = item.gem_sockets
+    if item.unique is not None:
+        st["unique_name"] = item.unique.ja
+    for flag in ("destroyed", "corrupted"):
+        if getattr(item, flag):
+            st[flag] = True
+    if not item.identified:
+        st["unidentified"] = True
+    return st
 
 
 def build_prompt(

@@ -152,6 +152,15 @@ class StageMod(BaseModel):
     crafted: bool = False
 
 
+class UniqueRef(BaseModel):
+    """可能性のオーブ等でなったユニークの名前."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    en: str
+    ja: str
+
+
 class StageItem(BaseModel):
     """ある時点のアイテム全体."""
 
@@ -169,6 +178,10 @@ class StageItem(BaseModel):
     )
     sockets: int = Field(default=0, ge=0, le=6, description="熟練工のオーブで増える")
     destroyed: bool = Field(default=False, description="可能性のオーブ等でアイテムが壊れた")
+    unique: UniqueRef | None = Field(default=None, description="ユニークになった時の名前")
+    gem_sockets: int | None = Field(
+        default=None, ge=0, le=6, description="スキルジェムのサポート枠 (宝飾職人のオーブ)"
+    )
     prefixes: list[StageMod] = Field(default_factory=list, max_length=3)
     suffixes: list[StageMod] = Field(default_factory=list, max_length=3)
 
