@@ -22,6 +22,7 @@ from poe2tube.render.tachie import render_tachie  # noqa: E402
 from poe2tube.render.telop_style import render_telop  # noqa: E402
 
 W, H = 1280, 720
+TOP = 275  # 箱の上端。見出しの下端より下 (文字を何にも被せない)
 ICONS = ROOT / "assets" / "icons"
 OUT = ROOT / "output" / "act_currency_8min_thumb.jpg"
 BOXES = [
@@ -51,29 +52,31 @@ def main() -> None:
     # 3 つの箱 (少し斜めの帯で「仕分け」らしく)
     cols = [(0, 430), (430, 860), (860, W)]
     for (label, color, orbs), (x0, x1) in zip(BOXES, cols, strict=True):
-        poly = [(x0 + 30, 250), (x1 + 30, 250), (x1 - 10, H), (x0 - 10, H)]
+        poly = [(x0 + 30, TOP), (x1 + 30, TOP), (x1 - 10, H), (x0 - 10, H)]
         d.polygon(poly, fill=(*color, 255))
-        d.line([(x1 + 30, 250), (x1 - 10, H)], fill=(255, 255, 255, 255), width=14)
+        d.line([(x1 + 30, TOP), (x1 - 10, H)], fill=(255, 255, 255, 255), width=14)
         tag = render_telop("textstyle025", label, 0.9)
         tag = fit(tag, x1 - x0 - 40, 120)
-        img.alpha_composite(tag, ((x0 + x1) // 2 + 10 - tag.width // 2, 262))
+        img.alpha_composite(tag, ((x0 + x1) // 2 + 10 - tag.width // 2, TOP + 10))
         n = len(orbs)
         for i, key in enumerate(orbs):
             size = 150 if n <= 2 else 112
             per_row = 2
             row, colno = divmod(i, per_row)
             cx = (x0 + x1) // 2 + 10 + (colno - (min(n, per_row) - 1) / 2) * (size + 16)
-            cy = 470 + row * (size + 14) - (40 if n > 2 else 0)
+            cy = TOP + 225 + row * (size + 14) - (40 if n > 2 else 0)
             glow_icon(img, key, int(cx), int(cy), size)
     # 集める: 変成のオーブ 1 個 +「シャード 10 個で 1 個」
-    glow_icon(img, "transmute", 1085, 450, 150)
-    d.text((1085, 575), "シャード 10 個で", font=font(46), fill=(255, 255, 255), anchor="mm")
-    d.text((1085, 635), "オーブ 1 個", font=font(46), fill=(255, 255, 255), anchor="mm")
+    glow_icon(img, "transmute", 1085, TOP + 205, 140)
+    d.text((1085, TOP + 318), "シャード 10 個で", font=font(46), fill=(255, 255, 255), anchor="mm")
+    d.text((1085, TOP + 372), "オーブ 1 個", font=font(46), fill=(255, 255, 255), anchor="mm")
     # 上: 問いかけ
-    q = fit(render_telop("textstyle032", "そのオーブ、", 1.3), 700, 130)
-    img.alpha_composite(q, (40, 10))
-    big = fit(render_telop("textstyle025", "使っていいの？", 1.6), 900, 170)
-    img.alpha_composite(big, (40, 105))
+    q = fit(render_telop("textstyle032", "そのオーブ、", 1.3), 700, 110)
+    img.alpha_composite(q, (40, 4))
+    y = 4 + q.height + 4  # 1 行目の下に隙間を空ける (文字同士も被せない)
+    big = fit(render_telop("textstyle025", "使っていいの？", 1.6), 900, TOP - y - 6)
+    img.alpha_composite(big, (40, y))
+    assert y + big.height <= TOP, "見出しが箱に被る"
     # 右上: 困り顔のずんだもん (見出しの右、箱の上)
     z = render_tachie("zundamon", "troubled", 0, 300)
     img.alpha_composite(z, (W - z.width - 20, -30))
