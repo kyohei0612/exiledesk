@@ -1170,7 +1170,7 @@
         },
         {
           "speaker": "metan",
-          "text": "変成、錬金術、王者、熟練工、可能性のシャードね。",
+          "text": "変成、王者、熟練工、可能性のシャードね。",
           "emotion": "normal",
           "scene": {
             "kind": "talk"
@@ -1178,7 +1178,7 @@
         },
         {
           "speaker": "zundamon",
-          "text": "錬金術のシャードなら、錬金術のオーブなのだ？",
+          "text": "変成のシャードなら、変成のオーブなのだ？",
           "emotion": "normal",
           "scene": {
             "kind": "talk"
@@ -1186,7 +1186,7 @@
         },
         {
           "speaker": "metan",
-          "text": "そう。この黄色い指輪も、シャードから作れるわ。",
+          "text": "そう。名前が同じオーブになるの。",
           "emotion": "proud",
           "scene": {
             "kind": "item",
