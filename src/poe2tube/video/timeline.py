@@ -67,8 +67,18 @@ def mouth_levels(
     return tuple(levels + [MOUTH_CLOSED] * gap_frames)
 
 
-def build_cues(sections: list[Section], wavs: list[Path], fps: int, gap: float = 0.3) -> list[Cue]:
-    """セクション順に wav を当てて Cue 列を作る。``wavs`` は全行ぶん (行の順)."""
+def build_cues(
+    sections: list[Section],
+    wavs: list[Path],
+    fps: int,
+    gap: float = 0.3,
+    min_seconds: dict[int, float] | None = None,
+) -> list[Cue]:
+    """セクション順に wav を当てて Cue 列を作る。``wavs`` は全行ぶん (行の順).
+
+    ``min_seconds`` {行の位置 (0 始まり): 秒}: その行が短ければ末尾を無音で延ばす
+    (付いた後の演出を見せ切る前に次の画面へ行かないように)。
+    """
     lines = [(sec.name, ln) for sec in sections for ln in sec.lines]
     if len(lines) != len(wavs):
         raise ValueError(f"行数 {len(lines)} と wav 数 {len(wavs)} が違う")
@@ -78,6 +88,9 @@ def build_cues(sections: list[Section], wavs: list[Path], fps: int, gap: float =
     for i, ((section, line), wav) in enumerate(zip(lines, wavs, strict=True), start=1):
         samples, sr = read_wav(wav)
         levels = mouth_levels(samples, sr, fps, gap_frames)
+        need = int(round((min_seconds or {}).get(i - 1, 0.0) * fps))
+        if len(levels) < need:
+            levels = levels + (MOUTH_CLOSED,) * (need - len(levels))
         duration = len(levels) / fps
         cues.append(Cue(i, section, line, wav, t, duration, levels))
         t += duration

@@ -54,6 +54,9 @@ def test_build_cues_and_concat_audio_align(tmp_path: Path) -> None:
     out = concat_audio(cues, tmp_path / "mix.wav")
     samples, sr = read_wav(out)
     assert len(samples) == int(round((cues[0].duration + cues[1].duration) * sr))
+    # 反応の行の最短の長さ: 短ければ無音で延ばす
+    held = build_cues([sec], wavs, fps=12, gap=0.25, min_seconds={1: 2.0})
+    assert held[1].frames == 24 and held[0].frames == 9
 
 
 def test_build_cues_rejects_mismatch(tmp_path: Path) -> None:
@@ -114,7 +117,7 @@ def test_voicevox_client_caches_and_maps_style(
 
 
 def test_stage_hit_not_replayed_after_talk() -> None:
-    from poe2tube.video.animate import stage_hit
+    from poe2tube.video.clip_timing import stage_hit
 
     def ln(kind: str, step: int | None = None) -> Line:
         return Line(speaker="metan", text="あ", scene=Scene(kind=kind, step=step))  # type: ignore[arg-type]

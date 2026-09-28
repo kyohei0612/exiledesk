@@ -1,0 +1,115 @@
+"""撮影クリップの「付いた瞬間」を画像の変化から見つける.
+
+ExileDesk の手つきの速さはバージョンで変わる (v0.1.311 は約 2.5 秒、v0.1.314 は約 1.8 秒)。
+決め打ちの秒数だと、ずんだもんが付く前に驚いたり、付いた瞬間に画面が切り替わったりする
+(kyohei 2026-09-28)。そこでクリップごとにアイテム枠が一番大きく変わったコマを探す。
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+
+import numpy as np
+import numpy.typing as npt
+from PIL import Image
+
+from poe2tube.capture.stage import clip_frames
+from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.script.model import Line
+
+# アイテム枠 + 棚のあたり (1920x1080 の撮影画面を 1/4 にした座標)。下 15% の空きは見ない
+_REGION = (40, 0, 380, 230)
+HOLD_AFTER_ATTACH = 0.5  # 付いた後の演出が終わってから、次の画面に行くまでの余白 (秒)
+LAND_WITHOUT_PREROLL = 0.4  # 前の行で手つきを流せない時、反応の行の頭から付くまでの秒
+
+
+@lru_cache(maxsize=64)
+def _attach_index(frames: tuple[str, ...]) -> int:
+    """変化量が最大値の半分を初めて超えたコマ。最大そのものは光る演出の山で、付いた瞬間より遅い."""
+    prev: npt.NDArray[np.float32] | None = None
+    diffs = [0.0]
+    x0, y0, x1, y1 = _REGION
+    for f in frames:
+        a = np.asarray(Image.open(f).convert("L").resize((480, 270))).astype(np.float32)
+        cur = a[y0:y1, x0:x1]
+        if prev is not None:
+            diffs.append(float(np.abs(cur - prev).mean()))
+        prev = cur
+    peak = max(diffs)
+    return next(i for i, d in enumerate(diffs) if d >= peak * 0.5) if peak > 0 else 0
+
+
+def attach_index(clip: list[Path]) -> int:
+    """クリップの中で付いた瞬間のコマ番号 (クリップが空なら 0)."""
+    if len(clip) < 2:
+        return 0
+    return _attach_index(tuple(str(p) for p in clip))
+
+
+def stage_hit(prev: Line | None, cur: Line, shown: set[int] | None = None) -> bool:
+    """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く).
+
+    ``shown`` (もう打った step) を渡すと、雑談を挟んで同じ step に戻った行では打ち直さない
+    (kyohei 2026-09-28: 「王者を使うわね」で前の手の撮影と結果の文字がもう一度出ていた)。
+    """
+    sc = cur.scene
+    if sc.kind != "stage" or not sc.step or (shown is not None and sc.step in shown):
+        return False
+    return prev is None or prev.scene.kind != "stage" or prev.scene.step != sc.step
+
+
+@dataclass(frozen=True)
+class HitPlan:
+    """打つ行 1 つぶんの段取り.
+
+    preroll=True: 1 つ前の行 (「○○を使うわね」) の終わりで手つき (clip[:attach]) を流し、
+    反応の行の頭ちょうどで付く。反応の行は clip[attach:] から始める。
+    """
+
+    step: int
+    clip: tuple[Path, ...]
+    attach: int
+    preroll: bool
+    fps: int = 24
+
+    @property
+    def start(self) -> int:
+        """反応の行で最初に出すコマ."""
+        return (
+            self.attach
+            if self.preroll
+            else max(0, self.attach - int(LAND_WITHOUT_PREROLL * self.fps))
+        )
+
+    @property
+    def min_seconds(self) -> float:
+        """反応の行の最短の長さ: 付いた後の演出を見せ切って、少し余白を置く."""
+        return (len(self.clip) - self.start) / self.fps + HOLD_AFTER_ATTACH
+
+    @property
+    def land_at(self) -> float:
+        """反応の行の頭から付くまでの秒 (SE を鳴らす所)."""
+        return 0.0 if self.preroll else (self.attach - self.start) / self.fps
+
+
+def plan_hits(
+    lines: list[tuple[str, Line]], plan: CraftStagePlan, fps: int = 24
+) -> dict[int, HitPlan]:
+    """{行の位置 (0 始まり): HitPlan}。(章名, 行) の並びだけで決まる (尺を作る前に使える)."""
+    out: dict[int, HitPlan] = {}
+    shown: set[int] = set()
+    prev: Line | None = None
+    prev_section: str | None = None
+    for i, (section, line) in enumerate(lines):
+        new_chapter = prev_section is not None and prev_section != section
+        if stage_hit(prev, line, shown) and line.scene.step:
+            step = line.scene.step
+            shown.add(step)
+            clip = clip_frames(plan, step)
+            if clip:
+                preroll = prev is not None and prev.scene.kind == "stage" and not new_chapter
+                out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps)
+        prev, prev_section = line, section
+    return out

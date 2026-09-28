@@ -19,6 +19,7 @@ from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events, write_frames
+from poe2tube.video.clip_timing import plan_hits
 from poe2tube.video.timeline import Cue, build_cues, concat_audio
 
 log = structlog.get_logger()
@@ -115,13 +116,16 @@ def build_video(
     log.info("voice ready", lines=len(wavs))
 
     book = NameBook.load()
-    cues = build_cues(script.sections, wavs, s.fps)
+    capture_stage_scenes(script, result)  # 手つきの長さを測るので先に撮る
+    lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
+    hits = plan_hits(lines, result.plan, s.fps)
+    hold = {i: h.min_seconds for i, h in hits.items()}
+    cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold)
     write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")
     events = sound_events(cues, book, script.final_step or len(result.steps), result)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
-    capture_stage_scenes(script, result)
     frames = write_frames(cues, result, book, work / "frames", script.final_step)
     log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
 

@@ -14,12 +14,11 @@ import structlog
 from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
-from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
 from poe2tube.render.overlay_fx import CHAPTER_SECONDS, HIT_START, draw_chapter, draw_hit
-from poe2tube.script.model import Line
+from poe2tube.video.clip_timing import HitPlan, plan_hits
 from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
@@ -74,20 +73,20 @@ def sound_events(
     events = [SoundEvent(0.0, "start")]
     prev = None
     prev_section: str | None = None
-    shown: set[int] = set()
-    for c in cues:
+    hits = plan_hits([(c.section, c.line) for c in cues], result.plan) if result else {}
+    for i, c in enumerate(cues):
         sc = c.line.scene
-        hit = stage_hit(prev, c.line, shown)
-        if hit and sc.step:
-            shown.add(sc.step)
+        hp = hits.get(i)
         new_chapter = prev is not None and c.section != prev_section
         lead = chapter_lead(new_chapter)
         if new_chapter:
             events.append(SoundEvent(c.start, "chapter"))
-        if result is not None and hit and sc.step:
-            at = c.start + lead + HIT_START
-            events.append(SoundEvent(at, hit_sound(result.steps[sc.step - 1])))
-        if prev is not None and scene_changed(prev, c.line):
+        if result is not None and hp is not None:
+            # 付いた瞬間に鳴らす (手つきは前の行で流し終わっている)
+            events.append(
+                SoundEvent(c.start + lead + hp.land_at, hit_sound(result.steps[hp.step - 1]))
+            )
+        if prev is not None and scene_changed(prev, c.line) and hp is None:
             is_final = (
                 sc.kind in ("stack", "item")
                 and sc.step == n_steps
@@ -97,7 +96,7 @@ def sound_events(
                     "name",
                 )
             )
-            kind = "hit" if hit else ("complete" if is_final else "slide")
+            kind = "complete" if is_final else "slide"
             events.append(SoundEvent(c.start, kind))
         if book.find_in_text(c.line.text):
             events.append(SoundEvent(c.start + POP_DELAY, "pop"))
@@ -116,18 +115,6 @@ def hit_sound(step: StageStep) -> str:
     return "hit_added" if ch.added else "hit_removed"
 
 
-def stage_hit(prev: Line | None, cur: Line, shown: set[int] | None = None) -> bool:
-    """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く).
-
-    ``shown`` (もう打った step) を渡すと、雑談を挟んで同じ step に戻った行では打ち直さない
-    (kyohei 2026-09-28: 「王者を使うわね」で前の手の撮影と結果の文字がもう一度出ていた)。
-    """
-    sc = cur.scene
-    if sc.kind != "stage" or not sc.step or (shown is not None and sc.step in shown):
-        return False
-    return prev is None or prev.scene.kind != "stage" or prev.scene.step != sc.step
-
-
 def iter_frames(
     cues: list[Cue], result: CraftStageResult, book: NameBook, final_step: int | None = None
 ) -> Iterator[tuple[int, Image.Image]]:
@@ -138,26 +125,26 @@ def iter_frames(
     prev = None
     prev_section: str | None = None
     prev_zoom = False
-    shown: set[int] = set()
+    hits = plan_hits([(c.section, c.line) for c in cues], result.plan, round(fps))
     for i, c in enumerate(cues):
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
-        nxt = cues[i + 1].line if i + 1 < len(cues) else None
-        is_hit = stage_hit(prev, c.line, shown)
-        if is_hit and c.line.scene.step:
-            shown.add(c.line.scene.step)
-        # 拡大: 手を打つ直前の行 (「○○を使うわね」) から、打った行まで
-        zoom_on = c.line.scene.kind == "stage" and (
-            is_hit or (nxt is not None and stage_hit(c.line, nxt, shown))
-        )
+        hp: HitPlan | None = hits.get(i)
+        is_hit = hp is not None
+        nxt_hp = hits.get(i + 1)
+        # 次の行で付くなら、この行 (「○○を使うわね」) の終わりで手つきを流す
+        pre = list(nxt_hp.clip[: nxt_hp.attach]) if nxt_hp and nxt_hp.preroll else []
+        pre = pre[-len(c.mouth_levels) :] if pre else []
+        pre_from = len(c.mouth_levels) - len(pre)
+        zoom_on = c.line.scene.kind == "stage" and (is_hit or nxt_hp is not None)
         panel = render_panel_layer(
             c.line, result, final_step=final_step, zoom=1.0 if zoom_on else 0.0
         )
-        # 打った瞬間の連番 (ExileDesk の演出そのもの) があれば、行の頭はそれを 1 コマずつ貼る
-        clip = clip_frames(result.plan, c.line.scene.step or 0) if is_hit else []
+        # 反応の行は付いた瞬間 (preroll 無しなら少し手前) から連番を貼る
+        clip = list(hp.clip[hp.start :]) if hp else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
-        hit_step = result.steps[c.line.scene.step - 1] if is_hit and c.line.scene.step else None
+        hit_step = result.steps[hp.step - 1] if hp else None
         new_chapter = prev_section is not None and prev_section != c.section
         lead = chapter_lead(new_chapter)
         for k, mouth in enumerate(c.mouth_levels):
@@ -166,6 +153,11 @@ def iter_frames(
             kl = int(round(tl * fps))
             if tl < 0:
                 frame_static = base  # 章カードの間はパネルを出さない (被せない)
+            elif pre and k >= pre_from:
+                layer = render_panel_layer(
+                    c.line, result, stage_shot=pre[k - pre_from], final_step=final_step
+                )
+                frame_static = _with_panel(base, layer, 0, 1.0)
             elif 0 <= kl < len(clip) * CLIP_SLOWMO:
                 shot = clip[kl // CLIP_SLOWMO]
                 layer = render_panel_layer(

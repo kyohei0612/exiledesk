@@ -18,10 +18,8 @@ from poe2tube.render.palette import INK, font
 from poe2tube.render.scene_panel import STAGE_HIT_Y
 from poe2tube.render.telop_style import load_presets, render_telop
 
-HIT_START, HIT_END = (
-    2.5,
-    5.4,
-)  # 手つきで付いた後に結果を出す (ExileDesk v0.1.311 の手つき 約 2.5 秒)
+# 反応の行の頭 (= 付いた瞬間) からの秒。手つきは前の行で流し終わっている (video/clip_timing.py)
+HIT_START, HIT_END = 0.7, 3.0
 CHAPTER_SECONDS = 1.4
 HIT_Y = STAGE_HIT_Y  # 撮影画面の下 15% の空き (ExileDesk layout=clip が空けてくれる帯)
 EMPHASIS = re.compile(r"(T\d+|[+＋−-]\s?\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:つ|個|手目|手|枠))")
