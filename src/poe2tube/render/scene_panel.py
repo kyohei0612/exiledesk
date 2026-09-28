@@ -50,6 +50,13 @@ def draw_scene_panel(
             _stage_capture(img, inner, shot, scene.step or 0, zoom)
         else:
             _stage_placeholder(img, inner, scene, result, icon_dir)
+    elif scene.kind in ("tiers", "compare"):
+        # ExileDesk の動画用の画面 (要望 ⑪)。撮れていなければ文字だけ
+        tag = "ティアの表" if scene.kind == "tiers" else "比べる"
+        if stage_shot is not None and stage_shot.exists():
+            _stage_capture(img, inner, stage_shot, 0, tag=tag)
+        else:
+            pill(img, (x0, y0), f"{tag} (撮影なし)", MUTED, size=28)
     elif scene.kind == "cost":
         _cost(img, inner, result)
     elif scene.kind == "quiz":
@@ -94,7 +101,14 @@ def _lerp_box(a: tuple[int, int, int, int], b: tuple[int, int, int, int], e: flo
     return [int(a[i] + (b[i] - a[i]) * e) for i in range(4)]
 
 
-def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: float = 0.0) -> None:
+def _stage_capture(
+    img: Image.Image,
+    box: Box,
+    shot: Path,
+    step: int,
+    zoom: float = 0.0,
+    tag: str | None = None,
+) -> None:
     """ExileDesk クラフトステージの実画面を貼る。``zoom``: 0 = 全体、1 = 棚とアイテム (手つき)、
     2 = アイテムだけ (付いた瞬間)。間の値はなめらかに寄る.
 
@@ -123,7 +137,8 @@ def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: floa
         d.rounded_rectangle((px - 6, py - 6, qx + 6, qy + 6), 16, fill=INK)
         img.alpha_composite(im, (px, py))
         # アイテム枠の左の黒地に「N 手目」だけ (長い札はアイテム名に被る)
-        pill(img, (px + 14, py + 14), f"{step} 手目" if step else "開始前", ACCENT, size=26)
+        tag = tag or (f"{step} 手目" if step else "開始前")
+        pill(img, (px + 14, py + 14), tag, ACCENT, size=26)
         return
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
     im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)

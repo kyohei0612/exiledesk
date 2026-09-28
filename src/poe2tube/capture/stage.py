@@ -120,7 +120,7 @@ def capture_plan(
     out_dir = CACHE_DIR / plan_key(plan)
     out_dir.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(args=["--mute-audio"])  # テストでも音を出さない
         page = browser.new_page(
             viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=1
         )

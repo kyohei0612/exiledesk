@@ -14,6 +14,7 @@ import structlog
 from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
 from poe2tube.capture.stage import capture_plan
+from poe2tube.capture.views import capture_views, view_query
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
@@ -103,6 +104,20 @@ def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
             )
 
 
+def capture_view_scenes(script: VideoScript, rs: ResultSet) -> None:
+    """段の表・比べる・スポットライトの画面を撮っておく (ExileDesk ⑪、失敗しても動画は作る)."""
+    if not get_settings().stage_capture:
+        return
+    queries = [q for ln in script.lines if (q := view_query(ln.scene, rs)) is not None]
+    if not queries:
+        return
+    try:
+        capture_views(queries)
+        log.info("view scenes ready", count=len(set(queries)))
+    except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
+        log.warning("view capture failed", error=str(e)[:300])
+
+
 def write_chapters(cues: list[Cue], path: Path) -> None:
     """章 (section) の頭の時刻。投稿時の説明文のチャプターに使う (ADR 003)."""
     seen: list[dict[str, object]] = []
@@ -128,6 +143,7 @@ def build_video(
 
     book = NameBook.load()
     capture_stage_scenes(script, rs)  # 手つきの長さを測るので先に撮る
+    capture_view_scenes(script, rs)
     lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
     hold = {i: h.min_seconds for i, h in hits.items()}

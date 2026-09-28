@@ -14,6 +14,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
+from poe2tube.capture.views import shot_for
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
 from poe2tube.render.frame import compose_frame, render_base, render_panel_layer
@@ -169,7 +170,10 @@ def iter_frames(
         pre = pre[-len(c.mouth_levels) :] if pre else []
         pre_from = len(c.mouth_levels) - len(pre)
         zoom_on = c.line.scene.kind == "stage" and (is_hit or nxt_hp is not None)
-        panel = render_panel_layer(c.line, res, final_step=fin, zoom=1.0 if zoom_on else 0.0)
+        extra = shot_for(c.line.scene, rs)  # 段の表・比べる・スポットライト (ExileDesk ⑪)
+        panel = render_panel_layer(
+            c.line, res, stage_shot=extra, final_step=fin, zoom=1.0 if zoom_on else 0.0
+        )
         # 反応の行は付いた瞬間 (preroll 無しなら少し手前) から連番を貼る
         clip = list(hp.clip[hp.start :]) if hp else []
         animate = panel is not None and scene_changed(prev, c.line) and not clip

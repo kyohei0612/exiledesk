@@ -18,7 +18,7 @@ SCRIPT_SCHEMA = "poe2tube-script/1"
 
 Speaker = Literal["zundamon", "metan"]
 Emotion = Literal["normal", "troubled", "surprised", "happy", "proud", "sad"]
-SceneKind = Literal["talk", "stack", "item", "stage", "cost", "quiz"]
+SceneKind = Literal["talk", "stack", "item", "stage", "cost", "quiz", "tiers", "compare"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分
@@ -55,6 +55,16 @@ class Scene(BaseModel):
     badges: list[str] | None = Field(
         default=None, description="quiz: カードごとの札 (例「使う」「取っておく」)"
     )
+    mod: str | None = Field(
+        default=None, description="tiers: 段の表を出す MOD (id か系統、例 ColdResistance)"
+    )
+    focus: str | None = Field(
+        default=None, description="stage: 光らせる MOD (id か系統)。スポットライト (ExileDesk ⑪)"
+    )
+    compare_with: str | None = Field(
+        default=None, description="compare: 右 (入れ替える物) の実演キー。左は demo の手"
+    )
+    b_step: int | None = Field(default=None, ge=0, description="compare: 右の実演の手")
     countdown: int | None = Field(
         default=None, ge=1, le=10, description="quiz: 行の後に数える秒 (3→2→1 と音、ADR 005)"
     )
@@ -69,11 +79,15 @@ class Scene(BaseModel):
             tuple(self.choices or ()),
             self.answer,
             tuple(self.badges or ()),
+            self.mod,
+            self.focus,
+            self.compare_with,
+            self.b_step,
         )
 
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:
-        if self.kind in ("stack", "item", "stage") and self.step is None:
+        if self.kind in ("stack", "item", "stage", "compare") and self.step is None:
             raise ValueError(f"scene.kind={self.kind} には step が必要")
         if self.show_steps is not None and self.kind != "stack":
             raise ValueError("show_steps は stack 専用")
@@ -86,6 +100,12 @@ class Scene(BaseModel):
                 raise ValueError("quiz の badges は choices と同じ数")
         elif self.choices or self.answer is not None or self.badges or self.countdown:
             raise ValueError("choices / answer / badges / countdown は quiz 専用")
+        if (self.kind == "tiers") != (self.mod is not None):
+            raise ValueError("tiers には mod が必要 (mod は tiers 専用)")
+        if (self.kind == "compare") != (self.compare_with is not None):
+            raise ValueError("compare には compare_with が必要 (compare_with は compare 専用)")
+        if self.focus is not None and self.kind != "stage":
+            raise ValueError("focus は stage 専用")
         return self
 
 
@@ -160,6 +180,8 @@ class VideoScript(BaseModel):
                 continue
             res = demos[sc.demo] if sc.demo is not None else result
             n = len(res.steps)
+            if sc.compare_with is not None and sc.compare_with not in demos:
+                problems.append(f"line {i}: 比べる相手 {sc.compare_with!r} が demos に無い")
             if sc.step is not None and sc.step > n:
                 problems.append(f"line {i}: step {sc.step} は結果 JSON に無い (最大 {n})")
             for s in sc.show_steps or []:

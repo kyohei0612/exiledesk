@@ -57,7 +57,7 @@ def render_panel_layer(
     s = get_settings()
     w, h = s.width, s.height
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    if line.scene.kind == "stage" and USE_CLIP_LAYOUT:
+    if line.scene.kind in ("stage", "tiers", "compare") and USE_CLIP_LAYOUT:
         panel, inner = STAGE_PANEL, stage_inner()
     else:
         panel = (330, 130, w - 330, h - TELOP_H - 40)

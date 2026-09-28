@@ -117,3 +117,31 @@ def test_brief_checks_each_demo_plan() -> None:
     probs = b.problems()
     assert any(p.startswith("[w]") and "ilvl 80" in p for p in probs)
     assert not any(p.startswith("視聴者") for p in probs)
+
+
+def test_view_queries_for_new_screens() -> None:
+    from poe2tube.capture.views import view_path, view_query
+
+    rs = ResultSet(_result(), {"w": _result()})
+    t = view_query(Scene(kind="tiers", mod="ColdResistance"), rs)
+    assert t is not None and "view=tiers" in t and "mod=ColdResistance" in t and "ilvl=" in t
+    c = view_query(Scene(kind="compare", step=1, compare_with="w", b_step=2), rs)
+    assert c is not None and "view=compare" in c and "a_step=1" in c and "b_step=2" in c
+    f = view_query(Scene(kind="stage", step=1, focus="Rings/ColdResistance"), rs)
+    assert f is not None and "focus=Rings/ColdResistance" in f and "step=1" in f
+    assert view_query(Scene(kind="stage", step=1), rs) is None
+    assert view_path(t) != view_path(c)
+
+
+def test_new_screen_rules() -> None:
+    with pytest.raises(ValueError):
+        Scene(kind="tiers")
+    with pytest.raises(ValueError):
+        Scene(kind="compare", step=1)
+    with pytest.raises(ValueError):
+        Scene(kind="item", step=1, focus="x")
+    s = _script([_ln("stage", 1), _ln("stage", 2), _ln("stage", 3)])
+    s.sections[0].lines.append(
+        Line(speaker="metan", text="あ", scene=Scene(kind="compare", step=1, compare_with="nope"))
+    )
+    assert any("比べる相手" in p for p in s.check_against(_result(), {}))
