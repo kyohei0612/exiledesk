@@ -20,7 +20,12 @@ from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.render.draw import load_icon, pill, shadow_panel
 from poe2tube.render.overlay_fx import draw_emphasis_text
 from poe2tube.render.palette import ACCENT, ACCENT_SOFT, GOLD, LINE, PANEL, WHITE, font
-from poe2tube.render.scene_panel import draw_scene_panel
+from poe2tube.render.scene_panel import (
+    STAGE_PANEL,
+    USE_CLIP_LAYOUT,
+    draw_scene_panel,
+    stage_inner,
+)
 from poe2tube.render.tachie import render_tachie
 from poe2tube.script.model import Emotion, Line, Speaker
 
@@ -52,12 +57,15 @@ def render_panel_layer(
     s = get_settings()
     w, h = s.width, s.height
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    panel = (330, 130, w - 330, h - TELOP_H - 40)
+    if line.scene.kind == "stage" and USE_CLIP_LAYOUT:
+        panel, inner = STAGE_PANEL, stage_inner()
+    else:
+        panel = (330, 130, w - 330, h - TELOP_H - 40)
+        inner = (panel[0] + 40, panel[1] + 40, panel[2] - 40, panel[3] - 40)
     shadow_panel(layer, panel, fill=WHITE, outline=LINE, radius=32, blur=24)
-    x0, y0, x1, y1 = panel
     draw_scene_panel(
         layer,
-        (x0 + 40, y0 + 40, x1 - 40, y1 - 40),
+        inner,
         line.scene,
         result,
         ICON_DIR,

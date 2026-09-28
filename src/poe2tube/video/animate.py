@@ -74,13 +74,17 @@ def sound_events(
     events = [SoundEvent(0.0, "start")]
     prev = None
     prev_section: str | None = None
+    shown: set[int] = set()
     for c in cues:
         sc = c.line.scene
+        hit = stage_hit(prev, c.line, shown)
+        if hit and sc.step:
+            shown.add(sc.step)
         new_chapter = prev is not None and c.section != prev_section
         lead = chapter_lead(new_chapter)
         if new_chapter:
             events.append(SoundEvent(c.start, "chapter"))
-        if result is not None and stage_hit(prev, c.line) and sc.step:
+        if result is not None and hit and sc.step:
             at = c.start + lead + HIT_START
             events.append(SoundEvent(at, hit_sound(result.steps[sc.step - 1])))
         if prev is not None and scene_changed(prev, c.line):
@@ -93,7 +97,7 @@ def sound_events(
                     "name",
                 )
             )
-            kind = "hit" if stage_hit(prev, c.line) else ("complete" if is_final else "slide")
+            kind = "hit" if hit else ("complete" if is_final else "slide")
             events.append(SoundEvent(c.start, kind))
         if book.find_in_text(c.line.text):
             events.append(SoundEvent(c.start + POP_DELAY, "pop"))
@@ -112,10 +116,14 @@ def hit_sound(step: StageStep) -> str:
     return "hit_added" if ch.added else "hit_removed"
 
 
-def stage_hit(prev: Line | None, cur: Line) -> bool:
-    """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く)."""
+def stage_hit(prev: Line | None, cur: Line, shown: set[int] | None = None) -> bool:
+    """この行で「手を打つ」瞬間か: stage の step が初めて出てくる (0 = 開始前は除く).
+
+    ``shown`` (もう打った step) を渡すと、雑談を挟んで同じ step に戻った行では打ち直さない
+    (kyohei 2026-09-28: 「王者を使うわね」で前の手の撮影と結果の文字がもう一度出ていた)。
+    """
     sc = cur.scene
-    if sc.kind != "stage" or not sc.step:
+    if sc.kind != "stage" or not sc.step or (shown is not None and sc.step in shown):
         return False
     return prev is None or prev.scene.kind != "stage" or prev.scene.step != sc.step
 
@@ -130,14 +138,17 @@ def iter_frames(
     prev = None
     prev_section: str | None = None
     prev_zoom = False
+    shown: set[int] = set()
     for i, c in enumerate(cues):
         props = [f.key for f in book.find_in_text(c.line.text)]
         base = render_base(c.section, c.index / len(cues))
         nxt = cues[i + 1].line if i + 1 < len(cues) else None
-        is_hit = stage_hit(prev, c.line)
+        is_hit = stage_hit(prev, c.line, shown)
+        if is_hit and c.line.scene.step:
+            shown.add(c.line.scene.step)
         # 拡大: 手を打つ直前の行 (「○○を使うわね」) から、打った行まで
         zoom_on = c.line.scene.kind == "stage" and (
-            is_hit or (nxt is not None and stage_hit(c.line, nxt))
+            is_hit or (nxt is not None and stage_hit(c.line, nxt, shown))
         )
         panel = render_panel_layer(
             c.line, result, final_step=final_step, zoom=1.0 if zoom_on else 0.0

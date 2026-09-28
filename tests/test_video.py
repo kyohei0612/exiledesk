@@ -111,3 +111,18 @@ def test_voicevox_client_caches_and_maps_style(
     assert p1 == p2 and p1.read_bytes() == b"RIFF...."
     assert calls == ["audio_query", "synthesis"]  # 2 回目はキャッシュ
     assert client.cache_path(line).name.startswith("zundamon_")
+
+
+def test_stage_hit_not_replayed_after_talk() -> None:
+    from poe2tube.video.animate import stage_hit
+
+    def ln(kind: str, step: int | None = None) -> Line:
+        return Line(speaker="metan", text="あ", scene=Scene(kind=kind, step=step))  # type: ignore[arg-type]
+
+    shown: set[int] = set()
+    first = ln("stage", 2)
+    assert stage_hit(ln("stage", 1), first, shown)
+    shown.add(2)
+    # 雑談を挟んで同じ 2 手目に戻っても打ち直さない
+    assert not stage_hit(ln("talk"), ln("stage", 2), shown)
+    assert stage_hit(ln("talk"), ln("stage", 2))  # shown 無しは従来どおり

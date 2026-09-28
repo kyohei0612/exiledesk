@@ -60,6 +60,31 @@ HAND_REGION = (80, 150, 1060, 760)
 CARD_REGION = HAND_REGION
 ZOOM_TEXT_H = 130  # 拡大中はパネルの下にこれだけ空けて、結果の文字をそこに出す
 
+# stage シーンだけパネルを広げ、撮影画面を大きく貼る (kyohei 2026-09-28「装備も小さい」)。
+# 0.57 倍 → 0.67 倍。手順名の札は撮影画面の左上 (黒地) に重ねる
+STAGE_PANEL: Box = (300, 104, 1620, 888)
+STAGE_PAD = 14
+SHOT_W, SHOT_H = 1920, 1080
+
+
+def stage_shot_rect(inner: Box) -> Box:
+    """撮影画面 (1920x1080) を ``inner`` に収めた時の貼り位置 (x0, y0, x1, y1)."""
+    x0, y0, x1, y1 = inner
+    scale = min((x1 - x0) / SHOT_W, (y1 - y0) / SHOT_H)
+    w, h = int(SHOT_W * scale), int(SHOT_H * scale)
+    px, py = x0 + (x1 - x0 - w) // 2, y0 + (y1 - y0 - h) // 2
+    return (px, py, px + w, py + h)
+
+
+def stage_inner() -> Box:
+    x0, y0, x1, y1 = STAGE_PANEL
+    return (x0 + STAGE_PAD, y0 + STAGE_PAD, x1 - STAGE_PAD, y1 - STAGE_PAD)
+
+
+_R = stage_shot_rect(stage_inner())
+# 撮影画面の下 15% の空き (ExileDesk layout=clip) の真ん中。結果の文字をここに出す
+STAGE_HIT_Y = _R[1] + int((_R[3] - _R[1]) * 0.925)
+
 
 def _lerp_box(a: tuple[int, int, int, int], b: tuple[int, int, int, int], e: float) -> list[int]:
     return [int(a[i] + (b[i] - a[i]) * e) for i in range(4)]
@@ -86,14 +111,22 @@ def _stage_capture(img: Image.Image, box: Box, shot: Path, step: int, zoom: floa
             c = _lerp_box(HAND_REGION, CARD_REGION, e)
         im = im.crop((c[0], c[1], c[2], c[3]))
         y1 = int(y1 - ZOOM_TEXT_H * min(1.0, zoom))
+    label = "クラフトステージ (ExileDesk)" + (f"  {step} 手目" if step else "  開始前")
+    d = ImageDraw.Draw(img)
+    if USE_CLIP_LAYOUT:
+        px, py, qx, qy = stage_shot_rect((x0, y0, x1, y1))
+        im = im.resize((qx - px, qy - py), Image.Resampling.LANCZOS)
+        d.rounded_rectangle((px - 6, py - 6, qx + 6, qy + 6), 16, fill=INK)
+        img.alpha_composite(im, (px, py))
+        # アイテム枠の左の黒地に「N 手目」だけ (長い札はアイテム名に被る)
+        pill(img, (px + 14, py + 14), f"{step} 手目" if step else "開始前", ACCENT, size=26)
+        return
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
     im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)
     px = x0 + (x1 - x0 - im.width) // 2
     py = y0 + 44
-    d = ImageDraw.Draw(img)
     d.rounded_rectangle((px - 6, py - 6, px + im.width + 6, py + im.height + 6), 16, fill=INK)
     img.alpha_composite(im, (px, py))
-    label = "クラフトステージ (ExileDesk)" + (f"  {step} 手目" if step else "  開始前")
     pill(img, (x0, y0), label, ACCENT, size=24)
 
 

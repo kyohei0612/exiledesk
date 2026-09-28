@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 
 from poe2tube.contracts.craft_stage import StageStep
 from poe2tube.render.palette import INK, font
+from poe2tube.render.scene_panel import STAGE_HIT_Y
 from poe2tube.render.telop_style import load_presets, render_telop
 
 HIT_START, HIT_END = (
@@ -22,7 +23,7 @@ HIT_START, HIT_END = (
     5.4,
 )  # 手つきで付いた後に結果を出す (ExileDesk v0.1.311 の手つき 約 2.5 秒)
 CHAPTER_SECONDS = 1.4
-HIT_Y = 790  # 撮影画面の下 15% の空き (ExileDesk layout=clip が空けてくれる帯)
+HIT_Y = STAGE_HIT_Y  # 撮影画面の下 15% の空き (ExileDesk layout=clip が空けてくれる帯)
 EMPHASIS = re.compile(r"(T\d+|[+＋−-]\s?\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:つ|個|手目|手|枠))")
 STYLE_RARITY = "textstyle010"  # 黄
 STYLE_ADDED = "textstyle025"  # 赤メタリック
