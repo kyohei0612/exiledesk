@@ -1,0 +1,1717 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-28T00:00:08.616Z",
+  "exiledesk_version": "0.1.310",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "アクト中のクラフト: 変成 → 増強 → 王者 → 高貴 ×3 → カオスの実験",
+    "base": "Sapphire Ring",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261001,
+    "steps": [
+      {
+        "currency": "transmute",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "augment",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "regal",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": "6 つ目 = 完成"
+      },
+      {
+        "currency": "chaos",
+        "omen": null,
+        "times": 1,
+        "note": "実験: 気に入らない MOD がある時に打つとどうなるか (1 つ消して 1 つ足す)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261002,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261003,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": []
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261004,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261005,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      }
+    },
+    {
+      "index": 5,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261006,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 2.024
+      }
+    },
+    {
+      "index": 6,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261007,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          },
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "混沌ダメージが8%増加する",
+            "text_en": "8% increased Chaos Damage",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Tainted"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "混沌ダメージが8%増加する",
+            "text_en": "8% increased Chaos Damage",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Tainted"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 3.036
+      }
+    },
+    {
+      "index": 7,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261008,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          },
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "混沌ダメージが8%増加する",
+            "text_en": "8% increased Chaos Damage",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Tainted"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/FireDamagePercentage",
+            "family": "FireDamagePercentage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "火ダメージが5%増加する",
+            "text_en": "5% increased Fire Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Searing"
+          },
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "混沌ダメージが8%増加する",
+            "text_en": "8% increased Chaos Damage",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Tainted"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+            "text_en": "Gain 8 Mana per enemy killed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          },
+          {
+            "mod_id": "Rings/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 35,
+            "text_ja": "毎秒12.8のライフを自動回復する",
+            "text_en": "12.8 Life Regeneration per second",
+            "values": [
+              12.8
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          },
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +7%",
+            "text_en": "+7% to Lightning Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +7%",
+            "text_en": "+7% to Lightning Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Rings/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "知性 +9",
+            "text_en": "+9 to Intelligence",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Student"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 1,
+        "subtotal": 64.768,
+        "cumulative": 67.804
+      }
+    }
+  ],
+  "final": {
+    "name": "サファイアの指輪",
+    "base": "Sapphire Ring",
+    "base_ja": "サファイアの指輪",
+    "item_level": 36,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Rings/IncreasedMana",
+        "family": "IncreasedMana",
+        "side": "prefix",
+        "tier_name": "T10",
+        "mod_level": 16,
+        "text_ja": "最大マナ +27",
+        "text_en": "+27 to maximum Mana",
+        "values": [
+          27
+        ],
+        "ranges": [
+          [
+            25,
+            34
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Azure"
+      },
+      {
+        "mod_id": "Rings/FireDamagePercentage",
+        "family": "FireDamagePercentage",
+        "side": "prefix",
+        "tier_name": "T6",
+        "mod_level": 8,
+        "text_ja": "火ダメージが5%増加する",
+        "text_en": "5% increased Fire Damage",
+        "values": [
+          5
+        ],
+        "ranges": [
+          [
+            3,
+            7
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Searing"
+      },
+      {
+        "mod_id": "Rings/IncreasedChaosDamage",
+        "family": "IncreasedChaosDamage",
+        "side": "prefix",
+        "tier_name": "T5",
+        "mod_level": 16,
+        "text_ja": "混沌ダメージが8%増加する",
+        "text_en": "8% increased Chaos Damage",
+        "values": [
+          8
+        ],
+        "ranges": [
+          [
+            8,
+            12
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Tainted"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/ManaGainedFromEnemyDeath",
+        "family": "ManaGainedFromEnemyDeath",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 23,
+        "text_ja": "倒した敵1体ごとに8のマナを獲得する",
+        "text_en": "Gain 8 Mana per enemy killed",
+        "values": [
+          8
+        ],
+        "ranges": [
+          [
+            6,
+            9
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of Infusion"
+      },
+      {
+        "mod_id": "Rings/LifeRegeneration",
+        "family": "LifeRegeneration",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 35,
+        "text_ja": "毎秒12.8のライフを自動回復する",
+        "text_en": "12.8 Life Regeneration per second",
+        "values": [
+          12.8
+        ],
+        "ranges": [
+          [
+            9.1,
+            13
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Troll"
+      },
+      {
+        "mod_id": "Rings/LightningResistance",
+        "family": "LightningResistance",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "雷耐性 +7%",
+        "text_en": "+7% to Lightning Resistance",
+        "values": [
+          7
+        ],
+        "ranges": [
+          [
+            6,
+            10
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Cloud"
+      }
+    ]
+  },
+  "total_cost": 67.804
+}
