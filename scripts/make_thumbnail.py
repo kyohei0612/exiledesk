@@ -27,9 +27,14 @@ def main() -> None:
     ap.add_argument("--corner", default="初心者必見！")
     ap.add_argument("--badges", nargs="*", default=[])
     ap.add_argument("--bg", type=Path, default=None)
+    ap.add_argument(
+        "--orbs", nargs="*", default=None, help="周りに並べるオーブ (assets/icons の名前)"
+    )
     ap.add_argument("--out", type=Path, default=ROOT / "output" / "thumbnail.png")
     a = ap.parse_args()
     spec = ThumbnailSpec(top=a.top, main=a.main, corner=a.corner, badges=a.badges, background=a.bg)
+    if a.orbs:
+        spec = spec.model_copy(update={"orbs": a.orbs})
     img = render_thumbnail(spec)
     a.out.parent.mkdir(parents=True, exist_ok=True)
     img.convert("RGB").save(a.out, quality=92)
