@@ -13,6 +13,7 @@ import { htcBaseInfo } from "../../services/htc/patch";
 import { CATALYSTS } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { baseStatsOf, isFlask, isGem } from "../../services/craft-stage/stage-bases";
+import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
@@ -68,6 +69,8 @@ function look(m: StageMod): { cls: string; tag: string } {
   if (m.crafted) return { cls: "text-[#b8c8ff]", tag: "エッセンス" };
   return { cls: "text-[#8888ff]", tag: "" };
 }
+/** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
+const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? uniqueLines(props.item.unique.en) : []));
 const rows = computed(() => [
   ...props.item.prefixes.map((m) => ({ m, side: "プレ" })),
   ...props.item.suffixes.map((m) => ({ m, side: "サフィ" })),
@@ -129,8 +132,12 @@ const rows = computed(() => [
           <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
       </div>
-      <!-- ユニークの効果は出さない: ユニーク → MOD の対応がクライアントの表に無く確実に引けない。撮影用 (compact) は注記も出さない (要望 ⑨) -->
-      <p v-if="!rows.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : "(ユニークの MOD はこのステージでは出さない)") : "MOD なし" }}</p>
+      <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->
+      <div v-if="!hidden && uLines.length" class="space-y-1">
+        <p v-for="(t, i) in uLines" :key="'u' + i" class="px-2 py-0.5 text-[#8888ff]">{{ t }}</p>
+      </div>
+      <!-- ページの無いユニークは名前だけ (撮影用は注記も出さない) -->
+      <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : "(このユニークの効果はデータに無い)") : "MOD なし" }}</p>
       <!-- 消えた MOD (直前の手) -->
       <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ m.textJa }}</p>
       <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">コラプト</p>
