@@ -268,7 +268,7 @@ def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
                 ic.putalpha(ic.getchannel("A").point(lambda a: int(a * 0.45)))
             img.alpha_composite(ic, (cx0 + (cw - ic.width) // 2, top + 30))
         name = _names().ja(key)
-        f = font(40 if len(name) <= 6 else 32)
+        f = font(52 if len(name) <= 6 else 44)
         d.text(
             (cx0 + cw // 2, top + 60 + size),
             name,
@@ -279,5 +279,5 @@ def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
         if scene.badges:
             color = GREEN if right else ACCENT
             label = scene.badges[i]
-            bw = int(d.textlength(label, font=font(30))) + 44
-            pill(img, (cx0 + (cw - bw) // 2, top + ch - 70), label, color, size=30)
+            bw = int(d.textlength(label, font=font(40))) + 50
+            pill(img, (cx0 + (cw - bw) // 2, top + ch - 84), label, color, size=40)

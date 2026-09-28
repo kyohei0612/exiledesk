@@ -7,8 +7,6 @@
 
 from __future__ import annotations
 
-import re
-
 from PIL import Image, ImageDraw
 
 from poe2tube.render.draw import pill
@@ -26,24 +24,45 @@ TELOP_Y0, TELOP_Y1 = 1560, 1880
 WRAP = 15  # 字幕 1 行の字数の目安
 
 
-def wrap_text(text: str, width: int = WRAP) -> list[str]:
-    """句読点で区切ってから、長い所は字数で折る (最大 3 行)."""
-    chunks = [c for c in re.split(r"(?<=[、。！？])", text) if c]
-    lines: list[str] = []
-    cur = ""
-    for c in chunks:
-        if len(cur) + len(c) <= width:
-            cur += c
-            continue
-        if cur:
-            lines.append(cur)
-        while len(c) > width:
-            lines.append(c[:width])
-            c = c[width:]
-        cur = c
-    if cur:
-        lines.append(cur)
-    return lines[:3]
+PUNCT = "、。！？…"
+PARTICLES = "はがをにでもへと"
+
+
+def _break_points(rest: str, cut: int) -> list[list[int]]:
+    """折ってよい位置の候補: 句読点の後 (前後 6 字) → 助詞の後 (前後 4 字)."""
+    punct = [i + 1 for i in range(max(1, cut - 6), min(len(rest) - 1, cut + 6)) if rest[i] in PUNCT]
+    particle = [
+        i + 1
+        for i in range(max(1, cut - 4), min(len(rest) - 1, cut + 4))
+        if rest[i] in PARTICLES and not ("ぁ" <= rest[i + 1] <= "ゖ") and rest[i + 1] not in PUNCT
+    ]
+    return [punct, particle]
+
+
+def wrap_text(text: str, width: int = WRAP, max_rows: int = 3) -> list[str]:
+    """だいたい同じ長さの行に割る。句読点か助詞の後で折り、行頭に句読点を置かない."""
+    text = text.strip()
+    if len(text) <= width:
+        return [text]
+    rows = min(max_rows, -(-len(text) // width))
+    target = -(-len(text) // rows)
+    out: list[str] = []
+    rest = text
+    while rest and len(out) < rows - 1:
+        cut = min(target, len(rest))
+        left = rows - len(out) - 1  # この行の後に残る行数
+        for cand in _break_points(rest, cut):
+            fit = [i for i in cand if i <= width + 3 and len(rest) - i <= (width + 3) * left]
+            if fit:
+                cut = min(fit, key=lambda i: abs(i - target))
+                break
+        while cut < len(rest) and rest[cut] in PUNCT + "）」":
+            cut += 1  # 行頭に句読点を置かない
+        out.append(rest[:cut])
+        rest = rest[cut:]
+    if rest:
+        out.append(rest)
+    return out
 
 
 def _header(img: Image.Image, title: str | None) -> None:
@@ -51,7 +70,7 @@ def _header(img: Image.Image, title: str | None) -> None:
     d.rectangle((0, 0, SW, 110), fill=ACCENT)
     d.text((SW // 2, 55), BANNER, font=font(48), fill=WHITE, anchor="mm")
     if title:
-        for i, ln in enumerate(wrap_text(title, 14)[:2]):
+        for i, ln in enumerate(wrap_text(title, 16, 2)):
             d.text((SW // 2, 170 + i * 76), ln, font=font(62), fill=INK, anchor="mm")
 
 

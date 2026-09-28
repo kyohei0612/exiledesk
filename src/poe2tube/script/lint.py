@@ -44,11 +44,7 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
             problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
     run = 1
     for k, (prev, cur) in enumerate(zip(lines, lines[1:], strict=False), start=2):
-        same = (prev.scene.kind, prev.scene.step, prev.scene.show_steps) == (
-            cur.scene.kind,
-            cur.scene.step,
-            cur.scene.show_steps,
-        )
+        same = prev.scene.key() == cur.scene.key()
         run = run + 1 if same else 1
         if run > MAX_SAME_SCENE_RUN:
             problems.append(

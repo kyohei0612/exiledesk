@@ -127,7 +127,4 @@ def scene_changed(prev: Line | None, cur: Line) -> bool:
     """画面が切り替わる行か (シーンの種類・工程・並びのどれかが違う)."""
     if prev is None:
         return True
-    a, b = prev.scene, cur.scene
-    key_a = (a.kind, a.step, tuple(a.show_steps or ()))
-    key_b = (b.kind, b.step, tuple(b.show_steps or ()))
-    return key_a != key_b
+    return prev.scene.key() != cur.scene.key()

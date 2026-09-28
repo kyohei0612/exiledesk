@@ -56,6 +56,18 @@ class Scene(BaseModel):
         default=None, description="quiz: カードごとの札 (例「使う」「取っておく」)"
     )
 
+    def key(self) -> tuple[object, ...]:
+        """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
+        return (
+            self.kind,
+            self.step,
+            tuple(self.show_steps or ()),
+            self.demo,
+            tuple(self.choices or ()),
+            self.answer,
+            tuple(self.badges or ()),
+        )
+
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:
         if self.kind in ("stack", "item", "stage") and self.step is None:
