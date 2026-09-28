@@ -56,14 +56,17 @@ export function applyJeweller(item: StageItem, key: string): StageApply {
 // ---- 品質 (砥石 / 端材 / 飾り玉 / プリズム) ----------------------------------------------------------------------
 // 対象 (クライアントの説明文): 砥石「martial weapon」/ 端材「armour」/ 飾り玉「flask」/ プリズム「Skill Gem」
 // 効果 (poe2db の Quality): 武器は品質 1% ごとに物理ダメージ 1% more、防具は防御力 1% more、フラスコは回復量 1% more。上限 20%
-const MARTIAL = ["Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Spears", "Talismans"];
-const ARMOUR = ["Body_Armours", "Helmets", "Gloves", "Boots", "Shields", "Bucklers", "Foci"];
+export const MARTIAL = ["Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Spears", "Talismans"];
+export const CASTER = ["Wands", "Staves", "Sceptres"];
+export const ARMOUR = ["Body_Armours", "Helmets", "Gloves", "Boots", "Shields", "Bucklers", "Foci"];
 export const QUALITY_TARGET: Record<string, { cats: string[]; ja: string }> = {
   // ja は打てない時の短い理由にも使う。言葉はゲームの説明文 (currency-hover-ja.json) と同じ (POE2Tube 要望 ⑨「マーシャル武器」)
   whetstone: { cats: MARTIAL, ja: "マーシャル武器" },
   scrap: { cats: ARMOUR, ja: "防具" },
   bauble: { cats: ["LifeFlask", "ManaFlask"], ja: "フラスコ" },
   gemcutter: { cats: ["SkillGem"], ja: "スキルジェム" },
+  // 2026-09-29: 秘術師の彫刻針「ワンド、スタッフまたはセプターの品質を向上させる」
+  etcher: { cats: CASTER, ja: "ワンド・スタッフ・セプター" },
 };
 export const QUALITY_MAX = 20;
 /**

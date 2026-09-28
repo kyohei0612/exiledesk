@@ -145,6 +145,10 @@ const rows = computed(() => [
       <p v-for="m in removed" :key="'x' + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ m.textJa }}</p>
       <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">コラプト</p>
       <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">聖別</p>
+      <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->
+      <p v-if="item.siphoner" class="text-[#d20000]">キル閾値 (ヴァールサイフォナー)</p>
+      <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">ミラー</p>
+      <p v-if="item.foreseen" class="pt-1 text-violet-200">予見 (次の手の結果が見える)</p>
     </div>
     <p v-if="holding" class="absolute -bottom-6 left-0 right-0 text-center text-[11px] text-amber-200/90">押すと使う (右クリック / Esc で手放す)</p>
   </div>

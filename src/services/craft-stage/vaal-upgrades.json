@@ -1,0 +1,1248 @@
+{
+ "CorruptionAdditionalAmmo1": {
+  "id": "CorruptionUpgradeAdditionalAmmo1",
+  "en": "Loads 2 additional bolts",
+  "ja": "ボルトを追加で2本装填する",
+  "stats": [
+   {
+    "id": "base_number_of_crossbow_bolts",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionAdditionalArrows1": {
+  "id": "CorruptionUpgradeAdditionalArrows1",
+  "en": "Bow Attacks fire 2 additional Arrows",
+  "ja": "弓によるアタックは矢を追加で2本放つ",
+  "stats": [
+   {
+    "id": "number_of_additional_arrows",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionAdditionalPhysicalDamageReduction1": {
+  "id": "CorruptionUpgradeAdditionalPhysicalDamageReduction1",
+  "en": "(6-9)% additional Physical Damage Reduction",
+  "ja": "物理ダメージ軽減率が(6-9)%される",
+  "stats": [
+   {
+    "id": "base_additional_physical_damage_reduction_%",
+    "min": 6,
+    "max": 9
+   }
+  ]
+ },
+ "CorruptionAllDamage1": {
+  "id": "CorruptionUpgradeAlliesInPresenceAllDamage1",
+  "en": "Allies in your Presence deal (50-75)% increased Damage",
+  "ja": "プレイヤーの存在下にいる味方はダメージが(50-75)%増加する",
+  "stats": [
+   {
+    "id": "allies_in_presence_damage_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionAllResistances1": {
+  "id": "CorruptionUpgradeAllResistances1",
+  "en": "+(15-35)% to all Elemental Resistances",
+  "ja": "全ての元素耐性 +(15-35)%",
+  "stats": [
+   {
+    "id": "base_resist_all_elements_%",
+    "min": 15,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionAlliesInPresenceAllDamage1": {
+  "id": "CorruptionUpgradeAlliesInPresenceAllDamage1",
+  "en": "Allies in your Presence deal (50-75)% increased Damage",
+  "ja": "プレイヤーの存在下にいる味方はダメージが(50-75)%増加する",
+  "stats": [
+   {
+    "id": "allies_in_presence_damage_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionAlliesInPresenceCriticalStrikeMultiplier1": {
+  "id": "CorruptionUpgradeSpellCriticalStrikeMultiplier",
+  "en": "(60-90)% increased Critical Spell Damage Bonus",
+  "ja": "スペルクリティカルダメージボーナスが(60-90)%増加する",
+  "stats": [
+   {
+    "id": "base_spell_critical_strike_multiplier_+",
+    "min": 60,
+    "max": 90
+   }
+  ]
+ },
+ "CorruptionAlliesInPresenceIncreasedAttackSpeed1": {
+  "id": "CorruptionUpgradeLocalIncreasedAttackSpeed1",
+  "en": "(12-16)% increased Attack Speed",
+  "ja": "アタックスピードが(12-16)%増加する",
+  "stats": [
+   {
+    "id": "local_attack_speed_+%",
+    "min": 12,
+    "max": 16
+   }
+  ]
+ },
+ "CorruptionAlliesInPresenceIncreasedCastSpeed1": {
+  "id": "CorruptionUpgradeIncreasedCastSpeed1",
+  "en": "(20-35)% increased Cast Speed",
+  "ja": "キャストスピードが(20-35)%増加する",
+  "stats": [
+   {
+    "id": "base_cast_speed_+%",
+    "min": 20,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionArmourBreak1": {
+  "id": "CorruptionUpgradeArmourBreak1",
+  "en": "Break (25-40)% increased Armour",
+  "ja": "アーマー破壊するアーマー量が(25-40)%増加する",
+  "stats": [
+   {
+    "id": "armour_break_amount_+%",
+    "min": 25,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionChainFromTerrain1": {
+  "id": "CorruptionUpgradeChainFromTerrain1",
+  "en": "Projectiles have (25-40)% chance to Chain an additional time from terrain",
+  "ja": "投射物は(25-40)%の確率で地形から追加で1回連鎖する",
+  "stats": [
+   {
+    "id": "projectile_chance_to_chain_1_extra_time_from_terrain_%",
+    "min": 25,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionChanceToPierce1": {
+  "id": "CorruptionUpgradeChanceToPierce1",
+  "en": "(50-75)% chance to Pierce an Enemy",
+  "ja": "(50-75)%の確率で敵を貫通する",
+  "stats": [
+   {
+    "id": "base_chance_to_pierce_%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionChaosResistance1": {
+  "id": "CorruptionUpgradeJewelChaosResist1",
+  "en": "+(10-13)% to Chaos Resistance",
+  "ja": "混沌耐性 +(10-13)%",
+  "stats": [
+   {
+    "id": "base_chaos_damage_resistance_%",
+    "min": 10,
+    "max": 13
+   }
+  ]
+ },
+ "CorruptionCharmChargeGeneration1": {
+  "id": "CorruptionUpgradeManaFlaskChargeGeneration1",
+  "en": "Mana Flasks gain (0.33-0.58) charges per Second",
+  "ja": "マナフラスコは毎秒(0.33-0.58)のチャージを獲得する",
+  "stats": [
+   {
+    "id": "generate_x_charges_for_mana_flasks_per_minute",
+    "min": 20,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionColdPenetration1": {
+  "id": "CorruptionUpgradeColdPenetration1",
+  "en": "Damage Penetrates (25-40)% Cold Resistance",
+  "ja": "ダメージは(25-40)%の冷気耐性を貫通する",
+  "stats": [
+   {
+    "id": "base_reduce_enemy_cold_resistance_%",
+    "min": 25,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionColdResistance1": {
+  "id": "CorruptionUpgradeJewelColdResist1",
+  "en": "+(15-20)% to Cold Resistance",
+  "ja": "冷気耐性 +(15-20)%",
+  "stats": [
+   {
+    "id": "base_cold_damage_resistance_%",
+    "min": 15,
+    "max": 20
+   }
+  ]
+ },
+ "CorruptionCriticalStrikeMultiplier1": {
+  "id": "CorruptionUpgradeSpellCriticalStrikeMultiplier",
+  "en": "(60-90)% increased Critical Spell Damage Bonus",
+  "ja": "スペルクリティカルダメージボーナスが(60-90)%増加する",
+  "stats": [
+   {
+    "id": "base_spell_critical_strike_multiplier_+",
+    "min": 60,
+    "max": 90
+   }
+  ]
+ },
+ "CorruptionDamageTakenGainedAsLife1": {
+  "id": "CorruptionUpgradeDamageTakenGainedAsLife1",
+  "en": "(25-35)% of Damage taken Recouped as Life",
+  "ja": "受けたダメージの(25-35)%をライフとして回収する",
+  "stats": [
+   {
+    "id": "damage_taken_goes_to_life_over_4_seconds_%",
+    "min": 25,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionDamageTakenGainedAsMana1": {
+  "id": "CorruptionUpgradePercentDamageGoesToMana",
+  "en": "(10-20)% of Damage taken Recouped as Mana",
+  "ja": "受けたダメージの(10-20)%をマナとして回収する",
+  "stats": [
+   {
+    "id": "damage_taken_goes_to_mana_%",
+    "min": 10,
+    "max": 20
+   }
+  ]
+ },
+ "CorruptionDexterity1": {
+  "id": "CorruptionUpgradeJewelDexterity1",
+  "en": "+(14-16) to Dexterity",
+  "ja": "器用さ +(14-16)",
+  "stats": [
+   {
+    "id": "additional_dexterity",
+    "min": 14,
+    "max": 16
+   }
+  ]
+ },
+ "CorruptionEnergyShieldDelay1": {
+  "id": "CorruptionUpgradeEnergyShieldDelay1",
+  "en": "(35-50)% faster start of Energy Shield Recharge",
+  "ja": "エナジーシールドのリチャージが(35-50)%速く始まる",
+  "stats": [
+   {
+    "id": "energy_shield_delay_-%",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionFirePenetration1": {
+  "id": "CorruptionUpgradeFirePenetration1",
+  "en": "Damage Penetrates (25-40)% Fire Resistance",
+  "ja": "ダメージは(25-40)%の火耐性を貫通する",
+  "stats": [
+   {
+    "id": "base_reduce_enemy_fire_resistance_%",
+    "min": 25,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionFireResistance1": {
+  "id": "CorruptionUpgradeJewelFireResist1",
+  "en": "+(15-20)% to Fire Resistance",
+  "ja": "火耐性 +(15-20)%",
+  "stats": [
+   {
+    "id": "base_fire_damage_resistance_%",
+    "min": 15,
+    "max": 20
+   }
+  ]
+ },
+ "CorruptionFreezeDamageIncrease1": {
+  "id": "CorruptionUpgradeFreezeDamageIncrease1",
+  "en": "(50-75)% increased Freeze Buildup",
+  "ja": "凍結蓄積が(50-75)%増加する",
+  "stats": [
+   {
+    "id": "hit_damage_freeze_multiplier_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionGainLifeOnBlock1": {
+  "id": "CorruptionUpgradeGainLifeOnBlock1",
+  "en": "(40-55) Life gained when you Block",
+  "ja": "ブロック時に(40-55)のライフを獲得する",
+  "stats": [
+   {
+    "id": "life_gained_on_block",
+    "min": 40,
+    "max": 55
+   }
+  ]
+ },
+ "CorruptionGainManaOnBlock1": {
+  "id": "CorruptionUpgradeGainManaOnBlock1",
+  "en": "(20-30) Mana gained when you Block",
+  "ja": "ブロック時に(20-30)のマナを獲得する",
+  "stats": [
+   {
+    "id": "mana_gained_on_block",
+    "min": 20,
+    "max": 30
+   }
+  ]
+ },
+ "CorruptionGlobalChaosSpellGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalColdSpellGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalFireSpellGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalLightningSpellGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalMeleeSkillGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalMinionSkillGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalPhysicalSpellGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalSkillGemLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGlobalTrapSkillGemsLevel1": {
+  "id": "CorruptionUpgradeTwoHandGlobalIncreaseSpellSkillGemLevel",
+  "en": "+(3-4) to Level of all Spell Skills",
+  "ja": "全てのスペルスキルのレベル +(3-4)",
+  "stats": [
+   {
+    "id": "spell_skill_gem_level_+",
+    "min": 3,
+    "max": 4
+   }
+  ]
+ },
+ "CorruptionGoldFoundIncrease1": {
+  "id": "CorruptionUpgradeItemFoundRarityIncrease1",
+  "en": "(25-35)% increased Rarity of Items found",
+  "ja": "見つかるアイテムのレアリティが(25-35)%増加する",
+  "stats": [
+   {
+    "id": "base_item_found_rarity_+%",
+    "min": 25,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionIncreasedAccuracy1": {
+  "id": "CorruptionUpgradeIncreasedAccuracy1",
+  "en": "+(150-300) to Accuracy Rating",
+  "ja": "命中力 +(150-300)",
+  "stats": [
+   {
+    "id": "accuracy_rating",
+    "min": 150,
+    "max": 300
+   }
+  ]
+ },
+ "CorruptionIncreasedCastSpeed1": {
+  "id": "CorruptionUpgradeIncreasedCastSpeed1",
+  "en": "(20-35)% increased Cast Speed",
+  "ja": "キャストスピードが(20-35)%増加する",
+  "stats": [
+   {
+    "id": "base_cast_speed_+%",
+    "min": 20,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionIncreasedEnergyShieldPercent1": {
+  "id": "CorruptionUpgradeIncreasedEnergyShieldPercent1",
+  "en": "(40-60)% increased maximum Energy Shield",
+  "ja": "最大エナジーシールドが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "maximum_energy_shield_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionIncreasedEvasionRatingPercent1": {
+  "id": "CorruptionUpgradeIncreasedEvasionRatingPercent1",
+  "en": "(40-60)% increased Evasion Rating",
+  "ja": "回避力が(40-60)%増加する",
+  "stats": [
+   {
+    "id": "evasion_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionIncreasedFreezeThreshold1": {
+  "id": "CorruptionUpgradeIncreasedFreezeThreshold1",
+  "en": "(50-75)% increased Freeze Threshold",
+  "ja": "凍結閾値が(50-75)%増加する",
+  "stats": [
+   {
+    "id": "freeze_threshold_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionIncreasedLife1": {
+  "id": "CorruptionUpgradeIncreasedLife1",
+  "en": "+(120-160) to maximum Life",
+  "ja": "最大ライフ +(120-160)",
+  "stats": [
+   {
+    "id": "base_maximum_life",
+    "min": 120,
+    "max": 160
+   }
+  ]
+ },
+ "CorruptionIncreasedMana1": {
+  "id": "CorruptionUpgradeIncreasedMana1",
+  "en": "+(80-100) to maximum Mana",
+  "ja": "最大マナ +(80-100)",
+  "stats": [
+   {
+    "id": "base_maximum_mana",
+    "min": 80,
+    "max": 100
+   }
+  ]
+ },
+ "CorruptionIncreasedPhysicalDamageReductionRatingPercent1": {
+  "id": "CorruptionUpgradeIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionIncreasedSkillSpeed1": {
+  "id": "CorruptionUpgradeIncreasedSkillSpeed1",
+  "en": "(8-16)% increased Skill Speed",
+  "ja": "スキルスピードが(8-16)%増加する",
+  "stats": [
+   {
+    "id": "skill_speed_+%",
+    "min": 8,
+    "max": 16
+   }
+  ]
+ },
+ "CorruptionIncreasedSpirit1": {
+  "id": "CorruptionUpgradeIncreasedSpirit1",
+  "en": "+(40-50) to Spirit",
+  "ja": "スピリット +(40-50)",
+  "stats": [
+   {
+    "id": "base_spirit_from_equipment",
+    "min": 40,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionIncreasedStunThreshold1": {
+  "id": "CorruptionUpgradeIncreasedStunThreshold1",
+  "en": "(50-75)% increased Stun Threshold",
+  "ja": "スタン閾値が(50-75)%増加する",
+  "stats": [
+   {
+    "id": "stun_threshold_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionIntelligence1": {
+  "id": "CorruptionUpgradeJewelIntelligence1",
+  "en": "+(14-16) to Intelligence",
+  "ja": "知性 +(14-16)",
+  "stats": [
+   {
+    "id": "additional_intelligence",
+    "min": 14,
+    "max": 16
+   }
+  ]
+ },
+ "CorruptionItemFoundRarityIncrease1": {
+  "id": "CorruptionUpgradeItemFoundRarityIncrease1",
+  "en": "(25-35)% increased Rarity of Items found",
+  "ja": "見つかるアイテムのレアリティが(25-35)%増加する",
+  "stats": [
+   {
+    "id": "base_item_found_rarity_+%",
+    "min": 25,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionLifeFlaskChargeGeneration1": {
+  "id": "CorruptionUpgradeManaFlaskChargeGeneration1",
+  "en": "Mana Flasks gain (0.33-0.58) charges per Second",
+  "ja": "マナフラスコは毎秒(0.33-0.58)のチャージを獲得する",
+  "stats": [
+   {
+    "id": "generate_x_charges_for_mana_flasks_per_minute",
+    "min": 20,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionLifeGainedFromEnemyDeath1": {
+  "id": "CorruptionUpgradeLifeGainedFromEnemyDeath1",
+  "en": "Gain (40-55) Life per enemy killed",
+  "ja": "倒した敵1体ごとに(40-55)のライフを獲得する",
+  "stats": [
+   {
+    "id": "base_life_gained_on_enemy_death",
+    "min": 40,
+    "max": 55
+   }
+  ]
+ },
+ "CorruptionLifeLeech1": {
+  "id": "CorruptionUpgradeLifeLeech1",
+  "en": "Leech 9% of Physical Attack Damage as Life",
+  "ja": "物理アタックダメージの9%をライフとしてリーチする",
+  "stats": [
+   {
+    "id": "base_life_leech_from_physical_attack_damage_permyriad",
+    "min": 900,
+    "max": 900
+   }
+  ]
+ },
+ "CorruptionLifeRegenerationRate1": {
+  "id": "CorruptionUpgradeLifeRegenerationRate1",
+  "en": "(35-50)% increased Life Regeneration rate",
+  "ja": "ライフ自動回復レートが(35-50)%増加する",
+  "stats": [
+   {
+    "id": "life_regeneration_rate_+%",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLightningPenetration1": {
+  "id": "CorruptionUpgradeLightningPenetration1",
+  "en": "Damage Penetrates (25-40)% Lightning Resistance",
+  "ja": "ダメージは(25-40)%の雷耐性を貫通する",
+  "stats": [
+   {
+    "id": "base_reduce_enemy_lightning_resistance_%",
+    "min": 25,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionLightningResistance1": {
+  "id": "CorruptionUpgradeLightningResistance1",
+  "en": "+(50-75)% to Lightning Resistance",
+  "ja": "雷耐性 +(50-75)%",
+  "stats": [
+   {
+    "id": "base_lightning_damage_resistance_%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionLocalAddedChaosDamage1": {
+  "id": "CorruptionUpgradeLocalAddedChaosDamageTwoHand1",
+  "en": "Adds (40-46) to (67-75) Chaos damage",
+  "ja": "(40-46)から(67-75)の混沌ダメージを追加する",
+  "stats": [
+   {
+    "id": "local_minimum_added_chaos_damage",
+    "min": 40,
+    "max": 46
+   },
+   {
+    "id": "local_maximum_added_chaos_damage",
+    "min": 67,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionLocalAddedChaosDamageTwoHand1": {
+  "id": "CorruptionUpgradeLocalAddedChaosDamageTwoHand1",
+  "en": "Adds (40-46) to (67-75) Chaos damage",
+  "ja": "(40-46)から(67-75)の混沌ダメージを追加する",
+  "stats": [
+   {
+    "id": "local_minimum_added_chaos_damage",
+    "min": 40,
+    "max": 46
+   },
+   {
+    "id": "local_maximum_added_chaos_damage",
+    "min": 67,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionLocalAddedColdDamage1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsCold",
+  "en": "Gain (35-50)% of Damage as Extra Cold Damage",
+  "ja": "ダメージの(35-50)%を追加冷気ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_cold",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalAddedColdDamageTwoHand1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsCold",
+  "en": "Gain (35-50)% of Damage as Extra Cold Damage",
+  "ja": "ダメージの(35-50)%を追加冷気ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_cold",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalAddedFireDamage1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsFire",
+  "en": "Gain (35-50)% of Damage as Extra Fire Damage",
+  "ja": "ダメージの(35-50)%を追加火ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalAddedFireDamageTwoHand1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsFire",
+  "en": "Gain (35-50)% of Damage as Extra Fire Damage",
+  "ja": "ダメージの(35-50)%を追加火ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalAddedLightningDamage1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsLightning",
+  "en": "Gain (35-50)% of Damage as Extra Lightning Damage",
+  "ja": "ダメージの(35-50)%を追加雷ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_lightning",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalAddedLightningDamageTwoHand1": {
+  "id": "CorruptionUpgradeTwoHandDamageGainedAsLightning",
+  "en": "Gain (35-50)% of Damage as Extra Lightning Damage",
+  "ja": "ダメージの(35-50)%を追加雷ダメージとして獲得する",
+  "stats": [
+   {
+    "id": "non_skill_base_all_damage_%_to_gain_as_lightning",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalBlockChance1": {
+  "id": "CorruptionUpgradeLocalBlockChance1",
+  "en": "(20-30)% increased Block chance",
+  "ja": "ブロック率が(20-30)%増加する",
+  "stats": [
+   {
+    "id": "local_block_chance_+%",
+    "min": 20,
+    "max": 30
+   }
+  ]
+ },
+ "CorruptionLocalChanceToBleed1": {
+  "id": "CorruptionUpgradeLocalChanceToBleed1",
+  "en": "(25-50)% chance to cause Bleeding on Hit",
+  "ja": "ヒット時に(25-50)%の確率で出血を付与する",
+  "stats": [
+   {
+    "id": "local_chance_to_bleed_on_hit_%",
+    "min": 25,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalChanceToBlind1": {
+  "id": "CorruptionUpgradeLocalChanceToBlind1",
+  "en": "(25-50)% chance to Blind Enemies on hit",
+  "ja": "ヒット時に(25-50)%の確率で敵を盲目にする",
+  "stats": [
+   {
+    "id": "local_chance_to_blind_on_hit_%",
+    "min": 25,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalChanceToMaim1": {
+  "id": "CorruptionUpgradeLocalChanceToMaim1",
+  "en": "(25-50)% chance to Maim on Hit",
+  "ja": "ヒット時に(25-50)%の確率で重傷を付与する",
+  "stats": [
+   {
+    "id": "local_maim_on_hit_%",
+    "min": 25,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalChanceToPoison1": {
+  "id": "CorruptionUpgradeLocalChanceToPoison1",
+  "en": "(25-50)% chance to Poison on Hit with this weapon",
+  "ja": "この武器によるヒット時に(25-50)%の確率で毒を付与する",
+  "stats": [
+   {
+    "id": "local_poison_on_hit_%",
+    "min": 25,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionLocalCriticalStrikeMultiplier1": {
+  "id": "CorruptionUpgradeSpellCriticalStrikeMultiplier",
+  "en": "(60-90)% increased Critical Spell Damage Bonus",
+  "ja": "スペルクリティカルダメージボーナスが(60-90)%増加する",
+  "stats": [
+   {
+    "id": "base_spell_critical_strike_multiplier_+",
+    "min": 60,
+    "max": 90
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedArmourAndEnergyShield1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedArmourAndEvasion1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedAttackSpeed1": {
+  "id": "CorruptionUpgradeLocalIncreasedAttackSpeed1",
+  "en": "(12-16)% increased Attack Speed",
+  "ja": "アタックスピードが(12-16)%増加する",
+  "stats": [
+   {
+    "id": "local_attack_speed_+%",
+    "min": 12,
+    "max": 16
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedEnergyShieldPercent1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedEvasionAndEnergyShield1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedEvasionRatingPercent1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedPhysicalDamagePercent1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamagePercent1",
+  "en": "(40-60)% increased Physical Damage",
+  "ja": "物理ダメージが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedPhysicalDamageReductionRatingPercent1": {
+  "id": "CorruptionUpgradeLocalIncreasedPhysicalDamageReductionRatingPercent1",
+  "en": "(40-60)% increased Armour",
+  "ja": "アーマーが(40-60)%増加する",
+  "stats": [
+   {
+    "id": "local_physical_damage_reduction_rating_+%",
+    "min": 40,
+    "max": 60
+   }
+  ]
+ },
+ "CorruptionLocalIncreasedSpiritPercent1": {
+  "id": "CorruptionUpgradeLocalIncreasedSpiritPercent1",
+  "en": "(35-45)% increased Spirit",
+  "ja": "スピリットが(35-45)%増加する",
+  "stats": [
+   {
+    "id": "local_spirit_+%",
+    "min": 35,
+    "max": 45
+   }
+  ]
+ },
+ "CorruptionLocalRageOnHit1": {
+  "id": "CorruptionUpgradeLocalRageOnHit1",
+  "en": "Grants (4-6) Rage on Hit",
+  "ja": "ヒット時に憤怒を(4-6)獲得する",
+  "stats": [
+   {
+    "id": "local_gain_X_rage_on_hit",
+    "min": 4,
+    "max": 6
+   }
+  ]
+ },
+ "CorruptionLocalStunDamageIncrease1": {
+  "id": "CorruptionUpgradeLocalStunDamageIncrease1",
+  "en": "Causes (50-75)% increased Stun Buildup",
+  "ja": "引き起こすスタン蓄積が(50-75)%増加する",
+  "stats": [
+   {
+    "id": "local_hit_damage_stun_multiplier_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionLocalWeaponRangeIncrease1": {
+  "id": "CorruptionUpgradeLocalWeaponRangeIncrease1",
+  "en": "(20-40)% increased Melee Strike Range with this weapon",
+  "ja": "この武器の近接ストライク距離が(20-40)%増加する",
+  "stats": [
+   {
+    "id": "local_+%_weapon_range",
+    "min": 20,
+    "max": 40
+   }
+  ]
+ },
+ "CorruptionManaFlaskChargeGeneration1": {
+  "id": "CorruptionUpgradeManaFlaskChargeGeneration1",
+  "en": "Mana Flasks gain (0.33-0.58) charges per Second",
+  "ja": "マナフラスコは毎秒(0.33-0.58)のチャージを獲得する",
+  "stats": [
+   {
+    "id": "generate_x_charges_for_mana_flasks_per_minute",
+    "min": 20,
+    "max": 35
+   }
+  ]
+ },
+ "CorruptionManaGainedFromEnemyDeath1": {
+  "id": "CorruptionUpgradeManaGainedFromEnemyDeath1",
+  "en": "Gain (20-30) Mana per enemy killed",
+  "ja": "倒した敵1体ごとに(20-30)のマナを獲得する",
+  "stats": [
+   {
+    "id": "base_mana_gained_on_enemy_death",
+    "min": 20,
+    "max": 30
+   }
+  ]
+ },
+ "CorruptionManaLeech1": {
+  "id": "CorruptionUpgradeManaLeech1",
+  "en": "Leech 6% of Physical Attack Damage as Mana",
+  "ja": "物理アタックダメージの6%をマナとしてリーチする",
+  "stats": [
+   {
+    "id": "base_mana_leech_from_physical_attack_damage_permyriad",
+    "min": 600,
+    "max": 600
+   }
+  ]
+ },
+ "CorruptionManaRegeneration1": {
+  "id": "CorruptionUpgradeManaRegeneration1",
+  "en": "(35-50)% increased Mana Regeneration Rate",
+  "ja": "マナ自動回復レートが(35-50)%増加する",
+  "stats": [
+   {
+    "id": "mana_regeneration_rate_+%",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionMaximumBlockChance1": {
+  "id": "CorruptionUpgradeMaximumBlockChance1",
+  "en": "+(4-5)% to maximum Block chance",
+  "ja": "ブロック率の最大値 +(4-5)%",
+  "stats": [
+   {
+    "id": "additional_maximum_block_%",
+    "min": 4,
+    "max": 5
+   }
+  ]
+ },
+ "CorruptionMaximumColdResistance1": {
+  "id": "CorruptionUpgradeMaximumColdResistance1",
+  "en": "+(4-5)% to Maximum Cold Resistance",
+  "ja": "冷気耐性の最大値 +(4-5)%",
+  "stats": [
+   {
+    "id": "base_maximum_cold_damage_resistance_%",
+    "min": 4,
+    "max": 5
+   }
+  ]
+ },
+ "CorruptionMaximumElementalResistance1": {
+  "id": "CorruptionUpgradeMaximumElementalResistance1",
+  "en": "+2% to all Maximum Elemental Resistances",
+  "ja": "全ての元素耐性の最大値 +2%",
+  "stats": [
+   {
+    "id": "additional_maximum_all_elemental_resistances_%",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionMaximumEnduranceCharges1": {
+  "id": "CorruptionUpgradeMaximumEnduranceCharges1",
+  "en": "+2 to Maximum Endurance Charges",
+  "ja": "エンデュランスチャージの最大数 +2",
+  "stats": [
+   {
+    "id": "max_endurance_charges",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionMaximumFireResistance1": {
+  "id": "CorruptionUpgradeMaximumFireResistance1",
+  "en": "+(4-5)% to Maximum Fire Resistance",
+  "ja": "火耐性の最大値 +(4-5)%",
+  "stats": [
+   {
+    "id": "base_maximum_fire_damage_resistance_%",
+    "min": 4,
+    "max": 5
+   }
+  ]
+ },
+ "CorruptionMaximumFrenzyCharges1": {
+  "id": "CorruptionUpgradeMaximumFrenzyCharges1",
+  "en": "+2 to Maximum Frenzy Charges",
+  "ja": "フレンジーチャージの最大数 +2",
+  "stats": [
+   {
+    "id": "max_frenzy_charges",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionMaximumLightningResistance1": {
+  "id": "CorruptionUpgradeMaximumLightningResistance1",
+  "en": "+(4-5)% to Maximum Lightning Resistance",
+  "ja": "雷耐性の最大値 +(4-5)%",
+  "stats": [
+   {
+    "id": "base_maximum_lightning_damage_resistance_%",
+    "min": 4,
+    "max": 5
+   }
+  ]
+ },
+ "CorruptionMaximumPowerCharges1": {
+  "id": "CorruptionUpgradeMaximumPowerCharges1",
+  "en": "+2 to Maximum Power Charges",
+  "ja": "パワーチャージの最大数 +2",
+  "stats": [
+   {
+    "id": "max_power_charges",
+    "min": 2,
+    "max": 2
+   }
+  ]
+ },
+ "CorruptionMovementVelocity1": {
+  "id": "CorruptionUpgradeMovementVelocity1",
+  "en": "(10-15)% increased Movement Speed",
+  "ja": "移動スピードが(10-15)%増加する",
+  "stats": [
+   {
+    "id": "base_movement_velocity_+%",
+    "min": 10,
+    "max": 15
+   }
+  ]
+ },
+ "CorruptionReducedLocalAttributeRequirements1": {
+  "id": "CorruptionUpgradeReducedLocalAttributeRequirements1",
+  "en": "(50-30)% reduced Attribute Requirements",
+  "ja": "要求能力値が(50-30)%減少する",
+  "stats": [
+   {
+    "id": "local_attribute_requirements_+%",
+    "min": -50,
+    "max": -30
+   }
+  ]
+ },
+ "CorruptionSlowPotency1": {
+  "id": "CorruptionUpgradeSlowPotency1",
+  "en": "(50-40)% reduced Slowing Potency of Debuffs on You",
+  "ja": "プレイヤーに対する減速のデバフのポテンシャルが(50-40)%減少する",
+  "stats": [
+   {
+    "id": "base_slow_potency_+%",
+    "min": -50,
+    "max": -40
+   }
+  ]
+ },
+ "CorruptionSpellCriticalStrikeChance1": {
+  "id": "CorruptionUpgradeSpellCriticalStrikeChance1",
+  "en": "(50-75)% increased Critical Hit Chance for Spells",
+  "ja": "スペルのクリティカルヒット率が(50-75)%増加する",
+  "stats": [
+   {
+    "id": "spell_critical_strike_chance_+%",
+    "min": 50,
+    "max": 75
+   }
+  ]
+ },
+ "CorruptionSpellDamageOnTwoHandWeapon1": {
+  "id": "CorruptionUpgradeSpellDamageOnWeapon1",
+  "en": "(60-90)% increased Spell Damage",
+  "ja": "スペルダメージが(60-90)%増加する",
+  "stats": [
+   {
+    "id": "spell_damage_+%",
+    "min": 60,
+    "max": 90
+   }
+  ]
+ },
+ "CorruptionSpellDamageOnWeapon1": {
+  "id": "CorruptionUpgradeSpellDamageOnWeapon1",
+  "en": "(60-90)% increased Spell Damage",
+  "ja": "スペルダメージが(60-90)%増加する",
+  "stats": [
+   {
+    "id": "spell_damage_+%",
+    "min": 60,
+    "max": 90
+   }
+  ]
+ },
+ "CorruptionStrength1": {
+  "id": "CorruptionUpgradeStrength1",
+  "en": "+(35-50) to Strength",
+  "ja": "筋力 +(35-50)",
+  "stats": [
+   {
+    "id": "additional_strength",
+    "min": 35,
+    "max": 50
+   }
+  ]
+ },
+ "CorruptionThornsDamageIncrease1": {
+  "id": "CorruptionUpgradeThornsDamageIncreaseIfBlockedRecently",
+  "en": "(100-150)% increased Thorns damage if you've Blocked Recently",
+  "ja": "直近ブロックしていれば棘ダメージが(100-150)%増加する",
+  "stats": [
+   {
+    "id": "thorns_damage_+%_if_blocked_recently",
+    "min": 100,
+    "max": 150
+   }
+  ]
+ },
+ "CorruptionWeaponElementalDamage1": {
+  "id": "CorruptionUpgradeWeaponElementalDamageTwoHand1",
+  "en": "(120-150)% increased Elemental Damage with Attacks",
+  "ja": "アタックスキルによる元素ダメージが(120-150)%増加する",
+  "stats": [
+   {
+    "id": "elemental_damage_with_attack_skills_+%",
+    "min": 120,
+    "max": 150
+   }
+  ]
+ },
+ "CorruptionWeaponElementalDamageTwoHand1": {
+  "id": "CorruptionUpgradeWeaponElementalDamageTwoHand1",
+  "en": "(120-150)% increased Elemental Damage with Attacks",
+  "ja": "アタックスキルによる元素ダメージが(120-150)%増加する",
+  "stats": [
+   {
+    "id": "elemental_damage_with_attack_skills_+%",
+    "min": 120,
+    "max": 150
+   }
+  ]
+ }
+}

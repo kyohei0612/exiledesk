@@ -41,9 +41,10 @@ const ESSENCE_KEYS = (essenceKeys as { keys: Record<string, GameName> }).keys;
  */
 export function jaOfPriceKey(key: string, cls?: ItemBase): string | null {
   if (key.startsWith("essence:")) return ESSENCE_KEYS[key]?.ja ?? null;
-  if (cls && (key === "desecrate" || key === "desecrate_ancient" || key === "desecrate_altered")) {
+  const boneMatch = /^desecrate(?:_(ancient|altered|gnawed))?$/.exec(key);
+  if (cls && boneMatch) {
     const bone = desecrationBoneFor(cls.category);
-    const boneKey = key === "desecrate_ancient" ? `${bone}_ancient` : key === "desecrate_altered" ? `${bone}_altered` : bone;
+    const boneKey = boneMatch[1] ? `${bone}_${boneMatch[1]}` : bone;
     return KEYS.bones[boneKey]?.ja ?? null;
   }
   return KEYS.currency[key]?.ja ?? KEYS.bones[key]?.ja ?? null;

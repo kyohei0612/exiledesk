@@ -24,6 +24,10 @@ import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, is
 import { isFlask, isGem, uniquesForBase } from "./stage-bases";
 import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
+import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
+
+/** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
+export const GNAWED_MAX_ILVL = 64;
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
@@ -72,16 +76,21 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
   if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, SHARD_REASON);
   if (item.destroyed) return skip(item, "壊れたアイテムには何も使えない");
+  if (item.mirrored && !ANY_STATE.includes(currency)) return skip(item, "ミラーしたアイテムには使えない");
   // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
   if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
-  if (item.sanctified) return skip(item, "聖別したアイテムには使えない");
-  if (item.corrupted && kindOf(currency) !== "reveal") return skip(item, "コラプトしたアイテムには使えない");
+  // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
+  if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, "聖別したアイテムには使えない");
+  if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, "コラプトしたアイテムには使えない");
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
   if (bad) return skip(item, "このお告げの効果はまだ入れていない");
   const r = applyInner(data, item, currency, rng, used, hint);
-  return r.applied ? { ...r, omensUsed: used } : r;
+  if (!r.applied) return r;
+  // ヒネコラの予見は「アイテムを変えると消える」(説明文)
+  const item2 = currency !== "hinekora" && r.item.foreseen ? { ...r.item, foreseen: false } : r.item;
+  return { ...r, item: item2, omensUsed: used };
 }
 
 function applyInner(data: PatchData, item: StageItem, currency: string, rng: () => number, used: readonly string[], hint: ApplyHint): StageApply {
@@ -91,9 +100,12 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency in QUALITY_TARGET) return applyQuality(item, currency);
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
+  if (isExtra(currency)) return applyExtra(item, currency, rng, hint.outcome);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);
+  // 噛み切られた骨はアイテムレベル 64 以下だけ (クライアントの AbyssBenchTicketTypes.MaximumItemLevel)
+  if (currency === "desecrate_gnawed" && item.itemLevel > GNAWED_MAX_ILVL) return skip(item, `アイテムレベル ${GNAWED_MAX_ILVL} 以下にだけ使える`);
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);

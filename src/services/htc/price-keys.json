@@ -138,6 +138,62 @@
    "en": "Perfect Jeweller's Orb",
    "ja": "宝飾職人のオーブ (完全)"
   },
+  "etcher": {
+   "en": "Arcanist's Etcher",
+   "ja": "秘術師の彫刻針"
+  },
+  "vaal_infuser_jewellery": {
+   "en": "Vaal Catalysing Infuser",
+   "ja": "ヴァールカタリストのインフューザー"
+  },
+  "vaal_infuser_armour": {
+   "en": "Vaal Armourer's Infuser",
+   "ja": "ヴァール鎧鍛冶のインフューザー"
+  },
+  "vaal_infuser_martial": {
+   "en": "Vaal Blacksmith's Infuser",
+   "ja": "ヴァール鍛冶屋のインフューザー"
+  },
+  "vaal_infuser_caster": {
+   "en": "Vaal Arcanist's Infuser",
+   "ja": "ヴァールアルカニストのインフューザー"
+  },
+  "sacrifice_jewellery": {
+   "en": "Kamasa's Orb of Sacrifice",
+   "ja": "カマサの生贄のオーブ"
+  },
+  "sacrifice_armour": {
+   "en": "Kopec's Orb of Sacrifice",
+   "ja": "コペックの生贄のオーブ"
+  },
+  "sacrifice_weapon": {
+   "en": "Yaomac's Orb of Sacrifice",
+   "ja": "ヤオマックの生贄のオーブ"
+  },
+  "architect": {
+   "en": "Architect's Orb",
+   "ja": "アーキテクトオーブ"
+  },
+  "cultivation": {
+   "en": "Vaal Cultivation Orb",
+   "ja": "ヴァール培養のオーブ"
+  },
+  "siphoner": {
+   "en": "Vaal Siphoner",
+   "ja": "ヴァールサイフォナー"
+  },
+  "mirror": {
+   "en": "Mirror of Kalandra",
+   "ja": "カランドラの鏡"
+  },
+  "hinekora": {
+   "en": "Hinekora's Lock",
+   "ja": "ヒネコラの髪束"
+  },
+  "extraction": {
+   "en": "Orb of Extraction",
+   "ja": "抽出のオーブ"
+  },
   "essence:breach": {
    "en": "Essence of the Breach",
    "ja": "ブリーチのエッセンス"
@@ -219,6 +275,18 @@
   "collarbone_ancient": {
    "en": "Ancient Collarbone",
    "ja": "古代の鎖骨"
+  },
+  "jawbone_gnawed": {
+   "en": "Gnawed Jawbone",
+   "ja": "噛み切られた顎骨"
+  },
+  "rib_gnawed": {
+   "en": "Gnawed Rib",
+   "ja": "噛み切られた肋骨"
+  },
+  "collarbone_gnawed": {
+   "en": "Gnawed Collarbone",
+   "ja": "噛み切られた鎖骨"
   },
   "collarbone_altered": {
    "en": "Altered Collarbone",

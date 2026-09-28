@@ -114,6 +114,18 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
         <RevealPanel />
+        <!-- ヒネコラの髪束の予見: 持っているカレンシーを打った時の結果 (次の手の seed で引くので、打つとこの通りになる) -->
+        <div v-if="s.foresight.value" class="w-[380px] rounded-xl border border-violet-400/50 bg-violet-500/10 p-3 text-[12px]">
+          <p class="mb-1 font-bold text-violet-200">予見: {{ nameOf(s.foresight.value.key) }} を使うと</p>
+          <p v-if="!s.foresight.value.applied" class="text-rose-300">使えない — {{ s.foresight.value.reason }}</p>
+          <template v-else>
+            <p v-for="(t, i) in s.foresight.value.added" :key="'fa' + i" class="text-emerald-300">＋ {{ t }}</p>
+            <p v-for="(t, i) in s.foresight.value.removed" :key="'fr' + i" class="text-rose-300 line-through">－ {{ t }}</p>
+            <p v-if="s.foresight.value.after.destroyed" class="font-bold text-rose-400">壊れる</p>
+            <p v-if="s.foresight.value.after.corrupted && !s.item.value?.corrupted" class="font-bold text-[#d20000]">コラプトする</p>
+            <p v-if="!s.foresight.value.added.length && !s.foresight.value.removed.length && !s.foresight.value.after.destroyed" class="opacity-60">MOD は変わらない</p>
+          </template>
+        </div>
         <div class="w-[380px] rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px]">
           <p class="mb-1 flex items-center justify-between"><b class="text-amber-100">直前の変化</b><span class="tabular-nums opacity-70">累計 {{ displayCurrency.money(s.total.value) }} · {{ s.log.value.length }} 手</span></p>
           <template v-if="s.last.value">

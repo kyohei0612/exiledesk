@@ -6,6 +6,8 @@
  *   - アイテム枠が色付きで光って弾む (マジック = 青 / レア = 金 / 冒涜 = 赤 / 破砕 = 金茶 / 神 = 白)
  *   - レアリティが上がった時は大きく光って「マジックに!」「レアに!」、T1 が付いた時は金の「T1!」
  *   - 打てなかった時は枠が赤く震えて理由を出す
+ *   - 2026-09-29 オーナー「高貴とか打ったらほわーんって出て欲しい。どのカレンシー打ってもなんかしら出て欲しい。T● がついたーみたいな」:
+ *     何も出ていなかった手 (高貴・カオス・消去・神・カタリスト等) にも「T3 がついた!」「T4 が消えた」「数値を振り直し!」などを出す
  * 手が増えた時と、打てなかった時 (craftStage.miss。工程には積まない) だけ動く (1 手戻す・再生では動かない)。色と文字は style.css の stage-* と --fx。
  */
 import { ref, watch, type Ref } from "vue";
@@ -40,6 +42,25 @@ function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; col
   if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: "#c8a86a", text: "ソケット +1!" };
   return null;
 }
+/** 付いた / 消えた MOD の段 (「T3 がついた!」「T4 → T2」「T5 が消えた」)。MOD が動いていなければ "" */
+function modText(st: PlayedStep): string {
+  const add = st.added.filter((m) => !m.unrevealed).map((m) => m.tierName);
+  const del = st.removed.filter((m) => !m.unrevealed).map((m) => m.tierName);
+  if (add.length && del.length && st.out.currency !== "divine") return `${del.join("・")} → ${add.join("・")}`;
+  if (add.length) return `${add.join("・")} がついた!`;
+  if (del.length) return `${del.join("・")} が消えた`;
+  return "";
+}
+/** 2026-09-29 に足したカレンシー (apply-extra.ts) の文字 */
+function extraText(st: PlayedStep): string {
+  const { before: b, after: a, out: o } = st;
+  if (a.mirrored && !b.mirrored) return "ミラー!";
+  if (a.foreseen && !b.foreseen) return "予見!";
+  if (a.siphoner && !b.siphoner) return "キル閾値!";
+  if (a.unique && b.unique && a.unique.en !== b.unique.en) return `${a.unique.ja} に!`;
+  if (a.enchant && b.enchant && a.enchant.id !== b.enchant.id) return o.currency.startsWith("sacrifice_") ? "エンチャントが上位に!" : "エンチャントが変わった!";
+  return "";
+}
 /** コラプトの結果の文字 */
 function vaalText(before: StageItem, after: StageItem, changed: number): string {
   if (after.enchant !== before.enchant) return "コラプト — エンチャント!";
@@ -64,18 +85,22 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     const top = st.added.find((m) => m.tierName === "T1" && !m.unrevealed);
     let next: Omit<StageFx, "n" | "x" | "y" | "icon">;
     const act = actText(st.before, st.after);
+    const mods = modText(st);
+    const extra = extraText(st);
     if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? "使えない" };
     else if (st.after.destroyed && !st.before.destroyed) next = { kind: "shake", color: COLOR.miss, text: "壊れた…" };
-    else if (act) next = act;
+    else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: `${act.text} — コラプト!` } : act;
+    else if (extra) next = { kind: "up", color: COLOR.top, text: `${extra}${mods ? ` ${mods}` : ""}` };
     else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };
     else if (st.after.corrupted && !st.before.corrupted) next = { kind: "up", color: COLOR.corrupt, text: vaalText(st.before, st.after, st.added.length + st.removed.length) };
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
-    else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: RARITY_TEXT[o.changed.rarity_to] };
-    else if (top) next = { kind: "up", color: COLOR.top, text: "T1!" };
+    else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${RARITY_TEXT[o.changed.rarity_to]}${mods ? ` ${mods}` : ""}` };
+    else if (top) next = { kind: "up", color: COLOR.top, text: mods || "T1 がついた!" };
     else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "破砕!" };
     else if (st.added.some((m) => m.desecrated)) next = { kind: "hit", color: COLOR.desecrated, text: st.added.some((m) => m.unrevealed) ? "冒涜!" : "開示!" };
-    else if (o.currency === "divine") next = { kind: "hit", color: COLOR.divine, text: "" };
-    else next = { kind: "hit", color: COLOR[st.after.rarity], text: "" };
+    else if (o.currency === "divine") next = { kind: "hit", color: COLOR.divine, text: "数値を振り直し!" };
+    else if (st.after.quality !== st.before.quality) next = { kind: "hit", color: COLOR.top, text: `品質 ${st.after.quality}%` };
+    else next = { kind: "hit", color: COLOR[st.after.rarity], text: mods || "変化なし" };
     show(next, iconOf(o.currency));
   });
   watch(() => craftStage.miss.value?.n, () => {

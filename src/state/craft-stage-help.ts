@@ -5,6 +5,8 @@
  * ゲームの公式の説明文 (currency-hover-ja.json、クライアント原本) とは別に、このステージ (= 計算機と同じ規則) で
  * **実際にどう動くか**を書く。規則の本体は services/craft-stage/apply-*.ts。ここを変えたら向こうも見る。
  */
+import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
+import { GNAWED_MAX_ILVL } from "../services/craft-stage/apply-currency";
 import { jaOfMod } from "../services/htc/mod-text";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
@@ -54,6 +56,37 @@ const OMEN: Record<string, string[]> = {
 };
 
 /** 棚の 1 つの「ステージでの動き」(行の並び)。** で囲んだ所は強調 */
+/** apply-extra.ts の物の説明 (クライアントの説明文 + 仮の値) */
+const INFUSER_LINE = (ja: string) => [
+  `**${ja}** の品質を上げる。上限を **最大 10% 超えられる** が、超えた時に一定確率で **コラプト** する (クライアントの説明文)`,
+  `1 回で上がる量は砥石などと同じ (**未確定**)。コラプトする確率は公開されていない (**未確定**、仮に ${Math.round(INFUSER_CORRUPT_P * 100)}%。手順の outcome "corrupted" / "safe" で指定できる)`,
+];
+const SACRIFICE_LINE = (ja: string) => [
+  `**コラプトしたレア** の ${ja} の **コラプトエンチャントを上位版に上げ**、ランダムな MOD を **1 つ消す** (クライアントの説明文)`,
+  "上位版はクライアントの MOD 表の「CorruptionUpgrade…」(元のエンチャントと同じ系統)。エンチャントが無いと使えない",
+];
+const EXTRA_HELP: Record<string, string[]> = {
+  vaal_infuser_jewellery: INFUSER_LINE("指輪・アミュレット"),
+  vaal_infuser_armour: INFUSER_LINE("防具"),
+  vaal_infuser_martial: INFUSER_LINE("マーシャル武器"),
+  vaal_infuser_caster: INFUSER_LINE("ワンド・スタッフ・セプター"),
+  sacrifice_jewellery: SACRIFICE_LINE("アミュレット・指輪・ベルト"),
+  sacrifice_armour: SACRIFICE_LINE("防具"),
+  sacrifice_weapon: SACRIFICE_LINE("武器・矢筒"),
+  architect: [
+    "**コラプトした装備** を予測できない形で **変えるか、壊す** (クライアントの説明文)",
+    `壊れる確率も「変わる」中身も公開されていない (**未確定**、仮に 壊れる ${Math.round(ARCHITECT_DESTROY_P * 100)}% / 変わる = コラプトエンチャントが別の物に)。手順の outcome "destroyed" / "changed" で指定できる`,
+  ],
+  cultivation: [
+    "**コラプトしたユニーク** を、**同じ種類の別のユニーク** に変える (クライアントの説明文)",
+    "ヴァールユニークは「MOD を最大 2 つ置き換える」だが、ユニークの MOD の表が無いのでこのステージでは扱わない",
+  ],
+  siphoner: ["**コラプトしたレアの宝飾品** にキル閾値を付ける。閾値に届くとランダムな MOD を吸って、他の MOD の数値が上がる (クライアントの説明文)", "閾値の数や上がり幅は公開されていないので、このステージでは付いたことだけ出す"],
+  mirror: ["アイテムの **ミラー化した写し** を作る (クライアントの説明文)", "ミラーしたアイテムにはもう何も使えない"],
+  hinekora: ["次に使うカレンシーの **結果を予見** できるようにする (クライアントの説明文)", "アイテムを何かで変えると予見は消える"],
+  extraction: ["装備を **壊して**、差してある (ソケットバウンドでない) オーグメントを取り戻す (クライアントの説明文)"],
+};
+
 export function stageHelp(key: string, data: PatchData | null, item: StageItem | null): string[] {
   if (OMEN[key]) return [...OMEN[key]!, "押すと掛けておく (何枚でも)。次に打つ、関係する手でだけ使われる"];
   const s = strengthOf(key);
@@ -101,13 +134,15 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     }
     case "desecrate":
     case "desecrate_ancient":
-    case "desecrate_altered": {
+    case "desecrate_altered":
+    case "desecrate_gnawed": {
       const bone = item ? { jawbone: "顎の骨 (武器・矢筒)", rib: "肋骨 (防具)", collarbone: "鎖骨 (アクセサリー)" }[desecrationBoneFor(item.cls.category)] : "";
       return [
         "**レア** に **未開示の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
         "付く側は、その側で出うる MOD の重みの合計で決まる。両側が埋まっていれば、その側の MOD を 1 つ差し替える",
         "開示で **候補 3 つから 1 つ選ぶ**。候補は普通の MOD + 冒涜の MOD から、系統の被りを除いて重みで重複なしに 3 つ",
         key === "desecrate_ancient" ? "古びた骨: 候補は MOD レベル 40 以上の段だけ" : "",
+        key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
         key === "desecrate_altered" ? "変質した鎖骨: 候補に **異界の MOD** も入る (アクセサリーだけ)" : "",
         bone ? `このベースで使う骨: ${bone}` : "",
         "お告げ: 左右のネクロマンシー (側) / 支配者・君主・ブラックブラッド (勢力で絞る) / 腐食 (全部を未開示にしてコラプト) / アビスの反響 (開示の引き直し)",
@@ -119,11 +154,14 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const t = QUALITY_TARGET[key]!;
     const st = QUALITY_STEP;
     return [
-      `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
+      `**${t.ja}** の品質を上げる (上限 ${QUALITY_MAX}%)${key === "etcher" ? "。ワンド・スタッフ・セプター用 (砥石はマーシャル武器用)" : ""}${key === "whetstone" ? "。マーシャル武器 = 弓・クロスボウ・メイス・クォータースタッフ・槍・タリスマン (ワンド・セプター・スタッフは不可)" : ""}`,
       key === "gemcutter" ? `1 回で +${st.gem}% (**未確定**: 1% と 5% の記述が食い違う)` : `1 回で ノーマル +${st.normal}% / マジック +${st.magic}% / レア・ユニーク +${st.rare}% (**未確定**: 攻略サイトの記述のみ)`,
       key === "whetstone" ? "品質 1% ごとに物理ダメージが 1% 増える (poe2db の Quality)" : key === "scrap" ? "品質 1% ごとにアーマー・回避力・エナジーシールドが 1% 増える" : key === "bauble" ? "品質 1% ごとにライフ・マナの回復量が 1% 増える" : "品質の効果はジェムごとに違う",
     ];
   }
+  // 2026-09-29 に足した物 (apply-extra.ts)。確率は公開されていないので仮
+  const extra = EXTRA_HELP[key];
+  if (extra) return extra;
   if (key === "wisdom") return ["**未鑑定** のアイテムを鑑定する (隠れていた MOD が見える)", "未鑑定のアイテムには、ほかのカレンシーは打てない"];
   if (key === "chance") {
     return [

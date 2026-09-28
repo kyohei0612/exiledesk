@@ -76,6 +76,21 @@ const CURRENCY = {
   jeweller_greater: "Metadata/Items/Currency/CurrencyAddSkillGemSocket4",
   // 2026-09-29 オーナー「完全宝飾職人とかなくね?」: 完全 = サポート枠 5 (説明文「スキルジェムに5個のサポートジェムソケットをセットする」)
   jeweller_perfect: "Metadata/Items/Currency/CurrencyAddSkillGemSocket5",
+  // 2026-09-29 オーナー「全部足して」: 今の相場に値段があるのにクラフトステージの棚に無かった物
+  etcher: "Metadata/Items/Currency/CurrencyMagicQuality",
+  vaal_infuser_jewellery: "Metadata/Items/Currency/CurrencyIncursionJewelleryQuality",
+  vaal_infuser_armour: "Metadata/Items/Currency/CurrencyIncursionWeaponOrArmourQualityHigh",
+  vaal_infuser_martial: "Metadata/Items/Currency/CurrencyIncursionMartialWeaponQuality",
+  vaal_infuser_caster: "Metadata/Items/Currency/CurrencyIncursionCasterWeaponQuality",
+  sacrifice_jewellery: "Metadata/Items/Currency/CurrencyIncursionMutateCorruptionEnchantJewellery",
+  sacrifice_armour: "Metadata/Items/Currency/CurrencyIncursionMutateCorruptionEnchantArmour",
+  sacrifice_weapon: "Metadata/Items/Currency/CurrencyIncursionMutateCorruptionEnchantWeapon",
+  architect: "Metadata/Items/Currency/CurrencyIncursionDoubleCorrupt",
+  cultivation: "Metadata/Items/Currency/CurrencyIncursionMutateUnique",
+  siphoner: "Metadata/Items/Currency/CurrencyIncursionVaalIncubator",
+  mirror: "Metadata/Items/Currency/CurrencyDuplicate",
+  hinekora: "Metadata/Items/Currency/CurrencyHinekorasLock",
+  extraction: "Metadata/Items/Currency/CurrencyIncursionExtractAllSocketablesCurrency",
 };
 
 /**
@@ -89,6 +104,10 @@ const BONES = {
   rib_ancient: "Metadata/Items/Currency/AbyssalBenchTicketArmourHigh",
   collarbone: "Metadata/Items/Currency/AbyssalBenchTicketJewellery",
   collarbone_ancient: "Metadata/Items/Currency/AbyssalBenchTicketJewelleryHigh",
+  // 噛み切られた骨: アイテムレベル 64 以下にだけ使える (AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29)
+  jawbone_gnawed: "Metadata/Items/Currency/AbyssalBenchTicketWeaponLow",
+  rib_gnawed: "Metadata/Items/Currency/AbyssalBenchTicketArmourLow",
+  collarbone_gnawed: "Metadata/Items/Currency/AbyssalBenchTicketJewelleryLow",
   // 変質した鎖骨: 冒涜に「異界の MOD」も混ざる (2026-09-27)。装飾品だけ
   collarbone_altered: "Metadata/Items/Currency/AbyssalBenchTicketBreach",
 };

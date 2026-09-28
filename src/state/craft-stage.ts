@@ -71,6 +71,19 @@ export const craftStage = {
     return revealOffers(data.value, item.value, mulberry32(seed.value + log.value.length + 1));
   }),
 
+  /**
+   * ヒネコラの髪束の予見: 予見できるアイテムでカレンシーを持っている時、打った時の結果 (次の手の seed で引くので、打つとこの通りになる)
+   */
+  foresight: computed(() => {
+    const it = item.value;
+    const key = held.value;
+    if (!data.value || !it?.foreseen || !key || key === "hinekora") return null;
+    const index = log.value.length + 1;
+    const want = omensFor(key, omens.value);
+    const p = playStep(data.value, it, key, { index, seed: seed.value + index, price: () => 0, cumulative: 0, omen: want.length ? want.join("+") : null });
+    return { key, applied: p.out.applied, reason: p.out.reason ?? null, added: p.added.map((m) => m.textJa), removed: p.removed.map((m) => m.textJa), after: p.after };
+  }),
+
   async init(): Promise<void> {
     if (data.value) return;
     try {

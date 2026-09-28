@@ -21,7 +21,7 @@ import { addOne, allMods, replaced, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 
 interface Enchant { domain: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
-const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
+export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
 
 /** 計算機のベースの種類 → コラプトの付加が見るタグ (クライアントの BaseItemTypes.Tags と同じ名前) */
 const CLASS_TAGS: Record<string, string[]> = {
@@ -51,7 +51,7 @@ export function enchantPool(item: StageItem): string[] {
   }).map(([id]) => id);
 }
 /** 文面の「(a-b)」を順に振った値にする */
-function rollText(text: string, vals: readonly number[]): string {
+export function rollText(text: string, vals: readonly number[]): string {
   let i = 0;
   return text.replace(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g, (m) => (i < vals.length ? String(vals[i++]) : m));
 }

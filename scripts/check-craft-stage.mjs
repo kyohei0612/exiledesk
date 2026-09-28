@@ -263,5 +263,49 @@ function compare(label, item, cur, n = 40000) {
   console.log(`アクト: 砥石 20% / 鑑定 / 端材 +2% (マジック) / 宝飾職人 3→4 / 可能性 (ユニーク ${cu.final.unique?.ja}・壊れた) / シャード 10 個 / 熟練工 2 まで`);
 }
 
+// ---- 7. 2026-09-29 に足した物 (apply-extra.ts・噛み切られた骨・彫刻針) ----
+{
+  const A = (item, key, seed = 1, hint = {}) => M.applyCurrency(data, item, key, M.mulberry32(seed), [], hint);
+  const wand = M.freshItem(data, "Attuned Wand", 30);
+  if (A(wand, "etcher").item.quality !== 5) ng("彫刻針でワンドの品質が +5% にならない");
+  if (A(M.freshItem(data, "Hardwood Spear", 30), "etcher").applied) ng("槍に彫刻針が打てた");
+  // 噛み切られた骨: アイテムレベル 64 以下だけ
+  const rare = (base, lvl) => { let it = M.freshItem(data, base, lvl); for (const k of ["transmute", "regal"]) it = A(it, k, 3).item; return it; };
+  if (A(rare("Gold Ring", 82), "desecrate_gnawed").applied) ng("アイテムレベル 82 に噛み切られた骨が打てた");
+  if (!A(rare("Gold Ring", 60), "desecrate_gnawed").applied) ng("アイテムレベル 60 に噛み切られた骨が打てない");
+  // インフューザー: 上限 20 → 30 まで、超えた時に outcome で コラプト / 無事
+  let arm = M.freshItem(data, "Rusted Cuirass", 30);
+  for (let i = 0; i < 4; i++) arm = A(arm, "scrap").item;
+  const safe = A(arm, "vaal_infuser_armour", 1, { outcome: "safe" });
+  const bad = A(arm, "vaal_infuser_armour", 1, { outcome: "corrupted" });
+  if (safe.item.quality !== 25 || safe.item.corrupted) ng(`インフューザー (safe) が品質 25% でない / コラプトした (${safe.item.quality})`);
+  if (!bad.item.corrupted) ng("インフューザー (corrupted) でコラプトしない");
+  if (A(M.freshItem(data, "Gold Ring", 30), "vaal_infuser_armour").applied) ng("指輪に防具のインフューザーが打てた");
+  // 生贄のオーブ: コラプト + エンチャントのあるレアだけ。上位版になって MOD が 1 つ減る
+  let r = rare("Gold Ring", 82);
+  if (A(r, "sacrifice_jewellery").applied) ng("コラプトしていない指輪に生贄のオーブが打てた");
+  r = { ...r, corrupted: true, enchant: { id: "CorruptionAllResistances1", textJa: "x", textEn: "x" } };
+  const sac = A(r, "sacrifice_jewellery", 5);
+  const before = r.prefixes.length + r.suffixes.length;
+  if (!sac.applied || !sac.item.enchant.id.startsWith("CorruptionUpgrade") || sac.item.prefixes.length + sac.item.suffixes.length !== before - 1) ng("生贄のオーブでエンチャントが上がらない / MOD が 1 つ減らない");
+  if (A(r, "sacrifice_armour").applied) ng("指輪に防具の生贄のオーブが打てた");
+  // アーキテクト: outcome で 壊れる / 変わる
+  if (!A(r, "architect", 1, { outcome: "destroyed" }).item.destroyed) ng("アーキテクト (destroyed) で壊れない");
+  const ch = A(r, "architect", 1, { outcome: "changed" });
+  if (ch.item.destroyed || ch.item.enchant.id === r.enchant.id) ng("アーキテクト (changed) でエンチャントが変わらない");
+  // 培養: コラプトしたユニーク → 同じ種類の別のユニーク
+  const u = { ...A(M.freshItem(data, "Gold Ring", 30), "chance", 1, { outcome: "unique" }).item, corrupted: true };
+  const cv = A(u, "cultivation", 2);
+  if (!cv.applied || cv.item.unique.en === u.unique.en) ng("ヴァール培養のオーブで別のユニークにならない");
+  // 鏡・髪束・抽出・サイフォナー
+  const m = A(rare("Gold Ring", 82), "mirror");
+  if (!m.item.mirrored || A(m.item, "exalt").applied) ng("ミラーの後に高貴が打てた");
+  const h = A(rare("Gold Ring", 82), "hinekora");
+  if (!h.item.foreseen || A(h.item, "exalt", 3).item.foreseen) ng("予見がアイテムを変えても消えない");
+  if (!A(rare("Gold Ring", 82), "extraction").item.destroyed) ng("抽出のオーブで壊れない");
+  if (!A({ ...rare("Gold Ring", 82), corrupted: true }, "siphoner").item.siphoner) ng("サイフォナーでキル閾値が付かない");
+  console.log(`追加: 彫刻針 / 噛み切られた骨 (ilvl 64 まで) / インフューザー 25% / 生贄 (${sac.item.enchant.textJa}) / アーキテクト / 培養 (${u.unique.ja} → ${cv.item.unique?.ja}) / 鏡 / 髪束 / 抽出 / サイフォナー`);
+}
+
 console.log(failed ? `\nNG: ${failed} 件` : "\n全部 OK");
 process.exit(failed ? 1 : 0);

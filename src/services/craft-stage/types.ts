@@ -66,6 +66,12 @@ export interface StageItem {
   unique?: { en: string; ja: string } | null;
   /** スキルジェムのサポート枠の数 (宝飾職人のオーブ) */
   gemSockets?: number;
+  /** ミラー (カランドラの鏡で作った写し)。以後何も打てない */
+  mirrored?: boolean;
+  /** 予見 (ヒネコラの髪束)。次に打つ手の結果が先に見える。アイテムが変わると消える */
+  foreseen?: boolean;
+  /** ヴァールサイフォナーのキル閾値 (数値は公開されていないので付いたことだけ) */
+  siphoner?: boolean;
   /** 拾ったシャードの数 (キー → 個数)。10 個でオーブになる。アイテムの状態ではないが、手順の流れで持ち回すためここに置く */
   shards?: Record<string, number>;
 }

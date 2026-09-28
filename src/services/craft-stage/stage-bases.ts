@@ -67,6 +67,12 @@ export const isGem = (category: string): boolean => category === "SkillGem";
 
 /** そのベースのユニーク (可能性のオーブでなる物)。src/i18n/vaal-enchants.json の uniques (trade2 のユニーク名 → ベース) */
 const UNIQUES = (vaal as unknown as { uniques: Record<string, { ja: string; base: string }> }).uniques;
+/** 同じ種類 (trade2 のクラス) のユニーク (ヴァール培養のオーブ: 「同じアイテムクラスのランダムなユニーク」)。そのユニーク自身は除く */
+export function uniquesOfSameClass(en: string): Array<{ en: string; ja: string }> {
+  const cls = (UNIQUES[en] as { cls?: string } | undefined)?.cls;
+  if (!cls) return [];
+  return Object.entries(UNIQUES).filter(([n, u]) => n !== en && (u as { cls?: string }).cls === cls).map(([n, u]) => ({ en: n, ja: u.ja }));
+}
 export function uniquesForBase(base: string): Array<{ en: string; ja: string }> {
   return Object.entries(UNIQUES).filter(([, u]) => u.base === base).map(([en, u]) => ({ en, ja: u.ja }));
 }

@@ -35,10 +35,13 @@ export const ORBS: ShelfGroup[] = [
   { kind: "annul", label: "消去", keys: ["annul"] },
   { kind: "other", label: "その他", keys: ["divine", "fracture", "artificer", "vaal"] },
   // アクト中に落ちる物 (2026-09-28、POE2Tube 要望 ⑧)
-  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater", "jeweller_perfect"] },
+  { kind: "act", label: "アクト", keys: ["wisdom", "chance", "whetstone", "scrap", "bauble", "gemcutter", "jeweller_lesser", "jeweller_greater", "jeweller_perfect", "etcher"] },
+  // 2026-09-29 オーナー「全部足して」: 今の相場にあって棚に無かった物 (apply-extra.ts)
+  { kind: "vaal_extra", label: "ヴァール", keys: ["vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster", "sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon", "architect", "cultivation", "siphoner"] },
+  { kind: "special", label: "特殊", keys: ["mirror", "hinekora", "extraction"] },
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
 ];
-export const BONES = ["desecrate", "desecrate_ancient", "desecrate_altered"];
+export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**
  * 今のアイテムに出す骨。変質した鎖骨は装飾品だけ (武器・防具には「変質した」骨が無く、相場の行も絵も引けなかった。2026-09-29 オーナー「イラストエラー」)。
  * フラスコ・スキルジェムは冒涜できないので出さない
@@ -78,7 +81,8 @@ export function enOf(key: string, item: StageItem | null): string {
   if (key.startsWith("essence:") && ESS[key]) return ESS[key].en;
   if (BONES.includes(key) && item) {
     const bone = desecrationBoneFor(item.cls.category);
-    const k = key === "desecrate_ancient" ? `${bone}_ancient` : key === "desecrate_altered" ? `${bone}_altered` : bone;
+    const suffix = /^desecrate_(ancient|altered|gnawed)$/.exec(key)?.[1];
+    const k = suffix ? `${bone}_${suffix}` : bone;
     return KEYS.bones[k]?.en ?? key;
   }
   return KEYS.currency[key]?.en ?? KEYS.omens[key]?.en ?? KEYS.bones[key]?.en ?? key;
