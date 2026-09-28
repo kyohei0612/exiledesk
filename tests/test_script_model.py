@@ -65,7 +65,7 @@ def test_scene_requires_step_for_visual_kinds() -> None:
 def test_line_spoken_prefers_speech() -> None:
     ln = Line(speaker="metan", text="MOD", speech="モッド", scene=Scene(kind="talk"))
     assert ln.spoken == "モッド"
-    assert Line(speaker="metan", text="MOD", scene=Scene(kind="talk")).spoken == "MOD"
+    assert Line(speaker="metan", text="MOD", scene=Scene(kind="talk")).spoken == "モッド"
 
 
 def test_check_against_reports_bad_step() -> None:

@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.script.reading import normalize_speech
 
 SCRIPT_SCHEMA = "poe2tube-script/1"
 
@@ -68,7 +69,7 @@ class Line(BaseModel):
 
     @property
     def spoken(self) -> str:
-        return self.speech or self.text
+        return normalize_speech(self.speech or self.text)
 
 
 class Section(BaseModel):
