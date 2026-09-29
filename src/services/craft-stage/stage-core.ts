@@ -132,7 +132,7 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number): StageMod {
   const ranges = raw.map(([a, b], i) => [scaled(a!, scales[i]!), scaled(b!, scales[i]!)]);
   const en = mod.text ?? mod.id;
   const textEn = fillEn(en, values);
-  return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn };
+  return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}) };
 }
 /**
  * 日本語文に値を入れる。値の範囲の無い MOD (固定の「+1 to Level of all Minion Skills」、2 行目が固定の物) は日本語だけ「#」なので、

@@ -98,3 +98,36 @@ describe("解呪・サルベージ (要望 ⑰-5)", () => {
     expect(A(s, "salvage").item).toMatchObject({ gained: { scrap: 1 }, shards: { artificer_shard: 1 } });
   });
 });
+
+describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
+  it("ルーンは空きソケットにだけ、部位で効き目が違う (弓 = 火ダメージ追加、防具 = 火耐性)", () => {
+    const bow = freshItem(data, "Crude Bow", 20);
+    expect(A(bow, "rune:Lesser Desert Rune").applied).toBe(false);
+    const socketed = A(bow, "artificer").item;
+    const r = A(socketed, "rune:Lesser Desert Rune").item;
+    expect(r.augments?.[0]).toMatchObject({ cat: "マーシャル武器", textJa: "4から6の火ダメージを追加する" });
+    expect(A(r, "rune:Lesser Desert Rune").applied).toBe(false);
+    const arm = A(A(freshItem(data, "Chain Mail", 20), "artificer").item, "rune:Lesser Desert Rune").item;
+    expect(arm.augments?.[0]?.textJa).toBe("火耐性 +10%");
+  });
+  it("上の数値にルーンの追加ダメージと品質が乗る", async () => {
+    const { propRows } = await import("../src/services/craft-stage/stage-props");
+    const bow = freshItem(data, "Crude Bow", 20);
+    expect(propRows(bow).find((x) => x.key === "phys")).toMatchObject({ value: "6〜9", up: false });
+    const r = A(A(bow, "artificer").item, "rune:Lesser Desert Rune").item;
+    expect(propRows(r).find((x) => x.key === "fire")).toMatchObject({ value: "4〜6", up: true });
+    const q = A(r, "whetstone").item;
+    expect(propRows(q).find((x) => x.key === "phys")?.value).toBe(`${Math.round(6 * 1.05)}〜${Math.round(9 * 1.05)}`);
+  });
+  it("ローカルの MOD (物理ダメージ増加) が物理ダメージに乗る", async () => {
+    const { propRows } = await import("../src/services/craft-stage/stage-props");
+    let it = freshItem(data, "Crude Bow", 82);
+    for (let s = 1; s < 200; s++) {
+      const r = A(freshItem(data, "Crude Bow", 82), "transmute", s).item;
+      if (r.prefixes.some((m) => m.stats?.includes("local_physical_damage_+%"))) { it = r; break; }
+    }
+    const inc = it.prefixes.find((m) => m.stats?.includes("local_physical_damage_+%"))!;
+    const k = 1 + inc.values[0]! / 100;
+    expect(propRows(it).find((x) => x.key === "phys")).toMatchObject({ value: `${Math.round(6 * k)}〜${Math.round(9 * k)}`, up: true });
+  });
+});

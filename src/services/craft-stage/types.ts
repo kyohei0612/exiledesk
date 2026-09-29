@@ -25,6 +25,8 @@ export interface StageMod {
   /** 転がった数値 (段の範囲の中から) */
   values: number[];
   ranges: number[][];
+  /** values と同じ並びの stat の id (データの段の stats)。武器・防具の数値への反映と PoB に使う (要望 ⑰-2) */
+  stats?: string[];
   textJa: string;
   textEn: string;
   fractured?: boolean;

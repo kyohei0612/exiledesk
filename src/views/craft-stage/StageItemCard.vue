@@ -12,7 +12,9 @@ import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { baseStatsOf, isFlask, isGem } from "../../services/craft-stage/stage-bases";
+import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
+import { propRows } from "../../services/craft-stage/stage-props";
+import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
@@ -41,27 +43,9 @@ const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア
 /** 種類の言葉 (フラスコ・ジェムはレアリティの代わりに出す) */
 const kindJa = computed(() => (isGem(props.item.cls.category) ? "スキルジェム" : isFlask(props.item.cls.category) ? "フラスコ" : RARITY_JA[props.item.rarity]));
 /**
- * ベースの数値を品質込みで (品質 1% ごとに 1% more。poe2db の Quality)。変わった値は青 (ゲームと同じく増えた数値は青)
+ * ベースの数値 (品質・ローカル MOD・ルーンを反映、stage-props.ts)。変わった値は青 (ゲームと同じく増えた数値は青)
  */
-const baseRows = computed(() => {
-  const b = baseStatsOf(props.item.base);
-  if (!b) return [];
-  const q = 1 + props.item.quality / 100;
-  const mul = (v: number | [number, number]): string => (Array.isArray(v) ? `${Math.round(v[0] * q)}〜${Math.round(v[1] * q)}` : String(Math.round(v * q)));
-  const rows: Array<{ label: string; value: string; up: boolean }> = [];
-  const up = props.item.quality > 0;
-  if (b.phys) rows.push({ label: "物理ダメージ", value: mul(b.phys), up });
-  if (b.crit) rows.push({ label: "クリティカルヒット率", value: `${b.crit.toFixed(2)}%`, up: false });
-  if (b.aps) rows.push({ label: "アタック/秒", value: b.aps.toFixed(2), up: false });
-  if (b.armour) rows.push({ label: "アーマー", value: mul(b.armour), up });
-  if (b.evasion) rows.push({ label: "回避力", value: mul(b.evasion), up });
-  if (b.es) rows.push({ label: "エナジーシールド", value: mul(b.es), up });
-  if (b.block) rows.push({ label: "ブロック率", value: `${b.block}%`, up: false });
-  if (b.life) rows.push({ label: "ライフ回復", value: mul(b.life), up });
-  if (b.mana) rows.push({ label: "マナ回復", value: mul(b.mana), up });
-  if (b.duration && (b.life || b.mana)) rows.push({ label: "回復時間", value: `${(b.duration / 10).toFixed(1)} 秒`, up: false });
-  return rows;
-});
+const baseRows = computed(() => propRows(props.item));
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
 const implicits = computed(() => (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja));
@@ -116,8 +100,13 @@ const rows = computed(() => [
       <p v-for="r in baseRows" :key="r.label" class="text-[12px] text-white/50">{{ r.label }}: <span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
-        <span v-for="i in item.sockets" :key="'s' + i" class="h-4 w-4 rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
+        <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-row-in h-7 w-7' : 'h-4 w-4'">
+          <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
+        </span>
       </div>
+      <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
+      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]">{{ a.textJa }}</p>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
         サポート枠
