@@ -55,7 +55,13 @@ export type StageExtra =
   // aPob / bPob: 結果 JSON の pob (要望 ⑰-3、&a_pob= / &b_pob=)。あれば真ん中の差に DPS の差も出す
   | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob: PobBlock | null; bPob: PobBlock | null }
   // 耐性の画面 (要望 ⑰-4): r = craft-stage-run.mjs --resists の結果、act = どのペナルティを出すか、penalty = false でペナルティ後を出さない
-  | { kind: "resists"; r: ResistsBlock; act: number | null; penalty: boolean };
+  | { kind: "resists"; r: ResistsBlock; act: number | null; penalty: boolean }
+  // 倒すまでの時間 (要望 ⑰-15): a / b = 結果 JSON の pob、step = どの手の武器か、label = 左右の札
+  | { kind: "ttk"; a: PobBlock; aStep: number; aLabel: string; b: PobBlock | null; bStep: number; bLabel: string }
+  // 受けるダメージ (要望 ⑰-16): pob のその手のキャラのライフ、elem の一撃、res = 左右の耐性 (%)、dmg = 一撃の指定 (無ければ PoB の既定)
+  | { kind: "hit"; pob: PobBlock; step: number; elem: string; res: number[]; dmg: number | null }
+  // DPS の内訳 (要望 ⑰-5)
+  | { kind: "dps"; pob: PobBlock; step: number };
 /** craft-stage-run.mjs --resists の結果 (耐性の画面に URL で渡す) */
 export interface ResistsBlock {
   version: string;
@@ -127,6 +133,14 @@ export const craftStage = {
         const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
         const pj = (k: string) => (q.get(k) ? (JSON.parse(q.get(k)!) as PobBlock) : null);
         extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step"), aPob: pj("a_pob"), bPob: pj("b_pob") };
+      } else if (view === "ttk") {
+        const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
+        extra.value = { kind: "ttk", a: JSON.parse(q.get("a_pob") ?? "{}") as PobBlock, aStep: num("a_step"), aLabel: q.get("a_label") ?? "A", b: q.get("b_pob") ? (JSON.parse(q.get("b_pob")!) as PobBlock) : null, bStep: num("b_step"), bLabel: q.get("b_label") ?? "B" };
+      } else if (view === "hit") {
+        const res = (q.get("res") ?? "50,75").split(",").map(Number).filter((x) => Number.isFinite(x));
+        extra.value = { kind: "hit", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999, elem: q.get("elem") ?? "fire", res, dmg: q.get("dmg") != null ? Number(q.get("dmg")) : null };
+      } else if (view === "dps") {
+        extra.value = { kind: "dps", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999 };
       } else if (view === "resists") {
         const act = q.get("act");
         extra.value = { kind: "resists", r: JSON.parse(q.get("r") ?? "{}") as ResistsBlock, act: act != null ? Number(act) : null, penalty: q.get("penalty") !== "0" };

@@ -160,4 +160,9 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
   出る物: 解呪 = マジック → 変成 / レア → 王者 / ユニーク → 可能性のシャード (攻略の定番)、サルベージ = ソケット → 熟練工のシャード / 品質 → その装備の品質カレンシー (クライアントの説明文)。**個数は出典なし、1 個と仮定** (DISPOSE_COUNT_CONFIRMED = false)
 - **スキル・ジェムの絵** (scripts/build-skill-art-from-client.mjs): スキルのアイコンは PoB の Data/Skills の icon、ジェムの絵はクライアントの BaseItemTypes → ItemVisualIdentity
   (PoB のゲーム内 ID は綴りが違う物があるので、無ければジェムの名前で引く)。画像パック skill-art / rune-art
+- **2026-09-29 夕方の全面更新 (要望 ⑰ の 21 項目)**: 動きの共通の決まり (use-anim.ts: `&play=1` / `data-anim-ms` / `data-anim-done` / `&reveal=1`、時間だけで決まり乱数なし)。
+  DPS の内訳 (PoB の MainHand の <種類>HitAverage の割合。PoB の取り出し口 call_get_stats_all に MainHand / OffHand の中を `MainHand.<キー>` で足した)、
+  DPS の層 (素のベース / MOD まで / 全部 を PoB で 3 回)、敵 (PoB の Data/Misc.lua の monsterLifeTable・monsterDamageTable、倍率は Modules/Data.lua、敵のレベルは CalcSetup と同じ)。
+  新しい画面: view=ttk (倒すまでの時間 = 敵のライフ ÷ DPS)、view=hit (受けるダメージ = 一撃 × (1 − 耐性))、view=dps (内訳)。
+  見送り: view=skill (スキルの札)、view=pool / roll と段の重みの数字 (次のクラフト回まで)
 

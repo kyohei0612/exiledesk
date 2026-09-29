@@ -125,5 +125,5 @@ export function useVideoHand(frame: Ref<HTMLElement | null>, speed: Ref<number>)
     const f = frame.value?.getBoundingClientRect();
     return f ? { x: f.x + hand.x * unit(f), y: f.y + hand.y * unit(f) } : { x: 0, y: 0 };
   }
-  return { hand, armed, spent, reveal, slots, play, skip, screenPoint, isBusy: () => busy };
+  return { hand, armed, spent, reveal, slots, play, skip, screenPoint, pointOf, isBusy: () => busy };
 }

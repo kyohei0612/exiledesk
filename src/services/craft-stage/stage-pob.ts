@@ -34,6 +34,15 @@ export interface PobStat {
   hit: number;
   aps: number;
   crit: number;
+  /** crit と同じ (POE2Tube の名前) */
+  crit_chance: number;
+  /** DPS の種類ごとの内訳 (PoB の <種類>HitAverage の割合で DPS を分けた物) */
+  breakdown: Record<"physical" | "fire" | "cold" | "lightning" | "chaos", number>;
+  /**
+   * DPS の層 (要望 ⑰-5 の view=dps): 素のベース (MOD もルーンも無し、品質はそのまま) / MOD まで / 全部 (ルーン込み)。
+   * 同じキャラ・同じスキルで PoB を 3 回回した値。武器でない手は無い
+   */
+  layers?: { base: number; mods: number; full: number };
   armour: number;
   evasion: number;
   es: number;
@@ -41,8 +50,20 @@ export interface PobStat {
   /** 耐性: value = 上限とペナルティの後 (実際の値)、total = 上限前の合計 (ペナルティ込み) */
   resists: Record<"fire" | "cold" | "lightning" | "chaos", { value: number; total: number }>;
 }
+/** 敵 (PoB の表から。倒すまでの時間・受けるダメージの画面用) */
+export interface PobEnemy {
+  /** 敵のレベル (設定の enemyLevel、無ければキャラのレベル。PoB の CalcSetup と同じ、上限 85) */
+  level: number;
+  /** 普通の敵のライフ (PoB の Data/Misc.lua の monsterLifeTable[level]) */
+  life: number;
+  /** 敵の一撃 (種類ごと) の既定値 = monsterDamageTable[level] × 1.5 × 敵の種類の倍率 (PoB の設定の既定値と同じ式) */
+  hit: number;
+  /** 言葉 (「普通の敵 Lv20 のライフ 249」) */
+  ja: string;
+}
 export interface PobBlock {
   version: string;
+  enemy?: PobEnemy;
   character: { class: string; level: number; skill: string; skill_ja: string | null; gem_level: number; supports: string[] };
   config: Record<string, number | string>;
   config_ja: string;
@@ -99,11 +120,17 @@ const n = (o: Record<string, number>, k: string): number => (typeof o[k] === "nu
 /** stage_pob の 1 手の出力 → 結果 JSON の形 */
 export function pobStatOf(o: Record<string, number>): PobStat {
   const r = (e: string) => ({ value: n(o, `${e}Resist`), total: n(o, `${e}ResistTotal`) });
+  const dps = n(o, "TotalDPS") || n(o, "CombinedDPS");
+  const types = { physical: "Physical", fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" } as const;
+  const hitSum = Object.values(types).reduce((a, t) => a + n(o, `MainHand.${t}HitAverage`), 0);
+  const breakdown = Object.fromEntries(Object.entries(types).map(([k, t]) => [k, hitSum > 0 ? (dps * n(o, `MainHand.${t}HitAverage`)) / hitSum : 0])) as PobStat["breakdown"];
   return {
-    dps: n(o, "TotalDPS") || n(o, "CombinedDPS"),
+    dps,
     hit: n(o, "AverageDamage"),
     aps: n(o, "Speed"),
     crit: n(o, "CritChance"),
+    crit_chance: n(o, "CritChance"),
+    breakdown,
     armour: n(o, "Armour"),
     evasion: n(o, "Evasion"),
     es: n(o, "EnergyShield"),
@@ -111,6 +138,11 @@ export function pobStatOf(o: Record<string, number>): PobStat {
     resists: { fire: r("Fire"), cold: r("Cold"), lightning: r("Lightning"), chaos: r("Chaos") },
   };
 }
+
+/** アイテムから MOD を全部外した物 (DPS の層の「素のベース」)。ルーンも外す */
+export const bareOf = (it: StageItem): StageItem => ({ ...it, prefixes: [], suffixes: [], augments: [], rarity: "normal" });
+/** ルーンだけ外した物 (DPS の層の「MOD まで」) */
+export const noRunesOf = (it: StageItem): StageItem => ({ ...it, augments: [] });
 
 /** DPS の短い書き方 (123 / 1.2K / 3.4M) */
 export function dpsText(v: number): string {

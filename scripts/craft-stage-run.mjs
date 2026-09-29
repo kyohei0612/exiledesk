@@ -22,7 +22,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { prices as testPrices } from "./_htc-test-prices.mjs";
-import { pobGems, runStagePob } from "./_pob-stage.mjs";
+import { pobEnemy, pobGems, runStagePob } from "./_pob-stage.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -83,9 +83,20 @@ if (plan.pob) {
   const h = pobHead(plan.pob);
   const { steps } = M.playPlan(data, plan, prices);
   const items = [M.startItem(data, plan), ...steps.map((s) => s.after)];
-  const out = runStagePob(root, { ...h.input, steps: items.map((it) => equip(it)) });
-  const stats = out.steps.map((o) => M.pobStatOf(o));
-  result.pob = { version: out.pob_version, character: h.character, config: h.config, config_ja: h.config_ja, steps: stats };
+  // 手ごとに 3 通り (全部 / ルーン無し / 素のベース) を回して DPS の層を作る (要望 ⑰-5 の view=dps)。武器でない手は全部だけ
+  const isWeapon = (it) => M.pobSlotOf(it.cls.category) === "Weapon 1";
+  const runs = items.flatMap((it) => (isWeapon(it) ? [equip(it), equip(M.noRunesOf(it)), equip(M.bareOf(it))] : [equip(it)]));
+  const out = runStagePob(root, { ...h.input, steps: runs });
+  let k = 0;
+  const stats = items.map((it) => {
+    const full = M.pobStatOf(out.steps[k++]);
+    if (!isWeapon(it)) return full;
+    const mods = M.pobStatOf(out.steps[k++]).dps;
+    const base = M.pobStatOf(out.steps[k++]).dps;
+    return { ...full, layers: { base, mods, full: full.dps } };
+  });
+  const enemy = pobEnemy(root, plan.pob.level, h.config);
+  result.pob = { version: out.pob_version, enemy, character: h.character, config: h.config, config_ja: h.config_ja, steps: stats };
   result.steps.forEach((s, i) => { s.pob = stats[i + 1] ?? null; });
   const d0 = stats[0]?.dps ?? 0;
   const d1 = stats[stats.length - 1]?.dps ?? 0;

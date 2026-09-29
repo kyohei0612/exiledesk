@@ -117,6 +117,31 @@ async function go(n: number): Promise<void> {
   }
   if (idx.value >= tape.length) playing.value = false;
 }
+/**
+ * 解呪・サルベージ (要望 ⑰-21): アイテムが崩れたら、手に入ったシャード・品質カレンシーの絵がアイテム枠から棚の枠へ飛ぶ
+ * (棚に無い物は棚の上の方へ)。棚のシャードは「n/10」が増え、10 個目でオーブに変わる (use-stage-fx の文字)
+ */
+const flyers = ref<Array<{ id: number; icon: string; x: number; y: number; go: boolean; tx: number; ty: number }>>([]);
+let flyId = 0;
+watch(idx, (i, old) => {
+  if (i !== old + 1) return;
+  const st = tape[i - 1];
+  if (!st || !st.after.disposed || st.before.disposed) return;
+  const from = hand.pointOf(cardEl.value);
+  if (!from) return;
+  const got = [
+    ...Object.keys(st.after.shards ?? {}).filter((k) => (st.after.shards?.[k] ?? 0) !== (st.before.shards?.[k] ?? 0)),
+    ...Object.keys(st.after.gained ?? {}).filter((k) => (st.after.gained?.[k] ?? 0) !== (st.before.gained?.[k] ?? 0)),
+  ];
+  for (const [n, k] of got.entries()) {
+    const to = hand.pointOf(hand.slots.get(k)) ?? { x: from.x + 420, y: 80 };
+    const f = { id: ++flyId, icon: iconOf(k), x: from.x - 24, y: from.y - 24 + n * 30, go: false, tx: to.x - 24, ty: to.y - 24 };
+    flyers.value = [...flyers.value, f];
+    setTimeout(() => { flyers.value = flyers.value.map((x) => (x.id === f.id ? { ...x, go: true } : x)); }, 350 + n * 150);
+    setTimeout(() => { flyers.value = flyers.value.filter((x) => x.id !== f.id); }, 1500 + n * 150);
+  }
+});
+
 /** 自動再生: 手つき → 付いた所を 1.3 秒見せる → 次 (速さで割る)。止めたら抜ける */
 let loop = 0;
 async function run(): Promise<void> {
@@ -228,6 +253,15 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         <!-- 棚 (カーソルがここから拾う) -->
         <VideoTray v-if="!clip" :counts="item.shards" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
 
+        <!-- 解呪・サルベージで棚へ飛ぶシャード (要望 ⑰-21) -->
+        <img
+          v-for="f in flyers"
+          :key="f.id"
+          :src="f.icon"
+          alt=""
+          class="pointer-events-none absolute left-0 top-0 z-30 h-12 w-12 object-contain drop-shadow-[0_0_12px_rgba(250,204,21,0.8)] transition-transform duration-700 ease-in-out"
+          :style="{ transform: `translate(${f.go ? f.tx : f.x}px, ${f.go ? f.ty : f.y}px) scale(${f.go ? 0.8 : 1.3})` }"
+        />
         <!-- カーソル (横と縦で動き方を変えて弧を描く) -->
         <div v-if="hand.hand.visible" class="pointer-events-none absolute left-0 top-0 z-30" :style="{ transform: `translateX(${hand.hand.x}px)`, transition: `transform ${hand.hand.dur}ms cubic-bezier(0.45, 0.05, 0.3, 1)` }">
           <div :style="{ transform: `translateY(${hand.hand.y}px)`, transition: `transform ${hand.hand.dur}ms cubic-bezier(0.15, 0.7, 0.35, 1)` }">

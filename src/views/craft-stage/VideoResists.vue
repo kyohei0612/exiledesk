@@ -7,9 +7,12 @@
     - 上限 (75%) を超えた分は薄く、足りない (マイナス) 所は赤
     - &penalty=0 でペナルティ後を出さない (質問の行用、&hl=0 と同じ考え)
   撮影の準備の目印: 画面の見出しに「耐性」の文字。下 15% (612px より下) は空ける。
+  動き (要望 ⑰-17、&play=1): アクト 1 → act のアクトまで 1 段 0.7 秒で −10% ずつ棒が縮み、「アクト 2」「アクト 3」の札が順に出る。
+  最後に上限 75% に届かない所が赤く光る。長さ = 0.7 秒 × 段の数 + 0.6 秒 (data-anim-ms)。&penalty=0&play=1&reveal=1 は、ペナルティ前から削れる所を見せる
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import { useAnim } from "./use-anim";
 import type { ResistsBlock } from "../../state/craft-stage";
 
 const props = defineProps<{ r: ResistsBlock; act: number | null; penalty: boolean }>();
@@ -21,7 +24,26 @@ const ELEMS = [
   { key: "chaos", ja: "混沌耐性", color: "#c77dff" },
 ] as const;
 const base = computed(() => props.r.rows?.find((x) => x.penalty === 0) ?? props.r.rows?.[0] ?? null);
-const row = computed(() => (props.act != null ? props.r.rows?.find((x) => x.penalty === props.act) : null) ?? props.r.rows?.[props.r.rows.length - 1] ?? null);
+const target = computed(() => (props.act != null ? props.r.rows?.find((x) => x.penalty === props.act) : null) ?? props.r.rows?.[props.r.rows.length - 1] ?? null);
+/** 動き: アクト 1 から目的のアクトまでの行 (ペナルティの大きい順に並べ直して、目的の所まで) */
+const path = computed(() => {
+  const rows = [...(props.r.rows ?? [])].sort((a, b) => b.penalty - a.penalty);
+  const end = rows.findIndex((x) => x === target.value);
+  return rows.slice(0, end < 0 ? rows.length : end + 1);
+});
+const STEP_MS = 700;
+const anim = useAnim(STEP_MS * Math.max(1, (props.act != null ? Math.abs(props.act) / 10 : 6) + 1) + 600, { revealAt: 0.15 });
+/** 今出している行 (動きの途中はアクト 1 から順に) */
+const row = computed(() => {
+  if (!anim.play) return target.value;
+  const n = path.value.length;
+  const k = Math.min(n - 1, Math.floor(anim.t.value * (n + 0.9)));
+  return path.value[Math.max(0, k)] ?? target.value;
+});
+/** ペナルティ後を出すか (&penalty=0 は隠す。&reveal=1 で動かすと途中から出る) */
+const showPenalty = computed(() => props.penalty || (anim.play && anim.reveal && anim.shown.value));
+/** 最後に届かない所を赤く光らせる */
+const done = computed(() => !anim.play || anim.t.value >= 1);
 /** 棒の目盛り: -60% 〜 +100% を横幅に */
 const MIN = -60;
 const MAX = 100;
@@ -43,7 +65,7 @@ const bars = computed(() =>
         <p class="text-[40px] font-bold leading-tight text-amber-100">耐性</p>
         <p class="text-[18px] text-white/60">{{ r.items?.map((i) => i.name).join("・") }}</p>
       </div>
-      <p v-if="penalty && row" class="rounded-xl border border-rose-300/40 bg-rose-500/15 px-4 py-2 text-[24px] font-bold text-rose-100">{{ row.label }}</p>
+      <p v-if="showPenalty && row" :key="row.penalty" class="stage-pop rounded-xl border border-rose-300/40 bg-rose-500/15 px-4 py-2 text-[24px] font-bold text-rose-100">{{ row.label }}</p>
     </div>
     <div class="space-y-5">
       <div v-for="b in bars" :key="b.key" class="grid grid-cols-[150px_1fr_260px] items-center gap-5">
@@ -56,10 +78,10 @@ const bars = computed(() =>
           <!-- 装備の合計 (ペナルティ前) -->
           <span class="absolute inset-y-1 rounded border-2 border-dashed border-white/60" :style="{ left: `${x(Math.min(0, b.total))}%`, width: `${Math.abs(x(b.total) - x(0))}%` }" />
           <!-- 実際の値 (ペナルティ後・上限後) -->
-          <template v-if="penalty">
+          <template v-if="showPenalty">
             <span
-              class="absolute inset-y-2 rounded transition-all duration-700"
-              :class="b.value < 0 ? 'bg-rose-500/80' : ''"
+              class="absolute inset-y-2 rounded transition-all duration-500"
+              :class="[b.value < 0 ? 'bg-rose-500/80' : '', done && b.value < 75 ? 'shadow-[0_0_18px_4px_rgba(244,63,94,0.55)]' : '']"
               :style="{ left: `${x(Math.min(0, b.value))}%`, width: `${Math.abs(x(b.value) - x(0))}%`, ...(b.value >= 0 ? { background: b.color } : {}) }"
             />
             <span v-if="b.over" class="absolute inset-y-2 rounded opacity-30" :style="{ left: `${x(CAP)}%`, width: `${x(b.after) - x(CAP)}%`, background: b.color }" />
@@ -67,12 +89,12 @@ const bars = computed(() =>
         </div>
         <span class="text-right text-[24px] tabular-nums">
           <span class="text-white/60">装備 {{ b.total > 0 ? "+" : "" }}{{ Math.round(b.total) }}%</span>
-          <template v-if="penalty"> → <b :class="b.value < 0 ? 'text-rose-300' : 'text-white'">{{ Math.round(b.value) }}%</b></template>
+          <template v-if="showPenalty"> → <b :class="b.value < 0 ? 'text-rose-300' : 'text-white'">{{ Math.round(b.value) }}%</b></template>
         </span>
       </div>
     </div>
     <p class="mt-6 text-[15px] text-white/50">
-      点線 = 装備の合計 (ペナルティ前)<template v-if="penalty">、塗り = ペナルティ後の実際の値 (上限 75% を超えた分は薄く、マイナスは赤)</template>。数値は Path of Building {{ r.version }} の計算
+      点線 = 装備の合計 (ペナルティ前)<template v-if="showPenalty">、塗り = ペナルティ後の実際の値 (上限 75% を超えた分は薄く、マイナスは赤)</template>。数値は Path of Building {{ r.version }} の計算
     </p>
   </div>
 </template>

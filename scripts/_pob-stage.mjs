@@ -42,6 +42,27 @@ export function pobGems(root) {
   };
 }
 
+/**
+ * 敵 (PoB の表): レベル (設定の enemyLevel、無ければキャラのレベル。上限 MaxEnemyLevel = CalcSetup.lua と同じ)、
+ * 普通の敵のライフ (Data/Misc.lua の monsterLifeTable)、一撃の既定値 (ConfigOptions.lua と同じ monsterDamageTable × 1.5 × 敵の種類の倍率)
+ */
+export function pobEnemy(root, charLevel, config) {
+  const src = resolve(root, "vendor/PathOfBuilding-PoE2/src");
+  const misc = readFileSync(join(src, "Data/Misc.lua"), "utf8");
+  const dataLua = readFileSync(join(src, "Modules/Data.lua"), "utf8");
+  const table = (name) => (new RegExp(`data\\.${name} = \\{([^}]*)\\}`).exec(misc)?.[1] ?? "").split(",").map((x) => Number(x.trim())).filter((x) => Number.isFinite(x));
+  const num = (name) => {
+    const m = new RegExp(`${name} = ([\\d.]+) / ([\\d.]+)`).exec(dataLua);
+    return m ? Number(m[1]) / Number(m[2]) : NaN;
+  };
+  const maxLevel = Number(/MaxEnemyLevel = (\d+)/.exec(dataLua)?.[1] ?? 85);
+  const level = Math.min(maxLevel, Number(config.enemyLevel ?? charLevel));
+  const life = table("monsterLifeTable")[level - 1] ?? 0;
+  const mult = { None: num("normalEnemyDPSMult"), Boss: num("stdBossDPSMult"), Pinnacle: num("pinnacleBossDPSMult"), Uber: num("uberBossDPSMult") }[String(config.enemyIsBoss ?? "Pinnacle")] ?? num("normalEnemyDPSMult");
+  const hit = Math.round((table("monsterDamageTable")[level - 1] ?? 0) * 1.5 * mult);
+  return { level, life, hit, ja: `普通の敵 Lv${level} のライフ ${life}` };
+}
+
 /** stage_pob を呼ぶ。steps は手ごとの [{ slot, text }]。戻りは stage_pob の out.json */
 export function runStagePob(root, input) {
   const dir = mkdtempSync(join(tmpdir(), "exiledesk-stage-pob-"));

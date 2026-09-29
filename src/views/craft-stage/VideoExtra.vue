@@ -2,13 +2,16 @@
   VideoExtra.vue — 動画用の別の画面の入れ物 (POE2Tube 要望 ⑪、2026-09-29)
 
   URL の view= (craft-stage.ts の extra) で開く。1280×720 を窓に合わせて拡大 (VideoStage と同じ)、背景も同じ。
-  中身: view=tiers → [[VideoTiers.vue]]、view=compare → [[VideoCompare.vue]]。Esc で閉じる。
+  中身: view=tiers → [[VideoTiers.vue]]、view=compare → [[VideoCompare.vue]]、2026-09-29 (要望 ⑰): view=resists / ttk / hit / dps。Esc で閉じる。
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import VideoTiers from "./VideoTiers.vue";
 import VideoCompare from "./VideoCompare.vue";
 import VideoResists from "./VideoResists.vue";
+import VideoTtk from "./VideoTtk.vue";
+import VideoHit from "./VideoHit.vue";
+import VideoDps from "./VideoDps.vue";
 import { craftStage } from "../../state/craft-stage";
 
 const ex = craftStage.extra;
@@ -27,6 +30,9 @@ onBeforeUnmount(() => { ro?.disconnect(); window.removeEventListener("keydown", 
       <VideoTiers v-if="ex?.kind === 'tiers'" :base="ex.base" :mod="ex.mod" :ilvl="ex.ilvl" :hl="ex.hl" />
       <VideoCompare v-else-if="ex?.kind === 'compare'" :a="ex.a" :b="ex.b" :a-step="ex.aStep" :b-step="ex.bStep" :a-pob="ex.aPob" :b-pob="ex.bPob" />
       <VideoResists v-else-if="ex?.kind === 'resists'" :r="ex.r" :act="ex.act" :penalty="ex.penalty" />
+      <VideoTtk v-else-if="ex?.kind === 'ttk'" :a="ex.a" :a-step="ex.aStep" :a-label="ex.aLabel" :b="ex.b" :b-step="ex.bStep" :b-label="ex.bLabel" />
+      <VideoHit v-else-if="ex?.kind === 'hit'" :pob="ex.pob" :step="ex.step" :elem="ex.elem" :res="ex.res" :dmg="ex.dmg" />
+      <VideoDps v-else-if="ex?.kind === 'dps'" :pob="ex.pob" :step="ex.step" />
     </div>
   </div>
 </template>

@@ -260,6 +260,16 @@ pub(crate) fn call_get_stats_all(lua: &Lua) -> mlua::Result<HashMap<String, f64>
         for k, v in pairs(b.calcsTab.calcsEnv.player.output) do
             if type(v) == "number" then out[k] = v end
         end
+        -- 2026-09-29: 武器ごとの出力 (種類ごとの 1 発の平均 PhysicalHitAverage など) は MainHand / OffHand の中なので、
+        -- "MainHand.<キー>" の形で足す (クラフトステージの DPS の内訳、src-tauri/examples/stage_pob.rs)
+        for _, hand in ipairs({ "MainHand", "OffHand" }) do
+            local t = b.calcsTab.calcsEnv.player.output[hand]
+            if type(t) == "table" then
+                for k, v in pairs(t) do
+                    if type(v) == "number" then out[hand .. "." .. k] = v end
+                end
+            end
+        end
         return out
     "#;
     let tbl: Table = lua.load(script).eval()?;

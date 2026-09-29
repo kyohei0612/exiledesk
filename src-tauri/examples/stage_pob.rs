@@ -52,6 +52,10 @@ const KEYS: &[&str] = &[
     "FireResist", "ColdResist", "LightningResist", "ChaosResist",
     "FireResistTotal", "ColdResistTotal", "LightningResistTotal", "ChaosResistTotal",
     "FireResistOverCap", "ColdResistOverCap", "LightningResistOverCap", "ChaosResistOverCap",
+    // 1 発の種類ごとの平均 (DPS の内訳、要望 ⑰-2 の breakdown)
+    "MainHand.PhysicalHitAverage", "MainHand.FireHitAverage", "MainHand.ColdHitAverage", "MainHand.LightningHitAverage", "MainHand.ChaosHitAverage",
+    // 敵の一撃 (種類ごと、PoB の設定の既定値。受けるダメージの画面)
+    "PhysicalEnemyDamage", "FireEnemyDamage", "ColdEnemyDamage", "LightningEnemyDamage", "ChaosEnemyDamage",
 ];
 
 fn esc(s: &str) -> String {
@@ -130,6 +134,14 @@ fn main() {
         }
         let _ = worker.set_main_socket_group(1);
         let all: HashMap<String, f64> = worker.get_stats_all().unwrap_or_default();
+        // 確かめ用: STAGE_POB_KEYS=<部分文字列> で、その文字を含む出力のキーを全部出す
+        if let Ok(f) = env::var("STAGE_POB_KEYS") {
+            let mut ks: Vec<_> = all.iter().filter(|(k, _)| k.contains(&f)).collect();
+            ks.sort_by(|a, b| a.0.cmp(b.0));
+            for (k, v) in ks {
+                eprintln!("{k} = {v}");
+            }
+        }
         let row: serde_json::Map<String, serde_json::Value> =
             KEYS.iter().filter_map(|k| all.get(*k).map(|v| (k.to_string(), serde_json::json!(v)))).collect();
         steps.push(serde_json::Value::Object(row));

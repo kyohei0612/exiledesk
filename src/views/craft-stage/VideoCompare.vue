@@ -5,6 +5,8 @@
   手順を (step まで) 打ったアイテム 2 つを左右に並べ、真ん中に違い (B − A) を色で出す (増えた = 緑、減った = 赤)。
   「装備を入れ替えるかの見方」の回用。下 15% (612px より下) は空ける。画面に「アイテムレベル」の文字が出る (アイテム枠)。
   2026-09-29 (要望 ⑰-3): &a_pob= / &b_pob= (それぞれの結果 JSON の pob、PoB で計算済み) があれば、差の一番上に「スキル DPS A → B (±%)」。
+  動き (要望 ⑰-18 / ⑰-20、&play=1、2.4 秒): 左右とも 1 手前の状態から始めて同時に最後の手を打つ (同じルーンを武器と防具にはめる比べ等)
+  → DPS の棒が左右で伸びる競争。&dps=0 で DPS を隠す (質問の行)、&reveal=1 で隠した所から出す。
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -14,10 +16,17 @@ import { playPlan } from "../../services/craft-stage/run-plan";
 import { diffItems } from "../../services/craft-stage/compare";
 import type { CraftStagePlan } from "../../services/craft-stage/contract";
 import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
+import { easeOut, seg, useAnim } from "./use-anim";
 
 const props = defineProps<{ a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob?: PobBlock | null; bPob?: PobBlock | null }>();
 /** その手の PoB の値 (step が手の数より大きい時は最後) */
 const pobAt = (p: PobBlock | null | undefined, step: number) => (p ? p.steps[Math.min(step, p.steps.length - 1)] ?? null : null);
+const anim = useAnim(2400, { revealAt: 0.45 });
+const hideDps = new URLSearchParams(location.search).get("dps") === "0";
+/** 動きの前半は 1 手前、0.35 から最後の手 */
+const after = computed(() => !anim.play || anim.t.value >= 0.35);
+/** DPS の棒の伸び (0 → 1) */
+const grow = computed(() => easeOut(seg(anim.t.value, 0.4, 0.95)));
 const dps = computed(() => {
   const a = pobAt(props.aPob, props.aStep);
   const b = pobAt(props.bPob, props.bStep);
@@ -29,9 +38,16 @@ const view = computed(() => {
   const data = craftStage.data.value;
   if (!data) return null;
   try {
-    const a = playPlan(data, props.a, {}, props.aStep).final;
-    const b = playPlan(data, props.b, {}, props.bStep).final;
-    return { a, b, diff: diffItems(a, b) };
+    const pa = playPlan(data, props.a, {}, props.aStep);
+    const pb = playPlan(data, props.b, {}, props.bStep);
+    const a = pa.final;
+    const b = pb.final;
+    // 1 手前 (動きの始め)。最後の手で付いた物は光らせる
+    const aBefore = pa.steps.length ? pa.steps[pa.steps.length - 1]!.before : a;
+    const bBefore = pb.steps.length ? pb.steps[pb.steps.length - 1]!.before : b;
+    const aAdded = pa.steps.length ? pa.steps[pa.steps.length - 1]!.added : [];
+    const bAdded = pb.steps.length ? pb.steps[pb.steps.length - 1]!.added : [];
+    return { a, b, aBefore, bBefore, aAdded, bAdded, diff: diffItems(a, b) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }
@@ -76,16 +92,22 @@ const ZOOM = 1.44;
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">A (今の装備)</p>
         <div :style="{ zoom: ZOOM }">
-          <StageItemCard :item="view.a" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact :width="COL_W / ZOOM" />
+          <StageItemCard :item="after ? view.a : view.aBefore" :added="after && anim.play ? view.aAdded : []" :removed="[]" :holding="false" :flash-key="after ? 1 : 0" compact :width="COL_W / ZOOM" />
         </div>
       </div>
       <!-- 違い (B − A) -->
       <div class="shrink-0 space-y-1.5 rounded-2xl border border-white/15 bg-black/70 p-3" :style="{ width: `${DIFF_W}px` }">
         <p class="text-center text-[24px] font-bold text-amber-100">入れ替えると</p>
         <!-- スキル DPS の差 (PoB、要望 ⑰-3) -->
-        <div v-if="dps" class="rounded-lg px-2.5 py-1.5 text-center font-bold" :class="dps.b > dps.a ? 'bg-emerald-500/20 text-emerald-100' : dps.b < dps.a ? 'bg-rose-500/20 text-rose-100' : 'bg-white/5 text-white/60'">
+        <div v-if="dps && !hideDps" class="rounded-lg px-2.5 py-1.5 text-center font-bold" :class="dps.b > dps.a ? 'bg-emerald-500/20 text-emerald-100' : dps.b < dps.a ? 'bg-rose-500/20 text-rose-100' : 'bg-white/5 text-white/60'">
           <p class="text-[15px] opacity-80">スキル DPS ({{ dps.skill }})</p>
-          <p class="text-[26px] tabular-nums leading-tight">{{ dpsText(dps.a) }} → {{ dpsText(dps.b) }}<template v-if="dps.pct != null"> ({{ dps.pct > 0 ? "+" : "" }}{{ dps.pct }}%)</template></p>
+          <!-- 棒の競争 (左 A / 右 B、長い方に合わせる) -->
+          <div v-for="(v, i) in [dps.a, dps.b]" :key="i" class="mt-1 flex items-center gap-2 text-[15px]">
+            <span class="w-5 text-white/60">{{ i ? "B" : "A" }}</span>
+            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="i ? 'bg-amber-300' : 'bg-white/60'" :style="{ width: `${(v / Math.max(dps.a, dps.b, 1e-9)) * 100 * grow}%` }" /></span>
+            <span class="w-14 text-right tabular-nums">{{ dpsText(v * grow) }}</span>
+          </div>
+          <p v-if="anim.shown.value && grow >= 1" class="stage-pop text-[24px] tabular-nums leading-tight">{{ dpsText(dps.a) }} → {{ dpsText(dps.b) }}<template v-if="dps.pct != null"> ({{ dps.pct > 0 ? "+" : "" }}{{ dps.pct }}%)</template></p>
         </div>
         <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
         <p
@@ -99,7 +121,7 @@ const ZOOM = 1.44;
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>
         <div :style="{ zoom: ZOOM }">
-          <StageItemCard :item="view.b" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact :width="COL_W / ZOOM" />
+          <StageItemCard :item="after ? view.b : view.bBefore" :added="after && anim.play ? view.bAdded : []" :removed="[]" :holding="false" :flash-key="after ? 1 : 0" compact :width="COL_W / ZOOM" />
         </div>
       </div>
     </div>
