@@ -22,7 +22,8 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                 "extended": { "subcategories": r.subcategories },
                 // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (TS 側 ingest が同じ経路で読む)
                 "grantedSkills": r.granted_skills.iter().map(|s| serde_json::json!({ "name": "Grants Skill", "values": [[s, 25]] })).collect::<Vec<_>>(),
-                "socketedItems": [{ "socketedItems": r.socketed_gems.iter().map(|g| serde_json::json!({ "typeLine": g })).collect::<Vec<_>>() }],
+                // 2026-09-29: ソケットに入れた物 (augments) は socketedItems[].typeLine、付与スキルの穴のジェムはその中の socketedItems
+                "socketedItems": r.augments.iter().map(|a| serde_json::json!({ "typeLine": a })).chain(std::iter::once(serde_json::json!({ "socketedItems": r.socketed_gems.iter().map(|g| serde_json::json!({ "typeLine": g })).collect::<Vec<_>>() }))).collect::<Vec<_>>(),
                 // 2026-09-22: 品質も poe.ninja の形に戻す (TS 側が同じ経路で読めるように)
                 "properties": r.quality.map(|q| serde_json::json!([{ "name": "[Quality]", "values": [[format!("+{q}%"), 1]] }])).unwrap_or(serde_json::json!([])),
             }
@@ -40,6 +41,7 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
             "implicitMods": u.implicit_mods,
             "explicitMods": u.explicit_mods,
             "extended": { "subcategories": u.subcategories },
+            "socketedItems": u.augments.iter().map(|a| serde_json::json!({ "typeLine": a })).collect::<Vec<_>>(),
         });
         if let Some(v) = &u.flavour_text {
             data["flavourText"] = v.clone();
@@ -81,7 +83,11 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                     serde_json::json!({ "name": gem.name, "itemData": { "support": false, "properties": props } })
                 })
                 .collect();
-            gems.extend(g.supports.iter().map(|n| serde_json::json!({ "name": n, "itemData": { "support": true } })));
+            // リネージュサポートはタグを poe.ninja の形 (properties[0].name) で戻す
+            gems.extend(g.supports.iter().map(|n| {
+                let tags = if g.lineage.contains(n) { "[SupportGem|Support], [LineageSupports|Lineage]" } else { "[SupportGem|Support]" };
+                serde_json::json!({ "name": n, "itemData": { "support": true, "properties": [{ "name": tags }] } })
+            }));
             serde_json::json!({ "allGems": gems, "dps": [{ "name": g.dps_skill, "dps": g.dps }] })
         })
         .collect();
@@ -90,5 +96,8 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
         name: c.name.clone(),
         items,
         skills,
+        keystones: c.keystones.clone(),
+        flasks: c.flasks.clone(),
+        jewels: c.jewels.clone(),
     }
 }

@@ -112,6 +112,12 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
             // 完全一致で拾えなければ「Quality を含む名前」で拾い直す。
             let quality = gem_property_number(data.get("properties"), "[Quality]")
                 .or_else(|| quality_any(data.get("properties")));
+            // 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …)
+            let augments: Vec<String> = data
+                .get("socketedItems")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|x| x.get("typeLine").and_then(|v| v.as_str())).filter(|s| !s.is_empty()).map(str::to_string).collect())
+                .unwrap_or_default();
             rare_items.push(CachedRareItem {
                 inventory_id: inv_id,
                 explicit_mods,
@@ -120,6 +126,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                 granted_skills,
                 socketed_gems,
                 quality,
+                augments,
             });
         } else if frame_type == 3 {
             // unique
@@ -166,6 +173,12 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
             let properties = data.get("properties").cloned();
             let item_level = data.get("ilvl").and_then(|v| v.as_i64());
             let level = data.get("level").and_then(|v| v.as_i64());
+            // 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …)
+            let augments: Vec<String> = data
+                .get("socketedItems")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|x| x.get("typeLine").and_then(|v| v.as_str())).filter(|s| !s.is_empty()).map(str::to_string).collect())
+                .unwrap_or_default();
 
             unique_items.push(CachedUniqueItem {
                 inventory_id: inv_id,
@@ -181,6 +194,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                 item_level,
                 level,
                 subcategories,
+                augments,
             });
         }
     }
@@ -194,6 +208,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
             let gems = g.get("allGems")?.as_array()?;
             let mut mains: Vec<CachedGem> = Vec::new();
             let mut supports = Vec::new();
+            let mut lineage = Vec::new();
             for gem in gems {
                 let name = match gem.get("name").and_then(|v| v.as_str()) {
                     Some(n) if !n.is_empty() => n.to_string(),
@@ -205,6 +220,11 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
                 if is_support {
+                    // リネージュサポートはタグ (properties[0].name) に LineageSupports が入る
+                    let tags = item_data.and_then(|d| d.get("properties")).and_then(|p| p.get(0)).and_then(|p| p.get("name")).and_then(|v| v.as_str()).unwrap_or("");
+                    if tags.contains("LineageSupports") {
+                        lineage.push(name.clone());
+                    }
                     supports.push(name);
                 } else {
                     let props = item_data.and_then(|d| d.get("properties"));
@@ -233,7 +253,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                     })
                 })
                 .unwrap_or((0.0, None));
-            Some(CachedSkillGroup { mains, supports, dps, dps_skill })
+            Some(CachedSkillGroup { mains, supports, lineage, dps, dps_skill })
         })
         .collect();
 
@@ -244,5 +264,9 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
         unique_items,
         fetched_at,
         skills,
+        keystones: ci.keystones.clone(),
+        flasks: ci.flasks.clone(),
+        jewels: ci.jewels.clone(),
+        detail: 1,
     }
 }

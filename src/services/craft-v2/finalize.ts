@@ -105,7 +105,8 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         extended: { subcategories: r.subcategories ?? [] },
         // 2026-09-12: 付与スキル / 装着ジェムを poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
         grantedSkills: (r.granted_skills ?? []).map((s) => ({ name: "Grants Skill", values: [[s, 25]] })),
-        socketedItems: [{ socketedItems: (r.socketed_gems ?? []).map((g) => ({ typeLine: g })) }],
+        // 2026-09-29: ソケットに入れた物 (augments) は socketedItems[].typeLine (Rust の from_cached と同じ形)
+        socketedItems: [...(r.augments ?? []).map((a) => ({ typeLine: a })), { socketedItems: (r.socketed_gems ?? []).map((g) => ({ typeLine: g })) }],
         // 2026-09-22: 品質も poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
         properties: r.quality != null ? [{ name: "[Quality]", values: [[`+${r.quality}%`, 1]] }] : [],
       },
@@ -129,6 +130,7 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         ilvl: u.item_level,
         level: u.level,
         extended: { subcategories: u.subcategories ?? [] },
+        socketedItems: (u.augments ?? []).map((a) => ({ typeLine: a })),
       },
     });
   }
@@ -145,11 +147,15 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
           ],
         },
       })),
-      ...g.supports.map((n) => ({ name: n, itemData: { support: true } })),
+      // リネージュサポートはタグを poe.ninja の形で戻す (ingest/loadout.ts の isLineage が読む)
+      ...g.supports.map((n) => ({
+        name: n,
+        itemData: { support: true, properties: [{ name: (g.lineage ?? []).includes(n) ? "[SupportGem|Support], [LineageSupports|Lineage]" : "[SupportGem|Support]" }] },
+      })),
     ],
     dps: [{ dps: g.dps }],
   }));
-  return { account: c.account, name: c.name, items, skills };
+  return { account: c.account, name: c.name, items, skills, keystones: c.keystones ?? [], flasks: c.flasks ?? [], jewels: c.jewels ?? [] };
 }
 
 /**

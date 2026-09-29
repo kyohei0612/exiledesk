@@ -27,7 +27,7 @@ function pick(slot: SlotKey): void {
   activeSlot.value = slot;
   skillsTab.value = false;
 }
-const topSkill = (): string => props.agg.skills[0]?.name ?? "—";
+const topSkill = (): string => [...props.agg.skills].sort((a, b) => b.mainCount - a.mainCount)[0]?.name ?? "—";
 </script>
 
 <template>
@@ -60,9 +60,9 @@ const topSkill = (): string => props.agg.skills[0]?.name ?? "—";
       :class="skillsTab ? 'border-amber-300/70 ring-1 ring-amber-300/50' : 'border-white/10'"
       @click="skillsTab = true"
     >
-      <span class="text-[11px] font-bold tracking-wider text-white/55">スキル</span>
+      <span class="text-[11px] font-bold tracking-wider text-white/55">スキル・持ち物</span>
       <span class="mt-2 text-[13px] text-sky-200">{{ topSkill() }}</span>
-      <span class="text-[10px] text-white/45">メイン・スピリット・サポート</span>
+      <span class="text-[10px] text-white/45">サポート・リネージュ・オーグメント・キーストーン</span>
     </button>
   </div>
 </template>

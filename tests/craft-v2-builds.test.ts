@@ -43,3 +43,24 @@ describe("ビルド別の集計", () => {
     expect(a!.uniques.map((u) => [u.nameEn, u.count])).toEqual([["Ming's Heart", 2], ["Blackflame", 1]]);
   });
 });
+
+describe("ビルドの持ち物", () => {
+  it("オーグメント・リネージュ・キーストーン・チャーム・ジュエルを人数で数える (同じ人の 2 つは 1)", () => {
+    const c = cache(undefined);
+    const [a0, a1] = c.ascendancies[0]!.characters;
+    a0!.rare_items[0]!.augments = ["Perfect Iron Rune", "Perfect Iron Rune"];
+    a1!.unique_items[0]!.augments = ["Perfect Iron Rune"];
+    a0!.skills = [{ mains: [{ name: "Arc" }], supports: ["Brutus' Brain", "Zenith II"], lineage: ["Brutus' Brain"], dps: 100 }];
+    a0!.keystones = ["Chaos Inoculation"];
+    a0!.flasks = ["Silver Charm"];
+    a1!.jewels = ["Emerald"];
+    const [a] = aggregateFromCache(c);
+    const l = a!.loadout!;
+    expect(l.augments).toEqual([{ nameEn: "Perfect Iron Rune", name: "鉄のパーフェクトルーン", count: 2 }]);
+    expect(l.lineage.map((x) => [x.nameEn, x.count])).toEqual([["Brutus' Brain", 1]]);
+    expect(l.keystones[0]).toEqual({ nameEn: "Chaos Inoculation", name: "カオスイノキュレイション", count: 1 });
+    expect(l.flasks[0]!.count).toBe(1);
+    expect(l.jewels[0]!.nameEn).toBe("Emerald");
+  });
+});
+

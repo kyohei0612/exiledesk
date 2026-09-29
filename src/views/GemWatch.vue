@@ -27,6 +27,7 @@ import { useSweep } from "./gem-watch/use-sweep";
 import SweepControls from "./gem-watch/SweepControls.vue";
 import DroppedGemsCard from "./gem-watch/DroppedGemsCard.vue";
 import AddGemCard from "./gem-watch/AddGemCard.vue";
+import AscendancySkillUsage from "./gem-watch/AscendancySkillUsage.vue";
 import RankingControls from "./gem-watch/RankingControls.vue";
 import { useEvAttempts } from "./gem-watch/use-ev-attempts";
 import { useWatchActions } from "./gem-watch/use-watch-actions";
@@ -205,6 +206,9 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
         </template>
       </GemUsageRanking>
     </div>
+
+    <!-- アセンダンシー別のスキル使用率 (poe.ninja の全キャラ)。上位プレイヤー MOD 一覧から移した (2026-09-29) -->
+    <AscendancySkillUsage />
 
 
     <SoldListDialog :open="soldFor !== ''" :title="soldTitle" :keys="soldKeys" :store="flowStore" @close="soldFor = ''" />

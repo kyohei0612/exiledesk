@@ -111,6 +111,16 @@ pub struct CachedCharacter {
     /// 2026-09-12: スキルグループ (主流スキル集計用)。旧キャッシュには無い
     #[serde(default)]
     pub skills: Vec<CachedSkillGroup>,
+    /// 2026-09-29: キーストーン / チャーム・フラスコ / ジュエル (ユニークは名前、レアはベース)。旧キャッシュには無い
+    #[serde(default)]
+    pub keystones: Vec<String>,
+    #[serde(default)]
+    pub flasks: Vec<String>,
+    #[serde(default)]
+    pub jewels: Vec<String>,
+    /// 取り方の版 (1 = 2026-09-29: 継続ダメージ・スキル名・オーグメント・リネージュ・キーストーン入り)。これ未満は取り直す
+    #[serde(default)]
+    pub detail: u8,
 }
 
 /// poe.ninja `skills[]` 1 グループの縮小形。mains = サポート以外のジェム (トリガーメタ + スキル)、supports = サポート名。
@@ -119,6 +129,9 @@ pub struct CachedSkillGroup {
     /// 2026-09-16: レベル / 品質のランキング用に、名前だけでなくジェムの数値も持つ
     pub mains: Vec<CachedGem>,
     pub supports: Vec<String>,
+    /// 2026-09-29: supports のうちリネージュサポート (タグ LineageSupports)
+    #[serde(default)]
+    pub lineage: Vec<String>,
     /// poe.ninja が算出した DPS の最大値 (無ければ 0)。2026-09-29 から当たり (dps) と継続 (dotDps) の大きい方
     /// (コンテイジョンなど継続ダメージのスキルは dps が 0 で dotDps だけ入る)
     #[serde(default)]
@@ -170,6 +183,9 @@ pub struct CachedRareItem {
     /// (`services/htc/lingering.ts`)。ここが無いと判定できないので拾う。
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality: Option<i64>,
+    /// 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア・タリスマン …、`socketedItems[].typeLine`)。旧キャッシュには無い
+    #[serde(default)]
+    pub augments: Vec<String>,
 }
 
 /// ユニーク装備の縮小保存。ホバーオーバーレイ表示に必要な最小サブセット。
@@ -195,6 +211,9 @@ pub struct CachedUniqueItem {
     /// 古いキャッシュとの互換のため `#[serde(default)]`。
     #[serde(default)]
     pub subcategories: Vec<String>,
+    /// 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア・タリスマン …、`socketedItems[].typeLine`)。旧キャッシュには無い
+    #[serde(default)]
+    pub augments: Vec<String>,
 }
 
 // ============================================================================

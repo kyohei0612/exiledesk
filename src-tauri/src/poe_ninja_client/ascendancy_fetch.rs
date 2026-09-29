@@ -78,8 +78,8 @@ async fn get_character(ctx: &AscFetchCtx, asc: &str, r: &CharacterRef, got: &mut
         .as_ref()
         .filter(|_| ctx.differential_mode)
         .and_then(|p| p.characters.iter().find(|c| char_key(&c.account, &c.name) == key))
-        // 2026-09-29 より前のキャッシュは継続ダメージ (dotDps) とスキル名が無いので取り直す
-        .filter(|c| c.skills.iter().all(|g| g.dps <= 0.0 || g.dps_skill.is_some()))
+        // 取り方の版が古いキャッシュ (継続ダメージ・スキル名・オーグメント・リネージュ・キーストーンが無い) は取り直す
+        .filter(|c| c.detail >= 1)
         .cloned();
     let (ci, cached) = match reused {
         // 流用キャラの fetched_at は「今」に更新して永続的に古いまま居座るのを防ぐ (Rust-H4)

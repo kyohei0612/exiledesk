@@ -229,6 +229,21 @@ export interface NinjaSkillStats {
   all: NinjaSkillStat[];
 }
 
+/** 持ち物 1 つとその人数 (ビルドの持ち物の集計、2026-09-29) */
+export interface LoadoutEntry {
+  name: string;
+  nameEn: string;
+  count: number;
+}
+/** ビルドの持ち物 (オーグメント・リネージュサポート・キーストーン・チャーム / フラスコ・ジュエル)。人数の多い順 */
+export interface Loadout {
+  augments: LoadoutEntry[];
+  lineage: LoadoutEntry[];
+  keystones: LoadoutEntry[];
+  flasks: LoadoutEntry[];
+  jewels: LoadoutEntry[];
+}
+
 /** DPS 順のビルド 1 つ (同じメインスキルの上位 10 人) と、その人たちだけの集計 */
 export interface BuildView {
   skillEn: string;
@@ -280,4 +295,6 @@ export interface AggregatedAscendancy {
   };
   /** 2026-09-29: DPS 順のビルド (最大 3 つ)。旧キャッシュ・取得前は無い。全体 (このオブジェクト自身) はビルドの人の合計 */
   builds?: BuildView[];
+  /** 2026-09-29: 持ち物 (オーグメント・リネージュ・キーストーン・チャーム / フラスコ・ジュエル)。古いキャッシュでは空 */
+  loadout?: Loadout;
 }

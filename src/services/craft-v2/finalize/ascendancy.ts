@@ -23,6 +23,29 @@ import { tagSetsForSlotWithBases } from "../../mods/item-class-tags";
 import { baseClassOf } from "../../trade2/category";
 import { finalizeBuckets } from "./mods";
 import { GEM_INFO } from "./gems";
+import { jaTypeName, jaUniqueName } from "../../trade2/localize";
+import passivesJa from "../../../i18n/passives-ja-client.json";
+import type { Loadout, LoadoutEntry } from "../types";
+
+const PASSIVES_JA = passivesJa as Record<string, string>;
+/** 持ち物の日本語 (公式の名前。ユニークのジュエルはユニーク名、キーストーンはパッシブの名前) */
+function entries(m: Map<string, number>, ja: (en: string) => string): LoadoutEntry[] {
+  return [...m].map(([nameEn, count]) => ({ nameEn, name: ja(nameEn), count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+function finalizeLoadout(counter: AscendancyCounter): Loadout {
+  const l = counter.loadout;
+  const item = (en: string): string => {
+    const u = jaUniqueName(en);
+    return u !== en ? u : jaTypeName(en);
+  };
+  return {
+    augments: entries(l.augments, item),
+    lineage: entries(l.lineage, jaSkill),
+    keystones: entries(l.keystones, (en) => PASSIVES_JA[en] ?? en),
+    flasks: entries(l.flasks, item),
+    jewels: entries(l.jewels, item),
+  };
+}
 
 function finalizeBases(buckets: Map<string, BaseBucket>): BaseEntry[] {
   const list: BaseEntry[] = [];
@@ -162,5 +185,6 @@ export function finalizeAscendancy(
     ninjaSkills: toNinjaSkills(ninjaRaw),
     error,
     fetchProgress,
+    loadout: finalizeLoadout(counter),
   };
 }

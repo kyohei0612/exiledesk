@@ -23,7 +23,7 @@ import ModSearchBar from "../components/craft-v2/ModSearchBar.vue";
 import ModListCard from "../components/craft-v2/ModListCard.vue";
 import BaseListCard from "../components/craft-v2/BaseListCard.vue";
 import UniqueUsageCard from "../components/craft-v2/UniqueUsageCard.vue";
-import SkillUsageCard from "../components/craft-v2/SkillUsageCard.vue";
+import BuildLoadout from "../components/craft-v2/BuildLoadout.vue";
 import { craftV2Store, ensureCraftV2Started, refreshCraftV2, forceRefetchCraftV2 } from "../state/craft-v2-store";
 import { useCraftV2Derived } from "./craft-v2/useCraftV2Derived";
 import { useModSelection } from "./craft-v2/useModSelection";
@@ -113,14 +113,9 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- スキルタブ: 主流スキル / スピリット / サポート (2026-09-12) -->
-      <SkillUsageCard
-        v-if="d.activeAscendancy.value && d.skillsTab.value"
-        :ninja="d.activeNinjaSkills.value"
-        :skills="d.activeSkills.value"
-        :sample-size="d.activeAscendancy.value.sampleSize"
-        :ascendancy-name="d.activeAscendancy.value.name"
-      />
+      <!-- スキル・持ち物: 選んだビルドの人のスキル構成 (メイン・サポート・リネージュ) とオーグメントなど (2026-09-29)。
+           アセンダンシー全体のスキル使用率は自動ジェム監視へ移した -->
+      <BuildLoadout v-if="d.activeAscendancy.value && d.skillsTab.value" :agg="d.activeAscendancy.value" />
 
       <!-- 本体: prefix / suffix / (ベース) / unique カード。ユニーク優位スロットでは order でユニークを最上段に。 -->
       <div v-if="d.activeAscendancy.value && !d.skillsTab.value" class="flex flex-col gap-4">

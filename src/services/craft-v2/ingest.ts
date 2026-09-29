@@ -12,6 +12,7 @@ import { classifyEquipItem, classifyUniqueItem, isPoeNinjaItem } from "./ninja-i
 import { emptySlotSets, type AscendancyCounter } from "./ingest/counters";
 import { addBaseToSlot, addModToSlot, addUniqueToAscendancy } from "./ingest/slot";
 import { ingestCharacterSkills } from "./ingest/skills";
+import { ingestLoadout } from "./ingest/loadout";
 
 export type {
   AggregatedModBucket,
@@ -32,6 +33,7 @@ export { emptyAscendancyCounter } from "./ingest/counters";
  */
 export function ingestCharacterItems(asc: AscendancyCounter, charItems: CharacterItems, isMeta: (nameEn: string) => boolean = () => false): void {
   ingestCharacterSkills(asc, charItems.skills, isMeta);
+  ingestLoadout(asc.loadout, charItems);
   if (!Array.isArray(charItems.items)) return;
 
   const seenPerSlot = emptySlotSets();

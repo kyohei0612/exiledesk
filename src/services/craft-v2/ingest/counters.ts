@@ -3,6 +3,7 @@
  *
  * ingest.ts から切り出し (2026-09-26)。
  */
+import { emptyLoadout, type LoadoutCounter } from "./loadout";
 import type { SlotKey, UniqueRepresentative } from "../types";
 
 // ============================================================================
@@ -75,6 +76,8 @@ export interface AscendancyCounter {
   uniques: Map<string, UniqueBucket>;
   /** スロット別ユニーク集計。同キャラ × 同ユニーク × 同スロット は 1。 */
   uniquesBySlot: { [K in SlotKey]: Map<string, UniqueBucket> };
+  /** 2026-09-29: 持ち物 (オーグメント・リネージュ・キーストーン・チャーム / フラスコ・ジュエル) */
+  loadout: LoadoutCounter;
 }
 
 function emptySlotCounter(): SlotCounter {
@@ -112,6 +115,7 @@ export function emptyAscendancyCounter(): AscendancyCounter {
     },
     uniques: new Map<string, UniqueBucket>(),
     skills: new Map<string, SkillBucket2>(),
+    loadout: emptyLoadout(),
     uniquesBySlot: {
       ring: new Map<string, UniqueBucket>(),
       amulet: new Map<string, UniqueBucket>(),

@@ -110,11 +110,16 @@ mod tests {
             rare_items: vec![],
             unique_items: vec![],
             fetched_at: 0,
+            keystones: vec![],
+            flasks: vec![],
+            jewels: vec![],
+            detail: 1,
             skills: groups
                 .iter()
                 .map(|(mains, dps, named)| CachedSkillGroup {
                     mains: mains.iter().map(|n| CachedGem { name: n.to_string(), level: None, quality: None }).collect(),
                     supports: vec![],
+                    lineage: vec![],
                     dps: *dps,
                     dps_skill: named.map(str::to_string),
                 })

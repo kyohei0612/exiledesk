@@ -38,6 +38,13 @@ pub struct CharacterItems {
     /// poe.ninja `skills[]` (スキルグループ: allGems[] + dps[]) をそのまま保持 (2026-09-12、主流スキル集計用)
     #[serde(default)]
     pub skills: Vec<serde_json::Value>,
+    /// 2026-09-29: キーストーン / チャーム・フラスコ / ジュエルの名前 (fetch_character が抜き出す)
+    #[serde(default)]
+    pub keystones: Vec<String>,
+    #[serde(default)]
+    pub flasks: Vec<String>,
+    #[serde(default)]
+    pub jewels: Vec<String>,
 }
 
 /// snapshot メタ情報 (index-state より動的解決)

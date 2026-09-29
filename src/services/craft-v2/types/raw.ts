@@ -22,6 +22,10 @@ export interface CharacterItems {
   items: unknown[];
   /** poe.ninja skills[] (スキルグループ) の生 JSON。古い payload には無い (2026-09-12) */
   skills?: unknown[];
+  /** 2026-09-29: キーストーン / チャーム・フラスコ / ジュエルの名前 (Rust が抜き出す) */
+  keystones?: string[];
+  flasks?: string[];
+  jewels?: string[];
 }
 
 export interface CraftV2Progress {
@@ -110,6 +114,8 @@ export interface CachedRareItem {
   quality?: number;
   /** 2026-09-12: 付与スキルの穴に入っていたジェム名 (例: ["Frost Wall"])。 */
   socketed_gems?: string[];
+  /** 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …) */
+  augments?: string[];
 }
 
 export interface CachedUniqueItem {
@@ -127,6 +133,8 @@ export interface CachedUniqueItem {
   item_level?: number;
   level?: number;
   subcategories?: string[];
+  /** 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …) */
+  augments?: string[];
 }
 
 export interface CachedCharacter {
@@ -137,6 +145,11 @@ export interface CachedCharacter {
   fetched_at: number;
   /** 2026-09-12: スキルグループ (Rust CachedSkillGroup のミラー)。旧キャッシュには無い */
   skills?: CachedSkillGroup[];
+  /** 2026-09-29: キーストーン / チャーム・フラスコ / ジュエル / 取り方の版 */
+  keystones?: string[];
+  flasks?: string[];
+  jewels?: string[];
+  detail?: number;
 }
 
 export interface CachedSkillGroup {
@@ -144,6 +157,8 @@ export interface CachedSkillGroup {
   mains: CachedGem[];
   supports: string[];
   dps: number;
+  /** 2026-09-29: supports のうちリネージュサポート */
+  lineage?: string[];
 }
 
 export interface CachedGem {

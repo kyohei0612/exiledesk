@@ -208,11 +208,30 @@ pub async fn fetch_character(
         .cloned()
         .unwrap_or_default();
 
+    // 2026-09-29: ビルドの中身を全部出すため、キーストーン・チャーム / フラスコ・ジュエルの名前も (ユニークは名前、それ以外はベース)
+    let names = |key: &str, field: &str| -> Vec<String> {
+        body.get(key)
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|x| {
+                        let d = x.get("itemData").unwrap_or(x);
+                        let unique = d.get("frameType").and_then(|v| v.as_i64()) == Some(3);
+                        let n = if unique { d.get("name") } else { None }.or_else(|| d.get(field)).or_else(|| d.get("name"));
+                        n.and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(str::to_string)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
     Ok(CharacterItems {
         account: char_ref.account.clone(),
         name: char_ref.name.clone(),
         items,
         skills,
+        keystones: names("keystones", "name"),
+        flasks: names("flasks", "baseType"),
+        jewels: names("jewels", "baseType"),
     })
 }
 
