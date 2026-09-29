@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from poe2tube.contracts.pick import Pick, StartState
 from poe2tube.contracts.pob import PobBlock, PobSpec, PobStats
 
 PLAN_SCHEMA = "craft-stage-plan/1"
@@ -93,6 +94,10 @@ class PlanStep(BaseModel):
     note: str | None = Field(
         default=None, description="台本用の覚え書き (ExileDesk は無視してよい)"
     )
+    pick: Pick | list[Pick] | None = Field(
+        default=None, description="付く MOD の指名 (錬金などは配列、足りない分は乱数。⑱)"
+    )
+    remove: str | None = Field(default=None, description="カオス: 消える MOD の指名 (系統か id)")
 
     _v = field_validator("currency")(_check_currency)
 
@@ -119,6 +124,9 @@ class CraftStagePlan(BaseModel):
     )
     start_unidentified: bool = Field(
         default=False, description="未鑑定から始める (鑑定の巻物の実演、マジック / レアの時)"
+    )
+    start: StartState | None = Field(
+        default=None, description="始めの状態 (手を見せずに持っているレア)。start_rarity より優先"
     )
     tray: list[str] | None = Field(
         default=None,
@@ -195,6 +203,9 @@ class StageItem(BaseModel):
     )
     augments: list[dict[str, Any]] = Field(default_factory=list, description="はめたルーン (⑰)")
     disposed: str | None = Field(default=None, description="disenchant / salvage で手放した")
+    requirements: dict[str, int] | None = Field(
+        default=None, description="要求 {level, str, dex, int} (要求レベル = ドロップレベル、⑱)"
+    )
     prefixes: list[StageMod] = Field(default_factory=list, max_length=3)
     suffixes: list[StageMod] = Field(default_factory=list, max_length=3)
 
@@ -244,6 +255,10 @@ class StageStep(BaseModel):
     changed: StageChange
     cost: StageCost
     pob: PobStats | None = None
+    picked: bool = Field(default=False, description="指名した手 (⑱)")
+    pick_chance: list[dict[str, Any]] = Field(
+        default_factory=list, description="指名しなかったら付く確率 [{mod_id, tier_name, chance}]"
+    )
 
     _v = field_validator("currency")(_check_currency)
 

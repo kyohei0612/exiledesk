@@ -1,0 +1,5 @@
+{"schema":"craft-stage-plan/1","title":"ずんだもんの武器","base":"Steelpoint Quarterstaff","item_level":33,"seed":1,
+ "start":{"rarity":"rare","mods":[{"mod":"LocalPhysicalDamage","tier":"T7"},{"mod":"LocalPhysicalDamagePercent","tier":"T7"},{"mod":"LocalAccuracyRating","tier":"T7"},
+   {"mod":"ManaGainedFromEnemyDeath"},{"mod":"LocalStunDuration"},{"mod":"LocalAttributeRequirements"}]},
+ "pob":{"class":"Monk","level":32,"skill":"Ice Strike","quests_act":2,"config":{"resistancePenalty":-20,"enemyIsBoss":"None"}},
+ "steps":[{"currency":"chaos","remove":"ManaGainedFromEnemyDeath","pick":{"mod":"LocalIncreasedAttackSpeed"}}]}

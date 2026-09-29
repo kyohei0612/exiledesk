@@ -206,3 +206,19 @@ def test_quiz_answer_by_name() -> None:
         {"kind": "quiz", "choices": ["transmute", "augment"], "answer": "augment"}
     )
     assert sc.answer == 1
+
+
+def test_pick_and_start_round_trip() -> None:
+    """⑱: 付く MOD の指名・始めの状態・要求レベル・敵のアーマー (v0.1.336 の本物)."""
+    plan = CraftStagePlan.model_validate(_load("plan-pick-start.json"))
+    assert plan.start is not None and len(plan.start.mods) == 6
+    step = plan.steps[0]
+    assert step.remove == "ManaGainedFromEnemyDeath" and not isinstance(step.pick, list)
+    assert plan.pob is not None and plan.pob.quests_act == 2
+    res = CraftStageResult.model_validate(_load("result-pick-start.json"))
+    first = res.steps[0]
+    assert first.picked and 0 < first.pick_chance[0]["chance"] < 1
+    assert res.final.requirements is not None and res.final.requirements["level"] == 28
+    assert res.pob is not None and res.pob.enemy is not None and res.pob.enemy.armour == 237
+    with pytest.raises(ValueError):
+        PlanStep(currency="exalt", pick={"mod": "X", "tier": "6"})  # 段は T から

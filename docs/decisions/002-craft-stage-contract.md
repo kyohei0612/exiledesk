@@ -35,6 +35,15 @@ POE2Tube (Python) が「この順でカレンシーを使って」と頼み、Ex
   brief の `resists` に組を書くと `scripts/run_stage.py` が `data/results/<name>__resists_<キー>.json` を作る
 - 見本: `contracts/examples/{plan,result}-quarterstaff-pob.json`、`resists-quarterstaff-ring.json` (v0.1.331 の本物)
 
+### 追記 (2026-09-29、ExileDesk 要望 ⑱ / ⑲、v0.1.335〜336)
+
+- 手ごとの `pick` (付く MOD の指名。錬金などは配列) と `remove` (カオスで消える MOD)、手順の `start` (始めの状態) — `contracts/pick.py`。
+  結果の手に `picked` と `pick_chance` (指名しなかったら付く確率)。動画では確率を正直に言う
+- アイテムに `requirements` (要求レベル = ドロップレベル・能力値)
+- PoB: `skill_part` (スキルの段)・`quests_act` (何アクトまでのクエスト報酬)・`config.enemyArmour`。結果の `enemy.armour` は PoB が使った値。
+  dps = PoB の TotalDPS (命中率・クリティカル込みの当たりの DPS)。キャラはパッシブ・アセンダンシー・フラスコ・オーラ無し、耐性 +10% はアクト 3 のクエスト報酬
+- 見本: `contracts/examples/{plan,result}-pick-start.json`
+
 ## 影響
 
 - ExileDesk ADR-001 の「再生モード」が読む JSON はこの schema (パスを ADR に追記)。

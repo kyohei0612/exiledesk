@@ -70,6 +70,18 @@
           "title": "Start Unidentified",
           "type": "boolean"
         },
+        "start": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StartState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "始めの状態 (手を見せずに持っているレア)。start_rarity より優先"
+        },
         "tray": {
           "anyOf": [
             {
@@ -113,6 +125,52 @@
         "steps"
       ],
       "title": "CraftStagePlan",
+      "type": "object"
+    },
+    "Pick": {
+      "additionalProperties": false,
+      "description": "付ける MOD 1 つ。``mod`` は系統 (ColdResistance) か id (Rings/ColdResistance).",
+      "properties": {
+        "mod": {
+          "minLength": 1,
+          "title": "Mod",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "pattern": "^T\\d+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "例 T6。無ければ乱数",
+          "title": "Tier"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "数値。無ければ段の中の乱数",
+          "title": "Values"
+        }
+      },
+      "required": [
+        "mod"
+      ],
+      "title": "Pick",
       "type": "object"
     },
     "PlanStep": {
@@ -172,6 +230,38 @@
           "default": null,
           "description": "台本用の覚え書き (ExileDesk は無視してよい)",
           "title": "Note"
+        },
+        "pick": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pick"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Pick"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "付く MOD の指名 (錬金などは配列、足りない分は乱数。⑱)",
+          "title": "Pick"
+        },
+        "remove": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "カオス: 消える MOD の指名 (系統か id)",
+          "title": "Remove"
         }
       },
       "required": [
@@ -260,6 +350,18 @@
           },
           "title": "Supports",
           "type": "array"
+        },
+        "skill_part": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skill Part"
         }
       },
       "required": [
@@ -309,6 +411,20 @@
           "default": null,
           "description": "無ければキャラのレベル",
           "title": "Enemylevel"
+        },
+        "enemyArmour": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "敵のアーマー。無ければ PoB の表 (敵のレベルの目安)",
+          "title": "Enemyarmour"
         }
       },
       "title": "PobConfig",
@@ -331,6 +447,19 @@
         "ja": {
           "title": "Ja",
           "type": "string"
+        },
+        "armour": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "PoB が使った敵のアーマー (⑲)",
+          "title": "Armour"
         }
       },
       "required": [
@@ -383,6 +512,37 @@
           "default": null,
           "description": "無ければ使える一番高い物",
           "title": "Gem Level"
+        },
+        "skill_part": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "スキルの段 (番号か名前、例 Third Strike)。無ければ PoB の既定",
+          "title": "Skill Part"
+        },
+        "quests_act": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "何アクトまでのクエスト報酬を入れるか。無ければ全部",
+          "title": "Quests Act"
         },
         "config": {
           "$ref": "#/$defs/PobConfig"
@@ -693,6 +853,22 @@
           "description": "disenchant / salvage で手放した",
           "title": "Disposed"
         },
+        "requirements": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "要求 {level, str, dex, int} (要求レベル = ドロップレベル、⑱)",
+          "title": "Requirements"
+        },
         "prefixes": {
           "items": {
             "$ref": "#/$defs/StageMod"
@@ -888,6 +1064,21 @@
             }
           ],
           "default": null
+        },
+        "picked": {
+          "default": false,
+          "description": "指名した手 (⑱)",
+          "title": "Picked",
+          "type": "boolean"
+        },
+        "pick_chance": {
+          "description": "指名しなかったら付く確率 [{mod_id, tier_name, chance}]",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Pick Chance",
+          "type": "array"
         }
       },
       "required": [
@@ -901,6 +1092,68 @@
         "cost"
       ],
       "title": "StageStep",
+      "type": "object"
+    },
+    "StartState": {
+      "additionalProperties": false,
+      "description": "手を見せずに最初から持っているアイテム (拾ったレア・作ったレア).",
+      "properties": {
+        "rarity": {
+          "anyOf": [
+            {
+              "enum": [
+                "normal",
+                "magic",
+                "rare"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ MOD 3 つ以上でレア",
+          "title": "Rarity"
+        },
+        "mods": {
+          "items": {
+            "$ref": "#/$defs/Pick"
+          },
+          "maxItems": 6,
+          "title": "Mods",
+          "type": "array"
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "maximum": 30,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality"
+        },
+        "sockets": {
+          "anyOf": [
+            {
+              "maximum": 6,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sockets"
+        }
+      },
+      "title": "StartState",
       "type": "object"
     },
     "UniqueRef": {

@@ -28,6 +28,9 @@ class PobConfig(BaseModel):
     enemyLevel: int | None = Field(  # noqa: N815
         default=None, ge=1, le=85, description="無ければキャラのレベル"
     )
+    enemyArmour: int | None = Field(  # noqa: N815
+        default=None, ge=0, description="敵のアーマー。無ければ PoB の表 (敵のレベルの目安)"
+    )
 
 
 class PobSpec(BaseModel):
@@ -40,6 +43,12 @@ class PobSpec(BaseModel):
     skill: str = Field(description="例 Ice Strike")
     supports: list[str] = Field(default_factory=list)
     gem_level: int | None = Field(default=None, ge=1, le=40, description="無ければ使える一番高い物")
+    skill_part: int | str | None = Field(
+        default=None, description="スキルの段 (番号か名前、例 Third Strike)。無ければ PoB の既定"
+    )
+    quests_act: int | None = Field(
+        default=None, ge=0, le=10, description="何アクトまでのクエスト報酬を入れるか。無ければ全部"
+    )
     config: PobConfig = Field(default_factory=PobConfig)
 
 
@@ -70,6 +79,7 @@ class PobEnemy(BaseModel):
     life: float
     hit: float
     ja: str
+    armour: float | None = Field(default=None, description="PoB が使った敵のアーマー (⑲)")
 
 
 class PobCharacter(BaseModel):
@@ -81,6 +91,7 @@ class PobCharacter(BaseModel):
     skill_ja: str
     gem_level: int
     supports: list[str] = Field(default_factory=list)
+    skill_part: str | None = None
 
 
 class PobBlock(BaseModel):

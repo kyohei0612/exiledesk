@@ -1,5 +1,51 @@
 {
   "$defs": {
+    "Pick": {
+      "additionalProperties": false,
+      "description": "付ける MOD 1 つ。``mod`` は系統 (ColdResistance) か id (Rings/ColdResistance).",
+      "properties": {
+        "mod": {
+          "minLength": 1,
+          "title": "Mod",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "pattern": "^T\\d+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "例 T6。無ければ乱数",
+          "title": "Tier"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "数値。無ければ段の中の乱数",
+          "title": "Values"
+        }
+      },
+      "required": [
+        "mod"
+      ],
+      "title": "Pick",
+      "type": "object"
+    },
     "PlanStep": {
       "additionalProperties": false,
       "description": "手順 1 つ。``times`` で同じカレンシーの連打を表す (Chaos ×5 など).",
@@ -57,6 +103,38 @@
           "default": null,
           "description": "台本用の覚え書き (ExileDesk は無視してよい)",
           "title": "Note"
+        },
+        "pick": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pick"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Pick"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "付く MOD の指名 (錬金などは配列、足りない分は乱数。⑱)",
+          "title": "Pick"
+        },
+        "remove": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "カオス: 消える MOD の指名 (系統か id)",
+          "title": "Remove"
         }
       },
       "required": [
@@ -102,6 +180,20 @@
           "default": null,
           "description": "無ければキャラのレベル",
           "title": "Enemylevel"
+        },
+        "enemyArmour": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "敵のアーマー。無ければ PoB の表 (敵のレベルの目安)",
+          "title": "Enemyarmour"
         }
       },
       "title": "PobConfig",
@@ -149,6 +241,37 @@
           "description": "無ければ使える一番高い物",
           "title": "Gem Level"
         },
+        "skill_part": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "スキルの段 (番号か名前、例 Third Strike)。無ければ PoB の既定",
+          "title": "Skill Part"
+        },
+        "quests_act": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "何アクトまでのクエスト報酬を入れるか。無ければ全部",
+          "title": "Quests Act"
+        },
         "config": {
           "$ref": "#/$defs/PobConfig"
         }
@@ -159,6 +282,68 @@
         "skill"
       ],
       "title": "PobSpec",
+      "type": "object"
+    },
+    "StartState": {
+      "additionalProperties": false,
+      "description": "手を見せずに最初から持っているアイテム (拾ったレア・作ったレア).",
+      "properties": {
+        "rarity": {
+          "anyOf": [
+            {
+              "enum": [
+                "normal",
+                "magic",
+                "rare"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ MOD 3 つ以上でレア",
+          "title": "Rarity"
+        },
+        "mods": {
+          "items": {
+            "$ref": "#/$defs/Pick"
+          },
+          "maxItems": 6,
+          "title": "Mods",
+          "type": "array"
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "maximum": 30,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality"
+        },
+        "sockets": {
+          "anyOf": [
+            {
+              "maximum": 6,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sockets"
+        }
+      },
+      "title": "StartState",
       "type": "object"
     }
   },
@@ -230,6 +415,18 @@
       "description": "未鑑定から始める (鑑定の巻物の実演、マジック / レアの時)",
       "title": "Start Unidentified",
       "type": "boolean"
+    },
+    "start": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StartState"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "始めの状態 (手を見せずに持っているレア)。start_rarity より優先"
     },
     "tray": {
       "anyOf": [
