@@ -18,6 +18,7 @@ import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { isShard } from "./apply-act";
 import { extraBaseFor } from "./stage-bases";
+import { DISPOSE_JA } from "./apply-dispose";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
 export const GEM_START_SOCKETS = 2;
@@ -68,6 +69,8 @@ export function outItem(it: StageItem): OutItem {
     destroyed: !!it.destroyed,
     // 足したキー (POE2Tube は無視してよい): 品質の種類・ソケットの数 (sockets は POE2Tube の型にもある)・ユニーク名・ジェムの枠・シャード
     ...({ unique: it.unique ?? null, gem_sockets: it.gemSockets ?? null, shards: it.shards ?? null } as object),
+    // 要望 ⑰-5: 解呪 / サルベージで無くなった ("disenchant" / "salvage") と、手に入った品質カレンシー
+    ...({ disposed: it.disposed ?? null, gained: it.gained ?? null } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
     suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
@@ -88,6 +91,7 @@ export const splitOmens = (omen: string | null | undefined): string[] => (omen ?
 export function stepJa(currency: string, item: StageItem): string {
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `開示 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
+  if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
   return jaOfPriceKey(currency, item.cls) ?? currency;
 }
 

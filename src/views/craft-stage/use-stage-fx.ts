@@ -11,7 +11,7 @@
  * 手が増えた時と、打てなかった時 (craftStage.miss。工程には積まない) だけ動く (1 手戻す・再生では動かない)。色と文字は style.css の stage-* と --fx。
  */
 import { ref, watch, type Ref } from "vue";
-import { craftStage, iconOf } from "../../state/craft-stage";
+import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import type { StageItem } from "../../services/craft-stage/types";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
 
@@ -61,6 +61,19 @@ function extraText(st: PlayedStep): string {
   if (a.enchant && b.enchant && a.enchant.id !== b.enchant.id) return o.currency.startsWith("sacrifice_") ? "エンチャントが上位に!" : "エンチャントが変わった!";
   return "";
 }
+/** 解呪 / サルベージで手に入った物 (「王者のシャード +1」) */
+function disposeText(before: StageItem, after: StageItem): string {
+  const got: string[] = [];
+  for (const k of Object.keys(after.shards ?? {})) {
+    const d = (after.shards?.[k] ?? 0) - (before.shards?.[k] ?? 0);
+    if (d) got.push(d > 0 ? `${nameOf(k)} +${d}` : `${nameOf(k)} → オーブ!`);
+  }
+  for (const k of Object.keys(after.gained ?? {})) {
+    const d = (after.gained?.[k] ?? 0) - (before.gained?.[k] ?? 0);
+    if (d > 0) got.push(`${nameOf(k)} +${d}`);
+  }
+  return got.join("・") || (after.disposed === "disenchant" ? "解呪!" : "サルベージ!");
+}
 /** コラプトの結果の文字 */
 function vaalText(before: StageItem, after: StageItem, changed: number): string {
   if (after.enchant !== before.enchant) return "コラプト — エンチャント!";
@@ -89,6 +102,7 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     const extra = extraText(st);
     if (!o.applied) next = { kind: "shake", color: COLOR.miss, text: o.reason ?? "使えない" };
     else if (st.after.destroyed && !st.before.destroyed) next = { kind: "shake", color: COLOR.miss, text: "壊れた…" };
+    else if (st.after.disposed && !st.before.disposed) next = { kind: "up", color: COLOR.top, text: disposeText(st.before, st.after) };
     else if (act) next = st.after.corrupted && !st.before.corrupted ? { ...act, color: COLOR.corrupt, text: `${act.text} — コラプト!` } : act;
     else if (extra) next = { kind: "up", color: COLOR.top, text: `${extra}${mods ? ` ${mods}` : ""}` };
     else if (st.after.corrupted && !st.before.corrupted && o.currency !== "vaal") next = { kind: "up", color: COLOR.desecrated, text: "腐食!" };

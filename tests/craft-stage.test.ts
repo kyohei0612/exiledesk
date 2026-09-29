@@ -79,3 +79,22 @@ describe("2026-09-29 に足した物", () => {
     expect(A(h, "exalt", 3).item.foreseen).toBe(false);
   });
 });
+
+describe("解呪・サルベージ (要望 ⑰-5)", () => {
+  it("解呪はマジック → 変成のシャード、レア → 王者のシャード、ノーマルは不可。後は何も打てない", () => {
+    const magic = A(freshItem(data, "Gold Ring", 30), "transmute").item;
+    const d = A(magic, "disenchant");
+    expect(d.item).toMatchObject({ disposed: "disenchant", shards: { transmute_shard: 1 } });
+    expect(A(d.item, "augment").applied).toBe(false);
+    expect(A(rare("Gold Ring", 82), "disenchant").item.shards).toEqual({ regal_shard: 1 });
+    expect(A(freshItem(data, "Gold Ring", 30), "disenchant").applied).toBe(false);
+  });
+  it("サルベージは品質 → 品質カレンシー、ソケット → 熟練工のシャード。どちらも無ければ不可", () => {
+    const plain = freshItem(data, "Rusted Cuirass", 30);
+    expect(A(plain, "salvage").applied).toBe(false);
+    const q = A(plain, "scrap").item;
+    expect(A(q, "salvage").item).toMatchObject({ disposed: "salvage", gained: { scrap: 1 } });
+    const s = A(q, "artificer").item;
+    expect(A(s, "salvage").item).toMatchObject({ gained: { scrap: 1 }, shards: { artificer_shard: 1 } });
+  });
+});

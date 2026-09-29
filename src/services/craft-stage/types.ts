@@ -74,6 +74,10 @@ export interface StageItem {
   siphoner?: boolean;
   /** 拾ったシャードの数 (キー → 個数)。10 個でオーブになる。アイテムの状態ではないが、手順の流れで持ち回すためここに置く */
   shards?: Record<string, number>;
+  /** 解呪 / サルベージで無くなった (POE2Tube 要望 ⑰-5)。以後何も打てない */
+  disposed?: "disenchant" | "salvage";
+  /** 解呪 / サルベージで手に入った品質カレンシー (キー → 個数)。シャードは shards の方 */
+  gained?: Record<string, number>;
 }
 
 /** 1 手の結果 */

@@ -97,6 +97,10 @@ const rows = computed(() => [
     <div v-if="item.destroyed" class="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-black/60">
       <p class="rotate-[-8deg] rounded border-2 border-rose-500/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-rose-400">壊れた</p>
     </div>
+    <!-- 解呪 / サルベージで無くなった (要望 ⑰-5) -->
+    <div v-if="item.disposed" class="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-lg bg-black/65">
+      <p class="rotate-[-8deg] rounded border-2 border-amber-300/80 px-4 py-1 text-2xl font-bold tracking-[0.2em] text-amber-200">{{ item.disposed === "disenchant" ? "解呪した" : "サルベージした" }}</p>
+    </div>
     <!-- 見出し -->
     <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3']">
       <!-- ゲーム内と同じ絵 (2026-09-29 オーナー「クラフトステージ上とか」) -->

@@ -25,6 +25,7 @@ import { isFlask, isGem, uniquesForBase } from "./stage-bases";
 import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
+import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 
 /** 噛み切られた骨が使えるアイテムレベルの上限 (クライアントの AbyssBenchTicketTypes.MaximumItemLevel、2026-09-29) */
 export const GNAWED_MAX_ILVL = 64;
@@ -76,8 +77,11 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
   if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, SHARD_REASON);
   if (item.destroyed) return skip(item, "壊れたアイテムには何も使えない");
+  if (item.disposed) return skip(item, `${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`);
   if (item.mirrored && !ANY_STATE.includes(currency)) return skip(item, "ミラーしたアイテムには使えない");
   // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
+  // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
+  if (isDispose(currency)) return applyDispose(item, currency);
   if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す

@@ -40,6 +40,8 @@ export const ORBS: ShelfGroup[] = [
   { kind: "vaal_extra", label: "ヴァール", keys: ["vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster", "sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon", "architect", "cultivation", "siphoner"] },
   { kind: "special", label: "特殊", keys: ["mirror", "hinekora", "extraction"] },
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
+  // 2026-09-29 (POE2Tube 要望 ⑰-5): 解呪・サルベージ (アイテムは無くなり、シャード・品質カレンシーになる。apply-dispose.ts)
+  { kind: "dispose", label: "解呪・サルベージ", keys: ["disenchant", "salvage"] },
 ];
 export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**
