@@ -26,6 +26,8 @@ defineProps<{
   /** 小見出し (段・タグ) を出す (ゲームの Alt 表示) */
   detail?: boolean;
   footer?: string | null;
+  /** ゲーム内の絵 (ベース / ユニーク。無ければ出さない。2026-09-29 クラフトステージの部品を流用) */
+  art?: string | null;
 }>();
 /** MOD の色 (ゲームの青が基本。固定 / 冒涜 / クラフト / 外れ は分ける) */
 const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
@@ -42,6 +44,7 @@ const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
 
 <template>
   <div class="poe-card select-text text-center">
+    <img v-if="art" :src="art" alt="" class="mx-auto mb-1 mt-2 h-20 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" draggable="false" />
     <!-- 見出し (レアは黄色。金の線で挟む) -->
     <div class="poe-head">
       <span class="poe-orn poe-orn-l" /><span class="poe-orn poe-orn-r" />

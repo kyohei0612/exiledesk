@@ -9,6 +9,8 @@
  */
 import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
+import BaseCatalog from "../../components/items/BaseCatalog.vue";
+import { baseArt } from "../../services/craft-stage/base-art";
 import SocketPicker from "./SocketPicker.vue";
 import ModPickColumn from "./ModPickColumn.vue";
 import { effectiveSocket, socketEffects, socketLabel, withSocketLimits } from "../../services/htc/sockets";
@@ -39,14 +41,6 @@ const CLS_JA: Record<string, string> = {
   Spears: "槍", OneHand_Maces: "片手メイス", TwoHand_Maces: "両手メイス",
 };
 const clsJa = (x: string): string => CLS_JA[x] ?? x.replace(/_/g, " ");
-/** 種類のチップ (よく作る物を先に) */
-const CLS_ORDER = ["Rings", "Amulets", "Belts", "Helmets", "Gloves", "Boots", "Body_Armours", "Shields", "Bucklers", "Foci", "Quivers", "Talismans", "Wands", "Sceptres", "Staves", "Quarterstaves", "Bows", "Crossbows", "Spears", "OneHand_Maces", "TwoHand_Maces"];
-const clsFilter = ref<string>("Rings");
-/** ベースの一覧 (種類と検索で絞る) */
-const bases = computed(() => {
-  const q = pk.baseQuery.value.trim().toLowerCase();
-  return pk.allBases.value.filter((b) => (q ? b.ja.toLowerCase().includes(q) || b.en.toLowerCase().includes(q) : b.cls === clsFilter.value)).slice(0, 60);
-});
 const chosen = computed(() => pk.allBases.value.find((b) => b.en === pk.baseName.value) ?? null);
 function choose(en: string): void {
   const d = props.c.data.value;
@@ -130,7 +124,8 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
           <span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>
           <b class="text-sm">ベースを選ぶ</b>
           <template v-if="chosen">
-            <span class="ml-2 text-amber-100">{{ chosen.ja }}</span><span class="opacity-50">({{ clsJa(chosen.cls) }})</span>
+            <img v-if="baseArt(chosen.en)" :src="baseArt(chosen.en)!" alt="" class="ml-2 h-8 w-8 object-contain" draggable="false" />
+            <span class="ml-1 text-amber-100">{{ chosen.ja }}</span><span class="opacity-50">({{ clsJa(chosen.cls) }})</span>
             <button type="button" class="ml-auto rounded-lg border border-white/20 px-2 py-0.5 hover:bg-white/5" @click="pk.baseName.value = null">変える</button>
           </template>
         </div>
@@ -157,21 +152,8 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
             <button v-for="k in skillOptions" :key="k.en" type="button" class="rounded-full px-2 py-0.5" :class="zeroStart.grantedSkill === k.en ? 'bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60' : 'bg-white/5 hover:bg-white/10'" :title="k.en" @click="pickSkill(k.en)">{{ k.ja }}</button>
           </div>
         </div>
-        <template v-if="!chosen">
-          <div class="mb-2 flex flex-wrap items-center gap-1">
-            <button v-for="k in CLS_ORDER" :key="k" type="button" class="rounded-full px-2.5 py-0.5" :class="!pk.baseQuery.value && clsFilter === k ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'bg-white/5 hover:bg-white/10'" @click="clsFilter = k; pk.baseQuery.value = ''">{{ clsJa(k) }}</button>
-            <input v-model="pk.baseQuery.value" placeholder="名前で探す (サファイア / Ring …)" class="ml-auto w-56 rounded-lg border border-white/15 bg-black/30 px-2 py-1" />
-          </div>
-          <div class="grid max-h-[26rem] grid-cols-3 gap-1.5 overflow-auto pr-1">
-            <button v-for="b in bases" :key="b.en" type="button" class="rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5 text-left hover:border-amber-400/60 hover:bg-amber-500/5" @click="choose(b.en)">
-              <p class="font-bold text-amber-100">{{ b.ja }}</p>
-              <p class="text-[10.5px] opacity-50">{{ clsJa(b.cls) }} ・ 必要レベル {{ b.lvl }}</p>
-              <p v-if="b.implicits.length" class="text-[10.5px] text-[#8888ff]">{{ b.implicits.join(" / ") }}</p>
-              <p v-if="skillsOf(b.en).length" class="text-[10.5px] text-sky-300">付与スキル {{ skillsOf(b.en).length }} 種から 1 つ</p>
-            </button>
-            <p v-if="!bases.length" class="col-span-3 py-4 text-center opacity-50">見つかりません</p>
-          </div>
-        </template>
+        <!-- ベースの一覧 (クラフトステージと同じ共通の部品: poe2db の段・ゲーム内の絵・素の数値。2026-09-29) -->
+        <BaseCatalog v-if="!chosen" :data="c.data.value" :selected="pk.baseName.value" :note="(en) => (skillsOf(en).length ? `付与スキル ${skillsOf(en).length} 種から 1 つ` : '')" height="26rem" @pick="choose" />
       </section>
 
       <!-- ② 狙う MOD -->
@@ -246,7 +228,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
     <!-- 右: 完成図 -->
     <aside class="sticky top-2 w-[22rem] shrink-0">
       <p class="mb-1.5 text-[11px] opacity-50">完成図 (選んだ物がここに並ぶ)</p>
-      <ItemCard v-if="chosen" :base="chosen.ja" :ilvl="pk.level.value" :quality="zeroStart.quality" :quality-label="qualityLabelOf(zeroStart.qualityTag)" :implicits="chosen.implicits" :mods="cardMods" :socket="socketLabel(sockOn)" :socket-effects="socketEffects(sockOn)" detail />
+      <ItemCard v-if="chosen" :art="baseArt(chosen.en)" :base="chosen.ja" :ilvl="pk.level.value" :quality="zeroStart.quality" :quality-label="qualityLabelOf(zeroStart.qualityTag)" :implicits="chosen.implicits" :mods="cardMods" :socket="socketLabel(sockOn)" :socket-effects="socketEffects(sockOn)" detail />
       <div v-else class="rounded-xl border border-dashed border-white/15 p-6 text-center opacity-50">ベースを選ぶとここに出ます</div>
     </aside>
   </div>
