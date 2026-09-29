@@ -62,11 +62,18 @@ function aggregateWithBuilds(
   const all = aggregateOf(classEn, percentage, pick(builds.flatMap((b) => b.members)), progress, skillStats);
   all.builds = builds.map((b): BuildView => {
     const members = pick(b.members);
+    const skillOf = new Map(b.members.map((k, i) => [k, b.member_skills?.[i] ?? null] as const));
+    const mix = new Map<string, number>();
+    for (const s of b.member_skills ?? []) mix.set(s, (mix.get(s) ?? 0) + 1);
     return {
       skillEn: b.skill,
       skillJa: jaSkill(b.skill),
       topDps: b.top_dps > 0 && b.top_dps < UNCOUNTABLE_DPS ? b.top_dps : null,
-      members: members.map((c) => ({ account: c.account, name: c.name })),
+      members: members.map((c) => {
+        const s = skillOf.get(`${c.account}|${c.name}`);
+        return { account: c.account, name: c.name, skillJa: s ? jaSkill(s) : null };
+      }),
+      skillMix: [...mix].map(([skillEn, count]) => ({ skillEn, skillJa: jaSkill(skillEn), count })).sort((x, y) => y.count - x.count),
       agg: aggregateOf(classEn, percentage, members, { done: members.length, total: members.length }, skillStats),
     };
   });

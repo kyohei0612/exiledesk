@@ -235,7 +235,9 @@ export interface BuildView {
   skillJa: string;
   /** 一番上の人の DPS。トリガーで数えられない時は null */
   topDps: number | null;
-  members: Array<{ account: string; name: string }>;
+  members: Array<{ account: string; name: string; skillJa: string | null }>;
+  /** メインスキルの内訳 (人数の多い順)。ビルド 2・3 は別のスキルの人も混ざる */
+  skillMix: Array<{ skillEn: string; skillJa: string; count: number }>;
   /** この人たちだけの MOD / ベース / ユニーク / スキル (全体と同じ集計を通した物) */
   agg: AggregatedAscendancy;
 }

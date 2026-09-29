@@ -110,12 +110,12 @@ pub(crate) async fn fetch_search(
     class: &str,
     n: usize,
 ) -> Result<SearchResult, String> {
-    fetch_search_filtered(client, gate, snapshot, class, None, n).await
+    fetch_search_skill(client, gate, snapshot, class, None, n).await
 }
 
-/// search (DPS 順) を叩く。skill を渡すとメインスキルで絞る (poe.ninja の画面の `skills=` と同じ。2026-09-29 ビルド別の上位 MOD)。
-/// 絞り込みが効いているかは呼び側がキャラのメインスキルで確かめる (効かなければ絞らない一覧が返るだけ)。
-pub(crate) async fn fetch_search_filtered(
+/// search (DPS 順)。skill を渡すと poe.ninja の画面と同じ `skills=` で絞る (2026-09-29 ビルドの補充用)。
+/// 受け付けられたかは呼び側が上位の顔ぶれで確かめる (受け付けなければ絞らない一覧が返る)
+pub(crate) async fn fetch_search_skill(
     client: &Client,
     gate: &RateGate,
     snapshot: &SnapshotMeta,
@@ -123,8 +123,8 @@ pub(crate) async fn fetch_search_filtered(
     skill: Option<&str>,
     n: usize,
 ) -> Result<SearchResult, String> {
-    // 2026-09-16: class が空なら絞り込み無し = リーグ全体の DPS 上位 (別の 100 人が返る)
     let skill_q = skill.map(|s| format!("&skills={}", url_encode(s))).unwrap_or_default();
+    // 2026-09-16: class が空なら絞り込み無し = リーグ全体の DPS 上位 (別の 100 人が返る)
     let url = if class.is_empty() {
         format!(
             "{NINJA_BASE}/poe2/api/builds/{version}/search?overview={overview}&sort=dps{skill_q}",

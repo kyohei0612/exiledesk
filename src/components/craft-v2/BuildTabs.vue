@@ -77,6 +77,10 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
           上位 {{ b.members.length }} 人<template v-if="b.topDps != null"> · 最高 DPS <span class="tabular-nums text-white/85">{{ dpsText(b.topDps) }}</span></template
           ><template v-else> · トリガーで発動 (DPS の数値なし)</template>
         </p>
+        <!-- メインスキルの内訳 (ビルド 2・3 は前のスキルを外した DPS 順なので、別のスキルの人も混ざる) -->
+        <p v-if="b.skillMix.length > 1" class="mt-0.5 truncate text-[11px] text-white/45" :title="b.skillMix.map((x) => `${x.skillJa} ${x.count}`).join(' / ')">
+          {{ b.skillMix.map((x) => `${x.skillJa} ${x.count}`).join(" · ") }}
+        </p>
         <div class="mt-2 flex gap-1.5">
           <img v-for="u in topUniques(b.agg)" :key="u.nameEn" :src="u.art" :alt="u.name" :title="`${u.name} (${u.count} 人)`" class="h-10 w-10 rounded bg-black/40 object-contain p-0.5" loading="lazy" referrerpolicy="no-referrer" />
         </div>
@@ -93,7 +97,7 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
         :title="`${m.account} — poe.ninja で開く`"
         @click="openExternal(ninjaCharUrl(m))"
       >
-        <span class="tabular-nums text-white/40">{{ j + 1 }}.</span> {{ m.name }}
+        <span class="tabular-nums text-white/40">{{ j + 1 }}.</span> {{ m.name }}<span v-if="m.skillJa && m.skillJa !== selected.skillJa" class="text-white/40"> ({{ m.skillJa }})</span>
       </button>
     </div>
   </div>

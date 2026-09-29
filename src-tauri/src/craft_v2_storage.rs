@@ -58,13 +58,16 @@ pub struct CachedAscendancy {
     pub builds: Vec<CachedBuild>,
 }
 
-/// ビルド 1 つ = 同じメインスキルの DPS 上位のキャラ (オーナー「DPS 順に並べて上位 10 人、そのスキルを外してまた DPS 順、を 3 回」)
+/// ビルド 1 つ = DPS 順の 10 人 (オーナー「DPS 順に並べて上位 10 人、そのスキルを外してまた DPS 順、を 3 回」。決まりは builds.rs)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CachedBuild {
-    /// メインスキル (英語名。トリガーのメタジェムなら中のスキル)
+    /// ビルドの名前 = 先頭 (DPS 1 位) の人のメインスキル (英語名。トリガーのメタジェムなら中のスキル)
     pub skill: String,
     /// キャラ ("account|name")、DPS 順
     pub members: Vec<String>,
+    /// members と同じ順の、その人のメインスキル (ビルド 2・3 は別のスキルの人も混ざる)。v0.1.327 のキャッシュには無い
+    #[serde(default)]
+    pub member_skills: Vec<String>,
     /// 一番上の人の DPS
     pub top_dps: f64,
 }

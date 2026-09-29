@@ -36,12 +36,14 @@ export interface CraftV2Progress {
   builds?: CachedBuildRaw[];
 }
 
-/** ビルド 1 つ = 同じメインスキルの DPS 上位 10 人 (Rust の CachedBuild) */
+/** ビルド 1 つ = DPS 順の 10 人 (Rust の CachedBuild、決まりは builds.rs) */
 export interface CachedBuildRaw {
-  /** メインスキルの英語名 */
+  /** ビルドの名前 = 先頭 (DPS 1 位) の人のメインスキルの英語名 */
   skill: string;
   /** "account|name"、DPS 順 */
   members: string[];
+  /** members と同じ順の、その人のメインスキル (v0.1.327 のキャッシュには無い) */
+  member_skills?: string[];
   /** 一番上の人の DPS (トリガーのメタジェムは 2147483647 = 数えられない) */
   top_dps: number;
 }

@@ -2,10 +2,12 @@
 //!
 //! 旧 `craft_v2_fetch_all` 内の 300 行 async ブロックを関数へ切り出したもの (2026-09-07 R3)。
 //! 2026-09-29: 上位 50 人を並べて取るのをやめ、オーナーの「DPS 順の上位 10 人 → そのスキルを外して次の 10 人、を 3 回」に。
-//!   1. 絞らない DPS 順の一覧を頭から取り、メインスキルが 3 つ見つかるまで読む (最大 SCAN_LIMIT 人)
-//!   2. 人が足りないビルドは、スキルで絞った DPS 順の一覧 (`skills=`) から足す。別スキルの人が続けば絞れていないとみなしてやめる
-//!   3. それでも足りなければ、絞らない一覧の続きを読む (最大 FALLBACK_LIMIT 人)
-//! 取得は 1 人ずつ (並列度は元から 1)。外側のタイムアウトで future ごと落ちれば、途中の取得もそこで止まる。
+//! 決め方は builds.rs (スキル 3 つ = DPS 上位 10 人のスキル、足りなければ外して次の 10 人 / ビルド = スキルごとの DPS 上位 10 人)。
+//!   1. DPS 順の一覧 (search は 100 人) を頭から 1 人ずつ取ってメインスキルを見る
+//!   2. 足りないスキルは `skills=` で絞った DPS 順の一覧から
+//!   3. 絞れなければ DPS 順の一覧の続き (最大 SCAN_LIMIT 人)。取得は 1 人ずつ (並列度は元から 1)。
+//!   4. 探しても BUILD_MIN 人に届かないスキルは外して 1. から (最大 ROUNDS 回)
+//! 外側のタイムアウトで future ごと落ちれば、途中の取得もそこで止まる。
 
 use super::*;
 
@@ -49,12 +51,12 @@ fn char_key(account: &str, name: &str) -> String {
     format!("{account}|{name}")
 }
 
-/// 絞らない一覧でスキルを探す時に読む人数の上限
-const SCAN_LIMIT: usize = 20;
-/// スキルで絞った一覧で、別スキルの人がこれだけ続いたら「絞れていない」とみなす
-const MISMATCH_LIMIT: usize = 3;
-/// 絞れなかった時に、絞らない一覧を読む人数の上限 (前の上位 50 人と同じ)
-const FALLBACK_LIMIT: usize = 50;
+/// DPS 順の一覧を読む人数の上限 (search が返すのは 100 人)
+const SCAN_LIMIT: usize = 100;
+/// 「足りないスキルを外して拾い直す」の回数の上限
+const ROUNDS: usize = 4;
+/// 絞った一覧で、名前と違うスキルの人がこれだけ続いたら補充をやめる
+const MISMATCH_LIMIT: usize = 10;
 
 /// 取得済みのキャラ (取った順) と、キャラごとのメインスキル (取れなかった人は None)
 struct Fetched {
@@ -102,7 +104,8 @@ async fn get_character(ctx: &AscFetchCtx, asc: &str, r: &CharacterRef, got: &mut
 
 /// 進捗を送る (集計は TS が builds のキャラで組み直す)
 fn emit_progress(ctx: &AscFetchCtx, asc: &AscendancyMeta, got: &Fetched, picker: &BuildPicker, skill_stats: &Option<SkillUsageStats>, done_phase: bool) {
-    let done: usize = picker.builds.iter().map(|b| b.members.len()).sum();
+    let builds = picker.builds();
+    let done: usize = builds.iter().map(|b| b.members.len()).sum();
     let total = if done_phase { done.max(1) } else { BUILD_COUNT * BUILD_SIZE };
     emit_char_progress(&ctx.window, &asc.class, done, total, if done_phase { "completed" } else { "fetching" });
     let _ = ctx.window.emit(
@@ -114,58 +117,9 @@ fn emit_progress(ctx: &AscFetchCtx, asc: &AscendancyMeta, got: &Fetched, picker:
             characters_total: total,
             items: got.items.clone(),
             skill_stats: skill_stats.clone(),
-            builds: picker.builds.clone(),
+            builds,
         },
     );
-}
-
-/// 一覧を頭から読んでビルドに振り分ける。only = Some(スキル) ならそのスキルの人だけ数え、別スキルが続けば false を返す
-#[allow(clippy::too_many_arguments)]
-async fn read_list(
-    ctx: &AscFetchCtx,
-    asc: &AscendancyMeta,
-    refs: &[CharacterRef],
-    limit: usize,
-    only: Option<&str>,
-    got: &mut Fetched,
-    picker: &mut BuildPicker,
-    skill_stats: &Option<SkillUsageStats>,
-    now_ts: i64,
-) -> bool {
-    let mut mismatch = 0usize;
-    for r in refs.iter().take(limit) {
-        let enough = match only {
-            Some(s) => !picker.is_short(s),
-            None if limit == SCAN_LIMIT => picker.skills_found(),
-            None => picker.full(),
-        };
-        if enough {
-            break;
-        }
-        let key = char_key(&r.account, &r.name);
-        let fresh = !got.main.contains_key(&key);
-        let Some(m) = get_character(ctx, &asc.class, r, got, now_ts).await else { break };
-        match (&m, only) {
-            (Some((s, dps)), Some(want)) if s == want => {
-                mismatch = 0;
-                picker.offer(&key, s, *dps);
-            }
-            (_, Some(_)) => {
-                mismatch += 1;
-                if mismatch >= MISMATCH_LIMIT {
-                    return false;
-                }
-            }
-            (Some((s, dps)), None) => {
-                picker.offer(&key, s, *dps);
-            }
-            (None, None) => {}
-        }
-        if fresh {
-            emit_progress(ctx, asc, got, picker, skill_stats, false);
-        }
-    }
-    true
 }
 
 /// 1 アセンダンシーを取得して CachedAscendancy を返す。
@@ -194,45 +148,87 @@ pub(crate) async fn fetch_one_ascendancy(ctx: AscFetchCtx, asc: AscendancyMeta) 
     let now_ts = now_unix_seconds();
     let mut got = Fetched { items: Vec::new(), cached: Vec::new(), main: HashMap::new() };
     let mut picker = BuildPicker::default();
-    let all = search.characters;
+    let all = &search.characters;
+    let mut next = 0usize;
 
-    // 1. スキルを 3 つ見つける
-    read_list(&ctx, &asc, &all, SCAN_LIMIT, None, &mut got, &mut picker, &skill_stats, now_ts).await;
-
-    // 2. 足りないビルドはスキルで絞った一覧から
+    let general_head: Vec<String> = all.iter().take(5).map(|r| char_key(&r.account, &r.name)).collect();
     let mut filter_works = true;
-    for skill in picker.short_skills() {
+    let mut tried: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for _round in 0..ROUNDS {
+        // 1. DPS 順の一覧を読む (揃うか、一覧の終わりまで)。2026-09-29 実機: 途中で絞った一覧に任せると、
+        //    デトネートデッドの人が混ざる絞った一覧からは 0 人で、一覧の奥に居たコンテイジョンまで外していた
+        while next < all.len().min(SCAN_LIMIT) && !picker.full() {
+            let r = &all[next];
+            next += 1;
+            let Some(m) = get_character(&ctx, &asc_class, r, &mut got, now_ts).await else { break };
+            if let Some((skill, dps)) = m {
+                picker.offer(&char_key(&r.account, &r.name), &skill, dps);
+            }
+            emit_progress(&ctx, &asc, &got, &picker, &skill_stats, false);
+        }
         if is_cancel_requested() {
             break;
         }
-        match fetch_search_filtered(&ctx.client, &ctx.gate, &ctx.snapshot, &asc_class, Some(&skill), 100).await {
-            Ok(r) => {
-                if !read_list(&ctx, &asc, &r.characters, 100, Some(&skill), &mut got, &mut picker, &skill_stats, now_ts).await {
-                    // 別スキルの人が続いた = poe.ninja が絞り込みを受け付けていない。残りは絞らない一覧の続きで埋める
-                    emit_error(window, &asc_class, "search-skill", format!("{skill} で絞れなかった (別のスキルが続いた)"));
-                    filter_works = false;
+
+        // 2. 足りないスキルは、そのスキルで絞った DPS 順の一覧 (`skills=`) から (スキルごとに 1 回)
+        for skill in picker.short_skills() {
+            if !filter_works || is_cancel_requested() || !tried.insert(skill.clone()) {
+                continue;
+            }
+            let refs = match fetch_search_skill(&ctx.client, &ctx.gate, &ctx.snapshot, &asc_class, Some(&skill), 100).await {
+                Ok(r) => r.characters,
+                Err(e) => {
+                    emit_error(window, &asc_class, "search-skill", e);
+                    continue;
+                }
+            };
+            let head: Vec<String> = refs.iter().take(5).map(|r| char_key(&r.account, &r.name)).collect();
+            if head == general_head {
+                crate::app_log::line_static(&format!("[上位MOD] {asc_class}: poe.ninja が「{skill}」の絞り込みを受け付けなかった。一覧の続きを読む"));
+                filter_works = false;
+                break;
+            }
+            let (mut mismatch, mut added) = (0usize, 0usize);
+            for r in &refs {
+                if !picker.is_short(&skill) || mismatch >= MISMATCH_LIMIT {
                     break;
                 }
+                let Some(m) = get_character(&ctx, &asc_class, r, &mut got, now_ts).await else { break };
+                match m {
+                    Some((s, dps)) if s == skill => {
+                        mismatch = 0;
+                        added += 1;
+                        picker.add_extra(&char_key(&r.account, &r.name), &s, dps);
+                    }
+                    _ => mismatch += 1,
+                }
+                emit_progress(&ctx, &asc, &got, &picker, &skill_stats, false);
             }
-            Err(e) => emit_error(window, &asc_class, "search-skill", e),
+            crate::app_log::line_static(&format!("[上位MOD] {asc_class}: 「{skill}」で絞った一覧から {added} 人"));
         }
-    }
 
-    // 3. まだ足りなければ絞らない一覧の続き
-    if !filter_works && !picker.full() {
-        read_list(&ctx, &asc, &all, FALLBACK_LIMIT, None, &mut got, &mut picker, &skill_stats, now_ts).await;
+        // 3. 探しても BUILD_MIN 人に届かないスキルは外して、次のスキルを拾い直す (一覧の続き or 絞り込み)
+        let weak: Vec<String> = picker.weak_skills().into_iter().filter(|s| tried.contains(s) || !filter_works).collect();
+        if picker.full() || weak.is_empty() || (!filter_works && next >= all.len().min(SCAN_LIMIT)) {
+            break;
+        }
+        for w in &weak {
+            crate::app_log::line_static(&format!("[上位MOD] {asc_class}: 「{w}」は {BUILD_MIN} 人に届かないので外して次のスキルへ"));
+            picker.drop_skill(w);
+        }
     }
 
     emit_progress(&ctx, &asc, &got, &picker, &skill_stats, true);
     // キャッシュにはビルドに入った人だけ (ビルド順・DPS 順)。ビルドが作れなかった時 (スキルが取れない) は取れた人全員
     let mut by_key: HashMap<String, CachedCharacter> = got.cached.into_iter().map(|c| (char_key(&c.account, &c.name), c)).collect();
-    let characters: Vec<CachedCharacter> = if picker.builds.is_empty() {
+    let builds = picker.builds();
+    let characters: Vec<CachedCharacter> = if builds.is_empty() {
         by_key.into_values().collect()
     } else {
-        picker.builds.iter().flat_map(|b| b.members.iter()).filter_map(|k| by_key.remove(k)).collect()
+        builds.iter().flat_map(|b| b.members.iter()).filter_map(|k| by_key.remove(k)).collect()
     };
     if characters.is_empty() {
         return None;
     }
-    Some(CachedAscendancy { class: asc_class, percentage: asc.percentage, characters, skill_stats, builds: picker.builds })
+    Some(CachedAscendancy { class: asc_class, percentage: asc.percentage, characters, skill_stats, builds })
 }
