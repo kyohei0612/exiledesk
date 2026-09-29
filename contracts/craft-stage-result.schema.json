@@ -86,6 +86,18 @@
           "description": "動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
           "title": "Tray"
         },
+        "pob": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "PoB でスキルの DPS を手ごとに計算する前提 (ExileDesk ⑰)"
+        },
         "steps": {
           "items": {
             "$ref": "#/$defs/PlanStep"
@@ -166,6 +178,309 @@
         "currency"
       ],
       "title": "PlanStep",
+      "type": "object"
+    },
+    "PobBlock": {
+      "additionalProperties": true,
+      "description": "結果 JSON の pob。台本で前提を言う時は ``config_ja`` と ``character`` を使う.",
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "character": {
+          "$ref": "#/$defs/PobCharacter"
+        },
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "config_ja": {
+          "description": "例「普通の敵・アクト 3 (-20%) のペナルティ」",
+          "title": "Config Ja",
+          "type": "string"
+        },
+        "enemy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobEnemy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "steps": {
+          "description": "手 0 (白) … 最後",
+          "items": {
+            "$ref": "#/$defs/PobStats"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "character",
+        "config",
+        "config_ja",
+        "steps"
+      ],
+      "title": "PobBlock",
+      "type": "object"
+    },
+    "PobCharacter": {
+      "properties": {
+        "class": {
+          "title": "Class",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "integer"
+        },
+        "skill": {
+          "title": "Skill",
+          "type": "string"
+        },
+        "skill_ja": {
+          "title": "Skill Ja",
+          "type": "string"
+        },
+        "gem_level": {
+          "title": "Gem Level",
+          "type": "integer"
+        },
+        "supports": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supports",
+          "type": "array"
+        }
+      },
+      "required": [
+        "class",
+        "level",
+        "skill",
+        "skill_ja",
+        "gem_level"
+      ],
+      "title": "PobCharacter",
+      "type": "object"
+    },
+    "PobConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "resistancePenalty": {
+          "default": -20,
+          "description": "元素耐性のペナルティ (0 = アクト 1 … -60 = エンド)",
+          "maximum": 0,
+          "minimum": -60,
+          "title": "Resistancepenalty",
+          "type": "integer"
+        },
+        "enemyIsBoss": {
+          "default": "None",
+          "description": "普通の敵 / ボス",
+          "enum": [
+            "None",
+            "Boss",
+            "Pinnacle",
+            "Uber"
+          ],
+          "title": "Enemyisboss",
+          "type": "string"
+        },
+        "enemyLevel": {
+          "anyOf": [
+            {
+              "maximum": 85,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければキャラのレベル",
+          "title": "Enemylevel"
+        }
+      },
+      "title": "PobConfig",
+      "type": "object"
+    },
+    "PobEnemy": {
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "integer"
+        },
+        "life": {
+          "title": "Life",
+          "type": "number"
+        },
+        "hit": {
+          "title": "Hit",
+          "type": "number"
+        },
+        "ja": {
+          "title": "Ja",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "life",
+        "hit",
+        "ja"
+      ],
+      "title": "PobEnemy",
+      "type": "object"
+    },
+    "PobSpec": {
+      "additionalProperties": false,
+      "description": "手順 JSON の pob。クラス・スキルは PoB の英語名 (Gems.lua の name).",
+      "properties": {
+        "class": {
+          "description": "例 Monk / Ranger",
+          "title": "Class",
+          "type": "string"
+        },
+        "level": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "例 Ice Strike",
+          "title": "Skill",
+          "type": "string"
+        },
+        "supports": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supports",
+          "type": "array"
+        },
+        "gem_level": {
+          "anyOf": [
+            {
+              "maximum": 40,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ使える一番高い物",
+          "title": "Gem Level"
+        },
+        "config": {
+          "$ref": "#/$defs/PobConfig"
+        }
+      },
+      "required": [
+        "class",
+        "level",
+        "skill"
+      ],
+      "title": "PobSpec",
+      "type": "object"
+    },
+    "PobStats": {
+      "description": "1 手ぶんの PoB の出力 (手 0 = 白).",
+      "properties": {
+        "dps": {
+          "minimum": 0,
+          "title": "Dps",
+          "type": "number"
+        },
+        "hit": {
+          "description": "1 発のダメージ",
+          "minimum": 0,
+          "title": "Hit",
+          "type": "number"
+        },
+        "aps": {
+          "minimum": 0,
+          "title": "Aps",
+          "type": "number"
+        },
+        "crit_chance": {
+          "default": 0,
+          "title": "Crit Chance",
+          "type": "number"
+        },
+        "breakdown": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "physical / fire / …",
+          "title": "Breakdown",
+          "type": "object"
+        },
+        "layers": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "武器の手だけ: base (素) / mods (MOD まで) / full (ルーン込み)",
+          "title": "Layers"
+        },
+        "armour": {
+          "default": 0,
+          "title": "Armour",
+          "type": "number"
+        },
+        "evasion": {
+          "default": 0,
+          "title": "Evasion",
+          "type": "number"
+        },
+        "es": {
+          "default": 0,
+          "title": "Es",
+          "type": "number"
+        },
+        "life": {
+          "default": 0,
+          "title": "Life",
+          "type": "number"
+        },
+        "resists": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "title": "Resists",
+          "type": "object"
+        }
+      },
+      "required": [
+        "dps",
+        "hit",
+        "aps"
+      ],
+      "title": "PobStats",
       "type": "object"
     },
     "StageChange": {
@@ -346,6 +661,37 @@
           "default": null,
           "description": "スキルジェムのサポート枠 (宝飾職人のオーブ)",
           "title": "Gem Sockets"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "上の数値 [{key,label,value,up}] (up = 青、⑰)",
+          "title": "Properties"
+        },
+        "augments": {
+          "description": "はめたルーン (⑰)",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Augments",
+          "type": "array"
+        },
+        "disposed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "disenchant / salvage で手放した",
+          "title": "Disposed"
         },
         "prefixes": {
           "items": {
@@ -531,6 +877,17 @@
         },
         "cost": {
           "$ref": "#/$defs/StageCost"
+        },
+        "pob": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -625,6 +982,18 @@
       "minimum": 0,
       "title": "Total Cost",
       "type": "number"
+    },
+    "pob": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PobBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "手順に pob があった時 (⑰)"
     }
   },
   "required": [

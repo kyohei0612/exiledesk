@@ -17,12 +17,14 @@ from PIL import Image, ImageDraw
 
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.names import icon_path
 from poe2tube.render.draw import load_icon, pill, shadow_panel
 from poe2tube.render.overlay_fx import draw_emphasis_text
 from poe2tube.render.palette import ACCENT, ACCENT_SOFT, GOLD, LINE, PANEL, WHITE, font
 from poe2tube.render.scene_panel import (
     STAGE_PANEL,
     USE_CLIP_LAYOUT,
+    VIEW_TAGS,
     draw_scene_panel,
     stage_inner,
 )
@@ -57,7 +59,7 @@ def render_panel_layer(
     s = get_settings()
     w, h = s.width, s.height
     layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    if line.scene.kind in ("stage", "tiers", "compare") and USE_CLIP_LAYOUT:
+    if (line.scene.kind == "stage" or line.scene.kind in VIEW_TAGS) and USE_CLIP_LAYOUT:
         panel, inner = STAGE_PANEL, stage_inner()
     else:
         panel = (330, 130, w - 330, h - TELOP_H - 40)
@@ -161,7 +163,7 @@ def _props(
         cy = 300 + base // 2
         cx = (w - 400 - base // 2) if speaker == "zundamon" else 400 + base // 2
     for i, key in enumerate(props):
-        path = ICON_DIR / f"{key}.png"
+        path = icon_path(key, ICON_DIR)
         if not path.exists():
             continue
         ic = load_icon(path, size)

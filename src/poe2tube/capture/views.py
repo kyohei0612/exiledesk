@@ -1,4 +1,4 @@
-"""ExileDesk の動画用の画面 (要望 ⑪): 段の表 / 2 つ並べて比べる / スポットライト.
+"""ExileDesk の動画用の画面 (段の表・比べる・スポットライト、DPS・倒すまで・受けるダメ・耐性).
 
 手順の撮影 (capture/stage.py) と同じく、URL を開いて撮るだけ。キャッシュは URL ごと。
 場面 (Scene) と結果の組 (ResultSet) から、撮る URL と保存先を決める。
@@ -21,8 +21,9 @@ from poe2tube.capture.stage import (
     VIEWPORT,
     ensure_video_mode,
     ensure_vite,
+    pob_json,
 )
-from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult
 from poe2tube.script.model import Scene
 from poe2tube.video.results import ResultSet
 
@@ -45,16 +46,44 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         mod = urllib.parse.quote(scene.mod)
         q = f"{CLIP}&view=tiers&base={base}&mod={mod}&ilvl={plan.item_level}"
         return q if scene.reveal else q + "&hl=0"
+    hide_dps = "" if scene.show_dps else "&dps=0"
     if scene.kind == "compare" and scene.compare_with:
-        b = rs.demos[scene.compare_with].plan
-        q = f"{CLIP}&view=compare&a={_plan_json(plan)}&b={_plan_json(b)}&a_step={scene.step or 0}"
-        return q + (f"&b_step={scene.b_step}" if scene.b_step is not None else "")
-    if scene.kind == "stage" and scene.focus:
-        return (
-            f"stage-plan={_plan_json(plan)}&step={scene.step or 0}&{CLIP}"
-            f"&focus={urllib.parse.quote(scene.focus)}"
-        )
+        other = rs.demos[scene.compare_with]
+        q = f"{CLIP}&view=compare&a={_plan_json(plan)}&b={_plan_json(other.plan)}"
+        q += f"&a_step={scene.step or 0}"
+        q += f"&b_step={scene.b_step}" if scene.b_step is not None else ""
+        return q + _pob("a_pob", res) + _pob("b_pob", other) + hide_dps
+    if scene.kind == "stage" and (scene.focus or not scene.show_dps):
+        q = f"stage-plan={_plan_json(plan)}&step={scene.step or 0}&{CLIP}" + _pob("stage-pob", res)
+        q += f"&focus={urllib.parse.quote(scene.focus)}" if scene.focus else ""
+        return q + hide_dps
+    if scene.kind in ("dps", "hit") and res.pob is not None:
+        q = f"{CLIP}&view={scene.kind}{_pob('pob', res)}&step={scene.step or 0}"
+        if scene.kind == "hit":
+            q += f"&elem={scene.elem}&res={','.join(map(str, scene.res or [50, 75]))}"
+            q += f"&dmg={scene.dmg}" if scene.dmg else ""
+        return q
+    if scene.kind == "ttk" and res.pob is not None:
+        labels = scene.labels or ["A", "B"]
+        q = f"{CLIP}&view=ttk{_pob('a_pob', res)}&a_step={scene.step or 0}"
+        q += f"&a_label={urllib.parse.quote(labels[0])}"
+        # 右 = 別の実演 (compare_with) か、同じ実演の別の手 (b_step だけ。例: 白と黄)
+        b = rs.demos[scene.compare_with] if scene.compare_with else res
+        if scene.compare_with or scene.b_step is not None:
+            q += _pob("b_pob", b) + f"&b_step={scene.b_step if scene.b_step is not None else 9999}"
+            q += f"&b_label={urllib.parse.quote(labels[1] if len(labels) > 1 else 'B')}"
+        return q if scene.reveal else q + "&hl=0"
+    if scene.kind == "resists" and scene.resists in rs.resists:
+        raw = rs.resists[scene.resists].model_dump_json()
+        q = f"{CLIP}&view=resists&r={urllib.parse.quote(raw)}&act={scene.act}"
+        return q if scene.reveal else q + "&penalty=0"
     return None
+
+
+def _pob(param: str, res: CraftStageResult) -> str:
+    """結果の pob を URL の引数に (無ければ空)。DPS の札・比べる・倒すまでの時間用 (⑰)."""
+    raw = pob_json(res)
+    return f"&{param}={urllib.parse.quote(raw)}" if raw else ""
 
 
 def view_path(query: str) -> Path:

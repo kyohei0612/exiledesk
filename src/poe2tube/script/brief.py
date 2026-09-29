@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.contracts.pob import ResistsSpec
 from poe2tube.publish.models import Source
 
 PlayerStage = Literal["act", "early_endgame", "endgame"]
@@ -84,6 +85,10 @@ class Brief(BaseModel):
         default_factory=dict,
         description="追加の実演 {キー: 手順}。武器・防具など別のアイテムでも見せる回 (ADR 004)",
     )
+    resists: dict[str, ResistsSpec] = Field(
+        default_factory=dict,
+        description="耐性の画面の装備の組 {キー: 組}。scene.resists で指す (ExileDesk ⑰)",
+    )
     notes: list[str] = Field(default_factory=list, description="台本に入れたい要点・避けたい事")
     sources: list[Source] = Field(
         default_factory=list,
@@ -100,6 +105,10 @@ class Brief(BaseModel):
         out = self._plan_problems(self.plan, "")
         for key, plan in self.demos.items():
             out += self._plan_problems(plan, f"[{key}] ")
+        for key, spec in self.resists.items():
+            for it in spec.items:
+                if it.demo is not None and it.demo not in self.demos:
+                    out.append(f"耐性の組 {key}: 実演 {it.demo!r} が demos に無い")
         n = len(self.plan.expanded_steps())
         if self.final_step is not None and self.final_step > n:
             out.append(f"final_step {self.final_step} が手数 {n} を超えている")

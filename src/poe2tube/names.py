@@ -58,6 +58,7 @@ class NameBook:
             ess = json.loads(essence_keys.read_text(encoding="utf-8")).get("keys", {})
             for key, val in ess.items():
                 names[key] = GameName.model_validate(val)
+        names.update(_skills_and_runes(s.exiledesk_root))
         return cls(names=names)
 
     def __post_init__(self) -> None:
@@ -82,3 +83,51 @@ class NameBook:
             Found(key=self._by_ja[m.group(0)], ja=m.group(0), start=m.start(), end=m.end())
             for m in self._pattern.finditer(text)
         ]
+
+
+STAGE_DIR = ("src", "services", "craft-stage")
+
+
+def _skills_and_runes(root: Path) -> dict[str, GameName]:
+    """スキル (skill:<id>) とルーン (rune:<英語名>) の公式日本語名 (ExileDesk ⑰、無ければ空).
+
+    サポートジェムは名前が短く本文の言葉に誤爆しやすいので入れない。
+    """
+    out: dict[str, GameName] = {}
+    skills = root.joinpath(*STAGE_DIR, "skill-art.json")
+    if skills.exists():
+        for sk in json.loads(skills.read_text(encoding="utf-8")):
+            if not sk.get("support") and len(sk.get("ja", "")) >= 3:
+                out[f"skill:{sk['id']}"] = GameName(en=sk["en"], ja=sk["ja"])
+    runes = root.joinpath(*STAGE_DIR, "stage-runes.json")
+    if runes.exists():
+        for en, r in json.loads(runes.read_text(encoding="utf-8")).get("runes", {}).items():
+            if r.get("kind") == "rune":
+                out[f"rune:{en}"] = GameName(en=en, ja=r["ja"])
+    return out
+
+
+def icon_path(key: str, icon_dir: Path) -> Path:
+    """小道具のアイコン。カレンシーは assets/icons、スキル・ルーンは ExileDesk の絵 (webp)."""
+    root = get_settings().exiledesk_root
+    if key.startswith("skill:"):
+        return root / "public" / "skill-art" / f"{key[6:]}_icon.webp"
+    if key.startswith("rune:"):
+        return _rune_art(root).get(key[5:], icon_dir / "_none.png")
+    return icon_dir / f"{key}.png"
+
+
+_RUNE_ART: dict[str, Path] = {}
+
+
+def _rune_art(root: Path) -> dict[str, Path]:
+    """ルーンの英語名 → 絵 (dds のパス Art/2DItems/Currency/Runes/X.dds → Currency_Runes_X.webp)."""
+    if not _RUNE_ART:
+        path = root.joinpath(*STAGE_DIR, "stage-runes.json")
+        runes = (
+            json.loads(path.read_text(encoding="utf-8")).get("runes", {}) if path.exists() else {}
+        )
+        for en, r in runes.items():
+            dds = str(r.get("dds", "")).removeprefix("Art/2DItems/").removesuffix(".dds")
+            _RUNE_ART[en] = root / "public" / "rune-art" / (dds.replace("/", "_") + ".webp")
+    return _RUNE_ART

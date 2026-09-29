@@ -14,6 +14,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
+from poe2tube.capture.anim import anim_frames, anim_query
 from poe2tube.capture.views import shot_for
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
@@ -176,7 +177,9 @@ def iter_frames(
         )
         # 反応の行は付いた瞬間 (preroll 無しなら少し手前) から連番を貼る
         clip = list(hp.clip[hp.start :]) if hp else []
-        animate = panel is not None and scene_changed(prev, c.line) and not clip
+        # ⑰ の画面の登場の動き (録画済みなら、スライドの代わりに行の頭で流す)
+        intro = anim_frames(anim_query(c.line.scene, prev.scene if prev else None, rs))
+        animate = panel is not None and scene_changed(prev, c.line) and not clip and not intro
         static = _with_panel(base, panel, 0, 1.0)
         hit_step = res.steps[hp.step - 1] if hp else None
         land = hp.land_at if hp else 0.0  # 結果の文字は付いた瞬間から数える
@@ -192,6 +195,9 @@ def iter_frames(
                 layer = render_panel_layer(
                     c.line, res, stage_shot=pre[k - pre_from], final_step=fin
                 )
+                frame_static = _with_panel(base, layer, 0, 1.0)
+            elif 0 <= kl < len(intro):
+                layer = render_panel_layer(c.line, res, stage_shot=intro[kl], final_step=fin)
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif 0 <= kl < len(clip) * CLIP_SLOWMO:
                 shot = clip[kl // CLIP_SLOWMO]

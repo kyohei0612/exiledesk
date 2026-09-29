@@ -24,6 +24,7 @@ from poe2tube.contracts.craft_stage import CraftStageResult, StageItem
 from poe2tube.script.brief import Brief
 from poe2tube.script.lint import lint_script
 from poe2tube.script.model import VideoScript
+from poe2tube.script.pob_digest import item_extras, pob_digest, resists_block, resists_files
 
 log = structlog.get_logger()
 RULES_PATH = REPO_ROOT / "docs" / "script_rules" / "_all.md"
@@ -60,7 +61,7 @@ def result_digest(result: CraftStageResult) -> str:
             "rarity": f"{s.changed.rarity_from}→{s.changed.rarity_to}",
             "added": [f"{m.side} {m.tier_name} {m.text_ja}" for m in s.changed.added],
             "removed": [m.text_ja for m in s.changed.removed],
-            "after": _state(s.after),
+            "after": _state(s.after) | item_extras(s.after),
         }
         for s in result.steps
     ]
@@ -68,9 +69,11 @@ def result_digest(result: CraftStageResult) -> str:
         {
             "base_ja": result.final.base_ja,
             "item_level": result.final.item_level,
+            "start": item_extras(result.steps[0].before),
             "final_rarity": result.final.rarity,
             "final_mods": [m.text_ja for m in result.final.prefixes + result.final.suffixes],
             "steps": steps,
+            "pob": pob_digest(result),
         },
         ensure_ascii=False,
         indent=2,
@@ -138,6 +141,7 @@ def build_prompt(
         + result_digest(result)
         + "\n```",
         *demo_block(demos),
+        *resists_block(brief),
         f"## 出力\n- `result_file` は `{result_file}`\n"
         f"- `target_seconds` は {brief.target_seconds}\n"
         "- JSON 以外の文字 (前置き・コードフェンス・注釈) を出力しない",
@@ -220,6 +224,8 @@ def write_script(
             continue
         if demos:
             script = script.model_copy(update={"demos": demo_files(brief.name, demos)})
+        if brief.resists:
+            script = script.model_copy(update={"resists": resists_files(brief)})
         problems = demo_problems(script, result, demos)
         if not problems:
             log.info("script accepted", attempt=attempt, lines=len(script.lines))

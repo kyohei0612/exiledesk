@@ -18,7 +18,22 @@ SCRIPT_SCHEMA = "poe2tube-script/1"
 
 Speaker = Literal["zundamon", "metan"]
 Emotion = Literal["normal", "troubled", "surprised", "happy", "proud", "sad"]
-SceneKind = Literal["talk", "stack", "item", "stage", "cost", "quiz", "tiers", "compare"]
+SceneKind = Literal[
+    "talk",
+    "stack",
+    "item",
+    "stage",
+    "cost",
+    "quiz",
+    "tiers",
+    "compare",
+    "dps",
+    "ttk",
+    "hit",
+    "resists",
+]
+POB_KINDS = ("dps", "ttk", "hit")  # 結果 JSON の pob (PoB の計算) が要る画面
+Element = Literal["fire", "cold", "lightning", "chaos"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 
 CHARS_PER_MINUTE = 400  # 実測 (2026-09-28): 1.2 倍速 + 話速正規化で 2,502 字 → 370 秒 ≈ 405 字/分
@@ -67,9 +82,29 @@ class Scene(BaseModel):
     compare_with: str | None = Field(
         default=None, description="compare: 右 (入れ替える物) の実演キー。左は demo の手"
     )
-    b_step: int | None = Field(default=None, ge=0, description="compare: 右の実演の手")
+    b_step: int | None = Field(default=None, ge=0, description="compare / ttk: 右の手")
     countdown: int | None = Field(
         default=None, ge=1, le=10, description="quiz: 行の後に数える秒 (3→2→1 と音、ADR 005)"
+    )
+    # --- ExileDesk ⑰ (PoB・耐性)。reveal=False は ttk の秒数・resists のペナルティ後を隠す
+    show_dps: bool = Field(
+        default=True, description="stage / compare: False = DPS の札を隠す (質問の行)"
+    )
+    labels: list[str] | None = Field(default=None, description='ttk: 左右の札 (例 ["白", "レア"])')
+    elem: Element | None = Field(default=None, description="hit: 受ける一撃の元素")
+    res: list[int] | None = Field(
+        default=None, description="hit: 並べる耐性 (例 [50, 75])。無ければ 50 と 75"
+    )
+    dmg: int | None = Field(
+        default=None,
+        ge=1,
+        description="hit: 一撃の大きさ (画面に「仮の一撃」と出る)。無ければ PoB の敵",
+    )
+    resists: str | None = Field(
+        default=None, description="resists: 装備の組のキー (VideoScript.resists)"
+    )
+    act: int | None = Field(
+        default=None, ge=-60, le=0, description="resists: ペナルティ (0 = アクト 1 … -60 = エンド)"
     )
 
     def key(self) -> tuple[object, ...]:
@@ -87,11 +122,18 @@ class Scene(BaseModel):
             self.focus,
             self.compare_with,
             self.b_step,
+            self.show_dps,
+            tuple(self.labels or ()),
+            self.elem,
+            tuple(self.res or ()),
+            self.dmg,
+            self.resists,
+            self.act,
         )
 
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:
-        if self.kind in ("stack", "item", "stage", "compare") and self.step is None:
+        if self.kind in ("stack", "item", "stage", "compare", *POB_KINDS) and self.step is None:
             raise ValueError(f"scene.kind={self.kind} には step が必要")
         if self.show_steps is not None and self.kind != "stack":
             raise ValueError("show_steps は stack 専用")
@@ -106,8 +148,18 @@ class Scene(BaseModel):
             raise ValueError("choices / answer / badges / countdown は quiz 専用")
         if (self.kind == "tiers") != (self.mod is not None):
             raise ValueError("tiers には mod が必要 (mod は tiers 専用)")
-        if (self.kind == "compare") != (self.compare_with is not None):
-            raise ValueError("compare には compare_with が必要 (compare_with は compare 専用)")
+        if self.kind == "compare" and self.compare_with is None:
+            raise ValueError("compare には compare_with が必要")
+        if self.compare_with is not None and self.kind not in ("compare", "ttk"):
+            raise ValueError("compare_with は compare / ttk 専用")
+        if (self.kind == "resists") != (self.resists is not None and self.act is not None):
+            raise ValueError("resists には resists (装備の組) と act が必要 (resists 専用)")
+        if (self.kind == "hit") != (self.elem is not None):
+            raise ValueError("hit には elem が必要 (elem・res・dmg は hit 専用)")
+        if (self.res is not None or self.dmg is not None) and self.kind != "hit":
+            raise ValueError("res・dmg は hit 専用")
+        if self.labels is not None and self.kind != "ttk":
+            raise ValueError("labels は ttk 専用")
         if self.focus is not None and self.kind != "stage":
             raise ValueError("focus は stage 専用")
         return self
@@ -159,6 +211,9 @@ class VideoScript(BaseModel):
         default_factory=dict,
         description="追加の実演 {キー: 結果 JSON パス}。1 本で複数のアイテムを見せる回 (ADR 004)",
     )
+    resists: dict[str, str] = Field(
+        default_factory=dict, description="耐性の画面の組 {キー: --resists の出力パス} (⑰)"
+    )
     sections: list[Section] = Field(min_length=1)
 
     @property
@@ -186,6 +241,10 @@ class VideoScript(BaseModel):
             n = len(res.steps)
             if sc.compare_with is not None and sc.compare_with not in demos:
                 problems.append(f"line {i}: 比べる相手 {sc.compare_with!r} が demos に無い")
+            if sc.kind in POB_KINDS and res.pob is None:
+                problems.append(f"line {i}: {sc.kind} は PoB の計算 (手順の pob) が要る")
+            if sc.resists is not None and sc.resists not in self.resists:
+                problems.append(f"line {i}: 耐性の組 {sc.resists!r} が resists に無い")
             if sc.step is not None and sc.step > n:
                 problems.append(f"line {i}: step {sc.step} は結果 JSON に無い (最大 {n})")
             for s in sc.show_steps or []:

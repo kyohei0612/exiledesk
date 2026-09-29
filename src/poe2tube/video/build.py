@@ -13,7 +13,8 @@ import structlog
 
 from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
-from poe2tube.capture.stage import capture_plan
+from poe2tube.capture.anim import anim_query, capture_anims
+from poe2tube.capture.stage import capture_plan, pob_json
 from poe2tube.capture.views import capture_views, view_query
 from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
@@ -96,7 +97,7 @@ def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
         if not steps:
             continue
         try:
-            paths = capture_plan(res.plan, steps)
+            paths = capture_plan(res.plan, steps, pob=pob_json(res))
             log.info("stage scenes ready", demo=key, steps=steps, cached=len(paths))
         except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
             log.warning(
@@ -105,7 +106,7 @@ def capture_stage_scenes(script: VideoScript, rs: ResultSet) -> None:
 
 
 def capture_view_scenes(script: VideoScript, rs: ResultSet) -> None:
-    """段の表・比べる・スポットライトの画面を撮っておく (ExileDesk ⑪、失敗しても動画は作る)."""
+    """段の表・比べる・スポットライト・⑰ の画面と登場の動きを撮っておく (失敗しても動画は作る)."""
     if not get_settings().stage_capture:
         return
     queries = [q for ln in script.lines if (q := view_query(ln.scene, rs)) is not None]
@@ -116,6 +117,17 @@ def capture_view_scenes(script: VideoScript, rs: ResultSet) -> None:
         log.info("view scenes ready", count=len(set(queries)))
     except Exception as e:  # noqa: BLE001 — 撮影は補助。落ちても動画は作る
         log.warning("view capture failed", error=str(e)[:300])
+    lines = script.lines
+    anims = [
+        q
+        for i, ln in enumerate(lines)
+        if (q := anim_query(ln.scene, lines[i - 1].scene if i else None, rs)) is not None
+    ]
+    try:  # 登場の動き (&play=1、ExileDesk ⑰)。撮れなければ今まで通りスライドで出す
+        capture_anims(anims, fps=get_settings().fps)
+        log.info("view anims ready", count=len(set(anims)))
+    except Exception as e:  # noqa: BLE001
+        log.warning("view anim capture failed", error=str(e)[:300])
 
 
 def write_chapters(cues: list[Cue], path: Path) -> None:

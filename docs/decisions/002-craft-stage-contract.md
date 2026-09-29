@@ -24,6 +24,17 @@ POE2Tube (Python) が「この順でカレンシーを使って」と頼み、Ex
 6. **再現性**: `plan.seed` から 1 手ごとの seed を派生。同じ手順 JSON → 同じ結果 JSON (撮り直し・検算のため)。
 7. 見本 `contracts/examples/*.json` を置き、テストで常に検証する。
 
+### 追記 (2026-09-29、ExileDesk 要望 ⑰ / v0.1.330〜331)
+
+- 手順 JSON に `pob` (`contracts/pob.py` の `PobSpec`: class・level・skill・supports・gem_level・config)。
+  PoB の既定は「エンドの強いボス + 耐性 -60%」なので、アクトの回は `config` (resistancePenalty・enemyIsBoss) を必ず渡す
+- 結果 JSON に `pob` (`PobBlock`: 使った設定の書き戻し `config` / `config_ja`・キャラ・敵・手ごとの DPS 等、手 0 = 白) と `steps[i].pob`。
+  アイテムに `properties` (上の数値、`up` = 青)・`augments` (ルーン)・`disposed` (解呪 / サルベージ)
+- カレンシーのキーに `rune:<英語名>`・`disenchant`・`salvage`
+- 耐性の画面は別の入出力: `craft-stage-run.mjs --resists spec.json out.json` (`ResistsSpec` → `ResistsBlock`、ペナルティ 7 通り)。
+  brief の `resists` に組を書くと `scripts/run_stage.py` が `data/results/<name>__resists_<キー>.json` を作る
+- 見本: `contracts/examples/{plan,result}-quarterstaff-pob.json`、`resists-quarterstaff-ring.json` (v0.1.331 の本物)
+
 ## 影響
 
 - ExileDesk ADR-001 の「再生モード」が読む JSON はこの schema (パスを ADR に追記)。

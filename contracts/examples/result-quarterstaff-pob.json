@@ -1,0 +1,1787 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T08:26:15.873Z",
+  "exiledesk_version": "0.1.331",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "qs",
+    "base": "Crescent Quarterstaff",
+    "item_level": 22,
+    "start_rarity": "normal",
+    "seed": 20261003,
+    "pob": {
+      "class": "Monk",
+      "level": 20,
+      "skill": "Ice Strike",
+      "config": {
+        "resistancePenalty": -20,
+        "enemyIsBoss": "None"
+      }
+    },
+    "steps": [
+      {
+        "currency": "transmute"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      },
+      {
+        "currency": "artificer"
+      },
+      {
+        "currency": "rune:Lesser Iron Rune"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261004,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.50",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 61.03760796695976,
+        "hit": 25.797805565071755,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.7118733956275864,
+          "fire": 0,
+          "cold": 56.32573457133218,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 61.03760796695976,
+          "full": 61.03760796695976
+        }
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261005,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          }
+        ]
+      },
+      "after": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 74.05060796695976,
+        "hit": 31.297805565071755,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.70640701455191,
+          "fire": 0,
+          "cold": 56.260389451953536,
+          "lightning": 13.083811500454312,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.05060796695976,
+          "full": 74.05060796695976
+        }
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261006,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          }
+        ]
+      },
+      "after": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 74.84238709454236,
+        "hit": 31.632454393297703,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.756729826779099,
+          "fire": 0,
+          "cold": 56.86194834931736,
+          "lightning": 13.223708918445897,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 74.84238709454236
+        }
+      }
+    },
+    {
+      "index": 4,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261007,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "after": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 74.84238709454236,
+        "hit": 31.632454393297703,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.756729826779099,
+          "fire": 0,
+          "cold": 56.86194834931736,
+          "lightning": 13.223708918445897,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 74.84238709454236
+        }
+      }
+    },
+    {
+      "index": 5,
+      "currency": "rune:Lesser Iron Rune",
+      "currency_ja": "鉄のレッサールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261008,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "19〜39",
+            "up": false
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "after": {
+        "name": "三日月のクォータースタッフ",
+        "base": "Crescent Quarterstaff",
+        "base_ja": "三日月のクォータースタッフ",
+        "item_level": 22,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "22〜44",
+            "up": true
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "1〜10",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.69",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Lesser Iron Rune",
+            "en": "Lesser Iron Rune",
+            "ja": "鉄のレッサールーン",
+            "category": "マーシャル武器",
+            "text_ja": "物理ダメージが14%増加する",
+            "text_en": "14% increased Physical Damage",
+            "stats": [
+              {
+                "id": "local_physical_damage_+%",
+                "value": 14
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 1,
+            "text_ja": "1から10の雷ダメージを追加する",
+            "text_en": "Adds 1 to 10 Lightning Damage",
+            "values": [
+              1,
+              10
+            ],
+            "ranges": [
+              [
+                1,
+                1
+              ],
+              [
+                7,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Humming"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +11%",
+            "text_en": "+11% to Critical Damage Bonus",
+            "values": [
+              11
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 83.13388165780528,
+        "hit": 35.13688996526005,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 6.3935478309784015,
+          "fire": 0,
+          "cold": 63.50924178771879,
+          "lightning": 13.23109203910808,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 83.13388165780528
+        }
+      }
+    }
+  ],
+  "final": {
+    "name": "三日月のクォータースタッフ",
+    "base": "Crescent Quarterstaff",
+    "base_ja": "三日月のクォータースタッフ",
+    "item_level": 22,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "properties": [
+      {
+        "key": "phys",
+        "label": "物理ダメージ",
+        "value": "22〜44",
+        "up": true
+      },
+      {
+        "key": "lightning",
+        "label": "雷ダメージ",
+        "value": "1〜10",
+        "up": true
+      },
+      {
+        "key": "crit",
+        "label": "クリティカルヒット率",
+        "value": "10.00%",
+        "up": false
+      },
+      {
+        "key": "aps",
+        "label": "アタック/秒",
+        "value": "1.69",
+        "up": true
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Lesser Iron Rune",
+        "en": "Lesser Iron Rune",
+        "ja": "鉄のレッサールーン",
+        "category": "マーシャル武器",
+        "text_ja": "物理ダメージが14%増加する",
+        "text_en": "14% increased Physical Damage",
+        "stats": [
+          {
+            "id": "local_physical_damage_+%",
+            "value": 14
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Quarterstaves/LocalLightningDamage",
+        "family": "LightningDamage",
+        "side": "prefix",
+        "tier_name": "T10",
+        "mod_level": 1,
+        "text_ja": "1から10の雷ダメージを追加する",
+        "text_en": "Adds 1 to 10 Lightning Damage",
+        "values": [
+          1,
+          10
+        ],
+        "ranges": [
+          [
+            1,
+            1
+          ],
+          [
+            7,
+            10
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Humming"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+        "family": "IncreasedAttackSpeed",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "アタックスピードが13%増加する",
+        "text_en": "13% increased Attack Speed",
+        "values": [
+          13
+        ],
+        "ranges": [
+          [
+            11,
+            13
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of Mastery"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+        "family": "CriticalStrikeMultiplier",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 8,
+        "text_ja": "クリティカルダメージボーナス +11%",
+        "text_en": "+11% to Critical Damage Bonus",
+        "values": [
+          11
+        ],
+        "ranges": [
+          [
+            10,
+            11
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of Ire"
+      }
+    ]
+  },
+  "total_cost": 0,
+  "pob": {
+    "version": "0.23.1",
+    "enemy": {
+      "level": 20,
+      "life": 249,
+      "hit": 13,
+      "ja": "普通の敵 Lv20 のライフ 249"
+    },
+    "character": {
+      "class": "Monk",
+      "level": 20,
+      "skill": "Ice Strike",
+      "skill_ja": "アイスストライク",
+      "gem_level": 6,
+      "supports": []
+    },
+    "config": {
+      "resistancePenalty": -20,
+      "enemyIsBoss": "None"
+    },
+    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ",
+    "steps": [
+      {
+        "dps": 54.17539168665068,
+        "hit": 25.797805565071755,
+        "aps": 2.0999999999999996,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.182136149965314,
+          "fire": 0,
+          "cold": 49.99325553668536,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 54.17539168665068,
+          "full": 54.17539168665068
+        }
+      },
+      {
+        "dps": 61.03760796695976,
+        "hit": 25.797805565071755,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.7118733956275864,
+          "fire": 0,
+          "cold": 56.32573457133218,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 61.03760796695976,
+          "full": 61.03760796695976
+        }
+      },
+      {
+        "dps": 74.05060796695976,
+        "hit": 31.297805565071755,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.70640701455191,
+          "fire": 0,
+          "cold": 56.260389451953536,
+          "lightning": 13.083811500454312,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.05060796695976,
+          "full": 74.05060796695976
+        }
+      },
+      {
+        "dps": 74.84238709454236,
+        "hit": 31.632454393297703,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.756729826779099,
+          "fire": 0,
+          "cold": 56.86194834931736,
+          "lightning": 13.223708918445897,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 74.84238709454236
+        }
+      },
+      {
+        "dps": 74.84238709454236,
+        "hit": 31.632454393297703,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.756729826779099,
+          "fire": 0,
+          "cold": 56.86194834931736,
+          "lightning": 13.223708918445897,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 74.84238709454236
+        }
+      },
+      {
+        "dps": 83.13388165780528,
+        "hit": 35.13688996526005,
+        "aps": 2.3659999999999997,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 6.3935478309784015,
+          "fire": 0,
+          "cold": 63.50924178771879,
+          "lightning": 13.23109203910808,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 305,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 54.17539168665068,
+          "mods": 74.84238709454236,
+          "full": 83.13388165780528
+        }
+      }
+    ]
+  }
+}

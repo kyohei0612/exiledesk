@@ -22,7 +22,7 @@ from typing import Any
 import structlog
 
 from poe2tube.config.settings import REPO_ROOT, get_settings
-from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult
 
 log = structlog.get_logger()
 CACHE_DIR = REPO_ROOT / "cache" / "stage"
@@ -30,9 +30,10 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 # ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
 # 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
 VIEWPORT = (1920, 1080)
-CAPTURE_VER = "v16-hl0"  # 撮り方を変えたらキャッシュを切替 (v16 = v0.1.329、段の表の hl=0)
+CAPTURE_VER = "v17-pob"  # 撮り方を変えたらキャッシュを切替 (v17 = v0.1.331、PoB の DPS・新画面)
 # アイテム枠が描けたら撮る。v0.1.314 の撮影用は英語ベース名を出さないので「アイテムレベル」を待つ
-READY_SELECTOR = "text=/アイテムレベル|スキルジェム/"  # ジェムにはアイテムレベルが無い
+# ジェムにはアイテムレベルが無い。⑰ の画面は見出しの文字を待つ
+READY_SELECTOR = "text=/アイテムレベル|スキルジェム|耐性|倒すまでの時間|受けるダメージ|DPS の内訳/"
 # 動画モードは普通の画面の上に重ねて出る (fixed inset-0)。真ん中の一番手前がそれでなければ
 # 開けていない (2026-09-29: ExileDesk 開発版の版ずれで普通の画面のまま動画ができていた)
 VIDEO_OVERLAY_JS = "!!document.elementFromPoint(960, 540)?.closest('.fixed.inset-0')"
@@ -58,10 +59,19 @@ def clip_frames(plan: CraftStagePlan, step: int) -> list[Path]:
     return sorted(clip_dir(plan, step).glob("f*.png")) if step >= 1 else []
 
 
-def replay_url(plan: CraftStagePlan, step: int, base: str) -> str:
+def pob_json(result: CraftStageResult) -> str | None:
+    """結果 JSON の pob (DPS の札・比べる・倒すまでの時間の画面に渡す)。無ければ None."""
+    if result.pob is None:
+        return None
+    return json.dumps(result.pob.model_dump(by_alias=True, mode="json"), ensure_ascii=False)
+
+
+def replay_url(plan: CraftStagePlan, step: int, base: str, pob: str | None = None) -> str:
     raw = json.dumps(plan.model_dump(by_alias=True, exclude_none=True), ensure_ascii=False)
+    extra = f"&stage-pob={urllib.parse.quote(pob)}" if pob else ""
     return (
         f"{base}/?stage-plan={urllib.parse.quote(raw)}&step={step}&video=1&controls=0&layout=clip"
+        + extra
     )
 
 
@@ -106,7 +116,12 @@ def ensure_vite(wait_seconds: int = 60) -> str:
 
 
 def capture_plan(
-    plan: CraftStagePlan, steps: list[int], force: bool = False, clips: bool = True, fps: int = 24
+    plan: CraftStagePlan,
+    steps: list[int],
+    force: bool = False,
+    clips: bool = True,
+    fps: int = 24,
+    pob: str | None = None,
 ) -> dict[int, Path]:
     """必要な手の静止画 (と打った瞬間の連番) を撮って {step: png} を返す (キャッシュ済みは撮らない).
 
@@ -129,7 +144,7 @@ def capture_plan(
             viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=1
         )
         for st in todo:
-            page.goto(replay_url(plan, st, base), wait_until="networkidle", timeout=60000)
+            page.goto(replay_url(plan, st, base, pob), wait_until="networkidle", timeout=60000)
             page.wait_for_selector(READY_SELECTOR, timeout=30000)
             page.wait_for_timeout(SETTLE_MS)
             ensure_video_mode(page)
@@ -137,7 +152,7 @@ def capture_plan(
             log.info("stage captured", step=st, path=paths[st].name)
         page.close()
         for st in todo_clips:
-            _record_clip(browser, base, plan, st, fps)
+            _record_clip(browser, base, plan, st, fps, pob)
         browser.close()
     return paths
 
@@ -153,7 +168,9 @@ def ensure_video_mode(page: Any) -> None:
         )
 
 
-def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: int) -> None:
+def _record_clip(
+    browser: Any, base: str, plan: CraftStagePlan, step: int, fps: int, pob: str | None = None
+) -> None:
     """1 つ前の手で開き、→ キーで 1 手進めた瞬間を Playwright の動画録画で撮って連番 PNG にする."""
     out_dir = clip_dir(plan, step)
     shutil.rmtree(out_dir, ignore_errors=True)
@@ -166,7 +183,7 @@ def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: 
         )
         t0 = time.perf_counter()
         page = ctx.new_page()
-        page.goto(replay_url(plan, step - 1, base), wait_until="networkidle", timeout=60000)
+        page.goto(replay_url(plan, step - 1, base, pob), wait_until="networkidle", timeout=60000)
         page.wait_for_selector(READY_SELECTOR, timeout=30000)
         ensure_video_mode(page)
         page.wait_for_timeout(800)

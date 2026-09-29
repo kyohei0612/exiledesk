@@ -13,9 +13,11 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from poe2tube.contracts.pob import PobBlock, PobSpec, PobStats
 
 PLAN_SCHEMA = "craft-stage-plan/1"
 RESULT_SCHEMA = "craft-stage-result/1"
@@ -58,10 +60,13 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
         "etcher",  # 秘術師の彫刻針 (ワンド・スタッフ・セプターの品質)
         "jeweller_lesser",  # 宝飾職人のオーブ (見習い)
         "jeweller_greater",  # 宝飾職人のオーブ (上級)
+        "disenchant",  # 解呪 (マジック / レア / ユニーク → シャード、ExileDesk ⑰)
+        "salvage",  # サルベージ (ソケット / 品質付き → シャード・品質のカレンシー)
     }
 )
 # エッセンスの実キーは "essence:lesser:Bows/Essence_PhysicalDamage" のように ":" と "/" を含む
-_CURRENCY_PREFIX = re.compile(r"^(essence:\S+|catalyst_[a-z]+)$")
+# ルーンは "rune:Lesser Iron Rune" (ExileDesk stage-runes.json の英語名、⑰)
+_CURRENCY_PREFIX = re.compile(r"^(essence:\S+|catalyst_[a-z]+|rune:[A-Za-z' ]+)$")
 
 
 def _check_currency(value: str) -> str:
@@ -118,6 +123,9 @@ class CraftStagePlan(BaseModel):
     tray: list[str] | None = Field(
         default=None,
         description="動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
+    )
+    pob: PobSpec | None = Field(
+        default=None, description="PoB でスキルの DPS を手ごとに計算する前提 (ExileDesk ⑰)"
     )
     steps: list[PlanStep] = Field(min_length=1)
 
@@ -182,6 +190,11 @@ class StageItem(BaseModel):
     gem_sockets: int | None = Field(
         default=None, ge=0, le=6, description="スキルジェムのサポート枠 (宝飾職人のオーブ)"
     )
+    properties: list[dict[str, Any]] = Field(
+        default_factory=list, description="上の数値 [{key,label,value,up}] (up = 青、⑰)"
+    )
+    augments: list[dict[str, Any]] = Field(default_factory=list, description="はめたルーン (⑰)")
+    disposed: str | None = Field(default=None, description="disenchant / salvage で手放した")
     prefixes: list[StageMod] = Field(default_factory=list, max_length=3)
     suffixes: list[StageMod] = Field(default_factory=list, max_length=3)
 
@@ -230,6 +243,7 @@ class StageStep(BaseModel):
     after: StageItem
     changed: StageChange
     cost: StageCost
+    pob: PobStats | None = None
 
     _v = field_validator("currency")(_check_currency)
 
@@ -249,6 +263,7 @@ class CraftStageResult(BaseModel):
     steps: list[StageStep] = Field(min_length=1)
     final: StageItem
     total_cost: float = Field(ge=0)
+    pob: PobBlock | None = Field(default=None, description="手順に pob があった時 (⑰)")
 
     @field_validator("schema_id")
     @classmethod

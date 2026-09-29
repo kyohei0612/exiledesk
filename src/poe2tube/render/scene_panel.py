@@ -50,9 +50,9 @@ def draw_scene_panel(
             _stage_capture(img, inner, shot, scene.step or 0, zoom)
         else:
             _stage_placeholder(img, inner, scene, result, icon_dir)
-    elif scene.kind in ("tiers", "compare"):
-        # ExileDesk の動画用の画面 (要望 ⑪)。撮れていなければ文字だけ
-        tag = "ティアの表" if scene.kind == "tiers" else "比べる"
+    elif scene.kind in VIEW_TAGS:
+        # ExileDesk の動画用の画面 (要望 ⑪ / ⑰)。撮れていなければ文字だけ
+        tag = VIEW_TAGS[scene.kind]
         if stage_shot is not None and stage_shot.exists():
             _stage_capture(img, inner, stage_shot, 0, tag=tag)
         else:
@@ -62,6 +62,16 @@ def draw_scene_panel(
     elif scene.kind == "quiz":
         draw_quiz(img, inner, scene, icon_dir)
 
+
+# ExileDesk の動画用の画面の左上の札
+VIEW_TAGS = {
+    "tiers": "ティアの表",
+    "compare": "比べる",
+    "dps": "DPS の内訳",
+    "ttk": "倒すまでの時間",
+    "hit": "受けるダメージ",
+    "resists": "耐性",
+}
 
 # 撮影画面 (1920x1080、ExileDesk v0.1.311 の動画モード) の見せる範囲
 # v0.1.312 から棚がアイテムの右横に縦並び → アイテム + 棚を 1 つの範囲で拡大

@@ -64,6 +64,102 @@
       ],
       "title": "PlanStep",
       "type": "object"
+    },
+    "PobConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "resistancePenalty": {
+          "default": -20,
+          "description": "元素耐性のペナルティ (0 = アクト 1 … -60 = エンド)",
+          "maximum": 0,
+          "minimum": -60,
+          "title": "Resistancepenalty",
+          "type": "integer"
+        },
+        "enemyIsBoss": {
+          "default": "None",
+          "description": "普通の敵 / ボス",
+          "enum": [
+            "None",
+            "Boss",
+            "Pinnacle",
+            "Uber"
+          ],
+          "title": "Enemyisboss",
+          "type": "string"
+        },
+        "enemyLevel": {
+          "anyOf": [
+            {
+              "maximum": 85,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければキャラのレベル",
+          "title": "Enemylevel"
+        }
+      },
+      "title": "PobConfig",
+      "type": "object"
+    },
+    "PobSpec": {
+      "additionalProperties": false,
+      "description": "手順 JSON の pob。クラス・スキルは PoB の英語名 (Gems.lua の name).",
+      "properties": {
+        "class": {
+          "description": "例 Monk / Ranger",
+          "title": "Class",
+          "type": "string"
+        },
+        "level": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "例 Ice Strike",
+          "title": "Skill",
+          "type": "string"
+        },
+        "supports": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supports",
+          "type": "array"
+        },
+        "gem_level": {
+          "anyOf": [
+            {
+              "maximum": 40,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ使える一番高い物",
+          "title": "Gem Level"
+        },
+        "config": {
+          "$ref": "#/$defs/PobConfig"
+        }
+      },
+      "required": [
+        "class",
+        "level",
+        "skill"
+      ],
+      "title": "PobSpec",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -150,6 +246,18 @@
       "default": null,
       "description": "動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
       "title": "Tray"
+    },
+    "pob": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PobSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "PoB でスキルの DPS を手ごとに計算する前提 (ExileDesk ⑰)"
     },
     "steps": {
       "items": {

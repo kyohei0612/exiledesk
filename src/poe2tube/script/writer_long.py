@@ -21,6 +21,7 @@ from poe2tube.script.brief import Brief
 from poe2tube.script.lint import lint_section
 from poe2tube.script.model import Section, VideoScript
 from poe2tube.script.outline import Outline
+from poe2tube.script.pob_digest import resists_block, resists_files
 from poe2tube.script.writer import (
     Demos,
     Runner,
@@ -57,6 +58,7 @@ def outline_prompt(
         "## 題材 (brief)\n```json\n" + brief.model_dump_json(indent=2, by_alias=True) + "\n```",
         "## クラフトステージの結果\n```json\n" + result_digest(result) + "\n```",
         *demo_block(demos),
+        *resists_block(brief),
         "## 構成表の形 (JSON だけを返す)\n```json\n"
         + json.dumps(
             {
@@ -116,6 +118,7 @@ def section_prompt(
         + result_digest(result)
         + "\n```",
         *demo_block(demos),
+        *resists_block(brief),
         "## 構成表 (全体)\n```json\n" + outline.model_dump_json(indent=2) + "\n```",
         "## ここまでの本文 (続きとして自然につながるように。同じ説明を繰り返さない)\n```json\n"
         + json.dumps(so_far, ensure_ascii=False, indent=1)
@@ -318,6 +321,7 @@ def _assemble(
         result_file=result_file,
         final_step=brief.final_step,
         demos=demo_files(brief.name, demos) if demos else {},
+        resists=resists_files(brief),
         sections=sections,
     )
 

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from poe2tube.config.settings import REPO_ROOT
 from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult
+from poe2tube.contracts.pob import ResistsBlock
 from poe2tube.script.model import Scene, VideoScript
 
 
@@ -18,6 +19,7 @@ from poe2tube.script.model import Scene, VideoScript
 class ResultSet:
     main: CraftStageResult
     demos: dict[str, CraftStageResult] = field(default_factory=dict)
+    resists: dict[str, ResistsBlock] = field(default_factory=dict)
 
     def of(self, scene: Scene) -> CraftStageResult:
         return self.demos[scene.demo] if scene.demo is not None else self.main
@@ -41,4 +43,8 @@ def load_results(script: VideoScript, root: Path = REPO_ROOT) -> ResultSet:
     return ResultSet(
         _load(root / script.result_file),
         {k: _load(root / p) for k, p in script.demos.items()},
+        {
+            k: ResistsBlock.model_validate(json.loads((root / p).read_text(encoding="utf-8")))
+            for k, p in script.resists.items()
+        },
     )

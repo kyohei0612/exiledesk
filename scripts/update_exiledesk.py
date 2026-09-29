@@ -4,6 +4,7 @@
     python scripts/update_exiledesk.py v0.1.330   # 決めた印に
 
 固定版の Vite (1430) が動いていたら止めてから進める (古い物を配り続けないように)。
+PoB のサブモジュールと DPS の計算 (cargo の stage_pob) も用意する (初回は数分)。
 進めた後は撮影のキャッシュが古い見た目のままなので、capture/stage.py の CAPTURE_VER を上げる。
 """
 
@@ -59,6 +60,17 @@ def main() -> None:
         creationflags=NOWIN,
         check=True,
         shell=os.name == "nt",
+    )
+    # PoB (DPS の計算、⑰) はサブモジュール。本体の物を参照にして取り込み、Rust を先にビルド
+    pob = "vendor/PathOfBuilding-PoE2"
+    git(stage, "submodule", "update", "--init", "--reference", str(DEV / pob), pob)
+    env = {k: v for k, v in os.environ.items() if k != "NoDefaultCurrentDirectoryInExePath"}
+    subprocess.run(  # mlua-sys (LuaJIT) は上の変数があるとビルドで落ちる (ExileDesk の既知の癖)
+        ["cargo", "build", "-q", "--example", "stage_pob"],
+        cwd=stage / "src-tauri",
+        env=env,
+        creationflags=NOWIN,
+        check=True,
     )
     log.info("exiledesk-stage updated", before=before, after=tag, path=str(stage))
     log.info("次: 固定版の Vite (1430) を止めて、capture/stage.py の CAPTURE_VER を上げる")
