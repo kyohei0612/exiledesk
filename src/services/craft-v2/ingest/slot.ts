@@ -108,7 +108,9 @@ export function addUniqueToAscendancy(
 ): void {
   const data = item.itemData;
   if (!data) return;
-  const nameEn = data.typeLine;
+  // 2026-09-29: ユニークの名前 (Svalinn) で数える。typeLine はベースの名前 (Crucible Tower Shield) なので、
+  // 同じベースの別のユニーク (指輪など) が 1 つにまとまっていた
+  const nameEn = (typeof data.name === "string" && data.name) || data.typeLine;
   if (!nameEn || typeof nameEn !== "string") return;
 
   let representative: UniqueRepresentative | null = null;

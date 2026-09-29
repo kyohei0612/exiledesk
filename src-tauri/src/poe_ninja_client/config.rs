@@ -37,19 +37,10 @@ pub(crate) const USER_AGENT: &str = "ExileDesk/0.1.4 (POE2 craft discovery; cont
 /// GGG より緩い説があり、まず試す。510 req × 2.5秒 = 21 分。
 pub(crate) const MIN_REQUEST_INTERVAL_MS: u64 = 2500;
 
-/// キャラ並列 fetch の上限 (Semaphore のキャパシティ)。
-/// 2026-05-23 第2回: 2→1 に減らして完全シリアル送信、burst ゼロ。
-/// 同時に複数 in-flight しないので Cloudflare の short window 集中検出を
-/// 確実に回避できる。
-/// 2026-05-23 ON/OFF サイクル: 1→4 に復活 (ON 期間 15 秒だけ並列 4、その後 10 秒休止)。
-/// 累積 req/sec は 75 req / 25 秒 = 3.0 req/sec で、シリアル 500ms の 2.0 req/sec
-/// より一見高いが、10 秒の完全休止が token bucket をリセットさせる狙い。
-/// 2026-05-23 第3回: ON 中の burst で 1015 食らうため 4→1 に戻す。
-/// 完全シリアル + 500ms 間隔 = 2 req/sec で安定動作を狙う。
-pub(crate) const CONCURRENT_FETCH_LIMIT: usize = 1;
+/// キャラの取得は 1 人ずつ (2026-05-23 に並列で 1015 を食らって 1 に。2026-09-29 に並列の仕組みごと外した)
 
 /// ON/OFF サイクル: ON 期間の長さ (ms)。
-/// この期間内は MIN_REQUEST_INTERVAL_MS 間隔で並列 CONCURRENT_FETCH_LIMIT 件まで送信。
+/// この期間内は MIN_REQUEST_INTERVAL_MS 間隔で1 件ずつ送信。
 /// 15 秒間 × 200ms 間隔 = 最大 75 req/サイクル。
 pub(crate) const ON_PERIOD_MS: u64 = 15_000;
 
@@ -82,7 +73,8 @@ pub(crate) const MAX_RETRIES: usize = 8;
 /// 16 分以上ハングする問題への対策。これを超えたらそのアセは諦めて次へ進む。
 /// 5 分 = 50 キャラ × 並列度 4 = 平均 12.5 並列 batch、各 batch ~3-5 秒として
 /// 通常 1-3 分、429 backoff 込でも 5 分以内に収まる想定。
-pub(crate) const ASCENDANCY_TIMEOUT_SECS: u64 = 300;
+/// 2026-09-29: ビルド 3 つ × 10 人 + スキルで絞った search 3 回で 1 人ずつ取るので 10 分に
+pub(crate) const ASCENDANCY_TIMEOUT_SECS: u64 = 600;
 
 /// 2026-05-23 緊急修正: オーナー指示で意図的に除外する inventoryId 群。
 /// `is_target_inventory_id` で reject されるが「未知警告」(record_unknown_inventory_id)

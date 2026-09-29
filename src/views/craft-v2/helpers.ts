@@ -29,10 +29,10 @@ export const SLOT_TABS: readonly SlotTab[] = [
 ];
 
 /**
- * ニッチ MOD の閾値: 50 人母集団なら 6 人以上 (12%以上) を「主流」とみなし、
- * 採用者 5 人以下 (= 10% 以下) はデフォルト非表示 (クリックで展開)。
+ * ニッチ MOD の閾値 (この人数未満はデフォルト非表示、クリックで展開)。母集団の 1 割を超える人数から「主流」。
+ * 50 人なら 6 人 (前の固定値と同じ)、全体 30 人なら 4 人、1 ビルド 10 人なら 2 人 (2026-09-29 ビルド別に)
  */
-export const LOW_COUNT_THRESHOLD = 6;
+export const lowThresholdFor = (sampleSize: number): number => Math.max(2, Math.floor(sampleSize * 0.1) + 1);
 
 /** 進捗率の分母 (想定アセンダンシー数) */
 export const TARGET_ASCENDANCY_COUNT = 10;

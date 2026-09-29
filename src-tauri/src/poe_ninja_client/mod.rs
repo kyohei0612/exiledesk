@@ -41,17 +41,17 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use reqwest::{header::HeaderMap, Client, StatusCode};
 use serde::Serialize;
 use tauri::Emitter;
-use tokio::sync::{Mutex, Semaphore};
-use tokio::task::JoinSet;
+use tokio::sync::Mutex;
 use tokio::time::{sleep, sleep_until, Instant};
 
 use crate::craft_v2_storage::{
-    CachedAscendancy, CachedCharacter, CachedGem, CachedRareItem, CachedSkillGroup, CachedUniqueItem, CraftV2Cache, GemUsageCount,
+    CachedAscendancy, CachedBuild, CachedCharacter, CachedGem, CachedRareItem, CachedSkillGroup, CachedUniqueItem, CraftV2Cache, GemUsageCount,
     SkillUsageStats,
 };
 
 mod ascendancy_fetch;
 mod build_copy;
+mod builds;
 mod cache_convert;
 mod config;
 mod economy;
@@ -72,6 +72,7 @@ mod tests;
 // 子モジュール (`use super::*`) へ見える。
 pub(crate) use ascendancy_fetch::*;
 pub use build_copy::*;
+pub(crate) use builds::*;
 pub(crate) use cache_convert::*;
 pub(crate) use config::*;
 pub use economy::*;

@@ -15,18 +15,6 @@ fn resolve_prev_by_class(prev_cache: Option<&CraftV2Cache>, snapshot: &SnapshotM
     }
 }
 
-/// アセ単位タイムアウト発火時: spawn 済み character タスクを明示的に abort し、
-/// cancel 完了 (= permit / guard drop) まで join_next で消費する (Rust-H6)。
-/// abort 済みタスクは即 JoinError::is_cancelled() で返るのでブロックしない。
-async fn abort_pending_tasks(slot: &JoinSetSlot) {
-    let slot = slot.lock().await;
-    if let Some(set_arc) = slot.as_ref() {
-        let mut set_guard = set_arc.lock().await;
-        set_guard.abort_all();
-        while set_guard.join_next().await.is_some() {}
-    }
-}
-
 /// アセ完了時の累計リクエスト集計 (Cloudflare 1015 閾値実測用)。
 fn log_ascendancy_done(class: &str) {
     let total_reqs = REQ_COUNTER.load(Ordering::Relaxed);
@@ -65,10 +53,13 @@ fn build_cache(snapshot: &SnapshotMeta, ascendancies: Vec<CachedAscendancy>) -> 
 pub async fn craft_v2_fetch_all(
     window: tauri::Window,
     top_n_ascendancies: usize,
-    top_n_per_ascendancy: usize,
+    // 2026-09-29: 人数はビルド 3 つ × 10 人 (builds.rs) に決まったので使わない。古い画面からの呼び出しのために受けるだけ
+    #[allow(unused_variables)] top_n_per_ascendancy: usize,
     prev_cache: Option<CraftV2Cache>,
     // Phase ξ: 取得対象リーグの url (例: "vaal" / "hcvaal" / "standard")。None なら economyLeagues[0]。
     league_url: Option<String>,
+    // 2026-09-29: トリガーのメタジェムの名前 (メインスキルは中のスキルを採る)。クライアントのジェム表 (gems-client.json の kind = meta)
+    meta_gems: Option<Vec<String>>,
 ) -> Result<CraftV2FetchResult, String> {
     let client = Arc::new(build_client()?);
     // poe.ninja 宛は 1 本のゲートを共有する (使用率ランキングと同時に走っても間隔が半分にならない)
@@ -86,8 +77,7 @@ pub async fn craft_v2_fetch_all(
     let prev_by_class = resolve_prev_by_class(prev_cache.as_ref(), &snapshot);
     let differential_mode = !prev_by_class.is_empty();
 
-    // character 並列度 (Phase θ で 8→6→4→1 に段階緩和済み)
-    let semaphore = Arc::new(Semaphore::new(CONCURRENT_FETCH_LIMIT));
+    let meta_gems: Arc<std::collections::HashSet<String>> = Arc::new(meta_gems.unwrap_or_default().into_iter().collect());
     let mut new_ascendancies: Vec<CachedAscendancy> = Vec::with_capacity(top_ascendancies.len());
 
     for asc in &top_ascendancies {
@@ -100,24 +90,20 @@ pub async fn craft_v2_fetch_all(
             break;
         }
 
-        let join_set_slot: JoinSetSlot = Arc::new(Mutex::new(None));
         let ctx = AscFetchCtx {
             client: Arc::clone(&client),
             gate: gate.clone(),
-            semaphore: Arc::clone(&semaphore),
             snapshot: snapshot.clone(),
             window: window.clone(),
-            top_n_per_ascendancy,
             differential_mode,
             prev_asc: prev_by_class.get(&asc.class).cloned(),
-            join_set_slot: Arc::clone(&join_set_slot),
+            meta_gems: Arc::clone(&meta_gems),
         };
         let timeout_dur = Duration::from_secs(ASCENDANCY_TIMEOUT_SECS);
         let maybe_ascendancy = match tokio::time::timeout(timeout_dur, fetch_one_ascendancy(ctx, asc.clone())).await {
             Ok(opt) => opt, // 正常完了 (Some=結果あり / None=空 or search 失敗)
             Err(_elapsed) => {
-                // タイムアウト: そのアセは諦めて次へ (部分結果も破棄)。次アセは確実に 0 並列スタート。
-                abort_pending_tasks(&join_set_slot).await;
+                // タイムアウト: そのアセは諦めて次へ (部分結果も破棄)。取得は future ごと落ちている
                 let active_after_abort = ACTIVE_FETCH_COUNT.load(Ordering::Relaxed);
                 emit_error(
                     &window,

@@ -77,6 +77,8 @@ pub struct CraftV2Progress {
     pub items: Vec<CharacterItems>,
     /// 2026-09-14: poe.ninja のスキル使用率 (そのクラスの全キャラ)。辞書が取れなかった時は None
     pub skill_stats: Option<SkillUsageStats>,
+    /// 2026-09-29: ここまでに組めたビルド (メインスキルごとの DPS 上位)。TS はこのキャラで集計を組み直す
+    pub builds: Vec<CachedBuild>,
 }
 
 /// per-character 単位の進捗イベント payload (Tauri emit 用、2026-05-23 追加)。

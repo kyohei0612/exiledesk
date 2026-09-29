@@ -229,6 +229,17 @@ export interface NinjaSkillStats {
   all: NinjaSkillStat[];
 }
 
+/** DPS 順のビルド 1 つ (同じメインスキルの上位 10 人) と、その人たちだけの集計 */
+export interface BuildView {
+  skillEn: string;
+  skillJa: string;
+  /** 一番上の人の DPS。トリガーで数えられない時は null */
+  topDps: number | null;
+  members: Array<{ account: string; name: string }>;
+  /** この人たちだけの MOD / ベース / ユニーク / スキル (全体と同じ集計を通した物) */
+  agg: AggregatedAscendancy;
+}
+
 export interface AggregatedAscendancy {
   /** id: `class` 英語表記を kebab-case 化したもの (UI key 用) */
   id: string;
@@ -265,4 +276,6 @@ export interface AggregatedAscendancy {
     done: number;
     total: number;
   };
+  /** 2026-09-29: DPS 順のビルド (最大 3 つ)。旧キャッシュ・取得前は無い。全体 (このオブジェクト自身) はビルドの人の合計 */
+  builds?: BuildView[];
 }

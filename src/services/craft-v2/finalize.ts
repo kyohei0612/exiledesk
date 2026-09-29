@@ -8,6 +8,9 @@
 
 import type {
   AggregatedAscendancy,
+  BuildView,
+  CachedBuildRaw,
+  SkillUsageStatsRaw,
   CachedAscendancy,
   CachedCharacter,
   CharacterItems,
@@ -17,6 +20,7 @@ import type {
 import { emptyAscendancyCounter, ingestCharacterItems } from "./ingest";
 import { isMetaGem } from "./finalize/gems";
 import { finalizeAscendancy } from "./finalize/ascendancy";
+import { jaSkill } from "../../i18n/skills-ja";
 
 export { usageTierFromValues } from "./finalize/mods";
 
@@ -24,13 +28,54 @@ export { usageTierFromValues } from "./finalize/mods";
 // 集計の入口: progress payload / ディスクキャッシュ
 // ============================================================================
 
+/** キャラの集まり 1 つを集計する (全体・ビルドごと、どちらもこれ 1 本) */
+function aggregateOf(
+  classEn: string,
+  percentage: number,
+  chars: readonly CharacterItems[],
+  progress: { done: number; total: number },
+  skillStats: SkillUsageStatsRaw | null | undefined,
+): AggregatedAscendancy {
+  const counter = emptyAscendancyCounter();
+  for (const ci of chars) ingestCharacterItems(counter, ci, isMetaGem);
+  return finalizeAscendancy(classEn, percentage, chars.length, counter, undefined, progress, skillStats);
+}
+
+/** トリガーのメタジェム (Cast on Block 等) の DPS は数えられない値 (i32 の上限) で届く */
+const UNCOUNTABLE_DPS = 2147483647;
+
+/**
+ * 全体 + ビルドごとの集計。ビルド (Rust の builds.rs が DPS 順に組んだ物) があれば、全体はビルドの人の合計、
+ * 無ければ (旧キャッシュ・スキルが取れない) 全員を 1 つとして見る
+ */
+function aggregateWithBuilds(
+  classEn: string,
+  percentage: number,
+  chars: readonly CharacterItems[],
+  builds: readonly CachedBuildRaw[] | undefined,
+  progress: { done: number; total: number },
+  skillStats: SkillUsageStatsRaw | null | undefined,
+): AggregatedAscendancy {
+  if (!builds?.length) return aggregateOf(classEn, percentage, chars, progress, skillStats);
+  const byKey = new Map<string, CharacterItems>(chars.map((c) => [`${c.account}|${c.name}`, c]));
+  const pick = (keys: readonly string[]): CharacterItems[] => keys.flatMap((k) => byKey.get(k) ?? []);
+  const all = aggregateOf(classEn, percentage, pick(builds.flatMap((b) => b.members)), progress, skillStats);
+  all.builds = builds.map((b): BuildView => {
+    const members = pick(b.members);
+    return {
+      skillEn: b.skill,
+      skillJa: jaSkill(b.skill),
+      topDps: b.top_dps > 0 && b.top_dps < UNCOUNTABLE_DPS ? b.top_dps : null,
+      members: members.map((c) => ({ account: c.account, name: c.name })),
+      agg: aggregateOf(classEn, percentage, members, { done: members.length, total: members.length }, skillStats),
+    };
+  });
+  return all;
+}
+
 /** Rust から届いた 1 アセンダンシー分の progress payload を集計して返す。 */
 export function aggregateFromProgress(payload: CraftV2Progress): AggregatedAscendancy {
-  const counter = emptyAscendancyCounter();
-  for (const ci of payload.items) {
-    ingestCharacterItems(counter, ci, isMetaGem);
-  }
-  return finalizeAscendancy(payload.ascendancy, payload.percentage, payload.characters_done, counter, undefined, {
+  return aggregateWithBuilds(payload.ascendancy, payload.percentage, payload.items, payload.builds, {
     done: payload.characters_done,
     total: payload.characters_total,
   }, payload.skill_stats);
@@ -105,16 +150,10 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
  * fetchProgress は `{ done: 件数, total: 件数 }` (= 取得済み) を入れる。取得が始まれば progress で置換される。
  */
 function aggregateFromCachedAscendancy(cached: CachedAscendancy): AggregatedAscendancy {
-  const counter = emptyAscendancyCounter();
-  for (const c of cached.characters) {
-    ingestCharacterItems(counter, cachedCharacterToCharacterItems(c), isMetaGem);
-  }
-  const cachedCount = cached.characters.length;
+  const chars = cached.characters.map(cachedCharacterToCharacterItems);
+  const count = cached.builds?.length ? cached.builds.reduce((a, b) => a + b.members.length, 0) : chars.length;
   // 2026-09-16: キャッシュのキャラは取得済み。done=0 だとタブに "0/50" が残り、取得済アセンダンシー数も 0 になる
-  return finalizeAscendancy(cached.class, cached.percentage, cachedCount, counter, undefined, {
-    done: cachedCount,
-    total: cachedCount > 0 ? cachedCount : 1,
-  }, cached.skill_stats);
+  return aggregateWithBuilds(cached.class, cached.percentage, chars, cached.builds, { done: count, total: count > 0 ? count : 1 }, cached.skill_stats);
 }
 
 /** キャッシュ全体から AggregatedAscendancy[] を構築 (使用率降順)。 */

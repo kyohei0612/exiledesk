@@ -15,6 +15,8 @@ const props = defineProps<{
   total: number;
   /** 折りたたまれている低カウント MOD 数 (もっと見るボタン) */
   lowCount: number;
+  /** 折りたたむ人数 (この人数以下) */
+  lowLimit: number;
   selectedCount: number;
   isSelected: (mod: ModEntry) => boolean;
   isDisabled: (mod: ModEntry) => boolean;
@@ -97,7 +99,7 @@ const badge = computed(() =>
             @click.stop="showLowCount = !showLowCount"
             class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
           >
-            {{ showLowCount ? `▲ 5 人以下を隠す` : `▼ もっと見る (5 人以下 ${lowCount} 件)` }}
+            {{ showLowCount ? `▲ ${lowLimit} 人以下を隠す` : `▼ もっと見る (${lowLimit} 人以下 ${lowCount} 件)` }}
           </button>
         </li>
       </ul>

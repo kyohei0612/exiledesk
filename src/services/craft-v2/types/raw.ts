@@ -32,6 +32,18 @@ export interface CraftV2Progress {
   items: CharacterItems[];
   /** 2026-09-14: poe.ninja のスキル使用率 (そのクラスの全キャラ)。辞書が取れなかった時は null */
   skill_stats?: SkillUsageStatsRaw | null;
+  /** 2026-09-29: ここまでに組めたビルド (メインスキルごとの DPS 上位)。組み分けは Rust の builds.rs */
+  builds?: CachedBuildRaw[];
+}
+
+/** ビルド 1 つ = 同じメインスキルの DPS 上位 10 人 (Rust の CachedBuild) */
+export interface CachedBuildRaw {
+  /** メインスキルの英語名 */
+  skill: string;
+  /** "account|name"、DPS 順 */
+  members: string[];
+  /** 一番上の人の DPS (トリガーのメタジェムは 2147483647 = 数えられない) */
+  top_dps: number;
 }
 
 export interface CraftV2ErrorPayload {
@@ -142,6 +154,8 @@ export interface CachedAscendancy {
   characters: CachedCharacter[];
   /** 2026-09-14: poe.ninja のスキル使用率。旧キャッシュには無い */
   skill_stats?: SkillUsageStatsRaw | null;
+  /** 2026-09-29: DPS 順のビルド 3 つ。旧キャッシュには無い (空 = 全員を 1 つとして見る) */
+  builds?: CachedBuildRaw[];
 }
 
 export interface CraftV2Cache {

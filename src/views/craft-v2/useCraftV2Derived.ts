@@ -15,7 +15,7 @@ import type {
   UniqueUsage,
 } from "../../services/craft-v2/types";
 import { craftV2Store, nowMs } from "../../state/craft-v2-store";
-import { LOW_COUNT_THRESHOLD, SLOT_TABS, TARGET_ASCENDANCY_COUNT } from "./helpers";
+import { lowThresholdFor, SLOT_TABS, TARGET_ASCENDANCY_COUNT } from "./helpers";
 
 export function useCraftV2Derived() {
   const ascendancies = computed(() => craftV2Store.ascendancies);
@@ -26,10 +26,20 @@ export function useCraftV2Derived() {
   /** 「スキル」タブ (装備スロットの代わりに主流スキルを出す)。2026-09-12 */
   const skillsTab = ref(false);
 
-  const activeAscendancy = computed<AggregatedAscendancy | null>(() => {
+  /** 選択中のアセンダンシー (ビルドを選んでいても、アセンダンシー全体) */
+  const ascendancy = computed<AggregatedAscendancy | null>(() => {
     if (ascendancies.value.length === 0) return null;
     return ascendancies.value.find((a) => a.id === activeAscendancyId.value) ?? ascendancies.value[0];
   });
+  /** DPS 順のビルド (-1 = 全体)。2026-09-29 */
+  const activeBuild = ref<number>(-1);
+  watch(activeAscendancyId, () => {
+    activeBuild.value = -1;
+  });
+  /** 表示に使う集計 = 選んだビルドの人だけ (全体なら 3 ビルドの合計) */
+  const activeAscendancy = computed<AggregatedAscendancy | null>(
+    () => ascendancy.value?.builds?.[activeBuild.value]?.agg ?? ascendancy.value,
+  );
 
   // 未選択 (空文字) かつ初到着のタイミングだけ最初の id を選ぶ
   watch(
@@ -67,7 +77,7 @@ export function useCraftV2Derived() {
   const activeNinjaSkills = computed(() => activeAscendancy.value?.ninjaSkills ?? null);
 
   // ---- 低カウント折りたたみ (アセンダンシー × スロット 別に独立した state) ----
-  const expandKey = computed<string>(() => `${activeAscendancyId.value}::${activeSlot.value}`);
+  const expandKey = computed<string>(() => `${activeAscendancyId.value}::${activeBuild.value}::${activeSlot.value}`);
   const showLowCountByKey = ref<Record<string, boolean>>({});
   const showLowCount = computed<boolean>({
     get: () => showLowCountByKey.value[expandKey.value] ?? false,
@@ -88,9 +98,11 @@ export function useCraftV2Derived() {
   const sortedSuffix = computed<ModEntry[]>(() => [...activeSlotMods.value.suffix].sort((a, b) => b.count - a.count));
   const sortedBases = computed<BaseEntry[]>(() => [...activeSlotMods.value.bases].sort((a, b) => b.count - a.count));
 
+  /** この人数未満は折りたたむ (母集団の大きさで変わる) */
+  const lowThreshold = computed<number>(() => lowThresholdFor(activeAscendancy.value?.sampleSize ?? 0));
   const visible = <T extends { count: number }>(list: T[], show: boolean): T[] =>
-    show ? list : list.filter((m) => m.count >= LOW_COUNT_THRESHOLD);
-  const lowCount = (list: Array<{ count: number }>): number => list.filter((m) => m.count < LOW_COUNT_THRESHOLD).length;
+    show ? list : list.filter((m) => m.count >= lowThreshold.value);
+  const lowCount = (list: Array<{ count: number }>): number => list.filter((m) => m.count < lowThreshold.value).length;
 
   const visiblePrefix = computed(() => visible(sortedPrefix.value, showLowCount.value));
   const visibleSuffix = computed(() => visible(sortedSuffix.value, showLowCount.value));
@@ -105,12 +117,8 @@ export function useCraftV2Derived() {
    * ベースセクションを描画するスロット (オーナー指示: アミュレット / 指輪 のみ)。
    * 2026-09-12: スキルを付与するベース (王笏など) が集計に出ているスロットでも描画する。
    */
-  const showBaseSection = computed<boolean>(
-    () =>
-      activeSlot.value === "ring" ||
-      activeSlot.value === "amulet" ||
-      sortedBases.value.some((b) => (b.skills?.length ?? 0) > 0),
-  );
+  // 2026-09-29: 全部の部位で出す (ベースの絵が付いたので、防具・武器もどのベースか一目で分かる)
+  const showBaseSection = computed<boolean>(() => sortedBases.value.length > 0);
 
   /**
    * レアに表示すべき MOD が無いスロット (prefix / suffix とも 0 件、折りたたみ状態) で、
@@ -119,7 +127,7 @@ export function useCraftV2Derived() {
   const isMostlyUniqueSlot = computed<boolean>(() => {
     if (showLowCount.value) return false;
     const topCount = activeUniques.value[0]?.count ?? 0;
-    return visiblePrefix.value.length === 0 && visibleSuffix.value.length === 0 && topCount >= LOW_COUNT_THRESHOLD;
+    return visiblePrefix.value.length === 0 && visibleSuffix.value.length === 0 && topCount >= lowThreshold.value;
   });
   const topUniqueCount = computed<number>(() => activeUniques.value[0]?.count ?? 0);
   const topUniqueName = computed<string>(
@@ -176,6 +184,9 @@ export function useCraftV2Derived() {
     activeAscendancyId,
     activeSlot,
     activeAscendancy,
+    ascendancy,
+    activeBuild,
+    lowThreshold,
     sortedAscendancies,
     activeSlotMods,
     activeUniques,

@@ -26,6 +26,7 @@ import type {
 } from "./types";
 import { loadCraftV2Cache, saveCraftV2Cache } from "./cache";
 import { aggregateFromCache, aggregateFromProgress } from "./finalize";
+import { GEM_INFO } from "./finalize/gems";
 
 /**
  * 起動時 / 設定 UI から呼ばれ、poe.ninja の現リーグ一覧を返す。
@@ -134,6 +135,8 @@ export async function startCraftDiscoveryV2(
     topNPerAscendancy,
     prevCache,
     leagueUrl: leagueUrl ?? null,
+    // 2026-09-29: メインスキルを決める時に外すトリガーのメタジェム (Cast on Block 等)。表はクライアントのジェム表 1 つ
+    metaGems: [...GEM_INFO].filter(([, g]) => g.meta).map(([en]) => en),
   }).catch((err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
     onFatal?.(`craft_v2_fetch_all 失敗: ${msg}`);

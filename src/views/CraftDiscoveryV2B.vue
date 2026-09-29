@@ -2,6 +2,8 @@
   CraftDiscoveryV2B.vue — 上位プレイヤーMOD一覧 (poe.ninja 連携)
   ---------------------------------------------------------------------------
   2026-09-07 リファクタ: 1,881 行あった画面を分割した。この画面は配線とレイアウトだけ持つ。
+  2026-09-29 作り直し: アセンダンシー → DPS 順のビルド 3 つ (BuildTabs、各 10 人) → 部位の絵のマス (GearGrid) → MOD 一覧。
+    集計は全体もビルドも同じ関数 (services/craft-v2/finalize.ts の aggregateOf)。
     views/craft-v2/useCraftV2Derived.ts   選択中アセ / スロットと表示用の派生状態
     views/craft-v2/useModSelection.ts     MOD チェック選択・ティア・trade2 一括検索
     views/craft-v2/useUniqueHover.ts      ユニークのホバー / クリック検索
@@ -15,6 +17,8 @@ import UniqueTooltip from "../components/decor/UniqueTooltip.vue";
 import CraftV2Header from "../components/craft-v2/CraftV2Header.vue";
 import WarnHistoryPanel from "../components/craft-v2/WarnHistoryPanel.vue";
 import AscendancyTabs from "../components/craft-v2/AscendancyTabs.vue";
+import BuildTabs from "../components/craft-v2/BuildTabs.vue";
+import GearGrid from "../components/craft-v2/GearGrid.vue";
 import ModSearchBar from "../components/craft-v2/ModSearchBar.vue";
 import ModListCard from "../components/craft-v2/ModListCard.vue";
 import BaseListCard from "../components/craft-v2/BaseListCard.vue";
@@ -41,7 +45,8 @@ const hover = useUniqueHover({
   leagueName,
 });
 
-const sampleSize = computed<number | null>(() => d.activeAscendancy.value?.sampleSize ?? null);
+/** 折りたたむ人数 (この人数以下)。カードの「N 人以下」の表示 */
+const lowLimit = computed<number>(() => d.lowThreshold.value - 1);
 
 // 起動時に App.vue が呼んでいるので、ここでは念のため再度呼ぶ (冪等ガード済 = no-op)
 onMounted(() => {
@@ -52,9 +57,6 @@ onMounted(() => {
 <template>
   <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
     <CraftV2Header
-      v-model:active-slot="d.activeSlot.value"
-      v-model:skills-tab="d.skillsTab.value"
-      :sample-size="sampleSize"
       :phase-elapsed-secs="d.phaseElapsedSecs.value"
       :progress-fraction="d.progressFraction.value"
       :overall-progress-percent="d.overallProgressPercent.value"
@@ -65,6 +67,9 @@ onMounted(() => {
     <WarnHistoryPanel @retry="refreshCraftV2" />
 
     <AscendancyTabs v-model:active-ascendancy-id="d.activeAscendancyId.value" :sorted-ascendancies="d.sortedAscendancies.value" />
+
+    <BuildTabs v-if="d.ascendancy.value" v-model="d.activeBuild.value" :asc="d.ascendancy.value" :league-url="store.snapshot?.league_url ?? null" />
+    <GearGrid v-if="d.activeAscendancy.value" v-model:active-slot="d.activeSlot.value" v-model:skills-tab="d.skillsTab.value" :agg="d.activeAscendancy.value" />
 
     <ModSearchBar
       v-if="store.ascendancies.length > 0"
@@ -125,6 +130,7 @@ onMounted(() => {
           :mods="d.visiblePrefix.value"
           :total="d.sortedPrefix.value.length"
           :low-count="d.totalLowPrefixCount.value"
+          :low-limit="lowLimit"
           :selected-count="sel.selectedMods.value.size"
           :is-selected="sel.isModSelected"
           :is-disabled="sel.isModCheckDisabled"
@@ -140,6 +146,7 @@ onMounted(() => {
           :mods="d.visibleSuffix.value"
           :total="d.sortedSuffix.value.length"
           :low-count="d.totalLowSuffixCount.value"
+          :low-limit="lowLimit"
           :selected-count="sel.selectedMods.value.size"
           :is-selected="sel.isModSelected"
           :is-disabled="sel.isModCheckDisabled"
@@ -155,6 +162,7 @@ onMounted(() => {
           :bases="d.visibleBases.value"
           :total="d.sortedBases.value.length"
           :low-count="d.totalLowBasesCount.value"
+          :low-limit="lowLimit"
           :slot-label="d.activeSlotLabel.value"
           :pct="d.pct"
           :order-class="d.isMostlyUniqueSlot.value ? 'order-4' : 'order-3'"
@@ -164,6 +172,7 @@ onMounted(() => {
           :uniques="d.visibleUniques.value"
           :total="d.activeUniques.value.length"
           :low-count="d.totalLowUniquesCount.value"
+          :low-limit="lowLimit"
           :slot-label="d.activeSlotLabel.value"
           :is-mostly-unique-slot="d.isMostlyUniqueSlot.value"
           :top-unique-count="d.topUniqueCount.value"
@@ -182,7 +191,7 @@ onMounted(() => {
         v-if="d.activeAscendancy.value"
         class="mt-4 pt-3 border-t border-[var(--exile-color-border-subtle)] text-[11px] text-[var(--exile-color-text-tertiary)] flex items-center gap-4 flex-wrap"
       >
-        <span>サンプル: 上位 {{ d.activeAscendancy.value.sampleSize }} 人 (使用率 {{ d.activeAscendancy.value.usagePercent.toFixed(1) }}%)</span>
+        <span>サンプル: {{ d.activeBuild.value >= 0 ? "このビルドの DPS 上位" : "DPS 上位" }} {{ d.activeAscendancy.value.sampleSize }} 人 (アセンダンシー使用率 {{ d.activeAscendancy.value.usagePercent.toFixed(1) }}%)</span>
         <span class="inline-flex items-center gap-1">
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#9B7BCC]/25 text-[#C7A7E5] ring-1 ring-[#9B7BCC]/50">P</span>
           = プレフィックス

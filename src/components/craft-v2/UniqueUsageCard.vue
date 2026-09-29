@@ -5,12 +5,15 @@
 <script setup lang="ts">
 import BaseCard from "../decor/BaseCard.vue";
 import type { UniqueUsage } from "../../services/craft-v2/types";
+import { uniqueArt } from "../../services/assets/unique-art";
 
 defineProps<{
   /** 表示するユニーク (低カウント折りたたみ適用後) */
   uniques: UniqueUsage[];
   total: number;
   lowCount: number;
+  /** 折りたたむ人数 (この人数以下) */
+  lowLimit: number;
   slotLabel: string;
   /** レアに表示すべき MOD が無いスロット = ユニーク優位 (バッジ + 最上段) */
   isMostlyUniqueSlot: boolean;
@@ -58,14 +61,15 @@ const emit = defineEmits<{
           @mouseleave="emit('leave')"
           @click="emit('select', u)"
         >
-          <img v-if="u.icon" :src="u.icon" :alt="u.nameEn" class="w-6 h-6 object-contain shrink-0" referrerpolicy="no-referrer" />
+          <!-- 2026-09-29: ゲーム内の絵 (画像パック)。無ければ poe.ninja のアイコン -->
+          <img v-if="uniqueArt(u.nameEn) || u.icon" :src="uniqueArt(u.nameEn) || u.icon" :alt="u.nameEn" class="w-10 h-10 object-contain shrink-0 rounded bg-black/30" loading="lazy" referrerpolicy="no-referrer" />
           <span
             v-else
             class="shrink-0 inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold leading-none bg-[#D6B98A]/25 text-[#E8D2A4] ring-1 ring-[#D6B98A]/50"
             aria-hidden="true"
             >U</span
           >
-          <span class="truncate text-[13px] text-[var(--exile-color-accent-focus)]">{{ u.name }}</span>
+          <span class="truncate text-[13px] text-rarity-unique">{{ u.name }}</span>
           <span class="shrink-0 tabular-nums text-[12px] text-[var(--exile-color-text-secondary)] group-hover:text-[var(--exile-color-accent-focus)]">
             {{ u.count }}人
             <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">({{ Math.round(u.percentage * 100) }}%)</span>
@@ -78,7 +82,7 @@ const emit = defineEmits<{
             @click.stop="showLowCount = !showLowCount"
             class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
           >
-            {{ showLowCount ? `▲ 5 人以下を隠す` : `▼ もっと見る (5 人以下 ${lowCount} 件)` }}
+            {{ showLowCount ? `▲ ${lowLimit} 人以下を隠す` : `▼ もっと見る (${lowLimit} 人以下 ${lowCount} 件)` }}
           </button>
         </li>
       </ul>

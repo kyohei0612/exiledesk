@@ -53,6 +53,20 @@ pub struct CachedAscendancy {
     /// 2026-09-14: poe.ninja が表示しているスキル使用率 (search の集計、そのクラスの全キャラ)。旧キャッシュには無い
     #[serde(default)]
     pub skill_stats: Option<SkillUsageStats>,
+    /// 2026-09-29: DPS 順のビルド (メインスキルごとに上位 10 人、3 つまで)。旧キャッシュには無い (空 = 全員を 1 つとして見る)
+    #[serde(default)]
+    pub builds: Vec<CachedBuild>,
+}
+
+/// ビルド 1 つ = 同じメインスキルの DPS 上位のキャラ (オーナー「DPS 順に並べて上位 10 人、そのスキルを外してまた DPS 順、を 3 回」)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct CachedBuild {
+    /// メインスキル (英語名。トリガーのメタジェムなら中のスキル)
+    pub skill: String,
+    /// キャラ ("account|name")、DPS 順
+    pub members: Vec<String>,
+    /// 一番上の人の DPS
+    pub top_dps: f64,
 }
 
 /// poe.ninja のスキル使用率 (search レスポンスの集計 dimension を辞書で名前にした物)。

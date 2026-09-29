@@ -3,6 +3,7 @@
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。人数ベース、人数降順。
 -->
 <script setup lang="ts">
+import { baseArt } from "../../services/craft-stage/base-art";
 import BaseCard from "../decor/BaseCard.vue";
 import type { BaseEntry } from "../../services/craft-v2/types";
 
@@ -10,6 +11,8 @@ defineProps<{
   bases: BaseEntry[];
   total: number;
   lowCount: number;
+  /** 折りたたむ人数 (この人数以下) */
+  lowLimit: number;
   slotLabel: string;
   pct: (count: number) => string;
   orderClass: string;
@@ -38,18 +41,17 @@ const showLowCount = defineModel<boolean>("showLowCount", { required: true });
           :key="'base-' + i + '-' + b.nameEn"
           class="group grid grid-cols-[auto_1fr_auto] items-center gap-3 py-1 px-1 -mx-1 rounded transition-colors hover:bg-[var(--exile-color-bg-elevated)]"
         >
-          <span
-            class="shrink-0 inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold leading-none bg-[#6AA0B8]/25 text-[#9CC9DA] ring-1 ring-[#6AA0B8]/50"
-            aria-label="ベース"
-            >B</span
-          >
-          <span class="truncate text-[13px]" :title="b.name">{{ b.name }}</span>
+          <!-- 2026-09-29: ベースの絵 (画像パック) -->
+          <span class="w-10 h-10 shrink-0 overflow-hidden rounded bg-black/30 p-0.5">
+            <img v-if="baseArt(b.nameEn)" :src="baseArt(b.nameEn)!" :alt="b.name" class="h-full w-full object-contain" loading="lazy" />
+          </span>
+          <span class="truncate text-[13px] text-rarity-rare" :title="b.name">{{ b.name }}</span>
           <span class="shrink-0 tabular-nums text-[12px] text-[var(--exile-color-text-secondary)] group-hover:text-[var(--exile-color-accent-focus)]">
             {{ b.count }}人
             <span class="text-[10px] text-[var(--exile-color-text-tertiary)]">({{ pct(b.count) }})</span>
           </span>
           <!-- 付与スキル (不在のアミュレット / 王笏など)。2026-09-12: ベースの中身が見えない問題への対応 -->
-          <ul v-if="b.skills && b.skills.length > 0" class="col-span-3 ml-7 mb-1 space-y-0.5">
+          <ul v-if="b.skills && b.skills.length > 0" class="col-span-3 ml-14 mb-1 space-y-0.5">
             <li v-for="s in b.skills" :key="'skill-' + b.nameEn + '-' + s.nameEn" class="text-[12px] leading-snug">
               <div class="flex items-baseline gap-2">
                 <span class="shrink-0 text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">付与</span>
@@ -75,7 +77,7 @@ const showLowCount = defineModel<boolean>("showLowCount", { required: true });
             @click.stop="showLowCount = !showLowCount"
             class="text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] underline tabular-nums"
           >
-            {{ showLowCount ? `▲ 5 人以下を隠す` : `▼ もっと見る (5 人以下 ${lowCount} 件)` }}
+            {{ showLowCount ? `▲ ${lowLimit} 人以下を隠す` : `▼ もっと見る (${lowLimit} 人以下 ${lowCount} 件)` }}
           </button>
         </li>
       </ul>

@@ -1,27 +1,20 @@
 <!--
   CraftV2Header.vue — MOD 一覧画面のヘッダー
   タイトル / リーグ選択 / 進捗・フェーズ・ネットワーク状態 / 全体プログレスバー /
-  スロットタブ / 更新・全取得ボタン。取得状態は craftV2Store を直接参照する。
+  更新・全取得ボタン (部位の切替は 2026-09-29 に GearGrid.vue の絵のマスへ)。取得状態は craftV2Store を直接参照する。
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
 -->
 <script setup lang="ts">
 import RefreshButton from "../RefreshButton.vue";
 import { computed } from "vue";
-import type { SlotKey } from "../../services/craft-v2/types";
 import { craftV2Store, refetchWithSelectedLeague } from "../../state/craft-v2-store";
-import { SLOT_TABS } from "../../views/craft-v2/helpers";
 import { resumeAtText, waitText } from "../../utils/wait-text";
 
 defineProps<{
-  /** 選択中アセンダンシーのサンプル人数 (null なら未表示) */
-  sampleSize: number | null;
   phaseElapsedSecs: number;
   progressFraction: string;
   overallProgressPercent: number;
 }>();
-const activeSlot = defineModel<SlotKey>("activeSlot", { required: true });
-/** 「スキル」タブ (2026-09-12)。装備タブを押すと外れる */
-const skillsTab = defineModel<boolean>("skillsTab", { default: false });
 const emit = defineEmits<{ refresh: []; forceRefetch: [] }>();
 const store = craftV2Store;
 /** レート制限 / 再試行の待ち中は「取得中」ではないので、フェーズ表示を待機表示に差し替える (オーナー指摘 2026-09-16) */
@@ -36,9 +29,7 @@ const waiting = computed(
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">
         上位プレイヤーMOD一覧
         <span class="text-[var(--exile-color-text-secondary)] text-sm"
-          >(poe.ninja 連携 / 上位 10 アセンダンシー<template v-if="sampleSize != null">
-            × 各 {{ sampleSize }} 人</template
-          >)</span
+          >(poe.ninja 連携 / 上位 10 アセンダンシー × DPS 上位 3 スキル × 10 人)</span
         >
       </h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
@@ -182,53 +173,6 @@ const waiting = computed(
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
-      <!-- 8 スロット横並びタブ -->
-      <div
-        class="flex flex-wrap max-w-full border border-[var(--exile-color-border-subtle)] rounded overflow-hidden text-[12px] font-bold"
-        role="tablist"
-        aria-label="スロット切替"
-      >
-        <button
-          v-for="(tab, idx) in SLOT_TABS"
-          :key="tab.key"
-          type="button"
-          role="tab"
-          :aria-selected="activeSlot === tab.key && !skillsTab"
-          @click="
-            activeSlot = tab.key;
-            skillsTab = false;
-          "
-          :class="[
-            'px-2.5 py-1.5 transition-colors inline-flex items-center gap-1 leading-none whitespace-nowrap',
-            idx > 0 ? 'border-l border-[var(--exile-color-border-subtle)]' : '',
-            activeSlot === tab.key && !skillsTab
-              ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
-              : 'text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
-          ]"
-          :title="tab.label"
-        >
-          <span aria-hidden="true">{{ tab.icon }}</span>
-          <span>{{ tab.label }}</span>
-        </button>
-        <!-- 2026-09-12: 主流スキル / スピリット / サポート (poe.ninja のスキルグループ) -->
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="skillsTab"
-          @click="skillsTab = true"
-          :class="[
-            'px-2.5 py-1.5 transition-colors inline-flex items-center gap-1 leading-none whitespace-nowrap border-l border-[var(--exile-color-border-subtle)]',
-            skillsTab
-              ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
-              : 'text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)]',
-          ]"
-          title="スキル"
-        >
-          <span aria-hidden="true">✦</span>
-          <span>スキル</span>
-        </button>
-      </div>
-
       <!-- 更新 (差分) / 全取得 (キャッシュ削除) -->
       <RefreshButton
         :label="store.loading ? '取得中…' : '更新'"
