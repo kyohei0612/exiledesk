@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/asset-packs.mjs && vue-tsc --noEmit && vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "tauri": "tauri",
     "lint:hex": "node scripts/lint-hex.mjs",
@@ -40,6 +41,7 @@
     "tailwindcss": "^4.2.4",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
+    "vitest": "^3.2.7",
     "vue-tsc": "^2.1.10"
   },
   "pnpm": {
