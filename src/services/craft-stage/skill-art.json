@@ -1,0 +1,9453 @@
+[
+ {
+  "id": "SkillGemIceNova",
+  "en": "Ice Nova",
+  "ja": "アイスノヴァ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Duration",
+   "Nova",
+   "Repeatable"
+  ],
+  "icon": "SkillGemIceNova_icon",
+  "gem": "SkillGemIceNova_gem"
+ },
+ {
+  "id": "SkillGemLeapSlam",
+  "en": "Leap Slam",
+  "ja": "リープスラム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Travel",
+   "Payoff"
+  ],
+  "icon": "SkillGemLeapSlam_icon",
+  "gem": "SkillGemLeapSlam_gem"
+ },
+ {
+  "id": "SkillGemMoltenCrash",
+  "en": "Molten Crash",
+  "ja": "モルテンクラッシュ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Travel"
+  ],
+  "icon": "SkillGemMoltenCrash_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemShieldCharge",
+  "en": "Shield Charge",
+  "ja": "シールドチャージ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Physical",
+   "Channelling",
+   "Travel"
+  ],
+  "icon": "SkillGemShieldCharge_icon",
+  "gem": "SkillGemShieldCharge_gem"
+ },
+ {
+  "id": "SkillGemDetonateDead",
+  "en": "Detonate Dead",
+  "ja": "デトネートデッド",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Fire",
+   "Detonator",
+   "Repeatable"
+  ],
+  "icon": "SkillGemDetonateDead_icon",
+  "gem": "SkillGemDetonateDead_gem"
+ },
+ {
+  "id": "SkillGemVolatileDead",
+  "en": "Volatile Dead",
+  "ja": "ボラタイルデッド",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Fire",
+   "Repeatable"
+  ],
+  "icon": "SkillGemVolatileDead_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemAddedFireDamageSupport",
+  "en": "Fire Attunement",
+  "ja": "ファイヤーアチューンメント",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": "SkillGemAddedFireDamageSupport_icon",
+  "gem": "SkillGemAddedFireDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidAttacksSupport",
+  "en": "Rapid Attacks I",
+  "ja": "アタックスピード増加 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidAttacksSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidAttacksSupportTwo",
+  "en": "Rapid Attacks II",
+  "ja": "アタックスピード増加 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidAttacksSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidAttacksSupportThree",
+  "en": "Rapid Attacks III",
+  "ja": "アタックスピード増加 III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidAttacksSupport_gem"
+ },
+ {
+  "id": "SkillGemMultishotSupport",
+  "en": "Multishot I",
+  "ja": "マルチショット I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemMultishotSupport_gem"
+ },
+ {
+  "id": "SkillGemMultishotSupportTwo",
+  "en": "Multishot II",
+  "ja": "マルチショット II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemMultishotSupport_gem"
+ },
+ {
+  "id": "SkillGemNovaProjectilesSupport",
+  "en": "Nova Projectiles I",
+  "ja": "ノヴァの投射物 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemNovaProjectilesSupport_gem"
+ },
+ {
+  "id": "SkillGemProjectileAccelerationSupport",
+  "en": "Projectile Acceleration I",
+  "ja": "投射物加速 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemProjectileAccelerationSupport_gem"
+ },
+ {
+  "id": "SkillGemProjectileAccelerationSupportTwo",
+  "en": "Projectile Acceleration II",
+  "ja": "投射物加速 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemProjectileAccelerationSupport_gem"
+ },
+ {
+  "id": "SkillGemProjectileAccelerationSupportThree",
+  "en": "Projectile Acceleration III",
+  "ja": "投射物加速 III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemProjectileAccelerationSupport_gem"
+ },
+ {
+  "id": "SkillGemAddedColdDamageSupport",
+  "en": "Cold Attunement",
+  "ja": "コールドアチューンメント",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemAddedColdDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemHeightenedAccuracySupport",
+  "en": "Heightened Accuracy I",
+  "ja": "命中ブースト I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemHeightenedAccuracySupport_gem"
+ },
+ {
+  "id": "SkillGemHeightenedAccuracySupportTwo",
+  "en": "Heightened Accuracy II",
+  "ja": "命中ブースト II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemHeightenedAccuracySupport_gem"
+ },
+ {
+  "id": "SkillGemMagnifiedAreaSupport",
+  "en": "Magnified Area I",
+  "ja": "効果範囲拡大 I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE"
+  ],
+  "icon": null,
+  "gem": "SkillGemMagnifiedAreaSupport_gem"
+ },
+ {
+  "id": "SkillGemMagnifiedAreaSupportTwo",
+  "en": "Magnified Area II",
+  "ja": "効果範囲拡大 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE"
+  ],
+  "icon": null,
+  "gem": "SkillGemMagnifiedAreaSupport_gem"
+ },
+ {
+  "id": "SkillGemAddedLightningDamageSupport",
+  "en": "Lightning Attunement",
+  "ja": "ライトニングアチューンメント",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemAddedLightningDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemRaiseZombie",
+  "en": "Raise Zombie",
+  "ja": "ゾンビ蘇生",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemRaiseZombie_icon",
+  "gem": "SkillGemRaiseZombie_gem"
+ },
+ {
+  "id": "SkillGemEfficiencySupport",
+  "en": "Efficiency I",
+  "ja": "コスト軽減 I",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemEfficiencySupport_gem"
+ },
+ {
+  "id": "SkillGemEfficiencySupportTwo",
+  "en": "Efficiency II",
+  "ja": "コスト軽減 II",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemEfficiencySupport_gem"
+ },
+ {
+  "id": "SkillGemIncreasedCriticalDamageSupport",
+  "en": "Supercritical",
+  "ja": "スーパークリティカル",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemIncreasedCriticalDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemKnockbackSupport",
+  "en": "Knockback",
+  "ja": "ノックバック",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemKnockbackSupport_gem"
+ },
+ {
+  "id": "SkillGemLifeLeechSupport",
+  "en": "Life Leech I",
+  "ja": "ライフリーチ I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemLifeLeechSupport_gem"
+ },
+ {
+  "id": "SkillGemLifeLeechSupportTwo",
+  "en": "Life Leech II",
+  "ja": "ライフリーチ II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemLifeLeechSupport_gem"
+ },
+ {
+  "id": "SkillGemLifeLeechSupportThree",
+  "en": "Life Leech III",
+  "ja": "ライフリーチ III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemLifeLeechSupport_gem"
+ },
+ {
+  "id": "SkillGemManaLeechSupport",
+  "en": "Mana Leech",
+  "ja": "マナリーチ",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": "SkillGemManaLeechSupport_icon",
+  "gem": "SkillGemManaLeechSupport_gem"
+ },
+ {
+  "id": "SkillGemAddedChaosDamageSupport",
+  "en": "Chaos Attunement",
+  "ja": "カオスアチューンメント",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemAddedChaosDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemFlickerStrike",
+  "en": "Flicker Strike",
+  "ja": "フリッカーストライク",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemFlickerStrike_icon",
+  "gem": "SkillGemFlickerStrike_gem"
+ },
+ {
+  "id": "SkillGemSpark",
+  "en": "Spark",
+  "ja": "スパーク",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSpark_icon",
+  "gem": "SkillGemSpark_gem"
+ },
+ {
+  "id": "SkillGemPierceSupport",
+  "en": "Pierce I",
+  "ja": "貫通 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemPierceSupport_gem"
+ },
+ {
+  "id": "SkillGemPierceSupportTwo",
+  "en": "Pierce II",
+  "ja": "貫通 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemPierceSupport_gem"
+ },
+ {
+  "id": "SkillGemPierceSupportThree",
+  "en": "Pierce III",
+  "ja": "貫通 III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemPierceSupport_gem"
+ },
+ {
+  "id": "SkillGemSummonSpectre",
+  "en": "Spectre: {0}",
+  "ja": "スペクター: {0}",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemSummonSpectre_icon",
+  "gem": "SkillGemSummonSpectre_gem"
+ },
+ {
+  "id": "SkillGemFrostWall",
+  "en": "Frost Wall",
+  "ja": "フロストウォール",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemFrostWall_icon",
+  "gem": "SkillGemFrostWall_gem"
+ },
+ {
+  "id": "SkillGemEnervatingNova",
+  "en": "Enervating Nova",
+  "ja": "エナヴェイティングノヴァ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning",
+   "Duration",
+   "Nova",
+   "Repeatable"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemMeleePhysicalDamageSupport",
+  "en": "Heavy Swing",
+  "ja": "ヘビースイング",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemMeleePhysicalDamageSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidCastingSupport",
+  "en": "Rapid Casting I",
+  "ja": "キャストスピード増加 I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidCastingSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidCastingSupportTwo",
+  "en": "Rapid Casting II",
+  "ja": "キャストスピード増加 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidCastingSupport_gem"
+ },
+ {
+  "id": "SkillGemRapidCastingSupportThree",
+  "en": "Rapid Casting III",
+  "ja": "キャストスピード増加 III",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemRapidCastingSupport_gem"
+ },
+ {
+  "id": "SkillGemTemporalChains",
+  "en": "Temporal Chains",
+  "ja": "テンポラルチェーン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Curse",
+   "Repeatable"
+  ],
+  "icon": "SkillGemTemporalChains_icon",
+  "gem": "SkillGemTemporalChains_gem"
+ },
+ {
+  "id": "SkillGemEnfeeble",
+  "en": "Enfeeble",
+  "ja": "エンフィーブル",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Curse",
+   "Repeatable"
+  ],
+  "icon": "SkillGemEnfeeble_icon",
+  "gem": "SkillGemEnfeeble_gem"
+ },
+ {
+  "id": "SkillGemSnipersMark",
+  "en": "Sniper's Mark",
+  "ja": "スナイパーの呪印",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Duration"
+  ],
+  "icon": "SkillGemSnipersMark_icon",
+  "gem": "SkillGemSnipersMark_gem"
+ },
+ {
+  "id": "SkillGemDespair",
+  "en": "Despair",
+  "ja": "ディスペア",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Chaos",
+   "Duration",
+   "Curse",
+   "Repeatable"
+  ],
+  "icon": "SkillGemDespair_icon",
+  "gem": "SkillGemDespair_gem"
+ },
+ {
+  "id": "SkillGemLightningWarp",
+  "en": "Lightning Warp",
+  "ja": "ライトニングワープ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning",
+   "Duration",
+   "Remnant",
+   "Repeatable"
+  ],
+  "icon": "SkillGemLightningWarp_icon",
+  "gem": "SkillGemLightningWarp_gem"
+ },
+ {
+  "id": "SkillGemVileDisruption",
+  "en": "His Vile Intrusion",
+  "ja": "ヒズヴァイルイントリュージョン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemVileDisruption_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemArmourBreaker",
+  "en": "Armour Breaker",
+  "ja": "アーマーブレイカー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical"
+  ],
+  "icon": "SkillGemArmourBreaker_icon",
+  "gem": "SkillGemArmourBreaker_gem"
+ },
+ {
+  "id": "SkillGemRainOfArrows",
+  "en": "Rain of Arrows",
+  "ja": "レインオブアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained"
+  ],
+  "icon": "SkillGemRainOfArrows_icon",
+  "gem": "SkillGemRainOfArrows_gem"
+ },
+ {
+  "id": "SkillGemConcentratedAreaSupport",
+  "en": "Concentrated Area",
+  "ja": "効果範囲集中",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE"
+  ],
+  "icon": null,
+  "gem": "SkillGemConcentratedAreaSupport_gem"
+ },
+ {
+  "id": "SkillGemBloodlustSupport",
+  "en": "Bloodlust",
+  "ja": "ブラッドラスト",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBloodlustSupport_gem"
+ },
+ {
+  "id": "SkillGemFirestorm",
+  "en": "Firestorm",
+  "ja": "ファイヤーストーム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Fire",
+   "Duration",
+   "Repeatable",
+   "Storm"
+  ],
+  "icon": "SkillGemFirestorm_icon",
+  "gem": "SkillGemFirestorm_gem"
+ },
+ {
+  "id": "SkillGemFallingThunder",
+  "en": "Falling Thunder",
+  "ja": "フォーリングサンダー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Projectile",
+   "Lightning"
+  ],
+  "icon": "SkillGemFallingThunder_icon",
+  "gem": "SkillGemFallingThunder_gem"
+ },
+ {
+  "id": "SkillGemPowerSiphon",
+  "en": "Power Siphon",
+  "ja": "パワーサイフォン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Physical"
+  ],
+  "icon": "SkillGemPowerSiphon_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemLightningArrow",
+  "en": "Lightning Arrow",
+  "ja": "ライトニングアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Chaining",
+   "Repeatable"
+  ],
+  "icon": "SkillGemLightningArrow_icon",
+  "gem": "SkillGemLightningArrow_gem"
+ },
+ {
+  "id": "SkillGemDiscipline",
+  "en": "Discipline",
+  "ja": "ディシプリン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura"
+  ],
+  "icon": "SkillGemDiscipline_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemShockwaveTotem",
+  "en": "Shockwave Totem",
+  "ja": "ショックウェーブトーテム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Totem",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration",
+   "Nova"
+  ],
+  "icon": "SkillGemShockwaveTotem_icon",
+  "gem": "SkillGemShockwaveTotem_gem"
+ },
+ {
+  "id": "SkillGemBlindSupport",
+  "en": "Blind I",
+  "ja": "盲目 I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBlindSupport_gem"
+ },
+ {
+  "id": "SkillGemBlindSupportTwo",
+  "en": "Blind II",
+  "ja": "盲目 II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBlindSupport_gem"
+ },
+ {
+  "id": "SkillGemValakosCharge",
+  "en": "Valako's Charge",
+  "ja": "ヴァラコチャージ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Chaining"
+  ],
+  "icon": "SkillGemValakosCharge_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemArc",
+  "en": "Arc",
+  "ja": "アーク",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Lightning",
+   "Chaining",
+   "Repeatable"
+  ],
+  "icon": "SkillGemArc_icon",
+  "gem": "SkillGemArc_gem"
+ },
+ {
+  "id": "SkillGemArcticArmour",
+  "en": "Arctic Armour",
+  "ja": "アークティックアーマー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Persistent",
+   "Sustained",
+   "Cold",
+   "Staged"
+  ],
+  "icon": "SkillGemArcticArmour_icon",
+  "gem": "SkillGemArcticArmour_gem"
+ },
+ {
+  "id": "SkillGemFirePenetrationSupport",
+  "en": "Fire Penetration I",
+  "ja": "火耐性貫通 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemFirePenetrationSupport_gem"
+ },
+ {
+  "id": "SkillGemFirePenetrationSupportTwo",
+  "en": "Fire Penetration II",
+  "ja": "火耐性貫通 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemFirePenetrationSupport_gem"
+ },
+ {
+  "id": "SkillGemColdPenetrationSupport",
+  "en": "Cold Penetration",
+  "ja": "冷気耐性貫通",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemColdPenetrationSupport_gem"
+ },
+ {
+  "id": "SkillGemLightningPenetrationSupport",
+  "en": "Lightning Penetration",
+  "ja": "雷耐性貫通",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemLightningPenetrationSupport_gem"
+ },
+ {
+  "id": "SkillGemChainSupport",
+  "en": "Chain I",
+  "ja": "連鎖 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile",
+   "Chaining"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemChainSupport_gem"
+ },
+ {
+  "id": "SkillGemChainSupportTwo",
+  "en": "Chain II",
+  "ja": "連鎖 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile",
+   "Chaining"
+  ],
+  "icon": null,
+  "gem": "SkillGemChainSupport_gem"
+ },
+ {
+  "id": "SkillGemChainSupportThree",
+  "en": "Chain III",
+  "ja": "連鎖 III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile",
+   "Chaining"
+  ],
+  "icon": null,
+  "gem": "SkillGemChainSupport_gem"
+ },
+ {
+  "id": "SkillGemForkSupport",
+  "en": "Fork",
+  "ja": "分岐",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemForkSupport_gem"
+ },
+ {
+  "id": "SkillGemIncinerate",
+  "en": "Incinerate",
+  "ja": "インシネレート",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Fire",
+   "Duration",
+   "Channelling"
+  ],
+  "icon": "SkillGemIncinerate_icon",
+  "gem": "SkillGemIncinerate_gem"
+ },
+ {
+  "id": "SkillGemSpellEchoSupport",
+  "en": "Spell Echo",
+  "ja": "スペルエコー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE"
+  ],
+  "icon": null,
+  "gem": "SkillGemSpellEchoSupport_gem"
+ },
+ {
+  "id": "SkillGemElementalArmySupport",
+  "en": "Elemental Army",
+  "ja": "元素の軍勢",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": "SkillGemArcticArmour_icon",
+  "gem": "SkillGemElementalArmySupport_gem"
+ },
+ {
+  "id": "SkillGemProjectileDecelerationSupport",
+  "en": "Projectile Deceleration I",
+  "ja": "投射物減速 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemProjectileDecelerationSupport_gem"
+ },
+ {
+  "id": "SkillGemProjectileDecelerationSupportTwo",
+  "en": "Projectile Deceleration II",
+  "ja": "投射物減速 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemProjectileDecelerationSupport_gem"
+ },
+ {
+  "id": "SkillGemVilentasPropulsionSupport",
+  "en": "Vilenta's Propulsion",
+  "ja": "ヴィレンタの推進力",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Spell",
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemVilentasPropulsionSupport_gem"
+ },
+ {
+  "id": "SkillGemPurityOfFire",
+  "en": "Purity of Fire",
+  "ja": "ピュリティオブファイヤー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Fire"
+  ],
+  "icon": "SkillGemPurityOfFire_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemPurityOfIce",
+  "en": "Purity of Ice",
+  "ja": "ピュリティオブアイス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Cold"
+  ],
+  "icon": "SkillGemPurityOfIce_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemPurityOfLightning",
+  "en": "Purity of Lightning",
+  "ja": "ピュリティオブライトニング",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Lightning"
+  ],
+  "icon": "SkillGemPurityOfLightning_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemImpurity",
+  "en": "Impurity",
+  "ja": "インピュリティ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Chaos"
+  ],
+  "icon": "SkillGemImpurity_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemFlameblast",
+  "en": "Flameblast",
+  "ja": "フレイムブラスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Fire",
+   "Channelling",
+   "Nova",
+   "Staged"
+  ],
+  "icon": "SkillGemFlameblast_icon",
+  "gem": "SkillGemFlameblast_gem"
+ },
+ {
+  "id": "SkillGemBarrage",
+  "en": "Barrage",
+  "ja": "バラージ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Duration"
+  ],
+  "icon": "SkillGemBarrage_icon",
+  "gem": "SkillGemBarrage_gem"
+ },
+ {
+  "id": "SkillGemBallLightning",
+  "en": "Ball Lightning",
+  "ja": "ボールライトニング",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Chaining",
+   "Repeatable"
+  ],
+  "icon": "SkillGemBallLightning_icon",
+  "gem": "SkillGemBallLightning_gem"
+ },
+ {
+  "id": "SkillGemBoneOffering",
+  "en": "Bone Offering",
+  "ja": "ボーンオファリング",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemBoneOffering_icon",
+  "gem": "SkillGemBoneOffering_gem"
+ },
+ {
+  "id": "SkillGemHeraldOfAsh",
+  "en": "Herald of Ash",
+  "ja": "ヘラルドオブアッシュ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Fire",
+   "Duration",
+   "Herald"
+  ],
+  "icon": "SkillGemHeraldOfAsh_icon",
+  "gem": "SkillGemHeraldOfAsh_gem"
+ },
+ {
+  "id": "SkillGemHeraldOfIce",
+  "en": "Herald of Ice",
+  "ja": "ヘラルドオブアイス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Cold",
+   "Herald",
+   "Payoff"
+  ],
+  "icon": "SkillGemHeraldOfIce_icon",
+  "gem": "SkillGemHeraldOfIce_gem"
+ },
+ {
+  "id": "SkillGemHeraldOfThunder",
+  "en": "Herald of Thunder",
+  "ja": "ヘラルドオブサンダー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Lightning",
+   "Herald",
+   "Payoff"
+  ],
+  "icon": "SkillGemHeraldOfThunder_icon",
+  "gem": "SkillGemHeraldOfThunder_gem"
+ },
+ {
+  "id": "SkillGemBlasphemy",
+  "en": "Blasphemy",
+  "ja": "ブラスファミー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Aura",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemBlasphemy_gem"
+ },
+ {
+  "id": "SkillGemInfernallCry",
+  "en": "Infernal Cry",
+  "ja": "インファーナルクライ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Fire",
+   "Duration",
+   "Nova"
+  ],
+  "icon": "SkillGemInfernallCry_icon",
+  "gem": "SkillGemInfernallCry_gem"
+ },
+ {
+  "id": "SkillGemIceBiteSupport",
+  "en": "Ice Bite I",
+  "ja": "アイスバイト I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemIceBiteSupport_gem"
+ },
+ {
+  "id": "SkillGemIceBiteSupportTwo",
+  "en": "Ice Bite II",
+  "ja": "アイスバイト II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemIceBiteSupport_gem"
+ },
+ {
+  "id": "SkillGemBhatairsVengeanceSupport",
+  "en": "Bhatair's Vengeance",
+  "ja": "バタイルの復讐",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Warcry",
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemBhatairsVengeanceSupport_gem"
+ },
+ {
+  "id": "SkillGemFreezeSupport",
+  "en": "Freeze",
+  "ja": "凍結",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemFreezeSupport_gem"
+ },
+ {
+  "id": "SkillGemShockSupport",
+  "en": "Shock",
+  "ja": "感電",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemShockSupport_gem"
+ },
+ {
+  "id": "SkillGemShatteringSpite",
+  "en": "Shattering Spite",
+  "ja": "シャタリングスパイト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Lightning",
+   "Fire"
+  ],
+  "icon": "SkillGemShatteringSpite_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemRighteousDescent",
+  "en": "Righteous Descent",
+  "ja": "ライチャスデセント",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Physical",
+   "Lightning",
+   "Travel"
+  ],
+  "icon": "SkillGemRighteousDescent_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemRollingMagma",
+  "en": "Rolling Magma",
+  "ja": "ローリングマグマ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Wyvern",
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Detonator"
+  ],
+  "icon": "SkillGemRollingMagma_icon",
+  "gem": "SkillGemRollingMagma_gem"
+ },
+ {
+  "id": "SkillGemFrostBomb",
+  "en": "Frost Bomb",
+  "ja": "フロストボム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Duration",
+   "Orb",
+   "Remnant"
+  ],
+  "icon": "SkillGemFrostBomb_icon",
+  "gem": "SkillGemFrostBomb_gem"
+ },
+ {
+  "id": "SkillGemOrbOfStorms",
+  "en": "Orb of Storms",
+  "ja": "オーブオブストーム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Chaining",
+   "Orb",
+   "Remnant",
+   "Repeatable"
+  ],
+  "icon": "SkillGemOrbOfStorms_icon",
+  "gem": "SkillGemOrbOfStorms_gem"
+ },
+ {
+  "id": "SkillGemEarthquake",
+  "en": "Earthquake",
+  "ja": "アースクエイク",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration"
+  ],
+  "icon": "SkillGemEarthquake_icon",
+  "gem": "SkillGemEarthquake_gem"
+ },
+ {
+  "id": "SkillGemContagion",
+  "en": "Contagion",
+  "ja": "コンテージョン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemContagion_icon",
+  "gem": "SkillGemContagion_gem"
+ },
+ {
+  "id": "SkillGemWither",
+  "en": "Wither",
+  "ja": "ウィザー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Chaos",
+   "Duration",
+   "Channelling"
+  ],
+  "icon": "SkillGemWither_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemEssenceDrain",
+  "en": "Essence Drain",
+  "ja": "エッセンスドレイン",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemEssenceDrain_icon",
+  "gem": "SkillGemEssenceDrain_gem"
+ },
+ {
+  "id": "SkillGemControlledDestructionSupport",
+  "en": "Controlled Destruction",
+  "ja": "破壊制御",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemControlledDestructionSupport_gem"
+ },
+ {
+  "id": "SkillGemSunder",
+  "en": "Sunder",
+  "ja": "サンダー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration",
+   "Payoff"
+  ],
+  "icon": "SkillGemSunder_icon",
+  "gem": "SkillGemSunder_gem"
+ },
+ {
+  "id": "SkillGemFrostBolt",
+  "en": "Frostbolt",
+  "ja": "フロストボルト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFrostBolt_icon",
+  "gem": "SkillGemFrostBolt_gem"
+ },
+ {
+  "id": "SkillGemElementalFocusSupport",
+  "en": "Elemental Focus",
+  "ja": "元素ダメージ集中",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemElementalFocusSupport_icon",
+  "gem": "SkillGemElementalFocusSupport_gem"
+ },
+ {
+  "id": "SkillGemSkeletalSniper",
+  "en": "Skeletal Sniper",
+  "ja": "スケルトンスナイパー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Physical",
+   "Fire",
+   "Chaos"
+  ],
+  "icon": "SkillGemSkeletalSniper_icon",
+  "gem": "SkillGemSkeletalSniper_gem"
+ },
+ {
+  "id": "SkillGemSkeletalReaver",
+  "en": "Skeletal Reaver",
+  "ja": "スケルトンリーバー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemSkeletalReaver_icon",
+  "gem": "SkillGemSkeletalReaver_gem"
+ },
+ {
+  "id": "SkillGemSkeletalBrute",
+  "en": "Skeletal Brute",
+  "ja": "スケルトンブルート",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Warcry",
+   "Persistent",
+   "Physical",
+   "Payoff"
+  ],
+  "icon": "SkillGemSkeletalBrute_icon",
+  "gem": "SkillGemSkeletalBrute_gem"
+ },
+ {
+  "id": "SkillGemSkeletalFrostMage",
+  "en": "Skeletal Frost Mage",
+  "ja": "スケルトンフロストメイジ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Cold"
+  ],
+  "icon": "SkillGemSkeletalFrostMage_icon",
+  "gem": "SkillGemSkeletalFrostMage_gem"
+ },
+ {
+  "id": "SkillGemSkeletalStormMage",
+  "en": "Skeletal Storm Mage",
+  "ja": "スケルトンストームメイジ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Lightning"
+  ],
+  "icon": "SkillGemSkeletalStormMage_icon",
+  "gem": "SkillGemSkeletalStormMage_gem"
+ },
+ {
+  "id": "SkillGemSkeletalArsonist",
+  "en": "Skeletal Arsonist",
+  "ja": "スケルトンアーソニスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Fire",
+   "Detonator"
+  ],
+  "icon": "SkillGemSkeletalArsonist_icon",
+  "gem": "SkillGemSkeletalArsonist_gem"
+ },
+ {
+  "id": "SkillGemSkeletalCleric",
+  "en": "Skeletal Cleric",
+  "ja": "スケルトンクレリック",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemSkeletalCleric_icon",
+  "gem": "SkillGemSkeletalCleric_gem"
+ },
+ {
+  "id": "SkillGemAzmerianWolf",
+  "en": "Azmerian Wolf",
+  "ja": "アズメリウルフ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemAzmerianWolf_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemMistRaven",
+  "en": "Mist Raven",
+  "ja": "ミストレイヴン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Physical",
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemSpiralingConspiracy",
+  "en": "Spiraling Conspiracy",
+  "ja": "スパイラリングコンスピラシー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Chaos",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemWildfireSupport",
+  "en": "Wildfire",
+  "ja": "発火伝染",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemWildfireSupport_gem"
+ },
+ {
+  "id": "SkillGemBleedSupport",
+  "en": "Bleed I",
+  "ja": "出血 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBleedSupport_gem"
+ },
+ {
+  "id": "SkillGemBleedSupportTwo",
+  "en": "Bleed II",
+  "ja": "出血 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBleedSupport_gem"
+ },
+ {
+  "id": "SkillGemBleedSupportThree",
+  "en": "Bleed III",
+  "ja": "出血 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBleedSupport_gem"
+ },
+ {
+  "id": "SkillGemBleedSupportFour",
+  "en": "Bleed IV",
+  "ja": "出血 IV",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBleedSupport_gem"
+ },
+ {
+  "id": "SkillGemPoisonSupport",
+  "en": "Poison I",
+  "ja": "毒 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemPoisonSupportTwo",
+  "en": "Poison II",
+  "ja": "毒 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemPoisonSupportThree",
+  "en": "Poison III",
+  "ja": "毒 III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemMaimSupport",
+  "en": "Maim",
+  "ja": "重傷",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemMaimSupport_gem"
+ },
+ {
+  "id": "SkillGemImmolateSupport",
+  "en": "Immolate",
+  "ja": "火炙り",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire",
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemImmolateSupport_gem"
+ },
+ {
+  "id": "SkillGemLastingShockSupport",
+  "en": "Lasting Shock",
+  "ja": "感電持続",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemLastingShockSupport_gem"
+ },
+ {
+  "id": "SkillGemBrutalitySupport",
+  "en": "Brutality I",
+  "ja": "ブルータリティ I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBrutalitySupport_gem"
+ },
+ {
+  "id": "SkillGemBrutalitySupportTwo",
+  "en": "Brutality II",
+  "ja": "ブルータリティ II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBrutalitySupport_gem"
+ },
+ {
+  "id": "SkillGemBrutalitySupportThree",
+  "en": "Brutality III",
+  "ja": "ブルータリティ III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemBrutalitySupport_gem"
+ },
+ {
+  "id": "SkillGemMomentumSupport",
+  "en": "Momentum",
+  "ja": "モーメンタム",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemMomentumSupport_gem"
+ },
+ {
+  "id": "SkillGemArcaneSurgeSupport",
+  "en": "Arcane Surge",
+  "ja": "アーケインサージ",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemArcaneSurgeSupport_gem"
+ },
+ {
+  "id": "SkillGemVulnerability",
+  "en": "Vulnerability",
+  "ja": "ヴァルネラビリティ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration",
+   "Curse",
+   "Repeatable"
+  ],
+  "icon": "SkillGemVulnerability_icon",
+  "gem": "SkillGemVulnerability_gem"
+ },
+ {
+  "id": "SkillGemWitheringTouchSupport",
+  "en": "Withering Touch",
+  "ja": "ヒット時衰弱",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Chaos",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemWitheringTouchSupport_gem"
+ },
+ {
+  "id": "SkillGemSoulrend",
+  "en": "Soulrend",
+  "ja": "ソウルレンド",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSoulrend_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemExpandSupport",
+  "en": "Expand",
+  "ja": "拡張",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE"
+  ],
+  "icon": null,
+  "gem": "SkillGemExpandSupport_gem"
+ },
+ {
+  "id": "SkillGemUnleashSupport",
+  "en": "Unleash",
+  "ja": "アンリーシュ",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemUnleashSupport_gem"
+ },
+ {
+  "id": "SkillGemZarokhsRevoltSupport",
+  "en": "Zarokh's Revolt",
+  "ja": "ザロクの反逆",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemZarokhsRevoltSupport_gem"
+ },
+ {
+  "id": "SkillGemCloseCombatSupport",
+  "en": "Close Combat I",
+  "ja": "近距離戦闘 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemCloseCombatSupport_gem"
+ },
+ {
+  "id": "SkillGemCloseCombatSupportTwo",
+  "en": "Close Combat II",
+  "ja": "近距離戦闘 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemCloseCombatSupport_gem"
+ },
+ {
+  "id": "SkillGemRageSupport",
+  "en": "Rage I",
+  "ja": "憤怒 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee"
+  ],
+  "icon": "SkillGemRageSupport_icon",
+  "gem": "SkillGemRageSupport_gem"
+ },
+ {
+  "id": "SkillGemRageSupportTwo",
+  "en": "Rage II",
+  "ja": "憤怒 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee"
+  ],
+  "icon": null,
+  "gem": "SkillGemRageSupport_gem"
+ },
+ {
+  "id": "SkillGemRageSupportThree",
+  "en": "Rage III",
+  "ja": "憤怒 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee"
+  ],
+  "icon": null,
+  "gem": "SkillGemRageSupport_gem"
+ },
+ {
+  "id": "SkillGemPlagueBearer",
+  "en": "Plague Bearer",
+  "ja": "プレイグベアラー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Chaos",
+   "Nova"
+  ],
+  "icon": "SkillGemPlagueBearer_icon",
+  "gem": "SkillGemPlagueBearer_gem"
+ },
+ {
+  "id": "SkillGemFeedingFrenzySupport",
+  "en": "Feeding Frenzy I",
+  "ja": "狂乱の餌付け I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemFeedingFrenzySupport_gem"
+ },
+ {
+  "id": "SkillGemFeedingFrenzySupportTwo",
+  "en": "Feeding Frenzy II",
+  "ja": "狂乱の餌付け II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemFeedingFrenzySupport_gem"
+ },
+ {
+  "id": "SkillGemMeatShieldSupport",
+  "en": "Meat Shield I",
+  "ja": "ミートシールド I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemMeatShieldSupport_gem"
+ },
+ {
+  "id": "SkillGemMeatShieldSupportTwo",
+  "en": "Meat Shield II",
+  "ja": "ミートシールド II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemMeatShieldSupport_gem"
+ },
+ {
+  "id": "SkillGemBrutusBrainSupport",
+  "en": "Brutus' Brain",
+  "ja": "ブルータスの脳",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemBrutusBrainSupport_gem"
+ },
+ {
+  "id": "SkillGemInfernalLegionSupport",
+  "en": "Infernal Legion I",
+  "ja": "インファーナルリージョン I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion",
+   "AoE",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemInfernalLegionSupport_gem"
+ },
+ {
+  "id": "SkillGemInfernalLegionSupportTwo",
+  "en": "Infernal Legion II",
+  "ja": "インファーナルリージョン II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion",
+   "AoE",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemInfernalLegionSupport_gem"
+ },
+ {
+  "id": "SkillGemInfernalLegionSupportThree",
+  "en": "Infernal Legion III",
+  "ja": "インファーナルリージョン III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion",
+   "AoE",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemInfernalLegionSupport_gem"
+ },
+ {
+  "id": "SkillGemSiegeBallista",
+  "en": "Siege Ballista",
+  "ja": "シージバリスタ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Totem",
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Fire",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSiegeBallista_icon",
+  "gem": "SkillGemSiegeBallista_gem"
+ },
+ {
+  "id": "SkillGemSecondWindSupport",
+  "en": "Second Wind I",
+  "ja": "セカンドウィンド I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemSecondWindSupport_gem"
+ },
+ {
+  "id": "SkillGemSecondWindSupportTwo",
+  "en": "Second Wind II",
+  "ja": "セカンドウィンド II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemSecondWindSupport_gem"
+ },
+ {
+  "id": "SkillGemSecondWindSupportThree",
+  "en": "Second Wind III",
+  "ja": "セカンドウィンド III",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemSecondWindSupport_gem"
+ },
+ {
+  "id": "SkillGemSeismicCry",
+  "en": "Seismic Cry",
+  "ja": "サイズミッククライ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Nova"
+  ],
+  "icon": "SkillGemSeismicCry_icon",
+  "gem": "SkillGemSeismicCry_gem"
+ },
+ {
+  "id": "SkillGemEarthshatter",
+  "en": "Earthshatter",
+  "ja": "アースシャッター",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration"
+  ],
+  "icon": "SkillGemEarthshatter_icon",
+  "gem": "SkillGemEarthshatter_gem"
+ },
+ {
+  "id": "SkillGemSigilOfPower",
+  "en": "Sigil of Power",
+  "ja": "シギルオブパワー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Staged"
+  ],
+  "icon": "SkillGemSigilOfPower_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemSigilOfLife",
+  "en": "Rite of Restoration",
+  "ja": "ライトオブレストレーション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Staged"
+  ],
+  "icon": "SkillGemSigilOfLife_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemFlameWall",
+  "en": "Flame Wall",
+  "ja": "フレイムウォール",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Fire",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFlameWall_icon",
+  "gem": "SkillGemFlameWall_gem"
+ },
+ {
+  "id": "SkillGemImpendingDoomSupport",
+  "en": "Impending Doom",
+  "ja": "インペンディングドゥーム",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemImpendingDoomSupport_gem"
+ },
+ {
+  "id": "SkillGemHexblast",
+  "en": "Hexblast",
+  "ja": "ヘックスブラスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Chaos",
+   "Payoff",
+   "Repeatable"
+  ],
+  "icon": "SkillGemHexblast_icon",
+  "gem": "SkillGemHexblast_gem"
+ },
+ {
+  "id": "SkillGemExsanguinate",
+  "en": "Exsanguinate",
+  "ja": "イグザングイネイト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Physical",
+   "Duration",
+   "Chaining",
+   "Repeatable"
+  ],
+  "icon": "SkillGemExsanguinate_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemReap",
+  "en": "Reap",
+  "ja": "リープ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemReap_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemBloodMagicSupport",
+  "en": "Lifetap",
+  "ja": "ライフタップ",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBloodMagicSupport_gem"
+ },
+ {
+  "id": "SkillGemAtaluiBloodlettingSupport",
+  "en": "Atalui's Bloodletting",
+  "ja": "アタルイの血抜き",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemAtaluiBloodlettingSupport_gem"
+ },
+ {
+  "id": "SkillGemBeheadSupport",
+  "en": "Behead I",
+  "ja": "首狩り I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemBeheadSupport_gem"
+ },
+ {
+  "id": "SkillGemBeheadSupportTwo",
+  "en": "Behead II",
+  "ja": "首狩り II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemBeheadSupport_gem"
+ },
+ {
+  "id": "SkillGemEinharsBeastriteSupport",
+  "en": "Einhar's Beastrite",
+  "ja": "アイナーの獣の儀式",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemEinharsBeastriteSupport_gem"
+ },
+ {
+  "id": "SkillGemExecuteSupport",
+  "en": "Execute I",
+  "ja": "処刑 I",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemExecuteSupport_gem"
+ },
+ {
+  "id": "SkillGemExecuteSupportTwo",
+  "en": "Execute II",
+  "ja": "処刑 II",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemExecuteSupport_gem"
+ },
+ {
+  "id": "SkillGemExecuteSupportThree",
+  "en": "Execute III",
+  "ja": "処刑 III",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemExecuteSupport_gem"
+ },
+ {
+  "id": "SkillGemBoneshatter",
+  "en": "Boneshatter",
+  "ja": "ボーンシャッター",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemBoneshatter_icon",
+  "gem": "SkillGemBoneshatter_gem"
+ },
+ {
+  "id": "SkillGemEyeOfWinter",
+  "en": "Eye of Winter",
+  "ja": "アイオブウィンター",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Cold"
+  ],
+  "icon": "SkillGemEyeOfWinter_icon",
+  "gem": "SkillGemEyeOfWinter_gem"
+ },
+ {
+  "id": "SkillGemTornado",
+  "en": "Tornado",
+  "ja": "トルネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration",
+   "Wind",
+   "Storm"
+  ],
+  "icon": "SkillGemTornado_icon",
+  "gem": "SkillGemTornado_gem"
+ },
+ {
+  "id": "SkillGemOverchargeSupport",
+  "en": "Overcharge",
+  "ja": "過剰感電",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemOverchargeSupport_gem"
+ },
+ {
+  "id": "SkillGemLightningConduit",
+  "en": "Lightning Conduit",
+  "ja": "ライトニングコンジット",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning"
+  ],
+  "icon": "SkillGemLightningConduit_icon",
+  "gem": "SkillGemLightningConduit_gem"
+ },
+ {
+  "id": "SkillGemGalvanicField",
+  "en": "Galvanic Field",
+  "ja": "ガルヴァニックフィールド",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Chaining",
+   "Orb"
+  ],
+  "icon": "SkillGemGalvanicField_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemVolcanicFissure",
+  "en": "Volcanic Fissure",
+  "ja": "ヴォルカニックフィッシャー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Sustained",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemVolcanicFissure_icon",
+  "gem": "SkillGemVolcanicFissure_gem"
+ },
+ {
+  "id": "SkillGemRapidAssault",
+  "en": "Rapid Assault",
+  "ja": "ラピッドアサルト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemRapidAssault_icon",
+  "gem": "SkillGemRapidAssault_gem"
+ },
+ {
+  "id": "SkillGemDisengage",
+  "en": "Disengage",
+  "ja": "ディスエンゲージ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Travel"
+  ],
+  "icon": "SkillGemDisengage_icon",
+  "gem": "SkillGemDisengage_gem"
+ },
+ {
+  "id": "SkillGemBloodHunt",
+  "en": "Blood Hunt",
+  "ja": "ブラッドハント",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical",
+   "Payoff"
+  ],
+  "icon": "SkillGemBloodHunt_icon",
+  "gem": "SkillGemBloodHunt_gem"
+ },
+ {
+  "id": "SkillGemWhirlingSlash",
+  "en": "Whirling Slash",
+  "ja": "ワーリングスラッシュ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Staged",
+   "Wind"
+  ],
+  "icon": "SkillGemWhirlingSlash_icon",
+  "gem": "SkillGemWhirlingSlash_gem"
+ },
+ {
+  "id": "SkillGemSpearfield",
+  "en": "Spearfield",
+  "ja": "スピアフィールド",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Sustained",
+   "Duration",
+   "Hazard"
+  ],
+  "icon": "SkillGemSpearfield_icon",
+  "gem": "SkillGemSpearfield_gem"
+ },
+ {
+  "id": "SkillGemLightningSpear",
+  "en": "Lightning Spear",
+  "ja": "ライトニングスピア",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Repeatable"
+  ],
+  "icon": "SkillGemLightningSpear_icon",
+  "gem": "SkillGemLightningSpear_gem"
+ },
+ {
+  "id": "SkillGemGlacialLance",
+  "en": "Glacial Lance",
+  "ja": "グレイシャルランス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Cold",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemGlacialLance_icon",
+  "gem": "SkillGemGlacialLance_gem"
+ },
+ {
+  "id": "SkillGemWhirlingAssault",
+  "en": "Whirling Assault",
+  "ja": "ワーリングアサルト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemWhirlingAssault_icon",
+  "gem": "SkillGemWhirlingAssault_gem"
+ },
+ {
+  "id": "SkillGemRollingSlam",
+  "en": "Rolling Slam",
+  "ja": "ローリングスラム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam"
+  ],
+  "icon": "SkillGemRollingSlam_icon",
+  "gem": "SkillGemRollingSlam_gem"
+ },
+ {
+  "id": "SkillGemEscapeShot",
+  "en": "Escape Shot",
+  "ja": "エスケープショット",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Cold"
+  ],
+  "icon": "SkillGemEscapeShot_icon",
+  "gem": "SkillGemEscapeShot_gem"
+ },
+ {
+  "id": "SkillGemSuperchargedSlam",
+  "en": "Supercharged Slam",
+  "ja": "スーパーチャージドスラム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Channelling",
+   "Staged"
+  ],
+  "icon": "SkillGemSuperchargedSlam_icon",
+  "gem": "SkillGemSuperchargedSlam_gem"
+ },
+ {
+  "id": "SkillGemWindBlast",
+  "en": "Wind Blast",
+  "ja": "ウィンドブラスト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Wind"
+  ],
+  "icon": "SkillGemWindBlast_icon",
+  "gem": "SkillGemWindBlast_gem"
+ },
+ {
+  "id": "SkillGemWaveOfFrost",
+  "en": "Wave of Frost",
+  "ja": "ウェーブオブフロスト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Cold"
+  ],
+  "icon": "SkillGemWaveOfFrost_icon",
+  "gem": "SkillGemWaveOfFrost_gem"
+ },
+ {
+  "id": "SkillGemIceStrike",
+  "en": "Ice Strike",
+  "ja": "アイスストライク",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Cold"
+  ],
+  "icon": "SkillGemIceStrike_icon",
+  "gem": "SkillGemIceStrike_gem"
+ },
+ {
+  "id": "SkillGemJaggedGroundSupport",
+  "en": "Jagged Ground I",
+  "ja": "ギザギザ領域 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemJaggedGroundSupport_gem"
+ },
+ {
+  "id": "SkillGemJaggedGroundSupportTwo",
+  "en": "Jagged Ground II",
+  "ja": "ギザギザ領域 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemJaggedGroundSupport_gem"
+ },
+ {
+  "id": "SkillGemInevitableCriticalsSupport",
+  "en": "Inexorable Critical I",
+  "ja": "クリティカル蓄積 I",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemInevitableCriticalsSupport_icon",
+  "gem": "SkillGemInevitableCriticalsSupport_gem"
+ },
+ {
+  "id": "SkillGemInevitableCriticalsSupportTwo",
+  "en": "Inexorable Critical II",
+  "ja": "クリティカル蓄積 II",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemInevitableCriticalsSupport_gem"
+ },
+ {
+  "id": "SkillGemRuthlessSupport",
+  "en": "Ruthless",
+  "ja": "ルースレス",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemRuthlessSupport_gem"
+ },
+ {
+  "id": "SkillGemCompressedDurationSupport",
+  "en": "Compressed Duration I",
+  "ja": "持続時間圧縮 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemCompressedDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemCompressedDurationSupportTwo",
+  "en": "Compressed Duration II",
+  "ja": "持続時間圧縮 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemCompressedDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemFistOfWarSupport",
+  "en": "Fist of War I",
+  "ja": "フィストオブウォー I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": null,
+  "gem": "SkillGemFistOfWarSupport_gem"
+ },
+ {
+  "id": "SkillGemFistOfWarSupportTwo",
+  "en": "Fist of War II",
+  "ja": "フィストオブウォー II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": null,
+  "gem": "SkillGemFistOfWarSupport_gem"
+ },
+ {
+  "id": "SkillGemFistOfWarSupportThree",
+  "en": "Fist of War III",
+  "ja": "フィストオブウォー III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": null,
+  "gem": "SkillGemFistOfWarSupport_gem"
+ },
+ {
+  "id": "SkillGemProlongedDurationSupport",
+  "en": "Prolonged Duration I",
+  "ja": "持続時間延長 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemProlongedDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemProlongedDurationSupportTwo",
+  "en": "Prolonged Duration II",
+  "ja": "持続時間延長 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemProlongedDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemImpactShockwaveSupport",
+  "en": "Impact Shockwave",
+  "ja": "インパクトショックウェーブ",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemImpactShockwaveSupport_gem"
+ },
+ {
+  "id": "SkillGemHexBloomSupport",
+  "en": "Hex Bloom",
+  "ja": "呪術の華",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Curse"
+  ],
+  "icon": null,
+  "gem": "SkillGemHexBloomSupport_gem"
+ },
+ {
+  "id": "SkillGemGlacialCascade",
+  "en": "Glacial Cascade",
+  "ja": "グレイシャルカスケード",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Cold",
+   "Payoff"
+  ],
+  "icon": "SkillGemGlacialCascade_icon",
+  "gem": "SkillGemGlacialCascade_gem"
+ },
+ {
+  "id": "SkillGemComet",
+  "en": "Comet",
+  "ja": "コメット",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemComet_icon",
+  "gem": "SkillGemComet_gem"
+ },
+ {
+  "id": "SkillGemStaffConsecrate",
+  "en": "Consecrate",
+  "ja": "コンセクレート",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Nova"
+  ],
+  "icon": "SkillGemStaffConsecrate_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArtilleryBallista",
+  "en": "Artillery Ballista",
+  "ja": "アーティラリーバリスタ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Totem",
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Duration"
+  ],
+  "icon": "SkillGemArtilleryBallista_icon",
+  "gem": "SkillGemSiegeBallista_gem"
+ },
+ {
+  "id": "SkillGemManaTempest",
+  "en": "Mana Tempest",
+  "ja": "マナテンペスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Lightning",
+   "Storm"
+  ],
+  "icon": "SkillGemManaTempest_icon",
+  "gem": "SkillGemManaTempest_gem"
+ },
+ {
+  "id": "SkillGemKillingPalm",
+  "en": "Killing Palm",
+  "ja": "キリングパーム",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical"
+  ],
+  "icon": "SkillGemKillingPalm_icon",
+  "gem": "SkillGemKillingPalm_gem"
+ },
+ {
+  "id": "SkillGemCrushingFear",
+  "en": "Crushing Fear",
+  "ja": "クラッシングフィアー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical",
+   "Chaos"
+  ],
+  "icon": "SkillGemCrushingFear_icon",
+  "gem": "SkillGemKillingPalm_gem"
+ },
+ {
+  "id": "SkillGemShatteringPalm",
+  "en": "Shattering Palm",
+  "ja": "シャタリングパーム",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Trigger",
+   "Cold"
+  ],
+  "icon": "SkillGemShatteringPalm_icon",
+  "gem": "SkillGemShatteringPalm_gem"
+ },
+ {
+  "id": "SkillGemVolcano",
+  "en": "Volcano",
+  "ja": "ボルケーノ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Fire",
+   "Duration",
+   "Channelling"
+  ],
+  "icon": "SkillGemVolcano_icon",
+  "gem": "SkillGemVolcano_gem"
+ },
+ {
+  "id": "SkillGemWolfPack",
+  "en": "Wolf Pack",
+  "ja": "ウルフパック",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemWolfPack_icon",
+  "gem": "SkillGemWolfPack_gem"
+ },
+ {
+  "id": "SkillGemHyenaCackle",
+  "en": "Cackling Companions",
+  "ja": "ハイエナコンパニオン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemHyenaCackle_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemChillingIceSupport",
+  "en": "Frost Nexus",
+  "ja": "フロストネクサス",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemChillingIceSupport_gem"
+ },
+ {
+  "id": "SkillGemSpiralVolley",
+  "en": "Spiral Volley",
+  "ja": "スパイラルボレー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Sustained"
+  ],
+  "icon": "SkillGemSpiralVolley_icon",
+  "gem": "SkillGemSpiralVolley_gem"
+ },
+ {
+  "id": "SkillGemBearMaul",
+  "en": "Maul",
+  "ja": "モール",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemBearMaul_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemWyvernRend",
+  "en": "Rend",
+  "ja": "レンド",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Wyvern",
+   "AoE",
+   "Melee",
+   "Strike",
+   "Duration"
+  ],
+  "icon": "SkillGemWyvernRend_icon",
+  "gem": "SkillGemWyvernRend_gem"
+ },
+ {
+  "id": "SkillGemWolfPounce",
+  "en": "Pounce",
+  "ja": "パウンス",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Shapeshift",
+   "Werewolf",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Trigger",
+   "Mark",
+   "Duration",
+   "Travel",
+   "Meta"
+  ],
+  "icon": "SkillGemWolfPounce_icon",
+  "gem": "SkillGemWolfPounce_gem"
+ },
+ {
+  "id": "SkillGemLightningBolt",
+  "en": "Lightning Bolt",
+  "ja": "ライトニングボルト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning",
+   "Repeatable"
+  ],
+  "icon": "SkillGemLightningBolt_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemBearRampage",
+  "en": "Rampage",
+  "ja": "ランページ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Sustained",
+   "Channelling",
+   "Travel"
+  ],
+  "icon": "SkillGemBearRampage_icon",
+  "gem": "SkillGemBearRampage_gem"
+ },
+ {
+  "id": "SkillGemEnergyShieldOnShockKillSupport",
+  "en": "Shock Siphon",
+  "ja": "感電エナジーシールド吸収",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemEnergyShieldOnShockKillSupport_gem"
+ },
+ {
+  "id": "SkillGemShockConductionSupport",
+  "en": "Shock Conduction",
+  "ja": "感電伝染",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemShockConductionSupport_gem"
+ },
+ {
+  "id": "SkillGemShockConductionSupportTwo",
+  "en": "Shock Conduction II",
+  "ja": "感電伝染 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemShockConductionSupport_gem"
+ },
+ {
+  "id": "SkillGemLastingFrostSupport",
+  "en": "Deep Freeze",
+  "ja": "凍結持続",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemLastingFrostSupport_gem"
+ },
+ {
+  "id": "SkillGemThunderstorm",
+  "en": "Thunderstorm",
+  "ja": "サンダーストーム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Storm"
+  ],
+  "icon": null,
+  "gem": "SkillGemThunderstorm_gem"
+ },
+ {
+  "id": "SkillGemIgniteSupport",
+  "en": "Ignite I",
+  "ja": "発火 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteSupport_gem"
+ },
+ {
+  "id": "SkillGemIgniteSupportTwo",
+  "en": "Ignite II",
+  "ja": "発火 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteSupport_gem"
+ },
+ {
+  "id": "SkillGemIgniteSupportThree",
+  "en": "Ignite III",
+  "ja": "発火 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteSupport_gem"
+ },
+ {
+  "id": "SkillGemDeadlyIgnitesSupport",
+  "en": "Searing Flame I",
+  "ja": "灼熱の炎 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeadlyIgnitesSupport_gem"
+ },
+ {
+  "id": "SkillGemDeadlyIgnitesSupportTwo",
+  "en": "Searing Flame II",
+  "ja": "灼熱の炎 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeadlyIgnitesSupport_gem"
+ },
+ {
+  "id": "SkillGemIgniteDurationSupport",
+  "en": "Eternal Flame I",
+  "ja": "永遠の炎 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemIgniteDurationSupportTwo",
+  "en": "Eternal Flame II",
+  "ja": "永遠の炎 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemIgniteDurationSupportThree",
+  "en": "Eternal Flame III",
+  "ja": "永遠の炎 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemIgniteDurationSupport_gem"
+ },
+ {
+  "id": "SkillGemEssenceHarvestSupport",
+  "en": "Essence Harvest",
+  "ja": "魂の収穫",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemEssenceHarvestSupport_gem"
+ },
+ {
+  "id": "SkillGemFuriousSlam",
+  "en": "Furious Slam",
+  "ja": "フューリアススラム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Melee",
+   "Slam"
+  ],
+  "icon": "SkillGemFuriousSlam_icon",
+  "gem": "SkillGemFuriousSlam_gem"
+ },
+ {
+  "id": "SkillGemFerociousRoar",
+  "en": "Ferocious Roar",
+  "ja": "フェロシアスロア",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Nova",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemFerociousRoar_gem"
+ },
+ {
+  "id": "SkillGemCastOnElementalAilment",
+  "en": "Cast on Elemental Ailment",
+  "ja": "元素系状態異常時キャスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnElementalAilment_gem"
+ },
+ {
+  "id": "SkillGemCastOnMeleeKill",
+  "en": "Cast on Melee Kill",
+  "ja": "近接キル時キャスト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnMeleeKill_gem"
+ },
+ {
+  "id": "SkillGemCastOnCriticalStrike",
+  "en": "Cast on Critical",
+  "ja": "クリティカル時キャスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": "SkillGemCastOnCriticalStrike_icon",
+  "gem": "SkillGemCastOnCriticalStrike_gem"
+ },
+ {
+  "id": "SkillGemExploitWeaknessSupport",
+  "en": "Exploit Weakness",
+  "ja": "弱点活用",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemExploitWeaknessSupport_gem"
+ },
+ {
+  "id": "SkillGemBarrierInvocation",
+  "en": "Barrier Invocation",
+  "ja": "バリアーインボケーション",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Invocation",
+   "Meta"
+  ],
+  "icon": "SkillGemBarrierInvocation_icon",
+  "gem": "SkillGemBarrierInvocation_gem"
+ },
+ {
+  "id": "SkillGemCastOnDodge",
+  "en": "Cast on Dodge",
+  "ja": "ドッジ時キャスト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnDodge_gem"
+ },
+ {
+  "id": "SkillGemCastOnMeleeStun",
+  "en": "Cast on Melee Stun",
+  "ja": "近接スタン時キャスト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnMeleeStun_gem"
+ },
+ {
+  "id": "SkillGemEnragedWarcrySupport",
+  "en": "Enraged Warcry I",
+  "ja": "激怒のウォークライ I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry"
+  ],
+  "icon": null,
+  "gem": "SkillGemEnragedWarcrySupport_gem"
+ },
+ {
+  "id": "SkillGemEnragedWarcrySupportTwo",
+  "en": "Enraged Warcry II",
+  "ja": "激怒のウォークライ II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry"
+  ],
+  "icon": null,
+  "gem": "SkillGemEnragedWarcrySupport_gem"
+ },
+ {
+  "id": "SkillGemLingeringIllusion",
+  "en": "Lingering Illusion",
+  "ja": "リンガーリングイリュージョン",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Duration",
+   "Remnant"
+  ],
+  "icon": "SkillGemLingeringIllusion_icon",
+  "gem": "SkillGemLingeringIllusion_gem"
+ },
+ {
+  "id": "SkillGemGhostDance",
+  "en": "Ghost Dance",
+  "ja": "ゴーストダンス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemGhostDance_icon",
+  "gem": "SkillGemGhostDance_gem"
+ },
+ {
+  "id": "SkillGemAncestralWarriorTotem",
+  "en": "Ancestral Warrior Totem",
+  "ja": "アンセストラルウォーリアートーテム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Duration",
+   "Conditional",
+   "Meta"
+  ],
+  "icon": "SkillGemAncestralWarriorTotem_icon",
+  "gem": "SkillGemAncestralWarriorTotem_gem"
+ },
+ {
+  "id": "SkillGemMetaSpellTotem",
+  "en": "Spell Totem",
+  "ja": "スペルトーテム",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Duration",
+   "Conditional",
+   "Meta"
+  ],
+  "icon": "SkillGemMetaSpellTotem_icon",
+  "gem": "SkillGemMetaSpellTotem_gem"
+ },
+ {
+  "id": "SkillGemExplosiveGrenade",
+  "en": "Explosive Grenade",
+  "ja": "エクスプローシブグレネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade",
+   "Fire",
+   "Detonator"
+  ],
+  "icon": "SkillGemExplosiveGrenade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFlashGrenade",
+  "en": "Flash Grenade",
+  "ja": "フラッシュグレネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade"
+  ],
+  "icon": "SkillGemFlashGrenade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemOilGrenade",
+  "en": "Oil Grenade",
+  "ja": "オイルグレネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemOilGrenade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemToxicGrenade",
+  "en": "Gas Grenade",
+  "ja": "ガスグレネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade",
+   "Fire",
+   "Chaos",
+   "Duration"
+  ],
+  "icon": "SkillGemToxicGrenade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemShockGrenade",
+  "en": "Voltaic Grenade",
+  "ja": "ヴォルタイークグレネード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": "SkillGemShockGrenade_icon",
+  "gem": "SkillGemShockGrenade_gem"
+ },
+ {
+  "id": "SkillGemPainOffering",
+  "en": "Pain Offering",
+  "ja": "ペインオファリング",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Duration"
+  ],
+  "icon": "SkillGemPainOffering_icon",
+  "gem": "SkillGemPainOffering_gem"
+ },
+ {
+  "id": "SkillGemTempestFlurry",
+  "en": "Tempest Flurry",
+  "ja": "テンペストフラリィ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Lightning"
+  ],
+  "icon": "SkillGemTempestFlurry_icon",
+  "gem": "SkillGemTempestFlurry_gem"
+ },
+ {
+  "id": "SkillGemStaggeringPalm",
+  "en": "Staggering Palm",
+  "ja": "スタッガリングパーム",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Melee",
+   "Strike",
+   "Projectile",
+   "Physical",
+   "Duration",
+   "Wind"
+  ],
+  "icon": "SkillGemStaggeringPalm_icon",
+  "gem": "SkillGemStaggeringPalm_gem"
+ },
+ {
+  "id": "SkillGemChargedStaff",
+  "en": "Charged Staff",
+  "ja": "チャージドスタッフ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Buff",
+   "AoE",
+   "Lightning",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemChargedStaff_icon",
+  "gem": "SkillGemChargedStaff_gem"
+ },
+ {
+  "id": "SkillGemSiphoningStrike",
+  "en": "Siphoning Strike",
+  "ja": "サイフォンストライク",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Lightning",
+   "Payoff"
+  ],
+  "icon": "SkillGemSiphoningStrike_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTempestBell",
+  "en": "Tempest Bell",
+  "ja": "テンペストベル",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Sustained",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemTempestBell_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemChaosbolt",
+  "en": "Chaos Bolt",
+  "ja": "カオスボルト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Chaos",
+   "Repeatable"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemCoilingBolts",
+  "en": "Coiling Bolts",
+  "ja": "コイリングボルト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Chaos",
+   "Repeatable"
+  ],
+  "icon": "SkillGemCoilingBolts_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemFrozenLocus",
+  "en": "Frozen Locus",
+  "ja": "フローズンローカス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemFrozenLocus_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBonestorm",
+  "en": "Bonestorm",
+  "ja": "ボーンストーム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Physical",
+   "Channelling"
+  ],
+  "icon": "SkillGemBonestorm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBoneCage",
+  "en": "Bone Cage",
+  "ja": "ボーンケージ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration",
+   "Nova",
+   "Repeatable"
+  ],
+  "icon": "SkillGemBoneCage_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemNeuralOverload",
+  "en": "Neural Overload",
+  "ja": "神経過負荷",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemNeuralOverload_gem"
+ },
+ {
+  "id": "SkillGemPinpointCritical",
+  "en": "Pinpoint Critical",
+  "ja": "クリティカル集中",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemPinpointCritical_gem"
+ },
+ {
+  "id": "SkillGemPerpetualCharge",
+  "en": "Perpetual Charge",
+  "ja": "チャージ温存",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemPerpetualCharge_gem"
+ },
+ {
+  "id": "SkillGemCorrosion",
+  "en": "Corrosion",
+  "ja": "腐食",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Physical",
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemCorrosion_gem"
+ },
+ {
+  "id": "SkillGemUnearth",
+  "en": "Unearth",
+  "ja": "アンアース",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Minion",
+   "AoE",
+   "Physical",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemUnearth_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDetonatingArrow",
+  "en": "Detonating Arrow",
+  "ja": "デトネーティングアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Channelling",
+   "Detonator",
+   "Staged",
+   "Repeatable"
+  ],
+  "icon": "SkillGemDetonatingArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPoisonBurstArrow",
+  "en": "Poisonburst Arrow",
+  "ja": "ポイズンバーストアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemPoisonBurstArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFirebolt",
+  "en": "Firebolt",
+  "ja": "ファイヤーボルト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFirebolt_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemToxicGrowth",
+  "en": "Toxic Growth",
+  "ja": "トキシックグロース",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Chaos",
+   "Repeatable",
+   "Plant"
+  ],
+  "icon": "SkillGemToxicGrowth_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemStormcallerArrow",
+  "en": "Stormcaller Arrow",
+  "ja": "ストームコーラーアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemStormcallerArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemLightningRod",
+  "en": "Lightning Rod",
+  "ja": "ライトニングロッド",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemLightningRod_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSnipe",
+  "en": "Snipe",
+  "ja": "スナイプ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Cold",
+   "Channelling",
+   "Payoff",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSnipe_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemGasArrow",
+  "en": "Gas Arrow",
+  "ja": "ガスアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemGasArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSolarOrb",
+  "en": "Solar Orb",
+  "ja": "ソーラーオーブ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Fire",
+   "Duration",
+   "Orb",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSolarOrb_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFireball",
+  "en": "Fireball",
+  "ja": "ファイヤーボール",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFireball_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemElectrocutingArrow",
+  "en": "Electrocuting Arrow",
+  "ja": "エレクトロカッティングアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemElectrocutingArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSnap",
+  "en": "Snap",
+  "ja": "スナップ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Payoff",
+   "Remnant",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSnap_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPerfectStrike",
+  "en": "Perfect Strike",
+  "ja": "パーフェクトストライク",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Fire",
+   "Channelling"
+  ],
+  "icon": "SkillGemPerfectStrike_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemShieldBlock",
+  "en": "Raise Shield",
+  "ja": "レイズシールド",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Physical",
+   "Channelling"
+  ],
+  "icon": "SkillGemShieldBlock_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemResonatingShield",
+  "en": "Resonating Shield",
+  "ja": "レゾーネーティングシールド",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Sustained",
+   "Physical",
+   "Channelling"
+  ],
+  "icon": "SkillGemResonatingShield_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemManaRemnants",
+  "en": "Mana Remnants",
+  "ja": "マナレムナント",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemManaRemnants_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSanguineRevelry",
+  "en": "Sanguine Revelry",
+  "ja": "サングインレヴェルリー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemSanguineRevelry_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMagmaBarrier",
+  "en": "Magma Barrier",
+  "ja": "マグマバリアー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Melee",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": "SkillGemMagmaBarrier_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFreezingShards",
+  "en": "Freezing Shards",
+  "ja": "フリージングシャード",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFreezingShards_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemVineArrow",
+  "en": "Vine Arrow",
+  "ja": "ヴァインアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Chaos",
+   "Duration",
+   "Repeatable",
+   "Plant"
+  ],
+  "icon": "SkillGemVineArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemRhoaMount",
+  "en": "Rhoa Mount",
+  "ja": "ロア騎乗",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Companion",
+   "Persistent"
+  ],
+  "icon": "SkillGemRhoaMount_icon",
+  "gem": "SkillGemRhoaMount_gem"
+ },
+ {
+  "id": "SkillGemSupportBurstingPlague",
+  "en": "Bursting Plague",
+  "ja": "疫病爆発",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemSupportBurstingPlague_gem"
+ },
+ {
+  "id": "SkillGemCorpseCloud",
+  "en": "Decompose",
+  "ja": "デコンポーズ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Fire",
+   "Chaos",
+   "Duration"
+  ],
+  "icon": "SkillGemCorpseCloud_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemWallFortress",
+  "en": "Fortress I",
+  "ja": "円形陣地 I",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemWallFortress_gem"
+ },
+ {
+  "id": "SkillGemWallFortressTwo",
+  "en": "Fortress II",
+  "ja": "円形陣地 II",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemWallFortress_gem"
+ },
+ {
+  "id": "SkillGemAhnsCitadelSupport",
+  "en": "Ahn's Citadel",
+  "ja": "アーンの城塞",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": null,
+  "gem": "SkillGemAhnsCitadelSupport_gem"
+ },
+ {
+  "id": "SkillGemFrostfireSupport",
+  "en": "Frostfire",
+  "ja": "フロストファイヤー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold",
+   "Fire",
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemFrostfireSupport_gem"
+ },
+ {
+  "id": "SkillGemStormfireSupport",
+  "en": "Stormfire",
+  "ja": "ストームファイヤー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lightning",
+   "Fire"
+  ],
+  "icon": "SkillGemStormfireSupport_icon",
+  "gem": "SkillGemStormfireSupport_gem"
+ },
+ {
+  "id": "SkillGemIncreaseLimitSupport",
+  "en": "Overabundance I",
+  "ja": "上限超過 I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemIncreaseLimitSupport_gem"
+ },
+ {
+  "id": "SkillGemIncreaseLimitSupportTwo",
+  "en": "Overabundance II",
+  "ja": "上限超過 II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemIncreaseLimitSupport_gem"
+ },
+ {
+  "id": "SkillGemElectrocuteSupport",
+  "en": "Electrocute",
+  "ja": "麻痺",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemElectrocuteSupport_gem"
+ },
+ {
+  "id": "SkillGemEonyrsThunderSupport",
+  "en": "Eonyr's Thunder",
+  "ja": "エオニルの雷",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemEonyrsThunderSupport_gem"
+ },
+ {
+  "id": "SkillGemRagingSpirits",
+  "en": "Raging Spirits",
+  "ja": "レイジングスピリット",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Persistent",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemRagingSpirits_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemKnockbackWaveSupport",
+  "en": "Wind Wave",
+  "ja": "ウィンドウェーブ",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Trigger"
+  ],
+  "icon": null,
+  "gem": "SkillGemKnockbackWaveSupport_gem"
+ },
+ {
+  "id": "SkillGemBitingFrostSupport",
+  "en": "Biting Frost I",
+  "ja": "バイティングフロスト I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold",
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemBitingFrostSupport_gem"
+ },
+ {
+  "id": "SkillGemBitingFrostSupportTwo",
+  "en": "Biting Frost II",
+  "ja": "バイティングフロスト II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold",
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemBitingFrostSupport_gem"
+ },
+ {
+  "id": "SkillGemElementalDischarge",
+  "en": "Elemental Discharge",
+  "ja": "エレメンタルディチャージ",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Payoff"
+  ],
+  "icon": null,
+  "gem": "SkillGemElementalDischarge_gem"
+ },
+ {
+  "id": "SkillGemHourglassSupport",
+  "en": "Hourglass",
+  "ja": "砂時計",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemHourglassSupport_gem"
+ },
+ {
+  "id": "SkillGemFieryDeathSupport",
+  "en": "Fiery Death",
+  "ja": "発火死亡時爆発",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemFieryDeathSupport_gem"
+ },
+ {
+  "id": "SkillGemTwister",
+  "en": "Twister",
+  "ja": "ツイスター",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Duration",
+   "Repeatable",
+   "Wind"
+  ],
+  "icon": "SkillGemTwister_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDetonateMinion",
+  "en": "Detonate Minion",
+  "ja": "デトネートミニオン",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Fire"
+  ],
+  "icon": "SkillGemSkeletalArsonist_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemExplosiveSpear",
+  "en": "Explosive Spear",
+  "ja": "エクスプローシブスピア",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Duration",
+   "Detonator",
+   "Repeatable"
+  ],
+  "icon": "SkillGemExplosiveSpear_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemThunderousLeap",
+  "en": "Thunderous Leap",
+  "ja": "サンダラスリープ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Lightning",
+   "Detonator",
+   "Travel"
+  ],
+  "icon": "SkillGemThunderousLeap_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWindDancer",
+  "en": "Wind Dancer",
+  "ja": "ウィンドダンサー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Melee",
+   "Trigger",
+   "Staged"
+  ],
+  "icon": "SkillGemWindDancer_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDeadlyHeraldsSupport",
+  "en": "Deadly Herald",
+  "ja": "デッドリーヘラルド",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Herald"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeadlyHeraldsSupport_gem"
+ },
+ {
+  "id": "SkillGemManaFlareSupport",
+  "en": "Mana Flare",
+  "ja": "マナフレア",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemManaFlareSupport_gem"
+ },
+ {
+  "id": "SkillGemLockdownSupport",
+  "en": "Lockdown",
+  "ja": "足止めブースト",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemLockdownSupport_gem"
+ },
+ {
+  "id": "SkillGemStunSupport",
+  "en": "Stun I",
+  "ja": "スタン I",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemStunSupport_icon",
+  "gem": "SkillGemStunSupport_gem"
+ },
+ {
+  "id": "SkillGemStunSupportTwo",
+  "en": "Stun II",
+  "ja": "スタン II",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemStunSupport_gem"
+ },
+ {
+  "id": "SkillGemStunSupportThree",
+  "en": "Stun III",
+  "ja": "スタン III",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemStunSupport_gem"
+ },
+ {
+  "id": "SkillGemMobilitySupport",
+  "en": "Mobility",
+  "ja": "機動力",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemMobilitySupport_gem"
+ },
+ {
+  "id": "SkillGemPinSupport",
+  "en": "Pin I",
+  "ja": "足止め I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemPinSupport_gem"
+ },
+ {
+  "id": "SkillGemPinSupportTwo",
+  "en": "Pin II",
+  "ja": "足止め II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemPinSupport_gem"
+ },
+ {
+  "id": "SkillGemPinSupportThree",
+  "en": "Pin III",
+  "ja": "足止め III",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemPinSupport_gem"
+ },
+ {
+  "id": "SkillGemAmbushSupport",
+  "en": "Ambush",
+  "ja": "アンブッシュ",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemAmbushSupport_gem"
+ },
+ {
+  "id": "SkillGemProfaneRitual",
+  "en": "Profane Ritual",
+  "ja": "プロファンリチュアル",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemProfaneRitual_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSoulOffering",
+  "en": "Soul Offering",
+  "ja": "ソウルオファリング",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Duration"
+  ],
+  "icon": "SkillGemSoulOffering_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBountySupport",
+  "en": "Bounty I",
+  "ja": "バウンティ I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBountySupport_gem"
+ },
+ {
+  "id": "SkillGemBountySupportTwo",
+  "en": "Bounty II",
+  "ja": "バウンティ II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBountySupport_gem"
+ },
+ {
+  "id": "SkillGemManaFlaskSupport",
+  "en": "Mana Bounty",
+  "ja": "マナバウンティ",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemManaFlaskSupport_gem"
+ },
+ {
+  "id": "SkillGemLifeFlaskSupport",
+  "en": "Life Bounty",
+  "ja": "ライフバウンティ",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemBountySupport_gem"
+ },
+ {
+  "id": "SkillGemSkeletalWarrior",
+  "en": "Skeletal Warrior",
+  "ja": "スケルトンウォーリアー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemSkeletalWarrior_icon",
+  "gem": "SkillGemSkeletalSniper_gem"
+ },
+ {
+  "id": "SkillGemCurseEffectSupport",
+  "en": "Heightened Curse",
+  "ja": "呪いブースト",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Curse"
+  ],
+  "icon": null,
+  "gem": "SkillGemCurseEffectSupport_gem"
+ },
+ {
+  "id": "SkillGemLifeOnCullSupport",
+  "en": "Life Drain",
+  "ja": "ライフドレイン",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemLifeOnCullSupport_gem"
+ },
+ {
+  "id": "SkillGemManaOnCullSupport",
+  "en": "Soul Drain",
+  "ja": "ソウルドレイン",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemManaOnCullSupport_gem"
+ },
+ {
+  "id": "SkillGemGrimFeast",
+  "en": "Grim Feast",
+  "ja": "グリムフィースト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Minion",
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemGrimFeast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCastOnMinionDeath",
+  "en": "Cast on Minion Death",
+  "ja": "ミニオン死亡時キャスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnMinionDeath_gem"
+ },
+ {
+  "id": "SkillGemEscalatingPoisonSupport",
+  "en": "Escalating Poison",
+  "ja": "急性毒",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemEscalatingPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemChargeProfusionSupport",
+  "en": "Charge Profusion I",
+  "ja": "チャージ追加付与 I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemChargeProfusionSupport_gem"
+ },
+ {
+  "id": "SkillGemChargeProfusionSupportTwo",
+  "en": "Charge Profusion II",
+  "ja": "チャージ追加付与 II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemChargeProfusionSupport_gem"
+ },
+ {
+  "id": "SkillGemEmpoweredCullSupport",
+  "en": "Murderous Intent",
+  "ja": "殺意",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemEmpoweredCullSupport_gem"
+ },
+ {
+  "id": "SkillGemScavengedPlating",
+  "en": "Scavenged Plating",
+  "ja": "スカベンジドプレーティング",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemScavengedPlating_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemManaDrain",
+  "en": "Mana Drain",
+  "ja": "マナドレイン",
+  "color": "blue",
+  "support": false,
+  "tags": [],
+  "icon": "SkillGemManaDrain_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBoneBlast",
+  "en": "Bone Blast",
+  "ja": "ボーンブラスト",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemBoneBlast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBlackPowderBlitzReservation",
+  "en": "Black Powder Blitz",
+  "ja": "ブラックパウダーブリッツ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Fire",
+   "Detonator",
+   "Travel"
+  ],
+  "icon": "SkillGemBlackPowderBlitzReservation_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMoltenBlast",
+  "en": "Molten Blast",
+  "ja": "モルテンブラスト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire"
+  ],
+  "icon": "SkillGemMoltenBlast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMalice",
+  "en": "Malice",
+  "ja": "マリス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Duration"
+  ],
+  "icon": "SkillGemMalice_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHammerOfTheGods",
+  "en": "Hammer of the Gods",
+  "ja": "ハンマーオブゴッド",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemHammerOfTheGods_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemShieldWall",
+  "en": "Shield Wall",
+  "ja": "シールドウォール",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemShieldWall_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFortifyingCry",
+  "en": "Fortifying Cry",
+  "ja": "フォティファイイングクライ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Trigger",
+   "Physical",
+   "Duration",
+   "Nova"
+  ],
+  "icon": "SkillGemFortifyingCry_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEmberFusillade",
+  "en": "Ember Fusillade",
+  "ja": "エンバーフシレイド",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemEmberFusillade_icon",
+  "gem": "SkillGemEmberFusillade_gem"
+ },
+ {
+  "id": "SkillGemScatteringCalamity",
+  "en": "His Scattering Calamity",
+  "ja": "ヒズスキャタリングカラミティ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemScatteringCalamity_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemHighVelocityRounds",
+  "en": "High Velocity Rounds",
+  "ja": "ハイベロシティー弾",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Ammunition",
+   "Projectile",
+   "Physical",
+   "Duration",
+   "Payoff"
+  ],
+  "icon": "SkillGemHighVelocityRounds_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFragmentationRounds",
+  "en": "Fragmentation Rounds",
+  "ja": "フラグメンテーション弾",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Payoff",
+   "Merging"
+  ],
+  "icon": "SkillGemFragmentationRounds_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSiegeCascade",
+  "en": "Siege Cascade",
+  "ja": "シージカスケード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Sustained"
+  ],
+  "icon": "SkillGemSiegeCascade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArmourPiercingRounds",
+  "en": "Armour Piercing Rounds",
+  "ja": "アーマーピアシング弾",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Ammunition",
+   "Projectile",
+   "Physical"
+  ],
+  "icon": "SkillGemArmourPiercingRounds_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemExplosiveShot",
+  "en": "Explosive Shot",
+  "ja": "エクスプローシブショット",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Fire",
+   "Detonator"
+  ],
+  "icon": "SkillGemExplosiveShot_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIncendiaryShot",
+  "en": "Incendiary Shot",
+  "ja": "インセンディアリーショット",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Fire",
+   "Merging"
+  ],
+  "icon": "SkillGemIncendiaryShot_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemRapidShot",
+  "en": "Rapid Shot",
+  "ja": "ラピッドショット",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Ammunition",
+   "Projectile",
+   "Fire"
+  ],
+  "icon": "SkillGemRapidShot_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemGlacialBolt",
+  "en": "Glacial Bolt",
+  "ja": "グレイシャルボルト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemGlacialBolt_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPermafrostBolts",
+  "en": "Permafrost Bolts",
+  "ja": "パーマフロストボルト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Cold",
+   "Merging"
+  ],
+  "icon": "SkillGemPermafrostBolts_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHailstormRounds",
+  "en": "Hailstorm Rounds",
+  "ja": "ヘイルストーム弾",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Sustained",
+   "Cold"
+  ],
+  "icon": "SkillGemHailstormRounds_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIceShards",
+  "en": "Ice Shards",
+  "ja": "アイスシャード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Sustained",
+   "Cold",
+   "Hazard"
+  ],
+  "icon": "SkillGemIceShards_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlasmaBlast",
+  "en": "Plasma Blast",
+  "ja": "プラズマブラスト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Lightning",
+   "Channelling"
+  ],
+  "icon": "SkillGemPlasmaBlast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemGalvanicShards",
+  "en": "Galvanic Shards",
+  "ja": "ガルヴァニックシャード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Ammunition",
+   "Projectile",
+   "Lightning",
+   "Chaining",
+   "Merging"
+  ],
+  "icon": "SkillGemGalvanicShards_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemStormblastBolts",
+  "en": "Stormblast Bolts",
+  "ja": "ストームブラストボルト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": "SkillGemStormblastBolts_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemShockburstRounds",
+  "en": "Shockburst Rounds",
+  "ja": "ショックバースト弾",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Lightning",
+   "Payoff"
+  ],
+  "icon": "SkillGemShockburstRounds_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArmourDemolisherSupport",
+  "en": "Armour Demolisher I",
+  "ja": "アーマー破壊ブースト I",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemArmourDemolisherSupport_gem"
+ },
+ {
+  "id": "SkillGemArmourDemolisherSupportTwo",
+  "en": "Armour Demolisher II",
+  "ja": "アーマー破壊ブースト II",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemArmourDemolisherSupport_gem"
+ },
+ {
+  "id": "SkillGemUruksSmeltingSupport",
+  "en": "Uruk's Smelting",
+  "ja": "ウルクの製錬",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemUruksSmeltingSupport_gem"
+ },
+ {
+  "id": "SkillGemPlayerDefaultQuarterstaff",
+  "en": "Quarterstaff Strike",
+  "ja": "クォータースタッフストライク",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemPlayerDefaultQuarterstaff_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefault1HMace",
+  "en": "Mace Strike",
+  "ja": "メイスストライク",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemPlayerDefault1HMace_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefaultSpear",
+  "en": "Spear Stab",
+  "ja": "スピアスタブ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemPlayerDefaultSpear_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefaultSpearThrow",
+  "en": "Spear Throw",
+  "ja": "スピアスロー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Repeatable"
+  ],
+  "icon": "SkillGemPlayerDefaultSpearThrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefaultBow",
+  "en": "Bow Shot",
+  "ja": "ボウショット",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Repeatable"
+  ],
+  "icon": "SkillGemPlayerDefaultBow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefaultCrossbow",
+  "en": "Crossbow Shot",
+  "ja": "クロスボウショット",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile"
+  ],
+  "icon": "SkillGemPlayerDefaultCrossbow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPlayerDefaultGrenadeLauncher",
+  "en": "Grenade",
+  "ja": "グレネード",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Grenade",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemPlayerDefaultGrenadeLauncher_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyLifeRemnants",
+  "en": "Life Remnants",
+  "ja": "ライフレムナント",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemAscendancyLifeRemnants_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyExplosiveConcoction",
+  "en": "Explosive Concoction",
+  "ja": "エクスプローシブコンコクション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Fire"
+  ],
+  "icon": "SkillGemAscendancyExplosiveConcoction_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyFulminatingConcoction",
+  "en": "Fulminating Concoction",
+  "ja": "フォーミネイティングコンコクション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning"
+  ],
+  "icon": "SkillGemAscendancyFulminatingConcoction_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyPoisonousConcoction",
+  "en": "Acidic Concoction",
+  "ja": "アシッドコンコクション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Physical"
+  ],
+  "icon": "SkillGemAscendancyPoisonousConcoction_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyBleedingConcoction",
+  "en": "Bleeding Concoction",
+  "ja": "ブリーディングコンコクション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Physical"
+  ],
+  "icon": "SkillGemAscendancyBleedingConcoction_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyMeditate",
+  "en": "Meditate",
+  "ja": "メディテート",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Channelling"
+  ],
+  "icon": "SkillGemAscendancyMeditate_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyElementalStorm",
+  "en": "Elemental Storm",
+  "ja": "エレメンタルストーム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration",
+   "Orb"
+  ],
+  "icon": "SkillGemAscendancyElementalStorm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancySummonWaterDjinn",
+  "en": "Navira, the Last Mirage",
+  "ja": "最期の蜃気楼、ナヴィラ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Command",
+   "Cold"
+  ],
+  "icon": "SkillGemAscendancySummonWaterDjinn_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancySummonFireDjinn",
+  "en": "Ruzhan, the Blazing Sword",
+  "ja": "灼熱の剣、ルザン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Command",
+   "Fire"
+  ],
+  "icon": "SkillGemAscendancySummonFireDjinn_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancySummonSandDjinn",
+  "en": "Kelari, the Tainted Sands",
+  "ja": "汚染された砂、ケラリ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Command",
+   "Physical"
+  ],
+  "icon": "SkillGemAscendancySummonSandDjinn_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyCorpseBeetles",
+  "en": "Kelari's Malediction",
+  "ja": "ケラリの呪詛",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Command",
+   "Duration"
+  ],
+  "icon": "SkillGemAscendancyCorpseBeetles_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyAlignFate",
+  "en": "Align Fate",
+  "ja": "運命の調和",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemAscendancyAlignFate_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyMomentOfVulnerability",
+  "en": "Moment of Vulnerability",
+  "ja": "無防備の瞬間",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Nova"
+  ],
+  "icon": "SkillGemAscendancyMomentOfVulnerability_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTemporalRift",
+  "en": "Temporal Rift",
+  "ja": "テンポラルリフト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": "SkillGemTemporalRift_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTimeFreeze",
+  "en": "Time Freeze",
+  "ja": "タイムフリーズ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration"
+  ],
+  "icon": "SkillGemTimeFreeze_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTimeSnap",
+  "en": "Time Snap",
+  "ja": "タイムスナップ",
+  "color": "white",
+  "support": false,
+  "tags": [],
+  "icon": "SkillGemTimeSnap_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyEncasedInJade",
+  "en": "Encase in Jade",
+  "ja": "ヒスイの守り",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemAscendancyEncasedInJade_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSorceryWard",
+  "en": "Sorcery Ward",
+  "ja": "ソーサリーワード",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "Lightning",
+   "Cold",
+   "Fire"
+  ],
+  "icon": "SkillGemSorceryWard_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIntoTheBreach",
+  "en": "Into the Breach",
+  "ja": "ブリーチ侵入",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemIntoTheBreach_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAncestralSpriits",
+  "en": "Ancestral Spirits",
+  "ja": "アンセストラルスピリット",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Trigger",
+   "Duration"
+  ],
+  "icon": "SkillGemAncestralSpriits_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemRitualSacrifice",
+  "en": "Ritual Sacrifice",
+  "ja": "リチュアルサクリファイス",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Duration"
+  ],
+  "icon": "SkillGemRitualSacrifice_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBloodBoil",
+  "en": "Blood Boil",
+  "ja": "ブラッドボイル",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemBloodBoil_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemVividStampede",
+  "en": "Vivid Stampede",
+  "ja": "ビビッドスタンピード",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": "SkillGemVividStampede_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWildProtector",
+  "en": "Wild Protector",
+  "ja": "ワイルドプロテクター",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Physical"
+  ],
+  "icon": "SkillGemWildProtector_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHollowForm",
+  "en": "Hollow Form",
+  "ja": "ホロウフォーム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Melee",
+   "Sustained",
+   "Channelling",
+   "Meta"
+  ],
+  "icon": "SkillGemHollowForm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMirageDeadeye",
+  "en": "Mirage Deadeye",
+  "ja": "ミラージュデッドアイ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Duration",
+   "Meta"
+  ],
+  "icon": "SkillGemMirageDeadeye_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemInevitableAgony",
+  "en": "Inevitable Agony",
+  "ja": "インエビタブルアゴニー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemInevitableAgony_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMetaDeadeyeMarks",
+  "en": "Called Shots",
+  "ja": "コールショット",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Meta"
+  ],
+  "icon": "SkillGemMetaDeadeyeMarks_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCastFireSpellOnHit",
+  "en": "Fire Spell on Hit",
+  "ja": "ヒット時火スペル",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Fire",
+   "Meta"
+  ],
+  "icon": "SkillGemCastFireSpellOnHit_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemManifestWeapon",
+  "en": "Manifest Weapon",
+  "ja": "マニフェストウェポン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent"
+  ],
+  "icon": "SkillGemManifestWeapon_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSupportingFire",
+  "en": "Supporting Fire",
+  "ja": "サポーティングファイヤー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemSupportingFire_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemVoidIllusion",
+  "en": "Void Illusion",
+  "ja": "ヴォイドイリュージョン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "AoE",
+   "Trigger",
+   "Duration"
+  ],
+  "icon": "SkillGemVoidIllusion_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCrescendoSupport",
+  "en": "Crescendo I",
+  "ja": "クレッシェンド I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemCrescendoSupport_gem"
+ },
+ {
+  "id": "SkillGemCrescendoSupportTwo",
+  "en": "Crescendo II",
+  "ja": "クレッシェンド II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemCrescendoSupport_gem"
+ },
+ {
+  "id": "SkillGemCrescendoSupportThree",
+  "en": "Crescendo III",
+  "ja": "クレッシェンド III",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemCrescendoSupport_gem"
+ },
+ {
+  "id": "SkillGemFireExposureSupport",
+  "en": "Fire Exposure",
+  "ja": "火の曝露",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Fire",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemFireExposureSupport_gem"
+ },
+ {
+  "id": "SkillGemLightningExposureSupport",
+  "en": "Lightning Exposure",
+  "ja": "雷の曝露",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lightning",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemLightningExposureSupport_gem"
+ },
+ {
+  "id": "SkillGemColdExposureSupport",
+  "en": "Cold Exposure",
+  "ja": "冷気の曝露",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemColdExposureSupport_gem"
+ },
+ {
+  "id": "SkillGemDeadlyPoisonSupport",
+  "en": "Deadly Poison I",
+  "ja": "致死毒 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeadlyPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemDeadlyPoisonSupportTwo",
+  "en": "Deadly Poison II",
+  "ja": "致死毒 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeadlyPoisonSupport_gem"
+ },
+ {
+  "id": "SkillGemDeepCutsSupport",
+  "en": "Deep Cuts I",
+  "ja": "重出血 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": "SkillGemDeepCutsSupport_icon",
+  "gem": "SkillGemDeepCutsSupport_gem"
+ },
+ {
+  "id": "SkillGemDeepCutsSupportTwo",
+  "en": "Deep Cuts II",
+  "ja": "重出血 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemDeepCutsSupport_gem"
+ },
+ {
+  "id": "SkillGemCorruptingCrySupport",
+  "en": "Corrupting Cry I",
+  "ja": "コラプティングクライ 1",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "Trigger",
+   "Physical",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemCorruptingCrySupport_gem"
+ },
+ {
+  "id": "SkillGemCorruptingCrySupportTwo",
+  "en": "Corrupting Cry II",
+  "ja": "コラプティングクライ 2",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "Trigger",
+   "Physical",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemCorruptingCrySupport_gem"
+ },
+ {
+  "id": "SkillGemCorruptingCrySupportThree",
+  "en": "Paquate's Pact",
+  "ja": "パクアテの契約",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Warcry",
+   "Trigger",
+   "Physical",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemCorruptingCrySupportThree_gem"
+ },
+ {
+  "id": "SkillGemWindowOfOpportunitySupport",
+  "en": "Window of Opportunity I",
+  "ja": "好機の幅 I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Channelling"
+  ],
+  "icon": null,
+  "gem": "SkillGemWindowOfOpportunitySupport_gem"
+ },
+ {
+  "id": "SkillGemWindowOfOpportunitySupportTwo",
+  "en": "Window of Opportunity II",
+  "ja": "好機の幅 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Channelling"
+  ],
+  "icon": null,
+  "gem": "SkillGemWindowOfOpportunitySupport_gem"
+ },
+ {
+  "id": "SkillGemFireMasterySupport",
+  "en": "Fire Mastery",
+  "ja": "火マスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": "SkillGemFireMasterySupport_icon",
+  "gem": "SkillGemFireMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemColdMasterySupport",
+  "en": "Cold Mastery",
+  "ja": "冷気マスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemColdMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemLightningMasterySupport",
+  "en": "Lightning Mastery",
+  "ja": "雷マスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lightning"
+  ],
+  "icon": null,
+  "gem": "SkillGemLightningMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemChaosMasterySupport",
+  "en": "Chaos Mastery",
+  "ja": "混沌マスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Chaos"
+  ],
+  "icon": null,
+  "gem": "SkillGemChaosMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemPhysicalMasterySupport",
+  "en": "Physical Mastery",
+  "ja": "物理マスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemPhysicalMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemMinionMasterySupport",
+  "en": "Minion Mastery",
+  "ja": "ミニオンマスタリー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemPhysicalMasterySupport_gem"
+ },
+ {
+  "id": "SkillGemShockchainArrow",
+  "en": "Shockchain Arrow",
+  "ja": "ショックチェインアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning",
+   "Chaining",
+   "Payoff",
+   "Repeatable"
+  ],
+  "icon": "SkillGemShockchainArrow_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemVaultingImpact",
+  "en": "Vaulting Impact",
+  "ja": "ヴォルティングインパクト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Physical",
+   "Duration",
+   "Travel",
+   "Payoff"
+  ],
+  "icon": "SkillGemVaultingImpact_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemStormWave",
+  "en": "Storm Wave",
+  "ja": "ストームウェーブ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Lightning"
+  ],
+  "icon": "SkillGemStormWave_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMantraOfDestruction",
+  "en": "Mantra of Destruction",
+  "ja": "マントラオブデストラクション",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Chaos",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemMantraOfDestruction_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDrainedAilmentSupport",
+  "en": "Drain Ailments",
+  "ja": "状態異常吸収",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemDrainedAilmentSupport_gem"
+ },
+ {
+  "id": "SkillGemComboFinisherSupport",
+  "en": "Combo Finisher I",
+  "ja": "コンボフィニッシャー I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike",
+   "Conditional"
+  ],
+  "icon": null,
+  "gem": "SkillGemComboFinisherSupport_gem"
+ },
+ {
+  "id": "SkillGemComboFinisherSupportTwo",
+  "en": "Combo Finisher II",
+  "ja": "コンボフィニッシャー II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike",
+   "Conditional"
+  ],
+  "icon": null,
+  "gem": "SkillGemComboFinisherSupport_gem"
+ },
+ {
+  "id": "SkillGemAilithLineageSupport",
+  "en": "Ailith's Chimes",
+  "ja": "エイリスの鐘",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": null,
+  "gem": "SkillGemAilithLineageSupport_gem"
+ },
+ {
+  "id": "SkillGemSlowPotencySupport",
+  "en": "Slow Potency",
+  "ja": "減速効能",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Spell"
+  ],
+  "icon": null,
+  "gem": "SkillGemSlowPotencySupport_gem"
+ },
+ {
+  "id": "SkillGemPrecisionSupport",
+  "en": "Precision I",
+  "ja": "プレシジョン I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemPrecisionSupport_gem"
+ },
+ {
+  "id": "SkillGemPrecisionSupportTwo",
+  "en": "Precision II",
+  "ja": "プレシジョン II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemPrecisionSupport_gem"
+ },
+ {
+  "id": "SkillGemClaritySupport",
+  "en": "Clarity I",
+  "ja": "クラリティ I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemClaritySupport_gem"
+ },
+ {
+  "id": "SkillGemClaritySupportTwo",
+  "en": "Clarity II",
+  "ja": "クラリティ II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemClaritySupport_gem"
+ },
+ {
+  "id": "SkillGemVitalitySupport",
+  "en": "Vitality I",
+  "ja": "バイタリティー I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemVitalitySupport_gem"
+ },
+ {
+  "id": "SkillGemVitalitySupportTwo",
+  "en": "Vitality II",
+  "ja": "バイタリティー II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemVitalitySupport_gem"
+ },
+ {
+  "id": "SkillGemHerbalismSupport",
+  "en": "Herbalism I",
+  "ja": "薬草学 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemHerbalismSupport_gem"
+ },
+ {
+  "id": "SkillGemHerbalismSupportTwo",
+  "en": "Herbalism II",
+  "ja": "薬草学 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemHerbalismSupport_gem"
+ },
+ {
+  "id": "SkillGemCannibalismSupport",
+  "en": "Cannibalism I",
+  "ja": "カニバリズム I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemCannibalismSupport_gem"
+ },
+ {
+  "id": "SkillGemCannibalismSupportTwo",
+  "en": "Cannibalism II",
+  "ja": "カニバリズム II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemCannibalismSupport_gem"
+ },
+ {
+  "id": "SkillGemArmourBreakSupport",
+  "en": "Armour Break I",
+  "ja": "アーマー破壊 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemArmourBreakSupport_gem"
+ },
+ {
+  "id": "SkillGemArmourBreakSupportTwo",
+  "en": "Armour Break II",
+  "ja": "アーマー破壊 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemArmourBreakSupport_gem"
+ },
+ {
+  "id": "SkillGemArmourBreakSupportThree",
+  "en": "Armour Break III",
+  "ja": "アーマー破壊 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemArmourBreakSupport_gem"
+ },
+ {
+  "id": "SkillGemFarCombatSupport",
+  "en": "Longshot I",
+  "ja": "ロングショット I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemFarCombatSupport_gem"
+ },
+ {
+  "id": "SkillGemFarCombatSupportTwo",
+  "en": "Longshot II",
+  "ja": "ロングショット II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemFarCombatSupport_gem"
+ },
+ {
+  "id": "SkillGemDazeSupport",
+  "en": "Daze",
+  "ja": "眩暈",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemDazeSupport_gem"
+ },
+ {
+  "id": "SkillGemElementalArmamentSupport",
+  "en": "Elemental Armament I",
+  "ja": "元素武装 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemElementalArmamentSupport_gem"
+ },
+ {
+  "id": "SkillGemElementalArmamentSupportTwo",
+  "en": "Elemental Armament II",
+  "ja": "元素武装 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemElementalArmamentSupport_gem"
+ },
+ {
+  "id": "SkillGemElementalArmamentSupportThree",
+  "en": "Elemental Armament III",
+  "ja": "元素武装 III",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": null,
+  "gem": "SkillGemElementalArmamentSupport_gem"
+ },
+ {
+  "id": "SkillGemCooldownRecoverySupport",
+  "en": "Cooldown Recovery I",
+  "ja": "クールダウン解消 I",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemCooldownRecoverySupport_gem"
+ },
+ {
+  "id": "SkillGemCooldownRecoverySupportTwo",
+  "en": "Cooldown Recovery II",
+  "ja": "クールダウン解消 II",
+  "color": "green",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemCooldownRecoverySupport_gem"
+ },
+ {
+  "id": "SkillGemAscendancyElementalExpression",
+  "en": "Elemental Expression",
+  "ja": "エレメンタルエクスプレッション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Chaining"
+  ],
+  "icon": "SkillGemAscendancyElementalExpression_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIceShot",
+  "en": "Ice Shot",
+  "ja": "アイスショット",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Projectile",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemIceShot_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWarBanner",
+  "en": "War Banner",
+  "ja": "ウォーバナー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "AoE",
+   "Aura",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemWarBanner_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDefianceBanner",
+  "en": "Defiance Banner",
+  "ja": "ディファイアンスバナー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "AoE",
+   "Aura",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemDefianceBanner_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDreadBanner",
+  "en": "Dread Banner",
+  "ja": "ドレッドバナー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "AoE",
+   "Aura",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemDreadBanner_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFreezingMark",
+  "en": "Freezing Mark",
+  "ja": "凍結の呪印",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemFreezingMark_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemVoltaicMark",
+  "en": "Voltaic Mark",
+  "ja": "電流の呪印",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": "SkillGemVoltaicMark_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHandOfChayula",
+  "en": "Hand of Chayula",
+  "ja": "チャユラの手",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Chaos",
+   "Meta"
+  ],
+  "icon": "SkillGemHandOfChayula_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTimeOfNeed",
+  "en": "Time of Need",
+  "ja": "タイムオブニード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemTimeOfNeed_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemElementalInvocation",
+  "en": "Elemental Invocation",
+  "ja": "エレメンタルインボケーション",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Invocation",
+   "Meta"
+  ],
+  "icon": "SkillGemElementalInvocation_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAttrition",
+  "en": "Attrition",
+  "ja": "アトリション",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemAttrition_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemElementalConflux",
+  "en": "Elemental Conflux",
+  "ja": "エレメンタルコンフラックス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemElementalConflux_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEmergencyReload",
+  "en": "Emergency Reload",
+  "ja": "緊急リロード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Duration"
+  ],
+  "icon": "SkillGemEmergencyReload_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBloodFountainSupport",
+  "en": "Font of Blood",
+  "ja": "血の泉",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Totem"
+  ],
+  "icon": null,
+  "gem": "SkillGemBloodFountainSupport_gem"
+ },
+ {
+  "id": "SkillGemManaFountainSupport",
+  "en": "Font of Mana",
+  "ja": "マナの泉",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Totem"
+  ],
+  "icon": null,
+  "gem": "SkillGemManaFountainSupport_gem"
+ },
+ {
+  "id": "SkillGemAftershockChanceSupport",
+  "en": "Aftershock I",
+  "ja": "余震 I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemAftershockChanceSupport_gem"
+ },
+ {
+  "id": "SkillGemAftershockChanceSupportTwo",
+  "en": "Aftershock II",
+  "ja": "余震 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": null,
+  "gem": "SkillGemAftershockChanceSupport_gem"
+ },
+ {
+  "id": "SkillGemSlamAftershocksSupport",
+  "en": "Tectonic Slams",
+  "ja": "テクトニックスラム",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Slam"
+  ],
+  "icon": null,
+  "gem": "SkillGemSlamAftershocksSupport_gem"
+ },
+ {
+  "id": "SkillGemTornadoShot",
+  "en": "Tornado Shot",
+  "ja": "トルネードショット",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Physical",
+   "Duration",
+   "Repeatable",
+   "Wind"
+  ],
+  "icon": "SkillGemTornadoShot_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemChargeRegulation",
+  "en": "Charge Regulation",
+  "ja": "チャージレギュレーション",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemChargeRegulation_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBurningRunesSupport",
+  "en": "Burning Inscription",
+  "ja": "燃焼の刻印",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemBurningRunesSupport_gem"
+ },
+ {
+  "id": "SkillGemShardScavenger",
+  "en": "Shard Scavenger",
+  "ja": "シャードスカベンジャー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Physical",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemShardScavenger_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemOverwhelmingPresence",
+  "en": "Overwhelming Presence",
+  "ja": "オーバーウェルミングプレゼンス",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura"
+  ],
+  "icon": "SkillGemOverwhelmingPresence_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAlchemistsBoon",
+  "en": "Alchemist's Boon",
+  "ja": "錬金術師の恩恵",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura"
+  ],
+  "icon": "SkillGemAlchemistsBoon_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemReapersInvocation",
+  "en": "Reaper's Invocation",
+  "ja": "リーパーズインボケーション",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Invocation",
+   "Meta"
+  ],
+  "icon": "SkillGemReapersInvocation_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArchmage",
+  "en": "Archmage",
+  "ja": "アーチメイジ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Lightning"
+  ],
+  "icon": "SkillGemArchmage_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMagneticSalvo",
+  "en": "Magnetic Salvo",
+  "ja": "マグネティックサルヴォ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Lightning"
+  ],
+  "icon": "SkillGemMagneticSalvo_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFreezingSalvo",
+  "en": "Freezing Salvo",
+  "ja": "フリージングサルヴォ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFreezingSalvo_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBerserk",
+  "en": "Berserk",
+  "ja": "バーサーク",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemAddedFireDamageSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHeraldOfPlague",
+  "en": "Herald of Plague",
+  "ja": "ヘラルドオブプレイグ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Chaos",
+   "Herald"
+  ],
+  "icon": "SkillGemHeraldOfPlague_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHeraldOfBlood",
+  "en": "Herald of Blood",
+  "ja": "ヘラルドオブブラッド",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Herald",
+   "Payoff"
+  ],
+  "icon": "SkillGemHeraldOfBlood_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWitheringPresence",
+  "en": "Withering Presence",
+  "ja": "ウィザリングプレゼンス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Chaos",
+   "Duration"
+  ],
+  "icon": "SkillGemWitheringPresence_icon",
+  "gem": "SkillGemWitheringPresence_gem"
+ },
+ {
+  "id": "SkillGemRavenousSwarm",
+  "en": "Ravenous Swarm",
+  "ja": "ラヴェナススウォーム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Persistent",
+   "Physical",
+   "Chaos",
+   "Duration"
+  ],
+  "icon": "SkillGemRavenousSwarm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMirageArcher",
+  "en": "Mirage Archer",
+  "ja": "ミラージュアーチャー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Duration",
+   "Meta"
+  ],
+  "icon": "SkillGemMirageArcher_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCombatFrenzy",
+  "en": "Combat Frenzy",
+  "ja": "コンバットフレンジー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemCombatFrenzy_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCastOnBlock",
+  "en": "Cast on Block",
+  "ja": "ブロック時キャスト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": "SkillGemCastOnBlock_icon",
+  "gem": "SkillGemCastOnMinionDeath_gem"
+ },
+ {
+  "id": "SkillGemCastCurseOnBlock",
+  "en": "Curse on Block",
+  "ja": "ブロック時呪い",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": "SkillGemCastOnBlock_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemGatheringStorm",
+  "en": "Gathering Storm",
+  "ja": "ギャザリングストーム",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Lightning",
+   "Duration",
+   "Channelling",
+   "Travel"
+  ],
+  "icon": "SkillGemGatheringStorm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBranchingFissuresSupport",
+  "en": "Branching Fissures I",
+  "ja": "枝分かれする亀裂 I",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemBranchingFissuresSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemLastingGroundSupport",
+  "en": "Lasting Ground",
+  "ja": "領域持続",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemLastingGroundSupport_gem"
+ },
+ {
+  "id": "SkillGemTempestuousTempoSupport",
+  "en": "Rising Tempest",
+  "ja": "嵐の連鎖",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemTempestuousTempoSupport_gem"
+ },
+ {
+  "id": "SkillGemPracticedComboSupport",
+  "en": "Practiced Combo",
+  "ja": "手慣れたコンボ",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemPracticedComboSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBoundlessEnergySupport",
+  "en": "Boundless Energy I",
+  "ja": "無尽蔵のエネルギー I",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAdhesiveGrenadesSupport",
+  "en": "Adhesive Grenades I",
+  "ja": "粘着グレネード I",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Grenade"
+  ],
+  "icon": "SkillGemPlagueBearer_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCadenceSupport",
+  "en": "Cadence",
+  "ja": "ケイデンス",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Attack"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFlamepierceSupport",
+  "en": "Flamepierce",
+  "ja": "発火貫通",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Projectile",
+   "Fire"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAbidingHexSupport",
+  "en": "Abiding Hex",
+  "ja": "持続する呪術",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Curse"
+  ],
+  "icon": "SkillGemAbidingHexSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAcrimonySupport",
+  "en": "Acrimony",
+  "ja": "蝕み",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCracklingBarrierSupport",
+  "en": "Crackling Barrier",
+  "ja": "帯電障壁",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lightning",
+   "Channelling"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSparSupport",
+  "en": "Spar",
+  "ja": "スパーリング",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArmsLengthSupport",
+  "en": "Arms Length",
+  "ja": "間合い保持",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTearSupport",
+  "en": "Tear",
+  "ja": "追い裂き",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Physical"
+  ],
+  "icon": "SkillGemTearSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCatharsisSupport",
+  "en": "Catharsis",
+  "ja": "カタルシス",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Physical",
+   "Chaos",
+   "Conditional"
+  ],
+  "icon": "SkillGemCatharsisSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemLoyaltySupport",
+  "en": "Loyalty",
+  "ja": "忠誠",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemHardyTotemsSupport",
+  "en": "Hardy Totems I",
+  "ja": "頑強なトーテム I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Totem"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEncroachingGroundSupport",
+  "en": "Encroaching Ground",
+  "ja": "侵蝕する領域",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE"
+  ],
+  "icon": "SkillGemEncroachingGroundSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWhirlwindLance",
+  "en": "Whirlwind Lance",
+  "ja": "ワールウィンドランス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Duration",
+   "Repeatable",
+   "Wind"
+  ],
+  "icon": "SkillGemStunSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPrimalStrikes",
+  "en": "Primal Strikes",
+  "ja": "プライマルストライク",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Lightning",
+   "Payoff"
+  ],
+  "icon": "SkillGemPrimalStrikes_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCullTheWeak",
+  "en": "Cull The Weak",
+  "ja": "カルザウィーク",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike"
+  ],
+  "icon": "SkillGemCullTheWeak_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFangsOfFrost",
+  "en": "Fangs of Frost",
+  "ja": "ファングオブフロスト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Cold"
+  ],
+  "icon": "SkillGemFangsOfFrost_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWindSerpentsFury",
+  "en": "Wind Serpent's Fury",
+  "ja": "ウィンドサーペントの怒り",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Sustained",
+   "Conditional",
+   "Wind"
+  ],
+  "icon": "SkillGemWindSerpentsFury_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemRake",
+  "en": "Rake",
+  "ja": "レーキ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Strike",
+   "Physical"
+  ],
+  "icon": "SkillGemRake_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBloodhoundsMark",
+  "en": "Bloodhound's Mark",
+  "ja": "ブラッドハウンドの呪印",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Duration",
+   "Payoff"
+  ],
+  "icon": "SkillGemBloodhoundsMark_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTameBeast",
+  "en": "Tame Beast",
+  "ja": "テイムビースト",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemTameBeast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSpearOfSolaris",
+  "en": "Spear of Solaris",
+  "ja": "スピアオブソラリス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Fire",
+   "Conditional"
+  ],
+  "icon": "SkillGemSpearOfSolaris_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemStormLance",
+  "en": "Storm Lance",
+  "ja": "ストームランス",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Sustained",
+   "Lightning",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemStormLance_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemElementalSundering",
+  "en": "Elemental Sundering",
+  "ja": "エレメンタルサンダーリング",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Nova",
+   "Payoff"
+  ],
+  "icon": "SkillGemElementalSundering_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSummonBeast",
+  "en": "Companion: {0}",
+  "ja": "コンパニオン：{0}",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent"
+  ],
+  "icon": "SkillGemSummonBeast_icon",
+  "gem": "SkillGemSummonBeast_gem"
+ },
+ {
+  "id": "SkillGemCastOnCharmUse",
+  "en": "Cast on Charm Use",
+  "ja": "チャーム使用時キャスト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Meta"
+  ],
+  "icon": null,
+  "gem": "SkillGemCastOnCharmUse_gem"
+ },
+ {
+  "id": "SkillGemTrinity",
+  "en": "Trinity",
+  "ja": "トリニティ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Lightning",
+   "Cold",
+   "Fire"
+  ],
+  "icon": "SkillGemTrinity_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTrailOfCaltrops",
+  "en": "Trail of Caltrops",
+  "ja": "トレイルオブカルトロップ",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Physical",
+   "Duration",
+   "Hazard"
+  ],
+  "icon": "SkillGemTrailOfCaltrops_icon",
+  "gem": "SkillGemTrailOfCaltrops_gem"
+ },
+ {
+  "id": "SkillGemAscendancyTriggerElementalSurge",
+  "en": "Elemental Surge",
+  "ja": "エレメンタルサージ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire"
+  ],
+  "icon": "SkillGemAscendancyTriggerElementalSurge_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCastLightningSpellOnHit",
+  "en": "Thundergod's Wrath",
+  "ja": "雷神の怒り",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Lightning",
+   "Meta"
+  ],
+  "icon": "SkillGemCastLightningSpellOnHit_icon",
+  "gem": "SkillGemCastOnCharmUse_gem"
+ },
+ {
+  "id": "SkillGemConvalescence",
+  "en": "Convalescence",
+  "ja": "コンヴァレッセンス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemConvalescence_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemGeminiSurge",
+  "en": "Gemini Surge",
+  "ja": "ジェミニサージ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Cold",
+   "Fire"
+  ],
+  "icon": "SkillGemAscendancyTriggerElementalSurge_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWingBlast",
+  "en": "Wing Blast",
+  "ja": "ウィングブラスト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Wyvern",
+   "AoE",
+   "Melee",
+   "Wind"
+  ],
+  "icon": "SkillGemWingBlast_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIronWard",
+  "en": "Iron Ward",
+  "ja": "アイアンワード",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Nova"
+  ],
+  "icon": "SkillGemIronWard_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEntangle",
+  "en": "Entangle",
+  "ja": "エンタングル",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Physical",
+   "Duration",
+   "Repeatable",
+   "Plant"
+  ],
+  "icon": "SkillGemEntangle_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIceFragments",
+  "en": "Ice Fragments",
+  "ja": "アイスフラグメント",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Cold"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWolfShred",
+  "en": "Shred",
+  "ja": "シュレッド",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Werewolf",
+   "AoE",
+   "Melee",
+   "Strike",
+   "Projectile",
+   "Trigger",
+   "Cold",
+   "Payoff"
+  ],
+  "icon": "SkillGemWolfShred_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBearFuryOfTheMountain",
+  "en": "Fury of the Mountain",
+  "ja": "フューリーオブザマウンテン",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Bear",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Sustained",
+   "Duration",
+   "Channelling"
+  ],
+  "icon": "SkillGemBearFuryOfTheMountain_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWolfCrossSlash",
+  "en": "Cross Slash",
+  "ja": "クロススラッシュ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Werewolf",
+   "AoE",
+   "Melee"
+  ],
+  "icon": "SkillGemWolfCrossSlash_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIcestorm",
+  "en": "Icestorm",
+  "ja": "アイスストーム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Cold",
+   "Duration",
+   "Payoff",
+   "Repeatable",
+   "Storm"
+  ],
+  "icon": "SkillGemIcestorm_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPinnacleOfPower",
+  "en": "Pinnacle of Power",
+  "ja": "ピナクルオブパワー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemBranchingFissuresSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCrossbowRequiem",
+  "en": "Requiem",
+  "ja": "レクイエム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Ammunition",
+   "Projectile",
+   "Cold",
+   "Conditional"
+  ],
+  "icon": "SkillGemCrossbowRequiem_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemLunarAssault",
+  "en": "Lunar Assault",
+  "ja": "ルナーアサルト",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Werewolf",
+   "AoE",
+   "Melee",
+   "Strike",
+   "Cold"
+  ],
+  "icon": "SkillGemLunarAssault_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWyvernDevour",
+  "en": "Devour",
+  "ja": "デバウアー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Wyvern",
+   "AoE",
+   "Melee",
+   "Slam"
+  ],
+  "icon": "SkillGemWyvernDevour_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemThrashingVines",
+  "en": "Thrashing Vines",
+  "ja": "スラッシングヴァイン",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Sustained",
+   "Physical",
+   "Duration",
+   "Plant"
+  ],
+  "icon": "SkillGemThrashingVines_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemWolfLunarBlessing",
+  "en": "Lunar Blessing",
+  "ja": "ルナーブレッシング",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Shapeshift",
+   "Buff",
+   "Werewolf",
+   "AoE",
+   "Trigger",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemWolfLunarBlessing_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemLivingLightningSupportTwo",
+  "en": "Living Lightning II",
+  "ja": "リビングライトニング II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Minion",
+   "Trigger",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": "SkillGemInevitableCriticalsSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSkitteringStoneSupportTwo",
+  "en": "Skittering Stone II",
+  "ja": "這いまわる石 II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Minion",
+   "Trigger",
+   "Physical",
+   "Duration"
+  ],
+  "icon": "SkillGemRageSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEshsRadianceSupport",
+  "en": "Esh's Radiance",
+  "ja": "エシュの輝き",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Lightning",
+   "Chaos"
+  ],
+  "icon": "SkillGemEshsRadianceSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemDaressosPassionSupport",
+  "en": "Daresso's Passion",
+  "ja": "ダレッソの熱情",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Banner",
+   "Lineage"
+  ],
+  "icon": "SkillGemDaressosPassionSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemGarukhansResolveSupport",
+  "en": "Garukhan's Resolve",
+  "ja": "ガルカーンの決意",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Attack",
+   "Conditional"
+  ],
+  "icon": "SkillGemGarukhansResolveSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemForgeHammer",
+  "en": "Forge Hammer",
+  "ja": "フォージハンマー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemForgeHammer_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFulmination",
+  "en": "Fulmination",
+  "ja": "フルミネーション",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Aura",
+   "Lightning"
+  ],
+  "icon": "SkillGemFulmination_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMortarCannon",
+  "en": "Mortar Cannon",
+  "ja": "モルタルキャノン",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Grenade",
+   "Duration",
+   "Meta"
+  ],
+  "icon": "SkillGemMortarCannon_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAncestralCry",
+  "en": "Ancestral Cry",
+  "ja": "アンセストラルクライ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Buff",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Projectile",
+   "Trigger",
+   "Fire",
+   "Duration",
+   "Nova",
+   "Conditional"
+  ],
+  "icon": "SkillGemAncestralCry_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPrimalBounty",
+  "en": "Primal Bounty",
+  "ja": "プライマルバウンティ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Trigger"
+  ],
+  "icon": "SkillGemPrimalBounty_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFeastOfFlesh",
+  "en": "Feast of Flesh",
+  "ja": "フィーストオブフレッシュ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Nova",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFeastOfFlesh_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemToxicDomain",
+  "en": "Toxic Domain",
+  "ja": "トキシックドメイン",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Physical",
+   "Chaos",
+   "Duration",
+   "Plant"
+  ],
+  "icon": "SkillGemGarukhansResolveSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemSpellslinger",
+  "en": "Spellslinger",
+  "ja": "スペルスリンガー",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Trigger",
+   "Invocation",
+   "Meta"
+  ],
+  "icon": "SkillGemSpellslinger_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemIceTippedArrows",
+  "en": "Ice-Tipped Arrows",
+  "ja": "アイスティップアロー",
+  "color": "green",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Buff",
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemIceTippedArrows_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCracklingPalm",
+  "en": "Crackling Palm",
+  "ja": "クラックリングパーム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Lightning"
+  ],
+  "icon": "SkillGemCracklingPalm_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemFuturePast",
+  "en": "Future-Past",
+  "ja": "時の交差",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemFuturePast_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemRunicTempering",
+  "en": "Runic Tempering",
+  "ja": "ルーニックテンパリング",
+  "color": "white",
+  "support": false,
+  "tags": [],
+  "icon": "SkillGemRunicTempering_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemHisWinnowingFlame",
+  "en": "His Winnowing Flame",
+  "ja": "ヒズウィノーイングフレイム",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Fire",
+   "Payoff"
+  ],
+  "icon": "SkillGemHisWinnowingFlame_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemHisFoulEmergence",
+  "en": "His Foul Emergence",
+  "ja": "ヒズフォウルエマージェンス",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Chaos",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemHisFoulEmergence_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemSiphonElements",
+  "en": "Siphon Elements",
+  "ja": "サイフォンエレメント",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Remnant"
+  ],
+  "icon": "SkillGemSiphonElements_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFrostDarts",
+  "en": "Frost Darts",
+  "ja": "フロストダーツ",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Cold",
+   "Payoff",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFrostDarts_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTriggeredAbyssalApparition",
+  "en": "Abyssal Apparition",
+  "ja": "アビサルアパリション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Trigger"
+  ],
+  "icon": "SkillGemTriggeredAbyssalApparition_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemCreepingChillSupport",
+  "en": "Creeping Chill",
+  "ja": "クリーピングチル",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemCreepingChillSupport_gem"
+ },
+ {
+  "id": "SkillGemBriarpatch",
+  "en": "Briarpatch",
+  "ja": "ブライアパッチ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Persistent",
+   "AoE",
+   "Sustained",
+   "Physical",
+   "Duration",
+   "Plant"
+  ],
+  "icon": "SkillGemBriarpatch_icon",
+  "gem": "SkillGemBriarpatch_gem"
+ },
+ {
+  "id": "SkillGemEternalRage",
+  "en": "Eternal Rage",
+  "ja": "エターナルレイジ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": "SkillGemEternalRage_icon",
+  "gem": "SkillGemEternalRage_gem"
+ },
+ {
+  "id": "SkillGemSavageFury",
+  "en": "Savage Fury",
+  "ja": "サベージフューリー",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemSavageFury_icon",
+  "gem": "SkillGemSavageFury_gem"
+ },
+ {
+  "id": "SkillGemWalkingCalamity",
+  "en": "Walking Calamity",
+  "ja": "ウォーキングカラミティ",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Shapeshift",
+   "Buff",
+   "Bear",
+   "AoE",
+   "Trigger",
+   "Fire",
+   "Duration",
+   "Conditional"
+  ],
+  "icon": "SkillGemWalkingCalamity_icon",
+  "gem": "SkillGemWalkingCalamity_gem"
+ },
+ {
+  "id": "SkillGemTheStarsAnswer",
+  "en": "The Stars Answer",
+  "ja": "スターアンサー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemTheStarsAnswer_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemApocalypse",
+  "en": "Apocalypse",
+  "ja": "アポカリプス",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration",
+   "Conditional",
+   "Storm"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemMarkOfSiphoningSupport",
+  "en": "Mark of Siphoning",
+  "ja": "吸収の呪印",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Mark"
+  ],
+  "icon": null,
+  "gem": "SkillGemMarkOfSiphoningSupport_gem"
+ },
+ {
+  "id": "SkillGemMarkOfSiphoningSupportTwo",
+  "en": "Mark of Siphoning II",
+  "ja": "吸収の呪印 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Mark"
+  ],
+  "icon": null,
+  "gem": "SkillGemMarkOfSiphoningSupport_gem"
+ },
+ {
+  "id": "SkillGemThrillOfTheKillSupport",
+  "en": "Thrill of the Kill",
+  "ja": "スリルオブキル",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemThrillOfTheKillSupport_gem"
+ },
+ {
+  "id": "SkillGemThrillOfTheKillSupportTwo",
+  "en": "Thrill of the Kill II",
+  "ja": "スリルオブキル II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemThrillOfTheKillSupport_gem"
+ },
+ {
+  "id": "SkillGemExposingCrySupport",
+  "en": "Exposing Cry",
+  "ja": "曝露のクライ",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemExposingCrySupport_gem"
+ },
+ {
+  "id": "SkillGemOpeningMoveSupport",
+  "en": "Opening Move",
+  "ja": "先制の一手",
+  "color": "red",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemOpeningMoveSupport_gem"
+ },
+ {
+  "id": "SkillGemExplosiveGrowthSupport",
+  "en": "Accelerated Growth",
+  "ja": "成長の加速",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Plant"
+  ],
+  "icon": "SkillGemAbidingHexSupport_icon",
+  "gem": "SkillGemExplosiveGrowthSupport_gem"
+ },
+ {
+  "id": "SkillGemExplosiveGrowthSupportTwo",
+  "en": "Accelerated Growth II",
+  "ja": "成長の加速 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Plant"
+  ],
+  "icon": null,
+  "gem": "SkillGemExplosiveGrowthSupport_gem"
+ },
+ {
+  "id": "SkillGemFanTheFlamesSupport",
+  "en": "Fan The Flames",
+  "ja": "ファンザフレイム",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": null,
+  "gem": "SkillGemFanTheFlamesSupport_gem"
+ },
+ {
+  "id": "SkillGemFanTheFlamesSupportTwo",
+  "en": "Fan The Flames II",
+  "ja": "ファンザフレイム II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": "SkillGemDeepCutsSupport_icon",
+  "gem": "SkillGemFanTheFlamesSupport_gem"
+ },
+ {
+  "id": "SkillGemDeadlyCurrentSupport",
+  "en": "Coursing Current",
+  "ja": "雷の奔流",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "Projectile",
+   "Trigger",
+   "Lightning",
+   "Chaining"
+  ],
+  "icon": null,
+  "gem": "SkillGemCatharsisSupport_icon"
+ },
+ {
+  "id": "SkillGemMirrorOfRefraction",
+  "en": "Mirror of Refraction",
+  "ja": "屈折の鏡",
+  "color": "blue",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemMirrorOfRefraction_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemBarkskin",
+  "en": "Barkskin",
+  "ja": "バークスキン",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemBarkskin_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemFeralInvocation",
+  "en": "Feral Invocation",
+  "ja": "フェラルインヴォケーション",
+  "color": "red",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Invocation",
+   "Meta"
+  ],
+  "icon": "SkillGemFeralInvocation_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemEchoingCrySupport",
+  "en": "Echoing Cry",
+  "ja": "反響のクライ",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Warcry",
+   "AoE",
+   "Conditional"
+  ],
+  "icon": null,
+  "gem": "SkillGemEchoingCrySupport_gem"
+ },
+ {
+  "id": "SkillGemGorgeSupport",
+  "en": "Gorge",
+  "ja": "貪食",
+  "color": "blue",
+  "support": true,
+  "tags": [],
+  "icon": null,
+  "gem": "SkillGemGorgeSupport_gem"
+ },
+ {
+  "id": "SkillGemEmpoweredSparksSupport",
+  "en": "Empowered Sparks I",
+  "ja": "強化のスパーク I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Projectile",
+   "Trigger",
+   "Lightning",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemElementalFocusSupport_icon"
+ },
+ {
+  "id": "SkillGemControlledHazardSupport",
+  "en": "Controlled Hazard",
+  "ja": "ハザード制御",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Hazard"
+  ],
+  "icon": null,
+  "gem": "SkillGemControlledHazardSupport_gem"
+ },
+ {
+  "id": "SkillGemBrittleArmourSupport",
+  "en": "Brittle Armour",
+  "ja": "脆弱なアーマー",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Physical",
+   "Cold"
+  ],
+  "icon": null,
+  "gem": "SkillGemBrittleArmourSupport_gem"
+ },
+ {
+  "id": "SkillGemRendingApexSupport",
+  "en": "Rending Apex",
+  "ja": "裂傷の頂点",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemRendingApexSupport_gem"
+ },
+ {
+  "id": "SkillGemPracticalMagicSupport",
+  "en": "Practical Magic I",
+  "ja": "実践的魔術 I",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemPracticalMagicSupport_gem"
+ },
+ {
+  "id": "SkillGemPracticalMagicSupportTwo",
+  "en": "Practical Magic II",
+  "ja": "実践的魔術 II",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemPracticalMagicSupport_gem"
+ },
+ {
+  "id": "SkillGemBlazingCriticalSupport",
+  "en": "Blazing Critical",
+  "ja": "灼熱のクリティカル",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Fire",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemBlazingCriticalSupport_gem"
+ },
+ {
+  "id": "SkillGemConcussiveSpellsSupport",
+  "en": "Concussive Spells",
+  "ja": "衝撃のスペル",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemConcussiveSpellsSupport_gem"
+ },
+ {
+  "id": "SkillGemEternalMarkSupport",
+  "en": "Eternal Mark",
+  "ja": "呪印永続化",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Mark"
+  ],
+  "icon": null,
+  "gem": "SkillGemEternalMarkSupport_gem"
+ },
+ {
+  "id": "SkillGemCatalysingElementsSupport",
+  "en": "Catalysing Elements",
+  "ja": "カタライジングエレメンツ",
+  "color": "blue",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Cold",
+   "Fire"
+  ],
+  "icon": "SkillGemArcticArmour_icon",
+  "gem": "SkillGemCatalysingElementsSupport_gem"
+ },
+ {
+  "id": "SkillGemNovaProjectilesTwoSupport",
+  "en": "Nova Projectiles II",
+  "ja": "ノヴァの投射物 II",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Projectile"
+  ],
+  "icon": null,
+  "gem": "SkillGemNovaProjectilesSupport_gem"
+ },
+ {
+  "id": "SkillGemChargedMarkSupport",
+  "en": "Charged Mark",
+  "ja": "電荷の呪印",
+  "color": "green",
+  "support": true,
+  "tags": [
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Mark",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemChargedMarkSupport_gem"
+ },
+ {
+  "id": "SkillGemMinionMeleeSplashSupport",
+  "en": "Minion Splash I",
+  "ja": "ミニオンスプラッシュ I",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Minion",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemMinionMeleeSplashSupport_gem"
+ },
+ {
+  "id": "SkillGemMinionMeleeSplashSupportTwo",
+  "en": "Minion Splash II",
+  "ja": "ミニオンスプラッシュ II",
+  "color": "red",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Minion",
+   "Melee",
+   "Strike"
+  ],
+  "icon": null,
+  "gem": "SkillGemMinionMeleeSplashSupport_gem"
+ },
+ {
+  "id": "SkillGemArchonOfChayula",
+  "en": "Archon of Chayula",
+  "ja": "アルコンオブチャユラ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Chaos",
+   "Duration",
+   "Conditional",
+   "Storm"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemAncientGifts",
+  "en": "Wildwood's Gifts",
+  "ja": "ワイルドウッドギフト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemAncientGifts_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemStarbornOnslaught",
+  "en": "Starborn Onslaught",
+  "ja": "スターボーンオンスロート",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Physical",
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemAzmerianSwarm",
+  "en": "Azmerian Swarms",
+  "ja": "アズメリスウォーム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Persistent",
+   "Physical",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Duration"
+  ],
+  "icon": "SkillGemAzmerianSwarm_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemHarbingerOfMadness",
+  "en": "Harbinger of Madness",
+  "ja": "ハービンジャーオブマッドネス",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Physical"
+  ],
+  "icon": "SkillGemHarbingerOfMadness_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemNightfallShieldThrow",
+  "en": "Soaring Midnight",
+  "ja": "ソアリングミッドナイト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Melee",
+   "Slam",
+   "Projectile",
+   "Physical",
+   "Cold",
+   "Travel"
+  ],
+  "icon": "SkillGemNightfallShieldThrow_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemSpiritVessel",
+  "en": "Spirit Vessel",
+  "ja": "スピリットヴェセル",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Companion",
+   "Persistent",
+   "Meta"
+  ],
+  "icon": "SkillGemSpiritVessel_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemHerDeclarationSupport",
+  "en": "Her Declaration",
+  "ja": "彼女の宣言",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Buff",
+   "Persistent"
+  ],
+  "icon": "SkillGemHerDeclarationSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemPrototypeSeventeenSupport",
+  "en": "Prototype Seventeen",
+  "ja": "プロトタイプ17号",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": "SkillGemPrototypeSeventeenSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTrickstersShardSupport",
+  "en": "Trickster's Shard",
+  "ja": "トリックスターの破片",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Spell",
+   "AoE",
+   "Trigger",
+   "Duration"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemArbitersReachSupport",
+  "en": "Arbiter's Reach",
+  "ja": "アービターの射程",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Buff",
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemArbitersReachSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTangmazusThuribleSupport",
+  "en": "Tangmazu's Thurible",
+  "ja": "タングマズの香炉",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Minion",
+   "Persistent"
+  ],
+  "icon": "SkillGemTangmazusThuribleSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMidnightStar",
+  "en": "Midnight Zenith",
+  "ja": "ミッドナイトゼニス",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Cold",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemEshsProwessSupport",
+  "en": "Esh's Prowess",
+  "ja": "エシュの武勇",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Lightning"
+  ],
+  "icon": "SkillGemEshsProwessSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemBreachlordsAmalgamSupport",
+  "en": "Breachlord's Amalgam",
+  "ja": "ブリーチロードの融合体",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Projectile",
+   "Lightning",
+   "Cold"
+  ],
+  "icon": "SkillGemBreachlordsAmalgamSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemUhtredsConstellationSupport",
+  "en": "Uhtred's Constellation",
+  "ja": "ウートレドの星座",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": "SkillGemUhtredsConstellationSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMedvedsFellingSupport",
+  "en": "Medved's Felling",
+  "ja": "メドヴェッドの伐採",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Attack",
+   "Melee"
+  ],
+  "icon": "SkillGemMedvedsFellingSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemVoranasSiegeSupport",
+  "en": "Vorana's Siege",
+  "ja": "ヴォラナの包囲",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "AoE"
+  ],
+  "icon": "SkillGemVoranasSiegeSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemStyrnsFerocitySupport",
+  "en": "Styrn's Ferocity",
+  "ja": "スターンの獰猛さ",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Physical"
+  ],
+  "icon": "SkillGemStyrnsFerocitySupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemMorrigansInsightSupport",
+  "en": "Morrigan's Insight",
+  "ja": "Morrigan's Insight",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Trigger",
+   "Cold",
+   "Duration",
+   "Payoff"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemTulsAvalancheSupport",
+  "en": "Tul's Avalanche",
+  "ja": "トゥルの雪崩",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage",
+   "Spell",
+   "AoE"
+  ],
+  "icon": "SkillGemTulsAvalancheSupport_icon",
+  "gem": null
+ },
+ {
+  "id": "SkillGemAscendancyGemlingVirtuousBarrier",
+  "en": "Virtuous Barrier",
+  "ja": "ヴァーチュアスバリア",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemConcussiveRunesSupport",
+  "en": "Concussive Runes",
+  "ja": "コンカッシブルーン",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Trigger"
+  ],
+  "icon": "SkillGemConcussiveRunesSupport_icon",
+  "gem": "SkillGemConcussiveRunesSupport_gem"
+ },
+ {
+  "id": "SkillGemLeylines",
+  "en": "Leylines",
+  "ja": "レイライン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "AoE",
+   "Duration"
+  ],
+  "icon": "SkillGemLeylines_icon",
+  "gem": "SkillGemLeylines_gem"
+ },
+ {
+  "id": "SkillGemFrostflameNova",
+  "en": "Frostflame Nova",
+  "ja": "フロストフレイムノヴァ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Fire",
+   "Nova",
+   "Repeatable"
+  ],
+  "icon": "SkillGemFrostflameNova_icon",
+  "gem": "SkillGemFrostflameNova_gem"
+ },
+ {
+  "id": "SkillGemHollowShell",
+  "en": "Hollow Shell",
+  "ja": "ホロウシェル",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Nova"
+  ],
+  "icon": "SkillGemHollowShell_icon",
+  "gem": "SkillGemHollowShell_gem"
+ },
+ {
+  "id": "SkillGemMoltenShower",
+  "en": "Molten Shower",
+  "ja": "モルテンシャワー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": "SkillGemTearSupport_icon",
+  "gem": "SkillGemVolcano_gem"
+ },
+ {
+  "id": "SkillGemRunicInfusionSupport",
+  "en": "Runic Infusion",
+  "ja": "ルーニックインフュージョン",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Physical"
+  ],
+  "icon": null,
+  "gem": "SkillGemRunicInfusionSupport_gem"
+ },
+ {
+  "id": "SkillGemRuneforgedBladesSupport",
+  "en": "Runeforged Blades",
+  "ja": "ルーンフォージブレード",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Attack",
+   "Projectile",
+   "Trigger",
+   "Payoff"
+  ],
+  "icon": "SkillGemChainSupport_icon",
+  "gem": "SkillGemRuneforgedBladesSupport_gem"
+ },
+ {
+  "id": "SkillGemPoweredByVerisium",
+  "en": "Powered by Verisium",
+  "ja": "パワードバイヴェリシウム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Repeatable"
+  ],
+  "icon": "SkillGemPoweredByVerisium_icon",
+  "gem": "SkillGemPoweredByVerisium_gem"
+ },
+ {
+  "id": "SkillGemRefutation",
+  "en": "Refutation",
+  "ja": "リフュテーション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": "SkillGemRefutation_icon",
+  "gem": "SkillGemRefutation_gem"
+ },
+ {
+  "id": "SkillGemRepulsion",
+  "en": "Repulsion",
+  "ja": "リパルジョン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Duration",
+   "Curse",
+   "Repeatable"
+  ],
+  "icon": "SkillGemRepulsion_icon",
+  "gem": "SkillGemRepulsion_gem"
+ },
+ {
+  "id": "SkillGemTriskelionCascade",
+  "en": "Triskelion Cascade",
+  "ja": "トリスケリオン・カスケード",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "Duration"
+  ],
+  "icon": "SkillGemTriskelionCascade_icon",
+  "gem": "SkillGemTriskelionCascade_gem"
+ },
+ {
+  "id": "SkillGemGelidPalm",
+  "en": "Gelid Palm",
+  "ja": "ジェリッドパーム",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Cold"
+  ],
+  "icon": "SkillGemGelidPalm_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemSkyfall",
+  "en": "Skyfall",
+  "ja": "スカイフォール",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Minion",
+   "AoE",
+   "Physical",
+   "Cold",
+   "Conditional",
+   "Repeatable"
+  ],
+  "icon": "SkillGemSkyfall_icon",
+  "gem": "SkillGemSkyfall_gem"
+ },
+ {
+  "id": "SkillGemDetonateLiving",
+  "en": "Detonate Living",
+  "ja": "デトネートリビング",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Physical",
+   "Repeatable"
+  ],
+  "icon": "SkillGemDetonateLiving_icon",
+  "gem": "SkillGemDetonateLiving_gem"
+ },
+ {
+  "id": "SkillGemAnimusExchange",
+  "en": "Animus Exchange",
+  "ja": "アニムスエクスチェンジ",
+  "color": "white",
+  "support": false,
+  "tags": [],
+  "icon": "SkillGemAnimusExchange_icon",
+  "gem": "SkillGemAnimusExchange_gem"
+ },
+ {
+  "id": "SkillGemBitterDead",
+  "en": "Bitter Dead",
+  "ja": "ビターデッド",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Repeatable"
+  ],
+  "icon": "SkillGemBitterDead_icon",
+  "gem": "SkillGemBitterDead_gem"
+ },
+ {
+  "id": "SkillGemEternalMarch",
+  "en": "Eternal March",
+  "ja": "エターナルマーチ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Minion"
+  ],
+  "icon": null,
+  "gem": "SkillGemEternalMarch_gem"
+ },
+ {
+  "id": "SkillGemGrimPillars",
+  "en": "Grim Pillars",
+  "ja": "グリムピラー",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Cold",
+   "Duration",
+   "Nova"
+  ],
+  "icon": "SkillGemGrimPillars_icon",
+  "gem": "SkillGemGrimPillars_gem"
+ },
+ {
+  "id": "SkillGemVerisiumManifestation",
+  "en": "Verisium Manifestations",
+  "ja": "ヴェリシウムマニフェステーション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Persistent",
+   "Duration"
+  ],
+  "icon": "SkillGemVerisiumManifestation_icon",
+  "gem": "SkillGemVerisiumManifestation_gem"
+ },
+ {
+  "id": "SkillGemRemnantsOfKalguur",
+  "en": "Remnants of Kalguur",
+  "ja": "レムナントオブカルグール",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Persistent",
+   "Remnant"
+  ],
+  "icon": "SkillGemRemnantsOfKalguur_icon",
+  "gem": "SkillGemRemnantsOfKalguur_gem"
+ },
+ {
+  "id": "SkillGemWardboundMinions",
+  "en": "Wardbound Minions",
+  "ja": "ワードバウンドミニオン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Minion",
+   "Duration",
+   "Repeatable"
+  ],
+  "icon": null,
+  "gem": "SkillGemWardboundMinions_gem"
+ },
+ {
+  "id": "SkillGemRunicExtractionSupport",
+  "en": "Runic Extraction",
+  "ja": "ルーンの抽出",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Remnant"
+  ],
+  "icon": "SkillGemRunicExtractionSupport_icon",
+  "gem": "SkillGemRunicExtractionSupport_gem"
+ },
+ {
+  "id": "SkillGemFragmentsOfThePast",
+  "en": "Fragments Of The Past",
+  "ja": "フラグメントオブパスト",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Projectile",
+   "Trigger",
+   "Sustained",
+   "Cold",
+   "Duration"
+  ],
+  "icon": "SkillGemFragmentsOfThePast_icon",
+  "gem": "SkillGemFragmentsOfThePast_gem"
+ },
+ {
+  "id": "SkillGemConductiveRunes",
+  "en": "Conductive Runes",
+  "ja": "コンダクティブルーン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Lightning",
+   "Duration",
+   "Hazard"
+  ],
+  "icon": "SkillGemConductiveRunes_icon",
+  "gem": "SkillGemConductiveRunes_gem"
+ },
+ {
+  "id": "SkillGemUniqueAtziriHerald",
+  "en": "Herald of the Royal Queen",
+  "ja": "ヘラルドオブロイヤルクイーン",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Attack",
+   "Persistent",
+   "AoE",
+   "Physical",
+   "Herald",
+   "Payoff"
+  ],
+  "icon": "SkillGemUniqueAtziriHerald_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "SkillGemAnimusSplinters",
+  "en": "Animus Splinters",
+  "ja": "アニムススプリンター",
+  "color": "white",
+  "support": false,
+  "tags": [],
+  "icon": "SkillGemAnimusSplinters_icon",
+  "gem": "SkillGemAnimusSplinters_gem"
+ },
+ {
+  "id": "SkillGemScouringFlame",
+  "en": "Scouring Flame",
+  "ja": "スカリングフレイム",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Fire"
+  ],
+  "icon": "SkillGemScouringFlame_icon",
+  "gem": "SkillGemScouringFlame_gem"
+ },
+ {
+  "id": "SkillGemRunicReprieve",
+  "en": "Runic Reprieve",
+  "ja": "ルーニックリプリーブ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Channelling"
+  ],
+  "icon": null,
+  "gem": "SkillGemRunicReprieve_gem"
+ },
+ {
+  "id": "SkillGemFistOfKalguurSupport",
+  "en": "Fist Of Kalguur",
+  "ja": "フィストオブカルグール",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Attack",
+   "AoE",
+   "Melee",
+   "Slam",
+   "Trigger",
+   "Physical",
+   "Duration"
+  ],
+  "icon": null,
+  "gem": "SkillGemFistOfKalguurSupport_gem"
+ },
+ {
+  "id": "SkillGemVoltaicBarrier",
+  "en": "Voltaic Barrier",
+  "ja": "ボルタイックバリア",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Lightning",
+   "Chaining"
+  ],
+  "icon": null,
+  "gem": "SkillGemVoltaicBarrier_gem"
+ },
+ {
+  "id": "SkillGemHealingRunesSupport",
+  "en": "Healing Runes",
+  "ja": "回復のルーン",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Buff",
+   "Persistent"
+  ],
+  "icon": null,
+  "gem": "SkillGemHealingRunesSupport_gem"
+ },
+ {
+  "id": "SkillGemOlrothsConvictionSupport",
+  "en": "Olroth's Conviction",
+  "ja": "オルロスの信念",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": "SkillGemOlrothsConvictionSupport_icon",
+  "gem": "SkillGemOlrothsConvictionSupport_gem"
+ },
+ {
+  "id": "SkillGemExplosiveTransmutation",
+  "en": "Explosive Transmutation",
+  "ja": "エクスプローシブトランスミューテーション",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Spell",
+   "Persistent",
+   "AoE",
+   "Trigger",
+   "Physical",
+   "Lightning",
+   "Cold",
+   "Fire",
+   "Chaos"
+  ],
+  "icon": "SkillGemExplosiveTransmutation_icon",
+  "gem": "SkillGemExplosiveTransmutation_gem"
+ },
+ {
+  "id": "SkillGemRainOfBlades",
+  "en": "Rain of Blades",
+  "ja": "レインオブブレード",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Buff",
+   "AoE",
+   "Trigger",
+   "Duration"
+  ],
+  "icon": "SkillGemRainOfBlades_icon",
+  "gem": "SkillGemRainOfBlades_gem"
+ },
+ {
+  "id": "SkillGemOlrothsHubrisSupport",
+  "en": "Olroth's Hubris",
+  "ja": "オルロスの驕り",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Lineage"
+  ],
+  "icon": null,
+  "gem": "SkillGemOlrothsHubrisSupport_gem"
+ },
+ {
+  "id": "SkillGemSmashToSmithereens",
+  "en": "Smash to Smithereens",
+  "ja": "スマッシュトゥスミザリンズ",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "AoE",
+   "Trigger",
+   "Fire"
+  ],
+  "icon": "SkillGemSmashToSmithereens_icon",
+  "gem": "SkillGemMoltenCrash_gem"
+ },
+ {
+  "id": "Uncut_Skill_Gem",
+  "en": "Uncut Skill Gem",
+  "ja": "スキルジェムの原石",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Uncut"
+  ],
+  "icon": null,
+  "gem": "Uncut_Skill_Gem_gem"
+ },
+ {
+  "id": "Uncut_Support_Gem",
+  "en": "Uncut Support Gem",
+  "ja": "サポートジェムの原石",
+  "color": "white",
+  "support": true,
+  "tags": [
+   "Uncut"
+  ],
+  "icon": null,
+  "gem": "Uncut_Support_Gem_gem"
+ },
+ {
+  "id": "Uncut_Spirit_Gem",
+  "en": "Uncut Spirit Gem",
+  "ja": "スピリットジェムの原石",
+  "color": "white",
+  "support": false,
+  "tags": [
+   "Uncut"
+  ],
+  "icon": null,
+  "gem": "Uncut_Spirit_Gem_gem"
+ }
+]

@@ -1,0 +1,4328 @@
+{
+ "generated": "2026-09-29",
+ "source": "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)",
+ "runes": {
+  "Lesser Desert Rune": {
+   "ja": "砂漠のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/FireRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_fire_damage",
+       "value": 4
+      },
+      {
+       "id": "local_maximum_added_fire_damage",
+       "value": 6
+      }
+     ],
+     "ja": "4から6の火ダメージを追加する",
+     "en": "Adds 4 to 6 Fire Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+       "value": 6
+      }
+     ],
+     "ja": "ダメージの6%を追加火ダメージとして獲得する",
+     "en": "Gain 6% of Damage as Extra Fire Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_fire_damage_resistance_%",
+       "value": 10
+      }
+     ],
+     "ja": "火耐性 +10%",
+     "en": "+10% to Fire Resistance"
+    }
+   ]
+  },
+  "Desert Rune": {
+   "ja": "砂漠のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/FireRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_fire_damage",
+       "value": 7
+      },
+      {
+       "id": "local_maximum_added_fire_damage",
+       "value": 11
+      }
+     ],
+     "ja": "7から11の火ダメージを追加する",
+     "en": "Adds 7 to 11 Fire Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+       "value": 8
+      }
+     ],
+     "ja": "ダメージの8%を追加火ダメージとして獲得する",
+     "en": "Gain 8% of Damage as Extra Fire Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_fire_damage_resistance_%",
+       "value": 14
+      }
+     ],
+     "ja": "火耐性 +14%",
+     "en": "+14% to Fire Resistance"
+    }
+   ]
+  },
+  "Greater Desert Rune": {
+   "ja": "砂漠のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/FireRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_fire_damage",
+       "value": 13
+      },
+      {
+       "id": "local_maximum_added_fire_damage",
+       "value": 16
+      }
+     ],
+     "ja": "13から16の火ダメージを追加する",
+     "en": "Adds 13 to 16 Fire Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_fire",
+       "value": 10
+      }
+     ],
+     "ja": "ダメージの10%を追加火ダメージとして獲得する",
+     "en": "Gain 10% of Damage as Extra Fire Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_fire_damage_resistance_%",
+       "value": 18
+      }
+     ],
+     "ja": "火耐性 +18%",
+     "en": "+18% to Fire Resistance"
+    }
+   ]
+  },
+  "Lesser Glacial Rune": {
+   "ja": "氷河のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/ColdRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_cold_damage",
+       "value": 3
+      },
+      {
+       "id": "local_maximum_added_cold_damage",
+       "value": 5
+      }
+     ],
+     "ja": "3から5の冷気ダメージを追加する",
+     "en": "Adds 3 to 5 Cold Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_cold",
+       "value": 6
+      }
+     ],
+     "ja": "ダメージの6%を追加冷気ダメージとして獲得する",
+     "en": "Gain 6% of Damage as Extra Cold Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_cold_damage_resistance_%",
+       "value": 10
+      }
+     ],
+     "ja": "冷気耐性 +10%",
+     "en": "+10% to Cold Resistance"
+    }
+   ]
+  },
+  "Glacial Rune": {
+   "ja": "氷河のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/ColdRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_cold_damage",
+       "value": 6
+      },
+      {
+       "id": "local_maximum_added_cold_damage",
+       "value": 10
+      }
+     ],
+     "ja": "6から10の冷気ダメージを追加する",
+     "en": "Adds 6 to 10 Cold Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_cold",
+       "value": 8
+      }
+     ],
+     "ja": "ダメージの8%を追加冷気ダメージとして獲得する",
+     "en": "Gain 8% of Damage as Extra Cold Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_cold_damage_resistance_%",
+       "value": 14
+      }
+     ],
+     "ja": "冷気耐性 +14%",
+     "en": "+14% to Cold Resistance"
+    }
+   ]
+  },
+  "Greater Glacial Rune": {
+   "ja": "氷河のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/ColdRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_cold_damage",
+       "value": 9
+      },
+      {
+       "id": "local_maximum_added_cold_damage",
+       "value": 15
+      }
+     ],
+     "ja": "9から15の冷気ダメージを追加する",
+     "en": "Adds 9 to 15 Cold Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_cold",
+       "value": 10
+      }
+     ],
+     "ja": "ダメージの10%を追加冷気ダメージとして獲得する",
+     "en": "Gain 10% of Damage as Extra Cold Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_cold_damage_resistance_%",
+       "value": 18
+      }
+     ],
+     "ja": "冷気耐性 +18%",
+     "en": "+18% to Cold Resistance"
+    }
+   ]
+  },
+  "Lesser Storm Rune": {
+   "ja": "嵐のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_lightning_damage",
+       "value": 1
+      },
+      {
+       "id": "local_maximum_added_lightning_damage",
+       "value": 10
+      }
+     ],
+     "ja": "1から10の雷ダメージを追加する",
+     "en": "Adds 1 to 10 Lightning Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_lightning",
+       "value": 6
+      }
+     ],
+     "ja": "ダメージの6%を追加雷ダメージとして獲得する",
+     "en": "Gain 6% of Damage as Extra Lightning Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_lightning_damage_resistance_%",
+       "value": 10
+      }
+     ],
+     "ja": "雷耐性 +10%",
+     "en": "+10% to Lightning Resistance"
+    }
+   ]
+  },
+  "Storm Rune": {
+   "ja": "嵐のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/LightningRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_lightning_damage",
+       "value": 1
+      },
+      {
+       "id": "local_maximum_added_lightning_damage",
+       "value": 20
+      }
+     ],
+     "ja": "1から20の雷ダメージを追加する",
+     "en": "Adds 1 to 20 Lightning Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_lightning",
+       "value": 8
+      }
+     ],
+     "ja": "ダメージの8%を追加雷ダメージとして獲得する",
+     "en": "Gain 8% of Damage as Extra Lightning Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_lightning_damage_resistance_%",
+       "value": 14
+      }
+     ],
+     "ja": "雷耐性 +14%",
+     "en": "+14% to Lightning Resistance"
+    }
+   ]
+  },
+  "Greater Storm Rune": {
+   "ja": "嵐のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_lightning_damage",
+       "value": 1
+      },
+      {
+       "id": "local_maximum_added_lightning_damage",
+       "value": 30
+      }
+     ],
+     "ja": "1から30の雷ダメージを追加する",
+     "en": "Adds 1 to 30 Lightning Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_lightning",
+       "value": 10
+      }
+     ],
+     "ja": "ダメージの10%を追加雷ダメージとして獲得する",
+     "en": "Gain 10% of Damage as Extra Lightning Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_lightning_damage_resistance_%",
+       "value": 18
+      }
+     ],
+     "ja": "雷耐性 +18%",
+     "en": "+18% to Lightning Resistance"
+    }
+   ]
+  },
+  "Lesser Iron Rune": {
+   "ja": "鉄のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/EnhanceRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_physical_damage_+%",
+       "value": 14
+      }
+     ],
+     "ja": "物理ダメージが14%増加する",
+     "en": "14% increased Physical Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_damage_+%",
+       "value": 20
+      }
+     ],
+     "ja": "スペルダメージが20%増加する",
+     "en": "20% increased Spell Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_armour_and_evasion_and_energy_shield_+%",
+       "value": 14
+      }
+     ],
+     "ja": "アーマー、回避力およびエナジーシールドが14%増加する",
+     "en": "14% increased Armour, Evasion and Energy Shield"
+    }
+   ]
+  },
+  "Iron Rune": {
+   "ja": "鉄のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/EnhanceRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_physical_damage_+%",
+       "value": 16
+      }
+     ],
+     "ja": "物理ダメージが16%増加する",
+     "en": "16% increased Physical Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_damage_+%",
+       "value": 25
+      }
+     ],
+     "ja": "スペルダメージが25%増加する",
+     "en": "25% increased Spell Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_armour_and_evasion_and_energy_shield_+%",
+       "value": 16
+      }
+     ],
+     "ja": "アーマー、回避力およびエナジーシールドが16%増加する",
+     "en": "16% increased Armour, Evasion and Energy Shield"
+    }
+   ]
+  },
+  "Greater Iron Rune": {
+   "ja": "鉄のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/EnhanceRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_physical_damage_+%",
+       "value": 18
+      }
+     ],
+     "ja": "物理ダメージが18%増加する",
+     "en": "18% increased Physical Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_damage_+%",
+       "value": 30
+      }
+     ],
+     "ja": "スペルダメージが30%増加する",
+     "en": "30% increased Spell Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_armour_and_evasion_and_energy_shield_+%",
+       "value": 18
+      }
+     ],
+     "ja": "アーマー、回避力およびエナジーシールドが18%増加する",
+     "en": "18% increased Armour, Evasion and Energy Shield"
+    }
+   ]
+  },
+  "Lesser Body Rune": {
+   "ja": "肉体のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 11,
+   "dds": "Art/2DItems/Currency/Runes/LifeRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_life_leech_from_physical_damage_permyriad",
+       "value": 300
+      }
+     ],
+     "ja": "物理ダメージの3%をライフとしてリーチする",
+     "en": "Leeches 3% of Physical Damage as Life"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_energy_shield",
+       "value": 30
+      }
+     ],
+     "ja": "最大エナジーシールド +30",
+     "en": "+30 to maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_life",
+       "value": 30
+      }
+     ],
+     "ja": "最大ライフ +30",
+     "en": "+30 to maximum Life"
+    }
+   ]
+  },
+  "Body Rune": {
+   "ja": "肉体のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 37,
+   "dds": "Art/2DItems/Currency/Runes/LifeRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_life_leech_from_physical_damage_permyriad",
+       "value": 400
+      }
+     ],
+     "ja": "物理ダメージの4%をライフとしてリーチする",
+     "en": "Leeches 4% of Physical Damage as Life"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_energy_shield",
+       "value": 40
+      }
+     ],
+     "ja": "最大エナジーシールド +40",
+     "en": "+40 to maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_life",
+       "value": 45
+      }
+     ],
+     "ja": "最大ライフ +45",
+     "en": "+45 to maximum Life"
+    }
+   ]
+  },
+  "Greater Body Rune": {
+   "ja": "肉体のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 57,
+   "dds": "Art/2DItems/Currency/Runes/LifeRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_life_leech_from_physical_damage_permyriad",
+       "value": 500
+      }
+     ],
+     "ja": "物理ダメージの5%をライフとしてリーチする",
+     "en": "Leeches 5% of Physical Damage as Life"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_energy_shield",
+       "value": 50
+      }
+     ],
+     "ja": "最大エナジーシールド +50",
+     "en": "+50 to maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_life",
+       "value": 60
+      }
+     ],
+     "ja": "最大ライフ +60",
+     "en": "+60 to maximum Life"
+    }
+   ]
+  },
+  "Lesser Mind Rune": {
+   "ja": "精神のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 11,
+   "dds": "Art/2DItems/Currency/Runes/ManaRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_mana_leech_from_physical_damage_permyriad",
+       "value": 200
+      }
+     ],
+     "ja": "物理ダメージの2%をマナとしてリーチする",
+     "en": "Leeches 2% of Physical Damage as Mana"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 45
+      }
+     ],
+     "ja": "最大マナ +45",
+     "en": "+45 to maximum Mana"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 20
+      }
+     ],
+     "ja": "最大マナ +20",
+     "en": "+20 to maximum Mana"
+    }
+   ]
+  },
+  "Mind Rune": {
+   "ja": "精神のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 37,
+   "dds": "Art/2DItems/Currency/Runes/ManaRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_mana_leech_from_physical_damage_permyriad",
+       "value": 300
+      }
+     ],
+     "ja": "物理ダメージの3%をマナとしてリーチする",
+     "en": "Leeches 3% of Physical Damage as Mana"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 60
+      }
+     ],
+     "ja": "最大マナ +60",
+     "en": "+60 to maximum Mana"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 30
+      }
+     ],
+     "ja": "最大マナ +30",
+     "en": "+30 to maximum Mana"
+    }
+   ]
+  },
+  "Greater Mind Rune": {
+   "ja": "精神のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 57,
+   "dds": "Art/2DItems/Currency/Runes/ManaRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_mana_leech_from_physical_damage_permyriad",
+       "value": 400
+      }
+     ],
+     "ja": "物理ダメージの4%をマナとしてリーチする",
+     "en": "Leeches 4% of Physical Damage as Mana"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 75
+      }
+     ],
+     "ja": "最大マナ +75",
+     "en": "+75 to maximum Mana"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_maximum_mana",
+       "value": 40
+      }
+     ],
+     "ja": "最大マナ +40",
+     "en": "+40 to maximum Mana"
+    }
+   ]
+  },
+  "Lesser Rebirth Rune": {
+   "ja": "復活のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 21,
+   "dds": "Art/2DItems/Currency/Runes/LifeRecoveryRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_life_gained_on_enemy_death",
+       "value": 15
+      }
+     ],
+     "ja": "倒した敵1体ごとに15のライフを獲得する",
+     "en": "Gain 15 Life per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_rate_+%",
+       "value": 6
+      }
+     ],
+     "ja": "エナジーシールドリチャージレートが6%増加する",
+     "en": "6% increased Energy Shield Recharge Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "life_regeneration_rate_per_minute_%",
+       "value": 21
+      }
+     ],
+     "ja": "毎秒ライフの0.35%を自動回復する",
+     "en": "Regenerate 0.35% of maximum Life per second"
+    }
+   ]
+  },
+  "Rebirth Rune": {
+   "ja": "復活のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 45,
+   "dds": "Art/2DItems/Currency/Runes/LifeRecoveryRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_life_gained_on_enemy_death",
+       "value": 25
+      }
+     ],
+     "ja": "倒した敵1体ごとに25のライフを獲得する",
+     "en": "Gain 25 Life per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_rate_+%",
+       "value": 8
+      }
+     ],
+     "ja": "エナジーシールドリチャージレートが8%増加する",
+     "en": "8% increased Energy Shield Recharge Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "life_regeneration_rate_per_minute_%",
+       "value": 24
+      }
+     ],
+     "ja": "毎秒ライフの0.4%を自動回復する",
+     "en": "Regenerate 0.4% of maximum Life per second"
+    }
+   ]
+  },
+  "Greater Rebirth Rune": {
+   "ja": "復活のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 62,
+   "dds": "Art/2DItems/Currency/Runes/LifeRecoveryRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_life_gained_on_enemy_death",
+       "value": 35
+      }
+     ],
+     "ja": "倒した敵1体ごとに35のライフを獲得する",
+     "en": "Gain 35 Life per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_rate_+%",
+       "value": 10
+      }
+     ],
+     "ja": "エナジーシールドリチャージレートが10%増加する",
+     "en": "10% increased Energy Shield Recharge Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "life_regeneration_rate_per_minute_%",
+       "value": 27
+      }
+     ],
+     "ja": "毎秒ライフの0.45%を自動回復する",
+     "en": "Regenerate 0.45% of maximum Life per second"
+    }
+   ]
+  },
+  "Lesser Inspiration Rune": {
+   "ja": "鼓舞のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 21,
+   "dds": "Art/2DItems/Currency/Runes/ManaRecoveryRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_mana_gained_on_enemy_death",
+       "value": 10
+      }
+     ],
+     "ja": "倒した敵1体ごとに10のマナを獲得する",
+     "en": "Gain 10 Mana per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 20
+      }
+     ],
+     "ja": "マナ自動回復レートが20%増加する",
+     "en": "20% increased Mana Regeneration Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 12
+      }
+     ],
+     "ja": "マナ自動回復レートが12%増加する",
+     "en": "12% increased Mana Regeneration Rate"
+    }
+   ]
+  },
+  "Inspiration Rune": {
+   "ja": "鼓舞のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 45,
+   "dds": "Art/2DItems/Currency/Runes/ManaRecoveryRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_mana_gained_on_enemy_death",
+       "value": 20
+      }
+     ],
+     "ja": "倒した敵1体ごとに20のマナを獲得する",
+     "en": "Gain 20 Mana per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 25
+      }
+     ],
+     "ja": "マナ自動回復レートが25%増加する",
+     "en": "25% increased Mana Regeneration Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 15
+      }
+     ],
+     "ja": "マナ自動回復レートが15%増加する",
+     "en": "15% increased Mana Regeneration Rate"
+    }
+   ]
+  },
+  "Greater Inspiration Rune": {
+   "ja": "鼓舞のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 62,
+   "dds": "Art/2DItems/Currency/Runes/ManaRecoveryRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_mana_gained_on_enemy_death",
+       "value": 30
+      }
+     ],
+     "ja": "倒した敵1体ごとに30のマナを獲得する",
+     "en": "Gain 30 Mana per enemy killed"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 30
+      }
+     ],
+     "ja": "マナ自動回復レートが30%増加する",
+     "en": "30% increased Mana Regeneration Rate"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "mana_regeneration_rate_+%",
+       "value": 18
+      }
+     ],
+     "ja": "マナ自動回復レートが18%増加する",
+     "en": "18% increased Mana Regeneration Rate"
+    }
+   ]
+  },
+  "Lesser Stone Rune": {
+   "ja": "石のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 16,
+   "dds": "Art/2DItems/Currency/Runes/StunRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_hit_damage_stun_multiplier_+%",
+       "value": 20
+      }
+     ],
+     "ja": "引き起こすスタン蓄積が20%増加する",
+     "en": "Causes 20% increased Stun Buildup"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "stun_threshold_+_from_%_maximum_energy_shield",
+       "value": 10
+      }
+     ],
+     "ja": "最大エナジーシールドの10%と同量の追加スタン閾値を獲得する",
+     "en": "Gain additional Stun Threshold equal to 10% of maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "stun_threshold_+",
+       "value": 50
+      }
+     ],
+     "ja": "スタン閾値 +50",
+     "en": "+50 to Stun Threshold"
+    }
+   ]
+  },
+  "Stone Rune": {
+   "ja": "石のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 41,
+   "dds": "Art/2DItems/Currency/Runes/StunRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_hit_damage_stun_multiplier_+%",
+       "value": 30
+      }
+     ],
+     "ja": "引き起こすスタン蓄積が30%増加する",
+     "en": "Causes 30% increased Stun Buildup"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "stun_threshold_+_from_%_maximum_energy_shield",
+       "value": 12
+      }
+     ],
+     "ja": "最大エナジーシールドの12%と同量の追加スタン閾値を獲得する",
+     "en": "Gain additional Stun Threshold equal to 12% of maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "stun_threshold_+",
+       "value": 75
+      }
+     ],
+     "ja": "スタン閾値 +75",
+     "en": "+75 to Stun Threshold"
+    }
+   ]
+  },
+  "Greater Stone Rune": {
+   "ja": "石のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 59,
+   "dds": "Art/2DItems/Currency/Runes/StunRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_hit_damage_stun_multiplier_+%",
+       "value": 40
+      }
+     ],
+     "ja": "引き起こすスタン蓄積が40%増加する",
+     "en": "Causes 40% increased Stun Buildup"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "stun_threshold_+_from_%_maximum_energy_shield",
+       "value": 14
+      }
+     ],
+     "ja": "最大エナジーシールドの14%と同量の追加スタン閾値を獲得する",
+     "en": "Gain additional Stun Threshold equal to 14% of maximum Energy Shield"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "stun_threshold_+",
+       "value": 100
+      }
+     ],
+     "ja": "スタン閾値 +100",
+     "en": "+100 to Stun Threshold"
+    }
+   ]
+  },
+  "Lesser Vision Rune": {
+   "ja": "先見のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 16,
+   "dds": "Art/2DItems/Currency/Runes/AccuracyRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_accuracy_rating",
+       "value": 60
+      }
+     ],
+     "ja": "命中力 +60",
+     "en": "+60 to Accuracy Rating"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_critical_strike_chance_+%",
+       "value": 16
+      }
+     ],
+     "ja": "スペルのクリティカルヒット率が16%増加する",
+     "en": "16% increased Critical Hit Chance for Spells"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "flask_life_and_mana_to_recover_+%",
+       "value": 8
+      }
+     ],
+     "ja": "フラスコによるライフおよびマナの回復量が8%増加する",
+     "en": "8% increased Life and Mana Recovery from Flasks"
+    }
+   ]
+  },
+  "Vision Rune": {
+   "ja": "先見のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 41,
+   "dds": "Art/2DItems/Currency/Runes/AccuracyRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_accuracy_rating",
+       "value": 90
+      }
+     ],
+     "ja": "命中力 +90",
+     "en": "+90 to Accuracy Rating"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_critical_strike_chance_+%",
+       "value": 20
+      }
+     ],
+     "ja": "スペルのクリティカルヒット率が20%増加する",
+     "en": "20% increased Critical Hit Chance for Spells"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "flask_life_and_mana_to_recover_+%",
+       "value": 12
+      }
+     ],
+     "ja": "フラスコによるライフおよびマナの回復量が12%増加する",
+     "en": "12% increased Life and Mana Recovery from Flasks"
+    }
+   ]
+  },
+  "Greater Vision Rune": {
+   "ja": "先見のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 59,
+   "dds": "Art/2DItems/Currency/Runes/AccuracyRuneTier2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_accuracy_rating",
+       "value": 120
+      }
+     ],
+     "ja": "命中力 +120",
+     "en": "+120 to Accuracy Rating"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_critical_strike_chance_+%",
+       "value": 24
+      }
+     ],
+     "ja": "スペルのクリティカルヒット率が24%増加する",
+     "en": "24% increased Critical Hit Chance for Spells"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "flask_life_and_mana_to_recover_+%",
+       "value": 16
+      }
+     ],
+     "ja": "フラスコによるライフおよびマナの回復量が16%増加する",
+     "en": "16% increased Life and Mana Recovery from Flasks"
+    }
+   ]
+  },
+  "Soul Core of Tacati": {
+   "ja": "タカティのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreChaos.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_poison_effect_+%",
+       "value": 25
+      }
+     ],
+     "ja": "プレイヤーが付与した毒の強度が25%増加する",
+     "en": "25% increased Magnitude of Poison you inflict"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_chaos_damage_resistance_%",
+       "value": 13
+      }
+     ],
+     "ja": "混沌耐性 +13%",
+     "en": "+13% to Chaos Resistance"
+    }
+   ]
+  },
+  "Soul Core of Opiloti": {
+   "ja": "オピロティのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCorePhysical.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_bleeding_effect_+%",
+       "value": 40
+      }
+     ],
+     "ja": "プレイヤーが付与した出血の強度が40%増加する",
+     "en": "40% increased Magnitude of Bleeding you inflict"
+    },
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "pin_duration_+%",
+       "value": 25
+      }
+     ],
+     "ja": "足止め持続時間が25%増加する",
+     "en": "25% increased Pin duration"
+    }
+   ]
+  },
+  "Soul Core of Jiquani": {
+   "ja": "ジクアニのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreLife.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "recover_%_maximum_life_on_kill",
+       "value": 5
+      }
+     ],
+     "ja": "敵を倒した時にライフの5%を回復する",
+     "en": "Recover 5% of maximum Life on Kill"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "maximum_life_+%",
+       "value": 5
+      }
+     ],
+     "ja": "最大ライフが5%増加する",
+     "en": "5% increased maximum Life"
+    }
+   ]
+  },
+  "Soul Core of Zalatl": {
+   "ja": "ザラトルのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreMana.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "recover_%_maximum_mana_on_kill",
+       "value": 4
+      }
+     ],
+     "ja": "敵を倒した時にマナの4%を回復する",
+     "en": "Recover 4% of maximum Mana on Kill"
+    },
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "maximum_mana_+%",
+       "value": 5
+      }
+     ],
+     "ja": "最大マナが5%増加する",
+     "en": "5% increased maximum Mana"
+    }
+   ]
+  },
+  "Soul Core of Citaqualotl": {
+   "ja": "シアクラトルのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreElementalResist.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "elemental_damage_with_attack_skills_+%",
+       "value": 40
+      }
+     ],
+     "ja": "アタックスキルによる元素ダメージが40%増加する",
+     "en": "40% increased Elemental Damage with Attacks"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "base_resist_all_elements_%",
+       "value": 6
+      }
+     ],
+     "ja": "全ての元素耐性 +6%",
+     "en": "+6% to all Elemental Resistances"
+    }
+   ]
+  },
+  "Soul Core of Puhuarte": {
+   "ja": "プフアーテのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreFire.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_ignite_effect_+%",
+       "value": 40
+      }
+     ],
+     "ja": "発火の強度が40%増加する",
+     "en": "40% increased Ignite Magnitude"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_maximum_fire_damage_resistance_%",
+       "value": 2
+      }
+     ],
+     "ja": "火耐性の最大値 +2%",
+     "en": "+2% to Maximum Fire Resistance"
+    }
+   ]
+  },
+  "Soul Core of Tzamoto": {
+   "ja": "ザモトのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreCold.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "hit_damage_freeze_multiplier_+%",
+       "value": 60
+      }
+     ],
+     "ja": "凍結蓄積が60%増加する",
+     "en": "60% increased Freeze Buildup"
+    },
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "base_maximum_cold_damage_resistance_%",
+       "value": 2
+      }
+     ],
+     "ja": "冷気耐性の最大値 +2%",
+     "en": "+2% to Maximum Cold Resistance"
+    }
+   ]
+  },
+  "Soul Core of Xopec": {
+   "ja": "ゾペックのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreLightning.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "shock_effect_+%",
+       "value": 25
+      }
+     ],
+     "ja": "プレイヤーが付与した感電の強度が25%増加する",
+     "en": "25% increased Magnitude of Shock you inflict"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "base_maximum_lightning_damage_resistance_%",
+       "value": 2
+      }
+     ],
+     "ja": "雷耐性の最大値 +2%",
+     "en": "+2% to Maximum Lightning Resistance"
+    }
+   ]
+  },
+  "Soul Core of Azcapa": {
+   "ja": "アズカパのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreWealthRarity.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "base_spirit_from_equipment",
+       "value": 15
+      }
+     ],
+     "ja": "スピリット +15",
+     "en": "+15 to Spirit"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "gold_+%_from_enemies",
+       "value": 10
+      }
+     ],
+     "ja": "倒した敵からドロップするゴールドの数量が10%増加する",
+     "en": "10% increased Quantity of Gold Dropped by Slain Enemies"
+    }
+   ]
+  },
+  "Soul Core of Topotante": {
+   "ja": "トポタンテのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreTriElement.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_elemental_penetration_%",
+       "value": 25
+      }
+     ],
+     "ja": "この武器によるアタックは25%の元素耐性を貫通する",
+     "en": "Attacks with this Weapon Penetrate 25% Elemental Resistances"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "non_damaging_ailment_effect_+%_on_self",
+       "value": -25
+      }
+     ],
+     "ja": "プレイヤーに対する非ダメージ性状態異常の効果が25%減少する",
+     "en": "25% reduced Effect of Non-Damaging Ailments on you"
+    }
+   ]
+  },
+  "Soul Core of Quipolatl": {
+   "ja": "クイポラトルのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreSpeed.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_attack_speed_+%",
+       "value": 5
+      }
+     ],
+     "ja": "アタックスピードが5%増加する",
+     "en": "5% increased Attack Speed"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "base_slow_potency_+%",
+       "value": -15
+      }
+     ],
+     "ja": "プレイヤーに対する減速のデバフのポテンシャルが15%減少する",
+     "en": "15% reduced Slowing Potency of Debuffs on You"
+    }
+   ]
+  },
+  "Soul Core of Ticaba": {
+   "ja": "ティカバのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreCrit.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_critical_strike_multiplier_+",
+       "value": 5
+      }
+     ],
+     "ja": "クリティカルダメージボーナス +5%",
+     "en": "+5% to Critical Damage Bonus"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "base_self_critical_strike_multiplier_-%",
+       "value": 50
+      }
+     ],
+     "ja": "プレイヤーに対するヒットはクリティカルダメージボーナスが50%減少する",
+     "en": "Hits against you have 50% reduced Critical Damage Bonus"
+    },
+    {
+     "cat": "Shield or Buckler",
+     "catJa": "盾またはバックラー",
+     "stats": [
+      {
+       "id": "base_self_critical_strike_multiplier_-%",
+       "value": 50
+      }
+     ],
+     "ja": "プレイヤーに対するヒットはクリティカルダメージボーナスが50%減少する",
+     "en": "Hits against you have 50% reduced Critical Damage Bonus"
+    }
+   ]
+  },
+  "Soul Core of Atmohua": {
+   "ja": "アトモフアのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreStrength.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_strength",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を筋力に変換する",
+     "en": "Convert 40% of Requirements to Strength"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_strength",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を筋力に変換する",
+     "en": "Convert 40% of Requirements to Strength"
+    }
+   ]
+  },
+  "Soul Core of Cholotl": {
+   "ja": "チョロトルのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreDex.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_dexterity",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を器用さに変換する",
+     "en": "Convert 40% of Requirements to Dexterity"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_dexterity",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を器用さに変換する",
+     "en": "Convert 40% of Requirements to Dexterity"
+    }
+   ]
+  },
+  "Soul Core of Zantipi": {
+   "ja": "ザンティーピのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/SoulCores/GreaterSoulCoreint.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_intelligence",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を知性に変換する",
+     "en": "Convert 40% of Requirements to Intelligence"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "local_requirements_%_to_convert_to_intelligence",
+       "value": 40
+      }
+     ],
+     "ja": "要求能力値の40%を知性に変換する",
+     "en": "Convert 40% of Requirements to Intelligence"
+    }
+   ]
+  },
+  "Greater Rune of Leadership": {
+   "ja": "統率力のグレータールーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneSpecial1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "minion_physical_damage_%_to_gain_as_lightning",
+       "value": 10
+      }
+     ],
+     "ja": "ミニオンはその物理ダメージの10%を追加雷ダメージとして獲得する",
+     "en": "Minions gain 10% of their Physical Damage as Extra Lightning Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "minion_physical_hit_and_dot_damage_%_taken_as_lightning",
+       "value": 10
+      }
+     ],
+     "ja": "ミニオンは物理ダメージの10%を雷ダメージとして受ける",
+     "en": "Minions take 10% of Physical Damage as Lightning Damage"
+    }
+   ]
+  },
+  "Greater Rune of Tithing": {
+   "ja": "十分の一税のグレータールーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneSpecial2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "energy_generated_+%",
+       "value": 10
+      }
+     ],
+     "ja": "メタスキルの獲得エネルギーが10%増加する",
+     "en": "Meta Skills gain 10% increased Energy"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "thorns_minimum_base_lightning_damage",
+       "value": 1
+      },
+      {
+       "id": "thorns_maximum_base_lightning_damage",
+       "value": 100
+      }
+     ],
+     "ja": "1から100の雷棘ダメージ",
+     "en": "1 to 100 Lightning Thorns damage"
+    }
+   ]
+  },
+  "Greater Rune of Alacrity": {
+   "ja": "積極性のグレータールーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneSpecial3.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "skill_speed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "スキルスピードが8%増加する",
+     "en": "8% increased Skill Speed"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "debuff_time_passed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "プレイヤーに対するデバフは8%速く消える",
+     "en": "Debuffs on you expire 8% faster"
+    }
+   ]
+  },
+  "Greater Rune of Nobility": {
+   "ja": "高潔なグレータールーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/LightningRuneSpecial4.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_inflict_exposure_on_hit_%_chance",
+       "value": 10
+      }
+     ],
+     "ja": "この武器によるアタックは10%の確率で曝露を付与する",
+     "en": "Attacks with this Weapon have 10% chance to inflict Exposure"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "shocked_effect_on_self_+%",
+       "value": -10
+      }
+     ],
+     "ja": "プレイヤーに対する感電の効果が10%減少する",
+     "en": "10% reduced effect of Shock on you"
+    }
+   ]
+  },
+  "Lesser Robust Rune": {
+   "ja": "強固のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/StrengthRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_strength",
+       "value": 6
+      }
+     ],
+     "ja": "筋力 +6",
+     "en": "+6 to Strength"
+    }
+   ]
+  },
+  "Robust Rune": {
+   "ja": "強固のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/StrengthRune.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_strength",
+       "value": 9
+      }
+     ],
+     "ja": "筋力 +9",
+     "en": "+9 to Strength"
+    }
+   ]
+  },
+  "Greater Robust Rune": {
+   "ja": "強固のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/StrengthRuneTier3.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_strength",
+       "value": 12
+      }
+     ],
+     "ja": "筋力 +12",
+     "en": "+12 to Strength"
+    }
+   ]
+  },
+  "Lesser Adept Rune": {
+   "ja": "熟達のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/DexRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_dexterity",
+       "value": 6
+      }
+     ],
+     "ja": "器用さ +6",
+     "en": "+6 to Dexterity"
+    }
+   ]
+  },
+  "Adept Rune": {
+   "ja": "熟達のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/DexRune.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_dexterity",
+       "value": 9
+      }
+     ],
+     "ja": "器用さ +9",
+     "en": "+9 to Dexterity"
+    }
+   ]
+  },
+  "Greater Adept Rune": {
+   "ja": "熟達のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/DexRuneTier3.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_dexterity",
+       "value": 12
+      }
+     ],
+     "ja": "器用さ +12",
+     "en": "+12 to Dexterity"
+    }
+   ]
+  },
+  "Lesser Resolve Rune": {
+   "ja": "決意のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/IntRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_intelligence",
+       "value": 6
+      }
+     ],
+     "ja": "知性 +6",
+     "en": "+6 to Intelligence"
+    }
+   ]
+  },
+  "Resolve Rune": {
+   "ja": "決意のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/IntRune.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_intelligence",
+       "value": 9
+      }
+     ],
+     "ja": "知性 +9",
+     "en": "+9 to Intelligence"
+    }
+   ]
+  },
+  "Greater Resolve Rune": {
+   "ja": "決意のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/IntRuneTier3.dds",
+   "effects": [
+    {
+     "cat": "All",
+     "catJa": "全ての装備品",
+     "stats": [
+      {
+       "id": "additional_intelligence",
+       "value": 12
+      }
+     ],
+     "ja": "知性 +12",
+     "en": "+12 to Intelligence"
+    }
+   ]
+  },
+  "Lesser Tempered Rune": {
+   "ja": "鍛錬のレッサールーン",
+   "kind": "rune",
+   "tier": "lesser",
+   "level": 0,
+   "drop": 5,
+   "dds": "Art/2DItems/Currency/Runes/PhyDmgRuneTier1.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_physical_damage",
+       "value": 3
+      },
+      {
+       "id": "local_maximum_added_physical_damage",
+       "value": 4
+      }
+     ],
+     "ja": "3から4の物理ダメージを追加する",
+     "en": "Adds 3 to 4 Physical Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "thorns_minimum_base_physical_damage",
+       "value": 6
+      },
+      {
+       "id": "thorns_maximum_base_physical_damage",
+       "value": 9
+      }
+     ],
+     "ja": "6から9の物理棘ダメージ",
+     "en": "6 to 9 Physical Thorns damage"
+    }
+   ]
+  },
+  "Tempered Rune": {
+   "ja": "鍛錬のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 15,
+   "drop": 31,
+   "dds": "Art/2DItems/Currency/Runes/PhyDmgRune.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_physical_damage",
+       "value": 6
+      },
+      {
+       "id": "local_maximum_added_physical_damage",
+       "value": 9
+      }
+     ],
+     "ja": "6から9の物理ダメージを追加する",
+     "en": "Adds 6 to 9 Physical Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "thorns_minimum_base_physical_damage",
+       "value": 14
+      },
+      {
+       "id": "thorns_maximum_base_physical_damage",
+       "value": 21
+      }
+     ],
+     "ja": "14から21の物理棘ダメージ",
+     "en": "14 to 21 Physical Thorns damage"
+    }
+   ]
+  },
+  "Greater Tempered Rune": {
+   "ja": "鍛錬のグレータールーン",
+   "kind": "rune",
+   "tier": "greater",
+   "level": 30,
+   "drop": 52,
+   "dds": "Art/2DItems/Currency/Runes/PhyDmgRuneTier3.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_physical_damage",
+       "value": 9
+      },
+      {
+       "id": "local_maximum_added_physical_damage",
+       "value": 12
+      }
+     ],
+     "ja": "9から12の物理ダメージを追加する",
+     "en": "Adds 9 to 12 Physical Damage"
+    },
+    {
+     "cat": "Armour",
+     "catJa": "防具",
+     "stats": [
+      {
+       "id": "thorns_minimum_base_physical_damage",
+       "value": 31
+      },
+      {
+       "id": "thorns_maximum_base_physical_damage",
+       "value": 52
+      }
+     ],
+     "ja": "31から52の物理棘ダメージ",
+     "en": "31 to 52 Physical Thorns damage"
+    }
+   ]
+  },
+  "Snake Idol": {
+   "ja": "ヘビのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableSnake.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "curse_effect_+%",
+       "value": 8
+      }
+     ],
+     "ja": "呪いの強度が8%増加する",
+     "en": "8% increased Curse Magnitudes"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_attack_speed_+%",
+       "value": 10
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方はアタックスピードが10%増加する",
+     "en": "Allies in your Presence have 10% increased Attack Speed"
+    }
+   ]
+  },
+  "Primate Idol": {
+   "ja": "サルのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableMonkey.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "minion_maximum_life_+%",
+       "value": 15
+      }
+     ],
+     "ja": "ミニオンの最大ライフが15%増加する",
+     "en": "Minions have 15% increased maximum Life"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_damage_+%",
+       "value": 40
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方はダメージが40%増加する",
+     "en": "Allies in your Presence deal 40% increased Damage"
+    }
+   ]
+  },
+  "Owl Idol": {
+   "ja": "フクロウのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableOwl.dds",
+   "effects": [
+    {
+     "cat": "Focus",
+     "catJa": "Focus",
+     "stats": [
+      {
+       "id": "base_cooldown_speed_+%",
+       "value": 12
+      }
+     ],
+     "ja": "クールダウン解消レートが12%増加する",
+     "en": "12% increased Cooldown Recovery Rate"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_cast_speed_+%",
+       "value": 10
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方はキャストスピードが10%増加する",
+     "en": "Allies in your Presence have 10% increased Cast Speed"
+    }
+   ]
+  },
+  "Cat Idol": {
+   "ja": "ネコのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableCat.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "accuracy_rating_+%",
+       "value": 25
+      }
+     ],
+     "ja": "グローバル命中力が25%増加する",
+     "en": "25% increased Accuracy Rating"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_critical_strike_chance_+%",
+       "value": 14
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方はクリティカルヒット率が14%増加する",
+     "en": "Allies in your Presence have 14% increased Critical Hit Chance"
+    }
+   ]
+  },
+  "Wolf Idol": {
+   "ja": "オオカミのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableWolf.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_bleeding_effect_+%",
+       "value": 15
+      }
+     ],
+     "ja": "プレイヤーが付与した出血の強度が15%増加する",
+     "en": "15% increased Magnitude of Bleeding you inflict"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_critical_strike_multiplier_+",
+       "value": 20
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方はクリティカルダメージボーナスが20%増加する",
+     "en": "Allies in your Presence have 20% increased Critical Damage Bonus"
+    }
+   ]
+  },
+  "Stag Idol": {
+   "ja": "シカのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableStag.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "projectile_chance_to_fork_%",
+       "value": 15
+      }
+     ],
+     "ja": "投射物は15%の確率で分岐する",
+     "en": "Projectiles have 15% chance to Fork"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_attack_minimum_added_lightning_damage",
+       "value": 1
+      },
+      {
+       "id": "allies_in_presence_attack_maximum_added_lightning_damage",
+       "value": 40
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方は1から40の追加アタック雷ダメージを与える",
+     "en": "Allies in your Presence deal 1 to 40 added Attack Lightning Damage"
+    }
+   ]
+  },
+  "Boar Idol": {
+   "ja": "イノシシのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableBoar.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "gain_x_rage_on_melee_hit",
+       "value": 1
+      }
+     ],
+     "ja": "近接ヒット時に憤怒を1獲得する",
+     "en": "Gain 1 Rage on Melee Hit"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_life_regeneration_rate_per_minute_equal_to_your_maximum_life_%",
+       "value": 30
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方は毎秒プレイヤーの最大ライフの0.5%を自動回復する",
+     "en": "Allies in your Presence Regenerate 0.5% of your Maximum Life per second"
+    }
+   ]
+  },
+  "Bear Idol": {
+   "ja": "クマのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableBear.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "base_skill_area_of_effect_+%",
+       "value": 10
+      }
+     ],
+     "ja": "効果範囲が10%増加する",
+     "en": "10% increased Area of Effect"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_attack_minimum_added_physical_damage",
+       "value": 12
+      },
+      {
+       "id": "allies_in_presence_attack_maximum_added_physical_damage",
+       "value": 18
+      }
+     ],
+     "ja": "プレイヤーの存在下で味方は12から18の追加アタック物理ダメージ",
+     "en": "Allies in your Presence deal 12 to 18 added Attack Physical Damage"
+    }
+   ]
+  },
+  "Ox Idol": {
+   "ja": "ウシのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 35,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableOx.dds",
+   "effects": [
+    {
+     "cat": "Shield or Buckler",
+     "catJa": "盾またはバックラー",
+     "stats": [
+      {
+       "id": "local_block_chance_+%",
+       "value": 15
+      }
+     ],
+     "ja": "ブロック率が15%増加する",
+     "en": "15% increased Block chance"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_resist_all_elements_%",
+       "value": 12
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方は元素耐性 +12%",
+     "en": "Allies in your Presence have +12% to all Elemental Resistances"
+    }
+   ]
+  },
+  "Rabbit Idol": {
+   "ja": "ウサギのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableRabbit.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "base_item_found_rarity_+%",
+       "value": 12
+      }
+     ],
+     "ja": "見つかるアイテムのレアリティが12%増加する",
+     "en": "12% increased Rarity of Items found"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "local_spirit_+%",
+       "value": 15
+      }
+     ],
+     "ja": "スピリットが15%増加する",
+     "en": "15% increased Spirit"
+    }
+   ]
+  },
+  "Fox Idol": {
+   "ja": "キツネのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 0,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableFox.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "local_idols_gain_additional_socketable_mods",
+       "value": 1
+      },
+      {
+       "id": "display_additional_socketable_mods_for_idols",
+       "value": 1
+      }
+     ],
+     "ja": "このアイテムにソケットされたアイドルはその絆モッドの恩恵を獲得する",
+     "en": "Idols socketed in this item gain the benefits of their Bonded modifiers"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "presence_area_+%",
+       "value": 50
+      }
+     ],
+     "ja": "存在下の効果範囲が50%増加する",
+     "en": "50% increased Presence Area of Effect"
+    }
+   ]
+  },
+  "Hedgewitch Assandra's Rune of Wisdom": {
+   "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune1.dds",
+   "effects": [
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_skill_gem_level_+",
+       "value": 1
+      }
+     ],
+     "ja": "全てのスペルスキルのレベル +1",
+     "en": "+1 to Level of all Spell Skills"
+    }
+   ]
+  },
+  "Saqawal's Rune of the Sky": {
+   "ja": "サカワルの空のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_cold_fire_lightning",
+       "value": 5
+      }
+     ],
+     "ja": "ダメ―ジの5%を全ての元素属性の追加ダメージとして獲得する",
+     "en": "Gain 5% of Damage as Extra Damage of all Elements"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_cold_fire_lightning",
+       "value": 5
+      }
+     ],
+     "ja": "ダメ―ジの5%を全ての元素属性の追加ダメージとして獲得する",
+     "en": "Gain 5% of Damage as Extra Damage of all Elements"
+    }
+   ]
+  },
+  "Fenumus' Rune of Agony": {
+   "ja": "フィヌムスの苦痛のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune3.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_chaos",
+       "value": 13
+      }
+     ],
+     "ja": "ダメージの13%を追加混沌ダメージとして獲得する",
+     "en": "Gain 13% of Damage as Extra Chaos Damage"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "non_skill_base_all_damage_%_to_gain_as_chaos",
+       "value": 13
+      }
+     ],
+     "ja": "ダメージの13%を追加混沌ダメージとして獲得する",
+     "en": "Gain 13% of Damage as Extra Chaos Damage"
+    }
+   ]
+  },
+  "Farrul's Rune of Grace": {
+   "ja": "ファルウルの気品のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune4.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "deflection_rating_+%_while_moving",
+       "value": 8
+      }
+     ],
+     "ja": "移動中受け流し力が8%増加する",
+     "en": "8% increased Deflection Rating while moving"
+    }
+   ]
+  },
+  "Farrul's Rune of the Chase": {
+   "ja": "ファルウルの追跡のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune5.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "base_movement_velocity_+%",
+       "value": 5
+      }
+     ],
+     "ja": "移動スピードが5%増加する",
+     "en": "5% increased Movement Speed"
+    }
+   ]
+  },
+  "Craiceann's Rune of Warding": {
+   "ja": "クレイシアンの守りのルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune6.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "curse_effect_on_self_+%",
+       "value": -50
+      }
+     ],
+     "ja": "プレイヤーに対する呪いの効果が50%減少する",
+     "en": "50% reduced effect of Curses on you"
+    }
+   ]
+  },
+  "Saqawal's Rune of Memory": {
+   "ja": "サカワルの記憶のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune7.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "experience_gain_+%",
+       "value": 2
+      }
+     ],
+     "ja": "獲得経験値が2%増加する",
+     "en": "2% increased Experience gain"
+    }
+   ]
+  },
+  "Saqawal's Rune of Erosion": {
+   "ja": "サカワルの浸食のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune8.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "exposure_effect_+%",
+       "value": 25
+      }
+     ],
+     "ja": "曝露の効果が25%増加する",
+     "en": "25% increased Exposure Effect"
+    }
+   ]
+  },
+  "Farrul's Rune of the Hunt": {
+   "ja": "ファルウルの狩りのルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune9.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "attack_damage_+%_vs_rare_or_unique_enemy",
+       "value": 50
+      }
+     ],
+     "ja": "レアまたはユニークの敵に対するアタックダメージが50%増加する",
+     "en": "50% increased Attack Damage against Rare or Unique Enemies"
+    }
+   ]
+  },
+  "Craiceann's Rune of Recovery": {
+   "ja": "クレイシアンの回復のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune10.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_rate_+%",
+       "value": 30
+      }
+     ],
+     "ja": "エナジーシールドリチャージレートが30%増加する",
+     "en": "30% increased Energy Shield Recharge Rate"
+    }
+   ]
+  },
+  "Courtesan Mannan's Rune of Cruelty": {
+   "ja": "宮廷女官マンナンの残虐のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune11.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_damaging_ailment_effect_+%",
+       "value": 20
+      }
+     ],
+     "ja": "プレイヤーが付与したダメージ性状態異常の強度が20%増加する",
+     "en": "20% increased Magnitude of Damaging Ailments you inflict"
+    }
+   ]
+  },
+  "Thane Grannell's Rune of Mastery": {
+   "ja": "族長グラネルの熟達のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune12.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "non_damaging_ailment_effect_+%",
+       "value": 30
+      }
+     ],
+     "ja": "プレイヤーが付与した非ダメージ性状態異常の強度が30%増加する",
+     "en": "30% increased Magnitude of Non-Damaging Ailments you inflict"
+    }
+   ]
+  },
+  "Fenumus' Rune of Spinning": {
+   "ja": "フィヌムスの紡績のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune13.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_cast_speed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "キャストスピードが8%増加する",
+     "en": "8% increased Cast Speed"
+    }
+   ]
+  },
+  "Countess Seske's Rune of Archery": {
+   "ja": "セスケ女伯爵の弓のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune14.dds",
+   "effects": [
+    {
+     "cat": "Bow",
+     "catJa": "Bow",
+     "stats": [
+      {
+       "id": "number_of_additional_arrows",
+       "value": 1
+      }
+     ],
+     "ja": "弓によるアタックは矢を追加で1本放つ",
+     "en": "Bow Attacks fire an additional Arrow"
+    }
+   ]
+  },
+  "Thane Girt's Rune of Wildness": {
+   "ja": "族長ガートの野生のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune15.dds",
+   "effects": [
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "spell_skills_fire_2_additional_projectiles_final_chance_%",
+       "value": 25
+      }
+     ],
+     "ja": "25%の確率でスペルスキルは投射物を追加で2個放つ",
+     "en": "25% chance for Spell Skills to fire 2 additional Projectiles"
+    }
+   ]
+  },
+  "Fenumus' Rune of Draining": {
+   "ja": "フィヌムスの吸収のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune16.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "withered_magnitude_+%",
+       "value": 20
+      }
+     ],
+     "ja": "衰弱の強度が20%増加する",
+     "en": "20% increased Withered Magnitude"
+    }
+   ]
+  },
+  "Thane Myrk's Rune of Summer": {
+   "ja": "族長ミュルクの夏のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune17.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "minimum_added_fire_damage_vs_ignited_enemies",
+       "value": 23
+      },
+      {
+       "id": "maximum_added_fire_damage_vs_ignited_enemies",
+       "value": 34
+      }
+     ],
+     "ja": "発火状態の敵に対するアタックに23から34の火ダメージを追加する",
+     "en": "Adds 23 to 34 Fire Damage to Attacks against Ignited Enemies"
+    }
+   ]
+  },
+  "Lady Hestra's Rune of Winter": {
+   "ja": "ヘストラ婦人の冬のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune18.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "minimum_added_cold_damage_vs_chilled_enemies",
+       "value": 19
+      },
+      {
+       "id": "maximum_added_cold_damage_vs_chilled_enemies",
+       "value": 28
+      }
+     ],
+     "ja": "冷却状態の敵に対して19から28の冷気ダメージを追加する",
+     "en": "Adds 19 to 28 Cold Damage against Chilled Enemies"
+    }
+   ]
+  },
+  "Thane Leld's Rune of Spring": {
+   "ja": "族長レルドの春のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune19.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "global_minimum_added_lightning_damage_vs_shocked_enemies",
+       "value": 1
+      },
+      {
+       "id": "global_maximum_added_lightning_damage_vs_shocked_enemies",
+       "value": 60
+      }
+     ],
+     "ja": "1から60の雷ダメージを感電状態の敵に対して追加する",
+     "en": "Adds 1 to 60 Lightning Damage against Shocked Enemies"
+    }
+   ]
+  },
+  "The Greatwolf's Rune of Claws": {
+   "ja": "大狼の鉤爪のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune20.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "attack_minimum_added_physical_damage",
+       "value": 5
+      },
+      {
+       "id": "attack_maximum_added_physical_damage",
+       "value": 12
+      }
+     ],
+     "ja": "5から12の物理ダメージをアタックに追加する",
+     "en": "Adds 5 to 12 Physical Damage to Attacks"
+    }
+   ]
+  },
+  "The Greatwolf's Rune of Willpower": {
+   "ja": "大狼の意志力のルーン",
+   "kind": "rune",
+   "tier": "normal",
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/Runes/NewRune21.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "base_damage_removed_from_mana_before_life_%",
+       "value": 15
+      }
+     ],
+     "ja": "ダメージの15%をライフより先にマナで受ける",
+     "en": "15% of Damage is taken from Mana before Life"
+    }
+   ]
+  },
+  "Idol of Sirrius": {
+   "ja": "シリウスのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableWolfSpecial.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "attack_speed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "アタックスピードが8%増加する",
+     "en": "8% increased Attack Speed"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_movement_speed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方は移動スピードが8%増加する",
+     "en": "Allies in your Presence have 8% increased Movement Speed"
+    }
+   ]
+  },
+  "Idol of Thruldana": {
+   "ja": "スルルダーナのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableSnakeSpecial.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "number_of_additional_poison_stacks",
+       "value": 1
+      },
+      {
+       "id": "base_poison_duration_+%",
+       "value": -25
+      }
+     ],
+     "ja": "一度に対象に付与できる毒のスタック数 +1、毒持続時間が25%減少する",
+     "en": "Targets can be affected by +1 of your Poisons at the same time, 25% reduced Poison Duration"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "allies_in_presence_attack_minimum_added_chaos_damage",
+       "value": 13
+      },
+      {
+       "id": "allies_in_presence_attack_maximum_added_chaos_damage",
+       "value": 27
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる味方は13から27の追加アタック混沌ダメージを与える",
+     "en": "Allies in your Presence deal 13 to 27 added Attack Chaos Damage"
+    }
+   ]
+  },
+  "Idol of Grold": {
+   "ja": "グロルドのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableBearSpecial.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "warcry_monster_power_+%",
+       "value": 50
+      }
+     ],
+     "ja": "ウォークライが計算する合計パワーが50%増加する",
+     "en": "50% increased total Power counted by Warcries"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "damage_+%_per_different_companion_in_presence",
+       "value": 15
+      }
+     ],
+     "ja": "プレイヤーの存在下にいる種類の異なるコンパニオンごとにダメージが15%増加する",
+     "en": "15% increased Damage per each different Companion in your Presence"
+    }
+   ]
+  },
+  "Idol of Eeshta": {
+   "ja": "イーシュタのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableOwlSpecial.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "base_skill_cost_efficiency_+%",
+       "value": 15
+      }
+     ],
+     "ja": "コスト効率が15%増加する",
+     "en": "15% increased Cost Efficiency"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "mana_recovery_rate_+%_while_companion_in_presence",
+       "value": 15
+      }
+     ],
+     "ja": "コンパニオンがプレイヤーの存在下にいる間マナ回復レートが15%増加する",
+     "en": "15% increased Mana Recovery rate while your Companion is in your Presence"
+    }
+   ]
+  },
+  "Idol of Egrin": {
+   "ja": "エグリンのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableCatSpecial.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "enemies_damage_taken_+%_while_cursed",
+       "value": 6
+      }
+     ],
+     "ja": "プレイヤーが呪いを付与した敵が受けるダメージが6%増加する",
+     "en": "Enemies you Curse take 6% increased Damage"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "base_curse_duration_+%",
+       "value": 20
+      }
+     ],
+     "ja": "呪いの持続時間が20%増加する",
+     "en": "20% increased Curse Duration"
+    }
+   ]
+  },
+  "Idol of Maxarius": {
+   "ja": "マクサリウスのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableStagSpecial.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "num_charm_slots",
+       "value": 1
+      }
+     ],
+     "ja": "チャームスロット +1",
+     "en": "+1 Charm Slot"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "generate_x_charges_for_any_flask_per_minute",
+       "value": 12
+      }
+     ],
+     "ja": "フラスコは毎秒0.2のチャージを獲得する",
+     "en": "Flasks gain 0.2 charges per Second"
+    }
+   ]
+  },
+  "Idol of Ralakesh": {
+   "ja": "ララケシュのアイドル",
+   "kind": "talisman",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/TormentedSpiritSocketables/AzmeriSocketableMonkeySpecial.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "reservation_efficiency_+%_of_minion_skills",
+       "value": 8
+      }
+     ],
+     "ja": "ミニオンスキルのリザーブ効率が8%増加する",
+     "en": "8% increased Reservation Efficiency of Minion Skills"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "global_armour_evasion_energy_shield_while_in_presence_of_companion_+%",
+       "value": 40
+      }
+     ],
+     "ja": "コンパニオンがプレイヤーの存在下にいる間はアーマー、回避力およびエナジーシールドが40%増加する",
+     "en": "40% increased Armour, Evasion and Energy Shield while your Companion is in your Presence"
+    }
+   ]
+  },
+  "Hayoxi's Soul Core of Heatproofing": {
+   "ja": "ハヨキの耐熱のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreIce.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "base_armour_%_applies_to_cold_damage",
+       "value": 40
+      }
+     ],
+     "ja": "アーマーの+40%が冷気ダメージにも適用される",
+     "en": "+40% of Armour also applies to Cold Damage"
+    }
+   ]
+  },
+  "Zalatl's Soul Core of Insulation": {
+   "ja": "ザラトルの絶縁のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreLightning.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "base_armour_%_applies_to_lightning_damage",
+       "value": 40
+      }
+     ],
+     "ja": "アーマーの+40%が雷ダメージにも適用される",
+     "en": "+40% of Armour also applies to Lightning Damage"
+    }
+   ]
+  },
+  "Topotante's Soul Core of Dampening": {
+   "ja": "トポタンテの軽減のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreFire.dds",
+   "effects": [
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_armour_%_applies_to_fire_damage",
+       "value": 40
+      }
+     ],
+     "ja": "アーマーの+40%が火ダメージにも適用される",
+     "en": "+40% of Armour also applies to Fire Damage"
+    }
+   ]
+  },
+  "Atmohua's Soul Core of Retreat": {
+   "ja": "アトモフアの退却のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreEnergyShield.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "energy_shield_from_focus_+%",
+       "value": 40
+      }
+     ],
+     "ja": "装備中のフォーカスから得られるエナジーシールドが40%増加する",
+     "en": "40% increased Energy Shield from Equipped Focus"
+    },
+    {
+     "cat": "Focus",
+     "catJa": "Focus",
+     "stats": [
+      {
+       "id": "maximum_energy_shield_from_body_armour_+%",
+       "value": 30
+      }
+     ],
+     "ja": "装備中の鎧から得られるエナジーシールドが30%増加する",
+     "en": "30% increased Energy Shield from Equipped Body Armour"
+    }
+   ]
+  },
+  "Quipolatl's Soul Core of Flow": {
+   "ja": "キポラトルの流れのソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreTimeCooldown.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "skill_effect_duration_+%",
+       "value": 8
+      },
+      {
+       "id": "base_cooldown_speed_+%",
+       "value": 8
+      }
+     ],
+     "ja": "スキル効果持続時間が8%増加する、クールダウン解消レートが8%増加する",
+     "en": "8% increased Skill Effect Duration, 8% increased Cooldown Recovery Rate"
+    }
+   ]
+  },
+  "Tzamoto's Soul Core of Ferocity": {
+   "ja": "ザモトの凶暴性のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreRage.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "maximum_rage",
+       "value": 4
+      }
+     ],
+     "ja": "憤怒の最大数 +4",
+     "en": "+4 to Maximum Rage"
+    }
+   ]
+  },
+  "Uromoti's Soul Core of Attenuation": {
+   "ja": "ウルモティの希薄化のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreCurses2.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "base_curse_duration_+%",
+       "value": 20
+      },
+      {
+       "id": "base_poison_duration_+%",
+       "value": 20
+      }
+     ],
+     "ja": "呪いの持続時間が20%増加する、毒持続時間が20%増加する",
+     "en": "20% increased Curse Duration, 20% increased Poison Duration"
+    }
+   ]
+  },
+  "Opiloti's Soul Core of Assault": {
+   "ja": "オピロティの強襲のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreFrenzyCharge.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_frenzy_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "フレンジーチャージを獲得する時に50%の確率でフレンジーチャージを追加で1個獲得する",
+     "en": "50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_frenzy_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "フレンジーチャージを獲得する時に50%の確率でフレンジーチャージを追加で1個獲得する",
+     "en": "50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge"
+    }
+   ]
+  },
+  "Guatelitzi's Soul Core of Endurance": {
+   "ja": "グアテリッツィの忍耐のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreEnduranceCharge.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_endurance_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "エンデュランスチャージを獲得する時に50%の確率でエンデュランスチャージを追加で1個獲得する",
+     "en": "50% chance when you gain an Endurance Charge to gain an additional Endurance Charge"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_endurance_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "エンデュランスチャージを獲得する時に50%の確率でエンデュランスチャージを追加で1個獲得する",
+     "en": "50% chance when you gain an Endurance Charge to gain an additional Endurance Charge"
+    }
+   ]
+  },
+  "Xopec's Soul Core of Power": {
+   "ja": "ゾペックの力のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCorePowerCharge.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_power_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "パワーチャージを獲得する時に50%の確率でパワーチャージを追加で1個獲得する",
+     "en": "50% chance when you gain a Power Charge to gain an additional Power Charge"
+    },
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "chance_to_gain_1_more_power_charge_%",
+       "value": 50
+      }
+     ],
+     "ja": "パワーチャージを獲得する時に50%の確率でパワーチャージを追加で1個獲得する",
+     "en": "50% chance when you gain a Power Charge to gain an additional Power Charge"
+    }
+   ]
+  },
+  "Estazunti's Soul Core of Convalescence": {
+   "ja": "エスタザンティの再起のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreTimeSlow.dds",
+   "effects": [
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "recoup_speed_+%",
+       "value": 15
+      }
+     ],
+     "ja": "回収効果のスピードが15%増加する",
+     "en": "15% increased speed of Recoup Effects"
+    },
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "damage_taken_goes_to_life_over_4_seconds_%",
+       "value": 10
+      }
+     ],
+     "ja": "受けたダメージの10%をライフとして回収する",
+     "en": "10% of Damage taken Recouped as Life"
+    }
+   ]
+  },
+  "Tacati's Soul Core of Affliction": {
+   "ja": "タカティの病苦のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreChaos1.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "enemies_chaos_resistance_%_while_cursed",
+       "value": -5
+      }
+     ],
+     "ja": "プレイヤーが呪いを付与した敵の混沌耐性 -5%",
+     "en": "Enemies you Curse have -5% to Chaos Resistance"
+    }
+   ]
+  },
+  "Cholotl's Soul Core of War": {
+   "ja": "チョロトルの戦のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreProjectile.dds",
+   "effects": [
+    {
+     "cat": "Bow",
+     "catJa": "Bow",
+     "stats": [
+      {
+       "id": "projectile_chance_to_chain_1_extra_time_from_terrain_%",
+       "value": 20
+      }
+     ],
+     "ja": "投射物は20%の確率で地形から追加で1回連鎖する",
+     "en": "Projectiles have 20% chance to Chain an additional time from terrain"
+    }
+   ]
+  },
+  "Citaqualotl's Soul Core of Foulness": {
+   "ja": "シタクアロトルの不快のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreChaos2.dds",
+   "effects": [
+    {
+     "cat": "Martial Weapon",
+     "catJa": "マーシャル武器",
+     "stats": [
+      {
+       "id": "local_minimum_added_chaos_damage",
+       "value": 19
+      },
+      {
+       "id": "local_maximum_added_chaos_damage",
+       "value": 29
+      }
+     ],
+     "ja": "19から29の混沌ダメージを追加する",
+     "en": "Adds 19 to 29 Chaos damage"
+    }
+   ]
+  },
+  "Xipocado's Soul Core of Dominion": {
+   "ja": "ジポカドの支配のソウルコア",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 50,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/SoulCores/NewSoulCoreMinion.dds",
+   "effects": [
+    {
+     "cat": "Wand or Staff",
+     "catJa": "ワンドまたはスタッフ",
+     "stats": [
+      {
+       "id": "minion_commanded_skill_damage_+%",
+       "value": 40
+      }
+     ],
+     "ja": "ミニオンはコマンドスキルのダメージが40%増加する",
+     "en": "Minions deal 40% increased Damage with Command Skills"
+    },
+    {
+     "cat": "Sceptre",
+     "catJa": "Sceptre",
+     "stats": [
+      {
+       "id": "minion_commanded_skill_damage_+%",
+       "value": 40
+      }
+     ],
+     "ja": "ミニオンはコマンドスキルのダメージが40%増加する",
+     "en": "Minions deal 40% increased Damage with Command Skills"
+    }
+   ]
+  },
+  "Amanamu's Gaze": {
+   "ja": "アマナムの凝視",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/AbyssalEyeSocketables/AmanamusGaze.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "remove_damaging_ailment_on_using_command_skill",
+       "value": 1
+      }
+     ],
+     "ja": "コマンドスキルを使用した時にダメージ性状態異常を取り除く",
+     "en": "Remove a Damaging Ailment when you use a Command Skill"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "armour_+_per_1_spirit",
+       "value": 2
+      }
+     ],
+     "ja": "スピリット1ごとにアーマー +2",
+     "en": "+2 to Armour per 1 Spirit"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "abyss_socketable_movement_speed_is_only_base_+%_per_15_spirit_up_to_+40%",
+       "value": 1
+      }
+     ],
+     "ja": "スピリット15ごとに移動スピードが1%増加する、最大40%まで\nスプリント以外の移動スピードの他のモッドは適用されない",
+     "en": "1% increased Movement Speed per 15 Spirit, up to a maximum of 40%\nOther Modifiers to Movement Speed except for Sprinting do not apply"
+    }
+   ]
+  },
+  "Tecrod's Gaze": {
+   "ja": "テクロッドの凝視",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/AbyssalEyeSocketables/TecrodsGaze.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "life_regeneration_rate_per_minute_%",
+       "value": 90
+      }
+     ],
+     "ja": "毎秒ライフの1.5%を自動回復する",
+     "en": "Regenerate 1.5% of maximum Life per second"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "base_life_cost_efficiency_+%",
+       "value": 25
+      }
+     ],
+     "ja": "ライフコスト効率が25%増加する",
+     "en": "25% increased Life Cost Efficiency"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "movement_velocity_+%_when_on_low_life",
+       "value": 10
+      }
+     ],
+     "ja": "低ライフ時に移動スピードが10%増加する",
+     "en": "10% increased Movement Speed when on Low Life"
+    }
+   ]
+  },
+  "Kurgal's Gaze": {
+   "ja": "クルガルの凝視",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/AbyssalEyeSocketables/KurgalsGaze.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "additive_modifiers_to_life_regeneration_also_apply_to_mana_regeneration_rate",
+       "value": 1
+      }
+     ],
+     "ja": "ライフ自動回復レートの増減のモッドはマナ自動回復レートにも適用される",
+     "en": "Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "arcane_surge_effect_on_self_+%",
+       "value": 40
+      }
+     ],
+     "ja": "プレイヤーに対するアーケインサージの効果が40%増加する",
+     "en": "40% increased effect of Arcane Surge on you"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "mana_cost_efficiency_+%_if_not_dodge_rolled_recently",
+       "value": 15
+      }
+     ],
+     "ja": "直近ドッジロールしていなければマナコスト効率が15%増加する",
+     "en": "15% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently"
+    }
+   ]
+  },
+  "Ulaman's Gaze": {
+   "ja": "ウラマンの凝視",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/AbyssalEyeSocketables/UlamansGaze.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "accuracy_rating_+_per_evasion_rating_on_helmet",
+       "value": 1
+      }
+     ],
+     "ja": "装備中のヘルメットのアイテム回避力1ごとに命中力 +1",
+     "en": "+1 to Accuracy Rating per 1 Item Evasion Rating on Equipped Helmet"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "critical_chance_luck_against_parry_debuffed_enemies",
+       "value": 1
+      }
+     ],
+     "ja": "パリィのデバフを受けている敵に対するクリティカルヒット率が幸運になる",
+     "en": "Critical Hit chance is Lucky against Parried enemies"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "base_damage_%_deflected",
+       "value": 3
+      }
+     ],
+     "ja": "受け流したヒットのダメージから防ぐ量が+3%される",
+     "en": "Prevent +3% of Damage from Deflected Hits"
+    }
+   ]
+  },
+  "Guatelitzi's Thesis": {
+   "ja": "グアテリッツィの命題",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/PerfectSoulCores/SoulCoreBlood.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "gain_armour_from_%_life_loss_from_hits_lasting_8_seconds",
+       "value": 35
+      }
+     ],
+     "ja": "過去8秒間にヒットにより失ったライフの35%と同量のアーマーを獲得する",
+     "en": "Gain Armour equal to 35% of Life Lost from Hits in the past 8 seconds"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "physical_damage_prevented_recouped_as_life_%",
+       "value": 10
+      }
+     ],
+     "ja": "防いだ物理ダメージの10%をライフとして回収する",
+     "en": "10% of Physical Damage prevented Recouped as Life"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "life_loss_%_per_minute_while_sprinting",
+       "value": 300
+      },
+      {
+       "id": "sprint_movement_speed_+%",
+       "value": 25
+      }
+     ],
+     "ja": "スプリント中に毎秒最大ライフの5%を失う、スプリント中に移動スピードが25%増加する",
+     "en": "Lose 5% of maximum Life per second while Sprinting, 25% increased Movement Speed while Sprinting"
+    }
+   ]
+  },
+  "Citaqualotl's Thesis": {
+   "ja": "シタクアロトルの命題",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/PerfectSoulCores/SoulCoreSacrifice.dds",
+   "effects": [
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "recoup_life_equal_to_%_of_hit_damage_dealt_to_your_offerings",
+       "value": 50
+      }
+     ],
+     "ja": "オファリングが受けたダメージの50%を最大ライフとして回収する",
+     "en": "You Recoup 50% of Damage taken by your Offerings as Life"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "revive_random_persistent_minion_on_offering_expiration",
+       "value": 1
+      }
+     ],
+     "ja": "オファリングの効果が切れた時に永続ミニオンの一体が復活する",
+     "en": "One of your Persistent Minions revives when an Offering expires"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "sacrifice_%_life_to_gain_as_guard_on_dodge_roll",
+       "value": 10
+      }
+     ],
+     "ja": "ドッジロール時に最大ライフの10%を捧げ、同量のガードを獲得する",
+     "en": "Sacrifice 10% of maximum Life to gain that much Guard when you Dodge Roll"
+    }
+   ]
+  },
+  "Jiquani's Thesis": {
+   "ja": "ジクアニの命題",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/PerfectSoulCores/SoulCoreSoul.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "gain_X_max_mana_per_3_armour_on_equipped_helmet",
+       "value": 1
+      }
+     ],
+     "ja": "装備中のヘルメットのアイテムアーマー3ごとに最大マナ +1",
+     "en": "+1 to maximum Mana per 3 Item Armour on Equipped Helmet"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_starts_after_spending_2000_mana_every_2_seconds",
+       "value": 1
+      }
+     ],
+     "ja": "エナジーシールドリチャージはマナを合計2000使用した後に開始する。2秒に1度だけ起きる",
+     "en": "Energy Shield Recharge starts after spending a total of\n 2000 Mana, no more than once every 2 seconds"
+    },
+    {
+     "cat": "Boots",
+     "catJa": "Boots",
+     "stats": [
+      {
+       "id": "increases_and_reductions_to_move_speed_apply_to_es_recharge_rate",
+       "value": 1
+      }
+     ],
+     "ja": "移動スピードの増減のモッドは\nエナジーシールドリチャージレートにも適用される",
+     "en": "Increases and Reductions to Movement Speed also\n apply to Energy Shield Recharge Rate"
+    }
+   ]
+  },
+  "Quipolatl's Thesis": {
+   "ja": "キポラトルの命題",
+   "kind": "soulcore",
+   "tier": null,
+   "level": 60,
+   "drop": 65,
+   "dds": "Art/2DItems/Currency/PerfectSoulCores/SoulCoreScience.dds",
+   "effects": [
+    {
+     "cat": "Helmet",
+     "catJa": "Helmet",
+     "stats": [
+      {
+       "id": "mark_grants_%_max_glory_to_random_skill_on_activate",
+       "value": 50
+      }
+     ],
+     "ja": "グローリーを必要とするランダムなスキルは呪印がアクティベートした時にそのグローリーの最大値の50%を生成する",
+     "en": "A random Skill that requires Glory generates 50% of its maximum Glory when your Marks Activate"
+    },
+    {
+     "cat": "Gloves",
+     "catJa": "Gloves",
+     "stats": [
+      {
+       "id": "energy_shield_recharge_start_when_minions_reform",
+       "value": 1
+      }
+     ],
+     "ja": "ミニオンが再構成された時にエナジーシールドリチャージを開始する",
+     "en": "Your Energy Shield Recharge starts when your Minions are Reformed"
+    },
+    {
+     "cat": "Body Armour",
+     "catJa": "Body Armour",
+     "stats": [
+      {
+       "id": "armour_%_also_applies_to_chaos_damage_while_at_full_es",
+       "value": 75
+      }
+     ],
+     "ja": "エナジシールドがフルの間アーマーの+75%が混沌ダメージにも適用される",
+     "en": "+75% of Armour also applies to Chaos Damage while on full Energy Shield"
+    }
+   ]
+  }
+ }
+}

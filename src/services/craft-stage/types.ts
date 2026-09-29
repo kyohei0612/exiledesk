@@ -74,10 +74,26 @@ export interface StageItem {
   siphoner?: boolean;
   /** 拾ったシャードの数 (キー → 個数)。10 個でオーブになる。アイテムの状態ではないが、手順の流れで持ち回すためここに置く */
   shards?: Record<string, number>;
+  /** ソケットにはめたオーグメント (ルーン)。はめた順。要望 ⑰-1 */
+  augments?: StageAugment[];
   /** 解呪 / サルベージで無くなった (POE2Tube 要望 ⑰-5)。以後何も打てない */
   disposed?: "disenchant" | "salvage";
   /** 解呪 / サルベージで手に入った品質カレンシー (キー → 個数)。シャードは shards の方 */
   gained?: Record<string, number>;
+}
+
+/** ソケットにはめたルーン 1 つ (その部位での効き目) */
+export interface StageAugment {
+  /** 手順のキー (rune:<英語名>) */
+  key: string;
+  en: string;
+  ja: string;
+  /** 効き目の部位の言葉 (マーシャル武器 / 防具 …) */
+  cat: string;
+  textJa: string;
+  textEn: string;
+  /** stat の id と値 (武器・防具の数値への反映と PoB に使う) */
+  stats: Array<{ id: string; value: number }>;
 }
 
 /** 1 手の結果 */

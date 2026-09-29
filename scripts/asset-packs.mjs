@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 /** 画像パック: 名前 = public/ の下のフォルダ名 = 画面から読む時の先頭 (/base-art/…) */
-export const PACKS = ["base-art", "mtx-art", "unique-art"];
+export const PACKS = ["base-art", "mtx-art", "unique-art", "skill-art", "rune-art"];
 const TAG = "asset-packs";
 const REPO = "kyohei0612/ExileDesk";
 const OUT_DIR = resolve(ROOT, "data-cache/asset-packs");

@@ -19,6 +19,7 @@ import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { isShard } from "./apply-act";
 import { extraBaseFor } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
+import { isRune, runeOf } from "./stage-runes";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
 export const GEM_START_SOCKETS = 2;
@@ -71,6 +72,8 @@ export function outItem(it: StageItem): OutItem {
     ...({ unique: it.unique ?? null, gem_sockets: it.gemSockets ?? null, shards: it.shards ?? null } as object),
     // 要望 ⑰-5: 解呪 / サルベージで無くなった ("disenchant" / "salvage") と、手に入った品質カレンシー
     ...({ disposed: it.disposed ?? null, gained: it.gained ?? null } as object),
+    // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
+    ...({ augments: (it.augments ?? []).map((a) => ({ key: a.key, en: a.en, ja: a.ja, category: a.cat, text_ja: a.textJa, text_en: a.textEn, stats: a.stats })) } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
     suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
@@ -92,6 +95,7 @@ export function stepJa(currency: string, item: StageItem): string {
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `開示 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
+  if (isRune(currency)) return runeOf(currency)!.ja;
   return jaOfPriceKey(currency, item.cls) ?? currency;
 }
 

@@ -14,6 +14,8 @@ import { jaOfOmen } from "../services/htc/labels";
 import { stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
+import { isRune, runeKeys, RUNE_PREFIX } from "../services/craft-stage/stage-runes";
+import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import { marketStore } from "./market-store";
@@ -42,6 +44,10 @@ export const ORBS: ShelfGroup[] = [
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
   // 2026-09-29 (POE2Tube 要望 ⑰-5): 解呪・サルベージ (アイテムは無くなり、シャード・品質カレンシーになる。apply-dispose.ts)
   { kind: "dispose", label: "解呪・サルベージ", keys: ["disenchant", "salvage"] },
+  // 2026-09-29 (POE2Tube 要望 ⑰-1): ルーン (ソケットにはめる。stage-runes.ts)。アクト中に拾える下位 (レッサー) から
+  { kind: "rune_lesser", label: "ルーン (レッサー)", keys: runeKeys("lesser") },
+  { kind: "rune", label: "ルーン", keys: runeKeys("normal") },
+  { kind: "rune_greater", label: "ルーン (グレーター)", keys: runeKeys("greater") },
 ];
 export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**
@@ -81,6 +87,7 @@ export function essenceShelf(data: PatchData | null, item: StageItem | null): Sh
 /** キーの英語名 (相場の行を引く鍵)。骨は装備で種類が決まる */
 export function enOf(key: string, item: StageItem | null): string {
   if (key.startsWith("essence:") && ESS[key]) return ESS[key].en;
+  if (isRune(key)) return key.slice(RUNE_PREFIX.length);
   if (BONES.includes(key) && item) {
     const bone = desecrationBoneFor(item.cls.category);
     const suffix = /^desecrate_(ancient|altered|gnawed)$/.exec(key)?.[1];
@@ -95,7 +102,8 @@ export function priceOfKey(key: string, item: StageItem | null): number {
   const it = row(key, item);
   return it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
 }
-export const iconOfKey = (key: string, item: StageItem | null): string => row(key, item)?.IconUrl ?? "";
+/** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
+export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(key.slice(RUNE_PREFIX.length)) : null) ?? row(key, item)?.IconUrl ?? "";
 /** 日本語名 (お告げ・開示も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
   if (KEYS.omens[key]) return jaOfOmen(key) ?? key;
