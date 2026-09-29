@@ -24,6 +24,7 @@ import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey }
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
+import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
 
 const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
@@ -51,10 +52,23 @@ const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?:
 export type StageExtra =
   // hl = false: 答えの金の段を出さない (&hl=0、POE2Tube 要望 ⑯「ネタバレは避けたい」)
   | { kind: "tiers"; base: string; mod: string; ilvl: number | null; hl: boolean }
-  | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number };
+  // aPob / bPob: 結果 JSON の pob (要望 ⑰-3、&a_pob= / &b_pob=)。あれば真ん中の差に DPS の差も出す
+  | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob: PobBlock | null; bPob: PobBlock | null }
+  // 耐性の画面 (要望 ⑰-4): r = craft-stage-run.mjs --resists の結果、act = どのペナルティを出すか、penalty = false でペナルティ後を出さない
+  | { kind: "resists"; r: ResistsBlock; act: number | null; penalty: boolean };
+/** craft-stage-run.mjs --resists の結果 (耐性の画面に URL で渡す) */
+export interface ResistsBlock {
+  version: string;
+  items: Array<{ name: string; base: string; rarity: string }>;
+  /** 装備だけの耐性の合計 (アイテム無しとの差) */
+  equip?: Record<"fire" | "cold" | "lightning" | "chaos", number>;
+  rows: Array<{ penalty: number; label: string; resists: PobStat["resists"] }>;
+}
 const extra = ref<StageExtra | null>(null);
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
 const focus = ref<string | null>(null);
+/** PoB の計算 (要望 ⑰-3、URL の stage-pob=<結果 JSON の pob>)。動画モードで手ごとの DPS を出す */
+const pob = shallowRef<PobBlock | null>(null);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -71,7 +85,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, pob,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -111,8 +125,13 @@ export const craftStage = {
         extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null, hl: q.get("hl") !== "0" };
       } else if (view === "compare") {
         const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
-        extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step") };
+        const pj = (k: string) => (q.get(k) ? (JSON.parse(q.get(k)!) as PobBlock) : null);
+        extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step"), aPob: pj("a_pob"), bPob: pj("b_pob") };
+      } else if (view === "resists") {
+        const act = q.get("act");
+        extra.value = { kind: "resists", r: JSON.parse(q.get("r") ?? "{}") as ResistsBlock, act: act != null ? Number(act) : null, penalty: q.get("penalty") !== "0" };
       }
+      if (q.get("stage-pob")) pob.value = JSON.parse(q.get("stage-pob")!) as PobBlock;
       // 再生は費用も出すので相場を待つ (手で打つ時は待たない。値段は打った時に引く)
       if (raw) await market;
       const step = Number(q.get("step") ?? "9999");

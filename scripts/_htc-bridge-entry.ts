@@ -66,3 +66,6 @@ export { makeStageMod } from "../src/services/craft-stage/stage-core";
 export { revealOffers } from "../src/services/craft-stage/apply-desecrate";
 export { runPlan, freshItem } from "../src/services/craft-stage/run-plan";
 export { addNormalAffixProbability } from "../src/vendor/poe2htc/engine/probability";
+// クラフトステージの PoB (要望 ⑰-3 / ⑰-4、craft-stage-run.mjs)
+export { playPlan, startItem } from "../src/services/craft-stage/run-plan";
+export { pobItemText, pobSlotOf, pobConfigOf, pobStatOf } from "../src/services/craft-stage/stage-pob";

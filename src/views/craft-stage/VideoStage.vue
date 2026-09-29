@@ -17,6 +17,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import StageItemCard from "./StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
+import VideoPob from "./VideoPob.vue";
 import { useStageFx } from "./use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -194,6 +195,8 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           :class="clip ? 'absolute left-1/2 top-[12px] flex origin-top items-center gap-5' : 'absolute left-[40px] top-[120px] flex w-[560px] justify-center'"
           :style="clip ? { transform: `translateX(-50%) scale(${clipScale})` } : undefined"
         >
+          <!-- PoB の DPS (要望 ⑰-3、URL の stage-pob= がある時だけ) -->
+          <VideoPob v-if="craftStage.pob.value && clip" :pob="craftStage.pob.value" :idx="idx" />
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
             <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :compact="clip" :focus="craftStage.focus.value" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>

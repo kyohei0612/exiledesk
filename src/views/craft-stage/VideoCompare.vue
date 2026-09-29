@@ -4,6 +4,7 @@
   URL: ?video=1&layout=clip&view=compare&a=<手順 JSON>&b=<手順 JSON>[&a_step=N&b_step=N]
   手順を (step まで) 打ったアイテム 2 つを左右に並べ、真ん中に違い (B − A) を色で出す (増えた = 緑、減った = 赤)。
   「装備を入れ替えるかの見方」の回用。下 15% (612px より下) は空ける。画面に「アイテムレベル」の文字が出る (アイテム枠)。
+  2026-09-29 (要望 ⑰-3): &a_pob= / &b_pob= (それぞれの結果 JSON の pob、PoB で計算済み) があれば、差の一番上に「スキル DPS A → B (±%)」。
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -12,8 +13,17 @@ import { craftStage } from "../../state/craft-stage";
 import { playPlan } from "../../services/craft-stage/run-plan";
 import { diffItems } from "../../services/craft-stage/compare";
 import type { CraftStagePlan } from "../../services/craft-stage/contract";
+import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
 
-const props = defineProps<{ a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number }>();
+const props = defineProps<{ a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob?: PobBlock | null; bPob?: PobBlock | null }>();
+/** その手の PoB の値 (step が手の数より大きい時は最後) */
+const pobAt = (p: PobBlock | null | undefined, step: number) => (p ? p.steps[Math.min(step, p.steps.length - 1)] ?? null : null);
+const dps = computed(() => {
+  const a = pobAt(props.aPob, props.aStep);
+  const b = pobAt(props.bPob, props.bStep);
+  if (!a || !b) return null;
+  return { a: a.dps, b: b.dps, pct: a.dps > 0 ? Math.round(((b.dps - a.dps) / a.dps) * 100) : null, skill: props.aPob?.character.skill_ja ?? props.aPob?.character.skill ?? "" };
+});
 
 const view = computed(() => {
   const data = craftStage.data.value;
@@ -72,6 +82,11 @@ const ZOOM = 1.44;
       <!-- 違い (B − A) -->
       <div class="shrink-0 space-y-1.5 rounded-2xl border border-white/15 bg-black/70 p-3" :style="{ width: `${DIFF_W}px` }">
         <p class="text-center text-[24px] font-bold text-amber-100">入れ替えると</p>
+        <!-- スキル DPS の差 (PoB、要望 ⑰-3) -->
+        <div v-if="dps" class="rounded-lg px-2.5 py-1.5 text-center font-bold" :class="dps.b > dps.a ? 'bg-emerald-500/20 text-emerald-100' : dps.b < dps.a ? 'bg-rose-500/20 text-rose-100' : 'bg-white/5 text-white/60'">
+          <p class="text-[15px] opacity-80">スキル DPS ({{ dps.skill }})</p>
+          <p class="text-[26px] tabular-nums leading-tight">{{ dpsText(dps.a) }} → {{ dpsText(dps.b) }}<template v-if="dps.pct != null"> ({{ dps.pct > 0 ? "+" : "" }}{{ dps.pct }}%)</template></p>
+        </div>
         <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
         <p
           v-for="(d, i) in view.diff.slice(0, 14)"
