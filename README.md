@@ -1,9 +1,10 @@
 # ExileDesk
 
-POE2 (Path of Exile 2) 向けデスクトップ UI ツール。**配布精度優先で UI は 2 機能に集中**:
+POE2 (Path of Exile 2) 向けの日本語デスクトップアプリ。相場 (カレンシー・ユニーク)・上位プレイヤーの MOD・ビルドコピー・取引履歴・
+ヴァールの天秤 (賭けの期待値)・クラフト計算機・クラフトステージ (実演・動画撮影)・スキン (PoE1 → PoE2 で使えるか)・PoB 同梱・ゲームログ診断。
 
-- **上位プレイヤーMOD一覧** (poe.ninja 連携): 上位 10 アセンダンシー × 50 人のレア装備 MOD を prefix/suffix で集計、trade2 即時検索連携
-- **カレンシーランキング** (poe2scout 連携): 神/高貴/カオス 3 通貨並列ペア表示、神換算値表示
+**全体の地図 (画面 → 仕組み → エンジン / Rust、何を正とするか、データの出どころ、配布、テスト) は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**。
+大きな決めごとは [docs/decisions/](docs/decisions/) (ADR)。
 
 ## 技術スタック
 
@@ -16,8 +17,10 @@ POE2 (Path of Exile 2) 向けデスクトップ UI ツール。**配布精度優
 ```bash
 pnpm install
 pnpm tauri dev     # 開発時 (Vite HMR + cargo watch)
-pnpm build         # フロントエンド本番ビルド (vue-tsc + Vite)
-pnpm tauri build   # 配布用 EXE/DMG/AppImage 生成
+pnpm build         # フロントエンド本番ビルド (画像パックの版 → vue-tsc → Vite)
+pnpm test          # 自動テスト (vitest、tests/)。Rust は cd src-tauri && cargo test
+pnpm data:client   # パッチの後: クライアント由来のデータを順に全部作り直す (--list で段の一覧)
+pnpm tauri build   # 配布用のインストーラー (普段は v*.*.* のタグで CI が作る)
 ```
 
 ## 起動時自動チェック (Phase ο)
