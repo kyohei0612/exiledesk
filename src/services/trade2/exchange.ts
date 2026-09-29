@@ -10,6 +10,7 @@
 import { shallowRef } from "vue";
 import { fetchPairRate } from "../../api/poe2scout";
 import { marketStore } from "../../state/market-store";
+import { ceilMoney } from "../money";
 
 /**
  * 支払いに使う通貨。
@@ -113,7 +114,7 @@ export function cachedBuy(apiId: string): BestBuy | null {
  * 取ってきたレートはそのまま持っておいて (キャッシュも生の値)、使う時にこれを通す。
  */
 export function payableUnit(perUnit: number): number {
-  return perUnit >= 1 ? Math.ceil(perUnit) : perUnit;
+  return perUnit >= 1 ? ceilMoney(perUnit) : perUnit;
 }
 
 /** 生のレートに「実際に払う額」を足す。高貴換算も繰り上げ後の量から出し直す */

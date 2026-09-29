@@ -7,6 +7,7 @@
  */
 import { computed, ref } from "vue";
 import { marketStore } from "./market-store";
+import { ceilMoney, floorMoney, toExalted } from "../services/money";
 
 export type DisplayCurrency = "exalted" | "chaos" | "divine";
 /**
@@ -122,15 +123,10 @@ export function roundMoney(
   const { c, value } = pickUnit(exalted, from);
   // 一番下の通貨でも 1 未満 = これ以上落とせない。丸めずそのまま出す
   if (Math.abs(value) < 1) return { exalted, value, cur: c, rounded: false };
-  // 丸め誤差の逃げ。取引所の値段は高貴建てで小数 2 桁に丸めて保存されるので、神に戻すと
-  // 60 神が 59.99999 神になり、切り下げで丸ごと 1 神落ちていた
-  // (オーナー報告 2026-09-20「完成品の値段がズレてる」: 売値は 60.0 神なのに収支は 59)。
-  // 2 桁の丸めの誤差は最大 0.005 高貴 ÷ 約 490 ≈ 1e-5 なので、1e-4 だけ寄せてから丸める
-  const v = dir === "up" ? Math.ceil(value - ROUND_EPS) : Math.floor(value + ROUND_EPS);
+  // 丸め誤差の逃げ (60 神が 59.99999 神になる件) は services/money.ts の ceilMoney / floorMoney
+  const v = dir === "up" ? ceilMoney(value) : floorMoney(value);
   return { exalted: v * rateOf(c), value: v, cur: c, rounded: true };
 }
-/** 丸める前に寄せる幅 (通貨換算の往復で生じる誤差より大きく、実際の値段の差より小さい) */
-const ROUND_EPS = 1e-4;
 
 export const displayCurrency = {
   /** 選んでいる物 (適正 / 神 / カオス / 高貴)。プルダウンはこれ */
@@ -216,13 +212,7 @@ export function averageExalted(prices: { amount: number; currency: string }[]): 
 function toExaltedList(prices: { amount: number; currency: string }[]): number[] {
   if (prices.length === 0) return [];
   const r = marketStore.rates.value;
-  const toExalted = (p: { amount: number; currency: string }): number | null => {
-    if (p.currency === "exalted") return p.amount;
-    if (p.currency === "divine") return r.divine > 0 ? p.amount * r.divine : null;
-    if (p.currency === "chaos") return r.chaos > 0 ? p.amount * r.chaos : null;
-    return null;
-  };
-  return prices.map(toExalted).filter((v): v is number => v != null);
+  return prices.map((p) => toExalted(p.amount, p.currency, r)).filter((v): v is number => v != null);
 }
 
 /** 中央値を「確か」と言える最低の件数 */

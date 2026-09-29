@@ -14,30 +14,9 @@ const FETCH_CHUNK = 10;
 /** 既定で見る listing 数 (最安 10 件) */
 export const FETCH_TOP_N = 10;
 
-/** 通貨 → 高貴 (Exalted) 換算レート。exalted=1、divine / chaos は poe2scout のリーグ情報、他は poe2scout の価格表 */
-export interface ExaltedRates {
-  /** 1 神 = ? 高貴 */
-  divine: number;
-  /** 1 カオス = ? 高貴 */
-  chaos: number;
-  /** その他通貨 (trade2 の currency id = poe2scout の ApiId) → 高貴 */
-  others?: Record<string, number>;
-}
-
-export function toExalted(amount: number, currency: string, rates: ExaltedRates): number | null {
-  switch (currency) {
-    case "exalted":
-      return amount;
-    case "divine":
-      return amount * rates.divine;
-    case "chaos":
-      return amount * rates.chaos;
-    default: {
-      const r = rates.others?.[currency];
-      return r ? amount * r : null;
-    }
-  }
-}
+// 換算の決まりは services/money.ts に 1 つ
+import { toExalted, type ExaltedRates } from "../../money";
+export { toExalted, type ExaltedRates };
 
 export interface PriceListing {
   /** trade2 の listing ID (捌き速度の消失率に使う) */

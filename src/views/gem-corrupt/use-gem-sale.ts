@@ -8,6 +8,7 @@
 import { tradeLock, tradeTrace } from "../../state/trade-lock";
 import { ref, watch, type ComputedRef, type Ref } from "vue";
 import { marketStore } from "../../state/market-store";
+import { toExalted } from "../../services/money";
 import { buildGemQuery, type GemQueryOptions } from "../../services/trade2/query";
 import { trade2QueryUrl } from "../../services/trade2/league";
 import { type PriceResult } from "../../services/trade2/pricing";
@@ -65,8 +66,7 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
     if (st == null || amount == null || !(amount > 0)) return null;
     const r = rates.value;
     const cur = st.cheapest_currency ?? "exalted";
-    const exalted =
-      cur === "exalted" ? amount : cur === "divine" ? (r.divine > 0 ? amount * r.divine : null) : cur === "chaos" ? (r.chaos > 0 ? amount * r.chaos : null) : null;
+    const exalted = toExalted(amount, cur, r);
     return exalted == null ? null : { exalted: Math.round(exalted * 100) / 100, at: st.sampled_at };
   }
   /** 記録の値を売値に入れる (overwrite = false なら空いている欄だけ) */

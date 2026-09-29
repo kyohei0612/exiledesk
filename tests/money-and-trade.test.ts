@@ -82,3 +82,18 @@ describe("ユニークの検索条件", () => {
     expect(buildUniqueNameQuery("Andvarius", { baseType: "Gold Ring" }).query).toMatchObject({ type: "Gold Ring" });
   });
 });
+
+describe("換算と丸めの決まりは services/money.ts に 1 つ", async () => {
+  const { toExalted, ceilMoney, floorMoney } = await import("../src/services/money");
+  it("レートが分からない通貨は null (0 にしない)", () => {
+    expect(toExalted(2, "divine", { divine: 0, chaos: 7 })).toBeNull();
+    expect(toExalted(2, "divine", { divine: 500, chaos: 7 })).toBe(1000);
+    expect(toExalted(3, "annul", { divine: 500, chaos: 7, others: { annul: 20 } })).toBe(60);
+    expect(toExalted(3, "annul", { divine: 500, chaos: 7 })).toBeNull();
+  });
+  it("払う量の切り上げも、換算の誤差で 1 つ増えない", () => {
+    expect(payableUnit(3.00001)).toBe(3);
+    expect(ceilMoney(59.99999)).toBe(60);
+    expect(floorMoney(59.99999)).toBe(60);
+  });
+});
