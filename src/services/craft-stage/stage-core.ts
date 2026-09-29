@@ -121,14 +121,17 @@ function scaleOf(stat: string | undefined): { div: number; digits: number } | nu
   return null;
 }
 const scaled = (v: number, sc: { div: number; digits: number } | null): number => (sc ? Math.round((v / sc.div) * 10 ** sc.digits) / 10 ** sc.digits : v);
-/** 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す */
-export function withValues(m: StageMod, mod: Mod, rng: () => number): StageMod {
+/**
+ * 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す。
+ * fixed: 数値を指名する (画面の単位、要望 ⑱ の pick.values / start.mods[].values)。無ければ転がす
+ */
+export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: readonly number[]): StageMod {
   const tier = mod.tiers[m.tierIndex]!;
   const raw = (tier.ranges ?? []).map((r) => [Number(r[0]), Number(r[1])]);
   // stats は型に無いがデータには入っている (patch の段の stat の id)
   const stats = (tier as { stats?: readonly string[] }).stats;
   const scales = raw.map((_r, i) => scaleOf(stats?.[i]));
-  const values = raw.map(([a, b], i) => scaled(rollValue(a!, b!, rng), scales[i]!));
+  const values = raw.map(([a, b], i) => (fixed?.[i] != null ? fixed[i]! : scaled(rollValue(a!, b!, rng), scales[i]!)));
   const ranges = raw.map(([a, b], i) => [scaled(a!, scales[i]!), scaled(b!, scales[i]!)]);
   const en = mod.text ?? mod.id;
   const textEn = fillEn(en, values);
@@ -193,6 +196,54 @@ export function addOne(data: PatchData, item: StageItem, floor: number, rng: () 
   const sm = makeStageMod(c.mod, c.side, t.index, rng);
   return { item: withMod(item, sm), mod: sm };
 }
+/**
+ * 付く MOD の指名 (POE2Tube 要望 ⑱-1 kyohei「MOD を自分で選んで組み合わせる機能いるんじゃね？」)。
+ * mod = MOD の id (Rings/ColdResistance) か系統 (ColdResistance)、tier = "T6" (無ければ段は乱数)、values = 数値 (画面の単位、無ければ乱数)
+ */
+export interface Force { mod: string; tier?: string; values?: number[] }
+/** 指名した MOD と、指名しなかったら付く確率 (その段 (段を指名しなければその MOD) の重み ÷ その手で付きうる全部の重み) */
+export interface Forced { item: StageItem; mod: StageMod; chance: number }
+const matchesMod = (mod: Mod, key: string): boolean => mod.id === key || mod.id.endsWith(`/${key}`) || mod.family === key;
+/**
+ * 指名した MOD を付ける。**その時点で本当に付きうる物だけ** (乱数の時と同じ候補: 空き枠・同系統・アイテムレベル・強さの下限・重み > 0)。
+ * 付けられなければ { error: 理由 }
+ */
+export function addForced(data: PatchData, item: StageItem, floor: number, rng: () => number, force: Force, o: PoolOpts & { sides?: readonly StageSide[] } = {}): Forced | { error: string } {
+  const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
+  if (!sides.length) return { error: "足す枠が無い" };
+  const cands = candidates(data, item, sides, floor, o);
+  const total = cands.reduce((a, c) => a + c.w, 0);
+  const c = cands.find((x) => matchesMod(x.mod, force.mod));
+  if (!c) {
+    const any = [...data.mods.values()].find((m) => matchesMod(m, force.mod));
+    return { error: any ? `${force.mod} はこの手では付かない (空き枠・同じ系統・アイテムレベル・強さの下限のどれか)` : `${force.mod} という MOD が無い` };
+  }
+  let t: { index: number; w: number } | undefined;
+  if (force.tier) {
+    const n = Number(/^T(\d+)$/i.exec(force.tier)?.[1]);
+    const index = c.mod.tiers.length - n;
+    t = c.tiers.find((x) => x.index === index);
+    if (!t) return { error: `${force.mod} の ${force.tier} はこの手では付かない (アイテムレベル ${item.itemLevel}・強さの下限 ${floor})` };
+  } else {
+    t = pickWeighted(c.tiers, rng)!;
+  }
+  let sm = makeStageMod(c.mod, c.side, t.index, rng);
+  if (force.values) {
+    const bad = force.values.findIndex((v, i) => { const r = sm.ranges[i]; return !r || v < Math.min(r[0]!, r[1]!) || v > Math.max(r[0]!, r[1]!); });
+    if (bad >= 0) return { error: `${force.mod} の数値 ${force.values[bad]} が段の範囲 (${sm.ranges[bad]?.join("〜") ?? "無し"}) の外` };
+    sm = withValues(sm, c.mod, rng, force.values);
+  }
+  const chance = total > 0 ? (force.tier ? t.w : c.w) / total : 0;
+  return { item: withMod(item, sm), mod: sm, chance };
+}
+/** 消える MOD の指名 (カオスの remove)。固定済み (フラクチャー) は消せない */
+export function removeForced(item: StageItem, key: string): { item: StageItem; mod: StageMod } | { error: string } {
+  const m = allMods(item).find((x) => (x.modId === key || x.modId.endsWith(`/${key}`) || x.family === key));
+  if (!m) return { error: `${key} は付いていない` };
+  if (m.fractured) return { error: `${key} は固定済み (フラクチャー) で消せない` };
+  return { item: without(item, m), mod: m };
+}
+
 /** 固定済み (フラクチャー) 以外から等しく 1 つ消す。sides で側を絞れる (お告げ) */
 export function removeOne(item: StageItem, rng: () => number, sides: readonly StageSide[] = SIDES): { item: StageItem; mod: StageMod } | null {
   const rem = allMods(item).filter((m) => !m.fractured && sides.includes(m.side));

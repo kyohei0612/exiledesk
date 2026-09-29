@@ -16,8 +16,10 @@ import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
 import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
+import { addForced, type Force } from "./stage-core";
+import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
-import { extraBaseFor } from "./stage-bases";
+import { extraBaseFor, reqOf } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
 import { isRune, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
@@ -73,6 +75,8 @@ export function outItem(it: StageItem): OutItem {
     ...({ unique: it.unique ?? null, gem_sockets: it.gemSockets ?? null, shards: it.shards ?? null } as object),
     // 要望 ⑰-5: 解呪 / サルベージで無くなった ("disenchant" / "salvage") と、手に入った品質カレンシー
     ...({ disposed: it.disposed ?? null, gained: it.gained ?? null } as object),
+    // 要望 ⑱-3: 装備に必要なレベル・能力値 (PoB の req。要求レベル = ドロップレベル)
+    ...({ requirements: reqOf(it.base) } as object),
     // 要望 ⑰-2: 上の数値 (品質・ローカル MOD・ルーンを反映。up = 素の値から変わった = ゲームでは青)
     ...({ properties: propRows(it).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
@@ -129,6 +133,8 @@ export function playStep(
     after: outItem(r.item),
     changed: { added: r.added.map(outMod), removed: r.removed.map(outMod), rarity_from: item.rarity, rarity_to: r.item.rarity },
     cost: { each, amount, subtotal, cumulative },
+    // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
+    ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
   };
   return { out, before: item, after: r.item, added: r.added, removed: r.removed };
 }
@@ -148,7 +154,33 @@ export interface RunMeta {
  * (マジック = 変成 + 半分の確率で増強、レア = 錬金。seed は plan.seed - 1 で決まる)。
  * start_unidentified: true (手順 JSON の追加キー、要望 ⑧) なら未鑑定で始める (MOD は隠れ、鑑定の巻物で見える)
  */
+/**
+ * 始めの状態の指名 (要望 ⑱-2、2026-09-29 オーナー「指定 MOD 選んでからそこからクラフトできるように、動画用として」):
+ *   手順 JSON の start: { rarity, mods: [{ mod, tier?, values? }], quality?, sockets? }。「拾ったレア」「高貴を打ちまくったレア」を手を見せずに出す。
+ *   MOD は 1 つずつ付きうる物だけ (付く MOD の指名 pick と同じ決まり。強さの下限は無し)。付けられなければエラーで止める
+ */
+export interface StartSpec { rarity?: StageItem["rarity"]; mods?: Force[]; quality?: number; sockets?: number }
+export function startFrom(data: PatchData, base: string, itemLevel: number, s: StartSpec, seed: number): StageItem {
+  const rarity = s.rarity ?? (s.mods && s.mods.length > 2 ? "rare" : s.mods?.length ? "magic" : "normal");
+  let item: StageItem = { ...freshItem(data, base, itemLevel), rarity };
+  const rng = mulberry32(seed);
+  for (const [i, f] of (s.mods ?? []).entries()) {
+    const r = addForced(data, item, 0, rng, f);
+    if ("error" in r) throw new Error(`始めの状態の MOD ${i + 1} つ目: ${r.error}`);
+    item = r.item;
+  }
+  if (s.quality != null) item = { ...item, quality: s.quality };
+  if (s.sockets != null) {
+    const cap = socketCapOf(item.base, item.cls.category);
+    if (s.sockets > cap + 1) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${cap}、コラプトで +1) を超える`);
+    item = { ...item, sockets: s.sockets };
+  }
+  return item;
+}
+
 export function startItem(data: PatchData, plan: CraftStagePlan): StageItem {
+  const start = (plan as { start?: StartSpec }).start;
+  if (start) return startFrom(data, plan.base, plan.item_level ?? 80, start, plan.seed - 1);
   const rarity = plan.start_rarity ?? "normal";
   let item = freshItem(data, plan.base, plan.item_level ?? 80);
   const rng = mulberry32(plan.seed - 1);
@@ -176,9 +208,13 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
       if (index >= upTo) return { steps, final: item };
       index++;
       // シャードの手は「1 個拾う」、可能性のオーブは outcome で結果を指定できる (要望 ⑧。outcome は POE2Tube の手順 JSON の追加キー)
-      const outcome = (ps as { outcome?: string }).outcome;
-      const hint = { collect: isShard(ps.currency), ...(outcome ? { outcome } : {}) };
+      // pick / remove: 付く MOD・消える MOD の指名 (要望 ⑱-1)。pick は 1 つか配列
+      const x = ps as { outcome?: string; pick?: Force | Force[]; remove?: string };
+      const pick = x.pick ? (Array.isArray(x.pick) ? x.pick : [x.pick]) : undefined;
+      const hint = { collect: isShard(ps.currency), ...(x.outcome ? { outcome: x.outcome } : {}), ...(pick ? { pick } : {}), ...(x.remove ? { remove: x.remove } : {}) };
       const p = playStep(data, item, ps.currency, { index, seed: plan.seed + index, price: (k) => prices[k] ?? 0, cumulative, omen: ps.omen ?? null, hint });
+      // 指名が通らない手順はエラーで止める (理由を返す)。指名の無い手の「打てない」は今まで通り記録して進む
+      if ((pick || x.remove) && !p.out.applied) throw new Error(`手 ${index} (${ps.currency}): ${p.out.reason}`);
       steps.push(p);
       item = p.after;
       cumulative = p.out.cost.cumulative;

@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
-import { freshItem, runPlan } from "../src/services/craft-stage/run-plan";
+import { freshItem, playPlan, runPlan } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { mulberry32 } from "../src/services/htc/rng";
 import type { StageItem } from "../src/services/craft-stage/types";
@@ -156,5 +156,33 @@ describe("今のゲームの決まり (2026-09-29 見直し、クライアント
     expect(runeKeys().includes("rune:Perfect Desert Rune")).toBe(true);
     const s = A(freshItem(data, "Chain Mail", 30), "artificer").item;
     expect(A(s, "rune:Lesser Tempered Rune").applied).toBe(false);
+  });
+});
+
+describe("指名 (要望 ⑱)", () => {
+  it("付く MOD を指名できる。付きうる物だけで、結果に指名しなかった時の確率", () => {
+    const r = playPlan(data, plan("Gold Ring", [{ currency: "transmute", pick: { mod: "ColdResistance", tier: "T6" } }]), {});
+    const st = r.steps[0]!;
+    expect(st.after.prefixes.length + st.after.suffixes.length).toBe(1);
+    expect(st.added[0]).toMatchObject({ family: "ColdResistance", tierName: "T6" });
+    const out = st.out as unknown as { picked: boolean; pick_chance: Array<{ chance: number }> };
+    expect(out.picked).toBe(true);
+    expect(out.pick_chance[0]!.chance).toBeGreaterThan(0);
+    expect(out.pick_chance[0]!.chance).toBeLessThan(1);
+  });
+  it("付けられない指名はエラーで止まる (アイテムレベルで出ない段)", () => {
+    expect(() => playPlan(data, plan("Gold Ring", [{ currency: "transmute", pick: { mod: "ColdResistance", tier: "T1" } }], { item_level: 10 }), {})).toThrow(/指名できない/);
+  });
+  it("カオスは消える MOD と付く MOD を指名できる", () => {
+    const p = plan("Gold Ring", [{ currency: "chaos", remove: "ColdResistance", pick: { mod: "FireResistance" } }], { start: { mods: [{ mod: "ColdResistance" }, { mod: "IncreasedLife" }, { mod: "Strength" }] } });
+    const st = playPlan(data, p, {}).steps[0]!;
+    expect(st.removed[0]?.family).toBe("ColdResistance");
+    expect(st.added[0]?.family).toBe("FireResistance");
+  });
+  it("始めの状態を MOD で指名できる (3 つからはレア)。要求レベルが結果に入る", () => {
+    const p = plan("Crescent Quarterstaff", [{ currency: "exalt" }], { start: { mods: [{ mod: "LocalPhysicalDamagePercent" }, { mod: "LocalIncreasedAttackSpeed" }, { mod: "LocalColdDamage" }] } });
+    const r = playPlan(data, p, {});
+    expect(r.steps[0]!.before.rarity).toBe("rare");
+    expect((r.steps[0]!.out.after as unknown as { requirements: { level: number } }).requirements.level).toBe(20);
   });
 });

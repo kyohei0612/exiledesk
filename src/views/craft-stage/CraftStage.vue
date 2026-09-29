@@ -88,7 +88,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
         <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="s.itemLevel.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="s.itemLevel.value = lv; s.reset()">{{ lv }}</button>
       </span>
       <button type="button" :class="btn" @click="s.reset()">白に戻す</button>
-      <button type="button" :class="btn" :disabled="!s.log.value.length" title="Ctrl+Z" @click="s.undo()">1 手戻す</button>
+      <button type="button" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" title="Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)" @click="s.undo()">1 手戻す</button>
       <button type="button" :class="btn" class="border-amber-400/60 text-amber-100" :disabled="!s.log.value.length" title="打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">動画モード</button>
       <span class="ml-auto flex items-center gap-1.5">
         <span v-if="copied" class="text-emerald-300">{{ copied }}</span>

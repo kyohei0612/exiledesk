@@ -174,3 +174,10 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
   - 熟練工の上限はベースごと: PoB の Data/Bases の socketLimit (胴・両手 4 / ほか 3、手で書かれた値) − 2 = 胴・両手 2 / ほか 1。規格外 +1・コラプト +1 の読み (規格外は扱わない)。
     **クライアントに上限の列は無い** (ItemClasses / BaseItemTypes / ArmourTypes / WeaponTypes に無い) ので、読みが違えばここを直す
 
+## 追記 2026-09-29: 指名 (POE2Tube 要望 ⑱ kyohei「MOD を自分で選んで組み合わせる機能いるんじゃね？」)
+- 付く MOD の指名 `pick` ({ mod: id か系統, tier?: "T6", values? }、錬金・大いなる高貴は配列)、カオスの消える MOD `remove`。候補は乱数の時と同じ (空き枠・同系統・アイテムレベル・強さの下限・重み > 0) で、
+  外れた指名は「手 N: 指名できない (理由)」で再生を止める。結果の手に picked / pick_chance (その段の重み ÷ その手で付きうる全部の重み、段を指名しなければその MOD の重み)
+- 始めの状態 `start` ({ rarity?, mods: [pick と同じ形], quality?, sockets? })。MOD は 1 つずつ付きうる物だけ (強さの下限なし)、rarity を書かなければ 3 つ以上でレア。
+  手で打つ画面は MOD 一覧の段の表の「付ける」(まだ打っていない間だけ、「1 手戻す」で外す)、手順 JSON の書き出しに start が入る
+- 要求 (装備に必要なレベル・能力値): PoB の Data/Bases の req (stage-bases-pob.json)。要求レベルはドロップレベルと同じ値。結果のアイテムの requirements とアイテム枠の「要求 Lv …」
+

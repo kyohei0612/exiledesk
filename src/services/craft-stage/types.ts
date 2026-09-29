@@ -108,4 +108,8 @@ export interface StageApply {
   removed: StageMod[];
   /** この手で食ったお告げ (持っていても関係の無い物は残る) */
   omensUsed?: string[];
+  /** 指名で付けた MOD と、指名しなかったら付く確率 (要望 ⑱-1) */
+  picked?: Array<{ modId: string; tierName: string; chance: number }>;
+  /** 指名が通らなかった (手順の再生はエラーで止める) */
+  pickError?: boolean;
 }

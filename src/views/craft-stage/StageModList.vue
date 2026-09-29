@@ -7,6 +7,8 @@
   種類 (普通 / エッセンス / 冒涜 / 異界) をタブで切り替え、プレフィックス / サフィックスを 2 列。1 行 = 1 系統:
   文面 (一番上の段の数値)・タグ (色付き)・段の数・一番上の段の MOD レベル・出やすさ (同じ側の重みに対する割合を棒と %)。
   行を押すと段ごと (T1〜) の表。今付いている系統は緑、同じ系統が付いていて付かない物は薄く。中身は [[mod-list.ts]]。
+  2026-09-29 (要望 ⑱-2、オーナー「指定 MOD 選んでからそこからクラフトできるように、動画用として」): まだ 1 手も打っていない間は、
+  段の表の「付ける」で始めの状態にその MOD・段を足せる (付きうる物だけ。手順 JSON の start.mods に入る)。「1 手戻す」で 1 つずつ外す。
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
@@ -15,6 +17,8 @@ import { GROUP_JA, modListFor, shownTags, TAG_STYLE, type ListRow, type ModGroup
 import essenceKeys from "../../services/htc/essence-keys.json";
 
 const s = craftStage;
+/** 始めの状態を組める (まだ打っていない・再生でない) */
+const canStart = computed(() => !s.log.value.length && !s.replay.value);
 const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
 
 /** 畳んだかどうか (見る人ごとの好み。保存できなくても動く) */
@@ -58,7 +62,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <!-- 見出し (押すと畳む) -->
     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>
-      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合</span>
+      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · 段の表の「付ける」で始めの状態を組める</template></span>
       <span class="ml-auto opacity-60">{{ open ? "▲ 畳む" : "▼ 開く" }}</span>
     </button>
 
@@ -113,6 +117,9 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                   <td class="py-0.5 pl-2 opacity-60">{{ tierName(r, t.name) }}</td>
                   <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                   <td class="w-16 py-0.5 text-right tabular-nums opacity-70">{{ t.weight ? `重み ${t.weight}` : "" }}</td>
+                  <td v-if="canStart && group === 'normal'" class="w-14 py-0.5 text-right">
+                    <button type="button" class="rounded border border-sky-400/50 px-1.5 text-[10px] text-sky-200 hover:bg-sky-500/15" :title="`始めの状態に ${t.rank} を付ける (付きうる物だけ)`" @click.stop="s.addStartMod({ mod: r.id, tier: t.rank })">付ける</button>
+                  </td>
                 </tr>
               </tbody>
             </table>

@@ -8,6 +8,7 @@
  */
 import type { ItemBase } from "../../vendor/poe2htc/engine/types";
 import stageBases from "./stage-bases.json";
+import basesPob from "./stage-bases-pob.json";
 import gemsRaw from "../../i18n/gems-client.json";
 import vaal from "../../i18n/vaal-enchants.json";
 
@@ -28,6 +29,21 @@ export interface BaseStats {
 }
 const BASES = (stageBases as unknown as { bases: Record<string, BaseStats> }).bases;
 const GEMS = (gemsRaw as Array<{ en: string; ja: string; kind: string }>).filter((g) => g.kind === "skill");
+
+/**
+ * 装備に必要なレベル・能力値 (要望 ⑱-3)。PoB の Data/Bases の req (scripts/build-stage-runes.mjs → stage-bases-pob.json)。
+ * 要求レベルはドロップレベルと同じ値 (PoB で確認: 三日月のクォータースタッフ 20 / スパイククラブ 16)。要求の無いベースは null
+ */
+export interface BaseReq { level?: number; str?: number; dex?: number; int?: number }
+const REQS = (basesPob as unknown as { reqs: Record<string, BaseReq> }).reqs;
+export const reqOf = (base: string): BaseReq | null => REQS[base] ?? null;
+/** 要求の言葉 (「要求 Lv 20・器用さ 30・知性 14」)。無ければ "" */
+export function reqText(base: string): string {
+  const r = reqOf(base);
+  if (!r) return "";
+  const parts = [r.level ? `Lv ${r.level}` : "", r.str ? `筋力 ${r.str}` : "", r.dex ? `器用さ ${r.dex}` : "", r.int ? `知性 ${r.int}` : ""].filter(Boolean);
+  return parts.length ? `要求 ${parts.join("・")}` : "";
+}
 
 /** ベースの数値 (無ければ null) */
 export const baseStatsOf = (base: string): BaseStats | null => BASES[base] ?? null;

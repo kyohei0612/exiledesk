@@ -15,7 +15,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier } from "../htc/catalysing-multiplier";
 import { boostedBy } from "../htc/quality";
-import { addOne, allMods, removeOne, room, SIDES, skip, without, type PoolOpts } from "./stage-core";
+import { addForced, addOne, allMods, removeForced, removeOne, room, SIDES, skip, without, type Force, type PoolOpts } from "./stage-core";
 import { applyEssence } from "./apply-essence";
 import { applyBone, applyReveal } from "./apply-desecrate";
 import { applyOther, OTHER_KINDS } from "./apply-other";
@@ -72,7 +72,16 @@ function sideOmen(used: readonly string[], left: string, right: string): StageSi
  * hint: 手順の手の追加の指定 (要望 ⑧)。collect = シャードを拾う手 (手で打つ画面でアイテムに使う時は無し → 打てない)、
  * outcome = 可能性のオーブの結果を指定 ("unique" / "destroyed")
  */
-export interface ApplyHint { collect?: boolean; outcome?: string }
+export interface ApplyHint {
+  collect?: boolean;
+  outcome?: string;
+  /** 付く MOD の指名 (要望 ⑱-1)。足す順 (錬金・大いなる高貴は複数)。足りない分は乱数 */
+  pick?: Force[];
+  /** 消える MOD の指名 (カオス) */
+  remove?: string;
+}
+/** 指名が通らなかった時 (理由つきで打てない、pickError) */
+const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, `指名できない: ${why}`), pickError: true });
 
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
@@ -128,13 +137,24 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   const add = (it: StageItem, n: number, pick: (k: number, cur: StageItem) => readonly StageSide[] = () => SIDES, boost?: PoolOpts["boost"]): StageApply => {
     let cur = it;
     const added: StageMod[] = [];
+    const picked: NonNullable<StageApply["picked"]> = [];
+    if ((hint.pick?.length ?? 0) > n) return pickFail(item, `この手で付く MOD は ${n} つまで`);
     for (let i = 0; i < n; i++) {
+      const f = hint.pick?.[i];
+      if (f) {
+        const r = addForced(data, cur, floor, rng, f, { sides: pick(i, cur), boost });
+        if ("error" in r) return pickFail(item, r.error);
+        cur = r.item;
+        added.push(r.mod);
+        picked.push({ modId: r.mod.modId, tierName: r.mod.tierName, chance: r.chance });
+        continue;
+      }
       const r = addOne(data, cur, floor, rng, { sides: pick(i, cur), boost });
       if (!r) break;
       cur = r.item;
       added.push(r.mod);
     }
-    return added.length ? { applied: true, item: cur, added, removed: [] } : skip(item, "付けられる MOD が無い");
+    return added.length ? { applied: true, item: cur, added, removed: [], ...(picked.length ? { picked } : {}) } : skip(item, "付けられる MOD が無い");
   };
   switch (kind) {
     case "transmute":
@@ -176,7 +196,12 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
     case "chaos": {
       if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
       let r: { item: StageItem; mod: StageMod } | null;
-      if (used.includes("OmenofWhittling")) {
+      if (hint.remove) {
+        // 消える MOD の指名 (要望 ⑱-1)
+        const f = removeForced(item, hint.remove);
+        if ("error" in f) return pickFail(item, f.error);
+        r = f;
+      } else if (used.includes("OmenofWhittling")) {
         // 削りのお告げ: 一番 MOD レベルの低い物を消す (同じなら等しく)
         const rem = allMods(item).filter((m) => !m.fractured);
         const low = Math.min(...rem.map((m) => m.modLevel));
@@ -189,6 +214,12 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
         r = removeOne(item, rng, side ? [side] : SIDES);
       }
       if (!r) return skip(item, "外せる MOD が無い");
+      const f = hint.pick?.[0];
+      if (f) {
+        const a = addForced(data, r.item, floor, rng, f);
+        if ("error" in a) return pickFail(item, a.error);
+        return { applied: true, item: a.item, added: [a.mod], removed: [r.mod], picked: [{ modId: a.mod.modId, tierName: a.mod.tierName, chance: a.chance }] };
+      }
       const a = addOne(data, r.item, floor, rng);
       return { applied: true, item: a?.item ?? r.item, added: a ? [a.mod] : [], removed: [r.mod] };
     }

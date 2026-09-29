@@ -117,20 +117,31 @@ cores.forEach((c, i) => {
 // ---- ソケットの上限 (PoB の Data/Bases/*.lua の socketLimit) ----
 const bases = resolve(ROOT, "vendor/PathOfBuilding-PoE2/src/Data/Bases");
 const socketLimits = {};
+/** 装備に必要なレベル・能力値 (PoB の req。要求レベルはドロップレベルと同じ値、要望 ⑱-3) */
+const reqs = {};
 for (const f of readdirSync(bases).filter((x) => x.endsWith(".lua"))) {
   const t = readFileSync(join(bases, f), "utf8");
   for (const m of t.matchAll(/itemBases\["([^"]+)"\] = \{([\s\S]*?)\n\}/g)) {
     const lim = /socketLimit = (\d+)/.exec(m[2]);
     if (lim) socketLimits[m[1]] = Number(lim[1]);
+    const req = /req = \{([^}]*)\}/.exec(m[2]);
+    const r = req ? Object.fromEntries([...req[1].matchAll(/(level|str|dex|int) = (\d+)/g)].map((x) => [x[1], Number(x[2])])) : {};
+    if (Object.keys(r).length) reqs[m[1]] = r;
   }
 }
 
 writeFileSync(OUT, JSON.stringify({
   generated: new Date().toISOString().slice(0, 10),
-  source: "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)、有る無しは相場 (poe2scout) の値段、ソケットの上限は PoB の Data/Bases の socketLimit",
+  source: "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)、有る無しは相場 (poe2scout) の値段",
   runes: out,
-  socketLimits,
 }, null, 1) + "\n");
+// PoB のベースのデータ (ソケットの上限と要求)。src/services/craft-stage/stage-bases-pob.json
+writeFileSync(resolve(ROOT, "src/services/craft-stage/stage-bases-pob.json"), JSON.stringify({
+  generated: new Date().toISOString().slice(0, 10),
+  source: "vendor の PoB の Data/Bases/*.lua (socketLimit と req)",
+  socketLimits,
+  reqs,
+}) + "\n");
 const n = Object.values(out);
 const avail = n.filter((x) => x.available);
 console.log(`[build-stage-runes] ${n.length} 件 (rune ${n.filter((x) => x.kind === "rune").length} / soulcore ${n.filter((x) => x.kind === "soulcore").length} / talisman ${n.filter((x) => x.kind === "talisman").length})、今のゲームに有る ${market ? avail.length : "?"}、ソケットの上限 ${Object.keys(socketLimits).length} ベース -> ${OUT}`);

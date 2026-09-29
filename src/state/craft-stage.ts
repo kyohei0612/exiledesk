@@ -17,7 +17,8 @@ import { loadHtcPatch } from "../services/htc/patch";
 import { loadCurrencyHover } from "../services/currency/currency-hover";
 import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
-import { freshItem, playPlan, playStep, resultOf, type PlayedStep } from "../services/craft-stage/run-plan";
+import { freshItem, playPlan, playStep, resultOf, startFrom, type PlayedStep, type StartSpec } from "../services/craft-stage/run-plan";
+import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { marketStore } from "./market-store";
 import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./craft-stage-shelf";
@@ -75,6 +76,11 @@ const extra = ref<StageExtra | null>(null);
 const focus = ref<string | null>(null);
 /** PoB の計算 (要望 ⑰-3、URL の stage-pob=<結果 JSON の pob>)。動画モードで手ごとの DPS を出す */
 const pob = shallowRef<PobBlock | null>(null);
+/**
+ * 始めの状態に付けた MOD (要望 ⑱-2、オーナー「指定 MOD 選んでからそこからクラフトできるように、動画用として」)。
+ * まだ 1 手も打っていない間だけ、MOD 一覧から足せる。手順 JSON の start.mods に書き出す
+ */
+const startMods = ref<Force[]>([]);
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = ref<{ n: number; reason: string } | null>(null);
 
@@ -91,7 +97,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, pob,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, pob, startMods,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -165,10 +171,25 @@ export const craftStage = {
       error.value = e instanceof Error ? e.message : String(e);
     }
   },
-  /** 白の新品から (ベース・アイテムレベルを変えた時も) */
+  /**
+   * 始めの状態に MOD を 1 つ足す (まだ 1 手も打っていない間だけ)。付きうる物だけ (付かなければ理由を震えで出す)。
+   * 3 つ目からはレア、それまではマジック
+   */
+  addStartMod(f: Force): void {
+    if (!data.value || log.value.length || replay.value) return;
+    const next = [...startMods.value, f];
+    try {
+      item.value = startFrom(data.value, base.value, itemLevel.value, { mods: next }, seed.value - 1);
+      startMods.value = next;
+    } catch (e) {
+      miss.value = { n: (miss.value?.n ?? 0) + 1, reason: e instanceof Error ? e.message.replace(/^始めの状態の MOD \d+ つ目: /, "") : String(e) };
+    }
+  },
+  /** 白の新品から (ベース・アイテムレベルを変えた時も)。始めの MOD も外す */
   reset(): void {
     if (!data.value) return;
     try {
+      startMods.value = [];
       item.value = freshItem(data.value, base.value, itemLevel.value);
       log.value = [];
       omens.value = [];
@@ -206,6 +227,12 @@ export const craftStage = {
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
     const l = log.value;
+    // まだ打っていない時は、始めの MOD を 1 つ外す
+    if (!l.length && startMods.value.length && data.value && !replay.value) {
+      startMods.value = startMods.value.slice(0, -1);
+      item.value = startFrom(data.value, base.value, itemLevel.value, { mods: startMods.value }, seed.value - 1);
+      return;
+    }
     if (!l.length || replay.value) return;
     const last = l[l.length - 1]!;
     item.value = last.before;
@@ -229,6 +256,8 @@ export const craftStage = {
       item_level: itemLevel.value,
       start_rarity: "normal",
       start_paste: null,
+      // 始めの状態の MOD (要望 ⑱-2)。無ければ書かない
+      ...(startMods.value.length ? ({ start: { mods: startMods.value } satisfies StartSpec } as object) : {}),
       seed: seed.value,
       steps: (log.value.length ? log.value.map((s) => ({ currency: s.out.currency, omen: s.out.omen ?? null, times: 1, note: null })) : [{ currency: "transmute", omen: null, times: 1, note: null }]) as CraftStagePlan["steps"],
     };

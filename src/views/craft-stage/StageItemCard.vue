@@ -12,7 +12,7 @@ import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
+import { isFlask, isGem, reqText } from "../../services/craft-stage/stage-bases";
 import { propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
@@ -96,6 +96,8 @@ const rows = computed(() => [
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
     <div class="space-y-1 px-4 text-center text-[13px]" :class="[compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
       <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></template></p>
+      <!-- 要求 (要望 ⑱-3) -->
+      <p v-if="reqText(item.base)" class="text-[12px] text-white/50">{{ reqText(item.base) }}</p>
       <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
       <p v-for="r in baseRows" :key="r.label" class="text-[12px] text-white/50">{{ r.label }}: <span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>

@@ -14,6 +14,7 @@
  *     (胴・両手 2 / ほか 1)、規格外のベースは +1、コラプト (ヴァール) で +1 の読み。規格外はこのステージでは扱わない
  */
 import runesRaw from "./stage-runes.json";
+import basesPob from "./stage-bases-pob.json";
 import { ARMOUR, CASTER, MARTIAL } from "./apply-act";
 import type { StageApply, StageItem, StageAugment } from "./types";
 import { skip } from "./stage-core";
@@ -36,7 +37,7 @@ export interface RuneRow {
   effects: RuneEffect[];
 }
 export const RUNES = (runesRaw as unknown as { runes: Record<string, RuneRow> }).runes;
-const SOCKET_LIMITS = (runesRaw as unknown as { socketLimits: Record<string, number> }).socketLimits;
+const SOCKET_LIMITS = (basesPob as unknown as { socketLimits: Record<string, number> }).socketLimits;
 
 export const RUNE_PREFIX = "rune:";
 export const isRune = (key: string): boolean => key.startsWith(RUNE_PREFIX) && !!RUNES[key.slice(RUNE_PREFIX.length)];
