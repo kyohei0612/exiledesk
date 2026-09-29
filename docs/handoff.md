@@ -10,10 +10,8 @@
 
 ## 待っている事
 
-- **ExileDesk の次のリリース待ち**: 要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す、ネタバレ防止) が入る。出たら:
-  1. `python scripts/update_exiledesk.py` (固定版を最新のリリースへ)
-  2. `capture/stage.py` の `CAPTURE_VER` を上げる
-  3. `python scripts/build_video.py data/scripts/test_1min_ui.json --keep-frames` → `python scripts/check_sync.py data/scripts/test_1min_ui.json` で数字と一覧画像を確認 (10 行目の質問で金の段が無く、11 行目の答えで出るか)
+- なし。要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す) は v0.1.329 で入り、固定版を進めて確認済 (2026-09-29、CAPTURE_VER=v16-hl0。test_1min_ui の 10 行目で金の段が無く 11 行目で出る)
+- 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
 ## 次の動画 (kyohei が構成を考え中)
 
