@@ -10,7 +10,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { maxQualityForBase, QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
-import { socketCountFor } from "../htc/sockets";
+import { socketCapOf } from "./stage-runes";
 import { allMods, replaced, skip, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 
@@ -54,7 +54,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
       return { applied: true, item: replaced(item, m, next), added: [next], removed: [m] };
     }
     case "artificer": {
-      const max = socketCountFor(item.cls.category);
+      // 上限はベースごと (PoB の socketLimit − 2、stage-runes.ts)。2026-09-29 までは全部 2 だった
+      const max = socketCapOf(item.base, item.cls.category);
       // 言葉はゲームの説明文「マーシャル武器、ワンド、スタッフまたは防具にオーグメントソケットを1個追加する」
       if (!max) return skip(item, "マーシャル武器・ワンド・スタッフ・防具にだけ使える");
       const n = item.sockets ?? 0;

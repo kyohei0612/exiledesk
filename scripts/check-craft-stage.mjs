@@ -116,8 +116,8 @@ function compare(label, item, cur, n = 40000) {
 // ---- 4. クラフトに使える物全部 (エッセンス・骨と開示・お告げ・神・破砕・アーティファサー・カタリスト) で規則が崩れないか ----
 {
   const OMENS = ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofWhittling", "OmenofSinistralErasure",
-    "OmenofGreaterAnnulment", "OmenofLight", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralNecromancy",
-    "OmenoftheSovereign", "OmenofAbyssalEchoes", "OmenofSinistralCoronation", "OmenofDextralAlchemy", "OmenofCatalysingExaltation"];
+    "OmenofLight", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralNecromancy",
+    "OmenoftheSovereign", "OmenofAbyssalEchoes", "OmenofCatalysingExaltation"];
   const BASE_KEYS = ["transmute", "augment", "regal", "alchemy", "exalt", "exalt_greater", "chaos", "annul", "divine", "fracture", "artificer",
     "desecrate", "desecrate_ancient", "desecrate_altered", "reveal:1", "reveal:2", "reveal:3", "reveal:1:reroll", "catalyst_mana", "catalyst_life", "essence:breach"];
   const BASES2 = ["Gold Ring", "Absent Amulet", "Siphoning Wand", "Ancestral Tiara", "Heavy Belt"];
@@ -209,9 +209,8 @@ function compare(label, item, cur, n = 40000) {
   const a = kinds(rare, 8000, []);
   console.log(`ヴァール (兜): ${JSON.stringify(a)}`);
   for (const k of Object.keys(a)) if (Math.abs(a[k] / 8000 - 0.25) > 0.02) ng(`ヴァールの結果 ${k} が 1/4 から外れた`);
-  const b = kinds(rare, 3000, ["OmenofCorruption"]);
-  console.log(`ヴァール + コラプトのお告げ: ${JSON.stringify(b)}`);
-  if (b.none) ng("コラプトのお告げで変化なしが出た");
+  // コラプトのお告げは今のゲームに無い (2026-09-29、相場の値段 0) → 掛けたら打てない
+  if (M.applyCurrency(data, rare, "vaal", M.mulberry32(1), ["OmenofCorruption"]).applied) ng("今のゲームに無いコラプトのお告げで打てた");
   const ring = M.applyCurrency(data, M.freshItem(data, "Gold Ring", 82), "alchemy", M.mulberry32(22)).item;
   const c = kinds(ring, 4000, []);
   console.log(`ヴァール (指輪、ソケットの代わりに変化なし): ${JSON.stringify(c)}`);
@@ -260,9 +259,12 @@ function compare(label, item, cur, n = 40000) {
   const sh = run(P("Gold Ring", [{ currency: "regal_shard", times: 11 }]));
   if (sh.steps[9].after.shards.regal_shard !== 0 || sh.final.shards.regal_shard !== 1) ng("シャード 10 個でオーブにならない");
   if (M.applyCurrency(data, M.freshItem(data, "Gold Ring", 30), "regal_shard", M.mulberry32(1)).applied) ng("手で打つ時にシャードがアイテムに使えた");
-  const a = run(P("Hardwood Spear", [{ currency: "artificer", times: 3 }]));
-  if (a.final.sockets !== 2 || a.steps[2].applied) ng("熟練工のソケット (2 まで) が違う");
-  console.log(`アクト: 砥石 20% / 鑑定 / 端材 +2% (マジック) / 宝飾職人 3→4 / 可能性 (ユニーク ${cu.final.unique?.ja}・壊れた) / シャード 10 個 / 熟練工 2 まで`);
+  // 熟練工の上限はベースごと (PoB の socketLimit − 2): 片手の槍 1 / 胴 2 (2026-09-29)
+  const a = run(P("Hardwood Spear", [{ currency: "artificer", times: 2 }]));
+  if (a.final.sockets !== 1 || a.steps[1].applied) ng("熟練工のソケット (片手の槍は 1 まで) が違う");
+  const a2 = run(P("Chain Mail", [{ currency: "artificer", times: 3 }]));
+  if (a2.final.sockets !== 2 || a2.steps[2].applied) ng("熟練工のソケット (胴は 2 まで) が違う");
+  console.log(`アクト: 砥石 20% / 鑑定 / 端材 +2% (マジック) / 宝飾職人 3→4 / 可能性 (ユニーク ${cu.final.unique?.ja}・壊れた) / シャード 10 個 / 熟練工 (片手 1・胴 2 まで)`);
 }
 
 // ---- 7. 2026-09-29 に足した物 (apply-extra.ts・噛み切られた骨・彫刻針) ----

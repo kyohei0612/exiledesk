@@ -15,7 +15,7 @@
  * コラプトと同じく、以後は手を加えられない。
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { socketCountFor } from "../htc/sockets";
+import { socketCapOf } from "./stage-runes";
 import vaal from "../../i18n/vaal-enchants.json";
 import { addOne, allMods, replaced, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
@@ -76,7 +76,8 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
       return done({ ...item, enchant: { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) } });
     }
     case "fourth": {
-      const max = socketCountFor(item.cls.category);
+      // コラプトで熟練工の上限を 1 つ超えられる (stage-runes.ts の socketCapOf + 1)
+      const max = socketCapOf(item.base, item.cls.category);
       if (!max) return done(item);
       return done({ ...item, sockets: Math.min(max + 1, (item.sockets ?? 0) + 1) });
     }

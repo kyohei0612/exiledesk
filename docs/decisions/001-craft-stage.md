@@ -165,4 +165,12 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
   DPS の層 (素のベース / MOD まで / 全部 を PoB で 3 回)、敵 (PoB の Data/Misc.lua の monsterLifeTable・monsterDamageTable、倍率は Modules/Data.lua、敵のレベルは CalcSetup と同じ)。
   新しい画面: view=ttk (倒すまでの時間 = 敵のライフ ÷ DPS)、view=hit (受けるダメージ = 一撃 × (1 − 耐性))、view=dps (内訳)。
   見送り: view=skill (スキルの札)、view=pool / roll と段の重みの数字 (次のクラフト回まで)
+- **2026-09-29 夜の見直し (オーナー「現行のバージョンでシステム正しいかデータ見ながら。ベースによって挿せるルーンの数、あるルーン、お告げ」)**:
+  - 有る無しの正は相場 (カレンシーランキング、poe2scout の Forbidden Rites、data-cache/market-snapshot-2026-09-29.json)。値段 0 = 今のゲームに無い。
+    お告げ 6 種 (左右の戴冠・左右の錬金・大いなる消去・コラプト) を外した (omens.ts の REMOVED_OMENS、掛けたら打てない)。オーブ・骨・エッセンス・カタリストは全部値段あり
+  - ルーンの表は手元のクライアントから列を足して書き出し直し (data-cache/client-export-stage: SoulCores の Limit / IsSocketBound / CanSocketInCorruptedSanctified、BaseItemTypes の DropLevel)。
+    前は 5 月の RePoE のベース一覧で絞っていてパーフェクト・Ward・Charging のルーンが落ちていた。相場に無い物 (Tempered、Lesser Charging、Legacy 系) は available: false
+  - 普通のルーンはコラプト・聖別の後でもはめられる (CanSocketInCorruptedSanctified、前の「打てない扱い」は誤り)。1 つのアイテムにはめられる数 (Limit) を効かせる
+  - 熟練工の上限はベースごと: PoB の Data/Bases の socketLimit (胴・両手 4 / ほか 3、手で書かれた値) − 2 = 胴・両手 2 / ほか 1。規格外 +1・コラプト +1 の読み (規格外は扱わない)。
+    **クライアントに上限の列は無い** (ItemClasses / BaseItemTypes / ArmourTypes / WeaponTypes に無い) ので、読みが違えばここを直す
 

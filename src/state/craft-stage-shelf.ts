@@ -48,6 +48,7 @@ export const ORBS: ShelfGroup[] = [
   { kind: "rune_lesser", label: "ルーン (レッサー)", keys: runeKeys("lesser") },
   { kind: "rune", label: "ルーン", keys: runeKeys("normal") },
   { kind: "rune_greater", label: "ルーン (グレーター)", keys: runeKeys("greater") },
+  { kind: "rune_perfect", label: "ルーン (パーフェクト)", keys: runeKeys("perfect") },
 ];
 export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**

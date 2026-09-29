@@ -11,7 +11,7 @@ import { fillHashes, jaOfMod } from "../services/htc/mod-text";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
 import { enchantPool } from "../services/craft-stage/apply-vaal";
-import { socketCountFor } from "../services/htc/sockets";
+import { socketCapOf } from "../services/craft-stage/stage-runes";
 import { maxQualityForBase } from "../services/htc/catalysing-setup";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
@@ -97,9 +97,9 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     case "augment":
       return ["**マジック** で MOD が 1 つの時、空いている側に 1 つ足す (マジックはプレ 1 / サフィ 1 まで)", ADD, FLOOR("transmute", s)].filter(Boolean);
     case "regal":
-      return ["**マジック → レア** にして MOD を 1 つ足す (付いている MOD は残る)", ADD, FLOOR("regal", s), "お告げ: 左右の王者 (足す側)"].filter(Boolean);
+      return ["**マジック → レア** にして MOD を 1 つ足す (付いている MOD は残る)", ADD, FLOOR("regal", s)].filter(Boolean);
     case "alchemy":
-      return ["**ノーマル → レア** にして MOD を **4 つ** 付ける", ADD, "お告げ: 左右の錬金術 (その側を上限まで)"];
+      return ["**ノーマル → レア** にして MOD を **4 つ** 付ける", ADD];
     case "exalt":
       return ["**レア** に MOD を 1 つ足す (プレ・サフィ合わせて空きがある時)", ADD, FLOOR("regal", s), "お告げ: 左右の高貴 (足す側) / 偉大なる高貴 (2 つ) / 触媒の高貴 (品質の種類を重く)"].filter(Boolean);
     case "chaos":
@@ -111,14 +111,14 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
         "お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)",
       ].filter(Boolean);
     case "annul":
-      return ["**マジックかレア** の MOD を 1 つ消す (破砕以外から等しく)", "お告げ: 左右の消去 (消す側) / 偉大なる消去 (2 つ) / 光 (冒涜の MOD だけ)"];
+      return ["**マジックかレア** の MOD を 1 つ消す (破砕以外から等しく)", "お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)"];
     case "divine":
       return ["破砕以外の MOD の **数値だけ** を、その段の範囲の中で振り直す (段は変わらない)", "お告げ: 聖別 (0.78〜1.22 倍にして聖別。以後手を加えられない)"];
     case "fracture":
       return ["**レア** で MOD が **4 つ以上**、まだ破砕が無い時", "MOD を 1 つ **固定 (破砕)** する。どれになるかは等しく (未開示の冒涜 MOD は選ばれない)", "破砕した MOD は、カオス・消去・エッセンスでも消えない"];
     case "artificer": {
-      const n = item ? socketCountFor(item.cls.category) : 2;
-      return ["武器・防具に **ソケットを 1 つ** 足す", n ? `このベースは ${n} つまで` : "このベース (アクセサリー・矢筒) には付けられない"];
+      const n = item ? socketCapOf(item.base, item.cls.category) : 1;
+      return ["マーシャル武器・ワンド・スタッフ・防具に **ソケットを 1 つ** 足す", n ? `このベースは ${n} つまで (胴・両手武器 2 / ほか 1。コラプトで +1)` : "このベース (アクセサリー・矢筒・フラスコ) には付けられない"];
     }
     case "vaal": {
       const pool = item ? enchantPool(item).length : 0;
@@ -128,8 +128,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
         "① 変化なし",
         "② MOD を 1〜3 つ、別の新しい MOD に振り直す (破砕は残る)",
         `③ ヴァールのエンチャントを 1 つ付ける${pool ? ` (このベースに付くのは ${pool} 種類から等しく)` : ""}`,
-        "④ 武器・防具はソケット +1 (上限を無視)、アクセサリーは変化なし",
-        "お告げ: コラプト (① を外す)",
+        "④ 武器・防具はソケット +1 (熟練工の上限を 1 つ超えられる)、アクセサリーは変化なし",
       ];
     }
     case "desecrate":

@@ -131,3 +131,30 @@ describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
     expect(propRows(it).find((x) => x.key === "phys")).toMatchObject({ value: `${Math.round(6 * k)}〜${Math.round(9 * k)}`, up: true });
   });
 });
+
+describe("今のゲームの決まり (2026-09-29 見直し、クライアントの表と相場)", () => {
+  it("熟練工の上限はベースごと: 片手武器・兜は 1、胴・両手は 2 (PoB の socketLimit − 2)", async () => {
+    const { socketCapOf } = await import("../src/services/craft-stage/stage-runes");
+    const cap = (b: string) => { const it = freshItem(data, b, 30); return socketCapOf(it.base, it.cls.category); };
+    expect(cap("Hardwood Spear")).toBe(1);
+    expect(cap("Chain Mail")).toBe(2);
+    expect(cap("Crescent Quarterstaff")).toBe(2);
+    expect(cap("Gold Ring")).toBe(0);
+  });
+  it("普通のルーンはコラプトの後でもはめられる (CanSocketInCorruptedSanctified)", () => {
+    const it = { ...A(freshItem(data, "Chain Mail", 30), "artificer").item, corrupted: true };
+    expect(A(it, "rune:Lesser Desert Rune").applied).toBe(true);
+  });
+  it("今のゲームに無いお告げ (王者・錬金・大いなる消去・コラプト) を掛けたら打てない", () => {
+    const magic = A(freshItem(data, "Gold Ring", 82), "transmute").item;
+    const r = applyCurrency(data, magic, "regal", mulberry32(1), ["OmenofSinistralCoronation"]);
+    expect(r).toMatchObject({ applied: false, reason: "今のゲームに無いお告げ" });
+  });
+  it("相場に無いルーン (Tempered) は棚に出さず、打てない", async () => {
+    const { runeKeys } = await import("../src/services/craft-stage/stage-runes");
+    expect(runeKeys().includes("rune:Lesser Tempered Rune")).toBe(false);
+    expect(runeKeys().includes("rune:Perfect Desert Rune")).toBe(true);
+    const s = A(freshItem(data, "Chain Mail", 30), "artificer").item;
+    expect(A(s, "rune:Lesser Tempered Rune").applied).toBe(false);
+  });
+});

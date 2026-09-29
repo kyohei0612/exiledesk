@@ -22,7 +22,7 @@ import { applyOther, OTHER_KINDS } from "./apply-other";
 import { applySanctify, applyVaal } from "./apply-vaal";
 import { applyChance, applyJeweller, applyQuality, applyWisdom, collectShard, isShard, QUALITY_TARGET, SHARD_REASON } from "./apply-act";
 import { isFlask, isGem, uniquesForBase } from "./stage-bases";
-import { OMEN_FOR, UNMODELLED_OMENS } from "./omens";
+import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
@@ -86,8 +86,13 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   if (item.identified === false && currency !== "wisdom") return skip(item, "未鑑定 (先に鑑定の巻物で鑑定する)");
   // コラプト・聖別の後は手を加えられない。腐食のお告げでコラプトした未開示の MOD の開示だけはできる (ゲームと同じ)
   // コラプトしたアイテムにだけ打つ物 (生贄のオーブ・アーキテクト等、apply-extra.ts) と、状態を問わない物 (鏡・抽出) は通す
+ // ルーン (要望 ⑰-1) はコラプト・聖別の後でもはめられる物がある (クライアントの CanSocketInCorruptedSanctified、applyRune で見る)
+  if (isRune(currency)) return applyRune(item, currency);
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, "聖別したアイテムには使えない");
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, "コラプトしたアイテムには使えない");
+  // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)
+  const gone = omens.find((o) => REMOVED_OMENS.includes(o));
+  if (gone) return skip(item, "今のゲームに無いお告げ");
   const used = omensFor(currency, omens);
   const bad = used.find((o) => UNMODELLED_OMENS.includes(o));
   if (bad) return skip(item, "このお告げの効果はまだ入れていない");
@@ -106,8 +111,6 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (currency === "jeweller_lesser" || currency === "jeweller_greater" || currency === "jeweller_perfect") return applyJeweller(item, currency);
   if (currency === "chance") return applyChance(item, rng, uniquesForBase(item.base), hint.outcome);
   if (isExtra(currency)) return applyExtra(item, currency, rng, hint.outcome);
-  // ルーンをソケットにはめる (要望 ⑰-1、stage-runes.ts)。コラプト後にはめられるかは出典が無いので、普通の手と同じく打てない扱い
-  if (isRune(currency)) return applyRune(item, currency);
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? "スキルジェムには使えない" : "フラスコには使えない (このステージでは MOD を扱わない)");
   if (kind === "essence" || kind === "essence_perfect") return applyEssence(data, item, currency, rng, used);

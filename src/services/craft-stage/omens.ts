@@ -6,16 +6,24 @@
  */
 export const OMEN_FOR: Readonly<Record<string, readonly string[]>> = {
   exalt: ["OmenofSinistralExaltation", "OmenofDextralExaltation", "OmenofGreaterExaltation", "OmenofCatalysingExaltation"],
-  regal: ["OmenofSinistralCoronation", "OmenofDextralCoronation"],
-  alchemy: ["OmenofSinistralAlchemy", "OmenofDextralAlchemy"],
   chaos: ["OmenofWhittling", "OmenofSinistralErasure", "OmenofDextralErasure"],
-  annul: ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofGreaterAnnulment", "OmenofLight"],
+  annul: ["OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofLight"],
   essence_perfect: ["OmenofSinistralCrystallisation", "OmenofDextralCrystallisation"],
   desecrate: ["OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenoftheSovereign", "OmenoftheLiege", "OmenoftheBlackblooded", "OmenofPutrefaction"],
   reveal: ["OmenofAbyssalEchoes"],
-  vaal: ["OmenofCorruption"],
   divine: ["OmenofSanctification"],
 };
+/**
+ * 今のゲームに無いお告げ (2026-09-29、Forbidden Rites の相場 poe2scout で値段が 0 = 取引されていない。data-cache/market-snapshot-2026-09-29.json)。
+ * オーナー「錬金術のお告げとかない、王者のお告げやら」。クライアントのデータには説明文付きで残っているので、表から外して打てない扱いにする
+ * (決まり: カレンシーランキングに値段が無い物は使えない)。均質化・リコンビネーションも同じく値段 0 (元から棚に無い)
+ */
+export const REMOVED_OMENS: readonly string[] = [
+  "OmenofSinistralCoronation", "OmenofDextralCoronation",
+  "OmenofSinistralAlchemy", "OmenofDextralAlchemy",
+  "OmenofGreaterAnnulment",
+  "OmenofCorruption",
+];
 /** 棚に出す順 (手の種類ごと) */
 export const OMEN_SHELF: readonly string[] = Object.values(OMEN_FOR).flat();
 /** 効果の規則をまだ入れていない物 (棚には出すが打つと理由を返す)。2026-09-27 にヴァール・腐食・聖別を入れて空 */

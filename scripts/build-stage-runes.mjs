@@ -1,48 +1,49 @@
 #!/usr/bin/env node
 /**
- * build-stage-runes.mjs — クラフトステージのルーン (オーグメント) の表 (2026-09-29、POE2Tube 要望 ⑰-1)
+ * build-stage-runes.mjs — クラフトステージのルーン (オーグメント) とソケットの上限の表 (2026-09-29、POE2Tube 要望 ⑰-1)
  *
- *   node scripts/build-stage-runes.mjs      (手元のクライアントの書き出しだけ読む。通信しない)
+ *   (cd data-cache/client-export-stage && npx pathofexile-dat)                 … 手元のクライアントから表を書き出す (通信しない)
+ *   node scripts/build-stage-runes.mjs [--market market.json]
  *
- * 元: data-cache/client-export-currency/tables/{English,Japanese}/ (SoulCores / SoulCoreStats / SoulCoreStatCategories / BaseItemTypes / Stats)、
- *     文面は data-cache/client-export/files/…stat_descriptions.csd (build-currency-effects-from-client.mjs と同じ描き方)、
- *     絵のパスは data-cache/client-export-art (BaseItemTypes → ItemVisualIdentity.DDSFile)、ドロップレベルは data-cache/base_items.json。
- * 出力: src/services/craft-stage/stage-runes.json
- *   { runes: { "<英語名>": { ja, kind: rune|soulcore|talisman, tier: lesser|normal|greater|perfect|null, level, drop, dds,
- *                           effects: [{ cat, catJa, stats: [{ id, value }], ja, en }] } } }
- * cat は SoulCoreStatCategories.Id (Martial Weapon / Armour / Wand or Staff …)。どの部位に効くかは stage-runes.ts の CAT_TO_CLASSES。
- * 「一度ソケットすると取り外せないが、他のオーグメントで置き換えられる」はクライアントの ClientStrings (ItemDescriptionSoulCore)。
+ * 元 (オーナー 2026-09-29「現行のバージョンでシステム正しいかデータ見ながら」):
+ *   - data-cache/client-export-stage/tables/{English,Japanese}/ : SoulCores (RequiredLevel / Limit / IsSocketBound / CanSocketInCorruptedSanctified)、
+ *     SoulCoreStats (部位ごとの stat と値)、SoulCoreStatCategories、BaseItemTypes (名前・DropLevel)、Stats
+ *   - 文面は stat_descriptions.csd (build-currency-effects-from-client.mjs と同じ描き方)、絵のパスは data-cache/client-export-art
+ *   - 今のゲームに有るか: --market (アプリの相場 poe2scout の書き出し [{t, c, p}]) で値段が 0 より大きい物だけ available
+ *     (決まり: カレンシーランキングに値段が無い物は使えない。クライアントには Tempered のルーンなど相場に無い物も残っている)
+ *   - ソケットの上限: vendor の PoB の Data/Bases/*.lua の socketLimit (ベースごと。胴・両手武器 4 / ほか 3)。
+ *     熟練工で付けられるのは socketLimit − 2 (胴・両手 2 / ほか 1)、規格外のベースは +1、コラプトで +1 の読み (stage-runes.ts)
+ * 出力: src/services/craft-stage/stage-runes.json { runes: { <英語名>: {…} }, socketLimits: { <ベース名>: n } }
  */
-import { readFile, writeFile } from "node:fs/promises";
-import { resolve, dirname } from "node:path";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decodeCsd, parseStatDescriptions, renderDescriptor } from "./parse-stat-descriptions.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CUR = resolve(ROOT, "data-cache/client-export-currency/tables");
+const T = resolve(ROOT, "data-cache/client-export-stage/tables");
 const ART = resolve(ROOT, "data-cache/client-export-art/tables/English");
 const CSD = resolve(ROOT, "data-cache/client-export/files/Data@StatDescriptions@stat_descriptions.csd");
 const OUT = resolve(ROOT, "src/services/craft-stage/stage-runes.json");
+const args = process.argv.slice(2);
+const marketPath = args[args.indexOf("--market") + 1];
 
 const rows = (j) => (Array.isArray(j) ? j : j.rows || Object.values(j));
-const load = async (p) => rows(JSON.parse(await readFile(p, "utf8")));
+const load = (p) => rows(JSON.parse(readFileSync(p, "utf8")));
 const strip = (s) => String(s ?? "").replace(/\[([^|\]]+)\|([^\]]+)\]/g, "$2").replace(/\[([^|\]]+)\]/g, "$1").trim();
 
-const [cores, coreStats, catEn, catJa, stats, bEn, bJa, artB, artV] = await Promise.all([
-  load(`${CUR}/English/SoulCores.json`),
-  load(`${CUR}/English/SoulCoreStats.json`),
-  load(`${CUR}/English/SoulCoreStatCategories.json`),
-  load(`${CUR}/Japanese/SoulCoreStatCategories.json`),
-  load(`${CUR}/English/Stats.json`),
-  load(`${CUR}/English/BaseItemTypes.json`),
-  load(`${CUR}/Japanese/BaseItemTypes.json`),
-  load(`${ART}/BaseItemTypes.json`),
-  load(`${ART}/ItemVisualIdentity.json`),
-]);
-const baseItems = JSON.parse(await readFile(resolve(ROOT, "data-cache/base_items.json"), "utf8"));
-const byId = new Map(Object.entries(baseItems));
-const { byStat } = parseStatDescriptions(decodeCsd(await readFile(CSD)));
+const cores = load(`${T}/English/SoulCores.json`);
+const coreStats = load(`${T}/English/SoulCoreStats.json`);
+const catEn = load(`${T}/English/SoulCoreStatCategories.json`);
+const catJa = load(`${T}/Japanese/SoulCoreStatCategories.json`);
+const stats = load(`${T}/English/Stats.json`);
+const bEn = load(`${T}/English/BaseItemTypes.json`);
+const bJa = load(`${T}/Japanese/BaseItemTypes.json`);
+const artB = load(`${ART}/BaseItemTypes.json`);
+const artV = load(`${ART}/ItemVisualIdentity.json`);
+const { byStat } = parseStatDescriptions(decodeCsd(readFileSync(CSD)));
 const ddsByName = new Map(artB.map((b) => [b.Name, artV[b.ItemVisualIdentity]?.DDSFile ?? null]));
+const market = marketPath && args.includes("--market") ? new Map(JSON.parse(readFileSync(marketPath, "utf8")).map((x) => [x.t, x.p])) : null;
 
 const statRows = new Map();
 for (const r of coreStats) {
@@ -70,13 +71,9 @@ const out = {};
 cores.forEach((c, i) => {
   const b = bEn[c.BaseItemType];
   const name = b?.Name;
-  if (!name) return;
-  const bi = byId.get(b.Id) ?? null;
-  const tags = bi?.tags ?? [];
-  // 未実装の物 (base_items に無い / リリース前) は出さない
-  if (!bi || /DNT|UNUSED/i.test(name)) return;
+  if (!name || /DNT|UNUSED/i.test(name)) return;
   const kind = /Rune/.test(b.Id) ? "rune" : /Talisman|Idol/i.test(b.Id) ? "talisman" : "soulcore";
-  const tier = tags.find((t) => /^rune_(lesser|greater|perfect)$/.test(t))?.replace("rune_", "") ?? (kind === "rune" ? "normal" : null);
+  const tier = kind === "rune" ? (/^(Lesser|Greater|Perfect) /.exec(name)?.[1]?.toLowerCase() ?? "normal") : null;
   const effects = [];
   for (const r of statRows.get(i) ?? []) {
     const ids = (r.Stats ?? []).map((k) => stats[k]?.Id).filter(Boolean);
@@ -95,16 +92,44 @@ cores.forEach((c, i) => {
     });
   }
   if (!effects.length) return;
+  const price = market?.get(name);
   out[name] = {
     ja: bJa[c.BaseItemType]?.Name ?? name,
     kind,
     tier,
     level: Number(c.RequiredLevel) || 0,
-    drop: bi.drop_level ?? null,
+    drop: Number(b.DropLevel) || null,
+    /** 1 つのアイテムにはめられる数 (無ければ制限なし) */
+    limit: c.Limit || null,
+    /** 外せない (クライアントの IsSocketBound) */
+    bound: !!c.IsSocketBound,
+    /** コラプト・聖別の後でもはめられる (クライアントの CanSocketInCorruptedSanctified) */
+    corruptOk: !!c.CanSocketInCorruptedSanctified,
+    /** 今のゲームに有るか (相場に値段がある)。--market が無ければ null (分からない) */
+    available: market ? price != null && price > 0 : null,
     dds: ddsByName.get(name) ?? null,
     effects,
   };
 });
-await writeFile(OUT, JSON.stringify({ generated: new Date().toISOString().slice(0, 10), source: "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)", runes: out }, null, 1) + "\n");
+
+// ---- ソケットの上限 (PoB の Data/Bases/*.lua の socketLimit) ----
+const bases = resolve(ROOT, "vendor/PathOfBuilding-PoE2/src/Data/Bases");
+const socketLimits = {};
+for (const f of readdirSync(bases).filter((x) => x.endsWith(".lua"))) {
+  const t = readFileSync(join(bases, f), "utf8");
+  for (const m of t.matchAll(/itemBases\["([^"]+)"\] = \{([\s\S]*?)\n\}/g)) {
+    const lim = /socketLimit = (\d+)/.exec(m[2]);
+    if (lim) socketLimits[m[1]] = Number(lim[1]);
+  }
+}
+
+writeFileSync(OUT, JSON.stringify({
+  generated: new Date().toISOString().slice(0, 10),
+  source: "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)、有る無しは相場 (poe2scout) の値段、ソケットの上限は PoB の Data/Bases の socketLimit",
+  runes: out,
+  socketLimits,
+}, null, 1) + "\n");
 const n = Object.values(out);
-console.log(`[build-stage-runes] ${n.length} 件 (rune ${n.filter((x) => x.kind === "rune").length} / soulcore ${n.filter((x) => x.kind === "soulcore").length} / talisman ${n.filter((x) => x.kind === "talisman").length}) -> ${OUT}`);
+const avail = n.filter((x) => x.available);
+console.log(`[build-stage-runes] ${n.length} 件 (rune ${n.filter((x) => x.kind === "rune").length} / soulcore ${n.filter((x) => x.kind === "soulcore").length} / talisman ${n.filter((x) => x.kind === "talisman").length})、今のゲームに有る ${market ? avail.length : "?"}、ソケットの上限 ${Object.keys(socketLimits).length} ベース -> ${OUT}`);
+if (market) console.log("  相場に無いルーン:", n.filter((x) => x.kind === "rune" && !x.available).map((x) => Object.keys(out).find((k) => out[k] === x)).join(", "));
