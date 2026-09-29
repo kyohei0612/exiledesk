@@ -5,7 +5,7 @@
  */
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import type { AggregatedAscendancy } from "../../../services/craft-v2/types";
-import { startCraftDiscoveryV2 } from "../../../services/craft-v2/runner";
+import { startCraftDiscoveryV2, TOP_ASCENDANCIES } from "../../../services/craft-v2/runner";
 import { craftV2Store, formatDateTime, formatHms, pushWarn } from "../store";
 import {
   mergeAscendancy,
@@ -76,7 +76,7 @@ export async function runFetch(useCache: boolean, opts?: { background?: boolean;
   }
 
   const un = await startCraftDiscoveryV2({
-    topNAscendancies: 10,
+    topNAscendancies: TOP_ASCENDANCIES,
     topNPerAscendancy: 50,
     useCache,
     leagueUrl: craftV2Store.selectedLeagueUrl || undefined,

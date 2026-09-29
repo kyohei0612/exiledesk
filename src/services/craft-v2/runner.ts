@@ -28,6 +28,9 @@ import { loadCraftV2Cache, saveCraftV2Cache } from "./cache";
 import { aggregateFromCache, aggregateFromProgress } from "./finalize";
 import { GEM_INFO } from "./finalize/gems";
 
+/** 取る・出すアセンダンシーの数 (使用率の上位)。2026-09-29 オーナー「上位 7 種類に」(前は 10)。数はここだけ */
+export const TOP_ASCENDANCIES = 7;
+
 /**
  * 起動時 / 設定 UI から呼ばれ、poe.ninja の現リーグ一覧を返す。
  * 失敗時は空配列ではなく Error throw (UI 側でフォールバック)。
@@ -50,7 +53,7 @@ export async function startCraftDiscoveryV2(
   }
 
   const {
-    topNAscendancies = 10,
+    topNAscendancies = TOP_ASCENDANCIES,
     topNPerAscendancy = 50,
     onProgress,
     onError,

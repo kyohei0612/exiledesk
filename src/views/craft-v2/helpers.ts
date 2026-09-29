@@ -4,6 +4,7 @@
  * CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
  */
 import type { SlotKey } from "../../services/craft-v2/types";
+import { TOP_ASCENDANCIES } from "../../services/craft-v2/runner";
 import type { WarnLevel, WarnSource } from "../../state/craft-v2-store";
 
 export interface SlotTab {
@@ -35,7 +36,7 @@ export const SLOT_TABS: readonly SlotTab[] = [
 export const lowThresholdFor = (sampleSize: number): number => Math.max(2, Math.floor(sampleSize * 0.1) + 1);
 
 /** 進捗率の分母 (想定アセンダンシー数) */
-export const TARGET_ASCENDANCY_COUNT = 10;
+export const TARGET_ASCENDANCY_COUNT = TOP_ASCENDANCIES;
 
 /** POE2 装備は prefix/suffix 各 3 枠まで (4 つ目のチェックは物理的にあり得ない) */
 export const MAX_AFFIX_PER_ITEM = 3;

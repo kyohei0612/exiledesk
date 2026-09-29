@@ -53,8 +53,9 @@ export function useCraftV2Derived() {
   );
 
   /** 使用率降順 (Rust 側も降順 emit するが並列受信時のブレを防ぐため UI 側でも明示 sort) */
+  // 2026-09-29: 上位 TARGET_ASCENDANCY_COUNT (7) だけ出す (前の 10 で取ったキャッシュの 8〜10 位は隠す)
   const sortedAscendancies = computed(() =>
-    [...ascendancies.value].sort((a, b) => b.usagePercent - a.usagePercent),
+    [...ascendancies.value].sort((a, b) => b.usagePercent - a.usagePercent).slice(0, TARGET_ASCENDANCY_COUNT),
   );
 
   const activeSlotMods = computed<SlotMods>(() => {
@@ -138,7 +139,7 @@ export function useCraftV2Derived() {
   /** 取得済 = fetchProgress が完了したアセンダンシー数 (未取得は含めない) */
   const completedAscendancyCount = computed<number>(() => {
     let c = 0;
-    for (const a of ascendancies.value) {
+    for (const a of sortedAscendancies.value) {
       const fp = a.fetchProgress;
       if (!fp || fp.total <= 0 || fp.done >= fp.total) c += 1;
     }
@@ -149,7 +150,7 @@ export function useCraftV2Derived() {
   /** 全体プログレスバー (0-100)。キャラ取得中も少しずつ伸びる。 */
   const overallProgressPercent = computed<number>(() => {
     let acc = 0;
-    for (const a of ascendancies.value) {
+    for (const a of sortedAscendancies.value) {
       const fp = a.fetchProgress;
       if (!fp || fp.total <= 0) {
         acc += 1;

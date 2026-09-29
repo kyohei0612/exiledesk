@@ -8,6 +8,7 @@
 import RefreshButton from "../RefreshButton.vue";
 import { computed } from "vue";
 import { craftV2Store, refetchWithSelectedLeague } from "../../state/craft-v2-store";
+import { TOP_ASCENDANCIES } from "../../services/craft-v2/runner";
 import { resumeAtText, waitText } from "../../utils/wait-text";
 
 defineProps<{
@@ -29,7 +30,7 @@ const waiting = computed(
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">
         上位プレイヤーMOD一覧
         <span class="text-[var(--exile-color-text-secondary)] text-sm"
-          >(poe.ninja 連携 / 上位 10 アセンダンシー × DPS 上位 3 スキル × 10 人)</span
+          >(poe.ninja 連携 / 上位 {{ TOP_ASCENDANCIES }} アセンダンシー × DPS 上位 3 スキル × 10 人)</span
         >
       </h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
