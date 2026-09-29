@@ -21,7 +21,7 @@ import { uniqueArt } from "../../services/assets/unique-art";
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null }>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number }>();
 /**
  * スポットライト (POE2Tube 要望 ⑪-2、URL の focus=<MOD の id か系統>): その MOD の行だけ光らせて少し大きく、他は暗く
  */
@@ -89,7 +89,7 @@ const rows = computed(() => [
 <template>
   <div
     class="relative w-[380px] select-none rounded-lg border-2 bg-black/70 shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
-    :style="minH ? { minHeight: `${minH}px` } : undefined"
+    :style="{ ...(minH ? { minHeight: `${minH}px` } : {}), ...(width ? { width: `${width}px` } : {}) }"
     :class="[tone.frame, holding ? 'cursor-pointer ring-2 ring-amber-400/70 hover:ring-amber-300' : '', item.destroyed ? 'stage-destroyed' : '']"
     @click="holding && emit('use')"
   >

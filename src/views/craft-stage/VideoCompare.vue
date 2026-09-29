@@ -39,11 +39,13 @@ function withDelta(text: string, d: number): string {
   return used ? out : `${text} ${signed(d)}`;
 }
 /**
- * 並べ方 (2026-09-29 要望 ⑫「3 列を横幅いっぱいに。差の行は特に大きく」): 真ん中の差を主役にして幅 480px・文字 26px
- * (1080p で約 39px)、左右のカードは残りの幅いっぱい (1280 − 余白 24 − 差 480 − 間 24 を 2 枚で割る)
+ * 並べ方 (要望 ⑫「3 列を横幅いっぱいに。差の行は特に大きく」、⑬「左右のアイテムを縦にも大きく。MOD の文字は 1080p で 28px 以上。
+ * 差の列は少し細くしてよい」): 差の列 360px・文字 22px (1080p で約 33px)。左右のカードは残りの幅を 2 枚で分け、CSS の zoom で
+ * ZOOM 倍 (MOD の文字 13px × 1.44 ≒ 19px = 1080p で約 28px)。幅が足りない分は元の幅を狭めて MOD を折り返す
  */
-const DIFF_W = 480;
-const CARD = (1280 - 24 - DIFF_W - 24) / 2 / 380;
+const DIFF_W = 360;
+const COL_W = (1280 - 24 - DIFF_W - 24) / 2;
+const ZOOM = 1.44;
 </script>
 
 <template>
@@ -51,27 +53,27 @@ const CARD = (1280 - 24 - DIFF_W - 24) / 2 / 380;
     <p v-if="!view" class="mt-40 text-center text-2xl opacity-60">データを読んでいます…</p>
     <p v-else-if="'error' in view" class="mt-40 text-center text-2xl text-rose-300">{{ view.error }}</p>
     <div v-else class="flex h-full items-start justify-center gap-3">
-      <div class="shrink-0" :style="{ width: `${380 * CARD}px` }">
+      <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">A (今の装備)</p>
-        <div :style="{ transform: `scale(${CARD})`, transformOrigin: '0 0' }">
-          <StageItemCard :item="view.a" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact />
+        <div :style="{ zoom: ZOOM }">
+          <StageItemCard :item="view.a" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact :width="COL_W / ZOOM" />
         </div>
       </div>
       <!-- 違い (B − A) -->
       <div class="shrink-0 space-y-1.5 rounded-2xl border border-white/15 bg-black/70 p-3" :style="{ width: `${DIFF_W}px` }">
-        <p class="text-center text-[28px] font-bold text-amber-100">入れ替えると</p>
+        <p class="text-center text-[24px] font-bold text-amber-100">入れ替えると</p>
         <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
         <p
           v-for="(d, i) in view.diff.slice(0, 10)"
           :key="i"
-          class="truncate rounded-lg px-3 py-1 text-[26px] font-bold leading-snug"
+          class="truncate rounded-lg px-2.5 py-1 text-[22px] font-bold leading-snug"
           :class="d.delta > 0 ? 'bg-emerald-500/15 text-emerald-200' : d.delta < 0 ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-white/50'"
         >{{ withDelta(d.text, d.delta) }}</p>
       </div>
-      <div class="shrink-0" :style="{ width: `${380 * CARD}px` }">
+      <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>
-        <div :style="{ transform: `scale(${CARD})`, transformOrigin: '0 0' }">
-          <StageItemCard :item="view.b" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact />
+        <div :style="{ zoom: ZOOM }">
+          <StageItemCard :item="view.b" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact :width="COL_W / ZOOM" />
         </div>
       </div>
     </div>
