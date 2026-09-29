@@ -101,7 +101,10 @@ def run_resists(brief: Brief, key: str, spec: ResistsSpec) -> Path:
     work = ROOT / "output" / "work" / brief.name
     work.mkdir(parents=True, exist_ok=True)
     spec_path = work / f"resists_{key}.json"
-    body = {"pob": {"class": spec.class_, "level": spec.level}, "items": items}
+    pob: dict[str, object] = {"class": spec.class_, "level": spec.level}
+    if spec.quests_act is not None:
+        pob["quests_act"] = spec.quests_act
+    body = {"pob": pob, "items": items}
     spec_path.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding="utf-8")
     out = ROOT / "data" / "results" / f"{brief.name}__resists_{key}.json"
     stdout = _node(["--resists", str(spec_path), str(out)])

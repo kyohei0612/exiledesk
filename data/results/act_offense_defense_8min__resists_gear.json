@@ -24,8 +24,8 @@
       "label": "アクト 1 (0%)",
       "resists": {
         "fire": {
-          "value": 10,
-          "total": 10
+          "value": 0,
+          "total": 0
         },
         "cold": {
           "value": 45,
@@ -39,6 +39,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": 0,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": 0,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -46,8 +68,8 @@
       "label": "アクト 2 (-10%)",
       "resists": {
         "fire": {
-          "value": 0,
-          "total": 0
+          "value": -10,
+          "total": -10
         },
         "cold": {
           "value": 35,
@@ -61,6 +83,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -10,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -10,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -10,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -68,8 +112,8 @@
       "label": "アクト 3 (-20%)",
       "resists": {
         "fire": {
-          "value": -10,
-          "total": -10
+          "value": -20,
+          "total": -20
         },
         "cold": {
           "value": 25,
@@ -83,6 +127,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -20,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -20,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -20,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -90,8 +156,8 @@
       "label": "アクト 4 (-30%)",
       "resists": {
         "fire": {
-          "value": -20,
-          "total": -20
+          "value": -30,
+          "total": -30
         },
         "cold": {
           "value": 15,
@@ -105,6 +171,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -30,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -30,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -30,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -112,8 +200,8 @@
       "label": "アクト 5 (-40%)",
       "resists": {
         "fire": {
-          "value": -30,
-          "total": -30
+          "value": -40,
+          "total": -40
         },
         "cold": {
           "value": 5,
@@ -127,6 +215,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -40,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -40,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -40,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -134,8 +244,8 @@
       "label": "アクト 6 (-50%)",
       "resists": {
         "fire": {
-          "value": -40,
-          "total": -40
+          "value": -50,
+          "total": -50
         },
         "cold": {
           "value": -5,
@@ -149,6 +259,28 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -50,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -50,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -50,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     },
     {
@@ -156,8 +288,8 @@
       "label": "エンドゲーム (-60%)",
       "resists": {
         "fire": {
-          "value": -50,
-          "total": -50
+          "value": -60,
+          "total": -60
         },
         "cold": {
           "value": -15,
@@ -171,8 +303,99 @@
           "value": 0,
           "total": 0
         }
+      },
+      "parts": {
+        "fire": {
+          "base": -60,
+          "quests": 0,
+          "equip": 0
+        },
+        "cold": {
+          "base": -60,
+          "quests": 10,
+          "equip": 35
+        },
+        "lightning": {
+          "base": -60,
+          "quests": 10,
+          "equip": 0
+        },
+        "chaos": {
+          "base": 0,
+          "quests": 0,
+          "equip": 0
+        }
       }
     }
   ],
-  "unparsed": []
+  "unparsed": [],
+  "character": {
+    "class": "Monk",
+    "level": 32
+  },
+  "config": {
+    "enemyIsBoss": "None",
+    "questAct 3Azak BogIgnagduk": false,
+    "questAct 3Jiquani's MachinariumBlackjaw": false,
+    "questAct 4Eye of HinekoraSilent Hall": false,
+    "questInterlude 2Khari CrossingMolten Shrine": false,
+    "questInterlude 3Kriar VillageLythara": false
+  },
+  "config_ja": "普通の敵・アクト 2 までのクエストの報酬",
+  "quests": [
+    {
+      "act": 1,
+      "area": "Clearfell",
+      "stat": "+10% to Cold Resistance",
+      "on": true
+    },
+    {
+      "act": 1,
+      "area": "Freythorn",
+      "stat": "+30 to Spirit",
+      "on": true
+    },
+    {
+      "act": 1,
+      "area": "Ogham Manor",
+      "stat": "+20 to maximum Life",
+      "on": true
+    },
+    {
+      "act": 2,
+      "area": "Spires of Deshar",
+      "stat": "+10% to Lightning Resistance",
+      "on": true
+    },
+    {
+      "act": 3,
+      "area": "Azak Bog",
+      "stat": "+30 to Spirit",
+      "on": false
+    },
+    {
+      "act": 3,
+      "area": "Jiquani's Machinarium",
+      "stat": "+10% to Fire Resistance",
+      "on": false
+    },
+    {
+      "act": 4,
+      "area": "Eye of Hinekora",
+      "stat": "5% increased Maximum Mana",
+      "on": false
+    },
+    {
+      "act": 5,
+      "area": "Khari Crossing",
+      "stat": "5% increased maximum Life",
+      "on": false
+    },
+    {
+      "act": 5,
+      "area": "Kriar Village",
+      "stat": "+40 to Spirit",
+      "on": false
+    }
+  ]
 }

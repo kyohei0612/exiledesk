@@ -1,10 +1,10 @@
 """サムネ: act_offense_defense_8min (アクト中の火力と防御).
 
-採用 (2026-09-30): このスクリプトの案 3 (武器のカード 2 枚 + 矢印 + 嘆くずんだもん、文字なし) を土台に、
+採用 (2026-09-30): 案 3 (武器のカード 2 枚 + 矢印 + 嘆くずんだもん、文字なし) を土台に、
 kyohei が GiftCut で文字 (「アクトが難しいのだ!!」「アクト中のコツ紹介！」) を入れて仕上げた物
 (Downloads/giftcut_screenshot.png → output/act_offense_defense_8min_thumb.jpg、1280x720)。
 
-案 (kyohei 2026-09-30): 白地の右側に、ずんだもんの顔を大きく。嘆いて叫んでいる表情 (困り眉・><・うわー・
+案 (kyohei 2026-09-30): 白地の右側に、ずんだもんの顔を大きく。嘆いて叫ぶ表情 (困り眉・><・うわー・
 青ざめ・涙・両手を挙げる・萎えた枝豆)。左に「アクト、ムズすぎ！」と、答えの「火力は武器・防御は耐性」。
 文字はずんだもんに被せない。
 
@@ -69,7 +69,7 @@ def fit(im: Image.Image, max_w: int, max_h: int) -> Image.Image:
 
 PUB = get_settings().exiledesk_root / "public"
 ICONS = ROOT / "assets" / "icons"
-# PoE2 の小物 (ゲームのデータから ExileDesk が書き出した絵): (絵, 幅, 高さの上限, 中心 x, 中心 y, 回転)
+# PoE2 の小物 (ExileDesk が書き出したゲームの絵): (絵, 幅, 高さの上限, 中心 x, 中心 y, 回転)
 PROPS = [
     (ICONS / "transmute.png", 90, 90, 90, 660, -10),
     (ICONS / "augment.png", 90, 90, 200, 665, 8),
@@ -96,12 +96,16 @@ def shadowed(im: Image.Image, blur: int = 6, alpha: int = 110) -> Image.Image:
 
 
 def put(canvas: Image.Image, path: Path, w: int, h: int, cx: int, cy: int, rot: float) -> None:
-    im = fit(Image.open(path).convert("RGBA"), w, h).rotate(rot, expand=True, resample=Image.BICUBIC)
+    im = fit(Image.open(path).convert("RGBA"), w, h).rotate(
+        rot, expand=True, resample=Image.BICUBIC
+    )
     im = shadowed(im)
     canvas.alpha_composite(im, (cx - im.width // 2, cy - im.height // 2))
 
 
-COMPARE = ROOT / "cache" / "stage" / "views" / "76007dcb2b975efb.png"  # 比べる (ずんだもん / おすすめ)
+COMPARE = (
+    ROOT / "cache" / "stage" / "views" / "76007dcb2b975efb.png"
+)  # 比べる (ずんだもん / おすすめ)
 
 
 def base_canvas(variant: str) -> Image.Image:
@@ -129,10 +133,18 @@ def main() -> None:
         bust = bust.resize((int(bust.width * 980 / bust.height), 980), Image.Resampling.LANCZOS)
         canvas.alpha_composite(bust, (W - int(bust.width * 0.61), -60))
         small = variant == "2"  # 札を置く分だけ文字を詰める
-        top = fit(render_telop("textstyle032", "アクト、", 1.5), TEXT_RIGHT - 40, 118 if small else 150)
-        main_w = fit(render_telop("textstyle025", "ムズすぎ！", 2.2), TEXT_RIGHT - 30, 205 if small else 250)
-        sub1 = fit(render_telop("textstyle010", "火力は武器", 1.3), TEXT_RIGHT - 60, 92 if small else 120)
-        sub2 = fit(render_telop("textstyle100", "防御は耐性", 1.3), TEXT_RIGHT - 60, 92 if small else 120)
+        top = fit(
+            render_telop("textstyle032", "アクト、", 1.5), TEXT_RIGHT - 40, 118 if small else 150
+        )
+        main_w = fit(
+            render_telop("textstyle025", "ムズすぎ！", 2.2), TEXT_RIGHT - 30, 205 if small else 250
+        )
+        sub1 = fit(
+            render_telop("textstyle010", "火力は武器", 1.3), TEXT_RIGHT - 60, 92 if small else 120
+        )
+        sub2 = fit(
+            render_telop("textstyle100", "防御は耐性", 1.3), TEXT_RIGHT - 60, 92 if small else 120
+        )
         y = 16 if small else 30
         for im, x in ((top, 40), (main_w, 20), (sub1, 60), (sub2, 60)):
             canvas.alpha_composite(im, (x, y))
@@ -159,8 +171,13 @@ def arrow(w: int, h: int) -> Image.Image:
     d = ImageDraw.Draw(im)
     body = h // 3
     pts = [
-        (20, 20 + body), (20 + w * 0.55, 20 + body), (20 + w * 0.55, 20), (20 + w, 20 + h // 2),
-        (20 + w * 0.55, 20 + h), (20 + w * 0.55, 20 + h - body), (20, 20 + h - body),
+        (20, 20 + body),
+        (20 + w * 0.55, 20 + body),
+        (20 + w * 0.55, 20),
+        (20 + w, 20 + h // 2),
+        (20 + w * 0.55, 20 + h),
+        (20 + w * 0.55, 20 + h - body),
+        (20, 20 + h - body),
     ]
     d.polygon(pts, fill=(255, 255, 255, 255))
     inner = Image.new("RGBA", im.size, (0, 0, 0, 0))
