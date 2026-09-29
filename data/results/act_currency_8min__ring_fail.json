@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-09-28T12:25:01.750Z",
-  "exiledesk_version": "0.1.316",
+  "generated_at": "2026-09-29T06:35:57.554Z",
+  "exiledesk_version": "0.1.328",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -34,7 +34,7 @@
       "omen_ja": null,
       "seed": 20261104,
       "applied": false,
-      "reason": "物理武器にだけ使える",
+      "reason": "マーシャル武器にだけ使える",
       "before": {
         "name": "サファイアの指輪",
         "base": "Sapphire Ring",

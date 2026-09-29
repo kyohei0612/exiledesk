@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     )
 
     exiledesk_root: Path = Field(
-        default=Path.home() / "ExileDesk",
-        description="ExileDesk のリポジトリ。公式日本語名 (price-keys.json 等) の出どころ",
+        default=Path.home() / "ExileDesk-stage",
+        description=(
+            "撮影・実演・名前に使う ExileDesk。既定はリリースの印で固定した別フォルダ (ADR 006、"
+            "scripts/update_exiledesk.py で進める)。開発版を試す時は .env で ~/ExileDesk に"
+        ),
     )
     youtube_pipeline_root: Path = Field(default=Path.home() / "youtube-pipeline")
     giftcut_root: Path = Field(
@@ -26,8 +29,8 @@ class Settings(BaseSettings):
     )
     voicevox_url: str = "http://127.0.0.1:50021"
     exiledesk_dev_url: str = Field(
-        default="http://localhost:1420",
-        description="ExileDesk の Vite dev (クラフトステージ撮影用)",
+        default="http://localhost:1430",
+        description="撮影で開く ExileDesk (固定版は 1430、開発版を試す時は 1420)",
     )
     stage_capture: bool = Field(
         default=True, description="stage シーンを ExileDesk の実画面で撮る (False なら図解で代用)"

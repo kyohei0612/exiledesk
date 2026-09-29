@@ -59,6 +59,7 @@ python scripts/publish_video.py <name> --execute  # チョコバナナに「非�
 
 ## 関連リポジトリ
 
+- `C:\Users\kyohei\ExileDesk-stage` — **撮影・実演・名前はここ (ExileDesk のリリースの印で固定、Vite 1430、ADR 006)**。新しいリリースを使う時は `python scripts/update_exiledesk.py` → CAPTURE_VER を上げる
 - `C:\Users\kyohei\ExileDesk` — クラフトステージ (`docs/decisions/001-craft-stage.md`、`scripts/craft-stage-run.mjs`)。仕様変更は両方の ADR を同時に更新
 - `C:\Users\kyohei\youtube-pipeline` — BGM / SE 素材の流用元。朝 5:00 のニュース本番と Claude CLI の使用枠を食い合わないよう、重い生成は昼〜夜に
 

@@ -1,6 +1,6 @@
 """クラフトステージの撮影: ExileDesk の動画モード (video=1) を Playwright で開いて PNG にする.
 
-- Vite dev (port 1420) が動いていなければ `pnpm dev` を隠し窓で起動する
+- 撮影用の ExileDesk (リリースで固定、Vite 1430、ADR 006) が動いていなければ隠し窓で起動する
 - 1920x1080 で開けば動画と同じ解像度なので、縮めず貼れる (サイドバー・操作欄は動画モードが隠す)
 - キャッシュ: cache/stage/<手順のハッシュ>/step_N.png。同じ手順 JSON なら撮り直さない
 """
@@ -30,7 +30,7 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 # ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
 # 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
 VIEWPORT = (1920, 1080)
-CAPTURE_VER = "v14-fix"  # 撮り方を変えたらキャッシュを切替 (v14 = 版ずれ直し後の撮り直し)
+CAPTURE_VER = "v15-pin"  # 撮り方を変えたらキャッシュを切替 (v15 = リリース固定版を撮る)
 # アイテム枠が描けたら撮る。v0.1.314 の撮影用は英語ベース名を出さないので「アイテムレベル」を待つ
 READY_SELECTOR = "text=/アイテムレベル|スキルジェム/"  # ジェムにはアイテムレベルが無い
 # 動画モードは普通の画面の上に重ねて出る (fixed inset-0)。真ん中の一番手前がそれでなければ
@@ -80,15 +80,16 @@ def ensure_vite(wait_seconds: int = 60) -> str:
     base = s.exiledesk_dev_url.rstrip("/")
     host, port = (
         urllib.parse.urlparse(base).hostname or "localhost",
-        urllib.parse.urlparse(base).port or 1420,
+        urllib.parse.urlparse(base).port or 1430,
     )
     if port_open(host, port):
         return base
     pnpm = shutil.which("pnpm")
     if not pnpm:
         raise FileNotFoundError("pnpm が PATH に無い (ExileDesk の Vite dev を起動できない)")
+    # 固定版 (1430) は ExileDesk の開発版 (1420) と並べて動かすので、ポートを指定して起動する
     subprocess.Popen(
-        [pnpm, "dev"],
+        [pnpm, "exec", "vite", "--port", str(port), "--strictPort"],
         cwd=s.exiledesk_root,
         creationflags=CREATE_NO_WINDOW,
         stdout=subprocess.DEVNULL,

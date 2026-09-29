@@ -45,8 +45,13 @@ def test_capture_plan_uses_cache_without_browser(
 
 
 def test_real_capture_when_vite_is_running(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    if not stage.port_open("localhost", 1420):
-        pytest.skip("ExileDesk の Vite dev が動いていない")
+    import urllib.parse
+
+    from poe2tube.config.settings import get_settings
+
+    port = urllib.parse.urlparse(get_settings().exiledesk_dev_url).port or 1430
+    if not stage.port_open("localhost", port):
+        pytest.skip("撮影用の ExileDesk (Vite) が動いていない")
     monkeypatch.setattr(stage, "CACHE_DIR", tmp_path)
     paths = stage.capture_plan(_plan(), [1])
     from PIL import Image
