@@ -5,8 +5,9 @@
  *   cardOfState(c, state)  … 作り方の STEP の時の形 (シミュレーターの状態。外れ・触らない・ブリーチの MOD も)
  * MOD の見出しはゲームの詳細表示に合わせる: 『プレフィックス MOD "Sagacious" (T2) — マナ, キャスター』
  */
+import { tagJa } from "../../services/mods/tag-ja";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
-import { CATALYSTS } from "../../services/htc/quality";
+import { qualityLabelOf } from "../../services/htc/quality";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
 import type { SimState } from "../../services/htc/sim-route";
 import { zeroStart } from "./craft-settings";
@@ -36,27 +37,12 @@ export interface CardData {
   socketEffects: string[];
 }
 
-/** MOD のタグの日本語。クライアント由来の辞書の言い回しに合わせる (元素 496 件 vs エレメント 6 件、アタック 1224 vs 攻撃 45。2026-09-26 オーナー「タグの日本語訳をチェック」) */
-const TAG_JA: Record<string, string> = {
-  mana: "マナ", life: "ライフ", caster: "キャスター", attack: "アタック", speed: "スピード", elemental: "元素",
-  fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌", physical: "物理", resistance: "耐性", defences: "防御",
-  armour: "アーマー", evasion: "回避", energy_shield: "エナジーシールド", minion: "ミニオン", critical: "クリティカル",
-  damage: "ダメージ", attribute: "属性", resource: "リソース", gem: "ジェム", curse: "呪い", aura: "オーラ", ailment: "状態異常",
-  bleed: "出血", poison: "毒", block: "ブロック", flask: "フラスコ", charm: "チャーム", drop: "ドロップ",
-  elemental_damage: "元素ダメージ", physical_damage: "物理ダメージ", chaos_damage: "混沌ダメージ", caster_damage: "キャスターダメージ",
-  caster_speed: "キャストスピード", caster_critical: "スペルクリティカル", fire_resistance: "火耐性", cold_resistance: "冷気耐性",
-  lightning_resistance: "雷耐性", elemental_resistance: "元素耐性", chaos_resistance: "混沌耐性", flat_life_regen: "ライフ再生",
-};
 /** 見出しに出す主なタグ (細かい派生タグは省く) */
 const HEAD_TAGS = ["mana", "life", "caster", "attack", "speed", "elemental", "fire", "cold", "lightning", "chaos", "physical", "resistance", "defences", "armour", "evasion", "energy_shield", "minion", "critical", "attribute", "gem", "curse", "aura"];
 
 const SIDE_JA = { P: "プレフィックス", S: "サフィックス" } as const;
 
-/** 品質の表記 (『品質 (マナモッド)』)。種類が無ければ『品質』 */
-export function qualityLabelOf(tag: string | null | undefined): string {
-  const k = tag ? CATALYSTS.find((x) => x.tag === tag) : undefined;
-  return k?.label?.ja ?? "品質";
-}
+export { qualityLabelOf };
 
 /** MOD の見出し: 側 + 段の名前 + T + 主なタグ */
 function headOf(c: ReturnType<typeof useHtcCraft>, modId: string, tierIndex: number | undefined, side: "P" | "S" | null): string | undefined {
@@ -65,7 +51,7 @@ function headOf(c: ReturnType<typeof useHtcCraft>, modId: string, tierIndex: num
   const tiers = m.tiers ?? [];
   const i = tierIndex ?? (c.targets.value.find((t) => t.modId === modId)?.minTierIndex ?? 0);
   const tier = tiers[i];
-  const tags = (m.tags ?? []).filter((t) => HEAD_TAGS.includes(t)).map((t) => TAG_JA[t] ?? t);
+  const tags = (m.tags ?? []).filter((t) => HEAD_TAGS.includes(t)).map(tagJa);
   // オーナー 2026-09-26:「詳細の中身はプレフィックス T● — その MOD に付いているタグ。無ければ表示なし」
   void tier;
   const parts = [side ? SIDE_JA[side] : "MOD", tiers.length ? `T${tiers.length - i}` : ""].filter(Boolean).join(" ");

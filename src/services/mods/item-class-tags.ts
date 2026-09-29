@@ -21,7 +21,8 @@ const ONE_HAND = ["weapon", "one_hand_weapon"];
 const TWO_HAND = ["weapon", "two_hand_weapon"];
 
 const armourSets = (slotTag: string) => ARMOUR_SUBTYPES.map((sub) => [slotTag, "armour", sub]);
-const shieldSets = () => SHIELD_SUBTYPES.map((sub) => ["shield", sub]);
+/** 盾はクライアントのベースに str_armour と str_shield の両方が付いている (Crucible Tower Shield / Oak Buckler 2026-09-29 確認) */
+const shieldSets = () => SHIELD_SUBTYPES.map((sub) => ["shield", "armour", sub.replace("_shield", "_armour"), sub]);
 
 /** 装備種別 → タグ集合の一覧 (1 種別が複数集合を持つのは防具 / 盾のサブタイプ) */
 const CLASS_TAG_SETS: Record<string, string[][]> = {
@@ -35,7 +36,7 @@ const CLASS_TAG_SETS: Record<string, string[][]> = {
   Boots: armourSets("boots"),
   Shield: shieldSets(),
   Buckler: shieldSets(),
-  Focus: [["focus"]],
+  Focus: [["focus", "armour", "int_armour"]],
   Quiver: [["quiver"]],
   Bow: [["bow", "ranged", ...TWO_HAND]],
   Crossbow: [["crossbow", "ranged", ...TWO_HAND]],
@@ -109,6 +110,30 @@ function setsOfBase(nameEn: string, cls: string | undefined): string[][] | null 
   if (s) return [["shield", `${s[1]}_shield`]];
   return cls ? (CLASS_TAG_SETS[cls] ?? null) : null;
 }
+/**
+ * 計算機のエンジンの種類 (category) → GGG の ItemClasses.Id。種類 → タグの表は上の CLASS_TAG_SETS だけ
+ * (2026-09-29 統一: クラフトステージのヴァールの付加が別の表を持っていて、弓・クロスボウの ranged が抜けていた)
+ */
+const ENGINE_CLASS: Record<string, string> = {
+  Rings: "Ring", Amulets: "Amulet", Belts: "Belt", Quivers: "Quiver", Talismans: "Talisman",
+  Helmets: "Helmet", Gloves: "Gloves", Boots: "Boots", Body_Armours: "Body Armour",
+  Shields: "Shield", Bucklers: "Buckler", Foci: "Focus",
+  Bows: "Bow", Crossbows: "Crossbow", Wands: "Wand", Sceptres: "Sceptre", Staves: "Staff", Quarterstaves: "Warstaff",
+  Spears: "Spear", OneHand_Maces: "One Hand Mace", TwoHand_Maces: "Two Hand Mace",
+};
+/** バックラーの行は属性が付かない (全部 DEX) */
+const ROW_ATTR_DEFAULT: Record<string, string> = { Bucklers: "dex", Foci: "int" };
+/**
+ * エンジンの行 1 つのタグ (1 集合)。防具・盾は行の属性で絞る (Gloves_str → gloves / armour / str_armour)
+ */
+export function tagsOfEngineRow(category: string, rowId: string): Set<string> {
+  const sets = CLASS_TAG_SETS[ENGINE_CLASS[category] ?? ""] ?? [];
+  if (sets.length <= 1) return new Set(sets[0] ?? []);
+  const attr = /_((?:str|dex|int)(?:_(?:str|dex|int))*)$/.exec(rowId)?.[1] ?? ROW_ATTR_DEFAULT[category];
+  const hit = attr ? sets.find((s) => s.includes(`${attr}_armour`)) : undefined;
+  return new Set(hit ?? sets.flat());
+}
+
 /** スロットで実際に使われていたベースに絞る (防具・盾は属性まで)。1 つも引けなければスロット既定 */
 export function tagSetsForSlotWithBases(slot: SlotKey, bases: Array<{ nameEn: string; cls: string | undefined }>): string[][] {
   const seen = new Set<string>();

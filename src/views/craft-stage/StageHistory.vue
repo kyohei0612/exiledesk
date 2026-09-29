@@ -9,7 +9,7 @@ import { craftStage, iconOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
-const RARITY_CLS = { normal: "text-[#c8c8c8]", magic: "text-[#8888ff]", rare: "text-[#e8d77a]", unique: "text-[#af6025]" } as const;
+const RARITY_CLS = { normal: "text-rarity-normal", magic: "text-rarity-magic", rare: "text-rarity-rare", unique: "text-rarity-unique" } as const;
 const money = (ex: number) => displayCurrency.money(ex);
 </script>
 

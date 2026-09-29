@@ -39,7 +39,7 @@ function pick(i: number): void {
         class="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-left hover:border-rose-300/60 hover:bg-rose-500/10"
         @click="pick(i)"
       >
-        <span class="text-[#e0a0a0]">{{ m.textJa }}</span>
+        <span class="text-mod-desecrated">{{ m.textJa }}</span>
         <span class="shrink-0 text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>
       </button>
     </div>

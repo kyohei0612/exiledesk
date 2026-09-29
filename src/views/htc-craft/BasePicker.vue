@@ -10,6 +10,7 @@
 import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
+import { classJa } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import SocketPicker from "./SocketPicker.vue";
 import ModPickColumn from "./ModPickColumn.vue";
@@ -33,14 +34,7 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: "preset", id: string): void; (e: "run"): void }>();
 const pk = props.pk;
 
-/** 種類の日本語 (ゲームのアイテムクラス名) */
-const CLS_JA: Record<string, string> = {
-  Rings: "指輪", Amulets: "アミュレット", Belts: "ベルト", Helmets: "兜", Gloves: "手袋", Boots: "靴", Body_Armours: "鎧",
-  Shields: "盾", Bucklers: "バックラー", Foci: "焦点具", Quivers: "矢筒", Talismans: "タリスマン", Wands: "ワンド",
-  Sceptres: "セプター", Staves: "スタッフ", Quarterstaves: "クォータースタッフ", Bows: "弓", Crossbows: "クロスボウ",
-  Spears: "槍", OneHand_Maces: "片手メイス", TwoHand_Maces: "両手メイス",
-};
-const clsJa = (x: string): string => CLS_JA[x] ?? x.replace(/_/g, " ");
+const clsJa = (x: string): string => classJa(x, false);
 const chosen = computed(() => pk.allBases.value.find((b) => b.en === pk.baseName.value) ?? null);
 function choose(en: string): void {
   const d = props.c.data.value;

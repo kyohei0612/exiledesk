@@ -67,8 +67,8 @@ const chip = (on: boolean): string => (on ? "bg-amber-500/25 text-amber-100 ring
             <span v-if="b.lvl" class="ml-auto shrink-0 text-[10px] opacity-50">Lv {{ b.lvl }}</span>
           </span>
           <span v-if="query.trim()" class="block text-[10px] opacity-50">{{ CATALOG_CLS_JA.get(b.cls) ?? b.cls }}</span>
-          <span v-if="b.stats" class="block truncate text-[11px] text-[#8888ff]" :title="b.stats">{{ b.stats }}</span>
-          <span v-if="b.implicit" class="block truncate text-[11px] text-[#8888ff]" :title="b.implicit">{{ b.implicit }}</span>
+          <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic" :title="b.stats">{{ b.stats }}</span>
+          <span v-if="b.implicit" class="block truncate text-[11px] text-rarity-magic" :title="b.implicit">{{ b.implicit }}</span>
           <span v-if="note?.(b.en)" class="block truncate text-[10.5px] text-sky-300">{{ note(b.en) }}</span>
         </span>
       </button>

@@ -31,10 +31,10 @@ defineProps<{
 }>();
 /** MOD の色 (ゲームの青が基本。固定 / 冒涜 / クラフト / 外れ は分ける) */
 const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
-  normal: "text-[#8888ff]",
+  normal: "text-rarity-magic",
   fixed: "text-[#a29160]",
-  desecrated: "text-[#c58cff]",
-  crafted: "text-[#b4b4ff]",
+  desecrated: "text-mod-desecrated",
+  crafted: "text-mod-crafted",
   tree: "text-[#e879f9]",
   junk: "text-[#c0504d]",
   keep: "text-[#d9b96a]",
@@ -57,11 +57,11 @@ const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
       <p v-if="socket" class="poe-dim">{{ socket.split(": ")[0] }}: <span class="poe-white">{{ socket.split(": ").slice(1).join(": ") }}</span></p>
       <template v-if="socketEffects?.length">
         <div class="poe-sep" />
-        <p v-for="x in socketEffects" :key="x" class="poe-mod text-[#b4b4ff]">{{ x }}</p>
+        <p v-for="x in socketEffects" :key="x" class="poe-mod text-mod-crafted">{{ x }}</p>
       </template>
       <template v-if="implicits?.length">
         <div class="poe-sep" />
-        <p v-for="x in implicits" :key="x" class="poe-mod text-[#8888ff]">{{ x }}</p>
+        <p v-for="x in implicits" :key="x" class="poe-mod text-rarity-magic">{{ x }}</p>
       </template>
       <div class="poe-sep" />
       <p v-if="!mods.length" class="poe-dim">MOD なし</p>
@@ -98,10 +98,10 @@ const COLOR: Record<NonNullable<CardMod["tone"]>, string> = {
 .poe-orn { position: absolute; top: 50%; width: 14px; height: 14px; margin-top: -7px; border: 1px solid #b09660; transform: rotate(45deg); background: radial-gradient(#5a4622, #1a1409); }
 .poe-orn-l { left: 6px; }
 .poe-orn-r { right: 6px; }
-.poe-name { color: #ffff77; font-weight: 700; font-size: 16px; letter-spacing: 0.04em; text-shadow: 0 0 6px rgba(255, 255, 119, 0.25); }
+.poe-name { color: var(--color-rarity-rare); font-weight: 700; font-size: 16px; letter-spacing: 0.04em; text-shadow: 0 0 6px rgba(255, 255, 119, 0.25); }
 .poe-base { font-size: 14px; font-weight: 600; }
 .poe-dim { color: #7f7f7f; }
-.poe-val { color: #8888ff; }
+.poe-val { color: var(--color-rarity-magic); }
 .poe-white { color: #fff; }
 .poe-sep { height: 1px; margin: 6px 0; background: linear-gradient(90deg, transparent, #7a6538 20%, #7a6538 80%, transparent); }
 .poe-row { padding: 1px 4px; }

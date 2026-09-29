@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { CATALYSTS } from "../../services/htc/quality";
+import { qualityLabelOf } from "../../services/htc/quality";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { baseStatsOf, isFlask, isGem } from "../../services/craft-stage/stage-bases";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
@@ -31,10 +31,10 @@ const emit = defineEmits<{ use: [] }>();
 
 /** ゲームのレアリティの色 */
 const TONE = {
-  normal: { name: "text-[#c8c8c8]", frame: "border-[#8a8a8a]/60", head: "from-[#3a3a3a]/60" },
-  magic: { name: "text-[#8888ff]", frame: "border-[#8888ff]/60", head: "from-[#22224a]/70" },
-  rare: { name: "text-[#e8d77a]", frame: "border-[#e8d77a]/60", head: "from-[#4a4020]/70" },
-  unique: { name: "text-[#af6025]", frame: "border-[#af6025]/70", head: "from-[#4a2a10]/70" },
+  normal: { name: "text-rarity-normal", frame: "border-[#8a8a8a]/60", head: "from-[#3a3a3a]/60" },
+  magic: { name: "text-rarity-magic", frame: "border-rarity-magic/60", head: "from-[#22224a]/70" },
+  rare: { name: "text-rarity-rare", frame: "border-rarity-rare/60", head: "from-[#4a4020]/70" },
+  unique: { name: "text-rarity-unique", frame: "border-rarity-unique/70", head: "from-[#4a2a10]/70" },
 } as const;
 const tone = computed(() => TONE[props.item.rarity]);
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
@@ -69,14 +69,14 @@ const implicits = computed(() => (htcBaseInfo()[props.item.base]?.implicits ?? [
 const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
-const qualityLabel = computed(() => CATALYSTS.find((c) => c.tag === props.item.qualityTag)?.label.ja ?? "品質");
+const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
 /** MOD の種類ごとの色と札 (ゲームの色に寄せる: 破砕 = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
-  if (m.fractured) return { cls: "text-[#c8a86a]", tag: "破砕" };
-  if (m.desecrated) return { cls: "text-[#e0a0a0]", tag: "冒涜" };
-  if (m.crafted) return { cls: "text-[#b8c8ff]", tag: "エッセンス" };
-  return { cls: "text-[#8888ff]", tag: "" };
+  if (m.fractured) return { cls: "text-mod-fractured", tag: "破砕" };
+  if (m.desecrated) return { cls: "text-mod-desecrated", tag: "冒涜" };
+  if (m.crafted) return { cls: "text-mod-crafted", tag: "エッセンス" };
+  return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
 const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? uniqueLines(props.item.unique.en) : []));
@@ -107,9 +107,9 @@ const rows = computed(() => [
     </div>
     <div class="space-y-1 px-4 text-center text-[13px]" :class="compact ? 'pb-2' : 'pb-4'">
       <p class="text-[12px] text-white/50">{{ kindJa }}<template v-if="!isGem(item.cls.category)"> · アイテムレベル <span class="text-white">{{ item.itemLevel }}</span></template></p>
-      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-[#8888ff]">+{{ item.quality }}%</span></p>
+      <p v-if="item.quality > 0" class="text-[12px] text-white/50">{{ qualityLabel }}: <span class="text-rarity-magic">+{{ item.quality }}%</span></p>
       <!-- ベースの数値 (品質で増えた値は青) -->
-      <p v-for="r in baseRows" :key="r.label" class="text-[12px] text-white/50">{{ r.label }}: <span :class="r.up ? 'text-[#8888ff]' : 'text-white/85'">{{ r.value }}</span></p>
+      <p v-for="r in baseRows" :key="r.label" class="text-[12px] text-white/50">{{ r.label }}: <span :class="r.up ? 'text-rarity-magic' : 'text-white/85'">{{ r.value }}</span></p>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <span v-for="i in item.sockets" :key="'s' + i" class="h-4 w-4 rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" />
@@ -126,7 +126,7 @@ const rows = computed(() => [
       </template>
       <template v-if="implicits.length">
         <div class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
-        <p v-for="(t, i) in implicits" :key="'i' + i" class="text-[#8888ff]">{{ t }}</p>
+        <p v-for="(t, i) in implicits" :key="'i' + i" class="text-rarity-magic">{{ t }}</p>
       </template>
       <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="mx-auto h-px w-4/5 bg-white/15" :class="compact ? 'my-1' : 'my-2'" />
       <!-- 未鑑定: MOD を隠す (ゲームと同じく赤い「未鑑定」) -->
@@ -145,7 +145,7 @@ const rows = computed(() => [
       </div>
       <!-- ユニークの効果 (要望 ⑨)。クライアントの表に「どのユニークがどの MOD」が無いので poe2db のページ (保存済み) から -->
       <div v-if="!hidden && uLines.length" class="space-y-1">
-        <p v-for="(t, i) in uLines" :key="'u' + i" class="px-2 py-0.5 text-[#8888ff]">{{ t }}</p>
+        <p v-for="(t, i) in uLines" :key="'u' + i" class="px-2 py-0.5 text-rarity-magic">{{ t }}</p>
       </div>
       <!-- ページの無いユニークは名前だけ (撮影用は注記も出さない) -->
       <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : "(このユニークの効果はデータに無い)") : "MOD なし" }}</p>

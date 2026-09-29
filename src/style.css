@@ -113,6 +113,14 @@
   --color-signal-info:      var(--exile-color-signal-info);
   --color-signal-success:   var(--exile-color-signal-success);
   --color-signal-error:     var(--exile-color-signal-error);
+  /* ----- アイテムの色 (ゲームに寄せる。レアリティ・MOD の種類。色はここだけで決める 2026-09-29) ----- */
+  --color-rarity-normal:    #c8c8c8;
+  --color-rarity-magic:     #8888ff;
+  --color-rarity-rare:      #e8d77a;
+  --color-rarity-unique:    #af6025;
+  --color-mod-fractured:    #c8a86a;
+  --color-mod-desecrated:   #e0a0a0;
+  --color-mod-crafted:      #b8c8ff;
 
   /* ----- Fonts ----- */
   --font-sans:    var(--exile-font-family-sans);

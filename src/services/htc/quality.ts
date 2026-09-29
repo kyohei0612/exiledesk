@@ -173,3 +173,9 @@ export function catalystTagFromLabel(label: string): string | null {
   for (const c of CATALYSTS) if (k.includes(squash(c.ja)) || k.includes(squash(c.en))) return c.tag;
   return null;
 }
+
+/** 品質の表記 (『品質 (マナモッド)』)。種類が無ければ『品質』。計算機のカードとクラフトステージの両方でこれ */
+export function qualityLabelOf(tag: string | null | undefined): string {
+  const k = tag ? CATALYSTS.find((x) => x.tag === tag) : undefined;
+  return k?.label?.ja ?? "品質";
+}

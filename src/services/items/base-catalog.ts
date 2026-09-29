@@ -29,6 +29,15 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
 export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
+/**
+ * 種類の日本語 (ゲームのアイテムクラス名。クライアントの ItemClasses と同じ = スピア・フォーカス・鎧)。
+ * 行 (Gloves_str) は属性付きで、属性の無いキー (Gloves・Shields) は属性を外した名前。アプリの種類名はここから取る
+ */
+export function classJa(cls: string, withAttr = true): string {
+  const hit = CATALOG_CLS_JA.get(cls) ?? [...CATALOG_CLS_JA].find(([k]) => k.startsWith(`${cls}_`))?.[1];
+  if (!hit) return cls.replace(/_/g, " ");
+  return withAttr && CATALOG_CLS_JA.has(cls) ? hit : hit.replace(/\(.*\)$/, "");
+}
 /** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */
 const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;
 

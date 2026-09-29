@@ -19,28 +19,13 @@ import { socketCountFor } from "../htc/sockets";
 import vaal from "../../i18n/vaal-enchants.json";
 import { addOne, allMods, replaced, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
+import { tagsOfEngineRow } from "../mods/item-class-tags";
 
 interface Enchant { domain: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
 
-/** 計算機のベースの種類 → コラプトの付加が見るタグ (クライアントの BaseItemTypes.Tags と同じ名前) */
-const CLASS_TAGS: Record<string, string[]> = {
-  Rings: ["ring"], Amulets: ["amulet"], Belts: ["belt"], Quivers: ["quiver"],
-  Helmets: ["helmet", "armour"], Gloves: ["gloves", "armour"], Boots: ["boots", "armour"], Body_Armours: ["body_armour", "armour"],
-  Shields: ["shield", "armour"], Bucklers: ["shield", "armour"], Foci: ["focus", "armour"],
-  Bows: ["bow", "two_hand_weapon", "weapon"], Crossbows: ["crossbow", "two_hand_weapon", "weapon"],
-  Wands: ["wand", "one_hand_weapon", "weapon"], Sceptres: ["sceptre", "one_hand_weapon", "weapon"],
-  Staves: ["staff", "two_hand_weapon", "weapon"], Quarterstaves: ["warstaff", "two_hand_weapon", "weapon"],
-  Spears: ["spear", "one_hand_weapon", "weapon"], OneHand_Maces: ["mace", "one_hand_weapon", "weapon"],
-  TwoHand_Maces: ["mace", "two_hand_weapon", "weapon"],
-};
-/** 防具の属性のタグ (Helmets_str_int → str_int_armour) */
-function tagsOf(item: StageItem): Set<string> {
-  const tags = new Set(CLASS_TAGS[item.cls.category] ?? []);
-  const attr = /_((?:str|dex|int)(?:_(?:str|dex|int))?)$/.exec(item.cls.id)?.[1];
-  if (attr && tags.has("armour")) tags.add(`${attr}_armour`);
-  return tags;
-}
+/** そのアイテムのタグ (クライアントの BaseItemTypes.Tags と同じ名前。表は services/mods/item-class-tags.ts に 1 つ) */
+const tagsOf = (item: StageItem): Set<string> => tagsOfEngineRow(item.cls.category, item.cls.id);
 /** そのアイテムに付くエンチャント (spawn は順番に見て最初に当たったタグの重み) */
 export function enchantPool(item: StageItem): string[] {
   const tags = tagsOf(item);

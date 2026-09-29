@@ -26,7 +26,7 @@ export interface StageFx {
 }
 
 const RARITY_TEXT = { magic: "マジックに!", rare: "レアに!", normal: "", unique: "ユニークに!" } as const;
-const COLOR = { magic: "#8888ff", rare: "#e8d77a", normal: "#c8c8c8", unique: "#ff9a4a", desecrated: "#f07070", fractured: "#c8a86a", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
+const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-rare)", normal: "var(--color-rarity-normal)", unique: "#ff9a4a", desecrated: "#f07070", fractured: "var(--color-mod-fractured)", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
 /**
  * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
  */
@@ -37,9 +37,9 @@ function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; col
   const sh = Object.keys(after.shards ?? {}).find((k) => (after.shards?.[k] ?? 0) !== (before.shards?.[k] ?? 0));
   if (sh) {
     const n = after.shards![sh]!;
-    return n === 0 ? { kind: "up", color: COLOR.top, text: "10 個でオーブに!" } : { kind: "hit", color: "#c8c8c8", text: `+1 (${n}/10)` };
+    return n === 0 ? { kind: "up", color: COLOR.top, text: "10 個でオーブに!" } : { kind: "hit", color: COLOR.normal, text: `+1 (${n}/10)` };
   }
-  if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: "#c8a86a", text: "ソケット +1!" };
+  if ((after.sockets ?? 0) > (before.sockets ?? 0) && !after.corrupted) return { kind: "hit", color: COLOR.fractured, text: "ソケット +1!" };
   return null;
 }
 /** 付いた / 消えた MOD の段 (「T3 がついた!」「T4 → T2」「T5 が消えた」)。MOD が動いていなければ "" */

@@ -215,7 +215,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
             v-for="(m, i) in hand.reveal.value.offers"
             :key="m.modId + i"
             class="flex items-center justify-between rounded-xl border px-4 py-2 text-[17px] transition-all duration-200"
-            :class="hand.reveal.value.lit === i ? 'scale-[1.04] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-black/40 text-[#e0a0a0]'"
+            :class="hand.reveal.value.lit === i ? 'scale-[1.04] border-rose-300 bg-rose-500/25 text-white shadow-[0_0_18px_rgba(244,63,94,0.6)]' : 'border-white/10 bg-black/40 text-mod-desecrated'"
           >
             <span>{{ m.textJa }}</span>
             <span class="text-[12px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span>

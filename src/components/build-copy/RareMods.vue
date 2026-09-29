@@ -61,7 +61,7 @@ const btn = "rounded-md border border-white/15 px-2 py-0.5 hover:bg-white/5";
           >
             <option v-for="o in m.options" :key="o.i" :value="o.i">{{ o.label }}{{ o.i === m.tier ? " (今)" : "" }}</option>
           </select>
-          <span class="min-w-0 text-[#8888ff]"><RichText :text="m.text" /></span>
+          <span class="min-w-0 text-rarity-magic"><RichText :text="m.text" /></span>
         </div>
       </div>
       <!-- 段の無い行 (ジュエル・計算機で作れない特殊な MOD) は数値の割合で -->
@@ -69,7 +69,7 @@ const btn = "rounded-md border border-white/15 px-2 py-0.5 hover:bg-white/5";
         <p v-if="rare.analysis.mods.length" class="text-[10px] tracking-wider text-amber-200/80">特殊な MOD (数値で)</p>
         <div v-for="(l, k) in rare.analysis.lines" :key="'l' + k" class="flex items-center gap-2 py-0.5 text-[12px]">
           <span class="num w-40 shrink-0 text-[11px] opacity-70">{{ lineLabel(l) }}</span>
-          <span class="min-w-0 text-[#8888ff]"><RichText :text="l.text" /></span>
+          <span class="min-w-0 text-rarity-magic"><RichText :text="l.text" /></span>
         </div>
       </div>
     </div>

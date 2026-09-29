@@ -46,7 +46,7 @@ const tierName = (r: ListRow, name: string): string => (r.group === "essence" ? 
 const pct = (x: number): string => (x >= 0.1 ? `${(x * 100).toFixed(0)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "—");
 /** 種類の色 (ゲームの MOD の色: 普通 = 青、エッセンス = 薄い青、冒涜 = 赤、異界 = 緑がかった青) */
 const TONE: Record<ModGroup, { tab: string; bar: string }> = {
-  normal: { tab: "bg-[#8888ff]/25 text-[#c8c8ff] ring-1 ring-[#8888ff]/60", bar: "bg-[#8888ff]/20" },
+  normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/20" },
   essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/15" },
   desecrated: { tab: "bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60", bar: "bg-rose-500/15" },
   otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/15" },

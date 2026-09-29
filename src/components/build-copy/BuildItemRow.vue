@@ -33,7 +33,7 @@ const emit = defineEmits<{
 }>();
 const money = (ex: number) => displayCurrency.money(ex);
 /** ゲームのレアリティの色 */
-const COLOR: Record<string, string> = { UNIQUE: "text-[#af6025]", RELIC: "text-[#82ad6a]", RARE: "text-[#e8d77a]", MAGIC: "text-[#8888ff]", NORMAL: "text-[#c8c8c8]" };
+const COLOR: Record<string, string> = { UNIQUE: "text-rarity-unique", RELIC: "text-[#82ad6a]", RARE: "text-rarity-rare", MAGIC: "text-rarity-magic", NORMAL: "text-rarity-normal" };
 /** どこで取れたかの札 (クラフト計算機と同じ色の決まり: 緑 = そのまま / 水色 = 近い / 黄 = ゆるめた / 赤 = 無い) */
 const STAGE: Record<AutoStage, { label: string; cls: string }> = {
   exact: { label: "完成品", cls: "bg-emerald-500/20 text-emerald-300" },

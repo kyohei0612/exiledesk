@@ -119,7 +119,7 @@ const position = computed(() => {
 /* ユニーク: 茶の枠と橙の名前 */
 .g-unique { border: 1px solid #7a4a22; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #2a1a0e, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-unique .g-head { background: linear-gradient(180deg, #3d2412 0%, #22140a 55%, #0f0905 100%); border-bottom: 1px solid #8a5a30; box-shadow: inset 0 1px 0 #a8744a, inset 0 -1px 0 #3a2414; }
-.g-unique .g-name { color: #af6025; }
+.g-unique .g-name { color: var(--color-rarity-unique); }
 /* カレンシー: 灰金の枠とベージュの名前 */
 .g-currency { border: 1px solid #6a5f48; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #22201a, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-currency .g-head { background: linear-gradient(180deg, #34302a 0%, #1d1b17 55%, #0c0b09 100%); border-bottom: 1px solid #7d7156; box-shadow: inset 0 1px 0 #9c8f70, inset 0 -1px 0 #2e2a22; }
@@ -127,10 +127,10 @@ const position = computed(() => {
 /* レア: 金の枠と黄色の名前 (ItemCard.vue と同じ) / マジック: 青の名前 */
 .g-rare { border: 1px solid #6a5630; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #2a2214, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-rare .g-head { background: linear-gradient(180deg, #3d3116 0%, #221b0c 55%, #0f0c05 100%); border-bottom: 1px solid #8a7040; box-shadow: inset 0 1px 0 #a8895a, inset 0 -1px 0 #3a2f18; }
-.g-rare .g-name { color: #ffff77; }
+.g-rare .g-name { color: var(--color-rarity-rare); }
 .g-magic { border: 1px solid #3d3d6a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-magic .g-head { background: linear-gradient(180deg, #202038 0%, #121220 100%); border-bottom: 1px solid #4a4a80; }
-.g-magic .g-name { color: #8888ff; }
+.g-magic .g-name { color: var(--color-rarity-magic); }
 /* ジェム: 青緑の名前 (ゲームのジェムの色) */
 .g-gem { border: 1px solid #2f5d5a; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #10201f, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-gem .g-head { background: linear-gradient(180deg, #16302e 0%, #0d1c1b 55%, #070d0d 100%); border-bottom: 1px solid #3c6f6a; box-shadow: inset 0 1px 0 #4f8a84, inset 0 -1px 0 #16302e; }
@@ -145,9 +145,9 @@ const position = computed(() => {
 /* 中身で使う色 (スロットの中の入れ子にも効くよう scoped にしない。.g-card の中だけ) */
 .g-card .g-dim { color: #7f7f7f; }
 .g-card .g-white { color: #fff; }
-.g-card .g-mod { color: #8888ff; }
-.g-card .g-flavour { color: #af6025; font-style: italic; font-size: 12.5px; }
-.g-card .g-desc { color: #c8c8c8; }
+.g-card .g-mod { color: var(--color-rarity-magic); }
+.g-card .g-flavour { color: var(--color-rarity-unique); font-style: italic; font-size: 12.5px; }
+.g-card .g-desc { color: var(--color-rarity-normal); }
 .g-card .g-head2 { color: #aa9e82; font-size: 12px; margin-top: 4px; }
 .g-card .g-sep { height: 1px; margin: 6px 0; background: linear-gradient(90deg, transparent, #7a6538 20%, #7a6538 80%, transparent); }
 </style>

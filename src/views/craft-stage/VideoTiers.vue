@@ -85,7 +85,7 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
           <span class="truncate text-[#c8c8ff]">{{ t.text }}</span>
           <span class="tabular-nums">Lv {{ t.ilvl }}</span>
           <span class="flex items-center gap-3">
-            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="t.top ? 'bg-amber-300' : 'bg-[#8888ff]'" :style="{ width: `${t.bar * 100}%` }" /></span>
+            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="t.top ? 'bg-amber-300' : 'bg-rarity-magic'" :style="{ width: `${t.bar * 100}%` }" /></span>
             <span class="w-20 text-right tabular-nums">{{ pct(t.share) }}</span>
           </span>
         </div>
