@@ -14,7 +14,7 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { addToBasket } from "../state/craft-basket";
+import { goCraft } from "../state/craft-basket";
 import { isCraftableBase, prepareCraftData } from "../services/craft-v2/to-craft";
 import UniqueTooltip from "../components/decor/UniqueTooltip.vue";
 import CraftV2Header from "../components/craft-v2/CraftV2Header.vue";
@@ -49,7 +49,7 @@ const hover = useUniqueHover({
 });
 
 /**
- * クラフトのベース (2026-09-29「クラフトに追加 / クラフトへ」)。この部位で上位の人が使っていたレアのベースのうち、
+ * クラフトのベース (2026-09-29「クラフトへ」)。この部位で上位の人が使っていたレアのベースのうち、
  * 計算機にある物を人数順。部位を変えたら一番多い物に戻す
  */
 const craftDataReady = ref(false);
@@ -60,13 +60,17 @@ const craftBase = ref("");
 watch(craftBases, (list) => {
   if (!list.some((b) => b.en === craftBase.value)) craftBase.value = list[0]?.en ?? "";
 }, { immediate: true });
-function addCraft(): void {
-  const b = craftBases.value.find((x) => x.en === craftBase.value);
-  if (!b) return;
+/** MOD を選ぶ状態か (最初はチェックを出さない)。キャンセルで選択を消して元に戻す */
+const selecting = ref(false);
+function cancelSelect(): void {
+  sel.clearSelectedMods();
+  selecting.value = false;
+}
+/** チェックした MOD (段つき) とベースで計算機へ。渡せたら選ぶ状態を閉じる */
+async function toCraft(): Promise<void> {
   const all = [...d.activeSlotMods.value.prefix, ...d.activeSlotMods.value.suffix];
   const chosen = all.filter((m) => sel.selectedMods.value.has(m.rawTemplate)).map((mod) => ({ mod, tierIdx: sel.getModTierIdx(mod) }));
-  addToBasket(b.en, b.ja, chosen);
-  sel.clearSelectedMods();
+  if (await goCraft(craftBase.value, chosen)) cancelSelect();
 }
 
 /** 見方の切り替え (skillsTab = スキル・持ち物) */
@@ -120,13 +124,15 @@ onMounted(() => {
       v-if="store.ascendancies.length > 0 && !d.skillsTab.value"
       v-model:bulk-tier-value="sel.bulkTierValue.value"
       v-model:craft-base="craftBase"
+      v-model:selecting="selecting"
       :craft-bases="craftBases"
       :selected-count="sel.selectedMods.value.size"
       :searching="sel.searching.value"
       @clear="sel.clearSelectedMods"
       @apply-bulk-tier="sel.applyBulkTier"
       @search="sel.searchSelectedMods"
-      @add-craft="addCraft"
+      @craft="toCraft"
+      @cancel="cancelSelect"
     />
 
     <!-- スクロール可能本体 (アセンダンシータブまでの固定エリアの下) -->
@@ -180,6 +186,7 @@ onMounted(() => {
           :tier-idx="sel.getModTierIdx"
           :pct="d.pct"
           :order-class="d.isMostlyUniqueSlot.value ? 'order-2' : 'order-1'"
+          :selectable="selecting"
           @toggle="sel.toggleModSelect"
           @set-tier="sel.setModTier"
         />
@@ -196,6 +203,7 @@ onMounted(() => {
           :tier-idx="sel.getModTierIdx"
           :pct="d.pct"
           :order-class="d.isMostlyUniqueSlot.value ? 'order-3' : 'order-2'"
+          :selectable="selecting"
           @toggle="sel.toggleModSelect"
           @set-tier="sel.setModTier"
         />
@@ -244,7 +252,7 @@ onMounted(() => {
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#B8956A]/25 text-[#D6B98A] ring-1 ring-[#B8956A]/50">S</span>
           = サフィックス
         </span>
-        <span class="italic">MOD にチェック → 上の「trade2 検索」で一括検索</span>
+        <span class="italic">上の「クラフト MOD 選択」で MOD を選んで、クラフト計算機や trade2 検索へ</span>
         </template>
       </footer>
     </div>

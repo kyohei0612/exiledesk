@@ -24,6 +24,8 @@ const props = defineProps<{
   pct: (count: number) => string;
   /** flex order 用 (ユニーク優位スロットで並び替え) */
   orderClass: string;
+  /** チェックを出すか (2026-09-29 オーナー「最初はクラフト MOD 選択ってボタンにして、チェックはそこで表示」) */
+  selectable: boolean;
 }>();
 const showLowCount = defineModel<boolean>("showLowCount", { required: true });
 const emit = defineEmits<{ toggle: [mod: ModEntry]; setTier: [mod: ModEntry, idx: number] }>();
@@ -51,12 +53,16 @@ const badge = computed(() =>
         <li
           v-for="(mod, i) in mods"
           :key="affix + '-' + i + '-' + mod.rawTemplate"
-          class="group cursor-pointer grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-3 py-1 px-1 -mx-1 rounded transition-colors hover:bg-[var(--exile-color-bg-elevated)]"
-          :class="isSelected(mod) ? 'bg-[var(--exile-color-bg-elevated)] ring-1 ring-[var(--exile-color-accent-focus)]/40' : ''"
-          @click="emit('toggle', mod)"
-          :title="`クリックで選択 / 解除 (現在 ${selectedCount} 件選択中)`"
+          class="group grid items-center gap-3 py-1 px-1 -mx-1 rounded transition-colors"
+          :class="[
+            selectable ? 'cursor-pointer grid-cols-[auto_auto_1fr_auto_auto] hover:bg-[var(--exile-color-bg-elevated)]' : 'grid-cols-[auto_1fr_auto_auto]',
+            isSelected(mod) ? 'bg-[var(--exile-color-bg-elevated)] ring-1 ring-[var(--exile-color-accent-focus)]/40' : '',
+          ]"
+          @click="selectable && emit('toggle', mod)"
+          :title="selectable ? `クリックで選択 / 解除 (現在 ${selectedCount} 件選択中)` : ''"
         >
           <input
+            v-if="selectable"
             type="checkbox"
             :checked="isSelected(mod)"
             :disabled="isDisabled(mod)"
