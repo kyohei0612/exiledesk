@@ -25,7 +25,13 @@ import { finalizeBuckets } from "./mods";
 import { GEM_INFO } from "./gems";
 import { jaTypeName, jaUniqueName } from "../../trade2/localize";
 import passivesJa from "../../../i18n/passives-ja-client.json";
-import type { Loadout, LoadoutEntry } from "../types";
+import augmentKinds from "../../../i18n/augment-kinds.json";
+import type { AugmentKind, Loadout, LoadoutEntry } from "../types";
+
+const AUGMENT_KINDS = augmentKinds as Record<string, AugmentKind>;
+/** オーグメントの種類 (クライアントの BaseItemTypes の Id で分けた表。無ければ名前で) */
+const augmentKind = (en: string): AugmentKind =>
+  AUGMENT_KINDS[en] ?? (/Idol/.test(en) ? "idol" : /Soul Core/.test(en) ? "soulcore" : /Rune/.test(en) ? "rune" : "other");
 
 const PASSIVES_JA = passivesJa as Record<string, string>;
 /** 持ち物の日本語 (公式の名前。ユニークのジュエルはユニーク名、キーストーンはパッシブの名前) */
@@ -39,7 +45,7 @@ function finalizeLoadout(counter: AscendancyCounter): Loadout {
     return u !== en ? u : jaTypeName(en);
   };
   return {
-    augments: entries(l.augments, item),
+    augments: entries(l.augments, item).map((e) => ({ ...e, kind: augmentKind(e.nameEn) })),
     lineage: entries(l.lineage, jaSkill),
     keystones: entries(l.keystones, (en) => PASSIVES_JA[en] ?? en),
     flasks: entries(l.flasks, item),

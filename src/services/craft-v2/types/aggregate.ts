@@ -234,7 +234,10 @@ export interface LoadoutEntry {
   name: string;
   nameEn: string;
   count: number;
+  /** オーグメントの種類 (ルーン / ソウルコア / アイドル / 付与スキルの穴のジェム / その他)。オーグメント以外は無い */
+  kind?: AugmentKind;
 }
+export type AugmentKind = "rune" | "soulcore" | "idol" | "gem" | "other";
 /** ビルドの持ち物 (オーグメント・リネージュサポート・キーストーン・チャーム / フラスコ・ジュエル)。人数の多い順 */
 export interface Loadout {
   augments: LoadoutEntry[];

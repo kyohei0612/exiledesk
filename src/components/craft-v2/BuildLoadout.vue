@@ -8,7 +8,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import type { AggregatedAscendancy, LoadoutEntry, SkillUsage } from "../../services/craft-v2/types";
+import type { AggregatedAscendancy, AugmentKind, LoadoutEntry, SkillUsage } from "../../services/craft-v2/types";
 
 const props = defineProps<{ agg: AggregatedAscendancy }>();
 
@@ -22,6 +22,27 @@ const CHIP: Record<Tier, string> = {
   rare: "bg-transparent text-white/40 ring-white/10",
 };
 const showRare = ref(false);
+/** オーグメントの種類ごとの色 (オーナー「アイドルとかルーンとか種類ごとに色分け」)。定番は濃く太く、少数派は薄く */
+const AUG: Record<AugmentKind, { label: string; core: string; common: string; dot: string }> = {
+  rune: { label: "ルーン", core: "bg-cyan-400/25 text-cyan-50 ring-cyan-300/80 font-bold", common: "bg-cyan-500/10 text-cyan-100 ring-cyan-400/30", dot: "bg-cyan-300" },
+  soulcore: { label: "ソウルコア", core: "bg-orange-400/25 text-orange-50 ring-orange-300/80 font-bold", common: "bg-orange-500/10 text-orange-100 ring-orange-400/30", dot: "bg-orange-300" },
+  idol: { label: "アイドル", core: "bg-emerald-400/25 text-emerald-50 ring-emerald-300/80 font-bold", common: "bg-emerald-500/10 text-emerald-100 ring-emerald-400/30", dot: "bg-emerald-300" },
+  gem: { label: "付与スキルの穴のジェム", core: "bg-sky-400/25 text-sky-50 ring-sky-300/80 font-bold", common: "bg-sky-500/10 text-sky-100 ring-sky-400/30", dot: "bg-sky-300" },
+  other: { label: "その他", core: "bg-stone-400/25 text-stone-50 ring-stone-300/70 font-bold", common: "bg-stone-500/10 text-stone-100 ring-stone-400/30", dot: "bg-stone-300" },
+};
+const AUG_ORDER: AugmentKind[] = ["rune", "soulcore", "idol", "gem", "other"];
+const augChip = (e: LoadoutEntry): string => {
+  const t = tierOf(e.count);
+  return t === "rare" ? CHIP.rare : AUG[e.kind ?? "other"][t];
+};
+/** 定番セットの札の色 (オーグメントは種類の色、リネージュは紫、ほかは金) */
+const coreChip = (e: { nameEn: string; kind?: AugmentKind }): string =>
+  e.kind ? AUG[e.kind].core : lineageSet.value.has(e.nameEn) ? "bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-300/60" : CHIP.core;
+/** オーグメントを種類ごとに (見えている物だけ) */
+const augGroups = computed(() => {
+  const list = props.agg.loadout?.augments ?? [];
+  return AUG_ORDER.map((k) => ({ kind: k, ...AUG[k], list: top(list.filter((e) => (e.kind ?? "other") === k)) })).filter((g) => g.list.length);
+});
 const lineageSet = computed(() => new Set((props.agg.loadout?.lineage ?? []).map((l) => l.nameEn)));
 const visible = <T extends { count: number }>(list: T[]): T[] => (showRare.value ? list : list.filter((x) => tierOf(x.count) !== "rare"));
 const rareCount = (list: Array<{ count: number }>): number => list.filter((x) => tierOf(x.count) === "rare").length;
@@ -82,7 +103,7 @@ const top = (list: LoadoutEntry[]): LoadoutEntry[] => visible(list).slice(0, 30)
               v-for="e in r.items"
               :key="e.nameEn"
               class="rounded-md px-2 py-0.5 text-[13px] font-bold ring-1"
-              :class="lineageSet.has(e.nameEn) ? 'bg-fuchsia-500/20 text-fuchsia-100 ring-fuchsia-300/60' : CHIP.core"
+              :class="coreChip(e)"
               :title="e.nameEn"
               >{{ e.name }} <span class="text-[11px] font-normal tabular-nums opacity-70">{{ e.count }}/{{ agg.sampleSize }}</span></span
             >
@@ -95,6 +116,7 @@ const top = (list: LoadoutEntry[]): LoadoutEntry[] => visible(list).slice(0, 30)
       <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-amber-400/60" />定番 (7 割以上)</span>
       <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-white/30" />よく使う (4 割以上)</span>
       <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-fuchsia-400/60" />リネージュ</span>
+      <span v-for="k in AUG_ORDER.slice(0, 3)" :key="k" class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm" :class="AUG[k].dot" />{{ AUG[k].label }}</span>
       <button type="button" class="ml-auto rounded px-2 py-0.5 ring-1 ring-white/15 hover:bg-white/10" @click="showRare = !showRare">
         {{ showRare ? "少数派を隠す" : "少数派 (4 割未満) も出す" }}
       </button>
@@ -137,7 +159,19 @@ const top = (list: LoadoutEntry[]): LoadoutEntry[] => visible(list).slice(0, 30)
         <h2 class="mb-3 text-sm font-bold text-amber-100">持ち物</h2>
         <div v-for="b in blocks" :key="b.key" class="mb-3 last:mb-0">
           <p class="mb-1 text-[11px] font-bold tracking-wider text-white/45">{{ b.label }}</p>
-          <div v-if="top(b.list).length" class="flex flex-wrap gap-1">
+          <!-- オーグメントは種類ごとに色を分けて段にする -->
+          <template v-if="b.key === 'augments'">
+            <div v-for="g in augGroups" :key="g.kind" class="mb-1.5 flex items-start gap-2">
+              <span class="mt-0.5 inline-flex w-20 shrink-0 items-center gap-1 text-[11px] text-white/55"><span class="h-2 w-2 rounded-full" :class="g.dot" />{{ g.label }}</span>
+              <div class="flex flex-wrap gap-1">
+                <span v-for="e in g.list" :key="e.nameEn" class="rounded px-1.5 py-0.5 text-[12px] ring-1" :class="augChip(e)" :title="e.nameEn"
+                  >{{ e.name }} <span class="tabular-nums opacity-60">{{ e.count }}/{{ agg.sampleSize }}</span></span
+                >
+              </div>
+            </div>
+            <p v-if="!augGroups.length" class="text-[11px] text-white/30">{{ b.list.length ? `少数派 ${b.list.length} 件のみ` : "なし" }}</p>
+          </template>
+          <div v-else-if="top(b.list).length" class="flex flex-wrap gap-1">
             <span
               v-for="e in top(b.list)"
               :key="e.nameEn"
@@ -147,7 +181,7 @@ const top = (list: LoadoutEntry[]): LoadoutEntry[] => visible(list).slice(0, 30)
               >{{ e.name }} <span class="tabular-nums opacity-60">{{ e.count }}/{{ agg.sampleSize }}</span></span
             >
           </div>
-          <p v-else class="text-[11px] text-white/30">{{ b.list.length ? `少数派 ${b.list.length} 件のみ` : "なし" }}</p>
+          <p v-else-if="b.key !== 'augments'" class="text-[11px] text-white/30">{{ b.list.length ? `少数派 ${b.list.length} 件のみ` : "なし" }}</p>
         </div>
         <p v-if="!blocks.length" class="text-[12px] text-white/40">持ち物の情報がありません (「更新」で取り直すと入ります)</p>
       </section>

@@ -56,7 +56,7 @@ describe("ビルドの持ち物", () => {
     a1!.jewels = ["Emerald"];
     const [a] = aggregateFromCache(c);
     const l = a!.loadout!;
-    expect(l.augments).toEqual([{ nameEn: "Perfect Iron Rune", name: "鉄のパーフェクトルーン", count: 2 }]);
+    expect(l.augments).toEqual([{ nameEn: "Perfect Iron Rune", name: "鉄のパーフェクトルーン", count: 2, kind: "rune" }]);
     expect(l.lineage.map((x) => [x.nameEn, x.count])).toEqual([["Brutus' Brain", 1]]);
     expect(l.keystones[0]).toEqual({ nameEn: "Chaos Inoculation", name: "カオスイノキュレイション", count: 1 });
     expect(l.flasks[0]!.count).toBe(1);
