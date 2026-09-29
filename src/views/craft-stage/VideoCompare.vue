@@ -28,16 +28,26 @@ const view = computed(() => {
 });
 const num = (v: number): string => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0+$/, ""));
 const signed = (v: number): string => (v > 0 ? `+${num(v)}` : num(v));
-/** 違いを文面に入れる (「回避力 +#」→「回避力 +169」)。数値が 2 つある文面は 1 つ目に差、残りは省く */
-function withDelta(text: string, d: number): string {
-  let used = false;
+/** 違いを文面に入れる (「回避力 +#」→「回避力 +169」、「#から#の物理ダメージ」→「+4から+6の物理ダメージ」。要望 ⑭ で全部の数値を出す) */
+function withDelta(text: string, ds: readonly number[]): string {
+  let i = 0;
   const out = text.replace(/([+-]?)#/g, () => {
-    if (used) return "…";
-    used = true;
+    const d = ds[i++] ?? 0;
     return d === 0 ? "±0" : signed(d);
   });
-  return used ? out : `${text} ${signed(d)}`;
+  return i ? out : `${text} ${signed(ds[0] ?? 0)}`;
 }
+/**
+ * 差の行の文字の大きさ (要望 ⑭「2 行まで折り返して全文。2 行でも入らない時だけ少し小さく」)。
+ * 列の中身の幅 (約 316px) に 2 行で入る文字数を、全角 = 1・半角 = 0.55 で数えて決める
+ */
+function diffFont(text: string, top: number): number {
+  const w = [...text].reduce((a, c) => a + (/[ -~]/.test(c) ? 0.55 : 1), 0);
+  for (const px of [22, 20, 18, 16].filter((x) => x <= top)) if (w <= Math.floor(316 / px) * 2) return px;
+  return 15;
+}
+/** 行が多い時は全体を少し小さく (下 15% より上に全部の差を収める) */
+const topFont = (n: number): number => (n <= 8 ? 22 : n <= 10 ? 20 : n <= 12 ? 18 : 16);
 /**
  * 並べ方 (要望 ⑫「3 列を横幅いっぱいに。差の行は特に大きく」、⑬「左右のアイテムを縦にも大きく。MOD の文字は 1080p で 28px 以上。
  * 差の列は少し細くしてよい」): 差の列 360px・文字 22px (1080p で約 33px)。左右のカードは残りの幅を 2 枚で分け、CSS の zoom で
@@ -64,11 +74,12 @@ const ZOOM = 1.44;
         <p class="text-center text-[24px] font-bold text-amber-100">入れ替えると</p>
         <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
         <p
-          v-for="(d, i) in view.diff.slice(0, 10)"
+          v-for="(d, i) in view.diff.slice(0, 14)"
           :key="i"
-          class="truncate rounded-lg px-2.5 py-1 text-[22px] font-bold leading-snug"
+          class="line-clamp-2 rounded-lg px-2.5 py-1 font-bold leading-snug"
           :class="d.delta > 0 ? 'bg-emerald-500/15 text-emerald-200' : d.delta < 0 ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-white/50'"
-        >{{ withDelta(d.text, d.delta) }}</p>
+          :style="{ fontSize: `${diffFont(withDelta(d.text, d.deltas), topFont(Math.min(14, view.diff.length)))}px` }"
+        >{{ withDelta(d.text, d.deltas) }}</p>
       </div>
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>
