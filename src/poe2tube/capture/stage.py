@@ -38,6 +38,7 @@ READY_SELECTOR = "text=/アイテムレベル|スキルジェム|耐性|倒す�
 # 開けていない (2026-09-29: ExileDesk 開発版の版ずれで普通の画面のまま動画ができていた)
 VIDEO_OVERLAY_JS = "!!document.elementFromPoint(960, 540)?.closest('.fixed.inset-0')"
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
+HEADER_OPT = "--max-http-header-size=262144"  # 256KB (撮影の URL が長いため)
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
 
@@ -98,9 +99,14 @@ def ensure_vite(wait_seconds: int = 60) -> str:
     if not pnpm:
         raise FileNotFoundError("pnpm が PATH に無い (ExileDesk の Vite dev を起動できない)")
     # 固定版 (1430) は ExileDesk の開発版 (1420) と並べて動かすので、ポートを指定して起動する
+    # 比べる画面などは PoB の結果を URL に入れるので長い (2 万字近く)。Node の既定のヘッダー上限
+    # (16KB) を超えると 431 で真っ白になる (2026-09-30) → 上限を広げて起動する
+    node_opts = f"{os.environ.get('NODE_OPTIONS', '')} {HEADER_OPT}".strip()
+    env = {**os.environ, "NODE_OPTIONS": node_opts}
     subprocess.Popen(
         [pnpm, "exec", "vite", "--port", str(port), "--strictPort"],
         cwd=s.exiledesk_root,
+        env=env,
         creationflags=CREATE_NO_WINDOW,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
