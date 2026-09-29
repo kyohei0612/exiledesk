@@ -5,12 +5,18 @@
     - 種類ごとに 1 色 (CAT)。黄色はキーストーンだけ
     - 人数で 3 段: 定番 (7 割以上) = その色を濃く太く / よく使う (4 割以上) = 薄く / 少数派 = 灰色、最初は畳む
     - 一番上の「定番セット」は定番だけを種類をまたいで集めた物 (これだけ見ればそのビルドの形が分かる)
-  選んだビルド (か 3 ビルドの合計) の人だけの集計。アセンダンシー全体の使用率は自動ジェム監視へ移した。
+  選んだビルドの人だけの集計。アセンダンシー全体の使用率は自動ジェム監視へ移した。
+  メインスキルとスピリットには「監視へ +」(他の画面と同じ WatchToggleButton)。オーナー 2026-09-29「今まで通り監視へボタンはいる、そこだけ」
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { AggregatedAscendancy, AugmentKind, LoadoutEntry, SkillUsage } from "../../services/craft-v2/types";
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
+import gemsRaw from "../../i18n/gems-client.json";
+import WatchToggleButton from "../WatchToggleButton.vue";
+
+/** 監視に入れられるジェム (英語名)。ユニークの付与スキルなどは出さない (SkillUsageCard と同じ) */
+const WATCHABLE = new Set((gemsRaw as { en: string }[]).map((g) => g.en));
 
 const props = defineProps<{ agg: AggregatedAscendancy }>();
 
@@ -151,6 +157,10 @@ const skillVisible = (list: SkillUsage[]): SkillUsage[] => visible(list);
                 <span class="min-w-0 flex-1 truncate" :class="tierOf(s.count) === 'core' ? 'text-[14px] font-bold text-white' : 'text-[13px] text-white/75'" :title="s.nameEn">{{ s.name }}</span>
                 <span class="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="CAT[g.cat].bar" :style="{ width: pctW(s.count) }" /></span>
                 <span class="w-12 shrink-0 text-right text-[12px] tabular-nums text-white/60">{{ s.count }}/{{ agg.sampleSize }}</span>
+                <!-- 列は全部の行で空けて棒の位置を揃える (ボタンはメインとスピリットだけ) -->
+                <span class="w-[4.5rem] shrink-0 text-right">
+                  <WatchToggleButton v-if="g.key !== 'other' && WATCHABLE.has(s.nameEn)" :gem-en="s.nameEn" :name-ja="s.name" class="text-[10px]" />
+                </span>
               </div>
               <div v-if="visible(s.supports).length" class="mt-1 flex flex-wrap gap-1 pl-2">
                 <span
