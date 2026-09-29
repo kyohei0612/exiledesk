@@ -13,7 +13,8 @@ import { computed } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import { craftStage } from "../../state/craft-stage";
 import { playPlan } from "../../services/craft-stage/run-plan";
-import { diffItems } from "../../services/craft-stage/compare";
+import { diffItems, type DiffLine } from "../../services/craft-stage/compare";
+import { NEGATIVE_WORDS } from "../../services/craft-stage/stage-core";
 import type { CraftStagePlan } from "../../services/craft-stage/contract";
 import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
 import { easeOut, seg, useAnim } from "./use-anim";
@@ -54,15 +55,25 @@ const view = computed(() => {
 });
 const num = (v: number): string => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/0+$/, ""));
 const signed = (v: number): string => (v > 0 ? `+${num(v)}` : num(v));
-/** 違いを文面に入れる (「回避力 +#」→「回避力 +169」、「#から#の物理ダメージ」→「+4から+6の物理ダメージ」。要望 ⑭ で全部の数値を出す) */
-function withDelta(text: string, ds: readonly number[]): string {
+/**
+ * 差の行の文面 (要望 ㉑、2026-09-30「消えた MOD の符号が混ざる」「±0 の行が並ぶ」):
+ *   増えた = 「+ アタックスピードが8%増加する」、消えた = 「− スタン持続時間が15%増加する」(数字は元のまま)、
+ *   変わった = 「物理ダメージが53→104%増加する (+51)」(変わった数値だけ 前→後、最後に差)。数値は全部出す (要望 ⑭)
+ */
+function fill(text: string, vals: (i: number) => string): string {
   let i = 0;
-  const out = text.replace(/([+-]?)#/g, () => {
-    const d = ds[i++] ?? 0;
-    return d === 0 ? "±0" : signed(d);
-  });
-  return i ? out : `${text} ${signed(ds[0] ?? 0)}`;
+  return text.replace(/#/g, () => vals(i++));
 }
+function lineText(d: DiffLine): string {
+  // 「減少する」の文は数字を正で (ゲームと同じ。データの値は負)
+  if (NEGATIVE_WORDS.test(d.text)) d = { ...d, a: d.a.map(Math.abs), b: d.b.map(Math.abs), delta: -d.delta };
+  if (d.kind === "added") return `+ ${fill(d.text, (i) => num(d.b[i] ?? 0))}`;
+  if (d.kind === "removed") return `− ${fill(d.text, (i) => num(d.a[i] ?? 0))}`;
+  const body = fill(d.text, (i) => ((d.a[i] ?? 0) === (d.b[i] ?? 0) ? num(d.b[i] ?? 0) : `${num(d.a[i] ?? 0)}→${num(d.b[i] ?? 0)}`));
+  return `${body} (${signed(d.delta)})`;
+}
+/** 行の色: 増えた・上がった = 緑、消えた・下がった = 赤 */
+const tone = (d: DiffLine): string => (d.kind === "added" || (d.kind === "changed" && d.delta > 0) ? "bg-emerald-500/15 text-emerald-200" : "bg-rose-500/15 text-rose-200");
 /**
  * 差の行の文字の大きさ (要望 ⑭「2 行まで折り返して全文。2 行でも入らない時だけ少し小さく」)。
  * 列の中身の幅 (約 316px) に 2 行で入る文字数を、全角 = 1・半角 = 0.55 で数えて決める
@@ -114,9 +125,9 @@ const ZOOM = 1.44;
           v-for="(d, i) in view.diff.slice(0, 14)"
           :key="i"
           class="line-clamp-2 rounded-lg px-2.5 py-1 font-bold leading-snug"
-          :class="d.delta > 0 ? 'bg-emerald-500/15 text-emerald-200' : d.delta < 0 ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-white/50'"
-          :style="{ fontSize: `${diffFont(withDelta(d.text, d.deltas), topFont(Math.min(14, view.diff.length)))}px` }"
-        >{{ withDelta(d.text, d.deltas) }}</p>
+          :class="tone(d)"
+          :style="{ fontSize: `${diffFont(lineText(d), topFont(Math.min(14, view.diff.length)))}px` }"
+        >{{ lineText(d) }}</p>
       </div>
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>

@@ -40,8 +40,16 @@ describe("比べる画面の差", () => {
     expect(phys?.deltas.length).toBe(2);
     expect(d.length).toBeGreaterThan(5);
   });
-  it("同じアイテム同士は差が 0", () => {
+  it("同じアイテム同士は行が出ない (差が 0 の行は出さない、要望 ㉑)", () => {
     const a = playPlan(data, P(4242, ["transmute", "regal"]), {}).final;
-    expect(diffItems(a, a).every((x) => x.delta === 0 && !x.only)).toBe(true);
+    expect(diffItems(a, a)).toEqual([]);
+  });
+  it("増えた → 変わった → 消えた の順、消えた行の数値は元のまま (符号を付けない)", () => {
+    const a = playPlan(data, P(4242, ["transmute", "augment", "regal", "exalt", "exalt", "exalt"]), {}).final;
+    const b = playPlan(data, P(9001, ["alchemy", "exalt", "exalt"]), {}).final;
+    const d = diffItems(a, b);
+    const order = d.map((x) => ({ added: 0, changed: 1, removed: 2 })[x.kind]);
+    expect(order).toEqual([...order].sort((p, q) => p - q));
+    for (const x of d.filter((x) => x.kind === "removed")) expect(x.a.every((v, i) => v === x.deltas[i])).toBe(true);
   });
 });

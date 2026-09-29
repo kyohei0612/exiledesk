@@ -1,9 +1,11 @@
 /**
  * compare.ts — アイテム 2 つの違い (POE2Tube 要望 ⑪-3「装備を入れ替えるかの見方」、2026-09-29)
  *
- * MOD の文面の数値を # にした形 (同じ効果) で揃え、数値ごとの差を出す。片方にしか無い物は「A だけ」「B だけ」。
+ * MOD の文面の数値を # にした形 (同じ効果) で揃えて、行ごとに「増えた (B だけ) / 変わった (両方にあって数値が違う) / 消えた (A だけ)」に分ける。
  * 数値は MOD の values (転がった値)。エンチャント・固有の効果は比べない (MOD だけ)。
- * 要望 ⑭「数値 (+2から3 等) は必ず見えるように」: 数値が 2 つある MOD (「#から#の物理ダメージ」) は両方の差を持つ。
+ * 要望 ⑭「数値 (+2から3 等) は必ず見えるように」: 数値が 2 つある MOD (「#から#の物理ダメージ」) は両方を持つ。
+ * 要望 ㉑ (2026-09-30、撮った本編で読みにくかった): 消えた MOD の数字にマイナスを付けない (元の数字のまま「−」の印)、
+ * 差が 0 の行は出さない、並びは 増えた → 変わった → 消えた。数値の書き方は画面 (VideoCompare) の lineText。
  */
 import type { StageItem } from "./types";
 import { allMods } from "./stage-core";
@@ -11,11 +13,15 @@ import { allMods } from "./stage-core";
 export interface DiffLine {
   /** 日本語の文面 (数値は #) */
   text: string;
-  /** 数値ごとの差 (B − A。片方だけの時はその値、A だけなら負) */
+  kind: "added" | "changed" | "removed";
+  /** A (今の装備) の数値。増えた行は [] */
+  a: number[];
+  /** B (入れ替える物) の数値。消えた行は [] */
+  b: number[];
+  /** 数値ごとの差 (B − A)。増えた行は B の値、消えた行は A の値 (符号はそのまま。色は kind で決める) */
   deltas: number[];
-  /** 並べる・色を決める差 (1 つ目) */
+  /** 並べる大きさ (1 つ目の差の大きさ) */
   delta: number;
-  only: "a" | "b" | null;
 }
 
 /** 転がった値だけを順に # にする (「1 体ごとに」の 1 などは残す) */
@@ -33,6 +39,7 @@ function templateOf(text: string, values: readonly number[]): string {
 }
 
 const round = (v: number): number => Math.round(v * 100) / 100;
+const ORDER = { added: 0, changed: 1, removed: 2 } as const;
 
 export function diffItems(a: StageItem, b: StageItem): DiffLine[] {
   const pick = (it: StageItem) => {
@@ -52,13 +59,17 @@ export function diffItems(a: StageItem, b: StageItem): DiffLine[] {
   for (const k of new Set([...A.keys(), ...B.keys()])) {
     const x = A.get(k);
     const y = B.get(k);
-    let deltas: number[];
-    let only: DiffLine["only"] = null;
-    if (x && y) deltas = y.v.map((n, i) => round(n - (x.v[i] ?? 0)));
-    else if (y) (deltas = y.v.map(round)), (only = "b");
-    else deltas = x!.v.map((n) => round(-n)), (only = "a");
-    out.push({ text: (y ?? x)!.text, deltas, delta: deltas[0] ?? 0, only });
+    if (x && y) {
+      const deltas = y.v.map((n, i) => round(n - (x.v[i] ?? 0)));
+      // 差が 0 の行 (左右で同じ MOD) は出さない (要望 ㉑)
+      if (deltas.every((d) => d === 0)) continue;
+      out.push({ text: y.text, kind: "changed", a: x.v.map(round), b: y.v.map(round), deltas, delta: deltas.find((d) => d !== 0) ?? 0 });
+    } else if (y) {
+      out.push({ text: y.text, kind: "added", a: [], b: y.v.map(round), deltas: y.v.map(round), delta: round(y.v[0] ?? 0) });
+    } else if (x) {
+      out.push({ text: x.text, kind: "removed", a: x.v.map(round), b: [], deltas: x.v.map(round), delta: round(x.v[0] ?? 0) });
+    }
   }
-  // 両方にあって差の無い物は最後、それ以外は差の大きい順
-  return out.sort((p, q) => Number(p.delta === 0 && !p.only) - Number(q.delta === 0 && !q.only) || Math.abs(q.delta) - Math.abs(p.delta));
+  // 増えた → 変わった → 消えた、その中は差の大きい順
+  return out.sort((p, q) => ORDER[p.kind] - ORDER[q.kind] || Math.abs(q.delta) - Math.abs(p.delta));
 }

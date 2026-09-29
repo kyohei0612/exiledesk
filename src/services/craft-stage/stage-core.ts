@@ -141,7 +141,13 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
  * 日本語文に値を入れる。値の範囲の無い MOD (固定の「+1 to Level of all Minion Skills」、2 行目が固定の物) は日本語だけ「#」なので、
  * 値を入れた英語文の数値を順に使う (日本語に字で書いてある数値「最大ライフ 100 ごと」は除いて数を合わせる)
  */
+/**
+ * 「減少する」「低下する」の文は、ゲームの表示と同じく数字を正で出す (データの値は負: 要求能力値 -15 → 「要求能力値が15%減少する」)。
+ * 2026-09-30 (要望 ㉑ の確認で見つけた): 「要求能力値が-15%減少する」と二重に負になっていた
+ */
+export const NEGATIVE_WORDS = /減少|低下/;
 function fillJa(ja: string, en: string, values: readonly number[], signs: readonly string[]): string {
+  if (NEGATIVE_WORDS.test(ja)) values = values.map((v) => Math.abs(v));
   const holes = (ja.match(/#/g) ?? []).length;
   if (holes <= values.length) return fillValues(ja, values, signs);
   let nums = [...en.matchAll(/([+-]?)(\d+(?:\.\d+)?)/g)];
