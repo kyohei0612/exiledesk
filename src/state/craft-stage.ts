@@ -69,7 +69,16 @@ export interface ResistsBlock {
   items: Array<{ name: string; base: string; rarity: string }>;
   /** 装備だけの耐性の合計 (アイテム無しとの差) */
   equip?: Record<"fire" | "cold" | "lightning" | "chaos", number>;
-  rows: Array<{ penalty: number; label: string; resists: PobStat["resists"] }>;
+  rows: Array<{
+    penalty: number;
+    label: string;
+    resists: PobStat["resists"];
+    /** 内訳 (要望 ⑳): 元の値 (ペナルティ) / クエストの報酬 / 装備 (どれも PoB の値) */
+    parts?: Record<"fire" | "cold" | "lightning" | "chaos", { base: number; quests: number; equip: number }>;
+  }>;
+  /** 使った前提 (要望 ⑳): 設定の言葉と入れたクエストの報酬 */
+  config_ja?: string;
+  quests?: Array<{ act: number; area: string; stat: string; on: boolean }>;
 }
 const extra = ref<StageExtra | null>(null);
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */

@@ -58,6 +58,18 @@ const result = M.runPlan(data, plan, {
 
 // ---- PoB (要望 ⑰-3): 手順 JSON に pob があれば、手 0 (始め) と各手の後のアイテムで PoB を計算して結果 JSON の pob と steps[i].pob に入れる ----
 const skillJa = new Map(JSON.parse(readFileSync(join(root, "src/services/craft-stage/skill-art.json"), "utf8")).map((s) => [s.en, s.ja]));
+/**
+ * クエストの報酬 (要望 ⑲-6): quests_act (何アクトまで終えたか) より先のアクトの物を外す設定と、入れた物の一覧。無ければ PoB の既定 (全部入り)。
+ * 手順の pob と耐性の画面 (--resists) の両方がこれを使う (要望 ⑳: 耐性の方に渡っていなかった)
+ */
+function questsOf(p) {
+  const quests = pobQuests(root).map((q) => ({ ...q, on: p?.quests_act == null || q.act <= p.quests_act }));
+  return {
+    off: Object.fromEntries(quests.filter((q) => !q.on).map((q) => [q.key, false])),
+    list: quests.map(({ act, area, stat, on }) => ({ act, area, stat, on })),
+    ja: p?.quests_act != null ? `アクト ${p.quests_act} までのクエストの報酬` : "クエストの報酬は全部 (PoB の既定)",
+  };
+}
 /** 前提のキャラ (手順の pob) → stage_pob の入力の頭と、結果に書き戻す character / config */
 function pobHead(p) {
   const G = pobGems(root);
@@ -65,9 +77,8 @@ function pobHead(p) {
   const gemLevel = p.gem_level ?? G.levelFor(p.skill, p.level);
   const supports = p.supports ?? [];
   const { config: base, ja } = M.pobConfigOf(p);
-  // クエストの報酬 (要望 ⑲-6): quests_act (何アクトまで終えたか) より先のアクトの物を外す。無ければ PoB の既定 (全部入り)
-  const quests = pobQuests(root).map((q) => ({ ...q, on: p.quests_act == null || q.act <= p.quests_act }));
-  const config = { ...base, ...Object.fromEntries(quests.filter((q) => !q.on).map((q) => [q.key, false])) };
+  const q = questsOf(p);
+  const config = { ...base, ...q.off };
   // スキルの段 (要望 ⑱-4): skill_part は番号か名前。段 (parts) かステータスの組 (statSets) を選ぶ。無ければ PoB の既定 (1 つ目)
   const part = G.choose(p.skill, p.skill_part);
   const names = G.partNames(p.skill);
@@ -79,8 +90,8 @@ function pobHead(p) {
       skill_part: names[partIdx - 1] ?? null, skill_parts: names,
     },
     config,
-    config_ja: p.quests_act != null ? `${ja}・アクト ${p.quests_act} までのクエストの報酬` : `${ja}・クエストの報酬は全部 (PoB の既定)`,
-    quests: quests.map(({ act, area, stat, on }) => ({ act, area, stat, on })),
+    config_ja: `${ja}・${q.ja}`,
+    quests: q.list,
   };
 }
 /** アイテム → PoB の装備 (壊れた・ユニーク・枠の無い物は装備しない) */
@@ -136,18 +147,31 @@ function resists(spec) {
     return played.final;
   });
   const equipped = items.flatMap((it) => equip(it, it.cls.category === "Rings" ? ring++ : 0));
-  const base = { class: spec.pob?.class ?? "Ranger", level: spec.pob?.level ?? 20, config: { enemyIsBoss: "None", ...(spec.pob?.config ?? {}) } };
+  // 手順の pob と同じ扱い (要望 ⑳): config の他の項目とクエストの報酬 (quests_act)
+  const q = questsOf(spec.pob);
+  const base = { class: spec.pob?.class ?? "Ranger", level: spec.pob?.level ?? 20, config: { enemyIsBoss: "None", ...(spec.pob?.config ?? {}), ...q.off } };
   // ペナルティごとに別のビルド (設定) なので 1 本ずつ
   const outs = PEN.map((p) => runStagePob(root, { ...base, config: { ...base.config, resistancePenalty: p }, steps: [equipped, []] }));
   const r = (o, e) => ({ value: o[`${e}Resist`] ?? 0, total: o[`${e}ResistTotal`] ?? 0 });
   const E = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
-  const rows = outs.map((o, i) => ({ penalty: PEN[i], label: PJA[String(PEN[i])] ?? `${PEN[i]}%`, resists: Object.fromEntries(Object.entries(E).map(([k, e]) => [k, r(o.steps[0], e)])) }));
+  // 内訳 (要望 ⑳ のついで): 元の値 = ペナルティ (混沌は 0)、クエスト = アイテム無しの合計 − 元の値、装備 = 装備込みの合計 − アイテム無しの合計 (どれも PoB の値)
+  const parts = (o, pen) => Object.fromEntries(Object.entries(E).map(([k, e]) => {
+    const withItems = o.steps[0][`${e}ResistTotal`] ?? 0;
+    const bare = o.steps[1][`${e}ResistTotal`] ?? 0;
+    const orig = k === "chaos" ? 0 : pen;
+    return [k, { base: orig, quests: bare - orig, equip: withItems - bare }];
+  }));
+  const rows = outs.map((o, i) => ({ penalty: PEN[i], label: PJA[String(PEN[i])] ?? `${PEN[i]}%`, resists: Object.fromEntries(Object.entries(E).map(([k, e]) => [k, r(o.steps[0], e)])), parts: parts(o, PEN[i]) }));
   const o0 = outs[0];
   const equipSum = Object.fromEntries(Object.entries(E).map(([k, e]) => [k, (o0.steps[0][`${e}ResistTotal`] ?? 0) - (o0.steps[1][`${e}ResistTotal`] ?? 0)]));
   // PoB が読めなかった行 (要望 ⑲-3)。空なら全部読めている
   const unparsed = [...new Set(o0.steps[0]?.inspect?.unparsed ?? [])];
   if (unparsed.length) console.warn(`PoB が読めなかった行: ${unparsed.join(" / ")}`);
-  const out = { version: o0.pob_version, items: items.map((it) => ({ name: it.baseJa, base: it.base, rarity: it.rarity })), equip: equipSum, rows, unparsed };
+  const out = {
+    version: o0.pob_version, items: items.map((it) => ({ name: it.baseJa, base: it.base, rarity: it.rarity })), equip: equipSum, rows, unparsed,
+    // 使った前提 (要望 ⑳): キャラ・設定・入れたクエストの報酬
+    character: { class: base.class, level: base.level }, config: base.config, config_ja: `${spec.pob?.config?.enemyIsBoss === "Boss" ? "ボス" : "普通の敵"}・${q.ja}`, quests: q.list,
+  };
   writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
   console.log(`耐性 (PoB ${out.version}): 装備 ${items.length} 個、ペナルティ ${PEN.length} 通り -> ${outPath}`);
 }
