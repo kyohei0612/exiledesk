@@ -36,6 +36,15 @@ export interface PobStat {
   crit: number;
   /** crit と同じ (POE2Tube の名前) */
   crit_chance: number;
+  /** DPS の種類 (要望 ⑲-7): dps = PoB の TotalDPS (当たりの DPS、命中率とクリティカル込み、状態異常の継続ダメージは入らない)、combined_dps = 状態異常込み、dot = 継続ダメージ */
+  combined_dps: number;
+  dot: number;
+  /** 命中率 (%)。dps はこれで割り引いた後 */
+  hit_chance: number;
+  /** PoB が実際に使ったスキル (段・効いているサポート・使えない理由)。使えない理由があれば dps は 0 */
+  skill?: { name: string; part: string; level: number; supports: Record<string, number>; disabled: string };
+  /** PoB が読めなかったアイテムの行 (要望 ⑲-3。空なら全部読めている) */
+  unparsed: string[];
   /** DPS の種類ごとの内訳 (PoB の <種類>HitAverage の割合で DPS を分けた物) */
   breakdown: Record<"physical" | "fire" | "cold" | "lightning" | "chaos", number>;
   /**
@@ -52,6 +61,10 @@ export interface PobStat {
 }
 /** 敵 (PoB の表から。倒すまでの時間・受けるダメージの画面用) */
 export interface PobEnemy {
+  /** PoB が実際に使った値 (要望 ⑱-5 / ⑲-5): アーマー・回避力・耐性 (%)。enemyArmour 等の設定があればその値 */
+  armour?: number;
+  evasion?: number;
+  resists?: Record<"fire" | "cold" | "lightning" | "chaos", number>;
   /** 敵のレベル (設定の enemyLevel、無ければキャラのレベル。PoB の CalcSetup と同じ、上限 85) */
   level: number;
   /** 普通の敵のライフ (PoB の Data/Misc.lua の monsterLifeTable[level]) */
@@ -102,13 +115,14 @@ export function pobItemText(it: StageItem): string | null {
   const NL = String.fromCharCode(10);
   const implicits = (htcBaseInfo()[it.base]?.implicits ?? []).map((i) => (i as { en?: string }).en).filter((x): x is string => !!x);
   const runes = it.augments ?? [];
-  const lines = [`Rarity: ${RARITY[it.rarity]}`, it.rarity === "rare" ? "Stage Item" : it.base, it.base, "--------", `Item Level: ${it.itemLevel}`];
+  // 区切り線 (--------) は入れない。PoB の書き出しと同じ形 (Classes/Item.lua の BuildRaw)。区切り線の後の「Implicits:」は読めない行になっていた (要望 ⑲)
+  const lines = [`Rarity: ${RARITY[it.rarity]}`, it.rarity === "rare" ? "Stage Item" : it.base, it.base, `Item Level: ${it.itemLevel}`];
   if (it.quality > 0) lines.push(`Quality: ${it.quality}`);
   if (it.sockets) {
     lines.push(`Sockets: ${Array.from({ length: it.sockets }, () => "S").join(" ")}`);
     for (let i = 0; i < it.sockets; i++) lines.push(`Rune: ${runes[i]?.en ?? "None"}`);
   }
-  lines.push("--------", `Implicits: ${runes.length + implicits.length}`);
+  lines.push(`Implicits: ${runes.length + implicits.length}`);
   for (const r of runes) lines.push(`{rune}${r.textEn}`);
   lines.push(...implicits);
   if (it.identified !== false) for (const m of [...it.prefixes, ...it.suffixes]) if (!m.unrevealed) lines.push(m.textEn);
@@ -124,12 +138,19 @@ export function pobStatOf(o: Record<string, number>): PobStat {
   const types = { physical: "Physical", fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" } as const;
   const hitSum = Object.values(types).reduce((a, t) => a + n(o, `MainHand.${t}HitAverage`), 0);
   const breakdown = Object.fromEntries(Object.entries(types).map(([k, t]) => [k, hitSum > 0 ? (dps * n(o, `MainHand.${t}HitAverage`)) / hitSum : 0])) as PobStat["breakdown"];
+  const ins = (o as unknown as { inspect?: { skill?: { name: string; part: string; stat_set: string; level: number; supports: Record<string, number>; disabled: string }; unparsed?: string[] } }).inspect;
+  const sk = ins?.skill;
   return {
     dps,
     hit: n(o, "AverageDamage"),
     aps: n(o, "Speed"),
     crit: n(o, "CritChance"),
     crit_chance: n(o, "CritChance"),
+    combined_dps: n(o, "CombinedDPS"),
+    dot: n(o, "TotalDot"),
+    hit_chance: n(o, "MainHand.HitChance"),
+    ...(sk ? { skill: { name: sk.name, part: sk.stat_set || sk.part || "", level: sk.level, supports: sk.supports ?? {}, disabled: sk.disabled ?? "" } } : {}),
+    unparsed: ins?.unparsed ?? [],
     breakdown,
     armour: n(o, "Armour"),
     evasion: n(o, "Evasion"),

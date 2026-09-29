@@ -21,6 +21,8 @@ pub enum PobJob {
     GetEquippedItems { reply: Reply<Vec<EquippedItemInfo>> },
     GetSkillGroups { reply: Reply<Vec<SkillGroupInfo>> },
     SetMainSocketGroup { index: u32, reply: Reply<()> },
+    /// 2026-09-29: Lua の塊を実行して文字列を返す (クラフトステージの PoB の点検・スキルの段や読めなかった行の取り出し。examples/stage_pob.rs)
+    EvalString { script: String, reply: Reply<String> },
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -162,6 +164,16 @@ impl PobWorker {
             .map_err(|_| "pob worker reply lost".to_string())?
     }
 
+    /// Lua の塊を実行して、返した文字列を受け取る (点検用。塊は `return <文字列>` で終える)
+    pub fn eval_string(&self, script: String) -> Result<String, String> {
+        let (tx, rx) = mpsc::channel();
+        self.sender()
+            .send(PobJob::EvalString { script, reply: tx })
+            .map_err(|_| "pob worker disconnected".to_string())?;
+        rx.recv()
+            .map_err(|_| "pob worker reply lost".to_string())?
+    }
+
     pub fn set_main_socket_group(&self, index: u32) -> Result<(), String> {
         let (tx, rx) = mpsc::channel();
         self.sender()
@@ -235,6 +247,10 @@ fn run_job(lua: &Lua, job: PobJob) {
             let r = call_set_main_socket_group(lua, index).map_err(|e| e.to_string());
             let _ = reply.send(r);
         }
+        PobJob::EvalString { script, reply } => {
+            let r = lua.load(&script).eval::<String>().map_err(|e| e.to_string());
+            let _ = reply.send(r);
+        }
     }
 }
 
@@ -268,6 +284,9 @@ fn fail_job(job: PobJob, msg: String) {
             let _ = reply.send(Err(msg));
         }
         PobJob::SetMainSocketGroup { reply, .. } => {
+            let _ = reply.send(Err(msg));
+        }
+        PobJob::EvalString { reply, .. } => {
             let _ = reply.send(Err(msg));
         }
     }

@@ -38,6 +38,14 @@ struct Input {
     gem_id: Option<String>,
     #[serde(default)]
     gem_level: u32,
+    /// スキルの段 (1 から、PoB の parts)。無ければ PoB の既定 (1 つ目)
+    #[serde(default)]
+    skill_part: Option<u32>,
+    /// ステータスの組 (1 から、PoE2 の PoB の statSets。アイスストライクの Normal Strikes / Third Strike など)。granted_effect と組で
+    #[serde(default)]
+    stat_set: Option<u32>,
+    #[serde(default)]
+    granted_effect: Option<String>,
     #[serde(default)]
     supports: Vec<String>,
     #[serde(default)]
@@ -52,11 +60,64 @@ const KEYS: &[&str] = &[
     "FireResist", "ColdResist", "LightningResist", "ChaosResist",
     "FireResistTotal", "ColdResistTotal", "LightningResistTotal", "ChaosResistTotal",
     "FireResistOverCap", "ColdResistOverCap", "LightningResistOverCap", "ChaosResistOverCap",
+    // DPS の種類 (要望 ⑲-7): TotalDPS = 当たりの DPS (命中率・クリティカル込み)、CombinedDPS = 状態異常のダメージ込み、FullDPS = 全部のスキル
+    "FullDPS", "TotalDot", "MainHand.HitChance", "MainHand.CritChance",
     // 1 発の種類ごとの平均 (DPS の内訳、要望 ⑰-2 の breakdown)
     "MainHand.PhysicalHitAverage", "MainHand.FireHitAverage", "MainHand.ColdHitAverage", "MainHand.LightningHitAverage", "MainHand.ChaosHitAverage",
     // 敵の一撃 (種類ごと、PoB の設定の既定値。受けるダメージの画面)
     "PhysicalEnemyDamage", "FireEnemyDamage", "ColdEnemyDamage", "LightningEnemyDamage", "ChaosEnemyDamage",
 ];
+
+/**
+ * PoB が実際に読んだ物を JSON の文字列で返す Lua (要望 ⑲ の点検)。
+ *   skill: メインのスキルの名前・段の名前・効いているサポート (effectList の 2 つ目から)
+ *   gems: 読み込んだジェム (gemData が引けたか = PoB が知っているジェムか)
+ *   unparsed: 装備したアイテムの読めなかった行 (modLine.extra = PoB の「unsupported」)
+ *   enemy: 敵のレベル・ライフ・アーマー・回避・耐性 (enemy.output / enemyDB)
+ */
+const INSPECT: &str = r#"
+local function q(s) return '"' .. tostring(s or ""):gsub('\\', '\\\\'):gsub('"', '\\"') .. '"' end
+local parts = {}
+local env = build.calcsTab and build.calcsTab.mainEnv
+local ms = env and env.player and env.player.mainSkill
+if ms and ms.activeEffect then
+  local sup = {}
+  for i, e in ipairs(ms.effectList or {}) do
+    if i > 1 and e.grantedEffect then table.insert(sup, q(e.grantedEffect.name) .. ":" .. tostring(e.level or 0)) end
+  end
+  local ae = ms.activeEffect
+  local ssi = (ae.statSet and ae.statSet.index) or (ae.statSetCalcs and ae.statSetCalcs.index) or 1
+  local ss = ae.grantedEffect.statSets and ae.grantedEffect.statSets[ssi]
+  table.insert(parts, '"skill":{"name":' .. q(ae.grantedEffect.name) .. ',"stat_set":' .. q(ss and ss.label) .. ',"stat_set_index":' .. tostring(ssi) .. ',"part":' .. q(ms.skillPartName) .. ',"part_index":' .. tostring(ms.skillPart or 0) .. ',"level":' .. tostring(ms.activeEffect.level or 0) .. ',"disabled":' .. q(ms.disableReason) .. ',"supports":{' .. table.concat(sup, ",") .. '}}')
+end
+local gems = {}
+for _, sg in ipairs(build.skillsTab.socketGroupList or {}) do
+  for _, g in ipairs(sg.gemList or {}) do
+    table.insert(gems, '{"spec":' .. q(g.nameSpec) .. ',"known":' .. tostring(g.gemData ~= nil) .. ',"support":' .. tostring(g.gemData and g.gemData.tags and g.gemData.tags.support or false) .. ',"level":' .. tostring(g.level or 0) .. ',"enabled":' .. tostring(g.enabled ~= false) .. '}')
+  end
+end
+table.insert(parts, '"gems":[' .. table.concat(gems, ",") .. ']')
+local un = {}
+for _, slot in pairs(build.itemsTab.slots or {}) do
+  local item = slot.selItemId and slot.selItemId > 0 and build.itemsTab.items[slot.selItemId]
+  if item then
+    for _, list in ipairs({ item.runeModLines or {}, item.implicitModLines or {}, item.explicitModLines or {} }) do
+      for _, ml in ipairs(list) do
+        if ml.extra then table.insert(un, q(ml.line)) end
+      end
+    end
+  end
+end
+table.insert(parts, '"unparsed":[' .. table.concat(un, ",") .. ']')
+local en = env and env.enemy
+if en then
+  local o = en.output or {}
+  local db = en.modDB
+  local function b(n) return db and db:Sum("BASE", nil, n) or 0 end
+  table.insert(parts, '"enemy":{"level":' .. tostring(env.enemyLevel or 0) .. ',"armour":' .. tostring(o.Armour or b("Armour")) .. ',"evasion":' .. tostring(o.Evasion or b("Evasion")) .. ',"fire":' .. tostring(b("FireResist")) .. ',"cold":' .. tostring(b("ColdResist")) .. ',"lightning":' .. tostring(b("LightningResist")) .. ',"chaos":' .. tostring(b("ChaosResist")) .. '}')
+end
+return "{" .. table.concat(parts, ",") .. "}"
+"#;
 
 fn esc(s: &str) -> String {
     s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
@@ -78,7 +139,13 @@ fn build_xml(empty: &str, inp: &Input) -> String {
     let Some(gem_id) = inp.gem_id.as_deref() else {
         return with_config(xml, inp);
     };
-    let mut gems = format!("<Gem gemId=\"{}\" level=\"{}\" quality=\"0\" enabled=\"true\"/>", esc(gem_id), inp.gem_level.max(1));
+    let part = inp.skill_part.map(|p| format!(" skillPart=\"{p}\" skillPartCalcs=\"{p}\"")).unwrap_or_default();
+    // ステータスの組は Gem の子の StatSetIndex / StatSetCalcsIndex (Classes/SkillsTab.lua の LoadSkill と同じ形)
+    let set = match (inp.stat_set, inp.granted_effect.as_deref()) {
+        (Some(n), Some(ge)) => format!("<StatSetIndex grantedEffect=\"{0}\" index=\"{n}\"/><StatSetCalcsIndex grantedEffect=\"{0}\" index=\"{n}\"/>", esc(ge)),
+        _ => String::new(),
+    };
+    let mut gems = format!("<Gem gemId=\"{}\" level=\"{}\" quality=\"0\" enabled=\"true\"{part}>{set}</Gem>", esc(gem_id), inp.gem_level.max(1));
     for s in &inp.supports {
         gems.push_str(&format!("<Gem gemId=\"{}\" level=\"1\" quality=\"0\" enabled=\"true\"/>", esc(s)));
     }
@@ -142,8 +209,20 @@ fn main() {
                 eprintln!("{k} = {v}");
             }
         }
-        let row: serde_json::Map<String, serde_json::Value> =
+        let mut row: serde_json::Map<String, serde_json::Value> =
             KEYS.iter().filter_map(|k| all.get(*k).map(|v| (k.to_string(), serde_json::json!(v)))).collect();
+        // 確かめ用: STAGE_POB_LUA=<Lua の塊 (文字列を return)> を手ごとに実行して標準エラーに出す (要望 ⑲ の点検)
+        if let Ok(script) = env::var("STAGE_POB_LUA") {
+            eprintln!("[lua] {}", worker.eval_string(script).unwrap_or_else(|e| format!("ERR {e}")));
+        }
+        // PoB が実際に読んだ物 (要望 ⑲ の点検): メインのスキルと段・効いているサポート・読めなかったアイテムの行・敵の値
+        if let Ok(s) = worker.eval_string(INSPECT.to_string()) {
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&s) {
+                row.insert("inspect".into(), v);
+            } else {
+                eprintln!("点検の読み取りに失敗: {s}");
+            }
+        }
         steps.push(serde_json::Value::Object(row));
     }
     let out = serde_json::json!({ "pob_version": pob_version(), "config": inp.config, "steps": steps });

@@ -16,7 +16,23 @@ export function pobGems(root) {
   for (const m of text.matchAll(/\["(Metadata\/Items\/Gems\/[^"]+)"\] = \{([\s\S]*?)\n\t\},/g)) {
     const name = /\n\t\tname = "([^"]*)"/.exec(m[2])?.[1];
     const effect = /\n\t\tgrantedEffectId = "([^"]*)"/.exec(m[2])?.[1];
-    if (name && !byName.has(name)) byName.set(name, { gameId: m[1], effect });
+    // PoB が引くのは中の gameId の値 (build.data.gemsByGameId)。見出しの ID とはサポートで違う
+    // (見出し SupportGemHeft / gameId SkillGemHeftSupport)。見出しを渡していてサポートが全部読まれていなかった (2026-09-29、要望 ⑱-6)
+    const gameId = /\n\t\tgameId = "([^"]*)"/.exec(m[2])?.[1] ?? m[1];
+    if (name && !byName.has(name)) byName.set(name, { gameId, effect });
+  }
+  // スキルの段 (parts) の名前。skill_part を名前で選ぶ時に番号 (1 から) にする
+  const partsOf = new Map();
+  const setsOf = new Map();
+  for (const f of readdirSync(join(data, "Skills")).filter((x) => x.endsWith(".lua"))) {
+    const t = readFileSync(join(data, "Skills", f), "utf8");
+    for (const m of t.matchAll(/skills\["([^"]+)"\] = \{([\s\S]*?)\n\}/g)) {
+      const block = /\n\tparts = \{([\s\S]*?)\n\t\},/.exec(m[2])?.[1];
+      if (block && !partsOf.has(m[1])) partsOf.set(m[1], [...block.matchAll(/name = "([^"]*)"/g)].map((x) => x[1]));
+      // PoE2 の PoB は段の代わりにステータスの組 (statSets) の物が多い (アイスストライクの Normal Strikes / Third Strike)
+      const sets = /\n\tstatSets = \{([\s\S]*)/.exec(m[2])?.[1];
+      if (sets && !setsOf.has(m[1])) setsOf.set(m[1], [...sets.matchAll(/\n\t\t\tlabel = "([^"]*)"/g)].map((x) => x[1]));
+    }
   }
   // スキルごとの「ジェムレベル → 必要なキャラのレベル」
   const reqs = new Map();
@@ -32,6 +48,52 @@ export function pobGems(root) {
       const g = byName.get(name);
       if (!g) throw new Error(`PoB にスキル「${name}」が無い (英語の名前で指定)`);
       return g;
+    },
+    /**
+     * スキルの段の選び方: 段 (parts) があれば { skill_part }、ステータスの組 (statSets) が 2 つ以上あれば { stat_set, granted_effect }。
+     * part は番号 (1 から) か名前 (英語)。無ければ {} (PoB の既定 = 1 つ目)。無い名前・番号はエラー
+     */
+    choose(name, part) {
+      if (part == null) return {};
+      const g = byName.get(name);
+      const parts = (g?.effect && partsOf.get(g.effect)) || [];
+      const sets = (g?.effect && setsOf.get(g.effect)) || [];
+      if (parts.length > 1) return { skill_part: pick(parts) };
+      if (sets.length > 1) return { stat_set: pick(sets), granted_effect: g.effect };
+      throw new Error(`${name} には選べる段が無い`);
+      function pick(list) {
+        if (typeof part === "number") {
+          if (part < 1 || part > list.length) throw new Error(`${name} の段 ${part} は無い (段: ${list.join(" / ")})`);
+          return part;
+        }
+        const i = list.findIndex((x) => x.toLowerCase() === String(part).toLowerCase());
+        if (i < 0) throw new Error(`${name} に「${part}」という段は無い (段: ${list.join(" / ")})`);
+        return i + 1;
+      }
+    },
+    /** 段の名前の一覧 (段か、ステータスの組。無ければ []) */
+    partNames(name) {
+      const g = byName.get(name);
+      const parts = (g?.effect && partsOf.get(g.effect)) || [];
+      return parts.length > 1 ? parts : (g?.effect && setsOf.get(g.effect)) || [];
+    },
+    /** スキルの段 (1 から)。part は番号か名前 (英語)。無ければ null (PoB の既定 = 1 つ目)。無い名前はエラー */
+    partIndex(name, part) {
+      if (part == null) return null;
+      const g = byName.get(name);
+      const list = (g?.effect && partsOf.get(g.effect)) || [];
+      if (typeof part === "number") {
+        if (part < 1 || part > Math.max(1, list.length)) throw new Error(`${name} の段 ${part} は無い (段: ${list.join(" / ") || "1 つだけ"})`);
+        return part;
+      }
+      const i = list.findIndex((x) => x.toLowerCase() === String(part).toLowerCase());
+      if (i < 0) throw new Error(`${name} に「${part}」という段は無い (段: ${list.join(" / ") || "1 つだけ"})`);
+      return i + 1;
+    },
+    /** スキルの段の名前 (無ければ []) */
+    parts(name) {
+      const g = byName.get(name);
+      return (g?.effect && partsOf.get(g.effect)) || [];
     },
     /** キャラのレベルで使える一番高いジェムレベル (データが無ければ 1) */
     levelFor(name, charLevel) {
@@ -61,6 +123,23 @@ export function pobEnemy(root, charLevel, config) {
   const mult = { None: num("normalEnemyDPSMult"), Boss: num("stdBossDPSMult"), Pinnacle: num("pinnacleBossDPSMult"), Uber: num("uberBossDPSMult") }[String(config.enemyIsBoss ?? "Pinnacle")] ?? num("normalEnemyDPSMult");
   const hit = Math.round((table("monsterDamageTable")[level - 1] ?? 0) * 1.5 * mult);
   return { level, life, hit, ja: `普通の敵 Lv${level} のライフ ${life}` };
+}
+
+/**
+ * クエストの報酬 (要望 ⑲-6): PoB は素のキャラにもクエストの報酬 (アクト 1 のライフ +20、アクト 3 の火耐性 +10% など) を既定で入れる
+ * (Modules/ConfigOptions.lua の「Quest Rewards」、チェックの既定がオン)。アクトの話と合わないので、quests_act (何アクトまで終えたか) より先の物を外せるように。
+ * 戻り: [{ key (設定の鍵 = "quest" + Description + Area + Info), act, area, stat }] (チェックの物だけ。選ぶ物 (Options) は PoB の既定で「無し」)
+ */
+export function pobQuests(root) {
+  const t = readFileSync(resolve(root, "vendor/PathOfBuilding-PoE2/src/Data/QuestRewards.lua"), "utf8");
+  const out = [];
+  for (const m of t.matchAll(/\n\t\{([\s\S]*?)\n\t\}/g)) {
+    const s = (k) => new RegExp(`\\["${k}"\\] = "([^"]*)"`).exec(m[1])?.[1];
+    const act = Number(/\["Act"\] = (\d+)/.exec(m[1])?.[1] ?? 0);
+    if (/\["useConfig"\] = false/.test(m[1]) || !s("Stat")) continue;
+    out.push({ key: `quest${s("Description")}${s("Area")}${s("Info")}`, act, area: s("Area"), stat: s("Stat") });
+  }
+  return out;
 }
 
 /** stage_pob を呼ぶ。steps は手ごとの [{ slot, text }]。戻りは stage_pob の out.json */
