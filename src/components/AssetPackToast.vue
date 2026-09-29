@@ -16,7 +16,7 @@ const mb = (n: number): string => (n / 1048576).toFixed(1);
       <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
         <div class="h-full rounded-full bg-amber-300 transition-all" :style="{ width: assetProgress.total ? `${Math.min(100, (assetProgress.received / assetProgress.total) * 100)}%` : '100%' }" />
       </div>
-      <p class="mt-1 opacity-60">{{ assetProgress.phase === "extract" ? "展開しています…" : `${mb(assetProgress.received)} / ${mb(assetProgress.total)} MB` }} · 初回と画像が変わった時だけ</p>
+      <p class="mt-1 opacity-60">{{ assetProgress.phase === "extract" ? "展開しています…" : assetProgress.phase === "files" ? `増えた画像 ${assetProgress.received} / ${assetProgress.total} 枚` : `${mb(assetProgress.received)} / ${mb(assetProgress.total)} MB` }} · 初回と画像が変わった時だけ</p>
     </template>
     <p v-else class="text-rose-300">{{ assetError }} <button type="button" class="ml-1 underline opacity-70" @click="assetError = null">閉じる</button></p>
   </div>

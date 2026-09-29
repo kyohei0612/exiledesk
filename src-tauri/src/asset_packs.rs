@@ -5,7 +5,11 @@
 //! (scripts/asset-packs.mjs --publish が、画像が変わった時だけ上げる)。アプリは画面が要る版 (hash) と
 //! `<app_local_data_dir>/assets/<pack>/.pack-state.json` を比べ、違う時だけ落として展開し直す。
 //! 仕組みは PoB の別配布 (pob_bundle.rs) と同じ (sha256 検証 → `<pack>.new` に展開 → 入れ替え)。
+//! 2026-09-29 オーナー「追加画像だけ落とす形」: 初回 (手元に無い) だけ zip。次からは manifest の files (名前 → ハッシュ) と
+//! 手元を比べ、変わった・増えた画像だけを GitHub の中身 (manifest の commit の public/<pack>/) から 1 枚ずつ落とし、消えた画像は消す。
+//! 手元の一覧が無い (v0.1.323 で zip だけ入れた) 時は、手元のファイルからハッシュを計算して比べる。多すぎる (400 枚超) 時は zip。
 
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -14,6 +18,10 @@ use sha2::{Digest, Sha256};
 use tauri::{Emitter, Manager};
 
 const BASE_URL: &str = "https://github.com/kyohei0612/ExileDesk/releases/download/asset-packs";
+/** 1 枚ずつ落とす時の取り先 (コミット・パック・ファイル名を後ろに付ける) */
+const RAW_URL: &str = "https://raw.githubusercontent.com/kyohei0612/ExileDesk";
+/** これより多く変わっていたら 1 枚ずつではなく zip で入れ直す */
+const DIFF_LIMIT: usize = 400;
 
 #[derive(Deserialize, Clone, Debug)]
 struct PackManifest {
@@ -24,11 +32,46 @@ struct PackManifest {
     #[serde(rename = "zipSize")]
     zip_size: u64,
     url: String,
+    /** 画像が入っているコミット (1 枚ずつ落とす時の取り先) */
+    commit: Option<String>,
+    /** ファイル名 → ハッシュ (sha256 の先頭 16 桁) */
+    files: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
 struct PackState {
     content_hash: Option<String>,
+    #[serde(default)]
+    files: Option<HashMap<String, String>>,
+}
+
+fn file_hash(bytes: &[u8]) -> String {
+    let d = format!("{:x}", Sha256::digest(bytes));
+    d[..16].to_string()
+}
+
+/// 手元の画像の一覧 (state に無い時はファイルから計算する)
+fn local_files(dir: &Path, st: &PackState) -> HashMap<String, String> {
+    if let Some(f) = &st.files {
+        return f.clone();
+    }
+    let mut out = HashMap::new();
+    if let Ok(rd) = std::fs::read_dir(dir) {
+        for e in rd.flatten() {
+            let name = e.file_name().to_string_lossy().to_string();
+            if name.starts_with('.') {
+                continue;
+            }
+            if let Ok(b) = std::fs::read(e.path()) {
+                out.insert(name, file_hash(&b));
+            }
+        }
+    }
+    out
+}
+
+fn write_state(dir: &Path, st: &PackState) -> Result<(), String> {
+    std::fs::write(dir.join(".pack-state.json"), serde_json::to_string(st).unwrap()).map_err(|e| e.to_string())
 }
 
 #[derive(Serialize, Clone)]
@@ -82,7 +125,7 @@ pub async fn asset_pack_ensure(app: tauri::AppHandle, pack: String, hash: String
     }
 }
 
-/// manifest → zip を落として sha256 を確かめ、`<pack>.new` に展開して入れ替える。入れた版 (contentHash) を返す
+/// manifest を見て、差分 (変わった画像だけ) か zip で入れる。入れた版 (contentHash) を返す
 async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<String, String> {
     let client = http_client()?;
     let m: PackManifest = client
@@ -96,6 +139,40 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
         .await
         .map_err(|e| format!("manifest の解析に失敗: {e}"))?;
     std::fs::create_dir_all(root).map_err(|e| e.to_string())?;
+    let dir = root.join(pack);
+    if let (true, Some(files), Some(commit)) = (dir.is_dir(), &m.files, &m.commit) {
+        let local = local_files(&dir, &read_state(&dir));
+        let changed: Vec<&String> = files.iter().filter(|(k, v)| local.get(*k) != Some(*v)).map(|(k, _)| k).collect();
+        let removed: Vec<&String> = local.keys().filter(|k| !files.contains_key(*k)).collect();
+        if changed.len() <= DIFF_LIMIT {
+            let total = changed.len() as u64;
+            for (i, name) in changed.iter().enumerate() {
+                let _ = app.emit("asset-pack-progress", Progress { pack: pack.to_string(), phase: "files", received: i as u64, total });
+                let bytes = client
+                    .get(format!("{RAW_URL}/{commit}/public/{pack}/{name}"))
+                    .send()
+                    .await
+                    .and_then(|r| r.error_for_status())
+                    .map_err(|e| format!("{name} の取得に失敗: {e}"))?
+                    .bytes()
+                    .await
+                    .map_err(|e| format!("{name} の取得に失敗: {e}"))?;
+                if &file_hash(&bytes) != files.get(*name).unwrap() {
+                    return Err(format!("{name} のハッシュが合わない"));
+                }
+                let tmp = dir.join(format!("{name}.part"));
+                std::fs::write(&tmp, &bytes).map_err(|e| e.to_string())?;
+                std::fs::rename(&tmp, dir.join(name.as_str())).map_err(|e| e.to_string())?;
+            }
+            for name in &removed {
+                let _ = std::fs::remove_file(dir.join(name.as_str()));
+            }
+            write_state(&dir, &PackState { content_hash: Some(m.content_hash.clone()), files: Some(files.clone()) })?;
+            let _ = app.emit("asset-pack-progress", Progress { pack: pack.to_string(), phase: "done", received: total, total });
+            crate::app_log::line_static(&format!("[画像パック] {pack}: 差分 {} 枚を落とし {} 枚を消した ({})", changed.len(), removed.len(), m.content_hash));
+            return Ok(m.content_hash);
+        }
+    }
     let zip_path = root.join(format!("{pack}.download.zip"));
     let mut resp = client.get(&m.url).send().await.map_err(|e| format!("ダウンロードに失敗: {e}"))?;
     if !resp.status().is_success() {
@@ -136,7 +213,6 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
     .await
     .map_err(|e| e.to_string())??;
     let _ = std::fs::remove_file(&zip_path);
-    let dir = root.join(pack);
     let old = root.join(format!("{pack}.old"));
     let _ = std::fs::remove_dir_all(&old);
     if dir.exists() {
@@ -144,8 +220,7 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
     }
     std::fs::rename(&new_dir, &dir).map_err(|e| format!("画像の配置に失敗: {e}"))?;
     let _ = std::fs::remove_dir_all(&old);
-    std::fs::write(dir.join(".pack-state.json"), serde_json::to_string(&PackState { content_hash: Some(m.content_hash.clone()) }).unwrap())
-        .map_err(|e| e.to_string())?;
+    write_state(&dir, &PackState { content_hash: Some(m.content_hash.clone()), files: m.files.clone() })?;
     emit("done", received);
     crate::app_log::line_static(&format!("[画像パック] {pack}: {:.1} MB を入れた ({})", received as f64 / 1_048_576.0, m.content_hash));
     Ok(m.content_hash)

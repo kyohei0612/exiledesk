@@ -10,6 +10,9 @@
  *   node scripts/asset-packs.mjs            … 版を計算して src/services/assets/asset-packs.json に書く (pnpm build の前に自動)
  *   node scripts/asset-packs.mjs --publish  … 版が公開済みと違うパックだけ zip にして GitHub Release の固定タグ asset-packs に上げる
  *                                             (CI の release.yml が本体のビルドの前に呼ぶ。要 gh CLI、zip は PowerShell)
+ * 2026-09-29 オーナー「追加画像だけ落とす形、めっちゃええやん」: manifest にファイルごとのハッシュ (files) と、その画像が入っている
+ * コミット (commit) を載せる。アプリは初回だけ zip、次からは変わった・増えた画像だけを GitHub の中身
+ * (raw.githubusercontent.com/<repo>/<commit>/public/<pack>/<file>) から 1 枚ずつ落とす。
  * 画像を増やす時は PACKS に 1 行足すだけ。
  */
 import { createHash } from "node:crypto";
@@ -29,6 +32,13 @@ const PUBLISH = process.argv.includes("--publish");
 const log = (...a) => console.log("[asset-packs]", ...a);
 const sh = (cmd, args) => { const r = spawnSync(cmd, args, { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" }); return { ok: r.status === 0, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 
+/** ファイル 1 つのハッシュ (sha256 の先頭 16 桁。アプリ側 asset_packs.rs と同じ) */
+const fileHash = (buf) => createHash("sha256").update(buf).digest("hex").slice(0, 16);
+async function filesOf(dir) {
+  const out = {};
+  for (const name of (await readdir(dir)).sort()) out[name] = fileHash(await readFile(join(dir, name)));
+  return out;
+}
 async function hashOf(dir) {
   const h = createHash("sha256");
   for (const name of (await readdir(dir)).sort()) {
@@ -57,14 +67,16 @@ if (PUBLISH) {
     const cur = sh("gh", ["release", "download", TAG, "-R", REPO, "-p", `${pack}.json`, "-O", "-"]);
     let published = null;
     try { published = cur.ok ? JSON.parse(cur.out) : null; } catch { published = null; }
-    if (published?.contentHash === hashes[pack]) { log(`${pack}: 公開済みと同じ → 上げない`); continue; }
+    const commit = process.env.GITHUB_SHA || sh("git", ["rev-parse", "HEAD"]).out.trim();
+    if (published?.contentHash === hashes[pack] && published.files && published.commit) { log(`${pack}: 公開済みと同じ → 上げない`); continue; }
     const zip = join(OUT_DIR, `${pack}.zip`);
     await rm(zip, { force: true });
     const src = resolve(ROOT, "public", pack);
     const z = sh("powershell", ["-NoProfile", "-Command", `Compress-Archive -Path '${src.replace(/'/g, "''")}/*' -DestinationPath '${zip.replace(/'/g, "''")}' -CompressionLevel Optimal -Force`]);
     if (!z.ok) throw new Error(`Compress-Archive: ${z.out}`);
     const buf = await readFile(zip);
-    const manifest = { pack, contentHash: hashes[pack], zipSha256: createHash("sha256").update(buf).digest("hex"), zipSize: (await stat(zip)).size, url: `https://github.com/${REPO}/releases/download/${TAG}/${pack}.zip` };
+    // commit: 1 枚ずつ落とす時の取り先 (その画像が入っている、push 済みのコミット。CI は GITHUB_SHA)
+    const manifest = { pack, contentHash: hashes[pack], zipSha256: createHash("sha256").update(buf).digest("hex"), zipSize: (await stat(zip)).size, url: `https://github.com/${REPO}/releases/download/${TAG}/${pack}.zip`, commit, files: await filesOf(src) };
     const mf = join(OUT_DIR, `${pack}.json`);
     await writeFile(mf, JSON.stringify(manifest, null, 2) + "\n");
     // zip → manifest の順 (manifest が先に変わると、古い zip を新しい版として入れてしまう)
