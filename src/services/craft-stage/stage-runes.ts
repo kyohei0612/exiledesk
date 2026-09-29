@@ -102,7 +102,7 @@ export function runeEffectFor(rune: RuneRow, category: string): RuneEffect | nul
 
 /** 棚に並べるルーン (ルーンだけ、段 → ドロップレベル順)。tier を渡すとその段だけ */
 export function runeKeys(tier?: string): string[] {
-  const order: Record<string, number> = { lesser: 0, normal: 1, greater: 2, perfect: 3 };
+  const order: Record<string, number> = { lesser: 0, normal: 1, greater: 2, perfect: 3, special: 4 };
   return Object.entries(RUNES)
     .filter(([, r]) => r.kind === "rune" && r.available !== false && (!tier || r.tier === tier))
     .sort(([, a], [, b]) => (order[a.tier ?? ""] ?? 9) - (order[b.tier ?? ""] ?? 9) || (a.drop ?? 0) - (b.drop ?? 0))

@@ -2673,7 +2673,7 @@
   "Greater Rune of Leadership": {
    "ja": "統率力のグレータールーン",
    "kind": "rune",
-   "tier": "greater",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -2711,7 +2711,7 @@
   "Greater Rune of Tithing": {
    "ja": "十分の一税のグレータールーン",
    "kind": "rune",
-   "tier": "greater",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -2753,7 +2753,7 @@
   "Greater Rune of Alacrity": {
    "ja": "積極性のグレータールーン",
    "kind": "rune",
-   "tier": "greater",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -2791,7 +2791,7 @@
   "Greater Rune of Nobility": {
    "ja": "高潔なグレータールーン",
    "kind": "rune",
-   "tier": "greater",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -3709,7 +3709,7 @@
   "Hedgewitch Assandra's Rune of Wisdom": {
    "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3735,7 +3735,7 @@
   "Saqawal's Rune of the Sky": {
    "ja": "サカワルの空のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3773,7 +3773,7 @@
   "Fenumus' Rune of Agony": {
    "ja": "フィヌムスの苦痛のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3811,7 +3811,7 @@
   "Farrul's Rune of Grace": {
    "ja": "ファルウルの気品のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3837,7 +3837,7 @@
   "Farrul's Rune of the Chase": {
    "ja": "ファルウルの追跡のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3863,7 +3863,7 @@
   "Craiceann's Rune of Warding": {
    "ja": "クレイシアンの守りのルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3889,7 +3889,7 @@
   "Saqawal's Rune of Memory": {
    "ja": "サカワルの記憶のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3915,7 +3915,7 @@
   "Saqawal's Rune of Erosion": {
    "ja": "サカワルの浸食のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3941,7 +3941,7 @@
   "Farrul's Rune of the Hunt": {
    "ja": "ファルウルの狩りのルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3967,7 +3967,7 @@
   "Craiceann's Rune of Recovery": {
    "ja": "クレイシアンの回復のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -3993,7 +3993,7 @@
   "Courtesan Mannan's Rune of Cruelty": {
    "ja": "宮廷女官マンナンの残虐のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4019,7 +4019,7 @@
   "Thane Grannell's Rune of Mastery": {
    "ja": "族長グラネルの熟達のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4045,7 +4045,7 @@
   "Fenumus' Rune of Spinning": {
    "ja": "フィヌムスの紡績のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4071,7 +4071,7 @@
   "Countess Seske's Rune of Archery": {
    "ja": "セスケ女伯爵の弓のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4097,7 +4097,7 @@
   "Thane Girt's Rune of Wildness": {
    "ja": "族長ガートの野生のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4123,7 +4123,7 @@
   "Fenumus' Rune of Draining": {
    "ja": "フィヌムスの吸収のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4149,7 +4149,7 @@
   "Thane Myrk's Rune of Summer": {
    "ja": "族長ミュルクの夏のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4179,7 +4179,7 @@
   "Lady Hestra's Rune of Winter": {
    "ja": "ヘストラ婦人の冬のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4209,7 +4209,7 @@
   "Thane Leld's Rune of Spring": {
    "ja": "族長レルドの春のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4239,7 +4239,7 @@
   "The Greatwolf's Rune of Claws": {
    "ja": "大狼の鉤爪のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -4269,7 +4269,7 @@
   "The Greatwolf's Rune of Willpower": {
    "ja": "大狼の意志力のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 50,
    "drop": 65,
    "limit": null,
@@ -7095,7 +7095,7 @@
   "Warding Rune of Reinforcement": {
    "ja": "補強のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7121,7 +7121,7 @@
   "Warding Rune of Protection": {
    "ja": "保護のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7147,7 +7147,7 @@
   "Warding Rune of Disintegration": {
    "ja": "分解のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7173,7 +7173,7 @@
   "Warding Rune of Desperation": {
    "ja": "窮地のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7199,7 +7199,7 @@
   "Warding Rune of Symbiosis": {
    "ja": "共生のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7225,7 +7225,7 @@
   "Warding Rune of Courage": {
    "ja": "勇気のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7251,7 +7251,7 @@
   "Warding Rune of Stability": {
    "ja": "安定のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7277,7 +7277,7 @@
   "Warding Rune of Glancing": {
    "ja": "浅い傷のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7303,7 +7303,7 @@
   "Warding Rune of Heart": {
    "ja": "心臓のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7329,7 +7329,7 @@
   "Warding Rune of Nourishment": {
    "ja": "滋養のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -7355,7 +7355,7 @@
   "Warding Rune of Annihilation": {
    "ja": "殲滅のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7381,7 +7381,7 @@
   "Warding Rune of Armature": {
    "ja": "骨組みのワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 45,
    "drop": 45,
    "limit": null,
@@ -7407,7 +7407,7 @@
   "Warding Rune of Obsession": {
    "ja": "執着のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 45,
    "drop": 45,
    "limit": null,
@@ -7437,7 +7437,7 @@
   "Warding Rune of Equinox": {
    "ja": "分点のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 45,
    "drop": 45,
    "limit": null,
@@ -7467,7 +7467,7 @@
   "Warding Rune of Salvaging": {
    "ja": "回収のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 30,
    "limit": null,
@@ -7493,7 +7493,7 @@
   "Warding Rune of Bodyguards": {
    "ja": "護衛のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 45,
    "drop": 45,
    "limit": null,
@@ -7519,7 +7519,7 @@
   "Warding Rune of Hollowing": {
    "ja": "空洞のワードルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 45,
    "drop": 45,
    "limit": null,
@@ -7549,7 +7549,7 @@
   "Passion of Aldur": {
    "ja": "アルダーの情熱",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -7575,7 +7575,7 @@
   "Breath of Aldur": {
    "ja": "アルダーの息吹",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -7601,7 +7601,7 @@
   "Ire of Aldur": {
    "ja": "アルダーの怒り",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -7627,7 +7627,7 @@
   "Betrayal of Aldur": {
    "ja": "アルダーの裏切り",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -7653,7 +7653,7 @@
   "Ancient Rune of Splinters": {
    "ja": "破片の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7679,7 +7679,7 @@
   "Ancient Rune of Dueling": {
    "ja": "決闘の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7705,7 +7705,7 @@
   "Ancient Rune of the Titan": {
    "ja": "タイタンの古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7731,7 +7731,7 @@
   "Ancient Rune of Shattering": {
    "ja": "破砕の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7757,7 +7757,7 @@
   "Ancient Rune of Prowess": {
    "ja": "武勇の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7783,7 +7783,7 @@
   "Ancient Rune of Control": {
    "ja": "制御の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7809,7 +7809,7 @@
   "Ancient Rune of Discovery": {
    "ja": "発見の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7835,7 +7835,7 @@
   "Ancient Rune of Decay": {
    "ja": "腐敗の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7861,7 +7861,7 @@
   "Ancient Rune of Witchcraft": {
    "ja": "妖術の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7887,7 +7887,7 @@
   "Ancient Rune of the Horde": {
    "ja": "大群の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7913,7 +7913,7 @@
   "Ancient Rune of Animosity": {
    "ja": "敵意の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7939,7 +7939,7 @@
   "Ancient Rune of Detonation": {
    "ja": "起爆の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7965,7 +7965,7 @@
   "Ancient Rune of Retaliation": {
    "ja": "報復の古代ルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 30,
    "drop": 12,
    "limit": null,
@@ -7991,7 +7991,7 @@
   "Rune of Vitality": {
    "ja": "生命力のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8029,7 +8029,7 @@
   "Rune of the Hunt": {
    "ja": "狩猟のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8067,7 +8067,7 @@
   "Rune of Acrobatics": {
    "ja": "軽業のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8105,7 +8105,7 @@
   "Rune of Culmination": {
    "ja": "集大成のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8143,7 +8143,7 @@
   "Rune of Renown": {
    "ja": "名声のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8181,7 +8181,7 @@
   "Rune of Accumulation": {
    "ja": "蓄積のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8223,7 +8223,7 @@
   "Rune of Foundations": {
    "ja": "基礎のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8257,7 +8257,7 @@
   "Rune of the Prism": {
    "ja": "プリズムのルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8287,7 +8287,7 @@
   "Rune of the Blossom": {
    "ja": "開花のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8317,7 +8317,7 @@
   "Rune of Consistency": {
    "ja": "一貫性のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8359,7 +8359,7 @@
   "Rune of Reach": {
    "ja": "射程のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8401,7 +8401,7 @@
   "Rune of Vital Flame": {
    "ja": "生命の炎のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8435,7 +8435,7 @@
   "Rune of Confrontation": {
    "ja": "対峙のルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 15,
    "drop": 15,
    "limit": null,
@@ -8465,7 +8465,7 @@
   "Serle's Triumph": {
    "ja": "セールの凱旋",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8495,7 +8495,7 @@
   "Cadigan's Epiphany": {
    "ja": "カディガンの啓示",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8521,7 +8521,7 @@
   "Astrid's Creativity": {
    "ja": "アストリッドの創造性",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8547,7 +8547,7 @@
   "Uhtred's Sidereus": {
    "ja": "ウートレドの星読み",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8573,7 +8573,7 @@
   "Kolr's Hunt": {
    "ja": "コルの狩り",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8599,7 +8599,7 @@
   "Vorana's Carnage": {
    "ja": "ヴォラナの虐殺",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8625,7 +8625,7 @@
   "Thrud's Might": {
    "ja": "スルードの力",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8651,7 +8651,7 @@
   "Medved's Tending": {
    "ja": "メドヴェッドの世話",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8677,7 +8677,7 @@
   "Katla's Gloom": {
    "ja": "カトラの陰鬱",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8703,7 +8703,7 @@
   "Aldur's Legacy": {
    "ja": "アルダーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 0,
    "drop": 65,
    "limit": null,
@@ -8729,7 +8729,7 @@
   "Legacy of Bramblejack": {
    "ja": "ブランブルジャックの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8755,7 +8755,7 @@
   "Legacy of Blackbraid": {
    "ja": "黒い組紐の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8781,7 +8781,7 @@
   "Legacy of Edyrn's Tusks": {
    "ja": "エディルンの牙の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8811,7 +8811,7 @@
   "Legacy of Kingsguard": {
    "ja": "キングスガードの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8837,7 +8837,7 @@
   "Legacy of Bristleboar": {
    "ja": "毛深い猪の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8867,7 +8867,7 @@
   "Legacy of Foxshade": {
    "ja": "フォックスシェードの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8897,7 +8897,7 @@
   "Legacy of Ashrend": {
    "ja": "アッシュレンドの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8927,7 +8927,7 @@
   "Legacy of Briskwrap": {
    "ja": "ブリスクラップのルーン",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8953,7 +8953,7 @@
   "Legacy of The Unleashed": {
    "ja": "解き放たれし者の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -8979,7 +8979,7 @@
   "Legacy of Horns of Bynden": {
    "ja": "ビンデンの角笛の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9009,7 +9009,7 @@
   "Legacy of Wings of Caelyn": {
    "ja": "ケイリンの翼の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9039,7 +9039,7 @@
   "Legacy of Ezomyte Peak": {
    "ja": "エゾマイトピークの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9069,7 +9069,7 @@
   "Legacy of Deidbell": {
    "ja": "ディードベルの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9095,7 +9095,7 @@
   "Legacy of Elevore": {
    "ja": "エレボアーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9125,7 +9125,7 @@
   "Legacy of Starkonja's Head": {
    "ja": "スターコンジャの頭の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9155,7 +9155,7 @@
   "Legacy of Crown of Thorns": {
    "ja": "茨の冠の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9181,7 +9181,7 @@
   "Legacy of Greymake": {
    "ja": "グレイメイクの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9207,7 +9207,7 @@
   "Legacy of Erian's Cobble": {
    "ja": "エリアンの玉石の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9261,7 +9261,7 @@
   "Legacy of The Smiling Knight": {
    "ja": "微笑む騎士の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9287,7 +9287,7 @@
   "Legacy of The Vile Knight": {
    "ja": "卑劣な騎士の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9313,7 +9313,7 @@
   "Legacy of Northpaw": {
    "ja": "北の脚の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9339,7 +9339,7 @@
   "Legacy of Candlemaker": {
    "ja": "キャンドルメーカーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9369,7 +9369,7 @@
   "Legacy of Deathblow": {
    "ja": "デスブローの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9395,7 +9395,7 @@
   "Legacy of Legionstride": {
    "ja": "リージョンストライドの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9421,7 +9421,7 @@
   "Legacy of Trampletoe": {
    "ja": "踏みつぶす爪先の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9447,7 +9447,7 @@
   "Legacy of Briarpatch": {
    "ja": "ブライアパッチの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9473,7 +9473,7 @@
   "Legacy of Bushwhack": {
    "ja": "ブッシュワックの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9499,7 +9499,7 @@
   "Legacy of Wanderlust": {
    "ja": "ワンダーラストの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9525,7 +9525,7 @@
   "Legacy of The Knight-errant": {
    "ja": "放浪騎士の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9551,7 +9551,7 @@
   "Legacy of Obern's Bastion": {
    "ja": "オバーンの砦の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9577,7 +9577,7 @@
   "Legacy of Dionadair": {
    "ja": "ディオナデアの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9603,7 +9603,7 @@
   "Legacy of Wulfsbane": {
    "ja": "ウルフスベインの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9629,7 +9629,7 @@
   "Legacy of Chernobog's Pillar": {
    "ja": "チェルノボグの柱の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9655,7 +9655,7 @@
   "Legacy of Alkem Eira": {
    "ja": "アルケム・エイラの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9681,7 +9681,7 @@
   "Legacy of Oaksworn": {
    "ja": "楢の誓いの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9707,7 +9707,7 @@
   "Legacy of Dunkelhalt": {
    "ja": "ダンケルハルトの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9733,7 +9733,7 @@
   "Legacy of Rondel de Ezo": {
    "ja": "ロンデル・デ・エゾの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9759,7 +9759,7 @@
   "Legacy of Brynhand's Mark": {
    "ja": "ブリンハンドの印の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9785,7 +9785,7 @@
   "Legacy of Trenchtimbre": {
    "ja": "トレンチティンバーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9811,7 +9811,7 @@
   "Legacy of Mjölner": {
    "ja": "ミョルナーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9841,7 +9841,7 @@
   "Legacy of Twisted Empyrean": {
    "ja": "歪んだ天空の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9871,7 +9871,7 @@
   "Legacy of Hoghunt": {
    "ja": "豚狩りの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9901,7 +9901,7 @@
   "Legacy of Hrimnor's Hymn": {
    "ja": "フリムノーの聖歌の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9927,7 +9927,7 @@
   "Legacy of Brain Rattler": {
    "ja": "脳揺らしの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9953,7 +9953,7 @@
   "Legacy of Lifesprig": {
    "ja": "ライフスプリグの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -9979,7 +9979,7 @@
   "Legacy of Duality": {
    "ja": "二面性の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10005,7 +10005,7 @@
   "Legacy of Tyranny's Grip": {
    "ja": "圧政の手の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10031,7 +10031,7 @@
   "Legacy of The Sentry": {
    "ja": "哨兵の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10065,7 +10065,7 @@
   "Legacy of Adonia's Ego": {
    "ja": "アドニアのエゴの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10091,7 +10091,7 @@
   "Legacy of Cursecarver": {
    "ja": "呪い刻みの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10117,7 +10117,7 @@
   "Legacy of Dusk Vigil": {
    "ja": "夕闇の番の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10143,7 +10143,7 @@
   "Legacy of The Blood Thorn": {
    "ja": "血の棘の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10177,7 +10177,7 @@
   "Legacy of Quill Rain": {
    "ja": "針の雨の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10207,7 +10207,7 @@
   "Legacy of Ironbound": {
    "ja": "アイアンバウンドの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10237,7 +10237,7 @@
   "Legacy of Amor Mandragora": {
    "ja": "マンドラゴラの愛の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10263,7 +10263,7 @@
   "Legacy of Spiteful Floret": {
    "ja": "悪意の小花の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10289,7 +10289,7 @@
   "Legacy of Svalinn": {
    "ja": "スヴァリンの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10319,7 +10319,7 @@
   "Legacy of Keeper of the Arc": {
    "ja": "アークの守り手の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10345,7 +10345,7 @@
   "Legacy of Olrovasara": {
    "ja": "オルロヴァサラの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10371,7 +10371,7 @@
   "Legacy of A Worthy Foe": {
    "ja": "ふさわしい相手の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10397,7 +10397,7 @@
   "Legacy of Serle's Grit": {
    "ja": "サールの根性の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10423,7 +10423,7 @@
   "Legacy of Runeseeker's Call": {
    "ja": "ルーンシーカーの呼び声の遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,
@@ -10449,7 +10449,7 @@
   "Legacy of Facebreaker": {
    "ja": "フェースブレーカーの遺産",
    "kind": "rune",
-   "tier": "normal",
+   "tier": "special",
    "level": 65,
    "drop": 65,
    "limit": 3,

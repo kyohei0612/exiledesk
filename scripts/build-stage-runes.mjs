@@ -73,7 +73,9 @@ cores.forEach((c, i) => {
   const name = b?.Name;
   if (!name || /DNT|UNUSED/i.test(name)) return;
   const kind = /Rune/.test(b.Id) ? "rune" : /Talisman|Idol/i.test(b.Id) ? "talisman" : "soulcore";
-  const tier = kind === "rune" ? (/^(Lesser|Greater|Perfect) /.exec(name)?.[1]?.toLowerCase() ?? "normal") : null;
+  // 段: 「(Lesser|Greater|Perfect) <1 語> Rune」の普通のルーンだけ。古代・Warding・人名の物などは special (棚の「特別なルーン」)
+  const std = /^(?:(Lesser|Greater|Perfect) )?[A-Za-z]+ Rune$/.exec(name);
+  const tier = kind === "rune" ? (std ? (std[1]?.toLowerCase() ?? "normal") : "special") : null;
   const effects = [];
   for (const r of statRows.get(i) ?? []) {
     const ids = (r.Stats ?? []).map((k) => stats[k]?.Id).filter(Boolean);

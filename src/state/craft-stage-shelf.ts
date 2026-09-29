@@ -14,7 +14,7 @@ import { jaOfOmen } from "../services/htc/labels";
 import { stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
-import { isRune, runeKeys, RUNE_PREFIX } from "../services/craft-stage/stage-runes";
+import { isRune, runeEffectFor, runeKeys, runeOf, RUNE_PREFIX } from "../services/craft-stage/stage-runes";
 import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
@@ -44,12 +44,23 @@ export const ORBS: ShelfGroup[] = [
   { kind: "shard", label: "シャード", keys: ["transmute_shard", "regal_shard", "artificer_shard", "chance_shard"] },
   // 2026-09-29 (POE2Tube 要望 ⑰-5): 解呪・サルベージ (アイテムは無くなり、シャード・品質カレンシーになる。apply-dispose.ts)
   { kind: "dispose", label: "解呪・サルベージ", keys: ["disenchant", "salvage"] },
-  // 2026-09-29 (POE2Tube 要望 ⑰-1): ルーン (ソケットにはめる。stage-runes.ts)。アクト中に拾える下位 (レッサー) から
-  { kind: "rune_lesser", label: "ルーン (レッサー)", keys: runeKeys("lesser") },
-  { kind: "rune", label: "ルーン", keys: runeKeys("normal") },
-  { kind: "rune_greater", label: "ルーン (グレーター)", keys: runeKeys("greater") },
-  { kind: "rune_perfect", label: "ルーン (パーフェクト)", keys: runeKeys("perfect") },
 ];
+/**
+ * ルーン (ソケットにはめる。stage-runes.ts、POE2Tube 要望 ⑰-1)。2026-09-29 オーナー「ルーン関係タブでまとめてもいいかも」で棚の別のタブに。
+ * アクト中に拾える下位 (レッサー) から段ごと。今のベースに効き目の無い物は出さない (runesFor)
+ */
+export const RUNE_GROUPS: ShelfGroup[] = [
+  { kind: "lesser", label: "レッサー", keys: runeKeys("lesser") },
+  { kind: "normal", label: "普通", keys: runeKeys("normal") },
+  { kind: "greater", label: "グレーター", keys: runeKeys("greater") },
+  { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect") },
+  { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
+];
+/** 今のアイテムに効き目があるルーンだけ (段ごと、空の段は出さない) */
+export function runesFor(item: StageItem | null): ShelfGroup[] {
+  if (!item) return [];
+  return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter((k) => { const r = runeOf(k); return !!r && !!runeEffectFor(r, item.cls.category); }) })).filter((g) => g.keys.length);
+}
 export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**
  * 今のアイテムに出す骨。変質した鎖骨は装飾品だけ (武器・防具には「変質した」骨が無く、相場の行も絵も引けなかった。2026-09-29 オーナー「イラストエラー」)。
