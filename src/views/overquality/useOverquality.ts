@@ -113,7 +113,7 @@ export function useOverquality() {
   const salePrice = computed<number | null>(() => autoSalePrice.value ?? uniquePriceOf(uniqueEn.value));
   const qualityCurrencyCount = computed(() => ETCHER_COUNT);
   const pricing = ref(false);
-  const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  const tradeLeague = marketStore.tradeLeague;
   const baseSearchUrl = ref<string | null>(null);
   const saleSearchUrl = ref<string | null>(null);
   const baseTradeUrl = computed(() =>

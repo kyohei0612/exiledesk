@@ -179,7 +179,7 @@ export function useFinishedCompare(
     const ABORT = Symbol("abort");
     const guard = (): void => { if (c.fetchGen.value !== gen) throw ABORT; };
     try {
-      const league = marketStore.league.value?.Value ?? "Standard";
+      const league = marketStore.tradeLeague.value;
       lightNote.value = null;
       tierless.value = false;
       dropped.value = [];

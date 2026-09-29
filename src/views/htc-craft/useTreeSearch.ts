@@ -156,7 +156,7 @@ export function useTreeSearch(deps: {
   async function runPlan(tp: NonNullable<ReturnType<typeof planFor>>, onStep?: (label: string) => void, alive?: () => boolean): Promise<TreeResult> {
     const p = prices.value!;
     const div = p.currency.divine!;
-    const league = marketStore.league.value?.Value ?? "Standard";
+    const league = marketStore.tradeLeague.value;
     const rates = marketStore.rates.value;
     const listings: TreeListing[] = [];
     const found: Array<{ key: string; label: string; total: number; url: string | null; error?: string }> = [];

@@ -55,7 +55,7 @@ export function useGemCorrupt() {
   const marketLabel = marketStore.fetchedLabel;
   const loadMarket = (): Promise<void> => marketStore.ensureMarket();
   const rates = marketStore.rates;
-  const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  const tradeLeague = marketStore.tradeLeague;
 
   // ---- 素材 (原石 / 現物 / 取引所の比較) は use-gem-materials.ts ----
   const {

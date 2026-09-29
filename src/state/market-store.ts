@@ -120,9 +120,13 @@ const fetchedLabel = computed<string>(() => {
   return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")} 取得`;
 });
 
+/** 取引所 (trade2) に渡すリーグ名。未取得なら Standard (アプリ全体でこれ) */
+const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+
 export const marketStore = {
   leagues,
   league,
+  tradeLeague,
   items,
   fetchedAt,
   fetchedLabel,

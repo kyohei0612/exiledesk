@@ -58,7 +58,7 @@ type Opts = { aborted: () => boolean; onStep?: (s: string) => void };
 async function search(q: unknown, step: string, opts: Opts): Promise<PriceResult | null> {
   if (opts.aborted()) return null;
   opts.onStep?.(step);
-  const league = marketStore.league.value?.Value ?? "Standard";
+  const league = marketStore.tradeLeague.value;
   const go = (body: unknown) => autoPriceCached(league, body, marketStore.rates.value, TOP_N, { onWait: (secs) => opts.onStep?.(`${step} · 取引所の間隔待ち ${secs} 秒`) });
   const r = await go(q);
   // 「検索条件が複雑過ぎます」と断られたら、普通 / 冒涜 / 固定済み の 3 択を普通の MOD だけに戻して投げ直す (クラフト計算機と同じ)

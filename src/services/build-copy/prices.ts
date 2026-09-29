@@ -66,11 +66,6 @@ function plainNinja(t: string): string {
   return t.replace(/\[([^\]|]+)\|([^\]]+)\]/g, "$2").replace(/\[([^\]]+)\]/g, "$1").replace(/\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g, "1");
 }
 
-/** 種類違いのあるユニークか */
-export function isVariantUnique(name: string): boolean {
-  return variantKeys.has(name);
-}
-
 /**
  * ユニークを取引所で探す条件 (種類違いのある物・ソケットのある物)。名前 + ベース + 種類を決める MOD (数値なし) + ソケット数。
  * コラプトの指定はしない (一番ゆるく)。

@@ -4,6 +4,7 @@
  * レビュー指摘: 同じ「MM/DD HH:mm」が 5 つのファイルに別々の実装で入っていた。ここに寄せる。
  *   fmtClock(sec)            … "09/17 21:34"   (unix 秒。0 / null は "—")
  *   fmtClock(sec, "time")    … "21:34"
+ *   formatHms(date)          … "21:34:05"
  */
 export function fmtClock(sec: number | null | undefined, style: "date" | "time" = "date"): string {
   if (!sec) return "—";
@@ -24,4 +25,10 @@ export function fmtSpan(sec: number | null | undefined): string {
   const d = Math.floor(h / 24);
   const rh = h % 24;
   return rh > 0 ? `${d} 日 ${rh} 時間` : `${d} 日`;
+}
+
+/** HH:MM:SS (Date から) */
+export function formatHms(d: Date): string {
+  const p = (n: number): string => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }

@@ -86,7 +86,7 @@ async function runOnce(): Promise<void> {
   try {
     // お気に入りの数だけ信号を使う (検索 + 取得)。途中で制限にかからず回り切れるまで待つ
     if (!(await tradeLock.reserve("unique-fav", favs.length))) return;
-    const league = marketStore.league.value?.Value ?? "Standard";
+    const league = marketStore.tradeLeague.value;
     for (const key of favs) {
       if (g !== gen) return;
       const { name, base } = split(key);

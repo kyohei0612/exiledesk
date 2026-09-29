@@ -127,7 +127,7 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
   async function searchSide(modIds: readonly string[]): Promise<SideResult | null> {
     const q = sideQuery(modIds);
     if (!q) return null;
-    const r = await autoPriceCached(marketStore.league.value?.Value ?? "Standard", q, marketStore.rates.value, 1);
+    const r = await autoPriceCached(marketStore.tradeLeague.value, q, marketStore.rates.value, 1);
     if (!r) return { kind: "side", price: null, total: 0, url: null, error: tradeAuto.lastError.value ?? "取れませんでした" };
     return { kind: "side", price: r.minExalted ?? null, total: r.total, url: r.searchUrl || null };
   }

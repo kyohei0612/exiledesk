@@ -121,7 +121,7 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
  */
 export async function sampleGemNow(gemEn: string): Promise<{ done: number; skipped: number }> {
   const gem = GEMS.find((g) => g.en === gemEn);
-  const league = marketStore.league.value?.Value ?? "Standard";
+  const league = marketStore.tradeLeague.value;
   running.value = true;
   current.value = gemEn;
   let done = 0;

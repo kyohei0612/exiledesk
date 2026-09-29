@@ -9,6 +9,7 @@
  *   - per-view な操作 state (selectedMods / activeAscendancyId / activeSlot 等) は画面側に残す。
  *     store には「fetch 由来の取得状態」と「health-check / dict-check 等のグローバル警告」のみ。
  */
+import { formatHms } from "../../utils/format-time";
 import { reactive, ref } from "vue";
 import type {
   AggregatedAscendancy,
@@ -147,8 +148,4 @@ export function formatDateTime(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** HH:MM:SS */
-export function formatHms(d: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
+export { formatHms }; // utils/format-time.ts に 1 つ

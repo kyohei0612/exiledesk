@@ -10,6 +10,7 @@
  *     それも無ければ系統 → 値の数ごとの stat (familyStats、extra-bases.json。buy-or-craft.ts と同じ借り方)
  */
 import type { Mod, PatchData, Tier } from "../../vendor/poe2htc/engine/types";
+import { fillHashes } from "../../services/htc/mod-text";
 import type { WEssence, WMod, WPage, WStat } from "./sim-data";
 
 type TierWithStats = Tier & { stats?: readonly string[] };
@@ -19,13 +20,7 @@ function statsOf(tier: TierWithStats, lend: readonly string[] | undefined, byCou
   return tier.ranges.map((r, i) => ({ id: ids[i] ?? "", min: r[0] ?? 0, max: r[1] ?? r[0] ?? 0 })).filter((s) => s.id);
 }
 /** 数値を段の幅で埋めた文面 ("+#" → "+(5-8)") */
-function textOf(mod: Mod, tier: Tier): string {
-  let i = 0;
-  return (mod.text ?? mod.family).replace(/#/g, () => {
-    const r = tier.ranges[i++];
-    return r ? (r[0] === r[1] ? String(r[0]) : `(${r[0]}-${r[1]})`) : "#";
-  });
-}
+const textOf = (mod: Mod, tier: Tier): string => fillHashes(mod.text ?? mod.family, tier.ranges);
 
 export function pageFromHtc(data: PatchData, rowId: string, familyStats: Record<string, Record<string, string[]>> = {}): WPage | null {
   const row = data.bases.get(rowId);

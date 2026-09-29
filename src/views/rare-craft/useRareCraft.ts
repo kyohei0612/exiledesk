@@ -78,7 +78,7 @@ export function useRareCraft() {
   const marketError = marketStore.error;
   const marketLabel = marketStore.fetchedLabel;
   const priceOf = marketStore.priceOf;
-  const tradeLeague = computed(() => league.value?.Value ?? "Standard");
+  const tradeLeague = marketStore.tradeLeague;
   /**
    * 通貨相場 (poe2scout) だけ用意する。
    *

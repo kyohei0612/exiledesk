@@ -3,6 +3,7 @@
  *
  * Settings.vue から切り出し (2026-09-26)。画面を開くたびに新しい状態を作る (モジュール共有はしない)。
  */
+import { formatHms } from "../utils/format-time";
 import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -113,10 +114,6 @@ export function useAppSettings() {
     }
   }
 
-  function formatHms(d: Date): string {
-    const pad = (n: number) => n.toString().padStart(2, "0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  }
 
   return { settings, loading, saving, errorMessage, savedAt, isDebugBuild, autoRefetchDays, loadSettings, saveSettings, formatHms };
 }

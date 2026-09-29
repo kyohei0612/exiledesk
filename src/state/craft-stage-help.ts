@@ -7,7 +7,7 @@
  */
 import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
 import { GNAWED_MAX_ILVL } from "../services/craft-stage/apply-currency";
-import { jaOfMod } from "../services/htc/mod-text";
+import { fillHashes, jaOfMod } from "../services/htc/mod-text";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
 import { enchantPool } from "../services/craft-stage/apply-vaal";
@@ -187,7 +187,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const t = essenceTarget(data, item, key);
     if (!t) return ["このベースには使えないエッセンス"];
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
-    const text = fillRanges(jaOfMod(t.mod), (tier?.ranges ?? []) as number[][]);
+    const text = fillHashes(jaOfMod(t.mod), tier?.ranges ?? []);
     const side = t.side === "prefix" ? "プレフィックス" : "サフィックス";
     if (t.level === "perfect") {
       return [
@@ -210,12 +210,3 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
   return [];
 }
 
-/** 文面の # を段の範囲 (a-b) にする */
-function fillRanges(text: string, ranges: number[][]): string {
-  let i = 0;
-  return text.replace(/#/g, () => {
-    const r = ranges[i++];
-    if (!r) return "#";
-    return r[0] === r[1] ? String(r[0]) : `(${r[0]}-${r[1]})`;
-  });
-}
