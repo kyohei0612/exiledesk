@@ -6,7 +6,7 @@
  * 候補の規則は計算機 (sim-route-helpers.ts の roll) と同じ: 付いている系統を除き、アイテムレベル以下・段の下限以上の段の重みで引く。
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import { familiesOf } from "../../vendor/poe2htc/engine/pool";
+import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
@@ -40,18 +40,20 @@ export const replaced = (item: StageItem, mod: StageMod, next: StageMod): StageI
 
 export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
 
-/**
- * MOD の系統の鍵。エンジンの familiesOf はエッセンスの系統を crafted:… に分けるが、計算機の sim (usable) は
- * エッセンスと普通の MOD の同じ系統も弾くので、生の系統も足して両方で比べる
- */
-export function familyKeys(mod: Mod): string[] {
-  return [...new Set([...familiesOf(mod), ...(mod.families?.length ? mod.families : [mod.family])])];
-}
+/** MOD の系統の鍵 (決まりは services/mods/mod-rules.ts に 1 つ) */
+export const familyKeys = familyKeysOf;
 /** 付いている MOD の系統 (except は除く。開示の時の未開示の枠など) */
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
     const md = data.mods.get(m.modId);
-    return md ? familyKeys(md) : [m.family];
+    return md ? familyKeysOf(md) : [m.family];
+  }));
+}
+/** 付いている MOD の生の系統 (エッセンスを打てるかの判定用) */
+export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> {
+  return new Set(allMods(item).flatMap((m) => {
+    const md = data.mods.get(m.modId);
+    return md ? rawFamiliesOf(md) : [m.family];
   }));
 }
 
@@ -162,7 +164,7 @@ export function candidates(data: PatchData, item: StageItem, sides: readonly Sta
     const ids = o.pools ? o.pools(side) : item.cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"];
     for (const id of ids) {
       const mod = data.mods.get(id);
-      if (!mod || familyKeys(mod).some((f) => taken.has(f))) continue;
+      if (!mod || familyBlocked(mod, taken)) continue;
       const k = o.boost?.test(mod) ? o.boost.mult : 1;
       const tiers = mod.tiers.flatMap((t, index) => (t.ilvl <= item.itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ index, w: t.weight * k }] : []));
       const w = tiers.reduce((a, t) => a + t.w, 0);

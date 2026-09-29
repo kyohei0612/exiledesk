@@ -10,7 +10,8 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { fillHashes, jaOfMod } from "../htc/mod-text";
 import type { StageItem, StageSide } from "./types";
-import { allMods, familyKeys } from "./stage-core";
+import { allMods, takenFamilies } from "./stage-core";
+import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 
 export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
 export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
@@ -42,7 +43,7 @@ export interface ListRow {
 export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   const pools = item.cls.pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };
   const onIds = new Set(allMods(item).map((m) => m.modId));
-  const taken = new Set(allMods(item).flatMap((m) => { const md = data.mods.get(m.modId); return md ? familyKeys(md) : [m.family]; }));
+  const taken = takenFamilies(data, item);
   const out: ListRow[] = [];
   const groups: Array<[ModGroup, { prefixes: readonly string[]; suffixes: readonly string[] } | undefined]> = [
     ["normal", pools.normal], ["essence", pools.essence], ["desecrated", pools.desecrated], ["otherworldly", pools.otherworldly],
@@ -55,16 +56,14 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
         const ja = jaOfMod(m);
         const n = m.tiers.length;
         const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, t.ranges as number[][]) }));
-        const weight = m.tiers.reduce((a, t) => a + t.weight, 0);
+        const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
         const on = onIds.has(m.id);
         return {
           id: m.id, family: m.family, template: ja, side, group, text: tiers[0]?.text ?? ja, tags: [...m.tags], tiers, weight,
-          topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyKeys(m).some((f) => taken.has(f)),
+          topLevel: n ? m.tiers[n - 1]!.ilvl : 0, share: 0, on, blocked: !on && familyBlocked(m, taken),
         };
       });
-      const total = rows.reduce((a, r) => a + r.weight, 0);
-      for (const r of rows) r.share = total ? r.weight / total : 0;
-      out.push(...rows);
+      out.push(...fillShares(rows));
     }
   }
   return out;

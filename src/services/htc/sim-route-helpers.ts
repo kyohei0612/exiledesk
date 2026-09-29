@@ -4,6 +4,7 @@ import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./cata
 import { catalystsFor } from "./quality";
 import { type Side } from "./step-odds";
 import { OMEN, BREACH_FAMILY } from "./omens";
+import { essenceClash, familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
 const FLOOR: Record<string, number> = { chaos: 0, chaos_greater: 35, chaos_perfect: 50, exalt: 0, exalt_greater: 35, exalt_perfect: 50 };
@@ -28,8 +29,11 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   const count = (s: SimState, side: Side): number => s.slots.filter((x) => x.side === side).length + (side === "prefix" && s.breach ? 1 : 0);
   const room = (s: SimState, side: Side): boolean => count(s, side) < ctx.limits[side];
   /** 付いている系統 (狙いの MOD も外れも。系統が分からない物は数えない) */
-  const familyOf = (x: SimSlot): string | undefined => x.family ?? (x.modId ? mod(x.modId)?.family : undefined);
-  const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => { const f = familyOf(x); return f ? [f] : []; }));
+  const keysOf = (x: SimSlot, raw = false): string[] => {
+    const m = x.modId ? mod(x.modId) : undefined;
+    return m ? (raw ? rawFamiliesOf(m) : familyKeysOf(m)) : x.family ? [x.family] : [];
+  };
+  const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => keysOf(x)));
   /** ブリーチの MOD のレベル (削減のお告げで比べる。データの段のレベル、無ければ 1) */
   const breachLvl = Math.min(...[...data.mods.values()].filter((m) => m.family === BREACH_FAMILY).flatMap((m) => m.tiers.map((t) => t.ilvl)), 1);
   /** ツリー全体で「数える」MOD と段の下限 (狙い・残したいに出てくる物) */
@@ -105,7 +109,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
     for (const side of sides) {
       for (const id of cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"]) {
         const m = mod(id);
-        if (!m || occ.has(m.family)) continue;
+        if (!m || familyBlocked(m, occ)) continue;
         const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
         const min = minTierOf.get(id) ?? Infinity;
         const good: Array<{ lvl: number; p: number }> = [], bad: Array<{ lvl: number; p: number }> = [];
@@ -151,8 +155,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
         // 同じ系統の MOD が付いていれば付かない (ゲームは打てない)。ただしそれが消える側で唯一外せる物なら、先に消えるので付く
         // (枠 2 つの側の上書きの輪: 冒涜の外れがエッセンスと同じ系統のことがある)
-        const fam = mod(a.modId)?.family;
-        const clash = fam ? s.slots.map((x, i) => (familyOf(x) === fam ? i : -2)).filter((i) => i >= 0) : [];
+        const em = mod(a.modId);
+        const clash = em ? s.slots.map((x, i) => (essenceClash(em, new Set(keysOf(x, true))) ? i : -2)).filter((i) => i >= 0) : [];
         const rem = removable(s, rs);
         if (clash.length && !(clash.length === 1 && rem.length === 1 && rem[0] === clash[0])) return "同じ系統の MOD が付いている";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
@@ -244,7 +248,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
     const ids = [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k], ...ow])];
     const opts: DesecOpt[] = ids.flatMap((id) => {
       const m = mod(id);
-      if (!m || occ.has(m.family)) return [];
+      if (!m || familyBlocked(m, occ)) return [];
       const min = want.get(id);
       const tiers = m.tiers.flatMap((t, i) => (t.ilvl <= itemLevel && t.ilvl >= floor && t.weight > 0 ? [{ lvl: t.ilvl, w: t.weight, good: min != null && i >= min }] : []));
       const w = tiers.reduce((x, t) => x + t.w, 0);

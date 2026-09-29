@@ -13,6 +13,7 @@ import { htcBaseInfo } from "../../services/htc/patch";
 import { itemBaseFor } from "../../services/htc/bridge";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { isCraftedMod } from "../../services/htc/craft-slots";
+import { fillShares, tierWeight } from "../../services/mods/mod-rules";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -118,8 +119,8 @@ export function usePicker() {
     const q = modQuery.value.trim().toLowerCase();
     const out: ModRow[] = [];
     const seen = new Set<string>();
-    /** 側 + 種類 → 重みの合計 (検索で絞る前) */
-    const totals = new Map<string, number>();
+    /** 出やすさの分母 (検索で絞る前の全部) */
+    const all: Array<{ side: string; group: string; weight: number }> = [];
     const pool = (p: { prefixes: readonly string[]; suffixes: readonly string[] } | undefined, group: ModGroup) =>
       p ? ([["P", p.prefixes, group], ["S", p.suffixes, group]] as const) : [];
     const lists = [
@@ -136,8 +137,8 @@ export function usePicker() {
         if (group === "essence" && mod.source !== "perfect_essence") continue;
         seen.add(id);
         const ja = jaOfMod(mod);
-        const weight = mod.tiers.filter((t) => t.ilvl <= level.value).reduce((a, t) => a + (t.weight || 0), 0);
-        totals.set(`${side}|${group}`, (totals.get(`${side}|${group}`) ?? 0) + weight);
+        const weight = tierWeight(mod, 0, level.value);
+        all.push({ side, group, weight });
         if (q && !ja.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) continue;
         const tiers = mod.tiers
           .map((t, i) => ({ i, t }))
@@ -151,11 +152,7 @@ export function usePicker() {
         out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, weight, share: 0, ...(mod.alloy ? { alloy: true } : {}) });
       }
     }
-    for (const r of out) {
-      const t = totals.get(`${r.side}|${r.group}`) ?? 0;
-      r.share = t > 0 ? r.weight / t : 0;
-    }
-    return out;
+    return fillShares(out, all);
   });
 
   function isPicked(modId: string): boolean {

@@ -15,6 +15,8 @@
  */
 import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
+/** 系統の鍵 (src/services/mods/mod-rules.ts と同じ: エッセンス等の MOD は普通の MOD と同じ系統でも並ぶ) */
+const famKey = (m) => (m.crafted ? `crafted:${m.family}` : m.family);
 
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();
@@ -59,7 +61,7 @@ for (const base of BASES) {
       const lim = it.rarity === "magic" ? { prefixes: 1, suffixes: 1 } : it.cls.limits ?? { prefixes: 3, suffixes: 3 };
       if (it.prefixes.length > lim.prefixes || it.suffixes.length > lim.suffixes) ng(`${base} ${cur}: 枠を超えた (${it.rarity} ${it.prefixes.length}/${it.suffixes.length})`);
       const all = [...it.prefixes, ...it.suffixes];
-      const fams = all.map((m) => m.family);
+      const fams = all.map(famKey);
       if (new Set(fams).size !== fams.length) ng(`${base} ${cur}: 同じ系統が 2 つ (${fams.join(",")})`);
       if (it.rarity === "normal" && all.length) ng(`${base} ${cur}: ノーマルに MOD`);
       for (const m of r.added) {
@@ -144,7 +146,7 @@ function compare(label, item, cur, n = 40000) {
         const lim = it.rarity === "magic" ? { prefixes: 1, suffixes: 1 } : it.cls.limits ?? { prefixes: 3, suffixes: 3 };
         if (it.prefixes.length > lim.prefixes || it.suffixes.length > lim.suffixes) ng(`${base} ${cur}: 枠を超えた (${it.rarity} ${it.prefixes.length}/${it.suffixes.length})`);
         const all = [...it.prefixes, ...it.suffixes];
-        const fams = all.map((m) => m.family);
+        const fams = all.map(famKey);
         if (new Set(fams).size !== fams.length) ng(`${base} ${cur}: 同じ系統が 2 つ (${fams.join(",")})`);
         if (all.filter((m) => m.desecrated).length > 1) ng(`${base} ${cur}: 冒涜の MOD が 2 つ`);
         if (all.filter((m) => m.crafted).length > 1) ng(`${base} ${cur}: エッセンスの MOD が 2 つ`);
@@ -225,7 +227,7 @@ function compare(label, item, cur, n = 40000) {
     if (r.added[0].modId.includes("Desecrated")) ng("腐食の開示で冒涜専用の MOD が出た");
     it = r.item;
   }
-  const fams = [...it.prefixes, ...it.suffixes].map((m) => m.family);
+  const fams = [...it.prefixes, ...it.suffixes].map(famKey);
   if (new Set(fams).size !== fams.length) ng("腐食の開示で同じ系統が 2 つ");
   console.log(`腐食 → 開示 6 回: ${[...it.prefixes, ...it.suffixes].map((m) => m.textJa).join(" / ")}`);
   // 聖別: 0.78〜1.22 倍、聖別済みは以後打てない

@@ -11,7 +11,8 @@
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
-import { allMods, familyKeys, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenFamilies, withMod } from "./stage-core";
+import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenRawFamilies, withMod } from "./stage-core";
+import { essenceClash } from "../mods/mod-rules";
 import type { StageApply, StageItem, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
@@ -45,7 +46,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   if (!tier) return skip(item, "このエッセンスの段が無い");
   if (tier.ilvl > item.itemLevel) return skip(item, `アイテムレベルが足りない (${tier.ilvl} 以上)`);
   if (allMods(item).some((m) => m.crafted)) return skip(item, "エッセンスの MOD はアイテムに 1 つまで");
-  const clash = (it: StageItem) => familyKeys(mod).some((f) => takenFamilies(data, it).has(f));
+  const clash = (it: StageItem) => essenceClash(mod, takenRawFamilies(data, it));
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), crafted: true };
 
   if (level !== "perfect") {

@@ -9,7 +9,8 @@
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
-import { tierWeight, type Side } from "../../services/htc/step-odds";
+import { type Side } from "../../services/htc/step-odds";
+import { familyBlocked, familyKeysOf, tierWeight } from "../../services/mods/mod-rules";
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { autoTreeMeta, breachPlanned, type AutoTreeInput } from "./tree-auto";
@@ -31,7 +32,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
   // 同じ引数で何度も呼ばれる (候補の組み合わせごと) ので覚えておく。2026-09-26: 前回の続きで 0.2 秒固まっていた
   const poolMemo = new Map<string, number>();
   // 付いている系統 (固定済みの狙い) はもう付かないので、抽選の元から外す (Craft of Exile と同じ。2026-09-26 精度上げ)
-  const occupied = new Set(inp.fixedIds.flatMap((id) => { const m = d.mods.get(id); return m ? [m.family] : []; }));
+  const occupied = new Set(inp.fixedIds.flatMap((id) => { const m = d.mods.get(id); return m ? familyKeysOf(m) : []; }));
   // desec = "altered" は変質した鎖骨 (異界の MOD も引く元に入る。2026-09-27)
   const poolW = (s: Side, floor: number, desec: boolean | "altered", tag: string | null, mult: number): number => {
     const mk = `${s}|${floor}|${desec}|${tag}|${mult}`;
@@ -40,7 +41,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const ow = desec === "altered" ? (cls.pools.otherworldly?.[key(s)] ?? []) : [];
     const v = [...cls.pools.normal[key(s)], ...(desec ? cls.pools.desecrated[key(s)] : []), ...ow].reduce((a, id) => {
       const m = d.mods.get(id);
-      if (!m || occupied.has(m.family)) return a;
+      if (!m || familyBlocked(m, occupied)) return a;
       const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
       return a + w(m, 0, floor) * k;
     }, 0);

@@ -20,6 +20,7 @@
  *     固定の数値のとこはそのままで」)
  */
 import { loadHtcPatch } from "../htc/patch";
+import { tierWeight } from "../mods/mod-rules";
 import { parseJaItem, targetsFor } from "../htc/paste";
 import { baseForSolving } from "../htc/bridge";
 import { tradeFiltersFor } from "../htc/buy-or-craft";
@@ -242,7 +243,7 @@ export function rareQuery(
 /** その MOD の付きやすさ (アイテムレベルで出る段の重みの合計。データが無ければ 0) */
 function weightOf(modId: string, ilvl: number): number {
   const m = data?.mods.get(modId);
-  return (m?.tiers ?? []).filter((t) => t.ilvl <= ilvl).reduce((s, t) => s + (t.weight || 0), 0);
+  return m ? tierWeight(m, 0, ilvl) : 0;
 }
 
 /**

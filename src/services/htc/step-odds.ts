@@ -20,6 +20,7 @@ import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./cata
 import { CATALYSTS, catalystsFor } from "./quality";
 import { jaOfOmen, jaOfPriceKey } from "./labels";
 import { OMEN } from "./omens";
+import { familyBlocked, familyKeysOf, tierWeight } from "../mods/mod-rules";
 
 export type Side = "prefix" | "suffix";
 
@@ -95,9 +96,7 @@ const SIDE_JA: Record<Side, string> = { prefix: "左", suffix: "右" };
  * MOD の重み (minIdx の段より上で、ilvl で出る段の合計)。floor = 上級・完全のオーブや古代の骨の段の足切り。
  * シミュレーター・1 手ずつ・自動の組み立て・確率の実験室で同じ式を使う
  */
-export function tierWeight(m: Mod, minIdx: number, ilvl: number, floor = 0): number {
-  return m.tiers.reduce((a, t, i) => a + (i >= minIdx && t.ilvl <= ilvl && t.ilvl >= floor ? t.weight : 0), 0);
-}
+export { tierWeight }; // 式は services/mods/mod-rules.ts に 1 つ
 
 export function stepHelpers(ctx: StepCtx) {
   const { data, cls, prices, itemLevel } = ctx;
@@ -108,12 +107,16 @@ export function stepHelpers(ctx: StepCtx) {
   const room = (s: ItemState, side: Side): boolean => count(s, side) < ctx.limits[side];
   /** 付いている系統 (狙いも外れも。系統が分からない物は数えない。[[sim-route.ts]] の families と同じ) */
   const families = (s: ItemState, skip = -1): Set<string> =>
-    new Set(s.slots.flatMap((x, i) => { const f = i !== skip ? x.family ?? (x.modId ? mod(x.modId)?.family : undefined) : undefined; return f ? [f] : []; }));
+    new Set(s.slots.flatMap((x, i) => {
+      if (i === skip) return [];
+      const m = x.modId ? mod(x.modId) : undefined;
+      return m ? familyKeysOf(m) : x.family ? [x.family] : [];
+    }));
   /** その側で付きうる普通の MOD の重み (付いている系統を除く)。tag のカタリストが効く物は mult 倍 */
   const poolW = (side: Side, occ: Set<string>, floor: number, tag: string | null, mult: number): number =>
     cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"].reduce((a, id) => {
       const m = mod(id);
-      if (!m || occ.has(m.family)) return a;
+      if (!m || familyBlocked(m, occ)) return a;
       return a + sw(m, 0, floor) * (tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1);
     }, 0);
   const quality = (s: ItemState): number => (s.breach ? 40 : 20);
@@ -140,7 +143,7 @@ export function stepHelpers(ctx: StepCtx) {
     const side = t.type as Side;
     const out: StepMethod[] = [];
     const occ = families(s);
-    if (occ.has(t.family)) return [];
+    if (familyBlocked(t, occ)) return [];
     const q = quality(s);
     if (t.source === "normal" && room(s, side)) {
       const tags = catalystsFor(t).map((c) => c.tag).filter((tag) => ctx.catalystOk(tag) && Number.isFinite(cur(catalystPriceKey(tag))));
@@ -221,7 +224,7 @@ export function stepHelpers(ctx: StepCtx) {
         if (isOw && k !== "desecrate_altered") continue;
         // 骨の名前はベースで変わる (武器・装飾品 = 鎖骨 / 顎骨、防具 = 肋骨)
         const bone = jaOfPriceKey(k, cls) ?? k;
-        const W = [...pool, ...(k === "desecrate_altered" ? ow : [])].reduce((a, id) => { const m = mod(id); return m && !occ.has(m.family) ? a + sw(m, 0, floor) : a; }, 0);
+        const W = [...pool, ...(k === "desecrate_altered" ? ow : [])].reduce((a, id) => { const m = mod(id); return m && !familyBlocked(m, occ) ? a + sw(m, 0, floor) : a; }, 0);
         const p1 = sw(t, minTier, floor) / W;
         if (!(p1 > 0)) continue;
         for (const echoes of [false, true]) {
@@ -284,7 +287,7 @@ export function stepHelpers(ctx: StepCtx) {
       // 変質した鎖骨で付く異界の MOD (装飾品だけ)
       ...(cls.pools.otherworldly?.prefixes ?? []), ...(cls.pools.otherworldly?.suffixes ?? []),
     ];
-    return [...new Set(ids)].map((id) => mod(id)).filter((m): m is Mod => !!m && !occ.has(m.family)
+    return [...new Set(ids)].map((id) => mod(id)).filter((m): m is Mod => !!m && !familyBlocked(m, occ)
       && (m.source === "normal" || m.source === "desecrated" || m.source === "perfect_essence"));
   }
 
