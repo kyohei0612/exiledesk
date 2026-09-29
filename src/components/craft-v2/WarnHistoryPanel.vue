@@ -43,7 +43,7 @@ async function copyWarns(): Promise<void> {
     <button type="button" @click="emit('retry')" class="ml-2 underline text-red-100 hover:text-white">再試行</button>
   </div>
   <div
-    v-else-if="store.warnHistory.length > 0"
+    v-else-if="store.warnHistory.some((w) => w.level !== 'info')"
     class="mb-3 px-3 py-2 rounded-lg border border-amber-400/30 bg-amber-500/[0.05] text-[11px]"
   >
     <div class="flex items-center justify-between mb-1.5">

@@ -24,7 +24,8 @@ export function useCraftV2Derived() {
   /** 右上トグルで選択中のスロット */
   const activeSlot = ref<SlotKey>("ring");
   /** 「スキル」タブ (装備スロットの代わりに主流スキルを出す)。2026-09-12 */
-  const skillsTab = ref(false);
+  // 2026-09-29: 最初はスキル・持ち物 (定番セットがそのビルドの答え)。装備は切り替えで
+  const skillsTab = ref(true);
 
   /** 選択中のアセンダンシー (ビルドを選んでいても、アセンダンシー全体) */
   const ascendancy = computed<AggregatedAscendancy | null>(() => {

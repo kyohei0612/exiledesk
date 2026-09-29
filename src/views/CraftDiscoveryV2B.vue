@@ -2,7 +2,8 @@
   CraftDiscoveryV2B.vue — 上位プレイヤーMOD一覧 (poe.ninja 連携)
   ---------------------------------------------------------------------------
   2026-09-07 リファクタ: 1,881 行あった画面を分割した。この画面は配線とレイアウトだけ持つ。
-  2026-09-29 作り直し: アセンダンシー → DPS 順のビルド 3 つ (BuildTabs、各 10 人) → 部位の絵のマス (GearGrid) → MOD 一覧。
+  2026-09-29 作り直し: アセンダンシー → DPS 順のビルド 3 つ (BuildTabs、各 10 人) → 「スキル・持ち物 | 装備」の切り替え
+    スキル・持ち物 (BuildLoadout、最初に開く。一番上の定番セットが答え) / 装備 (部位の絵のマス GearGrid → MOD 一覧)。
     集計は全体もビルドも同じ関数 (services/craft-v2/finalize.ts の aggregateOf)。
     views/craft-v2/useCraftV2Derived.ts   選択中アセ / スロットと表示用の派生状態
     views/craft-v2/useModSelection.ts     MOD チェック選択・ティア・trade2 一括検索
@@ -45,6 +46,11 @@ const hover = useUniqueHover({
   leagueName,
 });
 
+/** 見方の切り替え (skillsTab = スキル・持ち物) */
+const VIEW_TABS = [
+  { key: "loadout", label: "スキル・持ち物", skills: true },
+  { key: "gear", label: "装備 (部位ごとの MOD)", skills: false },
+] as const;
 /** 折りたたむ人数 (この人数以下)。カードの「N 人以下」の表示 */
 const lowLimit = computed<number>(() => d.lowThreshold.value - 1);
 
@@ -69,10 +75,25 @@ onMounted(() => {
     <AscendancyTabs v-model:active-ascendancy-id="d.activeAscendancyId.value" :sorted-ascendancies="d.sortedAscendancies.value" />
 
     <BuildTabs v-if="d.ascendancy.value" v-model="d.activeBuild.value" :asc="d.ascendancy.value" :league-url="store.snapshot?.league_url ?? null" />
-    <GearGrid v-if="d.activeAscendancy.value" v-model:active-slot="d.activeSlot.value" v-model:skills-tab="d.skillsTab.value" :agg="d.activeAscendancy.value" />
+    <!-- 見方の切り替え (2026-09-29 UI 見直し: 前は部位のマスの 1 つに紛れていた) -->
+    <div v-if="d.activeAscendancy.value" class="mb-3 inline-flex rounded-lg bg-black/30 p-1 ring-1 ring-white/10" role="tablist">
+      <button
+        v-for="t in VIEW_TABS"
+        :key="t.key"
+        type="button"
+        role="tab"
+        :aria-selected="d.skillsTab.value === t.skills"
+        class="rounded-md px-4 py-1.5 text-[13px] font-bold transition"
+        :class="d.skillsTab.value === t.skills ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'"
+        @click="d.skillsTab.value = t.skills"
+      >
+        {{ t.label }}
+      </button>
+    </div>
+    <GearGrid v-if="d.activeAscendancy.value && !d.skillsTab.value" v-model:active-slot="d.activeSlot.value" :agg="d.activeAscendancy.value" />
 
     <ModSearchBar
-      v-if="store.ascendancies.length > 0"
+      v-if="store.ascendancies.length > 0 && !d.skillsTab.value"
       v-model:bulk-tier-value="sel.bulkTierValue.value"
       :selected-count="sel.selectedMods.value.size"
       :searching="sel.searching.value"

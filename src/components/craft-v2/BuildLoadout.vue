@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { AggregatedAscendancy, AugmentKind, LoadoutEntry, SkillUsage } from "../../services/craft-v2/types";
+import { SLOT_TABS } from "../../views/craft-v2/helpers";
 
 const props = defineProps<{ agg: AggregatedAscendancy }>();
 
@@ -82,10 +83,20 @@ const core = computed(() => {
   const spirit = groups.value.find((g) => g.key === "spirit")?.list ?? [];
   const mainSkill = main[0];
   const l = props.agg.loadout;
-  type Item = { name: string; nameEn: string; count: number; cat: Cat };
+  type Item = { name: string; nameEn: string; count: number; cat: Cat; cls?: string };
   const as = <T extends { name: string; nameEn: string; count: number }>(list: T[], cat: (x: T) => Cat): Item[] =>
     list.filter(isCore).map((x) => ({ name: x.name, nameEn: x.nameEn, count: x.count, cat: cat(x) }));
+  // 装備: 部位ごとに一番多いユニーク / レアのベース (定番の物だけ)。色はゲームのレアリティの色
+  const gear: Item[] = SLOT_TABS.flatMap((t) => {
+    const u = props.agg.uniquesBySlot?.[t.key]?.[0];
+    const b = props.agg[t.key].bases[0];
+    const best = u && (!b || u.count >= b.count) ? { name: u.name, nameEn: u.nameEn, count: u.count, unique: true } : b ? { name: b.name, nameEn: b.nameEn, count: b.count, unique: false } : null;
+    if (!best || !isCore(best)) return [];
+    const cls = `bg-white/10 ring-white/30 ${best.unique ? "text-rarity-unique" : "text-rarity-rare"}`;
+    return [{ name: `${t.label}: ${best.name}`, nameEn: best.nameEn, count: best.count, cat: "other" as Cat, cls }];
+  });
   const rows: Array<{ label: string; items: Item[] }> = [
+    { label: "装備", items: gear },
     { label: "メイン", items: mainSkill ? [{ name: mainSkill.name, nameEn: mainSkill.nameEn, count: mainSkill.count, cat: "main" }] : [] },
     { label: "サポート", items: mainSkill ? as(mainSkill.supports, (x) => supportCat(x.nameEn)) : [] },
     { label: "スピリット", items: as(spirit, () => "spirit") },
@@ -111,7 +122,7 @@ const skillVisible = (list: SkillUsage[]): SkillUsage[] => visible(list);
         <template v-for="r in core" :key="r.label">
           <span class="pt-0.5 text-[11px] font-bold tracking-wider text-white/50">{{ r.label }}</span>
           <div class="flex flex-wrap gap-1.5">
-            <span v-for="e in r.items" :key="e.nameEn" class="rounded-md px-2 py-0.5 text-[13px] font-bold ring-1" :class="CAT[e.cat].core" :title="e.nameEn"
+            <span v-for="e in r.items" :key="e.nameEn" class="rounded-md px-2 py-0.5 text-[13px] font-bold ring-1" :class="e.cls ?? CAT[e.cat].core" :title="e.nameEn"
               >{{ e.name }} <span class="text-[11px] font-normal tabular-nums opacity-70">{{ e.count }}/{{ agg.sampleSize }}</span></span
             >
           </div>

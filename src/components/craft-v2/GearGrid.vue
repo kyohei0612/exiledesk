@@ -1,17 +1,16 @@
 <!--
   GearGrid.vue — 装備の部位を絵で選ぶ (2026-09-29、スロットのタブの代わり)
-  部位ごとに一番多いユニーク (ユニークの絵・橙) と一番多いレアのベース (ベースの絵・黄) を出す。
-  クリックでその部位の MOD 一覧へ。最後のマスは「スキル」(主流スキル / スピリット / サポート)。
+  部位ごとに一番多いユニーク (ユニークの絵・橙) と一番多いレアのベース (ベースの絵・黄) と、よく付いている MOD を 2 つ。
+  クリックでその部位の MOD 一覧へ。スキル・持ち物は上の切り替えタブ (前はここのマスの 1 つだった)。
 -->
 <script setup lang="ts">
-import type { AggregatedAscendancy, SlotKey } from "../../services/craft-v2/types";
+import type { AggregatedAscendancy, ModEntry, SlotKey } from "../../services/craft-v2/types";
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
 import { uniqueArt } from "../../services/assets/unique-art";
 import { baseArt } from "../../services/craft-stage/base-art";
 
 const props = defineProps<{ agg: AggregatedAscendancy }>();
 const activeSlot = defineModel<SlotKey>("activeSlot", { required: true });
-const skillsTab = defineModel<boolean>("skillsTab", { required: true });
 
 interface Face { art: string | null; name: string; count: number; kind: "unique" | "rare" }
 /** その部位で一番多いユニークとレアのベース (人数の多い方を大きく) */
@@ -23,22 +22,21 @@ function facesOf(slot: SlotKey): Face[] {
   if (b) out.push({ art: baseArt(b.nameEn), name: b.name, count: b.count, kind: "rare" });
   return out.sort((x, y) => y.count - x.count);
 }
-function pick(slot: SlotKey): void {
-  activeSlot.value = slot;
-  skillsTab.value = false;
+/** レアによく付いている MOD (人数の多い順に 2 つ) */
+function topMods(slot: SlotKey): ModEntry[] {
+  return [...props.agg[slot].prefix, ...props.agg[slot].suffix].sort((a, b) => b.count - a.count).slice(0, 2);
 }
-const topSkill = (): string => [...props.agg.skills].sort((a, b) => b.mainCount - a.mainCount)[0]?.name ?? "—";
 </script>
 
 <template>
-  <div class="mb-4 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr))]">
+  <div class="mb-4 grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))]">
     <button
       v-for="t in SLOT_TABS"
       :key="t.key"
       type="button"
       class="flex flex-col rounded-lg border bg-black/25 p-2 text-left transition hover:border-white/30 hover:bg-white/[0.04]"
-      :class="activeSlot === t.key && !skillsTab ? 'border-amber-300/70 ring-1 ring-amber-300/50' : 'border-white/10'"
-      @click="pick(t.key)"
+      :class="activeSlot === t.key ? 'border-white/60 ring-1 ring-white/40' : 'border-white/10'"
+      @click="activeSlot = t.key"
     >
       <span class="text-[11px] font-bold tracking-wider text-white/55">{{ t.label }}</span>
       <template v-for="(f, i) in facesOf(t.key)" :key="f.kind">
@@ -53,16 +51,10 @@ const topSkill = (): string => [...props.agg.skills].sort((a, b) => b.mainCount 
         </span>
       </template>
       <span v-if="!facesOf(t.key).length" class="mt-2 text-[11px] text-white/35">データなし</span>
-    </button>
-    <button
-      type="button"
-      class="flex flex-col rounded-lg border bg-black/25 p-2 text-left transition hover:border-white/30 hover:bg-white/[0.04]"
-      :class="skillsTab ? 'border-amber-300/70 ring-1 ring-amber-300/50' : 'border-white/10'"
-      @click="skillsTab = true"
-    >
-      <span class="text-[11px] font-bold tracking-wider text-white/55">スキル・持ち物</span>
-      <span class="mt-2 text-[13px] text-sky-200">{{ topSkill() }}</span>
-      <span class="text-[10px] text-white/45">サポート・リネージュ・オーグメント・キーストーン</span>
+      <!-- よく付いている MOD (押さなくても中身の見当が付くように) -->
+      <span v-for="m in topMods(t.key)" :key="m.rawTemplate + m.affix" class="mt-1 block truncate text-[10px] text-rarity-magic/90" :title="m.text"
+        >{{ m.text }} <span class="tabular-nums text-white/40">{{ m.count }}</span></span
+      >
     </button>
   </div>
 </template>

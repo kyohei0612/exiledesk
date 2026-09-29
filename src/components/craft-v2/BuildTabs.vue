@@ -5,7 +5,7 @@
   選んだビルドの人の名前は下に並べ、クリックで poe.ninja のキャラのページを開く。
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { AggregatedAscendancy, BuildView, UniqueUsage } from "../../services/craft-v2/types";
 import { uniqueArt } from "../../services/assets/unique-art";
 import { openExternal } from "../../services/trade2/open-external";
@@ -14,12 +14,8 @@ const props = defineProps<{ asc: AggregatedAscendancy; leagueUrl: string | null 
 /** -1 = 全体、0〜 = ビルド */
 const active = defineModel<number>({ required: true });
 
-/** ビルドごとの色 (1 位 = 金、2 位 = 青、3 位 = 紫) */
-const TONES = [
-  { ring: "ring-amber-400/70", bg: "from-amber-500/20", text: "text-amber-200", dot: "bg-amber-400" },
-  { ring: "ring-sky-400/70", bg: "from-sky-500/20", text: "text-sky-200", dot: "bg-sky-400" },
-  { ring: "ring-violet-400/70", bg: "from-violet-500/20", text: "text-violet-200", dot: "bg-violet-400" },
-] as const;
+/** 2026-09-29 UI 見直し: ビルドごとの色 (金・青・紫) はスキルの種類の色 (BuildLoadout) とかぶるのでやめ、順位の数字で見分ける */
+const showMembers = ref(false);
 
 /** DPS の短い書き方 (21,100,016 → 21.1M) */
 function dpsText(v: number | null): string {
@@ -65,17 +61,17 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
         v-for="(b, i) in builds"
         :key="b.skillEn"
         type="button"
-        class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br to-transparent p-3 text-left transition hover:border-white/25"
-        :class="[TONES[i % 3]!.bg, active === i ? `ring-2 ${TONES[i % 3]!.ring}` : '']"
+        class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-white/25"
+        :class="active === i ? 'ring-2 ring-white/60 bg-white/[0.07]' : ''"
         @click="active = i"
       >
         <p class="flex items-center gap-1.5 text-[11px] tracking-wider text-white/55">
-          <span class="h-2 w-2 rounded-full" :class="TONES[i % 3]!.dot" />DPS {{ i + 1 }} 位のスキル
+          <span class="grid h-5 w-5 place-items-center rounded-full bg-white/15 text-[11px] font-bold text-white">{{ i + 1 }}</span>DPS {{ i + 1 }} 位のスキル
         </p>
-        <p class="mt-0.5 truncate text-[17px] font-bold" :class="TONES[i % 3]!.text" :title="b.skillEn">{{ b.skillJa }}</p>
+        <p class="mt-0.5 truncate text-[17px] font-bold text-white" :title="b.skillEn">{{ b.skillJa }}</p>
         <p class="mt-1 text-[12px] text-white/60">
           上位 {{ b.members.length }} 人<template v-if="b.topDps != null"> · 最高 DPS <span class="tabular-nums text-white/85">{{ dpsText(b.topDps) }}</span></template
-          ><template v-else> · トリガーで発動 (DPS の数値なし)</template>
+          ><template v-else> · トリガー (DPS なし)</template>
         </p>
         <!-- メインスキルの内訳 (ビルド 2・3 は前のスキルを外した DPS 順なので、別のスキルの人も混ざる) -->
         <p v-if="b.skillMix.length > 1" class="mt-0.5 truncate text-[11px] text-white/45" :title="b.skillMix.map((x) => `${x.skillJa} ${x.count}`).join(' / ')">
@@ -88,8 +84,11 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
     </div>
     <!-- 選んだビルドの人 (DPS 順) -->
     <div v-if="selected" class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-      <span class="text-white/45">DPS 順:</span>
+      <button type="button" class="text-white/45 underline hover:text-white/80" @click="showMembers = !showMembers">
+        {{ showMembers ? "10 人を隠す ▲" : `このビルドの ${selected.members.length} 人を見る (poe.ninja) ▼` }}
+      </button>
       <button
+        v-show="showMembers"
         v-for="(m, j) in selected.members"
         :key="m.account + m.name"
         type="button"

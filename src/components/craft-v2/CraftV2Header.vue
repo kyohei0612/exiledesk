@@ -34,7 +34,7 @@ const waiting = computed(
         >
       </h1>
       <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        上位プレイヤーのレア装備 (指輪 / アミュレット / 武器 / オフハンド / 兜 / 手袋 / 胴体 / 靴) の explicit MOD を prefix / suffix で集計 (人数降順)。数値は実際に取れた人数分の平均値です。
+        アセンダンシーごとに DPS 上位のスキル 3 つ × 10 人の、スキル・持ち物・装備で何が多いか。
       </p>
       <!-- 出どころと取得時刻は他の画面と同じ並び・同じ字で (2026-09-21) -->
       <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
