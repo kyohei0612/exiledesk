@@ -38,34 +38,38 @@ function withDelta(text: string, d: number): string {
   });
   return used ? out : `${text} ${signed(d)}`;
 }
-/** カードの倍率 (左右 2 枚 + 真ん中 300px が 1280 に収まる) */
-const CARD = 1.22;
+/**
+ * 並べ方 (2026-09-29 要望 ⑫「3 列を横幅いっぱいに。差の行は特に大きく」): 真ん中の差を主役にして幅 480px・文字 26px
+ * (1080p で約 39px)、左右のカードは残りの幅いっぱい (1280 − 余白 24 − 差 480 − 間 24 を 2 枚で割る)
+ */
+const DIFF_W = 480;
+const CARD = (1280 - 24 - DIFF_W - 24) / 2 / 380;
 </script>
 
 <template>
-  <div class="absolute inset-x-0 top-0 h-[612px] px-4 pt-4 text-white">
+  <div class="absolute inset-x-0 top-0 h-[612px] px-3 pt-3 text-white">
     <p v-if="!view" class="mt-40 text-center text-2xl opacity-60">データを読んでいます…</p>
     <p v-else-if="'error' in view" class="mt-40 text-center text-2xl text-rose-300">{{ view.error }}</p>
-    <div v-else class="flex h-full items-start justify-center gap-4">
+    <div v-else class="flex h-full items-start justify-center gap-3">
       <div class="shrink-0" :style="{ width: `${380 * CARD}px` }">
-        <p class="mb-1 text-center text-[20px] font-bold text-white/75">A (今の装備)</p>
+        <p class="mb-1 text-center text-[24px] font-bold text-white/80">A (今の装備)</p>
         <div :style="{ transform: `scale(${CARD})`, transformOrigin: '0 0' }">
           <StageItemCard :item="view.a" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact />
         </div>
       </div>
       <!-- 違い (B − A) -->
-      <div class="mt-10 w-[300px] shrink-0 space-y-1.5 rounded-2xl border border-white/15 bg-black/65 p-3">
-        <p class="text-center text-[20px] font-bold text-amber-100">入れ替えると</p>
-        <p v-if="!view.diff.length" class="text-center text-[17px] opacity-60">MOD の違いは無い</p>
+      <div class="shrink-0 space-y-1.5 rounded-2xl border border-white/15 bg-black/70 p-3" :style="{ width: `${DIFF_W}px` }">
+        <p class="text-center text-[28px] font-bold text-amber-100">入れ替えると</p>
+        <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
         <p
-          v-for="(d, i) in view.diff.slice(0, 11)"
+          v-for="(d, i) in view.diff.slice(0, 10)"
           :key="i"
-          class="truncate rounded-lg px-2.5 py-1 text-[17px] font-bold"
+          class="truncate rounded-lg px-3 py-1 text-[26px] font-bold leading-snug"
           :class="d.delta > 0 ? 'bg-emerald-500/15 text-emerald-200' : d.delta < 0 ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-white/50'"
         >{{ withDelta(d.text, d.delta) }}</p>
       </div>
       <div class="shrink-0" :style="{ width: `${380 * CARD}px` }">
-        <p class="mb-1 text-center text-[20px] font-bold text-white/75">B (入れ替える物)</p>
+        <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>
         <div :style="{ transform: `scale(${CARD})`, transformOrigin: '0 0' }">
           <StageItemCard :item="view.b" :added="[]" :removed="[]" :holding="false" :flash-key="0" compact />
         </div>
