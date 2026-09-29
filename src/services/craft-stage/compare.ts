@@ -73,3 +73,26 @@ export function diffItems(a: StageItem, b: StageItem): DiffLine[] {
   // 増えた → 変わった → 消えた、その中は差の大きい順
   return out.sort((p, q) => ORDER[p.kind] - ORDER[q.kind] || Math.abs(q.delta) - Math.abs(p.delta));
 }
+
+/**
+ * 差の列の 1 行を「名前」と「数値」に分ける (2026-09-30 オーナー「真ん中の奴、ゴチャってる」)。
+ * MOD の文面は変えず、よくある言い回しだけ 名前 / 数値 に分ける:
+ *   「アタックスピードが#%増加する」→ 名前「アタックスピード」数値「+#%」、「#から#の物理ダメージを追加する」→「物理ダメージ」「+#〜#」、
+ *   「要求能力値が#%減少する」→「要求能力値」「−#%」、「命中力 +#」→「命中力」「+#」、
+ *   「倒した敵1体ごとに#のマナを獲得する」→「マナ」「+#」補足「倒した敵1体ごと」。
+ * 当たらない文は名前 = 文全体 (数値を入れた物)、数値は無し。値の # は呼ぶ側が埋める
+ */
+export function splitLine(text: string): { name: string; value: string; note: string } | null {
+  const rules: Array<[RegExp, (m: RegExpExecArray) => { name: string; value: string; note: string }]> = [
+    [/^#から#の(.+?)ダメージを(?:アタックに)?追加する$/, (m) => ({ name: `${m[1]}ダメージ`, value: "+#〜#", note: "" })],
+    [/^(.+?)が#%(?:増加|上昇)する$/, (m) => ({ name: m[1]!, value: "+#%", note: "" })],
+    [/^(.+?)が#%(?:減少|低下)する$/, (m) => ({ name: m[1]!, value: "−#%", note: "" })],
+    [/^(.+?)ごとに#の(.+?)を獲得する$/, (m) => ({ name: m[2]!, value: "+#", note: `${m[1]}ごと` })],
+    [/^(.+?) ([+-]?)#(%?)$/, (m) => ({ name: m[1]!, value: `${m[2] || "+"}#${m[3]}`, note: "" })],
+  ];
+  for (const [re, f] of rules) {
+    const m = re.exec(text);
+    if (m) return f(m);
+  }
+  return null;
+}

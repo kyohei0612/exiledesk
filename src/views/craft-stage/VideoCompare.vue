@@ -13,7 +13,7 @@ import { computed } from "vue";
 import StageItemCard from "./StageItemCard.vue";
 import { craftStage } from "../../state/craft-stage";
 import { playPlan } from "../../services/craft-stage/run-plan";
-import { diffItems, type DiffLine } from "../../services/craft-stage/compare";
+import { diffItems, splitLine, type DiffLine } from "../../services/craft-stage/compare";
 import { NEGATIVE_WORDS } from "../../services/craft-stage/stage-core";
 import type { CraftStagePlan } from "../../services/craft-stage/contract";
 import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
@@ -72,17 +72,23 @@ function lineText(d: DiffLine): string {
   const body = fill(d.text, (i) => ((d.a[i] ?? 0) === (d.b[i] ?? 0) ? num(d.b[i] ?? 0) : `${num(d.a[i] ?? 0)}→${num(d.b[i] ?? 0)}`));
   return `${body} (${signed(d.delta)})`;
 }
+/**
+ * 差の列の 1 行を 名前 / 数値 / 補足 に (2026-09-30 オーナー「真ん中の奴、ゴチャってる」)。MOD の文面は変えず、見せ方だけ分ける。
+ * 分けられない文は名前 = 文全体 (数値入り)。変わった行の数値は「53% → 104%」
+ */
+function rowOf(d: DiffLine): { name: string; value: string; note: string } {
+  const neg = NEGATIVE_WORDS.test(d.text);
+  const a = neg ? d.a.map(Math.abs) : d.a;
+  const b = neg ? d.b.map(Math.abs) : d.b;
+  const s = splitLine(d.text);
+  if (!s) return { name: lineText(d).replace(/^[+−] /, ""), value: "", note: "" };
+  const at = (vals: number[]) => fill(s.value, (i) => num(vals[i] ?? 0));
+  const value = d.kind === "added" ? at(b) : d.kind === "removed" ? at(a) : `${at(a)} → ${at(b)}`;
+  return { name: s.name, value, note: s.note };
+}
+const KIND_JA = { added: "付く", changed: "変わる", removed: "消える" } as const;
 /** 行の色: 増えた・上がった = 緑、消えた・下がった = 赤 */
 const tone = (d: DiffLine): string => (d.kind === "added" || (d.kind === "changed" && d.delta > 0) ? "bg-emerald-500/15 text-emerald-200" : "bg-rose-500/15 text-rose-200");
-/**
- * 差の行の文字の大きさ (要望 ⑭「2 行まで折り返して全文。2 行でも入らない時だけ少し小さく」)。
- * 列の中身の幅 (約 316px) に 2 行で入る文字数を、全角 = 1・半角 = 0.55 で数えて決める
- */
-function diffFont(text: string, top: number): number {
-  const w = [...text].reduce((a, c) => a + (/[ -~]/.test(c) ? 0.55 : 1), 0);
-  for (const px of [22, 20, 18, 16].filter((x) => x <= top)) if (w <= Math.floor(316 / px) * 2) return px;
-  return 15;
-}
 /** 行が多い時は全体を少し小さく (下 15% より上に全部の差を収める) */
 const topFont = (n: number): number => (n <= 8 ? 22 : n <= 10 ? 20 : n <= 12 ? 18 : 16);
 /**
@@ -121,13 +127,21 @@ const ZOOM = 1.44;
           <p v-if="anim.shown.value && grow >= 1" class="stage-pop text-[24px] tabular-nums leading-tight">{{ dpsText(dps.a) }} → {{ dpsText(dps.b) }}<template v-if="dps.pct != null"> ({{ dps.pct > 0 ? "+" : "" }}{{ dps.pct }}%)</template></p>
         </div>
         <p v-if="!view.diff.length" class="text-center text-[24px] opacity-60">MOD の違いは無い</p>
-        <p
+        <!-- 1 行 = 札 (付く / 変わる / 消える) + 名前 (左) + 数値 (右、大きく)。補足は数値の下に小さく -->
+        <div
           v-for="(d, i) in view.diff.slice(0, 14)"
           :key="i"
-          class="line-clamp-2 rounded-lg px-2.5 py-1 font-bold leading-snug"
+          class="flex items-center gap-2 rounded-lg px-2.5 py-1"
           :class="tone(d)"
-          :style="{ fontSize: `${diffFont(lineText(d), topFont(Math.min(14, view.diff.length)))}px` }"
-        >{{ lineText(d) }}</p>
+          :style="{ fontSize: `${topFont(Math.min(14, view.diff.length))}px` }"
+        >
+          <span class="shrink-0 rounded px-1 text-[0.55em] font-bold opacity-80 ring-1 ring-current">{{ KIND_JA[d.kind] }}</span>
+          <span class="line-clamp-2 min-w-0 flex-1 font-bold leading-snug" :class="d.kind === 'removed' ? 'opacity-75' : ''">{{ rowOf(d).name }}</span>
+          <span v-if="rowOf(d).value" class="shrink-0 text-right font-bold tabular-nums">
+            {{ rowOf(d).value }}
+            <span v-if="rowOf(d).note" class="block text-[0.55em] font-normal opacity-70">{{ rowOf(d).note }}</span>
+          </span>
+        </div>
       </div>
       <div class="shrink-0" :style="{ width: `${COL_W}px` }">
         <p class="mb-1 text-center text-[24px] font-bold text-white/80">B (入れ替える物)</p>
