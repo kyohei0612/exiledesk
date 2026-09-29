@@ -62,6 +62,16 @@ fn quality_any(props: Option<&serde_json::Value>) -> Option<i64> {
     None
 }
 
+/// 名前に `Quality` を含む property の名前 (`[Quality] ([Mana|Mana] Modifiers)` など。カタリストの種類)
+pub(crate) fn quality_name(props: Option<&serde_json::Value>) -> Option<String> {
+    props?
+        .as_array()?
+        .iter()
+        .filter_map(|p| p.get("name").and_then(|v| v.as_str()))
+        .find(|n| n.contains("Quality"))
+        .map(str::to_string)
+}
+
 pub(crate) fn gem_property_number(props: Option<&serde_json::Value>, key: &str) -> Option<i64> {
     for p in props?.as_array()? {
         if p.get("name").and_then(|v| v.as_str()) != Some(key) {

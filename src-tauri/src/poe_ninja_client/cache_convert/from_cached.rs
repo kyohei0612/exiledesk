@@ -25,7 +25,8 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                 // 2026-09-29: ソケットに入れた物 (augments) は socketedItems[].typeLine、付与スキルの穴のジェムはその中の socketedItems
                 "socketedItems": r.augments.iter().map(|a| serde_json::json!({ "typeLine": a })).chain(std::iter::once(serde_json::json!({ "socketedItems": r.socketed_gems.iter().map(|g| serde_json::json!({ "typeLine": g })).collect::<Vec<_>>() }))).collect::<Vec<_>>(),
                 // 2026-09-22: 品質も poe.ninja の形に戻す (TS 側が同じ経路で読めるように)
-                "properties": r.quality.map(|q| serde_json::json!([{ "name": "[Quality]", "values": [[format!("+{q}%"), 1]] }])).unwrap_or(serde_json::json!([])),
+                // 2026-09-29: 名前は品質の種類 (カタリスト) のまま戻す。無い (旧キャッシュ) なら [Quality]
+                "properties": r.quality.map(|q| serde_json::json!([{ "name": r.quality_kind.as_deref().unwrap_or("[Quality]"), "values": [[format!("+{q}%"), 1]] }])).unwrap_or(serde_json::json!([])),
             }
         }));
     }

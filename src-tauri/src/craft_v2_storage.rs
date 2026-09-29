@@ -183,6 +183,10 @@ pub struct CachedRareItem {
     /// (`services/htc/lingering.ts`)。ここが無いと判定できないので拾う。
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality: Option<i64>,
+    /// 2026-09-29: 品質の欄の名前 (`[Quality] ([Mana|Mana] Modifiers)` など)。装飾品のカタリストの種類で、
+    /// 上位プレイヤー MOD 一覧が底上げされた表示値を素の値に戻すのに使う (どの MOD が上がっているかはタグで決まる)。旧キャッシュには無い
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quality_kind: Option<String>,
     /// 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア・タリスマン …、`socketedItems[].typeLine`)。旧キャッシュには無い
     #[serde(default)]
     pub augments: Vec<String>,

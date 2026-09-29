@@ -27,6 +27,7 @@ import type {
 import { loadCraftV2Cache, saveCraftV2Cache } from "./cache";
 import { aggregateFromCache, aggregateFromProgress } from "./finalize";
 import { GEM_INFO } from "./finalize/gems";
+import { prepareDeboost } from "./deboost";
 
 /** 取る・出すアセンダンシーの数 (使用率の上位)。2026-09-29 オーナー「上位 7 種類に」(前は 10)。数はここだけ */
 export const TOP_ASCENDANCIES = 7;
@@ -64,6 +65,9 @@ export async function startCraftDiscoveryV2(
     leagueUrl,
     onCharacterProgress,
   } = options;
+
+  // 集計で装飾品の数値を素に戻すのに計算機のデータが要る (集計は同期なので先に読む)
+  await prepareDeboost().catch((e) => console.warn("[craft-discovery-v2] 計算機のデータを読めず、品質の割り戻しなしで集計:", e));
 
   // キャッシュロード + 即時 UI 反映 (差分モード判定は Rust 側に任せる)
   let prevCache: CraftV2Cache | null = null;

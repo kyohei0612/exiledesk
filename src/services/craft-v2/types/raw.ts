@@ -112,6 +112,8 @@ export interface CachedRareItem {
    * 見分けるのに使う。古いキャッシュには無い。
    */
   quality?: number;
+  /** 2026-09-29: 品質の欄の名前 (`[Quality] ([Mana|Mana] Modifiers)`)。カタリストの種類。旧キャッシュには無い */
+  quality_kind?: string;
   /** 2026-09-12: 付与スキルの穴に入っていたジェム名 (例: ["Frost Wall"])。 */
   socketed_gems?: string[];
   /** 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …) */

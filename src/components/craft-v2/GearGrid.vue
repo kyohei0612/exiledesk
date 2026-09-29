@@ -53,7 +53,7 @@ function topMods(slot: SlotKey): ModEntry[] {
       <span v-if="!facesOf(t.key).length" class="mt-2 text-[11px] text-white/35">データなし</span>
       <!-- よく付いている MOD (押さなくても中身の見当が付くように) -->
       <span v-for="m in topMods(t.key)" :key="m.rawTemplate + m.affix" class="mt-1 block truncate text-[10px] text-rarity-magic/90" :title="m.text"
-        >{{ m.text }} <span class="tabular-nums text-white/40">{{ m.count }}</span></span
+        >{{ m.text }} <span v-if="m.usageTier ?? m.inferredTier" class="tabular-nums text-[var(--exile-color-accent-focus)]">T{{ m.usageTier ?? m.inferredTier }}</span> <span class="tabular-nums text-white/40">{{ m.count }}</span></span
       >
     </button>
   </div>

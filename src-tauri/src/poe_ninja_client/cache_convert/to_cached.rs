@@ -112,6 +112,8 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
             // 完全一致で拾えなければ「Quality を含む名前」で拾い直す。
             let quality = gem_property_number(data.get("properties"), "[Quality]")
                 .or_else(|| quality_any(data.get("properties")));
+            // 2026-09-29: 品質の欄の名前 (カタリストの種類)。素の値に戻すのに使う
+            let quality_kind = quality_name(data.get("properties"));
             // 2026-09-29: ソケットに入れた物 (ルーン・ソウルコア …)
             let augments: Vec<String> = data
                 .get("socketedItems")
@@ -126,6 +128,7 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
                 granted_skills,
                 socketed_gems,
                 quality,
+                quality_kind,
                 augments,
             });
         } else if frame_type == 3 {

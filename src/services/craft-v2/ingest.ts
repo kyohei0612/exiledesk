@@ -13,6 +13,7 @@ import { emptySlotSets, type AscendancyCounter } from "./ingest/counters";
 import { addBaseToSlot, addModToSlot, addUniqueToAscendancy } from "./ingest/slot";
 import { ingestCharacterSkills } from "./ingest/skills";
 import { ingestLoadout } from "./ingest/loadout";
+import { deboostMods } from "./deboost";
 
 export type {
   AggregatedModBucket,
@@ -46,7 +47,9 @@ export function ingestCharacterItems(asc: AscendancyCounter, charItems: Characte
 
     const rareSlot = classifyEquipItem(raw);
     if (rareSlot) {
-      const mods = Array.isArray(raw.itemData?.explicitMods) ? raw.itemData!.explicitMods! : [];
+      // 2026-09-29: 装飾品のカタリストで底上げされた数値は素の値に戻してから積む (deboost.ts)
+      const shown = Array.isArray(raw.itemData?.explicitMods) ? raw.itemData!.explicitMods! : [];
+      const mods = deboostMods(raw.itemData?.baseType, raw.itemData?.properties, shown);
       const seen = seenPerSlot[rareSlot];
       const slotCounter = asc.slots[rareSlot];
       for (const modText of mods) {

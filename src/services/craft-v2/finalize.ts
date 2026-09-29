@@ -108,7 +108,8 @@ function cachedCharacterToCharacterItems(c: CachedCharacter): CharacterItems {
         // 2026-09-29: ソケットに入れた物 (augments) は socketedItems[].typeLine (Rust の from_cached と同じ形)
         socketedItems: [...(r.augments ?? []).map((a) => ({ typeLine: a })), { socketedItems: (r.socketed_gems ?? []).map((g) => ({ typeLine: g })) }],
         // 2026-09-22: 品質も poe.ninja の形に戻す (Rust 側 cache_convert と同じ形)
-        properties: r.quality != null ? [{ name: "[Quality]", values: [[`+${r.quality}%`, 1]] }] : [],
+        // 2026-09-29: 名前は品質の種類 (カタリスト) のまま (素の値に戻すのに使う)
+        properties: r.quality != null ? [{ name: r.quality_kind ?? "[Quality]", values: [[`+${r.quality}%`, 1]] }] : [],
       },
     });
   }
