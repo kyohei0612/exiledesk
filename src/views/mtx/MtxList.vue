@@ -24,7 +24,7 @@ type Poe2Filter = "all" | "yes" | "no";
 const poe2 = ref<Poe2Filter>("yes");
 const cat = ref<number | "all">("all");
 const query = ref("");
-const PAGE = 60;
+const PAGE = 90;
 /** 並び: 新しい順 (既定) / 古い順。クライアントの表は追加された順に行が増える */
 const order = ref<"new" | "old">("new");
 const shown = ref(PAGE);
@@ -40,7 +40,9 @@ const cats = computed(() => {
 const list = computed(() => {
   const q = query.value.trim().toLowerCase();
   const hit = byPoe2.value.filter((x) => (cat.value === "all" || x.c === cat.value) && (!q || x.ja.toLowerCase().includes(q) || x.en.toLowerCase().includes(q) || x.t.toLowerCase().includes(q)));
-  return order.value === "new" ? [...hit].sort((a, b) => b.i - a.i) : [...hit].sort((a, b) => a.i - b.i);
+  // 絵の無い物 (まだ絵が用意されていない物) は後ろへ。その中で新しい順 / 古い順
+  const noArt = (x: MtxItem) => (x.a == null ? 1 : 0);
+  return [...hit].sort((a, b) => noArt(a) - noArt(b) || (order.value === "new" ? b.i - a.i : a.i - b.i));
 });
 const counts = computed(() => {
   const all = data.value?.items ?? [];
@@ -52,7 +54,8 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-6 py-5 text-[12px]">
+  <!-- 幅は窓いっぱい (2026-09-29 オーナー「縮こまってる。最大化時と縮小時を合わせて」)。列の数は窓の幅で変わる -->
+  <div class="w-full px-6 py-5 text-[12px]">
     <header class="mb-4">
       <h1 class="text-xl font-bold text-amber-100">スキン</h1>
       <p class="mt-1 opacity-60">PoE1 で使えるスキン・エフェクト・ペットなどが、PoE2 でも使えるか。ゲームのデータから (パッチで変わることがある)。カードを押すと poe2db で見た目を確かめられる。</p>
@@ -83,7 +86,7 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
 
       <p class="mb-3 opacity-50">{{ list.length }} 件 · {{ order === "new" ? "新しく追加された順" : "古い順" }}</p>
       <!-- 2 列の大きいカード -->
-      <div class="grid gap-4 md:grid-cols-2">
+      <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,460px),1fr))]">
         <button
           v-for="x in list.slice(0, shown)"
           :key="x.i"
@@ -93,8 +96,8 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
           title="poe2db で見た目を見る"
           @click="open(x)"
         >
-          <span class="grid h-32 w-32 shrink-0 place-items-center rounded-xl bg-black/40">
-            <img v-if="artOf(x)" :src="artOf(x)!" alt="" loading="lazy" class="max-h-28 max-w-28 object-contain transition group-hover:scale-105" draggable="false" />
+          <span class="grid h-36 w-36 shrink-0 place-items-center rounded-xl bg-black/40">
+            <img v-if="artOf(x)" :src="artOf(x)!" alt="" loading="lazy" class="max-h-32 max-w-32 object-contain transition group-hover:scale-105" draggable="false" />
             <span v-else class="text-[11px] opacity-40">絵なし</span>
           </span>
           <span class="min-w-0 flex-1">
