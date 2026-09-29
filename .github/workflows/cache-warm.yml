@@ -58,9 +58,10 @@ jobs:
             ~/.cargo/git
             src-tauri/target
             !src-tauri/target/release/bundle
-          key: ${{ runner.os }}-cargo-${{ hashFiles('.cargo-lock-key') }}
+          # v2 (2026-09-29): Cache warm をリリースと同じ tauri build で作るようにした時に、食い違った古いキャッシュを入れ替えるため
+          key: ${{ runner.os }}-cargo-v2-${{ hashFiles('.cargo-lock-key') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-cargo-v2-
 
       - name: Get pnpm store directory
         id: pnpm-store
@@ -78,10 +79,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      # tauri のコード生成が frontendDist (dist/) を要求するので先にフロントを作る
-      - name: Build frontend
-        run: pnpm build
-
-      - name: Build Rust (release, no bundling)
-        working-directory: src-tauri
-        run: cargo build --release
+      # リリース (tauri-action = tauri build) と**同じコマンド**で作る (2026-09-29)。
+      # 前は cargo build --release で、tauri build が足す本番用の機能 (custom-protocol) が無かったため
+      # 「別のビルド」扱いになり、リリースのたびに tauri と tauri-plugin-* を作り直していた (約 1 分)。
+      # beforeBuildCommand (pnpm build) もここで走る。--no-bundle なのでインストーラーは作らない (署名も要らない)
+      - name: Build (tauri build --no-bundle, リリースと同じ)
+        run: pnpm tauri build --no-bundle

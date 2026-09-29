@@ -47,9 +47,10 @@ jobs:
             ~/.cargo/git
             src-tauri/target
             !src-tauri/target/release/bundle
-          key: ${{ runner.os }}-cargo-${{ hashFiles('.cargo-lock-key') }}
+          # v2 (2026-09-29): Cache warm をリリースと同じ tauri build で作るようにした時に、食い違った古いキャッシュを入れ替えるため
+          key: ${{ runner.os }}-cargo-v2-${{ hashFiles('.cargo-lock-key') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-cargo-v2-
 
       - name: Get pnpm store directory
         id: pnpm-store
