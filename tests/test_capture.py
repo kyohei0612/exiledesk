@@ -58,29 +58,16 @@ def test_real_capture_when_vite_is_running(tmp_path: Path, monkeypatch: pytest.M
 def test_ensure_video_mode_raises_on_normal_screen() -> None:
     from poe2tube.capture.stage import NotVideoModeError, ensure_video_mode
 
-    class _Loc:
-        def __init__(self, n: int) -> None:
-            self.n = n
-            self.first = self
-
-        def count(self) -> int:
-            return self.n
-
-        def is_visible(self) -> bool:
-            return True
-
     class _Page:
-        def __init__(self, n: int) -> None:
-            self.n = n
+        def __init__(self, on_top: bool) -> None:
+            self.on_top = on_top
 
-        def locator(self, _sel: str) -> _Loc:
-            return _Loc(self.n)
+        def evaluate(self, _js: str) -> bool:
+            return self.on_top
 
-    ensure_video_mode(_Page(0))
-    import pytest
-
+    ensure_video_mode(_Page(True))
     with pytest.raises(NotVideoModeError):
-        ensure_video_mode(_Page(1))
+        ensure_video_mode(_Page(False))
 
 
 def test_focus_line_is_not_a_hit() -> None:

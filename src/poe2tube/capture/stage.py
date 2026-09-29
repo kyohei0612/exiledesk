@@ -30,12 +30,12 @@ CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 # ExileDesk の動画モード (v0.1.308、VideoStage.vue): 16:9 の撮影用画面を窓いっぱいに出す。
 # 1920x1080 の窓で撮れば動画と同じ解像度なので、そのまま貼れる (サイドバー・操作欄は出ない)
 VIEWPORT = (1920, 1080)
-CAPTURE_VER = "v13-wrap"  # 撮り方を変えたらキャッシュを切替 (v13 = 差の列の折り返し)
+CAPTURE_VER = "v14-fix"  # 撮り方を変えたらキャッシュを切替 (v14 = 版ずれ直し後の撮り直し)
 # アイテム枠が描けたら撮る。v0.1.314 の撮影用は英語ベース名を出さないので「アイテムレベル」を待つ
 READY_SELECTOR = "text=/アイテムレベル|スキルジェム/"  # ジェムにはアイテムレベルが無い
-# 動画モードになっていない (普通の手操作の画面) のしるし。これが写ったら撮らずに止める
-# (2026-09-29: ExileDesk の不具合で普通の画面のまま動画ができていた)
-NOT_VIDEO_MARK = "text=カレンシーランキング"
+# 動画モードは普通の画面の上に重ねて出る (fixed inset-0)。真ん中の一番手前がそれでなければ
+# 開けていない (2026-09-29: ExileDesk 開発版の版ずれで普通の画面のまま動画ができていた)
+VIDEO_OVERLAY_JS = "!!document.elementFromPoint(960, 540)?.closest('.fixed.inset-0')"
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
@@ -146,9 +146,9 @@ class NotVideoModeError(RuntimeError):
 
 
 def ensure_video_mode(page: Any) -> None:
-    if page.locator(NOT_VIDEO_MARK).count() and page.locator(NOT_VIDEO_MARK).first.is_visible():
+    if not page.evaluate(VIDEO_OVERLAY_JS):
         raise NotVideoModeError(
-            "ExileDesk が動画モードで開けていない (普通の画面が写った)。ExileDesk 側の不具合を疑う"
+            "ExileDesk が動画モードで開けていない (普通の画面が写った)。版ずれか不具合を疑う"
         )
 
 
