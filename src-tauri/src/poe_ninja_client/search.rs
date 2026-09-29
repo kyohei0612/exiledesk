@@ -110,20 +110,19 @@ pub(crate) async fn fetch_search(
     class: &str,
     n: usize,
 ) -> Result<SearchResult, String> {
-    fetch_search_skill(client, gate, snapshot, class, None, n).await
+    fetch_search_skill(client, gate, snapshot, class, &[], n).await
 }
 
-/// search (DPS 順)。skill を渡すと poe.ninja の画面と同じ `skills=` で絞る (2026-09-29 ビルドの補充用)。
-/// 受け付けられたかは呼び側が上位の顔ぶれで確かめる (受け付けなければ絞らない一覧が返る)
+/// search (DPS 順)。skills の条件ごとに `&skills=` を付ける (絞る「Arc」・外す「!Arc」、かつ。builds.rs の skills_param)
 pub(crate) async fn fetch_search_skill(
     client: &Client,
     gate: &RateGate,
     snapshot: &SnapshotMeta,
     class: &str,
-    skill: Option<&str>,
+    skills: &[String],
     n: usize,
 ) -> Result<SearchResult, String> {
-    let skill_q = skill.map(|s| format!("&skills={}", url_encode(s))).unwrap_or_default();
+    let skill_q: String = skills.iter().map(|s| format!("&skills={}", url_encode(s))).collect();
     // 2026-09-16: class が空なら絞り込み無し = リーグ全体の DPS 上位 (別の 100 人が返る)
     let url = if class.is_empty() {
         format!(

@@ -70,6 +70,9 @@ pub struct CachedBuild {
     pub member_skills: Vec<String>,
     /// 一番上の人の DPS
     pub top_dps: f64,
+    /// 画面に出す名前 (skill は poe.ninja の名前で、2.1B の人は「Dark Consequences」になるので、その時はジェムの名前)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
 }
 
 /// poe.ninja のスキル使用率 (search レスポンスの集計 dimension を辞書で名前にした物)。
@@ -116,9 +119,13 @@ pub struct CachedSkillGroup {
     /// 2026-09-16: レベル / 品質のランキング用に、名前だけでなくジェムの数値も持つ
     pub mains: Vec<CachedGem>,
     pub supports: Vec<String>,
-    /// poe.ninja が算出した DPS の最大値 (無ければ 0)
+    /// poe.ninja が算出した DPS の最大値 (無ければ 0)。2026-09-29 から当たり (dps) と継続 (dotDps) の大きい方
+    /// (コンテイジョンなど継続ダメージのスキルは dps が 0 で dotDps だけ入る)
     #[serde(default)]
     pub dps: f64,
+    /// その DPS を poe.ninja がどのスキルの物としているか (dps[].name)。2026-09-29 より前のキャッシュには無い
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dps_skill: Option<String>,
 }
 
 /// スキルジェム 1 個 (サポート以外)。レベル / 品質は properties から読めた時だけ入る。

@@ -82,7 +82,7 @@ pub(crate) fn cached_character_to_character_items(c: &CachedCharacter) -> Charac
                 })
                 .collect();
             gems.extend(g.supports.iter().map(|n| serde_json::json!({ "name": n, "itemData": { "support": true } })));
-            serde_json::json!({ "allGems": gems, "dps": [{ "dps": g.dps }] })
+            serde_json::json!({ "allGems": gems, "dps": [{ "name": g.dps_skill, "dps": g.dps }] })
         })
         .collect();
     CharacterItems {

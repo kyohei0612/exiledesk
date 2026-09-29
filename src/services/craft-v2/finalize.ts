@@ -66,8 +66,8 @@ function aggregateWithBuilds(
     const mix = new Map<string, number>();
     for (const s of b.member_skills ?? []) mix.set(s, (mix.get(s) ?? 0) + 1);
     return {
-      skillEn: b.skill,
-      skillJa: jaSkill(b.skill),
+      skillEn: b.label ?? b.skill,
+      skillJa: jaSkill(b.label ?? b.skill),
       topDps: b.top_dps > 0 && b.top_dps < UNCOUNTABLE_DPS ? b.top_dps : null,
       members: members.map((c) => {
         const s = skillOf.get(`${c.account}|${c.name}`);

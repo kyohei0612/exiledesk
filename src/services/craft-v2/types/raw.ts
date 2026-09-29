@@ -44,6 +44,8 @@ export interface CachedBuildRaw {
   members: string[];
   /** members と同じ順の、その人のメインスキル (v0.1.327 のキャッシュには無い) */
   member_skills?: string[];
+  /** 画面に出す名前 (skill が poe.ninja の「Dark Consequences」の時のジェム名 Detonate Dead など)。無ければ skill */
+  label?: string | null;
   /** 一番上の人の DPS (トリガーのメタジェムは 2147483647 = 数えられない) */
   top_dps: number;
 }

@@ -218,12 +218,22 @@ pub(crate) fn character_items_to_cached(ci: &CharacterItems, fetched_at: i64) ->
             if mains.is_empty() {
                 return None;
             }
-            let dps = g
+            // dps[] = { name, dps (当たり), dotDps (継続) }。大きい方を、その名前のスキルの DPS とする
+            let (dps, dps_skill) = g
                 .get("dps")
                 .and_then(|v| v.as_array())
-                .map(|arr| arr.iter().filter_map(|d| d.get("dps").and_then(|x| x.as_f64())).fold(0.0_f64, f64::max))
-                .unwrap_or(0.0);
-            Some(CachedSkillGroup { mains, supports, dps })
+                .map(|arr| {
+                    arr.iter().fold((0.0_f64, None::<String>), |(best, name), d| {
+                        let v = ["dps", "dotDps"].iter().filter_map(|k| d.get(*k).and_then(|x| x.as_f64())).fold(0.0_f64, f64::max);
+                        if v > best {
+                            (v, d.get("name").and_then(|n| n.as_str()).map(str::to_string))
+                        } else {
+                            (best, name)
+                        }
+                    })
+                })
+                .unwrap_or((0.0, None));
+            Some(CachedSkillGroup { mains, supports, dps, dps_skill })
         })
         .collect();
 
