@@ -45,7 +45,8 @@ function finalizeLoadout(counter: AscendancyCounter): Loadout {
     return u !== en ? u : jaTypeName(en);
   };
   return {
-    augments: entries(l.augments, item).map((e) => ({ ...e, kind: augmentKind(e.nameEn) })),
+    // 盾・武器の付与スキルの穴に入れたジェム (Sigil of Power など) はオーグメントではないので外す (2026-09-29 オーナー)
+    augments: entries(l.augments, item).map((e) => ({ ...e, kind: augmentKind(e.nameEn) })).filter((e) => e.kind !== "gem"),
     lineage: entries(l.lineage, jaSkill),
     keystones: entries(l.keystones, (en) => PASSIVES_JA[en] ?? en),
     flasks: entries(l.flasks, item),
