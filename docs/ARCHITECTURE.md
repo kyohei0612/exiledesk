@@ -35,8 +35,21 @@ PoE2 のための Windows アプリ。画面は Vue 3 + TypeScript、裏側は R
 - **ベースの一覧 (種類の段・素の数値)** … `services/items/base-catalog.ts` と部品 `components/items/BaseCatalog.vue`。
 - **取引所 (trade2) を叩く順番と間隔** … Rust の門番 (`src-tauri/src/trade2/gate`・`pace.rs`・`reserve.rs`)。
   画面側は `state/trade-lock.ts` で「今どの機能が使っているか」を 1 つに決める。**検索は 10 秒間隔・5 分 30 回を守る** (テストでも)。
-- **お金の表示** … `state/display-currency.ts` の `roundMoney` (費用は切り上げ・収入は切り下げ)。
+- **MOD の決まり (系統・重み・出やすさ)** … `services/mods/mod-rules.ts` (`familyKeysOf` / `familyBlocked` / `tierWeight` / `fillShares`、エッセンスを打てるかは `essenceClash`)。
+  中身はエンジンの `familiesOf` / `excluded` / `modTierWeight`。`m.family` を直接比べたり、段の重みを自分で足したりしない
+  (2 つの系統にまたがる MOD を落とす)。
+- **お金** … 換算と丸めの決まりは `services/money.ts` (`toExalted` / `ceilMoney` / `floorMoney`)、画面に出す時は `state/display-currency.ts` の `roundMoney`
+  (費用は切り上げ・収入は切り下げ)。取引所のリーグ名は `marketStore.tradeLeague`。
 - **ゲームの名前・文面** … クライアント (`src/i18n/*-client.json` など)。自分で訳さない。
+  種類の日本語は `services/items/base-catalog.ts` の `classJa`、MOD のタグは `services/mods/tag-ja.ts`、品質の表記は `services/htc/quality.ts` の `qualityLabelOf`、
+  MOD の文面の `#` を段の幅で埋めるのは `services/htc/mod-text.ts` の `fillHashes`。
+- **種類 → タグ (spawn の判定)** … `services/mods/item-class-tags.ts` (エンジンの行からは `tagsOfEngineRow`)。
+- **アイテムの色** … `src/style.css` の `@theme` (`rarity-normal / magic / rare / unique`、`mod-fractured / desecrated / crafted`)。
+  クラスは `text-rarity-rare` など、CSS は `var(--color-rarity-rare)`。色コードを画面に直接書かない。
+- **時刻の書き方** … `utils/format-time.ts`。
+
+新しい画面 (MOD の別のタブなど) を作る時も、上の置き場から取る。同じ表や式を画面の中に書き写さない。
+直す時は置き場の 1 か所を直せば全部の画面が変わる。決まりを変えたら `tests/` の該当テスト (`mod-rules` / `shared-tables` / `money-and-trade`) も直す。
 
 ## データの出どころ
 
