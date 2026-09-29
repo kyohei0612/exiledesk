@@ -12,6 +12,7 @@
 
 - 要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す) は v0.1.329 で入り、固定版を進めて確認済 (2026-09-29、CAPTURE_VER=v16-hl0。test_1min_ui の 10 行目で金の段が無く 11 行目で出る)
 - **ExileDesk 要望 ⑰ (2026-09-29、全面更新)**: 全文は ExileDesk のメモ `craft-stage-feature` の「要望 ⑰」。武器はクォータースタッフ (モンク、PoB で DPS)。A 火力 (上の数値に MOD 反映 / PoB の DPS + 設定の書き戻し / DPS の札 / 比べるに DPS 差 / DPS の内訳) B スキル (スキル・ジェムの絵 / スキルの札 view=skill) C 防御 (ルーンの手 / 耐性の画面 view=resists) D 資源 (解呪・サルベージ) E MOD の重み (付きうる MOD の一覧 view=pool / 段の重みの数字 / 何回で出るか は後で)。返事が来たら contracts/craft_stage.py に pob 欄と新しい手を足し、Scene.kind に skill / resists / pool / dps を足す
+- **要望 ⑰ の F (動きと見せ方、kyohei「ExileDesk は好きに改造して構わん、飽きさせない工夫を作り込む」)**: 全画面に `&play=1` の登場の動き (長さは `body.dataset.animMs`、終わると `data-anim-done`)。新しい画面: MOD のくじ引き view=roll (重みの帯の上をカーソルが走って実際の結果に止まる)、倒すまでの時間 view=ttk、受けるダメージ view=hit。**POE2Tube 側の宿題: 打った瞬間の連番 (`_record_clip`) の仕組みを全部の画面の `&play=1` に広げる** (animMs の長さだけ録画)
 - **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
