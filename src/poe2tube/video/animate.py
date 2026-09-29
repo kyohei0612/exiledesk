@@ -33,7 +33,7 @@ from poe2tube.video.timeline import Cue, scene_changed
 
 log = structlog.get_logger()
 POP_SECONDS = 0.35
-COUNTDOWN_AT = (960, 495)  # パネルの真ん中 (横長の座標、ショートでは切り出した中に入る)
+COUNTDOWN_AT = (1740, 250)  # 横長: パネルの右上の外 (カードに被せない)。ショートは別の位置
 POP_DELAY = 0.15
 SLIDE_SECONDS = 0.3
 SLIDE_PX = 60

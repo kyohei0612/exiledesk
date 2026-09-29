@@ -282,15 +282,26 @@ def draw_quiz(img: Image.Image, box: Box, scene: Scene, icon_dir: Path) -> None:
             if dim:
                 ic.putalpha(ic.getchannel("A").point(lambda a: int(a * 0.45)))
             img.alpha_composite(ic, (cx0 + (cw - ic.width) // 2, top + 30))
-        name = _names().ja(key)
-        f = font(52 if len(name) <= 6 else 44)
-        d.text(
-            (cx0 + cw // 2, top + 60 + size),
-            name,
-            font=f,
-            fill=MUTED if dim else INK,
-            anchor="ma",
-        )
+        if icon.exists():
+            name = _names().ja(key) if key in _names().names else key
+            f = font(52 if len(name) <= 6 else 44)
+            d.text(
+                (cx0 + cw // 2, top + 60 + size),
+                name,
+                font=f,
+                fill=MUTED if dim else INK,
+                anchor="ma",
+            )
+        else:
+            # 文字だけの選択肢 (「T1」「T8」「入れ替える」等、章末クイズ用)
+            f = font(96 if len(key) <= 3 else 64 if len(key) <= 6 else 48)
+            d.text(
+                (cx0 + cw // 2, top + ch // 2 - 30),
+                key,
+                font=f,
+                fill=MUTED if dim else INK,
+                anchor="mm",
+            )
         if scene.badges:
             color = GREEN if right else ACCENT
             label = scene.badges[i]

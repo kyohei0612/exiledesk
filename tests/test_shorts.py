@@ -68,3 +68,12 @@ def test_countdown_number_and_ticks() -> None:
     assert countdown_number(5.0, 3, 5.0) is None
     with pytest.raises(ValueError):
         Scene(kind="talk", countdown=3)
+
+
+def test_quiz_text_choices_render() -> None:
+    from poe2tube.render.scene_panel import draw_quiz
+
+    img = Image.new("RGBA", (1920, 1080), (255, 255, 255, 255))
+    sc = Scene(kind="quiz", choices=["T1", "T5", "alchemy"], answer=1, badges=["a", "b", "c"])
+    draw_quiz(img, (300, 100, 1600, 900), sc, REPO_ROOT / "assets" / "icons")
+    assert img.getbbox() is not None
