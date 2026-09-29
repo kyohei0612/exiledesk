@@ -14,6 +14,7 @@
 - **ExileDesk 要望 ⑰ は v0.1.330 / 331 でリリース済、POE2Tube に取り込み済 (2026-09-29)**: 固定版は v0.1.331 (PoB のサブモジュールと cargo の stage_pob も update_exiledesk.py が用意)。台本の画面 `dps` / `ttk` / `hit` / `resists`、stage の DPS の札 (`show_dps`)、登場の動きの録画 (`capture/anim.py`)、スキル・ルーンの小道具。見送り (次のクラフト回): スキルの札 view=skill、MOD の重み (view=pool / roll)
 - **要確認 (ExileDesk に聞く)**: 耐性の画面でアクト 3 (-20%) なのに装備なしの耐性が -10% と出る (PoB の元の値か、ラベルのずれか)
 - **ExileDesk 要望 ⑱ (2026-09-29)**: 手ごとに付く MOD を指名 (`pick`、指名しなかった時の確率も結果に)・最初からレア (`start.mods`)・ベースの要求レベル。乱数探しをやめるため。全文は ExileDesk のメモ `craft-stage-feature`
+- **次の回の話の筋 (2026-09-29 kyohei、⑱ のリリース待ち)**: 導入 = ずんだもんの武器 (プレフィックスは普通くらいのダメージ MOD、サフィックスはしょぼい: マナ・スタン・要求能力値)。サフィックスだけ豪華 (アタックスピード・近接スキルのレベル +2・クリティカル率) にすると伸びる。PoB 試算 (アイスストライク): 白 76.1 / ずんだもん 165.2 / サフィックスだけ豪華 218.0 (+32%)。敵のアーマー (PoB の目安、Lv32 で 237) は動画で言う。⑱ の MOD 指名 (`pick` / `start.mods`) で作る。導入は approved/section_00.json を作り直す、2 章目以降は全部作り直さず章ごとに
 - **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
