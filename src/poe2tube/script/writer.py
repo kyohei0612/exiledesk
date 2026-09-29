@@ -170,7 +170,8 @@ def claude_cli_runner(model: str | None = None, timeout: int = 900) -> Runner:
         raise FileNotFoundError("claude CLI が PATH に無い")
 
     def run(prompt: str) -> str:
-        cmd = [exe, "-p", "--output-format", "json", "--max-turns", "1"]
+        # 道具は使わせない (ファイルを読みに行って 1 ターンを使い切ると error_max_turns で落ちる)
+        cmd = [exe, "-p", "--output-format", "json", "--max-turns", "1", "--tools", ""]
         if model:
             cmd += ["--model", model]
         last = ""
