@@ -68,6 +68,10 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # 画面側のテスト (vitest、約 10 秒)。落ちたらリリースを止める (2026-09-29 案 A。Rust のテストは tests.yml が別に回す)
+      - name: テスト (vitest)
+        run: pnpm test
+
       # vendor の SHA + 組み立てスクリプトが前回と同じなら、PoB 同梱はまるごと飛ばす。
       # SHA は submodule の中身が無くても git ls-tree で読める
       - name: PoB 同梱の要否

@@ -70,6 +70,15 @@ fn local_files(dir: &Path, st: &PackState) -> HashMap<String, String> {
     out
 }
 
+/// 差分: 公開の一覧 (remote) と手元 (local) を比べ、(落とす = 無い・中身が違う, 消す = 公開から消えた) を返す。名前順
+fn diff_files(remote: &HashMap<String, String>, local: &HashMap<String, String>) -> (Vec<String>, Vec<String>) {
+    let mut changed: Vec<String> = remote.iter().filter(|(k, v)| local.get(*k) != Some(*v)).map(|(k, _)| k.clone()).collect();
+    let mut removed: Vec<String> = local.keys().filter(|k| !remote.contains_key(*k)).cloned().collect();
+    changed.sort();
+    removed.sort();
+    (changed, removed)
+}
+
 fn write_state(dir: &Path, st: &PackState) -> Result<(), String> {
     std::fs::write(dir.join(".pack-state.json"), serde_json::to_string(st).unwrap()).map_err(|e| e.to_string())
 }
@@ -142,8 +151,7 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
     let dir = root.join(pack);
     if let (true, Some(files), Some(commit)) = (dir.is_dir(), &m.files, &m.commit) {
         let local = local_files(&dir, &read_state(&dir));
-        let changed: Vec<&String> = files.iter().filter(|(k, v)| local.get(*k) != Some(*v)).map(|(k, _)| k).collect();
-        let removed: Vec<&String> = local.keys().filter(|k| !files.contains_key(*k)).collect();
+        let (changed, removed) = diff_files(files, &local);
         if changed.len() <= DIFF_LIMIT {
             let total = changed.len() as u64;
             for (i, name) in changed.iter().enumerate() {
@@ -157,7 +165,7 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
                     .bytes()
                     .await
                     .map_err(|e| format!("{name} の取得に失敗: {e}"))?;
-                if &file_hash(&bytes) != files.get(*name).unwrap() {
+                if &file_hash(&bytes) != files.get(name).unwrap() {
                     return Err(format!("{name} のハッシュが合わない"));
                 }
                 let tmp = dir.join(format!("{name}.part"));
@@ -224,4 +232,38 @@ async fn install(app: &tauri::AppHandle, root: &Path, pack: &str) -> Result<Stri
     emit("done", received);
     crate::app_log::line_static(&format!("[画像パック] {pack}: {:.1} MB を入れた ({})", received as f64 / 1_048_576.0, m.content_hash));
     Ok(m.content_hash)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn map(pairs: &[(&str, &str)]) -> HashMap<String, String> {
+        pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+    }
+
+    #[test]
+    fn diff_only_new_changed_and_removed() {
+        let remote = map(&[("a.webp", "1"), ("b.webp", "2"), ("c.webp", "3")]);
+        let local = map(&[("a.webp", "1"), ("b.webp", "old"), ("gone.webp", "9")]);
+        let (changed, removed) = diff_files(&remote, &local);
+        // a は同じなので落とさない。b は中身が違う、c は増えた。gone は公開から消えた
+        assert_eq!(changed, vec!["b.webp", "c.webp"]);
+        assert_eq!(removed, vec!["gone.webp"]);
+    }
+
+    #[test]
+    fn diff_same_is_empty() {
+        let remote = map(&[("a.webp", "1"), ("b.webp", "2")]);
+        let (changed, removed) = diff_files(&remote, &remote.clone());
+        assert!(changed.is_empty() && removed.is_empty());
+    }
+
+    #[test]
+    fn file_hash_is_16_hex() {
+        let h = file_hash(b"exiledesk");
+        assert_eq!(h.len(), 16);
+        assert!(h.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(h, file_hash(b"exiledesk"));
+    }
 }
