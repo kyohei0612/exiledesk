@@ -124,7 +124,8 @@
           "text": "火耐性は、どこまで強くなるのだ？",
           "scene": {
             "kind": "tiers",
-            "mod": "FireResistance"
+            "mod": "FireResistance",
+            "reveal": false
           }
         },
         {

@@ -43,7 +43,8 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
     if scene.kind == "tiers" and scene.mod:
         base = urllib.parse.quote(plan.base)
         mod = urllib.parse.quote(scene.mod)
-        return f"{CLIP}&view=tiers&base={base}&mod={mod}&ilvl={plan.item_level}"
+        q = f"{CLIP}&view=tiers&base={base}&mod={mod}&ilvl={plan.item_level}"
+        return q if scene.reveal else q + "&hl=0"
     if scene.kind == "compare" and scene.compare_with:
         b = rs.demos[scene.compare_with].plan
         q = f"{CLIP}&view=compare&a={_plan_json(plan)}&b={_plan_json(b)}&a_step={scene.step or 0}"

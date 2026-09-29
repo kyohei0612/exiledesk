@@ -136,3 +136,28 @@ def plan_hits(
                 out[i] = HitPlan(step, tuple(clip), attach_index(clip), preroll, fps, demo)
         prev, prev_section = line, section
     return out
+
+
+REVEAL_LEAD = 0.6  # 画面の変化 (付く・正解が緑になる) を見せてから声を出すまでの秒
+
+
+def plan_cue_timing(
+    lines: list[tuple[str, Line]], wav_seconds: list[float], hits: dict[int, HitPlan]
+) -> tuple[dict[int, float], dict[int, float]]:
+    """(行の最短の長さ, 声を遅らせる秒) を行の位置で。動画づくりと check_sync が同じ物を使う.
+
+    ネタバレ防止 (kyohei 2026-09-29「音声が先で画面より先に言ってしまう」):
+    - 付く行: 付いて結果の文字が出てから REVEAL_LEAD 秒後にずんだもんが反応する
+    - クイズの答えの行 (前の行がカウントダウン): カードが緑になって正解の音が鳴ってから「正解は…」
+    """
+    hold: dict[int, float] = {}
+    delay: dict[int, float] = {}
+    for i, (_sec, ln) in enumerate(lines):
+        prev = lines[i - 1][1] if i else None
+        if i in hits or (prev is not None and prev.scene.countdown and ln.scene.kind == "quiz"):
+            delay[i] = REVEAL_LEAD
+        if i in hits:
+            hold[i] = hits[i].min_seconds + delay.get(i, 0.0)
+        if ln.scene.countdown:  # クイズ: 読み上げの後に数える秒ぶん延ばす (ADR 005)
+            hold[i] = max(hold.get(i, 0.0), wav_seconds[i] + 0.3 + ln.scene.countdown)
+    return hold, delay

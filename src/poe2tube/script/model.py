@@ -58,6 +58,9 @@ class Scene(BaseModel):
     mod: str | None = Field(
         default=None, description="tiers: 段の表を出す MOD (id か系統、例 ColdResistance)"
     )
+    reveal: bool = Field(
+        default=True, description="tiers: False = 答えの金の段を出さない (質問の行、ネタバレ防止)"
+    )
     focus: str | None = Field(
         default=None, description="stage: 光らせる MOD (id か系統)。スポットライト (ExileDesk ⑪)"
     )
@@ -80,6 +83,7 @@ class Scene(BaseModel):
             self.answer,
             tuple(self.badges or ()),
             self.mod,
+            self.reveal,
             self.focus,
             self.compare_with,
             self.b_step,

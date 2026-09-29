@@ -29,6 +29,7 @@ class Cue:
     start: float
     duration: float
     mouth_levels: tuple[int, ...]  # fps ごと (無音の gap を含む)
+    voice_delay: float = 0.0  # 行の頭から声が始まるまでの無音 (画面の変化を先に見せる)
 
     @property
     def end(self) -> float:
@@ -73,11 +74,13 @@ def build_cues(
     fps: int,
     gap: float = 0.3,
     min_seconds: dict[int, float] | None = None,
+    voice_delay: dict[int, float] | None = None,
 ) -> list[Cue]:
     """セクション順に wav を当てて Cue 列を作る。``wavs`` は全行ぶん (行の順).
 
     ``min_seconds`` {行の位置 (0 始まり): 秒}: その行が短ければ末尾を無音で延ばす
     (付いた後の演出を見せ切る前に次の画面へ行かないように)。
+    ``voice_delay`` {行の位置: 秒}: 声の前に無音を入れる (画面の変化を先に見せてネタバレを防ぐ)。
     """
     lines = [(sec.name, ln) for sec in sections for ln in sec.lines]
     if len(lines) != len(wavs):
@@ -88,11 +91,13 @@ def build_cues(
     for i, ((section, line), wav) in enumerate(zip(lines, wavs, strict=True), start=1):
         samples, sr = read_wav(wav)
         levels = mouth_levels(samples, sr, fps, gap_frames)
+        delay = int(round((voice_delay or {}).get(i - 1, 0.0) * fps))
+        levels = (MOUTH_CLOSED,) * delay + levels
         need = int(round((min_seconds or {}).get(i - 1, 0.0) * fps))
         if len(levels) < need:
             levels = levels + (MOUTH_CLOSED,) * (need - len(levels))
         duration = len(levels) / fps
-        cues.append(Cue(i, section, line, wav, t, duration, levels))
+        cues.append(Cue(i, section, line, wav, t, duration, levels, delay / fps))
         t += duration
     return cues
 
@@ -105,6 +110,9 @@ def concat_audio(cues: list[Cue], out: Path, sr: int = 24000) -> Path:
         if src_sr != sr:
             raise ValueError(f"sample rate が違う: {c.wav} ({src_sr} != {sr})")
         need = int(round(c.duration * sr))
+        pad = int(round(c.voice_delay * sr))
+        if pad:
+            samples = np.concatenate([np.zeros(pad, dtype=np.float32), samples])
         if len(samples) < need:
             samples = np.concatenate([samples, np.zeros(need - len(samples), dtype=np.float32)])
         parts.append(samples[:need])

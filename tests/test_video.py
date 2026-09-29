@@ -129,3 +129,22 @@ def test_stage_hit_not_replayed_after_talk() -> None:
     # 雑談を挟んで同じ 2 手目に戻っても打ち直さない
     assert not stage_hit(ln("talk"), ln("stage", 2), shown)
     assert stage_hit(ln("talk"), ln("stage", 2))  # shown 無しは従来どおり
+
+
+def test_voice_delay_and_reveal_timing(tmp_path: Path) -> None:
+    from poe2tube.video.clip_timing import REVEAL_LEAD, plan_cue_timing
+
+    q = ["alchemy", "chaos"]
+    lines = [
+        ("s", Line(speaker="metan", text="あ", scene=Scene(kind="quiz", choices=q, countdown=3))),
+        ("s", Line(speaker="metan", text="い", scene=Scene(kind="quiz", choices=q, answer=0))),
+    ]
+    hold, delay = plan_cue_timing(lines, [1.0, 1.0], {})
+    assert delay == {1: REVEAL_LEAD} and hold[0] == pytest.approx(4.3)
+    sec = Section(name="s", target_seconds=5, lines=[ln for _, ln in lines])
+    wavs = [_write_wav(tmp_path / "1.wav", 0.5), _write_wav(tmp_path / "2.wav", 0.5)]
+    cues = build_cues([sec], wavs, fps=12, gap=0.25, voice_delay={1: 0.5})
+    assert cues[1].voice_delay == pytest.approx(0.5) and cues[1].mouth_levels[:6] == (0,) * 6
+    samples, sr = read_wav(concat_audio(cues, tmp_path / "m.wav"))
+    head = samples[int(cues[1].start * sr) : int((cues[1].start + 0.45) * sr)]
+    assert float(abs(head).max()) < 1e-3  # 遅らせた所は無音

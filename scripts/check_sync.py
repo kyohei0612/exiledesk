@@ -26,7 +26,7 @@ from poe2tube.names import NameBook  # noqa: E402
 from poe2tube.render.palette import font  # noqa: E402
 from poe2tube.video.animate import sound_events  # noqa: E402
 from poe2tube.video.build import load_script  # noqa: E402
-from poe2tube.video.clip_timing import plan_hits  # noqa: E402
+from poe2tube.video.clip_timing import plan_cue_timing, plan_hits  # noqa: E402
 from poe2tube.video.timeline import build_cues, read_wav  # noqa: E402
 
 log = structlog.get_logger()
@@ -56,19 +56,16 @@ def main(script_path: Path) -> None:
     wavs = [vv.cache_path(ln) for ln in sc.lines]
     lines = [(sec.name, ln) for sec in sc.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
-    hold = {i: h.min_seconds for i, h in hits.items()}
-    for i, (_n, ln) in enumerate(lines):
-        if ln.scene.countdown:
-            smp, sr = read_wav(wavs[i])
-            hold[i] = max(hold.get(i, 0.0), len(smp) / sr + 0.3 + ln.scene.countdown)
-    cues = build_cues(sc.sections, wavs, s.fps, min_seconds=hold)
-    onsets = voice_onsets(work / "voice.wav", [c.start for c in cues])
+    secs = [len(smp) / sr for smp, sr in (read_wav(w) for w in wavs)]
+    hold, delay = plan_cue_timing(lines, secs, hits)
+    cues = build_cues(sc.sections, wavs, s.fps, min_seconds=hold, voice_delay=delay)
+    onsets = voice_onsets(work / "voice.wav", [c.start + c.voice_delay for c in cues])
     frames = work / "frames"
     ev = sound_events(cues, NameBook.load(), sc.final_step or len(rs.main.steps), rs)
     worst = 0.0
     rows = []
     for i, c in enumerate(cues):
-        lag = onsets[i] - c.start
+        lag = onsets[i] - (c.start + c.voice_delay)
         worst = max(worst, abs(lag))
         hit = hits.get(i)
         hit_se = [e.at for e in ev if e.kind.startswith("hit_") and c.start <= e.at < c.end]
@@ -78,8 +75,9 @@ def main(script_path: Path) -> None:
             d = (hit_se[0] - land) if hit_se else float("nan")
             note = f" 付く {land:6.2f}s / 効果音 {hit_se[0] if hit_se else '-'} (差 {d:+.2f}s)"
         rows.append((i, c))
+        lead = f" 画面を先に {c.voice_delay:.1f}s" if c.voice_delay else ""
         print(
-            f"{i + 1:3d} {c.start:6.2f}s〜{c.end:6.2f}s 声の立ち上がり {lag:+.2f}s "
+            f"{i + 1:3d} {c.start:6.2f}s〜{c.end:6.2f}s 声の立ち上がり {lag:+.2f}s{lead} "
             f"画面={c.line.scene.kind:<7} {c.line.text[:22]}{note}"
         )
     print(f"声のずれの最大 {worst:.2f}s (0.30s 未満なら OK)")

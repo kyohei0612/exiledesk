@@ -19,7 +19,7 @@ from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events, write_frames
-from poe2tube.video.clip_timing import plan_hits
+from poe2tube.video.clip_timing import plan_cue_timing, plan_hits
 from poe2tube.video.results import ResultSet, load_results
 from poe2tube.video.timeline import Cue, build_cues, concat_audio, read_wav
 
@@ -146,12 +146,9 @@ def build_video(
     capture_view_scenes(script, rs)
     lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
-    hold = {i: h.min_seconds for i, h in hits.items()}
-    for i, (_sec, ln) in enumerate(lines):
-        if ln.scene.countdown:  # クイズ: 読み上げの後に数える秒ぶん延ばす (ADR 005)
-            samples, sr = read_wav(wavs[i])
-            hold[i] = max(hold.get(i, 0.0), len(samples) / sr + 0.3 + ln.scene.countdown)
-    cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold)
+    secs = [len(smp) / sr for smp, sr in (read_wav(w) for w in wavs)]
+    hold, delay = plan_cue_timing(lines, secs, hits)
+    cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold, voice_delay=delay)
     write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")
     events = sound_events(cues, book, script.final_step or len(rs.main.steps), rs)

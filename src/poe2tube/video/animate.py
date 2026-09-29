@@ -179,6 +179,7 @@ def iter_frames(
         animate = panel is not None and scene_changed(prev, c.line) and not clip
         static = _with_panel(base, panel, 0, 1.0)
         hit_step = res.steps[hp.step - 1] if hp else None
+        land = hp.land_at if hp else 0.0  # 結果の文字は付いた瞬間から数える
         new_chapter = prev_section is not None and prev_section != c.section
         lead = chapter_lead(new_chapter)
         for k, mouth in enumerate(c.mouth_levels):
@@ -215,14 +216,14 @@ def iter_frames(
                 # 縦: 結果の文字・数字はパネルの中に描いてから切り出す。章カードは出さない (ADR 005)
                 tmp = frame_static.copy() if hit_step is not None else frame_static
                 if hit_step is not None:
-                    draw_hit(tmp, hit_step, tl)
+                    draw_hit(tmp, hit_step, tl - land)
                 yield n, compose_short(tmp, c.line, mouth, short_title, num)
                 n += 1
                 continue
             scale = pop_scale(t) if props else 1.0
             frame = compose_frame(frame_static, c.line, mouth, props, scale)
             if hit_step is not None:
-                draw_hit(frame, hit_step, tl)
+                draw_hit(frame, hit_step, tl - land)
             if num is not None:
                 draw_countdown(frame, num, COUNTDOWN_AT)
             if new_chapter:
