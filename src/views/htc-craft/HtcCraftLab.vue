@@ -5,7 +5,8 @@
  * オーナー指示:「マジで簡易的な計算機的な奴でいい。動きが見たい。イメージとあってるかどうか」。
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
-import { computed, ref, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
+import { pendingCraft } from "../../state/app-nav";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { useHtcCraft } from "./useHtcCraft";
@@ -79,6 +80,7 @@ function pick(id: string): void {
 
 /** 入口へ戻る。計算結果は捨てる (中途半端に残すと、今どの物の話か分からなくなる) */
 function backToDoor(): void {
+  fromList.value = null;
   c.resumeFlow.value = false;
   c.reset();
   pk.clear();
@@ -109,6 +111,34 @@ async function runPicked(): Promise<void> {
   await c.runPicked(pk.baseName.value, pk.cls.value, pk.targets.value);
   if (c.base.value) inputOpen.value = false;
 }
+/**
+ * 上位プレイヤー MOD 一覧の「クラフトへ」で来た時 (2026-09-29): ベースから選ぶの道に、ベース・アイテムレベル・狙う MOD を入れて
+ * そのまま作り方まで組む。計算機で作れなかった MOD は上に断りを出す
+ */
+const fromList = ref<{ baseJa: string; count: number; skipped: string[] } | null>(null);
+watch(
+  pendingCraft,
+  async (plan) => {
+    if (!plan) return;
+    pendingCraft.value = null;
+    backToDoor();
+    door.value = "base";
+    const d = await c.ensureData();
+    pk.level.value = plan.itemLevel;
+    pk.chooseBase(d, plan.baseType);
+    pk.picks.value = plan.picks.map((x) => ({ ...x }));
+    fromList.value = { baseJa: pk.allBases.value.find((b) => b.en === plan.baseType)?.ja ?? plan.baseType, count: plan.picks.length, skipped: plan.skipped };
+    if (!plan.picks.length) return;
+    await runPicked();
+    // 取引所で始め方を探す (②) は押した時だけの物なので、ここでは探さずに作り方 (白から) まで進める。探すのは入口に戻らず後からでもできる
+    if (c.base.value) {
+      c.phase.value = "done";
+      c.diagBusy.value = false;
+    }
+  },
+  { immediate: true },
+);
+
 /** たたんだ入力欄の 1 行 */
 const inputSummary = computed(() => {
   const it = c.item.value;
@@ -206,6 +236,14 @@ const inputSummary = computed(() => {
 
     <!-- 入口 B: ベースから選ぶ (2026-09-26 作り直し: ① ベース → ② 狙う MOD → ③ 作り方 + 右に完成図) -->
     <BasePicker v-if="door === 'base' && (inputOpen || !c.base.value)" :c="c" :pk="pk" :presets="ZERO_PRESETS" :preset-picked="zeroPicked" @preset="pickZero" @run="runPicked()" />
+
+    <!-- 上位プレイヤー MOD 一覧から来た時 -->
+    <div v-if="fromList" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs">
+      上位プレイヤー MOD 一覧から: <b>{{ fromList.baseJa }}</b> に MOD {{ fromList.count }} 個
+      <p v-if="fromList.skipped.length" class="mt-1 text-amber-200">
+        計算機で作れない MOD は外しました (買うしかない物): {{ fromList.skipped.join(" / ") }}
+      </p>
+    </div>
 
     <p v-if="c.error.value" class="mb-3 rounded bg-red-900/40 p-2 text-xs">{{ c.error.value }}</p>
 

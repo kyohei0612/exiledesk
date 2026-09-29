@@ -13,7 +13,9 @@
   取得状態は state/craft-v2-store (シングルトン) が持ち、App.vue 起動時から fetch が走る。
 -->
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { addToBasket } from "../state/craft-basket";
+import { isCraftableBase, prepareCraftData } from "../services/craft-v2/to-craft";
 import UniqueTooltip from "../components/decor/UniqueTooltip.vue";
 import CraftV2Header from "../components/craft-v2/CraftV2Header.vue";
 import WarnHistoryPanel from "../components/craft-v2/WarnHistoryPanel.vue";
@@ -46,6 +48,27 @@ const hover = useUniqueHover({
   leagueName,
 });
 
+/**
+ * クラフトのベース (2026-09-29「クラフトに追加 / クラフトへ」)。この部位で上位の人が使っていたレアのベースのうち、
+ * 計算機にある物を人数順。部位を変えたら一番多い物に戻す
+ */
+const craftDataReady = ref(false);
+const craftBases = computed(() =>
+  craftDataReady.value ? d.sortedBases.value.filter((b) => isCraftableBase(b.nameEn)).map((b) => ({ en: b.nameEn, ja: b.name, count: b.count })) : [],
+);
+const craftBase = ref("");
+watch(craftBases, (list) => {
+  if (!list.some((b) => b.en === craftBase.value)) craftBase.value = list[0]?.en ?? "";
+}, { immediate: true });
+function addCraft(): void {
+  const b = craftBases.value.find((x) => x.en === craftBase.value);
+  if (!b) return;
+  const all = [...d.activeSlotMods.value.prefix, ...d.activeSlotMods.value.suffix];
+  const chosen = all.filter((m) => sel.selectedMods.value.has(m.rawTemplate)).map((mod) => ({ mod, tierIdx: sel.getModTierIdx(mod) }));
+  addToBasket(b.en, b.ja, chosen);
+  sel.clearSelectedMods();
+}
+
 /** 見方の切り替え (skillsTab = スキル・持ち物) */
 const VIEW_TABS = [
   { key: "loadout", label: "スキル・持ち物", skills: true },
@@ -57,6 +80,7 @@ const lowLimit = computed<number>(() => d.lowThreshold.value - 1);
 // 起動時に App.vue が呼んでいるので、ここでは念のため再度呼ぶ (冪等ガード済 = no-op)
 onMounted(() => {
   void ensureCraftV2Started();
+  void prepareCraftData().then(() => (craftDataReady.value = true));
 });
 </script>
 
@@ -95,11 +119,14 @@ onMounted(() => {
     <ModSearchBar
       v-if="store.ascendancies.length > 0 && !d.skillsTab.value"
       v-model:bulk-tier-value="sel.bulkTierValue.value"
+      v-model:craft-base="craftBase"
+      :craft-bases="craftBases"
       :selected-count="sel.selectedMods.value.size"
       :searching="sel.searching.value"
       @clear="sel.clearSelectedMods"
       @apply-bulk-tier="sel.applyBulkTier"
       @search="sel.searchSelectedMods"
+      @add-craft="addCraft"
     />
 
     <!-- スクロール可能本体 (アセンダンシータブまでの固定エリアの下) -->

@@ -19,3 +19,15 @@ export function openGemCorrupt(nameEn: string): void {
   pendingGemCorrupt.value = nameEn;
   activeNav.value = "gem-corrupt";
 }
+
+/**
+ * クラフト計算機で開いてほしい中身 (ベース + 狙う MOD と段)。計算機が受け取ったら null に戻す (2026-09-29)。
+ * 上位プレイヤー MOD 一覧の「クラフトへ」から。型は services/craft-v2/to-craft.ts の CraftPlan
+ */
+export const pendingCraft = ref<import("../services/craft-v2/to-craft").CraftPlan | null>(null);
+
+/** クラフト計算機へ移動し、その中身で作り方を組ませる */
+export function openCraftLab(plan: import("../services/craft-v2/to-craft").CraftPlan): void {
+  pendingCraft.value = plan;
+  activeNav.value = "htc-craft";
+}
