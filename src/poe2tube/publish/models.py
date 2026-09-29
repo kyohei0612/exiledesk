@@ -18,6 +18,15 @@ class PlaylistSpec(BaseModel):
     privacy: Privacy = "public"
 
 
+class Source(BaseModel):
+    """台本の解説で参考にした記事・サイト。説明欄の「▼参考」に出す (kyohei 2026-09-29)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, description="サイト名・記事名 (例 Maxroll「防御ガイド」)")
+    url: str = Field(pattern=r"^https?://", description="出典の URL")
+
+
 class VideoDefaults(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -7,7 +7,8 @@ import re
 from pathlib import Path
 
 from poe2tube.config.settings import REPO_ROOT
-from poe2tube.publish.models import ChannelProfile, Chapter, VideoMeta
+from poe2tube.publish.models import ChannelProfile, Chapter, Source, VideoMeta
+from poe2tube.script.brief import Brief
 from poe2tube.script.model import VideoScript
 
 MIN_CHAPTER_SECONDS = 10.0  # YouTube のチャプター条件: 各 10 秒以上・3 個以上・先頭 0:00
@@ -45,11 +46,28 @@ def default_summary(title: str) -> str:
     return re.sub(r"^【[^】]*】\s*", "", title).strip()
 
 
-def build_description(summary: str, chapters: list[Chapter], profile: ChannelProfile) -> str:
+def load_sources(name: str, root: Path = REPO_ROOT) -> list[Source]:
+    """brief (data/briefs/<name>.json) の参考サイト。brief が無ければ空."""
+    path = root / "data" / "briefs" / f"{name}.json"
+    if not path.exists():
+        return []
+    return Brief.model_validate(json.loads(path.read_text(encoding="utf-8"))).sources
+
+
+def build_description(
+    summary: str,
+    chapters: list[Chapter],
+    profile: ChannelProfile,
+    sources: list[Source] | None = None,
+) -> str:
     parts = [summary.strip()]
     ch = clean_chapters(chapters)
     if ch:
         parts.append("▼チャプター\n" + "\n".join(f"{timestamp(c.start)} {c.title}" for c in ch))
+    if sources:  # 記事を読んで解説した回は出典を必ず載せる (kyohei 2026-09-29)
+        parts.append(
+            "▼参考にした記事・サイト\n" + "\n".join(f"・{s.title}\n{s.url}" for s in sources)
+        )
     v = profile.video
     if v.credits:
         parts.append("▼クレジット\n" + "\n".join(v.credits))
@@ -86,6 +104,7 @@ def build_meta(
             summary or default_summary(script.title),
             load_chapters(chapters_path(name, root)),
             profile,
+            load_sources(name, root),
         ),
         tags=tags,
         category_id=v.category_id,

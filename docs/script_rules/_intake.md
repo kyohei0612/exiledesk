@@ -24,6 +24,7 @@ kyohei が「台本を作りたい」「この brief で 1 本」と言ったら
 
 ## 答えの落とし方
 
+- **記事・サイト (攻略記事・poe2db・PoB 等) を読んで解説する回は、その出典を `sources` (`{title, url}` の配列) に入れる**。投稿の説明欄に「▼参考にした記事・サイト」として自動で載る (kyohei 2026-09-29)
 - 答えを `Brief` の JSON にして `data/briefs/<name>.json` に保存し、`brief.problems()` (設定と手順の食い違い検査) を通す
 - 通ったら `scripts/run_stage.py` → `scripts/write_script.py` → `scripts/build_video.py`
 - 途中で kyohei が前提を変えたら brief を直し、影響する章だけ書き直す (`output/work/<name>/script_cache/` の該当章を消す)

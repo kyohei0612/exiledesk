@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.publish.models import Source
 
 PlayerStage = Literal["act", "early_endgame", "endgame"]
 
@@ -84,6 +85,10 @@ class Brief(BaseModel):
         description="追加の実演 {キー: 手順}。武器・防具など別のアイテムでも見せる回 (ADR 004)",
     )
     notes: list[str] = Field(default_factory=list, description="台本に入れたい要点・避けたい事")
+    sources: list[Source] = Field(
+        default_factory=list,
+        description="解説で参考にした記事・サイト。投稿の説明欄の「▼参考」に出す",
+    )
     final_step: int | None = Field(
         default=None,
         ge=1,

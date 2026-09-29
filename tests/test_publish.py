@@ -10,7 +10,7 @@ from poe2tube.config.settings import REPO_ROOT
 from poe2tube.publish.channel import apply_profile, branding_body, ensure_playlists, load_profile
 from poe2tube.publish.envfile import read_env, set_env
 from poe2tube.publish.meta import build_description, build_meta, clean_chapters, timestamp
-from poe2tube.publish.models import ChannelProfile, Chapter, VideoMeta
+from poe2tube.publish.models import ChannelProfile, Chapter, Source, VideoMeta
 from poe2tube.publish.youtube import (
     WrongChannelError,
     publish_lock,
@@ -157,6 +157,16 @@ def test_chapters_and_description() -> None:
     desc = build_description("要約", raw, prof)
     assert "0:00 導入" in desc and "VOICEVOX:四国めたん" in desc and desc.endswith("#ずんだもん")
     assert clean_chapters(raw[:2]) == []  # 3 個未満は出さない
+    assert "▼参考" not in desc  # 参考が無ければ見出しも出さない
+
+
+def test_description_lists_sources() -> None:
+    url = "https://maxroll.gg/poe2/getting-started/defence-guide"
+    desc = build_description("要約", [], load_profile(PROFILE), [Source(title="防御", url=url)])
+    block = f"▼参考にした記事・サイト\n・防御\n{url}"
+    assert block in desc and desc.index(block) < desc.index("▼クレジット")
+    with pytest.raises(ValueError):
+        Source(title="x", url="maxroll.gg")  # URL は http(s) から
 
 
 def test_build_meta_from_script(tmp_path: Path) -> None:
@@ -176,6 +186,16 @@ def test_build_meta_from_script(tmp_path: Path) -> None:
     assert meta.title == script.title and meta.thumbnail == "output/act_craft_8min_thumb.jpg"
     assert "▼チャプター" in meta.description and meta.privacy == "private"
     assert meta.playlist_key == "basics"
+    assert "▼参考" not in meta.description  # brief が無い
+
+    brief = json.loads((REPO_ROOT / "data" / "briefs" / "act_craft_8min.json").read_text("utf-8"))
+    brief["sources"] = [{"title": "poe2db 耐性", "url": "https://poe2db.tw/jp/Resistances"}]
+    (tmp_path / "data" / "briefs").mkdir(parents=True)
+    (tmp_path / "data" / "briefs" / "act_craft_8min.json").write_text(
+        json.dumps(brief, ensure_ascii=False), encoding="utf-8"
+    )
+    meta = build_meta("act_craft_8min", script, load_profile(PROFILE), root=tmp_path)
+    assert "・poe2db 耐性\nhttps://poe2db.tw/jp/Resistances" in meta.description
 
 
 def test_video_body_schedules_as_private() -> None:
