@@ -49,7 +49,8 @@ const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?:
  *   view=compare&a=<手順 JSON>&b=<手順 JSON>[&a_step=N&b_step=N] … 2 つのアイテムを並べて違いを出す
  */
 export type StageExtra =
-  | { kind: "tiers"; base: string; mod: string; ilvl: number | null }
+  // hl = false: 答えの金の段を出さない (&hl=0、POE2Tube 要望 ⑯「ネタバレは避けたい」)
+  | { kind: "tiers"; base: string; mod: string; ilvl: number | null; hl: boolean }
   | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number };
 const extra = ref<StageExtra | null>(null);
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
@@ -107,7 +108,7 @@ export const craftStage = {
       const view = q.get("view");
       if (view === "tiers") {
         const ilvl = Number(q.get("ilvl"));
-        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null };
+        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null, hl: q.get("hl") !== "0" };
       } else if (view === "compare") {
         const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
         extra.value = { kind: "compare", a: JSON.parse(q.get("a") ?? "{}") as CraftStagePlan, b: JSON.parse(q.get("b") ?? "{}") as CraftStagePlan, aStep: num("a_step"), bStep: num("b_step") };

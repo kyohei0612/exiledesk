@@ -15,7 +15,8 @@ import { freshItem } from "../../services/craft-stage/run-plan";
 import { modListFor, shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { baseArt } from "../../services/craft-stage/base-art";
 
-const props = defineProps<{ base: string; mod: string; ilvl: number | null }>();
+/** hl = false: 答えの金の段を出さない (POE2Tube 要望 ⑯ &hl=0。質問の行で表だけ見せ、答えの行で金の段を「パッ」と出す) */
+const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean }>(), { hl: true });
 
 const view = computed(() => {
   const data = craftStage.data.value;
@@ -26,10 +27,11 @@ const view = computed(() => {
     const m = props.mod;
     const row = rows.find((r) => r.id === m) ?? rows.find((r) => r.id.endsWith(`/${m}`)) ?? rows.find((r) => r.family === m && r.group === "normal") ?? rows.find((r) => r.family === m);
     if (!row) return { error: `このベースに ${m} の MOD が無い`, item };
-    const lv = props.ilvl ?? Infinity;
+    // hl = false の時は全部の段を同じ見た目に (薄い段も付けない)。出やすさも全部の段の中で
+    const lv = props.hl ? (props.ilvl ?? Infinity) : Infinity;
     const open = row.tiers.filter((t) => t.ilvl <= lv);
     const total = open.reduce((a, t) => a + t.weight, 0);
-    const top = open[0]?.rank ?? null;
+    const top = props.hl ? (open[0]?.rank ?? null) : null;
     const maxW = Math.max(1, ...row.tiers.map((t) => t.weight));
     return {
       item, row,
@@ -90,7 +92,7 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
           </span>
         </div>
       </div>
-      <p v-if="ilvl" class="mt-2 w-full text-right text-[16px] text-white/60">金の段 = アイテムレベル {{ ilvl }} で出る一番上の段。薄い段はまだ出ない。出やすさは、この MOD が付いた時にどの段になるか</p>
+      <p v-if="ilvl && hl" class="mt-2 w-full text-right text-[16px] text-white/60">金の段 = アイテムレベル {{ ilvl }} で出る一番上の段。薄い段はまだ出ない。出やすさは、この MOD が付いた時にどの段になるか</p>
     </template>
   </div>
 </template>
