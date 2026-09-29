@@ -37,9 +37,14 @@ const ORDER: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly"];
 
 const groups = computed(() =>
   ORDER.filter((g) => props.filter === "all" || props.filter === g)
-    .map((g) => ({ g, st: GROUPS[g], rows: props.rows.filter((r) => r.group === g) }))
+    .map((g) => {
+      const rows = props.rows.filter((r) => r.group === g);
+      return { g, st: GROUPS[g], rows, top: Math.max(0, ...rows.map((r) => r.share)) };
+    })
     .filter((x) => x.rows.length),
 );
+/** 出やすさの % (重みの無い種類 = エッセンスは出さない) */
+const pct = (x: number): string => (x >= 0.1 ? `${Math.round(x * 100)}%` : x >= 0.001 ? `${(x * 100).toFixed(1)}%` : x > 0 ? "<0.1%" : "");
 const full = computed(() => props.count >= props.limit);
 const isDesec = (m: ModRow): boolean => m.group === "desecrated" || m.group === "otherworldly";
 /** 押せない理由 (入れた物は外せる) */
@@ -68,17 +73,20 @@ function blocked(m: ModRow): string | null {
           <div
             v-for="m in x.rows"
             :key="m.modId"
-            class="flex items-center gap-2 rounded-r-lg border-l-2 px-2 py-1"
+            class="relative flex items-center gap-2 overflow-hidden rounded-r-lg border-l-2 px-2 py-1"
             :class="[x.st.bar, pk.isPicked(m.modId) ? 'bg-amber-500/10 ring-1 ring-amber-400/40' : blocked(m) ? 'opacity-35' : 'cursor-pointer hover:bg-white/5']"
             :title="blocked(m) ?? ''"
             @click="!blocked(m) && emit('toggle', m)"
           >
-            <span class="grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
-            <span class="min-w-0 flex-1">{{ named(m) }}</span>
-            <span v-if="m.alloy" class="shrink-0 rounded px-1 text-[10px]" :class="x.st.chip">合金</span>
+            <!-- 出やすさの棒 (種類の中で一番出やすい物を 100%。2026-09-29 クラフトステージの MOD 一覧と同じ) -->
+            <span v-if="m.share > 0 && x.top > 0" class="pointer-events-none absolute inset-y-0 left-0 bg-white/[0.06]" :style="{ width: `${(m.share / x.top) * 100}%` }" />
+            <span class="relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
+            <span class="relative min-w-0 flex-1">{{ named(m) }}</span>
+            <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" title="この種類・この側の中での出やすさ (今のアイテムレベルで出る段の重みの割合)">{{ pct(m.share) }}</span>
+            <span v-if="m.alloy" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip">合金</span>
             <select
               v-if="pk.isPicked(m.modId)"
-              class="shrink-0 rounded border border-white/20 bg-black/40 px-1 py-0.5"
+              class="relative shrink-0 rounded border border-white/20 bg-black/40 px-1 py-0.5"
               :value="pk.tierOf(m.modId)"
               @click.stop
               @change="pk.setTier(m.modId, Number(($event.target as HTMLSelectElement).value))"

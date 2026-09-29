@@ -44,6 +44,13 @@ export interface ModRow {
   group: ModGroup;
   /** 合金 (エッセンスの種類の中で名前を分ける) */
   alloy?: boolean;
+  /** その ilvl で出うる段の重みの合計 */
+  weight: number;
+  /**
+   * 出やすさ = 同じ側・同じ種類の重みの合計に対する割合 (0〜1、検索で絞る前の全部で割る)。
+   * 重みを持たない種類 (エッセンス = 確定) は 0。2026-09-29 オーナー「A」(クラフトステージの MOD 一覧の出やすさを計算機にも)
+   */
+  share: number;
 }
 export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
 
@@ -111,6 +118,8 @@ export function usePicker() {
     const q = modQuery.value.trim().toLowerCase();
     const out: ModRow[] = [];
     const seen = new Set<string>();
+    /** 側 + 種類 → 重みの合計 (検索で絞る前) */
+    const totals = new Map<string, number>();
     const pool = (p: { prefixes: readonly string[]; suffixes: readonly string[] } | undefined, group: ModGroup) =>
       p ? ([["P", p.prefixes, group], ["S", p.suffixes, group]] as const) : [];
     const lists = [
@@ -127,6 +136,8 @@ export function usePicker() {
         if (group === "essence" && mod.source !== "perfect_essence") continue;
         seen.add(id);
         const ja = jaOfMod(mod);
+        const weight = mod.tiers.filter((t) => t.ilvl <= level.value).reduce((a, t) => a + (t.weight || 0), 0);
+        totals.set(`${side}|${group}`, (totals.get(`${side}|${group}`) ?? 0) + weight);
         if (q && !ja.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) continue;
         const tiers = mod.tiers
           .map((t, i) => ({ i, t }))
@@ -137,8 +148,12 @@ export function usePicker() {
             range: (t.ranges ?? []).map((r) => `${r[0]}-${r[1]}`).join(" / "),
           }));
         if (tiers.length === 0) continue; // この ilvl では 1 段も取れない
-        out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, ...(mod.alloy ? { alloy: true } : {}) });
+        out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, weight, share: 0, ...(mod.alloy ? { alloy: true } : {}) });
       }
+    }
+    for (const r of out) {
+      const t = totals.get(`${r.side}|${r.group}`) ?? 0;
+      r.share = t > 0 ? r.weight / t : 0;
     }
     return out;
   });
