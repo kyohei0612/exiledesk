@@ -11,6 +11,7 @@
 ## 待っている事
 
 - なし。要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す) は v0.1.329 で入り、固定版を進めて確認済 (2026-09-29、CAPTURE_VER=v16-hl0。test_1min_ui の 10 行目で金の段が無く 11 行目で出る)
+- **ExileDesk 要望 ⑰ (2026-09-29、次の「アクト中の火力と防御」回用)**: ① ルーンをはめる手 ② 武器・防具の上の数値に MOD を反映 ③ PoB でスキルの DPS (設定 = 敵・アクトの耐性ペナルティも指定、結果 JSON に書き戻す) ④ 耐性の画面 view=resists ⑤ 解呪・サルベージの手。返事が来たら contracts/craft_stage.py に pob 欄を足す。ExileDesk のメモ `craft-stage-feature` に記載。リリースされたら下の手順で撮り直す
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
 ## 次の動画 (kyohei が構成を考え中)
