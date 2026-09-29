@@ -6,7 +6,8 @@
     - 人数で 3 段: 定番 (7 割以上) = その色を濃く太く / よく使う (4 割以上) = 薄く / 少数派 = 灰色、最初は畳む
     - 一番上の「定番セット」は定番だけを種類をまたいで集めた物 (これだけ見ればそのビルドの形が分かる)
   選んだビルドの人だけの集計。アセンダンシー全体の使用率は自動ジェム監視へ移した。
-  メインスキルとスピリットには「監視へ +」(他の画面と同じ WatchToggleButton)。オーナー 2026-09-29「今まで通り監視へボタンはいる、そこだけ」
+  メインスキルとスピリットには「監視へ +」(他の画面と同じ WatchToggleButton) と「計算 ↗」(ジェムコラプトの賭けへ)。
+    オーナー 2026-09-29「今まで通り監視へボタンはいる、そこだけ」「監視と計算ボタンにしようか、計算もそのままいけちゃうし」
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -14,6 +15,7 @@ import type { AggregatedAscendancy, AugmentKind, LoadoutEntry, SkillUsage } from
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
 import gemsRaw from "../../i18n/gems-client.json";
 import WatchToggleButton from "../WatchToggleButton.vue";
+import { openGemCorrupt } from "../../state/app-nav";
 
 /** 監視に入れられるジェム (英語名)。ユニークの付与スキルなどは出さない (SkillUsageCard と同じ) */
 const WATCHABLE = new Set((gemsRaw as { en: string }[]).map((g) => g.en));
@@ -158,8 +160,18 @@ const skillVisible = (list: SkillUsage[]): SkillUsage[] => visible(list);
                 <span class="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="CAT[g.cat].bar" :style="{ width: pctW(s.count) }" /></span>
                 <span class="w-12 shrink-0 text-right text-[12px] tabular-nums text-white/60">{{ s.count }}/{{ agg.sampleSize }}</span>
                 <!-- 列は全部の行で空けて棒の位置を揃える (ボタンはメインとスピリットだけ) -->
-                <span class="w-[4.5rem] shrink-0 text-right">
-                  <WatchToggleButton v-if="g.key !== 'other' && WATCHABLE.has(s.nameEn)" :gem-en="s.nameEn" :name-ja="s.name" class="text-[10px]" />
+                <span class="flex w-[8.5rem] shrink-0 justify-end gap-1">
+                  <template v-if="g.key !== 'other' && WATCHABLE.has(s.nameEn)">
+                    <button
+                      type="button"
+                      class="shrink-0 whitespace-nowrap rounded border border-[var(--exile-color-border-brass)] px-1 text-[10px] text-[var(--exile-color-accent-focus)] transition-colors hover:bg-[var(--exile-color-bg-elevated)]"
+                      :title="`ジェムコラプトの賭けで ${s.name} を計算する`"
+                      @click="openGemCorrupt(s.nameEn)"
+                    >
+                      計算 ↗
+                    </button>
+                    <WatchToggleButton :gem-en="s.nameEn" :name-ja="s.name" class="text-[10px]" />
+                  </template>
                 </span>
               </div>
               <div v-if="visible(s.supports).length" class="mt-1 flex flex-wrap gap-1 pl-2">
