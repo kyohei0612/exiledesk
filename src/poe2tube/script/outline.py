@@ -57,7 +57,7 @@ class Outline(BaseModel):
         n = len(result.steps)
         stage_steps: set[int] = set()
         for s in self.sections:
-            bad = [st for st in s.steps if not 1 <= st <= n]
+            bad = [st for st in s.steps if not 0 <= st <= n]  # 0 = 白 (使う前、白の話の item 等)
             if bad:
                 problems.append(f"「{s.name}」の steps に無い工程 {bad} (最大 {n})")
             if "stage" in s.scenes:
