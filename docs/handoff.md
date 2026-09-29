@@ -13,6 +13,7 @@
 - 要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す) は v0.1.329 で入り、固定版を進めて確認済 (2026-09-29、CAPTURE_VER=v16-hl0。test_1min_ui の 10 行目で金の段が無く 11 行目で出る)
 - **ExileDesk 要望 ⑰ は v0.1.330 / 331 でリリース済、POE2Tube に取り込み済 (2026-09-29)**: 固定版は v0.1.331 (PoB のサブモジュールと cargo の stage_pob も update_exiledesk.py が用意)。台本の画面 `dps` / `ttk` / `hit` / `resists`、stage の DPS の札 (`show_dps`)、登場の動きの録画 (`capture/anim.py`)、スキル・ルーンの小道具。見送り (次のクラフト回): スキルの札 view=skill、MOD の重み (view=pool / roll)
 - **要確認 (ExileDesk に聞く)**: 耐性の画面でアクト 3 (-20%) なのに装備なしの耐性が -10% と出る (PoB の元の値か、ラベルのずれか)
+- **ExileDesk 要望 ⑱ (2026-09-29)**: 手ごとに付く MOD を指名 (`pick`、指名しなかった時の確率も結果に)・最初からレア (`start.mods`)・ベースの要求レベル。乱数探しをやめるため。全文は ExileDesk のメモ `craft-stage-feature`
 - **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 

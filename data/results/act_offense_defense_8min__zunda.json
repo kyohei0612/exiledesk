@@ -1,0 +1,2434 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T09:35:23.992Z",
+  "exiledesk_version": "0.1.331",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "ずんだもんの武器: 良さそうと思った MOD に高貴を打ちまくったレア",
+    "base": "Gothic Quarterstaff",
+    "item_level": 30,
+    "start_rarity": "normal",
+    "seed": 20262005,
+    "start_unidentified": false,
+    "pob": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "supports": [],
+      "config": {
+        "resistancePenalty": -20,
+        "enemyIsBoss": "None"
+      }
+    },
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1
+      },
+      {
+        "currency": "augment",
+        "times": 1
+      },
+      {
+        "currency": "regal",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262006,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 42.16169365337556,
+        "hit": 21.51106819049774,
+        "aps": 1.9599999999999995,
+        "crit": 11.64,
+        "crit_chance": 11.64,
+        "breakdown": {
+          "physical": 2.4169123750342676,
+          "fire": 0,
+          "cold": 39.744781278341286,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 42.16169365337556,
+          "full": 42.16169365337556
+        }
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262007,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 43.62032325791854,
+        "hit": 22.25526696832579,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.5005280848488334,
+          "fire": 0,
+          "cold": 41.11979517306971,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 43.62032325791854,
+          "full": 43.62032325791854
+        }
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262008,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 91.32280325791852,
+        "hit": 46.593266968325786,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.498192186386829,
+          "fire": 47.74322845094829,
+          "cold": 41.08138262058341,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 91.32280325791852,
+          "full": 91.32280325791852
+        }
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262009,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          }
+        ]
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      },
+      "pob": {
+        "dps": 91.32280325791852,
+        "hit": 46.593266968325786,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.498192186386829,
+          "fire": 47.74322845094829,
+          "cold": 41.08138262058341,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 91.32280325791852,
+          "full": 91.32280325791852
+        }
+      }
+    },
+    {
+      "index": 5,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262010,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "2〜20",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "2から20の雷ダメージを追加する",
+            "text_en": "Adds 2 to 20 Lightning Damage",
+            "values": [
+              2,
+              20
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                19,
+                27
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Buzzing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "2から20の雷ダメージを追加する",
+            "text_en": "Adds 2 to 20 Lightning Damage",
+            "values": [
+              2,
+              20
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                19,
+                27
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Buzzing"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 2.024
+      },
+      "pob": {
+        "dps": 117.94744325791854,
+        "hit": 60.177266968325796,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.497710563108863,
+          "fire": 47.73402409496938,
+          "cold": 41.07346259334575,
+          "lightning": 26.642246006494542,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 117.94744325791854,
+          "full": 117.94744325791854
+        }
+      }
+    },
+    {
+      "index": 6,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262011,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "2〜20",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "2から20の雷ダメージを追加する",
+            "text_en": "Adds 2 to 20 Lightning Damage",
+            "values": [
+              2,
+              20
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                19,
+                27
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Buzzing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "ゴシッククォータースタッフ",
+        "base": "Gothic Quarterstaff",
+        "base_ja": "ゴシッククォータースタッフ",
+        "item_level": 30,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "16〜26",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "16〜24",
+            "up": true
+          },
+          {
+            "key": "lightning",
+            "label": "雷ダメージ",
+            "value": "2〜20",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "命中力 +98",
+            "text_en": "+98 to Accuracy Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                85,
+                123
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Deliberate"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 16,
+            "text_ja": "16から24の火ダメージを追加する",
+            "text_en": "Adds 16 to 24 Fire Damage",
+            "values": [
+              16,
+              24
+            ],
+            "ranges": [
+              [
+                11,
+                17
+              ],
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Smoking"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalLightningDamage",
+            "family": "LightningDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "2から20の雷ダメージを追加する",
+            "text_en": "Adds 2 to 20 Lightning Damage",
+            "values": [
+              2,
+              20
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                19,
+                27
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Buzzing"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+            "family": "CriticalStrikeMultiplier",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "クリティカルダメージボーナス +10%",
+            "text_en": "+10% to Critical Damage Bonus",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                10,
+                11
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Ire"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が-15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          },
+          {
+            "mod_id": "Quarterstaves/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに6のマナを獲得する",
+            "text_en": "Gain 6 Mana per enemy killed",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/ManaGainedFromEnemyDeath",
+            "family": "ManaGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 23,
+            "text_ja": "倒した敵1体ごとに6のマナを獲得する",
+            "text_en": "Gain 6 Mana per enemy killed",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                6,
+                9
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Infusion"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 3.036
+      },
+      "pob": {
+        "dps": 117.94744325791854,
+        "hit": 60.177266968325796,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.497710563108863,
+          "fire": 47.73402409496938,
+          "cold": 41.07346259334575,
+          "lightning": 26.642246006494542,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 117.94744325791854,
+          "full": 117.94744325791854
+        }
+      }
+    }
+  ],
+  "final": {
+    "name": "ゴシッククォータースタッフ",
+    "base": "Gothic Quarterstaff",
+    "base_ja": "ゴシッククォータースタッフ",
+    "item_level": 30,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "properties": [
+      {
+        "key": "phys",
+        "label": "物理ダメージ",
+        "value": "16〜26",
+        "up": false
+      },
+      {
+        "key": "fire",
+        "label": "火ダメージ",
+        "value": "16〜24",
+        "up": true
+      },
+      {
+        "key": "lightning",
+        "label": "雷ダメージ",
+        "value": "2〜20",
+        "up": true
+      },
+      {
+        "key": "crit",
+        "label": "クリティカルヒット率",
+        "value": "12.00%",
+        "up": false
+      },
+      {
+        "key": "aps",
+        "label": "アタック/秒",
+        "value": "1.40",
+        "up": false
+      }
+    ],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Quarterstaves/LocalAccuracyRating",
+        "family": "IncreasedAccuracy",
+        "side": "prefix",
+        "tier_name": "T6",
+        "mod_level": 26,
+        "text_ja": "命中力 +98",
+        "text_en": "+98 to Accuracy Rating",
+        "values": [
+          98
+        ],
+        "ranges": [
+          [
+            85,
+            123
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "Deliberate"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalFireDamage",
+        "family": "FireDamage",
+        "side": "prefix",
+        "tier_name": "T8",
+        "mod_level": 16,
+        "text_ja": "16から24の火ダメージを追加する",
+        "text_en": "Adds 16 to 24 Fire Damage",
+        "values": [
+          16,
+          24
+        ],
+        "ranges": [
+          [
+            11,
+            17
+          ],
+          [
+            19,
+            28
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Smoking"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalLightningDamage",
+        "family": "LightningDamage",
+        "side": "prefix",
+        "tier_name": "T9",
+        "mod_level": 8,
+        "text_ja": "2から20の雷ダメージを追加する",
+        "text_en": "Adds 2 to 20 Lightning Damage",
+        "values": [
+          2,
+          20
+        ],
+        "ranges": [
+          [
+            1,
+            2
+          ],
+          [
+            19,
+            27
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Buzzing"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/LocalCriticalStrikeMultiplier",
+        "family": "CriticalStrikeMultiplier",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 8,
+        "text_ja": "クリティカルダメージボーナス +10%",
+        "text_en": "+10% to Critical Damage Bonus",
+        "values": [
+          10
+        ],
+        "ranges": [
+          [
+            10,
+            11
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of Ire"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalAttributeRequirements",
+        "family": "LocalAttributeRequirements",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 24,
+        "text_ja": "要求能力値が-15%減少する",
+        "text_en": "-15% reduced Attribute Requirements",
+        "values": [
+          -15
+        ],
+        "ranges": [
+          [
+            -15,
+            -15
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Worthy"
+      },
+      {
+        "mod_id": "Quarterstaves/ManaGainedFromEnemyDeath",
+        "family": "ManaGainedFromEnemyDeath",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 23,
+        "text_ja": "倒した敵1体ごとに6のマナを獲得する",
+        "text_en": "Gain 6 Mana per enemy killed",
+        "values": [
+          6
+        ],
+        "ranges": [
+          [
+            6,
+            9
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of Infusion"
+      }
+    ]
+  },
+  "total_cost": 3.036,
+  "pob": {
+    "version": "0.23.1",
+    "enemy": {
+      "level": 32,
+      "life": 683,
+      "hit": 22,
+      "ja": "普通の敵 Lv32 のライフ 683"
+    },
+    "character": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "skill_ja": "アイスストライク",
+      "gem_level": 9,
+      "supports": []
+    },
+    "config": {
+      "resistancePenalty": -20,
+      "enemyIsBoss": "None"
+    },
+    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ",
+    "steps": [
+      {
+        "dps": 41.704305459266045,
+        "hit": 21.277706866972476,
+        "aps": 1.9599999999999995,
+        "crit": 11.64,
+        "crit_chance": 11.64,
+        "breakdown": {
+          "physical": 2.3906926696394546,
+          "fire": 0,
+          "cold": 39.31361278962659,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 41.704305459266045,
+          "full": 41.704305459266045
+        }
+      },
+      {
+        "dps": 42.16169365337556,
+        "hit": 21.51106819049774,
+        "aps": 1.9599999999999995,
+        "crit": 11.64,
+        "crit_chance": 11.64,
+        "breakdown": {
+          "physical": 2.4169123750342676,
+          "fire": 0,
+          "cold": 39.744781278341286,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 42.16169365337556,
+          "full": 42.16169365337556
+        }
+      },
+      {
+        "dps": 43.62032325791854,
+        "hit": 22.25526696832579,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.5005280848488334,
+          "fire": 0,
+          "cold": 41.11979517306971,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 43.62032325791854,
+          "full": 43.62032325791854
+        }
+      },
+      {
+        "dps": 91.32280325791852,
+        "hit": 46.593266968325786,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.498192186386829,
+          "fire": 47.74322845094829,
+          "cold": 41.08138262058341,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 91.32280325791852,
+          "full": 91.32280325791852
+        }
+      },
+      {
+        "dps": 91.32280325791852,
+        "hit": 46.593266968325786,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.498192186386829,
+          "fire": 47.74322845094829,
+          "cold": 41.08138262058341,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 91.32280325791852,
+          "full": 91.32280325791852
+        }
+      },
+      {
+        "dps": 117.94744325791854,
+        "hit": 60.177266968325796,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.497710563108863,
+          "fire": 47.73402409496938,
+          "cold": 41.07346259334575,
+          "lightning": 26.642246006494542,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 117.94744325791854,
+          "full": 117.94744325791854
+        }
+      },
+      {
+        "dps": 117.94744325791854,
+        "hit": 60.177266968325796,
+        "aps": 1.9599999999999995,
+        "crit": 12,
+        "crit_chance": 12,
+        "breakdown": {
+          "physical": 2.497710563108863,
+          "fire": 47.73402409496938,
+          "cold": 41.07346259334575,
+          "lightning": 26.642246006494542,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 41.704305459266045,
+          "mods": 117.94744325791854,
+          "full": 117.94744325791854
+        }
+      }
+    ]
+  }
+}

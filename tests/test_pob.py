@@ -199,3 +199,10 @@ def test_ttk_question_holds_first_frame() -> None:
     assert holds_first(Scene(kind="ttk", step=0, b_step=3, reveal=False))
     assert not holds_first(Scene(kind="ttk", step=0, b_step=3))
     assert not holds_first(Scene(kind="resists", resists="gear", act=0, reveal=False))
+
+
+def test_quiz_answer_by_name() -> None:
+    sc = Scene.model_validate(
+        {"kind": "quiz", "choices": ["transmute", "augment"], "answer": "augment"}
+    )
+    assert sc.answer == 1

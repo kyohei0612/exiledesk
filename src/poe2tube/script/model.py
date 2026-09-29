@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -131,6 +131,16 @@ class Scene(BaseModel):
             self.resists,
             self.act,
         )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _answer_by_name(cls, data: Any) -> Any:
+        """クイズの正解を選択肢の名前で書かれても番号に直す (Claude が "augment" と書いた)."""
+        if isinstance(data, dict) and isinstance(data.get("answer"), str):
+            choices = data.get("choices") or []
+            if data["answer"] in choices:
+                data = {**data, "answer": choices.index(data["answer"])}
+        return data
 
     @model_validator(mode="after")
     def _needs_step(self) -> Scene:

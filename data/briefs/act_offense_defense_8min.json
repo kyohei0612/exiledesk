@@ -3,42 +3,80 @@
   "title_hint": "アクト中の火力と防御: 火力は武器 1 本で決まる、防御は耐性。オーブとルーンで自分で直す",
   "player_stage": "act",
   "goal": "アクト中の火力は武器、防御は耐性で決まると分かり、オーブとルーンで自分の装備を直せるようになる",
-  "target_seconds": 480,
+  "target_seconds": 540,
   "plan": {
     "schema": "craft-stage-plan/1",
     "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 熟練工 → 氷河のルーン",
     "base": "Steelpoint Quarterstaff",
     "item_level": 33,
-    "seed": 20261201,
+    "seed": 20261374,
     "pob": {
       "class": "Monk",
       "level": 32,
       "skill": "Ice Strike",
-      "config": { "resistancePenalty": -20, "enemyIsBoss": "None" }
+      "config": {
+        "resistancePenalty": -20,
+        "enemyIsBoss": "None"
+      }
     },
     "steps": [
-      { "currency": "transmute" },
-      { "currency": "augment" },
-      { "currency": "regal", "note": "完成 (王者まで)" },
-      { "currency": "artificer", "note": "さらに一押し: ソケットを足す" },
-      { "currency": "rune:Lesser Glacial Rune", "note": "武器には冷気ダメージ" }
+      {
+        "currency": "transmute"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal",
+        "note": "完成 (王者まで)"
+      },
+      {
+        "currency": "artificer",
+        "note": "さらに一押し: ソケットを足す"
+      },
+      {
+        "currency": "rune:Lesser Glacial Rune",
+        "note": "武器には冷気ダメージ"
+      }
     ]
   },
   "final_step": 3,
   "demos": {
-    "low_rare": {
+    "zunda": {
       "schema": "craft-stage-plan/1",
-      "title": "レベルの低いベースのレア (黄色だから強いとは限らない)",
+      "title": "ずんだもんの武器: 良さそうと思った MOD に高貴を打ちまくったレア",
       "base": "Gothic Quarterstaff",
       "item_level": 30,
-      "seed": 20261202,
+      "seed": 20262005,
       "pob": {
         "class": "Monk",
         "level": 32,
         "skill": "Ice Strike",
-        "config": { "resistancePenalty": -20, "enemyIsBoss": "None" }
+        "config": {
+          "resistancePenalty": -20,
+          "enemyIsBoss": "None"
+        }
       },
-      "steps": [{ "currency": "alchemy" }]
+      "steps": [
+        {
+          "currency": "transmute"
+        },
+        {
+          "currency": "augment"
+        },
+        {
+          "currency": "regal"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        }
+      ]
     },
     "armour": {
       "schema": "craft-stage-plan/1",
@@ -47,9 +85,15 @@
       "item_level": 33,
       "seed": 20261203,
       "steps": [
-        { "currency": "transmute" },
-        { "currency": "artificer" },
-        { "currency": "rune:Lesser Glacial Rune" }
+        {
+          "currency": "transmute"
+        },
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Lesser Glacial Rune"
+        }
       ]
     },
     "ring": {
@@ -58,7 +102,11 @@
       "base": "Sapphire Ring",
       "item_level": 33,
       "seed": 20261204,
-      "steps": [{ "currency": "transmute" }]
+      "steps": [
+        {
+          "currency": "transmute"
+        }
+      ]
     },
     "junk": {
       "schema": "craft-stage-plan/1",
@@ -67,21 +115,35 @@
       "item_level": 33,
       "start_rarity": "magic",
       "seed": 20261205,
-      "steps": [{ "currency": "disenchant" }]
+      "steps": [
+        {
+          "currency": "disenchant"
+        }
+      ]
     }
   },
   "resists": {
     "gear": {
       "class": "Monk",
       "level": 32,
-      "items": [{ "demo": "armour" }, { "demo": "ring" }]
+      "items": [
+        {
+          "demo": "armour"
+        },
+        {
+          "demo": "ring"
+        }
+      ]
     }
   },
   "notes": [
+    "スキルの説明から入る: アイスストライクはゲーム内の説明文で「物理ダメージの80%を冷気ダメージに変換する」。だから物理ダメージ・冷気ダメージ・アタックスピードの MOD が合う (火・雷のダメージは合わない)。MOD の良し悪しはこの基準で話す (kyohei 2026-09-29「氷のスキルに火ダメ付けて喜ばん」)",
+    "導入: ずんだもんが「アイスストライクを使ってるのに倒せない」と相談。今の武器は、ずんだもんが良さそうと思った MOD に高貴なオーブを打ちまくって作ったレア (demo zunda、6 MOD。見せるのは最後の手の item か stage で、作る手順は見せない)。めたんが装備を見て「これなら、まず武器を替えた方がいい」へ。完成品に驚かない",
+    "ずんだもんの武器 (zunda) の MOD はクリティカル・命中力・火・雷・要求能力値・マナなど、アイスストライク (物理→冷気) に合わない物ばかり。DPS で比べる (compare / ttk で zunda の最後の手 vs メインの手)。「黄色で 6 MOD でも、スキルに合わないと弱い」「高貴なオーブは貴重、打つ前に合う MOD か見る」",
+    "数字の流れ (結果 JSON): ずんだもんの武器 117.9 (火・雷のダメージの MOD で少しは上がっているのは正直に言う) / 白のスチールポイント 76.1 → 変成 (光半径、外れ) 78.7 → 増強 (物理ダメージ 81% 増加) 147.9 → 王者 (冷気ダメージ追加) 166.3 = 3 MOD で 6 MOD のレアを追い抜く → ルーン 176.0",
+    "メインの土台 (スチールポイントクォータースタッフ) は、レベル 32 のキャラが装備できる一番レベルの高いクォータースタッフとして選んだ (要求レベルの数字は言わない、未確認)",
     "PoB の前提 (結果 JSON の pob.config_ja とキャラ) を、DPS の数字を初めて出す行で 1 回だけ言う。「同じキャラ・同じスキルで武器だけ替えた時」",
-    "導入: ずんだもんの困りごと「ボスで急に死ぬ・敵が硬い」から。完成した武器 (王者まで) の DPS を先に見せてよい (驚かない)",
     "火力: 武器 1 本で決まる。白に 変成 → 増強 → 王者 と打つたびに DPS がどう変わるか。倒すまでの時間 (ttk) で白とレアを競争させる",
-    "レベルの低いレア (low_rare) とレベルの高い白 (メイン手 0) を比べる: 黄色だから強いとは限らない、ベースのレベルが大事",
     "微妙な MOD が付いたら正直に言い、「次の白を探す」判断の例にする",
     "ルーン: 熟練工でソケットを足して氷河のルーン。同じルーンが武器では冷気ダメージ、防具 (armour) では冷気耐性になる",
     "防御: 耐性の上限 75%、アクトが進むとペナルティで削れる (resists の画面、act を変えて見せる)。耐性 50% と 75% で受けるダメージが 2 倍違う (hit の画面)",
@@ -90,13 +152,37 @@
     "過去の動画 (クラフトの基礎・鞄のカレンシー) の内容は詳しく説明し直さない"
   ],
   "sources": [
-    { "title": "Maxroll: League Start Leveling Guide (Path of Exile 2)", "url": "https://maxroll.gg/poe2/getting-started/comprehensive-league-start-leveling-guide" },
-    { "title": "Maxroll: Defence Guide (Path of Exile 2)", "url": "https://maxroll.gg/poe2/getting-started/defence-guide" },
-    { "title": "poe2db: ルーン", "url": "https://poe2db.tw/jp/Runes" },
-    { "title": "poe2db: 耐性", "url": "https://poe2db.tw/jp/Resistances" },
-    { "title": "Game8 / Mobalytics: Count Geonor (アクト 1 のボス)", "url": "https://mobalytics.gg/poe-2/guides/count-geonor" },
-    { "title": "Gamer Guides: Disenchanting and Salvaging Guide", "url": "https://www.gamerguides.com/path-of-exile-2/guide/getting-started/gameplay/disenchanting-and-salvaging-guide" },
-    { "title": "Gamerch PoE2 攻略 Wiki: 装備のおすすめの選び方", "url": "https://gamerch.com/poe2/995755" },
-    { "title": "Path of Building Community (PoE2) — DPS・耐性の計算", "url": "https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2" }
+    {
+      "title": "Maxroll: League Start Leveling Guide (Path of Exile 2)",
+      "url": "https://maxroll.gg/poe2/getting-started/comprehensive-league-start-leveling-guide"
+    },
+    {
+      "title": "Maxroll: Defence Guide (Path of Exile 2)",
+      "url": "https://maxroll.gg/poe2/getting-started/defence-guide"
+    },
+    {
+      "title": "poe2db: ルーン",
+      "url": "https://poe2db.tw/jp/Runes"
+    },
+    {
+      "title": "poe2db: 耐性",
+      "url": "https://poe2db.tw/jp/Resistances"
+    },
+    {
+      "title": "Game8 / Mobalytics: Count Geonor (アクト 1 のボス)",
+      "url": "https://mobalytics.gg/poe-2/guides/count-geonor"
+    },
+    {
+      "title": "Gamer Guides: Disenchanting and Salvaging Guide",
+      "url": "https://www.gamerguides.com/path-of-exile-2/guide/getting-started/gameplay/disenchanting-and-salvaging-guide"
+    },
+    {
+      "title": "Gamerch PoE2 攻略 Wiki: 装備のおすすめの選び方",
+      "url": "https://gamerch.com/poe2/995755"
+    },
+    {
+      "title": "Path of Building Community (PoE2) — DPS・耐性の計算",
+      "url": "https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2"
+    }
   ]
 }

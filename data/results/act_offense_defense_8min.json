@@ -1,6 +1,6 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-09-29T08:37:59.185Z",
+  "generated_at": "2026-09-29T09:35:17.551Z",
   "exiledesk_version": "0.1.331",
   "patch": "0.5.0",
   "league": null,
@@ -11,7 +11,7 @@
     "base": "Steelpoint Quarterstaff",
     "item_level": 33,
     "start_rarity": "normal",
-    "seed": 20261201,
+    "seed": 20261374,
     "start_unidentified": false,
     "pob": {
       "class": "Monk",
@@ -56,7 +56,7 @@
       "currency_ja": "変成のオーブ",
       "omen": null,
       "omen_ja": null,
-      "seed": 20261202,
+      "seed": 20261375,
       "applied": true,
       "reason": null,
       "before": {
@@ -150,11 +150,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -179,11 +179,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -257,7 +257,7 @@
       "currency_ja": "増強のオーブ",
       "omen": null,
       "omen_ja": null,
-      "seed": 20261203,
+      "seed": 20261376,
       "applied": true,
       "reason": null,
       "before": {
@@ -308,11 +308,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -348,13 +348,7 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
-          },
-          {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "value": "51〜92",
             "up": true
           },
           {
@@ -377,29 +371,24 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
           }
         ],
         "suffixes": [
@@ -409,11 +398,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -433,29 +422,24 @@
       "changed": {
         "added": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
           }
         ],
         "removed": [],
@@ -469,15 +453,15 @@
         "cumulative": 0
       },
       "pob": {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 147.926686928702,
+        "hit": 75.4727994534194,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.307392033632507,
+          "fire": 0,
+          "cold": 134.6192948950695,
           "lightning": 0,
           "chaos": 0
         },
@@ -505,8 +489,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 147.926686928702,
+          "full": 147.926686928702
         }
       }
     },
@@ -516,7 +500,7 @@
       "currency_ja": "王者のオーブ",
       "omen": null,
       "omen_ja": null,
-      "seed": 20261204,
+      "seed": 20261377,
       "applied": true,
       "reason": null,
       "before": {
@@ -538,13 +522,7 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
-          },
-          {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "value": "51〜92",
             "up": true
           },
           {
@@ -567,29 +545,24 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
           }
         ],
         "suffixes": [
@@ -599,11 +572,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -639,13 +612,13 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
+            "value": "51〜92",
+            "up": true
           },
           {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "5〜11",
             "up": true
           },
           {
@@ -668,29 +641,49 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ],
+              [
+                9,
+                14
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "suffixes": [
@@ -700,11 +693,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -718,50 +711,35 @@
             ],
             "tier_index": 2,
             "affix": "of Radiance"
-          },
-          {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
-            "values": [
-              14
-            ],
-            "ranges": [
-              [
-                13,
-                16
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
           }
         ]
       },
       "changed": {
         "added": [
           {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
             "values": [
-              14
+              5,
+              11
             ],
             "ranges": [
               [
-                13,
-                16
+                5,
+                8
+              ],
+              [
+                9,
+                14
               ]
             ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "removed": [],
@@ -775,15 +753,15 @@
         "cumulative": 0
       },
       "pob": {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 166.25268692870196,
+        "hit": 84.82279945341939,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.297004855309236,
+          "fire": 0,
+          "cold": 152.95568207339272,
           "lightning": 0,
           "chaos": 0
         },
@@ -811,8 +789,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 166.25268692870196,
+          "full": 166.25268692870196
         }
       }
     },
@@ -822,7 +800,7 @@
       "currency_ja": "熟練工のオーブ",
       "omen": null,
       "omen_ja": null,
-      "seed": 20261205,
+      "seed": 20261378,
       "applied": true,
       "reason": null,
       "before": {
@@ -844,13 +822,13 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
+            "value": "51〜92",
+            "up": true
           },
           {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "5〜11",
             "up": true
           },
           {
@@ -873,29 +851,49 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ],
+              [
+                9,
+                14
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "suffixes": [
@@ -905,11 +903,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -923,26 +921,6 @@
             ],
             "tier_index": 2,
             "affix": "of Radiance"
-          },
-          {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
-            "values": [
-              14
-            ],
-            "ranges": [
-              [
-                13,
-                16
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
           }
         ]
       },
@@ -965,13 +943,13 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
+            "value": "51〜92",
+            "up": true
           },
           {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "5〜11",
             "up": true
           },
           {
@@ -994,29 +972,49 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ],
+              [
+                9,
+                14
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "suffixes": [
@@ -1026,11 +1024,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -1044,26 +1042,6 @@
             ],
             "tier_index": 2,
             "affix": "of Radiance"
-          },
-          {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
-            "values": [
-              14
-            ],
-            "ranges": [
-              [
-                13,
-                16
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
           }
         ]
       },
@@ -1080,15 +1058,15 @@
         "cumulative": 0
       },
       "pob": {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 166.25268692870196,
+        "hit": 84.82279945341939,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.297004855309236,
+          "fire": 0,
+          "cold": 152.95568207339272,
           "lightning": 0,
           "chaos": 0
         },
@@ -1116,8 +1094,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 166.25268692870196,
+          "full": 166.25268692870196
         }
       }
     },
@@ -1127,7 +1105,7 @@
       "currency_ja": "氷河のレッサールーン",
       "omen": null,
       "omen_ja": null,
-      "seed": 20261206,
+      "seed": 20261379,
       "applied": true,
       "reason": null,
       "before": {
@@ -1149,13 +1127,13 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
+            "value": "51〜92",
+            "up": true
           },
           {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "5〜11",
             "up": true
           },
           {
@@ -1178,29 +1156,49 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ],
+              [
+                9,
+                14
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "suffixes": [
@@ -1210,11 +1208,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -1228,26 +1226,6 @@
             ],
             "tier_index": 2,
             "affix": "of Radiance"
-          },
-          {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
-            "values": [
-              14
-            ],
-            "ranges": [
-              [
-                13,
-                16
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
           }
         ]
       },
@@ -1270,19 +1248,13 @@
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
-          },
-          {
-            "key": "fire",
-            "label": "火ダメージ",
-            "value": "22〜30",
+            "value": "51〜92",
             "up": true
           },
           {
             "key": "cold",
             "label": "冷気ダメージ",
-            "value": "3〜5",
+            "value": "8〜16",
             "up": true
           },
           {
@@ -1324,29 +1296,49 @@
         "sanctified": false,
         "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalFireDamage",
-            "family": "FireDamage",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T7",
-            "mod_level": 33,
-            "text_ja": "22から30の火ダメージを追加する",
-            "text_en": "Adds 22 to 30 Fire Damage",
+            "tier_name": "T6",
+            "mod_level": 16,
+            "text_ja": "物理ダメージが81%増加する",
+            "text_en": "81% increased Physical Damage",
             "values": [
-              22,
-              30
+              81
             ],
             "ranges": [
               [
-                19,
-                27
-              ],
-              [
-                30,
-                42
+                65,
+                84
               ]
             ],
-            "tier_index": 3,
-            "affix": "Burning"
+            "tier_index": 2,
+            "affix": "Wicked"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalColdDamage",
+            "family": "ColdDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 8,
+            "text_ja": "5から11の冷気ダメージを追加する",
+            "text_en": "Adds 5 to 11 Cold Damage",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ],
+              [
+                9,
+                14
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Chilled"
           }
         ],
         "suffixes": [
@@ -1356,11 +1348,11 @@
             "side": "suffix",
             "tier_name": "T1",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 58",
-            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "text_ja": "光半径が+15%増加する / 命中力 54",
+            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
             "values": [
               15,
-              58
+              54
             ],
             "ranges": [
               [
@@ -1374,26 +1366,6 @@
             ],
             "tier_index": 2,
             "affix": "of Radiance"
-          },
-          {
-            "mod_id": "Quarterstaves/Intelligence",
-            "family": "Intelligence",
-            "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 22,
-            "text_ja": "知性 +14",
-            "text_en": "+14 to Intelligence",
-            "values": [
-              14
-            ],
-            "ranges": [
-              [
-                13,
-                16
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of the Prodigy"
           }
         ]
       },
@@ -1410,15 +1382,15 @@
         "cumulative": 0
       },
       "pob": {
-        "dps": 148.7237879500053,
-        "hit": 75.8794836479619,
+        "dps": 175.95468692870196,
+        "hit": 89.7727994534194,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.854326163577908,
-          "fire": 61.65834076561174,
-          "cold": 82.21112102081565,
+          "physical": 13.292386930153492,
+          "fire": 0,
+          "cold": 162.6622999985485,
           "lightning": 0,
           "chaos": 0
         },
@@ -1446,8 +1418,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 148.7237879500053
+          "mods": 166.25268692870196,
+          "full": 175.95468692870196
         }
       }
     }
@@ -1471,19 +1443,13 @@
       {
         "key": "phys",
         "label": "物理ダメージ",
-        "value": "28〜51",
-        "up": false
-      },
-      {
-        "key": "fire",
-        "label": "火ダメージ",
-        "value": "22〜30",
+        "value": "51〜92",
         "up": true
       },
       {
         "key": "cold",
         "label": "冷気ダメージ",
-        "value": "3〜5",
+        "value": "8〜16",
         "up": true
       },
       {
@@ -1525,29 +1491,49 @@
     "sanctified": false,
     "prefixes": [
       {
-        "mod_id": "Quarterstaves/LocalFireDamage",
-        "family": "FireDamage",
+        "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+        "family": "LocalPhysicalDamagePercent",
         "side": "prefix",
-        "tier_name": "T7",
-        "mod_level": 33,
-        "text_ja": "22から30の火ダメージを追加する",
-        "text_en": "Adds 22 to 30 Fire Damage",
+        "tier_name": "T6",
+        "mod_level": 16,
+        "text_ja": "物理ダメージが81%増加する",
+        "text_en": "81% increased Physical Damage",
         "values": [
-          22,
-          30
+          81
         ],
         "ranges": [
           [
-            19,
-            27
-          ],
-          [
-            30,
-            42
+            65,
+            84
           ]
         ],
-        "tier_index": 3,
-        "affix": "Burning"
+        "tier_index": 2,
+        "affix": "Wicked"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalColdDamage",
+        "family": "ColdDamage",
+        "side": "prefix",
+        "tier_name": "T9",
+        "mod_level": 8,
+        "text_ja": "5から11の冷気ダメージを追加する",
+        "text_en": "Adds 5 to 11 Cold Damage",
+        "values": [
+          5,
+          11
+        ],
+        "ranges": [
+          [
+            5,
+            8
+          ],
+          [
+            9,
+            14
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Chilled"
       }
     ],
     "suffixes": [
@@ -1557,11 +1543,11 @@
         "side": "suffix",
         "tier_name": "T1",
         "mod_level": 30,
-        "text_ja": "光半径が+15%増加する / 命中力 58",
-        "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+        "text_ja": "光半径が+15%増加する / 命中力 54",
+        "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
         "values": [
           15,
-          58
+          54
         ],
         "ranges": [
           [
@@ -1575,26 +1561,6 @@
         ],
         "tier_index": 2,
         "affix": "of Radiance"
-      },
-      {
-        "mod_id": "Quarterstaves/Intelligence",
-        "family": "Intelligence",
-        "side": "suffix",
-        "tier_name": "T6",
-        "mod_level": 22,
-        "text_ja": "知性 +14",
-        "text_en": "+14 to Intelligence",
-        "values": [
-          14
-        ],
-        "ranges": [
-          [
-            13,
-            16
-          ]
-        ],
-        "tier_index": 2,
-        "affix": "of the Prodigy"
       }
     ]
   },
@@ -1704,15 +1670,15 @@
         }
       },
       {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 147.926686928702,
+        "hit": 75.4727994534194,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.307392033632507,
+          "fire": 0,
+          "cold": 134.6192948950695,
           "lightning": 0,
           "chaos": 0
         },
@@ -1740,20 +1706,20 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 147.926686928702,
+          "full": 147.926686928702
         }
       },
       {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 166.25268692870196,
+        "hit": 84.82279945341939,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.297004855309236,
+          "fire": 0,
+          "cold": 152.95568207339272,
           "lightning": 0,
           "chaos": 0
         },
@@ -1781,20 +1747,20 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 166.25268692870196,
+          "full": 166.25268692870196
         }
       },
       {
-        "dps": 140.09978795000532,
-        "hit": 71.47948364796191,
+        "dps": 166.25268692870196,
+        "hit": 84.82279945341939,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.855359001984833,
-          "fire": 61.67145960029735,
-          "cold": 73.57296934772316,
+          "physical": 13.297004855309236,
+          "fire": 0,
+          "cold": 152.95568207339272,
           "lightning": 0,
           "chaos": 0
         },
@@ -1822,20 +1788,20 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 140.09978795000532
+          "mods": 166.25268692870196,
+          "full": 166.25268692870196
         }
       },
       {
-        "dps": 148.7237879500053,
-        "hit": 75.8794836479619,
+        "dps": 175.95468692870196,
+        "hit": 89.7727994534194,
         "aps": 1.9599999999999995,
         "crit": 10,
         "crit_chance": 10,
         "breakdown": {
-          "physical": 4.854326163577908,
-          "fire": 61.65834076561174,
-          "cold": 82.21112102081565,
+          "physical": 13.292386930153492,
+          "fire": 0,
+          "cold": 162.6622999985485,
           "lightning": 0,
           "chaos": 0
         },
@@ -1863,8 +1829,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 140.09978795000532,
-          "full": 148.7237879500053
+          "mods": 166.25268692870196,
+          "full": 175.95468692870196
         }
       }
     ]
