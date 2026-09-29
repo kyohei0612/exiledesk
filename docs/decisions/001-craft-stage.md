@@ -144,3 +144,20 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
 - クライアントの表には「どのユニークがどの MOD」の対応が無いので、保存済みの poe2db のユニークのページ (日本語、`data-cache/poe2db-unique-pages`、2026-05-22) の explicitMod を使う。`node scripts/build-craft-stage-uniques.mjs` → `src/services/craft-stage/stage-uniques.json`
 - ステージでなり得るユニーク 429 件のうち 363 件。ページの無い 66 件 (保存後に増えた物) は名前だけ出す
 - 値の幅はユニークの名前から決めた 1 つの値にする (何度なっても同じ。結果 JSON には入れない、表示だけ)。ユニークの効果はベースの数値 (物理ダメージ等) には足さない
+
+## 追記 2026-09-29: アクト中の火力と防御 (POE2Tube 要望 ⑰)
+- **ルーン** (`rune:<英語名>`、stage-runes.ts): 表はクライアントの SoulCores / SoulCoreStats (scripts/build-stage-runes.mjs → stage-runes.json、123 件)。
+  効き目は SoulCoreStatCategories (マーシャル武器 / ワンドまたはスタッフ / 防具 …) で部位ごとに違い、当てはまる部位が一番狭い行を使う。
+  「一度ソケットすると取り外せないが、他のオーグメントで置き換えられる」はクライアントの ClientStrings (ItemDescriptionSoulCore / RuneSocketConfirmWarning)。
+  置き換えの手は未対応 (空きが無ければ打てない)。**コラプト後にはめられるかは出典なし** → 打てない扱い。アクト中に拾える下位は base_items のタグ rune_lesser (14 種、drop_level 5)
+- **上の数値** (stage-props.ts): 物理 = (素 + 追加) × (1 + 増加%) × (1 + 品質)、防御 = (素 + 固定) × (1 + %合計) × (1 + 品質) (ES は規格外の賭けの ladder.ts がゲーム内の実測で確かめた形)。
+  丸めは出典なし (四捨五入)。数値の正は PoB
+- **PoB** (stage-pob.ts / src-tauri/examples/stage_pob.rs / scripts/_pob-stage.mjs): 同梱の PoB 0.23.1 に素のキャラ (パッシブ無し・他の装備無し) を作り、手ごとのアイテムだけ入れ替える。
+  設定は PoB の Configuration の Input (resistancePenalty / enemyIsBoss / enemyLevel)。指定が無ければ PoB の既定 (Pinnacle / -60%) を明示して結果に書き戻す。
+  ジェムレベルの既定はキャラのレベルで使える一番高い物 (PoB のスキルの levelRequirement)。撮影はブラウザで PoB を呼べないので、Node の再生で計算して URL (`stage-pob=` / `a_pob=` / `r=`) で渡す
+- **耐性の画面** (`view=resists`): 装備だけの合計はアイテム無しとの差 (素のキャラの耐性を混ぜない)。PoB の素のキャラは各元素 +10% を持っている (ペナルティ -20 で -10 になるのはそのため)
+- **解呪・サルベージ** (apply-dispose.ts): 名前はクライアントの ClientStrings (SellWindowTitle「解呪」、AdvancedCraftingBenchSalvageButton「サルベージ」)。
+  出る物: 解呪 = マジック → 変成 / レア → 王者 / ユニーク → 可能性のシャード (攻略の定番)、サルベージ = ソケット → 熟練工のシャード / 品質 → その装備の品質カレンシー (クライアントの説明文)。**個数は出典なし、1 個と仮定** (DISPOSE_COUNT_CONFIRMED = false)
+- **スキル・ジェムの絵** (scripts/build-skill-art-from-client.mjs): スキルのアイコンは PoB の Data/Skills の icon、ジェムの絵はクライアントの BaseItemTypes → ItemVisualIdentity
+  (PoB のゲーム内 ID は綴りが違う物があるので、無ければジェムの名前で引く)。画像パック skill-art / rune-art
+
