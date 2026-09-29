@@ -136,8 +136,9 @@ def stage_coverage(
     for key, n in wanted.items():
         steps = by_demo.get(key)
         if not steps:
-            if key is not None:
-                problems.append(f"実演 {key!r} の stage 行が無い")
+            # 追加の実演は姿だけ見せる (item / compare) こともある。手を見せる実演だけ全部の手を見る
+            if key is None:
+                problems.append("実践 (stage) の行が無い")
             continue
         last = n or max(steps)
         missing = [s for s in range(1, last + 1) if s not in steps]

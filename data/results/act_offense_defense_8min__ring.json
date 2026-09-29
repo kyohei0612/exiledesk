@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-09-29T09:35:31.628Z",
-  "exiledesk_version": "0.1.331",
+  "generated_at": "2026-09-29T15:42:53.775Z",
+  "exiledesk_version": "0.1.336",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -45,6 +45,9 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 12
+        },
         "properties": [],
         "augments": [],
         "quality_tag": null,
@@ -69,6 +72,9 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 12
+        },
         "properties": [],
         "augments": [],
         "quality_tag": null,
@@ -149,6 +155,9 @@
     "shards": null,
     "disposed": null,
     "gained": null,
+    "requirements": {
+      "level": 12
+    },
     "properties": [],
     "augments": [],
     "quality_tag": null,

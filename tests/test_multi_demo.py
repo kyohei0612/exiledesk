@@ -59,7 +59,9 @@ def test_stage_coverage_per_demo() -> None:
     s = _script([_ln("stage", 1), _ln("stage", 2), _ln("stage", 1, "w")], {"w": EX})
     probs = stage_coverage(s, 2, {"w": 2, "flask": 1})
     assert any("'w' の" in p and "[2]" in p for p in probs)
-    assert any("'flask' の stage 行が無い" in p for p in probs)
+    # 姿だけ見せる実演 (stage 行が無い flask) は弾かない。手を見せる実演 (w) は全部の手を見る
+    assert not any("flask" in p for p in probs)
+    assert stage_coverage(_script([_ln("talk")], {}), 2) == ["実践 (stage) の行が無い"]
     assert stage_coverage(s, 2, {"w": 1}) == []
 
 

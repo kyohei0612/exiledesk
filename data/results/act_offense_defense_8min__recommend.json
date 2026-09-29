@@ -1,0 +1,875 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T15:42:49.630Z",
+  "exiledesk_version": "0.1.336",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "おすすめのレア: 同じプレフィックス + 当たりのサフィックス",
+    "base": "Steelpoint Quarterstaff",
+    "item_level": 33,
+    "start_rarity": "normal",
+    "seed": 20262602,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "LocalPhysicalDamage",
+          "tier": "T7",
+          "values": [
+            9,
+            15
+          ]
+        },
+        {
+          "mod": "LocalPhysicalDamagePercent",
+          "tier": "T7",
+          "values": [
+            53
+          ]
+        },
+        {
+          "mod": "LocalAccuracyRating",
+          "tier": "T7",
+          "values": [
+            64
+          ]
+        },
+        {
+          "mod": "LocalIncreasedAttackSpeed"
+        },
+        {
+          "mod": "GlobalIncreaseMeleeSkillGemLevelWeapon"
+        },
+        {
+          "mod": "LocalBaseCriticalStrikeChance"
+        }
+      ]
+    },
+    "pob": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "supports": [],
+      "quests_act": 2,
+      "config": {
+        "resistancePenalty": -20,
+        "enemyIsBoss": "None"
+      }
+    },
+    "steps": [
+      {
+        "currency": "wisdom",
+        "times": 1,
+        "note": "見せるだけ (手は打たない)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "wisdom",
+      "currency_ja": "鑑定の巻物",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20262603,
+      "applied": false,
+      "reason": "鑑定済みのアイテムには使えない",
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜101",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "11.35%",
+            "up": true
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.51",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 16,
+            "text_ja": "9から15の物理ダメージを追加する",
+            "text_en": "Adds 9 to 15 Physical Damage",
+            "values": [
+              9,
+              15
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ],
+              [
+                15,
+                22
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Polished"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 8,
+            "text_ja": "物理ダメージが53%増加する",
+            "text_en": "53% increased Physical Damage",
+            "values": [
+              53
+            ],
+            "ranges": [
+              [
+                50,
+                64
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Serrated"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 18,
+            "text_ja": "命中力 +64",
+            "text_en": "+64 to Accuracy Rating",
+            "values": [
+              64
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "アタックスピードが8%増加する",
+            "text_en": "8% increased Attack Speed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Ease"
+          },
+          {
+            "mod_id": "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての近接スキルのレベル +2",
+            "text_en": "+2 to Level of all Melee Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Dueling"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 1,
+            "text_ja": "クリティカルヒット率 +1.35%",
+            "text_en": "+1.35% to Critical Hit Chance",
+            "values": [
+              1.35
+            ],
+            "ranges": [
+              [
+                1.01,
+                1.5
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Menace"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜101",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "11.35%",
+            "up": true
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.51",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 16,
+            "text_ja": "9から15の物理ダメージを追加する",
+            "text_en": "Adds 9 to 15 Physical Damage",
+            "values": [
+              9,
+              15
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ],
+              [
+                15,
+                22
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Polished"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 8,
+            "text_ja": "物理ダメージが53%増加する",
+            "text_en": "53% increased Physical Damage",
+            "values": [
+              53
+            ],
+            "ranges": [
+              [
+                50,
+                64
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Serrated"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalAccuracyRating",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 18,
+            "text_ja": "命中力 +64",
+            "text_en": "+64 to Accuracy Rating",
+            "values": [
+              64
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "アタックスピードが8%増加する",
+            "text_en": "8% increased Attack Speed",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of Ease"
+          },
+          {
+            "mod_id": "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon",
+            "family": "IncreaseSocketedGemLevel",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 18,
+            "text_ja": "全ての近接スキルのレベル +2",
+            "text_en": "+2 to Level of all Melee Skills",
+            "values": [
+              2
+            ],
+            "ranges": [
+              [
+                2,
+                2
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Dueling"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 1,
+            "text_ja": "クリティカルヒット率 +1.35%",
+            "text_en": "+1.35% to Critical Hit Chance",
+            "values": [
+              1.35
+            ],
+            "ranges": [
+              [
+                1.01,
+                1.5
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Menace"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 201.5356965541754,
+        "hit": 95.3338205081246,
+        "aps": 2.114,
+        "crit": 11.35,
+        "crit_chance": 11.35,
+        "combined_dps": 201.5356965541754,
+        "dot": 0,
+        "hit_chance": 100,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 11,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
+        "breakdown": {
+          "physical": 20.05606716821472,
+          "fire": 0,
+          "cold": 181.47962938596064,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 434,
+        "resists": {
+          "fire": {
+            "value": -20,
+            "total": -20
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 201.5356965541754,
+          "full": 201.5356965541754
+        }
+      }
+    }
+  ],
+  "final": {
+    "name": "スチールポイントクォータースタッフ",
+    "base": "Steelpoint Quarterstaff",
+    "base_ja": "スチールポイントクォータースタッフ",
+    "item_level": 33,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 28,
+      "dex": 41,
+      "int": 18
+    },
+    "properties": [
+      {
+        "key": "phys",
+        "label": "物理ダメージ",
+        "value": "57〜101",
+        "up": true
+      },
+      {
+        "key": "crit",
+        "label": "クリティカルヒット率",
+        "value": "11.35%",
+        "up": true
+      },
+      {
+        "key": "aps",
+        "label": "アタック/秒",
+        "value": "1.51",
+        "up": true
+      }
+    ],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Quarterstaves/LocalPhysicalDamage",
+        "family": "PhysicalDamage",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 16,
+        "text_ja": "9から15の物理ダメージを追加する",
+        "text_en": "Adds 9 to 15 Physical Damage",
+        "values": [
+          9,
+          15
+        ],
+        "ranges": [
+          [
+            8,
+            12
+          ],
+          [
+            15,
+            22
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Polished"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+        "family": "LocalPhysicalDamagePercent",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 8,
+        "text_ja": "物理ダメージが53%増加する",
+        "text_en": "53% increased Physical Damage",
+        "values": [
+          53
+        ],
+        "ranges": [
+          [
+            50,
+            64
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Serrated"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalAccuracyRating",
+        "family": "IncreasedAccuracy",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 18,
+        "text_ja": "命中力 +64",
+        "text_en": "+64 to Accuracy Rating",
+        "values": [
+          64
+        ],
+        "ranges": [
+          [
+            61,
+            84
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Focused"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+        "family": "IncreasedAttackSpeed",
+        "side": "suffix",
+        "tier_name": "T7",
+        "mod_level": 11,
+        "text_ja": "アタックスピードが8%増加する",
+        "text_en": "8% increased Attack Speed",
+        "values": [
+          8
+        ],
+        "ranges": [
+          [
+            8,
+            10
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "of Ease"
+      },
+      {
+        "mod_id": "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon",
+        "family": "IncreaseSocketedGemLevel",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 18,
+        "text_ja": "全ての近接スキルのレベル +2",
+        "text_en": "+2 to Level of all Melee Skills",
+        "values": [
+          2
+        ],
+        "ranges": [
+          [
+            2,
+            2
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of Dueling"
+      },
+      {
+        "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+        "family": "CriticalStrikeChanceIncrease",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 1,
+        "text_ja": "クリティカルヒット率 +1.35%",
+        "text_en": "+1.35% to Critical Hit Chance",
+        "values": [
+          1.35
+        ],
+        "ranges": [
+          [
+            1.01,
+            1.5
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of Menace"
+      }
+    ]
+  },
+  "total_cost": 0,
+  "pob": {
+    "version": "0.23.1",
+    "enemy": {
+      "level": 32,
+      "life": 683,
+      "hit": 22,
+      "ja": "普通の敵 Lv32 のライフ 683・アーマー 237・回避力 266",
+      "armour": 237,
+      "evasion": 266,
+      "resists": {
+        "fire": 0,
+        "cold": 0,
+        "lightning": 0,
+        "chaos": 0
+      }
+    },
+    "character": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "skill_ja": "アイスストライク",
+      "gem_level": 9,
+      "supports": [],
+      "skill_part": "Normal Strikes",
+      "skill_parts": [
+        "Normal Strikes",
+        "Third Strike"
+      ]
+    },
+    "config": {
+      "resistancePenalty": -20,
+      "enemyIsBoss": "None",
+      "questAct 3Azak BogIgnagduk": false,
+      "questAct 3Jiquani's MachinariumBlackjaw": false,
+      "questAct 4Eye of HinekoraSilent Hall": false,
+      "questInterlude 2Khari CrossingMolten Shrine": false,
+      "questInterlude 3Kriar VillageLythara": false
+    },
+    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ・アクト 2 までのクエストの報酬",
+    "quests": [
+      {
+        "act": 1,
+        "area": "Clearfell",
+        "stat": "+10% to Cold Resistance",
+        "on": true
+      },
+      {
+        "act": 1,
+        "area": "Freythorn",
+        "stat": "+30 to Spirit",
+        "on": true
+      },
+      {
+        "act": 1,
+        "area": "Ogham Manor",
+        "stat": "+20 to maximum Life",
+        "on": true
+      },
+      {
+        "act": 2,
+        "area": "Spires of Deshar",
+        "stat": "+10% to Lightning Resistance",
+        "on": true
+      },
+      {
+        "act": 3,
+        "area": "Azak Bog",
+        "stat": "+30 to Spirit",
+        "on": false
+      },
+      {
+        "act": 3,
+        "area": "Jiquani's Machinarium",
+        "stat": "+10% to Fire Resistance",
+        "on": false
+      },
+      {
+        "act": 4,
+        "area": "Eye of Hinekora",
+        "stat": "5% increased Maximum Mana",
+        "on": false
+      },
+      {
+        "act": 5,
+        "area": "Khari Crossing",
+        "stat": "5% increased maximum Life",
+        "on": false
+      },
+      {
+        "act": 5,
+        "area": "Kriar Village",
+        "stat": "+40 to Spirit",
+        "on": false
+      }
+    ],
+    "steps": [
+      {
+        "dps": 201.5356965541754,
+        "hit": 95.3338205081246,
+        "aps": 2.114,
+        "crit": 11.35,
+        "crit_chance": 11.35,
+        "combined_dps": 201.5356965541754,
+        "dot": 0,
+        "hit_chance": 100,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 11,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
+        "breakdown": {
+          "physical": 20.05606716821472,
+          "fire": 0,
+          "cold": 181.47962938596064,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 434,
+        "resists": {
+          "fire": {
+            "value": -20,
+            "total": -20
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 201.5356965541754,
+          "full": 201.5356965541754
+        }
+      },
+      {
+        "dps": 201.5356965541754,
+        "hit": 95.3338205081246,
+        "aps": 2.114,
+        "crit": 11.35,
+        "crit_chance": 11.35,
+        "combined_dps": 201.5356965541754,
+        "dot": 0,
+        "hit_chance": 100,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 11,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
+        "breakdown": {
+          "physical": 20.05606716821472,
+          "fire": 0,
+          "cold": 181.47962938596064,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 434,
+        "resists": {
+          "fire": {
+            "value": -20,
+            "total": -20
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 201.5356965541754,
+          "full": 201.5356965541754
+        }
+      }
+    ]
+  }
+}

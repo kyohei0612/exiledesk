@@ -1,13 +1,13 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-09-29T09:35:17.551Z",
-  "exiledesk_version": "0.1.331",
+  "generated_at": "2026-09-29T15:42:39.397Z",
+  "exiledesk_version": "0.1.336",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
   "plan": {
     "schema": "craft-stage-plan/1",
-    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 熟練工 → 氷河のルーン",
+    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 高貴 → 熟練工 → 氷河のルーン (サフィックスを埋める)",
     "base": "Steelpoint Quarterstaff",
     "item_level": 33,
     "start_rarity": "normal",
@@ -18,6 +18,7 @@
       "level": 32,
       "skill": "Ice Strike",
       "supports": [],
+      "quests_act": 2,
       "config": {
         "resistancePenalty": -20,
         "enemyIsBoss": "None"
@@ -26,21 +27,40 @@
     "steps": [
       {
         "currency": "transmute",
-        "times": 1
+        "times": 1,
+        "note": "プレフィックスの当たり",
+        "pick": {
+          "mod": "LocalPhysicalDamagePercent"
+        }
       },
       {
         "currency": "augment",
-        "times": 1
+        "times": 1,
+        "note": "サフィックスの当たり",
+        "pick": {
+          "mod": "LocalIncreasedAttackSpeed"
+        }
       },
       {
         "currency": "regal",
         "times": 1,
-        "note": "完成 (王者まで)"
+        "note": "サフィックスの外れ (正直に)",
+        "pick": {
+          "mod": "LocalLightRadiusAndAccuracy"
+        }
+      },
+      {
+        "currency": "exalt",
+        "times": 1,
+        "note": "サフィックスをもう 1 つ埋める",
+        "pick": {
+          "mod": "LocalBaseCriticalStrikeChance"
+        }
       },
       {
         "currency": "artificer",
         "times": 1,
-        "note": "さらに一押し: ソケットを足す"
+        "note": "さらに一押し: ソケット"
       },
       {
         "currency": "rune:Lesser Glacial Rune",
@@ -74,6 +94,11 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
@@ -117,12 +142,17 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
+            "value": "57〜104",
+            "up": true
           },
           {
             "key": "crit",
@@ -142,61 +172,51 @@
         "sockets": 0,
         "enchant": null,
         "sanctified": false,
-        "prefixes": [],
-        "suffixes": [
+        "prefixes": [
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
-            "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              15,
-              54
+              104
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                85,
+                109
               ]
             ],
-            "tier_index": 2,
-            "affix": "of Radiance"
+            "tier_index": 3,
+            "affix": "Vicious"
           }
-        ]
+        ],
+        "suffixes": []
       },
       "changed": {
         "added": [
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
-            "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              15,
-              54
+              104
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                85,
+                109
               ]
             ],
-            "tier_index": 2,
-            "affix": "of Radiance"
+            "tier_index": 3,
+            "affix": "Vicious"
           }
         ],
         "removed": [],
@@ -209,27 +229,46 @@
         "subtotal": 0,
         "cumulative": 0
       },
+      "picked": true,
+      "pick_chance": [
+        {
+          "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+          "tier_name": "T5",
+          "chance": 0.05457463884430177
+        }
+      ],
       "pob": {
-        "dps": 78.65378795000532,
-        "hit": 40.12948364796191,
+        "dps": 163.64579555398436,
+        "hit": 83.4927528336655,
         "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "crit": 9.7,
+        "crit_chance": 9.7,
+        "combined_dps": 163.64579555398436,
+        "dot": 0,
+        "hit_chance": 97,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 4.869316806810233,
+          "physical": 15.608491486182073,
           "fire": 0,
-          "cold": 73.78447114319509,
+          "cold": 148.03730406780227,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -246,8 +285,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 78.65378795000532,
-          "full": 78.65378795000532
+          "mods": 163.64579555398436,
+          "full": 163.64579555398436
         }
       }
     },
@@ -275,80 +314,16 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "28〜51",
-            "up": false
-          },
-          {
-            "key": "crit",
-            "label": "クリティカルヒット率",
-            "value": "10.00%",
-            "up": false
-          },
-          {
-            "key": "aps",
-            "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
-          }
-        ],
-        "augments": [],
-        "quality_tag": null,
-        "sockets": 0,
-        "enchant": null,
-        "sanctified": false,
-        "prefixes": [],
-        "suffixes": [
-          {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
-            "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
-            "values": [
-              15,
-              54
-            ],
-            "ranges": [
-              [
-                15,
-                15
-              ],
-              [
-                41,
-                60
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of Radiance"
-          }
-        ]
-      },
-      "after": {
-        "name": "スチールポイントクォータースタッフ",
-        "base": "Steelpoint Quarterstaff",
-        "base_ja": "スチールポイントクォータースタッフ",
-        "item_level": 33,
-        "rarity": "magic",
-        "quality": 0,
-        "corrupted": false,
-        "identified": true,
-        "destroyed": false,
-        "unique": null,
-        "gem_sockets": null,
-        "shards": null,
-        "disposed": null,
-        "gained": null,
-        "properties": [
-          {
-            "key": "phys",
-            "label": "物理ダメージ",
-            "value": "51〜92",
+            "value": "57〜104",
             "up": true
           },
           {
@@ -374,72 +349,136 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
               ]
             ],
-            "tier_index": 2,
-            "affix": "Wicked"
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": []
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜104",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.58",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
+            "values": [
+              104
+            ],
+            "ranges": [
+              [
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
           }
         ],
         "suffixes": [
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
             "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
             "values": [
-              15,
-              54
+              13
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "of Radiance"
+            "affix": "of Mastery"
           }
         ]
       },
       "changed": {
         "added": [
           {
-            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
-            "family": "LocalPhysicalDamagePercent",
-            "side": "prefix",
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
             "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
             "values": [
-              81
+              13
             ],
             "ranges": [
               [
-                65,
-                84
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           }
         ],
         "removed": [],
@@ -452,27 +491,46 @@
         "subtotal": 0,
         "cumulative": 0
       },
+      "picked": true,
+      "pick_chance": [
+        {
+          "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+          "tier_name": "T6",
+          "chance": 0.1111111111111111
+        }
+      ],
       "pob": {
-        "dps": 147.926686928702,
-        "hit": 75.4727994534194,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 184.68596926806808,
+        "hit": 83.4927528336655,
+        "aps": 2.2119999999999997,
+        "crit": 9.7,
+        "crit_chance": 9.7,
+        "combined_dps": 184.68596926806808,
+        "dot": 0,
+        "hit_chance": 97,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.307392033632507,
+          "physical": 17.615297534405485,
           "fire": 0,
-          "cold": 134.6192948950695,
+          "cold": 167.07067173366258,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -489,8 +547,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 147.926686928702,
-          "full": 147.926686928702
+          "mods": 184.68596926806808,
+          "full": 184.68596926806808
         }
       }
     },
@@ -518,11 +576,16 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
+            "value": "57〜104",
             "up": true
           },
           {
@@ -534,8 +597,8 @@
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [],
@@ -548,48 +611,43 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
               ]
             ],
-            "tier_index": 2,
-            "affix": "Wicked"
+            "tier_index": 3,
+            "affix": "Vicious"
           }
         ],
         "suffixes": [
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
             "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
             "values": [
-              15,
-              54
+              13
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "of Radiance"
+            "affix": "of Mastery"
           }
         ]
       },
@@ -608,17 +666,16 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
-            "up": true
-          },
-          {
-            "key": "cold",
-            "label": "冷気ダメージ",
-            "value": "5〜11",
+            "value": "57〜104",
             "up": true
           },
           {
@@ -630,8 +687,8 @@
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [],
@@ -644,30 +701,52 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           },
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -675,55 +754,28 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
-          }
-        ],
-        "suffixes": [
-          {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
-            "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
-            "values": [
-              15,
-              54
-            ],
-            "ranges": [
-              [
-                15,
-                15
-              ],
-              [
-                41,
-                60
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of Radiance"
+            "tier_index": 0,
+            "affix": "of Shining"
           }
         ]
       },
       "changed": {
         "added": [
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -731,15 +783,15 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
+            "tier_index": 0,
+            "affix": "of Shining"
           }
         ],
         "removed": [],
@@ -752,27 +804,46 @@
         "subtotal": 0,
         "cumulative": 0
       },
+      "picked": true,
+      "pick_chance": [
+        {
+          "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+          "tier_name": "T3",
+          "chance": 0.0546448087431694
+        }
+      ],
       "pob": {
-        "dps": 166.25268692870196,
-        "hit": 84.82279945341939,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 186.7719005084722,
+        "hit": 84.4357597235408,
+        "aps": 2.2119999999999997,
+        "crit": 9.8,
+        "crit_chance": 9.8,
+        "combined_dps": 186.7719005084722,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.297004855309236,
+          "physical": 17.81425308897009,
           "fire": 0,
-          "cold": 152.95568207339272,
+          "cold": 168.9576474195021,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -789,15 +860,15 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 166.25268692870196
+          "mods": 186.7719005084722,
+          "full": 186.7719005084722
         }
       }
     },
     {
       "index": 4,
-      "currency": "artificer",
-      "currency_ja": "熟練工のオーブ",
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
       "omen": null,
       "omen_ja": null,
       "seed": 20261378,
@@ -818,17 +889,16 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
-            "up": true
-          },
-          {
-            "key": "cold",
-            "label": "冷気ダメージ",
-            "value": "5〜11",
+            "value": "57〜104",
             "up": true
           },
           {
@@ -840,8 +910,8 @@
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [],
@@ -854,30 +924,52 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           },
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -885,42 +977,15 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
-          }
-        ],
-        "suffixes": [
-          {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
-            "side": "suffix",
-            "tier_name": "T1",
-            "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
-            "values": [
-              15,
-              54
-            ],
-            "ranges": [
-              [
-                15,
-                15
-              ],
-              [
-                41,
-                60
-              ]
-            ],
-            "tier_index": 2,
-            "affix": "of Radiance"
+            "tier_index": 0,
+            "affix": "of Shining"
           }
         ]
       },
@@ -939,35 +1004,34 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
-            "up": true
-          },
-          {
-            "key": "cold",
-            "label": "冷気ダメージ",
-            "value": "5〜11",
+            "value": "57〜104",
             "up": true
           },
           {
             "key": "crit",
             "label": "クリティカルヒット率",
-            "value": "10.00%",
-            "up": false
+            "value": "12.19%",
+            "up": true
           },
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [],
         "quality_tag": null,
-        "sockets": 1,
+        "sockets": 0,
         "enchant": null,
         "sanctified": false,
         "prefixes": [
@@ -975,30 +1039,52 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           },
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -1006,78 +1092,111 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
-          }
-        ],
-        "suffixes": [
+            "tier_index": 0,
+            "affix": "of Shining"
+          },
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
             "side": "suffix",
-            "tier_name": "T1",
+            "tier_name": "T4",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
             "values": [
-              15,
-              54
+              2.19
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                2.11,
+                2.7
               ]
             ],
             "tier_index": 2,
-            "affix": "of Radiance"
+            "affix": "of Disaster"
           }
         ]
       },
       "changed": {
-        "added": [],
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 30,
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
+            "values": [
+              2.19
+            ],
+            "ranges": [
+              [
+                2.11,
+                2.7
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Disaster"
+          }
+        ],
         "removed": [],
         "rarity_from": "rare",
         "rarity_to": "rare"
       },
       "cost": {
-        "each": 0,
+        "each": 1.012,
         "amount": 1,
-        "subtotal": 0,
-        "cumulative": 0
+        "subtotal": 1.012,
+        "cumulative": 1.012
       },
+      "picked": true,
+      "pick_chance": [
+        {
+          "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+          "tier_name": "T4",
+          "chance": 0.057803468208092484
+        }
+      ],
       "pob": {
-        "dps": 166.25268692870196,
-        "hit": 84.82279945341939,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 190.67695810516744,
+        "hit": 86.2011564670739,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 190.67695810516744,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.297004855309236,
+          "physical": 18.18671642079435,
           "fire": 0,
-          "cold": 152.95568207339272,
+          "cold": 172.4902416843731,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1094,15 +1213,15 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 166.25268692870196
+          "mods": 190.67695810516744,
+          "full": 190.67695810516744
         }
       }
     },
     {
       "index": 5,
-      "currency": "rune:Lesser Glacial Rune",
-      "currency_ja": "氷河のレッサールーン",
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
       "omen": null,
       "omen_ja": null,
       "seed": 20261379,
@@ -1123,35 +1242,34 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
-            "up": true
-          },
-          {
-            "key": "cold",
-            "label": "冷気ダメージ",
-            "value": "5〜11",
+            "value": "57〜104",
             "up": true
           },
           {
             "key": "crit",
             "label": "クリティカルヒット率",
-            "value": "10.00%",
-            "up": false
+            "value": "12.19%",
+            "up": true
           },
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [],
         "quality_tag": null,
-        "sockets": 1,
+        "sockets": 0,
         "enchant": null,
         "sanctified": false,
         "prefixes": [
@@ -1159,30 +1277,52 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           },
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -1190,42 +1330,35 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
-          }
-        ],
-        "suffixes": [
+            "tier_index": 0,
+            "affix": "of Shining"
+          },
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
             "side": "suffix",
-            "tier_name": "T1",
+            "tier_name": "T4",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
             "values": [
-              15,
-              54
+              2.19
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                2.11,
+                2.7
               ]
             ],
             "tier_index": 2,
-            "affix": "of Radiance"
+            "affix": "of Disaster"
           }
         ]
       },
@@ -1244,30 +1377,379 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
         "properties": [
           {
             "key": "phys",
             "label": "物理ダメージ",
-            "value": "51〜92",
-            "up": true
-          },
-          {
-            "key": "cold",
-            "label": "冷気ダメージ",
-            "value": "8〜16",
+            "value": "57〜104",
             "up": true
           },
           {
             "key": "crit",
             "label": "クリティカルヒット率",
-            "value": "10.00%",
-            "up": false
+            "value": "12.19%",
+            "up": true
           },
           {
             "key": "aps",
             "label": "アタック/秒",
-            "value": "1.40",
-            "up": false
+            "value": "1.58",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
+            "values": [
+              104
+            ],
+            "ranges": [
+              [
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 8,
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                5
+              ],
+              [
+                10,
+                20
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Shining"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 30,
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
+            "values": [
+              2.19
+            ],
+            "ranges": [
+              [
+                2.11,
+                2.7
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Disaster"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 1.012
+      },
+      "pob": {
+        "dps": 190.67695810516744,
+        "hit": 86.2011564670739,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 190.67695810516744,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
+        "breakdown": {
+          "physical": 18.18671642079435,
+          "fire": 0,
+          "cold": 172.4902416843731,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 434,
+        "resists": {
+          "fire": {
+            "value": -20,
+            "total": -20
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 190.67695810516744,
+          "full": 190.67695810516744
+        }
+      }
+    },
+    {
+      "index": 6,
+      "currency": "rune:Lesser Glacial Rune",
+      "currency_ja": "氷河のレッサールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261380,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜104",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.19%",
+            "up": true
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.58",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
+            "family": "LocalPhysicalDamagePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
+            "values": [
+              104
+            ],
+            "ranges": [
+              [
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Mastery"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 8,
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
+            "values": [
+              5,
+              11
+            ],
+            "ranges": [
+              [
+                5,
+                5
+              ],
+              [
+                10,
+                20
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Shining"
+          },
+          {
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 30,
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
+            "values": [
+              2.19
+            ],
+            "ranges": [
+              [
+                2.11,
+                2.7
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Disaster"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 28,
+          "dex": 41,
+          "int": 18
+        },
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "57〜104",
+            "up": true
+          },
+          {
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "3〜5",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "12.19%",
+            "up": true
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.58",
+            "up": true
           }
         ],
         "augments": [
@@ -1299,30 +1781,52 @@
             "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
             "family": "LocalPhysicalDamagePercent",
             "side": "prefix",
-            "tier_name": "T6",
-            "mod_level": 16,
-            "text_ja": "物理ダメージが81%増加する",
-            "text_en": "81% increased Physical Damage",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "物理ダメージが104%増加する",
+            "text_en": "104% increased Physical Damage",
             "values": [
-              81
+              104
             ],
             "ranges": [
               [
-                65,
-                84
+                85,
+                109
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Vicious"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+            "family": "IncreasedAttackSpeed",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "アタックスピードが13%増加する",
+            "text_en": "13% increased Attack Speed",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                11,
+                13
               ]
             ],
             "tier_index": 2,
-            "affix": "Wicked"
+            "affix": "of Mastery"
           },
           {
-            "mod_id": "Quarterstaves/LocalColdDamage",
-            "family": "ColdDamage",
-            "side": "prefix",
-            "tier_name": "T9",
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T3",
             "mod_level": 8,
-            "text_ja": "5から11の冷気ダメージを追加する",
-            "text_en": "Adds 5 to 11 Cold Damage",
+            "text_ja": "光半径が+5%増加する / 命中力 11",
+            "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
             "values": [
               5,
               11
@@ -1330,42 +1834,35 @@
             "ranges": [
               [
                 5,
-                8
+                5
               ],
               [
-                9,
-                14
+                10,
+                20
               ]
             ],
-            "tier_index": 1,
-            "affix": "Chilled"
-          }
-        ],
-        "suffixes": [
+            "tier_index": 0,
+            "affix": "of Shining"
+          },
           {
-            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-            "family": "LightRadiusAndAccuracy",
+            "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
             "side": "suffix",
-            "tier_name": "T1",
+            "tier_name": "T4",
             "mod_level": 30,
-            "text_ja": "光半径が+15%増加する / 命中力 54",
-            "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+            "text_ja": "クリティカルヒット率 +2.19%",
+            "text_en": "+2.19% to Critical Hit Chance",
             "values": [
-              15,
-              54
+              2.19
             ],
             "ranges": [
               [
-                15,
-                15
-              ],
-              [
-                41,
-                60
+                2.11,
+                2.7
               ]
             ],
             "tier_index": 2,
-            "affix": "of Radiance"
+            "affix": "of Disaster"
           }
         ]
       },
@@ -1379,29 +1876,40 @@
         "each": 0,
         "amount": 1,
         "subtotal": 0,
-        "cumulative": 0
+        "cumulative": 1.012
       },
       "pob": {
-        "dps": 175.95468692870196,
-        "hit": 89.7727994534194,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 200.38385788564742,
+        "hit": 90.58944750707388,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 200.38385788564742,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.292386930153492,
+          "physical": 18.17947846414158,
           "fire": 0,
-          "cold": 162.6622999985485,
+          "cold": 182.20437942150582,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1418,8 +1926,8 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 175.95468692870196
+          "mods": 190.67695810516744,
+          "full": 200.38385788564742
         }
       }
     }
@@ -1439,30 +1947,35 @@
     "shards": null,
     "disposed": null,
     "gained": null,
+    "requirements": {
+      "level": 28,
+      "dex": 41,
+      "int": 18
+    },
     "properties": [
       {
         "key": "phys",
         "label": "物理ダメージ",
-        "value": "51〜92",
+        "value": "57〜104",
         "up": true
       },
       {
         "key": "cold",
         "label": "冷気ダメージ",
-        "value": "8〜16",
+        "value": "3〜5",
         "up": true
       },
       {
         "key": "crit",
         "label": "クリティカルヒット率",
-        "value": "10.00%",
-        "up": false
+        "value": "12.19%",
+        "up": true
       },
       {
         "key": "aps",
         "label": "アタック/秒",
-        "value": "1.40",
-        "up": false
+        "value": "1.58",
+        "up": true
       }
     ],
     "augments": [
@@ -1494,30 +2007,52 @@
         "mod_id": "Quarterstaves/LocalPhysicalDamagePercent",
         "family": "LocalPhysicalDamagePercent",
         "side": "prefix",
-        "tier_name": "T6",
-        "mod_level": 16,
-        "text_ja": "物理ダメージが81%増加する",
-        "text_en": "81% increased Physical Damage",
+        "tier_name": "T5",
+        "mod_level": 33,
+        "text_ja": "物理ダメージが104%増加する",
+        "text_en": "104% increased Physical Damage",
         "values": [
-          81
+          104
         ],
         "ranges": [
           [
-            65,
-            84
+            85,
+            109
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "Vicious"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/LocalIncreasedAttackSpeed",
+        "family": "IncreasedAttackSpeed",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "アタックスピードが13%増加する",
+        "text_en": "13% increased Attack Speed",
+        "values": [
+          13
+        ],
+        "ranges": [
+          [
+            11,
+            13
           ]
         ],
         "tier_index": 2,
-        "affix": "Wicked"
+        "affix": "of Mastery"
       },
       {
-        "mod_id": "Quarterstaves/LocalColdDamage",
-        "family": "ColdDamage",
-        "side": "prefix",
-        "tier_name": "T9",
+        "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+        "family": "LightRadiusAndAccuracy",
+        "side": "suffix",
+        "tier_name": "T3",
         "mod_level": 8,
-        "text_ja": "5から11の冷気ダメージを追加する",
-        "text_en": "Adds 5 to 11 Cold Damage",
+        "text_ja": "光半径が+5%増加する / 命中力 11",
+        "text_en": "5% increased Light Radius\n+11 to Accuracy Rating",
         "values": [
           5,
           11
@@ -1525,53 +2060,54 @@
         "ranges": [
           [
             5,
-            8
+            5
           ],
           [
-            9,
-            14
+            10,
+            20
           ]
         ],
-        "tier_index": 1,
-        "affix": "Chilled"
-      }
-    ],
-    "suffixes": [
+        "tier_index": 0,
+        "affix": "of Shining"
+      },
       {
-        "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
-        "family": "LightRadiusAndAccuracy",
+        "mod_id": "Quarterstaves/LocalBaseCriticalStrikeChance",
+        "family": "CriticalStrikeChanceIncrease",
         "side": "suffix",
-        "tier_name": "T1",
+        "tier_name": "T4",
         "mod_level": 30,
-        "text_ja": "光半径が+15%増加する / 命中力 54",
-        "text_en": "15% increased Light Radius\n+54 to Accuracy Rating",
+        "text_ja": "クリティカルヒット率 +2.19%",
+        "text_en": "+2.19% to Critical Hit Chance",
         "values": [
-          15,
-          54
+          2.19
         ],
         "ranges": [
           [
-            15,
-            15
-          ],
-          [
-            41,
-            60
+            2.11,
+            2.7
           ]
         ],
         "tier_index": 2,
-        "affix": "of Radiance"
+        "affix": "of Disaster"
       }
     ]
   },
-  "total_cost": 0,
+  "total_cost": 1.012,
   "pob": {
     "version": "0.23.1",
     "enemy": {
       "level": 32,
       "life": 683,
       "hit": 22,
-      "ja": "普通の敵 Lv32 のライフ 683"
+      "ja": "普通の敵 Lv32 のライフ 683・アーマー 237・回避力 266",
+      "armour": 237,
+      "evasion": 266,
+      "resists": {
+        "fire": 0,
+        "cold": 0,
+        "lightning": 0,
+        "chaos": 0
+      }
     },
     "character": {
       "class": "Monk",
@@ -1579,13 +2115,79 @@
       "skill": "Ice Strike",
       "skill_ja": "アイスストライク",
       "gem_level": 9,
-      "supports": []
+      "supports": [],
+      "skill_part": "Normal Strikes",
+      "skill_parts": [
+        "Normal Strikes",
+        "Third Strike"
+      ]
     },
     "config": {
       "resistancePenalty": -20,
-      "enemyIsBoss": "None"
+      "enemyIsBoss": "None",
+      "questAct 3Azak BogIgnagduk": false,
+      "questAct 3Jiquani's MachinariumBlackjaw": false,
+      "questAct 4Eye of HinekoraSilent Hall": false,
+      "questInterlude 2Khari CrossingMolten Shrine": false,
+      "questInterlude 3Kriar VillageLythara": false
     },
-    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ",
+    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ・アクト 2 までのクエストの報酬",
+    "quests": [
+      {
+        "act": 1,
+        "area": "Clearfell",
+        "stat": "+10% to Cold Resistance",
+        "on": true
+      },
+      {
+        "act": 1,
+        "area": "Freythorn",
+        "stat": "+30 to Spirit",
+        "on": true
+      },
+      {
+        "act": 1,
+        "area": "Ogham Manor",
+        "stat": "+20 to maximum Life",
+        "on": true
+      },
+      {
+        "act": 2,
+        "area": "Spires of Deshar",
+        "stat": "+10% to Lightning Resistance",
+        "on": true
+      },
+      {
+        "act": 3,
+        "area": "Azak Bog",
+        "stat": "+30 to Spirit",
+        "on": false
+      },
+      {
+        "act": 3,
+        "area": "Jiquani's Machinarium",
+        "stat": "+10% to Fire Resistance",
+        "on": false
+      },
+      {
+        "act": 4,
+        "area": "Eye of Hinekora",
+        "stat": "5% increased Maximum Mana",
+        "on": false
+      },
+      {
+        "act": 5,
+        "area": "Khari Crossing",
+        "stat": "5% increased maximum Life",
+        "on": false
+      },
+      {
+        "act": 5,
+        "area": "Kriar Village",
+        "stat": "+40 to Spirit",
+        "on": false
+      }
+    ],
     "steps": [
       {
         "dps": 76.07254982129044,
@@ -1593,6 +2195,17 @@
         "aps": 1.9599999999999995,
         "crit": 9.7,
         "crit_chance": 9.7,
+        "combined_dps": 76.07254982129044,
+        "dot": 0,
+        "hit_chance": 97,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
           "physical": 4.709516922658183,
           "fire": 0,
@@ -1603,11 +2216,11 @@
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1629,26 +2242,37 @@
         }
       },
       {
-        "dps": 78.65378795000532,
-        "hit": 40.12948364796191,
+        "dps": 163.64579555398436,
+        "hit": 83.4927528336655,
         "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "crit": 9.7,
+        "crit_chance": 9.7,
+        "combined_dps": 163.64579555398436,
+        "dot": 0,
+        "hit_chance": 97,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 4.869316806810233,
+          "physical": 15.608491486182073,
           "fire": 0,
-          "cold": 73.78447114319509,
+          "cold": 148.03730406780227,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1665,31 +2289,42 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 78.65378795000532,
-          "full": 78.65378795000532
+          "mods": 163.64579555398436,
+          "full": 163.64579555398436
         }
       },
       {
-        "dps": 147.926686928702,
-        "hit": 75.4727994534194,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 184.68596926806808,
+        "hit": 83.4927528336655,
+        "aps": 2.2119999999999997,
+        "crit": 9.7,
+        "crit_chance": 9.7,
+        "combined_dps": 184.68596926806808,
+        "dot": 0,
+        "hit_chance": 97,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.307392033632507,
+          "physical": 17.615297534405485,
           "fire": 0,
-          "cold": 134.6192948950695,
+          "cold": 167.07067173366258,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1706,31 +2341,42 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 147.926686928702,
-          "full": 147.926686928702
+          "mods": 184.68596926806808,
+          "full": 184.68596926806808
         }
       },
       {
-        "dps": 166.25268692870196,
-        "hit": 84.82279945341939,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 186.7719005084722,
+        "hit": 84.4357597235408,
+        "aps": 2.2119999999999997,
+        "crit": 9.8,
+        "crit_chance": 9.8,
+        "combined_dps": 186.7719005084722,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.297004855309236,
+          "physical": 17.81425308897009,
           "fire": 0,
-          "cold": 152.95568207339272,
+          "cold": 168.9576474195021,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1747,31 +2393,42 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 166.25268692870196
+          "mods": 186.7719005084722,
+          "full": 186.7719005084722
         }
       },
       {
-        "dps": 166.25268692870196,
-        "hit": 84.82279945341939,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 190.67695810516744,
+        "hit": 86.2011564670739,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 190.67695810516744,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.297004855309236,
+          "physical": 18.18671642079435,
           "fire": 0,
-          "cold": 152.95568207339272,
+          "cold": 172.4902416843731,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1788,31 +2445,42 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 166.25268692870196
+          "mods": 190.67695810516744,
+          "full": 190.67695810516744
         }
       },
       {
-        "dps": 175.95468692870196,
-        "hit": 89.7727994534194,
-        "aps": 1.9599999999999995,
-        "crit": 10,
-        "crit_chance": 10,
+        "dps": 190.67695810516744,
+        "hit": 86.2011564670739,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 190.67695810516744,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
         "breakdown": {
-          "physical": 13.292386930153492,
+          "physical": 18.18671642079435,
           "fire": 0,
-          "cold": 162.6622999985485,
+          "cold": 172.4902416843731,
           "lightning": 0,
           "chaos": 0
         },
         "armour": 0,
         "evasion": 7,
         "es": 0,
-        "life": 456,
+        "life": 434,
         "resists": {
           "fire": {
-            "value": -10,
-            "total": -10
+            "value": -20,
+            "total": -20
           },
           "cold": {
             "value": -10,
@@ -1829,8 +2497,60 @@
         },
         "layers": {
           "base": 76.07254982129044,
-          "mods": 166.25268692870196,
-          "full": 175.95468692870196
+          "mods": 190.67695810516744,
+          "full": 190.67695810516744
+        }
+      },
+      {
+        "dps": 200.38385788564742,
+        "hit": 90.58944750707388,
+        "aps": 2.2119999999999997,
+        "crit": 11.9462,
+        "crit_chance": 11.9462,
+        "combined_dps": 200.38385788564742,
+        "dot": 0,
+        "hit_chance": 98,
+        "skill": {
+          "name": "Ice Strike",
+          "part": "Normal Strikes",
+          "level": 9,
+          "supports": {},
+          "disabled": ""
+        },
+        "unparsed": [],
+        "breakdown": {
+          "physical": 18.17947846414158,
+          "fire": 0,
+          "cold": 182.20437942150582,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 434,
+        "resists": {
+          "fire": {
+            "value": -20,
+            "total": -20
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 190.67695810516744,
+          "full": 200.38385788564742
         }
       }
     ]

@@ -6,7 +6,7 @@
   "target_seconds": 540,
   "plan": {
     "schema": "craft-stage-plan/1",
-    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 熟練工 → 氷河のルーン",
+    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 高貴 → 熟練工 → 氷河のルーン (サフィックスを埋める)",
     "base": "Steelpoint Quarterstaff",
     "item_level": 33,
     "seed": 20261374,
@@ -17,22 +17,41 @@
       "config": {
         "resistancePenalty": -20,
         "enemyIsBoss": "None"
-      }
+      },
+      "quests_act": 2
     },
     "steps": [
       {
-        "currency": "transmute"
+        "currency": "transmute",
+        "pick": {
+          "mod": "LocalPhysicalDamagePercent"
+        },
+        "note": "プレフィックスの当たり"
       },
       {
-        "currency": "augment"
+        "currency": "augment",
+        "pick": {
+          "mod": "LocalIncreasedAttackSpeed"
+        },
+        "note": "サフィックスの当たり"
       },
       {
         "currency": "regal",
-        "note": "完成 (王者まで)"
+        "pick": {
+          "mod": "LocalLightRadiusAndAccuracy"
+        },
+        "note": "サフィックスの外れ (正直に)"
+      },
+      {
+        "currency": "exalt",
+        "pick": {
+          "mod": "LocalBaseCriticalStrikeChance"
+        },
+        "note": "サフィックスをもう 1 つ埋める"
       },
       {
         "currency": "artificer",
-        "note": "さらに一押し: ソケットを足す"
+        "note": "さらに一押し: ソケット"
       },
       {
         "currency": "rune:Lesser Glacial Rune",
@@ -40,14 +59,62 @@
       }
     ]
   },
-  "final_step": 3,
+  "final_step": 4,
   "demos": {
     "zunda": {
       "schema": "craft-stage-plan/1",
-      "title": "ずんだもんの武器: 良さそうと思った MOD に高貴を打ちまくったレア",
-      "base": "Gothic Quarterstaff",
-      "item_level": 30,
-      "seed": 20262005,
+      "title": "ずんだもんの武器: 普通のプレフィックス + しょぼいサフィックス",
+      "base": "Steelpoint Quarterstaff",
+      "item_level": 33,
+      "seed": 20262601,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "LocalPhysicalDamage",
+            "tier": "T7",
+            "values": [
+              9,
+              15
+            ]
+          },
+          {
+            "mod": "LocalPhysicalDamagePercent",
+            "tier": "T7",
+            "values": [
+              53
+            ]
+          },
+          {
+            "mod": "LocalAccuracyRating",
+            "tier": "T7",
+            "values": [
+              64
+            ]
+          },
+          {
+            "mod": "ManaGainedFromEnemyDeath",
+            "tier": "T7",
+            "values": [
+              5
+            ]
+          },
+          {
+            "mod": "LocalStunDuration",
+            "tier": "T5",
+            "values": [
+              15
+            ]
+          },
+          {
+            "mod": "LocalAttributeRequirements",
+            "tier": "T5",
+            "values": [
+              -15
+            ]
+          }
+        ]
+      },
       "pob": {
         "class": "Monk",
         "level": 32,
@@ -55,26 +122,72 @@
         "config": {
           "resistancePenalty": -20,
           "enemyIsBoss": "None"
-        }
+        },
+        "quests_act": 2
       },
       "steps": [
         {
-          "currency": "transmute"
+          "currency": "wisdom",
+          "note": "見せるだけ (手は打たない)"
+        }
+      ]
+    },
+    "recommend": {
+      "schema": "craft-stage-plan/1",
+      "title": "おすすめのレア: 同じプレフィックス + 当たりのサフィックス",
+      "base": "Steelpoint Quarterstaff",
+      "item_level": 33,
+      "seed": 20262602,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "LocalPhysicalDamage",
+            "tier": "T7",
+            "values": [
+              9,
+              15
+            ]
+          },
+          {
+            "mod": "LocalPhysicalDamagePercent",
+            "tier": "T7",
+            "values": [
+              53
+            ]
+          },
+          {
+            "mod": "LocalAccuracyRating",
+            "tier": "T7",
+            "values": [
+              64
+            ]
+          },
+          {
+            "mod": "LocalIncreasedAttackSpeed"
+          },
+          {
+            "mod": "GlobalIncreaseMeleeSkillGemLevelWeapon"
+          },
+          {
+            "mod": "LocalBaseCriticalStrikeChance"
+          }
+        ]
+      },
+      "pob": {
+        "class": "Monk",
+        "level": 32,
+        "skill": "Ice Strike",
+        "config": {
+          "resistancePenalty": -20,
+          "enemyIsBoss": "None"
         },
+        "quests_act": 2
+      },
+      "steps": [
         {
-          "currency": "augment"
-        },
-        {
-          "currency": "regal"
-        },
-        {
-          "currency": "exalt"
-        },
-        {
-          "currency": "exalt"
-        },
-        {
-          "currency": "exalt"
+          "currency": "wisdom",
+          "note": "見せるだけ (手は打たない)"
         }
       ]
     },
@@ -137,10 +250,11 @@
     }
   },
   "notes": [
-    "スキルの説明から入る: アイスストライクはゲーム内の説明文で「物理ダメージの80%を冷気ダメージに変換する」。だから物理ダメージ・冷気ダメージ・アタックスピードの MOD が合う (火・雷のダメージは合わない)。MOD の良し悪しはこの基準で話す (kyohei 2026-09-29「氷のスキルに火ダメ付けて喜ばん」)",
-    "導入: ずんだもんが「アイスストライクを使ってるのに倒せない」と相談。今の武器は、ずんだもんが良さそうと思った MOD に高貴なオーブを打ちまくって作ったレア (demo zunda、6 MOD。見せるのは最後の手の item か stage で、作る手順は見せない)。めたんが装備を見て「これなら、まず武器を替えた方がいい」へ。完成品に驚かない",
-    "ずんだもんの武器 (zunda) の MOD はクリティカル・命中力・火・雷・要求能力値・マナなど、アイスストライク (物理→冷気) に合わない物ばかり。DPS で比べる (compare / ttk で zunda の最後の手 vs メインの手)。「黄色で 6 MOD でも、スキルに合わないと弱い」「高貴なオーブは貴重、打つ前に合う MOD か見る」",
-    "数字の流れ (結果 JSON): ずんだもんの武器 117.9 (火・雷のダメージの MOD で少しは上がっているのは正直に言う) / 白のスチールポイント 76.1 → 変成 (光半径、外れ) 78.7 → 増強 (物理ダメージ 81% 増加) 147.9 → 王者 (冷気ダメージ追加) 166.3 = 3 MOD で 6 MOD のレアを追い抜く → ルーン 176.0",
+    "導入: ずんだもんが「アイスストライクを使ってるのに倒せない」と相談。今の武器 (demo zunda) はプレフィックスは普通のダメージ MOD、サフィックスはマナ・スタン・要求能力値のしょぼい物。めたんが装備を見て「プレフィックスは悪くない、サフィックスが外れ」と見抜く。完成品に驚かない",
+    "比べる (compare / ttk) は zunda と recommend。プレフィックスはまったく同じで、サフィックスだけ違う (アタックスピード・全ての近接スキルのレベル +2・クリティカルヒット率)。PoB の DPS の差をそのまま言う",
+    "PoB で分かった事 (2026-09-30): アイスストライクでも、武器の火・冷気・雷の追加は同じ扱い (冷気だけ得にはならない。数値の幅が大きい物ほど強い)。一番効くのは物理ダメージ増加 (土台の物理に掛かる)。「スキルに合う属性」の話はしない",
+    "サフィックスの出やすさ (重み): 当たり (アタックスピード・スキルのレベル・クリティカル) は約 3 割、外れが約 7 割。近接スキルのレベル +2 は結果 JSON の pick_chance の確率を言う。プレフィックスは約 9 割がダメージ",
+    "敵は PoB の「普通の敵」(結果 JSON の pob.enemy: ライフ・アーマー)。アーマーの数字を 1 回言う。耐性の +10% はアクト 3 のクエスト報酬 (クエストはアクト 2 まで入れているので入らない)",
     "メインの土台 (スチールポイントクォータースタッフ) は、レベル 32 のキャラが装備できる一番レベルの高いクォータースタッフとして選んだ (要求レベルの数字は言わない、未確認)",
     "PoB の前提 (結果 JSON の pob.config_ja とキャラ) を、DPS の数字を初めて出す行で 1 回だけ言う。「同じキャラ・同じスキルで武器だけ替えた時」",
     "火力: 武器 1 本で決まる。白に 変成 → 増強 → 王者 と打つたびに DPS がどう変わるか。倒すまでの時間 (ttk) で白とレアを競争させる",

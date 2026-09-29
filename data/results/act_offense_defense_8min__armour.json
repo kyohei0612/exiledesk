@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-09-29T09:35:31.079Z",
-  "exiledesk_version": "0.1.331",
+  "generated_at": "2026-09-29T15:42:53.189Z",
+  "exiledesk_version": "0.1.336",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -53,6 +53,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -90,6 +91,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -191,6 +193,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -249,6 +252,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -329,6 +333,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -387,6 +392,7 @@
         "shards": null,
         "disposed": null,
         "gained": null,
+        "requirements": null,
         "properties": [
           {
             "key": "armour",
@@ -474,6 +480,7 @@
     "shards": null,
     "disposed": null,
     "gained": null,
+    "requirements": null,
     "properties": [
       {
         "key": "armour",
