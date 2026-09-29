@@ -32,12 +32,12 @@ export function useCraftV2Derived() {
     if (ascendancies.value.length === 0) return null;
     return ascendancies.value.find((a) => a.id === activeAscendancyId.value) ?? ascendancies.value[0];
   });
-  /** DPS 順のビルド (-1 = 全体)。2026-09-29 */
-  const activeBuild = ref<number>(-1);
+  /** DPS 順のビルド (0〜2)。2026-09-29 オーナー「全体いらん、1.2.3 まで表示されればおけ」 */
+  const activeBuild = ref<number>(0);
   watch(activeAscendancyId, () => {
-    activeBuild.value = -1;
+    activeBuild.value = 0;
   });
-  /** 表示に使う集計 = 選んだビルドの人だけ (全体なら 3 ビルドの合計) */
+  /** 表示に使う集計 = 選んだビルドの人だけ (ビルドの無い古いキャッシュだけアセンダンシー全体) */
   const activeAscendancy = computed<AggregatedAscendancy | null>(
     () => ascendancy.value?.builds?.[activeBuild.value]?.agg ?? ascendancy.value,
   );

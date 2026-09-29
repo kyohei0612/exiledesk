@@ -77,7 +77,6 @@ export async function runFetch(useCache: boolean, opts?: { background?: boolean;
 
   const un = await startCraftDiscoveryV2({
     topNAscendancies: TOP_ASCENDANCIES,
-    topNPerAscendancy: 50,
     useCache,
     leagueUrl: craftV2Store.selectedLeagueUrl || undefined,
     onCacheReady: (cachedAggs, cache) => {

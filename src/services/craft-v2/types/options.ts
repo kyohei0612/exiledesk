@@ -12,7 +12,6 @@ import type { AggregatedAscendancy } from "./aggregate";
 
 export interface StartCraftDiscoveryV2Options {
   topNAscendancies?: number;
-  topNPerAscendancy?: number;
   onProgress: (data: AggregatedAscendancy) => void;
   onError: (msg: string, payload?: CraftV2ErrorPayload) => void;
   onDone: (snapshot: SnapshotMeta) => void;

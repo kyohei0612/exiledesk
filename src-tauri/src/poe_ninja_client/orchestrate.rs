@@ -53,8 +53,6 @@ fn build_cache(snapshot: &SnapshotMeta, ascendancies: Vec<CachedAscendancy>) -> 
 pub async fn craft_v2_fetch_all(
     window: tauri::Window,
     top_n_ascendancies: usize,
-    // 2026-09-29: 人数はビルド 3 つ × 10 人 (builds.rs) に決まったので使わない。古い画面からの呼び出しのために受けるだけ
-    #[allow(unused_variables)] top_n_per_ascendancy: usize,
     prev_cache: Option<CraftV2Cache>,
     // Phase ξ: 取得対象リーグの url (例: "vaal" / "hcvaal" / "standard")。None なら economyLeagues[0]。
     league_url: Option<String>,

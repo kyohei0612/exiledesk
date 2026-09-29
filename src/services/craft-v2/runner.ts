@@ -54,7 +54,6 @@ export async function startCraftDiscoveryV2(
 
   const {
     topNAscendancies = TOP_ASCENDANCIES,
-    topNPerAscendancy = 50,
     onProgress,
     onError,
     onDone,
@@ -135,7 +134,6 @@ export async function startCraftDiscoveryV2(
   // prevCache を渡すと Rust 側で差分モードに入る (version 一致時のみ)。
   invoke<CraftV2FetchResult>("craft_v2_fetch_all", {
     topNAscendancies,
-    topNPerAscendancy,
     prevCache,
     leagueUrl: leagueUrl ?? null,
     // 2026-09-29: メインスキルを決める時に外すトリガーのメタジェム (Cast on Block 等)。表はクライアントのジェム表 1 つ

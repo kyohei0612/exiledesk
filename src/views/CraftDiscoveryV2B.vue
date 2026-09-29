@@ -207,7 +207,8 @@ onMounted(() => {
         v-if="d.activeAscendancy.value"
         class="mt-4 pt-3 border-t border-[var(--exile-color-border-subtle)] text-[11px] text-[var(--exile-color-text-tertiary)] flex items-center gap-4 flex-wrap"
       >
-        <span>サンプル: {{ d.activeBuild.value >= 0 ? "このビルドの DPS 上位" : "DPS 上位" }} {{ d.activeAscendancy.value.sampleSize }} 人 (アセンダンシー使用率 {{ d.activeAscendancy.value.usagePercent.toFixed(1) }}%)</span>
+        <span>サンプル: {{ d.ascendancy.value?.builds?.length ? "このビルドの DPS 上位" : "DPS 上位" }} {{ d.activeAscendancy.value.sampleSize }} 人 (アセンダンシー使用率 {{ d.activeAscendancy.value.usagePercent.toFixed(1) }}%)</span>
+        <template v-if="!d.skillsTab.value">
         <span class="inline-flex items-center gap-1">
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#9B7BCC]/25 text-[#C7A7E5] ring-1 ring-[#9B7BCC]/50">P</span>
           = プレフィックス
@@ -216,7 +217,8 @@ onMounted(() => {
           <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold leading-none bg-[#B8956A]/25 text-[#D6B98A] ring-1 ring-[#B8956A]/50">S</span>
           = サフィックス
         </span>
-        <span class="italic">チェック → 上部「trade2 検索」ボタンで一括検索</span>
+        <span class="italic">MOD にチェック → 上の「trade2 検索」で一括検索</span>
+        </template>
       </footer>
     </div>
   </section>

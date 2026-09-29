@@ -1,7 +1,7 @@
 <!--
   BuildTabs.vue — DPS 順のビルド 3 つ (同じメインスキルの上位 10 人) を大きなカードで選ぶ (2026-09-29)
   オーナー「DPS が高い●スキルビルド上位 MOD、みたいに並べて。画像をふんだんに、UI はシンプルに」。
-  カード = スキル名・一番上の DPS・人数・よく使われているユニークの絵。「全体」= 3 つの合計。
+  カード = スキル名・一番上の DPS・人数・よく使われているユニークの絵。「全体」(3 つの合計) は 2026-09-29 に外した。
   選んだビルドの人の名前は下に並べ、クリックで poe.ninja のキャラのページを開く。
 -->
 <script setup lang="ts">
@@ -11,7 +11,7 @@ import { uniqueArt } from "../../services/assets/unique-art";
 import { openExternal } from "../../services/trade2/open-external";
 
 const props = defineProps<{ asc: AggregatedAscendancy; leagueUrl: string | null }>();
-/** -1 = 全体、0〜 = ビルド */
+/** 0〜 = ビルド */
 const active = defineModel<number>({ required: true });
 
 /** 2026-09-29 UI 見直し: ビルドごとの色 (金・青・紫) はスキルの種類の色 (BuildLoadout) とかぶるのでやめ、順位の数字で見分ける */
@@ -34,7 +34,6 @@ function topUniques(a: AggregatedAscendancy): Array<UniqueUsage & { art: string 
 }
 const builds = computed<BuildView[]>(() => props.asc.builds ?? []);
 const selected = computed<BuildView | null>(() => builds.value[active.value] ?? null);
-const total = computed(() => builds.value.reduce((a, b) => a + b.members.length, 0));
 const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
   props.leagueUrl ? `https://poe.ninja/poe2/builds/${props.leagueUrl}/character/${encodeURIComponent(m.account)}/${encodeURIComponent(m.name)}` : null;
 </script>
@@ -42,20 +41,6 @@ const ninjaCharUrl = (m: { account: string; name: string }): string | null =>
 <template>
   <div v-if="builds.length" class="mb-4">
     <div class="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))]">
-      <!-- 全体 -->
-      <button
-        type="button"
-        class="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-3 text-left transition hover:border-white/25"
-        :class="active === -1 ? 'ring-2 ring-white/60' : ''"
-        @click="active = -1"
-      >
-        <p class="text-[11px] tracking-wider text-white/50">全体</p>
-        <p class="mt-0.5 text-[17px] font-bold text-white/90">3 ビルドの合計</p>
-        <p class="mt-1 text-[12px] text-white/60">{{ total }} 人 · {{ asc.name }}</p>
-        <div class="mt-2 flex gap-1.5">
-          <img v-for="u in topUniques(asc)" :key="u.nameEn" :src="u.art" :alt="u.name" :title="`${u.name} (${u.count} 人)`" class="h-10 w-10 rounded bg-black/40 object-contain p-0.5" loading="lazy" referrerpolicy="no-referrer" />
-        </div>
-      </button>
       <!-- ビルド -->
       <button
         v-for="(b, i) in builds"

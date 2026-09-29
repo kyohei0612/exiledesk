@@ -1,6 +1,7 @@
 <!--
   AscendancyTabs.vue — アセンダンシータブ (横並び、使用率併記、取得中は小プログレスバー)
   CraftDiscoveryV2B.vue から切り出し (2026-09-07)。
+  2026-09-29: 見た目をビルドのカード (BuildTabs) にそろえた。錬金術記号の飾りはやめ、取得中の進みはタブの下の細い線に。
 -->
 <script setup lang="ts">
 import type { AggregatedAscendancy } from "../../services/craft-v2/types";
@@ -10,12 +11,17 @@ import { TARGET_ASCENDANCY_COUNT } from "../../views/craft-v2/helpers";
 defineProps<{ sortedAscendancies: AggregatedAscendancy[] }>();
 const activeAscendancyId = defineModel<string>("activeAscendancyId", { required: true });
 const store = craftV2Store;
+/** このアセンダンシーを手前で取っている途中か */
+function loadingOf(asc: AggregatedAscendancy): boolean {
+  const fp = asc.fetchProgress;
+  return store.loading && !store.backgroundRefresh && !!fp && fp.total > 0 && fp.done < fp.total;
+}
 </script>
 
 <template>
   <nav
     v-if="store.ascendancies.length > 0"
-    class="shrink-0 flex flex-wrap gap-1.5 mb-4 pt-2 pb-3 border-b border-[var(--exile-color-border-subtle)] overflow-x-auto"
+    class="mb-3 flex flex-wrap gap-1.5 border-b border-white/10 pb-3"
     role="tablist"
     aria-label="アセンダンシー切替"
   >
@@ -27,47 +33,29 @@ const store = craftV2Store;
       :aria-selected="asc.id === activeAscendancyId"
       @click="activeAscendancyId = asc.id"
       :class="[
-        'group relative flex flex-col items-stretch gap-1 px-3 py-2 border rounded transition-colors font-display tracking-[0.05em] text-[13px] shrink-0',
-        asc.id === activeAscendancyId
-          ? 'border-[var(--exile-color-accent-focus)] bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]'
-          : 'border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] hover:border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-surface)]',
+        'relative overflow-hidden rounded-lg px-3 py-1.5 text-left text-[13px] font-bold transition',
+        asc.id === activeAscendancyId ? 'bg-white/15 text-white ring-2 ring-white/60' : 'bg-white/[0.03] text-white/60 ring-1 ring-white/10 hover:text-white hover:ring-white/25',
       ]"
-      :title="
-        store.loading && !store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total
-          ? `${asc.fetchProgress.done} / ${asc.fetchProgress.total} キャラ取得中`
-          : asc.name
-      "
+      :title="loadingOf(asc) ? `${asc.fetchProgress!.done} / ${asc.fetchProgress!.total} 人 取得中` : asc.name"
     >
-      <span class="flex items-center gap-2">
-        <span class="text-lg leading-none" aria-hidden="true">{{ asc.icon }}</span>
-        <span class="leading-none">{{ asc.name }}</span>
-        <span
-          class="leading-none text-[11px] tabular-nums"
-          :class="asc.id === activeAscendancyId ? 'text-[var(--exile-color-accent-focus-hover)]' : 'text-[var(--exile-color-text-secondary)]'"
-          >{{ asc.usagePercent.toFixed(1) }}%</span
-        >
-      </span>
-      <!-- タブ毎の小プログレスバー (N/M キャラ取得中のみ) -->
-      <span
-        v-if="store.loading && !store.backgroundRefresh && asc.fetchProgress && asc.fetchProgress.done < asc.fetchProgress.total"
-        class="flex items-center gap-1.5 text-[10px] tabular-nums text-[var(--exile-color-text-secondary)]"
+      {{ asc.name }}
+      <span class="ml-1 text-[11px] font-normal tabular-nums" :class="asc.id === activeAscendancyId ? 'text-white/70' : 'text-white/40'"
+        >{{ asc.usagePercent.toFixed(1) }}%</span
       >
-        <span class="flex-1 h-1 rounded-full overflow-hidden bg-[var(--exile-color-bg-canvas)] border border-[var(--exile-color-border-subtle)]" aria-hidden="true">
-          <span
-            class="block h-full bg-[var(--exile-color-accent-focus)] transition-[width] duration-300 ease-out"
-            :style="{ width: asc.fetchProgress.total > 0 ? (asc.fetchProgress.done / asc.fetchProgress.total) * 100 + '%' : '0%' }"
-          ></span>
-        </span>
-        <span>{{ asc.fetchProgress.done }}/{{ asc.fetchProgress.total }}</span>
+      <!-- 取得中はタブの下に細い線で進み -->
+      <span v-if="loadingOf(asc)" class="absolute inset-x-0 bottom-0 h-0.5 bg-white/10" aria-hidden="true">
+        <span
+          class="block h-full bg-[var(--exile-color-accent-focus)] transition-[width] duration-300 ease-out"
+          :style="{ width: (asc.fetchProgress!.done / asc.fetchProgress!.total) * 100 + '%' }"
+        ></span>
       </span>
     </button>
-    <!-- 未到着分の取得中インジケータ -->
+    <!-- まだ来ていないアセンダンシー -->
     <span
       v-if="store.loading && !store.backgroundRefresh && store.ascendancies.length < TARGET_ASCENDANCY_COUNT"
-      class="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] text-[var(--exile-color-text-secondary)] italic"
+      class="self-center px-2 text-[11px] text-white/40"
     >
-      <span class="inline-block w-2 h-2 rounded-full bg-[var(--exile-color-accent-focus)] animate-pulse" aria-hidden="true"></span>
-      残り取得中…
+      あと {{ TARGET_ASCENDANCY_COUNT - store.ascendancies.length }} つ取得中…
     </span>
   </nav>
 </template>
