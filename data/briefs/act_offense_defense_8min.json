@@ -246,7 +246,8 @@
         {
           "demo": "ring"
         }
-      ]
+      ],
+      "quests_act": 2
     }
   },
   "notes": [
@@ -281,10 +282,6 @@
     {
       "title": "poe2db: 耐性",
       "url": "https://poe2db.tw/jp/Resistances"
-    },
-    {
-      "title": "Game8 / Mobalytics: Count Geonor (アクト 1 のボス)",
-      "url": "https://mobalytics.gg/poe-2/guides/count-geonor"
     },
     {
       "title": "Gamer Guides: Disenchanting and Salvaging Guide",
