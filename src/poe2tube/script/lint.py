@@ -12,9 +12,8 @@ import re
 from poe2tube.script.model import CHARS_PER_MINUTE, Line, Section, VideoScript
 
 MAX_SENTENCE = 40
-MAX_SAME_SCENE_RUN = 3
 # 情報の画面 (ExileDesk の撮影) は出したまま話す。文字の多い画面は 8 秒、動きで見せる画面は 5 秒以上
-# (kyohei 2026-09-30「せっかく作った比較画像や DPS があまりにも早く消える」)。同じ画面の連続の対象外
+# (kyohei 2026-09-30「せっかく作った比較画像や DPS があまりにも早く消える」)
 INFO_MIN_SECONDS = {
     "compare": 8.0,
     "dps": 8.0,
@@ -53,16 +52,13 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
         if main and n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
             problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
     problems += info_screen_time(lines, offset)
-    run = 1
-    for k, (prev, cur) in enumerate(zip(lines, lines[1:], strict=False), start=2):
-        same = prev.scene.key() == cur.scene.key() and cur.scene.kind not in INFO_MIN_SECONDS
-        run = run + 1 if same else 1
-        if run > MAX_SAME_SCENE_RUN:
+    # 同じ画面は何行続けてもよい (テロップが変わっても画像を置いたまま、kyohei 2026-09-30)
+    for k, ln in enumerate(lines, start=1):
+        if ln.scene.kind == "talk":
             problems.append(
-                f"line {offset + k}: 同じ画面が {run} 行続く (前の章の終わりも含む): "
-                f"{cur.scene.kind} step={cur.scene.step} → この行の画面を変える"
+                f"line {offset + k}: 何も出ない画面 (talk) は使わない → 話題の物 "
+                "(item / stage / compare 等) を出したまま話す"
             )
-            run = 1
     return problems
 
 

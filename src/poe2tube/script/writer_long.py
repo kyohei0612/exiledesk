@@ -70,7 +70,7 @@ def outline_prompt(
                         "goal": "この章で視聴者ができるようになること",
                         "points": ["要点 1", "要点 2"],
                         "steps": [1, 2],
-                        "scenes": ["talk", "item"],
+                        "scenes": ["item", "stage"],
                         "bridge": "次の章へ渡す最後の一言の方向性",
                     }
                 ],
@@ -139,7 +139,7 @@ def section_prompt(
                         "emotion": "troubled",
                         "text": "…なのだ。",
                         "speech": "(読みが素直なら省略)",
-                        "scene": {"kind": "talk"},
+                        "scene": {"kind": "item", "step": 0},
                     }
                 ],
             },

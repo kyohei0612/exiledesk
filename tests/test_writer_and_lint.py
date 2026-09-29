@@ -10,7 +10,7 @@ import pytest
 from poe2tube.audio.voicevox import VoicevoxClient, predicted_seconds
 from poe2tube.contracts.craft_stage import CraftStageResult
 from poe2tube.script.brief import Brief
-from poe2tube.script.lint import lint_script
+from poe2tube.script.lint import lint_lines, lint_script
 from poe2tube.script.model import Line, Scene, Section, VideoScript
 from poe2tube.script.writer import build_prompt, extract_json, write_script
 
@@ -55,8 +55,10 @@ def test_lint_catches_style_and_scene_runs() -> None:
         "敬語" in problems
         and "一文が" in problems
         and "のだ" in problems
-        and "同じ画面" in problems
+        and "同じ画面" not in problems  # 同じ画面は何行続けてもよい (2026-09-30)
     )
+    talk = [Line(speaker="metan", text="雑談よ。", scene=Scene(kind="talk"))]
+    assert any("何も出ない画面" in p for p in lint_lines(talk))
 
 
 def test_predicted_seconds_and_speed_normalization() -> None:

@@ -124,7 +124,7 @@ def _section_json(name: str, seconds: int) -> dict[str, object]:
     else:
         lines = []
         for i in range(n):
-            scene = {"kind": "talk"} if i % 2 == 0 else {"kind": "item", "step": 3}
+            scene = {"kind": "item", "step": 0} if i % 2 == 0 else {"kind": "item", "step": 3}
             lines += _lines(1 if i % 2 == 0 else 0, 0 if i % 2 == 0 else 1, scene)
     return {"name": name, "target_seconds": seconds, "lines": lines}
 
@@ -171,12 +171,12 @@ def test_sections_to_rewrite_maps_line_numbers() -> None:
     s1 = Section(
         name="a",
         target_seconds=10,
-        lines=[Line(speaker="metan", text="x。", scene=Scene(kind="talk"))] * 2,
+        lines=[Line(speaker="metan", text="x。", scene=Scene(kind="item", step=0))] * 2,
     )
     s2 = Section(
         name="b",
         target_seconds=10,
-        lines=[Line(speaker="metan", text="x。", scene=Scene(kind="talk"))] * 3,
+        lines=[Line(speaker="metan", text="x。", scene=Scene(kind="item", step=0))] * 3,
     )
     script = VideoScript(title="t", target_seconds=20, result_file="r", sections=[s1, s2])
     assert _sections_to_rewrite(script, ["line 1: だめ", "line 4: だめ"]) == [0, 1]
