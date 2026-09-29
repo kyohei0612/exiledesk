@@ -19,6 +19,7 @@ from poe2tube.capture.stage import (
     READY_SELECTOR,
     SETTLE_MS,
     VIEWPORT,
+    ensure_video_mode,
     ensure_vite,
 )
 from poe2tube.contracts.craft_stage import CraftStagePlan
@@ -87,6 +88,7 @@ def capture_views(queries: list[str], force: bool = False) -> list[Path]:
             page.goto(f"{base}/?{q}", wait_until="networkidle", timeout=60000)
             page.wait_for_selector(READY_SELECTOR, timeout=30000)
             page.wait_for_timeout(SETTLE_MS)
+            ensure_video_mode(page)
             page.screenshot(path=str(view_path(q)))
             log.info("view captured", path=view_path(q).name, view=q.split("&view=")[-1][:20])
         browser.close()

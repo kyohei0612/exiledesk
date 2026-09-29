@@ -33,6 +33,9 @@ VIEWPORT = (1920, 1080)
 CAPTURE_VER = "v13-wrap"  # 撮り方を変えたらキャッシュを切替 (v13 = 差の列の折り返し)
 # アイテム枠が描けたら撮る。v0.1.314 の撮影用は英語ベース名を出さないので「アイテムレベル」を待つ
 READY_SELECTOR = "text=/アイテムレベル|スキルジェム/"  # ジェムにはアイテムレベルが無い
+# 動画モードになっていない (普通の手操作の画面) のしるし。これが写ったら撮らずに止める
+# (2026-09-29: ExileDesk の不具合で普通の画面のまま動画ができていた)
+NOT_VIDEO_MARK = "text=カレンシーランキング"
 SETTLE_MS = 1500  # 打った瞬間の演出 (波紋・光) が収まるまで
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
@@ -126,10 +129,9 @@ def capture_plan(
         )
         for st in todo:
             page.goto(replay_url(plan, st, base), wait_until="networkidle", timeout=60000)
-            page.wait_for_selector(
-                READY_SELECTOR, timeout=30000
-            )  # アイテム枠の英語名 (どの見た目にも出る)
+            page.wait_for_selector(READY_SELECTOR, timeout=30000)
             page.wait_for_timeout(SETTLE_MS)
+            ensure_video_mode(page)
             page.screenshot(path=str(paths[st]))
             log.info("stage captured", step=st, path=paths[st].name)
         page.close()
@@ -137,6 +139,17 @@ def capture_plan(
             _record_clip(browser, base, plan, st, fps)
         browser.close()
     return paths
+
+
+class NotVideoModeError(RuntimeError):
+    """ExileDesk が動画モードで開けていない (普通の画面を撮ってしまうので止める)."""
+
+
+def ensure_video_mode(page: Any) -> None:
+    if page.locator(NOT_VIDEO_MARK).count() and page.locator(NOT_VIDEO_MARK).first.is_visible():
+        raise NotVideoModeError(
+            "ExileDesk が動画モードで開けていない (普通の画面が写った)。ExileDesk 側の不具合を疑う"
+        )
 
 
 def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: int) -> None:
@@ -153,9 +166,8 @@ def _record_clip(browser: Any, base: str, plan: CraftStagePlan, step: int, fps: 
         t0 = time.perf_counter()
         page = ctx.new_page()
         page.goto(replay_url(plan, step - 1, base), wait_until="networkidle", timeout=60000)
-        page.wait_for_selector(
-            READY_SELECTOR, timeout=30000
-        )  # アイテム枠の英語名 (どの見た目にも出る)
+        page.wait_for_selector(READY_SELECTOR, timeout=30000)
+        ensure_video_mode(page)
         page.wait_for_timeout(800)
         page.keyboard.press("ArrowRight")
         t_press = time.perf_counter() - t0

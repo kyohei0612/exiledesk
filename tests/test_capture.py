@@ -40,7 +40,7 @@ def test_capture_plan_uses_cache_without_browser(
         p = stage.cached_path(plan, st)
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(b"png")
-    paths = stage.capture_plan(plan, [0, 1])  # 全部キャッシュ済 → ブラウザを起動しない
+    paths = stage.capture_plan(plan, [0, 1], clips=False)  # 全部キャッシュ済 → ブラウザ無し
     assert paths[1].read_bytes() == b"png"
 
 
@@ -53,3 +53,40 @@ def test_real_capture_when_vite_is_running(tmp_path: Path, monkeypatch: pytest.M
 
     im = Image.open(paths[1])
     assert (im.width, im.height) == (1920, 1080)  # 動画モードは 16:9 をそのまま
+
+
+def test_ensure_video_mode_raises_on_normal_screen() -> None:
+    from poe2tube.capture.stage import NotVideoModeError, ensure_video_mode
+
+    class _Loc:
+        def __init__(self, n: int) -> None:
+            self.n = n
+            self.first = self
+
+        def count(self) -> int:
+            return self.n
+
+        def is_visible(self) -> bool:
+            return True
+
+    class _Page:
+        def __init__(self, n: int) -> None:
+            self.n = n
+
+        def locator(self, _sel: str) -> _Loc:
+            return _Loc(self.n)
+
+    ensure_video_mode(_Page(0))
+    import pytest
+
+    with pytest.raises(NotVideoModeError):
+        ensure_video_mode(_Page(1))
+
+
+def test_focus_line_is_not_a_hit() -> None:
+    from poe2tube.script.model import Line, Scene
+    from poe2tube.video.clip_timing import stage_hit
+
+    talk = Line(speaker="metan", text="あ", scene=Scene(kind="talk"))
+    look = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=1, focus="X"))
+    assert not stage_hit(talk, look)
