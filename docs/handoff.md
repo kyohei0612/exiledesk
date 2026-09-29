@@ -11,7 +11,8 @@
 ## 待っている事
 
 - 要望 ⑯ (`view=tiers&hl=0` = 段の表の金の段を隠す) は v0.1.329 で入り、固定版を進めて確認済 (2026-09-29、CAPTURE_VER=v16-hl0。test_1min_ui の 10 行目で金の段が無く 11 行目で出る)
-- **ExileDesk 要望 ⑰ (2026-09-29、次の「アクト中の火力と防御」回用)**: ① ルーンをはめる手 ② 武器・防具の上の数値に MOD を反映 ③ PoB でスキルの DPS (設定 = 敵・アクトの耐性ペナルティも指定、結果 JSON に書き戻す) ④ 耐性の画面 view=resists ⑤ 解呪・サルベージの手 ⑥ スキル・ジェムの絵 (クライアントから)。武器は弓 (kyohei)。返事が来たら contracts/craft_stage.py に pob 欄を足す。ExileDesk のメモ `craft-stage-feature` に記載。リリースされたら下の手順で撮り直す
+- **ExileDesk 要望 ⑰ (2026-09-29、全面更新)**: 全文は ExileDesk のメモ `craft-stage-feature` の「要望 ⑰」。武器はクォータースタッフ (モンク、PoB で DPS)。A 火力 (上の数値に MOD 反映 / PoB の DPS + 設定の書き戻し / DPS の札 / 比べるに DPS 差 / DPS の内訳) B スキル (スキル・ジェムの絵 / スキルの札 view=skill) C 防御 (ルーンの手 / 耐性の画面 view=resists) D 資源 (解呪・サルベージ) E MOD の重み (付きうる MOD の一覧 view=pool / 段の重みの数字 / 何回で出るか は後で)。返事が来たら contracts/craft_stage.py に pob 欄と新しい手を足し、Scene.kind に skill / resists / pool / dps を足す
+- **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
 ## 次の動画: 「アクト中の火力と防御」に決定 (2026-09-29、武器・ルーン・耐性・解呪。ExileDesk 要望 ⑰ 待ち)
