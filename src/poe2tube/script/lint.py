@@ -101,6 +101,22 @@ def lint_script(
     if not lo <= est <= hi:
         problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
     problems += stage_coverage(script, n_steps, demo_steps)
+    problems += hidden_dps_on_hit(script)
+    return problems
+
+
+def hidden_dps_on_hit(script: VideoScript) -> list[str]:
+    """打つ行 (その手が初めて出る stage) では DPS を隠せない (打つ瞬間の録画に数字が出る、⑰)."""
+    seen: set[tuple[str | None, int]] = set()
+    problems: list[str] = []
+    for i, ln in enumerate(script.lines, start=1):
+        sc = ln.scene
+        if sc.kind != "stage" or sc.step is None:
+            continue
+        key = (sc.demo, sc.step)
+        if key not in seen and sc.step >= 1 and not sc.show_dps:
+            problems.append(f"line {i}: 打つ行では show_dps: false にできない (前の行で隠す)")
+        seen.add(key)
     return problems
 
 

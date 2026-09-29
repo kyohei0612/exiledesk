@@ -52,12 +52,21 @@ STAGE_CURRENCIES: dict[PlayerStage, frozenset[str] | None] = {
             "chance_shard",
             "jeweller_lesser",
             "jeweller_greater",
+            "disenchant",  # 解呪・サルベージ (ExileDesk ⑰)
+            "salvage",
         }
     ),
     "early_endgame": frozenset(
         {"transmute", "augment", "regal", "alchemy", "exalt", "annul", "chaos", "artificer"}
+        | {"disenchant", "salvage"}
     ),
     "endgame": None,  # 制限なし
+}
+# ルーンは段で入手時期が変わる。アクトは下位 (Lesser) だけ (ExileDesk stage-runes.json、drop 5)
+STAGE_RUNE_PREFIX: dict[PlayerStage, str | None] = {
+    "act": "rune:Lesser ",
+    "early_endgame": "rune:",
+    "endgame": None,
 }
 STAGE_JA = {"act": "アクト中", "early_endgame": "エンド序盤", "endgame": "エンド"}
 # ベースの入手段階 (docs/script_rules/_facts.md と揃える)。表に無いベースは検査しない
@@ -124,7 +133,14 @@ class Brief(BaseModel):
             )
         allowed = STAGE_CURRENCIES[self.player_stage]
         if allowed is not None:
-            bad = sorted({s.currency for s in plan.steps if s.currency not in allowed})
+            rune = STAGE_RUNE_PREFIX[self.player_stage]
+            bad = sorted(
+                {
+                    s.currency
+                    for s in plan.steps
+                    if s.currency not in allowed and not (rune and s.currency.startswith(rune))
+                }
+            )
             if bad:
                 out.append(
                     f"{label}「{stage}」では手に入りにくいカレンシー: {bad}"

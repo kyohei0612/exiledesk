@@ -111,6 +111,10 @@ def hit_label(step: StageStep) -> tuple[str, str]:
         return "+ " + _short(ch.added[0].text_ja), STYLE_ADDED
     if ch.removed:
         return "消えた! " + _short(ch.removed[0].text_ja), STYLE_REMOVED
+    if len(a.augments) > len(b.augments):  # ルーンをはめた (ExileDesk ⑰)
+        return "+ " + _short(str(a.augments[-1].get("text_ja", "ルーン"))), STYLE_ADDED
+    if a.disposed and not b.disposed:
+        return ("解呪!" if a.disposed == "disenchant" else "サルベージ!"), STYLE_ADDED
     if a.quality > b.quality:
         return "品質アップ!", STYLE_ADDED
     if a.sockets > b.sockets:

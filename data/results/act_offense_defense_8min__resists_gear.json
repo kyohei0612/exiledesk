@@ -1,0 +1,177 @@
+{
+  "version": "0.23.1",
+  "items": [
+    {
+      "name": "チェインメイル",
+      "base": "Chain Mail",
+      "rarity": "magic"
+    },
+    {
+      "name": "サファイアの指輪",
+      "base": "Sapphire Ring",
+      "rarity": "magic"
+    }
+  ],
+  "equip": {
+    "fire": 0,
+    "cold": 35,
+    "lightning": 0,
+    "chaos": 0
+  },
+  "rows": [
+    {
+      "penalty": 0,
+      "label": "アクト 1 (0%)",
+      "resists": {
+        "fire": {
+          "value": 10,
+          "total": 10
+        },
+        "cold": {
+          "value": 45,
+          "total": 45
+        },
+        "lightning": {
+          "value": 10,
+          "total": 10
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -10,
+      "label": "アクト 2 (-10%)",
+      "resists": {
+        "fire": {
+          "value": 0,
+          "total": 0
+        },
+        "cold": {
+          "value": 35,
+          "total": 35
+        },
+        "lightning": {
+          "value": 0,
+          "total": 0
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -20,
+      "label": "アクト 3 (-20%)",
+      "resists": {
+        "fire": {
+          "value": -10,
+          "total": -10
+        },
+        "cold": {
+          "value": 25,
+          "total": 25
+        },
+        "lightning": {
+          "value": -10,
+          "total": -10
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -30,
+      "label": "アクト 4 (-30%)",
+      "resists": {
+        "fire": {
+          "value": -20,
+          "total": -20
+        },
+        "cold": {
+          "value": 15,
+          "total": 15
+        },
+        "lightning": {
+          "value": -20,
+          "total": -20
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -40,
+      "label": "アクト 5 (-40%)",
+      "resists": {
+        "fire": {
+          "value": -30,
+          "total": -30
+        },
+        "cold": {
+          "value": 5,
+          "total": 5
+        },
+        "lightning": {
+          "value": -30,
+          "total": -30
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -50,
+      "label": "アクト 6 (-50%)",
+      "resists": {
+        "fire": {
+          "value": -40,
+          "total": -40
+        },
+        "cold": {
+          "value": -5,
+          "total": -5
+        },
+        "lightning": {
+          "value": -40,
+          "total": -40
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    },
+    {
+      "penalty": -60,
+      "label": "エンドゲーム (-60%)",
+      "resists": {
+        "fire": {
+          "value": -50,
+          "total": -50
+        },
+        "cold": {
+          "value": -15,
+          "total": -15
+        },
+        "lightning": {
+          "value": -50,
+          "total": -50
+        },
+        "chaos": {
+          "value": 0,
+          "total": 0
+        }
+      }
+    }
+  ]
+}

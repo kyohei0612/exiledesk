@@ -13,7 +13,7 @@ import structlog
 
 from poe2tube.audio.mix import mix
 from poe2tube.audio.voicevox import VoicevoxClient
-from poe2tube.capture.anim import anim_query, capture_anims
+from poe2tube.capture.anim import anim_query, capture_anims, intro_timing
 from poe2tube.capture.stage import capture_plan, pob_json
 from poe2tube.capture.views import capture_views, view_query
 from poe2tube.config.settings import REPO_ROOT, get_settings
@@ -159,7 +159,8 @@ def build_video(
     lines = [(sec.name, ln) for sec in script.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
     secs = [len(smp) / sr for smp, sr in (read_wav(w) for w in wavs)]
-    hold, delay = plan_cue_timing(lines, secs, hits)
+    intros = intro_timing([ln.scene for _, ln in lines], rs, s.fps)
+    hold, delay = plan_cue_timing(lines, secs, hits, intros)
     cues = build_cues(script.sections, wavs, s.fps, min_seconds=hold, voice_delay=delay)
     write_chapters(cues, work / "chapters.json")
     voice = concat_audio(cues, work / "voice.wav")

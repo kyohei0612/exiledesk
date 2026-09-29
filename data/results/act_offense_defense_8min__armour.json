@@ -1,0 +1,536 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T08:38:09.203Z",
+  "exiledesk_version": "0.1.331",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "胴: 熟練工 → 同じ氷河のルーン (防具には冷気耐性)",
+    "base": "Chain Mail",
+    "item_level": 33,
+    "start_rarity": "normal",
+    "seed": 20261203,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1
+      },
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "rune:Lesser Glacial Rune",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261204,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261205,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "rune:Lesser Glacial Rune",
+      "currency_ja": "氷河のレッサールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261206,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "25",
+            "up": false
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "16",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Lesser Glacial Rune",
+            "en": "Lesser Glacial Rune",
+            "ja": "氷河のレッサールーン",
+            "category": "防具",
+            "text_ja": "冷気耐性 +10%",
+            "text_en": "+10% to Cold Resistance",
+            "stats": [
+              {
+                "id": "base_cold_damage_resistance_%",
+                "value": 10
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "チェインメイル",
+    "base": "Chain Mail",
+    "base_ja": "チェインメイル",
+    "item_level": 33,
+    "rarity": "magic",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "25",
+        "up": false
+      },
+      {
+        "key": "evasion",
+        "label": "回避力",
+        "value": "16",
+        "up": false
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Lesser Glacial Rune",
+        "en": "Lesser Glacial Rune",
+        "ja": "氷河のレッサールーン",
+        "category": "防具",
+        "text_ja": "冷気耐性 +10%",
+        "text_en": "+10% to Cold Resistance",
+        "stats": [
+          {
+            "id": "base_cold_damage_resistance_%",
+            "value": 10
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str_dex/Dexterity",
+        "family": "Dexterity",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "器用さ +14",
+        "text_en": "+14 to Dexterity",
+        "values": [
+          14
+        ],
+        "ranges": [
+          [
+            13,
+            16
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Fox"
+      }
+    ]
+  },
+  "total_cost": 0
+}

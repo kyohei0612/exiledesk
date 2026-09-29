@@ -1,0 +1,1872 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T08:37:59.185Z",
+  "exiledesk_version": "0.1.331",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 熟練工 → 氷河のルーン",
+    "base": "Steelpoint Quarterstaff",
+    "item_level": 33,
+    "start_rarity": "normal",
+    "seed": 20261201,
+    "start_unidentified": false,
+    "pob": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "supports": [],
+      "config": {
+        "resistancePenalty": -20,
+        "enemyIsBoss": "None"
+      }
+    },
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1
+      },
+      {
+        "currency": "augment",
+        "times": 1
+      },
+      {
+        "currency": "regal",
+        "times": 1,
+        "note": "完成 (王者まで)"
+      },
+      {
+        "currency": "artificer",
+        "times": 1,
+        "note": "さらに一押し: ソケットを足す"
+      },
+      {
+        "currency": "rune:Lesser Glacial Rune",
+        "times": 1,
+        "note": "武器には冷気ダメージ"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261202,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 78.65378795000532,
+        "hit": 40.12948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.869316806810233,
+          "fire": 0,
+          "cold": 73.78447114319509,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 78.65378795000532,
+          "full": 78.65378795000532
+        }
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261203,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261204,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          },
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      }
+    },
+    {
+      "index": 4,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261205,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          },
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          },
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      }
+    },
+    {
+      "index": 5,
+      "currency": "rune:Lesser Glacial Rune",
+      "currency_ja": "氷河のレッサールーン",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261206,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          },
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ]
+      },
+      "after": {
+        "name": "スチールポイントクォータースタッフ",
+        "base": "Steelpoint Quarterstaff",
+        "base_ja": "スチールポイントクォータースタッフ",
+        "item_level": 33,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "properties": [
+          {
+            "key": "phys",
+            "label": "物理ダメージ",
+            "value": "28〜51",
+            "up": false
+          },
+          {
+            "key": "fire",
+            "label": "火ダメージ",
+            "value": "22〜30",
+            "up": true
+          },
+          {
+            "key": "cold",
+            "label": "冷気ダメージ",
+            "value": "3〜5",
+            "up": true
+          },
+          {
+            "key": "crit",
+            "label": "クリティカルヒット率",
+            "value": "10.00%",
+            "up": false
+          },
+          {
+            "key": "aps",
+            "label": "アタック/秒",
+            "value": "1.40",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Lesser Glacial Rune",
+            "en": "Lesser Glacial Rune",
+            "ja": "氷河のレッサールーン",
+            "category": "マーシャル武器",
+            "text_ja": "3から5の冷気ダメージを追加する",
+            "text_en": "Adds 3 to 5 Cold Damage",
+            "stats": [
+              {
+                "id": "local_minimum_added_cold_damage",
+                "value": 3
+              },
+              {
+                "id": "local_maximum_added_cold_damage",
+                "value": 5
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Quarterstaves/LocalFireDamage",
+            "family": "FireDamage",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "22から30の火ダメージを追加する",
+            "text_en": "Adds 22 to 30 Fire Damage",
+            "values": [
+              22,
+              30
+            ],
+            "ranges": [
+              [
+                19,
+                27
+              ],
+              [
+                30,
+                42
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "Burning"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+            "family": "LightRadiusAndAccuracy",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 30,
+            "text_ja": "光半径が+15%増加する / 命中力 58",
+            "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+            "values": [
+              15,
+              58
+            ],
+            "ranges": [
+              [
+                15,
+                15
+              ],
+              [
+                41,
+                60
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of Radiance"
+          },
+          {
+            "mod_id": "Quarterstaves/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "知性 +14",
+            "text_en": "+14 to Intelligence",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Prodigy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "pob": {
+        "dps": 148.7237879500053,
+        "hit": 75.8794836479619,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.854326163577908,
+          "fire": 61.65834076561174,
+          "cold": 82.21112102081565,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 148.7237879500053
+        }
+      }
+    }
+  ],
+  "final": {
+    "name": "スチールポイントクォータースタッフ",
+    "base": "Steelpoint Quarterstaff",
+    "base_ja": "スチールポイントクォータースタッフ",
+    "item_level": 33,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "properties": [
+      {
+        "key": "phys",
+        "label": "物理ダメージ",
+        "value": "28〜51",
+        "up": false
+      },
+      {
+        "key": "fire",
+        "label": "火ダメージ",
+        "value": "22〜30",
+        "up": true
+      },
+      {
+        "key": "cold",
+        "label": "冷気ダメージ",
+        "value": "3〜5",
+        "up": true
+      },
+      {
+        "key": "crit",
+        "label": "クリティカルヒット率",
+        "value": "10.00%",
+        "up": false
+      },
+      {
+        "key": "aps",
+        "label": "アタック/秒",
+        "value": "1.40",
+        "up": false
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Lesser Glacial Rune",
+        "en": "Lesser Glacial Rune",
+        "ja": "氷河のレッサールーン",
+        "category": "マーシャル武器",
+        "text_ja": "3から5の冷気ダメージを追加する",
+        "text_en": "Adds 3 to 5 Cold Damage",
+        "stats": [
+          {
+            "id": "local_minimum_added_cold_damage",
+            "value": 3
+          },
+          {
+            "id": "local_maximum_added_cold_damage",
+            "value": 5
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Quarterstaves/LocalFireDamage",
+        "family": "FireDamage",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 33,
+        "text_ja": "22から30の火ダメージを追加する",
+        "text_en": "Adds 22 to 30 Fire Damage",
+        "values": [
+          22,
+          30
+        ],
+        "ranges": [
+          [
+            19,
+            27
+          ],
+          [
+            30,
+            42
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "Burning"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Quarterstaves/LocalLightRadiusAndAccuracy",
+        "family": "LightRadiusAndAccuracy",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 30,
+        "text_ja": "光半径が+15%増加する / 命中力 58",
+        "text_en": "15% increased Light Radius\n+58 to Accuracy Rating",
+        "values": [
+          15,
+          58
+        ],
+        "ranges": [
+          [
+            15,
+            15
+          ],
+          [
+            41,
+            60
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of Radiance"
+      },
+      {
+        "mod_id": "Quarterstaves/Intelligence",
+        "family": "Intelligence",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "知性 +14",
+        "text_en": "+14 to Intelligence",
+        "values": [
+          14
+        ],
+        "ranges": [
+          [
+            13,
+            16
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Prodigy"
+      }
+    ]
+  },
+  "total_cost": 0,
+  "pob": {
+    "version": "0.23.1",
+    "enemy": {
+      "level": 32,
+      "life": 683,
+      "hit": 22,
+      "ja": "普通の敵 Lv32 のライフ 683"
+    },
+    "character": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "skill_ja": "アイスストライク",
+      "gem_level": 9,
+      "supports": []
+    },
+    "config": {
+      "resistancePenalty": -20,
+      "enemyIsBoss": "None"
+    },
+    "config_ja": "普通の敵・アクト 3 (-20%) のペナルティ",
+    "steps": [
+      {
+        "dps": 76.07254982129044,
+        "hit": 38.81252541902574,
+        "aps": 1.9599999999999995,
+        "crit": 9.7,
+        "crit_chance": 9.7,
+        "breakdown": {
+          "physical": 4.709516922658183,
+          "fire": 0,
+          "cold": 71.36303289863226,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 76.07254982129044,
+          "full": 76.07254982129044
+        }
+      },
+      {
+        "dps": 78.65378795000532,
+        "hit": 40.12948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.869316806810233,
+          "fire": 0,
+          "cold": 73.78447114319509,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 78.65378795000532,
+          "full": 78.65378795000532
+        }
+      },
+      {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      },
+      {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      },
+      {
+        "dps": 140.09978795000532,
+        "hit": 71.47948364796191,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.855359001984833,
+          "fire": 61.67145960029735,
+          "cold": 73.57296934772316,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 140.09978795000532
+        }
+      },
+      {
+        "dps": 148.7237879500053,
+        "hit": 75.8794836479619,
+        "aps": 1.9599999999999995,
+        "crit": 10,
+        "crit_chance": 10,
+        "breakdown": {
+          "physical": 4.854326163577908,
+          "fire": 61.65834076561174,
+          "cold": 82.21112102081565,
+          "lightning": 0,
+          "chaos": 0
+        },
+        "armour": 0,
+        "evasion": 7,
+        "es": 0,
+        "life": 456,
+        "resists": {
+          "fire": {
+            "value": -10,
+            "total": -10
+          },
+          "cold": {
+            "value": -10,
+            "total": -10
+          },
+          "lightning": {
+            "value": -10,
+            "total": -10
+          },
+          "chaos": {
+            "value": 0,
+            "total": 0
+          }
+        },
+        "layers": {
+          "base": 76.07254982129044,
+          "mods": 140.09978795000532,
+          "full": 148.7237879500053
+        }
+      }
+    ]
+  }
+}

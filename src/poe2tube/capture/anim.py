@@ -42,6 +42,15 @@ def _hidden(scene: Scene) -> bool:
     return not scene.reveal or not scene.show_dps
 
 
+# 質問の行 (答えを隠す) でも動きを流すと答えが見える画面 (倒すまでの時間 = どちらが先に倒れるか)。
+# 動きの最初のコマ (競争の前) で止めて見せる
+HOLD_FIRST_KINDS = ("ttk",)
+
+
+def holds_first(scene: Scene) -> bool:
+    return scene.kind in HOLD_FIRST_KINDS and _hidden(scene)
+
+
 def anim_query(scene: Scene, prev: Scene | None, rs: ResultSet) -> str | None:
     """この行の頭で流す動きの URL。動かない画面・前の行と同じ画面なら None."""
     if scene.kind not in ANIM_KINDS:
@@ -136,3 +145,14 @@ def _to_frames(webm: Path, start: float, seconds: float, fps: int, out_dir: Path
     r = subprocess.run(cmd, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
     if r.returncode != 0:
         raise RuntimeError(f"ffmpeg 連番化 失敗: {r.stderr[-300:]}")
+
+
+def intro_timing(scenes: list[Scene], rs: ResultSet, fps: int) -> dict[int, tuple[float, bool]]:
+    """行の位置 → (登場の動きの秒, 答えを出す動きか)。録画済みの行だけ (行の長さ・声の遅れ用)."""
+    out: dict[int, tuple[float, bool]] = {}
+    for i, sc in enumerate(scenes):
+        q = anim_query(sc, scenes[i - 1] if i else None, rs)
+        frames = anim_frames(q)
+        if q and frames and not holds_first(sc):
+            out[i] = (len(frames) / fps, q.endswith("&reveal=1"))
+    return out

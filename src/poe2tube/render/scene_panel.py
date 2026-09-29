@@ -54,7 +54,8 @@ def draw_scene_panel(
         # ExileDesk の動画用の画面 (要望 ⑪ / ⑰)。撮れていなければ文字だけ
         tag = VIEW_TAGS[scene.kind]
         if stage_shot is not None and stage_shot.exists():
-            _stage_capture(img, inner, stage_shot, 0, tag=tag)
+            # ExileDesk の画面は自分の見出しを持つので札は重ねない (重なって二重になる、⑰ の確認)
+            _stage_capture(img, inner, stage_shot, 0, tag="")
         else:
             pill(img, (x0, y0), f"{tag} (撮影なし)", MUTED, size=28)
     elif scene.kind == "cost":
@@ -147,8 +148,9 @@ def _stage_capture(
         d.rounded_rectangle((px - 6, py - 6, qx + 6, qy + 6), 16, fill=INK)
         img.alpha_composite(im, (px, py))
         # アイテム枠の左の黒地に「N 手目」だけ (長い札はアイテム名に被る)
-        tag = tag or (f"{step} 手目" if step else "開始前")
-        pill(img, (px + 14, py + 14), tag, ACCENT, size=26)
+        if tag != "":  # "" = 札なし (ExileDesk の画面が自分の見出しを持つ時)
+            tag = tag or (f"{step} 手目" if step else "開始前")
+            pill(img, (px + 14, py + 14), tag, ACCENT, size=26)
         return
     scale = min((x1 - x0) / im.width, (y1 - y0 - 44) / im.height)
     im = im.resize((int(im.width * scale), int(im.height * scale)), Image.Resampling.LANCZOS)

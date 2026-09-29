@@ -33,6 +33,7 @@ SceneKind = Literal[
     "resists",
 ]
 POB_KINDS = ("dps", "ttk", "hit")  # 結果 JSON の pob (PoB の計算) が要る画面
+MAIN = "main"  # compare_with でメインの実演を指す (demo の省略 = メインと同じ)
 Element = Literal["fire", "cold", "lightning", "chaos"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
 
@@ -80,7 +81,7 @@ class Scene(BaseModel):
         default=None, description="stage: 光らせる MOD (id か系統)。スポットライト (ExileDesk ⑪)"
     )
     compare_with: str | None = Field(
-        default=None, description="compare: 右 (入れ替える物) の実演キー。左は demo の手"
+        default=None, description="compare / ttk: 右 (入れ替える物) の実演キー (main = メイン)"
     )
     b_step: int | None = Field(default=None, ge=0, description="compare / ttk: 右の手")
     countdown: int | None = Field(
@@ -239,7 +240,7 @@ class VideoScript(BaseModel):
                 continue
             res = demos[sc.demo] if sc.demo is not None else result
             n = len(res.steps)
-            if sc.compare_with is not None and sc.compare_with not in demos:
+            if sc.compare_with not in (None, MAIN, *demos):
                 problems.append(f"line {i}: 比べる相手 {sc.compare_with!r} が demos に無い")
             if sc.kind in POB_KINDS and res.pob is None:
                 problems.append(f"line {i}: {sc.kind} は PoB の計算 (手順の pob) が要る")

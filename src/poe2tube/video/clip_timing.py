@@ -139,10 +139,14 @@ def plan_hits(
 
 
 REVEAL_LEAD = 0.6  # 画面の変化 (付く・正解が緑になる) を見せてから声を出すまでの秒
+REVEAL_AT = 0.5  # ExileDesk の答えを出す動き (use-anim.ts の revealAt の既定) の割合
 
 
 def plan_cue_timing(
-    lines: list[tuple[str, Line]], wav_seconds: list[float], hits: dict[int, HitPlan]
+    lines: list[tuple[str, Line]],
+    wav_seconds: list[float],
+    hits: dict[int, HitPlan],
+    intros: dict[int, tuple[float, bool]] | None = None,
 ) -> tuple[dict[int, float], dict[int, float]]:
     """(行の最短の長さ, 声を遅らせる秒) を行の位置で。動画づくりと check_sync が同じ物を使う.
 
@@ -158,6 +162,11 @@ def plan_cue_timing(
             delay[i] = REVEAL_LEAD
         if i in hits:
             hold[i] = hits[i].min_seconds + delay.get(i, 0.0)
+        if intros and i in intros:  # ⑰ の画面の登場の動きは最後まで見せる
+            secs, reveal = intros[i]
+            if reveal:  # 隠した所から答えが出る動き: 答えが出てから (動きの半ば) 声を出す
+                delay[i] = max(delay.get(i, 0.0), min(secs * REVEAL_AT + REVEAL_LEAD, 3.0))
+            hold[i] = max(hold.get(i, 0.0), secs + 0.2)
         if ln.scene.countdown:  # クイズ: 読み上げの後に数える秒ぶん延ばす (ADR 005)
             hold[i] = max(hold.get(i, 0.0), wav_seconds[i] + 0.3 + ln.scene.countdown)
     return hold, delay

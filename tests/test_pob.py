@@ -152,3 +152,50 @@ def test_brief_resists(tmp_path: Path, resists: ResistsBlock) -> None:
     (out / "qs__resists_gear.json").write_text(resists.model_dump_json(), encoding="utf-8")
     block = resists_block(brief, tmp_path)
     assert len(block) == 1 and "アクト 3" in block[0] and '"gear"' in block[0]
+
+
+def test_hit_label_rune_and_disenchant(result: CraftStageResult) -> None:
+    from poe2tube.render.overlay_fx import hit_label
+    from poe2tube.video.animate import hit_sound
+
+    rune = result.steps[-1]
+    assert hit_label(rune)[0].startswith("+ ") and hit_sound(rune) == "hit_added"
+    junk = CraftStageResult.model_validate(
+        json.loads(
+            (EX.parents[1] / "data" / "results" / "act_offense_defense_8min__junk.json").read_text(
+                encoding="utf-8"
+            )
+        )
+    )
+    assert hit_label(junk.steps[0])[0] == "解呪!"
+
+
+def test_hidden_dps_on_hit_line() -> None:
+    from poe2tube.script.lint import hidden_dps_on_hit
+
+    def line(step: int, show: bool) -> dict[str, object]:
+        return {
+            "speaker": "metan",
+            "text": "見てみるわ。",
+            "scene": {"kind": "stage", "step": step, "show_dps": show},
+        }
+
+    script = VideoScript.model_validate(
+        {
+            "title": "t",
+            "target_seconds": 10,
+            "result_file": "x.json",
+            "sections": [
+                {"name": "s", "target_seconds": 10, "lines": [line(1, False), line(1, False)]}
+            ],
+        }
+    )
+    assert [p[:6] for p in hidden_dps_on_hit(script)] == ["line 1"]
+
+
+def test_ttk_question_holds_first_frame() -> None:
+    from poe2tube.capture.anim import holds_first
+
+    assert holds_first(Scene(kind="ttk", step=0, b_step=3, reveal=False))
+    assert not holds_first(Scene(kind="ttk", step=0, b_step=3))
+    assert not holds_first(Scene(kind="resists", resists="gear", act=0, reveal=False))

@@ -1,0 +1,102 @@
+{
+  "name": "act_offense_defense_8min",
+  "title_hint": "アクト中の火力と防御: 火力は武器 1 本で決まる、防御は耐性。オーブとルーンで自分で直す",
+  "player_stage": "act",
+  "goal": "アクト中の火力は武器、防御は耐性で決まると分かり、オーブとルーンで自分の装備を直せるようになる",
+  "target_seconds": 480,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "クォータースタッフ: 白 → 変成 → 増強 → 王者 → 熟練工 → 氷河のルーン",
+    "base": "Steelpoint Quarterstaff",
+    "item_level": 33,
+    "seed": 20261201,
+    "pob": {
+      "class": "Monk",
+      "level": 32,
+      "skill": "Ice Strike",
+      "config": { "resistancePenalty": -20, "enemyIsBoss": "None" }
+    },
+    "steps": [
+      { "currency": "transmute" },
+      { "currency": "augment" },
+      { "currency": "regal", "note": "完成 (王者まで)" },
+      { "currency": "artificer", "note": "さらに一押し: ソケットを足す" },
+      { "currency": "rune:Lesser Glacial Rune", "note": "武器には冷気ダメージ" }
+    ]
+  },
+  "final_step": 3,
+  "demos": {
+    "low_rare": {
+      "schema": "craft-stage-plan/1",
+      "title": "レベルの低いベースのレア (黄色だから強いとは限らない)",
+      "base": "Gothic Quarterstaff",
+      "item_level": 30,
+      "seed": 20261202,
+      "pob": {
+        "class": "Monk",
+        "level": 32,
+        "skill": "Ice Strike",
+        "config": { "resistancePenalty": -20, "enemyIsBoss": "None" }
+      },
+      "steps": [{ "currency": "alchemy" }]
+    },
+    "armour": {
+      "schema": "craft-stage-plan/1",
+      "title": "胴: 熟練工 → 同じ氷河のルーン (防具には冷気耐性)",
+      "base": "Chain Mail",
+      "item_level": 33,
+      "seed": 20261203,
+      "steps": [
+        { "currency": "transmute" },
+        { "currency": "artificer" },
+        { "currency": "rune:Lesser Glacial Rune" }
+      ]
+    },
+    "ring": {
+      "schema": "craft-stage-plan/1",
+      "title": "サファイアの指輪 (固有で冷気耐性)",
+      "base": "Sapphire Ring",
+      "item_level": 33,
+      "seed": 20261204,
+      "steps": [{ "currency": "transmute" }]
+    },
+    "junk": {
+      "schema": "craft-stage-plan/1",
+      "title": "いらない青を解呪 → 変成のシャード",
+      "base": "Chain Mail",
+      "item_level": 33,
+      "start_rarity": "magic",
+      "seed": 20261205,
+      "steps": [{ "currency": "disenchant" }]
+    }
+  },
+  "resists": {
+    "gear": {
+      "class": "Monk",
+      "level": 32,
+      "items": [{ "demo": "armour" }, { "demo": "ring" }]
+    }
+  },
+  "notes": [
+    "PoB の前提 (結果 JSON の pob.config_ja とキャラ) を、DPS の数字を初めて出す行で 1 回だけ言う。「同じキャラ・同じスキルで武器だけ替えた時」",
+    "導入: ずんだもんの困りごと「ボスで急に死ぬ・敵が硬い」から。完成した武器 (王者まで) の DPS を先に見せてよい (驚かない)",
+    "火力: 武器 1 本で決まる。白に 変成 → 増強 → 王者 と打つたびに DPS がどう変わるか。倒すまでの時間 (ttk) で白とレアを競争させる",
+    "レベルの低いレア (low_rare) とレベルの高い白 (メイン手 0) を比べる: 黄色だから強いとは限らない、ベースのレベルが大事",
+    "微妙な MOD が付いたら正直に言い、「次の白を探す」判断の例にする",
+    "ルーン: 熟練工でソケットを足して氷河のルーン。同じルーンが武器では冷気ダメージ、防具 (armour) では冷気耐性になる",
+    "防御: 耐性の上限 75%、アクトが進むとペナルティで削れる (resists の画面、act を変えて見せる)。耐性 50% と 75% で受けるダメージが 2 倍違う (hit の画面)",
+    "資源: いらない青は解呪で変成のシャード (junk)。10 個でオーブ。「解呪」「サルベージ」はゲーム内の言葉",
+    "値段の話はしない。剣は出さない (未実装)。PoE1 の仕様を言わない。耐性のペナルティの数字は PoB の設定 (結果 JSON) 以外で言い切らない",
+    "過去の動画 (クラフトの基礎・鞄のカレンシー) の内容は詳しく説明し直さない"
+  ],
+  "sources": [
+    { "title": "Maxroll: League Start Leveling Guide (Path of Exile 2)", "url": "https://maxroll.gg/poe2/getting-started/comprehensive-league-start-leveling-guide" },
+    { "title": "Maxroll: Defence Guide (Path of Exile 2)", "url": "https://maxroll.gg/poe2/getting-started/defence-guide" },
+    { "title": "poe2db: ルーン", "url": "https://poe2db.tw/jp/Runes" },
+    { "title": "poe2db: 耐性", "url": "https://poe2db.tw/jp/Resistances" },
+    { "title": "Game8 / Mobalytics: Count Geonor (アクト 1 のボス)", "url": "https://mobalytics.gg/poe-2/guides/count-geonor" },
+    { "title": "Gamer Guides: Disenchanting and Salvaging Guide", "url": "https://www.gamerguides.com/path-of-exile-2/guide/getting-started/gameplay/disenchanting-and-salvaging-guide" },
+    { "title": "Gamerch PoE2 攻略 Wiki: 装備のおすすめの選び方", "url": "https://gamerch.com/poe2/995755" },
+    { "title": "Path of Building Community (PoE2) — DPS・耐性の計算", "url": "https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2" }
+  ]
+}

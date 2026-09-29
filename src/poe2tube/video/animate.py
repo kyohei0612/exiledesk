@@ -14,7 +14,7 @@ import structlog
 from PIL import Image
 
 from poe2tube.audio.mix import SoundEvent
-from poe2tube.capture.anim import anim_frames, anim_query
+from poe2tube.capture.anim import anim_frames, anim_query, holds_first
 from poe2tube.capture.views import shot_for
 from poe2tube.contracts.craft_stage import CraftStageResult, StageStep
 from poe2tube.names import NameBook
@@ -137,6 +137,8 @@ def hit_sound(step: StageStep) -> str:
         or a.quality > b.quality
         or a.sockets > b.sockets
         or (a.gem_sockets or 0) > (b.gem_sockets or 0)
+        or len(a.augments) > len(b.augments)
+        or (a.disposed and not b.disposed)
     )
     return "hit_added" if improved else "hit_removed"
 
@@ -172,13 +174,15 @@ def iter_frames(
         pre_from = len(c.mouth_levels) - len(pre)
         zoom_on = c.line.scene.kind == "stage" and (is_hit or nxt_hp is not None)
         extra = shot_for(c.line.scene, rs)  # 段の表・比べる・スポットライト (ExileDesk ⑪)
+        # ⑰ の画面の登場の動き (録画済みなら、スライドの代わりに行の頭で流す)
+        intro = anim_frames(anim_query(c.line.scene, prev.scene if prev else None, rs))
+        if intro and holds_first(c.line.scene):  # 質問の行: 動きの前の絵で止める (答えを見せない)
+            extra, intro = intro[0], []
         panel = render_panel_layer(
             c.line, res, stage_shot=extra, final_step=fin, zoom=1.0 if zoom_on else 0.0
         )
         # 反応の行は付いた瞬間 (preroll 無しなら少し手前) から連番を貼る
         clip = list(hp.clip[hp.start :]) if hp else []
-        # ⑰ の画面の登場の動き (録画済みなら、スライドの代わりに行の頭で流す)
-        intro = anim_frames(anim_query(c.line.scene, prev.scene if prev else None, rs))
         animate = panel is not None and scene_changed(prev, c.line) and not clip and not intro
         static = _with_panel(base, panel, 0, 1.0)
         hit_step = res.steps[hp.step - 1] if hp else None
@@ -206,7 +210,7 @@ def iter_frames(
                 )
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif is_hit and clip:
-                layer = render_panel_layer(c.line, res, final_step=fin, zoom=2.0)
+                layer = render_panel_layer(c.line, res, stage_shot=extra, final_step=fin, zoom=2.0)
                 frame_static = _with_panel(base, layer, 0, 1.0)
             elif zoom_on and not prev_zoom and tl < ZOOM_SECONDS:
                 layer = render_panel_layer(c.line, res, final_step=fin, zoom=tl / ZOOM_SECONDS)

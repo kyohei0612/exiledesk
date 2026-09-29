@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from poe2tube.audio.voicevox import VoicevoxClient  # noqa: E402
+from poe2tube.capture.anim import intro_timing  # noqa: E402
 from poe2tube.config.settings import get_settings  # noqa: E402
 from poe2tube.names import NameBook  # noqa: E402
 from poe2tube.render.palette import font  # noqa: E402
@@ -57,7 +58,8 @@ def main(script_path: Path) -> None:
     lines = [(sec.name, ln) for sec in sc.sections for ln in sec.lines]
     hits = plan_hits(lines, rs.plan_of, s.fps)
     secs = [len(smp) / sr for smp, sr in (read_wav(w) for w in wavs)]
-    hold, delay = plan_cue_timing(lines, secs, hits)
+    intros = intro_timing([ln.scene for _, ln in lines], rs, s.fps)
+    hold, delay = plan_cue_timing(lines, secs, hits, intros)
     cues = build_cues(sc.sections, wavs, s.fps, min_seconds=hold, voice_delay=delay)
     onsets = voice_onsets(work / "voice.wav", [c.start + c.voice_delay for c in cues])
     frames = work / "frames"

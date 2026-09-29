@@ -48,7 +48,7 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         return q if scene.reveal else q + "&hl=0"
     hide_dps = "" if scene.show_dps else "&dps=0"
     if scene.kind == "compare" and scene.compare_with:
-        other = rs.demos[scene.compare_with]
+        other = rs.by_key(scene.compare_with)
         q = f"{CLIP}&view=compare&a={_plan_json(plan)}&b={_plan_json(other.plan)}"
         q += f"&a_step={scene.step or 0}"
         q += f"&b_step={scene.b_step}" if scene.b_step is not None else ""
@@ -68,7 +68,7 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         q = f"{CLIP}&view=ttk{_pob('a_pob', res)}&a_step={scene.step or 0}"
         q += f"&a_label={urllib.parse.quote(labels[0])}"
         # 右 = 別の実演 (compare_with) か、同じ実演の別の手 (b_step だけ。例: 白と黄)
-        b = rs.demos[scene.compare_with] if scene.compare_with else res
+        b = rs.by_key(scene.compare_with) if scene.compare_with else res
         if scene.compare_with or scene.b_step is not None:
             q += _pob("b_pob", b) + f"&b_step={scene.b_step if scene.b_step is not None else 9999}"
             q += f"&b_label={urllib.parse.quote(labels[1] if len(labels) > 1 else 'B')}"

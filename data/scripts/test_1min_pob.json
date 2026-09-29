@@ -1,0 +1,136 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "テスト: PoB の画面",
+  "target_seconds": 34,
+  "result_file": "data/results/act_offense_defense_8min.json",
+  "demos": {
+    "low_rare": "data/results/act_offense_defense_8min__low_rare.json",
+    "armour": "data/results/act_offense_defense_8min__armour.json",
+    "ring": "data/results/act_offense_defense_8min__ring.json",
+    "junk": "data/results/act_offense_defense_8min__junk.json"
+  },
+  "resists": {
+    "gear": "data/results/act_offense_defense_8min__resists_gear.json"
+  },
+  "sections": [
+    {
+      "name": "テスト",
+      "target_seconds": 34,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "この武器、強くなったのか分からないのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "DPS で見ると、ここまで上がったのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "何が効いたか、内訳を見てみるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "dps",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "白とレア、どっちが早く倒せるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "ttk",
+            "step": 0,
+            "b_step": 3,
+            "labels": [
+              "白",
+              "レア"
+            ],
+            "reveal": false
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "正解は、レアの方がずっと早いのよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "ttk",
+            "step": 0,
+            "b_step": 3,
+            "labels": [
+              "白",
+              "レア"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "耐性 50% と 75% だと、ここまで違うわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "hit",
+            "step": 3,
+            "elem": "cold",
+            "res": [
+              50,
+              75
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アクト 3 だと耐性はどうなるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "resists": "gear",
+            "act": -20,
+            "reveal": false
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ペナルティで、ここまで下がるのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "resists": "gear",
+            "act": -20
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "古いレアと、育てた白を比べてみるわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 1,
+            "demo": "low_rare",
+            "compare_with": "main",
+            "b_step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アイスストライクに氷河のレッサールーンよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        }
+      ]
+    }
+  ]
+}
