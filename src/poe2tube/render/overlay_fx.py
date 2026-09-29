@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 from poe2tube.contracts.craft_stage import StageStep
 from poe2tube.render.palette import INK, font
@@ -154,14 +154,12 @@ def draw_hit(img: Image.Image, step: StageStep, t: float) -> None:
     _paste_center(img, im, img.width // 2, HIT_Y, _pop(t - HIT_START), fade)
 
 
-MOSAIC_BLOCK = 28  # 章名カードの間の背景のモザイクの粗さ (px)
+BLUR_RADIUS = 14  # 章名カードの間の背景のぼかしの強さ (px)
 
 
-def mosaic(img: Image.Image, block: int = MOSAIC_BLOCK) -> Image.Image:
-    """画面全体をモザイクに (章名カードの文字だけを目立たせる、kyohei 2026-09-30)."""
-    size = (max(1, img.width // block), max(1, img.height // block))
-    small = img.resize(size, Image.Resampling.BILINEAR)
-    return small.resize(img.size, Image.Resampling.NEAREST)
+def blur_bg(img: Image.Image, radius: int = BLUR_RADIUS) -> Image.Image:
+    """画面全体をぼかす (章名カードの文字だけを目立たせる、kyohei 2026-09-30)."""
+    return img.filter(ImageFilter.GaussianBlur(radius))
 
 
 def draw_chapter(img: Image.Image, name: str, t: float) -> None:
