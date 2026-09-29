@@ -222,3 +222,31 @@ def test_pick_and_start_round_trip() -> None:
     assert res.pob is not None and res.pob.enemy is not None and res.pob.enemy.armour == 237
     with pytest.raises(ValueError):
         PlanStep(currency="exalt", pick={"mod": "X", "tier": "6"})  # 段は T から
+
+
+def test_info_screen_time() -> None:
+    """情報の画面は出したまま話す (比べる等は 8 秒以上、隠す / 出すは同じ画面として足す)."""
+    from poe2tube.script.lint import info_screen_time, lint_lines
+    from poe2tube.script.model import Line
+
+    cmp_ = {"kind": "compare", "step": 0, "compare_with": "other"}
+
+    def ln(text: str, sc: dict[str, object]) -> Line:
+        return Line.model_validate({"speaker": "metan", "text": text, "scene": sc})
+
+    short = [ln("比べるわ。", cmp_), ln("次ね。", {"kind": "talk"})]
+    assert any("compare の画面" in p for p in info_screen_time(short))
+    long_ = [
+        ln("上が同じで、下だけ違う 2 本を並べてみたわ。", {**cmp_, "show_dps": False}),
+        ln("左がずんだもんの武器、右がおすすめの武器ね。", cmp_),
+        ln("サフィックスだけで、DPS がこれだけ違うのよ。", cmp_),
+        ln("アタックスピードと近接スキルのレベルが効いてるわ。", cmp_),
+    ]
+    assert info_screen_time(long_) == []
+    assert not any("同じ画面" in p for p in lint_lines(long_))  # 情報の画面は連続の対象外
+
+
+def test_reading_kaiju() -> None:
+    from poe2tube.script.reading import normalize_speech
+
+    assert normalize_speech("青を解呪するわ") == "青をかいじゅするわ"

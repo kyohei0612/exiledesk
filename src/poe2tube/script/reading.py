@@ -10,7 +10,8 @@ import re
 
 # 英単語同士 (Sapphire Ring 等) の空白だけは残す
 _SPACE = re.compile(r"(?<![A-Za-z])[ 　]+|[ 　]+(?![A-Za-z])")
-_WORDS = (("MOD", "モッド"), ("Mod", "モッド"))
+# 読みを直す言葉 (テロップはそのまま)。解呪は「かいじゅ」(kyohei 2026-09-30)
+_WORDS = (("MOD", "モッド"), ("Mod", "モッド"), ("解呪", "かいじゅ"))
 _PLUS = re.compile(r"\+(?=\d)")
 
 

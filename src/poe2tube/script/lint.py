@@ -13,6 +13,16 @@ from poe2tube.script.model import CHARS_PER_MINUTE, Line, Section, VideoScript
 
 MAX_SENTENCE = 40
 MAX_SAME_SCENE_RUN = 3
+# 情報の画面 (ExileDesk の撮影) は出したまま話す。文字の多い画面は 8 秒、動きで見せる画面は 5 秒以上
+# (kyohei 2026-09-30「せっかく作った比較画像や DPS があまりにも早く消える」)。同じ画面の連続の対象外
+INFO_MIN_SECONDS = {
+    "compare": 8.0,
+    "dps": 8.0,
+    "resists": 8.0,
+    "tiers": 8.0,
+    "ttk": 5.0,
+    "hit": 5.0,
+}
 INTRO_MAX_RATIO = 0.2
 SECTION_TOLERANCE = 0.35  # 章ごとの尺のずれ許容 (全体は ±25%)
 POLITE = re.compile(r"(です|ます|ました|でしょう)[。！？]")
@@ -42,9 +52,10 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
         main = ln.scene.demo is None  # 追加の実演の手数は stage_coverage で見る
         if main and n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
             problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
+    problems += info_screen_time(lines, offset)
     run = 1
     for k, (prev, cur) in enumerate(zip(lines, lines[1:], strict=False), start=2):
-        same = prev.scene.key() == cur.scene.key()
+        same = prev.scene.key() == cur.scene.key() and cur.scene.kind not in INFO_MIN_SECONDS
         run = run + 1 if same else 1
         if run > MAX_SAME_SCENE_RUN:
             problems.append(
@@ -52,6 +63,32 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
                 f"{cur.scene.kind} step={cur.scene.step} → この行の画面を変える"
             )
             run = 1
+    return problems
+
+
+def _view_key(ln: Line) -> tuple[object, ...]:
+    """答えを隠す / 出すの違いは同じ画面として数える."""
+    return ln.scene.model_copy(update={"reveal": True, "show_dps": True}).key()
+
+
+def info_screen_time(lines: list[Line], offset: int = 0) -> list[str]:
+    """情報の画面を出している時間 (声の見込み) が短すぎないか。続く行は 1 つの画面として足す."""
+    problems: list[str] = []
+    k = 0
+    while k < len(lines):
+        ln = lines[k]
+        need = INFO_MIN_SECONDS.get(ln.scene.kind)
+        j = k + 1
+        while j < len(lines) and _view_key(lines[j]) == _view_key(ln):
+            j += 1
+        if need is not None:
+            secs = sum(len(x.spoken) for x in lines[k:j]) / CHARS_PER_MINUTE * 60
+            if secs < need:
+                problems.append(
+                    f"line {offset + k + 1}: {ln.scene.kind} の画面が約 {secs:.0f} 秒で消える "
+                    f"({need:.0f} 秒以上、画面を出したままつなぎで話す)"
+                )
+        k = j
     return problems
 
 

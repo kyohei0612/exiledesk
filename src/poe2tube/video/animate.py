@@ -26,6 +26,7 @@ from poe2tube.render.overlay_fx import (
     draw_chapter,
     draw_countdown,
     draw_hit,
+    mosaic,
 )
 from poe2tube.render.short_frame import compose_short
 from poe2tube.video.clip_timing import HitPlan, plan_hits
@@ -231,12 +232,16 @@ def iter_frames(
                 n += 1
                 continue
             scale = pop_scale(t) if props else 1.0
-            frame = compose_frame(frame_static, c.line, mouth, props, scale)
+            card = (
+                new_chapter and t < CHAPTER_SECONDS
+            )  # 章名カードの間: テロップなし・背景はモザイク
+            frame = compose_frame(frame_static, c.line, mouth, props, scale, telop=not card)
             if hit_step is not None:
                 draw_hit(frame, hit_step, tl - land)
             if num is not None:
                 draw_countdown(frame, num, COUNTDOWN_AT)
-            if new_chapter:
+            if card:
+                frame = mosaic(frame)
                 draw_chapter(frame, c.section, t)
             yield n, frame
             n += 1

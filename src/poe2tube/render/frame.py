@@ -95,13 +95,18 @@ def compose_frame(
     mouth: int = 0,
     props: list[str] | None = None,
     prop_scale: float = 1.0,
+    telop: bool = True,
 ) -> Image.Image:
-    """静的な層の上に、口パク立ち絵 + 小道具 + テロップを重ねて 1 フレームにする."""
+    """静的な層の上に、口パク立ち絵 + 小道具 + テロップを重ねて 1 フレームにする.
+
+    telop=False: テロップを描かない (章名カードの間。先の話が見えないように、kyohei 2026-09-30)。
+    """
     img = static.copy()
     panel_mode = line.scene.kind != "talk"
     _characters(img, line, panel_mode, mouth)
     _props(img, props or [], line.speaker, panel_mode, prop_scale)
-    _telop(img, line)
+    if telop:
+        _telop(img, line)
     return img
 
 

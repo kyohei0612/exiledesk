@@ -154,6 +154,16 @@ def draw_hit(img: Image.Image, step: StageStep, t: float) -> None:
     _paste_center(img, im, img.width // 2, HIT_Y, _pop(t - HIT_START), fade)
 
 
+MOSAIC_BLOCK = 28  # 章名カードの間の背景のモザイクの粗さ (px)
+
+
+def mosaic(img: Image.Image, block: int = MOSAIC_BLOCK) -> Image.Image:
+    """画面全体をモザイクに (章名カードの文字だけを目立たせる、kyohei 2026-09-30)."""
+    size = (max(1, img.width // block), max(1, img.height // block))
+    small = img.resize(size, Image.Resampling.BILINEAR)
+    return small.resize(img.size, Image.Resampling.NEAREST)
+
+
 def draw_chapter(img: Image.Image, name: str, t: float) -> None:
     """章の頭に章名を大きく (半透明の帯 + ポップ + フェードアウト)."""
     if t > CHAPTER_SECONDS:

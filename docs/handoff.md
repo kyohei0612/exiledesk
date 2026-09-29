@@ -20,6 +20,8 @@
 - **⑱・⑲ はリリース済・取り込み済 (2026-09-29 夜、固定版 v0.1.336、CAPTURE_VER=v18-pick)**: 指名 (`pick` / `remove` / `start`)、要求レベル、PoB の skill_part / quests_act / enemyArmour。サポートジェムが効くようになった。ワーリングスラッシュは槍専用 (クォータースタッフでは 0)。耐性 +10% はアクト 3 のクエスト報酬 (以前の「元の値」は誤り)
 - **次の回の台本 (2026-09-30)**: 1 章ずつ手で書いて確認中。確定済みは `output/work/act_offense_defense_8min/approved/section_00〜03.json` (導入 / プレフィックスは当たりが多い / 白からサフィックスを埋める / 熟練工とルーン)。クイズはまとめの前に 1 問だけ。次は 5 章目 = 防御 (耐性)、その後 資源 (解呪) → クイズ → まとめ。全部 OK になったら approved を並べて data/scripts/act_offense_defense_8min.json にする
 - **ExileDesk 要望 ⑳ (2026-09-30)**: 耐性の画面の計算に quests_act が渡っていない (全部入りで計算される)。直るまで 5 章目の耐性の数字は確定しない
+- **ExileDesk 要望 ㉑ (2026-09-30)**: 比べる画面の真ん中の列 (消えた MOD の符号が混ざる・差 0 の行が並ぶ)
+- **次の台本から (2026-09-30 kyohei)**: 情報の画面は 8 秒以上出したまま話す (lint.info_screen_time)、章名カードの間はモザイク + テロップなし、解呪は「かいじゅ」
 - **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
