@@ -148,3 +148,18 @@ def test_voice_delay_and_reveal_timing(tmp_path: Path) -> None:
     samples, sr = read_wav(concat_audio(cues, tmp_path / "m.wav"))
     head = samples[int(cues[1].start * sr) : int((cues[1].start + 0.45) * sr)]
     assert float(abs(head).max()) < 1e-3  # 遅らせた所は無音
+
+
+def test_chapter_card_delays_voice() -> None:
+    """章が変わった行は、章名カード (CHAPTER_SECONDS) の間は喋らない (kyohei 2026-09-30)."""
+    from poe2tube.render.overlay_fx import CHAPTER_SECONDS
+    from poe2tube.video.clip_timing import plan_cue_timing
+
+    talk = Scene(kind="talk")
+    lines = [
+        ("導入", Line(speaker="metan", text="あ", scene=talk)),
+        ("導入", Line(speaker="metan", text="い", scene=talk)),
+        ("防御", Line(speaker="metan", text="う", scene=talk)),
+    ]
+    hold, delay = plan_cue_timing(lines, [1.0, 1.0, 1.0], {})
+    assert delay == {2: CHAPTER_SECONDS} and CHAPTER_SECONDS >= 3.0 and hold == {}

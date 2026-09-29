@@ -20,7 +20,7 @@ from poe2tube.render.telop_style import load_presets, render_telop
 
 # 反応の行の頭 (= 付いた瞬間) からの秒。手つきは前の行で流し終わっている (video/clip_timing.py)
 HIT_START, HIT_END = 0.15, 3.0  # 付いてすぐ文字 → 声は REVEAL_LEAD 秒後 (ネタバレ防止)
-CHAPTER_SECONDS = 1.4
+CHAPTER_SECONDS = 3.0  # 章名カード。この間は声を出さない (kyohei 2026-09-30「早すぎて見えない」)
 HIT_Y = STAGE_HIT_Y  # 撮影画面の下 15% の空き (ExileDesk layout=clip が空けてくれる帯)
 EMPHASIS = re.compile(r"(T\d+|[+＋−-]\s?\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:つ|個|手目|手|枠))")
 STYLE_RARITY = "textstyle010"  # 黄

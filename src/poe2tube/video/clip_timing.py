@@ -18,6 +18,7 @@ from PIL import Image
 
 from poe2tube.capture.stage import clip_frames
 from poe2tube.contracts.craft_stage import CraftStagePlan
+from poe2tube.render.overlay_fx import CHAPTER_SECONDS
 from poe2tube.script.model import Line, Scene
 
 # アイテム枠 + 棚のあたり (1920x1080 の撮影画面を 1/4 にした座標)。下 15% の空きは見ない
@@ -169,4 +170,8 @@ def plan_cue_timing(
             hold[i] = max(hold.get(i, 0.0), secs + 0.2)
         if ln.scene.countdown:  # クイズ: 読み上げの後に数える秒ぶん延ばす (ADR 005)
             hold[i] = max(hold.get(i, 0.0), wav_seconds[i] + 0.3 + ln.scene.countdown)
+        if i and lines[i - 1][0] != lines[i][0]:  # 章が変わった行: 章名カードの間は喋らない
+            delay[i] = CHAPTER_SECONDS + delay.get(i, 0.0)
+            if i in hold:
+                hold[i] += CHAPTER_SECONDS
     return hold, delay

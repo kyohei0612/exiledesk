@@ -121,6 +121,9 @@ class ResistsSpec(BaseModel):
 
     class_: str = Field(default="Monk", alias="class")
     level: int = Field(default=20, ge=1, le=100)
+    quests_act: int | None = Field(
+        default=None, ge=0, le=10, description="何アクトまでのクエスト報酬 (無ければ全部、⑳)"
+    )
     items: list[ResistItem] = Field(min_length=1)
 
 
