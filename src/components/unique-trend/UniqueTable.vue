@@ -18,6 +18,7 @@ import { FAV_MAX, uniqueFavorites } from "../../state/unique-favorites";
 import { openTrade2ForUnique } from "../../services/trade2/open";
 import { marketStore } from "../../state/market-store";
 import type { SortKey, UniqueRow, UniqueTrend } from "../../views/unique-trend/useUniqueTrend";
+import { uniqueArt } from "../../services/assets/unique-art";
 
 const props = defineProps<{ rows: UniqueRow[]; trends: Map<number, UniqueTrend>; openId: number | null; favMode?: boolean }>();
 /** お気に入りの一覧は 名前 + ベース で 1 行 (poe.ninja の純正品とコラプト品の行をまとめる) */
@@ -104,7 +105,8 @@ function onFav(key: string): void {
             <td class="px-3 py-2.5 text-[var(--exile-color-text-secondary)] tabular-nums">{{ i + 1 }}</td>
             <td class="px-3 py-2.5">
               <div class="flex items-center gap-3 min-w-0">
-                <img v-if="r.icon" :src="r.icon" :alt="r.nameEn" class="w-9 h-9 object-contain shrink-0" loading="lazy" />
+                <!-- poe.ninja の絵が無い時は同梱のユニークの絵 (2026-09-29) -->
+                <img v-if="r.icon || uniqueArt(r.nameEn)" :src="r.icon || uniqueArt(r.nameEn)!" :alt="r.nameEn" class="w-9 h-9 object-contain shrink-0" loading="lazy" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 min-w-0 text-[var(--exile-color-text-primary)]">
                     <!-- 名前に下線。名前にカーソルでゲームと同じカード (オーナー 2026-09-26「列にホバーで表示されるから分かりづらい」) -->

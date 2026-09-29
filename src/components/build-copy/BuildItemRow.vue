@@ -15,6 +15,8 @@ import { toCss } from "../../utils/zoom";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import RichText from "../decor/RichText.vue";
 import RareMods from "./RareMods.vue";
+import { baseArt } from "../../services/craft-stage/base-art";
+import { uniqueArt } from "../../services/assets/unique-art";
 import type { ItemRow } from "../../views/build-copy/useBuildCopy";
 import type { AutoStage } from "../../services/build-copy/rare-auto";
 
@@ -50,6 +52,8 @@ const showEdit = computed(() => props.r.src === "rare" && (editing.value || prop
 const num = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 /** 「トレード2へ」の説明 */
 const tradeTitle = computed(() => (props.r.auto?.query ? `取れた所の検索で開く (${props.r.auto.note})` : "取引所 (即時購入) をこの条件で開く"));
+/** ゲーム内と同じ絵 (ユニーク = ユニークの絵、他 = ベースの絵。2026-09-29 クラフトステージの部品を流用) */
+const art = computed(() => (props.r.item.rarity === "UNIQUE" || props.r.item.rarity === "RELIC" ? uniqueArt(props.r.item.name) : null) ?? (props.r.item.base ? baseArt(props.r.item.base) : null));
 const extraLinks = computed(() => (props.r.src === "rare" && props.r.rare ? props.r.rare.links : []));
 </script>
 
@@ -58,6 +62,10 @@ const extraLinks = computed(() => (props.r.src === "rare" && props.r.rare ? prop
     <div class="flex items-start gap-3">
       <!-- 部位 -->
       <span class="mt-0.5 w-24 shrink-0 text-[11px] opacity-60">{{ r.item.slot }}</span>
+      <!-- ゲーム内の絵 -->
+      <span class="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-black/30">
+        <img v-if="art" :src="art" alt="" loading="lazy" class="max-h-11 max-w-11 object-contain" draggable="false" />
+      </span>
       <!-- 名前と印 -->
       <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">

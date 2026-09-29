@@ -15,6 +15,7 @@ import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import { baseStatsOf, isFlask, isGem } from "../../services/craft-stage/stage-bases";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { baseArt } from "../../services/craft-stage/base-art";
+import { uniqueArt } from "../../services/assets/unique-art";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
@@ -64,6 +65,8 @@ const baseRows = computed(() => {
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
 const implicits = computed(() => (htcBaseInfo()[props.item.base]?.implicits ?? []).map((i) => i.ja));
+/** 絵: ユニークになったらユニークの見た目、それ以外はベースの絵 */
+const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) : null) ?? baseArt(props.item.base));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => CATALYSTS.find((c) => c.tag === props.item.qualityTag)?.label.ja ?? "品質");
@@ -97,7 +100,7 @@ const rows = computed(() => [
     <!-- 見出し -->
     <div class="rounded-t-md bg-gradient-to-b to-transparent px-4 text-center" :class="[tone.head, compact ? 'pb-1 pt-2' : 'pb-2 pt-3']">
       <!-- ゲーム内と同じ絵 (2026-09-29 オーナー「クラフトステージ上とか」) -->
-      <img v-if="baseArt(item.base)" :src="baseArt(item.base)!" alt="" class="mx-auto mb-1 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" :class="compact ? 'h-14' : 'h-20'" draggable="false" />
+      <img v-if="art" :src="art" alt="" class="mx-auto mb-1 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" :class="compact ? 'h-14' : 'h-20'" draggable="false" />
       <p v-if="item.unique" class="text-lg font-bold" :class="tone.name">{{ item.unique.ja }}</p>
       <p :class="item.unique ? ['text-[15px]', tone.name] : ['text-lg font-bold', tone.name]">{{ item.baseJa }}</p>
       <p v-if="!compact" class="text-[11px] opacity-60">{{ item.base }}</p>

@@ -14,7 +14,7 @@ export default defineConfig(async () => ({
     apply: "build" as const,
     async closeBundle() {
       const { rm } = await import("node:fs/promises");
-      for (const p of ["base-art", "mtx-art"]) await rm(`dist/${p}`, { recursive: true, force: true });
+      for (const p of ["base-art", "mtx-art", "unique-art"]) await rm(`dist/${p}`, { recursive: true, force: true });
     },
   }],
 
