@@ -67,7 +67,8 @@ export function useRarePrices(o: {
     const common = { category: r.category, socketsMin: sockets.value, arMin: d.arMin, evMin: d.evMin };
     if (kind === "base") {
       const t = currentTier.value;
-      return buildSpecQuery({ ...common, rarity: "magic", ilvlMin: ilvl.value, esMin: d.esMin, stats: t ? [{ id: r.baseMod.tradeStat, min: t.min }] : [] });
+      // 素材に買うベースなので聖別化された物は除く (2026-09-30)
+      return buildSpecQuery({ ...common, rarity: "magic", ilvlMin: ilvl.value, esMin: d.esMin, stats: t ? [{ id: r.baseMod.tradeStat, min: t.min }] : [], noSanctified: true });
     }
     const conds = kind === "floor" ? floorConds.value : (buckets.value.find((b) => `b:${b.key}` === kind)?.conds ?? {});
     const spec = condsToSpec(conds);

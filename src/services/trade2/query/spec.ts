@@ -45,6 +45,11 @@ export interface SpecQueryOptions {
    */
   fracturedItem?: boolean;
   /**
+   * 聖別化された物を除く (misc_filters.sanctified = いいえ)。クラフトの素材に買うベースに使う:
+   * 聖別化された物はもう手を加えられないのに安く並んでいて、最安値がそれになっていた (オーナー 2026-09-30「聖別も × だね、ここじゃないと最安値取れん」)
+   */
+  noSanctified?: boolean;
+  /**
    * 「どれか 1 つ」の条件 (取引所の count グループ、1 つ以上)。グループごとに AND。
    * 完成品を探す時に、同じ MOD を固定済み (`fractured.`) でも普通 (`explicit.`) でも拾う用 (2026-09-24)
    */
@@ -102,6 +107,7 @@ export function buildSpecQuery(o: SpecQueryOptions) {
           filters: {
             corrupted: { option: "false" },
             ...(o.fracturedItem != null ? { fractured_item: { option: String(o.fracturedItem) } } : {}),
+            ...(o.noSanctified ? { sanctified: { option: "false" } } : {}),
           },
         },
       },

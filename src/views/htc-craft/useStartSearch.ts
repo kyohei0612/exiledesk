@@ -119,6 +119,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
       ilvlMin: c.item.value?.itemLevel ?? zeroStart.value.itemLevel,
       stats: [...tree, ...filters.map((f) => ({ id: f.id.replace(/^explicit\./, "fractured."), min: f.min }))],
       ...(modIds.length ? {} : { fracturedItem: false }),
+      // 素材に買うので聖別化された物は除く (手を加えられない、オーナー 2026-09-30)
+      noSanctified: true,
       grantedSkill: grantedSkillFor(c.item.value),
       // 武器・防具は規格外 (ルーンソケット 2 つ) のベースで作る (オーナー 2026-09-26)
       ...(c.socketsMin?.value != null ? { socketsMin: c.socketsMin.value } : {}),

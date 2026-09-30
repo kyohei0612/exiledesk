@@ -178,6 +178,8 @@ export function treeBuyQuery(
     // 固定無しを探す時は「フラクチャー: いいえ」も入れる。stat を explicit にしただけだと、
     // 別の MOD が固定された物 (= もう樹 MOD を固定できない物) が返ってくる
     ...(fractured ? {} : { fracturedItem: false }),
+    // 素材に買うので聖別化された物は除く (手を加えられない)
+    noSanctified: true,
     grantedSkill: opts.grantedSkill ?? null,
     ...(opts.socketsMin != null ? { socketsMin: opts.socketsMin } : {}),
   });
