@@ -50,7 +50,9 @@ const STAMP: Record<string, string> = { evade: "避けた！", block: "ブロッ
         <div class="relative h-9 overflow-hidden rounded-lg bg-white/5">
           <!-- 前の長さ (薄く) と後の長さ (濃く)。進みで前 → 後に縮む -->
           <div class="absolute inset-y-0 left-0 rounded-lg opacity-25" :style="{ width: width(l.before), background: color }" />
+          <!-- 効かない段 (ES 無し・ブロック 0% など) は色の棒を出さない (要望 ㉒ の確認 1) -->
           <div
+            v-if="!l.skipped"
             class="absolute inset-y-0 left-0 rounded-lg"
             :style="{ width: width(l.before + (l.after - l.before) * p(i)), background: l.key === 'es' ? '#5aa9e6' : l.key === 'life' ? '#d94c4c' : color }"
           />

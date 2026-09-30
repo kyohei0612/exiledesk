@@ -64,6 +64,6 @@ const count = (row: string[], k: string) => row.filter((x) => x === k).length;
         >{{ LOOK[a].ja }}</div>
       </div>
     </div>
-    <p class="text-[15px] text-white/45">並びは確率の通りの回数を並べた例 (実際は毎回の確率)</p>
+    <p class="text-[15px] text-white/45">並びは確率の通りの回数を並べた例</p>
   </div>
 </template>

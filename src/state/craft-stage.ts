@@ -108,7 +108,7 @@ function defenceView(view: string, q: URLSearchParams): StageExtra {
   if (view === "es") {
     const hits = list("hits");
     const kind = q.get("kind");
-    return { kind: "es", life, es, dmg: num("dmg") ?? 200, hits: hits.length ? hits : [0, 0.8, 1.6], esKind: kind === "chaos" || kind === "bleed" ? kind : "phys", until: num("until") ?? 12 };
+    return { kind: "es", life, es, dmg: num("dmg") ?? 200, hits: hits.length ? hits : [0.8, 1.6, 2.4], esKind: kind === "chaos" || kind === "bleed" ? kind : "phys", until: num("until") ?? 12 };
   }
   const kinds: DamageKind[] = ["physical", "fire", "cold", "lightning", "chaos"];
   const dmgKind = (kinds.includes(q.get("kind") as DamageKind) ? q.get("kind") : "physical") as DamageKind;

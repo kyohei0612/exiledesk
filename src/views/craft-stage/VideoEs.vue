@@ -1,7 +1,7 @@
 <!--
   VideoEs.vue — 動画用の「ES とライフ」(2026-09-30、POE2Tube 要望 ㉒-B4)
 
-  URL: ?video=1&layout=clip&view=es&life=1000&es=600&dmg=250[&hits=0,0.8,1.6][&kind=phys|chaos|bleed][&until=12]
+  URL: ?video=1&layout=clip&view=es&life=1000&es=600&dmg=250[&hits=0.8,1.6,2.4 (既定。満タンを少し見せてから)][&kind=phys|chaos|bleed][&until=12]
   時間の横軸でダメージを受けて ES → ライフの順に減り、最後に ES が減ってから 4 秒後に最大の 12.5% / 秒で戻る (ゲームの説明文)。
     - kind=chaos: 混沌は ES を 2 倍削る。kind=bleed: 出血・毒は ES を素通りしてライフへ (ES は減らないので戻りも始まらない)
     - ライフは戻さない (自然回復は入れない)
