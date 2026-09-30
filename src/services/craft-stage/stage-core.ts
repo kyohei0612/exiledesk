@@ -236,7 +236,7 @@ export function addForced(data: PatchData, item: StageItem, floor: number, rng: 
   let sm = makeStageMod(c.mod, c.side, t.index, rng);
   if (force.values) {
     const bad = force.values.findIndex((v, i) => { const r = sm.ranges[i]; return !r || v < Math.min(r[0]!, r[1]!) || v > Math.max(r[0]!, r[1]!); });
-    if (bad >= 0) return { error: `${force.mod} の数値 ${force.values[bad]} が段の範囲 (${sm.ranges[bad]?.join("〜") ?? "無し"}) の外` };
+    if (bad >= 0) return { error: `${force.mod} の数値 ${force.values[bad]} がティアの範囲 (${sm.ranges[bad]?.join("〜") ?? "無し"}) の外` };
     sm = withValues(sm, c.mod, rng, force.values);
   }
   const chance = total > 0 ? (force.tier ? t.w : c.w) / total : 0;

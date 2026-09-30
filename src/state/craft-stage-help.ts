@@ -20,10 +20,10 @@ import type { StageItem } from "../services/craft-stage/types";
 
 const FLOOR = (kind: "transmute" | "regal", s: string): string => {
   const f = kind === "transmute" ? { greater: 55, perfect: 70 } : { greater: 35, perfect: 50 };
-  return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上の段だけ` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上の段だけ` : "";
+  return s === "greater" ? `上級: 付く MOD は MOD レベル ${f.greater} 以上のティアだけ` : s === "perfect" ? `完全: 付く MOD は MOD レベル ${f.perfect} 以上のティアだけ` : "";
 };
 const strengthOf = (key: string): string => (key.endsWith("_greater") ? "greater" : key.endsWith("_perfect") ? "perfect" : "base");
-const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下の段の重みで引く (計算機と同じ)";
+const ADD = "付く MOD は、その側の普通の MOD の置き場から、付いている系統を除き、アイテムレベル以下のティアの重みで引く (計算機と同じ)";
 
 /** お告げの動き */
 const OMEN: Record<string, string[]> = {
@@ -49,7 +49,7 @@ const OMEN: Record<string, string[]> = {
   OmenoftheSovereign: ["次の骨の開示の候補を **ウラマンの MOD だけ** にする (MOD ごとに等しく)", "武器とアクセサリーだけ (防具には使えない)"],
   OmenoftheLiege: ["次の骨の開示の候補を **アマナムの MOD だけ** にする", "武器とアクセサリーだけ"],
   OmenoftheBlackblooded: ["次の骨の開示の候補を **クルガルの MOD だけ** にする", "武器とアクセサリーだけ"],
-  OmenofPutrefaction: ["次の骨は **破砕以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未開示の MOD にして **コラプト** する", "開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でも段の下限は掛からない"],
+  OmenofPutrefaction: ["次の骨は **破砕以外の MOD を全部外し**、枠いっぱい (普通 6 つ) を未開示の MOD にして **コラプト** する", "開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)", "古びた骨でもティアの下限は掛からない"],
   OmenofAbyssalEchoes: ["次の開示で、候補 3 つを **1 回だけ引き直せる**", "引き直さなくても、その開示で使い切る"],
   OmenofCorruption: ["次のヴァールオーブの「変化なし」を外す (残り 3 つから等しく)", "アクセサリーの 4 つ目 (ソケットの代わりの変化なし) は外れない", "0.5.0 で入手できなくなった"],
   OmenofSanctification: ["次の神のオーブをレアに使うと **聖別** する: MOD ごとに 0.78〜1.22 倍 (0.01 刻み) を掛けて丸める", "聖別したアイテムは、以後手を加えられない"],
@@ -107,13 +107,13 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
         "**レア** の MOD を 1 つ消して、1 つ足す",
         "消すのは破砕 (固定) 以外から等しく 1 つ",
         ADD,
-        s === "greater" ? "上級: 足す MOD は MOD レベル 35 以上の段だけ" : s === "perfect" ? "完全: 足す MOD は MOD レベル 50 以上の段だけ" : "",
+        s === "greater" ? "上級: 足す MOD は MOD レベル 35 以上のティアだけ" : s === "perfect" ? "完全: 足す MOD は MOD レベル 50 以上のティアだけ" : "",
         "お告げ: 削減 (一番低い MOD を消す) / 左右の抹消 (消す側)",
       ].filter(Boolean);
     case "annul":
       return ["**マジックかレア** の MOD を 1 つ消す (破砕以外から等しく)", "お告げ: 左右の消去 (消す側) / 光 (冒涜の MOD だけ)"];
     case "divine":
-      return ["破砕以外の MOD の **数値だけ** を、その段の範囲の中で振り直す (段は変わらない)", "お告げ: 聖別 (0.78〜1.22 倍にして聖別。以後手を加えられない)"];
+      return ["破砕以外の MOD の **数値だけ** を、そのティアの範囲の中で振り直す (ティアは変わらない)", "お告げ: 聖別 (0.78〜1.22 倍にして聖別。以後手を加えられない)"];
     case "fracture":
       return ["**レア** で MOD が **4 つ以上**、まだ破砕が無い時", "MOD を 1 つ **固定 (破砕)** する。どれになるかは等しく (未開示の冒涜 MOD は選ばれない)", "破砕した MOD は、カオス・消去・エッセンスでも消えない"];
     case "artificer": {
@@ -140,7 +140,7 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
         "**レア** に **未開示の冒涜 MOD** を 1 つ付ける (冒涜の MOD はアイテムに 1 つまで)",
         "付く側は、その側で出うる MOD の重みの合計で決まる。両側が埋まっていれば、その側の MOD を 1 つ差し替える",
         "開示で **候補 3 つから 1 つ選ぶ**。候補は普通の MOD + 冒涜の MOD から、系統の被りを除いて重みで重複なしに 3 つ",
-        key === "desecrate_ancient" ? "古びた骨: 候補は MOD レベル 40 以上の段だけ" : "",
+        key === "desecrate_ancient" ? "古びた骨: 候補は MOD レベル 40 以上のティアだけ" : "",
         key === "desecrate_gnawed" ? `噛み切られた骨: **アイテムレベル ${GNAWED_MAX_ILVL} 以下** にだけ使える (クライアントの表)。候補は保存された骨と同じ` : "",
         key === "desecrate_altered" ? "変質した鎖骨: 候補に **異界の MOD** も入る (アクセサリーだけ)" : "",
         bone ? `このベースで使う骨: ${bone}` : "",

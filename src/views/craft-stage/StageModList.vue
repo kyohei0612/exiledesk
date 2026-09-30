@@ -62,7 +62,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
     <!-- 見出し (押すと畳む) -->
     <button type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left" @click="open = !open">
       <b class="text-sm text-amber-100">このベースに付く MOD</b>
-      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · 段の表の「付ける」で始めの状態を組める</template></span>
+      <span class="opacity-50">{{ s.item.value?.baseJa }} · アイテムレベルは見ない · 出やすさは同じ側の重みの割合<template v-if="canStart"> · ティアの表の「付ける」で始めの状態を組める</template></span>
       <span class="ml-auto opacity-60">{{ open ? "▲ 畳む" : "▼ 開く" }}</span>
     </button>
 
@@ -104,7 +104,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 </span>
                 <span class="shrink-0 text-right tabular-nums">
                   <span class="block text-[13px] font-bold text-amber-100">{{ pct(r.share) }}</span>
-                  <span class="block text-[10px] opacity-60">{{ r.tiers.length }} 段 · Lv {{ r.topLevel }}</span>
+                  <span class="block text-[10px] opacity-60">{{ r.tiers.length }} ティア · Lv {{ r.topLevel }}</span>
                 </span>
               </span>
             </button>

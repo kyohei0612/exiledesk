@@ -74,7 +74,7 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
       <!-- 段の表 -->
       <div class="w-full overflow-hidden rounded-2xl border border-white/15 bg-black/55">
         <div class="grid h-[44px] grid-cols-[90px_1fr_240px_300px] items-center gap-4 border-b border-white/15 px-6 text-[19px] text-white/60">
-          <span>段</span><span>数値</span><span>必要アイテムレベル</span><span>出やすさ</span>
+          <span>ティア</span><span>数値</span><span>必要アイテムレベル</span><span>出やすさ</span>
         </div>
         <div
           v-for="t in view.tiers"
@@ -92,7 +92,7 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
           </span>
         </div>
       </div>
-      <p v-if="ilvl && hl" class="mt-2 w-full text-right text-[16px] text-white/60">金の段 = アイテムレベル {{ ilvl }} で出る一番上の段。薄い段はまだ出ない。出やすさは、この MOD が付いた時にどの段になるか</p>
+      <p v-if="ilvl && hl" class="mt-2 w-full text-right text-[16px] text-white/60">金のティア = アイテムレベル {{ ilvl }} で出る一番上のティア。薄いティアはまだ出ない。出やすさは、この MOD が付いた時にどのティアになるか</p>
     </template>
   </div>
 </template>

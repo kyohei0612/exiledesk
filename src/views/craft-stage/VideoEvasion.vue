@@ -15,6 +15,8 @@ import { seg, useAnim } from "./use-anim";
 
 const props = defineProps<{ ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }>();
 const hl = new URLSearchParams(location.search).get("hl") !== "0";
+/** 計算式を数字入りで出す (要望 ㉓、&formula=0 で式の行ごと消す) */
+const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
 const evPct = computed(() => evadeChance(props.ev, props.acc));
 const dfPct = computed(() => deflectChance(props.deflect, props.acc));
 const rows = computed(() => [
@@ -41,12 +43,14 @@ const count = (row: string[], k: string) => row.filter((x) => x === k).length;
       <div class="rounded-2xl border border-emerald-300/30 bg-black/55 px-6 py-3">
         <p class="text-[20px] text-white/70">回避力 <b class="text-white">{{ ev }}</b></p>
         <p class="text-[40px] font-bold text-emerald-300">回避率 <span v-if="hl">{{ evPct }}%</span><span v-else>?</span></p>
-        <p class="text-[16px] text-white/50">当たる率 = 1 − 0.95 × 回避力 ÷ (回避力 + 4 × 命中力)</p>
+        <p v-if="showFormula" class="text-[16px] text-white/50">当たる率 = 1 − 0.95 × 回避力 ÷ (回避力 + 4 × 命中力)</p>
+        <p v-if="showFormula" class="text-[16px] tabular-nums text-white/70">= 1 − 0.95 × {{ ev }} ÷ ({{ ev }} + 4 × {{ acc }})<template v-if="hl"> = {{ 100 - evPct }}% → 回避率 <b class="text-emerald-300">{{ evPct }}%</b></template></p>
       </div>
       <div class="rounded-2xl border border-amber-300/30 bg-black/55 px-6 py-3">
         <p class="text-[20px] text-white/70">受け流し力 <b class="text-white">{{ deflect }}</b></p>
         <p class="text-[40px] font-bold text-amber-200">受け流す率 <span v-if="hl">{{ dfPct }}%</span><span v-else>?</span></p>
         <p class="text-[16px] text-white/50">受け流すとダメージの {{ DEF.constants.deflectPct }}% を防ぐ (当たった攻撃のうち)</p>
+        <p v-if="showFormula && deflect > 0" class="text-[16px] tabular-nums text-white/70">受け流さない率 = {{ acc }} ÷ ({{ acc }} + {{ deflect }} × 0.12) × 150 − 50<template v-if="hl"> = {{ 100 - dfPct }}%</template></p>
       </div>
     </div>
     <div v-for="r in rows" :key="r.label" class="mb-4">

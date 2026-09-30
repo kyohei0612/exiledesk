@@ -15,6 +15,8 @@ import { useAnim } from "./use-anim";
 
 const props = defineProps<{ life: number; es: number; dmg: number; hits: number[]; kind: "phys" | "chaos" | "bleed"; until: number }>();
 const hl = new URLSearchParams(location.search).get("hl") !== "0";
+/** 計算式を数字入りで出す (要望 ㉓、&formula=0 で消す) */
+const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
 const KIND = { phys: { ja: "普通の一撃", color: "#e8e0d0" }, chaos: { ja: "混沌の一撃 (ES を 2 倍削る)", color: "#c77dff" }, bleed: { ja: "出血・毒 (ES を素通り)", color: "#ff5a5a" } } as const;
 const pts = computed(() => esTimeline(props.life, props.es, props.dmg, props.hits, props.kind, props.until));
 const W = 1080;
@@ -54,7 +56,12 @@ const rechargeAt = computed(() => {
       <span class="text-sky-300">ES {{ Math.round(cur.es) }} / {{ es }}</span>
       <span class="text-red-400">ライフ {{ Math.round(cur.life) }} / {{ life }}</span>
     </div>
-    <svg :viewBox="`-20 -10 ${W + 40} ${H + 60}`" class="h-[470px] w-full">
+    <div v-if="showFormula" class="mb-1 space-y-0.5 text-[18px] tabular-nums text-white/70">
+      <p v-if="kind === 'chaos'">混沌の一撃: ES の減り = 一撃 × {{ DEF.constants.chaosEsMult }} = {{ dmg }} × {{ DEF.constants.chaosEsMult }} = <b class="text-sky-300">{{ dmg * DEF.constants.chaosEsMult }}</b></p>
+      <p v-else-if="kind === 'bleed'">出血・毒: ES を素通りして ライフ −{{ dmg }} (ES は減らない)</p>
+      <p v-if="kind !== 'bleed'">戻る量 = 最大 ES × {{ DEF.constants.esRatePct }}% = {{ es }} × {{ DEF.constants.esRatePct }}% = <b class="text-sky-300">毎秒 {{ Math.round((es * DEF.constants.esRatePct) / 100) }}</b>（最後に減ってから {{ DEF.constants.esDelay }} 秒後から）</p>
+    </div>
+    <svg :viewBox="`-20 -10 ${W + 40} ${H + 60}`" :class="showFormula ? 'h-[410px]' : 'h-[470px]'" class="w-full">
       <polygon :points="area('life')" fill="#b83232" opacity="0.85" />
       <polygon :points="area('es')" fill="#3d8bd4" opacity="0.85" />
       <line x1="0" :x2="W" :y1="H" :y2="H" stroke="rgba(255,255,255,0.4)" />

@@ -43,7 +43,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   // 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段
   const tierIndex = level === "perfect" ? 0 : mod.tiers.findIndex((x) => essenceLevelOf(String(x.name ?? "")) === level);
   const tier = mod.tiers[tierIndex];
-  if (!tier) return skip(item, "このエッセンスの段が無い");
+  if (!tier) return skip(item, "このエッセンスのティアが無い");
   if (tier.ilvl > item.itemLevel) return skip(item, `アイテムレベルが足りない (${tier.ilvl} 以上)`);
   if (allMods(item).some((m) => m.crafted)) return skip(item, "エッセンスの MOD はアイテムに 1 つまで");
   const clash = (it: StageItem) => essenceClash(mod, takenRawFamilies(data, it));

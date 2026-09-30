@@ -15,6 +15,9 @@ import { easeOut, useAnim } from "./use-anim";
 
 const props = defineProps<{ ar: number[]; labels: string[]; max: number | null; hit: number | null }>();
 const hl = new URLSearchParams(location.search).get("hl") !== "0";
+/** 計算式を数字入りで出す (要望 ㉓、&formula=0 で消す) */
+const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
+const R = DEF.constants.armourRatio;
 const COLORS = ["#f2c14e", "#6fc3ff", "#ff7a45", "#9be08a"];
 const W = 1060;
 const H = 440;
@@ -31,7 +34,7 @@ const lines = computed(() =>
       if (k / 200 > reach.value) break;
       pts.push(`${x(h).toFixed(1)},${y(armourReduction(a, h)).toFixed(1)}`);
     }
-    return { a, label: props.labels[i] ?? `アーマー ${a}`, color: COLORS[i % COLORS.length]!, d: pts.join(" "), half: a / DEF.constants.armourRatio };
+    return { a, label: props.labels[i] ?? "アーマー", color: COLORS[i % COLORS.length]!, d: pts.join(" "), half: a / DEF.constants.armourRatio };
   }),
 );
 const ticks = computed(() => [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxHit.value * f)));
@@ -45,7 +48,17 @@ const ticks = computed(() => [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(maxHi
         <span v-for="l in lines" :key="l.a" class="flex items-center gap-2"><i class="inline-block h-1.5 w-7 rounded" :style="{ background: l.color }" />{{ l.label }} <b class="tabular-nums">{{ l.a }}</b></span>
       </div>
     </div>
-    <svg :viewBox="`-70 -10 ${W + 110} ${H + 70}`" class="h-[520px] w-full">
+    <!-- 計算式 (回避の画面の式の行と同じ見た目) -->
+    <div v-if="showFormula" class="mb-1 space-y-0.5 text-[18px] text-white/70">
+      <p>軽減 = アーマー ÷ (アーマー + 一撃 × {{ R }})<span class="text-white/45">・上限 {{ DEF.constants.armourCap }}%</span></p>
+      <template v-if="hit != null">
+        <p v-for="l in lines" :key="'f' + l.a" class="tabular-nums">
+          <span :style="{ color: l.color }">{{ l.a }} ÷ ({{ l.a }} + {{ hit }} × {{ R }})</span>
+          <template v-if="hl"> = <b :style="{ color: l.color }">{{ armourReduction(l.a, hit).toFixed(0) }}%</b></template>
+        </p>
+      </template>
+    </div>
+    <svg :viewBox="`-70 -10 ${W + 110} ${H + 70}`" :class="showFormula ? (hit != null ? 'h-[430px]' : 'h-[490px]') : 'h-[520px]'" class="w-full">
       <!-- 目盛り -->
       <g class="text-white/40" fill="currentColor" font-size="18">
         <template v-for="v in [0, 25, 50, 75, 90]" :key="v">
