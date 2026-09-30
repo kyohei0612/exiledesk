@@ -6,6 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
+import { isLegacyRune, LEGACY_SOURCE } from "../services/market/legacy-rune";
 import priceKeys from "../services/htc/price-keys.json";
 import essenceKeys from "../services/htc/essence-keys.json";
 import essences from "../vendor/poe2htc/data/essences.json";
@@ -112,7 +113,10 @@ const row = (key: string, item: StageItem | null) => marketStore.items.value.fin
 /** 1 個の値段 (高貴建て、相場。無ければ 0。開示は 0) */
 export function priceOfKey(key: string, item: StageItem | null): number {
   const it = row(key, item);
-  return it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
+  const p = it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
+  // 遺産のルーンは相場に値段が無い → アルダーの遺産の値段 (legacy-rune.ts)
+  if (p <= 0 && isRune(key) && isLegacyRune(key.slice(RUNE_PREFIX.length))) return marketStore.items.value.find((x) => x.Text === LEGACY_SOURCE)?.CurrentPrice ?? 0;
+  return p;
 }
 /** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
 export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(key.slice(RUNE_PREFIX.length)) : null) ?? row(key, item)?.IconUrl ?? "";

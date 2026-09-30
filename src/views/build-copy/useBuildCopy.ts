@@ -9,6 +9,7 @@
  * 合計は値段の分かった物だけ足し、取引所の相場を取り終えてから出す。
  *   段と割合 → [[useRareTiers.ts]]、手入れの値段 → [[manual-prices.ts]]
  */
+import { isLegacyRune } from "../../services/market/legacy-rune";
 import { recordHistory } from "../../services/history";
 import { computed, ref, shallowRef } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -170,7 +171,8 @@ export function useBuildCopy() {
     const m = new Map<string, number>();
     for (const n of names) m.set(n, (m.get(n) ?? 0) + 1);
     return [...m.entries()]
-      .map(([nameEn, count]) => ({ nameEn, nameJa: jaCurrency(nameEn), count, unit: currencyPrice(nameEn) }))
+      // 遺産のルーンはアルダーの遺産の値段 (相場に無い)。名前の横にそう書く
+      .map(([nameEn, count]) => ({ nameEn, nameJa: isLegacyRune(nameEn) ? `${jaCurrency(nameEn)} (アルダーの遺産の値段)` : jaCurrency(nameEn), count, unit: currencyPrice(nameEn) }))
       .sort((a, b) => (b.unit ?? 0) * b.count - (a.unit ?? 0) * a.count);
   }
   const runes = computed(() => bulk((build.value?.items ?? []).flatMap((x) => x.runes)));

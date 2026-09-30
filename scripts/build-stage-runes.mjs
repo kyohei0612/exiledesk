@@ -108,7 +108,8 @@ cores.forEach((c, i) => {
     /** コラプト・聖別の後でもはめられる (クライアントの CanSocketInCorruptedSanctified) */
     corruptOk: !!c.CanSocketInCorruptedSanctified,
     /** 今のゲームに有るか (相場に値段がある)。--market が無ければ null (分からない) */
-    available: market ? price != null && price > 0 : null,
+    // 遺産のルーン (Legacy of ○○) は相場に値段が無いが、アルダーの遺産があれば作れる (2026-09-30 オーナー)
+    available: market ? (price != null && price > 0) || (/^Legacy of /.test(name) && (market.get("Aldur's Legacy") ?? 0) > 0) : null,
     dds: ddsByName.get(name) ?? null,
     effects,
   };

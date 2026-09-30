@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-29",
+ "generated": "2026-09-30",
  "source": "GGG クライアント SoulCores / SoulCoreStats (stat_descriptions.csd で描画)、有る無しは相場 (poe2scout) の値段",
  "runes": {
   "Lesser Desert Rune": {
@@ -8735,7 +8735,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8761,7 +8761,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8787,7 +8787,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8817,7 +8817,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8843,7 +8843,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8873,7 +8873,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8903,7 +8903,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8933,7 +8933,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8959,7 +8959,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -8985,7 +8985,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9015,7 +9015,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9045,7 +9045,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9075,7 +9075,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9101,7 +9101,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9131,7 +9131,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9161,7 +9161,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9187,7 +9187,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9213,7 +9213,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9267,7 +9267,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9293,7 +9293,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9319,7 +9319,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9345,7 +9345,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9375,7 +9375,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9401,7 +9401,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9427,7 +9427,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9453,7 +9453,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9479,7 +9479,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9505,7 +9505,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9531,7 +9531,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9557,7 +9557,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9583,7 +9583,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9609,7 +9609,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9635,7 +9635,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9661,7 +9661,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9687,7 +9687,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9713,7 +9713,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9739,7 +9739,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9765,7 +9765,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9791,7 +9791,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9817,7 +9817,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9847,7 +9847,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9877,7 +9877,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9907,7 +9907,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9933,7 +9933,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9959,7 +9959,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -9985,7 +9985,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10011,7 +10011,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10037,7 +10037,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10071,7 +10071,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10097,7 +10097,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10123,7 +10123,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10149,7 +10149,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10183,7 +10183,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10213,7 +10213,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10243,7 +10243,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10269,7 +10269,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10295,7 +10295,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10325,7 +10325,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10351,7 +10351,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10377,7 +10377,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10403,7 +10403,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10429,7 +10429,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {
@@ -10455,7 +10455,7 @@
    "limit": 3,
    "bound": false,
    "corruptOk": true,
-   "available": false,
+   "available": true,
    "dds": "Art/2DItems/Currency/Expedition2/GameWarpRuneUniqueFragment.dds",
    "effects": [
     {

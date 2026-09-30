@@ -8,6 +8,7 @@
  *   (オーナー 2026-09-27「1 ユニークだけど複数あるやつは MOD で検索してあげて最安値取ろうか。コラプト等の指定はなしで一番緩く」)
  * 取引所へはどれも即時購入 (status: securable) で開く。
  */
+import { isLegacyRune, LEGACY_SOURCE } from "../market/legacy-rune";
 import { fetchNinjaOverview, NINJA_UNIQUE_KINDS } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
 import { SecurityStatus } from "../../constants/trade2";
@@ -117,7 +118,9 @@ export function statFilter(id: string, value?: { min?: number; max?: number }): 
 /** 英語名 → 高貴建て (ルーン・ソウルコア・リネージュサポートなど) */
 export function currencyPrice(nameEn: string): number | null {
   const it = marketStore.items.value.find((x) => x.Text === nameEn);
-  return it && typeof it.CurrentPrice === "number" && it.CurrentPrice > 0 ? it.CurrentPrice : null;
+  if (it && typeof it.CurrentPrice === "number" && it.CurrentPrice > 0) return it.CurrentPrice;
+  // 遺産のルーンは相場に値段が無い → 作る元のアルダーの遺産の値段 (legacy-rune.ts)
+  return isLegacyRune(nameEn) ? currencyPrice(LEGACY_SOURCE) : null;
 }
 /** その名前がリネージュサポートか (相場の分類で見る) */
 export function isLineage(nameEn: string): boolean {
