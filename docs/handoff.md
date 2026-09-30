@@ -22,6 +22,7 @@
 - **ExileDesk 要望 ⑳ (2026-09-30)**: 耐性の画面の計算に quests_act が渡っていない (全部入りで計算される)。直るまで 5 章目の耐性の数字は確定しない
 - **ExileDesk 要望 ㉑ はリリース済・取り込み済 (v0.1.338、CAPTURE_VER=v20-compare)**: 比べる画面の差の列が 増えた (+) → 変わった (53→104%) → 消えた (−) の順、差 0 の行は出ない
 - **次の台本から (2026-09-30 kyohei)**: 情報の画面は 8 秒以上出したまま話す (lint.info_screen_time)、章名カードの間はモザイク + テロップなし、解呪は「かいじゅ」
+- **ExileDesk 要望 ㉒ (2026-09-30、次の回「防御の違い」用)**: A = PoB の防御の点検 (感電 15/20・凍結 2/4 秒・出血毒と ES・回避のエントロピーと式・アーマー係数・耐性ペナルティの区切り・受け流し・ルーンワード・回避ロール、原因が PoB か渡し方か)、B = 防御の仕組みの画面 (layers / armour / evasion / es / bases / hit の拡張)。数字はゲームのデータ優先
 - **POE2Tube 側で作る素材 (ExileDesk に頼まない物)**: ① DPS の推移の棒 (白 → 変成 → 増強 → 王者 → ルーン、結果 JSON の pob.dps から) ② 耐性 50% と 75% で受けるダメージの長さ比べ (2 倍) ③ 前提の札 (「モンク Lv20・普通の敵・アクト 3 のペナルティで計算」、結果 JSON に書き戻された設定から)
 - 新しいリリースを使う時の手順: `python scripts/update_exiledesk.py` → 1430 の Vite を止める → `CAPTURE_VER` を上げる → `build_video.py data/scripts/test_1min_ui.json --keep-frames` → `check_sync.py` で確認
 
