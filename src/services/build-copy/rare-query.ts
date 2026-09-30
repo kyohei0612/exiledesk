@@ -138,7 +138,12 @@ function nearestTier(mod: Mod, text: string, level: number): number | null {
 }
 
 /** 品質の最大値 (+20% to Maximum Quality) の行ではない */
-const notQuality = (t: TextStat) => !t.ids.some((id) => id.endsWith(".stat_2039822488"));
+/**
+ * 条件に入れない行: 品質の最大値 (MOD ではない) と、ベースの枠の数 (不在のアミュレットの「-1 Prefix Modifier allowed」等)。
+ * 枠の数はベースそのものの性質で、ベース名で既に絞っている。入れると取引所で「使用不能なスタッツ」が混ざり 0 件になっていた (オーナー 2026-09-30「これ要らんね、このせいで検索ヒットしない」)
+ */
+const SLOT_LIMIT_STATS = [".stat_3182714256", ".stat_718638445"];
+const notQuality = (t: TextStat) => !t.ids.some((id) => id.endsWith(".stat_2039822488") || SLOT_LIMIT_STATS.some((x) => id.endsWith(x)));
 const equipOf = (it: BuildItem): Equip => ({ armour: it.armour, evasion: it.evasion, energyShield: it.energyShield, sockets: it.sockets, quality: it.quality, grantedSkill: grantedSkillOf(it) });
 /** 付与スキルの行 (「Grants Skill: Level 20 Cast on Critical」) から名前。候補から 1 つ付くベースの時だけ */
 function grantedSkillOf(it: BuildItem): string | null {
