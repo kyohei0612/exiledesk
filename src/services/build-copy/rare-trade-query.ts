@@ -5,6 +5,7 @@
 import { Rarity, SecurityStatus } from "../../constants/trade2";
 import { statFilter } from "./prices";
 import { grantedSkillStatId } from "../trade2/query/spec";
+import { existingKinds } from "../trade2/stat-kinds";
 import type { Equip, RareLine, RareLink } from "./rare-query";
 
 export type Filter = { id: string; value?: { min?: number; max?: number; option?: number } };
@@ -48,7 +49,8 @@ function statGroups(filters: Filter[]): unknown[] {
   const bare = (id: string) => id.replace(/^explicit\./, "");
   return [
     ...(plain.length ? [{ type: "and", filters: plain }] : []),
-    ...any.map((f) => ({ type: "count", value: { min: 1 }, filters: ["explicit", "desecrated", "fractured"].map((k) => ({ ...f, id: `${k}.${bare(f.id)}` })) })),
+    // 取引所に無い種類 (冒涜の無い MOD など) は送らない (「使用不能なスタッツ」になる、2026-09-30)
+    ...any.map((f) => ({ type: "count", value: { min: 1 }, filters: existingKinds(bare(f.id), ["explicit", "desecrated", "fractured"] as const).map((k) => ({ ...f, id: `${k}.${bare(f.id)}` })) })),
   ];
 }
 /** 段を下げた時の防御値の下限 (1 段ごとに 1 割) */

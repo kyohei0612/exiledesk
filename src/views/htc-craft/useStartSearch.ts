@@ -19,6 +19,7 @@
 import { tradeLock } from "../../state/trade-lock";
 import { computed, nextTick, ref, shallowRef, watch } from "vue";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
+import { hasStatKind } from "../../services/trade2/stat-kinds";
 import { buildSpecQuery } from "../../services/trade2/query";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
@@ -113,6 +114,8 @@ export function useStartSearch(c: ReturnType<typeof useHtcCraft>, afterAll: () =
     const tree = buys.flatMap((b) => b.filters.map((f) => ({ id: f.id.replace(/^fractured\./, `${b.plain}.`), min: f.min ?? 0 })));
     const { filters, unmatched } = tradeFiltersFor(d, c.targets.value.filter((t) => modIds.includes(t.modId)));
     if (unmatched.length) return null;
+    // 固定済みの狙いに取引所のフラクチャーの番号が無い = その MOD の固定品は取引所に無い。送ると「使用不能」で条件が効かず別の物が引ける (2026-09-30)
+    if (filters.some((f) => !hasStatKind(f.id.replace(/^explicit\./, ""), "fractured"))) return null;
     return buildSpecQuery({
       ...(c.item.value?.baseType ? { baseType: c.item.value.baseType } : {}),
       rarity: "nonunique",

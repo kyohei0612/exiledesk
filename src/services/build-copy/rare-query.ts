@@ -188,7 +188,9 @@ export function analyzeRare(it: BuildItem): RareAnalysis {
         // 計算機の型に無い行 (「13% reduced Slowing Potency of Debuffs on You」など) は p.unmatched に落ちる。黙って抜けないよう文面から
         // (貼り付けの見出し「Rarity: Rare」・固有名も p.unmatched に入るので、MOD の行だけ)
         const own = new Set(it.mods);
-        const extra = textStats([...refetch, ...got.skipped, ...p.unmatched.filter((l) => own.has(l))]);
+        // 固有 (implicit) の行は入れない: 計算機の解析に通すため固有も渡しているので、作れない行 (skipped) に固有が混ざる
+        // (不在のアミュレットの「-1 Prefix Modifier allowed」が普通の MOD として探され 0 件になっていた、2026-09-30)。固有はベース名で決まる
+        const extra = textStats([...refetch, ...got.skipped.filter((l) => own.has(l)), ...p.unmatched.filter((l) => own.has(l))]);
         return { base: it.base, via: "tier", mods, lines: extra.lines.filter(notQuality).map((x) => ({ ...toLine(x, sanctified), weight: weightByText.get(x.text) })), missing: extra.missing, sanctified, ilvl: it.itemLevel || 100, equip: equipOf(it) };
       }
     } catch {

@@ -13,6 +13,7 @@
 import { tradeLock } from "../../state/trade-lock";
 import { computed, ref, shallowRef, watch } from "vue";
 import { tradeCategoryOf, tradeFiltersFor } from "../../services/htc/buy-or-craft";
+import { hasStatKind, type StatKind } from "../../services/trade2/stat-kinds";
 import { buildSpecQuery } from "../../services/trade2/query";
 import { tradeAuto } from "../../services/trade2/auto-price";
 import { autoPriceCached } from "../../services/trade2/query-cache";
@@ -74,7 +75,10 @@ export function useFinishedCompare(
       // min: 2 択も無し (樹 MOD も固定済みでない種類だけ)。樹 MOD が 3 つあると light でも複雑過ぎと断られた (2026-09-24 金の指輪)
       const kinds = level === "min" ? null : treeKeys.has(key) ? [plainOf.get(key) ?? "explicit", "fractured"] : level === "full" ? ["explicit", "fractured", "desecrated"] : null;
       if (!kinds && treeKeys.has(key)) { plain.push({ id: `${plainOf.get(key) ?? "explicit"}.${key}`, ...(f.min != null ? { min: f.min } : {}) }); continue; }
-      if (kinds) anyOf.push({ filters: kinds.map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) })) });
+      // 取引所に無い種類 (冒涜の無い MOD など) は送らない (2026-09-30)
+      const real = kinds ? kinds.filter((k) => hasStatKind(key, k as StatKind)) : null;
+      if (real && real.length > 1) anyOf.push({ filters: real.map((k) => ({ id: `${k}.${key}`, ...(f.min != null ? { min: f.min } : {}) })) });
+      else if (real) plain.push({ id: `${real[0] ?? "explicit"}.${key}`, ...(f.min != null ? { min: f.min } : {}) });
       else plain.push(f.min != null ? f : { id: f.id });
     }
     // 狙い以外の付いている MOD (冒涜のみ・作れない)。値は問わず、付いていること (冒涜の物は冒涜で)

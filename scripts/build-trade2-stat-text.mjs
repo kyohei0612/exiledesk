@@ -26,3 +26,16 @@ for (const g of groups) {
 }
 writeFileSync(join(root, "src/i18n/trade2-stat-text.json"), JSON.stringify(out) + "\n");
 console.log(`型 ${Object.keys(out).length} 件`);
+
+// 種類の有無 (2026-09-30 オーナー「他にも同じように検索出ないとかありそう」): 普通の MOD の番号ごとに、取引所に
+// 普通 (e) / フラクチャー (f) / 冒涜 (d) のどれがあるか。「どれか 1 つ」の枠に無い種類を送らないため (無い番号は取引所で「使用不能なスタッツ」)
+// 出力: src/i18n/trade2-stat-kinds.json  { "stat_123": "efd" }
+const have = new Set(groups.flatMap((g) => (g.entries ?? []).map((e) => e.id)));
+const kinds = {};
+for (const id of have) {
+  if (!id.startsWith("explicit.")) continue;
+  const bare = id.slice("explicit.".length);
+  kinds[bare] = "e" + (have.has(`fractured.${bare}`) ? "f" : "") + (have.has(`desecrated.${bare}`) ? "d" : "");
+}
+writeFileSync(join(root, "src/i18n/trade2-stat-kinds.json"), JSON.stringify(kinds) + "\n");
+console.log(`種類 ${Object.keys(kinds).length} 件`);

@@ -23,6 +23,7 @@
  * ## ここは投げません
  * 組み立てるだけです ([[api-probing-policy]])。
  */
+import { hasStatKind } from "../trade2/stat-kinds";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import { htcDropOnly } from "./patch";
 import { buildSpecQuery } from "../trade2/query";
@@ -167,6 +168,8 @@ export function treeBuyQuery(
     if (nS) filters.push({ id: STRICT_SUFFIX, max: nS });
   }
   if (filters.length === 0) return null;
+  // 固定品を探す時、取引所にフラクチャーの番号が無い MOD がある = その固定品は取引所に無い。送ると「使用不能」で条件が効かない (2026-09-30)
+  if (fractured && filters.some((f) => f.id.startsWith("fractured.") && !hasStatKind(f.id.slice("fractured.".length), "fractured"))) return null;
   const category = tradeCategoryOf(cls);
   if (!opts.baseType && !category) return null;
   return buildSpecQuery({

@@ -14,3 +14,19 @@ describe("聖別化", () => {
     expect("sanctified" in q.query.filters.misc_filters.filters).toBe(false);
   });
 });
+
+import { existingKinds, hasStatKind } from "../src/services/trade2/stat-kinds";
+import { query } from "../src/services/build-copy/rare-trade-query";
+
+describe("取引所に無い種類を送らない (2026-09-30)", () => {
+  it("種類の表", () => {
+    expect(hasStatKind("stat_3981240776", "desecrated")).toBe(true); // スピリット: 普通 / フラクチャー / 冒涜
+    expect(hasStatKind("stat_3182714256", "desecrated")).toBe(false); // 枠の数: 冒涜は無い
+    expect(existingKinds("stat_3182714256", ["explicit", "desecrated", "fractured"] as const)).toEqual(["explicit", "fractured"]);
+    expect(existingKinds("stat_unknown", ["explicit", "desecrated"] as const)).toEqual(["explicit"]);
+  });
+  it("ビルドコピーの「どれか 1 つ」の枠は有る種類だけ", () => {
+    const q = query("Absent Amulet", [{ id: "explicit.stat_3182714256" }], { armour: 0, evasion: 0, energyShield: 0, sockets: 0, quality: 0, grantedSkill: null }, null) as { query: { stats: Array<{ filters: Array<{ id: string }> }> } };
+    expect(q.query.stats[0]!.filters.map((f) => f.id)).toEqual(["explicit.stat_3182714256", "fractured.stat_3182714256"]);
+  });
+});
