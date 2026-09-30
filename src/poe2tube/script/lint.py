@@ -12,20 +12,22 @@ import re
 from poe2tube.script.model import CHARS_PER_MINUTE, Line, Section, VideoScript
 
 MAX_SENTENCE = 40
-# 情報の画面 (ExileDesk の撮影) は出したまま話す。文字の多い画面は 8 秒、動きで見せる画面は 5 秒以上
-# (kyohei 2026-09-30「せっかく作った比較画像や DPS があまりにも早く消える」)
+# 情報の画面は出したまま、止めて解説する。最低の表示時間は画面の情報量で 3 つ
+# (kyohei 2026-09-30「画像みて完全に理解するまでの時間」): 軽い 6 秒 / 表 10 秒 / 仕組みの図 12 秒
+LIGHT, TABLE, DIAGRAM = 6.0, 10.0, 12.0
 INFO_MIN_SECONDS = {
-    "compare": 8.0,
-    "dps": 8.0,
-    "resists": 8.0,
-    "tiers": 8.0,
-    "ttk": 5.0,
-    "hit": 5.0,
-    "layers": 8.0,
-    "armour": 8.0,
-    "evasion": 8.0,
-    "es": 8.0,
-    "bases": 8.0,
+    "quiz": LIGHT,
+    "ttk": LIGHT,
+    "hit": LIGHT,
+    "compare": TABLE,
+    "dps": TABLE,
+    "resists": TABLE,
+    "tiers": TABLE,
+    "layers": DIAGRAM,
+    "armour": DIAGRAM,
+    "evasion": DIAGRAM,
+    "es": DIAGRAM,
+    "bases": DIAGRAM,
 }
 INTRO_MAX_RATIO = 0.2
 SECTION_TOLERANCE = 0.35  # 章ごとの尺のずれ許容 (全体は ±25%)
@@ -74,9 +76,18 @@ def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -
     return problems
 
 
+# 同じ画像のまま答えだけ出す引数 (防御の画面の数字を隠す hl)。続く間は下げずに 1 枚として数える
+_REVEAL_PARAMS = ("hl",)
+
+
 def _view_key(ln: Line) -> tuple[object, ...]:
-    """答えを隠す / 出すの違いは同じ画面として数える."""
-    return ln.scene.model_copy(update={"reveal": True, "show_dps": True}).key()
+    """同じ画像を続けて使う間は 1 つの画面 (答えを隠す / 出す・クイズの秒読みと正解の違いは同じ)."""
+    sc = ln.scene
+    params = {k: v for k, v in (sc.def_params or {}).items() if k not in _REVEAL_PARAMS}
+    update: dict[str, object] = {"reveal": True, "show_dps": True, "def_params": params or None}
+    if sc.kind == "quiz":
+        update |= {"answer": None, "countdown": None}
+    return sc.model_copy(update=update).key()
 
 
 def info_screen_time(lines: list[Line], offset: int = 0) -> list[str]:

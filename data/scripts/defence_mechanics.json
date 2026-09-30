@@ -1,0 +1,2355 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】防御が多すぎて意味不明！アーマー・回避・受け流し・ES・ブロックを全部解説",
+  "target_seconds": 590,
+  "result_file": "data/results/defence_mechanics.json",
+  "layout": "wide",
+  "practice": false,
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "防具を見てたら、アーマー、回避力、ES……わけが分からなくなったのだ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          },
+          "speech": "防具を見てたら、アーマー、回避力、イーエス……わけが分からなくなったのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴だけでも、こんなに種類があるものね。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "しかも受け流しとかブロックとか、まだあるのだ！",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "実は全部、「防ぐ物」が違うのよ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "違うのだ？ 全部ダメージを減らすんじゃないのだ？",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "物理だけに効く物、当たる前に避ける物、当たった後に減らす物……いろいろよ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それに、ボスの赤く光る技には効かない物もあるの。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、効かないのもあるのだ！？",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "だから今日は、防御を 1 つずつ解説するわ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          },
+          "speech": "だから今日は、防御を1つずつ解説するわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "仕組みが分かれば、アクトでもエンドでもずっと使えるわよ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "装備を選ぶ時に、迷わなくなるのだ？",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "ええ。何を重ねればいいか、自分で決められるようになるわ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは、敵の一撃がどう減っていくか、全体から見ていきましょう。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ダメージが減る順番",
+      "target_seconds": 65,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "敵の一撃は、こんな順番で減っていくの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上から、回避、受け流し、ブロック、耐性、アーマー、ES、最後にライフ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "上から、回避、受け流し、ブロック、耐性、アーマー、イーエス、最後にライフ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "7 つもあるのだ！？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "7つもあるのだ！？"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず回避。避けられたら、そこでダメージは 0 よ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "まず回避。避けられたら、そこでダメージはゼロよ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "避けたら、下の防御はいらないのだ！",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "避けられなかったら、次は受け流し。当たったダメージを 4 割減らすわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "避けられなかったら、次は受け流し。当たったダメージを4割減らすわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブロックできたら、そこで 0。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "ブロックできたら、そこでゼロ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "耐性は前の動画で話した通り、元素と混沌のダメージを減らすわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "物理には耐性がないのだ？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。物理を減らすのはアーマーの役目よ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "残ったダメージは、先に ES が受けて、なくなったらライフが減るの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "残ったダメージは、先にイーエスが受けて、なくなったらライフが減るの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ES は、ライフの前に立つ盾みたいなものなのだ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "イーエスは、ライフの前に立つ盾みたいなものなのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それから、ボスの赤く光る技。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避とブロックは飛ばされて、受け流しから先だけが効くの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "避ける系が効かないのだ！？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "だから、1 つの防御だけに頼ると危ないのよ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          },
+          "speech": "だから、1つの防御だけに頼ると危ないのよ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここから 1 つずつ見ていくわ。まずはアーマーね。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          },
+          "speech": "ここから1つずつ見ていくわ。まずはアーマーね。"
+        }
+      ]
+    },
+    {
+      "name": "アーマー",
+      "target_seconds": 85,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーは、物理ダメージの一撃を軽くする防御よ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "減らせる割合は、この式で決まるの。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "軽減 = アーマー ÷ (アーマー + 一撃 × 10)。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          },
+          "speech": "軽減は、アーマー割る、アーマー足す一撃かける10。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "式が出てきたのだ……。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "式は 1 つだけ。中身はかんたんだから安心して。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          },
+          "speech": "式は1つだけ。中身はかんたんだから安心して。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "大丈夫、数字を入れてみましょう。アーマー 1000、一撃 100 の時ね。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "100"
+            }
+          },
+          "speech": "大丈夫、数字を入れてみましょう。アーマーせん、一撃ひゃくの時ね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "一撃 × 10 で 1000。アーマー 1000 を足して、下は 2000。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "100"
+            }
+          },
+          "speech": "一撃かける10でせん。アーマーせんを足して、下はにせん。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1000 ÷ 2000 で、ちょうど 50%。100 の一撃が 50 になるの。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "100"
+            }
+          },
+          "speech": "せん割るにせんで、ちょうど50パーセント。ひゃくの一撃が50になるの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "半分になったのだ！",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "100"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "じゃあ、一撃が 1000 だったら？",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "1000"
+            }
+          },
+          "speech": "じゃあ、一撃がせんだったら？"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "一撃 × 10 で 10000……下は 11000 なのだ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "1000"
+            }
+          },
+          "speech": "一撃かける10でいちまん……下はいちまんせんなのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1000 ÷ 11000 で、約 9%。ほとんど減らないのよ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "1000"
+            }
+          },
+          "speech": "せん割るいちまんせんで、約9パーセント。ほとんど減らないのよ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "一撃が大きいと、全然効かないのだ！",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200",
+              "hit": "1000"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "グラフにするとこう。一撃が大きくなるほど、下がっていくわ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "小さい攻撃をたくさん受ける時に強くて、ボスの大きい一撃には弱いの。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上限は 90%。どれだけ積んでも、それ以上は減らないわ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          },
+          "speech": "上限は90パーセント。どれだけ積んでも、それ以上は減らないわ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "火や雷には効かないのだ？",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普段は物理だけ。元素にも効かせる MOD もあるけど、それは特別ね。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          },
+          "speech": "普段は物理だけ。元素にも効かせるモッドもあるけど、それは特別ね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、出血みたいな継続ダメージにも効かないの。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーを増やすと、グラフ全体が上にずれるわ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000,3000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "大きい一撃でも、減らせるようになるのだ！",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000,3000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力の防具に多く付く防御よ。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000,3000",
+              "max": "1200"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まとめると、アーマーは「物理のヒットを、一撃の大きさしだいで減らす」防御ね。",
+          "scene": {
+            "kind": "armour",
+            "def_params": {
+              "ar": "1000,3000",
+              "max": "1200"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "回避力",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "続いて回避力。当たる前に、ヒットを丸ごと避ける防御よ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "避けられるかは、敵の命中力との比べっこで決まるの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "当たる率 = 1 − 0.95 × 回避力 ÷ (回避力 + 4 × 命中力)。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "当たる率は、1引く、0.95かける回避力、割る、回避力足す4かける命中力。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "また式なのだ……。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避力 400、敵の命中力 267 で入れてみましょう。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "回避力よんひゃく、敵の命中力にひゃくろくじゅうななで入れてみましょう。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "4 × 267 で 1068。400 を足して、下は 1468。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "4かけるにひゃくろくじゅうななで、せんろくじゅうはち。よんひゃくを足して、下はせんよんひゃくろくじゅうはち。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "400 ÷ 1468 に 0.95 を掛けて、約 26%。これが避けられる割合よ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "よんひゃく割るせんよんひゃくろくじゅうはちに0.95を掛けて、約26パーセント。これが避けられる割合よ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "4 回に 1 回くらい、避けるのだ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "4回に1回くらい、避けるのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。下の 10 回の例だと、避けたのが 3 回ね。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "そう。下の10回の例だと、避けたのが3回ね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避力が敵の命中力の 12 倍なら、約 71% 避けるわ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "回避力が敵の命中力の12倍なら、約71パーセント避けるわ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "かなり避けるのだ！",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "でも上限は 95%。どれだけ積んでも、5% は必ず当たるの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "でも上限は95パーセント。どれだけ積んでも、5パーセントは必ず当たるの。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それに敵が強くなると命中力も上がるから、同じ回避力でも避けにくくなるわ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "敵に合わせて、回避力も増やさないとなのだ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "スペルや範囲攻撃も避けられるけど、ボスの赤く光る技だけは避けられないの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "避けたヒットはダメージが 0。当たった時の効果も起きないわ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          },
+          "speech": "避けたヒットはダメージがゼロ。当たった時の効果も起きないわ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "器用さの防具に付くのだ？",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "そうよ。まとめると、回避力は「当たるかどうか」を決める防御ね。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "3200",
+              "deflect": "0",
+              "lvl": "32"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "受け流し",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "続いて受け流し。回避とセットで出てくる防御よ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "避けるのとは違うのだ？",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "違うわ。受け流しは当たったうえで、ダメージの 40% を防ぐの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "違うわ。受け流しは当たったうえで、ダメージの40パーセントを防ぐの。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "100 のヒットを受け流したら、受けるのは 60 ね。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "ひゃくのヒットを受け流したら、受けるのはろくじゅうね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "受け流せるかも、敵の命中力と比べて決まるわ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "受け流さない率 = 命中力÷(命中力+0.12×受け流し力)×150−50。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "受け流さない率は、命中力、割る、命中力足す0.12かける受け流し力、かける150、引く50。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "回避の式より、ややこしいのだ……。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "受け流し力 600、敵の命中力 267 で入れてみましょう。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "受け流し力ろっぴゃく、敵の命中力にひゃくろくじゅうななで入れてみましょう。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "0.12 × 600 で 72。267 ÷ 339 に 150 を掛けて 50 を引くと、約 68%。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "0.12かけるろっぴゃくで72。にひゃくろくじゅうなな割るさんびゃくさんじゅうきゅうに150を掛けて50を引くと、約68パーセント。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "受け流さないのが 68% だから、受け流す率は約 32% よ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "受け流さないのが68パーセントだから、受け流す率は約32パーセントよ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "3 回に 1 回くらい、40% 減るのだ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "0",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "3回に1回くらい、40パーセント減るのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避と両方あると、避けられなかったヒットを受け流しで減らせるの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上限はどちらも 95%。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "上限はどちらも95パーセント。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "下の列を見て。赤い技の攻撃よ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ボスの赤く光る技は回避できないけど、受け流しは効くの。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "回避の弱いところを埋めてくれるのだ！",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "器用さの防具に「回避力の何% ぶんの受け流し力」みたいな MOD が付くわ。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "器用さの防具に、回避力の何パーセントぶんの受け流し力、みたいなモッドが付くわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "まとめると、回避は丸ごと避ける、受け流しは当たっても 40% 減らす防御ね。",
+          "scene": {
+            "kind": "evasion",
+            "def_params": {
+              "ev": "400",
+              "deflect": "600",
+              "lvl": "32"
+            }
+          },
+          "speech": "まとめると、回避は丸ごと避ける、受け流しは当たっても40パーセント減らす防御ね。"
+        }
+      ]
+    },
+    {
+      "name": "ブロック",
+      "target_seconds": 55,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はブロック。これは確率で、ヒットを丸ごと止める防御よ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "回避と同じなのだ？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "止めるのは同じ。でもブロックは敵の命中力と関係なく、書いてある率そのままなの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブロック率 30% なら、10 回に 3 回くらい止める。式はいらないわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          },
+          "speech": "ブロック率30パーセントなら、10回に3回くらい止める。式はいらないわ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "やっと式が無いのだ！",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブロックしたヒットはダメージが 0。見て、ここで全部止まってる。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          },
+          "speech": "ブロックしたヒットはダメージがゼロ。見て、ここで全部止まってる。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただし、スタンは受けるから気をつけて。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上限は 50%。2 回に 1 回までね。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          },
+          "speech": "上限は50パーセント。2回に1回までね。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "盾を持つと付くのだ？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。盾に付いているブロック率が基本よ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "block"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そして弱点。ボスの赤く光る技は、ブロックできないの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブロックが飛ばされて、そのまま下の防御に進んでいるわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "回避と同じ弱点なのだ……。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "だから赤い技には、受け流しやアーマーみたいな、減らす防御が大事なの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 0,
+              "deflect": 0,
+              "block": 30,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ES とライフ",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後はエナジーシールド、ES よ。ライフの前に立つ、もう 1 本のゲージね。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "最後はエナジーシールド、イーエスよ。ライフの前に立つ、もう1本のゲージね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ダメージは、まず ES から減って、ES が 0 になってからライフが減るの。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "ダメージは、まずイーエスから減って、イーエスがゼロになってからライフが減るの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "150 を 3 回で 450。ES 300 が無くなって、ライフは 150 減ったのだ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "ひゃくごじゅうを3回でよんひゃくごじゅう。イーエスさんびゃくが無くなって、ライフはひゃくごじゅう減ったのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。そして ES の一番いい所は、勝手に戻ること。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "そう。そしてイーエスの一番いい所は、勝手に戻ること。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後に ES が減ってから 4 秒たつと、1 秒に最大の 12.5% ずつ戻るわ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "最後にイーエスが減ってから4秒たつと、1秒に最大の12.5パーセントずつ戻るわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "300 の 12.5% で、1 秒に 37.5。8 秒で満タンね。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "さんびゃくの12.5パーセントで、1秒に37.5。8秒で満タンね。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ライフが減っただけなら、待ち時間はやり直しにならないのだ？",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ならないわ。やり直しになるのは、ES が減った時だけ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "150",
+              "hits": "0.8,1.6,2.4",
+              "kind": "phys"
+            }
+          },
+          "speech": "ならないわ。やり直しになるのは、イーエスが減った時だけ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただし ES には苦手が 2 つあるの。1 つ目は混沌ダメージ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6",
+              "kind": "chaos"
+            }
+          },
+          "speech": "ただしイーエスには苦手が2つあるの。1つ目は混沌ダメージ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "混沌は ES を 2 倍削るの。100 の一撃で、ES は 200 減るわ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6",
+              "kind": "chaos"
+            }
+          },
+          "speech": "混沌はイーエスを2倍削るの。ひゃくの一撃で、イーエスはにひゃく減るわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普通の一撃なら 100 なのに、倍の速さで無くなるの。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6",
+              "kind": "chaos"
+            }
+          },
+          "speech": "普通の一撃ならひゃくなのに、倍の速さで無くなるの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "2 回で ES が空っぽなのだ！",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6",
+              "kind": "chaos"
+            }
+          },
+          "speech": "2回でイーエスが空っぽなのだ！"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "2 つ目は出血と毒。これは ES を素通りして、ライフを直接減らすの。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "2つ目は出血と毒。これはイーエスを素通りして、ライフを直接減らすの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ES が満タンでも、ライフが減ってるのだ……。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "イーエスが満タンでも、ライフが減ってるのだ……。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。ES が多くても、出血と毒の対策は別に要るのよ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "そう。イーエスが多くても、出血と毒の対策は別に要るのよ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ES は知力の防具に付くのだ？",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "イーエスは知力の防具に付くのだ？"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そうよ。それと、ルーンワードという新しい守りもあるわ。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ライフが 0 になる一撃を受けても 1 残して、残りを肩代わりしてくれるの。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "ライフがゼロになる一撃を受けても1残して、残りを肩代わりしてくれるの。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "まとめると、ES は先に減って勝手に戻るゲージ。混沌と出血・毒には弱い防御ね。",
+          "scene": {
+            "kind": "es",
+            "def_params": {
+              "life": "500",
+              "es": "300",
+              "until": "16",
+              "dmg": "100",
+              "hits": "0.8,1.6,2.4",
+              "kind": "bleed"
+            }
+          },
+          "speech": "まとめると、イーエスは先に減って勝手に戻るゲージ。混沌と、出血、毒には弱い防御ね。"
+        }
+      ]
+    },
+    {
+      "name": "どの防具にどの防御が付くか",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "防御の種類は分かったのだ。でも、どうやって手に入れるのだ？",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "一番の元は防具よ。防具の種類で、付く防御が決まっているの。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力の防具はアーマー、器用さの防具は回避力、知力の防具は ES。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          },
+          "speech": "筋力の防具はアーマー、器用さの防具は回避力、知力の防具はイーエス。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "2 つ混ざった防具もあるわ。アーマーと回避、アーマーと ES、回避と ES。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          },
+          "speech": "2つ混ざった防具もあるわ。アーマーと回避、アーマーとイーエス、回避とイーエス。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "見た目で分からないのだ……。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "防具を見たら、アーマー・回避力・ES のどれが書いてあるかを見ればいいの。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          },
+          "speech": "防具を見たら、アーマー、回避力、イーエスのどれが書いてあるかを見ればいいの。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そしてもう 1 つ大事なのが、ベースの必要レベル。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80",
+              "hl": "0"
+            }
+          },
+          "speech": "そしてもう1つ大事なのが、ベースの必要レベル。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "同じアーマーの胴でも、レベル 1 の物は 45、レベル 80 の物は 496。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          },
+          "speech": "同じアーマーの胴でも、レベル1の物はよんじゅうご、レベル80の物はよんひゃくきゅうじゅうろく。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "11 倍もあるのだ！",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          },
+          "speech": "11倍もあるのだ！"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "回避力は約 15 倍、ES は約 5.5 倍。これは MOD が何も無い、素の値よ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          },
+          "speech": "回避力は約15倍、イーエスは約5.5倍。これはモッドが何も無い、素の値よ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "MOD の「アーマー +◯%」は素の値に掛け算。だからベースが古いと伸びないの。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          },
+          "speech": "モッドの、アーマー何パーセント増加は、素の値に掛け算。だからベースが古いと伸びないの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "レベルが上がったら、新しいベースに変えるのだ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "そう。自分の防御に合う種類を選んで、ベースを新しくしていく。これはエンドでも同じよ。",
+          "scene": {
+            "kind": "bases",
+            "def_params": {
+              "slot": "body",
+              "early": "1",
+              "late": "80"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "クイズとまとめ",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでクイズ。ボスの赤く光る技に効くのは、どれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ],
+            "countdown": 3
+          },
+          "speech": "3秒で考えてね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "正解は受け流し。回避とブロックは、赤い技には効かないの。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ],
+            "answer": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "覚えてたのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ],
+            "answer": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "まとめると、防御は上から順番に効いていくのだ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "回避とブロックは丸ごと止める。受け流し・アーマー・耐性は減らすのだ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "回避とブロックは丸ごと止める。受け流し、アーマー、耐性は減らすのだ。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ES はライフの前のゲージで、勝手に戻るのだ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "イーエスはライフの前のゲージで、勝手に戻るのだ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。防具の種類で付く防御が決まるから、自分に合う物を選んでね。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "どれか 1 つで全部は守れないから、組み合わせて穴を埋めるのが大事よ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          },
+          "speech": "どれか1つで全部は守れないから、組み合わせて穴を埋めるのが大事よ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2 の基礎を初心者向けにまとめていくわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "分からない所や知りたい事があったら、コメントで教えてね。チャンネル登録もよろしく！",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

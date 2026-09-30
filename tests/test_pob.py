@@ -246,6 +246,27 @@ def test_info_screen_time() -> None:
     assert not any("同じ画面" in p for p in lint_lines(long_))  # 情報の画面は連続の対象外
 
 
+def test_info_screen_same_image_counts_once() -> None:
+    """同じ画像のまま答えを出す (クイズの秒読み → 正解、防御の hl) は 1 枚として足す."""
+    from poe2tube.script.lint import INFO_MIN_SECONDS, info_screen_time
+    from poe2tube.script.model import Line
+
+    def ln(text: str, sc: dict[str, object]) -> Line:
+        return Line.model_validate({"speaker": "metan", "text": text, "scene": sc})
+
+    q = {"kind": "quiz", "choices": ["回避力", "受け流し"]}
+    quiz = [
+        ln("ここでクイズ。赤い技に効くのはどれ？", q),
+        ln("3 秒で考えてね。", {**q, "countdown": 3}),
+        ln("正解は受け流し。回避は赤い技に効かないの。", {**q, "answer": 1}),
+    ]
+    assert info_screen_time(quiz) == []
+    b = {"kind": "bases", "def_params": {"slot": "body"}}
+    hidden = {"kind": "bases", "def_params": {"slot": "body", "hl": "0"}}
+    assert info_screen_time([ln("防具のベースよ。", hidden), ln("何倍かしら。", b)]) != []
+    assert INFO_MIN_SECONDS["bases"] > INFO_MIN_SECONDS["compare"] > INFO_MIN_SECONDS["quiz"]
+
+
 def test_reading_kaiju() -> None:
     from poe2tube.script.reading import normalize_speech
 

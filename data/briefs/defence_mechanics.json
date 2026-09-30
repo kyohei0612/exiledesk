@@ -1,0 +1,59 @@
+{
+  "name": "defence_mechanics",
+  "title_hint": "【PoE2 初心者】防御が多すぎて意味不明！アーマー・回避・受け流し・ES・ブロックを全部解説",
+  "player_stage": "act",
+  "goal": "アーマー・回避・受け流し・ブロック・ES の仕組みと弱点が分かり、防具を選ぶ時に何を見ればいいか分かる (エンドでも同じ考え方)",
+  "target_seconds": 540,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "防御の仕組みの回 (実演なし、画面の土台だけ)",
+    "base": "Rusted Cuirass",
+    "item_level": 33,
+    "seed": 20260930,
+    "steps": [
+      {
+        "currency": "transmute",
+        "note": "土台 (台本では使わない)"
+      }
+    ]
+  },
+  "notes": [
+    "実演なし (practice: false)。画面は ExileDesk の防御の画面 (layers / armour / evasion / es / bases)",
+    "式 → 数字を入れる → 全体 の順で説明",
+    "「段」は使わない、回避ロールを無敵と言わない、ルーンワードの数字は出さない"
+  ],
+  "sources": [
+    {
+      "title": "Maxroll: Defence Guide (Path of Exile 2)",
+      "url": "https://maxroll.gg/poe2/getting-started/defence-guide"
+    },
+    {
+      "title": "PoE2 Wiki: Armour",
+      "url": "https://www.poe2wiki.net/wiki/Armour"
+    },
+    {
+      "title": "PoE2 Wiki: Evasion",
+      "url": "https://www.poe2wiki.net/wiki/Evasion"
+    },
+    {
+      "title": "PoE2 Wiki: Deflection",
+      "url": "https://www.poe2wiki.net/wiki/Deflection"
+    },
+    {
+      "title": "PoE2 Wiki: Energy Shield",
+      "url": "https://www.poe2wiki.net/wiki/Energy_Shield"
+    },
+    {
+      "title": "PoE2DB: 受け流し",
+      "url": "https://poe2db.tw/jp/Deflect"
+    },
+    {
+      "title": "Mobalytics: Deflection Guide",
+      "url": "https://mobalytics.gg/poe-2/guides/deflection"
+    },
+    {
+      "title": "Path of Building (PoE2)",
+      "url": "https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2"
+    }
+  ]
+}
