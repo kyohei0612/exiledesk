@@ -43,7 +43,7 @@ CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v
 
 
 def cache_ver() -> str:
-    """キャッシュの版。撮影先 (固定版 1430 / 開発版 1420) も含める (開発版で試した絵を本番に混ぜない)."""
+    """キャッシュの版。撮影先 (固定版 1430 / 開発版 1420) も含める (開発版の絵を本番に混ぜない)."""
     base = get_settings().exiledesk_dev_url.rstrip("/")
     return CAPTURE_VER if base.endswith(":1430") else f"{CAPTURE_VER}@{base}"
 

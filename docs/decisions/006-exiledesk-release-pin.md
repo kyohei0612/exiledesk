@@ -24,3 +24,14 @@ POE2Tube は ExileDesk の作業フォルダ (`~/ExileDesk`) を直接読んで�
 
 - 頼んだ変更は ExileDesk がリリースするまで本番の動画に使えない (試すのは開発版に切り替えて)
 - 画像パック (`public/base-art` 等) は git に入っているので、固定版にもある
+
+## 追記 (2026-09-30 kyohei): 要望は開発版で確かめてからリリース
+
+1. ExileDesk は要望を実装したら **リリースせず開発版 (~/ExileDesk、Vite 1420) で止める**
+2. POE2Tube が開発版を撮って確かめる (撮影先を開発版に向ける。キャッシュは撮影先ごとに分かれるので本番の絵と混ざらない):
+   `POE2TUBE_EXILEDESK_ROOT=~/ExileDesk POE2TUBE_EXILEDESK_DEV_URL=http://localhost:1420 python scripts/...`
+   (.env は書き換えない。PoB の計算を回す run_stage も同じ環境変数で開発版に向く)
+3. おかしい所があれば ExileDesk に直してもらい、2 に戻る
+4. 開発版で OK なら、kyohei が ExileDesk にリリースを指示する
+5. **本番の動画はリリース版 (固定版 ~/ExileDesk-stage、1430) で作る** (`update_exiledesk.py` → `CAPTURE_VER` を上げる)
+
