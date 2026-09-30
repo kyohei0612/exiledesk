@@ -80,6 +80,8 @@ export interface PobBlock {
   character: { class: string; level: number; skill: string; skill_ja: string | null; gem_level: number; supports: string[] };
   config: Record<string, number | string>;
   config_ja: string;
+  /** ゲームのデータに合わせた上書き (要望 ㉒-A、例「感電で受けるダメージを PoB の 15% → ゲームの 20% に」) */
+  game_fixes?: string[];
   steps: PobStat[];
 }
 

@@ -26,6 +26,7 @@ import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
+import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
 
 const data = shallowRef<PatchData | null>(null);
 const item = shallowRef<StageItem | null>(null);
@@ -62,7 +63,13 @@ export type StageExtra =
   // 受けるダメージ (要望 ⑰-16): pob のその手のキャラのライフ、elem の一撃、res = 左右の耐性 (%)、dmg = 一撃の指定 (無ければ PoB の既定)
   | { kind: "hit"; pob: PobBlock; step: number; elem: string; res: number[]; dmg: number | null }
   // DPS の内訳 (要望 ⑰-5)
-  | { kind: "dps"; pob: PobBlock; step: number };
+  | { kind: "dps"; pob: PobBlock; step: number }
+  // 防御の仕組み (要望 ㉒-B): ダメージが減る順番 / アーマーのグラフ / 回避と受け流し / ES とライフ / 防具のベース
+  | { kind: "layers"; d: Defender; hit: number; dmgKind: DamageKind; acc: number; outcome: Outcome; red: boolean; lvl: number | null }
+  | { kind: "armour"; ar: number[]; labels: string[]; max: number | null; hit: number | null }
+  | { kind: "evasion"; ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }
+  | { kind: "es"; life: number; es: number; dmg: number; hits: number[]; esKind: "phys" | "chaos" | "bleed"; until: number }
+  | { kind: "bases"; slot: string; early: number; late: number };
 /** craft-stage-run.mjs --resists の結果 (耐性の画面に URL で渡す) */
 export interface ResistsBlock {
   version: string;
@@ -81,6 +88,37 @@ export interface ResistsBlock {
   quests?: Array<{ act: number; area: string; stat: string; on: boolean }>;
 }
 const extra = ref<StageExtra | null>(null);
+
+/**
+ * 防御の画面 (要望 ㉒-B) の URL → 中身。キャラは &pob=<結果 JSON の pob>&step=N (ライフ・ES・アーマー・回避力・耐性) を元に、
+ * &life= &es= &armour= &evasion= &deflect= &block= &res= で上書き。敵は &lvl= (命中力・一撃の表)、&acc= / &dmg= で上書き
+ */
+function defenceView(view: string, q: URLSearchParams): StageExtra {
+  const num = (k: string): number | null => (q.get(k) != null && q.get(k) !== "" && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : null);
+  const list = (k: string): number[] => (q.get(k) ? q.get(k)!.split(",").filter((x) => x.trim() !== "").map(Number).filter((x) => Number.isFinite(x)) : []);
+  const pobBlock = q.get("pob") ? (JSON.parse(q.get("pob")!) as PobBlock) : null;
+  const st = pobBlock?.steps?.[Math.min(num("step") ?? 9999, (pobBlock.steps?.length ?? 1) - 1)] ?? null;
+  const lvl = num("lvl") ?? pobBlock?.enemy?.level ?? null;
+  const acc = num("acc") ?? (lvl ? monsterAccuracy(lvl) : 0);
+  if (view === "armour") return { kind: "armour", ar: list("ar").length ? list("ar") : [st?.armour ?? 1000], labels: (q.get("labels") ?? "").split(",").filter(Boolean), max: num("max"), hit: num("hit") };
+  if (view === "evasion") return { kind: "evasion", ev: num("ev") ?? st?.evasion ?? 0, deflect: num("deflect") ?? 0, acc, lvl, n: num("n") ?? 10, red: q.get("red") !== "0" };
+  if (view === "bases") return { kind: "bases", slot: q.get("slot") ?? "body", early: num("early") ?? 1, late: num("late") ?? 80 };
+  const life = num("life") ?? Math.round(st?.life ?? 1000);
+  const es = num("es") ?? Math.round(st?.es ?? 0);
+  if (view === "es") {
+    const hits = list("hits");
+    const kind = q.get("kind");
+    return { kind: "es", life, es, dmg: num("dmg") ?? 200, hits: hits.length ? hits : [0, 0.8, 1.6], esKind: kind === "chaos" || kind === "bleed" ? kind : "phys", until: num("until") ?? 12 };
+  }
+  const kinds: DamageKind[] = ["physical", "fire", "cold", "lightning", "chaos"];
+  const dmgKind = (kinds.includes(q.get("kind") as DamageKind) ? q.get("kind") : "physical") as DamageKind;
+  const outcomes: Outcome[] = ["hit", "evade", "deflect", "block"];
+  const outcome = (outcomes.includes(q.get("outcome") as Outcome) ? q.get("outcome") : "hit") as Outcome;
+  const resist = num("res") ?? (dmgKind === "physical" ? 0 : (st?.resists?.[dmgKind]?.value ?? 0));
+  const d: Defender = { life, es, armour: num("armour") ?? Math.round(st?.armour ?? 0), evasion: num("evasion") ?? Math.round(st?.evasion ?? 0), deflection: num("deflect") ?? 0, block: num("block") ?? 0, resist };
+  const hit = num("dmg") ?? pobBlock?.enemy?.hit ?? (lvl ? Math.round((DEF.monsterDamage[lvl - 1] ?? 0) * 1.5) : 500);
+  return { kind: "layers", d, hit, dmgKind, acc, outcome, red: q.get("red") === "1", lvl };
+}
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
 const focus = ref<string | null>(null);
 /** PoB の計算 (要望 ⑰-3、URL の stage-pob=<結果 JSON の pob>)。動画モードで手ごとの DPS を出す */
@@ -156,6 +194,8 @@ export const craftStage = {
         extra.value = { kind: "hit", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999, elem: q.get("elem") ?? "fire", res, dmg: q.get("dmg") != null ? Number(q.get("dmg")) : null };
       } else if (view === "dps") {
         extra.value = { kind: "dps", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999 };
+      } else if (view === "layers" || view === "armour" || view === "evasion" || view === "es" || view === "bases") {
+        extra.value = defenceView(view, q);
       } else if (view === "resists") {
         const act = q.get("act");
         extra.value = { kind: "resists", r: JSON.parse(q.get("r") ?? "{}") as ResistsBlock, act: act != null ? Number(act) : null, penalty: q.get("penalty") !== "0" };

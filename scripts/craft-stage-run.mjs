@@ -22,7 +22,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { prices as testPrices } from "./_htc-test-prices.mjs";
-import { pobEnemy, pobGems, pobQuests, runStagePob } from "./_pob-stage.mjs";
+import { gameFixes, pobEnemy, pobGems, pobQuests, runStagePob } from "./_pob-stage.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -78,7 +78,8 @@ function pobHead(p) {
   const supports = p.supports ?? [];
   const { config: base, ja } = M.pobConfigOf(p);
   const q = questsOf(p);
-  const config = { ...base, ...q.off };
+  // ゲームのデータに合わせる上書き (要望 ㉒-A: 感電 15% → 20%)
+  const { config, fixes } = gameFixes({ ...base, ...q.off });
   // スキルの段 (要望 ⑱-4): skill_part は番号か名前。段 (parts) かステータスの組 (statSets) を選ぶ。無ければ PoB の既定 (1 つ目)
   const part = G.choose(p.skill, p.skill_part);
   const names = G.partNames(p.skill);
@@ -92,6 +93,7 @@ function pobHead(p) {
     config,
     config_ja: `${ja}・${q.ja}`,
     quests: q.list,
+    fixes,
   };
 }
 /** アイテム → PoB の装備 (壊れた・ユニーク・枠の無い物は装備しない) */
@@ -125,7 +127,7 @@ if (plan.pob) {
   if (off) console.warn(`PoB: ${off.skill.name} が使えない (${off.skill.disabled})。DPS は 0 になる (武器の種類が合っているか)`);
   const bad = [...new Set(stats.flatMap((s) => s.unparsed))];
   if (bad.length) console.warn(`PoB が読めなかった行: ${bad.join(" / ")}`);
-  result.pob = { version: out.pob_version, enemy, character: h.character, config: h.config, config_ja: h.config_ja, quests: h.quests, steps: stats };
+  result.pob = { version: out.pob_version, enemy, character: h.character, config: h.config, config_ja: h.config_ja, quests: h.quests, game_fixes: h.fixes, steps: stats };
   result.steps.forEach((s, i) => { s.pob = stats[i + 1] ?? null; });
   const d0 = stats[0]?.dps ?? 0;
   const d1 = stats[stats.length - 1]?.dps ?? 0;
@@ -149,7 +151,8 @@ function resists(spec) {
   const equipped = items.flatMap((it) => equip(it, it.cls.category === "Rings" ? ring++ : 0));
   // 手順の pob と同じ扱い (要望 ⑳): config の他の項目とクエストの報酬 (quests_act)
   const q = questsOf(spec.pob);
-  const base = { class: spec.pob?.class ?? "Ranger", level: spec.pob?.level ?? 20, config: { enemyIsBoss: "None", ...(spec.pob?.config ?? {}), ...q.off } };
+  const fx = gameFixes({ enemyIsBoss: "None", ...(spec.pob?.config ?? {}), ...q.off });
+  const base = { class: spec.pob?.class ?? "Ranger", level: spec.pob?.level ?? 20, config: fx.config };
   // ペナルティごとに別のビルド (設定) なので 1 本ずつ
   const outs = PEN.map((p) => runStagePob(root, { ...base, config: { ...base.config, resistancePenalty: p }, steps: [equipped, []] }));
   const r = (o, e) => ({ value: o[`${e}Resist`] ?? 0, total: o[`${e}ResistTotal`] ?? 0 });
@@ -170,7 +173,7 @@ function resists(spec) {
   const out = {
     version: o0.pob_version, items: items.map((it) => ({ name: it.baseJa, base: it.base, rarity: it.rarity })), equip: equipSum, rows, unparsed,
     // 使った前提 (要望 ⑳): キャラ・設定・入れたクエストの報酬
-    character: { class: base.class, level: base.level }, config: base.config, config_ja: `${spec.pob?.config?.enemyIsBoss === "Boss" ? "ボス" : "普通の敵"}・${q.ja}`, quests: q.list,
+    character: { class: base.class, level: base.level }, config: base.config, config_ja: `${spec.pob?.config?.enemyIsBoss === "Boss" ? "ボス" : "普通の敵"}・${q.ja}`, quests: q.list, game_fixes: fx.fixes,
   };
   writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
   console.log(`耐性 (PoB ${out.version}): 装備 ${items.length} 個、ペナルティ ${PEN.length} 通り -> ${outPath}`);

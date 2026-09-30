@@ -156,3 +156,21 @@ export function runStagePob(root, input) {
     rmSync(dir, { recursive: true, force: true });
   }
 }
+
+/**
+ * ゲームのデータに合わせる上書き (要望 ㉒-A、2026-09-30)。PoB 本体は触らず、設定の customMods (PoB の「Custom Modifiers」の欄) に足す。
+ *   - 感電 (自分が受ける側): PoB の設定 (ConfigOptions の conditionShocked) は受けるダメージ +15% の手書き。
+ *     ゲームは 20% (GameConstants.BaseShockMagnitude と感電の説明文)。差の 5% を足す (PoB の modDB で 15 → 20 を確かめた)
+ * 戻り: { config (上書き後), fixes (日本語の説明の一覧) }
+ */
+export function gameFixes(config) {
+  const add = [];
+  const fixes = [];
+  if (config.conditionShocked === true) {
+    add.push("5% increased Damage taken");
+    fixes.push("感電で受けるダメージを PoB の 15% → ゲームの 20% に");
+  }
+  if (!add.length) return { config, fixes };
+  const cur = typeof config.customMods === "string" && config.customMods ? `${config.customMods}\n` : "";
+  return { config: { ...config, customMods: cur + add.join("\n") }, fixes };
+}
