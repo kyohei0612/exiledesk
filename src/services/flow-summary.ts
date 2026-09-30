@@ -24,8 +24,9 @@ export { flowSentence, fmtAge, fmtPct, fmtSellTime } from "./flow-summary-text";
  * 古い記録 (unknown の欄が無い頃の物) も、出品時刻か出品者が欠けていれば unknown に倒す。
  */
 export type TrackedFate = "alive" | "pending" | "sold" | "relisted" | "unknown";
-export function fateOf(t: Tracked): TrackedFate {
-  if (!t.gone_at) return t.missing_since ? "pending" : "alive";
+export function fateOf(t: Tracked, sampledAt = 0): TrackedFate {
+  // 最後の取得の検索に居なかった物も「並んでいる」にしない (2026-09-30、出品数と揃える。sold-list-rows.ts の aliveCounts)
+  if (!t.gone_at) return t.missing_since || t.last_seen < sampledAt ? "pending" : "alive";
   if (t.relisted) return "relisted";
   if (t.unknown || t.listed_at == null || !t.account) return "unknown";
   return "sold";
@@ -69,7 +70,7 @@ export function summarizeFlow(state: WatchState | undefined, nowSec: number = Ma
   for (const t of state.tracked) {
     // 売れた (sold) と並んでいる (alive) 以外は、速さにも値段にも入れない (2026-09-26 監査)。
     //   付け替え … 売れても売れ残ってもいない / 確定待ち・不明 … 売れたと言い切れない
-    const fate = fateOf(t);
+    const fate = fateOf(t, state.list_complete === false ? 0 : state.sampled_at);
     if (fate === "pending") {
       pending++;
       continue;

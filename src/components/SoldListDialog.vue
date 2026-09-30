@@ -14,7 +14,7 @@ import { fmtSellTime, verifyFlow, type FlowStore, type VerifyResult } from "../s
 import { currencyJa, displayCurrency, setDisplayCurrency, type DisplayChoice } from "../state/display-currency";
 import { fmtClock, fmtSpan } from "../utils/format-time";
 // 行の組み立ては sold-list-rows.ts へ (2026-09-26 の分割)
-import { buildAliveRows, buildSoldRows, buildSummaries, fmtAmount, groupByCheck, sumBy, toneClass, type Row } from "./sold-list-rows";
+import { aliveCounts, buildAliveRows, buildSoldRows, buildSummaries, fmtAmount, groupByCheck, sumBy, toneClass, type Row } from "./sold-list-rows";
 
 const props = defineProps<{
   open: boolean;
@@ -47,7 +47,12 @@ const relistedCount = computed(() => soldRows.value.filter((r) => r.relisted).le
 const unknownCount = computed(() => soldRows.value.filter((r) => r.unknown).length);
 
 /** まだ出品されている分 (並んでいる時間が長い順) */
-const aliveRows = computed(() => buildAliveRows(props.keys, props.store, nowSec()));
+const allAliveRows = computed(() => buildAliveRows(props.keys, props.store, nowSec()));
+const aliveRows = computed(() => allAliveRows.value.filter((r) => !r.pending));
+/** 出品数 (最後の取得の total) と、検索に居るが追跡していない件数 (最安 10 件の外)。並んでいる行 + untracked = 出品数 */
+const counts = computed(() => aliveCounts(props.keys, props.store));
+/** 最後の取得で見えなくなった出品 (次の取得で確定) */
+const pendingRows = computed(() => allAliveRows.value.filter((r) => r.pending));
 
 /** 登録元のメモ (「品質 23% を 12 / 47 人」など) */
 const note = computed(() => props.store?.watches?.find((w) => props.keys.some((k) => k.key === w.key))?.note ?? "");
@@ -145,7 +150,7 @@ async function verify(key: string): Promise<void> {
             まだ 1 件も売れていません。追跡中の出品が一覧から消えると、ここに値段つきで並びます。
           </p>
 
-          <table v-else class="w-full">
+          <table v-if="aliveRows.length" class="w-full">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">条件</th>
@@ -197,9 +202,9 @@ async function verify(key: string): Promise<void> {
 
         <!-- まだ並んでいる -->
         <div class="mt-3 rounded-xl border border-white/10 p-3 text-[12px] overflow-x-auto">
-          <h3 class="text-[13px] font-bold text-amber-100 mb-1">まだ並んでいる出品 ({{ aliveRows.length }} 件・長い順)</h3>
-          <p v-if="aliveRows.length === 0" class="text-[var(--exile-color-text-tertiary)]">追跡中の出品はありません。</p>
-          <table v-else class="w-full">
+          <h3 class="text-[13px] font-bold text-amber-100 mb-1">まだ並んでいる出品 ({{ counts.total }} 件・長い順)</h3>
+          <p v-if="counts.total === 0" class="text-[var(--exile-color-text-tertiary)]">最後の取得では出品はありませんでした。</p>
+          <table v-if="aliveRows.length" class="w-full">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
                 <th class="text-left font-normal pb-1">条件</th>
@@ -221,6 +226,20 @@ async function verify(key: string): Promise<void> {
               </tr>
             </tbody>
           </table>
+          <p v-if="counts.untracked > 0" class="mt-1 text-[var(--exile-color-text-tertiary)]">ほか {{ counts.untracked }} 件 (安い順で 11 件目以降。値段と出品者は取っていません)</p>
+          <template v-if="pendingRows.length">
+            <h4 class="text-[12px] font-bold text-[var(--exile-color-text-secondary)] mt-3 mb-1">最後の取得で見えなくなった出品 ({{ pendingRows.length }} 件・出品数には入れない。次の取得でも無ければ売れた)</h4>
+            <table class="w-full text-[var(--exile-color-text-tertiary)]">
+              <tbody>
+                <tr v-for="r in pendingRows" :key="r.id" class="border-t border-[var(--exile-color-border-subtle)]">
+                  <td class="py-1 whitespace-nowrap">{{ r.cond }}</td>
+                  <td class="py-1 pl-3 text-right tabular-nums whitespace-nowrap">{{ fmtAmount(r.amount) }} {{ curLabel(r.currency) }}</td>
+                  <td class="py-1 pl-3 max-w-[12rem] truncate" :title="r.account">{{ r.account || "—" }}</td>
+                  <td class="py-1 pl-3 tabular-nums whitespace-nowrap">{{ fmtClock(r.listedAt) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             2 日以上並んだままの出品は赤字にしています。その値段では買い手が付いていないという目安です。
           </p>

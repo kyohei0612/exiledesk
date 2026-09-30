@@ -168,19 +168,21 @@ fn buried_listings_stop_being_tracked() {
     assert_eq!(st.tracked.len(), 1, "一覧に居る a は残る");
 }
 
-/// 検索が空で返った時に、追跡中の出品を全部「売れた」にしない
+/// サーバーが 0 件と答えたら判定する (全部売れた条件の出品が残り続けない)。1 回目は確定待ち、2 回続けて 0 件なら売れた (2026-09-30)
 #[test]
-fn empty_result_does_not_wipe_tracked() {
+fn zero_result_marks_tracked_gone_after_two() {
     let now = 1_700_000_000i64;
     let mut st = WatchState::default();
     apply_sample(&mut st, now, 2, &ids(&["a", "b"]), &[lr("a", 1.0), lr("b", 1.0)], true, OK);
-    // 空の応答 (total 0 / ID 0 件)
     let empty: Vec<String> = Vec::new();
     let list_complete = list_is_complete(&empty, 0, &st.tracked);
-    assert!(!list_complete, "空の応答では消えた判定をしない");
+    assert!(list_complete, "0 件の応答は判定する");
     apply_sample(&mut st, now + 3600, 0, &empty, &[], list_complete, OK);
+    assert_eq!(st.tracked.iter().filter(|t| t.missing_since.is_some()).count(), 2, "1 回目は確定待ち");
     apply_sample(&mut st, now + 7200, 0, &empty, &[], list_complete, OK);
-    assert_eq!(st.tracked.iter().filter(|t| t.gone_at.is_some() || t.missing_since.is_some()).count(), 0);
+    assert_eq!(st.tracked.iter().filter(|t| t.gone_at == Some(now + 3600)).count(), 2, "2 回続けて 0 件なら売れた");
+    // ID が空なのに総数が 0 でない (壊れた応答) は判定しない
+    assert!(!list_is_complete(&empty, 3, &st.tracked));
 }
 
 /// 古い保存データ (新しい欄が無い) もそのまま読める

@@ -120,7 +120,7 @@ pub fn market_flow_record(app: tauri::AppHandle, req: RecordRequest) -> Result<(
     let state = store.states.entry(req.key).or_default();
     // 自動巡回とまったく同じルールで判定する (画面の売値も巡回も条件が同じ securable のため)。
     // ID 一覧が出品全部を含んでいる時だけ「消えた = 売れた」と数える。
-    // 応答が空の時は判定しない (通信不良で全滅させないため)
+    // ID が空なのに総数が 0 でない壊れた応答は判定しない (0 件と答えた時は判定する、2026-09-30)
     let list_complete = list_is_complete(&req.ids, req.total, &state.tracked);
     // 画面は最安 10 件の詳細しか取ってこない。出品者が 1 人も取れていない時と、消えた出品があって
     // 11 件目以降の出品者も見ないと付け替えか分からない時は、消えた判定をしない (次の巡回で確定させる。2026-09-26)

@@ -135,14 +135,35 @@ export function groupByCheck(soldRows: Row[]) {
 }
 
 /** まだ出品されている分 (並んでいる時間が長い順) */
+/**
+ * まだ並んでいる出品 (2026-09-30 オーナー「出品数とここは絶対一致するはず、同期させて」)。
+ * ルール: 「並んでいる」= **最後の取得の検索結果に居た物だけ** (last_seen = その条件の sampled_at)。
+ *   - 追跡中で最後の検索に居なかった物は pending (見えなくなった。次の取得でも居なければ売れた、tally/apply.rs)
+ *   - 検索に居るが追跡していない物 (最安 10 件の外) は untracked の件数だけ (値段・出品者は取っていない)
+ *   - 並んでいる (pending 以外の行) + untracked = 出品数 (最後の取得の total) になる
+ */
+export function aliveCounts(keys: SoldKeyDef[], store: FlowStore | null): { total: number; untracked: number } {
+  let total = 0;
+  let untracked = 0;
+  for (const k of keys) {
+    const st = store?.states?.[k.key];
+    if (!st) continue;
+    const present = (st.tracked ?? []).filter((t) => !t.gone_at && t.last_seen >= st.sampled_at).length;
+    total += st.total;
+    untracked += Math.max(0, st.total - present);
+  }
+  return { total, untracked };
+}
+
 export function buildAliveRows(keys: SoldKeyDef[], store: FlowStore | null, now: number) {
-  const rows: { id: string; cond: string; account: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean }[] = [];
+  // pending = 最後の取得で一覧に居なかった (確定待ち)。次の取得でも居なければ売れた。「まだ並んでいる」には数えない (2026-09-30 オーナー「1 品しかないのに 6 件」)
+  const rows: { id: string; cond: string; account: string; amount: number | null | undefined; currency: string | null | undefined; listedAt: number | null; age: number; estimated: boolean; pending: boolean }[] = [];
   for (const k of keys) {
     const st = store?.states?.[k.key];
     if (!st?.tracked) continue;
     for (const t of st.tracked) {
       if (t.gone_at) continue;
-      rows.push({ id: t.id, cond: k.label, account: t.account ?? "", amount: t.amount, currency: t.currency, listedAt: t.listed_at ?? null, age: now - startOf(t), estimated: t.listed_at == null });
+      rows.push({ id: t.id, cond: k.label, account: t.account ?? "", amount: t.amount, currency: t.currency, listedAt: t.listed_at ?? null, age: now - startOf(t), estimated: t.listed_at == null, pending: !!t.missing_since || t.last_seen < st.sampled_at });
     }
   }
   return rows.sort((a, b) => b.age - a.age);
