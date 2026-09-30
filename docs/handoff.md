@@ -6,7 +6,7 @@
 
 - チャンネル「チョコバナナch」公開済み 2 本: 「クラフトの基礎」(KENilVeUeoU)、「鞄に溜まったカレンシー」本編 (X05W2eQdReU) + ショート「3 秒クイズ」(JvJp1kahmfk)
 - 3 本目「アクト中の火力と防御」本編 (DJxZ7HgjNTs) + ショート「上の3つは全く同じ武器、どっちが強い？」(ZbZ2wq4EVbI) を 2026-09-30 10:00 公開で予約済み。ショートの関連動画は Studio で手設定
-- 4 本目「防御の仕組み」本編 (9kF4rWk1Uvk) + ショート「ボスの赤く光る技、効く防御はどれ？」(Cace_ygWwBU) を 2026-09-30 19:00 公開で予約済み。サムネは scripts/thumbs/defence_mechanics.py の土台 (output/defence_mechanics_thumb_base.jpg) に kyohei が文字を入れた物。ショートの関連動画は Studio で手設定
+- 4 本目「防御の仕組み」本編 (9kF4rWk1Uvk) + ショート「ボスの赤く光る技、効く防御はどれ？」(Cace_ygWwBU) を 2026-09-30 19:00 公開で予約済み。サムネは scripts/thumbs/defence_mechanics.py の土台 (output/defence_mechanics_thumb_base.jpg) に kyohei が文字を入れた物。ショートの関連動画は kyohei が手で設定済み。**次から: ショートの関連動画は、投稿のあと Claude が Claude in Chrome で Studio (studio.youtube.com/video/<ショート>/edit) を操作して本編を指定する** (API に項目が無い、kyohei 2026-09-30「B で操作していい」)
 - 台本の新しい決まり (2026-09-30): 情報の画面の最低表示 軽い 6 / 表 10 / 仕組みの図 12 秒、同じ画像は下げずに 1 枚として数える、情報の多い画面は止めて解説 (_all.md)。動画は 30 MB 超えならスマホ用 _phone.mp4 も送る
 - 方針: 今は本数を打つ助走期間 (仕上げに凝りすぎず早めに出す)。本番はクラフト解説と流行りのビルドの回
 - ExileDesk は**リリースで固定した** `~/ExileDesk-stage` (v0.1.341、Vite 1430) を撮る (ADR 006)
