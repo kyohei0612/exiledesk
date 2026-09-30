@@ -20,10 +20,10 @@ import structlog
 
 from poe2tube.capture.stage import (
     CACHE_DIR,
-    CAPTURE_VER,
     CREATE_NO_WINDOW,
     READY_SELECTOR,
     VIEWPORT,
+    cache_ver,
     ensure_video_mode,
     ensure_vite,
 )
@@ -72,7 +72,7 @@ def anim_query(scene: Scene, prev: Scene | None, rs: ResultSet) -> str | None:
 
 
 def anim_dir(query: str) -> Path:
-    key = hashlib.sha256(f"{CAPTURE_VER}|{query}".encode()).hexdigest()[:16]
+    key = hashlib.sha256(f"{cache_ver()}|{query}".encode()).hexdigest()[:16]
     return ANIM_DIR / key
 
 

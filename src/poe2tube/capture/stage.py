@@ -42,9 +42,15 @@ HEADER_OPT = "--max-http-header-size=262144"  # 256KB (撮影の URL が長い�
 CLIP_SECONDS = 4.4  # 棚から拾って運んで付ける手つき (ExileDesk v0.1.311、約 2.5 秒) + 付いた所
 
 
+def cache_ver() -> str:
+    """キャッシュの版。撮影先 (固定版 1430 / 開発版 1420) も含める (開発版で試した絵を本番に混ぜない)."""
+    base = get_settings().exiledesk_dev_url.rstrip("/")
+    return CAPTURE_VER if base.endswith(":1430") else f"{CAPTURE_VER}@{base}"
+
+
 def plan_key(plan: CraftStagePlan) -> str:
     raw = plan.model_dump_json(by_alias=True, exclude_none=True)
-    return hashlib.sha256(f"{CAPTURE_VER}|{raw}".encode()).hexdigest()[:16]
+    return hashlib.sha256(f"{cache_ver()}|{raw}".encode()).hexdigest()[:16]
 
 
 def cached_path(plan: CraftStagePlan, step: int) -> Path:

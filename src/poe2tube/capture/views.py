@@ -15,10 +15,10 @@ import structlog
 
 from poe2tube.capture.stage import (
     CACHE_DIR,
-    CAPTURE_VER,
     READY_SELECTOR,
     SETTLE_MS,
     VIEWPORT,
+    cache_ver,
     ensure_video_mode,
     ensure_vite,
     pob_json,
@@ -87,7 +87,7 @@ def _pob(param: str, res: CraftStageResult) -> str:
 
 
 def view_path(query: str) -> Path:
-    key = hashlib.sha256(f"{CAPTURE_VER}|{query}".encode()).hexdigest()[:16]
+    key = hashlib.sha256(f"{cache_ver()}|{query}".encode()).hexdigest()[:16]
     return VIEW_DIR / f"{key}.png"
 
 
