@@ -24,7 +24,7 @@ from poe2tube.capture.stage import (
     pob_json,
 )
 from poe2tube.contracts.craft_stage import CraftStagePlan, CraftStageResult
-from poe2tube.script.model import Scene
+from poe2tube.script.model import DEFENCE_KINDS, Scene
 from poe2tube.video.results import ResultSet
 
 log = structlog.get_logger()
@@ -73,6 +73,15 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
             q += _pob("b_pob", b) + f"&b_step={scene.b_step if scene.b_step is not None else 9999}"
             q += f"&b_label={urllib.parse.quote(labels[1] if len(labels) > 1 else 'B')}"
         return q if scene.reveal else q + "&hl=0"
+    if scene.kind in DEFENCE_KINDS:
+        # 防御の仕組みの画面: 値は台本の def_params (無ければ ExileDesk の既定)。pob があれば渡す
+        params = urllib.parse.urlencode({k: str(v) for k, v in (scene.def_params or {}).items()})
+        pob = (
+            _pob("pob", res)
+            if res.pob is not None and "life" not in (scene.def_params or {})
+            else ""
+        )
+        return f"{CLIP}&view={scene.kind}" + (f"&{params}" if params else "") + pob
     if scene.kind == "resists" and scene.resists in rs.resists:
         raw = rs.resists[scene.resists].model_dump_json()
         q = f"{CLIP}&view=resists&r={urllib.parse.quote(raw)}&act={scene.act}"

@@ -250,3 +250,33 @@ def test_reading_kaiju() -> None:
     from poe2tube.script.reading import normalize_speech
 
     assert normalize_speech("青を解呪するわ") == "青をかいじゅするわ"
+
+
+def test_tier_is_not_dan() -> None:
+    """「段」は使わない (ティアと紛らわしい)。段階・手段などの別の言葉はよい (kyohei 2026-09-30)."""
+    from poe2tube.script.lint import lint_lines
+    from poe2tube.script.model import Line
+
+    def ln(text: str, kind: str = "item") -> Line:
+        sc: dict[str, object] = {"kind": kind, "step": 0}
+        if kind == "tiers":
+            sc = {"kind": "tiers", "mod": "FireResistance"}
+        return Line.model_validate({"speaker": "metan", "text": text, "scene": sc})
+
+    bad = [ln("T5 の段まで付くわ。"), ln("金の段が一番上よ。"), ln("ここから 1 段ずつ見ていくわ。")]
+    ok = [ln("段階を踏むの。"), ln("防御の手段が多いわ。"), ln("値段の話はしないわ。")]
+    assert all(any("「段」" in p for p in lint_lines([x])) for x in bad)
+    assert not any("「段」" in p for p in lint_lines(ok))
+
+
+def test_defence_scene_query() -> None:
+    from poe2tube.capture.views import view_query
+    from poe2tube.contracts.craft_stage import CraftStageResult
+
+    res = CraftStageResult.model_validate(_load("result-quarterstaff-pob.json"))
+    sc = Scene(kind="layers", def_params={"life": 500, "outcome": "evade", "red": "1"})
+    q = view_query(sc, ResultSet(res))
+    assert q is not None and "view=layers" in q and "life=500" in q and "outcome=evade" in q
+    assert "&pob=" not in q  # life を指定した時は PoB のキャラを使わない
+    with pytest.raises(ValueError):
+        Scene(kind="item", step=0, def_params={"life": 1})

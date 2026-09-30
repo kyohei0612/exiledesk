@@ -31,7 +31,14 @@ SceneKind = Literal[
     "ttk",
     "hit",
     "resists",
+    "layers",
+    "armour",
+    "evasion",
+    "es",
+    "bases",
 ]
+# 防御の仕組みの画面 (ExileDesk 要望 ㉒)。中身は def_params をそのまま URL に渡す
+DEFENCE_KINDS = ("layers", "armour", "evasion", "es", "bases")
 POB_KINDS = ("dps", "ttk", "hit")  # 結果 JSON の pob (PoB の計算) が要る画面
 MAIN = "main"  # compare_with でメインの実演を指す (demo の省略 = メインと同じ)
 Element = Literal["fire", "cold", "lightning", "chaos"]
@@ -107,6 +114,11 @@ class Scene(BaseModel):
     act: int | None = Field(
         default=None, ge=-60, le=0, description="resists: ペナルティ (0 = アクト 1 … -60 = エンド)"
     )
+    def_params: dict[str, str | int | float] | None = Field(
+        default=None,
+        description="防御の画面 (layers / armour / evasion / es / bases) に渡す値 "
+        "(例 life / es / armour / evasion / deflect / block / lvl / dmg / kind / outcome / red)",
+    )
 
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
@@ -130,6 +142,7 @@ class Scene(BaseModel):
             self.dmg,
             self.resists,
             self.act,
+            tuple(sorted((self.def_params or {}).items())),
         )
 
     @model_validator(mode="before")
@@ -169,6 +182,10 @@ class Scene(BaseModel):
             raise ValueError("hit には elem が必要 (elem・res・dmg は hit 専用)")
         if (self.res is not None or self.dmg is not None) and self.kind != "hit":
             raise ValueError("res・dmg は hit 専用")
+        if self.def_params is not None and self.kind not in DEFENCE_KINDS:
+            raise ValueError(
+                "def_params は防御の画面 (layers / armour / evasion / es / bases) 専用"
+            )
         if self.labels is not None and self.kind != "ttk":
             raise ValueError("labels は ttk 専用")
         if self.focus is not None and self.kind != "stage":
@@ -224,6 +241,10 @@ class VideoScript(BaseModel):
     )
     resists: dict[str, str] = Field(
         default_factory=dict, description="耐性の画面の組 {キー: --resists の出力パス} (⑰)"
+    )
+    practice: bool = Field(
+        default=True,
+        description="False = クラフトの実演 (stage) の無い回 (防御の解説など)。手の検査をしない",
     )
     sections: list[Section] = Field(min_length=1)
 

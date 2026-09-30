@@ -34,7 +34,18 @@ from poe2tube.video.results import ResultSet
 log = structlog.get_logger()
 ANIM_DIR = CACHE_DIR / "anim"
 # ExileDesk v0.1.331 で動きがある画面 (use-anim.ts を使う物)
-ANIM_KINDS = ("compare", "dps", "ttk", "hit", "resists")
+ANIM_KINDS = (
+    "compare",
+    "dps",
+    "ttk",
+    "hit",
+    "resists",
+    "layers",
+    "armour",
+    "evasion",
+    "es",
+    "bases",
+)
 TAIL_SECONDS = 0.3  # 動きが終わった後の止め (切り出しの余白)
 
 
