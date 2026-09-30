@@ -9,6 +9,7 @@
  * 合計は値段の分かった物だけ足し、取引所の相場を取り終えてから出す。
  *   段と割合 → [[useRareTiers.ts]]、手入れの値段 → [[manual-prices.ts]]
  */
+import { recordHistory } from "../../services/history";
 import { computed, ref, shallowRef } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { decodePobCode, parseBuild, type BuildItem, type ParsedBuild } from "../../services/build-copy/pob";
@@ -116,6 +117,8 @@ export function useBuildCopy() {
       progress.value = "ユニークの相場を読んでいます (poe.ninja)";
       await loadUniquePrices((d, t) => (progress.value = `ユニークの相場を読んでいます (poe.ninja ${d}/${t})`));
       priceTick.value++;
+      // 履歴 (2026-09-30): 貼った物と読めた装備・ジェム
+      recordHistory("build-copy", "load", { code: code.value, build: build.value });
       // 読み込んだらそのまま取引所の相場も取る。合計は取り終えてから出す
       // (オーナー 2026-09-27「その最安値を自動で計算に加えて」「順番にレアもそのまま取得しちゃっていいよ」)
       void auto.run();

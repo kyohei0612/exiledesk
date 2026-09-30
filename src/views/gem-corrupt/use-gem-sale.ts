@@ -5,6 +5,7 @@
  *   売値: 手入力、または trade2 で最安を 3 回検索 (レベル 21 / 品質 23% / 完成品)。
  *         「鑑定 ↗」は API を叩かず ?q= でトレードサイトを開く (レート制限に当たらない)。
  */
+import { recordHistory } from "../../services/history";
 import { tradeLock, tradeTrace } from "../../state/trade-lock";
 import { ref, watch, type ComputedRef, type Ref } from "vue";
 import { marketStore } from "../../state/market-store";
@@ -219,6 +220,8 @@ export function useGemSale({ selected, tradeLeague, spiritBump, baseBump, fetchE
       if (!spiritGemMeasured(gem.en) && baseSourceOf(gem.en) !== "buy") await measureOriginal(gem, force);
       // 画面に出すのは日本語にしてから (2026-09-21 に戻した)
       priceError.value = tradeErrorJa(tradeAuto.lastError.value);
+      // 履歴 (2026-09-30): 3 条件の売値と出品数 (取引所の結果そのまま)
+      if (seq === fetchSeq) recordHistory("gem-corrupt", "sale", { gem: gem.en, sale: sale.value, saleInfo: saleInfo.value, error: priceError.value });
       // 途中で待ちに入った (どれかが null で返った) なら、明けたら続きを取る
       if (seq === fetchSeq && isRateLimited()) retryWhenFree.value = true;
     } finally {

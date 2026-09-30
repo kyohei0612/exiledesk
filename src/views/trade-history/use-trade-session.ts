@@ -3,6 +3,7 @@
  *
  * TradeHistory.vue から切り出し (2026-09-26)。画面のライフサイクル (mount / activated / unmount) もここで張る。
  */
+import { recordHistory } from "../../services/history";
 import { computed, onActivated, onMounted, onUnmounted, ref, watch } from "vue";
 import { askConfirm } from "../../state/confirm-dialog";
 import { markSessionExpired, refreshSession as refreshGlobalSession } from "../../state/poe-session";
@@ -161,6 +162,7 @@ export function useTradeSession() {
       const r = await fetchAndMerge(game.value, league.value);
       message.value = { ok: r.ok, text: r.message };
       reloadStored();
+      recordHistory("trade-history", "fetch", { game: game.value, league: league.value, ok: r.ok, message: r.message, expired: !!r.expired });
       if (r.expired) {
         markSessionExpired();
         loggedIn.value = false;

@@ -17,6 +17,8 @@ import SocketPicker from "./SocketPicker.vue";
 import { cardOfState, cardOfTarget } from "./item-card-data";
 import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
+import { recordHistory } from "../../services/history";
+import { zeroStart } from "./craft-settings";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
 import { startKindOf } from "./start-kind";
 import type { RedoPlan } from "./redo-cost";
@@ -68,8 +70,22 @@ async function loadAuto(): Promise<void> {
     plan.value = got.plan;
     picked.value = { label: got.greater, expected: got.simExpected, done: got.simDone };
     t.setAll(got.nodes);
+    // 履歴 (2026-09-30 オーナー「後からおかしいってなった時に即見れるように」): この条件で組み直せる入力と、組んだ結果
+    recordHistory("craft-calc", "auto-tree", {
+      base: c.base.value?.name ?? null,
+      zeroStart: zeroStart.value,
+      item: c.item.value,
+      targets: c.targets.value,
+      fractured: c.fracturedTargets.value,
+      sockets: c.socketOn.value,
+      start: t.start.value,
+      picked: picked.value,
+      plan: plan.value,
+      nodes: got.nodes,
+    });
   } catch (e) {
     autoError.value = `自動で組めませんでした: ${e instanceof Error ? e.message : String(e)}`;
+    recordHistory("craft-calc", "auto-error", { error: autoError.value, base: c.base.value?.name ?? null, targets: c.targets.value, start: t.start.value });
   } finally {
     autoBusy.value = false;
     if (autoAgain) { autoAgain = false; void loadAuto(); }

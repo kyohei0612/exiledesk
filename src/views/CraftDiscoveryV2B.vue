@@ -13,6 +13,7 @@
   取得状態は state/craft-v2-store (シングルトン) が持ち、App.vue 起動時から fetch が走る。
 -->
 <script setup lang="ts">
+import { recordHistory } from "../services/history";
 import { computed, onMounted, ref, watch } from "vue";
 import { goCraft } from "../state/craft-basket";
 import { isCraftableBase, prepareCraftData } from "../services/craft-v2/to-craft";
@@ -70,6 +71,8 @@ function cancelSelect(): void {
 async function toCraft(): Promise<void> {
   const all = [...d.activeSlotMods.value.prefix, ...d.activeSlotMods.value.suffix];
   const chosen = all.filter((m) => sel.selectedMods.value.has(m.rawTemplate)).map((mod) => ({ mod, tierIdx: sel.getModTierIdx(mod) }));
+  // 履歴 (2026-09-30): 計算機へ渡したベースと MOD (段)。計算機の側は craft-calc に残る
+  recordHistory("top-mods", "to-craft", { base: craftBase.value, ascendancy: d.activeAscendancyId.value, build: d.activeBuild.value, slot: d.activeSlot.value, mods: chosen.map((c) => ({ text: c.mod.rawTemplate, tierIdx: c.tierIdx })) });
   if (await goCraft(craftBase.value, chosen)) cancelSelect();
 }
 

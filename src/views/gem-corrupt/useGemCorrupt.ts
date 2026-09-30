@@ -10,7 +10,8 @@
  * 2026-09-26: ジェム一覧は gem-list.ts、素材は use-gem-materials.ts、売値は use-gem-sale.ts へ分けた。
  * 呼ぶ側は今まで通りここから取れる (返す物の形も同じ)。
  */
-import { computed, ref } from "vue";
+import { recordHistory } from "../../services/history";
+import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
 import { setBaseSource as saveBaseSource, type BaseSource } from "../../state/gem-base-source";
 import { bestRoute, DEFAULT_PARAMS, evaluateRoutes, vaalProbabilities, type CorruptParams, type RouteResult } from "./model";
@@ -117,6 +118,11 @@ export function useGemCorrupt() {
   const routes = computed<RouteResult[]>(() => evaluateRoutes(materials.value, sale.value, params.value));
   const best = computed<RouteResult | null>(() => bestRoute(routes.value));
   const divineRate = computed(() => rates.value.divine);
+  // 履歴 (2026-09-30): 経路の比べ (素材・売値・前提 → 経路ごとの結果と最も得)。同じ中身は書かない (recordHistory が弾く)
+  watch(best, () => {
+    if (!selected.value) return;
+    recordHistory("gem-corrupt", "routes", { gem: selected.value.en, params: params.value, materials: materials.value, sale: sale.value, routes: routes.value, best: best.value });
+  });
 
   return {
     query,

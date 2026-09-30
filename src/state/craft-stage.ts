@@ -12,6 +12,7 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
+import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef } from "vue";
 import { loadHtcPatch } from "../services/htc/patch";
 import { loadCurrencyHover } from "../services/currency/currency-hover";
@@ -269,6 +270,7 @@ export const craftStage = {
     });
     log.value = [...log.value, p];
     item.value = p.after;
+    recordHistory("craft-stage", "use", { base: base.value, itemLevel: itemLevel.value, seed: seed.value, startMods: startMods.value, out: p.out, after: p.after });
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length) omens.value = omens.value.filter((o) => !ate.includes(o));
@@ -337,6 +339,7 @@ export const craftStage = {
       log.value = steps;
       item.value = final;
       error.value = null;
+      recordHistory("craft-stage", "replay", { plan, step, final, steps: steps.map((s) => s.out) });
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     }

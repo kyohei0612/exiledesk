@@ -6,6 +6,7 @@
  *
  * 2026-09-19 に GemWatch.vue (778 行) から切り出した。中身は変えていない。
  */
+import { recordHistory } from "../../services/history";
 import { computed, ref, type Ref } from "vue";
 import { cancelSweep, CYCLE_OFF, DEFAULT_CYCLE_SECS, loadFlowStatus, setFlowCycle, sweepNow, tradePaceSecs, tradeRateSecs, type FlowStatus } from "../../services/market-flow";
 import { fmtClock } from "../../utils/format-time";
@@ -54,6 +55,7 @@ export function useSweep(opts: {
     try {
       const r = await sweepNow();
       await reload();
+      recordHistory("gem-watch", "sweep", { reason: reason ?? null, result: r, status: status.value });
       const st = status.value;
       const left = st?.retry_keys ?? 0;
       const failed = st?.last_failed ?? 0;

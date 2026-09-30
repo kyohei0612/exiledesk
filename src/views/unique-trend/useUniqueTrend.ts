@@ -10,6 +10,7 @@
  *   - 取った一覧はリーグごとに 30 分覚える (タブを開き直すたびに取らない)
  *   - 型・定数・行の変換・キャッシュは [[unique-trend-data.ts]] (2026-09-26 分割)
  */
+import { recordHistory } from "../../services/history";
 import { computed, ref, shallowRef, watch } from "vue";
 import { fetchNinjaOverview, NINJA_UNIQUE_KINDS, type NinjaUniqueKind } from "../../api/ninja-economy";
 import { marketStore } from "../../state/market-store";
@@ -158,6 +159,7 @@ export function useUniqueTrend() {
         }
       }
       fetchedAt.value = Date.now();
+      recordHistory("unique-trend", "fetch", { league: league.value, error: error.value, kinds: [...byKind.value.entries()].map(([k, v]) => ({ kind: k, rows: v.rows.length })) });
     } finally {
       if (my === gen) {
         loading.value = false;

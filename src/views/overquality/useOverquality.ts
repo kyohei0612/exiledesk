@@ -5,6 +5,7 @@
  *   素材価格:   poe2scout。売値の初期値は poe2scout のユニーク価格 (品質を問わない値なので目安)
  *   期待値:     overquality/model.ts
  */
+import { recordHistory } from "../../services/history";
 import { tradeLock } from "../../state/trade-lock";
 import { computed, ref, watch } from "vue";
 import { marketStore } from "../../state/market-store";
@@ -149,6 +150,7 @@ export function useOverquality() {
         if (v != null) autoSalePrice.value = v;
         if (url) saleSearchUrl.value = url;
       }
+      recordHistory("overquality", "prices", { preset: presetId.value, base: baseEn.value, unique: uniqueEn.value, params: params.value, basePrice: autoBasePrice.value, salePrice: autoSalePrice.value, baseUrl: baseSearchUrl.value, saleUrl: saleSearchUrl.value });
     } finally {
       if (seq === fetchSeq) pricing.value = false;
       tradeLock.end("overquality", ticket);

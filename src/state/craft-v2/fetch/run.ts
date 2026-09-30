@@ -3,6 +3,7 @@
  *
  * fetch.ts から切り出し (2026-09-26)。
  */
+import { recordHistory } from "../../../services/history";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import type { AggregatedAscendancy } from "../../../services/craft-v2/types";
 import { startCraftDiscoveryV2, TOP_ASCENDANCIES } from "../../../services/craft-v2/runner";
@@ -142,6 +143,8 @@ export async function runFetch(useCache: boolean, opts?: { background?: boolean;
         bgStaging.clear();
       }
       craftV2Store.snapshot = snap;
+      // 履歴 (2026-09-30): 取った時点 (中身は craft_v2_cache.json)
+      recordHistory("top-mods", "fetched", { snapshot: snap, ascendancies: craftV2Store.ascendancies.length });
       craftV2Store.loading = false;
       craftV2Store.backgroundRefresh = false;
       craftV2Store.cacheSavedAt = Math.floor(Date.now() / 1000);

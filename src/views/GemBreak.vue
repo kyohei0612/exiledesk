@@ -8,6 +8,7 @@
     src-tauri/src/gem_break.rs  取得 + 集計 (gem-break-progress を emit)
 -->
 <script setup lang="ts">
+import { recordHistory } from "../services/history";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -161,6 +162,7 @@ async function fetchNow(): Promise<void> {
       req: { class: selectedClass.value, topN: topN.value, spread: selectedClass.value ? spread.value : 1 },
     });
     result.value = r;
+    recordHistory("gem-break", "fetch", { klass: selectedClass.value, topN: topN.value, spread: spread.value, result: r });
     // 取得しただけでは監視は切り替えない (オーナー指示 2026-09-17:
     // 「アセンダンシー変えたら一覧取得後に表示して、自動取得開始ボタンがあれば便利」)。
     // 上の自動ジェム監視に「新しい一覧で監視を開始」ボタンが出るので、そこで明示的に切り替える。

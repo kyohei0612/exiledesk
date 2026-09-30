@@ -7,6 +7,7 @@
  *   行ごとの状態: 順番待ち → 取得中 (今の段階・取引所の間隔待ち) → 済み。今どの行か (current) は画面の進み具合に出す
  *   レアの値段は手入れの欄に入れる (上書きできる)。ユニークはその値段で poe.ninja の相場を置き換える
  */
+import { recordHistory } from "../../services/history";
 import { computed, reactive, ref, type Ref, type ShallowRef } from "vue";
 import { autoRarePrice, autoUniquePrice, type RareAutoResult } from "../../services/build-copy/rare-auto";
 import { uniqueTradeQuery } from "../../services/build-copy/prices";
@@ -80,7 +81,11 @@ export function useAutoPrices(deps: {
         done.value++;
       }
     } finally {
-      if (g === gen) finish();
+      if (g === gen) {
+        finish();
+        // 履歴 (2026-09-30): 行ごとの取引所の結果と、選んだ段・倍率
+        recordHistory("build-copy", "prices", { results: Object.fromEntries(results), picked: Object.fromEntries(deps.picked), ratios: Object.fromEntries(deps.ratios) });
+      }
       tradeLock.end("build-copy", ticket);
     }
   }

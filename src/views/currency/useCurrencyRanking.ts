@@ -6,6 +6,7 @@
  *   - filteredRanking: カテゴリ + 検索で絞り、神換算降順
  *   - 前回表示の保存 / カテゴリ集計 / 絞り込み / 7 日の並列取得は [[currency-ranking-cache.ts]] (2026-09-26 分割)
  */
+import { recordHistory } from "../../services/history";
 import { computed, reactive, ref, watch } from "vue";
 import {
   fetchItems,
@@ -215,6 +216,8 @@ export function useCurrencyRanking() {
       trend7d.clear(); // 新データなので 7 日キャッシュは破棄して取り直す
       trends.value = trendMap;
       lastUpdated.value = new Date();
+      // 履歴 (2026-09-30): 取った相場 (件数が多いので ID・値段・一番安い払い方だけ)
+      recordHistory("currency-ranking", "refresh", { league: league.value, divine: divinePrice.value, chaosDivine: chaosDivinePrice.value, items: ranked.map((r) => ({ id: r.apiId, ex: r.exaltedPrice, pay: r.bestPay })) });
       fromCache.value = false;
       saveSnapshot();
 

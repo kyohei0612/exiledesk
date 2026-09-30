@@ -95,3 +95,49 @@ pub fn line_at(path: &std::path::Path, msg: &str) {
     }
     eprintln!("{msg}");
 }
+
+// ============================================================================
+// 画面ごとの履歴 (2026-09-30 オーナー「全てにおいて履歴、ログはあとからおかしいってなった時に即見れるような作りにすべき」)
+// ============================================================================
+//
+// app_data_dir/history/<画面>.jsonl に 1 行 1 件 (JSON) で追記する。行の頭に at (日本時間の文字) を足す。
+// 2 MB を超えたら <画面>.jsonl.1 に回す (2 世代)。1 件は 200 KB で切る (巨大なツリーで膨らませない)。
+// 何を残すかは画面側 (src/services/history.ts の recordHistory)。
+//   読み方: 開発側は app_data_dir/history/ を開けばその時の入力と結果が並んでいる
+
+const HISTORY_ROTATE_BYTES: u64 = 2 * 1024 * 1024;
+const HISTORY_ENTRY_MAX: usize = 200 * 1024;
+
+/// 画面の名前 → ファイル名 (英小文字・数字・-_ だけ。他は _)
+fn history_file(feature: &str) -> Option<PathBuf> {
+    let dir = path()?.parent()?.join("history");
+    let _ = std::fs::create_dir_all(&dir);
+    let name: String = feature.chars().take(40).map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c.to_ascii_lowercase() } else { '_' }).collect();
+    Some(dir.join(format!("{}.jsonl", if name.is_empty() { "misc".into() } else { name })))
+}
+
+#[tauri::command]
+pub fn history_write(feature: String, entry: serde_json::Value) {
+    let Some(p) = history_file(&feature) else { return };
+    let mut obj = serde_json::Map::new();
+    obj.insert("at".into(), serde_json::Value::String(now_text()));
+    match entry {
+        serde_json::Value::Object(m) => obj.extend(m),
+        other => {
+            obj.insert("data".into(), other);
+        }
+    }
+    let mut text = serde_json::Value::Object(obj).to_string();
+    if text.len() > HISTORY_ENTRY_MAX {
+        let head: String = text.chars().take(HISTORY_ENTRY_MAX / 2).collect();
+        text = serde_json::json!({ "at": now_text(), "truncated": true, "head": head }).to_string();
+    }
+    if let Ok(meta) = std::fs::metadata(&p) {
+        if meta.len() > HISTORY_ROTATE_BYTES {
+            let _ = std::fs::rename(&p, p.with_extension("jsonl.1"));
+        }
+    }
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&p) {
+        let _ = writeln!(f, "{text}");
+    }
+}

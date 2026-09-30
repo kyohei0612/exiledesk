@@ -8,6 +8,7 @@
  *
  * 2026-09-19 に useRareCraft.ts (551 行) から切り出した。中身は変えていない。
  */
+import { recordHistory } from "../../services/history";
 import { tradeLock } from "../../state/trade-lock";
 import { computed, onScopeDispose, ref, type ComputedRef, type Ref } from "vue";
 import { autoMinWithUrl, isRateLimited, tradeAuto } from "../../services/trade2/auto-price";
@@ -120,6 +121,7 @@ export function useRarePrices(o: {
     } finally {
       tradeLock.end("rare-craft", ticket);
       if (seq === fetchSeq) {
+        recordHistory("rare-craft", "prices", { fetched: FETCHED.value, error: priceError.value });
         pricing.value = false;
         remaining.value = 0;
         if (dirty) {
