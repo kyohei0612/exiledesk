@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { diffGemGroup, diffGems, diffMods, diffSlot, templ } from "../src/services/pob-check/build-diff";
-import type { GemView, GroupView, ItemView, Summary } from "../src/services/pob-check/api";
+import { adoptCandidates, diffGemGroup, diffGems, diffMods, diffSlot, templ } from "../src/services/pob-check/build-diff";
+import { prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../src/services/pob-check/trade-links";
+import type { GemView, GroupView, ItemView, Summary, TreeNode } from "../src/services/pob-check/api";
 
-const item = (o: Partial<ItemView>): ItemView => ({ title: "x", base: "Ruby Ring", rarity: "RARE", implicits: [], runes: [], explicits: [], corrupted: false, ...o });
+const item = (o: Partial<ItemView>): ItemView => ({ title: "x", base: "Ruby Ring", rarity: "RARE", implicits: [], runes: [], explicits: [], corrupted: false, raw: "", ...o });
 const gem = (name: string, o: Partial<GemView> = {}): GemView => ({ j: 1, name, level: 20, quality: 0, corrupt: 0, enabled: true, support: name.includes("Support") || name.endsWith(" II") || name.endsWith(" III"), maxLevel: 40, ...o });
 const group = (i: number, gems: GemView[], o: Partial<GroupView> = {}): GroupView => ({ i, label: "", enabled: true, meta: false, gems, skills: [], ...o });
 const sum = (groups: GroupView[]): Summary => ({ char: { class: "", ascendancy: "", level: 1 }, stats: {}, config: { powerCharges: 0, powerChargesInput: 0 }, mainSocketGroup: 1, groups, items: [], tree: { alloc: [], granted: [], jewels: [] }, weaponSet: 1 });
@@ -84,8 +85,81 @@ describe("build-diff (相手とのジェムの差)", () => {
     expect(d.groups[1]).toMatchObject({ kind: "missing", active: { name: "Firestorm" }, others: [{ name: "Zenith II" }] });
   });
 
+  it("同じアクティブの組が複数 (CoEA が 2 つ) は、中のジェムが一番重なる組と合わせる (順ではない)", () => {
+    const mine = sum([
+      group(1, [gem("Cast on Elemental Ailment"), gem("Arc"), gem("Arc"), gem("Pinpoint Critical")]),
+      group(2, [gem("Cast on Elemental Ailment"), gem("Lightning Warp"), gem("Snap"), gem("Pinpoint Critical")]),
+    ]);
+    const target = sum([
+      group(6, [gem("Cast on Elemental Ailment"), gem("Lightning Warp"), gem("Snap"), gem("Pinpoint Critical"), gem("Execute III")]),
+      group(9, [gem("Cast on Elemental Ailment"), gem("Arc"), gem("Arc"), gem("Pinpoint Critical"), gem("Execute III")]),
+    ]);
+    const d = diffGems(mine, target);
+    expect(d.groups).toEqual([
+      expect.objectContaining({ kind: "changes", gi: 2, lines: [{ gem: "Execute III", kind: "missing", from: null, to: 20 }] }),
+      expect.objectContaining({ kind: "changes", gi: 1, lines: [{ gem: "Execute III", kind: "missing", from: null, to: 20 }] }),
+    ]);
+  });
+
   it("差の無い組は出さない", () => {
     const g = [gem("Spark"), gem("Pierce III")];
     expect(diffGems(sum([group(1, g)]), sum([group(1, g)]))).toEqual({ groups: [], onlyMine: 0 });
+  });
+});
+
+describe("build-diff (取り入れの試算の対象)", () => {
+  const node = (id: number, g: number, t: TreeNode["t"], n = ""): TreeNode => ({ id, x: 0, y: 0, t, n, l: [], g });
+  const tree: TreeNode[] = [
+    node(1, 10, "n"), node(2, 10, "N", "Heartstopper"), node(3, 10, "n"),
+    node(4, 20, "n"), node(5, 20, "n"),
+    node(6, 30, "K", "Pain Attunement"),
+    node(7, 40, "N", "Wicked Pall"), node(8, 40, "N", "Sage"),
+    node(9, 50, "A", "Start"),
+  ];
+  const withTree = (s: Summary, alloc: number[], granted: number[] = []): Summary => ({ ...s, tree: { alloc, granted, jewels: [] } });
+  const withItems = (s: Summary, items: Array<[string, ItemView]>): Summary => ({ ...s, items: items.map(([slot, it]) => ({ slot, jewel: false, changed: false, item: it })) });
+
+  it("装備: 差のある欄だけ (ユニークは装備ごと、レアは足りない行付き)。ジェム: 差のある組 (自分の組の番号、無ければ 0 = 足す)", () => {
+    const mage = item({ title: "Mageblood", base: "Utility Belt", rarity: "UNIQUE", raw: "Rarity: UNIQUE\nMageblood" });
+    const mine = withItems(sum([group(1, [gem("Spark"), gem("Pierce III")])]), [["Belt", item({ title: "Rift Post" })], ["Ring 1", item({ explicits: ["+38 to maximum Life"] })], ["Ring 2", item({ explicits: ["+50 to maximum Life"] })]]);
+    const target = withItems(sum([group(3, [gem("Spark"), gem("Pierce III"), gem("Embitter Support")]), group(4, [gem("Firestorm")])]), [["Belt", mage], ["Ring 1", item({ explicits: ["+101 to maximum Life"], raw: "ring" })], ["Ring 2", item({ explicits: ["+50 to maximum Life"] })]]);
+    const c = adoptCandidates(mine, target, []);
+    expect(c.map((x) => x.key)).toEqual(["item:Belt", "item:Ring 1", "gems:0:Spark", "gems:1:Firestorm"]);
+    expect(c[0]).toMatchObject({ kind: "item", slot: "Belt", unique: true, to: mage, mods: [] });
+    expect(c[1]).toMatchObject({ kind: "item", slot: "Ring 1", unique: false, mods: [{ from: "+38 to maximum Life", to: "+101 to maximum Life" }] });
+    expect(c[2]).toMatchObject({ kind: "gems", gi: 1, lines: [{ gem: "Embitter Support", kind: "missing" }] });
+    expect((c[2] as { gems: GemView[] }).gems.map((g) => g.name)).toEqual(["Spark", "Pierce III", "Embitter Support"]);
+    expect(c[3]).toMatchObject({ kind: "gems", gi: 0, active: { name: "Firestorm" }, lines: [] });
+  });
+
+  it("ツリー: 相手にあって自分に無いノードをまとまり (g) で束ね、ノータブル / キーストーンを含む束だけ。装備が与える物・始点・ツリーに無い物は除く", () => {
+    const mine = withTree(sum([]), [1, 7], [8]);
+    const target = withTree(sum([]), [1, 2, 3, 4, 5, 6, 7, 8, 9, 999]);
+    const c = adoptCandidates(mine, target, tree);
+    expect(c).toEqual([
+      // 束 10: 1 は自分も取っている。ノータブルの名前が束の名前
+      { kind: "nodes", key: "nodes:10", name: "Heartstopper", ids: [2, 3], names: ["Heartstopper"] },
+      // 束 20 は小さいノードだけなので出さない。束 30 はキーストーン 1 つ
+      { kind: "nodes", key: "nodes:30", name: "Pain Attunement", ids: [6], names: ["Pain Attunement"] },
+      // 束 40: 7 は取っている、8 は装備が与えている → 何も残らないので出ない。束 50 は始点 (A) なので出ない
+    ]);
+  });
+});
+
+describe("trade-links (取引所で探す = URL の条件だけ、API は叩かない)", () => {
+  it("ユニークは名前 + ベース", () => {
+    expect(uniqueSearchQuery({ title: "Mageblood", base: "Utility Belt" })).toMatchObject({ query: { name: { option: "Mageblood" }, type: "Utility Belt" } });
+  });
+  it("レアの足りない行は取引所の条件の番号に引いて数値を下限に。引けない行は missing", async () => {
+    await prepareTradeLinks();
+    const r = rareModsSearchQuery("Sapphire Ring", ["+101 to maximum Life", "+58% to Lightning Resistance", "this line does not exist"]);
+    expect(r).not.toBeNull();
+    expect(r!.missing).toEqual(["this line does not exist"]);
+    const q = r!.query as { query: { type: string; stats: Array<{ type: string; value?: { min: number }; filters: Array<{ id: string; value?: { min?: number } }> }> } };
+    expect(q.query.type).toBe("Sapphire Ring");
+    // 明示の MOD は「普通 / 冒涜 / 固定済み のどれでも」(count 1) の組に。数値はそのまま下限
+    const mins = q.query.stats.flatMap((g) => g.filters.map((f) => f.value?.min)).filter((v) => v != null);
+    expect(mins).toEqual(expect.arrayContaining([101, 58]));
+    expect(rareModsSearchQuery("Sapphire Ring", ["nothing here"])).toBeNull();
   });
 });

@@ -8,10 +8,11 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary, estimateItem, estimateGems, estimateNodes, setGroupGems, type EstimateRaw, type EstimateStats, type EstimateItemRaw, type EstimateGemsRaw, type EstimateNodesRaw } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
+import { adoptCandidates, type AdoptCandidate } from "../../services/pob-check/build-diff";
 import { parseNinjaUrl } from "../../services/build-copy/ninja-url";
 import passivesJa from "../../i18n/passives-ja-client.json";
 import { toPobItem } from "../../services/pob-check/item-text";
@@ -52,6 +53,38 @@ const note = (s: string): void => {
 };
 /** パッシブツリーの形 (読み込みのたびに 1 回取る) */
 const treeNodes = shallowRef<TreeNode[]>([]);
+
+/**
+ * 取り入れの試算 (2026-10-03 オーナー「まんま真似できないけど部分的に真似できる所、ここだけ真似しようかな」) の 1 行。
+ * dps = 取り入れた後の上のバーのスキルの DPS (自分の行の DPS × PoB の with / base。物差しは行と同じなので取り入れた後の行とそろう)、
+ * stats = ライフ等の変化 (後 − 前)。lines = ユニークの「ここが効く」(行を抜くと DPS が下がる割合、大きい順の上位 3 つ)
+ */
+export interface Estimate {
+  c: AdoptCandidate;
+  dps: number;
+  stats: EstimateStats;
+  lines?: Array<{ line: string; loss: number }>;
+  /** PoB が知らないジェム (計算に入っていない) */
+  unknown?: string[];
+  /** 両手武器で外れる欄 */
+  displaced?: string[];
+  /** ツリーの束: 本当に足したノードの数 */
+  n?: number;
+  /** 組を足す時: その組の最初のスキルの DPS */
+  newDps?: number;
+  /** 組の差し替えで上のバーのスキルがその組から無くなる (dps は 0) */
+  focusLost?: boolean;
+  /** 使っていない武器セットの欄 (今の DPS は変わらない) */
+  unusedSet?: boolean;
+  /** 試算できなかった理由 */
+  error?: string;
+}
+/** 試算の結果。of = 試算した時の自分 (cur が変わったら古い = もう一度試算)、dps = その時の上のバーのスキルの DPS */
+const estimates = shallowRef<{ list: Estimate[]; of: Summary; focusKey: string; dps: number } | null>(null);
+const estimating = ref(false);
+const estimateProgress = ref("");
+/** 取り入れた項目の鍵 (表に「取り入れた」の印) */
+const adopted = ref<Set<string>>(new Set());
 
 /**
  * スキルの鍵。比べる時に同じスキル同士を合わせる。組の番号は読み込み直しで入れ替わることがあるので使わず、
@@ -238,6 +271,111 @@ export function usePobCheck() {
     target.value = null;
     targetPlan.value = null;
     targetFrom.value = "";
+    estimates.value = null;
+    adopted.value = new Set();
+  }
+
+  // ---------------------------------------------------------------- 取り入れの試算 (2026-10-03)
+  /** 試算の対象 (差の 1 項目ずつ)。相手が無ければ空 */
+  const candidates = computed(() => (cur.value && target.value ? adoptCandidates(cur.value, target.value, treeNodes.value) : []));
+  /** 試算した後に自分を変えた (取り入れた・他で変えた) = 数字が古い */
+  const estimatesStale = computed(() => !!estimates.value && (estimates.value.of !== cur.value || estimates.value.focusKey !== focus.value?.key));
+  /** ライフ等の変化 (後 − 前) */
+  const statDelta = (r: EstimateRaw): EstimateStats => {
+    const out = {} as EstimateStats;
+    for (const k of Object.keys(r.statsWith) as Array<keyof EstimateStats>) out[k] = (r.statsWith[k] ?? 0) - (r.stats[k] ?? 0);
+    return out;
+  };
+  /**
+   * 候補を順に PoB で試算する (1 つ 1〜3 秒。装備はユニークだけ行ごとの効きも)。ビルドは変えない。
+   * 1 つ失敗しても残りは続け、その行に理由を出す
+   */
+  async function runEstimates(): Promise<void> {
+    const f = focus.value;
+    const mine = cur.value;
+    const list = candidates.value;
+    if (!f || !mine || !list.length || estimating.value || busy.value || loading.value) return;
+    estimating.value = true;
+    const out: Estimate[] = [];
+    try {
+      for (const [idx, c] of list.entries()) {
+        estimateProgress.value = `${idx + 1}/${list.length}`;
+        try {
+          const r = await run<EstimateItemRaw | EstimateGemsRaw | EstimateNodesRaw>(() =>
+            c.kind === "item" ? estimateItem(f.g.i, f.s.k, c.slot, c.to.raw, c.unique) : c.kind === "gems" ? estimateGems(f.g.i, f.s.k, c.gi, c.gems) : estimateNodes(f.g.i, f.s.k, c.ids),
+          );
+          const ratio = r.base > 0 ? r.with / r.base : 1;
+          const e: Estimate = { c, dps: f.s.game.dps * ratio, stats: statDelta(r) };
+          if ("lines" in r && r.lines) {
+            // 行を抜いた時に DPS が下がる割合 = その行の効き。下がらない行は出さない
+            e.lines = r.lines
+              .map((x) => ({ line: x.line, loss: r.with > 0 ? 1 - x.dps / r.with : 0 }))
+              .filter((x) => x.loss > 0.0005)
+              .sort((a, b) => b.loss - a.loss)
+              .slice(0, 3);
+          }
+          if ("displaced" in r && r.displaced.length) e.displaced = r.displaced;
+          if ("unknown" in r && r.unknown.length) e.unknown = r.unknown;
+          if ("focusLost" in r && r.focusLost) e.focusLost = true;
+          // 武器の欄が使っていない側の武器セット (Weapon 1 Swap を I で使っている時など) なら、今の DPS は変わらない
+          if (c.kind === "item" && /^Weapon/.test(c.slot)) e.unusedSet = c.slot.endsWith(" Swap") !== (mine.weaponSet === 2);
+          if ("n" in r) e.n = r.n;
+          if ("newDps" in r && r.newDps != null && c.kind === "gems" && c.gi === 0) {
+            const g = target.value?.groups.find((x) => x.gems.some((y) => y === c.active));
+            const ratio2 = g?.skills.find((s) => s.name === c.active.name)?.game.enemyRatio;
+            // 足した組の DPS は相手の行の物差し (敵側の割り戻し) が分からないので、相手の同じスキルの比があればそれで
+            e.newDps = r.newDps * (ratio2 ?? 1);
+          }
+          out.push(e);
+        } catch (err) {
+          out.push({ c, dps: f.s.game.dps, stats: {} as EstimateStats, error: msg(err) });
+        }
+      }
+      // DPS の変化が大きい順 (失敗は最後)
+      out.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || b.dps - a.dps);
+      estimates.value = { list: out, of: mine, focusKey: f.key, dps: f.s.game.dps };
+      recordHistory("pob-check", "adopt-estimate", {
+        skill: f.s.name,
+        dps: f.s.game.dps,
+        results: out.map((e) => ({ kind: e.c.kind, key: e.c.key, dps: Math.round(e.dps), life: e.stats.Life, error: e.error })),
+      });
+    } finally {
+      estimating.value = false;
+      estimateProgress.value = "";
+    }
+  }
+  /**
+   * 取り入れる: 装備 = 相手の物を自分の欄に (英語の PoB の文面なので changeItem がそのまま通す)、ジェム = 自分の組を相手の構成に (無い組は足す)、
+   * ツリー = 束のノードを 1 つずつ取る (PoB が始点からの道も取る。つながらないノードで止めて理由を出す)。返り値は画面に出す失敗の理由
+   */
+  async function adopt(c: AdoptCandidate): Promise<string | null> {
+    try {
+      if (c.kind === "item") {
+        await changeItem(c.slot, c.to.raw);
+      } else if (c.kind === "gems") {
+        const r = await act({
+          fn: () => setGroupGems(c.gi, c.gems.map((g) => ({ name: g.name, gemId: g.gemId, level: g.level, quality: g.quality, corrupt: g.corrupt, enabled: g.enabled }))),
+          history: ["adopt", (x) => ({ kind: "gems", gi: c.gi, active: c.active.name, gems: c.gems.map((g) => g.name), unknown: x.unknown })],
+          note: c.gi ? `${gemJa(c.active.name)} の組を相手の構成に` : `${gemJa(c.active.name)} の組を足す (相手の構成)`,
+          rethrow: true,
+        });
+        if (!r) return "読み込み中か計算中です";
+        if (r.unknown.length) return `PoB が知らないジェムは入れていません: ${r.unknown.map(gemJa).join("、")}`;
+      } else {
+        for (const id of c.ids) {
+          // 前のノードを取った時に道として取れた物は飛ばす (もう 1 度押すと外れてしまう)
+          if (cur.value?.tree.alloc.includes(id)) continue;
+          const err = await clickNode(id, 1);
+          if (err) return `${c.name}: ${err} (途中まで取りました)`;
+        }
+        recordHistory("pob-check", "adopt", { kind: "nodes", name: c.name, ids: c.ids });
+      }
+      if (c.kind === "item") recordHistory("pob-check", "adopt", { kind: "item", slot: c.slot, title: c.to.title, base: c.to.base });
+      adopted.value = new Set([...adopted.value, c.key]);
+      return null;
+    } catch (e) {
+      return msg(e);
+    }
   }
 
   /** ビルドプランナーのファイル名 (拡張子なし)。誰の物か分かるよう ExileDesk を入れる */
@@ -433,5 +571,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

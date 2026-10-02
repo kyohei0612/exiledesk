@@ -7,16 +7,23 @@
   中: ジェム (2026-10-03 オーナー「ジェムも」): 相手の組ごとに、自分に無い組は組ごと、ある組は足りないジェム / 低いレベル・品質だけ。
   下: 欄ごとに ユニーク = 「名前 → 名前」、レア = 足りない / 弱い MOD の行だけ「自分の行 → 相手の行」。差の無い欄は出さない。
   決まりは services/pob-check/build-diff.ts
+
+  取り入れたら (2026-10-03 オーナー「まんま真似できないけど部分的に真似できる所、ここだけ真似しようかな」): 「試算する」で差の 1 項目ずつ
+  (相手の装備 1 つ / 組 1 つ / ツリーのまとまり 1 つ) を自分に当てた時の DPS とライフ等の変化を PoB で計算し (ビルドは変えない)、
+  大きい順に並べる。「取り入れる」で本当に自分のビルドに入れる。ユニークは行ごとの効き (「ここが効く」) と「取引所で探す」、
+  レアは足りない MOD で「取引所で探す」(代替品 B。値段の自動取得は入れない = 外部 API は叩かず URL を開くだけ)
 -->
 <script setup lang="ts">
-import { computed, shallowRef, watch } from "vue";
+import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
+import passivesJa from "../../i18n/passives-ja-client.json";
 import { gemJa, type ItemView, type Summary } from "../../services/pob-check/api";
-import { diffBuilds, diffGems, type GemLineDiff } from "../../services/pob-check/build-diff";
+import { diffBuilds, diffGems, type AdoptCandidate, type GemLineDiff } from "../../services/pob-check/build-diff";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
-import type { SkillRow } from "./usePobCheck";
+import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
+import type { Estimate, SkillRow } from "./usePobCheck";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
 
@@ -30,8 +37,64 @@ const props = defineProps<{
   /** 書き出した後に出す文 */
   planMsg: string;
   busy: boolean;
+  /** 取り入れの試算 (usePobCheck)。candidates = 対象の数 (0 なら「試算する」を出さない) */
+  candidates: AdoptCandidate[];
+  estimates: { list: Estimate[]; dps: number } | null;
+  estimating: boolean;
+  estimateProgress: string;
+  /** 試算した後に自分を変えた = もう一度試算 */
+  estimatesStale: boolean;
+  adopted: Set<string>;
 }>();
-const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void }>();
+const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void; (e: "estimate"): void; (e: "adopt", c: AdoptCandidate, done: (err: string | null) => void): void }>();
+
+// ---------------------------------------------------------------- 取り入れたら
+const PASSIVE_JA = passivesJa as Record<string, string>;
+/** 試算の行の「何を」 */
+const what = (c: AdoptCandidate): string => {
+  if (c.kind === "item") return `${slotJa(c.slot)} ${c.unique ? "(ユニーク)" : "(レア)"}`;
+  if (c.kind === "gems") return `${gemJa(c.active.name)} の組${c.gi ? "" : " (組を足す)"}`;
+  return `${c.names.map((n) => PASSIVE_JA[n] ?? n).join(" / ")} (${c.ids.length} ノード)`;
+};
+/** 試算の行の「自分 → 相手」(短く) */
+const fromTo = (c: AdoptCandidate): { from: string; to: string } => {
+  if (c.kind === "item") return { from: nameJa(c.from), to: nameJa(c.to) };
+  if (c.kind === "gems") return c.gi ? { from: `差 ${c.lines.length} 件`, to: "相手の構成" } : { from: "無し", to: c.gems.map((g) => gemJa(g.name)).join("、") };
+  return { from: "取っていない", to: "ツリーに足す" };
+};
+/** 取り入れの失敗 (行の下に出す) */
+const adoptErr = ref<Record<string, string>>({});
+const adopting = ref<string | null>(null);
+function onAdopt(c: AdoptCandidate): void {
+  adopting.value = c.key;
+  emit("adopt", c, (err) => {
+    adopting.value = null;
+    adoptErr.value = { ...adoptErr.value, [c.key]: err ?? "" };
+  });
+}
+/** 取引所で探す (URL を開くだけ)。レアは足りない行、ユニークは名前 + ベース。条件にできない時は理由を行の下に */
+const tradeMsg = ref<Record<string, string>>({});
+onMounted(() => void prepareTradeLinks().catch(() => undefined));
+async function onTrade(c: AdoptCandidate): Promise<void> {
+  if (c.kind !== "item") return;
+  try {
+    if (c.unique) {
+      await openTradeQuery(uniqueSearchQuery(c.to));
+      return;
+    }
+    const q = rareModsSearchQuery(c.to.base, c.mods.map((m) => m.to));
+    if (!q) {
+      tradeMsg.value = { ...tradeMsg.value, [c.key]: "足りない行を取引所の条件にできませんでした" };
+      return;
+    }
+    if (q.missing.length) tradeMsg.value = { ...tradeMsg.value, [c.key]: `条件にできない行は外しました: ${q.missing.map(lineJa).join("、")}` };
+    await openTradeQuery(q.query);
+  } catch (e) {
+    tradeMsg.value = { ...tradeMsg.value, [c.key]: e instanceof Error ? e.message : String(e) };
+  }
+}
+/** ライフ等の変化の表示 (0 は出さない) */
+const delta = (v: number | undefined): string | null => (v && Math.round(v) !== 0 ? `${v > 0 ? "+" : "−"}${Math.round(Math.abs(v))}` : null);
 
 const gems = computed(() => diffGems(props.mine, props.target));
 /** ジェムの差の行の文 (「無し → 名前」「Lv 20 → Lv 21」「品質 0% → 20%」) */
@@ -64,15 +127,26 @@ const targetSkill = computed(() => {
 
 /** MOD の行の日本語 (英語 → 日本語は辞書の逆引き。まとめて 1 回) */
 const ja = shallowRef<Map<string, string>>(new Map());
+/** 英語の行をまとめて日本語にして ja に足す */
+async function addJa(lines: Iterable<string>): Promise<void> {
+  const arr = [...new Set(lines)].filter((l) => !ja.value.has(l));
+  if (!arr.length) return;
+  const out = await linesToJa(arr);
+  ja.value = new Map([...ja.value, ...arr.map((l, i): [string, string] => [l, out[i] ?? l])]);
+}
 watch(
   diff,
-  async (d) => {
+  (d) => {
     const lines = new Set<string>();
     for (const s of d.slots) if (s.kind === "mods") for (const m of s.mods) { if (m.from) lines.add(m.from); lines.add(m.to); }
-    const arr = [...lines];
-    const out = await linesToJa(arr);
-    ja.value = new Map(arr.map((l, i) => [l, out[i] ?? l]));
+    void addJa(lines);
   },
+  { immediate: true },
+);
+// ユニークの「ここが効く」の行も日本語に
+watch(
+  () => props.estimates,
+  (e) => void addJa((e?.list ?? []).flatMap((x) => (x.lines ?? []).map((l) => l.line))),
   { immediate: true },
 );
 const lineJa = (l: string): string => ja.value.get(l) ?? l;
@@ -128,6 +202,95 @@ const STATS = [
           <span class="font-semibold text-sky-200">{{ Math.round(stat(target, s.k)) }}</span>
         </span>
       </div>
+    </div>
+
+    <!-- 取り入れたら: 差の 1 項目ずつを自分に当てた時の変化 (PoB で試算、ビルドは変えない) -->
+    <div v-if="focus && candidates.length" class="rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/[0.05] to-transparent p-4">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <p class="text-sm font-bold text-emerald-200">
+          取り入れたら
+          <span class="ml-1 text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">— 差の {{ candidates.length }} 項目 (装備 / 組 / ツリーのまとまり) を 1 つずつ自分に当てた時の {{ gemJa(focus.s.name) }} の DPS</span>
+        </p>
+        <button
+          type="button"
+          class="rounded bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/30 disabled:opacity-40"
+          :disabled="estimating || busy"
+          :title="'1 項目 1〜3 秒。PoB の中で計算するだけで、ビルドは変えません'"
+          @click="emit('estimate')"
+        >{{ estimating ? `試算中… ${estimateProgress}` : estimates ? "もう一度試算" : "試算する" }}</button>
+        <span v-if="estimatesStale && !estimating" class="rounded-full bg-amber-500/15 px-2 py-px text-[11px] text-amber-200">自分のビルドを変えたので数字が古い — もう一度試算</span>
+      </div>
+      <table v-if="estimates" class="mt-3 w-full text-[12px]">
+        <thead>
+          <tr class="text-left text-[10px] text-[var(--exile-color-text-tertiary)]">
+            <th class="pb-1 font-semibold">何を</th>
+            <th class="pb-1 font-semibold">自分 → 相手</th>
+            <th class="pb-1 text-right font-semibold">DPS</th>
+            <th class="pb-1 text-right font-semibold">ライフ / ES</th>
+            <th class="pb-1"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="e in estimates.list" :key="e.c.key">
+            <tr class="border-t border-white/[0.06] align-top">
+              <td class="py-1.5 pr-3 font-semibold text-[var(--exile-color-text-secondary)]">{{ what(e.c) }}</td>
+              <td class="py-1.5 pr-3">
+                <span :class="e.c.kind === 'item' && !e.c.from ? 'text-rose-300/80' : 'text-[var(--exile-color-text-tertiary)]'">{{ fromTo(e.c).from }}</span>
+                <span class="mx-1.5 text-[var(--exile-color-text-tertiary)]">→</span>
+                <span class="text-amber-200">{{ fromTo(e.c).to }}</span>
+              </td>
+              <td class="whitespace-nowrap py-1.5 pr-3 text-right tabular-nums">
+                <template v-if="e.error"><span class="text-rose-300">—</span></template>
+                <template v-else>
+                  <span class="font-semibold">{{ fmtNum(e.dps) }}</span>
+                  <DiffBadge class="ml-1.5" :now="e.dps" :before="estimates.dps" />
+                </template>
+              </td>
+              <td class="whitespace-nowrap py-1.5 pr-3 text-right tabular-nums">
+                <template v-if="!e.error">
+                  <span v-if="delta(e.stats.Life)" :class="e.stats.Life > 0 ? 'text-emerald-300' : 'text-rose-300'">ライフ {{ delta(e.stats.Life) }}</span>
+                  <span v-if="delta(e.stats.EnergyShield)" class="ml-2" :class="e.stats.EnergyShield > 0 ? 'text-emerald-300' : 'text-rose-300'">ES {{ delta(e.stats.EnergyShield) }}</span>
+                  <span v-if="!delta(e.stats.Life) && !delta(e.stats.EnergyShield)" class="text-[var(--exile-color-text-tertiary)]">—</span>
+                </template>
+              </td>
+              <td class="whitespace-nowrap py-1.5 text-right">
+                <button
+                  v-if="!e.error"
+                  type="button"
+                  class="rounded bg-sky-500/20 px-2 py-0.5 text-[11px] font-semibold text-sky-100 hover:bg-sky-500/30 disabled:opacity-40"
+                  :disabled="busy || estimating || adopting === e.c.key || adopted.has(e.c.key)"
+                  :title="e.c.kind === 'nodes' ? '束のノードを 1 つずつ取る (始点からの道も取る。つながらないノードがあれば止めて理由を出す)' : e.c.kind === 'gems' ? (e.c.gi ? '自分の組のジェムを相手の構成に差し替える' : '相手の組を自分に足す (装着先の欄は無し)') : '相手の物を自分の欄に入れる (元に戻すは装備のタブ)'"
+                  @click="onAdopt(e.c)"
+                >{{ adopted.has(e.c.key) ? "取り入れた" : adopting === e.c.key ? "入れています…" : "取り入れる" }}</button>
+              </td>
+            </tr>
+            <!-- 行の下: 失敗 / ここが効く / 取引所で探す / 注記 -->
+            <tr v-if="e.error || adoptErr[e.c.key] || tradeMsg[e.c.key] || e.lines?.length || e.c.kind === 'item' || e.displaced || e.unknown || e.focusLost || e.c.kind === 'nodes'">
+              <td></td>
+              <td colspan="4" class="pb-2 text-[11px] leading-snug text-[var(--exile-color-text-tertiary)]">
+                <p v-if="e.error" class="text-rose-300">試算できませんでした: {{ e.error }}</p>
+                <p v-if="adoptErr[e.c.key]" class="text-rose-300">{{ adoptErr[e.c.key] }}</p>
+                <p v-if="e.lines?.length">
+                  ここが効く:
+                  <span v-for="(l, i) in e.lines" :key="i" class="ml-1.5 text-emerald-200/90">{{ lineJa(l.line) }} <span class="text-emerald-300">(+{{ (l.loss * 100).toFixed(1) }}%)</span></span>
+                </p>
+                <p v-if="e.displaced" class="text-amber-200/80">両手武器なので {{ e.displaced.map((s) => slotJa(s)).join("、") }} が外れます</p>
+                <p v-if="e.unusedSet" class="text-amber-200/80">使っていない武器セットの欄なので、今の DPS は変わりません (装備のタブで武器セットを切り替えると効く)</p>
+                <p v-if="e.focusLost" class="text-rose-300">この構成にすると {{ gemJa(focus?.s.name ?? "") }} がこの組から無くなります (DPS は出せない)</p>
+                <p v-if="e.unknown" class="text-amber-200/80">PoB が知らないジェムは計算に入っていません: {{ e.unknown.map(gemJa).join("、") }}</p>
+                <p v-if="e.c.kind === 'nodes'">全部取れたとしての数字です (つながる道は見ていない。取り入れる時は始点からの道も一緒に取る)</p>
+                <p v-if="e.c.kind === 'item'">
+                  <button type="button" class="text-sky-300 underline hover:text-sky-200" :title="e.c.unique ? '相手のユニーク (名前 + ベース) を取引所で探す (URL を開くだけ)' : '足りない MOD の行を条件にして取引所で探す (数値はそのまま下限。URL を開くだけ)'" @click="onTrade(e.c)">取引所で探す ↗</button>
+                  <span v-if="tradeMsg[e.c.key]" class="ml-2">{{ tradeMsg[e.c.key] }}</span>
+                </p>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <p v-if="estimates" class="mt-2 text-[11px] text-[var(--exile-color-text-tertiary)]">
+        DPS は上のバーのスキルの、取り入れた後の見込み (自分の行と同じ物差し)。1 項目ずつの数字なので、2 つ以上を取り入れた時の合計ではありません。
+      </p>
     </div>
 
     <!-- ジェムの差 (相手の組ごと) -->

@@ -17,6 +17,8 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 export interface GemView {
   j: number;
   name: string;
+  /** PoB の中のジェムの ID (相手の組を自分に写す時、名前より確実に同じジェムを引く) */
+  gemId?: string;
   level: number;
   quality: number;
   corrupt: number;
@@ -87,6 +89,8 @@ export interface ItemView {
   runes: string[];
   explicits: string[];
   corrupted: boolean;
+  /** PoB の文面 (本家 BuildRaw)。相手の物を自分の欄に当てる試算・取り入れに使う */
+  raw: string;
 }
 export interface SlotView {
   slot: string;
@@ -117,6 +121,8 @@ export interface TreeNode {
   gx?: number;
   gy?: number;
   r?: number;
+  /** ツリーのまとまり (group) の番号。相手が取っていて自分に無いノードを束ねる単位 (取り入れの試算) */
+  g?: number;
 }
 export interface TreeState {
   alloc: number[];
@@ -258,3 +264,62 @@ export interface NodePowerRaw {
 /** スキル (組 i のスキル k) で、取っているノード ids を 1 個ずつ外した時の DPS */
 export const nodePower = (i: number, k: number, ids: number[]): Promise<NodePowerRaw> =>
   evalLua(`return PCK.nodePower(${luaNum(i)}, ${luaNum(k)}, {${ids.map(luaNum).join(",")}})`);
+
+// ---------------------------------------------------------------- 取り入れの試算 (2026-10-03)
+/** ライフ・ES・マナ・耐性 (試算の前後) */
+export type EstimateStats = Record<"Life" | "EnergyShield" | "Mana" | "FireResist" | "ColdResist" | "LightningResist" | "ChaosResist", number>;
+/**
+ * 試算の返り。base / with = 上のバーのスキルの DPS (行の DPS と同じ物差し。画面は 自分の行の DPS × with / base)、
+ * stats / statsWith = ライフ等。ビルドは変えていない
+ */
+export interface EstimateRaw {
+  base: number;
+  with: number;
+  stats: EstimateStats;
+  statsWith: EstimateStats;
+}
+export interface EstimateItemRaw extends EstimateRaw {
+  /** 両手武器で外れる欄 (オフハンド) */
+  displaced: string[];
+  /** withLines の時: その物の明示の行を 1 行ずつ抜いた時の DPS (小さいほどその行が効いている = 「ここが効く」) */
+  lines?: Array<{ line: string; dps: number }>;
+}
+export interface EstimateGemsRaw extends EstimateRaw {
+  /** PoB が知らなかったジェムの名前 (計算に入っていない) */
+  unknown: string[];
+  /** 組を足した時 (gi = 0): その組の最初のスキルの DPS */
+  newDps?: number;
+  /** 差し替えで上のバーのスキルがその組から無くなる (with は 0) */
+  focusLost?: boolean;
+}
+export interface EstimateNodesRaw extends EstimateRaw {
+  /** 本当に足したノードの数 (もう取っている物は除く) */
+  n: number;
+}
+/** 相手の組のジェムを自分の組に写す時の 1 つ分 (GemView から取る) */
+export interface GemSpec {
+  name: string;
+  gemId?: string;
+  level: number;
+  quality: number;
+  corrupt: number;
+  enabled: boolean;
+}
+/** ジェムの一覧を Lua のテーブルに */
+const luaGems = (gems: GemSpec[]): string =>
+  `{${gems
+    .map((g) => `{name=${luaStr(g.name)},${g.gemId ? `gemId=${luaStr(g.gemId)},` : ""}level=${luaNum(g.level)},quality=${luaNum(g.quality)},corrupt=${luaNum(g.corrupt)},enabled=${g.enabled ? "true" : "false"}}`)
+    .join(",")}}`;
+
+/** 欄 slot に raw (PoB の文面) の物を付けたら (スキル = 組 i のスキル k)。withLines = 行ごとの効きも (ユニークの「ここが効く」) */
+export const estimateItem = (i: number, k: number, slot: string, raw: string, withLines: boolean): Promise<EstimateItemRaw> =>
+  evalLua(`return PCK.estimateItem(${luaNum(i)}, ${luaNum(k)}, ${luaStr(slot)}, ${luaStr(raw)}, ${withLines ? "true" : "false"})`);
+/** 自分の組 gi のジェムを相手の構成にしたら (gi = 0 は組を足したら) */
+export const estimateGems = (i: number, k: number, gi: number, gems: GemSpec[]): Promise<EstimateGemsRaw> =>
+  evalLua(`return PCK.estimateGems(${luaNum(i)}, ${luaNum(k)}, ${luaNum(gi)}, ${luaGems(gems)})`);
+/** 取り入れる: 組 gi のジェムを本当に相手の構成にする (gi = 0 は組を足す)。返りは組の番号と PoB が知らないジェム */
+export const setGroupGems = (gi: number, gems: GemSpec[]): Promise<{ i: number; unknown: string[] }> =>
+  evalLua(`return PCK.setGroupGems(${luaNum(gi)}, ${luaGems(gems)})`);
+/** 相手が取っていて自分に無いノード ids を全部取れたとして足したら (つながる道は見ない) */
+export const estimateNodes = (i: number, k: number, ids: number[]): Promise<EstimateNodesRaw> =>
+  evalLua(`return PCK.estimateNodes(${luaNum(i)}, ${luaNum(k)}, {${ids.map((id) => luaNum(Math.floor(id))).join(",")}})`);

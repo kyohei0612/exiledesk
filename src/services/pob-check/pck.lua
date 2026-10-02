@@ -155,6 +155,8 @@ local function gemInfo(gem)
   local ge = gem.gemData and gem.gemData.grantedEffect
   return {
     name = gem.nameSpec or (ge and ge.name) or "?",
+    -- PoB の中のジェムの ID (相手の組を自分に写す時、名前の照合より確実)
+    gemId = gem.gemId,
     level = gem.level or 0,
     quality = gem.quality or 0,
     corrupt = tonumber(gem.corruptLevel) or 0,
@@ -459,6 +461,8 @@ function PCK.items()
           title = item.title or item.name, base = item.baseName, rarity = item.rarity,
           implicits = modLines(item.implicitModLines), runes = modLines(item.runeModLines),
           explicits = modLines(item.explicitModLines), corrupted = item.corrupted and true or false,
+          -- PoB の文面 (本家 BuildRaw)。相手の物を自分の欄に当てる試算・取り入れ (PCK.estimateItem / equip) に使う
+          raw = item:BuildRaw(),
         }
       end
       -- 装備の中のジュエルの穴 (Weapon 1 Jewel Socket 1 など) は入っている時だけ
@@ -605,7 +609,8 @@ function PCK.treeStatic()
     local code = TYPE_CODE[node.type]
     local keep = code and (node.ascendancyName == nil or node.ascendancyName == asc)
     if keep and node.x then
-      local e = { id = id, x = math.floor(node.x + 0.5), y = math.floor(node.y + 0.5), t = code, n = node.dn or "", sd = node.sd, l = {} }
+      -- g = ツリーのまとまり (group) の番号。相手が取っていて自分に無いノードを束ねる単位 (取り入れの試算)
+      local e = { id = id, x = math.floor(node.x + 0.5), y = math.floor(node.y + 0.5), t = code, n = node.dn or "", sd = node.sd, l = {}, g = tonumber(node.g) }
       if node.ascendancyName then e.a = 1 end
       if node.isAttribute then e.at = 1 end
       if node.group and node.orbit and node.orbit > 0 then
@@ -671,12 +676,12 @@ function PCK.resetTree()
   return PCK.mutate(function() build.spec:RestoreUndoState(PCK.treeOrig) end)
 end
 
---- ノードごとの火力への寄与 (PoB の「Node Power」と同じやり方: そのノードを外した時の計算)。
---- i, k = スキルの組とその中のスキル (画面のスキルのカード)。ids = 調べる取っているノード (画面が何回かに分けて送る)
---- 返す: { base = その時の DPS, nodes = { [id] = { single = 1 個だけ外した時の DPS, path = 外すとつながらなくなる先も込みで外した時の DPS, n = 込みの個数 } } }
---- DPS は PoB の CombinedDPS (敵側の倍率込み)。割合で見るので、ゲーム内の表記との違いは貫通などの敵側のノードだけ。
---- 本家 CalcsTab と同じく、効果の無いノード (modKey == "") と装備・ジュエルが与えるノードは飛ばす
-function PCK.nodePower(i, k, ids)
+--- 試算の物差し: ヒット + 継続 + ミニオン (行の DPS と同じ中身。PoB のまま = 敵側の倍率込み)。割合で見るので画面は 行の DPS × 比
+local function dpsOf(o) return (o.CombinedDPS or o.TotalDPS or 0) + ((o.Minion and (o.Minion.CombinedDPS or o.Minion.TotalDPS)) or 0) end
+
+--- 画面の上のバーのスキル (組 i のスキル k) を主スキルにして fn(calcFunc, base) を走らせ、終わったら主スキルの選びを戻す。
+--- calcFunc = 本家 getMiscCalculator (override で ビルドを変えずに「〜したら」を計算)、base = 今の出力。nodePower と取り入れの試算の共通の枠
+local function withMainSkill(i, k, fn)
   local g = build.skillsTab.socketGroupList[i]
   if not g then return json.encode({ ok = false, error = "組が無い" }) end
   local origMain, origSkill = build.mainSocketGroup, g.mainActiveSkill
@@ -684,10 +689,24 @@ function PCK.nodePower(i, k, ids)
   g.mainActiveSkill = k
   local ok, res = pcall(function()
     PCK.recalc()
-    local granted = build.calcsTab.mainEnv.grantedPassives or {}
     local calcFunc, base = build.calcsTab.calcs.getMiscCalculator(build)
-    -- 物差しは ヒット + 継続 + ミニオン (行の DPS と同じ中身。PoB のまま)
-    local function dpsOf(o) return (o.CombinedDPS or o.TotalDPS or 0) + ((o.Minion and (o.Minion.CombinedDPS or o.Minion.TotalDPS)) or 0) end
+    return fn(calcFunc, base)
+  end)
+  build.mainSocketGroup = origMain
+  g.mainActiveSkill = origSkill
+  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
+  res.ok = true
+  return json.encode(res)
+end
+
+--- ノードごとの火力への寄与 (PoB の「Node Power」と同じやり方: そのノードを外した時の計算)。
+--- i, k = スキルの組とその中のスキル (画面のスキルのカード)。ids = 調べる取っているノード (画面が何回かに分けて送る)
+--- 返す: { base = その時の DPS, nodes = { [id] = { single = 1 個だけ外した時の DPS, path = 外すとつながらなくなる先も込みで外した時の DPS, n = 込みの個数 } } }
+--- DPS は PoB の CombinedDPS (敵側の倍率込み)。割合で見るので、ゲーム内の表記との違いは貫通などの敵側のノードだけ。
+--- 本家 CalcsTab と同じく、効果の無いノード (modKey == "") と装備・ジュエルが与えるノードは飛ばす
+function PCK.nodePower(i, k, ids)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local granted = build.calcsTab.mainEnv.grantedPassives or {}
     local out = { base = dpsOf(base), nodes = {} }
     for _, id in ipairs(ids) do
       local node = build.spec.nodes[id]
@@ -709,11 +728,202 @@ function PCK.nodePower(i, k, ids)
     end
     return out
   end)
-  build.mainSocketGroup = origMain
-  g.mainActiveSkill = origSkill
-  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
-  res.ok = true
-  return json.encode(res)
+end
+
+-- ---------------------------------------------------------------- 取り入れの試算 (2026-10-03)
+--- オーナー「まんま真似できないけど部分的に真似できる所、ここだけ真似しようかな」: 相手との差の 1 項目 (相手の装備 1 つ / 相手の組 1 つ /
+--- ツリーのまとまり 1 つ) を自分に当てた時の、上のバーのスキルの DPS と ライフ・ES・耐性 の変化。ビルドは変えない (本家 getMiscCalculator の
+--- override で計算し、変えた物は元に戻す)。返す数字: base / with = DPS (dpsOf)、stats / statsWith = ライフ等
+local STAT_KEYS = { "Life", "EnergyShield", "Mana", "FireResist", "ColdResist", "LightningResist", "ChaosResist" }
+local function statsOf(o)
+  local t = {}
+  for _, k in ipairs(STAT_KEYS) do t[k] = o[k] or 0 end
+  return t
+end
+--- 試算の物差しは行の DPS と同じ中身 (gameNumbers: ヒットは TotalDPS × 敵側の割り戻し + 継続 + その他 + ミニオン)。
+--- CombinedDPS では合わなかった (2026-10-03 の確かめ: 移動スキル (showAverage) は CombinedDPS が 1 発の平均になり、詠唱速度の差が消える。
+--- 指輪の試算 +6.7% に対して本当に付けると +12.6%)。主スキルは渡さない (二刀流の ÷2 は前後で同じ係数なので比には効かない)。
+--- 画面は 自分の行の DPS × (with / base) で出すので、取り入れた後の行とそろう
+local function estDpsOf(o) return gameNumbers(o, nil, o.Minion, nil).dps end
+
+--- 欄 slotName に raw (PoB の文面) の物を付けたら。withLines = true なら、その物の明示の行を 1 行ずつ抜いた時の DPS も (ユニークの「ここが効く」)。
+--- 本家の repItem は「その欄にこの物」だけで、両手武器を持った時にオフハンドが外れる分は見ない (CalcSetup の Staff / Bow の条件は
+--- item が nil のまま比べていて効かない。Two Hand Sword / Axe / Mace だけ外す)。なので両手武器 (base.tags.twohand) を Weapon 1 に当てる時は、
+--- 本当に付けた時 (PCK.equip → PopulateSlots) と同じになるよう、試算の間だけ欄に入れて PopulateSlots で外れる物も外し、終わったら全部戻す
+function PCK.estimateItem(i, k, slotName, raw, withLines)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local it = build.itemsTab
+    local slot = it.slots[slotName]
+    if not slot then fail("欄が無い: " .. tostring(slotName)) end
+    local item = new("Item", raw)
+    if not item or not item.base then fail("PoB が読めない文面です") end
+    if not it:IsItemValidForSlot(item, slotName) then fail("この欄には入れられない物です (" .. tostring(item.type or item.baseName) .. ")") end
+    local res = { base = estDpsOf(base), stats = statsOf(base), displaced = {} }
+    local twoHand = item.base.tags and item.base.tags.twohand and slotName:match("^Weapon 1") and true or false
+    local function lines(cf)
+      if not withLines then return nil end
+      local out = {}
+      for idx, ml in ipairs(item.explicitModLines or {}) do
+        if ml.line and ml.line ~= "" then
+          local it2 = new("Item", raw)
+          table.remove(it2.explicitModLines, idx)
+          it2:BuildAndParseRaw()
+          out[#out + 1] = { line = ml.line, dps = estDpsOf(cf({ repSlotName = slotName, repItem = it2 }, false)) }
+        end
+      end
+      return out
+    end
+    if not twoHand then
+      local out = calcFunc({ repSlotName = slotName, repItem = item }, false)
+      res.with = estDpsOf(out)
+      res.statsWith = statsOf(out)
+      res.lines = lines(calcFunc)
+      return res
+    end
+    -- 両手武器: 試算の間だけ本当に入れる (欄の中身を全部覚えて戻す。足した物は PoB から消す)
+    local before = {}
+    for name, s in pairs(it.slots) do before[name] = { id = s.selItemId or 0, active = s.active } end
+    it:AddItem(item, true)
+    local ok, err = pcall(function()
+      putInSlot(slot, item.id, true)
+      it:PopulateSlots()
+      for name, s in pairs(it.slots) do
+        if name ~= slotName and (s.selItemId or 0) ~= before[name].id then res.displaced[#res.displaced + 1] = name end
+      end
+      PCK.recalc()
+      local cf, out = build.calcsTab.calcs.getMiscCalculator(build)
+      res.with = estDpsOf(out)
+      res.statsWith = statsOf(out)
+      res.lines = lines(cf)
+    end)
+    for name, s in pairs(it.slots) do
+      s:SetSelItemId(before[name].id)
+      if isFlaskLike(name) then s.active = before[name].active end
+    end
+    it:DeleteItem(item, true)
+    build.buildFlag = true
+    if not ok then error(err, 0) end
+    return res
+  end)
+end
+
+--- 相手の組のジェムの一覧 → PoB の gemInstance の一覧 (本家 SkillsTab の XML の読み込みと同じ項目。gemId があれば ProcessSocketGroup が
+--- それで gemData を引き、無ければ nameSpec (名前) で探す)
+local function newGemList(gems)
+  local list = {}
+  for _, g in ipairs(gems or {}) do
+    local corrupt = tonumber(g.corrupt) or 0
+    list[#list + 1] = {
+      nameSpec = g.name or "", gemId = g.gemId, level = tonumber(g.level) or 20, quality = tonumber(g.quality) or 0,
+      enabled = g.enabled ~= false, enableGlobal1 = true, enableGlobal2 = true, count = 1,
+      corruptLevel = corrupt, corrupted = corrupt ~= 0, statSet = {}, statSetCalcs = {}, skillMinionSkillStatSetIndexLookup = {},
+    }
+  end
+  return list
+end
+--- PoB が知らなかったジェム (名前で見つからない等) の名前
+local function unknownGems(g)
+  local out = {}
+  for _, gem in ipairs(g.gemList or {}) do
+    if gem.errMsg or not (gem.gemData or gem.grantedEffect) then out[#out + 1] = gem.nameSpec end
+  end
+  return out
+end
+--- 組 g のジェムを list に差し替える。gi = 0 なら新しい組を足す (装着先の欄は無し)。返す: 差し替えた / 足した組
+local function putGems(gi, list)
+  local st = build.skillsTab
+  local g
+  if gi > 0 then
+    g = st.socketGroupList[gi]
+    if not g then fail("組が無い") end
+    g.gemList = list
+  else
+    g = { label = "", enabled = true, gemList = list, mainActiveSkill = 1, mainActiveSkillCalcs = 1 }
+    table.insert(st.socketGroupList, g)
+  end
+  st:ProcessSocketGroup(g)
+  return g
+end
+
+--- 自分の組 gi のジェムを相手の構成 gems ({ name, gemId, level, quality, corrupt, enabled }) に差し替えたら (gi = 0 は組を足したら)。
+--- 差し替え → 計算 → 元の gemList に戻す。上のバーのスキルが差し替える組の中なら、同じ名前のスキルの位置に合わせる。
+--- 組を足す時は、その組の最初のスキルの DPS (newDps) も返す (上のバーのスキルは変わらないことが多いので)
+function PCK.estimateGems(i, k, gi, gems)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local st = build.skillsTab
+    local focus = st.socketGroupList[i]
+    local focusName = focus.displaySkillList and focus.displaySkillList[k] and focus.displaySkillList[k].activeEffect.grantedEffect.name
+    local saved = gi > 0 and st.socketGroupList[gi].gemList or nil
+    local added -- 足した組 (失敗しても、足した時だけ外す)
+    local ok, res = pcall(function()
+      local g = putGems(gi, newGemList(gems))
+      if gi == 0 then added = g end
+      -- displaySkillList は本家の計算 (CalcSetup) が作り直す。ProcessSocketGroup では前のままなので、先に計算してから見る
+      -- (2026-10-03: 先に見ていたので古い一覧で「ある」と判定し、相手のアーク×2 を当てた時にアークの DPS を出していた)
+      PCK.recalc()
+      -- 差し替える組が上のバーのスキルの組なら、同じ名前のスキルの位置に合わせる。無くなるなら DPS は出せない (focusLost、with = 0)
+      local focusLost = false
+      if gi == i and focusName then
+        local found
+        for idx, sk in ipairs(g.displaySkillList or {}) do
+          if sk.activeEffect and sk.activeEffect.grantedEffect.name == focusName then found = idx break end
+        end
+        if not found then
+          focusLost = true
+        elseif focus.mainActiveSkill ~= found then
+          focus.mainActiveSkill = found
+          PCK.recalc()
+        end
+      end
+      local _, out = build.calcsTab.calcs.getMiscCalculator(build)
+      local r = { base = estDpsOf(base), with = focusLost and 0 or estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), unknown = unknownGems(g), focusLost = focusLost }
+      if gi == 0 and g.displaySkillList and g.displaySkillList[1] then
+        build.mainSocketGroup = #st.socketGroupList
+        PCK.recalc()
+        local _, o2 = build.calcsTab.calcs.getMiscCalculator(build)
+        r.newDps = estDpsOf(o2)
+        build.mainSocketGroup = i
+      end
+      return r
+    end)
+    if gi > 0 then
+      st.socketGroupList[gi].gemList = saved
+      st:ProcessSocketGroup(st.socketGroupList[gi])
+    elseif added then
+      for idx = #st.socketGroupList, 1, -1 do
+        if st.socketGroupList[idx] == added then table.remove(st.socketGroupList, idx) break end
+      end
+    end
+    build.buildFlag = true
+    if not ok then error(res, 0) end
+    return res
+  end)
+end
+
+--- 取り入れる: 組 gi のジェムを本当に相手の構成にする (gi = 0 は組を足す)。返す: { i = 組の番号, unknown = PoB が知らないジェム }
+function PCK.setGroupGems(gi, gems)
+  return PCK.mutate(function()
+    local g = putGems(gi, newGemList(gems))
+    local idx = gi > 0 and gi or #build.skillsTab.socketGroupList
+    return { i = idx, unknown = unknownGems(g) }
+  end)
+end
+
+--- 相手が取っていて自分に無いノード ids を「全部取れたとして」足したら (本家 addNodes。つながる道は見ない = 画面に注記)
+function PCK.estimateNodes(i, k, ids)
+  return withMainSkill(i, k, function(calcFunc, base)
+    local set, n = {}, 0
+    for _, id in ipairs(ids) do
+      local node = build.spec.nodes[id]
+      if node and not node.alloc then
+        set[node] = true
+        n = n + 1
+      end
+    end
+    if n == 0 then fail("足すノードがありません (もう取っている)") end
+    local out = calcFunc({ addNodes = set }, false)
+    return { base = estDpsOf(base), with = estDpsOf(out), stats = statsOf(base), statsWith = statsOf(out), n = n }
+  end)
 end
 
 return "ok"

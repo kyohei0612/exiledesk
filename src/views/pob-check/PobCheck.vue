@@ -17,7 +17,7 @@ import BuildDiff from "./BuildDiff.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 /**
@@ -356,7 +356,26 @@ const resists = computed(() =>
 
       <!-- 相手との差 -->
       <div v-if="tab === 'diff'">
-        <BuildDiff v-if="target" :mine="cur" :target="target" :target-from="targetFrom" :focus="focus" :can-plan="!!targetPlan" :plan-msg="targetPlanMsg" :busy="busy || loading" @clear="clearTarget" @plan="onPlan('target')" />
+        <BuildDiff
+          v-if="target"
+          :mine="cur"
+          :target="target"
+          :target-from="targetFrom"
+          :focus="focus"
+          :can-plan="!!targetPlan"
+          :plan-msg="targetPlanMsg"
+          :busy="busy || loading"
+          :candidates="candidates"
+          :estimates="estimates"
+          :estimating="estimating"
+          :estimate-progress="estimateProgress"
+          :estimates-stale="estimatesStale"
+          :adopted="adopted"
+          @clear="clearTarget"
+          @plan="onPlan('target')"
+          @estimate="runEstimates"
+          @adopt="async (c, done) => done(await adopt(c))"
+        />
         <p v-else class="mb-6 text-sm text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
       </div>
 

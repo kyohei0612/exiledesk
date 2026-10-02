@@ -13,7 +13,7 @@
  *     自分に無い組は組ごと、ある組は 相手にあって自分に無いジェム / レベル・品質が相手の方が高い物 だけ (diffGems)。
  *     コラプトの +レベルは level に含めない (corrupt は別の欄)。英語の名前のまま返し、日本語にするのは画面 (gemJa)
  */
-import type { GemView, GroupView, ItemView, SlotView, Summary } from "./api";
+import type { GemView, GroupView, ItemView, SlotView, Summary, TreeNode } from "./api";
 
 export interface ModDiff {
   /** 自分の行 (無ければ null = 足りない) */
@@ -90,10 +90,10 @@ export interface GemLineDiff {
   to: number;
 }
 export type GemGroupDiff =
-  /** 自分に無い組: アクティブと、その組の残りのジェム (サポート・2 つ目以降のアクティブ) */
-  | { kind: "missing"; active: GemView; others: GemView[] }
-  /** ある組: 足りない / 弱いジェムの行 */
-  | { kind: "changes"; active: GemView; lines: GemLineDiff[] };
+  /** 自分に無い組: アクティブと、その組の残りのジェム (サポート・2 つ目以降のアクティブ)。gems = 相手の組の使っているジェム全部 (取り入れに使う) */
+  | { kind: "missing"; active: GemView; others: GemView[]; gems: GemView[] }
+  /** ある組: 足りない / 弱いジェムの行。gi = 合わせた自分の組の番号、gems = 相手の組の使っているジェム全部 (取り入れ = 自分の組をこれにする) */
+  | { kind: "changes"; active: GemView; lines: GemLineDiff[]; gi: number; gems: GemView[] };
 
 /** 画面に出す組 (使っている・2 重でない・装備やツリーが与える物でない) の、使っているジェム。先頭のアクティブが組の名前 */
 const liveGroups = (s: Summary): Array<{ g: GroupView; gems: GemView[]; active: GemView }> =>
@@ -123,19 +123,32 @@ export function diffGemGroup(mine: GemView[], target: GemView[]): GemLineDiff[] 
   return out;
 }
 
-/** ジェムの差。相手の組ごとにアクティブの名前で自分の組を合わせる。onlyMine = 相手に無く自分だけの組の数 */
+/**
+ * ジェムの差。相手の組ごとにアクティブの名前で自分の組を合わせる。同じアクティブの組が複数 (CoEA が 2 つなど) なら、
+ * 中のジェムの名前が一番多く重なる組と合わせる (2026-10-03: 順で合わせると 自分の CoEA (アーク×2) に相手の CoEA (ライトニングワープ) が
+ * 当たり、取り入れの試算で主スキルが消えて −86% に見えた)。onlyMine = 相手に無く自分だけの組の数
+ */
 export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff[]; onlyMine: number } {
-  const own = new Map<string, Array<{ gems: GemView[] }>>();
+  const own = new Map<string, Array<{ g: GroupView; gems: GemView[] }>>();
   for (const x of liveGroups(mine)) own.set(x.active.name, [...(own.get(x.active.name) ?? []), x]);
+  const overlap = (a: GemView[], b: GemView[]): number => {
+    const names = new Set(a.map((x) => x.name));
+    return b.filter((x) => names.has(x.name)).length;
+  };
   const groups: GemGroupDiff[] = [];
   for (const t of liveGroups(target)) {
-    const m = own.get(t.active.name)?.shift();
+    const list = own.get(t.active.name);
+    let m: { g: GroupView; gems: GemView[] } | undefined;
+    if (list?.length) {
+      m = list.reduce((best, x) => (overlap(x.gems, t.gems) > overlap(best.gems, t.gems) ? x : best));
+      list.splice(list.indexOf(m), 1);
+    }
     if (!m) {
-      groups.push({ kind: "missing", active: t.active, others: t.gems.filter((x) => x !== t.active) });
+      groups.push({ kind: "missing", active: t.active, others: t.gems.filter((x) => x !== t.active), gems: t.gems });
       continue;
     }
     const lines = diffGemGroup(m.gems, t.gems);
-    if (lines.length) groups.push({ kind: "changes", active: t.active, lines });
+    if (lines.length) groups.push({ kind: "changes", active: t.active, lines, gi: m.g.i, gems: t.gems });
   }
   const onlyMine = [...own.values()].reduce((n, arr) => n + arr.length, 0);
   return { groups, onlyMine };
@@ -152,4 +165,46 @@ export function diffBuilds(mine: Summary, target: Summary): { slots: SlotDiff[];
   const slots = names.map((slot) => diffSlot(slot, a.get(slot)?.item ?? null, b.get(slot)?.item ?? null)).filter((d) => d.kind !== "same");
   const jewels = { mine: mine.items.filter((x) => x.jewel && x.item).length, target: target.items.filter((x) => x.jewel && x.item).length };
   return { slots, jewels };
+}
+
+// ---------------------------------------------------------------- 取り入れの試算の対象 (2026-10-03)
+/**
+ * オーナー「まんま真似できないけど部分的に真似できる所、ここだけ真似しようかな」: 差の 1 項目ずつを「自分に当てたら」で試算する対象。
+ *   - item: 差のある欄 (ユニーク = 装備ごと / レア = 足りない MOD のある物)。raw = 相手の物の PoB の文面を自分の欄に
+ *   - gems: 差のある組。gi = 自分の合わせた組 (無い組は 0 = 組を足す)、gems = 相手の組の構成
+ *   - nodes: 相手が取っていて自分に無いノードを、ツリーのまとまり (TreeNode.g) で束ねた物。ノータブル / キーストーンを含む束だけ
+ *     (小さいノードだけの束は道の途中なので単体では意味が薄い)。束の名前はその中のノータブル / キーストーンの名前
+ *   key は画面の行の鍵 (試算の結果を結び付ける)
+ */
+export type AdoptCandidate =
+  | { kind: "item"; key: string; slot: string; from: ItemView | null; to: ItemView; unique: boolean; mods: ModDiff[] }
+  | { kind: "gems"; key: string; active: GemView; gi: number; gems: GemView[]; lines: GemLineDiff[] }
+  | { kind: "nodes"; key: string; name: string; ids: number[]; names: string[] };
+
+export function adoptCandidates(mine: Summary, target: Summary, treeNodes: readonly TreeNode[]): AdoptCandidate[] {
+  const out: AdoptCandidate[] = [];
+  for (const d of diffBuilds(mine, target).slots) {
+    if (d.kind === "unique") out.push({ kind: "item", key: `item:${d.slot}`, slot: d.slot, from: d.from, to: d.to, unique: true, mods: [] });
+    else if (d.kind === "mods") out.push({ kind: "item", key: `item:${d.slot}`, slot: d.slot, from: d.from, to: d.to, unique: false, mods: d.mods });
+  }
+  for (const [n, g] of diffGems(mine, target).groups.entries()) {
+    out.push({ kind: "gems", key: `gems:${n}:${g.active.name}`, active: g.active, gi: g.kind === "changes" ? g.gi : 0, gems: g.gems, lines: g.kind === "changes" ? g.lines : [] });
+  }
+  // ツリー: 相手にあって自分に無いノード (装備が与えている物も除く) を g で束ねる
+  const have = new Set([...mine.tree.alloc, ...mine.tree.granted]);
+  const byId = new Map(treeNodes.map((x) => [x.id, x]));
+  const bundles = new Map<number, TreeNode[]>();
+  for (const id of target.tree.alloc) {
+    const node = byId.get(id);
+    // 自分のツリーに無いノード (違うアセンダンシー・始点) は取れないので飛ばす
+    if (have.has(id) || !node || node.g == null || node.t === "C" || node.t === "A") continue;
+    bundles.set(node.g, [...(bundles.get(node.g) ?? []), node]);
+  }
+  for (const [g, nodes] of bundles) {
+    const big = nodes.filter((x) => x.t === "N" || x.t === "K");
+    if (!big.length) continue;
+    const names = big.map((x) => x.n).filter(Boolean);
+    out.push({ kind: "nodes", key: `nodes:${g}`, name: names.join(" / ") || `まとまり ${g}`, ids: nodes.map((x) => x.id).sort((a, b) => a - b), names });
+  }
+  return out;
 }
