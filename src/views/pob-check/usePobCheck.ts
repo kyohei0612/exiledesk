@@ -8,6 +8,8 @@
 import { computed, ref, shallowRef } from "vue";
 import { equip, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
+import { gemJa } from "../../services/pob-check/api";
+import passivesJa from "../../i18n/passives-ja-client.json";
 import { toPobItem } from "../../services/pob-check/item-text";
 
 const input = ref("");
@@ -25,6 +27,17 @@ export interface NodePower {
 }
 const power = shallowRef<{ target: string; label: string; nodes: Map<number, NodePower>; of: Summary } | null>(null);
 const powerProgress = ref<string>("");
+/** 比べる元からの変えた所 (画面の上のバーに並べる)。読み込み・「今を比べる元にする」で空にする */
+const changes = ref<string[]>([]);
+const note = (s: string): void => {
+  changes.value = [...changes.value, s];
+};
+const SLOT_JA: Record<string, string> = {
+  "Weapon 1": "武器", "Weapon 2": "オフハンド", "Weapon 1 Swap": "武器 (II)", "Weapon 2 Swap": "オフハンド (II)",
+  Helmet: "兜", "Body Armour": "胴", Gloves: "手袋", Boots: "靴", Amulet: "アミュレット",
+  "Ring 1": "指輪 (左)", "Ring 2": "指輪 (右)", Belt: "ベルト",
+};
+const slotJa = (s: string): string => SLOT_JA[s] ?? (s.startsWith("Jewel") ? "ジュエル" : s.replace(/^Charm /, "チャーム "));
 /** パッシブツリーの形 (読み込みのたびに 1 回取る) */
 const treeNodes = shallowRef<TreeNode[]>([]);
 
@@ -93,6 +106,7 @@ export function usePobCheck() {
       cur.value = s;
       base.value = s;
       baseAt.value = "読み込んだ時";
+      changes.value = [];
       recordHistory("pob-check", "load", { input: input.value.slice(0, 200), char: s.char, stats: s.stats });
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
@@ -103,19 +117,32 @@ export function usePobCheck() {
   function setBaseToNow(): void {
     base.value = cur.value;
     baseAt.value = new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) + " の状態";
+    changes.value = [];
   }
   async function changeGem(i: number, j: number, field: "level" | "quality" | "corrupt" | "enabled", value: number | boolean): Promise<void> {
+    const gem = cur.value?.groups.find((g) => g.i === i)?.gems.find((x) => x.j === j);
     for (const gi of withCopies(i)) await run(() => setGem(gi, j, field, value));
     recordHistory("pob-check", "gem", { i, j, field, value });
+    if (gem) {
+      const n = gemJa(gem.name);
+      if (field === "level") note(`${n} Lv ${gem.level}→${value}`);
+      else if (field === "quality") note(`${n} 品質 ${gem.quality}→${value}%`);
+      else if (field === "corrupt") note(`${n} コラプト ${value ? `+${value}` : "なし"}`);
+      else note(`${n} ${value ? "使う" : "外す"}`);
+    }
     await refresh();
   }
   async function toggleGroup(i: number, enabled: boolean): Promise<void> {
+    const g = cur.value?.groups.find((x) => x.i === i);
     for (const gi of withCopies(i)) await run(() => setGroup(gi, enabled));
+    if (g) note(`${gemJa(g.gems[0]?.name ?? "")} の組 ${enabled ? "オン" : "オフ"}`);
     await refresh();
   }
   async function changeCharges(n: number): Promise<void> {
+    const before = cur.value?.config.powerCharges ?? 0;
     await run(() => setPowerCharges(n));
     recordHistory("pob-check", "charges", { n });
+    note(`パワーチャージ ${before}→${n}`);
     await refresh();
   }
 
@@ -125,22 +152,26 @@ export function usePobCheck() {
     const r = await run(() => equip(slot, conv.text));
     if (!r.ok) throw new Error(r.error ?? "入れられませんでした");
     recordHistory("pob-check", "equip", { slot, english: conv.english, base: conv.base, rarity: conv.rarity, unread: conv.unread, notCalculated: r.unread ?? [], text: conv.text });
+    note(`${slotJa(slot)} 差し替え`);
     await refresh();
     return { unread: conv.unread, notCalculated: r.unread ?? [] };
   }
   async function clearItem(slot: string): Promise<void> {
     await run(() => unequip(slot));
     recordHistory("pob-check", "unequip", { slot });
+    note(`${slotJa(slot)} 外す`);
     await refresh();
   }
   async function changeWeaponSet(n: 1 | 2): Promise<void> {
     await run(() => setWeaponSet(n));
     recordHistory("pob-check", "weapon-set", { n });
+    note(`武器セット ${n === 1 ? "I" : "II"}`);
     await refresh();
   }
   async function restoreItem(slot: string): Promise<void> {
     await run(() => restore(slot));
     recordHistory("pob-check", "restore", { slot });
+    note(`${slotJa(slot)} 元に戻す`);
     await refresh();
   }
 
@@ -149,6 +180,8 @@ export function usePobCheck() {
     const r = await run(() => toggleNode(id, attr));
     if (!r.ok) return r.error ?? "できませんでした";
     recordHistory("pob-check", "node", { id, attr, alloc: r.alloc, changed: r.changed });
+    const nn = treeNodes.value.find((x) => x.id === id)?.n ?? String(id);
+    note(`${(passivesJa as Record<string, string>)[nn] ?? nn} ${r.alloc ? "取る" : "外す"} (${(r.changed ?? 0) > 0 ? "+" : "−"}${Math.abs(r.changed ?? 0)})`);
     treeNodes.value = (await run(treeStatic)).nodes;
     await refresh();
     return null;
@@ -156,6 +189,7 @@ export function usePobCheck() {
   async function resetTreeToLoaded(): Promise<void> {
     await run(resetTree);
     recordHistory("pob-check", "tree-reset", {});
+    note("ツリーを戻す");
     treeNodes.value = (await run(treeStatic)).nodes;
     await refresh();
   }
@@ -206,5 +240,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

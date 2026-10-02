@@ -8,14 +8,14 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import DiffBadge from "./DiffBadge.vue";
-import SkillCard from "./SkillCard.vue";
+import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const TABS = [
@@ -24,6 +24,12 @@ const TABS = [
   { id: "tree", label: "パッシブツリー" },
 ] as const;
 const tab = ref<(typeof TABS)[number]["id"]>("items");
+
+const STEPS = [
+  { title: "読み込む", cls: "text-amber-200", body: "PoB の「Import/Export」のコードか、poe.ninja のキャラのページの URL を上に貼って「読み込む」。" },
+  { title: "変える", cls: "text-sky-200", body: "装備はゲームで Ctrl+C したアイテムを貼る (日本語のまま)。ジェムはレベルや品質を ±、ツリーはノードをクリックで取る / 外す。" },
+  { title: "比べる", cls: "text-emerald-200", body: "変えるたびに PoB で計算し直して、上のバーに合計の差、スキルの表に 1 つずつの差が出ます。良ければ「今を比べる元にする」で続けて比べる。" },
+] as const;
 
 const num = (k: string): number => {
   const v = cur.value?.stats[k];
@@ -93,6 +99,19 @@ const resists = computed(() =>
       <p v-if="error" class="mt-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
     </div>
 
+    <!-- まだ読み込んでいない時の案内 -->
+    <div v-if="!cur && !loading" class="mt-6 grid gap-3 @3xl:grid-cols-3">
+      <div v-for="(st, i) in STEPS" :key="i" class="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-5">
+        <p class="flex items-center gap-2 text-sm font-bold" :class="st.cls">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs">{{ i + 1 }}</span>{{ st.title }}
+        </p>
+        <p class="mt-2 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">{{ st.body }}</p>
+      </div>
+    </div>
+    <div v-if="loading" class="mt-10 flex items-center justify-center gap-2 text-sm text-amber-200/80">
+      <span class="h-2.5 w-2.5 animate-ping rounded-full bg-amber-300" />PoB で読み込んで計算しています (数秒)
+    </div>
+
     <template v-if="cur">
       <!-- キャラ -->
       <div class="mb-4 flex flex-wrap items-center gap-2">
@@ -110,56 +129,57 @@ const resists = computed(() =>
         <span v-if="cur.stats.LowLife" class="rounded-lg bg-rose-500/20 px-2.5 py-1.5 text-xs font-semibold text-rose-200">低ライフ</span>
       </div>
 
-      <!-- 合計と操作 -->
-      <div class="mb-5 flex flex-wrap items-stretch gap-3">
-        <div class="relative flex-1 overflow-hidden rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-500/15 via-orange-500/5 to-transparent px-5 py-4">
-          <p class="text-xs text-amber-100/70">スキルの DPS の合計 <span class="text-[var(--exile-color-text-tertiary)]">(ゲーム内の表記)</span></p>
-          <div class="mt-1 flex items-baseline gap-3">
-            <p class="text-4xl font-black tabular-nums text-amber-200">{{ fmtNum(total) }}</p>
-            <DiffBadge :now="total" :before="baseTotal" size="lg" />
-          </div>
-          <p class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
-            比べる元: {{ baseAt }}<template v-if="!sameAsBase"> ({{ fmtNum(baseTotal) }})</template>
-          </p>
-          <div v-if="busy" class="absolute right-4 top-4 flex items-center gap-1.5 text-[11px] text-amber-200/80">
-            <span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />計算中
-          </div>
-        </div>
-        <div class="flex flex-col justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+      <!-- 合計・変えた所・操作 (スクロールしても上に残す。変えたらすぐ差が見えるように) -->
+      <div class="sticky -top-4 z-20 -mx-4 mb-4 border-b border-amber-400/20 bg-[#0b0907]/90 px-4 pb-3 pt-4 backdrop-blur">
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
           <div>
-            <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">パワーチャージ</p>
-            <div class="mt-1 flex items-center gap-1">
-              <button
-                v-for="n in chargesMax + 1"
-                :key="n"
-                type="button"
-                class="h-7 w-7 rounded-md text-xs font-semibold tabular-nums transition-colors"
-                :class="n - 1 === charges ? 'bg-sky-500 text-white' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15'"
-                :disabled="busy"
-                @click="changeCharges(n - 1)"
-              >{{ n - 1 }}</button>
+            <p class="text-[10px] text-amber-100/60">スキルの DPS の合計 (ゲーム内の表記)</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(total) }}</span>
+              <DiffBadge :now="total" :before="baseTotal" size="lg" />
+              <span v-if="busy" class="flex items-center gap-1 text-[11px] text-amber-200/80"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />計算中</span>
             </div>
           </div>
-          <button
-            type="button"
-            class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold hover:bg-white/10 disabled:opacity-40"
-            :disabled="sameAsBase"
-            @click="setBaseToNow"
-          >今を比べる元にする</button>
+          <!-- 変えた所 -->
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">
+              比べる元: {{ baseAt }}<template v-if="!sameAsBase"> ({{ fmtNum(baseTotal) }})</template>
+            </p>
+            <div v-if="changes.length" class="mt-0.5 flex flex-wrap gap-1">
+              <span v-for="(c, i) in changes.slice(-6)" :key="i" class="rounded-full bg-sky-500/15 px-2 py-px text-[11px] text-sky-200">{{ c }}</span>
+              <span v-if="changes.length > 6" class="px-1 text-[11px] text-[var(--exile-color-text-tertiary)]">ほか {{ changes.length - 6 }} 件</span>
+            </div>
+            <p v-else class="mt-0.5 text-[11px] text-[var(--exile-color-text-tertiary)]">下の 装備 / ジェム / パッシブツリー で変えると、ここに変えた所と差が出ます</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div>
+              <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">パワーチャージ</p>
+              <div class="flex gap-0.5">
+                <button
+                  v-for="n in chargesMax + 1"
+                  :key="n"
+                  type="button"
+                  class="h-6 w-6 rounded text-[11px] font-semibold tabular-nums transition-colors"
+                  :class="n - 1 === charges ? 'bg-sky-500 text-white' : 'bg-white/5 text-[var(--exile-color-text-secondary)] hover:bg-white/15'"
+                  :disabled="busy"
+                  @click="changeCharges(n - 1)"
+                >{{ n - 1 }}</button>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="self-end rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold hover:bg-white/10 disabled:opacity-30"
+              :disabled="sameAsBase"
+              title="今の状態を比べる元にして、ここからの差を見る"
+              @click="setBaseToNow"
+            >今を比べる元にする</button>
+          </div>
         </div>
       </div>
 
       <!-- スキル -->
-      <h2 class="mb-2 text-sm font-bold text-[var(--exile-color-text-secondary)]">スキル <span class="font-normal text-[var(--exile-color-text-tertiary)]">DPS の高い順</span></h2>
-      <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
-        <SkillCard
-          v-for="x in skills"
-          :key="x.key"
-          :skill="x.s"
-          :before="baseSkills.get(x.key)"
-          :count="x.count"
-          :share="total > 0 ? (x.s.game.dps / total) * 100 : 0"
-        />
+      <div class="mb-6">
+        <SkillTable :rows="skills" :before="baseSkills" :total="total" />
       </div>
 
       <!-- 変える所 (装備 / ジェム / ツリー) -->
