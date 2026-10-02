@@ -1,8 +1,14 @@
 //! LuaJIT state の初期化: utf8 polyfill / error trap / file-loader override / boot_pob
 //!
 //! __tmp_src.rs (812 行) から機械分割 (2026-09-07 R3)。
+//!
+//! 2026-10-02: 本家 (vendor submodule) に手を入れずに読み方を直す「補正の層」`lua/fixes.lua` を、HeadlessWrapper の直後
+//! (= ビルドの読み込みより前) に流す。中身と理由は fixes.lua の頭のコメント (今は 絆 (Bonded) の行の parseMod の包み)。
 
 use super::*;
+
+/// ExileDesk 側の PoB の補正 (本家のファイルは変えない)。boot_pob が HeadlessWrapper.lua の後に流す
+pub(crate) const FIXES_LUA: &str = include_str!("lua/fixes.lua");
 
 // ---------------------------------------------------------------------------
 // Lua state setup（lua_test.rs から移植・共通化）
@@ -175,5 +181,11 @@ pub(crate) fn boot_pob(pob_src: &Path) -> Result<Lua> {
             build.type_name()
         ));
     }
+
+    // 補正の層 (fixes.lua)。ビルドの中のアイテムも絆を持ち得るので、loadBuildFromXML より前にここで入れる
+    lua.load(FIXES_LUA)
+        .set_name("exiledesk/fixes.lua")
+        .exec()
+        .map_err(|e| anyhow!("fixes.lua (ExileDesk の補正): {}", e))?;
     Ok(lua)
 }
