@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-02T01:44:54.294Z",
-  "exiledesk_version": "0.1.342",
+  "generated_at": "2026-10-02T07:53:51.679Z",
+  "exiledesk_version": "0.1.345",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -1480,10 +1480,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +147",
+            "text_en": "+147 to maximum Life",
             "values": [
-              145
+              147
             ],
             "ranges": [
               [
@@ -1492,7 +1492,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -1606,10 +1612,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +147",
+            "text_en": "+147 to maximum Life",
             "values": [
-              145
+              147
             ],
             "ranges": [
               [
@@ -1618,7 +1624,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -1710,10 +1722,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +149",
+            "text_en": "+149 to maximum Life",
             "values": [
-              145
+              149
             ],
             "ranges": [
               [
@@ -1722,7 +1734,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -1836,10 +1854,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +149",
+            "text_en": "+149 to maximum Life",
             "values": [
-              145
+              149
             ],
             "ranges": [
               [
@@ -1848,7 +1866,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -1940,10 +1964,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +151",
+            "text_en": "+151 to maximum Life",
             "values": [
-              145
+              151
             ],
             "ranges": [
               [
@@ -1952,7 +1976,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2066,10 +2096,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +151",
+            "text_en": "+151 to maximum Life",
             "values": [
-              145
+              151
             ],
             "ranges": [
               [
@@ -2078,7 +2108,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2170,10 +2206,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +153",
+            "text_en": "+153 to maximum Life",
             "values": [
-              145
+              153
             ],
             "ranges": [
               [
@@ -2182,7 +2218,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2296,10 +2338,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +153",
+            "text_en": "+153 to maximum Life",
             "values": [
-              145
+              153
             ],
             "ranges": [
               [
@@ -2308,7 +2350,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2400,10 +2448,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +155",
+            "text_en": "+155 to maximum Life",
             "values": [
-              145
+              155
             ],
             "ranges": [
               [
@@ -2412,7 +2460,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2526,10 +2580,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +155",
+            "text_en": "+155 to maximum Life",
             "values": [
-              145
+              155
             ],
             "ranges": [
               [
@@ -2538,7 +2592,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2630,10 +2690,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +158",
+            "text_en": "+158 to maximum Life",
             "values": [
-              145
+              158
             ],
             "ranges": [
               [
@@ -2642,7 +2702,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2756,10 +2822,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +158",
+            "text_en": "+158 to maximum Life",
             "values": [
-              145
+              158
             ],
             "ranges": [
               [
@@ -2768,7 +2834,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2860,10 +2932,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +160",
+            "text_en": "+160 to maximum Life",
             "values": [
-              145
+              160
             ],
             "ranges": [
               [
@@ -2872,7 +2944,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -2986,10 +3064,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +160",
+            "text_en": "+160 to maximum Life",
             "values": [
-              145
+              160
             ],
             "ranges": [
               [
@@ -2998,7 +3076,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3090,10 +3174,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +162",
+            "text_en": "+162 to maximum Life",
             "values": [
-              145
+              162
             ],
             "ranges": [
               [
@@ -3102,7 +3186,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3216,10 +3306,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +162",
+            "text_en": "+162 to maximum Life",
             "values": [
-              145
+              162
             ],
             "ranges": [
               [
@@ -3228,7 +3318,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3320,10 +3416,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +164",
+            "text_en": "+164 to maximum Life",
             "values": [
-              145
+              164
             ],
             "ranges": [
               [
@@ -3332,7 +3428,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3446,10 +3548,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +164",
+            "text_en": "+164 to maximum Life",
             "values": [
-              145
+              164
             ],
             "ranges": [
               [
@@ -3458,7 +3560,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3550,10 +3658,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +166",
+            "text_en": "+166 to maximum Life",
             "values": [
-              145
+              166
             ],
             "ranges": [
               [
@@ -3562,7 +3670,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3676,10 +3790,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +166",
+            "text_en": "+166 to maximum Life",
             "values": [
-              145
+              166
             ],
             "ranges": [
               [
@@ -3688,7 +3802,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3780,10 +3900,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +168",
+            "text_en": "+168 to maximum Life",
             "values": [
-              145
+              168
             ],
             "ranges": [
               [
@@ -3792,7 +3912,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -3906,10 +4032,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +168",
+            "text_en": "+168 to maximum Life",
             "values": [
-              145
+              168
             ],
             "ranges": [
               [
@@ -3918,7 +4044,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4010,10 +4142,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +171",
+            "text_en": "+171 to maximum Life",
             "values": [
-              145
+              171
             ],
             "ranges": [
               [
@@ -4022,7 +4154,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4136,10 +4274,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +171",
+            "text_en": "+171 to maximum Life",
             "values": [
-              145
+              171
             ],
             "ranges": [
               [
@@ -4148,7 +4286,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4240,10 +4384,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +173",
+            "text_en": "+173 to maximum Life",
             "values": [
-              145
+              173
             ],
             "ranges": [
               [
@@ -4252,7 +4396,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4366,10 +4516,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +173",
+            "text_en": "+173 to maximum Life",
             "values": [
-              145
+              173
             ],
             "ranges": [
               [
@@ -4378,7 +4528,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4445,7 +4601,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 21,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -4470,10 +4626,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +175",
+            "text_en": "+175 to maximum Life",
             "values": [
-              145
+              175
             ],
             "ranges": [
               [
@@ -4482,7 +4638,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4563,15 +4725,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261023,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 21,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -4596,10 +4758,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +175",
+            "text_en": "+175 to maximum Life",
             "values": [
-              145
+              175
             ],
             "ranges": [
               [
@@ -4608,7 +4770,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4675,7 +4843,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 22.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -4700,10 +4868,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +177",
+            "text_en": "+177 to maximum Life",
             "values": [
-              145
+              177
             ],
             "ranges": [
               [
@@ -4712,7 +4880,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4781,9 +4955,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3814.2280000000032
       }
     },
     {
@@ -4793,15 +4967,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261024,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 22.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -4826,10 +5000,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +177",
+            "text_en": "+177 to maximum Life",
             "values": [
-              145
+              177
             ],
             "ranges": [
               [
@@ -4838,7 +5012,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -4905,7 +5085,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 24,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -4930,10 +5110,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +179",
+            "text_en": "+179 to maximum Life",
             "values": [
-              145
+              179
             ],
             "ranges": [
               [
@@ -4942,7 +5122,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5011,9 +5197,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3824.8540000000035
       }
     },
     {
@@ -5023,15 +5209,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261025,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 24,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5056,10 +5242,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +179",
+            "text_en": "+179 to maximum Life",
             "values": [
-              145
+              179
             ],
             "ranges": [
               [
@@ -5068,7 +5254,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5135,7 +5327,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 25.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5160,10 +5352,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +181",
+            "text_en": "+181 to maximum Life",
             "values": [
-              145
+              181
             ],
             "ranges": [
               [
@@ -5172,7 +5364,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5241,9 +5439,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3835.4800000000037
       }
     },
     {
@@ -5253,15 +5451,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261026,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 25.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5286,10 +5484,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +181",
+            "text_en": "+181 to maximum Life",
             "values": [
-              145
+              181
             ],
             "ranges": [
               [
@@ -5298,7 +5496,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5365,7 +5569,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 27,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5390,10 +5594,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +184",
+            "text_en": "+184 to maximum Life",
             "values": [
-              145
+              184
             ],
             "ranges": [
               [
@@ -5402,7 +5606,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5471,9 +5681,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3846.106000000004
       }
     },
     {
@@ -5483,15 +5693,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261027,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 27,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5516,10 +5726,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +184",
+            "text_en": "+184 to maximum Life",
             "values": [
-              145
+              184
             ],
             "ranges": [
               [
@@ -5528,7 +5738,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5595,7 +5811,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 28.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5620,10 +5836,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +186",
+            "text_en": "+186 to maximum Life",
             "values": [
-              145
+              186
             ],
             "ranges": [
               [
@@ -5632,7 +5848,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5701,9 +5923,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3856.732000000004
       }
     },
     {
@@ -5713,15 +5935,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261028,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 28.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5746,10 +5968,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +186",
+            "text_en": "+186 to maximum Life",
             "values": [
-              145
+              186
             ],
             "ranges": [
               [
@@ -5758,7 +5980,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5825,7 +6053,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 30,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5850,10 +6078,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +188",
+            "text_en": "+188 to maximum Life",
             "values": [
-              145
+              188
             ],
             "ranges": [
               [
@@ -5862,7 +6090,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -5931,9 +6165,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3867.3580000000043
       }
     },
     {
@@ -5943,15 +6177,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261029,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 30,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -5976,10 +6210,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +188",
+            "text_en": "+188 to maximum Life",
             "values": [
-              145
+              188
             ],
             "ranges": [
               [
@@ -5988,7 +6222,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6055,7 +6295,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 31.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6080,10 +6320,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +190",
+            "text_en": "+190 to maximum Life",
             "values": [
-              145
+              190
             ],
             "ranges": [
               [
@@ -6092,7 +6332,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6161,9 +6407,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3877.9840000000045
       }
     },
     {
@@ -6173,15 +6419,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261030,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 31.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6206,10 +6452,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +190",
+            "text_en": "+190 to maximum Life",
             "values": [
-              145
+              190
             ],
             "ranges": [
               [
@@ -6218,7 +6464,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6285,7 +6537,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 33,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6310,10 +6562,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +192",
+            "text_en": "+192 to maximum Life",
             "values": [
-              145
+              192
             ],
             "ranges": [
               [
@@ -6322,7 +6574,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6391,9 +6649,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3888.6100000000047
       }
     },
     {
@@ -6403,15 +6661,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261031,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 33,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6436,10 +6694,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +192",
+            "text_en": "+192 to maximum Life",
             "values": [
-              145
+              192
             ],
             "ranges": [
               [
@@ -6448,7 +6706,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6515,7 +6779,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 34.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6540,10 +6804,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +195",
+            "text_en": "+195 to maximum Life",
             "values": [
-              145
+              195
             ],
             "ranges": [
               [
@@ -6552,7 +6816,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6621,9 +6891,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3899.236000000005
       }
     },
     {
@@ -6633,15 +6903,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261032,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 34.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6666,10 +6936,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +195",
+            "text_en": "+195 to maximum Life",
             "values": [
-              145
+              195
             ],
             "ranges": [
               [
@@ -6678,7 +6948,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6745,7 +7021,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 36,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6770,10 +7046,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +197",
+            "text_en": "+197 to maximum Life",
             "values": [
-              145
+              197
             ],
             "ranges": [
               [
@@ -6782,7 +7058,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6851,9 +7133,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3909.862000000005
       }
     },
     {
@@ -6863,15 +7145,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261033,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 36,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -6896,10 +7178,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +197",
+            "text_en": "+197 to maximum Life",
             "values": [
-              145
+              197
             ],
             "ranges": [
               [
@@ -6908,7 +7190,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -6975,7 +7263,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 37.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -7000,10 +7288,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +199",
+            "text_en": "+199 to maximum Life",
             "values": [
-              145
+              199
             ],
             "ranges": [
               [
@@ -7012,7 +7300,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7081,9 +7375,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3920.4880000000053
       }
     },
     {
@@ -7093,15 +7387,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261034,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 37.5,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -7126,10 +7420,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +199",
+            "text_en": "+199 to maximum Life",
             "values": [
-              145
+              199
             ],
             "ranges": [
               [
@@ -7138,7 +7432,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7205,7 +7505,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 39,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -7230,10 +7530,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +201",
+            "text_en": "+201 to maximum Life",
             "values": [
-              145
+              201
             ],
             "ranges": [
               [
@@ -7242,7 +7542,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7311,9 +7617,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3931.1140000000055
       }
     },
     {
@@ -7323,15 +7629,15 @@
       "omen": null,
       "omen_ja": null,
       "seed": 20261035,
-      "applied": false,
-      "reason": "品質が上限 (20%)",
+      "applied": true,
+      "reason": null,
       "before": {
         "name": "琥珀のアミュレット",
         "base": "Amber Amulet",
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 39,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -7356,10 +7662,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +201",
+            "text_en": "+201 to maximum Life",
             "values": [
-              145
+              201
             ],
             "ranges": [
               [
@@ -7368,7 +7674,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7435,7 +7747,7 @@
         "base_ja": "琥珀のアミュレット",
         "item_level": 82,
         "rarity": "rare",
-        "quality": 20,
+        "quality": 40,
         "corrupted": false,
         "identified": true,
         "destroyed": false,
@@ -7460,10 +7772,10 @@
             "side": "prefix",
             "tier_name": "T1",
             "mod_level": 60,
-            "text_ja": "最大ライフ +145",
-            "text_en": "+145 to maximum Life",
+            "text_ja": "最大ライフ +203",
+            "text_en": "+203 to maximum Life",
             "values": [
-              145
+              203
             ],
             "ranges": [
               [
@@ -7472,7 +7784,13 @@
               ]
             ],
             "tier_index": 8,
-            "affix": "Athlete's"
+            "affix": "Athlete's",
+            "quality_boosted": true,
+            "raw_values": [
+              145
+            ],
+            "raw_text_ja": "最大ライフ +145",
+            "raw_text_en": "+145 to maximum Life"
           },
           {
             "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7541,9 +7859,9 @@
       },
       "cost": {
         "each": 10.626000000000001,
-        "amount": 0,
-        "subtotal": 0,
-        "cumulative": 3803.602000000003
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3941.7400000000057
       }
     }
   ],
@@ -7553,7 +7871,7 @@
     "base_ja": "琥珀のアミュレット",
     "item_level": 82,
     "rarity": "rare",
-    "quality": 20,
+    "quality": 40,
     "corrupted": false,
     "identified": true,
     "destroyed": false,
@@ -7578,10 +7896,10 @@
         "side": "prefix",
         "tier_name": "T1",
         "mod_level": 60,
-        "text_ja": "最大ライフ +145",
-        "text_en": "+145 to maximum Life",
+        "text_ja": "最大ライフ +203",
+        "text_en": "+203 to maximum Life",
         "values": [
-          145
+          203
         ],
         "ranges": [
           [
@@ -7590,7 +7908,13 @@
           ]
         ],
         "tier_index": 8,
-        "affix": "Athlete's"
+        "affix": "Athlete's",
+        "quality_boosted": true,
+        "raw_values": [
+          145
+        ],
+        "raw_text_ja": "最大ライフ +145",
+        "raw_text_en": "+145 to maximum Life"
       },
       {
         "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
@@ -7651,5 +7975,5 @@
       }
     ]
   },
-  "total_cost": 3803.602000000003
+  "total_cost": 3941.7400000000057
 }
