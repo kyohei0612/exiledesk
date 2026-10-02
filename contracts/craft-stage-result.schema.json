@@ -764,8 +764,8 @@
         },
         "quality": {
           "default": 0,
-          "description": "カタリストで 1.5 刻みの小数もある",
-          "maximum": 30,
+          "description": "カタリストで 1.5 刻みの小数もある。ブリーチのエッセンスで上限 40% (㉔)",
+          "maximum": 50,
           "minimum": 0,
           "title": "Quality",
           "type": "number"
@@ -966,6 +966,25 @@
           "default": false,
           "title": "Crafted",
           "type": "boolean"
+        },
+        "quality_boosted": {
+          "default": false,
+          "description": "カタリストの品質で数値が伸びた (text_ja / values は伸びた後、㉔)",
+          "title": "Quality Boosted",
+          "type": "boolean"
+        },
+        "raw_text_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "品質で伸びる前の文 (㉔)",
+          "title": "Raw Text Ja"
         }
       },
       "required": [

@@ -45,6 +45,7 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         base = urllib.parse.quote(plan.base)
         mod = urllib.parse.quote(scene.mod)
         q = f"{CLIP}&view=tiers&base={base}&mod={mod}&ilvl={plan.item_level}"
+        q += f"&floor={scene.floor}" if scene.floor else ""
         return q if scene.reveal else q + "&hl=0"
     hide_dps = "" if scene.show_dps else "&dps=0"
     if scene.kind == "compare" and scene.compare_with:
@@ -53,9 +54,10 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         q += f"&a_step={scene.step or 0}"
         q += f"&b_step={scene.b_step}" if scene.b_step is not None else ""
         return q + _pob("a_pob", res) + _pob("b_pob", other) + hide_dps
-    if scene.kind == "stage" and (scene.focus or not scene.show_dps):
+    if scene.kind == "stage" and (scene.focus or scene.tags or not scene.show_dps):
         q = f"stage-plan={_plan_json(plan)}&step={scene.step or 0}&{CLIP}" + _pob("stage-pob", res)
         q += f"&focus={urllib.parse.quote(scene.focus)}" if scene.focus else ""
+        q += "&tags=1" if scene.tags else ""
         return q + hide_dps
     if scene.kind in ("dps", "hit") and res.pob is not None:
         q = f"{CLIP}&view={scene.kind}{_pob('pob', res)}&step={scene.step or 0}"

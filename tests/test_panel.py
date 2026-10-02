@@ -93,3 +93,15 @@ def test_stage_coverage_uses_skippable() -> None:
     )
     assert stage_coverage(s, 4)  # 1〜3 が無い
     assert stage_coverage(s, 4, None, {None: {1, 2, 3}}) == []
+
+
+def test_floor_and_tags_only_on_their_views() -> None:
+    assert (
+        Scene(kind="tiers", mod="IncreasedLife", floor=50).key()
+        != Scene(kind="tiers", mod="IncreasedLife").key()
+    )
+    assert Scene(kind="stage", step=1, tags=True).tags
+    with pytest.raises(ValueError):
+        Scene(kind="stage", step=1, floor=50)
+    with pytest.raises(ValueError):
+        Scene(kind="item", step=1, tags=True)

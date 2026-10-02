@@ -237,7 +237,8 @@
           "text": "違うのは、弱い MOD が付かないこと。付く MOD のレベルに下限があるの。",
           "scene": {
             "kind": "tiers",
-            "mod": "IncreasedLife"
+            "mod": "IncreasedLife",
+            "floor": 50
           }
         },
         {
@@ -246,7 +247,8 @@
           "text": "下限って、何なのだ？",
           "scene": {
             "kind": "tiers",
-            "mod": "IncreasedLife"
+            "mod": "IncreasedLife",
+            "floor": 50
           }
         },
         {
@@ -255,7 +257,8 @@
           "text": "王者と高貴なら、上級は 35、完全は 50 より下のティアは付かない。",
           "scene": {
             "kind": "tiers",
-            "mod": "IncreasedLife"
+            "mod": "IncreasedLife",
+            "floor": 50
           }
         },
         {
@@ -1158,7 +1161,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "品質が上がると、種類に合う MOD の数値が伸びるの。ライフのカタリストなら、ライフの MOD。",
+          "text": "品質が上がると、種類に合う MOD の数値が伸びるの。肉体のカタリストなら、ライフの MOD。",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1180,7 +1183,8 @@
           "text": "合うかどうかは、MOD に付いているタグで決まるの。",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "tags": true
           }
         },
         {
@@ -1189,7 +1193,8 @@
           "text": "タグは MOD の分類の札。最大ライフには「ライフ」のタグが付いているわ。",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "tags": true
           }
         },
         {
@@ -1198,7 +1203,8 @@
           "text": "タグは、ゲームのどこで見られるのだ？",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "tags": true
           }
         },
         {
@@ -1207,7 +1213,8 @@
           "text": "ゲームの中では見えないの。MOD を調べられるデータサイトで確認してね。",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "tags": true
           }
         },
         {
@@ -1216,7 +1223,8 @@
           "text": "合わない MOD はどうなるのだ？",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "tags": true
           }
         },
         {
@@ -1278,7 +1286,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "ライフのカタリストを、上限まで使っていくわね。",
+          "text": "肉体のカタリストを、上限まで使っていくわね。",
           "scene": {
             "kind": "stage",
             "step": 6

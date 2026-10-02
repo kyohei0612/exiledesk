@@ -166,6 +166,11 @@ class StageMod(BaseModel):
     fractured: bool = False
     desecrated: bool = False
     crafted: bool = False
+    quality_boosted: bool = Field(
+        default=False,
+        description="カタリストの品質で数値が伸びた (text_ja / values は伸びた後、㉔)",
+    )
+    raw_text_ja: str | None = Field(default=None, description="品質で伸びる前の文 (㉔)")
 
 
 class UniqueRef(BaseModel):
@@ -187,7 +192,12 @@ class StageItem(BaseModel):
     base_ja: str | None = None
     item_level: int = Field(ge=1, le=100)
     rarity: Rarity
-    quality: float = Field(default=0, ge=0, le=30, description="カタリストで 1.5 刻みの小数もある")
+    quality: float = Field(
+        default=0,
+        ge=0,
+        le=50,
+        description="カタリストで 1.5 刻みの小数もある。ブリーチのエッセンスで上限 40% (㉔)",
+    )
     corrupted: bool = False
     identified: bool = Field(
         default=True, description="False = 未鑑定 (MOD を隠す)。鑑定の巻物で True"
