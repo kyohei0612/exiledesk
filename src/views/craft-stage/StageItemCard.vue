@@ -4,6 +4,7 @@
   ゲームのアイテムの見た目 (レアリティの色の見出し → 種類・アイテムレベル → 固有 → プレ / サフィ)。
   カレンシーを持った状態でここを押すと 1 手打つ (Craft of Exile と同じ操作)。直前の手で付いた MOD は光らせ、消えた MOD は
   取り消し線で一瞬残す (変化が動画で見えるように)。
+  2026-10-02 (POE2Tube 要望 ㉔): カタリストの品質で伸びた MOD は伸びた後の数値を水色で (素の値は title)、&tags=1 で MOD の横にタグの札。
   2026-09-28 (POE2Tube 要望 ⑧): ベースの数値 (防御力・武器の物理ダメージ・フラスコの回復量) を品質込みで出す (品質 1% ごとに 1% more、
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
@@ -18,12 +19,15 @@ import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
+import { boostedMod } from "../../services/craft-stage/stage-core";
+import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
+import { craftStage } from "../../state/craft-stage";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number }>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean }>();
 /**
  * スポットライト (POE2Tube 要望 ⑪-2、URL の focus=<MOD の id か系統>): その MOD の行だけ光らせて少し大きく、他は暗く
  */
@@ -54,20 +58,24 @@ const art = computed(() => (props.item.unique ? uniqueArt(props.item.unique.en) 
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId);
 /** 品質の種類 (カタリスト。「品質 (マナモッド)」) */
 const qualityLabel = computed(() => qualityLabelOf(props.item.qualityTag));
-/** MOD の種類ごとの色と札 (ゲームの色に寄せる: 破砕 = 金、冒涜 = 赤、エッセンス = 薄い青) */
+/** MOD の種類ごとの色と札 (ゲームの色に寄せる: フラクチャー = 金、冒涜 = 赤、エッセンス = 薄い青) */
 function look(m: StageMod): { cls: string; tag: string } {
   if (m.unrevealed) return { cls: "text-rose-300 italic", tag: "" };
-  if (m.fractured) return { cls: "text-mod-fractured", tag: "破砕" };
+  if (m.fractured) return { cls: "text-mod-fractured", tag: "フラクチャー" };
   if (m.desecrated) return { cls: "text-mod-desecrated", tag: "冒涜" };
   if (m.crafted) return { cls: "text-mod-crafted", tag: "エッセンス" };
   return { cls: "text-rarity-magic", tag: "" };
 }
 /** ユニークの効果 (poe2db のページから。値はユニークごとに決まった 1 つ。ページの無いユニークは空) */
 const uLines = computed(() => (props.item.rarity === "unique" && props.item.unique ? uniqueLines(props.item.unique.en) : []));
-const rows = computed(() => [
-  ...props.item.prefixes.map((m) => ({ m, side: "プレ" })),
-  ...props.item.suffixes.map((m) => ({ m, side: "サフィ" })),
-]);
+const rows = computed(() =>
+  [...props.item.prefixes.map((m) => ({ m, side: "プレ" })), ...props.item.suffixes.map((m) => ({ m, side: "サフィ" }))].map((r) => {
+    // カタリストの品質で伸びた数値 (伸びない MOD は null)
+    const b = boostedMod(props.item, r.m, craftStage.data.value ?? undefined);
+    const tags = props.showTags ? shownTags(r.m.tags ?? craftStage.data.value?.mods.get(r.m.modId)?.tags ?? []) : [];
+    return { ...r, text: b?.textJa ?? r.m.textJa, boosted: !!b, tags };
+  }),
+);
 </script>
 
 <template>
@@ -135,7 +143,8 @@ const rows = computed(() => [
           class="relative rounded px-2 py-0.5"
           :class="[look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? 'stage-mod-new' : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
         >
-          {{ r.m.textJa }}
+          <span :class="r.boosted ? 'text-[#7ee8ff]' : ''" :title="r.boosted ? `品質で伸びた数値 (素は ${r.m.textJa})` : undefined">{{ r.text }}</span>
+          <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ TAG_STYLE[t]!.ja }}</span>
           <span class="ml-2 whitespace-nowrap align-middle text-[10px]" :class="r.side === 'プレ' ? 'text-sky-300/70' : 'text-violet-300/70'"><span v-if="look(r.m).tag" class="mr-1 opacity-90">{{ look(r.m).tag }}</span>{{ r.side }} {{ r.m.tierName }}</span>
         </p>
       </div>

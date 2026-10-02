@@ -9,6 +9,8 @@ import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
+import { maxQualityForBase } from "../htc/catalysing-setup";
+import { displayedValue } from "../htc/quality";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 export const SIDES: StageSide[] = ["prefix", "suffix"];
@@ -30,6 +32,19 @@ export function rareLimitOf(item: StageItem, side: StageSide): number {
 export const listOf = (item: StageItem, side: StageSide): StageMod[] => (side === "prefix" ? item.prefixes : item.suffixes);
 export const room = (item: StageItem, side: StageSide): boolean => listOf(item, side).length < limitOf(item, side);
 export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
+
+/**
+ * 指輪・アミュレットの品質の上限 (POE2Tube 要望 ㉔-3、2026-10-02): ベースの最大品質 + MOD の「品質の最大値 +N%」
+ * (ブリーチのエッセンス Perfect Essence of the Breach = "+20% to Maximum Quality"、ゲームの説明文「宝飾品に付く: 品質の最大値 +20%」)
+ */
+export function maxQualityOf(item: StageItem): number {
+  let add = 0;
+  for (const m of allMods(item)) {
+    const r = /^\+?(\d+)% to Maximum Quality$/i.exec(m.textEn);
+    if (r) add += Number(r[1]);
+  }
+  return maxQualityForBase(item.base) + add;
+}
 export const without = (item: StageItem, mod: StageMod): StageItem =>
   ({ ...item, prefixes: item.prefixes.filter((m) => m !== mod), suffixes: item.suffixes.filter((m) => m !== mod) });
 export const withMod = (item: StageItem, mod: StageMod): StageItem =>
@@ -93,6 +108,26 @@ function fillEn(text: string, values: readonly number[]): string {
   return text.replace(re, () => String(values[i++]));
 }
 
+/**
+ * カタリストの品質で伸びた後の数値と文 (POE2Tube 要望 ㉔-4、2026-10-02)。伸びない時は null。
+ * 決まりは計算機の quality.ts と同じ (オーナーの実物で検算済み): 指輪・アミュレットだけ、品質の種類 (qualityTag) のタグを
+ * MOD 自身が持っていれば 素の値 × (1 + 品質) を切り捨て。防具・武器の MOD は品質で数値が動かない。
+ * タグは MOD に持たせた物 (無い古い物は data から引く)
+ */
+export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { values: number[]; textJa: string; textEn: string } | null {
+  const tag = item.qualityTag;
+  if (!tag || !(item.quality > 0) || !/^(Rings|Amulets)\//.test(m.modId)) return null;
+  const tags = m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
+  if (!tags.includes(tag) || !m.values.length) return null;
+  const values = m.values.map((v) => displayedValue(v, item.quality));
+  if (values.every((v, i) => v === m.values[i])) return null;
+  // 文の数字を素 → 伸びた後に差し替える (文の中の同じ数字の並び)
+  const swap = new Map(m.values.map((v, i) => [String(Math.abs(v)), String(Math.abs(Math.round(values[i]! * 100) / 100))]));
+  const re = /\d+(?:\.\d+)?/g;
+  const fix = (t: string): string => t.replace(re, (n) => swap.get(n) ?? n);
+  return { values, textJa: fix(m.textJa), textEn: fix(m.textEn) };
+}
+
 /** MOD の段を 1 つ確定させて表示に要る物を埋める */
 export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: () => number): StageMod {
   const tier = mod.tiers[tierIndex]!;
@@ -135,7 +170,7 @@ export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: rea
   const ranges = raw.map(([a, b], i) => [scaled(a!, scales[i]!), scaled(b!, scales[i]!)]);
   const en = mod.text ?? mod.id;
   const textEn = fillEn(en, values);
-  return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}) };
+  return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };
 }
 /**
  * 日本語文に値を入れる。値の範囲の無い MOD (固定の「+1 to Level of all Minion Skills」、2 行目が固定の物) は日本語だけ「#」なので、

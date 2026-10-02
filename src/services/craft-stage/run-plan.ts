@@ -16,7 +16,7 @@ import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
 import { mulberry32 } from "../htc/rng";
 import { jaTypeName } from "../trade2/localize";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
-import { addForced, type Force } from "./stage-core";
+import { addForced, boostedMod, type Force } from "./stage-core";
 import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOf } from "./stage-bases";
@@ -60,6 +60,16 @@ export function outMod(m: StageMod): OutMod {
     ...({ tier_index: m.tierIndex, affix: m.affix } as object),
   } as OutMod;
 }
+/**
+ * そのアイテムの中の MOD として書き出す。カタリストの品質で伸びる MOD は text_ja / text_en / values を伸びた後に、
+ * 元は raw_values / raw_text_ja / raw_text_en に残す (POE2Tube 要望 ㉔-4)
+ */
+export function outModIn(it: StageItem, m: StageMod): OutMod {
+  const o = outMod(m);
+  const b = boostedMod(it, m);
+  if (!b) return o;
+  return { ...o, text_ja: b.textJa, text_en: b.textEn, values: b.values, ...({ quality_boosted: true, raw_values: m.values, raw_text_ja: m.textJa, raw_text_en: m.textEn } as object) } as OutMod;
+}
 export function outItem(it: StageItem): OutItem {
   return {
     name: it.baseJa,
@@ -82,8 +92,8 @@ export function outItem(it: StageItem): OutItem {
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
     ...({ augments: (it.augments ?? []).map((a) => ({ key: a.key, en: a.en, ja: a.ja, category: a.cat, text_ja: a.textJa, text_en: a.textEn, stats: a.stats })) } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
-    prefixes: it.prefixes.map(outMod) as OutItem["prefixes"],
-    suffixes: it.suffixes.map(outMod) as OutItem["suffixes"],
+    prefixes: it.prefixes.map((m) => outModIn(it, m)) as OutItem["prefixes"],
+    suffixes: it.suffixes.map((m) => outModIn(it, m)) as OutItem["suffixes"],
   };
 }
 
@@ -131,7 +141,7 @@ export function playStep(
     reason: r.reason ?? null,
     before: outItem(item),
     after: outItem(r.item),
-    changed: { added: r.added.map(outMod), removed: r.removed.map(outMod), rarity_from: item.rarity, rarity_to: r.item.rarity },
+    changed: { added: r.added.map((m) => outModIn(r.item, m)), removed: r.removed.map((m) => outModIn(item, m)), rarity_from: item.rarity, rarity_to: r.item.rarity },
     cost: { each, amount, subtotal, cumulative },
     // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),

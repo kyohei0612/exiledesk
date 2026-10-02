@@ -7,6 +7,8 @@
   出やすさ = その MOD が付いた時にどの段になるか (出うる段の重みの割合)。下 15% (612px より下) は空ける。
   画面に「アイテムレベル」の文字を出す (POE2Tube の撮影の準備判定)。
   2026-09-29 要望 ⑫「撮影画面いっぱいに大きく (1080p で 32px 以上)」: 行の高さを段の数で決め、文字も行の高さに合わせて大きく。
+  2026-10-02 要望 ㉔-1 &floor=N: 上位のオーブの「付く MOD のレベルの下限」。N 未満のティアは灰色・取り消し線で「付かない」、出やすさは付くティアの中で。
+    下限はエンジンの CURRENCY_FLOOR (王者・高貴 35 / 50、変成・増強 55 / 70)。注にどのオーブの下限かを出す
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -14,9 +16,23 @@ import { craftStage } from "../../state/craft-stage";
 import { freshItem } from "../../services/craft-stage/run-plan";
 import { modListFor, shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { baseArt } from "../../services/craft-stage/base-art";
+import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
 /** hl = false: 答えの金の段を出さない (POE2Tube 要望 ⑯ &hl=0。質問の行で表だけ見せ、答えの行で金の段を「パッ」と出す) */
-const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean }>(), { hl: true });
+const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean; floor?: number | null }>(), { hl: true, floor: null });
+
+/** 下限の数 → そのオーブの名前 (CURRENCY_FLOOR から。公式の日本語) */
+const FLOOR_NAME: Record<string, string> = { transmute: "変成", augment: "増強", regal: "王者", exalt: "高貴" };
+const floorNote = computed(() => {
+  const f = props.floor;
+  if (!f) return "";
+  const names: string[] = [];
+  for (const [cur, tiers] of Object.entries(CURRENCY_FLOOR)) {
+    if (tiers.greater === f) names.push(`上級の${FLOOR_NAME[cur]}`);
+    if (tiers.perfect === f) names.push(`完全の${FLOOR_NAME[cur]}`);
+  }
+  return `${names.length ? names.join("・") : "このオーブ"}: MOD レベル ${f} 未満のティアは付かない`;
+});
 
 const view = computed(() => {
   const data = craftStage.data.value;
@@ -29,13 +45,20 @@ const view = computed(() => {
     if (!row) return { error: `このベースに ${m} の MOD が無い`, item };
     // hl = false の時は全部の段を同じ見た目に (薄い段も付けない)。出やすさも全部の段の中で
     const lv = props.hl ? (props.ilvl ?? Infinity) : Infinity;
-    const open = row.tiers.filter((t) => t.ilvl <= lv);
+    const floor = props.floor ?? 0;
+    // 付かない = 下限より下 (これは答えではないので hl=0 でも出す)
+    const open = row.tiers.filter((t) => t.ilvl <= lv && t.ilvl >= floor);
     const total = open.reduce((a, t) => a + t.weight, 0);
     const top = props.hl ? (open[0]?.rank ?? null) : null;
+    // 下限で全部消えた時は金も出さない
     const maxW = Math.max(1, ...row.tiers.map((t) => t.weight));
     return {
       item, row,
-      tiers: row.tiers.map((t) => ({ ...t, open: t.ilvl <= lv, top: t.rank === top, share: t.ilvl <= lv && total ? t.weight / total : 0, bar: t.weight / maxW })),
+      tiers: row.tiers.map((t) => {
+        const below = t.ilvl < floor;
+        const isOpen = t.ilvl <= lv && !below;
+        return { ...t, open: t.ilvl <= lv, below, top: t.rank === top, share: isOpen && total ? t.weight / total : 0, bar: t.weight / maxW };
+      }),
     };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e), item: null };
@@ -48,7 +71,8 @@ const pct = (x: number): string => (x >= 0.1 ? `${Math.round(x * 100)}%` : x > 0
 const rowH = computed(() => {
   const v = view.value;
   const n = v && "tiers" in v && v.tiers ? v.tiers.length : 1;
-  return Math.min(64, Math.floor((612 - 16 - 132 - 46 - 26) / Math.max(1, n)));
+  // &floor の注の 1 行 (余白込み 46px) も引く
+  return Math.min(64, Math.floor((612 - 16 - 132 - 46 - 26 - (props.floor ? 46 : 0)) / Math.max(1, n)));
 });
 /** 行の文字の大きさ (行の高さに合わせる。1280 の枠で 30px = 1080p で約 40px) */
 const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value * 0.6))));
@@ -80,18 +104,19 @@ const rowFont = computed(() => Math.max(18, Math.min(30, Math.round(rowH.value *
           v-for="t in view.tiers"
           :key="t.rank"
           class="relative grid grid-cols-[90px_1fr_240px_300px] items-center gap-4 border-b border-white/5 px-6"
-          :class="[t.top ? 'bg-amber-400/15 ring-[3px] ring-inset ring-amber-300/85' : '', t.open ? '' : 'opacity-30']"
+          :class="[t.top ? 'bg-amber-400/15 ring-[3px] ring-inset ring-amber-300/85' : '', t.below ? 'bg-white/[0.02] text-white/35' : t.open ? '' : 'opacity-30']"
           :style="{ height: `${rowH}px`, fontSize: `${rowFont}px` }"
         >
-          <b :class="t.top ? 'text-amber-200' : 'text-white/85'">{{ t.rank }}</b>
-          <span class="truncate text-[#c8c8ff]">{{ t.text }}</span>
-          <span class="tabular-nums">Lv {{ t.ilvl }}</span>
+          <b :class="t.below ? 'line-through decoration-white/40' : t.top ? 'text-amber-200' : 'text-white/85'">{{ t.rank }}</b>
+          <span class="truncate" :class="t.below ? 'line-through decoration-white/40' : 'text-[#c8c8ff]'">{{ t.text }}</span>
+          <span class="tabular-nums" :class="t.below ? 'line-through decoration-white/40' : ''">Lv {{ t.ilvl }}</span>
           <span class="flex items-center gap-3">
-            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="t.top ? 'bg-amber-300' : 'bg-rarity-magic'" :style="{ width: `${t.bar * 100}%` }" /></span>
-            <span class="w-20 text-right tabular-nums">{{ pct(t.share) }}</span>
+            <span class="h-4 flex-1 overflow-hidden rounded-full bg-white/10"><span class="block h-full rounded-full" :class="t.below ? 'bg-white/15' : t.top ? 'bg-amber-300' : 'bg-rarity-magic'" :style="{ width: `${t.bar * 100}%` }" /></span>
+            <span class="w-28 whitespace-nowrap text-right tabular-nums">{{ t.below ? "付かない" : pct(t.share) }}</span>
           </span>
         </div>
       </div>
+      <p v-if="floorNote" class="mt-2 w-full text-right text-[18px] font-bold text-white/80">{{ floorNote }}</p>
       <p v-if="ilvl && hl" class="mt-2 w-full text-right text-[16px] text-white/60">金のティア = アイテムレベル {{ ilvl }} で出る一番上のティア。薄いティアはまだ出ない。出やすさは、この MOD が付いた時にどのティアになるか</p>
     </template>
   </div>

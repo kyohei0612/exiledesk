@@ -54,7 +54,7 @@ const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?:
  */
 export type StageExtra =
   // hl = false: 答えの金の段を出さない (&hl=0、POE2Tube 要望 ⑯「ネタバレは避けたい」)
-  | { kind: "tiers"; base: string; mod: string; ilvl: number | null; hl: boolean }
+  | { kind: "tiers"; base: string; mod: string; ilvl: number | null; hl: boolean; floor: number | null }
   // aPob / bPob: 結果 JSON の pob (要望 ⑰-3、&a_pob= / &b_pob=)。あれば真ん中の差に DPS の差も出す
   | { kind: "compare"; a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob: PobBlock | null; bPob: PobBlock | null }
   // 耐性の画面 (要望 ⑰-4): r = craft-stage-run.mjs --resists の結果、act = どのペナルティを出すか、penalty = false でペナルティ後を出さない
@@ -70,7 +70,9 @@ export type StageExtra =
   | { kind: "armour"; ar: number[]; labels: string[]; max: number | null; hit: number | null }
   | { kind: "evasion"; ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }
   | { kind: "es"; life: number; es: number; dmg: number; hits: number[]; esKind: "phys" | "chaos" | "bleed"; until: number }
-  | { kind: "bases"; slot: string; early: number; late: number };
+  | { kind: "bases"; slot: string; early: number; late: number }
+  // エッセンスの強さの比べ (要望 ㉔-6): name = Essence of ○○ の ○○、part = 強調する部位の言葉
+  | { kind: "essence"; name: string; part: string | null };
 /** craft-stage-run.mjs --resists の結果 (耐性の画面に URL で渡す) */
 export interface ResistsBlock {
   version: string;
@@ -122,6 +124,8 @@ function defenceView(view: string, q: URLSearchParams): StageExtra {
 }
 /** スポットライト (URL の focus=<MOD の id か系統>)。動画モードのアイテム枠でその行だけ光らせる */
 const focus = ref<string | null>(null);
+/** MOD の横にタグの札を出す (URL の tags=1、POE2Tube 要望 ㉔-5)。ゲームの中では見えないので動画で「データサイトで確認」と言う用 */
+const showTags = ref(false);
 /** PoB の計算 (要望 ⑰-3、URL の stage-pob=<結果 JSON の pob>)。動画モードで手ごとの DPS を出す */
 const pob = shallowRef<PobBlock | null>(null);
 /**
@@ -145,7 +149,7 @@ function priceKeysAll(): string[] {
 }
 
 export const craftStage = {
-  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, pob, startMods,
+  data, item, log, held, omens, seed, error, replay, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -179,10 +183,11 @@ export const craftStage = {
       const q = new URLSearchParams(location.search);
       const raw = q.get("stage-plan");
       focus.value = q.get("focus");
+      showTags.value = q.get("tags") === "1";
       const view = q.get("view");
       if (view === "tiers") {
         const ilvl = Number(q.get("ilvl"));
-        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null, hl: q.get("hl") !== "0" };
+        extra.value = { kind: "tiers", base: q.get("base") ?? "", mod: q.get("mod") ?? "", ilvl: Number.isFinite(ilvl) && ilvl > 0 ? ilvl : null, hl: q.get("hl") !== "0", floor: Number(q.get("floor")) > 0 ? Number(q.get("floor")) : null };
       } else if (view === "compare") {
         const num = (k: string) => (q.get(k) != null ? Number(q.get(k)) : 9999);
         const pj = (k: string) => (q.get(k) ? (JSON.parse(q.get(k)!) as PobBlock) : null);
@@ -197,6 +202,8 @@ export const craftStage = {
         extra.value = { kind: "dps", pob: JSON.parse(q.get("pob") ?? "{}") as PobBlock, step: q.get("step") != null ? Number(q.get("step")) : 9999 };
       } else if (view === "layers" || view === "armour" || view === "evasion" || view === "es" || view === "bases") {
         extra.value = defenceView(view, q);
+      } else if (view === "essence") {
+        extra.value = { kind: "essence", name: q.get("name") ?? "body", part: q.get("part") };
       } else if (view === "resists") {
         const act = q.get("act");
         extra.value = { kind: "resists", r: JSON.parse(q.get("r") ?? "{}") as ResistsBlock, act: act != null ? Number(act) : null, penalty: q.get("penalty") !== "0" };

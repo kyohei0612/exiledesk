@@ -9,9 +9,9 @@
  *   - ヴァールのオーブと聖別は [[apply-vaal.ts]]
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { maxQualityForBase, QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
+import { QUALITY_PER_CATALYST } from "../htc/catalysing-setup";
 import { socketCapOf } from "./stage-runes";
-import { allMods, replaced, skip, withValues } from "./stage-core";
+import { allMods, maxQualityOf, replaced, skip, withValues } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 
 export const OTHER_KINDS: readonly string[] = ["divine", "fracture", "artificer"];
@@ -22,7 +22,8 @@ export function applyOther(data: PatchData, item: StageItem, currency: string, r
   if (currency.startsWith("catalyst_")) {
     if (!CATALYST_CLASSES.includes(item.cls.category)) return skip(item, "カタリストは指輪・アミュレットだけ");
     const tag = currency.slice("catalyst_".length);
-    const max = maxQualityForBase(item.base);
+    // ブリーチのエッセンスの「品質の最大値 +20%」も足す (要望 ㉔-3)
+    const max = maxQualityOf(item);
     const base = item.qualityTag === tag ? item.quality : 0;
     if (base >= max) return skip(item, `品質が上限 (${max}%)`);
     const quality = Math.min(max, Math.round((base + QUALITY_PER_CATALYST) * 10) / 10);

@@ -110,7 +110,7 @@ export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource =
     else if (st.after.sanctified) next = { kind: "up", color: COLOR.top, text: "聖別!" };
     else if (o.changed.rarity_from !== o.changed.rarity_to) next = { kind: "up", color: COLOR[o.changed.rarity_to], text: `${RARITY_TEXT[o.changed.rarity_to]}${mods ? ` ${mods}` : ""}` };
     else if (top) next = { kind: "up", color: COLOR.top, text: mods || "T1 がついた!" };
-    else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "破砕!" };
+    else if (st.added.some((m) => m.fractured)) next = { kind: "hit", color: COLOR.fractured, text: "フラクチャー!" };
     else if (st.added.some((m) => m.desecrated)) next = { kind: "hit", color: COLOR.desecrated, text: st.added.some((m) => m.unrevealed) ? "冒涜!" : "開示!" };
     else if (o.currency === "divine") next = { kind: "hit", color: COLOR.divine, text: "数値を振り直し!" };
     else if (st.after.quality !== st.before.quality) next = { kind: "hit", color: COLOR.top, text: `品質 ${st.after.quality}%` };

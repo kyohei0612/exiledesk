@@ -29,6 +29,8 @@ export interface StageMod {
   stats?: string[];
   textJa: string;
   textEn: string;
+  /** MOD のタグ (データの mod.tags。カタリストで伸びるか・&tags=1 の札。要望 ㉔、2026-10-02) */
+  tags?: string[];
   fractured?: boolean;
   desecrated?: boolean;
   /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで) */

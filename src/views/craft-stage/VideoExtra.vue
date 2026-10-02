@@ -2,7 +2,7 @@
   VideoExtra.vue — 動画用の別の画面の入れ物 (POE2Tube 要望 ⑪、2026-09-29)
 
   URL の view= (craft-stage.ts の extra) で開く。1280×720 を窓に合わせて拡大 (VideoStage と同じ)、背景も同じ。
-  中身: view=tiers → [[VideoTiers.vue]]、view=compare → [[VideoCompare.vue]]、2026-09-29 (要望 ⑰): view=resists / ttk / hit / dps、2026-09-30 (要望 ㉒-B): view=layers / armour / evasion / es / bases。Esc で閉じる。
+  中身: view=tiers → [[VideoTiers.vue]]、view=compare → [[VideoCompare.vue]]、2026-09-29 (要望 ⑰): view=resists / ttk / hit / dps、2026-09-30 (要望 ㉒-B): view=layers / armour / evasion / es / bases、2026-10-02 (要望 ㉔-6): view=essence。Esc で閉じる。
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
@@ -17,6 +17,7 @@ import VideoArmour from "./VideoArmour.vue";
 import VideoEvasion from "./VideoEvasion.vue";
 import VideoEs from "./VideoEs.vue";
 import VideoBases from "./VideoBases.vue";
+import VideoEssence from "./VideoEssence.vue";
 import { craftStage } from "../../state/craft-stage";
 
 const ex = craftStage.extra;
@@ -32,7 +33,7 @@ onBeforeUnmount(() => { ro?.disconnect(); window.removeEventListener("keydown", 
 <template>
   <div ref="rootEl" class="fixed inset-0 z-[400] grid place-items-center overflow-hidden bg-black">
     <div class="stage-video-bg relative h-[720px] w-[1280px] shrink-0 overflow-hidden" :style="{ transform: `scale(${scale})` }">
-      <VideoTiers v-if="ex?.kind === 'tiers'" :base="ex.base" :mod="ex.mod" :ilvl="ex.ilvl" :hl="ex.hl" />
+      <VideoTiers v-if="ex?.kind === 'tiers'" :base="ex.base" :mod="ex.mod" :ilvl="ex.ilvl" :hl="ex.hl" :floor="ex.floor" />
       <VideoCompare v-else-if="ex?.kind === 'compare'" :a="ex.a" :b="ex.b" :a-step="ex.aStep" :b-step="ex.bStep" :a-pob="ex.aPob" :b-pob="ex.bPob" />
       <VideoResists v-else-if="ex?.kind === 'resists'" :r="ex.r" :act="ex.act" :penalty="ex.penalty" />
       <VideoTtk v-else-if="ex?.kind === 'ttk'" :a="ex.a" :a-step="ex.aStep" :a-label="ex.aLabel" :b="ex.b" :b-step="ex.bStep" :b-label="ex.bLabel" />
@@ -43,6 +44,7 @@ onBeforeUnmount(() => { ro?.disconnect(); window.removeEventListener("keydown", 
       <VideoEvasion v-else-if="ex?.kind === 'evasion'" :ev="ex.ev" :deflect="ex.deflect" :acc="ex.acc" :lvl="ex.lvl" :n="ex.n" :red="ex.red" />
       <VideoEs v-else-if="ex?.kind === 'es'" :life="ex.life" :es="ex.es" :dmg="ex.dmg" :hits="ex.hits" :kind="ex.esKind" :until="ex.until" />
       <VideoBases v-else-if="ex?.kind === 'bases'" :slot="ex.slot" :early="ex.early" :late="ex.late" />
+      <VideoEssence v-else-if="ex?.kind === 'essence'" :name="ex.name" :part="ex.part" />
     </div>
   </div>
 </template>

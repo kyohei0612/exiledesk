@@ -14,11 +14,10 @@
  * 噛み切られた骨 (アイテムレベル 64 以下) は apply-desecrate、秘術師の彫刻針は apply-act の品質。
  */
 import type { StageApply, StageItem, StageMod } from "./types";
-import { allMods, skip, without } from "./stage-core";
+import { allMods, maxQualityOf, skip, without } from "./stage-core";
 import { ARMOUR, CASTER, MARTIAL, QUALITY_MAX, QUALITY_STEP } from "./apply-act";
 import { ENCHANTS, rollText } from "./apply-vaal";
 import { uniquesOfSameClass } from "./stage-bases";
-import { maxQualityForBase } from "../htc/catalysing-setup";
 import upgradesRaw from "./vaal-upgrades.json";
 
 const UPGRADES = upgradesRaw as Record<string, { id: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }> }>;
@@ -63,7 +62,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
   const inf = INFUSER[key];
   if (inf) {
     if (!inf.cats.includes(item.cls.category)) return skip(item, `${inf.ja}にだけ使える`);
-    const base = JEWELLERY.includes(item.cls.category) ? maxQualityForBase(item.base) : QUALITY_MAX;
+    const base = JEWELLERY.includes(item.cls.category) ? maxQualityOf(item) : QUALITY_MAX;
     const cap = base + 10;
     if (item.quality >= cap) return skip(item, `品質が上限 (${cap}%)`);
     const quality = Math.min(cap, item.quality + QUALITY_STEP[item.rarity]);
