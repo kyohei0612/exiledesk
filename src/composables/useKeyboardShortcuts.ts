@@ -22,6 +22,7 @@
 
 import { onBeforeUnmount, onMounted, type Ref } from "vue";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { openTopMods } from "../state/app-nav";
 
 /** 画面固有ハンドラに渡される識別子 (visual-concept §6.1) */
 export type ShortcutKey =
@@ -38,9 +39,11 @@ export type ShortcutHandler = (e: KeyboardEvent) => void;
 /** 設計書 Phase A.8: ナビ ID は LeftSidebar.vue と一致させる */
 // 2026-05-22: econ-trending (旧クラフト発見) は LeftSidebar から削除済。
 // Ctrl+2 は現行の「上位プレイヤーMOD一覧」(craft-v2) に割り当て直す。
-const NAV_BY_DIGIT: Record<string, string> = {
+// 2026-10-03: 上位プレイヤーの MOD はクラフト計算機の中のタブになったので、Ctrl+2 は画面 id ではなく
+// そのタブを開く関数 (state/app-nav.ts の openTopMods) を呼ぶ。値が関数の時はそれを呼び、文字列なら activeNav に入れる
+const NAV_BY_DIGIT: Record<string, string | (() => void)> = {
   "1": "econ-currency",
-  "2": "craft-v2",
+  "2": openTopMods,
 };
 
 export interface UseKeyboardShortcutsOptions {
@@ -153,7 +156,8 @@ export function useKeyboardShortcuts(
       const navId = NAV_BY_DIGIT[e.key];
       if (navId) {
         e.preventDefault();
-        activeNav.value = navId;
+        if (typeof navId === "function") navId();
+        else activeNav.value = navId;
         return;
       }
 

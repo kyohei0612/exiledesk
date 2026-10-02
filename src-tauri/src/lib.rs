@@ -11,7 +11,6 @@ pub mod settings;  // 設定画面 (2026-05-23): autostart / close_to_tray / aut
 pub mod pob_launcher;  // 同梱 PoB の起動 (2026-09-07): resources/pob を外部プロセスで開く
 pub mod asset_packs; // 画像パック (2026-09-29): 画像はインストーラーに入れず GitHub Release asset-packs から 1 回だけ落とす
 pub mod pob_bundle;  // PoB 同梱物の別配布 (2026-09-08): GitHub Release pob-bundle から app_local_data_dir/pob に展開
-pub mod client_log;  // ゲームログ (Client.txt) 診断 (2026-09-10): 既知パターンで実害あり / 無害を仕分け
 pub mod instance_guard;  // 2 重起動の防止とスタートアップ登録の自己修復 (2026-09-15)
 pub mod app_log;
 pub mod gem_break_cache;  // 使用率ランキングのキャラ別キャッシュ (2026-09-18)
@@ -266,11 +265,6 @@ pub fn run() {
             pob_bundle::pob_bundle_status,
             pob_bundle::pob_bundle_check,
             pob_bundle::pob_bundle_install,
-            client_log::client_log_status,
-            client_log::client_log_diagnose,
-            client_log::client_log_clear,
-            client_log::client_log_history,
-            client_log::client_log_auto_rotate,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

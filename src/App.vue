@@ -15,7 +15,6 @@ import { ensureAssetPacks } from "./services/assets/asset-packs";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 import { ensureCraftV2Started } from "./state/craft-v2-store";
 import { ensurePobBundleFresh } from "./services/pob-bundle";
-import { ensureClientLogRotated } from "./services/client-log";
 import { startWatchAutoRefresh } from "./state/gem-watch-auto";
 import { startSessionWatch } from "./state/poe-session";
 import { startFetchBusyWatch } from "./state/fetch-busy";
@@ -65,8 +64,6 @@ onMounted(() => {
   void ensurePobBundleFresh();
   // 画像パック (ベースの絵・スキンの画像): 要る版と違う時だけ落とす (初回と画像が変わった時だけ。2026-09-29)
   void ensureAssetPacks();
-  // ゲームログ: 前回の消し込みから 7 日経っていれば診断 → 履歴保存 → 本体を空に
-  void ensureClientLogRotated();
   // 捌き速度: 追跡する銘柄 (自動ジェム監視の設定で決まる) を 1 日 1 回そろえ直す。
   // 出品の追跡そのものは Rust 側が周期 (既定 8 時間) ごとに回す
   startWatchAutoRefresh();

@@ -6,7 +6,7 @@
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
 import { computed, ref, watch, watchEffect } from "vue";
-import { pendingCraft } from "../../state/app-nav";
+import { htcCraftTab, pendingCraft, type HtcCraftTab } from "../../state/app-nav";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { useHtcCraft } from "./useHtcCraft";
@@ -16,6 +16,24 @@ import CraftTreePanel from "./CraftTreePanel.vue";
 import BasePicker from "./BasePicker.vue";
 // 「詳しく」(開発ビルドだけ) は LabDevDetails.vue へ (2026-09-26 の分割)
 import LabDevDetails from "./LabDevDetails.vue";
+// 2026-10-03 統合: 上位プレイヤー MOD 一覧 (旧サイドバーの「上位プレイヤーMOD一覧」craft-v2) はこの画面のタブに
+// (オーナー「被ってる機能・要らん機能を整理、似た物は一緒に」)。中身は CraftDiscoveryV2B.vue のまま、ロジックは触らない
+import CraftDiscoveryV2B from "../CraftDiscoveryV2B.vue";
+
+/**
+ * 上のタブ。lab = 計算機 / top-mods = 上位プレイヤーの MOD。どちらを開いているかは state/app-nav.ts (他の画面や Ctrl+2 から
+ * 「上位プレイヤーの MOD のタブへ」と飛べるように)。計算機の中身は v-show で保ち、上位プレイヤーの MOD は一度開いたら
+ * v-show で保つ (開くまでは描かない: 一覧は重いので、計算機だけ使う人に最初から描かせない。取得そのものは App.vue 起動時から
+ * state/craft-v2-store が背景で回しているので、開いた時には出そろっている)
+ */
+const TABS: readonly { id: HtcCraftTab; label: string; hint: string }[] = [
+  { id: "lab", label: "計算機", hint: "貼るか選ぶかして、作り方と費用を出す" },
+  { id: "top-mods", label: "上位プレイヤーの MOD", hint: "poe.ninja の上位の人の装備の MOD。選んで「クラフトへ」で計算機に渡す" },
+];
+const topModsOpened = ref(htcCraftTab.value === "top-mods");
+watch(htcCraftTab, (t) => {
+  if (t === "top-mods") topModsOpened.value = true;
+});
 
 const c = useHtcCraft();
 const pk = usePicker();
@@ -153,8 +171,32 @@ const inputSummary = computed(() => {
   <!-- 中身は幅 1400px で固定 (オーナー 2026-09-26:「ウィンドウ小さくしても大きくしても変わらない感じで。ウィンドウによって崩れる」)。
        狭い窓では横にスクロール、広い窓では余白 -->
   <!-- 窓の大きさへの合わせ込みはアプリ全体でする (App.vue の fitZoom)。ここは最小の窓の幅いっぱい -->
-  <div class="h-full overflow-auto p-4 text-sm">
-   <div>
+  <div class="h-full overflow-auto text-sm">
+   <!-- タブ (2026-10-03 統合): 計算機 / 上位プレイヤーの MOD。見た目はヴァールの天秤 (VaalScales.vue) の帯と同じ -->
+   <div class="px-6 pt-3 flex items-end gap-1 border-b border-[var(--exile-color-border-subtle)]" role="tablist" aria-label="クラフト計算機">
+     <span class="mr-3 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-secondary)]" aria-hidden="true">🧪 クラフト計算機</span>
+     <button
+       v-for="t in TABS"
+       :key="t.id"
+       type="button"
+       role="tab"
+       :aria-selected="htcCraftTab === t.id"
+       :title="t.hint"
+       class="px-3 py-1.5 -mb-px border-b-2 text-[12px] tracking-[0.04em] transition whitespace-nowrap"
+       :class="
+         htcCraftTab === t.id
+           ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
+           : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
+       "
+       @click="htcCraftTab = t.id"
+     >{{ t.label }}</button>
+   </div>
+
+   <!-- 上位プレイヤーの MOD (旧 craft-v2 の画面をそのまま)。一度開いたら v-show で保つ (選んだアセ・部位・チェックが消えないように) -->
+   <CraftDiscoveryV2B v-if="topModsOpened" v-show="htcCraftTab === 'top-mods'" />
+
+   <!-- 計算機 -->
+   <div v-show="htcCraftTab === 'lab'" class="p-4">
     <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
     <p class="mb-3 text-xs opacity-60">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
@@ -237,9 +279,9 @@ const inputSummary = computed(() => {
     <!-- 入口 B: ベースから選ぶ (2026-09-26 作り直し: ① ベース → ② 狙う MOD → ③ 作り方 + 右に完成図) -->
     <BasePicker v-if="door === 'base' && (inputOpen || !c.base.value)" :c="c" :pk="pk" :presets="ZERO_PRESETS" :preset-picked="zeroPicked" @preset="pickZero" @run="runPicked()" />
 
-    <!-- 上位プレイヤー MOD 一覧から来た時 -->
+    <!-- 上位プレイヤーの MOD (隣のタブ) から来た時 -->
     <div v-if="fromList" class="mb-3 rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs">
-      上位プレイヤー MOD 一覧から: <b>{{ fromList.baseJa }}</b> に MOD {{ fromList.count }} 個
+      上位プレイヤーの MOD から: <b>{{ fromList.baseJa }}</b> に MOD {{ fromList.count }} 個
       <p v-if="fromList.skipped.length" class="mt-1 text-amber-200">
         計算機で作れない MOD は外しました (買うしかない物): {{ fromList.skipped.join(" / ") }}
       </p>

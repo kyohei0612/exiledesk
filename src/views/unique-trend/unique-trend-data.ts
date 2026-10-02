@@ -2,6 +2,11 @@
  * ユニーク装備価格推移の型・定数・行の変換・一覧のキャッシュ (メモリ + localStorage)
  *
  * useUniqueTrend.ts から切り出し (2026-09-26)。キャッシュ (`cache`) はここにだけ置く (1 つきり)。
+ *
+ * 2026-10-03 (オーナー「キャッシュの残り方すらカレンシーランキングと一緒でいい」): 30 分の期限をやめ、
+ * カレンシーランキングの前回表示 (currency-ranking-cache.ts) と同じ決まりにした。
+ *   - 残す場所は localStorage、期限は無し。起動時は前回の物をそのまま出し (「前回のデータ」)、取り直したら上書き
+ *   - いつ取り直すかはカレンシーランキングの更新と同じきっかけ (useCurrencyRanking.refresh → refreshUniqueTrend)
  */
 import type { HistoryPoint } from "../../api/poe2scout";
 import type { NinjaLine, NinjaModLine, NinjaUniqueKind } from "../../api/ninja-economy";
@@ -65,8 +70,6 @@ export const CAT_OF: Record<NinjaUniqueKind, string> = {
 export const FAV_CATEGORY = "favorites";
 /** 高騰率 / 下落率で信用しない出品数 (これ未満は後ろ) */
 export const THIN_LISTINGS = 3;
-/** 一覧を覚えておく時間 */
-export const TTL_MS = 30 * 60 * 1000;
 /** 画面に一度に出す行数 (「もっと見る」で増やす) */
 export const LIMIT_STEP = 100;
 
@@ -114,9 +117,10 @@ export interface KindCache { at: number; rows: UniqueRow[]; trends: Map<number, 
 export const cache = new Map<string, Map<NinjaUniqueKind, KindCache>>();
 
 /**
- * 取った一覧を localStorage にも残す (30 分)。読み込み直しても poe.ninja から取り直さない
+ * 取った一覧を localStorage にも残す。読み込み直しても poe.ninja から取り直さない
  * (オーナー 2026-09-26「開発版キャッシュでユニーク表示おｋだよ、取り直すと手間でしょ」)。
- * 残せない環境 (容量など) では今までどおりメモリだけ
+ * 残せない環境 (容量など) では今までどおりメモリだけ。
+ * 期限は付けない (カレンシーランキングの前回表示と同じ。取り直すきっかけもあちらと同じ)
  */
 const LS_KEY = "exiledesk.uniqueTrend.cache.v1";
 export function saveLs(league: string, lc: Map<NinjaUniqueKind, KindCache>): void {
@@ -127,19 +131,28 @@ export function saveLs(league: string, lc: Map<NinjaUniqueKind, KindCache>): voi
     /* 残せなくても動く */
   }
 }
-export function loadLs(league: string): Map<NinjaUniqueKind, KindCache> | null {
+/**
+ * 前回の保存分を読む (リーグ名つき)。無い・壊れている時は null。
+ * 起動時にリーグがまだ分からなくても前回の物を出せるよう、リーグを選ばずに読む
+ */
+export function loadLsAny(): { league: string; kinds: Map<NinjaUniqueKind, KindCache> } | null {
   try {
     const raw = JSON.parse(localStorage.getItem(LS_KEY) ?? "null") as
       | { league: string; kinds: Record<string, { at: number; rows: UniqueRow[]; trends: Array<[number, UniqueTrend]> }> }
       | null;
-    if (!raw || raw.league !== league) return null;
+    if (!raw || typeof raw.league !== "string" || !raw.kinds) return null;
     const m = new Map<NinjaUniqueKind, KindCache>();
     for (const [k, c] of Object.entries(raw.kinds)) {
-      if (Date.now() - c.at > TTL_MS) continue;
-      m.set(k as NinjaUniqueKind, { at: c.at, rows: c.rows, trends: new Map(c.trends) });
+      if (!Array.isArray(c?.rows)) continue;
+      m.set(k as NinjaUniqueKind, { at: c.at, rows: c.rows, trends: new Map(c.trends ?? []) });
     }
-    return m.size ? m : null;
+    return m.size ? { league: raw.league, kinds: m } : null;
   } catch {
     return null;
   }
+}
+/** 指定のリーグの前回の保存分。リーグが違えば null */
+export function loadLs(league: string): Map<NinjaUniqueKind, KindCache> | null {
+  const got = loadLsAny();
+  return got && got.league === league ? got.kinds : null;
 }

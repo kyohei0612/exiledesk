@@ -50,7 +50,8 @@ function run(fn: () => void): void {
   <header class="mb-3">
     <div class="flex items-start justify-between gap-4 flex-wrap">
       <div class="min-w-0">
-        <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">上位プレイヤーMOD一覧</h1>
+        <!-- 2026-10-03: クラフト計算機の中のタブになったので、見出しもタブの名前 (上位プレイヤーの MOD) に合わせた -->
+        <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">上位プレイヤーの MOD</h1>
         <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
           使用率の上位 {{ TOP_ASCENDANCIES }} アセンダンシーごとに、DPS 上位のスキル 3 つ × 10 人の、スキル・持ち物・装備で何が多いか。
         </p>

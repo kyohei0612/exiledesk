@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { computed, type Component } from "vue";
 import CurrencyRanking from "../views/CurrencyRanking.vue";
-import UniqueTrend from "../views/UniqueTrend.vue";
 import BuildCopy from "../views/BuildCopy.vue";
-import CraftDiscoveryV2B from "../views/CraftDiscoveryV2B.vue";
 import Settings from "../views/Settings.vue";
 import PobLauncher from "../views/PobLauncher.vue";
-import ClientLog from "../views/ClientLog.vue";
-import GemCorrupt from "../views/GemCorrupt.vue";
-import Overquality from "../views/Overquality.vue";
-import RareCraft from "../views/RareCraft.vue";
+// 2026-10-03 統合: ヴァールの天秤の 4 画面 (Overquality / GemCorrupt / GemWatch / RareCraft) は VaalScales.vue のタブ、
+// 上位プレイヤー MOD 一覧 (CraftDiscoveryV2B) はクラフト計算機 (HtcCraftLab) のタブ。ゲームログ診断 (ClientLog) は削除
+import VaalScales from "../views/VaalScales.vue";
 import HtcCraftLab from "../views/htc-craft/HtcCraftLab.vue";
 import TradeHistory from "../views/TradeHistory.vue";
-import GemWatch from "../views/GemWatch.vue";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import MtxList from "../views/mtx/MtxList.vue";
 import PobCheck from "../views/pob-check/PobCheck.vue";
@@ -27,34 +23,23 @@ const props = defineProps<{ activeNav: string }>();
 // 通貨ランキング ↔ 発見V2 を行き来しても再 fetch されないようメモリ保持する。
 const currentView = computed<Component | undefined>(() => {
   switch (props.activeNav) {
+    // ユニーク装備価格推移 (旧 unique-trend) は 2026-10-03 からカレンシーランキングのタブ
     case "econ-currency":
       return CurrencyRanking;
-    case "unique-trend":
-      return UniqueTrend;
     case "build-copy":
       return BuildCopy;
-    case "craft-v2":
-      return CraftDiscoveryV2B;
     case "settings":
       return Settings;
     case "pob-check":
       return PobCheck;
     case "pob":
       return PobLauncher;
-    case "client-log":
-      return ClientLog;
-    case "gem-corrupt":
-      return GemCorrupt;
-    case "overquality":
-      return Overquality;
-    case "rare-craft":
-      return RareCraft;
+    case "vaal-scales":
+      return VaalScales;
     case "htc-craft":
       return HtcCraftLab;
     case "trade-history":
       return TradeHistory;
-    case "gem-watch":
-      return GemWatch;
     case "mtx":
       return MtxList;
     case "craft-stage":

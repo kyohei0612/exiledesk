@@ -1,7 +1,7 @@
 # ExileDesk
 
 POE2 (Path of Exile 2) 向けの日本語デスクトップアプリ。相場 (カレンシー・ユニーク)・上位プレイヤーの MOD・ビルドコピー・取引履歴・
-ヴァールの天秤 (賭けの期待値)・クラフト計算機・クラフトステージ (実演・動画撮影)・スキン (PoE1 → PoE2 で使えるか)・PoB 同梱・ゲームログ診断。
+ヴァールの天秤 (賭けの期待値)・クラフト計算機・クラフトステージ (実演・動画撮影)・スキン (PoE1 → PoE2 で使えるか)・PoB 同梱。
 
 **全体の地図 (画面 → 仕組み → エンジン / Rust、何を正とするか、データの出どころ、配布、テスト) は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**。
 大きな決めごとは [docs/decisions/](docs/decisions/) (ADR)。
@@ -286,20 +286,6 @@ Tauri (v2) は破壊的変更が多いので minor 上げる際は CHANGELOG 必
   `CurrencyExchangeCategories` 由来、`scripts/build-currency-exchange-from-client.mjs` → `src/i18n/currency-exchange.json`)。
   poe2scout のアイテムを英名で取引所の表に引き、グループ ID `x:<Category>` で集計する。取引所に無いもの (装備 / ユニーク等) は
   poe2scout のカテゴリのまま後ろに並ぶ。基本通貨 3 種 (神 / 高貴 / カオス) は基準レート帯に出すので件数はゲームより 3 少ない。
-
-### ゲームログ診断 (2026-09-10〜)
-
-- 左ナビ「ゲームログ診断」: PoE2 の `logs/Client.txt` を末尾から走査し、既知パターン表で
-  「実害あり / 注意 / 既知の無害 / 未分類」に仕分ける (`src-tauri/src/client_log.rs`)。
-  ゲームは無害な CRIT を大量に吐く (実測 64 MB / 41 万行で CRIT 29 万件、うちほぼ全部が無害) ので、
-  件数ではなく分類と対処法を見せるのが目的。実害ありは日別推移も出す。
-- パターン表は `RULES` (client_log.rs) に集約。**未分類のものは画面に「エラー解決案を追加してください」と出す**ので、
-  出てきたメッセージを `RULES` に足していく運用。無害なものにも「なぜ対処不要か」を書く。
-- 消し込み: 診断結果の要約を `<app_local_data_dir>/client-log-history.json` に残してからログ本体を 0 バイトにする。
-  **週 1 回、起動時に自動実行** (`services/client-log.ts` の `ensureClientLogRotated`、前回から 7 日 + 32 MB 以上)。
-  ゲーム起動中はファイルが掴まれていて消せないので、その回は見送って次の起動で再試行する。
-- 診断: `cd src-tauri && cargo run --example client_log_probe [走査 MB]` (`EXILEDESK_CLIENT_LOG` でパス上書き可)。
-  実測で末尾 64 MB / 41 万行を 1.65 秒。
 
 ## アーキテクチャ概要
 

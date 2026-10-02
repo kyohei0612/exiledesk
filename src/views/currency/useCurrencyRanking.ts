@@ -22,6 +22,9 @@ import {
   type League,
 } from "../../api/poe2scout";
 import { adoptMarket } from "../../state/market-store";
+// 2026-10-03: ユニーク装備価格推移はこの画面のタブ。一覧の取り直しはこちらの更新と同じ時に (オーナー「ランキング自体は
+// カレンシーランキングと一緒の方が都合がいい」)。型だけの循環 (あちらが CategoryDisplay を import) なので実害は無い
+import { refreshUniqueTrend } from "../unique-trend/useUniqueTrend";
 import {
   buildCategoryDisplayList,
   fetchTrends7dPooled,
@@ -205,6 +208,9 @@ export function useCurrencyRanking() {
       snapshotEpoch.value = snapEpoch;
       // 2026-09-12: 取った価格表を相場ストアに流し、ヴァールの天秤の素材価格に流用する (二重取得しない)
       adoptMarket(leagues.value, league.value, items);
+      // 2026-10-03: ユニークの一覧 (poe.ninja、隣のタブ) も同じきっかけで取り直す。待たない (こちらの表を先に出す)。
+      // 相場ストアのリーグが決まった後に呼ぶ (ユニークの一覧は現行リーグで取る)
+      refreshUniqueTrend();
       const ranked = buildRankedItems(items, divinePrice.value, chaosDivinePrice.value);
       const best = bestPayByApiId(
         pairs,

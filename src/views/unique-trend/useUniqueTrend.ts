@@ -7,8 +7,15 @@
  *   - 種類ごとの一覧 (8 種) を順に取る。一覧に 値段・7 日の推移・出品数 が入っているので、行ごとに取りに行かない
  *   - 日ごとの推移は行を開いた時だけ ([[useUniqueDetail.ts]])
  *   - お気に入り ([[unique-favorites.ts]]) はカテゴリ欄の一番上
- *   - 取った一覧はリーグごとに 30 分覚える (タブを開き直すたびに取らない)
  *   - 型・定数・行の変換・キャッシュは [[unique-trend-data.ts]] (2026-09-26 分割)
+ *
+ * 2026-10-03 カレンシーランキングのタブに統合 (オーナー「ユニーク装備価格推移はカレンシーランキングの中のタブに。
+ * ランキング自体はカレンシーランキングと一緒の方が都合がいい。キャッシュの残り方すら一緒でいい」):
+ *   - 状態はアプリで 1 つ (useUniqueTrend() は同じ物を返す)。カレンシーランキングの更新 (起動時 / 更新ボタン / タブを開いた時の
+ *     5 分空けた自動更新 / リーグの切り替え) が refreshUniqueTrend() を呼び、同じ時にユニークの一覧も取り直す。
+ *     お気に入りの最安値の自動取得 ([[unique-watch.ts]]) は別物のまま
+ *   - 30 分の期限はやめた。起動時は前回の保存分をそのまま出し (「前回のデータ」)、取り直したら上書き (カレンシーランキングと同じ)
+ *   - 自分では取りに行かない (前は開いた時 / リーグが変わった時に取っていた)。例外は、ユニークのタブを開いたのに何も無い時だけ load()
  */
 import { recordHistory } from "../../services/history";
 import { computed, ref, shallowRef, watch } from "vue";
@@ -22,11 +29,11 @@ import {
   FAV_CATEGORY,
   LIMIT_STEP,
   loadLs,
+  loadLsAny,
   saveLs,
   sparkOf,
   THIN_LISTINGS,
   toRow,
-  TTL_MS,
   type KindCache,
   type SortKey,
   type UniqueRow,
@@ -35,7 +42,7 @@ import {
 
 export { FAV_CATEGORY, SORT_OPTIONS, type SortKey, type UniqueRow, type UniqueTrend } from "./unique-trend-data";
 
-export function useUniqueTrend() {
+function createUniqueTrend() {
   const categoryFilter = ref<string>("all");
   const searchQuery = ref<string>("");
   const sortKey = ref<SortKey>("price");
@@ -47,6 +54,8 @@ export function useUniqueTrend() {
   const progress = ref({ done: 0, total: 0 });
   const error = ref<string | null>(null);
   const fetchedAt = ref<number | null>(null);
+  /** 表示中の内容が前回の保存分か (取り直すまで true)。画面に「前回のデータ」と出す (カレンシーランキングと同じ) */
+  const fromCache = ref(false);
   let gen = 0;
 
   const league = computed(() => marketStore.league.value?.Value ?? "");
@@ -111,7 +120,20 @@ export function useUniqueTrend() {
     limit.value += LIMIT_STEP;
   }
 
-  /** 種類を順に取る (覚えている物で新しい物は飛ばす)。今見ているカテゴリの種類から先に */
+  /** 起動直後に前回の保存分を出す (リーグがまだ分からなくても出す。取り直したら上書き) */
+  function hydrateFromCache(): void {
+    const got = loadLsAny();
+    if (!got) return;
+    cache.set(got.league, got.kinds);
+    byKind.value = new Map(got.kinds);
+    fetchedAt.value = Math.min(...[...got.kinds.values()].map((c) => c.at));
+    fromCache.value = true;
+  }
+
+  /**
+   * 種類を順に取る。force = 全部取り直す (カレンシーランキングの更新と同じ時) / false = そのリーグでまだ無い種類だけ。
+   * 今見ているカテゴリの種類から先に
+   */
   async function fetchAll(force: boolean): Promise<void> {
     const lg = league.value;
     if (!lg) return;
@@ -125,7 +147,7 @@ export function useUniqueTrend() {
     byKind.value = new Map(lc);
     const first = (k: NinjaUniqueKind) => Number(CAT_OF[k] === categoryFilter.value);
     const want = NINJA_UNIQUE_KINDS.map((k) => k.kind).sort((a, b) => first(b) - first(a));
-    const todo = want.filter((k) => force || !lc.has(k) || Date.now() - lc.get(k)!.at > TTL_MS);
+    const todo = want.filter((k) => force || !lc.has(k));
     if (!todo.length) {
       fetchedAt.value = Math.min(...[...lc.values()].map((c) => c.at));
       return;
@@ -154,6 +176,7 @@ export function useUniqueTrend() {
           lc.set(kind, { at: Date.now(), rows: kRows, trends: kTrends });
           byKind.value = new Map(lc);
           saveLs(lg, lc);
+          fromCache.value = false;
         } catch (e) {
           error.value = `${NINJA_UNIQUE_KINDS.find((k) => k.kind === kind)?.ja ?? kind}: ${String(e)}`;
         }
@@ -168,19 +191,19 @@ export function useUniqueTrend() {
     }
   }
 
-  /** 開いた時: リーグと換算レート (相場ストア) を揃えてから一覧を取る */
+  /** 何も無い時の保険 (ユニークのタブを開いたのに空): リーグと換算レート (相場ストア) を揃えてから、無い種類だけ取る */
   async function load(): Promise<void> {
     await marketStore.ensureMarket();
     await fetchAll(false);
   }
 
-  /** 更新ボタン: 全部取り直す */
+  /** 全部取り直す。カレンシーランキングの更新と同じきっかけで呼ばれる (ユニークのタブの「更新」ボタンも同じ) */
   async function refresh(): Promise<void> {
+    await marketStore.ensureMarket();
     await fetchAll(true);
   }
 
   watch([categoryFilter, searchQuery], () => (limit.value = LIMIT_STEP));
-  watch(league, () => void fetchAll(false));
 
   const loadingLabel = computed(() => {
     const k = loadingKind.value;
@@ -188,6 +211,8 @@ export function useUniqueTrend() {
     const ja = NINJA_UNIQUE_KINDS.find((x) => x.kind === k)?.ja ?? k;
     return `${ja}を取得中 (${progress.value.done + 1}/${progress.value.total})`;
   });
+
+  hydrateFromCache();
 
   return {
     league,
@@ -203,10 +228,28 @@ export function useUniqueTrend() {
     loadingLabel,
     error,
     fetchedAt,
+    fromCache,
     categoryFilter,
     searchQuery,
     sortKey,
     load,
     refresh,
   };
+}
+
+/** アプリで 1 つ (画面とカレンシーランキングの更新が同じ物を見る) */
+let shared: ReturnType<typeof createUniqueTrend> | null = null;
+export function useUniqueTrend() {
+  shared ??= createUniqueTrend();
+  return shared;
+}
+
+/**
+ * カレンシーランキングの更新 (useCurrencyRanking.refresh) から呼ぶ: ユニークの一覧も同じ時に取り直す。
+ * 待たせない (poe.ninja は 8 種類で 20 秒ほど。カレンシーランキングの表示を遅らせない)
+ */
+export function refreshUniqueTrend(): void {
+  const u = useUniqueTrend();
+  if (u.loading.value) return;
+  void u.refresh();
 }

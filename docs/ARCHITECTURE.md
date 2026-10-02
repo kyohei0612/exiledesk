@@ -15,16 +15,15 @@ PoE2 のための Windows アプリ。画面は Vue 3 + TypeScript、裏側は R
 
 | 画面 | 入口 | 主な中身 |
 |---|---|---|
-| カレンシーランキング | `views/CurrencyRanking.vue` | poe2scout の相場 (`state/market-store.ts`) |
-| ユニーク装備価格推移 | `views/UniqueTrend.vue` | poe.ninja の一覧・推移、お気に入りの最安値は trade2 (`state/unique-watch.ts`) |
-| 上位プレイヤー MOD 一覧 | `views/CraftDiscoveryV2B.vue` | poe.ninja の builds 集計 (`services/craft-v2`)、段の表は `services/mods/tiers.ts` |
-| 忍者ビルドコピー | `views/BuildCopy.vue` | PoB コード / ninja URL → 装備と取引所の値段 (`services/build-copy`) |
+| カレンシーランキング (タブ 2 つ) | `views/CurrencyRanking.vue` | タブ「カレンシー」= poe2scout の相場 (`state/market-store.ts`) / タブ「ユニーク」= `views/UniqueTrend.vue` (poe.ninja の一覧・推移。一覧の取り直しはカレンシーの更新と同じ時・前回表示の保存も同じ決まり、お気に入りの最安値は trade2 `state/unique-watch.ts`)。2026-10-03 に統合 |
 | 取引履歴 | `views/TradeHistory.vue` | マーチャントの履歴 (POESESSID) |
-| ヴァールの天秤 (4 画面) | `views/Overquality.vue` ほか | アドニアの賭け・ジェムコラプト・自動ジェム監視・規格外の賭け (`views/rare-craft`) |
-| クラフト計算機 | `views/htc-craft/HtcCraftLab.vue` | 貼り付け or ベースから → 作り方と費用 (エンジン) |
-| クラフトステージ | `views/craft-stage/CraftStage.vue` | 1 手ずつの実演・動画モード・POE2Tube の撮影 (ADR-001) |
+| ヴァールの天秤 (タブ 4 つ) | `views/VaalScales.vue` | アドニアの賭け (`Overquality.vue`)・ジェムコラプト (`GemCorrupt.vue`)・自動ジェム監視 (`GemWatch.vue`)・規格外の賭け (`RareCraft.vue`)。2026-10-03 に 1 画面へ統合 |
+| クラフト計算機 | `views/htc-craft/HtcCraftLab.vue` | タブ「計算機」= 貼り付け or ベースから → 作り方と費用 (エンジン) / タブ「上位プレイヤーの MOD」= `views/CraftDiscoveryV2B.vue` (poe.ninja の builds 集計 `services/craft-v2`、ティアの表は `services/mods/tiers.ts`)。2026-10-03 に統合 |
+| 火力チェック | `views/pob-check/PobCheck.vue` | 同梱 PoB で読み込んで火力を比べる (`services/pob-check`) |
+| 忍者ビルドコピー | `views/BuildCopy.vue` | PoB コード / ninja URL → 装備と取引所の値段 (`services/build-copy`) |
 | スキン | `views/mtx/MtxList.vue` | PoE1 のスキンが PoE2 で使えるか (`services/mtx`) |
-| PoB を開く / ゲームログ診断 / 設定 | `views/PobLauncher.vue` ほか | |
+| クラフトステージ | `views/craft-stage/CraftStage.vue` | 1 手ずつの実演・動画モード・POE2Tube の撮影 (ADR-001)。動画用なので「ツール」の下の方に置く |
+| PoB を開く / 設定 | `views/PobLauncher.vue` / `views/Settings.vue` | |
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 

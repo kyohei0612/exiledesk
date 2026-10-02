@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { poeSession } from "../state/poe-session";
 
-const props = defineProps<{ active: string }>();
+defineProps<{ active: string }>();
 const emit = defineEmits<{ "update:active": [value: string] }>();
 
 interface NavItem {
@@ -10,54 +9,39 @@ interface NavItem {
   icon: string;
   label: string;
   group: "economy" | "tools";
-  /** 折りたたみ親項目: クリックで展開 / 収納、子を選ぶと親もハイライト */
-  children?: NavItem[];
 }
 
 // アイコンは visual-concept §5.5 / §8.2 で確定した錬金術記号セット (☉🜔⚙)。
-// ☉ = 通貨ランキング / 🜔 = クラフト発見 / ⚙ = 設定
+// ☉ = 通貨ランキング / ⚙ = 設定
 // 2026-05-23: 設定画面 (autostart / close_to_tray / 自動再取得) を実装し復活。
+//
+// 2026-10-03 画面の統合 (オーナー「被ってる機能・要らん機能を整理、似た物は一緒に。今は器用貧乏」):
+//   - ヴァールの天秤の 4 画面 (アドニア / ジェムコラプト / 自動ジェム監視 / 規格外) → 1 画面 `vaal-scales` のタブ (views/VaalScales.vue)。
+//     折りたたみの親子 (children) はこれだけが使っていたので仕組みごと外した
+//   - 上位プレイヤー MOD 一覧 (`craft-v2`) → クラフト計算機 `htc-craft` のタブ (HtcCraftLab.vue)
+//   - ゲームログ診断 (`client-log`) → 削除 (view / services / Rust ごと)
+//   - クラフトステージは動画用なので「経済」から「ツール」の下の方 (PoB を開くの近く) へ移して目立たなくした
 const items: NavItem[] = [
+  // ユニーク装備価格推移 (旧 `unique-trend`、2026-09-26) は 2026-10-03 からこの中のタブ「ユニーク」(CurrencyRanking.vue)
   { id: "econ-currency", icon: "☉", label: "カレンシーランキング", group: "economy" },
-  // 2026-09-26: ユニーク装備の相場と 7 日の推移 (オーナー指示「カレンシーランキングの下らへんに同じように」)
-  { id: "unique-trend", icon: "🜚", label: "ユニーク装備価格推移", group: "economy" },
-  // 旧「クラフト発見」(econ-trending → EconDashboard.vue) は 2026-05-22 に非表示。
-  // 復活時は本行を戻し、CenterContent.vue の import + v-else-if 行も合わせて戻す。
-  { id: "craft-v2", icon: "🜔", label: "上位プレイヤーMOD一覧", group: "economy" },
-  // 2026-09-26: PoB のコードを貼って、ビルドをそろえる費用と取引所へのリンクを一覧に (オーナー「忍者ビルドコピーってタブで」)
-  { id: "build-copy", icon: "🜃", label: "忍者ビルドコピー", group: "economy" },
   // 2026-09-16: 公式サイトのマーチャント履歴をアプリ内ログインで取り込む
   { id: "trade-history", icon: "🜨", label: "取引履歴", group: "economy" },
-  // 2026-09-12: 「ヴァールの天秤」= 賭けクラフトの期待値ツール群 (旧クラフト収支は廃止)。親をクリックで展開。
-  // 聖別の賭け / アルダーの航路 は同日オーナー指示で削除 (使わない)。
-  {
-    id: "vaal-scales",
-    icon: "⚖",
-    label: "ヴァールの天秤",
-    group: "economy",
-    children: [
-      { id: "overquality", icon: "🜛", label: "アドニアの賭け", group: "economy" },
-      { id: "gem-corrupt", icon: "🜏", label: "ジェムコラプトの賭け", group: "economy" },
-      // 2026-09-16: クラフトするジェムを選ぶ画面 (ジェムコラプトの直下に置く)
-      // 2026-09-17: 自動ジェム監視 (使用率ランキングの取得もここに統合。旧「クラフト選定ジェム」)
-      { id: "gem-watch", icon: "👁", label: "自動ジェム監視", group: "economy" },
-      // 2026-09-14: 規格外 (ソケット 2) のレアクラフト (ES 兜 / ライフ耐性手袋 / 移動速度靴)。2026-09-29 から計算機のエンジンの重みでシミュレーション
-      { id: "rare-craft", icon: "🜲", label: "規格外の賭け", group: "economy" },
-    ],
-  },
-  // 2026-09-22: 貼り付けたアイテムから「買うか自分で出すか」と設計図を出すお試し計算機。
-  // 賭けではないので「ヴァールの天秤」の下ではなく経済の直下に置く
+  // 2026-09-12: 「ヴァールの天秤」= 賭けクラフトの期待値ツール群 (旧クラフト収支は廃止)。
+  // 聖別の賭け / アルダーの航路 は同日オーナー指示で削除 (使わない)。中のタブは state/app-nav.ts の VAAL_SCALES_TABS
+  { id: "vaal-scales", icon: "⚖", label: "ヴァールの天秤", group: "economy" },
+  // 2026-09-22: 貼り付けたアイテムから「買うか自分で出すか」と設計図を出す計算機。上位プレイヤーの MOD もこの中のタブ
   { id: "htc-craft", icon: "🧪", label: "クラフト計算機", group: "economy" },
-  // 2026-09-27: カレンシーを 1 個ずつ使って変化を見せる実演 (動画・配信用。ADR-001 docs/decisions/001-craft-stage.md)
-  { id: "craft-stage", icon: "🜖", label: "クラフトステージ", group: "economy" },
-  // 2026-09-29: PoE1 のスキン (マイクロトランザクション) が PoE2 でも使えるか (views/mtx/MtxList.vue)
-  { id: "mtx", icon: "✦", label: "スキン", group: "tools" },
   // 2026-10-02: 同梱 PoB で読み込んで、ジェムなどを変えて火力を比べる (views/pob-check/PobCheck.vue)
   { id: "pob-check", icon: "🔥", label: "火力チェック", group: "tools" },
+  // 2026-09-26: PoB のコードを貼って、ビルドをそろえる費用と取引所へのリンクを一覧に (オーナー「忍者ビルドコピーってタブで」)。
+  // 後で火力チェックに統合する予定なので、今は火力チェックの直下に残す
+  { id: "build-copy", icon: "🜃", label: "忍者ビルドコピー", group: "tools" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
-  // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す
-  { id: "client-log", icon: "🜂", label: "ゲームログ診断", group: "tools" },
+  // 2026-09-29: PoE1 のスキン (マイクロトランザクション) が PoE2 でも使えるか (views/mtx/MtxList.vue)
+  { id: "mtx", icon: "✦", label: "スキン", group: "tools" },
+  // 2026-09-27: カレンシーを 1 個ずつ使って変化を見せる実演 (動画・配信用。ADR-001 docs/decisions/001-craft-stage.md)
+  { id: "craft-stage", icon: "🜖", label: "クラフトステージ", group: "tools" },
   { id: "settings", icon: "⚙", label: "設定", group: "tools" },
 ];
 
@@ -74,39 +58,8 @@ const groups = (["economy", "tools"] as const)
   }))
   .filter((g) => g.items.length > 0);
 
-// ---- 折りたたみ状態 (親 id → 展開中か)。localStorage に残す (ブラウザ保存はあくまで利便) ----
-const STORAGE_KEY = "exiledesk.sidebar.expanded";
-function loadExpanded(): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-  } catch {
-    return {};
-  }
-}
-const expanded = ref<Record<string, boolean>>(loadExpanded());
-// 選択中の子を持つ親は最初から開いておく
-for (const it of items) {
-  if (it.children?.some((c) => c.id === props.active)) expanded.value[it.id] = true;
-}
-function toggle(id: string): void {
-  expanded.value = { ...expanded.value, [id]: !expanded.value[id] };
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(expanded.value));
-  } catch {
-    /* 保存できなくても動作に影響なし */
-  }
-}
-function isParentActive(item: NavItem): boolean {
-  return !!item.children?.some((c) => c.id === props.active);
-}
-function onClick(item: NavItem): void {
-  if (item.children) {
-    toggle(item.id);
-    return;
-  }
-  emit("update:active", item.id);
-}
+// 2026-10-03: 旧「ヴァールの天秤 ▶」の折りたたみ状態を localStorage (exiledesk.sidebar.expanded) に残していたが、
+// 親子の仕組みごと外したので読まない。残っていても害は無い
 </script>
 
 <template>
@@ -131,53 +84,26 @@ function onClick(item: NavItem): void {
         >
           {{ group.label }}
         </div>
-        <template v-for="item in group.items" :key="item.id">
-          <button
-            type="button"
-            @click="onClick(item)"
-            :class="[
-              'w-full text-left px-4 py-2 flex items-center gap-2 transition border-l-2 font-display text-[13px] tracking-[0.06em]',
-              active === item.id || (item.children && isParentActive(item) && !expanded[item.id])
-                ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
-                : item.children && isParentActive(item)
-                  ? 'border-transparent text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)]'
-                  : 'border-transparent hover:bg-[var(--exile-color-bg-elevated)]',
-            ]"
-            :aria-expanded="item.children ? !!expanded[item.id] : undefined"
-          >
-            <!--
-              アイコン (☉🜔) は Cinzel の unicode-range 外なので、
-              font-display 指定の影響を受けず Yu Gothic UI / 絵文字フォントに落ちる。
-              ラベル日本語も同様に自動フォールバック (visual-concept §9.6)。
-            -->
-            <span class="w-5 inline-block text-center" aria-hidden="true">{{ item.icon }}</span>
-            <span class="whitespace-nowrap">{{ item.label }}</span>
-            <span
-              v-if="item.children"
-              class="ml-auto text-[10px] text-[var(--exile-color-text-tertiary)] transition-transform"
-              :class="expanded[item.id] ? 'rotate-90' : ''"
-              aria-hidden="true"
-              >▶</span
-            >
-          </button>
-          <div v-if="item.children && expanded[item.id]" class="pb-1">
-            <button
-              v-for="child in item.children"
-              :key="child.id"
-              type="button"
-              @click="$emit('update:active', child.id)"
-              :class="[
-                'w-full text-left pl-9 pr-4 py-1.5 flex items-center gap-2 transition border-l-2 text-[12px] tracking-[0.04em]',
-                active === child.id
-                  ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
-                  : 'border-transparent text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] hover:text-[var(--exile-color-text-primary)]',
-              ]"
-            >
-              <span class="w-4 inline-block text-center" aria-hidden="true">{{ child.icon }}</span>
-              <span class="whitespace-nowrap">{{ child.label }}</span>
-            </button>
-          </div>
-        </template>
+        <button
+          v-for="item in group.items"
+          :key="item.id"
+          type="button"
+          @click="emit('update:active', item.id)"
+          :class="[
+            'w-full text-left px-4 py-2 flex items-center gap-2 transition border-l-2 font-display text-[13px] tracking-[0.06em]',
+            active === item.id
+              ? 'bg-[var(--exile-color-bg-elevated)] border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
+              : 'border-transparent hover:bg-[var(--exile-color-bg-elevated)]',
+          ]"
+        >
+          <!--
+            アイコン (☉🜔) は Cinzel の unicode-range 外なので、
+            font-display 指定の影響を受けず Yu Gothic UI / 絵文字フォントに落ちる。
+            ラベル日本語も同様に自動フォールバック (visual-concept §9.6)。
+          -->
+          <span class="w-5 inline-block text-center" aria-hidden="true">{{ item.icon }}</span>
+          <span class="whitespace-nowrap">{{ item.label }}</span>
+        </button>
       </div>
     </nav>
   </aside>

@@ -9,11 +9,16 @@
     components/currency/RankingTable       本体テーブル
     components/currency/CurrencyHoverCard  ゲーム風ホバーカード (ユニーク装備価格推移と同じ枠 GameItemCard)
     components/currency/Sparkline          7 日折れ線 + %
+  2026-10-03 統合 (オーナー「ユニーク装備価格推移はカレンシーランキングの中のタブに」): 上にタブ「カレンシー / ユニーク」。
+    ユニーク側は views/UniqueTrend.vue をそのまま置く (v-show で両方の状態を保つ)。ユニークの一覧の取り直しは
+    こちらの refresh() と同じ時 (useCurrencyRanking.ts → refreshUniqueTrend)。お気に入りの最安値の自動取得は別のまま
 -->
 <script setup lang="ts">
 import { toCss } from "../utils/zoom";
 import RefreshButton from "../components/RefreshButton.vue";
-import { onActivated, onMounted } from "vue";
+import { onActivated, onMounted, ref, watch } from "vue";
+import UniqueTrend from "./UniqueTrend.vue";
+import { useUniqueTrend } from "./unique-trend/useUniqueTrend";
 import type { RankedItem } from "../api/poe2scout";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import RateHeader from "../components/currency/RateHeader.vue";
@@ -39,7 +44,7 @@ function hideTip() {
 }
 
 onMounted(() => {
-  // 起動時は前回の保存分をすぐ出したうえで取り直す (真っ白にしない)
+  // 起動時は前回の保存分をすぐ出したうえで取り直す (真っ白にしない)。ユニークの一覧も refresh() の中で同時に取り直す
   void r.refresh();
 });
 // keep-alive なのでタブを開き直しても mount されない。開いた時にここで更新する
@@ -47,10 +52,44 @@ onMounted(() => {
 onActivated(() => {
   void r.refreshIfStale();
 });
+
+/** 上のタブ: カレンシー (この画面の本体) / ユニーク (UniqueTrend.vue) */
+const TABS = [
+  { id: "currency", icon: "☉", label: "カレンシー" },
+  { id: "unique", icon: "🜚", label: "ユニーク" },
+] as const;
+const tab = ref<(typeof TABS)[number]["id"]>("currency");
+// ユニークのタブを開いたのに何も無い (前回の保存も無く、こちらの更新も失敗した等) 時だけ保険で取る。普段はこちらの更新に乗る
+const u = useUniqueTrend();
+watch(tab, (t) => {
+  if (t === "unique" && !u.rows.value.length && !u.loading.value) void u.load();
+});
 </script>
 
 <template>
-  <div class="h-full flex overflow-hidden">
+  <div class="h-full flex flex-col overflow-hidden">
+    <!-- タブの帯 (2026-10-03 統合)。見た目はヴァールの天秤 (VaalScales.vue) と同じ -->
+    <div class="px-6 pt-3 flex items-end gap-1 border-b border-[var(--exile-color-border-subtle)] shrink-0" role="tablist" aria-label="カレンシーランキング">
+      <span class="mr-3 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-secondary)]" aria-hidden="true">☉ カレンシーランキング</span>
+      <button
+        v-for="t in TABS"
+        :key="t.id"
+        type="button"
+        role="tab"
+        :aria-selected="tab === t.id"
+        class="px-3 py-1.5 -mb-px flex items-center gap-1.5 border-b-2 text-[12px] tracking-[0.04em] transition whitespace-nowrap"
+        :class="tab === t.id ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'"
+        @click="tab = t.id"
+      >
+        <span class="inline-block text-center" aria-hidden="true">{{ t.icon }}</span>
+        <span>{{ t.label }}</span>
+      </button>
+    </div>
+
+    <!-- ユニーク装備価格推移 (元の画面をそのまま。状態はアプリで 1 つなので v-show で十分) -->
+    <UniqueTrend v-show="tab === 'unique'" class="flex-1 min-h-0" />
+
+   <div v-show="tab === 'currency'" class="flex-1 min-h-0 flex overflow-hidden">
     <CategorySidebar
       v-model:category-filter="r.categoryFilter.value"
       v-model:search-query="r.searchQuery.value"
@@ -155,6 +194,6 @@ onActivated(() => {
         / 値段は表示通貨 (適正 = 神、1 未満はカオス、1 カオス未満は高貴) / 取引の推奨 = カオスと神で交換の安い方 (1 個あたりの値段)
       </p>
     </div>
-
+   </div>
   </div>
 </template>

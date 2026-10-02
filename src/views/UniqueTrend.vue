@@ -10,9 +10,11 @@
     components/unique-trend/UniqueDetail     詳細 (グラフ + 最安・最高 + 取引所ボタン)
     components/unique-trend/LineChart        素の SVG の折れ線
   カテゴリ欄はカレンシーランキングの CategorySidebar をそのまま使う。
+  2026-10-03: カレンシーランキング (CurrencyRanking.vue) のタブ「ユニーク」の中身になった。自分では取りに行かず、
+  一覧の取り直しはカレンシーランキングの更新と同じ時 (useUniqueTrend.ts の refreshUniqueTrend)。
 -->
 <script setup lang="ts">
-import { onActivated, onMounted, ref } from "vue";
+import { ref } from "vue";
 import RefreshButton from "../components/RefreshButton.vue";
 import CategorySidebar from "../components/currency/CategorySidebar.vue";
 import UniqueTable from "../components/unique-trend/UniqueTable.vue";
@@ -27,9 +29,7 @@ function toggle(id: number) {
   openId.value = openId.value === id ? null : id;
 }
 
-onMounted(() => void u.load());
-// keep-alive なので開き直した時はここ。相場ストアが 30 分より古ければ取り直す
-onActivated(() => void u.load());
+// 取りに行くのはカレンシーランキングの更新と同じ時 (親の CurrencyRanking.vue から)。ここでは開いた時に取らない (2026-10-03)
 
 function fmtTime(t: number): string {
   return new Date(t).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
@@ -41,7 +41,8 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
 </script>
 
 <template>
-  <div class="h-full flex overflow-hidden">
+  <!-- 高さは親 (CurrencyRanking.vue のタブの下、flex-1 min-h-0) が決める。h-full だとタブの帯の分だけはみ出る -->
+  <div class="flex overflow-hidden">
     <CategorySidebar
       v-model:category-filter="u.categoryFilter.value"
       v-model:search-query="u.searchQuery.value"
@@ -56,6 +57,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
           <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe.ninja の相場と 7 日の動き。行を押すとグラフ、♡ でお気に入り。</p>
           <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
             相場: poe.ninja<span v-if="u.fetchedAt.value"> · {{ fmtTime(u.fetchedAt.value) }} 取得</span>
+            <span v-if="u.fromCache.value"> (前回のデータ)</span>
             <span v-if="u.league.value"> / {{ u.league.value }}</span>
             <span v-if="u.rows.value.length"> / {{ u.rows.value.length }} 件</span>
           </p>
@@ -75,7 +77,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
           <RefreshButton
             :label="u.loading.value ? '更新中…' : '更新'"
             :disabled="u.loading.value"
-            title="poe.ninja から取り直します (8 種類、20 秒ほど)"
+            title="poe.ninja から取り直します (8 種類、20 秒ほど)。カレンシーの「更新」でも一緒に取り直します"
             @click="u.refresh"
           />
         </div>
