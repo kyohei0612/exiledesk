@@ -1,13 +1,10 @@
 /**
- * item-text.ts — ゲームでコピーしたアイテムの文面 (日本語 / 英語) → PoB が読める文面 (2026-10-02 火力チェックの装備の差し替え)
+ * item-text.ts — コピーしたアイテムの文面 (日本語 / 英語) → PoB が読める文面 (2026-10-02 火力チェックの装備の差し替え)
  *
  * 英語のコピー (Item Class: / Rarity: のある物) は PoB がそのまま読めるので素通し。
- * 日本語のコピーは 1 行ずつ英語にする:
- *   - MOD の行: ゲームの stat_descriptions の日本語と英語の組 (src/i18n/mod-lines-ja-en.json、scripts/build-mod-lines-ja-en.mjs)
- *   - ベース名: items-ja-client.json (逆引き) のうち **PoB の itemBases にある物だけ** (src/data/pob-item-bases.json、
- *     scripts/build-pob-item-bases.mjs。通貨・ジェム・マップが混ざると「ゴールドアミュレット」の中の「ゴールド」= 通貨を拾う)。
- *     日本語が同じベース (神秘の装束 = Arcane Raiment / Mystic Raiment) は アイテムクラス・要求レベル・防御値で絞り、絞れなければ `ambiguous` に候補を出す
- *   - ユニーク名: unique-names-ja.json (逆引き)
+ * 日本語のコピーは 1 行ずつ英語にする。文面は 2 通りある (どちらも同じ下請け = 行の仕分け readMetaLine / readModRow と 出力 buildText を使う):
+ *
+ *   A. ゲームの Ctrl+C (「レアリティ: …」の見出しと `--------` の区切りがある) … readBlocks
  *   - 区切り線で塊に分け、アイテムレベルより後の塊を MOD の塊とみる。分類は **注記が有る時は注記で、無い時は塊の順で** (どちらも実物にある:
  *     オーナーの 2026-09-22 のコピーには注記が無い、取引所の日本語には " (rune)" " (implicit)" が付く)。
  *     塊の順: **最後の塊が明示 MOD、それより前は暗黙** (ノーマルは全部暗黙)。ただし行が全部ルーンの効果 (絆 / ルーンの表の文面そのまま) の塊は
@@ -15,6 +12,30 @@
  *   - 塊を捨てるのは**フレーバーテキストだと分かる時だけ** (ユニークで、数字が 1 つも無く、どの行も辞書に当たらない / フレーバーの辞書にある行)。
  *     それ以外の当たらなかった行は `unread` に出し、塊は残して分類に数える (黙って捨てると塊の数が減って暗黙が明示に化けた)
  *   - 物理ダメージ・アーマー・要求などの性能の塊は入れない (PoB がベースと MOD から計算し直す)
+ *
+ *   B. 公式トレードサイト (jp.pathofexile.com/trade2) のコピー (見出しも区切りも無い。オーナーの 2026-10-02 の実物) … readFlat
+ *   - 1 行目が名前、2 行目がベース (ノーマル / マジックは 1 行目がベース名そのもの / ベース名を含む)。レアリティは名前で決める
+ *     (ユニーク名の辞書 → ユニーク、レアの名前 (Words) が読める → レア、ベース名そのもの → ノーマル、ベース名を含む → マジック)
+ *   - 「W」「P」「エゾマイト ワンド」のような短い行・説明の行が混ざる (オーナー「比較がいらん奴の説明とか全部のる」)。辞書に当たらず数字も無い行は、
+ *     性能・MOD の行より前なら捨てる (何か分かっていない。「エゾマイト ワンド」は ClientStrings / ItemClasses / BaseItemTypes のどれにも無い、
+ *     スキンの名前らしい)。それより後は ユニークの説明文 / フレーバー (数字が無く辞書に当たらない) だけ捨て、他は `unread`
+ *   - 暗黙と明示は塊の順が使えないので **ベースの固有 MOD の型 (PoB の itemBases の implicit、src/data/pob-item-bases.json)** と突き合わせる:
+ *     英語にした行が型 (数字と「(1-20)」の幅) に合えば暗黙 (同じ型は 1 回だけ。ルビーの指輪の火耐性は暗黙にも接尾にも出るので、先に出た方が暗黙)。
+ *     「Grants Skill:」は常に暗黙 (PoE2 の武器のスキル付与はベースの固有。PoB も Item.lua の baseHasImplicitLine で特別扱い、
+ *     ユニーク (Runeseeker's Call) は PoB の Uniques/wand.lua でも Implicits 側)。「絆 …」(Bonded) はルーン。それ以外は明示
+ *   - ユニークの固有 MOD は PoB が補わない (Item.lua の GetUniqueDBItem は要求レベルにしか使わない) ので、ここで分けた暗黙を Implicits: に数えて渡す
+ *
+ *   - 取引所のコピーには注記が無いので、ソケットされたルーンの効果 (「ルーンの効果増加」で伸びた値で載る。オーナーの実物はスペルダメージ 90% など 5 行が
+ *     ルーン 5 個の効果の 3 倍) は辞書に当たる普通の MOD と見分けられず明示になる。値は表示のままなので PoB の計算は同じ (ルーンの数の推定だけ違う)
+ *
+ * 行の英語化:
+ *   - MOD の行: ゲームの stat_descriptions の日本語と英語の組 (src/i18n/mod-lines-ja-en.json、scripts/build-mod-lines-ja-en.mjs)
+ *   - ベース名: items-ja-client.json (逆引き) のうち **PoB の itemBases にある物だけ** (src/data/pob-item-bases.json、
+ *     scripts/build-pob-item-bases.mjs。通貨・ジェム・マップが混ざると「ゴールドアミュレット」の中の「ゴールド」= 通貨を拾う)。
+ *     日本語が同じベース (神秘の装束 = Arcane Raiment / Mystic Raiment) は アイテムクラス・要求レベル・防御値で絞り、絞れなければ `ambiguous` に候補を出す
+ *   - ユニーク名: unique-names-ja.json (逆引き)
+ *   - 要求 (「必要：レベル 65, 114 知性」/ 装備要求の「レベル: 73」「知性: 100」) は `Requires: Level 65, 114 Int` で渡す
+ *     (Item.lua は `^Requires:? Level (%d+)` で要求レベルだけ読む)。ベースの絞り込みにも使う
  */
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
@@ -60,7 +81,6 @@ const NUM = "([+-]?[0-9]+(?:" + BS + ".[0-9]+)?)";
 const PH = /\{(\d*)(?::([^}]*))?\}/g;
 /** 型の中の数字と、その直前の符号の文字 (「受け流し力 -{0}」の「-」。数字に付けて出す) */
 const PH_SIGNED = /([+-])?\{(\d*)(?::([^}]*))?\}/g;
-
 interface LinePattern {
   re: RegExp;
   /** 正規表現の何番目の数字が {n} か */
@@ -165,6 +185,8 @@ interface PobBase {
   evasion?: number;
   es?: number;
   ward?: number;
+  /** ベースの固有 MOD の型 (PoB の implicit。「+(20-30)% to Fire Resistance」) */
+  implicits?: string[];
 }
 const POB_BASES = (pobBases as { bases: Record<string, PobBase>; classes: Record<string, string> }).bases;
 /** 文面の「アイテムクラス: 鎧」→ PoB の type */
@@ -191,8 +213,12 @@ function findBaseCandidates(nameLines: string[]): string[] {
     const exact = baseCandidatesByJa.get(nameLines[i]!);
     if (exact) return exact;
   }
+  return containedBaseCandidates(nameLines);
+}
+/** 行の中に含まれる一番長いベース名の候補 (マジックの名前) */
+function containedBaseCandidates(lines: string[]): string[] {
   let best: [string, string[]] | null = null;
-  for (const line of nameLines) for (const [ja, ens] of baseCandidatesByJa) if (ja.length >= 2 && line.includes(ja) && (!best || ja.length > best[0].length)) best = [ja, ens];
+  for (const line of lines) for (const [ja, ens] of baseCandidatesByJa) if (ja.length >= 2 && line.includes(ja) && (!best || ja.length > best[0].length)) best = [ja, ens];
   return best?.[1] ?? [];
 }
 
@@ -200,7 +226,7 @@ function findBaseCandidates(nameLines: string[]): string[] {
 interface BaseHints {
   /** 「アイテムクラス: 鎧」の日本語 */
   classJa: string | null;
-  /** 「装備要求」の「レベル: 73」。MOD で上がることはあっても下がることは無いので、ベースの要求レベルはこれ以下 */
+  /** 要求レベル (「レベル: 73」/「必要：レベル 65, …」)。MOD で上がることはあっても下がることは無いので、ベースの要求レベルはこれ以下 */
   reqLevel: number | null;
   /** 「アーマー: 138」など。品質と MOD で増えることはあっても素の値より下がることは無い */
   defence: Partial<Record<"armour" | "evasion" | "es" | "ward", number>>;
@@ -229,6 +255,31 @@ function narrowBases(cands: string[], h: BaseHints): string[] {
     apply((b) => kinds.every((k) => !b[k] || (h.defence[k] != null && b[k]! <= h.defence[k]!)));
   }
   return cur;
+}
+
+/**
+ * ベースの固有 MOD の型 (「+(20-30)% to Fire Resistance」「Adds 1 to 4 Physical Damage to Attacks」) に英語の行が合うか。
+ * 「(a-b)」は幅 (値がその中)、それ以外の数字はそのまま一致
+ */
+function implicitMatcher(tmpl: string): (en: string) => boolean {
+  const ranges: Array<[number, number]> = [];
+  let src = "^";
+  let last = 0;
+  for (const m of tmpl.matchAll(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g)) {
+    src += esc(tmpl.slice(last, m.index)) + "(-?[0-9]+(?:" + BS + ".[0-9]+)?)";
+    ranges.push([Number(m[1]), Number(m[2])]);
+    last = m.index! + m[0].length;
+  }
+  src += esc(tmpl.slice(last)) + "$";
+  const re = new RegExp(src);
+  return (en) => {
+    const m = re.exec(en);
+    if (!m) return false;
+    return ranges.every(([a, b], i) => {
+      const v = Number(m[i + 1]);
+      return v >= Math.min(a, b) && v <= Math.max(a, b);
+    });
+  };
 }
 
 // ---- レアの名前 ----
@@ -312,6 +363,11 @@ const LINE_FLAG: Partial<Record<ItemLine["kind"], string>> = { rune: "{rune}", e
  * アイテムレベルより後ろに来るので、MOD の塊に数えると明示が暗黙に化ける。読まない (unread にも出さない)
  */
 const DESCRIPTION_LINE = /^(右クリック|条件を満たした時に自動的に使用される|街の井戸で補充|パッシブツリーで割り当てられたジュエルソケットにはめる|アイテムのアビスソケット|メモ[:：])/;
+/**
+ * 性能の行「物理ダメージ: 70-116」「クリティカルヒット率: 10.00%」「秒間アタック回数: 1.40」「スピリット: 100」(ラベル: 数値だけ)。
+ * 区切り線の無い文面では塊で捨てられないので行で見分ける。PoB がベースと MOD から計算し直すので読まない
+ */
+const PERFORMANCE_LINE = /^[^\d:：]+[:：]\s*[+-]?\d[\d.,]*(?:\s*[-–]\s*\d[\d.,]*)?%?$/;
 /** フレーバーテキストの行 (poe2-flavour-ja.json の日本語を 1 行ずつ) */
 const flavourLines: Set<string> = (() => {
   const s = new Set<string>();
@@ -332,8 +388,101 @@ const stripRanges = (s: string): string => s.replace(/(\d)\(\s*-?\d+(?:\.\d+)?\s
 interface Row {
   ja: string;
   en: string | null;
-  /** 注記・見出し・絆で決まった種類。null なら塊の順で決める */
+  /** 注記・見出し・絆で決まった種類。null なら塊の順 (A) / ベースの固有との突き合わせ (B) で決める */
   kind: ItemLine["kind"] | null;
+}
+
+/** MOD 以外の行から集める物 (両方の読み方で共通) */
+interface Meta {
+  itemLevel: number;
+  quality: number;
+  /** 品質の種類 (カタリスト) の PoB のラベル「Quality (Attack Modifiers)」。Item.lua:558 が catalyst として読み、該当タグの MOD を伸ばす */
+  catalystLabel: string | null;
+  sockets: string;
+  corrupted: boolean;
+  mirrored: boolean;
+  sanctified: boolean;
+  unidentified: boolean;
+  hints: BaseHints;
+  /** 要求の属性 (「114 知性」→ ["114 Int"]) */
+  reqAttrs: string[];
+}
+const newMeta = (classJa: string | null): Meta => ({
+  itemLevel: 0, quality: 0, catalystLabel: null, sockets: "", corrupted: false, mirrored: false, sanctified: false, unidentified: false,
+  hints: { classJa, reqLevel: null, defence: {} }, reqAttrs: [],
+});
+
+/** 要求の属性の日本語 (ClientStrings Strength 筋力 / Dexterity 器用さ / Intelligence 知性) → PoB の略 */
+const ATTR_EN: Record<string, string> = { 筋力: "Str", 力: "Str", 器用さ: "Dex", 敏捷: "Dex", 知性: "Int", Str: "Str", Dex: "Dex", Int: "Int" };
+// (\b は日本語に効かないので使わない)
+const ATTR_RE = /(\d+)\s*(筋力|器用さ|敏捷|知性|力|Str|Dex|Int)|(筋力|器用さ|敏捷|知性|力|Str|Dex|Int)[:：]\s*(\d+)/g;
+function readRequirement(text: string, m: Meta): void {
+  const lv = /(?:レベル|Level)[:：]?\s*(\d+)/.exec(text);
+  if (lv) m.hints.reqLevel = Number(lv[1]);
+  for (const a of text.matchAll(ATTR_RE)) {
+    const n = a[1] ?? a[4];
+    const attr = ATTR_EN[a[2] ?? a[3] ?? ""];
+    if (n && attr && !m.reqAttrs.some((s) => s.endsWith(attr))) m.reqAttrs.push(`${n} ${attr}`);
+  }
+}
+
+/**
+ * MOD 以外の行 (アイテムレベル / 品質 / ソケット / 状態 / 要求 / 防御値) を読む。読めたら何の行かを返し、MOD の行なら null。
+ * 状態の行は ClientStrings: ItemPopupCorrupted コラプト状態 / ItemPopupMirrored ミラー状態 / ItemPopupSanctified 聖別化 / ItemPopupUnidentified 未鑑定
+ * (「コラプト済み」は旧表記を念のため)
+ */
+function readMetaLine(raw: string, m: Meta): "level" | "meta" | null {
+  const lv = /^アイテムレベル[:：]\s*(\d+)/.exec(raw);
+  if (lv) { m.itemLevel = Number(lv[1]); return "level"; }
+  // 「品質: +20%」/ 装飾品は種類つき「品質 (アタックモッド): +20%」(ラベル → 種類は計算機の quality.ts と同じ表)
+  const q = /^品質(.*?)[:：]\s*\+?(\d+)%/.exec(raw);
+  if (q) {
+    m.quality = Number(q[2]);
+    const tag = q[1]!.trim() ? catalystTagFromLabel(raw) : null;
+    m.catalystLabel = tag ? CATALYSTS.find((c) => c.tag === tag)?.label.en ?? null : null;
+    return "meta";
+  }
+  const so = /^ソケット[:：]\s*(.+)$/.exec(raw);
+  if (so) { m.sockets = so[1]!.trim(); return "meta"; }
+  if (raw === "コラプト済み" || raw === "コラプト状態" || raw === "Corrupted") { m.corrupted = true; return "meta"; }
+  if (raw === "ミラー状態" || raw === "Mirrored") { m.mirrored = true; return "meta"; }
+  if (raw === "聖別化" || raw === "Sanctified") { m.sanctified = true; return "meta"; }
+  if (raw === "未鑑定" || raw === "Unidentified") { m.unidentified = true; return "meta"; }
+  // 要求: 取引所は 1 行「必要：レベル 65, 114 知性」(全角コロン)、ゲームは「装備要求:」(ClientStrings ItemRequirementsLabel は「装備条件：」) の下に「レベル: 73」「知性: 100」
+  const req = /^(?:必要|装備条件|装備要求|Requires?|Requirements?)[:：]\s*(.*)$/.exec(raw);
+  if (req) { readRequirement(req[1]!, m); return "meta"; }
+  if (/^(?:レベル|Level)[:：]\s*\d+/.test(raw) || /^(?:筋力|器用さ|敏捷|知性|力|Str|Dex|Int)[:：]\s*\d+/.test(raw)) { readRequirement(raw, m); return "meta"; }
+  // 防御値「アーマー: 138」。ベースを絞る手がかり
+  const df = /^(アーマー|回避力|エナジーシールド|ルーンワード)[:：]\s*(\d+)/.exec(raw);
+  if (df) { m.hints.defence[DEFENCE_KEY[df[1]!]!] = Number(df[2]); return "meta"; }
+  return null;
+}
+
+/**
+ * MOD の 1 行 → 英語と、注記・絆で決まった種類。
+ * 絆 (Bonded) は頭に「絆」(取引所は「絆 …」、ゲームのコピーは「絆: …」かも)。注記 (rune) と重なっても読む。絆はルーン / ソウルコアの物なので種類は rune。
+ * PoB は `Bonded: <英語>` を ModParser の `^bonded: ` で読み、Condition:CanUseBondedModifiers (「絆モッドの恩恵を獲得する」のノード) の付いた MOD にする
+ */
+function readModRow(raw: string, pats: LinePattern[]): Row {
+  const l = stripRanges(raw);
+  const toEn = (t: string): { en: string | null; kind: ItemLine["kind"] | null } => {
+    const bonded = /^絆[:：]?\s*(.+)$/.exec(t);
+    if (bonded) {
+      const x = lineToEn(bonded[1]!, pats);
+      return { en: x ? `Bonded: ${x}` : null, kind: "rune" };
+    }
+    return { en: lineToEn(t, pats) ?? grantsSkillToEn(t), kind: null };
+  };
+  let { en, kind } = toEn(l);
+  if (!en) {
+    // 行末の注記 (固有) (ルーン) (fractured) などを外してもう 1 度
+    const note = /^(.*?)\s*[(（]([^)）]+)[)）]$/.exec(l);
+    if (note) {
+      ({ en, kind } = toEn(note[1]!));
+      kind ??= NOTE_KIND.find(([re]) => re.test(note[2]!))?.[1] ?? null;
+    }
+  }
+  return { ja: raw, en, kind };
 }
 
 /** 貼られた文面 → PoB の文面 */
@@ -355,82 +504,55 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
       unread: [],
     };
   }
+  const pats = await linePatterns();
+  const lines = text.split(NL).map((l) => l.trim()).filter(Boolean);
+  const hasBlocks = lines.some((l) => /^-{3,}$/.test(l)) || lines.some((l) => /^レアリティ[:：]/.test(l));
+  const read = hasBlocks ? readBlocks(text, pats) : readFlat(lines, pats);
+  return buildText(read);
+}
 
+/** 読み方 A / B が出す物 (→ buildText) */
+interface Parsed {
+  rarity: string;
+  /** 貼られたままの名前の行 */
+  nameJa: string;
+  /** ユニーク名 (英語)。辞書に無ければ日本語のまま */
+  uniqueName: string | null;
+  candidates: string[];
+  meta: Meta;
+  lines: ItemLine[];
+  unread: string[];
+}
+
+// ---- A. ゲームのコピー (見出し + 区切り線) ----
+function readBlocks(text: string, pats: LinePattern[]): Parsed {
   const blocks = text.split(/\n-{3,}\n?/).map((b) => b.split(NL).map((l) => l.trim()).filter(Boolean)).filter((b) => b.length);
   const head = blocks[0] ?? [];
   const rarityJa = (head.find((l) => l.startsWith("レアリティ")) ?? "").split(/[:：]/)[1]?.trim() ?? "";
   const rarity = RARITY[rarityJa] ?? "Rare";
   const nameLines = head.filter((l) => !/^(アイテムクラス|レアリティ)/.test(l));
-  const hints: BaseHints = { classJa: (head.find((l) => l.startsWith("アイテムクラス")) ?? "").split(/[:：]/)[1]?.trim() || null, reqLevel: null, defence: {} };
+  const meta = newMeta((head.find((l) => l.startsWith("アイテムクラス")) ?? "").split(/[:：]/)[1]?.trim() || null);
   const candidates = findBaseCandidates(nameLines);
   if (!candidates.length) throw new Error("ベースの名前が読めません (ゲームで Ctrl+C したアイテムの文面を貼ってください)");
 
-  let itemLevel = 0;
-  let quality = 0;
-  /** 品質の種類 (カタリスト) の PoB のラベル「Quality (Attack Modifiers)」。Item.lua:558 が catalyst として読み、該当タグの MOD を伸ばす */
-  let catalystLabel: string | null = null;
-  let corrupted = false;
-  let mirrored = false;
-  let sanctified = false;
-  let unidentified = false;
-  let sockets = "";
   let afterLevel = false;
-  const pats = await linePatterns();
   const modBlocks: Row[][] = [];
   for (const b of blocks.slice(1)) {
     const rows: Row[] = [];
     /** 詳細コピーの見出しで決まった、続く行の種類 */
     let fromHeader: ItemLine["kind"] | null = null;
     for (const raw of b) {
-      const lv = /^アイテムレベル[:：]\s*(\d+)/.exec(raw);
-      if (lv) { itemLevel = Number(lv[1]); afterLevel = true; continue; }
-      // 「品質: +20%」/ 装飾品は種類つき「品質 (アタックモッド): +20%」(ラベル → 種類は計算機の quality.ts と同じ表)
-      const q = /^品質(.*?)[:：]\s*\+?(\d+)%/.exec(raw);
-      if (q) {
-        quality = Number(q[2]);
-        const tag = q[1]!.trim() ? catalystTagFromLabel(raw) : null;
-        catalystLabel = tag ? CATALYSTS.find((c) => c.tag === tag)?.label.en ?? null : null;
-        continue;
-      }
-      const so = /^ソケット[:：]\s*(.+)$/.exec(raw);
-      if (so) { sockets = so[1]!.trim(); continue; }
-      // 状態の行 (ClientStrings: ItemPopupCorrupted コラプト状態 / ItemPopupMirrored ミラー状態 / ItemPopupSanctified 聖別化 / ItemPopupUnidentified 未鑑定)。「コラプト済み」は旧表記を念のため
-      if (raw === "コラプト済み" || raw === "コラプト状態" || raw === "Corrupted") { corrupted = true; continue; }
-      if (raw === "ミラー状態" || raw === "Mirrored") { mirrored = true; continue; }
-      if (raw === "聖別化" || raw === "Sanctified") { sanctified = true; continue; }
-      if (raw === "未鑑定" || raw === "Unidentified") { unidentified = true; continue; }
-      if (!afterLevel) {
-        // 装備要求 (「レベル: 73」) と防御値 (「アーマー: 138」) はアイテムレベルより前。ベースを絞る手がかりに取る
-        const rl = /^(?:レベル|Level)[:：]\s*(\d+)/.exec(raw);
-        if (rl) hints.reqLevel = Number(rl[1]);
-        const df = /^(アーマー|回避力|エナジーシールド|ルーンワード)[:：]\s*(\d+)/.exec(raw);
-        if (df) hints.defence[DEFENCE_KEY[df[1]!]!] = Number(df[2]);
-        continue;
-      }
+      const kind = readMetaLine(raw, meta);
+      if (kind === "level") afterLevel = true;
+      if (kind) continue;
+      // アイテムレベルより前は性能の塊 (物理ダメージ・防御値・要求)。MOD ではない
+      if (!afterLevel) continue;
       // 詳細コピー (Ctrl+Alt+C) の見出し `{ … }` は MOD ではない。続く行の種類だけ取る
       if (/^\{.*\}$/.test(raw)) { fromHeader = headerKind(raw); continue; }
       // 説明の行、注意書き (括弧で始まる行。PoB も `^%(%a+` を読み飛ばす) は MOD ではない
       if (DESCRIPTION_LINE.test(raw) || /^[(（]/.test(raw)) continue;
-      const l = stripRanges(raw);
-      // 絆 (Bonded) は頭に「絆」(取引所は「絆 …」、ゲームのコピーは「絆: …」かも)。注記 (rune) と重なっても読む。絆はソウルコアの物なので種類は rune
-      const toEn = (t: string): { en: string | null; kind: ItemLine["kind"] | null } => {
-        const bonded = /^絆[:：]?\s*(.+)$/.exec(t);
-        if (bonded) {
-          const x = lineToEn(bonded[1]!, pats);
-          return { en: x ? `Bonded: ${x}` : null, kind: "rune" };
-        }
-        return { en: lineToEn(t, pats) ?? grantsSkillToEn(t), kind: null };
-      };
-      let { en, kind } = toEn(l);
-      if (!en) {
-        // 行末の注記 (固有) (ルーン) (fractured) などを外してもう 1 度
-        const note = /^(.*?)\s*[(（]([^)）]+)[)）]$/.exec(l);
-        if (note) {
-          ({ en, kind } = toEn(note[1]!));
-          kind ??= NOTE_KIND.find(([re]) => re.test(note[2]!))?.[1] ?? null;
-        }
-      }
-      rows.push({ ja: raw, en, kind: kind ?? fromHeader });
+      const row = readModRow(raw, pats);
+      rows.push({ ...row, kind: row.kind ?? fromHeader });
     }
     if (!rows.length) continue;
     // フレーバーテキストだと分かる塊だけ捨てる (ユニークで、数字が 1 つも無く、どの行も辞書に当たらない / フレーバーの辞書にある行)
@@ -443,7 +565,7 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
   // 塊の分類: 種類が決まっている行だけの塊 (注記・見出し・絆) と、行が全部ルーンの効果の塊 (ソケットがある時) は順の数に入れない
   const positional = modBlocks.filter((rows) => {
     if (rows.every((r) => r.kind)) return false;
-    if (sockets && rows.every((r) => r.en && (r.kind === "rune" || runeEffectLines.has(r.en)))) {
+    if (meta.sockets && rows.every((r) => r.en && (r.kind === "rune" || runeEffectLines.has(r.en)))) {
       for (const r of rows) r.kind = "rune";
       return false;
     }
@@ -454,32 +576,111 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
   for (const rows of modBlocks) {
     const pi = positional.indexOf(rows);
     // ノーマルと未鑑定 (明示が見えない) は塊が全部暗黙
-    const blockKind: ItemLine["kind"] = rarity === "Normal" || unidentified || (pi >= 0 && pi < positional.length - 1) ? "implicit" : "explicit";
+    const blockKind: ItemLine["kind"] = rarity === "Normal" || meta.unidentified || (pi >= 0 && pi < positional.length - 1) ? "implicit" : "explicit";
     for (const r of rows) {
       if (!r.en) { unread.push(r.ja); continue; }
       lines.push({ ja: r.ja, en: r.en, kind: r.kind ?? blockKind });
     }
   }
+  const nameJa = nameLines[0] ?? "";
+  return { rarity, nameJa, uniqueName: rarity === "Unique" ? uniqueEnByJa.get(nameJa) ?? nameJa : null, candidates, meta, lines, unread };
+}
 
-  const narrowed = narrowBases(candidates, hints);
+// ---- B. 取引所のコピー (見出しも区切り線も無い) ----
+function readFlat(all: string[], pats: LinePattern[]): Parsed {
+  const l0 = all[0] ?? "";
+  const l1 = all[1] ?? "";
+  const exact0 = baseCandidatesByJa.get(l0);
+  const exact1 = baseCandidatesByJa.get(l1);
+  let rarity: string;
+  let candidates: string[];
+  /** 名前・ベースに使った行数 */
+  let used: number;
+  const uniqueEn = uniqueEnByJa.get(l0) ?? null;
+  if (uniqueEn) {
+    // ユニーク名 → 2 行目がベース (辞書に無いベースなら 2 行目の中に含まれる物)
+    rarity = "Unique";
+    candidates = exact1 ?? containedBaseCandidates([l1]);
+    used = candidates.length ? 2 : 1;
+  } else if (exact1 && !exact0) {
+    // 名前 + ベース。レアの名前 (Words) が読めなくても 2 行目がベースならレア
+    rarity = "Rare";
+    candidates = exact1;
+    used = 2;
+  } else if (exact0) {
+    rarity = "Normal";
+    candidates = exact0;
+    used = 1;
+  } else {
+    // マジック「接頭 + ベース + 接尾」
+    rarity = "Magic";
+    candidates = containedBaseCandidates([l0]);
+    used = 1;
+  }
+  if (!candidates.length) throw new Error("ベースの名前が読めません (ゲームで Ctrl+C したアイテムの文面か、取引所のコピーを貼ってください)");
+
+  const meta = newMeta(null);
+  const rows: Row[] = [];
+  const unread: string[] = [];
+  /** 性能・要求・MOD の行が始まったか (それより前の、辞書に当たらず数字も無い行は スキン名などの説明。捨てる) */
+  let bodyStarted = false;
+  for (const raw of all.slice(used)) {
+    if (readMetaLine(raw, meta)) { bodyStarted = true; continue; }
+    // 「W」「P」のような 1〜2 文字の行 (何かは分かっていない。取引所の表示の文字が入る)
+    if ([...raw].length <= 2) continue;
+    if (/^\{.*\}$/.test(raw) || DESCRIPTION_LINE.test(raw) || /^[(（]/.test(raw)) continue;
+    if (PERFORMANCE_LINE.test(raw)) { bodyStarted = true; continue; }
+    const row = readModRow(raw, pats);
+    if (row.en) {
+      bodyStarted = true;
+      rows.push(row);
+      continue;
+    }
+    const noDigit = !/\d/.test(raw);
+    // 当たらない行: 性能より前の説明 (スキン名など) と、ユニークの説明文 / フレーバー (数字が無い) は捨てる。他は unread に出す (黙って落とさない)
+    if (noDigit && (!bodyStarted || rarity === "Unique" || flavourLines.has(raw))) continue;
+    unread.push(raw);
+  }
+
+  // 暗黙と明示: ベースの固有 MOD の型と突き合わせる (同じ型は 1 回だけ)。Grants Skill は常に暗黙、ノーマル / 未鑑定は全部暗黙
+  const base = narrowBases(candidates, meta.hints)[0]!;
+  const matchers = (POB_BASES[base]?.implicits ?? []).map(implicitMatcher);
+  const lines: ItemLine[] = [];
+  for (const r of rows) {
+    let kind = r.kind;
+    if (!kind) {
+      const mi = matchers.findIndex((m) => m(r.en!));
+      if (mi >= 0) matchers.splice(mi, 1);
+      kind = mi >= 0 || r.en!.startsWith("Grants Skill:") || rarity === "Normal" || meta.unidentified ? "implicit" : "explicit";
+    }
+    lines.push({ ja: r.ja, en: r.en!, kind });
+  }
+  return { rarity, nameJa: l0, uniqueName: uniqueEn, candidates, meta, lines, unread };
+}
+
+// ---- 出力 ----
+function buildText(p: Parsed): ConvertedItem {
+  const { rarity, meta, lines, unread } = p;
+  const narrowed = narrowBases(p.candidates, meta.hints);
   const base = narrowed[0]!;
   const ambiguous = narrowed.length > 1 ? narrowed : [];
-  const uniqueName = rarity === "Unique" ? uniqueEnByJa.get(nameLines[0] ?? "") ?? nameLines[0] : null;
-  const rareName = rarity === "Rare" ? rareNameEn(nameLines[0] ?? "") : null;
+  const rareName = rarity === "Rare" ? rareNameEn(p.nameJa) : null;
   // 未鑑定は名前の行がベースだけ。PoB (Item.lua:366) もベース名が先頭なら未鑑定と読む
-  const name = unidentified ? base : rarity === "Rare" || rarity === "Unique" ? (uniqueName ?? rareName ?? "Pasted Item") : base;
+  const name = meta.unidentified ? base : rarity === "Rare" || rarity === "Unique" ? (p.uniqueName ?? rareName ?? "Pasted Item") : base;
   const implicitLike = lines.filter((l) => isImplicitSide(l.kind));
   const out = [`Rarity: ${rarity}`, name];
   if (name !== base) out.push(base);
-  if (itemLevel) out.push(`Item Level: ${itemLevel}`);
-  if (quality) out.push(catalystLabel ? `${catalystLabel}: +${quality}%` : `Quality: ${quality}`);
-  if (sockets) out.push(`Sockets: ${sockets}`);
+  if (meta.itemLevel) out.push(`Item Level: ${meta.itemLevel}`);
+  if (meta.quality) out.push(meta.catalystLabel ? `${meta.catalystLabel}: +${meta.quality}%` : `Quality: ${meta.quality}`);
+  if (meta.sockets) out.push(`Sockets: ${meta.sockets}`);
+  // 要求 (Item.lua:533 `^Requires:? Level (%d+)`。属性は PoB が読まないが、人が見る用に本家の書き方で添える)
+  if (meta.hints.reqLevel != null) out.push(["Requires: Level " + meta.hints.reqLevel, ...meta.reqAttrs].join(", "));
   out.push(`Implicits: ${implicitLike.length}`);
   for (const l of implicitLike) out.push((LINE_FLAG[l.kind] ?? "") + l.en);
   // 未鑑定は明示 MOD が見えない (有っても読めない) ので暗黙だけ
-  if (!unidentified) for (const l of lines) if (!isImplicitSide(l.kind)) out.push((LINE_FLAG[l.kind] ?? "") + l.en);
-  if (corrupted) out.push("Corrupted");
-  if (mirrored) out.push("Mirrored");
-  if (sanctified) out.push("Sanctified");
-  return { text: out.join(NL), name: nameLines[0] ?? base, base, ambiguous, rarity, english: false, unidentified, lines, unread };
+  if (!meta.unidentified) for (const l of lines) if (!isImplicitSide(l.kind)) out.push((LINE_FLAG[l.kind] ?? "") + l.en);
+  if (meta.corrupted) out.push("Corrupted");
+  if (meta.mirrored) out.push("Mirrored");
+  if (meta.sanctified) out.push("Sanctified");
+  return { text: out.join(NL), name: p.nameJa || base, base, ambiguous, rarity, english: false, unidentified: meta.unidentified, lines, unread };
 }

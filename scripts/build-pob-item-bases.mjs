@@ -11,7 +11,8 @@
  *   入力: vendor/PathOfBuilding-PoE2/src/Data/Bases/*.lua (`itemBases["..."] = { type = "...", armour = {...}, req = {...} }`)
  *         data-cache/client-export/tables/{English,Japanese}/ItemClasses.json (文面の「アイテムクラス: 鎧」→ PoB の type)
  *   出力: src/data/pob-item-bases.json
- *         { classes: { "<日本語のクラス名>": "<PoB の type>" }, bases: { "<英語名>": { type, level?, armour?, evasion?, es?, ward? } } }
+ *         { classes: { "<日本語のクラス名>": "<PoB の type>" }, bases: { "<英語名>": { type, level?, armour?, evasion?, es?, ward?, implicits? } } }
+ *         implicits = ベースの固有 MOD の型 (PoB の implicit。区切り線の無い文面で暗黙と明示を分けるのに使う)
  *
  *   node scripts/build-pob-item-bases.mjs
  */
@@ -57,6 +58,16 @@ for (const f of readdirSync(BASES).filter((x) => x.endsWith(".lua"))) {
       const v = new RegExp("\\b" + name + " = (\\d+)").exec(armour);
       if (v && Number(v[1]) > 0) o[key] = Number(v[1]);
     }
+    // ベースの固有 MOD (暗黙) の型 (「+(20-30)% to Fire Resistance」「Grants Skill: Level (1-20) Chaos Bolt」)。
+    // 区切り線の無い文面 (取引所のコピー) で暗黙と明示を分けるのに使う (item-text.ts)。
+    // Lua の文字列は複数行を "\n" で、変種を {variant:N} で持つ。同じ名前のベースが複数ある (Runemastered … の変種) ので合わせて持つ
+    const implicitRaw = /\n\timplicit = "((?:[^"\\]|\\.)*)"/.exec(body)?.[1];
+    const implicits = implicitRaw
+      ? implicitRaw.split("\\n").map((s) => s.replace(/^\{variant:[\d,]+\}/, "").trim()).filter(Boolean)
+      : [];
+    const prev = bases[m[1]];
+    if (prev?.implicits) for (const s of prev.implicits) if (!implicits.includes(s)) implicits.push(s);
+    if (implicits.length) o.implicits = implicits;
     bases[m[1]] = o;
   }
 }

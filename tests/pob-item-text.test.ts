@@ -268,6 +268,105 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
     expect(lines.indexOf("{rune}Adds 4 to 6 Fire Damage")).toBeLessThan(lines.indexOf("+5 to Level of all Melee Skills"));
   });
 
+  // (11) 公式トレードサイト (jp.pathofexile.com/trade2) のコピー: 見出しも区切り線も無い (オーナーの 2026-10-02 の実物をそのまま)。
+  // 「W」「P」「エゾマイト ワンド」のような表示の文字・スキン名が混ざり、「必要：」は全角コロン、ルーンの行は「絆 」で始まる。
+  // 絆 5 行は rune、スキル付与は暗黙 (PoB の Uniques/wand.lua の Runeseeker's Call も Implicits 側)、残りは明示。
+  // 実物の「スペルダメージが90%増加する」〜「75%の確率で…投射物を追加で2個放つ」の 5 行は ソケットされたルーン 5 個の効果が「ルーンの効果が200%増加」で 3 倍になった物
+  // (Thane Girt's Rune of Wildness の 25% → 75% など) だが、注記が無い文面では普通の MOD と見分けられないので明示 (値は表示のままなので計算は同じ)。
+  // 「このアイテムにはルーンだけをソケットできる」は説明文に見えるが PoB の Runeseeker's Call の行で ModParser が SocketedRunesOnly に読む MOD なので明示に入れる
+  it("取引所のコピー (区切り無し) のユニークを読む", async () => {
+    const text = [
+      "ルーンシーカーの呼び声",
+      "ルーニックフォーク",
+      "W",
+      "P",
+      "エゾマイト ワンド",
+      "品質: +20%",
+      "アイテムレベル: 86",
+      "必要：レベル 65, 114 知性",
+      "スペルダメージが90%増加する",
+      "全てのスペルスキルのレベル +3",
+      "スペルのクリティカルヒット率が72%増加する",
+      "ダメージの39%を追加混沌ダメージとして獲得する",
+      "75%の確率でスペルスキルは投射物を追加で2個放つ",
+      "絆 クリティカルダメージボーナスが75%増加する",
+      "絆 ダメージの24%を追加物理ダメージとして獲得する",
+      "絆 アルコン待機時間の解消が90%速くなる",
+      "絆 スペルによるクリティカルヒット時に与えた物理ダメージの36%と同量のアーマーをアーマー破壊する",
+      "絆 憤怒のそれぞれのスタックはスペルダメージ3%増加も付与する",
+      "スキルを付与: レベル20 スターアンサー",
+      "このアイテムにはルーンだけをソケットできる",
+      "ソケットされているルーンの効果が200%増加する",
+      "コラプト状態",
+    ].join(NL);
+    const it = await toPobItem(text);
+    expect(it.rarity).toBe("Unique");
+    expect(it.name).toBe("ルーンシーカーの呼び声");
+    expect(it.base).toBe("Runic Fork");
+    expect(it.ambiguous).toEqual([]);
+    expect(it.unread).toEqual([]);
+    expect(it.unidentified).toBe(false);
+    const lines = it.text.split(NL);
+    expect(lines.slice(0, 6)).toEqual(["Rarity: Unique", "Runeseeker's Call", "Runic Fork", "Item Level: 86", "Quality: 20", "Requires: Level 65, 114 Int"]);
+    expect(lines).toContain("Implicits: 6");
+    expect(lines.at(-1)).toBe("Corrupted");
+    // 暗黙 = スキル付与だけ
+    expect(it.lines.filter((l) => l.kind === "implicit").map((l) => l.en)).toEqual(["Grants Skill: Level 20 The Stars Answer"]);
+    // 絆 5 行 = rune ({rune} の印で Implicits: 側に出す。PoB の Bonded: の形で、計算に入る MOD になる)
+    const runes = it.lines.filter((l) => l.kind === "rune");
+    expect(runes.map((l) => l.en)).toEqual([
+      "Bonded: 75% increased Critical Damage Bonus",
+      "Bonded: Gain 24% of Damage as Extra Physical Damage",
+      "Bonded: Archon recovery period expires 90% faster",
+      "Bonded: Break Armour on Critical Hit with Spells equal to 36% of Physical Damage dealt",
+      "Bonded: Every Rage also grants 3% increased Spell Damage",
+    ]);
+    expect(lines).toContain("{rune}Bonded: 75% increased Critical Damage Bonus");
+    // 明示 7 行
+    expect(it.lines.filter((l) => l.kind === "explicit").map((l) => l.en)).toEqual([
+      "90% increased Spell Damage",
+      "+3 to Level of all Spell Skills",
+      "72% increased Critical Hit Chance for Spells",
+      "Gain 39% of Damage as Extra Chaos Damage",
+      "75% chance for Spell Skills to fire 2 additional Projectiles",
+      "Only Runes can be Socketed in this item",
+      "200% increased effect of Socketed Runes",
+    ]);
+    // 表示の文字・スキン名は MOD にも unread にもしない
+    for (const junk of ["W", "P", "エゾマイト ワンド"]) {
+      expect(it.lines.map((l) => l.ja)).not.toContain(junk);
+      expect(it.unread).not.toContain(junk);
+      expect(lines).not.toContain(junk);
+    }
+  });
+
+  // (12) 取引所のコピーのレア (架空)。暗黙はベースの固有 MOD の型 (Ruby Ring = +(20-30)% to Fire Resistance) で決める:
+  // 幅に入る最初の火耐性が暗黙、2 つ目の火耐性 (接尾) は明示。クラス名らしい行「指輪」は捨て、数字のある読めない行は unread
+  it("取引所のコピー (区切り無し) のレア: ベースの固有の型で暗黙と明示を分ける", async () => {
+    const text = ["亀裂のあるポスト", "ルビーの指輪", "指輪", "アイテムレベル: 80", "必要：レベル 30", "火耐性 +25%", "最大マナ +136", "火耐性 +35%", "辞書に無い行 12", "冷気耐性 +58%"].join(NL);
+    const it = await toPobItem(text);
+    expect(it.rarity).toBe("Rare");
+    expect(it.base).toBe("Ruby Ring");
+    expect(it.unread).toEqual(["辞書に無い行 12"]);
+    expect(it.lines.map((l) => [l.en, l.kind])).toEqual([
+      ["+25% to Fire Resistance", "implicit"],
+      ["+136 to maximum Mana", "explicit"],
+      ["+35% to Fire Resistance", "explicit"],
+      ["+58% to Cold Resistance", "explicit"],
+    ]);
+    const lines = it.text.split(NL);
+    expect(lines.slice(0, 6)).toEqual(["Rarity: Rare", "Rift Post", "Ruby Ring", "Item Level: 80", "Requires: Level 30", "Implicits: 1"]);
+    expect(lines).not.toContain("指輪");
+    // ノーマル (1 行目がベース名そのもの) は全部暗黙、マジック (ベース名を含む) は明示
+    const normal = await toPobItem(["ルビーの指輪", "火耐性 +25%"].join(NL));
+    expect(normal.rarity).toBe("Normal");
+    expect(normal.text.split(NL)).toEqual(["Rarity: Normal", "Ruby Ring", "Implicits: 1", "+25% to Fire Resistance"]);
+    const magic = await toPobItem(["鋭いルビーの指輪", "火耐性 +25%", "最大マナ +136"].join(NL));
+    expect(magic.rarity).toBe("Magic");
+    expect(magic.base).toBe("Ruby Ring");
+    expect(magic.lines.map((l) => l.kind)).toEqual(["implicit", "explicit"]);
+  });
+
   // (10) fractured / desecrated / crafted の注記 → PoB の {fractured} 等 (Item.lua の lineFlags)。明示側なので Implicits: に数えない
   it("fractured などの注記は PoB の印にする", async () => {
     const text = [...HELM_HEAD, "--------", "回避力が98%増加する (implicit)", "--------", "最大マナ +136 (fractured)", "冷気耐性 +58% (desecrated)", "最大ライフ +30 (クラフト)"].join(NL);
