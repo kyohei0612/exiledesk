@@ -302,6 +302,40 @@ function PCK.treeState()
   return { alloc = alloc, jewels = jewels }
 end
 
+--- ノードを取る / 外す (PoB のツリーの左クリックと同じ: 取る時は始点からの一番近い道ごと、外す時はつながらなくなる先ごと)
+--- attr = 能力値のノード (筋力/器用さ/知性を選ぶ物) を取る時の選び (1 筋力 / 2 器用さ / 3 知性)
+--- 返す: { ok, alloc = 取った後か, changed = 増えた (+) / 減った (-) 数 }
+PCK.treeOrig = PCK.treeOrig or build.spec:CreateUndoState()
+function PCK.toggleNode(id, attr)
+  local spec = build.spec
+  local node = spec.nodes[id]
+  if not node then return json.encode({ ok = false, error = "ノードが無い" }) end
+  local before = 0
+  for _ in pairs(spec.allocNodes) do before = before + 1 end
+  if node.alloc then
+    if node.type == "ClassStart" or node.type == "AscendClassStart" then return json.encode({ ok = false, error = "始点は外せません" }) end
+    if node.isAttribute then spec.hashOverrides[id] = nil end
+    spec:DeallocNode(node)
+  else
+    if node.isAttribute and attr then spec.attributeIndex = attr end
+    spec:AllocNode(node)
+    if not node.alloc then return json.encode({ ok = false, error = "つながる道がありません (違うアセンダンシーのノードなど)" }) end
+  end
+  spec:AddUndoState()
+  build.buildFlag = true
+  local after = 0
+  for _ in pairs(spec.allocNodes) do after = after + 1 end
+  return json.encode({ ok = true, alloc = node.alloc and true or false, changed = after - before })
+end
+
+--- ツリーを読み込んだ時に戻す
+function PCK.resetTree()
+  local ok, err = pcall(function() build.spec:RestoreUndoState(PCK.treeOrig) end)
+  build.buildFlag = true
+  if ok then return json.encode({ ok = true }) end
+  return json.encode({ ok = false, error = tostring(err) })
+end
+
 --- ノードごとの火力への寄与 (PoB の「Node Power」と同じやり方: そのノードを外した時の計算)。
 --- i, k = スキルの組とその中のスキル (画面のスキルのカード)。ids = 調べる取っているノード (画面が何回かに分けて送る)
 --- 返す: { base = その時の DPS, nodes = { [id] = { single = 1 個だけ外した時の DPS, path = 外すとつながらなくなる先も込みで外した時の DPS, n = 込みの個数 } } }

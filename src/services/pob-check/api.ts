@@ -163,6 +163,11 @@ function luaStr(s: string): string {
 export const setWeaponSet = (n: 1 | 2): Promise<unknown> => evalLua(`return PCK.setWeaponSet(${n})`);
 export const treeStatic = (): Promise<{ nodes: TreeNode[] }> => evalLua("return PCK.treeStatic()");
 
+/** ノードを取る / 外す。attr = 能力値のノードの選び (1 筋力 / 2 器用さ / 3 知性) */
+export const toggleNode = (id: number, attr: number): Promise<{ ok: boolean; error?: string; alloc?: boolean; changed?: number }> =>
+  evalLua(`return PCK.toggleNode(${Math.floor(id)}, ${Math.floor(attr)})`);
+export const resetTree = (): Promise<{ ok: boolean; error?: string }> => evalLua("return PCK.resetTree()");
+
 export interface NodePowerRaw {
   ok: boolean;
   error?: string;

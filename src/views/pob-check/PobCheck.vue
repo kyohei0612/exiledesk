@@ -15,7 +15,7 @@ import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const TABS = [
@@ -232,6 +232,8 @@ const resists = computed(() =>
           :skill-options="skills.map((x) => ({ key: x.key, name: x.s.name }))"
           :busy="busy"
           @power="computePower"
+          @toggle="async (id, attr, done) => done(await clickNode(id, attr).catch((e) => String(e)))"
+          @reset="resetTreeToLoaded"
         />
       </div>
 

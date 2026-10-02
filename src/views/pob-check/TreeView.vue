@@ -20,7 +20,31 @@ const props = defineProps<{
   skillOptions: Array<{ key: string; name: string }>;
   busy: boolean;
 }>();
-const emit = defineEmits<{ (e: "power", target: string): void }>();
+const emit = defineEmits<{
+  (e: "power", target: string): void;
+  (e: "toggle", id: number, attr: number, done: (err: string | null) => void): void;
+  (e: "reset"): void;
+}>();
+/** 能力値のノード (筋力/器用さ/知性を選ぶ物) を取る時の選び。初めは今取っている能力値のノードで一番多い物 */
+const ATTRS = [
+  { i: 1, en: "Strength", ja: "筋力", cls: "text-rose-300" },
+  { i: 2, en: "Dexterity", ja: "器用さ", cls: "text-emerald-300" },
+  { i: 3, en: "Intelligence", ja: "知性", cls: "text-sky-300" },
+] as const;
+const attrPick = ref<number | null>(null);
+const attrDefault = computed(() => {
+  const count = [0, 0, 0, 0];
+  for (const n of props.nodes) {
+    if (!n.at || !alloc.value.has(n.id)) continue;
+    const a = ATTRS.find((x) => x.en === n.n);
+    if (a) count[a.i]!++;
+  }
+  const best = [1, 2, 3].sort((a, b) => count[b]! - count[a]!)[0]!;
+  return count[best]! > 0 ? best : 1;
+});
+const attr = computed(() => attrPick.value ?? attrDefault.value);
+const clickErr = ref("");
+const toggling = ref(false);
 const powerTarget = ref("all");
 const powerLabel = computed(() => (props.power ? (props.power.label === "全スキルの合計" ? "合計" : gemJa(props.power.label)) : ""));
 const progressLabel = computed(() => {
@@ -229,7 +253,7 @@ function draw(): void {
 }
 
 // ---- 操作 ----
-let drag: { x: number; y: number; cx: number; cy: number } | null = null;
+let drag: { x: number; y: number; cx: number; cy: number; moved: boolean } | null = null;
 const hover = ref<{ node: TreeNode; x: number; y: number } | null>(null);
 function onWheel(e: WheelEvent): void {
   const rect = canvas.value!.getBoundingClientRect();
@@ -244,11 +268,12 @@ function onWheel(e: WheelEvent): void {
   draw();
 }
 function onDown(e: MouseEvent): void {
-  drag = { x: e.clientX, y: e.clientY, cx: view.value.cx, cy: view.value.cy };
+  drag = { x: e.clientX, y: e.clientY, cx: view.value.cx, cy: view.value.cy, moved: false };
 }
 function onMove(e: MouseEvent): void {
   const rect = canvas.value!.getBoundingClientRect();
-  if (drag) {
+  if (drag && (drag.moved || Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4)) {
+    drag.moved = true;
     const k = view.value.k;
     view.value = { k, cx: drag.cx - (e.clientX - drag.x) / k, cy: drag.cy - (e.clientY - drag.y) / k };
     hover.value = null;
@@ -268,6 +293,18 @@ function onMove(e: MouseEvent): void {
 }
 function onUp(): void {
   drag = null;
+}
+/** クリック (動かさずに離した) でノードを取る / 外す */
+function onClick(): void {
+  const h = hover.value;
+  if (!h || toggling.value || props.busy) return;
+  if (h.node.t === "C" || h.node.t === "A") return;
+  toggling.value = true;
+  clickErr.value = "";
+  emit("toggle", h.node.id, attr.value, (err) => {
+    toggling.value = false;
+    clickErr.value = err ?? "";
+  });
 }
 
 let ro: ResizeObserver | null = null;
@@ -352,8 +389,21 @@ const hoverInfo = computed(() => {
         class="w-60 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 outline-none focus:border-sky-400/60"
       />
       <span v-if="query.trim()" class="text-sky-300">{{ hits.size }} 個</span>
-      <button type="button" class="ml-auto rounded-lg bg-white/[0.06] px-2.5 py-1 hover:bg-white/15" @click="fit">取っている所に合わせる</button>
+      <span class="flex items-center gap-1 rounded-lg bg-white/[0.05] px-2 py-0.5">
+        <span class="text-[var(--exile-color-text-tertiary)]">能力値のノードは</span>
+        <button
+          v-for="a in ATTRS"
+          :key="a.i"
+          type="button"
+          class="rounded px-1.5 py-px font-semibold"
+          :class="attr === a.i ? ['bg-white/15', a.cls] : 'text-[var(--exile-color-text-tertiary)] hover:bg-white/10'"
+          @click="attrPick = a.i"
+        >{{ a.ja }}</button>
+      </span>
+      <button type="button" class="ml-auto rounded-lg bg-white/[0.06] px-2.5 py-1 hover:bg-white/15 disabled:opacity-40" :disabled="busy || toggling" @click="emit('reset')">ツリーを読み込んだ時に戻す</button>
+      <button type="button" class="rounded-lg bg-white/[0.06] px-2.5 py-1 hover:bg-white/15" @click="fit">取っている所に合わせる</button>
     </div>
+    <p v-if="clickErr" class="mb-2 rounded bg-rose-500/10 px-2 py-1 text-[12px] text-rose-300">{{ clickErr }}</p>
     <!-- 火力への寄与 -->
     <div class="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/[0.06] px-3 py-2 text-[12px]">
       <span class="font-bold text-orange-200">火力への寄与</span>
@@ -386,6 +436,7 @@ const hoverInfo = computed(() => {
         class="h-full w-full cursor-grab active:cursor-grabbing"
         @wheel.prevent="onWheel"
         @mousedown="onDown"
+        @click="onClick"
         @mousemove="onMove"
         @mouseleave="hover = null"
       />
@@ -405,7 +456,9 @@ const hoverInfo = computed(() => {
           外すと {{ powerLabel }} の DPS {{ pct(hoverInfo.power.loss) }}
           <span v-if="hoverInfo.power.n > 1" class="block text-[10px] font-normal text-[var(--exile-color-text-tertiary)]">つながらなくなる {{ hoverInfo.power.n - 1 }} 個も込みで {{ pct(hoverInfo.power.pathLoss) }}</span>
         </p>
-        <p class="mt-1 text-[10px]" :class="hoverInfo.on ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">{{ hoverInfo.on ? "取っている" : "取っていない" }}</p>
+        <p class="mt-1 text-[10px]" :class="hoverInfo.on ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">
+          {{ hoverInfo.on ? "取っている (クリックで外す。つながらなくなる先も一緒に外れる)" : "取っていない (クリックで取る。始点からの一番近い道ごと)" }}
+        </p>
       </div>
     </div>
     <div v-if="power" class="mt-3 grid gap-3 @3xl:grid-cols-2">
@@ -446,6 +499,6 @@ const hoverInfo = computed(() => {
         </template>
       </div>
     </div>
-    <p class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">ホイールで拡大縮小、ドラッグで移動。点線の円はジュエルの範囲。緑の輪 = 比べる元から増えた、赤の輪 = 減った。</p>
+    <p class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">ホイールで拡大縮小、ドラッグで移動、クリックで取る / 外す (計算し直して比べる元との差が出ます)。点線の円はジュエルの範囲。緑の輪 = 比べる元から増えた、赤の輪 = 減った。</p>
   </div>
 </template>

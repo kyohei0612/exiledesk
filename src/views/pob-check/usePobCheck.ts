@@ -6,7 +6,7 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, nodePower, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { toPobItem } from "../../services/pob-check/item-text";
 
@@ -144,6 +144,22 @@ export function usePobCheck() {
     await refresh();
   }
 
+  /** ツリーのノードを取る / 外す。能力値のノードの名前 (筋力など) も変わるのでツリーの形も取り直す */
+  async function clickNode(id: number, attr: number): Promise<string | null> {
+    const r = await run(() => toggleNode(id, attr));
+    if (!r.ok) return r.error ?? "できませんでした";
+    recordHistory("pob-check", "node", { id, attr, alloc: r.alloc, changed: r.changed });
+    treeNodes.value = (await run(treeStatic)).nodes;
+    await refresh();
+    return null;
+  }
+  async function resetTreeToLoaded(): Promise<void> {
+    await run(resetTree);
+    recordHistory("pob-check", "tree-reset", {});
+    treeNodes.value = (await run(treeStatic)).nodes;
+    await refresh();
+  }
+
   /**
    * ノードの寄与を計算する。target = スキルの鍵 か "all" (全スキルの合計 = ゲーム内の表記の DPS で重みづけ)。
    * 1 スキル 2 秒くらい。合計は表に出ているスキルを順に回す
@@ -190,5 +206,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }
