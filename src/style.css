@@ -351,6 +351,171 @@ table th,
   }
 }
 
+/* ============================================================
+ * 全画面で揃える共通の見た目 (2026-10-03 オーナー「全て作成後に UI のブスさをまとめてきれいにシンプルに見やすい状態に整えてくれ」)
+ *
+ * 画面ごとに Tailwind の長い連なりで書いていた 枠 / 見出し / ボタン / 注記 を 1 か所に置く。
+ *   .card        … 枠 (角丸 12px、薄い白の線、うっすら明るい地)。BaseCard.vue と同じ見た目で、BaseCard を使わない所用
+ *   .card-title  … 枠の中の見出し (13px 太字、暖色)。番号の丸は .card-no
+ *   .sec-title   … 枠の外の節の見出し (12px 太字、2 番目の色)。相手との差の「取り入れたら / ジェム / 装備」など
+ *   .btn         … ボタンの土台 (高さ 28px、角丸 8px、12px 太字)。色は .btn-primary (主 = 1 色で塗る) / .btn-outline (副 = 枠だけ)
+ *                  / .btn-ghost (地だけ薄く)。小さい物は .btn-sm (高さ 24px、11px)
+ *   .btn-link    … 文中の小さなリンク (下線)
+ *   .chip        … 数字の札 (キャラの ライフ / マナ など)
+ *   .note        … 注記 (11px、3 番目の色)
+ *   .input       … 文字の入力欄 (PoB コードの欄など)。.num / .sel と同じ地と線
+ * 色の値は Tailwind の slate/amber 等を使わず、トークン (--exile-color-*) と白の透過だけで決める (lint:hex)。
+ * @layer components なので、幅や余白は Tailwind の w-20 / px-4 などで上書きできる
+ * ============================================================ */
+@layer components {
+  .card {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background: rgb(255 255 255 / 0.03);
+  }
+  .card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--exile-color-text-primary);
+  }
+  .card-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 9999px;
+    background: var(--exile-color-accent-focus);
+    color: var(--exile-color-bg-canvas);
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--exile-color-text-secondary);
+  }
+  .sec-title .sec-note {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--exile-color-text-tertiary);
+  }
+  .note {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--exile-color-text-tertiary);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 0.5rem;
+    background: rgb(255 255 255 / 0.04);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .chip .chip-label {
+    color: var(--exile-color-text-tertiary);
+  }
+  .chip .chip-value {
+    font-weight: 600;
+  }
+  .input {
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 0.5rem;
+    background: var(--exile-color-bg-surface);
+    border: 1px solid var(--exile-color-border-subtle);
+    font-size: 13px;
+    outline: none;
+  }
+  .input:focus {
+    border-color: var(--exile-color-accent-focus);
+  }
+  .input::placeholder {
+    color: var(--exile-color-text-tertiary);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color var(--exile-motion-base) var(--exile-ease-out), border-color var(--exile-motion-base) var(--exile-ease-out), color var(--exile-motion-base) var(--exile-ease-out);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-sm {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  /* 主の操作 (画面に 1 つ): 金で塗る */
+  .btn-primary {
+    background: var(--exile-color-accent-focus);
+    color: var(--exile-color-bg-canvas);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--exile-color-accent-focus-hover);
+  }
+  /* 副の操作: 枠だけ */
+  .btn-outline {
+    border-color: rgb(255 255 255 / 0.15);
+    color: var(--exile-color-text-secondary);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.05);
+    color: var(--exile-color-text-primary);
+  }
+  /* 金の枠 (手動更新など、押してほしい副の操作。RefreshButton と同じ) */
+  .btn-outline.btn-accent {
+    border-color: color-mix(in srgb, var(--exile-color-accent-focus) 50%, transparent);
+    color: var(--exile-color-accent-focus);
+  }
+  /* 地だけ薄く (枠の中の小さな操作) */
+  .btn-ghost {
+    background: rgb(255 255 255 / 0.06);
+    color: var(--exile-color-text-secondary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.14);
+    color: var(--exile-color-text-primary);
+  }
+  .btn-link {
+    font-size: 11px;
+    color: var(--exile-color-text-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .btn-link:hover:not(:disabled) {
+    color: var(--exile-color-accent-focus);
+  }
+  .btn-link:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
 /*
  * クラフトステージ (2026-09-27、ADR-001): 付いた MOD を光らせ、消えた MOD を薄く消す (動画で変化が見えるように)
  */

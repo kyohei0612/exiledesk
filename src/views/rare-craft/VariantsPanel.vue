@@ -41,7 +41,7 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
                 <th class="text-right font-normal pb-1 pl-2">期待売上</th>
                 <th class="text-right font-normal pb-1 pl-2">期待収支</th>
                 <th class="text-right font-normal pb-1 pl-2">黒字の確率</th>
-                <th class="text-right font-normal pb-1 pl-2">一番高い段</th>
+                <th class="text-right font-normal pb-1 pl-2">一番高いライン</th>
                 <th class="pb-1"></th>
               </tr>
             </thead>
@@ -74,7 +74,7 @@ const shortRune = (label: string): string => (label === "ルーンなし" ? "—
           </button>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
             冒涜 = 肋骨 (保存 / 古代) と アビスの反響のお告げ の有無。古代の肋骨は冒涜の候補を MOD レベル 40 以上に絞る (通常の MOD の低いティアが出なくなる)。反響は最初の 3 択の一番いい物が「引き直した時の平均」より悪ければ引き直す。
-            高貴なオーブの「右側」= 右側の高貴なお告げ (サフィックスだけに付ける)。一番高い段 = 取れた売値が一番高い段で売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
+            高貴なオーブの「右側」= 右側の高貴なお告げ (サフィックスだけに付ける)。一番高いライン = 取れた売値が一番高いラインで売る確率。比較表は 2,500 回ずつの試算なので、上の「1 回あたり」(2 万回) と少しずれます。
           </p>
           <p v-if="c.unpricedOptions.value.length" class="text-[11px] text-amber-300 mt-1">相場が無いので比較に出ていない素材: {{ c.unpricedOptions.value.join("、") }}</p>
         </template>

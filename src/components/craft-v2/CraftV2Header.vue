@@ -50,13 +50,12 @@ function run(fn: () => void): void {
   <header class="mb-3">
     <div class="flex items-start justify-between gap-4 flex-wrap">
       <div class="min-w-0">
-        <!-- 2026-10-03: クラフト計算機の中のタブになったので、見出しもタブの名前 (上位プレイヤーの MOD) に合わせた -->
-        <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">上位プレイヤーの MOD</h1>
-        <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
+        <!-- 2026-10-03: クラフト計算機の中のタブになった。画面名は上の帯 (クラフト計算機 > 上位プレイヤーの MOD) に出しているので、ここは説明と出どころだけ -->
+        <p class="text-[12px] text-[var(--exile-color-text-secondary)]">
           使用率の上位 {{ TOP_ASCENDANCIES }} アセンダンシーごとに、DPS 上位のスキル 3 つ × 10 人の、スキル・持ち物・装備で何が多いか。
         </p>
         <!-- 出どころと取得時刻は他の画面と同じ並び・同じ字で (2026-09-21) -->
-        <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+        <p class="note mt-0.5">
           poe.ninja<template v-if="leagueName"> · {{ leagueName }}</template> ·
           <template v-if="store.lastUpdatedAt">{{ store.lastUpdatedAt }} 取得</template>
           <template v-else>未取得</template>

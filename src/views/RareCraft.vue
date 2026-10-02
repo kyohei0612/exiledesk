@@ -2,7 +2,7 @@
   RareCraft.vue — 規格外の賭け (2026-09-14、「ヴァールの天秤」の 1 つ。旧「ES 兜のクラフト」を一般化)
   規格外 (ルーンソケット 2) のマジックベース (MOD 1 つ) → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
   1 ソケットの通常ベースは今の相場で全部赤字なので扱わない (オーナー指示 2026-09-14)。
-  当たり方はクラフト計算機と同じエンジンの重み × ティア値でシミュレーションし (2026-09-29 から。前は poe2db の重み表を別に持っていた)、trade2 の「売値の段」で期待収支を出す。
+  当たり方はクラフト計算機と同じエンジンの重み × ティア値でシミュレーションし (2026-09-29 から。前は poe2db の重み表を別に持っていた)、trade2 の「売値のライン」(2026-10-03 まで「段」) で期待収支を出す。
     views/rare-craft/sim.ts          シミュレーター (純粋関数)
  *    views/rare-craft/ladder.ts       売値の段 (ラダー) の判定
     views/rare-craft/recipes.ts      レシピ (ES 兜 / ライフ耐性手袋 / 移動速度靴) と素材
@@ -17,6 +17,7 @@ import { tradeLock, tradeRefetch } from "../state/trade-lock";
 import BaseCard from "../components/decor/BaseCard.vue";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import ScreenHeader from "../components/ScreenHeader.vue";
+import RefreshButton from "../components/RefreshButton.vue";
 import { displayCurrency } from "../state/display-currency";
 import { useRareCraft } from "./rare-craft/useRareCraft";
 import { bucketLabel } from "./rare-craft/recipes";
@@ -61,8 +62,9 @@ const priceRows = computed(() => {
       label: "ベース (規格外のマジック)",
       note: `${c.page.value.label} · ilvl ${c.ilvl.value}+ · ${c.recipe.value.baseMod.label} ${t ? `${t.min}〜${t.max} (T${t.tier})` : "—"} · ソケット ${c.sockets.value}`,
     },
-    ...c.buckets.value.map((b) => ({ kind: bucketKind(b.key), label: `売値の段: ${bucketLabel(b.conds)}`, note: `レア · 未コラプト · ソケット ${c.sockets.value}` })),
-    { kind: "floor", label: `外れ: ${bucketLabel(c.floorConds.value)}`, note: "どの段にも届かず、この条件には届いた物をこの値で売る (条件に届かない物は 0)" },
+    // 「売値の段」→「売値のライン」(2026-10-03。「段」という言葉は使わない。ティアは「ティア」)
+    ...c.buckets.value.map((b) => ({ kind: bucketKind(b.key), label: `売値のライン: ${bucketLabel(b.conds)}`, note: `レア · 未コラプト · ソケット ${c.sockets.value}` })),
+    { kind: "floor", label: `外れ: ${bucketLabel(c.floorConds.value)}`, note: "どのラインにも届かず、この条件には届いた物をこの値で売る (条件に届かない物は 0)" },
   ];
   return rows.map((r) => {
     const f = c.get(r.kind);
@@ -85,9 +87,9 @@ const materialTable = computed(() => {
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <ScreenHeader title="規格外の賭け" :error="c.marketError.value ? `poe2scout 取得失敗: ${c.marketError.value}` : null">
-      規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2、の収支。
-        どこまで伸びるかはクラフト計算機と同じ重み × ティア値で 2 万回試し、trade2 の「売値の段」(ソケット 2 のレア) で売った時の期待収支を出します。
+    <!-- 画面名は上の帯 (ヴァールの天秤 > 規格外の賭け) に出しているので title は渡さない (2026-10-03) -->
+    <ScreenHeader :error="c.marketError.value ? `poe2scout 取得失敗: ${c.marketError.value}` : null">
+      規格外 (ルーンソケット 2) のマジックベース → グレーターエッセンス → 肋骨で冒涜 → 高貴なオーブ + 偉大なる高貴なお告げで 2 つ足す → ルーン ×2 の収支を、クラフト計算機と同じ重み × ティア値で 2 万回試し、trade2 の「売値のライン」(ソケット 2 のレア) で売った時の期待値で出します。
       <template #source>
         素材価格: カレンシーランキングの相場{{ c.league.value ? ` (${c.league.value.Value})` : "" }} · {{ c.marketLabel.value }} / ベースと売値: trade2 最安 (自動) / 重み: クラフト計算機と同じ (冒涜は一様)
       </template>
@@ -115,15 +117,8 @@ const materialTable = computed(() => {
         <div class="p-4 pl-5">
           <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
             <h2 class="text-sm font-bold text-amber-100"><span class="mr-2 rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">1</span>相場 (trade2)</h2>
-            <button
-              type="button"
-              :disabled="refetch.disabled"
-              class="px-3 py-1 rounded-lg border border-amber-400/50 text-[11px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors tabular-nums"
-              @click="onRefetch"
-            >
-              <span aria-hidden="true">⟳</span>
-              {{ refetch.label }}
-            </button>
+            <!-- 他の画面の手動更新と同じ部品 (2026-10-03。前は同じ見た目を手書きしていた) -->
+            <RefreshButton :label="refetch.label" :disabled="refetch.disabled" title="ベースと売値を trade2 から取る" @click="onRefetch" />
           </div>
           <p v-if="c.missingCount.value > 0 && !c.pricing.value" class="text-[10px] text-[var(--exile-color-text-tertiary)] mb-2">
             画面を開いただけでは取りに行きません (レート制限に当たるため)。条件を決めてから「取得」を押してください。
@@ -141,7 +136,7 @@ const materialTable = computed(() => {
             </template>
           </div>
           <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-3">
-            売値はどれも「インスタントバイアウト」の最安。1 回ぶんの結果は、満たす段のうち一番高い売値で売る前提です。段の条件は前提欄で変えられます (変えるとその分だけ取り直す)。
+            売値はどれも「インスタントバイアウト」の最安。1 回ぶんの結果は、満たすラインのうち一番高い売値で売る前提です。ラインの条件は前提欄で変えられます (変えるとその分だけ取り直す)。
           </p>
         </div>
       </BaseCard>

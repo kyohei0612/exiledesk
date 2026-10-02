@@ -108,7 +108,7 @@ const steps = computed(() => {
   const ph = c.phase.value;
   return [
     s(c.item.value ? "アイテムを貼る" : "アイテムを決める", "done"),
-    s("MOD と段を確かめる", ph === "analyzed" ? "now" : "done"),
+    s("MOD とティアを確かめる", ph === "analyzed" ? "now" : "done"),
     s("固定する MOD を選んで探す", ph === "analyzed" ? "todo" : searched && ph === "done" ? "done" : "now"),
     s("買うか作るかを見る", ph !== "done" ? "todo" : decided ? "done" : "now"),
     s("下の作り方を回して確かめる", ph === "done" && decided ? "now" : "todo"),
@@ -118,7 +118,7 @@ const steps = computed(() => {
 const hint = computed(() => {
   if (ss.kind.value.kind === "unsafe") return "クラフト非推奨: ② で完成品を探して買う";
   const ph = c.phase.value;
-  if (ph === "analyzed") return "MOD と段を確かめて「おｋ」を押す";
+  if (ph === "analyzed") return "MOD とティアを確かめて「おｋ」を押す";
   if (ph === "pick") return "固定する MOD を選んで「取引所で探す」を押す";
   const best = threeWay.value.find((w) => w.best);
   return best ? `${best.name} が一番安い → 下の作り方 (STEP) を回して確かめる` : "② で買うか作るかを見る";
@@ -176,7 +176,7 @@ function onSearch(): void {
     <ModBreakdown :c="c" />
     <!-- 解析おｋ → ① へ (段を直したい時はここで直してから) -->
     <div v-if="c.phase.value === 'analyzed'" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-      <span>MOD と段はこれでおｋ？</span>
+      <span>MOD とティアはこれでおｋ？</span>
       <button type="button" class="rounded-lg bg-amber-500 px-4 py-1.5 font-bold text-black shadow hover:bg-amber-400" @click="goPick()">おｋ → ① 固定する MOD を選ぶ</button>
       <button type="button" class="rounded-lg border border-white/20 px-3 py-1.5 hover:bg-white/5" title="取引所で探さずに、貼った物のまま作り方を組む" @click="finishDiag()">探さずに作り方へ</button>
     </div>
@@ -226,7 +226,7 @@ function onSearch(): void {
               <label v-for="x in g.list" :key="x.key" class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/5" :class="ss.locked(x.key) ? 'opacity-40' : ss.checked.value.includes(x.key) ? 'bg-amber-500/10' : ''">
                 <input v-model="ss.checked.value" type="checkbox" :value="x.key" :disabled="ss.locked(x.key) || ss.busy.value" />
                 <span class="flex-1">{{ x.name }}</span>
-                <span class="rounded-md bg-white/5 px-1.5 tabular-nums opacity-80" title="その側に 1 回付けて出る確率 (狙いの段以上)">{{ x.chance != null ? pctOf(x.chance) : "?" }}</span>
+                <span class="rounded-md bg-white/5 px-1.5 tabular-nums opacity-80" title="その側に 1 回付けて出る確率 (狙いのティア以上)">{{ x.chance != null ? pctOf(x.chance) : "?" }}</span>
               </label>
             </div>
           </template>

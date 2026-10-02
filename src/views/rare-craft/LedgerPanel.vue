@@ -235,7 +235,7 @@ const fmtCount = (q: number): string => (Number.isInteger(q) ? String(q) : q.toF
           </tbody>
         </table>
         <p class="text-[10px] text-[var(--exile-color-text-tertiary)] mt-2">
-          使った数は空欄なら「帳簿の組み合わせの 1 回の数 × 回数」、売れた数は空欄なら「その段で売る確率 × 回数」(期待値) です。実際に違った数だけ入れてください。
+          使った数は空欄なら「帳簿の組み合わせの 1 回の数 × 回数」、売れた数は空欄なら「そのラインで売る確率 × 回数」(期待値) です。実際に違った数だけ入れてください。
           帳簿の組み合わせは回数を入れた時点の素材欄 (既定は最も得) で固定し、相場で最も得が変わっても数え直しません。売値の欄は空欄なら上の相場、実際に売れた額があればそれを入れてください。入力はレシピごとにこの PC に残ります。
           <span v-if="ledgerTotals.missingCost" class="text-amber-300">相場が取れていない素材があるため費用が不完全です。</span>
           <span v-if="ledgerTotals.missingSale" class="text-amber-300">売値が無い行があるため売上が不完全です。</span>

@@ -128,7 +128,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
           <span class="opacity-60">アイテムレベル</span>
           <button v-for="lv in ILVLS" :key="lv" type="button" class="rounded-lg px-2 py-0.5" :class="pk.level.value === lv ? 'bg-amber-500/25 text-amber-100 ring-1 ring-amber-400/60' : 'border border-white/15 hover:bg-white/5'" @click="pk.level.value = lv">{{ lv }}</button>
           <input v-model.number="pk.level.value" type="number" min="1" max="100" class="w-14 rounded border border-white/15 bg-black/30 px-1 py-0.5" />
-          <span class="opacity-40">(出る段の上限が決まる)</span>
+          <span class="opacity-40">(出るティアの上限が決まる)</span>
           <span class="ml-auto flex flex-wrap items-center gap-1.5">
             <span class="opacity-50">見本:</span>
             <button v-for="z in presets" :key="z.id" type="button" class="rounded-lg border px-2 py-0.5" :class="presetPicked === z.id ? 'border-amber-400 text-amber-300' : 'border-white/15 opacity-70 hover:opacity-100'" @click="emit('preset', z.id)">{{ z.label }}</button>
@@ -155,7 +155,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
         <div class="mb-2 flex items-center gap-2">
           <span class="rounded-full bg-amber-500/80 px-2 py-0.5 text-[11px] font-bold text-black">2</span>
           <b class="text-sm">狙う MOD を選ぶ</b>
-          <span class="opacity-50">押すと入る / 外れる。段は入れた後に選べる</span>
+          <span class="opacity-50">押すと入る / 外れる。ティアは入れた後に選べる</span>
           <input v-model="pk.modQuery.value" placeholder="MOD を探す (ライフ / 耐性 …)" class="ml-auto w-56 rounded-lg border border-white/15 bg-black/30 px-2 py-1" />
         </div>
         <!-- 種類で絞る -->

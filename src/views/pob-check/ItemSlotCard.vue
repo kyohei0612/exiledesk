@@ -82,7 +82,8 @@ function submit(): void {
 </script>
 
 <template>
-  <div class="flex flex-col rounded-xl border p-3" :class="[entry.changed ? 'border-amber-400/40 bg-amber-500/[0.05]' : 'border-white/10 bg-white/[0.03]', idle ? 'opacity-50' : '']">
+  <!-- 枠とボタンは全画面共通の .card / .btn (style.css。2026-10-03。前はこのファイルの <style scoped> に同じ物があった) -->
+  <div class="card flex flex-col p-3" :class="[entry.changed ? 'border-amber-400/40 bg-amber-500/[0.05]' : '', idle ? 'opacity-50' : '']">
     <div class="flex items-center justify-between gap-2">
       <span class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">
         {{ slotJa }}
@@ -90,9 +91,9 @@ function submit(): void {
         <span v-if="idle" class="ml-1 rounded bg-white/10 px-1.5 py-px">使っていない武器セット</span>
       </span>
       <span class="flex gap-1">
-        <button v-if="entry.changed" type="button" class="btn" :disabled="disabled" @click="emit('restore')">元に戻す</button>
-        <button v-if="entry.item" type="button" class="btn" :disabled="disabled" @click="emit('clear')">外す</button>
-        <button type="button" class="btn btn-soft" :disabled="disabled" @click="open = !open">差し替え</button>
+        <button v-if="entry.changed" type="button" class="btn btn-sm btn-ghost" :disabled="disabled" @click="emit('restore')">元に戻す</button>
+        <button v-if="entry.item" type="button" class="btn btn-sm btn-ghost" :disabled="disabled" @click="emit('clear')">外す</button>
+        <button type="button" class="btn btn-sm btn-outline btn-accent" :disabled="disabled" @click="open = !open">差し替え</button>
       </span>
     </div>
     <template v-if="entry.item">
@@ -110,11 +111,11 @@ function submit(): void {
         v-model="text"
         rows="6"
         placeholder="ゲームでアイテムにカーソルを合わせて Ctrl+C → ここに貼る (日本語でも英語でも)"
-        class="w-full rounded-lg border border-white/10 bg-black/30 p-2 text-[11px] outline-none focus:border-amber-400/60"
+        class="input w-full p-2 text-[11px]"
       />
       <div class="mt-1 flex justify-end gap-1">
-        <button type="button" class="btn" @click="open = false">やめる</button>
-        <button type="button" class="btn btn-main" :disabled="working || disabled || !text.trim()" @click="submit">{{ working ? "計算中…" : "入れて計算" }}</button>
+        <button type="button" class="btn btn-sm btn-ghost" @click="open = false">やめる</button>
+        <button type="button" class="btn btn-sm btn-primary" :disabled="working || disabled || !text.trim()" @click="submit">{{ working ? "計算中…" : "入れて計算" }}</button>
       </div>
     </div>
     <p v-if="err" class="mt-2 rounded bg-rose-500/10 px-2 py-1 text-[11px] text-rose-300">{{ err }}</p>
@@ -125,28 +126,3 @@ function submit(): void {
     </div>
   </div>
 </template>
-
-<style scoped>
-.btn {
-  border-radius: 0.375rem;
-  background: rgb(255 255 255 / 0.06);
-  padding: 2px 8px;
-  font-size: 11px;
-  color: var(--exile-color-text-secondary);
-}
-.btn:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.14);
-}
-.btn-soft {
-  background: rgb(245 158 11 / 0.2);
-  color: rgb(254 243 199);
-}
-.btn-main {
-  background: rgb(245 158 11);
-  color: #000;
-  font-weight: 700;
-}
-.btn:disabled {
-  opacity: 0.35;
-}
-</style>

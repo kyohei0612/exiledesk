@@ -22,7 +22,8 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="rounded-xl border p-3 transition-opacity" :class="group.enabled ? 'border-white/10 bg-white/[0.03]' : 'border-white/5 bg-black/20 opacity-55'">
+  <!-- 枠は全画面共通の .card (2026-10-03)。オフの組は暗く薄く -->
+  <div class="card p-3 transition-opacity" :class="group.enabled ? '' : 'border-white/5 bg-black/20 opacity-55'">
     <div class="mb-2 flex items-center justify-between gap-2">
       <p class="truncate text-[13px] font-bold">
         {{ gemJa(group.gems[0]?.name ?? "") }}

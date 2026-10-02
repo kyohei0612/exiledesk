@@ -103,7 +103,7 @@ const emit = defineEmits<{ clear: []; applyBulkTier: []; search: []; craft: []; 
           type="button"
           :disabled="selectedCount === 0 || !craftBase || craftGo.busy"
           class="px-4 py-1.5 rounded font-bold text-[12px] transition bg-sky-500/80 text-black hover:bg-sky-400 disabled:bg-[var(--exile-color-bg-surface)] disabled:text-[var(--exile-color-text-tertiary)] disabled:cursor-not-allowed"
-          :title="craftBase ? 'クラフト計算機を開いて、このベースとチェックした MOD (段つき) で作り方を組む' : 'この部位には計算機で作れるベースがありません'"
+          :title="craftBase ? 'クラフト計算機を開いて、このベースとチェックした MOD (ティアつき) で作り方を組む' : 'この部位には計算機で作れるベースがありません'"
           @click="emit('craft')"
         >
           {{ craftGo.busy ? "準備中…" : `クラフトへ →${selectedCount ? ` (${selectedCount})` : ""}` }}

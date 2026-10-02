@@ -91,9 +91,9 @@ function onRefetch(): void {
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <ScreenHeader title="アドニアの賭け" :error="o.marketError.value ? `poe2scout 取得失敗: ${o.marketError.value}` : null">
-      吸収のワンドをヴァールアルカニストのインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにするクラフトの収支。
-      20% を超えた分だけコラプト化の危険があり、コラプトしたワンドは失敗です。完成品 1 個あたりの実質コストで判定します。
+    <!-- 画面名は上の帯 (ヴァールの天秤 > アドニアの賭け) に出しているので title は渡さない (2026-10-03) -->
+    <ScreenHeader :error="o.marketError.value ? `poe2scout 取得失敗: ${o.marketError.value}` : null">
+      吸収のワンドをインフューザーで品質 20% より上 (最大 30%) に育て、可能性のお告げ + 可能性のオーブでアドニアのエゴにする収支を、完成品 1 個あたりの実質コストで判定します (20% を超えた分だけコラプトの危険があり、コラプトしたら失敗)。
       <template #source>
         素材価格: カレンシーランキングの相場{{ o.league.value ? ` (${o.league.value.Value})` : "" }} · {{ o.marketLabel.value }} / 通貨の説明: ゲームクライアント / コラプト確率は非公開 (プレイヤー計測値、変更可)
       </template>

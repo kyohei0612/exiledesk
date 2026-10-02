@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { toCss } from "../utils/zoom";
 import RefreshButton from "../components/RefreshButton.vue";
+import TabBar from "../components/ui/TabBar.vue";
 import { onActivated, onMounted, ref, watch } from "vue";
 import UniqueTrend from "./UniqueTrend.vue";
 import { useUniqueTrend } from "./unique-trend/useUniqueTrend";
@@ -68,23 +69,8 @@ watch(tab, (t) => {
 
 <template>
   <div class="h-full flex flex-col overflow-hidden">
-    <!-- タブの帯 (2026-10-03 統合)。見た目はヴァールの天秤 (VaalScales.vue) と同じ -->
-    <div class="px-6 pt-3 flex items-end gap-1 border-b border-[var(--exile-color-border-subtle)] shrink-0" role="tablist" aria-label="カレンシーランキング">
-      <span class="mr-3 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-secondary)]" aria-hidden="true">☉ カレンシーランキング</span>
-      <button
-        v-for="t in TABS"
-        :key="t.id"
-        type="button"
-        role="tab"
-        :aria-selected="tab === t.id"
-        class="px-3 py-1.5 -mb-px flex items-center gap-1.5 border-b-2 text-[12px] tracking-[0.04em] transition whitespace-nowrap"
-        :class="tab === t.id ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]' : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'"
-        @click="tab = t.id"
-      >
-        <span class="inline-block text-center" aria-hidden="true">{{ t.icon }}</span>
-        <span>{{ t.label }}</span>
-      </button>
-    </div>
+    <!-- タブの帯 (2026-10-03 統合)。帯の見た目は components/ui/TabBar.vue で 4 画面共通。画面名はここに 1 回だけ (本文に h1 は無い) -->
+    <TabBar icon="☉" title="カレンシーランキング" :tabs="TABS" :model-value="tab" @update:model-value="tab = $event as (typeof TABS)[number]['id']" />
 
     <!-- ユニーク装備価格推移 (元の画面をそのまま。状態はアプリで 1 つなので v-show で十分) -->
     <UniqueTrend v-show="tab === 'unique'" class="flex-1 min-h-0" />
@@ -98,12 +84,12 @@ watch(tab, (t) => {
     />
 
     <div class="flex-1 overflow-auto p-4">
-      <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div class="flex items-start justify-between mb-3 gap-4 flex-wrap">
         <div class="min-w-0">
-          <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">カレンシーランキング</h1>
-          <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe2scout の相場。素材の単価はこの数字を使います。</p>
+          <!-- 画面名は上の帯に出しているので、ここは説明と出どころだけ (2026-10-03) -->
+          <p class="text-[12px] text-[var(--exile-color-text-secondary)]">poe2scout の相場。素材の単価はこの数字を使います。</p>
           <!-- 出どころと取得時刻は他の画面と同じ並び (2026-09-21) -->
-          <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+          <p class="note mt-0.5">
             相場: poe2scout ({{ formatEpoch(r.snapshotEpoch.value) }} 更新) · {{ formatTime(r.lastUpdated.value) }} 取得
             <span v-if="r.fromCache.value">(前回のデータ)</span>
             <span v-if="r.ranking.value.length"> / {{ r.ranking.value.length }} 件</span>
@@ -112,11 +98,7 @@ watch(tab, (t) => {
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <CurrencyPicker />
-          <select
-            v-model="r.league.value"
-            @change="r.onLeagueChange"
-            class="px-3 py-2 rounded bg-[var(--exile-color-bg-surface)] border border-[var(--exile-color-border-subtle)] text-sm"
-          >
+          <select v-model="r.league.value" @change="r.onLeagueChange" class="sel">
             <option v-for="l in r.leagues.value" :key="l.Value" :value="l.Value">{{ l.Value }}{{ l.IsCurrent ? " ★" : "" }}</option>
             <option v-if="!r.leagues.value.length" :value="r.league.value">{{ r.league.value }}</option>
           </select>

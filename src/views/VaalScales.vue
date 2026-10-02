@@ -12,7 +12,8 @@
 -->
 <script setup lang="ts">
 import { computed, type Component } from "vue";
-import { VAAL_SCALES_TABS, vaalScalesTab } from "../state/app-nav";
+import TabBar from "../components/ui/TabBar.vue";
+import { VAAL_SCALES_TABS, vaalScalesTab, type VaalScalesTab } from "../state/app-nav";
 import Overquality from "./Overquality.vue";
 import GemCorrupt from "./GemCorrupt.vue";
 import GemWatch from "./GemWatch.vue";
@@ -28,32 +29,9 @@ const current = computed<Component>(() => views[vaalScalesTab.value]);
 </script>
 
 <template>
-  <!-- 背景は各タブの view が自分で塗る (元の画面のまま)。ここはタブの帯だけ -->
+  <!-- 背景は各タブの view が自分で塗る (元の画面のまま)。ここはタブの帯だけ (帯の見た目は components/ui/TabBar.vue で 4 画面共通) -->
   <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <div
-      class="px-6 pt-3 flex items-end gap-1 border-b border-[var(--exile-color-border-subtle)]"
-      role="tablist"
-      aria-label="ヴァールの天秤"
-    >
-      <span class="mr-3 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-secondary)]" aria-hidden="true">⚖ ヴァールの天秤</span>
-      <button
-        v-for="t in VAAL_SCALES_TABS"
-        :key="t.id"
-        type="button"
-        role="tab"
-        :aria-selected="vaalScalesTab === t.id"
-        class="px-3 py-1.5 -mb-px flex items-center gap-1.5 border-b-2 text-[12px] tracking-[0.04em] transition"
-        :class="
-          vaalScalesTab === t.id
-            ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
-            : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
-        "
-        @click="vaalScalesTab = t.id"
-      >
-        <span class="inline-block text-center" aria-hidden="true">{{ t.icon }}</span>
-        <span class="whitespace-nowrap">{{ t.label }}</span>
-      </button>
-    </div>
+    <TabBar icon="⚖" title="ヴァールの天秤" :tabs="VAAL_SCALES_TABS" :model-value="vaalScalesTab" @update:model-value="vaalScalesTab = $event as VaalScalesTab" />
     <div class="flex-1">
       <KeepAlive>
         <component :is="current" />

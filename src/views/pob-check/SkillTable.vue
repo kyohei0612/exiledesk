@@ -25,7 +25,7 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+  <div class="card overflow-hidden">
     <div class="grid grid-cols-[minmax(0,1fr)_7.5rem_5.5rem_5.5rem_4.5rem_4.5rem] items-center gap-x-3 border-b border-white/10 px-4 py-1.5 text-[10px] text-[var(--exile-color-text-tertiary)]">
       <span>スキル</span>
       <span class="text-right">DPS</span>

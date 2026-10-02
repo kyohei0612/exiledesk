@@ -1,5 +1,5 @@
 <!--
-  PerAttemptPanel.vue — 1 回あたり (費用・期待売上・期待収支・黒字の確率、売値の段ごとの内訳、N 回やった場合)
+  PerAttemptPanel.vue — 1 回あたり (費用・期待売上・期待収支・黒字の確率、売値のラインごとの内訳、N 回やった場合)
   RareCraft.vue から切り出し (2026-09-26)。中身は変えていない。回数は素材欄と共有 (v-model:attempts)。
 -->
 <script setup lang="ts">
@@ -68,9 +68,9 @@ const atN = computed(() => {
           <table class="mt-3 text-[12px] w-full max-w-4xl break-words">
             <thead class="text-[10px] tracking-wider text-[var(--exile-color-text-tertiary)]">
               <tr>
-                <th class="text-left font-normal pb-1">売値の段</th>
+                <th class="text-left font-normal pb-1">売値のライン</th>
                 <th class="text-right font-normal pb-1 pl-2">条件を満たす確率</th>
-                <th class="text-right font-normal pb-1 pl-2">この段で売る確率</th>
+                <th class="text-right font-normal pb-1 pl-2">このラインで売る確率</th>
                 <th class="text-right font-normal pb-1 pl-2">売値</th>
                 <th class="text-right font-normal pb-1 pl-2">期待売上への寄与</th>
               </tr>
@@ -124,7 +124,7 @@ const atN = computed(() => {
               <span class="text-[var(--exile-color-text-secondary)]">期待損益</span>
               <span class="text-right tabular-nums" :class="evClass(atN.profit)">{{ money(atN.profit, true) }}</span>
               <template v-if="atN.topLabel">
-                <span class="text-[var(--exile-color-text-secondary)]">一番高い段 ({{ atN.topLabel }}) が 1 個以上出る確率</span>
+                <span class="text-[var(--exile-color-text-secondary)]">一番高いライン ({{ atN.topLabel }}) が 1 個以上出る確率</span>
                 <span class="text-right tabular-nums">{{ pct(atN.pTopAny) }} (期待 {{ atN.topExpected.toFixed(2) }} 個)</span>
               </template>
             </div>

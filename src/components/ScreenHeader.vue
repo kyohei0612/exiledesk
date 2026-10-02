@@ -16,22 +16,28 @@
    ジェムコラプトだけ通貨の選択が取得時刻より上、など)。
 -->
 <script setup lang="ts">
+/**
+ * 2026-10-03: 画面名は上の帯 (components/ui/TabBar.vue) に 1 回だけ出す決まりにしたので、title は省けるようにした。
+ * 帯のある画面 (ヴァールの天秤の中の 4 画面、取引履歴 など) は title を渡さず、説明・出どころ・操作だけをここで出す
+ */
 withDefaults(
   defineProps<{
-    title: string;
+    /** 画面名。上の帯に出している画面は省く (h1 を二重に出さない) */
+    title?: string;
     /** 取れなかった時に赤字で出す一言 (空なら出さない) */
     error?: string | null;
   }>(),
-  { error: null },
+  { title: undefined, error: null },
 );
 </script>
 
 <template>
   <header class="mb-3">
     <div class="flex items-start justify-between gap-4 flex-wrap">
-      <div class="min-w-0">
-        <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">{{ title }}</h1>
-        <p v-if="$slots.default" class="text-xs text-[var(--exile-color-text-secondary)] mt-1"><slot /></p>
+      <!-- 左は伸び縮みする列にして、説明が長くても右の操作 (手動更新) が同じ行に残るように (2026-10-03。title が無いと説明が横いっぱいに伸びて操作が下に落ちていた) -->
+      <div class="min-w-0 flex-1 basis-[32rem]">
+        <h1 v-if="title" class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">{{ title }}</h1>
+        <p v-if="$slots.default" class="text-[12px] text-[var(--exile-color-text-secondary)]" :class="title ? 'mt-1' : ''"><slot /></p>
         <!-- 自動で入る数字の出どころと取得時刻 -->
         <p v-if="$slots.source" class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
           <slot name="source" />

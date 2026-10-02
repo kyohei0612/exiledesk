@@ -143,10 +143,10 @@ const ok = (a: SimAction | null): boolean => !!a && !!h.value && !h.value.usable
 const boneJa = (key: string): string => jaOfPriceKey(key, props.c.base.value ?? undefined) ?? (key === "desecrate_ancient" ? "古代の骨" : "保存された骨");
 /** オーブの候補 (お告げに合う物だけ) */
 const ORBS = computed((): Array<{ key: string; ja: string }> => [
-  { key: "chaos", ja: "カオスオーブ" }, { key: "chaos_greater", ja: "カオスオーブ (上級・段 35 以上)" }, { key: "chaos_perfect", ja: "カオスオーブ (完全・段 50 以上)" },
-  { key: "exalt", ja: "高貴なオーブ" }, { key: "exalt_greater", ja: "高貴なオーブ (上級・段 35 以上)" }, { key: "exalt_perfect", ja: "高貴なオーブ (完全・段 50 以上)" },
+  { key: "chaos", ja: "カオスオーブ" }, { key: "chaos_greater", ja: "カオスオーブ (上級・MOD レベル 35 以上)" }, { key: "chaos_perfect", ja: "カオスオーブ (完全・MOD レベル 50 以上)" },
+  { key: "exalt", ja: "高貴なオーブ" }, { key: "exalt_greater", ja: "高貴なオーブ (上級・MOD レベル 35 以上)" }, { key: "exalt_perfect", ja: "高貴なオーブ (完全・MOD レベル 50 以上)" },
   { key: "annul", ja: "消去のオーブ" },
-  { key: "desecrate", ja: `${boneJa("desecrate")} (冒涜)` }, { key: "desecrate_ancient", ja: `${boneJa("desecrate_ancient")} (冒涜・段 40 以上)` },
+  { key: "desecrate", ja: `${boneJa("desecrate")} (冒涜)` }, { key: "desecrate_ancient", ja: `${boneJa("desecrate_ancient")} (冒涜・MOD レベル 40 以上)` },
   // 変質した鎖骨: 冒涜に異界の MOD も混ざる。装飾品 (異界の MOD があるベース) だけ (2026-09-27)
   ...(props.c.base.value?.pools.otherworldly ? [{ key: "desecrate_altered", ja: `${boneJa("desecrate_altered")} (冒涜・異界の MOD も出る)` }] : []),
 ]);

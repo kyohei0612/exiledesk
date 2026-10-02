@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import ScreenHeader from "../components/ScreenHeader.vue";
 import RefreshButton from "../components/RefreshButton.vue";
+import TabBar from "../components/ui/TabBar.vue";
 import { fetchBusy } from "../state/fetch-busy";
 import CurrencyPicker from "../components/vaal-scales/CurrencyPicker.vue";
 import { currencyJa, displayCurrency } from "../state/display-currency";
@@ -51,9 +52,12 @@ const curLabel = currencyJa;
 </script>
 
 <template>
-  <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <ScreenHeader title="取引履歴">
-      公式サイトのマーチャント履歴を ExileDesk に取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行い、そのログイン状態で履歴を読みます。
+  <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03) -->
+  <TabBar icon="🜨" title="取引履歴" />
+  <section class="@container block px-6 py-4">
+    <ScreenHeader>
+      公式サイトのマーチャント履歴を取り込みます。ログインは ExileDesk が開く pathofexile.com の画面で本人が行い、そのログイン状態で履歴を読みます。
       <template #source>
         履歴: 公式サイト (非公式 API) · {{ lastFetchAt ? `${fmtTime(lastFetchAt)} 取得` : "未取得" }}<template v-if="usageText"> · 使った回数 {{ usageText }}</template><template v-if="autoNote"> · {{ autoNote }}</template>
       </template>
@@ -75,16 +79,16 @@ const curLabel = currencyJa;
 
     <p v-if="!inApp" class="mb-3 text-[12px] text-amber-300">この画面はアプリ (ExileDesk) の中でだけ動きます。ブラウザ表示では保存済みの履歴だけ出ます。</p>
 
-    <!-- ログインと取得 -->
-    <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+    <!-- ログインと取得 (枠とボタンは共通の .card / .btn。2026-10-03) -->
+    <div class="card p-3 text-[12px] mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
       <div class="flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">ログイン</span>
         <span v-if="loggedIn === null" class="text-[var(--exile-color-text-tertiary)]">確認中…</span>
         <span v-else-if="loggedIn" class="text-emerald-300">ログイン済み</span>
         <span v-else class="text-amber-300">未ログイン</span>
-        <button v-if="!loggedIn" type="button" :disabled="!inApp" class="px-2 py-0.5 rounded border border-[var(--exile-color-border-brass)] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-40" @click="login">pathofexile.com にログイン</button>
-        <button type="button" :disabled="!inApp" class="underline text-[11px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-accent-focus)] disabled:opacity-40" @click="refreshSession">状態を確認</button>
-        <button v-if="loggedIn" type="button" class="underline text-[11px] text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-accent-focus)]" @click="doLogout">ログアウト</button>
+        <button v-if="!loggedIn" type="button" :disabled="!inApp" class="btn btn-sm btn-outline btn-accent" @click="login">pathofexile.com にログイン</button>
+        <button type="button" :disabled="!inApp" class="btn-link" @click="refreshSession">状態を確認</button>
+        <button v-if="loggedIn" type="button" class="btn-link" @click="doLogout">ログアウト</button>
       </div>
       <label class="inline-flex items-center gap-2">
         <span class="text-[var(--exile-color-text-secondary)]">ゲーム</span>
@@ -136,10 +140,10 @@ const curLabel = currencyJa;
     </div>
 
     <!-- 日別グラフ -->
-    <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3 mb-4">
+    <div class="card p-3 mb-4">
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
         <div class="flex items-center gap-2">
-          <h2 class="text-sm font-bold text-amber-100">
+          <h2 class="card-title">
             {{
               period === "7d" ? `${dayLabel(activeDay)} の売上 (時間別)` : "リーグ開始からの売上 (1 日ずつ)"
             }}
@@ -209,5 +213,6 @@ const curLabel = currencyJa;
 
     <EntryTable :entries="entries" :visible="visible" :game="game" />
   </section>
+  </div>
 </template>
 

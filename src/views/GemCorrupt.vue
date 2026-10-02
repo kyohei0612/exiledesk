@@ -98,9 +98,9 @@ const ledgerApi = useGemLedger(g, attempts);
 
 <template>
   <section class="@container min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <ScreenHeader title="ジェムコラプトの賭け" :error="g.marketError.value ? `poe2scout 取得失敗: ${g.marketError.value}` : null">
-      レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う)
-        を「1 回あたりの期待収支」で比べます。
+    <!-- 画面名は上の帯 (ヴァールの天秤 > ジェムコラプトの賭け) に出しているので title は渡さない (2026-10-03) -->
+    <ScreenHeader :error="g.marketError.value ? `poe2scout 取得失敗: ${g.marketError.value}` : null">
+      レベル 21 · 品質 23% のジェムを手に入れる 4 つの経路 (自作 / レベル 21 を買って賭ける / 品質 23% を買って賭ける / 完成品を買う) を「1 回あたりの期待収支」で比べます。
       <template #source>
         素材価格: カレンシーランキングの相場{{ g.league.value ? ` (${g.league.value.Value})` : "" }} · {{ g.marketLabel.value }} / 売値: trade2 最安 (取得ボタン) か手入力 / ジェム一覧と素材の説明: ゲームクライアント
       </template>

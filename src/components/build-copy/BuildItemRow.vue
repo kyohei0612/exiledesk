@@ -78,7 +78,7 @@ const extraLinks = computed(() => (props.r.src === "rare" && props.r.rare ? prop
           >
           <span class="text-[11px] opacity-50">{{ r.item.rarity === "RARE" ? r.item.name : r.baseJa !== r.nameJa ? r.baseJa : "" }}</span>
           <span v-if="r.item.corrupted" class="rounded-full bg-rose-500/20 px-1.5 text-[10px] text-rose-300">コラプト</span>
-          <span v-if="r.item.sanctified" class="rounded-full bg-amber-500/20 px-1.5 text-[10px] text-amber-200" title="聖別で MOD の数値が 78%〜122% に振り直されています。段は戻した値で決めています">聖別</span>
+          <span v-if="r.item.sanctified" class="rounded-full bg-amber-500/20 px-1.5 text-[10px] text-amber-200" title="聖別で MOD の数値が 78%〜122% に振り直されています。ティアは戻した値で決めています">聖別</span>
           <span v-if="r.tradeUnique" class="rounded-full bg-violet-500/20 px-1.5 text-[10px] text-violet-200" title="種類違い・ソケットのあるユニークは poe.ninja の相場では区別されないので、取引所で同じ物を探します">取引所で探す</span>
           <span v-if="r.item.kind === 'jewel' && r.item.rarity === 'RARE'" class="rounded-full bg-white/10 px-1.5 text-[10px] opacity-70" title="レアのジュエルは自動では取りません。見た値段を打つと合計に入ります">手入れ</span>
         </div>

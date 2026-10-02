@@ -82,7 +82,7 @@ function blocked(m: ModRow): string | null {
             <span v-if="m.share > 0 && x.top > 0" class="pointer-events-none absolute inset-y-0 left-0 bg-white/[0.06]" :style="{ width: `${(m.share / x.top) * 100}%` }" />
             <span class="relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
             <span class="relative min-w-0 flex-1">{{ named(m) }}</span>
-            <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" title="この種類・この側の中での出やすさ (今のアイテムレベルで出る段の重みの割合)">{{ pct(m.share) }}</span>
+            <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" title="この種類・この側の中での出やすさ (今のアイテムレベルで出るティアの重みの割合)">{{ pct(m.share) }}</span>
             <span v-if="m.alloy" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip">合金</span>
             <select
               v-if="pk.isPicked(m.modId)"

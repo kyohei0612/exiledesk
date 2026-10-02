@@ -35,8 +35,9 @@ function fmtTime(t: number): string {
   return new Date(t).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
 }
 
-const seg = "px-3 py-1.5 text-sm transition";
-const segOn = "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)]";
+// 並び替えの切り替え (枠の中のボタン列)。高さは .btn と同じ 28px
+const seg = "h-7 px-3 text-[12px] transition";
+const segOn = "bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)] font-semibold";
 const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]";
 </script>
 
@@ -51,11 +52,11 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
     />
 
     <div class="flex-1 overflow-auto p-4">
-      <div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div class="flex items-start justify-between mb-3 gap-4 flex-wrap">
         <div class="min-w-0">
-          <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">ユニーク装備価格推移</h1>
-          <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">poe.ninja の相場と 7 日の動き。行を押すとグラフ、♡ でお気に入り。</p>
-          <p class="text-[11px] text-[var(--exile-color-text-tertiary)] mt-0.5">
+          <!-- 画面名は上の帯 (カレンシーランキング > ユニーク) に出しているので、ここは説明と出どころだけ (2026-10-03) -->
+          <p class="text-[12px] text-[var(--exile-color-text-secondary)]">poe.ninja のユニークの相場と 7 日の動き。行を押すとグラフ、♡ でお気に入り。</p>
+          <p class="note mt-0.5">
             相場: poe.ninja<span v-if="u.fetchedAt.value"> · {{ fmtTime(u.fetchedAt.value) }} 取得</span>
             <span v-if="u.fromCache.value"> (前回のデータ)</span>
             <span v-if="u.league.value"> / {{ u.league.value }}</span>
@@ -64,7 +65,7 @@ const segOff = "text-[var(--exile-color-text-secondary)] hover:text-[var(--exile
         </div>
         <div class="flex items-center gap-3">
           <CurrencyPicker />
-          <div class="inline-flex rounded border border-[var(--exile-color-border-subtle)] overflow-hidden bg-[var(--exile-color-bg-surface)]">
+          <div class="inline-flex rounded-lg border border-[var(--exile-color-border-subtle)] overflow-hidden bg-[var(--exile-color-bg-surface)]">
             <button
               v-for="o in SORT_OPTIONS"
               :key="o.key"

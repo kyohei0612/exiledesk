@@ -30,6 +30,7 @@ import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { useAppSettings } from "./useAppSettings";
 import SettingsSeedSection from "./SettingsSeedSection.vue";
 import SettingsUpdateSection from "./SettingsUpdateSection.vue";
+import TabBar from "../components/ui/TabBar.vue";
 
 // トレードサイトの言語 (ブラウザで開く先)。localStorage のみ (2026-09-12)
 const tradeSite = ref<Trade2Site>(trade2Site());
@@ -62,18 +63,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="min-h-full px-8 py-8 text-[var(--exile-color-text-primary)]"
-  >
-    <div class="max-w-2xl">
-      <header class="mb-6 pb-3 border-b border-[var(--exile-color-border-subtle)]">
-        <h1 class="font-display tracking-[0.12em] text-2xl text-[var(--exile-color-accent-focus)]">
-          設定
-        </h1>
-        <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">
-          Discord 風のバックグラウンド常駐と、自動再取得の設定。
-        </p>
-      </header>
+  <div class="min-h-full flex flex-col text-[var(--exile-color-text-primary)]">
+    <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03。余白も他の画面と同じ px-6 py-4 に) -->
+    <TabBar icon="⚙" title="設定" />
+    <div class="max-w-2xl px-6 py-4">
+      <p class="mb-5 text-[12px] text-[var(--exile-color-text-secondary)]">
+        バックグラウンド常駐 (Discord 風) と自動再取得、トレードサイト、配布データ、更新。変えると自動で保存します。
+      </p>
 
       <div v-if="loading" class="text-sm text-[var(--exile-color-text-secondary)]">
         読み込み中…
@@ -144,15 +140,7 @@ onMounted(async () => {
           </h2>
           <label class="flex items-center gap-3">
             <span class="text-sm whitespace-nowrap">取得間隔:</span>
-            <input
-              type="number"
-              v-model.number="autoRefetchDays"
-              @change="saveSettings"
-              min="0"
-              max="7"
-              step="1"
-              class="w-20 px-2 py-1 bg-[var(--exile-color-bg-elevated)] border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] rounded-sm"
-            />
+            <input type="number" v-model.number="autoRefetchDays" @change="saveSettings" min="0" max="7" step="1" class="num w-20" />
             <span class="text-sm text-[var(--exile-color-text-secondary)]">
               日 (0 = 無効)
             </span>
@@ -171,11 +159,7 @@ onMounted(async () => {
           </h2>
           <label class="flex items-center gap-3">
             <span class="text-sm whitespace-nowrap">ブラウザで開く先:</span>
-            <select
-              :value="tradeSite"
-              @change="onTradeSiteChange(($event.target as HTMLSelectElement).value as Trade2Site)"
-              class="px-2 py-1 bg-[var(--exile-color-bg-elevated)] border border-[var(--exile-color-border-subtle)] text-[var(--exile-color-text-primary)] rounded-sm"
-            >
+            <select :value="tradeSite" @change="onTradeSiteChange(($event.target as HTMLSelectElement).value as Trade2Site)" class="sel">
               <option value="jp">日本語 (jp.pathofexile.com)</option>
               <option value="www">英語 (www.pathofexile.com)</option>
             </select>

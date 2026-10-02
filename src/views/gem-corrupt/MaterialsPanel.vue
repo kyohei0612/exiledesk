@@ -219,7 +219,7 @@ const baseBuyTitle = computed(() => {
                 <td></td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap">{{ craft?.ok ? moneyFixed(craft.expectedCost) : "—" }}</td>
                 <!-- 完成の個数と N 回の費用は上の行と同じ連鎖 (切り下げ) と丸めた単価から (収支と一致させる。2026-09-20) -->
-                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]" :title="craft?.ok ? `確率のまま掛けると ${(attempts * craft.pFinished).toFixed(2)} 個。個数は段ごとに切り下げて数えています` : ''">{{ counts ? `完成 ${fmtFinished(counts.finished)} 個` : "" }}</td>
+                <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap text-[10px] text-[var(--exile-color-text-tertiary)]" :title="craft?.ok ? `確率のまま掛けると ${(attempts * craft.pFinished).toFixed(2)} 個。個数は工程ごとに切り下げて数えています` : ''">{{ counts ? `完成 ${fmtFinished(counts.finished)} 個` : "" }}</td>
                 <td class="py-1.5 pl-2 text-right tabular-nums whitespace-nowrap" :title="craft?.ok ? `確率のまま掛けると ${moneyFixed(attempts * craft.expectedCost)}` : ''">{{ totalN == null ? "—" : moneyFixed(totalN) }}</td>
               </tr>
             </tbody>

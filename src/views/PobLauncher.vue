@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { invoke } from "@tauri-apps/api/core";
 import { computed, onActivated, onMounted, ref } from "vue";
+import TabBar from "../components/ui/TabBar.vue";
 import { checkPobBundle, installPobBundle, pobBundleState, refreshPobBundleStatus } from "../services/pob-bundle";
 
 interface PobLauncherStatus {
@@ -80,33 +81,28 @@ onActivated(() => {
 </script>
 
 <template>
-  <section class="min-h-full block px-6 py-4 bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
-    <header class="mb-4">
-      <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">Path of Building (PoE2) 日本語版</h1>
-      <p class="text-xs text-[var(--exile-color-text-secondary)] mt-1">
-        公式 PoB + PoB2-JP 日本語化パッチを ExileDesk が管理します。初回だけダウンロード (約 100 MB)、以降は 30 日ごとに更新を確認します。
-      </p>
-    </header>
+  <div class="min-h-full flex flex-col bg-[var(--exile-color-bg-canvas)] text-[var(--exile-color-text-primary)]">
+  <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03)。サイドバーの名前「PoB を開く」と同じにした -->
+  <TabBar icon="🜍" title="PoB を開く" />
+  <section class="block px-6 py-4">
+    <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">
+      Path of Building (PoE2) 日本語版 = 公式 PoB + PoB2-JP 日本語化パッチを ExileDesk が管理します。初回だけダウンロード (約 100 MB)、以降は 30 日ごとに更新を確認します。
+    </p>
 
     <!-- 未インストール -->
-    <div v-if="b.status && !b.status.installed" class="rounded-xl border border-amber-400/40 bg-white/[0.03] p-4 max-w-[720px]">
+    <div v-if="b.status && !b.status.installed" class="card border-amber-400/40 p-4 max-w-[720px]">
       <p class="text-[13px]">PoB はまだこの PC にありません。</p>
       <div class="mt-3 flex items-center gap-3">
-        <button
-          type="button"
-          @click="install"
-          :disabled="b.installing"
-          class="px-4 py-1.5 rounded font-medium text-[13px] bg-[var(--exile-color-accent-focus)] text-black hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
+        <button type="button" @click="install" :disabled="b.installing" class="btn btn-primary">
           {{ b.installing ? progressText : "⬇ PoB をダウンロード (約 100 MB)" }}
         </button>
-        <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">保存先: {{ b.status.dir }}</span>
+        <span class="note">保存先: {{ b.status.dir }}</span>
       </div>
       <p v-if="b.error" class="mt-3 text-[12px] text-red-200">失敗: {{ b.error }}</p>
     </div>
 
     <!-- インストール済み -->
-    <div v-else class="rounded-xl border border-amber-400/40 bg-white/[0.03] p-4 max-w-[720px]">
+    <div v-else class="card p-4 max-w-[720px]">
       <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[13px]">
         <dt class="text-[var(--exile-color-text-secondary)]">状態</dt>
         <dd>
@@ -135,40 +131,19 @@ onActivated(() => {
         <dd class="text-[var(--exile-color-text-secondary)]">ドキュメント\Path of Building (PoE2)\Builds (公式 PoB と共通)</dd>
       </dl>
 
+      <!-- ボタンは共通の .btn (主 = 起動だけ金で塗る、残りは枠だけ。2026-10-03) -->
       <div class="mt-4 flex items-center gap-2 flex-wrap">
-        <button
-          type="button"
-          @click="launch(true)"
-          :disabled="launching || b.installing || !status?.available"
-          class="px-4 py-1.5 rounded font-medium text-[13px] bg-[var(--exile-color-accent-focus)] text-black hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
+        <button type="button" @click="launch(true)" :disabled="launching || b.installing || !status?.available" class="btn btn-primary">
           {{ launching ? "起動中…" : "▶ PoB を起動" }}
         </button>
-        <button
-          v-if="b.lastCheck?.update_needed"
-          type="button"
-          @click="install"
-          :disabled="b.installing"
-          class="px-3 py-1.5 rounded border border-[var(--exile-color-border-brass)] text-[12px] text-[var(--exile-color-accent-focus)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-50 transition"
-        >
+        <button v-if="b.lastCheck?.update_needed" type="button" @click="install" :disabled="b.installing" class="btn btn-outline btn-accent">
           {{ b.installing ? progressText : "⬇ 更新する" }}
         </button>
-        <button
-          type="button"
-          @click="checkPobBundle"
-          :disabled="b.checking || b.installing"
-          class="px-3 py-1.5 rounded border border-[var(--exile-color-border-subtle)] text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-50 transition"
-        >
+        <button type="button" @click="checkPobBundle" :disabled="b.checking || b.installing" class="btn btn-outline">
           {{ b.checking ? "確認中…" : "更新を確認" }}
         </button>
-        <button
-          type="button"
-          @click="refreshStatus"
-          class="px-3 py-1.5 rounded border border-[var(--exile-color-border-subtle)] text-[12px] text-[var(--exile-color-text-secondary)] hover:bg-[var(--exile-color-bg-elevated)] transition"
-        >
-          状態を再確認
-        </button>
-        <span v-if="lastLaunchedAt" class="text-[11px] text-[var(--exile-color-text-tertiary)]">起動しました (別ウィンドウ)</span>
+        <button type="button" @click="refreshStatus" class="btn btn-outline">状態を再確認</button>
+        <span v-if="lastLaunchedAt" class="note">起動しました (別ウィンドウ)</span>
       </div>
 
       <p v-if="status && !status.available && status.message" class="mt-3 text-[12px] text-amber-200">⚠️ {{ status.message }}</p>
@@ -176,9 +151,10 @@ onActivated(() => {
       <p v-if="b.error" class="mt-3 text-[12px] text-red-200">{{ b.error }}</p>
     </div>
 
-    <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)] max-w-[720px]">
+    <p class="note mt-4 max-w-[720px]">
       PoB 自身の自動更新は止めてあり、更新は ExileDesk が 30 日ごとに確認して入れ替えます (PoB を閉じた状態で行ってください)。
       ビルドデータは公式 PoB と同じ場所に保存されるため、更新・削除しても消えません。
     </p>
   </section>
+  </div>
 </template>

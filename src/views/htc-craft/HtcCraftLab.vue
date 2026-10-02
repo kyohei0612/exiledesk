@@ -6,6 +6,7 @@
  * **リリース前の動作確認用**で、体裁は最小限。中身は useHtcCraft.ts。
  */
 import { computed, ref, watch, watchEffect } from "vue";
+import TabBar from "../../components/ui/TabBar.vue";
 import { htcCraftTab, pendingCraft, type HtcCraftTab } from "../../state/app-nav";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
@@ -172,62 +173,34 @@ const inputSummary = computed(() => {
        狭い窓では横にスクロール、広い窓では余白 -->
   <!-- 窓の大きさへの合わせ込みはアプリ全体でする (App.vue の fitZoom)。ここは最小の窓の幅いっぱい -->
   <div class="h-full overflow-auto text-sm">
-   <!-- タブ (2026-10-03 統合): 計算機 / 上位プレイヤーの MOD。見た目はヴァールの天秤 (VaalScales.vue) の帯と同じ -->
-   <div class="px-6 pt-3 flex items-end gap-1 border-b border-[var(--exile-color-border-subtle)]" role="tablist" aria-label="クラフト計算機">
-     <span class="mr-3 pb-2 font-display text-[13px] tracking-[0.08em] text-[var(--exile-color-text-secondary)]" aria-hidden="true">🧪 クラフト計算機</span>
-     <button
-       v-for="t in TABS"
-       :key="t.id"
-       type="button"
-       role="tab"
-       :aria-selected="htcCraftTab === t.id"
-       :title="t.hint"
-       class="px-3 py-1.5 -mb-px border-b-2 text-[12px] tracking-[0.04em] transition whitespace-nowrap"
-       :class="
-         htcCraftTab === t.id
-           ? 'border-[var(--exile-color-accent-focus)] text-[var(--exile-color-accent-focus)]'
-           : 'border-transparent text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)]'
-       "
-       @click="htcCraftTab = t.id"
-     >{{ t.label }}</button>
-   </div>
+   <!-- タブ (2026-10-03 統合): 計算機 / 上位プレイヤーの MOD。帯の見た目は components/ui/TabBar.vue で 4 画面共通。画面名はここに 1 回だけ -->
+   <TabBar icon="🧪" title="クラフト計算機" :tabs="TABS" :model-value="htcCraftTab" @update:model-value="htcCraftTab = $event as HtcCraftTab" />
 
    <!-- 上位プレイヤーの MOD (旧 craft-v2 の画面をそのまま)。一度開いたら v-show で保つ (選んだアセ・部位・チェックが消えないように) -->
    <CraftDiscoveryV2B v-if="topModsOpened" v-show="htcCraftTab === 'top-mods'" />
 
    <!-- 計算機 -->
-   <div v-show="htcCraftTab === 'lab'" class="p-4">
-    <h1 class="mb-1 text-lg font-bold">クラフト計算機</h1>
-    <p class="mb-3 text-xs opacity-60">
+   <div v-show="htcCraftTab === 'lab'" class="px-6 py-4">
+    <!-- 画面名は上の帯に出しているので、ここは説明だけ (2026-10-03) -->
+    <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">
       作りたいアイテムを貼るか、ベースと MOD を選ぶと、ベースの買い方・完成品との比べ・作り方ごとの費用と成功確率を出します。
     </p>
 
     <!-- 入口。開いた時はここだけ。何も計算していない -->
     <div v-if="door === 'none'" class="mb-4 grid gap-3" :class="lastPaste ? 'sm:grid-cols-3' : 'sm:grid-cols-2'">
       <!-- 前回の続き: 貼り直し → おｋ → 探す (キャッシュ) → 作り方 まで 1 押しで -->
-      <button v-if="lastPaste" type="button" class="rounded border border-amber-500/40 bg-amber-500/10 p-4 text-left hover:border-amber-400" @click="resumeLast()">
-        <div class="mb-1 font-bold text-amber-300">前回の続きから</div>
-        <div class="text-xs opacity-70">{{ lastPasteLabel }} — 作り方まで自動で進む</div>
+      <!-- 入口の 3 枚は同じ枠 (.card) で、前回の続きだけ金の枠 (2026-10-03 見た目をそろえた) -->
+      <button v-if="lastPaste" type="button" class="card border-amber-500/40 bg-amber-500/10 p-4 text-left hover:border-amber-400" @click="resumeLast()">
+        <div class="mb-1 text-[13px] font-bold text-amber-300">前回の続きから</div>
+        <div class="note">{{ lastPasteLabel }} — 作り方まで自動で進む</div>
       </button>
-      <button
-        type="button"
-        class="rounded-lg border border-white/10 p-4 text-left hover:border-amber-400"
-        @click="door = 'paste'"
-      >
-        <div class="mb-1 font-bold text-amber-300">コピーを貼る</div>
-        <div class="text-xs opacity-60">
-          poe.ninja やゲームから Ctrl+C した物をそのまま貼ります。<b>既にある物を真似る</b>時。
-        </div>
+      <button type="button" class="card p-4 text-left hover:border-amber-400" @click="door = 'paste'">
+        <div class="mb-1 text-[13px] font-bold text-amber-300">コピーを貼る</div>
+        <div class="note">poe.ninja やゲームから Ctrl+C した物をそのまま貼る。<b>既にある物を真似る</b>時。</div>
       </button>
-      <button
-        type="button"
-        class="rounded-lg border border-white/10 p-4 text-left hover:border-amber-400"
-        @click="openBaseDoor()"
-      >
-        <div class="mb-1 font-bold text-amber-300">ベースから選ぶ</div>
-        <div class="text-xs opacity-60">
-          ベースと狙う MOD を自分で並べます。<b>0 から決める</b>時。
-        </div>
+      <button type="button" class="card p-4 text-left hover:border-amber-400" @click="openBaseDoor()">
+        <div class="mb-1 text-[13px] font-bold text-amber-300">ベースから選ぶ</div>
+        <div class="note">ベースと狙う MOD を自分で並べる。<b>0 から決める</b>時。</div>
       </button>
     </div>
 
@@ -268,7 +241,7 @@ const inputSummary = computed(() => {
       />
       <div class="flex items-center gap-3">
         <button
-          class="rounded bg-amber-600/80 px-3 py-1 text-xs font-bold disabled:opacity-40"
+          class="btn btn-primary"
           :disabled="c.loading.value || !text.trim()"
           @click="c.resumeFlow.value = false; reread(text)"
         >{{ c.loading.value ? "解析中…" : "MOD 解析" }}</button>
@@ -302,12 +275,12 @@ const inputSummary = computed(() => {
       <span class="inline-block animate-pulse">●</span> {{ c.stage.value || "解析中…" }} <span class="opacity-60">— 済むと順に埋まる</span>
     </p>
     <template v-if="c.base.value">
-      <h2 class="mb-1 text-base font-bold">MOD 解析とベースの診断</h2>
+      <h2 class="sec-title">MOD 解析とベースの診断</h2>
       <DiagnosisCard :c="c" />
       <!-- 作り方は ②③ が済んでから (順に出す。v-show で組んだツリーは保つ) -->
-      <p v-if="c.diagBusy.value" class="mb-1 mt-5 text-xs opacity-50">作り方は ② が終わると自動で出る</p>
+      <p v-if="c.diagBusy.value" class="note mb-1 mt-5">作り方は ② が終わると自動で出る</p>
       <div v-show="!c.diagBusy.value">
-        <h2 class="mb-1 mt-5 text-base font-bold">作り方 (STEP の並び)</h2>
+        <h2 class="sec-title mt-5">作り方 (手順の並び)</h2>
         <CraftTreePanel :c="c" />
       </div>
 

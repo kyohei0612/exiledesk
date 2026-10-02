@@ -92,23 +92,24 @@ function onTrade(): void {
   <div class="@container">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <!-- 自分 / 相手 -->
-      <span class="inline-flex overflow-hidden rounded-md border border-white/10 text-[12px] font-semibold">
+      <!-- 自分 / 相手 の切り替え (選んでいる方を金で塗る。装備タブの武器セットと同じ見た目。2026-10-03) -->
+      <span class="inline-flex overflow-hidden rounded-lg border border-white/15 text-[12px] font-semibold">
         <button
           type="button"
-          class="px-3 py-1"
-          :class="who === 'mine' ? 'bg-amber-500 text-black' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
+          class="h-7 px-3"
+          :class="who === 'mine' ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
           @click="who = 'mine'"
         >自分</button>
         <button
           type="button"
-          class="px-3 py-1 disabled:opacity-40"
-          :class="who === 'target' ? 'bg-sky-500 text-white' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
+          class="h-7 px-3 disabled:opacity-40"
+          :class="who === 'target' ? 'bg-[var(--exile-color-accent-focus)] text-[var(--exile-color-bg-canvas)]' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
           :disabled="!targetCode"
           :title="targetCode ? '比べる相手の装備と値段' : '上の「比べる相手」を読み込むと選べます'"
           @click="who = 'target'"
         >相手</button>
       </span>
-      <p class="text-xs text-[var(--exile-color-text-secondary)]">
+      <p class="note">
         読み込んだビルドをそろえるのに要る物の一覧。値段は「値段を取る」を押した時だけ取ります (自動では取りません)。
       </p>
       <span class="ml-auto"><CurrencyPicker /></span>
@@ -128,18 +129,18 @@ function onTrade(): void {
       @stop="tradeLock.stop('build-copy')"
     />
 
-    <p v-if="!b.build.value && !b.loading.value && !b.error.value" class="mb-6 text-sm text-[var(--exile-color-text-secondary)]">
+    <p v-if="!b.build.value && !b.loading.value && !b.error.value" class="mb-6 text-[12px] text-[var(--exile-color-text-secondary)]">
       {{ who === "mine" ? "ビルドを読み込むと、装備・ルーン・リネージュサポートがここに並びます。" : "相手を読み込むと、相手の装備がここに並びます。" }}
     </p>
 
     <template v-if="b.build.value && !b.loading.value">
       <!-- 合計: 取引所の相場を取り終えてから (オーナー 2026-09-26「合計表示するのは全部取得終わってから」)。取る前はボタンを促す -->
-      <section v-if="!fetching(b)" class="mb-4 rounded-xl border p-3" :class="b.fetched.value ? 'border-emerald-400/40 bg-emerald-500/[0.06]' : 'border-white/10 bg-white/[0.03]'">
+      <section v-if="!fetching(b)" class="card mb-4 p-3" :class="b.fetched.value ? 'border-emerald-400/40 bg-emerald-500/[0.06]' : ''">
         <div class="flex flex-wrap items-end gap-x-6 gap-y-2">
           <div>
-            <p class="text-[11px] opacity-70">{{ who === "mine" ? "自分" : "相手" }} · {{ b.build.value.ascendancy || b.build.value.className }} · レベル {{ b.build.value.level }}</p>
+            <p class="note">{{ who === "mine" ? "自分" : "相手" }} · {{ b.build.value.ascendancy || b.build.value.className }} · レベル {{ b.build.value.level }}</p>
             <p v-if="b.fetched.value" class="text-3xl font-bold tabular-nums text-emerald-300">合計 {{ money(b.totals.value.sum) }}</p>
-            <p v-else class="text-sm text-[var(--exile-color-text-secondary)]">「値段を取る」を押すと、poe.ninja / poe2scout の相場と取引所の最安値を取って合計を出します (1 点 10 秒ほど)</p>
+            <p v-else class="text-[12px] text-[var(--exile-color-text-secondary)]">「値段を取る」を押すと、poe.ninja / poe2scout の相場と取引所の最安値を取って合計を出します (1 点 10 秒ほど)</p>
           </div>
           <div v-if="b.fetched.value" class="grid flex-1 grid-cols-2 gap-2 @3xl:grid-cols-4">
             <div v-for="p in parts" :key="p.label" class="rounded-lg bg-black/30 px-2 py-1">
@@ -147,11 +148,12 @@ function onTrade(): void {
               <p class="tabular-nums">{{ money(p.value) }}</p>
             </div>
           </div>
+          <!-- 取るボタン: 取る前と再開は金の枠 (押してほしい)、取った後は普通の枠 (2026-10-03 他の画面の手動更新と同じ形に) -->
           <button
             type="button"
             :disabled="tb.disabled"
-            class="ml-auto rounded-lg border px-3 py-1.5 text-[12px] font-semibold disabled:opacity-40"
-            :class="tb.action === 'resume' ? 'border-amber-400/60 text-amber-200 hover:bg-amber-500/10' : b.fetched.value ? 'border-white/20 hover:bg-white/5' : 'border-emerald-400/60 text-emerald-200 hover:bg-emerald-500/10'"
+            class="btn btn-outline ml-auto"
+            :class="tb.action === 'resume' || !b.fetched.value ? 'btn-accent' : ''"
             title="今のティア・割合で、取引所の相場を取る (再開は取れていない物だけ)"
             @click="onTrade"
           >{{ tb.label }}</button>
@@ -164,14 +166,16 @@ function onTrade(): void {
       </section>
 
       <!-- 装備 -->
-      <div class="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
-        <b class="text-sm">装備</b>
-        <span class="opacity-60">値段の札:</span>
-        <span class="rounded-full bg-emerald-500/20 px-1.5 text-emerald-300">完成品</span>
-        <span class="rounded-full bg-sky-500/20 px-1.5 text-sky-300">ティアを下げて</span>
-        <span class="rounded-full bg-amber-500/20 px-1.5 text-amber-200">MOD を外して / 数値なし</span>
-        <span class="rounded-full bg-violet-500/20 px-1.5 text-violet-200">取引所の最安値 (ユニーク)</span>
-        <span class="rounded-full bg-rose-500/20 px-1.5 text-rose-300">出品なし</span>
+      <div class="sec-title flex-wrap items-center gap-2">
+        <span>装備</span>
+        <span class="sec-note">値段の札:</span>
+        <span class="flex flex-wrap gap-1 text-[10px] font-normal">
+          <span class="rounded-full bg-emerald-500/20 px-1.5 text-emerald-300">完成品</span>
+          <span class="rounded-full bg-sky-500/20 px-1.5 text-sky-300">ティアを下げて</span>
+          <span class="rounded-full bg-amber-500/20 px-1.5 text-amber-200">MOD を外して / 数値なし</span>
+          <span class="rounded-full bg-violet-500/20 px-1.5 text-violet-200">取引所の最安値 (ユニーク)</span>
+          <span class="rounded-full bg-rose-500/20 px-1.5 text-rose-300">出品なし</span>
+        </span>
       </div>
       <div class="mb-4 space-y-2">
         <BuildItemRow
@@ -193,7 +197,7 @@ function onTrade(): void {
         <BuildBulkTable title="ルーン・ソウルコア" :rows="b.runes.value" empty="差しているルーンはありません" />
         <BuildBulkTable title="リネージュサポート" :rows="b.lineage.value" gem empty="リネージュサポートは使っていません" />
       </div>
-      <p class="mb-6 mt-3 text-[10px] text-[var(--exile-color-text-tertiary)]">
+      <p class="note mb-6 mt-3">
         ユニーク: poe.ninja の相場 (コラプトしていない純正品)。種類違い・ソケットのある物は取引所で同じ物の最安値 (コラプト問わず) / ルーン・リネージュサポート: poe2scout の相場 /
         レア: 取引所で MOD の組み合わせを数値なしで確かめ、無ければ付きやすい MOD から外す → 選んだティア (品質・防御値・ソケットも) → 1 つ下げ → 2 つ下げ。値段は安い方 5 件の真ん中、数値なしで止まった時は平均。
         「トレード2へ」は値段を取った検索を開きます。ジュエルは手入れのみ。

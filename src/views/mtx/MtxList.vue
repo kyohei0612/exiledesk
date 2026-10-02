@@ -10,6 +10,7 @@
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref, shallowRef, watch } from "vue";
+import TabBar from "../../components/ui/TabBar.vue";
 import { artOf, loadMtx, poe2dbUrl, usableInPoe2, type MtxData, type MtxItem } from "../../services/mtx/mtx";
 import { openExternal } from "../../services/trade2/open-external";
 
@@ -55,16 +56,16 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
 
 <template>
   <!-- 幅は窓いっぱい (2026-09-29 オーナー「縮こまってる。最大化時と縮小時を合わせて」)。列の数は窓の幅で変わる -->
-  <div class="w-full px-6 py-5 text-[12px]">
-    <header class="mb-4">
-      <h1 class="text-xl font-bold text-amber-100">スキン</h1>
-      <p class="mt-1 opacity-60">PoE1 で使えるスキン・エフェクト・ペットなどが、PoE2 でも使えるか。ゲームのデータから (パッチで変わることがある)。カードを押すと poe2db で見た目を確かめられる。</p>
-    </header>
+  <div class="w-full text-[12px]">
+    <!-- 画面名は上の帯に 1 回だけ (他の画面と同じ TabBar。2026-10-03) -->
+    <TabBar icon="✦" title="スキン" />
+    <div class="px-6 py-4">
+    <p class="mb-3 text-[12px] text-[var(--exile-color-text-secondary)]">PoE1 で使えるスキン・エフェクト・ペットなどが PoE2 でも使えるか (ゲームのデータから。パッチで変わることがある)。カードを押すと poe2db で見た目を確かめられる。</p>
     <p v-if="error" class="text-rose-300">{{ error }}</p>
     <p v-else-if="!data" class="py-16 text-center opacity-50">読んでいます…</p>
     <template v-else>
-      <!-- 絞り込み -->
-      <section class="mb-5 space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <!-- 絞り込み (枠は共通の .card) -->
+      <section class="card mb-4 space-y-3 p-4">
         <div class="flex flex-wrap items-center gap-2">
           <button type="button" class="rounded-full px-4 py-1.5" :class="poe2 === 'yes' ? 'bg-emerald-500/25 text-emerald-100 ring-1 ring-emerald-400/60' : 'border border-white/15 hover:bg-white/5'" @click="poe2 = 'yes'">PoE2 でも使える <span class="ml-1 opacity-60">{{ counts.yes }}</span></button>
           <button type="button" class="rounded-full px-4 py-1.5" :class="poe2 === 'no' ? 'bg-rose-500/20 text-rose-100 ring-1 ring-rose-400/60' : 'border border-white/15 hover:bg-white/5'" @click="poe2 = 'no'">PoE1 だけ <span class="ml-1 opacity-60">{{ counts.no }}</span></button>
@@ -91,8 +92,8 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
           v-for="x in list.slice(0, shown)"
           :key="x.i"
           type="button"
-          class="group flex items-center gap-4 rounded-2xl border bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]"
-          :class="usableInPoe2(x) ? 'border-emerald-500/25 hover:border-emerald-400/60' : 'border-white/10 hover:border-white/30'"
+          class="card group flex items-center gap-4 p-4 text-left transition hover:bg-white/[0.06]"
+          :class="usableInPoe2(x) ? 'border-emerald-500/25 hover:border-emerald-400/60' : 'hover:border-white/30'"
           title="poe2db で見た目を見る"
           @click="open(x)"
         >
@@ -114,8 +115,9 @@ const open = (x: MtxItem) => void openExternal(poe2dbUrl(x));
         </button>
       </div>
       <div v-if="list.length > shown" class="mt-5 text-center">
-        <button type="button" class="rounded-xl border border-white/20 px-5 py-2 hover:bg-white/5" @click="shown += PAGE">もっと見る (残り {{ list.length - shown }} 件)</button>
+        <button type="button" class="btn btn-outline" @click="shown += PAGE">もっと見る (残り {{ list.length - shown }} 件)</button>
       </div>
     </template>
+    </div>
   </div>
 </template>

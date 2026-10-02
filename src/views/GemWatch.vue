@@ -147,10 +147,11 @@ function openSold(en: string, key: (typeof SALE_KEYS)[number] | null): void {
 </script>
 
 <template>
-  <section class="p-6 @container">
+  <!-- 余白はヴァールの天秤の他の 3 画面と同じ (px-6 py-4。2026-10-03 にそろえた) -->
+  <section class="px-6 py-4 @container">
     <!-- 他の画面と同じ見出し (2026-09-21 オーナー指示「UI とか UX 周り、統一感持たせて」)。
-         一括取得のボタンはこの画面の主役なので下のカードの操作に残す -->
-    <ScreenHeader title="自動ジェム監視">
+         一括取得のボタンはこの画面の主役なので下のカードの操作に残す。画面名は上の帯に出しているので title は渡さない (2026-10-03) -->
+    <ScreenHeader>
       監視するジェムの 3 条件 (レベル 21 / 品質 23% / 完成品) の最安と出品数を周期ごとに取り、売れるまでの時間を測ります。期待値の高い順に並びます。
       <template #source>
         売値と捌き速度: trade2 (一括取得と自動取得) · {{ sweepClock || "まだ 1 巡していません" }} / 使用率: poe.ninja

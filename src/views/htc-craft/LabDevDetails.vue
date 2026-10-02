@@ -17,7 +17,7 @@ const implicitText = (lines: readonly string[]): string =>
 
 <template>
       <details class="mb-4 mt-4 text-xs">
-        <summary class="cursor-pointer opacity-60">詳しく (MOD の段・忍者の道・ベース候補)</summary>
+        <summary class="cursor-pointer opacity-60">詳しく (MOD のティア・忍者の道・ベース候補)</summary>
       <!-- 読み取り -->
       <section class="mb-4">
         <h2 class="mb-1 font-bold">① MOD 解析</h2>
@@ -70,7 +70,7 @@ const implicitText = (lines: readonly string[]): string =>
               </span>
               <!-- 探す段。既定は貼り付けた物の段。変えると 3 本の検索の下限が変わる -->
               <label v-if="d.tiers?.length" class="ml-1">
-                探す段
+                探すティア
                 <select
                   class="rounded border border-[var(--exile-color-border-subtle)] bg-black/30 px-1"
                   :value="c.treeTierPick.value[d.text] ?? d.tier?.index ?? 0"

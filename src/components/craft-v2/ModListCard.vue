@@ -74,7 +74,7 @@ const badge = computed(() =>
           <span class="truncate text-[13px]" :title="mod.text">
             {{ mod.text }}
             <!-- 2026-09-29: 段は一番多い段 (チェックした時の既定・クラフトに渡す段と同じ)。数値は品質の底上げを抜いた素の値の平均 -->
-            <span v-if="mod.usageTier ?? mod.inferredTier" class="ml-1 text-[10px] text-[var(--exile-color-accent-focus)] tabular-nums" title="一番多い段 (T1 が最高)。数値は品質 (カタリスト) の底上げを抜いた素の値"
+            <span v-if="mod.usageTier ?? mod.inferredTier" class="ml-1 text-[10px] text-[var(--exile-color-accent-focus)] tabular-nums" title="一番多いティア (T1 が最高)。数値は品質 (カタリスト) の底上げを抜いた素の値"
               >T{{ mod.usageTier ?? mod.inferredTier }}</span
             >
           </span>
