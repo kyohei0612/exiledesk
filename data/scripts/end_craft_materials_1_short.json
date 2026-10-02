@@ -1,20 +1,19 @@
 {
   "schema": "poe2tube-script/1",
   "title": "【PoE2】消去のオーブを打ちまくっても消えない MOD はどれ？ #Shorts",
-  "target_seconds": 50,
+  "target_seconds": 40,
   "result_file": "data/results/end_craft_materials_1.json",
   "layout": "short",
   "short_title": "最後まで残る MOD は？",
   "demos": {
     "essence": "data/results/end_craft_materials_1__essence.json",
     "annul": "data/results/end_craft_materials_1__annul.json",
-    "annul_plain": "data/results/end_craft_materials_1__annul_plain.json",
     "annul_essence": "data/results/end_craft_materials_1__annul_essence.json"
   },
   "sections": [
     {
       "name": "最後まで残る MOD は？",
-      "target_seconds": 50,
+      "target_seconds": 40,
       "lines": [
         {
           "speaker": "metan",
@@ -22,8 +21,8 @@
           "text": "消去のオーブを打ちまくっても、消えない MOD があるの。どれだと思う？",
           "scene": {
             "kind": "stage",
-            "step": 4,
-            "demo": "annul_plain",
+            "step": 5,
+            "demo": "annul_essence",
             "still": true
           }
         },
@@ -33,66 +32,15 @@
           "text": "そんなのあるのだ？",
           "scene": {
             "kind": "stage",
-            "step": 4,
-            "demo": "annul_plain",
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "まずは、普通の MOD だけのアミュレット。",
-          "scene": {
-            "kind": "stage",
-            "step": 4,
-            "demo": "annul_plain",
-            "still": true
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "ライフの自動回復が消えた。",
-          "scene": {
-            "kind": "stage",
             "step": 5,
-            "demo": "annul_plain"
+            "demo": "annul_essence",
+            "still": true
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "全ての能力値。",
-          "scene": {
-            "kind": "stage",
-            "step": 6,
-            "demo": "annul_plain"
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "最大ライフ。",
-          "scene": {
-            "kind": "stage",
-            "step": 7,
-            "demo": "annul_plain"
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "全ての元素耐性も消えて、全部無くなったわ。",
-          "scene": {
-            "kind": "stage",
-            "step": 8,
-            "demo": "annul_plain"
-          }
-        },
-        {
-          "speaker": "metan",
-          "emotion": "normal",
-          "text": "次は、エッセンスで付けた MOD が入った物。",
+          "text": "まずは、エッセンスで付けた MOD が入ったアミュレット。",
           "scene": {
             "kind": "stage",
             "step": 5,
@@ -174,7 +122,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "最後は、フラクチャーオーブを使った物。",
+          "text": "次は、フラクチャーオーブを使った物。",
           "scene": {
             "kind": "stage",
             "step": 6,
