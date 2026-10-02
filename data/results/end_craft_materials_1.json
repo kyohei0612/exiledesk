@@ -1,6 +1,6 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-02T00:45:51.172Z",
+  "generated_at": "2026-10-02T01:44:54.294Z",
   "exiledesk_version": "0.1.342",
   "patch": "0.5.0",
   "league": null,
@@ -52,7 +52,7 @@
       },
       {
         "currency": "catalyst_life",
-        "times": 1,
+        "times": 27,
         "note": "カタリスト: ライフの MOD を品質で伸ばす"
       }
     ]
@@ -1565,6 +1565,5986 @@
         "subtotal": 10.626000000000001,
         "cumulative": 3665.4640000000004
       }
+    },
+    {
+      "index": 8,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261010,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 1.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 3,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3676.0900000000006
+      }
+    },
+    {
+      "index": 9,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261011,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 3,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 4.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3686.716000000001
+      }
+    },
+    {
+      "index": 10,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261012,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 4.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 6,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3697.342000000001
+      }
+    },
+    {
+      "index": 11,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261013,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 6,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 7.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3707.968000000001
+      }
+    },
+    {
+      "index": 12,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261014,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 7.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 9,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3718.5940000000014
+      }
+    },
+    {
+      "index": 13,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261015,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 9,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 10.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3729.2200000000016
+      }
+    },
+    {
+      "index": 14,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261016,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 10.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 12,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3739.846000000002
+      }
+    },
+    {
+      "index": 15,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261017,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 12,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 13.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3750.472000000002
+      }
+    },
+    {
+      "index": 16,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261018,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 13.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 15,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3761.0980000000022
+      }
+    },
+    {
+      "index": 17,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261019,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 15,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 16.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3771.7240000000024
+      }
+    },
+    {
+      "index": 18,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261020,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 16.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 18,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3782.3500000000026
+      }
+    },
+    {
+      "index": 19,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261021,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 18,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 19.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3792.976000000003
+      }
+    },
+    {
+      "index": 20,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261022,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 19.5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 1,
+        "subtotal": 10.626000000000001,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 21,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261023,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 22,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261024,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 23,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261025,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 24,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261026,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 25,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261027,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 26,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261028,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 27,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261029,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 28,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261030,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 29,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261031,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 30,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261032,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 31,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261033,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 32,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261034,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
+    },
+    {
+      "index": 33,
+      "currency": "catalyst_life",
+      "currency_ja": "肉体のカタリスト",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261035,
+      "applied": false,
+      "reason": "品質が上限 (20%)",
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 20,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": "life",
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +145",
+            "text_en": "+145 to maximum Life",
+            "values": [
+              145
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_LocalMaximumQuality",
+            "family": "LocalMaximumQuality",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 1,
+            "text_ja": "品質の最大値 +20%",
+            "text_en": "+20% to Maximum Quality",
+            "values": [],
+            "ranges": [],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Breach"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/AllAttributes",
+            "family": "AllAttributes",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 66,
+            "text_ja": "全ての能力値 +19",
+            "text_en": "+19 to all Attributes",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                19,
+                20
+              ]
+            ],
+            "fractured": true,
+            "tier_index": 6,
+            "affix": "of the Universe"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 10.626000000000001,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 3803.602000000003
+      }
     }
   ],
   "final": {
@@ -1573,7 +7553,7 @@
     "base_ja": "琥珀のアミュレット",
     "item_level": 82,
     "rarity": "rare",
-    "quality": 1.5,
+    "quality": 20,
     "corrupted": false,
     "identified": true,
     "destroyed": false,
@@ -1671,5 +7651,5 @@
       }
     ]
   },
-  "total_cost": 3665.4640000000004
+  "total_cost": 3803.602000000003
 }

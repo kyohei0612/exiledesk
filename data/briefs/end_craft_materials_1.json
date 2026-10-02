@@ -44,11 +44,12 @@
       },
       {
         "currency": "catalyst_life",
-        "note": "カタリスト: ライフの MOD を品質で伸ばす"
+        "note": "カタリスト: ライフの MOD を品質で伸ばす",
+        "times": 27
       }
     ]
   },
-  "final_step": 7,
+  "final_step": 33,
   "notes": [
     "全 2 本の前編 (前編と言ってよい、kyohei 2026-10-02)。後編 (骨・お告げ) の中身には触れない",
     "各素材を 1 手ずつ実演 (宣言 → 結果)。エッセンスが良い MOD を消したら正直に見せる。グレーターエッセンスは別のアミュレット (demos.essence) で見せる (エッセンスの MOD は 1 つまで)",
@@ -73,6 +74,10 @@
     {
       "title": "PoE2DB: Catalysts",
       "url": "https://poe2db.tw/us/Catalysts"
+    },
+    {
+      "title": "PoE2DB: Amulets (MOD とタグ)",
+      "url": "https://poe2db.tw/us/Amulets#ModifiersCalc"
     }
   ],
   "demos": {
@@ -90,6 +95,61 @@
         {
           "currency": "essence:greater:Amulets/Essence_IncreasedLife",
           "note": "レアにしてライフを確定"
+        }
+      ]
+    },
+    "annul": {
+      "schema": "craft-stage-plan/1",
+      "title": "フラクチャーの後に消去を打ちまくる (固定した MOD は消えない)。6 手目まで本編と同じ",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261002,
+      "steps": [
+        {
+          "currency": "transmute_perfect",
+          "pick": {
+            "mod": "Amulets/AllResistances"
+          },
+          "note": "上位のオーブ: 弱いティアが付かない"
+        },
+        {
+          "currency": "regal_perfect",
+          "pick": {
+            "mod": "Amulets/IncreasedLife"
+          },
+          "note": "完全の王者: レアにして 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: MOD を 4 個に"
+        },
+        {
+          "currency": "essence:breach",
+          "note": "レアに使うエッセンス: 1 個消えて品質の最大値 +20%"
+        },
+        {
+          "currency": "fracture",
+          "note": "MOD が 4 個以上のレアで 1 個を固定"
+        },
+        {
+          "currency": "annul",
+          "note": "固定した MOD は消えない"
+        },
+        {
+          "currency": "annul",
+          "note": "固定した MOD は消えない"
+        },
+        {
+          "currency": "annul",
+          "note": "固定した MOD は消えない"
+        },
+        {
+          "currency": "annul",
+          "note": "固定した MOD は消えない"
         }
       ]
     }
