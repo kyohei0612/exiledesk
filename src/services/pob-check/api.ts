@@ -71,6 +71,8 @@ export interface SlotView {
   jewel: boolean;
   /** 読み込んだ時から変えた */
   changed: boolean;
+  /** 武器の欄だけ: 1 = 1 つ目の武器セット / 2 = 持ち替え */
+  weaponSet?: number;
   item?: ItemView;
 }
 export interface Summary {
@@ -79,6 +81,8 @@ export interface Summary {
   config: { powerCharges: number };
   groups: GroupView[];
   items: SlotView[];
+  /** 今使っている武器セット */
+  weaponSet: number;
 }
 
 const JA = itemsJaClient as Record<string, string>;
@@ -132,3 +136,4 @@ function luaStr(s: string): string {
   while (s.includes(`]${eq}]`)) eq += "=";
   return `[${eq}[${s}]${eq}]`;
 }
+export const setWeaponSet = (n: 1 | 2): Promise<unknown> => evalLua(`return PCK.setWeaponSet(${n})`);

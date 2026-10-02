@@ -127,6 +127,7 @@ function PCK.summary()
   calcs.input.skill_activeNumber = origCalcsActive
   calcs:BuildOutput()
   res.items = PCK.items()
+  res.weaponSet = build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1
   return json.encode(res)
 end
 
@@ -146,10 +147,10 @@ function PCK.items()
     local name = slot.slotName
     local isJewel = slot.nodeId ~= nil
     local show = (not isJewel) or (build.spec.allocNodes[slot.nodeId] ~= nil)
-    -- 武器の持ち替え (Weapon 1 Swap など) は今は出さない
-    if show and not name:find("Swap") then
+    if show then
       local item = it.items[slot.selItemId]
-      local e = { slot = name, jewel = isJewel, changed = PCK.orig[name] ~= nil }
+      -- weaponSet: 武器の持ち替え (Weapon 1 Swap = 2 つ目の武器セット)。使っていない側は計算に入らない
+      local e = { slot = name, jewel = isJewel, changed = PCK.orig[name] ~= nil, weaponSet = slot.weaponSet }
       if item then
         e.item = {
           title = item.title or item.name, base = item.baseName, rarity = item.rarity,
@@ -184,6 +185,14 @@ function PCK.equip(slotName, raw)
     end
   end
   return json.encode({ ok = true, unread = unread })
+end
+
+--- 使う武器セット (1 / 2)。PoB の I / II のボタンと同じ (メインのスキルの組もその武器セットの物に寄せる)
+function PCK.setWeaponSet(n)
+  local c = build.itemsTab.controls
+  local btn = n == 2 and c.weaponSwap2 or c.weaponSwap1
+  btn.onClick()
+  return json.encode({ ok = true })
 end
 
 --- 欄を空にする

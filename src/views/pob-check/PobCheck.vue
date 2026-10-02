@@ -14,7 +14,7 @@ import ItemSlotCard from "./ItemSlotCard.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem } =
+const { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const num = (k: string): number => {
@@ -157,12 +157,24 @@ const resists = computed(() =>
       <!-- 装備 -->
       <h2 class="mb-2 text-sm font-bold text-[var(--exile-color-text-secondary)]">
         装備 <span class="font-normal text-[var(--exile-color-text-tertiary)]">ゲームで Ctrl+C したアイテムを貼ると入れ替えて計算し直します (日本語のままで OK)</span>
+        <span class="ml-3 inline-flex overflow-hidden rounded-md border border-white/10 align-middle text-[11px] font-semibold">
+          <button
+            v-for="n in [1, 2] as const"
+            :key="n"
+            type="button"
+            class="px-2.5 py-0.5"
+            :class="cur.weaponSet === n ? 'bg-sky-500 text-white' : 'text-[var(--exile-color-text-secondary)] hover:bg-white/10'"
+            :disabled="busy"
+            @click="changeWeaponSet(n)"
+          >武器セット {{ n === 1 ? "I" : "II" }}</button>
+        </span>
       </h2>
       <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3 @[100rem]:grid-cols-4">
         <ItemSlotCard
           v-for="s in cur.items"
           :key="s.slot"
           :entry="s"
+          :active-set="cur.weaponSet"
           :disabled="busy"
           @paste="(text, done) => onPaste(s.slot, text, done)"
           @clear="clearItem(s.slot)"

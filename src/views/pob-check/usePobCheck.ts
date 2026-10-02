@@ -6,7 +6,7 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, loadBuild, restore, setGem, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, loadBuild, restore, setGem, setWeaponSet, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { toPobItem } from "../../services/pob-check/item-text";
 
@@ -121,6 +121,11 @@ export function usePobCheck() {
     recordHistory("pob-check", "unequip", { slot });
     await refresh();
   }
+  async function changeWeaponSet(n: 1 | 2): Promise<void> {
+    await run(() => setWeaponSet(n));
+    recordHistory("pob-check", "weapon-set", { n });
+    await refresh();
+  }
   async function restoreItem(slot: string): Promise<void> {
     await run(() => restore(slot));
     recordHistory("pob-check", "restore", { slot });
@@ -135,5 +140,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem };
+  return { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

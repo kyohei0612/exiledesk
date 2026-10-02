@@ -5,10 +5,12 @@
 import { computed, ref, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
-import { linesToJa } from "../../services/pob-check/item-text";
+import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import type { SlotView } from "../../services/pob-check/api";
 
-const props = defineProps<{ entry: SlotView; disabled: boolean }>();
+const props = defineProps<{ entry: SlotView; disabled: boolean; activeSet: number }>();
+/** 今使っていない方の武器セット (計算に入らない) */
+const idle = computed(() => props.entry.weaponSet != null && props.entry.weaponSet !== props.activeSet);
 const emit = defineEmits<{
   (e: "paste", text: string, done: (r: { unread: string[]; notCalculated: string[] } | null, err?: string) => void): void;
   (e: "clear"): void;
@@ -34,7 +36,10 @@ const slotJa = computed(() => {
   const s = props.entry.slot;
   if (props.entry.jewel) return "ジュエル";
   const charm = /^Charm (\d+)$/.exec(s);
-  return charm ? `チャーム ${charm[1]}` : (SLOT_JA[s] ?? s);
+  if (charm) return `チャーム ${charm[1]}`;
+  const swap = /^(Weapon [12]) Swap$/.exec(s);
+  if (swap) return `${SLOT_JA[swap[1]!]} (II)`;
+  return (SLOT_JA[s] ?? s) + (props.entry.weaponSet ? " (I)" : "");
 });
 
 const RARITY_CLS: Record<string, string> = {
@@ -49,7 +54,7 @@ const title = computed(() => {
   const it = props.entry.item;
   if (!it) return "";
   if (it.rarity === "UNIQUE") return JA_UNIQUE[it.title] ?? it.title;
-  if (it.rarity === "RARE") return it.title === "Pasted Item" ? "貼った物" : it.title;
+  if (it.rarity === "RARE") return it.title === "Pasted Item" ? "貼った物" : (rareNameJa(it.title) ?? it.title);
   return JA_BASE[it.base] ?? it.base;
 });
 const baseJa = computed(() => (props.entry.item ? (JA_BASE[props.entry.item.base] ?? props.entry.item.base) : ""));
@@ -97,11 +102,12 @@ function submit(): void {
 </script>
 
 <template>
-  <div class="flex flex-col rounded-xl border p-3" :class="entry.changed ? 'border-amber-400/40 bg-amber-500/[0.05]' : 'border-white/10 bg-white/[0.03]'">
+  <div class="flex flex-col rounded-xl border p-3" :class="[entry.changed ? 'border-amber-400/40 bg-amber-500/[0.05]' : 'border-white/10 bg-white/[0.03]', idle ? 'opacity-50' : '']">
     <div class="flex items-center justify-between gap-2">
       <span class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">
         {{ slotJa }}
         <span v-if="entry.changed" class="ml-1 rounded bg-amber-500/25 px-1.5 py-px text-amber-200">変更中</span>
+        <span v-if="idle" class="ml-1 rounded bg-white/10 px-1.5 py-px">使っていない武器セット</span>
       </span>
       <span class="flex gap-1">
         <button v-if="entry.changed" type="button" class="btn" :disabled="disabled" @click="emit('restore')">元に戻す</button>

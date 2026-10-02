@@ -12,6 +12,7 @@
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
+import rareNamesJa from "../../i18n/rare-names-ja.json";
 import { gemJa } from "./api";
 
 export interface ItemLine {
@@ -148,6 +149,29 @@ function findBase(nameLines: string[]): string | null {
   return best?.[1] ?? null;
 }
 
+const RARE = rareNamesJa as { prefix: Record<string, string>; suffix: Record<string, string> };
+const rarePrefixEn = new Map(Object.entries(RARE.prefix).map(([e, j]) => [j, e]));
+const rareSuffixEn = new Map(Object.entries(RARE.suffix).map(([e, j]) => [j, e]));
+/** レアの名前 英語 → 日本語 ("Vengeance Spur" → "復讐の拍車")。言葉が辞書に無ければ null */
+export function rareNameJa(en: string): string | null {
+  const words = en.split(" ");
+  for (let k = 1; k < words.length; k++) {
+    const p = RARE.prefix[words.slice(0, k).join(" ")];
+    const s = RARE.suffix[words.slice(k).join(" ")];
+    if (p && s) return p + s;
+  }
+  return null;
+}
+/** レアの名前 日本語 → 英語 ("亀裂のあるポスト" → "Rift Post") */
+export function rareNameEn(ja: string): string | null {
+  for (let k = 1; k < ja.length; k++) {
+    const p = rarePrefixEn.get(ja.slice(0, k));
+    const s = rareSuffixEn.get(ja.slice(k));
+    if (p && s) return `${p} ${s}`;
+  }
+  return null;
+}
+
 const RARITY: Record<string, string> = { ノーマル: "Normal", マジック: "Magic", レア: "Rare", ユニーク: "Unique" };
 const NOTE_KIND: Array<[RegExp, ItemLine["kind"]]> = [
   [/implicit|固有|暗黙/i, "implicit"],
@@ -218,7 +242,8 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
   });
 
   const uniqueName = rarity === "Unique" ? uniqueEnByJa.get(nameLines[0] ?? "") ?? nameLines[0] : null;
-  const name = rarity === "Rare" || rarity === "Unique" ? (uniqueName ?? "Pasted Item") : base;
+  const rareName = rarity === "Rare" ? rareNameEn(nameLines[0] ?? "") : null;
+  const name = rarity === "Rare" || rarity === "Unique" ? (uniqueName ?? rareName ?? "Pasted Item") : base;
   const implicitLike = lines.filter((l) => l.kind !== "explicit");
   const out = [`Rarity: ${rarity}`, name];
   if (name !== base) out.push(base);

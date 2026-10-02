@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { linesToJa, toPobItem } from "../src/services/pob-check/item-text";
+import { linesToJa, rareNameEn, rareNameJa, toPobItem } from "../src/services/pob-check/item-text";
 
 const NL = String.fromCharCode(10);
 
@@ -33,7 +33,7 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
     expect(it.base).toBe("Aegis Quarterstaff");
     expect(it.unread).toEqual([]);
     const lines = it.text.split(NL);
-    expect(lines.slice(0, 6)).toEqual(["Rarity: Rare", "Pasted Item", "Aegis Quarterstaff", "Item Level: 83", "Quality: 20", "Implicits: 1"]);
+    expect(lines.slice(0, 6)).toEqual(["Rarity: Rare", "Rift Post", "Aegis Quarterstaff", "Item Level: 83", "Quality: 20", "Implicits: 1"]);
     expect(lines).toContain("Adds 150 to 221 Fire Damage");
     expect(lines).toContain("Adds 6 to 342 Lightning Damage");
     expect(lines).toContain("+5 to Level of all Melee Skills");
@@ -52,5 +52,41 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
   it("PoB の英語の行を日本語で出す", async () => {
     const ja = await linesToJa(["Adds 150 to 221 Fire Damage", "+5 to Level of all Melee Skills", "+17% Chance to Block", "no such line"]);
     expect(ja).toEqual(["150から221の火ダメージを追加する", "全ての近接スキルのレベル +5", "ブロック率 +17%", "no such line"]);
+  });
+
+  it("レアの名前 (Words の前の言葉 + 後ろの言葉)", () => {
+    expect(rareNameJa("Vengeance Spur")).toBe("復讐の拍車");
+    expect(rareNameJa("Brood Gorget")).toBe("思案する喉当て");
+    expect(rareNameEn("亀裂のあるポスト")).toBe("Rift Post");
+  });
+
+  // 日本語クライアントでも行末の注記は英語 (Exiled Exchange 2 の Parser: " (implicit)" " (rune)" などは言語共通)
+  it("注記つき (implicit / rune) の日本語の行", async () => {
+    const text = [
+      "アイテムクラス: 兜",
+      "レアリティ: レア",
+      "復讐の拍車",
+      "ルーンマスターの装甲帽子",
+      "--------",
+      "アイテムレベル: 80",
+      "--------",
+      "最大ライフ +30 (rune)",
+      "--------",
+      "回避力が98%増加する (implicit)",
+      "--------",
+      "最大マナ +136",
+      "冷気耐性 +58%",
+      "--------",
+      "コラプト状態",
+    ].join(NL);
+    const it = await toPobItem(text);
+    expect(it.unread).toEqual([]);
+    expect(it.lines.map((l) => l.kind)).toEqual(["rune", "implicit", "explicit", "explicit"]);
+    const lines = it.text.split(NL);
+    expect(lines).toContain("Implicits: 2");
+    expect(lines).toContain("{rune}+30 to maximum Life");
+    expect(lines).toContain("98% increased Evasion Rating");
+    expect(lines).toContain("+136 to maximum Mana");
+    expect(lines.at(-1)).toBe("Corrupted");
   });
 });
