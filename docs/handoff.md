@@ -4,8 +4,8 @@
 
 ## 5 本目 (2026-10-02): 「エンドのクラフト素材 前編」(end_craft_materials_1) — 予約済み
 
-- 本編 (8GGUloinfis) + ショート「最後まで残る MOD は？」(uqpba1P1cx8) を **2026-10-02 22:00 公開で予約**。サムネは scripts/thumbs/end_craft_materials_1.py の土台に kyohei が文字を入れた物 (付け済み)
-- **残り: ショートの関連動画に本編を指定** (予約中は Studio の候補に出ないので 22:00 の後に Claude in Chrome で)。X の宣伝は kyohei
+- 本編 (8GGUloinfis) + ショート「最後まで残る MOD は？」(uqpba1P1cx8) を **2026-10-02 20:37 に公開** (予約から早めた)。サムネは scripts/thumbs/end_craft_materials_1.py の土台に kyohei が文字を入れた物 (付け済み)
+- ショートの関連動画は本編を指定済み (公開後に Chrome で)。X の宣伝は kyohei
 - 撮影用 ExileDesk は v0.1.345 (CAPTURE_VER v23-materials)。㉔ (下限 floor / タグ tags / 品質で伸びる数値 / フラクチャーの名前) は取り込み済み
 - 新しい台本の道具: scene.kind = icons / table (panel)、tiers の floor、stage の tags / still (打つ演出を流さず姿だけ)。ショートは 1 本・1 分前後か未満
 - 次: 後編 (骨・お告げ)。_facts.md の「骨 (冒涜)」「消去のオーブ」は前編で足した所まで。お告げは未調査
