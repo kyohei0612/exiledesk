@@ -62,9 +62,8 @@ def stage_hit(prev: Line | None, cur: Line, shown: set[HitKey] | None = None) ->
     sc = cur.scene
     if sc.kind != "stage" or not sc.step or (shown is not None and (sc.demo, sc.step) in shown):
         return False
-    if (
-        sc.focus is not None
-    ):  # スポットライトは「見る」行。打つ演出は流さない (2026-09-29 テストで発覚)
+    if sc.focus is not None or sc.tags:
+        # スポットライト・タグの札は「見る」行。打つ演出は流さない (2026-09-29 / 10-02 テストで発覚)
         return False
     if prev is None or prev.scene.kind != "stage":
         return True

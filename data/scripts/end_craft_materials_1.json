@@ -101,7 +101,7 @@
           "text": "今回はその前編。そのうち 4 つを使って、アミュレットを 1 つ作っていくわ。",
           "scene": {
             "kind": "item",
-            "step": 6
+            "step": 33
           }
         },
         {
@@ -110,7 +110,7 @@
           "text": "これが完成品なのだ？",
           "scene": {
             "kind": "item",
-            "step": 6
+            "step": 33
           }
         },
         {
@@ -962,8 +962,7 @@
           "text": "全ての能力値 +19 が固定されたわ。色が変わったのが固定の印よ。",
           "scene": {
             "kind": "stage",
-            "step": 6,
-            "focus": "AllAttributes"
+            "step": 6
           }
         },
         {
@@ -972,7 +971,8 @@
           "text": "ライフか耐性が良かったのだ……。",
           "scene": {
             "kind": "stage",
-            "step": 6
+            "step": 6,
+            "focus": "AllAttributes"
           }
         },
         {

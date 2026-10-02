@@ -105,3 +105,13 @@ def test_floor_and_tags_only_on_their_views() -> None:
         Scene(kind="stage", step=1, floor=50)
     with pytest.raises(ValueError):
         Scene(kind="item", step=1, tags=True)
+
+
+def test_tags_line_is_a_look_line() -> None:
+    from poe2tube.video.clip_timing import stage_hit
+
+    talk = Line(speaker="metan", text="あ", scene=Scene(kind="icons", panel=Panel(icons=["exalt"])))
+    look = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=6, tags=True))
+    hit = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=6))
+    assert not stage_hit(talk, look)
+    assert stage_hit(talk, hit)
