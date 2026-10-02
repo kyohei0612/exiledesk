@@ -124,3 +124,10 @@ def test_still_line_shows_without_hit() -> None:
     assert not stage_hit(None, still)
     with pytest.raises(ValueError):
         Scene(kind="item", step=1, still=True)
+
+
+def test_short_wrap_keeps_ascii_words() -> None:
+    from poe2tube.render.short_frame import wrap_text
+
+    rows = wrap_text("まずは、エッセンスで付けた MOD が入ったアミュレット。", 14)
+    assert all("M" not in r or "MOD" in r for r in rows)

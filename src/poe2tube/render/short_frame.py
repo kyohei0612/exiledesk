@@ -39,6 +39,22 @@ def _break_points(rest: str, cut: int) -> list[list[int]]:
     return [punct, particle]
 
 
+def _not_in_word(rest: str, cut: int) -> int:
+    """英字・数字の並び (MOD・T1 等) の途中では折らない。並びの前か後の近い方へずらす."""
+
+    def word(ch: str) -> bool:
+        return ch.isascii() and (ch.isalnum() or ch in "+-%.")
+
+    if not 0 < cut < len(rest) or not (word(rest[cut - 1]) and word(rest[cut])):
+        return cut
+    start, end = cut, cut
+    while start > 0 and word(rest[start - 1]):
+        start -= 1
+    while end < len(rest) and word(rest[end]):
+        end += 1
+    return start if start > 0 and cut - start <= end - cut else end
+
+
 def wrap_text(text: str, width: int = WRAP, max_rows: int = 3) -> list[str]:
     """だいたい同じ長さの行に割る。句読点か助詞の後で折り、行頭に句読点を置かない."""
     text = text.strip()
@@ -56,6 +72,7 @@ def wrap_text(text: str, width: int = WRAP, max_rows: int = 3) -> list[str]:
             if fit:
                 cut = min(fit, key=lambda i: abs(i - target))
                 break
+        cut = _not_in_word(rest, cut)
         while cut < len(rest) and rest[cut] in PUNCT + "）」":
             cut += 1  # 行頭に句読点を置かない
         out.append(rest[:cut])
