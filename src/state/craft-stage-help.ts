@@ -177,7 +177,8 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
   if (key.startsWith("catalyst_")) {
     const max = item ? maxQualityOf(item) : 20;
     return [
-      "**指輪・アミュレット** に品質を +1.5% (計算機と同じ)。上限はこのベースで " + `${max}%`,
+      // 上限はベースの最大品質 + MOD の「品質の最大値 +N%」(ブリーチのエッセンス) なので「このベースで」ではなく「今のアイテムで」
+      "**指輪・アミュレット** に品質を +1.5% (計算機と同じ)。上限は今のアイテムで " + `${max}%`,
       "品質の種類はカタリストで決まる。**別の種類を使うと品質は 0 からやり直し**",
       "触媒の高貴のお告げと組むと、その種類の MOD が付きやすくなる (品質は使い切る)",
     ];

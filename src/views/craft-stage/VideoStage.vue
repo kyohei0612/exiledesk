@@ -63,6 +63,11 @@ async function fitClip(): Promise<void> {
 }
 const tape = [...s.log.value];
 const start = tape[0]?.before ?? s.item.value!;
+/**
+ * アイテムの札に渡す物のうち、本物と計測用で同じでないといけない物 (compact / 札 / スポットライト)。
+ * 計測用に show-tags を渡し忘れると札の分だけ本物が高くなり、決めた倍率で下 15% を侵す (POE2Tube 要望 ㉔ の差分) ので 1 つにまとめる
+ */
+const cardCommon = computed(() => ({ holding: false, compact: clip.value, focus: craftStage.focus.value, showTags: craftStage.showTags.value }));
 const idx = ref(Math.min(opts.from, tape.length));
 const playing = ref(false);
 const speed = ref(1);
@@ -223,7 +228,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
           <!-- PoB の DPS (要望 ⑰-3、URL の stage-pob= がある時だけ) -->
           <VideoPob v-if="craftStage.pob.value && clip" :pob="craftStage.pob.value" :idx="idx" />
           <div ref="cardEl" class="relative origin-top" :class="[clip ? '' : 'scale-[1.3]', fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
-            <StageItemCard :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :holding="false" :flash-key="idx" :compact="clip" :focus="craftStage.focus.value" :show-tags="craftStage.showTags.value" />
+            <StageItemCard v-bind="cardCommon" :item="item" :added="last?.added ?? []" :removed="last?.removed ?? []" :flash-key="idx" />
             <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : ['text-2xl', clip ? 'stage-float-in' : '']">{{ fx.text }}</span>
           </div>
           <VideoTray v-if="clip" inline glow :counts="item.shards" :height="clipMaxH" :keys="trayKeys" :omens="trayOmens" :held="hand.hand.held" :armed="hand.armed.value" :spent="hand.spent.value" :slots="hand.slots" />
@@ -232,7 +237,7 @@ const btn = "rounded-lg border border-white/25 bg-black/60 px-3 py-1.5 hover:bg-
         <!-- 撮影用の倍率を決めるため、全部の段階のアイテムを見えない所に並べて高さを測る (測ったら消す) -->
         <div v-if="clip && !clipMaxH" class="pointer-events-none invisible absolute left-0 top-0" aria-hidden="true">
           <div v-for="(m, i) in measureStates" :key="i" :ref="(el) => { if (el) measureEls[i] = el as HTMLElement; }">
-            <StageItemCard :item="m.item" :added="[]" :removed="m.removed" :holding="false" :flash-key="0" compact />
+            <StageItemCard v-bind="cardCommon" :item="m.item" :added="[]" :removed="m.removed" :flash-key="0" />
           </div>
         </div>
 

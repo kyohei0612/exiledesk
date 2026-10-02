@@ -6,41 +6,21 @@ import { computed, ref, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
+import { slotJa as slotJaOf } from "../../services/pob-check/slots";
 import type { SlotView } from "../../services/pob-check/api";
+import type { PasteNote } from "./usePobCheck";
 
 const props = defineProps<{ entry: SlotView; disabled: boolean; activeSet: number }>();
 /** 今使っていない方の武器セット (計算に入らない) */
 const idle = computed(() => props.entry.weaponSet != null && props.entry.weaponSet !== props.activeSet);
 const emit = defineEmits<{
-  (e: "paste", text: string, done: (r: { unread: string[]; notCalculated: string[] } | null, err?: string) => void): void;
+  (e: "paste", text: string, done: (r: PasteNote | null, err?: string) => void): void;
   (e: "clear"): void;
   (e: "restore"): void;
 }>();
 
-const SLOT_JA: Record<string, string> = {
-  "Weapon 1": "武器",
-  "Weapon 2": "オフハンド",
-  Helmet: "兜",
-  "Body Armour": "胴",
-  Gloves: "手袋",
-  Boots: "靴",
-  Amulet: "アミュレット",
-  "Ring 1": "指輪 (左)",
-  "Ring 2": "指輪 (右)",
-  "Ring 3": "指輪 3",
-  Belt: "ベルト",
-  "Flask 1": "ライフフラスコ",
-  "Flask 2": "マナフラスコ",
-};
-const slotJa = computed(() => {
-  const s = props.entry.slot;
-  if (props.entry.jewel) return "ジュエル";
-  const charm = /^Charm (\d+)$/.exec(s);
-  if (charm) return `チャーム ${charm[1]}`;
-  const swap = /^(Weapon [12]) Swap$/.exec(s);
-  if (swap) return `${SLOT_JA[swap[1]!]} (II)`;
-  return (SLOT_JA[s] ?? s) + (props.entry.weaponSet ? " (I)" : "");
-});
+// 欄の日本語の表は services/pob-check/slots.ts に 1 つ (変更の記録と同じ言葉にする)
+const slotJa = computed(() => slotJaOf(props.entry.slot, { jewel: props.entry.jewel, weaponSet: props.entry.weaponSet }));
 
 const RARITY_CLS: Record<string, string> = {
   UNIQUE: "text-orange-300",
@@ -78,7 +58,7 @@ watch(
 const open = ref(false);
 const text = ref("");
 const working = ref(false);
-const note = ref<{ unread: string[]; notCalculated: string[] } | null>(null);
+const note = ref<PasteNote | null>(null);
 const err = ref("");
 // 元に戻したら、差し替えた時の注意は消す
 watch(
@@ -138,9 +118,10 @@ function submit(): void {
       </div>
     </div>
     <p v-if="err" class="mt-2 rounded bg-rose-500/10 px-2 py-1 text-[11px] text-rose-300">{{ err }}</p>
-    <div v-if="note && (note.unread.length || note.notCalculated.length)" class="mt-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+    <div v-if="note && (note.unread.length || note.notCalculated.length || note.warnings.length)" class="mt-2 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
       <p v-if="note.unread.length">英語にできず入れていない行: {{ note.unread.join(" / ") }}</p>
       <p v-if="note.notCalculated.length">PoB が計算しない行: {{ note.notCalculated.join(" / ") }}</p>
+      <p v-for="w in note.warnings" :key="w">{{ w }}</p>
     </div>
   </div>
 </template>

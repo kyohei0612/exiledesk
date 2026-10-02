@@ -3,7 +3,7 @@
  *
  * オーナー:「カレンシーっていうかクラフトに使える奴全部だねこのステージは」。
  * ここはオーブ (変成 / 増強 / 王者 / 錬金 / 高貴 / カオス / 消去) とそれに掛かるお告げ、そして他の物への振り分け:
- *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / 破砕 / カタリスト / アーティファサー → [[apply-other.ts]]、
+ *   エッセンス → [[apply-essence.ts]]、骨と開示 → [[apply-desecrate.ts]]、神 / フラクチャー / カタリスト / アーティファサー → [[apply-other.ts]]、
  *   ヴァールと聖別 → [[apply-vaal.ts]]
  * 規則は計算機 (sim-route-helpers.ts の roll / usable / apply、エンジンの probability.ts) と同じ:
  *   - 足す MOD は、その側の普通の MOD の置き場から、**付いている系統を除き**、アイテムレベル以下 (上級・完全は段の下限以上) の段の重みで引く
@@ -128,7 +128,7 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   if (kind === "desecrate") return applyBone(data, item, currency, rng, used);
   if (kind === "reveal") return applyReveal(data, item, currency, rng, used);
   if (kind === "vaal") return applyVaal(data, item, rng, used);
-  if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(item, rng);
+  if (kind === "divine" && used.includes("OmenofSanctification")) return applySanctify(data, item, rng);
   if (kind === "catalyst" || OTHER_KINDS.includes(kind)) return applyOther(data, item, currency, rng);
 
   const { strength } = parseKey(currency);

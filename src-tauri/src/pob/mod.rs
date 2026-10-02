@@ -77,5 +77,57 @@ fn inflate_raw_lenient(compressed: &[u8]) -> Option<String> {
         }
     }
     let xml = String::from_utf8_lossy(&buf).into_owned();
-    xml.trim_end().ends_with("</PathOfBuilding2>").then_some(xml)
+    // 根が PoE2 の PoB で、かつ閉じタグまで読めている (途中で切れた物は使わない)
+    (check_pob2_xml(&xml).is_ok() && xml.trim_end().ends_with("</PathOfBuilding2>")).then_some(xml)
+}
+
+/// 貼られた XML が PoE2 の PoB のビルドか (根の要素が `<PathOfBuilding2>`) を Rust 側で確かめる (2026-10-02)。
+///
+/// PoB の `loadBuildFromXML` → `LoadDB` は根が違うと `ShowErrMsg` + `CloseBuild` で**黙って**空のビルドに戻る
+/// (vendor/PathOfBuilding-PoE2/src/Modules/Build.lua の LoadDB)。ヘッドレスでは ShowErrMsg が画面に出ないので、
+/// PoE1 のコード (根が `<PathOfBuilding>`) や PoB でない XML を貼っても「読み込み成功」になっていた。
+/// `pob_load_build_code` の decode 後・`pob_load_saved_build` の読み込み後・`inflate_raw_lenient` の 3 箇所で使う
+pub fn check_pob2_xml(xml: &str) -> Result<(), String> {
+    let mut rest = xml.trim_start_matches('\u{feff}').trim_start();
+    // 先頭の <?xml ...?> 宣言とコメントは読み飛ばす
+    loop {
+        if rest.starts_with("<?") {
+            let Some(end) = rest.find("?>") else { break };
+            rest = rest[end + 2..].trim_start();
+        } else if rest.starts_with("<!--") {
+            let Some(end) = rest.find("-->") else { break };
+            rest = rest[end + 3..].trim_start();
+        } else {
+            break;
+        }
+    }
+    let Some(tag) = rest.strip_prefix('<') else {
+        return Err("PoB のビルドではありません (XML ではない物を貼っています)".into());
+    };
+    let name: String = tag.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == ':').collect();
+    match name.as_str() {
+        "PathOfBuilding2" => Ok(()),
+        // PoE1 の PoB は根が <PathOfBuilding>。PoE2 の PoB では読めない
+        "PathOfBuilding" => Err("PoE1 の PoB コードです (PoE2 の PoB のコードを貼ってください)".into()),
+        _ => Err(format!("PoB のビルドではありません (根の要素: <{}>)", name.chars().take(40).collect::<String>())),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_pob2_xml_accepts_poe2_root() {
+        assert!(check_pob2_xml("<PathOfBuilding2><Build/></PathOfBuilding2>").is_ok());
+        assert!(check_pob2_xml("\u{feff}<?xml version=\"1.0\"?>\n<PathOfBuilding2>\n</PathOfBuilding2>").is_ok());
+    }
+
+    #[test]
+    fn check_pob2_xml_rejects_poe1_and_others() {
+        assert!(check_pob2_xml("<PathOfBuilding><Build/></PathOfBuilding>").unwrap_err().contains("PoE1"));
+        assert!(check_pob2_xml("<html></html>").unwrap_err().contains("PoB のビルドではありません"));
+        assert!(check_pob2_xml("ただの文").is_err());
+        assert!(check_pob2_xml("").is_err());
+    }
 }

@@ -8,12 +8,18 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vu
 import passivesJa from "../../i18n/passives-ja-client.json";
 import { linesToJa } from "../../services/pob-check/item-text";
 import { gemJa, type TreeNode, type TreeState } from "../../services/pob-check/api";
+import { toCss } from "../../utils/zoom";
 import type { NodePower } from "./usePobCheck";
 
 const props = defineProps<{
   nodes: TreeNode[];
   state: TreeState;
   baseAlloc?: number[];
+  /**
+   * 読み込みの合図。これが変わった時 (と最初の 1 回) だけ「取っている所に合わせる」を自動でやる。
+   * ノードを取る / 外すたびに nodes が差し替わっても表示位置・倍率は保つ (無い時は最初の 1 回だけ)
+   */
+  fitKey?: number;
   /** ノードの火力への寄与 (計算した時の物)。stale = その後にビルドを変えた */
   power?: { label: string; nodes: Map<number, NodePower>; stale: boolean } | null;
   powerProgress?: string;
@@ -56,7 +62,8 @@ const progressLabel = computed(() => {
 });
 
 const JA = passivesJa as Record<string, string>;
-const nameJa = (n: string): string => (n === "Jewel Socket" ? "ジュエルソケット" : (JA[n] ?? n));
+// 名前の無いノード (n が undefined) があるので、"undefined" が混ざらないよう空文字にする
+const nameJa = (n: string | undefined): string => (!n ? "" : n === "Jewel Socket" ? "ジュエルソケット" : (JA[n] ?? n));
 /** 名前 (ジュエルの穴は入っているジュエルの名前も) */
 const nodeLabel = (n: TreeNode): string => {
   const j = n.t === "J" ? props.state.jewels.find((x) => x.id === n.id) : undefined;
@@ -64,9 +71,11 @@ const nodeLabel = (n: TreeNode): string => {
 };
 /**
  * 条件つきの効果 (直近〜していれば・〜中・エネルギー・トリガー など)。
- * PoB は設定 (Config) でその条件をオフにしているか、そもそも計算しない (メタスキルのエネルギー) ので 0 と出るが、ゲームでは効いていることがある
+ * PoB は設定 (Config) でその条件をオフにしているか、そもそも計算しない (メタスキルのエネルギー) ので 0 と出るが、ゲームでは効いていることがある。
+ * 「per 」は入れない: 「per Power Charge」「per 10 Strength」は PoB が設定のチャージ数・能力値で計算するので、0 なら本当に効いていない。
+ * 「duration」も入れない: 持続時間は DPS に効かないので 0 が正しい (条件つきではない)
  */
-const CONDITIONAL = /recently|if you|if an?|while|when |during|energy|meta skill|trigger|consum|duration|on kill|on hit|for each|per /i;
+const CONDITIONAL = /recently|if you|if an?|while|when |during|energy|meta skill|trigger|consum|on kill|on hit|for each/i;
 const isConditional = (n: TreeNode): boolean => (n.sd ?? []).some((l) => CONDITIONAL.test(l));
 
 const wrap = ref<HTMLDivElement | null>(null);
@@ -74,6 +83,8 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const size = ref({ w: 800, h: 600 });
 /** 画面の点 = (世界の点 - 中心) × 倍率 + 画面の中心 */
 const view = ref({ cx: 0, cy: 0, k: 0.02 });
+/** 最初の自動の合わせが済んだか (枠の実サイズが分かっている状態で合わせた時だけ true)。下の watch (immediate) より先に宣言しておく */
+let fitted = false;
 
 const byId = computed(() => new Map(props.nodes.map((n) => [n.id, n])));
 const alloc = computed(() => new Set(props.state.alloc));
@@ -84,24 +95,44 @@ const query = ref("");
 /** 検索に当たったノード (名前・効果の日本語/英語) */
 const hits = shallowRef<Set<number>>(new Set());
 const sdJa = shallowRef<Map<number, string[]>>(new Map());
+/** 前回に日本語にした時の効果の文 (id → sd の join)。同じなら訳し直さない */
+let sdKey = new Map<number, string>();
+let translateSeq = 0;
 watch(
   () => props.nodes,
   async (nodes) => {
-    // 効果の日本語は 1 回だけ作る (検索と乗せた時の説明に使う)
-    const m = new Map<number, string[]>();
-    const all = nodes.flatMap((n) => n.sd ?? []);
-    const ja = await linesToJa(all);
-    let i = 0;
+    // 効果の日本語 (検索と乗せた時の説明に使う)。ノードを取る / 外すたびに配列が差し替わるので、
+    // 全ノードを毎回訳し直すと重い → 効果の文が前回と同じノードは前回の訳をそのまま使い、変わった物だけ訳す
+    const seq = ++translateSeq;
+    const prev = sdJa.value;
+    const nextKey = new Map<number, string>();
+    const todo: TreeNode[] = [];
     for (const n of nodes) {
+      const key = (n.sd ?? []).join("\n");
+      nextKey.set(n.id, key);
+      if (sdKey.get(n.id) !== key || !prev.has(n.id)) todo.push(n);
+    }
+    const ja = todo.length ? await linesToJa(todo.flatMap((n) => n.sd ?? [])) : [];
+    // 訳している間に配列がまた差し替わっていたら、こちらの結果は捨てる (新しい方が入れる)
+    if (seq !== translateSeq) return;
+    const m = new Map<number, string[]>();
+    let i = 0;
+    const fresh = new Map<number, string[]>();
+    for (const n of todo) {
       const k = n.sd?.length ?? 0;
-      m.set(n.id, ja.slice(i, i + k));
+      fresh.set(n.id, ja.slice(i, i + k));
       i += k;
     }
+    for (const n of nodes) m.set(n.id, fresh.get(n.id) ?? prev.get(n.id) ?? []);
+    sdKey = nextKey;
     sdJa.value = m;
-    fit();
+    // 合わせるのは読み込みの時 (fitKey が変わった時) と最初の 1 回だけ。それ以外は今の表示位置・倍率のまま描き直す
+    if (!fitted) fit();
+    else draw();
   },
   { immediate: true },
 );
+watch(() => props.fitKey, (k, old) => { if (k !== old) fit(); });
 watch([query, sdJa], () => {
   const q = query.value.trim().toLowerCase();
   if (!q) { hits.value = new Set(); draw(); return; }
@@ -116,10 +147,16 @@ watch([query, sdJa], () => {
 
 /** 取っているノードが入るように合わせる (無ければ全体) */
 function fit(): void {
+  // 枠の実サイズを先に読む。ResizeObserver より先に (タブを 2 回目に開いた時など) 呼ばれると size が初期値 (800×600) のままで、
+  // 倍率が合わない。サイズが取れない間 (マウント前) は fitted にせず、ResizeObserver の最初の回でもう 1 度合わせる
+  const el = wrap.value;
+  const sized = !!el && el.clientWidth > 0 && el.clientHeight > 0;
+  if (sized) size.value = { w: el.clientWidth, h: el.clientHeight };
   // アセンダンシーは離れた所に描かれるので、合わせる時は本体だけ
   const pts = props.nodes.filter((n) => alloc.value.has(n.id) && !n.a && n.t !== "A");
   const use = pts.length > 5 ? pts : props.nodes;
   if (!use.length) return;
+  if (sized) fitted = true;
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const n of use) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); }
   const pad = 1500;
@@ -258,10 +295,17 @@ function draw(): void {
 // ---- 操作 ----
 let drag: { x: number; y: number; cx: number; cy: number; moved: boolean } | null = null;
 const hover = ref<{ node: TreeNode; x: number; y: number } | null>(null);
-function onWheel(e: WheelEvent): void {
+/**
+ * マウスの位置 → キャンバスの中の CSS ピクセル。
+ * アプリ全体に CSS zoom (App.vue の fitZoom) が掛かっているので、clientX/Y と getBoundingClientRect() は実ピクセル、
+ * size (clientWidth/Height) と描画の座標は CSS ピクセル。そのまま引くと拡大率ぶんずれるので toCss で揃える
+ */
+function mousePos(e: MouseEvent): [number, number] {
   const rect = canvas.value!.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  return [toCss(e.clientX - rect.left), toCss(e.clientY - rect.top)];
+}
+function onWheel(e: WheelEvent): void {
+  const [mx, my] = mousePos(e);
   const { cx, cy, k } = view.value;
   const wx = (mx - size.value.w / 2) / k + cx;
   const wy = (my - size.value.h / 2) / k + cy;
@@ -274,17 +318,20 @@ function onDown(e: MouseEvent): void {
   drag = { x: e.clientX, y: e.clientY, cx: view.value.cx, cy: view.value.cy, moved: false };
 }
 function onMove(e: MouseEvent): void {
-  const rect = canvas.value!.getBoundingClientRect();
-  if (drag && (drag.moved || Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4)) {
-    drag.moved = true;
-    const k = view.value.k;
-    view.value = { k, cx: drag.cx - (e.clientX - drag.x) / k, cy: drag.cy - (e.clientY - drag.y) / k };
-    hover.value = null;
-    draw();
-    return;
+  if (drag) {
+    // ドラッグの移動量も実ピクセル → CSS ピクセル (zoom を考えないと動かした分より多く / 少なく動く)
+    const dx = toCss(e.clientX - drag.x);
+    const dy = toCss(e.clientY - drag.y);
+    if (drag.moved || Math.abs(dx) + Math.abs(dy) > 4) {
+      drag.moved = true;
+      const k = view.value.k;
+      view.value = { k, cx: drag.cx - dx / k, cy: drag.cy - dy / k };
+      hover.value = null;
+      draw();
+      return;
+    }
   }
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const [mx, my] = mousePos(e);
   let best: TreeNode | null = null;
   let bd = Infinity;
   for (const n of props.nodes) {
@@ -316,7 +363,9 @@ onMounted(() => {
     const el = wrap.value;
     if (!el) return;
     size.value = { w: el.clientWidth, h: el.clientHeight };
-    draw();
+    // 実サイズを知る前に合わせていた (マウント前にノードが来た) 時は、ここで最初の合わせをやり直す
+    if (!fitted && props.nodes.length) fit();
+    else draw();
   });
   if (wrap.value) ro.observe(wrap.value);
   window.addEventListener("mouseup", onUp);
@@ -327,7 +376,12 @@ onBeforeUnmount(() => {
 });
 watch(() => [props.state, props.baseAlloc, props.power], draw);
 
-const pct = (v: number): string => `${v >= 0 ? "−" : "+"}${Math.abs(v * 100).toFixed(v !== 0 && Math.abs(v) < 0.01 ? 2 : 1)}%`;
+/** 外した時の DPS の差 (loss > 0 = 下がる → −)。差が無い (丸めて 0) 時は「−0.0%」ではなく「±0.0%」 */
+const pct = (v: number): string => {
+  const s = Math.abs(v * 100).toFixed(v !== 0 && Math.abs(v) < 0.01 ? 2 : 1);
+  const sign = Number(s) === 0 ? "±" : v > 0 ? "−" : "+";
+  return `${sign}${s}%`;
+};
 /** 寄与の順位 (本体の取っているノードだけ。始点とアセンダンシーは外せないので除く) */
 const ranking = computed(() => {
   const empty = { top: [] as Array<{ n: TreeNode; p: NodePower }>, idle: [] as Array<{ n: TreeNode; p: NodePower }>, cond: [] as Array<{ n: TreeNode; p: NodePower }> };

@@ -17,7 +17,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { socketCapOf } from "./stage-runes";
 import vaal from "../../i18n/vaal-enchants.json";
-import { addOne, allMods, replaced, skip, without } from "./stage-core";
+import { addOne, allMods, replaced, retext, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 
@@ -50,7 +50,7 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
     ({ applied: true, item: { ...it, corrupted: true }, added, removed });
   switch (outcome) {
     case "reroll": {
-      // 最大 3 つ (1〜3 を等分。破砕・未開示は振り直さない)。消した側に新しい MOD を 1 つずつ
+      // 最大 3 つ (1〜3 を等分。フラクチャー・未開示は振り直さない)。消した側に新しい MOD を 1 つずつ
       const pool = allMods(item).filter((m) => !m.fractured && !m.unrevealed);
       const n = Math.min(pool.length, 1 + Math.floor(rng() * 3));
       let cur = item;
@@ -86,8 +86,8 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
   }
 }
 
-/** 聖別: MOD ごとに 0.78〜1.22 倍して丸める */
-export function applySanctify(item: StageItem, rng: () => number): StageApply {
+/** 聖別: MOD ごとに 0.78〜1.22 倍して丸める。文は stage-core の retext (雛形の「#」の位置だけ変える。カタリストの品質と同じ道) */
+export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply {
   if (item.rarity !== "rare") return skip(item, "聖別はレアのアイテムにだけ");
   const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed);
   let cur = item;
@@ -96,14 +96,9 @@ export function applySanctify(item: StageItem, rng: () => number): StageApply {
     const k = (78 + Math.floor(rng() * 45)) / 100;
     const digits = (v: number) => (Number.isInteger(v) ? 0 : 2);
     const values = m.values.map((v) => { const d = 10 ** digits(v); return Math.round(v * k * d) / d; });
-    const next = { ...m, values, textJa: swapNums(m.textJa, m.values, values), textEn: swapNums(m.textEn, m.values, values) };
+    const next = { ...m, values, ...retext(m, values, data) };
     cur = replaced(cur, m, next);
     added.push(next);
   }
   return { applied: true, item: { ...cur, sanctified: true }, added, removed: mods };
-}
-/** 文面の数値を順に差し替える (値の並びと同じ順で出てくる物だけ) */
-function swapNums(text: string, from: readonly number[], to: readonly number[]): string {
-  let i = 0;
-  return text.replace(/\d+(?:\.\d+)?/g, (s) => (i < from.length && Number(s) === Math.abs(from[i]!) ? String(Math.abs(to[i++]!)) : s));
 }

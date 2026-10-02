@@ -3,10 +3,16 @@
   2026-10-02 見直し: サポートジェムはレベル・品質を変えない (出さない)、コラプトは「素」ではなく「コラプト +1」、組のオン・オフはスイッチ
 -->
 <script setup lang="ts">
-import { gemJa, type GroupView } from "../../services/pob-check/api";
+import { gemJa, type GemView, type GroupView } from "../../services/pob-check/api";
 
 /** ± のボタン */
 const step = "h-5 w-5 rounded bg-white/5 text-[12px] leading-none text-[var(--exile-color-text-secondary)] hover:bg-white/15 disabled:opacity-30";
+/**
+ * レベルの上限: PoB のジェムの最大レベル (pck.lua の gemInfo。本家 validateGemLevel が丸める上限と同じ)。
+ * コラプトの +1 はこの上とは別に乗る (PoB も「レベル」と「コラプトの +レベル」は別の欄) ので、ここでは素のレベルだけ見る
+ */
+const maxLevelOf = (g: GemView): number => g.maxLevel || 40;
+const MAX_QUALITY = 23;
 
 defineProps<{ group: GroupView; disabled: boolean }>();
 const emit = defineEmits<{
@@ -57,13 +63,13 @@ const emit = defineEmits<{
           <span class="flex items-center gap-0.5 text-[11px] tabular-nums">
             <button type="button" :class="step" :disabled="disabled || gem.level <= 1" @click="emit('gem', gem.j, 'level', gem.level - 1)">−</button>
             <span class="w-9 text-center">Lv{{ gem.level }}</span>
-            <button type="button" :class="step" :disabled="disabled" @click="emit('gem', gem.j, 'level', gem.level + 1)">+</button>
+            <button type="button" :class="step" :disabled="disabled || gem.level >= maxLevelOf(gem)" :title="`最大 Lv${maxLevelOf(gem)}`" @click="emit('gem', gem.j, 'level', Math.min(maxLevelOf(gem), gem.level + 1))">+</button>
           </span>
-          <!-- 品質 -->
+          <!-- 品質 (0〜23%: コラプトで 23 が上限) -->
           <span class="flex items-center gap-0.5 text-[11px] tabular-nums">
             <button type="button" :class="step" :disabled="disabled || gem.quality <= 0" @click="emit('gem', gem.j, 'quality', Math.max(0, gem.quality - 1))">−</button>
             <span class="w-8 text-center">{{ gem.quality }}%</span>
-            <button type="button" :class="step" :disabled="disabled" @click="emit('gem', gem.j, 'quality', gem.quality + 1)">+</button>
+            <button type="button" :class="step" :disabled="disabled || gem.quality >= MAX_QUALITY" :title="`最大 ${MAX_QUALITY}%`" @click="emit('gem', gem.j, 'quality', Math.min(MAX_QUALITY, gem.quality + 1))">+</button>
           </span>
           <!-- コラプトの +レベル -->
           <button

@@ -64,13 +64,14 @@ export function outMod(m: StageMod): OutMod {
  * そのアイテムの中の MOD として書き出す。カタリストの品質で伸びる MOD は text_ja / text_en / values を伸びた後に、
  * 元は raw_values / raw_text_ja / raw_text_en に残す (POE2Tube 要望 ㉔-4)
  */
-export function outModIn(it: StageItem, m: StageMod): OutMod {
+export function outModIn(it: StageItem, m: StageMod, data?: PatchData): OutMod {
   const o = outMod(m);
-  const b = boostedMod(it, m);
+  // data があれば伸びた後の文を雛形から作り直す (「#」の位置だけ変わる)。無ければ数字の差し替え (stage-core の retext)
+  const b = boostedMod(it, m, data);
   if (!b) return o;
   return { ...o, text_ja: b.textJa, text_en: b.textEn, values: b.values, ...({ quality_boosted: true, raw_values: m.values, raw_text_ja: m.textJa, raw_text_en: m.textEn } as object) } as OutMod;
 }
-export function outItem(it: StageItem): OutItem {
+export function outItem(it: StageItem, data?: PatchData): OutItem {
   return {
     name: it.baseJa,
     base: it.base,
@@ -92,8 +93,8 @@ export function outItem(it: StageItem): OutItem {
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
     ...({ augments: (it.augments ?? []).map((a) => ({ key: a.key, en: a.en, ja: a.ja, category: a.cat, text_ja: a.textJa, text_en: a.textEn, stats: a.stats })) } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
-    prefixes: it.prefixes.map((m) => outModIn(it, m)) as OutItem["prefixes"],
-    suffixes: it.suffixes.map((m) => outModIn(it, m)) as OutItem["suffixes"],
+    prefixes: it.prefixes.map((m) => outModIn(it, m, data)) as OutItem["prefixes"],
+    suffixes: it.suffixes.map((m) => outModIn(it, m, data)) as OutItem["suffixes"],
   };
 }
 
@@ -139,9 +140,9 @@ export function playStep(
     seed: o.seed,
     applied: r.applied,
     reason: r.reason ?? null,
-    before: outItem(item),
-    after: outItem(r.item),
-    changed: { added: r.added.map((m) => outModIn(r.item, m)), removed: r.removed.map((m) => outModIn(item, m)), rarity_from: item.rarity, rarity_to: r.item.rarity },
+    before: outItem(item, data),
+    after: outItem(r.item, data),
+    changed: { added: r.added.map((m) => outModIn(r.item, m, data)), removed: r.removed.map((m) => outModIn(item, m, data)), rarity_from: item.rarity, rarity_to: r.item.rarity },
     cost: { each, amount, subtotal, cumulative },
     // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
@@ -234,7 +235,7 @@ export function playPlan(data: PatchData, plan: CraftStagePlan, prices: Readonly
 }
 
 /** 結果 JSON に組む */
-export function resultOf(plan: CraftStagePlan, steps: readonly PlayedStep[], final: StageItem, meta: RunMeta): CraftStageResult {
+export function resultOf(plan: CraftStagePlan, steps: readonly PlayedStep[], final: StageItem, meta: RunMeta, data?: PatchData): CraftStageResult {
   return {
     schema: "craft-stage-result/1",
     generated_at: meta.generatedAt ?? new Date().toISOString(),
@@ -244,7 +245,7 @@ export function resultOf(plan: CraftStagePlan, steps: readonly PlayedStep[], fin
     price_unit: "exalted",
     plan,
     steps: steps.map((s) => s.out) as CraftStageResult["steps"],
-    final: outItem(final),
+    final: outItem(final, data),
     total_cost: steps.length ? steps[steps.length - 1]!.out.cost.cumulative : 0,
   };
 }
@@ -252,5 +253,5 @@ export function resultOf(plan: CraftStagePlan, steps: readonly PlayedStep[], fin
 /** 手順を打って結果 JSON まで (CLI 用) */
 export function runPlan(data: PatchData, plan: CraftStagePlan, meta: RunMeta): CraftStageResult {
   const { steps, final } = playPlan(data, plan, meta.prices);
-  return resultOf(plan, steps, final, meta);
+  return resultOf(plan, steps, final, meta, data);
 }

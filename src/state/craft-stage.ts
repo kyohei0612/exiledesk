@@ -325,7 +325,7 @@ export const craftStage = {
     if (!item.value) return null;
     return resultOf(replay.value?.plan ?? craftStage.plan(), log.value, item.value, {
       prices: {}, exiledeskVersion: version, patch: "0.5.0", league: marketStore.league.value?.Value ?? null,
-    });
+    }, data.value ?? undefined);
   },
   /** CLI (craft-stage-run.mjs --prices) に渡す相場 (高貴建て) */
   prices(): Record<string, number> {

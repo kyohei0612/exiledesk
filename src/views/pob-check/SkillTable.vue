@@ -65,10 +65,13 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
       <div class="relative text-right">
         <p class="text-[17px] font-black leading-tight tabular-nums text-amber-200">{{ fmtNum(x.s.game.dps) }}</p>
         <DiffBadge :now="x.s.game.dps" :before="before.get(x.key)?.game.dps" />
-        <!-- ヒット以外が入っている時の内訳 -->
-        <p v-if="(x.s.game.dot ?? 0) > 0 && x.s.game.hitDps > 0" class="text-[10px] tabular-nums text-orange-300/80" title="発火・出血・毒・継続ダメージのスキル (PoB の数字のまま)">うち継続 {{ fmtNum(x.s.game.dot) }}</p>
+        <!-- ヒット以外が入っている時の内訳 (決まりは pck.lua の頭) -->
+        <p v-if="(x.s.game.dot ?? 0) > 0 && x.s.game.hitDps > 0" class="text-[10px] tabular-nums text-orange-300/80" title="発火・出血・毒・継続ダメージのスキル (敵側の倍率を割り戻したゲーム内の表記)">うち継続 {{ fmtNum(x.s.game.dot) }}</p>
         <p v-else-if="(x.s.game.dot ?? 0) > 0" class="text-[10px] text-orange-300/80">継続ダメージ</p>
+        <p v-if="(x.s.game.other ?? 0) > 0" class="text-[10px] tabular-nums text-sky-300/80" title="インペイル・ミラージュの分 (PoB の数字のまま)">うちインペイル等 {{ fmtNum(x.s.game.other) }}</p>
         <p v-if="(x.s.game.minion ?? 0) > 0" class="text-[10px] text-emerald-300/80" title="ミニオン・コンパニオンの DPS (PoB の数字のまま)">ミニオン</p>
+        <p v-if="x.s.game.dualWield" class="text-[10px] text-[var(--exile-color-text-secondary)]" title="二刀流で両手で殴るスキル。1 発は両手の平均 (PoB と同じ)">二刀流</p>
+        <p v-if="x.s.game.dps <= 0" class="text-[10px] text-rose-300/80" title="比べる元では DPS があったスキル。外した・オフにしたなどで 0 になった">0 になった</p>
       </div>
       <div class="relative text-right">
         <p class="text-[13px] tabular-nums">{{ x.s.game.hit > 0 ? fmtNum(x.s.game.hit) : "—" }}</p>

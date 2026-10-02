@@ -11,6 +11,7 @@ import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
+import { swapNums } from "./text-nums";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 export const SIDES: StageSide[] = ["prefix", "suffix"];
@@ -119,13 +120,25 @@ export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { va
   if (!tag || !(item.quality > 0) || !/^(Rings|Amulets)\//.test(m.modId)) return null;
   const tags = m.tags ?? data?.mods.get(m.modId)?.tags ?? [];
   if (!tags.includes(tag) || !m.values.length) return null;
-  const values = m.values.map((v) => displayedValue(v, item.quality));
+  // 小数の値は 2 桁に丸める (6.45 × 1.2 = 7.739999… のような誤差を values に入れない。文と同じ丸め)。整数は displayedValue が切り捨て済み
+  const values = m.values.map((v) => { const b = displayedValue(v, item.quality); return Number.isInteger(v) ? b : Math.round(b * 100) / 100; });
   if (values.every((v, i) => v === m.values[i])) return null;
-  // 文の数字を素 → 伸びた後に差し替える (文の中の同じ数字の並び)
-  const swap = new Map(m.values.map((v, i) => [String(Math.abs(v)), String(Math.abs(Math.round(values[i]! * 100) / 100))]));
-  const re = /\d+(?:\.\d+)?/g;
-  const fix = (t: string): string => t.replace(re, (n) => swap.get(n) ?? n);
-  return { values, textJa: fix(m.textJa), textEn: fix(m.textEn) };
+  return { values, ...retext(m, values, data) };
+}
+
+/**
+ * MOD の数値を values に変えた時の文 (聖別・カタリストの品質で共通)。
+ * データにその MOD があれば、作った時と同じ道 (withValues: 英語の雛形の「#」の位置と日本語の雛形) で文を作り直す = 「#」の位置だけ変わる。
+ * 無い時 (テストの作り物など) は値の並び順で同じ数字を順に差し替える (text-nums.ts の swapNums)。
+ * 「同じ数字をすべて置換」はしない: Rings/LightRadiusAndManaRegeneration「5% increased Light Radius / #% Mana Regen」で固定の 5 まで変わる
+ */
+export function retext(m: StageMod, values: readonly number[], data?: PatchData): { textJa: string; textEn: string } {
+  const mod = data?.mods.get(m.modId);
+  if (mod && mod.tiers[m.tierIndex]) {
+    const re = withValues(m, mod, () => 0, values);
+    return { textJa: re.textJa, textEn: re.textEn };
+  }
+  return { textJa: swapNums(m.textJa, m.values, values), textEn: swapNums(m.textEn, m.values, values) };
 }
 
 /** MOD の段を 1 つ確定させて表示に要る物を埋める */

@@ -7,17 +7,18 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { characterWindow, gemJa, openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
+import { characterWindow, gemJa, openPob, savedBuilds, type CharacterWindowEndpoint, type CharacterWindowResponse, type SavedBuild } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
+import { markSessionExpired } from "../../state/poe-session";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
-import { usePobCheck } from "./usePobCheck";
+import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { lastSource, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const LOAD_MODES = [
@@ -47,20 +48,71 @@ async function openPobApp(): Promise<void> {
 watch(loadMode, (m) => {
   if (m === "mine") void refreshSaved();
 });
-/** 試し: アプリのログインで character-window を読む。応答は履歴 (pob-check.jsonl) に残す */
+/**
+ * 試し: アプリのログインで character-window を読む。応答は履歴 (pob-check.jsonl) に残す。
+ *
+ * 2026-10-02: 取得口は 4 つ (get-account-name / get-characters / get-items / get-passive-skills)。
+ * 装備とパッシブは accountName が要る (PoE1 からの仕様) ので、キャラ名から get-account-name で引いてから呼ぶ。
+ * 応答の形は trade_history_fetch と同じ { status, retry_after, ratelimit, body } (src-tauri/src/trade_history.rs)
+ */
 const acctBusy = ref(false);
 const acctMsg = ref("");
 const acctChars = ref<Array<{ name: string; class: string; level: number; league: string }>>([]);
+/** 生の本体を 60,000 文字まで残す。試しのためなので、取り込みを作ったら status と件数だけにする */
 const clip = (v: unknown): string => JSON.stringify(v).slice(0, 60000);
+
+type CwEndpoint = CharacterWindowEndpoint;
+type CwResponse = CharacterWindowResponse;
+const cw = characterWindow;
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/** 429 なら retry_after 秒 (無ければ 5 秒) 待って 1 回だけ呼び直す。それ以外はそのまま返す */
+async function cwRetry(endpoint: CwEndpoint, character?: string, account?: string): Promise<CwResponse> {
+  const r = await cw(endpoint, character, account);
+  if (r.status !== 429) return r;
+  const wait = Math.max(1, Math.min(r.retry_after ?? 5, 120));
+  acctMsg.value = `制限中 (${endpoint})。${wait} 秒待ってから呼び直します…`;
+  await sleep(wait * 1000);
+  return cw(endpoint, character, account);
+}
+
+/**
+ * HTTP の状態を日本語に (本家 vendor/PathOfBuilding-PoE2/src/Classes/ImportTab.lua の DownloadCharacterList の対応表)。
+ * 401 はログインが切れた扱い (取引履歴と同じ poe-session の markSessionExpired → ログインの画面が出る)。
+ * 403 は「プロフィールのキャラ一覧が非公開」が本家の読みなので、未ログイン扱いにはしない (自分のアカウントで 403 なら
+ * 設定の問題で、ログインし直しても変わらない)
+ */
+function cwStatusText(r: CwResponse): string {
+  switch (r.status) {
+    case 200:
+      return "読めた";
+    case 401:
+      return "ログインが要る (切れている)";
+    case 403:
+      return "プロフィールのキャラ一覧が非公開 (pathofexile.com のプライバシー設定)";
+    case 404:
+      return "アカウント名かキャラ名が違う";
+    case 429:
+      return `送り過ぎ (${r.retry_after ?? "?"} 秒待つ)`;
+    default:
+      return `状態 ${r.status}`;
+  }
+}
+function noteStatus(r: CwResponse): void {
+  if (r.status === 401) markSessionExpired();
+}
+
 async function tryAccount(): Promise<void> {
   acctBusy.value = true;
   acctMsg.value = "読んでいます…";
   try {
-    const r = await characterWindow("get-characters");
-    recordHistory("pob-check", "account-characters", { status: r.status, body: clip(r.body) });
+    const r = await cwRetry("get-characters");
+    noteStatus(r);
+    recordHistory("pob-check", "account-characters", { status: r.status, retry_after: r.retry_after ?? null, ratelimit: r.ratelimit ?? null, body: clip(r.body) });
     const list = Array.isArray(r.body) ? (r.body as Array<Record<string, unknown>>) : [];
     acctChars.value = list.map((c) => ({ name: String(c.name ?? ""), class: String(c.class ?? ""), level: Number(c.level ?? 0), league: String(c.league ?? "") }));
-    acctMsg.value = r.status === 200 ? `読めた (${list.length} 人)。キャラを押すと装備とパッシブも試す` : `読めない (状態 ${r.status}): ${clip(r.body).slice(0, 120)}`;
+    acctMsg.value = r.status === 200 ? `読めた (${list.length} 人)。キャラを押すと装備とパッシブも試す` : `読めない: ${cwStatusText(r)} — ${clip(r.body).slice(0, 120)}`;
   } catch (e) {
     acctMsg.value = String(e);
   } finally {
@@ -69,13 +121,35 @@ async function tryAccount(): Promise<void> {
 }
 async function tryAccountChar(name: string): Promise<void> {
   acctBusy.value = true;
-  acctMsg.value = `${name} の装備とパッシブを読んでいます…`;
+  acctMsg.value = `${name} のアカウント名を読んでいます…`;
   try {
-    const items = await characterWindow("get-items", name);
-    await new Promise((r) => setTimeout(r, 1500));
-    const passives = await characterWindow("get-passive-skills", name);
-    recordHistory("pob-check", "account-character", { name, items: { status: items.status, body: clip(items.body) }, passives: { status: passives.status, body: clip(passives.body) } });
-    acctMsg.value = `装備 ${items.status} / パッシブ ${passives.status} (履歴に残しました)`;
+    // 1. キャラ名 → アカウント名 (PoE1 では { accountName: "..." })
+    const acct = await cwRetry("get-account-name", name);
+    noteStatus(acct);
+    const accountName = (acct.body as { accountName?: unknown } | null)?.accountName;
+    const account = typeof accountName === "string" && accountName ? accountName : undefined;
+    // アカウント名は履歴に残さない (伏せる)。取れたかどうかと長さだけ
+    recordHistory("pob-check", "account-name", { status: acct.status, retry_after: acct.retry_after ?? null, ratelimit: acct.ratelimit ?? null, got: !!account, length: account?.length ?? 0, body_keys: acct.body && typeof acct.body === "object" ? Object.keys(acct.body as object) : typeof acct.body });
+    if (!account) {
+      acctMsg.value = `アカウント名を読めない: ${cwStatusText(acct)} — ${clip(acct.body).slice(0, 120)} (装備とパッシブは accountName が要るので止めます)`;
+      return;
+    }
+    // 2. 装備 → 3. パッシブ (間を 1.5 秒空ける。429 なら cwRetry が retry_after 秒待つ)
+    acctMsg.value = `${name} の装備を読んでいます…`;
+    await sleep(1500);
+    const items = await cwRetry("get-items", name, account);
+    noteStatus(items);
+    acctMsg.value = `${name} のパッシブを読んでいます…`;
+    await sleep(1500);
+    const passives = await cwRetry("get-passive-skills", name, account);
+    noteStatus(passives);
+    // 生の本体 (clip) は試しのため。取り込みを作ったら status と件数だけにする。アカウント名は入れない
+    recordHistory("pob-check", "account-character", {
+      name,
+      items: { status: items.status, retry_after: items.retry_after ?? null, ratelimit: items.ratelimit ?? null, body: clip(items.body) },
+      passives: { status: passives.status, retry_after: passives.retry_after ?? null, ratelimit: passives.ratelimit ?? null, body: clip(passives.body) },
+    });
+    acctMsg.value = `装備: ${cwStatusText(items)} / パッシブ: ${cwStatusText(passives)} (履歴に残しました)`;
   } catch (e) {
     acctMsg.value = String(e);
   } finally {
@@ -87,12 +161,9 @@ const fmtDate = (sec: number): string => (sec ? new Date(sec * 1000).toLocaleStr
 /** 共有: 今のビルドの PoB コードをコピー */
 const shareMsg = ref("");
 async function onShare(): Promise<void> {
-  try {
-    await shareCode();
-    shareMsg.value = changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました";
-  } catch (e) {
-    shareMsg.value = `できませんでした: ${e instanceof Error ? e.message : String(e)}`;
-  }
+  // 失敗の理由は usePobCheck が error (上の帯) に出す
+  const code = await shareCode();
+  shareMsg.value = code ? (changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました") : "できませんでした";
   setTimeout(() => (shareMsg.value = ""), 4000);
 }
 
@@ -113,12 +184,16 @@ const num = (k: string): number => {
   const v = cur.value?.stats[k];
   return typeof v === "number" ? v : 0;
 };
+/** 実効のパワーチャージ (PoB が使っている数。Min のあるビルドは 0 にしても Min 個が効く) */
 const charges = computed(() => cur.value?.config.powerCharges ?? 0);
 const chargesMax = computed(() => Math.max(num("PowerChargesMax"), 3));
 const sameAsBase = computed(() => cur.value === base.value);
+/** ツリーに渡す寄与 (毎レンダーで新しい物を作ると TreeView が描き直し続けるので computed) */
+const treePower = computed(() => (power.value ? { label: power.value.label, nodes: power.value.nodes, stale: power.value.of !== cur.value } : null));
+const treeSkillOptions = computed(() => skills.value.map((x) => ({ key: x.key, name: x.s.name + (x.s.game.minionName ? ` → ${x.s.game.minionName}` : "") })));
 
 /** 差し替えの結果をカードに返す */
-async function onPaste(slot: string, text: string, done: (r: { unread: string[]; notCalculated: string[] } | null, err?: string) => void): Promise<void> {
+async function onPaste(slot: string, text: string, done: (r: PasteNote | null, err?: string) => void): Promise<void> {
   try {
     done(await changeItem(slot, text));
   } catch (e) {
@@ -258,8 +333,9 @@ const resists = computed(() =>
           <span v-for="r in resists" :key="r.label" class="ml-1.5 font-semibold tabular-nums" :class="r.cls">{{ r.label }}{{ Math.round(r.v) }}</span>
         </span>
         <span v-if="loadedFrom" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ loadedFrom }} から</span>
+        <!-- PoB コードは同じ文字列を読み直すだけで最新は取れないので、poe.ninja と保存したビルドの時だけ -->
         <button
-          v-if="lastSource"
+          v-if="lastSource && canReload"
           type="button"
           class="rounded-lg bg-white/[0.07] px-2.5 py-1 text-[11px] font-semibold hover:bg-white/15 disabled:opacity-40"
           :disabled="loading || busy"
@@ -403,13 +479,14 @@ const resists = computed(() =>
           :nodes="treeNodes"
           :state="cur.tree"
           :base-alloc="base && base !== cur ? base.tree.alloc : undefined"
-          :power="power ? { label: power.label, nodes: power.nodes, stale: power.of !== cur } : null"
+          :power="treePower"
           :power-progress="powerProgress"
-          :skill-options="skills.map((x) => ({ key: x.key, name: x.s.name + (x.s.game.minionName ? ` → ${x.s.game.minionName}` : '') }))"
+          :skill-options="treeSkillOptions"
           :default-target="focus?.key ?? ''"
+          :fit-key="loadSeq"
           :busy="busy"
           @power="computePower"
-          @toggle="async (id, attr, done) => done(await clickNode(id, attr).catch((e) => String(e)))"
+          @toggle="async (id, attr, done) => done(await clickNode(id, attr))"
           @reset="resetTreeToLoaded"
         />
       </div>

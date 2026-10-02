@@ -43,9 +43,16 @@ pub struct SkillGroupInfo {
     pub is_main: bool,         // build.mainSocketGroup == index か
 }
 
+/// 1 つのジョブの返事を待つ上限 (2026-10-02)。
+/// ノードの寄与は 1 スキル 2 秒ほど、ビルドの読み込みも数秒なので、これを超えるのは PoB が無限ループに入った時。
+/// 待ち続けると画面側の Promise が永久に解決しないので、ここで切って日本語のエラーを返す
+pub(crate) const JOB_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
+
 pub struct PobWorker {
     /// 2026-09-08: PoB 同梱物の入れ替え後に worker を起動し直せるよう Mutex で差し替え可能にした
     tx: std::sync::Mutex<mpsc::Sender<PobJob>>,
+    /// 今の worker が読んでいるスクリプトの場所。worker が死んだ時に同じ場所で起動し直すために持つ (2026-10-02)
+    pob_src: std::sync::Mutex<PathBuf>,
 }
 
 impl PobWorker {
@@ -59,14 +66,20 @@ impl PobWorker {
     }
 
     pub fn spawn(pob_src: PathBuf) -> Self {
-        Self { tx: std::sync::Mutex::new(Self::spawn_thread(pob_src)) }
+        Self {
+            tx: std::sync::Mutex::new(Self::spawn_thread(pob_src.clone())),
+            pob_src: std::sync::Mutex::new(pob_src),
+        }
     }
 
     /// 新しいスクリプトディレクトリで worker を起動し直す。旧 thread は sender が消えた時点で終了する。
     pub fn restart(&self, pob_src: PathBuf) {
-        let new_tx = Self::spawn_thread(pob_src);
+        let new_tx = Self::spawn_thread(pob_src.clone());
         if let Ok(mut guard) = self.tx.lock() {
             *guard = new_tx;
+        }
+        if let Ok(mut guard) = self.pob_src.lock() {
+            *guard = pob_src;
         }
     }
 
@@ -74,31 +87,47 @@ impl PobWorker {
         self.tx.lock().map(|g| g.clone()).unwrap_or_else(|e| e.into_inner().clone())
     }
 
-    pub fn load_build_xml(&self, xml: String) -> Result<(), String> {
+    fn current_src(&self) -> PathBuf {
+        self.pob_src.lock().map(|g| g.clone()).unwrap_or_else(|e| e.into_inner().clone())
+    }
+
+    /// ジョブを 1 つ投げて返事を待つ (全部の pob_* がここを通る)。
+    ///
+    /// - worker の thread が死んでいて送れない時 (`"pob worker disconnected"`) は、同じ場所で **1 回だけ** 起動し直して投げ直す
+    ///   (PoB 同梱物の入れ替え中に旧 thread が終わった直後、Lua 側の panic で thread が落ちた時など)
+    /// - 返事は `JOB_TIMEOUT` まで待つ。超えたら「PoB の計算が終わりません」。worker 自体はそのまま計算を続けるので、
+    ///   次のジョブはその後ろに並ぶ (止める手段は LuaJIT に無い)
+    fn request<T>(&self, make: impl FnOnce(Reply<T>) -> PobJob) -> Result<T, String> {
         let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::LoadBuildXml { xml, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        // 送れなかった時はジョブがそのまま返ってくる (SendError の中身) ので、作り直さずに投げ直せる
+        if let Err(mpsc::SendError(job)) = self.sender().send(make(tx)) {
+            eprintln!("[pob worker] 送れないので起動し直します");
+            self.restart(self.current_src());
+            if self.sender().send(job).is_err() {
+                return Err("PoB の計算スレッドが止まっています (起動し直しても送れません)".into());
+            }
+        }
+        match rx.recv_timeout(JOB_TIMEOUT) {
+            Ok(r) => r,
+            Err(mpsc::RecvTimeoutError::Timeout) => Err(format!(
+                "PoB の計算が終わりません ({} 秒待ちました)",
+                JOB_TIMEOUT.as_secs()
+            )),
+            // 返事を待つ間に worker が死んだ (reply の送り手が落ちた)。次のジョブで起動し直す
+            Err(mpsc::RecvTimeoutError::Disconnected) => Err("PoB の計算スレッドが途中で止まりました".into()),
+        }
+    }
+
+    pub fn load_build_xml(&self, xml: String) -> Result<(), String> {
+        self.request(|reply| PobJob::LoadBuildXml { xml, reply })
     }
 
     pub fn get_stat(&self, key: String) -> Result<f64, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::GetStat { key, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::GetStat { key, reply })
     }
 
     pub fn get_stats_all(&self) -> Result<HashMap<String, f64>, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::GetStatsAll { reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::GetStatsAll { reply })
     }
 
     /// 装備テキストを slot にセット。slot=None なら item:GetPrimarySlot() で自動推定。
@@ -108,79 +137,39 @@ impl PobWorker {
         slot: Option<String>,
         raw: String,
     ) -> Result<String, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::SetItemInSlot { slot, raw, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::SetItemInSlot { slot, raw, reply })
     }
 
     pub fn clear_slot(&self, slot: String) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::ClearSlot { slot, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::ClearSlot { slot, reply })
     }
 
     /// build を XML で snapshot。装備差替え前に呼んで、後で restore できるように。
     pub fn snapshot(&self) -> Result<String, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::Snapshot { reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::Snapshot { reply })
     }
 
     pub fn restore_snapshot(&self, xml: String) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::RestoreSnapshot { xml, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::RestoreSnapshot { xml, reply })
     }
 
     /// 現在 build の各 slot に何が装備されているかを取得。
     /// 空 slot も has_item=false で返す。Vue 側で slot プルダウン構築用。
     pub fn get_equipped_items(&self) -> Result<Vec<EquippedItemInfo>, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::GetEquippedItems { reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::GetEquippedItems { reply })
     }
 
     pub fn get_skill_groups(&self) -> Result<Vec<SkillGroupInfo>, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::GetSkillGroups { reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::GetSkillGroups { reply })
     }
 
     /// Lua の塊を実行して、返した文字列を受け取る (点検用。塊は `return <文字列>` で終える)
     pub fn eval_string(&self, script: String) -> Result<String, String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::EvalString { script, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::EvalString { script, reply })
     }
 
     pub fn set_main_socket_group(&self, index: u32) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender()
-            .send(PobJob::SetMainSocketGroup { index, reply: tx })
-            .map_err(|_| "pob worker disconnected".to_string())?;
-        rx.recv()
-            .map_err(|_| "pob worker reply lost".to_string())?
+        self.request(|reply| PobJob::SetMainSocketGroup { index, reply })
     }
 }
 

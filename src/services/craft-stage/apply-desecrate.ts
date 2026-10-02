@@ -122,7 +122,7 @@ const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>):
 });
 
 /**
- * 腐食のお告げ: 固定済み (破砕) 以外の MOD を全部外し、枠いっぱいまで未開示の MOD にしてコラプトする (普通 6 つ、破砕があれば 5 つ)。
+ * 腐食のお告げ: 固定済み (フラクチャー) 以外の MOD を全部外し、枠いっぱいまで未開示の MOD にしてコラプトする (普通 6 つ、フラクチャーがあれば 5 つ)。
  * 開示で出るのは普通の MOD だけ (冒涜専用の勢力の MOD は出ない)。古びた骨でも段の下限は掛からない (PoE2 Wiki の Omen of Putrefaction)
  */
 function putrefy(item: StageItem, key: string): StageApply {
