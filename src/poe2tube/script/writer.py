@@ -105,8 +105,42 @@ def demo_problems(script: VideoScript, result: CraftStageResult, demos: Demos | 
     """画面と結果の噛み合わせ + 台本の規則 (追加の実演の手数も見る)."""
     demos = demos or {}
     return script.check_against(result, demos) + lint_script(
-        script, len(result.steps), {k: len(r.steps) for k, r in demos.items()}
+        script,
+        len(result.steps),
+        {k: len(r.steps) for k, r in demos.items()},
+        skippable_steps(result, demos),
     )
+
+
+def skippable_steps(
+    result: CraftStageResult, demos: Demos | None = None
+) -> dict[str | None, set[int]]:
+    """台本に行が無くてよい手.
+
+    - 手順の ``times`` で連打した手の途中。最後の 1 手は見せる (カタリスト ×27 等)
+    - 追加の実演のうち、メインと同じ手・同じ結果が続く前半 (消去を試す実演、2026-10-02)。
+      最後まで全部同じ実演は除く
+    """
+    out: dict[str | None, set[int]] = {None: _repeats(result)}
+    for key, demo in (demos or {}).items():
+        same: set[int] = set()
+        for a, b in zip(demo.steps, result.steps, strict=False):
+            if a.currency != b.currency or a.after != b.after:
+                break
+            same.add(a.index)
+        if len(same) == len(demo.steps):
+            same = set()  # 全部メインと同じ実演は見せ方の間違い (飛ばしてよい手にしない)
+        out[key] = _repeats(demo) | same
+    return out
+
+
+def _repeats(result: CraftStageResult) -> set[int]:
+    out: set[int] = set()
+    first = 1
+    for st in result.plan.steps:
+        out |= set(range(first, first + st.times - 1))
+        first += st.times
+    return out
 
 
 def _state(item: StageItem) -> dict[str, object]:

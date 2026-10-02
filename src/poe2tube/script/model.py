@@ -12,6 +12,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from poe2tube.contracts.craft_stage import CraftStageResult
+from poe2tube.script.panel import Panel
 from poe2tube.script.reading import normalize_speech
 
 SCRIPT_SCHEMA = "poe2tube-script/1"
@@ -36,10 +37,13 @@ SceneKind = Literal[
     "evasion",
     "es",
     "bases",
+    "icons",
+    "table",
 ]
 # 防御の仕組みの画面 (ExileDesk 要望 ㉒)。中身は def_params をそのまま URL に渡す
 DEFENCE_KINDS = ("layers", "armour", "evasion", "es", "bases")
 POB_KINDS = ("dps", "ttk", "hit")  # 結果 JSON の pob (PoB の計算) が要る画面
+PANEL_KINDS = ("icons", "table")  # POE2Tube 側で描く図 (script/panel.py)
 MAIN = "main"  # compare_with でメインの実演を指す (demo の省略 = メインと同じ)
 Element = Literal["fire", "cold", "lightning", "chaos"]
 Highlight = Literal["added", "rarity", "name", "cost", "step"]
@@ -120,6 +124,10 @@ class Scene(BaseModel):
         "(例 life / es / armour / evasion / deflect / block / lvl / dmg / kind / outcome / red)",
     )
 
+    panel: Panel | None = Field(
+        default=None, description="icons / table: POE2Tube 側で描く図 (script/panel.py)"
+    )
+
     def key(self) -> tuple[object, ...]:
         """見た目が同じ場面かを比べる鍵 (実演・クイズの答えと札の違いも別の画面とみなす)."""
         return (
@@ -143,6 +151,7 @@ class Scene(BaseModel):
             self.resists,
             self.act,
             tuple(sorted((self.def_params or {}).items())),
+            self.panel.key() if self.panel else None,
         )
 
     @model_validator(mode="before")
@@ -190,6 +199,10 @@ class Scene(BaseModel):
             raise ValueError("labels は ttk 専用")
         if self.focus is not None and self.kind != "stage":
             raise ValueError("focus は stage 専用")
+        if (self.kind in PANEL_KINDS) != (self.panel is not None):
+            raise ValueError("icons / table には panel が必要 (panel は icons / table 専用)")
+        if self.panel is not None and (self.panel.icons is None) == (self.kind == "icons"):
+            raise ValueError("icons は panel.icons、table は panel.rows")
         return self
 
 

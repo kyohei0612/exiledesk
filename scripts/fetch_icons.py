@@ -18,7 +18,7 @@ import structlog
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from poe2tube.names import NameBook  # noqa: E402
+from poe2tube.names import NameBook, icon_file  # noqa: E402
 
 log = structlog.get_logger()
 BASE = "https://api.poe2scout.com/poe2"
@@ -35,7 +35,7 @@ def current_league(session: requests.Session) -> str:
 def fetch(keys: list[str]) -> None:
     ICON_DIR.mkdir(parents=True, exist_ok=True)
     book = NameBook.load()
-    todo = {k: book.names[k].en for k in keys if not (ICON_DIR / f"{k}.png").exists()}
+    todo = {k: book.names[k].en for k in keys if not (ICON_DIR / f"{icon_file(k)}.png").exists()}
     if not todo:
         log.info("all icons cached", keys=keys)
         return
@@ -50,7 +50,7 @@ def fetch(keys: list[str]) -> None:
                 continue
             img = s.get(url, headers=UA, timeout=30)
             img.raise_for_status()
-            (ICON_DIR / f"{key}.png").write_bytes(img.content)
+            (ICON_DIR / f"{icon_file(key)}.png").write_bytes(img.content)
             log.info("icon saved", key=key, bytes=len(img.content), url=url)
 
 

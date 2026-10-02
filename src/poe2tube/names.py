@@ -114,7 +114,12 @@ def icon_path(key: str, icon_dir: Path) -> Path:
         return root / "public" / "skill-art" / f"{key[6:]}_icon.webp"
     if key.startswith("rune:"):
         return _rune_art(root).get(key[5:], icon_dir / "_none.png")
-    return icon_dir / f"{key}.png"
+    return icon_dir / f"{icon_file(key)}.png"
+
+
+def icon_file(key: str) -> str:
+    """キーをファイル名にする (エッセンスの essence:greater:Amulets/X の : と / を避ける)."""
+    return key.replace(":", "__").replace("/", "_")
 
 
 _RUNE_ART: dict[str, Path] = {}

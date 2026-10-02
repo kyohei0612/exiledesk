@@ -17,6 +17,8 @@ MAX_SENTENCE = 40
 LIGHT, TABLE, DIAGRAM = 6.0, 10.0, 12.0
 INFO_MIN_SECONDS = {
     "quiz": LIGHT,
+    "icons": LIGHT,
+    "table": TABLE,
     "ttk": LIGHT,
     "hit": LIGHT,
     "compare": TABLE,
@@ -129,9 +131,15 @@ def lint_section(section: Section, n_steps: int | None = None, offset: int = 0) 
 
 
 def lint_script(
-    script: VideoScript, n_steps: int | None = None, demo_steps: dict[str, int] | None = None
+    script: VideoScript,
+    n_steps: int | None = None,
+    demo_steps: dict[str, int] | None = None,
+    skippable: dict[str | None, set[int]] | None = None,
 ) -> list[str]:
-    """全体の検査。``n_steps`` はメインの結果 JSON の手数、``demo_steps`` は追加の実演ごとの手数."""
+    """全体の検査。``n_steps`` はメインの結果 JSON の手数、``demo_steps`` は追加の実演ごとの手数.
+
+    ``skippable`` は行が無くてよい手 (同じカレンシーの連打の途中・メインと同じ前半、writer.py).
+    """
     lines = script.lines
     problems = lint_lines(lines, 0, n_steps)
     if script.layout == "short":
@@ -156,7 +164,7 @@ def lint_script(
     est = script.estimated_seconds()
     if not lo <= est <= hi:
         problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
-    problems += stage_coverage(script, n_steps, demo_steps)
+    problems += stage_coverage(script, n_steps, demo_steps, skippable)
     problems += hidden_dps_on_hit(script)
     return problems
 
@@ -177,9 +185,15 @@ def hidden_dps_on_hit(script: VideoScript) -> list[str]:
 
 
 def stage_coverage(
-    script: VideoScript, n_steps: int | None, demo_steps: dict[str, int] | None = None
+    script: VideoScript,
+    n_steps: int | None,
+    demo_steps: dict[str, int] | None = None,
+    skippable: dict[str | None, set[int]] | None = None,
 ) -> list[str]:
-    """実践は 1 手 1 行以上: 実演ごとに stage の step が 1..n を飛ばさず出る (2026-09-27)."""
+    """実践は 1 手 1 行以上: 実演ごとに stage の step が 1..n を飛ばさず出る (2026-09-27).
+
+    ``skippable`` の手は飛ばしてよい (カタリスト ×27 の途中、消去を試す実演のメインと同じ前半)。
+    """
     by_demo: dict[str | None, set[int]] = {}
     for ln in script.lines:
         if ln.scene.kind == "stage" and ln.scene.step:
@@ -197,7 +211,8 @@ def stage_coverage(
                 problems.append("実践 (stage) の行が無い")
             continue
         last = n or max(steps)
-        missing = [s for s in range(1, last + 1) if s not in steps]
+        ok = (skippable or {}).get(key, set())
+        missing = [s for s in range(1, last + 1) if s not in steps and s not in ok]
         if missing:
             name = "" if key is None else f"実演 {key!r} の"
             problems.append(

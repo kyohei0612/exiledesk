@@ -13,6 +13,7 @@ from poe2tube.names import NameBook
 from poe2tube.render.draw import load_icon, pill, shadow_panel
 from poe2tube.render.item_card import card_height, draw_item_card
 from poe2tube.render.palette import ACCENT, GOLD, GREEN, INK, LINE, MUTED, WHITE, font
+from poe2tube.render.panel_draw import draw_icons, draw_table
 from poe2tube.render.stack import draw_stack
 from poe2tube.script.model import Scene
 
@@ -62,6 +63,10 @@ def draw_scene_panel(
         _cost(img, inner, result)
     elif scene.kind == "quiz":
         draw_quiz(img, inner, scene, icon_dir)
+    elif scene.kind == "icons" and scene.panel:
+        draw_icons(img, inner, scene.panel, icon_dir)
+    elif scene.kind == "table" and scene.panel:
+        draw_table(img, inner, scene.panel)
 
 
 # ExileDesk の動画用の画面の左上の札
