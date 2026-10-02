@@ -42,16 +42,40 @@ pub fn decode_pob_code(code: &str) -> Result<String> {
     let cleaned: String = code
         .trim()
         .chars()
-        .filter(|c| !c.is_whitespace())
+        .filter(|c| !c.is_whitespace() && *c != '=')
+        // url-safe と標準が混ざった物 (末尾の = 付きの url-safe など、PoB2 の書き出し) も読めるように寄せる
+        .map(|c| match c {
+            '+' => '-',
+            '/' => '_',
+            c => c,
+        })
         .collect();
     let compressed = URL_SAFE_NO_PAD
         .decode(&cleaned)
-        .or_else(|_| base64::engine::general_purpose::STANDARD.decode(&cleaned))
         .context("base64 decode of PoB code")?;
     let mut decoder = ZlibDecoder::new(&compressed[..]);
     let mut xml = String::new();
-    decoder
-        .read_to_string(&mut xml)
-        .context("zlib inflate of PoB code")?;
-    Ok(xml)
+    match decoder.read_to_string(&mut xml) {
+        Ok(_) => Ok(xml),
+        Err(e) => inflate_raw_lenient(&compressed).ok_or_else(|| anyhow!(e).context("zlib inflate of PoB code")),
+    }
+}
+
+/// チャットなどを経て末尾 (チェックサム) が崩れたコードの救済 (2026-10-02 火力チェック)。
+/// zlib の頭 2 バイトと尻 4 バイトを除いて生の deflate として読めるところまで読み、XML が閉じていれば使う。
+fn inflate_raw_lenient(compressed: &[u8]) -> Option<String> {
+    if compressed.len() < 7 {
+        return None;
+    }
+    let mut d = flate2::read::DeflateDecoder::new(&compressed[2..compressed.len() - 4]);
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 16384];
+    loop {
+        match d.read(&mut chunk) {
+            Ok(0) | Err(_) => break,
+            Ok(n) => buf.extend_from_slice(&chunk[..n]),
+        }
+    }
+    let xml = String::from_utf8_lossy(&buf).into_owned();
+    xml.trim_end().ends_with("</PathOfBuilding2>").then_some(xml)
 }

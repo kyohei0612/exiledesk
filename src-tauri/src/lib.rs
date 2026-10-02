@@ -209,6 +209,7 @@ pub fn run() {
             pob::pob_restore_snapshot,
             pob::pob_get_equipped_items,
             pob::pob_get_skill_groups,
+            pob::pob_eval,
             pob::pob_set_main_socket_group,
             trade2::trade2_search,
             trade2::trade2_search_count,

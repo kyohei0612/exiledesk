@@ -52,6 +52,8 @@ const items: NavItem[] = [
   { id: "craft-stage", icon: "🜖", label: "クラフトステージ", group: "economy" },
   // 2026-09-29: PoE1 のスキン (マイクロトランザクション) が PoE2 でも使えるか (views/mtx/MtxList.vue)
   { id: "mtx", icon: "✦", label: "スキン", group: "tools" },
+  // 2026-10-02: 同梱 PoB で読み込んで、ジェムなどを変えて火力を比べる (views/pob-check/PobCheck.vue)
+  { id: "pob-check", icon: "🔥", label: "火力チェック", group: "tools" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   // 2026-09-10: Client.txt を仕分けて実害のあるエラーだけ出す

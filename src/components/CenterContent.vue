@@ -15,6 +15,7 @@ import TradeHistory from "../views/TradeHistory.vue";
 import GemWatch from "../views/GemWatch.vue";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import MtxList from "../views/mtx/MtxList.vue";
+import PobCheck from "../views/pob-check/PobCheck.vue";
 // 旧「クラフト発見」(econ-trending) は 2026-05-22 に非表示。
 // 復活時は次の 2 行を戻すだけで OK:
 //   import EconDashboard from "../views/EconDashboard.vue";
@@ -36,6 +37,8 @@ const currentView = computed<Component | undefined>(() => {
       return CraftDiscoveryV2B;
     case "settings":
       return Settings;
+    case "pob-check":
+      return PobCheck;
     case "pob":
       return PobLauncher;
     case "client-log":

@@ -91,3 +91,11 @@ pub fn pob_set_main_socket_group(
 ) -> Result<(), String> {
     state.set_main_socket_group(index)
 }
+
+/// PoB の中で Lua を 1 本走らせて、返した文字 (JSON) を返す (2026-10-02 火力チェックの画面)。
+/// 画面側 (src/services/pob-check/) が「スキルごとの数字」「ジェムを変える」などの小さな Lua を送る。
+/// PoB の計算そのものには手を入れず、PoB の関数を呼ぶだけにする (オーナーの方針: 計算エンジンは触らない)
+#[tauri::command]
+pub fn pob_eval(state: tauri::State<'_, PobWorker>, script: String) -> Result<String, String> {
+    state.eval_string(script)
+}
