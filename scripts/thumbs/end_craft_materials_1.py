@@ -2,7 +2,8 @@
 
 案 A (kyohei 2026-10-02「土台のサムネ見して」): 真ん中の帯に前編の 4 つの素材 (完全の高貴・
 グレーターエッセンス・フラクチャーオーブ・肉体のカタリスト) をアイコン + 名前の札で並べ、右に困った
-ずんだもん。地は前回 (defence_mechanics) と同じ暗い PoE2 風のぼかし。上と下は kyohei が文字を入れる。
+ずんだもん。地は前回 (defence_mechanics) と同じ暗い PoE2 風のぼかし。
+上と下は kyohei が文字を入れる。
 アイコンは元が 64px なので 2 倍までにとどめる (それ以上はぼやける)。
 
     python scripts/thumbs/end_craft_materials_1.py [--seed N]
