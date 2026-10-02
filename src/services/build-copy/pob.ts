@@ -56,8 +56,18 @@ export async function decodePobCode(code: string): Promise<string> {
   const bin = atob(clean);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
-  return await new Response(stream).text();
+  const inflate = (b: Uint8Array, format: "deflate" | "deflate-raw") => new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream(format))).text();
+  try {
+    return await inflate(bytes, "deflate");
+  } catch (e) {
+    // 末尾 (チェックサム) が崩れたコードの救済 (Rust の pob::inflate_raw_lenient と同じ。PoB の Import/Export で出した自分のコードがこれだった、2026-10-03):
+    // zlib の頭 2 バイトと尻 4 バイトを除いて生の deflate として読み、XML が閉じていれば使う。
+    // ブラウザは失敗の理由を「Failed to fetch」としか言わないので、だめなら元の失敗を投げる
+    if (bytes.length < 7) throw e;
+    const xml = await inflate(bytes.subarray(2, bytes.length - 4), "deflate-raw").catch(() => "");
+    if (xml.trimEnd().endsWith("</PathOfBuilding2>")) return xml;
+    throw e;
+  }
 }
 
 /** PoB の部位 → 日本語 (並びもこの順) */

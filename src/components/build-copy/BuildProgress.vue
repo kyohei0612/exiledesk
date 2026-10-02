@@ -1,9 +1,10 @@
 <!--
-  BuildProgress.vue — 忍者ビルドコピーの読み込みの進み具合 (2026-09-27)
+  BuildProgress.vue — 火力チェックのタブ「値段」(旧 忍者ビルドコピー) の取得の進み具合 (2026-09-27)
 
   オーナー:「今何の動きをしてるかわかりやすいように表示させてね」「レート制限中の状態も分かりづらい」
   「読み込み後の完了まで色々いまなにしてますよーってわかりやすく UI であればおｋ」。
-    ① ビルドと相場 (poe.ninja / poe2scout) → ② 取引所の相場 (1 点ずつ。今の品物と段階、取引所の間隔待ち・制限中の残り秒)
+    ① 相場 (poe.ninja / poe2scout) → ② 取引所の相場 (1 点ずつ。今の品物と段階、取引所の間隔待ち・制限中の残り秒)
+  2026-10-03 統合でビルドの解析はコードが変わった時にローカルで済むようになったので、① は相場だけ (「値段を取る」を押した後)
   クラフト計算機と同じ番号の丸と色 (進行中 = 黄、済み = 緑)。
 -->
 <script setup lang="ts">
@@ -31,7 +32,7 @@ const pct = computed(() => (props.total ? Math.round((props.done / props.total) 
     <!-- ① ビルドと相場 -->
     <p class="flex items-center gap-2">
       <span class="rounded-full px-2 py-0.5 text-[11px] font-bold text-black" :class="loading ? 'bg-amber-400' : 'bg-emerald-400'">1</span>
-      <b>ビルドと相場を読む</b>
+      <b>相場を読む (poe.ninja / poe2scout)</b>
       <span v-if="loading" class="animate-pulse text-amber-200">{{ progress }}…</span>
       <span v-else class="text-emerald-300">済み</span>
     </p>

@@ -31,11 +31,9 @@ const items: NavItem[] = [
   { id: "vaal-scales", icon: "⚖", label: "ヴァールの天秤", group: "economy" },
   // 2026-09-22: 貼り付けたアイテムから「買うか自分で出すか」と設計図を出す計算機。上位プレイヤーの MOD もこの中のタブ
   { id: "htc-craft", icon: "🧪", label: "クラフト計算機", group: "economy" },
-  // 2026-10-02: 同梱 PoB で読み込んで、ジェムなどを変えて火力を比べる (views/pob-check/PobCheck.vue)
+  // 2026-10-02: 同梱 PoB で読み込んで、ジェムなどを変えて火力を比べる (views/pob-check/PobCheck.vue)。
+  // 忍者ビルドコピー (旧 `build-copy`、2026-09-26) は 2026-10-03 からこの中のタブ「値段」(PricesTab.vue)
   { id: "pob-check", icon: "🔥", label: "火力チェック", group: "tools" },
-  // 2026-09-26: PoB のコードを貼って、ビルドをそろえる費用と取引所へのリンクを一覧に (オーナー「忍者ビルドコピーってタブで」)。
-  // 後で火力チェックに統合する予定なので、今は火力チェックの直下に残す
-  { id: "build-copy", icon: "🜃", label: "忍者ビルドコピー", group: "tools" },
   // 2026-09-07: 同梱 PoB を別ウィンドウで起動 (PobLauncher.vue が onActivated で起動する)
   { id: "pob", icon: "🜍", label: "PoB を開く", group: "tools" },
   // 2026-09-29: PoE1 のスキン (マイクロトランザクション) が PoE2 でも使えるか (views/mtx/MtxList.vue)

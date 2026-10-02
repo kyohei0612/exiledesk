@@ -6,7 +6,7 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { gemJa, openPob } from "../../services/pob-check/api";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
@@ -14,10 +14,11 @@ import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
 import BuildDiff from "./BuildDiff.vue";
+import PricesTab from "./PricesTab.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 /**
@@ -60,8 +61,17 @@ const TABS = [
   { id: "gems", label: "ジェム" },
   { id: "tree", label: "パッシブツリー" },
   { id: "diff", label: "相手との差" },
+  { id: "prices", label: "値段" },
 ] as const;
 const tab = ref<(typeof TABS)[number]["id"]>("items");
+/**
+ * 「値段」(旧 忍者ビルドコピー、2026-10-03 統合) は一度開いたら v-show で保つ (取った値段を消さないため)。
+ * 開くまでは作らない (解析はローカルだが、使わない人の分まで走らせない)
+ */
+const pricesOpened = ref(false);
+watch(tab, (t) => {
+  if (t === "prices") pricesOpened.value = true;
+});
 /** 相手を読み込んだら「相手との差」を開く */
 async function onLoadTarget(): Promise<void> {
   await loadTarget();
@@ -72,6 +82,8 @@ const STEPS = [
   { title: "読み込む", cls: "text-amber-200", body: "PoB の「Import/Export」のコードか、poe.ninja のキャラのページの URL を上に貼って「読み込む」。自分のキャラは同梱の PoB でログインして取り込み、そのコードを貼る。" },
   { title: "変える", cls: "text-sky-200", body: "装備はゲームで Ctrl+C したアイテムを貼る (日本語のまま)。ジェムはレベルや品質を ±、ツリーはノードをクリックで取る / 外す。" },
   { title: "比べる", cls: "text-emerald-200", body: "変えるたびに PoB で計算し直して、上のバーに合計の差、スキルの表に 1 つずつの差が出ます。良ければ「今を比べる元にする」で続けて比べる。" },
+  // 2026-10-03 忍者ビルドコピーの統合: 値段はタブ「値段」。取るのはボタンを押した時だけ
+  { title: "そろえる", cls: "text-violet-200", body: "タブ「値段」に、読んだビルド (自分 / 相手) の装備・ルーン・リネージュサポートと取引所へのリンクが並びます。値段は「値段を取る」を押した時だけ取ります。" },
 ] as const;
 
 const num = (k: string): number => {
@@ -168,7 +180,7 @@ const resists = computed(() =>
     </div>
 
     <!-- まだ読み込んでいない時の案内 -->
-    <div v-if="!cur && !loading" class="mt-6 grid gap-3 @3xl:grid-cols-3">
+    <div v-if="!cur && !loading" class="mt-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-4">
       <div v-for="(st, i) in STEPS" :key="i" class="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-5">
         <p class="flex items-center gap-2 text-sm font-bold" :class="st.cls">
           <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs">{{ i + 1 }}</span>{{ st.title }}
@@ -377,6 +389,11 @@ const resists = computed(() =>
           @adopt="async (c, done) => done(await adopt(c))"
         />
         <p v-else class="mb-6 text-sm text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
+      </div>
+
+      <!-- 値段 (旧 忍者ビルドコピー)。自分 = 読んだコード、相手 = 比べる相手のコード。値段は押した時だけ -->
+      <div v-if="pricesOpened" v-show="tab === 'prices'">
+        <PricesTab :mine-code="lastSource?.code ?? null" :target-code="targetCode" />
       </div>
 
       <!-- ツリー -->

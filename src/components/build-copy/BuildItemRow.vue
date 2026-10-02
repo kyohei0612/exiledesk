@@ -1,5 +1,5 @@
 <!--
-  BuildItemRow.vue — 忍者ビルドコピーの装備 1 つ (2026-09-27、BuildItemTable から分けた)
+  BuildItemRow.vue — 火力チェックのタブ「値段」(旧 忍者ビルドコピー) の装備 1 つ (2026-09-27、BuildItemTable から分けた)
 
   オーナー 2026-09-27「全体的に UI が不細工。クラフト計算機にならって色々色付けてわかりやすくかつシンプルに」
   「読み込み後の完了まで、いまなにしてますよーってわかりやすく」。
@@ -37,7 +37,7 @@ const COLOR: Record<string, string> = { UNIQUE: "text-rarity-unique", RELIC: "te
 /** どこで取れたかの札 (クラフト計算機と同じ色の決まり: 緑 = そのまま / 水色 = 近い / 黄 = ゆるめた / 赤 = 無い) */
 const STAGE: Record<AutoStage, { label: string; cls: string }> = {
   exact: { label: "完成品", cls: "bg-emerald-500/20 text-emerald-300" },
-  lowered: { label: "段を下げて", cls: "bg-sky-500/20 text-sky-300" },
+  lowered: { label: "ティアを下げて", cls: "bg-sky-500/20 text-sky-300" },
   dropped: { label: "MOD を外して", cls: "bg-amber-500/20 text-amber-200" },
   bare: { label: "数値なし (平均)", cls: "bg-amber-500/20 text-amber-200" },
   unique: { label: "取引所の最安値", cls: "bg-violet-500/20 text-violet-200" },
@@ -134,7 +134,7 @@ const extraLinks = computed(() => (props.r.src === "rare" && props.r.rare ? prop
         <button v-for="l in extraLinks" :key="l.label" type="button" class="text-[10px] text-sky-300/70 underline hover:text-sky-200" :title="`取引所をこの条件 (${l.label}) で開く`" @click="emit('link', l.query)">
           {{ l.label }}
         </button>
-        <button v-if="r.autoTarget && !r.autoStep && !r.queued" type="button" :disabled="autoBusy" class="text-[10px] underline opacity-50 hover:opacity-100 disabled:opacity-20" title="今の段・割合で取引所の相場を取り直す" @click="emit('auto')">
+        <button v-if="r.autoTarget && !r.autoStep && !r.queued" type="button" :disabled="autoBusy" class="text-[10px] underline opacity-50 hover:opacity-100 disabled:opacity-20" title="今のティア・割合で取引所の相場を取り直す" @click="emit('auto')">
           取り直す
         </button>
       </div>

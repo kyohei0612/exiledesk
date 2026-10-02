@@ -20,7 +20,8 @@ import { refetchState } from "../services/trade2/auto-price";
 
 export type TradeUser = "build-copy" | "craft" | "gem-corrupt" | "overquality" | "rare-craft" | "unique-fav";
 export const TRADE_USER_JA: Record<TradeUser, string> = {
-  "build-copy": "忍者ビルドコピー",
+  // 旧 忍者ビルドコピー。2026-10-03 から火力チェックのタブ「値段」(id と履歴の名前はそのまま)
+  "build-copy": "火力チェックの値段",
   craft: "クラフト計算機",
   "gem-corrupt": "ジェムコラプトの賭け",
   overquality: "アドニアの賭け",

@@ -39,9 +39,9 @@ const btn = "rounded-md border border-white/15 px-2 py-0.5 hover:bg-white/5";
   <div class="mt-2 rounded-lg border border-white/10 bg-black/20 p-2">
     <div class="mb-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
       <span class="opacity-60">検索の条件</span>
-      <button type="button" :class="btn" @click="emit('raise')">{{ rare.analysis.mods.length ? "段を上げる" : "数値 +10%" }}</button>
-      <button type="button" :class="btn" @click="emit('lower')">{{ rare.analysis.mods.length ? "段を下げる" : "数値 −10%" }}</button>
-      <button type="button" :disabled="!changed()" :class="btn" class="disabled:opacity-30" title="付いている段・数値に戻す" @click="emit('reset')">リセット</button>
+      <button type="button" :class="btn" @click="emit('raise')">{{ rare.analysis.mods.length ? "ティアを上げる" : "数値 +10%" }}</button>
+      <button type="button" :class="btn" @click="emit('lower')">{{ rare.analysis.mods.length ? "ティアを下げる" : "数値 −10%" }}</button>
+      <button type="button" :disabled="!changed()" :class="btn" class="disabled:opacity-30" title="付いているティア・数値に戻す" @click="emit('reset')">リセット</button>
       <span v-if="rare.analysis.lines.length" class="rounded-full px-2" :class="rare.ratio !== 100 ? 'bg-amber-500/20 text-amber-200' : 'bg-white/5 opacity-70'">数値の {{ rare.ratio }}% 以上</span>
       <span v-if="item.quality" class="rounded-full bg-white/5 px-2 opacity-70" title="完成品の検索だけ品質も同じ以上で探します">品質 {{ item.quality }}%</span>
       <span v-if="item.sockets" class="rounded-full bg-white/5 px-2 opacity-70">ソケット {{ item.sockets }}</span>

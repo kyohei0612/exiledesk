@@ -48,6 +48,8 @@ const targetFrom = ref("");
 const targetInput = ref("");
 /** 相手のビルドプランナーの中身 (相手を読み込んでいる間に取る。相手は読み直しで PoB から消えるので、後からは作れない) */
 const targetPlan = shallowRef<BuildPlan | null>(null);
+/** 相手の PoB コード (poe.ninja の URL から読んだ時は取ってきた物)。タブ「値段」が相手の装備を解析するのに使う (2026-10-03 忍者ビルドコピーの統合) */
+const targetCode = ref<string | null>(null);
 const note = (s: string): void => {
   changes.value = [...changes.value, s];
 };
@@ -242,10 +244,10 @@ export function usePobCheck() {
     loading.value = true;
     error.value = null;
     try {
-      const { s, p } = await run(async () => {
+      const { s, p, code } = await run(async () => {
         const mine = cur.value ? await exportCode() : null;
         if (mine) await stashState();
-        await loadBuild(t);
+        const code = await loadBuild(t);
         const s = await summary();
         // 相手のビルドプランナーの中身は、相手が PoB にいる今のうちに作る (失敗しても相手の差は出す)
         const p = await plan(planName(s, "相手"), "ExileDesk").catch(() => null);
@@ -253,10 +255,11 @@ export function usePobCheck() {
           await loadBuild(mine);
           await unstashState();
         }
-        return { s, p };
+        return { s, p, code };
       });
       target.value = s;
       targetPlan.value = p;
+      targetCode.value = code;
       targetFrom.value = parseNinjaUrl(t) ? "poe.ninja" : "PoB コード";
       recordHistory("pob-check", "target", { input: t.slice(0, 200), char: s.char, stats: s.stats, plan: p ? { passives: p.passives, skills: p.skills } : null });
       // 自分のビルドを読み直したので、数字を今の物に (変えた所は PoB の中に残っている)
@@ -270,6 +273,7 @@ export function usePobCheck() {
   function clearTarget(): void {
     target.value = null;
     targetPlan.value = null;
+    targetCode.value = null;
     targetFrom.value = "";
     estimates.value = null;
     adopted.value = new Set();
@@ -571,5 +575,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { candidates, estimates, estimating, estimateProgress, estimatesStale, adopted, runEstimates, adopt, target, targetFrom, targetInput, targetPlan, targetCode, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

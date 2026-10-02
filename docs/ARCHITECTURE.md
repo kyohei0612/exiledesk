@@ -19,8 +19,7 @@ PoE2 のための Windows アプリ。画面は Vue 3 + TypeScript、裏側は R
 | 取引履歴 | `views/TradeHistory.vue` | マーチャントの履歴 (POESESSID) |
 | ヴァールの天秤 (タブ 4 つ) | `views/VaalScales.vue` | アドニアの賭け (`Overquality.vue`)・ジェムコラプト (`GemCorrupt.vue`)・自動ジェム監視 (`GemWatch.vue`)・規格外の賭け (`RareCraft.vue`)。2026-10-03 に 1 画面へ統合 |
 | クラフト計算機 | `views/htc-craft/HtcCraftLab.vue` | タブ「計算機」= 貼り付け or ベースから → 作り方と費用 (エンジン) / タブ「上位プレイヤーの MOD」= `views/CraftDiscoveryV2B.vue` (poe.ninja の builds 集計 `services/craft-v2`、ティアの表は `services/mods/tiers.ts`)。2026-10-03 に統合 |
-| 火力チェック | `views/pob-check/PobCheck.vue` | 同梱 PoB で読み込んで火力を比べる (`services/pob-check`) |
-| 忍者ビルドコピー | `views/BuildCopy.vue` | PoB コード / ninja URL → 装備と取引所の値段 (`services/build-copy`) |
+| 火力チェック (タブ 5 つ) | `views/pob-check/PobCheck.vue` | 同梱 PoB で読み込んで火力を比べる (`services/pob-check`)。装備 / ジェム / パッシブツリー / 相手との差 / タブ「値段」= `views/pob-check/PricesTab.vue` (旧 忍者ビルドコピー `BuildCopy.vue`。読んだビルド (自分 / 相手) の装備と取引所の値段 `views/build-copy`・`services/build-copy`。値段は「値段を取る」を押した時だけ)。2026-10-03 に統合 |
 | スキン | `views/mtx/MtxList.vue` | PoE1 のスキンが PoE2 で使えるか (`services/mtx`) |
 | クラフトステージ | `views/craft-stage/CraftStage.vue` | 1 手ずつの実演・動画モード・POE2Tube の撮影 (ADR-001)。動画用なので「ツール」の下の方に置く |
 | PoB を開く / 設定 | `views/PobLauncher.vue` / `views/Settings.vue` | |
@@ -30,7 +29,7 @@ PoE2 のための Windows アプリ。画面は Vue 3 + TypeScript、裏側は R
 - **MOD の置き場・重み・段** … 計算機のエンジンの**行** (`Gloves_str` など。STR / DEX / INT、ワンドの属性で分かれる)。
   読み込みは `services/htc/patch.ts` の `loadHtcPatch()` (同梱データ + `extra-bases.json` + 重みの上書き `weight-overrides.ts`)。
   ベース名 → 行は `services/htc/bridge.ts` の `classOfBase`、エンジンを読まずに行だけ要る所は `services/htc/base-rows.json`。
-  計算機・クラフトステージ・規格外の賭け・ビルドコピーのレア・上位プレイヤー MOD 一覧の段の表、全部ここから。
+  計算機・クラフトステージ・規格外の賭け・火力チェックの値段のレア・上位プレイヤー MOD 一覧の段の表、全部ここから。
 - **ベースの一覧 (種類の段・素の数値)** … `services/items/base-catalog.ts` と部品 `components/items/BaseCatalog.vue`。
 - **取引所 (trade2) を叩く順番と間隔** … Rust の門番 (`src-tauri/src/trade2/gate`・`pace.rs`・`reserve.rs`)。
   画面側は `state/trade-lock.ts` で「今どの機能が使っているか」を 1 つに決める。**検索は 10 秒間隔・5 分 30 回を守る** (テストでも)。
