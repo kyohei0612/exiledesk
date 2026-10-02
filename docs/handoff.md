@@ -2,12 +2,13 @@
 
 まず `CLAUDE.md` → `docs/script_rules/_all.md` (台本ルール) → この紙。
 
-## 今やっている回 (2026-10-02): 「エンドのクラフト素材 前編」(end_craft_materials_1)
+## 5 本目 (2026-10-02): 「エンドのクラフト素材 前編」(end_craft_materials_1) — 予約済み
 
-- 2 本に分ける前編 (上位オーブ・エッセンス + 合金・フラクチャー・カタリスト)。後編は骨・お告げ。視聴者はエンド、値段の数字は出さない、「前編」と言ってよい (後編の中身には触れない)
-- **台本は全 6 章 確定** (`output/work/end_craft_materials_1/approved/`、つないだ物 `data/scripts/end_craft_materials_1.json`、検査 0 件)。手順は `data/briefs/end_craft_materials_1.json` (琥珀のアミュレット ilvl 82、別の実演 essence / annul)
-- POE2Tube 側の素材は済 (scene.kind = icons / table、アイコン 22 個)。**ExileDesk 要望 ㉔ の返事待ち** (ExileDesk のメモ craft-stage-feature の末尾): ティアの表の下限の灰色・「破砕」→「フラクチャー」・ブリーチのエッセンスで品質の上限 40%・品質で MOD の数値を伸ばす・MOD のタグ。控えは `output/work/end_craft_materials_1/requests.md`
-- 次: ㉔ を開発版 (1420) で確かめる → kyohei のリリースの指示 → update_exiledesk → 撮影 → 合体 (build_video)。カタリストの章の「145 → 203」は ㉔ の後の結果 JSON で確かめる。section_01 の tiers は ㉔ の下限の指定を足す
+- 本編 (8GGUloinfis) + ショート「最後まで残る MOD は？」(uqpba1P1cx8) を **2026-10-02 22:00 公開で予約**。サムネは scripts/thumbs/end_craft_materials_1.py の土台に kyohei が文字を入れた物 (付け済み)
+- **残り: ショートの関連動画に本編を指定** (予約中は Studio の候補に出ないので 22:00 の後に Claude in Chrome で)。X の宣伝は kyohei
+- 撮影用 ExileDesk は v0.1.345 (CAPTURE_VER v23-materials)。㉔ (下限 floor / タグ tags / 品質で伸びる数値 / フラクチャーの名前) は取り込み済み
+- 新しい台本の道具: scene.kind = icons / table (panel)、tiers の floor、stage の tags / still (打つ演出を流さず姿だけ)。ショートは 1 本・1 分前後か未満
+- 次: 後編 (骨・お告げ)。_facts.md の「骨 (冒涜)」「消去のオーブ」は前編で足した所まで。お告げは未調査
 
 ## 今の状態
 
