@@ -71,6 +71,7 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
       "アイテムレベル: 80",
       "--------",
       "最大ライフ +30 (rune)",
+      "絆 投射物ダメージが20%増加する (rune)",
       "--------",
       "回避力が98%増加する (implicit)",
       "--------",
@@ -81,9 +82,11 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
     ].join(NL);
     const it = await toPobItem(text);
     expect(it.unread).toEqual([]);
-    expect(it.lines.map((l) => l.kind)).toEqual(["rune", "implicit", "explicit", "explicit"]);
+    expect(it.lines.map((l) => l.kind)).toEqual(["rune", "rune", "implicit", "explicit", "explicit"]);
     const lines = it.text.split(NL);
-    expect(lines).toContain("Implicits: 2");
+    expect(lines).toContain("Implicits: 3");
+    // 取引所の日本語の絆 (2026-10-02 エンジン点検で読めていなかった)
+    expect(lines).toContain("{rune}Bonded: 20% increased Projectile Damage");
     expect(lines).toContain("{rune}+30 to maximum Life");
     expect(lines).toContain("98% increased Evasion Rating");
     expect(lines).toContain("+136 to maximum Mana");

@@ -32,7 +32,15 @@ export interface GameNumbers {
   hitChance: number;
   /** クリティカル込みの平均の 1 発 */
   avg: number;
+  /** この行の DPS = ヒット (ゲーム内の表記) + 継続 + ミニオン */
   dps: number;
+  /** ヒットの DPS (敵側の倍率を割り戻した、ゲーム内の表記) */
+  hitDps: number;
+  /** 継続ダメージ (発火・出血・毒・DoT スキル。PoB のまま) */
+  dot: number;
+  /** ミニオンの DPS (PoB のまま) と名前 */
+  minion: number;
+  minionName?: string;
   /** 敵側の倍率を割り戻した比 (PoB の DPS × これ = ここの DPS) */
   enemyRatio: number;
   parts: Array<{ type: string; hit: number }>;

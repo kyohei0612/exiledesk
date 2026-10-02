@@ -215,14 +215,20 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
       if (so) { sockets = so[1]!.trim(); continue; }
       if (l === "コラプト済み" || l === "コラプト状態") { corrupted = true; continue; }
       if (!afterLevel) continue;
-      const bondedJa = /^絆[:：]?\s*(.+)$/.exec(l);
-      let en = bondedJa ? ((x) => (x ? `Bonded: ${x}` : null))(lineToEn(bondedJa[1]!, pats)) : lineToEn(l, pats);
+      // 絆 (Bonded) は頭に「絆」(取引所は「絆 …」、ゲームのコピーは「絆: …」かも)。注記 (rune) と重なっても読む
+      const toEn = (t: string): string | null => {
+        const b = /^絆[:：]?\s*(.+)$/.exec(t);
+        if (!b) return lineToEn(t, pats);
+        const x = lineToEn(b[1]!, pats);
+        return x ? `Bonded: ${x}` : null;
+      };
+      let en = toEn(l);
       let kind: ItemLine["kind"] | null = null;
       if (!en) {
         // 行末の注記 (固有) (ルーン) などを外してもう 1 度
         const note = /^(.*?)\s*[(（]([^)）]+)[)）]$/.exec(l);
         if (note) {
-          en = lineToEn(note[1]!, pats);
+          en = toEn(note[1]!);
           kind = NOTE_KIND.find(([re]) => re.test(note[2]!))?.[1] ?? null;
         }
       }

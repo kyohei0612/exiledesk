@@ -10,31 +10,49 @@ PCK = {}
 local TYPES = { "Physical", "Lightning", "Cold", "Fire", "Chaos" }
 
 --- o = 内訳モード (CALCS) の出力。<種類>EffMult はこのモードでしか出ない (CalcOffence.lua)
-local function gameNumbers(o)
+--- アタックは 1 発の数字が武器ごと (o.MainHand / o.OffHand) に入っていて、上の段には無い (2026-10-02 エンジン点検で発覚:
+--- 弓やメイスのスキルが全部 0 になっていた)。1 発・クリティカル・速さはメインハンド、DPS は上の段の合計 (両手持ちも込み)
+local function hitOf(src)
+  local h = 0
+  for _, t in ipairs(TYPES) do h = h + (src[t .. "HitAverage"] or 0) end
+  return h
+end
+local function gameNumbers(o, minionOut, minionName)
+  local src = o
+  if hitOf(o) <= 0 and o.MainHand and hitOf(o.MainHand) > 0 then src = o.MainHand end
   local hit, crit, hitPost = 0, 0, 0
   local parts = {}
   for _, t in ipairs(TYPES) do
-    local eff = o[t .. "EffMult"]
+    local eff = src[t .. "EffMult"] or o[t .. "EffMult"]
     if not eff or eff <= 0 then eff = 1 end
-    local post = o[t .. "HitAverage"] or 0
+    local post = src[t .. "HitAverage"] or 0
     local h = post / eff
-    local c = (o[t .. "CritAverage"] or 0) / eff
+    local c = (src[t .. "CritAverage"] or 0) / eff
     hit = hit + h
     hitPost = hitPost + post
     crit = crit + c
     if h > 0 then parts[#parts + 1] = { type = t, hit = h } end
   end
-  -- DPS は PoB の DPS (時間で当たるスキルや回数込み) に、敵側の倍率を割り戻した比を掛ける
+  -- ヒットの DPS は PoB の DPS (時間で当たるスキルや回数込み) に、敵側の倍率を割り戻した比を掛ける
   local ratio = hitPost > 0 and hit / hitPost or 1
-  local cc = (o.CritChance or 0) / 100
+  local cc = (src.CritChance or 0) / 100
+  local hitDps = (o.TotalDPS or 0) * ratio
+  -- 継続ダメージ (発火・出血・毒・DoT のスキル): PoB の CombinedDPS からヒットの分を引いた物 (敵側の倍率は込みのまま)
+  local dot = math.max(0, (o.CombinedDPS or 0) - (o.TotalDPS or 0))
+  -- ミニオン (コンパニオン・スケルトン等): ミニオンの CombinedDPS (PoB のまま)
+  local minion = minionOut and (minionOut.CombinedDPS or minionOut.TotalDPS or 0) or 0
   return {
     hit = hit,
     crit = crit,
-    critChance = o.CritChance or 0,
-    speed = o.Speed or 0,
-    hitChance = (o.HitChance or 100),
+    critChance = src.CritChance or 0,
+    speed = src.Speed or o.Speed or 0,
+    hitChance = (src.HitChance or 100),
     avg = hit * (1 - cc) + crit * cc,
-    dps = (o.TotalDPS or 0) * ratio,
+    hitDps = hitDps,
+    dot = dot,
+    minion = minion,
+    minionName = minion > 0 and minionName or nil,
+    dps = hitDps + dot + minion,
     enemyRatio = ratio,
     parts = parts,
   }
@@ -108,8 +126,9 @@ function PCK.summary()
         local mo = calcs.calcsOutput
         local ms = calcs.calcsEnv.player.mainSkill
         local name = ms and ms.activeEffect and ms.activeEffect.grantedEffect and ms.activeEffect.grantedEffect.name or "?"
-        local n = gameNumbers(mo)
-        if n.hit > 0 then
+        local m = calcs.calcsEnv.minion
+        local n = gameNumbers(mo, m and m.output, m and m.minionData and m.minionData.name)
+        if n.dps > 0 then
           gr.skills[#gr.skills + 1] = {
             k = k, name = name, level = ms.activeEffect.level,
             triggered = (isMeta and k > 1) and true or false,
@@ -348,17 +367,19 @@ function PCK.nodePower(i, k, ids)
   g.mainActiveSkill = k
   local ok, res = pcall(function()
     local calcFunc, base = build.calcsTab.calcs.getMiscCalculator(build)
-    local out = { base = base.TotalDPS or 0, nodes = {} }
+    -- 物差しは ヒット + 継続 + ミニオン (行の DPS と同じ中身。PoB のまま)
+    local function dpsOf(o) return (o.CombinedDPS or o.TotalDPS or 0) + ((o.Minion and (o.Minion.CombinedDPS or o.Minion.TotalDPS)) or 0) end
+    local out = { base = dpsOf(base), nodes = {} }
     for _, id in ipairs(ids) do
       local node = build.spec.nodes[id]
       if node and node.alloc then
         local single = calcFunc({ removeNodes = { [node] = true } })
-        local e = { single = single.TotalDPS or 0, n = 1 }
+        local e = { single = dpsOf(single), n = 1 }
         local deps = node.depends or {}
         if #deps > 1 then
           local set = {}
           for _, d in ipairs(deps) do set[d] = true end
-          e.path = (calcFunc({ removeNodes = set }).TotalDPS or 0)
+          e.path = dpsOf(calcFunc({ removeNodes = set }))
           e.n = #deps
         else
           e.path = e.single

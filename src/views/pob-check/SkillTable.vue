@@ -39,6 +39,7 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
       <div class="relative min-w-0">
         <p class="flex items-center gap-1.5 truncate text-[13px] font-bold">
           {{ gemJa(x.s.name) }}
+          <span v-if="x.s.game.minionName" class="truncate text-[11px] font-semibold text-emerald-200/90">→ {{ x.s.game.minionName }}</span>
           <span class="rounded bg-white/10 px-1 text-[10px] font-semibold text-[var(--exile-color-text-secondary)]">Lv{{ x.s.level }}</span>
           <span v-if="x.count > 1" class="rounded bg-white/10 px-1 text-[10px] font-semibold text-[var(--exile-color-text-secondary)]" title="同じスキルが同じ数字で複数あるので 1 行にまとめました (合計には 1 つ分だけ)">×{{ x.count }}</span>
           <span
@@ -57,17 +58,21 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
       <div class="relative text-right">
         <p class="text-[17px] font-black leading-tight tabular-nums text-amber-200">{{ fmtNum(x.s.game.dps) }}</p>
         <DiffBadge :now="x.s.game.dps" :before="before.get(x.key)?.game.dps" />
+        <!-- ヒット以外が入っている時の内訳 -->
+        <p v-if="(x.s.game.dot ?? 0) > 0 && x.s.game.hitDps > 0" class="text-[10px] tabular-nums text-orange-300/80" title="発火・出血・毒・継続ダメージのスキル (PoB の数字のまま)">うち継続 {{ fmtNum(x.s.game.dot) }}</p>
+        <p v-else-if="(x.s.game.dot ?? 0) > 0" class="text-[10px] text-orange-300/80">継続ダメージ</p>
+        <p v-if="(x.s.game.minion ?? 0) > 0" class="text-[10px] text-emerald-300/80" title="ミニオン・コンパニオンの DPS (PoB の数字のまま)">ミニオン</p>
       </div>
       <div class="relative text-right">
-        <p class="text-[13px] tabular-nums">{{ fmtNum(x.s.game.hit) }}</p>
+        <p class="text-[13px] tabular-nums">{{ x.s.game.hit > 0 ? fmtNum(x.s.game.hit) : "—" }}</p>
         <DiffBadge :now="x.s.game.hit" :before="before.get(x.key)?.game.hit" />
       </div>
       <div class="relative text-right">
-        <p class="text-[13px] tabular-nums">{{ fmtNum(x.s.game.crit) }}</p>
+        <p class="text-[13px] tabular-nums">{{ x.s.game.hit > 0 ? fmtNum(x.s.game.crit) : "—" }}</p>
         <DiffBadge :now="x.s.game.crit" :before="before.get(x.key)?.game.crit" />
       </div>
       <div class="relative text-right">
-        <p class="text-[13px] tabular-nums">{{ x.s.game.critChance.toFixed(1) }}%</p>
+        <p class="text-[13px] tabular-nums">{{ x.s.game.hit > 0 ? `${x.s.game.critChance.toFixed(1)}%` : "—" }}</p>
         <DiffBadge :now="x.s.game.critChance" :before="before.get(x.key)?.game.critChance" />
       </div>
       <div class="relative text-right">
