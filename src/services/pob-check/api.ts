@@ -189,39 +189,8 @@ export async function loadBuild(text: string): Promise<void> {
   await sendPck();
 }
 
-/** 同梱 (公式と共通) の PoB が保存したビルド */
-export interface SavedBuild {
-  name: string;
-  path: string;
-  modified: number;
-  class_name: string;
-  ascendancy: string;
-  level: number;
-}
-export const savedBuilds = (): Promise<SavedBuild[]> => invoke<SavedBuild[]>("pob_saved_builds");
-/** PoB に保存したビルドを読み込む (自分のキャラ: PoB でログインして取り込んで保存した物) */
-export async function loadSavedBuild(path: string): Promise<void> {
-  if (!isTauriRuntime()) throw new Error("アプリの中でだけ使えます");
-  await invoke("pob_load_saved_build", { path });
-  await sendPck();
-}
-/** 同梱の PoB を開く (自分のキャラの取り込みは PoB の Import/Export → Import from website / Character import で) */
+/** 同梱の PoB を開く (自分のキャラは PoB でログインして取り込み、Import/Export のコードをアプリに貼る) */
 export const openPob = (): Promise<unknown> => invoke("pob_launcher_open");
-/**
- * アプリのログインで pathofexile.com の character-window を読む (自分のキャラ、2026-10-02 試し)。
- * PoE2 で使えるかは未確認なので、状態と本体をそのまま返す
- */
-export type CharacterWindowEndpoint = "get-account-name" | "get-characters" | "get-items" | "get-passive-skills";
-export interface CharacterWindowResponse {
-  status: number;
-  /** 429 の時の待ち秒数 (Retry-After)。無ければ null */
-  retry_after: number | null;
-  /** x-rate-limit-* ヘッダ */
-  ratelimit: Record<string, string>;
-  body: unknown;
-}
-export const characterWindow = (endpoint: CharacterWindowEndpoint, character?: string, account?: string): Promise<CharacterWindowResponse> =>
-  invoke("poe_character_window", { endpoint, character: character ?? null, account: account ?? null });
 /** 今のビルド (変えた所も込み) を PoB のコードに (共有用)。先に画面で見ているスキルを PoB の主スキルにする */
 export async function exportCode(main?: { i: number; k: number }): Promise<string> {
   if (main) await evalLua(`return PCK.setMainSkill(${luaNum(main.i)}, ${luaNum(main.k)})`);

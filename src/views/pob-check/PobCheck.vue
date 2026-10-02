@@ -6,10 +6,8 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { characterWindow, gemJa, openPob, savedBuilds, type CharacterWindowEndpoint, type CharacterWindowResponse, type SavedBuild } from "../../services/pob-check/api";
-import { recordHistory } from "../../services/history";
-import { markSessionExpired } from "../../state/poe-session";
+import { computed, ref } from "vue";
+import { gemJa, openPob } from "../../services/pob-check/api";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
@@ -21,142 +19,20 @@ import { usePobCheck, type PasteNote } from "./usePobCheck";
 const { lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
-const LOAD_MODES = [
-  { id: "other", label: "人のビルド (コード / poe.ninja)" },
-  { id: "mine", label: "自分のキャラ (PoB でログイン)" },
-] as const;
-const loadMode = ref<(typeof LOAD_MODES)[number]["id"]>("other");
-const saved = ref<SavedBuild[]>([]);
-const savedMsg = ref("");
-async function refreshSaved(): Promise<void> {
-  try {
-    saved.value = await savedBuilds();
-    savedMsg.value = saved.value.length ? `${saved.value.length} 件` : "保存したビルドがまだありません";
-  } catch (e) {
-    savedMsg.value = String(e);
-  }
-}
+/**
+ * 自分のキャラ: PoB でログインして取り込み、Import/Export のコードを上の欄に貼る (2026-10-02 オーナー決定)。
+ * アプリのログイン (POESESSID) では PoE2 の装備・パッシブは読めない (Web サイト側に口が無く、公式 API は OAuth の登録が要る)
+ */
+const pobMsg = ref("");
 async function openPobApp(): Promise<void> {
-  savedMsg.value = "PoB を開いています…";
+  pobMsg.value = "PoB を開いています…";
   try {
     await openPob();
-    savedMsg.value = "取り込んで保存したら「一覧を更新」";
+    pobMsg.value = "PoB で「Import/Export Build」→ ログインして取り込み → 「Generate」のコードをコピーして上の欄へ";
   } catch (e) {
-    savedMsg.value = String(e);
+    pobMsg.value = String(e);
   }
 }
-watch(loadMode, (m) => {
-  if (m === "mine") void refreshSaved();
-});
-/**
- * 試し: アプリのログインで character-window を読む。応答は履歴 (pob-check.jsonl) に残す。
- *
- * 2026-10-02: 取得口は 4 つ (get-account-name / get-characters / get-items / get-passive-skills)。
- * 装備とパッシブは accountName が要る (PoE1 からの仕様) ので、キャラ名から get-account-name で引いてから呼ぶ。
- * 応答の形は trade_history_fetch と同じ { status, retry_after, ratelimit, body } (src-tauri/src/trade_history.rs)
- */
-const acctBusy = ref(false);
-const acctMsg = ref("");
-const acctChars = ref<Array<{ name: string; class: string; level: number; league: string }>>([]);
-/** 生の本体を 60,000 文字まで残す。試しのためなので、取り込みを作ったら status と件数だけにする */
-const clip = (v: unknown): string => JSON.stringify(v).slice(0, 60000);
-
-type CwEndpoint = CharacterWindowEndpoint;
-type CwResponse = CharacterWindowResponse;
-const cw = characterWindow;
-
-const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
-
-/** 429 なら retry_after 秒 (無ければ 5 秒) 待って 1 回だけ呼び直す。それ以外はそのまま返す */
-async function cwRetry(endpoint: CwEndpoint, character?: string, account?: string): Promise<CwResponse> {
-  const r = await cw(endpoint, character, account);
-  if (r.status !== 429) return r;
-  const wait = Math.max(1, Math.min(r.retry_after ?? 5, 120));
-  acctMsg.value = `制限中 (${endpoint})。${wait} 秒待ってから呼び直します…`;
-  await sleep(wait * 1000);
-  return cw(endpoint, character, account);
-}
-
-/**
- * HTTP の状態を日本語に (本家 vendor/PathOfBuilding-PoE2/src/Classes/ImportTab.lua の DownloadCharacterList の対応表)。
- * 401 はログインが切れた扱い (取引履歴と同じ poe-session の markSessionExpired → ログインの画面が出る)。
- * 403 は「プロフィールのキャラ一覧が非公開」が本家の読みなので、未ログイン扱いにはしない (自分のアカウントで 403 なら
- * 設定の問題で、ログインし直しても変わらない)
- */
-function cwStatusText(r: CwResponse): string {
-  switch (r.status) {
-    case 200:
-      return "読めた";
-    case 401:
-      return "ログインが要る (切れている)";
-    case 403:
-      return "プロフィールのキャラ一覧が非公開 (pathofexile.com のプライバシー設定)";
-    case 404:
-      return "アカウント名かキャラ名が違う";
-    case 429:
-      return `送り過ぎ (${r.retry_after ?? "?"} 秒待つ)`;
-    default:
-      return `状態 ${r.status}`;
-  }
-}
-function noteStatus(r: CwResponse): void {
-  if (r.status === 401) markSessionExpired();
-}
-
-async function tryAccount(): Promise<void> {
-  acctBusy.value = true;
-  acctMsg.value = "読んでいます…";
-  try {
-    const r = await cwRetry("get-characters");
-    noteStatus(r);
-    recordHistory("pob-check", "account-characters", { status: r.status, retry_after: r.retry_after ?? null, ratelimit: r.ratelimit ?? null, body: clip(r.body) });
-    const list = Array.isArray(r.body) ? (r.body as Array<Record<string, unknown>>) : [];
-    acctChars.value = list.map((c) => ({ name: String(c.name ?? ""), class: String(c.class ?? ""), level: Number(c.level ?? 0), league: String(c.league ?? "") }));
-    acctMsg.value = r.status === 200 ? `読めた (${list.length} 人)。キャラを押すと装備とパッシブも試す` : `読めない: ${cwStatusText(r)} — ${clip(r.body).slice(0, 120)}`;
-  } catch (e) {
-    acctMsg.value = String(e);
-  } finally {
-    acctBusy.value = false;
-  }
-}
-async function tryAccountChar(name: string): Promise<void> {
-  acctBusy.value = true;
-  acctMsg.value = `${name} のアカウント名を読んでいます…`;
-  try {
-    // 1. キャラ名 → アカウント名 (PoE1 では { accountName: "..." })
-    const acct = await cwRetry("get-account-name", name);
-    noteStatus(acct);
-    const accountName = (acct.body as { accountName?: unknown } | null)?.accountName;
-    const account = typeof accountName === "string" && accountName ? accountName : undefined;
-    // アカウント名は履歴に残さない (伏せる)。取れたかどうかと長さだけ
-    recordHistory("pob-check", "account-name", { status: acct.status, retry_after: acct.retry_after ?? null, ratelimit: acct.ratelimit ?? null, got: !!account, length: account?.length ?? 0, body_keys: acct.body && typeof acct.body === "object" ? Object.keys(acct.body as object) : typeof acct.body });
-    if (!account) {
-      acctMsg.value = `アカウント名を読めない: ${cwStatusText(acct)} — ${clip(acct.body).slice(0, 120)} (装備とパッシブは accountName が要るので止めます)`;
-      return;
-    }
-    // 2. 装備 → 3. パッシブ (間を 1.5 秒空ける。429 なら cwRetry が retry_after 秒待つ)
-    acctMsg.value = `${name} の装備を読んでいます…`;
-    await sleep(1500);
-    const items = await cwRetry("get-items", name, account);
-    noteStatus(items);
-    acctMsg.value = `${name} のパッシブを読んでいます…`;
-    await sleep(1500);
-    const passives = await cwRetry("get-passive-skills", name, account);
-    noteStatus(passives);
-    // 生の本体 (clip) は試しのため。取り込みを作ったら status と件数だけにする。アカウント名は入れない
-    recordHistory("pob-check", "account-character", {
-      name,
-      items: { status: items.status, retry_after: items.retry_after ?? null, ratelimit: items.ratelimit ?? null, body: clip(items.body) },
-      passives: { status: passives.status, retry_after: passives.retry_after ?? null, ratelimit: passives.ratelimit ?? null, body: clip(passives.body) },
-    });
-    acctMsg.value = `装備: ${cwStatusText(items)} / パッシブ: ${cwStatusText(passives)} (履歴に残しました)`;
-  } catch (e) {
-    acctMsg.value = String(e);
-  } finally {
-    acctBusy.value = false;
-  }
-}
-const fmtDate = (sec: number): string => (sec ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
 
 /** 共有: 今のビルドの PoB コードをコピー */
 const shareMsg = ref("");
@@ -175,7 +51,7 @@ const TABS = [
 const tab = ref<(typeof TABS)[number]["id"]>("items");
 
 const STEPS = [
-  { title: "読み込む", cls: "text-amber-200", body: "PoB の「Import/Export」のコードか、poe.ninja のキャラのページの URL を上に貼って「読み込む」。" },
+  { title: "読み込む", cls: "text-amber-200", body: "PoB の「Import/Export」のコードか、poe.ninja のキャラのページの URL を上に貼って「読み込む」。自分のキャラは同梱の PoB でログインして取り込み、そのコードを貼る。" },
   { title: "変える", cls: "text-sky-200", body: "装備はゲームで Ctrl+C したアイテムを貼る (日本語のまま)。ジェムはレベルや品質を ±、ツリーはノードをクリックで取る / 外す。" },
   { title: "比べる", cls: "text-emerald-200", body: "変えるたびに PoB で計算し直して、上のバーに合計の差、スキルの表に 1 つずつの差が出ます。良ければ「今を比べる元にする」で続けて比べる。" },
 ] as const;
@@ -236,72 +112,25 @@ const resists = computed(() =>
     <div class="mb-4">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">火力チェック</h1>
       <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">ビルドを読み込んで、装備・ジェム・ツリーを変えると読み込んだ時との差が出ます。</p>
-      <!-- 読み込み方: 人のビルド / 自分のキャラ (PoB でログインして取り込んだ物) -->
-      <div class="mt-3 flex gap-1">
+      <!-- 読み込み: PoB コード (人のビルドも自分のキャラも) か poe.ninja の URL。自分のキャラは PoB でログインして取り込んだコードを貼る -->
+      <form class="mt-3 flex gap-2" @submit.prevent="load()">
+        <input
+          v-model="input"
+          type="text"
+          placeholder="PoB コード / https://poe.ninja/poe2/builds/... のキャラの URL"
+          class="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[var(--exile-color-accent-focus)]"
+        />
         <button
-          v-for="m in LOAD_MODES"
-          :key="m.id"
-          type="button"
-          class="rounded-t-lg px-3 py-1.5 text-xs font-bold transition-colors"
-          :class="loadMode === m.id ? 'bg-white/[0.07] text-amber-200' : 'text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]'"
-          @click="loadMode = m.id"
-        >{{ m.label }}</button>
-      </div>
-      <div class="rounded-b-lg rounded-tr-lg bg-white/[0.04] p-3">
-        <form v-if="loadMode === 'other'" class="flex gap-2" @submit.prevent="load()">
-          <input
-            v-model="input"
-            type="text"
-            placeholder="PoB コード / https://poe.ninja/poe2/builds/... のキャラの URL"
-            class="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[var(--exile-color-accent-focus)]"
-          />
-          <button
-            type="submit"
-            class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-sm font-bold text-black shadow disabled:opacity-40"
-            :disabled="loading || !input.trim()"
-          >{{ loading ? "読み込み中…" : "読み込む" }}</button>
-        </form>
-        <div v-else>
-          <p class="text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
-            自分のキャラは PoB と同じやり方で: <b>同梱の PoB を開く</b> → 「Import/Export Build」→ ログインしてキャラを取り込む → 保存 (Ctrl+S)。保存したビルドがここに並びます。
-          </p>
-          <div class="mt-2 flex items-center gap-2">
-            <button type="button" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400" @click="openPobApp">同梱の PoB を開く</button>
-            <button type="button" class="rounded-lg bg-white/[0.07] px-3 py-1.5 text-xs font-semibold hover:bg-white/15" @click="refreshSaved">一覧を更新</button>
-            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ savedMsg }}</span>
-          </div>
-          <div class="mt-3 border-t border-white/10 pt-2">
-            <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">
-              試し: アプリのログインで公式サイトからキャラを読めるか (読めれば PoB でのログインが要らなくなる)。押すと応答を履歴に残すので、結果を教えてください
-            </p>
-            <div class="mt-1 flex items-center gap-2">
-              <button type="button" class="rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-500/30 disabled:opacity-40" :disabled="acctBusy" @click="tryAccount">アプリのログインでキャラ一覧</button>
-              <span class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ acctMsg }}</span>
-            </div>
-            <ul v-if="acctChars.length" class="mt-1 flex flex-wrap gap-1">
-              <li v-for="c in acctChars" :key="c.name">
-                <button type="button" class="rounded bg-black/30 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-40" :disabled="acctBusy" @click="tryAccountChar(c.name)">
-                  {{ c.name }} <span class="text-[var(--exile-color-text-tertiary)]">{{ c.class }} Lv{{ c.level }} {{ c.league }}</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-          <ul v-if="saved.length" class="mt-2 max-h-56 space-y-1 overflow-auto">
-            <li v-for="b in saved" :key="b.path">
-              <button
-                type="button"
-                class="flex w-full items-center gap-3 rounded-lg bg-black/25 px-3 py-1.5 text-left hover:bg-white/10 disabled:opacity-40"
-                :disabled="loading"
-                @click="load({ path: b.path, name: b.name })"
-              >
-                <span class="min-w-0 flex-1 truncate text-[13px] font-semibold">{{ b.name }}</span>
-                <span class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ b.ascendancy || b.class_name }} Lv {{ b.level }}</span>
-                <span class="w-28 text-right text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ fmtDate(b.modified) }}</span>
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+          type="submit"
+          class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-sm font-bold text-black shadow disabled:opacity-40"
+          :disabled="loading || !input.trim()"
+        >{{ loading ? "読み込み中…" : "読み込む" }}</button>
+      </form>
+      <p class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
+        <span>自分のキャラは <b>同梱の PoB</b> でログインして取り込み、「Import/Export」のコードをここに貼る。</span>
+        <button type="button" class="rounded bg-white/[0.07] px-2 py-0.5 text-[11px] font-semibold text-[var(--exile-color-text-secondary)] hover:bg-white/15" @click="openPobApp">同梱の PoB を開く</button>
+        <span v-if="pobMsg" class="text-[var(--exile-color-text-secondary)]">{{ pobMsg }}</span>
+      </p>
       <p v-if="error" class="mt-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
     </div>
 

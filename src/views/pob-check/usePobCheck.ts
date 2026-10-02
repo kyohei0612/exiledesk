@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, exportCode, loadSavedBuild, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, exportCode, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
@@ -33,8 +33,8 @@ const power = shallowRef<{ target: string; label: string; nodes: Map<number, Nod
 const powerProgress = ref<string>("");
 /** 比べる元からの変えた所 (画面の上のバーに並べる)。読み込み・「今を比べる元にする」で空にする */
 const changes = ref<string[]>([]);
-/** 最後に読み込んだ元 (読み込み直す用) */
-const lastSource = ref<{ path: string; name: string } | { text: string } | null>(null);
+/** 最後に読み込んだ元 (読み込み直す用。PoB コード か poe.ninja の URL) */
+const lastSource = ref<{ text: string } | null>(null);
 /** 何から読み込んだか (画面の表示用) */
 const loadedFrom = ref("");
 /** 上のバーで見るスキルの鍵 (読み込んだ時に DPS が一番高いスキルで確定。行が消えたら一番高い物に戻る) */
@@ -151,10 +151,10 @@ function withCopies(i: number): number[] {
 }
 
 export function usePobCheck() {
-  /** 読み込む: text = PoB コード / poe.ninja の URL、saved = PoB に保存したビルドのパス (自分のキャラ) */
-  async function load(saved?: { path: string; name: string }, opts: { keepBase?: boolean; text?: string } = {}): Promise<void> {
+  /** 読み込む: text = PoB コード (人のビルド / 自分のキャラは PoB の Import/Export のコード) か poe.ninja の URL */
+  async function load(opts: { keepBase?: boolean; text?: string } = {}): Promise<void> {
     const text = opts.text ?? input.value;
-    if (!saved && !text.trim()) return;
+    if (!text.trim()) return;
     if (loading.value || busy.value) return;
     const prev = cur.value;
     loading.value = true;
@@ -162,8 +162,7 @@ export function usePobCheck() {
     try {
       // 読み込み・部品送り・数字・ツリー を 1 つの run にまとめる (間に他の操作が割り込まない)
       const { s, nodes } = await run(async () => {
-        if (saved) await loadSavedBuild(saved.path);
-        else await loadBuild(text);
+        await loadBuild(text);
         return { s: await summary(), nodes: (await treeStatic()).nodes };
       });
       treeNodes.value = nodes;
@@ -179,12 +178,12 @@ export function usePobCheck() {
         baseAt.value = "読み込んだ時";
         changes.value = [];
       }
-      lastSource.value = saved ? { ...saved } : { text };
+      lastSource.value = { text };
       // 上のバーのスキルは読み込んだ時に確定 (DPS が一番高い物)。変更で順位が入れ替わっても勝手に変わらない
       focusKey.value = skillsOf(s)[0]?.key ?? null;
       loadSeq.value++;
-      recordHistory("pob-check", opts.keepBase ? "reload" : "load", { input: saved ? `saved:${saved.name}` : text.slice(0, 200), char: s.char, stats: s.stats });
-      loadedFrom.value = saved ? `PoB に保存したビルド「${saved.name}」` : parseNinjaUrl(text) ? "poe.ninja" : "PoB コード";
+      recordHistory("pob-check", opts.keepBase ? "reload" : "load", { input: text.slice(0, 200), char: s.char, stats: s.stats });
+      loadedFrom.value = parseNinjaUrl(text) ? "poe.ninja" : "PoB コード";
     } catch (e) {
       error.value = msg(e);
     } finally {
@@ -249,17 +248,12 @@ export function usePobCheck() {
   const changeWeaponSet = (n: 1 | 2): Promise<unknown> => act({ fn: () => setWeaponSet(n), history: ["weapon-set", { n }], note: `武器セット ${n === 1 ? "I" : "II"}` });
   const restoreItem = (slot: string): Promise<unknown> => act({ fn: () => restore(slot), history: ["restore", { slot }], note: `${slotJa(slot)} 元に戻す` });
 
-  /** 読み込み直せる元か (PoB コードは同じ文字列を読み直すだけなので最新は取れない) */
-  const canReload = computed(() => {
-    const src = lastSource.value;
-    return !!src && ("path" in src || !!parseNinjaUrl(src.text));
-  });
-  /** 読み込み直す (同じ元から最新を取り直し、今の状態を比べる元に残す)。poe.ninja はあちらの更新待ちのことがある */
+  /** 読み込み直せる元か (poe.ninja の URL だけ。PoB コードは同じ文字列を読み直すだけなので最新は取れない) */
+  const canReload = computed(() => !!lastSource.value && !!parseNinjaUrl(lastSource.value.text));
+  /** 読み込み直す (poe.ninja から最新を取り直し、今の状態を比べる元に残す)。あちらの更新待ちのことがある */
   async function reload(): Promise<void> {
     const src = lastSource.value;
-    if (!src) return;
-    if ("path" in src) await load(src, { keepBase: true });
-    else await load(undefined, { keepBase: true, text: src.text });
+    if (src) await load({ keepBase: true, text: src.text });
   }
 
   /** 共有: 今のビルド (変えた所も込み) の PoB コードをクリップボードへ。上のバーのスキルを PoB の主スキルにしてから書き出す */

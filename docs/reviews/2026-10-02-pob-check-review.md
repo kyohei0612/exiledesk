@@ -9,7 +9,8 @@
 - **craft-stage**: 数値差し替えは `text-nums.ts` (apply-vaal と stage-core が共用、雛形から作り直す `retext`)、部位の上位語は `essence-parts.ts`、撮影カードの props は `cardCommon`
 - **Rust**: pob_* は `command(async)` + `request()` 1 本 (120 秒タイムアウト・worker 死亡時 1 回再起動)、`check_pob2_xml` を 3 箇所で共用
 - 確かめ: `pnpm test` 117 件、`vue-tsc` 0 件、`cargo check` 通過、ヘッドレス PoB (examples/pob_eval + オーナーの XML) で summary / 両手武器 → オフハンドが外れて戻る / フラスコの欄の規則と active / ジェムの丸め / コラプトの印 / 足した物が残らない を確認。**アプリ本体 (開発ビルド、CDP) で `scripts/pob-check-live/run.mjs` を流した (2026-10-02 15:50)**: オーナーのキャラ + タイの人のビルド (Stormweaver Lv97、オーナーが貼ったコード) + poe.ninja の 7 ビルドで、本家の左の数字 (MAIN の TotalDPS) と行の pobDps が一致、取引所の武器 (両手スタッフ) と手袋を日本語 / 英語で貼って同じ結果、両手武器でオフハンドが外れて「元に戻す」で両方戻る、足したアイテムが PoB に残らない (個数が元に戻る)、ジェム Lv 99 → 40。**ツリーのクリック位置・fit・画面の見た目はオーナーの試し待ち** (開発ビルドは起動したまま)
-- 残り (オーナーの確認が要る物): ゲーム内コピーのルーンの塊の位置・「スキルを付与」「品質 (アタックモッド)」の実表記、Light Radius 5% がカタリストで伸びるか (データでは値)、キャラ一覧 (get-account-name → get-items) が PoE2 で動くか
+- 2026-10-02 オーナー決定: 光の半径 + マナ再生 (Rings/LightRadiusAndManaRegeneration、タグは mana) は神経のカタリストで光の半径の 5 も一緒に伸びる (タグは MOD 単位、数値ごとのタグは元データに無い。指輪・アミュレットで 2 つの効果が同居する MOD はこれだけ)。今の実装のまま
+- 残り (オーナーの確認が要る物): ゲーム内コピーのルーンの塊の位置・「スキルを付与」「品質 (アタックモッド)」の実表記、キャラ一覧の試し → PoE1 しか返らず (2026-10-02 夜に確認、UI と Rust の口は削除。自分のキャラは PoB のコードを貼る)
 
 ---
 
