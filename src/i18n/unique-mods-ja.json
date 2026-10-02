@@ -4713,6 +4713,7 @@
   "All Chests are Magic or Rare": "全てのチェストはマジックまたはレアである",
   "All Damage Taken from Hits can Ignite you": "ヒットにより受ける全てのダメージによりプレイヤーに発火が付与される",
   "All Damage from Hits Contributes to Chill Magnitude": "ヒットによる全てのダメージが冷却の強度に寄与する",
+  "All Damage from Hits Contributes to Freeze Buildup": "[HitDamage|ヒット]による全てのダメージが凍結蓄積に寄与する",
   "All Damage from Hits Contributes to Poison Magnitude": "ヒットによる全てのダメージが毒の強度に寄与する",
   "All Damage from Hits against Bleeding targets Contributes to Chill Magnitude": "出血状態の対象がヒットから受ける全てのダメージがその敵に対する冷却の強度に寄与する",
   "All Damage from Hits against Poisoned targets Contributes to Chill Magnitude": "毒状態の対象がヒットから受ける全てのダメージがその敵に対する冷却の強度に寄与する",
