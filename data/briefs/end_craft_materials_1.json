@@ -1,0 +1,97 @@
+{
+  "name": "end_craft_materials_1",
+  "title_hint": "【PoE2】エンドのクラフト素材を一気に解説 前編: 上位オーブ・エッセンス・フラクチャー・カタリスト",
+  "audience": "マップに入ってクラフト素材を拾い始めた人",
+  "player_stage": "endgame",
+  "goal": "エンドで拾う上位オーブ・エッセンス・フラクチャー・カタリストが何をする物で、どこで使うかが分かる",
+  "target_seconds": 540,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "アミュレット: 完全の変成 → 完全の王者 → 完全の高貴 ×2 → ブリーチのエッセンス → フラクチャー → カタリスト",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "seed": 20261002,
+    "steps": [
+      {
+        "currency": "transmute_perfect",
+        "pick": {
+          "mod": "Amulets/AllResistances"
+        },
+        "note": "上位のオーブ: 弱いティアが付かない"
+      },
+      {
+        "currency": "regal_perfect",
+        "pick": {
+          "mod": "Amulets/IncreasedLife"
+        },
+        "note": "完全の王者: レアにして 1 個足す"
+      },
+      {
+        "currency": "exalt_perfect",
+        "note": "完全の高貴: 1 個足す"
+      },
+      {
+        "currency": "exalt_perfect",
+        "note": "完全の高貴: MOD を 4 個に"
+      },
+      {
+        "currency": "essence:breach",
+        "note": "レアに使うエッセンス: 1 個消えて品質の最大値 +20%"
+      },
+      {
+        "currency": "fracture",
+        "note": "MOD が 4 個以上のレアで 1 個を固定"
+      },
+      {
+        "currency": "catalyst_life",
+        "note": "カタリスト: ライフの MOD を品質で伸ばす"
+      }
+    ]
+  },
+  "final_step": 7,
+  "notes": [
+    "全 2 本の前編 (前編と言ってよい、kyohei 2026-10-02)。後編 (骨・お告げ) の中身には触れない",
+    "各素材を 1 手ずつ実演 (宣言 → 結果)。エッセンスが良い MOD を消したら正直に見せる。グレーターエッセンスは別のアミュレット (demos.essence) で見せる (エッセンスの MOD は 1 つまで)",
+    "値段の数字は出さない (「貴重」「よく拾う」程度)",
+    "フラクチャーした MOD はゲームと同じ色で見せる。名前は「フラクチャー」(破砕と言わない)",
+    "カタリストの 1 個あたりの品質の量は言わない (_facts.md)",
+    "PoE1 の仕様・略語・「段」は使わない"
+  ],
+  "sources": [
+    {
+      "title": "PoE2 Wiki: Greater Orb of Transmutation",
+      "url": "https://www.poe2wiki.net/wiki/Greater_Orb_of_Transmutation"
+    },
+    {
+      "title": "PoE2 Wiki: Greater Exalted Orb",
+      "url": "https://www.poe2wiki.net/wiki/Greater_Exalted_Orb"
+    },
+    {
+      "title": "PoE2DB: Fracturing Orb",
+      "url": "https://poe2db.tw/us/Fracturing_Orb"
+    },
+    {
+      "title": "PoE2DB: Catalysts",
+      "url": "https://poe2db.tw/us/Catalysts"
+    }
+  ],
+  "demos": {
+    "essence": {
+      "schema": "craft-stage-plan/1",
+      "title": "グレーターエッセンス: マジック → レア + ライフ確定",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "steps": [
+        {
+          "currency": "transmute",
+          "note": "マジックにする"
+        },
+        {
+          "currency": "essence:greater:Amulets/Essence_IncreasedLife",
+          "note": "レアにしてライフを確定"
+        }
+      ]
+    }
+  }
+}
