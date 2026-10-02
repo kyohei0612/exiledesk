@@ -246,6 +246,12 @@ pub async fn gate_acquire(kind: &str) -> Result<(), String> {
 /// 待ちは罰則ではなく順番待ちなので、巡回は待てばよい。
 pub const PATIENT_MAX_WAIT_MS: i64 = 20 * 60 * 1000;
 
+/// 予約 (通し券) のある画面の取得が待てる上限。合計の 5 分枠 (隠れた上限) を 1 回で超える取得 (ビルドコピーの全部自動 =
+/// 21 件 × 検索 + 取得 = 42 本 など) は、空になった枠で始めても途中で必ず枠待ちになる。その待ちは枠が 1 本空くまで
+/// (最長で窓の 300 秒) なので、画面の 90 秒で諦めると取得が途中で「レート制限」として止まる (2026-10-03 オーナー
+/// 「なんかレート制限なったんだけど」: 22 本目で あと 272 秒 → 諦めて中断)。予約した取得は窓の長さまで待って続ける
+pub const PASS_MAX_WAIT_MS: i64 = 310_000;
+
 pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), String> {
     // 長く待てる側 (巡回) か、人が待っている側 (画面) か
     let patient = max_wait_ms > MAX_GATE_WAIT_MS;
@@ -254,8 +260,8 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
     // 長い待ち (画面は 3 秒、巡回は 30 秒以上) だけ 1 回書く。最低間隔の短い待ちは書かない
     let mut logged = false;
     loop {
-        // (待ち ms, 罰則で止まっているか)
-        let (wait, penalized) = {
+        // (待ち ms, 罰則で止まっているか, 予約の通し券で送っているか)
+        let (wait, penalized, pass) = {
             let mut guard = match GATES.lock() {
                 Ok(g) => g,
                 Err(_) => return Ok(()),
@@ -282,11 +288,13 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
                 }
                 save_gates_locked(map);
             }
-            (wait, map.values().any(|g| g.blocked_until > now))
+            (wait, map.values().any(|g| g.blocked_until > now), pass)
         };
         if wait <= 0 {
             return Ok(());
         }
+        // 予約した画面の取得は、合計の枠が 1 本空くまで (窓の長さ) 待ってよい。罰則 (429) は今までどおり 90 秒で諦める
+        let max_wait_ms = if pass && !penalized { max_wait_ms.max(PASS_MAX_WAIT_MS) } else { max_wait_ms };
         if !logged && wait >= if patient { 30_000 } else { 3_000 } {
             logged = true;
             crate::app_log::line_static(&format!(
@@ -303,7 +311,9 @@ pub async fn gate_acquire_with(kind: &str, max_wait_ms: i64) -> Result<(), Strin
             return Err(if penalized {
                 format!("trade2 レート制限中 (あと {secs} 秒)。少し待ってから取得してください")
             } else {
-                format!("trade2 の枠待ち (あと {secs} 秒)。裏の巡回と枠を分け合っています")
+                // サーバーの 429 ではなく、こちらが決めた送れる数 (合計 5 分 N 本) の枠待ち。前の文「裏の巡回と枠を分け合っています」は
+                // 巡回が動いていない時に出て誤解を招いた (2026-10-03)
+                format!("取引所に送れる数の枠 (5 分 {} 本) を使い切ったので、あと {secs} 秒待つ必要があります", super::pace::adaptive_max())
             });
         }
         let step = wait.min(2000);

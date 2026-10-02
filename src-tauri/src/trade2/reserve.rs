@@ -150,6 +150,14 @@ pub async fn trade2_reserve(searches: u32, fetches: u32, max_wait_ms: i64) -> Re
             *g = Some((searches, fetches, now_ms() + PASS_TTL_MS));
         }
     }
+    // 1 回で合計の 5 分枠を超える取得 (Whole): 空の枠で始めても途中で枠待ちになる。門番は通し券の取得なら窓の長さまで待って
+    // 続ける (gate.rs PASS_MAX_WAIT_MS) ので止まらないが、かかる時間は見込みとして残す (合計の間隔 = 300 秒 ÷ 上限)
+    let total = (searches + fetches) as i64;
+    let cap = combined_cap();
+    if result.is_ok() && total > cap {
+        let mins = (total * super::pace::pace_ms() + 59_999) / 60_000;
+        crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本 = {total} 本は合計の 5 分枠 ({cap} 本) を超えるので、途中で枠が空くのを待ちながら取る (見込み 約 {mins} 分)"));
+    }
     match &result {
         Ok(()) if waited > 0 => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: {} 秒待って開始", waited / 1000)),
         Ok(()) => crate::app_log::line_static(&format!("[予約] 検索 {searches} / 取得 {fetches} 本: 待たずに開始")),
