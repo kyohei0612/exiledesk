@@ -6,7 +6,8 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
@@ -15,8 +16,49 @@ import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
+
+const LOAD_MODES = [
+  { id: "other", label: "人のビルド (コード / poe.ninja)" },
+  { id: "mine", label: "自分のキャラ (PoB でログイン)" },
+] as const;
+const loadMode = ref<(typeof LOAD_MODES)[number]["id"]>("other");
+const saved = ref<SavedBuild[]>([]);
+const savedMsg = ref("");
+async function refreshSaved(): Promise<void> {
+  try {
+    saved.value = await savedBuilds();
+    savedMsg.value = saved.value.length ? `${saved.value.length} 件` : "保存したビルドがまだありません";
+  } catch (e) {
+    savedMsg.value = String(e);
+  }
+}
+async function openPobApp(): Promise<void> {
+  savedMsg.value = "PoB を開いています…";
+  try {
+    await openPob();
+    savedMsg.value = "取り込んで保存したら「一覧を更新」";
+  } catch (e) {
+    savedMsg.value = String(e);
+  }
+}
+watch(loadMode, (m) => {
+  if (m === "mine") void refreshSaved();
+});
+const fmtDate = (sec: number): string => (sec ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
+
+/** 共有: 今のビルドの PoB コードをコピー */
+const shareMsg = ref("");
+async function onShare(): Promise<void> {
+  try {
+    await shareCode();
+    shareMsg.value = changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました";
+  } catch (e) {
+    shareMsg.value = `できませんでした: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  setTimeout(() => (shareMsg.value = ""), 4000);
+}
 
 const TABS = [
   { id: "items", label: "装備" },
@@ -82,20 +124,57 @@ const resists = computed(() =>
     <!-- 見出しと読み込み -->
     <div class="mb-4">
       <h1 class="font-display text-xl tracking-[0.08em] text-[var(--exile-color-accent-focus)]">火力チェック</h1>
-      <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">PoB のコードか poe.ninja のキャラの URL を貼って読み込み。ジェムやチャージを変えると、読み込んだ時との差が出ます。</p>
-      <form class="mt-3 flex gap-2" @submit.prevent="load">
-        <input
-          v-model="input"
-          type="text"
-          placeholder="PoB コード / https://poe.ninja/poe2/builds/... の URL"
-          class="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[var(--exile-color-accent-focus)]"
-        />
+      <p class="mt-1 text-xs text-[var(--exile-color-text-secondary)]">ビルドを読み込んで、装備・ジェム・ツリーを変えると読み込んだ時との差が出ます。</p>
+      <!-- 読み込み方: 人のビルド / 自分のキャラ (PoB でログインして取り込んだ物) -->
+      <div class="mt-3 flex gap-1">
         <button
-          type="submit"
-          class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-sm font-bold text-black shadow disabled:opacity-40"
-          :disabled="loading || !input.trim()"
-        >{{ loading ? "読み込み中…" : "読み込む" }}</button>
-      </form>
+          v-for="m in LOAD_MODES"
+          :key="m.id"
+          type="button"
+          class="rounded-t-lg px-3 py-1.5 text-xs font-bold transition-colors"
+          :class="loadMode === m.id ? 'bg-white/[0.07] text-amber-200' : 'text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]'"
+          @click="loadMode = m.id"
+        >{{ m.label }}</button>
+      </div>
+      <div class="rounded-b-lg rounded-tr-lg bg-white/[0.04] p-3">
+        <form v-if="loadMode === 'other'" class="flex gap-2" @submit.prevent="load()">
+          <input
+            v-model="input"
+            type="text"
+            placeholder="PoB コード / https://poe.ninja/poe2/builds/... のキャラの URL"
+            class="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-[var(--exile-color-accent-focus)]"
+          />
+          <button
+            type="submit"
+            class="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-sm font-bold text-black shadow disabled:opacity-40"
+            :disabled="loading || !input.trim()"
+          >{{ loading ? "読み込み中…" : "読み込む" }}</button>
+        </form>
+        <div v-else>
+          <p class="text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
+            自分のキャラは PoB と同じやり方で: <b>同梱の PoB を開く</b> → 「Import/Export Build」→ ログインしてキャラを取り込む → 保存 (Ctrl+S)。保存したビルドがここに並びます。
+          </p>
+          <div class="mt-2 flex items-center gap-2">
+            <button type="button" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400" @click="openPobApp">同梱の PoB を開く</button>
+            <button type="button" class="rounded-lg bg-white/[0.07] px-3 py-1.5 text-xs font-semibold hover:bg-white/15" @click="refreshSaved">一覧を更新</button>
+            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ savedMsg }}</span>
+          </div>
+          <ul v-if="saved.length" class="mt-2 max-h-56 space-y-1 overflow-auto">
+            <li v-for="b in saved" :key="b.path">
+              <button
+                type="button"
+                class="flex w-full items-center gap-3 rounded-lg bg-black/25 px-3 py-1.5 text-left hover:bg-white/10 disabled:opacity-40"
+                :disabled="loading"
+                @click="load({ path: b.path, name: b.name })"
+              >
+                <span class="min-w-0 flex-1 truncate text-[13px] font-semibold">{{ b.name }}</span>
+                <span class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ b.ascendancy || b.class_name }} Lv {{ b.level }}</span>
+                <span class="w-28 text-right text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ fmtDate(b.modified) }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
       <p v-if="error" class="mt-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
     </div>
 
@@ -126,6 +205,7 @@ const resists = computed(() =>
           <span class="text-[var(--exile-color-text-tertiary)]">耐性</span>
           <span v-for="r in resists" :key="r.label" class="ml-1.5 font-semibold tabular-nums" :class="r.cls">{{ r.label }}{{ Math.round(r.v) }}</span>
         </span>
+        <span v-if="loadedFrom" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ loadedFrom }} から</span>
         <span v-if="cur.stats.LowLife" class="rounded-lg bg-rose-500/20 px-2.5 py-1.5 text-xs font-semibold text-rose-200">低ライフ</span>
       </div>
 
@@ -173,6 +253,15 @@ const resists = computed(() =>
               title="今の状態を比べる元にして、ここからの差を見る"
               @click="setBaseToNow"
             >今を比べる元にする</button>
+            <div class="relative self-end">
+              <button
+                type="button"
+                class="rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-500/30"
+                title="今のビルド (変えた所も込み) を PoB のコードにしてコピー。PoB や poe.ninja 以外の人にも渡せる"
+                @click="onShare"
+              >共有 (PoB コード)</button>
+              <span v-if="shareMsg" class="absolute right-0 top-full mt-1 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[11px] text-sky-200">{{ shareMsg }}</span>
+            </div>
           </div>
         </div>
       </div>

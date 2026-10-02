@@ -6,7 +6,7 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, exportCode, loadSavedBuild, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import passivesJa from "../../i18n/passives-ja-client.json";
@@ -29,6 +29,8 @@ const power = shallowRef<{ target: string; label: string; nodes: Map<number, Nod
 const powerProgress = ref<string>("");
 /** 比べる元からの変えた所 (画面の上のバーに並べる)。読み込み・「今を比べる元にする」で空にする */
 const changes = ref<string[]>([]);
+/** 何から読み込んだか (画面の表示用) */
+const loadedFrom = ref("");
 const note = (s: string): void => {
   changes.value = [...changes.value, s];
 };
@@ -94,12 +96,14 @@ function withCopies(i: number): number[] {
 }
 
 export function usePobCheck() {
-  async function load(): Promise<void> {
-    if (!input.value.trim()) return;
+  /** 読み込む: text = PoB コード / poe.ninja の URL、saved = PoB に保存したビルドのパス (自分のキャラ) */
+  async function load(saved?: { path: string; name: string }): Promise<void> {
+    if (!saved && !input.value.trim()) return;
     loading.value = true;
     error.value = null;
     try {
-      await run(() => loadBuild(input.value));
+      if (saved) await run(() => loadSavedBuild(saved.path));
+      else await run(() => loadBuild(input.value));
       const s = await run(summary);
       treeNodes.value = (await run(treeStatic)).nodes;
       power.value = null;
@@ -107,7 +111,8 @@ export function usePobCheck() {
       base.value = s;
       baseAt.value = "読み込んだ時";
       changes.value = [];
-      recordHistory("pob-check", "load", { input: input.value.slice(0, 200), char: s.char, stats: s.stats });
+      recordHistory("pob-check", "load", { input: saved ? `saved:${saved.name}` : input.value.slice(0, 200), char: s.char, stats: s.stats });
+      loadedFrom.value = saved ? `PoB に保存したビルド「${saved.name}」` : /poe\.ninja/.test(input.value) ? "poe.ninja" : "PoB コード";
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
@@ -175,6 +180,14 @@ export function usePobCheck() {
     await refresh();
   }
 
+  /** 共有: 今のビルド (変えた所も込み) の PoB コードをクリップボードへ */
+  async function shareCode(): Promise<string> {
+    const code = await run(exportCode);
+    await navigator.clipboard.writeText(code);
+    recordHistory("pob-check", "share", { length: code.length, changes: changes.value });
+    return code;
+  }
+
   /** ツリーのノードを取る / 外す。能力値のノードの名前 (筋力など) も変わるのでツリーの形も取り直す */
   async function clickNode(id: number, attr: number): Promise<string | null> {
     const r = await run(() => toggleNode(id, attr));
@@ -240,5 +253,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

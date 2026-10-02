@@ -138,14 +138,40 @@ export async function toPobCode(text: string): Promise<string> {
   return code;
 }
 
+/** PoB の中の部品を送る (読み込みのたび) */
+async function sendPck(): Promise<void> {
+  const ok = await invoke<string>("pob_eval", { script: pckLua });
+  if (ok !== "ok") throw new Error(`PoB の部品を読み込めません: ${ok}`);
+}
+
 /** ビルドを読み込んで、PoB の中の部品を送る */
 export async function loadBuild(text: string): Promise<void> {
   if (!isTauriRuntime()) throw new Error("アプリの中でだけ使えます");
   const code = await toPobCode(text);
   await invoke("pob_load_build_code", { code });
-  const ok = await invoke<string>("pob_eval", { script: pckLua });
-  if (ok !== "ok") throw new Error(`PoB の部品を読み込めません: ${ok}`);
+  await sendPck();
 }
+
+/** 同梱 (公式と共通) の PoB が保存したビルド */
+export interface SavedBuild {
+  name: string;
+  path: string;
+  modified: number;
+  class_name: string;
+  ascendancy: string;
+  level: number;
+}
+export const savedBuilds = (): Promise<SavedBuild[]> => invoke<SavedBuild[]>("pob_saved_builds");
+/** PoB に保存したビルドを読み込む (自分のキャラ: PoB でログインして取り込んで保存した物) */
+export async function loadSavedBuild(path: string): Promise<void> {
+  if (!isTauriRuntime()) throw new Error("アプリの中でだけ使えます");
+  await invoke("pob_load_saved_build", { path });
+  await sendPck();
+}
+/** 同梱の PoB を開く (自分のキャラの取り込みは PoB の Import/Export → Import from website / Character import で) */
+export const openPob = (): Promise<unknown> => invoke("pob_launcher_open");
+/** 今のビルド (変えた所も込み) を PoB のコードに (共有用) */
+export const exportCode = (): Promise<string> => invoke<string>("pob_export_code");
 
 export const summary = (): Promise<Summary> => evalLua<Summary>("return PCK.summary()");
 
