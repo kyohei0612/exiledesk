@@ -15,7 +15,7 @@ import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const TABS = [
@@ -223,7 +223,16 @@ const resists = computed(() =>
 
       <!-- ツリー -->
       <div v-if="tab === 'tree'" class="mb-6">
-        <TreeView :nodes="treeNodes" :state="cur.tree" :base-alloc="base && base !== cur ? base.tree.alloc : undefined" />
+        <TreeView
+          :nodes="treeNodes"
+          :state="cur.tree"
+          :base-alloc="base && base !== cur ? base.tree.alloc : undefined"
+          :power="power ? { label: power.label, nodes: power.nodes, stale: power.of !== cur } : null"
+          :power-progress="powerProgress"
+          :skill-options="skills.map((x) => ({ key: x.key, name: x.s.name }))"
+          :busy="busy"
+          @power="computePower"
+        />
       </div>
 
       <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)]">

@@ -302,4 +302,43 @@ function PCK.treeState()
   return { alloc = alloc, jewels = jewels }
 end
 
+--- ノードごとの火力への寄与 (PoB の「Node Power」と同じやり方: そのノードを外した時の計算)。
+--- i, k = スキルの組とその中のスキル (画面のスキルのカード)。ids = 調べる取っているノード (画面が何回かに分けて送る)
+--- 返す: { base = その時の DPS, nodes = { [id] = { single = 1 個だけ外した時の DPS, path = 外すとつながらなくなる先も込みで外した時の DPS, n = 込みの個数 } } }
+--- DPS は PoB の TotalDPS (敵側の倍率込み)。割合で見るので、ゲーム内の表記との違いは貫通などの敵側のノードだけ
+function PCK.nodePower(i, k, ids)
+  local g = build.skillsTab.socketGroupList[i]
+  if not g then return json.encode({ ok = false, error = "組が無い" }) end
+  local origMain, origSkill = build.mainSocketGroup, g.mainActiveSkill
+  build.mainSocketGroup = i
+  g.mainActiveSkill = k
+  local ok, res = pcall(function()
+    local calcFunc, base = build.calcsTab.calcs.getMiscCalculator(build)
+    local out = { base = base.TotalDPS or 0, nodes = {} }
+    for _, id in ipairs(ids) do
+      local node = build.spec.nodes[id]
+      if node and node.alloc then
+        local single = calcFunc({ removeNodes = { [node] = true } })
+        local e = { single = single.TotalDPS or 0, n = 1 }
+        local deps = node.depends or {}
+        if #deps > 1 then
+          local set = {}
+          for _, d in ipairs(deps) do set[d] = true end
+          e.path = (calcFunc({ removeNodes = set }).TotalDPS or 0)
+          e.n = #deps
+        else
+          e.path = e.single
+        end
+        out.nodes[tostring(id)] = e
+      end
+    end
+    return out
+  end)
+  build.mainSocketGroup = origMain
+  g.mainActiveSkill = origSkill
+  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
+  res.ok = true
+  return json.encode(res)
+end
+
 return "ok"

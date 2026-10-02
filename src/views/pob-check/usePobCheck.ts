@@ -6,7 +6,7 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, nodePower, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { toPobItem } from "../../services/pob-check/item-text";
 
@@ -17,6 +17,14 @@ const error = ref<string | null>(null);
 const cur = shallowRef<Summary | null>(null);
 const base = shallowRef<Summary | null>(null);
 const baseAt = ref<string>("");
+/** ノードの火力への寄与。loss = 外した時に DPS が減る割合 (0.1 = −10%)、pathLoss = つながらなくなる先も込み */
+export interface NodePower {
+  loss: number;
+  pathLoss: number;
+  n: number;
+}
+const power = shallowRef<{ target: string; label: string; nodes: Map<number, NodePower>; of: Summary } | null>(null);
+const powerProgress = ref<string>("");
 /** パッシブツリーの形 (読み込みのたびに 1 回取る) */
 const treeNodes = shallowRef<TreeNode[]>([]);
 
@@ -81,6 +89,7 @@ export function usePobCheck() {
       await run(() => loadBuild(input.value));
       const s = await run(summary);
       treeNodes.value = (await run(treeStatic)).nodes;
+      power.value = null;
       cur.value = s;
       base.value = s;
       baseAt.value = "読み込んだ時";
@@ -135,6 +144,44 @@ export function usePobCheck() {
     await refresh();
   }
 
+  /**
+   * ノードの寄与を計算する。target = スキルの鍵 か "all" (全スキルの合計 = ゲーム内の表記の DPS で重みづけ)。
+   * 1 スキル 2 秒くらい。合計は表に出ているスキルを順に回す
+   */
+  async function computePower(target: string): Promise<void> {
+    const list = target === "all" ? skills.value : skills.value.filter((x) => x.key === target);
+    if (!list.length || !cur.value) return;
+    const ids = cur.value.tree.alloc;
+    const sum = new Map<number, { base: number; single: number; path: number; n: number }>();
+    try {
+      for (const [idx, x] of list.entries()) {
+        powerProgress.value = `${x.s.name} (${idx + 1}/${list.length})`;
+        const r = await run(() => nodePower(x.g.i, x.s.k, ids));
+        if (!r.ok) throw new Error(r.error ?? "計算できませんでした");
+        // PoB の DPS (敵側込み) をゲーム内の表記にそろえてから足す (スキルごとに敵側の倍率が違う)
+        const ratio = x.s.game.enemyRatio || 1;
+        for (const [id, e] of Object.entries(r.nodes)) {
+          const cell = sum.get(Number(id)) ?? { base: 0, single: 0, path: 0, n: e.n };
+          cell.base += r.base * ratio;
+          cell.single += e.single * ratio;
+          cell.path += e.path * ratio;
+          sum.set(Number(id), cell);
+        }
+      }
+      const nodes = new Map<number, NodePower>();
+      for (const [id, c] of sum) {
+        nodes.set(id, { loss: c.base > 0 ? 1 - c.single / c.base : 0, pathLoss: c.base > 0 ? 1 - c.path / c.base : 0, n: c.n });
+      }
+      const label = target === "all" ? "全スキルの合計" : list[0]!.s.name;
+      power.value = { target, label, nodes, of: cur.value };
+      recordHistory("pob-check", "node-power", { target, skills: list.map((x) => x.s.name), nodes: nodes.size });
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e);
+    } finally {
+      powerProgress.value = "";
+    }
+  }
+
   const skills = computed(() => skillsOf(cur.value));
   const baseSkills = computed(() => new Map(skillsOf(base.value).map((x) => [x.key, x.s])));
   const total = computed(() => skills.value.reduce((a, x) => a + x.s.game.dps, 0));
@@ -143,5 +190,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

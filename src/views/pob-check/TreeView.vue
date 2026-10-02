@@ -7,12 +7,40 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import passivesJa from "../../i18n/passives-ja-client.json";
 import { linesToJa } from "../../services/pob-check/item-text";
-import type { TreeNode, TreeState } from "../../services/pob-check/api";
+import { gemJa, type TreeNode, type TreeState } from "../../services/pob-check/api";
+import type { NodePower } from "./usePobCheck";
 
-const props = defineProps<{ nodes: TreeNode[]; state: TreeState; baseAlloc?: number[] }>();
+const props = defineProps<{
+  nodes: TreeNode[];
+  state: TreeState;
+  baseAlloc?: number[];
+  /** ノードの火力への寄与 (計算した時の物)。stale = その後にビルドを変えた */
+  power?: { label: string; nodes: Map<number, NodePower>; stale: boolean } | null;
+  powerProgress?: string;
+  skillOptions: Array<{ key: string; name: string }>;
+  busy: boolean;
+}>();
+const emit = defineEmits<{ (e: "power", target: string): void }>();
+const powerTarget = ref("all");
+const powerLabel = computed(() => (props.power ? (props.power.label === "全スキルの合計" ? "合計" : gemJa(props.power.label)) : ""));
+const progressLabel = computed(() => {
+  const m = /^(.*) \((.*)\)$/.exec(props.powerProgress ?? "");
+  return m ? `${gemJa(m[1]!)} ${m[2]}` : "";
+});
 
 const JA = passivesJa as Record<string, string>;
-const nameJa = (n: string): string => JA[n] ?? n;
+const nameJa = (n: string): string => (n === "Jewel Socket" ? "ジュエルソケット" : (JA[n] ?? n));
+/** 名前 (ジュエルの穴は入っているジュエルの名前も) */
+const nodeLabel = (n: TreeNode): string => {
+  const j = n.t === "J" ? props.state.jewels.find((x) => x.id === n.id) : undefined;
+  return j ? `${nameJa(n.n)} (${j.name})` : nameJa(n.n);
+};
+/**
+ * 条件つきの効果 (直近〜していれば・〜中・エネルギー・トリガー など)。
+ * PoB は設定 (Config) でその条件をオフにしているか、そもそも計算しない (メタスキルのエネルギー) ので 0 と出るが、ゲームでは効いていることがある
+ */
+const CONDITIONAL = /recently|if you|if an?|while|when |during|energy|meta skill|trigger|consum|duration|on kill|on hit|for each|per /i;
+const isConditional = (n: TreeNode): boolean => (n.sd ?? []).some((l) => CONDITIONAL.test(l));
 
 const wrap = ref<HTMLDivElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
@@ -85,6 +113,17 @@ function nodePx(n: TreeNode): number {
 }
 const COLOR_ON: Record<TreeNode["t"], string> = { n: "#e8c46a", N: "#ffb347", K: "#f0abfc", J: "#4fd1c5", C: "#cbd5e1", A: "#c4b5fd" };
 
+const showPower = computed(() => !!props.power && props.power.nodes.size > 0);
+/** 寄与の色: 0 = 灰青 (効いていない)、少し = 黄、8% 以上 = 赤。マイナス (外すと上がる) は緑 */
+function heat(loss: number): string {
+  if (loss < -0.0005) return "#34d399";
+  if (loss < 0.0005) return "#64748b";
+  // 0.1% = 黄、1% = 橙、5% 以上 = 赤
+  const t = Math.min(1, Math.max(0, Math.log10(loss / 0.001) / Math.log10(50)));
+  const hue = 55 - 55 * t;
+  return `hsl(${hue}, 95%, ${60 - 8 * t}%)`;
+}
+
 function draw(): void {
   const c = canvas.value;
   if (!c) return;
@@ -155,7 +194,8 @@ function draw(): void {
     const on = A.has(n.id);
     g.beginPath();
     g.arc(x, y, r, 0, Math.PI * 2);
-    g.fillStyle = on ? COLOR_ON[n.t] : n.t === "n" ? "rgba(100,116,139,0.55)" : "rgba(148,163,184,0.6)";
+    const pw = on && showPower.value ? props.power!.nodes.get(n.id) : undefined;
+    g.fillStyle = pw ? heat(pw.loss) : on ? COLOR_ON[n.t] : n.t === "n" ? "rgba(100,116,139,0.55)" : "rgba(148,163,184,0.6)";
     g.fill();
     if (n.t !== "n" && !on) { g.strokeStyle = "rgba(203,213,225,0.35)"; g.lineWidth = 1; g.stroke(); }
     if (added.value.has(n.id) || removed.value.has(n.id)) {
@@ -245,7 +285,34 @@ onBeforeUnmount(() => {
   ro?.disconnect();
   window.removeEventListener("mouseup", onUp);
 });
-watch(() => [props.state, props.baseAlloc], draw);
+watch(() => [props.state, props.baseAlloc, props.power], draw);
+
+const pct = (v: number): string => `${v >= 0 ? "−" : "+"}${Math.abs(v * 100).toFixed(v !== 0 && Math.abs(v) < 0.01 ? 2 : 1)}%`;
+/** 寄与の順位 (本体の取っているノードだけ。始点とアセンダンシーは外せないので除く) */
+const ranking = computed(() => {
+  const empty = { top: [] as Array<{ n: TreeNode; p: NodePower }>, idle: [] as Array<{ n: TreeNode; p: NodePower }>, cond: [] as Array<{ n: TreeNode; p: NodePower }> };
+  if (!props.power) return empty;
+  const rows = props.nodes
+    .filter((n) => alloc.value.has(n.id) && !n.a && n.t !== "C" && n.t !== "A")
+    .map((n) => ({ n, p: props.power!.nodes.get(n.id) }))
+    .filter((x): x is { n: TreeNode; p: NodePower } => !!x.p);
+  const top = [...rows].sort((a, b) => b.p.loss - a.p.loss).slice(0, 12);
+  // 外しても火力が変わらない物 (1 個で ±0.05% 未満、つながりの先も込みで ±0.05% 未満)
+  const zero = rows
+    .filter((x) => Math.abs(x.p.loss) < 0.0005 && Math.abs(x.p.pathLoss) < 0.0005)
+    .sort((a, b) => nameJa(a.n.n).localeCompare(nameJa(b.n.n)));
+  // 条件つきは別にする (PoB では 0 でもゲームでは効いていることがある。外す候補にしない)
+  return { top, idle: zero.filter((x) => !isConditional(x.n)), cond: zero.filter((x) => isConditional(x.n)) };
+});
+/** 一覧で押したノードを真ん中に */
+function focusNode(id: number): void {
+  const n = byId.value.get(id);
+  if (!n) return;
+  view.value = { k: Math.max(view.value.k, 0.08), cx: n.x, cy: n.y };
+  const [x, y] = toScreen(n.x, n.y);
+  hover.value = { node: n, x, y };
+  draw();
+}
 
 const allocCount = computed(() => props.nodes.filter((n) => alloc.value.has(n.id) && !n.a && n.t !== "C").length);
 const ascCount = computed(() => props.nodes.filter((n) => alloc.value.has(n.id) && n.a && n.t !== "A").length);
@@ -256,11 +323,12 @@ const hoverInfo = computed(() => {
   const kind = { n: "", N: "ノータブル", K: "キーストーン", J: "ジュエルの穴", C: "クラスの始点", A: "アセンダンシーの始点" }[n.t];
   const jewel = props.state.jewels.find((j) => j.id === n.id);
   return {
-    name: nameJa(n.n),
+    name: nodeLabel(n),
     kind,
     on: alloc.value.has(n.id),
     lines: sdJa.value.get(n.id) ?? n.sd ?? [],
     jewel: jewel?.name,
+    power: props.power?.nodes.get(n.id),
     left: Math.min(h.x + 16, size.value.w - 300),
     top: Math.min(h.y + 16, size.value.h - 160),
   };
@@ -286,6 +354,29 @@ const hoverInfo = computed(() => {
       <span v-if="query.trim()" class="text-sky-300">{{ hits.size }} 個</span>
       <button type="button" class="ml-auto rounded-lg bg-white/[0.06] px-2.5 py-1 hover:bg-white/15" @click="fit">取っている所に合わせる</button>
     </div>
+    <!-- 火力への寄与 -->
+    <div class="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/[0.06] px-3 py-2 text-[12px]">
+      <span class="font-bold text-orange-200">火力への寄与</span>
+      <select v-model="powerTarget" class="rounded-md border border-white/10 bg-black/40 px-2 py-0.5">
+        <option value="all">全スキルの合計</option>
+        <option v-for="o in skillOptions" :key="o.key" :value="o.key">{{ gemJa(o.name) }}</option>
+      </select>
+      <button
+        type="button"
+        class="rounded-md bg-orange-500 px-3 py-0.5 font-bold text-black disabled:opacity-40"
+        :disabled="busy || !!powerProgress"
+        @click="emit('power', powerTarget)"
+      >{{ powerProgress ? `計算中… ${progressLabel}` : "取っているノードを 1 個ずつ外して計算" }}</button>
+      <template v-if="power">
+        <span class="text-[var(--exile-color-text-secondary)]">{{ power.label === "全スキルの合計" ? power.label : powerLabel }} で計算済み</span>
+        <span v-if="power.stale" class="rounded bg-amber-500/20 px-1.5 text-amber-200">その後ビルドを変えたので古い</span>
+        <span class="ml-auto flex items-center gap-1 text-[10px] text-[var(--exile-color-text-tertiary)]">
+          効いていない
+          <span class="inline-block h-2 w-14 rounded-full" style="background: linear-gradient(90deg, #64748b, hsl(55, 95%, 60%), hsl(28, 95%, 56%), hsl(0, 95%, 52%))" />
+          よく効く (外すと −5% 以上)
+        </span>
+      </template>
+    </div>
     <div
       ref="wrap"
       class="relative h-[640px] overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,rgba(30,41,59,0.6),rgba(2,6,23,0.9))]"
@@ -307,11 +398,52 @@ const hoverInfo = computed(() => {
           {{ hoverInfo.name }}
           <span v-if="hoverInfo.kind" class="ml-1 text-[10px] font-normal text-[var(--exile-color-text-tertiary)]">{{ hoverInfo.kind }}</span>
         </p>
-        <p v-if="hoverInfo.jewel" class="text-[11px] text-orange-300">{{ hoverInfo.jewel }}</p>
         <ul class="mt-1 space-y-px text-sky-100/90">
           <li v-for="(l, i) in hoverInfo.lines" :key="i">{{ l }}</li>
         </ul>
+        <p v-if="hoverInfo.power" class="mt-1 text-[11px] font-semibold" :class="hoverInfo.power.loss > 0.0005 ? 'text-orange-300' : hoverInfo.power.loss < -0.0005 ? 'text-emerald-300' : 'text-slate-400'">
+          外すと {{ powerLabel }} の DPS {{ pct(hoverInfo.power.loss) }}
+          <span v-if="hoverInfo.power.n > 1" class="block text-[10px] font-normal text-[var(--exile-color-text-tertiary)]">つながらなくなる {{ hoverInfo.power.n - 1 }} 個も込みで {{ pct(hoverInfo.power.pathLoss) }}</span>
+        </p>
         <p class="mt-1 text-[10px]" :class="hoverInfo.on ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">{{ hoverInfo.on ? "取っている" : "取っていない" }}</p>
+      </div>
+    </div>
+    <div v-if="power" class="mt-3 grid gap-3 @3xl:grid-cols-2">
+      <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <p class="mb-1.5 text-[12px] font-bold text-orange-200">よく効いているノード</p>
+        <ul class="space-y-0.5 text-[12px]">
+          <li v-for="x in ranking.top" :key="x.n.id" class="flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-white/5" @click="focusNode(x.n.id)">
+            <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ background: heat(x.p.loss) }" />
+            <span class="min-w-0 flex-1 truncate">{{ nodeLabel(x.n) }}</span>
+            <span class="tabular-nums text-orange-300">{{ pct(x.p.loss) }}</span>
+          </li>
+        </ul>
+      </div>
+      <div class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <p class="mb-1.5 text-[12px] font-bold text-slate-300">
+          火力に効いていないノード
+          <span class="font-normal text-[var(--exile-color-text-tertiary)]">{{ ranking.idle.length }} 個 (外しても DPS が変わらない。防御・移動・道のノードもここに入る)</span>
+        </p>
+        <ul class="max-h-64 space-y-0.5 overflow-auto text-[12px]">
+          <li v-for="x in ranking.idle" :key="x.n.id" class="flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-white/5" @click="focusNode(x.n.id)">
+            <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-slate-500" />
+            <span class="w-36 shrink-0 truncate">{{ nameJa(x.n.n) }}</span>
+            <span class="min-w-0 flex-1 truncate text-[11px] text-[var(--exile-color-text-tertiary)]">{{ (sdJa.get(x.n.id) ?? x.n.sd ?? []).join(" / ") }}</span>
+          </li>
+        </ul>
+        <template v-if="ranking.cond.length">
+          <p class="mb-1.5 mt-3 text-[12px] font-bold text-amber-200">
+            条件つきで PoB では 0 の物
+            <span class="font-normal text-[var(--exile-color-text-tertiary)]">{{ ranking.cond.length }} 個 (「直近〜していれば」「エネルギー」など。PoB の設定でオフか計算しないだけで、ゲームでは効いていることがある)</span>
+          </p>
+          <ul class="max-h-48 space-y-0.5 overflow-auto text-[12px]">
+            <li v-for="x in ranking.cond" :key="x.n.id" class="flex cursor-pointer items-center gap-2 rounded px-1 hover:bg-white/5" @click="focusNode(x.n.id)">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-400/60" />
+              <span class="w-36 shrink-0 truncate">{{ nameJa(x.n.n) }}</span>
+              <span class="min-w-0 flex-1 truncate text-[11px] text-[var(--exile-color-text-tertiary)]">{{ (sdJa.get(x.n.id) ?? x.n.sd ?? []).join(" / ") }}</span>
+            </li>
+          </ul>
+        </template>
       </div>
     </div>
     <p class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">ホイールで拡大縮小、ドラッグで移動。点線の円はジュエルの範囲。緑の輪 = 比べる元から増えた、赤の輪 = 減った。</p>

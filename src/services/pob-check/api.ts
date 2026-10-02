@@ -162,3 +162,13 @@ function luaStr(s: string): string {
 }
 export const setWeaponSet = (n: 1 | 2): Promise<unknown> => evalLua(`return PCK.setWeaponSet(${n})`);
 export const treeStatic = (): Promise<{ nodes: TreeNode[] }> => evalLua("return PCK.treeStatic()");
+
+export interface NodePowerRaw {
+  ok: boolean;
+  error?: string;
+  base: number;
+  nodes: Record<string, { single: number; path: number; n: number }>;
+}
+/** スキル (組 i のスキル k) で、取っているノード ids を 1 個ずつ外した時の DPS */
+export const nodePower = (i: number, k: number, ids: number[]): Promise<NodePowerRaw> =>
+  evalLua(`return PCK.nodePower(${i}, ${k}, {${ids.join(",")}})`);
