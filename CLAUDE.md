@@ -17,7 +17,7 @@
 
 ```bash
 python scripts/run_stage.py    data/briefs/<name>.json   # ExileDesk で手順を引く → data/results/<name>.json
-python scripts/write_script.py data/briefs/<name>.json   # Claude が台本 (180 秒以上は 構成表→章ごと) → data/scripts/<name>.json
+# (台本は Claude が導入から 1 章ずつ手で書く。approved/ の章をつないで data/scripts/<name>.json。write_script.py で全編を一気に生成しない)
 python scripts/build_video.py  data/scripts/<name>.json  # 音声・図解・撮影・合成 → output/<name>.mp4
 python scripts/preview_frames.py data/scripts/<name>.json  # 台本チェック用の静止画 → output/preview/
 python scripts/make_thumbnail.py --top ... --main ... --bg cache/stage/<hash>/step_N.png --out output/<name>_thumb.jpg
@@ -33,7 +33,8 @@ python scripts/publish_video.py <name> --execute  # チョコバナナに「非�
 - アイコン / チャンネル名は API で変えられない → YouTube Studio で手で。素材は `assets/brand/`
 - API の 1 日の枠はニュースと共有 (動画 1 本 ≒ 1,700 / 10,000)
 
-- **台本は導入から 1 章ずつ書いて、合格したら次の章** (全体を一度に生成しない、kyohei 2026-09-30)。確定した章は `output/work/<name>/approved/`
+- **1 本の流れ (kyohei 2026-10-02)**: ① 既定の質問 → ② **調べて情報を取る → ファクトチェック** (`_facts.md` に追記、ゲームのデータ優先) → ③ **導入を書く** → ④ **終わりまで 1 章ずつ** (合格したら次) → ⑤ 台本で使う画面を洗い出して **撮影用の素材を要求・実装** (ExileDesk は開発版で確認 → リリース、POE2Tube 側の素材は自前) → ⑥ **撮影** → ⑦ **合体** (build_video)。撮影は最後
+- **一気に全編を作る台本は書かない** (`write_script.py` で全体を生成しない、kyohei 2026-10-02)。導入から 1 章ずつ書いて、合格したら次の章 (2026-09-30)。確定した章は `output/work/<name>/approved/`
 - **台本ができたら動画にする前に kyohei と 1 章ずつチェック** (問題 → 直した案の表 → OK で反映 → 次の章)
 - **全章 OK になったら、聞かずにそのまま build_video で動画まで作って送る** (kyohei 2026-09-28「台本の後に基本的に動画作る」)
 - **本編の動画を作っている間に、ショートの案を出して並行で進める** (台本とセット、kyohei 2026-09-28)。ショートは最後まで見られない前提で、最初の 30 秒に勝負を置き、本編への案内は途中から出しっぱなし (ADR 005)
