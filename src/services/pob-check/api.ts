@@ -198,6 +198,9 @@ export async function exportCode(main?: { i: number; k: number }): Promise<strin
 }
 
 export const summary = (): Promise<Summary> => evalLua<Summary>("return PCK.summary()");
+/** 比べる相手を読み込む前に今のビルドの覚え (元の物・足した物・ツリーの元) を退避し、自分のビルドを読み直した後に戻す */
+export const stashState = (): Promise<unknown> => evalLua("return PCK.stash()");
+export const unstashState = (): Promise<{ restored: boolean }> => evalLua("return PCK.unstash()");
 
 /** ジェムを変える。返りは PoB が丸めた後のジェム (画面の「変えた所」はこれで書く) */
 export const setGem = (i: number, j: number, field: "level" | "quality" | "corrupt" | "enabled", value: number | boolean): Promise<{ gem: GemView }> =>

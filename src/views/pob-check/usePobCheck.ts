@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, exportCode, nodePower, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, exportCode, nodePower, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
@@ -41,6 +41,10 @@ const loadedFrom = ref("");
 const focusKey = ref<string | null>(null);
 /** 読み込みの回数 (ツリーの画面が「取っている所に合わせる」のは読み込みの時だけ) */
 const loadSeq = ref(0);
+/** 比べる相手 (忍者のビルド等)。読み込んだ時の数字と装備の写し (PoB の中は自分のビルドに戻してある) */
+const target = shallowRef<Summary | null>(null);
+const targetFrom = ref("");
+const targetInput = ref("");
 const note = (s: string): void => {
   changes.value = [...changes.value, s];
 };
@@ -189,6 +193,42 @@ export function usePobCheck() {
     } finally {
       loading.value = false;
     }
+  }
+  /**
+   * 比べる相手を読み込む (2026-10-03 オーナー「比較先もビルド読み込みと同じ流れで」)。同じ PoB に相手を読み込んで数字と装備を
+   * 写し、自分のビルドは今の状態 (変えた所も込み) をコードにして読み直す。覚え (元の物・ツリーの元) は PCK.stash / unstash で保つ
+   */
+  async function loadTarget(text = targetInput.value): Promise<void> {
+    const t = text.trim();
+    if (!t || loading.value || busy.value) return;
+    loading.value = true;
+    error.value = null;
+    try {
+      const s = await run(async () => {
+        const mine = cur.value ? await exportCode() : null;
+        if (mine) await stashState();
+        await loadBuild(t);
+        const s = await summary();
+        if (mine) {
+          await loadBuild(mine);
+          await unstashState();
+        }
+        return s;
+      });
+      target.value = s;
+      targetFrom.value = parseNinjaUrl(t) ? "poe.ninja" : "PoB コード";
+      recordHistory("pob-check", "target", { input: t.slice(0, 200), char: s.char, stats: s.stats });
+      // 自分のビルドを読み直したので、数字を今の物に (変えた所は PoB の中に残っている)
+      if (cur.value) cur.value = await run(summary);
+    } catch (e) {
+      error.value = msg(e);
+    } finally {
+      loading.value = false;
+    }
+  }
+  function clearTarget(): void {
+    target.value = null;
+    targetFrom.value = "";
   }
   function setBaseToNow(): void {
     base.value = cur.value;
@@ -341,5 +381,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { target, targetFrom, targetInput, loadTarget, clearTarget, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

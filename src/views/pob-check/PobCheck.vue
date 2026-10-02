@@ -13,10 +13,11 @@ import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
 import TreeView from "./TreeView.vue";
+import BuildDiff from "./BuildDiff.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { target, targetFrom, targetInput, loadTarget, clearTarget, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 /**
@@ -47,8 +48,14 @@ const TABS = [
   { id: "items", label: "装備" },
   { id: "gems", label: "ジェム" },
   { id: "tree", label: "パッシブツリー" },
+  { id: "diff", label: "相手との差" },
 ] as const;
 const tab = ref<(typeof TABS)[number]["id"]>("items");
+/** 相手を読み込んだら「相手との差」を開く */
+async function onLoadTarget(): Promise<void> {
+  await loadTarget();
+  if (target.value) tab.value = "diff";
+}
 
 const STEPS = [
   { title: "読み込む", cls: "text-amber-200", body: "PoB の「Import/Export」のコードか、poe.ninja のキャラのページの URL を上に貼って「読み込む」。自分のキャラは同梱の PoB でログインして取り込み、そのコードを貼る。" },
@@ -131,6 +138,21 @@ const resists = computed(() =>
         <button type="button" class="rounded bg-white/[0.07] px-2 py-0.5 text-[11px] font-semibold text-[var(--exile-color-text-secondary)] hover:bg-white/15" @click="openPobApp">同梱の PoB を開く</button>
         <span v-if="pobMsg" class="text-[var(--exile-color-text-secondary)]">{{ pobMsg }}</span>
       </p>
+      <!-- 比べる相手 (忍者のビルド等)。同じ流れ (PoB コード / poe.ninja の URL) で読み込み、「相手との差」に出す -->
+      <form v-if="cur" class="mt-2 flex items-center gap-2" @submit.prevent="onLoadTarget()">
+        <span class="shrink-0 text-[11px] font-semibold text-sky-200/90">比べる相手</span>
+        <input
+          v-model="targetInput"
+          type="text"
+          placeholder="相手の PoB コード / poe.ninja の URL (忍者の人のビルドと、自分に足りない MOD を比べる)"
+          class="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-[13px] outline-none focus:border-sky-400/60"
+        />
+        <button
+          type="submit"
+          class="rounded-lg bg-sky-500/20 px-4 py-1.5 text-[13px] font-bold text-sky-100 hover:bg-sky-500/30 disabled:opacity-40"
+          :disabled="loading || busy || !targetInput.trim()"
+        >{{ loading ? "読み込み中…" : target ? "相手を読み直す" : "相手を読み込む" }}</button>
+      </form>
       <p v-if="error" class="mt-2 rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-300">{{ error }}</p>
     </div>
 
@@ -300,6 +322,12 @@ const resists = computed(() =>
           @group="(en) => toggleGroup(g.i, en)"
         />
       </div>
+      </div>
+
+      <!-- 相手との差 -->
+      <div v-if="tab === 'diff'">
+        <BuildDiff v-if="target" :mine="cur" :target="target" :target-from="targetFrom" :focus="focus" @clear="clearTarget" />
+        <p v-else class="mb-6 text-sm text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
       </div>
 
       <!-- ツリー -->

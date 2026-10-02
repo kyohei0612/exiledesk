@@ -269,6 +269,23 @@ function PCK.setMainSkill(i, k)
   end)
 end
 
+-- ---------------------------------------------------------------- 比べる相手の読み込みの間の退避
+--- 比べる相手 (別のビルド) を同じ PoB に読み込む間、今のビルドの覚え (欄の元の物・貼って足した物・外れた欄・ツリーの元) を
+--- 退避しておき、自分のビルドをコードから読み直した後に戻す (PCK は読み込みのたびに作り直されるので、別の名前に置く)。
+--- アイテムの id は SaveDB → LoadDB で保たれるので、覚えの id はそのまま使える
+function PCK.stash()
+  EXILEDESK_KEEP = { orig = PCK.orig, added = PCK.added, displaced = PCK.displaced, treeOrig = PCK.treeOrig }
+  return json.encode({ ok = true })
+end
+function PCK.unstash()
+  local k = EXILEDESK_KEEP
+  if k then
+    PCK.orig, PCK.added, PCK.displaced, PCK.treeOrig = k.orig, k.added, k.displaced, k.treeOrig
+  end
+  EXILEDESK_KEEP = nil
+  return json.encode({ ok = true, restored = k ~= nil })
+end
+
 -- ---------------------------------------------------------------- 装備
 
 local function modLines(list)
