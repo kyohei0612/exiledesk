@@ -131,6 +131,10 @@ class Scene(BaseModel):
         description="tiers: この MOD レベル未満のティアを「付かない」に (㉔)",
     )
     tags: bool = Field(default=False, description="stage: MOD の横にタグの札を出す (㉔)")
+    still: bool = Field(
+        default=False,
+        description="stage: 打つ演出を流さず、その手の後の姿だけ見せる (別の実演の見せ始め)",
+    )
     panel: Panel | None = Field(
         default=None, description="icons / table: POE2Tube 側で描く図 (script/panel.py)"
     )
@@ -161,6 +165,7 @@ class Scene(BaseModel):
             self.panel.key() if self.panel else None,
             self.floor,
             self.tags,
+            self.still,
         )
 
     @model_validator(mode="before")
@@ -210,8 +215,8 @@ class Scene(BaseModel):
             raise ValueError("focus は stage 専用")
         if self.floor is not None and self.kind != "tiers":
             raise ValueError("floor は tiers 専用")
-        if self.tags and self.kind != "stage":
-            raise ValueError("tags は stage 専用")
+        if (self.tags or self.still) and self.kind != "stage":
+            raise ValueError("tags・still は stage 専用")
         if (self.kind in PANEL_KINDS) != (self.panel is not None):
             raise ValueError("icons / table には panel が必要 (panel は icons / table 専用)")
         if self.panel is not None and (self.panel.icons is None) == (self.kind == "icons"):

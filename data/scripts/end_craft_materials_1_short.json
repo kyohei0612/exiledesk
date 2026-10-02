@@ -23,7 +23,8 @@
           "scene": {
             "kind": "stage",
             "step": 6,
-            "demo": "annul"
+            "demo": "annul",
+            "still": true
           }
         },
         {

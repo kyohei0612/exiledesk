@@ -115,3 +115,12 @@ def test_tags_line_is_a_look_line() -> None:
     hit = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=6))
     assert not stage_hit(talk, look)
     assert stage_hit(talk, hit)
+
+
+def test_still_line_shows_without_hit() -> None:
+    from poe2tube.video.clip_timing import stage_hit
+
+    still = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=6, still=True))
+    assert not stage_hit(None, still)
+    with pytest.raises(ValueError):
+        Scene(kind="item", step=1, still=True)
