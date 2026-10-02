@@ -29,6 +29,8 @@ const power = shallowRef<{ target: string; label: string; nodes: Map<number, Nod
 const powerProgress = ref<string>("");
 /** 比べる元からの変えた所 (画面の上のバーに並べる)。読み込み・「今を比べる元にする」で空にする */
 const changes = ref<string[]>([]);
+/** 最後に読み込んだ元 (読み込み直す用) */
+const lastSource = ref<{ path: string; name: string } | { text: string } | null>(null);
 /** 何から読み込んだか (画面の表示用) */
 const loadedFrom = ref("");
 /** 上のバーで見るスキルの鍵 (null = DPS が一番高いスキル) */
@@ -99,23 +101,33 @@ function withCopies(i: number): number[] {
 
 export function usePobCheck() {
   /** 読み込む: text = PoB コード / poe.ninja の URL、saved = PoB に保存したビルドのパス (自分のキャラ) */
-  async function load(saved?: { path: string; name: string }): Promise<void> {
-    if (!saved && !input.value.trim()) return;
+  async function load(saved?: { path: string; name: string }, opts: { keepBase?: boolean; text?: string } = {}): Promise<void> {
+    const text = opts.text ?? input.value;
+    if (!saved && !text.trim()) return;
+    const prev = cur.value;
     loading.value = true;
     error.value = null;
     try {
       if (saved) await run(() => loadSavedBuild(saved.path));
-      else await run(() => loadBuild(input.value));
+      else await run(() => loadBuild(text));
       const s = await run(summary);
       treeNodes.value = (await run(treeStatic)).nodes;
       power.value = null;
       cur.value = s;
-      base.value = s;
-      baseAt.value = "読み込んだ時";
-      changes.value = [];
+      // 読み込み直す: 前の状態を比べる元に残して、ゲームで変えた分の差を見る
+      if (opts.keepBase && prev) {
+        base.value = prev;
+        baseAt.value = "読み込み直す前";
+        changes.value = ["読み込み直し (ゲームでの変更)"];
+      } else {
+        base.value = s;
+        baseAt.value = "読み込んだ時";
+        changes.value = [];
+      }
+      lastSource.value = saved ? { ...saved } : { text };
       focusKey.value = null;
-      recordHistory("pob-check", "load", { input: saved ? `saved:${saved.name}` : input.value.slice(0, 200), char: s.char, stats: s.stats });
-      loadedFrom.value = saved ? `PoB に保存したビルド「${saved.name}」` : /poe\.ninja/.test(input.value) ? "poe.ninja" : "PoB コード";
+      recordHistory("pob-check", opts.keepBase ? "reload" : "load", { input: saved ? `saved:${saved.name}` : text.slice(0, 200), char: s.char, stats: s.stats });
+      loadedFrom.value = saved ? `PoB に保存したビルド「${saved.name}」` : /poe\.ninja/.test(text) ? "poe.ninja" : "PoB コード";
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
     } finally {
@@ -181,6 +193,14 @@ export function usePobCheck() {
     recordHistory("pob-check", "restore", { slot });
     note(`${slotJa(slot)} 元に戻す`);
     await refresh();
+  }
+
+  /** 読み込み直す (同じ元から最新を取り直し、今の状態を比べる元に残す)。poe.ninja はあちらの更新待ちのことがある */
+  async function reload(): Promise<void> {
+    const src = lastSource.value;
+    if (!src) return;
+    if ("path" in src) await load(src, { keepBase: true });
+    else await load(undefined, { keepBase: true, text: src.text });
   }
 
   /** 共有: 今のビルド (変えた所も込み) の PoB コードをクリップボードへ */
@@ -260,5 +280,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { lastSource, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

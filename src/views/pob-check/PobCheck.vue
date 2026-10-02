@@ -7,7 +7,8 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { gemJa, openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
+import { characterWindow, gemJa, openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
+import { recordHistory } from "../../services/history";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
@@ -16,7 +17,7 @@ import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { lastSource, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const LOAD_MODES = [
@@ -46,6 +47,41 @@ async function openPobApp(): Promise<void> {
 watch(loadMode, (m) => {
   if (m === "mine") void refreshSaved();
 });
+/** 試し: アプリのログインで character-window を読む。応答は履歴 (pob-check.jsonl) に残す */
+const acctBusy = ref(false);
+const acctMsg = ref("");
+const acctChars = ref<Array<{ name: string; class: string; level: number; league: string }>>([]);
+const clip = (v: unknown): string => JSON.stringify(v).slice(0, 60000);
+async function tryAccount(): Promise<void> {
+  acctBusy.value = true;
+  acctMsg.value = "読んでいます…";
+  try {
+    const r = await characterWindow("get-characters");
+    recordHistory("pob-check", "account-characters", { status: r.status, body: clip(r.body) });
+    const list = Array.isArray(r.body) ? (r.body as Array<Record<string, unknown>>) : [];
+    acctChars.value = list.map((c) => ({ name: String(c.name ?? ""), class: String(c.class ?? ""), level: Number(c.level ?? 0), league: String(c.league ?? "") }));
+    acctMsg.value = r.status === 200 ? `読めた (${list.length} 人)。キャラを押すと装備とパッシブも試す` : `読めない (状態 ${r.status}): ${clip(r.body).slice(0, 120)}`;
+  } catch (e) {
+    acctMsg.value = String(e);
+  } finally {
+    acctBusy.value = false;
+  }
+}
+async function tryAccountChar(name: string): Promise<void> {
+  acctBusy.value = true;
+  acctMsg.value = `${name} の装備とパッシブを読んでいます…`;
+  try {
+    const items = await characterWindow("get-items", name);
+    await new Promise((r) => setTimeout(r, 1500));
+    const passives = await characterWindow("get-passive-skills", name);
+    recordHistory("pob-check", "account-character", { name, items: { status: items.status, body: clip(items.body) }, passives: { status: passives.status, body: clip(passives.body) } });
+    acctMsg.value = `装備 ${items.status} / パッシブ ${passives.status} (履歴に残しました)`;
+  } catch (e) {
+    acctMsg.value = String(e);
+  } finally {
+    acctBusy.value = false;
+  }
+}
 const fmtDate = (sec: number): string => (sec ? new Date(sec * 1000).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
 
 /** 共有: 今のビルドの PoB コードをコピー */
@@ -159,6 +195,22 @@ const resists = computed(() =>
             <button type="button" class="rounded-lg bg-white/[0.07] px-3 py-1.5 text-xs font-semibold hover:bg-white/15" @click="refreshSaved">一覧を更新</button>
             <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ savedMsg }}</span>
           </div>
+          <div class="mt-3 border-t border-white/10 pt-2">
+            <p class="text-[11px] text-[var(--exile-color-text-tertiary)]">
+              試し: アプリのログインで公式サイトからキャラを読めるか (読めれば PoB でのログインが要らなくなる)。押すと応答を履歴に残すので、結果を教えてください
+            </p>
+            <div class="mt-1 flex items-center gap-2">
+              <button type="button" class="rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:bg-sky-500/30 disabled:opacity-40" :disabled="acctBusy" @click="tryAccount">アプリのログインでキャラ一覧</button>
+              <span class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ acctMsg }}</span>
+            </div>
+            <ul v-if="acctChars.length" class="mt-1 flex flex-wrap gap-1">
+              <li v-for="c in acctChars" :key="c.name">
+                <button type="button" class="rounded bg-black/30 px-2 py-0.5 text-[11px] hover:bg-white/10 disabled:opacity-40" :disabled="acctBusy" @click="tryAccountChar(c.name)">
+                  {{ c.name }} <span class="text-[var(--exile-color-text-tertiary)]">{{ c.class }} Lv{{ c.level }} {{ c.league }}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
           <ul v-if="saved.length" class="mt-2 max-h-56 space-y-1 overflow-auto">
             <li v-for="b in saved" :key="b.path">
               <button
@@ -206,6 +258,14 @@ const resists = computed(() =>
           <span v-for="r in resists" :key="r.label" class="ml-1.5 font-semibold tabular-nums" :class="r.cls">{{ r.label }}{{ Math.round(r.v) }}</span>
         </span>
         <span v-if="loadedFrom" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ loadedFrom }} から</span>
+        <button
+          v-if="lastSource"
+          type="button"
+          class="rounded-lg bg-white/[0.07] px-2.5 py-1 text-[11px] font-semibold hover:bg-white/15 disabled:opacity-40"
+          :disabled="loading || busy"
+          title="同じ所から最新を読み直し、今の状態を比べる元に残す (ゲームで装備を変えた後に、どれだけ変わったか)。poe.ninja はあちらの更新待ちで古いことがある"
+          @click="reload"
+        >{{ loading ? "読み込み中…" : "↻ 読み込み直す" }}</button>
         <span v-if="cur.stats.LowLife" class="rounded-lg bg-rose-500/20 px-2.5 py-1.5 text-xs font-semibold text-rose-200">低ライフ</span>
       </div>
 

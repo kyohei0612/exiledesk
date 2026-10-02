@@ -200,3 +200,39 @@ pub async fn trade_history_fetch(app: tauri::AppHandle, req: HistoryRequest) -> 
         .unwrap_or_else(|_| serde_json::Value::String(text.chars().take(300).collect()));
     Ok(serde_json::json!({ "status": status, "retry_after": retry_after, "ratelimit": ratelimit, "body": body }))
 }
+
+/// 火力チェックの「自分のキャラ」(2026-10-02 オーナー「ログインは同じ管理にできる？」): アプリのログイン (POESESSID) で
+/// pathofexile.com の character-window (PoE1 からある取得口) を読む。PoE2 (realm=poe2) で使えるかは未確認なので、
+/// 応答は加工せずにそのまま返す (状態 + 本体)。読めるのは キャラ一覧 / 装備 / パッシブ の 3 つだけ
+#[tauri::command]
+pub async fn poe_character_window(
+    app: tauri::AppHandle,
+    endpoint: String,
+    character: Option<String>,
+    account: Option<String>,
+) -> Result<serde_json::Value, String> {
+    if !["get-characters", "get-items", "get-passive-skills"].contains(&endpoint.as_str()) {
+        return Err(format!("読めない取得口: {endpoint}"));
+    }
+    let cookie = read_session(app)
+        .await?
+        .ok_or("pathofexile.com にログインしていません")?;
+    let mut url = format!("{SITE}character-window/{endpoint}?realm=poe2");
+    if let Some(a) = account.filter(|s| !s.is_empty()) {
+        url.push_str(&format!("&accountName={}", crate::trade2::urlencode(&a)));
+    }
+    if let Some(c) = character.filter(|s| !s.is_empty()) {
+        url.push_str(&format!("&character={}", crate::trade2::urlencode(&c)));
+    }
+    let res = crate::trade2::build_client()?
+        .get(&url)
+        .header(COOKIE, format!("{SESSION_COOKIE}={}", cookie.value()))
+        .send()
+        .await
+        .map_err(|e| format!("通信エラー: {e}"))?;
+    let status = res.status().as_u16();
+    let text = res.text().await.map_err(|e| format!("応答を読めません: {e}"))?;
+    let body = serde_json::from_str::<serde_json::Value>(&text)
+        .unwrap_or_else(|_| serde_json::Value::String(text.chars().take(500).collect()));
+    Ok(serde_json::json!({ "status": status, "body": body }))
+}

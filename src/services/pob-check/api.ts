@@ -170,6 +170,12 @@ export async function loadSavedBuild(path: string): Promise<void> {
 }
 /** 同梱の PoB を開く (自分のキャラの取り込みは PoB の Import/Export → Import from website / Character import で) */
 export const openPob = (): Promise<unknown> => invoke("pob_launcher_open");
+/**
+ * アプリのログインで pathofexile.com の character-window を読む (自分のキャラ、2026-10-02 試し)。
+ * PoE2 で使えるかは未確認なので、状態と本体をそのまま返す
+ */
+export const characterWindow = (endpoint: "get-characters" | "get-items" | "get-passive-skills", character?: string, account?: string): Promise<{ status: number; body: unknown }> =>
+  invoke("poe_character_window", { endpoint, character: character ?? null, account: account ?? null });
 /** 今のビルド (変えた所も込み) を PoB のコードに (共有用) */
 export const exportCode = (): Promise<string> => invoke<string>("pob_export_code");
 

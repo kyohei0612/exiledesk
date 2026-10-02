@@ -245,6 +245,7 @@ pub fn run() {
             trade_history::trade_history_logout,
             trade_history::trade_history_leagues,
             trade_history::trade_history_fetch,
+            trade_history::poe_character_window,
             gem_break::gem_break_fetch,
             gem_break::gem_break_stored_result,
             gem_break::gem_break_cached,
