@@ -1,0 +1,319 @@
+<!--
+  TreeView.vue — パッシブツリー (見るだけ、2026-10-02)
+  PoB が持っているノードの位置・つながり・効果をそのまま描く。取っているノードは金色、比べる元から増えた物は緑・減った物は赤の輪。
+  ジュエルの範囲は点線の円。ホイールで拡大縮小、ドラッグで移動、ノードに乗せると名前と効果 (日本語)。
+-->
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import passivesJa from "../../i18n/passives-ja-client.json";
+import { linesToJa } from "../../services/pob-check/item-text";
+import type { TreeNode, TreeState } from "../../services/pob-check/api";
+
+const props = defineProps<{ nodes: TreeNode[]; state: TreeState; baseAlloc?: number[] }>();
+
+const JA = passivesJa as Record<string, string>;
+const nameJa = (n: string): string => JA[n] ?? n;
+
+const wrap = ref<HTMLDivElement | null>(null);
+const canvas = ref<HTMLCanvasElement | null>(null);
+const size = ref({ w: 800, h: 600 });
+/** 画面の点 = (世界の点 - 中心) × 倍率 + 画面の中心 */
+const view = ref({ cx: 0, cy: 0, k: 0.02 });
+
+const byId = computed(() => new Map(props.nodes.map((n) => [n.id, n])));
+const alloc = computed(() => new Set(props.state.alloc));
+const added = computed(() => (props.baseAlloc ? new Set(props.state.alloc.filter((id) => !props.baseAlloc!.includes(id))) : new Set<number>()));
+const removed = computed(() => (props.baseAlloc ? new Set(props.baseAlloc.filter((id) => !alloc.value.has(id))) : new Set<number>()));
+
+const query = ref("");
+/** 検索に当たったノード (名前・効果の日本語/英語) */
+const hits = shallowRef<Set<number>>(new Set());
+const sdJa = shallowRef<Map<number, string[]>>(new Map());
+watch(
+  () => props.nodes,
+  async (nodes) => {
+    // 効果の日本語は 1 回だけ作る (検索と乗せた時の説明に使う)
+    const m = new Map<number, string[]>();
+    const all = nodes.flatMap((n) => n.sd ?? []);
+    const ja = await linesToJa(all);
+    let i = 0;
+    for (const n of nodes) {
+      const k = n.sd?.length ?? 0;
+      m.set(n.id, ja.slice(i, i + k));
+      i += k;
+    }
+    sdJa.value = m;
+    fit();
+  },
+  { immediate: true },
+);
+watch([query, sdJa], () => {
+  const q = query.value.trim().toLowerCase();
+  if (!q) { hits.value = new Set(); draw(); return; }
+  const s = new Set<number>();
+  for (const n of props.nodes) {
+    const text = [n.n, nameJa(n.n), ...(n.sd ?? []), ...(sdJa.value.get(n.id) ?? [])].join(" ").toLowerCase();
+    if (text.includes(q)) s.add(n.id);
+  }
+  hits.value = s;
+  draw();
+});
+
+/** 取っているノードが入るように合わせる (無ければ全体) */
+function fit(): void {
+  // アセンダンシーは離れた所に描かれるので、合わせる時は本体だけ
+  const pts = props.nodes.filter((n) => alloc.value.has(n.id) && !n.a && n.t !== "A");
+  const use = pts.length > 5 ? pts : props.nodes;
+  if (!use.length) return;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const n of use) { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); }
+  const pad = 1500;
+  const k = Math.min(size.value.w / (x1 - x0 + pad * 2), size.value.h / (y1 - y0 + pad * 2));
+  view.value = { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, k };
+  draw();
+}
+
+const toScreen = (x: number, y: number): [number, number] => [
+  (x - view.value.cx) * view.value.k + size.value.w / 2,
+  (y - view.value.cy) * view.value.k + size.value.h / 2,
+];
+
+const WORLD_R: Record<TreeNode["t"], number> = { n: 30, N: 50, K: 70, J: 50, C: 80, A: 50 };
+const MIN_PX: Record<TreeNode["t"], number> = { n: 1.6, N: 3, K: 4.5, J: 3.5, C: 4, A: 3 };
+function nodePx(n: TreeNode): number {
+  return Math.max(WORLD_R[n.t] * view.value.k, MIN_PX[n.t]);
+}
+const COLOR_ON: Record<TreeNode["t"], string> = { n: "#e8c46a", N: "#ffb347", K: "#f0abfc", J: "#4fd1c5", C: "#cbd5e1", A: "#c4b5fd" };
+
+function draw(): void {
+  const c = canvas.value;
+  if (!c) return;
+  const dpr = window.devicePixelRatio || 1;
+  const { w, h } = size.value;
+  if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const g = c.getContext("2d")!;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const k = view.value.k;
+  const A = alloc.value;
+  const map = byId.value;
+
+  // ジュエルの範囲
+  for (const j of props.state.jewels) {
+    const n = map.get(j.id);
+    if (!n || !j.r) continue;
+    const [x, y] = toScreen(n.x, n.y);
+    g.beginPath();
+    g.arc(x, y, j.r * k, 0, Math.PI * 2);
+    g.setLineDash([6, 5]);
+    g.strokeStyle = j.rarity === "UNIQUE" ? "rgba(251,146,60,0.7)" : "rgba(253,224,71,0.6)";
+    g.lineWidth = 1.5;
+    g.stroke();
+    g.fillStyle = j.rarity === "UNIQUE" ? "rgba(251,146,60,0.05)" : "rgba(253,224,71,0.05)";
+    g.fill();
+    g.setLineDash([]);
+  }
+
+  // つながり (取っていない → 取っている の順に重ねる)
+  for (const pass of [0, 1]) {
+    for (const a of props.nodes) {
+      for (const bid of a.l) {
+        const b = map.get(bid);
+        if (!b) continue;
+        // アセンダンシーと本体の始点のつながり・クラスの始点どうしの遠いつながりは描かない (PoB も描かない)
+        if (!!a.a !== !!b.a || (a.x - b.x) ** 2 + (a.y - b.y) ** 2 > 2500 ** 2) continue;
+        const on = A.has(a.id) && A.has(b.id);
+        if ((pass === 1) !== on) continue;
+        g.beginPath();
+        if (a.r && b.r && a.gx === b.gx && a.gy === b.gy && a.r === b.r) {
+          // 同じ軌道: 円弧 (短い向き)
+          const [cx, cy] = toScreen(a.gx!, a.gy!);
+          const t1 = Math.atan2(a.y - a.gy!, a.x - a.gx!);
+          let t2 = Math.atan2(b.y - b.gy!, b.x - b.gx!);
+          let d = t2 - t1;
+          while (d > Math.PI) d -= Math.PI * 2;
+          while (d < -Math.PI) d += Math.PI * 2;
+          t2 = t1 + d;
+          g.arc(cx, cy, a.r * k, t1, t2, d < 0);
+        } else {
+          g.moveTo(...toScreen(a.x, a.y));
+          g.lineTo(...toScreen(b.x, b.y));
+        }
+        g.strokeStyle = on ? "rgba(232,196,106,0.85)" : "rgba(148,163,184,0.18)";
+        g.lineWidth = on ? Math.max(2.2, 14 * k) : Math.max(0.8, 6 * k);
+        g.stroke();
+      }
+    }
+  }
+
+  // ノード
+  const H = hits.value;
+  for (const n of props.nodes) {
+    const [x, y] = toScreen(n.x, n.y);
+    if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
+    const r = nodePx(n);
+    const on = A.has(n.id);
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fillStyle = on ? COLOR_ON[n.t] : n.t === "n" ? "rgba(100,116,139,0.55)" : "rgba(148,163,184,0.6)";
+    g.fill();
+    if (n.t !== "n" && !on) { g.strokeStyle = "rgba(203,213,225,0.35)"; g.lineWidth = 1; g.stroke(); }
+    if (added.value.has(n.id) || removed.value.has(n.id)) {
+      g.beginPath();
+      g.arc(x, y, r + 3, 0, Math.PI * 2);
+      g.strokeStyle = added.value.has(n.id) ? "#34d399" : "#fb7185";
+      g.lineWidth = 2.5;
+      g.stroke();
+    }
+    if (H.has(n.id)) {
+      g.beginPath();
+      g.arc(x, y, r + 5, 0, Math.PI * 2);
+      g.strokeStyle = "#38bdf8";
+      g.lineWidth = 2;
+      g.stroke();
+    }
+  }
+
+  // 大きくした時はノータブル・キーストーンの名前
+  if (k > 0.09) {
+    g.font = "11px sans-serif";
+    g.textAlign = "center";
+    for (const n of props.nodes) {
+      if (n.t !== "N" && n.t !== "K") continue;
+      const [x, y] = toScreen(n.x, n.y);
+      if (x < 0 || y < 0 || x > w || y > h) continue;
+      g.fillStyle = A.has(n.id) ? "#fde68a" : "rgba(203,213,225,0.7)";
+      g.fillText(nameJa(n.n), x, y - nodePx(n) - 4);
+    }
+  }
+}
+
+// ---- 操作 ----
+let drag: { x: number; y: number; cx: number; cy: number } | null = null;
+const hover = ref<{ node: TreeNode; x: number; y: number } | null>(null);
+function onWheel(e: WheelEvent): void {
+  const rect = canvas.value!.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const { cx, cy, k } = view.value;
+  const wx = (mx - size.value.w / 2) / k + cx;
+  const wy = (my - size.value.h / 2) / k + cy;
+  const nk = Math.min(0.6, Math.max(0.005, k * (e.deltaY < 0 ? 1.2 : 1 / 1.2)));
+  // カーソルの下の点が動かないように
+  view.value = { k: nk, cx: wx - (mx - size.value.w / 2) / nk, cy: wy - (my - size.value.h / 2) / nk };
+  draw();
+}
+function onDown(e: MouseEvent): void {
+  drag = { x: e.clientX, y: e.clientY, cx: view.value.cx, cy: view.value.cy };
+}
+function onMove(e: MouseEvent): void {
+  const rect = canvas.value!.getBoundingClientRect();
+  if (drag) {
+    const k = view.value.k;
+    view.value = { k, cx: drag.cx - (e.clientX - drag.x) / k, cy: drag.cy - (e.clientY - drag.y) / k };
+    hover.value = null;
+    draw();
+    return;
+  }
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  let best: TreeNode | null = null;
+  let bd = Infinity;
+  for (const n of props.nodes) {
+    const [x, y] = toScreen(n.x, n.y);
+    const d = (x - mx) ** 2 + (y - my) ** 2;
+    if (d < Math.max(nodePx(n), 7) ** 2 && d < bd) { bd = d; best = n; }
+  }
+  hover.value = best ? { node: best, x: mx, y: my } : null;
+}
+function onUp(): void {
+  drag = null;
+}
+
+let ro: ResizeObserver | null = null;
+onMounted(() => {
+  ro = new ResizeObserver(() => {
+    const el = wrap.value;
+    if (!el) return;
+    size.value = { w: el.clientWidth, h: el.clientHeight };
+    draw();
+  });
+  if (wrap.value) ro.observe(wrap.value);
+  window.addEventListener("mouseup", onUp);
+});
+onBeforeUnmount(() => {
+  ro?.disconnect();
+  window.removeEventListener("mouseup", onUp);
+});
+watch(() => [props.state, props.baseAlloc], draw);
+
+const allocCount = computed(() => props.nodes.filter((n) => alloc.value.has(n.id) && !n.a && n.t !== "C").length);
+const ascCount = computed(() => props.nodes.filter((n) => alloc.value.has(n.id) && n.a && n.t !== "A").length);
+const hoverInfo = computed(() => {
+  const h = hover.value;
+  if (!h) return null;
+  const n = h.node;
+  const kind = { n: "", N: "ノータブル", K: "キーストーン", J: "ジュエルの穴", C: "クラスの始点", A: "アセンダンシーの始点" }[n.t];
+  const jewel = props.state.jewels.find((j) => j.id === n.id);
+  return {
+    name: nameJa(n.n),
+    kind,
+    on: alloc.value.has(n.id),
+    lines: sdJa.value.get(n.id) ?? n.sd ?? [],
+    jewel: jewel?.name,
+    left: Math.min(h.x + 16, size.value.w - 300),
+    top: Math.min(h.y + 16, size.value.h - 160),
+  };
+});
+</script>
+
+<template>
+  <div>
+    <div class="mb-2 flex flex-wrap items-center gap-2 text-[12px]">
+      <span class="rounded-lg bg-white/[0.05] px-2.5 py-1">
+        取っている <b class="tabular-nums text-amber-200">{{ allocCount }}</b>
+        <span class="ml-2 text-[var(--exile-color-text-tertiary)]">アセンダンシー</span> <b class="tabular-nums text-violet-200">{{ ascCount }}</b>
+      </span>
+      <span v-if="baseAlloc" class="rounded-lg bg-white/[0.05] px-2.5 py-1">
+        比べる元から <b class="text-emerald-300">+{{ added.size }}</b> / <b class="text-rose-300">−{{ removed.size }}</b>
+      </span>
+      <input
+        v-model="query"
+        type="search"
+        placeholder="ノードを探す (例: クリティカル、雷)"
+        class="w-60 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 outline-none focus:border-sky-400/60"
+      />
+      <span v-if="query.trim()" class="text-sky-300">{{ hits.size }} 個</span>
+      <button type="button" class="ml-auto rounded-lg bg-white/[0.06] px-2.5 py-1 hover:bg-white/15" @click="fit">取っている所に合わせる</button>
+    </div>
+    <div
+      ref="wrap"
+      class="relative h-[640px] overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,rgba(30,41,59,0.6),rgba(2,6,23,0.9))]"
+    >
+      <canvas
+        ref="canvas"
+        class="h-full w-full cursor-grab active:cursor-grabbing"
+        @wheel.prevent="onWheel"
+        @mousedown="onDown"
+        @mousemove="onMove"
+        @mouseleave="hover = null"
+      />
+      <div
+        v-if="hoverInfo"
+        class="pointer-events-none absolute z-10 w-[290px] rounded-lg border border-white/15 bg-slate-950/95 p-2.5 text-[12px] shadow-xl"
+        :style="{ left: `${hoverInfo.left}px`, top: `${hoverInfo.top}px` }"
+      >
+        <p class="font-bold" :class="hoverInfo.on ? 'text-amber-200' : 'text-[var(--exile-color-text-primary)]'">
+          {{ hoverInfo.name }}
+          <span v-if="hoverInfo.kind" class="ml-1 text-[10px] font-normal text-[var(--exile-color-text-tertiary)]">{{ hoverInfo.kind }}</span>
+        </p>
+        <p v-if="hoverInfo.jewel" class="text-[11px] text-orange-300">{{ hoverInfo.jewel }}</p>
+        <ul class="mt-1 space-y-px text-sky-100/90">
+          <li v-for="(l, i) in hoverInfo.lines" :key="i">{{ l }}</li>
+        </ul>
+        <p class="mt-1 text-[10px]" :class="hoverInfo.on ? 'text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'">{{ hoverInfo.on ? "取っている" : "取っていない" }}</p>
+      </div>
+    </div>
+    <p class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">ホイールで拡大縮小、ドラッグで移動。点線の円はジュエルの範囲。緑の輪 = 比べる元から増えた、赤の輪 = 減った。</p>
+  </div>
+</template>

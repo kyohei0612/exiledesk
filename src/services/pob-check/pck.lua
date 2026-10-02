@@ -127,6 +127,7 @@ function PCK.summary()
   calcs.input.skill_activeNumber = origCalcsActive
   calcs:BuildOutput()
   res.items = PCK.items()
+  res.tree = PCK.treeState()
   res.weaponSet = build.itemsTab.activeItemSet.useSecondWeaponSet and 2 or 1
   return json.encode(res)
 end
@@ -253,6 +254,52 @@ function PCK.setPowerCharges(n)
   build.configTab:BuildModList()
   build.buildFlag = true
   return json.encode({ ok = true })
+end
+
+--- パッシブツリーの形 (読み込みのたびに 1 回)。位置・つながり・名前・効果 (タイムレスジュエルで変わった後の物)
+--- 同じグループの同じ軌道の 2 点は円弧で結ぶので、グループの中心と半径も渡す
+local TYPE_CODE = { Normal = "n", Notable = "N", Keystone = "K", Socket = "J", ClassStart = "C", AscendClassStart = "A" }
+function PCK.treeStatic()
+  local spec = build.spec
+  local tree = spec.tree
+  local asc = spec.curAscendClass and spec.curAscendClass.name or nil
+  local nodes = {}
+  for id, node in pairs(spec.nodes) do
+    local code = TYPE_CODE[node.type]
+    local keep = code and (node.ascendancyName == nil or node.ascendancyName == asc)
+    if keep and node.x then
+      local e = { id = id, x = math.floor(node.x + 0.5), y = math.floor(node.y + 0.5), t = code, n = node.dn, sd = node.sd, l = {} }
+      if node.ascendancyName then e.a = 1 end
+      if node.isAttribute then e.at = 1 end
+      if node.group and node.orbit and node.orbit > 0 then
+        e.gx = math.floor(node.group.x + 0.5)
+        e.gy = math.floor(node.group.y + 0.5)
+        e.r = tree.orbitRadii[node.orbit + 1]
+      end
+      for _, other in ipairs(node.linked or {}) do
+        if other.id > id then e.l[#e.l + 1] = other.id end
+      end
+      nodes[#nodes + 1] = e
+    end
+  end
+  return json.encode({ nodes = nodes })
+end
+
+--- 取っているノードと、ジュエルの範囲 (ジュエルの穴の id・半径・名前)
+function PCK.treeState()
+  local spec = build.spec
+  local alloc = {}
+  for id in pairs(spec.allocNodes) do alloc[#alloc + 1] = id end
+  local jewels = {}
+  local mult = data.gameConstants["PassiveTreeJewelDistanceMultiplier"] or 1
+  for nodeId, slot in pairs(build.itemsTab.sockets) do
+    local item = spec.allocNodes[nodeId] and build.itemsTab.items[slot.selItemId]
+    if item then
+      local ri = item.jewelRadiusIndex and data.jewelRadius[item.jewelRadiusIndex]
+      jewels[#jewels + 1] = { id = nodeId, name = item.title or item.name, rarity = item.rarity, r = ri and ri.outer * mult or 0 }
+    end
+  end
+  return { alloc = alloc, jewels = jewels }
 end
 
 return "ok"

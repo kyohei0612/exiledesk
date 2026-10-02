@@ -6,16 +6,24 @@
   オーナー「pob新しいやつはUIシンプルかつわかりやすく、色付きで今風で表示してくれ」
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import DiffBadge from "./DiffBadge.vue";
 import SkillCard from "./SkillCard.vue";
 import GemGroupCard from "./GemGroupCard.vue";
 import ItemSlotCard from "./ItemSlotCard.vue";
+import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
+
+const TABS = [
+  { id: "items", label: "装備" },
+  { id: "gems", label: "ジェム" },
+  { id: "tree", label: "パッシブツリー" },
+] as const;
+const tab = ref<(typeof TABS)[number]["id"]>("items");
 
 const num = (k: string): number => {
   const v = cur.value?.stats[k];
@@ -154,9 +162,22 @@ const resists = computed(() =>
         />
       </div>
 
+      <!-- 変える所 (装備 / ジェム / ツリー) -->
+      <div class="mb-3 flex gap-1 border-b border-white/10">
+        <button
+          v-for="t in TABS"
+          :key="t.id"
+          type="button"
+          class="-mb-px border-b-2 px-4 py-2 text-sm font-bold transition-colors"
+          :class="tab === t.id ? 'border-amber-400 text-amber-200' : 'border-transparent text-[var(--exile-color-text-tertiary)] hover:text-[var(--exile-color-text-secondary)]'"
+          @click="tab = t.id"
+        >{{ t.label }}</button>
+      </div>
+
       <!-- 装備 -->
-      <h2 class="mb-2 text-sm font-bold text-[var(--exile-color-text-secondary)]">
-        装備 <span class="font-normal text-[var(--exile-color-text-tertiary)]">ゲームで Ctrl+C したアイテムを貼ると入れ替えて計算し直します (日本語のままで OK)</span>
+      <div v-show="tab === 'items'">
+      <p class="mb-2 text-xs text-[var(--exile-color-text-tertiary)]">
+        ゲームで Ctrl+C したアイテムを貼ると入れ替えて計算し直します (日本語のままで OK)
         <span class="ml-3 inline-flex overflow-hidden rounded-md border border-white/10 align-middle text-[11px] font-semibold">
           <button
             v-for="n in [1, 2] as const"
@@ -168,7 +189,7 @@ const resists = computed(() =>
             @click="changeWeaponSet(n)"
           >武器セット {{ n === 1 ? "I" : "II" }}</button>
         </span>
-      </h2>
+      </p>
       <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3 @[100rem]:grid-cols-4">
         <ItemSlotCard
           v-for="s in cur.items"
@@ -181,11 +202,13 @@ const resists = computed(() =>
           @restore="restoreItem(s.slot)"
         />
       </div>
+      </div>
 
       <!-- ジェム -->
-      <h2 class="mb-2 text-sm font-bold text-[var(--exile-color-text-secondary)]">
-        ジェム <span class="font-normal text-[var(--exile-color-text-tertiary)]">変えるとすぐ計算し直します<template v-if="merged > 0"> ・ 同じ中身の組 {{ merged }} 個はまとめました</template></span>
-      </h2>
+      <div v-show="tab === 'gems'">
+      <p class="mb-2 text-xs text-[var(--exile-color-text-tertiary)]">
+        変えるとすぐ計算し直します<template v-if="merged > 0"> ・ 同じ中身の組 {{ merged }} 個はまとめました</template>
+      </p>
       <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
         <GemGroupCard
           v-for="g in groups"
@@ -195,6 +218,12 @@ const resists = computed(() =>
           @gem="(j, field, value) => changeGem(g.i, j, field, value)"
           @group="(en) => toggleGroup(g.i, en)"
         />
+      </div>
+      </div>
+
+      <!-- ツリー -->
+      <div v-if="tab === 'tree'" class="mb-6">
+        <TreeView :nodes="treeNodes" :state="cur.tree" :base-alloc="base && base !== cur ? base.tree.alloc : undefined" />
       </div>
 
       <p class="text-[11px] leading-relaxed text-[var(--exile-color-text-tertiary)]">

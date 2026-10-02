@@ -6,7 +6,7 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, loadBuild, restore, setGem, setWeaponSet, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { toPobItem } from "../../services/pob-check/item-text";
 
@@ -17,6 +17,8 @@ const error = ref<string | null>(null);
 const cur = shallowRef<Summary | null>(null);
 const base = shallowRef<Summary | null>(null);
 const baseAt = ref<string>("");
+/** パッシブツリーの形 (読み込みのたびに 1 回取る) */
+const treeNodes = shallowRef<TreeNode[]>([]);
 
 /** スキルの鍵 (組の番号 + スキルの番号)。比べる時に同じスキル同士を合わせる */
 export const skillKey = (g: GroupView, s: SkillView): string => `${g.i}:${s.k}:${s.name}`;
@@ -78,6 +80,7 @@ export function usePobCheck() {
     try {
       await run(() => loadBuild(input.value));
       const s = await run(summary);
+      treeNodes.value = (await run(treeStatic)).nodes;
       cur.value = s;
       base.value = s;
       baseAt.value = "読み込んだ時";
@@ -140,5 +143,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

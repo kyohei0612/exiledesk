@@ -75,12 +75,36 @@ export interface SlotView {
   weaponSet?: number;
   item?: ItemView;
 }
+export interface TreeNode {
+  id: number;
+  x: number;
+  y: number;
+  /** n 小 / N ノータブル / K キーストーン / J ジュエルの穴 / C クラスの始点 / A アセンダンシーの始点 */
+  t: "n" | "N" | "K" | "J" | "C" | "A";
+  n: string;
+  sd?: string[];
+  /** つながる先 (自分より大きい id だけ。線を 2 回引かない) */
+  l: number[];
+  /** アセンダンシーのノード */
+  a?: 1;
+  /** 能力値 (筋力/器用さ/知性を選ぶ) */
+  at?: 1;
+  /** 同じグループの同じ軌道なら円弧で結ぶ: グループの中心と半径 */
+  gx?: number;
+  gy?: number;
+  r?: number;
+}
+export interface TreeState {
+  alloc: number[];
+  jewels: Array<{ id: number; name: string; rarity: string; r: number }>;
+}
 export interface Summary {
   char: { class: string; ascendancy: string; level: number };
   stats: Record<string, number | boolean | null>;
   config: { powerCharges: number };
   groups: GroupView[];
   items: SlotView[];
+  tree: TreeState;
   /** 今使っている武器セット */
   weaponSet: number;
 }
@@ -137,3 +161,4 @@ function luaStr(s: string): string {
   return `[${eq}[${s}]${eq}]`;
 }
 export const setWeaponSet = (n: 1 | 2): Promise<unknown> => evalLua(`return PCK.setWeaponSet(${n})`);
+export const treeStatic = (): Promise<{ nodes: TreeNode[] }> => evalLua("return PCK.treeStatic()");
