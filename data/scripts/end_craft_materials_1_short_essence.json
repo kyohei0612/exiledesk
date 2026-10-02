@@ -1,0 +1,169 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】エッセンスで付けた MOD、消去のオーブで消える？ #Shorts",
+  "target_seconds": 30,
+  "result_file": "data/results/end_craft_materials_1.json",
+  "layout": "short",
+  "short_title": "エッセンスの MOD は消える？",
+  "demos": {
+    "essence": "data/results/end_craft_materials_1__essence.json",
+    "annul": "data/results/end_craft_materials_1__annul.json",
+    "annul_plain": "data/results/end_craft_materials_1__annul_plain.json",
+    "annul_essence": "data/results/end_craft_materials_1__annul_essence.json",
+    "annul_bone": "data/results/end_craft_materials_1__annul_bone.json"
+  },
+  "sections": [
+    {
+      "name": "エッセンスの MOD は消える？",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスで付けた MOD は、消去のオーブで消えるかしら。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "proud",
+          "text": "確定で付けたんだから、守られてるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての能力値が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフが消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エッセンスのだけ残ってるのだ！ やっぱり守られてるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回……消えたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、消えちゃったのだ！？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスの MOD も、普通の MOD と同じ。消去で消えるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "消えない MOD にしたいなら、フラクチャーで固定するのよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エンドのクラフト素材、本編でまとめて解説してるのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上位のオーブやエッセンスも、関連動画から見てね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

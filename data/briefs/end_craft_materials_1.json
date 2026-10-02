@@ -152,6 +152,122 @@
           "note": "固定した MOD は消えない"
         }
       ]
+    },
+    "annul_plain": {
+      "schema": "craft-stage-plan/1",
+      "title": "ショート: 普通の MOD だけのレアに消去を打ちまくる (4 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261002,
+      "steps": [
+        {
+          "currency": "transmute_perfect",
+          "pick": {
+            "mod": "Amulets/AllResistances"
+          },
+          "note": "上位のオーブ: 弱いティアが付かない"
+        },
+        {
+          "currency": "regal_perfect",
+          "pick": {
+            "mod": "Amulets/IncreasedLife"
+          },
+          "note": "完全の王者: レアにして 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: MOD を 4 個に"
+        },
+        {
+          "currency": "annul",
+          "times": 4,
+          "note": "消去を打ちまくる (ショート)"
+        }
+      ]
+    },
+    "annul_essence": {
+      "schema": "craft-stage-plan/1",
+      "title": "ショート: エッセンスのクラフト MOD 入りに消去を打ちまくる (5 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261002,
+      "steps": [
+        {
+          "currency": "transmute_perfect",
+          "pick": {
+            "mod": "Amulets/AllResistances"
+          },
+          "note": "上位のオーブ: 弱いティアが付かない"
+        },
+        {
+          "currency": "regal_perfect",
+          "pick": {
+            "mod": "Amulets/IncreasedLife"
+          },
+          "note": "完全の王者: レアにして 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: MOD を 4 個に"
+        },
+        {
+          "currency": "essence:breach",
+          "note": "レアに使うエッセンス: 1 個消えて品質の最大値 +20%"
+        },
+        {
+          "currency": "annul",
+          "times": 4,
+          "note": "消去を打ちまくる (ショート)"
+        }
+      ]
+    },
+    "annul_bone": {
+      "schema": "craft-stage-plan/1",
+      "title": "ショート: 冒涜 (骨) の MOD 入りに消去を打ちまくる (3 手目まで本編と同じ、開示してから)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261002,
+      "steps": [
+        {
+          "currency": "transmute_perfect",
+          "pick": {
+            "mod": "Amulets/AllResistances"
+          },
+          "note": "上位のオーブ: 弱いティアが付かない"
+        },
+        {
+          "currency": "regal_perfect",
+          "pick": {
+            "mod": "Amulets/IncreasedLife"
+          },
+          "note": "完全の王者: レアにして 1 個足す"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "完全の高貴: 1 個足す"
+        },
+        {
+          "currency": "desecrate",
+          "note": "骨で冒涜 (中身は見えない)"
+        },
+        {
+          "currency": "reveal:1",
+          "note": "開示 (3 つから 1 つ)"
+        },
+        {
+          "currency": "annul",
+          "times": 4,
+          "note": "消去を打ちまくる (ショート)"
+        }
+      ]
     }
   }
 }
