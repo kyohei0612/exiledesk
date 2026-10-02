@@ -17,7 +17,7 @@ import BuildDiff from "./BuildDiff.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck, type PasteNote } from "./usePobCheck";
 
-const { target, targetFrom, targetInput, loadTarget, clearTarget, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 /**
@@ -42,6 +42,17 @@ async function onShare(): Promise<void> {
   const code = await shareCode();
   shareMsg.value = code ? (changes.value.length ? "変えた所も込みでコピーしました" : "コピーしました") : "できませんでした";
   setTimeout(() => (shareMsg.value = ""), 4000);
+}
+
+/** ゲームのビルドプランナーへの書き出し (自分 = 上のバー、相手 = 「相手との差」)。書いた後の文は 8 秒出す */
+const planMsg = ref("");
+const targetPlanMsg = ref("");
+async function onPlan(which: "mine" | "target"): Promise<void> {
+  const box = which === "mine" ? planMsg : targetPlanMsg;
+  box.value = "書いています…";
+  const m = await exportPlan(which);
+  box.value = m ?? "できませんでした";
+  setTimeout(() => (box.value = ""), 8000);
 }
 
 const TABS = [
@@ -247,6 +258,14 @@ const resists = computed(() =>
               title="今の状態を比べる元にして、ここからの差を見る"
               @click="setBaseToNow"
             >今を比べる元にする</button>
+            <!-- 全部戻す: 読み込んだ元をもう 1 回読み込む (変えた所が 1 つ以上ある時だけ)。相手は残る -->
+            <button
+              type="button"
+              class="self-end rounded-lg border border-rose-300/30 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-500/15 disabled:opacity-30"
+              :disabled="!canReset || busy || loading"
+              title="変えた所を全部捨てて、読み込んだ時の状態に戻す (比べる元も読み込んだ時に戻る。比べる相手はそのまま)"
+              @click="resetAll"
+            >全部戻す</button>
             <div class="relative self-end">
               <button
                 type="button"
@@ -255,6 +274,17 @@ const resists = computed(() =>
                 @click="onShare"
               >共有 (PoB コード)</button>
               <span v-if="shareMsg" class="absolute right-0 top-full mt-1 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[11px] text-sky-200">{{ shareMsg }}</span>
+            </div>
+            <!-- 自分の今のビルド (変えた所も込み) をゲームのビルドプランナー (.build) に -->
+            <div class="relative self-end">
+              <button
+                type="button"
+                class="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/30 disabled:opacity-40"
+                :disabled="busy || loading"
+                title="今のパッシブとジェム (変えた所も込み) を Documents/My Games/Path of Exile 2/BuildPlanner に .build で書く。ゲームのビルドプランナーの一覧に出る (ゲームを開き直す)"
+                @click="onPlan('mine')"
+              >ビルドプランナーに書き出す</button>
+              <span v-if="planMsg" class="absolute right-0 top-full z-10 mt-1 max-w-[28rem] rounded bg-black/90 px-2 py-0.5 text-[11px] text-emerald-200">{{ planMsg }}</span>
             </div>
           </div>
         </div>
@@ -326,7 +356,7 @@ const resists = computed(() =>
 
       <!-- 相手との差 -->
       <div v-if="tab === 'diff'">
-        <BuildDiff v-if="target" :mine="cur" :target="target" :target-from="targetFrom" :focus="focus" @clear="clearTarget" />
+        <BuildDiff v-if="target" :mine="cur" :target="target" :target-from="targetFrom" :focus="focus" :can-plan="!!targetPlan" :plan-msg="targetPlanMsg" :busy="busy || loading" @clear="clearTarget" @plan="onPlan('target')" />
         <p v-else class="mb-6 text-sm text-[var(--exile-color-text-secondary)]">上の「比べる相手」に忍者のビルドの URL か PoB コードを貼って読み込むと、ユニークは装備ごと、レアは足りない MOD だけが「自分 → 相手」で並びます。</p>
       </div>
 

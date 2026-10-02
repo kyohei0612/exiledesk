@@ -10,6 +10,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import pckLua from "./pck.lua?raw";
 import itemsJaClient from "../../i18n/items-ja-client.json";
+import passiveIds from "../../data/passive-ids.json";
 import { parseNinjaUrl } from "../build-copy/ninja-url";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 
@@ -71,6 +72,8 @@ export interface GroupView {
   enabled: boolean;
   slot?: string;
   meta: boolean;
+  /** 装備・ツリーが与えるスキルの組 ("Item:13:Adonia's Ego, …" / "Tree:12882")。ジェムではないので、ジェムの差・ビルドプランナーには出さない */
+  source?: string;
   /** 同じ中身の組 (スキルセットの 2 重など) の時、元の組の番号 */
   duplicateOf?: number;
   gems: GemView[];
@@ -181,12 +184,13 @@ async function sendPck(): Promise<void> {
   if (ok !== "ok") throw new Error(`PoB の部品を読み込めません: ${ok}`);
 }
 
-/** ビルドを読み込んで、PoB の中の部品を送る */
-export async function loadBuild(text: string): Promise<void> {
+/** ビルドを読み込んで、PoB の中の部品を送る。返り値は読み込んだ PoB コード (poe.ninja の URL なら取ってきた物。「全部戻す」はこれを読み直す = 取り直さない) */
+export async function loadBuild(text: string): Promise<string> {
   if (!isTauriRuntime()) throw new Error("アプリの中でだけ使えます");
   const code = await toPobCode(text);
   await invoke("pob_load_build_code", { code });
   await sendPck();
+  return code;
 }
 
 /** 同梱の PoB を開く (自分のキャラは PoB でログインして取り込み、Import/Export のコードをアプリに貼る) */
@@ -198,6 +202,30 @@ export async function exportCode(main?: { i: number; k: number }): Promise<strin
 }
 
 export const summary = (): Promise<Summary> => evalLua<Summary>("return PCK.summary()");
+
+/** ゲームのビルドプランナー (.build) の中身。json = そのまま書く文字列、unknownNodes = ID の表に無かったノード (出せなかった) */
+export interface BuildPlan {
+  json: string;
+  passives: number;
+  skills: number;
+  unknownNodes: number[];
+  /** PoB が知らない (gameId の無い) ジェムや、アクティブの無い組のジェム = 出せなかった数 */
+  skippedGems: number;
+}
+/** ノードの番号 → ゲームの文字列 ID の表を Lua のテーブルにした物 (1 回だけ作る。125 KB) */
+let passiveIdsLua: string | null = null;
+/**
+ * 今の PoB のビルドをゲームのビルドプランナーの形に (2026-10-03 オーナー「相手のビルドのビルドプランナーもそのまま使えるようにしたい」)。
+ * 相手を読み込んでいる間に呼べば相手の物になる。形の決まりは pck.lua の PCK.plan、書くのは buildPlannerWrite
+ */
+export function plan(name: string, author: string): Promise<BuildPlan> {
+  passiveIdsLua ??= `{${Object.entries(passiveIds as Record<string, string>)
+    .map(([k, v]) => `[${Number(k)}]=${JSON.stringify(v)}`)
+    .join(",")}}`;
+  return evalLua<BuildPlan>(`return PCK.plan(${luaStr(name)}, ${luaStr(author)}, ${passiveIdsLua})`);
+}
+/** .build を Documents/My Games/Path of Exile 2/BuildPlanner に書く。返り値は書いたパス (同名があれば (2) が付く) */
+export const buildPlannerWrite = (name: string, json: string): Promise<string> => invoke<string>("build_planner_write", { name, json });
 /** 比べる相手を読み込む前に今のビルドの覚え (元の物・足した物・ツリーの元) を退避し、自分のビルドを読み直した後に戻す */
 export const stashState = (): Promise<unknown> => evalLua("return PCK.stash()");
 export const unstashState = (): Promise<{ restored: boolean }> => evalLua("return PCK.unstash()");

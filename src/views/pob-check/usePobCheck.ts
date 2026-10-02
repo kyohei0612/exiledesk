@@ -8,7 +8,7 @@
  *     新しい操作を足す時も act() に包むだけで二重にならない)
  */
 import { computed, ref, shallowRef } from "vue";
-import { equip, exportCode, nodePower, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { buildPlannerWrite, equip, exportCode, nodePower, plan, stashState, unstashState, resetTree, toggleNode, loadBuild, restore, setGem, setWeaponSet, treeStatic, type BuildPlan, type TreeNode, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
 import { gemJa } from "../../services/pob-check/api";
 import { slotJa } from "../../services/pob-check/slots";
@@ -33,8 +33,8 @@ const power = shallowRef<{ target: string; label: string; nodes: Map<number, Nod
 const powerProgress = ref<string>("");
 /** 比べる元からの変えた所 (画面の上のバーに並べる)。読み込み・「今を比べる元にする」で空にする */
 const changes = ref<string[]>([]);
-/** 最後に読み込んだ元 (読み込み直す用。PoB コード か poe.ninja の URL) */
-const lastSource = ref<{ text: string } | null>(null);
+/** 最後に読み込んだ元 (読み込み直す用。text = 貼った物 (PoB コード か poe.ninja の URL)、code = 実際に読んだ PoB コード = 「全部戻す」が読み直す物) */
+const lastSource = ref<{ text: string; code: string } | null>(null);
 /** 何から読み込んだか (画面の表示用) */
 const loadedFrom = ref("");
 /** 上のバーで見るスキルの鍵 (読み込んだ時に DPS が一番高いスキルで確定。行が消えたら一番高い物に戻る) */
@@ -45,6 +45,8 @@ const loadSeq = ref(0);
 const target = shallowRef<Summary | null>(null);
 const targetFrom = ref("");
 const targetInput = ref("");
+/** 相手のビルドプランナーの中身 (相手を読み込んでいる間に取る。相手は読み直しで PoB から消えるので、後からは作れない) */
+const targetPlan = shallowRef<BuildPlan | null>(null);
 const note = (s: string): void => {
   changes.value = [...changes.value, s];
 };
@@ -155,8 +157,11 @@ function withCopies(i: number): number[] {
 }
 
 export function usePobCheck() {
-  /** 読み込む: text = PoB コード (人のビルド / 自分のキャラは PoB の Import/Export のコード) か poe.ninja の URL */
-  async function load(opts: { keepBase?: boolean; text?: string } = {}): Promise<void> {
+  /**
+   * 読み込む: text = PoB コード (人のビルド / 自分のキャラは PoB の Import/Export のコード) か poe.ninja の URL。
+   * code = 読み直す時 (「全部戻す」) の、前に読んだ PoB コード (text が poe.ninja の URL でも取り直さない)
+   */
+  async function load(opts: { keepBase?: boolean; text?: string; code?: string } = {}): Promise<void> {
     const text = opts.text ?? input.value;
     if (!text.trim()) return;
     if (loading.value || busy.value) return;
@@ -165,9 +170,9 @@ export function usePobCheck() {
     error.value = null;
     try {
       // 読み込み・部品送り・数字・ツリー を 1 つの run にまとめる (間に他の操作が割り込まない)
-      const { s, nodes } = await run(async () => {
-        await loadBuild(text);
-        return { s: await summary(), nodes: (await treeStatic()).nodes };
+      const { s, nodes, code } = await run(async () => {
+        const code = await loadBuild(opts.code ?? text);
+        return { s: await summary(), nodes: (await treeStatic()).nodes, code };
       });
       treeNodes.value = nodes;
       power.value = null;
@@ -182,11 +187,11 @@ export function usePobCheck() {
         baseAt.value = "読み込んだ時";
         changes.value = [];
       }
-      lastSource.value = { text };
+      lastSource.value = { text, code };
       // 上のバーのスキルは読み込んだ時に確定 (DPS が一番高い物)。変更で順位が入れ替わっても勝手に変わらない
       focusKey.value = skillsOf(s)[0]?.key ?? null;
       loadSeq.value++;
-      recordHistory("pob-check", opts.keepBase ? "reload" : "load", { input: text.slice(0, 200), char: s.char, stats: s.stats });
+      recordHistory("pob-check", opts.keepBase ? "reload" : opts.code ? "reset" : "load", { input: text.slice(0, 200), char: s.char, stats: s.stats });
       loadedFrom.value = parseNinjaUrl(text) ? "poe.ninja" : "PoB コード";
     } catch (e) {
       error.value = msg(e);
@@ -204,20 +209,23 @@ export function usePobCheck() {
     loading.value = true;
     error.value = null;
     try {
-      const s = await run(async () => {
+      const { s, p } = await run(async () => {
         const mine = cur.value ? await exportCode() : null;
         if (mine) await stashState();
         await loadBuild(t);
         const s = await summary();
+        // 相手のビルドプランナーの中身は、相手が PoB にいる今のうちに作る (失敗しても相手の差は出す)
+        const p = await plan(planName(s, "相手"), "ExileDesk").catch(() => null);
         if (mine) {
           await loadBuild(mine);
           await unstashState();
         }
-        return s;
+        return { s, p };
       });
       target.value = s;
+      targetPlan.value = p;
       targetFrom.value = parseNinjaUrl(t) ? "poe.ninja" : "PoB コード";
-      recordHistory("pob-check", "target", { input: t.slice(0, 200), char: s.char, stats: s.stats });
+      recordHistory("pob-check", "target", { input: t.slice(0, 200), char: s.char, stats: s.stats, plan: p ? { passives: p.passives, skills: p.skills } : null });
       // 自分のビルドを読み直したので、数字を今の物に (変えた所は PoB の中に残っている)
       if (cur.value) cur.value = await run(summary);
     } catch (e) {
@@ -228,7 +236,51 @@ export function usePobCheck() {
   }
   function clearTarget(): void {
     target.value = null;
+    targetPlan.value = null;
     targetFrom.value = "";
+  }
+
+  /** ビルドプランナーのファイル名 (拡張子なし)。誰の物か分かるよう ExileDesk を入れる */
+  function planName(s: Summary, who: string): string {
+    return `${s.char.ascendancy || s.char.class} Lv${s.char.level} - ${who} - ExileDesk`;
+  }
+  /**
+   * ゲームのビルドプランナーに書き出す (2026-10-03 オーナー「相手のビルドのビルドプランナーもそのまま使えるようにしたい」)。
+   * which = mine: 今の自分のビルド (変えた所も込み) を今 PoB から作る / target: 相手を読み込んだ時に作った物。
+   * 返り値は画面に出す文 (失敗は error に出して null)
+   */
+  async function exportPlan(which: "mine" | "target"): Promise<string | null> {
+    try {
+      let p: BuildPlan | null;
+      let name: string;
+      if (which === "mine") {
+        if (!cur.value) return null;
+        name = planName(cur.value, "自分");
+        p = await run(() => plan(name, "ExileDesk"));
+      } else {
+        p = targetPlan.value;
+        name = target.value ? planName(target.value, "相手") : "相手 - ExileDesk";
+        if (!p) throw new Error("相手のビルドプランナーの中身がありません (相手を読み直してください)");
+      }
+      const path = await buildPlannerWrite(name, p.json);
+      recordHistory("pob-check", "plan", { which, path, passives: p.passives, skills: p.skills, unknownNodes: p.unknownNodes, skippedGems: p.skippedGems, changes: which === "mine" ? changes.value : undefined });
+      const file = path.split(/[\\/]/).pop() ?? path;
+      const notes: string[] = [];
+      if (p.unknownNodes.length) notes.push(`ID の分からないノード ${p.unknownNodes.length} 個は入れていません`);
+      if (p.skippedGems) notes.push(`PoB が知らないジェム ${p.skippedGems} 個は入れていません`);
+      return `${file} に書きました。ゲームのビルドプランナーの一覧に出ます (ゲームを開き直す)${notes.length ? "。" + notes.join("、") : ""}`;
+    } catch (e) {
+      error.value = msg(e);
+      return null;
+    }
+  }
+
+  /** 全部戻す (2026-10-03 オーナー「火力チェックのリセット機能も欲しい」): 読み込んだ元をもう 1 回読み込む。比べる元も読み込んだ時に戻る。相手は残す */
+  const canReset = computed(() => !!lastSource.value && changes.value.length > 0);
+  async function resetAll(): Promise<void> {
+    const src = lastSource.value;
+    if (!src || !canReset.value) return;
+    await load({ text: src.text, code: src.code });
   }
   function setBaseToNow(): void {
     base.value = cur.value;
@@ -381,5 +433,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { target, targetFrom, targetInput, loadTarget, clearTarget, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { target, targetFrom, targetInput, targetPlan, loadTarget, clearTarget, exportPlan, canReset, resetAll, lastSource, canReload, reload, loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, loadSeq, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

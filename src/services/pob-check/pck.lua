@@ -165,6 +165,16 @@ local function gemInfo(gem)
   }
 end
 
+--- 組の中身の印 (同じ中身の組 = スキルセットの 2 重など を 1 つにまとめる鍵)。summary と plan で同じ物を使う
+local function groupSig(g)
+  local sig = {}
+  for _, gem in ipairs(g.gemList or {}) do
+    local gi = gemInfo(gem)
+    sig[#sig + 1] = gi.name .. ":" .. gi.level .. ":" .. gi.quality .. ":" .. gi.corrupt .. ":" .. tostring(gi.enabled)
+  end
+  return table.concat(sig, "|") .. "|" .. tostring(g.slot) .. "|" .. tostring(g.enabled ~= false)
+end
+
 --- 組 i のスキル k を内訳 (CALCS) の主スキルにして計算し、出力とスキルを返す。呼ぶ側が元に戻す
 local function evalSkill(i, k)
   local calcs = build.calcsTab
@@ -211,15 +221,14 @@ function PCK.summary()
     -- 同じ中身の組 (スキルセットの 2 重など) は 1 つにまとめる。後の方は duplicateOf に元の番号
     local seenSig = {}
     for i, g in ipairs(build.skillsTab.socketGroupList) do
-      local gr = { i = i, label = g.label or "", enabled = g.enabled ~= false, slot = g.slot, gems = {}, skills = {} }
-      local sig = {}
+      -- source = 装備・ツリーが与えるスキルの組 ("Item:13:Adonia's Ego" / "Tree:12882")。ジェムの差やビルドプランナーでは「ジェム」として扱わない
+      local gr = { i = i, label = g.label or "", enabled = g.enabled ~= false, slot = g.slot, source = g.source, gems = {}, skills = {} }
       for j, gem in ipairs(g.gemList or {}) do
         local gi = gemInfo(gem)
         gi.j = j
         gr.gems[#gr.gems + 1] = gi
-        sig[#sig + 1] = gi.name .. ":" .. gi.level .. ":" .. gi.quality .. ":" .. gi.corrupt .. ":" .. tostring(gi.enabled)
       end
-      local key = table.concat(sig, "|") .. "|" .. tostring(g.slot) .. "|" .. tostring(gr.enabled)
+      local key = groupSig(g)
       if seenSig[key] then gr.duplicateOf = seenSig[key] else seenSig[key] = i end
       -- メタジェム (CoEA など) の組: 2 つ目以降のスキルはメタジェムから出る
       local first = g.displaySkillList and g.displaySkillList[1]
@@ -284,6 +293,95 @@ function PCK.unstash()
   end
   EXILEDESK_KEEP = nil
   return json.encode({ ok = true, restored = k ~= nil })
+end
+
+-- ---------------------------------------------------------------- ゲームのビルドプランナーへの書き出し
+--- 今のビルドをゲームのビルドプランナーの .build (JSON) の形にする (2026-10-03 オーナー「相手のビルドのビルドプランナーもそのまま使えるようにしたい」)。
+--- 形は poe.ninja が書いた実物 (Documents/My Games/Path of Exile 2/BuildPlanner/*.build) に合わせた:
+---   * passives: 取っているノードを文字列の ID (PassiveSkills 表の Id) で。PoB は番号しか持たないので ids ({ [番号] = "Id" }、
+---     src/data/passive-ids.json) を画面から渡す。武器セットだけで取る物 (node.allocMode 1 / 2) は weapon_set を付ける。
+---     クラスの始点は実物に無いので出さない (アセンダンシーの始点 AscendancySorceress1Start_ は実物にあるので出す)。
+---     装備が与えるノード (「Allocates X」のアノイント・ユニーク = mainEnv.grantedPassives) も実物 (poe.ninja がキャラから書いた物) に
+---     入っているので出す (タイの人の実物: Dominion のアノイント / Infused Limits / Evocational Practitioner の 3 つ)
+---   * ascendancy: ツリーの internalId (Sorceress1 の形。無ければ "")
+---   * skills: 使っている組 (装備が与える物 = source のある組は除く) ごとに、最初のアクティブジェムを id (ゲームの gameId、
+---     Metadata/Items/Gem(s)/... の形)、残り (サポートも 2 つ目以降のアクティブも) を support_skills に。実物も CoEA の組で
+---     2 つ目以降のアクティブ (Lightning Warp / Cold Snap) が support_skills 側に入っている。PoB が知らないジェムは出せない (skipped に数)。
+---     同じ中身の組 (スキルセットの 2 重。summary の duplicateOf と同じ印) は 1 つだけ (オーナーのコードは全部の組が 2 重で 30 個になっていた)
+---   * description = "" と inventory_slots = [] は無いとゲームの一覧に出ない (memory: build-planner-files) ので必ず入れる
+function PCK.plan(name, author, ids)
+  ids = ids or {}
+  local ok, res = pcall(function()
+    local spec = build.spec
+    if not build.calcsTab.mainEnv then PCK.recalc() end
+    local granted = build.calcsTab.mainEnv and build.calcsTab.mainEnv.grantedPassives or {}
+    local nodeIds = {}
+    for id, node in pairs(spec.allocNodes) do
+      if node.type ~= "ClassStart" then nodeIds[#nodeIds + 1] = id end
+    end
+    for id in pairs(granted) do
+      if not spec.allocNodes[id] and spec.nodes[id] then nodeIds[#nodeIds + 1] = id end
+    end
+    table.sort(nodeIds)
+    local passives = setmetatable({}, { __jsontype = "array" })
+    local unknown = {}
+    for _, id in ipairs(nodeIds) do
+      local sid = ids[id] or ids[tostring(id)]
+      if sid then
+        local p = { id = sid }
+        local mode = spec.allocNodes[id] and spec.allocNodes[id].allocMode or 0
+        if mode == 1 or mode == 2 then p.weapon_set = mode end
+        passives[#passives + 1] = p
+      else
+        unknown[#unknown + 1] = id
+      end
+    end
+    local asc = ""
+    local cls = spec.tree.classes[spec.curClassId]
+    if cls and spec.curAscendClassId and cls.classes[spec.curAscendClassId] then asc = cls.classes[spec.curAscendClassId].internalId or "" end
+    local skills = setmetatable({}, { __jsontype = "array" })
+    local skipped = 0
+    local seenSig = {}
+    for _, g in ipairs(build.skillsTab.socketGroupList) do
+      local key = groupSig(g)
+      local dup = seenSig[key]
+      seenSig[key] = true
+      if g.enabled ~= false and not g.source and not dup then
+        local main, rest = nil, {}
+        for _, gem in ipairs(g.gemList or {}) do
+          local gd = gem.gemData
+          if gd and gd.gameId then
+            local isSupport = gd.grantedEffect and gd.grantedEffect.support
+            if not main and not isSupport then main = gd.gameId else rest[#rest + 1] = { id = gd.gameId } end
+          else
+            skipped = skipped + 1
+          end
+        end
+        if main then
+          local s = { id = main }
+          if #rest > 0 then s.support_skills = rest end
+          skills[#skills + 1] = s
+        else
+          -- アクティブの無い組 (サポートだけ) はゲームの形にできない
+          skipped = skipped + #rest
+        end
+      end
+    end
+    local plan = {
+      name = name or build.buildName or "ExileDesk",
+      ascendancy = asc,
+      author = author or "ExileDesk",
+      description = "",
+      passives = passives,
+      skills = skills,
+      inventory_slots = setmetatable({}, { __jsontype = "array" }),
+    }
+    local text = json.encode(plan, { indent = true, keyorder = { "name", "ascendancy", "author", "description", "passives", "skills", "inventory_slots", "id", "weapon_set", "support_skills" } })
+    return { json = text, passives = #passives, skills = #skills, unknownNodes = unknown, skippedGems = skipped }
+  end)
+  if not ok then return json.encode({ ok = false, error = tostring(res) }) end
+  res.ok = true
+  return json.encode(res)
 end
 
 -- ---------------------------------------------------------------- 装備

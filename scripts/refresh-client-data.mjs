@@ -33,6 +33,7 @@ const STEPS = [
   ["クライアントの表を書き出す", exportDirs.map((d) => [join("data-cache", d), "npx", ["pathofexile-dat"]])],
   ["辞書 (名前・MOD の文面・エッセンス・ジェム)", [[".", "pnpm", ["build:dicts:client"]]]],
   ["パッシブの日本語名 (キーストーン)", [[".", "node", ["scripts/build-passives-ja.mjs"]]]],
+  ["パッシブの番号 → ゲームの ID (ビルドプランナーの書き出し)", [[".", "node", ["scripts/build-passive-ids-from-client.mjs"]]]],
   ["オーグメントの種類 (ルーン / ソウルコア / アイドル)", [[".", "node", ["scripts/build-augment-kinds.mjs"]]]],
   ["計算機のベース (クライアントで補う行・付与スキル)", [[".", "pnpm", ["build:htc-bases"]]]],
   ["ベース → エンジンの行の対応表", [[".", "node", ["scripts/build-htc-base-rows.mjs"]]]],

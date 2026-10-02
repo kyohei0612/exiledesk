@@ -19,6 +19,7 @@ pub mod seed_data;        // 同梱データ (自動ジェム監視まわり) �
 pub mod market_flow;  // 捌き速度の追跡 (2026-09-16): trade2 のクエリ単位で 周期ごとに出品の消失率を記録
 pub mod gem_break;  // クラフト前提ジェム (2026-09-16): 1 アセンダンシー分のレベル 21 / 品質 23% 使用人数
 pub mod trade_history;  // 取引履歴 (マーチャント履歴) の連動 (2026-09-16): アプリ内ログイン + 履歴 API
+pub mod build_planner;  // ゲームのビルドプランナー (.build) への書き出し (2026-10-03 火力チェック)
 mod startup;  // 起動時の setup (ワーカー / 巡回 / 設定 / トレイ / 自動再取得)。2026-09-26 に run() から分割
 
 use tauri::{Manager, WindowEvent};
@@ -212,6 +213,7 @@ pub fn run() {
             pob::pob_eval,
             pob::pob_export_code,
             pob::pob_set_main_socket_group,
+            build_planner::build_planner_write,
             trade2::trade2_search,
             trade2::trade2_search_count,
             trade2::trade2_fetch,

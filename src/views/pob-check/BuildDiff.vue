@@ -3,6 +3,8 @@
   レアは足りない MOD だけ『これからこれ』。火力比較で」)
 
   上: 相手のキャラと、上のバーのスキルの DPS (自分 → 相手の同じ名前のスキル、無ければ相手の一番高いスキル)。
+      「相手のビルドをゲームのビルドプランナーに書き出す」(2026-10-03) もここ。
+  中: ジェム (2026-10-03 オーナー「ジェムも」): 相手の組ごとに、自分に無い組は組ごと、ある組は足りないジェム / 低いレベル・品質だけ。
   下: 欄ごとに ユニーク = 「名前 → 名前」、レア = 足りない / 弱い MOD の行だけ「自分の行 → 相手の行」。差の無い欄は出さない。
   決まりは services/pob-check/build-diff.ts
 -->
@@ -11,15 +13,34 @@ import { computed, shallowRef, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
 import { gemJa, type ItemView, type Summary } from "../../services/pob-check/api";
-import { diffBuilds } from "../../services/pob-check/build-diff";
+import { diffBuilds, diffGems, type GemLineDiff } from "../../services/pob-check/build-diff";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
 import type { SkillRow } from "./usePobCheck";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
 
-const props = defineProps<{ mine: Summary; target: Summary; targetFrom: string; focus: SkillRow | null }>();
-const emit = defineEmits<{ (e: "clear"): void }>();
+const props = defineProps<{
+  mine: Summary;
+  target: Summary;
+  targetFrom: string;
+  focus: SkillRow | null;
+  /** 相手のビルドプランナーの中身があるか (読み込んだ時に作れなかったら押せない) */
+  canPlan: boolean;
+  /** 書き出した後に出す文 */
+  planMsg: string;
+  busy: boolean;
+}>();
+const emit = defineEmits<{ (e: "clear"): void; (e: "plan"): void }>();
+
+const gems = computed(() => diffGems(props.mine, props.target));
+/** ジェムの差の行の文 (「無し → 名前」「Lv 20 → Lv 21」「品質 0% → 20%」) */
+const gemLine = (l: GemLineDiff): { gem: string; from: string; to: string } => {
+  const gem = gemJa(l.gem);
+  if (l.kind === "missing") return { gem, from: "無し", to: gem };
+  if (l.kind === "level") return { gem, from: `Lv ${l.from}`, to: `Lv ${l.to}` };
+  return { gem, from: `品質 ${l.from}%`, to: `品質 ${l.to}%` };
+};
 
 const JA_BASE = itemsJaClient as Record<string, string>;
 const JA_UNIQUE = uniqueNamesJa as Record<string, string>;
@@ -77,6 +98,15 @@ const STATS = [
           <span class="ml-2 text-[11px] font-normal text-[var(--exile-color-text-tertiary)]">{{ targetFrom }} から</span>
         </p>
         <button type="button" class="rounded bg-white/[0.07] px-2 py-0.5 text-[11px] font-semibold hover:bg-white/15" @click="emit('clear')">相手を外す</button>
+        <!-- 相手のツリーとジェムをゲームのビルドプランナー (.build) に。中身は相手を読み込んだ時に作ってある -->
+        <button
+          type="button"
+          class="rounded bg-sky-500/20 px-2 py-0.5 text-[11px] font-semibold text-sky-100 hover:bg-sky-500/30 disabled:opacity-40"
+          :disabled="!canPlan || busy"
+          :title="canPlan ? '相手のパッシブとジェムを Documents/My Games/Path of Exile 2/BuildPlanner に .build で書く。ゲームのビルドプランナーの一覧に出る' : '相手を読み込んだ時にビルドプランナーの中身を作れませんでした (相手を読み直す)'"
+          @click="emit('plan')"
+        >相手のビルドをゲームのビルドプランナーに書き出す</button>
+        <span v-if="planMsg" class="text-[11px] text-emerald-200">{{ planMsg }}</span>
       </div>
       <div v-if="focus && targetSkill" class="mt-3 flex flex-wrap items-end gap-x-6 gap-y-2">
         <div>
@@ -100,7 +130,43 @@ const STATS = [
       </div>
     </div>
 
+    <!-- ジェムの差 (相手の組ごと) -->
+    <div>
+      <p class="mb-1.5 text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">
+        ジェム
+        <span class="ml-1 font-normal">
+          <template v-if="!gems.groups.length">— 差はありません (相手の組は全部あって、ジェムも足りている)</template>
+          <template v-else>— 相手の組 {{ gems.groups.length }} 個に差</template>
+          <template v-if="gems.onlyMine"> ・ 自分だけの組 {{ gems.onlyMine }} 個</template>
+        </span>
+      </p>
+      <div v-if="gems.groups.length" class="grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
+        <template v-for="(g, gi) in gems.groups" :key="gi">
+          <div v-if="g.kind === 'missing'" class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ gemJa(g.active.name) }} — 自分に無い組</p>
+            <p class="mt-1.5 text-[13px]">
+              <span class="text-rose-300/80">無し</span>
+              <span class="mx-2 text-[var(--exile-color-text-tertiary)]">→</span>
+              <span class="font-bold text-amber-200">{{ gemJa(g.active.name) }}</span>
+              <span v-if="g.others.length" class="text-emerald-200"> + {{ g.others.map((x) => gemJa(x.name)).join("、") }}</span>
+            </p>
+          </div>
+          <div v-else class="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ gemJa(g.active.name) }} の組 — 足りない / 低い {{ g.lines.length }} 件</p>
+            <ul class="mt-1.5 space-y-1 text-[12px] leading-snug">
+              <li v-for="(l, i) in g.lines" :key="i" class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2">
+                <span :class="l.kind === 'missing' ? 'text-rose-300/80' : 'text-[var(--exile-color-text-secondary)]'">{{ l.kind === "missing" ? "無し" : `${gemLine(l).gem} ${gemLine(l).from}` }}</span>
+                <span class="text-[var(--exile-color-text-tertiary)]">→</span>
+                <span class="text-emerald-200">{{ l.kind === "missing" ? gemLine(l).to : `${gemLine(l).gem} ${gemLine(l).to}` }}</span>
+              </li>
+            </ul>
+          </div>
+        </template>
+      </div>
+    </div>
+
     <!-- 欄ごとの差 -->
+    <p class="mb-1.5 text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">装備</p>
     <p v-if="!diff.slots.length" class="text-sm text-[var(--exile-color-text-secondary)]">装備に差はありません (同じユニーク、または相手より弱い MOD が無い)。</p>
     <div v-else class="grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
       <template v-for="d in diff.slots" :key="d.slot">
