@@ -57,11 +57,28 @@ export interface GroupView {
   gems: GemView[];
   skills: SkillView[];
 }
+export interface ItemView {
+  title: string;
+  base: string;
+  rarity: string;
+  implicits: string[];
+  runes: string[];
+  explicits: string[];
+  corrupted: boolean;
+}
+export interface SlotView {
+  slot: string;
+  jewel: boolean;
+  /** 読み込んだ時から変えた */
+  changed: boolean;
+  item?: ItemView;
+}
 export interface Summary {
   char: { class: string; ascendancy: string; level: number };
   stats: Record<string, number | boolean | null>;
   config: { powerCharges: number };
   groups: GroupView[];
+  items: SlotView[];
 }
 
 const JA = itemsJaClient as Record<string, string>;
@@ -102,3 +119,16 @@ export const setGem = (i: number, j: number, field: "level" | "quality" | "corru
 export const setGroup = (i: number, enabled: boolean): Promise<unknown> => evalLua(`return PCK.setGroup(${i}, ${enabled})`);
 
 export const setPowerCharges = (n: number): Promise<unknown> => evalLua(`return PCK.setPowerCharges(${Math.max(0, Math.floor(n))})`);
+
+/** 欄に物を入れる (text = PoB の文面)。unread = PoB が計算しない行 */
+export const equip = (slot: string, text: string): Promise<{ ok: boolean; error?: string; unread?: string[] }> =>
+  evalLua(`return PCK.equip(${luaStr(slot)}, ${luaStr(text)})`);
+export const unequip = (slot: string): Promise<unknown> => evalLua(`return PCK.unequip(${luaStr(slot)})`);
+export const restore = (slot: string): Promise<unknown> => evalLua(`return PCK.restore(${luaStr(slot)})`);
+
+/** Lua の文字列 (長い括弧。中に ]==] が無い限り何でも入る) */
+function luaStr(s: string): string {
+  let eq = "=";
+  while (s.includes(`]${eq}]`)) eq += "=";
+  return `[${eq}[${s}]${eq}]`;
+}

@@ -6,8 +6,9 @@
  *   - cur: 今の数字。変えるたびに PoB で計算し直す (変更は順番に 1 本ずつ流す)
  */
 import { computed, ref, shallowRef } from "vue";
-import { loadBuild, setGem, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
+import { equip, loadBuild, restore, setGem, unequip, setGroup, setPowerCharges, summary, type GroupView, type SkillView, type Summary } from "../../services/pob-check/api";
 import { recordHistory } from "../../services/history";
+import { toPobItem } from "../../services/pob-check/item-text";
 
 const input = ref("");
 const loading = ref(false);
@@ -106,6 +107,26 @@ export function usePobCheck() {
     await refresh();
   }
 
+  /** 貼られた文面で欄の物を差し替える。返り値は画面に出す注意 (英語にできなかった行 / PoB が計算しない行) */
+  async function changeItem(slot: string, pasted: string): Promise<{ unread: string[]; notCalculated: string[] }> {
+    const conv = await toPobItem(pasted);
+    const r = await run(() => equip(slot, conv.text));
+    if (!r.ok) throw new Error(r.error ?? "入れられませんでした");
+    recordHistory("pob-check", "equip", { slot, english: conv.english, base: conv.base, rarity: conv.rarity, unread: conv.unread, notCalculated: r.unread ?? [], text: conv.text });
+    await refresh();
+    return { unread: conv.unread, notCalculated: r.unread ?? [] };
+  }
+  async function clearItem(slot: string): Promise<void> {
+    await run(() => unequip(slot));
+    recordHistory("pob-check", "unequip", { slot });
+    await refresh();
+  }
+  async function restoreItem(slot: string): Promise<void> {
+    await run(() => restore(slot));
+    recordHistory("pob-check", "restore", { slot });
+    await refresh();
+  }
+
   const skills = computed(() => skillsOf(cur.value));
   const baseSkills = computed(() => new Map(skillsOf(base.value).map((x) => [x.key, x.s])));
   const total = computed(() => skills.value.reduce((a, x) => a + x.s.game.dps, 0));
@@ -114,5 +135,5 @@ export function usePobCheck() {
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges };
+  return { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem };
 }

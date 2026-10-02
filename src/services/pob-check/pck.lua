@@ -6,7 +6,7 @@
 --   それで割り戻して「敵がいない時の 1 発」にする。クリティカル率・詠唱の速さはそのまま。DPS = 平均の 1 発 × 速さ × 命中率。
 --   メタジェム (CoEA など) から出るスキルは PoB がエネルギーを計算しないので、自分で撃った扱いの数字になる (PoB の限界、画面に注記)。
 local json = require("dkjson")
-PCK = PCK or {}
+PCK = {}
 local TYPES = { "Physical", "Lightning", "Cold", "Fire", "Chaos" }
 
 --- o = 内訳モード (CALCS) の出力。<種類>EffMult はこのモードでしか出ない (CalcOffence.lua)
@@ -126,7 +126,85 @@ function PCK.summary()
   calcs.input.skill_number = origCalcs
   calcs.input.skill_activeNumber = origCalcsActive
   calcs:BuildOutput()
+  res.items = PCK.items()
   return json.encode(res)
+end
+
+--- 装備の欄 (武器・防具・装飾品・フラスコ・取っているジュエルの穴) と、入っている物
+local function modLines(list)
+  local out = {}
+  for _, ml in ipairs(list or {}) do
+    if ml.line and ml.line ~= "" then out[#out + 1] = ml.line end
+  end
+  return out
+end
+PCK.orig = PCK.orig or {}
+function PCK.items()
+  local it = build.itemsTab
+  local out = {}
+  for _, slot in ipairs(it.orderedSlots) do
+    local name = slot.slotName
+    local isJewel = slot.nodeId ~= nil
+    local show = (not isJewel) or (build.spec.allocNodes[slot.nodeId] ~= nil)
+    -- 武器の持ち替え (Weapon 1 Swap など) は今は出さない
+    if show and not name:find("Swap") then
+      local item = it.items[slot.selItemId]
+      local e = { slot = name, jewel = isJewel, changed = PCK.orig[name] ~= nil }
+      if item then
+        e.item = {
+          title = item.title or item.name, base = item.baseName, rarity = item.rarity,
+          implicits = modLines(item.implicitModLines), runes = modLines(item.runeModLines),
+          explicits = modLines(item.explicitModLines), corrupted = item.corrupted and true or false,
+        }
+      end
+      -- 装備の中のジュエルの穴 (Weapon 1 Jewel Socket 1 など) は入っている時だけ
+      -- 指輪 3 は一部のアセンダンシーだけ。空なら出さない
+      if item or not (isJewel or name:find("Jewel Socket") or name == "Ring 3") then out[#out + 1] = e end
+    end
+  end
+  return out
+end
+
+--- 欄に物を入れる (raw = PoB の文面)。最初に変えた時の元の物を覚えておき、PCK.restore で戻す
+function PCK.equip(slotName, raw)
+  local it = build.itemsTab
+  local slot = it.slots[slotName]
+  if not slot then return json.encode({ ok = false, error = "欄が無い: " .. tostring(slotName) }) end
+  local item = new("Item", raw)
+  if not item or not item.base then return json.encode({ ok = false, error = "PoB が読めない文面です" }) end
+  if PCK.orig[slotName] == nil then PCK.orig[slotName] = slot.selItemId or 0 end
+  it:AddItem(item, true)
+  slot:SetSelItemId(item.id)
+  build.buildFlag = true
+  -- PoB が読めなかった行 (計算に入らない)
+  local unread = {}
+  for _, list in ipairs({ item.implicitModLines, item.explicitModLines, item.runeModLines }) do
+    for _, ml in ipairs(list or {}) do
+      if ml.extra then unread[#unread + 1] = ml.line end
+    end
+  end
+  return json.encode({ ok = true, unread = unread })
+end
+
+--- 欄を空にする
+function PCK.unequip(slotName)
+  local slot = build.itemsTab.slots[slotName]
+  if not slot then return json.encode({ ok = false }) end
+  if PCK.orig[slotName] == nil then PCK.orig[slotName] = slot.selItemId or 0 end
+  slot:SetSelItemId(0)
+  build.buildFlag = true
+  return json.encode({ ok = true })
+end
+
+--- 読み込んだ時の物に戻す
+function PCK.restore(slotName)
+  local slot = build.itemsTab.slots[slotName]
+  local id = PCK.orig[slotName]
+  if not slot or id == nil then return json.encode({ ok = false }) end
+  slot:SetSelItemId(id)
+  PCK.orig[slotName] = nil
+  build.buildFlag = true
+  return json.encode({ ok = true })
 end
 
 --- ジェムを変える (field = level / quality / corrupt / enabled)

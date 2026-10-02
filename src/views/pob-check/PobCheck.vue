@@ -10,10 +10,11 @@ import { computed } from "vue";
 import DiffBadge from "./DiffBadge.vue";
 import SkillCard from "./SkillCard.vue";
 import GemGroupCard from "./GemGroupCard.vue";
+import ItemSlotCard from "./ItemSlotCard.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges } =
+const { input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem } =
   usePobCheck();
 
 const num = (k: string): number => {
@@ -23,6 +24,15 @@ const num = (k: string): number => {
 const charges = computed(() => cur.value?.config.powerCharges ?? 0);
 const chargesMax = computed(() => Math.max(num("PowerChargesMax"), 3));
 const sameAsBase = computed(() => cur.value === base.value);
+
+/** 差し替えの結果をカードに返す */
+async function onPaste(slot: string, text: string, done: (r: { unread: string[]; notCalculated: string[] } | null, err?: string) => void): Promise<void> {
+  try {
+    done(await changeItem(slot, text));
+  } catch (e) {
+    done(null, e instanceof Error ? e.message : String(e));
+  }
+}
 
 const statChips = computed(() => {
   if (!cur.value) return [];
@@ -141,6 +151,22 @@ const resists = computed(() =>
           :before="baseSkills.get(x.key)"
           :count="x.count"
           :share="total > 0 ? (x.s.game.dps / total) * 100 : 0"
+        />
+      </div>
+
+      <!-- 装備 -->
+      <h2 class="mb-2 text-sm font-bold text-[var(--exile-color-text-secondary)]">
+        装備 <span class="font-normal text-[var(--exile-color-text-tertiary)]">ゲームで Ctrl+C したアイテムを貼ると入れ替えて計算し直します (日本語のままで OK)</span>
+      </h2>
+      <div class="mb-6 grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3 @[100rem]:grid-cols-4">
+        <ItemSlotCard
+          v-for="s in cur.items"
+          :key="s.slot"
+          :entry="s"
+          :disabled="busy"
+          @paste="(text, done) => onPaste(s.slot, text, done)"
+          @clear="clearItem(s.slot)"
+          @restore="restoreItem(s.slot)"
         />
       </div>
 
