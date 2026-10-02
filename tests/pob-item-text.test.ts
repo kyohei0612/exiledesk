@@ -367,6 +367,99 @@ describe("火力チェック: 日本語のアイテム → PoB の文面", () =>
     expect(magic.lines.map((l) => l.kind)).toEqual(["implicit", "explicit"]);
   });
 
+  // (13) 取引所のコピーの実物 3 つ (2026-10-02 オーナー): 兜 (ルーンワードの性能行・合計の擬似 MOD・値段のメモ)、手袋 (末尾の性能の写し)、ワンド (未発現)
+  it("取引所のコピーの実物: 兜 — 合計の擬似 MOD と値段のメモは捨て、絆 2 行は rune", async () => {
+    const it = await toPobItem(`復讐の頭輪
+ルーンフォージの先祖のティアラ
+W
+P
+兜
+品質: +20%
+エナジーシールド: 244
+ルーンワード: 288
+アイテムレベル: 80
+必要：レベル 80, 115 知性
+アーマー、回避力およびエナジーシールドが36%増加する
+絆 最大ライフ +40
+絆 最大マナ +40
+最大エナジーシールド +70
+エナジーシールドが38%増加する
+最大ライフ +38
+最大マナ +105
+クリティカルヒット率が32%増加する
+火耐性 +31%
+スキルのスピリットリザーブ効率が7%増加する
+最大マナ合計 +105
+コラプト状態
+~b/o 100 divine`);
+    expect(it.rarity).toBe("Rare");
+    expect(it.base).toBe("Runeforged Ancestral Tiara");
+    expect(it.unread).toEqual([]);
+    expect(it.notes).toEqual([]);
+    expect(it.lines.filter((l) => l.kind === "rune").map((l) => l.en)).toEqual(["Bonded: +40 to maximum Life", "Bonded: +40 to maximum Mana"]);
+    expect(it.lines.filter((l) => l.kind === "explicit")).toHaveLength(8);
+    const lines = it.text.split(NL);
+    expect(lines).toContain("Requires: Level 80, 115 Int");
+    expect(lines).toContain("Corrupted");
+    expect(lines.filter((l) => l.includes("maximum Mana"))).toEqual(["{rune}Bonded: +40 to maximum Mana", "+105 to maximum Mana"]);
+  });
+  it("取引所のコピーの実物: 手袋 — 末尾の「アーマー174」は捨てる、絆 1 行は rune", async () => {
+    const it = await toPobItem(`精神の爪
+ブラックスティールガントレット
+W
+P
+手袋
+品質: +20%
+アーマー: 174
+回避力: 159
+アイテムレベル: 82
+必要：レベル 80, 55 筋力, 55 器用さ
+ダメージは12%の雷耐性を貫通する
+8から19の物理ダメージをアタックに追加する
+絆 亀裂スキルの上限 +3
+アーマーおよび回避力が41%増加する
+3から59の雷ダメージをアタックに追加する
+最大ライフ +48
+クリティカルダメージボーナスが30%増加する
+倒した敵1体ごとに33のマナを獲得する
+最大ライフ +101
+ソケットされているオーグメントの効果が60%増加する
+コラプト状態
+~b/o 1 divine
+アーマー174
+回避力159`);
+    expect(it.base).toBe("Blacksteel Gauntlets");
+    expect(it.unread).toEqual([]);
+    expect(it.lines.filter((l) => l.kind === "rune").map((l) => l.en)).toEqual(["Bonded: Fissure Skills have +3 to Limit"]);
+    expect(it.lines.filter((l) => l.kind === "explicit")).toHaveLength(9);
+    expect(it.text.split(NL)).toContain("Requires: Level 80, 55 Str, 55 Dex");
+  });
+  it("取引所のコピーの実物: ワンド — 未発現は notes に、スキルを付与は暗黙", async () => {
+    const it = await toPobItem(`抽象化した節木
+決闘のワンド
+W
+P
+ワンド
+アイテムレベル: 82
+必要：レベル 65, 79 知性
+スキルを付与: レベル19 スペルスリンガー
+倒した敵1体ごとに45のマナを獲得する
+ダメージの13%を追加火ダメージとして獲得する
+スペルダメージが28%増加する
+最大マナ +25
+要求能力値が30%減少する
+キャストスピードが31%増加する
+元素ダメージの7%を追加冷気ダメージとして獲得する
+未発現プレフィックス
+~b/o 10 mirror`);
+    expect(it.base).toBe("Dueling Wand");
+    expect(it.unread).toEqual([]);
+    expect(it.notes).toEqual(["未発現プレフィックス があり、開示するまで計算に入らない"]);
+    expect(it.lines[0]).toMatchObject({ kind: "implicit", en: "Grants Skill: Level 19 Spellslinger" });
+    expect(it.lines.filter((l) => l.kind === "explicit")).toHaveLength(7);
+    expect(it.text.split(NL)).toContain("Requires: Level 65, 79 Int");
+  });
+
   // (10) fractured / desecrated / crafted の注記 → PoB の {fractured} 等 (Item.lua の lineFlags)。明示側なので Implicits: に数えない
   it("fractured などの注記は PoB の印にする", async () => {
     const text = [...HELM_HEAD, "--------", "回避力が98%増加する (implicit)", "--------", "最大マナ +136 (fractured)", "冷気耐性 +58% (desecrated)", "最大ライフ +30 (クラフト)"].join(NL);

@@ -71,6 +71,8 @@ export interface ConvertedItem {
   lines: ItemLine[];
   /** 英語にできなかった MOD の塊の行 (計算に入らない) */
   unread: string[];
+  /** 計算に入れない事の注意 (未発現の MOD など。読めなかったのではなく、入れようが無い物) */
+  notes: string[];
 }
 
 const NL = String.fromCharCode(10);
@@ -368,6 +370,14 @@ const DESCRIPTION_LINE = /^(右クリック|条件を満たした時に自動的
  * 区切り線の無い文面では塊で捨てられないので行で見分ける。PoB がベースと MOD から計算し直すので読まない
  */
 const PERFORMANCE_LINE = /^[^\d:：]+[:：]\s*[+-]?\d[\d.,]*(?:\s*[-–]\s*\d[\d.,]*)?%?$/;
+/** 取引所のコピーの値段・メモの行「~b/o 100 divine」「~price 1 mirror」 */
+const TRADE_NOTE_LINE = /^~/;
+/** 取引所のコピーの合計の擬似 MOD「最大マナ合計 +105」(本物の MOD と二重になる) */
+const TRADE_TOTAL_LINE = /合計\s*[+-]?\d/;
+/** 取引所のコピーの末尾に付く性能の写し「アーマー174」「回避力159」(ラベルに数字が直接つながり、コロンが無い) */
+const TRADE_ECHO_LINE = /^[^\d\s:：+\-%]+\d[\d.,]*%?$/;
+/** 冒涜で付いた開示前の MOD「未発現プレフィックス」「未発現サフィックス」(ClientStrings の表記は実物で確認) */
+const UNREVEALED_LINE = /^未発現/;
 /** フレーバーテキストの行 (poe2-flavour-ja.json の日本語を 1 行ずつ) */
 const flavourLines: Set<string> = (() => {
   const s = new Set<string>();
@@ -500,6 +510,7 @@ export async function toPobItem(pasted: string): Promise<ConvertedItem> {
       rarity: (lines[r] ?? "").replace("Rarity:", "").trim(),
       english: true,
       unidentified: lines.includes("Unidentified"),
+      notes: [],
       lines: [],
       unread: [],
     };
@@ -522,6 +533,7 @@ interface Parsed {
   meta: Meta;
   lines: ItemLine[];
   unread: string[];
+  notes: string[];
 }
 
 // ---- A. ゲームのコピー (見出し + 区切り線) ----
@@ -583,7 +595,7 @@ function readBlocks(text: string, pats: LinePattern[]): Parsed {
     }
   }
   const nameJa = nameLines[0] ?? "";
-  return { rarity, nameJa, uniqueName: rarity === "Unique" ? uniqueEnByJa.get(nameJa) ?? nameJa : null, candidates, meta, lines, unread };
+  return { rarity, nameJa, uniqueName: rarity === "Unique" ? uniqueEnByJa.get(nameJa) ?? nameJa : null, candidates, meta, lines, unread, notes: [] };
 }
 
 // ---- B. 取引所のコピー (見出しも区切り線も無い) ----
@@ -622,6 +634,7 @@ function readFlat(all: string[], pats: LinePattern[]): Parsed {
   const meta = newMeta(null);
   const rows: Row[] = [];
   const unread: string[] = [];
+  const notes: string[] = [];
   /** 性能・要求・MOD の行が始まったか (それより前の、辞書に当たらず数字も無い行は スキン名などの説明。捨てる) */
   let bodyStarted = false;
   for (const raw of all.slice(used)) {
@@ -630,6 +643,11 @@ function readFlat(all: string[], pats: LinePattern[]): Parsed {
     if ([...raw].length <= 2) continue;
     if (/^\{.*\}$/.test(raw) || DESCRIPTION_LINE.test(raw) || /^[(（]/.test(raw)) continue;
     if (PERFORMANCE_LINE.test(raw)) { bodyStarted = true; continue; }
+    // 取引所のコピーだけに付く行 (2026-10-02 オーナーの実物 4 つで確認): 値段のメモ「~b/o 100 divine」、
+    // 合計の擬似 MOD「最大マナ合計 +105」、末尾の性能の写し「アーマー174」(コロン無し)
+    if (TRADE_NOTE_LINE.test(raw) || TRADE_TOTAL_LINE.test(raw) || (bodyStarted && TRADE_ECHO_LINE.test(raw))) continue;
+    // 未発現 (冒涜で付いた開示前の MOD)。中身が無いので計算に入れようが無い。読めなかった扱いではなく注意として返す
+    if (UNREVEALED_LINE.test(raw)) { notes.push(`${raw} があり、開示するまで計算に入らない`); continue; }
     const row = readModRow(raw, pats);
     if (row.en) {
       bodyStarted = true;
@@ -655,7 +673,7 @@ function readFlat(all: string[], pats: LinePattern[]): Parsed {
     }
     lines.push({ ja: r.ja, en: r.en!, kind });
   }
-  return { rarity, nameJa: l0, uniqueName: uniqueEn, candidates, meta, lines, unread };
+  return { rarity, nameJa: l0, uniqueName: uniqueEn, candidates, meta, lines, unread, notes };
 }
 
 // ---- 出力 ----
@@ -682,5 +700,5 @@ function buildText(p: Parsed): ConvertedItem {
   if (meta.corrupted) out.push("Corrupted");
   if (meta.mirrored) out.push("Mirrored");
   if (meta.sanctified) out.push("Sanctified");
-  return { text: out.join(NL), name: p.nameJa || base, base, ambiguous, rarity, english: false, unidentified: meta.unidentified, lines, unread };
+  return { text: out.join(NL), name: p.nameJa || base, base, ambiguous, rarity, english: false, unidentified: meta.unidentified, lines, unread, notes: p.notes };
 }

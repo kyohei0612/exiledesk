@@ -234,7 +234,7 @@ export function usePobCheck() {
     const conv = await toPobItem(pasted);
     const r = await act({
       fn: () => equip(slot, conv.text),
-      history: ["equip", (x) => ({ slot, english: conv.english, base: conv.base, rarity: conv.rarity, ambiguous: conv.ambiguous, unidentified: conv.unidentified, unread: conv.unread, notCalculated: x.unread, text: conv.text })],
+      history: ["equip", (x) => ({ slot, english: conv.english, base: conv.base, rarity: conv.rarity, ambiguous: conv.ambiguous, unidentified: conv.unidentified, notes: conv.notes, unread: conv.unread, notCalculated: x.unread, text: conv.text })],
       note: `${slotJa(slot)} 差し替え`,
       rethrow: true,
     });
@@ -242,6 +242,7 @@ export function usePobCheck() {
     const warnings: string[] = [];
     if (conv.ambiguous.length) warnings.push(`同じ日本語のベースが ${conv.ambiguous.length} 通り (${conv.ambiguous.join(" / ")})。${conv.base} で計算しています`);
     if (conv.unidentified) warnings.push("未鑑定なので暗黙だけで計算しています");
+    warnings.push(...conv.notes);
     return { unread: conv.unread, notCalculated: r.unread, warnings };
   }
   const clearItem = (slot: string): Promise<unknown> => act({ fn: () => unequip(slot), history: ["unequip", { slot }], note: `${slotJa(slot)} 外す` });
