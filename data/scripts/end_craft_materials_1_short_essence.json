@@ -9,8 +9,7 @@
     "essence": "data/results/end_craft_materials_1__essence.json",
     "annul": "data/results/end_craft_materials_1__annul.json",
     "annul_plain": "data/results/end_craft_materials_1__annul_plain.json",
-    "annul_essence": "data/results/end_craft_materials_1__annul_essence.json",
-    "annul_bone": "data/results/end_craft_materials_1__annul_bone.json"
+    "annul_essence": "data/results/end_craft_materials_1__annul_essence.json"
   },
   "sections": [
     {
