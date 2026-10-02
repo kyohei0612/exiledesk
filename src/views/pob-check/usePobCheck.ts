@@ -31,6 +31,8 @@ const powerProgress = ref<string>("");
 const changes = ref<string[]>([]);
 /** 何から読み込んだか (画面の表示用) */
 const loadedFrom = ref("");
+/** 上のバーで見るスキルの鍵 (null = DPS が一番高いスキル) */
+const focusKey = ref<string | null>(null);
 const note = (s: string): void => {
   changes.value = [...changes.value, s];
 };
@@ -111,6 +113,7 @@ export function usePobCheck() {
       base.value = s;
       baseAt.value = "読み込んだ時";
       changes.value = [];
+      focusKey.value = null;
       recordHistory("pob-check", "load", { input: saved ? `saved:${saved.name}` : input.value.slice(0, 200), char: s.char, stats: s.stats });
       loadedFrom.value = saved ? `PoB に保存したビルド「${saved.name}」` : /poe\.ninja/.test(input.value) ? "poe.ninja" : "PoB コード";
     } catch (e) {
@@ -247,11 +250,15 @@ export function usePobCheck() {
 
   const skills = computed(() => skillsOf(cur.value));
   const baseSkills = computed(() => new Map(skillsOf(base.value).map((x) => [x.key, x.s])));
-  const total = computed(() => skills.value.reduce((a, x) => a + x.s.game.dps, 0));
-  const baseTotal = computed(() => skillsOf(base.value).reduce((a, x) => a + x.s.game.dps, 0));
+  /**
+   * 上のバーで見るスキル (2026-10-02 オーナー「合計DPSいらんから意味ないし」: 全スキルの合計は出さない)。
+   * 選んでいなければ DPS が一番高いスキル。比べる元は同じ鍵のスキル
+   */
+  const focus = computed(() => skills.value.find((x) => x.key === focusKey.value) ?? skills.value[0] ?? null);
+  const focusBase = computed(() => (focus.value ? baseSkills.value.get(focus.value.key) ?? null : null));
   /** 画面に出す組 (2 重を除く) と、まとめた数 */
   const groups = computed(() => (cur.value?.groups ?? []).filter((g) => !g.duplicateOf));
   const merged = computed(() => (cur.value?.groups ?? []).filter((g) => g.duplicateOf).length);
 
-  return { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
+  return { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet };
 }

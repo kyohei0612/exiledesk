@@ -18,6 +18,8 @@ const props = defineProps<{
   power?: { label: string; nodes: Map<number, NodePower>; stale: boolean } | null;
   powerProgress?: string;
   skillOptions: Array<{ key: string; name: string }>;
+  /** 初めに選んでおくスキル (上のバーのスキル) */
+  defaultTarget?: string;
   busy: boolean;
 }>();
 const emit = defineEmits<{
@@ -45,8 +47,9 @@ const attrDefault = computed(() => {
 const attr = computed(() => attrPick.value ?? attrDefault.value);
 const clickErr = ref("");
 const toggling = ref(false);
-const powerTarget = ref("all");
-const powerLabel = computed(() => (props.power ? (props.power.label === "全スキルの合計" ? "合計" : gemJa(props.power.label)) : ""));
+const powerTarget = ref(props.defaultTarget || props.skillOptions[0]?.key || "");
+watch(() => props.defaultTarget, (k) => { if (k) powerTarget.value = k; });
+const powerLabel = computed(() => (props.power ? gemJa(props.power.label) : ""));
 const progressLabel = computed(() => {
   const m = /^(.*) \((.*)\)$/.exec(props.powerProgress ?? "");
   return m ? `${gemJa(m[1]!)} ${m[2]}` : "";
@@ -408,7 +411,6 @@ const hoverInfo = computed(() => {
     <div class="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/[0.06] px-3 py-2 text-[12px]">
       <span class="font-bold text-orange-200">火力への寄与</span>
       <select v-model="powerTarget" class="rounded-md border border-white/10 bg-black/40 px-2 py-0.5">
-        <option value="all">全スキルの合計</option>
         <option v-for="o in skillOptions" :key="o.key" :value="o.key">{{ gemJa(o.name) }}</option>
       </select>
       <button
@@ -418,7 +420,7 @@ const hoverInfo = computed(() => {
         @click="emit('power', powerTarget)"
       >{{ powerProgress ? `計算中… ${progressLabel}` : "取っているノードを 1 個ずつ外して計算" }}</button>
       <template v-if="power">
-        <span class="text-[var(--exile-color-text-secondary)]">{{ power.label === "全スキルの合計" ? power.label : powerLabel }} で計算済み</span>
+        <span class="text-[var(--exile-color-text-secondary)]">{{ powerLabel }} で計算済み</span>
         <span v-if="power.stale" class="rounded bg-amber-500/20 px-1.5 text-amber-200">その後ビルドを変えたので古い</span>
         <span class="ml-auto flex items-center gap-1 text-[10px] text-[var(--exile-color-text-tertiary)]">
           効いていない

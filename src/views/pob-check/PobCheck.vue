@@ -7,7 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
+import { gemJa, openPob, savedBuilds, type SavedBuild } from "../../services/pob-check/api";
 import DiffBadge from "./DiffBadge.vue";
 import SkillTable from "./SkillTable.vue";
 import GemGroupCard from "./GemGroupCard.vue";
@@ -16,7 +16,7 @@ import TreeView from "./TreeView.vue";
 import { fmtNum } from "./fmt";
 import { usePobCheck } from "./usePobCheck";
 
-const { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, total, baseTotal, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
+const { loadedFrom, shareCode, changes, clickNode, resetTreeToLoaded, power, powerProgress, computePower, treeNodes, input, loading, busy, error, cur, base, baseAt, skills, baseSkills, focus, focusBase, focusKey, groups, merged, load, setBaseToNow, changeGem, toggleGroup, changeCharges, changeItem, clearItem, restoreItem, changeWeaponSet } =
   usePobCheck();
 
 const LOAD_MODES = [
@@ -212,18 +212,25 @@ const resists = computed(() =>
       <!-- 合計・変えた所・操作 (スクロールしても上に残す。変えたらすぐ差が見えるように) -->
       <div class="sticky -top-4 z-20 -mx-4 mb-4 border-b border-amber-400/20 bg-[#0b0907]/90 px-4 pb-3 pt-4 backdrop-blur">
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <div>
-            <p class="text-[10px] text-amber-100/60">スキルの DPS の合計 (ゲーム内の表記)</p>
+          <div v-if="focus">
+            <select
+              :value="focus.key"
+              class="max-w-[16rem] rounded border border-transparent bg-transparent text-[11px] text-amber-100/80 outline-none hover:border-white/15"
+              title="上に出すスキルを選ぶ (初めは DPS が一番高いスキル)"
+              @change="focusKey = ($event.target as HTMLSelectElement).value"
+            >
+              <option v-for="x in skills" :key="x.key" :value="x.key" class="bg-[#1c1812]">{{ gemJa(x.s.name) }}{{ x.s.game.minionName ? ` → ${x.s.game.minionName}` : "" }} の DPS</option>
+            </select>
             <div class="flex items-baseline gap-2">
-              <span class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(total) }}</span>
-              <DiffBadge :now="total" :before="baseTotal" size="lg" />
+              <span class="text-3xl font-black leading-none tabular-nums text-amber-200">{{ fmtNum(focus.s.game.dps) }}</span>
+              <DiffBadge :now="focus.s.game.dps" :before="focusBase?.game.dps" size="lg" />
               <span v-if="busy" class="flex items-center gap-1 text-[11px] text-amber-200/80"><span class="h-2 w-2 animate-ping rounded-full bg-amber-300" />計算中</span>
             </div>
           </div>
           <!-- 変えた所 -->
           <div class="min-w-0 flex-1">
             <p class="text-[10px] text-[var(--exile-color-text-tertiary)]">
-              比べる元: {{ baseAt }}<template v-if="!sameAsBase"> ({{ fmtNum(baseTotal) }})</template>
+              比べる元: {{ baseAt }}<template v-if="!sameAsBase && focusBase"> ({{ fmtNum(focusBase.game.dps) }})</template>
             </p>
             <div v-if="changes.length" class="mt-0.5 flex flex-wrap gap-1">
               <span v-for="(c, i) in changes.slice(-6)" :key="i" class="rounded-full bg-sky-500/15 px-2 py-px text-[11px] text-sky-200">{{ c }}</span>
@@ -268,7 +275,7 @@ const resists = computed(() =>
 
       <!-- スキル -->
       <div class="mb-6">
-        <SkillTable :rows="skills" :before="baseSkills" :total="total" />
+        <SkillTable :rows="skills" :before="baseSkills" :focus-key="focus?.key ?? null" @focus="(k) => (focusKey = k)" />
       </div>
 
       <!-- 変える所 (装備 / ジェム / ツリー) -->
@@ -338,7 +345,8 @@ const resists = computed(() =>
           :base-alloc="base && base !== cur ? base.tree.alloc : undefined"
           :power="power ? { label: power.label, nodes: power.nodes, stale: power.of !== cur } : null"
           :power-progress="powerProgress"
-          :skill-options="skills.map((x) => ({ key: x.key, name: x.s.name }))"
+          :skill-options="skills.map((x) => ({ key: x.key, name: x.s.name + (x.s.game.minionName ? ` → ${x.s.game.minionName}` : '') }))"
+          :default-target="focus?.key ?? ''"
           :busy="busy"
           @power="computePower"
           @toggle="async (id, attr, done) => done(await clickNode(id, attr).catch((e) => String(e)))"

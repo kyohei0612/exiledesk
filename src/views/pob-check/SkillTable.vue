@@ -3,15 +3,20 @@
   左に DPS の割合の帯、名前と印、DPS と比べる元との差、1 発 / クリティカル / クリ率 / 1 秒の回数、ダメージの種類の色
 -->
 <script setup lang="ts">
+import { computed } from "vue";
 import DiffBadge from "./DiffBadge.vue";
 import { fmtNum, TYPE_STYLE } from "./fmt";
 import { gemJa, type GroupView, type SkillView } from "../../services/pob-check/api";
 
-defineProps<{
+const props = defineProps<{
   rows: Array<{ g: GroupView; s: SkillView; key: string; count: number }>;
   before: Map<string, SkillView>;
-  total: number;
+  /** 上のバーに出しているスキル */
+  focusKey: string | null;
 }>();
+const emit = defineEmits<{ (e: "focus", key: string): void }>();
+/** 帯の長さは一番高いスキルに対して (合計は出さない、2026-10-02) */
+const maxDps = computed(() => Math.max(1, ...props.rows.map((x) => x.s.game.dps)));
 
 function parts(s: SkillView): Array<{ type: string; pct: number; color: string; ja: string }> {
   const sum = s.game.parts.reduce((a, p) => a + p.hit, 0) || 1;
@@ -32,10 +37,13 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
     <div
       v-for="x in rows"
       :key="x.key"
-      class="relative grid grid-cols-[minmax(0,1fr)_7.5rem_5.5rem_5.5rem_4.5rem_4.5rem] items-center gap-x-3 border-b border-white/5 px-4 py-2 last:border-b-0 hover:bg-white/[0.03]"
+      class="relative grid cursor-pointer grid-cols-[minmax(0,1fr)_7.5rem_5.5rem_5.5rem_4.5rem_4.5rem] items-center gap-x-3 border-b border-white/5 px-4 py-2 last:border-b-0 hover:bg-white/[0.03]"
+      :class="x.key === focusKey ? 'bg-amber-400/[0.06]' : ''"
+      title="押すと上のバーにこのスキルを出す"
+      @click="emit('focus', x.key)"
     >
       <!-- 全体に占める割合の帯 (後ろ) -->
-      <div class="pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r from-amber-400/[0.10] to-transparent" :style="{ width: `${total > 0 ? (x.s.game.dps / total) * 100 : 0}%` }" />
+      <div class="pointer-events-none absolute inset-y-0 left-0 bg-gradient-to-r from-amber-400/[0.10] to-transparent" :style="{ width: `${(x.s.game.dps / maxDps) * 100}%` }" />
       <div class="relative min-w-0">
         <p class="flex items-center gap-1.5 truncate text-[13px] font-bold">
           {{ gemJa(x.s.name) }}
@@ -52,7 +60,6 @@ function parts(s: SkillView): Array<{ type: string; pct: number; color: string; 
           <div class="flex h-1 w-24 overflow-hidden rounded-full bg-white/5">
             <div v-for="p in parts(x.s)" :key="p.type" :style="{ width: `${p.pct}%`, background: p.color }" :title="`${p.ja} ${p.pct.toFixed(0)}%`" />
           </div>
-          <span class="text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">全体の {{ total > 0 ? ((x.s.game.dps / total) * 100).toFixed(0) : 0 }}%</span>
         </div>
       </div>
       <div class="relative text-right">
