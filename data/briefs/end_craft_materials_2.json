@@ -1,0 +1,569 @@
+{
+  "name": "end_craft_materials_2",
+  "title_hint": "【PoE2】エンドのクラフト素材を一気に解説 後編: 骨とお告げ",
+  "audience": "マップに入ってクラフト素材を拾い始めた人 (前編を見た人)",
+  "player_stage": "endgame",
+  "goal": "骨 (冒涜・発現) とクラフトに使うお告げ 17 種が、何をする物でどう動くかが分かる",
+  "target_seconds": 780,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "アミュレット (レア 4 MOD) → 左側の高貴 + 完全の高貴 → 右手のネクロマンシー + 保存された鎖骨 → 発現",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "seed": 20261003,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "Amulets/IncreasedLife",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/IncreasedMana",
+          "tier": "T3"
+        },
+        {
+          "mod": "Amulets/AllResistances",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/Strength",
+          "tier": "T3"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "currency": "exalt_perfect",
+        "omen": "OmenofSinistralExaltation",
+        "note": "左側の高貴: プレフィックスだけ"
+      },
+      {
+        "currency": "desecrate",
+        "omen": "OmenofDextralNecromancy",
+        "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
+      },
+      {
+        "currency": "reveal:1",
+        "note": "発現: 3 つから 1 つ"
+      }
+    ]
+  },
+  "notes": [
+    "前編の続き。前編の中身 (上位オーブ・エッセンス・フラクチャー・カタリスト) は詳しく説明し直さない",
+    "お告げはクラフトで使う 17 種を全部、実演付きで。今のリーグで取引されていない 4 種とマップ用は外す",
+    "言葉: 発現 / 未発現 / 魂の井戸 (開示と言わない)。値段の数字は出さない",
+    "アストリッド・深淵の印は言わない"
+  ],
+  "sources": [
+    {
+      "title": "timesaver.gg: PoE2 Desecrated Currency Guide",
+      "url": "https://timesaver.gg/blog/poe2-desecrated-currency-guide"
+    },
+    {
+      "title": "PoE2DB: 冒涜モッド",
+      "url": "https://poe2db.tw/jp/Desecrated_Modifiers"
+    },
+    {
+      "title": "PoE2 Wiki: Omen of Sanctification",
+      "url": "https://www.poe2wiki.net/wiki/Omen_of_Sanctification"
+    },
+    {
+      "title": "timesaver.gg: PoE2 0.5 Crafting Guide",
+      "url": "https://timesaver.gg/blog/poe2-0-5-crafting-guide"
+    }
+  ],
+  "demos": {
+    "exalt_right": {
+      "schema": "craft-stage-plan/1",
+      "title": "右側の高貴なお告げ (本編と同じ始まり)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofDextralExaltation",
+          "note": "右側の高貴: サフィックスだけ"
+        }
+      ]
+    },
+    "exalt_greater": {
+      "schema": "craft-stage-plan/1",
+      "title": "偉大なる高貴なお告げ: 高貴 1 回で MOD 2 個",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261004,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofGreaterExaltation",
+          "note": "2 個付く"
+        }
+      ]
+    },
+    "exalt_catalyst": {
+      "schema": "craft-stage-plan/1",
+      "title": "触媒の高貴なお告げ: 肉体のカタリストの品質を使って高貴",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261005,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "catalyst_life",
+          "times": 14,
+          "note": "品質 20%"
+        },
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofCatalysingExaltation",
+          "note": "品質を全部使って、ライフの MOD が付きやすい"
+        }
+      ]
+    },
+    "erase": {
+      "schema": "craft-stage-plan/1",
+      "title": "消すお告げ: 左側 / 右側の消去、削減、左側 / 右側の抹消",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261006,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T5"
+          },
+          {
+            "mod": "Amulets/GlobalEnergyShieldPercent",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T8"
+          },
+          {
+            "mod": "Amulets/FireResistance",
+            "tier": "T2"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "annul",
+          "omen": "OmenofSinistralAnnulment"
+        },
+        {
+          "currency": "annul",
+          "omen": "OmenofDextralAnnulment"
+        },
+        {
+          "currency": "chaos",
+          "omen": "OmenofWhittling"
+        },
+        {
+          "currency": "chaos",
+          "omen": "OmenofSinistralErasure"
+        },
+        {
+          "currency": "chaos",
+          "omen": "OmenofDextralErasure"
+        }
+      ]
+    },
+    "crystal_left": {
+      "schema": "craft-stage-plan/1",
+      "title": "左側の結晶化 + 強化のパーフェクトエッセンス",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261007,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T5"
+          },
+          {
+            "mod": "Amulets/GlobalEnergyShieldPercent",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T8"
+          },
+          {
+            "mod": "Amulets/FireResistance",
+            "tier": "T2"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "essence:perfect:Amulets/PerfectEssence_AllDefences",
+          "omen": "OmenofSinistralCrystallisation"
+        }
+      ]
+    },
+    "crystal_right": {
+      "schema": "craft-stage-plan/1",
+      "title": "右側の結晶化 + ヒステリーのエッセンス",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261008,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T5"
+          },
+          {
+            "mod": "Amulets/GlobalEnergyShieldPercent",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T1"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T8"
+          },
+          {
+            "mod": "Amulets/FireResistance",
+            "tier": "T2"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "essence:perfect:Amulets/PerfectEssence_DamageTakenGainedAsLife",
+          "omen": "OmenofDextralCrystallisation"
+        }
+      ]
+    },
+    "necro_left": {
+      "schema": "craft-stage-plan/1",
+      "title": "左手のネクロマンシー: プレフィックスが埋まっていると 1 つ消える → 骨をもう 1 回 (1 つまで)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofSinistralNecromancy"
+        },
+        {
+          "currency": "desecrate"
+        }
+      ]
+    },
+    "bone_gnawed": {
+      "schema": "craft-stage-plan/1",
+      "title": "噛み切られた鎖骨: アイテムレベル 82 には使えない",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "desecrate_gnawed"
+        }
+      ]
+    },
+    "echo": {
+      "schema": "craft-stage-plan/1",
+      "title": "アビスの反響のお告げ: 発現をもう一度引き直す (2 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofDextralNecromancy",
+          "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
+        },
+        {
+          "currency": "reveal:1:reroll",
+          "omen": "OmenofAbyssalEchoes",
+          "note": "引き直した 3 つの 1 番目"
+        }
+      ]
+    },
+    "faction_sovereign": {
+      "schema": "craft-stage-plan/1",
+      "title": "支配者のお告げ + 保存された鎖骨 → 発現",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261011,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "desecrate",
+          "omen": "OmenoftheSovereign"
+        },
+        {
+          "currency": "reveal:1"
+        }
+      ]
+    },
+    "faction_liege": {
+      "schema": "craft-stage-plan/1",
+      "title": "君主のお告げ + 保存された鎖骨 → 発現",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261012,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "desecrate",
+          "omen": "OmenoftheLiege"
+        },
+        {
+          "currency": "reveal:1"
+        }
+      ]
+    },
+    "faction_black": {
+      "schema": "craft-stage-plan/1",
+      "title": "ブラックブラッドのお告げ + 保存された鎖骨 → 発現",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261013,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "desecrate",
+          "omen": "OmenoftheBlackblooded"
+        },
+        {
+          "currency": "reveal:1"
+        }
+      ]
+    },
+    "faction_armour": {
+      "schema": "craft-stage-plan/1",
+      "title": "胴の防具に支配者のお告げ + 保存された肋骨 (防具には効かない)",
+      "base": "Conqueror Plate",
+      "item_level": 82,
+      "seed": 20261014,
+      "start": {
+        "rarity": "rare"
+      },
+      "steps": [
+        {
+          "currency": "desecrate",
+          "omen": "OmenoftheSovereign"
+        }
+      ]
+    }
+  }
+}

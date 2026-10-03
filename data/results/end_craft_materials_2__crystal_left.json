@@ -1,0 +1,570 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-03T11:10:53.474Z",
+  "exiledesk_version": "0.1.354",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "左側の結晶化 + 強化のパーフェクトエッセンス",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261007,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "Amulets/IncreasedLife",
+          "tier": "T1"
+        },
+        {
+          "mod": "Amulets/IncreasedMana",
+          "tier": "T5"
+        },
+        {
+          "mod": "Amulets/GlobalEnergyShieldPercent",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/AllResistances",
+          "tier": "T1"
+        },
+        {
+          "mod": "Amulets/Strength",
+          "tier": "T8"
+        },
+        {
+          "mod": "Amulets/FireResistance",
+          "tier": "T2"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "currency": "essence:perfect:Amulets/PerfectEssence_AllDefences",
+        "omen": "OmenofSinistralCrystallisation",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "essence:perfect:Amulets/PerfectEssence_AllDefences",
+      "currency_ja": "強化のパーフェクトエッセンス",
+      "omen": "OmenofSinistralCrystallisation",
+      "omen_ja": "左側の結晶化のお告げ",
+      "seed": 20261008,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +144",
+            "text_en": "+144 to maximum Life",
+            "values": [
+              144
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +106",
+            "text_en": "+106 to maximum Mana",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          },
+          {
+            "mod_id": "Amulets/GlobalEnergyShieldPercent",
+            "family": "EnergyShieldPercent",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 65,
+            "text_ja": "最大エナジーシールドが42%増加する",
+            "text_en": "42% increased maximum Energy Shield",
+            "values": [
+              42
+            ],
+            "ranges": [
+              [
+                39,
+                44
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Indomitable"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +17%",
+            "text_en": "+17% to all Elemental Resistances",
+            "values": [
+              17
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +40%",
+            "text_en": "+40% to Fire Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +144",
+            "text_en": "+144 to maximum Life",
+            "values": [
+              144
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/GlobalEnergyShieldPercent",
+            "family": "EnergyShieldPercent",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 65,
+            "text_ja": "最大エナジーシールドが42%増加する",
+            "text_en": "42% increased maximum Energy Shield",
+            "values": [
+              42
+            ],
+            "ranges": [
+              [
+                39,
+                44
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Indomitable"
+          },
+          {
+            "mod_id": "Amulets/PerfectEssence_AllDefences",
+            "family": "AllDefences",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "グローバルアーマー、回避力およびエナジーシールドが30%増加する",
+            "text_en": "30% increased Global Armour, Evasion and Energy Shield",
+            "values": [
+              30
+            ],
+            "ranges": [
+              [
+                20,
+                30
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Enhancement"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +17%",
+            "text_en": "+17% to all Elemental Resistances",
+            "values": [
+              17
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +40%",
+            "text_en": "+40% to Fire Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/PerfectEssence_AllDefences",
+            "family": "AllDefences",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "グローバルアーマー、回避力およびエナジーシールドが30%増加する",
+            "text_en": "30% increased Global Armour, Evasion and Energy Shield",
+            "values": [
+              30
+            ],
+            "ranges": [
+              [
+                20,
+                30
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Enhancement"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +106",
+            "text_en": "+106 to maximum Mana",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 2,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "琥珀のアミュレット",
+    "base": "Amber Amulet",
+    "base_ja": "琥珀のアミュレット",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 8
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Amulets/IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 60,
+        "text_ja": "最大ライフ +144",
+        "text_en": "+144 to maximum Life",
+        "values": [
+          144
+        ],
+        "ranges": [
+          [
+            120,
+            149
+          ]
+        ],
+        "tier_index": 8,
+        "affix": "Athlete's"
+      },
+      {
+        "mod_id": "Amulets/GlobalEnergyShieldPercent",
+        "family": "EnergyShieldPercent",
+        "side": "prefix",
+        "tier_name": "T2",
+        "mod_level": 65,
+        "text_ja": "最大エナジーシールドが42%増加する",
+        "text_en": "42% increased maximum Energy Shield",
+        "values": [
+          42
+        ],
+        "ranges": [
+          [
+            39,
+            44
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "Indomitable"
+      },
+      {
+        "mod_id": "Amulets/PerfectEssence_AllDefences",
+        "family": "AllDefences",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 72,
+        "text_ja": "グローバルアーマー、回避力およびエナジーシールドが30%増加する",
+        "text_en": "30% increased Global Armour, Evasion and Energy Shield",
+        "values": [
+          30
+        ],
+        "ranges": [
+          [
+            20,
+            30
+          ]
+        ],
+        "crafted": true,
+        "tier_index": 0,
+        "affix": "Perfect Essence of Enhancement"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Amulets/AllResistances",
+        "family": "AllResistances",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 80,
+        "text_ja": "全ての元素耐性 +17%",
+        "text_en": "+17% to all Elemental Resistances",
+        "values": [
+          17
+        ],
+        "ranges": [
+          [
+            17,
+            18
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Span"
+      },
+      {
+        "mod_id": "Amulets/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "筋力 +7",
+        "text_en": "+7 to Strength",
+        "values": [
+          7
+        ],
+        "ranges": [
+          [
+            5,
+            8
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Brute"
+      },
+      {
+        "mod_id": "Amulets/FireResistance",
+        "family": "FireResistance",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 71,
+        "text_ja": "火耐性 +40%",
+        "text_en": "+40% to Fire Resistance",
+        "values": [
+          40
+        ],
+        "ranges": [
+          [
+            36,
+            40
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "of Magma"
+      }
+    ]
+  },
+  "total_cost": 0
+}

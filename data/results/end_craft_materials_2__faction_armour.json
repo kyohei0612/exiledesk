@@ -1,0 +1,158 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-03T11:10:57.703Z",
+  "exiledesk_version": "0.1.354",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "胴の防具に支配者のお告げ + 保存された肋骨 (防具には効かない)",
+    "base": "Conqueror Plate",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261014,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": []
+    },
+    "steps": [
+      {
+        "currency": "desecrate",
+        "omen": "OmenoftheSovereign",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "desecrate",
+      "currency_ja": "保存された肋骨",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261015,
+      "applied": false,
+      "reason": "勢力のお告げは武器とアクセサリーだけ",
+      "before": {
+        "name": "征服者のプレート",
+        "base": "Conqueror Plate",
+        "base_ja": "征服者のプレート",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 68,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "445",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "征服者のプレート",
+        "base": "Conqueror Plate",
+        "base_ja": "征服者のプレート",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 68,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "445",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 171.02800000000002,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "征服者のプレート",
+    "base": "Conqueror Plate",
+    "base_ja": "征服者のプレート",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 68,
+      "str": 121
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "445",
+        "up": false
+      }
+    ],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": []
+  },
+  "total_cost": 0
+}

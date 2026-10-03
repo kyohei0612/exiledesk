@@ -65,18 +65,27 @@ def draw_icons(img: Image.Image, box: Box, panel: Panel, icon_dir: Path) -> None
 
 
 def draw_table(img: Image.Image, box: Box, panel: Panel) -> None:
-    """表: 1 行目は見出し (色付き)、列は均等割り。数字も文字もそのまま."""
+    """表: 1 行目は見出し (色付き)。列の幅は中身の長さに合わせ、行が多ければ字を小さくする."""
     rows = panel.rows or []
     x0, _, x1, y1 = box
     top = _title(img, box, panel.title)
     n_col = len(rows[0])
-    tw = min(x1 - x0, 360 * n_col)
+    longest = [max(len(r[c]) for r in rows) for c in range(n_col)]
+    tw = min(x1 - x0, max(360 * n_col, sum(longest) * 40))
     rh = min(110, (y1 - top) // len(rows))
     tx = (x0 + x1) // 2 - tw // 2
     ty = top + (y1 - top - rh * len(rows)) // 2
     shadow_panel(img, (tx, ty, tx + tw, ty + rh * len(rows)), fill=WHITE, outline=LINE, radius=20)
     d = ImageDraw.Draw(img)
-    colw = tw // n_col
+    weight = [max(n, 3) + 2 for n in longest]  # 短い列 (「サフィ」等) にも余白を
+    widths = [tw * w // sum(weight) for w in weight]
+    lefts = [tx + sum(widths[:c]) for c in range(n_col)]
+    base = min(46, int(rh * 0.5))  # 行が多い表 (勢力の MOD の一覧など) は字を小さく
+    fs = base  # 本文は表の中で同じ大きさにそろえる (一番きつい列に合わせる)
+    while fs > 16 and any(
+        d.textlength(r[c], font=font(fs)) > widths[c] - 24 for r in rows[1:] for c in range(n_col)
+    ):
+        fs -= 2
     for r, row in enumerate(rows):
         ry = ty + r * rh
         if r == 0:
@@ -84,13 +93,15 @@ def draw_table(img: Image.Image, box: Box, panel: Panel) -> None:
         elif r % 2 == 0:
             d.rectangle((tx + 2, ry, tx + tw - 2, ry + rh), fill=PANEL)
         for c, cell in enumerate(row):
-            fs = 44 if r == 0 else 46
-            while fs > 18 and d.textlength(cell, font=font(fs)) > colw - 24:
-                fs -= 2
+            size = fs
+            if r == 0:
+                size = base
+                while size > 16 and d.textlength(cell, font=font(size)) > widths[c] - 24:
+                    size -= 2
             d.text(
-                (tx + c * colw + colw // 2, ry + rh // 2),
+                (lefts[c] + widths[c] // 2, ry + rh // 2),
                 cell,
-                font=font(fs),
+                font=font(size),
                 fill=INK,
                 anchor="mm",
             )

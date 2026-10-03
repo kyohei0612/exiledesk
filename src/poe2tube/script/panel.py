@@ -23,7 +23,7 @@ class Panel(BaseModel):
         default=None, description="icons: アイコンの下の名前 (無ければ公式名)。icons と同じ数"
     )
     rows: list[list[str]] | None = Field(
-        default=None, min_length=2, max_length=8, description="table: 1 行目が見出し"
+        default=None, min_length=2, max_length=13, description="table: 1 行目が見出し (12 行まで)"
     )
 
     @model_validator(mode="after")

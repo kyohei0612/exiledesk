@@ -45,6 +45,7 @@ KNOWN_CURRENCIES: frozenset[str] = frozenset(
         "desecrate",
         "desecrate_ancient",
         "desecrate_altered",
+        "desecrate_gnawed",  # 噛み切られた骨 (アイテムレベル 64 まで)
         # アクト中に落ちるカレンシー解説用 (2026-09-28 追加、ExileDesk 要望 ⑧)
         "whetstone",  # 鍛冶屋の砥石 (武器の品質)
         "scrap",  # 鎧鍛冶の端材 (防具の品質)
