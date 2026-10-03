@@ -65,6 +65,21 @@ describe("ベースから選ぶ: オーグメント (コルの狩り 等) の種
     expect(ps.share).toBeCloseTo(ps.weight / totalP, 10);
     expect(ps.weight).toBe(3000); // ilvl 82 で 3 ティア × 仮の 1000
   });
+  it("兜・鎧・靴・武器の行にも、差せるルーンの系統がデータどおり並び、文面は日本語", () => {
+    const withRune = ITEMS.filter((x) => x.category !== "Gloves" && Object.keys(x.pools.rune ?? {}).length > 0);
+    expect(new Set(withRune.map((x) => x.category))).toEqual(new Set([
+      "Helmets", "Body_Armours", "Boots", "Bows", "Crossbows", "OneHand_Maces", "TwoHand_Maces", "Quarterstaves", "Sceptres", "Spears", "Staves", "Wands",
+    ]));
+    for (const it of withRune) {
+      const rows = pickerRows(it.bases[0]!);
+      for (const [rune, pool] of Object.entries(it.pools.rune!)) {
+        const got = rows.filter((r) => r.group === "rune" && r.rune === rune);
+        expect(got.map((r) => r.modId).sort(), `${it.id} ${rune}`).toEqual([...pool.prefixes, ...pool.suffixes].sort());
+        expect(got.every((r) => r.runeJa && r.runeJa !== rune), `${it.id} ${rune}`).toBe(true);
+        for (const id of got.map((r) => r.modId)) expect(/[ぁ-んァ-ヶ一-龠]/.test(jaOfMod(data.mods.get(id)!)), id).toBe(true);
+      }
+    }
+  });
   it("盾・指輪には出ない (差せる部位でない)", () => {
     for (const name of ["Aged Tower Shield", "Amethyst Ring"]) {
       expect(pickerRows(name).filter((r) => r.group === "rune")).toEqual([]);
@@ -92,14 +107,18 @@ describe("ソケット: 特別な MOD のルーン", () => {
     expect(socketBlock("Gloves", false, pick({ kolr: true }), "astrid")).toBeNull();
     expect(socketBlock("Gloves", false, pick({ kolr: true, astrid: true }), "serle")).toBeNull();
   });
-  it("盾・指輪・兜には差せない。画面に出すのは手袋だけ (他の部位は確かめてから)", () => {
+  it("盾・指輪には差せず、コルは兜にも差せない。画面には差せる部位ごとのルーンが出る (2026-10-04 に手袋から全部位へ)", () => {
     expect(socketBlock("Shields", false, NO_SOCKET, "kolr")).toContain("差せない");
     expect(socketBlock("Rings", false, NO_SOCKET, "kolr")).not.toBeNull();
     expect(socketBlock("Helmets", false, NO_SOCKET, "kolr")).toContain("差せない");
     expect(effectiveSocket("Shields", false, pick({ kolr: true })).kolr).toBeUndefined();
     expect(socketRunesFor("Gloves").map((r) => r.key)).toEqual(["astrid", "serle", "kolr", "katla"]);
-    expect(socketRunesFor("Helmets").map((r) => r.key)).toEqual(["astrid", "serle"]);
-    expect([...SPECIAL_RUNE_ON_SCREEN]).toEqual(["Gloves"]);
+    expect(socketRunesFor("Helmets").map((r) => r.key)).toEqual(["astrid", "serle", "vorana"]);
+    expect(socketRunesFor("Body_Armours").map((r) => r.key)).toEqual(["astrid", "serle", "medved"]);
+    expect(socketRunesFor("Boots").map((r) => r.key)).toEqual(["astrid", "serle", "uhtred"]);
+    expect(socketRunesFor("Spears").map((r) => r.key)).toEqual(["astrid", "serle", "thrud"]);
+    expect(socketRunesFor("Shields").map((r) => r.key)).toEqual(["astrid", "serle"]);
+    for (const c of ["Gloves", "Helmets", "Body_Armours", "Boots", "Wands", "Bows", "Quarterstaves"]) expect(SPECIAL_RUNE_ON_SCREEN.has(c), c).toBe(true);
   });
   it("狙いに特別な MOD があれば、そのルーンは差したまま (外せない)", () => {
     const req = requiredRunes(data, ["Gloves_dex/Rune_marksman_ProjectileSpeed", "Gloves_dex/IncreasedLife"]);

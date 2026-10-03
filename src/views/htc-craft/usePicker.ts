@@ -132,7 +132,7 @@ export function usePicker() {
     const all: Array<{ side: string; group: string; weight: number; rune?: string }> = [];
     const pool = (p: { prefixes: readonly string[]; suffixes: readonly string[] } | undefined, group: ModGroup) =>
       p ? ([["P", p.prefixes, group], ["S", p.suffixes, group]] as const) : [];
-    // 特別な MOD (pools.rune) はルーンごと。画面に出す部位 (今は手袋だけ、sockets.ts の SPECIAL_RUNE_ON_SCREEN) の物だけ並べる
+    // 特別な MOD (pools.rune) はルーンごと。差せる部位 (sockets.ts の SPECIAL_RUNE_ON_SCREEN) の物だけ並べる
     const runePools = Object.entries(c.pools.rune ?? {}).filter(([id]) => specialRuneShown(id, c.category));
     const runeOfMod = new Map<string, string>();
     for (const [id, p] of runePools) for (const m of [...p.prefixes, ...p.suffixes]) runeOfMod.set(m, id);

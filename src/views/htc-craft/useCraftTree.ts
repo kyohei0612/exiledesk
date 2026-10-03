@@ -47,7 +47,10 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
     const h = helpers.value, d = c.data.value;
     if (!h || !d || !nodes.value.length) return out;
     const byId = new Map(nodes.value.map((n) => [n.id, n]));
-    const queue: Array<[string, SimState]> = [[nodes.value[0]!.id, start.value]];
+    // ルーンを後で差す形 (ソケットの手がある) は、差す手までは差していない形で始まる (シミュレーターの lateSocket と同じ。2026-10-04:
+    // これが無くて、差す手を開くと「この時点では打てない: もう差してある」と出ていた)
+    const late = !!ctx.value?.rawCls && nodes.value.some((n) => n.action?.kind === "socket");
+    const queue: Array<[string, SimState]> = [[nodes.value[0]!.id, late ? { ...start.value, socketed: false } : start.value]];
     while (queue.length) {
       const [id, s] = queue.shift()!;
       if (out.has(id)) continue;
@@ -88,6 +91,8 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
         hit = { ...t, slots: [...t.slots, { modId: null, side: a.side, fixed: false, crafted: true, mark: true }] };
       } else if (a?.kind === "whittle") {
         hit = { ...s, breach: false };
+      } else if (a?.kind === "socket") {
+        hit = { ...s, socketed: true };
       }
       if (n.onHit && n.onHit !== "done" && n.onHit !== "auto") queue.push([n.onHit, hit]);
       if (n.onMiss && n.onMiss !== "done" && n.onMiss !== "auto") queue.push([n.onMiss, miss]);

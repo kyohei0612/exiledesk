@@ -36,7 +36,7 @@ const GROUPS: Record<ModGroup, GroupStyle> = {
   essence: { label: "エッセンス・合金", how: "パーフェクトエッセンス・合金で確定 (クラフト MOD は 1 つまで)", head: "text-sky-300", bar: "border-l-sky-400/70", chip: "bg-sky-500/15 text-sky-200" },
   desecrated: { label: "冒涜", how: "骨で冒涜して 3 択から (冒涜の MOD は 1 つまで)", head: "text-violet-300", bar: "border-l-violet-400/70", chip: "bg-violet-500/15 text-violet-200" },
   otherworldly: { label: "変質した鎖骨 (異界の MOD)", how: "変質した鎖骨の冒涜でだけ出る (冒涜の MOD として 1 つまで)", head: "text-teal-300", bar: "border-l-teal-400/70", chip: "bg-teal-500/15 text-teal-200" },
-  rune: { label: "オーグメント (コルの狩り 等)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。出やすさは仮)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },
+  rune: { label: "オーグメント (特別な MOD)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。出やすさは仮)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },
 };
 const ORDER: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly", "rune"];
 

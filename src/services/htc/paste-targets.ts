@@ -207,8 +207,8 @@ export function targetsFor(
     }
   }
 
-  // ルーン由来の MOD (コルの狩りのマークスマン等) も引く (2026-10-03 その 1)。画面に出す部位 (今は手袋、sockets.ts の
-  // SPECIAL_RUNE_ON_SCREEN) の物は「そのルーンを差したまま作る前提の狙い」にする (計算機の socketOn が狙いからルーンを足す)。
+  // ルーン由来の MOD (コルの狩りのマークスマン等) も引く (2026-10-03 その 1)。画面に出す部位 (sockets.ts の
+  // SPECIAL_RUNE_ON_SCREEN、手袋・兜・鎧・靴・武器) の物は「そのルーンを差したまま作る前提の狙い」にする (計算機の socketOn が狙いからルーンを足す)。
   // それ以外の部位の物は前と同じく繋がらない行に戻す (樹 MOD と同じく枠だけ数える)
   const keepRune = (b: BridgedMod, category: string | undefined): BridgedMod =>
     (b.viaRune && !specialRuneShown(b.viaRune, category) ? { template: b.template, mod: null, viaAlias: false, viaLine: false } : b);

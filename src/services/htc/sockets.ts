@@ -25,7 +25,7 @@
  *   - 差す時機: 既定は「最初から差したまま」。自動の候補に「ルーンは後で差す」(普通の狙いを先に、差してからルーンの MOD を最後の冒涜で。その 3、2026-10-03) も入れてシミュレーターで比べる
  *   - **出やすさは仮**: 特別な MOD の重みはクライアントのデータに無く、エンジンの仮の値 (1 ティア 1000) のまま。
  *     差すと全部の抽選の分母に入るので、差した時の確率は全部この仮の値に乗っている (オーナー判断: 仮のまま画面で断る)
- *   - 画面に出すのは今は手袋だけ (`SPECIAL_RUNE_ON_SCREEN`)。データの経路は 6 種とも同じで、手袋で確かめた後に広げる
+ *   - 画面に出す部位は `SPECIAL_RUNE_ON_SCREEN` (2026-10-03 は手袋だけ、10-04 に 6 種の差せる部位全部)
  *
  * ## 費用
  * ルーンの相場 (`rune:<id>`、[[prices.ts]] が上流の名前引きで埋める) + 足りない穴の数だけ熟練工のオーブ (`artificer`)。
@@ -60,11 +60,6 @@ export interface SocketPick extends Partial<Record<SpecialKey, boolean>> {
 export const DEFAULT_BASE_SOCKETS = 2;
 export const NO_SOCKET: SocketPick = { astrid: false, serle: false, baseSockets: DEFAULT_BASE_SOCKETS };
 
-/**
- * 特別な MOD のルーンを画面 (トグル・MOD の一覧・貼り付けの狙い) に出す部位。データの経路は 6 種とも同じだが、
- * オーナーと手袋で確かめてから広げる (2026-10-03「最初は手袋」)。広げる時はここに部位を足すだけ
- */
-export const SPECIAL_RUNE_ON_SCREEN: ReadonlySet<string> = new Set(["Gloves"]);
 
 /** 特別な MOD の出やすさの断り (重みがデータに無く、エンジンの仮の値のまま) */
 export const ASSUMED_RUNE_WEIGHT_NOTE =
@@ -108,6 +103,11 @@ const SPECIALS: ReadonlyArray<{ key: SpecialKey; id: string; en: string; tag: st
   { key: "uhtred", id: "uhtreds-sidereus", en: "Uhtred's Sidereus", tag: "Chronomancy" },
   { key: "thrud", id: "thruds-might", en: "Thrud's Might", tag: "Destruction" },
 ];
+/**
+ * 特別な MOD のルーンを画面 (トグル・MOD の一覧・貼り付けの狙い) に出す部位。2026-10-03 は手袋だけで確かめ、
+ * 2026-10-04 に 6 種の差せる部位 (手袋 / 兜 / 鎧 / 靴 / 武器、エンジンのルーンの表) 全部に広げた
+ */
+export const SPECIAL_RUNE_ON_SCREEN: ReadonlySet<string> = new Set(SPECIALS.flatMap((x) => RUNE_BY_ID.get(x.id)?.categories ?? []));
 const ASTRID = ruleOf("Astrid's Creativity");
 const SERLE = ruleOf("Serle's Triumph");
 /** 差せる物の一覧 (画面の順)。bound = ソケットバウンド (差したまま、置き換えもできない) */
@@ -132,7 +132,7 @@ const KEY_BY_RUNE_ID = new Map(SOCKET_RUNES.map((r) => [r.id, r.key]));
 export const runeFits = (r: Pick<SocketRune, "categories">, category: string | null | undefined): boolean =>
   !!category && (r.categories.length === 0 || r.categories.includes(category));
 
-/** 画面に出す差せる物 (アストリッド・セールはいつも。特別な MOD のルーンは差せる部位で、SPECIAL_RUNE_ON_SCREEN の部位だけ) */
+/** 画面に出す差せる物 (アストリッド・セールはいつも。特別な MOD のルーンは差せる部位だけ) */
 export function socketRunesFor(category: string | null | undefined): SocketRune[] {
   return SOCKET_RUNES.filter((r) => !r.pool || (runeFits(r, category) && SPECIAL_RUNE_ON_SCREEN.has(category ?? "")));
 }

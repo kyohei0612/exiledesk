@@ -87,7 +87,7 @@ const GROUP_CHIPS: Array<{ k: ModGroup | "all"; ja: string; on: string }> = [
   { k: "essence", ja: "エッセンス・合金", on: "bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60" },
   { k: "desecrated", ja: "冒涜", on: "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/60" },
   { k: "otherworldly", ja: "変質した鎖骨 (異界)", on: "bg-teal-500/25 text-teal-100 ring-1 ring-teal-400/60" },
-  { k: "rune", ja: "オーグメント (コルの狩り 等)", on: "bg-orange-500/25 text-orange-100 ring-1 ring-orange-400/60" },
+  { k: "rune", ja: "オーグメント (特別な MOD)", on: "bg-orange-500/25 text-orange-100 ring-1 ring-orange-400/60" },
 ];
 /** 種類ごとの数 (そのベースに無い種類のチップは出さない) */
 const groupCount = (k: ModGroup | "all"): number => (k === "all" ? pk.modRows.value.length : pk.modRows.value.filter((m) => m.group === k).length);

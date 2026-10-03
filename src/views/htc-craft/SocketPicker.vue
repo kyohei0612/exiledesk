@@ -5,7 +5,7 @@
  * オーナー:「アストリッドやら追加しとこうか」。作り方のツリーの設定の列と、ベースから選ぶ道の ③ に置く。
  * 武器・防具は規格外 (ソケット 2 つ) のベースが既定で、素材の検索もその数以上で探す。差せない時 (指輪など・コラプト済み) は
  * 押せず、理由を短く出す。決まりと費用は [[sockets.ts]]。
- * 特別な MOD のルーン (コルの狩り 等、2026-10-03) は差せる部位 (今は手袋) だけ並べる。狙いにその MOD があれば入ったまま外せない
+ * 特別な MOD のルーン (コルの狩り 等、2026-10-03) は差せる部位 (手袋・兜・鎧・靴・武器) だけ並べる。狙いにその MOD があれば入ったまま外せない
  */
 import { computed } from "vue";
 import { ASSUMED_RUNE_WEIGHT_NOTE, artificerCount, effectiveSocket, requiredRunes, socketBlock, socketCostOf, socketCountFor, socketRunesFor, usesAssumedWeight, withRequired, type SocketKey, type SocketPick } from "../../services/htc/sockets";
