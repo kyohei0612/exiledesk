@@ -21,7 +21,7 @@ import type { useHtcCraft } from "./useHtcCraft";
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 
-type Kind = "tree" | "normal" | "desecrated" | "otherworldly" | "essence" | "cannot";
+type Kind = "tree" | "normal" | "rune" | "desecrated" | "otherworldly" | "essence" | "cannot";
 /** 種類ごとの札・色・説明 */
 const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   tree: { label: "特殊 (樹 MOD)", cls: "border-fuchsia-400/60 text-fuchsia-200", note: "創生の樹からしか出ない。クラフトでは付かないので、固定済みの品を買って始める" },
@@ -31,10 +31,12 @@ const KINDS: Record<Kind, { label: string; cls: string; note: string }> = {
   desecrated: { label: "特殊 (冒涜のみ)", cls: "border-violet-400/60 text-violet-200", note: "冒涜 (骨) でしか付かない MOD。冒涜するかは作り方で決める" },
   // 変質した鎖骨 (装飾品) の冒涜でだけ出る「異界の MOD」(2026-09-27。前は樹 MOD 扱いで買うしかなかった)
   otherworldly: { label: "特殊 (異界の MOD)", cls: "border-teal-400/60 text-teal-200", note: "変質した鎖骨の冒涜でしか付かない。外れは普通の冒涜と同じく光のお告げか合金の上書きで回す" },
+  // 特別な MOD (コルの狩り 等のルーンを差すと出る。2026-10-03)。重みがデータに無く仮の値なので、ここでも断る
+  rune: { label: "オーグメント (ルーンの MOD)", cls: "border-orange-400/60 text-orange-200", note: "そのルーン (ソケットバウンド) を差したまま作ると高貴・カオスで出る。この MOD の出やすさは仮 (重みがデータに無く、エンジンの仮の値)" },
   essence: { label: "エッセンスで確定", cls: "border-sky-400/60 text-sky-200", note: "パーフェクトエッセンスで確定で付けられる (クラフト MOD)。1 つのアイテムに 1 つまで" },
   cannot: { label: "作れない", cls: "border-rose-500/60 text-rose-300", note: "このベースのクラフトでは付かない (出どころがデータに無い)。付いている物を買うしかない。枠は使う" },
 };
-const ORDER: Kind[] = ["tree", "otherworldly", "desecrated", "cannot", "normal", "essence"];
+const ORDER: Kind[] = ["tree", "otherworldly", "desecrated", "cannot", "normal", "rune", "essence"];
 
 interface Row { key: string; text: string; side: "P" | "S" | null; kind: Kind; fixed: boolean; tier: string | null; modId: string | null }
 
@@ -45,6 +47,7 @@ const kindOf = (modId: string): Kind => {
   const src = m?.source;
   if (src && CRAFTED_SOURCES.has(src)) return "essence";
   if (m?.tags.includes("breach_desecration")) return "otherworldly";
+  if (m?.rune) return "rune";
   return src === "desecrated" ? "desecrated" : "normal";
 };
 /** 樹 MOD 以外で、このベースに付かない行 */

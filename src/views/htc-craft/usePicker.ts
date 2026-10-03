@@ -15,6 +15,7 @@ import { jaOfMod } from "../../services/htc/mod-text";
 import { isCraftedMod } from "../../services/htc/craft-slots";
 import { fillShares, tierWeight } from "../../services/mods/mod-rules";
 import { rangeLabel, tierDisplayRanges } from "../../services/mods/stat-scale";
+import { runeJaOf, specialRuneShown } from "../../services/htc/sockets";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -42,10 +43,17 @@ export interface ModRow {
   /**
    * 種類 (オーナー 2026-09-27「DB みたいに普通の MOD、エッセンス、冒涜、変質とか分けて表示」)。
    * normal = カオス・高貴 / essence = パーフェクトエッセンス・合金で確定 / desecrated = 冒涜 (骨) / otherworldly = 変質した鎖骨の冒涜 (異界の MOD)
+   * / rune = オーグメント (コルの狩り 等。ソケットバウンドのルーンを差すと高貴・カオスで出る。2026-10-03)
    */
   group: ModGroup;
   /** 合金 (エッセンスの種類の中で名前を分ける) */
   alloy?: boolean;
+  /**
+   * 特別な MOD (group = rune) が要るルーンの id (`kolrs-hunt`) と日本語名。狙いに入れるとそのルーンを差したまま作る。
+   * 重みはデータに無く仮の値 (sockets.ts の ASSUMED_RUNE_WEIGHT_NOTE)
+   */
+  rune?: string;
+  runeJa?: string;
   /** その ilvl で出うる段の重みの合計 */
   weight: number;
   /**
@@ -54,7 +62,7 @@ export interface ModRow {
    */
   share: number;
 }
-export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
+export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly" | "rune";
 
 /** 選んだ MOD と、狙う段 */
 export interface Pick {
@@ -121,14 +129,19 @@ export function usePicker() {
     const out: ModRow[] = [];
     const seen = new Set<string>();
     /** 出やすさの分母 (検索で絞る前の全部) */
-    const all: Array<{ side: string; group: string; weight: number }> = [];
+    const all: Array<{ side: string; group: string; weight: number; rune?: string }> = [];
     const pool = (p: { prefixes: readonly string[]; suffixes: readonly string[] } | undefined, group: ModGroup) =>
       p ? ([["P", p.prefixes, group], ["S", p.suffixes, group]] as const) : [];
+    // 特別な MOD (pools.rune) はルーンごと。画面に出す部位 (今は手袋だけ、sockets.ts の SPECIAL_RUNE_ON_SCREEN) の物だけ並べる
+    const runePools = Object.entries(c.pools.rune ?? {}).filter(([id]) => specialRuneShown(id, c.category));
+    const runeOfMod = new Map<string, string>();
+    for (const [id, p] of runePools) for (const m of [...p.prefixes, ...p.suffixes]) runeOfMod.set(m, id);
     const lists = [
       ...pool(c.pools.normal, "normal"),
       ...pool(c.pools.essence, "essence"),
       ...pool(c.pools.desecrated, "desecrated"),
       ...pool(c.pools.otherworldly, "otherworldly"),
+      ...runePools.flatMap(([, p]) => pool(p, "rune")),
     ];
     for (const [side, ids, group] of lists) {
       for (const id of ids) {
@@ -139,7 +152,7 @@ export function usePicker() {
         seen.add(id);
         const ja = jaOfMod(mod);
         const weight = tierWeight(mod, 0, level.value);
-        all.push({ side, group, weight });
+        all.push({ side, group, weight, ...(group === "rune" ? { rune: runeOfMod.get(id) } : {}) });
         if (q && !ja.toLowerCase().includes(q) && !id.toLowerCase().includes(q)) continue;
         const tiers = mod.tiers
           .map((t, i) => ({ i, t }))
@@ -152,10 +165,24 @@ export function usePicker() {
             ranges: tierDisplayRanges(t),
           }));
         if (tiers.length === 0) continue; // この ilvl では 1 段も取れない
-        out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, weight, share: 0, ...(mod.alloy ? { alloy: true } : {}) });
+        const rune = group === "rune" ? runeOfMod.get(id) : undefined;
+        out.push({
+          modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, weight, share: 0,
+          ...(mod.alloy ? { alloy: true } : {}), ...(rune ? { rune, runeJa: runeJaOf(rune) } : {}),
+        });
       }
     }
-    return fillShares(out, all);
+    fillShares(out, all);
+    // 特別な MOD の出やすさは、差した時の高貴・カオスの抽選 (普通の MOD + そのルーンの MOD を同じ側で混ぜた重み) の中の割合。
+    // 種類の中だけで割ると、普通の MOD と並んだ時に何倍も出やすく見える (重みは仮の値)
+    const normalTotal = (side: string): number => all.filter((x) => x.group === "normal" && x.side === side).reduce((a, x) => a + x.weight, 0);
+    const runeTotal = (rune: string, side: string): number => all.filter((x) => x.rune === rune && x.side === side).reduce((a, x) => a + x.weight, 0);
+    for (const r of out) {
+      if (r.group !== "rune" || !r.rune) continue;
+      const t = normalTotal(r.side) + runeTotal(r.rune, r.side);
+      r.share = t > 0 ? r.weight / t : 0;
+    }
+    return out;
   });
 
   function isPicked(modId: string): boolean {

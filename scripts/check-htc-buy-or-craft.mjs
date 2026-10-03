@@ -89,14 +89,16 @@ console.log("\n武器 (イージスクォータースタッフ) の検索:");
 {
   const BASE = "Aegis Quarterstaff";
   const qs = M.itemBaseFor(data, BASE);
-  if (M.tradeCategoryOf(qs)) fail("武器にカテゴリが入っている (未確認のはず)");
+  // 2026-10-03: 取引所のフィルタ表 (trade2-filters-jp.json) から全クラスのカテゴリを埋めた (クォータースタッフ = weapon.warstaff)
+  if (M.tradeCategoryOf(qs) !== "weapon.warstaff") fail(`クォータースタッフのカテゴリが weapon.warstaff でない: ${M.tradeCategoryOf(qs)}`);
   const ids = [
     "Quarterstaves/LocalFireDamage",
     "Quarterstaves/GlobalIncreaseMeleeSkillGemLevelWeapon",
     "Quarterstaves/PerfectEssence_Onslaught",
   ].map((modId) => ({ modId }));
-  // ベース名が無ければ今まで通り組まない
-  if (M.buildFinishedQuery(data, qs, ids, { ilvlMin: 83 })) fail("ベース名なしで武器の検索が組めてしまう");
+  // ベース名が無ければカテゴリで組む (保険の道。2026-10-03 までは武器のカテゴリが未確認で組まなかった)
+  const byCat = M.buildFinishedQuery(data, qs, ids, { ilvlMin: 83 });
+  if (byCat?.query.query.filters.type_filters.filters.category?.option !== "weapon.warstaff") fail("ベース名なしの時にカテゴリで組めていない");
   const w = M.buildFinishedQuery(data, qs, ids, { ilvlMin: 83, baseType: BASE });
   if (!w) { fail("ベース名を渡しても組めない"); } else {
     const t = w.query.query.type;

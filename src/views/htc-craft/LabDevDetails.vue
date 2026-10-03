@@ -3,6 +3,7 @@
  * LabDevDetails.vue — クラフト計算機の「詳しく」(MOD の段・忍者の道・ベース候補)。開発ビルドだけ出す
  * HtcCraftLab.vue から切り出し (2026-09-26)。中身は変えていない。
  */
+import { ASSUMED_RUNE_WEIGHT_NOTE } from "../../services/htc/sockets";
 import type { useHtcCraft } from "./useHtcCraft";
 import type { usePicker } from "./usePicker";
 
@@ -40,8 +41,8 @@ const implicitText = (lines: readonly string[]): string =>
             <td class="w-28 text-amber-300">{{ r.boosted ? "品質を外した" : "" }}</td>
             <td class="w-32 text-emerald-300">{{ r.crafted ? "確定で乗せられる" : "" }}</td>
             <!-- 重みがデータに無い MOD は確率を信用できない。埋めた物は推定値と断る -->
-            <td class="w-28 text-amber-300" :title="r.overridden ? c.weightNote : ''">
-              {{ r.unknownWeight ? "重み不明" : r.overridden ? "重みは推定値" : "" }}
+            <td class="w-28 text-amber-300" :title="r.assumedWeight ? ASSUMED_RUNE_WEIGHT_NOTE : r.overridden ? c.weightNote : ''">
+              {{ r.unknownWeight ? "重み不明" : r.assumedWeight ? "出やすさは仮" : r.overridden ? "重みは推定値" : "" }}
             </td>
           </tr>
         </table>

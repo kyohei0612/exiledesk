@@ -39,6 +39,8 @@ export function craftLimitsOf(c: C): { prefix: number; suffix: number } {
 
 /** シミュレーターの設定。データ・ベース・相場が揃っていなければ null */
 export function simCtxOf(c: C): SimCtx | null {
+  // cls は差した特別な MOD のルーン (コルの狩り 等) を混ぜたベース (useHtcCraft の base = withRunes)。シミュレーター・1 手の確率・
+  // 作り直しの費用はみんなここから読むので、ルーンの MOD も高貴・カオスで出る (2026-10-03)
   const d = c.data.value, cls = c.base.value, p = c.prices.value;
   if (!d || !cls || !p) return null;
   const it = c.item.value;

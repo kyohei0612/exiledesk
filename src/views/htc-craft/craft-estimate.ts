@@ -5,7 +5,7 @@
  * 固定済みにする MOD (fixedIds) は付いている前提で数えない。[[step-odds.ts]] の一番安い打ち方 (外れの消去込み) の合計。
  * 付けた物が消える分は入らないので安めに出る。
  */
-import { socketOnOf } from "../../services/htc/sockets";
+import { socketOnOf, socketSig } from "../../services/htc/sockets";
 import { stepHelpers, tierWeight, type ItemState, type Side } from "../../services/htc/step-odds";
 import { shallowRef } from "vue";
 import { simulateTreeChunked } from "../../services/htc/sim-route";
@@ -57,7 +57,8 @@ function keyOf(c: ReturnType<typeof useHtcCraft>, fixedIds: readonly string[], k
     [...fixedIds].sort().join(","),
     c.prices.value?.currency.divine ?? 0,
     // ソケットに差す物で枠・クラフト MOD の上限・代が変わる (2026-09-26)
-    `ソケット:${socketOnOf(c).astrid ? "A" : ""}${socketOnOf(c).serle ? "S" : ""}${socketOnOf(c).baseSockets}`,
+    // 特別な MOD のルーン (コルの狩り等) でプールも変わる (2026-10-03)
+    `ソケット:${socketSig(socketOnOf(c))}`,
   ].join("|");
 }
 function put(key: string, v: { value: number | null; pDone: number } | "pending"): void {

@@ -1,5 +1,6 @@
 /** paste.ts から切り出し (2026-09-26): 読んだアイテムをソルバの目標に直す (targetsFor・段の割り出し・創生の樹の MOD) */
-import { bridgeMods, sideLimits } from "./bridge";
+import { bridgeMods, sideLimits, type BridgedMod } from "./bridge";
+import { specialRuneShown } from "./sockets";
 import { balanceSides, hybridLineParts } from "./paste-sides";
 import { matchKey } from "./bridge-index";
 import { htcBaseInfo, htcDropOnly, htcModSides, type DropOnlyInfo, type DropOnlyTier } from "./patch";
@@ -202,8 +203,13 @@ export function targetsFor(
     }
   }
 
-  // 素のベースから作る話なので、ルーン由来の MOD は混ぜない
-  const bridged = bridgeMods(data, item.baseType, rollable.map((l) => l.template), "exclude");
+  // ルーン由来の MOD (コルの狩りのマークスマン等) も引く (2026-10-03 その 1)。画面に出す部位 (今は手袋、sockets.ts の
+  // SPECIAL_RUNE_ON_SCREEN) の物は「そのルーンを差したまま作る前提の狙い」にする (計算機の socketOn が狙いからルーンを足す)。
+  // それ以外の部位の物は前と同じく繋がらない行に戻す (樹 MOD と同じく枠だけ数える)
+  const keepRune = (b: BridgedMod, category: string | undefined): BridgedMod =>
+    (b.viaRune && !specialRuneShown(b.viaRune, category) ? { template: b.template, mod: null, viaAlias: false, viaLine: false } : b);
+  const bridged = bridgeMods(data, item.baseType, rollable.map((l) => l.template), "include");
+  bridged.mods = bridged.mods.map((b) => keepRune(b, bridged.cls?.category));
   // 繋がらなかった物を**符号違いで**もう一度引く。`mod-text-ja.json` は
   // 「# to Level of all Melee Skills」、エンジンは「+# to Level of all Melee Skills」で、
   // 先頭の `+` を数値側に取り込むか文面側に残すかが辞書ごとに違う (実物で踏んだ)
@@ -211,9 +217,9 @@ export function targetsFor(
     .map((b, i) => (!b.mod && rollable[i]!.template.startsWith("#") ? i : -1))
     .filter((i) => i >= 0);
   if (retryAt.length) {
-    const again = bridgeMods(data, item.baseType, retryAt.map((i) => "+" + rollable[i]!.template), "exclude");
+    const again = bridgeMods(data, item.baseType, retryAt.map((i) => "+" + rollable[i]!.template), "include");
     retryAt.forEach((i, k) => {
-      const got = again.mods[k];
+      const got = again.mods[k] ? keepRune(again.mods[k]!, again.cls?.category) : undefined;
       if (got?.mod) bridged.mods[i] = got;
     });
   }
@@ -235,7 +241,7 @@ export function targetsFor(
   bridged.mods.forEach((b, i) => {
     const line = rollable[i]!;
     if (hybridParts.has(i)) return; // 複合 MOD のもう 1 行 (狙いは複合 MOD の方で数える)
-    if (!b.mod || b.viaRune) { skipped.push(line.text); return; }
+    if (!b.mod) { skipped.push(line.text); return; }
     // **ティアを読む前に品質を外す。**装飾品の品質はその種類のタグを持つ MOD の値を
     // 押し上げるので、画面の数字のまま読むとティアを高く見積もります。実物で踏んだ:
     // 「品質 (マナモッド) +20%」の最大マナ +183 は、素だと 152.5 で 1 段下のティア。

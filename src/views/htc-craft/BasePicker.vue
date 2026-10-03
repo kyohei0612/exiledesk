@@ -14,7 +14,7 @@ import { classJa } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import SocketPicker from "./SocketPicker.vue";
 import ModPickColumn from "./ModPickColumn.vue";
-import { effectiveSocket, socketEffects, socketLabel, withSocketLimits } from "../../services/htc/sockets";
+import { ASSUMED_RUNE_WEIGHT_NOTE, effectiveSocket, requiredRunes, socketBlock, socketEffects, socketLabel, specialKeyOf, withRequired, withSocketLimits } from "../../services/htc/sockets";
 import { zeroStart } from "./craft-settings";
 import { CATALYSTS } from "../../services/htc/quality";
 import { sideLimits } from "../../services/htc/bridge";
@@ -52,8 +52,19 @@ const pickSkill = (en: string | null): void => void (zeroStart.value = { ...zero
 /** よく使う ilvl */
 const ILVLS = [75, 79, 82, 84, 86];
 
-/** ソケットに差す物 (③ で選ぶ。種類で差せない物は落とす) */
-const sockOn = computed(() => effectiveSocket(chosen.value?.cls, false, props.c.socket.value));
+/** 狙いの特別な MOD (コルの狩りのマークスマン等) が要るルーン。差したまま作るので ③ のトグルも入って外せない (2026-10-03) */
+const required = computed(() => requiredRunes(props.c.data.value, pk.picks.value.map((p) => p.modId)));
+/** ソケットに差す物 (③ で選ぶ + 狙いが要るルーン。種類で差せない物は落とす) */
+const sockOn = computed(() => effectiveSocket(chosen.value?.cls, false, withRequired(props.c.socket.value, required.value)));
+/** 特別な MOD を入れると要るルーンが差せない (穴が足りない 等) なら、その理由。入れた物・ルーンが既に入っている物は押せる */
+function runeBlock(m: ModRow): string | null {
+  const key = specialKeyOf(m.rune);
+  if (!key || pk.isPicked(m.modId) || sockOn.value[key]) return null;
+  const why = socketBlock(chosen.value?.cls, false, sockOn.value, key);
+  return why ? `${m.runeJa ?? "ルーン"}を差せない: ${why}` : null;
+}
+/** 狙いに特別な MOD がある (出やすさが仮の値に乗る) */
+const runePicked = computed(() => pk.picks.value.some((p) => pk.modRows.value.find((m) => m.modId === p.modId)?.group === "rune"));
 /** 枠 (固定済みの樹 MOD が使う分を引く) */
 const limits = computed(() => {
   const d = props.c.data.value;
@@ -65,7 +76,7 @@ const pickedCount = (side: "P" | "S"): number => pk.picks.value.filter((p) => pk
 const full = (side: "P" | "S"): boolean => pickedCount(side) >= limits.value[side];
 const columns = computed(() => (["P", "S"] as const).map((side) => ({ side, title: side === "P" ? "プレフィックス" : "サフィックス", rows: pk.modRows.value.filter((m) => m.side === side) })));
 function toggle(m: ModRow): void {
-  if (!pk.isPicked(m.modId) && full(m.side)) return;
+  if (!pk.isPicked(m.modId) && (full(m.side) || runeBlock(m))) return;
   pk.toggle(m);
 }
 /** 種類の絞り込み (オーナー 2026-09-27「普通の MOD、エッセンス、冒涜、変質とか分けて」) */
@@ -76,6 +87,7 @@ const GROUP_CHIPS: Array<{ k: ModGroup | "all"; ja: string; on: string }> = [
   { k: "essence", ja: "エッセンス・合金", on: "bg-sky-500/25 text-sky-100 ring-1 ring-sky-400/60" },
   { k: "desecrated", ja: "冒涜", on: "bg-violet-500/25 text-violet-100 ring-1 ring-violet-400/60" },
   { k: "otherworldly", ja: "変質した鎖骨 (異界)", on: "bg-teal-500/25 text-teal-100 ring-1 ring-teal-400/60" },
+  { k: "rune", ja: "オーグメント (コルの狩り 等)", on: "bg-orange-500/25 text-orange-100 ring-1 ring-orange-400/60" },
 ];
 /** 種類ごとの数 (そのベースに無い種類のチップは出さない) */
 const groupCount = (k: ModGroup | "all"): number => (k === "all" ? pk.modRows.value.length : pk.modRows.value.filter((m) => m.group === k).length);
@@ -179,9 +191,11 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
             :pk="pk"
             :named="named"
             :tier-label="tierLabel"
+            :block-of="runeBlock"
             @toggle="toggle"
           />
         </div>
+        <p v-if="runePicked" class="mt-2 rounded-lg bg-orange-500/10 px-2 py-1 text-[11px] text-orange-100/90 ring-1 ring-orange-400/30">{{ ASSUMED_RUNE_WEIGHT_NOTE }}</p>
       </section>
 
       <!-- ③ 作り方の設定と計算 -->
@@ -203,7 +217,7 @@ const step = computed(() => (!pk.baseName.value ? 1 : pk.picks.value.length ? 3 
               <option v-for="k in CATALYSTS" :key="k.tag" :value="k.tag">{{ k.ja }}</option>
             </select>
           </label>
-          <SocketPicker :c="c" :category="chosen.cls" class="basis-full" />
+          <SocketPicker :c="c" :category="chosen.cls" :required="required" class="basis-full" />
           <details class="opacity-80">
             <summary class="cursor-pointer opacity-70">樹 MOD (固定済みで買う物) がある時</summary>
             <span class="mt-1 flex items-center gap-2">

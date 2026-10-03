@@ -14,7 +14,8 @@ import { useTreeSearch } from "./useTreeSearch";
 export type { TreeRoute } from "./useTreeSearch";
 import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
-import { NO_SOCKET, effectiveSocket, socketCountFor, socketsMinFor, type SocketPick } from "../../services/htc/sockets";
+import { NO_SOCKET, effectiveSocket, poolRuneIds, requiredRunes, socketCountFor, socketsMinFor, withRequired, type SocketPick } from "../../services/htc/sockets";
+import { withRunes } from "../../vendor/poe2htc/engine/runes";
 import { jaOfMod, jaOfPastedLine, fillHashes } from "../../services/htc/mod-text";
 import { rangeLabel, tierDisplayRanges } from "../../services/mods/stat-scale";
 import { boostedBy } from "../../services/htc/quality";
@@ -51,6 +52,8 @@ export interface TargetRow {
   unknownWeight: boolean;
   /** 重みを別の出どころ (Craft of Exile の値など) で埋めた MOD か */
   overridden: boolean;
+  /** 特別な MOD (コルの狩り等のルーンを差すと出る)。重みはエンジンの仮の値のまま */
+  assumedWeight?: boolean;
 }
 
 export function useHtcCraft() {
@@ -108,7 +111,11 @@ export function useHtcCraft() {
   const error = ref<string | null>(null);
 
   const item = shallowRef<PastedItem | null>(null);
-  const base = shallowRef<ItemBase | null>(null);
+  /**
+   * 選んだ・貼り付けたベース (エンジンの行) そのまま。計算に使うのは下の base (差した特別な MOD のルーンを混ぜた物)。
+   * 価格表と部位の判定はこちら (ルーンで部位も値段も変わらない)
+   */
+  const rawBase = shallowRef<ItemBase | null>(null);
   const prices = shallowRef<Prices | null>(null);
   const targets = shallowRef<TierTarget[]>([]);
   const rows = shallowRef<TargetRow[]>([]);
@@ -120,14 +127,24 @@ export function useHtcCraft() {
    */
   const socket = ref<SocketPick>({ ...NO_SOCKET });
   /** ソケットの数 (0 = 付けられない種類)。ベースが決まる前は 0 */
-  const socketSlots = computed(() => socketCountFor(base.value?.category));
-  /** 実際に効く差し方。シミュレーター・自動の組み立て・見積もりは全部これ ([[sim-setup.ts]] の simCtxOf) */
-  const socketOn = computed<SocketPick>(() => effectiveSocket(base.value?.category, !!item.value?.corrupted, socket.value));
+  const socketSlots = computed(() => socketCountFor(rawBase.value?.category));
+  /**
+   * 実際に効く差し方。シミュレーター・自動の組み立て・見積もりは全部これ ([[sim-setup.ts]] の simCtxOf)。
+   * 狙いに特別な MOD (コルの狩りのマークスマン等) があれば、そのルーンは差したまま作る (無いとその MOD は出ない。2026-10-03)
+   */
+  const socketOn = computed<SocketPick>(() => effectiveSocket(rawBase.value?.category, !!item.value?.corrupted,
+    withRequired(socket.value, requiredRunes(data.value, targets.value.map((t) => t.modId)))));
+  /**
+   * 計算に使うベース = 差した特別な MOD のルーンの MOD を、高貴・カオスのプール (pools.normal) に混ぜた物 (エンジンの withRunes)。
+   * シミュレーター・1 手の確率・作り直しの費用・自動の組み立て・始め方の判定は全部 c.base を読むので、ここ 1 か所で全部に届く
+   * (2026-10-03 その 1)。差していなければ rawBase そのもの
+   */
+  const base = computed<ItemBase | null>(() => (rawBase.value ? withRunes(rawBase.value, poolRuneIds(socketOn.value)) : null));
   /**
    * 素材 (始め方のベース) を探す時のルーンソケットの下限。武器・防具は規格外 (2 つ) が既定 (オーナー 2026-09-26:
    * 武器・防具のクラフトはほぼ規格外でやる)。指輪など・0 を選んだ時は条件に入れない
    */
-  const socketsMin = computed(() => socketsMinFor(base.value?.category, !!item.value?.corrupted, socket.value));
+  const socketsMin = computed(() => socketsMinFor(rawBase.value?.category, !!item.value?.corrupted, socket.value));
   /** 確定で乗せる MOD が何個あるか。**解く前に分かる** ([[craft-slots.ts]])。アストリッドを差せば枠が 2 つ */
   const slots = computed<CraftedSurvey | null>(() => (data.value && base.value && targets.value.length
     ? craftedSurvey(data.value, base.value, targets.value, { astrid: socketOn.value.astrid }) : null));
@@ -183,8 +200,8 @@ export function useHtcCraft() {
     await marketStore.ensureMarket(PRICE_MAX_AGE_MS);
     // 取り直していなければ値段表も作り直さない (作り直すと下流が「変わった」と見て組み直す)
     if (marketStore.fetchedAt.value === before && prices.value) return;
-    if (base.value) {
-      const built = buildPrices(base.value);
+    if (rawBase.value) {
+      const built = buildPrices(rawBase.value);
       prices.value = built.prices;
       coverage.value = built.coverage;
     }
@@ -204,7 +221,7 @@ export function useHtcCraft() {
   function reset(): void {
     error.value = null;
     item.value = null;
-    base.value = null;
+    rawBase.value = null;
     targets.value = [];
     rows.value = [];
     bases.value = [];
@@ -236,7 +253,7 @@ export function useHtcCraft() {
     /** 実際のベース名 (「サファイアリング」)。`cls` は行 ("Rings") なので別に要る */
     currentBase: string,
   ): void {
-    base.value = cls;
+    rawBase.value = cls;
     const built = buildPrices(cls);
     prices.value = built.prices;
     coverage.value = built.coverage;
@@ -258,6 +275,8 @@ export function useHtcCraft() {
         boosted: !!(it?.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
         crafted: isCraftedMod(mod),
         unknownWeight: isPlaceholderWeight(mod),
+        // 特別な MOD (ルーンの MOD) の重みはデータに無く仮の値 (sockets.ts の ASSUMED_RUNE_WEIGHT_NOTE)
+        ...(mod.rune ? { assumedWeight: true } : {}),
         overridden: OVERRIDDEN.has(mod.id),
       };
     });

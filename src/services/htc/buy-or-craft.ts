@@ -47,20 +47,40 @@ const STAT_MAP = statMapping as Record<string, string>;
 /**
  * エンジンのクラス -> 取引所のカテゴリ。
  *
- * **実物で確認できた 6 つだけ**載せています。残り (帯 / 盾 / 武器 / タリスマン) は取引所の
- * 内部値を確認できていないので、当てずっぽうを書きません。
+ * 2026-10-03 (防具・武器への拡張 その 1): 取引所の日本語のフィルタ表 (data-cache/trade2-filters-jp.json の
+ * type_filters → category の選択肢) から、エンジンの全クラス (base_items.json + extra-bases.json の 21 種) を埋めた。
+ * 前は実物で確かめた 6 つ (指輪・アミュレット・兜・手袋・靴・鎧) だけで、残りは「未確認なので検索を組まない」で断っていた。
+ * 対応: 弓 weapon.bow / クロスボウ weapon.crossbow / 片手メイス weapon.onemace / 両手メイス weapon.twomace /
+ * クォータースタッフ weapon.warstaff / スピア weapon.spear / タリスマン weapon.talisman / ワンド weapon.wand /
+ * セプター weapon.sceptre / スタッフ weapon.staff / 盾 armour.shield / バックラー armour.buckler / フォーカス armour.focus /
+ * 矢筒 armour.quiver / ベルト accessory.belt (選択肢の日本語の名前と、エンジンのクラスの名前で 1 対 1)。
  *
  * **ただしクラフトの試算では使いません。**狙うベースは必ず 1 つに決まっているので、
- * `buildFinishedQuery` はベース名 (`type`) で引きます ── カテゴリより厳しく、内部値の
- * 当てずっぽうも要らない。ここが残っているのは、ベース名が分からない呼び出し向けの保険です。
+ * `buildFinishedQuery` はベース名 (`type`) で引きます ── カテゴリより厳しい。
+ * ここは、ベース名が分からない呼び出し向けの保険です。
  */
 const TRADE_CATEGORY: Record<string, string> = {
   Amulets: "accessory.amulet",
   Rings: "accessory.ring",
+  Belts: "accessory.belt",
   Helmets: "armour.helmet",
   Gloves: "armour.gloves",
   Boots: "armour.boots",
   Body_Armours: "armour.chest",
+  Shields: "armour.shield",
+  Bucklers: "armour.buckler",
+  Foci: "armour.focus",
+  Quivers: "armour.quiver",
+  Bows: "weapon.bow",
+  Crossbows: "weapon.crossbow",
+  OneHand_Maces: "weapon.onemace",
+  TwoHand_Maces: "weapon.twomace",
+  Quarterstaves: "weapon.warstaff",
+  Spears: "weapon.spear",
+  Talismans: "weapon.talisman",
+  Wands: "weapon.wand",
+  Sceptres: "weapon.sceptre",
+  Staves: "weapon.staff",
 };
 
 /** そのクラスを取引所で引けるか。引けなければ null (理由は `tradeCategoryNote`) */

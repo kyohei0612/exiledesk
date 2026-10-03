@@ -5,10 +5,12 @@
   今全部一緒でしょ。プレとサフィは分けて。あと色とか工夫して見やすくね」。
   列の中を種類ごとの見出しで分け、行の左端と札を種類の色にする (普通 = 緑 / エッセンス = 水色 / 冒涜 = 紫 / 異界 = 青緑)。
   冒涜の MOD は 1 つのアイテムに 1 つまで (異界の MOD も冒涜) なので、1 つ選ぶと他の冒涜は選べない。
+  オーグメント (コルの狩り 等、2026-10-03) は橙。行にルーンの名前の札と「仮」(出やすさがエンジンの仮の値) を付ける。
 -->
 <script setup lang="ts">
 import { computed } from "vue";
 import type { ModGroup, ModRow, usePicker } from "./usePicker";
+import { ASSUMED_RUNE_WEIGHT_NOTE } from "../../services/htc/sockets";
 
 const props = defineProps<{
   title: string;
@@ -22,6 +24,8 @@ const props = defineProps<{
   pk: ReturnType<typeof usePicker>;
   named: (m: ModRow) => string;
   tierLabel: (m: ModRow, i: number) => string;
+  /** 親が決める押せない理由 (特別な MOD のルーンを差す穴が無い 等)。無ければ null */
+  blockOf?: (m: ModRow) => string | null;
 }>();
 const emit = defineEmits<{ toggle: [m: ModRow] }>();
 
@@ -32,8 +36,9 @@ const GROUPS: Record<ModGroup, GroupStyle> = {
   essence: { label: "エッセンス・合金", how: "パーフェクトエッセンス・合金で確定 (クラフト MOD は 1 つまで)", head: "text-sky-300", bar: "border-l-sky-400/70", chip: "bg-sky-500/15 text-sky-200" },
   desecrated: { label: "冒涜", how: "骨で冒涜して 3 択から (冒涜の MOD は 1 つまで)", head: "text-violet-300", bar: "border-l-violet-400/70", chip: "bg-violet-500/15 text-violet-200" },
   otherworldly: { label: "変質した鎖骨 (異界の MOD)", how: "変質した鎖骨の冒涜でだけ出る (冒涜の MOD として 1 つまで)", head: "text-teal-300", bar: "border-l-teal-400/70", chip: "bg-teal-500/15 text-teal-200" },
+  rune: { label: "オーグメント (コルの狩り 等)", how: "そのルーンを差したまま作ると高貴・カオスで出る (ソケットバウンド。出やすさは仮)", head: "text-orange-300", bar: "border-l-orange-400/70", chip: "bg-orange-500/15 text-orange-200" },
 };
-const ORDER: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly"];
+const ORDER: ModGroup[] = ["normal", "essence", "desecrated", "otherworldly", "rune"];
 
 const groups = computed(() =>
   ORDER.filter((g) => props.filter === "all" || props.filter === g)
@@ -52,7 +57,7 @@ function blocked(m: ModRow): string | null {
   if (props.pk.isPicked(m.modId)) return null;
   if (full.value) return "枠がいっぱい";
   if (isDesec(m) && props.desecTaken) return "冒涜の MOD は 1 つまで";
-  return null;
+  return props.blockOf?.(m) ?? null;
 }
 </script>
 
@@ -82,7 +87,8 @@ function blocked(m: ModRow): string | null {
             <span v-if="m.share > 0 && x.top > 0" class="pointer-events-none absolute inset-y-0 left-0 bg-white/[0.06]" :style="{ width: `${(m.share / x.top) * 100}%` }" />
             <span class="relative grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px]" :class="pk.isPicked(m.modId) ? 'border-amber-400 bg-amber-400 text-black' : 'border-white/30'">{{ pk.isPicked(m.modId) ? "✓" : "" }}</span>
             <span class="relative min-w-0 flex-1">{{ named(m) }}</span>
-            <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" title="この種類・この側の中での出やすさ (今のアイテムレベルで出るティアの重みの割合)">{{ pct(m.share) }}</span>
+            <span v-if="m.share > 0" class="relative shrink-0 text-[10.5px] tabular-nums text-amber-100/80" :title="m.rune ? `ルーンを差した時の、この側の高貴・カオスの抽選の中での出やすさ。${ASSUMED_RUNE_WEIGHT_NOTE}` : 'この種類・この側の中での出やすさ (今のアイテムレベルで出るティアの重みの割合)'">{{ pct(m.share) }}</span>
+            <span v-if="m.rune" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip" :title="ASSUMED_RUNE_WEIGHT_NOTE">{{ m.runeJa }} · 仮</span>
             <span v-if="m.alloy" class="relative shrink-0 rounded px-1 text-[10px]" :class="x.st.chip">合金</span>
             <select
               v-if="pk.isPicked(m.modId)"
