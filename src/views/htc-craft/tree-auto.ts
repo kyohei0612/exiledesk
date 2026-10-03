@@ -441,6 +441,13 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     if (finalQuality) main.push(finalQuality);
   }
 
+  // 特別な MOD のルーンを後で差す (2026-10-03 その 3): ルーンの MOD を狙う最初の手の直前に「差す」手を入れる。
+  // それより前の手はルーンの置き場無しで引く (普通の狙いの分母が小さい)。最初の手から狙うなら入れても同じなので入れない
+  if (inp.lateSocket?.length) {
+    const rune = new Set(inp.lateSocket);
+    const at = main.findIndex((n) => n.targets.some((t) => rune.has(t.modId)) || (n.action?.kind === "magicEssence" && rune.has(n.action.modId)));
+    if (at > 0) main.splice(at, 0, { ...base, id: id(), action: { kind: "socket" }, targets: [], keep: [], need: 1, onHit: null, onMiss: null });
+  }
   // 本線をつなぐ (○ は次の手、最後は完成)。深淵の印の手は○で冒涜へ、冒涜の○が本線の次へ
   // 白のベースなら最初に 変成 → 普通のエッセンス (その狙いはこれで確定。後の手は残すように keep に入れる)
   if (me) {

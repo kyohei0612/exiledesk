@@ -408,7 +408,7 @@ export function useHtcCraft() {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedTargets, slotsUsed, dropOnly,
     loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
-    timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin,
+    timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin, rawBase,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeTierPick, searchFor, planFor, treeFixSide,

@@ -41,6 +41,19 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 白のベースなら 変成 → 普通のエッセンス で 1 つ確定させる形も比べる (段が届く時だけ。2026-10-03 その 2)
   const me = magicEssenceFor(inp, ctx.cls, ctx.itemLevel);
   if (me) picks.push({ label: "変成 → エッセンス", magicEssence: me, chaosOk: false, chaosSide: null });
+  // 特別な MOD のルーンは、その MOD を狙う直前に差す形も比べる (差す前は普通の狙いの分母にルーンの MOD が入らない。2026-10-03 その 3)。
+  // 候補が倍になると回すのが重いので、先頭の 2 つだけ
+  const raw = ctx.rawCls;
+  const runeIds = raw ? inp.targets.map((t) => t.modId).filter((id) => {
+    const k = (ctx.data.mods.get(id)?.type ?? "prefix") === "prefix" ? "prefixes" : "suffixes";
+    return ctx.cls.pools.normal[k].includes(id) && !raw.pools.normal[k].includes(id);
+  }) : [];
+  // 形: 普通の狙いを先に作り、差してから、ルーンの MOD を最後の冒涜で取る (冒涜の 3 択は普通の置き場も引くので差した後なら出る)。
+  // ルーンの狙いが 1 つで、冒涜の MOD (冒涜でしか付かない狙い) が無い時だけ
+  const desecOnly = inp.targets.some((t) => ctx.data.mods.get(t.modId)?.source === "desecrated");
+  if (runeIds.length === 1 && !desecOnly) {
+    for (const pk of picks.slice(0, 2)) picks.push({ ...pk, label: `${pk.label}・ルーンは後で差す`, lateSocket: runeIds, desecratePick: runeIds[0]! });
+  }
   const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
   for (const pk of picks) {
     for (const g of ["catalyst", "all"] as const) for (const an of annuls) variants.push({

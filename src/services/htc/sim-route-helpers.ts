@@ -80,6 +80,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
    * 創造性で 2)。2026-09-26: 前は「付いているか」だけ見ていて、アストリッドを差しても 2 つ目のエッセンスが打てなかった
    */
   const craftedCount = (s: SimState): number => (s.breach ? 1 : 0) + s.slots.filter((x) => x.crafted).length;
+  /** 引く置き場: 特別な MOD のルーンをまだ差していなければ差す前のベース (2026-10-03 その 3) */
+  const poolCls = (s: SimState) => (ctx.rawCls && s.socketed === false ? ctx.rawCls : cls);
   const craftedLimit = ctx.craftedLimit ?? 1;
   /** 深淵のエッセンスの値段のキー (クラスごと) */
   const abyssKey = `essence:perfect:${cls.id}/PerfectEssence_EssenceAbyss`;
@@ -103,13 +105,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
    */
   function roll(s: SimState, sides: Side[], floor: number, tag: string | null, q: number): RollOutcome[] {
     const occ = families(s);
-    const key = `${sides.join()}|${floor}|${tag}|${q}|${[...occ].sort().join()}`;
+    const pc = poolCls(s);
+    const key = `${pc === cls ? "" : "raw|"}${sides.join()}|${floor}|${tag}|${q}|${[...occ].sort().join()}`;
     const hit = memo.get(key);
     if (hit) return hit;
     const mult = tag ? catalysingMultiplier(q) : 1;
     const out: Array<{ modId: string | null; family: string; side: Side; w: number; tiers: Array<{ lvl: number; p: number }> }> = [];
     for (const side of sides) {
-      for (const id of cls.pools.normal[side === "prefix" ? "prefixes" : "suffixes"]) {
+      for (const id of pc.pools.normal[side === "prefix" ? "prefixes" : "suffixes"]) {
         const m = mod(id);
         if (!m || familyBlocked(m, occ)) continue;
         const k = tag && catalystsFor(m).some((c) => c.tag === tag) ? mult : 1;
@@ -164,6 +167,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
       case "magicEssence": return s.slots.length || s.breach ? "白のベースにだけ (変成 → エッセンス)" : null;
+      case "socket": return s.socketed === false ? null : "もう差してある";
       case "abyss":
         if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
         if (s.slots.some((x) => x.desec)) return "冒涜の MOD を先に外す (エッセンス・合金で上書き)";
@@ -230,6 +234,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "light": return cur("annul") + cur("OmenofLight");
       case "abyss": return cur(abyssKey) + (need ? cur(OMEN.crystallisation[a.side]) : 0);
       case "magicEssence": return cur("transmute") + cur(a.key);
+      case "socket": return ctx.socketCost ?? 0;
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
       case "breach": {
@@ -256,13 +261,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
     // 変質した鎖骨は、その側の異界の MOD も候補に入る (2026-09-27)
     const ow = a.bone === "desecrate_altered" ? (cls.pools.otherworldly?.[a.side === "prefix" ? "prefixes" : "suffixes"] ?? []) : [];
     const want = new Map(n.targets.filter((t) => !has(s, t.modId)).map((t) => [t.modId, t.minTier] as const));
-    const key = `${a.side}|${a.bone}|${a.faction ?? ""}|${marked ? "m" : ""}|${[...want].join()}|${[...occ].sort().join()}`;
+    const pc = poolCls(s);
+    const key = `${pc === cls ? "" : "raw|"}${a.side}|${a.bone}|${a.faction ?? ""}|${marked ? "m" : ""}|${[...want].join()}|${[...occ].sort().join()}`;
     const hit = desecMemo.get(key);
     if (hit) return hit;
     const k = a.side === "prefix" ? "prefixes" : "suffixes";
     // 勢力のお告げ: その勢力の冒涜の MOD だけ (普通の MOD・異界は出ない)、MOD ごとに等しく (段の中は重みのまま)
     const tag = a.faction ? FACTION_TAG[a.faction] : null;
-    const ids = tag ? cls.pools.desecrated[k] : [...new Set([...cls.pools.normal[k], ...cls.pools.desecrated[k], ...ow])];
+    const ids = tag ? pc.pools.desecrated[k] : [...new Set([...pc.pools.normal[k], ...pc.pools.desecrated[k], ...ow])];
     const opts: DesecOpt[] = ids.flatMap((id) => {
       const m = mod(id);
       if (!m || familyBlocked(m, occ) || (tag && !m.tags.includes(tag))) return [];
@@ -362,6 +368,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const em = mod(a.modId);
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true, ...(em ? { family: em.family, lvl: em.tiers[0]?.ilvl ?? 1 } : {}) }] };
       }
+      case "socket": return { ...s, socketed: true };
       case "magicEssence": {
         // エッセンスの MOD + 変成で付いた 1 つ (外れ、狙いなら狙い。エッセンスと同じ系統は出ない = 先に置いてから引く)
         const em = mod(a.modId);

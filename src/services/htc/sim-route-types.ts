@@ -34,6 +34,11 @@ export type SimAction =
    * MOD が 1 つも無い時だけ。付いた MOD はクラフト MOD (エッセンスの MOD は 1 つまで)
    */
   | { kind: "magicEssence"; modId: string; key: string }
+  /**
+   * 特別な MOD のルーン (コルの狩り 等) をここで差す (2026-10-03、その 3 ソケットの時機)。差す前は ctx.rawCls (ルーンの置き場無し) で引き、
+   * 差した後はルーンの置き場込み (ctx.cls)。ルーンと熟練工の代 (ctx.socketCost) はこの手で払う (この手が無いツリーは今まで通り最初に払う)
+   */
+  | { kind: "socket" }
   | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
@@ -122,6 +127,8 @@ export interface SimSlot {
 export interface SimState {
   slots: SimSlot[];
   breach: boolean;
+  /** 特別な MOD のルーンを差したか (差す手 socket のあるツリーだけ false から始まる) */
+  socketed?: boolean;
   /**
    * 今の品質 (%) と種類 (カタリストのタグ)。品質の手を打つと入る。**ブリーチの MOD が消えても下がらない**
    * (オーナー 2026-09-24:「一度 40% に上げた後、品質 MOD 消してもそのままだからね」)。
@@ -164,7 +171,7 @@ export interface SimResult {
  * 確定の手 (必ず付く・必ず消える)。× の行き先が未設定でも止めずに○の行き先へ進む
  * (オーナー 2026-09-24:「一応確定やから、そこの手でバツはデフォで入力しなかったら無視するように」)
  */
-export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss", "magicEssence"]);
+export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss", "magicEssence", "socket"]);
 
 /** 側のお告げを使う手か (高貴・消去・カオスは側を選んだ時、エッセンス・ブリーチ・冒涜はいつも)。画面の「お告げ不要」の出し分け用 */
 export function hasSideOmen(a: SimAction | null): boolean {
@@ -181,4 +188,6 @@ export function hasSideOmen(a: SimAction | null): boolean {
  * craftedLimit = 持てるクラフト MOD の数 (既定 1、アストリッドの創造性で 2)。socketCost = ソケットに差す物の代 (1 回の作成に
  * 1 度、各回の初めに足す)。2026-09-26 オーナー「アストリッドやら追加しとこうか」([[sockets.ts]])
  */
-export type SimCtx = StepCtx & { baseQuality?: number; craftedLimit?: number; socketCost?: number };
+export type SimCtx = StepCtx & { baseQuality?: number; craftedLimit?: number; socketCost?: number;
+  /** 特別な MOD のルーンを差す前のベース (置き場にルーンの MOD が無い)。差す手 socket の前はこれで引く */
+  rawCls?: import("../../vendor/poe2htc/engine/types").ItemBase };

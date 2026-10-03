@@ -92,6 +92,8 @@ export function simulateTree(inp: {
   // 耐性用に戻しに行かない)
   const qualityReady = (st: SimState, pos: number): boolean => {
     const x = nodes[main[pos]!]!;
+    // ルーンを差す手は、差した後は戻り先にしない (2026-10-03 その 3)
+    if (x.action?.kind === "socket") return st.socketed !== false;
     if (x.action?.kind !== "quality") return false;
     // その種類で上限まで入っている時だけ (触媒の高貴で使い切った後の 0 は入れ直す)
     if (st.quality != null && st.qualityTag === x.action.catalyst && st.quality >= (ctx.baseQuality ?? 20) + (st.breach ? 20 : 0)) return true;
@@ -138,10 +140,12 @@ export function simulateTree(inp: {
   const keepCount = inp.start.slots.filter((x) => x.keep).length;
   // ソケットに差す物 (ルーン + 熟練工のオーブ) は 1 回の作成に 1 度、初めに払う。相場に無ければ回さずに止める
   const socketCost = ctx.socketCost ?? 0;
+  // ルーンを差す手のあるツリーは、差すまでルーンの置き場無しで引き、代はその手で払う (2026-10-03 その 3)
+  const lateSocket = !!ctx.rawCls && nodes.some((n) => n.action?.kind === "socket");
   for (let r = 0; r < runs; r++) {
     finalQualityDone = false;
-    let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })) };
-    let cost = Number.isFinite(socketCost) ? socketCost : 0;
+    let s: SimState = { ...inp.start, slots: inp.start.slots.map((x) => ({ ...x })), ...(lateSocket ? { socketed: false } : {}) };
+    let cost = lateSocket ? 0 : Number.isFinite(socketCost) ? socketCost : 0;
     let at = nodes.length ? 0 : -1;
     let end: string | null = !Number.isFinite(socketCost) ? "ソケットに差す物 (ルーン・熟練工のオーブ) が相場に無い" : nodes.length ? null : "STEP が無い";
     if (end) at = -1;

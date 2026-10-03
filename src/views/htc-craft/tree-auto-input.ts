@@ -71,6 +71,8 @@ export interface AutoTreeInput {
    * 省くと上書きできる時は上書き。比べる用 (オーナー 2026-09-25:「安いリロール優先。骨も光を使うなら古代が良かったりする。確率計算で判断して」)
    */
   reroll?: "overwrite" | "light" | "abyss";
+  /** 特別な MOD のルーンを後で差す時の、ルーンの置き場の狙い (その MOD を狙う最初の手の前に「差す」手。省くと最初から差したまま) */
+  lateSocket?: readonly string[];
   /** 白のベースに 変成 → 普通のエッセンス で最初に付ける狙い ([[magicEssenceFor]])。省くと使わない (比べる用の候補) */
   magicEssence?: { modId: string; key: string } | null;
   /** 持てるクラフト MOD の数 (アストリッドの創造性で 2)。深淵の印の輪は 2 が要る */
