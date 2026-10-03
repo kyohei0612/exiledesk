@@ -61,9 +61,9 @@ def test_chunks_match_one_stream(tmp_path: Path) -> None:
 def test_parallel_matches_one_stream(tmp_path: Path) -> None:
     cues, result, ctx = _ctx(tmp_path)
     whole = [f.convert("RGB").tobytes() for _, f in iter_frames(cues, result, NameBook.load())]
-    got = list(parallel.iter_frames_parallel(ctx, workers=2))
+    got = [(n, (w, h, bytes(b))) for n, (w, h, b) in parallel.iter_frames_parallel(ctx, workers=2)]
     assert [n for n, _ in got] == list(range(len(whole)))
-    assert [raw[2] for _, raw in got] == whole
+    assert [bytes(raw[2]) for _, raw in got] == whole
 
 
 def test_default_workers_leaves_cores() -> None:

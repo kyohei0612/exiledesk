@@ -61,10 +61,10 @@ def _tail(audio: Path, out: Path, vargs: list[str]) -> list[str]:
     ]
 
 
-Frame = Image.Image | tuple[int, int, bytes]  # 絵か、(幅, 高さ, RGB) (並べて作った時)
+Frame = Image.Image | tuple[int, int, bytes | memoryview]  # 絵か、(幅, 高さ, RGB) (並べて作った時)
 
 
-def _rgb(frame: Frame) -> tuple[tuple[int, int], bytes]:
+def _rgb(frame: Frame) -> tuple[tuple[int, int], bytes | memoryview]:
     if isinstance(frame, tuple):
         return (frame[0], frame[1]), frame[2]
     rgb = frame.convert("RGB")
