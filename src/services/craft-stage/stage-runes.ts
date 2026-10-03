@@ -143,7 +143,7 @@ export function applyRune(item: StageItem, key: string): StageApply {
   const sockets = item.sockets ?? 0;
   const now = item.augments ?? [];
   if (rune.available === false) return skip(item, "今のゲームには無いルーン (相場に無い)");
-  const place = placeBlock(rule, { category: item.cls.category, rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified });
+  const place = placeBlock(rule, { category: item.cls.category, rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified }, !!runeEffectFor(rune, item.cls.category));
   if (place) return skip(item, place);
   if (!sockets) return skip(item, "ソケットが無い (先に熟練工のオーブ)");
   if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, `ソケットは ${sockets} つ (${p.socket} 番目は無い)`);

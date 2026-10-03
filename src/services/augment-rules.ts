@@ -98,12 +98,17 @@ export function slotOk(rule: AugmentRule, category: string): boolean | null {
 export const slotLabel = (rule: AugmentRule): string => (!rule.slotsKnown ? "分からない" : !rule.slots ? "どの装備にも" : rule.slots.join("・"));
 
 /** はめる前の決まり (部位・レアリティ・コラプト)。はめられるなら null、だめなら理由 (ゲームの言葉で) */
-export function placeBlock(rule: AugmentRule | null, item: { category: string; rarity: string; corrupted?: boolean; sanctified?: boolean }): string | null {
+/**
+ * はめられるか。effectFits = 効果のデータ (SoulCoreStats) でこの部位に効果の行があるか。渡されたら部位の判定は**そちらを正**にする
+ * (2026-10-03: 説明文の部位と効果の部位が食い違う 5 件。説明文は大まかな言葉 (盾 ⊃ バックラー、遠距離武器 ⊃ スピア等) か古いまま
+ * (グロルドのアイドル: 説明文「手袋」、取引所の出品は 靴 883 件 / 手袋 0 件) だったので、オーナーと決めて効果のデータに合わせた)
+ */
+export function placeBlock(rule: AugmentRule | null, item: { category: string; rarity: string; corrupted?: boolean; sanctified?: boolean }, effectFits?: boolean): string | null {
   if (!rule || !rule.slotsKnown || rule.removable == null) {
     return `決まりがクライアントの説明文から読めない${rule?.extra?.length ? ` (${rule.extra.join("。")})` : ""}`;
   }
   if ((item.corrupted || item.sanctified) && !rule.corruptOk) return "コラプト・聖別したアイテムにははめられない";
-  if (slotOk(rule, item.category) === false) return `${slotLabel(rule)}の空のオーグメントソケットにだけはめられる`;
+  if (effectFits === false || (effectFits === undefined && slotOk(rule, item.category) === false)) return `${slotLabel(rule)}の空のオーグメントソケットにだけはめられる`;
   if (rule.rarity === "rare" && item.rarity !== "rare") return "レアのアイテムにだけはめられる";
   return null;
 }

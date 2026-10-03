@@ -16,7 +16,6 @@ import { stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
 import { isRune, runeEffectFor, runeKeys, runeNameOf, runeOf } from "../services/craft-stage/stage-runes";
-import { augmentRule, slotOk } from "../services/augment-rules";
 import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
@@ -59,15 +58,15 @@ export const RUNE_GROUPS: ShelfGroup[] = [
   { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
 ];
 /**
- * 今のアイテムに効き目があって、説明文の部位の制限 (「靴の空のオーグメントソケットに」、augment-rules.ts) に入るルーンだけ
+ * 今のアイテムに効き目がある (効果のデータにこの部位の行がある) ルーンだけ
  * (グループごと、空のグループは出さない)。部位が説明文から読めない物 (傑作のルーン・アルダーの遺産) は出しておき、打つと理由が出る
  */
 export function runesFor(item: StageItem | null): ShelfGroup[] {
   if (!item) return [];
   const fits = (k: string): boolean => {
     const r = runeOf(k);
-    const rule = augmentRule(runeNameOf(k));
-    return !!r && !!runeEffectFor(r, item.cls.category) && (!rule || slotOk(rule, item.cls.category) !== false);
+    // 部位は効果のデータ (この部位に効果の行があるか) を正にする。説明文の部位とは 5 件食い違う (augment-rules.ts の placeBlock)
+    return !!r && !!runeEffectFor(r, item.cls.category);
   };
   return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter(fits) })).filter((g) => g.keys.length);
 }
