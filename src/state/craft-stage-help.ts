@@ -8,6 +8,7 @@
 import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
 import { GNAWED_MAX_ILVL } from "../services/craft-stage/apply-currency";
 import { fillHashes, jaOfMod } from "../services/htc/mod-text";
+import { tierDisplayRanges } from "../services/mods/stat-scale";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
 import { enchantPool } from "../services/craft-stage/apply-vaal";
@@ -187,7 +188,8 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     const t = essenceTarget(data, item, key);
     if (!t) return ["このベースには使えないエッセンス"];
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
-    const text = fillHashes(jaOfMod(t.mod), tier?.ranges ?? []);
+    // 数値は画面の単位で (services/mods/stat-scale.ts)
+    const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
     const side = t.side === "prefix" ? "プレフィックス" : "サフィックス";
     if (t.level === "perfect") {
       return [

@@ -14,6 +14,7 @@ import { itemBaseFor } from "../../services/htc/bridge";
 import { jaOfMod } from "../../services/htc/mod-text";
 import { isCraftedMod } from "../../services/htc/craft-slots";
 import { fillShares, tierWeight } from "../../services/mods/mod-rules";
+import { rangeLabel, tierDisplayRanges } from "../../services/mods/stat-scale";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
@@ -34,8 +35,8 @@ export interface ModRow {
   modId: string;
   ja: string;
   side: "P" | "S";
-  /** 段の名前 (低い方から)。`tiers[i]` と同じ並び */
-  tiers: { name: string; ilvl: number; range: string }[];
+  /** 段の名前 (低い方から)。`tiers[i]` と同じ並び。range は表示 (「150-164」)、ranges は画面の単位の幅 (文の # を埋めるのに使う) */
+  tiers: { name: string; ilvl: number; range: string; ranges: number[][] }[];
   /** 確定で乗せられる MOD (エッセンス / 合金) か */
   crafted: boolean;
   /**
@@ -146,7 +147,9 @@ export function usePicker() {
           .map(({ t }) => ({
             name: String(t.name ?? ""),
             ilvl: t.ilvl,
-            range: (t.ranges ?? []).map((r) => `${r[0]}-${r[1]}`).join(" / "),
+            // 画面の単位で (決まりは services/mods/stat-scale.ts)
+            range: rangeLabel(t),
+            ranges: tierDisplayRanges(t),
           }));
         if (tiers.length === 0) continue; // この ilvl では 1 段も取れない
         out.push({ modId: id, ja, side, tiers, crafted: isCraftedMod(mod), group, weight, share: 0, ...(mod.alloy ? { alloy: true } : {}) });

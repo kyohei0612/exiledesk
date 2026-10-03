@@ -16,6 +16,7 @@
 import modsBundle from "../../i18n/mods-bundle.json";
 import type { ModTierRow } from "../craft-v2/types";
 import { normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers } from "./normalize";
+import { displayValue } from "./stat-scale";
 
 interface BundleStat {
   id: string;
@@ -54,6 +55,24 @@ function displayRanges(textEn: string): Array<[number, number]> {
   return out;
 }
 
+/**
+ * 原本 1 件の表示の下限 / 上限。表示値 (text_en) を優先し、数が合わなければ stats を単位の決まり (stat-scale.ts) で画面の値に。
+ * ティア表に乗らない物 (値の無い MOD) は null。pnpm check:mods がここの答えを原本と突き合わせる
+ * (2026-10-03: 数が合わない時に stats の生の値 (1 万分率の 400 など) を出していた)
+ */
+export function sourceRanges(e: BundleEntry): { mins: number[]; maxs: number[] } | null {
+  if (!e.text_en) return null;
+  const stats = (e.stats ?? []).filter((s) => typeof s.min === "number" && typeof s.max === "number");
+  if (stats.length === 0) return null;
+  const ranges = displayRanges(stripRichTextMarkers(e.text_en));
+  const useDisplay = ranges.length === stats.length;
+  const lo = (s: BundleStat) => displayValue(s.id, s.min as number);
+  const hi = (s: BundleStat) => displayValue(s.id, s.max as number);
+  const mins = useDisplay ? ranges.map((r) => Math.min(r[0], r[1])) : stats.map((s) => Math.min(lo(s), hi(s)));
+  const maxs = useDisplay ? ranges.map((r) => Math.max(r[0], r[1])) : stats.map((s) => Math.max(lo(s), hi(s)));
+  return { mins, maxs };
+}
+
 /** normalize(text_en) → その文言を持つ mod */
 const SOURCES: Map<string, TierSource[]> = (() => {
   const dict = modsBundle as Record<string, BundleEntry>;
@@ -64,14 +83,9 @@ const SOURCES: Map<string, TierSource[]> = (() => {
     if (e.desecrated || EXCLUDED_KEY.test(key)) continue;
     // ハイブリッド (複数行) はティア表に混ぜない (単独 mod の T1..Tn と別物)
     if (/\r?\n/.test(e.text_en.trim())) continue;
-    const stats = (e.stats ?? []).filter((s) => typeof s.min === "number" && typeof s.max === "number");
-    if (stats.length === 0) continue;
-    // 表示値 (text_en) を優先。数が合わなければ stats の内部値
-    const ranges = displayRanges(stripRichTextMarkers(e.text_en));
-    const useDisplay = ranges.length === stats.length;
-    const mins = useDisplay ? ranges.map((r) => Math.min(r[0], r[1])) : stats.map((s) => s.min as number);
-    const maxs = useDisplay ? ranges.map((r) => Math.max(r[0], r[1])) : stats.map((s) => s.max as number);
-    const src: TierSource = { key, level: e.level ?? 0, mins, maxs, spawn: e.spawn ?? [] };
+    const got = sourceRanges(e);
+    if (!got) continue;
+    const src: TierSource = { key, level: e.level ?? 0, mins: got.mins, maxs: got.maxs, spawn: e.spawn ?? [] };
     // キーはマーカー除去 + 小文字 (クライアントは "Lightning damage" のように小文字が混ざる)
     const k = normalizeModTextKey(e.text_en);
     if (!k) continue;

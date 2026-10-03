@@ -21,6 +21,7 @@
  */
 import { loadHtcPatch } from "../htc/patch";
 import { tierWeight } from "../mods/mod-rules";
+import { rangeLabel, tierDisplayRanges } from "../mods/stat-scale";
 import { parseJaItem, targetsFor } from "../htc/paste";
 import { baseForSolving } from "../htc/bridge";
 import { tradeFiltersFor } from "../htc/buy-or-craft";
@@ -121,7 +122,8 @@ function nearestTier(mod: Mod, text: string, level: number): number | null {
   let best: number | null = null;
   let bestD = Infinity;
   mod.tiers.forEach((t, i) => {
-    const r = t.ranges ?? [];
+    // 貼り付けの数字は画面の単位なので、段の幅も画面の単位にして比べる (services/mods/stat-scale.ts)
+    const r = tierDisplayRanges(t);
     if (t.ilvl > level || r.length !== nums.length || !r.length) return;
     const d = r.reduce((s, x, k) => {
       const lo = Number(x[0]);
@@ -178,7 +180,7 @@ export function analyzeRare(it: BuildItem): RareAnalysis {
           const side = mod?.type === "prefix" || mod?.type === "suffix" ? mod.type : null;
           const cur = (sanctified && mod ? nearestTier(mod, text, it.itemLevel || 100) : null) ?? t.minTierIndex ?? 0;
           const options = tiers
-            .map((tr, i) => ({ i, ilvl: tr.ilvl, label: `T${tiers.length - i} 以上 (${(tr.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")})` }))
+            .map((tr, i) => ({ i, ilvl: tr.ilvl, label: `T${tiers.length - i} 以上 (${rangeLabel(tr)})` }))
             .filter((o) => o.ilvl <= (it.itemLevel || 100) || o.i === cur)
             .reverse()
             .map(({ i, label }) => ({ i, label }));

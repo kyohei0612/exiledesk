@@ -84,8 +84,8 @@ const desecTaken = computed(() => pk.picks.value.some((p) => { const g = pk.modR
 /** 文面の # を段の幅で埋める (入れた物はその段、まだの物は一番上の段) */
 function named(m: ModRow): string {
   const i = pk.tierOf(m.modId) ?? m.tiers.length - 1;
-  const ranges = (m.tiers[i]?.range ?? "").split(" / ").filter(Boolean).map((r) => r.split("-") as [string, string]);
-  return fillHashes(m.ja, ranges);
+  // 表示の文字列を割らずに、画面の単位の幅そのもの (負の値・1 点の幅でも崩れない。2026-10-03)
+  return fillHashes(m.ja, m.tiers[i]?.ranges ?? []);
 }
 /** 段の表示 (T1 が一番上) */
 const tierLabel = (m: ModRow, i: number): string => `T${m.tiers.length - i} 以上 (${m.tiers[i]!.range})`;

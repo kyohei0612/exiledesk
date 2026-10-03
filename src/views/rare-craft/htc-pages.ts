@@ -11,16 +11,18 @@
  */
 import type { Mod, PatchData, Tier } from "../../vendor/poe2htc/engine/types";
 import { fillHashes } from "../../services/htc/mod-text";
+import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import type { WEssence, WMod, WPage, WStat } from "./sim-data";
 
 type TierWithStats = Tier & { stats?: readonly string[] };
 
 function statsOf(tier: TierWithStats, lend: readonly string[] | undefined, byCount: Record<string, string[]> | undefined): WStat[] {
   const ids = tier.stats?.length ? tier.stats : lend ?? byCount?.[String(tier.ranges.length)] ?? [];
-  return tier.ranges.map((r, i) => ({ id: ids[i] ?? "", min: r[0] ?? 0, max: r[1] ?? r[0] ?? 0 })).filter((s) => s.id);
+  // 値は画面の単位 (services/mods/stat-scale.ts)。シミュレーターの列 (ES / 耐性 / 移動速度) の stat は元から割らない物
+  return tierDisplayRanges(tier).map((r, i) => ({ id: ids[i] ?? "", min: r[0] ?? 0, max: r[1] ?? r[0] ?? 0 })).filter((s) => s.id);
 }
 /** 数値を段の幅で埋めた文面 ("+#" → "+(5-8)") */
-const textOf = (mod: Mod, tier: Tier): string => fillHashes(mod.text ?? mod.family, tier.ranges);
+const textOf = (mod: Mod, tier: Tier): string => fillHashes(mod.text ?? mod.family, tierDisplayRanges(tier));
 
 export function pageFromHtc(data: PatchData, rowId: string, familyStats: Record<string, Record<string, string[]>> = {}): WPage | null {
   const row = data.bases.get(rowId);

@@ -16,6 +16,7 @@ import { baseChoices, type BaseChoice } from "../../services/htc/base-choice";
 import { craftedSurvey, isCraftedMod, type CraftedSurvey } from "../../services/htc/craft-slots";
 import { NO_SOCKET, effectiveSocket, socketCountFor, socketsMinFor, type SocketPick } from "../../services/htc/sockets";
 import { jaOfMod, jaOfPastedLine, fillHashes } from "../../services/htc/mod-text";
+import { rangeLabel, tierDisplayRanges } from "../../services/mods/stat-scale";
 import { boostedBy } from "../../services/htc/quality";
 import { isPlaceholderWeight, OVERRIDDEN, WEIGHT_OVERRIDE_NOTE } from "../../services/htc/weight-overrides";
 import { buildHtcPrices, type HtcPriceCoverage } from "../../services/htc/prices";
@@ -250,7 +251,8 @@ export function useHtcCraft() {
         text: got.texts[i] ? jaOfPastedLine(got.texts[i]!) ?? got.texts[i]! : tg.modId,
         side: mod.type === "prefix" ? "P" : "S",
         tierName: String(tier.name ?? ""),
-        range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / "),
+        // 画面の単位で (1 万分率 / 毎分 の生の値を出さない。決まりは services/mods/stat-scale.ts)
+        range: rangeLabel(tier),
         // **`boostedBy` を使うこと。**タグだけ見て書き直すと判定がずれる (向こうはクラスも見る)。
         // 実際ずれていて、割り戻したキャストスピードに印が付いていなかった (2026-09-23)
         boosted: !!(it?.quality && it.catalystTag && boostedBy(mod, it.catalystTag)),
@@ -294,7 +296,7 @@ export function useHtcCraft() {
       applyTargets(
         d,
         cls,
-        { targets: [...picks], texts: picks.map((p2) => { const m = d.mods.get(p2.modId)!; return fillHashes(jaOfMod(m), m.tiers[p2.minTierIndex ?? 0]?.ranges ?? []); }) },
+        { targets: [...picks], texts: picks.map((p2) => { const m = d.mods.get(p2.modId)!; const t = m.tiers[p2.minTierIndex ?? 0]; return fillHashes(jaOfMod(m), t ? tierDisplayRanges(t) : []); }) },
         baseName,
       );
       diagBusy.value = true;
@@ -361,7 +363,7 @@ export function useHtcCraft() {
     targets.value = re(targets.value);
     fracturedTargets.value = re(fracturedTargets.value);
     rows.value = rows.value.map((r) => (r.modId === modId
-      ? { ...r, tierName: String(tier.name ?? ""), range: (tier.ranges ?? []).map((r2) => `${r2[0]}-${r2[1]}`).join(" / ") } : r));
+      ? { ...r, tierName: String(tier.name ?? ""), range: rangeLabel(tier) } : r));
   }
 
   /**

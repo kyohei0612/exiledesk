@@ -11,6 +11,7 @@ import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfMod } from "../htc/mod-text";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
+import { displayValue, tierDisplayRanges, type TierLike } from "../mods/stat-scale";
 import { swapNums } from "./text-nums";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
@@ -159,28 +160,20 @@ export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: 
   }, mod, rng);
 }
 /**
- * データの値の単位 → 画面の単位。リーチ・クリティカル率は 1 万分率 (645 → 6.45%)、再生は毎分 (60 → 毎秒 1)。
- * 転がすのはデータの整数のまま (ゲームと同じ刻み) で、表示と values / ranges は画面の単位にする
- */
-function scaleOf(stat: string | undefined): { div: number; digits: number } | null {
-  if (!stat) return null;
-  if (/permyriad$/.test(stat) || stat === "local_critical_strike_chance") return { div: 100, digits: 2 };
-  if (/per_minute$/.test(stat)) return { div: 60, digits: 1 };
-  return null;
-}
-const scaled = (v: number, sc: { div: number; digits: number } | null): number => (sc ? Math.round((v / sc.div) * 10 ** sc.digits) / 10 ** sc.digits : v);
-/**
  * 段はそのままで数値だけ転がし直す (神のオーブ)。段の範囲はデータから引き直す。
+ * データの値の単位 → 画面の単位 (リーチ・クリティカル率は 1 万分率 645 → 6.45%、再生は毎分 60 → 毎秒 1) の決まりは
+ * services/mods/stat-scale.ts に 1 つ (2026-10-03 にここから移した)。転がすのはデータの整数のまま (ゲームと同じ刻み) で、
+ * 表示と values / ranges は画面の単位にする。stats を持たない段 (同梱の冒涜・エッセンス) の ranges は元から画面の単位
  * fixed: 数値を指名する (画面の単位、要望 ⑱ の pick.values / start.mods[].values)。無ければ転がす
  */
 export function withValues(m: StageMod, mod: Mod, rng: () => number, fixed?: readonly number[]): StageMod {
   const tier = mod.tiers[m.tierIndex]!;
   const raw = (tier.ranges ?? []).map((r) => [Number(r[0]), Number(r[1])]);
-  // stats は型に無いがデータには入っている (patch の段の stat の id)
+  // stats は型に無いがデータには入っている (patch の段の stat の id)。stats の数が合う段だけ換算する (tierDisplayRanges と同じ決まり)
   const stats = (tier as { stats?: readonly string[] }).stats;
-  const scales = raw.map((_r, i) => scaleOf(stats?.[i]));
-  const values = raw.map(([a, b], i) => (fixed?.[i] != null ? fixed[i]! : scaled(rollValue(a!, b!, rng), scales[i]!)));
-  const ranges = raw.map(([a, b], i) => [scaled(a!, scales[i]!), scaled(b!, scales[i]!)]);
+  const statOf = (i: number): string | undefined => (stats && stats.length === raw.length ? stats[i] : undefined);
+  const values = raw.map(([a, b], i) => (fixed?.[i] != null ? fixed[i]! : displayValue(statOf(i), rollValue(a!, b!, rng))));
+  const ranges = tierDisplayRanges(tier as TierLike);
   const en = mod.text ?? mod.id;
   const textEn = fillEn(en, values);
   return { ...m, values, ranges, textJa: fillJa(jaOfMod(mod), textEn, values, signsOf(en)), textEn, ...(stats ? { stats: [...stats] } : {}), ...(mod.tags?.length ? { tags: [...mod.tags] } : {}) };

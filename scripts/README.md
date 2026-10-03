@@ -70,6 +70,22 @@ node scripts/verify-mods-bundle.mjs
 - `text_ja` / `text_en` に null が 1 件でも混入
 - essence < 5 / corrupted < 100 / desecrated < 300
 
+## build-stat-scale-from-client.mjs / check-mod-values.mjs (2026-10-03)
+
+MOD の数値の「データの値 → 画面の値」の決まりと、その全数点検。
+オーナー「異界の MOD で、アミュレットなのに火スペルの MOD の中身が 400% とか。MOD をフルチェックしてくれ」。
+
+```bash
+node scripts/build-stat-scale-from-client.mjs   # pnpm build:stat-scale。csd の token → src/services/mods/stat-scale.json / stat-hidden.json
+node scripts/check-mod-values.mjs               # pnpm check:mods。不一致を一覧、0 件で exit 0 (--all で照合できなかった段も出す)
+```
+
+- 決まりはアプリ側 `src/services/mods/stat-scale.ts` に 1 つ (1 万分率 ÷100、毎分 ÷60、ミリ秒 ÷1000 …)。表は `build:dicts:client` の中でも作り直す
+- 点検の中身は `src/services/mods/mod-values-check.ts` (tests/mod-values.test.ts と同じ関数)。見るのは
+  (a) 原本 mods-bundle の text_en と stats、(b) 計算機のエンジン (poe2htc mods.json + extra-bases.json) の段の ranges、
+  (c) 樹の MOD の段 (dropOnly) と上位プレイヤーの MOD のティア表 (services/mods/tiers.ts)
+- エンジンの段は **stats を持つ段だけ生の値** (stats が無い同梱の冒涜 / エッセンスは poe2db の表示値)。この前提も点検が全段で確かめる
+
 ## 関連ドキュメント
 
 - 調査: `.company/research/topics/poe2-mod-data-sources.md`

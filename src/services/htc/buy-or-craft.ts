@@ -37,6 +37,7 @@
 import { buildSpecQuery } from "../trade2/query";
 import { currencyJa, displayCurrency } from "../../state/display-currency";
 import { htcFamilyStats } from "./patch";
+import { tierDisplayRanges } from "../mods/stat-scale";
 import statMapping from "../../i18n/trade2-stat-mapping.json";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
@@ -192,15 +193,16 @@ export function tradeFiltersFor(
       continue;
     }
     const entries: { id: string; min: number; statId: string }[] = [];
+    const shown = tierDisplayRanges(tier);
     statIds.forEach((statId, i) => {
       const id = STAT_MAP[statId];
       if (!id) {
         unmatched.push(`${t.modId} の ${statId} (取引所の stat が不明)`);
         return;
       }
-      // 範囲は stat と同じ並び。素の下限をそのまま使う
-      const range = tier.ranges[i] ?? tier.ranges[0];
-      const min = Array.isArray(range) ? Number(range[0]) : 0;
+      // 範囲は stat と同じ並び。下限は**画面の単位**で (取引所の条件は表示値。毎分 1746 のままだと毎秒再生の下限が 1746 になって 0 件だった。services/mods/stat-scale.ts)
+      const range = shown[i] ?? shown[0];
+      const min = range ? Math.min(range[0]!, range[1]!) : 0;
       entries.push({ id, min: Number.isFinite(min) ? min : 0, statId });
     });
     // 同じ取引所 stat に落ちた物はここで 1 本にする

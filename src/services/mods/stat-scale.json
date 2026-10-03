@@ -1,0 +1,450 @@
+{
+ "generated": "2026-10-03",
+ "source": "GGG client Data/StatDescriptions/stat_descriptions.csd の token (scripts/build-stat-scale-from-client.mjs)。表に無い stat は割らない",
+ "stats": {
+  "additional_base_critical_strike_chance": {
+   "div": 100,
+   "digits": 2
+  },
+  "additional_critical_strike_chance_per_power_charge_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "aggravate_bleeding_older_than_ms_on_hit": {
+   "div": 1000,
+   "digits": 2
+  },
+  "allies_in_presence_life_regeneration_rate_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "allies_in_presence_life_regeneration_rate_per_minute_equal_to_your_maximum_life_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "apply_ancients_challenge_in_front_facing_radius_on_raise_shield": {
+   "div": 10,
+   "digits": 1
+  },
+  "base_banner_life_regeneration_rate_per_minute_%_to_apply": {
+   "div": 60,
+   "digits": 2
+  },
+  "base_body_armour_permyriad_to_gain_as_physical_thorns_damage": {
+   "div": 100,
+   "digits": 2
+  },
+  "base_chaos_damage_taken_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "base_life_leech_from_all_thorns_damage_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "base_life_leech_from_physical_attack_damage_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "base_life_regeneration_rate_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "base_life_regeneration_rate_per_minute_per_10_intelligence": {
+   "div": 60,
+   "digits": 2
+  },
+  "base_mana_leech_from_physical_attack_damage_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "base_melee_critical_strike_chance_while_unarmed_%": {
+   "div": 100,
+   "digits": 2
+  },
+  "base_rage_regeneration_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "base_thorns_critical_strike_chance": {
+   "div": 100,
+   "digits": 2
+  },
+  "chill_enemy_when_hit_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "chill_prevention_ms_when_chilled": {
+   "div": 1000,
+   "digits": 2
+  },
+  "companions_gain_onslaught_on_hitting_enemies_marked_by_you_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "deaths_oath_debuff_on_kill_base_chaos_damage_to_deal_per_minute": {
+   "div": 60,
+   "digits": 0
+  },
+  "deaths_oath_debuff_on_kill_duration_ms": {
+   "div": 1000,
+   "digits": 0
+  },
+  "dodge_roll_base_travel_distance": {
+   "div": 10,
+   "digits": 1
+  },
+  "dodge_roll_travel_distance_+_if_dodge_rolled_recently": {
+   "div": 10,
+   "digits": 1
+  },
+  "dodge_roll_travel_distance_+_if_not_dodge_rolled_recently": {
+   "div": 10,
+   "digits": 1
+  },
+  "energy_shield_recharge_rate_per_minute_with_all_corrupted_equipped_items": {
+   "div": 60,
+   "digits": 2
+  },
+  "fire_spell_additional_critical_strike_chance_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "gain_a_modifier_from_enemies_in_presence_when_shapeshifting_ms": {
+   "div": 100,
+   "digits": 2
+  },
+  "gain_divinity_ms_when_reaching_maximum_divine_charges": {
+   "div": 1000,
+   "digits": 2
+  },
+  "gain_physical_damage_immunity_on_rampage_threshold_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "gain_soul_eater_stack_on_hit_vs_unique_cooldown_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "gain_soul_eater_with_equipped_corrupted_items_on_vaal_skill_use_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "gain_spirit_charge_every_x_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "generate_x_charges_for_any_flask_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "generate_x_charges_for_charms_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "generate_x_charges_for_life_flasks_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "generate_x_charges_for_mana_flasks_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "ghostflame_on_hit_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "global_life_leech_from_physical_attack_damage_per_red_socket_on_item_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "golem_life_regeneration_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "grant_void_arrow_every_x_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "guardian_gain_life_regeneration_per_minute_%_for_1_second_every_10_seconds": {
+   "div": 60,
+   "digits": 2
+  },
+  "heist_alert_level_gained_per_10_sec": {
+   "div": 100,
+   "digits": 2
+  },
+  "intimidate_enemy_on_block_for_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "life_loss_%_per_minute_while_sprinting": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regen_per_minute_per_endurance_charge": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_%_if_used_a_command_skill_recently": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_%_while_frozen": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_%_while_ignited": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_per_active_buff": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_while_moving": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_per_minute_with_no_corrupted_equipped_items": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%_if_have_been_hit_recently": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%_if_used_life_flask_in_past_10_seconds": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%_per_endurance_charge": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%_per_fragile_regrowth": {
+   "div": 60,
+   "digits": 1
+  },
+  "life_regeneration_rate_per_minute_%_per_frenzy_charge": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_%_when_on_low_life": {
+   "div": 60,
+   "digits": 2
+  },
+  "life_regeneration_rate_per_minute_per_level": {
+   "div": 60,
+   "digits": 2
+  },
+  "local_critical_strike_chance": {
+   "div": 100,
+   "digits": 2
+  },
+  "local_display_aura_base_chaos_damage_to_deal_per_minute": {
+   "div": 60,
+   "digits": 0
+  },
+  "local_display_nearby_enemies_take_X_lightning_damage_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "local_display_socketed_gems_additional_critical_strike_chance_%": {
+   "div": 100,
+   "digits": 2
+  },
+  "local_flask_gain_X_charges_every_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "local_flask_ward_regeneration_per_minute_%_during_flask_effect": {
+   "div": 60,
+   "digits": 1
+  },
+  "local_life_leech_from_physical_damage_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "local_mana_leech_from_physical_damage_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "local_unique_flask_chaos_damage_%_of_maximum_life_to_deal_per_minute_while_healing": {
+   "div": 60,
+   "digits": 2
+  },
+  "local_unique_flask_life_loss_%_per_minute_while_you_have_no_runic_ward_during_flask_effect": {
+   "div": 60,
+   "digits": 2
+  },
+  "local_unique_flask_ward_gained_as_guard_duration_ms_when_flask_effect_ends": {
+   "div": 1000,
+   "digits": 0
+  },
+  "local_weapon_base_crit_chance_permyriad_override": {
+   "div": 100,
+   "digits": 2
+  },
+  "mana_degeneration_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "mana_recharge_rate_per_minute_with_all_corrupted_equipped_items": {
+   "div": 60,
+   "digits": 2
+  },
+  "mana_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "mana_regeneration_rate_per_minute_per_10_devotion": {
+   "div": 60,
+   "digits": 2
+  },
+  "mana_regeneration_rate_per_minute_per_power_charge": {
+   "div": 60,
+   "digits": 2
+  },
+  "mana_reservation_efficiency_-2%_per_1": {
+   "div": 0.5,
+   "digits": 2
+  },
+  "map_breach_splinters_drop_as_stones_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "map_flask_charges_recovered_per_3_seconds_%": {
+   "div": 100,
+   "digits": 2
+  },
+  "map_magic_monster_life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "map_non_unique_monster_life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "map_normal_monster_life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "map_player_base_chaos_damage_taken_per_minute": {
+   "div": 60,
+   "digits": 2
+  },
+  "map_player_death_mark_on_rare_unique_kill_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "map_players_gain_rare_monster_mods_on_kill_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "map_players_gain_soul_eater_on_rare_kill_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "map_rare_monster_life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "map_ritual_offered_rewards_from_rerolls_have_permyriad_chance_to_cost_no_tribute": {
+   "div": 100,
+   "digits": 2
+  },
+  "max_fortification_+1_per_5": {
+   "div": 5,
+   "digits": 2
+  },
+  "melee_range_+": {
+   "div": 10,
+   "digits": 1
+  },
+  "melee_range_+_while_unarmed": {
+   "div": 10,
+   "digits": 1
+  },
+  "mines_invulnerable_for_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "minion_caustic_cloud_on_death_maximum_life_per_minute_to_deal_as_chaos_damage_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "minion_life_regeneration_rate_per_minute_%": {
+   "div": 60,
+   "digits": 2
+  },
+  "movement_speed_bonus_when_throwing_trap_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "non_skill_base_all_damage_%_to_gain_as_physical_per_10%_missing_mana_permyriad": {
+   "div": 100,
+   "digits": 2
+  },
+  "onslaught_buff_duration_on_culling_strike_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "onslaught_buff_duration_on_kill_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "onslaught_on_crit_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "onslaught_on_vaal_skill_use_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "override_weapon_base_critical_strike_chance": {
+   "div": 100,
+   "digits": 2
+  },
+  "phasing_on_rampage_threshold_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "phasing_on_trap_triggered_by_an_enemy_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "rage_loss_delay_ms_+": {
+   "div": 1000,
+   "digits": 2
+  },
+  "reserve_life_instead_of_loss_from_damage_for_x_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "summon_skeletons_cooldown_modifier_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "traps_invulnerable_for_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "unique_blood_barrier_corrupted_blood_base_physical_damage_per_minute_as_%_of_maximum_life": {
+   "div": 60,
+   "digits": 2
+  },
+  "unique_blood_barrier_corrupted_blood_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  },
+  "unique_gain_onslaught_when_hit_duration_ms": {
+   "div": 1000,
+   "digits": 2
+  }
+ }
+}

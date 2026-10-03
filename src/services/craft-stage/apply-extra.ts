@@ -16,7 +16,7 @@
 import type { StageApply, StageItem, StageMod } from "./types";
 import { allMods, maxQualityOf, skip, without } from "./stage-core";
 import { ARMOUR, CASTER, MARTIAL, QUALITY_MAX, QUALITY_STEP } from "./apply-act";
-import { ENCHANTS, rollText } from "./apply-vaal";
+import { ENCHANTS, rollEnchantValues, rollText } from "./apply-vaal";
 import { uniquesOfSameClass } from "./stage-bases";
 import upgradesRaw from "./vaal-upgrades.json";
 
@@ -78,7 +78,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
     if (!item.enchant) return skip(item, "コラプトエンチャントが無い");
     const up = UPGRADES[item.enchant.id];
     if (!up) return skip(item, "このエンチャントは上がらない");
-    const vals = up.stats.filter((s) => s.min !== s.max).map((s) => s.min + Math.floor(rng() * (s.max - s.min + 1)));
+    const vals = rollEnchantValues(up.stats, rng);
     const pool = allMods(item).filter((m) => !m.fractured);
     const gone = pool.length ? pool[Math.floor(rng() * pool.length)]! : null;
     const next = { ...(gone ? without(item, gone) : item), enchant: { id: up.id, textJa: rollText(up.ja, vals), textEn: rollText(up.en, vals) } };
@@ -94,7 +94,7 @@ export function applyExtra(item: StageItem, key: string, rng: () => number, outc
       const id = ids[Math.floor(rng() * ids.length)];
       const e = id ? ENCHANTS[id] : undefined;
       if (!id || !e) return done(item);
-      const vals = e.stats.filter((s) => s.min !== s.max).map((s) => s.min + Math.floor(rng() * (s.max - s.min + 1)));
+      const vals = rollEnchantValues(e.stats, rng);
       return done({ ...item, enchant: { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) } });
     }
     case "cultivation": {

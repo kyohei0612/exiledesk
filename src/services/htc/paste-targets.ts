@@ -4,6 +4,7 @@ import { balanceSides, hybridLineParts } from "./paste-sides";
 import { matchKey } from "./bridge-index";
 import { htcBaseInfo, htcDropOnly, htcModSides, type DropOnlyInfo, type DropOnlyTier } from "./patch";
 import { boostedBy, rawValue } from "./quality";
+import { tierDisplayRanges } from "../mods/stat-scale";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { stripMarkers, type PastedItem, type PastedLine } from "./paste-parse";
@@ -89,7 +90,8 @@ function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], le
   for (let i = mod.tiers.length - 1; i >= 0; i--) {
     const t = mod.tiers[i];
     if (!t || t.ilvl > level) continue;
-    const ranges = t.ranges ?? [];
+    // 貼られた数字は画面の単位。段の幅も画面の単位にして比べる (1 万分率・毎分の生の値のままだと毎秒再生 28 が段に合わず最上段に落ちていた。services/mods/stat-scale.ts)
+    const ranges = tierDisplayRanges(t);
     if (ranges.length !== lo.length) continue;
     // 範囲 [r0, r1] と幅 [lo, hi] が重なるか
     if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return i;

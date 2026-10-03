@@ -10,6 +10,7 @@
  * 足し方の細かい丸め (ゲームは切り捨てか四捨五入か) は出典が無いので四捨五入。数値の正は PoB (要望 ⑰-3 の DPS は PoB で計算する)。
  */
 import { baseStatsOf } from "./stage-bases";
+import { displayValue } from "../mods/stat-scale";
 import type { StageItem } from "./types";
 
 export interface PropRow { key: string; label: string; value: string; up: boolean }
@@ -19,7 +20,8 @@ function sums(item: StageItem): Map<string, number> {
   const m = new Map<string, number>();
   const add = (id: string, v: number) => m.set(id, (m.get(id) ?? 0) + v);
   if (item.identified !== false) for (const md of [...item.prefixes, ...item.suffixes]) (md.stats ?? []).forEach((id, i) => add(id, md.values[i] ?? 0));
-  for (const a of item.augments ?? []) for (const s of a.stats) add(s.id, s.value);
+  // ルーンの stat はクライアントの生の値 (リーチ 300 = 3%)。MOD の values は画面の単位なので揃える (services/mods/stat-scale.ts)
+  for (const a of item.augments ?? []) for (const s of a.stats) add(s.id, displayValue(s.id, s.value));
   return m;
 }
 const ELEMENTS = [

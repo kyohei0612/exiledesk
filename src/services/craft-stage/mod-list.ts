@@ -13,6 +13,7 @@ import type { StageItem, StageSide } from "./types";
 import { allMods, takenFamilies } from "./stage-core";
 import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
+import { tierDisplayRanges } from "../mods/stat-scale";
 
 export type ModGroup = "normal" | "essence" | "desecrated" | "otherworldly";
 export const GROUP_JA: Record<ModGroup, string> = { normal: "普通", essence: "エッセンス", desecrated: "冒涜", otherworldly: "異界 (変質した鎖骨)" };
@@ -56,7 +57,8 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
       const rows = mods.map((m): ListRow => {
         const ja = jaOfMod(m);
         const n = m.tiers.length;
-        const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, t.ranges as number[][]) }));
+        // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
+        const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillHashes(ja, tierDisplayRanges(t)) }));
         const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
         const on = onIds.has(m.id);
         return {

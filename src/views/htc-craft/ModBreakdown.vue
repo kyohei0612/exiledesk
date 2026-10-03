@@ -15,6 +15,7 @@ import { jaOfPastedLine } from "../../services/htc/mod-text";
 import { zeroStart } from "./craft-settings";
 import { htcModSides } from "../../services/htc/patch";
 import { matchKey } from "../../services/htc/bridge-index";
+import { rangeLabel } from "../../services/mods/stat-scale";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
@@ -84,7 +85,7 @@ const legend = computed(() => ORDER.filter((k) => rows.value.some((r) => r.kind 
 function tiersOf(modId: string): Array<{ i: number; label: string }> {
   const m = c.data.value?.mods.get(modId);
   const lv = c.item.value?.itemLevel ?? zeroStart.value.itemLevel;
-  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} 以上 (${(t.ranges ?? []).map((x) => `${x[0]}-${x[1]}`).join(" / ")})` }))
+  return (m?.tiers ?? []).map((t, i) => ({ i, ilvl: t.ilvl, label: `T${m!.tiers.length - i} 以上 (${rangeLabel(t)})` }))
     .filter((t) => t.ilvl <= lv).reverse();
 }
 const tierOf = (modId: string): number => c.targets.value.find((t) => t.modId === modId)?.minTierIndex ?? 0;

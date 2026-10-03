@@ -20,6 +20,7 @@ import vaal from "../../i18n/vaal-enchants.json";
 import { addOne, allMods, replaced, retext, skip, without } from "./stage-core";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
+import { displayValue } from "../mods/stat-scale";
 
 interface Enchant { domain: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
@@ -36,6 +37,14 @@ export function enchantPool(item: StageItem): string[] {
   }).map(([id]) => id);
 }
 /** 文面の「(a-b)」を順に振った値にする */
+/**
+ * エンチャントの数値を転がす。転がすのはデータの整数のまま、文に入れる値は画面の単位
+ * (フラスコのチャージ獲得は毎分 20-35 → 毎秒 0.33-0.58。生の値を入れると「毎秒 27」になっていた。services/mods/stat-scale.ts)
+ */
+export function rollEnchantValues(stats: ReadonlyArray<{ id: string; min: number; max: number }>, rng: () => number): number[] {
+  return stats.filter((s) => s.min !== s.max).map((s) => displayValue(s.id, s.min + Math.floor(rng() * (s.max - s.min + 1))));
+}
+
 export function rollText(text: string, vals: readonly number[]): string {
   let i = 0;
   return text.replace(/\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g, (m) => (i < vals.length ? String(vals[i++]) : m));
@@ -72,7 +81,7 @@ export function applyVaal(data: PatchData, item: StageItem, rng: () => number, u
       const id = pool[Math.floor(rng() * pool.length)];
       const e = id ? ENCHANTS[id] : undefined;
       if (!id || !e) return done(item);
-      const vals = e.stats.filter((s) => s.min !== s.max).map((s) => s.min + Math.floor(rng() * (s.max - s.min + 1)));
+      const vals = rollEnchantValues(e.stats, rng);
       return done({ ...item, enchant: { id, textJa: rollText(e.ja, vals), textEn: rollText(e.en, vals) } });
     }
     case "fourth": {

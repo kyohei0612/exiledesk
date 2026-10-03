@@ -1,0 +1,9880 @@
+{
+ "generated": "2026-10-03",
+ "source": "文に値が出ない stat (scripts/build-stat-scale-from-client.mjs)。点検 (check-mod-values) だけが読む",
+ "hidden": [
+  "abyssal_wasting_on_hit",
+  "accuracy_rating_is_doubled",
+  "action_speed_cannot_be_reduced_below_base",
+  "add_endurance_charge_on_enemy_critical_strike",
+  "add_frenzy_charge_every_50_rampage_stacks",
+  "add_frenzy_charge_on_critical_strike",
+  "additive_minion_damage_modifiers_apply_to_you_at_150%_value",
+  "additive_modifiers_to_life_regeneration_also_apply_to_mana_regeneration_rate",
+  "additive_modifiers_to_minion_attack_speed_also_affect_you",
+  "additive_spell_damage_modifiers_apply_to_attack_damage_at_150%_value",
+  "aggravate_bleeding_inflicted_vs_shocked_enemy",
+  "all_attack_damage_can_electrocute",
+  "all_damage_can_chill",
+  "all_damage_can_freeze",
+  "all_damage_can_ignite",
+  "all_damage_can_poison",
+  "all_damage_can_shock",
+  "all_damage_taken_can_ignite",
+  "all_damage_taken_chills_you_while_bleeding",
+  "all_damage_taken_chills_you_while_poisoned",
+  "all_damage_to_bleeding_enemies_contributes_to_chill",
+  "all_damage_to_poisoned_enemies_contributes_to_chill",
+  "all_lightning_damage_to_bleeding_enemies_can_electrocute",
+  "allies_in_your_presence_share_charges_with_you",
+  "always_crit_shocked_enemies",
+  "always_ignite",
+  "always_ignite_while_burning",
+  "always_shock",
+  "ancestral_slam_strike_every_other_strike_or_slam_while_shapeshifted",
+  "apply_blind_on_hit_while_ruby_sapphire_socketed",
+  "apply_debilitate_on_hit_while_emerald_sapphire_socketed",
+  "apply_exposure_on_hit_while_ruby_emerald_socketed",
+  "arctic_armour_no_reservation",
+  "armour_increased_by_uncapped_fire_resistance",
+  "arrow_damage_+50%_vs_pierced_targets",
+  "arrow_projectiles_return_if_they_have_pierced_a_fully_armour_broken_target",
+  "arrow_speed_additive_modifiers_also_apply_to_bow_damage",
+  "arrows_always_pierce_after_chaining",
+  "arrows_that_pierce_chance_to_bleed_25%",
+  "attack_damage_+1%_per_300_of_min_of_armour_or_evasion",
+  "attack_damage_is_lucky_if_surrounded",
+  "attack_damage_that_stuns_also_chills",
+  "attack_projectiles_fork",
+  "attacks_chance_to_bleed_25%_vs_cursed_enemies",
+  "attacks_deal_no_physical_damage",
+  "attacks_do_not_cost_mana",
+  "attacks_inflict_bleeding_on_hit",
+  "avoid_stun_35%_per_active_herald",
+  "base_armour_applies_to_lightning_damage",
+  "base_bleed_chance_is_poison_chance_instead",
+  "base_block_chance_luck",
+  "base_cannot_be_chilled",
+  "base_cannot_be_chilled_or_frozen",
+  "base_cannot_be_electrocuted",
+  "base_cannot_be_frozen",
+  "base_cannot_be_ignited",
+  "base_cannot_be_shocked",
+  "base_cannot_be_stunned",
+  "base_cannot_evade",
+  "base_cannot_gain_bleeding",
+  "base_cannot_leech",
+  "base_chaos_damage_can_electrocute",
+  "base_chaos_damage_does_not_damage_energy_shield_extra_hard",
+  "base_cold_damage_can_poison",
+  "base_cold_immunity",
+  "base_deal_no_physical_damage",
+  "base_enemies_in_your_presence_are_hindered",
+  "base_fire_damage_can_poison",
+  "base_fire_immunity",
+  "base_ignite_deals_chaos_instead",
+  "base_leech_is_instant_on_critical",
+  "base_life_leech_does_not_stop_at_full_life",
+  "base_lightning_damage_can_electrocute",
+  "base_lightning_damage_can_poison",
+  "base_lightning_immunity",
+  "base_physical_damage_can_pin",
+  "base_poison_chance_is_bleed_chance_instead",
+  "bleed_damage_applies_as_fire_instead_of_physical",
+  "bleed_on_stun",
+  "bleeding_damage_on_self_taken_as_fire_instead",
+  "bleeding_reflected_to_self",
+  "blind_from_sightless_conviction_unique",
+  "blind_on_poison_inflicted",
+  "blood_footprints_from_item",
+  "buff_auras_dont_affect_allies",
+  "can_apply_additional_chill",
+  "can_have_2_companions",
+  "can_have_unlimited_companions",
+  "can_wield_2h_axe_sword_mace_in_one_hand",
+  "cannot_be_affected_by_flasks",
+  "cannot_be_blinded",
+  "cannot_be_frozen_with_dex_higher_than_int",
+  "cannot_be_ignited_with_strength_higher_than_dex",
+  "cannot_be_inflicted_by_corrupted_blood",
+  "cannot_be_killed_by_elemental_reflect",
+  "cannot_be_knocked_back",
+  "cannot_be_poisoned",
+  "cannot_be_shocked_while_at_maximum_endurance_charges",
+  "cannot_be_shocked_while_frozen",
+  "cannot_be_shocked_with_int_higher_than_strength",
+  "cannot_be_stunned_by_attacks_if_other_ring_is_elder_item",
+  "cannot_be_stunned_by_blocked_hits",
+  "cannot_be_stunned_by_spells_if_other_ring_is_shaper_item",
+  "cannot_be_stunned_when_on_low_life",
+  "cannot_block",
+  "cannot_cast_spells",
+  "cannot_cause_bleeding",
+  "cannot_crit_non_shocked_enemies",
+  "cannot_gain_power_charges",
+  "cannot_have_current_energy_shield",
+  "cannot_increase_quantity_of_dropped_items",
+  "cannot_increase_rarity_of_dropped_items",
+  "cannot_inflict_elemental_ailments",
+  "cannot_knockback",
+  "cannot_leech_life_from_critical_strikes",
+  "cannot_leech_or_regenerate_mana",
+  "cannot_miss_against_full_life_enemies",
+  "cannot_sprint",
+  "cannot_stun",
+  "cannot_use_warcries",
+  "celestial_footprints_from_item",
+  "chance_to_ignite_is_doubled",
+  "chaos_damage_can_shock",
+  "chaos_damage_does_not_damage_energy_shield_extra_hard_while_not_low_life",
+  "chaos_damage_resistance_is_doubled",
+  "chaos_immunity",
+  "charm_create_consecrated_ground_when_used",
+  "chest_drop_additional_currency_item_divination_cards",
+  "chest_number_of_additional_pirate_uniques_to_drop",
+  "chill_effect_is_reversed",
+  "chills_from_your_hits_cause_shattering",
+  "cold_damage_can_ignite",
+  "conductivity_no_reservation",
+  "convert_100%_energy_shield_to_divinity",
+  "convert_all_life_leech_to_energy_shield_leech",
+  "converts_all_armour_to_evasion_rating",
+  "critical_chance_luck_against_parry_debuffed_enemies",
+  "critical_hits_cannot_consume_impale",
+  "critical_strike_chance_cannot_be_rerolled",
+  "critical_strike_chance_increased_by_overcapped_lightning_resistance",
+  "critical_strikes_deal_no_damage",
+  "crits_have_culling_strike",
+  "culling_strike_on_burning_enemies",
+  "curse_ignores_curse_limit",
+  "curse_on_hit_level_enfeeble",
+  "curse_on_hit_level_flammability",
+  "curse_on_hit_level_temporal_chains",
+  "curses_never_expire",
+  "damage_+%_per_1%_increased_item_found_quantity",
+  "damage_cannot_be_taken_from_ward",
+  "deal_1000_chaos_damage_per_second_for_10_seconds_on_hit",
+  "deal_double_damage_to_enemies_on_full_life",
+  "deal_no_elemental_damage",
+  "deal_no_non_elemental_damage",
+  "deal_no_non_physical_damage",
+  "deal_thorns_damage_on_melee_crit",
+  "deathgrip_presence",
+  "decimating_strike",
+  "deflect_chance_is_lucky_while_on_low_life",
+  "delve_biome_boss_drops_additional_unique_item",
+  "delve_biome_boss_drops_extra_precursor_component_ring",
+  "delve_biome_city_chambers_can_contain_special_delve_chest",
+  "delve_biome_contains_delve_boss",
+  "delve_biome_monster_projectiles_always_pierce",
+  "disable_blessing_skills_and_display_socketed_aura_gems_reserve_no_mana",
+  "disable_chest_slot",
+  "dispel_status_ailments_on_rampage_threshold",
+  "display_area_contains_alluring_vaal_side_area",
+  "display_area_contains_corrupting_tempest",
+  "display_area_contains_improved_labyrinth_trial",
+  "display_cowards_trial_waves_of_monsters",
+  "display_cowards_trial_waves_of_undead_monsters",
+  "display_golden_radiance",
+  "display_map_final_boss_drops_higher_level_gear",
+  "display_map_has_oxygen",
+  "display_map_inhabited_by_wild_beasts",
+  "display_map_large_chest",
+  "display_map_larger_maze",
+  "display_map_mission_id",
+  "display_map_no_monsters",
+  "display_map_restless_dead",
+  "display_memory_line_abyss_beyond_monsters_from_cracks",
+  "display_strongbox_drops_additional_shaper_or_elder_cards",
+  "double_evasion_rating_if_you_havent_been_hit_recently",
+  "dummy_display_is_obliterated",
+  "dummy_display_stat_rune_chaos_convert",
+  "dummy_display_stat_rune_cold_convert",
+  "dummy_display_stat_rune_create_jewel_socket",
+  "dummy_display_stat_rune_fire_convert",
+  "dummy_display_stat_rune_lightning_convert",
+  "dummy_display_stat_rune_olroths_legacy",
+  "dummy_display_stat_rune_upgrade",
+  "each_arrow_fired_gains_random_perdandus_prefix",
+  "effects_from_blinded_are_inverted",
+  "elemental_ailments_reflected_to_self",
+  "elemental_damage_also_contributes_to_flammability_ignite_chill_freeze_and_shock",
+  "elemental_damage_can_shock",
+  "elemental_damage_resisted_by_lowest_elemental_resistance",
+  "enable_unfettered_authority_roll_variation",
+  "endurance_only_conduit",
+  "enemies_chilled_by_hits_take_damage_increased_by_chill_effect",
+  "enemies_explode_on_kill",
+  "enemies_in_presence_are_blinded_by_the_wendigo",
+  "enemies_in_presence_are_intimidated",
+  "enemies_in_presence_count_as_low_life",
+  "enemies_in_presence_have_exposure",
+  "enemies_in_presence_lightning_resist_equal_to_yours",
+  "enemies_in_your_presence_gain_a_stack_of_gruelling_madness_every_second",
+  "enemies_you_ignite_wither_does_not_expire",
+  "enemy_extra_damage_rolls_when_on_full_life",
+  "enemy_hits_roll_low_damage",
+  "enemy_knockback_direction_is_reversed",
+  "energy_generation_is_doubled",
+  "energy_shield_cannot_be_converted",
+  "energy_shield_recharge_start_when_minions_reform",
+  "energy_shield_recharge_start_when_stunned",
+  "energy_shield_recharge_starts_after_spending_2000_mana_every_2_seconds",
+  "essence_abyss_guaranteed_pick",
+  "evasion_rating_increased_by_overcapped_cold_resistance",
+  "extra_gore",
+  "fire_damage_can_inflict_bleeding",
+  "fishing_hook_type",
+  "fishing_lure_type",
+  "flasks_apply_to_your_zombies_and_spectres",
+  "flasks_dispel_burning",
+  "frenzy_only_conduit",
+  "fully_break_enemies_armour_on_heavy_stun_with_shield_skills",
+  "gain_an_additional_vaal_soul_on_kill_if_have_rampaged_recently",
+  "gain_arcane_surge_for_4_seconds_on_minion_death",
+  "gain_arcane_surge_on_spell_hit_by_you_or_your_totems",
+  "gain_armour_equal_to_strength",
+  "gain_dark_whispers_every_second_there_is_a_cursed_enemy_in_presence",
+  "gain_debilitating_presence_ms_on_kill_vs_rare_or_unique_enemy",
+  "gain_druidic_prowess_per_X_rage_spent",
+  "gain_endurance_charge_on_power_charge_expiry",
+  "gain_endurance_charge_on_reaching_low_life_once_per_2s",
+  "gain_frenzy_charge_if_attack_ignites",
+  "gain_frenzy_charge_on_hit_while_bleeding",
+  "gain_frenzy_charge_on_reaching_maximum_power_charges",
+  "gain_iron_reflexes_while_at_maximum_frenzy_charges",
+  "gain_mind_over_matter_while_at_maximum_power_charges",
+  "gain_no_inherent_bonus_from_intelligence",
+  "gain_onslaught_for_4_seconds_on_minion_death",
+  "gain_onslaught_while_at_maximum_endurance_charges",
+  "gain_onslaught_while_you_have_fortify",
+  "gain_phasing_for_4_seconds_on_begin_es_recharge",
+  "gain_phasing_if_enemy_killed_recently",
+  "gain_player_far_shot_while_do_not_have_iron_reflexes",
+  "gain_power_charge_per_second_if_have_not_lost_power_charge_recently",
+  "gain_random_charge_per_second_while_stationary",
+  "gain_rare_monster_mods_on_kill_ms",
+  "gain_runic_binding_stack_on_damaging_spell_hit_once_per_second",
+  "gain_soul_eater_during_flask_effect",
+  "gain_soul_eater_when_hitting_a_rare_or_unique_enemy_that_has_open_weakness",
+  "gifts_from_above_consecrated_ground_while_stationary",
+  "global_always_hit",
+  "global_cannot_crit",
+  "global_equipment_no_attribute_requirements",
+  "global_poison_on_hit",
+  "global_skill_gems_no_attribute_requirements",
+  "glows_in_area_with_unique_fish",
+  "golems_larger_aggro_radius",
+  "grant_fear_overwhelming_stack_on_culling_enemies",
+  "ground_smoke_on_rampage_threshold_ms",
+  "ground_tar_on_take_crit_base_area_of_effect_radius",
+  "has_unique_chaos_shrine_effect",
+  "has_unique_cold_shrine_effect",
+  "has_unique_fire_shrine_effect",
+  "has_unique_lightning_shrine_effect",
+  "have_unholy_might",
+  "heist_alert_level_gained_on_monster_death",
+  "heist_contract_gang_takes_no_cut",
+  "heist_contract_no_travel_cost",
+  "heist_lockdown_is_instant",
+  "herald_mana_reservation_override_45%",
+  "hits_can_only_kill_frozen_enemies",
+  "hits_cannot_be_evaded_vs_blinded_maimed_bleeding_enemies",
+  "hits_ignore_enemy_chaos_resistance_if_all_elder_items_equipped",
+  "ignited_enemies_explode_on_kill",
+  "ignore_hexproof",
+  "immune_to_ally_buff_auras",
+  "immune_to_bleeding",
+  "immune_to_burning_shocks_and_chilled_ground",
+  "immune_to_freeze_and_chill_while_ignited",
+  "immune_to_maim",
+  "increases_and_reductions_to_move_speed_apply_to_es_recharge_rate",
+  "iron_reflexes_rotation_active",
+  "item_drops_on_death",
+  "item_generation_can_have_multiple_crafted_mods",
+  "item_generation_cannot_change_prefixes",
+  "item_generation_cannot_change_suffixes",
+  "item_generation_cannot_roll_attack_affixes",
+  "item_generation_cannot_roll_caster_affixes",
+  "keystone_acrobatics",
+  "keystone_battlemage",
+  "keystone_blood_magic",
+  "keystone_hollow_palm_technique",
+  "keystone_iron_reflexes",
+  "keystone_pain_attunement",
+  "keystone_point_blank",
+  "keystone_unwavering_stance",
+  "kill_enemy_on_hit_if_under_10%_life",
+  "life_leech_also_recovers_based_on_lightning_damage",
+  "life_leech_can_overcap_life",
+  "life_recovery_from_regeneration_is_not_applied",
+  "light_radius_scales_with_energy_shield",
+  "lightning_damage_can_ignite",
+  "lightning_resistance_does_not_apply_to_lighting_damage",
+  "local_all_damage_can_electrocute",
+  "local_all_damage_can_pin",
+  "local_always_heavy_stun_on_full_life",
+  "local_always_hit",
+  "local_always_maim_on_crit",
+  "local_apply_extra_herald_mod_when_synthesised",
+  "local_attacks_cannot_be_blocked",
+  "local_attacks_intimidate_on_hit_for_4_seconds_with_melee_abyss_jewel_socketed",
+  "local_attacks_maim_on_hit_for_4_seconds_with_ranged_abyss_jewel_socketed",
+  "local_bleed_on_hit",
+  "local_blind_enemies_on_attack_hits_with_ranged_abyss_jewel_socketed",
+  "local_can_only_deal_damage_with_this_weapon",
+  "local_can_only_socket_corrupted_gems",
+  "local_can_only_socket_runes",
+  "local_can_only_socket_soul_cores",
+  "local_can_socket_gems_ignoring_colour",
+  "local_cannot_be_thrown",
+  "local_chance_to_bleed_on_crit_50%",
+  "local_chance_to_bleed_on_hit_25%",
+  "local_consecrate_ground_on_flask_use_radius",
+  "local_culling_strike",
+  "local_damage_roll_always_min_or_max",
+  "local_display_aura_allies_have_culling_strike",
+  "local_display_fire_burst_on_hit_%",
+  "local_display_gain_power_charge_on_spending_mana",
+  "local_display_grants_summon_beast_companion",
+  "local_display_manifest_dancing_dervish_destroy_on_end_rampage",
+  "local_display_manifest_dancing_dervish_disables_weapons",
+  "local_display_nearby_allies_action_speed_cannot_be_reduced_below_base",
+  "local_display_nearby_enemies_are_covered_in_ash",
+  "local_display_nearby_enemies_cannot_crit",
+  "local_display_socketed_gems_have_blood_magic",
+  "local_display_socketed_gems_have_elemental_equilibrium",
+  "local_display_socketed_gems_have_secrets_of_suffering",
+  "local_display_socketed_gems_projectiles_nova",
+  "local_display_socketed_skills_summon_your_maximum_number_of_totems_in_formation",
+  "local_display_supported_by_level_10_controlled_destruction",
+  "local_display_supported_by_level_10_intensify",
+  "local_display_trigger_level_18_summon_spectral_wolf_on_kill_10%_chance",
+  "local_double_damage_to_chilled_enemies",
+  "local_double_hit_damage_stun_build_up",
+  "local_flask_adds_knockback_while_healing",
+  "local_flask_always_drinking",
+  "local_flask_cannot_be_stunned_during_flask_effect",
+  "local_flask_cannot_be_used_manually",
+  "local_flask_chilled_ground_on_flask_use_radius",
+  "local_flask_consume_flask_duration_+%_when_used",
+  "local_flask_dispels_burning_and_ignite_immunity_during_effect",
+  "local_flask_effect_not_removed_at_full_life",
+  "local_flask_effect_not_removed_at_full_mana",
+  "local_flask_immune_to_bleeding_and_corrupted_blood_during_flask_effect",
+  "local_flask_immune_to_damage",
+  "local_flask_immune_to_freeze_and_chill_during_flask_effect",
+  "local_flask_immune_to_poison_during_flask_effect",
+  "local_flask_immune_to_shock_during_flask_effect",
+  "local_flask_is_petrified",
+  "local_flask_no_inherent_rage_loss_during_effect",
+  "local_flask_recovers_instantly",
+  "local_flask_remove_curses_on_use",
+  "local_flask_taunt_enemies_on_use_radius",
+  "local_flask_use_causes_area_knockback",
+  "local_flask_use_on_affected_by_bleed",
+  "local_flask_use_on_perfect_timing",
+  "local_force_corruption_outcome_two_enchants",
+  "local_has_no_sockets",
+  "local_idols_gain_additional_socketable_mods",
+  "local_is_alternate_tree_jewel",
+  "local_item_benefit_socketable_as_if_helmet",
+  "local_item_can_be_instilled",
+  "local_item_stats_are_doubled_in_breach",
+  "local_jewel_allocated_non_notable_passives_in_radius_grant_nothing",
+  "local_jewel_can_allocate_passives_from_str_start",
+  "local_jewel_copy_stats_from_unallocated_non_notable_passives_in_radius",
+  "local_jewel_disable_combust_with_40_strength_in_radius",
+  "local_jewel_display_radius_change",
+  "local_jewel_transform_damage_increases_from_cold_fire_to_lightning",
+  "local_jewel_transform_damage_increases_from_cold_lightning_to_fire",
+  "local_jewel_transform_damage_increases_from_fire_lightning_to_cold",
+  "local_jewel_variable_ring_radius_value",
+  "local_kill_enemy_on_hit_if_under_15%_life_if_searing_exarch_dominant",
+  "local_left_ring_slot_projectiles_from_spells_cannot_chain",
+  "local_left_ring_slot_projectiles_from_spells_fork",
+  "local_life_leech_is_instant",
+  "local_physical_damage_roll_always_min_or_max",
+  "local_poison_on_hit",
+  "local_quality_does_not_increase_damage",
+  "local_right_ring_slot_projectiles_from_spells_cannot_fork",
+  "local_ring_disable_other_ring",
+  "local_ring_duplicate_other_ring",
+  "local_shield_double_stun_threshold_while_active_blocking",
+  "local_smoke_ground_on_flask_use_radius",
+  "local_soul_core_gain_benefits_from_boots_as_well",
+  "local_tablet_make_maps_in_radius_available",
+  "local_unique_cast_socketed_cold_skills_on_melee_critical_strike",
+  "local_unique_counts_as_dual_wielding",
+  "local_unique_facebreaker_damage_is_fire",
+  "local_unique_flask_kiaras_determination",
+  "local_unique_flask_mana_flask_recovery_can_overcap_mana_during_flask_effect",
+  "local_unique_hungry_loop_has_consumed_gem",
+  "local_unique_jewel_alternate_tree_internal_revision",
+  "local_unique_jewel_alternate_tree_keystone",
+  "local_unique_jewel_alternate_tree_version",
+  "local_unique_jewel_cold_resistance_also_grants_frenzy_charge_on_kill_chance",
+  "local_unique_jewel_damage_increases_applies_to_fire_damage",
+  "local_unique_jewel_elemental_hit_50%_less_cold_damage_per_40_str_and_int",
+  "local_unique_jewel_elemental_hit_cannot_roll_cold_damage_with_40_int_+_str_in_radius",
+  "local_unique_jewel_fire_resistance_also_grants_endurance_charge_on_kill_chance",
+  "local_unique_jewel_lightning_resistance_also_grants_power_charge_on_kill_chance",
+  "local_unique_jewel_nearby_disconnected_passives_can_be_allocated",
+  "local_unique_overflowing_chalice_flask_cannot_gain_flask_charges_during_flask_effect",
+  "local_varunastra_weapon_counts_as_all_1h_melee_weapon_types",
+  "local_weapon_accuracy_is_unaffected_by_distance",
+  "lose_all_charges_on_starting_movement",
+  "lose_all_endurance_charges_when_reaching_maximum",
+  "lose_all_fragile_regrowth_when_hit",
+  "lose_all_power_charges_on_reaching_maximum_power_charges",
+  "lose_all_tailwind_when_hit",
+  "lose_soul_eater_souls_on_flask_use",
+  "lose_spirit_charges_on_savage_hit_taken",
+  "magic_items_drop_identified",
+  "mana_leech_applies_recovery_to_energy_shield_also",
+  "manifest_a_fragment_of_divinity_in_your_presence_every_4_seconds",
+  "map_abyss_monsters_enhanced_per_chasm_closed",
+  "map_abyss_overrun_no_monsters",
+  "map_allow_shrines",
+  "map_also_count_as_desert_biome",
+  "map_also_count_as_forest_biome",
+  "map_also_count_as_grass_biome",
+  "map_also_count_as_mountain_biome",
+  "map_also_count_as_swamp_biome",
+  "map_also_count_as_water_biome",
+  "map_always_has_weather",
+  "map_ambush_chests",
+  "map_area_contains_metamorphs",
+  "map_area_contains_rituals",
+  "map_atlas_influence_type",
+  "map_base_ground_fire_damage_to_deal_per_10_seconds",
+  "map_base_ground_fire_damage_to_deal_per_minute",
+  "map_beyond_demon_always_elite",
+  "map_beyond_from_league_item_rarity_+%_permyriad_per_portal_merge",
+  "map_beyond_monster_difficulty_tankiness_+%_per_portal_merge",
+  "map_beyond_rules",
+  "map_blight_tower_cost_doubled",
+  "map_boss_accompanied_by_bodyguards",
+  "map_boss_accompanied_by_harbinger",
+  "map_boss_drops_additional_conqueror_map",
+  "map_boss_drops_additional_currency_shards",
+  "map_boss_is_possessed",
+  "map_boss_surrounded_by_tormented_spirits",
+  "map_breach_additional_monster_potency_skill",
+  "map_breach_additional_rare_mod_skill",
+  "map_breach_additional_rare_spawner_skill",
+  "map_breach_additional_sacrifice_for_buff_skill",
+  "map_breach_additional_sacrifice_for_rarity_skill",
+  "map_breach_additional_upgrade_zone_skill",
+  "map_breach_hands_are_small",
+  "map_breach_rules",
+  "map_breach_type_override",
+  "map_chance_for_area_%_to_contain_harvest",
+  "map_chests_all_magic_or_rare",
+  "map_contains_abyss_boss",
+  "map_contains_abyss_depths",
+  "map_contains_abyss_depths_with_no_boss",
+  "map_contains_citadel",
+  "map_contains_cleansed_boss",
+  "map_contains_x_additional_packs_on_their_own_team",
+  "map_cowards_trial_extra_ghosts",
+  "map_cowards_trial_extra_oriath_citizens",
+  "map_cowards_trial_extra_phantasms",
+  "map_cowards_trial_extra_raging_spirits",
+  "map_cowards_trial_extra_rhoas",
+  "map_cowards_trial_extra_skeleton_cannons",
+  "map_cowards_trial_extra_zombies",
+  "map_delve_rules",
+  "map_display_strongbox_monsters_are_enraged",
+  "map_doesnt_consume_sextant_use",
+  "map_dropped_maps_are_corrupted_with_8_mods",
+  "map_elder_boss_variation",
+  "map_elemental_weakness_curse_zones",
+  "map_enfeeble_curse_zones",
+  "map_equipment_drops_identified",
+  "map_expedition_league",
+  "map_expedition_saga_contains_boss",
+  "map_expedition_twinned_elites",
+  "map_fishy_effect_0",
+  "map_fishy_effect_1",
+  "map_fishy_effect_2",
+  "map_fishy_effect_3",
+  "map_fixed_seed",
+  "map_force_stone_circle",
+  "map_ground_mana_siphoning",
+  "map_harbingers_drops_additional_currency_shards",
+  "map_harvest_double_lifeforce_dropped",
+  "map_harvest_seeds_1_of_every_2_plot_type_override",
+  "map_has_monoliths",
+  "map_heist_contract_npc_items_cannot_drop",
+  "map_is_branchy",
+  "map_item_drop_quality_also_applies_to_map_item_drop_rarity",
+  "map_items_drop_corrupted",
+  "map_legion_league_force_general",
+  "map_legion_league_force_war_chest",
+  "map_legion_monster_splinter_emblem_drops_duplicated",
+  "map_logbook_has_at_least_1_expedition2_remnant_with_a_power_rune",
+  "map_metamorph_catalyst_drops_duplicated",
+  "map_metamorphosis_league",
+  "map_minimap_revealed",
+  "map_monster_melee_attacks_apply_random_curses",
+  "map_monster_no_drops",
+  "map_monster_unaffected_by_shock",
+  "map_monsters_additional_dexterity_ratio_%_for_evasion",
+  "map_monsters_additional_strength_ratio_%_for_armour",
+  "map_monsters_all_damage_can_chill",
+  "map_monsters_always_ignite",
+  "map_monsters_are_hexproof",
+  "map_monsters_cannot_be_leeched_from",
+  "map_monsters_cannot_be_stunned",
+  "map_monsters_cannot_be_taunted",
+  "map_monsters_drop_ground_fire_on_death_base_radius",
+  "map_monsters_have_onslaught",
+  "map_monsters_immune_to_a_random_status_ailment_or_stun",
+  "map_monsters_movement_speed_cannot_be_reduced_below_base",
+  "map_monsters_poison_on_hit",
+  "map_monsters_reflect_curses",
+  "map_monstrous_treasure_no_monsters",
+  "map_natural_rare_monsters_have_soul_eater",
+  "map_no_refills_in_town",
+  "map_non_unique_items_drop_normal",
+  "map_non_unique_monsters_spawn_X_monsters_on_death",
+  "map_num_extra_blights_",
+  "map_packs_are_abomination_monsters",
+  "map_packs_are_animals",
+  "map_packs_are_str_mission_totems",
+  "map_packs_are_totems",
+  "map_packs_are_vaal",
+  "map_packs_have_pop_up_traps",
+  "map_player_cannot_expose",
+  "map_player_flask_recovery_is_instant",
+  "map_player_has_blood_magic_keystone",
+  "map_player_has_level_X_despair",
+  "map_player_has_level_X_elemental_weakness",
+  "map_player_has_level_X_enfeeble",
+  "map_player_has_level_X_punishment",
+  "map_player_has_level_X_temporal_chains",
+  "map_player_has_level_X_vulnerability",
+  "map_player_soul_eater_souls_stolen_on_rare_kill",
+  "map_players_cannot_take_reflected_damage",
+  "map_players_gain_rampage_stacks",
+  "map_players_have_point_blank",
+  "map_portals_do_not_expire",
+  "map_random_zana_mod",
+  "map_ritual_contains_alphas_howl",
+  "map_ritual_contains_astramentis",
+  "map_ritual_contains_defiance_of_destiny",
+  "map_ritual_contains_dream_fragments",
+  "map_ritual_contains_greater_omen_annulment",
+  "map_ritual_contains_headhunter",
+  "map_ritual_contains_kalandras_touch",
+  "map_ritual_contains_mageblood",
+  "map_ritual_contains_omen_amelioration",
+  "map_ritual_contains_omen_blessed",
+  "map_ritual_contains_omen_chance",
+  "map_ritual_contains_omen_corruption",
+  "map_ritual_contains_omen_dextral_annulment",
+  "map_ritual_contains_omen_dextral_crystallisation",
+  "map_ritual_contains_omen_dextral_erasure",
+  "map_ritual_contains_omen_dextral_exaltation",
+  "map_ritual_contains_omen_sanctification",
+  "map_ritual_contains_omen_sinistral_annulment",
+  "map_ritual_contains_omen_sinistral_crystallisation",
+  "map_ritual_contains_omen_sinistral_erasure",
+  "map_ritual_contains_omen_sinistral_exaltation",
+  "map_ritual_contains_omen_whittling",
+  "map_ritual_contains_original_sin",
+  "map_ritual_contains_queen_of_the_forest",
+  "map_ritual_contains_yoke_of_suffering",
+  "map_spawn_abysses",
+  "map_spawn_affliction_mirror",
+  "map_spawn_bestiary_encounters",
+  "map_spawn_betrayals",
+  "map_spawn_exile_per_area_%",
+  "map_spawn_harbingers",
+  "map_spawn_heist_smugglers_cache",
+  "map_spawn_incursion_encounters",
+  "map_spawn_perandus_chests",
+  "map_spawn_talismans",
+  "map_spawn_two_bosses",
+  "map_strongbox_monsters_attack_speed_+%",
+  "map_strongboxes_are_corrupted",
+  "map_strongboxes_minimum_rarity",
+  "map_synthesis_league",
+  "map_tempest_ground_ice",
+  "map_temporal_chains_curse_zones",
+  "map_uber_map_player_damage_cycle",
+  "map_unique_boss_drops_divination_cards",
+  "map_unique_monsters_drop_corrupted_items",
+  "maven_fight_layout_override",
+  "max_chance_to_block_attacks_if_not_blocked_recently",
+  "maximum_guard_is_based_on_energy_shield",
+  "melee_attacks_usable_without_mana_cost",
+  "melee_splash",
+  "minion_larger_aggro_radius",
+  "minion_melee_splash",
+  "minions_are_gigantic_if_have_revived_recently",
+  "minions_cannot_be_blinded",
+  "minions_cannot_die_while_affected_by_life_flask",
+  "minions_gain_your_strength",
+  "minions_have_unholy_might",
+  "minions_hits_can_only_kill_ignited_enemies",
+  "minions_in_presence_have_onslaught_while_you_are_on_low_ward",
+  "modifiers_to_claw_attack_speed_also_affect_unarmed_melee_attack_speed",
+  "modifiers_to_claw_critical_strike_chance_also_affect_unarmed_melee_critical_strike_chance",
+  "modifiers_to_claw_damage_also_affect_unarmed_melee_damage",
+  "modifiers_to_map_item_drop_quantity_also_apply_to_map_item_drop_rarity",
+  "movement_skills_cost_no_mana",
+  "movement_skills_deal_no_physical_damage",
+  "movement_speed_cannot_be_reduced_below_base",
+  "nearby_enemies_chilled_on_block",
+  "no_critical_strike_multiplier",
+  "no_extra_bleeding_damage_while_moving",
+  "no_inherent_rage_loss",
+  "no_life_regeneration",
+  "no_mana_regeneration",
+  "non_critical_strikes_deal_no_damage",
+  "non_instant_mana_recovery_from_flasks_also_recovers_life",
+  "off_hand_apply_ancients_challenge_on_hit",
+  "on_kill_effects_occur_twice",
+  "overencumbrance_on_dodge_roll",
+  "parry_applies_spell_damage_debuff_instead",
+  "permanently_intimidate_enemy_on_block",
+  "phase_through_objects",
+  "physical_damage_can_chill",
+  "physical_damage_can_ignite_freeze_shock",
+  "physical_damage_can_shock",
+  "physical_damage_from_hits_also_contributes_to_chill_and_freeze",
+  "player_far_shot",
+  "player_gain_rampage_stacks",
+  "poison_on_critical_strike",
+  "poison_reflected_to_self",
+  "power_only_conduit",
+  "primordial_jewel_count",
+  "projectiles_always_pierce_you",
+  "projectiles_from_spells_cannot_pierce",
+  "projectiles_from_spells_fork",
+  "raging_spirits_refresh_duration_when_they_kill_ignited_enemy",
+  "randomly_cursed_when_totems_die_curse_level",
+  "recover_ward_as_well_as_mana_from_mana_regeneration",
+  "reflect_curses",
+  "reflect_shocks",
+  "regenerate_energy_shield_instead_of_life",
+  "remnants_affect_allies_in_presence",
+  "remove_damaging_ailment_on_using_command_skill",
+  "revive_random_persistent_minion_on_offering_expiration",
+  "runefathers_boast_maximum_stacks",
+  "self_take_no_extra_damage_from_critical_strikes",
+  "self_take_no_extra_damage_from_critical_strikes_while_on_consecrated_ground",
+  "share_charges_with_allies_in_your_presence",
+  "shatter_on_kill_if_fully_broken_armour",
+  "shocked_for_4_seconds_on_reaching_maximum_power_charges",
+  "silver_footprints_from_item",
+  "slows_have_no_potency_on_you",
+  "slows_have_no_potency_on_you_while_sprinting",
+  "smoke_cloud_while_stationary_radius",
+  "soul_core_cannot_roll_no_outcome_with_corruption",
+  "spear_skills_inflict_bloodstone_lance_on_hit",
+  "spell_skills_deal_no_damage",
+  "spells_have_culling_strike",
+  "stun_threshold_based_on_energy_shield_instead_of_life",
+  "synthesis_map_adjacent_nodes_global_mod_values_doubled",
+  "synthesis_map_node_grants_no_global_mod",
+  "synthesis_map_node_item_quantity_increases_doubled",
+  "synthesis_map_node_item_rarity_increases_doubled",
+  "synthesis_map_node_pack_size_increases_doubled",
+  "thaumaturgy_rotation_active",
+  "the_wendigo_manifests_every_x_seconds",
+  "thorns_damage_is_lucky_against_enemies_with_fully_broken_armour",
+  "totems_cannot_be_stunned",
+  "transfer_hexes_to_X_nearby_enemies_on_kill",
+  "travel_skills_cannot_be_exerted",
+  "travel_skills_poison_reflected_to_self_up_to_5_poisons",
+  "unaffected_by_curses",
+  "unaffected_by_ignite_and_shock_while_max_life_mana_within_500",
+  "unaffected_by_shock",
+  "unholy_might_while_you_have_no_energy_shield",
+  "unique_body_armour_unfaltering_faith_damage_over_time_does_not_bypass_energy_shield",
+  "unique_chin_sol_close_range_knockback",
+  "unique_cold_damage_ignites",
+  "unique_facebreaker_can_use_mace_attacks_with_both_hands_empty_using_facebreaker_base_damage",
+  "unique_fire_damage_shocks",
+  "unique_gain_soul_eater",
+  "unique_lightning_damage_freezes",
+  "unique_loris_lantern_golden_light",
+  "unique_no_curse_delay",
+  "unique_reveal_weakness",
+  "unique_sunblast_throw_traps_in_circle_radius",
+  "unique_voltaxic_rift_shock_maximum_magnitude_override",
+  "warcries_knock_back_enemies",
+  "ward_can_overcap",
+  "ward_regeneration_rate_is_doubled",
+  "warping_rune_add_item_tag_1",
+  "warping_rune_add_item_tag_2",
+  "warping_rune_add_item_tag_3",
+  "warping_rune_add_item_tag_4",
+  "warping_rune_add_item_tag_5",
+  "warping_rune_add_item_tag_6",
+  "wind_skills_can_be_empowered_by_multiple_elements",
+  "wind_skills_count_as_empowered_by_chilled_ground",
+  "wind_skills_count_as_empowered_by_ignited_ground",
+  "wind_skills_count_as_empowered_by_shocked_ground",
+  "wither_inflicted_also_does_fire",
+  "wither_never_expires",
+  "you_cannot_be_hindered",
+  "your_elemental_resistances_do_not_exist",
+  "your_shield_skills_are_disabled",
+  "your_spells_are_disabled",
+  "zero_chaos_resistance"
+ ],
+ "partly": {
+  "%_chance_to_gain_frenzy_charge_on_trap_triggered_by_an_enemy": {
+   "pos": 0,
+   "stats": [
+    "%_chance_to_gain_frenzy_charge_on_trap_triggered_by_an_enemy"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "add_frenzy_charge_on_kill_%_chance": {
+   "pos": 0,
+   "stats": [
+    "add_frenzy_charge_on_kill_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "add_power_charge_on_critical_strike_%": {
+   "pos": 0,
+   "stats": [
+    "add_power_charge_on_critical_strike_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "add_power_charge_on_kill_%_chance": {
+   "pos": 0,
+   "stats": [
+    "add_power_charge_on_kill_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "additional_combo_gain_chance_%": {
+   "pos": 0,
+   "stats": [
+    "additional_combo_gain_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "additional_infusion_gain_chance_%": {
+   "pos": 0,
+   "stats": [
+    "additional_infusion_gain_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "aggravate_bleeding_on_attack_crit_chance_%": {
+   "pos": 0,
+   "stats": [
+    "aggravate_bleeding_on_attack_crit_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "apply_covered_in_ash_to_attacker_when_hit_%": {
+   "pos": 0,
+   "stats": [
+    "apply_covered_in_ash_to_attacker_when_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "arrow_base_number_of_targets_to_pierce": {
+   "pos": 0,
+   "stats": [
+    "arrow_base_number_of_targets_to_pierce"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "attack_projectiles_fork_additional_times": {
+   "pos": 0,
+   "stats": [
+    "attack_projectiles_fork_additional_times"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "attacks_chance_to_blind_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "attacks_chance_to_blind_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "attacks_impale_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "attacks_impale_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "attacks_num_of_additional_chains": {
+   "pos": 0,
+   "stats": [
+    "attacks_num_of_additional_chains"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "attacks_number_of_additional_projectiles": {
+   "pos": 0,
+   "stats": [
+    "attacks_number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "avoid_chaos_damage_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_chaos_damage_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_cold_damage_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_cold_damage_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_elemental_damage_%_per_frenzy_charge": {
+   "pos": 0,
+   "stats": [
+    "avoid_elemental_damage_%_per_frenzy_charge"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_fire_damage_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_fire_damage_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_knockback_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_knockback_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_lightning_damage_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_lightning_damage_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "avoid_physical_damage_%": {
+   "pos": 0,
+   "stats": [
+    "avoid_physical_damage_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_avoid_projectiles_%_chance": {
+   "pos": 0,
+   "stats": [
+    "base_avoid_projectiles_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_chance_to_daze_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_daze_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "base_chance_to_freeze_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_freeze_%",
+    "always_freeze"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       99
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "base_chance_to_inflict_bleeding_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_inflict_bleeding_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_chance_to_not_consume_corpse_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_not_consume_corpse_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_chance_to_poison_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_poison_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_chance_to_shock_%": {
+   "pos": 0,
+   "stats": [
+    "base_chance_to_shock_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_inflict_cold_exposure_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "base_inflict_cold_exposure_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_number_of_crossbow_bolts": {
+   "pos": 0,
+   "stats": [
+    "base_number_of_crossbow_bolts",
+    "quality_display_base_number_of_crossbow_bolts_is_gem"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "base_onlsaught_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "base_onlsaught_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "base_skill_cost_life_instead_of_mana_%": {
+   "pos": 0,
+   "stats": [
+    "base_skill_cost_life_instead_of_mana_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "base_steal_power_frenzy_endurance_charges_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "base_steal_power_frenzy_endurance_charges_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "bleed_on_hit_with_attacks_%": {
+   "pos": 0,
+   "stats": [
+    "bleed_on_hit_with_attacks_%",
+    "attacks_inflict_bleeding_on_hit",
+    "cannot_cause_bleeding"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ],
+      [
+       "!",
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       "!",
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "blind_chilled_enemies_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "blind_chilled_enemies_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "cast_socketed_minion_skills_on_bow_kill_%": {
+   "pos": 0,
+   "stats": [
+    "cast_socketed_minion_skills_on_bow_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       99
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "cast_socketed_spells_on_mana_spent_%_chance": {
+   "pos": 1,
+   "stats": [
+    "cast_socketed_spells_on_X_mana_spent",
+    "cast_socketed_spells_on_mana_spent_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "chance_for_double_items_from_heist_chests_%": {
+   "pos": 0,
+   "stats": [
+    "chance_for_double_items_from_heist_chests_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_crush_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_crush_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       -1
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "chance_to_curse_self_with_punishment_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_curse_self_with_punishment_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "chance_to_fortify_on_melee_hit_+%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_fortify_on_melee_hit_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "chance_to_fortify_on_melee_stun_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_fortify_on_melee_stun_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_1_more_charge_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_1_more_charge_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_1_more_endurance_charge_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_1_more_endurance_charge_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_1_more_frenzy_charge_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_1_more_frenzy_charge_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_1_more_power_charge_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_1_more_power_charge_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_1_more_random_charge_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_1_more_random_charge_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_endurance_charge_on_block_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_endurance_charge_on_block_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_frenzy_charge_on_killing_frozen_enemy_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_frenzy_charge_on_killing_frozen_enemy_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_onslaught_on_kill_for_10_seconds_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_onslaught_on_kill_for_10_seconds_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_gain_power_charge_on_killing_frozen_enemy_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_gain_power_charge_on_killing_frozen_enemy_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_grant_endurance_charge_to_nearby_allies_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_grant_endurance_charge_to_nearby_allies_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_grant_frenzy_charge_to_nearby_allies_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_grant_frenzy_charge_to_nearby_allies_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_grant_nearby_enemies_onslaught_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_grant_nearby_enemies_onslaught_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_grant_power_charge_to_nearby_allies_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_grant_power_charge_to_nearby_allies_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_grant_power_charge_to_nearby_allies_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_grant_power_charge_to_nearby_allies_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_inflict_incision_on_attack_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_inflict_incision_on_attack_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "chance_to_intimidate_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_intimidate_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_poison_%_vs_cursed_enemies": {
+   "pos": 0,
+   "stats": [
+    "chance_to_poison_%_vs_cursed_enemies"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_poison_on_hit_with_attacks_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_poison_on_hit_with_attacks_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_poison_on_melee_hit_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_poison_on_melee_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_retain_40%_of_glory_on_use_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_retain_40%_of_glory_on_use_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chance_to_trigger_socketed_bow_skill_on_bow_attack_%": {
+   "pos": 0,
+   "stats": [
+    "chance_to_trigger_socketed_bow_skill_on_bow_attack_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chill_attackers_for_4_seconds_on_block_%_chance": {
+   "pos": 0,
+   "stats": [
+    "chill_attackers_for_4_seconds_on_block_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chilled_ground_on_freeze_%_chance_for_3_seconds": {
+   "pos": 0,
+   "stats": [
+    "chilled_ground_on_freeze_%_chance_for_3_seconds"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "chilled_ground_when_hit_with_attack_%": {
+   "pos": 0,
+   "stats": [
+    "chilled_ground_when_hit_with_attack_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "consecrate_ground_on_shatter_%_chance_for_3_seconds": {
+   "pos": 0,
+   "stats": [
+    "consecrate_ground_on_shatter_%_chance_for_3_seconds"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "consecrate_on_crit_%_chance_to_create": {
+   "pos": 0,
+   "stats": [
+    "consecrate_on_crit_%_chance_to_create"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       99
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "curse_on_block_enfeeble_chance_%": {
+   "pos": 0,
+   "stats": [
+    "curse_on_block_enfeeble_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "curse_on_hit_%_flammability": {
+   "pos": 0,
+   "stats": [
+    "curse_on_hit_%_flammability"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "curse_on_hit_%_temporal_chains": {
+   "pos": 0,
+   "stats": [
+    "curse_on_hit_%_temporal_chains"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "curse_on_hit_%_vulnerability": {
+   "pos": 0,
+   "stats": [
+    "curse_on_hit_%_vulnerability"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "curse_on_hit_level_10_vulnerability_%": {
+   "pos": 0,
+   "stats": [
+    "curse_on_hit_level_10_vulnerability_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "damage_blocked_%_recouped_as_mana": {
+   "pos": 0,
+   "stats": [
+    "damage_blocked_%_recouped_as_mana"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "display_item_quantity_increases_rewards_from_boss_by_x_percent_of_its_value": {
+   "pos": 0,
+   "stats": [
+    "display_item_quantity_increases_rewards_from_boss_by_x_percent_of_its_value"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "display_item_quantity_increases_rewards_from_encounter_by_x_percent_of_its_value": {
+   "pos": 0,
+   "stats": [
+    "display_item_quantity_increases_rewards_from_encounter_by_x_percent_of_its_value"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "endurance_charge_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "endurance_charge_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_1_verisium_infusion_every_X_seconds": {
+   "pos": 0,
+   "stats": [
+    "gain_1_verisium_infusion_every_X_seconds"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "gain_alchemists_genius_on_flask_use_%": {
+   "pos": 0,
+   "stats": [
+    "gain_alchemists_genius_on_flask_use_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_arcane_surge_on_crit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "gain_arcane_surge_on_crit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_divine_charge_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "gain_divine_charge_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_flask_charge_on_crit_chance_%_while_at_maximum_frenzy_charges": {
+   "pos": 0,
+   "stats": [
+    "gain_flask_charge_on_crit_chance_%_while_at_maximum_frenzy_charges"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_onslaught_for_3_seconds_%_chance_when_hit": {
+   "pos": 0,
+   "stats": [
+    "gain_onslaught_for_3_seconds_%_chance_when_hit"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_onslaught_on_hit_chance_while_at_maximum_frenzy_charges_%": {
+   "pos": 0,
+   "stats": [
+    "gain_onslaught_on_hit_chance_while_at_maximum_frenzy_charges_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_power_charge_when_throwing_trap_%": {
+   "pos": 0,
+   "stats": [
+    "gain_power_charge_when_throwing_trap_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "gain_soul_eater_stack_on_hit_vs_unique_cooldown_ms": {
+   "pos": 0,
+   "stats": [
+    "gain_soul_eater_stack_on_hit_vs_unique_cooldown_ms"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1000,
+       1000
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "gain_spirit_charge_every_x_ms": {
+   "pos": 0,
+   "stats": [
+    "gain_spirit_charge_every_x_ms"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1000,
+       1000
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "gain_spirit_charge_on_kill_%_chance": {
+   "pos": 0,
+   "stats": [
+    "gain_spirit_charge_on_kill_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "global_chance_to_blind_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "global_chance_to_blind_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "grant_void_arrow_every_x_ms": {
+   "pos": 0,
+   "stats": [
+    "grant_void_arrow_every_x_ms"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1000,
+       1000
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "grenade_skill_%_chance_to_explode_twice": {
+   "pos": 0,
+   "stats": [
+    "grenade_skill_%_chance_to_explode_twice"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "grenade_skill_number_of_additional_projectiles": {
+   "pos": 0,
+   "stats": [
+    "grenade_skill_number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "ground_smoke_when_hit_%": {
+   "pos": 0,
+   "stats": [
+    "ground_smoke_when_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_blighted_maps_and_catalysts_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_blighted_maps_and_catalysts_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_breach_splinters_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_breach_splinters_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_catalysts_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_catalysts_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_currency_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_currency_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_delirium_orbs_and_splinters_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_delirium_orbs_and_splinters_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_divination_cards_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_divination_cards_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_essences_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_essences_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_jewels_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_jewels_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_legion_splinters_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_legion_splinters_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_map_fragments_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_map_fragments_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_maps_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_maps_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_oils_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_oils_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_scarabs_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_scarabs_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_double_sextants_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_double_sextants_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_chests_unique_rarity_%": {
+   "pos": 0,
+   "stats": [
+    "heist_chests_unique_rarity_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       -1
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_coins_dropped_by_monsters_double_%": {
+   "pos": 0,
+   "stats": [
+    "heist_coins_dropped_by_monsters_double_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_coins_from_world_chests_double_%": {
+   "pos": 0,
+   "stats": [
+    "heist_coins_from_world_chests_double_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_alteration_drops_as_alchemy_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_alteration_drops_as_alchemy_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_alteration_drops_as_chaos_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_alteration_drops_as_chaos_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_alteration_drops_as_regal_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_alteration_drops_as_regal_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_augmentation_drops_as_alchemy_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_augmentation_drops_as_alchemy_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_augmentation_drops_as_chaos_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_augmentation_drops_as_chaos_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_augmentation_drops_as_regal_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_augmentation_drops_as_regal_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_chaos_drops_as_divine_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_chaos_drops_as_divine_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_chaos_drops_as_exalted_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_chaos_drops_as_exalted_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_chromatic_drops_as_fusing_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_chromatic_drops_as_fusing_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_chromatic_drops_as_jewellers_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_chromatic_drops_as_jewellers_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_jewellers_drops_as_fusing_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_jewellers_drops_as_fusing_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_regal_drops_as_divine_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_regal_drops_as_divine_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_regal_drops_as_exalted_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_regal_drops_as_exalted_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_regret_drops_as_annulment_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_regret_drops_as_annulment_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_scouring_drops_as_annulment_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_scouring_drops_as_annulment_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_scouring_drops_as_regret_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_scouring_drops_as_regret_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_transmutation_drops_as_alchemy_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_transmutation_drops_as_alchemy_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_currency_transmutation_drops_as_chaos_%": {
+   "pos": 0,
+   "stats": [
+    "heist_currency_transmutation_drops_as_chaos_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_drops_double_currency_%": {
+   "pos": 0,
+   "stats": [
+    "heist_drops_double_currency_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_are_fully_linked_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_are_fully_linked_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_drop_corrupted_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_drop_corrupted_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_drop_identified_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_drop_identified_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_have_elder_influence_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_have_elder_influence_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_have_one_additional_socket_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_have_one_additional_socket_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "heist_items_have_shaper_influence_%": {
+   "pos": 0,
+   "stats": [
+    "heist_items_have_shaper_influence_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "impale_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "impale_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "instability_on_critical_%_chance": {
+   "pos": 0,
+   "stats": [
+    "instability_on_critical_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "intimidate_on_hit_chance_with_attacks_while_at_maximum_endurance_charges_%": {
+   "pos": 0,
+   "stats": [
+    "intimidate_on_hit_chance_with_attacks_while_at_maximum_endurance_charges_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "labyrinth_darkshrine_additional_divine_font_use_display": {
+   "pos": 0,
+   "stats": [
+    "labyrinth_darkshrine_additional_divine_font_use_display"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_additional_attack_chain_chance_%": {
+   "pos": 0,
+   "stats": [
+    "local_additional_attack_chain_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_can_socket_x_emerald_jewels_exclude_disallowed_types": {
+   "pos": 1,
+   "stats": [
+    "local_can_socket_x_ruby_jewels_exclude_disallowed_types",
+    "local_can_socket_x_emerald_jewels_exclude_disallowed_types",
+    "local_can_socket_x_sapphire_jewels_exclude_disallowed_types"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       "!",
+       0
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       "!",
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       "!",
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       "!",
+       0
+      ],
+      [
+       "!",
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       "!",
+       0
+      ],
+      [
+       0,
+       0
+      ],
+      [
+       "!",
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       "!",
+       0
+      ],
+      [
+       "!",
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       "!",
+       0
+      ],
+      [
+       "!",
+       0
+      ],
+      [
+       "!",
+       0
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_display_cast_level_1_summon_lesser_shrine_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "local_display_cast_level_1_summon_lesser_shrine_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_display_socketed_gems_additional_critical_strike_chance_%": {
+   "pos": 0,
+   "stats": [
+    "local_display_socketed_gems_additional_critical_strike_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       3,
+       3
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_display_socketed_gems_have_number_of_additional_projectiles": {
+   "pos": 0,
+   "stats": [
+    "local_display_socketed_gems_have_number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_display_summon_raging_spirit_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "local_display_summon_raging_spirit_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_display_trigger_level_20_summon_spectral_wolf_on_crit_with_this_weapon_%_chance": {
+   "pos": 0,
+   "stats": [
+    "local_display_trigger_level_20_summon_spectral_wolf_on_crit_with_this_weapon_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_flask_area_of_consecrated_ground_+%": {
+   "pos": 0,
+   "stats": [
+    "local_flask_area_of_consecrated_ground_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       200,
+       200
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_flask_consumes_x_frenzy_charges_on_use": {
+   "pos": 0,
+   "stats": [
+    "local_flask_consumes_x_frenzy_charges_on_use"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_flask_number_of_additional_projectiles_during_flask_effect": {
+   "pos": 0,
+   "stats": [
+    "local_flask_number_of_additional_projectiles_during_flask_effect"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_flask_recovery_amount_%_to_recover_instantly": {
+   "pos": 0,
+   "stats": [
+    "local_flask_recovery_amount_%_to_recover_instantly"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_implicit_stat_magnitude_+%": {
+   "pos": 0,
+   "stats": [
+    "local_implicit_stat_magnitude_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       200,
+       200
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       -1
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_inflict_exposure_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "local_inflict_exposure_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_inflict_malignant_madness_on_critical_strike_%_if_eater_of_worlds_dominant": {
+   "pos": 0,
+   "stats": [
+    "local_inflict_malignant_madness_on_critical_strike_%_if_eater_of_worlds_dominant"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_intelligence_requirement_+%": {
+   "pos": 0,
+   "stats": [
+    "local_intelligence_requirement_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       -99,
+       -1
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       -100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_item_additional_skill_slots": {
+   "pos": 0,
+   "stats": [
+    "local_item_additional_skill_slots"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_item_can_have_x_additional_enchantments": {
+   "pos": 0,
+   "stats": [
+    "local_item_can_have_x_additional_enchantments"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_maim_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "local_maim_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_number_of_bloodworms_to_spawn_on_flask_use": {
+   "pos": 0,
+   "stats": [
+    "local_number_of_bloodworms_to_spawn_on_flask_use"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_physical_damage_+%": {
+   "pos": 0,
+   "stats": [
+    "local_physical_damage_+%",
+    "local_weapon_no_physical_damage"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       -1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       -100
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       -99,
+       -1
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_poison_on_critical_strike_chance_%": {
+   "pos": 0,
+   "stats": [
+    "local_poison_on_critical_strike_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_poison_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "local_poison_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_strength_requirement_+%": {
+   "pos": 0,
+   "stats": [
+    "local_strength_requirement_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       -99,
+       -1
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       -100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_unique_flask_gain_%_of_current_ward_as_guard_when_flask_effect_ends": {
+   "pos": 0,
+   "stats": [
+    "local_unique_flask_gain_%_of_current_ward_as_guard_when_flask_effect_ends",
+    "local_unique_flask_ward_gained_as_guard_duration_ms_when_flask_effect_ends"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "local_unique_flask_instantly_recovers_%_maximum_life": {
+   "pos": 0,
+   "stats": [
+    "local_unique_flask_instantly_recovers_%_maximum_life"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       100
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       101,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "local_unique_hungry_loop_number_of_gems_to_consume": {
+   "pos": 0,
+   "stats": [
+    "local_unique_hungry_loop_number_of_gems_to_consume",
+    "local_unique_hungry_loop_has_consumed_gem"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       -1,
+       -1
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "maim_bleeding_enemies_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "maim_bleeding_enemies_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "maim_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "maim_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_abyss_%_chance_chasm_spawns_at_least_magic_monsters": {
+   "pos": 0,
+   "stats": [
+    "map_abyss_%_chance_chasm_spawns_at_least_magic_monsters"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_abyss_%_chance_path_spawns_at_least_magic_monsters": {
+   "pos": 0,
+   "stats": [
+    "map_abyss_%_chance_path_spawns_at_least_magic_monsters"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_abyss_jewels_%_chance_to_drop_corrupted_with_more_mods": {
+   "pos": 0,
+   "stats": [
+    "map_abyss_jewels_%_chance_to_drop_corrupted_with_more_mods"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_abyss_no_reward_chance_+%": {
+   "pos": 0,
+   "stats": [
+    "map_abyss_no_reward_chance_+%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       -50,
+       -50
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       -100,
+       -100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_abyss_overrun_extra_pits": {
+   "pos": 0,
+   "stats": [
+    "map_abyss_overrun_extra_pits"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_addtional_magic_chest_amount": {
+   "pos": 0,
+   "stats": [
+    "map_addtional_magic_chest_amount"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_blight_chest_%_chance_for_additional_drop": {
+   "pos": 0,
+   "stats": [
+    "map_blight_chest_%_chance_for_additional_drop"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_blight_lane_additional_chests": {
+   "pos": 0,
+   "stats": [
+    "map_blight_lane_additional_chests"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_blight_oils_chance_to_drop_a_tier_higher_%": {
+   "pos": 0,
+   "stats": [
+    "map_blight_oils_chance_to_drop_a_tier_higher_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_breach_%_chance_for_1_additional_breach": {
+   "pos": 0,
+   "stats": [
+    "map_breach_%_chance_for_1_additional_breach"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_breach_%_chance_for_3_additional_breach": {
+   "pos": 0,
+   "stats": [
+    "map_breach_%_chance_for_3_additional_breach"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_breach_X_additional_rare_monsters": {
+   "pos": 0,
+   "stats": [
+    "map_breach_X_additional_rare_monsters"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_chance_for_4_additional_abysses_%": {
+   "pos": 0,
+   "stats": [
+    "map_chance_for_4_additional_abysses_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_contains_additional_breaches": {
+   "pos": 0,
+   "stats": [
+    "map_contains_additional_breaches"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_contains_additional_tormented_betrayers": {
+   "pos": 0,
+   "stats": [
+    "map_contains_additional_tormented_betrayers"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_contains_x_additional_magic_packs": {
+   "pos": 0,
+   "stats": [
+    "map_contains_x_additional_magic_packs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_contains_x_additional_rare_packs": {
+   "pos": 0,
+   "stats": [
+    "map_contains_x_additional_rare_packs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_contracts_drop_with_additional_special_implicit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_contracts_drop_with_additional_special_implicit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_death_and_taxes_boss_drops_additional_currency": {
+   "pos": 0,
+   "stats": [
+    "map_death_and_taxes_boss_drops_additional_currency"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_display_unique_boss_drops_X_maps": {
+   "pos": 0,
+   "stats": [
+    "map_display_unique_boss_drops_X_maps"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_duplicate_captured_beasts_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_duplicate_captured_beasts_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_expedition2_remnant_generation_has_x_lucky_rolls": {
+   "pos": 0,
+   "stats": [
+    "map_expedition2_remnant_generation_has_x_lucky_rolls"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_expedition_encounter_additional_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_expedition_encounter_additional_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_expedition_x_extra_relic_suffixes": {
+   "pos": 0,
+   "stats": [
+    "map_expedition_x_extra_relic_suffixes"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_extra_monoliths": {
+   "pos": 0,
+   "stats": [
+    "map_extra_monoliths"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_heist_contract_additional_reveals_granted": {
+   "pos": 0,
+   "stats": [
+    "map_heist_contract_additional_reveals_granted"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_heist_npc_perks_effect_+%_final": {
+   "pos": 0,
+   "stats": [
+    "map_heist_npc_perks_effect_+%_final"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_killing_rare_monsters_pauses_delirium_mirror_timer_for_x_seconds": {
+   "pos": 0,
+   "stats": [
+    "map_killing_rare_monsters_pauses_delirium_mirror_timer_for_x_seconds"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_leaguestone_area_contains_x_additional_leaguestones": {
+   "pos": 0,
+   "stats": [
+    "map_leaguestone_area_contains_x_additional_leaguestones"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_leaguestone_override_base_num_perandus_chests": {
+   "pos": 0,
+   "stats": [
+    "map_leaguestone_override_base_num_perandus_chests"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_legion_league_extra_spawns": {
+   "pos": 0,
+   "stats": [
+    "map_legion_league_extra_spawns"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_monster_additional_abyssal_monolithic_slug_packs": {
+   "pos": 0,
+   "stats": [
+    "map_monster_additional_abyssal_monolithic_slug_packs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_monster_additional_incursion_VaalColossusBoss_packs": {
+   "pos": 0,
+   "stats": [
+    "map_monster_additional_incursion_VaalColossusBoss_packs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_monster_melee_attacks_apply_random_curses_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_monster_melee_attacks_apply_random_curses_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_add_endurance_charge_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_add_endurance_charge_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_add_frenzy_charge_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_add_frenzy_charge_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_add_power_charge_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_add_power_charge_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_additional_number_of_projecitles": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_additional_number_of_projecitles",
+    "map_players_additional_number_of_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_monsters_chance_to_blind_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_chance_to_blind_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_chance_to_impale_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_chance_to_impale_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_chance_to_inflict_brittle_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_chance_to_inflict_brittle_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_maim_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_maim_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_remove_charges_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_remove_charges_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_spells_chance_to_hinder_on_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_spells_chance_to_hinder_on_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_steal_charges": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_steal_charges"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_monsters_withered_on_hit_for_2_seconds_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_monsters_withered_on_hit_for_2_seconds_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_num_extra_abysses": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_abysses"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_gloom_shrines": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_gloom_shrines"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_harbingers": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_harbingers"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_invasion_bosses": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_invasion_bosses"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_shrines": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_shrines"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_stone_circles": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_stone_circles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_num_extra_strongboxes": {
+   "pos": 0,
+   "stats": [
+    "map_num_extra_strongboxes"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_on_complete_drop_x_additional_maps": {
+   "pos": 0,
+   "stats": [
+    "map_on_complete_drop_x_additional_maps"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_possessed_monsters_drop_gilded_scarab_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_possessed_monsters_drop_gilded_scarab_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_ritual_additional_reward_rerolls": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_additional_reward_rerolls"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_chaos_orbs": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_chaos_orbs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_divine_orbs": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_divine_orbs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_exalted_orbs": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_exalted_orbs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_greater_augmentation": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_greater_augmentation"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_greater_chaos": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_greater_chaos"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_greater_exalt": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_greater_exalt"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_greater_regal": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_greater_regal"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_greater_transmutation": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_greater_transmutation"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_orbs_of_annulment": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_orbs_of_annulment"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_orbs_of_chance": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_orbs_of_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_perfect_augmentation": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_perfect_augmentation"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_perfect_chaos": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_perfect_chaos"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_perfect_exalt": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_perfect_exalt"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_perfect_regal": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_perfect_regal"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_contains_perfect_transmutation": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_contains_perfect_transmutation"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_ritual_number_of_free_rerolls": {
+   "pos": 0,
+   "stats": [
+    "map_ritual_number_of_free_rerolls"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_rogue_exiles_drop_x_additional_jewels": {
+   "pos": 0,
+   "stats": [
+    "map_rogue_exiles_drop_x_additional_jewels"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_spawn_cadiro_%_chance": {
+   "pos": 0,
+   "stats": [
+    "map_spawn_cadiro_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_spawn_extra_perandus_chests": {
+   "pos": 0,
+   "stats": [
+    "map_spawn_extra_perandus_chests"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_spawn_x_additional_heist_smugglers_caches": {
+   "pos": 0,
+   "stats": [
+    "map_spawn_x_additional_heist_smugglers_caches"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_breach_splinter_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_breach_splinter_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_currency_item_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_currency_item_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_currency_shard_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_currency_shard_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_divination_card_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_divination_card_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_elder_item_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_elder_item_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_fossil_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_fossil_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_quality_currency_item_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_quality_currency_item_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_additional_shaper_item_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_additional_shaper_item_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_magic_monster_items_drop_corrupted_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_magic_monster_items_drop_corrupted_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_monster_additional_divination_card_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_monster_additional_divination_card_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_abyss_jewel_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_abyss_jewel_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_essence_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_essence_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_jewel_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_jewel_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_map_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_map_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_talisman_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_talisman_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_additional_vaal_fragment_drop_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_additional_vaal_fragment_drop_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_gives_mods_to_killer_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_gives_mods_to_killer_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_synthesised_rare_monster_resurrect_as_ally_chance_%": {
+   "pos": 0,
+   "stats": [
+    "map_synthesised_rare_monster_resurrect_as_ally_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_vaal_monster_items_drop_corrupted_%": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_monster_items_drop_corrupted_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "map_vaal_temple_spawn_additional_vaal_vessels": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_temple_spawn_additional_vaal_vessels"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_divination_cards": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_divination_cards"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_fossils": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_fossils"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_levelled_vaal_gems": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_levelled_vaal_gems"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_prophecies": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_prophecies"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_rare_temple_items": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_rare_temple_items"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_sacrifice_fragments": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_sacrifice_fragments"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_X_vaal_orbs": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_X_vaal_orbs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "map_vaal_vessel_drop_x_double_implicit_corrupted_uniques": {
+   "pos": 0,
+   "stats": [
+    "map_vaal_vessel_drop_x_double_implicit_corrupted_uniques"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "maps_with_powerful_bosses_additional_essence_+": {
+   "pos": 0,
+   "stats": [
+    "maps_with_powerful_bosses_additional_essence_+"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "maps_with_powerful_bosses_additional_shrine_+": {
+   "pos": 0,
+   "stats": [
+    "maps_with_powerful_bosses_additional_shrine_+"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "maps_with_powerful_bosses_additional_spirit_+": {
+   "pos": 0,
+   "stats": [
+    "maps_with_powerful_bosses_additional_spirit_+"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "maps_with_powerful_bosses_additional_strongbox_+": {
+   "pos": 0,
+   "stats": [
+    "maps_with_powerful_bosses_additional_strongbox_+"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "maximum_physical_damage_to_return_on_block": {
+   "pos": 1,
+   "stats": [
+    "minimum_physical_damage_to_return_on_block",
+    "maximum_physical_damage_to_return_on_block"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "melee_attacks_number_of_additional_projectiles": {
+   "pos": 0,
+   "stats": [
+    "melee_attacks_number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "memory_line_abyss_scourge_spawn_boss_chance_%": {
+   "pos": 0,
+   "stats": [
+    "memory_line_abyss_scourge_spawn_boss_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "memory_line_number_of_breaches": {
+   "pos": 0,
+   "stats": [
+    "memory_line_number_of_breaches"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "memory_line_number_of_strongboxes": {
+   "pos": 0,
+   "stats": [
+    "memory_line_number_of_strongboxes"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "mine_extra_uses": {
+   "pos": 0,
+   "stats": [
+    "mine_extra_uses"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "minions_chance_to_poison_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "minions_chance_to_poison_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "movement_speed_+%_on_throwing_trap": {
+   "pos": 1,
+   "stats": [
+    "movement_speed_bonus_when_throwing_trap_ms",
+    "movement_speed_+%_on_throwing_trap"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "num_of_additional_chains_at_max_frenzy_charges": {
+   "pos": 0,
+   "stats": [
+    "num_of_additional_chains_at_max_frenzy_charges"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "number_of_additional_arrows": {
+   "pos": 0,
+   "stats": [
+    "number_of_additional_arrows"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "number_of_additional_curses_allowed": {
+   "pos": 0,
+   "stats": [
+    "number_of_additional_curses_allowed"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       -1,
+       -1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "number_of_additional_curses_allowed_on_self": {
+   "pos": 0,
+   "stats": [
+    "number_of_additional_curses_allowed_on_self"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "number_of_additional_projectiles": {
+   "pos": 1,
+   "stats": [
+    "active_skill_additional_projectiles_description_mode",
+    "number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "other_rite_maps_gain_ritual_additional_reward_rerolls": {
+   "pos": 0,
+   "stats": [
+    "other_rite_maps_gain_ritual_additional_reward_rerolls"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "other_rite_maps_gain_ritual_additional_wildwood_packs": {
+   "pos": 0,
+   "stats": [
+    "other_rite_maps_gain_ritual_additional_wildwood_packs"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "other_rite_maps_gain_ritual_number_of_free_rerolls": {
+   "pos": 0,
+   "stats": [
+    "other_rite_maps_gain_ritual_number_of_free_rerolls"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "phasing_%_for_3_seconds_on_trap_triggered_by_an_enemy": {
+   "pos": 0,
+   "stats": [
+    "phasing_%_for_3_seconds_on_trap_triggered_by_an_enemy",
+    "phasing_on_trap_triggered_by_an_enemy_ms"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       99
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "phasing_on_trap_triggered_by_an_enemy_ms": {
+   "pos": 1,
+   "stats": [
+    "phasing_%_for_3_seconds_on_trap_triggered_by_an_enemy",
+    "phasing_on_trap_triggered_by_an_enemy_ms"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       99
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "power_frenzy_or_endurance_charge_on_kill_%": {
+   "pos": 0,
+   "stats": [
+    "power_frenzy_or_endurance_charge_on_kill_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectile_attacks_%_chance_to_fire_2_additional_projectiles_while_moving": {
+   "pos": 0,
+   "stats": [
+    "projectile_attacks_%_chance_to_fire_2_additional_projectiles_while_moving"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectile_base_number_of_targets_to_pierce": {
+   "pos": 0,
+   "stats": [
+    "projectile_base_number_of_targets_to_pierce"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "projectile_chain_from_terrain_chance_%": {
+   "pos": 0,
+   "stats": [
+    "projectile_chain_from_terrain_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       0,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectile_chance_to_fork_%": {
+   "pos": 0,
+   "stats": [
+    "projectile_chance_to_fork_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectile_freeze_chance_%": {
+   "pos": 0,
+   "stats": [
+    "projectile_freeze_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectile_shock_chance_%": {
+   "pos": 0,
+   "stats": [
+    "projectile_shock_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectiles_fork_chance_%_if_youve_dealt_melee_hit_recently": {
+   "pos": 0,
+   "stats": [
+    "projectiles_fork_chance_%_if_youve_dealt_melee_hit_recently"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "projectiles_pierce_x_additional_targets_while_you_have_phasing": {
+   "pos": 0,
+   "stats": [
+    "projectiles_pierce_x_additional_targets_while_you_have_phasing"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "rage_loss_delay_ms_+": {
+   "pos": 0,
+   "stats": [
+    "rage_loss_delay_ms_+"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1000,
+       1000
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "shock_attackers_for_4_seconds_on_block_%_chance": {
+   "pos": 0,
+   "stats": [
+    "shock_attackers_for_4_seconds_on_block_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "skills_from_corrupted_gems_cost_life_instead_of_%_mana_cost": {
+   "pos": 0,
+   "stats": [
+    "skills_from_corrupted_gems_cost_life_instead_of_%_mana_cost"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "spell_maximum_added_cold_damage_per_power_charge": {
+   "pos": 1,
+   "stats": [
+    "spell_minimum_added_cold_damage_per_power_charge",
+    "spell_maximum_added_cold_damage_per_power_charge"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "spell_minimum_added_cold_damage_per_power_charge": {
+   "pos": 0,
+   "stats": [
+    "spell_minimum_added_cold_damage_per_power_charge",
+    "spell_maximum_added_cold_damage_per_power_charge"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       0,
+       0
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       0,
+       0
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "spells_chance_to_hinder_on_hit_%": {
+   "pos": 0,
+   "stats": [
+    "spells_chance_to_hinder_on_hit_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "spells_have_x%_chance_inflict_withered_on_hit": {
+   "pos": 0,
+   "stats": [
+    "spells_have_x%_chance_inflict_withered_on_hit"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "spells_number_of_additional_projectiles": {
+   "pos": 0,
+   "stats": [
+    "spells_number_of_additional_projectiles"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "summon_skeletons_num_additional_warrior_skeletons": {
+   "pos": 0,
+   "stats": [
+    "summon_skeletons_num_additional_warrior_skeletons"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "trap_%_chance_to_trigger_twice": {
+   "pos": 0,
+   "stats": [
+    "trap_%_chance_to_trigger_twice"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "traps_and_mines_%_chance_to_poison": {
+   "pos": 0,
+   "stats": [
+    "traps_and_mines_%_chance_to_poison"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       null,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "treat_enemy_resistances_as_negated_on_elemental_damage_hit_%_chance": {
+   "pos": 0,
+   "stats": [
+    "treat_enemy_resistances_as_negated_on_elemental_damage_hit_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "trigger_skills_refund_half_energy_spent_chance_%": {
+   "pos": 0,
+   "stats": [
+    "trigger_skills_refund_half_energy_spent_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "unique_add_power_charge_on_melee_knockback_%": {
+   "pos": 0,
+   "stats": [
+    "unique_add_power_charge_on_melee_knockback_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "unique_blood_barrier_applies_x_stacks_of_corrupted_blood_on_block": {
+   "pos": 0,
+   "stats": [
+    "unique_blood_barrier_applies_x_stacks_of_corrupted_blood_on_block",
+    "unique_blood_barrier_corrupted_blood_duration_ms",
+    "unique_blood_barrier_corrupted_blood_base_physical_damage_per_minute_as_%_of_maximum_life"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       1000,
+       1000
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       1
+      ],
+      [
+       null,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ],
+      [
+       1000,
+       1000
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       2,
+       null
+      ],
+      [
+       null,
+       null
+      ],
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "unique_chaos_damage_to_reflect_to_self_on_attack_%_chance": {
+   "pos": 0,
+   "stats": [
+    "unique_chaos_damage_to_reflect_to_self_on_attack_%_chance",
+    "unique_minimum_chaos_damage_to_reflect_to_self_on_attack",
+    "unique_maximum_chaos_damage_to_reflect_to_self_on_attack"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ],
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ],
+      [
+       null,
+       null
+      ],
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "unique_redblade_banner_enemies_in_presence_monster_power_+%_final": {
+   "pos": 0,
+   "stats": [
+    "unique_redblade_banner_enemies_in_presence_monster_power_+%_final"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       100,
+       100
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       1,
+       null
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       null,
+       -1
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "volatility_on_kill_%_chance": {
+   "pos": 0,
+   "stats": [
+    "volatility_on_kill_%_chance"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "warcry_empowers_next_x_melee_attacks": {
+   "pos": 0,
+   "stats": [
+    "warcry_empowers_next_x_melee_attacks"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       1
+      ]
+     ],
+     "shown": 0
+    },
+    {
+     "lim": [
+      [
+       null,
+       null
+      ]
+     ],
+     "shown": 1
+    }
+   ]
+  },
+  "your_mace_slam_aftershock_chance_%": {
+   "pos": 0,
+   "stats": [
+    "your_mace_slam_aftershock_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  },
+  "your_slam_aftershock_chance_%": {
+   "pos": 0,
+   "stats": [
+    "your_slam_aftershock_chance_%"
+   ],
+   "lines": [
+    {
+     "lim": [
+      [
+       1,
+       99
+      ]
+     ],
+     "shown": 1
+    },
+    {
+     "lim": [
+      [
+       100,
+       null
+      ]
+     ],
+     "shown": 0
+    }
+   ]
+  }
+ }
+}
