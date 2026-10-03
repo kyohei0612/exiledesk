@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     )
     hit_zoom: bool = Field(
         default=True,
-        description="付ける瞬間にアイテムへ寄る拡大 (今の録画の形では ExileDesk 側の動きが使われる)",
+        description="付ける瞬間にアイテムへ寄る拡大 (今の録画の形では ExileDesk の動きを使う)",
     )
     render_workers: int = Field(
         default=0,
