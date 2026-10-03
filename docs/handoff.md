@@ -2,6 +2,14 @@
 
 まず `CLAUDE.md` → `docs/script_rules/_all.md` (台本ルール) → この紙。
 
+## 6 本目 (2026-10-03): 「エンドのクラフト素材 後編」(end_craft_materials_2) — 台本確定、ExileDesk ㉕ 待ち
+
+- 骨 (冒涜・発現) とクラフトに使うお告げ 17 種を全部実演 (本編のアミュレット + demos 17 個)。台本は全 10 章確定 (`output/work/end_craft_materials_2/approved/`、`data/scripts/end_craft_materials_2.json`、検査 0 件、約 11 分)
+- 言葉: **発現 / 未発現 / 魂の井戸** (開示と言わない)。勢力のお告げ = 支配者 (ウラマン) / 君主 (アマナム) / ブラックブラッド (クルガル)。勢力の MOD の一覧の表 (アミュレット、各 10〜11 行) を 7 章で出す
+- **ExileDesk 要望 ㉕ の返事待ち** (メモ craft-stage-feature の末尾): 開示→発現、結果 JSON に発現の候補、動画モードで 3 択の絵。返事が来たら section_06 の「◯◯」(候補の名前) を埋めて、3 択の画面の scene を入れる
+- 計算は開発版 v0.1.354 で回した物 (data/results)。リリースの後に撮影用を進めて回し直す → 撮影 → 合体
+- 後編で足した道具: 表は列の幅を中身に合わせ 12 行まで、desecrate_gnawed / reveal:N のキー
+
 ## 5 本目 (2026-10-02): 「エンドのクラフト素材 前編」(end_craft_materials_1) — 予約済み
 
 - 本編 (8GGUloinfis) + ショート「最後まで残る MOD は？」(uqpba1P1cx8) を **2026-10-02 20:37 に公開** (予約から早めた)。サムネは scripts/thumbs/end_craft_materials_1.py の土台に kyohei が文字を入れた物 (付け済み)
