@@ -23,12 +23,14 @@ import { useThreeWay } from "./three-way";
 import ModBreakdown from "./ModBreakdown.vue";
 import { MAX_STARTS, useStartSearch } from "./useStartSearch";
 import { useFinishedCompare } from "./useFinishedCompare";
+import { jaTypeName } from "../../services/trade2/localize";
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
 const baseType = computed(() => c.item.value?.baseType ?? zeroStart.value.baseType);
-const baseJa = computed(() => c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? "");
+// どこかで英語名のまま来ても日本語に (2026-10-03: ベースから選んだ靴で「Luxurious Slippers」と出ていた)
+const baseJa = computed(() => jaTypeName(c.item.value?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? baseType.value ?? ""));
 // セールの凱旋を差せばサフィは 1 つ多い (2026-09-26)
 const lim = computed(() => withSocketLimits(c.data.value ? sideLimits(c.data.value, baseType.value) : { prefix: 3, suffix: 3 }, c.socketOn.value));
 /** 別のベースの方が合う時だけ 2 つまで (枠が違う・暗黙がタダ・品質の上限) */

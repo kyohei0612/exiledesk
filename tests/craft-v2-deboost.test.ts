@@ -12,8 +12,15 @@ const manaQ20 = [{ name: "[Quality] ([Mana|Mana] Modifiers)", values: [["+20%", 
 describe("カタリストの割り戻し", () => {
   it("そのカタリストのタグを持つ MOD だけ ÷ (1 + 品質)", () => {
     const out = deboostMods("Gold Ring", manaQ20, ["+218 to maximum Mana", "+30 to [Strength|Strength]"], data);
-    expect(out[0]).toBe("+181.7 to maximum Mana");
+    // 整数の表示は「切り捨てて同じ表示になる一番小さい整数」に戻す (182 × 1.2 = 218.4 → 218)。前は割っただけの 181.7
+    expect(out[0]).toBe("+182 to maximum Mana");
     expect(out[1]).toBe("+30 to [Strength|Strength]");
+  });
+  it("宝飾品のスキルレベル: 品質 34% の +4 は素 3 (T1)、33% の +3 も素 3", async () => {
+    const { rawValue } = await import("../src/services/htc/quality");
+    expect(rawValue(4, 34)).toBe(3);
+    expect(rawValue(3, 33)).toBe(3);
+    expect(rawValue(9, 20)).toBe(8);
   });
   it("種類の無い品質 (旧キャッシュ) と防具は戻さない", () => {
     expect(deboostMods("Gold Ring", [{ name: "[Quality]", values: [["+20%", 1]] }], ["+218 to maximum Mana"], data)).toEqual(["+218 to maximum Mana"]);

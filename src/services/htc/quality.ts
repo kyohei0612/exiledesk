@@ -129,11 +129,18 @@ export function displayedValue(raw: number, qualityPct: number): number {
 /**
  * 画面に出ている値 → 素の値。
  *
- * **切り捨てられた後なので完全には戻りません。**戻した値は「素はこれ以上」という下限です
- * (9 / 1.2 = 7.5 → 素は 8 だった)。ティア判定にはこれで足ります。
+ * **切り捨てられた後なので完全には戻りません。**整数の表示は、切り捨てて同じ表示になる一番小さい整数を返します
+ * (9 / 1.2 = 7.5 → 8、品質 34% の +4 → 3)。それ以外は割った値 (「素はこれ以上」の下限)
  */
 export function rawValue(displayed: number, qualityPct: number): number {
-  return qualityPct > 0 ? displayed / (1 + qualityPct / 100) : displayed;
+  if (!(qualityPct > 0)) return displayed;
+  // 整数の表示は、切り捨てて同じ表示になる一番小さい整数が素 (2026-10-03: 宝飾品のスキルレベル +3 は品質 34% で +4 と出る。
+  // 4 / 1.34 = 2.985 のままだと T1 (3) に届かず T2 と判定していた。SaVeQ「品質 34% で +4」)
+  if (displayed > 0 && Number.isInteger(displayed)) {
+    const r = Math.ceil(displayed / (1 + qualityPct / 100) - 1e-9);
+    if (displayedValue(r, qualityPct) === displayed) return r;
+  }
+  return displayed / (1 + qualityPct / 100);
 }
 
 /**

@@ -6,6 +6,7 @@
  * MOD の見出しはゲームの詳細表示に合わせる: 『プレフィックス MOD "Sagacious" (T2) — マナ, キャスター』
  */
 import { tagJa } from "../../services/mods/tag-ja";
+import { jaTypeName } from "../../services/trade2/localize";
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { qualityLabelOf } from "../../services/htc/quality";
 import { jaOfPastedLine } from "../../services/htc/mod-text";
@@ -70,7 +71,7 @@ const ja = (t: string): string => jaOfPastedLine(t) ?? t;
 
 function header(c: ReturnType<typeof useHtcCraft>): Pick<CardData, "name" | "base" | "ilvl" | "quality" | "qualityLabel" | "implicits" | "socket" | "socketEffects"> {
   const it = c.item.value;
-  const base = it?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? it?.baseType ?? zeroStart.value.baseType ?? "";
+  const base = jaTypeName(it?.baseText ?? c.bases.value.find((b) => b.current)?.ja ?? it?.baseType ?? zeroStart.value.baseType ?? "");
   return {
     name: null,
     base,
