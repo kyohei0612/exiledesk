@@ -131,3 +131,13 @@ def test_short_wrap_keeps_ascii_words() -> None:
 
     rows = wrap_text("まずは、エッセンスで付けた MOD が入ったアミュレット。", 14)
     assert all("M" not in r or "MOD" in r for r in rows)
+
+
+def test_offers_is_a_stage_look_line() -> None:
+    from poe2tube.video.clip_timing import stage_hit
+
+    offers = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3, offers=True))
+    assert not stage_hit(None, offers)
+    assert Scene(kind="stage", step=3, offers=True).key() != Scene(kind="stage", step=3).key()
+    with pytest.raises(ValueError):
+        Scene(kind="item", step=3, offers=True)

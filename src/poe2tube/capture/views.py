@@ -30,6 +30,7 @@ from poe2tube.video.results import ResultSet
 log = structlog.get_logger()
 VIEW_DIR = CACHE_DIR / "views"
 CLIP = "video=1&controls=0&layout=clip"
+OFFERS_SELECTOR = "[data-reveal-offers]"
 
 
 def _plan_json(plan: CraftStagePlan) -> str:
@@ -54,10 +55,11 @@ def view_query(scene: Scene, rs: ResultSet) -> str | None:
         q += f"&a_step={scene.step or 0}"
         q += f"&b_step={scene.b_step}" if scene.b_step is not None else ""
         return q + _pob("a_pob", res) + _pob("b_pob", other) + hide_dps
-    if scene.kind == "stage" and (scene.focus or scene.tags or not scene.show_dps):
+    if scene.kind == "stage" and (scene.focus or scene.tags or scene.offers or not scene.show_dps):
         q = f"stage-plan={_plan_json(plan)}&step={scene.step or 0}&{CLIP}" + _pob("stage-pob", res)
         q += f"&focus={urllib.parse.quote(scene.focus)}" if scene.focus else ""
         q += "&tags=1" if scene.tags else ""
+        q += "&offers=1" if scene.offers else ""  # 発現の 3 択 (ExileDesk ㉕)
         return q + hide_dps
     if scene.kind in ("dps", "hit") and res.pob is not None:
         q = f"{CLIP}&view={scene.kind}{_pob('pob', res)}&step={scene.step or 0}"
@@ -128,6 +130,8 @@ def capture_views(queries: list[str], force: bool = False) -> list[Path]:
         for q in todo:
             page.goto(f"{base}/?{q}", wait_until="networkidle", timeout=60000)
             page.wait_for_selector(READY_SELECTOR, timeout=30000)
+            if "&offers=1" in q:  # 発現の 3 択は札の後に出る (ExileDesk ㉕ の目印)
+                page.wait_for_selector(OFFERS_SELECTOR, timeout=30000)
             page.wait_for_timeout(SETTLE_MS)
             ensure_video_mode(page)
             page.screenshot(path=str(view_path(q)))
