@@ -201,12 +201,21 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
     // 数値は画面の単位で (services/mods/stat-scale.ts)
     const text = fillHashes(jaOfMod(t.mod), tier ? tierDisplayRanges(tier) : []);
     const side = t.side === "prefix" ? "プレフィックス" : "サフィックス";
+    // 深淵のエッセンス (2026-10-03)
+    if (t.mod.family === "EssenceAbyss") {
+      return [
+        "**レア** の MOD を 1 つ消して、消した側に **深淵の王の印** を付ける",
+        "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル 33 (仮: 説明文は「より高い段」だけ)",
+        "冒涜の MOD がある間は打てない (先にエッセンス・合金で上書き)。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
+        "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
+      ];
+    }
     if (t.level === "perfect") {
       return [
         "**レア** の MOD を 1 つ消してから、この MOD を付ける",
         `付く MOD (${side}): ${text}`,
         "消すのはフラクチャー以外から等しく 1 つ。付ける側が埋まっていれば、その側から消す",
-        "エッセンスの MOD はアイテムに 1 つまで。同じ系統が付いていると打てない",
+        "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)。同じ系統が付いていると打てない",
         `必要なアイテムレベル: ${tier?.ilvl ?? "?"}`,
         "お告げ: 左右の結晶化 (消す側)",
       ];

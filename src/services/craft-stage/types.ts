@@ -33,8 +33,10 @@ export interface StageMod {
   tags?: string[];
   fractured?: boolean;
   desecrated?: boolean;
-  /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで) */
+  /** エッセンスの MOD (普通・パーフェクトとも。1 つのアイテムに 1 つまで、アストリッドの創造性で 2 つ) */
   crafted?: boolean;
+  /** 深淵の王の印 (深淵のエッセンス、crafted も立つ)。次の骨はこれを置き換え、段の下限 MOD レベル 33 (仮、2026-10-03) */
+  abyssMark?: boolean;
   /**
    * 骨で付いたまだ発現していない冒涜 MOD (ゲームと同じく、発現の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
    * altered は変質した鎖骨 (異界の MOD も出る)、faction は王 / 君主 / 黒血のお告げで絞った勢力のタグ

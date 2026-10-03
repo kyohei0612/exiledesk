@@ -60,3 +60,43 @@ describe("無限のパーフェクトエッセンス", () => {
     expect(makeStageMod(data.mods.get("Amulets/PerfectEssence_PercentageIntelligence")!, "suffix", 0, mulberry32(1)).textJa).toMatch(/^知性が/);
   });
 });
+
+describe("深淵の印 (クラフトステージ)", async () => {
+  const { applyCurrency } = await import("../src/services/craft-stage/apply-currency");
+  const { freshItem: fresh } = await import("../src/services/craft-stage/run-plan");
+  const A = (item: Parameters<typeof applyCurrency>[1], key: string, omens: string[] = [], seed = 1) => applyCurrency(data, item, key, mulberry32(seed), omens, {});
+  const ABYSS = "essence:perfect:Boots_int/PerfectEssence_EssenceAbyss";
+  /** レアの靴 (プレ 1 つ・サフィ 3 つ) */
+  function rareBoots() {
+    let it = { ...fresh(data, "Luxurious Slippers", 82), rarity: "rare" as const };
+    for (const [k, o] of [["exalt", "OmenofSinistralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"], ["exalt", "OmenofDextralExaltation"]] as const) it = A(it, k, [o]).item as typeof it;
+    return it;
+  }
+  it("結晶化 + 深淵のエッセンスで、消した側に印 → 骨は印を置き換える (段の下限 33)", () => {
+    const it = rareBoots();
+    const e = A(it, ABYSS, ["OmenofSinistralCrystallisation"]);
+    expect(e.applied).toBe(true);
+    const mark = e.item.prefixes.find((m) => m.abyssMark)!;
+    expect(mark).toBeTruthy();
+    expect(e.item.suffixes.length).toBe(3);
+    const b = A(e.item, "desecrate");
+    expect(b.applied).toBe(true);
+    expect(b.removed.some((m) => m.abyssMark)).toBe(true);
+    const hidden = b.item.prefixes.find((m) => m.unrevealed)!;
+    expect(hidden.unrevealed!.floor).toBe(33);
+    expect(b.item.suffixes.length).toBe(3);
+  });
+  it("冒涜の MOD がある間は深淵のエッセンスを打てない", () => {
+    const it = rareBoots();
+    const b = A(it, "desecrate", ["OmenofSinistralNecromancy"]);
+    expect(A(b.item, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(false);
+  });
+  it("クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ", () => {
+    const it = rareBoots();
+    const one = A(it, "essence:perfect:Boots_int/PerfectEssence_LocalRunicWardPercent", ["OmenofSinistralCrystallisation"]);
+    expect(one.applied).toBe(true);
+    expect(A(one.item, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(false);
+    const withAstrid = { ...one.item, sockets: 1, augments: [{ key: "rune:Astrid's Creativity", en: "Astrid's Creativity", ja: "アストリッドの創造性", cat: "", textJa: "", textEn: "", stats: [] }] };
+    expect(A(withAstrid, ABYSS, ["OmenofSinistralCrystallisation"]).applied).toBe(true);
+  });
+});

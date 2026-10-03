@@ -13,7 +13,7 @@ import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { BREACH_FAMILY } from "../htc/omens";
 import { allMods, listOf, makeStageMod, rareLimitOf, removeOne, room, SIDES, skip, takenRawFamilies, withMod } from "./stage-core";
 import { essenceClash } from "../mods/mod-rules";
-import type { StageApply, StageItem, StageSide } from "./types";
+import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
 /** そのクラスのエッセンスの MOD (側つき) */
 function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: StageSide }> {
@@ -45,7 +45,9 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   const tier = mod.tiers[tierIndex];
   if (!tier) return skip(item, "このエッセンスのティアが無い");
   if (tier.ilvl > item.itemLevel) return skip(item, `アイテムレベルが足りない (${tier.ilvl} 以上)`);
-  if (allMods(item).some((m) => m.crafted)) return skip(item, "エッセンスの MOD はアイテムに 1 つまで");
+  // クラフト MOD は 1 つまで、アストリッドの創造性をはめていれば 2 つ (2026-10-03: 前はアストリッドを見ていなかった)
+  const limit = craftedLimitOf(item);
+  if (allMods(item).filter((m) => m.crafted).length >= limit) return skip(item, limit > 1 ? "クラフト MOD はアストリッドの創造性込みで 2 つまで" : "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)");
   const clash = (it: StageItem) => essenceClash(mod, takenRawFamilies(data, it));
   const sm = { ...makeStageMod(mod, side, tierIndex, rng), crafted: true };
 
@@ -57,6 +59,7 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   }
 
   if (item.rarity !== "rare") return skip(item, "レアのアイテムにだけ使える");
+  if (mod.family === ABYSS_FAMILY) return applyAbyss(item, sm, rng, used);
   // 結晶化のお告げ: 消す側。足す側が埋まっていれば、その側から消すしかない
   const omenSide: StageSide | null = used.includes("OmenofSinistralCrystallisation") ? "prefix" : used.includes("OmenofDextralCrystallisation") ? "suffix" : null;
   const full = !room(item, side);
@@ -68,4 +71,27 @@ export function applyEssence(data: PatchData, item: StageItem, key: string, rng:
   if (!room(rest, side)) return skip(item, "足す側に空きが無い");
   if (clash(rest)) return skip(item, "同じ系統の MOD が付いている");
   return { applied: true, item: withMod(rest, sm), added: [sm], removed: r ? [r.mod] : [] };
+}
+
+/** 深淵のエッセンスの MOD の系統 (深淵の王の印) */
+export const ABYSS_FAMILY = "EssenceAbyss";
+/** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
+export const craftedLimitOf = (item: StageItem): number => 1 + ((item.augments ?? []).some((a) => a.en === "Astrid's Creativity") ? 1 : 0);
+
+/**
+ * 深淵のエッセンス (2026-10-03、SaVeQ 0.5.5 / poe2fun): 固定済み以外から 1 つ消し (結晶化のお告げで側を指せる)、消した側に「深淵の王の印」。
+ * 印はクライアントでは両側にある (EssenceAbyssPrefix / Suffix。計算機のデータはプレだけ) ので、消した側に付ける。消す物が無ければ空いている側
+ * (お告げの側を先)。冒涜の MOD がある間は打てない (先にエッセンス・合金で上書きする。計算機と同じ決まり)。次の骨は印を置き換える
+ */
+function applyAbyss(item: StageItem, sm: StageMod, rng: () => number, used: readonly string[]): StageApply {
+  if (allMods(item).some((m) => m.desecrated)) return skip(item, "冒涜の MOD がある間は使えない (先にエッセンス・合金で上書き)");
+  if (allMods(item).some((m) => m.abyssMark)) return skip(item, "印はもう付いている");
+  const omenSide: StageSide | null = used.includes("OmenofSinistralCrystallisation") ? "prefix" : used.includes("OmenofDextralCrystallisation") ? "suffix" : null;
+  const r = removeOne(item, rng, omenSide ? [omenSide] : SIDES);
+  if (omenSide && !r && !room(item, omenSide)) return skip(item, "お告げの側に外せる MOD も空きも無い");
+  const rest = r?.item ?? item;
+  const side: StageSide | undefined = r ? r.mod.side : omenSide ?? SIDES.find((x) => room(rest, x));
+  if (!side) return skip(item, "外せる MOD も空きも無い");
+  const mark: StageMod = { ...sm, side, abyssMark: true };
+  return { applied: true, item: withMod(rest, mark), added: [mark], removed: r ? [r.mod] : [] };
 }

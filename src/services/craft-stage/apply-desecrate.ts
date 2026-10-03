@@ -12,7 +12,8 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { ANCIENT_BONE_FLOOR, bossOmenAllowed } from "../../vendor/poe2htc/engine/probability";
-import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, type Candidate } from "./stage-core";
+import { allMods, candidates, makeStageMod, pickWeighted, removeOne, replaced, room, SIDES, skip, withMod, without, type Candidate } from "./stage-core";
+import { ABYSS_MARK_FLOOR } from "../htc/omens";
 import { FACTION_TAG } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 
@@ -34,13 +35,15 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   if (allMods(item).some((m) => m.desecrated)) return skip(item, "冒涜の MOD はアイテムに 1 つまで");
   const altered = key === "desecrate_altered";
   if (altered && !item.cls.pools.otherworldly) return skip(item, "変質した鎖骨はアミュレット・指輪・ベルトだけ");
-  const floor = key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0;
+  // 深淵の王の印があれば、骨は必ず印を置き換える (側は印の側)。段の下限 33 (仮)。古代の骨とは重ならない (高い方)
+  const mark = allMods(item).find((m) => m.abyssMark);
+  const floor = Math.max(key === "desecrate_ancient" ? ANCIENT_BONE_FLOOR : 0, mark ? ABYSS_MARK_FLOOR : 0);
   const factionOmen = used.find((o) => FACTION_TAG[o]);
   if (factionOmen && !bossOmenAllowed(item.cls.category)) return skip(item, "勢力のお告げは武器とアクセサリーだけ");
   const faction = factionOmen ? FACTION_TAG[factionOmen]! : null;
 
   // 側: お告げ → それ、無ければ出うる MOD の重みで
-  const omenSide: StageSide | null = used.includes("OmenofSinistralNecromancy") ? "prefix" : used.includes("OmenofDextralNecromancy") ? "suffix" : null;
+  const omenSide: StageSide | null = mark ? mark.side : used.includes("OmenofSinistralNecromancy") ? "prefix" : used.includes("OmenofDextralNecromancy") ? "suffix" : null;
   const weightOf = (side: StageSide) => pool(data, item, side, floor, altered, faction, undefined).reduce((a, c) => a + c.w, 0);
   let side: StageSide;
   if (omenSide) side = omenSide;
@@ -53,7 +56,10 @@ export function applyBone(data: PatchData, item: StageItem, key: string, rng: ()
   if (!(weightOf(side) > 0)) return skip(item, "その側に付けられる冒涜の MOD が無い");
   let cur = item;
   const removed: StageMod[] = [];
-  if (!room(cur, side)) {
+  if (mark) {
+    cur = without(cur, mark);
+    removed.push(mark);
+  } else if (!room(cur, side)) {
     const r = removeOne(cur, rng, [side]);
     if (!r) return skip(item, "その側に空きが無い");
     cur = r.item;
