@@ -24,6 +24,8 @@ import SkillCompareTable from "./SkillCompareTable.vue";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
 import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
+import { pobRawToCopy } from "../../services/pob-check/to-craft";
+import { openCraftPaste } from "../../state/app-nav";
 import type { Estimate, SkillRow } from "./usePobCheck";
 import { fmtNum } from "./fmt";
 import DiffBadge from "./DiffBadge.vue";
@@ -467,6 +469,8 @@ const STATS = [
               <div class="flex min-w-0 items-center gap-1.5">
                 <ItemArt :name="d.to.title" :base="d.to.base" :rarity="d.to.rarity" :size="28" />
                 <BuildItemName :item="hoverOf(d.to, d.slot)" :label="nameJa(d.to)" class="min-w-0 text-amber-200" />
+                <!-- 相手の装備をまるごとクラフト計算機へ (2026-10-03、その 5) -->
+                <button v-if="d.to.raw" type="button" class="btn-link ml-auto shrink-0" title="相手のこの装備 (MOD 全部) をクラフト計算機に貼って、作り方と費用を出す" @click="openCraftPaste(pobRawToCopy(d.to.raw))">この装備を作る ↗</button>
               </div>
             </div>
             <div class="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 text-[11px]">

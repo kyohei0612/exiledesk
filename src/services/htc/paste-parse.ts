@@ -152,7 +152,8 @@ export function parseJaItem(text: string): PastedItem {
       const en = baseEnByJa.get(line) ?? (baseEnSet.has(line) ? line : null);
       if (en) {
         // 英語の貼り付け (忍者のコピー) はベース名も日本語で持つ (画面に出すため)
-        baseText = baseEnByJa.has(line) ? line : (itemsJa as Record<string, string>)[en] ?? line;
+        // 新しいベース (ルーンフォージのセケマのサンダル 等) は items-ja に無いのでクライアントの表も引く (2026-10-03)
+        baseText = baseEnByJa.has(line) ? line : (itemsJa as Record<string, string>)[en] ?? (itemsJaClient as Record<string, string>)[en] ?? line;
         baseType = en;
         continue;
       }

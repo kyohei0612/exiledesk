@@ -59,6 +59,18 @@ export function openTopMods(): void {
  */
 export const pendingCraft = ref<import("../services/craft-v2/to-craft").CraftPlan | null>(null);
 
+/**
+ * クラフト計算機に貼ってほしい文面 (ゲームのコピーの形)。火力チェックの「この装備を作る」から (2026-10-03、その 5)。
+ * 計算機が受け取ったら null に戻す
+ */
+export const pendingCraftPaste = ref<string | null>(null);
+/** クラフト計算機の「コピーを貼る」にその文面を貼って解析まで進める */
+export function openCraftPaste(text: string): void {
+  pendingCraftPaste.value = text;
+  htcCraftTab.value = "lab";
+  activeNav.value = "htc-craft";
+}
+
 /** クラフト計算機 (計算機のタブ) へ移動し、その中身で作り方を組ませる */
 export function openCraftLab(plan: import("../services/craft-v2/to-craft").CraftPlan): void {
   pendingCraft.value = plan;

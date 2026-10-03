@@ -7,7 +7,7 @@
  */
 import { computed, ref, watch, watchEffect } from "vue";
 import TabBar from "../../components/ui/TabBar.vue";
-import { htcCraftTab, pendingCraft, type HtcCraftTab } from "../../state/app-nav";
+import { htcCraftTab, pendingCraft, pendingCraftPaste, type HtcCraftTab } from "../../state/app-nav";
 import { PRESETS, ZERO_PRESETS } from "./presets";
 import { zeroStart } from "./craft-settings";
 import { useHtcCraft } from "./useHtcCraft";
@@ -135,6 +135,20 @@ async function runPicked(): Promise<void> {
  * そのまま作り方まで組む。計算機で作れなかった MOD は上に断りを出す
  */
 const fromList = ref<{ baseJa: string; count: number; skipped: string[] } | null>(null);
+/** 火力チェックの「この装備を作る」で来た時 (2026-10-03、その 5): 相手の装備の文面を「コピーを貼る」に入れて解析まで */
+watch(
+  pendingCraftPaste,
+  (t) => {
+    if (!t) return;
+    pendingCraftPaste.value = null;
+    backToDoor();
+    door.value = "paste";
+    c.resumeFlow.value = false;
+    text.value = t;
+    void reread(t);
+  },
+  { immediate: true },
+);
 watch(
   pendingCraft,
   async (plan) => {
