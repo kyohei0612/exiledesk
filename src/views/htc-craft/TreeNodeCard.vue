@@ -57,6 +57,7 @@ function actionText(a: SimAction | null, off = false): string {
     case "breach": return join(so(OMEN.crystallisation[a.removeSide ?? "prefix"]), "ブリーチのエッセンス (品質の上限 +20%)");
     case "desecrate": return join(so(OMEN.necromancy[a.side]), a.faction ? omenJa(FACTION_OMEN[a.faction]) : "", a.echoes ? omenJa("OmenofAbyssalEchoes") : "", boneJa(a.bone));
     case "light": return `${omenJa("OmenofLight")} + 消去のオーブ (冒涜だけ消す)`;
+    case "magicEssence": return `変成のオーブ → ${boneJa(a.key)} (マジックからレアに。エッセンスの MOD は確定)`;
     case "abyss": return join(so(OMEN.crystallisation[a.side]), "深淵のエッセンス (印を付ける。次の冒涜は印を置き換え、段の下限 MOD レベル 33 = 仮)");
     case "whittle": return `${omenJa("OmenofWhittling")} + カオスオーブ (一番レベルの低い MOD を消す)`;
     case "check": return "確認だけ (打たない)";

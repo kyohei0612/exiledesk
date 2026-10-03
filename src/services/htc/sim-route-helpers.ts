@@ -163,6 +163,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         if (clash.length && !(clash.length === 1 && rem.length === 1 && rem[0] === clash[0])) return "同じ系統の MOD が付いている";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
+      case "magicEssence": return s.slots.length || s.breach ? "白のベースにだけ (変成 → エッセンス)" : null;
       case "abyss":
         if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
         if (s.slots.some((x) => x.desec)) return "冒涜の MOD を先に外す (エッセンス・合金で上書き)";
@@ -228,6 +229,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "desecrate": return cur(a.bone) + (need ? cur(OMEN.necromancy[a.side]) : 0) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0) + (a.faction ? cur(FACTION_OMEN[a.faction]) : 0);
       case "light": return cur("annul") + cur("OmenofLight");
       case "abyss": return cur(abyssKey) + (need ? cur(OMEN.crystallisation[a.side]) : 0);
+      case "magicEssence": return cur("transmute") + cur(a.key);
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
       case "breach": {
@@ -359,6 +361,12 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const u = rmRandom(t, rs);
         const em = mod(a.modId);
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true, ...(em ? { family: em.family, lvl: em.tiers[0]?.ilvl ?? 1 } : {}) }] };
+      }
+      case "magicEssence": {
+        // エッセンスの MOD + 変成で付いた 1 つ (外れ、狙いなら狙い。エッセンスと同じ系統は出ない = 先に置いてから引く)
+        const em = mod(a.modId);
+        const t: SimState = { ...s, slots: [...s.slots, { modId: a.modId, side: (em?.type ?? "prefix") as Side, fixed: false, crafted: true, ...(em ? { family: em.family } : {}) }] };
+        return land(t, pick(roll(t, SIDES.filter((x) => room(t, x)), 0, null, 20)));
       }
       case "abyss": {
         const t = removable(s, a.side).length ? rmRandom(s, a.side) : s;

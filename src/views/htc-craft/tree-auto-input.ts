@@ -71,6 +71,8 @@ export interface AutoTreeInput {
    * 省くと上書きできる時は上書き。比べる用 (オーナー 2026-09-25:「安いリロール優先。骨も光を使うなら古代が良かったりする。確率計算で判断して」)
    */
   reroll?: "overwrite" | "light" | "abyss";
+  /** 白のベースに 変成 → 普通のエッセンス で最初に付ける狙い ([[magicEssenceFor]])。省くと使わない (比べる用の候補) */
+  magicEssence?: { modId: string; key: string } | null;
   /** 持てるクラフト MOD の数 (アストリッドの創造性で 2)。深淵の印の輪は 2 が要る */
   craftedLimit?: number;
   /** 勢力のお告げ (黒血・リージュ・君主) を使うか。省くと使える時は使う (武器・装飾品の勢力の冒涜 MOD)。false = 使わない (比べる用) */

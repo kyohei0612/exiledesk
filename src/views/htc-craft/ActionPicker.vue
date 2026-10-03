@@ -79,6 +79,7 @@ function orbOf(a: SimAction | null): string {
     case "breach": return "essence:breach";
     // 深淵のエッセンスは自動で組んだ時だけ (手で選ぶ欄はまだ無い)
     case "abyss": return "essence:abyss";
+    case "magicEssence": return a.key;
     case "desecrate": return a.bone;
     case "check": return "check";
     case "quality": return "quality";

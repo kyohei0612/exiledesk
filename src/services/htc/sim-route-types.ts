@@ -28,6 +28,12 @@ export type SimAction =
    * 段の下限は MOD レベル 33 (仮: 実測 1 件。説明文は「より高い段」だけ。古代の骨とは重ならない)。光のお告げ無しに冒涜を回す輪に使う
    */
   | { kind: "abyss"; side: Side }
+  /**
+   * 白のベース → 変成のオーブ (マジック、ランダムな MOD 1 つ) → 普通のエッセンス (レアにしてエッセンスの MOD) (2026-10-03、防具・武器への拡張 その 2)。
+   * modId = その MOD で満たす狙い (普通の MOD の id)、key = エッセンスの値段のキー (essence:lesser|normal|greater:<エッセンスの MOD>)。
+   * MOD が 1 つも無い時だけ。付いた MOD はクラフト MOD (エッセンスの MOD は 1 つまで)
+   */
+  | { kind: "magicEssence"; modId: string; key: string }
   | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
@@ -158,7 +164,7 @@ export interface SimResult {
  * 確定の手 (必ず付く・必ず消える)。× の行き先が未設定でも止めずに○の行き先へ進む
  * (オーナー 2026-09-24:「一応確定やから、そこの手でバツはデフォで入力しなかったら無視するように」)
  */
-export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss"]);
+export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss", "magicEssence"]);
 
 /** 側のお告げを使う手か (高貴・消去・カオスは側を選んだ時、エッセンス・ブリーチ・冒涜はいつも)。画面の「お告げ不要」の出し分け用 */
 export function hasSideOmen(a: SimAction | null): boolean {

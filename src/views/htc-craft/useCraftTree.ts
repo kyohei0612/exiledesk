@@ -78,6 +78,9 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
         miss = k >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== k) } : hit;
       } else if (a?.kind === "breach") {
         hit = { ...(junkAt >= 0 && s.slots[junkAt]!.side === "prefix" ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : s), breach: true };
+      } else if (a?.kind === "magicEssence") {
+        // 変成の 1 つ (外れ) + エッセンスの狙い
+        hit = { ...s, slots: [...s.slots, { modId: a.modId, side: sideOf(a.modId), fixed: false, crafted: true }, { modId: null, side: sideOf(a.modId) === "prefix" ? "suffix" : "prefix", fixed: false }] };
       } else if (a?.kind === "abyss") {
         // 深淵のエッセンス: その側の外れ (冒涜の外れ・上書きのエッセンス) を 1 つ消して印
         const j = s.slots.findIndex((x) => !x.fixed && !x.modId && x.side === a.side);

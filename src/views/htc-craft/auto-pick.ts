@@ -6,7 +6,7 @@
  * なので両方組んで、完成 90% 以上の中で平均の安い方 (どれも届かなければ完成の多い方)。カオスを使う / 使わないも同じく比べる。
  */
 import { simulateTreeChunked, type SimNode, type SimState } from "../../services/htc/sim-route";
-import { autoTree, chaosSideFor, type AutoTreeInput } from "./tree-auto";
+import { autoTree, chaosSideFor, magicEssenceFor, type AutoTreeInput } from "./tree-auto";
 import { spawnChance } from "./craft-estimate";
 import { planByRedoCost, type RedoPlan } from "./redo-cost";
 import type { useHtcCraft } from "./useHtcCraft";
@@ -38,6 +38,9 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   for (const ch of chaosVariants) for (const bn of bones) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });
   // 深淵の印の輪 (アストリッドで 2 つ持てる時だけ。組めない形なら autoTree が普通の輪にする = 同じ形は下でまとまる)
   if ((inp.craftedLimit ?? 1) >= 2) picks.push({ label: "深淵の印", reroll: "abyss" });
+  // 白のベースなら 変成 → 普通のエッセンス で 1 つ確定させる形も比べる (段が届く時だけ。2026-10-03 その 2)
+  const me = magicEssenceFor(inp, ctx.cls, ctx.itemLevel);
+  if (me) picks.push({ label: "変成 → エッセンス", magicEssence: me, chaosOk: false, chaosSide: null });
   const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
   for (const pk of picks) {
     for (const g of ["catalyst", "all"] as const) for (const an of annuls) variants.push({
