@@ -11,6 +11,9 @@ import { displayCurrency } from "../../state/display-currency";
 const RARITY_JA = { normal: "ノーマル", magic: "マジック", rare: "レア", unique: "ユニーク" } as const;
 const RARITY_CLS = { normal: "text-rarity-normal", magic: "text-rarity-magic", rare: "text-rarity-rare", unique: "text-rarity-unique" } as const;
 const money = (ex: number) => displayCurrency.money(ex);
+/** ルーンをはめた手の中身 (結果 JSON の augment_change、run-plan.ts)。置き換えた物は壊れて戻らない (augment-rules.ts) */
+type AugChange = { socket: number; put: { ja: string }; replaced: { ja: string } | null; replaced_goes: string | null };
+const augOf = (out: object): AugChange | null => (out as { augment_change?: AugChange }).augment_change ?? null;
 </script>
 
 <template>
@@ -36,6 +39,10 @@ const money = (ex: number) => displayCurrency.money(ex);
         <p v-for="m in s.added" :key="'a' + m.modId" class="text-emerald-300">＋ {{ m.textJa }} <span class="text-[10px] opacity-60">{{ m.side === "prefix" ? "プレ" : "サフィ" }} {{ m.tierName }}</span></p>
         <p v-for="m in s.removed" :key="'r' + m.modId" class="text-rose-300 line-through">－ {{ m.textJa }}</p>
         <p v-if="s.after.enchant && s.after.enchant !== s.before.enchant" class="text-sky-200">＋ {{ s.after.enchant.textJa }} <span class="text-[10px] opacity-60">エンチャント</span></p>
+        <template v-if="augOf(s.out)">
+          <p class="text-[#8fa8ff]">＋ {{ augOf(s.out)!.put.ja }} <span class="text-[10px] opacity-60">{{ augOf(s.out)!.socket }} 番目のソケット</span></p>
+          <p v-if="augOf(s.out)!.replaced" class="text-rose-300"><span class="line-through">－ {{ augOf(s.out)!.replaced!.ja }}</span> <span class="text-[10px] opacity-70">{{ augOf(s.out)!.replaced_goes === "destroyed" ? "置き換えで壊れた" : "置き換えた" }}</span></p>
+        </template>
         <p v-if="(s.after.sockets ?? 0) > (s.before.sockets ?? 0)" class="text-sky-200">＋ ソケット ({{ s.after.sockets }})</p>
         <p v-if="s.after.corrupted && !s.before.corrupted" class="text-[#ff5050]">コラプト<span v-if="!s.added.length && !s.removed.length && s.after.enchant === s.before.enchant && s.after.sockets === s.before.sockets"> (変化なし)</span></p>
         <p v-if="s.after.sanctified && !s.before.sanctified" class="text-amber-200">聖別</p>

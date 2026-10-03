@@ -21,13 +21,13 @@ import { socketCapOf } from "./stage-runes";
 import { isShard } from "./apply-act";
 import { extraBaseFor, reqOf } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
-import { isRune, runeOf } from "./stage-runes";
+import { isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
 export const GEM_START_SOCKETS = 2;
 import type { CraftStagePlan, CraftStageResult, StageItem as OutItem, StageMod as OutMod, StageStep as OutStep } from "./contract";
-import type { StageItem, StageMod } from "./types";
+import type { StageAugment, StageItem, StageMod } from "./types";
 
 /** 白 (か手順の開始のレアリティ) の新品 */
 export function freshItem(data: PatchData, base: string, itemLevel: number, rarity: StageItem["rarity"] = "normal"): StageItem {
@@ -91,12 +91,15 @@ export function outItem(it: StageItem, data?: PatchData): OutItem {
     // 要望 ⑰-2: 上の数値 (品質・ローカル MOD・ルーンを反映。up = 素の値から変わった = ゲームでは青)
     ...({ properties: propRows(it).map((r) => ({ key: r.key, label: r.label, value: r.value, up: r.up })) } as object),
     // 要望 ⑰-1: ソケットにはめたルーン (はめた順)
-    ...({ augments: (it.augments ?? []).map((a) => ({ key: a.key, en: a.en, ja: a.ja, category: a.cat, text_ja: a.textJa, text_en: a.textEn, stats: a.stats })) } as object),
+    ...({ augments: (it.augments ?? []).map(outAug) } as object),
     ...({ quality_tag: it.qualityTag ?? null, sockets: it.sockets ?? 0, enchant: it.enchant ? { id: it.enchant.id, text_ja: it.enchant.textJa, text_en: it.enchant.textEn } : null, sanctified: !!it.sanctified } as object),
     prefixes: it.prefixes.map((m) => outModIn(it, m, data)) as OutItem["prefixes"],
     suffixes: it.suffixes.map((m) => outModIn(it, m, data)) as OutItem["suffixes"],
   };
 }
+
+/** はめたオーグメント 1 つ (結果 JSON の augments の 1 つと同じ形) */
+const outAug = (a: StageAugment) => ({ key: a.key, en: a.en, ja: a.ja, category: a.cat, text_ja: a.textJa, text_en: a.textEn, stats: a.stats });
 
 /** 1 手の記録 (画面の履歴にも使う) と、打った後のアイテム */
 export interface PlayedStep {
@@ -113,7 +116,11 @@ export function stepJa(currency: string, item: StageItem): string {
   const rv = /^reveal:(\d)(:reroll)?$/.exec(currency);
   if (rv) return `開示 (${rv[2] ? "引き直して " : ""}${rv[1]} 番目)`;
   if (DISPOSE_JA[currency]) return DISPOSE_JA[currency]!;
-  if (isRune(currency)) return runeOf(currency)!.ja;
+  if (isRune(currency)) {
+    // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
+    const n = parseRuneKey(currency)?.socket;
+    return n ? `${runeOf(currency)!.ja} (${n} 番目のソケット)` : runeOf(currency)!.ja;
+  }
   return jaOfPriceKey(currency, item.cls) ?? currency;
 }
 
@@ -146,6 +153,9 @@ export function playStep(
     cost: { each, amount, subtotal, cumulative },
     // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
+    // オーグメント (ルーン) をはめた手 (2026-10-03、足したキー): どのソケット (1 から) に何を。置き換えた時は外れた物と、その行き先
+    // (replaced_goes "destroyed" = 壊れて戻らない。src/services/augment-rules.ts)。POE2Tube は無視してよい
+    ...(r.augment ? ({ augment_change: { socket: r.augment.socket, put: outAug(r.augment.put), replaced: r.augment.replaced ? outAug(r.augment.replaced) : null, replaced_goes: r.augment.replacedGoes } } as object) : {}),
   };
   return { out, before: item, after: r.item, added: r.added, removed: r.removed };
 }

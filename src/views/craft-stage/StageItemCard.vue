@@ -33,7 +33,16 @@ const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: [] }>();
+const emit = defineEmits<{ use: []; socket: [n: number] }>();
+/**
+ * ルーンの入ったソケットを押した (2026-10-03): そのソケットを指して打つ (置き換え)。親が持っている物を見て決める
+ * (ルーン以外を持っている時は、アイテムを押したのと同じ)。空のソケットはアイテムを押したのと同じ
+ */
+function onSocket(e: MouseEvent, n: number): void {
+  if (!props.holding || !props.item.augments?.[n - 1]) return;
+  e.stopPropagation();
+  emit("socket", n);
+}
 
 /** ゲームのレアリティの色 */
 const TONE = {
@@ -112,7 +121,7 @@ const rows = computed(() =>
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
-        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'">
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :title="item.augments?.[i - 1] ? `${i} 番目: ${item.augments[i - 1]!.ja}` : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)">
           <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
         </span>
       </div>

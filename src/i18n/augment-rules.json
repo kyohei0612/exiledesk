@@ -1,0 +1,6688 @@
+{
+ "generated": "2026-10-03",
+ "source": "GGG クライアント: CurrencyItems.Description → SoulCores.Description (ClientStrings2) → ClientStrings.ItemDescriptionSoulCore の順の説明文、SoulCores (IsSocketBound / Limit / CanSocketInCorruptedSanctified)、SoulCoreLimits",
+ "replacedGoesWhy": "説明文「取り外すことはできないが、他のオーグメントアイテムで置き換えることができる」(英語 cannot be retrieved but can be replaced): 置き換えで外れた物は手元に戻らない",
+ "rules": {
+  "[DNT-Unused] Rune of Chance": {
+   "ja": "偶然のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス",
+    "クォータースタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスまたはクォータースタッフの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Confidence": {
+   "ja": "自信のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドまたはスタッフの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Confrontation": {
+   "ja": "対峙のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "メイス",
+    "タリスマン"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "メイスまたはタリスマンの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Duplication": {
+   "ja": "複製のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドまたはスタッフの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Partnership": {
+   "ja": "連携のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "セプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Reverberation": {
+   "ja": "反響のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "両手武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "両手武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Vital Flame": {
+   "ja": "生命の炎のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "メイス",
+    "タリスマン"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "メイスまたはタリスマンの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "[DNT-Unused] Rune of Wild Ferocity": {
+   "ja": "野生の獰猛さのルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Adept Rune": {
+   "ja": "熟達のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Aldur's Legacy": {
+   "ja": "アルダーの遺産",
+   "type": "Rune",
+   "removable": null,
+   "replaceable": null,
+   "bound": null,
+   "slots": null,
+   "slotsKnown": false,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "コラプト状態でないカルグールまたはエゾマイトのユニークの空のオーグメントソケットに配置し、そのユニークを破壊し新しくルーンを生成する。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Amanamu's Gaze": {
+   "ja": "アマナムの凝視",
+   "type": "AbyssalEye",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Ancient Rune of Animosity": {
+   "ja": "敵意の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "タリスマン"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "タリスマンの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Control": {
+   "ja": "制御の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "クォータースタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "クォータースタッフの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Decay": {
+   "ja": "腐敗の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Detonation": {
+   "ja": "起爆の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "クロスボウ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "クロスボウの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Discovery": {
+   "ja": "発見の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "スタッフの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Dueling": {
+   "ja": "決闘の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "バックラー"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "バックラーの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Prowess": {
+   "ja": "武勇の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "スピア"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "スピアの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Retaliation": {
+   "ja": "報復の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Shattering": {
+   "ja": "破砕の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Splinters": {
+   "ja": "破片の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "弓"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "弓の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of the Horde": {
+   "ja": "大群の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "セプターの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of the Titan": {
+   "ja": "タイタンの古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "両手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "両手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ancient Rune of Witchcraft": {
+   "ja": "妖術の古代ルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "フォーカス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "フォーカスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Astrid's Creativity": {
+   "ja": "アストリッドの創造性",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": "destroyed",
+   "text": "いずれかの装備品の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Atmohua's Soul Core of Retreat": {
+   "ja": "アトモフアの退却のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "フォーカス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはフォーカスの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Atziri's Soul Core of Alacrity": {
+   "ja": "アッツィリの俊敏のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": null,
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Atziri's Soul Core of Devotion": {
+   "ja": "アッツィリの献身のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": null,
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Atziri's Soul Core of Inoculation": {
+   "ja": "アッツィリの接種のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": null,
+   "text": "靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Atziri's Soul Core of Vitality": {
+   "ja": "アッツィリの活力のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": null,
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Bear Idol": {
+   "ja": "クマのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Betrayal of Aldur": {
+   "ja": "アルダーの裏切り",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": "rare",
+   "limit": null,
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "レアの武器の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": [
+    "ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない"
+   ]
+  },
+  "Boar Idol": {
+   "ja": "イノシシのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Body Rune": {
+   "ja": "肉体のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Breath of Aldur": {
+   "ja": "アルダーの息吹",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": "rare",
+   "limit": null,
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "レアの武器の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": [
+    "ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない"
+   ]
+  },
+  "Cadigan's Epiphany": {
+   "ja": "カディガンの啓示",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Carved Cunning": {
+   "ja": "刻印された狡猾さ",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Carved Majesty": {
+   "ja": "刻印された威厳",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Carved Mischief": {
+   "ja": "刻印された悪戯",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Carved Tenacity": {
+   "ja": "刻印された不屈",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Cat Idol": {
+   "ja": "ネコのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Charging Rune": {
+   "ja": "チャージルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Cholotl's Soul Core of War": {
+   "ja": "チョロトルの戦のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "弓"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "弓の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Citaqualotl's Soul Core of Foulness": {
+   "ja": "シタクアロトルの不快のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Citaqualotl's Thesis": {
+   "ja": "シタクアロトルの命題",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Countess Seske's Rune of Archery": {
+   "ja": "セスケ女伯爵の弓のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "弓"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "弓の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Courtesan Mannan's Rune of Cruelty": {
+   "ja": "宮廷女官マンナンの残虐のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Craiceann's Rune of Recovery": {
+   "ja": "クレイシアンの回復のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Craiceann's Rune of Warding": {
+   "ja": "クレイシアンの守りのルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Desert Rune": {
+   "ja": "砂漠のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Emergent Instinct": {
+   "ja": "発現する本能",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Emergent Possibility": {
+   "ja": "発現する可能性",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Emergent Protection": {
+   "ja": "発現する加護",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Emergent Vigour": {
+   "ja": "発現する活力",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Estazunti's Soul Core of Convalescence": {
+   "ja": "エスタザンティの再起のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴または兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Farrul's Rune of Grace": {
+   "ja": "ファルウルの気品のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Farrul's Rune of the Chase": {
+   "ja": "ファルウルの追跡のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Farrul's Rune of the Hunt": {
+   "ja": "ファルウルの狩りのルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Fenumus' Rune of Agony": {
+   "ja": "フィヌムスの苦痛のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Fenumus' Rune of Draining": {
+   "ja": "フィヌムスの吸収のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Fenumus' Rune of Spinning": {
+   "ja": "フィヌムスの紡績のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Fox Idol": {
+   "ja": "キツネのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Glacial Rune": {
+   "ja": "氷河のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Adept Rune": {
+   "ja": "熟達のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Greater Body Rune": {
+   "ja": "肉体のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Charging Rune": {
+   "ja": "グレーターチャージルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Desert Rune": {
+   "ja": "砂漠のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Glacial Rune": {
+   "ja": "氷河のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Inspiration Rune": {
+   "ja": "鼓舞のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Iron Rune": {
+   "ja": "鉄のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Mind Rune": {
+   "ja": "精神のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Rebirth Rune": {
+   "ja": "復活のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Resolve Rune": {
+   "ja": "決意のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Greater Robust Rune": {
+   "ja": "強固のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Greater Rune of Alacrity": {
+   "ja": "積極性のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Rune of Leadership": {
+   "ja": "統率力のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Rune of Nobility": {
+   "ja": "高潔なグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Rune of Tithing": {
+   "ja": "十分の一税のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Stone Rune": {
+   "ja": "石のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Storm Rune": {
+   "ja": "嵐のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Tempered Rune": {
+   "ja": "鍛錬のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Vision Rune": {
+   "ja": "先見のグレータールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Greater Ward Rune": {
+   "ja": "グレーターワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Guatelitzi's Soul Core of Endurance": {
+   "ja": "グアテリッツィの忍耐のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Guatelitzi's Thesis": {
+   "ja": "グアテリッツィの命題",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Hawk Idol": {
+   "ja": "タカのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Hayoxi's Soul Core of Heatproofing": {
+   "ja": "ハヨキの耐熱のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Hedgewitch Assandra's Rune of Wisdom": {
+   "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドまたはスタッフの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Alira": {
+   "ja": "アリラのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Eeshta": {
+   "ja": "イーシュタのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Egrin": {
+   "ja": "エグリンのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Eramir": {
+   "ja": "エラミアのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Greust": {
+   "ja": "グルーストのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾",
+    "バックラー",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾、バックラーまたはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Grold": {
+   "ja": "グロルドのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Kraityn": {
+   "ja": "クライティンのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Maxarius": {
+   "ja": "マクサリウスのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Oak": {
+   "ja": "オークのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Ralakesh": {
+   "ja": "ララケシュのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Silk": {
+   "ja": "シルクのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾",
+    "バックラー",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾、バックラーまたはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Sirrius": {
+   "ja": "シリウスのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of the Martyr": {
+   "ja": "殉教者のアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of the Pharisee": {
+   "ja": "パリサイ人のアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of the Sycophant": {
+   "ja": "へつらう者のアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Thruldana": {
+   "ja": "スルルダーナのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Idol of Yeena": {
+   "ja": "イーナのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Inspiration Rune": {
+   "ja": "鼓舞のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Ire of Aldur": {
+   "ja": "アルダーの怒り",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": "rare",
+   "limit": null,
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "レアの武器の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": [
+    "ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない"
+   ]
+  },
+  "Iron Rune": {
+   "ja": "鉄のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Abundance": {
+   "ja": "ジクアニの豊富さのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Automation": {
+   "ja": "ジクアニの自動化のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Malediction": {
+   "ja": "ジクアニの呪詛のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Munitions": {
+   "ja": "ジクアニの弾薬のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Quaking": {
+   "ja": "ジクアニの震動のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Radiance": {
+   "ja": "ジクアニの光輝のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Rallying": {
+   "ja": "ジクアニの決起のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Rippling": {
+   "ja": "ジクアニの波動のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Severing": {
+   "ja": "ジクアニの切断のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Snares": {
+   "ja": "ジクアニの罠のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Squalls": {
+   "ja": "ジクアニの突風のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Targeting": {
+   "ja": "ジクアニの照準のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Soul Core of Thundering": {
+   "ja": "ジクアニの雷鳴のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Jiquani's Thesis": {
+   "ja": "ジクアニの命題",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Katla's Gloom": {
+   "ja": "カトラの陰鬱",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Kolr's Hunt": {
+   "ja": "コルの狩り",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Kurgal's Gaze": {
+   "ja": "クルガルの凝視",
+   "type": "AbyssalEye",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Lady Hestra's Rune of Winter": {
+   "ja": "ヘストラ婦人の冬のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of A Worthy Foe": {
+   "ja": "ふさわしい相手の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Adonia's Ego": {
+   "ja": "アドニアのエゴの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Alkem Eira": {
+   "ja": "アルケム・エイラの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Amor Mandragora": {
+   "ja": "マンドラゴラの愛の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Ashrend": {
+   "ja": "アッシュレンドの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Blackbraid": {
+   "ja": "黒い組紐の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Brain Rattler": {
+   "ja": "脳揺らしの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "両手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "両手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Bramblejack": {
+   "ja": "ブランブルジャックの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Briarpatch": {
+   "ja": "ブライアパッチの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Briskwrap": {
+   "ja": "ブリスクラップのルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Bristleboar": {
+   "ja": "毛深い猪の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Brynhand's Mark": {
+   "ja": "ブリンハンドの印の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Bushwhack": {
+   "ja": "ブッシュワックの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Candlemaker": {
+   "ja": "キャンドルメーカーの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Chernobog's Pillar": {
+   "ja": "チェルノボグの柱の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Crown of Thorns": {
+   "ja": "茨の冠の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Cursecarver": {
+   "ja": "呪い刻みの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Deathblow": {
+   "ja": "デスブローの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Deidbell": {
+   "ja": "ディードベルの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Dionadair": {
+   "ja": "ディオナデアの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Duality": {
+   "ja": "二面性の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Dunkelhalt": {
+   "ja": "ダンケルハルトの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Dusk Vigil": {
+   "ja": "夕闇の番の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "スタッフの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Edyrn's Tusks": {
+   "ja": "エディルンの牙の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Elevore": {
+   "ja": "エレボアーの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Erian's Cobble": {
+   "ja": "エリアンの玉石の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Ezomyte Peak": {
+   "ja": "エゾマイトピークの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Facebreaker": {
+   "ja": "フェースブレーカーの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Foxshade": {
+   "ja": "フォックスシェードの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Greymake": {
+   "ja": "グレイメイクの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Hoghunt": {
+   "ja": "豚狩りの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "両手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "両手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Horns of Bynden": {
+   "ja": "ビンデンの角笛の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Hrimnor's Hymn": {
+   "ja": "フリムノーの聖歌の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "両手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "両手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Ironbound": {
+   "ja": "アイアンバウンドの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Keeper of the Arc": {
+   "ja": "アークの守り手の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Kingsguard": {
+   "ja": "キングスガードの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Legionstride": {
+   "ja": "リージョンストライドの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Lifesprig": {
+   "ja": "ライフスプリグの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Mjölner": {
+   "ja": "ミョルナーの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Northpaw": {
+   "ja": "北の脚の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Oaksworn": {
+   "ja": "楢の誓いの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Obern's Bastion": {
+   "ja": "オバーンの砦の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Olrovasara": {
+   "ja": "オルロヴァサラの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Quill Rain": {
+   "ja": "針の雨の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "弓"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "弓の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Rondel de Ezo": {
+   "ja": "ロンデル・デ・エゾの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Runeseeker's Call": {
+   "ja": "ルーンシーカーの呼び声の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Serle's Grit": {
+   "ja": "サールの根性の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Spiteful Floret": {
+   "ja": "悪意の小花の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Starkonja's Head": {
+   "ja": "スターコンジャの頭の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Svalinn": {
+   "ja": "スヴァリンの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of The Blood Thorn": {
+   "ja": "血の棘の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of The Knight-errant": {
+   "ja": "放浪騎士の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of The Sentry": {
+   "ja": "哨兵の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "クォータースタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "クォータースタッフの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of The Smiling Knight": {
+   "ja": "微笑む騎士の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of The Unleashed": {
+   "ja": "解き放たれし者の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of The Vile Knight": {
+   "ja": "卑劣な騎士の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Trampletoe": {
+   "ja": "踏みつぶす爪先の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Trenchtimbre": {
+   "ja": "トレンチティンバーの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイスの空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Twisted Empyrean": {
+   "ja": "歪んだ天空の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Tyranny's Grip": {
+   "ja": "圧政の手の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Legacy of Wanderlust": {
+   "ja": "ワンダーラストの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Wings of Caelyn": {
+   "ja": "ケイリンの翼の遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Legacy of Wulfsbane": {
+   "ja": "ウルフスベインの遺産",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AldursLegacyLimit1",
+    "n": 1,
+    "group": "アルダーの遺産"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることはできる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Lesser Adept Rune": {
+   "ja": "熟達のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Lesser Body Rune": {
+   "ja": "肉体のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Charging Rune": {
+   "ja": "レッサーチャージルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Desert Rune": {
+   "ja": "砂漠のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Glacial Rune": {
+   "ja": "氷河のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Inspiration Rune": {
+   "ja": "鼓舞のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Iron Rune": {
+   "ja": "鉄のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Mind Rune": {
+   "ja": "精神のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Rebirth Rune": {
+   "ja": "復活のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Resolve Rune": {
+   "ja": "決意のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Lesser Robust Rune": {
+   "ja": "強固のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Lesser Stone Rune": {
+   "ja": "石のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Storm Rune": {
+   "ja": "嵐のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Tempered Rune": {
+   "ja": "鍛錬のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Vision Rune": {
+   "ja": "先見のレッサールーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Lesser Ward Rune": {
+   "ja": "レッサーワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Masterwork Rune": {
+   "ja": "傑作のルーン",
+   "type": "Rune",
+   "removable": null,
+   "replaceable": null,
+   "bound": null,
+   "slots": null,
+   "slotsKnown": false,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": null,
+   "text": "ティアを持つルーンを持つオーグメントソケットにはめて、そのルーンをアップグレードできる。",
+   "textFrom": "CurrencyItems",
+   "extra": [
+    "ティアを持つルーンを持つオーグメントソケットにはめて、そのルーンをアップグレードできる"
+   ]
+  },
+  "Medved's Tending": {
+   "ja": "メドヴェッドの世話",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "鎧の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Mind Rune": {
+   "ja": "精神のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Opiloti's Soul Core of Assault": {
+   "ja": "オピロティの強襲のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Owl Idol": {
+   "ja": "フクロウのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "フォーカス",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "フォーカスまたはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ox Idol": {
+   "ja": "ウシのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "盾",
+    "バックラー",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "盾、バックラーまたはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Panther Idol": {
+   "ja": "ヒョウのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Passion of Aldur": {
+   "ja": "アルダーの情熱",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": "rare",
+   "limit": null,
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "レアの武器の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": [
+    "ソケットするとモッドを変化させるが、さらにモッドを変化させることはできない"
+   ]
+  },
+  "Perfect Adept Rune": {
+   "ja": "熟達のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Body Rune": {
+   "ja": "肉体のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Charging Rune": {
+   "ja": "パーフェクトチャージルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Desert Rune": {
+   "ja": "砂漠のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Glacial Rune": {
+   "ja": "氷河のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Inspiration Rune": {
+   "ja": "鼓舞のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Iron Rune": {
+   "ja": "鉄のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Mind Rune": {
+   "ja": "精神のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Rebirth Rune": {
+   "ja": "復活のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Resolve Rune": {
+   "ja": "決意のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Robust Rune": {
+   "ja": "強固のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Stone Rune": {
+   "ja": "石のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Storm Rune": {
+   "ja": "嵐のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Vision Rune": {
+   "ja": "先見のパーフェクトルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Perfect Ward Rune": {
+   "ja": "パーフェクトワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Primate Idol": {
+   "ja": "サルのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Quipolatl's Soul Core of Flow": {
+   "ja": "キポラトルの流れのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Quipolatl's Thesis": {
+   "ja": "キポラトルの命題",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Rabbit Idol": {
+   "ja": "ウサギのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Raven-Touched Shard": {
+   "ja": "レイヴンタッチシャード",
+   "type": "CongealedMist",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rebirth Rune": {
+   "ja": "復活のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Resolve Rune": {
+   "ja": "決意のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Robust Rune": {
+   "ja": "強固のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "装備品の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Accumulation": {
+   "ja": "蓄積のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "遠距離武器",
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "遠距離武器または手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Acrobatics": {
+   "ja": "軽業のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Confrontation": {
+   "ja": "対峙のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "クォータースタッフ",
+    "スピア"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "クォータースタッフまたはスピアの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Consistency": {
+   "ja": "一貫性のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "セプター",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンド、セプターまたは兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Culmination": {
+   "ja": "集大成のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "片手メイス",
+    "クォータースタッフ",
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "片手メイス、クォータースタッフまたは手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Foundations": {
+   "ja": "基礎のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Reach": {
+   "ja": "射程のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンド、スタッフまたは兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Renown": {
+   "ja": "名声のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "キャスター武器",
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "キャスター武器または手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of the Blossom": {
+   "ja": "開花のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of the Hunt": {
+   "ja": "狩猟のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "セプター",
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "セプターまたは靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of the Prism": {
+   "ja": "プリズムのルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Vital Flame": {
+   "ja": "生命の炎のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "メイス",
+    "タリスマン"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "メイスまたはタリスマンの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Rune of Vitality": {
+   "ja": "生命力のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "盾",
+    "バックラー"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器、盾またはバックラーの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Saqawal's Rune of Erosion": {
+   "ja": "サカワルの浸食のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Saqawal's Rune of Memory": {
+   "ja": "サカワルの記憶のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Saqawal's Rune of the Sky": {
+   "ja": "サカワルの空のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Serle's Triumph": {
+   "ja": "セールの凱旋",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": null,
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "いずれかの装備品の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Snake Idol": {
+   "ja": "ヘビのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Atmohua": {
+   "ja": "アトモフアのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Soul Core of Azcapa": {
+   "ja": "アズカパのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Cholotl": {
+   "ja": "チョロトルのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Soul Core of Citaqualotl": {
+   "ja": "シアクラトルのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Soul Core of Jiquani": {
+   "ja": "ジクアニのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Opiloti": {
+   "ja": "オピロティのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Puhuarte": {
+   "ja": "プフアーテのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Quipolatl": {
+   "ja": "クイポラトルのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Tacati": {
+   "ja": "タカティのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Soul Core of Ticaba": {
+   "ja": "ティカバのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "鎧",
+    "盾"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器、鎧または盾の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Topotante": {
+   "ja": "トポタンテのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Tzamoto": {
+   "ja": "ザモトのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Vizoma": {
+   "ja": "ヴィゾマのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Xopec": {
+   "ja": "ゾペックのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Zalatl": {
+   "ja": "ザラトルのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Soul Core of Zantipi": {
+   "ja": "ザンティーピのソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Stag Idol": {
+   "ja": "シカのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Stoat Idol": {
+   "ja": "オコジョのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Stone Rune": {
+   "ja": "石のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Storm Rune": {
+   "ja": "嵐のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Tacati's Soul Core of Affliction": {
+   "ja": "タカティの病苦のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Tecrod's Gaze": {
+   "ja": "テクロッドの凝視",
+   "type": "AbyssalEye",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Tempered Rune": {
+   "ja": "鍛錬のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Thane Girt's Rune of Wildness": {
+   "ja": "族長ガートの野生のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンドまたはスタッフの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Thane Grannell's Rune of Mastery": {
+   "ja": "族長グラネルの熟達のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Thane Leld's Rune of Spring": {
+   "ja": "族長レルドの春のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Thane Myrk's Rune of Summer": {
+   "ja": "族長ミュルクの夏のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "マーシャル武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "マーシャル武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "The Greatwolf's Rune of Claws": {
+   "ja": "大狼の鉤爪のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "The Greatwolf's Rune of Willpower": {
+   "ja": "大狼の意志力のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "鎧"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "鎧の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Thrud's Might": {
+   "ja": "スルードの力",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "武器の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Topotante's Soul Core of Dampening": {
+   "ja": "トポタンテの軽減のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Tzamoto's Soul Core of Ferocity": {
+   "ja": "ザモトの凶暴性のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "兜の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Uhtred's Sidereus": {
+   "ja": "ウートレドの星読み",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "靴の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ulaman's Gaze": {
+   "ja": "ウラマンの凝視",
+   "type": "AbyssalEye",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "AncientAugment",
+    "n": 1,
+    "group": "古代のオーグメント"
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "防具の空いているオーグメントソケットに配置すると、その効果がアイテムに適用されます。ソケットにはめ込むと取り出すことはできませんが、他のオーグメントアイテムで置き換えることはできます。",
+   "textFrom": "ClientStrings2.ItemDescriptionAbyssGazeSocketable",
+   "extra": null
+  },
+  "Uromoti's Soul Core of Attenuation": {
+   "ja": "ウルモティの希薄化のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Vision Rune": {
+   "ja": "先見のルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Vorana's Carnage": {
+   "ja": "ヴォラナの虐殺",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": false,
+   "bound": true,
+   "slots": [
+    "兜"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": false,
+   "replacedGoes": null,
+   "text": "兜の空のオーグメントソケットに配置しその効果をそのアイテムに適用する。ソケットすると取り外すことも置き換えることもできない。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Ward Rune": {
+   "ja": "ワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Annihilation": {
+   "ja": "殲滅のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Armature": {
+   "ja": "骨組みのワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Bodyguards": {
+   "ja": "護衛のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Courage": {
+   "ja": "勇気のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Desperation": {
+   "ja": "窮地のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Disintegration": {
+   "ja": "分解のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Equinox": {
+   "ja": "分点のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Glancing": {
+   "ja": "浅い傷のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Heart": {
+   "ja": "心臓のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Hollowing": {
+   "ja": "空洞のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Nourishment": {
+   "ja": "滋養のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Obsession": {
+   "ja": "執着のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Protection": {
+   "ja": "保護のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Reinforcement": {
+   "ja": "補強のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Salvaging": {
+   "ja": "回収のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Stability": {
+   "ja": "安定のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Warding Rune of Symbiosis": {
+   "ja": "共生のワードルーン",
+   "type": "Rune",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器",
+    "防具"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器または防具の空のオーグメントソケットにはめることで効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "ClientStrings.ItemDescriptionSoulCore",
+   "extra": null
+  },
+  "Wolf Idol": {
+   "ja": "オオカミのアイドル",
+   "type": "Idol",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "手袋",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": null,
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "手袋またはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Xipocado's Soul Core of Dominion": {
+   "ja": "ジポカドの支配のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "ワンド",
+    "スタッフ",
+    "セプター"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "ワンド、スタッフまたはセプターの空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Xopec's Soul Core of Power": {
+   "ja": "ゾペックの力のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "武器"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "武器の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  },
+  "Zalatl's Soul Core of Insulation": {
+   "ja": "ザラトルの絶縁のソウルコア",
+   "type": "SoulCore",
+   "removable": false,
+   "replaceable": true,
+   "bound": false,
+   "slots": [
+    "靴"
+   ],
+   "slotsKnown": true,
+   "rarity": null,
+   "limit": {
+    "id": "GenericLimit1",
+    "n": 1,
+    "group": null
+   },
+   "corruptOk": true,
+   "replacedGoes": "destroyed",
+   "text": "靴の空のオーグメントソケットにはめて、アイテムに効果を適用する。一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる。",
+   "textFrom": "CurrencyItems",
+   "extra": null
+  }
+ },
+ "unexpected": [
+  {
+   "en": "Masterwork Rune",
+   "ja": "傑作のルーン",
+   "why": [
+    "外し方の文の型が分からない",
+    "置き方の文の型が分からない (「<部位>の空のオーグメントソケットに」が無い)"
+   ],
+   "text": "ティアを持つルーンを持つオーグメントソケットにはめて、そのルーンをアップグレードできる。"
+  },
+  {
+   "en": "Aldur's Legacy",
+   "ja": "アルダーの遺産",
+   "why": [
+    "外し方の文の型が分からない",
+    "部位の言葉が分からない: コラプト状態でないカルグール / エゾマイトのユニーク"
+   ],
+   "text": "コラプト状態でないカルグールまたはエゾマイトのユニークの空のオーグメントソケットに配置し、そのユニークを破壊し新しくルーンを生成する。"
+  }
+ ]
+}

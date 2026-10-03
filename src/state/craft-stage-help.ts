@@ -12,7 +12,8 @@ import { tierDisplayRanges } from "../services/mods/stat-scale";
 import { essenceTarget } from "../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
 import { enchantPool } from "../services/craft-stage/apply-vaal";
-import { socketCapOf } from "../services/craft-stage/stage-runes";
+import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../services/craft-stage/stage-runes";
+import { ruleLines } from "../services/augment-rules";
 import { maxQualityOf } from "../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
 import { CHANCE_UNIQUE_P, isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
@@ -173,6 +174,15 @@ export function stageHelp(key: string, data: PatchData | null, item: StageItem |
   if (JEWELLER_TO[key]) {
     const n = JEWELLER_TO[key];
     return [`**スキルジェム** のサポート枠を **${n} つ** にする (1 つずつではなく一気に)`, `サポート枠が ${n} つ未満のジェムにだけ使える`, "装備には使えない"];
+  }
+  // ルーン・ソウルコア等 (2026-10-03): 決まり (部位・外せるか・置き換えられるか・数) は説明文から作った表 (augment-rules.ts) のまま
+  if (isRune(key)) {
+    const eff = item ? runeEffectFor(runeOf(key)!, item.cls.category) : null;
+    return [
+      ...(eff ? [`この部位 (${eff.catJa}) での効き目: ${eff.ja}`] : item ? ["この部位には効き目が無い"] : []),
+      ...ruleLines(runeNameOf(key)),
+      "空きソケットが無い時は、はまっている物と置き換える (ソケットの絵を押すとそのソケット、アイテムを押すと左から最初の置き換えられる物)",
+    ];
   }
   if (isShard(key)) return [`**${SHARDS_PER_ORB} 個** 集めると ${SHARD_TO_ORB[key] === "transmute" ? "変成" : SHARD_TO_ORB[key] === "regal" ? "王者" : SHARD_TO_ORB[key] === "artificer" ? "熟練工" : "可能性"}のオーブ 1 個になる (クライアントの説明文)`, "アイテムには使えない", "動画の手順では 1 手 = 1 個拾う"];
   if (key.startsWith("catalyst_")) {

@@ -5,8 +5,14 @@
  * 手順 JSON のキーは `rune:<英語名>` (例 `rune:Lesser Desert Rune`)。
  * 効き目は部位で違う (SoulCoreStatCategories: マーシャル武器 / ワンドまたはスタッフ / 防具 …)。1 つの部位に当てはまる行が複数ある時は、
  * 当てはまる部位が一番狭い行 (「弓」>「マーシャル武器」>「全ての装備品」) を使う。
- * 決まり (クライアントの ClientStrings.ItemDescriptionSoulCore「一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで置き換えることができる」):
- *   空きソケットにはめる。外す手は無い。空きが無い時は打てない (置き換えの手は今は未対応、打てない扱い)
+ * はめる・置き換える・取り外すの決まりは src/services/augment-rules.ts (説明文から作った表 augment-rules.json) に通す (2026-10-03 オーナー
+ *   「ソケットバウンド系と普通のルーンを確認しよう。アストリッドとか、ソケットバウンドじゃないのに付け替えできないとかある」)。
+ *   2026-10-02 までは「はめたら外せない・空きが無ければ打てない」を全部に当てていて、普通のルーンもアストリッドも置き換えられなかった。
+ *   - 空きがあれば空きにはめる。空きが無ければ、はまっている物を置き換える (置き換えた方は壊れて戻らない)
+ *   - 手順のキー `rune:<英語名>@<n>` で n 番目 (1 から) のソケットを指す。@ が無く空きが無い時は、左から最初の置き換えられる物
+ *   - ソケットバウンドの物 (セールの凱旋など) は置き換えられない (理由の札「○○はソケットバウンドなので置き換えられない」)
+ *   - 部位の制限 (「靴の空のオーグメントソケットに」) と、1 つのアイテムにはめられる数 (SoulCoreLimits) も表どおり。
+ *     説明文の部位と効き目の部位 (SoulCoreStats) が食い違う物 (5 件、tests/augment-rules.test.ts) は両方を満たす時だけはめる
  * 2026-09-29 オーナー「現行のバージョンでシステム正しいかデータ見ながら」で見直し (build-stage-runes.mjs):
  *   - 棚に出すのは今のゲームに有る物だけ (相場に値段がある、available)。Tempered のルーンなどはクライアントにあるが相場に無い
  *   - 1 つのアイテムにはめられる数 (SoulCores.Limit)、コラプト・聖別の後でもはめられるか (SoulCores.CanSocketInCorruptedSanctified)
@@ -18,6 +24,7 @@ import basesPob from "./stage-bases-pob.json";
 import { ARMOUR, CASTER, MARTIAL } from "./apply-act";
 import type { StageApply, StageItem, StageAugment } from "./types";
 import { skip } from "./stage-core";
+import { augmentRule, limitBlock, placeBlock, replaceBlock } from "../augment-rules";
 
 export interface RuneEffect { cat: string; catJa: string; stats: Array<{ id: string; value: number }>; ja: string; en: string }
 export interface RuneRow {
@@ -26,7 +33,10 @@ export interface RuneRow {
   tier: string | null;
   level: number;
   drop: number | null;
-  /** 1 つのアイテムにはめられる数 (無ければ制限なし) */
+  /**
+   * 使わない: SoulCores.Limit の行番号のまま入っていて数ではない (遺産のルーンが 3 = AldursLegacyLimit1 の行)。
+   * はめられる数は augment-rules.ts の limitBlock (SoulCoreLimits を引いた表) で見る
+   */
   limit: number | null;
   bound: boolean;
   /** コラプト・聖別の後でもはめられる */
@@ -40,8 +50,20 @@ export const RUNES = (runesRaw as unknown as { runes: Record<string, RuneRow> })
 const SOCKET_LIMITS = (basesPob as unknown as { socketLimits: Record<string, number> }).socketLimits;
 
 export const RUNE_PREFIX = "rune:";
-export const isRune = (key: string): boolean => key.startsWith(RUNE_PREFIX) && !!RUNES[key.slice(RUNE_PREFIX.length)];
-export const runeOf = (key: string): RuneRow | null => RUNES[key.slice(RUNE_PREFIX.length)] ?? null;
+/**
+ * 手順のキー `rune:<英語名>` / `rune:<英語名>@<n>` (n 番目のソケットを指す、1 から) を分ける。
+ * 名前に @ は無いので、最後の @ と数字だけをソケットの番号として読む
+ */
+export function parseRuneKey(key: string): { en: string; socket: number | null } | null {
+  if (!key.startsWith(RUNE_PREFIX)) return null;
+  const body = key.slice(RUNE_PREFIX.length);
+  const m = /^(.*)@(\d+)$/.exec(body);
+  return m ? { en: m[1]!, socket: Number(m[2]) } : { en: body, socket: null };
+}
+/** キーの英語名 (相場・絵を引く鍵。@n は外す) */
+export const runeNameOf = (key: string): string => parseRuneKey(key)?.en ?? key;
+export const isRune = (key: string): boolean => { const p = parseRuneKey(key); return !!p && !!RUNES[p.en]; };
+export const runeOf = (key: string): RuneRow | null => { const p = parseRuneKey(key); return p ? RUNES[p.en] ?? null : null; };
 
 const WANDSTAFF = ["Wands", "Staves"];
 const TWO_HAND = ["TwoHand_Maces", "Quarterstaves", "Bows", "Crossbows", "Staves", "Talismans"];
@@ -110,18 +132,47 @@ export function runeKeys(tier?: string): string[] {
     .map(([en]) => `${RUNE_PREFIX}${en}`);
 }
 
-/** ルーンを空きソケットに 1 つはめる */
+/**
+ * ルーンを 1 つはめる。空きがあれば空きに、無ければ置き換え (augment-rules.ts の決まり)。
+ * 置き換えた時は StageApply.augment.replaced に外れた物 (壊れて戻らない = replacedGoes "destroyed")
+ */
 export function applyRune(item: StageItem, key: string): StageApply {
+  const p = parseRuneKey(key)!;
   const rune = runeOf(key)!;
+  const rule = augmentRule(p.en);
   const sockets = item.sockets ?? 0;
-  const used = item.augments?.length ?? 0;
+  const now = item.augments ?? [];
   if (rune.available === false) return skip(item, "今のゲームには無いルーン (相場に無い)");
-  if ((item.corrupted || item.sanctified) && !rune.corruptOk) return skip(item, "コラプト・聖別したアイテムにははめられない");
+  const place = placeBlock(rule, { category: item.cls.category, rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified });
+  if (place) return skip(item, place);
   if (!sockets) return skip(item, "ソケットが無い (先に熟練工のオーブ)");
-  if (used >= sockets) return skip(item, "空きソケットが無い (はめたルーンは外せない)");
-  if (rune.limit && (item.augments ?? []).filter((a) => a.key === key).length >= rune.limit) return skip(item, `このルーンは 1 つのアイテムに ${rune.limit} 個まで`);
+  if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, `ソケットは ${sockets} つ (${p.socket} 番目は無い)`);
+  // どのソケットに: 指した番号 > 空き > 左から最初の置き換えられる物
+  let at: number;
+  if (p.socket != null) at = Math.min(p.socket - 1, now.length);
+  else if (now.length < sockets) at = now.length;
+  else {
+    at = now.findIndex((a) => replaceBlock(a) == null);
+    // 全部置き換えられない: 一番左の物の理由 (ソケットバウンドなので … ) を出す
+    if (at < 0) return skip(item, replaceBlock(now[0]!) ?? "置き換えられる物が無い");
+  }
+  const old = at < now.length ? now[at]! : null;
+  if (old) {
+    const why = replaceBlock(old);
+    if (why) return skip(item, why);
+  }
+  const lim = limitBlock(p.en, now.filter((_, i) => i !== at).map((a) => a.en));
+  if (lim) return skip(item, lim);
   const eff = runeEffectFor(rune, item.cls.category);
   if (!eff) return skip(item, "この部位には効き目が無い");
-  const aug: StageAugment = { key, en: key.slice(RUNE_PREFIX.length), ja: rune.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
-  return { applied: true, item: { ...item, augments: [...(item.augments ?? []), aug] }, added: [], removed: [] };
+  // 手順のキーは @n を外して持つ (同じルーンなら同じキー。絵・相場もこれで引く)
+  const aug: StageAugment = { key: `${RUNE_PREFIX}${p.en}`, en: p.en, ja: rune.ja, cat: eff.catJa, textJa: eff.ja, textEn: eff.en, stats: eff.stats };
+  const augments = old ? now.map((a, i) => (i === at ? aug : a)) : [...now, aug];
+  return {
+    applied: true,
+    item: { ...item, augments },
+    added: [],
+    removed: [],
+    augment: { socket: at + 1, put: aug, replaced: old, replacedGoes: old ? augmentRule(old.en)!.replacedGoes : null },
+  };
 }

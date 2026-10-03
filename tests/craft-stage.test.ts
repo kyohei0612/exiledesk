@@ -100,13 +100,14 @@ describe("解呪・サルベージ (要望 ⑰-5)", () => {
 });
 
 describe("ルーンと上の数値 (要望 ⑰-1 / ⑰-2)", () => {
-  it("ルーンは空きソケットにだけ、部位で効き目が違う (弓 = 火ダメージ追加、防具 = 火耐性)", () => {
+  it("ルーンはソケットが要る、部位で効き目が違う (弓 = 火ダメージ追加、防具 = 火耐性)", () => {
     const bow = freshItem(data, "Crude Bow", 20);
     expect(A(bow, "rune:Lesser Desert Rune").applied).toBe(false);
     const socketed = A(bow, "artificer").item;
     const r = A(socketed, "rune:Lesser Desert Rune").item;
     expect(r.augments?.[0]).toMatchObject({ cat: "マーシャル武器", textJa: "4から6の火ダメージを追加する" });
-    expect(A(r, "rune:Lesser Desert Rune").applied).toBe(false);
+    // 空きが無い時は置き換え (普通のルーンは置き換えられる。2026-10-03 augment-rules.ts)
+    expect(A(r, "rune:Lesser Glacial Rune").item.augments?.map((a) => a.en)).toEqual(["Lesser Glacial Rune"]);
     const arm = A(A(freshItem(data, "Chain Mail", 20), "artificer").item, "rune:Lesser Desert Rune").item;
     expect(arm.augments?.[0]?.textJa).toBe("火耐性 +10%");
   });

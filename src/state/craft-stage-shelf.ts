@@ -15,7 +15,8 @@ import { jaOfOmen } from "../services/htc/labels";
 import { stepJa } from "../services/craft-stage/run-plan";
 import { OMEN_FOR } from "../services/craft-stage/omens";
 import { isFlask, isGem } from "../services/craft-stage/stage-bases";
-import { isRune, runeEffectFor, runeKeys, runeOf, RUNE_PREFIX } from "../services/craft-stage/stage-runes";
+import { isRune, runeEffectFor, runeKeys, runeNameOf, runeOf } from "../services/craft-stage/stage-runes";
+import { augmentRule, slotOk } from "../services/augment-rules";
 import { runeArt } from "../services/craft-stage/rune-art";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
@@ -57,10 +58,18 @@ export const RUNE_GROUPS: ShelfGroup[] = [
   { kind: "perfect", label: "パーフェクト", keys: runeKeys("perfect") },
   { kind: "special", label: "特別なルーン (古代・ウォード・人の名前の物など)", keys: runeKeys("special") },
 ];
-/** 今のアイテムに効き目があるルーンだけ (段ごと、空の段は出さない) */
+/**
+ * 今のアイテムに効き目があって、説明文の部位の制限 (「靴の空のオーグメントソケットに」、augment-rules.ts) に入るルーンだけ
+ * (グループごと、空のグループは出さない)。部位が説明文から読めない物 (傑作のルーン・アルダーの遺産) は出しておき、打つと理由が出る
+ */
 export function runesFor(item: StageItem | null): ShelfGroup[] {
   if (!item) return [];
-  return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter((k) => { const r = runeOf(k); return !!r && !!runeEffectFor(r, item.cls.category); }) })).filter((g) => g.keys.length);
+  const fits = (k: string): boolean => {
+    const r = runeOf(k);
+    const rule = augmentRule(runeNameOf(k));
+    return !!r && !!runeEffectFor(r, item.cls.category) && (!rule || slotOk(rule, item.cls.category) !== false);
+  };
+  return RUNE_GROUPS.map((g) => ({ ...g, keys: g.keys.filter(fits) })).filter((g) => g.keys.length);
 }
 export const BONES = ["desecrate_gnawed", "desecrate", "desecrate_ancient", "desecrate_altered"];
 /**
@@ -100,7 +109,7 @@ export function essenceShelf(data: PatchData | null, item: StageItem | null): Sh
 /** キーの英語名 (相場の行を引く鍵)。骨は装備で種類が決まる */
 export function enOf(key: string, item: StageItem | null): string {
   if (key.startsWith("essence:") && ESS[key]) return ESS[key].en;
-  if (isRune(key)) return key.slice(RUNE_PREFIX.length);
+  if (isRune(key)) return runeNameOf(key);
   if (BONES.includes(key) && item) {
     const bone = desecrationBoneFor(item.cls.category);
     const suffix = /^desecrate_(ancient|altered|gnawed)$/.exec(key)?.[1];
@@ -115,11 +124,11 @@ export function priceOfKey(key: string, item: StageItem | null): number {
   const it = row(key, item);
   const p = it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
   // 遺産のルーンは相場に値段が無い → アルダーの遺産の値段 (legacy-rune.ts)
-  if (p <= 0 && isRune(key) && isLegacyRune(key.slice(RUNE_PREFIX.length))) return marketStore.items.value.find((x) => x.Text === LEGACY_SOURCE)?.CurrentPrice ?? 0;
+  if (p <= 0 && isRune(key) && isLegacyRune(runeNameOf(key))) return marketStore.items.value.find((x) => x.Text === LEGACY_SOURCE)?.CurrentPrice ?? 0;
   return p;
 }
 /** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
-export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(key.slice(RUNE_PREFIX.length)) : null) ?? row(key, item)?.IconUrl ?? "";
+export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? row(key, item)?.IconUrl ?? "";
 /** 日本語名 (お告げ・開示も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
   if (KEYS.omens[key]) return jaOfOmen(key) ?? key;

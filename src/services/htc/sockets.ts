@@ -5,16 +5,17 @@
  *
  * ## ゲームの決まり
  *   - **アストリッドの創造性**: クラフト MOD (エッセンス / 合金 / ブリーチ) を 2 つまで持てる (普通は 1 つ)。
- *     **入れ替えできる** (ソケットに縛られない。IsSocketBound = false): 差してクラフトした後に外して別の物を差しても、
+ *     **置き換えできる** (ソケットバウンドではない。説明文「一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで
+ *     置き換えることはできる」、src/services/augment-rules.ts): 差してクラフトした後に別の物で置き換えても、
  *     2 つ目のクラフト MOD は残る (オーナー:「入れ替え可能な奴は付けてから外してもクラフト MOD は消えないから便利」)。
- *     外すと無くなるので、代は 1 度だけ
- *   - **セールの凱旋**: サフィックスの枠 +1 (3 / 4)。**差したまま** (ソケットに縛られる。歪みのルーン = コル系と同じ)
+ *     取り外して手元に戻すことはできない (置き換えると壊れる) ので、代は 1 回の作成につき 1 度
+ *   - **セールの凱旋**: サフィックスの枠 +1 (3 / 4)。**ソケットバウンド** (取り外しも置き換えもできない。説明文から作った表 augment-rules.json)
  *   - ソケットを付けられるのは**武器と防具だけ**。指輪・アミュレット・ベルト・矢筒は付かない
  *   - 武器・防具のクラフトは、ほぼ**規格外 (ルーンソケット 2 つ) のベース**でやる (オーナー 2026-09-26)。なので買うベースの
  *     ソケットの数は既定 2 (0 / 1 / 2 を選べる)。足りない分だけ熟練工のオーブ (1 つ 1 個) で開ける
- *   - アストリッドは入れ替えられるので、セールと同じ穴を順に使える (先にアストリッド → クラフト → 外してセール)。
+ *   - アストリッドは置き換えられるので、セールと同じ穴を順に使える (先にアストリッド → クラフト → セールで置き換え)。
  *     要る穴 = 縛られるルーンの数 (無ければ、何か差すなら 1)
- *   - コラプト済み・聖別済みの物には差せない (貼り付けで分かるのはコラプトだけ)
+ *   - コラプト済み・聖別済みの物には差せない (表の corruptOk。2 つとも false。貼り付けで分かるのはコラプトだけ)
  *
  * ## 費用
  * ルーンの相場 (`rune:<id>`、[[prices.ts]] が上流の名前引きで埋める) + 足りない穴の数だけ熟練工のオーブ (`artificer`)。
@@ -25,6 +26,7 @@ import { ASTRID_RUNE } from "./craft-slots";
 import { runePriceKey } from "../../vendor/poe2htc/engine/runes";
 import { jaOfPastedLine } from "./mod-text";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
+import { augmentRule } from "../augment-rules";
 
 /** セールの凱旋のルーンの id (`engine/runes.ts` の表と同じ) */
 export const SERLE_RUNE = "serles-triumph";
@@ -46,10 +48,20 @@ export type SocketKey = "astrid" | "serle";
  * 英語はルーンの効果の行 (`Can have # additional Crafted Modifier` / `# Suffix Modifier allowed`)。引けなければ英語のまま
  */
 const effectJa = (en: string): string => jaOfPastedLine(en) ?? en;
-/** 差せる物の一覧 (画面の順)。bound = ソケットに縛られる (差したまま) */
-export const SOCKET_RUNES: ReadonlyArray<{ key: SocketKey; id: string; ja: string; effect: string; bound: boolean; note: string }> = [
-  { key: "astrid", id: ASTRID_RUNE, ja: "アストリッドの創造性", effect: effectJa("Can have 1 additional Crafted Modifier"), bound: false, note: "外しても 2 個目のクラフト MOD は残る (入れ替え可)" },
-  { key: "serle", id: SERLE_RUNE, ja: "セールの凱旋", effect: effectJa("+1 Suffix Modifier allowed"), bound: true, note: "差したまま (外せない)" },
+/**
+ * 差せる物の決まり (説明文から作った表 augment-rules.json)。表に無い・読めない物は縛られる (置き換えられない) 側に倒す
+ * (穴を多めに数えるだけで、作れない物を作れると言わないため)
+ */
+const ruleOf = (en: string) => {
+  const r = augmentRule(en);
+  return { ja: r?.ja ?? en, bound: r?.bound ?? true, corruptOk: r?.corruptOk ?? false };
+};
+const ASTRID = ruleOf("Astrid's Creativity");
+const SERLE = ruleOf("Serle's Triumph");
+/** 差せる物の一覧 (画面の順)。bound = ソケットバウンド (差したまま、置き換えもできない) */
+export const SOCKET_RUNES: ReadonlyArray<{ key: SocketKey; id: string; ja: string; effect: string; bound: boolean; corruptOk: boolean; note: string }> = [
+  { key: "astrid", id: ASTRID_RUNE, ja: ASTRID.ja, effect: effectJa("Can have 1 additional Crafted Modifier"), bound: ASTRID.bound, corruptOk: ASTRID.corruptOk, note: ASTRID.bound ? "ソケットバウンド (取り外しも置き換えもできない)" : "取り外せないが置き換えられる。置き換えても 2 個目のクラフト MOD は残る" },
+  { key: "serle", id: SERLE_RUNE, ja: SERLE.ja, effect: effectJa("+1 Suffix Modifier allowed"), bound: SERLE.bound, corruptOk: SERLE.corruptOk, note: SERLE.bound ? "ソケットバウンド (取り外しも置き換えもできない)" : "取り外せないが置き換えられる" },
 ];
 
 /** 熟練工のオーブの価格キー ([[price-keys.json]]) */
@@ -81,7 +93,7 @@ export function socketBlock(category: string | null | undefined, corrupted: bool
   if (pick[key]) return null;
   const n = socketCountFor(category);
   if (n === 0) return "指輪・アミュレット・ベルト・矢筒はソケットが付かない";
-  if (corrupted) return "コラプト済みには差せない";
+  if (corrupted && !SOCKET_RUNES.find((r) => r.key === key)?.corruptOk) return "コラプト済みには差せない";
   if (socketsNeeded({ ...pick, [key]: true }) > n) return `ソケットは ${n} つまで`;
   return null;
 }

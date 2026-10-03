@@ -114,4 +114,9 @@ export interface StageApply {
   picked?: Array<{ modId: string; tierName: string; chance: number }>;
   /** 指名が通らなかった (手順の再生はエラーで止める) */
   pickError?: boolean;
+  /**
+   * オーグメント (ルーン) をはめた手 (2026-10-03): どのソケット (1 から) に何を、置き換えた時は外れた物と、その行き先
+   * ("destroyed" = 壊れて戻らない。src/services/augment-rules.ts の決まり)
+   */
+  augment?: { socket: number; put: StageAugment; replaced: StageAugment | null; replacedGoes: "destroyed" | null };
 }

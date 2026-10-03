@@ -74,7 +74,7 @@ const TABS = computed(() => [
 
     <div v-else-if="tab === 'rune'">
       <p v-if="sockets" class="mb-2 text-[11px] opacity-70">
-        ソケット {{ sockets.now }} / {{ sockets.cap }} (熟練工のオーブで足す、コラプトで +1)・はめたルーン {{ sockets.used }}。はめたら外せない
+        ソケット {{ sockets.now }} / {{ sockets.cap }} (熟練工のオーブで足す、コラプトで +1)・はめたルーン {{ sockets.used }}。はめたら外せないが、他のルーンで置き換えられる (置き換えた方は壊れる。ソケットバウンドの物は置き換えも不可)。ルーンを持ってソケットの絵を押すとそのソケットを置き換える
         <ShelfButton k="artificer" class="ml-2 inline-block align-middle" @pick="emit('hold', $event)" />
       </p>
       <div class="space-y-2">

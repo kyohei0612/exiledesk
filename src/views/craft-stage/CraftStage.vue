@@ -23,8 +23,15 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import pkg from "../../../package.json";
+import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
 
 const s = craftStage;
+/** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
+function useAtSocket(n: number): void {
+  const k = s.held.value;
+  if (k && isRune(k)) s.use(`${RUNE_PREFIX}${runeNameOf(k)}@${n}`);
+  else s.use();
+}
 onMounted(() => void s.init());
 
 const ILVLS = [45, 65, 75, 82, 86];
@@ -112,6 +119,7 @@ const btn = "rounded-lg border border-white/20 px-2 py-1 hover:bg-white/5 disabl
           :holding="!!s.held.value && !s.replay.value"
           :flash-key="flashKey"
           @use="s.use()"
+          @socket="useAtSocket"
         />
         <span v-if="fx?.text" :key="fx.n" class="stage-float" :class="fx.kind === 'shake' ? 'stage-float-plate text-sm' : 'text-2xl'">{{ fx.text }}</span>
         </div>
