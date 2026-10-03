@@ -841,3 +841,13 @@ table th,
     }
   }
 }
+
+@layer components {
+  /* 相手との差の 2 列の見出し (自分 / 相手)。相手側は青で、どちらの列かを色でも分ける (2026-10-03) */
+  .diff-col-head {
+    @apply text-[10px] font-semibold tracking-[0.08em] text-[var(--exile-color-text-tertiary)] border-b border-white/10 pb-0.5 mb-1;
+  }
+  .diff-col-head-target {
+    @apply text-sky-300/80;
+  }
+}

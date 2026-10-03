@@ -91,27 +91,34 @@ export interface GemLineDiff {
 }
 export type GemGroupDiff =
   /** 自分に無い組: アクティブと、その組の残りのジェム (サポート・2 つ目以降のアクティブ)。gems = 相手の組の使っているジェム全部 (取り入れに使う) */
-  | { kind: "missing"; active: GemView; others: GemView[]; gems: GemView[] }
+  | { kind: "missing"; active: GemView; others: GemView[]; gems: GemView[]; fromItem: boolean }
   /** ある組: 足りない / 弱いジェムの行。gi = 合わせた自分の組の番号、gems = 相手の組の使っているジェム全部 (取り入れ = 自分の組をこれにする) */
-  | { kind: "changes"; active: GemView; lines: GemLineDiff[]; gi: number; gems: GemView[] };
+  | { kind: "changes"; active: GemView; lines: GemLineDiff[]; gi: number; gems: GemView[]; fromItem: boolean };
 
-/** 画面に出す組 (使っている・2 重でない・装備やツリーが与える物でない) の、使っているジェム。先頭のアクティブが組の名前 */
-const liveGroups = (s: Summary): Array<{ g: GroupView; gems: GemView[]; active: GemView }> =>
+/**
+ * 画面に出す組 (使っている・2 重でない) の、使っているジェム。先頭のアクティブが組の名前。
+ * 装備が与える組 (source = Item:…、例: アミュレット / セプターの「スキルを付与」) も出す (2026-10-03 オーナー「アミュレットのスキルと普通のスキルの
+ * サポジェムや品質等の扱いも注意して」): アクティブ自体は装備の物なので Lv / 品質は比べず、**付けているサポートだけ**を比べる。
+ * ツリーが与える組 (Tree:) は中身を変えられないので出さない
+ */
+const liveGroups = (s: Summary): Array<{ g: GroupView; gems: GemView[]; active: GemView; fromItem: boolean }> =>
   s.groups
-    .filter((g) => g.enabled && !g.duplicateOf && !g.source)
+    .filter((g) => g.enabled && !g.duplicateOf && !g.source?.startsWith("Tree:"))
     .map((g) => {
       const gems = g.gems.filter((x) => x.enabled);
       const active = gems.find((x) => !x.support);
-      return active ? { g, gems, active } : null;
+      return active ? { g, gems, active, fromItem: !!g.source } : null;
     })
-    .filter((x): x is { g: GroupView; gems: GemView[]; active: GemView } => !!x);
+    .filter((x): x is { g: GroupView; gems: GemView[]; active: GemView; fromItem: boolean } => !!x);
 
 /** 同じ組同士: 相手のジェムごとに、自分の同じ名前の物 (複数なら順に) と比べる。レベル・品質は相手が高い時だけ */
-export function diffGemGroup(mine: GemView[], target: GemView[]): GemLineDiff[] {
+export function diffGemGroup(mine: GemView[], target: GemView[], supportsOnly = false): GemLineDiff[] {
   const own = new Map<string, GemView[]>();
   for (const x of mine) own.set(x.name, [...(own.get(x.name) ?? []), x]);
   const out: GemLineDiff[] = [];
   for (const t of target) {
+    // 装備が与えるスキルの組: アクティブは装備の物 (Lv / 品質は装備で決まる) なのでサポートだけ比べる
+    if (supportsOnly && !t.support) continue;
     const m = own.get(t.name)?.shift();
     if (!m) {
       out.push({ gem: t.name, kind: "missing", from: null, to: t.level });
@@ -129,26 +136,30 @@ export function diffGemGroup(mine: GemView[], target: GemView[]): GemLineDiff[] 
  * 当たり、取り入れの試算で主スキルが消えて −86% に見えた)。onlyMine = 相手に無く自分だけの組の数
  */
 export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff[]; onlyMine: number } {
-  const own = new Map<string, Array<{ g: GroupView; gems: GemView[] }>>();
-  for (const x of liveGroups(mine)) own.set(x.active.name, [...(own.get(x.active.name) ?? []), x]);
+  const own = new Map<string, Array<{ g: GroupView; gems: GemView[]; fromItem: boolean }>>();
+  // 鍵 = 装備が与える組か + アクティブ名 (装備が与えるブリンクと、ジェムのブリンクは別物として合わせる)
+  const keyOf = (x: { active: GemView; fromItem: boolean }): string => `${x.fromItem ? "item" : "gem"}|${x.active.name}`;
+  for (const x of liveGroups(mine)) own.set(keyOf(x), [...(own.get(keyOf(x)) ?? []), x]);
   const overlap = (a: GemView[], b: GemView[]): number => {
     const names = new Set(a.map((x) => x.name));
     return b.filter((x) => names.has(x.name)).length;
   };
   const groups: GemGroupDiff[] = [];
   for (const t of liveGroups(target)) {
-    const list = own.get(t.active.name);
-    let m: { g: GroupView; gems: GemView[] } | undefined;
+    const list = own.get(keyOf(t));
+    let m: { g: GroupView; gems: GemView[]; fromItem: boolean } | undefined;
     if (list?.length) {
       m = list.reduce((best, x) => (overlap(x.gems, t.gems) > overlap(best.gems, t.gems) ? x : best));
       list.splice(list.indexOf(m), 1);
     }
     if (!m) {
-      groups.push({ kind: "missing", active: t.active, others: t.gems.filter((x) => x !== t.active), gems: t.gems });
+      // 装備が与える組は「自分の装備にそのスキルが無い」= 装備の差で出るので、ここでは組ごとには出さない
+      if (t.fromItem) continue;
+      groups.push({ kind: "missing", active: t.active, others: t.gems.filter((x) => x !== t.active), gems: t.gems, fromItem: false });
       continue;
     }
-    const lines = diffGemGroup(m.gems, t.gems);
-    if (lines.length) groups.push({ kind: "changes", active: t.active, lines, gi: m.g.i, gems: t.gems });
+    const lines = diffGemGroup(m.gems, t.gems, t.fromItem || m.fromItem);
+    if (lines.length) groups.push({ kind: "changes", active: t.active, lines, gi: m.g.i, gems: t.gems, fromItem: t.fromItem || m.fromItem });
   }
   const onlyMine = [...own.values()].reduce((n, arr) => n + arr.length, 0);
   return { groups, onlyMine };
@@ -157,12 +168,63 @@ export function diffGems(mine: Summary, target: Summary): { groups: GemGroupDiff
 // ---------------------------------------------------------------- 全体
 
 /** 欄の名前で合わせる (ジュエルの穴は id が人ごとに違うので、ジュエルは欄の名前では比べない = 相手のジュエルは数だけ) */
+/**
+ * 順不同の欄 (2026-10-03 オーナー「チャームの位置は順不同。指輪も基本一緒」): チャーム 1〜3 と 指輪 1〜2(3) は、欄の番号ではなく
+ * 中身で合わせる。同じユニーク同士 → 同じ、残りは MOD の型の重なりが一番多い物同士、余った相手の物は「無し → 相手」。
+ * 合わせた組は自分の欄の名前 (自分が空なら相手の欄) で返す (取り入れる時にその欄へ入れる)
+ */
+const UNORDERED: Array<[RegExp, string]> = [
+  [/^Charm \d$/, "Charm"],
+  [/^Ring \d$/, "Ring"],
+];
+const familyOf = (slot: string): string | null => UNORDERED.find(([re]) => re.test(slot))?.[1] ?? null;
+const isUnique = (it: ItemView): boolean => it.rarity.toUpperCase() === "UNIQUE";
+function pairUnordered(a: SlotView[], b: SlotView[]): Array<[string, ItemView | null, ItemView | null]> {
+  const out: Array<[string, ItemView | null, ItemView | null]> = [];
+  const restA = [...a];
+  const restB = [...b];
+  const take = (x: SlotView, y: SlotView): void => {
+    out.push([x.slot, x.item!, y.item!]);
+    restA.splice(restA.indexOf(x), 1);
+    restB.splice(restB.indexOf(y), 1);
+  };
+  // 1. 同じユニーク
+  for (const y of [...restB]) {
+    const x = restA.find((s) => isUnique(s.item!) && isUnique(y.item!) && s.item!.title === y.item!.title);
+    if (x) take(x, y);
+  }
+  // 2. MOD の型の重なりが一番多い物同士
+  const keys = (it: ItemView): Set<string> => new Set(allLines(it).map((l) => templ(l).t));
+  while (restA.length && restB.length) {
+    let best: [SlotView, SlotView, number] | null = null;
+    for (const x of restA) {
+      const kx = keys(x.item!);
+      for (const y of restB) {
+        const n = [...keys(y.item!)].filter((k) => kx.has(k)).length;
+        if (!best || n > best[2]) best = [x, y, n];
+      }
+    }
+    take(best![0], best![1]);
+  }
+  for (const y of restB) out.push([y.slot, null, y.item!]);
+  for (const x of restA) out.push([x.slot, x.item!, null]);
+  return out;
+}
+
 export function diffBuilds(mine: Summary, target: Summary): { slots: SlotDiff[]; jewels: { mine: number; target: number } } {
-  const bySlot = (s: Summary): Map<string, SlotView> => new Map(s.items.filter((x) => !x.jewel && x.item).map((x) => [x.slot, x]));
+  const live = (s: Summary): SlotView[] => s.items.filter((x) => !x.jewel && x.item);
+  const bySlot = (s: Summary): Map<string, SlotView> => new Map(live(s).filter((x) => !familyOf(x.slot)).map((x) => [x.slot, x]));
   const a = bySlot(mine);
   const b = bySlot(target);
   const names = [...new Set([...a.keys(), ...b.keys()])];
   const slots = names.map((slot) => diffSlot(slot, a.get(slot)?.item ?? null, b.get(slot)?.item ?? null)).filter((d) => d.kind !== "same");
+  for (const fam of new Set(UNORDERED.map(([, f]) => f))) {
+    const pairs = pairUnordered(live(mine).filter((x) => familyOf(x.slot) === fam), live(target).filter((x) => familyOf(x.slot) === fam));
+    for (const [slot, m, t] of pairs) {
+      const d = diffSlot(slot, m, t);
+      if (d.kind !== "same") slots.push(d);
+    }
+  }
   const jewels = { mine: mine.items.filter((x) => x.jewel && x.item).length, target: target.items.filter((x) => x.jewel && x.item).length };
   return { slots, jewels };
 }
@@ -188,6 +250,8 @@ export function adoptCandidates(mine: Summary, target: Summary, treeNodes: reado
     else if (d.kind === "mods") out.push({ kind: "item", key: `item:${d.slot}`, slot: d.slot, from: d.from, to: d.to, unique: false, mods: d.mods });
   }
   for (const [n, g] of diffGems(mine, target).groups.entries()) {
+    // 装備が与えるスキルの組は、サポートの差だけ見せて取り入れの対象にしない (アクティブは装備で決まり、PoB の組の作りも違う)
+    if (g.fromItem) continue;
     out.push({ kind: "gems", key: `gems:${n}:${g.active.name}`, active: g.active, gi: g.kind === "changes" ? g.gi : 0, gems: g.gems, lines: g.kind === "changes" ? g.lines : [] });
   }
   // ツリー: 相手にあって自分に無いノード (装備が与えている物も除く) を g で束ねる

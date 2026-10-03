@@ -75,7 +75,7 @@ describe("build-diff (相手とのジェムの差)", () => {
       group(1, [gem("Spark"), gem("Pierce III"), gem("Embitter Support")]),
       group(2, [gem("Firestorm", { level: 19 }), gem("Zenith II")]),
       group(3, [gem("Flame Wall")], { enabled: false }),
-      // 装備が与えるスキル (ブリンクの胴など) はジェムではないので見ない
+      // 装備が与えるスキル (ブリンクの胴など) は、同じく装備が与える組とだけ合わせる (サポートの差だけ)。ジェムのブリンクとは別物
       group(4, [gem("Blink", { level: 19 })], { source: "Item:8:Sands of Silk, Shrouded Vest" }),
     ]);
     const d = diffGems(mine, target);

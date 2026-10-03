@@ -18,8 +18,8 @@ import { computed, onMounted, ref, shallowRef, watch } from "vue";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import uniqueNamesJa from "../../i18n/unique-names-ja.json";
 import passivesJa from "../../i18n/passives-ja-client.json";
-import { gemJa, type ItemView, type Summary } from "../../services/pob-check/api";
-import { diffBuilds, diffGems, type AdoptCandidate, type GemLineDiff } from "../../services/pob-check/build-diff";
+import { gemJa, type GemView, type ItemView, type Summary } from "../../services/pob-check/api";
+import { diffBuilds, diffGems, type AdoptCandidate } from "../../services/pob-check/build-diff";
 import { linesToJa, rareNameJa } from "../../services/pob-check/item-text";
 import { slotJa } from "../../services/pob-check/slots";
 import { openTradeQuery, prepareTradeLinks, rareModsSearchQuery, uniqueSearchQuery } from "../../services/pob-check/trade-links";
@@ -97,13 +97,43 @@ async function onTrade(c: AdoptCandidate): Promise<void> {
 const delta = (v: number | undefined): string | null => (v && Math.round(v) !== 0 ? `${v > 0 ? "+" : "−"}${Math.round(Math.abs(v))}` : null);
 
 const gems = computed(() => diffGems(props.mine, props.target));
-/** ジェムの差の行の文 (「無し → 名前」「Lv 20 → Lv 21」「品質 0% → 20%」) */
-const gemLine = (l: GemLineDiff): { gem: string; from: string; to: string } => {
-  const gem = gemJa(l.gem);
-  if (l.kind === "missing") return { gem, from: "無し", to: gem };
-  if (l.kind === "level") return { gem, from: `Lv ${l.from}`, to: `Lv ${l.to}` };
-  return { gem, from: `品質 ${l.from}%`, to: `品質 ${l.to}%` };
-};
+/**
+ * ジェムの差のカード (2026-10-03 オーナー「全部『無し』になるし、自分と相手が分かりづらい」): 差の行だけ「無し → 名前」と並べるのをやめ、
+ * 組の中身を **自分 | 相手** の 2 列に全部並べる。相手だけにある物は右を緑・左を「—」、自分だけの物は左を普通・右を「—」(薄く)、
+ * 両方にあって相手が高い (Lv / 品質) 物は右の数字を緑、同じ物は薄く。何が足りて何が余っているかが一目で分かる
+ */
+interface GemCell {
+  name: string;
+  level: number;
+  quality: number;
+  support: boolean;
+}
+interface GemRow {
+  mine: GemCell | null;
+  target: GemCell | null;
+  /** 相手の方が Lv か品質が高い */
+  weaker: boolean;
+}
+const cellOf = (g: GemView): GemCell => ({ name: g.name, level: g.level, quality: g.quality, support: g.support });
+const gemCards = computed(() => {
+  const mineGroups = new Map(props.mine.groups.map((g) => [g.i, g]));
+  return gems.value.groups.map((d) => {
+    const targetGems = d.gems.map(cellOf);
+    const mineGems = d.kind === "changes" ? (mineGroups.get(d.gi)?.gems.filter((x) => x.enabled).map(cellOf) ?? []) : [];
+    const left = new Map<string, GemCell[]>();
+    for (const x of mineGems) left.set(x.name, [...(left.get(x.name) ?? []), x]);
+    const rows: GemRow[] = [];
+    for (const t of targetGems) {
+      const m = left.get(t.name)?.shift() ?? null;
+      rows.push({ mine: m, target: t, weaker: !!m && (t.level > m.level || t.quality > m.quality) });
+    }
+    for (const rest of left.values()) for (const m of rest) rows.push({ mine: m, target: null, weaker: false });
+    const diffCount = rows.filter((r) => !r.mine || !r.target || r.weaker).length;
+    return { title: gemJa(d.active.name), missingGroup: d.kind === "missing", fromItem: d.fromItem, diffCount, rows };
+  });
+});
+/** セルの文 (名前 + Lv と品質。品質 0 は出さない) */
+const gemCellText = (c: GemCell): string => `${gemJa(c.name)} Lv${c.level}${c.quality ? ` 品質${c.quality}%` : ""}`;
 
 const JA_BASE = itemsJaClient as Record<string, string>;
 const JA_UNIQUE = uniqueNamesJa as Record<string, string>;
@@ -315,27 +345,26 @@ const STATS = [
         </span>
       </h2>
       <div v-if="gems.groups.length" class="grid gap-3 @3xl:grid-cols-2 @6xl:grid-cols-3">
-        <template v-for="(g, gi) in gems.groups" :key="gi">
-          <div v-if="g.kind === 'missing'" class="card p-3">
-            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ gemJa(g.active.name) }} — 自分に無い組</p>
-            <p class="mt-1.5 text-[13px]">
-              <span class="text-rose-300/80">無し</span>
-              <span class="mx-2 text-[var(--exile-color-text-tertiary)]">→</span>
-              <span class="font-bold text-amber-200">{{ gemJa(g.active.name) }}</span>
-              <span v-if="g.others.length" class="text-emerald-200"> + {{ g.others.map((x) => gemJa(x.name)).join("、") }}</span>
-            </p>
+        <div v-for="(c, ci) in gemCards" :key="ci" class="card p-3">
+          <p class="flex items-baseline gap-2 text-[12px]">
+            <span class="font-bold text-amber-200">{{ c.title }}</span>
+            <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ c.missingGroup ? "自分に無い組" : `の組 ・ 差 ${c.diffCount} 件` }}</span>
+            <span v-if="c.fromItem" class="text-[10px] text-sky-300/70" title="アミュレットやセプターなど装備が与えるスキル。アクティブの Lv / 品質は装備で決まるので、付けているサポートだけ比べる">装備が与えるスキル ・ サポートだけ比べる</span>
+          </p>
+          <!-- 自分 | 相手 の 2 列。見出しを毎カードに付けて、どちらが誰かを迷わせない -->
+          <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 text-[11px] leading-snug">
+            <p class="diff-col-head">自分</p>
+            <p class="diff-col-head diff-col-head-target">相手</p>
+            <template v-for="(r, ri) in c.rows" :key="ri">
+              <p :class="r.mine ? (r.weaker ? 'text-[var(--exile-color-text-tertiary)]' : r.target ? 'text-[var(--exile-color-text-secondary)]' : 'text-[var(--exile-color-text-primary)]') : 'text-[var(--exile-color-text-tertiary)]'">
+                {{ r.mine ? gemCellText(r.mine) : "—" }}
+              </p>
+              <p :class="r.target ? (!r.mine || r.weaker ? 'font-semibold text-emerald-200' : 'text-[var(--exile-color-text-secondary)]') : 'text-[var(--exile-color-text-tertiary)]'">
+                {{ r.target ? gemCellText(r.target) : "—" }}
+              </p>
+            </template>
           </div>
-          <div v-else class="card p-3">
-            <p class="text-[11px] font-semibold text-[var(--exile-color-text-tertiary)]">{{ gemJa(g.active.name) }} の組 — 足りない / 低い {{ g.lines.length }} 件</p>
-            <ul class="mt-1.5 space-y-1 text-[12px] leading-snug">
-              <li v-for="(l, i) in g.lines" :key="i" class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2">
-                <span :class="l.kind === 'missing' ? 'text-rose-300/80' : 'text-[var(--exile-color-text-secondary)]'">{{ l.kind === "missing" ? "無し" : `${gemLine(l).gem} ${gemLine(l).from}` }}</span>
-                <span class="text-[var(--exile-color-text-tertiary)]">→</span>
-                <span class="text-emerald-200">{{ l.kind === "missing" ? gemLine(l).to : `${gemLine(l).gem} ${gemLine(l).to}` }}</span>
-              </li>
-            </ul>
-          </div>
-        </template>
+        </div>
       </div>
     </section>
 
@@ -363,7 +392,12 @@ const STATS = [
               {{ slotJa(d.slot) }} — 足りない MOD {{ d.mods.length }} 行
               <span class="ml-1 font-normal">({{ nameJa(d.from) }} → {{ nameJa(d.to) }})</span>
             </p>
-            <ul class="mt-1.5 space-y-1 text-[12px] leading-snug">
+            <div class="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 text-[11px]">
+              <p class="diff-col-head">自分</p>
+              <span />
+              <p class="diff-col-head diff-col-head-target">相手</p>
+            </div>
+            <ul class="mt-1 space-y-1 text-[12px] leading-snug">
               <li v-for="(m, i) in d.mods" :key="i" class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2">
                 <span :class="m.from ? 'text-[var(--exile-color-text-secondary)]' : 'text-rose-300/80'">{{ m.from ? lineJa(m.from) : "無し" }}</span>
                 <span class="text-[var(--exile-color-text-tertiary)]">→</span>

@@ -418,10 +418,11 @@ export function usePobCheck() {
   }
 
   /** 全部戻す (2026-10-03 オーナー「火力チェックのリセット機能も欲しい」): 読み込んだ元をもう 1 回読み込む。比べる元も読み込んだ時に戻る。相手は残す */
-  const canReset = computed(() => !!lastSource.value && changes.value.length > 0);
+  /** 読み込んであれば押せる (2026-10-03 オーナー「リセットが死んでる」: 変えた所の記録が無い時 (今を比べる元にした後など) に押せなくなっていた) */
+  const canReset = computed(() => !!lastSource.value);
   async function resetAll(): Promise<void> {
     const src = lastSource.value;
-    if (!src || !canReset.value) return;
+    if (!src) return;
     await load({ text: src.text, code: src.code });
   }
   function setBaseToNow(): void {
