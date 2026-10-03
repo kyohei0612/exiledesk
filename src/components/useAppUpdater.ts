@@ -79,6 +79,15 @@ export function useAppUpdater() {
       }
       return;
     }
+    // 開発ビルド (target\debug) では更新しない (2026-10-03: 開発ビルドの自動更新がインストール版を入れ替え、開発用の
+    // WebView2 プロファイルの環境変数ごと起動し直して、オーナーの監視・帳簿が「リセットされた」ように見えた)
+    if (await invoke<boolean>("app_is_debug").catch(() => false)) {
+      if (manual) {
+        updateCheckState.value = "error";
+        updateCheckError.value = "開発ビルドでは更新しません";
+      }
+      return;
+    }
     phase.value = "checking";
     errorMsg.value = null;
     updateCheckState.value = "checking";

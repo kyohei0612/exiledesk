@@ -26,6 +26,13 @@ use tauri::{Manager, WindowEvent};
 /// テンプレ由来 (`tauri create-app` の hello world example)。
 /// Low-L9 (2026-05-22): 実プロダクトでは未使用。削除可能だが、
 /// invoke_handler 登録から外すと UI 側の dev サンプルが壊れる懸念があるため残置。
+/// 開発ビルド (target\debug) か。フロントの自動更新は開発ビルドでは走らせない
+/// (2026-10-03: 開発ビルドの自動更新がインストール版を入れ替えて、開発用の環境変数ごと起動し直していた)
+#[tauri::command]
+fn app_is_debug() -> bool {
+    cfg!(debug_assertions)
+}
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -197,6 +204,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             greet,
+            app_is_debug,
             instance_guard::mark_show_on_restart,
             show_main_window,
             pob::pob_load_build_code,
