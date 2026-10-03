@@ -282,6 +282,11 @@ class VideoScript(BaseModel):
         default=True,
         description="False = クラフトの実演 (stage) の無い回 (防御の解説など)。手の検査をしない",
     )
+    planned_sections: int | None = Field(
+        default=None,
+        ge=1,
+        description="構成表で決めた章の数 (章ごとに先に作る時の進み具合のバー用)",
+    )
     sections: list[Section] = Field(min_length=1)
 
     @property

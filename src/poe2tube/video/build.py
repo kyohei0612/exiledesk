@@ -19,10 +19,10 @@ from poe2tube.config.settings import REPO_ROOT, get_settings
 from poe2tube.names import NameBook
 from poe2tube.script.model import VideoScript
 from poe2tube.video.animate import sound_events
+from poe2tube.video.chapters import build_chapter
 from poe2tube.video.clip_timing import plan_cue_timing, plan_hits
-from poe2tube.video.encode import encode_files, encode_stream
-from poe2tube.video.frames import iter_frames, make_context, write_frames
-from poe2tube.video.parallel import default_workers, iter_frames_parallel
+from poe2tube.video.encode import concat_with_audio, encode_files
+from poe2tube.video.frames import write_frames
 from poe2tube.video.results import ResultSet, load_results
 from poe2tube.video.timeline import Cue, build_cues, concat_audio, read_wav
 
@@ -106,19 +106,30 @@ def write_chapters(cues: list[Cue], path: Path) -> None:
     path.write_text(json.dumps(seen, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def build_video(
-    script_path: Path, out: Path | None = None, keep_frames: bool = False
-) -> BuildResult:
+@dataclass(frozen=True)
+class Prepared:
+    """声・撮影・行の長さ・全体の音まで済んだ状態 (章ごとの動画と合体の両方が使う)."""
+
+    script: VideoScript
+    rs: ResultSet
+    work: Path
+    cues: list[Cue]
+    audio: Path
+    book: NameBook
+
+    @property
+    def n_sections(self) -> int:
+        return max(self.script.planned_sections or 0, len(self.script.sections))
+
+
+def prepare(script_path: Path) -> Prepared:
     s = get_settings()
     script, rs = load_script(script_path)
     work = REPO_ROOT / "output" / "work" / script_path.stem
-    out = out or REPO_ROOT / "output" / f"{script_path.stem}.mp4"
-
     vv = VoicevoxClient()
     vv.ensure_engine()
     wavs = [vv.synthesize(ln) for ln in script.lines]
     log.info("voice ready", lines=len(wavs))
-
     book = NameBook.load()
     capture_stage_scenes(script, rs)  # 手つきの長さを測るので先に撮る
     capture_view_scenes(script, rs)
@@ -133,23 +144,40 @@ def build_video(
     events = sound_events(cues, book, script.final_step or len(rs.main.steps), rs)
     audio = mix(voice, work / "audio.wav", s.bgm, events, s.bgm_gain_db, s.se_gain_db)
     log.info("audio mixed", bgm=s.bgm, events=len(events))
-    short = script.layout == "short"
+    return Prepared(script, rs, work, cues, audio, book)
+
+
+def build_chapters(script_path: Path, only: list[int] | None = None) -> list[Path]:
+    """章ごとの 1080p の動画を作る (作り済みで変わっていない章は使い回す)。確認はこの動画で."""
+    p = prepare(script_path)
+    ks = only if only is not None else list(range(len(p.script.sections)))
+    return [
+        build_chapter(p.script, p.rs, k, p.cues, p.audio, p.work, p.book, p.n_sections) for k in ks
+    ]
+
+
+def build_video(
+    script_path: Path, out: Path | None = None, keep_frames: bool = False
+) -> BuildResult:
+    """全部の章の動画をそろえて (無い・古い章だけ作る)、つないで音と合わせる."""
+    s = get_settings()
+    p = prepare(script_path)
+    script, rs, cues, audio, book = p.script, p.rs, p.cues, p.audio, p.book
+    out = out or REPO_ROOT / "output" / f"{script_path.stem}.mp4"
     out.parent.mkdir(parents=True, exist_ok=True)
+    total = sum(c.frames for c in cues)
     if keep_frames:  # 確かめ用に連番 PNG を残す (check_sync で 1 コマずつ見る時)
-        frames = write_frames(
-            cues, rs, book, work / "frames", script.final_step, short, script.short_title
+        short = script.layout == "short"
+        write_frames(
+            cues, rs, book, p.work / "frames", script.final_step, short, script.short_title
         )
-        encode_files(work / "frames", audio, s.fps, out, s.nvenc)
-    else:  # PNG を書かずに ffmpeg へ直接流す (GPU の書き出しを活かす、2026-10-04)
-        shutil.rmtree(work / "frames", ignore_errors=True)
-        workers = s.render_workers or default_workers()
-        if workers > 1:  # CPU の複数のコアで並べて作る (2026-10-04)
-            ctx = make_context(cues, rs, book, script.final_step, short, script.short_title)
-            log.info("frames in parallel", workers=workers, total=ctx.total)
-            frames = encode_stream(iter_frames_parallel(ctx, workers), audio, s.fps, out, s.nvenc)
-        else:
-            it = iter_frames(cues, rs, book, script.final_step, short, script.short_title)
-            frames = encode_stream(it, audio, s.fps, out, s.nvenc)
-    log.info("frames ready", frames=frames, seconds=round(frames / s.fps, 1))
-    log.info("video built", mp4=str(out))
-    return BuildResult(out, frames / s.fps, frames)
+        encode_files(p.work / "frames", audio, s.fps, out, s.nvenc)
+    else:  # 章ごとの動画 (2026-10-04) をつなぐだけ。映像は作り直さない
+        shutil.rmtree(p.work / "frames", ignore_errors=True)
+        segments = [
+            build_chapter(script, rs, k, cues, audio, p.work, book, p.n_sections)
+            for k in range(len(script.sections))
+        ]
+        concat_with_audio(segments, audio, out)
+    log.info("video built", mp4=str(out), frames=total)
+    return BuildResult(out, total / s.fps, total)

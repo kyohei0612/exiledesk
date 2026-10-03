@@ -65,19 +65,26 @@ def _render(task: tuple[int, int, int, str]) -> tuple[int, int, int]:
         shm.close()
 
 
-def _tasks(ctx: FrameContext) -> Iterator[tuple[int, int, int]]:
+def _tasks(ctx: FrameContext, only: range | None = None) -> Iterator[tuple[int, int, int]]:
     for i, c in enumerate(ctx.cues):
+        if only is not None and i not in only:
+            continue
         n = len(c.mouth_levels)
         for k0 in range(0, n, CHUNK):
             yield i, k0, min(n, k0 + CHUNK)
 
 
-def iter_frames_parallel(ctx: FrameContext, workers: int) -> Iterator[tuple[int, RawFrame]]:
-    """(通し番号, RGB のコマ) を番号の順に返す。コマは受け取ったらすぐ使う (置き場を使い回す)."""
+def iter_frames_parallel(
+    ctx: FrameContext, workers: int, only: range | None = None
+) -> Iterator[tuple[int, RawFrame]]:
+    """(通し番号, RGB のコマ) を番号の順に返す。コマは受け取ったらすぐ使う (置き場を使い回す).
+
+    ``only`` を渡すとその行だけ (章ごとの動画)。番号は 0 から数え直す。
+    """
     n_slots = max(workers + 2, SLOT_BUDGET // (CHUNK * FRAME_BYTES))
     slots = [SharedMemory(create=True, size=CHUNK * FRAME_BYTES) for _ in range(n_slots)]
     free = deque(range(len(slots)))
-    tasks = _tasks(ctx)
+    tasks = _tasks(ctx, only)  # only: 作る行の位置 (章ごとに作る時)
     pending: deque[tuple[tuple[int, int, int], int, AsyncResult[tuple[int, int, int]]]] = deque()
     n = 0
     try:

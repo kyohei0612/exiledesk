@@ -54,7 +54,10 @@ def video_args(use_gpu: bool) -> list[str]:
     return NVENC_ARGS if gpu else X264_ARGS
 
 
-def _tail(audio: Path, out: Path, vargs: list[str]) -> list[str]:
+def _tail(audio: Path | None, out: Path, vargs: list[str]) -> list[str]:
+    """音があれば音も入れる。無ければ映像だけ (章ごとの映像、2026-10-04)."""
+    if audio is None:
+        return [*vargs, "-pix_fmt", "yuv420p", "-an", str(out)]
     return ["-i", str(audio), *vargs, "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k"] + [
         "-shortest",
         str(out),
@@ -72,7 +75,7 @@ def _rgb(frame: Frame) -> tuple[tuple[int, int], bytes | memoryview]:
 
 
 def encode_stream(
-    frames: Iterable[tuple[int, Frame]], audio: Path, fps: int, out: Path, use_gpu: bool
+    frames: Iterable[tuple[int, Frame]], audio: Path | None, fps: int, out: Path, use_gpu: bool
 ) -> int:
     """コマ (番号, 絵) を ffmpeg の標準入力に RGB で流して mp4 にする。書いたコマ数を返す."""
     it = iter(frames)
@@ -110,3 +113,17 @@ def encode_files(frames_dir: Path, audio: Path, fps: int, out: Path, use_gpu: bo
     r = subprocess.run(cmd, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
     if r.returncode != 0:
         raise RuntimeError(f"ffmpeg 失敗 rc={r.returncode}: {r.stderr[-800:]}")
+
+
+def concat_with_audio(segments: list[Path], audio: Path, out: Path) -> None:
+    """章ごとの映像 (同じ設定で書いた物) をつなぎ、音と合わせる。映像は作り直さない (-c:v copy)."""
+    listing = out.with_suffix(".concat.txt")
+    lines = [f"file '{p.resolve().as_posix()}'" for p in segments]
+    listing.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    cmd = [ffmpeg_path(), "-y", "-hide_banner", "-loglevel", "error", "-f", "concat", "-safe"]
+    cmd += ["0", "-i", str(listing), "-i", str(audio), "-map", "0:v", "-map", "1:a"]
+    cmd += ["-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", str(out)]
+    r = subprocess.run(cmd, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
+    listing.unlink(missing_ok=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"ffmpeg (つなぐ) 失敗 rc={r.returncode}: {r.stderr[-800:]}")

@@ -68,3 +68,24 @@ def test_parallel_matches_one_stream(tmp_path: Path) -> None:
 
 def test_default_workers_leaves_cores() -> None:
     assert 1 <= parallel.default_workers() <= 16
+
+
+def test_chapter_progress_does_not_depend_on_later_chapters() -> None:
+    from poe2tube.video.frames import chapter_progress
+
+    early = chapter_progress(["a", "a", "b"], n_sections=4)
+    later = chapter_progress(["a", "a", "b", "b", "c", "d"], n_sections=4)
+    assert early == later[:3]
+    assert early[0] == 0.0 and early[1] == 0.125 and early[2] == 0.25
+
+
+def test_cut_audio_matches_cue_time(tmp_path: Path) -> None:
+    from poe2tube.video.chapters import cue_range, cut_audio
+    from poe2tube.video.timeline import concat_audio, read_wav
+
+    cues, _result, _ctx2 = _ctx(tmp_path)
+    full = concat_audio(cues, tmp_path / "full.wav")
+    i0, i1 = cue_range(cues, "二")
+    part = cut_audio(full, cues, i0, i1, tmp_path / "part.wav")
+    samples, sr = read_wav(part)
+    assert len(samples) == int(round(cues[1].duration * sr))

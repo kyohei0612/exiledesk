@@ -58,6 +58,7 @@ class FrameContext:
     short_title: str | None
     fps: float
     hits: dict[int, HitPlan]
+    progress: tuple[float, ...]  # 行ごとの進み具合のバー (章の何番目の何割、0〜1)
 
     @property
     def total(self) -> int:
@@ -71,17 +72,42 @@ def make_context(
     final_step: int | None = None,
     short: bool = False,
     short_title: str | None = None,
+    n_sections: int | None = None,
 ) -> FrameContext:
     fps = cues[0].frames / cues[0].duration if cues else 24
     rs = as_set(result)
     hits = plan_hits([(c.section, c.line) for c in cues], rs.plan_of, round(fps))
-    return FrameContext(cues, rs, book, final_step, short, short_title, fps, hits)
+    progress = chapter_progress([c.section for c in cues], n_sections)
+    return FrameContext(cues, rs, book, final_step, short, short_title, fps, hits, progress)
+
+
+def chapter_progress(sections: list[str], n_sections: int | None = None) -> tuple[float, ...]:
+    """進み具合のバー: (章の番号 + 章の中の何行目 / 章の行数) / 章の数.
+
+    後の章が決まらなくても、前の章のバーが変わらない (章ごとに先に映像を作れる、2026-10-04)。
+    """
+    order: list[str] = []
+    for name in sections:
+        if not order or order[-1] != name:
+            order.append(name)
+    total = max(n_sections or 0, len(order), 1)
+    counts = {k: sum(1 for s in sections if s == name) for k, name in enumerate(order)}
+    out: list[float] = []
+    k, pos = 0, 0
+    for i, name in enumerate(sections):
+        if i and sections[i - 1] != name:
+            k, pos = k + 1, 0
+        out.append((k + pos / counts[k]) / total)
+        pos += 1
+    return tuple(out)
 
 
 def zoom_on(ctx: FrameContext, i: int) -> bool:
     """行 i が打つ行か、次の行で打つ (手つきを流す) stage の行か."""
     c = ctx.cues[i]
-    return c.line.scene.kind == "stage" and (i in ctx.hits or (i + 1) in ctx.hits)
+    # 次の行で打つ時も寄る。ただし章はまたがない (章ごとに作れるように)
+    same = i + 1 < len(ctx.cues) and ctx.cues[i + 1].section == c.section
+    return c.line.scene.kind == "stage" and (i in ctx.hits or (same and (i + 1) in ctx.hits))
 
 
 def cue_frames(
@@ -97,7 +123,7 @@ def cue_frames(
     res = rs.of(c.line.scene)  # この行の画面が指す実演の結果
     fin = ctx.final_step if c.line.scene.demo is None else None
     props = [f.key for f in ctx.book.find_in_text(c.line.text)]
-    base = render_base(c.section, c.index / len(cues))
+    base = render_base(c.section, ctx.progress[i])
     hp: HitPlan | None = ctx.hits.get(i)
     is_hit = hp is not None
     nxt_hp = ctx.hits.get(i + 1)
