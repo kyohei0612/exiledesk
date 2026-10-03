@@ -58,7 +58,10 @@ jobs:
       # テスト用の Rust のキャッシュはリリース用 (release プロファイル) と別。版の行を除いた Cargo.lock でキーを作る
       - name: Cache key (自分の版を除いた Cargo.lock)
         shell: bash
-        run: sed '/^name = "exiledesk"$/,+1 s/^version = .*/version = "x"/' src-tauri/Cargo.lock > .cargo-lock-key
+        # rustc の版も入れる (release.yml と同じ。2026-10-03: stable が上がっても古いキャッシュを戻して全部作り直していた)
+        run: |
+          sed '/^name = "exiledesk"$/,+1 s/^version = .*/version = "x"/' src-tauri/Cargo.lock > .cargo-lock-key
+          rustc -V >> .cargo-lock-key
 
       - name: Cache Rust (test)
         uses: actions/cache@v4
