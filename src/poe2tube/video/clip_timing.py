@@ -67,6 +67,8 @@ def stage_hit(prev: Line | None, cur: Line, shown: set[HitKey] | None = None) ->
         return False
     if prev is None or prev.scene.kind != "stage":
         return True
+    if prev.scene.offers:
+        return True  # 発現の 3 択 (打つ前の姿) の次の行が、発現した瞬間 (2026-10-03)
     return prev.scene.step != sc.step or prev.scene.demo != sc.demo
 
 

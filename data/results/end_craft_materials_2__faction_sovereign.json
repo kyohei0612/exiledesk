@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-03T11:10:56.122Z",
-  "exiledesk_version": "0.1.354",
+  "generated_at": "2026-10-03T14:10:35.944Z",
+  "exiledesk_version": "0.1.356",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -236,7 +236,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -297,7 +297,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -321,7 +321,7 @@
     {
       "index": 2,
       "currency": "reveal:1",
-      "currency_ja": "開示 (1 番目)",
+      "currency_ja": "発現 (1 番目)",
       "omen": null,
       "omen_ja": null,
       "seed": 20261013,
@@ -398,7 +398,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -612,7 +612,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -630,6 +630,76 @@
         "amount": 1,
         "subtotal": 0,
         "cumulative": 171.02800000000002
+      },
+      "reveal_offers": {
+        "chosen": 1,
+        "rerolled": false,
+        "first": [
+          {
+            "mod_id": "Amulets/Desecrated_AttackDamage",
+            "family": "AttackDamage",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "低ライフ状態の時のアタックダメージが25%増加する",
+            "text_en": "25% increased Attack Damage while on Low Life",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                15,
+                25
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Ulaman's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_GloryChanceToNotConsume",
+            "family": "GloryChanceToNotConsume",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "スキル使用時に29%の確率でグローリーの40%を保持する",
+            "text_en": "29% chance for Skills to retain 40% of Glory on use",
+            "values": [
+              29
+            ],
+            "ranges": [
+              [
+                20,
+                30
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Ulaman's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_EvasionRatingFromBodyArmour",
+            "family": "EvasionRatingFromBodyArmour",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "鎧から得られる回避力が35%増加する",
+            "text_en": "35% increased Evasion Rating from Equipped Body Armour",
+            "values": [
+              35
+            ],
+            "ranges": [
+              [
+                35,
+                50
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Ulaman's"
+          }
+        ],
+        "after_reroll": null
       }
     }
   ],

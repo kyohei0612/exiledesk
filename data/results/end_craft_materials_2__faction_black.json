@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-03T11:10:57.182Z",
-  "exiledesk_version": "0.1.354",
+  "generated_at": "2026-10-03T14:10:36.961Z",
+  "exiledesk_version": "0.1.356",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -236,7 +236,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -297,7 +297,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -321,7 +321,7 @@
     {
       "index": 2,
       "currency": "reveal:1",
-      "currency_ja": "開示 (1 番目)",
+      "currency_ja": "発現 (1 番目)",
       "omen": null,
       "omen_ja": null,
       "seed": 20261015,
@@ -398,7 +398,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -612,7 +612,7 @@
             "side": "prefix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (プレフィックス)",
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
             "text_en": "Unrevealed Desecrated Prefix",
             "values": [],
             "ranges": [],
@@ -630,6 +630,76 @@
         "amount": 1,
         "subtotal": 0,
         "cumulative": 171.02800000000002
+      },
+      "reveal_offers": {
+        "chosen": 1,
+        "rerolled": false,
+        "first": [
+          {
+            "mod_id": "Amulets/Desecrated_MaximumEnergyShieldFromBodyArmour",
+            "family": "MaximumEnergyShieldFromBodyArmour",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "装備中の鎧から得られるエナジーシールドが43%増加する",
+            "text_en": "43% increased Energy Shield from Equipped Body Armour",
+            "values": [
+              43
+            ],
+            "ranges": [
+              [
+                35,
+                50
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Kurgal's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_InvocatedSpellHalfEnergyChance",
+            "family": "InvocatedSpellHalfEnergyChance",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "インヴォケーションされるスペルの消費エネルギーが13%の確率で半分になる",
+            "text_en": "Invocated Spells have 13% chance to consume half as much Energy",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                10,
+                20
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Kurgal's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_IncreasedSpellDamageOnFullEnergyShield",
+            "family": "IncreasedSpellDamageOnFullEnergyShield",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "フルエナジーシールド時にスペルダメージが25%増加する",
+            "text_en": "25% increased Spell Damage while on Full Energy Shield",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                15,
+                25
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Kurgal's"
+          }
+        ],
+        "after_reroll": null
       }
     }
   ],

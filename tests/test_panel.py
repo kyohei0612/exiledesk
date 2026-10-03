@@ -141,3 +141,12 @@ def test_offers_is_a_stage_look_line() -> None:
     assert Scene(kind="stage", step=3, offers=True).key() != Scene(kind="stage", step=3).key()
     with pytest.raises(ValueError):
         Scene(kind="item", step=3, offers=True)
+
+
+def test_line_after_offers_is_the_reveal_hit() -> None:
+    from poe2tube.video.clip_timing import stage_hit
+
+    offers = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3, offers=True))
+    pick = Line(speaker="metan", text="あ", scene=Scene(kind="stage", step=3))
+    assert stage_hit(offers, pick)
+    assert not stage_hit(pick, pick)

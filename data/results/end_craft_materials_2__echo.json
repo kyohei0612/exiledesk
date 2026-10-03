@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-03T11:10:55.574Z",
-  "exiledesk_version": "0.1.354",
+  "generated_at": "2026-10-03T14:10:35.414Z",
+  "exiledesk_version": "0.1.356",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -48,10 +48,10 @@
         "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
       },
       {
-        "currency": "reveal:1:reroll",
+        "currency": "reveal:2:reroll",
         "omen": "OmenofAbyssalEchoes",
         "times": 1,
-        "note": "引き直した 3 つの 1 番目"
+        "note": "引き直した 3 つの 2 番目 (キャストスピード)"
       }
     ]
   },
@@ -608,7 +608,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -627,7 +627,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -650,8 +650,8 @@
     },
     {
       "index": 3,
-      "currency": "reveal:1:reroll",
-      "currency_ja": "開示 (引き直して 1 番目)",
+      "currency": "reveal:2:reroll",
+      "currency_ja": "発現 (引き直して 2 番目)",
       "omen": "OmenofAbyssalEchoes",
       "omen_ja": "アビスの反響のお告げ",
       "seed": 20261006,
@@ -790,7 +790,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -929,50 +929,50 @@
             "affix": "of the Goliath"
           },
           {
-            "mod_id": "Amulets/ManaRegeneration",
-            "family": "ManaRegeneration",
+            "mod_id": "Amulets/IncreasedCastSpeed",
+            "family": "IncreasedCastSpeed",
             "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 1,
-            "text_ja": "マナ自動回復レートが12%増加する",
-            "text_en": "12% increased Mana Regeneration Rate",
+            "tier_name": "T1",
+            "mod_level": 66,
+            "text_ja": "キャストスピードが26%増加する",
+            "text_en": "26% increased Cast Speed",
             "values": [
-              12
+              26
             ],
             "ranges": [
               [
-                10,
-                19
+                25,
+                28
               ]
             ],
             "desecrated": true,
-            "tier_index": 0,
-            "affix": "of Excitement"
+            "tier_index": 5,
+            "affix": "of Prestidigitation"
           }
         ]
       },
       "changed": {
         "added": [
           {
-            "mod_id": "Amulets/ManaRegeneration",
-            "family": "ManaRegeneration",
+            "mod_id": "Amulets/IncreasedCastSpeed",
+            "family": "IncreasedCastSpeed",
             "side": "suffix",
-            "tier_name": "T6",
-            "mod_level": 1,
-            "text_ja": "マナ自動回復レートが12%増加する",
-            "text_en": "12% increased Mana Regeneration Rate",
+            "tier_name": "T1",
+            "mod_level": 66,
+            "text_ja": "キャストスピードが26%増加する",
+            "text_en": "26% increased Cast Speed",
             "values": [
-              12
+              26
             ],
             "ranges": [
               [
-                10,
-                19
+                25,
+                28
               ]
             ],
             "desecrated": true,
-            "tier_index": 0,
-            "affix": "of Excitement"
+            "tier_index": 5,
+            "affix": "of Prestidigitation"
           }
         ],
         "removed": [
@@ -982,7 +982,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -1000,6 +1000,140 @@
         "amount": 2,
         "subtotal": 0,
         "cumulative": 1667.776
+      },
+      "reveal_offers": {
+        "chosen": 2,
+        "rerolled": true,
+        "first": [
+          {
+            "mod_id": "Amulets/Desecrated_CooldownRecovery",
+            "family": "CooldownRecovery",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "クールダウン解消レートが10%増加する",
+            "text_en": "10% increased Cooldown Recovery Rate",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "of Kurgal"
+          },
+          {
+            "mod_id": "Amulets/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "知性 +27",
+            "text_en": "+27 to Intelligence",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 5,
+            "affix": "of the Sage"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_HeraldReservationEfficiency",
+            "family": "HeraldReservationEfficiency",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "へラルドスキルのリザーブ効率が16%増加する",
+            "text_en": "16% increased Reservation Efficiency of Herald Skills",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                10,
+                20
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "of Ulaman"
+          }
+        ],
+        "after_reroll": [
+          {
+            "mod_id": "Amulets/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 1,
+            "text_ja": "マナ自動回復レートが12%増加する",
+            "text_en": "12% increased Mana Regeneration Rate",
+            "values": [
+              12
+            ],
+            "ranges": [
+              [
+                10,
+                19
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "of Excitement"
+          },
+          {
+            "mod_id": "Amulets/IncreasedCastSpeed",
+            "family": "IncreasedCastSpeed",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 66,
+            "text_ja": "キャストスピードが26%増加する",
+            "text_en": "26% increased Cast Speed",
+            "values": [
+              26
+            ],
+            "ranges": [
+              [
+                25,
+                28
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 5,
+            "affix": "of Prestidigitation"
+          },
+          {
+            "mod_id": "Amulets/CriticalStrikeChance",
+            "family": "CriticalStrikeChanceIncrease",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 58,
+            "text_ja": "クリティカルヒット率が34%増加する",
+            "text_en": "34% increased Critical Hit Chance",
+            "values": [
+              34
+            ],
+            "ranges": [
+              [
+                30,
+                34
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 4,
+            "affix": "of Ruin"
+          }
+        ]
       }
     }
   ],
@@ -1131,25 +1265,25 @@
         "affix": "of the Goliath"
       },
       {
-        "mod_id": "Amulets/ManaRegeneration",
-        "family": "ManaRegeneration",
+        "mod_id": "Amulets/IncreasedCastSpeed",
+        "family": "IncreasedCastSpeed",
         "side": "suffix",
-        "tier_name": "T6",
-        "mod_level": 1,
-        "text_ja": "マナ自動回復レートが12%増加する",
-        "text_en": "12% increased Mana Regeneration Rate",
+        "tier_name": "T1",
+        "mod_level": 66,
+        "text_ja": "キャストスピードが26%増加する",
+        "text_en": "26% increased Cast Speed",
         "values": [
-          12
+          26
         ],
         "ranges": [
           [
-            10,
-            19
+            25,
+            28
           ]
         ],
         "desecrated": true,
-        "tier_index": 0,
-        "affix": "of Excitement"
+        "tier_index": 5,
+        "affix": "of Prestidigitation"
       }
     ]
   },

@@ -1339,10 +1339,11 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "発現してみるわね。候補は、◯◯、◯◯、クールダウン解消レートの 3 つ。",
+          "text": "発現してみるわね。候補は、クールダウン解消レート、知性、へラルドスキルのリザーブ効率の 3 つ。",
           "scene": {
             "kind": "stage",
-            "step": 2
+            "step": 3,
+            "offers": true
           }
         },
         {
@@ -1397,25 +1398,25 @@
           "text": "同じアミュレットで試すわね。最初の候補は、さっきと同じ 3 つ。",
           "scene": {
             "kind": "stage",
-            "step": 2,
-            "demo": "echo",
-            "still": true
+            "step": 3,
+            "offers": true
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "引き直すと……候補は ◯◯、◯◯、マナ自動回復レート。",
+          "text": "引き直すと……候補は、マナ自動回復レート、キャストスピード、クリティカルヒット率。",
           "scene": {
             "kind": "stage",
-            "step": 2,
-            "demo": "echo"
+            "step": 3,
+            "demo": "echo",
+            "offers": true
           }
         },
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "マナ自動回復レートが 12% 増加する、を選んだわ。",
+          "text": "キャストスピードが 26% 増加する、を選ぶわ。",
           "scene": {
             "kind": "stage",
             "step": 3,
@@ -1424,8 +1425,8 @@
         },
         {
           "speaker": "zundamon",
-          "emotion": "sad",
-          "text": "引き直したら、ティアが下がったのだ……。",
+          "emotion": "happy",
+          "text": "最初より良い候補が出たのだ！",
           "scene": {
             "kind": "stage",
             "step": 3,
@@ -1435,7 +1436,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "引き直しも運だから、元の候補の方が良いこともあるの。",
+          "text": "ただ、引き直しも運。元の候補より悪くなることもあるわ。",
           "scene": {
             "kind": "stage",
             "step": 3,

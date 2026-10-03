@@ -432,9 +432,9 @@
           "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
         },
         {
-          "currency": "reveal:1:reroll",
+          "currency": "reveal:2:reroll",
           "omen": "OmenofAbyssalEchoes",
-          "note": "引き直した 3 つの 1 番目"
+          "note": "引き直した 3 つの 2 番目 (キャストスピード)"
         }
       ]
     },
@@ -562,6 +562,149 @@
         {
           "currency": "desecrate",
           "omen": "OmenoftheSovereign"
+        }
+      ]
+    },
+    "light": {
+      "schema": "craft-stage-plan/1",
+      "title": "光のお告げ + 消去 (完成品から、3 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofDextralNecromancy",
+          "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
+        },
+        {
+          "currency": "reveal:1",
+          "note": "発現: 3 つから 1 つ"
+        },
+        {
+          "currency": "annul",
+          "omen": "OmenofLight"
+        }
+      ]
+    },
+    "putrefy": {
+      "schema": "craft-stage-plan/1",
+      "title": "腐食のお告げ + 保存された鎖骨 (1 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofPutrefaction"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "コラプトの後はクラフトできない"
+        }
+      ]
+    },
+    "sanctify": {
+      "schema": "craft-stage-plan/1",
+      "title": "聖別のお告げ + 神のオーブ (完成品から)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofDextralNecromancy",
+          "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
+        },
+        {
+          "currency": "reveal:1",
+          "note": "発現: 3 つから 1 つ"
+        },
+        {
+          "currency": "divine",
+          "omen": "OmenofSanctification"
+        },
+        {
+          "currency": "exalt_perfect",
+          "note": "聖別の後はクラフトできない"
         }
       ]
     }

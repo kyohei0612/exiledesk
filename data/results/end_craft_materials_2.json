@@ -1,7 +1,7 @@
 {
   "schema": "craft-stage-result/1",
-  "generated_at": "2026-10-03T11:10:50.767Z",
-  "exiledesk_version": "0.1.354",
+  "generated_at": "2026-10-03T14:10:30.463Z",
+  "exiledesk_version": "0.1.356",
   "patch": "0.5.0",
   "league": null,
   "price_unit": "exalted",
@@ -607,7 +607,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -626,7 +626,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -650,7 +650,7 @@
     {
       "index": 3,
       "currency": "reveal:1",
-      "currency_ja": "開示 (1 番目)",
+      "currency_ja": "発現 (1 番目)",
       "omen": null,
       "omen_ja": null,
       "seed": 20261006,
@@ -789,7 +789,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -981,7 +981,7 @@
             "side": "suffix",
             "tier_name": "",
             "mod_level": 0,
-            "text_ja": "未開示の冒涜 MOD (サフィックス)",
+            "text_ja": "未発現の冒涜 MOD (サフィックス)",
             "text_en": "Unrevealed Desecrated Suffix",
             "values": [],
             "ranges": [],
@@ -999,6 +999,76 @@
         "amount": 1,
         "subtotal": 0,
         "cumulative": 1667.776
+      },
+      "reveal_offers": {
+        "chosen": 1,
+        "rerolled": false,
+        "first": [
+          {
+            "mod_id": "Amulets/Desecrated_CooldownRecovery",
+            "family": "CooldownRecovery",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "クールダウン解消レートが10%増加する",
+            "text_en": "10% increased Cooldown Recovery Rate",
+            "values": [
+              10
+            ],
+            "ranges": [
+              [
+                8,
+                12
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "of Kurgal"
+          },
+          {
+            "mod_id": "Amulets/Intelligence",
+            "family": "Intelligence",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "知性 +27",
+            "text_en": "+27 to Intelligence",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 5,
+            "affix": "of the Sage"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_HeraldReservationEfficiency",
+            "family": "HeraldReservationEfficiency",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "へラルドスキルのリザーブ効率が16%増加する",
+            "text_en": "16% increased Reservation Efficiency of Herald Skills",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                10,
+                20
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "of Ulaman"
+          }
+        ],
+        "after_reroll": null
       }
     }
   ],
