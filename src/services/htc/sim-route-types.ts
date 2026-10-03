@@ -17,7 +17,7 @@ export type SimAction =
    */
   | { kind: "essence"; modId: string; removeSide?: Side | "auto" }
   /**
-   * faction = 勢力のお告げ (黒血 = クルガル / リージュ = アマナム / 君主 = ウラマン)。候補をその勢力の冒涜の MOD だけにし、MOD ごとに等しく引く
+   * faction = 勢力のお告げ (ブラックブラッド = クルガル / 君主 (Liege) = アマナム / 支配者 (Sovereign) = ウラマン)。候補をその勢力の冒涜の MOD だけにし、MOD ごとに等しく引く
    * (クラフトステージ・エンジンの desecrationBossProbability と同じ)。武器と装飾品だけ (防具には効かない)
    */
   | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient" | "desecrate_altered"; echoes: boolean; faction?: DesecrationBossOmen }
