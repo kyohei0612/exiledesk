@@ -6,6 +6,7 @@ ExileDesk に頼まない軽い図。白背景に影付きのカード / 表で�
 from __future__ import annotations
 
 from functools import lru_cache
+from itertools import combinations, pairwise
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -47,8 +48,18 @@ def draw_icons(img: Image.Image, box: Box, panel: Panel, icon_dir: Path) -> None
     oy = top + (y1 - top - (ch * len(rows) + gap * (len(rows) - 1))) // 2
     d = ImageDraw.Draw(img)
     names = panel.names or [_names().ja(k) for k in keys]
-    fs = 34  # 1 枚の図の中では名前の大きさをそろえる (長い名前に合わせる)
-    while fs > 18 and max(d.textlength(n, font=font(fs)) for n in names) > cw - 20:
+    # 1 枚の図の中では名前の大きさをそろえる (長い名前に合わせる)。入らない名前は言葉の切れ目で
+    # 3 行まで折り、言葉の途中で折るよりは少し小さくする (26 まで)。それでも無理なら途中で折る
+    # (kyohei 2026-10-04: 縮めるだけだと「右手のネクロマンシーのお告げ」がカードからはみ出した)
+    fs = 34
+
+    def bad(fs: int) -> bool:
+        ws = [_wrap(d, n, fs, cw - 20) for n in names]
+        return any(_lines_w(d, ls, fs) > cw - 20 or len(ls) > 3 for ls, _ in ws) or (
+            fs > 26 and not all(nice for _, nice in ws)
+        )
+
+    while fs > 18 and bad(fs):
         fs -= 2
     for r, row in enumerate(rows):
         ox = (x0 + x1) // 2 - (cw * len(row) + gap * (len(row) - 1)) // 2
@@ -61,7 +72,60 @@ def draw_icons(img: Image.Image, box: Box, panel: Panel, icon_dir: Path) -> None
             path = icon_path(key, icon_dir)
             ic = load_icon(path, size) if path.exists() else placeholder_icon(name, size)
             img.alpha_composite(ic, (cx + (cw - ic.width) // 2, cy + 20))
-            d.text((cx + cw // 2, cy + 36 + size), name, font=font(fs), fill=INK, anchor="ma")
+            for li, line in enumerate(_wrap(d, name, fs, cw - 20)[0]):
+                ty = cy + 36 + size + int(li * fs * 1.25)
+                d.text((cx + cw // 2, ty), line, font=font(fs), fill=INK, anchor="ma")
+
+
+def _hira(c: str) -> bool:
+    return "ぁ" <= c <= "ゟ"
+
+
+def _kata(c: str) -> bool:
+    return "゠" <= c <= "ヿ"
+
+
+def _word_break(text: str, i: int) -> bool:
+    """i の前で折ってよいか: 「の」「・」の後ろ、ひらがな → 漢字 (「お告げ」の「お」は除く)、
+    カタカナとそれ以外の境目 (「偉大なる / 高貴なお告げ」「右手の / ネクロマンシーの / お告げ」)."""
+    a, b = text[i - 1], text[i]
+    if a in "の・":
+        return True
+    if _hira(a) and not _hira(b) and not _kata(b):
+        return a not in "おご"
+    return _kata(a) != _kata(b) and b != "の"
+
+
+def _wrap(d: ImageDraw.ImageDraw, text: str, fs: int, max_w: int) -> tuple[list[str], bool]:
+    """言葉の切れ目で 3 行までに折る (行が少ない → 「の」の後ろで折る → 行の長さがそろう、の順)。
+    2 つ目 = 切れ目で入った (False なら言葉の途中で 2 行に折った)."""
+    f = font(fs)
+    if d.textlength(text, font=f) <= max_w or len(text) < 2:
+        return [text], True
+    cuts = [i for i in range(1, len(text)) if _word_break(text, i)]
+    best: tuple[tuple[int, int, float], list[str]] | None = None
+    for n in (1, 2):
+        for combo in combinations(cuts, n):
+            edges = [0, *combo, len(text)]
+            lines = [text[x:y] for x, y in pairwise(edges)]
+            w = max(d.textlength(x, font=f) for x in lines)
+            if w > max_w:
+                continue
+            key = (len(lines), sum(text[c - 1] not in "の・" for c in combo), w)
+            if best is None or key < best[0]:
+                best = (key, lines)
+        if best:
+            return best[1], True
+
+    def width(i: int) -> float:
+        return max(d.textlength(text[:i], font=f), d.textlength(text[i:], font=f))
+
+    i = min(range(1, len(text)), key=width)
+    return [text[:i], text[i:]], False
+
+
+def _lines_w(d: ImageDraw.ImageDraw, lines: list[str], fs: int) -> float:
+    return max(d.textlength(x, font=font(fs)) for x in lines)
 
 
 def draw_table(img: Image.Image, box: Box, panel: Panel) -> None:
