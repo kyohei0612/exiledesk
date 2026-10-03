@@ -20,6 +20,7 @@ import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
 import { useStageFx } from "./use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
+import { installAnimClock, type StageAnimInfo } from "./anim-clock";
 import { craftStage } from "../../state/craft-stage";
 import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
 import { displayCurrency } from "../../state/display-currency";
@@ -119,7 +120,39 @@ const frameEl = ref<HTMLElement | null>(null);
 const hand = useVideoHand(frameEl, speed);
 // 撮影用の倍率は開いた時と見た目を切り替えた時に 1 回だけ決める
 watch(layout, () => void fitClip());
-onMounted(() => void fitClip());
+onMounted(() => void (opts.animT != null ? stillAt(opts.animT) : fitClip()));
+
+/**
+ * 手つきを時刻で止める (URL の anim_t、POE2Tube 要望 ㉖): 倍率を決めてから時計を仮の物に差し替え、1 つ前の手から step 手目を打ち、
+ * 指定の時刻まで一気に進めて止める ([[anim-clock.ts]])。時刻の情報は window.__stageAnim (attach_ms = 付いた瞬間、
+ * total_ms = anim_t=end の時の全体の長さ)、撮ってよくなったら ready と目印 data-anim-ready="1"
+ */
+async function stillAt(t: number | "end"): Promise<void> {
+  await fitClip();
+  // 倍率 (fit) は ResizeObserver の知らせを待たずに決めておく (来る前に始めると枠の大きさ 0 で位置を測っていた)
+  for (let i = 0; i < 100 && !(rootEl.value?.clientWidth && frameEl.value?.getBoundingClientRect().width); i++) {
+    fit();
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  const w = window as unknown as { __stageAnim?: StageAnimInfo };
+  const info: StageAnimInfo = { t: 0, attach_ms: null, total_ms: null, ready: false };
+  w.__stageAnim = info;
+  const clock = installAnimClock();
+  let doneAt: number | null = null;
+  if (idx.value < tape.length) {
+    const to = idx.value + 1;
+    void hand.play(tape[to - 1]!, cardEl.value, () => {
+      anchor.value = hand.screenPoint();
+      idx.value = to;
+      info.attach_ms = clock.now();
+    }).then(() => (doneAt = clock.now()));
+  } else doneAt = 0;
+  if (t === "end") info.total_ms = await clock.runToEnd(() => doneAt);
+  else await clock.advanceTo(t);
+  info.t = clock.now();
+  info.ready = true;
+  document.body.dataset.animReady = "1";
+}
 
 /**
  * n 手目へ。1 手進む時は手つきを見せてから付ける (押した瞬間に idx を進める)。戻る・飛ぶ時は一気に

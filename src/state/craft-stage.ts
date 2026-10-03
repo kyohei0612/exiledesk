@@ -47,7 +47,11 @@ const itemLevel = ref(82);
  * アイテム + 棚だけを大きく、見出し・右の欄・進行バー無し、下 15% 空け (結果の文字を重ねる所)
  */
 /** offers = 発現の手で止めた時に候補 3 つを出したままにする (URL の offers=1、POE2Tube 要望 ㉕-3) */
-const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip"; offers?: boolean } | null>(null);
+/**
+ * animT = 手つきを時刻で止める (URL の anim_t=<ミリ秒> か end、POE2Tube 要望 ㉖)。step 手目の手つきを始まりからその時刻まで進めた絵で止める。
+ * 時刻の情報は window.__stageAnim ([[anim-clock.ts]])
+ */
+const video = ref<{ from: number; autoplay: boolean; controls: boolean; layout?: "default" | "clip"; offers?: boolean; animT?: number | "end" | null } | null>(null);
 /**
  * 動画用の別の画面 (POE2Tube 要望 ⑪、2026-09-29)。URL の view= で開く (手順は要らない):
  *   view=tiers&base=<英語のベース名>&mod=<MOD の id か系統>&ilvl=N … 段の表
@@ -218,8 +222,12 @@ export const craftStage = {
       if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
       else craftStage.reset();
       if (raw && wantVideo) {
+        const at = q.get("anim_t");
+        const animT = at == null ? null : at === "end" ? "end" : Number.isFinite(Number(at)) ? Math.max(0, Number(at)) : null;
         video.value = {
-          from: Math.min(step, log.value.length),
+          // 手つきを時刻で止める時は 1 つ前の手から始めて、step 手目を打つ
+          from: Math.max(0, Math.min(step, log.value.length) - (animT != null ? 1 : 0)),
+          animT,
           autoplay: q.get("autoplay") === "1",
           controls: q.get("controls") !== "0",
           layout: q.get("layout") === "clip" ? "clip" : "default",
