@@ -18,6 +18,7 @@ from poe2tube.script.panel import Panel
 
 Box = tuple[int, int, int, int]
 PER_ROW = 6
+NICE_MIN = 22  # 言葉の切れ目で折るために縮めてよい下限
 TITLE_H = 90
 
 
@@ -35,40 +36,62 @@ def _title(img: Image.Image, box: Box, title: str | None) -> int:
     return y0 + TITLE_H
 
 
+def _per_row(d: ImageDraw.ImageDraw, names: list[str], width: int, gap: int) -> int:
+    """1 段の数。ふだんは 6 個で折り返す。
+
+    言葉の切れ目で折れない名前 (「右手のネクロマンシーのお告げ」) がある時は、1 段の数を
+    減らしてカードを広くする (5 → 4、段の中の数はそろえる).
+    """
+    n = len(names)
+    for per in (PER_ROW, 5, 4):
+        rows = -(-n // per)
+        per = -(-n // rows)  # 段の中の数をそろえる (8 個 → 4 + 4)
+        cw = min(300, (width - gap * (min(per, n) - 1)) // min(per, n))
+        if all(_wrap(d, x, NICE_MIN, cw - 20)[1] for x in names):
+            return per
+    return PER_ROW
+
+
 def draw_icons(img: Image.Image, box: Box, panel: Panel, icon_dir: Path) -> None:
     """アイコン + 公式名のカードを 1〜2 行に並べる (6 個で折り返す)."""
     keys = panel.icons or []
     x0, _, x1, y1 = box
     top = _title(img, box, panel.title)
-    rows = [keys[i : i + PER_ROW] for i in range(0, len(keys), PER_ROW)]
     gap = 28
-    per = min(PER_ROW, len(keys))
+    d0 = ImageDraw.Draw(img)
+    names0 = panel.names or [_names().ja(k) for k in keys]
+    per_row = _per_row(d0, names0, x1 - x0, gap)
+    rows = [keys[i : i + per_row] for i in range(0, len(keys), per_row)]
+    per = min(per_row, len(keys))
     cw = min(300, (x1 - x0 - gap * (per - 1)) // per)
     ch = min((y1 - top - gap * (len(rows) - 1)) // len(rows), int(cw * 1.3))
     oy = top + (y1 - top - (ch * len(rows) + gap * (len(rows) - 1))) // 2
     d = ImageDraw.Draw(img)
     names = panel.names or [_names().ja(k) for k in keys]
     # 1 枚の図の中では名前の大きさをそろえる (長い名前に合わせる)。入らない名前は言葉の切れ目で
-    # 3 行まで折り、言葉の途中で折るよりは少し小さくする (26 まで)。それでも無理なら途中で折る
+    # 3 行まで折り、言葉の途中で折るよりは少し小さくする (22 まで)。それでも無理なら途中で折る
     # (kyohei 2026-10-04: 縮めるだけだと「右手のネクロマンシーのお告げ」がカードからはみ出した)
     fs = 34
 
     def bad(fs: int) -> bool:
         ws = [_wrap(d, n, fs, cw - 20) for n in names]
         return any(_lines_w(d, ls, fs) > cw - 20 or len(ls) > 3 for ls, _ in ws) or (
-            fs > 26 and not all(nice for _, nice in ws)
+            fs > NICE_MIN and not all(nice for _, nice in ws)
         )
 
     while fs > 18 and bad(fs):
         fs -= 2
+    # 名前が 3 行になる時は、その分アイコンを小さくしてカードの中に収める
+    most = max(len(_wrap(d, n, fs, cw - 20)[0]) for n in names)
+    icon_size = min(int(min(cw, ch) * 0.56), ch - 36 - int(most * fs * 1.25) - 14)
     for r, row in enumerate(rows):
         ox = (x0 + x1) // 2 - (cw * len(row) + gap * (len(row) - 1)) // 2
         for c, key in enumerate(row):
-            i = r * PER_ROW + c
+            i = r * per_row + c
             cx, cy = ox + c * (cw + gap), oy + r * (ch + gap)
             shadow_panel(img, (cx, cy, cx + cw, cy + ch), fill=WHITE, outline=LINE, radius=24)
             name = names[i]
-            size = int(min(cw, ch) * 0.56)
+            size = icon_size
             path = icon_path(key, icon_dir)
             ic = load_icon(path, size) if path.exists() else placeholder_icon(name, size)
             img.alpha_composite(ic, (cx + (cw - ic.width) // 2, cy + 20))
