@@ -64,6 +64,7 @@ function omensOf(a: SimAction | null): string[] {
     case "chaos": return a.side ? [OMEN.erasure[a.side]] : [];
     case "essence": return [OMEN.crystallisation[((a.removeSide === "auto" ? null : a.removeSide) ?? props.c.data.value?.mods.get(a.modId)?.type) === "suffix" ? "suffix" : "prefix"]];
     case "breach": return [OMEN.crystallisation[a.removeSide === "suffix" ? "suffix" : "prefix"]];
+    case "abyss": return [OMEN.crystallisation[a.side]];
     case "desecrate": return [OMEN.necromancy[a.side], ...(a.faction ? [FACTION_OMEN[a.faction]] : []), ...(a.echoes ? ["OmenofAbyssalEchoes"] : [])];
     default: return [];
   }
@@ -76,6 +77,8 @@ function orbOf(a: SimAction | null): string {
     case "whittle": return "chaos";
     case "essence": return `essence:${a.modId}`;
     case "breach": return "essence:breach";
+    // 深淵のエッセンスは自動で組んだ時だけ (手で選ぶ欄はまだ無い)
+    case "abyss": return "essence:abyss";
     case "desecrate": return a.bone;
     case "check": return "check";
     case "quality": return "quality";

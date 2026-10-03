@@ -15,7 +15,7 @@
  * 固定済みの狙いは作らない。クラフト非推奨 (start-kind の unsafe) の時は組まない。
  */
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
-import { bossOmenAllowed, desecrationOmenForMod, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
+import { bossOmenAllowed, desecrationBoneFor, desecrationOmenForMod, type DesecrationBossOmen } from "../../vendor/poe2htc/engine/probability";
 import { catalystPriceKey } from "../../services/htc/catalysing";
 import { catalystsFor } from "../../services/htc/quality";
 import type { SimNode } from "../../services/htc/sim-route";
@@ -322,6 +322,8 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     }
   }
   const desecrateNodes: SimNode[] = [];
+  /** 深淵の印の手 → その冒涜の手 */
+  const abyssNext = new Map<string, string>();
   /**
    * 冒涜の骨: 異界の MOD は変質した鎖骨でしか付かない (2026-09-27 オーナー「変質した鎖骨 MOD も全部に追加」)。
    * それ以外は、古代の鎖骨は段 40 以上だけ・届かなければ普通の鎖骨
@@ -357,13 +359,44 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     if ((breach && !main.some((n) => n.onlyWithBreach) && side !== "prefix") || essences.length) return null;
     const cls = like.split("/")[0];
     const cands = [...d.mods.values()].filter((m) => m.id.startsWith(cls + "/") && CRAFTED_SOURCES.has(m.source) && m.type === side
-      && m.family !== BREACH_FAMILY && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
+      && m.family !== BREACH_FAMILY && m.family !== "EssenceAbyss" && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
     cands.sort((a, b) => (p.currency[`essence:perfect:${a.id}`] ?? Infinity) - (p.currency[`essence:perfect:${b.id}`] ?? Infinity));
+    return cands[0]?.id ?? null;
+  };
+  /**
+   * 深淵の印の輪 (2026-10-03、SaVeQ 0.5.5 / poe2fun。inp.reroll === "abyss" の時だけ): 結晶化のお告げ + 深淵のエッセンスで印 → 普通の骨で冒涜
+   * (印を置き換え、段の下限 33 = 仮) → 外れはその側のエッセンス / 合金で上書き → また深淵のエッセンス。光のお告げも消去も要らない。
+   * 印と上書きの 2 つのクラフト MOD を持つのでアストリッドの創造性が要る (craftedLimit 2)。防具・武器だけ (動画:「指輪・アミュは別の道」)。
+   * その側で消えて困る物 (固定でない狙い・触らない MOD・ブリーチ・エッセンスの狙い) があると上書きや印が食うので組まない
+   */
+  const abyssFor = (t: TierTarget, side: Side): string | null => {
+    if (inp.reroll !== "abyss" || (inp.craftedLimit ?? 1) < 2) return null;
+    const b = d.bases.get(t.modId.split("/")[0]!);
+    if (!b || desecrationBoneFor(b.category) === "collarbone") return null;
+    if (essences.length || (breach && !main.some((n) => n.onlyWithBreach)) || shielded.has(side) || (inp.startKeep?.[side] ?? 0) > 0) return null;
+    if (ts.some((x) => x.modId !== t.modId && sideOf(x.modId) === side)) return null;
+    if (!Number.isFinite(p.currency[`essence:perfect:${b.id}/PerfectEssence_EssenceAbyss`] ?? Infinity)) return null;
+    const cands = [...d.mods.values()].filter((m) => m.id.startsWith(b.id + "/") && CRAFTED_SOURCES.has(m.source) && m.type === side
+      && m.family !== BREACH_FAMILY && m.family !== "EssenceAbyss" && Number.isFinite(p.currency[`essence:perfect:${m.id}`] ?? Infinity));
+    cands.sort((a, c) => (p.currency[`essence:perfect:${a.id}`] ?? Infinity) - (p.currency[`essence:perfect:${c.id}`] ?? Infinity));
     return cands[0]?.id ?? null;
   };
   for (const t of desecrated) {
     const side = sideOf(t.modId);
     const lightId = `l-${t.modId}`;
+    const ab = abyssFor(t, side);
+    if (ab) {
+      const aid = id(), did = `d-${t.modId}`, eid = `o-${t.modId}`;
+      desecrateNodes.push({ ...base, id: aid, action: { kind: "abyss", side }, targets: [], keep: [], need: 1, onHit: null, onMiss: null });
+      // 冒涜は本線の外 (○は完成へ。本線の次の手につなぐのは印の手)
+      extra.push({
+        ...base, id: did, action: { ...desecAction(t, side), bone: "desecrate" } as SimNode["action"],
+        targets: [{ modId: t.modId, minTier: t.minTierIndex ?? 0 }], keep: [], need: 1, onHit: "auto", onMiss: eid,
+      });
+      extra.push({ ...base, id: eid, action: { kind: "essence", modId: ab, removeSide: side }, targets: [], need: 1, onHit: aid, onMiss: null });
+      abyssNext.set(aid, did);
+      continue;
+    }
     const ow = overwriteFor(side, t.modId);
     if (ow) {
       const did = id(), eid = `o-${t.modId}`;
@@ -405,7 +438,11 @@ export function autoTreeMeta(inp: AutoTreeInput): { nodes: SimNode[]; catalystOf
     if (finalQuality) main.push(finalQuality);
   }
 
-  // 本線をつなぐ (○ は次の手、最後は完成)
-  main.forEach((x, i) => { x.onHit = main[i + 1]?.id ?? "done"; });
+  // 本線をつなぐ (○ は次の手、最後は完成)。深淵の印の手は○で冒涜へ、冒涜の○が本線の次へ
+  main.forEach((x, i) => {
+    const next = main[i + 1]?.id ?? "done";
+    const did = abyssNext.get(x.id);
+    if (did) { x.onHit = did; const dn = extra.find((e) => e.id === did); if (dn) dn.onHit = next; } else x.onHit = next;
+  });
   return { nodes: [...main, ...extra], catalystOff };
 }

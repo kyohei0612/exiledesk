@@ -14,8 +14,8 @@ import { familyBlocked, familyKeysOf, tierWeight } from "../../services/mods/mod
 import type { ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import { autoTreeMeta, breachPlanned, type AutoTreeInput } from "./tree-auto";
-import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG } from "../../services/htc/omens";
-import { bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
+import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from "../../services/htc/omens";
+import { bossOmenAllowed, desecrationBoneFor, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 // 型と決まり (RULES) は 2026-09-26 に redo-cost-types.ts へ分けた
 import type { Bone, MethodEstimate, RedoPlan, Reroll } from "./redo-cost-types";
 export * from "./redo-cost-types";
@@ -144,6 +144,8 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const owOnly = isOtherworldly(t.modId);
     // 勢力のお告げ: 候補はその勢力の冒涜の MOD だけ・MOD ごとに等しく、3 択に入る確率 = min(3, N) / N、その中で狙いの段の割合
     const fo = faction ? factionOf(m) : undefined;
+    // 深淵の印の輪: 印から冒涜すると段の下限 33 (仮)。古代の骨とは重ならないので骨は普通の物だけ
+    const markFloor = reroll === "abyss" ? Math.max(floor, ABYSS_MARK_FLOOR) : floor;
     let pHit: number;
     if (fo) {
       const n = factionCount(s, fo, floor);
@@ -151,14 +153,15 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
       const q = n > 0 && all > 0 ? (Math.min(3, n) / n) * (w(m, t.minTierIndex ?? 0, floor) / all) : 0;
       pHit = echoes ? 1 - (1 - q) ** 2 : q;
     } else {
-      const p1 = owOnly && bone !== "desecrate_altered" ? 0 : w(m, t.minTierIndex ?? 0, floor) / poolW(s, floor, bone === "desecrate_altered" ? "altered" : true, null, 1);
+      const p1 = owOnly && bone !== "desecrate_altered" ? 0 : w(m, t.minTierIndex ?? 0, markFloor) / poolW(s, markFloor, bone === "desecrate_altered" ? "altered" : true, null, 1);
       pHit = 1 - (1 - p1) ** (echoes ? 6 : 3);
     }
     // 冒涜は最後の手。反対側が消えない物 + 狙い全部で埋まり、この側に枠があれば、ネクロマンシーのお告げは要らない
     const o = otherOf(s);
     const noOmen = lockedOn(o) + ts.filter((x) => sideOf(x.modId) === o).length >= limits[o]
       && limits[s] - (inp.startCount?.[s] ?? limits[s]) - k > 0;
-    const perTry = cur(bone) + (noOmen ? 0 : cur(OMEN.necromancy[s])) + (echoes ? cur("OmenofAbyssalEchoes") : 0) + (fo ? cur(FACTION_OMEN[fo]) : 0);
+    // 印の置き換えは側が決まっているのでネクロマンシーは要らない
+    const perTry = cur(bone) + (noOmen || reroll === "abyss" ? 0 : cur(OMEN.necromancy[s])) + (echoes ? cur("OmenofAbyssalEchoes") : 0) + (fo ? cur(FACTION_OMEN[fo]) : 0);
     let why: string | undefined;
     if (faction && !fo) why = "勢力のお告げが効かない (防具・勢力の無い MOD)";
     if (fo && bone === "desecrate_altered") why = "勢力のお告げと変質した鎖骨は一緒に使わない";
@@ -167,10 +170,20 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     if (owOnly && bone !== "desecrate_altered") why = "異界の MOD は変質した鎖骨でしか付かない";
     // 上書き: 枠 2 つの側で残りがフラクチャーだけ
     const canOw = limits[s] === 2 && fixedSides.has(s) && k === 0 && !(shielded.has(s) && loose(s) > 0);
-    const ess = [...d.mods.values()].filter((x) => x.id.startsWith(m.id.split("/")[0] + "/") && CRAFTED_SOURCES.has(x.source) && x.type === s && x.family !== BREACH_FAMILY)
+    const ess = [...d.mods.values()].filter((x) => x.id.startsWith(m.id.split("/")[0] + "/") && CRAFTED_SOURCES.has(x.source) && x.type === s && x.family !== BREACH_FAMILY && x.family !== "EssenceAbyss")
       .map((x) => cur(`essence:perfect:${x.id}`)).filter((v) => Number.isFinite(v)).sort((a, b) => a - b)[0];
     if (reroll === "overwrite" && (!canOw || ess == null)) why = why ?? "上書きは残りがフラクチャーの枠 2 つの側だけ";
-    const perMiss = reroll === "overwrite" ? cur(OMEN.crystallisation[s]) + (ess ?? Infinity) : cur("OmenofLight") + cur("annul");
+    // 深淵の印の輪: 防具・武器、アストリッド (クラフト MOD 2 つ)、その側に他の狙いも触らない物も無い。外れ 1 回 = 結晶化 2 つ + 上書き + 深淵のエッセンス
+    const abyssPrice = cur(`essence:perfect:${cls.id}/PerfectEssence_EssenceAbyss`);
+    if (reroll === "abyss") {
+      const ok = desecrationBoneFor(cls.category) !== "collarbone" && (inp.craftedLimit ?? 1) >= 2 && !essences.length && !shielded.has(s)
+        && (inp.startKeep?.[s] ?? 0) === 0 && k === 0 && ts.filter((x) => x.modId !== t.modId && sideOf(x.modId) === s).length === 0;
+      if (!ok || ess == null || !Number.isFinite(abyssPrice)) why = why ?? "深淵の印の輪は防具・武器でアストリッドを差し、その側に他の狙いが無い時だけ";
+      if (bone !== "desecrate" || fo) why = why ?? "深淵の印の輪は普通の骨だけ";
+    }
+    const perMiss = reroll === "overwrite" ? cur(OMEN.crystallisation[s]) + (ess ?? Infinity)
+      : reroll === "abyss" ? 2 * cur(OMEN.crystallisation[s]) + (ess ?? Infinity) + abyssPrice
+      : cur("OmenofLight") + cur("annul");
     // 満杯の側への冒涜は固定でない物を 1 つ置き換える (光で回す時)。上書きの形 (k = 0) は確定
     const full = limits[s] - (inp.startCount?.[s] ?? 0) - k <= 0;
     const risk = reroll === "light" && full && k > 0 ? k / (k + 1) : 0;
@@ -179,7 +192,9 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 外れのたびに足すと数えすぎで、見積もりが回した平均の 2 倍になった)
     const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen ? { noSideOmen: true } : {}),
       ...(fo ? { faction: true } : {}), ...(echoes ? {} : { echoes: false }) });
-    return risk > 0 ? { ...e, expected: e.expected + risk * redoPrior } : e;
+    // 深淵の印の輪は最初の印の 1 回分 (深淵のエッセンス + 結晶化) を足す
+    const first = reroll === "abyss" ? abyssPrice + cur(OMEN.crystallisation[s]) : 0;
+    return risk > 0 || first ? { ...e, expected: e.expected + risk * redoPrior + first } : e;
   }
   /**
    * カオスで取る (最初の 1 つ)。カオスは固定でない物を 1 つ消してから、**枠の空いている側に** 1 つ足す。消える物で空く側が
@@ -225,7 +240,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     const cands: MethodEstimate[] = [];
     // 勢力のお告げ (使える時だけ) × 反響の有無も比べる (2026-10-03、SaVeQ「反響は高い時は使わない」)
     const factions = factionOf(mod(t.modId)) ? [false, true] : [false];
-    for (const bone of BONES) for (const rr of ["overwrite", "light"] as const) for (const f of factions) for (const ec of [true, false]) cands.push(desecrateEst(t, k, bone, rr, redoPrior, f, ec));
+    for (const bone of BONES) for (const rr of ["overwrite", "light", "abyss"] as const) for (const f of factions) for (const ec of [true, false]) cands.push(desecrateEst(t, k, bone, rr, redoPrior, f, ec));
     return cands.reduce((a, b) => (b.expected < a.expected ? b : a));
   };
 

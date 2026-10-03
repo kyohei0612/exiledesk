@@ -22,6 +22,12 @@ export type SimAction =
    */
   | { kind: "desecrate"; side: Side; bone: "desecrate" | "desecrate_ancient" | "desecrate_altered"; echoes: boolean; faction?: DesecrationBossOmen }
   | { kind: "light" }
+  /**
+   * 深淵のエッセンス (2026-10-03、SaVeQ 0.5.5 / poe2fun): その側の結晶化のお告げで、その側の外せる物を 1 つ消して「深淵の王の印」を付ける。
+   * 印はクラフト MOD (アストリッドが無いと、外れの上書きに使ったエッセンスと 2 つ持てない)。印のある時の冒涜は必ず印を置き換え、
+   * 段の下限は MOD レベル 33 (仮: 実測 1 件。説明文は「より高い段」だけ。古代の骨とは重ならない)。光のお告げ無しに冒涜を回す輪に使う
+   */
+  | { kind: "abyss"; side: Side }
   | { kind: "breach"; removeSide?: Side }
   | { kind: "whittle" }
   /** 打たずに○の条件だけ見る (CoE の確認だけの手。「キャスピがある? → 高貴へ / 無ければカオスへ」) */
@@ -96,6 +102,8 @@ export interface SimSlot {
    */
   crafted?: boolean;
   desec?: boolean;
+  /** 深淵の王の印 (深淵のエッセンスで付く。crafted も立つ。冒涜がこれを置き換える) */
+  mark?: boolean;
   label?: string;
   /**
    * 実際に付いた MOD の系統 (外れでも)。同じ系統はもう付かないので、以後の抽選から外す (2026-09-26 精度上げ: 前は狙いの MOD
@@ -150,14 +158,14 @@ export interface SimResult {
  * 確定の手 (必ず付く・必ず消える)。× の行き先が未設定でも止めずに○の行き先へ進む
  * (オーナー 2026-09-24:「一応確定やから、そこの手でバツはデフォで入力しなかったら無視するように」)
  */
-export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality"]);
+export const CERTAIN: ReadonlySet<SimAction["kind"]> = new Set(["essence", "breach", "light", "quality", "abyss"]);
 
 /** 側のお告げを使う手か (高貴・消去・カオスは側を選んだ時、エッセンス・ブリーチ・冒涜はいつも)。画面の「お告げ不要」の出し分け用 */
 export function hasSideOmen(a: SimAction | null): boolean {
   if (!a) return false;
   switch (a.kind) {
     case "exalt": case "annul": case "chaos": return !!a.side;
-    case "essence": case "breach": case "desecrate": return true;
+    case "essence": case "breach": case "desecrate": case "abyss": return true;
     default: return false;
   }
 }

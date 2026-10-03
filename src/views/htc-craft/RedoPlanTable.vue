@@ -57,7 +57,9 @@ const missJa = (r: RedoPlan["rows"][number]): string => {
   switch (r.method) {
     case "chaos": return "外れはカオスで打ち直し";
     case "exalt": return `外れは ${r.plainAnnul ? "消去のオーブ" : `${omen(OMEN.annul[r.side])} + 消去のオーブ`}${r.safe ? " (狙い以外は消えない)" : " (ほかの MOD を巻き込む)"}`;
-    case "desecrate": return `外れは ${r.reroll === "overwrite" ? `${omen(OMEN.crystallisation[r.side])} + エッセンスで上書き` : `${omen("OmenofLight")} + 消去のオーブ`}`;
+    case "desecrate": return `外れは ${r.reroll === "overwrite" ? `${omen(OMEN.crystallisation[r.side])} + エッセンスで上書き`
+      : r.reroll === "abyss" ? `${omen(OMEN.crystallisation[r.side])} + エッセンス / 合金で上書き → ${omen(OMEN.crystallisation[r.side])} + 深淵のエッセンスで印 (アストリッド要る、印からの冒涜は段の下限 33 = 仮)`
+      : `${omen("OmenofLight")} + 消去のオーブ`}`;
     default: return "";
   }
 };

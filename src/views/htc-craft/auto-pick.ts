@@ -36,6 +36,8 @@ export async function pickAutoTree(inp: AutoTreeInput, ctx: Ctx, start: SimState
   // 決め打ちの骨は、上書きの輪が組める形 (固定 1 + 外れ 1 の枠 2 つの側) だけ普通の骨も試す (天体で回すなら普通の骨が安い)
   const bones = canOverwrite ? ([undefined, "preserved"] as const) : ([undefined] as const);
   for (const ch of chaosVariants) for (const bn of bones) picks.push({ label: `決め打ち${ch ? "" : "・カオス無し"}${bn ? "・普通の骨" : ""}`, ...(bn ? { bone: bn } : {}), ...(ch ? {} : { chaosOk: false, chaosSide: null }) });
+  // 深淵の印の輪 (アストリッドで 2 つ持てる時だけ。組めない形なら autoTree が普通の輪にする = 同じ形は下でまとまる)
+  if ((inp.craftedLimit ?? 1) >= 2) picks.push({ label: "深淵の印", reroll: "abyss" });
   const variants: Array<{ greater: string; nodes: ReturnType<typeof autoTree> }> = [];
   for (const pk of picks) {
     for (const g of ["catalyst", "all"] as const) for (const an of annuls) variants.push({
@@ -72,6 +74,7 @@ export function autoInputFor(c: ReturnType<typeof useHtcCraft>, ctx: Ctx, start:
     chaosSide: chaosSideFor(start, ctx.limits),
     chance: (t) => spawnChance(c, t.modId, t.minTierIndex ?? 0),
     limits: ctx.limits,
+    craftedLimit: ctx.craftedLimit ?? 1,
     fixedSides: [...new Set(start.slots.filter((x) => x.fixed).map((x) => x.side))],
     startCount: { prefix: start.slots.filter((x) => x.side === "prefix").length, suffix: start.slots.filter((x) => x.side === "suffix").length },
     startLoose: { prefix: start.slots.filter((x) => x.side === "prefix" && !x.fixed).length, suffix: start.slots.filter((x) => x.side === "suffix" && !x.fixed).length },

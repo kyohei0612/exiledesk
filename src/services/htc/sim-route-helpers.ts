@@ -3,7 +3,7 @@ import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "./catalysing";
 import { catalystsFor } from "./quality";
 import { type Side } from "./step-odds";
-import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG } from "./omens";
+import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from "./omens";
 import { essenceClash, familyBlocked, familyKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
@@ -81,6 +81,8 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
    */
   const craftedCount = (s: SimState): number => (s.breach ? 1 : 0) + s.slots.filter((x) => x.crafted).length;
   const craftedLimit = ctx.craftedLimit ?? 1;
+  /** 深淵のエッセンスの値段のキー (クラスごと) */
+  const abyssKey = `essence:perfect:${cls.id}/PerfectEssence_EssenceAbyss`;
   const craftedFull = (s: SimState): boolean => craftedCount(s) >= craftedLimit;
   const craftedMsg = (): string => `クラフト MOD は ${craftedLimit} つまで${craftedLimit < 2 ? " (アストリッドの創造性で 2 つ)" : ""}`;
   const hasJunk = (s: SimState): boolean =>
@@ -161,8 +163,15 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         if (clash.length && !(clash.length === 1 && rem.length === 1 && rem[0] === clash[0])) return "同じ系統の MOD が付いている";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
+      case "abyss":
+        if (craftedFull(s)) return `${craftedMsg()} (エッセンスの MOD が付いている)`;
+        if (s.slots.some((x) => x.desec)) return "冒涜の MOD を先に外す (エッセンス・合金で上書き)";
+        if (s.slots.some((x) => x.mark)) return "印はもう付いている";
+        return removable(s, a.side).length || room(s, a.side) ? null : "食わせる物も枠も無い";
       case "desecrate":
         if (s.slots.some((x) => x.desec)) return "冒涜の MOD は 1 つまで";
+        // 印があれば必ず印を置き換える (側は印の側)
+        if (s.slots.some((x) => x.mark)) return s.slots.find((x) => x.mark)!.side === a.side ? null : "印は反対側にある";
         // 満杯の側でも、固定済みでない MOD があれば 1 つ置き換わる (オーナーの実使用 / 0.5.5 の冒涜の解説)
         return room(s, a.side) || removable(s, a.side).length ? null : "冒涜する枠も置き換わる MOD も無い";
       case "light": return s.slots.some((x) => x.desecrated) ? null : "冒涜の外れが無い";
@@ -194,7 +203,9 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       case "chaos": case "annul": return !!a.side && removable(s, other(a.side)).length > 0;
       case "essence": return removable(s, other(removeSideOf(s, a))).length > 0;
       case "breach": return removable(s, other(a.removeSide ?? "prefix")).length > 0;
-      case "desecrate": return !room(s, a.side) || room(s, other(a.side));
+      // 印の置き換えは側が決まっているのでネクロマンシーは要らない
+      case "desecrate": return s.slots.some((x) => x.mark) ? false : !room(s, a.side) || room(s, other(a.side));
+      case "abyss": return removable(s, other(a.side)).length > 0;
       default: return false;
     }
   }
@@ -216,6 +227,7 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
       }
       case "desecrate": return cur(a.bone) + (need ? cur(OMEN.necromancy[a.side]) : 0) + (a.echoes ? cur("OmenofAbyssalEchoes") : 0) + (a.faction ? cur(FACTION_OMEN[a.faction]) : 0);
       case "light": return cur("annul") + cur("OmenofLight");
+      case "abyss": return cur(abyssKey) + (need ? cur(OMEN.crystallisation[a.side]) : 0);
       // カオススパムの直後はプレが固定済みだけなので、高貴 + 左側の高貴なお告げで外れを付けてから食わせる (オーナー:「カオス
       // スパム後に左側結晶化でブリーチエッセンス付ける手がいる」)
       case "breach": {
@@ -235,13 +247,14 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
    */
   type DesecOpt = { id: string; family: string; w: number; good: number; tiers: Array<{ lvl: number; w: number; good: boolean }> };
   const desecMemo = new Map<string, { opts: DesecOpt[]; pMiss3?: number }>();
-  function desecrateOpts(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>): { opts: DesecOpt[]; pMiss3?: number } {
+  function desecrateOpts(s: SimState, n: SimNode, a: Extract<SimAction, { kind: "desecrate" }>, marked = s.slots.some((x) => x.mark)): { opts: DesecOpt[]; pMiss3?: number } {
     const occ = families(s);
-    const floor = a.bone === "desecrate_ancient" ? 40 : 0;
+    // 印から冒涜すると段の下限 33 (仮)。古代の骨 (40) とは重ならない (高い方)
+    const floor = Math.max(a.bone === "desecrate_ancient" ? 40 : 0, marked ? ABYSS_MARK_FLOOR : 0);
     // 変質した鎖骨は、その側の異界の MOD も候補に入る (2026-09-27)
     const ow = a.bone === "desecrate_altered" ? (cls.pools.otherworldly?.[a.side === "prefix" ? "prefixes" : "suffixes"] ?? []) : [];
     const want = new Map(n.targets.filter((t) => !has(s, t.modId)).map((t) => [t.modId, t.minTier] as const));
-    const key = `${a.side}|${a.bone}|${a.faction ?? ""}|${[...want].join()}|${[...occ].sort().join()}`;
+    const key = `${a.side}|${a.bone}|${a.faction ?? ""}|${marked ? "m" : ""}|${[...want].join()}|${[...occ].sort().join()}`;
     const hit = desecMemo.get(key);
     if (hit) return hit;
     const k = a.side === "prefix" ? "prefixes" : "suffixes";
@@ -347,11 +360,16 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const em = mod(a.modId);
         return { ...u, slots: [...u.slots, { modId: a.modId, side, fixed: false, crafted: true, ...(em ? { family: em.family, lvl: em.tiers[0]?.ilvl ?? 1 } : {}) }] };
       }
+      case "abyss": {
+        const t = removable(s, a.side).length ? rmRandom(s, a.side) : s;
+        return { ...t, slots: [...t.slots, { modId: null, side: a.side, fixed: false, crafted: true, mark: true, family: "EssenceAbyss", lvl: 1 }] };
+      }
       case "desecrate": {
-        // 満杯の側なら、固定済みでない MOD が 1 つ冒涜 MOD に置き換わる
-        const base0 = room(s, a.side) ? s : rmRandom(s, a.side);
+        // 印があれば印を置き換える。無ければ、満杯の側なら固定済みでない MOD が 1 つ冒涜 MOD に置き換わる
+        const mi = s.slots.findIndex((x) => x.mark);
+        const base0 = mi >= 0 ? removeAt(s, mi) : room(s, a.side) ? s : rmRandom(s, a.side);
         // 3 択 (別々の MOD) を引き、狙いの段が出ていればそれを選ぶ。無ければ反響で 1 回引き直し。外れは最初の選択肢を付ける
-        const { opts } = desecrateOpts(base0, n, a);
+        const { opts } = desecrateOpts(base0, n, a, mi >= 0);
         type Drawn = { o: DesecOpt; lvl: number; good: boolean };
         const draw3 = (): Drawn[] => {
           const left = [...opts];

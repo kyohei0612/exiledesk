@@ -2,7 +2,8 @@
 import type { Side } from "../../services/htc/step-odds";
 
 export type Method = "chaos" | "exalt" | "desecrate" | "essence";
-export type Reroll = "light" | "overwrite";
+/** 冒涜の外れの回し方: 光 + 消去 / エッセンスで上書き (枠 2 つの側) / 深淵の印の輪 (防具・武器、アストリッドが要る。2026-10-03) */
+export type Reroll = "light" | "overwrite" | "abyss";
 /** 骨: 保存 / 古代 (段 40 以上) / 変質した鎖骨 (装飾品だけ。冒涜に異界の MOD も混ざる、2026-09-27) */
 export type Bone = "desecrate" | "desecrate_ancient" | "desecrate_altered";
 
