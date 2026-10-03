@@ -19,6 +19,7 @@ from typing import Any
 import structlog
 
 from poe2tube.capture.stage import (
+    BROWSER_ARGS,
     CACHE_DIR,
     CREATE_NO_WINDOW,
     READY_SELECTOR,
@@ -101,7 +102,7 @@ def capture_anims(queries: list[str], fps: int = 24, force: bool = False) -> Non
 
     base = ensure_vite()
     with sync_playwright() as p:
-        browser = p.chromium.launch(args=["--mute-audio"])
+        browser = p.chromium.launch(args=BROWSER_ARGS)
         for q in todo:
             _record(browser, f"{base}/?{q}", anim_dir(q), fps)
         browser.close()

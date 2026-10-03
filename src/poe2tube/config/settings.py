@@ -32,6 +32,10 @@ class Settings(BaseSettings):
         default="http://localhost:1430",
         description="撮影で開く ExileDesk (固定版は 1430、開発版を試す時は 1420)",
     )
+    nvenc: bool = Field(
+        default=True,
+        description="mp4 の書き出しに GPU (NVENC) を使う。使えない PC では自動で CPU (libx264)",
+    )
     stage_capture: bool = Field(
         default=True, description="stage シーンを ExileDesk の実画面で撮る (False なら図解で代用)"
     )

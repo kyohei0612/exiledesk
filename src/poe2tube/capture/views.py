@@ -14,6 +14,7 @@ from pathlib import Path
 import structlog
 
 from poe2tube.capture.stage import (
+    BROWSER_ARGS,
     CACHE_DIR,
     READY_SELECTOR,
     SETTLE_MS,
@@ -123,7 +124,7 @@ def capture_views(queries: list[str], force: bool = False) -> list[Path]:
     base = ensure_vite()
     VIEW_DIR.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
-        browser = p.chromium.launch(args=["--mute-audio"])
+        browser = p.chromium.launch(args=BROWSER_ARGS)
         page = browser.new_page(
             viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=1
         )

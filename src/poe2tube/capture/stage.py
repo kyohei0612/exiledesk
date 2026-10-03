@@ -33,6 +33,8 @@ VIEWPORT = (1920, 1080)
 CAPTURE_VER = "v24-omens"  # 撮り方を変えたらキャッシュを切替 (v24 = v0.1.358、㉕)
 # アイテム枠が描けたら撮る。v0.1.314 の撮影用は英語ベース名を出さないので「アイテムレベル」を待つ
 # ジェムにはアイテムレベルが無い。⑰ の画面は見出しの文字を待つ
+# Chromium にも GPU を使わせる (CSS の動き・大きな画面の描画。kyohei 2026-10-04)。音は出さない
+BROWSER_ARGS = ["--mute-audio", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"]
 READY_SELECTOR = "text=/アイテムレベル|スキルジェム|耐性|倒すまでの時間|受けるダメージ|DPS の内訳/"
 # 動画モードは普通の画面の上に重ねて出る (fixed inset-0)。真ん中の一番手前がそれでなければ
 # 開けていない (2026-09-29: ExileDesk 開発版の版ずれで普通の画面のまま動画ができていた)
@@ -151,7 +153,7 @@ def capture_plan(
     out_dir = CACHE_DIR / plan_key(plan)
     out_dir.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
-        browser = p.chromium.launch(args=["--mute-audio"])  # テストでも音を出さない
+        browser = p.chromium.launch(args=BROWSER_ARGS)  # テストでも音を出さない
         page = browser.new_page(
             viewport={"width": VIEWPORT[0], "height": VIEWPORT[1]}, device_scale_factor=1
         )
