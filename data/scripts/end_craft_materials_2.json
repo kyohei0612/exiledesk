@@ -1,0 +1,2685 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】エンドのクラフト素材を一気に解説 後編: 骨とお告げ",
+  "target_seconds": 780,
+  "result_file": "data/results/end_craft_materials_2.json",
+  "final_step": 3,
+  "layout": "wide",
+  "demos": {
+    "exalt_right": "data/results/end_craft_materials_2__exalt_right.json",
+    "exalt_greater": "data/results/end_craft_materials_2__exalt_greater.json",
+    "exalt_catalyst": "data/results/end_craft_materials_2__exalt_catalyst.json",
+    "erase": "data/results/end_craft_materials_2__erase.json",
+    "crystal_left": "data/results/end_craft_materials_2__crystal_left.json",
+    "crystal_right": "data/results/end_craft_materials_2__crystal_right.json",
+    "necro_left": "data/results/end_craft_materials_2__necro_left.json",
+    "bone_gnawed": "data/results/end_craft_materials_2__bone_gnawed.json",
+    "echo": "data/results/end_craft_materials_2__echo.json",
+    "faction_sovereign": "data/results/end_craft_materials_2__faction_sovereign.json",
+    "faction_liege": "data/results/end_craft_materials_2__faction_liege.json",
+    "faction_black": "data/results/end_craft_materials_2__faction_black.json",
+    "faction_armour": "data/results/end_craft_materials_2__faction_armour.json",
+    "light": "data/results/end_craft_materials_2__light.json",
+    "putrefy": "data/results/end_craft_materials_2__putrefy.json",
+    "sanctify": "data/results/end_craft_materials_2__sanctify.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "前編の素材は分かったけど、まだ鞄に骨とお告げが残ってるのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨とお告げ",
+              "icons": [
+                "collarbone_gnawed",
+                "collarbone",
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation",
+                "OmenofGreaterExaltation",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今回はその後編。骨とお告げを、全部解説していくわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨とお告げ",
+              "icons": [
+                "collarbone_gnawed",
+                "collarbone",
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation",
+                "OmenofGreaterExaltation",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "お告げって、種類が多すぎて全然分からないのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "お告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation",
+                "OmenofGreaterExaltation",
+                "OmenofDextralNecromancy",
+                "OmenofAbyssalEchoes",
+                "OmenoftheSovereign",
+                "OmenofLight",
+                "OmenofPutrefaction"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "実はクラフトのお告げは、どれも「次の 1 回」の動きを変える物なの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "お告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation",
+                "OmenofGreaterExaltation",
+                "OmenofDextralNecromancy",
+                "OmenofAbyssalEchoes",
+                "OmenoftheSovereign",
+                "OmenofLight",
+                "OmenofPutrefaction"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後には、骨とお告げでこのアミュレットを仕上げるわよ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "これが完成品なのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1 つずつ、実際に使いながら見ていきましょう。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "お告げの基本",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずはお告げの基本。お告げはクラフトに使う物じゃなくて、持っておく物よ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "持っておくだけなのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "インベントリの中で、アクティブにしておくの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "すると次の 1 回だけ、カレンシーの動きが変わるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "次の 1 回だけなのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "例えば左側の高貴なお告げ。次の高貴なオーブは、プレフィックスだけを足すわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "じゃあ右側は、サフィックスなのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。右側の高貴なお告げなら、サフィックスだけ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofSinistralExaltation",
+                "OmenofDextralExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このアミュレットで試すわね。プレフィックスもサフィックスも 2 個ずつよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左側の高貴なお告げを持って、完全の高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "プレフィックスに、最大エナジーシールドが 50% 増加する、が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "本当にプレフィックスに付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "同じアミュレットをもう 1 つ用意して、今度は右側の高貴なお告げ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "exalt_right"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスに、マナ自動回復レートが 69% 増加する、が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "exalt_right"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "付ける側を選べるのは便利なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "exalt_right"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、効くのは次の 1 回だけ。使うたびに、また用意してね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "exalt_right"
+          }
+        }
+      ]
+    },
+    {
+      "name": "高貴のお告げ",
+      "target_seconds": 65,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴のお告げは、あと 2 つあるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "偉大なる高貴なお告げ。次の高貴なオーブで、MOD が 2 個付くの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "1 回で 2 個なのだ！？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "MOD が 3 個のアミュレットで試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "exalt_greater"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "3 個から、いくつ増えるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "exalt_greater"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "偉大なる高貴なお告げを持って、完全の高貴を使うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "exalt_greater"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "火耐性 +31% と、スペルダメージが 28% 増加する、の 2 個が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "exalt_greater"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "一気に埋まったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "exalt_greater"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 つは、触媒の高貴のお告げ。前編のカタリストとセットで使うの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次の高貴なオーブが、カタリストの品質を全部使うの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そのかわり、品質に合う MOD が付きやすくなるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "高貴なお告げ",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofCatalysingExaltation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "肉体のカタリストで、品質を 20% にしておいたアミュレット。",
+          "scene": {
+            "kind": "stage",
+            "step": 14,
+            "demo": "exalt_catalyst",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "触媒の高貴のお告げを持って、完全の高貴を使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 14,
+            "demo": "exalt_catalyst"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付いたのは、回避力が 38% 増加する。品質は 0% になったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 15,
+            "demo": "exalt_catalyst"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "ライフじゃないのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 15,
+            "demo": "exalt_catalyst"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付きやすくなるだけで、必ずじゃないの。品質も無くなるから、そこは覚えておいてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 15,
+            "demo": "exalt_catalyst"
+          }
+        }
+      ]
+    },
+    {
+      "name": "消すお告げ",
+      "target_seconds": 85,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は、消す側を決めるお告げ。消去のオーブとカオスオーブに使うの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "消すお告げ",
+              "icons": [
+                "OmenofSinistralAnnulment",
+                "OmenofDextralAnnulment",
+                "OmenofWhittling",
+                "OmenofSinistralErasure",
+                "OmenofDextralErasure"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左側の消去のお告げは、次の消去でプレフィックスだけを消す。右側ならサフィックスだけよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "消すお告げ",
+              "icons": [
+                "OmenofSinistralAnnulment",
+                "OmenofDextralAnnulment",
+                "OmenofWhittling",
+                "OmenofSinistralErasure",
+                "OmenofDextralErasure"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "左と右で、消す側が決まるのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "消すお告げ",
+              "icons": [
+                "OmenofSinistralAnnulment",
+                "OmenofDextralAnnulment",
+                "OmenofWhittling",
+                "OmenofSinistralErasure",
+                "OmenofDextralErasure"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "プレフィックス 3 個、サフィックス 3 個のアミュレットで試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左側の消去のお告げを持って、消去のオーブ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "プレフィックスの、最大エナジーシールドが消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今度は右側の消去のお告げ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスの、火耐性が消えたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "消したくない側の MOD を守れるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "カオスオーブにもあるわ。削減のお告げは、次のカオスで一番レベルの低い MOD を消すの。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このアミュレットだと、ティア 8 の筋力が一番低いわね。使ってみるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力が消えて、器用さが付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "弱いのを狙って入れ替えられるのだ。でも、付いたのも弱いのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付く方はランダムだからね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左側の抹消のお告げは、次のカオスでプレフィックスだけを消すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大マナが消えて、冷気耐性が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "あれ、サフィックスに付いてるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "お告げが決めるのは消す方だけ。付く方は、側もランダムなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後に右側の抹消のお告げ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスの器用さが消えて、ライフの自動回復が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "erase"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "右側の抹消も、ちゃんとサフィックスだけなのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "erase"
+          }
+        }
+      ]
+    },
+    {
+      "name": "エッセンスのお告げ",
+      "target_seconds": 55,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスにもお告げがあるわ。左側と右側の結晶化のお告げ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "結晶化のお告げ",
+              "icons": [
+                "OmenofSinistralCrystallisation",
+                "OmenofDextralCrystallisation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "パーフェクトエッセンスは、ランダムに MOD を 1 個消してから付けるわよね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "結晶化のお告げ",
+              "icons": [
+                "OmenofSinistralCrystallisation",
+                "OmenofDextralCrystallisation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "結晶化のお告げがあると、消す側を決められるの。左側ならプレフィックス、右側ならサフィックス。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "結晶化のお告げ",
+              "icons": [
+                "OmenofSinistralCrystallisation",
+                "OmenofDextralCrystallisation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "消える側を選べるのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "結晶化のお告げ",
+              "icons": [
+                "OmenofSinistralCrystallisation",
+                "OmenofDextralCrystallisation"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "さっきと同じ、MOD が 6 個のアミュレットで試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "crystal_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "左側の結晶化のお告げを持って、強化のパーフェクトエッセンスを使うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "crystal_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "プレフィックスの最大マナが消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付いたのは、グローバルアーマー、回避力およびエナジーシールドが 30% 増加する。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_left"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "プレフィックス同士で入れ替わったのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今度は、右側の結晶化のお告げと、ヒステリーのエッセンス。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "crystal_right",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスの筋力が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_right"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "付いたのは、受けたダメージの 19% をライフとして回収する、よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_right"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "残したい側の MOD を守れるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_right"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "パーフェクトエッセンスを使う時は、結晶化のお告げで、消えてほしくない側を守れるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "crystal_right"
+          }
+        }
+      ]
+    },
+    {
+      "name": "骨と冒涜",
+      "target_seconds": 95,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここからは骨。骨を使うと、レアのアイテムを冒涜できるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨",
+              "icons": [
+                "jawbone",
+                "rib",
+                "collarbone"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "骨は部位で 3 種類。顎骨は武器と矢筒、肋骨は防具、鎖骨はアミュレット・指輪・ベルトよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨",
+              "icons": [
+                "jawbone",
+                "rib",
+                "collarbone"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "アミュレットなら鎖骨なのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨",
+              "icons": [
+                "jawbone",
+                "rib",
+                "collarbone"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それぞれに強さもあるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "噛み切られた骨はアイテムレベル 64 まで。保存された骨は制限なし。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "古代の骨は、付く MOD のレベルが 40 以上。変質した鎖骨は、異世界の MOD が出ることがあるの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "骨にも、上位のオーブみたいな違いがあるのだ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冒涜すると、中身の見えない「未発現」の MOD が 1 個付くわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "ネクロマンシーのお告げ",
+              "icons": [
+                "OmenofSinistralNecromancy",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ネクロマンシーのお告げで、付く側を決められるの。左手ならプレフィックス、右手ならサフィックス。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "ネクロマンシーのお告げ",
+              "icons": [
+                "OmenofSinistralNecromancy",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "さっきのアミュレットで試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "右手のネクロマンシーのお告げを持って、保存された鎖骨を使うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスに、未発現の冒涜 MOD が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "中身が分からないのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "中身は後で決めるの。未発現の間も、枠は 1 つ使っているわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今度は左手のネクロマンシー。プレフィックスは、もう 3 個で埋まっているわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "necro_left",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使うと……最大マナが消えて、プレフィックスに未発現の MOD が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "necro_left"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "埋まってたら、1 個消えちゃうのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "necro_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。どれが消えるかはランダムよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "necro_left"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "もう 1 回、鎖骨を使ってみるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "necro_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使えない。冒涜の MOD は、1 つのアイテムに 1 個までなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "necro_left"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、噛み切られた鎖骨。このアミュレットはアイテムレベル 82 だから……。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "bone_gnawed"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "やっぱり使えないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "bone_gnawed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "発現",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "未発現の MOD は、魂の井戸で中身を決めるの。これを「発現」と言うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "発現では、候補が 3 つ出て、その中から 1 つを選べるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "選べるのだ！ 骨なのに、運だけじゃないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "候補には、普通の MOD と、冒涜でしか付かない MOD が混ざって出るわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "冒涜でしか付かない MOD もあるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "発現してみるわね。候補は、◯◯、◯◯、クールダウン解消レートの 3 つ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クールダウン解消レートが 10% 増加する、を選ぶわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これでさっきの完成品なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "候補が 3 つとも気に入らない時は、アビスの反響のお告げ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "持っていると、発現の候補をもう 1 回だけ引き直せるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "同じアミュレットで試すわね。最初の候補は、さっきと同じ 3 つ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "echo",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "引き直すと……候補は ◯◯、◯◯、マナ自動回復レート。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "マナ自動回復レートが 12% 増加する、を選んだわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "引き直したら、ティアが下がったのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "引き直しも運だから、元の候補の方が良いこともあるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        }
+      ]
+    },
+    {
+      "name": "勢力のお告げ",
+      "target_seconds": 130,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冒涜には、勢力のお告げもあるわ。支配者、君主、ブラックブラッドの 3 つ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "勢力のお告げ",
+              "icons": [
+                "OmenoftheSovereign",
+                "OmenoftheLiege",
+                "OmenoftheBlackblooded"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "持って冒涜すると、その勢力の MOD が必ず 1 個付くの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "勢力のお告げ",
+              "icons": [
+                "OmenoftheSovereign",
+                "OmenoftheLiege",
+                "OmenoftheBlackblooded"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "支配者はウラマン、君主はアマナム、ブラックブラッドはクルガルの MOD よ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "勢力のお告げ",
+              "icons": [
+                "OmenoftheSovereign",
+                "OmenoftheLiege",
+                "OmenoftheBlackblooded"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "勢力って何なのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "勢力のお告げ",
+              "icons": [
+                "OmenoftheSovereign",
+                "OmenoftheLiege",
+                "OmenoftheBlackblooded"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冒涜で付く MOD には、勢力ごとのグループがあるの。そのどれかに絞るお告げね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "勢力のお告げ",
+              "icons": [
+                "OmenoftheSovereign",
+                "OmenoftheLiege",
+                "OmenoftheBlackblooded"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "支配者のお告げを持って、保存された鎖骨を使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "faction_sovereign"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "未発現の MOD が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "faction_sovereign"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "発現すると、低ライフ状態の時のアタックダメージが 25% 増加する。ウラマンの MOD よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "faction_sovereign"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "低ライフの時だけ強くなるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "faction_sovereign"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アミュレットに付くウラマンの MOD は、この 10 個。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "ウラマンの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "低ライフ状態の時のアタックダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "鎧から得られる回避力が(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "受け流し力が(10-20)%増加する"
+                ],
+                [
+                  "プレ",
+                  "スキル使用時に(20-30)%の確率でグローリーの40%を保持する"
+                ],
+                [
+                  "サフィ",
+                  "雷および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および器用さ +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキルスピードが(3-6)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にライフの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "へラルドスキルのリザーブ効率が(10-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルのレベル +1"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全てのスキルのレベル +1 や、スキルスピード、受け流し力もこのグループね。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "ウラマンの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "低ライフ状態の時のアタックダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "鎧から得られる回避力が(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "受け流し力が(10-20)%増加する"
+                ],
+                [
+                  "プレ",
+                  "スキル使用時に(20-30)%の確率でグローリーの40%を保持する"
+                ],
+                [
+                  "サフィ",
+                  "雷および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および器用さ +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキルスピードが(3-6)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にライフの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "へラルドスキルのリザーブ効率が(10-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルのレベル +1"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "スキルのレベルが上がるのは強そうなのだ！",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "ウラマンの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "低ライフ状態の時のアタックダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "鎧から得られる回避力が(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "受け流し力が(10-20)%増加する"
+                ],
+                [
+                  "プレ",
+                  "スキル使用時に(20-30)%の確率でグローリーの40%を保持する"
+                ],
+                [
+                  "サフィ",
+                  "雷および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および器用さ +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキルスピードが(3-6)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にライフの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "へラルドスキルのリザーブ効率が(10-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルのレベル +1"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "君主のお告げでも試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "faction_liege"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "未発現の MOD が付いて……",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "faction_liege"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "プレイヤーが生成したレムナントは効果が 8% 増加する。アマナムの MOD。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "faction_liege"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アマナムの MOD も 10 個。オーラスキルの強度や、要求能力値が下がる MOD があるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アマナムの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "プレイヤーが生成したレムナントは効果が(8-15)%増加する"
+                ],
+                [
+                  "プレ",
+                  "直近プレイヤーがヒットを与えていればミニオンのダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるアーマーが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "グローバルアーマー、回避力およびエナジーシールドが(15-25)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "火および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキル効果持続時間が(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "レムナントは(20-30)%遠くからでも拾える"
+                ],
+                [
+                  "サフィ",
+                  "装備およびスキルジェムは要求能力値が(15-10)%減少する"
+                ],
+                [
+                  "サフィ",
+                  "オーラスキルは強度が(8-16)%増加する"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "火および混沌耐性みたいに、2 つの耐性がまとめて付く MOD もあるの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アマナムの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "プレイヤーが生成したレムナントは効果が(8-15)%増加する"
+                ],
+                [
+                  "プレ",
+                  "直近プレイヤーがヒットを与えていればミニオンのダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるアーマーが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "グローバルアーマー、回避力およびエナジーシールドが(15-25)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "火および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキル効果持続時間が(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "レムナントは(20-30)%遠くからでも拾える"
+                ],
+                [
+                  "サフィ",
+                  "装備およびスキルジェムは要求能力値が(15-10)%減少する"
+                ],
+                [
+                  "サフィ",
+                  "オーラスキルは強度が(8-16)%増加する"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "2 つ同時に上がるのはお得なのだ！",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アマナムの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "プレイヤーが生成したレムナントは効果が(8-15)%増加する"
+                ],
+                [
+                  "プレ",
+                  "直近プレイヤーがヒットを与えていればミニオンのダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるアーマーが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "グローバルアーマー、回避力およびエナジーシールドが(15-25)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "火および混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "筋力および知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "スキル効果持続時間が(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "レムナントは(20-30)%遠くからでも拾える"
+                ],
+                [
+                  "サフィ",
+                  "装備およびスキルジェムは要求能力値が(15-10)%減少する"
+                ],
+                [
+                  "サフィ",
+                  "オーラスキルは強度が(8-16)%増加する"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブラックブラッドのお告げなら……",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "faction_black"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "未発現の MOD から……",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "faction_black"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "装備中の鎧から得られるエナジーシールドが 43% 増加する。クルガルの MOD ね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "faction_black"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "胴の防具の ES が増えるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "faction_black"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クルガルの MOD は 11 個。全てのスキルの品質や、クールダウン解消レートが入っているわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "クルガルの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "フルエナジーシールド時にスペルダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるエナジーシールドが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "インヴォケーションされるスペルの消費エネルギーが(10-20)%の確率で半分になる"
+                ],
+                [
+                  "サフィ",
+                  "冷気と混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "器用さおよび知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "曝露の効果が(10-15)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "クールダウン解消レートが(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にマナの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "ミニオンのクールダウン解消レートが(12-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "ダメージの(8-16)%をライフより先にマナで受ける"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルの品質 +(3-5)%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "完成させたアミュレットのクールダウン解消レートも、実はクルガルの MOD なの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "クルガルの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "フルエナジーシールド時にスペルダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるエナジーシールドが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "インヴォケーションされるスペルの消費エネルギーが(10-20)%の確率で半分になる"
+                ],
+                [
+                  "サフィ",
+                  "冷気と混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "器用さおよび知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "曝露の効果が(10-15)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "クールダウン解消レートが(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にマナの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "ミニオンのクールダウン解消レートが(12-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "ダメージの(8-16)%をライフより先にマナで受ける"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルの品質 +(3-5)%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "勢力を絞れたら、欲しい MOD を狙いやすいのだ！",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "クルガルの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "フルエナジーシールド時にスペルダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるエナジーシールドが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "インヴォケーションされるスペルの消費エネルギーが(10-20)%の確率で半分になる"
+                ],
+                [
+                  "サフィ",
+                  "冷気と混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "器用さおよび知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "曝露の効果が(10-15)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "クールダウン解消レートが(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にマナの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "ミニオンのクールダウン解消レートが(12-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "ダメージの(8-16)%をライフより先にマナで受ける"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルの品質 +(3-5)%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただし、使えるのは武器と宝飾品だけ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "クルガルの MOD (アミュレット)",
+              "rows": [
+                [
+                  "側",
+                  "MOD"
+                ],
+                [
+                  "プレ",
+                  "フルエナジーシールド時にスペルダメージが(15-25)%増加する"
+                ],
+                [
+                  "プレ",
+                  "装備中の鎧から得られるエナジーシールドが(35-50)%増加する"
+                ],
+                [
+                  "プレ",
+                  "インヴォケーションされるスペルの消費エネルギーが(10-20)%の確率で半分になる"
+                ],
+                [
+                  "サフィ",
+                  "冷気と混沌耐性 +(13-17)%"
+                ],
+                [
+                  "サフィ",
+                  "器用さおよび知性 +(9-15)"
+                ],
+                [
+                  "サフィ",
+                  "曝露の効果が(10-15)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "クールダウン解消レートが(8-12)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "敵を倒した時にマナの(2-3)%を回復する"
+                ],
+                [
+                  "サフィ",
+                  "ミニオンのクールダウン解消レートが(12-20)%増加する"
+                ],
+                [
+                  "サフィ",
+                  "ダメージの(8-16)%をライフより先にマナで受ける"
+                ],
+                [
+                  "サフィ",
+                  "全てのスキルの品質 +(3-5)%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴の防具に、支配者のお告げを持って保存された肋骨を使うと……。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "faction_armour"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使えない。防具には効かないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "faction_armour"
+          }
+        }
+      ]
+    },
+    {
+      "name": "光・腐食・聖別",
+      "target_seconds": 120,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後は、冒涜を消すお告げと、使ったら戻せないお告げよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "冒涜を消す・戻せないお告げ",
+              "icons": [
+                "OmenofLight",
+                "OmenofPutrefaction",
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは光のお告げ。次の消去のオーブで、冒涜の MOD だけを消すの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "冒涜を消す・戻せないお告げ",
+              "icons": [
+                "OmenofLight",
+                "OmenofPutrefaction",
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "冒涜の MOD が気に入らない時に使うのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "冒涜を消す・戻せないお告げ",
+              "icons": [
+                "OmenofLight",
+                "OmenofPutrefaction",
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。完成したアミュレットで試すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "light",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "光のお告げを持って、消去のオーブを使うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "light"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クールダウン解消レート、冒涜の MOD だけが消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "light"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "他の MOD は無事なのだ！ これでまた骨を使えるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "light"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は腐食のお告げ。気をつけてね、これは戻せないお告げよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "腐食のお告げ",
+              "icons": [
+                "OmenofPutrefaction"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "持って骨を使うと、全部の MOD が未発現の冒涜 MOD に置き換わるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "腐食のお告げ",
+              "icons": [
+                "OmenofPutrefaction"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大 6 個で、アイテムはコラプトするわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "腐食のお告げ",
+              "icons": [
+                "OmenofPutrefaction"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴を打ったところのアミュレットで試すわね。腐食のお告げを持って、保存された鎖骨。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "putrefy",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全部消えて、未発現の冒涜 MOD が 6 個。コラプトしたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "putrefy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "冒涜は 1 個までじゃなかったのだ！？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "putrefy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "腐食のお告げだけは別なの。でもコラプトしたから……。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "putrefy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴なオーブも、もう使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "putrefy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "コラプトしたら、もう何もできないのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "putrefy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後は聖別のお告げ。次にレアに使う神のオーブで、アイテムを聖別するの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "聖別のお告げ",
+              "icons": [
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "MOD ごとに、数値が 0.78 倍から 1.22 倍のどれかになるわ。元の上限を超えることもあるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "聖別のお告げ",
+              "icons": [
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "上がるか下がるかは、運なのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "聖別のお告げ",
+              "icons": [
+                "OmenofSanctification"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "完成したアミュレットに、聖別のお告げを持って神のオーブ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "sanctify",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフは 101 から 122 に上がった。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "sanctify"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "でも、最大マナは 156 から 151 に下がった。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "sanctify"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エナジーシールドも、50% から 40% に下がったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "sanctify"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "上がるのも下がるのもあるのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "sanctify"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そして聖別したアイテムは、もうクラフトできないの。高貴なオーブも使えないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "sanctify"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "最後の最後に使うお告げなのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "sanctify"
+          }
+        }
+      ]
+    },
+    {
+      "name": "クイズとまとめ",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでクイズ。冒涜の MOD だけを消せるお告げは、どれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "OmenofLight",
+              "OmenofSinistralAnnulment",
+              "OmenofWhittling"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "OmenofLight",
+              "OmenofSinistralAnnulment",
+              "OmenofWhittling"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "正解は光のお告げ。次の消去で、冒涜の MOD だけを消すの。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "OmenofLight",
+              "OmenofSinistralAnnulment",
+              "OmenofWhittling"
+            ],
+            "answer": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "覚えてたのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "OmenofLight",
+              "OmenofSinistralAnnulment",
+              "OmenofWhittling"
+            ],
+            "answer": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "まとめると、お告げはアクティブにしておくと、次の 1 回の動きを変えるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "骨で冒涜すると未発現の MOD が付いて、発現で 3 つから選ぶのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "勢力のお告げで絞れて、光で冒涜だけ消せる。腐食と聖別は戻せないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "前編と後編で、エンドのクラフト素材はひと通りそろったわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2 の基礎を初心者向けにまとめていくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "分からない所や知りたい事があったら、コメントで教えてね。チャンネル登録もよろしく！",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        }
+      ]
+    }
+  ]
+}
