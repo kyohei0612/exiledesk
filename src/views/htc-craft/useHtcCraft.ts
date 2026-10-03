@@ -121,6 +121,8 @@ export function useHtcCraft() {
   const rows = shallowRef<TargetRow[]>([]);
   const implicits = ref<string[]>([]);
   const skipped = ref<string[]>([]);
+  /** アルダーで重ねた獲得の MOD の作り方 (貼り付けから。最後にアルダーのルーンを差す。2026-10-03 その 4)。無ければ null */
+  const aldur = ref<import("../../services/htc/paste-targets").AldurPlan | null>(null);
   /**
    * ソケットに差す物 (アストリッドの創造性 / セールの凱旋)。2026-09-26 オーナー「アストリッドやら追加しとこうか」([[sockets.ts]])。
    * 画面のトグルが入れる。計算は種類・コラプトで差せない物を落とした socketOn を使う
@@ -228,6 +230,7 @@ export function useHtcCraft() {
     socket.value = { ...NO_SOCKET };
     implicits.value = [];
     skipped.value = [];
+    aldur.value = null;
     dropOnly.value = [];
     fracturedTargets.value = [];
     slotsUsed.value = { prefixes: 0, suffixes: 0, either: 0 };
@@ -360,6 +363,7 @@ export function useHtcCraft() {
       fracturedTargets.value = got.fracturedTargets;
       implicits.value = got.implicits;
       skipped.value = got.skipped;
+      aldur.value = got.aldur ?? null;
       applyTargets(d, cls, got, it.baseType);
       diagBusy.value = true;
     } catch (e) {
@@ -408,7 +412,7 @@ export function useHtcCraft() {
     stepTarget, setTier, setFractured, startPrice, startKeep, refreshPrices,
     fracturedTargets, slotsUsed, dropOnly,
     loading, stage, diagBusy, phase, resumeFlow, fetchGen, abortFetch, unreachableTargets, error, item, base, rows, implicits, skipped,
-    timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin, rawBase,
+    timings, coverage, slots, bases, targets, prices, socket, socketOn, socketSlots, socketsMin, rawBase, aldur,
     runPicked, reset, ensureData, data,
     money, run, treePlan,
     treeResult, treeTierPick, searchFor, planFor, treeFixSide,

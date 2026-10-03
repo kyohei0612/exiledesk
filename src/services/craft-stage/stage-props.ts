@@ -81,3 +81,40 @@ export function propRows(item: StageItem): PropRow[] {
   if (b.duration && (b.life || b.mana)) rows.push({ key: "duration", label: "回復時間", value: `${(b.duration / 10).toFixed(1)} 秒`, up: false });
   return rows;
 }
+
+/** 武器・防具の数値 (propRows と同じ式で数字のまま)。DPS = 1 発の平均 × アタック/秒 (2026-10-03、計算機の完成品の数値) */
+export interface ItemNumbers {
+  physDps: number | null;
+  eleDps: number;
+  aps: number | null;
+  crit: number | null;
+  armour: number | null;
+  evasion: number | null;
+  es: number | null;
+}
+export function numbersOf(item: StageItem): ItemNumbers | null {
+  const b = baseStatsOf(item.base);
+  if (!b) return null;
+  const s = sums(item);
+  const g = (id: string): number => s.get(id) ?? 0;
+  const q = 1 + item.quality / 100;
+  const aps = b.aps ? b.aps * (1 + g("local_attack_speed_+%") / 100) : null;
+  let physDps: number | null = null;
+  if (b.phys && aps) {
+    const inc = 1 + g("local_physical_damage_+%") / 100;
+    const lo = (b.phys[0] + g("local_minimum_added_physical_damage")) * inc * q;
+    const hi = (b.phys[1] + g("local_maximum_added_physical_damage")) * inc * q;
+    physDps = ((lo + hi) / 2) * aps;
+  }
+  const eleDps = aps ? ELEMENTS.reduce((a, e) => a + ((g(`local_minimum_added_${e.key}_damage`) + g(`local_maximum_added_${e.key}_damage`)) / 2) * aps, 0) : 0;
+  const def = (k: (typeof DEF)[number]): number | null => {
+    const base = b[k.key];
+    if (base == null) return null;
+    const [a, c] = lohi(base);
+    return ((a + c) / 2 + g(k.flat)) * (1 + k.inc.reduce((x, id) => x + g(id), 0) / 100) * q;
+  };
+  return {
+    physDps, eleDps, aps, crit: b.crit ? b.crit + g("local_critical_strike_chance") : null,
+    armour: def(DEF[0]), evasion: def(DEF[1]), es: def(DEF[2]),
+  };
+}

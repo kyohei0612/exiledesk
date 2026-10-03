@@ -1,4 +1,5 @@
 /** paste.ts から切り出し (2026-09-26): 読んだアイテムをソルバの目標に直す (targetsFor・段の割り出し・創生の樹の MOD) */
+import { runeRoute } from "../../vendor/poe2htc/engine/runeConvert";
 import { bridgeMods, sideLimits, type BridgedMod } from "./bridge";
 import { specialRuneShown } from "./sockets";
 import { balanceSides, hybridLineParts } from "./paste-sides";
@@ -6,8 +7,9 @@ import { matchKey } from "./bridge-index";
 import { htcBaseInfo, htcDropOnly, htcModSides, type DropOnlyInfo, type DropOnlyTier } from "./patch";
 import { boostedBy, rawValue } from "./quality";
 import { tierDisplayRanges } from "../mods/stat-scale";
+import { fillHashes, jaOfMod } from "./mod-text";
 import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
-import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { stripMarkers, type PastedItem, type PastedLine } from "./paste-parse";
 
 /**
@@ -150,6 +152,8 @@ export function targetsFor(
    * 道順が桁違いに短くなります (実測: 素から 9,780 神 → 固定済みから 148 神)。
    */
   fracturedTargets: TierTarget[];
+  /** アルダーで重ねた獲得の MOD があれば、その作り方 (最後に差すルーン)。無ければ null */
+  aldur?: AldurPlan | null;
 } {
   if (!item.baseType) {
     return {
@@ -238,6 +242,7 @@ export function targetsFor(
   /** `targets` と同じ並びの、貼り付けの文面。画面に日本語のまま出すため */
   const texts: string[] = [];
   const skipped: string[] = [];
+  let aldur: AldurPlan | null = null;
   bridged.mods.forEach((b, i) => {
     const line = rollable[i]!;
     if (hybridParts.has(i)) return; // 複合 MOD のもう 1 行 (狙いは複合 MOD の方で数える)
@@ -249,6 +254,21 @@ export function targetsFor(
     // 切り捨ての分だけ帯になる。底上げが無ければ幅ゼロ (表示がそのまま素)
     const lo = boost ? line.values.map((v) => rawValue(v, item.quality!)) : line.values;
     const hi = boost ? line.values.map((v) => rawValue(v + 1, item.quality!) - 1e-9) : line.values;
+    // アルダーで重ねた「ダメージの #% を追加の○ダメージとして獲得する」(2026-10-03 その 4): 1 つの MOD の一番上の段より大きい値は、
+    // 同じ元素に変わった 2 つ以上の合計 (ゲームは 1 行にまとめて出す。実物の杖 71% + 62% = 133%)。
+    // その元素の MOD + 兄弟の元素 (冷気・雷など、同じ系統にならないので両方付く) を狙いにし、最後にアルダーのルーンを差す
+    const route = aldurSplit(data, bridged.cls, b.mod, line.values[0] ?? 0, level);
+    if (route) {
+      // 文は狙いごとの MOD の物 (段の幅)。2 つ目以降は兄弟の元素なので、貼り付けの 1 行を写すと「火」が 2 つ並んで見えた
+      for (const t of route.targets) {
+        const m = data.mods.get(t.modId)!;
+        const tier = m.tiers[t.minTierIndex ?? 0];
+        targets.push(t);
+        texts.push(`${fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : [])} (アルダーで重ねる)`);
+      }
+      aldur = { rune: route.rune, priceKey: route.priceKey, element: route.element, text: line.text, count: route.targets.length };
+      return;
+    }
     targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, lo, hi, level) });
     texts.push(line.text);
   });
@@ -277,5 +297,32 @@ export function targetsFor(
   }
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
-  return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides };
+  return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides, aldur };
+}
+
+/** アルダーで重ねた獲得の MOD を作る道 (最後に差すルーンと、その値段のキー) */
+export interface AldurPlan { rune: string; priceKey: string; element: string; text: string; count: number }
+
+/**
+ * 1 つの MOD の一番上の段 (その ilvl で出る物) の上限より大きい「追加の○ダメージとして獲得」を、何個の MOD の合計か割り出し、
+ * エンジンの runeRoute (重ねる元素の MOD + 兄弟の元素) に通す。兄弟は 1 つ選ぶ: その段以上の重みが一番大きい物 (どれでも同じに変わる)。
+ * 各 MOD の段は「合計 ÷ 個数」が入る段 (内訳は分からないので均等に割る)
+ */
+function aldurSplit(data: PatchData, cls: ItemBase | null | undefined, mod: Mod, value: number, level: number): { targets: TierTarget[]; rune: string; priceKey: string; element: string } | null {
+  if (!cls || !/^Gain #% of Damage as Extra [A-Za-z]+ Damage$/.test(mod.text ?? "")) return null;
+  const top = [...mod.tiers].reverse().find((t) => t.ilvl <= level);
+  const max = Number(top?.ranges?.[0]?.[1] ?? Infinity);
+  if (!(value > max)) return null;
+  const count = Math.ceil(value / max);
+  const route = runeRoute(data, cls, mod.id, count);
+  if (!route) return null;
+  const each = value / count;
+  const tierOf = (m: Mod): number => tierIndexFor(m, [each], [each], level);
+  const targets: TierTarget[] = route.slots.map((slot) => {
+    const best = slot.map((id) => data.mods.get(id)!).filter(Boolean)
+      .map((m) => ({ m, w: m.tiers.reduce((a, t, i) => a + (i >= tierOf(m) && t.ilvl <= level ? t.weight : 0), 0) }))
+      .sort((a, b) => b.w - a.w)[0]!.m;
+    return { modId: best.id, minTierIndex: tierOf(best) };
+  });
+  return { targets, rune: route.rune, priceKey: route.priceKey, element: route.element };
 }

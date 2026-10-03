@@ -54,7 +54,8 @@ export function simCtxOf(c: C): SimCtx | null {
     baseQuality: maxQualityForBase((it ? it.baseType : zeroStart.value.baseType) ?? ""),
     // クラフト MOD の上限 (アストリッドの創造性で +1) と、差す物の代 (ルーン + 熟練工のオーブ。各回の初めに 1 度)
     craftedLimit: craftedLimitWith(limitsOf(cls).crafted ?? 1, sock),
-    socketCost: socketCostOf(p, sock).total,
+    // アルダーのルーン (重ねた獲得の MOD を最後に 1 つの元素に変える) の代も 1 回の作成に 1 度 (2026-10-03 その 4)
+    socketCost: socketCostOf(p, sock).total + (c.aldur.value ? p.currency[c.aldur.value.priceKey] ?? Infinity : 0),
     // 特別な MOD のルーンを差している時だけ、差す前のベース (ルーンを後で差す候補で使う。2026-10-03 その 3)
     ...(c.rawBase.value && c.rawBase.value !== cls ? { rawCls: c.rawBase.value } : {}),
   };

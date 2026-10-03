@@ -19,15 +19,31 @@ import { useCraftTree } from "./useCraftTree";
 import { TREE_PRESETS } from "./tree-presets";
 import { recordHistory } from "../../services/history";
 import { zeroStart } from "./craft-settings";
+import { finishedNumbers } from "./finished-numbers";
 import { autoInputFor, pickAutoTree } from "./auto-pick";
 import { startKindOf } from "./start-kind";
 import type { RedoPlan } from "./redo-cost";
 // 取り方の表 (お告げの正式名・守る価値) は RedoPlanTable.vue へ (2026-09-26 の分割)
 import RedoPlanTable from "./RedoPlanTable.vue";
+const ELEMENT_JA: Record<string, string> = { fire: "火", cold: "冷気", lightning: "雷", chaos: "混沌" };
+const ALDUR_JA: Record<string, string> = { "passion-of-aldur": "アルダーの情熱", "ire-of-aldur": "アルダーの怒り", "breath-of-aldur": "アルダーの息吹", "betrayal-of-aldur": "アルダーの裏切り" };
 import type { useHtcCraft } from "./useHtcCraft";
 
 const props = defineProps<{ c: ReturnType<typeof useHtcCraft> }>();
 const c = props.c;
+/**
+ * 完成品の数値 (2026-10-03 その 4): 武器なら物理 / 元素 DPS・アタック/秒・クリティカル、防具ならアーマー / 回避力 / ES。
+ * 狙いの段の下限〜上限 (その ilvl の一番上の段の一番上)、品質込み。装飾品など素の数値の無い物は出さない
+ */
+const finished = computed(() => {
+  const d = c.data.value;
+  const it = c.item.value;
+  const base = it?.baseType ?? zeroStart.value.baseType;
+  if (!d || !base || !c.targets.value.length) return null;
+  return finishedNumbers(d, base, it?.itemLevel ?? zeroStart.value.itemLevel, it?.quality ?? zeroStart.value.quality ?? 20, c.targets.value);
+});
+const quality = computed(() => c.item.value?.quality ?? zeroStart.value.quality ?? 20);
+const span = (a: number | null, b: number | null, digits = 0): string => (a == null || b == null ? "" : Math.abs(a - b) < 0.5 * 10 ** -digits ? a.toFixed(digits) : `${a.toFixed(digits)}〜${b.toFixed(digits)}`);
 const t = useCraftTree(c);
 const pct = (p: number): string => `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
 /** 貼り付けの狙いに合う見本のツリー */
@@ -230,6 +246,27 @@ const busyText = computed(() => autoBusy.value ? "組んでいます… (候補�
       </div>
     </div>
 
+    <!-- 完成品の数値 (2026-10-03 その 4) -->
+    <div v-if="finished" class="mb-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
+      <span class="opacity-60">完成品の数値 (品質 {{ quality }}%、狙いの段の下限〜上限)</span>
+      <template v-if="finished.lo.aps != null">
+        <span v-if="finished.lo.physDps != null">物理 DPS <b class="text-amber-100">{{ span(finished.lo.physDps, finished.hi.physDps, 1) }}</b></span>
+        <span v-if="finished.hi.eleDps > 0">元素・混沌 DPS <b class="text-amber-100">{{ span(finished.lo.eleDps, finished.hi.eleDps, 1) }}</b></span>
+        <span v-if="finished.hi.eleDps > 0 && finished.lo.physDps != null">合計 <b class="text-amber-100">{{ span((finished.lo.physDps ?? 0) + finished.lo.eleDps, (finished.hi.physDps ?? 0) + finished.hi.eleDps, 1) }}</b></span>
+        <span>アタック/秒 {{ span(finished.lo.aps, finished.hi.aps, 2) }}</span>
+        <span v-if="finished.lo.crit != null">クリティカル {{ span(finished.lo.crit, finished.hi.crit, 2) }}%</span>
+      </template>
+      <span v-if="finished.lo.armour != null">アーマー <b class="text-amber-100">{{ span(finished.lo.armour, finished.hi.armour) }}</b></span>
+      <span v-if="finished.lo.evasion != null">回避力 <b class="text-amber-100">{{ span(finished.lo.evasion, finished.hi.evasion) }}</b></span>
+      <span v-if="finished.lo.es != null">ES <b class="text-amber-100">{{ span(finished.lo.es, finished.hi.es) }}</b></span>
+    </div>
+
+    <!-- アルダーで重ねた獲得の MOD (2026-10-03 その 4) -->
+    <p v-if="c.aldur.value" class="mb-3 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+      「{{ c.aldur.value.text }}」は {{ c.aldur.value.count }} つの MOD の合計 (同じ系統は 2 つ付かないので、{{ ELEMENT_JA[c.aldur.value.element] ?? c.aldur.value.element }}と別の元素の物を作り、
+      最後に {{ ALDUR_JA[c.aldur.value.rune] ?? c.aldur.value.rune }} を差して全部{{ ELEMENT_JA[c.aldur.value.element] ?? c.aldur.value.element }}に変える)。
+      ルーンの代はソケットの代に入れた。ソケットを 1 つ使い、ほかの元素の「獲得」も全部変わる。合計の内訳は分からないので、2 つとも合計 ÷ 個数の段で狙う
+    </p>
     <!-- やり直しの費用から決めた取り方 (自動で組んだ時)。決まりは畳んで出す ([[RedoPlanTable.vue]]) -->
     <RedoPlanTable v-if="plan" :c="c" :t="t" :plan="plan" :picked="picked" :socket-ex="socketEx" />
 
