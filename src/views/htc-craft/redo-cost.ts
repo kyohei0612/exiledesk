@@ -190,7 +190,7 @@ export function planByRedoCost(inp: AutoTreeInput, cls: ItemBase, itemLevel: num
     // 満杯の側への冒涜は、最初の 1 回だけ固定でない物を置き換える (後は冒涜の外れが枠を埋め、光で消して打ち直すので
     // 巻き込まない)。その 1 回分の作り直し費用を足す (2026-09-26 レビュー: クラフター C の指摘で risk * 0 だったのを直した。
     // 外れのたびに足すと数えすぎで、見積もりが回した平均の 2 倍になった)
-    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen ? { noSideOmen: true } : {}),
+    const e = finish({ modId: t.modId, side: s, method: "desecrate", bone, reroll, perTry, p: pHit, perMiss, safe: risk === 0, ...(why ? { why } : {}), ...(noOmen || reroll === "abyss" ? { noSideOmen: true } : {}),
       ...(fo ? { faction: true } : {}), ...(echoes ? {} : { echoes: false }) });
     // 深淵の印の輪は最初の印の 1 回分 (深淵のエッセンス + 結晶化) を足す
     const first = reroll === "abyss" ? abyssPrice + cur(OMEN.crystallisation[s]) : 0;

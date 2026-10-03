@@ -46,6 +46,7 @@ const howJa = (r: RedoPlan["rows"][number]): string => {
       // 勢力のお告げ・反響 (2026-10-03)
       const fo = r.faction ? (() => { const m = props.c.data.value?.mods.get(r.modId); const f = m ? desecrationOmenForMod(m) : undefined; return f ? ` + ${omen(FACTION_OMEN[f])}` : ""; })() : "";
       const ec = r.echoes === false ? " (反響無し)" : ` + ${omen("OmenofAbyssalEchoes")}`;
+      if (r.reroll === "abyss") return `${priceJa(r.bone ?? "desecrate")}${fo}${ec} (印を置き換えるので側のお告げ不要)`;
       return r.noSideOmen ? `${priceJa(r.bone ?? "desecrate")}${fo}${ec} (反対側が埋まっているのでお告げ不要)` : `${priceJa(r.bone ?? "desecrate")} + ${omen(OMEN.necromancy[r.side])}${fo}${ec}`;
     }
     case "essence": return r.noSideOmen ? "パーフェクトエッセンス (確定・反対側に外せる物が無いのでお告げ不要)" : `パーフェクトエッセンス + ${omen(OMEN.crystallisation[r.side])} (確定)`;

@@ -64,10 +64,13 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
         // カオスは 1 つ外して 1 つ付ける。外れが無ければブリーチの MOD が外れる (守っていなければ)。
         // 2026-09-25: これを見ていなくて「足す枠が無い」の赤札が出たまま自動が組んでいた
         const breachGoes = a.kind === "chaos" && junkAt < 0 && s.breach && a.side !== "suffix" && !n.keep.includes("__breach__");
-        const base = a.kind === "chaos" || a.kind === "essence" ? (junkAt >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : breachGoes ? { ...s, breach: false } : s) : s;
+        // 冒涜は印があれば印を置き換える (深淵の印の輪、2026-10-03)
+        const markAt = a.kind === "desecrate" ? s.slots.findIndex((x) => x.mark) : -1;
+        const base = a.kind === "chaos" || a.kind === "essence" ? (junkAt >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : breachGoes ? { ...s, breach: false } : s)
+          : markAt >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== markAt) } : s;
         hit = want ? { ...base, slots: [...base.slots, { modId: want.modId, side: sideOf(want.modId), fixed: false }] } : base;
         const jSide: Side = a.kind === "exalt" && a.side ? a.side : a.kind === "desecrate" ? a.side : (h.room(s, "suffix") ? "suffix" : "prefix");
-        miss = a.kind === "chaos" ? s : { ...s, slots: [...s.slots, { modId: null, side: jSide, fixed: false, ...(a.kind === "desecrate" ? { desecrated: true } : {}) }] };
+        miss = a.kind === "chaos" ? s : { ...base, slots: [...(a.kind === "desecrate" ? base.slots : s.slots), { modId: null, side: jSide, fixed: false, ...(a.kind === "desecrate" ? { desecrated: true, desec: true } : {}) }] };
       } else if (a && (a.kind === "annul" || a.kind === "light")) {
         const j = a.kind === "light" ? s.slots.findIndex((x) => x.desecrated) : junkAt;
         hit = j >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== j) } : s;
@@ -75,6 +78,11 @@ export function useCraftTree(c: ReturnType<typeof useHtcCraft>) {
         miss = k >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== k) } : hit;
       } else if (a?.kind === "breach") {
         hit = { ...(junkAt >= 0 && s.slots[junkAt]!.side === "prefix" ? { ...s, slots: s.slots.filter((_, i) => i !== junkAt) } : s), breach: true };
+      } else if (a?.kind === "abyss") {
+        // 深淵のエッセンス: その側の外れ (冒涜の外れ・上書きのエッセンス) を 1 つ消して印
+        const j = s.slots.findIndex((x) => !x.fixed && !x.modId && x.side === a.side);
+        const t = j >= 0 ? { ...s, slots: s.slots.filter((_, i) => i !== j) } : s;
+        hit = { ...t, slots: [...t.slots, { modId: null, side: a.side, fixed: false, crafted: true, mark: true }] };
       } else if (a?.kind === "whittle") {
         hit = { ...s, breach: false };
       }
