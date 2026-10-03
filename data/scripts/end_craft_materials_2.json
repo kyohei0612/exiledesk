@@ -964,6 +964,38 @@
           }
         },
         {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "冒涜って、何をするのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨",
+              "icons": [
+                "jawbone",
+                "rib",
+                "collarbone"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "レアのアイテムに、中身の見えない MOD を 1 個付けることよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "骨",
+              "icons": [
+                "jawbone",
+                "rib",
+                "collarbone"
+              ]
+            }
+          }
+        },
+        {
           "speaker": "metan",
           "emotion": "normal",
           "text": "骨は部位で 3 種類。顎骨は武器と矢筒、肋骨は防具、鎖骨はアミュレット・指輪・ベルトよ。",
@@ -1029,9 +1061,75 @@
           }
         },
         {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "強さで、何が違うのだ？",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
           "speaker": "metan",
           "emotion": "normal",
           "text": "噛み切られた骨はアイテムレベル 64 まで。保存された骨は制限なし。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "骨の強さ",
+              "rows": [
+                [
+                  "骨",
+                  "できること"
+                ],
+                [
+                  "噛み切られた",
+                  "アイテムレベル 64 まで"
+                ],
+                [
+                  "保存された",
+                  "制限なし"
+                ],
+                [
+                  "古代",
+                  "MOD のレベル 40 以上"
+                ],
+                [
+                  "変質した鎖骨",
+                  "異世界の MOD が出ることがある"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "噛み切られた骨は、アイテムレベルの低い装備だけなのだ。",
           "scene": {
             "kind": "table",
             "panel": {
@@ -1130,7 +1228,7 @@
         {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "冒涜すると、中身の見えない「未発現」の MOD が 1 個付くわ。",
+          "text": "この中身の見えない MOD を、「未発現」って言うの。",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1146,6 +1244,36 @@
           "speaker": "metan",
           "emotion": "normal",
           "text": "ネクロマンシーのお告げで、付く側を決められるの。左手ならプレフィックス、右手ならサフィックス。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "ネクロマンシーのお告げ",
+              "icons": [
+                "OmenofSinistralNecromancy",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "お告げって、骨にも使えるのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "ネクロマンシーのお告げ",
+              "icons": [
+                "OmenofSinistralNecromancy",
+                "OmenofDextralNecromancy"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。骨を使う前に持っておけば、次の冒涜の向きを決められるわ。",
           "scene": {
             "kind": "icons",
             "panel": {
@@ -1199,6 +1327,24 @@
           "speaker": "metan",
           "emotion": "normal",
           "text": "中身は後で決めるの。未発現の間も、枠は 1 つ使っているわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "枠を使うってことは、MOD が 1 個増えたのと同じなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。だから、空いている枠が無いと……。",
           "scene": {
             "kind": "stage",
             "step": 2
@@ -1266,9 +1412,19 @@
           }
         },
         {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "噛み切られた骨は、どうなるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "necro_left"
+          }
+        },
+        {
           "speaker": "metan",
           "emotion": "normal",
-          "text": "それと、噛み切られた鎖骨。このアミュレットはアイテムレベル 82 だから……。",
+          "text": "このアミュレットはアイテムレベル 82。噛み切られた鎖骨を使うと……。",
           "scene": {
             "kind": "stage",
             "step": 0,
@@ -1295,6 +1451,15 @@
           "speaker": "metan",
           "emotion": "normal",
           "text": "未発現の MOD は、魂の井戸で中身を決めるの。これを「発現」と言うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "井戸で、どうやって中身が決まるのだ？",
           "scene": {
             "kind": "stage",
             "step": 2
@@ -1339,7 +1504,26 @@
         {
           "speaker": "metan",
           "emotion": "normal",
+          "text": "勢力の MOD がそうよ。後で詳しく見せるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
           "text": "発現してみるわね。候補は、クールダウン解消レート、知性、へラルドスキルのリザーブ効率の 3 つ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "offers": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "どれにするのだ？",
           "scene": {
             "kind": "stage",
             "step": 3,
@@ -1393,6 +1577,34 @@
           }
         },
         {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "引き直せるのは、1 回だけなのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。次の発現で、1 回だけよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
           "speaker": "metan",
           "emotion": "normal",
           "text": "同じアミュレットで試すわね。最初の候補は、さっきと同じ 3 つ。",
@@ -1406,6 +1618,17 @@
           "speaker": "metan",
           "emotion": "normal",
           "text": "引き直すと……候補は、マナ自動回復レート、キャストスピード、クリティカルヒット率。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo",
+            "offers": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "キャストスピードが T1 なのだ！",
           "scene": {
             "kind": "stage",
             "step": 3,
